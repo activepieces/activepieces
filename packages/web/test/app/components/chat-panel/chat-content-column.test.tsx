@@ -13,8 +13,6 @@ const chat = vi.hoisted((): { width: ChatWidth } => ({ width: 'closed' }));
 
 vi.mock('@/app/components/chat-panel/chat-window', () => ({
   useChatWidth: () => chat.width,
-  useCardWidth: () => 1200,
-  useDockWidth: () => 400,
 }));
 
 describe('ChatContentColumn', () => {

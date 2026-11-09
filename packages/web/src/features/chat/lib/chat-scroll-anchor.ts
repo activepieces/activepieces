@@ -1,4 +1,4 @@
-import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
+import { MOTION, chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 
 // Keeps the message the user was reading in place when the chat changes
 // width (full page, dock, sheet). Capture reads the layout before the change,
@@ -105,7 +105,7 @@ function firstElementFrom({
 }
 
 const PINNED_GAP = 24;
-const HOLD_MS = 700;
+const HOLD_MS = MOTION.move * 1000 + 300;
 const STRADDLE = 8;
 const USER_SCROLL_EVENTS: Array<'wheel' | 'touchstart' | 'keydown'> = [
   'wheel',

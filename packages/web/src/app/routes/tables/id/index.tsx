@@ -218,7 +218,11 @@ function SheenRow({
   useEffect(() => {
     const row = ref.current;
     if (sheenToken === null || !row) return;
-    aiSheen.play([...row.querySelectorAll(':scope > .rdg-cell')]);
+    aiSheen.play({
+      id: `${rowId}:${sheenToken}`,
+      elements: [...row.querySelectorAll(':scope > .rdg-cell')],
+      bounds: row.closest('.rdg'),
+    });
     onSheen({ rowId, token: sheenToken });
   }, [sheenToken, rowId, onSheen]);
   return <GridRow ref={ref} {...props} />;

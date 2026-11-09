@@ -43,7 +43,7 @@ describe('useAiFieldHighlights', () => {
 
     const played = vi
       .mocked(aiSheen.play)
-      .mock.calls.map(([elements]) =>
+      .mock.calls.map(([{ elements }]) =>
         elements[0].getAttribute('data-ai-field'),
       );
     expect(played).toEqual(['flow-step:a', 'flow-step:b', 'flow-step:a']);

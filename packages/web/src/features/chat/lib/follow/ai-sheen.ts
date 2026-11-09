@@ -1,12 +1,25 @@
+import { MOTION } from '@/features/workspace/lib/chat-layout';
+
 import { pageFocus } from './page-focus';
 
-function play(elements: Element[]): boolean {
+function play({
+  id,
+  elements,
+  bounds,
+}: {
+  id: string;
+  elements: Element[];
+  bounds?: Element | null;
+}): boolean {
   const hosts = elements.filter(
     (element): element is HTMLElement =>
       element instanceof HTMLElement && element.getClientRects().length > 0,
   );
-  if (hosts.length === 0) return false;
-  pending.push(hosts);
+  if (hosts.length === 0 || hosts.every((host) => played.get(host) === id)) {
+    return false;
+  }
+  hosts.forEach((host) => played.set(host, id));
+  pending.push({ hosts, bounds: bounds ?? null });
   if (frame === 0) frame = requestAnimationFrame(flush);
   return true;
 }
@@ -18,6 +31,7 @@ function durationFor(width: number): number {
 
 function delaysByTop(tops: number[]): number[] {
   const rows = [...new Set(tops.map(Math.round))].sort((a, b) => a - b);
+  if (rows.length > STAGGER_MAX_ROWS) return tops.map(() => 0);
   return tops.map((top) => rows.indexOf(Math.round(top)) * STAGGER_MS);
 }
 
@@ -39,10 +53,17 @@ function flush(): void {
   );
 }
 
-function measure(hosts: HTMLElement[]): MeasuredGroup {
+function measure({ hosts, bounds }: PendingGroup): MeasuredGroup {
   const rects = hosts.map((host) => host.getBoundingClientRect());
-  const left = Math.min(...rects.map((rect) => rect.left));
-  const right = Math.max(...rects.map((rect) => rect.right));
+  const area = bounds?.getBoundingClientRect();
+  const left = Math.max(
+    Math.min(...rects.map((rect) => rect.left)),
+    area?.left ?? -Infinity,
+  );
+  const right = Math.min(
+    Math.max(...rects.map((rect) => rect.right)),
+    area?.right ?? Infinity,
+  );
   return {
     top: Math.min(...rects.map((rect) => rect.top)),
     width: Math.max(0, right - left),
@@ -80,7 +101,7 @@ function sweep({
         base.animate([{ opacity: 1 }, { opacity: 0 }], {
           duration: REDUCED_FADE_MS,
           delay,
-          easing: 'ease-out',
+          easing: MOTION.easeOutCss,
           fill: 'both',
         }),
       ]
@@ -90,7 +111,7 @@ function sweep({
           {
             duration: duration + BASE_TAIL_MS,
             delay,
-            easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+            easing: MOTION.easeOutCss,
             fill: 'both',
           },
         ),
@@ -102,7 +123,7 @@ function sweep({
           {
             duration,
             delay,
-            easing: 'cubic-bezier(0.4, 0, 0.25, 1)',
+            easing: MOTION.easeOutCss,
             fill: 'both',
           },
         ),
@@ -130,16 +151,23 @@ function bandOf(overlay: HTMLElement): HTMLElement {
 const OVERLAY_CLASS = 'ap-ai-sheen';
 const BAND_PX = 140;
 const SPEED_PX_PER_S = 1000;
-const MIN_MS = 420;
-const MAX_MS = 900;
-const BASE_TAIL_MS = 150;
-const STAGGER_MS = 40;
-const REDUCED_FADE_MS = 600;
-const pending: HTMLElement[][] = [];
+const MIN_MS = 320;
+const MAX_MS = MOTION.highlightMax * 1000;
+const BASE_TAIL_MS = 100;
+const STAGGER_MS = 30;
+const STAGGER_MAX_ROWS = 6;
+const REDUCED_FADE_MS = 300;
+const pending: PendingGroup[] = [];
+const played = new WeakMap<HTMLElement, string>();
 let frame = 0;
 
 export const aiSheen = {
   play,
+};
+
+type PendingGroup = {
+  hosts: HTMLElement[];
+  bounds: Element | null;
 };
 
 type MeasuredGroup = {

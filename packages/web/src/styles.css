@@ -191,7 +191,6 @@
 @theme {
   --ease-*: initial;
   --ease-expand-out: cubic-bezier(0.35, 0, 0.25, 1);
-  --ease-move: cubic-bezier(0.22, 1, 0.36, 1);
 
   --transition-duration-1500: 1500ms;
 
@@ -404,6 +403,18 @@
   }
 }
 
+@theme static {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --dur-micro: 100ms;
+  --dur-fast: 120ms;
+  --dur-base: 160ms;
+  --dur-move: 200ms;
+  --dur-sheet: 260ms;
+  --dur-highlight-max: 600ms;
+}
+
 /*
   Per-block entrance fade for streaming chat markdown. While a message is actively
   streaming (`data-stream-animate` set), each top-level markdown block
@@ -415,7 +426,7 @@
 @keyframes chat-stream-block-in {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -424,7 +435,7 @@
 }
 
 [data-stream-animate] > * {
-  animation: chat-stream-block-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: chat-stream-block-in var(--dur-base) var(--ease-out) both;
 }
 
 /*
@@ -437,16 +448,14 @@
 @keyframes chat-word-in {
   from {
     opacity: 0;
-    filter: blur(5px);
   }
   to {
     opacity: 1;
-    filter: blur(0);
   }
 }
 
 .chat-word {
-  animation: chat-word-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: chat-word-in var(--dur-base) var(--ease-out) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1281,27 +1290,92 @@
   }
 }
 
-.ap-chat-notch-line {
-  stroke-dasharray: 1;
+:root[data-chat-move] [data-slot='sidebar-gap'],
+:root[data-chat-move] [data-slot='sidebar-container'],
+:root[data-chat-move] #ap-chat-panel {
+  transition: none;
 }
 
-.group:hover .ap-chat-notch-line {
-  animation: ap-chat-notch-write 450ms cubic-bezier(0.2, 0, 0, 1) both;
+::view-transition-group(*) {
+  animation-duration: var(--dur-move);
+  animation-timing-function: var(--ease-out);
 }
 
-.group:hover .ap-chat-notch-line + .ap-chat-notch-line {
-  animation-delay: 60ms;
+::view-transition-group(ap-chat) {
+  z-index: 3;
 }
 
-@keyframes ap-chat-notch-write {
+::view-transition-group(ap-rail) {
+  z-index: 2;
+}
+
+::view-transition-group(ap-page) {
+  z-index: 1;
+}
+
+::view-transition-group(ap-chat),
+::view-transition-group(ap-rail),
+::view-transition-group(ap-card),
+::view-transition-image-pair(ap-chat),
+::view-transition-image-pair(ap-rail),
+::view-transition-image-pair(ap-card) {
+  overflow: clip;
+}
+
+::view-transition-old(ap-chat),
+::view-transition-new(ap-chat),
+::view-transition-old(ap-rail),
+::view-transition-new(ap-rail),
+::view-transition-old(ap-card),
+::view-transition-new(ap-card),
+::view-transition-old(ap-page),
+::view-transition-new(ap-page) {
+  width: auto;
+  height: 100%;
+  object-fit: none;
+  object-position: left top;
+}
+
+::view-transition-old(ap-chat) {
+  animation: ap-view-fade-out calc(var(--dur-move) * 0.4) var(--ease-out) both;
+}
+
+::view-transition-new(ap-chat) {
+  animation: ap-view-fade-in var(--dur-move) var(--ease-out) both;
+}
+
+::view-transition-old(ap-page),
+::view-transition-new(ap-page),
+::view-transition-old(ap-rail),
+::view-transition-new(ap-rail),
+::view-transition-old(ap-card),
+::view-transition-new(ap-card) {
+  animation-duration: var(--dur-move);
+  animation-timing-function: var(--ease-out);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+@keyframes ap-view-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes ap-view-fade-in {
   from {
-    stroke-dashoffset: 1;
+    opacity: 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .group:hover .ap-chat-notch-line {
-    animation: none;
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }
 

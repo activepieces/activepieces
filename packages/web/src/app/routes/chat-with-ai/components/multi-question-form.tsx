@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { cn } from '@/lib/utils';
 
 import { MultiQuestion } from '../lib/message-parsers';
@@ -166,10 +167,10 @@ export function MultiQuestionForm({
         <AnimatePresence mode="wait">
           <motion.div
             key={`q-${currentStep}`}
-            initial={{ opacity: 0, x: 12 }}
+            initial={{ opacity: 0, x: 8 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -12 }}
-            transition={{ duration: 0.2 }}
+            exit={{ opacity: 0, x: -8, transition: { duration: MOTION.fast, ease: MOTION.easeOut } }}
+            transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
           >
             <Label
               htmlFor={fieldId}
@@ -212,10 +213,10 @@ export function MultiQuestionForm({
       <AnimatePresence mode="wait">
         <motion.div
           key={`opts-${currentStep}`}
-          initial={{ opacity: 0, x: 12 }}
+          initial={{ opacity: 0, x: 8 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -12 }}
-          transition={{ duration: 0.2 }}
+          exit={{ opacity: 0, x: -8, transition: { duration: MOTION.fast, ease: MOTION.easeOut } }}
+          transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
         >
           {isChoiceQuestion(q) ? (
             <ChoiceBody
@@ -320,7 +321,7 @@ function ChoiceBody({
                 onClick={() => onPick(option.label)}
                 aria-pressed={selected}
                 className={cn(
-                  'flex flex-col items-center gap-2 rounded-xl border border-gray-6/60 px-3 py-4 text-center text-sm transition-colors hover:bg-gray-3',
+                  'flex flex-col items-center gap-2 rounded-xl border border-gray-6/60 px-3 py-4 text-center text-sm transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3',
                   selected && 'border-accent-7 bg-accent-3 hover:bg-accent-4',
                 )}
               >
@@ -347,7 +348,7 @@ function ChoiceBody({
                   <div className="px-3">
                     <Separator
                       className={cn(
-                        'bg-gray-6/60 transition-opacity duration-150',
+                        'bg-gray-6/60 transition-opacity duration-(--dur-micro) ease-[ease]',
                         isMidSepHidden(i) && 'opacity-0',
                       )}
                     />
@@ -407,7 +408,7 @@ function ChoiceBody({
                     }
                   }}
                   className={cn(
-                    'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-pointer transition-colors hover:bg-gray-3 outline-none',
+                    'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-pointer transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 outline-none',
                     focusedRow === i &&
                       !selected &&
                       'bg-gray-3 hover:bg-gray-4',
@@ -425,7 +426,7 @@ function ChoiceBody({
                     <span
                       aria-hidden
                       className={cn(
-                        'flex size-8 shrink-0 items-center justify-center rounded-md bg-gray-5 text-xs font-medium text-gray-11 transition-colors',
+                        'flex size-8 shrink-0 items-center justify-center rounded-md bg-gray-5 text-xs font-medium text-gray-11 transition-colors duration-(--dur-micro) ease-[ease]',
                         focusedRow === i && 'bg-gray-12 text-gray-1',
                         selected && 'bg-gray-12 text-gray-1',
                       )}
@@ -453,7 +454,7 @@ function ChoiceBody({
           <div className="px-3">
             <Separator
               className={cn(
-                'bg-gray-6/60 transition-opacity duration-150',
+                'bg-gray-6/60 transition-opacity duration-(--dur-micro) ease-[ease]',
                 isBottomSepHidden && 'opacity-0',
               )}
             />
@@ -470,14 +471,14 @@ function ChoiceBody({
               setFocusedRow((prev) => (prev === 'custom' ? null : prev))
             }
             className={cn(
-              'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-text transition-colors hover:bg-gray-3 focus-within:bg-gray-3',
+              'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-text transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 focus-within:bg-gray-3',
               isCustomTextActive && 'bg-gray-3 hover:bg-gray-4',
             )}
           >
             <span
               aria-hidden
               className={cn(
-                'flex size-8 shrink-0 items-center justify-center rounded-md bg-gray-5 text-gray-11 transition-colors group-focus-within:bg-gray-12 group-focus-within:text-gray-1',
+                'flex size-8 shrink-0 items-center justify-center rounded-md bg-gray-5 text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] group-focus-within:bg-gray-12 group-focus-within:text-gray-1',
                 isCustomTextActive && 'bg-gray-12 text-gray-1',
               )}
             >

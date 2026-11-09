@@ -89,7 +89,7 @@ function Source({ href, title, className }: SourceProps) {
           target="_blank"
           rel="noopener noreferrer"
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-full border bg-gray-3/50 px-2.5 py-1 text-xs transition-colors hover:bg-gray-3 no-underline',
+            'inline-flex items-center gap-1.5 rounded-full border bg-gray-3/50 px-2.5 py-1 text-xs transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 no-underline',
             className,
           )}
         >

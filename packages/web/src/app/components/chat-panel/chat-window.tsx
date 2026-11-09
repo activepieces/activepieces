@@ -28,7 +28,7 @@ import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { cn } from '@/lib/utils';
 
-import { useShellHandle } from '../app-shell';
+import { CHAT_ALLOWED, useShellHandle } from '../app-shell';
 
 import { FollowAlongController } from './follow-along-controller';
 import { useSheetSwipe } from './use-sheet-swipe';
@@ -60,15 +60,15 @@ export function useDockWidth(dragWidth: number | null = null): number {
 }
 
 export function useChatWidth(): ChatWidth {
-  const routeChat = useShellHandle().chat;
-  const fullPage = routeChat === 'full';
+  const handle = useShellHandle();
+  const fullPage = handle.chat === 'full';
   const sheetOpen = useLocation().hash === chatPanelUtils.SHEET_HASH;
   const docked = useChatPanel((s) => s.open);
   const mode = useChatPanel((s) => s.mode);
   const phone = windowSizeHooks.useIsPhone();
   return chatLayoutUtils.widthFor({
     fullPage,
-    open: routeChat !== 'none' && (phone ? sheetOpen : docked),
+    open: CHAT_ALLOWED[handle.shell] && (phone ? sheetOpen : docked),
     mode,
     phone,
   });
@@ -106,7 +106,6 @@ export function useChatSheet() {
 export function ChatPanel() {
   const chatWidth = useChatWidth();
   const mode = useChatPanel((s) => s.mode);
-  const moving = useChatPanel((s) => s.moving);
   const [dragWidth, setDragWidth] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -119,10 +118,8 @@ export function ChatPanel() {
   const side = full ? 'left' : mode;
   const width = useDockWidth(dragWidth);
   const cardWidth = useCardWidth();
-  const innerWide = full && moving !== 'exit';
-  const layoutKey = `${chatWidth}|${innerWide}`;
+  const layoutKey = chatWidth;
   const committedLayout = useRef(layoutKey);
-  const contentRef = useRef<HTMLDivElement>(null);
 
   // Read where the reader is before React swaps the width under them.
   if (committedLayout.current !== layoutKey && pendingCapture !== layoutKey) {
@@ -131,18 +128,11 @@ export function ChatPanel() {
   }
 
   useLayoutEffect(() => {
-    const from = committedLayout.current;
-    if (from === layoutKey) return;
+    if (committedLayout.current === layoutKey) return;
     committedLayout.current = layoutKey;
     pendingCapture = null;
     chatScrollAnchor.restore();
-    if (from.endsWith('|false') && innerWide) {
-      contentRef.current?.animate([{ opacity: 0 }, { opacity: 1 }], {
-        duration: DIP_MS,
-        easing: 'ease-out',
-      });
-    }
-  }, [layoutKey, innerWide]);
+  }, [layoutKey]);
 
   if (visible && !mounted) {
     setMounted(true);
@@ -206,8 +196,10 @@ export function ChatPanel() {
           aria-hidden={!sheetOpen || undefined}
           onClick={sheet.hide}
           className={cn(
-            'fixed inset-0 z-40 cursor-default bg-scrim transition-opacity duration-150 ease-move motion-reduce:transition-none',
-            !sheetOpen && 'pointer-events-none opacity-0',
+            'fixed inset-0 z-40 cursor-default bg-scrim transition-opacity motion-reduce:duration-(--dur-fast)',
+            sheetOpen
+              ? 'duration-(--dur-sheet) ease-drawer'
+              : 'pointer-events-none opacity-0 duration-(--dur-move) ease-out',
           )}
         />
       )}
@@ -219,35 +211,21 @@ export function ChatPanel() {
         aria-modal={phone && sheetOpen ? true : undefined}
         inert={!visible}
         onPointerDown={phone ? swipe.onPointerDown : undefined}
-        onTransitionEnd={(event) => {
-          if (
-            event.target === event.currentTarget &&
-            event.propertyName === 'width'
-          ) {
-            useChatPanel.getState().setMoving(null);
-          }
-        }}
         style={
-          phone
-            ? undefined
-            : {
-                width: full ? '100%' : visible ? width : 0,
-                transition: moving ? MOVE_TRANSITION[moving] : undefined,
-              }
+          phone ? undefined : { width: full ? '100%' : visible ? width : 0 }
         }
         className={cn(
           phone
             ? [
-                'fixed inset-x-0 top-2 bottom-0 z-40 flex flex-col overflow-hidden rounded-t-xl border bg-gray-1 shadow-over transition-[translate,visibility] duration-150 ease-move motion-reduce:transition-none',
-                !sheetOpen && 'invisible translate-y-full',
+                'fixed inset-x-0 top-2 bottom-0 z-40 flex flex-col overflow-hidden rounded-t-xl border bg-gray-1 shadow-over transition-[translate,opacity,visibility] motion-reduce:transition-[opacity,visibility] motion-reduce:duration-(--dur-fast)',
+                sheetOpen
+                  ? 'duration-(--dur-sheet) ease-drawer'
+                  : 'invisible translate-y-full duration-(--dur-move) ease-out motion-reduce:translate-y-0 motion-reduce:opacity-0',
               ]
             : [
-                'relative flex shrink-0 flex-col overflow-hidden bg-gray-1',
+                'relative flex shrink-0 flex-col overflow-hidden bg-gray-1 [view-transition-name:ap-chat]',
                 side === 'right' && 'order-last',
-                moving === 'enter' && 'z-[1]',
                 visible && !full && (side === 'left' ? 'border-r' : 'border-l'),
-                dragWidth === null &&
-                  'transition-[width] duration-[var(--ap-move,200ms)] ease-move motion-reduce:transition-none',
               ],
         )}
       >
@@ -255,10 +233,7 @@ export function ChatPanel() {
         <FollowAlongController />
         <ChatAnnouncer />
         <div
-          ref={contentRef}
-          style={
-            phone ? undefined : { width: innerWide ? '100%' : `${width}px` }
-          }
+          style={phone ? undefined : { width: full ? '100%' : `${width}px` }}
           className={cn(
             'flex flex-col',
             phone
@@ -313,7 +288,7 @@ export function ChatPanel() {
           >
             <span
               className={cn(
-                'absolute inset-y-0 w-0.5 bg-gray-8 transition-opacity duration-150 group-hover/edge:opacity-100 group-focus-visible/edge:opacity-100',
+                'absolute inset-y-0 w-0.5 bg-gray-8 transition-opacity duration-(--dur-micro) ease-[ease] group-hover/edge:opacity-100 group-focus-visible/edge:opacity-100',
                 side === 'left' ? 'right-0' : 'left-0',
                 dragWidth === null ? 'opacity-0' : 'opacity-100',
               )}
@@ -350,7 +325,7 @@ function ChatSheetPill({ onOpen }: { onOpen: () => void }) {
       variant="outline"
       onClick={onOpen}
       aria-label={needsYou ? t('Open chat, it needs you') : t('Open chat')}
-      className="fixed left-1/2 z-40 h-11 -translate-x-1/2 animate-in fade-in-0 slide-in-from-bottom-2 gap-2 rounded-full bg-gray-1 pr-4 pl-3 text-gray-12 shadow-lift duration-150 motion-reduce:animate-none"
+      className="fixed left-1/2 z-40 h-11 -translate-x-1/2 animate-in fade-in-0 motion-safe:slide-in-from-bottom-2 gap-2 rounded-full bg-gray-1 pr-4 pl-3 text-gray-12 shadow-lift duration-(--dur-base) ease-out"
       style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
     >
       <span className="relative flex size-6 shrink-0 items-center justify-center">
@@ -465,6 +440,8 @@ function ChatRouterBinding() {
   const latest = useRef({ location, fullPage });
   latest.current = { location, fullPage };
 
+  useLayoutEffect(() => chatPanelUtils.routeCommitted(), [location.key]);
+
   useEffect(
     () =>
       chatPanelUtils.bindRouter({
@@ -554,11 +531,5 @@ function focusComposerWhenReady(panel: HTMLElement): (() => void) | undefined {
 const HANDOFF_STOP_EVENTS = ['focusin', 'pointerdown', 'keydown'] as const;
 const HANDOFF_MAX_MS = 5000;
 const PREWARM_MS = 800;
-const DIP_MS = 120;
 const BUILDER_CARD_CHROME = 14;
-const { MOVE_MS, MOVE_EASE } = chatLayoutUtils;
-const MOVE_TRANSITION: Record<'enter' | 'exit', string> = {
-  enter: `width ${MOVE_MS.wide}ms ${MOVE_EASE.emphasized} ${MOVE_MS.edgeDelay}ms`,
-  exit: `width ${MOVE_MS.back}ms ${MOVE_EASE.standard}`,
-};
 let pendingCapture: string | null = null;

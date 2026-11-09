@@ -18,6 +18,7 @@ vi.mock('i18next', () => ({ t: (key: string) => key }));
 
 vi.mock('@/app/components/app-shell', () => ({
   useShellHandle: () => ({ shell: 'project' }),
+  CHAT_ALLOWED: { project: true, builder: true, platform: false },
 }));
 
 vi.mock('@/app/components/chat-panel/chat-chrome', () => ({

@@ -209,7 +209,7 @@ export function OptionIcon({
     <span
       aria-hidden
       className={cn(
-        'flex shrink-0 items-center justify-center bg-gray-5 text-gray-11 transition-colors',
+        'flex shrink-0 items-center justify-center bg-gray-5 text-gray-11 transition-colors duration-(--dur-micro) ease-[ease]',
         variant === 'grid' ? 'size-10 rounded-xl' : 'size-8 rounded-md',
         selected &&
           (variant === 'grid'

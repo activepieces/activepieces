@@ -304,7 +304,7 @@ function Sidebar({
       <div
         data-slot="sidebar-gap"
         className={cn(
-          'relative w-(--sidebar-width) bg-transparent transition-[width] duration-[var(--ap-move,200ms)] ease-move motion-reduce:transition-none',
+          'relative w-(--sidebar-width) bg-transparent',
           'group-data-[collapsible=offcanvas]:w-0',
           'group-data-[side=right]:rotate-180',
           variant === 'floating' || variant === 'inset'
@@ -319,7 +319,7 @@ function Sidebar({
       <div
         data-slot="sidebar-container"
         className={cn(
-          'fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-[var(--ap-move,200ms)] ease-move motion-reduce:transition-none md:flex',
+          'fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) [view-transition-name:ap-rail] md:flex',
           side === 'left'
             ? 'left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]'
             : 'right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]',
@@ -520,7 +520,7 @@ function SidebarGroupLabel({
       data-slot="sidebar-group-label"
       data-sidebar="group-label"
       className={cn(
-        'flex h-7 shrink-0 items-center overflow-hidden rounded-md px-2 text-xs font-medium text-gray-11 ring-gray-8 outline-hidden transition-[height,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
+        'flex h-7 shrink-0 items-center overflow-hidden rounded-md px-2 text-xs font-medium text-gray-11 ring-gray-8 outline-hidden transition-opacity duration-(--dur-fast) ease-out motion-reduce:transition-none focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
         'group-data-[collapsible=icon]:h-0 group-data-[collapsible=icon]:opacity-0',
         className,
       )}

@@ -31,6 +31,7 @@ import {
   UseCaseCard,
 } from '@/features/chat/use-cases/use-case-card';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import {
   chatPanelUtils,
   useChatPanel,
@@ -183,7 +184,7 @@ function CollapseOnInput({
   return (
     <div
       className={cn(
-        'grid transition-all duration-300',
+        'grid transition-opacity duration-(--dur-base) ease-out motion-reduce:transition-none',
         collapsed ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100',
       )}
     >
@@ -268,7 +269,7 @@ function ChatNotice({
 
 export function MessageSkeletons() {
   return (
-    <div className="space-y-8 animate-in fade-in duration-300 py-4">
+    <div className="space-y-8 animate-in fade-in duration-(--dur-base) ease-out py-4 motion-reduce:animate-none">
       <div className="flex justify-end">
         <Skeleton className="h-10 w-48 rounded-xl" />
       </div>
@@ -288,6 +289,7 @@ function Greeting({
   firstName: string;
   incognito: boolean;
 }) {
+  const reduced = useReducedMotion();
   const headline = useMemo(
     () =>
       GREETING_HEADLINES[Math.floor(Math.random() * GREETING_HEADLINES.length)],
@@ -297,9 +299,9 @@ function Greeting({
   return (
     <motion.div
       className="flex flex-col items-start gap-3.5"
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: reduced ? 0 : 4 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       <h1 className="text-3xl sm:text-5xl font-semibold leading-tight text-balance font-serif">
         {incognito
@@ -450,7 +452,7 @@ function ExampleCards({
           className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
           initial={reducedMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.18, ease: 'easeOut' }}
+          transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
         >
           {cards.map((card) => (
             <UseCaseCard
@@ -468,7 +470,7 @@ function ExampleCards({
             <UseCaseCard
               key={card.key}
               card={card}
-              delay={0.15 + i * 0.08}
+              delay={i * CARD_STAGGER_S}
               onSelect={onSuggestionClick}
               className="min-w-[150px] flex-1 basis-0"
             />
@@ -480,12 +482,12 @@ function ExampleCards({
         <button
           type="button"
           onClick={handleToggle}
-          className="flex items-center gap-1.5 text-sm font-medium text-gray-11 transition-colors hover:text-gray-12 cursor-pointer"
+          className="flex items-center gap-1.5 text-sm font-medium text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] hover:text-gray-12 cursor-pointer"
         >
           {expanded ? t('Show less') : t('More and bigger')}
           <ChevronDown
             className={cn(
-              'size-4 transition-transform duration-300',
+              'size-4 transition-transform duration-(--dur-base) ease-out motion-reduce:transition-none',
               expanded && 'rotate-180',
             )}
           />
@@ -559,14 +561,14 @@ function CardCarousel({ children }: { children: ReactNode }) {
       <div
         aria-hidden
         className={cn(
-          'pointer-events-none absolute inset-y-0 left-0 z-20 w-16 bg-gradient-to-r from-gray-1 to-transparent transition-opacity duration-300',
+          'pointer-events-none absolute inset-y-0 left-0 z-20 w-16 bg-gradient-to-r from-gray-1 to-transparent transition-opacity duration-(--dur-base) ease-out',
           edges.atStart ? 'opacity-0' : 'opacity-100',
         )}
       />
       <div
         aria-hidden
         className={cn(
-          'pointer-events-none absolute inset-y-0 right-0 z-20 w-16 bg-gradient-to-l from-gray-1 to-transparent transition-opacity duration-300',
+          'pointer-events-none absolute inset-y-0 right-0 z-20 w-16 bg-gradient-to-l from-gray-1 to-transparent transition-opacity duration-(--dur-base) ease-out',
           edges.atEnd ? 'opacity-0' : 'opacity-100',
         )}
       />
@@ -618,7 +620,7 @@ function CarouselArrow({
       aria-label={direction === 'left' ? t('Scroll left') : t('Scroll right')}
       onClick={onClick}
       className={cn(
-        'absolute top-1/2 z-30 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-gray-6 bg-gray-1/90 text-gray-12 shadow-md backdrop-blur transition-colors hover:bg-gray-1',
+        'absolute top-1/2 z-30 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-gray-6 bg-gray-1/90 text-gray-12 shadow-md backdrop-blur transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-1',
         direction === 'left' ? 'left-2' : 'right-2',
       )}
     >
@@ -693,6 +695,7 @@ function resolveCards({
 }
 
 const COLLAPSED_CARD_COUNT = 4;
+const CARD_STAGGER_S = 0.03;
 
 const RESOURCE_PAGES = [
   `/projects/:projectId${routesThatRequireProjectId.singleFlow}`,

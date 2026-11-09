@@ -5,9 +5,8 @@ import { create } from 'zustand';
 import { routesThatRequireProjectId } from '@/lib/route-utils';
 import { safeStorage } from '@/lib/safe-storage';
 
-import { chatLayoutUtils } from './chat-layout';
 import { useChatPanel } from './chat-panel-open';
-import { routeChatUtils } from './route-chat';
+import { layoutMove } from './layout-move';
 import { windowSizeHooks } from './window-size-hooks';
 
 const PREFERENCE_KEY = 'primary-rail-collapsed';
@@ -81,9 +80,7 @@ function railIsOpen({
 
 export function useRailOpen(): boolean {
   const { pathname } = useLocation();
-  const chatPage = useMatches().some(
-    ({ handle }) => routeChatUtils.chatOfHandle(handle) === 'full',
-  );
+  const chatPage = useMatches().some(({ handle }) => isChatPageHandle(handle));
   return useRail((state) => railIsOpen({ state, pathname, chatPage }));
 }
 
@@ -93,8 +90,15 @@ export function useRailOpenState() {
 
   const onOpenChange = useCallback(
     (next: boolean) => {
-      chatLayoutUtils.startStructuralMove(next ? 'enter' : 'exit');
-      update({ preference: !next, foldedForChat: false, openedOn: pathname });
+      layoutMove.run({
+        waitForRoute: false,
+        update: () =>
+          update({
+            preference: !next,
+            foldedForChat: false,
+            openedOn: pathname,
+          }),
+      });
     },
     [pathname],
   );
@@ -135,6 +139,15 @@ windowSizeHooks.subscribe(() => {
   }
   wasDesktop = now;
 });
+
+function isChatPageHandle(handle: unknown): boolean {
+  return (
+    typeof handle === 'object' &&
+    handle !== null &&
+    'chat' in handle &&
+    handle.chat === 'full'
+  );
+}
 
 type RailState = {
   preference: boolean;

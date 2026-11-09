@@ -27,8 +27,10 @@ export function ChatNotch({ className }: { className?: string }) {
         viewBox={`0 0 ${NOTCH_BOX} ${NOTCH_BOX}`}
         aria-hidden
         className={cn(
-          'absolute inset-0 size-full origin-bottom-left overflow-visible transition-[scale,opacity] duration-150 ease-move motion-reduce:transition-none',
-          hidden && 'scale-0 opacity-0',
+          'absolute inset-0 size-full overflow-visible transition-opacity ease-out',
+          hidden
+            ? 'opacity-0 duration-(--dur-fast)'
+            : 'duration-(--dur-base)',
         )}
       >
         <path d={OUTLINE.fill} className="fill-gray-2" />
@@ -49,10 +51,10 @@ export function ChatNotch({ className }: { className?: string }) {
               tabIndex={hidden ? -1 : 0}
               onClick={() => useChatPanel.getState().setOpen(true)}
               className={cn(
-                'group absolute bottom-0 left-0 flex size-12 items-start justify-start rounded-md pt-3.25 pl-3 text-gray-12 outline-hidden transition-[opacity,scale,translate] duration-150 ease-move focus-visible:ring-2 focus-visible:ring-gray-8 focus-visible:ring-inset motion-reduce:transition-none',
+                'group absolute bottom-0 left-0 flex size-12 items-start justify-start rounded-md pt-3.25 pl-3 text-gray-12 outline-hidden transition-[opacity,scale] ease-out focus-visible:ring-2 focus-visible:ring-gray-8 focus-visible:ring-inset motion-reduce:transition-opacity',
                 hidden
-                  ? 'pointer-events-none translate-y-1.5 scale-60 opacity-0'
-                  : 'pointer-events-auto',
+                  ? 'pointer-events-none scale-95 opacity-0 duration-(--dur-fast) motion-reduce:scale-100'
+                  : 'pointer-events-auto duration-(--dur-base)',
               )}
             >
               <NotchChatIcon />
@@ -92,7 +94,7 @@ function NotchChatIcon() {
         className="fill-accent-9 stroke-accent-9"
       />
       {chatSparkPaths.lines.map((d) => (
-        <path key={d} d={d} pathLength={1} className="ap-chat-notch-line" />
+        <path key={d} d={d} />
       ))}
     </svg>
   );

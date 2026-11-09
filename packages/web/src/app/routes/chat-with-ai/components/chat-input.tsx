@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { ArrowUp, Mic, Paperclip, Square, X } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { VoiceWaveformBars } from '@/features/chat/components/voice-waveform';
 import { useVoiceInput } from '@/features/chat/lib/use-voice-input';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { cn } from '@/lib/utils';
 
 export function ChatInput({
@@ -60,6 +61,7 @@ export function ChatInput({
   const [value, setValue] = useState('');
   const [focused, setFocused] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const reduced = useReducedMotion();
   const [interimText, setInterimText] = useState('');
   const [queued, setQueued] = useState<QueuedMessage | null>(null);
   const [wasReplying, setWasReplying] = useState(replying);
@@ -226,24 +228,17 @@ export function ChatInput({
           onSubmit={handleSubmit}
           className="border-0 rounded-none shadow-none"
         >
-          <AnimatePresence>
-            {attachedFiles.length > 0 && (
-              <motion.div
-                className="flex flex-wrap gap-2 px-3 overflow-hidden"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
-              >
+          {attachedFiles.length > 0 && (
+              <div className="flex flex-wrap gap-2 px-3">
                 <div className="flex flex-wrap gap-2 pt-2 pb-0.5">
                   {attachedFiles.map((file) => (
                     <motion.div
                       key={file.name}
                       className="flex items-center gap-2 rounded-xl border bg-gray-3/50 px-3 py-1.5 text-sm"
                       onClick={(e) => e.stopPropagation()}
-                      initial={{ opacity: 0, scale: 0.95 }}
+                      initial={{ opacity: 0, scale: reduced ? 1 : 0.97 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.15 }}
+                      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
                     >
                       <Paperclip className="size-3.5 shrink-0 text-gray-11" />
                       <span className="max-w-[150px] truncate text-gray-12/80">
@@ -256,16 +251,15 @@ export function ChatInput({
                             prev.filter((f) => f.name !== file.name),
                           )
                         }
-                        className="text-gray-11 hover:text-gray-12 rounded-full p-0.5 transition-colors"
+                        className="text-gray-11 hover:text-gray-12 rounded-full p-0.5 transition-colors duration-(--dur-micro) ease-[ease]"
                       >
                         <X className="size-3.5" />
                       </button>
                     </motion.div>
                   ))}
                 </div>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
           {isRecording ? (
             <div className="min-h-[44px] px-3 py-2 text-base sm:text-sm text-gray-12 whitespace-pre-wrap break-words">
               {interimText || (
@@ -296,7 +290,7 @@ export function ChatInput({
               <div className="flex items-center gap-1">
                 <PromptInputAction tooltip={t('Attach files')}>
                   <FileUploadTrigger asChild>
-                    <div className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12">
+                    <div className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 hover:text-gray-12">
                       <Paperclip className="size-4" />
                     </div>
                   </FileUploadTrigger>
@@ -354,7 +348,7 @@ export function ChatInput({
                     <button
                       type="button"
                       onClick={startRecording}
-                      className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12"
+                      className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 hover:text-gray-12"
                     >
                       <Mic className="size-4" />
                     </button>

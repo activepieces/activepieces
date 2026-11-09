@@ -14,8 +14,7 @@ import { SidebarInset } from '@/components/ui/sidebar-shadcn';
 import { CreditsUsageAlert, ManagePlanDialog } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
 import { templatesHooks } from '@/features/templates';
-import { RouteChat } from '@/features/workspace/lib/route-chat';
-import { useChatOn } from '@/features/workspace/lib/use-chat-on';
+import { useChatEnabled } from '@/features/workspace/lib/use-chat-on';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { useSessionProjectId } from '@/hooks/use-session-project-id';
@@ -64,6 +63,12 @@ export function AppShellRoute() {
 
 export function useShellHandle(): RouteHandle {
   return useShellMatch().handle;
+}
+
+export function useChatOn(): boolean {
+  const enabled = useChatEnabled();
+  const { shell } = useShellHandle();
+  return enabled && CHAT_ALLOWED[shell];
 }
 
 function useShellMatch(): { handle: RouteHandle; templateId?: string } {
@@ -158,7 +163,7 @@ function AppShell({ handle }: { handle: RouteHandle }) {
             >
               <div
                 className={cn(
-                  'relative flex h-full overflow-clip',
+                  'relative flex h-full overflow-clip [view-transition-name:ap-card]',
                   isPlatform ? 'bg-(--admin-page)' : 'bg-gray-1',
                   !embedded && 'rounded-xl shadow-panel border',
                   embedded && isBuilder && 'border-l',
@@ -265,7 +270,7 @@ type ShellVariant = 'shell' | 'bare';
 
 export type RouteHandle = {
   shell: 'project' | 'builder' | 'platform';
-  chat: RouteChat;
+  chat?: 'full';
   projectHeader?: true;
   allowAnonymous?: true;
   standalone?: 'sharedTemplate';
@@ -273,23 +278,23 @@ export type RouteHandle = {
 };
 
 export const shellHandles = {
-  project: { shell: 'project', chat: 'dock' },
-  projectWithHeader: { shell: 'project', chat: 'dock', projectHeader: true },
-  publicProject: { shell: 'project', chat: 'dock', allowAnonymous: true },
-  projectRedirect: { shell: 'project', chat: 'dock', redirectOnly: true },
-  publicRedirect: {
-    shell: 'project',
-    chat: 'dock',
-    allowAnonymous: true,
-    redirectOnly: true,
-  },
+  project: { shell: 'project' },
+  projectWithHeader: { shell: 'project', projectHeader: true },
+  publicProject: { shell: 'project', allowAnonymous: true },
+  projectRedirect: { shell: 'project', redirectOnly: true },
+  publicRedirect: { shell: 'project', allowAnonymous: true, redirectOnly: true },
   templateDetails: {
     shell: 'project',
-    chat: 'dock',
     allowAnonymous: true,
     standalone: 'sharedTemplate',
   },
   chat: { shell: 'project', chat: 'full' },
-  builder: { shell: 'builder', chat: 'dock' },
-  platform: { shell: 'platform', chat: 'none' },
+  builder: { shell: 'builder' },
+  platform: { shell: 'platform' },
 } satisfies Record<string, RouteHandle>;
+
+export const CHAT_ALLOWED: Record<RouteHandle['shell'], boolean> = {
+  project: true,
+  builder: true,
+  platform: false,
+};

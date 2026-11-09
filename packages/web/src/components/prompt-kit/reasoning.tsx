@@ -105,7 +105,7 @@ const ReasoningTrigger = React.forwardRef<
       <span className="text-accent-11">{children}</span>
       <div
         className={cn(
-          'transform transition-transform',
+          'transform transition-transform duration-(--dur-base) ease-out motion-reduce:transition-none',
           isOpen ? 'rotate-180' : '',
         )}
       >
@@ -161,7 +161,7 @@ function ReasoningContent({
     <div
       ref={contentRef}
       className={cn(
-        'overflow-hidden transition-[max-height] duration-150',
+        'overflow-hidden',
         className,
       )}
       style={{

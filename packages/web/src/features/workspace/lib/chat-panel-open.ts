@@ -3,12 +3,12 @@ import { t } from 'i18next';
 import { create } from 'zustand';
 
 import { keepComposerFocus } from '@/features/chat/lib/keep-composer-focus';
-import { MOBILE_BREAKPOINT } from '@/hooks/use-mobile';
 import { authenticationSession } from '@/lib/authentication-session';
 import { CHAT_ROUTE } from '@/lib/route-utils';
 import { safeStorage } from '@/lib/safe-storage';
 
 import { chatLayoutUtils } from './chat-layout';
+import { layoutMove } from './layout-move';
 
 function bindRouter(next: ChatRouter): () => void {
   router = next;
@@ -29,24 +29,19 @@ function isFullPage(): boolean {
   return router?.isFullPage() ?? false;
 }
 
-function startMove(move: ChatMove): void {
-  if (
-    window.innerWidth >= MOBILE_BREAKPOINT &&
-    !chatLayoutUtils.prefersReducedMotion()
-  ) {
-    useChatPanel.getState().setMoving(move);
-  }
-}
-
 function expand(): void {
   const current = router;
   if (!current || current.isFullPage()) return;
-  if (useChatPanel.getState().open) startMove('exit');
-  keepComposerFocus.keep();
-  current.navigate({
-    to: routeFor(useChatPanel.getState().conversationId),
-    replace: false,
-    state: { [EXPANDED_STATE]: true },
+  layoutMove.run({
+    waitForRoute: true,
+    update: () => {
+      keepComposerFocus.keep();
+      current.navigate({
+        to: routeFor(useChatPanel.getState().conversationId),
+        replace: false,
+        state: { [EXPANDED_STATE]: true },
+      });
+    },
   });
 }
 
@@ -65,18 +60,25 @@ function openBeside({
   const page = route.split('#')[0];
   if (`${pathname}${search}` === page) return true;
   const panel = useChatPanel.getState();
-  keepComposerFocus.keep();
+  const behind = hash === SHEET_HASH;
+  const show = () => {
+    keepComposerFocus.keep();
+    if (current.isFullPage()) panel.dock(panel.mode);
+    current.navigate({
+      to: behind ? `${page}${SHEET_HASH}` : route,
+      replace: !push,
+    });
+  };
   if (current.isFullPage()) {
-    startMove('enter');
-    panel.dock(panel.mode);
+    layoutMove.run({ waitForRoute: true, update: show });
+  } else {
+    show();
   }
-  if (hash === SHEET_HASH) {
-    current.navigate({ to: `${page}${SHEET_HASH}`, replace: !push });
-    panel.announce(t('Opened {name} behind the chat.', { name }));
-    return true;
-  }
-  current.navigate({ to: route, replace: !push });
-  panel.announce(t('Opened {name} beside the chat.', { name }));
+  panel.announce(
+    behind
+      ? t('Opened {name} behind the chat.', { name })
+      : t('Opened {name} beside the chat.', { name }),
+  );
   return true;
 }
 
@@ -84,21 +86,32 @@ function collapse(side: ChatPanelSide): void {
   const current = router;
   if (!current) return;
   const panel = useChatPanel.getState();
-  if (current.isFullPage()) startMove('enter');
-  keepComposerFocus.keep();
-  panel.dock(side);
-  if (!current.isFullPage()) return;
-  const { state } = current.location();
-  if (isObject(state) && state[EXPANDED_STATE] === true) {
-    current.navigate({ back: true });
+  if (!current.isFullPage()) {
+    keepComposerFocus.keep();
+    panel.dock(side);
     return;
   }
-  current.navigate({
+  layoutMove.run({
+    waitForRoute: true,
+    update: () => {
+      keepComposerFocus.keep();
+      panel.dock(side);
+      current.navigate(backFromFullPage(current));
+    },
+  });
+}
+
+function backFromFullPage(current: ChatRouter): ChatNavTarget {
+  const { state } = current.location();
+  if (isObject(state) && state[EXPANDED_STATE] === true) {
+    return { back: true };
+  }
+  return {
     to:
-      panel.lastPage ??
+      useChatPanel.getState().lastPage ??
       authenticationSession.appendProjectRoutePrefix('/automations'),
     replace: false,
-  });
+  };
 }
 
 function startNewChat(): void {
@@ -235,7 +248,6 @@ function forgetSignedOutUser(): void {
 }
 
 let router: ChatRouter | null = null;
-let movingGuard: ReturnType<typeof setTimeout> | null = null;
 
 const STORAGE_KEY = 'chat-panel';
 const TAB_VIEW_KEY = 'chat:view';
@@ -245,7 +257,6 @@ const TAB_LAST_PAGE_KEY = 'chat:last-page';
 const EXPANDED_STATE = 'chatExpanded';
 const AUTO_FOLLOW_KEY = 'chat:auto-follow';
 const SHEET_HASH = '#chat';
-const MOVING_GUARD_MS = 900;
 
 const DEFAULTS: SavedChatPanel = {
   open: false,
@@ -276,21 +287,21 @@ const initChatPanel = (
     panelMounted: false,
     docks: 0,
     gateOpen: false,
-    moving: null,
     announcement: null,
     newChatToken: 0,
     pendingPrompt: undefined,
     setOpen: (open) => {
-      if (open !== get().open) {
-        chatLayoutUtils.startStructuralMove(open ? 'enter' : 'exit');
-      }
-      update({ open });
+      if (open === get().open) return;
+      layoutMove.run({ waitForRoute: false, update: () => update({ open }) });
     },
-    dock: (side) => {
-      chatLayoutUtils.startStructuralMove('enter');
-      set({ docks: get().docks + 1 });
-      update({ open: true, mode: side });
-    },
+    dock: (side) =>
+      layoutMove.run({
+        waitForRoute: false,
+        update: () => {
+          set({ docks: get().docks + 1 });
+          update({ open: true, mode: side });
+        },
+      }),
     setDockWidth: (width) =>
       update({ dockWidth: chatLayoutUtils.dockWidthFor(width) }),
     newChat: (prompt) =>
@@ -322,14 +333,6 @@ const initChatPanel = (
     setGateOpen: (gateOpen) => {
       if (gateOpen !== get().gateOpen) set({ gateOpen });
     },
-    setMoving: (moving) => {
-      if (moving === get().moving) return;
-      set({ moving });
-      if (movingGuard) clearTimeout(movingGuard);
-      movingGuard = moving
-        ? setTimeout(() => set({ moving: null }), MOVING_GUARD_MS)
-        : null;
-    },
     announce: (text) =>
       set({ announcement: { text, id: (get().announcement?.id ?? 0) + 1 } }),
     setLastPage: (lastPage) => {
@@ -360,12 +363,11 @@ export const chatPanelUtils = {
   startNewChat,
   showOnFullPage,
   followRouter,
+  routeCommitted: layoutMove.routeCommitted,
   SHEET_HASH,
 };
 
 export type ChatPanelSide = 'left' | 'right';
-// enter: full page shrinks into the dock. exit: dock grows into the full page.
-export type ChatMove = 'enter' | 'exit';
 export type ChatRouter = {
   navigate: (target: ChatNavTarget) => void;
   location: () => {
@@ -409,7 +411,6 @@ type ChatPanelState = SavedChatPanel & {
   panelMounted: boolean;
   docks: number;
   gateOpen: boolean;
-  moving: ChatMove | null;
   announcement: { text: string; id: number } | null;
   newChatToken: number;
   pendingPrompt?: string;
@@ -423,7 +424,6 @@ type ChatPanelState = SavedChatPanel & {
   setAutoFollow: (autoFollow: boolean) => void;
   setPanelMounted: (panelMounted: boolean) => void;
   setGateOpen: (gateOpen: boolean) => void;
-  setMoving: (moving: ChatMove | null) => void;
   announce: (text: string) => void;
   setLastPage: (lastPage: string) => void;
 };

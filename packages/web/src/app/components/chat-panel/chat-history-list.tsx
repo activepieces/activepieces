@@ -184,7 +184,7 @@ export function ChatHistoryList({
           )}
         >
           {searchShown && (
-            <label className="mb-1 flex h-9 shrink-0 cursor-text items-center gap-2 rounded-md px-3 text-gray-11 transition-colors duration-150 hover:bg-gray-3 focus-within:bg-gray-3">
+            <label className="mb-1 flex h-9 shrink-0 cursor-text items-center gap-2 rounded-md px-3 text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 focus-within:bg-gray-3">
               <Search className="size-4 shrink-0" />
               <input
                 type="text"
@@ -319,7 +319,7 @@ function HistoryRow({
         aria-current={selected ? 'true' : undefined}
         onClick={onOpen}
         className={cn(
-          'flex h-9 w-full items-center gap-3 rounded-md px-3 text-left text-sm text-gray-12 outline-hidden transition-colors duration-150 hover:bg-gray-3 focus-visible:bg-gray-3 focus-visible:ring-2 focus-visible:ring-gray-8 group-has-[[data-state=open]]:bg-gray-3 [@media(hover:none)]:pr-10',
+          'flex h-9 w-full items-center gap-3 rounded-md px-3 text-left text-sm text-gray-12 outline-hidden transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 focus-visible:bg-gray-3 focus-visible:ring-2 focus-visible:ring-gray-8 group-has-[[data-state=open]]:bg-gray-3 [@media(hover:none)]:pr-10',
           selected &&
             'bg-gray-3 font-medium hover:bg-gray-4 focus-visible:bg-gray-4 group-has-[[data-state=open]]:bg-gray-4',
         )}
@@ -327,7 +327,7 @@ function HistoryRow({
         <TextWithTooltip tooltipMessage={title}>
           <span className="min-w-0 flex-1">{title}</span>
         </TextWithTooltip>
-        <span className="flex shrink-0 items-center gap-2 text-xs font-normal text-gray-11 tabular-nums transition-opacity duration-150 group-hover:opacity-0 group-focus-within:opacity-0 group-has-[[data-state=open]]:opacity-0 [@media(hover:none)]:opacity-100">
+        <span className="flex shrink-0 items-center gap-2 text-xs font-normal text-gray-11 tabular-nums transition-opacity duration-(--dur-micro) ease-[ease] group-hover:opacity-0 group-focus-within:opacity-0 group-has-[[data-state=open]]:opacity-0 [@media(hover:none)]:opacity-100">
           {waiting && (
             <span className="size-1.5 rounded-full bg-accent-10">
               <span className="sr-only">{t('Waiting for your input')}</span>
@@ -348,7 +348,7 @@ function HistoryRow({
               variant="ghost"
               size="icon-xs"
               aria-label={t('Chat actions')}
-              className="pointer-events-none text-gray-11 opacity-0 transition-opacity duration-150 hover:bg-gray-4 hover:text-gray-12 focus-visible:pointer-events-auto focus-visible:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 data-[state=open]:pointer-events-auto data-[state=open]:opacity-100 [@media(hover:none)]:pointer-events-auto [@media(hover:none)]:opacity-100"
+              className="pointer-events-none text-gray-11 opacity-0 transition-opacity duration-(--dur-micro) ease-[ease] hover:bg-gray-4 hover:text-gray-12 focus-visible:pointer-events-auto focus-visible:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 data-[state=open]:pointer-events-auto data-[state=open]:opacity-100 [@media(hover:none)]:pointer-events-auto [@media(hover:none)]:opacity-100"
             >
               <Ellipsis />
             </Button>

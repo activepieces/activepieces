@@ -73,11 +73,6 @@ function shownDockWidth({
   );
 }
 
-// Rail and dock share one duration per move, so they land together.
-function startStructuralMove(kind: 'enter' | 'exit' | 'fold') {
-  document.documentElement.style.setProperty('--ap-move', `${MOVE_MS[kind]}ms`);
-}
-
 function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
@@ -93,19 +88,6 @@ const PAGE_COMFORT_WIDTH = 760;
 const SIDEBAR_WIDTH_REM = 15.5;
 const RAIL_WIDTH_REM = 3;
 const CARD_CHROME = 10;
-const MOVE_MS = {
-  enter: 220,
-  exit: 160,
-  fold: 160,
-  wide: 320,
-  back: 260,
-  edgeDelay: 120,
-  settleSlack: 160,
-} as const;
-const MOVE_EASE = {
-  emphasized: 'cubic-bezier(0.05, 0.7, 0.1, 1)',
-  standard: 'cubic-bezier(0.2, 0, 0, 1)',
-} as const;
 const PANEL_ID = 'ap-chat-panel';
 const FULL_TOAST_TOP = 80;
 
@@ -114,7 +96,6 @@ export const chatLayoutUtils = {
   dockWidthFor,
   cardInnerWidth,
   shownDockWidth,
-  startStructuralMove,
   prefersReducedMotion,
   toastPlacementFor,
   DOCK_MIN_WIDTH,
@@ -122,9 +103,36 @@ export const chatLayoutUtils = {
   DOCK_DEFAULT_WIDTH,
   PAGE_COMFORT_WIDTH,
   PANEL_ID,
-  MOVE_MS,
-  MOVE_EASE,
 };
+
+const EASE_OUT: CubicBezier = [0.23, 1, 0.32, 1];
+const EASE_DRAWER: CubicBezier = [0.32, 0.72, 0, 1];
+const GESTURE_SPRING: GestureSpring = {
+  type: 'spring',
+  bounce: 0,
+  visualDuration: 0.25,
+};
+
+export const MOTION = {
+  easeOut: EASE_OUT,
+  easeDrawer: EASE_DRAWER,
+  easeOutCss: cssBezier(EASE_OUT),
+  easeDrawerCss: cssBezier(EASE_DRAWER),
+  micro: 0.1,
+  fast: 0.12,
+  base: 0.16,
+  move: 0.2,
+  sheet: 0.26,
+  highlightMax: 0.6,
+  gestureSpring: GESTURE_SPRING,
+};
+
+function cssBezier([x1, y1, x2, y2]: CubicBezier): string {
+  return `cubic-bezier(${x1}, ${y1}, ${x2}, ${y2})`;
+}
+
+type CubicBezier = [number, number, number, number];
+type GestureSpring = { type: 'spring'; bounce: number; visualDuration: number };
 
 export type ChatWidth = ChatPanelSide | 'sheet' | 'full' | 'closed';
 export type ToastPlacement = {

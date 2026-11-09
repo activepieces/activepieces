@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { CircleSlash } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 
 import { chatDom } from '@/features/chat/lib/chat-dom';
@@ -25,7 +25,7 @@ import { ActionPreviewCard } from './action-preview-card';
 import { ChatCardSkeleton } from './chat-card-primitives';
 import { ChatInput, ComposerFill } from './chat-input';
 import { ConnectionPickerCard } from './connection-picker-card';
-import { FollowFinishedNote } from './follow-finished-note';
+import { chatNote, FollowFinishedNote } from './follow-finished-note';
 import { FollowOfferRow } from './follow-offer-row';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
 import { MultiQuestionForm } from './multi-question-form';
@@ -50,6 +50,7 @@ export function ChatBottomBar({
 }: ChatBottomBarProps) {
   const [composerEngaged, setComposerEngaged] = useState(false);
   const [skipped, setSkipped] = useState(false);
+  const reduced = useReducedMotion();
   useEffect(() => {
     if (!skipped) return;
     const timer = setTimeout(() => setSkipped(false), SKIPPED_VISIBLE_MS);
@@ -160,7 +161,7 @@ export function ChatBottomBar({
   }, [drafting]);
 
   return (
-    <div ref={rootRef} className="flex flex-col gap-2">
+    <div ref={rootRef} className="relative flex flex-col gap-2">
       {activeCard ?? <FollowFinishedNote />}
       <FollowOfferRow />
       <AnimatePresence initial={false}>
@@ -168,11 +169,8 @@ export function ChatBottomBar({
           <motion.div
             key="skipped"
             role="status"
-            className="flex items-center gap-1.5 px-1 text-xs text-gray-11"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.15 }}
+            className={chatNote.CLASS}
+            {...chatNote.motion(reduced)}
           >
             <CircleSlash className="size-3" />
             {t('Skipped')}
@@ -181,7 +179,7 @@ export function ChatBottomBar({
       </AnimatePresence>
       <div
         className={cn(
-          'overflow-hidden rounded-xl border transition-colors',
+          'overflow-hidden rounded-xl border transition-colors duration-(--dur-micro) ease-[ease]',
           minimal
             ? 'border-transparent bg-transparent hover:bg-gray-3/30'
             : 'border-gray-6 hover:border-gray-8 focus-within:border-gray-8',

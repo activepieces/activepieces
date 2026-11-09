@@ -4,9 +4,9 @@ import { Menu } from 'lucide-react';
 import { ChatSparkIcon } from '@/components/icons/chat-spark';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
-import { useChatOn } from '@/features/workspace/lib/use-chat-on';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
+import { useChatOn } from '../app-shell';
 import { useChatSheet, useChatWidth } from '../chat-panel/chat-window';
 
 export function MobileSidebarBar() {

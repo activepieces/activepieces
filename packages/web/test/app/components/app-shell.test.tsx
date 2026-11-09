@@ -106,7 +106,7 @@ vi.mock('@/hooks/flags-hooks', () => ({
 }));
 
 vi.mock('@/features/workspace/lib/use-chat-on', () => ({
-  useChatOn: () => chat.on,
+  useChatEnabled: () => chat.on,
 }));
 
 vi.mock('@/app/components/chat-panel/chat-window', () => ({

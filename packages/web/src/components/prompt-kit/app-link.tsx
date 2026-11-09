@@ -44,7 +44,7 @@ export function AppLink({
         if (opened) event.preventDefault();
       }}
       className={cn(
-        'rounded-sm text-accent-11 underline underline-offset-2 transition-colors hover:text-accent-11/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-8',
+        'rounded-sm text-accent-11 underline underline-offset-2 transition-colors duration-(--dur-micro) ease-[ease] hover:text-accent-11/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-8',
         className,
       )}
     >

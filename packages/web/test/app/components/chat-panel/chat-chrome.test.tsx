@@ -35,6 +35,7 @@ vi.mock('sonner', () => ({ toast: { error: toastError } }));
 
 vi.mock('@/app/components/app-shell', () => ({
   useShellHandle: () => ({ shell: 'project' }),
+  CHAT_ALLOWED: { project: true, builder: true, platform: false },
 }));
 
 vi.mock('@/app/components/chat-panel/follow-along-controller', () => ({

@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { chatPanelUtils } from '@/features/workspace/lib/chat-panel-open';
 import { authenticationSession } from '@/lib/authentication-session';
 import { domUtils } from '@/lib/dom-utils';
@@ -53,7 +54,7 @@ export function FlowBuildCard({
       className={cn('relative my-2 rounded-xl', CARD_BASE)}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       <div
         className={cn(
@@ -70,7 +71,7 @@ export function FlowBuildCard({
           value={percentage}
           className="mt-3 h-2"
           indicatorClassName={cn(
-            'transition-all duration-500',
+            'transition-[translate,transform,background-color] duration-(--dur-move) ease-out motion-reduce:transition-none',
             isDone && 'bg-success-9',
             isFailed && 'bg-warning-9',
           )}
@@ -94,7 +95,7 @@ export function FlowBuildCard({
               <Button
                 size="sm"
                 variant="ghost"
-                className="gap-1.5 border border-gray-6 bg-transparent text-xs font-medium text-gray-12 shadow-none transition-colors hover:bg-gray-5 hover:text-gray-12"
+                className="gap-1.5 border border-gray-6 bg-transparent text-xs font-medium text-gray-12 shadow-none transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-5 hover:text-gray-12"
                 onClick={() =>
                   onSendPrompt?.(
                     t('Publish and enable the automation so it runs live'),
@@ -130,7 +131,7 @@ function OpenInBuilderButton({
       asChild
       size="sm"
       variant="ghost"
-      className="gap-1.5 text-xs font-medium text-gray-11 shadow-none transition-colors hover:bg-gray-4 hover:text-gray-12"
+      className="gap-1.5 text-xs font-medium text-gray-11 shadow-none transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-4 hover:text-gray-12"
     >
       <a
         href={route}

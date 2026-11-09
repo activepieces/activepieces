@@ -19,6 +19,7 @@ vi.mock('@/components/ui/sonner', () => ({
 
 vi.mock('@/app/components/app-shell', () => ({
   useShellHandle: () => ({ shell: 'project' }),
+  CHAT_ALLOWED: { project: true, builder: true, platform: false },
 }));
 
 vi.mock('@/features/workspace/lib/rail-collapsed', () => ({

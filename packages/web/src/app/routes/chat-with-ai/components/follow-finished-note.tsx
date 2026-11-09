@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { Check } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -9,6 +9,7 @@ import {
   ResourceKind,
   resourceRegistry,
 } from '@/features/chat/lib/resources/registry';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 
 // "Chat finished editing this …" for a moment after a followed edit ends on
 // the page the user is looking at.
@@ -17,6 +18,7 @@ export function FollowFinishedNote() {
   const phase = useFollowAlong((s) => s.phase);
   const [finished, setFinished] = useState<ResourceKind | null>(null);
   const wasEditing = useRef(phase === 'editing');
+  const reduced = useReducedMotion();
 
   useEffect(() => {
     const was = wasEditing.current;
@@ -41,11 +43,8 @@ export function FollowFinishedNote() {
           key="follow-finished"
           role="status"
           aria-live="polite"
-          className="flex items-center gap-1.5 px-1 text-xs text-gray-11"
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.15 }}
+          className={NOTE_CLASS}
+          {...noteMotion(reduced)}
         >
           <Check className="size-3.5" aria-hidden />
           {DONE_LABEL[finished]()}
@@ -61,3 +60,26 @@ const DONE_LABEL: Record<ResourceKind, () => string> = {
 };
 
 const FINISHED_VISIBLE_MS = 2600;
+
+function noteMotion(reduced: boolean | null) {
+  const rise = reduced ? 0 : NOTE_RISE_PX;
+  return {
+    initial: { opacity: 0, y: rise },
+    animate: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: MOTION.base, ease: MOTION.easeOut },
+    },
+    exit: {
+      opacity: 0,
+      y: rise,
+      transition: { duration: MOTION.fast, ease: MOTION.easeOut },
+    },
+  };
+}
+
+const NOTE_RISE_PX = 4;
+const NOTE_CLASS =
+  'pointer-events-none absolute inset-x-0 bottom-full mb-2 flex items-center gap-1.5 bg-gray-1 px-1 text-xs text-gray-11';
+
+export const chatNote = { motion: noteMotion, CLASS: NOTE_CLASS };

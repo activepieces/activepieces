@@ -2,6 +2,7 @@ import { animate, useMotionValue } from 'motion/react';
 import { RefObject, useCallback, useEffect, useRef } from 'react';
 
 import { pageFocus } from '@/features/chat/lib/follow/page-focus';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 
 // Swipe the phone chat sheet down to close it. The swipe starts anywhere on
 // the sheet except on controls, or inside a list that can still scroll up.
@@ -74,8 +75,7 @@ export function useSheetSwipe({
       const scroller = scrollableAncestor({ from: target, within: panel });
       const startY = event.clientY;
       const base = sheetY.get();
-      let last = { y: startY, time: event.timeStamp };
-      let velocity = 0;
+      let samples: Sample[] = [{ y: startY, time: event.timeStamp }];
       let claimed = false;
       let restoreSelect: (() => void) | null = null;
 
@@ -105,11 +105,12 @@ export function useSheetSwipe({
         }
         const offset = base + delta;
         sheetY.set(offset >= 0 ? offset : -Math.sqrt(-offset) * 2);
-        const elapsed = move.timeStamp - last.time;
-        if (elapsed > 0) {
-          velocity = (move.clientY - last.y) / elapsed;
-          last = { y: move.clientY, time: move.timeStamp };
-        }
+        samples = [
+          ...samples.filter(
+            (sample) => move.timeStamp - sample.time <= VELOCITY_WINDOW_MS,
+          ),
+          { y: move.clientY, time: move.timeStamp },
+        ];
       };
       // Once the sheet owns the gesture, keep the browser from scrolling.
       const holdTouch = (touch: TouchEvent) => {
@@ -130,7 +131,7 @@ export function useSheetSwipe({
         if (up.pointerId !== event.pointerId) return;
         settle(
           sheetY.get() > height.current * SHEET_DISMISS_SHARE ||
-            velocity > SHEET_DISMISS_VELOCITY,
+            velocityOf(samples) > SHEET_DISMISS_VELOCITY,
         );
       };
       const onCancel = (cancel: PointerEvent) => {
@@ -145,6 +146,13 @@ export function useSheetSwipe({
   );
 
   return { onPointerDown };
+}
+
+function velocityOf(samples: Sample[]): number {
+  const first = samples[0];
+  const last = samples[samples.length - 1];
+  const elapsed = last.time - first.time;
+  return elapsed > 0 ? (last.y - first.y) / elapsed : 0;
 }
 
 function scrollableAncestor({
@@ -184,9 +192,13 @@ const INTERACTIVE =
   'button, a, input, textarea, select, [contenteditable="true"], [role^="menuitem"], [role="slider"], [data-no-sheet-swipe]';
 const DRAG_THRESHOLD = 4;
 const SHEET_DISMISS_SHARE = 0.25;
-const SHEET_DISMISS_VELOCITY = 0.5;
-const SETTLE = { type: 'spring', bounce: 0, visualDuration: 0.25 } as const;
+const SHEET_DISMISS_VELOCITY = 0.11;
+const VELOCITY_WINDOW_MS = 100;
 
 function settleTransition() {
-  return pageFocus.prefersReducedMotion() ? { duration: 0 } : SETTLE;
+  return pageFocus.prefersReducedMotion()
+    ? { duration: 0 }
+    : MOTION.gestureSpring;
 }
+
+type Sample = { y: number; time: number };

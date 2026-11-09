@@ -218,14 +218,14 @@ export function ConversationList({
       <div className="mb-2 flex flex-col gap-px">
         <button
           type="button"
-          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-xs font-semibold px-2 py-1 text-gray-11 transition-colors hover:text-gray-12"
+          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-xs font-semibold px-2 py-1 text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] hover:text-gray-12"
           onClick={() => toggleGroup(label)}
         >
           {label}
           <ChevronDown
             size={10}
             className={cn(
-              'shrink-0 transition-transform duration-150',
+              'shrink-0 transition-transform duration-(--dur-micro) ease-[ease] motion-reduce:transition-none',
               isCollapsed && '-rotate-90',
             )}
           />
@@ -238,7 +238,7 @@ export function ConversationList({
                 type="button"
                 key={conv.id}
                 className={cn(
-                  'group flex items-center w-full px-2 py-1.5 rounded-md bg-transparent border-none cursor-pointer text-left text-xs transition-colors hover:bg-gray-3 relative',
+                  'group flex items-center w-full px-2 py-1.5 rounded-md bg-transparent border-none cursor-pointer text-left text-xs transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 relative',
                   mobile && 'px-3 py-2.5 text-sm',
                   selectedId === conv.id &&
                     'bg-gray-3 font-semibold border-l-2 border-l-accent-9',
@@ -251,7 +251,7 @@ export function ConversationList({
                     : t('New conversation')}
                 </span>
                 {indicator && (
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 transition-opacity group-hover:opacity-0">
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 transition-opacity duration-(--dur-micro) ease-[ease] group-hover:opacity-0">
                     <ConversationStatusDot state={indicator} />
                   </span>
                 )}
@@ -262,7 +262,7 @@ export function ConversationList({
                       tabIndex={0}
                       aria-label={t('Delete')}
                       className={cn(
-                        'absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded-md text-gray-11 hover:text-danger-11 hover:bg-danger-3 transition-all',
+                        'absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded-md text-gray-11 hover:text-danger-11 hover:bg-danger-3 transition-[opacity,color,background-color] duration-(--dur-micro) ease-[ease]',
                         mobile && 'opacity-100 p-1.5',
                       )}
                       onClick={(e) => handleDelete(e, conv.id)}
@@ -298,7 +298,7 @@ export function ConversationList({
           <button
             type="button"
             className={cn(
-              'flex grow items-center justify-between gap-1.5 px-2 py-1.5 rounded-md border border-gray-6 bg-transparent cursor-pointer text-xs text-gray-12 transition-colors hover:bg-gray-4',
+              'flex grow items-center justify-between gap-1.5 px-2 py-1.5 rounded-md border border-gray-6 bg-transparent cursor-pointer text-xs text-gray-12 transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-4',
               mobile && 'px-3 py-2.5 text-sm',
             )}
             onClick={() => {
@@ -372,7 +372,7 @@ export function ConversationList({
           <button
             type="button"
             className={cn(
-              'flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md bg-transparent cursor-pointer text-xs text-gray-12 transition-colors hover:bg-gray-4',
+              'flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md bg-transparent cursor-pointer text-xs text-gray-12 transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-4',
               mobile && 'px-3 py-2.5 text-sm',
             )}
             onClick={() => setSettingsOpen(true)}

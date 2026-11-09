@@ -51,6 +51,7 @@ import {
   followAlong,
   useFollowAlong,
 } from '@/features/chat/lib/follow/follow-along';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import {
   chatPanelUtils,
   useChatPanel,
@@ -77,6 +78,7 @@ export function ChatChrome() {
   const renameCancelled = useRef(false);
   const titleInput = useRef<HTMLInputElement>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyByKey, setHistoryByKey] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const reduced = useReducedMotion();
   const full = layout === 'full';
@@ -92,6 +94,7 @@ export function ChatChrome() {
     const onKey = (event: KeyboardEvent) => {
       if (chatDom.shortcutOf(event) === 'history') {
         event.preventDefault();
+        setHistoryByKey(true);
         setHistoryOpen((open) => !open);
         return;
       }
@@ -191,7 +194,7 @@ export function ChatChrome() {
             {historyOpen ? (
               <motion.div
                 key="history"
-                {...titleFade(reduced)}
+                {...titleFade()}
                 className="flex min-w-0 items-center gap-1 [grid-area:1/1]"
               >
                 <Button
@@ -238,7 +241,7 @@ export function ChatChrome() {
             ) : titleLoading ? (
               <motion.div
                 key="loading"
-                {...titleFade(reduced)}
+                {...titleFade()}
                 className="[grid-area:1/1]"
               >
                 <Skeleton className="h-4 w-32" />
@@ -246,7 +249,7 @@ export function ChatChrome() {
             ) : (
               <motion.h2
                 key="chat"
-                {...titleFade(reduced)}
+                {...titleFade()}
                 title={title ?? undefined}
                 className="truncate text-sm font-semibold text-gray-12 [grid-area:1/1]"
               >
@@ -264,7 +267,10 @@ export function ChatChrome() {
             label={historyOpen ? t('Hide history') : t('History')}
             shortcut={HISTORY_SHORTCUT}
             aria-pressed={historyOpen}
-            onClick={() => setHistoryOpen(!historyOpen)}
+            onClick={() => {
+              setHistoryByKey(false);
+              setHistoryOpen(!historyOpen);
+            }}
           >
             <History />
           </HeaderButton>
@@ -306,7 +312,7 @@ export function ChatChrome() {
           {historyOpen && (
             <motion.div
               key="history"
-              {...historyMotion.enter(reduced)}
+              {...historyMotion.enter({ reduced, instant: historyByKey })}
               className="absolute inset-0 z-10 bg-gray-1"
             >
               <ChatHistoryList
@@ -580,7 +586,7 @@ function HeaderButton({
           variant="ghost"
           size="icon-sm"
           aria-label={label}
-          className="text-gray-11 transition-colors duration-150 hover:text-gray-12 active:bg-gray-5 aria-pressed:bg-gray-4 aria-pressed:text-gray-12 data-[state=open]:bg-gray-4 data-[state=open]:text-gray-12"
+          className="text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] hover:text-gray-12 active:bg-gray-5 aria-pressed:bg-gray-4 aria-pressed:text-gray-12 data-[state=open]:bg-gray-4 data-[state=open]:text-gray-12"
           {...props}
         >
           {children}
@@ -603,23 +609,14 @@ const TOGGLE_SHORTCUT = modShortcut({ key: 'J' });
 const HISTORY_SHORTCUT = modShortcut({ key: 'H', shift: true });
 const NEW_CHAT_SHORTCUT = modShortcut({ key: 'O', shift: true });
 
-function titleFade(reduced: boolean | null) {
+function titleFade() {
   return {
     initial: { opacity: 0 },
     animate: {
       opacity: 1,
-      transition: {
-        duration: reduced ? 0.1 : 0.22,
-        ease: TITLE_EASE,
-      },
+      transition: { duration: MOTION.base, ease: MOTION.easeOut },
     },
-    exit: {
-      opacity: 0,
-      transition: {
-        duration: reduced ? 0.08 : 0.16,
-        ease: TITLE_EASE,
-      },
-    },
+    exit: { opacity: 0, transition: { duration: 0 } },
   };
 }
 
@@ -639,7 +636,7 @@ function TypedText({ text }: { text: string }) {
           if (count >= text.length) clearInterval(timer);
           return Math.min(count + 1, text.length);
         }),
-      TYPE_STEP_MS,
+      Math.min(TYPE_STEP_MS, TYPE_TOTAL_MS / Math.max(1, text.length)),
     );
     return () => clearInterval(timer);
   }, [text, reduced]);
@@ -652,5 +649,5 @@ function TypedText({ text }: { text: string }) {
   );
 }
 
-const TITLE_EASE = [0.22, 1, 0.36, 1] as const;
 const TYPE_STEP_MS = 24;
+const TYPE_TOTAL_MS = 300;

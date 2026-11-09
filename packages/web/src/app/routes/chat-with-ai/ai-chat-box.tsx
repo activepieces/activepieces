@@ -9,7 +9,12 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import {
+  AnimatePresence,
+  motion,
+  MotionConfig,
+  useReducedMotion,
+} from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStickToBottomContext } from 'use-stick-to-bottom';
 
@@ -41,6 +46,7 @@ import { onboardingPrefillUtils } from '@/features/chat/lib/onboarding-prefill';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useSessionProjectId } from '@/hooks/use-session-project-id';
 import { userHooks } from '@/hooks/user-hooks';
@@ -68,11 +74,13 @@ import { getTextFromParts } from './lib/message-parsers';
 
 export function AIChatBox(props: AIChatBoxProps) {
   return (
-    <ChatStoreProvider>
-      <TaskPanelLayout>
-        <ChatBoxContent {...props} />
-      </TaskPanelLayout>
-    </ChatStoreProvider>
+    <MotionConfig reducedMotion="user">
+      <ChatStoreProvider>
+        <TaskPanelLayout>
+          <ChatBoxContent {...props} />
+        </TaskPanelLayout>
+      </ChatStoreProvider>
+    </MotionConfig>
   );
 }
 
@@ -93,6 +101,7 @@ function ChatBoxContent({
   autoFocusComposer,
 }: AIChatBoxProps) {
   const queryClient = useQueryClient();
+  const reduced = useReducedMotion();
   const credits = useCreditsState();
   const sessionProjectId = useSessionProjectId();
   const { data: gateUser } = userHooks.useCurrentUser();
@@ -410,7 +419,7 @@ function ChatBoxContent({
             className="flex-1 min-h-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
           >
             <ChatContainerRoot
               className="flex-1 relative h-full"
@@ -485,7 +494,7 @@ function ChatBoxContent({
                 )}
 
                 {wasCancelled && (
-                  <div className="flex items-center gap-2 py-2 text-xs text-gray-11 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 py-2 text-xs text-gray-11 animate-in fade-in duration-(--dur-base) ease-out motion-reduce:animate-none">
                     <Square className="h-3 w-3 fill-current" />
                     <span>{t('Response stopped')}</span>
                   </div>
@@ -498,9 +507,9 @@ function ChatBoxContent({
                       error &&
                         'rounded-xl border border-danger-6 bg-danger-3 px-3 py-2',
                     )}
-                    initial={{ opacity: 0, y: 4 }}
+                    initial={{ opacity: 0, y: reduced ? 0 : 4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2 }}
+                    transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
                   >
                     {error && (
                       <>
@@ -689,7 +698,7 @@ function ScrolledEdge() {
       aria-hidden
       data-scrolled={scrolled}
       className={cn(
-        'pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-gray-5 transition-opacity duration-150',
+        'pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-gray-5 transition-opacity duration-(--dur-micro) ease-[ease]',
         scrolled ? 'opacity-100' : 'opacity-0',
       )}
     />

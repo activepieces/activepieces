@@ -13,6 +13,7 @@ import {
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import { useCompanySuggestions } from '@/features/chat/lib/use-company-suggestions';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { userHooks } from '@/hooks/user-hooks';
 import { commonRoles } from '@/lib/common-roles';
 import { cn } from '@/lib/utils';
@@ -282,7 +283,7 @@ function OnboardingPill({
         autoFocus={autoFocus}
         autoComplete="off"
         spellCheck={false}
-        className="col-start-1 row-start-1 w-full min-w-0 max-w-full rounded-xl bg-gray-3/60 px-3.5 py-1.5 text-gray-12 caret-accent-9 ring-1 ring-transparent transition-[background-color,box-shadow] placeholder:text-gray-11 focus:bg-accent-3 focus:outline-none focus:ring-accent-8/50"
+        className="col-start-1 row-start-1 w-full min-w-0 max-w-full rounded-xl bg-gray-3/60 px-3.5 py-1.5 text-gray-12 caret-accent-9 ring-1 ring-transparent transition-[background-color,box-shadow] duration-(--dur-micro) ease-[ease] placeholder:text-gray-11 focus:bg-accent-3 focus:outline-none focus:ring-accent-8/50"
       />
       {rotating && (
         <span className="pointer-events-none absolute inset-0 flex items-center overflow-hidden px-3.5">
@@ -290,7 +291,7 @@ function OnboardingPill({
             key={example}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, ease: 'easeInOut' }}
+            transition={{ duration: MOTION.move, ease: MOTION.easeOut }}
             className="truncate font-normal text-gray-11"
           >
             {example}
