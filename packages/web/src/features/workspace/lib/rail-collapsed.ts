@@ -72,7 +72,7 @@ function railIsOpen({
   const routeHoldsItClosed =
     state.openedOn !== pathname &&
     ROUTES_THAT_HOLD_THE_RAIL_CLOSED.some(
-      (route) => matchPath(route, pathname) !== null
+      (route) => matchPath(route, pathname) !== null,
     );
   const chatHoldsItClosed = state.foldedForChat && !chatPage;
   return !(state.preference || routeHoldsItClosed || chatHoldsItClosed);
@@ -93,7 +93,7 @@ export function useRailOpenState() {
       chatLayoutUtils.startStructuralMove(next ? 'enter' : 'exit');
       update({ preference: !next, foldedForChat: false, openedOn: pathname });
     },
-    [pathname]
+    [pathname],
   );
 
   return { open, onOpenChange };

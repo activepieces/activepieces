@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
+import { usePendingDeletes } from '@/features/chat/lib/chat-pending-deletes';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { useConversationIndicators } from '@/features/chat/lib/use-conversation-indicators';
 import { cn } from '@/lib/utils';
@@ -97,9 +98,13 @@ export function ConversationList({
     },
   });
 
+  const pendingDeletes = usePendingDeletes((state) => state.ids);
   const allConversations = useMemo(
-    () => conversationPages?.pages.flatMap((page) => page.data) ?? [],
-    [conversationPages],
+    () =>
+      (conversationPages?.pages.flatMap((page) => page.data) ?? []).filter(
+        (c) => !pendingDeletes.has(c.id),
+      ),
+    [conversationPages, pendingDeletes],
   );
 
   const { getIndicator, markRead } = useConversationIndicators({

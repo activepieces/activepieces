@@ -3,6 +3,7 @@ import { CircleSlash } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 
+import { chatDom } from '@/features/chat/lib/chat-dom';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
 import { MultiQuestion } from '@/features/chat/lib/chat-store-types';
@@ -12,7 +13,7 @@ import {
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
 import { followHold } from '@/features/chat/lib/follow/follow-hold';
-import { pageFocus } from '@/features/chat/lib/follow/page-focus';
+import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 import { cn } from '@/lib/utils';
 
 import {
@@ -133,22 +134,27 @@ export function ChatBottomBar({
   };
 
   const minimal = recede === true && !activeCard && !composerEngaged;
+  const needsYou = activeCard !== null;
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!chatDom.inChat(rootRef.current)) return;
+    useChatPanel.getState().setGateOpen(needsYou);
+    return () => useChatPanel.getState().setGateOpen(false);
+  }, [needsYou]);
 
-  // Tell follow-along when the user is mid-reply or a card needs them, so it
-  // waits before opening a page.
+  // Tell follow-along when the user is mid-reply, so it waits before opening
+  // a page.
   const [hasDraft, setHasDraft] = useState(false);
   const handleInputChange = (hasInput: boolean) => {
     setHasDraft(hasInput);
     onInputChange?.(hasInput);
   };
-  const rootRef = useRef<HTMLDivElement>(null);
-  const gateOpen = activeCard !== null;
   const drafting = hasDraft && composerEngaged;
   useEffect(() => {
-    if (!pageFocus.inChat(rootRef.current)) return;
-    followHold.report({ gateOpen, drafting });
-    return () => followHold.report({ gateOpen: false, drafting: false });
-  }, [gateOpen, drafting]);
+    if (!chatDom.inChat(rootRef.current)) return;
+    followHold.report({ drafting });
+    return () => followHold.report({ drafting: false });
+  }, [drafting]);
 
   return (
     <div ref={rootRef} className="flex flex-col gap-2">

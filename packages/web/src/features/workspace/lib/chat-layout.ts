@@ -48,11 +48,13 @@ function sidebarWidth(railOpen: boolean): number {
 function cardInnerWidth({
   viewportWidth,
   railOpen,
+  chrome = CARD_CHROME,
 }: {
   viewportWidth: number;
   railOpen: boolean;
+  chrome?: number;
 }): number {
-  return viewportWidth - sidebarWidth(railOpen) - CARD_CHROME;
+  return viewportWidth - sidebarWidth(railOpen) - chrome;
 }
 
 // The dock never squeezes the page under PAGE_COMFORT_WIDTH, but it never
@@ -68,8 +70,8 @@ function shownDockWidth({
   return Math.round(
     Math.min(
       Math.max(savedWidth, DOCK_MIN_WIDTH),
-      Math.max(DOCK_MIN_WIDTH, max)
-    )
+      Math.max(DOCK_MIN_WIDTH, max),
+    ),
   );
 }
 

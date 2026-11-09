@@ -1,10 +1,10 @@
-import { ChatNotch } from './chat-notch';
 import { isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import {
   Suspense,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   useSyncExternalStore,
@@ -14,6 +14,7 @@ import { useLocation, useMatches, useNavigate } from 'react-router-dom';
 import { ChatSparkIcon } from '@/components/icons/chat-spark';
 import { Button } from '@/components/ui/button';
 import { chatDom } from '@/features/chat/lib/chat-dom';
+import { chatScrollAnchor } from '@/features/chat/lib/chat-scroll-anchor';
 import { pageFocus } from '@/features/chat/lib/follow/page-focus';
 import {
   ChatWidth,
@@ -23,6 +24,7 @@ import {
   chatPanelUtils,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
+import { useRailOpen } from '@/features/workspace/lib/rail-collapsed';
 import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { CHAT_ROUTE } from '@/lib/route-utils';
@@ -30,12 +32,34 @@ import { cn } from '@/lib/utils';
 
 import { useShellHandle } from '../app-shell';
 
+import { ChatNotch } from './chat-notch';
 import { FollowAlongController } from './follow-along-controller';
 
-const ChatChrome = lazyWithRetry(
-  () => import('./chat-chrome').then((m) => ({ default: m.ChatChrome })),
-  'chat-chrome',
-);
+const loadChatChrome = () =>
+  import('./chat-chrome').then((m) => ({ default: m.ChatChrome }));
+const ChatChrome = lazyWithRetry(loadChatChrome, 'chat-chrome');
+
+// The card width the page will have once the rail has settled, so the dock
+// and the page can be sized for where they land, not where they are mid-move.
+export function useCardWidth(): number {
+  const railOpen = useRailOpen();
+  const viewportWidth = windowSizeHooks.useWidth();
+  const builder = useShellHandle().shell === 'builder';
+  return chatLayoutUtils.cardInnerWidth({
+    viewportWidth,
+    railOpen,
+    chrome: builder ? BUILDER_CARD_CHROME : undefined,
+  });
+}
+
+export function useDockWidth(dragWidth: number | null = null): number {
+  const savedWidth = useChatPanel((s) => s.dockWidth);
+  const cardWidth = useCardWidth();
+  return chatLayoutUtils.shownDockWidth({
+    savedWidth: dragWidth ?? savedWidth,
+    cardWidth,
+  });
+}
 
 export function useChatWidth(): ChatWidth {
   const fullPage = useShellHandle().chat === 'full';
@@ -87,7 +111,7 @@ export function useChatSheet() {
 export function ChatPanel() {
   const chatWidth = useChatWidth();
   const mode = useChatPanel((s) => s.mode);
-  const savedWidth = useChatPanel((s) => s.dockWidth);
+  const moving = useChatPanel((s) => s.moving);
   const [dragWidth, setDragWidth] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
   const [sheetDrag, setSheetDrag] = useState<SheetDrag | null>(null);
@@ -100,11 +124,42 @@ export function ChatPanel() {
   const sheetOpen = chatWidth === 'sheet';
   const phone = viewportWidth < chatLayoutUtils.MOBILE_BREAKPOINT && !full;
   const side = full ? 'left' : mode;
-  const width = dragWidth ?? savedWidth;
+  const width = useDockWidth(dragWidth);
+  const cardWidth = useCardWidth();
+  const innerWide = full && moving !== 'exit';
+  const layoutKey = `${chatWidth}|${innerWide}`;
+  const committedLayout = useRef(layoutKey);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Read where the reader is before React swaps the width under them.
+  if (committedLayout.current !== layoutKey && pendingCapture !== layoutKey) {
+    pendingCapture = layoutKey;
+    chatScrollAnchor.capture();
+  }
+
+  useLayoutEffect(() => {
+    const from = committedLayout.current;
+    if (from === layoutKey) return;
+    committedLayout.current = layoutKey;
+    pendingCapture = null;
+    chatScrollAnchor.restore();
+    if (from.endsWith('|false') && innerWide) {
+      contentRef.current?.animate([{ opacity: 0 }, { opacity: 1 }], {
+        duration: DIP_MS,
+        easing: 'ease-out',
+      });
+    }
+  }, [layoutKey, innerWide]);
 
   if (visible && !mounted) {
     setMounted(true);
   }
+
+  useEffect(() => {
+    if (mounted) return;
+    const prewarm = setTimeout(() => setMounted(true), PREWARM_MS);
+    return () => clearTimeout(prewarm);
+  }, [mounted]);
   if (!sheetOpen && sheetDrag !== null) {
     setSheetDrag(null);
   }
@@ -121,9 +176,13 @@ export function ChatPanel() {
   const widthAt = (event: React.PointerEvent<HTMLDivElement>) => {
     const card = panelRef.current?.parentElement?.getBoundingClientRect();
     if (!card) return width;
-    return chatLayoutUtils.dockWidthFor(
-      side === 'left' ? event.clientX - card.left : card.right - event.clientX,
-    );
+    return chatLayoutUtils.shownDockWidth({
+      savedWidth:
+        side === 'left'
+          ? event.clientX - card.left
+          : card.right - event.clientX,
+      cardWidth,
+    });
   };
 
   const resizeByKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -131,11 +190,12 @@ export function ChatPanel() {
     event.preventDefault();
     const step = event.shiftKey ? 48 : 16;
     const grows = (event.key === 'ArrowRight') === (side === 'left');
-    useChatPanel
-      .getState()
-      .setDockWidth(
-        chatLayoutUtils.dockWidthFor(width + (grows ? step : -step)),
-      );
+    useChatPanel.getState().setDockWidth(
+      chatLayoutUtils.shownDockWidth({
+        savedWidth: width + (grows ? step : -step),
+        cardWidth,
+      }),
+    );
   };
 
   const startSwipe = (event: React.PointerEvent<HTMLElement>) => {
@@ -220,16 +280,22 @@ export function ChatPanel() {
         onLostPointerCapture={
           phone && sheetDrag?.dragging ? () => setSheetDrag(null) : undefined
         }
+        onTransitionEnd={(event) => {
+          if (
+            event.target === event.currentTarget &&
+            event.propertyName === 'width'
+          ) {
+            useChatPanel.getState().setMoving(null);
+          }
+        }}
         style={
           phone
             ? sheetDrag
               ? { translate: `0 ${sheetDrag.offset}px` }
               : undefined
-            : full
-            ? { width: '100%' }
             : {
-                width: visible ? width : 0,
-                maxWidth: visible ? DOCK_MAX_CSS : undefined,
+                width: full ? '100%' : visible ? width : 0,
+                transition: moving ? MOVE_TRANSITION[moving] : undefined,
               }
         }
         className={cn(
@@ -242,6 +308,7 @@ export function ChatPanel() {
             : [
                 'relative flex shrink-0 flex-col overflow-hidden bg-gray-1',
                 side === 'right' && 'order-last',
+                moving === 'enter' && 'z-[1]',
                 visible && !full && (side === 'left' ? 'border-r' : 'border-l'),
                 dragWidth === null &&
                   'transition-[width] duration-[var(--ap-move,200ms)] ease-move motion-reduce:transition-none',
@@ -253,11 +320,24 @@ export function ChatPanel() {
         {full && <ChatUrlSync />}
         <FollowAlongController />
         <ChatAnnouncer />
-        {mounted && (
-          <Suspense fallback={null}>
-            <ChatChrome />
-          </Suspense>
-        )}
+        <div
+          ref={contentRef}
+          style={
+            phone ? undefined : { width: innerWide ? '100%' : `${width}px` }
+          }
+          className={cn(
+            'flex flex-col',
+            phone
+              ? 'min-h-0 flex-1'
+              : ['absolute inset-y-0', side === 'left' ? 'left-0' : 'right-0'],
+          )}
+        >
+          {mounted && (
+            <Suspense fallback={null}>
+              <ChatChrome />
+            </Suspense>
+          )}
+        </div>
         {visible && !full && !phone && (
           <div
             role="separator"
@@ -271,6 +351,7 @@ export function ChatPanel() {
               if (event.button !== 0) return;
               event.preventDefault();
               event.currentTarget.setPointerCapture(event.pointerId);
+              cancelOnEscape(event);
               setDragWidth(width);
             }}
             onPointerMove={(event) => {
@@ -333,15 +414,24 @@ function ChatAnnouncer() {
 }
 
 function ChatSheetPill({ onOpen }: { onOpen: () => void }) {
+  const needsYou = useChatPanel((s) => s.gateOpen);
   return (
     <Button
       variant="outline"
       onClick={onOpen}
-      aria-label={t('Open chat')}
+      aria-label={needsYou ? t('Open chat, it needs you') : t('Open chat')}
       className="fixed left-1/2 z-40 h-11 -translate-x-1/2 animate-in fade-in-0 slide-in-from-bottom-2 gap-2 rounded-full bg-gray-1 pr-4 pl-3 text-gray-12 shadow-lift duration-150 motion-reduce:animate-none"
       style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
     >
-      <ChatSparkIcon className="size-5" />
+      <span className="relative flex size-6 shrink-0 items-center justify-center">
+        <ChatSparkIcon className="size-5" />
+        {needsYou && (
+          <span
+            aria-hidden
+            className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full border-2 border-gray-1 bg-accent-9"
+          />
+        )}
+      </span>
       {t('Chat')}
     </Button>
   );
@@ -409,6 +499,23 @@ function handleChatKey({
     if (chatWidth === 'sheet') sheet.hide();
     else useChatPanel.getState().setOpen(false);
   }
+}
+
+function cancelOnEscape(event: React.PointerEvent<HTMLElement>): void {
+  const handle = event.currentTarget;
+  const pointerId = event.pointerId;
+  const onKey = (key: KeyboardEvent) => {
+    if (key.key !== 'Escape') return;
+    key.preventDefault();
+    key.stopImmediatePropagation();
+    handle.releasePointerCapture(pointerId);
+  };
+  window.addEventListener('keydown', onKey, true);
+  handle.addEventListener(
+    'lostpointercapture',
+    () => window.removeEventListener('keydown', onKey, true),
+    { once: true },
+  );
 }
 
 function hasText(element: Element | null): boolean {
@@ -501,8 +608,7 @@ function useComposerFocus({
         active instanceof HTMLElement && active !== document.body
           ? active
           : null;
-      panel?.querySelector('textarea')?.focus({ preventScroll: true });
-      return;
+      return panel ? focusComposerWhenReady(panel) : undefined;
     }
     const active = document.activeElement;
     const focusLeftWithPanel =
@@ -517,6 +623,50 @@ function useComposerFocus({
 const SHEET_STATE = 'chatSheet';
 const SHEET_DISMISS_SHARE = 0.25;
 const SHEET_DISMISS_VELOCITY = 0.5;
-const DOCK_MAX_CSS = `max(${chatLayoutUtils.DOCK_MIN_WIDTH}px, calc(100% - ${chatLayoutUtils.PAGE_COMFORT_WIDTH}px))`;
+// Focus the composer as soon as it exists. On a cold first open the chat is
+// still loading, so wait for the textarea to appear, unless the user goes
+// somewhere else first.
+function focusComposerWhenReady(panel: HTMLElement): (() => void) | undefined {
+  const focus = () => {
+    const input = panel.querySelector('textarea');
+    if (!input) return false;
+    input.focus({ preventScroll: true });
+    return true;
+  };
+  if (focus()) return undefined;
+  const observer = new MutationObserver(() => {
+    if (focus()) stop();
+  });
+  const onElsewhere = (event: Event) => {
+    if (!(event.target instanceof Node) || !panel.contains(event.target)) {
+      stop();
+    }
+  };
+  const stop = () => {
+    observer.disconnect();
+    clearTimeout(timer);
+    HANDOFF_STOP_EVENTS.forEach((name) =>
+      document.removeEventListener(name, onElsewhere, true),
+    );
+  };
+  observer.observe(panel, { childList: true, subtree: true });
+  HANDOFF_STOP_EVENTS.forEach((name) =>
+    document.addEventListener(name, onElsewhere, true),
+  );
+  const timer = setTimeout(stop, HANDOFF_MAX_MS);
+  return stop;
+}
+
+const HANDOFF_STOP_EVENTS = ['focusin', 'pointerdown', 'keydown'] as const;
+const HANDOFF_MAX_MS = 5000;
+const PREWARM_MS = 800;
+const DIP_MS = 120;
+const BUILDER_CARD_CHROME = 14;
+const { MOVE_MS, MOVE_EASE } = chatLayoutUtils;
+const MOVE_TRANSITION: Record<'enter' | 'exit', string> = {
+  enter: `width ${MOVE_MS.wide}ms ${MOVE_EASE.emphasized} ${MOVE_MS.edgeDelay}ms`,
+  exit: `width ${MOVE_MS.back}ms ${MOVE_EASE.standard}`,
+};
+let pendingCapture: string | null = null;
 
 type SheetDrag = { offset: number; height: number; dragging: boolean };

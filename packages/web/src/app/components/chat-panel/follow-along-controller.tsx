@@ -133,10 +133,14 @@ function untilPageFree(run: (focused: Element | null) => boolean): () => void {
   const onFocusOut = (event: FocusEvent) =>
     retry(eventElement(event.relatedTarget));
   const stopHold = useFollowHold.subscribe(() => retry(document.activeElement));
+  const stopGate = useChatPanel.subscribe((state, previous) => {
+    if (state.gateOpen !== previous.gateOpen) retry(document.activeElement);
+  });
   const stop = () => {
     window.removeEventListener('focusin', onFocusIn, true);
     window.removeEventListener('focusout', onFocusOut, true);
     stopHold();
+    stopGate();
   };
   const retry = (focused: Element | null) => {
     if (run(focused)) stop();
