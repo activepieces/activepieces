@@ -19,6 +19,7 @@ export function makeDestination(
     enabled: true,
     headers: {},
     format: EventDestinationFormat.RAW,
+    eventFilters: null,
     ...overrides,
   };
 }
