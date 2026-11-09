@@ -231,6 +231,7 @@ export const EventsStep = ({
                           <div className="mt-2 flex items-start gap-2.5 border-t pt-3">
                             <Checkbox
                               id={`${checkboxIdPrefix}-patch`}
+                              aria-describedby={`${checkboxIdPrefix}-patch-description`}
                               checked={patchField.value}
                               onCheckedChange={(checked) =>
                                 patchField.onChange(checked === true)
@@ -243,7 +244,10 @@ export const EventsStep = ({
                               >
                                 {t('Also send patch version updates')}
                               </Label>
-                              <span className="text-xs text-gray-11">
+                              <span
+                                id={`${checkboxIdPrefix}-patch-description`}
+                                className="text-xs text-gray-11"
+                              >
                                 {t(
                                   'Patch updates are frequent. Translation sweeps can send hundreds in an hour.',
                                 )}

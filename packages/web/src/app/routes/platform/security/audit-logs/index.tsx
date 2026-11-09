@@ -81,12 +81,18 @@ export default function AuditLogsPage() {
       type: 'select',
       title: t('Action'),
       accessorKey: 'action',
-      options: Object.values(ApplicationEventName).map((action) => {
-        return {
-          label: eventLabels[action],
-          value: action,
-        };
-      }),
+      options: Object.values(ApplicationEventName)
+        .filter(
+          (action) =>
+            action !== ApplicationEventName.PIECE_CREATED &&
+            action !== ApplicationEventName.PIECE_VERSION_CREATED,
+        )
+        .map((action) => {
+          return {
+            label: eventLabels[action],
+            value: action,
+          };
+        }),
       icon: Wand,
     },
     {
