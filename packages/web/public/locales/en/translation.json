@@ -3763,5 +3763,15 @@
   "Doesn't open pages for you.": "Doesn't open pages for you.",
   "Chat is changing {name}": "Chat is changing {name}",
   "Chat deleted {name}.": "Chat deleted {name}.",
-  "Opened {name} beside the chat": "Opened {name} beside the chat"
+  "Opened {name} beside the chat": "Opened {name} beside the chat",
+  "Changed in this chat": "Changed in this chat",
+  "Couldn't load the changes.": "Couldn't load the changes.",
+  "Nothing changed yet.": "Nothing changed yet.",
+  "Changed {count, plural, one {# thing} other {# things}}:": "Changed {count, plural, one {# thing} other {# things}}:",
+  "Edited": "Edited",
+  "Deleted": "Deleted",
+  "{name} flow": "{name} flow",
+  "{name} table": "{name} table",
+  "Needs you: {title}": "Needs you: {title}",
+  "✓ {title}": "✓ {title}"
 }

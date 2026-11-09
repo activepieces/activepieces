@@ -20,6 +20,7 @@ import {
   ChatUIMessage,
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
+import { changeSummary } from '@/features/chat/lib/resources/change-summary';
 import { useTts } from '@/features/chat/lib/use-tts';
 import { cn } from '@/lib/utils';
 
@@ -40,6 +41,7 @@ import { ActionReceiptCard } from './action-receipt-card';
 import { ThinkingBlock } from './activity-accordion';
 import { BatchProgressCard } from './batch-progress-card';
 import { CardSkeleton } from './card-skeletons';
+import { ChangesSummary } from './changes-summary';
 import { ConnectionPickerCard } from './connection-picker-card';
 import { CopyIconButton } from './copy-icon-button';
 import { FeedbackButtons } from './feedback-buttons';
@@ -104,6 +106,10 @@ export const AssistantMessage = memo(function AssistantMessage({
 
   const { isSpeaking, isSupported: isTtsSupported, speak, stop } = useTts();
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+  const changes = useMemo(
+    () => (isStreaming ? [] : changeSummary.fromParts(message.parts)),
+    [isStreaming, message.parts],
+  );
 
   const hasRenderedContent = blocks.some((b) => b.kind !== 'thinking');
   const hasThinkingContent = blocks.some((b) => b.kind === 'thinking');
@@ -140,6 +146,8 @@ export const AssistantMessage = memo(function AssistantMessage({
             setIsAccordionOpen={setIsAccordionOpen}
             isResumed={isResumed}
           />
+
+          <ChangesSummary changes={changes} />
 
           {!isStreaming && sources.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 pt-2">

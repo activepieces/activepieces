@@ -33,6 +33,7 @@ import {
 import { ChatUIMessage, chatPartUtils } from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { onboardingPrefillUtils } from '@/features/chat/lib/onboarding-prefill';
+import { useBackgroundTitle } from '@/features/chat/lib/use-background-title';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
@@ -285,6 +286,7 @@ function ChatBoxContent({
   const hasBlockingCard = useChatStoreContext((s) =>
     chatStoreSelectors.hasBlockingCard({ state: s, lastAssistantMessage }),
   );
+  useBackgroundTitle({ streaming: isStreaming, needsYou: hasBlockingCard });
 
   const showBanner = credits.creditsExhausted || credits.showLowCreditsWarning;
 

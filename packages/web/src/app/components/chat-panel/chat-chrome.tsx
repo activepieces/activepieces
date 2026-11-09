@@ -19,6 +19,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
+import { ChangedInThisChat } from '@/app/routes/chat-with-ai/components/changed-in-this-chat';
 import { ChatAppLinks } from '@/app/routes/chat-with-ai/components/chat-app-links';
 import { ChatDisabledState } from '@/app/routes/chat-with-ai/components/chat-empty-state';
 import { ConversationList } from '@/app/routes/chat-with-ai/conversation-list';
@@ -204,6 +205,7 @@ export function ChatChrome() {
           {!phone && <LayoutMenu />}
           {chatEnabled && conversationId && (
             <MoreMenu
+              conversationId={conversationId}
               onRename={() => setRenaming(true)}
               onDelete={() => deleteChat().catch(() => undefined)}
             />
@@ -372,9 +374,11 @@ function LayoutMenu() {
 }
 
 function MoreMenu({
+  conversationId,
   onRename,
   onDelete,
 }: {
+  conversationId: string;
   onRename: () => void;
   onDelete: () => void;
 }) {
@@ -387,6 +391,8 @@ function MoreMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
         <FollowAlongItems />
+        <DropdownMenuSeparator />
+        <ChangedInThisChat conversationId={conversationId} />
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onRename}>
           <Pencil className="size-4" />

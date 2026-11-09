@@ -16,6 +16,7 @@ import {
   subagentProgressId,
   SubagentProgressEvent,
 } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -34,6 +35,7 @@ import { useChatStoreApi, useChatStoreContext } from './chat-store-context';
 import { ChatUIMessage, QuickRepliesData, chatPartUtils } from './chat-types';
 import { ChatModelPick, chatUtils } from './chat-utils';
 import { pageContextUtils } from './page-context';
+import { conversationChanges } from './use-conversation-changes';
 import { useStreamingReducer } from './use-streaming-reducer';
 
 function applyQuickRepliesToStore({
@@ -348,6 +350,7 @@ export function useAgentChat({
   onConversationMissing?: () => void;
 } = {}) {
   const store = useChatStoreApi();
+  const queryClient = useQueryClient();
   const toolCallMeta = useChatStoreContext((state) => state.toolCallMeta);
 
   const [conversationId, setConversationIdState] = useState<string | null>(
@@ -541,6 +544,11 @@ export function useAgentChat({
       if (!result) return null;
       const mapped = chatUtils.mapHistoryToUIMessages(result.data);
       setPersistedMessages(mapped);
+      conversationChanges.seed({
+        queryClient,
+        conversationId: convId,
+        messages: mapped,
+      });
       const restored = chatUtils.extractQuickRepliesFromHistory(mapped);
       applyQuickRepliesToStore({ setState: store.setState, data: restored });
       restoreReceiptsIntoStore({
@@ -549,7 +557,7 @@ export function useAgentChat({
       });
       return mapped;
     },
-    [store],
+    [store, queryClient],
   );
 
   const settleStreamRef = useRef<
@@ -1032,6 +1040,11 @@ export function useAgentChat({
         return;
       }
       const mapped = chatUtils.mapHistoryToUIMessages(historyResult.data.data);
+      conversationChanges.seed({
+        queryClient,
+        conversationId: id,
+        messages: mapped,
+      });
       const restored = chatUtils.extractQuickRepliesFromHistory(mapped);
       applyQuickRepliesToStore({ setState: store.setState, data: restored });
       restoreReceiptsIntoStore({
@@ -1090,7 +1103,7 @@ export function useAgentChat({
       }
       setIsLoadingHistory(false);
     },
-    [resetSession, startStream, updateSendStatus, store],
+    [resetSession, startStream, updateSendStatus, store, queryClient],
   );
 
   const setModelPick = useCallback(async (newPick: ChatModelPick) => {
