@@ -129,6 +129,30 @@ function listFilesResult(value: unknown): { incompleteSearch: unknown; files: un
   return { incompleteSearch: Reflect.get(value, 'incompleteSearch'), files: Reflect.get(value, 'files') };
 }
 
+function compareTime({ value, op, bound }: { value: string; op: string; bound: string }): boolean {
+  const epoch = Date.parse(value);
+  return op === '>=' ? epoch >= Date.parse(bound) : epoch > Date.parse(bound);
+}
+
+function matchesTimeQuery({ q, item }: { q: string; item: TimedItem }): boolean {
+  const changedClause = /\(modifiedTime (>=?) '([^']+)' or createdTime (>=?) '([^']+)'\)/;
+  const changed = changedClause.exec(q);
+  if (changed && !(compareTime({ value: item.modifiedTime, op: changed[1], bound: changed[2] }) || compareTime({ value: item.createdTime, op: changed[3], bound: changed[4] }))) {
+    return false;
+  }
+  const rest = q.replace(changedClause, '');
+  for (const [, field, op, bound] of rest.matchAll(/\b(createdTime|modifiedTime) (>=?) '([^']+)'/g)) {
+    if (!compareTime({ value: field === 'createdTime' ? item.createdTime : item.modifiedTime, op, bound })) return false;
+  }
+  return true;
+}
+
+function sortForOrderBy<T extends TimedItem>({ items, orderBy }: { items: T[]; orderBy: string | undefined }): T[] {
+  const key = orderBy?.startsWith('modifiedTime') ? 'modifiedTime' : 'createdTime';
+  const direction = orderBy?.endsWith(' desc') ? -1 : 1;
+  return [...items].sort((a, b) => direction * (Date.parse(a[key]) - Date.parse(b[key])) || a.id.localeCompare(b.id));
+}
+
 function listParams(args: unknown[]): ListParams {
   const [first] = args;
   if (typeof first !== 'object' || first === null) {
@@ -202,6 +226,8 @@ export const driveTestContext = {
   triggerContext,
   actionContext,
   listFilesResult,
+  matchesTimeQuery,
+  sortForOrderBy,
   driveEvents,
   listParams,
   listSignal,
@@ -227,3 +253,5 @@ export type ListParams = {
 };
 
 export type TriggerStore = Pick<ReturnType<typeof memoryStore>, 'put' | 'get' | 'delete'>;
+
+export type TimedItem = { id: string; createdTime: string; modifiedTime: string };

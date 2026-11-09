@@ -19,6 +19,7 @@ const vendor: Vendor = {
   pageSize: 1000,
   msPerSharedDriveCall: 0,
   slowCreatedPages: undefined,
+  rejectPageTokens: false,
   queries: new Array<string>(),
 };
 let clock = START;
@@ -63,6 +64,9 @@ function inCorpus({ corpora, driveId, item }: { corpora?: string; driveId?: stri
 async function fakeFilesList(...args: unknown[]) {
   const params = driveTestContext.listParams(args);
   vendor.queries.push(params.q ?? '');
+  if (vendor.rejectPageTokens && params.pageToken) {
+    throw Object.assign(new Error('Invalid Value'), { status: 400 });
+  }
   if (params.corpora === 'drive') clock += vendor.msPerSharedDriveCall;
   const key = params.orderBy?.startsWith('modifiedTime') ? 'modifiedTime' : 'createdTime';
   const slow = key === 'createdTime' ? vendor.slowCreatedPages : undefined;
@@ -100,6 +104,7 @@ beforeEach(() => {
   vendor.pageSize = 1000;
   vendor.msPerSharedDriveCall = 0;
   vendor.slowCreatedPages = undefined;
+  vendor.rejectPageTokens = false;
   vendor.queries = [];
   clock = START;
   vi.spyOn(Date, 'now').mockImplementation(() => clock);
@@ -303,6 +308,29 @@ describe('New or Updated File poll', () => {
     expect(JSON.stringify(seen).length).toBeLessThan(512 * 1024);
   });
 
+  it.each([
+    { withContent: false, polls: 6 },
+    { withContent: true, polls: 25 },
+  ])('1,001 imported files sharing one createdTime and edited later each fire once, then later changes still fire (content $withContent)', async ({ withContent, polls }) => {
+    const store = driveTestContext.memoryStore();
+    await hooks.enable({ store });
+    const imported = Array.from({ length: 1_001 }, (_, index) => `imported-${String(index).padStart(4, '0')}`);
+    imported.forEach((id, index) => {
+      add({ id, createdMs: 5_000, mimeType: PDF });
+      edit({ id, modifiedMs: 10_000 + index });
+    });
+    const fired: string[] = [];
+    for (let poll = 0; poll < polls; poll++) {
+      clock += 60_000;
+      fired.push(...ids(await hooks.run({ store, withContent })));
+    }
+    expect(fired).toEqual(imported);
+    add({ id: 'after-import', createdMs: clock - START, mimeType: PDF });
+    clock += 60_000;
+    expect(ids(await hooks.run({ store, withContent }))).toEqual(['after-import']);
+    expect(ids(await hooks.run({ store, withContent }))).toEqual([]);
+  });
+
   it('a truncated listing moves the cursor to the watermark, not to the newest file it sent', async () => {
     const store = driveTestContext.memoryStore();
     await hooks.enable({ store });
@@ -325,6 +353,59 @@ describe('New or Updated File poll', () => {
     await hooks.run({ store });
     expect(vendor.queries).toContainEqual(expect.stringContaining(`modifiedTime >= '${new Date(START + 1).toISOString()}'`));
     expect(vendor.queries).toContainEqual(expect.stringContaining(`createdTime >= '${new Date(START + 1).toISOString()}'`));
+  });
+});
+
+describe.each([
+  { hooks: triggers[0], keepOldModifiedTime: false },
+  { hooks: triggers[2], keepOldModifiedTime: true },
+])('$hooks.name poll when the deadline cuts inside one timestamp group', ({ hooks, keepOldModifiedTime }) => {
+  it.each([{ withContent: false }, { withContent: true }])('resumes from the saved page and fires every file once (content $withContent)', async ({ withContent }) => {
+    const store = driveTestContext.memoryStore();
+    await hooks.enable({ store });
+    const group = Array.from({ length: 60 }, (_, index) => `same-ms-${String(index).padStart(2, '0')}`);
+    group.forEach((id, index) => {
+      add({ id, createdMs: 5_000, mimeType: PDF });
+      if (keepOldModifiedTime) edit({ id, modifiedMs: -3 * 365 * 24 * 3_600_000 + index });
+    });
+    vendor.slowCreatedPages = { pageSize: 10, ms: 13_000 };
+    const perPoll: number[] = [];
+    const fired: string[] = [];
+    for (let poll = 0; poll < 3; poll++) {
+      clock += 60_000;
+      const sent = ids(await hooks.run({ store, withContent }));
+      perPoll.push(sent.length);
+      fired.push(...sent);
+    }
+    expect(perPoll).toEqual([20, 20, 20]);
+    expect(fired).toEqual(group);
+    expect(store.read('lastPoll')).toBe(Date.parse(at(5_000)));
+    add({ id: 'after-group', createdMs: clock - START, mimeType: PDF });
+    const later: string[] = [];
+    for (let poll = 0; poll < 4; poll++) {
+      clock += 60_000;
+      later.push(...ids(await hooks.run({ store, withContent })));
+    }
+    expect(later).toEqual(['after-group']);
+    expect(Number(store.read('lastPoll'))).toBeGreaterThan(Date.parse(at(5_000)));
+  });
+
+  it('falls back to a fresh listing when Drive rejects the saved page token', async () => {
+    const store = driveTestContext.memoryStore();
+    await hooks.enable({ store });
+    const group = Array.from({ length: 30 }, (_, index) => `same-ms-${String(index).padStart(2, '0')}`);
+    group.forEach((id, index) => {
+      add({ id, createdMs: 5_000, mimeType: PDF });
+      if (keepOldModifiedTime) edit({ id, modifiedMs: -3 * 365 * 24 * 3_600_000 + index });
+    });
+    vendor.slowCreatedPages = { pageSize: 10, ms: 13_000 };
+    clock += 60_000;
+    expect(ids(await hooks.run({ store }))).toEqual(group.slice(0, 20));
+    vendor.rejectPageTokens = true;
+    vendor.slowCreatedPages = undefined;
+    clock += 60_000;
+    expect(ids(await hooks.run({ store }))).toEqual(group.slice(20));
+    expect(ids(await hooks.run({ store }))).toEqual([]);
   });
 });
 
@@ -358,5 +439,6 @@ type Vendor = {
   pageSize: number;
   msPerSharedDriveCall: number;
   slowCreatedPages: SlowPages | undefined;
+  rejectPageTokens: boolean;
   queries: string[];
 };

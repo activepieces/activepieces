@@ -66,8 +66,8 @@ export const newFile = createTrigger({
     const items = await drivePoll.poll({
       store: context.store,
       maxItems: drivePoll.maxItemsPerPoll({ includeFileContent }),
-      list: ({ from, maxFiles }) =>
-        common.getFiles(
+      list: async ({ from, maxFiles, positions }) => [
+        await common.getFiles(
           context.auth,
           {
             parent: context.propsValue.parentFolder,
@@ -76,9 +76,11 @@ export const newFile = createTrigger({
             includeTeamDrive: context.propsValue.include_team_drives,
             deadline: startedAt + common.listingBudgetMs,
             stopAt: { maxFiles },
+            resume: positions[0],
           },
           'createdTime'
         ),
+      ],
       describe: ({ file }) => drivePoll.byCreatedTime(file),
     });
 

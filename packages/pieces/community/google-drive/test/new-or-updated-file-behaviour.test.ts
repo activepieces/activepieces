@@ -37,26 +37,17 @@ function deleteItem({ id }: { id: string }) {
 }
 
 function matchesQuery({ q, item }: { q: string; item: VendorItem }): boolean {
-  const changed = /\(modifiedTime > '([^']+)' or createdTime > '([^']+)'\)/.exec(q);
-  if (changed) {
-    const since = Date.parse(changed[1]);
-    if (!(Date.parse(item.modifiedTime) > since || Date.parse(item.createdTime) > since)) return false;
-  }
-  for (const [, field, op, bound] of q.matchAll(/(?<!\()\b(createdTime|modifiedTime) (>=?) '([^']+)'/g)) {
-    const value = Date.parse(field === 'createdTime' ? item.createdTime : item.modifiedTime);
-    if (!(op === '>=' ? value >= Date.parse(bound) : value > Date.parse(bound))) return false;
-  }
-  return !item.trashed;
+  return driveTestContext.matchesTimeQuery({ q, item }) && !item.trashed;
 }
 
 async function fakeFilesList(...args: unknown[]) {
   const params = driveTestContext.listParams(args);
   vendor.listCalls += 1;
   const offset = Number(params.pageToken ?? 0);
-  const sortKey = params.orderBy?.startsWith('modifiedTime') ? 'modifiedTime' : 'createdTime';
-  const visible = vendor.items
-    .filter((item) => matchesQuery({ q: params.q ?? '', item }))
-    .sort((a, b) => Date.parse(b[sortKey]) - Date.parse(a[sortKey]));
+  const visible = driveTestContext.sortForOrderBy({
+    items: vendor.items.filter((item) => matchesQuery({ q: params.q ?? '', item })),
+    orderBy: params.orderBy,
+  });
   const page = visible.slice(offset, offset + vendor.pageSize);
   const next = offset + vendor.pageSize < visible.length ? String(offset + vendor.pageSize) : undefined;
   return {

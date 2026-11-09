@@ -104,7 +104,7 @@ export const newOrUpdatedFile = createTrigger({
     const items = await drivePoll.poll({
       store: context.store,
       maxItems: drivePoll.maxItemsPerPoll({ includeFileContent }),
-      list: async ({ from, maxFiles }) => {
+      list: async ({ from, maxFiles, positions }) => {
         const scope = {
           parent: context.propsValue.parentFolder,
           mimeTypes: context.propsValue.file_types,
@@ -113,19 +113,28 @@ export const newOrUpdatedFile = createTrigger({
           deadline: startedAt + common.listingBudgetMs,
           stopAt: { maxFiles },
         };
-        const listings = await Promise.all([
+        return Promise.all([
           common.getFiles(
             context.auth,
-            { ...scope, createdTime: from, createdTimeOp: '>=' },
+            {
+              ...scope,
+              createdTime: from,
+              createdTimeOp: '>=',
+              resume: positions[0],
+            },
             'createdTime'
           ),
           common.getFiles(
             context.auth,
-            { ...scope, modifiedTime: from, modifiedTimeOp: '>=' },
+            {
+              ...scope,
+              modifiedTime: from,
+              modifiedTimeOp: '>=',
+              resume: positions[1],
+            },
             'modifiedTime'
           ),
         ]);
-        return drivePoll.combineListings(listings);
       },
       describe: ({ file, from, firedIds }) =>
         changeEntry({ file, from, firedIds }),

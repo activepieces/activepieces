@@ -39,19 +39,17 @@ function deleteItem({ id }: { id: string }) {
 }
 
 function matchesQuery({ q, item }: { q: string; item: VendorItem }): boolean {
-  const created = /createdTime > '([^']+)'/.exec(q);
-  if (created && !(Date.parse(item.createdTime) > Date.parse(created[1]))) return false;
-  return !item.trashed;
+  return driveTestContext.matchesTimeQuery({ q, item }) && !item.trashed;
 }
 
 async function fakeFilesList(...args: unknown[]) {
   const params = driveTestContext.listParams(args);
   vendor.listCalls += 1;
   const offset = Number(params.pageToken ?? 0);
-  const sortKey = params.orderBy?.startsWith('modifiedTime') ? 'modifiedTime' : 'createdTime';
-  const visible = vendor.items
-    .filter((item) => matchesQuery({ q: params.q ?? '', item }))
-    .sort((a, b) => Date.parse(b[sortKey]) - Date.parse(a[sortKey]));
+  const visible = driveTestContext.sortForOrderBy({
+    items: vendor.items.filter((item) => matchesQuery({ q: params.q ?? '', item })),
+    orderBy: params.orderBy,
+  });
   const page = visible.slice(offset, offset + vendor.pageSize);
   const next = offset + vendor.pageSize < visible.length ? String(offset + vendor.pageSize) : undefined;
   return {

@@ -15,7 +15,7 @@ const START = Date.parse('2026-11-01T10:00:00.000Z');
 
 type VendorItem = { id: string; name: string; mimeType: string; createdTime: string; modifiedTime: string };
 
-const vendor = { items: new Array<VendorItem>(), pageSize: 1000, msPerPage: 0 };
+const vendor = { items: new Array<VendorItem>(), pageSize: 1000, msPerPage: 0, incompleteAllDrives: false };
 let clock = START;
 
 function at(ms: number): string {
@@ -45,6 +45,9 @@ function matches({ q, item }: { q: string; item: VendorItem }): boolean {
 async function fakeFilesList(...args: unknown[]) {
   const params = driveTestContext.listParams(args);
   clock += vendor.msPerPage;
+  if (params.corpora === 'allDrives' && vendor.incompleteAllDrives) {
+    return { status: 200, data: { incompleteSearch: true, files: [] } };
+  }
   const key = params.orderBy?.startsWith('modifiedTime') ? 'modifiedTime' : 'createdTime';
   const direction = params.orderBy?.endsWith(' desc') ? -1 : 1;
   const visible = vendor.items
@@ -53,6 +56,10 @@ async function fakeFilesList(...args: unknown[]) {
   const offset = Number(params.pageToken ?? 0);
   const next = offset + vendor.pageSize < visible.length ? String(offset + vendor.pageSize) : undefined;
   return { status: 200, data: { incompleteSearch: false, nextPageToken: next, files: visible.slice(offset, offset + vendor.pageSize).map((file) => ({ kind: 'drive#file', ...file })) } };
+}
+
+async function noSharedDrives() {
+  return { status: 200, data: { drives: [] } };
 }
 
 async function fakeFetch(input: string | URL) {
@@ -67,6 +74,7 @@ beforeEach(() => {
   vendor.items = [];
   vendor.pageSize = 1000;
   vendor.msPerPage = 0;
+  vendor.incompleteAllDrives = false;
   clock = START;
   vi.spyOn(Date, 'now').mockImplementation(() => clock);
   vi.spyOn(drive_v3.Resource$Files.prototype, 'list').mockImplementation(fakeFilesList);
@@ -208,6 +216,75 @@ describe('QA r2 recheck: seen overflow at one millisecond', () => {
       fired.push(...ids(await hooks.run()));
     }
     expect(fired).toEqual(tied);
+  });
+});
+
+describe('Greptile recheck: saved page position', () => {
+  it('after a disable and enable, a saved position from the old cursor is ignored and a new file fires on the first poll', async () => {
+    const store = driveTestContext.memoryStore();
+    const trigger = driveTestContext.asPolling(newFile);
+    const ctx = () => driveTestContext.triggerContext({ trigger, propsValue: { parentFolder: undefined, include_team_drives: false, include_file_content: false }, store });
+    await trigger.onEnable(ctx());
+    Array.from({ length: 1_000 }, (_, index) => add({ id: `group-${String(index).padStart(4, '0')}`, createdMs: 5_000 }));
+    vendor.pageSize = 20;
+    vendor.msPerPage = 4_000;
+    clock += 60_000;
+    const first = ids(await trigger.run(ctx()));
+    expect(first.length).toBeGreaterThan(0);
+    expect(first.length).toBeLessThan(1_000);
+    expect(JSON.stringify(store.read('driveResume'))).toContain('pageToken');
+    await trigger.onDisable(ctx());
+    clock += 60_000;
+    await trigger.onEnable(ctx());
+    add({ id: 'after-enable', createdMs: clock - START + 1_000 });
+    clock += 60_000;
+    expect(ids(await trigger.run(ctx()))).toEqual(['after-enable']);
+  });
+
+  it('when Drive cannot finish the resumed shared-drive search, the same poll falls back to a fresh listing', async () => {
+    const store = driveTestContext.memoryStore();
+    const trigger = driveTestContext.asPolling(newFile);
+    const ctx = () => driveTestContext.triggerContext({ trigger, propsValue: { parentFolder: undefined, include_team_drives: true, include_file_content: false }, store });
+    vi.spyOn(drive_v3.Resource$Drives.prototype, 'list').mockImplementation(noSharedDrives);
+    await trigger.onEnable(ctx());
+    const group = Array.from({ length: 300 }, (_, index) => `group-${String(index).padStart(4, '0')}`);
+    group.forEach((id) => add({ id, createdMs: 5_000 }));
+    vendor.pageSize = 20;
+    vendor.msPerPage = 4_000;
+    clock += 60_000;
+    const first = ids(await trigger.run(ctx()));
+    expect(JSON.stringify(store.read('driveResume'))).toContain('allDrives');
+    vendor.msPerPage = 0;
+    vendor.incompleteAllDrives = true;
+    clock += 60_000;
+    const second = ids(await trigger.run(ctx()));
+    expect([...first, ...second].sort()).toEqual(group);
+  });
+});
+
+describe('Greptile recheck: shared test fakes honour orderBy and the comparison', () => {
+  const items = [
+    { id: 'b', createdTime: at(2_000), modifiedTime: at(9_000) },
+    { id: 'a', createdTime: at(1_000), modifiedTime: at(1_000) },
+    { id: 'c', createdTime: at(3_000), modifiedTime: at(3_000) },
+  ];
+
+  it('sorts ascending by default and descending with desc, on the requested key', () => {
+    const order = (orderBy: string | undefined) => driveTestContext.sortForOrderBy({ items, orderBy }).map((item) => item.id);
+    expect(order('createdTime')).toEqual(['a', 'b', 'c']);
+    expect(order('createdTime desc')).toEqual(['c', 'b', 'a']);
+    expect(order('modifiedTime')).toEqual(['a', 'c', 'b']);
+    expect(order('modifiedTime desc')).toEqual(['b', 'c', 'a']);
+  });
+
+  it('>= keeps the bound, > drops it, and the or-clause matches either time', () => {
+    const match = (q: string) => items.filter((item) => driveTestContext.matchesTimeQuery({ q, item })).map((item) => item.id).sort();
+    expect(match(`createdTime >= '${at(2_000)}'`)).toEqual(['b', 'c']);
+    expect(match(`createdTime > '${at(2_000)}'`)).toEqual(['c']);
+    expect(match(`modifiedTime >= '${at(9_000)}'`)).toEqual(['b']);
+    expect(match(`modifiedTime > '${at(9_000)}'`)).toEqual([]);
+    expect(match(`(modifiedTime > '${at(3_000)}' or createdTime > '${at(3_000)}')`)).toEqual(['b']);
+    expect(match(`(modifiedTime >= '${at(3_000)}' or createdTime >= '${at(3_000)}')`)).toEqual(['b', 'c']);
   });
 });
 

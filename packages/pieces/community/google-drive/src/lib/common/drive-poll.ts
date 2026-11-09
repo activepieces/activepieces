@@ -1,6 +1,6 @@
 import { Store } from '@activepieces/pieces-framework';
 import { drive_v3 } from '@googleapis/drive';
-import { DriveListing } from './index';
+import { DriveListing, ListingPosition, ResumableParams } from './index';
 
 async function onEnable({
   store,
@@ -143,6 +143,113 @@ function combineListings(listings: DriveListing[]): DriveListing {
     : { files, truncated: false };
 }
 
+function safePosition({
+  listing,
+  isDelivered,
+}: {
+  listing: DriveListing;
+  isDelivered: (file: drive_v3.Schema$File) => boolean;
+}): ListingPosition | null {
+  if (!listing.truncated || !listing.position) {
+    return null;
+  }
+  return listing.files.every(isDelivered) ? listing.position : null;
+}
+
+function optionalOf<T>({
+  source,
+  key,
+  guard,
+}: {
+  source: object;
+  key: string;
+  guard: (value: unknown) => value is T;
+}): Optional<T> {
+  const value: unknown = Reflect.get(source, key);
+  if (value === undefined) {
+    return { valid: true, value: undefined };
+  }
+  return guard(value) ? { valid: true, value } : { valid: false };
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === 'string';
+}
+
+function isNumber(value: unknown): value is number {
+  return typeof value === 'number';
+}
+
+function isBoolean(value: unknown): value is boolean {
+  return typeof value === 'boolean';
+}
+
+function readParams(value: unknown): ResumableParams | undefined {
+  if (typeof value !== 'object' || value === null) {
+    return undefined;
+  }
+  const text = (key: string) => optionalOf({ source: value, key, guard: isString });
+  const q = text('q');
+  const orderBy = text('orderBy');
+  const corpora = text('corpora');
+  const driveId = text('driveId');
+  const fields = text('fields');
+  const pageSize = optionalOf({ source: value, key: 'pageSize', guard: isNumber });
+  const supportsAllDrives = optionalOf({
+    source: value,
+    key: 'supportsAllDrives',
+    guard: isBoolean,
+  });
+  const includeItemsFromAllDrives = optionalOf({
+    source: value,
+    key: 'includeItemsFromAllDrives',
+    guard: isBoolean,
+  });
+  if (
+    !q.valid ||
+    !orderBy.valid ||
+    !corpora.valid ||
+    !driveId.valid ||
+    !fields.valid ||
+    !pageSize.valid ||
+    !supportsAllDrives.valid ||
+    !includeItemsFromAllDrives.valid
+  ) {
+    return undefined;
+  }
+  return {
+    q: q.value,
+    orderBy: orderBy.value,
+    corpora: corpora.value,
+    driveId: driveId.value,
+    fields: fields.value,
+    pageSize: pageSize.value,
+    supportsAllDrives: supportsAllDrives.value,
+    includeItemsFromAllDrives: includeItemsFromAllDrives.value,
+  };
+}
+
+function readPosition(value: unknown): ListingPosition | null {
+  if (typeof value !== 'object' || value === null) {
+    return null;
+  }
+  const pageToken: unknown = Reflect.get(value, 'pageToken');
+  const params = readParams(Reflect.get(value, 'params'));
+  return typeof pageToken === 'string' && params ? { params, pageToken } : null;
+}
+
+function readResume(value: unknown): DriveResume | undefined {
+  if (typeof value !== 'object' || value === null) {
+    return undefined;
+  }
+  const cursor: unknown = Reflect.get(value, 'cursor');
+  const positions: unknown = Reflect.get(value, 'positions');
+  if (typeof cursor !== 'number' || !Array.isArray(positions)) {
+    return undefined;
+  }
+  return { cursor, positions: positions.map(readPosition) };
+}
+
 async function poll({
   store,
   maxItems,
@@ -151,7 +258,11 @@ async function poll({
 }: {
   store: Store;
   maxItems: number;
-  list: (window: { from: number; maxFiles: number }) => Promise<DriveListing>;
+  list: (window: {
+    from: number;
+    maxFiles: number;
+    positions: (ListingPosition | undefined)[];
+  }) => Promise<DriveListing[]>;
   describe: (args: {
     file: drive_v3.Schema$File;
     from: number;
@@ -169,7 +280,17 @@ async function poll({
   const seenKeys = new Set(seen.map(seenKey));
   const firedIds = new Set(seen.map((entry) => entry.id));
 
-  const listing = await list({ from, maxFiles: maxItems + seen.length });
+  const saved = readResume(await store.get<unknown>(RESUME_KEY));
+  const positions =
+    saved && saved.cursor === cursor
+      ? saved.positions.map((position) => position ?? undefined)
+      : [];
+  const listings = await list({
+    from,
+    maxFiles: maxItems + seen.length,
+    positions,
+  });
+  const listing = combineListings(listings);
   const now = Date.now();
 
   const entries = listing.files
@@ -217,13 +338,33 @@ async function poll({
     );
   }
 
+  const delivered = new Set([...seenKeys, ...emitted.map(seenKey)]);
+  const resumeAfter: DriveResume = {
+    cursor: cursorAfter,
+    positions: listings.map((streamListing) =>
+      safePosition({
+        listing: streamListing,
+        isDelivered: (file) => {
+          const entry = describe({ file, from, firedIds });
+          return (
+            entry === undefined ||
+            (Number.isFinite(entry.epoch) && entry.epoch < from) ||
+            delivered.has(seenKey(entry))
+          );
+        },
+      })
+    ),
+  };
+
   await store.put(CURSOR_KEY, cursorAfter);
   await store.put(RECENT_KEY, recentAfter);
+  await store.put(RESUME_KEY, resumeAfter);
   return emitted.map((entry) => entry.data);
 }
 
 const CURSOR_KEY = 'lastPoll';
 const RECENT_KEY = 'driveRecent';
+const RESUME_KEY = 'driveResume';
 const MAX_ITEMS_PER_POLL = 500;
 const MAX_ITEMS_WITH_CONTENT = 50;
 const LATE_INDEX_WINDOW_MS = 5 * 60_000;
@@ -240,6 +381,10 @@ export const drivePoll = {
 type SeenEntry = { id: string; epoch: number };
 
 type DriveRecent = { from: number; seen: SeenEntry[] };
+
+type Optional<T> = { valid: true; value: T | undefined } | { valid: false };
+
+type DriveResume = { cursor: number; positions: (ListingPosition | null)[] };
 
 export type PollEntry = {
   id: string;

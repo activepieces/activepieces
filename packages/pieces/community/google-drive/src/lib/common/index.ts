@@ -120,6 +120,7 @@ async function listPages({
   deadline,
   wording,
   stopAt,
+  startToken,
 }: {
   drive: drive_v3.Drive;
   params: drive_v3.Params$Resource$Files$List;
@@ -127,17 +128,28 @@ async function listPages({
   deadline: number;
   wording: ListingWording;
   stopAt: ListingStop | undefined;
+  startToken?: string;
 }): Promise<PageListing> {
   const files: drive_v3.Schema$File[] = [];
-  let pageToken: string | undefined = undefined;
+  let pageToken: string | undefined = startToken;
   let pagesFetched = 0;
+  let closingKey: number | undefined = undefined;
   do {
     const canStop = stopAt !== undefined && pagesFetched > 0;
-    if (
-      canStop &&
-      (files.length >= stopAt.maxFiles || Date.now() >= deadline)
-    ) {
-      return { files, incomplete: false, truncated: true };
+    if (canStop) {
+      const lastKey = lastReadKey({
+        listing: { files, incomplete: false, truncated: true },
+        orderBy: params.orderBy,
+      });
+      if (Date.now() >= deadline) {
+        return { files, incomplete: false, truncated: true, nextPageToken: pageToken };
+      }
+      if (closingKey === undefined && files.length >= stopAt.maxFiles) {
+        closingKey = lastKey;
+      }
+      if (closingKey !== undefined && lastKey !== closingKey) {
+        return { files, incomplete: false, truncated: true, nextPageToken: pageToken };
+      }
     }
     const request: drive_v3.Params$Resource$Files$List = pageToken
       ? { ...params, pageToken }
@@ -156,7 +168,7 @@ async function listPages({
       }
     );
     if (page === undefined) {
-      return { files, incomplete: false, truncated: true };
+      return { files, incomplete: false, truncated: true, nextPageToken: pageToken };
     }
     if (page.incompleteSearch) {
       return { files, incomplete: true, truncated: false };
@@ -356,6 +368,54 @@ function mergeListings({
     : { files: merged, truncated: false };
 }
 
+function withPosition({
+  listing,
+  params,
+  nextPageToken,
+}: {
+  listing: DriveListing;
+  params: drive_v3.Params$Resource$Files$List;
+  nextPageToken: string | undefined;
+}): DriveListing {
+  if (!listing.truncated || !nextPageToken) {
+    return listing;
+  }
+  return { ...listing, position: { params: resumableParams(params), pageToken: nextPageToken } };
+}
+
+function resumedListing({
+  listing,
+  params,
+}: {
+  listing: PageListing;
+  params: drive_v3.Params$Resource$Files$List;
+}): DriveListing {
+  const merged = mergeListings({
+    listings: [{ ...listing, truncated: true }],
+    orderBy: params.orderBy,
+  });
+  return withPosition({
+    listing: merged,
+    params,
+    nextPageToken: listing.truncated ? listing.nextPageToken : undefined,
+  });
+}
+
+function resumableParams(
+  params: drive_v3.Params$Resource$Files$List
+): ResumableParams {
+  return {
+    q: params.q ?? undefined,
+    orderBy: params.orderBy ?? undefined,
+    corpora: params.corpora ?? undefined,
+    driveId: params.driveId ?? undefined,
+    fields: params.fields ?? undefined,
+    pageSize: params.pageSize ?? undefined,
+    supportsAllDrives: params.supportsAllDrives ?? undefined,
+    includeItemsFromAllDrives: params.includeItemsFromAllDrives ?? undefined,
+  };
+}
+
 async function listFilesAcrossCorpora({
   drive,
   params,
@@ -363,6 +423,7 @@ async function listFilesAcrossCorpora({
   deadline,
   wording = 'poll',
   stopAt,
+  resume,
 }: {
   drive: drive_v3.Drive;
   params: drive_v3.Params$Resource$Files$List;
@@ -370,8 +431,23 @@ async function listFilesAcrossCorpora({
   deadline: number | undefined;
   wording?: ListingWording;
   stopAt?: ListingStop;
+  resume?: ListingPosition;
 }): Promise<DriveListing> {
   const listingDeadline = deadline ?? Date.now() + LISTING_BUDGET_MS;
+  if (resume) {
+    const resumed = await listPages({
+      drive,
+      params: resume.params,
+      maxPages,
+      deadline: listingDeadline,
+      wording,
+      stopAt,
+      startToken: resume.pageToken,
+    }).catch(() => undefined);
+    if (resumed && !resumed.incomplete) {
+      return resumedListing({ listing: resumed, params: resume.params });
+    }
+  }
   const primary = await listPages({
     drive,
     params,
@@ -381,7 +457,11 @@ async function listFilesAcrossCorpora({
     stopAt,
   });
   if (!primary.incomplete) {
-    return mergeListings({ listings: [primary], orderBy: params.orderBy });
+    return withPosition({
+      listing: mergeListings({ listings: [primary], orderBy: params.orderBy }),
+      params,
+      nextPageToken: primary.nextPageToken,
+    });
   }
   if (params.corpora !== 'allDrives') {
     throw incompleteSearchError({ params, wording });
@@ -481,6 +561,7 @@ export const common = {
       includeTeamDrive?: boolean;
       deadline?: number;
       stopAt?: ListingStop;
+      resume?: ListingPosition;
     },
     order?: string
   ): Promise<DriveListing> {
@@ -536,6 +617,7 @@ export const common = {
       maxPages: search?.maxPages,
       deadline: search?.deadline,
       stopAt: search?.stopAt,
+      resume: search?.resume,
     });
   },
 
@@ -549,6 +631,7 @@ export const common = {
       maxPages?: number;
       deadline?: number;
       stopAt?: ListingStop;
+      resume?: ListingPosition;
     },
     order?: string
   ): Promise<DriveListing> {
@@ -580,6 +663,7 @@ export const common = {
       maxPages: search?.maxPages,
       deadline: search?.deadline,
       stopAt: search?.stopAt,
+      resume: search?.resume,
     });
   },
 };
@@ -590,10 +674,29 @@ type PageListing = {
   files: drive_v3.Schema$File[];
   incomplete: boolean;
   truncated: boolean;
+  nextPageToken?: string;
 };
 
 export type ListingStop = { maxFiles: number };
 
+export type ResumableParams = {
+  q?: string;
+  orderBy?: string;
+  corpora?: string;
+  driveId?: string;
+  fields?: string;
+  pageSize?: number;
+  supportsAllDrives?: boolean;
+  includeItemsFromAllDrives?: boolean;
+};
+
+export type ListingPosition = { params: ResumableParams; pageToken: string };
+
 export type DriveListing =
   | { files: drive_v3.Schema$File[]; truncated: false }
-  | { files: drive_v3.Schema$File[]; truncated: true; watermark: number };
+  | {
+      files: drive_v3.Schema$File[];
+      truncated: true;
+      watermark: number;
+      position?: ListingPosition;
+    };

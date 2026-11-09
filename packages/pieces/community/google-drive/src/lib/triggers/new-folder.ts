@@ -55,8 +55,8 @@ export const newFolder = createTrigger({
     return await drivePoll.poll({
       store: context.store,
       maxItems: drivePoll.maxItemsPerPoll({ includeFileContent: false }),
-      list: ({ from, maxFiles }) =>
-        common.getFolders(
+      list: async ({ from, maxFiles, positions }) => [
+        await common.getFolders(
           context.auth,
           {
             parent: context.propsValue.parentFolder,
@@ -65,9 +65,11 @@ export const newFolder = createTrigger({
             includeTeamDrive: context.propsValue.include_team_drives,
             deadline: startedAt + common.listingBudgetMs,
             stopAt: { maxFiles },
+            resume: positions[0],
           },
           'createdTime'
         ),
+      ],
       describe: ({ file }) => drivePoll.byCreatedTime(file),
     });
   },
