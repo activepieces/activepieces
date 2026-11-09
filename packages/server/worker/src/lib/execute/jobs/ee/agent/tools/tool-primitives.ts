@@ -6,7 +6,6 @@ import { z } from 'zod'
 
 export const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
 const CARD_ERROR_MAX_LENGTH = 300
-const BUILT_IN_TOOL_PREFIX = 'ap_'
 export const FETCH_URL_TIMEOUT_MS = 30 * 1_000
 export const MAX_FETCH_URL_BYTES = 5 * 1024 * 1024
 const READABLE_TEXT_CONTENT_TYPE = /^(text\/|application\/(json|xml|javascript|x-ndjson|[^;]*\+json|[^;]*\+xml))/i
@@ -82,12 +81,12 @@ export function resultMeta(result: unknown): Record<string, unknown> | undefined
     return isObject(result) && isObject(result['_meta']) ? result['_meta'] : undefined
 }
 
-export function withoutForeignApResource({ toolName, result }: { toolName: string, result: unknown }): unknown {
+export function withoutApResource(result: unknown): unknown {
     const meta = resultMeta(result)
-    if (toolName.startsWith(BUILT_IN_TOOL_PREFIX) || !isObject(result) || isNil(meta) || !('apResource' in meta)) {
+    if (!isObject(result) || isNil(meta) || !('apResource' in meta)) {
         return result
     }
-    const { apResource: _foreignResource, ...ownMeta } = meta
+    const { apResource: _untrustedResource, ...ownMeta } = meta
     return { ...result, _meta: ownMeta }
 }
 

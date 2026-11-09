@@ -21,16 +21,16 @@ export const lockModule: FastifyPluginAsyncZod = async (app) => {
                 return
             }
             const { resourceId, force, editorSessionId } = request.data
-            app.log.info({ resourceId }, '[Lock] LOCK_RESOURCE event received')
+            app.log.info({ resource: { id: resourceId } }, '[Lock] LOCK_RESOURCE event received')
             try {
                 const resource = await collaborativeResource.resolve({ resourceId, projectId })
                 if (isNil(resource)) {
-                    app.log.warn({ resourceId, user: { id: principal.id }, project: { id: projectId } }, '[LOCK_RESOURCE] Denied: resource does not belong to this project')
+                    app.log.warn({ resource: { id: resourceId }, user: { id: principal.id }, project: { id: projectId } }, '[LOCK_RESOURCE] Denied: resource does not belong to this project')
                     callback?.({ acquired: false, lock: null })
                     return
                 }
                 if (!websocketService.socketHasPermission({ socket, permission: resource.writePermission })) {
-                    app.log.debug({ resourceId, user: { id: principal.id }, project: { id: projectId } }, '[LOCK_RESOURCE] Denied: missing write permission')
+                    app.log.debug({ resource: { id: resourceId }, user: { id: principal.id }, project: { id: projectId } }, '[LOCK_RESOURCE] Denied: missing write permission')
                     callback?.({ acquired: false, lock: null })
                     return
                 }
@@ -119,7 +119,7 @@ async function releaseHeldLocks({ socket, userId, app }: ReleaseHeldLocksParams)
             editorSessionId,
         }))
         if (!isNil(error)) {
-            app.log.error({ error, resourceId, project: { id: projectId } }, '[releaseHeldLocks] Could not release a held lock, it stays tracked for the next leave')
+            app.log.error({ error, resource: { id: resourceId }, project: { id: projectId } }, '[releaseHeldLocks] Could not release a held lock, it stays tracked for the next leave')
             continue
         }
         untrackLockedResource({ socket, resourceId })

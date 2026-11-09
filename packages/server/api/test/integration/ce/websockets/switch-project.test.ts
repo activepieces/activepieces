@@ -6,6 +6,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 import * as lockServiceModule from '../../../../src/app/core/collaborative/lock/lock.service'
 import * as presenceServiceModule from '../../../../src/app/core/collaborative/presence/presence.service'
 import { websocketService } from '../../../../src/app/core/websockets.service'
+import * as projectMemberServiceModule from '../../../../src/app/ee/projects/project-members/project-member.service'
 import * as flowRunServiceModule from '../../../../src/app/flows/flow-run/flow-run-service'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
@@ -266,7 +267,61 @@ describe('Websocket SWITCH_PROJECT', () => {
         expect(conn.rooms.has(s.editorProjectId)).toBe(true)
         expect(await startedManualRunIn(conn)).toBe(s.editorProjectId)
     })
+
+    it('keeps serving the socket when the client sends a non-function ack', async () => {
+        const s = await setup()
+        const conn = await connect({ token: s.memberToken, projectId: null })
+
+        await expect(Promise.resolve(conn.handlers[WebsocketServerEvent.LOCK_RESOURCE]({ resourceId: s.editorFlowId }, 1))).resolves.toBeUndefined()
+        await expect(Promise.resolve(conn.handlers[WebsocketServerEvent.JOIN_TABLE_ROOM]({ tableId: apId() }, 1))).resolves.toBeUndefined()
+        await expect(Promise.resolve(conn.handlers[WebsocketServerEvent.SWITCH_PROJECT]({ projectId: s.editorProjectId }, 1))).resolves.toBeUndefined()
+
+        expect(conn.rooms.has(s.editorProjectId)).toBe(true)
+        expect(await send({ conn, event: WebsocketServerEvent.LOCK_RESOURCE, data: { resourceId: s.editorFlowId } })).toEqual({ acquired: true, lock: null })
+    })
+
+    it('ignores a switch that finishes after a newer switch already ran', async () => {
+        const s = await setup()
+        const conn = await connect({ token: s.memberToken, projectId: null })
+        const stalled = deferred()
+        const realProjectMemberService = projectMemberServiceModule.projectMemberService
+        vi.spyOn(projectMemberServiceModule, 'projectMemberService').mockImplementation((log) => {
+            const real = realProjectMemberService(log)
+            return {
+                ...real,
+                getRole: async (params) => {
+                    if (params.projectId === s.viewerProjectId) {
+                        await stalled.promise
+                    }
+                    return real.getRole(params)
+                },
+            }
+        })
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+
+        const older = switchProject({ conn, projectId: s.viewerProjectId })
+        const newer = switchProject({ conn, projectId: s.editorProjectId })
+        await vi.advanceTimersByTimeAsync(60_000)
+        vi.useRealTimers()
+        const newerResponse = await newer
+        stalled.resolve()
+        const olderResponse = await older
+
+        expect(newerResponse).toEqual({ success: true })
+        expect(olderResponse).toEqual({ success: false })
+        expect(conn.rooms.has(s.editorProjectId)).toBe(true)
+        expect(conn.rooms.has(s.viewerProjectId)).toBe(false)
+        expect(await startedManualRunIn(conn)).toBe(s.editorProjectId)
+    })
 })
+
+function deferred(): { promise: Promise<void>, resolve: () => void } {
+    const handle = { resolve: (): void => undefined }
+    const promise = new Promise<void>((resolve) => {
+        handle.resolve = resolve
+    })
+    return { promise, resolve: () => handle.resolve() }
+}
 
 async function setup(): Promise<Scenario> {
     const { mockPlatform: platform, mockProject: forbiddenProject, mockOwner: owner } = await mockAndSaveBasicSetup()
@@ -360,7 +415,7 @@ async function startedManualRunIn(conn: Connection): Promise<string | null> {
     return call ? call[0].projectId : null
 }
 
-type CapturedHandler = (data: unknown, callback?: (response: unknown) => void) => unknown
+type CapturedHandler = (data: unknown, callback?: unknown) => unknown
 
 type CapturedHandlers = Record<string, CapturedHandler>
 

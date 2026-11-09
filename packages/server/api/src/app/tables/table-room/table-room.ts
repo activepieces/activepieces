@@ -21,7 +21,6 @@ export const tableRoom = (log: FastifyBaseLogger) => ({
     },
 })
 
-
 function tableRoomName(tableId: string): string {
     return `table:${tableId}`
 }

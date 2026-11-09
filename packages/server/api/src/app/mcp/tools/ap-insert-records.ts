@@ -26,10 +26,9 @@ export const apInsertRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 if (isNil(table)) {
                     return tableNotFoundError(tableId)
                 }
-                const resolvedTableId = table.id
 
                 const allFieldNames = [...new Set(records.flatMap(r => Object.keys(r)))]
-                const { fields, fieldMap, errors } = await resolveFieldNamesForTable(mcp.projectId, resolvedTableId, allFieldNames)
+                const { fields, fieldMap, errors } = await resolveFieldNamesForTable(mcp.projectId, table.id, allFieldNames)
                 if (errors.length > 0) {
                     return { content: [{ type: 'text', text: `❌ Field resolution error:\n${errors.join('\n')}` }] }
                 }
@@ -42,7 +41,7 @@ export const apInsertRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 )
 
                 const result = await recordService.create({
-                    request: { tableId: resolvedTableId, records: convertedRecords },
+                    request: { tableId: table.id, records: convertedRecords },
                     projectId: mcp.projectId,
                     logger: log,
                     fields,
@@ -54,7 +53,7 @@ export const apInsertRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                         type: 'text',
                         text: `✅ Inserted ${result.length} record(s). IDs: ${result.map(r => r.id).join(', ')}`,
                     }],
-                    ...mcpUtils.apResourceMeta({ kind: 'table', id: resolvedTableId, projectId: mcp.projectId, op: 'update', label: table.name }),
+                    ...mcpUtils.apResourceMeta({ kind: 'table', id: table.id, projectId: mcp.projectId, op: 'update', label: table.name }),
                 }
             }
             catch (err) {

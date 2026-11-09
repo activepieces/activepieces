@@ -1,6 +1,8 @@
 import { AgentMcpTool, AgentToolType, McpAuthType, McpProtocol } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { tool, Tool, ToolSet } from 'ai'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 import { agentMcpClient } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-mcp-client'
 
 const { mockCreateMCPClient } = vi.hoisted(() => ({
@@ -204,18 +206,70 @@ describe('agentMcpClient.withToolTimeouts resource tags', () => {
         expect(result._meta).toEqual({ apResource })
     })
 
-    it('drops a resource tag sent by a third-party tool and keeps its other meta', async () => {
+    it('leaves the tag check to the source filter', async () => {
         const smallResult = { content: [{ type: 'text', text: 'ok' }], _meta: { apResource, traceId: 't-1' } }
-        const bigResult = { content: [{ type: 'text', text: 'x'.repeat(70 * 1024) }], _meta: { apResource, traceId: 't-1' } }
         const saveLargeResult = vi.fn().mockResolvedValue('file-1')
 
         const small = await runTool({ toolName: ATTIO_TOOL, toolResult: smallResult, saveLargeResult })
-        const big = await runTool({ toolName: ATTIO_TOOL, toolResult: bigResult, saveLargeResult })
 
-        expect(small._meta).toEqual({ traceId: 't-1' })
-        expect(big._meta).toEqual({ traceId: 't-1' })
+        expect(small._meta).toEqual({ apResource, traceId: 't-1' })
     })
 })
+
+describe('agentMcpClient.withApResourceFromApMcpOnly', () => {
+    const apResource = { v: 1, kind: 'table', id: 'table-1', projectId: 'project-1', op: 'update', label: 'Leads' }
+    const tagged = { content: [{ type: 'text', text: 'ok' }], _meta: { apResource, traceId: 't-1' } }
+
+    it('keeps the tag of an Activepieces MCP tool', async () => {
+        const apMcpToolSet = { [AP_TOOL]: resultTool(tagged) }
+
+        const tools = agentMcpClient.withApResourceFromApMcpOnly({ ownTools: apMcpToolSet, apMcpToolSet, stepMcpTools: {} })
+
+        expect(await executeTool({ tools, name: AP_TOOL })).toEqual(tagged)
+    })
+
+    it('drops the tag of a connector tool served through the Activepieces MCP server', async () => {
+        const apMcpToolSet = { [ATTIO_TOOL]: resultTool(tagged) }
+
+        const tools = agentMcpClient.withApResourceFromApMcpOnly({ ownTools: apMcpToolSet, apMcpToolSet, stepMcpTools: {} })
+
+        expect(await executeTool({ tools, name: ATTIO_TOOL })).toEqual({ ...tagged, _meta: { traceId: 't-1' } })
+    })
+
+    it('drops the tag of a local tool whose name starts with ap_', async () => {
+        const tools = agentMcpClient.withApResourceFromApMcpOnly({ ownTools: { ap_run_code: resultTool(tagged) }, apMcpToolSet: {}, stepMcpTools: {} })
+
+        expect(await executeTool({ tools, name: 'ap_run_code' })).toEqual({ ...tagged, _meta: { traceId: 't-1' } })
+    })
+
+    it('drops the tag sent by a step MCP server named ap', async () => {
+        mockCreateMCPClient.mockResolvedValueOnce(fakeMcpClient({ insert_records: resultTool(tagged) }))
+        const { log } = createTestLogger()
+        const apMcpToolSet = { [AP_TOOL]: resultTool(tagged) }
+
+        const { stepToolName, result } = await agentMcpClient.withStepMcpTools({
+            tools: [agentMcpTool({ toolName: 'ap' })],
+            skip: false,
+            log,
+            run: async (stepMcpTools) => {
+                const tools = agentMcpClient.withApResourceFromApMcpOnly({ ownTools: apMcpToolSet, apMcpToolSet, stepMcpTools })
+                const [name] = Object.keys(stepMcpTools)
+                return { stepToolName: name, result: await executeTool({ tools, name }) }
+            },
+        })
+
+        expect(stepToolName.startsWith('ap_')).toBe(true)
+        expect(result).toEqual({ ...tagged, _meta: { traceId: 't-1' } })
+    })
+})
+
+function resultTool(result: unknown): Tool {
+    return tool({ inputSchema: z.object({}), execute: async () => result })
+}
+
+async function executeTool({ tools, name }: { tools: ToolSet, name: string }): Promise<unknown> {
+    return tools[name].execute?.({}, { toolCallId: 'call-1', messages: [], context: undefined })
+}
 
 async function runTool({ toolName, toolResult, saveLargeResult }: { toolName: string, toolResult: unknown, saveLargeResult: (args: { json: string, fileName: string }) => Promise<string | null> }): Promise<{ content: { text: string }[], _meta?: unknown }> {
     const wrapped = agentMcpClient.withToolTimeouts({

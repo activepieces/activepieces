@@ -33,12 +33,13 @@ const projectLeaveHandlers = new Map<string, ProjectLeaveHandler>()
 
 const pendingWorkBySocket = new WeakMap<Socket, Promise<void>>()
 
-const QUEUED_WORK_TIME_LIMIT_MS = 15_000
+const switchGenerationBySocket = new WeakMap<Socket, number>()
+
+const QUEUED_WORK_TIME_LIMIT_MS = 5_000
 
 export const websocketService = {
     to: (workerId: string) => app!.io.to(workerId),
     socketHasPermission: ({ socket, permission }: SocketHasPermissionParams): boolean => hasPermission(projectBySocket.get(socket)?.role, permission),
-    getProjectId: (socket: Socket): string | null => projectBySocket.get(socket)?.projectId ?? null,
     onProjectLeave({ name, handler }: OnProjectLeaveParams): void {
         projectLeaveHandlers.set(name, handler)
     },
@@ -100,18 +101,25 @@ async function attachListeners({ socket, log }: AttachListenersParams): Promise<
             })
             await socket.join(principal.id)
             socket.once('disconnect', () => runInSocketOrder({ socket, log, work: () => leaveCurrentProject({ socket, userId: principal.id, log }) }))
-            socket.on(WebsocketServerEvent.SWITCH_PROJECT, async (data: unknown, callback?: (response: SwitchProjectResponse) => void) => {
-                const response = await runInSocketOrder({ socket, log, work: () => switchProject({ socket, userId: principal.id, data, log }) })
-                callback?.(response)
+            socket.on(WebsocketServerEvent.SWITCH_PROJECT, (data: unknown, callback?: unknown) => {
+                const ack = toAck(callback)
+                return guarded({
+                    log,
+                    work: async () => {
+                        const response = await runInSocketOrder({ socket, log, work: () => switchProject({ socket, userId: principal.id, data, log }) })
+                        ack?.(response)
+                    },
+                })
             })
             for (const event of Object.values(WebsocketServerEvent)) {
                 const handler = listener[PrincipalType.USER][event]
                 if (isNil(handler)) {
                     continue
                 }
-                socket.on(toSocketEvent(event), async (data: unknown, callback?: (data: unknown) => void) => {
-                    const work = (): Promise<void> => runUserEvent({ socket, event, handler, data, principal, callback, log })
-                    return eventsOrderedWithSwitch.has(event) ? runInSocketOrder({ socket, work, log }) : work()
+                socket.on(toSocketEvent(event), (data: unknown, callback?: unknown) => {
+                    const ack = toAck(callback)
+                    const work = (): Promise<void> => runUserEvent({ socket, event, handler, data, principal, callback: ack, log })
+                    return guarded({ log, work: eventsOrderedWithSwitch.has(event) ? () => runInSocketOrder({ socket, work, log }) : work })
                 })
             }
             break
@@ -144,6 +152,21 @@ async function attachListeners({ socket, log }: AttachListenersParams): Promise<
             })
         }
     }
+}
+
+function toAck(callback: unknown): Ack | undefined {
+    if (typeof callback !== 'function') {
+        return undefined
+    }
+    return (response: unknown): void => {
+        callback(response)
+    }
+}
+
+function guarded({ work, log }: GuardedParams): Promise<void> {
+    const running = work()
+    rejectedPromiseHandler(running, log)
+    return running.catch(() => undefined)
 }
 
 function toSocketEvent(event: WebsocketServerEvent): string {
@@ -210,21 +233,45 @@ async function switchProject({ socket, userId, data, log }: SwitchProjectParams)
         return { success: false }
     }
     const { projectId } = request.data
-    const { error } = await tryCatch(async () => {
+    const generation = (switchGenerationBySocket.get(socket) ?? 0) + 1
+    switchGenerationBySocket.set(socket, generation)
+    const isStale = (): boolean => switchGenerationBySocket.get(socket) !== generation
+    const { data: outcome, error } = await tryCatch(async (): Promise<SwitchOutcome> => {
         const role = await validateProjectId({ userId, projectId, log })
+        if (isStale()) {
+            return 'stale'
+        }
         const previous = projectBySocket.get(socket)
         if (!isNil(previous) && previous.projectId !== projectId) {
             await runProjectLeaveHandlers({ socket, userId, projectId: previous.projectId, log })
             await socket.leave(previous.projectId)
         }
+        if (isStale()) {
+            return 'stale'
+        }
         await socket.join(projectId)
+        if (isStale()) {
+            await leaveUnlessCurrent({ socket, projectId })
+            return 'stale'
+        }
         projectBySocket.set(socket, { projectId, role })
+        return 'switched'
     })
     if (!isNil(error)) {
         log.warn({ error, user: { id: userId }, project: { id: projectId } }, 'Websocket project switch rejected')
         return { success: false }
     }
+    if (outcome === 'stale') {
+        log.warn({ user: { id: userId }, project: { id: projectId } }, 'Websocket project switch dropped: a newer switch already ran')
+        return { success: false }
+    }
     return { success: true }
+}
+
+async function leaveUnlessCurrent({ socket, projectId }: LeaveUnlessCurrentParams): Promise<void> {
+    if (projectBySocket.get(socket)?.projectId !== projectId) {
+        await socket.leave(projectId)
+    }
 }
 
 async function leaveCurrentProject({ socket, userId, log }: LeaveCurrentProjectParams): Promise<void> {
@@ -267,6 +314,20 @@ async function validateProjectId({ userId, projectId, log }: ValidateProjectIdAr
 
 function hasPermission(role: ProjectRole | undefined, permission: Permission): boolean {
     return !isNil(role) && (role.permissions ?? []).includes(permission)
+}
+
+type Ack = (response: unknown) => void
+
+type SwitchOutcome = 'switched' | 'stale'
+
+type GuardedParams = {
+    work: () => Promise<void>
+    log: FastifyBaseLogger
+}
+
+type LeaveUnlessCurrentParams = {
+    socket: Socket
+    projectId: string
 }
 
 type ValidateProjectIdArgs = {
@@ -324,7 +385,7 @@ type RunUserEventParams = {
     handler: WebsocketListener<unknown, PrincipalType.USER>
     data: unknown
     principal: PrincipalForType<PrincipalType.USER>
-    callback?: (data: unknown) => void
+    callback?: Ack
     log: FastifyBaseLogger
 }
 

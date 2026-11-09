@@ -90,50 +90,6 @@ function RouteTableStateProvider({
 }) {
   const queryClient = useQueryClient();
   const [refreshKey, setRefreshKey] = useState(0);
-  const {
-    data: table,
-    isLoading: isTableLoading,
-    error: tableError,
-  } = useQuery({
-    queryKey: tableQueryKeys.table(tableId),
-    queryFn: () => snapshotOf(() => tablesApi.getById(tableId!)),
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    staleTime: 0,
-    gcTime: 0,
-  });
-
-  const {
-    data: fields,
-    isLoading: isFieldsLoading,
-    error: fieldsError,
-  } = useQuery({
-    queryKey: tableQueryKeys.fields(tableId),
-    queryFn: () => snapshotOf(() => fieldsApi.list({ tableId: tableId! })),
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    staleTime: 0,
-    gcTime: 0,
-  });
-
-  const {
-    data: records,
-    isLoading: isRecordsLoading,
-    error: recordsError,
-  } = useQuery({
-    queryKey: tableQueryKeys.records(tableId),
-    queryFn: () =>
-      snapshotOf(() =>
-        recordsApi
-          .list({ tableId: tableId!, limit: 99999999, cursor: undefined })
-          .then((page) => page.data),
-      ),
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    staleTime: 0,
-    gcTime: 0,
-  });
-
   const [changes] = useState(createChangeFeed);
   const [deleted, setDeleted] = useState(false);
   const onChange = useCallback(
@@ -165,7 +121,53 @@ function RouteTableStateProvider({
     },
     [queryClient, tableId],
   );
-  useTableRoom({ tableId, onChange, onJoined: refetchMissed });
+  const room = useTableRoom({ tableId, onChange, onJoined: refetchMissed });
+  const {
+    data: table,
+    isLoading: isTableLoading,
+    error: tableError,
+  } = useQuery({
+    queryKey: tableQueryKeys.table(tableId),
+    queryFn: () => snapshotOf(() => tablesApi.getById(tableId!)),
+    enabled: room.ready,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    staleTime: 0,
+    gcTime: 0,
+  });
+
+  const {
+    data: fields,
+    isLoading: isFieldsLoading,
+    error: fieldsError,
+  } = useQuery({
+    queryKey: tableQueryKeys.fields(tableId),
+    queryFn: () => snapshotOf(() => fieldsApi.list({ tableId: tableId! })),
+    enabled: room.ready,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    staleTime: 0,
+    gcTime: 0,
+  });
+
+  const {
+    data: records,
+    isLoading: isRecordsLoading,
+    error: recordsError,
+  } = useQuery({
+    queryKey: tableQueryKeys.records(tableId),
+    queryFn: () =>
+      snapshotOf(() =>
+        recordsApi
+          .list({ tableId: tableId!, limit: 99999999, cursor: undefined })
+          .then((page) => page.data),
+      ),
+    enabled: room.ready,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    staleTime: 0,
+    gcTime: 0,
+  });
 
   // rebuilds the table store from freshly fetched server state without
   // reloading the document (a full reload breaks the embed SDK handshake
@@ -183,7 +185,7 @@ function RouteTableStateProvider({
     setRefreshKey((key) => key + 1);
   }, [queryClient, tableId]);
 
-  if (isTableLoading || isFieldsLoading || isRecordsLoading) {
+  if (!room.ready || isTableLoading || isFieldsLoading || isRecordsLoading) {
     return <RouteLoadingBar />;
   }
 

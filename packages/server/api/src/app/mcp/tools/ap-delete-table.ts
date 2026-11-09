@@ -29,6 +29,7 @@ export const apDeleteTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                 await tableService.delete({
                     projectId: mcp.projectId,
                     id: tableId,
+                    editorSessionId: null,
                 })
 
                 return {

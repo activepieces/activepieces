@@ -387,7 +387,7 @@ function pageContextForRun({ pageContext, runProjectId, log }: { pageContext: un
     }
     const parsed = AgentPageContext.safeParse(pageContext)
     if (!parsed.success) {
-        log.debug({ fields: parsed.error.issues.map((issue) => issue.path.map(String).join('.')) }, '[agentConversationController] Page context dropped: it does not match the schema')
+        log.debug({ pageContext: { invalidFields: parsed.error.issues.map((issue) => issue.path.map(String).join('.')) } }, '[agentConversationController] Page context dropped: it does not match the schema')
         return undefined
     }
     if (parsed.data.projectId !== runProjectId) {

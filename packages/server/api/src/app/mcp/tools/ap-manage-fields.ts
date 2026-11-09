@@ -30,9 +30,8 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                 if (isNil(table)) {
                     return tableNotFoundError(tableId)
                 }
-                const resolvedTableId = table.id
                 const fieldsChanged = (text: string): McpToolResult => {
-                    return { content: [{ type: 'text', text }], ...mcpUtils.apResourceMeta({ kind: 'table', id: resolvedTableId, projectId: mcp.projectId, op: 'update', label: table.name }) }
+                    return { content: [{ type: 'text', text }], ...mcpUtils.apResourceMeta({ kind: 'table', id: table.id, projectId: mcp.projectId, op: 'update', label: table.name }) }
                 }
 
                 switch (operation) {
@@ -48,12 +47,13 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                         }
 
                         const request = type === FieldType.STATIC_DROPDOWN
-                            ? { name, type, tableId: resolvedTableId, data: { options: (options ?? []).map(v => ({ value: v })) } }
-                            : { name, type, tableId: resolvedTableId }
+                            ? { name, type, tableId: table.id, data: { options: (options ?? []).map(v => ({ value: v })) } }
+                            : { name, type, tableId: table.id }
 
                         const field = await fieldService.create({
                             projectId: mcp.projectId,
                             request,
+                            editorSessionId: null,
                         })
                         return fieldsChanged(`✅ Field added: ${formatFieldInfo(field)}`)
                     }
@@ -65,13 +65,14 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                             return { content: [{ type: 'text', text: '❌ name is required for UPDATE operation' }] }
                         }
                         const existing = await fieldService.getById({ id: fieldId, projectId: mcp.projectId })
-                        if (existing.tableId !== resolvedTableId) {
-                            return { content: [{ type: 'text', text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${resolvedTableId})` }] }
+                        if (existing.tableId !== table.id) {
+                            return { content: [{ type: 'text', text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${table.id})` }] }
                         }
                         const field = await fieldService.update({
                             id: fieldId,
                             projectId: mcp.projectId,
                             request: { name },
+                            editorSessionId: null,
                         })
                         return fieldsChanged(`✅ Field renamed: ${formatFieldInfo(field)}`)
                     }
@@ -80,12 +81,13 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                             return { content: [{ type: 'text', text: '❌ fieldId is required for DELETE operation' }] }
                         }
                         const toDelete = await fieldService.getById({ id: fieldId, projectId: mcp.projectId })
-                        if (toDelete.tableId !== resolvedTableId) {
-                            return { content: [{ type: 'text', text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${resolvedTableId})` }] }
+                        if (toDelete.tableId !== table.id) {
+                            return { content: [{ type: 'text', text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${table.id})` }] }
                         }
                         await fieldService.delete({
                             id: fieldId,
                             projectId: mcp.projectId,
+                            editorSessionId: null,
                         })
                         return fieldsChanged(`✅ Field "${toDelete.name}" deleted successfully.`)
                     }

@@ -70,10 +70,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         },
                     })
 
-                    await fieldService.validateCount({ projectId, tableId: table.id, insertCount: operation.tableState.fields.length })
-                    await Promise.all(operation.tableState.fields.map(async (field, position) => {
-                        await fieldService.createFromState({ projectId, field, tableId: table.id, position })
-                    }))
+                    await fieldService.createAllFromState({ projectId, tableId: table.id, fields: operation.tableState.fields })
                     break
                 }
                 case TableOperationType.UPDATE_TABLE: {
@@ -83,37 +80,9 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         request: {
                             name: operation.newTableState.name,
                         },
+                        editorSessionId: null,
                     })
-
-                    const fields = await fieldService.getAll({
-                        projectId,
-                        tableId: table.id,
-                    })
-
-                    const newFieldsCount = operation.newTableState.fields.filter((field) => !fields.some((f) => f.externalId === field.externalId)).length
-                    await fieldService.validateCount({ projectId, tableId: table.id, insertCount: newFieldsCount })
-                    await Promise.all(operation.newTableState.fields.map(async (field, position) => {
-                        const existingField = fields.find((f) => f.externalId === field.externalId)
-                        if (!isNil(existingField)) {
-                            await fieldService.update({
-                                projectId,
-                                id: existingField.id,
-                                request: field,
-                            })
-                        }
-                        else {
-                            await fieldService.createFromState({ projectId, field, tableId: table.id, position })
-                        }
-                    }))
-
-                    const fieldsToDelete = fields.filter((f) => !operation.newTableState.fields.some((nf) => nf.externalId === f.externalId))
-
-                    await Promise.all(fieldsToDelete.map(async (field) => {
-                        await fieldService.delete({
-                            id: field.id,
-                            projectId,
-                        })
-                    }))
+                    await fieldService.syncFromState({ projectId, tableId: table.id, fields: operation.newTableState.fields })
                     break
                 }
                 case TableOperationType.DELETE_TABLE: {
@@ -124,6 +93,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                     await tableService.delete({
                         id: table.id,
                         projectId,
+                        editorSessionId: null,
                     })
                     break
                 }
