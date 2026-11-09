@@ -1,5 +1,11 @@
+import { isNil } from '@activepieces/core-utils';
 import { Template, TemplateType } from '@activepieces/shared';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  skipToken,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -19,10 +25,10 @@ export const templatesHooks = {
     });
   },
 
-  useTemplate: (id: string) => {
+  useTemplate: (id: string | undefined) => {
     return useQuery<Template, Error>({
       queryKey: ['template', id],
-      queryFn: () => templatesApi.getTemplate(id),
+      queryFn: isNil(id) ? skipToken : () => templatesApi.getTemplate(id),
     });
   },
 
