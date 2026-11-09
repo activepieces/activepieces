@@ -9,6 +9,10 @@ import { collaborativeResource } from '../collaborative-resource'
 import { lockService } from './lock.service'
 
 export const lockModule: FastifyPluginAsyncZod = async (app) => {
+    websocketService.setProjectLeaveHandler({
+        name: 'lock',
+        handler: ({ socket, userId, projectId }) => releaseHeldLocks({ socket, userId, projectId, app }),
+    })
     websocketService.addListener(PrincipalType.USER, WebsocketServerEvent.LOCK_RESOURCE, (socket) => {
         return async (data: unknown, principal, projectId, callback) => {
             const request = LockResourceRequest.safeParse(data)
@@ -52,7 +56,7 @@ export const lockModule: FastifyPluginAsyncZod = async (app) => {
                     })
                 }
 
-                registerLockDisconnectHandler({ socket, userId: principal.id, projectId, app })
+                registerLockDisconnectHandler({ socket, userId: principal.id, app })
 
                 callback?.(result)
             }
@@ -106,27 +110,36 @@ function untrackLockedResource({ socket, resourceId }: UntrackParams): void {
     lockedResourcesBySocket.set(socket, new Map([...held].filter(([id]) => id !== resourceId)))
 }
 
-function registerLockDisconnectHandler({ socket, userId, projectId, app }: RegisterDisconnectHandlerParams): void {
+function registerLockDisconnectHandler({ socket, userId, app }: RegisterDisconnectHandlerParams): void {
     if (socketsWithLockDisconnectHandler.has(socket)) {
         return
     }
     socketsWithLockDisconnectHandler.add(socket)
     socket.once('disconnect', async () => {
-        const held = lockedResourcesBySocket.get(socket) ?? new Map<string, string | null>()
-        for (const [resourceId, editorSessionId] of held) {
-            const released = await lockService(app.log).release({
-                resourceId,
-                projectId,
-                userId,
-                editorSessionId,
-            })
-            if (released) {
-                websocketService.to(projectId).emit(WebsocketClientEvent.RESOURCE_UNLOCKED, {
-                    resourceId,
-                })
-            }
+        const projectId = websocketService.getProjectId(socket)
+        if (isNil(projectId)) {
+            return
         }
+        await releaseHeldLocks({ socket, userId, projectId, app })
     })
+}
+
+async function releaseHeldLocks({ socket, userId, projectId, app }: ReleaseHeldLocksParams): Promise<void> {
+    const held = lockedResourcesBySocket.get(socket) ?? new Map<string, string | null>()
+    lockedResourcesBySocket.delete(socket)
+    for (const [resourceId, editorSessionId] of held) {
+        const released = await lockService(app.log).release({
+            resourceId,
+            projectId,
+            userId,
+            editorSessionId,
+        })
+        if (released) {
+            websocketService.to(projectId).emit(WebsocketClientEvent.RESOURCE_UNLOCKED, {
+                resourceId,
+            })
+        }
+    }
 }
 
 type TrackParams = {
@@ -141,6 +154,12 @@ type UntrackParams = {
 }
 
 type RegisterDisconnectHandlerParams = {
+    socket: Socket
+    userId: string
+    app: FastifyInstance
+}
+
+type ReleaseHeldLocksParams = {
     socket: Socket
     userId: string
     projectId: string
