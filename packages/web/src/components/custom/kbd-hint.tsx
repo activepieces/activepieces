@@ -9,7 +9,7 @@ export function KbdHint({
   children: React.ReactNode;
 }) {
   return (
-    <kbd className={cn('font-sans text-xs text-gray-9', className)}>
+    <kbd className={cn('font-sans text-xs text-gray-11', className)}>
       {children}
     </kbd>
   );

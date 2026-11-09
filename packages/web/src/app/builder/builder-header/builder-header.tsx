@@ -138,7 +138,7 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
                 <div
                   data-ai-field={`flow-name:${flow.id}`}
                   className={cn(
-                    '-mx-1 flex min-w-0 items-center gap-1 rounded-md px-1 text-sm',
+                    'flex min-w-0 items-center gap-1 rounded-md px-1 text-sm',
                     {
                       'max-w-[500px]': !isEditingFlowName || readonly,
                     },
