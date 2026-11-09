@@ -33,6 +33,7 @@ function usePresence({ resourceId }: { resourceId: string }): PresenceUser[] {
   }, [resourceId, socket, currentUserId]);
 
   useEffect(() => {
+    let active = true;
     const joinKey = Symbol('presence-join');
     const heartbeatKey = Symbol('presence-heartbeat');
     emitInProject({
@@ -42,6 +43,9 @@ function usePresence({ resourceId }: { resourceId: string }): PresenceUser[] {
           WebsocketServerEvent.JOIN_PRESENCE,
           { resourceId },
           (response: { users: PresenceUser[] }) => {
+            if (!active) {
+              return;
+            }
             setActiveUsers(
               response.users.filter((u) => u.userId !== currentUserId),
             );
@@ -58,6 +62,7 @@ function usePresence({ resourceId }: { resourceId: string }): PresenceUser[] {
     }, 30_000);
 
     return () => {
+      active = false;
       clearInterval(heartbeat);
       dropHeldEmits([joinKey, heartbeatKey]);
       socket.emit(WebsocketServerEvent.LEAVE_PRESENCE, { resourceId });
