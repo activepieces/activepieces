@@ -3746,7 +3746,7 @@
   "Invite teammates, get {credits} credits each": "Invite teammates, get {credits} credits each",
   "{claimed} of {max} rewards earned": "{claimed} of {max} rewards earned",
   "Invite a teammate for +{credits}": "Invite a teammate for +{credits}",
-  "Each new teammate who joins earns you {credits} credits ({left} rewards left).": "Each new teammate who joins earns you {credits} credits ({left} rewards left).",
+  "Each new teammate who joins earns you {credits} credits ({left, plural, =1 {1 reward left} other {# rewards left}}).": "Each new teammate who joins earns you {credits} credits ({left, plural, =1 {1 reward left} other {# rewards left}}).",
   "Bonus credits from invites": "Bonus credits from invites",
   "+{credits} credits: {email} joined your team": "+{credits} credits: {email} joined your team"
 }

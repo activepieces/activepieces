@@ -17,7 +17,7 @@ export function InviteRewardHint() {
       <Gift className="size-4 shrink-0 text-accent-11" />
       <span>
         {t(
-          'Each new teammate who joins earns you {credits} credits ({left} rewards left).',
+          'Each new teammate who joins earns you {credits} credits ({left, plural, =1 {1 reward left} other {# rewards left}}).',
           {
             credits: billingUtils.formatCredits(rewards.creditsPerInvite),
             left: rewards.rewardsLeft,
