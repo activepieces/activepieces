@@ -1,16 +1,8 @@
-import { tryCatch } from '@activepieces/core-utils';
-import { AgentConversation, SeekPage } from '@activepieces/shared';
-import {
-  InfiniteData,
-  QueryClient,
-  QueryKey,
-  useInfiniteQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { AgentConversation } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Ellipsis, Pencil, Search, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -22,13 +14,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
-import { chatApi } from '@/features/chat/lib/chat-api';
-import { chatHistoryUtils } from '@/features/chat/lib/chat-history-utils';
 import {
-  chatPendingDeletes,
-  usePendingDeletes,
-} from '@/features/chat/lib/chat-pending-deletes';
-import { chatQueryKeys } from '@/features/chat/lib/chat-query-keys';
+  chatConversations,
+  useChatConversations,
+} from '@/features/chat/lib/chat-conversations';
+import { chatHistoryUtils } from '@/features/chat/lib/chat-history-utils';
+import { chatPendingDeletes } from '@/features/chat/lib/chat-pending-deletes';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { useConversationIndicators } from '@/features/chat/lib/use-conversation-indicators';
 import { cn } from '@/lib/utils';
@@ -52,7 +43,7 @@ export function ChatHistoryList({
   const listRef = useRef<HTMLDivElement>(null);
 
   const {
-    data,
+    conversations: all,
     isLoading,
     isError,
     isSuccess,
@@ -61,28 +52,7 @@ export function ChatHistoryList({
     isFetching,
     isFetchNextPageError,
     fetchNextPage,
-  } = useInfiniteQuery<
-    SeekPage<AgentConversation>,
-    Error,
-    InfiniteData<SeekPage<AgentConversation>>,
-    QueryKey,
-    string | undefined
-  >({
-    queryKey: chatQueryKeys.conversationList(),
-    initialPageParam: undefined,
-    getNextPageParam: (lastPage) => lastPage.next ?? undefined,
-    queryFn: ({ pageParam }) =>
-      chatApi.listConversations({ limit: PAGE_SIZE, cursor: pageParam }),
-  });
-
-  const pendingDeletes = usePendingDeletes((state) => state.ids);
-  const all = useMemo(
-    () =>
-      (data?.pages.flatMap((page) => page.data) ?? []).filter(
-        (conversation) => !pendingDeletes.has(conversation.id),
-      ),
-    [data, pendingDeletes],
-  );
+  } = useChatConversations();
 
   const { getIndicator, markRead } = useConversationIndicators({
     conversations: all,
@@ -94,11 +64,7 @@ export function ChatHistoryList({
   const trimmedQuery = query.trim().toLowerCase();
   const shown = useMemo(
     () =>
-      trimmedQuery
-        ? all.filter((conversation) =>
-            (conversation.title ?? '').toLowerCase().includes(trimmedQuery),
-          )
-        : all,
+      chatHistoryUtils.filterByTitle({ conversations: all, query: trimmedQuery }),
     [all, trimmedQuery],
   );
   const groups = chatHistoryUtils.groupByDay({
@@ -128,19 +94,12 @@ export function ChatHistoryList({
     const next = title.trim();
     const current = all.find((conversation) => conversation.id === id);
     if (!next || !current || next === current.title) return;
-    setTitleInCaches({ queryClient, id, title: next });
-    const { error } = await tryCatch(() =>
-      chatApi.updateConversation(id, { title: next }),
-    );
-    if (error) {
-      toast.error(t('Failed to rename conversation'));
-      queryClient
-        .invalidateQueries({ queryKey: chatQueryKeys.conversation(id) })
-        .catch(() => undefined);
-    }
-    queryClient
-      .invalidateQueries({ queryKey: chatQueryKeys.allConversationLists() })
-      .catch(() => undefined);
+    await chatConversations.rename({
+      queryClient,
+      id,
+      title: next,
+      previousTitle: current.title ?? null,
+    });
   };
 
   const skippedLoadMoreRef = useRef(false);
@@ -321,7 +280,7 @@ function HistoryRow({
         className={cn(
           'flex h-9 w-full items-center gap-3 rounded-md px-3 text-left text-sm text-gray-12 outline-hidden transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 focus-visible:bg-gray-3 focus-visible:ring-2 focus-visible:ring-gray-8 group-has-[[data-state=open]]:bg-gray-3 [@media(hover:none)]:pr-10',
           selected &&
-            'bg-gray-3 font-medium hover:bg-gray-4 focus-visible:bg-gray-4 group-has-[[data-state=open]]:bg-gray-4',
+            'bg-gray-3 hover:bg-gray-4 focus-visible:bg-gray-4 group-has-[[data-state=open]]:bg-gray-4',
         )}
       >
         <TextWithTooltip tooltipMessage={title}>
@@ -394,34 +353,5 @@ function HistorySkeleton() {
   );
 }
 
-function setTitleInCaches({
-  queryClient,
-  id,
-  title,
-}: {
-  queryClient: QueryClient;
-  id: string;
-  title: string;
-}): void {
-  queryClient.setQueriesData<InfiniteData<SeekPage<AgentConversation>>>(
-    { queryKey: chatQueryKeys.allConversationLists() },
-    (lists) =>
-      lists && {
-        ...lists,
-        pages: lists.pages.map((page) => ({
-          ...page,
-          data: page.data.map((conversation) =>
-            conversation.id === id ? { ...conversation, title } : conversation,
-          ),
-        })),
-      },
-  );
-  queryClient.setQueryData<AgentConversation | null>(
-    chatQueryKeys.conversation(id),
-    (cached) => (cached ? { ...cached, title } : cached),
-  );
-}
-
-const PAGE_SIZE = 100;
 const LOAD_MORE_OFFSET_PX = 200;
 const SKELETON_WIDTHS = ['w-2/3', 'w-1/2', 'w-3/4', 'w-2/5'];
