@@ -310,7 +310,7 @@ function ChoiceBody({
   return (
     <div>
       {useIconGrid ? (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-2 @xs/chat:grid-cols-3">
           {options.map((option) => {
             const selected = answer === option.label;
             return (
