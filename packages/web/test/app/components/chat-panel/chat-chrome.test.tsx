@@ -73,8 +73,8 @@ vi.mock('motion/react', () => ({
   useReducedMotion: () => true,
 }));
 
-vi.mock('@/app/routes/chat-with-ai/conversation-list', () => ({
-  ConversationList: () => <nav aria-label="Chat history" />,
+vi.mock('@/app/components/chat-panel/chat-history-list', () => ({
+  ChatHistoryList: () => <nav aria-label="Chat history" />,
 }));
 
 vi.mock('@/components/ui/dropdown-menu', async () => {
@@ -251,6 +251,17 @@ describe('ChatChrome', () => {
 
     expect(toggle.getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByRole('button', { name: 'Hide history' })).toBe(toggle);
+  });
+
+  it('shows a way back to the chat while History is open', () => {
+    getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
+    renderChrome();
+    fireEvent.click(screen.getByRole('button', { name: 'History' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to chat' }));
+
+    expect(historyList()).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Back to chat' })).toBeNull();
   });
 
   it('offers Follow along before the first message', () => {

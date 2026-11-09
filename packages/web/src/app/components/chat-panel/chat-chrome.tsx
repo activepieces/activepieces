@@ -3,6 +3,7 @@ import { AgentConversation } from '@activepieces/shared';
 import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
+  ArrowLeft,
   Ellipsis,
   EyeOff,
   History,
@@ -22,7 +23,6 @@ import { toast } from 'sonner';
 import { SettingsHubDialog } from '@/app/components/settings-hub/settings-hub-dialog';
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
 import { ChatAppLinks } from '@/app/routes/chat-with-ai/components/chat-app-links';
-import { ConversationList } from '@/app/routes/chat-with-ai/conversation-list';
 import { KbdHint, modShortcut } from '@/components/custom/kbd-hint';
 import { Button } from '@/components/ui/button';
 import {
@@ -58,6 +58,8 @@ import {
 import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
 import { cn } from '@/lib/utils';
 
+import { ChatHistoryList } from './chat-history-list';
+import { historyMotion } from './chat-history-motion';
 import {
   useActiveConversationId,
   useChatSheet,
@@ -186,7 +188,26 @@ export function ChatChrome() {
         )}
         <div className="grid min-w-0 flex-1 items-center">
           <AnimatePresence initial={false}>
-            {renaming ? (
+            {historyOpen ? (
+              <motion.div
+                key="history"
+                {...titleFade(reduced)}
+                className="flex min-w-0 items-center gap-1 [grid-area:1/1]"
+              >
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={t('Back to chat')}
+                  onClick={() => setHistoryOpen(false)}
+                  className="text-gray-11 hover:text-gray-12"
+                >
+                  <ArrowLeft />
+                </Button>
+                <h2 className="truncate text-sm font-semibold text-gray-12">
+                  {t('History')}
+                </h2>
+              </motion.div>
+            ) : renaming ? (
               <Input
                 key="rename"
                 ref={titleInput}
@@ -281,14 +302,22 @@ export function ChatChrome() {
         </div>
       </div>
       <div className="relative min-h-0 flex-1">
-        {historyOpen && (
-          <ConversationList
-            className="absolute inset-0 z-10 w-full bg-gray-1 animate-in fade-in duration-150 ease-move motion-reduce:animate-none"
-            selectedId={conversationId}
-            onSelect={openConversation}
-            onNewChat={startFresh}
-          />
-        )}
+        <AnimatePresence initial={false}>
+          {historyOpen && (
+            <motion.div
+              key="history"
+              {...historyMotion.enter(reduced)}
+              className="absolute inset-0 z-10 bg-gray-1"
+            >
+              <ChatHistoryList
+                wide={full}
+                selectedId={conversationId}
+                onSelect={openConversation}
+                onCurrentDeleted={chatPanelUtils.startNewChat}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div inert={historyOpen} className="h-full">
           <ChatBody
             full={full}

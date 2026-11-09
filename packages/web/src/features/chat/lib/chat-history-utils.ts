@@ -1,0 +1,114 @@
+import { AgentConversation } from '@activepieces/shared';
+import i18next, { t } from 'i18next';
+
+function groupByDay({
+  conversations,
+  now,
+}: {
+  conversations: AgentConversation[];
+  now: Date;
+}): ChatHistoryGroup[] {
+  const buckets: Record<ChatHistoryGroupId, AgentConversation[]> = {
+    today: [],
+    yesterday: [],
+    week: [],
+    older: [],
+  };
+  for (const conversation of conversations) {
+    buckets[groupOf({ date: new Date(conversation.created), now })].push(
+      conversation,
+    );
+  }
+  return GROUP_ORDER.filter((id) => buckets[id].length > 0).map((id) => ({
+    id,
+    label: groupLabel(id),
+    conversations: buckets[id],
+  }));
+}
+
+function groupOf({ date, now }: { date: Date; now: Date }): ChatHistoryGroupId {
+  const days = daysBetween({ date, now });
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days <= 7) return 'week';
+  return 'older';
+}
+
+function groupLabel(id: ChatHistoryGroupId): string {
+  switch (id) {
+    case 'today':
+      return t('Today');
+    case 'yesterday':
+      return t('Yesterday');
+    case 'week':
+      return t('Previous 7 days');
+    case 'older':
+      return t('Older');
+  }
+}
+
+function shortTime({ date, now }: { date: Date; now: Date }): string {
+  const minutes = Math.floor((now.getTime() - date.getTime()) / MINUTE_MS);
+  const days = daysBetween({ date, now });
+  if (days <= 0) {
+    if (minutes < 1) return t('Now');
+    if (minutes < 60) return narrowUnit({ value: minutes, unit: 'minute' });
+    return narrowUnit({ value: Math.floor(minutes / 60), unit: 'hour' });
+  }
+  if (days === 1) return t('Yesterday');
+  return new Intl.DateTimeFormat(i18next.language, {
+    month: 'short',
+    day: 'numeric',
+    ...(date.getFullYear() === now.getFullYear() ? {} : { year: 'numeric' }),
+  }).format(date);
+}
+
+function narrowUnit({
+  value,
+  unit,
+}: {
+  value: number;
+  unit: 'minute' | 'hour';
+}): string {
+  return new Intl.NumberFormat(i18next.language, {
+    style: 'unit',
+    unit,
+    unitDisplay: 'narrow',
+  }).format(value);
+}
+
+function daysBetween({ date, now }: { date: Date; now: Date }): number {
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((today.getTime() - start.getTime()) / DAY_MS);
+}
+
+function showsSearch({
+  total,
+  query,
+}: {
+  total: number;
+  query: string;
+}): boolean {
+  return total > SEARCH_THRESHOLD || query.length > 0;
+}
+
+const GROUP_ORDER: ChatHistoryGroupId[] = ['today', 'yesterday', 'week', 'older'];
+const MINUTE_MS = 60 * 1000;
+const DAY_MS = 24 * 60 * MINUTE_MS;
+const SEARCH_THRESHOLD = 8;
+
+export const chatHistoryUtils = {
+  groupByDay,
+  shortTime,
+  showsSearch,
+  SEARCH_THRESHOLD,
+};
+
+export type ChatHistoryGroupId = 'today' | 'yesterday' | 'week' | 'older';
+
+export type ChatHistoryGroup = {
+  id: ChatHistoryGroupId;
+  label: string;
+  conversations: AgentConversation[];
+};
