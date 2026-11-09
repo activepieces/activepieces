@@ -45,11 +45,12 @@ const EditorSelector = ({ fieldType }: { fieldType: FieldType }) => {
 const useSetInitialFocus = (isSelected: boolean) => {
   const containerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    requestAnimationFrame(() => {
-      if (isSelected) {
-        containerRef.current?.focus();
+    const frame = requestAnimationFrame(() => {
+      if (isSelected && focusIsFree()) {
+        containerRef.current?.focus({ preventScroll: true });
       }
     });
+    return () => cancelAnimationFrame(frame);
   }, []);
   return containerRef;
 };
@@ -76,7 +77,9 @@ export function EditableCell({
     selectedCell?.rowIdx === rowIdx && selectedCell?.columnIdx === column.idx;
   const containerRef = useSetInitialFocus(isSelected);
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    const isTypingKey = e.key.length === 1 || e.key === 'Enter';
+    const isShortcut = (e.ctrlKey || e.metaKey) && !e.altKey;
+    const isTypingKey =
+      (e.key.length === 1 || e.key === 'Enter') && !isShortcut;
     if (isTypingKey && !disabled && !isEditing) {
       setIsEditing(true);
       setSelectedCell({ rowIdx, columnIdx: column.idx });
@@ -165,5 +168,14 @@ export function EditableCell({
         </CellProvider>
       </ErrorBoundary>
     </div>
+  );
+}
+
+function focusIsFree(): boolean {
+  const active = document.activeElement;
+  return (
+    active === null ||
+    active === document.body ||
+    active.closest('.rdg') !== null
   );
 }

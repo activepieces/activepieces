@@ -1,9 +1,12 @@
 import { apId } from '@activepieces/core-utils'
-import { FieldType, FilterOperator, TableWebhookEventType } from '@activepieces/shared'
+import { EDITOR_SESSION_ID_HEADER, FieldType, FilterOperator, TableOperationType, TableRecordsChangeOp, TableWebhookEventType, WebsocketClientEvent } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import qs from 'qs'
+import { websocketService } from '../../../../src/app/core/websockets.service'
+import { projectStateService } from '../../../../src/app/ee/projects/project-release/project-state/project-state.service'
+import { tableService } from '../../../../src/app/tables/table/table.service'
 import { webhookService } from '../../../../src/app/webhooks/webhook.service'
 import { db } from '../../../helpers/db'
 import { describeWithAuth } from '../../../helpers/describe-with-auth'
@@ -28,6 +31,188 @@ afterAll(async () => {
 })
 
 describe('Record API', () => {
+
+    describeWithAuth('records changed push', () => app!, (setup) => {
+        it('sends the changed rows for create and update and the ids for delete to the table room only', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const pushes = capturePushes()
+
+            const created = await ctx.post('/v1/records', { tableId: table.id, records: [[{ fieldId: field.id, value: 'a' }]] })
+            const recordId = created?.json()[0].id
+            await ctx.post(`/v1/records/${recordId}`, { tableId: table.id, cells: [{ fieldId: field.id, value: 'b' }] })
+            await ctx.inject({ method: 'DELETE', url: '/api/v1/records', body: { tableId: table.id, ids: [recordId] } })
+            vi.restoreAllMocks()
+
+            expect(pushes).toEqual([
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.CREATED, records: [rowWithValue({ id: recordId, fieldId: field.id, value: 'a' })] } },
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.UPDATED, records: [rowWithValue({ id: recordId, fieldId: field.id, value: 'b' })] } },
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.DELETED, recordIds: [recordId] } },
+            ])
+        })
+
+        it('sends nothing when an update changes no cell', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const [record] = await saveRecordsWithValues({ ctx, table, field, values: ['same'] })
+            const pushes = capturePushes()
+
+            const response = await ctx.post(`/v1/records/${record.id}`, { tableId: table.id, cells: [{ fieldId: field.id, value: 'same' }] })
+            vi.restoreAllMocks()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(pushes).toEqual([])
+        })
+
+        it('sends a cleared change without record ids when the table is cleared', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            await saveRecordsWithValues({ ctx, table, field, values: ['a', 'b'] })
+            const pushes = capturePushes()
+
+            await ctx.post(`/v1/tables/${table.id}/clear`)
+            vi.restoreAllMocks()
+
+            expect(pushes).toEqual([
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.CLEARED } },
+            ])
+        })
+
+        it('carries the editor session id of the request', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const editorSessionId = apId()
+            const pushes = capturePushes()
+
+            const created = await ctx.inject({
+                method: 'POST',
+                url: '/api/v1/records',
+                headers: { [EDITOR_SESSION_ID_HEADER]: editorSessionId },
+                body: { tableId: table.id, records: [[{ fieldId: field.id, value: 'a' }]] },
+            })
+            vi.restoreAllMocks()
+
+            expect(pushes).toEqual([
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId, op: TableRecordsChangeOp.CREATED, records: [rowWithValue({ id: created.json()[0].id, fieldId: field.id, value: 'a' })] } },
+            ])
+        })
+
+        it('asks for a reload instead of listing rows above the push cap', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const pushes = capturePushes()
+
+            await ctx.post('/v1/records', { tableId: table.id, records: Array.from({ length: 51 }, () => [{ fieldId: field.id, value: 'a' }]) })
+            vi.restoreAllMocks()
+
+            expect(pushes).toEqual([
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.RELOAD } },
+            ])
+        })
+    })
+
+    describeWithAuth('field and table changes push', () => app!, (setup) => {
+        it('tells the table room that the fields changed when a column is added, renamed, reordered or deleted over REST', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const pushes = capturePushes()
+
+            const added = await ctx.post('/v1/fields', { tableId: table.id, name: 'Score', type: FieldType.TEXT })
+            const addedId = added?.json().id
+            await ctx.post(`/v1/fields/${addedId}`, { name: 'Points' })
+            await ctx.post('/v1/fields/reorder', { tableId: table.id, fieldIds: [addedId, field.id] })
+            await ctx.inject({ method: 'DELETE', url: `/api/v1/fields/${addedId}` })
+            vi.restoreAllMocks()
+
+            const fieldsChanged = { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.FIELDS_CHANGED } }
+            expect(added?.statusCode).toBe(StatusCodes.CREATED)
+            expect(pushes).toEqual([fieldsChanged, fieldsChanged, fieldsChanged, fieldsChanged])
+        })
+
+        it('tells the table room when the table is renamed or deleted', async () => {
+            const ctx = await setup()
+            const { table } = await createTableWithField(ctx)
+            const pushes = capturePushes()
+
+            await ctx.post(`/v1/tables/${table.id}`, { name: 'Renamed' })
+            await ctx.inject({ method: 'DELETE', url: `/api/v1/tables/${table.id}` })
+            vi.restoreAllMocks()
+
+            expect(pushes).toEqual([
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.TABLE_UPDATED } },
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.TABLE_DELETED } },
+            ])
+        })
+
+        it('does not tell the table room a table was deleted when no table was deleted', async () => {
+            const ctx = await setup()
+            const pushes = capturePushes()
+
+            await tableService.delete({ projectId: ctx.project.id, id: apId(), editorSessionId: null })
+            vi.restoreAllMocks()
+
+            expect(pushes).toEqual([])
+        })
+
+        it('tells the table room once when a release renames, adds and removes several fields', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const removed = createMockField({ tableId: table.id, projectId: ctx.project.id })
+            await db.save('field', removed)
+            const tableState = {
+                id: table.id,
+                name: table.name,
+                externalId: table.externalId,
+                fields: [field, removed].map((existing) => ({ name: existing.name, type: existing.type, data: null, externalId: existing.externalId })),
+                status: null,
+                trigger: null,
+            }
+            const newTableState = {
+                ...tableState,
+                fields: [
+                    { name: 'Renamed', type: field.type, data: null, externalId: field.externalId },
+                    { name: 'Added one', type: FieldType.TEXT, data: null, externalId: apId() },
+                    { name: 'Added two', type: FieldType.NUMBER, data: null, externalId: apId() },
+                ],
+            }
+            const pushes = capturePushes()
+
+            await projectStateService(app!.log).apply({
+                projectId: ctx.project.id,
+                platformId: ctx.platform.id,
+                log: app!.log,
+                diffs: { flows: [], connections: [], tables: [{ type: TableOperationType.UPDATE_TABLE, tableState, newTableState }] },
+            })
+            vi.restoreAllMocks()
+
+            expect(pushes).toEqual([
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.TABLE_UPDATED } },
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.FIELDS_CHANGED } },
+            ])
+        })
+
+        it('tells the table room once when a table is created with several fields', async () => {
+            const ctx = await setup()
+            const pushes = capturePushes()
+
+            const table = await tableService.create({
+                projectId: ctx.project.id,
+                request: {
+                    projectId: ctx.project.id,
+                    name: 'Leads',
+                    fields: [
+                        { name: 'Name', type: FieldType.TEXT, data: null, externalId: apId() },
+                        { name: 'Score', type: FieldType.NUMBER, data: null, externalId: apId() },
+                    ],
+                },
+            })
+            vi.restoreAllMocks()
+
+            expect(pushes).toEqual([
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.FIELDS_CHANGED } },
+            ])
+        })
+    })
 
     describeWithAuth('POST /v1/records (Create)', () => app!, (setup) => {
         it('should create a single record with cells', async () => {
@@ -797,6 +982,30 @@ describe('Record API', () => {
         })
     })
 })
+
+function rowWithValue({ id, fieldId, value }: { id: string, fieldId: string, value: string }): unknown {
+    return expect.objectContaining({ id, cells: { [fieldId]: expect.objectContaining({ value }) } })
+}
+
+function tableRoomOf(tableId: string): string {
+    return `table:${tableId}`
+}
+
+function capturePushes(): { room: string, payload: unknown }[] {
+    const pushes: { room: string, payload: unknown }[] = []
+    const realTo = websocketService.to
+    vi.spyOn(websocketService, 'to').mockImplementation((room) => {
+        const operator = realTo(room)
+        vi.spyOn(operator, 'emit').mockImplementation((event, ...args) => {
+            if (event === WebsocketClientEvent.TABLE_RECORDS_CHANGED) {
+                pushes.push({ room, payload: args[0] })
+            }
+            return true
+        })
+        return operator
+    })
+    return pushes
+}
 
 async function createTableWithField(ctx: TestContext) {
     return createTableWithTypedField({ ctx, type: FieldType.TEXT })

@@ -15,6 +15,7 @@ import { recordsApi } from '../../api/records-api';
 import { tablesApi } from '../../api/tables-api';
 
 import { ClientRecordData } from './ap-tables-client-state';
+import { tableSyncClock } from './table-sync-clock';
 
 export const createServerState = (
   _table: Table,
@@ -27,6 +28,21 @@ export const createServerState = (
   const clonedTable: Table = JSON.parse(JSON.stringify(_table));
   const clonedFields: Field[] = JSON.parse(JSON.stringify(_fields));
   let clonedRecords: PopulatedRecord[] = JSON.parse(JSON.stringify(_records));
+  const knownAt = new Map<string, number>();
+  const rowIds = new Map<string, string>();
+  const deletedIds = new Set<string>();
+
+  function markDeleted(ids: string[]) {
+    ids.forEach((id) => deletedIds.add(id));
+  }
+
+  function markKnown({ ids, at }: { ids: string[]; at: number }) {
+    ids.forEach((id) => knownAt.set(id, Math.max(knownAt.get(id) ?? 0, at)));
+  }
+
+  function markSaved(ids: string[]) {
+    markKnown({ ids, at: tableSyncClock.tick() });
+  }
 
   function addPromiseToQueue(promise: () => Promise<void>) {
     queue.add(async () => {
@@ -44,6 +60,7 @@ export const createServerState = (
       addPromiseToQueue(async () => {
         const fieldId = clonedFields[fieldIndex].id;
         await fieldsApi.delete(clonedFields[fieldIndex].id);
+        markSaved([fieldId]);
         clonedFields.splice(fieldIndex, 1);
         clonedRecords = clonedRecords.map((record) => {
           return {
@@ -58,6 +75,7 @@ export const createServerState = (
     createField: (field: CreateFieldRequest) => {
       addPromiseToQueue(async () => {
         const serverField = await fieldsApi.create({ ...field });
+        markSaved([serverField.id]);
         clonedFields.push(serverField);
       });
     },
@@ -73,9 +91,11 @@ export const createServerState = (
           ],
         });
 
-        if (createdRecords.length > 0) {
-          clonedRecords.push(...createdRecords);
-        }
+        markSaved(createdRecords.map((created) => created.id));
+        createdRecords.forEach((created) =>
+          rowIds.set(created.id, record.uuid),
+        );
+        clonedRecords.push(...createdRecords);
 
         updateSavingStatus(queue.size() === 1);
       });
@@ -85,16 +105,15 @@ export const createServerState = (
       record: Pick<ClientRecordData, 'values'>,
     ) => {
       addPromiseToQueue(async () => {
-        clonedRecords[recordIndex] = await recordsApi.update(
-          clonedRecords[recordIndex].id,
-          {
-            tableId: clonedTable.id,
-            cells: record.values.map((c) => ({
-              fieldId: clonedFields[c.fieldIndex].id,
-              value: String(c.value),
-            })),
-          },
-        );
+        const recordId = clonedRecords[recordIndex].id;
+        clonedRecords[recordIndex] = await recordsApi.update(recordId, {
+          tableId: clonedTable.id,
+          cells: record.values.map((c) => ({
+            fieldId: clonedFields[c.fieldIndex].id,
+            value: String(c.value),
+          })),
+        });
+        markSaved([recordId]);
       });
     },
     deleteRecords: (recordIndices: string[]) => {
@@ -106,6 +125,8 @@ export const createServerState = (
           tableId: clonedTable.id,
           ids: recordIds,
         });
+        markSaved(recordIds);
+        markDeleted(recordIds);
 
         // Sort indices in descending order to avoid shifting issues when splicing
         const sortedIndices = recordIndices
@@ -124,6 +145,7 @@ export const createServerState = (
         await fieldsApi.update(clonedFields[fieldIndex].id, {
           name: newName,
         });
+        markSaved([clonedFields[fieldIndex].id]);
       });
     },
     reorderField: (fieldIndex: number, targetIndex: number) => {
@@ -134,18 +156,38 @@ export const createServerState = (
           tableId: clonedTable.id,
           fieldIds: clonedFields.map((field) => field.id),
         });
+        markSaved([movedField.id]);
       });
     },
     update: async (request: UpdateTableRequest) => {
       addPromiseToQueue(async () => {
         const updatedTable = await tablesApi.update(clonedTable.id, request);
+        markSaved([clonedTable.id]);
         clonedTable.status = updatedTable.status;
       });
     },
+    idle: () => queue.idle(),
+    changedSince: ({ id, since }: { id: string; since: number }) =>
+      (knownAt.get(id) ?? 0) > since,
+    markKnown,
+    markDeleted,
+    isDeleted: (recordId: string) => deletedIds.has(recordId),
+    link: ({ recordId, rowId }: { recordId: string; rowId: string }) => {
+      rowIds.set(recordId, rowId);
+    },
+    rowIdOf: (recordId: string) => rowIds.get(recordId),
+    replaceTable: (table: Table) => {
+      clonedTable.status = table.status;
+    },
+    replaceFields: (fields: Field[]) => {
+      clonedFields.splice(0, clonedFields.length, ...fields);
+    },
     setRecords: (records: PopulatedRecord[]) => {
-      clonedRecords = JSON.parse(JSON.stringify(records));
+      clonedRecords = [...records];
     },
     fields: clonedFields,
-    records: clonedRecords,
+    get records() {
+      return clonedRecords;
+    },
   };
 };

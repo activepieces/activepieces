@@ -1,6 +1,7 @@
 import { StepRunResponse, UpdateStepProgressRequest } from '@activepieces/core-execution'
 import { ApId } from '@activepieces/core-utils'
 import { z } from 'zod'
+import { PopulatedRecord } from '../tables/record'
 
 export enum WebsocketClientEvent {
     TEST_FLOW_RUN_STARTED = 'TEST_FLOW_RUN_STARTED',
@@ -16,6 +17,7 @@ export enum WebsocketClientEvent {
     CHAT_MESSAGE_CHUNK = 'CHAT_MESSAGE_CHUNK',
     CHAT_PERSONALIZATION_PROGRESS = 'CHAT_PERSONALIZATION_PROGRESS',
     FLOW_DRAFT_UPDATED = 'FLOW_DRAFT_UPDATED',
+    TABLE_RECORDS_CHANGED = 'TABLE_RECORDS_CHANGED',
 }
 
 export enum WebsocketServerEvent {
@@ -33,6 +35,8 @@ export enum WebsocketServerEvent {
     JOIN_PRESENCE = 'JOIN_PRESENCE',
     LEAVE_PRESENCE = 'LEAVE_PRESENCE',
     SWITCH_PROJECT = 'SWITCH_PROJECT',
+    JOIN_TABLE_ROOM = 'JOIN_TABLE_ROOM',
+    LEAVE_TABLE_ROOM = 'LEAVE_TABLE_ROOM',
 }
 
 export const LockResourceRequest = z.object({
@@ -88,6 +92,41 @@ export const SwitchProjectResponse = z.object({
     success: z.boolean(),
 })
 
+export enum TableRecordsChangeOp {
+    CREATED = 'CREATED',
+    UPDATED = 'UPDATED',
+    DELETED = 'DELETED',
+    CLEARED = 'CLEARED',
+    RELOAD = 'RELOAD',
+    FIELDS_CHANGED = 'FIELDS_CHANGED',
+    TABLE_UPDATED = 'TABLE_UPDATED',
+    TABLE_DELETED = 'TABLE_DELETED',
+}
+
+const TableChangeBase = z.object({
+    tableId: z.string(),
+    editorSessionId: z.string().nullable(),
+})
+
+export const TableRecordsChangedEvent = z.discriminatedUnion('op', [
+    TableChangeBase.extend({ op: z.literal(TableRecordsChangeOp.CREATED), records: z.array(PopulatedRecord) }),
+    TableChangeBase.extend({ op: z.literal(TableRecordsChangeOp.UPDATED), records: z.array(PopulatedRecord) }),
+    TableChangeBase.extend({ op: z.literal(TableRecordsChangeOp.DELETED), recordIds: z.array(z.string()) }),
+    TableChangeBase.extend({ op: z.literal(TableRecordsChangeOp.CLEARED) }),
+    TableChangeBase.extend({ op: z.literal(TableRecordsChangeOp.RELOAD) }),
+    TableChangeBase.extend({ op: z.literal(TableRecordsChangeOp.FIELDS_CHANGED) }),
+    TableChangeBase.extend({ op: z.literal(TableRecordsChangeOp.TABLE_UPDATED) }),
+    TableChangeBase.extend({ op: z.literal(TableRecordsChangeOp.TABLE_DELETED) }),
+])
+
+export const TableRoomRequest = z.object({
+    tableId: z.string(),
+})
+
+export const JoinTableRoomResponse = z.object({
+    joined: z.boolean(),
+})
+
 export const EDITOR_SESSION_ID_HEADER = 'x-ap-editor-session-id'
 
 export type LockResourceRequest = z.infer<typeof LockResourceRequest>
@@ -102,3 +141,6 @@ export type PresenceUpdatedEvent = z.infer<typeof PresenceUpdatedEvent>
 export type FlowDraftUpdatedEvent = z.infer<typeof FlowDraftUpdatedEvent>
 export type SwitchProjectRequest = z.infer<typeof SwitchProjectRequest>
 export type SwitchProjectResponse = z.infer<typeof SwitchProjectResponse>
+export type TableRecordsChangedEvent = z.infer<typeof TableRecordsChangedEvent>
+export type TableRoomRequest = z.infer<typeof TableRoomRequest>
+export type JoinTableRoomResponse = z.infer<typeof JoinTableRoomResponse>

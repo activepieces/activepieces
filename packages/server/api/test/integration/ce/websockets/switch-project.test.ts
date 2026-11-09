@@ -273,6 +273,7 @@ describe('Websocket SWITCH_PROJECT', () => {
         const conn = await connect({ token: s.memberToken, projectId: null })
 
         await expect(Promise.resolve(conn.handlers[WebsocketServerEvent.LOCK_RESOURCE]({ resourceId: s.editorFlowId }, 1))).resolves.toBeUndefined()
+        await expect(Promise.resolve(conn.handlers[WebsocketServerEvent.JOIN_TABLE_ROOM]({ tableId: apId() }, 1))).resolves.toBeUndefined()
         await expect(Promise.resolve(conn.handlers[WebsocketServerEvent.SWITCH_PROJECT]({ projectId: s.editorProjectId }, 1))).resolves.toBeUndefined()
 
         expect(conn.rooms.has(s.editorProjectId)).toBe(true)

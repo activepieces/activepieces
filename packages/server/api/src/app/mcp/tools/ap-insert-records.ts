@@ -45,6 +45,7 @@ export const apInsertRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     projectId: mcp.projectId,
                     logger: log,
                     fields,
+                    editorSessionId: null,
                 })
 
                 return {

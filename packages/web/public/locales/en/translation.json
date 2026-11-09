@@ -3717,6 +3717,7 @@
   "records": "records",
   "recordsImported": "{count, plural, =1 {1 record imported} other {# records imported}}",
   "Table not available": "Table not available",
+  "This table was deleted": "This table was deleted",
   "We couldn’t load this table. It may have been removed or is unavailable.": "We couldn’t load this table. It may have been removed or is unavailable.",
   "Go to Tables": "Go to Tables",
   "mm/dd/yyy": "mm/dd/yyy",

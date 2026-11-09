@@ -38,6 +38,7 @@ function onChunks({
           [chunk.toolCallId]: {
             toolName: chunk.toolName,
             input: chunk.input,
+            startedAt: Date.now(),
           },
         },
       });
@@ -54,6 +55,9 @@ function onChunks({
     if (chunk.type !== 'tool-output-available') continue;
     const resolved = resourceRegistry.resolve(chunk.output);
     if (!resolved) continue;
+    if (call && resolved.op !== 'delete') {
+      rememberEditedSince({ resource: resolved.ref, since: call.startedAt });
+    }
     if (call) {
       rememberUnseen({
         resource: resolved.ref,
@@ -258,6 +262,40 @@ function takeUnseen({
   return true;
 }
 
+function rememberEditedSince({
+  resource,
+  since,
+}: {
+  resource: ResourceRef;
+  since: number;
+}): void {
+  const pathname = window.location.pathname;
+  if (resourceRegistry.isOn({ pathname, ref: resource })) return;
+  const scope = resourceRegistry.keyOf(resource);
+  const { editedSince } = useFollowMemory.getState();
+  const earliest = Math.min(editedSince[scope] ?? since, since);
+  if (editedSince[scope] === earliest) return;
+  useFollowMemory.setState({
+    editedSince: { ...editedSince, [scope]: earliest },
+  });
+}
+
+function peekEditedSince(
+  resource: Pick<ResourceRef, 'kind' | 'id'>,
+): number | null {
+  return (
+    useFollowMemory.getState().editedSince[resourceRegistry.keyOf(resource)] ??
+    null
+  );
+}
+
+function forgetEditedSince(resource: Pick<ResourceRef, 'kind' | 'id'>): void {
+  const scope = resourceRegistry.keyOf(resource);
+  const { [scope]: known, ...rest } = useFollowMemory.getState().editedSince;
+  if (known === undefined) return;
+  useFollowMemory.setState({ editedSince: rest });
+}
+
 function highlightKeys({
   toolName,
   input,
@@ -346,6 +384,7 @@ function initialMemory(): FollowMemory {
   return {
     toolCalls: {},
     unseen: {},
+    editedSince: {},
     pushedRuns: {},
     flashCount: 0,
   };
@@ -378,6 +417,8 @@ export const followAlong = {
   claimHistoryPush,
   onToolDone,
   takeUnseen,
+  peekEditedSince,
+  forgetEditedSince,
   reset,
 };
 
@@ -399,11 +440,12 @@ type FollowOffer = {
   conversationId: string | null;
 };
 
-type ToolCall = { toolName: string; input: unknown };
+type ToolCall = { toolName: string; input: unknown; startedAt: number };
 
 type FollowMemory = {
   toolCalls: Record<string, ToolCall>;
   unseen: Record<string, true>;
+  editedSince: Record<string, number>;
   pushedRuns: Record<string, true>;
   flashCount: number;
 };

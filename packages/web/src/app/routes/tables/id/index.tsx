@@ -1,12 +1,18 @@
 import { Permission } from '@activepieces/core-utils';
 import { ApFlagId } from '@activepieces/shared';
 import { nanoid } from 'nanoid';
-import { useRef, useEffect } from 'react';
-import DataGrid, { DataGridHandle } from 'react-data-grid';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import DataGrid, {
+  DataGridHandle,
+  RenderRowProps,
+  Row as GridRow,
+} from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { useNavigate } from 'react-router-dom';
 
 import { useTheme } from '@/components/providers/theme-provider';
+import { aiSheen } from '@/features/chat/lib/follow/ai-sheen';
+import { aiHighlight } from '@/features/chat/lib/follow/use-ai-highlight';
 import {
   ApTableFooter,
   ApTableHeader,
@@ -18,6 +24,7 @@ import {
   ROW_HEIGHT_MAP,
   RowHeight,
 } from '@/features/tables';
+import { RowSheen, useRowSheen } from '@/features/tables/hooks/use-row-sheen';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -38,6 +45,8 @@ const ApTableEditorPage = () => {
     records,
     setLockedByOtherUser,
     reorderField,
+    tableId,
+    rowIdsChangedSince,
   ] = useTableState((state) => [
     state.selectedRecords,
     state.setSelectedRecords,
@@ -48,7 +57,24 @@ const ApTableEditorPage = () => {
     state.records,
     state.setLockedByOtherUser,
     state.reorderField,
+    state.table.id,
+    state.rowIdsChangedSince,
   ]);
+  const rowSheen = useRowSheen({ records, tableId, rowIdsChangedSince });
+  const { pendingToken, played } = rowSheen;
+  const renderRow = useCallback(
+    (key: React.Key, rowProps: RenderRowProps<Row, { id: string }>) => (
+      <SheenRow
+        key={key}
+        {...rowProps}
+        rowId={rowProps.row.id}
+        sheenToken={pendingToken(rowProps.row.id)}
+        onSheen={played}
+      />
+    ),
+    [pendingToken, played],
+  );
+  const renderers = useMemo(() => ({ renderRow }), [renderRow]);
 
   // the lock lives in the table state provider, above the take-over refresh
   // remount boundary, so refreshing never releases the just-acquired lock
@@ -70,6 +96,28 @@ const ApTableEditorPage = () => {
   const canEdit = userHasTableWritePermission && !blockedByLock;
   const isAllowedToCreateRecord =
     canEdit && maxRecords && records.length < maxRecords;
+
+  const firstSheenIndex = rowSheen.firstRow?.index ?? null;
+  const firstSheenToken = rowSheen.firstRow?.token ?? null;
+  useEffect(() => {
+    if (
+      firstSheenIndex === null ||
+      firstSheenToken === null ||
+      !aiHighlight.claimScroll()
+    ) {
+      return;
+    }
+    const grid = gridRef.current;
+    const element = grid?.element;
+    if (!grid || !element) return;
+    element.style.scrollBehavior = 'auto';
+    grid.scrollToCell({ rowIdx: firstSheenIndex, idx: 0 });
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        element.style.scrollBehavior = '';
+      }),
+    );
+  }, [firstSheenIndex, firstSheenToken]);
 
   const createEmptyRecord = () => {
     createRecord({
@@ -103,7 +151,7 @@ const ApTableEditorPage = () => {
 
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [selectedCell]);
+  }, [selectedCell, setSelectedCell]);
 
   const columns = useTableColumns(createEmptyRecord);
   const rows = mapRecordsToRows(records, fields);
@@ -139,6 +187,7 @@ const ApTableEditorPage = () => {
               columns={columns}
               rows={rows}
               rowKeyGetter={(row: Row) => row.id}
+              renderers={renderers}
               selectedRows={selectedRecords}
               onSelectedRowsChange={setSelectedRecords}
               onColumnsReorder={handleColumnsReorder}
@@ -163,6 +212,30 @@ const ApTableEditorPage = () => {
     </div>
   );
 };
+
+function SheenRow({
+  rowId,
+  sheenToken,
+  onSheen,
+  ...props
+}: RenderRowProps<Row, { id: string }> & {
+  rowId: string;
+  sheenToken: number | null;
+  onSheen: (sheen: RowSheen) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const row = ref.current;
+    if (sheenToken === null || !row) return;
+    aiSheen.play({
+      id: `${rowId}:${sheenToken}`,
+      elements: [...row.querySelectorAll(':scope > .rdg-cell')],
+      bounds: row.closest('.rdg'),
+    });
+    onSheen({ rowId, token: sheenToken });
+  }, [sheenToken, rowId, onSheen]);
+  return <GridRow ref={ref} {...props} />;
+}
 
 ApTableEditorPage.displayName = 'ApTableEditorPage';
 
