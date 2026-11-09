@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { pageContextUtils } from './page-context';
+import { pageContextUtils } from '@/features/chat/lib/page-context';
 
 describe('pageContextUtils.fromPath', () => {
   it('names the flow and the selected step on a flow page', () => {
