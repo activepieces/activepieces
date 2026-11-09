@@ -33,6 +33,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
+import { useAiHighlight } from '@/features/chat/lib/follow/use-ai-highlight';
 import { flowHooks } from '@/features/flows';
 import { FlowCreatedByBadge } from '@/features/flows/components/flow-created-by-badge';
 import { foldersHooks } from '@/features/folders';
@@ -80,6 +81,15 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
     state.savePendingEdits,
     state.readonly,
   ]);
+
+  useAiHighlight({
+    resource: { kind: 'flow', id: flow.id },
+    key: `flow-name:${flow.id}`,
+  });
+  useAiHighlight({
+    resource: { kind: 'flow', id: flow.id },
+    key: `flow-status:${flow.id}`,
+  });
 
   const { embedState } = useEmbedding();
   const { project } = projectCollectionUtils.useCurrentProject();

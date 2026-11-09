@@ -33,6 +33,7 @@ export function ChatInput({
   onFocusChange,
   sendBlockedReason,
   fill,
+  onFillApplied,
 }: {
   isStreaming: boolean;
   onSend: (text: string, files?: File[]) => void;
@@ -45,6 +46,7 @@ export function ChatInput({
   onFocusChange?: (focused: boolean) => void;
   sendBlockedReason?: string;
   fill?: ComposerFill | null;
+  onFillApplied?: () => void;
 }) {
   const [value, setValue] = useState('');
   const [focused, setFocused] = useState(false);
@@ -67,11 +69,14 @@ export function ChatInput({
   );
 
   // A picked suggestion lands in the composer for editing instead of sending.
+  const appliedFillRef = useRef<number | null>(null);
   useEffect(() => {
-    if (isNil(fill)) return;
+    if (isNil(fill) || appliedFillRef.current === fill.id) return;
+    appliedFillRef.current = fill.id;
     caretToEndRef.current = true;
     handleValueChange(fill.text);
-  }, [fill, handleValueChange]);
+    onFillApplied?.();
+  }, [fill, handleValueChange, onFillApplied]);
 
   useEffect(() => {
     if (!caretToEndRef.current) return;

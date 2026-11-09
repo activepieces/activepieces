@@ -33,6 +33,8 @@ import {
 } from '@/features/chat/lib/chat-store-context';
 import { ChatUIMessage, chatPartUtils } from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
+import { followHold } from '@/features/chat/lib/follow/follow-hold';
+import { pageFocus } from '@/features/chat/lib/follow/page-focus';
 import { onboardingPrefillUtils } from '@/features/chat/lib/onboarding-prefill';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
@@ -225,6 +227,7 @@ function ChatBoxContent({
 
   const [hasInput, setHasInput] = useState(false);
   const [composerFill, setComposerFill] = useState<ComposerFill | null>(null);
+  const clearComposerFill = useCallback(() => setComposerFill(null), []);
   const [promptOpen, setPromptOpen] = useState(false);
   const sentInitialPrompt = useRef(false);
 
@@ -503,6 +506,7 @@ function ChatBoxContent({
               </ChatContainerContent>
               <ScrollButton className="absolute bottom-4 right-1/2 translate-x-1/2" />
               <ScrolledEdge />
+              <ReportScrolledUp />
             </ChatContainerRoot>
           </motion.div>
         )}
@@ -544,6 +548,7 @@ function ChatBoxContent({
             onStop={cancelStream}
             onInputChange={setHasInput}
             fill={composerFill}
+            onFillApplied={clearComposerFill}
             recede={showOnboardingCard}
             modelPicker={
               showsPicker && awaitingSavedPick ? (
@@ -669,6 +674,17 @@ function ScrolledEdge() {
       )}
     />
   );
+}
+
+// Follow-along waits while the user reads back through the chat.
+function ReportScrolledUp() {
+  const { isAtBottom, scrollRef } = useStickToBottomContext();
+  useEffect(() => {
+    if (!pageFocus.inChat(scrollRef.current)) return;
+    followHold.report({ scrolledUp: !isAtBottom });
+    return () => followHold.report({ scrolledUp: false });
+  }, [isAtBottom, scrollRef]);
+  return null;
 }
 
 function useDelayedFlag({

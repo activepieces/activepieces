@@ -12,6 +12,7 @@ import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { LoopIterationInput } from '@/app/builder/run-details/loop-iteration-input';
 import { RightSideBarType } from '@/app/builder/types';
+import { useAiHighlight } from '@/features/chat/lib/follow/use-ai-highlight';
 import { stepsHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
@@ -52,6 +53,10 @@ const ApStepCanvasNode = React.memo(
       state.canvasOrientation,
     ]);
     const isHorizontal = canvasOrientation === 'horizontal';
+    useAiHighlight({
+      resource: { kind: 'flow', id: flowVersion.flowId },
+      key: `flow-step:${step.name}`,
+    });
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
     });

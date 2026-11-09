@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { CircleSlash } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
@@ -11,6 +11,8 @@ import {
   ChatUIMessage,
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
+import { followHold } from '@/features/chat/lib/follow/follow-hold';
+import { pageFocus } from '@/features/chat/lib/follow/page-focus';
 import { cn } from '@/lib/utils';
 
 import {
@@ -22,6 +24,7 @@ import { ActionPreviewCard } from './action-preview-card';
 import { ChatCardSkeleton } from './chat-card-primitives';
 import { ChatInput, ComposerFill } from './chat-input';
 import { ConnectionPickerCard } from './connection-picker-card';
+import { FollowFinishedNote } from './follow-finished-note';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
 import { MultiQuestionForm } from './multi-question-form';
 import { ProjectPickerCard } from './project-picker-card';
@@ -39,6 +42,7 @@ export function ChatBottomBar({
   banner,
   recede,
   fill,
+  onFillApplied,
 }: ChatBottomBarProps) {
   const [composerEngaged, setComposerEngaged] = useState(false);
   const [skipped, setSkipped] = useState(false);
@@ -130,9 +134,25 @@ export function ChatBottomBar({
 
   const minimal = recede === true && !activeCard && !composerEngaged;
 
+  // Tell follow-along when the user is mid-reply or a card needs them, so it
+  // waits before opening a page.
+  const [hasDraft, setHasDraft] = useState(false);
+  const handleInputChange = (hasInput: boolean) => {
+    setHasDraft(hasInput);
+    onInputChange?.(hasInput);
+  };
+  const rootRef = useRef<HTMLDivElement>(null);
+  const gateOpen = activeCard !== null;
+  const drafting = hasDraft && composerEngaged;
+  useEffect(() => {
+    if (!pageFocus.inChat(rootRef.current)) return;
+    followHold.report({ gateOpen, drafting });
+    return () => followHold.report({ gateOpen: false, drafting: false });
+  }, [gateOpen, drafting]);
+
   return (
-    <div className="flex flex-col gap-2">
-      {activeCard}
+    <div ref={rootRef} className="flex flex-col gap-2">
+      {activeCard ?? <FollowFinishedNote />}
       <AnimatePresence initial={false}>
         {skipped && !activeCard && (
           <motion.div
@@ -162,7 +182,7 @@ export function ChatBottomBar({
           isStreaming={activeCard ? false : isStreaming}
           onSend={handleSend}
           onStop={onStop}
-          onInputChange={onInputChange}
+          onInputChange={handleInputChange}
           minimalUntilFocus={recede === true && !activeCard}
           onFocusChange={setComposerEngaged}
           placeholder={
@@ -173,6 +193,7 @@ export function ChatBottomBar({
           rightActions={modelPicker}
           sendBlockedReason={sendBlockedReason}
           fill={fill}
+          onFillApplied={onFillApplied}
         />
       </div>
     </div>
@@ -253,6 +274,7 @@ type ChatBottomBarProps = {
   banner?: ReactNode;
   recede?: boolean;
   fill?: ComposerFill | null;
+  onFillApplied?: () => void;
 };
 
 const SKIPPED_VISIBLE_MS = 2500;

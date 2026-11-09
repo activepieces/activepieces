@@ -23,6 +23,10 @@ function useChatRoute(): string {
   return routeFor(useChatPanel((s) => s.conversationId));
 }
 
+function isFullPage(): boolean {
+  return router?.isFullPage() ?? false;
+}
+
 function expand(): void {
   const current = router;
   if (!current || current.isFullPage()) return;
@@ -271,6 +275,7 @@ export const chatPanelUtils = {
   routeFor,
   useChatRoute,
   openBeside,
+  isFullPage,
   expand,
   collapse,
   startNewChat,

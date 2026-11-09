@@ -10,6 +10,10 @@ import {
   followAlong,
   useFollowAlong,
 } from '@/features/chat/lib/follow/follow-along';
+import {
+  followHold,
+  useFollowHold,
+} from '@/features/chat/lib/follow/follow-hold';
 import { pageFocus } from '@/features/chat/lib/follow/page-focus';
 import { useAiFieldHighlights } from '@/features/chat/lib/follow/use-ai-highlight';
 import { resourceRegistry } from '@/features/chat/lib/resources/registry';
@@ -110,6 +114,9 @@ export function FollowAlongController() {
         return true;
       }
       if (pageFocus.isBusyIn(focused)) return false;
+      if (followHold.holds({ fullPage: chatPanelUtils.isFullPage() })) {
+        return false;
+      }
       open();
       return true;
     });
@@ -118,14 +125,18 @@ export function FollowAlongController() {
   return null;
 }
 
+// Runs `run` now, then again on every focus move or chat hold change until it
+// reports done.
 function untilPageFree(run: (focused: Element | null) => boolean): () => void {
   if (run(document.activeElement)) return () => undefined;
   const onFocusIn = (event: FocusEvent) => retry(eventElement(event.target));
   const onFocusOut = (event: FocusEvent) =>
     retry(eventElement(event.relatedTarget));
+  const stopHold = useFollowHold.subscribe(() => retry(document.activeElement));
   const stop = () => {
     window.removeEventListener('focusin', onFocusIn, true);
     window.removeEventListener('focusout', onFocusOut, true);
+    stopHold();
   };
   const retry = (focused: Element | null) => {
     if (run(focused)) stop();
