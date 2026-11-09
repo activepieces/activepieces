@@ -145,10 +145,10 @@ function save({ open, mode, dockWidth }: SavedChatPanel) {
 function readConversationId(): string | null {
   const tab = safeStorage.read({ area: 'session', key: TAB_CONVERSATION_KEY });
   if (tab !== null) return tab || null;
-  const seeded = safeStorage.read({
-    area: 'local',
-    key: LAST_CONVERSATION_KEY,
-  });
+  const lastKey = lastConversationKey();
+  const seeded = isNil(lastKey)
+    ? null
+    : safeStorage.read({ area: 'local', key: lastKey });
   safeStorage.write({
     area: 'session',
     key: TAB_CONVERSATION_KEY,
@@ -163,13 +163,17 @@ function saveConversationId(conversationId: string | null) {
     key: TAB_CONVERSATION_KEY,
     value: conversationId ?? '',
   });
-  if (conversationId) {
-    safeStorage.write({
-      area: 'local',
-      key: LAST_CONVERSATION_KEY,
-      value: conversationId,
-    });
+  const lastKey = lastConversationKey();
+  if (conversationId && !isNil(lastKey)) {
+    safeStorage.write({ area: 'local', key: lastKey, value: conversationId });
   }
+}
+
+function lastConversationKey(): string | null {
+  const userId = authenticationSession.getCurrentUserId();
+  if (isNil(userId)) return null;
+  const platformId = authenticationSession.getPlatformId() ?? 'none';
+  return `${LAST_CONVERSATION_KEY}:${platformId}:${userId}`;
 }
 
 function readAutoFollow(): boolean {
@@ -182,7 +186,6 @@ function readLastPage(): string | null {
 
 function forgetSignedOutUser(): void {
   if (!isNil(authenticationSession.getToken())) return;
-  safeStorage.remove({ area: 'local', key: LAST_CONVERSATION_KEY });
   safeStorage.remove({ area: 'session', key: TAB_CONVERSATION_KEY });
   safeStorage.remove({ area: 'session', key: TAB_LAST_PAGE_KEY });
   useChatPanel.setState({ conversationId: null, lastPage: null });

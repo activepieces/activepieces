@@ -48,9 +48,21 @@ describe('chat panel conversation', () => {
   });
 
   it('starts a new tab on the last chat', () => {
-    window.localStorage.setItem('chat:last-conv', 'abc');
+    window.localStorage.setItem('token', userToken({ userId: 'user-a' }));
     const store = loadStore();
-    expect(store.getState().conversationId).toBe('abc');
+    store.getState().conversationCreated('abc');
+    window.sessionStorage.clear();
+    const newTab = loadStore();
+    expect(newTab.getState().conversationId).toBe('abc');
+  });
+
+  it('does not start another user on the last chat of the previous one', () => {
+    window.localStorage.setItem('token', userToken({ userId: 'user-a' }));
+    loadStore().getState().conversationCreated('chat-of-a');
+    window.sessionStorage.clear();
+    window.localStorage.setItem('token', userToken({ userId: 'user-b' }));
+    const store = loadStore();
+    expect(store.getState().conversationId).toBeNull();
   });
 
   it('keeps each tab on its own chat', () => {
@@ -89,3 +101,13 @@ describe('chat panel conversation', () => {
     expect(store.getState().newChatToken).toBe(1);
   });
 });
+
+function userToken({ userId }: { userId: string }): string {
+  const encode = (value: object): string =>
+    Buffer.from(JSON.stringify(value)).toString('base64url');
+  return [
+    encode({ alg: 'HS256', typ: 'JWT' }),
+    encode({ id: userId, type: 'USER', platform: { id: 'platform-a' } }),
+    'signature',
+  ].join('.');
+}
