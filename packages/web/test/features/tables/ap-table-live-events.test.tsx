@@ -115,6 +115,7 @@ vi.mock('@/hooks/use-resource-lock', () => ({
 vi.mock('@/lib/error-reporting', () => ({
   errorReporting: { report: vi.fn() },
 }));
+vi.mock('i18next', () => ({ t: (key: string) => key }));
 vi.mock('sonner', () => ({
   toast: Object.assign(vi.fn(), { dismiss: vi.fn(), error: vi.fn() }),
 }));

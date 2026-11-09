@@ -54,6 +54,7 @@ vi.mock('@/features/tables/api/fields-api', () => ({
 vi.mock('@/features/tables/api/tables-api', () => ({
   tablesApi: { getById: vi.fn() },
 }));
+vi.mock('i18next', () => ({ t: (key: string) => key }));
 vi.mock('@/lib/error-reporting', () => ({
   errorReporting: { report: vi.fn() },
 }));
