@@ -153,8 +153,6 @@ function AppRoot() {
   );
 }
 
-// Plain /chat resumes the chat that is open in the panel instead of
-// dropping it for an empty one.
 function ChatHome() {
   const conversationId = useChatPanel((s) => s.conversationId);
   const { state } = useLocation();

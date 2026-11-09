@@ -3,9 +3,6 @@ import { RefObject, useCallback, useEffect, useRef } from 'react';
 
 import { chatLayoutUtils, MOTION } from '@/features/workspace/lib/chat-layout';
 
-// Swipe the phone chat sheet down to close it. The swipe starts anywhere on
-// the sheet except on controls, or inside a list that can still scroll up.
-// Pulling up stretches with resistance; letting go springs back or closes.
 export function useSheetSwipe({
   enabled,
   panelRef,
@@ -51,9 +48,6 @@ export function useSheetSwipe({
     }
   }, [sheetY, panelRef, scrimRef]);
 
-  // Once the sheet is closed (or the layout stops being a sheet), hand the
-  // position back to the CSS classes. The sheet is off screen by then, so the
-  // swap does not show.
   useEffect(() => {
     if (!enabled) release();
   }, [enabled, release]);
@@ -111,7 +105,6 @@ export function useSheetSwipe({
           { y: move.clientY, time: move.timeStamp },
         ];
       };
-      // Once the sheet owns the gesture, keep the browser from scrolling.
       const holdTouch = (touch: TouchEvent) => {
         if (claimed && touch.cancelable) touch.preventDefault();
       };

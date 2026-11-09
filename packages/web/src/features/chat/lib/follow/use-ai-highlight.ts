@@ -8,7 +8,6 @@ import { ResourceRef } from '../resources/registry';
 import { aiSheen } from './ai-sheen';
 import { followAlong, useFollowAlong } from './follow-along';
 
-// Lights `key` when its component mounts after the AI changed it out of view.
 export function useAiHighlight({
   resource,
   key,
@@ -35,8 +34,6 @@ export function useAiFieldHighlights(): void {
       }
       takeScroll();
     };
-    // Dragging a scrollbar fires no wheel or key event, only scrolls while
-    // the pointer is held down outside the chat.
     let pointerDown = false;
     const press = (event: Event) => {
       pointerDown = !chatDom.inChat(event.target);

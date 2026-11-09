@@ -2,10 +2,6 @@ import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 
 import { chatDom } from './chat-dom';
 
-// When the chat changes the page beside it, the new page may grab focus
-// (autofocus fields, focus traps, a removed element dropping focus to body).
-// If the user was typing in the chat, hand focus straight back, until the user
-// moves it themselves or the page has had time to settle.
 function keep(): void {
   release?.();
   const kept = document.activeElement;

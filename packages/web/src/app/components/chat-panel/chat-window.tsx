@@ -119,7 +119,6 @@ export function ChatPanel() {
   const layoutKey = chatWidth;
   const committedLayout = useRef(layoutKey);
 
-  // Read where the reader is before React swaps the width under them.
   if (committedLayout.current !== layoutKey && pendingCapture !== layoutKey) {
     pendingCapture = layoutKey;
     chatScrollAnchor.capture();
@@ -494,9 +493,6 @@ function useComposerFocus({
 }
 
 const SHEET_STATE = 'chatSheet';
-// Focus the composer as soon as it exists. On a cold first open the chat is
-// still loading, so wait for the textarea to appear, unless the user goes
-// somewhere else first.
 function focusComposerWhenReady(panel: HTMLElement): (() => void) | undefined {
   const focus = () => {
     const input = panel.querySelector('textarea');

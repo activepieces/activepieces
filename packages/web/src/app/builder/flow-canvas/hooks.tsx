@@ -205,8 +205,6 @@ const useRefreshDraftOnPush = () => {
   }, [socket, store, flowId, refreshDraft]);
 };
 
-// Highlight keys for what a push changed: steps, plus the header's flow name
-// and publish status.
 function changedFlowParts({
   before,
   after,
@@ -338,9 +336,6 @@ function neighbours({ place, kept }: { place: StepPlace; kept: Set<string> }): {
   };
 }
 
-// When a flash lights a step that sits off screen, pan the canvas to the
-// last one at the current zoom. Runs off the flash itself, after the
-// refreshed nodes are on the page.
 const usePanToFlashedStep = () => {
   const { fitView, getViewport } = useReactFlow();
   const flashes = useFollowAlong((state) => state.flashes);
