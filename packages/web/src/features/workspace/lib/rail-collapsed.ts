@@ -36,7 +36,7 @@ function readFoldedForChat(): boolean {
 }
 
 function desktop(): boolean {
-  return window.innerWidth >= chatLayoutUtils.MOBILE_BREAKPOINT;
+  return !windowSizeHooks.isPhone();
 }
 
 const useRail = create<RailState>(() => ({

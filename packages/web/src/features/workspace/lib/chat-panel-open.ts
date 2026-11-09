@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { create } from 'zustand';
 
 import { keepComposerFocus } from '@/features/chat/lib/keep-composer-focus';
+import { MOBILE_BREAKPOINT } from '@/hooks/use-mobile';
 import { authenticationSession } from '@/lib/authentication-session';
 import { CHAT_ROUTE } from '@/lib/route-utils';
 import { safeStorage } from '@/lib/safe-storage';
@@ -30,7 +31,7 @@ function isFullPage(): boolean {
 
 function startMove(move: ChatMove): void {
   if (
-    window.innerWidth >= chatLayoutUtils.MOBILE_BREAKPOINT &&
+    window.innerWidth >= MOBILE_BREAKPOINT &&
     !chatLayoutUtils.prefersReducedMotion()
   ) {
     useChatPanel.getState().setMoving(move);

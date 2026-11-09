@@ -33,12 +33,12 @@ import {
   UseCaseCard,
 } from '@/features/chat/use-cases/use-case-card';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
-import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 import {
   chatPanelUtils,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
+import { MOBILE_BREAKPOINT } from '@/hooks/use-mobile';
 import { userHooks } from '@/hooks/user-hooks';
 import { routesThatRequireProjectId } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
@@ -213,7 +213,7 @@ export function SetupRequiredState() {
       push: true,
       name: t('AI providers'),
     });
-    if (window.innerWidth >= chatLayoutUtils.MOBILE_BREAKPOINT) {
+    if (window.innerWidth >= MOBILE_BREAKPOINT) {
       useChatPanel.getState().setOpen(true);
     }
   };

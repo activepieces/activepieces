@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 
-const base = {
+const base: Parameters<typeof chatLayoutUtils.widthFor>[0] = {
   fullPage: false,
   open: true,
-  mode: 'right' as const,
-  viewportWidth: 1440,
+  mode: 'right',
+  phone: false,
 };
 
 describe('chatLayoutUtils.widthFor', () => {
@@ -16,19 +16,17 @@ describe('chatLayoutUtils.widthFor', () => {
     ).toBe('full');
   });
 
-  it('docks on the saved side from 768 px up', () => {
+  it('docks on the saved side off phones', () => {
     expect(chatLayoutUtils.widthFor(base)).toBe('right');
     expect(
-      chatLayoutUtils.widthFor({ ...base, mode: 'left', viewportWidth: 800 }),
+      chatLayoutUtils.widthFor({ ...base, mode: 'left' }),
     ).toBe('left');
   });
 
-  it('uses the bottom sheet under 768 px', () => {
-    expect(chatLayoutUtils.widthFor({ ...base, viewportWidth: 390 })).toBe(
-      'sheet',
-    );
+  it('uses the bottom sheet on phones', () => {
+    expect(chatLayoutUtils.widthFor({ ...base, phone: true })).toBe('sheet');
     expect(
-      chatLayoutUtils.widthFor({ ...base, open: false, viewportWidth: 390 }),
+      chatLayoutUtils.widthFor({ ...base, open: false, phone: true }),
     ).toBe('closed');
   });
 

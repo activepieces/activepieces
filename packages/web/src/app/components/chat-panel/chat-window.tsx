@@ -7,7 +7,6 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  useSyncExternalStore,
 } from 'react';
 import { useLocation, useMatches, useNavigate } from 'react-router-dom';
 
@@ -42,7 +41,7 @@ const ChatChrome = lazyWithRetry(loadChatChrome, 'chat-chrome');
 // and the page can be sized for where they land, not where they are mid-move.
 export function useCardWidth(): number {
   const railOpen = useRailOpen();
-  const viewportWidth = windowSizeHooks.useWidth();
+  const viewportWidth = windowSizeHooks.useViewportWidth();
   const builder = useShellHandle().shell === 'builder';
   return chatLayoutUtils.cardInnerWidth({
     viewportWidth,
@@ -65,17 +64,13 @@ export function useChatWidth(): ChatWidth {
   const sheetOpen = useLocation().hash === chatPanelUtils.SHEET_HASH;
   const docked = useChatPanel((s) => s.open);
   const mode = useChatPanel((s) => s.mode);
-  return useSyncExternalStore(windowSizeHooks.subscribe, () =>
-    chatLayoutUtils.widthFor({
-      fullPage,
-      open:
-        window.innerWidth < chatLayoutUtils.MOBILE_BREAKPOINT
-          ? sheetOpen
-          : docked,
-      mode,
-      viewportWidth: window.innerWidth,
-    }),
-  );
+  const phone = windowSizeHooks.useIsPhone();
+  return chatLayoutUtils.widthFor({
+    fullPage,
+    open: phone ? sheetOpen : docked,
+    mode,
+    phone,
+  });
 }
 
 export function useActiveConversationId(): string | null {
@@ -116,11 +111,10 @@ export function ChatPanel() {
   const panelRef = useRef<HTMLDivElement>(null);
   const scrimRef = useRef<HTMLButtonElement>(null);
   const sheet = useChatSheet();
-  const viewportWidth = windowSizeHooks.useWidth();
   const full = chatWidth === 'full';
   const visible = chatWidth !== 'closed';
   const sheetOpen = chatWidth === 'sheet';
-  const phone = viewportWidth < chatLayoutUtils.MOBILE_BREAKPOINT && !full;
+  const phone = windowSizeHooks.useIsPhone() && !full;
   const side = full ? 'left' : mode;
   const width = useDockWidth(dragWidth);
   const cardWidth = useCardWidth();
@@ -333,7 +327,7 @@ export function ChatPanel() {
 export function ChatSheetLauncher() {
   const chatWidth = useChatWidth();
   const hasConversation = useChatPanel((s) => s.conversationId !== null);
-  const phone = windowSizeHooks.useWidth() < chatLayoutUtils.MOBILE_BREAKPOINT;
+  const phone = windowSizeHooks.useIsPhone();
   const sheet = useChatSheet();
   if (chatWidth !== 'closed' || !phone || !hasConversation) return null;
   return <ChatSheetPill onOpen={sheet.show} />;
@@ -410,7 +404,7 @@ function handleChatKey({
     event.preventDefault();
     if (chatWidth === 'sheet') {
       sheet.hide();
-    } else if (!full && window.innerWidth < chatLayoutUtils.MOBILE_BREAKPOINT) {
+    } else if (!full && windowSizeHooks.isPhone()) {
       sheet.show();
     } else if (full || (chatWidth !== 'closed' && !focusInChat)) {
       chatDom.composer()?.focus();

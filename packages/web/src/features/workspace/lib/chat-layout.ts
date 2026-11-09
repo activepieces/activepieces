@@ -1,19 +1,17 @@
 import type { ToasterProps } from 'sonner';
 
-import { MOBILE_BREAKPOINT } from '@/hooks/use-mobile';
-
 import type { ChatPanelSide } from './chat-panel-open';
 
 function widthFor({
   fullPage,
   open,
   mode,
-  viewportWidth,
+  phone,
 }: {
   fullPage: boolean;
   open: boolean;
   mode: ChatPanelSide;
-  viewportWidth: number;
+  phone: boolean;
 }): ChatWidth {
   if (fullPage) {
     return 'full';
@@ -21,7 +19,7 @@ function widthFor({
   if (!open) {
     return 'closed';
   }
-  return viewportWidth < MOBILE_BREAKPOINT ? 'sheet' : mode;
+  return phone ? 'sheet' : mode;
 }
 
 function toastPlacementFor(chatWidth: ChatWidth | null): ToastPlacement {
@@ -123,7 +121,6 @@ export const chatLayoutUtils = {
   DOCK_MAX_WIDTH,
   DOCK_DEFAULT_WIDTH,
   PAGE_COMFORT_WIDTH,
-  MOBILE_BREAKPOINT,
   PANEL_ID,
   MOVE_MS,
   MOVE_EASE,

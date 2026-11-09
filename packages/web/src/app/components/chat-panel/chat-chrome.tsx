@@ -56,7 +56,6 @@ import {
   followAlong,
   useFollowAlong,
 } from '@/features/chat/lib/follow/follow-along';
-import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 import {
   chatPanelUtils,
   useChatPanel,
@@ -112,7 +111,7 @@ export function ChatChrome() {
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [chatShown, historyOpen]);
-  const phone = windowSizeHooks.useWidth() < chatLayoutUtils.MOBILE_BREAKPOINT;
+  const phone = windowSizeHooks.useIsPhone();
   const chatSheet = useChatSheet();
   const renaming = renamingId !== null && renamingId === conversationId;
   const setRenaming = (on: boolean) =>
