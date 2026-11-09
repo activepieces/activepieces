@@ -1,9 +1,13 @@
 import { t } from 'i18next';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { matchPath } from 'react-router-dom';
 
 import { AppLinkProvider, useAppLinks } from '@/components/prompt-kit/app-link';
-import { ChatUIMessage, chatPartUtils } from '@/features/chat/lib/chat-types';
+import {
+  AnyToolPart,
+  ChatUIMessage,
+  chatPartUtils,
+} from '@/features/chat/lib/chat-types';
 import {
   ResourceRef,
   resourceRegistry,
@@ -23,26 +27,38 @@ export function ChatResourceLinks({
   children: React.ReactNode;
 }) {
   const outer = useAppLinks();
+  const latest = resourcesIn(messages);
+  const latestKey = keyOf(latest);
+  const [shown, setShown] = useState({ key: latestKey, resources: latest });
+  if (shown.key !== latestKey) {
+    setShown({ key: latestKey, resources: latest });
+  }
+  const resources = shown.resources;
   const handlers = useMemo(() => {
     if (!outer) return null;
     return {
       ...outer,
       label: (route: string) =>
-        resourceName({ route, resources: resourcesIn(messages) }) ??
-        outer.label(route),
+        resourceName({ route, resources }) ?? outer.label(route),
     };
-  }, [outer, messages]);
+  }, [outer, resources]);
   if (!handlers) return <>{children}</>;
   return <AppLinkProvider value={handlers}>{children}</AppLinkProvider>;
 }
 
 function label(route: string): string {
   const path = pathOf(route);
+  if (path === PLATFORM || path.startsWith(`${PLATFORM}/`)) {
+    const page = PLATFORM_PAGES.find(({ pattern }) =>
+      matchPath({ path: pattern, end: false }, path),
+    );
+    return page ? page.name() : t('Platform Admin');
+  }
   const inProject = path.replace(/^\/projects\/[^/]+/, '');
   const page = PAGES.find(({ pattern }) =>
     matchPath({ path: pattern, end: false }, inProject),
   );
-  return page ? page.name() : path;
+  return page ? page.name() : t('Open page');
 }
 
 function resourceName({
@@ -62,10 +78,28 @@ function resourcesIn(messages: ChatUIMessage[]): ResourceRef[] {
     message.parts.flatMap((part) => {
       if (!chatPartUtils.isAnyToolPart(part)) return [];
       if (part.state !== 'output-available') return [];
-      const resolved = resourceRegistry.resolve(part.output);
-      return resolved ? [resolved.ref] : [];
+      const ref = finishedOutputRef(part);
+      return ref ? [ref] : [];
     }),
   );
+}
+
+// A finished tool output never changes, so it is read once, not on every
+// streamed chunk.
+function finishedOutputRef(part: AnyToolPart): ResourceRef | null {
+  const cached = finishedOutputs.get(part);
+  if (cached !== undefined) return cached;
+  const ref = resourceRegistry.resolve(part.output)?.ref ?? null;
+  finishedOutputs.set(part, ref);
+  return ref;
+}
+
+function keyOf(resources: ResourceRef[]): string {
+  return resources
+    .map(
+      (ref) => `${resourceRegistry.keyOf(ref)}@${ref.projectId}=${ref.name}`,
+    )
+    .join('|');
 }
 
 function pathOf(route: string): string {
@@ -97,6 +131,33 @@ const PAGES: { pattern: string; name: () => string }[] = [
   { pattern: routesThatRequireProjectId.approvals, name: () => t('Approvals') },
   { pattern: routesThatRequireProjectId.settings, name: () => t('Settings') },
 ];
+
+const PLATFORM = '/platform';
+
+const PLATFORM_PAGES: { pattern: string; name: () => string }[] = [
+  { pattern: '/platform/projects', name: () => t('Projects') },
+  { pattern: '/platform/users', name: () => t('Users') },
+  {
+    pattern: '/platform/connections/global',
+    name: () => t('Global connections'),
+  },
+  { pattern: '/platform/ai', name: () => t('AI') },
+  { pattern: '/platform/mcp', name: () => t('MCP') },
+  { pattern: '/platform/pieces', name: () => t('Pieces') },
+  { pattern: '/platform/templates', name: () => t('Templates') },
+  { pattern: '/platform/billing', name: () => t('Billing') },
+  { pattern: '/platform/usage', name: () => t('Usage') },
+  { pattern: '/platform/api-keys', name: () => t('API Keys') },
+  { pattern: '/platform/secret-managers', name: () => t('Secret Managers') },
+  { pattern: '/platform/audit-log', name: () => t('Audit Logs') },
+  { pattern: '/platform/sso', name: () => t('SSO') },
+  { pattern: '/platform/embedding', name: () => t('Embedding') },
+  { pattern: '/platform/workers', name: () => t('Workers') },
+  { pattern: '/platform/health', name: () => t('Health') },
+  { pattern: '/platform/general', name: () => t('General') },
+];
+
+const finishedOutputs = new WeakMap<AnyToolPart, ResourceRef | null>();
 
 const HANDLERS = {
   open: ({ route, name }: { route: string; name: string }) =>

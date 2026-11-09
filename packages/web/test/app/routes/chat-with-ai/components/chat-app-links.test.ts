@@ -57,10 +57,16 @@ describe('chatAppLinkUtils.label', () => {
     );
   });
 
-  it('falls back to the path for pages it does not know', () => {
+  it('names platform pages', () => {
+    expect(chatAppLinkUtils.label('/platform/users')).toBe('Users');
+    expect(chatAppLinkUtils.label('/platform/ai/usage?x=1')).toBe('AI');
+  });
+
+  it('never shows a raw path for pages it does not know', () => {
     expect(chatAppLinkUtils.label('/platform/setup?tab=1')).toBe(
-      '/platform/setup',
+      'Platform Admin',
     );
+    expect(chatAppLinkUtils.label('/projects/p1/unknown/x')).toBe('Open page');
   });
 });
 
