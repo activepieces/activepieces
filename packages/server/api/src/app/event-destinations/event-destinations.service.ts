@@ -1,9 +1,10 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, partition, PlatformId, ProjectId, SeekPage, spreadIfDefined, spreadIfNotUndefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { createHash } from 'node:crypto'
+import { ActivepiecesError, apId, Cursor, ErrorCode, groupBy, isNil, partition, PlatformId, ProjectId, SeekPage, spreadIfDefined, spreadIfNotUndefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { OtlpExportLogsRequest, otlpLogs, PostForStatusFailure, safeHttp } from '@activepieces/server-utils'
-import { AgentRunSource, ApplicationEvent, ApplicationEventName, buildMockEvent, CreatePlatformEventDestinationRequestBody, EventDestination, EventDestinationFormat, EventDestinationHeaders, EventDestinationHeadersRequest, EventDestinationJobData, EventDestinationScope, EventDestinationTestError, EventPayload, FlowRunEvent, LATEST_JOB_DATA_SCHEMA_VERSION, TestPlatformEventDestinationResponse, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
+import { AgentRunSource, ApplicationEvent, ApplicationEventName, buildMockEvent, CreatePlatformEventDestinationRequestBody, DEFAULT_PIECE_CHANGE_TYPES, EventDestination, EventDestinationFormat, EventDestinationHeaders, EventDestinationHeadersRequest, EventDestinationJobData, EventDestinationScope, EventDestinationTestError, EventPayload, FlowRunEvent, LATEST_JOB_DATA_SCHEMA_VERSION, PieceCreatedEvent, PieceVersionCreatedEvent, TestPlatformEventDestinationResponse, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { ArrayContains, FindOptionsWhere } from 'typeorm'
+import { ArrayContains, ArrayOverlap, FindOptionsWhere } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
@@ -14,6 +15,8 @@ import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { CatalogChange } from '../pieces/piece-catalog/catalog-diff'
+import { pieceCatalogHooks, pieceSetsContaining, PieceSetVisibility } from '../pieces/piece-catalog/piece-catalog-hooks'
 import { projectService } from '../project/project-service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
@@ -38,6 +41,8 @@ const FLOW_RUN_EVENT_ACTIONS: ReadonlySet<ApplicationEventName> = new Set([
     ApplicationEventName.FLOW_RUN_RESUMED,
     ApplicationEventName.FLOW_RUN_RETRIED,
 ])
+
+const PIECE_CATALOG_EVENTS = [ApplicationEventName.PIECE_CREATED, ApplicationEventName.PIECE_VERSION_CREATED]
 
 const WEBHOOK_PATH_MARKER = '/v1/webhooks/'
 
@@ -215,6 +220,50 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             }),
         ))
     },
+    broadcast: async ({ changes }: BroadcastParams): Promise<{ queued: number }> => {
+        const destinations = await eventDestinationRepo().findBy({
+            scope: EventDestinationScope.PLATFORM,
+            enabled: true,
+            events: ArrayOverlap(PIECE_CATALOG_EVENTS),
+        })
+        if (changes.length === 0 || destinations.length === 0) {
+            return { queued: 0 }
+        }
+        const webhookUrlPrefix = await domainHelper.getPublicApiUrl({ path: 'v1/webhooks' })
+        let queued = 0
+        for (const [platformId, platformDestinations] of Object.entries(groupBy(destinations, (destination) => destination.platformId))) {
+            const { data: entitled, error: entitlementError } = await tryCatch(() => eventDestinationHooks.get(log).isDeliveryEntitled({ platformId }))
+            if (!isNil(entitlementError)) {
+                log.warn({ error: entitlementError, platform: { id: platformId } }, 'Failed to resolve event streaming entitlement, skipping the platform for piece catalog events')
+                continue
+            }
+            if (!entitled) {
+                continue
+            }
+            const pieceSets = await pieceCatalogHooks.get(log).listPieceSets({ platformId })
+            for (const change of changes) {
+                const event = toPieceCatalogEvent({ platformId, change, pieceSets })
+                const subscribed = platformDestinations
+                    .filter((destination) => acceptsPieceChange({ destination, event }))
+                    .map((destination) => classifyDestination({ destination, webhookUrlPrefix }))
+                queued += subscribed.filter(({ internalFlowId }) => isNil(internalFlowId)).length
+                await Promise.all(subscribed.map(({ destination, internalFlowId }) =>
+                    dispatchEventToDestination({
+                        log,
+                        platformId,
+                        destinationId: destination.id,
+                        destinationUrl: destination.url,
+                        internalFlowId,
+                        format: destination.format,
+                        storedHeaders: destination.headers,
+                        body: buildDeliveryBody({ format: destination.format, event }),
+                        jobId: pieceCatalogDeliveryJobId({ destinationId: destination.id, action: event.action, name: change.name, version: change.version }),
+                    }),
+                ))
+            }
+        }
+        return { queued }
+    },
     resolveDeliveryHeaders: async ({ platformId, destinationId, destinationUrl }: ResolveDeliveryHeadersParams): Promise<EventDestinationHeaders | null> => {
         const destination = await eventDestinationRepo().findOneBy({ id: destinationId, platformId, url: destinationUrl })
         if (isNil(destination)) {
@@ -371,6 +420,28 @@ function deliveryJobFields({ format, hasHeaders }: DeliveryJobFieldsParams): Pic
     }
 }
 
+function toPieceCatalogEvent({ platformId, change, pieceSets }: ToPieceCatalogEventParams): PieceCreatedEvent | PieceVersionCreatedEvent {
+    const now = new Date().toISOString()
+    const { name, displayName, version, previousVersion, changeType, minimumSupportedRelease, deprecated } = change
+    const data = {
+        piece: { name, displayName, version, previousVersion, changeType, pieceType: 'OFFICIAL' as const, minimumSupportedRelease, deprecated },
+        pieceSets: pieceSetsContaining({ pieceSets, name: change.name }),
+    }
+    const envelope = { id: apId(), created: now, updated: now, platformId }
+    return change.changeType === 'new'
+        ? { ...envelope, action: ApplicationEventName.PIECE_CREATED, data }
+        : { ...envelope, action: ApplicationEventName.PIECE_VERSION_CREATED, data }
+}
+
+function acceptsPieceChange({ destination, event }: AcceptsPieceChangeParams): boolean {
+    const changeTypes = destination.eventFilters?.piece?.changeTypes ?? DEFAULT_PIECE_CHANGE_TYPES
+    return destination.events.includes(event.action) && changeTypes.includes(event.data.piece.changeType)
+}
+
+function pieceCatalogDeliveryJobId({ destinationId, action, name, version }: PieceCatalogDeliveryJobIdParams): string {
+    return 'pce-' + createHash('sha256').update(`${destinationId}|${action}|${name}|${version}`).digest('hex').slice(0, 24)
+}
+
 const dispatchEventToDestination = async ({
     log,
     platformId,
@@ -381,6 +452,7 @@ const dispatchEventToDestination = async ({
     format,
     storedHeaders,
     body,
+    jobId,
 }: DispatchEventParams): Promise<void> => {
     if (!isNil(internalFlowId)) {
         const { data: headers, error } = await tryCatch(() => decryptBoundHeaders({ headers: storedHeaders, destinationId, destinationUrl, log }))
@@ -407,7 +479,7 @@ const dispatchEventToDestination = async ({
     }
     await jobQueue(log).add({
         type: JobType.ONE_TIME,
-        id: apId(),
+        id: jobId ?? apId(),
         data: {
             schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
             platformId,
@@ -767,6 +839,29 @@ type DispatchEventParams = {
     format: EventDestinationFormat
     storedHeaders: StoredEventDestinationHeaders | null
     body: unknown
+    jobId?: string
+}
+
+type BroadcastParams = {
+    changes: CatalogChange[]
+}
+
+type ToPieceCatalogEventParams = {
+    platformId: PlatformId
+    change: CatalogChange
+    pieceSets: PieceSetVisibility[]
+}
+
+type AcceptsPieceChangeParams = {
+    destination: EventDestinationSchema
+    event: PieceCreatedEvent | PieceVersionCreatedEvent
+}
+
+type PieceCatalogDeliveryJobIdParams = {
+    destinationId: string
+    action: ApplicationEventName
+    name: string
+    version: string
 }
 
 type ResolveDeliveryHeadersParams = {
