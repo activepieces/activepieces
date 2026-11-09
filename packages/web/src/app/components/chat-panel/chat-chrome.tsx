@@ -362,7 +362,6 @@ function titleFade() {
       opacity: 1,
       transition: { duration: MOTION.base, ease: MOTION.easeOut },
     },
-    exit: { opacity: 0, transition: { duration: 0 } },
   };
 }
 
