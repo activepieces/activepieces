@@ -23,6 +23,7 @@ import {
 
 vi.mock('@/components/providers/socket-provider', () => ({
   useSocket: () => ({ connected: false, on: vi.fn(), off: vi.fn() }),
+  emitInProject: (send: () => void) => send(),
 }));
 vi.mock('@/hooks/use-resource-lock', () => ({
   useResourceLock: () => ({

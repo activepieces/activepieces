@@ -31,5 +31,5 @@ export const flowModule: FastifyPluginAsyncZod = async (app) => {
             })
             socket.emit(WebsocketClientEvent.MANUAL_TRIGGER_RUN_STARTED, flowRun)
         }
-    }, Permission.WRITE_RUN)
+    }, { permission: Permission.WRITE_RUN })
 }

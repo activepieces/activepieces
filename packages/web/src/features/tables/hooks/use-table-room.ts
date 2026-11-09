@@ -9,7 +9,10 @@ import {
 } from '@activepieces/shared';
 import { useEffect } from 'react';
 
-import { useSocket } from '@/components/providers/socket-provider';
+import {
+  emitInProject,
+  useSocket,
+} from '@/components/providers/socket-provider';
 import { editorSession } from '@/lib/editor-session';
 import { errorReporting } from '@/lib/error-reporting';
 
@@ -27,25 +30,33 @@ export function useTableRoom({
     if (isNil(tableId)) {
       return;
     }
-    const join = () => {
-      const sentAt = Date.now();
-      socket
-        .timeout(JOIN_TIMEOUT_MS)
-        .emit(
-          WebsocketServerEvent.JOIN_TABLE_ROOM,
-          { tableId },
-          (error: Error | null, response: unknown) => {
-            if (!isNil(error)) {
-              errorReporting.report({ error, source: 'table-live-updates' });
-              return;
-            }
-            const parsed = JoinTableRoomResponse.safeParse(response);
-            if (parsed.success && parsed.data.joined) {
-              onJoined({ sentAt });
-            }
-          },
-        );
-    };
+    let active = true;
+    const join = () =>
+      emitInProject(() => {
+        if (!active) {
+          return;
+        }
+        const sentAt = Date.now();
+        socket
+          .timeout(JOIN_TIMEOUT_MS)
+          .emit(
+            WebsocketServerEvent.JOIN_TABLE_ROOM,
+            { tableId },
+            (error: Error | null, response: unknown) => {
+              if (!active) {
+                return;
+              }
+              if (!isNil(error)) {
+                errorReporting.report({ error, source: 'table-live-updates' });
+                return;
+              }
+              const parsed = JoinTableRoomResponse.safeParse(response);
+              if (parsed.success && parsed.data.joined) {
+                onJoined({ sentAt });
+              }
+            },
+          );
+      });
     const onRecordsChanged = (event: TableRecordsChangedEvent) => {
       if (
         event.tableId !== tableId ||
@@ -61,6 +72,7 @@ export function useTableRoom({
       join();
     }
     return () => {
+      active = false;
       socket.off(WebsocketClientEvent.TABLE_RECORDS_CHANGED, onRecordsChanged);
       socket.off('connect', join);
       if (socket.connected) {

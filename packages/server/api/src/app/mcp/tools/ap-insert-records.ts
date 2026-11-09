@@ -1,8 +1,7 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { McpToolDefinition, ProjectScopedMcpServer, TableRecordsChangeOp } from '@activepieces/shared'
+import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { recordSideEffects } from '../../tables/record/record-side-effects'
 import { recordService } from '../../tables/record/record.service'
 import { mcpUtils } from './mcp-utils'
 import { resolveFieldNamesForTable, resolveTable, tableNotFoundError } from './table-utils'
@@ -47,11 +46,6 @@ export const apInsertRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     projectId: mcp.projectId,
                     logger: log,
                     fields,
-                })
-                await recordSideEffects(log).onRecordsChanged({
-                    projectId: mcp.projectId,
-                    tableId: resolvedTableId,
-                    change: { op: TableRecordsChangeOp.CREATED, records: result },
                     editorSessionId: null,
                 })
 

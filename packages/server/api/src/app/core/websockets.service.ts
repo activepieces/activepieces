@@ -21,6 +21,12 @@ const listener = {
 
 const eventPermissions: Partial<Record<WebsocketServerEvent, Permission>> = {}
 
+const eventRejectResponses: Partial<Record<WebsocketServerEvent, unknown>> = {}
+
+const DEFAULT_REJECT_RESPONSE = { success: false }
+
+const eventsOrderedWithSwitch = new Set<WebsocketServerEvent>()
+
 const projectBySocket = new WeakMap<Socket, SocketProject>()
 
 const projectLeaveHandlers = new Map<string, ProjectLeaveHandler>()
@@ -31,7 +37,7 @@ export const websocketService = {
     to: (workerId: string) => app!.io.to(workerId),
     socketHasPermission: ({ socket, permission }: SocketHasPermissionParams): boolean => hasPermission(projectBySocket.get(socket)?.role, permission),
     getProjectId: (socket: Socket): string | null => projectBySocket.get(socket)?.projectId ?? null,
-    setProjectLeaveHandler({ name, handler }: SetProjectLeaveHandlerParams): void {
+    onProjectLeave({ name, handler }: OnProjectLeaveParams): void {
         projectLeaveHandlers.set(name, handler)
     },
     notifyWorkers: () => createNotifyClient<ApiToWorkerContract>(app!.io.to(WORKERS_ROOM)),
@@ -45,13 +51,20 @@ export const websocketService = {
     async verifyPrincipal(socket: Socket): Promise<Principal> {
         return accessTokenManager(app!.log).verifyPrincipal(socket.handshake.auth.token)
     },
-    addListener<T, PR extends PrincipalType.WORKER | PrincipalType.USER>(principalType: PR, event: WebsocketServerEvent, handler: WebsocketListener<T, PR>, permission?: Permission): void {
+    addListener<T, PR extends PrincipalType.WORKER | PrincipalType.USER>(principalType: PR, event: WebsocketServerEvent, handler: WebsocketListener<T, PR>, options?: ListenerOptions): void {
         switch (principalType) {
             case PrincipalType.USER: {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 listener[PrincipalType.USER][event] = handler as unknown as WebsocketListener<any, PrincipalType.USER>
+                const { permission, rejectResponse, orderedWithSwitch } = options ?? {}
                 if (!isNil(permission)) {
                     eventPermissions[event] = permission
+                }
+                if (!isNil(rejectResponse)) {
+                    eventRejectResponses[event] = rejectResponse
+                }
+                if (orderedWithSwitch === true) {
+                    eventsOrderedWithSwitch.add(event)
                 }
                 break
             }
@@ -84,6 +97,7 @@ async function attachListeners({ socket, log }: AttachListenersParams): Promise<
                 ...(isNil(joinedProjectId) ? {} : { project: { id: joinedProjectId } }),
             })
             await socket.join(principal.id)
+            socket.once('disconnect', () => runInSocketOrder({ socket, work: () => leaveCurrentProject({ socket, userId: principal.id, log }) }))
             socket.on(WebsocketServerEvent.SWITCH_PROJECT, async (data: unknown, callback?: (response: SwitchProjectResponse) => void) => {
                 const response = await runInSocketOrder({ socket, work: () => switchProject({ socket, userId: principal.id, data, log }) })
                 callback?.(response)
@@ -94,7 +108,8 @@ async function attachListeners({ socket, log }: AttachListenersParams): Promise<
                     continue
                 }
                 socket.on(toSocketEvent(event), async (data: unknown, callback?: (data: unknown) => void) => {
-                    return runInSocketOrder({ socket, work: () => runUserEvent({ socket, event, handler, data, principal, callback, log }) })
+                    const work = (): Promise<void> => runUserEvent({ socket, event, handler, data, principal, callback, log })
+                    return eventsOrderedWithSwitch.has(event) ? runInSocketOrder({ socket, work }) : work()
                 })
             }
             break
@@ -134,19 +149,23 @@ function toSocketEvent(event: WebsocketServerEvent): string {
 }
 
 async function runUserEvent({ socket, event, handler, data, principal, callback, log }: RunUserEventParams): Promise<void> {
+    const reject = (): void => callback?.(eventRejectResponses[event] ?? DEFAULT_REJECT_RESPONSE)
     const project = projectBySocket.get(socket)
     if (isNil(project)) {
         log.warn({ event, user: { id: principal.id } }, 'Websocket event blocked: no project selected')
+        reject()
         return
     }
     const requiredPermission = eventPermissions[event]
     if (!isNil(requiredPermission) && !hasPermission(project.role, requiredPermission)) {
         log.warn({ event, user: { id: principal.id }, project: { id: project.projectId }, requiredPermission }, 'Websocket event blocked: missing permission')
+        reject()
         return
     }
     const { error } = await tryCatch(() => handler(socket)(data, principal, project.projectId, callback))
     if (!isNil(error)) {
         log.error({ error, event, user: { id: principal.id }, project: { id: project.projectId } }, 'Websocket event failed')
+        reject()
     }
 }
 
@@ -179,9 +198,7 @@ async function switchProject({ socket, userId, data, log }: SwitchProjectParams)
         const role = await validateProjectId({ userId, projectId, log })
         const previous = projectBySocket.get(socket)
         if (!isNil(previous) && previous.projectId !== projectId) {
-            for (const leaveHandler of projectLeaveHandlers.values()) {
-                await leaveHandler({ socket, userId, projectId: previous.projectId })
-            }
+            await runProjectLeaveHandlers({ socket, userId, projectId: previous.projectId, log })
             await socket.leave(previous.projectId)
         }
         await socket.join(projectId)
@@ -192,6 +209,23 @@ async function switchProject({ socket, userId, data, log }: SwitchProjectParams)
         return { success: false }
     }
     return { success: true }
+}
+
+async function leaveCurrentProject({ socket, userId, log }: LeaveCurrentProjectParams): Promise<void> {
+    const project = projectBySocket.get(socket)
+    if (isNil(project)) {
+        return
+    }
+    await runProjectLeaveHandlers({ socket, userId, projectId: project.projectId, log })
+}
+
+async function runProjectLeaveHandlers({ socket, userId, projectId, log }: RunProjectLeaveHandlersParams): Promise<void> {
+    for (const [name, handler] of projectLeaveHandlers) {
+        const { error } = await tryCatch(() => handler({ socket, userId, projectId }))
+        if (!isNil(error)) {
+            log.error({ error, handler: name, user: { id: userId }, project: { id: projectId } }, 'Websocket project leave handler failed')
+        }
+    }
 }
 
 function parseHandshakeProjectId(value: unknown): string | null {
@@ -225,12 +259,18 @@ type ValidateProjectIdArgs = {
     log: FastifyBaseLogger
 }
 
+type ListenerOptions = {
+    permission?: Permission
+    rejectResponse?: unknown
+    orderedWithSwitch?: boolean
+}
+
 type SocketProject = {
     projectId: string
     role: ProjectRole
 }
 
-type SetProjectLeaveHandlerParams = {
+type OnProjectLeaveParams = {
     name: string
     handler: ProjectLeaveHandler
 }
@@ -239,6 +279,19 @@ type SwitchProjectParams = {
     socket: Socket
     userId: string
     data: unknown
+    log: FastifyBaseLogger
+}
+
+type LeaveCurrentProjectParams = {
+    socket: Socket
+    userId: string
+    log: FastifyBaseLogger
+}
+
+type RunProjectLeaveHandlersParams = {
+    socket: Socket
+    userId: string
+    projectId: string
     log: FastifyBaseLogger
 }
 
@@ -252,8 +305,7 @@ type SocketHasPermissionParams = {
 type RunUserEventParams = {
     socket: Socket
     event: WebsocketServerEvent
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    handler: WebsocketListener<any, PrincipalType.USER>
+    handler: WebsocketListener<unknown, PrincipalType.USER>
     data: unknown
     principal: PrincipalForType<PrincipalType.USER>
     callback?: (data: unknown) => void

@@ -56,6 +56,7 @@ vi.mock('@/app/components/allow-logged-in-user-only-guard', () => ({
 
 vi.mock('@/components/providers/socket-provider', () => ({
   SocketProvider: ({ children }: React.PropsWithChildren) => <>{children}</>,
+  emitInProject: (send: () => void) => send(),
 }));
 
 vi.mock('@/app/components/global-search/global-search-context', () => ({

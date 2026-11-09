@@ -11,6 +11,7 @@ import { agentHelpers } from '.././agent-helpers'
 import { agentModelTier, agentTierCandidates, AgentTierRun } from '.././agent-model-tier'
 import { agentMcp } from '.././mcp/agent-mcp'
 import { chatPersonalizationService } from '.././personalization/chat-personalization-service'
+import { agentPageContextNote } from '.././prompt/agent-page-context-note'
 import { agentPrompt } from '.././prompt/agent-prompt'
 import { agentSurfaceNotes } from '.././prompt/agent-surface-notes'
 import { UserIdentity } from '.././prompt/agent-user-identity'
@@ -241,20 +242,20 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const resumedHistory = lock === 'handed-off' ? await agentHelpers.conversationRepo().findOneByOrFail({ id: conversationId, platformId }) : null
         const history = resumedHistory ?? conversation
         const previousMessages = history.messages as ModelMessage[]
-        const onboardingNote = agentSurfaceNotes.onboardingNote({ source: conversation.source, ...spreadIfDefined('messageSource', input.messageSource) })
-        const newUserContent = isNil(onboardingNote) ? userContent : withLeadingNote({ content: userContent, note: onboardingNote })
+        const leadingNotes = [
+            agentSurfaceNotes.onboardingNote({ source: conversation.source, ...spreadIfDefined('messageSource', input.messageSource) }),
+            agentPageContextNote.build({ pageContext: input.pageContext }),
+        ].filter((note): note is string => !isNil(note))
+        const newUserContent = leadingNotes.reduceRight<UserContent>((content, note) => withLeadingNote({ content, note }), userContent)
         const newUserMessage: ModelMessage = { role: 'user' as const, content: newUserContent }
         const allMessages = isNil(resumedHistory) ? [...previousMessages, newUserMessage] : previousMessages
-        const pageNote = agentSurfaceNotes.pageContextNote({ pageContext: input.pageContext })
-        const modelUserMessage: ModelMessage = isNil(pageNote) ? newUserMessage : { role: 'user' as const, content: withLeadingNote({ content: newUserContent, note: pageNote }) }
-        const turnMessages = isNil(resumedHistory) ? [...previousMessages, modelUserMessage] : previousMessages
         const fastModelSeesMessages = conversation.source !== AgentRunSource.CHAT
         const modelsSeeingMessages = isNil(tierRun)
             ? [resolvedModelId, ...(fastModelSeesMessages ? [fastModelId] : [])].map((modelId) => ({ provider: providerConfig.provider, modelId }))
             : [...tierRun.candidates, ...(fastModelSeesMessages && !isNil(tierRun.fast) ? [tierRun.fast] : [])].map((candidate) => ({ provider: candidate.config.provider, modelId: candidate.modelId }))
         const catalog = await modelCatalog.load()
         const llmHistory = dropImagesForTextOnlyModels({
-            messages: agentAiUtils.collapseStaleToolOutputs({ messages: turnMessages }),
+            messages: agentAiUtils.collapseStaleToolOutputs({ messages: allMessages }),
             models: modelsSeeingMessages.map((model) => catalog.lookup(model)),
         })
 

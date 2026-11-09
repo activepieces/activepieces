@@ -1,5 +1,5 @@
-import { ApResourceKind, PopulatedFlow } from '@activepieces/core-execution'
-import { ApId, BaseModelSchema, Permission } from '@activepieces/core-utils'
+import { PopulatedFlow } from '@activepieces/core-execution'
+import { ApId, ApResourceKind, BaseModelSchema, Permission } from '@activepieces/core-utils'
 import { z } from 'zod'
 
 export type McpId = ApId
@@ -79,5 +79,5 @@ export type McpToolResult = {
     content: Array<{ type: 'text', text: string }>
     structuredContent?: Record<string, unknown>
     isError?: boolean
-    _meta?: { apResource?: ApResource }
+    _meta?: Record<string, unknown> & { apResource?: ApResource }
 }

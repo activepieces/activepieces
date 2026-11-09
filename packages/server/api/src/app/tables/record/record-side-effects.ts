@@ -1,24 +1,10 @@
-import { chunk, isNil, tryCatch } from '@activepieces/core-utils'
-import { PopulatedRecord, TableAutomationTrigger, TableRecordsChangedEvent, TableRecordsChangeOp, TableWebhookEventType, WebsocketClientEvent } from '@activepieces/shared'
+import { chunk } from '@activepieces/core-utils'
+import { PopulatedRecord, TableAutomationTrigger, TableWebhookEventType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { WebhookFlowVersionToRun, webhookService } from '../../webhooks/webhook.service'
 import { tableService } from '../table/table.service'
-import { MAX_BATCH_SIZE } from './record.service'
 
-export const recordSideEffects = (log: FastifyBaseLogger) => ({
-    async onRecordsChanged({ projectId, tableId, change, editorSessionId }: OnRecordsChangedParams): Promise<void> {
-        const event = buildRecordsChangedEvent({ tableId, change, editorSessionId })
-        if (isNil(event)) {
-            return
-        }
-        const { error } = await tryCatch(async () => {
-            const { websocketService } = await import('../../core/websockets.service')
-            websocketService.to(projectId).emit(WebsocketClientEvent.TABLE_RECORDS_CHANGED, event)
-        })
-        if (!isNil(error)) {
-            log.error({ error, table: { id: tableId }, project: { id: projectId } }, '[recordSideEffects#onRecordsChanged] Could not send the records change, the write is kept')
-        }
-    },
+export const recordSideEffects = (_log: FastifyBaseLogger) => ({
     async handleRecordsEvent(
         params: BulkSideEffectParams,
         eventKey: keyof typeof EVENT_TYPE_MAP,
@@ -65,29 +51,6 @@ export const recordSideEffects = (log: FastifyBaseLogger) => ({
     },
 })
 
-function buildRecordsChangedEvent({ tableId, change, editorSessionId }: BuildRecordsChangedEventParams): TableRecordsChangedEvent | null {
-    const base = { tableId, ...(isNil(editorSessionId) ? {} : { editorSessionId }) }
-    switch (change.op) {
-        case TableRecordsChangeOp.CLEARED:
-            return { ...base, op: TableRecordsChangeOp.CLEARED }
-        case TableRecordsChangeOp.DELETED:
-            return withinCap({ base, count: change.recordIds.length, event: { ...base, op: TableRecordsChangeOp.DELETED, recordIds: change.recordIds } })
-        case TableRecordsChangeOp.CREATED:
-        case TableRecordsChangeOp.UPDATED:
-            return withinCap({ base, count: change.records.length, event: { ...base, op: change.op, records: change.records } })
-    }
-}
-
-function withinCap({ base, count, event }: WithinCapParams): TableRecordsChangedEvent | null {
-    if (count === 0) {
-        return null
-    }
-    if (count > MAX_BATCH_SIZE) {
-        return { ...base, op: TableRecordsChangeOp.RELOAD }
-    }
-    return event
-}
-
 const MAX_CONCURRENT_WEBHOOK_DISPATCHES = 50
 
 const EVENT_TYPE_MAP: Record<
@@ -119,29 +82,4 @@ type BulkSideEffectParams = {
     logger: FastifyBaseLogger
     authorization: string
     agentUpdate?: boolean
-}
-
-type OnRecordsChangedParams = {
-    projectId: string
-    tableId: string
-    change: RecordsChange
-    editorSessionId: string | null
-}
-
-type BuildRecordsChangedEventParams = Omit<OnRecordsChangedParams, 'projectId'>
-
-type RecordsChange = {
-    op: TableRecordsChangeOp.CREATED | TableRecordsChangeOp.UPDATED
-    records: PopulatedRecord[]
-} | {
-    op: TableRecordsChangeOp.DELETED
-    recordIds: string[]
-} | {
-    op: TableRecordsChangeOp.CLEARED
-}
-
-type WithinCapParams = {
-    base: Pick<TableRecordsChangedEvent, 'tableId' | 'editorSessionId'>
-    count: number
-    event: TableRecordsChangedEvent
 }

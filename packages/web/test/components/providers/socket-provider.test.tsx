@@ -80,7 +80,7 @@ const sessionHarness = vi.hoisted(
 );
 
 const toastHarness = vi.hoisted(() => {
-  const toast = Object.assign(() => undefined, {
+  const toast = Object.assign(vi.fn(), {
     dismiss: () => undefined,
     error: (..._args: unknown[]) => undefined,
   });
@@ -101,6 +101,7 @@ vi.mock('@/lib/api', () => ({ API_BASE_URL: 'http://localhost:4200' }));
 vi.mock('@/lib/authentication-session', () => ({
   authenticationSession: {
     getToken: () => sessionHarness.token,
+    getProjectId: () => sessionHarness.projectId,
     subscribe: () => () => undefined,
   },
 }));
@@ -110,6 +111,7 @@ vi.mock('@/hooks/use-session-project-id', () => ({
 }));
 
 import {
+  emitInProject,
   SocketProvider,
   useSocket,
 } from '@/components/providers/socket-provider';
@@ -121,6 +123,7 @@ describe('SocketProvider', () => {
   beforeEach(() => {
     sessionHarness.projectId = 'project-1';
     socketHarness.reset();
+    toastHarness.toast.mockClear();
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -153,7 +156,9 @@ describe('SocketProvider', () => {
     await act(async () => root.render(<App onConnect={vi.fn()} />));
 
     expect(disconnect).not.toHaveBeenCalled();
-    expect(socketHarness.state.handshakes).toEqual([{ token: 'token-1' }]);
+    expect(socketHarness.state.handshakes).toEqual([
+      { token: 'token-1', projectId: 'project-1' },
+    ]);
     expect(socketHarness.emitted).toHaveLength(1);
     expect(socketHarness.emitted[0].event).toBe(
       WebsocketServerEvent.SWITCH_PROJECT,
@@ -176,7 +181,7 @@ describe('SocketProvider', () => {
     expect(socketHarness.emitted).toHaveLength(1);
   });
 
-  it('treats a switch the server never answers as an error and does not retry', async () => {
+  it('shows a calm message for a switch the server never answers and does not retry on its own', async () => {
     const showError = vi.spyOn(toastHarness.toast, 'error');
     await act(async () => root.render(<App onConnect={vi.fn()} />));
 
@@ -188,8 +193,44 @@ describe('SocketProvider', () => {
     );
     await act(async () => root.render(<App onConnect={vi.fn()} />));
 
-    expect(showError).toHaveBeenCalledTimes(1);
+    expect(showError).not.toHaveBeenCalled();
+    expect(liveUpdateToasts()).toHaveLength(1);
     expect(socketHarness.emitted).toHaveLength(1);
+  });
+
+  it('retries an unanswered switch when a page next needs the project', async () => {
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+    sessionHarness.projectId = 'project-2';
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+    act(() =>
+      socketHarness.emitted[0].ack(new Error('operation has timed out')),
+    );
+
+    await act(async () =>
+      root.render(<App onConnect={vi.fn()} lockResourceId="flow-2" />),
+    );
+
+    expect(emittedEvents()).toEqual([
+      [WebsocketServerEvent.SWITCH_PROJECT, { projectId: 'project-2' }],
+      [WebsocketServerEvent.SWITCH_PROJECT, { projectId: 'project-2' }],
+    ]);
+  });
+
+  it('shows no rejection for a project the user already left', async () => {
+    const showError = vi.spyOn(toastHarness.toast, 'error');
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+    sessionHarness.projectId = 'project-2';
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+    sessionHarness.projectId = 'project-3';
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+
+    act(() => socketHarness.emitted[0].ack(null, { success: false }));
+
+    expect(showError).not.toHaveBeenCalled();
+    expect(emittedEvents().at(-1)).toEqual([
+      WebsocketServerEvent.SWITCH_PROJECT,
+      { projectId: 'project-3' },
+    ]);
   });
 
   it('switches again after an unanswered switch to another project', async () => {
@@ -209,11 +250,13 @@ describe('SocketProvider', () => {
     });
   });
 
-  it('joins the project of the tab through a switch on connect', async () => {
+  it('sends the project of the tab in the handshake and confirms it with a switch on connect', async () => {
     await act(async () => root.render(<App onConnect={vi.fn()} />));
     act(() => socketHarness.sendFromServer('connect'));
 
-    expect(socketHarness.state.handshakes).toEqual([{ token: 'token-1' }]);
+    expect(socketHarness.state.handshakes).toEqual([
+      { token: 'token-1', projectId: 'project-1' },
+    ]);
     expect(socketHarness.emitted).toHaveLength(1);
     expect(socketHarness.emitted[0].event).toBe(
       WebsocketServerEvent.SWITCH_PROJECT,
@@ -251,23 +294,115 @@ describe('SocketProvider', () => {
     });
   });
 
-  it('connects with the token alone and joins no project on pages without one', async () => {
+  it('connects without a project and joins none on pages without one', async () => {
     sessionHarness.projectId = null;
     await act(async () => root.render(<App onConnect={vi.fn()} />));
     act(() => socketHarness.sendFromServer('connect'));
 
     expect(socketHarness.socket.connected).toBe(true);
-    expect(socketHarness.state.handshakes).toEqual([{ token: 'token-1' }]);
+    expect(socketHarness.state.handshakes).toEqual([
+      { token: 'token-1', projectId: null },
+    ]);
     expect(socketHarness.emitted).toHaveLength(0);
+  });
+
+  it('holds a lock sent by a page of the new project until the switch is answered', async () => {
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+    act(() => socketHarness.sendFromServer('connect'));
+    act(() => socketHarness.emitted[0].ack(null, { success: true }));
+
+    sessionHarness.projectId = 'project-2';
+    await act(async () =>
+      root.render(<App onConnect={vi.fn()} lockResourceId="flow-2" />),
+    );
+
+    expect(emittedEvents()).toEqual([
+      [WebsocketServerEvent.SWITCH_PROJECT, { projectId: 'project-1' }],
+      [WebsocketServerEvent.SWITCH_PROJECT, { projectId: 'project-2' }],
+    ]);
+
+    act(() => socketHarness.emitted[1].ack(null, { success: true }));
+
+    expect(emittedEvents().at(-1)).toEqual([
+      WebsocketServerEvent.LOCK_RESOURCE,
+      { resourceId: 'flow-2' },
+    ]);
+  });
+
+  it('sends a held lock once the switch is rejected so the server answers it with a failure', async () => {
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+    act(() => socketHarness.sendFromServer('connect'));
+    await act(async () =>
+      root.render(<App onConnect={vi.fn()} lockResourceId="flow-1" />),
+    );
+
+    expect(emittedEvents()).toHaveLength(1);
+
+    act(() => socketHarness.emitted[0].ack(null, { success: false }));
+
+    expect(emittedEvents().at(-1)).toEqual([
+      WebsocketServerEvent.LOCK_RESOURCE,
+      { resourceId: 'flow-1' },
+    ]);
+  });
+
+  it('sends a lock right away when the socket is already in the project', async () => {
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+    act(() => socketHarness.sendFromServer('connect'));
+    act(() => socketHarness.emitted[0].ack(null, { success: true }));
+
+    await act(async () =>
+      root.render(<App onConnect={vi.fn()} lockResourceId="flow-1" />),
+    );
+
+    expect(emittedEvents().at(-1)).toEqual([
+      WebsocketServerEvent.LOCK_RESOURCE,
+      { resourceId: 'flow-1' },
+    ]);
   });
 });
 
-function App({ onConnect }: { onConnect: () => void }) {
+function liveUpdateToasts(): unknown[][] {
+  return toastHarness.toast.mock.calls.filter(
+    ([, options]) =>
+      typeof options === 'object' &&
+      options !== null &&
+      'id' in options &&
+      options.id === 'websocket-live-updates',
+  );
+}
+
+function emittedEvents(): [string, unknown][] {
+  return socketHarness.emitted.map(({ event, payload }) => [event, payload]);
+}
+
+function App({
+  onConnect,
+  lockResourceId,
+}: {
+  onConnect: () => void;
+  lockResourceId?: string;
+}) {
   return (
     <SocketProvider>
       <ConnectListener onConnect={onConnect} />
+      {lockResourceId && <Locker resourceId={lockResourceId} />}
     </SocketProvider>
   );
+}
+
+function Locker({ resourceId }: { resourceId: string }) {
+  const socket = useSocket();
+  useEffect(() => {
+    emitInProject(() =>
+      socket.emit(
+        WebsocketServerEvent.LOCK_RESOURCE,
+        { resourceId },
+        () => undefined,
+      ),
+    );
+  }, [socket, resourceId]);
+  return null;
 }
 
 function ConnectListener({ onConnect }: { onConnect: () => void }) {

@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/core-utils'
+import { AIProviderName, apId } from '@activepieces/core-utils'
 import { AgentConversation, ExecuteAgentRunJobData, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -27,28 +27,53 @@ afterEach(() => {
 })
 
 describe('page context on a chat message', () => {
-    it('reaches the turn\'s model input once, is never stored, and is ignored for another project', async () => {
+    it('is stored with the user message, hidden from the UI, and ignored for another project', async () => {
         const { ctx, tierId, add } = await chatSetup()
         const conversation = await startChat({ ctx, body: { modelTierId: tierId, projectId: ctx.project.id } })
-        const pageContext = { kind: 'flow', id: 'flow-1', projectId: ctx.project.id, stepName: 'step_1' }
+        const flowId = apId()
+        const pageContext = { kind: 'flow', id: flowId, projectId: ctx.project.id, label: 'Lead intake', stepName: 'step_1' }
 
-        const foreign = await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/messages`, { content: 'hello', pageContext: { ...pageContext, projectId: 'other-project' } })
+        const foreign = await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/messages`, { content: 'hello', pageContext: { ...pageContext, projectId: apId() } })
         const own = await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/messages`, { content: 'hello', pageContext })
         const [foreignJob, ownJob] = queuedRuns({ add })
         const config = await configFor({ ctx, conversation, job: ownJob })
         const stored = await db.findOneByOrFail<AgentConversation>('agent_conversation', { id: conversation.id })
+        const note = `[Page context] The user is looking at flow "Lead intake" (id ${flowId}) in project ${ctx.project.id}, step "step_1" selected.`
 
         expect([foreign.statusCode, own.statusCode]).toEqual([StatusCodes.OK, StatusCodes.OK])
         expect(foreignJob.pageContext).toBeUndefined()
         expect(ownJob.pageContext).toEqual(pageContext)
-        expect(config.messages.at(-1)).toEqual({ role: 'user', content: [{ type: 'text', text: `[Page context] The user is looking at flow flow-1 in project ${ctx.project.id}, step "step_1" selected.` }, { type: 'text', text: 'hello' }] })
-        expect(JSON.stringify([stored.messages, stored.uiMessages, config.allMessages])).not.toContain('[Page context]')
+        expect(config.messages.at(-1)).toEqual({ role: 'user', content: [{ type: 'text', text: note }, { type: 'text', text: 'hello' }] })
+        expect(JSON.stringify(stored.messages)).toContain(note)
+        expect(JSON.stringify(stored.uiMessages)).not.toContain('[Page context]')
+    })
+
+    it('keeps the earlier turns unchanged when the next turn is sent from another page', async () => {
+        const { ctx, tierId, add } = await chatSetup()
+        const conversation = await startChat({ ctx, body: { modelTierId: tierId, projectId: ctx.project.id } })
+
+        await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/messages`, { content: 'hello', pageContext: { kind: 'flow', id: apId(), projectId: ctx.project.id } })
+        const firstTurn = await configFor({ ctx, conversation, job: queuedRuns({ add })[0] })
+        await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/messages`, { content: 'and now?', pageContext: { kind: 'table', id: apId(), projectId: ctx.project.id } })
+        const secondTurn = await configFor({ ctx, conversation, job: queuedRuns({ add })[1] })
+
+        expect(secondTurn.messages[0]).toEqual(firstTurn.messages.at(-1))
+    })
+
+    it('drops an invalid page context and still sends the message', async () => {
+        const { ctx, tierId, add } = await chatSetup()
+        const conversation = await startChat({ ctx, body: { modelTierId: tierId, projectId: ctx.project.id } })
+
+        const response = await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/messages`, { content: 'hello', pageContext: { kind: 'flow', id: 'not an id', projectId: ctx.project.id } })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(queuedRuns({ add })[0].pageContext).toBeUndefined()
     })
 
     it('is kept on the first message of a chat with no project when it names the project the run will use', async () => {
         const { ctx, tierId, add } = await chatSetup()
         const conversation = await startChat({ ctx, body: { modelTierId: tierId } })
-        const pageContext = { kind: 'table', id: 'table-1', projectId: ctx.project.id }
+        const pageContext = { kind: 'table', id: apId(), projectId: ctx.project.id }
 
         const response = await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/messages`, { content: 'hello', pageContext })
 
@@ -64,7 +89,7 @@ describe('a new chat started from a project page', () => {
         const projectB = createMockProject({ ownerId: ctx.user.id, platformId: ctx.platform.id })
         await db.save('project', projectB)
         const conversation = await startChat({ ctx, body: { modelTierId: tierId, projectId: projectB.id } })
-        const pageContext = { kind: 'flow', id: 'flow-b', projectId: projectB.id }
+        const pageContext = { kind: 'flow', id: apId(), projectId: projectB.id }
 
         await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/messages`, { content: 'hello', pageContext })
         const [job] = queuedRuns({ add })

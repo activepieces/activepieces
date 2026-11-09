@@ -32,6 +32,8 @@ import { editorSession } from '@/lib/editor-session';
 const socket = vi.hoisted(() => {
   const handlers = new Map<string, (payload?: unknown) => void>();
   const sent: SentEvent[] = [];
+  const held: (() => void)[] = [];
+  const project = { switching: false };
   const client = {
     connected: false,
     on: (name: string, handler: (payload?: unknown) => void) =>
@@ -43,16 +45,38 @@ const socket = vi.hoisted(() => {
   };
   const serverSends = (name: string, payload?: unknown) =>
     handlers.get(name)?.(payload);
+  const emitInProject = (send: () => void) => {
+    if (project.switching) {
+      held.push(send);
+      return;
+    }
+    send();
+  };
+  const finishProjectSwitch = () => {
+    project.switching = false;
+    held.splice(0).forEach((send) => send());
+  };
   const reset = () => {
     handlers.clear();
     sent.splice(0);
+    held.splice(0);
+    project.switching = false;
     client.connected = false;
   };
-  return { client, sent, serverSends, reset };
+  return {
+    client,
+    sent,
+    project,
+    serverSends,
+    emitInProject,
+    finishProjectSwitch,
+    reset,
+  };
 });
 
 vi.mock('@/components/providers/socket-provider', () => ({
   useSocket: () => socket.client,
+  emitInProject: socket.emitInProject,
 }));
 vi.mock('@/features/chat/lib/follow/follow-along', () => ({
   followAlong: { flash: vi.fn(), isFollowing: vi.fn(() => true) },
@@ -259,6 +283,42 @@ describe('open table live events', () => {
       WebsocketServerEvent.LEAVE_TABLE_ROOM,
     ]);
     expect(socket.sent[1].payload).toEqual({ tableId: 't1' });
+  });
+
+  it('joins only after the project switch is acknowledged', async () => {
+    socket.client.connected = true;
+    socket.project.switching = true;
+    await mount(queryClient);
+
+    expect(sentNames()).toEqual([]);
+
+    act(() => socket.finishProjectSwitch());
+
+    expect(sentNames()).toEqual([WebsocketServerEvent.JOIN_TABLE_ROOM]);
+    expect(socket.sent[0].payload).toEqual({ tableId: 't1' });
+  });
+
+  it('does not join a table that closed during the project switch', async () => {
+    socket.client.connected = true;
+    socket.project.switching = true;
+    const { unmount } = await mount(queryClient);
+
+    unmount();
+    act(() => socket.finishProjectSwitch());
+
+    expect(sentNames()).not.toContain(WebsocketServerEvent.JOIN_TABLE_ROOM);
+  });
+
+  it('joins the room again after the socket reconnects', async () => {
+    socket.client.connected = true;
+    await mount(queryClient);
+
+    socket.serverSends('connect');
+
+    expect(sentNames()).toEqual([
+      WebsocketServerEvent.JOIN_TABLE_ROOM,
+      WebsocketServerEvent.JOIN_TABLE_ROOM,
+    ]);
   });
 
   it('does not refetch when the table loaded after the join was sent', async () => {

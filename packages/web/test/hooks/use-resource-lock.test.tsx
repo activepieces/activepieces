@@ -93,6 +93,7 @@ const socketState = vi.hoisted(() => {
 
 vi.mock('@/components/providers/socket-provider', () => ({
   useSocket: () => socketState.fakeSocket,
+  emitInProject: (send: () => void) => send(),
 }));
 
 const RESOURCE_ID = 'flow-1';

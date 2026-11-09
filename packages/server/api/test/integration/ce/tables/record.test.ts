@@ -31,7 +31,7 @@ afterAll(async () => {
 describe('Record API', () => {
 
     describeWithAuth('records changed push', () => app!, (setup) => {
-        it('sends the changed rows for create and update and the ids for delete to the project room', async () => {
+        it('sends the changed rows for create and update and the ids for delete to the table room only', async () => {
             const ctx = await setup()
             const { table, field } = await createTableWithField(ctx)
             const pushes = capturePushes()
@@ -43,9 +43,9 @@ describe('Record API', () => {
             vi.restoreAllMocks()
 
             expect(pushes).toEqual([
-                { room: ctx.project.id, payload: { tableId: table.id, op: TableRecordsChangeOp.CREATED, records: [rowWithValue({ id: recordId, fieldId: field.id, value: 'a' })] } },
-                { room: ctx.project.id, payload: { tableId: table.id, op: TableRecordsChangeOp.UPDATED, records: [rowWithValue({ id: recordId, fieldId: field.id, value: 'b' })] } },
-                { room: ctx.project.id, payload: { tableId: table.id, op: TableRecordsChangeOp.DELETED, recordIds: [recordId] } },
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.CREATED, records: [rowWithValue({ id: recordId, fieldId: field.id, value: 'a' })] } },
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.UPDATED, records: [rowWithValue({ id: recordId, fieldId: field.id, value: 'b' })] } },
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.DELETED, recordIds: [recordId] } },
             ])
         })
 
@@ -72,7 +72,7 @@ describe('Record API', () => {
             vi.restoreAllMocks()
 
             expect(pushes).toEqual([
-                { room: ctx.project.id, payload: { tableId: table.id, op: TableRecordsChangeOp.CLEARED } },
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.CLEARED } },
             ])
         })
 
@@ -91,11 +91,11 @@ describe('Record API', () => {
             vi.restoreAllMocks()
 
             expect(pushes).toEqual([
-                { room: ctx.project.id, payload: { tableId: table.id, editorSessionId, op: TableRecordsChangeOp.CREATED, records: [rowWithValue({ id: created.json()[0].id, fieldId: field.id, value: 'a' })] } },
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId, op: TableRecordsChangeOp.CREATED, records: [rowWithValue({ id: created.json()[0].id, fieldId: field.id, value: 'a' })] } },
             ])
         })
 
-        it('asks for a reload instead of listing ids above the batch size', async () => {
+        it('asks for a reload instead of listing rows above the push cap', async () => {
             const ctx = await setup()
             const { table, field } = await createTableWithField(ctx)
             const pushes = capturePushes()
@@ -104,7 +104,7 @@ describe('Record API', () => {
             vi.restoreAllMocks()
 
             expect(pushes).toEqual([
-                { room: ctx.project.id, payload: { tableId: table.id, op: TableRecordsChangeOp.RELOAD } },
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.RELOAD } },
             ])
         })
     })
@@ -303,7 +303,7 @@ describe('Record API', () => {
 
         it('should add new cell to existing record (upsert)', async () => {
             const ctx = await setup()
-            const { table } = await createTableWithField(ctx)
+            const { table, field } = await createTableWithField(ctx)
             const field2 = createMockField({ tableId: table.id, projectId: ctx.project.id })
             field2.type = FieldType.TEXT
             await db.save('field', field2)
@@ -880,6 +880,10 @@ describe('Record API', () => {
 
 function rowWithValue({ id, fieldId, value }: { id: string, fieldId: string, value: string }): unknown {
     return expect.objectContaining({ id, cells: { [fieldId]: expect.objectContaining({ value }) } })
+}
+
+function tableRoomOf(tableId: string): string {
+    return `table:${tableId}`
 }
 
 function capturePushes(): { room: string, payload: unknown }[] {

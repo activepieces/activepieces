@@ -190,26 +190,44 @@ describe('agentMcpClient.withToolTimeouts circuit breaker', () => {
     })
 })
 
-describe('agentMcpClient.withToolTimeouts large result offload', () => {
-    it('keeps _meta on a result it offloads to a file', async () => {
-        const apResource = { v: 1, kind: 'table', id: 'table-1', projectId: 'project-1', op: 'update', label: 'Leads' }
+describe('agentMcpClient.withToolTimeouts resource tags', () => {
+    const apResource = { v: 1, kind: 'table', id: 'table-1', projectId: 'project-1', op: 'update', label: 'Leads' }
+
+    it('keeps the resource tag of an Activepieces tool on a result it offloads to a file', async () => {
         const bigResult = { content: [{ type: 'text', text: 'x'.repeat(70 * 1024) }], _meta: { apResource } }
         const saveLargeResult = vi.fn().mockResolvedValue('file-1')
 
-        const wrapped = agentMcpClient.withToolTimeouts({
-            mcpToolSet: { [ATTIO_TOOL]: { execute: async () => bigResult } },
-            brokenConnectors: new Set<string>(),
-            taintState: { tainted: false },
-            saveLargeResult,
-        }) as Record<string, { execute: (args: unknown) => Promise<{ content: { text: string }[], _meta?: unknown }> }>
-
-        const result = await wrapped[ATTIO_TOOL].execute({})
+        const result = await runTool({ toolName: AP_TOOL, toolResult: bigResult, saveLargeResult })
 
         expect(saveLargeResult).toHaveBeenCalledTimes(1)
         expect(result.content[0].text).toContain('file-1')
         expect(result._meta).toEqual({ apResource })
     })
+
+    it('drops a resource tag sent by a third-party tool and keeps its other meta', async () => {
+        const smallResult = { content: [{ type: 'text', text: 'ok' }], _meta: { apResource, traceId: 't-1' } }
+        const bigResult = { content: [{ type: 'text', text: 'x'.repeat(70 * 1024) }], _meta: { apResource, traceId: 't-1' } }
+        const saveLargeResult = vi.fn().mockResolvedValue('file-1')
+
+        const small = await runTool({ toolName: ATTIO_TOOL, toolResult: smallResult, saveLargeResult })
+        const big = await runTool({ toolName: ATTIO_TOOL, toolResult: bigResult, saveLargeResult })
+
+        expect(small._meta).toEqual({ traceId: 't-1' })
+        expect(big._meta).toEqual({ traceId: 't-1' })
+    })
 })
+
+async function runTool({ toolName, toolResult, saveLargeResult }: { toolName: string, toolResult: unknown, saveLargeResult: (args: { json: string, fileName: string }) => Promise<string | null> }): Promise<{ content: { text: string }[], _meta?: unknown }> {
+    const wrapped = agentMcpClient.withToolTimeouts({
+        mcpToolSet: { [toolName]: { execute: async () => toolResult } },
+        brokenConnectors: new Set<string>(),
+        taintState: { tainted: false },
+        saveLargeResult,
+    }) as Record<string, { execute: (args: unknown) => Promise<{ content: { text: string }[], _meta?: unknown }> }>
+    return wrapped[toolName].execute({})
+}
+
+const AP_TOOL = 'ap_insert_records'
 
 function createTestLogger(): { log: FastifyBaseLogger, warnCalls: unknown[][] } {
     const warnCalls: unknown[][] = []

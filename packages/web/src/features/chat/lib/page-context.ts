@@ -26,7 +26,11 @@ function current(): AgentPageContext | null {
 }
 
 function selectOpenBuilder(state: OpenBuilderState): OpenBuilder {
-  return { flowId: state.flow.id, stepName: state.selectedStep };
+  return {
+    flowId: state.flow.id,
+    label: state.flowVersion.displayName,
+    stepName: state.selectedStep,
+  };
 }
 
 function fromPath({
@@ -41,13 +45,13 @@ function fromPath({
     pathname,
   );
   if (flow?.params.projectId && flow.params.flowId) {
-    const stepName =
-      builder?.flowId === flow.params.flowId ? builder.stepName : null;
+    const openFlow = builder?.flowId === flow.params.flowId ? builder : null;
     return {
       kind: 'flow',
       id: flow.params.flowId,
       projectId: flow.params.projectId,
-      ...(stepName ? { stepName } : {}),
+      ...(openFlow?.label ? { label: openFlow.label } : {}),
+      ...(openFlow?.stepName ? { stepName: openFlow.stepName } : {}),
     };
   }
   const table = matchPath(
@@ -74,8 +78,16 @@ const useOpenBuilderStore = create<{ store: OpenBuilderStore | null }>(
   () => ({ store: null }),
 );
 
-type OpenBuilder = { flowId: string; stepName: string | null };
+type OpenBuilder = {
+  flowId: string;
+  label: string | null;
+  stepName: string | null;
+};
 
-type OpenBuilderState = { flow: { id: string }; selectedStep: string | null };
+type OpenBuilderState = {
+  flow: { id: string };
+  flowVersion: { displayName: string };
+  selectedStep: string | null;
+};
 
 type OpenBuilderStore = { getState: () => OpenBuilderState };

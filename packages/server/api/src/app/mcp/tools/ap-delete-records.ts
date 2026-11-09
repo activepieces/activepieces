@@ -1,8 +1,7 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { McpToolDefinition, ProjectScopedMcpServer, TableRecordsChangeOp } from '@activepieces/shared'
+import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { recordSideEffects } from '../../tables/record/record-side-effects'
 import { recordService } from '../../tables/record/record.service'
 import { mcpUtils } from './mcp-utils'
 import { resolveTable, tableNotFoundError } from './table-utils'
@@ -33,15 +32,10 @@ export const apDeleteRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     return tableNotFoundError(tableId)
                 }
 
-                const { deletedCount, deletedIds } = await recordService.delete({
+                const { deletedCount } = await recordService.delete({
                     ids: recordIds,
                     projectId: mcp.projectId,
                     tableId: table.id,
-                })
-                await recordSideEffects(log).onRecordsChanged({
-                    projectId: mcp.projectId,
-                    tableId: table.id,
-                    change: { op: TableRecordsChangeOp.DELETED, recordIds: deletedIds },
                     editorSessionId: null,
                 })
 

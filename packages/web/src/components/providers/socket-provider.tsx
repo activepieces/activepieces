@@ -18,6 +18,7 @@ const connection: ConnectionState = {
   serverProjectId: null,
   rejectedProjectId: null,
   pendingSwitch: null,
+  heldEmits: [],
 };
 
 const socket = io(API_BASE_URL, {
@@ -32,7 +33,7 @@ const SocketContext = React.createContext<typeof socket>(socket);
 
 const CONNECTION_LOST_TOAST_ID = 'websocket-disconnected';
 
-const LIVE_UPDATES_PAUSED_TOAST_ID = 'websocket-project-rejected';
+const LIVE_UPDATES_TOAST_ID = 'websocket-live-updates';
 
 const SWITCH_PROJECT_TIMEOUT_MS = 10_000;
 
@@ -78,10 +79,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       resetConnection();
       return;
     }
-    if (connection.wantedProjectId !== projectId) {
-      connection.rejectedProjectId = null;
-    }
-    connection.wantedProjectId = projectId;
+    setWantedProject(projectId);
     if (connection.token !== token) {
       connection.token = token;
       socket.disconnect();
@@ -102,22 +100,38 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const useSocket = () => React.useContext(SocketContext);
 
+function emitInProject(send: () => void): void {
+  setWantedProject(authenticationSession.getProjectId());
+  connection.heldEmits = [...connection.heldEmits, send];
+  syncProject();
+}
+
+function setWantedProject(projectId: string | null): void {
+  if (connection.wantedProjectId === projectId) {
+    return;
+  }
+  connection.rejectedProjectId = null;
+  connection.wantedProjectId = projectId;
+}
+
 function startHandshake(): HandshakeAuth {
   connection.serverProjectId = null;
   connection.rejectedProjectId = null;
   connection.pendingSwitch = null;
-  return { token: connection.token };
+  return { token: connection.token, projectId: connection.wantedProjectId };
 }
 
 function syncProject(): void {
+  if (!socket.connected || !isNil(connection.pendingSwitch)) {
+    return;
+  }
   const target = connection.wantedProjectId;
   if (
-    !socket.connected ||
-    !isNil(connection.pendingSwitch) ||
     isNil(target) ||
     target === connection.serverProjectId ||
     target === connection.rejectedProjectId
   ) {
+    releaseHeldEmits();
     return;
   }
   const pending = { projectId: target };
@@ -132,21 +146,44 @@ function syncProject(): void {
           return;
         }
         connection.pendingSwitch = null;
+        const stillWanted = connection.wantedProjectId === target;
+        if (!isNil(error)) {
+          connection.serverProjectId = null;
+          if (stillWanted) {
+            toast(t('Live updates are delayed'), {
+              id: LIVE_UPDATES_TOAST_ID,
+              description: t('Changes made by others may show up late.'),
+            });
+            releaseHeldEmits();
+            return;
+          }
+          syncProject();
+          return;
+        }
         const parsed = SwitchProjectResponse.safeParse(response);
-        if (isNil(error) && parsed.success && parsed.data.success) {
+        if (parsed.success && parsed.data.success) {
           connection.serverProjectId = target;
+          toast.dismiss(LIVE_UPDATES_TOAST_ID);
         } else {
           connection.rejectedProjectId = target;
-          toast.error(t('Live updates are paused'), {
-            id: LIVE_UPDATES_PAUSED_TOAST_ID,
-            description: t(
-              'We could not connect live updates to this project. Reload the page to try again.',
-            ),
-          });
+          if (stillWanted) {
+            toast.error(t('Live updates are paused'), {
+              id: LIVE_UPDATES_TOAST_ID,
+              description: t(
+                'We could not connect live updates to this project. Reload the page to try again.',
+              ),
+            });
+          }
         }
         syncProject();
       },
     );
+}
+
+function releaseHeldEmits(): void {
+  const held = connection.heldEmits;
+  connection.heldEmits = [];
+  held.forEach((send) => send());
 }
 
 function resetConnection(): void {
@@ -155,6 +192,7 @@ function resetConnection(): void {
   connection.serverProjectId = null;
   connection.rejectedProjectId = null;
   connection.pendingSwitch = null;
+  connection.heldEmits = [];
 }
 
 function readToken(): string | null {
@@ -167,8 +205,12 @@ type ConnectionState = {
   serverProjectId: string | null;
   rejectedProjectId: string | null;
   pendingSwitch: { projectId: string } | null;
+  heldEmits: (() => void)[];
 };
 
 type HandshakeAuth = {
   token: string | null;
+  projectId: string | null;
 };
+
+export { emitInProject };

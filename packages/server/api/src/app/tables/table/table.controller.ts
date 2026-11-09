@@ -1,5 +1,5 @@
 import { ApId, Permission, SeekPage } from '@activepieces/core-utils'
-import { CountTablesRequest, CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, GitPushOperationType, ListTablesRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate, Table, TableRecordsChangeOp, UpdateTableRequest } from '@activepieces/shared'
+import { CountTablesRequest, CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, GitPushOperationType, ListTablesRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate, Table, UpdateTableRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -128,11 +128,6 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
         const deletedRecords = await recordService.deleteAll({
             tableId: request.params.id,
             projectId: request.projectId,
-        })
-        await recordSideEffects(request.log).onRecordsChanged({
-            projectId: request.projectId,
-            tableId: request.params.id,
-            change: { op: TableRecordsChangeOp.CLEARED },
             editorSessionId: editorSession.idFromRequest(request),
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
