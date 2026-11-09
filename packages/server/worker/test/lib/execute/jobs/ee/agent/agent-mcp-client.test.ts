@@ -1,6 +1,8 @@
 import { AgentMcpTool, AgentToolType, McpAuthType, McpProtocol } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { tool, Tool, ToolSet } from 'ai'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 import { agentMcpClient } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-mcp-client'
 
 const { mockCreateMCPClient } = vi.hoisted(() => ({
@@ -261,20 +263,12 @@ describe('agentMcpClient.withApResourceFromApMcpOnly', () => {
     })
 })
 
-function resultTool(result: unknown): { execute: () => Promise<unknown> } {
-    return { execute: async () => result }
+function resultTool(result: unknown): Tool {
+    return tool({ inputSchema: z.object({}), execute: async () => result })
 }
 
-async function executeTool({ tools, name }: { tools: Record<string, unknown>, name: string }): Promise<unknown> {
-    const tool = tools[name]
-    if (!isExecutable(tool)) {
-        throw new Error(`${name} has no execute`)
-    }
-    return tool.execute({}, { toolCallId: 'call-1', messages: [] })
-}
-
-function isExecutable(tool: unknown): tool is { execute: (args: unknown, options: unknown) => Promise<unknown> } {
-    return typeof tool === 'object' && tool !== null && 'execute' in tool && typeof tool.execute === 'function'
+async function executeTool({ tools, name }: { tools: ToolSet, name: string }): Promise<unknown> {
+    return tools[name].execute?.({}, { toolCallId: 'call-1', messages: [], context: undefined })
 }
 
 async function runTool({ toolName, toolResult, saveLargeResult }: { toolName: string, toolResult: unknown, saveLargeResult: (args: { json: string, fileName: string }) => Promise<string | null> }): Promise<{ content: { text: string }[], _meta?: unknown }> {
