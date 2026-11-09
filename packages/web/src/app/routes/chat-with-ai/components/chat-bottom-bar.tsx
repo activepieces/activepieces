@@ -26,6 +26,7 @@ import { ChatCardSkeleton } from './chat-card-primitives';
 import { ChatInput, ComposerFill } from './chat-input';
 import { ConnectionPickerCard } from './connection-picker-card';
 import { FollowFinishedNote } from './follow-finished-note';
+import { FollowOfferRow } from './follow-offer-row';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
 import { MultiQuestionForm } from './multi-question-form';
 import { ProjectPickerCard } from './project-picker-card';
@@ -45,6 +46,7 @@ export function ChatBottomBar({
   fill,
   onFillApplied,
   autoFocus,
+  replyStopped,
 }: ChatBottomBarProps) {
   const [composerEngaged, setComposerEngaged] = useState(false);
   const [skipped, setSkipped] = useState(false);
@@ -160,6 +162,7 @@ export function ChatBottomBar({
   return (
     <div ref={rootRef} className="flex flex-col gap-2">
       {activeCard ?? <FollowFinishedNote />}
+      <FollowOfferRow />
       <AnimatePresence initial={false}>
         {skipped && !activeCard && (
           <motion.div
@@ -187,6 +190,9 @@ export function ChatBottomBar({
         {banner}
         <ChatInput
           isStreaming={activeCard ? false : isStreaming}
+          replying={isStreaming}
+          replyStopped={replyStopped}
+          holdQueued={activeCard !== null}
           onSend={handleSend}
           onStop={onStop}
           onInputChange={handleInputChange}
@@ -284,6 +290,7 @@ type ChatBottomBarProps = {
   fill?: ComposerFill | null;
   onFillApplied?: () => void;
   autoFocus?: boolean;
+  replyStopped?: boolean;
 };
 
 const SKIPPED_VISIBLE_MS = 2500;

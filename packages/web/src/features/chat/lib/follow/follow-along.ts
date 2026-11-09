@@ -2,7 +2,10 @@ import { isObject, tryCatchSync } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { create } from 'zustand';
 
-import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
+import {
+  chatPanelUtils,
+  useChatPanel,
+} from '@/features/workspace/lib/chat-panel-open';
 
 import {
   ResourceOp,
@@ -143,7 +146,38 @@ function endRun({
 }
 
 function stopFollowing(): void {
-  useFollowAlong.setState({ following: false });
+  useFollowAlong.setState({ following: false, offer: null });
+}
+
+function offer(resource: ResourceRef): void {
+  const conversationId = useChatPanel.getState().conversationId;
+  const current = useFollowAlong.getState().offer;
+  if (
+    current &&
+    current.conversationId === conversationId &&
+    resourceRegistry.keyOf(current.resource) ===
+      resourceRegistry.keyOf(resource) &&
+    current.resource.name === resource.name
+  ) {
+    return;
+  }
+  useFollowAlong.setState({ offer: { resource, conversationId } });
+}
+
+function dismissOffer(): void {
+  if (useFollowAlong.getState().offer === null) return;
+  useFollowAlong.setState({ offer: null });
+}
+
+function acceptOffer(): void {
+  const { offer: current } = useFollowAlong.getState();
+  if (!current) return;
+  useFollowAlong.setState({ offer: null });
+  chatPanelUtils.openBeside({
+    route: resourceRegistry.route(current.resource),
+    push: true,
+    name: current.resource.name,
+  });
 }
 
 function flash(keys: string[]): void {
@@ -263,6 +297,7 @@ function initialFollowState(): FollowState {
     flashes: {},
     scrollTaken: false,
     liveRuns: {},
+    offer: null,
   };
 }
 
@@ -285,6 +320,9 @@ export const followAlong = {
   onChunks,
   endRun,
   stopFollowing,
+  offer,
+  dismissOffer,
+  acceptOffer,
   flash,
   isFollowing,
   claimHistoryPush,
@@ -306,6 +344,11 @@ export type FollowChange = {
   navigable: boolean;
 };
 
+export type FollowOffer = {
+  resource: ResourceRef;
+  conversationId: string | null;
+};
+
 type ToolCall = { toolName: string; input: unknown };
 
 // Bookkeeping that no component renders from.
@@ -323,4 +366,5 @@ type FollowState = {
   flashes: Record<string, number>;
   scrollTaken: boolean;
   liveRuns: Record<string, RunContext>;
+  offer: FollowOffer | null;
 };

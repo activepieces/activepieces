@@ -565,6 +565,7 @@ function ChatBoxContent({
             onSend={handleSend}
             onStop={cancelStream}
             onInputChange={setHasInput}
+            replyStopped={wasCancelled || failed}
             fill={composerFill}
             onFillApplied={clearComposerFill}
             autoFocus={autoFocusComposer}
