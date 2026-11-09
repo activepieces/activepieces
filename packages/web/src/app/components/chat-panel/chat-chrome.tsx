@@ -20,7 +20,6 @@ import {
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { Tooltip as TooltipPrimitive } from 'radix-ui';
 import { memo, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -43,8 +42,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
@@ -178,7 +177,7 @@ export function ChatChrome() {
   };
 
   return (
-    <TooltipProvider delayDuration={500} skipDelayDuration={300}>
+    <>
       <div
         data-chat-header
         className={cn(
@@ -308,7 +307,7 @@ export function ChatChrome() {
         </div>
       </div>
       <SettingsHubDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
-    </TooltipProvider>
+    </>
   );
 }
 
@@ -553,7 +552,7 @@ function HeaderButton({
   ...props
 }: React.ComponentProps<typeof Button> & { label: string; shortcut?: string }) {
   return (
-    <TooltipPrimitive.Root>
+    <Tooltip delayDuration={HEADER_TOOLTIP_DELAY_MS}>
       <TooltipTrigger asChild>
         <Button
           variant="ghost"
@@ -573,10 +572,11 @@ function HeaderButton({
         {label}
         {shortcut && <KbdHint>{shortcut}</KbdHint>}
       </TooltipContent>
-    </TooltipPrimitive.Root>
+    </Tooltip>
   );
 }
 
+const HEADER_TOOLTIP_DELAY_MS = 500;
 const TOGGLE_SHORTCUT = modShortcut({ key: 'J' });
 const HISTORY_SHORTCUT = modShortcut({ key: 'H', shift: true });
 const NEW_CHAT_SHORTCUT = modShortcut({ key: 'O', shift: true });
