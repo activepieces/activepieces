@@ -1,7 +1,10 @@
 import { Permission, deepEquals, isNil, prune } from '@activepieces/core-utils';
 import {
+  FlowAction,
+  FlowActionType,
   FlowDraftUpdatedEvent,
   FlowRunStatus,
+  FlowTrigger,
   FlowVersion,
   FlowVersionState,
   PopulatedFlow,
@@ -163,22 +166,37 @@ const useRefreshDraftOnPush = () => {
       ) {
         return;
       }
-      const { flow: flowBefore, flowVersion: versionBefore } = store.getState();
-      const before = { flow: flowBefore, flowVersion: versionBefore };
+      let beforeApply: FlowSnapshot | null = null;
+      const stopWatching = store.subscribe((state, previous) => {
+        if (
+          state.flow !== previous.flow ||
+          state.flowVersion !== previous.flowVersion
+        ) {
+          beforeApply = {
+            flow: previous.flow,
+            flowVersion: previous.flowVersion,
+          };
+        }
+      });
       refreshDraft()
         .then((applied) => {
           if (
             !applied ||
+            beforeApply === null ||
             !followAlong.isFollowing({ kind: 'flow', id: flowId })
           ) {
             return;
           }
           const { flow, flowVersion } = store.getState();
           followAlong.flash(
-            changedFlowParts({ before, after: { flow, flowVersion } }),
+            changedFlowParts({
+              before: beforeApply,
+              after: { flow, flowVersion },
+            }),
           );
         })
-        .catch(() => undefined);
+        .catch(() => undefined)
+        .finally(stopWatching);
     };
     socket.on(WebsocketClientEvent.FLOW_DRAFT_UPDATED, refreshOnPush);
     return () => {
@@ -196,6 +214,8 @@ function changedFlowParts({
   before: FlowSnapshot;
   after: FlowSnapshot;
 }): string[] {
+  const placesBefore = stepPlaces(before.flowVersion.trigger);
+  const placesAfter = stepPlaces(after.flowVersion.trigger);
   const steps = flowStructureUtil
     .getAllSteps(after.flowVersion.trigger)
     .filter((step) => {
@@ -207,7 +227,13 @@ function changedFlowParts({
         !old ||
         old.type !== step.type ||
         old.displayName !== step.displayName ||
-        !deepEquals({ a: prune(old.settings), b: prune(step.settings) })
+        isSkipped(old) !== isSkipped(step) ||
+        !deepEquals({ a: prune(old.settings), b: prune(step.settings) }) ||
+        wasMoved({
+          name: step.name,
+          before: placesBefore,
+          after: placesAfter,
+        })
       );
     })
     .map((step) => `${STEP_KEY_PREFIX}${step.name}`);
@@ -221,6 +247,99 @@ function changedFlowParts({
     ...(renamed ? [`flow-name:${after.flow.id}`] : []),
     ...(statusChanged ? [`flow-status:${after.flow.id}`] : []),
   ];
+}
+
+function isSkipped(step: FlowAction | FlowTrigger): boolean {
+  return 'skip' in step && step.skip === true;
+}
+
+function stepPlaces(trigger: FlowTrigger): Map<string, StepPlace> {
+  return new Map(chainPlaces({ first: trigger, container: 'root' }));
+}
+
+function chainPlaces({
+  first,
+  container,
+}: {
+  first: FlowAction | FlowTrigger | null | undefined;
+  container: string;
+}): [string, StepPlace][] {
+  const chain = stepsInChain(first);
+  const names = chain.map((step) => step.name);
+  return chain.flatMap((step, index): [string, StepPlace][] => [
+    [step.name, { container, chain: names, index }],
+    ...childChains(step).flatMap(({ head, slot }) =>
+      chainPlaces({ first: head, container: `${step.name}:${slot}` }),
+    ),
+  ]);
+}
+
+function stepsInChain(
+  first: FlowAction | FlowTrigger | null | undefined,
+): (FlowAction | FlowTrigger)[] {
+  if (isNil(first)) return [];
+  return [first, ...stepsInChain(first.nextAction)];
+}
+
+function childChains(
+  step: FlowAction | FlowTrigger,
+): { head: FlowAction | null | undefined; slot: string }[] {
+  switch (step.type) {
+    case FlowActionType.LOOP_ON_ITEMS:
+      return [{ head: step.firstLoopAction, slot: 'loop' }];
+    case FlowActionType.ROUTER:
+    case FlowActionType.AI_ROUTER:
+      return step.children.map((head, index) => ({
+        head,
+        slot: `branch-${index}`,
+      }));
+    case FlowActionType.CODE:
+    case FlowActionType.PIECE:
+      return [
+        { head: step.continueOnFailureBranches?.onSuccess, slot: 'success' },
+        { head: step.continueOnFailureBranches?.onFailure, slot: 'failure' },
+      ];
+    default:
+      return [];
+  }
+}
+
+function wasMoved({
+  name,
+  before,
+  after,
+}: {
+  name: string;
+  before: Map<string, StepPlace>;
+  after: Map<string, StepPlace>;
+}): boolean {
+  const old = before.get(name);
+  const now = after.get(name);
+  if (!old || !now) return false;
+  if (old.container !== now.container) return true;
+  const kept = new Set([...before.keys()].filter((key) => after.has(key)));
+  const was = neighbours({ place: old, kept });
+  const is = neighbours({ place: now, kept });
+  return was.previous !== is.previous && was.next !== is.next;
+}
+
+function neighbours({
+  place,
+  kept,
+}: {
+  place: StepPlace;
+  kept: Set<string>;
+}): { previous: string | null; next: string | null } {
+  return {
+    previous:
+      place.chain
+        .slice(0, place.index)
+        .filter((name) => kept.has(name))
+        .at(-1) ?? null,
+    next:
+      place.chain.slice(place.index + 1).find((name) => kept.has(name)) ??
+      null,
+  };
 }
 
 // When a flash lights a step that sits off screen, pan the canvas to the
@@ -274,6 +393,8 @@ type FlowSnapshot = {
   flow: PopulatedFlow;
   flowVersion: FlowVersion;
 };
+
+type StepPlace = { container: string; chain: string[]; index: number };
 
 const useRefreshDraftOnReconnectAndReturn = () => {
   const socket = useSocket();

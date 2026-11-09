@@ -104,6 +104,7 @@ export type TableState = {
     removedIds: string[];
     since: number;
   }) => Map<string, string>;
+  clearRecords: (change: { since: number }) => void;
   setAgentRunId: (recordId: string, agentRunId: string | null) => void;
   toggleStatus: () => void;
   lockedByOtherUser: boolean;
@@ -124,55 +125,101 @@ export const createApTableStore = (
       records,
       (isSaving: boolean) => set({ isSaving }),
     );
+    const toRows = (fresh: PopulatedRecord[]): ClientRecordData[] => {
+      const rows = mapRecorddToClientRecordsData(fresh, serverState.fields);
+      fresh.forEach((record, index) =>
+        serverState.link({ recordId: record.id, rowId: rows[index].uuid }),
+      );
+      return rows;
+    };
     const mergeRecords = ({
       changed,
       removedIds,
       since,
       dropMissing,
+      keepUnlinkedRows = true,
     }: {
       changed: PopulatedRecord[];
       removedIds: string[];
       since: number;
       dropMissing: boolean;
+      keepUnlinkedRows?: boolean;
     }): Map<string, string> => {
       const state = get();
-      const local = serverState.records;
       const removed = new Set(removedIds);
-      const isNewer = (id: string) => !serverState.changedSince({ id, since });
-      const changedById = new Map(changed.map((record) => [record.id, record]));
-      const kept = local.flatMap((record, index) => {
-        const row = state.records[index];
-        const update = changedById.get(record.id);
-        changedById.delete(record.id);
-        if (!isNewer(record.id)) return [{ record, row }];
-        if (removed.has(record.id)) return [];
-        if (!update) return dropMissing ? [] : [{ record, row }];
-        const values = mapCellsToClientValues(update, serverState.fields);
-        return [{ record: update, row: { ...row, values } }];
-      });
-      const added = [...changedById.values()].filter((record) =>
-        isNewer(record.id),
+      const unchangedLocally = (id: string) =>
+        !serverState.changedSince({ id, since });
+      const incoming = new Map(changed.map((record) => [record.id, record]));
+      const rowsByUuid = new Map(state.records.map((row) => [row.uuid, row]));
+      const rowOf = (recordId: string) => {
+        const rowId = serverState.rowIdOf(recordId);
+        return rowId === undefined ? undefined : rowsByUuid.get(rowId);
+      };
+      const linkedRowIds = new Set(
+        serverState.records.flatMap((record) => {
+          const row = rowOf(record.id);
+          return row ? [row.uuid] : [];
+        }),
       );
-      const addedRows = mapRecorddToClientRecordsData(
-        added,
-        serverState.fields,
+      const updated = serverState.records.flatMap(
+        (record): MergedRecord[] => {
+          const update = incoming.get(record.id);
+          const row = rowOf(record.id);
+          const unchanged = unchangedLocally(record.id);
+          const gone = removed.has(record.id) || (dropMissing && !update);
+          if (unchanged && gone) return [];
+          if (!update) {
+            return row ? [{ record, row, applied: false }] : [];
+          }
+          const order = compareUpdated({
+            incoming: update.updated,
+            local: record.updated,
+          });
+          const incomingWins = order > 0 || (order === 0 && unchanged);
+          const winner = incomingWins ? update : record;
+          const values = mapCellsToClientValues(winner, serverState.fields);
+          return [
+            {
+              record: winner,
+              row: row ? { ...row, values } : newRow(values),
+              applied: incomingWins,
+            },
+          ];
+        },
+      );
+      const known = new Set(serverState.records.map((record) => record.id));
+      const added = changed
+        .filter(
+          (record) =>
+            !known.has(record.id) &&
+            !removed.has(record.id) &&
+            unchangedLocally(record.id),
+        )
+        .map((record) => ({
+          record,
+          row: newRow(mapCellsToClientValues(record, serverState.fields)),
+          applied: true,
+        }));
+      const updatedByRow = new Map(
+        updated.map((merged) => [merged.row.uuid, merged]),
       );
       const merged = [
-        ...kept,
-        ...added.map((record, index) => ({ record, row: addedRows[index] })),
+        ...state.records.flatMap((row) => updatedByRow.get(row.uuid) ?? []),
+        ...updated.filter((entry) => !rowsByUuid.has(entry.row.uuid)),
+        ...added,
       ];
-      const rows = [
-        ...merged.map(({ row }) => row),
-        ...state.records.slice(local.length),
-      ];
+      const unlinkedRows = keepUnlinkedRows
+        ? state.records.filter((row) => !linkedRowIds.has(row.uuid))
+        : [];
+      const rows = [...merged.map(({ row }) => row), ...unlinkedRows];
       serverState.setRecords(merged.map(({ record }) => record));
-      set({ records: rows, ...selectionFor({ state, rows }) });
-      const appliedIds = new Set(
-        changed.map((record) => record.id).filter(isNewer),
+      merged.forEach(({ record, row }) =>
+        serverState.link({ recordId: record.id, rowId: row.uuid }),
       );
+      set({ records: rows, ...selectionFor({ state, rows }) });
       return new Map(
         merged
-          .filter(({ record }) => appliedIds.has(record.id))
+          .filter(({ applied }) => applied)
           .map(({ record, row }) => [record.id, row.uuid]),
       );
     };
@@ -216,7 +263,7 @@ export const createApTableStore = (
             : { selectedCell },
         ),
       fields: fields.map(mapFieldToClientField),
-      records: mapRecorddToClientRecordsData(records, fields),
+      records: toRows(records),
       createRecord: (recordData: ClientRecordData) => {
         serverState.createRecord(recordData);
         return set((state) => {
@@ -297,6 +344,10 @@ export const createApTableStore = (
                 })),
             })),
             fields: state.fields.filter((_, index) => index !== fieldIndex),
+            selectedCell: clampSelectedCell({
+              selectedCell: state.selectedCell,
+              fieldsCount: state.fields.length - 1,
+            }),
           };
         });
       },
@@ -343,7 +394,7 @@ export const createApTableStore = (
         serverState.setRecords(records);
         return set(() => {
           return {
-            records: mapRecorddToClientRecordsData(records, serverState.fields),
+            records: toRows(records),
           };
         });
       },
@@ -359,10 +410,20 @@ export const createApTableStore = (
         );
         if (touched) return;
         serverState.replaceFields(fresh);
+        const recordByRow = new Map(
+          serverState.records.map((record) => [
+            serverState.rowIdOf(record.id),
+            record,
+          ]),
+        );
         set((state) => ({
           fields: fresh.map(mapFieldToClientField),
-          records: state.records.map((row, index) => {
-            const record = serverState.records[index];
+          selectedCell: clampSelectedCell({
+            selectedCell: state.selectedCell,
+            fieldsCount: fresh.length,
+          }),
+          records: state.records.map((row) => {
+            const record = recordByRow.get(row.uuid);
             return record
               ? { ...row, values: mapCellsToClientValues(record, fresh) }
               : row;
@@ -389,13 +450,22 @@ export const createApTableStore = (
         });
         return rowIds;
       },
+      clearRecords: ({ since }) => {
+        const removedIds = serverState.records.map((record) => record.id);
+        mergeRecords({
+          changed: [],
+          removedIds,
+          since,
+          dropMissing: false,
+          keepUnlinkedRows: false,
+        });
+        serverState.markKnown({ ids: removedIds, at: since });
+      },
       setAgentRunId: (recordId: string, agentRunId: string | null) => {
-        const recordIndex = serverState.records.findIndex(
-          (record) => record.id === recordId,
-        );
+        const rowId = serverState.rowIdOf(recordId);
         set((state) => ({
-          records: state.records.map((record, index) =>
-            index === recordIndex ? { ...record, agentRunId } : record,
+          records: state.records.map((record) =>
+            record.uuid === rowId ? { ...record, agentRunId } : record,
           ),
         }));
       },
@@ -425,6 +495,35 @@ export const createApTableStore = (
   });
 };
 
+function compareUpdated({
+  incoming,
+  local,
+}: {
+  incoming: string;
+  local: string;
+}): number {
+  const diff = Date.parse(incoming) - Date.parse(local);
+  return Number.isNaN(diff) ? 0 : Math.sign(diff);
+}
+
+function clampSelectedCell({
+  selectedCell,
+  fieldsCount,
+}: {
+  selectedCell: TableState['selectedCell'];
+  fieldsCount: number;
+}): TableState['selectedCell'] {
+  if (selectedCell === null || fieldsCount === 0) return null;
+  const columnIdx = Math.min(selectedCell.columnIdx, fieldsCount);
+  return columnIdx === selectedCell.columnIdx
+    ? selectedCell
+    : { ...selectedCell, columnIdx };
+}
+
+function newRow(values: ClientCellData[]): ClientRecordData {
+  return { uuid: nanoid(), agentRunId: null, values };
+}
+
 function selectionFor({
   state,
   rows,
@@ -448,3 +547,9 @@ function selectionFor({
 }
 
 export type ApTableStore = ReturnType<typeof createApTableStore>;
+
+type MergedRecord = {
+  record: PopulatedRecord;
+  row: ClientRecordData;
+  applied: boolean;
+};
