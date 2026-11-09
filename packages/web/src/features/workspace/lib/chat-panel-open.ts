@@ -46,6 +46,11 @@ function openBeside({
   if (!current || current.location().pathname === route) return;
   const panel = useChatPanel.getState();
   if (current.isFullPage()) panel.dock(panel.mode);
+  if (current.location().hash === SHEET_HASH) {
+    current.navigate({ to: `${route}${SHEET_HASH}`, replace: !push });
+    panel.announce(t('Opened {name} behind the chat', { name }));
+    return;
+  }
   current.navigate({ to: route, replace: !push });
   panel.announce(t('Opened {name} beside the chat', { name }));
 }
@@ -243,7 +248,7 @@ export const chatPanelUtils = {
 export type ChatPanelSide = 'left' | 'right';
 export type ChatRouter = {
   navigate: (target: ChatNavTarget) => void;
-  location: () => { pathname: string; state: unknown };
+  location: () => { pathname: string; hash: string; state: unknown };
   isFullPage: () => boolean;
 };
 
