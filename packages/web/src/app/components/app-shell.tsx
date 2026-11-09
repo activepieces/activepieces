@@ -1,22 +1,33 @@
 import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId, TemplateType } from '@activepieces/shared';
+import { t } from 'i18next';
+import { RefreshCw } from 'lucide-react';
 import { Suspense, useState } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import { Navigate, Outlet, useMatches } from 'react-router-dom';
 
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { SocketProvider } from '@/components/providers/socket-provider';
+import { Button } from '@/components/ui/button';
 import { SidebarInset } from '@/components/ui/sidebar-shadcn';
 import { CreditsUsageAlert, ManagePlanDialog } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
 import { templatesHooks } from '@/features/templates';
+import { useChatOn } from '@/features/workspace/lib/use-chat-on';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { useSessionProjectId } from '@/hooks/use-session-project-id';
 import { authenticationSession } from '@/lib/authentication-session';
+import { errorReporting } from '@/lib/error-reporting';
 import { cn } from '@/lib/utils';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
+import {
+  ChatContentColumn,
+  PageSkeleton,
+} from './chat-panel/chat-content-column';
+import { ChatPanel, useChatWidth } from './chat-panel/chat-window';
 import { GlobalSearchProvider } from './global-search/global-search-context';
 import { ProjectDashboardLayoutHeader } from './project-layout/project-dashboard-layout-header';
 import { AppSidebar } from './sidebar/app-sidebar';
@@ -43,6 +54,10 @@ export function AppShellRoute() {
       </SocketProvider>
     </AllowOnlyLoggedInUserOnlyGuard>
   );
+}
+
+export function useShellHandle(): RouteHandle {
+  return useShellMatch().handle;
 }
 
 function useShellMatch(): { handle: RouteHandle; templateId?: string } {
@@ -91,6 +106,7 @@ function BarePage() {
 function AppShell({ handle }: { handle: RouteHandle }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const embedded = useEmbedding().embedState.isEmbedded;
+  const chatOn = useChatOn();
   const projectId = useSessionProjectId();
   const isPlatformAdmin = useIsPlatformAdmin();
   const isPlatform = handle.shell === 'platform';
@@ -137,20 +153,33 @@ function AppShell({ handle }: { handle: RouteHandle }) {
                   embedded && isBuilder && 'border-l',
                 )}
               >
-                <div
-                  id="dashboard-content-container"
-                  className="relative flex min-w-0 flex-1 flex-col overflow-hidden"
-                >
+                {chatOn && handle.chat !== 'full' && (
+                  <ErrorBoundary
+                    fallbackRender={({ resetErrorBoundary }) => (
+                      <ChatPanelError onRetry={resetErrorBoundary} />
+                    )}
+                    onError={(error, info) =>
+                      errorReporting.report({
+                        error,
+                        componentStack: info.componentStack,
+                        source: 'react-error-boundary',
+                      })
+                    }
+                  >
+                    <ChatPanel />
+                  </ErrorBoundary>
+                )}
+                <ChatContentColumn>
                   {!isNil(headerProjectId) && (
                     <ProjectHeader projectId={headerProjectId} />
                   )}
                   {handle.shell === 'project' && <CreditsUsageAlert />}
                   <div className={PAGE_CLASS[handle.shell]}>
-                    <Suspense fallback={<RouteLoadingBar />}>
+                    <Suspense fallback={<PageFallback />}>
                       <Outlet />
                     </Suspense>
                   </div>
-                </div>
+                </ChatContentColumn>
               </div>
             </div>
           </SidebarInset>
@@ -158,6 +187,43 @@ function AppShell({ handle }: { handle: RouteHandle }) {
       </div>
       {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
     </GlobalSearchProvider>
+  );
+}
+
+function ChatPanelError({ onRetry }: { onRetry: () => void }) {
+  const chatWidth = useChatWidth();
+  if (chatWidth === 'closed') return null;
+  return (
+    <div
+      role="alert"
+      className={cn(
+        'flex shrink-0 flex-col items-start gap-3 bg-gray-1 p-4',
+        chatWidth === 'full' ? 'flex-1' : 'w-72',
+        chatWidth === 'right' && 'order-last border-l',
+        chatWidth !== 'right' && chatWidth !== 'full' && 'border-r',
+      )}
+    >
+      <p className="text-sm text-gray-11">
+        {t("Chat couldn't load. Your chats are safe.")}
+      </p>
+      <Button variant="outline" size="sm" onClick={onRetry}>
+        <RefreshCw className="size-4" />
+        {t('Try again')}
+      </Button>
+    </div>
+  );
+}
+
+// Beside the chat, a page that is still loading shows its shape instead of
+// a blank card.
+function PageFallback() {
+  const chatWidth = useChatWidth();
+  const besideChat = chatWidth === 'left' || chatWidth === 'right';
+  return (
+    <>
+      <RouteLoadingBar />
+      {besideChat && <PageSkeleton />}
+    </>
   );
 }
 
@@ -180,6 +246,7 @@ type ShellVariant = 'shell' | 'bare';
 
 export type RouteHandle = {
   shell: 'project' | 'builder' | 'platform';
+  chat?: 'full';
   projectHeader?: true;
   allowAnonymous?: true;
   standalone?: 'sharedTemplate';
@@ -194,6 +261,7 @@ export const shellHandles = {
     allowAnonymous: true,
     standalone: 'sharedTemplate',
   },
+  chat: { shell: 'project', chat: 'full' },
   builder: { shell: 'builder' },
   platform: { shell: 'platform' },
 } satisfies Record<string, RouteHandle>;

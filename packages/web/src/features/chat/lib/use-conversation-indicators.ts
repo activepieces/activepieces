@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSocket } from '@/components/providers/socket-provider';
 
 import { chatApi } from './chat-api';
+import { chatQueryKeys } from './chat-query-keys';
 
 export function useConversationIndicators({
   conversations,
@@ -68,7 +69,9 @@ export function useConversationIndicators({
     const knownStreaming = new Set<string>();
 
     const invalidateList = () => {
-      void queryClient.invalidateQueries({ queryKey: ['chat-conversations'] });
+      void queryClient.invalidateQueries({
+        queryKey: chatQueryKeys.allConversationLists(),
+      });
     };
 
     const handler = (event: SocketEvent) => {

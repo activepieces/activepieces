@@ -191,10 +191,13 @@
 @theme {
   --ease-*: initial;
   --ease-expand-out: cubic-bezier(0.35, 0, 0.25, 1);
+  --ease-move: cubic-bezier(0.22, 1, 0.36, 1);
 
   --transition-duration-1500: 1500ms;
 
   --container-page-band: 1198px;
+  --container-chat-sm: 30rem;
+  --container-chat-md: 44rem;
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;

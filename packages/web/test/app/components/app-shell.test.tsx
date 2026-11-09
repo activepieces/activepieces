@@ -25,6 +25,7 @@ const template = vi.hoisted(() => {
   return store;
 });
 const pageRenders = vi.hoisted(() => ({ count: 0 }));
+const chat = vi.hoisted(() => ({ on: false, crash: false }));
 const admin = vi.hoisted(() => ({ value: false }));
 const sidebarModes = vi.hoisted((): string[] => []);
 
@@ -95,6 +96,26 @@ vi.mock('@/features/projects', () => ({
 
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: { useFlag: () => ({ data: 'ce' }) },
+}));
+
+vi.mock('@/features/workspace/lib/use-chat-on', () => ({
+  useChatOn: () => chat.on,
+}));
+
+vi.mock('@/app/components/chat-panel/chat-window', () => ({
+  ChatPanel: () => {
+    if (chat.crash) throw new Error('chat crashed');
+    return <aside aria-label="Chat" />;
+  },
+  useChatWidth: () => 'full',
+}));
+
+vi.mock('@/app/components/chat-panel/chat-content-column', () => ({
+  ChatContentColumn: ({ children }: React.PropsWithChildren) => <>{children}</>,
+}));
+
+vi.mock('@/lib/error-reporting', () => ({
+  errorReporting: { report: vi.fn() },
 }));
 
 vi.mock('@/hooks/use-session-project-id', () => ({

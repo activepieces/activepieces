@@ -7,6 +7,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { DefaultRoute } from '@/app/guards/default-route';
 
+const embed = vi.hoisted(() => ({ isEmbedded: false }));
+
+vi.mock('@/components/providers/embed-provider', () => ({
+  useEmbedding: () => ({ embedState: { isEmbedded: embed.isEmbedded } }),
+}));
+
 vi.mock('@/hooks/platform-hooks', () => ({
   platformHooks: {
     useCurrentPlatform: () => ({ platform: { plan: { chatEnabled: true } } }),
@@ -34,9 +40,17 @@ describe('DefaultRoute', () => {
   afterEach(cleanup);
 
   it('opens the chat when the plan has it', () => {
+    embed.isEmbedded = false;
     renderAtRoot();
 
     expect(screen.getByText('Chat page')).toBeTruthy();
+  });
+
+  it('skips the chat inside an embed, where the chat is hidden', () => {
+    embed.isEmbedded = true;
+    renderAtRoot();
+
+    expect(screen.getByText('Automations page')).toBeTruthy();
   });
 });
 
