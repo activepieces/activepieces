@@ -16,6 +16,10 @@ export function AppLinkProvider({
   );
 }
 
+export function useAppLinks(): AppLinkHandlers | null {
+  return useContext(AppLinkContext);
+}
+
 export function AppLink({
   route,
   bare,
@@ -27,7 +31,7 @@ export function AppLink({
   className?: string;
   children: React.ReactNode;
 }) {
-  const handlers = useContext(AppLinkContext);
+  const handlers = useAppLinks();
   return (
     <Link
       to={route}

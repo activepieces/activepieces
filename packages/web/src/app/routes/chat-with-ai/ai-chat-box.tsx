@@ -42,6 +42,7 @@ import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
 import { AssistantMessage } from './components/assistant-message';
+import { ChatResourceLinks } from './components/chat-app-links';
 import { ChatBottomBar } from './components/chat-bottom-bar';
 import {
   ChatEmptyState,
@@ -425,36 +426,38 @@ function ChatBoxContent({
               >
                 {isLoadingHistory && <MessageSkeletons />}
 
-                {messages.map((msg, idx) => {
-                  if (msg.role === 'user') {
+                <ChatResourceLinks messages={messages}>
+                  {messages.map((msg, idx) => {
+                    if (msg.role === 'user') {
+                      return (
+                        <UserMessage
+                          key={msg.id}
+                          message={msg}
+                          isLastMessage={idx === messages.length - 1}
+                        />
+                      );
+                    }
+
+                    const isLastStreamingAssistant =
+                      isStreaming && idx === messages.length - 1;
+
+                    const isLastAssistant = idx === messages.length - 1;
+
                     return (
-                      <UserMessage
+                      <AssistantMessage
                         key={msg.id}
                         message={msg}
-                        isLastMessage={idx === messages.length - 1}
+                        isStreaming={isLastStreamingAssistant}
+                        isResumed={isLastStreamingAssistant && isResumedStream}
+                        isLastMessage={isLastAssistant}
+                        onSendPrompt={(text) => void handleSend(text)}
+                        claimedBuildIds={claimedBuildIdsByMessage.get(msg.id)}
+                        conversationId={conversationId}
+                        messageIndex={idx}
                       />
                     );
-                  }
-
-                  const isLastStreamingAssistant =
-                    isStreaming && idx === messages.length - 1;
-
-                  const isLastAssistant = idx === messages.length - 1;
-
-                  return (
-                    <AssistantMessage
-                      key={msg.id}
-                      message={msg}
-                      isStreaming={isLastStreamingAssistant}
-                      isResumed={isLastStreamingAssistant && isResumedStream}
-                      isLastMessage={isLastAssistant}
-                      onSendPrompt={(text) => void handleSend(text)}
-                      claimedBuildIds={claimedBuildIdsByMessage.get(msg.id)}
-                      conversationId={conversationId}
-                      messageIndex={idx}
-                    />
-                  );
-                })}
+                  })}
+                </ChatResourceLinks>
 
                 {!isAwaitingResponse &&
                   !wasCancelled &&
