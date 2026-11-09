@@ -107,11 +107,15 @@ vi.mock('@/features/flows/api/flows-api', () => ({
 
 vi.mock('@/components/providers/socket-provider', () => ({
   useSocket: () => socketHarness.socket,
+  emitInProject: ({ send }: { send: () => void }) => send(),
+  dropHeldEmits: () => undefined,
 }));
 
 vi.mock('@/lib/authentication-session', () => ({
   authenticationSession: {
     getCurrentUserId: () => 'viewer',
+    getPlatformId: () => null,
+    subscribe: () => () => undefined,
   },
 }));
 

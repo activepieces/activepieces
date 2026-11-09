@@ -32,6 +32,7 @@ function buildFakeSocket(token: string, projectId: string): { socket: Socket, ha
         handshake: { auth: { token, projectId } },
         join: async (): Promise<void> => undefined,
         use: (): void => undefined,
+        once: (): void => undefined,
         on: (event: string, cb: (data: unknown, callback?: (d: unknown) => void) => unknown): void => {
             handlers[event] = cb
         },

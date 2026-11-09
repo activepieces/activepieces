@@ -6,7 +6,11 @@ import {
 } from '@activepieces/shared';
 import { useEffect, useState } from 'react';
 
-import { useSocket } from '@/components/providers/socket-provider';
+import {
+  dropHeldEmits,
+  emitInProject,
+  useSocket,
+} from '@/components/providers/socket-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 
 function usePresence({ resourceId }: { resourceId: string }): PresenceUser[] {
@@ -29,22 +33,38 @@ function usePresence({ resourceId }: { resourceId: string }): PresenceUser[] {
   }, [resourceId, socket, currentUserId]);
 
   useEffect(() => {
-    socket.emit(
-      WebsocketServerEvent.JOIN_PRESENCE,
-      { resourceId },
-      (response: { users: PresenceUser[] }) => {
-        setActiveUsers(
-          response.users.filter((u) => u.userId !== currentUserId),
-        );
-      },
-    );
+    let active = true;
+    const joinKey = Symbol('presence-join');
+    const heartbeatKey = Symbol('presence-heartbeat');
+    emitInProject({
+      key: joinKey,
+      send: () =>
+        socket.emit(
+          WebsocketServerEvent.JOIN_PRESENCE,
+          { resourceId },
+          (response: { users: PresenceUser[] }) => {
+            if (!active) {
+              return;
+            }
+            setActiveUsers(
+              response.users.filter((u) => u.userId !== currentUserId),
+            );
+          },
+        ),
+    });
 
     const heartbeat = setInterval(() => {
-      socket.emit(WebsocketServerEvent.JOIN_PRESENCE, { resourceId });
+      emitInProject({
+        key: heartbeatKey,
+        send: () =>
+          socket.emit(WebsocketServerEvent.JOIN_PRESENCE, { resourceId }),
+      });
     }, 30_000);
 
     return () => {
+      active = false;
       clearInterval(heartbeat);
+      dropHeldEmits([joinKey, heartbeatKey]);
       socket.emit(WebsocketServerEvent.LEAVE_PRESENCE, { resourceId });
     };
   }, [resourceId, socket, currentUserId]);

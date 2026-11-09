@@ -4,10 +4,12 @@ import * as ReactDOM from 'react-dom/client';
 import './i18n';
 import { App } from './app/app';
 import { acquisitionUtils } from './lib/acquisition-utils';
+import { authenticationSession } from './lib/authentication-session';
 import { errorReporting } from './lib/error-reporting';
 import { reloadOnceForStaleChunk } from './lib/lazy-with-retry';
 
 acquisitionUtils.stashAcquisitionParams();
+authenticationSession.pinTabProject();
 
 window.addEventListener('vite:preloadError', (event) => {
   if (reloadOnceForStaleChunk('vite-preload')) {

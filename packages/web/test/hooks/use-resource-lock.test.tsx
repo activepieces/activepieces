@@ -91,8 +91,20 @@ const socketState = vi.hoisted(() => {
   return { emitCalls, fakeSocket, dispatch, reset };
 });
 
+const heldEmits = vi.hoisted(() => ({
+  sent: [] as symbol[],
+  dropped: [] as symbol[],
+}));
+
 vi.mock('@/components/providers/socket-provider', () => ({
   useSocket: () => socketState.fakeSocket,
+  emitInProject: ({ key, send }: { key: symbol; send: () => void }) => {
+    heldEmits.sent.push(key);
+    send();
+  },
+  dropHeldEmits: (keys: symbol[]) => {
+    heldEmits.dropped.push(...keys);
+  },
 }));
 
 const RESOURCE_ID = 'flow-1';
@@ -265,6 +277,23 @@ describe('useResourceLock takeOver', () => {
       }),
     ]);
     expect(onTakeOver).not.toHaveBeenCalled();
+  });
+
+  it('drops a held take over when the tab leaves before it is sent', async () => {
+    await act(async () => {
+      root.render(<Probe onTakeOver={vi.fn()} />);
+    });
+    await act(async () => {
+      latestHookResult?.takeOver();
+    });
+    const takeOverKey = heldEmits.sent[heldEmits.sent.length - 1];
+
+    await act(async () => {
+      root.unmount();
+    });
+
+    expect(takeOverKey.description).toBe('lock-take-over');
+    expect(heldEmits.dropped).toContain(takeOverKey);
   });
 
   it('keeps the locked state when the force acquire is rejected', async () => {

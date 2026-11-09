@@ -41,6 +41,7 @@ How an open builder tab takes a change that a different writer saved to the same
 - **Every socket `connect` refreshes, the first one of a page load too.** The page loads the flow over HTTP before the socket joins the project room, so a save in that gap sends a push that the tab never gets. The builder also refreshes once when it mounts while the socket is already connected: the route loads the flow and its sample data before the builder mounts and listens, and a push in that gap reaches no listener. The cost is one more `GET` per builder open.
 - **`SocketProvider` removes only its own socket listeners.** Its cleanup used to call `socket.off('connect')` with no handler, which removed every `connect` listener, the reconnect refresh included, when its effect ran again for a new `token` or `projectId`. Pass the handler to `off`.
 - **Known gaps:** the accepted same-step race (see the decision); a tab that misses a push (socket drop, deploy) catches up on reconnect or on return; an API Writer that writes from an older read still wins.
+- **Resource Locks and presence are also released on a project switch**, not only on disconnect: `SWITCH_PROJECT` runs the project leave handlers for the old project. Emits held during a switch are dropped when their page unmounts, so a late `JOIN_PRESENCE` or lock heartbeat can't follow the `LEAVE`.
 
 ## Key files
 

@@ -11,7 +11,6 @@ import { CompassIcon } from '@/components/icons/compass';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { CreditsUsageAlert, ManagePlanDialog } from '@/features/billing';
-import { projectHooks } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
@@ -32,17 +31,6 @@ export type ProjectDashboardLayoutHeaderTab = {
   show: boolean;
   beta?: boolean;
   badgeCount?: number;
-};
-
-const ProjectChangedRedirector = ({
-  currentProjectId,
-  children,
-}: {
-  currentProjectId: string;
-  children: React.ReactNode;
-}) => {
-  projectHooks.useReloadPageIfProjectIdChanged(currentProjectId);
-  return children;
 };
 
 export function ProjectDashboardLayout({
@@ -114,15 +102,7 @@ export function ProjectDashboardLayout({
     </GlobalSearchProvider>
   );
 
-  if (hasNoProject) {
-    return inner;
-  }
-
-  return (
-    <ProjectChangedRedirector currentProjectId={currentProjectId!}>
-      {inner}
-    </ProjectChangedRedirector>
-  );
+  return inner;
 }
 
 function ProjectDashboardLayoutInner({
