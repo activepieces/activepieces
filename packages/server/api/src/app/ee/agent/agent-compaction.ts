@@ -5,6 +5,7 @@ import { agentAiUtils } from '@activepieces/server-utils'
 import { aiProviderUtils } from '@activepieces/shared'
 import { generateText, LanguageModel, ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
+import { agentPageContextNote } from './prompt/agent-page-context-note'
 
 const COMPACTION_THRESHOLD = 0.7
 const RECENT_WINDOW_RATIO = 0.3
@@ -242,7 +243,7 @@ function extractTextContent(message: ModelMessage): string {
         }
         else if (typeof part === 'object' && part !== null && 'type' in part) {
             if (part.type === 'text' && 'text' in part) {
-                text += String(part.text)
+                text += agentPageContextNote.isNote(String(part.text)) ? '' : String(part.text)
             }
             else if (part.type === 'tool-call' && 'toolName' in part) {
                 text += `[Tool call: ${String(part.toolName)}]`

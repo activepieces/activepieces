@@ -8,9 +8,15 @@ describe('pageContextUtils.fromPath', () => {
     expect(
       pageContextUtils.fromPath({
         pathname: '/projects/p1/flows/f1',
-        builder: { flowId: 'f1', stepName: 'step_2' },
+        builder: { flowId: 'f1', label: 'Lead intake', stepName: 'step_2' },
       }),
-    ).toEqual({ kind: 'flow', id: 'f1', projectId: 'p1', stepName: 'step_2' });
+    ).toEqual({
+      kind: 'flow',
+      id: 'f1',
+      projectId: 'p1',
+      label: 'Lead intake',
+      stepName: 'step_2',
+    });
   });
 
   it('names the table on a table page', () => {
@@ -26,7 +32,7 @@ describe('pageContextUtils.fromPath', () => {
     expect(
       pageContextUtils.fromPath({
         pathname: '/projects/p1/runs/r1',
-        builder: { flowId: 'f1', stepName: 'step_2' },
+        builder: { flowId: 'f1', label: 'Lead intake', stepName: 'step_2' },
       }),
     ).toBeNull();
   });

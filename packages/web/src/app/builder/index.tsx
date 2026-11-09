@@ -85,8 +85,12 @@ const BuilderPage = () => {
   const builderStore = useBuilderStore();
   useOpenBuilder(
     useCallback(() => {
-      const { flow, selectedStep: stepName } = builderStore.getState();
-      return { flowId: flow.id, stepName };
+      const {
+        flow,
+        flowVersion,
+        selectedStep: stepName,
+      } = builderStore.getState();
+      return { flowId: flow.id, label: flowVersion.displayName, stepName };
     }, [builderStore]),
   );
   flowCanvasHooks.useShowBuilderIsSavingWarningBeforeLeaving();
