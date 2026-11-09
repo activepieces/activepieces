@@ -12,7 +12,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useReducedMotion } from 'motion/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { SettingsHubDialog } from '@/app/components/settings-hub/settings-hub-dialog';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -54,7 +54,6 @@ import {
 import { cn } from '@/lib/utils';
 
 export function ChatSwitcher({
-  anchorRef,
   conversationId,
   layout,
   typing,
@@ -65,7 +64,6 @@ export function ChatSwitcher({
   onShowAll,
   onTitleEdited,
 }: {
-  anchorRef: React.RefObject<HTMLElement | null>;
   conversationId: string | null;
   layout: ChatSwitcherLayout;
   typing: boolean;
@@ -88,7 +86,6 @@ export function ChatSwitcher({
   const closeFocus = useRef<CloseFocus>('title');
   const triggerRef = useRef<HTMLButtonElement>(null);
   const renameEnd = useRef<RenameEnd | null>(null);
-  const anchor = useMemo(() => measurableOf({ ref: anchorRef }), [anchorRef]);
   const renaming = renamingId !== null && renamingId === conversationId;
 
   const close = (focus: CloseFocus) => {
@@ -146,7 +143,6 @@ export function ChatSwitcher({
           onOpenChange({ open: next, openedBy: opener.current })
         }
       >
-        <PopoverAnchor virtualRef={anchor} />
         {renaming ? (
           <Input
             autoFocus
@@ -211,6 +207,10 @@ export function ChatSwitcher({
             </button>
           </PopoverTrigger>
         )}
+        <PopoverAnchor
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+        />
         <PopoverContent
           align="start"
           side="bottom"
@@ -584,15 +584,6 @@ function useConversationTitle({
 
 function hasText(target: EventTarget | null): boolean {
   return target instanceof HTMLInputElement && target.value.length > 0;
-}
-
-function measurableOf({ ref }: { ref: React.RefObject<HTMLElement | null> }) {
-  return {
-    current: {
-      getBoundingClientRect: () =>
-        ref.current?.getBoundingClientRect() ?? new DOMRect(),
-    },
-  };
 }
 
 const RECENT_COUNT = 6;

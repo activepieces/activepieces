@@ -9,7 +9,7 @@ import {
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
 import { ChatAppLinks } from '@/app/routes/chat-with-ai/components/chat-app-links';
@@ -55,7 +55,6 @@ export function ChatChrome() {
   const [typingId, setTypingId] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [switcher, setSwitcher] = useState<SwitcherState>(SWITCHER_CLOSED);
-  const headerRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
   const full = layout === 'full';
   const sheet = layout === 'sheet';
@@ -112,7 +111,6 @@ export function ChatChrome() {
   return (
     <>
       <div
-        ref={headerRef}
         data-chat-header
         className={cn(
           'relative flex h-14 shrink-0 items-center gap-2 pr-3 pl-2',
@@ -148,7 +146,6 @@ export function ChatChrome() {
             </motion.div>
           ) : (
             <ChatSwitcher
-              anchorRef={headerRef}
               conversationId={conversationId}
               layout={full ? 'full' : sheet ? 'sheet' : 'dock'}
               typing={typingId !== null && typingId === conversationId}

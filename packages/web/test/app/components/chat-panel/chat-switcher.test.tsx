@@ -14,7 +14,15 @@ import {
 } from '@testing-library/react';
 import * as React from 'react';
 import { RouterProvider, createMemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+  vi,
+} from 'vitest';
 
 import { ChatChrome } from '@/app/components/chat-panel/chat-chrome';
 import { chatDom } from '@/features/chat/lib/chat-dom';
@@ -153,6 +161,46 @@ describe('ChatSwitcher', () => {
     });
     await waitFor(() => expect(document.activeElement).toBe(search));
     expect(switcher().getAttribute('data-opened-by')).toBe('pointer');
+  });
+
+  it('stays open after a full pointer press on the title', async () => {
+    renderChrome();
+    const title = await titleButton();
+
+    fireEvent.pointerDown(title, { button: 0, pointerType: 'mouse' });
+    fireEvent.mouseDown(title, { button: 0 });
+    fireEvent.pointerUp(title, { button: 0, pointerType: 'mouse' });
+    fireEvent.mouseUp(title, { button: 0 });
+    fireEvent.click(title, { detail: 1 });
+
+    await screen.findByRole('combobox', { name: 'Search chats' });
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+    expect(switcher()).toBeTruthy();
+    expect(title.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('places the switcher from the live header anchor', async () => {
+    const rect = vi
+      .spyOn(Element.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: Element) {
+        return this.isConnected &&
+          this.matches('[data-slot="popover-anchor"]')
+          ? new DOMRect(0, 0, HEADER_WIDTH_PX, HEADER_HEIGHT_PX)
+          : new DOMRect();
+      });
+    onTestFinished(() => rect.mockRestore());
+    renderChrome();
+
+    await openSwitcher();
+
+    const wrapper = switcher().closest<HTMLElement>(
+      '[data-radix-popper-content-wrapper]',
+    );
+    await waitFor(() =>
+      expect(
+        wrapper?.style.getPropertyValue('--radix-popper-anchor-width'),
+      ).toBe(`${HEADER_WIDTH_PX}px`),
+    );
   });
 
   it('opens with only a fade when Enter or Space presses the title', async () => {
@@ -573,5 +621,8 @@ function renderChrome() {
     </QueryClientProvider>,
   );
 }
+
+const HEADER_WIDTH_PX = 400;
+const HEADER_HEIGHT_PX = 56;
 
 type MotionMock = React.PropsWithChildren<{ className?: string }>;
