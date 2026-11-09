@@ -33,6 +33,10 @@ vi.mock('@/app/components/app-shell', () => ({
   useShellHandle: () => ({ shell: 'project' }),
 }));
 
+vi.mock('@/app/components/chat-panel/follow-along-controller', () => ({
+  FollowAlongController: () => null,
+}));
+
 vi.mock('@/app/routes/chat-with-ai/ai-chat-box', () => ({
   AIChatBox: () => {
     React.useEffect(() => {

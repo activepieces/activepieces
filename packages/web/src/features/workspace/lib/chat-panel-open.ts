@@ -1,4 +1,5 @@
 import { isNil, isObject } from '@activepieces/core-utils';
+import { t } from 'i18next';
 import { create } from 'zustand';
 
 import { authenticationSession } from '@/lib/authentication-session';
@@ -30,6 +31,23 @@ function expand(): void {
     replace: false,
     state: { [EXPANDED_STATE]: true },
   });
+}
+
+function openBeside({
+  route,
+  push,
+  name,
+}: {
+  route: string;
+  push: boolean;
+  name: string;
+}): void {
+  const current = router;
+  if (!current || current.location().pathname === route) return;
+  const panel = useChatPanel.getState();
+  if (current.isFullPage()) panel.dock(panel.mode);
+  current.navigate({ to: route, replace: !push });
+  panel.announce(t('Opened {name} beside the chat.', { name }));
 }
 
 function collapse(side: ChatPanelSide): void {
@@ -127,6 +145,10 @@ function saveConversationId(conversationId: string | null) {
   }
 }
 
+function readAutoFollow(): boolean {
+  return safeStorage.read({ area: 'local', key: AUTO_FOLLOW_KEY }) !== 'false';
+}
+
 function readLastPage(): string | null {
   return safeStorage.read({ area: 'session', key: TAB_LAST_PAGE_KEY });
 }
@@ -147,6 +169,7 @@ const TAB_CONVERSATION_KEY = 'chat:conv';
 const LAST_CONVERSATION_KEY = 'chat:last-conv';
 const TAB_LAST_PAGE_KEY = 'chat:last-page';
 const EXPANDED_STATE = 'chatExpanded';
+const AUTO_FOLLOW_KEY = 'chat:auto-follow';
 
 const DEFAULTS: SavedChatPanel = {
   open: false,
@@ -173,7 +196,9 @@ const initChatPanel = (
     ...readSaved(),
     conversationId: readConversationId(),
     lastPage: readLastPage(),
+    autoFollow: readAutoFollow(),
     panelMounted: false,
+    announcement: null,
     newChatToken: 0,
     pendingPrompt: undefined,
     setOpen: (open) => update({ open }),
@@ -197,7 +222,17 @@ const initChatPanel = (
       }
       setConversation({ conversationId, pendingPrompt: undefined });
     },
+    setAutoFollow: (autoFollow) => {
+      set({ autoFollow });
+      safeStorage.write({
+        area: 'local',
+        key: AUTO_FOLLOW_KEY,
+        value: String(autoFollow),
+      });
+    },
     setPanelMounted: (panelMounted) => set({ panelMounted }),
+    announce: (text) =>
+      set({ announcement: { text, id: (get().announcement?.id ?? 0) + 1 } }),
     setLastPage: (lastPage) => {
       if (lastPage === get().lastPage) return;
       set({ lastPage });
@@ -219,6 +254,7 @@ export const chatPanelUtils = {
   bindRouter,
   routeFor,
   useChatRoute,
+  openBeside,
   expand,
   collapse,
   startNewChat,
@@ -246,7 +282,9 @@ type SavedChatPanel = {
 type ChatPanelState = SavedChatPanel & {
   conversationId: string | null;
   lastPage: string | null;
+  autoFollow: boolean;
   panelMounted: boolean;
+  announcement: { text: string; id: number } | null;
   newChatToken: number;
   pendingPrompt?: string;
   setOpen: (open: boolean) => void;
@@ -256,6 +294,8 @@ type ChatPanelState = SavedChatPanel & {
   conversationCreated: (conversationId: string) => void;
   conversationMissing: () => void;
   showConversation: (conversationId: string | null) => void;
+  setAutoFollow: (autoFollow: boolean) => void;
   setPanelMounted: (panelMounted: boolean) => void;
+  announce: (text: string) => void;
   setLastPage: (lastPage: string) => void;
 };

@@ -26,6 +26,8 @@ import { cn } from '@/lib/utils';
 
 import { useShellHandle } from '../app-shell';
 
+import { FollowAlongController } from './follow-along-controller';
+
 const ChatChrome = lazyWithRetry(
   () => import('./chat-chrome').then((m) => ({ default: m.ChatChrome })),
   'chat-chrome',
@@ -118,6 +120,7 @@ export function ChatPanel() {
   return (
     <aside
       ref={panelRef}
+      id={chatLayoutUtils.PANEL_ID}
       aria-label={t('Chat')}
       inert={!visible}
       style={
@@ -140,6 +143,8 @@ export function ChatPanel() {
       <ChatRouterBinding />
       <ChatLastPageTracker />
       {full && <ChatUrlSync />}
+      <FollowAlongController />
+      <ChatAnnouncer />
       {mounted && (
         <Suspense fallback={null}>
           <ChatChrome />
@@ -212,6 +217,15 @@ export function ChatLauncher() {
     >
       <ChatSparkIcon className="size-5" />
     </Button>
+  );
+}
+
+function ChatAnnouncer() {
+  const announcement = useChatPanel((s) => s.announcement);
+  return (
+    <div aria-live="polite" role="status" className="sr-only">
+      {announcement && <span key={announcement.id}>{announcement.text}</span>}
+    </div>
   );
 }
 

@@ -291,7 +291,11 @@ async function maybeOffloadMcpResult({ result, toolName, saveLargeResult }: {
     if (fileId === null) {
         return null
     }
-    return { content: [{ type: 'text', text: agentAiUtils.buildLargeResultPreview({ payload: result, byteSize, fileId, label: toolName }) }] }
+    const preview = { content: [{ type: 'text', text: agentAiUtils.buildLargeResultPreview({ payload: result, byteSize, fileId, label: toolName }) }] }
+    if (!isObject(result) || result['_meta'] === undefined) {
+        return preview
+    }
+    return { ...preview, _meta: result['_meta'] }
 }
 
 function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelectedAuth, saveLargeResult }: {

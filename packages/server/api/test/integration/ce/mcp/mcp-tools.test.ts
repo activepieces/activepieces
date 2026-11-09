@@ -8,32 +8,32 @@ import { flowService } from '../../../../src/app/flows/flow/flow.service'
 import { flowFolderService } from '../../../../src/app/flows/folder/folder.service'
 import { system } from '../../../../src/app/helper/system/system'
 import { AppSystemProp } from '../../../../src/app/helper/system/system-props'
+import { apAddBranchTool } from '../../../../src/app/mcp/tools/ap-add-branch'
+import { apAddStepTool } from '../../../../src/app/mcp/tools/ap-add-step'
 import { apBuildFlowTool } from '../../../../src/app/mcp/tools/ap-build-flow'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
 import { apCreateFolderTool } from '../../../../src/app/mcp/tools/ap-create-folder'
 import { apCreateTableTool } from '../../../../src/app/mcp/tools/ap-create-table'
-import { apFlowStructureTool } from '../../../../src/app/mcp/tools/ap-flow-structure'
-import { apResearchPiecesTool } from '../../../../src/app/mcp/tools/ap-research-pieces'
-import { apAddStepTool } from '../../../../src/app/mcp/tools/ap-add-step'
-import { apUpdateStepTool } from '../../../../src/app/mcp/tools/ap-update-step'
-import { apRenameFlowTool } from '../../../../src/app/mcp/tools/ap-rename-flow'
-import { apDeleteStepTool } from '../../../../src/app/mcp/tools/ap-delete-step'
-import { apLockAndPublishTool } from '../../../../src/app/mcp/tools/ap-lock-and-publish'
-import { apAddBranchTool } from '../../../../src/app/mcp/tools/ap-add-branch'
 import { apDeleteBranchTool } from '../../../../src/app/mcp/tools/ap-delete-branch'
-import { apGetPiecePropsTool } from '../../../../src/app/mcp/tools/ap-get-piece-props'
-import { apValidateStepConfigTool } from '../../../../src/app/mcp/tools/ap-validate-step-config'
-import { apValidateFlowTool } from '../../../../src/app/mcp/tools/ap-validate-flow'
-import { apUpdateTriggerTool } from '../../../../src/app/mcp/tools/ap-update-trigger'
+import { apDeleteStepTool } from '../../../../src/app/mcp/tools/ap-delete-step'
 import { apDuplicateFlowTool } from '../../../../src/app/mcp/tools/ap-duplicate-flow'
-import { apUpdateBranchTool } from '../../../../src/app/mcp/tools/ap-update-branch'
-import { apListRunsTool } from '../../../../src/app/mcp/tools/ap-list-runs'
+import { apFlowStructureTool } from '../../../../src/app/mcp/tools/ap-flow-structure'
+import { apGetPiecePropsTool } from '../../../../src/app/mcp/tools/ap-get-piece-props'
 import { apGetRunTool } from '../../../../src/app/mcp/tools/ap-get-run'
 import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apListFoldersTool } from '../../../../src/app/mcp/tools/ap-list-folders'
+import { apListRunsTool } from '../../../../src/app/mcp/tools/ap-list-runs'
+import { apLockAndPublishTool } from '../../../../src/app/mcp/tools/ap-lock-and-publish'
 import { apMoveFlowToFolderTool } from '../../../../src/app/mcp/tools/ap-move-flow-to-folder'
 import { apReadStepSettingsTool } from '../../../../src/app/mcp/tools/ap-read-step-settings'
+import { apRenameFlowTool } from '../../../../src/app/mcp/tools/ap-rename-flow'
+import { apResearchPiecesTool } from '../../../../src/app/mcp/tools/ap-research-pieces'
 import { apRunActionTool } from '../../../../src/app/mcp/tools/ap-run-action'
+import { apUpdateBranchTool } from '../../../../src/app/mcp/tools/ap-update-branch'
+import { apUpdateStepTool } from '../../../../src/app/mcp/tools/ap-update-step'
+import { apUpdateTriggerTool } from '../../../../src/app/mcp/tools/ap-update-trigger'
+import { apValidateFlowTool } from '../../../../src/app/mcp/tools/ap-validate-flow'
+import { apValidateStepConfigTool } from '../../../../src/app/mcp/tools/ap-validate-step-config'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
 import { tableService } from '../../../../src/app/tables/table/table.service'
 import { userInteractionWatcher } from '../../../../src/app/workers/user-interaction-watcher'
@@ -335,6 +335,18 @@ describe('MCP Tools integration', () => {
         // Flow structure header should reflect the new name
         const structure = await apFlowStructureTool(mcp, mockLog).execute({ flowId })
         expect(text(structure)).toContain('Renamed Flow')
+    })
+
+    it('flow writes tag their result with the resource they changed, failures do not', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Tagged')
+
+        const renamed = await apRenameFlowTool({ mcp }, mockLog).execute({ flowId, displayName: 'Tagged again' })
+        const missing = await apRenameFlowTool({ mcp }, mockLog).execute({ flowId: apId(), displayName: 'Nope' })
+
+        expect(renamed._meta?.apResource).toEqual({ v: 1, kind: 'flow', id: flowId, projectId: ctx.project.id, op: 'update', label: 'Tagged again' })
+        expect(missing._meta).toBeUndefined()
     })
 
     it('ap_add_step and ap_update_step mark a list or JSON field holding one whole reference as dynamic, and a real value back as manual', async () => {
@@ -1405,7 +1417,7 @@ describe('MCP Tools integration', () => {
         const result = await apBuildFlowTool({ mcp }, mockLog).execute({
             flowName: 'Build Test Reference Reasons',
             trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
-            steps: [{ type: FlowActionType.PIECE, displayName: 'Send Email', pieceName: '@activepieces/piece-test-email', actionName: 'send_email', input: { to: 'a@b.com', folder: "{{trigger['output'].folder}}" } }],
+            steps: [{ type: FlowActionType.PIECE, displayName: 'Send Email', pieceName: '@activepieces/piece-test-email', actionName: 'send_email', input: { to: 'a@b.com', folder: '{{trigger[\'output\'].folder}}' } }],
         })
 
         expect(text(result)).toMatch(/step_1 \([^)]*subject is missing/)
@@ -2172,9 +2184,6 @@ describe('MCP Tools integration', () => {
     // ── Error sanitization ───────────────────────────────────────────
 
     it('73. mcpToolError — sanitizes internal paths from error messages', async () => {
-        const ctx = await createTestContext(app)
-        const mcp = makeMcp(ctx.project.id)
-
         // Simulate what mcpUtils.mcpToolError does with internal paths
         const fakeError = new Error('Cannot find module at /root/codes/abc123/step_1/index.js and /root/common/node_modules/.bun/@activepieces+piece-slack@0.16.2/lib.js')
         const result = mcpUtils.mcpToolError('Test', fakeError)
@@ -3080,7 +3089,7 @@ describe('MCP Tools integration', () => {
         expect(flowStructureUtil.getStepOrThrow('step_1', builtFlow.version.trigger).settings.input).not.toHaveProperty('bogus')
         expect(text(triggerUpdate)).not.toContain('Unknown properties')
         expect(text(stepUpdate)).not.toContain('Unknown properties')
-        expect(text(rejected)).toContain("Unknown properties: 'nope'")
+        expect(text(rejected)).toContain('Unknown properties: \'nope\'')
         expect(updatedFlow.version.trigger.settings.input).toMatchObject({ folder: 'INBOX', label: 'urgent' })
         expect(flowStructureUtil.getStepOrThrow('step_1', updatedFlow.version.trigger).settings.input).toMatchObject({ to: 'a@b.co', subject: 'Hello' })
     })
@@ -3180,7 +3189,7 @@ describe('MCP Tools integration', () => {
         const afterFailedRefresh = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
 
         expect(builtFlow.version.trigger.settings.propertySettings).toMatchObject({ fields: { schema } })
-        expect(stepResolveInput).toMatchObject({ input: { auth: "{{connections['my-connection']}}" } })
+        expect(stepResolveInput).toMatchObject({ input: { auth: '{{connections[\'my-connection\']}}' } })
         expect(afterRefresh.version.trigger.settings.propertySettings).toMatchObject({ fields: { schema } })
         expect(afterFailedRefresh.version.trigger.settings.propertySettings?.fields).toEqual({ type: 'MANUAL' })
     })

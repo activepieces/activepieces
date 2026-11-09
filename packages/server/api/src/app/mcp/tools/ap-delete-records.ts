@@ -1,9 +1,10 @@
-import { Permission } from '@activepieces/core-utils'
+import { isNil, Permission } from '@activepieces/core-utils'
 import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
 import { mcpUtils } from './mcp-utils'
+import { resolveTable, tableNotFoundError } from './table-utils'
 
 const deleteRecordsInput = z.object({
     tableId: z.string().describe('ID of the table the records belong to. Use ap_find_records to find it.'),
@@ -26,10 +27,15 @@ export const apDeleteRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     return { content: [{ type: 'text', text: '❌ No record IDs provided.' }] }
                 }
 
+                const table = await resolveTable({ projectId: mcp.projectId, tableId })
+                if (isNil(table)) {
+                    return tableNotFoundError(tableId)
+                }
+
                 const { deletedCount } = await recordService.delete({
                     ids: recordIds,
                     projectId: mcp.projectId,
-                    tableId,
+                    tableId: table.id,
                 })
 
                 return {
@@ -37,6 +43,7 @@ export const apDeleteRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                         type: 'text',
                         text: `✅ Deleted ${deletedCount} record(s).`,
                     }],
+                    ...mcpUtils.apResourceMeta({ kind: 'table', id: table.id, projectId: mcp.projectId, op: 'update', label: table.name }),
                 }
             }
             catch (err) {
