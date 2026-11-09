@@ -53,6 +53,7 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                         const field = await fieldService.create({
                             projectId: mcp.projectId,
                             request,
+                            editorSessionId: null,
                         })
                         return fieldsChanged(`✅ Field added: ${formatFieldInfo(field)}`)
                     }
@@ -71,6 +72,7 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                             id: fieldId,
                             projectId: mcp.projectId,
                             request: { name },
+                            editorSessionId: null,
                         })
                         return fieldsChanged(`✅ Field renamed: ${formatFieldInfo(field)}`)
                     }
@@ -85,6 +87,7 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                         await fieldService.delete({
                             id: fieldId,
                             projectId: mcp.projectId,
+                            editorSessionId: null,
                         })
                         return fieldsChanged(`✅ Field "${toDelete.name}" deleted successfully.`)
                     }

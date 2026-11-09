@@ -1,10 +1,12 @@
 import { apId } from '@activepieces/core-utils'
-import { EDITOR_SESSION_ID_HEADER, FieldType, FilterOperator, TableRecordsChangeOp, TableWebhookEventType, WebsocketClientEvent } from '@activepieces/shared'
+import { EDITOR_SESSION_ID_HEADER, FieldType, FilterOperator, TableOperationType, TableRecordsChangeOp, TableWebhookEventType, WebsocketClientEvent } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import qs from 'qs'
 import { websocketService } from '../../../../src/app/core/websockets.service'
+import { projectStateService } from '../../../../src/app/ee/projects/project-release/project-state/project-state.service'
+import { tableService } from '../../../../src/app/tables/table/table.service'
 import { webhookService } from '../../../../src/app/webhooks/webhook.service'
 import { db } from '../../../helpers/db'
 import { describeWithAuth } from '../../../helpers/describe-with-auth'
@@ -139,6 +141,75 @@ describe('Record API', () => {
             expect(pushes).toEqual([
                 { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.TABLE_UPDATED } },
                 { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.TABLE_DELETED } },
+            ])
+        })
+
+        it('does not tell the table room a table was deleted when no table was deleted', async () => {
+            const ctx = await setup()
+            const pushes = capturePushes()
+
+            await tableService.delete({ projectId: ctx.project.id, id: apId(), editorSessionId: null })
+            vi.restoreAllMocks()
+
+            expect(pushes).toEqual([])
+        })
+
+        it('tells the table room once when a release renames, adds and removes several fields', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const removed = createMockField({ tableId: table.id, projectId: ctx.project.id })
+            await db.save('field', removed)
+            const tableState = {
+                id: table.id,
+                name: table.name,
+                externalId: table.externalId,
+                fields: [field, removed].map((existing) => ({ name: existing.name, type: existing.type, data: null, externalId: existing.externalId })),
+                status: null,
+                trigger: null,
+            }
+            const newTableState = {
+                ...tableState,
+                fields: [
+                    { name: 'Renamed', type: field.type, data: null, externalId: field.externalId },
+                    { name: 'Added one', type: FieldType.TEXT, data: null, externalId: apId() },
+                    { name: 'Added two', type: FieldType.NUMBER, data: null, externalId: apId() },
+                ],
+            }
+            const pushes = capturePushes()
+
+            await projectStateService(app!.log).apply({
+                projectId: ctx.project.id,
+                platformId: ctx.platform.id,
+                log: app!.log,
+                diffs: { flows: [], connections: [], tables: [{ type: TableOperationType.UPDATE_TABLE, tableState, newTableState }] },
+            })
+            vi.restoreAllMocks()
+
+            expect(pushes).toEqual([
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.TABLE_UPDATED } },
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.FIELDS_CHANGED } },
+            ])
+        })
+
+        it('tells the table room once when a table is created with several fields', async () => {
+            const ctx = await setup()
+            const pushes = capturePushes()
+
+            const table = await tableService.create({
+                projectId: ctx.project.id,
+                request: {
+                    projectId: ctx.project.id,
+                    name: 'Leads',
+                    fields: [
+                        { name: 'Name', type: FieldType.TEXT, data: null, externalId: apId() },
+                        { name: 'Score', type: FieldType.NUMBER, data: null, externalId: apId() },
+                    ],
+                },
+            })
+            vi.restoreAllMocks()
+
+            expect(pushes).toEqual([
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.FIELDS_CHANGED } },
             ])
         })
     })

@@ -41,10 +41,7 @@ export const tableService = {
             folderId,
         })
         if (request.fields) {
-            await fieldService.validateCount({ projectId, tableId: table.id, insertCount: request.fields.length })
-            await Promise.all(request.fields.map(async (field, position) => {
-                await fieldService.createFromState({ projectId, field, tableId: table.id, position })
-            }))
+            await fieldService.createAllFromState({ projectId, tableId: table.id, fields: request.fields })
         }
         return table
     },
@@ -202,12 +199,17 @@ export const tableService = {
     async delete({
         projectId,
         id,
-        editorSessionId = null,
+        editorSessionId,
     }: DeleteParams): Promise<void> {
-        await tableRepo().delete({
-            projectId,
-            id,
-        })
+        const deleted = await tableRepo().createQueryBuilder()
+            .delete()
+            .where('id = :id AND "projectId" = :projectId', { id, projectId })
+            .returning(['id'])
+            .execute()
+        const deletedRows: unknown = deleted.raw
+        if (!Array.isArray(deletedRows) || deletedRows.length === 0) {
+            return
+        }
         await tableRoom(system.globalLogger()).notifyChanged({ tableId: id, change: { op: TableRecordsChangeOp.TABLE_DELETED }, editorSessionId })
     },
 
@@ -341,7 +343,7 @@ export const tableService = {
         projectId,
         id,
         request,
-        editorSessionId = null,
+        editorSessionId,
     }: UpdateParams): Promise<Table> {
         const folderId = request.folderId === UncategorizedFolderId ? null : request.folderId
         if (!isNil(folderId)) {
@@ -464,7 +466,7 @@ type GetOneByExternalIdParams = {
 type DeleteParams = {
     projectId: string
     id: string
-    editorSessionId?: string | null
+    editorSessionId: string | null
 }
 
 type ExportTableParams = {
@@ -525,7 +527,7 @@ type UpdateParams = {
     projectId: string
     id: string
     request: UpdateTableRequest
-    editorSessionId?: string | null
+    editorSessionId: string | null
 }
 
 type CountParams = {
