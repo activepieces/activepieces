@@ -55,7 +55,7 @@ describe('ChatEmptyState', () => {
     width.value = 372;
     renderEmptyState({ onboarding: false });
 
-    expect(screen.getByText('Hi {name}, what should I do?')).toBeTruthy();
+    expect(screen.getByText('Hi {name}, what can I help with?')).toBeTruthy();
     expect(personalization).not.toHaveBeenCalled();
   });
 
@@ -64,7 +64,7 @@ describe('ChatEmptyState', () => {
     renderEmptyState({ onboarding: true });
 
     expect(screen.getByText('Onboarding')).toBeTruthy();
-    expect(screen.queryByText('Hi {name}, what should I do?')).toBeNull();
+    expect(screen.queryByText('Hi {name}, what can I help with?')).toBeNull();
   });
 });
 

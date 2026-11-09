@@ -114,8 +114,8 @@ function NarrowEmptyState({
     <div className="flex h-full flex-col justify-end gap-3 px-4 pb-3">
       <p className="text-base font-semibold text-gray-12">
         {name
-          ? t('Hi {name}, what should I do?', { name })
-          : t('What should I do?')}
+          ? t('Hi {name}, what can I help with?', { name })
+          : t('What can I help with?')}
       </p>
       <div className="flex flex-col items-start gap-1.5">
         {suggestions.map((suggestion) => {
@@ -719,7 +719,7 @@ const PAGE_SUGGESTION: Suggestion = {
 
 const SUGGESTIONS: Suggestion[] = [
   { text: 'Build me a flow for new leads', kind: 'build' },
-  { text: 'What saved us the most time this month?', kind: 'ask' },
+  { text: 'Which flows saved the most time this month?', kind: 'ask' },
   { text: 'Why did my last run fail?', kind: 'ask' },
 ];
 

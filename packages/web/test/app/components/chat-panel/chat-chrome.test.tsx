@@ -258,6 +258,7 @@ describe('ChatChrome', () => {
     renderChrome();
 
     expect(screen.getByText('Follow along')).toBeTruthy();
+    expect(screen.getByText('Opens pages the AI changes.')).toBeTruthy();
   });
 
     it('closes History, not the chat, on Escape', () => {

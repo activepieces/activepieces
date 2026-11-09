@@ -531,8 +531,8 @@ function FollowAlongItems() {
           <span>{t('Follow along')}</span>
           <span className="text-xs text-gray-10">
             {autoFollow
-              ? t('Opens what it edits.')
-              : t("Doesn't open pages for you.")}
+              ? t('Opens pages the AI changes.')
+              : t('Stays on your page.')}
           </span>
         </span>
       </DropdownMenuCheckboxItem>
