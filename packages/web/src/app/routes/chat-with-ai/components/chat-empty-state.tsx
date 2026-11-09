@@ -5,10 +5,8 @@ import { motion, useReducedMotion } from 'motion/react';
 import {
   CSSProperties,
   ReactNode,
-  RefObject,
   memo,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -60,38 +58,28 @@ export function ChatEmptyState({
   onSend: (text: string) => void;
   onFill: (text: string) => void;
 }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const width = useWidthOf(containerRef);
   return (
-    <div ref={containerRef} className="h-full">
-      {width === null ? null : width < WIDE_EMPTY_STATE_MIN_WIDTH ? (
+    <div className="h-full">
+      <div data-empty-state="narrow" className="h-full @chat-md/chat:hidden">
         <NarrowEmptyState onSend={onSend} onFill={onFill} />
-      ) : onboarding ? (
-        <OnboardingWelcome />
-      ) : (
-        <WideEmptyState
-          incognito={incognito}
-          hasInput={hasInput}
-          showFlowCards={showFlowCards}
-          onSuggestionClick={onFill}
-        />
-      )}
+      </div>
+      <div
+        data-empty-state="wide"
+        className="hidden h-full @chat-md/chat:block"
+      >
+        {onboarding ? (
+          <OnboardingWelcome />
+        ) : (
+          <WideEmptyState
+            incognito={incognito}
+            hasInput={hasInput}
+            showFlowCards={showFlowCards}
+            onSuggestionClick={onFill}
+          />
+        )}
+      </div>
     </div>
   );
-}
-
-function useWidthOf(ref: RefObject<HTMLElement | null>): number | null {
-  const [width, setWidth] = useState<number | null>(null);
-  useLayoutEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    const measure = () => setWidth(element.getBoundingClientRect().width);
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [ref]);
-  return width;
 }
 
 function NarrowEmptyState({
@@ -705,7 +693,6 @@ function resolveCards({
 }
 
 const COLLAPSED_CARD_COUNT = 4;
-const WIDE_EMPTY_STATE_MIN_WIDTH = 704;
 
 const RESOURCE_PAGES = [
   `/projects/:projectId${routesThatRequireProjectId.singleFlow}`,
