@@ -31,3 +31,5 @@ const CHAT_SPARK_PATHS = {
     'M19 2Q19.58 4.32 21.9 4.9Q19.58 5.48 19 7.8Q18.42 5.48 16.1 4.9Q18.42 4.32 19 2Z',
   lines: ['M7 9.5H14.5', 'M7 13.5H17.5'],
 } as const;
+
+export { CHAT_SPARK_PATHS };

@@ -171,8 +171,12 @@ function AppShell({ handle }: { handle: RouteHandle }) {
                     </Suspense>
                   </div>
                 </ChatContentColumn>
-                {chatOn && <ChatLauncher />}
               </div>
+              {chatOn && (
+                <ChatLauncher
+                  className={isBuilder ? 'bottom-1.5 left-1.5' : 'bottom-3'}
+                />
+              )}
             </div>
           </SidebarInset>
         </div>

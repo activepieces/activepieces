@@ -1,3 +1,4 @@
+import { ChatNotch } from './chat-notch';
 import { isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import {
@@ -309,7 +310,7 @@ export function ChatPanel() {
   );
 }
 
-export function ChatLauncher() {
+export function ChatLauncher({ className }: { className: string }) {
   const chatWidth = useChatWidth();
   const mode = useChatPanel((s) => s.mode);
   const hasConversation = useChatPanel((s) => s.conversationId !== null);
@@ -319,20 +320,7 @@ export function ChatLauncher() {
   if (phone) {
     return hasConversation ? <ChatSheetPill onOpen={sheet.show} /> : null;
   }
-  return (
-    <Button
-      variant="outline"
-      size="icon"
-      aria-label={t('Open chat')}
-      onClick={() => useChatPanel.getState().setOpen(true)}
-      className={cn(
-        'absolute bottom-5 z-30 size-10 rounded-full bg-gray-1 shadow-over max-md:hidden',
-        mode === 'left' ? 'left-5' : 'right-5',
-      )}
-    >
-      <ChatSparkIcon className="size-5" />
-    </Button>
-  );
+  return <ChatNotch className={className} />;
 }
 
 function ChatAnnouncer() {
