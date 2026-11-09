@@ -33,6 +33,8 @@ const projectLeaveHandlers = new Map<string, ProjectLeaveHandler>()
 
 const pendingWorkBySocket = new WeakMap<Socket, Promise<void>>()
 
+const QUEUED_WORK_TIME_LIMIT_MS = 15_000
+
 export const websocketService = {
     to: (workerId: string) => app!.io.to(workerId),
     socketHasPermission: ({ socket, permission }: SocketHasPermissionParams): boolean => hasPermission(projectBySocket.get(socket)?.role, permission),
@@ -97,9 +99,9 @@ async function attachListeners({ socket, log }: AttachListenersParams): Promise<
                 ...(isNil(joinedProjectId) ? {} : { project: { id: joinedProjectId } }),
             })
             await socket.join(principal.id)
-            socket.once('disconnect', () => runInSocketOrder({ socket, work: () => leaveCurrentProject({ socket, userId: principal.id, log }) }))
+            socket.once('disconnect', () => runInSocketOrder({ socket, log, work: () => leaveCurrentProject({ socket, userId: principal.id, log }) }))
             socket.on(WebsocketServerEvent.SWITCH_PROJECT, async (data: unknown, callback?: (response: SwitchProjectResponse) => void) => {
-                const response = await runInSocketOrder({ socket, work: () => switchProject({ socket, userId: principal.id, data, log }) })
+                const response = await runInSocketOrder({ socket, log, work: () => switchProject({ socket, userId: principal.id, data, log }) })
                 callback?.(response)
             })
             for (const event of Object.values(WebsocketServerEvent)) {
@@ -109,7 +111,7 @@ async function attachListeners({ socket, log }: AttachListenersParams): Promise<
                 }
                 socket.on(toSocketEvent(event), async (data: unknown, callback?: (data: unknown) => void) => {
                     const work = (): Promise<void> => runUserEvent({ socket, event, handler, data, principal, callback, log })
-                    return eventsOrderedWithSwitch.has(event) ? runInSocketOrder({ socket, work }) : work()
+                    return eventsOrderedWithSwitch.has(event) ? runInSocketOrder({ socket, work, log }) : work()
                 })
             }
             break
@@ -169,11 +171,25 @@ async function runUserEvent({ socket, event, handler, data, principal, callback,
     }
 }
 
-function runInSocketOrder<T>({ socket, work }: RunInSocketOrderParams<T>): Promise<T> {
+function runInSocketOrder<T>({ socket, work, log }: RunInSocketOrderParams<T>): Promise<T> {
     const previous = pendingWorkBySocket.get(socket) ?? Promise.resolve()
     const next = previous.then(work)
-    pendingWorkBySocket.set(socket, next.then(() => undefined, () => undefined))
+    pendingWorkBySocket.set(socket, previous.then(() => settledOrTimedOut({ work: next, socket, log })))
     return next
+}
+
+function settledOrTimedOut({ work, socket, log }: SettledOrTimedOutParams): Promise<void> {
+    return new Promise((resolve) => {
+        const timer = setTimeout(() => {
+            log.warn({ socket: { id: socket.id }, timeLimitMs: QUEUED_WORK_TIME_LIMIT_MS }, 'Websocket queued work is still running, moving on to the next work')
+            resolve()
+        }, QUEUED_WORK_TIME_LIMIT_MS)
+        const settle = (): void => {
+            clearTimeout(timer)
+            resolve()
+        }
+        work.then(settle, settle)
+    })
 }
 
 async function joinHandshakeProject({ socket, userId, projectId, log }: JoinHandshakeProjectParams): Promise<string | null> {
@@ -315,6 +331,13 @@ type RunUserEventParams = {
 type RunInSocketOrderParams<T> = {
     socket: Socket
     work: () => Promise<T>
+    log: FastifyBaseLogger
+}
+
+type SettledOrTimedOutParams = {
+    work: Promise<unknown>
+    socket: Socket
+    log: FastifyBaseLogger
 }
 
 type JoinHandshakeProjectParams = {
