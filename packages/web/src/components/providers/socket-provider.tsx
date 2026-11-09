@@ -33,7 +33,7 @@ const SocketContext = React.createContext<typeof socket>(socket);
 
 const CONNECTION_LOST_TOAST_ID = 'websocket-disconnected';
 
-const LIVE_UPDATES_PAUSED_TOAST_ID = 'websocket-project-rejected';
+const LIVE_UPDATES_TOAST_ID = 'websocket-live-updates';
 
 const SWITCH_PROJECT_TIMEOUT_MS = 10_000;
 
@@ -146,17 +146,34 @@ function syncProject(): void {
           return;
         }
         connection.pendingSwitch = null;
+        const stillWanted = connection.wantedProjectId === target;
+        if (!isNil(error)) {
+          connection.serverProjectId = null;
+          if (stillWanted) {
+            toast(t('Live updates are delayed'), {
+              id: LIVE_UPDATES_TOAST_ID,
+              description: t('Changes made by others may show up late.'),
+            });
+            releaseHeldEmits();
+            return;
+          }
+          syncProject();
+          return;
+        }
         const parsed = SwitchProjectResponse.safeParse(response);
-        if (isNil(error) && parsed.success && parsed.data.success) {
+        if (parsed.success && parsed.data.success) {
           connection.serverProjectId = target;
+          toast.dismiss(LIVE_UPDATES_TOAST_ID);
         } else {
           connection.rejectedProjectId = target;
-          toast.error(t('Live updates are paused'), {
-            id: LIVE_UPDATES_PAUSED_TOAST_ID,
-            description: t(
-              'We could not connect live updates to this project. Reload the page to try again.',
-            ),
-          });
+          if (stillWanted) {
+            toast.error(t('Live updates are paused'), {
+              id: LIVE_UPDATES_TOAST_ID,
+              description: t(
+                'We could not connect live updates to this project. Reload the page to try again.',
+              ),
+            });
+          }
         }
         syncProject();
       },

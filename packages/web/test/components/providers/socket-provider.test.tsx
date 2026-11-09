@@ -80,7 +80,7 @@ const sessionHarness = vi.hoisted(
 );
 
 const toastHarness = vi.hoisted(() => {
-  const toast = Object.assign(() => undefined, {
+  const toast = Object.assign(vi.fn(), {
     dismiss: () => undefined,
     error: (..._args: unknown[]) => undefined,
   });
@@ -123,6 +123,7 @@ describe('SocketProvider', () => {
   beforeEach(() => {
     sessionHarness.projectId = 'project-1';
     socketHarness.reset();
+    toastHarness.toast.mockClear();
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -180,7 +181,7 @@ describe('SocketProvider', () => {
     expect(socketHarness.emitted).toHaveLength(1);
   });
 
-  it('treats a switch the server never answers as an error and does not retry', async () => {
+  it('shows a calm message for a switch the server never answers and does not retry on its own', async () => {
     const showError = vi.spyOn(toastHarness.toast, 'error');
     await act(async () => root.render(<App onConnect={vi.fn()} />));
 
@@ -192,8 +193,44 @@ describe('SocketProvider', () => {
     );
     await act(async () => root.render(<App onConnect={vi.fn()} />));
 
-    expect(showError).toHaveBeenCalledTimes(1);
+    expect(showError).not.toHaveBeenCalled();
+    expect(liveUpdateToasts()).toHaveLength(1);
     expect(socketHarness.emitted).toHaveLength(1);
+  });
+
+  it('retries an unanswered switch when a page next needs the project', async () => {
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+    sessionHarness.projectId = 'project-2';
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+    act(() =>
+      socketHarness.emitted[0].ack(new Error('operation has timed out')),
+    );
+
+    await act(async () =>
+      root.render(<App onConnect={vi.fn()} lockResourceId="flow-2" />),
+    );
+
+    expect(emittedEvents()).toEqual([
+      [WebsocketServerEvent.SWITCH_PROJECT, { projectId: 'project-2' }],
+      [WebsocketServerEvent.SWITCH_PROJECT, { projectId: 'project-2' }],
+    ]);
+  });
+
+  it('shows no rejection for a project the user already left', async () => {
+    const showError = vi.spyOn(toastHarness.toast, 'error');
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+    sessionHarness.projectId = 'project-2';
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+    sessionHarness.projectId = 'project-3';
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+
+    act(() => socketHarness.emitted[0].ack(null, { success: false }));
+
+    expect(showError).not.toHaveBeenCalled();
+    expect(emittedEvents().at(-1)).toEqual([
+      WebsocketServerEvent.SWITCH_PROJECT,
+      { projectId: 'project-3' },
+    ]);
   });
 
   it('switches again after an unanswered switch to another project', async () => {
@@ -324,6 +361,16 @@ describe('SocketProvider', () => {
     ]);
   });
 });
+
+function liveUpdateToasts(): unknown[][] {
+  return toastHarness.toast.mock.calls.filter(
+    ([, options]) =>
+      typeof options === 'object' &&
+      options !== null &&
+      'id' in options &&
+      options.id === 'websocket-live-updates',
+  );
+}
 
 function emittedEvents(): [string, unknown][] {
   return socketHarness.emitted.map(({ event, payload }) => [event, payload]);
