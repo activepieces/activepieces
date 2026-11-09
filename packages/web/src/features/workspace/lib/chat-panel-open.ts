@@ -1,4 +1,4 @@
-import { isObject } from '@activepieces/core-utils';
+import { isNil, isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { create } from 'zustand';
 
@@ -149,6 +149,14 @@ function readLastPage(): string | null {
   return safeStorage.read({ area: 'session', key: TAB_LAST_PAGE_KEY });
 }
 
+function forgetSignedOutUser(): void {
+  if (!isNil(authenticationSession.getToken())) return;
+  safeStorage.remove({ area: 'local', key: LAST_CONVERSATION_KEY });
+  safeStorage.remove({ area: 'session', key: TAB_CONVERSATION_KEY });
+  safeStorage.remove({ area: 'session', key: TAB_LAST_PAGE_KEY });
+  useChatPanel.setState({ conversationId: null, lastPage: null });
+}
+
 let router: ChatRouter | null = null;
 
 const STORAGE_KEY = 'chat-panel';
@@ -183,6 +191,7 @@ export const useChatPanel = create<ChatPanelState>((set, get) => {
     conversationId: readConversationId(),
     lastPage: readLastPage(),
     autoFollow: readAutoFollow(),
+    panelMounted: false,
     announcement: null,
     newChatToken: 0,
     pendingPrompt: undefined,
@@ -215,6 +224,7 @@ export const useChatPanel = create<ChatPanelState>((set, get) => {
         value: String(autoFollow),
       });
     },
+    setPanelMounted: (panelMounted) => set({ panelMounted }),
     announce: (text) =>
       set({ announcement: { text, id: (get().announcement?.id ?? 0) + 1 } }),
     setLastPage: (lastPage) => {
@@ -228,6 +238,8 @@ export const useChatPanel = create<ChatPanelState>((set, get) => {
     },
   };
 });
+
+authenticationSession.subscribe(forgetSignedOutUser);
 
 export const chatPanelUtils = {
   bindRouter,
@@ -261,6 +273,7 @@ type ChatPanelState = SavedChatPanel & {
   conversationId: string | null;
   lastPage: string | null;
   autoFollow: boolean;
+  panelMounted: boolean;
   announcement: { text: string; id: number } | null;
   newChatToken: number;
   pendingPrompt?: string;
@@ -272,6 +285,7 @@ type ChatPanelState = SavedChatPanel & {
   conversationMissing: () => void;
   showConversation: (conversationId: string | null) => void;
   setAutoFollow: (autoFollow: boolean) => void;
+  setPanelMounted: (panelMounted: boolean) => void;
   announce: (text: string) => void;
   setLastPage: (lastPage: string) => void;
 };

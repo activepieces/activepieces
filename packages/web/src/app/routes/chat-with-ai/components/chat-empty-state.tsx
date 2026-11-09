@@ -1,18 +1,14 @@
 import { PersonalizationUseCase } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  MessageSquareOff,
-  Settings,
-} from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   CSSProperties,
   ReactNode,
+  RefObject,
   memo,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -20,6 +16,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
@@ -47,38 +44,38 @@ export function ChatEmptyState({
   showFlowCards: boolean;
   onSend: (text: string) => void;
 }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const width = useWidthOf(containerRef);
   return (
-    <div className="@container h-full">
-      <div className="hidden h-full @chat-md:block">
-        {onboarding ? (
-          <OnboardingWelcome />
-        ) : (
-          <WideEmptyState
-            incognito={incognito}
-            hasInput={hasInput}
-            showFlowCards={showFlowCards}
-            onSuggestionClick={onSend}
-          />
-        )}
-      </div>
-      <div className="h-full @chat-md:hidden">
+    <div ref={containerRef} className="h-full">
+      {width === null ? null : width < WIDE_EMPTY_STATE_MIN_WIDTH ? (
         <NarrowEmptyState onSend={onSend} />
-      </div>
+      ) : onboarding ? (
+        <OnboardingWelcome />
+      ) : (
+        <WideEmptyState
+          incognito={incognito}
+          hasInput={hasInput}
+          showFlowCards={showFlowCards}
+          onSuggestionClick={onSend}
+        />
+      )}
     </div>
   );
 }
 
-export function ChatDisabledState() {
-  return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 px-4 text-center">
-      <div className="flex size-10 items-center justify-center rounded-lg bg-gray-3">
-        <MessageSquareOff className="size-5 text-gray-11" />
-      </div>
-      <h2 className="text-sm font-semibold text-gray-12">
-        {t('Chat is turned off for this workspace.')}
-      </h2>
-    </div>
-  );
+function useWidthOf(ref: RefObject<HTMLElement | null>): number | null {
+  const [width, setWidth] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const measure = () => setWidth(element.getBoundingClientRect().width);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [ref]);
+  return width;
 }
 
 function NarrowEmptyState({ onSend }: { onSend: (text: string) => void }) {
@@ -102,11 +99,12 @@ function NarrowEmptyState({ onSend }: { onSend: (text: string) => void }) {
             <Button
               key={text}
               variant="ghost"
-              title={text}
               onClick={() => onSend(text)}
               className="h-auto max-w-full justify-start rounded-full border px-3 py-1.5 text-gray-11 hover:bg-gray-3 active:bg-gray-4"
             >
-              <span className="truncate">{text}</span>
+              <TextWithTooltip tooltipMessage={text}>
+                <span className="min-w-0">{text}</span>
+              </TextWithTooltip>
             </Button>
           );
         })}
@@ -632,3 +630,4 @@ function resolveCards({
 }
 
 const COLLAPSED_CARD_COUNT = 4;
+const WIDE_EMPTY_STATE_MIN_WIDTH = 704;

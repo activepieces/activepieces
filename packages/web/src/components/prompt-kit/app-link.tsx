@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import { Link } from 'react-router-dom';
 
-import { isPlainLeftClick } from '@/lib/dom-utils';
+import { domUtils } from '@/lib/dom-utils';
 import { cn } from '@/lib/utils';
 
 export function AppLinkProvider({
@@ -32,7 +32,7 @@ export function AppLink({
     <Link
       to={route}
       onClick={(event) => {
-        if (!handlers || !isPlainLeftClick(event)) return;
+        if (!handlers || !domUtils.isPlainLeftClick(event)) return;
         event.preventDefault();
         handlers.open({
           route,
@@ -44,14 +44,17 @@ export function AppLink({
         className,
       )}
     >
-      {bare ? handlers?.label(route) ?? route.split(/[?#]/)[0] : children}
+      {bare ? routeLabel(route) : children}
     </Link>
   );
+}
+
+function routeLabel(route: string): string {
+  return route.split(/[?#]/)[0];
 }
 
 const AppLinkContext = createContext<AppLinkHandlers | null>(null);
 
 export type AppLinkHandlers = {
   open: (params: { route: string; name: string }) => void;
-  label: (route: string) => string;
 };

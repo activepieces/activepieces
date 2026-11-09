@@ -1,6 +1,7 @@
 import { isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import {
+  Suspense,
   useCallback,
   useEffect,
   useRef,
@@ -8,9 +9,6 @@ import {
   useSyncExternalStore,
 } from 'react';
 import { useLocation, useMatches, useNavigate } from 'react-router-dom';
-import { ToasterProps } from 'sonner';
-import { create } from 'zustand';
-import { useShallow } from 'zustand/react/shallow';
 
 import { ChatSparkIcon } from '@/components/icons/chat-spark';
 import { Button } from '@/components/ui/button';
@@ -25,13 +23,18 @@ import {
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
 import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
+import { CHAT_ROUTE } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
 import { useShellHandle } from '../app-shell';
 
-import { ChatChrome, ChatLastPageTracker } from './chat-chrome';
 import { FollowAlongController } from './follow-along-controller';
+
+const ChatChrome = lazyWithRetry(
+  () => import('./chat-chrome').then((m) => ({ default: m.ChatChrome })),
+  'chat-chrome',
+);
 
 export function useChatWidth(): ChatWidth {
   const fullPage = useShellHandle().chat === 'full';
@@ -80,15 +83,6 @@ export function useChatSheet() {
   return { show, hide };
 }
 
-export function useChatToastPlacement(): ToastPlacement {
-  return useToastPlacement(
-    useShallow((state) => ({
-      position: state.position,
-      offset: state.offset,
-    })),
-  );
-}
-
 export function ChatPanel() {
   const chatWidth = useChatWidth();
   const mode = useChatPanel((s) => s.mode);
@@ -117,28 +111,11 @@ export function ChatPanel() {
   useChatKeys({ chatWidth, sheet });
 
   useEffect(() => {
-    useToastPlacement.setState(toastPlacementFor(chatWidth));
-  }, [chatWidth]);
+    useChatPanel.getState().setPanelMounted(true);
+    return () => useChatPanel.getState().setPanelMounted(false);
+  }, []);
 
   useComposerFocus({ panelRef, visible });
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (
-        !(event.metaKey || event.ctrlKey) ||
-        !event.shiftKey ||
-        event.altKey ||
-        event.key.toLowerCase() !== 'o'
-      ) {
-        return;
-      }
-      event.preventDefault();
-      chatPanelUtils.startNewChat();
-      panelRef.current?.querySelector('textarea')?.focus();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
 
   const widthAt = (event: React.PointerEvent<HTMLDivElement>) => {
     const card = panelRef.current?.parentElement?.getBoundingClientRect();
@@ -272,9 +249,14 @@ export function ChatPanel() {
       >
         <ChatRouterBinding />
         <ChatLastPageTracker />
+        {full && <ChatUrlSync />}
         <FollowAlongController />
         <ChatAnnouncer />
-        {mounted && <ChatChrome />}
+        {mounted && (
+          <Suspense fallback={null}>
+            <ChatChrome />
+          </Suspense>
+        )}
         {visible && !full && !phone && (
           <div
             role="separator"
@@ -364,16 +346,16 @@ function ChatAnnouncer() {
 
 function ChatSheetPill({ onOpen }: { onOpen: () => void }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant="outline"
       onClick={onOpen}
       aria-label={t('Open chat')}
-      className="fixed left-1/2 z-40 flex h-11 -translate-x-1/2 animate-in fade-in-0 slide-in-from-bottom-2 items-center gap-2 rounded-full border bg-gray-1 pr-4 pl-3 text-sm text-gray-12 shadow-lift duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8 motion-reduce:animate-none"
+      className="fixed left-1/2 z-40 h-11 -translate-x-1/2 animate-in fade-in-0 slide-in-from-bottom-2 gap-2 rounded-full bg-gray-1 pr-4 pl-3 text-gray-12 shadow-lift duration-150 motion-reduce:animate-none"
       style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
     >
       <ChatSparkIcon className="size-5" />
       {t('Chat')}
-    </button>
+    </Button>
   );
 }
 
@@ -384,51 +366,61 @@ function useChatKeys({
   chatWidth: ChatWidth;
   sheet: ReturnType<typeof useChatSheet>;
 }) {
-  const chatEnabled =
-    platformHooks.useCurrentPlatform().platform.plan.chatEnabled;
+  const latest = useRef({ chatWidth, sheet });
+  latest.current = { chatWidth, sheet };
   useEffect(() => {
-    const full = chatWidth === 'full';
-    const onKey = (event: KeyboardEvent) => {
-      const focusInChat = pageFocus.inChat(document.activeElement);
-      if (
-        chatEnabled &&
-        (event.metaKey || event.ctrlKey) &&
-        !event.altKey &&
-        !event.shiftKey &&
-        event.key.toLowerCase() === 'j'
-      ) {
-        event.preventDefault();
-        if (chatWidth === 'sheet') {
-          sheet.hide();
-        } else if (
-          !full &&
-          window.innerWidth < chatLayoutUtils.MOBILE_BREAKPOINT
-        ) {
-          sheet.show();
-        } else if (full || (chatWidth !== 'closed' && !focusInChat)) {
-          chatDom.composer()?.focus();
-        } else {
-          useChatPanel.getState().setOpen(chatWidth === 'closed');
-        }
-        return;
-      }
-      if (
-        event.key === 'Escape' &&
-        !full &&
-        chatWidth !== 'closed' &&
-        focusInChat &&
-        !hasText(document.activeElement) &&
-        !hasText(chatDom.composer()) &&
-        chatDom.escapeFree(event)
-      ) {
-        chatDom.claimEscape(event);
-        if (chatWidth === 'sheet') sheet.hide();
-        else useChatPanel.getState().setOpen(false);
-      }
-    };
+    const onKey = (event: KeyboardEvent) =>
+      handleChatKey({ event, ...latest.current });
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [chatWidth, chatEnabled, sheet]);
+  }, []);
+}
+
+function handleChatKey({
+  event,
+  chatWidth,
+  sheet,
+}: {
+  event: KeyboardEvent;
+  chatWidth: ChatWidth;
+  sheet: ReturnType<typeof useChatSheet>;
+}): void {
+  const full = chatWidth === 'full';
+  const focusInChat = pageFocus.inChat(document.activeElement);
+  const mod = (event.metaKey || event.ctrlKey) && !event.altKey;
+  const key = event.key.toLowerCase();
+  if (mod && event.shiftKey && key === 'o') {
+    event.preventDefault();
+    chatPanelUtils.startNewChat();
+    chatDom.composer()?.focus();
+    return;
+  }
+  if (mod && !event.shiftKey && key === 'j') {
+    event.preventDefault();
+    if (chatWidth === 'sheet') {
+      sheet.hide();
+    } else if (!full && window.innerWidth < chatLayoutUtils.MOBILE_BREAKPOINT) {
+      sheet.show();
+    } else if (full || (chatWidth !== 'closed' && !focusInChat)) {
+      chatDom.composer()?.focus();
+    } else {
+      useChatPanel.getState().setOpen(chatWidth === 'closed');
+    }
+    return;
+  }
+  if (
+    event.key === 'Escape' &&
+    !full &&
+    chatWidth !== 'closed' &&
+    focusInChat &&
+    !hasText(document.activeElement) &&
+    !hasText(chatDom.composer()) &&
+    chatDom.escapeFree(event)
+  ) {
+    chatDom.claimEscape(event);
+    if (chatWidth === 'sheet') sheet.hide();
+    else useChatPanel.getState().setOpen(false);
+  }
 }
 
 function hasText(element: Element | null): boolean {
@@ -441,6 +433,38 @@ function hasText(element: Element | null): boolean {
 
 function stateObject(state: unknown): Record<string, unknown> {
   return isObject(state) ? state : {};
+}
+
+function ChatLastPageTracker() {
+  const { pathname, search } = useLocation();
+  const onChatPage = useShellHandle().chat === 'full';
+  useEffect(() => {
+    if (!onChatPage) {
+      useChatPanel.getState().setLastPage(`${pathname}${search}`);
+    }
+  }, [onChatPage, pathname, search]);
+  return null;
+}
+
+function ChatUrlSync() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const urlId = useActiveConversationId();
+  const handedOverPrompt =
+    isObject(location.state) && typeof location.state.prompt === 'string'
+      ? location.state.prompt
+      : undefined;
+
+  useEffect(() => {
+    if (handedOverPrompt === undefined) {
+      useChatPanel.getState().showConversation(urlId);
+      return;
+    }
+    useChatPanel.getState().newChat(handedOverPrompt);
+    navigate(CHAT_ROUTE, { replace: true, state: null });
+  }, [urlId, handedOverPrompt, navigate]);
+
+  return null;
 }
 
 function ChatRouterBinding() {
@@ -502,33 +526,9 @@ function useComposerFocus({
   }, [visible, panelRef]);
 }
 
-function toastPlacementFor(chatWidth: ChatWidth): ToastPlacement {
-  switch (chatWidth) {
-    case 'full':
-      return { position: 'top-center', offset: { top: FULL_TOAST_TOP } };
-    case 'sheet':
-      return { position: 'top-center', offset: undefined };
-    case 'right':
-      return { position: 'bottom-left', offset: undefined };
-    default:
-      return { position: 'bottom-right', offset: undefined };
-  }
-}
-
-const FULL_TOAST_TOP = 80;
 const SHEET_STATE = 'chatSheet';
 const SHEET_DISMISS_SHARE = 0.25;
 const SHEET_DISMISS_VELOCITY = 0.5;
 const DOCK_MAX_CSS = `max(${chatLayoutUtils.DOCK_MIN_WIDTH}px, calc(100% - ${chatLayoutUtils.PAGE_COMFORT_WIDTH}px))`;
 
-const useToastPlacement = create<ToastPlacement>(() => ({
-  position: 'bottom-right',
-  offset: undefined,
-}));
-
 type SheetDrag = { offset: number; height: number; dragging: boolean };
-type ToastPosition = NonNullable<ToasterProps['position']>;
-type ToastPlacement = {
-  position: ToastPosition;
-  offset: ToasterProps['offset'];
-};

@@ -83,7 +83,7 @@ export const isEditableTarget = (target: EventTarget | null): boolean => {
   );
 };
 
-export const isPlainLeftClick = (event: {
+const isPlainLeftClick = (event: {
   defaultPrevented: boolean;
   button: number;
   metaKey: boolean;
@@ -125,3 +125,7 @@ type DownloadFileProps =
       fileName: string;
       extension: 'zip';
     };
+
+export const domUtils = {
+  isPlainLeftClick,
+};

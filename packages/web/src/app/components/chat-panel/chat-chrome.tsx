@@ -14,14 +14,14 @@ import {
   X,
 } from 'lucide-react';
 import { Tooltip as TooltipPrimitive } from 'radix-ui';
-import { memo, useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { memo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
 import { ChatAppLinks } from '@/app/routes/chat-with-ai/components/chat-app-links';
-import { ChatDisabledState } from '@/app/routes/chat-with-ai/components/chat-empty-state';
 import { ConversationList } from '@/app/routes/chat-with-ai/conversation-list';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   TooltipContent,
   TooltipProvider,
@@ -51,10 +52,7 @@ import {
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
 import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
-
-import { useShellHandle } from '../app-shell';
 
 import {
   useActiveConversationId,
@@ -68,8 +66,6 @@ export function ChatChrome() {
   const conversationId = useActiveConversationId();
   const newChatToken = useChatPanel((s) => s.newChatToken);
   const pendingPrompt = useChatPanel((s) => s.pendingPrompt);
-  const chatEnabled =
-    platformHooks.useCurrentPlatform().platform.plan.chatEnabled;
   const queryClient = useQueryClient();
   const [liveTitle, setLiveTitle] = useState<LiveTitle | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -83,7 +79,7 @@ export function ChatChrome() {
   const renaming = renamingId !== null && renamingId === conversationId;
   const setRenaming = (on: boolean) =>
     setRenamingId(on ? conversationId : null);
-  const title = useConversationTitle({
+  const { title, loading: titleLoading } = useConversationTitle({
     conversationId,
     liveTitle: liveTitle?.id === conversationId ? liveTitle.title : null,
   });
@@ -112,11 +108,13 @@ export function ChatChrome() {
     setRenaming(false);
     const trimmed = next.trim();
     if (!conversationId || !trimmed || trimmed === title) return;
+    const previous = liveTitle;
     setLiveTitle({ id: conversationId, title: trimmed });
     const { error } = await tryCatch(() =>
       chatApi.updateConversation(conversationId, { title: trimmed }),
     );
     if (error) {
+      setLiveTitle(previous);
       toast.error(t('Failed to rename conversation'));
       return;
     }
@@ -141,7 +139,7 @@ export function ChatChrome() {
       <div
         data-chat-header
         className={cn(
-          'relative flex h-14 shrink-0 items-center gap-2 pr-3 pl-4',
+          'relative flex h-14 shrink-0 items-center gap-2 pr-2 pl-2.5',
           sheet && 'touch-none select-none',
         )}
       >
@@ -151,7 +149,7 @@ export function ChatChrome() {
             className="absolute top-2 left-1/2 h-1 w-9 -translate-x-1/2 rounded-full bg-gray-6"
           />
         )}
-        <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 items-center">
           {renaming ? (
             <Input
               autoFocus
@@ -175,34 +173,35 @@ export function ChatChrome() {
                   event.currentTarget.blur();
                 }
               }}
-              className="-ml-1.5 h-8 px-1.5 text-sm font-semibold"
+              className="h-8 px-1.5 text-sm font-semibold"
             />
+          ) : titleLoading ? (
+            <Skeleton className="mx-1.5 h-4 w-32" />
           ) : (
-            <h2
-              title={title ?? undefined}
-              className="truncate text-sm font-semibold text-gray-12"
-            >
-              {chatEnabled ? title ?? t('New chat') : t('Chat')}
-            </h2>
+            <TextWithTooltip tooltipMessage={title ?? t('New chat')}>
+              <h2 className="px-1.5 text-sm font-semibold text-gray-12">
+                {title ?? t('New chat')}
+              </h2>
+            </TextWithTooltip>
           )}
         </div>
-        <div className="-mr-1 flex shrink-0 items-center gap-0.5">
-          {chatEnabled && (
-            <>
-              <HeaderButton
-                label={historyOpen ? t('Hide history') : t('History')}
-                aria-pressed={historyOpen}
-                onClick={() => setHistoryOpen(!historyOpen)}
-              >
-                <History />
-              </HeaderButton>
-              <HeaderButton label={t('New chat')} onClick={startFresh}>
-                <Plus />
-              </HeaderButton>
-            </>
-          )}
+        <div className="flex shrink-0 items-center gap-0.5">
+          <HeaderButton
+            label={t('History')}
+            aria-pressed={historyOpen}
+            onClick={() => setHistoryOpen(!historyOpen)}
+          >
+            <History />
+          </HeaderButton>
+          <HeaderButton
+            label={t('New chat')}
+            shortcut="⇧⌘O"
+            onClick={startFresh}
+          >
+            <Plus />
+          </HeaderButton>
           {!phone && <LayoutMenu />}
-          {chatEnabled && conversationId && (
+          {conversationId && (
             <MoreMenu
               onRename={() => setRenaming(true)}
               onDelete={() => deleteChat().catch(() => undefined)}
@@ -223,7 +222,7 @@ export function ChatChrome() {
         </div>
       </div>
       <div ref={bodyRef} className="relative min-h-0 flex-1">
-        {chatEnabled && historyOpen && (
+        {historyOpen && (
           <ConversationList
             className="absolute inset-0 z-10 w-full bg-gray-1 animate-in fade-in duration-150 ease-move motion-reduce:animate-none"
             selectedId={conversationId}
@@ -231,33 +230,18 @@ export function ChatChrome() {
             onNewChat={startFresh}
           />
         )}
-        {chatEnabled ? (
-          <div inert={historyOpen} className="h-full">
-            <ChatBody
-              full={full}
-              conversationId={conversationId}
-              newChatToken={newChatToken}
-              prompt={pendingPrompt}
-              onLiveTitle={setLiveTitle}
-            />
-          </div>
-        ) : (
-          <ChatDisabledState />
-        )}
+        <div inert={historyOpen} className="h-full">
+          <ChatBody
+            full={full}
+            conversationId={conversationId}
+            newChatToken={newChatToken}
+            prompt={pendingPrompt}
+            onLiveTitle={setLiveTitle}
+          />
+        </div>
       </div>
     </TooltipProvider>
   );
-}
-
-export function ChatLastPageTracker() {
-  const { pathname, search } = useLocation();
-  const onChatPage = useShellHandle().chat === 'full';
-  useEffect(() => {
-    if (!onChatPage) {
-      useChatPanel.getState().setLastPage(`${pathname}${search}`);
-    }
-  }, [onChatPage, pathname, search]);
-  return null;
 }
 
 const ChatBody = memo(function ChatBody({
@@ -285,10 +269,10 @@ const ChatBody = memo(function ChatBody({
   return (
     <ChatAppLinks>
       <AIChatBox
+        key={newChatToken}
         incognito={false}
         compact={!full}
         conversationId={conversationId}
-        newChatToken={newChatToken}
         initialPrompt={prompt}
         onConversationCreated={(id) => {
           useChatPanel.getState().conversationCreated(id);
@@ -315,8 +299,8 @@ function useConversationTitle({
 }: {
   conversationId: string | null;
   liveTitle: string | null;
-}): string | null {
-  const { data } = useQuery({
+}): { title: string | null; loading: boolean } {
+  const { data, isLoading } = useQuery({
     queryKey: ['chat-conversation', conversationId],
     queryFn: () =>
       conversationId ? chatApi.getConversation(conversationId) : null,
@@ -324,7 +308,10 @@ function useConversationTitle({
     staleTime: Infinity,
   });
   const title = liveTitle ?? data?.title ?? null;
-  return title ? chatUtils.sanitizeTitle(title) : null;
+  return {
+    title: title ? chatUtils.sanitizeTitle(title) : null,
+    loading: isLoading,
+  };
 }
 
 function LayoutMenu() {
@@ -436,9 +423,10 @@ function FollowAlongItems() {
 
 function HeaderButton({
   label,
+  shortcut,
   children,
   ...props
-}: React.ComponentProps<typeof Button> & { label: string }) {
+}: React.ComponentProps<typeof Button> & { label: string; shortcut?: string }) {
   return (
     <TooltipPrimitive.Root>
       <TooltipTrigger asChild>
@@ -452,8 +440,13 @@ function HeaderButton({
           {children}
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="bottom" sideOffset={4}>
+      <TooltipContent
+        side="bottom"
+        sideOffset={4}
+        className="flex items-center gap-2"
+      >
         {label}
+        {shortcut && <span className="text-xs opacity-50">{shortcut}</span>}
       </TooltipContent>
     </TooltipPrimitive.Root>
   );

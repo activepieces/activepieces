@@ -82,7 +82,6 @@ function ChatBoxContent({
   onTitleUpdate,
   onConversationCreated,
   onConversationMissing,
-  newChatToken,
   compact,
 }: AIChatBoxProps) {
   const queryClient = useQueryClient();
@@ -114,7 +113,6 @@ function ChatBoxContent({
     retryLastMessage,
     cancelStream,
     setConversationId,
-    startNew,
     setModelPick,
   } = useAgentChat({
     ...(agentId === undefined ? {} : { agentId }),
@@ -220,18 +218,7 @@ function ChatBoxContent({
 
   const [hasInput, setHasInput] = useState(false);
   const [promptOpen, setPromptOpen] = useState(false);
-  const [session, setSession] = useState(newChatToken ?? 0);
-  const sentInitialPrompt = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (newChatToken === undefined || newChatToken === session) return;
-    startNew();
-    setHasSentMessage(false);
-    setHasInput(false);
-    setPromptOpen(false);
-    sentInitialPrompt.current = null;
-    setSession(newChatToken);
-  }, [newChatToken, session, startNew]);
+  const sentInitialPrompt = useRef(false);
 
   useEffect(() => {
     const shouldSendInitialPrompt =
@@ -239,19 +226,11 @@ function ChatBoxContent({
       initialPrompt.trim().length > 0 &&
       !initialConversationId &&
       gate === 'ready' &&
-      session === (newChatToken ?? 0) &&
-      sentInitialPrompt.current !== session;
+      !sentInitialPrompt.current;
     if (!shouldSendInitialPrompt) return;
-    sentInitialPrompt.current = session;
+    sentInitialPrompt.current = true;
     handleSend(initialPrompt).catch(() => undefined);
-  }, [
-    initialPrompt,
-    initialConversationId,
-    handleSend,
-    gate,
-    session,
-    newChatToken,
-  ]);
+  }, [initialPrompt, initialConversationId, handleSend, gate]);
 
   const handleRetry = useCallback(() => {
     const lastUser = messages.findLast((m) => m.role === 'user');
@@ -668,7 +647,6 @@ type AIChatBoxProps = {
   onConversationCreated?: (conversationId: string) => void;
   onConversationMissing?: () => void;
   onTitleUpdate?: (title: string) => void;
-  newChatToken?: number;
   compact?: boolean;
 };
 

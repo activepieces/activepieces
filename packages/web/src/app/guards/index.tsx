@@ -1,6 +1,7 @@
 import { Permission } from '@activepieces/core-utils';
 import { lazy, Suspense } from 'react';
 import {
+  Outlet,
   RouterProvider,
   createBrowserRouter,
   createMemoryRouter,
@@ -17,6 +18,7 @@ import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { routeLocation } from '@/lib/route-location';
 
 import { AppShellRoute, shellHandles } from '../components/app-shell';
+import { AppToaster } from '../components/app-toaster';
 import { RouteErrorBoundary } from '../components/global-error-boundary';
 
 import { AgentsFlagGuard } from './agents-flag-guard';
@@ -24,21 +26,7 @@ import { DefaultRoute } from './default-route';
 import { RoutePermissionGuard } from './permission-guard';
 import { TokenCheckerWrapper } from './project-route-wrapper';
 
-const ChatWithAIPage = lazyWithRetry(
-  () =>
-    import('@/app/routes/chat-with-ai').then((m) => ({
-      default: m.ChatWithAIPage,
-    })),
-  'chat-with-ai',
-);
-
-const chatElement = (
-  <PageTitle title="Chat">
-    <Suspense fallback={<RouteLoadingBar />}>
-      <ChatWithAIPage />
-    </Suspense>
-  </PageTitle>
-);
+const chatElement = <PageTitle title="Chat">{null}</PageTitle>;
 
 const chatRoutes = [
   { path: '/chat', handle: shellHandles.chat, element: chatElement },
@@ -121,11 +109,17 @@ const shellRoutes = [
 ];
 
 const routes = [
-  ...[...devRoutes, ...publicRoutes, ...authRoutes].map(withErrorElement),
   {
-    element: <AppShellRoute />,
+    element: <AppRoot />,
     errorElement: <RouteErrorBoundary />,
-    children: shellRoutes.map(withErrorElement),
+    children: [
+      ...[...devRoutes, ...publicRoutes, ...authRoutes].map(withErrorElement),
+      {
+        element: <AppShellRoute />,
+        errorElement: <RouteErrorBoundary />,
+        children: shellRoutes.map(withErrorElement),
+      },
+    ],
   },
 ];
 
@@ -141,6 +135,15 @@ const ApRouter = () => {
 };
 
 export { ApRouter };
+
+function AppRoot() {
+  return (
+    <>
+      <Outlet />
+      <AppToaster />
+    </>
+  );
+}
 
 function withErrorElement<T extends object>(route: T) {
   return { errorElement: <RouteErrorBoundary />, ...route };

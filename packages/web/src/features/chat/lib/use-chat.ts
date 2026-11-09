@@ -760,8 +760,8 @@ export function useAgentChat({
       const chatProjectId = projectIdRef.current;
       const abort = new AbortController();
       createAbortRef.current = abort;
-      const conv = await chatApi.createConversation(
-        {
+      const conv = await chatApi.createConversation({
+        request: {
           title: title ?? null,
           ...(agentId === undefined
             ? {
@@ -771,8 +771,8 @@ export function useAgentChat({
             : { agentId }),
           ...(builder === undefined ? {} : { builder }),
         },
-        abort.signal,
-      );
+        signal: abort.signal,
+      });
       if (createAbortRef.current === abort) createAbortRef.current = null;
       setConversationProjectId(conv.projectId ?? null);
       savedPickRef.current = pick ?? null;
@@ -993,9 +993,13 @@ export function useAgentChat({
     [stopStream, updateSendStatus, store],
   );
 
-  const startNew = useCallback(() => {
-    resetSession(null);
-  }, [resetSession]);
+  useEffect(
+    () => () => {
+      sessionGenRef.current += 1;
+      createAbortRef.current?.abort();
+    },
+    [],
+  );
 
   const setConversationId = useCallback(
     async (id: string) => {
@@ -1138,7 +1142,6 @@ export function useAgentChat({
     retryLastMessage,
     cancelStream,
     setConversationId,
-    startNew,
     setModelPick,
   };
 }

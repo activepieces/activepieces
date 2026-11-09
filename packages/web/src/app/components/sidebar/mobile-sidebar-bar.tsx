@@ -2,20 +2,17 @@ import { t } from 'i18next';
 import { Menu } from 'lucide-react';
 
 import { ChatSparkIcon } from '@/components/icons/chat-spark';
-import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
+import { useChatOn } from '@/features/workspace/lib/use-chat-on';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 
 import { useChatSheet, useChatWidth } from '../chat-panel/chat-window';
 
 export function MobileSidebarBar() {
   const { isMobile, openMobile, setOpenMobile } = useSidebar();
   const branding = flagsHooks.useWebsiteBranding();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const embedded = useEmbedding().embedState.isEmbedded;
-  const chatOn = !embedded && platform.plan.chatEnabled;
+  const chatOn = useChatOn();
   const fullPage = useChatWidth() === 'full';
   const chatSheet = useChatSheet();
 

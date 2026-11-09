@@ -1,7 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId, TemplateType } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
-import { Suspense, useEffect, useRef } from 'react';
+import { Suspense, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Navigate, Outlet, useMatches } from 'react-router-dom';
 
@@ -9,13 +8,11 @@ import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { SocketProvider } from '@/components/providers/socket-provider';
 import { SidebarInset } from '@/components/ui/sidebar-shadcn';
-import { TooltipProvider } from '@/components/ui/tooltip';
 import { CreditsUsageAlert, ManagePlanDialog } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
-import { templatesApi } from '@/features/templates';
-import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
+import { templatesHooks } from '@/features/templates';
+import { useChatOn } from '@/features/workspace/lib/use-chat-on';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { useSessionProjectId } from '@/hooks/use-session-project-id';
 import { authenticationSession } from '@/lib/authentication-session';
 import { errorReporting } from '@/lib/error-reporting';
@@ -40,7 +37,13 @@ export function AppShellRoute() {
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
       <SocketProvider>
-        {variant === 'bare' ? <BarePage /> : <AppShell handle={handle} />}
+        {variant === 'loading' ? (
+          <RouteLoadingBar />
+        ) : variant === 'bare' ? (
+          <BarePage />
+        ) : (
+          <AppShell handle={handle} />
+        )}
       </SocketProvider>
     </AllowOnlyLoggedInUserOnlyGuard>
   );
@@ -69,24 +72,20 @@ function useShellVariant({
   templateId,
 }: {
   templateId: string | undefined;
-}): ShellVariant {
-  const { data: template, isLoading } = useQuery({
-    queryKey: ['template', templateId],
-    queryFn: () => templatesApi.getTemplate(templateId ?? ''),
-    enabled: !isNil(templateId),
-  });
-  const lastVariant = useRef<ShellVariant>('bare');
-  const variant: ShellVariant = isNil(templateId)
+}): ShellVariant | 'loading' {
+  const { data: template, isPending } = templatesHooks.useTemplate(templateId);
+  const [settled, setSettled] = useState<ShellVariant | null>(null);
+  const variant: ShellVariant | null = isNil(templateId)
     ? 'shell'
-    : isLoading
-    ? lastVariant.current
+    : isPending
+    ? null
     : template?.type === TemplateType.SHARED
     ? 'bare'
     : 'shell';
-  useEffect(() => {
-    lastVariant.current = variant;
-  }, [variant]);
-  return variant;
+  if (variant !== null && variant !== settled) {
+    setSettled(variant);
+  }
+  return variant ?? settled ?? 'loading';
 }
 
 function BarePage() {
@@ -100,10 +99,8 @@ function BarePage() {
 function AppShell({ handle }: { handle: RouteHandle }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const embedded = useEmbedding().embedState.isEmbedded;
-  const chatOn =
-    !embedded && platformHooks.useCurrentPlatform().platform.plan.chatEnabled;
+  const chatOn = useChatOn();
   const projectId = useSessionProjectId();
-  const isPlatformAdmin = useIsPlatformAdmin();
   const isPlatform = handle.shell === 'platform';
   const isBuilder = handle.shell === 'builder';
   const headerProjectId =
@@ -111,7 +108,7 @@ function AppShell({ handle }: { handle: RouteHandle }) {
       ? projectId
       : null;
 
-  if ((isPlatform && !isPlatformAdmin) || (handle.chat === 'full' && !chatOn)) {
+  if (handle.chat === 'full' && !chatOn) {
     return <Navigate to="/" replace />;
   }
 
@@ -124,60 +121,61 @@ function AppShell({ handle }: { handle: RouteHandle }) {
         )}
       >
         <AppSidebar mode={isPlatform ? 'platform' : 'app'} />
-        <TooltipProvider delayDuration={0}>
-          <div
-            className={cn(
-              'flex h-svh flex-1 min-w-0',
-              !isPlatform && 'md:will-change-transform',
-              !embedded && 'max-md:h-auto max-md:min-h-0',
-            )}
-          >
-            <SidebarInset className="flex flex-col h-full overflow-hidden bg-gray-2">
+        <div
+          className={cn(
+            'flex h-svh flex-1 min-w-0',
+            !isPlatform && 'md:will-change-transform',
+            !embedded && 'max-md:h-auto max-md:min-h-0',
+          )}
+        >
+          <SidebarInset className="flex flex-col h-full overflow-hidden bg-gray-2">
+            <div
+              className={cn(
+                'relative flex-1 flex flex-col overflow-hidden',
+                !embedded &&
+                  (isBuilder
+                    ? 'p-1.5'
+                    : 'pr-2 pt-3 pb-3 max-md:pl-2 max-md:pt-2'),
+              )}
+            >
               <div
                 className={cn(
-                  'relative flex-1 flex flex-col overflow-hidden',
-                  !embedded && 'pr-2 pt-3 pb-3 max-md:pl-2 max-md:pt-2',
+                  'relative flex h-full overflow-clip',
+                  isPlatform ? 'bg-(--admin-page)' : 'bg-gray-1',
+                  !embedded && 'rounded-xl shadow-panel border',
+                  embedded && isBuilder && 'border-l',
                 )}
               >
-                <div
-                  className={cn(
-                    'relative flex h-full overflow-clip',
-                    isPlatform ? 'bg-(--admin-page)' : 'bg-gray-1',
-                    !embedded && 'rounded-xl shadow-panel border',
-                    embedded && isBuilder && 'border-l',
+                {chatOn && (
+                  <ErrorBoundary
+                    fallback={null}
+                    onError={(error, info) =>
+                      errorReporting.report({
+                        error,
+                        componentStack: info.componentStack,
+                        source: 'react-error-boundary',
+                      })
+                    }
+                  >
+                    <ChatPanel />
+                  </ErrorBoundary>
+                )}
+                <ChatContentColumn>
+                  {!isNil(headerProjectId) && (
+                    <ProjectHeader projectId={headerProjectId} />
                   )}
-                >
-                  {chatOn && (
-                    <ErrorBoundary
-                      fallback={null}
-                      onError={(error, info) =>
-                        errorReporting.report({
-                          error,
-                          componentStack: info.componentStack,
-                          source: 'react-error-boundary',
-                        })
-                      }
-                    >
-                      <ChatPanel />
-                    </ErrorBoundary>
-                  )}
-                  <ChatContentColumn>
-                    {!isNil(headerProjectId) && (
-                      <ProjectHeader projectId={headerProjectId} />
-                    )}
-                    {handle.shell === 'project' && <CreditsUsageAlert />}
-                    <div className={PAGE_CLASS[handle.shell]}>
-                      <Suspense fallback={<RouteLoadingBar />}>
-                        <Outlet />
-                      </Suspense>
-                    </div>
-                  </ChatContentColumn>
-                  {chatOn && <ChatLauncher />}
-                </div>
+                  {handle.shell === 'project' && <CreditsUsageAlert />}
+                  <div className={PAGE_CLASS[handle.shell]}>
+                    <Suspense fallback={<RouteLoadingBar />}>
+                      <Outlet />
+                    </Suspense>
+                  </div>
+                </ChatContentColumn>
+                {chatOn && <ChatLauncher />}
               </div>
-            </SidebarInset>
-          </div>
-        </TooltipProvider>
+            </div>
+          </SidebarInset>
+        </div>
       </div>
       {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
     </GlobalSearchProvider>
@@ -186,7 +184,7 @@ function AppShell({ handle }: { handle: RouteHandle }) {
 
 function ProjectHeader({ projectId }: { projectId: string }) {
   const hasAccess = projectCollectionUtils.useHasAccessToProject(projectId);
-  return hasAccess ? <ProjectDashboardLayoutHeader /> : null;
+  return hasAccess ? <ProjectDashboardLayoutHeader key={projectId} /> : null;
 }
 
 function isRouteHandle(value: unknown): value is RouteHandle {

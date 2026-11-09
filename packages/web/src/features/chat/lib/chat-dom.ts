@@ -16,14 +16,16 @@ function claimEscape(event: KeyboardEvent): void {
 }
 
 function layerOpen(): boolean {
-  return Array.from(document.querySelectorAll(LAYERS)).some(
-    (layer) => layer.getAttribute('data-state') !== 'closed',
+  const panel = document.getElementById(chatLayoutUtils.PANEL_ID);
+  return Array.from(document.querySelectorAll(OPEN_OVERLAYS)).some(
+    (layer) => !panel?.contains(layer),
   );
 }
 
 const claimedEscapes = new WeakSet<KeyboardEvent>();
-const LAYERS =
-  '[role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"]';
+const OPEN_OVERLAYS = ['dialog', 'alertdialog', 'menu', 'listbox']
+  .map((role) => `[role="${role}"][data-state="open"]`)
+  .join(', ');
 
 export const chatDom = {
   composer,
