@@ -288,16 +288,17 @@ const INITIAL_COMPONENTS: Partial<Components> = {
       );
     }
     const isWebUrl = link.kind === 'external';
+    const target = isWebUrl ? link.href : href;
     const isBareUrl =
       isWebUrl && (text === '' || text === href || text.startsWith('http'));
 
     if (isBareUrl) {
-      return <Source href={href} />;
+      return <Source href={target} />;
     }
 
     return (
       <a
-        href={href}
+        href={target}
         target={isWebUrl ? '_blank' : undefined}
         rel={isWebUrl ? 'noopener noreferrer' : undefined}
         className="text-accent-11 underline underline-offset-2 hover:text-accent-11/80 transition-colors"

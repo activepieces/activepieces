@@ -69,12 +69,45 @@ describe('markdownTextUtils.classifyLink', () => {
   it('opens same-origin API files outside the app', () => {
     expect(classify(`${ORIGIN}/api/v1/files/1`)).toEqual({
       kind: 'external',
+      href: `${ORIGIN}/api/v1/files/1`,
     });
   });
 
   it('keeps other origins external', () => {
     expect(classify('https://docs.example.org/a')).toEqual({
       kind: 'external',
+      href: 'https://docs.example.org/a',
+    });
+  });
+
+  it.each([
+    ['/forms/f1', `${ORIGIN}/forms/f1`],
+    ['/chats/f1', `${ORIGIN}/chats/f1`],
+    ['/templates/t1', `${ORIGIN}/templates/t1`],
+    [`${ORIGIN}/forms/f1?x=1`, `${ORIGIN}/forms/f1?x=1`],
+  ])('opens the public page %s outside the app', (href, opened) => {
+    expect(classify(href)).toEqual({ kind: 'external', href: opened });
+  });
+
+  it.each([
+    '/mcp-authorize',
+    `${ORIGIN}/mcp-authorize`,
+    '/forms/../authenticate',
+    '/forms%2F..%2Fauthenticate',
+  ])('keeps %s blocked', (href) => {
+    expect(classify(href)).toEqual({ kind: 'unsafe' });
+  });
+
+  it('keeps a signed URL with an encoded slash in its query clickable', () => {
+    const signed =
+      'https://bucket.s3.amazonaws.com/f.png?X-Amz-Credential=AK%2F20260101%2Fus';
+    expect(classify(signed)).toEqual({ kind: 'external', href: signed });
+  });
+
+  it('routes an app page with an encoded slash in its query in-app', () => {
+    expect(classify('/projects/p1/tables/t1?filter=a%2Fb')).toEqual({
+      kind: 'app',
+      route: '/projects/p1/tables/t1?filter=a%2Fb',
     });
   });
 
@@ -110,6 +143,10 @@ function testRoutes() {
           { ...page, path: `/projects/:projectId${page.path}` },
         ]),
         { path: '/platform/projects', handle: { shell: 'platform' } },
+        {
+          path: '/templates/:templateId',
+          handle: { shell: 'project', allowAnonymous: true },
+        },
         {
           path: '/*',
           handle: { shell: 'project', allowAnonymous: true },
