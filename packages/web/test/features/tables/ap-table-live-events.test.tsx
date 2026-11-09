@@ -250,9 +250,34 @@ describe('open table live events', () => {
     });
 
     expect(queryClient.invalidateQueries).toHaveBeenCalledTimes(1);
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['records', 't1'],
+    expect(invalidatedKeys(queryClient)).toEqual([['records', 't1']]);
+  });
+
+  it('lets a running reload finish when more reloads arrive', async () => {
+    const { rows } = await mount(queryClient);
+    const reloading = Promise.withResolvers<void>();
+    vi.mocked(recordsApi.list).mockImplementation(async () => {
+      await reloading.promise;
+      return { data: [record('r1', 'reloaded')], next: null, previous: null };
     });
+
+    await receive({
+      tableId: 't1',
+      op: TableRecordsChangeOp.RELOAD,
+      editorSessionId: null,
+    });
+    await receive({
+      tableId: 't1',
+      op: TableRecordsChangeOp.RELOAD,
+      editorSessionId: null,
+    });
+    await act(async () => {
+      reloading.resolve();
+      await settle();
+    });
+
+    expect(recordsApi.list).toHaveBeenCalledTimes(2);
+    expect(rows()).toEqual(['reloaded']);
   });
 
   it('applies a reloaded snapshot and drops rows missing from it', async () => {

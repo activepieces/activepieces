@@ -143,9 +143,10 @@ function RouteTableStateProvider({
         return;
       }
       if (change.type === 'reload') {
-        queryClient.invalidateQueries({
-          queryKey: reloadKeyOf({ scope: change.scope, tableId }),
-        });
+        queryClient.invalidateQueries(
+          { queryKey: reloadKeyOf({ scope: change.scope, tableId }) },
+          { cancelRefetch: false },
+        );
         return;
       }
       changes.push({ change, since: tableSyncClock.tick() });
