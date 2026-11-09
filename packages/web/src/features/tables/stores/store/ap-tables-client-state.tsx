@@ -138,20 +138,21 @@ export const createApTableStore = (
       const state = get();
       const local = serverState.records;
       const removed = new Set(removedIds);
-      const isNewer = (id: string) => !serverState.changedSince({ id, since });
+      const unchangedLocally = (id: string) =>
+        !serverState.changedSince({ id, since });
       const changedById = new Map(changed.map((record) => [record.id, record]));
       const kept = local.flatMap((record, index) => {
         const row = state.records[index];
         const update = changedById.get(record.id);
         changedById.delete(record.id);
-        if (!isNewer(record.id)) return [{ record, row }];
+        if (!unchangedLocally(record.id)) return [{ record, row }];
         if (removed.has(record.id)) return [];
         if (!update) return dropMissing ? [] : [{ record, row }];
         const values = mapCellsToClientValues(update, serverState.fields);
         return [{ record: update, row: { ...row, values } }];
       });
       const added = [...changedById.values()].filter((record) =>
-        isNewer(record.id),
+        unchangedLocally(record.id),
       );
       const addedRows = mapRecorddToClientRecordsData(
         added,
@@ -168,7 +169,7 @@ export const createApTableStore = (
       serverState.setRecords(merged.map(({ record }) => record));
       set({ records: rows, ...selectionFor({ state, rows }) });
       const appliedIds = new Set(
-        changed.map((record) => record.id).filter(isNewer),
+        changed.map((record) => record.id).filter(unchangedLocally),
       );
       return new Map(
         merged

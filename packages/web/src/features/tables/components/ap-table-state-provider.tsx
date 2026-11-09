@@ -40,6 +40,7 @@ import { cn } from '@/lib/utils';
 import { fieldsApi } from '../api/fields-api';
 import { recordsApi } from '../api/records-api';
 import { tablesApi } from '../api/tables-api';
+import { tableQueryKeys } from '../utils/table-query-keys';
 
 const TableContext = createContext<ApTableStore | null>(null);
 const TableRefreshContext = createContext<(() => Promise<void>) | null>(null);
@@ -80,7 +81,7 @@ export function ApTableStateProvider({
     isLoading: isTableLoading,
     error: tableError,
   } = useQuery({
-    queryKey: ['table', tableId],
+    queryKey: tableQueryKeys.table(tableId),
     queryFn: () => snapshotOf(() => tablesApi.getById(tableId!)),
     refetchOnWindowFocus: true,
     refetchOnMount: true,
@@ -93,7 +94,7 @@ export function ApTableStateProvider({
     isLoading: isFieldsLoading,
     error: fieldsError,
   } = useQuery({
-    queryKey: ['fields', tableId],
+    queryKey: tableQueryKeys.fields(tableId),
     queryFn: () => snapshotOf(() => fieldsApi.list({ tableId: tableId! })),
     refetchOnWindowFocus: true,
     refetchOnMount: true,
@@ -106,7 +107,7 @@ export function ApTableStateProvider({
     isLoading: isRecordsLoading,
     error: recordsError,
   } = useQuery({
-    queryKey: ['records', tableId],
+    queryKey: tableQueryKeys.records(tableId),
     queryFn: () =>
       snapshotOf(() =>
         recordsApi
@@ -124,9 +125,13 @@ export function ApTableStateProvider({
   // inside an iframe)
   const refreshTableState = useCallback(async () => {
     await Promise.all([
-      queryClient.refetchQueries({ queryKey: ['table', tableId] }),
-      queryClient.refetchQueries({ queryKey: ['fields', tableId] }),
-      queryClient.refetchQueries({ queryKey: ['records', tableId] }),
+      queryClient.refetchQueries({ queryKey: tableQueryKeys.table(tableId) }),
+      queryClient.refetchQueries({
+        queryKey: tableQueryKeys.fields(tableId),
+      }),
+      queryClient.refetchQueries({
+        queryKey: tableQueryKeys.records(tableId),
+      }),
     ]);
     setRefreshKey((key) => key + 1);
   }, [queryClient, tableId]);
@@ -267,7 +272,9 @@ function useServerSync({
         return;
       }
       if (event.op === TableRecordsChangeOp.RELOAD) {
-        queryClient.invalidateQueries({ queryKey: ['records', tableId] });
+        queryClient.invalidateQueries({
+          queryKey: tableQueryKeys.records(tableId),
+        });
         return;
       }
       const since = tableSyncClock.tick();

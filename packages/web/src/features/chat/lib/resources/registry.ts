@@ -3,6 +3,7 @@ import { ApResource } from '@activepieces/shared';
 import { QueryKey } from '@tanstack/react-query';
 import { generatePath } from 'react-router-dom';
 
+import { tableQueryKeys } from '@/features/tables/utils/table-query-keys';
 import { authenticationSession } from '@/lib/authentication-session';
 import { routesThatRequireProjectId } from '@/lib/route-utils';
 
@@ -70,10 +71,10 @@ const KINDS: Record<ResourceKind, KindSpec> = {
   table: {
     path: (tableId) =>
       generatePath(routesThatRequireProjectId.singleTable, { tableId }),
-    listKeys: [['tables'], ['root-tables'], ['all-folder-contents']],
+    listKeys: [...tableQueryKeys.lists, ['all-folder-contents']],
     pageKeys: (tableId) => [
-      ['table', tableId],
-      ['fields', tableId],
+      tableQueryKeys.table(tableId),
+      tableQueryKeys.fields(tableId),
     ],
   },
 };
