@@ -188,7 +188,7 @@ export function ChatChrome() {
         </div>
         <div className="flex shrink-0 items-center gap-0.5">
           <HeaderButton
-            label={t('History')}
+            label={historyOpen ? t('Hide history') : t('History')}
             aria-pressed={historyOpen}
             onClick={() => setHistoryOpen(!historyOpen)}
           >
@@ -346,12 +346,15 @@ function LayoutMenu() {
           }}
         >
           <DropdownMenuRadioItem value="left">
+            <PanelLeft className="size-4" />
             {t('On the left')}
           </DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="right">
+            <PanelRight className="size-4" />
             {t('On the right')}
           </DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="full">
+            <Maximize2 className="size-4" />
             {t('Full page')}
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
@@ -419,13 +422,13 @@ function FollowAlongItems() {
         checked={autoFollow}
         onCheckedChange={(next) => useChatPanel.getState().setAutoFollow(next)}
         onSelect={(event) => event.preventDefault()}
-        className="items-start [&>span:first-child]:top-2"
+        className="cursor-pointer items-start [&>span:first-child]:top-2"
       >
         <span className="flex min-w-0 flex-1 flex-col">
           <span>{t('Follow along')}</span>
-          <span className="text-xs text-gray-11">
+          <span className="text-xs text-gray-10">
             {autoFollow
-              ? t('Opens what the AI edits.')
+              ? t('Opens what it edits.')
               : t("Doesn't open pages for you.")}
           </span>
         </span>
