@@ -76,14 +76,15 @@ describe('PIE-1084: relative item links when the feed has no channel link', () =
     expect(await trigger.run(context({ store, path }))).toEqual([]);
   });
 
-  it('key stability: the stored per-feed key is the hash of the raw relative link, as before the fix', async () => {
+  it('key: a bare guid with a relative link is scoped by the origin of the feed URL, so query edits keep the key', async () => {
     const path = '/blog5/feed.xml';
     server.set(path, { body: feed({ channelLink: null, items: [{ guid: '42', link: 'posts/42', at: '2026-10-20T08:00:00Z' }] }) });
     const store = fakeFeeds.memoryStore();
     await trigger.onEnable(context({ store, path }));
     const cursor = [...store.data.entries()].find(([key]) => key.startsWith('rss_feed_'));
     expect(cursor).toBeDefined();
-    const expected = createHash('sha256').update('42|posts/42').digest('hex').slice(0, 16);
-    expect(JSON.parse(cursor?.[1] ?? '{}').seen).toContain(expected);
+    const expected = createHash('sha256').update(`42|${new URL(server.url(path)).origin}`).digest('hex').slice(0, 16);
+    const stored: unknown = JSON.parse(cursor?.[1] ?? '{}');
+    expect(stored).toHaveProperty('seen', expect.arrayContaining([expected]));
   });
 });

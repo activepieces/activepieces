@@ -96,12 +96,12 @@ async function poll({ store, urls }: { store: Store; urls: unknown[] }): Promise
 			const candidates = feed.items
 				.map((item) => ({
 					item,
-					key: itemKey({ item }),
+					key: itemKey({ item, feedUrl: feed.url }),
 					shared: crossKey({ item, feedUrl: feed.url }),
 				}))
 				.filter(
 					({ item, key, shared }) =>
-						isNewForCursor({ cursor, seen, item, key }) &&
+						isNewForCursor({ cursor, seen, item, key, feedUrl: feed.url }) &&
 						!isKnownElsewhere({ item, shared, knownKeys, otherCross }) &&
 						(shared === null || !acc.emittedKeys.has(shared)),
 				);
@@ -111,6 +111,11 @@ async function poll({ store, urls }: { store: Store; urls: unknown[] }): Promise
 					.reverse()
 					.map((candidate) => [candidate.key, candidate]),
 			);
+			if (cursor.overflow === true) {
+				console.warn(
+					`RSS feed ${feed.url} lists more than ${MAX_SEEN_KEYS} items; until it lists fewer, only items dated after the newest known item can start a run.`,
+				);
+			}
 			const unrecorded = candidates.filter(({ key }) => !recorded.has(key)).length;
 			if (unrecorded > 0) {
 				console.warn(
@@ -215,7 +220,8 @@ function isFeedCursor(value: unknown): value is FeedCursor {
 		value.seen.every((key) => typeof key === 'string') &&
 		(!('pendingBaseline' in value) || typeof value.pendingBaseline === 'boolean') &&
 		(!('cross' in value) ||
-			(Array.isArray(value.cross) && value.cross.every((key) => typeof key === 'string')))
+			(Array.isArray(value.cross) && value.cross.every((key) => typeof key === 'string'))) &&
+		(!('overflow' in value) || typeof value.overflow === 'boolean')
 	);
 }
 
@@ -256,10 +262,12 @@ function startCursor({
 		return advanceCursor({ cursor: { publishedAt: null, seen: [] }, items, feedUrl, now });
 	}
 	const undated = items.filter((item) => publishedAtOf({ item }) === null);
+	const keys = [...new Set(keysNewestFirst({ items: undated, feedUrl }))];
 	return {
 		publishedAt: Math.min(mark, now),
-		seen: [...new Set(keysNewestFirst({ items: undated }))].slice(0, MAX_SEEN_KEYS),
+		seen: keys.slice(0, MAX_SEEN_KEYS),
 		cross: crossKeysNewestFirst({ items: undated, feedUrl }).slice(0, MAX_CROSS_KEYS),
+		...overflowFlag({ count: keys.length }),
 	};
 }
 
@@ -287,7 +295,7 @@ function advanceCursor({
 		const published = publishedAtOf({ item });
 		return published === null || floor === null || published >= floor;
 	});
-	const required = [...new Set(keysNewestFirst({ items: stillComparable }))];
+	const required = [...new Set(keysNewestFirst({ items: stillComparable, feedUrl }))];
 	const requiredSet = new Set(required);
 	const retained = cursor.seen
 		.filter((key) => !requiredSet.has(key))
@@ -301,7 +309,12 @@ function advanceCursor({
 		publishedAt,
 		seen: [...required, ...retained].slice(0, MAX_SEEN_KEYS),
 		cross: [...requiredCross, ...retainedCross].slice(0, MAX_CROSS_KEYS),
+		...overflowFlag({ count: required.length }),
 	};
+}
+
+function overflowFlag({ count }: { count: number }): { overflow?: true } {
+	return count > MAX_SEEN_KEYS ? { overflow: true } : {};
 }
 
 function knownCrossKeys({
@@ -316,7 +329,7 @@ function knownCrossKeys({
 			const stored = cursors.get(feed.url) ?? null;
 			const seen = new Set(stored?.seen ?? []);
 			const bridge = crossKeysNewestFirst({
-				items: feed.items.filter((item) => seen.has(itemKey({ item }))),
+				items: feed.items.filter((item) => isSeen({ seen, item, feedUrl: feed.url })),
 				feedUrl: feed.url,
 			});
 			return [feed.url, new Set([...(stored?.cross ?? []), ...bridge])];
@@ -352,7 +365,7 @@ function isKnownElsewhere({
 	if (shared === null) {
 		return false;
 	}
-	return isBareGuid({ item }) ? otherCross.has(shared) : knownKeys.has(shared);
+	return isBareGuid({ item }) ? otherCross.has(shared) : knownKeys.has(shared) || otherCross.has(shared);
 }
 
 function isNewForCursor({
@@ -360,17 +373,47 @@ function isNewForCursor({
 	seen,
 	item,
 	key,
+	feedUrl,
 }: {
 	cursor: FeedCursor;
 	seen: Set<string>;
 	item: FeedParser.Item;
 	key: string;
+	feedUrl: string;
 }): boolean {
-	if (seen.has(key)) {
+	if (seen.has(key) || isSeenUnderPreviousKey({ seen, item, feedUrl })) {
 		return false;
 	}
 	const published = publishedAtOf({ item });
+	if (cursor.overflow === true) {
+		return published !== null && (cursor.publishedAt === null || published > cursor.publishedAt);
+	}
 	return published === null || cursor.publishedAt === null || published >= cursor.publishedAt;
+}
+
+function isSeen({
+	seen,
+	item,
+	feedUrl,
+}: {
+	seen: Set<string>;
+	item: FeedParser.Item;
+	feedUrl: string;
+}): boolean {
+	return seen.has(itemKey({ item, feedUrl })) || isSeenUnderPreviousKey({ seen, item, feedUrl });
+}
+
+function isSeenUnderPreviousKey({
+	seen,
+	item,
+	feedUrl,
+}: {
+	seen: Set<string>;
+	item: FeedParser.Item;
+	feedUrl: string;
+}): boolean {
+	const previous = previousItemKey({ item, feedUrl });
+	return previous !== null && seen.has(previous);
 }
 
 async function readLegacyMarks({
@@ -440,17 +483,36 @@ function publishedAtOf({ item }: { item: FeedParser.Item }): number | null {
 	return Number.isNaN(time) ? null : time;
 }
 
-function itemKey({ item }: { item: FeedParser.Item }): string {
+function itemKey({ item, feedUrl }: { item: FeedParser.Item; feedUrl: string }): string {
 	const published = publishedAtOf({ item });
 	const identity = item.guid
-		? scopedGuid({ guid: item.guid, link: item.link })
+		? scopedGuid({ guid: item.guid, link: absoluteLink({ link: item.link, feedUrl }) })
 		: item.link ||
 			(item.title ? `${item.title}|${published ?? ''}` : JSON.stringify({ ...item, meta: undefined }));
 	return hashKey({ identity });
 }
 
+function previousItemKey({ item, feedUrl }: { item: FeedParser.Item; feedUrl: string }): string | null {
+	if (!isBareGuid({ item }) || !item.link || URL.canParse(item.link)) {
+		return null;
+	}
+	const previous = hashKey({ identity: `${item.guid}|${item.link}` });
+	return previous === itemKey({ item, feedUrl }) ? null : previous;
+}
+
 function crossKey({ item, feedUrl }: { item: FeedParser.Item; feedUrl: string }): string | null {
-	return isBareGuid({ item }) ? bareGuidCrossKey({ item, feedUrl }) : itemKey({ item });
+	if (isBareGuid({ item })) {
+		return bareGuidCrossKey({ item, feedUrl });
+	}
+	if (!item.guid && item.link) {
+		return hashKey({ identity: absoluteLink({ link: item.link, feedUrl }) ?? item.link });
+	}
+	return itemKey({ item, feedUrl });
+}
+
+function storedCrossKey({ item, feedUrl }: { item: FeedParser.Item; feedUrl: string }): string | null {
+	const key = crossKey({ item, feedUrl });
+	return key !== null && key !== itemKey({ item, feedUrl }) ? key : null;
 }
 
 function bareGuidCrossKey({ item, feedUrl }: { item: FeedParser.Item; feedUrl: string }): string | null {
@@ -467,8 +529,8 @@ function crossKeysNewestFirst({
 }): string[] {
 	return [
 		...new Set(
-			sortNewestFirst({ items: items.filter((item) => isBareGuid({ item })) }).flatMap((item) => {
-				const key = bareGuidCrossKey({ item, feedUrl });
+			sortNewestFirst({ items }).flatMap((item) => {
+				const key = storedCrossKey({ item, feedUrl });
 				return key === null ? [] : [key];
 			}),
 		),
@@ -523,8 +585,8 @@ function linkScope({ link }: { link: string | null | undefined }): string {
 	return origin === 'null' ? link : origin;
 }
 
-function keysNewestFirst({ items }: { items: FeedParser.Item[] }): string[] {
-	return sortNewestFirst({ items }).map((item) => itemKey({ item }));
+function keysNewestFirst({ items, feedUrl }: { items: FeedParser.Item[]; feedUrl: string }): string[] {
+	return sortNewestFirst({ items }).map((item) => itemKey({ item, feedUrl }));
 }
 
 function sortNewestFirst({ items }: { items: FeedParser.Item[] }): FeedParser.Item[] {
@@ -572,6 +634,7 @@ type FeedCursor = {
 	seen: string[];
 	pendingBaseline?: boolean;
 	cross?: string[];
+	overflow?: boolean;
 };
 
 type FetchedFeed = {
