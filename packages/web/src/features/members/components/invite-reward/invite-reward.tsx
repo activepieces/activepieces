@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils';
+import { isNil, tryCatchSync } from '@activepieces/core-utils';
 import { InviteRewardSurface, TelemetryEventName } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -160,15 +160,13 @@ function seenStorageKey(platformId: string): string {
 }
 
 function readSeenRewardIds(platformId: string): string[] {
-  try {
+  const { data } = tryCatchSync((): unknown => {
     const raw = localStorage.getItem(seenStorageKey(platformId));
-    const parsed: unknown = isNil(raw) ? [] : JSON.parse(raw);
-    return Array.isArray(parsed)
-      ? parsed.filter((id): id is string => typeof id === 'string')
-      : [];
-  } catch {
-    return [];
-  }
+    return isNil(raw) ? [] : JSON.parse(raw);
+  });
+  return Array.isArray(data)
+    ? data.filter((id): id is string => typeof id === 'string')
+    : [];
 }
 
 function writeSeenRewardIds({
@@ -178,11 +176,9 @@ function writeSeenRewardIds({
   platformId: string;
   ids: string[];
 }): void {
-  try {
-    localStorage.setItem(seenStorageKey(platformId), JSON.stringify(ids));
-  } catch {
-    return;
-  }
+  tryCatchSync(() =>
+    localStorage.setItem(seenStorageKey(platformId), JSON.stringify(ids)),
+  );
 }
 
 const SEEN_STORAGE_PREFIX = 'ap_invite_reward_seen_';
