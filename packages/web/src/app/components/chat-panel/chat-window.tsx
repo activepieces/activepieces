@@ -1,7 +1,14 @@
 import { t } from 'i18next';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import {
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useLocation, useMatches, useNavigate } from 'react-router-dom';
 
+import { chatScrollAnchor } from '@/features/chat/lib/chat-scroll-anchor';
 import {
   ChatWidth,
   chatLayoutUtils,
@@ -10,7 +17,7 @@ import {
   chatPanelUtils,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
-import { useRailOpenState } from '@/features/workspace/lib/rail-collapsed';
+import { useRailOpen } from '@/features/workspace/lib/rail-collapsed';
 import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { cn } from '@/lib/utils';
@@ -23,8 +30,8 @@ const ChatChrome = lazyWithRetry(loadChatChrome, 'chat-chrome');
 
 // The card width the page will have once the rail has settled, so the dock
 // and the page can be sized for where they land, not where they are mid-move.
-function useCardWidth(): number {
-  const railOpen = useRailOpenState().open;
+export function useCardWidth(): number {
+  const railOpen = useRailOpen();
   const viewportWidth = windowSizeHooks.useViewportWidth();
   const builder = useShellHandle().shell === 'builder';
   return chatLayoutUtils.cardInnerWidth({
@@ -34,7 +41,7 @@ function useCardWidth(): number {
   });
 }
 
-function useDockWidth(dragWidth: number | null = null): number {
+export function useDockWidth(dragWidth: number | null = null): number {
   const savedWidth = useChatPanel((s) => s.dockWidth);
   const cardWidth = useCardWidth();
   return chatLayoutUtils.shownDockWidth({
@@ -68,6 +75,7 @@ export function useActiveConversationId(): string | null {
 export function ChatPanel() {
   const chatWidth = useChatWidth();
   const mode = useChatPanel((s) => s.mode);
+  const moving = useChatPanel((s) => s.moving);
   const [dragWidth, setDragWidth] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -76,10 +84,40 @@ export function ChatPanel() {
   const side = full ? 'left' : mode;
   const width = useDockWidth(dragWidth);
   const cardWidth = useCardWidth();
+  const innerWide = full && moving !== 'exit';
+  const layoutKey = `${chatWidth}|${innerWide}`;
+  const committedLayout = useRef(layoutKey);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Read where the reader is before React swaps the width under them.
+  if (committedLayout.current !== layoutKey && pendingCapture !== layoutKey) {
+    pendingCapture = layoutKey;
+    chatScrollAnchor.capture();
+  }
+
+  useLayoutEffect(() => {
+    const from = committedLayout.current;
+    if (from === layoutKey) return;
+    committedLayout.current = layoutKey;
+    pendingCapture = null;
+    chatScrollAnchor.restore();
+    if (from.endsWith('|false') && innerWide) {
+      contentRef.current?.animate([{ opacity: 0 }, { opacity: 1 }], {
+        duration: DIP_MS,
+        easing: 'ease-out',
+      });
+    }
+  }, [layoutKey, innerWide]);
 
   if (visible && !mounted) {
     setMounted(true);
   }
+
+  useEffect(() => {
+    if (mounted) return;
+    const prewarm = setTimeout(() => setMounted(true), PREWARM_MS);
+    return () => clearTimeout(prewarm);
+  }, [mounted]);
 
   useEffect(() => {
     useChatPanel.getState().setPanelMounted(true);
@@ -119,10 +157,22 @@ export function ChatPanel() {
       id={chatLayoutUtils.PANEL_ID}
       aria-label={t('Chat')}
       inert={!visible}
-      style={{ width: full ? '100%' : visible ? width : 0 }}
+      onTransitionEnd={(event) => {
+        if (
+          event.target === event.currentTarget &&
+          event.propertyName === 'width'
+        ) {
+          useChatPanel.getState().setMoving(null);
+        }
+      }}
+      style={{
+        width: full ? '100%' : visible ? width : 0,
+        transition: moving ? MOVE_TRANSITION[moving] : undefined,
+      }}
       className={cn(
         'relative flex shrink-0 flex-col overflow-hidden bg-gray-1',
         side === 'right' && 'order-last',
+        moving === 'enter' && 'z-[1]',
         visible && !full && (side === 'left' ? 'border-r' : 'border-l'),
         dragWidth === null &&
           'transition-[width] duration-[var(--ap-move,200ms)] ease-move motion-reduce:transition-none',
@@ -130,7 +180,8 @@ export function ChatPanel() {
     >
       <ChatRouterBinding />
       <div
-        style={{ width: full ? '100%' : `${width}px` }}
+        ref={contentRef}
+        style={{ width: innerWide ? '100%' : `${width}px` }}
         className={cn(
           'absolute inset-y-0 flex flex-col',
           side === 'left' ? 'left-0' : 'right-0',
@@ -287,4 +338,12 @@ function focusComposerWhenReady(panel: HTMLElement): (() => void) | undefined {
 
 const HANDOFF_STOP_EVENTS = ['focusin', 'pointerdown', 'keydown'] as const;
 const HANDOFF_MAX_MS = 5000;
+const PREWARM_MS = 800;
+const DIP_MS = 120;
 const BUILDER_CARD_CHROME = 14;
+const { MOVE_MS, MOVE_EASE } = chatLayoutUtils;
+const MOVE_TRANSITION: Record<'enter' | 'exit', string> = {
+  enter: `width ${MOVE_MS.wide}ms ${MOVE_EASE.emphasized} ${MOVE_MS.edgeDelay}ms`,
+  exit: `width ${MOVE_MS.back}ms ${MOVE_EASE.standard}`,
+};
+let pendingCapture: string | null = null;

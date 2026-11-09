@@ -187,6 +187,20 @@ describe('ChatChrome', () => {
 
     await waitFor(() => expect(mounts.chatBox).toBe(2));
   });
+
+    it('puts focus in the new composer after New chat', async () => {
+    getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
+    renderChrome();
+    const oldComposer = screen.getByRole('textbox', { name: 'Message' });
+    oldComposer.focus();
+
+    fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
+
+    await waitFor(() => expect(mounts.chatBox).toBe(2));
+    const composer = screen.getByRole('textbox', { name: 'Message' });
+    expect(composer).not.toBe(oldComposer);
+    expect(document.activeElement).toBe(composer);
+  });
 });
 
 function historyList() {

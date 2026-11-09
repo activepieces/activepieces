@@ -12,6 +12,7 @@ import { useAgentChat } from '@/features/chat/lib/use-chat';
 
 vi.mock('@/components/providers/socket-provider', () => ({
   useSocket: () => ({ on: vi.fn(), off: vi.fn(), emit: vi.fn() }),
+  emitInProject: (send: () => void) => send(),
 }));
 
 vi.mock('@/features/chat/lib/chat-api', () => ({

@@ -1,6 +1,8 @@
 import { isNil, isObject } from '@activepieces/core-utils';
 import { create } from 'zustand';
 
+import { keepComposerFocus } from '@/features/chat/lib/keep-composer-focus';
+import { MOBILE_BREAKPOINT } from '@/hooks/use-mobile';
 import { authenticationSession } from '@/lib/authentication-session';
 import { CHAT_ROUTE } from '@/lib/route-utils';
 import { safeStorage } from '@/lib/safe-storage';
@@ -22,9 +24,20 @@ function useChatRoute(): string {
   return routeFor(useChatPanel((s) => s.conversationId));
 }
 
+function startMove(move: ChatMove): void {
+  if (
+    window.innerWidth >= MOBILE_BREAKPOINT &&
+    !chatLayoutUtils.prefersReducedMotion()
+  ) {
+    useChatPanel.getState().setMoving(move);
+  }
+}
+
 function expand(): void {
   const current = router;
   if (!current || current.isFullPage()) return;
+  if (useChatPanel.getState().open) startMove('exit');
+  keepComposerFocus.keep();
   current.navigate({
     to: routeFor(useChatPanel.getState().conversationId),
     replace: false,
@@ -36,6 +49,8 @@ function collapse(side: ChatPanelSide): void {
   const current = router;
   if (!current) return;
   const panel = useChatPanel.getState();
+  if (current.isFullPage()) startMove('enter');
+  keepComposerFocus.keep();
   panel.dock(side);
   if (!current.isFullPage()) return;
   const { state } = current.location();
@@ -181,6 +196,7 @@ function forgetSignedOutUser(): void {
 }
 
 let router: ChatRouter | null = null;
+let movingGuard: ReturnType<typeof setTimeout> | null = null;
 
 const STORAGE_KEY = 'chat-panel';
 const TAB_VIEW_KEY = 'chat:view';
@@ -188,6 +204,7 @@ const TAB_CONVERSATION_KEY = 'chat:conv';
 const LAST_CONVERSATION_KEY = 'chat:last-conv';
 const TAB_LAST_PAGE_KEY = 'chat:last-page';
 const EXPANDED_STATE = 'chatExpanded';
+const MOVING_GUARD_MS = 900;
 
 const DEFAULTS: SavedChatPanel = {
   open: false,
@@ -215,10 +232,21 @@ const initChatPanel = (
     conversationId: readConversationId(),
     lastPage: readLastPage(),
     panelMounted: false,
+    docks: 0,
+    moving: null,
     newChatToken: 0,
     pendingPrompt: undefined,
-    setOpen: (open) => update({ open }),
-    dock: (side) => update({ open: true, mode: side }),
+    setOpen: (open) => {
+      if (open !== get().open) {
+        chatLayoutUtils.startStructuralMove(open ? 'enter' : 'exit');
+      }
+      update({ open });
+    },
+    dock: (side) => {
+      chatLayoutUtils.startStructuralMove('enter');
+      set({ docks: get().docks + 1 });
+      update({ open: true, mode: side });
+    },
     setDockWidth: (width) =>
       update({ dockWidth: chatLayoutUtils.dockWidthFor(width) }),
     newChat: (prompt) =>
@@ -239,6 +267,14 @@ const initChatPanel = (
       setConversation({ conversationId, pendingPrompt: undefined });
     },
     setPanelMounted: (panelMounted) => set({ panelMounted }),
+    setMoving: (moving) => {
+      if (moving === get().moving) return;
+      set({ moving });
+      if (movingGuard) clearTimeout(movingGuard);
+      movingGuard = moving
+        ? setTimeout(() => set({ moving: null }), MOVING_GUARD_MS)
+        : null;
+    },
     setLastPage: (lastPage) => {
       if (lastPage === get().lastPage) return;
       set({ lastPage });
@@ -268,6 +304,8 @@ export const chatPanelUtils = {
 };
 
 export type ChatPanelSide = 'left' | 'right';
+// enter: full page shrinks into the dock. exit: dock grows into the full page.
+export type ChatMove = 'enter' | 'exit';
 export type ChatRouter = {
   navigate: (target: ChatNavTarget) => void;
   location: () => {
@@ -307,6 +345,8 @@ type ChatPanelState = SavedChatPanel & {
   conversationId: string | null;
   lastPage: string | null;
   panelMounted: boolean;
+  docks: number;
+  moving: ChatMove | null;
   newChatToken: number;
   pendingPrompt?: string;
   setOpen: (open: boolean) => void;
@@ -317,5 +357,6 @@ type ChatPanelState = SavedChatPanel & {
   conversationMissing: () => void;
   showConversation: (conversationId: string | null) => void;
   setPanelMounted: (panelMounted: boolean) => void;
+  setMoving: (moving: ChatMove | null) => void;
   setLastPage: (lastPage: string) => void;
 };

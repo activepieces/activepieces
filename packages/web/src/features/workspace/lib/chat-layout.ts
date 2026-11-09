@@ -69,6 +69,15 @@ function shownDockWidth({
   );
 }
 
+// Rail and dock share one duration per move, so they land together.
+function startStructuralMove(kind: 'enter' | 'exit' | 'fold') {
+  document.documentElement.style.setProperty('--ap-move', `${MOVE_MS[kind]}ms`);
+}
+
+function prefersReducedMotion(): boolean {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 function rootFontSize(): number {
   return parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
 }
@@ -80,6 +89,19 @@ const PAGE_COMFORT_WIDTH = 760;
 const SIDEBAR_WIDTH_REM = 15.5;
 const RAIL_WIDTH_REM = 3;
 const CARD_CHROME = 10;
+const MOVE_MS = {
+  enter: 220,
+  exit: 160,
+  fold: 160,
+  wide: 320,
+  back: 260,
+  edgeDelay: 120,
+  settleSlack: 160,
+} as const;
+const MOVE_EASE = {
+  emphasized: 'cubic-bezier(0.05, 0.7, 0.1, 1)',
+  standard: 'cubic-bezier(0.2, 0, 0, 1)',
+} as const;
 const PANEL_ID = 'ap-chat-panel';
 const FULL_TOAST_TOP = 80;
 
@@ -88,12 +110,16 @@ export const chatLayoutUtils = {
   dockWidthFor,
   cardInnerWidth,
   shownDockWidth,
+  startStructuralMove,
+  prefersReducedMotion,
   toastPlacementFor,
   DOCK_MIN_WIDTH,
   DOCK_MAX_WIDTH,
   DOCK_DEFAULT_WIDTH,
   PAGE_COMFORT_WIDTH,
   PANEL_ID,
+  MOVE_MS,
+  MOVE_EASE,
 };
 
 export type ChatWidth = ChatPanelSide | 'full' | 'closed';

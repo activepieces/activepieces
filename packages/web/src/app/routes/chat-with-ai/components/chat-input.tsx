@@ -32,6 +32,7 @@ export function ChatInput({
   minimalUntilFocus = false,
   onFocusChange,
   sendBlockedReason,
+  autoFocus,
 }: {
   isStreaming: boolean;
   onSend: (text: string, files?: File[]) => void;
@@ -43,6 +44,7 @@ export function ChatInput({
   minimalUntilFocus?: boolean;
   onFocusChange?: (focused: boolean) => void;
   sendBlockedReason?: string;
+  autoFocus?: boolean;
 }) {
   const [value, setValue] = useState('');
   const [focused, setFocused] = useState(false);
@@ -182,7 +184,7 @@ export function ChatInput({
           </div>
         ) : (
           <PromptInputTextarea
-            autoFocus={!minimalUntilFocus}
+            autoFocus={autoFocus ?? !minimalUntilFocus}
             placeholder={placeholder ?? t('Tell me what you need...')}
             className={cn(
               'text-base sm:text-sm',

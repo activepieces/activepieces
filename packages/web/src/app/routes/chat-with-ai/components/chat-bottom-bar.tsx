@@ -36,6 +36,7 @@ export function ChatBottomBar({
   placeholder,
   banner,
   recede,
+  autoFocus,
 }: ChatBottomBarProps) {
   const [composerEngaged, setComposerEngaged] = useState(false);
   const pendingActionPreview = useChatStoreContext((s) =>
@@ -144,6 +145,7 @@ export function ChatBottomBar({
           }
           rightActions={modelPicker}
           sendBlockedReason={sendBlockedReason}
+          autoFocus={autoFocus}
         />
       </div>
     </div>
@@ -223,4 +225,5 @@ type ChatBottomBarProps = {
   placeholder?: string;
   banner?: ReactNode;
   recede?: boolean;
+  autoFocus?: boolean;
 };

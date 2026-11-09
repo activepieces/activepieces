@@ -12,6 +12,7 @@ import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import {
   ChatContainerContent,
   ChatContainerRoot,
@@ -24,6 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ModelPicker, modelPickerUtils } from '@/features/agents';
 import { aiModelHooks } from '@/features/agents/ai-model/hooks';
 import { ChatCreditsAlert } from '@/features/billing';
+import { chatQueryKeys } from '@/features/chat/lib/chat-query-keys';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import {
   ChatStoreProvider,
@@ -36,20 +38,19 @@ import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useSessionProjectId } from '@/hooks/use-session-project-id';
 import { userHooks } from '@/hooks/user-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { AssistantMessage } from './components/assistant-message';
 import { ChatBottomBar } from './components/chat-bottom-bar';
 import {
-  EmptyState,
+  ChatEmptyState,
   MessageSkeletons,
   SetupRequiredState,
 } from './components/chat-empty-state';
 import { MemoryImportNudgeCard } from './components/memory-import-nudge-card';
 import { OnboardingQuestionCard } from './components/onboarding-question-card';
-import { OnboardingWelcome } from './components/onboarding-welcome';
 import {
   PersonalizationChip,
   PersonalizationChipState,
@@ -59,54 +60,11 @@ import { TaskPanelLayout } from './components/task-panel';
 import { UserMessage } from './components/user-message';
 import { getTextFromParts } from './lib/message-parsers';
 
-export function AIChatBox({
-  incognito,
-  initialPrompt,
-  agentId,
-  builder,
-  onTurnEnd,
-  emptyState,
-  footerNote,
-  placeholder,
-  conversationId,
-  onTitleUpdate,
-  onConversationCreated,
-  onConversationMissing,
-}: AIChatBoxProps) {
-  const projectId = authenticationSession.getProjectId();
-  const gated =
-    agentId === undefined && isNil(conversationId) && !isNil(projectId);
-  const { data: options, isLoading } = aiModelHooks.useModelOptions({
-    projectId: projectId ?? '',
-    surface: 'chat',
-    enabled: gated,
-  });
-
-  if (gated && isLoading) {
-    return <MessageSkeletons />;
-  }
-
-  if (gated && !isNil(options) && !hasAnyModel({ options })) {
-    return <SetupRequiredState />;
-  }
-
+export function AIChatBox(props: AIChatBoxProps) {
   return (
     <ChatStoreProvider>
       <TaskPanelLayout>
-        <ChatBoxContent
-          incognito={incognito}
-          initialPrompt={initialPrompt}
-          agentId={agentId}
-          builder={builder}
-          onTurnEnd={onTurnEnd}
-          emptyState={emptyState}
-          footerNote={footerNote}
-          placeholder={placeholder}
-          conversationId={conversationId}
-          onTitleUpdate={onTitleUpdate}
-          onConversationCreated={onConversationCreated}
-          onConversationMissing={onConversationMissing}
-        />
+        <ChatBoxContent {...props} />
       </TaskPanelLayout>
     </ChatStoreProvider>
   );
@@ -125,10 +83,21 @@ function ChatBoxContent({
   onTitleUpdate,
   onConversationCreated,
   onConversationMissing,
+  compact,
+  autoFocusComposer,
 }: AIChatBoxProps) {
   const queryClient = useQueryClient();
   const credits = useCreditsState();
-  const sessionProjectId = authenticationSession.getProjectId();
+  const sessionProjectId = useSessionProjectId();
+  const { data: gateUser } = userHooks.useCurrentUser();
+  const gate = useModelGate({
+    gated:
+      agentId === undefined &&
+      isNil(initialConversationId) &&
+      (!isNil(sessionProjectId) ||
+        gateUser?.platformRole === PlatformRole.ADMIN),
+    projectId: sessionProjectId,
+  });
 
   const {
     conversationId,
@@ -142,6 +111,8 @@ function ChatBoxContent({
     isLoadingHistory,
     error,
     failed,
+    historyFailed,
+    reloadHistory,
     sendMessage,
     retryLastMessage,
     cancelStream,
@@ -168,7 +139,7 @@ function ChatBoxContent({
 
   useEffect(() => {
     if (initialConversationId) {
-      void setConversationId(initialConversationId);
+      setConversationId(initialConversationId).catch(() => undefined);
     }
   }, [initialConversationId, setConversationId]);
 
@@ -212,7 +183,9 @@ function ChatBoxContent({
       modelOptions.defaultChoice ??
       null;
   const awaitingSavedPick =
-    !isNil(initialConversationId) && (isNil(modelPick) || isLoadingHistory);
+    !isNil(initialConversationId) &&
+    (isLoadingHistory ||
+      (initialConversationId !== conversationId && !failed && !historyFailed));
   const pickUnavailable =
     showsPicker &&
     !isNil(modelOptions) &&
@@ -247,6 +220,8 @@ function ChatBoxContent({
     ],
   );
 
+  const [hasInput, setHasInput] = useState(false);
+  const [promptOpen, setPromptOpen] = useState(false);
   const sentInitialPrompt = useRef(false);
 
   useEffect(() => {
@@ -254,11 +229,12 @@ function ChatBoxContent({
       initialPrompt !== undefined &&
       initialPrompt.trim().length > 0 &&
       !initialConversationId &&
+      gate === 'ready' &&
       !sentInitialPrompt.current;
     if (!shouldSendInitialPrompt) return;
     sentInitialPrompt.current = true;
     handleSend(initialPrompt).catch(() => undefined);
-  }, [initialPrompt, initialConversationId, handleSend]);
+  }, [initialPrompt, initialConversationId, handleSend, gate]);
 
   const handleRetry = useCallback(() => {
     const lastUser = messages.findLast((m) => m.role === 'user');
@@ -295,19 +271,21 @@ function ChatBoxContent({
 
   const showBanner = credits.creditsExhausted || credits.showLowCreditsWarning;
 
-  const [hasInput, setHasInput] = useState(false);
-  const [promptOpen, setPromptOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: currentUser } = userHooks.useCurrentUser();
   const personalization = usePersonalization({ enabled: !incognito });
 
   const isAwaitingLoad =
-    !!initialConversationId && messages.length === 0 && !error;
+    !!initialConversationId &&
+    messages.length === 0 &&
+    !error &&
+    !historyFailed;
   const isEmpty =
     messages.length === 0 &&
     !isLoadingHistory &&
     !isStreaming &&
     !isAwaitingLoad &&
+    !historyFailed &&
     !hasSentMessage;
 
   const isFirstRun =
@@ -316,10 +294,11 @@ function ChatBoxContent({
     (personalization.companyInput ?? '').trim().length > 0 &&
     currentUser?.platformRole !== PlatformRole.ADMIN;
   const showOnboardingCard =
-    isEmpty && !incognito && (isFirstRun || promptOpen);
+    isEmpty && !incognito && !compact && (isFirstRun || promptOpen);
   const showPersonalizationDonut =
     isEmpty &&
     !incognito &&
+    !compact &&
     isNil(agentId) &&
     !showOnboardingCard &&
     !personalization.isResolving &&
@@ -375,11 +354,19 @@ function ChatBoxContent({
 
   const cachedConversations = queryClient.getQueryData<
     SeekPage<AgentConversation>
-  >(['chat-conversations']);
+  >(chatQueryKeys.allConversationLists());
   const hasConversations = (cachedConversations?.data?.length ?? 0) > 0;
 
+  if (gate === 'loading') {
+    return <MessageSkeletons />;
+  }
+
+  if (gate === 'setup') {
+    return <SetupRequiredState />;
+  }
+
   return (
-    <div className="flex flex-col h-full flex-1 min-w-0">
+    <div className="@container/chat flex flex-col h-full flex-1 min-w-0 [&_*]:[scrollbar-width:thin]">
       <AnimatePresence mode="wait">
         {isEmpty ? (
           <div
@@ -389,17 +376,15 @@ function ChatBoxContent({
               showPersonalizationDonut && 'pb-14',
             )}
           >
-            {emptyState ??
-              (showOnboardingCard ? (
-                <OnboardingWelcome />
-              ) : (
-                <EmptyState
-                  onSuggestionClick={(text) => void handleSend(text)}
-                  incognito={incognito}
-                  showFlowCards={!hasConversations}
-                  hasInput={hasInput}
-                />
-              ))}
+            {emptyState ?? (
+              <ChatEmptyState
+                incognito={incognito}
+                hasInput={hasInput}
+                onboarding={showOnboardingCard}
+                showFlowCards={!hasConversations}
+                onSend={(text) => handleSend(text).catch(() => undefined)}
+              />
+            )}
           </div>
         ) : (
           <motion.div
@@ -410,7 +395,7 @@ function ChatBoxContent({
             transition={{ duration: 0.25 }}
           >
             <ChatContainerRoot
-              className="flex-1 relative h-full px-3 sm:px-6"
+              className="flex-1 relative h-full"
               style={{
                 maskImage:
                   'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
@@ -418,8 +403,18 @@ function ChatBoxContent({
                   'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
               }}
             >
-              <ChatContainerContent className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full">
+              <ChatContainerContent
+                scrollClassName="px-3 @chat-sm/chat:px-6"
+                className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full"
+              >
                 {isLoadingHistory && <MessageSkeletons />}
+
+                {historyFailed && (
+                  <DataFetchErrorState
+                    entity={t('this chat')}
+                    onRetry={reloadHistory}
+                  />
+                )}
 
                 {messages.map((msg, idx) => {
                   if (msg.role === 'user') {
@@ -513,7 +508,7 @@ function ChatBoxContent({
         )}
       </AnimatePresence>
 
-      <div className="px-3 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="px-3 @chat-sm/chat:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="max-w-3xl mx-auto relative">
           {showOnboardingCard && (
             <div className="mb-3">
@@ -548,6 +543,7 @@ function ChatBoxContent({
             onSend={handleSend}
             onStop={cancelStream}
             onInputChange={setHasInput}
+            autoFocus={autoFocusComposer}
             recede={showOnboardingCard}
             modelPicker={
               showsPicker && awaitingSavedPick ? (
@@ -596,6 +592,23 @@ function ChatBoxContent({
       </div>
     </div>
   );
+}
+
+function useModelGate({
+  gated,
+  projectId,
+}: {
+  gated: boolean;
+  projectId: string | null;
+}): ModelGate {
+  const { data: options, isLoading } = aiModelHooks.useModelOptions({
+    projectId: projectId ?? undefined,
+    surface: 'chat',
+    enabled: gated,
+  });
+  if (gated && isLoading) return 'loading';
+  if (gated && !isNil(options) && !hasAnyModel({ options })) return 'setup';
+  return 'ready';
 }
 
 function hasAnyModel({ options }: { options: ModelOptions }): boolean {
@@ -647,4 +660,8 @@ type AIChatBoxProps = {
   onConversationCreated?: (conversationId: string) => void;
   onConversationMissing?: () => void;
   onTitleUpdate?: (title: string) => void;
+  compact?: boolean;
+  autoFocusComposer?: boolean;
 };
+
+type ModelGate = 'loading' | 'setup' | 'ready';

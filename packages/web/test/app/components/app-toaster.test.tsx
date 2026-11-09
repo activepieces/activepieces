@@ -22,7 +22,7 @@ vi.mock('@/app/components/app-shell', () => ({
 }));
 
 vi.mock('@/features/workspace/lib/rail-collapsed', () => ({
-  useRailOpenState: () => ({ open: true }),
+  useRailOpen: () => true,
 }));
 
 vi.mock('@/app/components/chat-panel/chat-chrome', () => ({

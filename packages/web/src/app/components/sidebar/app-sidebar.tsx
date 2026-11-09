@@ -1,6 +1,11 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronsUpDown, PanelLeftClose, Search } from 'lucide-react';
+import {
+  ChevronsUpDown,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Search,
+} from 'lucide-react';
 import React, { ComponentType, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -59,9 +64,9 @@ export function AppSidebar({ mode }: { mode: AppSidebarMode }) {
 
   return (
     <SidebarProvider
-      open={isPlatform || rail.open}
-      onOpenChange={isPlatform ? keepOpen : rail.onOpenChange}
-      keyboardShortcut={!isPlatform}
+      open={rail.open}
+      onOpenChange={rail.onOpenChange}
+      keyboardShortcut
       shortcutIgnoresEditable
       className="contents"
       style={SIDEBAR_STYLE}
@@ -209,6 +214,7 @@ function AppHeader() {
 function PlatformHeader() {
   const chatOn = useChatOn();
   const { checkAccess } = useAuthorization();
+  const { toggleSidebar } = useSidebar();
   const chevronRef = useRef<ChevronLeftIconHandle>(null);
   const defaultRoute = determineDefaultRoute({
     checkAccess,
@@ -218,16 +224,40 @@ function PlatformHeader() {
   return (
     <SidebarHeader>
       <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton asChild>
+        <SidebarMenuItem className="flex items-center gap-1">
+          <SidebarMenuButton
+            asChild
+            tooltip={t('Back to app')}
+            className="min-w-0 flex-1"
+          >
             <Link
               to={defaultRoute}
               onMouseEnter={() => chevronRef.current?.startAnimation()}
               onMouseLeave={() => chevronRef.current?.stopAnimation()}
             >
               <ChevronLeftIcon ref={chevronRef} className="size-4" size={16} />
-              <span>{t('Back to app')}</span>
+              <span className={sidebarStyles.labelFade}>
+                {t('Back to app')}
+              </span>
             </Link>
+          </SidebarMenuButton>
+          <div className="shrink-0 group-data-[collapsible=icon]:hidden">
+            <HeaderIconButton
+              label={t('Close sidebar')}
+              icon={PanelLeftClose}
+              onClick={toggleSidebar}
+            />
+          </div>
+        </SidebarMenuItem>
+        <SidebarMenuItem className="hidden group-data-[collapsible=icon]:block">
+          <SidebarMenuButton
+            tooltip={t('Open sidebar')}
+            aria-label={t('Open sidebar')}
+            aria-expanded={false}
+            className="text-gray-11"
+            onClick={toggleSidebar}
+          >
+            <PanelLeftOpen />
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
@@ -320,10 +350,6 @@ function HeaderIconButton({
       <TooltipContent side="right">{label}</TooltipContent>
     </Tooltip>
   );
-}
-
-function keepOpen() {
-  return undefined;
 }
 
 const BRAND_BUTTON =

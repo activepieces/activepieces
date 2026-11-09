@@ -146,6 +146,8 @@ const ChatBody = memo(function ChatBody({
     <AIChatBox
       key={newChatToken}
       incognito={false}
+      compact={!full}
+      autoFocusComposer={newChatToken > 0}
       conversationId={conversationId}
       initialPrompt={prompt}
       onConversationCreated={(id) => {
