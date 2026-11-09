@@ -1,6 +1,6 @@
 
 import { z } from 'zod'
-import { AiCallContext, AIProviderName, AiStepAction, AiUsageEnvironment, AiUsageOrigin, isNil } from '@activepieces/core-utils'
+import { AiCallContext, AIProviderName, AiStepAction, AiUsageEnvironment, AiUsageOrigin, ApResourceKind, isNil } from '@activepieces/core-utils'
 import { ResumeReason, StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
@@ -309,9 +309,6 @@ export const AgentPromptOverride = z.object({
     guides: z.record(z.string(), z.string()).optional(),
 })
 export type AgentPromptOverride = z.infer<typeof AgentPromptOverride>
-
-export const ApResourceKind = z.enum(['flow', 'table'])
-export type ApResourceKind = z.infer<typeof ApResourceKind>
 
 export const AgentPageContext = z.object({
     kind: ApResourceKind,
