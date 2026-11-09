@@ -402,7 +402,7 @@ export type FollowChange = {
   navigable: boolean;
 };
 
-export type FollowOffer = {
+type FollowOffer = {
   resource: ResourceRef;
   conversationId: string | null;
 };

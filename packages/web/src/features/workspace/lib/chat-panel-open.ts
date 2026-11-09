@@ -411,7 +411,7 @@ export const chatPanelUtils = {
 };
 
 export type ChatPanelSide = 'left' | 'right';
-export type ChatRouter = {
+type ChatRouter = {
   navigate: (target: ChatNavTarget) => void;
   location: () => {
     pathname: string;

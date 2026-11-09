@@ -99,7 +99,6 @@ const GESTURE_SPRING: GestureSpring = {
 
 const MOTION = {
   easeOut: EASE_OUT,
-  easeDrawer: EASE_DRAWER,
   easeOutCss: cssBezier(EASE_OUT),
   easeDrawerCss: cssBezier(EASE_DRAWER),
   micro: 0.1,
@@ -146,7 +145,6 @@ const chatLayoutUtils = {
   DOCK_MIN_WIDTH,
   DOCK_MAX_WIDTH,
   DOCK_DEFAULT_WIDTH,
-  PAGE_COMFORT_WIDTH,
   PANEL_ID,
 };
 
@@ -156,7 +154,7 @@ type CubicBezier = [number, number, number, number];
 type GestureSpring = { type: 'spring'; bounce: number; visualDuration: number };
 
 export type ChatWidth = ChatPanelSide | 'sheet' | 'full' | 'closed';
-export type ToastPlacement = {
+type ToastPlacement = {
   position: NonNullable<ToasterProps['position']>;
   offset: ToasterProps['offset'];
 };

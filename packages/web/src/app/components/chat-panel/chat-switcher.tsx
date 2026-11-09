@@ -655,4 +655,4 @@ type CloseFocus = 'title' | 'composer' | 'none';
 type RenameEnd = 'commit' | 'cancel';
 
 export type ChatSwitcherOpener = 'pointer' | 'keyboard';
-export type ChatSwitcherLayout = 'dock' | 'full' | 'sheet';
+type ChatSwitcherLayout = 'dock' | 'full' | 'sheet';
