@@ -56,7 +56,12 @@ export const pieceCatalogEventsJob = (log: FastifyBaseLogger) => ({
         if (isCommunity() || system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE) === PieceSyncMode.OFFICIAL_AUTO) {
             return
         }
-        await seedIfMissing({ allowEmptyCatalog: true, log })
+        try {
+            await seedIfMissing({ allowEmptyCatalog: true, log })
+        }
+        catch (err) {
+            log.error({ err }, '[pieceCatalogEvents] boot seed failed')
+        }
     },
     async scheduleReconcile(): Promise<void> {
         if (isCommunity()) {
