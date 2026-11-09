@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { chatLayoutUtils } from './chat-layout';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 
 const base = {
   fullPage: false,

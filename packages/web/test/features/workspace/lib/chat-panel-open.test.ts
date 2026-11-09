@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 async function loadStore() {
   vi.resetModules();
-  const { useChatPanel } = await import('./chat-panel-open');
+  const { useChatPanel } = await import(
+    '@/features/workspace/lib/chat-panel-open'
+  );
   return useChatPanel;
 }
 
