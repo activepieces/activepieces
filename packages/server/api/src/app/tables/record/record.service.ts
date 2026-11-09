@@ -24,6 +24,7 @@ export const recordService = {
         projectId,
         fields,
         editorSessionId,
+        logger,
     }: CreateParams): Promise<PopulatedRecord[]> {
         await this.validateCount({ projectId, tableId: request.tableId }, request.records.length)
         const existingFields = fields ?? await fieldService.getAll({
@@ -65,7 +66,7 @@ export const recordService = {
             },
         })
         const created = await formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId, fields: existingFields })
-        await tableRoom.notifyChanged({ tableId: request.tableId, change: { op: TableRecordsChangeOp.CREATED, records: created }, editorSessionId })
+        await tableRoom(logger).notifyChanged({ tableId: request.tableId, change: { op: TableRecordsChangeOp.CREATED, records: created }, editorSessionId })
         return created
     },
 
@@ -217,7 +218,7 @@ export const recordService = {
             return { record: updatedRecord, changed }
         })
         if (result.changed) {
-            await tableRoom.notifyChanged({ tableId, change: { op: TableRecordsChangeOp.UPDATED, records: [result.record] }, editorSessionId })
+            await tableRoom(system.globalLogger()).notifyChanged({ tableId, change: { op: TableRecordsChangeOp.UPDATED, records: [result.record] }, editorSessionId })
         }
         return result
     },
@@ -252,7 +253,7 @@ export const recordService = {
                 params: { entityType: 'Record', entityId: uniqueIds[0] },
             })
         }
-        await tableRoom.notifyChanged({ tableId, change: { op: TableRecordsChangeOp.DELETED, recordIds: deletedIds }, editorSessionId })
+        await tableRoom(system.globalLogger()).notifyChanged({ tableId, change: { op: TableRecordsChangeOp.DELETED, recordIds: deletedIds }, editorSessionId })
         return {
             deletedCount: deletedIds.length,
             records,
@@ -265,7 +266,7 @@ export const recordService = {
         editorSessionId,
     }: DeleteAllParams): Promise<PopulatedRecord[]> {
         const { records } = await deleteRecordsAndReturnWebhookPayloads({ projectId, tableId })
-        await tableRoom.notifyChanged({ tableId, change: { op: TableRecordsChangeOp.CLEARED }, editorSessionId })
+        await tableRoom(system.globalLogger()).notifyChanged({ tableId, change: { op: TableRecordsChangeOp.CLEARED }, editorSessionId })
         return records
     },
 

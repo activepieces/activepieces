@@ -109,6 +109,40 @@ describe('Record API', () => {
         })
     })
 
+    describeWithAuth('field and table changes push', () => app!, (setup) => {
+        it('tells the table room that the fields changed when a column is added, renamed, reordered or deleted over REST', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const pushes = capturePushes()
+
+            const added = await ctx.post('/v1/fields', { tableId: table.id, name: 'Score', type: FieldType.TEXT })
+            const addedId = added?.json().id
+            await ctx.post(`/v1/fields/${addedId}`, { name: 'Points' })
+            await ctx.post('/v1/fields/reorder', { tableId: table.id, fieldIds: [addedId, field.id] })
+            await ctx.inject({ method: 'DELETE', url: `/api/v1/fields/${addedId}` })
+            vi.restoreAllMocks()
+
+            const fieldsChanged = { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.FIELDS_CHANGED } }
+            expect(added?.statusCode).toBe(StatusCodes.CREATED)
+            expect(pushes).toEqual([fieldsChanged, fieldsChanged, fieldsChanged, fieldsChanged])
+        })
+
+        it('tells the table room when the table is renamed or deleted', async () => {
+            const ctx = await setup()
+            const { table } = await createTableWithField(ctx)
+            const pushes = capturePushes()
+
+            await ctx.post(`/v1/tables/${table.id}`, { name: 'Renamed' })
+            await ctx.inject({ method: 'DELETE', url: `/api/v1/tables/${table.id}` })
+            vi.restoreAllMocks()
+
+            expect(pushes).toEqual([
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.TABLE_UPDATED } },
+                { room: tableRoomOf(table.id), payload: { tableId: table.id, editorSessionId: null, op: TableRecordsChangeOp.TABLE_DELETED } },
+            ])
+        })
+    })
+
     describeWithAuth('POST /v1/records (Create)', () => app!, (setup) => {
         it('should create a single record with cells', async () => {
             const ctx = await setup()

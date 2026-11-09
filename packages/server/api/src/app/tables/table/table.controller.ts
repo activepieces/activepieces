@@ -29,6 +29,7 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
             projectId: request.projectId,
             id: request.params.id,
             request: request.body,
+            editorSessionId: editorSession.idFromRequest(request),
         })
 
     })
@@ -73,6 +74,7 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
         await tableService.delete({
             projectId: request.projectId,
             id: request.params.id,
+            editorSessionId: editorSession.idFromRequest(request),
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
     })
