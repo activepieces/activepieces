@@ -21,6 +21,7 @@ export enum SystemJobName {
     WAITPOINT_DEADLINE_SWEEP = 'waitpoint-deadline-sweep',
     RUN_BACKGROUND_MIGRATIONS = 'run-background-migrations',
     AUDIT_LOG_RETENTION = 'audit-log-retention',
+    INVITE_REWARD_GRANT = 'invite-reward-grant',
 }
 
 type DeleteFlowDurableSystemJobData =  {
@@ -44,6 +45,11 @@ type CreateMissingPersonalProjectsSystemJobData = {
 
 type HardDeletePlatformSystemJobData = {
     platformId: PlatformId
+}
+
+type InviteRewardGrantSystemJobData = {
+    platformId: PlatformId
+    email: string
 }
 
 type ResumeDelayWaitpointSystemJobData = {
@@ -76,6 +82,7 @@ type SystemJobDataMap = {
     [SystemJobName.WAITPOINT_DEADLINE_SWEEP]: Record<string, never>
     [SystemJobName.RUN_BACKGROUND_MIGRATIONS]: Record<string, never>
     [SystemJobName.AUDIT_LOG_RETENTION]: Record<string, never>
+    [SystemJobName.INVITE_REWARD_GRANT]: InviteRewardGrantSystemJobData
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never

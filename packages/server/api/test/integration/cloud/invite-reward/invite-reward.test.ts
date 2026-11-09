@@ -4,6 +4,7 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { autumnConsole } from '../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils'
+import { systemJobsSchedule } from '../../../../src/app/helper/system-jobs/system-job'
 import { billingProvider } from '../../../../src/app/platform/billing-provider'
 import { userInvitationsService } from '../../../../src/app/user-invitations/user-invitation.service'
 import { generateMockToken } from '../../../helpers/auth'
@@ -89,6 +90,17 @@ describe('Invite reward', () => {
             const member = await databaseConnection().getRepository('user').findOneBy({ platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER })
             expect(member).not.toBeNull()
             expect(email).toContain('@')
+        })
+
+        it('keeps the reward request queued for a retry when the console fails', async () => {
+            const { mockPlatform } = await setupPlatform()
+            vi.mocked(autumnConsole.grantInviteReward).mockRejectedValue(new Error('console down'))
+
+            const email = await joinAsNewMember({ platformId: mockPlatform.id })
+
+            const jobId = `invite-reward-grant-${mockPlatform.id}-${email}`
+            await vi.waitFor(() => expect(autumnConsole.grantInviteReward).toHaveBeenCalledWith({ autumnCustomerId: CREDS.autumnCustomerId, inviteeEmail: email }))
+            await vi.waitFor(async () => expect(await systemJobsSchedule(mockLog).getJobState(jobId)).toBe('delayed'))
         })
     })
 

@@ -12,12 +12,14 @@ export function useInviteRewards(): InviteRewardsState {
   const { platform } = platformHooks.useCurrentPlatform();
   const isPlatformAdmin = useIsPlatformAdmin();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const hasPendingInvites = (platform.usage?.invitedSeats ?? 0) > 0;
 
   const { data: summary } = useQuery({
     queryKey: [INVITE_REWARDS_QUERY_KEY, platform.id],
     queryFn: inviteRewardsApi.getSummary,
     enabled: edition === ApEdition.CLOUD && isPlatformAdmin,
     staleTime: INVITE_REWARDS_STALE_MS,
+    refetchInterval: hasPendingInvites ? INVITE_REWARDS_STALE_MS : false,
   });
 
   if (isNil(summary)) {

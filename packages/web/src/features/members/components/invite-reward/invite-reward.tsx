@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import { InviteRewardSurface, TelemetryEventName } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Gift } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -106,6 +107,7 @@ export function BonusCreditsLine() {
 
 export function InviteRewardNotifier() {
   const { platformId, rewards } = useInviteRewards();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (isNil(platformId) || rewards.length === 0) {
@@ -128,7 +130,8 @@ export function InviteRewardNotifier() {
       platformId,
       ids: [...seen, ...unseen.map((reward) => reward.id)],
     });
-  }, [platformId, rewards]);
+    void queryClient.invalidateQueries({ queryKey: ['platform', platformId] });
+  }, [platformId, rewards, queryClient]);
 
   return null;
 }
