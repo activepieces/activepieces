@@ -71,6 +71,7 @@ export function AIChatBox({
   conversationId,
   onTitleUpdate,
   onConversationCreated,
+  onConversationMissing,
 }: AIChatBoxProps) {
   const projectId = authenticationSession.getProjectId();
   const gated =
@@ -104,6 +105,7 @@ export function AIChatBox({
           conversationId={conversationId}
           onTitleUpdate={onTitleUpdate}
           onConversationCreated={onConversationCreated}
+          onConversationMissing={onConversationMissing}
         />
       </TaskPanelLayout>
     </ChatStoreProvider>
@@ -122,6 +124,7 @@ function ChatBoxContent({
   conversationId: initialConversationId,
   onTitleUpdate,
   onConversationCreated,
+  onConversationMissing,
 }: AIChatBoxProps) {
   const queryClient = useQueryClient();
   const credits = useCreditsState();
@@ -151,6 +154,7 @@ function ChatBoxContent({
     onTitleUpdate,
     onConversationCreated,
     onTurnEnd,
+    onConversationMissing,
     onCreditsExhausted: () => credits.setCreditsExhausted(true),
   });
 
@@ -641,5 +645,6 @@ type AIChatBoxProps = {
   placeholder?: string;
   conversationId?: string | null;
   onConversationCreated?: (conversationId: string) => void;
+  onConversationMissing?: () => void;
   onTitleUpdate?: (title: string) => void;
 };

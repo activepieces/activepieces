@@ -48,6 +48,7 @@ import {
 import { blankAgentUtils } from '@/features/agents/lib/blank-agent';
 import { NewBlankAgentButton } from '@/features/agents/new-blank-agent-button';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
+import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { CHAT_ROUTE } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
@@ -167,11 +168,10 @@ const AgentsPageContent = () => {
     if (projectFiltered && viewProjectId !== project.id) {
       projectCollectionUtils.setCurrentProject(viewProjectId);
     }
-    navigate(CHAT_ROUTE, {
-      state: {
-        prompt: t('Build me an agent for this: {task}', { task: trimmed }),
-      },
-    });
+    useChatPanel
+      .getState()
+      .newChat(t('Build me an agent for this: {task}', { task: trimmed }));
+    navigate(CHAT_ROUTE);
   };
 
   const createBlankAgent = (projectId: string) => {

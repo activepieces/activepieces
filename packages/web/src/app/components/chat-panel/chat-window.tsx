@@ -1,11 +1,15 @@
 import { t } from 'i18next';
 import { Suspense, useEffect, useRef, useState } from 'react';
+import { useLocation, useMatches, useNavigate } from 'react-router-dom';
 
 import {
   ChatWidth,
   chatLayoutUtils,
 } from '@/features/workspace/lib/chat-layout';
-import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
+import {
+  chatPanelUtils,
+  useChatPanel,
+} from '@/features/workspace/lib/chat-panel-open';
 import { useRailOpenState } from '@/features/workspace/lib/rail-collapsed';
 import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
@@ -52,13 +56,24 @@ export function useChatWidth(): ChatWidth {
   });
 }
 
+export function useActiveConversationId(): string | null {
+  const fullPage = useShellHandle().chat === 'full';
+  const urlId =
+    useMatches().findLast((m) => m.params.conversationId !== undefined)?.params
+      .conversationId ?? null;
+  const storeId = useChatPanel((s) => s.conversationId);
+  return fullPage ? urlId : storeId;
+}
+
 export function ChatPanel() {
   const chatWidth = useChatWidth();
-  const side = useChatPanel((s) => s.mode);
+  const mode = useChatPanel((s) => s.mode);
   const [dragWidth, setDragWidth] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const full = chatWidth === 'full';
   const visible = chatWidth !== 'closed';
+  const side = full ? 'left' : mode;
   const width = useDockWidth(dragWidth);
   const cardWidth = useCardWidth();
 
@@ -104,17 +119,18 @@ export function ChatPanel() {
       id={chatLayoutUtils.PANEL_ID}
       aria-label={t('Chat')}
       inert={!visible}
-      style={{ width: visible ? width : 0 }}
+      style={{ width: full ? '100%' : visible ? width : 0 }}
       className={cn(
         'relative flex shrink-0 flex-col overflow-hidden bg-gray-1',
         side === 'right' && 'order-last',
-        visible && (side === 'left' ? 'border-r' : 'border-l'),
+        visible && !full && (side === 'left' ? 'border-r' : 'border-l'),
         dragWidth === null &&
           'transition-[width] duration-[var(--ap-move,200ms)] ease-move motion-reduce:transition-none',
       )}
     >
+      <ChatRouterBinding />
       <div
-        style={{ width: `${width}px` }}
+        style={{ width: full ? '100%' : `${width}px` }}
         className={cn(
           'absolute inset-y-0 flex flex-col',
           side === 'left' ? 'left-0' : 'right-0',
@@ -126,7 +142,7 @@ export function ChatPanel() {
           </Suspense>
         )}
       </div>
-      {visible && (
+      {visible && !full && (
         <div
           role="separator"
           aria-orientation="vertical"
@@ -175,6 +191,32 @@ export function ChatPanel() {
       )}
     </aside>
   );
+}
+
+function ChatRouterBinding() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const fullPage = useShellHandle().chat === 'full';
+  const latest = useRef({ location, fullPage });
+  latest.current = { location, fullPage };
+
+  useEffect(
+    () =>
+      chatPanelUtils.bindRouter({
+        navigate: (target) => {
+          if ('back' in target) {
+            navigate(-1);
+            return;
+          }
+          navigate(target.to, { replace: target.replace, state: target.state });
+        },
+        location: () => latest.current.location,
+        isFullPage: () => latest.current.fullPage,
+      }),
+    [navigate],
+  );
+
+  return null;
 }
 
 function useComposerFocus({

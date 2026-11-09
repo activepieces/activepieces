@@ -2,14 +2,101 @@ import { isNil, isObject } from '@activepieces/core-utils';
 import { create } from 'zustand';
 
 import { authenticationSession } from '@/lib/authentication-session';
+import { CHAT_ROUTE } from '@/lib/route-utils';
 import { safeStorage } from '@/lib/safe-storage';
 
 import { chatLayoutUtils } from './chat-layout';
 
+function bindRouter(next: ChatRouter): () => void {
+  router = next;
+  return () => {
+    if (router === next) router = null;
+  };
+}
+
+function routeFor(conversationId: string | null): string {
+  return conversationId ? `${CHAT_ROUTE}/${conversationId}` : CHAT_ROUTE;
+}
+
+function useChatRoute(): string {
+  return routeFor(useChatPanel((s) => s.conversationId));
+}
+
+function expand(): void {
+  const current = router;
+  if (!current || current.isFullPage()) return;
+  current.navigate({
+    to: routeFor(useChatPanel.getState().conversationId),
+    replace: false,
+    state: { [EXPANDED_STATE]: true },
+  });
+}
+
+function collapse(side: ChatPanelSide): void {
+  const current = router;
+  if (!current) return;
+  const panel = useChatPanel.getState();
+  panel.dock(side);
+  if (!current.isFullPage()) return;
+  const { state } = current.location();
+  if (isObject(state) && state[EXPANDED_STATE] === true) {
+    current.navigate({ back: true });
+    return;
+  }
+  current.navigate({
+    to:
+      panel.lastPage ??
+      authenticationSession.appendProjectRoutePrefix('/automations'),
+    replace: false,
+  });
+}
+
 function startNewChat(): void {
   const panel = useChatPanel.getState();
   panel.newChat();
+  if (router?.isFullPage()) {
+    showOnFullPage(null);
+    return;
+  }
   panel.setOpen(true);
+}
+
+// Swapping the chat shown on the full page replaces the history entry, so
+// keep the mark that says the full page was opened from a docked chat.
+function showOnFullPage(conversationId: string | null): void {
+  const current = router;
+  if (!current?.isFullPage()) return;
+  const { state } = current.location();
+  const expanded = isObject(state) && state[EXPANDED_STATE] === true;
+  current.navigate({
+    to: routeFor(conversationId),
+    replace: true,
+    state: expanded ? { [EXPANDED_STATE]: true } : undefined,
+  });
+}
+
+// The router, not a component effect, keeps the panel in step with the URL:
+// the chat page's conversation becomes the panel's, and any other app page is
+// where "On the left/right" goes back to.
+function followRouter(target: FollowableRouter): () => void {
+  syncWithRoute(target.state);
+  return target.subscribe(syncWithRoute);
+}
+
+function syncWithRoute({ location, matches }: ChatRouteState): void {
+  const handle = matches.findLast(
+    (match) => isObject(match.route.handle) && 'shell' in match.route.handle,
+  )?.route.handle;
+  if (!isObject(handle)) return;
+  const panel = useChatPanel.getState();
+  if (handle.chat !== 'full') {
+    panel.setLastPage(`${location.pathname}${location.search}`);
+    return;
+  }
+  const urlId =
+    matches.findLast((match) => match.params.conversationId !== undefined)
+      ?.params.conversationId ?? null;
+  if (urlId !== null) panel.showConversation(urlId);
 }
 
 function createChatPanelStore() {
@@ -82,16 +169,25 @@ function lastConversationKey(): string | null {
   return `${LAST_CONVERSATION_KEY}:${platformId}:${userId}`;
 }
 
+function readLastPage(): string | null {
+  return safeStorage.read({ area: 'session', key: TAB_LAST_PAGE_KEY });
+}
+
 function forgetSignedOutUser(): void {
   if (!isNil(authenticationSession.getToken())) return;
   safeStorage.remove({ area: 'session', key: TAB_CONVERSATION_KEY });
-  useChatPanel.setState({ conversationId: null });
+  safeStorage.remove({ area: 'session', key: TAB_LAST_PAGE_KEY });
+  useChatPanel.setState({ conversationId: null, lastPage: null });
 }
+
+let router: ChatRouter | null = null;
 
 const STORAGE_KEY = 'chat-panel';
 const TAB_VIEW_KEY = 'chat:view';
 const TAB_CONVERSATION_KEY = 'chat:conv';
 const LAST_CONVERSATION_KEY = 'chat:last-conv';
+const TAB_LAST_PAGE_KEY = 'chat:last-page';
+const EXPANDED_STATE = 'chatExpanded';
 
 const DEFAULTS: SavedChatPanel = {
   open: false,
@@ -109,7 +205,7 @@ const initChatPanel = (
   };
   const setConversation = (
     patch: Pick<ChatPanelState, 'conversationId'> &
-      Partial<Pick<ChatPanelState, 'newChatToken'>>,
+      Partial<Pick<ChatPanelState, 'newChatToken' | 'pendingPrompt'>>,
   ) => {
     set(patch);
     saveConversationId(patch.conversationId);
@@ -117,19 +213,41 @@ const initChatPanel = (
   return {
     ...readSaved(),
     conversationId: readConversationId(),
+    lastPage: readLastPage(),
     panelMounted: false,
     newChatToken: 0,
+    pendingPrompt: undefined,
     setOpen: (open) => update({ open }),
+    dock: (side) => update({ open: true, mode: side }),
     setDockWidth: (width) =>
       update({ dockWidth: chatLayoutUtils.dockWidthFor(width) }),
-    newChat: () =>
+    newChat: (prompt) =>
       setConversation({
         conversationId: null,
         newChatToken: get().newChatToken + 1,
+        pendingPrompt: prompt,
       }),
     conversationCreated: (conversationId) =>
-      setConversation({ conversationId }),
+      setConversation({ conversationId, pendingPrompt: undefined }),
+    conversationMissing: () => setConversation({ conversationId: null }),
+    showConversation: (conversationId) => {
+      if (conversationId === get().conversationId) return;
+      if (conversationId === null) {
+        get().newChat();
+        return;
+      }
+      setConversation({ conversationId, pendingPrompt: undefined });
+    },
     setPanelMounted: (panelMounted) => set({ panelMounted }),
+    setLastPage: (lastPage) => {
+      if (lastPage === get().lastPage) return;
+      set({ lastPage });
+      safeStorage.write({
+        area: 'session',
+        key: TAB_LAST_PAGE_KEY,
+        value: lastPage,
+      });
+    },
   };
 };
 
@@ -139,10 +257,43 @@ authenticationSession.subscribe(forgetSignedOutUser);
 
 export const chatPanelUtils = {
   createStore: createChatPanelStore,
+  bindRouter,
+  routeFor,
+  useChatRoute,
+  expand,
+  collapse,
   startNewChat,
+  showOnFullPage,
+  followRouter,
 };
 
 export type ChatPanelSide = 'left' | 'right';
+export type ChatRouter = {
+  navigate: (target: ChatNavTarget) => void;
+  location: () => {
+    pathname: string;
+    search: string;
+    state: unknown;
+  };
+  isFullPage: () => boolean;
+};
+
+export type ChatNavTarget =
+  | { back: true }
+  | { to: string; replace: boolean; state?: Record<string, unknown> };
+
+type FollowableRouter = {
+  state: ChatRouteState;
+  subscribe: (listener: (state: ChatRouteState) => void) => () => void;
+};
+
+type ChatRouteState = {
+  location: { pathname: string; search: string };
+  matches: {
+    params: Record<string, string | undefined>;
+    route: { handle?: unknown };
+  }[];
+};
 
 type SetChatPanel = (patch: Partial<ChatPanelState>) => void;
 
@@ -154,11 +305,17 @@ type SavedChatPanel = {
 
 type ChatPanelState = SavedChatPanel & {
   conversationId: string | null;
+  lastPage: string | null;
   panelMounted: boolean;
   newChatToken: number;
+  pendingPrompt?: string;
   setOpen: (open: boolean) => void;
+  dock: (side: ChatPanelSide) => void;
   setDockWidth: (width: number) => void;
-  newChat: () => void;
+  newChat: (prompt?: string) => void;
   conversationCreated: (conversationId: string) => void;
+  conversationMissing: () => void;
+  showConversation: (conversationId: string | null) => void;
   setPanelMounted: (panelMounted: boolean) => void;
+  setLastPage: (lastPage: string) => void;
 };

@@ -27,6 +27,7 @@ import {
   ChatContentColumn,
   PageSkeleton,
 } from './chat-panel/chat-content-column';
+import { ChatNotch } from './chat-panel/chat-notch';
 import { ChatPanel, useChatWidth } from './chat-panel/chat-window';
 import { GlobalSearchProvider } from './global-search/global-search-context';
 import { ProjectDashboardLayoutHeader } from './project-layout/project-dashboard-layout-header';
@@ -116,6 +117,10 @@ function AppShell({ handle }: { handle: RouteHandle }) {
       ? projectId
       : null;
 
+  if (handle.chat === 'full' && !chatOn) {
+    return <Navigate to="/" replace />;
+  }
+
   if (isPlatform && !isPlatformAdmin) {
     return <Navigate to="/" replace />;
   }
@@ -153,7 +158,7 @@ function AppShell({ handle }: { handle: RouteHandle }) {
                   embedded && isBuilder && 'border-l',
                 )}
               >
-                {chatOn && handle.chat !== 'full' && (
+                {chatOn && (
                   <ErrorBoundary
                     fallbackRender={({ resetErrorBoundary }) => (
                       <ChatPanelError onRetry={resetErrorBoundary} />
@@ -181,6 +186,13 @@ function AppShell({ handle }: { handle: RouteHandle }) {
                   </div>
                 </ChatContentColumn>
               </div>
+              {chatOn && (
+                <ChatNotch
+                  className={
+                    isBuilder ? 'bottom-1.5 left-1.5' : 'bottom-3 left-0'
+                  }
+                />
+              )}
             </div>
           </SidebarInset>
         </div>

@@ -1,11 +1,26 @@
 import { AgentConversation } from '@activepieces/shared';
 import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Plus, X } from 'lucide-react';
-import { memo } from 'react';
+import {
+  History,
+  Maximize2,
+  PanelLeft,
+  PanelRight,
+  Plus,
+  X,
+} from 'lucide-react';
+import { memo, useState } from 'react';
 
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
+import { ConversationList } from '@/app/routes/chat-with-ai/conversation-list';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Tooltip,
   TooltipContent,
@@ -18,11 +33,39 @@ import {
   chatPanelUtils,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
+import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
+
+import { useActiveConversationId, useChatWidth } from './chat-window';
 
 export function ChatChrome() {
-  const conversationId = useChatPanel((s) => s.conversationId);
+  const layout = useChatWidth();
+  const conversationId = useActiveConversationId();
   const newChatToken = useChatPanel((s) => s.newChatToken);
+  const pendingPrompt = useChatPanel((s) => s.pendingPrompt);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const full = layout === 'full';
+  const chatShown = layout !== 'closed';
+
+  if (!chatShown && historyOpen) {
+    setHistoryOpen(false);
+  }
+
+  const phone = windowSizeHooks.useIsPhone();
   const title = useConversationTitle({ conversationId });
+
+  const openConversation = (id: string) => {
+    setHistoryOpen(false);
+    if (full) {
+      chatPanelUtils.showOnFullPage(id);
+    } else {
+      useChatPanel.getState().showConversation(id);
+    }
+  };
+
+  const startFresh = () => {
+    setHistoryOpen(false);
+    chatPanelUtils.startNewChat();
+  };
 
   return (
     <>
@@ -38,46 +81,81 @@ export function ChatChrome() {
         </h2>
         <div className="-mr-1 flex shrink-0 items-center gap-0.5">
           <HeaderButton
-            label={t('New chat')}
-            onClick={chatPanelUtils.startNewChat}
+            label={historyOpen ? t('Hide history') : t('History')}
+            aria-pressed={historyOpen}
+            onClick={() => setHistoryOpen(!historyOpen)}
           >
+            <History />
+          </HeaderButton>
+          <HeaderButton label={t('New chat')} onClick={startFresh}>
             <Plus />
           </HeaderButton>
-          <HeaderButton
-            label={t('Close')}
-            onClick={() => useChatPanel.getState().setOpen(false)}
-          >
-            <X />
-          </HeaderButton>
+          {!phone && <LayoutMenu />}
+          {!full && (
+            <HeaderButton
+              label={t('Close')}
+              onClick={() => useChatPanel.getState().setOpen(false)}
+            >
+              <X />
+            </HeaderButton>
+          )}
         </div>
       </div>
       <div className="relative min-h-0 flex-1">
-        <ChatBody conversationId={conversationId} newChatToken={newChatToken} />
+        {historyOpen && (
+          <ConversationList
+            className="absolute inset-0 z-10 w-full bg-gray-1 animate-in fade-in duration-150 ease-move motion-reduce:animate-none"
+            selectedId={conversationId}
+            onSelect={openConversation}
+            onNewChat={startFresh}
+          />
+        )}
+        <div inert={historyOpen} className="h-full">
+          <ChatBody
+            full={full}
+            conversationId={conversationId}
+            newChatToken={newChatToken}
+            prompt={pendingPrompt}
+          />
+        </div>
       </div>
     </>
   );
 }
 
 const ChatBody = memo(function ChatBody({
+  full,
   conversationId,
   newChatToken,
+  prompt,
 }: {
+  full: boolean;
   conversationId: string | null;
   newChatToken: number;
+  prompt?: string;
 }) {
   const queryClient = useQueryClient();
   const invalidate = () =>
     queryClient
       .invalidateQueries({ queryKey: chatQueryKeys.allConversationLists() })
       .catch(() => undefined);
+  const showOnPage = (id: string | null) => {
+    if (full) chatPanelUtils.showOnFullPage(id);
+  };
   return (
     <AIChatBox
       key={newChatToken}
       incognito={false}
       conversationId={conversationId}
+      initialPrompt={prompt}
       onConversationCreated={(id) => {
         useChatPanel.getState().conversationCreated(id);
+        showOnPage(id);
         invalidate();
+      }}
+      onConversationMissing={() => {
+        useChatPanel.getState().conversationMissing();
+        showOnPage(null);
       }}
       onTitleUpdate={(next) => {
         const id = useChatPanel.getState().conversationId;
@@ -125,6 +203,57 @@ function setCachedTitle({
     ...cached,
     title,
   });
+}
+
+function LayoutMenu() {
+  const layout = useChatWidth();
+  const mode = useChatPanel((s) => s.mode);
+  const current = layout === 'full' ? 'full' : mode;
+  const Icon =
+    current === 'full'
+      ? Maximize2
+      : current === 'left'
+      ? PanelLeft
+      : PanelRight;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <HeaderButton label={t('Chat layout')}>
+          <Icon />
+        </HeaderButton>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="w-44"
+        onCloseAutoFocus={(event) => event.preventDefault()}
+      >
+        <DropdownMenuRadioGroup
+          value={current}
+          onValueChange={(value) => {
+            if (value === current) return;
+            if (value === 'full') {
+              chatPanelUtils.expand();
+            } else if (value === 'left' || value === 'right') {
+              chatPanelUtils.collapse(value);
+            }
+          }}
+        >
+          <DropdownMenuRadioItem value="left">
+            <PanelLeft className="size-4" />
+            {t('On the left')}
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="right">
+            <PanelRight className="size-4" />
+            {t('On the right')}
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="full">
+            <Maximize2 className="size-4" />
+            {t('Full page')}
+          </DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 function HeaderButton({

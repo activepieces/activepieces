@@ -335,6 +335,7 @@ export function useAgentChat({
   onConversationCreated,
   onCreditsExhausted,
   onTurnEnd,
+  onConversationMissing,
 }: {
   agentId?: string;
   builder?: boolean;
@@ -343,6 +344,7 @@ export function useAgentChat({
   onConversationCreated?: (conversationId: string) => void;
   onCreditsExhausted?: () => void;
   onTurnEnd?: () => void;
+  onConversationMissing?: () => void;
 } = {}) {
   const store = useChatStoreApi();
   const toolCallMeta = useChatStoreContext((state) => state.toolCallMeta);
@@ -385,6 +387,8 @@ export function useAgentChat({
   onTitleUpdateRef.current = onTitleUpdate;
   const onConversationCreatedRef = useRef(onConversationCreated);
   onConversationCreatedRef.current = onConversationCreated;
+  const onConversationMissingRef = useRef(onConversationMissing);
+  onConversationMissingRef.current = onConversationMissing;
 
   const handleTitleUpdate = useCallback((title: string) => {
     onTitleUpdateRef.current?.(title);
@@ -972,9 +976,14 @@ export function useAgentChat({
         conversationIdRef.current = null;
         setConversationIdState(null);
         setIsLoadingHistory(false);
+        const onMissing = onConversationMissingRef.current;
+        if (onMissing) {
+          onMissing();
+          return;
+        }
         updateSendStatus({
           type: 'error',
-          message: 'Conversation not found',
+          message: t('Conversation not found'),
         });
         return;
       }

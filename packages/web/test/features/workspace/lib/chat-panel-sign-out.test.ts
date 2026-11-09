@@ -16,9 +16,10 @@ describe('chat panel on sign out', () => {
       'conv-of-user-a',
     );
     window.sessionStorage.setItem('chat:conv', 'conv-of-user-a');
+    window.sessionStorage.setItem('chat:last-page', '/projects/p1/runs');
   });
 
-  it('forgets the open chat of the signed out user', async () => {
+  it('forgets the open chat and page of the signed out user', async () => {
     const { useChatPanel } = await import(
       '@/features/workspace/lib/chat-panel-open'
     );
@@ -30,7 +31,9 @@ describe('chat panel on sign out', () => {
     authenticationSession.clearSession();
 
     expect(window.sessionStorage.getItem('chat:conv')).toBeNull();
+    expect(window.sessionStorage.getItem('chat:last-page')).toBeNull();
     expect(useChatPanel.getState().conversationId).toBeNull();
+    expect(useChatPanel.getState().lastPage).toBeNull();
   });
 
   it('keeps them while the user stays signed in', async () => {
@@ -44,6 +47,9 @@ describe('chat panel on sign out', () => {
     expect(
       window.localStorage.getItem('chat:last-conv:platform-a:user-a'),
     ).toBe('conv-of-user-a');
+    expect(window.sessionStorage.getItem('chat:last-page')).toBe(
+      '/projects/p1/runs',
+    );
   });
 });
 

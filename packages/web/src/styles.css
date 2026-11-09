@@ -1276,3 +1276,27 @@
     --admin-card-border: var(--gray-6);
   }
 }
+
+.ap-chat-notch-line {
+  stroke-dasharray: 1;
+}
+
+.group:hover .ap-chat-notch-line {
+  animation: ap-chat-notch-write 450ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+.group:hover .ap-chat-notch-line + .ap-chat-notch-line {
+  animation-delay: 60ms;
+}
+
+@keyframes ap-chat-notch-write {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .group:hover .ap-chat-notch-line {
+    animation: none;
+  }
+}

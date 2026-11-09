@@ -2,7 +2,13 @@
  * @vitest-environment jsdom
  */
 import { TemplateType } from '@activepieces/shared';
-import { act, cleanup, render, screen } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from '@testing-library/react';
 import * as React from 'react';
 import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -110,6 +116,10 @@ vi.mock('@/app/components/chat-panel/chat-window', () => ({
   useChatWidth: () => 'full',
 }));
 
+vi.mock('@/app/components/chat-panel/chat-notch', () => ({
+  ChatNotch: () => null,
+}));
+
 vi.mock('@/app/components/chat-panel/chat-content-column', () => ({
   ChatContentColumn: ({ children }: React.PropsWithChildren) => <>{children}</>,
 }));
@@ -166,6 +176,38 @@ describe('AppShellRoute on a template link', () => {
   });
 });
 
+describe('AppShellRoute on the chat page', () => {
+  afterEach(cleanup);
+
+  it('shows the chat when it is on', () => {
+    chat.on = true;
+    renderAt('/chat');
+
+    expect(screen.getByRole('complementary', { name: 'Chat' })).toBeTruthy();
+  });
+
+  it('offers a retry when the chat crashes', () => {
+    chat.on = true;
+    chat.crash = true;
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    renderAt('/chat');
+
+    expect(screen.getByRole('alert')).toBeTruthy();
+    chat.crash = false;
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+    expect(screen.getByRole('complementary', { name: 'Chat' })).toBeTruthy();
+    quiet.mockRestore();
+  });
+
+  it('leaves the chat page when the chat is off or hidden', () => {
+    chat.on = false;
+    renderAt('/chat');
+
+    expect(screen.getByText('Home')).toBeTruthy();
+  });
+});
+
 describe('AppShellRoute on an admin page', () => {
   beforeEach(() => {
     sidebarModes.length = 0;
@@ -209,6 +251,7 @@ function renderAt(path: string) {
             handle: shellHandles.templateDetails,
             element: <TemplatePage />,
           },
+          { path: '/chat', handle: shellHandles.chat, element: null },
           {
             path: '/platform/projects',
             handle: shellHandles.platform,
