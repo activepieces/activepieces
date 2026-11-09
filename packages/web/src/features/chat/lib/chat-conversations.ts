@@ -5,9 +5,10 @@ import {
   QueryClient,
   QueryKey,
   useInfiniteQuery,
+  useQueryClient,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import { toast } from 'sonner';
 
 import { chatApi } from './chat-api';
@@ -40,6 +41,26 @@ export function useChatConversations() {
     [query.data, pendingDeletes],
   );
   return { ...query, conversations };
+}
+
+export function useHasConversations(): boolean {
+  const queryClient = useQueryClient();
+  const subscribe = useCallback(
+    (onChange: () => void) => queryClient.getQueryCache().subscribe(onChange),
+    [queryClient],
+  );
+  const read = useCallback(
+    () =>
+      queryClient
+        .getQueriesData<InfiniteData<SeekPage<AgentConversation>>>({
+          queryKey: chatQueryKeys.conversationList(),
+        })
+        .some(([, data]) =>
+          (data?.pages ?? []).some((page) => page.data.length > 0),
+        ),
+    [queryClient],
+  );
+  return useSyncExternalStore(subscribe, read);
 }
 
 async function rename({

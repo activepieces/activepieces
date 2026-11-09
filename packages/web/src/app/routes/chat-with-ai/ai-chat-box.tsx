@@ -1,12 +1,10 @@
-import { isNil, SeekPage } from '@activepieces/core-utils';
+import { isNil } from '@activepieces/core-utils';
 import {
-  AgentConversation,
   AgentMessageSource,
   ChatPersonalizationStatus,
   ModelOptions,
   PlatformRole,
 } from '@activepieces/shared';
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import {
@@ -31,8 +29,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ModelPicker, modelPickerUtils } from '@/features/agents';
 import { aiModelHooks } from '@/features/agents/ai-model/hooks';
 import { ChatCreditsAlert } from '@/features/billing';
+import { useHasConversations } from '@/features/chat/lib/chat-conversations';
 import { chatDom } from '@/features/chat/lib/chat-dom';
-import { chatQueryKeys } from '@/features/chat/lib/chat-query-keys';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import {
   ChatStoreProvider,
@@ -100,7 +98,6 @@ function ChatBoxContent({
   compact,
   autoFocusComposer,
 }: AIChatBoxProps) {
-  const queryClient = useQueryClient();
   const reduced = useReducedMotion();
   const credits = useCreditsState();
   const sessionProjectId = useSessionProjectId();
@@ -375,10 +372,7 @@ function ChatBoxContent({
     }
   };
 
-  const cachedConversations = queryClient.getQueryData<
-    SeekPage<AgentConversation>
-  >(chatQueryKeys.allConversationLists());
-  const hasConversations = (cachedConversations?.data?.length ?? 0) > 0;
+  const hasConversations = useHasConversations();
 
   if (gate === 'loading') {
     return <MessageSkeletons />;
