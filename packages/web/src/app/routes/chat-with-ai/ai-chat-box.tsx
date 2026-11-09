@@ -24,6 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ModelPicker, modelPickerUtils } from '@/features/agents';
 import { aiModelHooks } from '@/features/agents/ai-model/hooks';
 import { ChatCreditsAlert } from '@/features/billing';
+import { chatDom } from '@/features/chat/lib/chat-dom';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import {
   ChatStoreProvider,
@@ -41,6 +42,7 @@ import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
 import { AssistantMessage } from './components/assistant-message';
+import { ChatResourceLinks } from './components/chat-app-links';
 import { ChatBottomBar } from './components/chat-bottom-bar';
 import {
   ChatEmptyState,
@@ -146,23 +148,23 @@ function ChatBoxContent({
   useEffect(() => {
     if (!isStreaming) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
       const target = e.target;
       if (
+        e.key !== 'Escape' ||
         !(target instanceof HTMLElement) ||
         !(
           rootRef.current?.contains(target) ||
           (!compact && target === document.body)
         ) ||
-        ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)
+        !chatDom.escapeFree(e)
       ) {
         return;
       }
-      e.preventDefault();
+      chatDom.claimEscape(e);
       cancelStream();
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
   }, [isStreaming, cancelStream, compact]);
 
   const chatProjectId = conversationProjectId ?? sessionProjectId;
@@ -403,36 +405,38 @@ function ChatBoxContent({
               >
                 {isLoadingHistory && <MessageSkeletons />}
 
-                {messages.map((msg, idx) => {
-                  if (msg.role === 'user') {
+                <ChatResourceLinks messages={messages}>
+                  {messages.map((msg, idx) => {
+                    if (msg.role === 'user') {
+                      return (
+                        <UserMessage
+                          key={msg.id}
+                          message={msg}
+                          isLastMessage={idx === messages.length - 1}
+                        />
+                      );
+                    }
+
+                    const isLastStreamingAssistant =
+                      isStreaming && idx === messages.length - 1;
+
+                    const isLastAssistant = idx === messages.length - 1;
+
                     return (
-                      <UserMessage
+                      <AssistantMessage
                         key={msg.id}
                         message={msg}
-                        isLastMessage={idx === messages.length - 1}
+                        isStreaming={isLastStreamingAssistant}
+                        isResumed={isLastStreamingAssistant && isResumedStream}
+                        isLastMessage={isLastAssistant}
+                        onSendPrompt={(text) => void handleSend(text)}
+                        claimedBuildIds={claimedBuildIdsByMessage.get(msg.id)}
+                        conversationId={conversationId}
+                        messageIndex={idx}
                       />
                     );
-                  }
-
-                  const isLastStreamingAssistant =
-                    isStreaming && idx === messages.length - 1;
-
-                  const isLastAssistant = idx === messages.length - 1;
-
-                  return (
-                    <AssistantMessage
-                      key={msg.id}
-                      message={msg}
-                      isStreaming={isLastStreamingAssistant}
-                      isResumed={isLastStreamingAssistant && isResumedStream}
-                      isLastMessage={isLastAssistant}
-                      onSendPrompt={(text) => void handleSend(text)}
-                      claimedBuildIds={claimedBuildIdsByMessage.get(msg.id)}
-                      conversationId={conversationId}
-                      messageIndex={idx}
-                    />
-                  );
-                })}
+                  })}
+                </ChatResourceLinks>
 
                 {!isAwaitingResponse &&
                   !wasCancelled &&

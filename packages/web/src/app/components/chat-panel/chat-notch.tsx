@@ -42,6 +42,7 @@ export function ChatNotch({ className }: { className?: string }) {
             <button
               type="button"
               aria-label={t('Chat')}
+              aria-keyshortcuts="Meta+J Control+J"
               aria-hidden={hidden || undefined}
               tabIndex={hidden ? -1 : 0}
               onClick={() => useChatPanel.getState().setOpen(true)}
@@ -55,7 +56,10 @@ export function ChatNotch({ className }: { className?: string }) {
               <NotchChatIcon />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="right">{t('Chat')}</TooltipContent>
+          <TooltipContent side="right" className="flex items-center gap-2">
+            {t('Chat')}
+            <span className="text-xs opacity-50">⌘J</span>
+          </TooltipContent>
         </Tooltip>
       </TooltipProvider>
     </div>

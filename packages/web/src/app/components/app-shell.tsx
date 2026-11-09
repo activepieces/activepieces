@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { ChatContentColumn } from './chat-panel/chat-content-column';
 import { ChatNotch } from './chat-panel/chat-notch';
-import { ChatPanel } from './chat-panel/chat-window';
+import { ChatPanel, ChatSheetLauncher } from './chat-panel/chat-window';
 import { GlobalSearchProvider } from './global-search/global-search-context';
 import { ProjectDashboardLayoutHeader } from './project-layout/project-dashboard-layout-header';
 import { AppSidebar } from './sidebar/app-sidebar';
@@ -125,7 +125,7 @@ function AppShell({ handle }: { handle: RouteHandle }) {
         <div
           className={cn(
             'flex h-svh flex-1 min-w-0',
-            !isPlatform && 'will-change-transform',
+            !isPlatform && 'md:will-change-transform',
             !embedded && 'max-md:h-auto max-md:min-h-0',
           )}
         >
@@ -173,6 +173,7 @@ function AppShell({ handle }: { handle: RouteHandle }) {
                   </div>
                 </ChatContentColumn>
               </div>
+              {chatOn && <ChatSheetLauncher />}
               {chatOn && (
                 <ChatNotch
                   className={

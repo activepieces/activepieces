@@ -43,6 +43,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { determineDefaultRoute } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
+import { useShellHandle } from '../app-shell';
 import { useGlobalSearch } from '../global-search/global-search-context';
 
 import { AppNav, PlatformAdminNavItem } from './app-nav';
@@ -53,7 +54,9 @@ import { SidebarUser } from './sidebar-user';
 
 export function AppSidebar({ mode }: { mode: AppSidebarMode }) {
   const { embedState } = useEmbedding();
-  const rail = useRailOpenState();
+  const rail = useRailOpenState({
+    chatPage: useShellHandle().chat === 'full',
+  });
   const isPlatform = mode === 'platform';
   const isHidden =
     !isPlatform && (embedState.isEmbedded || embedState.hideSideNav);
