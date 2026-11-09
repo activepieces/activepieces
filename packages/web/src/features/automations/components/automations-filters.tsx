@@ -146,38 +146,35 @@ export const AutomationsFilters = ({
 
   return (
     <>
-      <div
-        className={cn('overflow-x-auto mt-4 mb-4', DASHBOARD_CONTENT_PADDING_X)}
-      >
-        <div className="flex items-center justify-between gap-4 min-w-max">
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-11" />
-              <Input
-                placeholder={searchPlaceholder({
-                  hideTables: embedState.hideTables,
-                  agentsVisible,
-                })}
-                value={searchTerm}
-                onChange={(e) => {
-                  onSearchChange(e.target.value);
+      <div className={cn('@container mt-4 mb-4', DASHBOARD_CONTENT_PADDING_X)}>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-11" />
+            <Input
+              placeholder={searchPlaceholder({
+                hideTables: embedState.hideTables,
+                agentsVisible,
+              })}
+              value={searchTerm}
+              onChange={(e) => {
+                onSearchChange(e.target.value);
+                onFilterChange?.();
+              }}
+              className="min-w-[300px] max-w-xs pl-8 pr-8 focus-visible:ring-0 focus-visible:ring-offset-0"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => {
+                  onSearchChange('');
                   onFilterChange?.();
                 }}
-                className="min-w-[300px] max-w-xs pl-8 pr-8 focus-visible:ring-0 focus-visible:ring-offset-0"
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => {
-                    onSearchChange('');
-                    onFilterChange?.();
-                  }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center h-5 w-5 rounded-full bg-gray-3 hover:bg-gray-4 text-gray-11 hover:text-gray-12 transition-colors"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              )}
-            </div>
-
+                className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center h-5 w-5 rounded-full bg-gray-3 hover:bg-gray-4 text-gray-11 hover:text-gray-12 transition-colors"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+          <div className="order-last flex min-w-0 basis-full flex-wrap items-center gap-2 @min-[1040px]:order-none @min-[1040px]:basis-auto">
             <MultiSelectFilter
               label={t('Type')}
               icon={<Filter className="h-4 w-4" />}
@@ -255,7 +252,7 @@ export const AutomationsFilters = ({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-2">
             {!embedState.hideExportAndImportFlow && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

@@ -235,7 +235,7 @@ export const AutomationsTableRow = ({
           ))}
       </div>
       <div
-        className="w-[80px] shrink-0 px-2 flex items-center justify-end gap-1"
+        className="sticky right-0 w-[80px] shrink-0 self-stretch px-2 flex items-center justify-end gap-1 bg-gray-1 group-hover:bg-gray-2 before:pointer-events-none before:absolute before:inset-y-0 before:right-full before:w-6 before:bg-gradient-to-l before:from-gray-1 before:to-transparent group-hover:before:from-gray-2"
         onClick={(e) => e.stopPropagation()}
       >
         {item.type === 'folder' && onCreateInFolder && (

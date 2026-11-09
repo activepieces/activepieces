@@ -8,7 +8,7 @@ import {
 import { t } from 'i18next';
 import { UsersRound, Lock } from 'lucide-react';
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PageHeader } from '@/components/custom/page-header';
@@ -41,11 +41,25 @@ export const ProjectDashboardPageHeader = ({
   const { project } = projectCollectionUtils.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsInitialTab, setSettingsInitialTab] = useState<
-    'general' | 'members' | 'alerts' | 'pieces' | 'environment'
-  >('general');
+  const [settingsOpenByUser, setSettingsOpenByUser] = useState(false);
+  const [settingsInitialTab, setSettingsInitialTab] =
+    useState<SettingsTab>('general');
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const linkedTab = settingsTabOf(searchParams.get(SETTINGS_PARAM));
+  const settingsOpen = settingsOpenByUser || linkedTab !== null;
+  const setSettingsOpen = (open: boolean) => {
+    setSettingsOpenByUser(open);
+    if (open || linkedTab === null) return;
+    setSearchParams(
+      (params) => {
+        const next = new URLSearchParams(params);
+        next.delete(SETTINGS_PARAM);
+        return next;
+      },
+      { replace: true, state: location.state },
+    );
+  };
   const { projectMembers } = projectMembersHooks.useProjectMembers();
   const activeProjectMembers = projectMembers?.filter(
     (member) => member.user.status === UserStatus.ACTIVE,
@@ -84,12 +98,7 @@ export const ProjectDashboardPageHeader = ({
     (platform.plan.embeddingEnabled &&
       user?.platformRole === PlatformRole.ADMIN);
 
-  const getFirstAvailableTab = ():
-    | 'general'
-    | 'members'
-    | 'alerts'
-    | 'pieces'
-    | 'environment' => {
+  const getFirstAvailableTab = (): SettingsTab => {
     if (hasGeneralSettings) return 'general';
     if (
       project.type === ProjectType.TEAM &&
@@ -190,8 +199,24 @@ export const ProjectDashboardPageHeader = ({
       <ProjectSettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
-        initialTab={settingsInitialTab}
+        initialTab={linkedTab ?? settingsInitialTab}
       />
     </>
   );
 };
+
+function settingsTabOf(value: string | null): SettingsTab | null {
+  return SETTINGS_TABS.find((tab) => tab === value) ?? null;
+}
+
+const SETTINGS_PARAM = 'settings';
+
+type SettingsTab = 'general' | 'members' | 'alerts' | 'pieces' | 'environment';
+
+const SETTINGS_TABS: SettingsTab[] = [
+  'general',
+  'members',
+  'alerts',
+  'pieces',
+  'environment',
+];
