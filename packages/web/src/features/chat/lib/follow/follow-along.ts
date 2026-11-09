@@ -28,9 +28,12 @@ function onChunks({
       typeof chunk.toolCallId === 'string' &&
       typeof chunk.toolName === 'string'
     ) {
-      toolCalls.set(chunk.toolCallId, {
-        toolName: chunk.toolName,
-        input: chunk.input,
+      const { toolCalls } = useFollowMemory.getState();
+      useFollowMemory.setState({
+        toolCalls: {
+          ...toolCalls,
+          [chunk.toolCallId]: { toolName: chunk.toolName, input: chunk.input },
+        },
       });
       continue;
     }
@@ -39,10 +42,9 @@ function onChunks({
     if (!resolved) continue;
     const call =
       typeof chunk.toolCallId === 'string'
-        ? toolCalls.get(chunk.toolCallId)
+        ? takeToolCall(chunk.toolCallId)
         : undefined;
     if (call) {
-      toolCalls.delete(chunk.toolCallId as string);
       rememberUnseen({
         resource: resolved.ref,
         keys: highlightKeys({
@@ -59,6 +61,12 @@ function onChunks({
       navigable: mayNavigate(ctx),
     });
   }
+}
+
+function takeToolCall(toolCallId: string): ToolCall | undefined {
+  const { [toolCallId]: call, ...rest } = useFollowMemory.getState().toolCalls;
+  if (call) useFollowMemory.setState({ toolCalls: rest });
+  return call;
 }
 
 function onChange(change: FollowChange): void {
@@ -87,7 +95,7 @@ function mayNavigate(ctx: RunContext): boolean {
 
 function begin(): boolean {
   if (useFollowAlong.getState().phase === 'editing') return false;
-  pushedRuns.clear();
+  useFollowMemory.setState({ pushedRuns: {} });
   useFollowAlong.setState({
     phase: 'editing',
     following: true,
@@ -140,7 +148,8 @@ function stopFollowing(): void {
 
 function flash(keys: string[]): void {
   if (keys.length === 0) return;
-  flashCount += 1;
+  const flashCount = useFollowMemory.getState().flashCount + 1;
+  useFollowMemory.setState({ flashCount });
   const lit = Object.fromEntries(keys.map((key) => [key, flashCount]));
   useFollowAlong.setState({
     flashes: { ...useFollowAlong.getState().flashes, ...lit },
@@ -158,7 +167,11 @@ function rememberUnseen({
   if (keys.length === 0) return;
   if (resourceRegistry.isOn(window.location.pathname, resource)) return;
   const scope = resourceRegistry.keyOf(resource);
-  keys.forEach((key) => unseen.add(`${scope}|${key}`));
+  const added = Object.fromEntries(
+    keys.map((key): [string, true] => [`${scope}|${key}`, true]),
+  );
+  const { unseen } = useFollowMemory.getState();
+  useFollowMemory.setState({ unseen: { ...unseen, ...added } });
 }
 
 function takeUnseen({
@@ -168,7 +181,11 @@ function takeUnseen({
   resource: Pick<ResourceRef, 'kind' | 'id'>;
   key: string;
 }): boolean {
-  return unseen.delete(`${resourceRegistry.keyOf(resource)}|${key}`);
+  const unseenKey = `${resourceRegistry.keyOf(resource)}|${key}`;
+  const { [unseenKey]: seen, ...rest } = useFollowMemory.getState().unseen;
+  if (!seen) return false;
+  useFollowMemory.setState({ unseen: rest });
+  return true;
 }
 
 function highlightKeys({
@@ -226,9 +243,31 @@ function isFollowing(resource: Pick<ResourceRef, 'kind' | 'id'>): boolean {
 
 function claimHistoryPush(runId: string | null): boolean {
   if (runId === null) return true;
-  if (pushedRuns.has(runId)) return false;
-  pushedRuns.add(runId);
+  const { pushedRuns } = useFollowMemory.getState();
+  if (pushedRuns[runId]) return false;
+  useFollowMemory.setState({ pushedRuns: { ...pushedRuns, [runId]: true } });
   return true;
+}
+
+// A new user or project starts with nothing remembered from the last one.
+function reset(): void {
+  useFollowAlong.setState(initialFollowState());
+  useFollowMemory.setState(initialMemory());
+}
+
+function initialFollowState(): FollowState {
+  return {
+    target: null,
+    phase: 'idle',
+    following: true,
+    flashes: {},
+    scrollTaken: false,
+    liveRuns: {},
+  };
+}
+
+function initialMemory(): FollowMemory {
+  return { toolCalls: {}, unseen: {}, pushedRuns: {}, flashCount: 0 };
 }
 
 function onToolDone(listener: (change: FollowChange) => void): () => void {
@@ -236,20 +275,11 @@ function onToolDone(listener: (change: FollowChange) => void): () => void {
   return () => changeListeners.delete(listener);
 }
 
-const toolCalls = new Map<string, { toolName: string; input: unknown }>();
-const unseen = new Set<string>();
 const changeListeners = new Set<(change: FollowChange) => void>();
-const pushedRuns = new Set<string>();
-let flashCount = 0;
 
-export const useFollowAlong = create<FollowState>(() => ({
-  target: null,
-  phase: 'idle',
-  following: true,
-  flashes: {},
-  scrollTaken: false,
-  liveRuns: {},
-}));
+const useFollowMemory = create<FollowMemory>(initialMemory);
+
+export const useFollowAlong = create<FollowState>(initialFollowState);
 
 export const followAlong = {
   onChunks,
@@ -260,6 +290,7 @@ export const followAlong = {
   claimHistoryPush,
   onToolDone,
   takeUnseen,
+  reset,
 };
 
 export type RunContext = {
@@ -273,6 +304,16 @@ export type FollowChange = {
   op: ResourceOp;
   runId: string;
   navigable: boolean;
+};
+
+type ToolCall = { toolName: string; input: unknown };
+
+// Bookkeeping that no component renders from.
+type FollowMemory = {
+  toolCalls: Record<string, ToolCall>;
+  unseen: Record<string, true>;
+  pushedRuns: Record<string, true>;
+  flashCount: number;
 };
 
 type FollowState = {

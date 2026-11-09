@@ -21,6 +21,7 @@ import {
   chatPanelUtils,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
+import { authenticationSession } from '@/lib/authentication-session';
 
 export function FollowAlongController() {
   useAiFieldHighlights();
@@ -39,6 +40,8 @@ export function FollowAlongController() {
   const pathnameRef = useRef(pathname);
   pathnameRef.current = pathname;
   const runOfTarget = useRef<string | null>(null);
+
+  useEffect(() => authenticationSession.subscribe(followAlong.reset), []);
 
   useEffect(() => {
     let stopLeaving = (): void => undefined;

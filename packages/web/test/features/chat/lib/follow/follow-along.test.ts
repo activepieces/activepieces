@@ -151,4 +151,22 @@ describe('followAlong', () => {
     toolResult({ ctx: sent(uid('run')), result: output({ id: 't1' }) });
     expect(useFollowAlong.getState().flashes).toEqual({});
   });
+
+  it('forgets everything from the last user or project on reset', () => {
+    const ctx = sent(uid('run'));
+    toolResult({ ctx, result: output({ id: 't1' }) });
+    followAlong.flash(['a']);
+    expect(followAlong.claimHistoryPush('r-reset')).toBe(true);
+    expect(followAlong.claimHistoryPush('r-reset')).toBe(false);
+
+    followAlong.reset();
+
+    expect(useFollowAlong.getState()).toMatchObject({
+      phase: 'idle',
+      target: null,
+      flashes: {},
+      liveRuns: {},
+    });
+    expect(followAlong.claimHistoryPush('r-reset')).toBe(true);
+  });
 });

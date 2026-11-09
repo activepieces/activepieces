@@ -4,13 +4,7 @@ import {
   FlowTriggerType,
   flowStructureUtil,
 } from '@activepieces/shared';
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { PanelImperativeHandle } from 'react-resizable-panels';
 import { usePrevious } from 'react-use';
 
@@ -82,13 +76,7 @@ const BuilderPage = () => {
       removeAllStepTestsListeners();
     };
   }, [removeAllStepTestsListeners]);
-  const builderStore = useBuilderStore();
-  useOpenBuilder(
-    useCallback(() => {
-      const { flow, selectedStep: stepName } = builderStore.getState();
-      return { flowId: flow.id, stepName };
-    }, [builderStore]),
-  );
+  useOpenBuilder(useBuilderStore());
   flowCanvasHooks.useShowBuilderIsSavingWarningBeforeLeaving();
   flowCanvasHooks.useFlushPendingEditsOnLeave();
   flowCanvasHooks.useRefreshDraftOnPush();

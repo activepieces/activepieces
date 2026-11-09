@@ -1,26 +1,32 @@
 import { AgentPageContext } from '@activepieces/shared';
 import { useEffect } from 'react';
 import { matchPath } from 'react-router-dom';
+import { create } from 'zustand';
 
 import { routeLocation } from '@/lib/route-location';
 import { routesThatRequireProjectId } from '@/lib/route-utils';
 
-export function useOpenBuilder(read: ReadOpenBuilder): void {
+export function useOpenBuilder(store: OpenBuilderStore): void {
   useEffect(() => {
-    openBuilder.read = read;
+    useOpenBuilderStore.setState({ store });
     return () => {
-      if (openBuilder.read === read) {
-        openBuilder.read = null;
+      if (useOpenBuilderStore.getState().store === store) {
+        useOpenBuilderStore.setState({ store: null });
       }
     };
-  }, [read]);
+  }, [store]);
 }
 
 function current(): AgentPageContext | null {
+  const { store } = useOpenBuilderStore.getState();
   return fromPath({
     pathname: routeLocation.pathname(),
-    builder: openBuilder.read?.() ?? null,
+    builder: store ? selectOpenBuilder(store.getState()) : null,
   });
+}
+
+function selectOpenBuilder(state: OpenBuilderState): OpenBuilder {
+  return { flowId: state.flow.id, stepName: state.selectedStep };
 }
 
 function fromPath({
@@ -64,8 +70,12 @@ function inProject(route: string): string {
 
 export const pageContextUtils = { current, fromPath };
 
-const openBuilder: { read: ReadOpenBuilder | null } = { read: null };
+const useOpenBuilderStore = create<{ store: OpenBuilderStore | null }>(
+  () => ({ store: null }),
+);
 
 type OpenBuilder = { flowId: string; stepName: string | null };
 
-type ReadOpenBuilder = () => OpenBuilder;
+type OpenBuilderState = { flow: { id: string }; selectedStep: string | null };
+
+type OpenBuilderStore = { getState: () => OpenBuilderState };
