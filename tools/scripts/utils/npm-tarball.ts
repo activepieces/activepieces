@@ -4,7 +4,7 @@ const MAX_ATTEMPTS = 60
 const waitUntilDownloadable = async ({ name, version }: { name: string, version: string }): Promise<boolean> => {
     const tarballUrl = `https://registry.npmjs.org/${name}/-/${name.split('/').pop()}-${version}.tgz`
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-        const response = await fetch(tarballUrl, { method: 'HEAD' }).catch(() => null)
+        const response = await fetch(tarballUrl, { method: 'HEAD', signal: AbortSignal.timeout(POLL_INTERVAL_MS) }).catch(() => null)
         if (response?.ok) {
             return true
         }
