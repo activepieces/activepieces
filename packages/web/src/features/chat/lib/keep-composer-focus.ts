@@ -1,5 +1,3 @@
-import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
-
 import { chatDom } from './chat-dom';
 
 function keep(): void {
@@ -9,9 +7,7 @@ function keep(): void {
     return;
   }
   const target = (): HTMLElement | null =>
-    kept.isConnected
-      ? kept
-      : document.querySelector<HTMLElement>(`${PANEL} textarea`);
+    kept.isConnected ? kept : chatDom.composer();
 
   const giveBack = () => {
     const into = target();
@@ -21,7 +17,7 @@ function keep(): void {
   const onFocusIn = (event: FocusEvent) => {
     const to = event.target;
     if (!(to instanceof Element) || chatDom.inChat(to)) return;
-    if (to.closest(LAYERS)) {
+    if (to.closest(chatDom.OVERLAY_SELECTOR)) {
       stop();
       return;
     }
@@ -56,8 +52,6 @@ function keep(): void {
   release = stop;
 }
 
-const PANEL = `#${chatLayoutUtils.PANEL_ID}`;
-const LAYERS = '[role="dialog"], [role="alertdialog"], [role="menu"]';
 const GUARD_MS = 2000;
 
 let release: (() => void) | null = null;

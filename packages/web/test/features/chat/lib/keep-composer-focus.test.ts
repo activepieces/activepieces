@@ -9,7 +9,7 @@ describe('keepComposerFocus', () => {
 
   beforeEach(() => {
     document.body.innerHTML = `
-      <aside id="ap-chat-panel"><textarea></textarea></aside>
+      <aside id="ap-chat-panel"><textarea data-chat-composer></textarea></aside>
       <main><input /></main>`;
     composer = document.querySelector('textarea')!;
     pageInput = document.querySelector('input')!;

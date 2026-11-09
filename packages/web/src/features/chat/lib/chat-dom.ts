@@ -45,6 +45,10 @@ function inCodeEditor(target: EventTarget | null): boolean {
   return target instanceof Element && target.closest(CODE_EDITOR) !== null;
 }
 
+function overlaySelector(state: string): string {
+  return OVERLAY_ROLES.map((role) => `[role="${role}"]${state}`).join(', ');
+}
+
 function layerOpen(): boolean {
   const panel = document.getElementById(chatLayoutUtils.PANEL_ID);
   return Array.from(document.querySelectorAll(OPEN_OVERLAYS)).some(
@@ -55,9 +59,9 @@ function layerOpen(): boolean {
 const COMPOSER_ATTRIBUTE = 'data-chat-composer';
 const CODE_EDITOR = '.cm-editor, .monaco-editor';
 const claimedEscapes = new WeakSet<KeyboardEvent>();
-const OPEN_OVERLAYS = ['dialog', 'alertdialog', 'menu', 'listbox']
-  .map((role) => `[role="${role}"][data-state="open"]`)
-  .join(', ');
+const OVERLAY_ROLES = ['dialog', 'alertdialog', 'menu', 'listbox'];
+const OVERLAY_SELECTOR = overlaySelector('');
+const OPEN_OVERLAYS = overlaySelector('[data-state="open"]');
 
 export const chatDom = {
   composer,
@@ -66,6 +70,7 @@ export const chatDom = {
   claimEscape,
   shortcutOf,
   isCardField,
+  OVERLAY_SELECTOR,
 };
 
 type ChatShortcut = 'toggle' | 'newChat' | 'history';
