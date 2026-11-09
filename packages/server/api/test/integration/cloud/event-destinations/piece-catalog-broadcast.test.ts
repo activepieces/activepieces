@@ -88,6 +88,7 @@ describe('Piece catalog broadcast', () => {
         expect(jobs.map((job) => job.data.webhookId).sort()).toEqual([firstDestinationId, secondDestinationId].sort())
         expect(jobs.map((job) => job.data.payload.platformId).sort()).toEqual([first.platform.id, second.platform.id].sort())
         for (const job of jobs) {
+            expect(job.data.lowPriority).toBe(true)
             expect(job.data.projectId).toBeUndefined()
             expect(job.data.payload).not.toHaveProperty('projectId')
             expect(job.data.payload).not.toHaveProperty('userId')
@@ -235,6 +236,7 @@ type QueuedJob = {
     data: {
         webhookId: string
         projectId?: string
+        lowPriority?: boolean
         payload: {
             platformId: string
             action: ApplicationEventName

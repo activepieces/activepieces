@@ -257,6 +257,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
                     storedHeaders: destination.headers,
                     body,
                     jobId,
+                    lowPriority: true,
                 }),
             ))
         }
@@ -468,6 +469,7 @@ const dispatchEventToDestination = async ({
     storedHeaders,
     body,
     jobId,
+    lowPriority,
 }: DispatchEventParams): Promise<void> => {
     if (!isNil(internalFlowId)) {
         const { data: headers, error } = await tryCatch(() => decryptBoundHeaders({ headers: storedHeaders, destinationId, destinationUrl, log }))
@@ -503,6 +505,7 @@ const dispatchEventToDestination = async ({
             webhookUrl: destinationUrl,
             payload: body,
             ...deliveryJobFields({ format, hasHeaders: !isNil(storedHeaders) }),
+            lowPriority,
             jobType: WorkerJobType.EVENT_DESTINATION,
         },
     })
@@ -855,6 +858,7 @@ type DispatchEventParams = {
     storedHeaders: StoredEventDestinationHeaders | null
     body: unknown
     jobId?: string
+    lowPriority?: boolean
 }
 
 type BroadcastParams = {
