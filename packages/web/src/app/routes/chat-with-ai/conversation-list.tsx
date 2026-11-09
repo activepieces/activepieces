@@ -3,7 +3,6 @@ import {
   InfiniteData,
   QueryKey,
   useInfiniteQuery,
-  useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -24,7 +23,10 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
-import { usePendingDeletes } from '@/features/chat/lib/chat-pending-deletes';
+import {
+  chatPendingDeletes,
+  usePendingDeletes,
+} from '@/features/chat/lib/chat-pending-deletes';
 import { chatQueryKeys } from '@/features/chat/lib/chat-query-keys';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { useConversationIndicators } from '@/features/chat/lib/use-conversation-indicators';
@@ -88,17 +90,19 @@ export function ConversationList({
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
 
-  const { mutate: deleteConv } = useMutation({
-    mutationFn: (id: string) => chatApi.deleteConversation(id),
-    onSuccess: (_data, deletedId) => {
-      void queryClient.invalidateQueries({
-        queryKey: chatQueryKeys.conversationList(agentId),
-      });
-      if (selectedIdRef.current === deletedId) {
-        onNewChat?.();
-      }
-    },
-  });
+  const deleteConv = (id: string) => {
+    const wasSelected = selectedIdRef.current === id;
+    const bringBack = () => {
+      if (wasSelected && !selectedIdRef.current) onSelect?.(id);
+    };
+    chatPendingDeletes.removeWithUndo({
+      queryClient,
+      id,
+      onUndo: bringBack,
+      onFailed: bringBack,
+    });
+    if (wasSelected) onNewChat?.();
+  };
 
   const pendingDeletes = usePendingDeletes((state) => state.ids);
   const allConversations = useMemo(
@@ -256,6 +260,7 @@ export function ConversationList({
                     <span
                       role="button"
                       tabIndex={0}
+                      aria-label={t('Delete')}
                       className={cn(
                         'absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded-md text-gray-11 hover:text-danger-11 hover:bg-danger-3 transition-all',
                         mobile && 'opacity-100 p-1.5',

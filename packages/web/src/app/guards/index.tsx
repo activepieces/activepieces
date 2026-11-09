@@ -96,7 +96,7 @@ const shellRoutes = [
   ...templateRoutes,
   {
     path: '/projects/:projectId',
-    handle: shellHandles.project,
+    handle: shellHandles.projectRedirect,
     element: (
       <TokenCheckerWrapper>
         <DefaultRoute></DefaultRoute>
@@ -105,7 +105,7 @@ const shellRoutes = [
   },
   {
     path: '/*',
-    handle: shellHandles.publicProject,
+    handle: shellHandles.publicRedirect,
     element: (
       <PageTitle title="Redirect">
         <DefaultRoute></DefaultRoute>

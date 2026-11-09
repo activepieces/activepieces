@@ -24,6 +24,9 @@ import { cn } from '@/lib/utils';
 
 export function ChatInput({
   isStreaming,
+  replying = isStreaming,
+  replyStopped = false,
+  holdQueued = false,
   onSend,
   onStop,
   onInputChange,
@@ -38,6 +41,9 @@ export function ChatInput({
   autoFocus,
 }: {
   isStreaming: boolean;
+  replying?: boolean;
+  replyStopped?: boolean;
+  holdQueued?: boolean;
   onSend: (text: string, files?: File[]) => void;
   onStop?: () => void;
   onInputChange?: (hasInput: boolean) => void;
@@ -55,6 +61,8 @@ export function ChatInput({
   const [focused, setFocused] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [interimText, setInterimText] = useState('');
+  const [queued, setQueued] = useState<QueuedMessage | null>(null);
+  const [wasReplying, setWasReplying] = useState(replying);
   const lastHasInputRef = useRef(false);
   const shellRef = useRef<HTMLDivElement>(null);
   const caretToEndRef = useRef(false);
@@ -129,20 +137,60 @@ export function ChatInput({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isRecording, cancelRecording]);
 
-  const handleSubmit = useCallback(() => {
-    if (
-      isNil(sendBlockedReason) &&
-      !isStreaming &&
-      (value.trim() || attachedFiles.length > 0)
-    ) {
-      onSend(
-        value.trim(),
-        attachedFiles.length > 0 ? attachedFiles : undefined,
-      );
-      setValue('');
-      setAttachedFiles([]);
+  const restoreQueued = (item: QueuedMessage) => {
+    const joined = [item.text, value].filter((part) => part.length > 0);
+    handleValueChange(joined.join('\n'));
+    setAttachedFiles((prev) => [...item.files, ...prev]);
+  };
+
+  if (wasReplying !== replying) {
+    setWasReplying(replying);
+    if (!replying && !isNil(queued) && (replyStopped || holdQueued)) {
+      setQueued(null);
+      restoreQueued(queued);
     }
-  }, [isStreaming, value, attachedFiles, onSend, sendBlockedReason]);
+  }
+
+  const sendQueuedRef = useRef(onSend);
+  sendQueuedRef.current = onSend;
+  const readyToSend = !replying && !replyStopped && !holdQueued;
+  useEffect(() => {
+    if (!readyToSend || isNil(queued)) return;
+    setQueued(null);
+    sendQueuedRef.current(
+      queued.text,
+      queued.files.length > 0 ? queued.files : undefined,
+    );
+  }, [readyToSend, queued]);
+
+  const cancelQueued = () => {
+    if (isNil(queued)) return;
+    setQueued(null);
+    restoreQueued(queued);
+  };
+
+  const handleSubmit = useCallback(() => {
+    const text = value.trim();
+    if (!isNil(sendBlockedReason) || (!text && attachedFiles.length === 0)) {
+      return;
+    }
+    if (isStreaming) {
+      if (!isNil(queued)) return;
+      setQueued({ text, files: attachedFiles });
+    } else {
+      onSend(text, attachedFiles.length > 0 ? attachedFiles : undefined);
+    }
+    handleValueChange('');
+    setAttachedFiles([]);
+  }, [
+    isStreaming,
+    value,
+    attachedFiles,
+    onSend,
+    sendBlockedReason,
+    queued,
+    handleValueChange,
+  ]);
 
   const handleFilesAdded = useCallback((files: File[]) => {
     setAttachedFiles((prev) => [...prev, ...files]);
@@ -154,6 +202,22 @@ export function ChatInput({
 
   return (
     <div ref={shellRef} className="contents">
+      {!isNil(queued) && (
+        <div
+          role="status"
+          className="flex flex-col items-end gap-0.5 px-3 pt-2"
+        >
+          <p className="line-clamp-3 max-w-[85%] whitespace-pre-wrap break-words rounded-xl bg-gray-3 px-2.5 py-1 text-sm text-gray-11">
+            {queued.text}
+          </p>
+          <div className="flex items-center gap-0.5 text-xs text-gray-11">
+            <span className="px-1">{t('Sends when the reply ends.')}</span>
+            <Button variant="ghost" size="xs" onClick={cancelQueued}>
+              {t('Cancel')}
+            </Button>
+          </div>
+        </div>
+      )}
       <FileUpload onFilesAdded={handleFilesAdded} multiple>
         <PromptInput
           isLoading={isStreaming}
@@ -280,7 +344,7 @@ export function ChatInput({
                       size="icon"
                       className="sm:h-7 sm:w-7 rounded-full"
                       onClick={handleSubmit}
-                      disabled={isStreaming || !isNil(sendBlockedReason)}
+                      disabled={!isNil(sendBlockedReason) || !isNil(queued)}
                     >
                       <ArrowUp className="size-4" />
                     </Button>
@@ -334,3 +398,5 @@ export function ChatInput({
 }
 
 export type ComposerFill = { text: string; id: number };
+
+type QueuedMessage = { text: string; files: File[] };

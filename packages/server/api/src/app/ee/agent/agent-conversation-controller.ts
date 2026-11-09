@@ -194,7 +194,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
                 flowTools,
                 ...spreadIfDefined('source', conversation.source === AgentRunSource.CHAT ? undefined : conversation.source),
                 ...spreadIfDefined('messageSource', request.body.messageSource),
-                ...spreadIfDefined('pageContext', pageContextForRun({ pageContext: request.body.pageContext, runProjectId: conversation.projectId ?? runProjectId, log: runLog })),
+                ...spreadIfDefined('pageContext', pageContextForRun({ pageContext: request.body.pageContext, runProjectId, log: runLog })),
                 ...(isBuilder ? { promptOverride: { system: agentPrompt.buildBuilderSystemPrompt({ agent }) } } : {}),
                 ...(carriesConfiguredTools ? agentHelpers.jobFieldsFromConfig({ config: agentConfig }) : {}),
             },
@@ -381,15 +381,20 @@ function connectionOffer<T extends { externalId: string, projectId: string }>({ 
     }
 }
 
-function pageContextForRun({ pageContext, runProjectId, log }: { pageContext: AgentPageContext | undefined, runProjectId: string | null, log: FastifyBaseLogger }): AgentPageContext | undefined {
+function pageContextForRun({ pageContext, runProjectId, log }: { pageContext: unknown, runProjectId: string | null, log: FastifyBaseLogger }): AgentPageContext | undefined {
     if (isNil(pageContext)) {
         return undefined
     }
-    if (pageContext.projectId !== runProjectId) {
+    const parsed = AgentPageContext.safeParse(pageContext)
+    if (!parsed.success) {
+        log.debug({ fields: parsed.error.issues.map((issue) => issue.path.map(String).join('.')) }, '[agentConversationController] Page context dropped: it does not match the schema')
+        return undefined
+    }
+    if (parsed.data.projectId !== runProjectId) {
         log.debug({ project: { id: runProjectId } }, '[agentConversationController] Page context dropped: it names another project than the run')
         return undefined
     }
-    return pageContext
+    return parsed.data
 }
 
 function normalizePiece(pieceName: string): string {

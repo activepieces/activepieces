@@ -268,12 +268,15 @@ export type RouteHandle = {
   projectHeader?: true;
   allowAnonymous?: true;
   standalone?: 'sharedTemplate';
+  redirectOnly?: true;
 };
 
 export const shellHandles = {
   project: { shell: 'project' },
   projectWithHeader: { shell: 'project', projectHeader: true },
   publicProject: { shell: 'project', allowAnonymous: true },
+  projectRedirect: { shell: 'project', redirectOnly: true },
+  publicRedirect: { shell: 'project', allowAnonymous: true, redirectOnly: true },
   templateDetails: {
     shell: 'project',
     allowAnonymous: true,

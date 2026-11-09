@@ -161,13 +161,10 @@ export function ChatChrome() {
       openConversation(id);
     };
     chatPendingDeletes.removeWithUndo({
+      queryClient,
       id,
       onUndo: bringBack,
       onFailed: bringBack,
-      onDeleted: () => {
-        queryClient.removeQueries({ queryKey: chatQueryKeys.conversation(id) });
-        invalidateList();
-      },
     });
     startFresh();
   };

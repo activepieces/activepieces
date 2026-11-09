@@ -127,22 +127,31 @@ export function FollowAlongController() {
       selfNavRef.current = route.split('?')[0];
       chatPanelUtils.openBeside({ route, push, name: target.name });
     };
-    return untilPageFree((focused) => {
+    const stop = untilPageFree((focused) => {
       const latest = useFollowAlong.getState();
       if (
         !latest.following ||
         !latest.target ||
         resourceRegistry.keyOf(latest.target) !== resourceRegistry.keyOf(target)
       ) {
+        followAlong.dismissOffer();
         return true;
       }
-      if (pageFocus.isBusyIn(focused)) return false;
-      if (followHold.holds({ fullPage: chatPanelUtils.isFullPage() })) {
+      if (
+        pageFocus.isBusyIn(focused) ||
+        followHold.holds({ fullPage: chatPanelUtils.isFullPage() })
+      ) {
+        followAlong.offer(target);
         return false;
       }
+      followAlong.dismissOffer();
       open();
       return true;
     });
+    return () => {
+      stop();
+      followAlong.dismissOffer();
+    };
   }, [pathname, targetKey, following, phase, embedded, autoFollow]);
 
   return null;

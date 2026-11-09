@@ -1,16 +1,21 @@
 import { tryCatch } from '@activepieces/core-utils';
+import { AgentConversation, SeekPage } from '@activepieces/shared';
+import { InfiniteData, QueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
 import { create } from 'zustand';
 
 import { chatApi } from './chat-api';
+import { chatQueryKeys } from './chat-query-keys';
 
 function removeWithUndo({
+  queryClient,
   id,
   onUndo,
   onDeleted,
   onFailed,
 }: {
+  queryClient: QueryClient;
   id: string;
   onUndo?: () => void;
   onDeleted?: () => void;
@@ -27,13 +32,19 @@ function removeWithUndo({
   const commit = async () => {
     if (!settle()) return;
     const { error } = await tryCatch(() => chatApi.deleteConversation(id));
-    show(id);
     if (error) {
+      show(id);
       toast.error(t('Failed to delete conversation'));
       onFailed?.();
       return;
     }
+    dropFromLists({ queryClient, id });
+    queryClient.removeQueries({ queryKey: chatQueryKeys.conversation(id) });
+    show(id);
     onDeleted?.();
+    queryClient
+      .invalidateQueries({ queryKey: chatQueryKeys.allConversationLists() })
+      .catch(() => undefined);
   };
   const commitOnExit = () => {
     if (!settle()) return;
@@ -57,6 +68,26 @@ function removeWithUndo({
       commit().catch(() => undefined);
     },
   });
+}
+
+function dropFromLists({
+  queryClient,
+  id,
+}: {
+  queryClient: QueryClient;
+  id: string;
+}): void {
+  queryClient.setQueriesData<InfiniteData<SeekPage<AgentConversation>>>(
+    { queryKey: chatQueryKeys.allConversationLists() },
+    (lists) =>
+      lists && {
+        ...lists,
+        pages: lists.pages.map((page) => ({
+          ...page,
+          data: page.data.filter((conversation) => conversation.id !== id),
+        })),
+      },
+  );
 }
 
 function hide(id: string) {

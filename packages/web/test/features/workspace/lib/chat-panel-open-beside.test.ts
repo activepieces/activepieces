@@ -67,6 +67,30 @@ describe('chatPanelUtils.openBeside', () => {
   });
 });
 
+describe('chatPanelUtils.openBeside without a chat router', () => {
+  it('reports that it did not open, so links navigate normally', () => {
+    expect(
+      chatPanelUtils.openBeside({
+        route: '/projects/p1/tables/t1',
+        push: true,
+        name: 'Leads',
+      }),
+    ).toBe(false);
+  });
+
+  it('reports that it opened when a chat router is bound', () => {
+    const { unbind } = bind('');
+    const opened = chatPanelUtils.openBeside({
+      route: '/projects/p1/tables/t1',
+      push: true,
+      name: 'Leads',
+    });
+    unbind();
+
+    expect(opened).toBe(true);
+  });
+});
+
 describe('chatPanelUtils.openBeside on the same page', () => {
   it('keeps the sheet hash alone when the link has its own hash', () => {
     const { navigations, unbind } = bind(chatPanelUtils.SHEET_HASH);

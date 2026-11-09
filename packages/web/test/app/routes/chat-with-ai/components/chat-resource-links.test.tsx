@@ -101,6 +101,6 @@ function toolMessage({ id, label }: { id: string; label: string }) {
 }
 
 const OUTER: AppLinkHandlers = {
-  open: () => undefined,
+  open: () => true,
   label: (route) => route,
 };

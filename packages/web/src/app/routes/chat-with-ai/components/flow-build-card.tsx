@@ -136,8 +136,11 @@ function OpenInBuilderButton({
         href={route}
         onClick={(event) => {
           if (!domUtils.isPlainLeftClick(event)) return;
-          event.preventDefault();
-          chatPanelUtils.openBeside({ route, push: true, name: t('Flow') });
+          if (
+            chatPanelUtils.openBeside({ route, push: true, name: t('Flow') })
+          ) {
+            event.preventDefault();
+          }
         }}
       >
         <PanelLeft className="h-3.5 w-3.5" />

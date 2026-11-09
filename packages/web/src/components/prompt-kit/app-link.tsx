@@ -37,11 +37,11 @@ export function AppLink({
       to={route}
       onClick={(event) => {
         if (!handlers || !domUtils.isPlainLeftClick(event)) return;
-        event.preventDefault();
-        handlers.open({
+        const opened = handlers.open({
           route,
           name: event.currentTarget.textContent?.trim() || route,
         });
+        if (opened) event.preventDefault();
       }}
       className={cn(
         'rounded-sm text-accent-11 underline underline-offset-2 transition-colors hover:text-accent-11/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-8',
@@ -56,6 +56,6 @@ export function AppLink({
 const AppLinkContext = createContext<AppLinkHandlers | null>(null);
 
 export type AppLinkHandlers = {
-  open: (params: { route: string; name: string }) => void;
+  open: (params: { route: string; name: string }) => boolean;
   label: (route: string) => string;
 };
