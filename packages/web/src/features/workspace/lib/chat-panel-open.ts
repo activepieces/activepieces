@@ -136,7 +136,7 @@ function syncWithRoute({ location, matches }: ChatRouteState): void {
   const handle = matches.findLast(
     (match) => isObject(match.route.handle) && 'shell' in match.route.handle,
   )?.route.handle;
-  if (!isObject(handle)) return;
+  if (!isObject(handle) || handle.redirectOnly === true) return;
   const panel = useChatPanel.getState();
   if (handle.chat !== 'full') {
     panel.setLastPage(`${location.pathname}${location.search}`);

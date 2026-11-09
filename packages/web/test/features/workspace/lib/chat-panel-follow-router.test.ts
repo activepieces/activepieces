@@ -53,6 +53,22 @@ describe('chatPanelUtils.followRouter', () => {
     expect(useChatPanel.getState().lastPage).toBe('/projects/p1/automations');
   });
 
+  it('never remembers a redirect-only route as the last page', async () => {
+    const router = follow('/projects/p1/automations');
+
+    await router.navigate('/projects/p1');
+    await router.navigate('/');
+    await router.navigate('/chat/c2');
+
+    expect(useChatPanel.getState().lastPage).toBe('/projects/p1/automations');
+  });
+
+  it('leaves no last page when only redirect-only routes were seen', () => {
+    follow('/');
+
+    expect(useChatPanel.getState().lastPage).toBeNull();
+  });
+
   function follow(path: string) {
     const router = createMemoryRouter(ROUTES, { initialEntries: [path] });
     stop = chatPanelUtils.followRouter(router);
@@ -67,10 +83,20 @@ const ROUTES = [
     handle: { shell: 'project' },
     element: null,
   },
+  {
+    path: '/projects/:projectId',
+    handle: { shell: 'project', redirectOnly: true },
+    element: null,
+  },
   { path: '/chat', handle: { shell: 'project', chat: 'full' }, element: null },
   {
     path: '/chat/:conversationId',
     handle: { shell: 'project', chat: 'full' },
+    element: null,
+  },
+  {
+    path: '/*',
+    handle: { shell: 'project', allowAnonymous: true, redirectOnly: true },
     element: null,
   },
 ];
