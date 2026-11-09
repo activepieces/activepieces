@@ -337,6 +337,7 @@ export function useAgentChat({
   onCreditsExhausted,
   onTurnEnd,
   onConversationMissing,
+  onSendAbandoned,
 }: {
   agentId?: string;
   builder?: boolean;
@@ -346,6 +347,7 @@ export function useAgentChat({
   onCreditsExhausted?: () => void;
   onTurnEnd?: () => void;
   onConversationMissing?: () => void;
+  onSendAbandoned?: (message: AbandonedSend) => void;
 } = {}) {
   const store = useChatStoreApi();
   const toolCallMeta = useChatStoreContext((state) => state.toolCallMeta);
@@ -390,6 +392,8 @@ export function useAgentChat({
   onConversationCreatedRef.current = onConversationCreated;
   const onConversationMissingRef = useRef(onConversationMissing);
   onConversationMissingRef.current = onConversationMissing;
+  const onSendAbandonedRef = useRef(onSendAbandoned);
+  onSendAbandonedRef.current = onSendAbandoned;
   const sessionGenRef = useRef(0);
   const createAbortRef = useRef<AbortController | null>(null);
 
@@ -802,9 +806,17 @@ export function useAgentChat({
     ) => {
       const gen = sessionGenRef.current;
       const isStale = () => gen !== sessionGenRef.current;
+      const sentTo = conversationIdRef.current;
+      const abandon = (target: string | null) =>
+        onSendAbandonedRef.current?.({
+          content,
+          files: files ?? [],
+          conversationId: target,
+        });
       updateSendStatus({ type: 'submitting' });
       await pickSaveQueueRef.current;
       if (isStale() || isSendCancelled({ statusRef: sendStatusRef })) {
+        abandon(sentTo);
         return;
       }
 
@@ -842,7 +854,10 @@ export function useAgentChat({
         const { data: encodedFiles, error: fileError } = await tryCatch(
           async () => Promise.all(files.map(fileToBase64)),
         );
-        if (isStale()) return;
+        if (isStale()) {
+          abandon(sentTo);
+          return;
+        }
         if (fileError) {
           setOptimisticUserMessage(null);
           updateSendStatus({
@@ -864,7 +879,10 @@ export function useAgentChat({
             gen,
           }),
         );
-        if (isStale()) return;
+        if (isStale()) {
+          abandon(sentTo);
+          return;
+        }
         if (convError) {
           setOptimisticUserMessage(null);
           updateSendStatus({
@@ -879,6 +897,7 @@ export function useAgentChat({
         onConversationCreatedRef.current?.(conv.id);
         if (isSendCancelled({ statusRef: sendStatusRef })) {
           setOptimisticUserMessage(null);
+          abandon(conv.id);
           return;
         }
       }
@@ -1142,3 +1161,9 @@ export function useAgentChat({
     setModelPick,
   };
 }
+
+export type AbandonedSend = {
+  content: string;
+  files: File[];
+  conversationId: string | null;
+};

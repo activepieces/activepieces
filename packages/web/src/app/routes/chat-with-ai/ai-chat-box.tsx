@@ -57,6 +57,8 @@ import {
 import { QuickReplies } from './components/quick-replies';
 import { TaskPanelLayout } from './components/task-panel';
 import { UserMessage } from './components/user-message';
+import { composerStore } from './lib/composer-store';
+import { composerUtils } from './lib/composer-utils';
 import { getTextFromParts } from './lib/message-parsers';
 
 export function AIChatBox(props: AIChatBoxProps) {
@@ -125,6 +127,12 @@ function ChatBoxContent({
     onTurnEnd,
     onConversationMissing,
     onCreditsExhausted: () => credits.setCreditsExhausted(true),
+    onSendAbandoned: ({ content, files, conversationId: target }) =>
+      composerStore.fill({
+        key: composerUtils.draftKeyFor({ conversationId: target, agentId }),
+        text: content,
+        files,
+      }),
   });
 
   const setStoreConversationId = useChatStoreContext(
@@ -552,6 +560,8 @@ function ChatBoxContent({
             onSend={handleSend}
             onStop={cancelStream}
             onInputChange={setHasInput}
+            replyStopped={wasCancelled || failed}
+            draftKey={composerUtils.draftKeyFor({ conversationId, agentId })}
             recede={showOnboardingCard}
             modelPicker={
               showsPicker && awaitingSavedPick ? (

@@ -3763,5 +3763,10 @@
   "Doesn't open pages for you.": "Doesn't open pages for you.",
   "Chat is changing {name}": "Chat is changing {name}",
   "Chat deleted {name}.": "Chat deleted {name}.",
-  "Opened {name} beside the chat": "Opened {name} beside the chat"
+  "Opened {name} beside the chat": "Opened {name} beside the chat",
+  "{count, plural, =1 {1 file} other {# files}}": "{count, plural, =1 {1 file} other {# files}}",
+  "Sends when the reply ends.": "Sends when the reply ends.",
+  "This looks like a secret key. Anyone who can read this chat will see it.": "This looks like a secret key. Anyone who can read this chat will see it.",
+  "Send anyway": "Send anyway",
+  "Remove it": "Remove it"
 }

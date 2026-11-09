@@ -36,6 +36,8 @@ export function ChatBottomBar({
   placeholder,
   banner,
   recede,
+  replyStopped,
+  draftKey,
 }: ChatBottomBarProps) {
   const [composerEngaged, setComposerEngaged] = useState(false);
   const pendingActionPreview = useChatStoreContext((s) =>
@@ -121,31 +123,32 @@ export function ChatBottomBar({
   return (
     <div className="flex flex-col gap-2">
       {activeCard}
-      <div
-        className={cn(
+      <ChatInput
+        isStreaming={activeCard ? false : isStreaming}
+        replying={isStreaming}
+        replyStopped={replyStopped}
+        holdQueued={activeCard !== null}
+        onSend={handleSend}
+        onStop={onStop}
+        onInputChange={onInputChange}
+        minimalUntilFocus={recede === true && !activeCard}
+        onFocusChange={setComposerEngaged}
+        placeholder={
+          activeCard
+            ? t('Or reply in your own words')
+            : placeholder ?? t('Reply...')
+        }
+        rightActions={modelPicker}
+        sendBlockedReason={sendBlockedReason}
+        draftKey={draftKey}
+        banner={banner}
+        frameClassName={cn(
           'overflow-hidden rounded-xl border transition-colors',
           minimal
             ? 'border-transparent bg-transparent hover:bg-gray-3/30'
             : 'border-gray-6 hover:border-gray-8 focus-within:border-gray-8',
         )}
-      >
-        {banner}
-        <ChatInput
-          isStreaming={activeCard ? false : isStreaming}
-          onSend={handleSend}
-          onStop={onStop}
-          onInputChange={onInputChange}
-          minimalUntilFocus={recede === true && !activeCard}
-          onFocusChange={setComposerEngaged}
-          placeholder={
-            activeCard
-              ? t('Or reply in your own words')
-              : placeholder ?? t('Reply...')
-          }
-          rightActions={modelPicker}
-          sendBlockedReason={sendBlockedReason}
-        />
-      </div>
+      />
     </div>
   );
 }
@@ -223,4 +226,6 @@ type ChatBottomBarProps = {
   placeholder?: string;
   banner?: ReactNode;
   recede?: boolean;
+  replyStopped?: boolean;
+  draftKey?: string;
 };
