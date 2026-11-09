@@ -323,7 +323,20 @@ describe('ChatChrome', () => {
     expect(await screen.findByText('First')).toBeTruthy();
   });
 
-  it('puts focus in the new composer after New chat', async () => {
+  it('brings the chat back when its delete fails', async () => {
+    getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
+    renderChrome();
+    await screen.findByText('Old title');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    expect(useChatPanel.getState().conversationId).toBeNull();
+    const [{ onFailed }] = removeWithUndo.mock.calls[0];
+    act(() => onFailed());
+
+    expect(useChatPanel.getState().conversationId).toBe('c1');
+  });
+
+    it('puts focus in the new composer after New chat', async () => {
     getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
     renderChrome();
     const oldComposer = screen.getByRole('textbox', { name: 'Message' });

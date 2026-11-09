@@ -50,6 +50,7 @@ import {
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { chatDom } from '@/features/chat/lib/chat-dom';
 import { chatPendingDeletes } from '@/features/chat/lib/chat-pending-deletes';
+import { chatQueryKeys } from '@/features/chat/lib/chat-query-keys';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import {
   followAlong,
@@ -122,7 +123,7 @@ export function ChatChrome() {
 
   const invalidateList = () =>
     queryClient
-      .invalidateQueries({ queryKey: ['chat-conversations'] })
+      .invalidateQueries({ queryKey: chatQueryKeys.allConversationLists() })
       .catch(() => undefined);
 
   const openConversation = (id: string) => {
@@ -143,7 +144,7 @@ export function ChatChrome() {
     setRenaming(false);
     const trimmed = next.trim();
     if (!conversationId || !trimmed || trimmed === title) return;
-    const key = conversationKey(conversationId);
+    const key = chatQueryKeys.conversation(conversationId);
     const previous = queryClient.getQueryData<AgentConversation | null>(key);
     setTypingId(null);
     setCachedTitle({ queryClient, conversationId, title: trimmed });
@@ -161,14 +162,16 @@ export function ChatChrome() {
   const deleteChat = () => {
     if (!conversationId) return;
     const id = conversationId;
+    const bringBack = () => {
+      if (useChatPanel.getState().conversationId) return;
+      openConversation(id);
+    };
     chatPendingDeletes.removeWithUndo({
       id,
-      onUndo: () => {
-        if (useChatPanel.getState().conversationId) return;
-        openConversation(id);
-      },
-      onSettled: () => {
-        queryClient.removeQueries({ queryKey: ['chat-conversation', id] });
+      onUndo: bringBack,
+      onFailed: bringBack,
+      onDeleted: () => {
+        queryClient.removeQueries({ queryKey: chatQueryKeys.conversation(id) });
         invalidateList();
       },
     });
@@ -326,7 +329,7 @@ const ChatBody = memo(function ChatBody({
   const queryClient = useQueryClient();
   const invalidate = () =>
     queryClient
-      .invalidateQueries({ queryKey: ['chat-conversations'] })
+      .invalidateQueries({ queryKey: chatQueryKeys.allConversationLists() })
       .catch(() => undefined);
   const showOnPage = (id: string | null) => {
     if (full) chatPanelUtils.showOnFullPage(id);
@@ -368,7 +371,7 @@ function useConversationTitle({
   conversationId: string | null;
 }): { title: string | null; loading: boolean } {
   const { data, isLoading } = useQuery({
-    queryKey: conversationKey(conversationId),
+    queryKey: chatQueryKeys.conversation(conversationId),
     queryFn: () =>
       conversationId ? chatApi.getConversation(conversationId) : null,
     enabled: !!conversationId,
@@ -390,7 +393,7 @@ function setCachedTitle({
   conversationId: string;
   title: string;
 }): void {
-  const key = conversationKey(conversationId);
+  const key = chatQueryKeys.conversation(conversationId);
   const cached = queryClient.getQueryData<AgentConversation | null>(key);
   if (!cached) {
     queryClient.invalidateQueries({ queryKey: key }).catch(() => undefined);
@@ -400,10 +403,6 @@ function setCachedTitle({
     ...cached,
     title,
   });
-}
-
-function conversationKey(conversationId: string | null) {
-  return ['chat-conversation', conversationId];
 }
 
 function LayoutMenu() {

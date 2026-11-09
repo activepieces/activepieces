@@ -25,6 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { usePendingDeletes } from '@/features/chat/lib/chat-pending-deletes';
+import { chatQueryKeys } from '@/features/chat/lib/chat-query-keys';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { useConversationIndicators } from '@/features/chat/lib/use-conversation-indicators';
 import { cn } from '@/lib/utils';
@@ -73,7 +74,7 @@ export function ConversationList({
     QueryKey,
     string | undefined
   >({
-    queryKey: ['chat-conversations', agentId ?? 'chat'],
+    queryKey: chatQueryKeys.conversationList(agentId),
     initialPageParam: undefined,
     getNextPageParam: (lastPage) => lastPage.next ?? undefined,
     queryFn: ({ pageParam }) =>
@@ -91,7 +92,7 @@ export function ConversationList({
     mutationFn: (id: string) => chatApi.deleteConversation(id),
     onSuccess: (_data, deletedId) => {
       void queryClient.invalidateQueries({
-        queryKey: ['chat-conversations', agentId ?? 'chat'],
+        queryKey: chatQueryKeys.conversationList(agentId),
       });
       if (selectedIdRef.current === deletedId) {
         onNewChat?.();

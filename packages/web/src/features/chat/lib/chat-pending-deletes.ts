@@ -8,11 +8,13 @@ import { chatApi } from './chat-api';
 function removeWithUndo({
   id,
   onUndo,
-  onSettled,
+  onDeleted,
+  onFailed,
 }: {
   id: string;
   onUndo?: () => void;
-  onSettled?: () => void;
+  onDeleted?: () => void;
+  onFailed?: () => void;
 }): void {
   hide(id);
   let settled = false;
@@ -25,9 +27,13 @@ function removeWithUndo({
   const commit = async () => {
     if (!settle()) return;
     const { error } = await tryCatch(() => chatApi.deleteConversation(id));
-    if (error) toast.error(t('Failed to delete conversation'));
     show(id);
-    onSettled?.();
+    if (error) {
+      toast.error(t('Failed to delete conversation'));
+      onFailed?.();
+      return;
+    }
+    onDeleted?.();
   };
   const commitOnExit = () => {
     if (!settle()) return;

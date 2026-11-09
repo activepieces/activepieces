@@ -27,6 +27,7 @@ import { ModelPicker, modelPickerUtils } from '@/features/agents';
 import { aiModelHooks } from '@/features/agents/ai-model/hooks';
 import { ChatCreditsAlert } from '@/features/billing';
 import { chatDom } from '@/features/chat/lib/chat-dom';
+import { chatQueryKeys } from '@/features/chat/lib/chat-query-keys';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import {
   ChatStoreProvider,
@@ -368,7 +369,7 @@ function ChatBoxContent({
 
   const cachedConversations = queryClient.getQueryData<
     SeekPage<AgentConversation>
-  >(['chat-conversations']);
+  >(chatQueryKeys.allConversationLists());
   const hasConversations = (cachedConversations?.data?.length ?? 0) > 0;
 
   if (gate === 'loading') {
