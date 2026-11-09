@@ -237,12 +237,12 @@ function useServerSync({
     }) => {
       await store.getState().waitForSaves();
       const state = store.getState();
+      if (event.op === TableRecordsChangeOp.CLEARED) {
+        state.clearRecords({ since });
+        return;
+      }
       const removedIds =
-        event.op === TableRecordsChangeOp.CLEARED
-          ? state.getServerRecords().map((record) => record.id)
-          : event.op === TableRecordsChangeOp.DELETED
-          ? event.recordIds ?? []
-          : [];
+        event.op === TableRecordsChangeOp.DELETED ? event.recordIds ?? [] : [];
       const rowIds = state.applyRecordChanges({
         records: event.records ?? [],
         removedIds,

@@ -21,6 +21,7 @@ import {
   TableStateProviderWithTable,
   useTableState,
 } from '@/features/tables/components/ap-table-state-provider';
+import { TableState } from '@/features/tables/stores/store/ap-tables-client-state';
 import { tableSyncClock } from '@/features/tables/stores/store/table-sync-clock';
 import { editorSession } from '@/lib/editor-session';
 
@@ -42,11 +43,19 @@ vi.mock('@/features/chat/lib/follow/follow-along', () => ({
   followAlong: { flash: vi.fn(), isFollowing: vi.fn(() => true) },
 }));
 vi.mock('@/features/tables/api/records-api', () => ({
-  recordsApi: { list: vi.fn(), getById: vi.fn() },
+  recordsApi: {
+    list: vi.fn(),
+    getById: vi.fn(),
+    create: vi.fn(async () => {
+      throw new Error('offline');
+    }),
+  },
 }));
 vi.mock('@/features/tables/api/fields-api', () => ({ fieldsApi: {} }));
 vi.mock('@/features/tables/api/tables-api', () => ({ tablesApi: {} }));
-vi.mock('@/lib/error-reporting', () => ({ errorReporting: {} }));
+vi.mock('@/lib/error-reporting', () => ({
+  errorReporting: { report: vi.fn() },
+}));
 
 describe('open table live events', () => {
   let queryClient: QueryClient;
@@ -99,6 +108,23 @@ describe('open table live events', () => {
     await receive({ tableId: 't1', op: TableRecordsChangeOp.CLEARED });
     expect(rows()).toEqual([]);
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+  });
+
+  it('empties the whole table on a clear, rows that never saved included', async () => {
+    const { rows, store } = mount(queryClient);
+    await act(async () => {
+      store().createRecord({
+        uuid: 'unsaved',
+        agentRunId: null,
+        values: [{ fieldIndex: 0, value: 'draft' }],
+      });
+      await settle();
+    });
+    expect(rows()).toEqual(['old', 'b', 'draft']);
+
+    await receive({ tableId: 't1', op: TableRecordsChangeOp.CLEARED });
+
+    expect(rows()).toEqual([]);
   });
 
   it('ignores the echo of this tab’s own edits', async () => {
@@ -168,10 +194,12 @@ function settle() {
 
 function mount(queryClient: QueryClient) {
   let rows: unknown[] = [];
+  let state: TableState | null = null;
   function Probe() {
-    rows = useTableState((state) =>
-      state.records.map((row) => row.values[0]?.value),
+    rows = useTableState((current) =>
+      current.records.map((row) => row.values[0]?.value),
     );
+    state = useTableState((current) => current);
     return null;
   }
   render(
@@ -185,7 +213,13 @@ function mount(queryClient: QueryClient) {
       </TableStateProviderWithTable>
     </QueryClientProvider>,
   );
-  return { rows: () => rows };
+  return {
+    rows: () => rows,
+    store: () => {
+      if (state === null) throw new Error('table not mounted');
+      return state;
+    },
+  };
 }
 
 function record(id: string, value: string): PopulatedRecord {

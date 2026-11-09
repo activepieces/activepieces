@@ -104,6 +104,7 @@ export type TableState = {
     removedIds: string[];
     since: number;
   }) => Map<string, string>;
+  clearRecords: (change: { since: number }) => void;
   setAgentRunId: (recordId: string, agentRunId: string | null) => void;
   toggleStatus: () => void;
   lockedByOtherUser: boolean;
@@ -136,11 +137,13 @@ export const createApTableStore = (
       removedIds,
       since,
       dropMissing,
+      keepUnlinkedRows = true,
     }: {
       changed: PopulatedRecord[];
       removedIds: string[];
       since: number;
       dropMissing: boolean;
+      keepUnlinkedRows?: boolean;
     }): Map<string, string> => {
       const state = get();
       const removed = new Set(removedIds);
@@ -205,9 +208,9 @@ export const createApTableStore = (
         ...updated.filter((entry) => !rowsByUuid.has(entry.row.uuid)),
         ...added,
       ];
-      const unlinkedRows = state.records.filter(
-        (row) => !linkedRowIds.has(row.uuid),
-      );
+      const unlinkedRows = keepUnlinkedRows
+        ? state.records.filter((row) => !linkedRowIds.has(row.uuid))
+        : [];
       const rows = [...merged.map(({ row }) => row), ...unlinkedRows];
       serverState.setRecords(merged.map(({ record }) => record));
       merged.forEach(({ record, row }) =>
@@ -438,6 +441,17 @@ export const createApTableStore = (
           at: since,
         });
         return rowIds;
+      },
+      clearRecords: ({ since }) => {
+        const removedIds = serverState.records.map((record) => record.id);
+        mergeRecords({
+          changed: [],
+          removedIds,
+          since,
+          dropMissing: false,
+          keepUnlinkedRows: false,
+        });
+        serverState.markKnown({ ids: removedIds, at: since });
       },
       setAgentRunId: (recordId: string, agentRunId: string | null) => {
         const rowId = serverState.rowIdOf(recordId);
