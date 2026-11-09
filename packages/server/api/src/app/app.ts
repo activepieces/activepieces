@@ -120,6 +120,7 @@ import { communityPiecesModule } from './pieces/community-piece-module'
 import { startDevPieceWatcher } from './pieces/dev-piece-watcher'
 import { pieceModule } from './pieces/metadata/piece-metadata-controller'
 import { pieceMetadataService } from './pieces/metadata/piece-metadata-service'
+import { pieceCatalogEventsJob } from './pieces/piece-catalog/piece-catalog-events.job'
 import { pieceCatalogHooks } from './pieces/piece-catalog/piece-catalog-hooks'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { billingProvider } from './platform/billing-provider'
@@ -248,11 +249,14 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(folderModule)
     await pieceSyncService(app.log).setup()
     toolSearchReindexJob(app.log).register()
+    pieceCatalogEventsJob(app.log).register()
     // Boot backfill: build the tool-search index if the flag is on but it is empty or only partially
     // embedded (a populated deployment fires no sync delta, and a build that failed midway leaves rows
     // unembedded). Fire-and-forget — a no-op once fully built, and must never block or fail boot.
     rejectedPromiseHandler(toolSearchReindexJob(app.log).backfillIfNeeded(), app.log)
     await toolSearchReindexJob(app.log).scheduleRecurringReconcile()
+    await pieceCatalogEventsJob(app.log).scheduleReconcile()
+    await pieceCatalogEventsJob(app.log).seedAtBootIfSyncOff()
     await pieceMetadataService(app.log).setup()
     await app.register(pieceModule)
     await app.register(collaborativeModule)
