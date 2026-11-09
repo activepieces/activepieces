@@ -106,27 +106,27 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
   };
 
   const titleContent = (
-    <div className="flex items-center gap-2 px-4">
-      <Breadcrumb>
-        <BreadcrumbList>
+    <div className="flex min-w-0 items-center gap-2 px-4">
+      <Breadcrumb className="min-w-0">
+        <BreadcrumbList className="flex-nowrap">
           {!embedState.disableNavigationInBuilder && (
             <>
-              <BreadcrumbItem>
+              <BreadcrumbItem className="min-w-0 @max-xl:hidden">
                 <BreadcrumbLink
                   onClick={goToFlowsPage}
-                  className="cursor-pointer text-sm"
+                  className="cursor-pointer truncate text-sm"
                 >
                   {getProjectName(project)}
                 </BreadcrumbLink>
               </BreadcrumbItem>
-              <BreadcrumbSeparator />
+              <BreadcrumbSeparator className="@max-xl:hidden" />
             </>
           )}
           {!embedState.hideFlowNameInBuilder && (
-            <BreadcrumbItem>
-              <BreadcrumbPage>
+            <BreadcrumbItem className="min-w-16">
+              <BreadcrumbPage className="min-w-0">
                 <div
-                  className={cn('flex items-center gap-1 text-sm', {
+                  className={cn('flex min-w-0 items-center gap-1 text-sm', {
                     'max-w-[500px]': !isEditingFlowName || readonly,
                   })}
                 >
@@ -181,16 +181,20 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
   );
 
   const rightContent = (
-    <div className="flex items-center justify-center gap-4">
+    <div className="flex shrink-0 items-center justify-center gap-4 @max-2xl:gap-2">
       {isLatestVersion &&
         !isRunsPage &&
         !embedState.hideConnectionsInBuilder && (
           <FlowConnectionsPopover isFlowLocked={isFlowLocked} />
         )}
       {showSupport && (
-        <Button variant="ghost" onClick={() => openNewWindow(supportUrl)}>
+        <Button
+          variant="ghost"
+          aria-label={t('Support')}
+          onClick={() => openNewWindow(supportUrl)}
+        >
           <CircleHelp className="w-4 h-4"></CircleHelp>
-          {t('Support')}
+          <span className="@max-2xl:hidden">{t('Support')}</span>
         </Button>
       )}
       {!embedState.hideActiveUsers && (
@@ -199,10 +203,11 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
       {hasPermissionToReadRuns && (
         <Button
           variant="ghost"
+          aria-label={t('Runs')}
           onClick={() => setRightSidebar(RightSideBarType.RUNS)}
         >
           <HistoryIcon className="w-4 h-4" />
-          {t('Runs')}
+          <span className="@max-2xl:hidden">{t('Runs')}</span>
         </Button>
       )}
 
@@ -215,6 +220,7 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
 
   return (
     <div
+      className="@container"
       style={{
         height: `$${flowCanvasConsts.BUILDER_HEADER_HEIGHT}px`,
       }}
