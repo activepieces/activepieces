@@ -76,5 +76,6 @@ const SCROLL_KEYS = new Set([
 ]);
 
 export const aiHighlight = {
+  mayScroll,
   claimScroll,
 };
