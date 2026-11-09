@@ -826,6 +826,16 @@ describe('Piece catalog events job', () => {
         expect(addSpy).not.toHaveBeenCalled()
     })
 
+    it('reconcile seeds an OFFICIAL_AUTO instance when a job finishes while the active list is read', async () => {
+        await insertOfficialPiece({ name: '@test/auto-a', version: '1.0.0' })
+        vi.spyOn(systemJobsQueue, 'getActive').mockResolvedValue([undefined] as unknown as Awaited<ReturnType<typeof systemJobsQueue.getActive>>)
+
+        await runReconcileJob()
+
+        expect(await loadSnapshot()).toEqual({ '@test/auto-a': '1.0.0' })
+        expect(addSpy).not.toHaveBeenCalled()
+    })
+
     it('reconcile treats an unreadable pieces sync state as running and skips the auto seed', async () => {
         await insertOfficialPiece({ name: '@test/auto-a', version: '1.0.0' })
         vi.spyOn(systemJobsQueue, 'getActive').mockRejectedValue(new Error('redis unavailable'))

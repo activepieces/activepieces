@@ -88,7 +88,7 @@ function isCommunity(): boolean {
 
 async function isPiecesSyncRunning(log: FastifyBaseLogger): Promise<boolean> {
     try {
-        return (await systemJobsQueue.getActive()).some((job) => job.name === SystemJobName.PIECES_SYNC)
+        return (await systemJobsQueue.getActive()).some((job) => !isNil(job) && job.name === SystemJobName.PIECES_SYNC)
     }
     catch (err) {
         log.warn({ err }, '[pieceCatalogEvents] could not read the pieces sync state, skipping the auto seed')
