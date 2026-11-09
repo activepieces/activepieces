@@ -60,6 +60,7 @@ import { appearanceHelper } from './ee/helper/appearance-helper'
 import { licenseKeyUsageReportModule } from './ee/license-key-usage-report/license-key-usage-report-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
+import { pieceSetCatalogHooks } from './ee/pieces/piece-set/piece-set-catalog-hooks'
 import { pieceSetRequiredActions } from './ee/pieces/piece-set/piece-set-required-actions'
 import { pieceSetModule } from './ee/pieces/piece-set/piece-set.module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
@@ -119,6 +120,7 @@ import { communityPiecesModule } from './pieces/community-piece-module'
 import { startDevPieceWatcher } from './pieces/dev-piece-watcher'
 import { pieceModule } from './pieces/metadata/piece-metadata-controller'
 import { pieceMetadataService } from './pieces/metadata/piece-metadata-service'
+import { pieceCatalogHooks } from './pieces/piece-catalog/piece-catalog-hooks'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { billingProvider } from './platform/billing-provider'
 import { piecesReportModule } from './platform/pieces-report/pieces-report.module'
@@ -410,6 +412,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
             eventDestinationHooks.set(eventDestinationEntitlementHooks)
+            pieceCatalogHooks.set(pieceSetCatalogHooks)
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformTeardownJobs(app.log).hardDeletePlatformHandler(data))
             break
@@ -459,6 +462,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
             eventDestinationHooks.set(eventDestinationEntitlementHooks)
+            pieceCatalogHooks.set(pieceSetCatalogHooks)
             break
         case ApEdition.COMMUNITY:
             await app.register(denoMigrationModule)
