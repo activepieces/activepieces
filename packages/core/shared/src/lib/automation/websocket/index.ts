@@ -1,6 +1,7 @@
 import { StepRunResponse, UpdateStepProgressRequest } from '@activepieces/core-execution'
 import { ApId } from '@activepieces/core-utils'
 import { z } from 'zod'
+import { PopulatedRecord } from '../tables/record'
 
 export enum WebsocketClientEvent {
     TEST_FLOW_RUN_STARTED = 'TEST_FLOW_RUN_STARTED',
@@ -93,12 +94,16 @@ export enum TableRecordsChangeOp {
     CREATED = 'CREATED',
     UPDATED = 'UPDATED',
     DELETED = 'DELETED',
+    CLEARED = 'CLEARED',
+    RELOAD = 'RELOAD',
 }
 
 export const TableRecordsChangedEvent = z.object({
     tableId: z.string(),
-    recordIds: z.array(z.string()),
     op: z.enum(TableRecordsChangeOp),
+    editorSessionId: z.string().optional(),
+    records: z.array(PopulatedRecord).optional(),
+    recordIds: z.array(z.string()).optional(),
 })
 
 export const EDITOR_SESSION_ID_HEADER = 'x-ap-editor-session-id'
