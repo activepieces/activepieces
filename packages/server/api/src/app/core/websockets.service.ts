@@ -304,8 +304,7 @@ type SocketHasPermissionParams = {
 type RunUserEventParams = {
     socket: Socket
     event: WebsocketServerEvent
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    handler: WebsocketListener<any, PrincipalType.USER>
+    handler: WebsocketListener<unknown, PrincipalType.USER>
     data: unknown
     principal: PrincipalForType<PrincipalType.USER>
     callback?: (data: unknown) => void
