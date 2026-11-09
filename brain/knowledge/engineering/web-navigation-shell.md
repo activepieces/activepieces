@@ -4,23 +4,19 @@ icon: 🧱
 
 # Web Navigation Shell
 
-The frame the web app renders every route inside. Four components, and knowing which is shared matters
-more than knowing what each looks like.
+The frame the web app renders every route inside. One shell, picked per route by its `handle`.
 
-**Primary rail** (`components/primary-rail`) is the chat-first left rail that replaced the project
-sidebar in PR #15005. Chat, Agents, Explore, Impact, plus the projects list and the credits meter.
+**`AppShellRoute`** (`components/app-shell.tsx`) wraps every app route. It reads the deepest route
+`handle` (a `RouteHandle` from `lib/shell-handle.ts`) and its `shell` field picks the
+frame: `project`, `builder` or `platform`. Route files set the handle from `shellHandles`, never by hand.
 
-**Dashboard sidebar** (`components/sidebar/dashboard`) is the older per-project nav the rail replaced
-on most surfaces.
-
-**Platform sidebar** (`components/sidebar/platform`) is the platform-admin nav, and it is the only one
-of the three that understands paid gating. Its groups and items are a literal built inline on every
+**`AppSidebar`** (`components/sidebar/app-sidebar.tsx`) is the left rail for every shell. `mode="app"`
+renders `AppNav` (Chat, Agents, Explore, Impact, the projects list and the credits meter).
+`mode="platform"` renders `PlatformNav` (`components/sidebar/platform`), the platform-admin nav. It is
+the only nav that understands paid gating. Its groups and items are a literal built inline on every
 render, not a config.
 
-**Layouts** (`components/platform-layout.tsx`, `components/project-layout`) pick which of the above a
-route gets. `PlatformLayout` mounts the platform sidebar with no rail beside it.
-
-`ap-sidebar-item` is the item primitive, and only the platform sidebar uses it. The rail does not.
+`ap-sidebar-item` is the item primitive, and only the platform nav uses it. `AppNav` does not.
 
 ## Gotchas
 
@@ -31,19 +27,19 @@ route gets. `PlatformLayout` mounts the platform sidebar with no rail beside it.
   so it is not a precedent for admin-nav work; what it does show is why it was unrevertable in pieces,
   since it bundled a navigation model change together with global search and the builder canvas. Keep a
   navigation change scoped to one surface and it stays revertable on its own.
-- **The rail and the platform admin nav are aligned by hand, not by shared code.** `primary-rail` imports
-  none of the sidebar item components (only `CreateProjectButton` borrows `SidebarMenuButton`), so the
-  two columns only look like one system because PR #15028 tuned their widths and spacing to match. Any
+- **The app nav and the platform admin nav are aligned by hand, not by shared code.** `AppNav` uses
+  none of the `ap-sidebar-item` components, so the two navs only look like one system because PR #15028 tuned their widths and spacing to match. Any
   change to admin nav metrics needs re-checking against the rail, and no type error or test will tell you
   it drifted.
-- **Platform admin deliberately renders without the rail.** `PlatformLayout` mounts the platform sidebar
-  straight under `SidebarProvider`, because the rail beside it meant two left columns and a narrower admin
-  nav, and the admin nav already carries its own way back out. This is a documented departure from the
-  `design/workspace-redesign` direction, which did show the rail there. Entry in is the rail's platform
-  admin button; the way out is the "Back to app" link in the platform sidebar header, which resolves
-  through `determineDefaultRoute`.
-- **A role check inside a platform admin page is dead code.** `PlatformLayout` calls `useIsPlatformAdmin()`
-  and redirects away when it fails, so every component below it already knows the viewer is a platform
+- **Platform admin swaps the nav, it does not add a second column.** On a `platform` shell, `AppSidebar`
+  renders `PlatformNav` in place of `AppNav`, because two left columns meant a narrower admin nav, and the
+  admin nav already carries its own way back out. This is a documented departure from the
+  `design/workspace-redesign` direction, which did show the app nav there. Entry in is the app nav's
+  platform admin button; the way out is the "Back to app" link in the platform sidebar header, which
+  resolves through `determineDefaultRoute`.
+- **A role check inside a platform admin page is dead code.** `AppShell` redirects a non-admin away from
+  any `platform` shell, and each admin route is also wrapped in `PlatformAdminGuard`
+  (`app/guards/platform-admin-guard.tsx`), so every component below already knows the viewer is a platform
   admin. AI Center used to wrap itself in a guard keyed on `platformRole !== PlatformRole.ADMIN`,
   which can never be true where it sits, and that guard was the only thing standing in for a plan gate on
   that page: reading it, the page looks gated when nothing gates it. Same shape as the `isCommunity` checks
@@ -79,7 +75,8 @@ route gets. `PlatformLayout` mounts the platform sidebar with no rail beside it.
 
 ## Key files
 
-- `packages/web/src/app/components/primary-rail`: the chat-first rail
-- `packages/web/src/app/components/sidebar`: the `ap-sidebar-item` primitive, plus the `dashboard` and `platform` navs
-- `packages/web/src/app/components/platform-layout.tsx`: `PlatformLayout`, the admin frame and its admin-role check
+- `packages/web/src/app/components/app-shell.tsx`: `AppShellRoute`, the one frame for every app route, and its admin redirect
+- `packages/web/src/lib/shell-handle.ts`: `RouteHandle`, `shellHandles`, `parseHandle` and `CHAT_ALLOWED`
+- `packages/web/src/app/components/sidebar`: `AppSidebar`, `AppNav`, the `platform` nav and the `ap-sidebar-item` primitive
+- `packages/web/src/app/guards/platform-admin-guard.tsx`: `PlatformAdminGuard`, the admin-role check on each admin route
 - `packages/web/src/lib/route-utils.ts`: `determineDefaultRoute`, where "Back to app" goes
