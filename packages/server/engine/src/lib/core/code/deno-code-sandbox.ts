@@ -166,6 +166,7 @@ function resolveWarmDenoDir(stepDir: string): string | undefined {
     const stepDirIsWritable = mode === ExecutionMode.SANDBOX_CODE_ONLY || mode === ExecutionMode.UNSANDBOXED
     const cacheIsMounted = process.env['AP_DENO_CACHE_MOUNTED'] === 'true'
     if (cacheIsMounted) {
+        // See brain/knowledge/decisions/000049-every-isolate-box-can-write-the-shared-deno-cache-because-the-engine-clears-its-umask.md
         process.umask(0)
     }
     const cacheMountAvailable = stepDirIsWritable || cacheIsMounted
