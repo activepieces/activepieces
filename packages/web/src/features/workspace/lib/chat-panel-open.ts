@@ -100,10 +100,24 @@ function startNewChat(): void {
   const panel = useChatPanel.getState();
   panel.newChat();
   if (router?.isFullPage()) {
-    router.navigate({ to: CHAT_ROUTE, replace: true });
+    showOnFullPage(null);
     return;
   }
   panel.setOpen(true);
+}
+
+// Swapping the chat shown on the full page replaces the history entry, so
+// keep the mark that says the full page was opened from a docked chat.
+function showOnFullPage(conversationId: string | null): void {
+  const current = router;
+  if (!current?.isFullPage()) return;
+  const { state } = current.location();
+  const expanded = isObject(state) && state[EXPANDED_STATE] === true;
+  current.navigate({
+    to: routeFor(conversationId),
+    replace: true,
+    state: expanded ? { [EXPANDED_STATE]: true } : undefined,
+  });
 }
 
 function createChatPanelStore() {
@@ -315,6 +329,7 @@ export const chatPanelUtils = {
   expand,
   collapse,
   startNewChat,
+  showOnFullPage,
   SHEET_HASH,
 };
 

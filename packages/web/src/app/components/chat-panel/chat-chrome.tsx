@@ -22,7 +22,6 @@ import {
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Tooltip as TooltipPrimitive } from 'radix-ui';
 import { memo, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { SettingsHubDialog } from '@/app/components/settings-hub/settings-hub-dialog';
@@ -72,7 +71,6 @@ import {
 
 export function ChatChrome() {
   const layout = useChatWidth();
-  const navigate = useNavigate();
   const conversationId = useActiveConversationId();
   const newChatToken = useChatPanel((s) => s.newChatToken);
   const pendingPrompt = useChatPanel((s) => s.pendingPrompt);
@@ -116,7 +114,7 @@ export function ChatChrome() {
   const openConversation = (id: string) => {
     setHistoryOpen(false);
     if (full) {
-      navigate(chatPanelUtils.routeFor(id), { replace: true });
+      chatPanelUtils.showOnFullPage(id);
     } else {
       useChatPanel.getState().showConversation(id);
     }
@@ -312,13 +310,12 @@ const ChatBody = memo(function ChatBody({
   onTitleTyped: (conversationId: string) => void;
 }) {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const invalidate = () =>
     queryClient
       .invalidateQueries({ queryKey: ['chat-conversations'] })
       .catch(() => undefined);
   const showOnPage = (id: string | null) => {
-    if (full) navigate(chatPanelUtils.routeFor(id), { replace: true });
+    if (full) chatPanelUtils.showOnFullPage(id);
   };
   return (
     <ChatAppLinks>

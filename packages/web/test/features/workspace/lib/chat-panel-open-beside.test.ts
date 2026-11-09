@@ -65,3 +65,44 @@ describe('chatPanelUtils.openBeside', () => {
     );
   });
 });
+
+describe('chatPanelUtils.showOnFullPage', () => {
+  it('keeps the docked-chat mark when the full page swaps chats', () => {
+    const navigations: ChatNavTarget[] = [];
+    const unbind = chatPanelUtils.bindRouter({
+      navigate: (target) => navigations.push(target),
+      location: () => ({
+        pathname: '/chat',
+        hash: '',
+        state: { chatExpanded: true },
+      }),
+      isFullPage: () => true,
+    });
+    chatPanelUtils.showOnFullPage('c1');
+    chatPanelUtils.startNewChat();
+    unbind();
+
+    expect(navigations).toEqual([
+      { to: '/chat/c1', replace: true, state: { chatExpanded: true } },
+      { to: '/chat', replace: true, state: { chatExpanded: true } },
+    ]);
+  });
+
+  it('goes back to the page under the chat after the first message', () => {
+    const navigations: ChatNavTarget[] = [];
+    let state: unknown = { chatExpanded: true };
+    const unbind = chatPanelUtils.bindRouter({
+      navigate: (target) => {
+        navigations.push(target);
+        if ('to' in target) state = target.state;
+      },
+      location: () => ({ pathname: '/chat', hash: '', state }),
+      isFullPage: () => true,
+    });
+    chatPanelUtils.showOnFullPage('c1');
+    chatPanelUtils.collapse('right');
+    unbind();
+
+    expect(navigations.at(-1)).toEqual({ back: true });
+  });
+});
