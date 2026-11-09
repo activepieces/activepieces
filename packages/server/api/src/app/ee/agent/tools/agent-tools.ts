@@ -1,7 +1,7 @@
 import { isNil, isObject, isString, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { ActionClassification, isReadOnlyClassification } from '@activepieces/pieces-framework'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { Agent, AgentActionOutcome, AgentIcon, AgentRunSource, AgentTool, agentToolClassification, AgentToolType, AppConnectionStatus, AppConnectionType, ApplicationEventName, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, mcpToolNameUtils, Project, RunEnvironment } from '@activepieces/shared'
+import { Agent, AgentActionOutcome, AgentIcon, AgentRunSource, AgentTool, agentToolClassification, AgentToolType, AppConnectionStatus, AppConnectionType, ApplicationEventName, ApResource, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, mcpToolNameUtils, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
@@ -256,7 +256,7 @@ async function createAgentFromChat({ toolInput, platformId, projectId, userId, l
             draft: { instructions, maxSteps: DEFAULT_AGENT_MAX_STEPS, tools: [], structuredOutput: [] },
         },
     })
-    return afterDraftChange({ agent, publish: false, editedItself: false, projectId, platformId, userId, log })
+    return afterDraftChange({ agent, op: 'create', publish: false, editedItself: false, projectId, platformId, userId, log })
 }
 
 async function updateAgentFromChat({ toolInput, agent, editedItself, projectId, platformId, userId, log }: {
@@ -286,7 +286,7 @@ async function updateAgentFromChat({ toolInput, agent, editedItself, projectId, 
             ...(isNil(instructions) ? {} : { draft: { ...agent.draft, instructions } }),
         },
     })
-    return afterDraftChange({ agent: updated, publish, editedItself, projectId, platformId, userId, log })
+    return afterDraftChange({ agent: updated, op: 'update', publish, editedItself, projectId, platformId, userId, log })
 }
 
 async function resolveConnectionToPin({ piece, pieceName, projectId, platformId, log }: {
@@ -381,7 +381,7 @@ async function addAgentToolFromChat({ toolInput, agent, editedItself, projectId,
     if (isNil(updated)) {
         return { error: `${agent.displayName} already has one of those tools. List them with ap_list_agents before adding.` }
     }
-    return afterDraftChange({ agent: updated, publish: toolInput.publish === true, editedItself, projectId, platformId, userId, log })
+    return afterDraftChange({ agent: updated, op: 'update', publish: toolInput.publish === true, editedItself, projectId, platformId, userId, log })
 }
 
 async function removeAgentToolFromChat({ toolInput, agent, editedItself, projectId, platformId, userId, log }: {
@@ -432,7 +432,7 @@ async function removeAgentToolFromChat({ toolInput, agent, editedItself, project
     if (isNil(updated)) {
         return { error: `${agent.displayName} has none of those tools, so there is nothing to remove.` }
     }
-    return afterDraftChange({ agent: updated, publish: toolInput.publish === true, editedItself, projectId, platformId, userId, log })
+    return afterDraftChange({ agent: updated, op: 'update', publish: toolInput.publish === true, editedItself, projectId, platformId, userId, log })
 }
 
 function pieceActionOf(tool: AgentTool): { pieceName: string, actionName: string } | undefined {
@@ -445,8 +445,9 @@ function toolNamesFrom(toolInput: Record<string, unknown>): string[] {
     return Array.isArray(toolInput.actionNames) ? toolInput.actionNames.flatMap((name) => nonEmpty(name) ?? []) : []
 }
 
-async function afterDraftChange({ agent, publish, editedItself, projectId, platformId, userId, log }: {
+async function afterDraftChange({ agent, op, publish, editedItself, projectId, platformId, userId, log }: {
     agent: Agent
+    op: ApResource['op']
     publish: boolean
     editedItself: boolean
     projectId: string
@@ -476,6 +477,7 @@ async function afterDraftChange({ agent, publish, editedItself, projectId, platf
                     : isNil(agent.published)
                         ? 'Saved to the draft. Nothing runs this agent until it is published.'
                         : 'Saved to the draft, so do not tell the user the change is live. The published version keeps running until this is published.',
+        ...mcpUtils.apResourceMeta({ kind: 'agent', id: agent.id, projectId, op, label: agent.displayName }),
     }
 }
 
@@ -577,6 +579,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                 connectionExternalId: externalId,
                 status: revalidated.status,
                 working,
+                ...mcpUtils.apResourceMeta({ kind: 'connection', id: found.id, projectId, op: 'update', label: found.displayName }),
                 note: working
                     ? 'This connection is valid — safe to build on.'
                     : 'This connection is NOT working (its credentials failed). Do not build on it — show the connection picker so the user can reconnect, then retry.',

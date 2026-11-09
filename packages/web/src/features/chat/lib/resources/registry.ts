@@ -20,7 +20,7 @@ function route(ref: ResourceRef): string {
 }
 
 function parentRoute(ref: ResourceRef): string {
-  return inProject({ ref, path: routesThatRequireProjectId.automations });
+  return inProject({ ref, path: KINDS[ref.kind].parentPath });
 }
 
 function inProject({ ref, path }: { ref: ResourceRef; path: string }): string {
@@ -70,12 +70,36 @@ const KINDS: Record<ResourceKind, KindSpec> = {
   flow: {
     path: (flowId) =>
       generatePath(routesThatRequireProjectId.singleFlow, { flowId }),
+    parentPath: routesThatRequireProjectId.automations,
     queryKeys: () => [['flows'], ...AUTOMATIONS_LIST_KEYS],
   },
   table: {
     path: (tableId) =>
       generatePath(routesThatRequireProjectId.singleTable, { tableId }),
+    parentPath: routesThatRequireProjectId.automations,
     queryKeys: () => [['tables'], ...AUTOMATIONS_LIST_KEYS],
+  },
+  agent: {
+    path: (agentId) =>
+      generatePath(routesThatRequireProjectId.singleAgent, { agentId }),
+    parentPath: routesThatRequireProjectId.automations,
+    queryKeys: () => [['agents'], ...AUTOMATIONS_LIST_KEYS],
+  },
+  run: {
+    path: (runId) =>
+      generatePath(routesThatRequireProjectId.singleRun, { runId }),
+    parentPath: routesThatRequireProjectId.runs,
+    queryKeys: (runId) => [
+      ['run', runId],
+      ['flow-run', runId],
+      ['flow-run-table'],
+      ['flow-run-count-by-status'],
+    ],
+  },
+  connection: {
+    path: () => routesThatRequireProjectId.connections,
+    parentPath: routesThatRequireProjectId.connections,
+    queryKeys: () => [['app-connections']],
   },
 };
 
@@ -107,5 +131,6 @@ export type ResolvedCall = {
 
 type KindSpec = {
   path: (id: string) => string;
+  parentPath: string;
   queryKeys: (id: string) => QueryKey[];
 };

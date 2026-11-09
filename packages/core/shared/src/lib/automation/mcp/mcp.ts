@@ -67,7 +67,7 @@ export type McpToolDefinition = {
 
 export const ApResource = z.object({
     v: z.literal(1),
-    kind: z.enum(['flow', 'table']),
+    kind: z.enum(['flow', 'table', 'agent', 'run', 'connection']),
     id: z.string().min(1),
     projectId: z.string().min(1),
     label: z.string(),

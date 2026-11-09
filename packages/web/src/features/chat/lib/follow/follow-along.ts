@@ -73,13 +73,70 @@ function setTarget(resource: ResourceRef): void {
 }
 
 function forget(resource: ResourceRef): void {
-  const { target } = useFollowAlong.getState();
-  if (
-    target &&
-    resourceRegistry.keyOf(target) === resourceRegistry.keyOf(resource)
-  ) {
+  const { target, offer } = useFollowAlong.getState();
+  if (target && sameResource({ a: target, b: resource })) {
     useFollowAlong.setState({ target: null });
   }
+  if (offer && sameResource({ a: offer.resource, b: resource })) {
+    useFollowAlong.setState({ offer: null });
+  }
+}
+
+function decide({
+  state,
+  onTarget,
+  autoFollow,
+  embedded,
+  busy,
+}: {
+  state: Pick<FollowState, 'target' | 'following' | 'phase'>;
+  onTarget: boolean;
+  autoFollow: boolean;
+  embedded: boolean;
+  busy: boolean;
+}): FollowDecision {
+  const { target } = state;
+  if (
+    !target ||
+    !state.following ||
+    state.phase !== 'editing' ||
+    onTarget ||
+    embedded ||
+    !autoFollow ||
+    !resourceRegistry.isInCurrentProject(target)
+  ) {
+    return 'stay';
+  }
+  return busy ? 'offer' : 'open';
+}
+
+function offer(resource: ResourceRef): void {
+  const conversationId = useChatPanel.getState().conversationId;
+  const current = useFollowAlong.getState().offer;
+  if (
+    current &&
+    current.conversationId === conversationId &&
+    sameResource({ a: current.resource, b: resource }) &&
+    current.resource.name === resource.name
+  ) {
+    return;
+  }
+  useFollowAlong.setState({ offer: { resource, conversationId } });
+}
+
+function dismissOffer(): void {
+  if (useFollowAlong.getState().offer === null) return;
+  useFollowAlong.setState({ offer: null });
+}
+
+function sameResource({
+  a,
+  b,
+}: {
+  a: Pick<ResourceRef, 'kind' | 'id'>;
+  b: Pick<ResourceRef, 'kind' | 'id'>;
+}): boolean {
+  return resourceRegistry.keyOf(a) === resourceRegistry.keyOf(b);
 }
 
 function endRun({
@@ -99,7 +156,7 @@ function endRun({
 }
 
 function stopFollowing(): void {
-  useFollowAlong.setState({ following: false });
+  useFollowAlong.setState({ following: false, offer: null });
 }
 
 function flash(keys: string[]): void {
@@ -126,12 +183,16 @@ export const useFollowAlong = create<FollowState>(() => ({
   flashes: {},
   scrollTaken: false,
   liveRuns: {},
+  offer: null,
 }));
 
 export const followAlong = {
   onChunks,
   endRun,
   stopFollowing,
+  decide,
+  offer,
+  dismissOffer,
   flash,
   onToolDone,
 };
@@ -149,6 +210,13 @@ export type FollowChange = {
   navigable: boolean;
 };
 
+export type FollowOffer = {
+  resource: ResourceRef;
+  conversationId: string | null;
+};
+
+export type FollowDecision = 'open' | 'offer' | 'stay';
+
 type FollowState = {
   target: ResourceRef | null;
   phase: 'idle' | 'editing';
@@ -156,4 +224,5 @@ type FollowState = {
   flashes: Record<string, number>;
   scrollTaken: boolean;
   liveRuns: Record<string, RunContext>;
+  offer: FollowOffer | null;
 };

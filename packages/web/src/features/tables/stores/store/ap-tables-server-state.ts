@@ -166,6 +166,11 @@ export const createServerState = (
       removed.forEach((index) => clonedRecords.splice(index, 1));
       return { indexes, removed };
     },
+    mergeFields: (fields: Field[]): string[] => {
+      const previousIds = clonedFields.map((field) => field.id);
+      clonedFields.splice(0, clonedFields.length, ...fields);
+      return previousIds;
+    },
     setRecords: (records: PopulatedRecord[]) => {
       clonedRecords = JSON.parse(JSON.stringify(records));
     },

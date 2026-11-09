@@ -83,6 +83,9 @@ export function FollowAlongController() {
     lastPath.current = pathname;
     const selfNavigated = selfNavRef.current === pathname;
     if (pathChanged) selfNavRef.current = null;
+    if (state.offer && resourceRegistry.isOn(pathname, state.offer.resource)) {
+      followAlong.dismissOffer();
+    }
     const target = state.target;
     if (!target || !state.following) return;
     const onTarget = resourceRegistry.isOn(pathname, target);
@@ -90,37 +93,25 @@ export function FollowAlongController() {
       if (state.phase === 'editing') followAlong.stopFollowing();
       return;
     }
-    if (
-      onTarget ||
-      state.phase !== 'editing' ||
-      embedded ||
-      !autoFollow ||
-      !resourceRegistry.isInCurrentProject(target)
-    ) {
+    const decision = followAlong.decide({
+      state,
+      onTarget,
+      autoFollow,
+      embedded,
+      busy: pageFocus.isAwayIn(document.activeElement),
+    });
+    if (decision === 'offer') {
+      followAlong.offer(target);
       return;
     }
-
-    const open = () => {
-      const route = resourceRegistry.route(target);
-      const runId = runOfTarget.current;
-      const push = runId === null || !pushedRuns.current.has(runId);
-      if (runId !== null) pushedRuns.current.add(runId);
-      selfNavRef.current = route.split('?')[0];
-      chatPanelUtils.openBeside({ route, push, name: target.name });
-    };
-    return untilPageFree((focused) => {
-      const latest = useFollowAlong.getState();
-      if (
-        !latest.following ||
-        !latest.target ||
-        resourceRegistry.keyOf(latest.target) !== resourceRegistry.keyOf(target)
-      ) {
-        return true;
-      }
-      if (pageFocus.isBusyIn(focused)) return false;
-      open();
-      return true;
-    });
+    if (decision === 'stay') return;
+    followAlong.dismissOffer();
+    const route = resourceRegistry.route(target);
+    const runId = runOfTarget.current;
+    const push = runId === null || !pushedRuns.current.has(runId);
+    if (runId !== null) pushedRuns.current.add(runId);
+    selfNavRef.current = route.split('?')[0];
+    chatPanelUtils.openBeside({ route, push, name: target.name });
   }, [pathname, targetKey, following, phase, embedded, autoFollow]);
 
   return null;

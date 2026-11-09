@@ -48,6 +48,7 @@ import {
   MessageSkeletons,
   SetupRequiredState,
 } from './components/chat-empty-state';
+import { FollowOfferRow } from './components/follow-offer-row';
 import { MemoryImportNudgeCard } from './components/memory-import-nudge-card';
 import { OnboardingQuestionCard } from './components/onboarding-question-card';
 import {
@@ -508,6 +509,8 @@ function ChatBoxContent({
                     </Button>
                   </motion.div>
                 )}
+
+                <FollowOfferRow conversationId={conversationId ?? null} />
 
                 <ChatContainerScrollAnchor />
               </ChatContainerContent>

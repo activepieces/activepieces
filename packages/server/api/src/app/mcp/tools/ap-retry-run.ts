@@ -49,6 +49,7 @@ export const apRetryRunTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
                 })
 
                 const completedRun = await pollForRunCompletion(log, retriedRun.id, mcp.projectId)
+                const runMeta = mcpUtils.apResourceMeta({ kind: 'run', id: completedRun.id, projectId: mcp.projectId, op: 'create', label: completedRun.flowVersion?.displayName ?? completedRun.id })
 
                 if (!isFlowRunStateTerminal({ status: completedRun.status, ignoreInternalError: false })) {
                     return {
@@ -56,10 +57,11 @@ export const apRetryRunTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
                             type: 'text',
                             text: `⏳ Retry still running after 120s. Run ID: ${completedRun.id} (status: ${completedRun.status}). Use ap_get_run to check results later.`,
                         }],
+                        ...runMeta,
                     }
                 }
 
-                return { content: [{ type: 'text', text: formatRunResult(completedRun) }] }
+                return { content: [{ type: 'text', text: formatRunResult(completedRun) }], ...runMeta }
             }
             catch (err) {
                 log.error({ error: err, project: { id: mcp.projectId } }, 'ap_retry_run failed')

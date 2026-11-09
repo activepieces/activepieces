@@ -1,10 +1,11 @@
 import { apId } from '@activepieces/core-utils'
 import { unique } from '@activepieces/core-utils'
-import { AgentToolType, mcpToolNameUtils, PackageType, PieceType } from '@activepieces/shared'
+import { AgentToolType, AppConnectionType, mcpToolNameUtils, PackageType, PieceType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { executeCrossProjectTool } from '../../../../src/app/ee/agent/tools/agent-tools'
+import { encryptUtils } from '../../../../src/app/helper/encryption'
 import { db } from '../../../helpers/db'
 import { createMockConnection, createMockPieceMetadata } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
@@ -119,6 +120,26 @@ describe('the chat tools that build agents, against the real service', () => {
         const read = await ctx.get(`/v1/agents/${agentId}`)
         expect(read.statusCode).toBe(StatusCodes.OK)
         expect(read.json().draft.instructions).toBe('Flag anything needing a reply today.')
+    })
+
+    it('tags what it created or changed so the chat can open the agent, and tags nothing it refused', async () => {
+        const ctx = await context()
+        const conversationId = await startConversation(ctx)
+        const created = await runTool(ctx, conversationId, 'ap_create_agent', {
+            displayName: 'Inbox triage',
+            instructions: 'Flag anything needing a reply today.',
+        }) as { agentId: string }
+
+        const renamed = await runTool(ctx, conversationId, 'ap_update_agent', { agentId: created.agentId, displayName: 'Inbox sorter' })
+        const refused = await runTool(ctx, conversationId, 'ap_update_agent', { agentId: created.agentId })
+
+        expect(created).toEqual(expect.objectContaining({
+            _meta: { apResource: { v: 1, kind: 'agent', id: created.agentId, projectId: ctx.project.id, op: 'create', label: 'Inbox triage' } },
+        }))
+        expect(renamed).toEqual(expect.objectContaining({
+            _meta: { apResource: { v: 1, kind: 'agent', id: created.agentId, projectId: ctx.project.id, op: 'update', label: 'Inbox sorter' } },
+        }))
+        expect(refused).not.toHaveProperty('_meta')
     })
 
     it('publishes the edit it was asked to publish, not the version before it', async () => {
@@ -402,6 +423,26 @@ describe('the chat tools that build agents, against the real service', () => {
         const stored = await agentRow(agentId)
         expect(stored.draft.instructions).toBe('Private.')
         expect(stored.published).toBeNull()
+    })
+
+    it('tags the connection it rechecked, and nothing when there is no such connection', async () => {
+        const ctx = await context()
+        const conversationId = await startConversation(ctx)
+        const connection = createMockConnection({ projectIds: [ctx.project.id], platformId: ctx.platform.id, pieceName: TOOL_PIECE, displayName: 'Work notes' }, ctx.user.id)
+        await db.save('app_connection', {
+            ...connection,
+            type: AppConnectionType.NO_AUTH,
+            value: await encryptUtils.encryptObject({ type: AppConnectionType.NO_AUTH }),
+        })
+
+        const checked = await runTool(ctx, conversationId, 'ap_revalidate_connection', { connectionExternalId: connection.externalId })
+        const missing = await runTool(ctx, conversationId, 'ap_revalidate_connection', { connectionExternalId: apId() })
+
+        expect(checked).toEqual(expect.objectContaining({
+            working: true,
+            _meta: { apResource: { v: 1, kind: 'connection', id: connection.id, projectId: ctx.project.id, op: 'update', label: 'Work notes' } },
+        }))
+        expect(missing).not.toHaveProperty('_meta')
     })
 
     it('refuses every agent tool once the platform loses the entitlement', async () => {

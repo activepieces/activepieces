@@ -86,6 +86,7 @@ export type TableState = {
     records: PopulatedRecord[];
     deletedIds: string[];
   }) => void;
+  mergeServerFields: (fields: Field[]) => void;
   setAgentRunId: (recordId: string, agentRunId: string | null) => void;
   toggleStatus: () => void;
   lockedByOtherUser: boolean;
@@ -145,21 +146,7 @@ export const createApTableStore = (
             ? state
             : { selectedCell },
         ),
-      fields: fields.map((field) => {
-        if (field.type === FieldType.STATIC_DROPDOWN) {
-          return {
-            uuid: field.id,
-            name: field.name,
-            type: field.type,
-            data: field.data,
-          };
-        }
-        return {
-          uuid: field.id,
-          name: field.name,
-          type: field.type,
-        };
-      }),
+      fields: fields.map((field) => toClientField({ field, uuid: field.id })),
       records: mapRecorddToClientRecordsData(records, fields),
       createRecord: (recordData: ClientRecordData) => {
         serverState.createRecord(recordData);
@@ -329,6 +316,37 @@ export const createApTableStore = (
           };
         });
       },
+      mergeServerFields: (fresh: Field[]) => {
+        const previousIds = serverState.mergeFields(fresh);
+        const nextIndexById = new Map(
+          fresh.map((field, index) => [field.id, index]),
+        );
+        set((state) => ({
+          fields: fresh.map((field) => {
+            const previousIndex = previousIds.indexOf(field.id);
+            return toClientField({
+              field,
+              uuid:
+                previousIndex === -1
+                  ? field.id
+                  : state.fields[previousIndex].uuid,
+            });
+          }),
+          records: state.records.map((record) => ({
+            ...record,
+            values: record.values
+              .flatMap((cell) => {
+                const fieldIndex = nextIndexById.get(
+                  previousIds[cell.fieldIndex],
+                );
+                return fieldIndex === undefined
+                  ? []
+                  : [{ ...cell, fieldIndex }];
+              })
+              .sort((a, b) => a.fieldIndex - b.fieldIndex),
+          })),
+        }));
+      },
       setAgentRunId: (recordId: string, agentRunId: string | null) => {
         const recordIndex = serverState.records.findIndex(
           (record) => record.id === recordId,
@@ -364,5 +382,18 @@ export const createApTableStore = (
     };
   });
 };
+
+function toClientField({
+  field,
+  uuid,
+}: {
+  field: Field;
+  uuid: string;
+}): ClientField {
+  if (field.type === FieldType.STATIC_DROPDOWN) {
+    return { uuid, name: field.name, type: field.type, data: field.data };
+  }
+  return { uuid, name: field.name, type: field.type };
+}
 
 export type ApTableStore = ReturnType<typeof createApTableStore>;

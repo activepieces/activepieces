@@ -156,4 +156,5 @@ export type FrontendErrorSource =
   | 'chunk-preload'
   | 'query'
   | 'table-save'
-  | 'table-live-records';
+  | 'table-live-records'
+  | 'table-live-fields';

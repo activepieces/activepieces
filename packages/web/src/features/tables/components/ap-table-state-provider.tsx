@@ -8,6 +8,7 @@ import {
   WebsocketClientEvent,
 } from '@activepieces/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import deepEqual from 'deep-equal';
 import { t } from 'i18next';
 import { FileX } from 'lucide-react';
 import {
@@ -26,6 +27,7 @@ import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { useSocket } from '@/components/providers/socket-provider';
 import { buttonVariants } from '@/components/ui/button';
 import {
+  FollowChange,
   followAlong,
   useFollowAlong,
 } from '@/features/chat/lib/follow/follow-along';
@@ -43,6 +45,7 @@ import { cn } from '@/lib/utils';
 import { fieldsApi } from '../api/fields-api';
 import { recordsApi } from '../api/records-api';
 import { tablesApi } from '../api/tables-api';
+import { tableChanges } from '../utils/table-changes';
 
 const TableContext = createContext<ApTableStore | null>(null);
 const TableRefreshContext = createContext<(() => Promise<void>) | null>(null);
@@ -214,23 +217,58 @@ function useLiveRecords({
         return;
       }
       await store.getState().waitForSaves();
+      const before = [...store.getState().serverRecords];
       store.getState().mergeServerRecords({
         records,
         deletedIds: deleted ? event.recordIds : [],
       });
       if (!deleted && isFollowed(tableId)) {
-        followAlong.flash(records.map((record) => `table-row:${record.id}`));
+        followAlong.flash(tableChanges.recordKeys({ before, records }));
+      }
+    };
+    const refreshFields = async () => {
+      const { data: fields, error } = await tryCatch(() =>
+        fieldsApi.list({ tableId }),
+      );
+      if (error) {
+        errorReporting.report({ error, source: 'table-live-fields' });
+        return;
+      }
+      await store.getState().waitForSaves();
+      const before = [...store.getState().serverFields];
+      if (deepEqual(before, fields)) return;
+      store.getState().mergeServerFields(fields);
+      if (isFollowed(tableId)) {
+        followAlong.flash(tableChanges.fieldKeys({ before, fields }));
       }
     };
     const onChange = (event: TableRecordsChangedEvent) => {
       if (event.tableId !== tableId) return;
       updates.add(() => apply(event));
     };
+    const stopFields = followAlong.onToolDone((change) => {
+      if (change.op === 'delete' || !isTable({ change, tableId })) return;
+      updates.add(refreshFields);
+    });
     socket.on(WebsocketClientEvent.TABLE_RECORDS_CHANGED, onChange);
     return () => {
       socket.off(WebsocketClientEvent.TABLE_RECORDS_CHANGED, onChange);
+      stopFields();
     };
   }, [socket, store, tableId]);
+}
+
+function isTable({
+  change,
+  tableId,
+}: {
+  change: FollowChange;
+  tableId: string;
+}): boolean {
+  return (
+    resourceRegistry.keyOf(change.resource) ===
+    resourceRegistry.keyOf({ kind: 'table', id: tableId })
+  );
 }
 
 function isFollowed(tableId: string): boolean {
