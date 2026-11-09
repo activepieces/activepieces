@@ -3,6 +3,8 @@ import { ApResource } from '@activepieces/shared';
 import { QueryKey } from '@tanstack/react-query';
 import { generatePath } from 'react-router-dom';
 
+import { flowQueryKeys } from '@/features/flows/utils/flow-query-keys';
+import { folderQueryKeys } from '@/features/folders/utils/folder-query-keys';
 import { tableQueryKeys } from '@/features/tables/utils/table-query-keys';
 import { authenticationSession } from '@/lib/authentication-session';
 import { routesThatRequireProjectId } from '@/lib/route-utils';
@@ -53,7 +55,7 @@ function queryKeys({
   const kind = KINDS[ref.kind];
   return op === 'update'
     ? [...kind.listKeys, ...kind.pageKeys(ref.id)]
-    : [...kind.listKeys, FOLDERS_KEY];
+    : [...kind.listKeys, folderQueryKeys.folders];
 }
 
 function keyOf({ kind, id }: Pick<ResourceRef, 'kind' | 'id'>): string {
@@ -65,19 +67,17 @@ function parseOutput(output: unknown): unknown {
   return tryCatchSync<unknown>(() => JSON.parse(output)).data ?? null;
 }
 
-const FOLDERS_KEY: QueryKey = ['folders'];
-
 const KINDS: Record<ResourceKind, KindSpec> = {
   flow: {
     path: (flowId) =>
       generatePath(routesThatRequireProjectId.singleFlow, { flowId }),
-    listKeys: [['flows'], ['root-flows'], ['all-folder-contents']],
+    listKeys: [...flowQueryKeys.lists, folderQueryKeys.contents],
     pageKeys: () => [],
   },
   table: {
     path: (tableId) =>
       generatePath(routesThatRequireProjectId.singleTable, { tableId }),
-    listKeys: [...tableQueryKeys.lists, ['all-folder-contents']],
+    listKeys: [...tableQueryKeys.lists, folderQueryKeys.contents],
     pageKeys: (tableId) => [
       tableQueryKeys.table(tableId),
       tableQueryKeys.fields(tableId),
