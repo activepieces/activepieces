@@ -12,7 +12,7 @@ How a ticket in the Engineering (ENG) Linear team is written, so people and agen
 **Where** — the edition (Cloud, self-hosted CE, self-hosted EE), the surface (app, Embed, MCP client), the version, and a link to the flow or run.
 **Steps to reproduce** — numbered steps another engineer can repeat.
 **Expected result** — what must happen instead, in the reporter's words. The engineer turns it into acceptance criteria.
-**Acceptance criteria** — one check per bullet; each bullet ends with ``E2E: `<test title>` `` or `no-e2e: <reason>`. The contract for done. On a Bug ticket the engineer writes them at triage. _Avoid_: "Done when"
+**Acceptance criteria** — one check per bullet; each bullet ends with ``E2E: `<test title>` `` or `no-e2e: <reason>`. The contract for done. A feature's criteria cover each item of the E2E checklist ("What to test" in `packages/tests-e2e/README.md`). On a Bug ticket the engineer writes them at triage. _Avoid_: "Done when"
 **Decisions** — one decision per bullet with a one-line why. Out of scope is a decision: "Not X, because Y."
 **no-e2e** — the ticket label for one or more criteria with no E2E test. The bullet markers are the source; the label follows them.
 **Done** — the PR is merged.
