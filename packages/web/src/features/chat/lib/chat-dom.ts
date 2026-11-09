@@ -1,8 +1,9 @@
 import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
+import { isEditableTarget } from '@/lib/dom-utils';
 
 function composer(): HTMLElement | null {
   return document.querySelector<HTMLElement>(
-    `#${chatLayoutUtils.PANEL_ID} textarea`,
+    `#${chatLayoutUtils.PANEL_ID} [${COMPOSER_ATTRIBUTE}]`,
   );
 }
 
@@ -20,6 +21,16 @@ function escapeFree(event: KeyboardEvent): boolean {
 function claimEscape(event: KeyboardEvent): void {
   claimedEscapes.add(event);
   event.preventDefault();
+}
+
+// A field inside a card (a question, a form) keeps Esc for itself: it must
+// not stop the reply the card belongs to.
+function isCardField(target: EventTarget | null): boolean {
+  return (
+    isEditableTarget(target) &&
+    target instanceof Element &&
+    target.closest(`[${COMPOSER_ATTRIBUTE}]`) === null
+  );
 }
 
 function shortcutOf(event: KeyboardEvent): ChatShortcut | null {
@@ -43,6 +54,7 @@ function layerOpen(): boolean {
   );
 }
 
+const COMPOSER_ATTRIBUTE = 'data-chat-composer';
 const CODE_EDITOR = '.cm-editor, .monaco-editor';
 const claimedEscapes = new WeakSet<KeyboardEvent>();
 const OPEN_OVERLAYS = ['dialog', 'alertdialog', 'menu', 'listbox']
@@ -55,6 +67,7 @@ export const chatDom = {
   escapeFree,
   claimEscape,
   shortcutOf,
+  isCardField,
 };
 
 type ChatShortcut = 'toggle' | 'newChat' | 'history';

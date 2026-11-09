@@ -77,6 +77,24 @@ describe('chatDom.shortcutOf', () => {
   });
 });
 
+describe('chatDom.isCardField', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('keeps Esc in a card input from stopping the reply', () => {
+    document.body.innerHTML = `
+      <form aria-label="Question"><input aria-label="Answer" /></form>
+      <textarea data-chat-composer aria-label="Composer"></textarea>`;
+
+    expect(chatDom.isCardField(document.querySelector('input'))).toBe(true);
+    expect(chatDom.isCardField(document.querySelector('textarea'))).toBe(
+      false,
+    );
+    expect(chatDom.isCardField(document.body)).toBe(false);
+  });
+});
+
 function escape(): KeyboardEvent {
   return new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
 }

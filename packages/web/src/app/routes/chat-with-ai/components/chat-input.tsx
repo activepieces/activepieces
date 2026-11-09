@@ -210,6 +210,7 @@ export function ChatInput({
             </div>
           ) : (
             <PromptInputTextarea
+              data-chat-composer=""
               autoFocus={autoFocus ?? !minimalUntilFocus}
               placeholder={placeholder ?? t('Tell me what you need...')}
               className={cn(

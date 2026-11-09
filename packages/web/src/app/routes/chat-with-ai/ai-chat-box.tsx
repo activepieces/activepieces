@@ -165,6 +165,7 @@ function ChatBoxContent({
           rootRef.current?.contains(target) ||
           (!compact && target === document.body)
         ) ||
+        chatDom.isCardField(target) ||
         !chatDom.escapeFree(e)
       ) {
         return;
