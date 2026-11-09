@@ -25,6 +25,8 @@ const eventRejectResponses: Partial<Record<WebsocketServerEvent, unknown>> = {}
 
 const DEFAULT_REJECT_RESPONSE = { success: false }
 
+const eventsOrderedWithSwitch = new Set<WebsocketServerEvent>()
+
 const projectBySocket = new WeakMap<Socket, SocketProject>()
 
 const projectLeaveHandlers = new Map<string, ProjectLeaveHandler>()
@@ -59,6 +61,9 @@ export const websocketService = {
                 }
                 if (!isNil(options?.rejectResponse)) {
                     eventRejectResponses[event] = options.rejectResponse
+                }
+                if (options?.orderedWithSwitch === true) {
+                    eventsOrderedWithSwitch.add(event)
                 }
                 break
             }
@@ -101,7 +106,8 @@ async function attachListeners({ socket, log }: AttachListenersParams): Promise<
                     continue
                 }
                 socket.on(toSocketEvent(event), async (data: unknown, callback?: (data: unknown) => void) => {
-                    return runInSocketOrder({ socket, work: () => runUserEvent({ socket, event, handler, data, principal, callback, log }) })
+                    const work = (): Promise<void> => runUserEvent({ socket, event, handler, data, principal, callback, log })
+                    return eventsOrderedWithSwitch.has(event) ? runInSocketOrder({ socket, work }) : work()
                 })
             }
             break
@@ -239,6 +245,7 @@ type ValidateProjectIdArgs = {
 type ListenerOptions = {
     permission?: Permission
     rejectResponse?: unknown
+    orderedWithSwitch?: boolean
 }
 
 type SocketProject = {

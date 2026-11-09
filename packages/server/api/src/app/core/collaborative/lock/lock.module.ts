@@ -65,7 +65,7 @@ export const lockModule: FastifyPluginAsyncZod = async (app) => {
                 callback?.({ acquired: false, lock: null })
             }
         }
-    }, { rejectResponse: LOCK_NOT_ACQUIRED })
+    }, { rejectResponse: LOCK_NOT_ACQUIRED, orderedWithSwitch: true })
     websocketService.addListener(PrincipalType.USER, WebsocketServerEvent.UNLOCK_RESOURCE, (socket) => {
         return async (data: unknown, principal, projectId) => {
             const request = LockResourceRequest.safeParse(data)
@@ -91,7 +91,7 @@ export const lockModule: FastifyPluginAsyncZod = async (app) => {
                 app.log.error({ error }, '[UNLOCK_RESOURCE] Failed to release lock')
             }
         }
-    })
+    }, { orderedWithSwitch: true })
 }
 
 const LOCK_NOT_ACQUIRED: LockResourceResponse = { acquired: false, lock: null }

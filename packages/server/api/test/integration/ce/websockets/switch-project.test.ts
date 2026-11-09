@@ -161,6 +161,20 @@ describe('Websocket SWITCH_PROJECT', () => {
         expect(afterSwitch).toEqual({ acquired: true, lock: null })
     })
 
+    it('answers a switch while a slow run start of the old project is still going', async () => {
+        const s = await setup()
+        const conn = await connect({ token: s.memberToken, projectId: s.editorProjectId })
+        vi.spyOn(flowRunServiceModule, 'flowRunService').mockReturnValue(
+            { startManualTrigger: () => new Promise(() => undefined) } as unknown as ReturnType<typeof flowRunServiceModule.flowRunService>,
+        )
+
+        void conn.handlers[WebsocketServerEvent.MANUAL_TRIGGER_RUN_STARTED]({ flowVersionId: apId() })
+        const response = await switchProject({ conn, projectId: s.viewerProjectId })
+
+        expect(response).toEqual({ success: true })
+        expect(conn.rooms.has(s.viewerProjectId)).toBe(true)
+    })
+
     it('leaves the socket in exactly one project room after two fast switches', async () => {
         const s = await setup()
         const conn = await connect({ token: s.memberToken, projectId: null })

@@ -57,7 +57,7 @@ export const presenceModule: FastifyPluginAsyncZod = async (app) => {
                 callback?.({ users: [] })
             }
         }
-    }, { rejectResponse: NO_PRESENCE })
+    }, { rejectResponse: NO_PRESENCE, orderedWithSwitch: true })
     websocketService.addListener(PrincipalType.USER, WebsocketServerEvent.LEAVE_PRESENCE, (socket) => {
         return async (data: unknown, principal, projectId) => {
             const request = PresenceRequest.safeParse(data)
@@ -83,7 +83,7 @@ export const presenceModule: FastifyPluginAsyncZod = async (app) => {
                 app.log.error({ error }, '[LEAVE_PRESENCE] Failed to leave presence')
             }
         }
-    })
+    }, { orderedWithSwitch: true })
 }
 
 const NO_PRESENCE: Pick<PresenceUpdatedEvent, 'users'> = { users: [] }
