@@ -119,6 +119,20 @@ function filterByTitle({
   );
 }
 
+function olderChats({
+  hasNextPage,
+  isFetchingNextPage,
+  isFetchNextPageError,
+}: {
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  isFetchNextPageError: boolean;
+}): OlderChats {
+  if (isFetchingNextPage) return 'loading';
+  if (isFetchNextPageError) return 'failed';
+  return hasNextPage ? 'available' : 'none';
+}
+
 const GROUP_ORDER: ChatHistoryGroupId[] = [
   'today',
   'yesterday',
@@ -136,8 +150,11 @@ export const chatHistoryUtils = {
   shortTime,
   showsSearch,
   filterByTitle,
+  olderChats,
   SEARCH_THRESHOLD,
 };
+
+export type OlderChats = 'none' | 'available' | 'loading' | 'failed';
 
 export type ChatHistoryGroupId = 'today' | 'yesterday' | 'week' | 'older';
 

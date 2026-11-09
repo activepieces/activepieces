@@ -71,6 +71,8 @@ vi.mock('@/components/ui/dropdown-menu', () => ({
   ),
 }));
 
+const NOW = new Date();
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
@@ -246,6 +248,77 @@ describe('ChatHistoryList', () => {
     expect(screen.getByText('No chats found')).toBeTruthy();
   });
 
+  it('searches only the loaded chats until asked to search older ones', async () => {
+    pagesReturn([
+      manyConversations(9),
+      [conversation({ id: 'old', title: 'Ancient report' })],
+    ]);
+    renderList();
+    const search = await screen.findByRole('textbox', { name: 'Search chats' });
+
+    fireEvent.change(search, { target: { value: 'Ancient' } });
+    await screen.findByText('No chats found');
+    expect(mocks.listConversations).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Search older chats' }));
+
+    expect(await screen.findByText('Ancient report')).toBeTruthy();
+    expect(mocks.listConversations).toHaveBeenLastCalledWith(
+      expect.objectContaining({ cursor: 'page-2' }),
+    );
+  });
+
+  it('shows loading, not No chats found, while older chats load', async () => {
+    mocks.listConversations
+      .mockResolvedValueOnce({
+        data: manyConversations(9),
+        next: 'page-2',
+        previous: null,
+      })
+      .mockReturnValueOnce(new Promise(() => undefined));
+    renderList();
+    const search = await screen.findByRole('textbox', { name: 'Search chats' });
+    fireEvent.change(search, { target: { value: 'Ancient' } });
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Search older chats' }),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('button', { name: 'Search older chats' }),
+      ).toBeNull(),
+    );
+    expect(screen.queryByText('No chats found')).toBeNull();
+  });
+
+  it('offers a retry when older chats fail to load', async () => {
+    mocks.listConversations
+      .mockResolvedValueOnce({
+        data: manyConversations(9),
+        next: 'page-2',
+        previous: null,
+      })
+      .mockRejectedValueOnce(new Error('down'))
+      .mockResolvedValueOnce({
+        data: [conversation({ id: 'old', title: 'Ancient report' })],
+        next: null,
+        previous: null,
+      });
+    renderList();
+    const search = await screen.findByRole('textbox', { name: 'Search chats' });
+    fireEvent.change(search, { target: { value: 'Ancient' } });
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Search older chats' }),
+    );
+
+    const alert = await screen.findByRole('alert');
+    expect(within(alert).getByText("Couldn't load older chats.")).toBeTruthy();
+    fireEvent.click(within(alert).getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('Ancient report')).toBeTruthy();
+  });
+
   it('marks only chats that wait for an answer', async () => {
     mocks.waitingIds.add('b');
     listReturns([
@@ -268,6 +341,16 @@ function listReturns(conversations: AgentConversation[]) {
     data: conversations,
     next: null,
     previous: null,
+  });
+}
+
+function pagesReturn(pages: AgentConversation[][]) {
+  pages.forEach((data, index) => {
+    mocks.listConversations.mockResolvedValueOnce({
+      data,
+      next: index < pages.length - 1 ? `page-${index + 2}` : null,
+      previous: null,
+    });
   });
 }
 
@@ -305,7 +388,7 @@ function conversation({
   title: string;
   daysAgo?: number;
 }): AgentConversation {
-  const created = new Date();
+  const created = new Date(NOW);
   created.setDate(created.getDate() - daysAgo);
   return AgentConversation.parse({
     id,

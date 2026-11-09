@@ -1,7 +1,7 @@
 import { AgentConversation } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Ellipsis, Pencil, Search, Trash2 } from 'lucide-react';
+import { Ellipsis, Pencil, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
@@ -18,7 +18,10 @@ import {
   chatConversations,
   useChatConversations,
 } from '@/features/chat/lib/chat-conversations';
-import { chatHistoryUtils } from '@/features/chat/lib/chat-history-utils';
+import {
+  chatHistoryUtils,
+  OlderChats,
+} from '@/features/chat/lib/chat-history-utils';
 import { chatPendingDeletes } from '@/features/chat/lib/chat-pending-deletes';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { useConversationIndicators } from '@/features/chat/lib/use-conversation-indicators';
@@ -50,6 +53,7 @@ export function ChatHistoryList({
     refetch,
     hasNextPage,
     isFetching,
+    isFetchingNextPage,
     isFetchNextPageError,
     fetchNextPage,
   } = useChatConversations();
@@ -115,11 +119,20 @@ export function ChatHistoryList({
     }
   }, [hasNextPage, isFetching, fetchNextPage]);
 
-  const fillsSearchResults = trimmedQuery.length > 0 && !isFetchNextPageError;
   useEffect(() => {
-    const retriesSkipped = skippedLoadMoreRef.current && !isFetchNextPageError;
-    if (fillsSearchResults || retriesSkipped) loadMoreIfNearEnd();
-  }, [shown, loadMoreIfNearEnd, fillsSearchResults, isFetchNextPageError]);
+    if (skippedLoadMoreRef.current && !isFetchNextPageError) {
+      loadMoreIfNearEnd();
+    }
+  }, [shown, loadMoreIfNearEnd, isFetchNextPageError]);
+
+  const older = chatHistoryUtils.olderChats({
+    hasNextPage,
+    isFetchingNextPage,
+    isFetchNextPageError,
+  });
+  const loadOlder = () => {
+    fetchNextPage().catch(() => undefined);
+  };
 
   const searchShown = chatHistoryUtils.showsSearch({
     total: all.length,
@@ -165,7 +178,7 @@ export function ChatHistoryList({
             <HistorySkeleton />
           ) : isError && all.length === 0 ? (
             <DataFetchErrorState entity={t('chats')} onRetry={refetch} />
-          ) : groups.length === 0 ? (
+          ) : groups.length === 0 && older !== 'loading' ? (
             <p className="px-3 py-2 text-sm text-gray-11">
               {trimmedQuery ? t('No chats found') : t('No chats yet')}
             </p>
@@ -204,6 +217,13 @@ export function ChatHistoryList({
                 </ul>
               </section>
             ))
+          )}
+          {!isLoading && (
+            <OlderChatsRow
+              state={older}
+              searching={trimmedQuery.length > 0}
+              onLoad={loadOlder}
+            />
           )}
         </div>
       </div>
@@ -337,6 +357,50 @@ function HistoryRow({
       </div>
     </li>
   );
+}
+
+function OlderChatsRow({
+  state,
+  searching,
+  onLoad,
+}: {
+  state: OlderChats;
+  searching: boolean;
+  onLoad: () => void;
+}) {
+  switch (state) {
+    case 'none':
+      return null;
+    case 'loading':
+      return <HistorySkeleton />;
+    case 'available':
+      return searching ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mt-2 justify-start text-gray-11"
+          onClick={onLoad}
+        >
+          <Search />
+          {t('Search older chats')}
+        </Button>
+      ) : null;
+    case 'failed':
+      return (
+        <div
+          role="alert"
+          className="mt-2 flex items-center gap-2 px-3 text-sm text-gray-11"
+        >
+          <span className="min-w-0 flex-1">
+            {t("Couldn't load older chats.")}
+          </span>
+          <Button variant="ghost" size="xs" onClick={onLoad}>
+            <RefreshCw />
+            {t('Retry')}
+          </Button>
+        </div>
+      );
+  }
 }
 
 function HistorySkeleton() {

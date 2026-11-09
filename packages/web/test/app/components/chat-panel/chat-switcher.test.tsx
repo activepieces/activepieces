@@ -255,6 +255,38 @@ describe('ChatSwitcher', () => {
     expect(screen.getByText('No chats match “nothing”')).toBeTruthy();
   });
 
+  it('searches loaded chats only, then older ones on request, with a retry', async () => {
+    mocks.listConversations
+      .mockResolvedValueOnce({
+        data: manyConversations(8),
+        next: 'page-2',
+        previous: null,
+      })
+      .mockRejectedValueOnce(new Error('down'))
+      .mockResolvedValueOnce({
+        data: [conversation({ id: 'old', title: 'Ancient report' })],
+        next: null,
+        previous: null,
+      });
+    renderChrome();
+    await openSwitcher();
+    await screen.findByText('Chat 6');
+
+    typeSearch('Ancient');
+    await screen.findByText('No chats match “Ancient”');
+    expect(mocks.listConversations).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(option(await screen.findByText('Search older chats')));
+    fireEvent.click(
+      option(await screen.findByText("Couldn't load older chats.")),
+    );
+
+    expect(option(await screen.findByText('Ancient report'))).toBeTruthy();
+    expect(mocks.listConversations).toHaveBeenLastCalledWith(
+      expect.objectContaining({ cursor: 'page-2' }),
+    );
+  });
+
   it('switches to the picked chat and closes', async () => {
     renderChrome();
     await openSwitcher();
@@ -585,17 +617,18 @@ function conversation({
   id: string;
   title: string;
 }): AgentConversation {
-  const now = new Date().toISOString();
   return AgentConversation.parse({
     id,
-    created: now,
-    updated: now,
+    created: NOW,
+    updated: NOW,
     platformId: 'platform-1',
     userId: 'user-1',
     source: AgentRunSource.CHAT,
     title,
   });
 }
+
+const NOW = new Date().toISOString();
 
 function renderChrome() {
   const queryClient = new QueryClient({

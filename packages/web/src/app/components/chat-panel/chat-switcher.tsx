@@ -8,6 +8,8 @@ import {
   EyeOff,
   History,
   Pencil,
+  RefreshCw,
+  Search,
   Settings,
   Trash2,
 } from 'lucide-react';
@@ -38,7 +40,10 @@ import {
   useChatConversations,
 } from '@/features/chat/lib/chat-conversations';
 import { chatDom } from '@/features/chat/lib/chat-dom';
-import { chatHistoryUtils } from '@/features/chat/lib/chat-history-utils';
+import {
+  chatHistoryUtils,
+  OlderChats,
+} from '@/features/chat/lib/chat-history-utils';
 import { chatPendingDeletes } from '@/features/chat/lib/chat-pending-deletes';
 import { chatQueryKeys } from '@/features/chat/lib/chat-query-keys';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
@@ -294,7 +299,7 @@ function SwitcherMenu({
     isLoading,
     isSuccess,
     hasNextPage,
-    isFetching,
+    isFetchingNextPage,
     isFetchNextPageError,
     fetchNextPage,
   } = useChatConversations();
@@ -315,21 +320,26 @@ function SwitcherMenu({
   );
 
   const searching = query.trim().length > 0;
-  const loadsMore = hasNextPage && !isFetchNextPageError;
+  const older = searching
+    ? chatHistoryUtils.olderChats({
+        hasNextPage,
+        isFetchingNextPage,
+        isFetchNextPageError,
+      })
+    : 'none';
   const shown = searching
     ? chatHistoryUtils.filterByTitle({ conversations, query })
     : conversations.slice(0, RECENT_COUNT);
   const hasChat = conversationId !== null;
-
-  useEffect(() => {
-    if (searching && loadsMore && !isFetching) {
-      fetchNextPage().catch(() => undefined);
-    }
-  }, [searching, loadsMore, isFetching, fetchNextPage]);
+  const loadOlder = () => {
+    fetchNextPage().catch(() => undefined);
+  };
 
   const chatValues = [
     ...shown.map((conversation) => conversation.id),
     ...(!searching && conversations.length > 0 ? [ALL_CHATS] : []),
+    ...(older === 'available' ? [SEARCH_OLDER] : []),
+    ...(older === 'failed' ? [RETRY_OLDER] : []),
   ];
   const actionValues = searching
     ? []
@@ -398,13 +408,12 @@ function SwitcherMenu({
               </CommandItem>
             )}
           </CommandGroup>
-        ) : searching && !loadsMore ? (
+        ) : searching && older !== 'loading' ? (
           <p className="px-4 py-3 text-sm text-gray-11">
             {t('No chats match “{query}”', { query: query.trim() })}
           </p>
-        ) : searching ? (
-          <RecentSkeleton />
         ) : null}
+        <OlderChatsItem state={older} onLoad={loadOlder} />
         {!searching && (
           <>
             {shown.length > 0 && <CommandSeparator />}
@@ -519,6 +528,42 @@ function ChatRow({
   );
 }
 
+function OlderChatsItem({
+  state,
+  onLoad,
+}: {
+  state: OlderChats;
+  onLoad: () => void;
+}) {
+  switch (state) {
+    case 'none':
+      return null;
+    case 'loading':
+      return <RecentSkeleton />;
+    case 'available':
+      return (
+        <CommandGroup>
+          <CommandItem value={SEARCH_OLDER} onSelect={onLoad} className="h-9">
+            <Search />
+            {t('Search older chats')}
+          </CommandItem>
+        </CommandGroup>
+      );
+    case 'failed':
+      return (
+        <CommandGroup>
+          <CommandItem value={RETRY_OLDER} onSelect={onLoad} className="h-9">
+            <RefreshCw />
+            <span className="min-w-0 flex-1 truncate">
+              {t("Couldn't load older chats.")}
+            </span>
+            <span className="text-xs text-gray-11">{t('Retry')}</span>
+          </CommandItem>
+        </CommandGroup>
+      );
+  }
+}
+
 function RecentSkeleton() {
   return (
     <div className="flex flex-col p-1.5">
@@ -591,6 +636,8 @@ const ANCHOR_ALIGN_OFFSET_PX = 8;
 const TYPE_STEP_MS = 24;
 const TYPE_TOTAL_MS = 300;
 const ALL_CHATS = 'switcher:all-chats';
+const SEARCH_OLDER = 'switcher:search-older';
+const RETRY_OLDER = 'switcher:retry-older';
 const RENAME = 'switcher:rename';
 const FOLLOW = 'switcher:follow-along';
 const STOP_FOLLOWING = 'switcher:stop-following';
