@@ -69,9 +69,9 @@ export function useConversationIndicators({
     const knownStreaming = new Set<string>();
 
     const invalidateList = () => {
-      void queryClient.invalidateQueries({
-        queryKey: chatQueryKeys.allConversationLists(),
-      });
+      queryClient
+        .invalidateQueries({ queryKey: chatQueryKeys.allConversationLists() })
+        .catch(() => undefined);
     };
 
     const handler = (event: SocketEvent) => {
@@ -85,9 +85,9 @@ export function useConversationIndicators({
           break;
         case AgentEventType.ACTION_PREVIEW:
         case AgentEventType.ACTION_RECEIPT:
-          void queryClient.invalidateQueries({
-            queryKey: ['chat-pending-gate', convId],
-          });
+          queryClient
+            .invalidateQueries({ queryKey: ['chat-pending-gate', convId] })
+            .catch(() => undefined);
           invalidateList();
           break;
         case AgentEventType.CHUNK:

@@ -96,7 +96,9 @@ export function FollowAlongController() {
         ref: change.resource,
         op: change.op,
       });
-      keys.forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
+      keys.forEach((queryKey) =>
+        queryClient.invalidateQueries({ queryKey }).catch(() => undefined),
+      );
     });
     return () => {
       stopListening();

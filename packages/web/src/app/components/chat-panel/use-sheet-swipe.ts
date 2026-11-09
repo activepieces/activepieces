@@ -112,12 +112,16 @@ export function useSheetSwipe({
         stop();
         if (!claimed) return;
         if (!dismiss) {
-          animate(sheetY, 0, settleTransition()).then(() => {
-            if (sheetY.get() === 0) release();
-          });
+          animate(sheetY, 0, settleTransition())
+            .then(() => {
+              if (sheetY.get() === 0) release();
+            })
+            .catch(() => undefined);
           return;
         }
-        animate(sheetY, height.current, settleTransition()).then(onDismiss);
+        animate(sheetY, height.current, settleTransition())
+          .then(onDismiss)
+          .catch(() => undefined);
       };
       const onUp = (up: PointerEvent) => {
         if (up.pointerId !== event.pointerId) return;

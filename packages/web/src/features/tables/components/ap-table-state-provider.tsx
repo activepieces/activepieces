@@ -99,10 +99,12 @@ function RouteTableStateProvider({
         return;
       }
       if (change.type === 'reload') {
-        queryClient.invalidateQueries(
-          { queryKey: reloadKeyOf({ scope: change.scope, tableId }) },
-          { cancelRefetch: false },
-        );
+        queryClient
+          .invalidateQueries(
+            { queryKey: reloadKeyOf({ scope: change.scope, tableId }) },
+            { cancelRefetch: false },
+          )
+          .catch(() => undefined);
         return;
       }
       changes.push({ change, since: tableSyncClock.tick() });
@@ -117,7 +119,9 @@ function RouteTableStateProvider({
             (queryClient.getQueryData<Snapshot<unknown>>(queryKey)
               ?.fetchStartedAt ?? 0) < sentAt,
         )
-        .forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
+        .forEach((queryKey) =>
+          queryClient.invalidateQueries({ queryKey }).catch(() => undefined),
+        );
     },
     [queryClient, tableId],
   );
@@ -350,9 +354,9 @@ async function applyChange({
     Object.keys(record.cells).some((fieldId) => !knownFieldIds.has(fieldId)),
   );
   if (hasUnknownField) {
-    queryClient.invalidateQueries({
-      queryKey: tableQueryKeys.fields(tableId),
-    });
+    queryClient
+      .invalidateQueries({ queryKey: tableQueryKeys.fields(tableId) })
+      .catch(() => undefined);
   }
   const rowIds = state.applyRecordChanges({
     records: change.records,

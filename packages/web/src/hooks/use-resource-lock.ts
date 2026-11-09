@@ -232,7 +232,7 @@ function useResourceLock({
               isOwner.current = false;
               setLockedBy(null);
               setLockSession((session) => session + 1);
-              void onTakeOver?.();
+              Promise.resolve(onTakeOver?.()).catch(() => undefined);
             }
           },
         ),
