@@ -6,10 +6,11 @@ import { asSchema, jsonSchema, Tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { agentWorkerTools } from './agent-worker-tools'
-import { cardTitleFields, plainJsonSchema, resultMeta, TaintState, withoutForeignApResource } from './tools/tool-primitives'
+import { cardTitleFields, plainJsonSchema, resultMeta, TaintState, toolHasExecute, withoutApResource } from './tools/tool-primitives'
 
 const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
 const MCP_OFFLOAD_BYTES = 64 * 1024
+const AP_MCP_TOOL_PREFIX = 'ap_'
 const CARD_TITLE_SCHEMA = asSchema(z.object(cardTitleFields))
 
 const MCP_CONNECTOR_NAME_PATTERN = /^mcp__([^_]+)__/
@@ -346,17 +347,33 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelecte
                     }
                     return buildReconnectGuidance({ connectorUuid })
                 }
-                const ownResult = withoutForeignApResource({ toolName: name, result: toolResult })
-                const offloaded = await maybeOffloadMcpResult({ result: ownResult, toolName: name, saveLargeResult })
+                const offloaded = await maybeOffloadMcpResult({ result: toolResult, toolName: name, saveLargeResult })
                 if (offloaded !== null) {
                     return offloaded
                 }
-                return agentWorkerTools.truncateLargeResult(ownResult)
+                return agentWorkerTools.truncateLargeResult(toolResult)
             },
         })
     }
 
     return result
+}
+
+function withApResourceFromApMcpOnly({ ownTools, apMcpToolSet, stepMcpTools }: {
+    ownTools: ToolSet
+    apMcpToolSet: Record<string, unknown>
+    stepMcpTools: ToolSet
+}): ToolSet {
+    const tools: ToolSet = { ...ownTools, ...stepMcpTools }
+    const trustedToolNames = new Set(Object.keys(apMcpToolSet).filter((name) => name.startsWith(AP_MCP_TOOL_PREFIX) && !(name in stepMcpTools)))
+    return Object.fromEntries(Object.entries(tools).map(([name, tool]) => {
+        if (trustedToolNames.has(name) || !toolHasExecute(tool)) {
+            return [name, tool]
+        }
+        const originalExecute = tool.execute.bind(tool)
+        const execute = async (args: unknown, options?: ToolExecutionOptions<undefined>) => withoutApResource(await originalExecute(args, options))
+        return [name, Object.assign({}, tool, { execute })]
+    }))
 }
 
 export type McpConnection = {
@@ -371,6 +388,7 @@ export const agentMcpClient = {
     closeAgentMcpTools,
     withStepMcpTools,
     withToolTimeouts,
+    withApResourceFromApMcpOnly,
     classifyMcpAuthError,
     redactMcpAuthSecrets,
 }
