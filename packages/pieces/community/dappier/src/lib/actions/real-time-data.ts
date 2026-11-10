@@ -7,9 +7,9 @@ export const realTimeWebSearch = createAction({
   name: 'real_time_web_search',
   classification: 'READ',
   auth: dappierAuth,
-  displayName: 'Real Time Data',
+  displayName: 'Web Search',
   description:
-    'Access real-time Google web search results including the latest news, weather, travel, deals and more.',
+    'Search the live web for news, weather, travel, deals and more.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -19,7 +19,8 @@ export const realTimeWebSearch = createAction({
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',
-      description: 'Enter your search query',
+      description: 'A question or keywords, answered from live web results.',
+      placeholder: 'Weather in Paris this weekend',
       required: true,
     }),
   },
