@@ -1,4 +1,6 @@
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Tabs, TabsTrigger, TabsList } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 
 import {
   PieceSelectorTabType,
@@ -28,23 +30,22 @@ export const PieceSelectorTabs = ({
       }}
       className="w-full min-w-0"
     >
-      <TabsList
-        className={`h-full w-full flex gap-3 px-2 justify-start rounded-none bg-gray-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]`}
-      >
+      <TabsList className="h-full w-full flex gap-3 px-2 justify-start rounded-none bg-gray-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
         {tabs.map((tab) => (
           <TabsTrigger
             key={tab.key}
             value={tab.key}
-            className={`flex flex-col h-full rounded-md w-[85px] max-w-[85px] shrink-0
-              hover:bg-gray-4
-               data-[state=active]:text-accent-11 data-[state=active]:shadow-none
-               border-transparent data-[state=active]:border-accent-9 data-[state=active]:bg-transparent
-               text-gray-12 [&>svg]:size-5 [&>svg]:shrink-0`}
+            className={cn(
+              'flex flex-col h-full rounded-md min-w-[85px] max-w-[160px] shrink-0 hover:bg-gray-4',
+              'data-[state=active]:text-accent-11 data-[state=active]:shadow-none',
+              'border-transparent data-[state=active]:border-accent-9 data-[state=active]:bg-transparent',
+              'text-gray-12 [&>svg]:size-5 [&>svg]:shrink-0',
+            )}
           >
             {tab.icon}
-            <span className="mt-1.5 text-sm truncate w-full text-center">
-              {tab.name}
-            </span>
+            <TextWithTooltip tooltipMessage={tab.name}>
+              <span className="mt-1.5 max-w-full">{tab.name}</span>
+            </TextWithTooltip>
           </TabsTrigger>
         ))}
       </TabsList>
