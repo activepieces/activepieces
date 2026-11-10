@@ -87,9 +87,20 @@ async function main(): Promise<void> {
     for (const dataset of ran) {
         outcomes.push(await reportDataset({ ...dataset, explained, live, browse, recordMode, upload: values.upload, modelId: values.model }))
     }
-    const broken = outcomes.filter((outcome) => outcome.broken)
-    console.log(`\n${broken.length === 0 ? colors.bold(colors.green('✓ Nothing broke')) : colors.bold(colors.red(`✗ Broken: ${broken.map((outcome) => outcome.reason).join('; ')}`))}`)
+    const broken = outcomes.filter((outcome) => outcome.status === 'broken')
+    const unchecked = outcomes.filter((outcome) => outcome.status === 'unchecked')
+    console.log(`\n${finalLine({ broken, unchecked })}`)
     process.exit(broken.length === 0 ? 0 : 1)
+}
+
+function finalLine({ broken, unchecked }: { broken: DatasetOutcome[], unchecked: DatasetOutcome[] }): string {
+    if (broken.length > 0) {
+        return colors.bold(colors.red(`✗ Broken: ${broken.map((outcome) => outcome.reason).join('; ')}`))
+    }
+    if (unchecked.length > 0) {
+        return colors.bold(colors.yellow(`⚠ Nothing to compare: ${unchecked.map((outcome) => outcome.reason).join('; ')}. Regressions were not checked.`))
+    }
+    return colors.bold(colors.green('✓ Nothing broke'))
 }
 
 async function runDataset({ dataset, repeats, recordMode, upload, verbose, live, modelId, auth, mcp }: { dataset: { name: string, cases: EvalCase[] }, repeats: number, recordMode: boolean, upload: boolean, verbose: boolean, live: boolean, modelId: string, auth: Record<string, unknown>, mcp: McpTools }): Promise<RanDataset> {
@@ -148,17 +159,22 @@ async function reportDataset({ name, cases, results, explained, live, browse, re
     console.log(`${colors.green(`${summaries.length - failing} pass`)} · ${failing > 0 ? colors.red(`${failing} fail`) : `${failing} fail`} ${colors.dim(`(${clearlyFailing} clearly)`)} · ${summaries.length} cases`)
     if (recordMode) {
         await saveFixtures({ cases, results })
-        return { broken: false, reason: '' }
+        return { status: 'ok', reason: '' }
     }
     if (upload) {
         const experimentId = await posthogExperiments.upload({ runs: results, suiteKey: name, runSource: isNil(process.env['CI']) ? 'local' : 'ci', applicationVersion: gitSha(), modelVersion: modelId, promptVersion: promptVersion() })
         console.log(`\nUploaded main baseline for ${name}: experiment ${experimentId}`)
     }
-    const regressed = upload ? 0 : await printDiff({ suiteKey: name, modelVersion: modelId, cases, summaries })
+    const diff: DiffResult = upload ? { baseline: 'skipped' } : await printDiff({ suiteKey: name, modelVersion: modelId, cases, summaries })
     if (MUST_PASS_DATASETS.has(name) && clearlyFailing > 0) {
-        return { broken: true, reason: `${clearlyFailing} ${name} case(s) clearly fail` }
+        return { status: 'broken', reason: `${clearlyFailing} ${name} case(s) clearly fail` }
     }
-    return regressed > 0 ? { broken: true, reason: `${regressed} ${name} case(s) regressed` } : { broken: false, reason: '' }
+    switch (diff.baseline) {
+        case 'error': return { status: 'broken', reason: `could not read the main baseline for ${name}: ${diff.message}` }
+        case 'missing': return { status: 'unchecked', reason: `no main baseline for ${name} on ${modelId}` }
+        case 'skipped': return { status: 'ok', reason: '' }
+        case 'found': return diff.regressed > 0 ? { status: 'broken', reason: `${diff.regressed} ${name} case(s) regressed` } : { status: 'ok', reason: '' }
+    }
 }
 
 async function runPool({ runs, run, onResult }: { runs: PlannedRun[], run: (planned: PlannedRun) => Promise<CaseResult>, onResult: (result: CaseResult) => void }): Promise<CaseResult[]> {
@@ -217,15 +233,15 @@ function average(values: (number | null)[]): number | null {
     return known.length === 0 ? null : known.reduce((total, value) => total + value, 0) / known.length
 }
 
-async function printDiff({ suiteKey, modelVersion, cases, summaries }: { suiteKey: string, modelVersion: string, cases: EvalCase[], summaries: CaseSummary[] }): Promise<number> {
+async function printDiff({ suiteKey, modelVersion, cases, summaries }: { suiteKey: string, modelVersion: string, cases: EvalCase[], summaries: CaseSummary[] }): Promise<DiffResult> {
     const { data: found, error } = await tryCatch(() => posthogExperiments.baseline({ suiteKey, modelVersion }))
     if (error) {
-        console.log(colors.yellow(`\nCould not read the main baseline from PostHog: ${error.message}`))
-        return 0
+        console.log(colors.red(`\nCould not read the main baseline from PostHog: ${error.message}`))
+        return { baseline: 'error', message: error.message }
     }
     if (isNil(found)) {
-        console.log(colors.yellow(`\nNo main baseline in PostHog yet for ${suiteKey} on ${modelVersion}, so there is nothing to diff against.`))
-        return 0
+        console.log(colors.yellow(`\nNo main baseline in PostHog yet for ${suiteKey} on ${modelVersion}, so there is nothing to compare against.`))
+        return { baseline: 'missing' }
     }
     console.log(`\n${colors.bold(`Diff vs main baseline ${found.applicationVersion.slice(0, SHORT_SHA)}`)} ${colors.dim(`same model · a change counts only when at least ${Math.round(CLEAR_SHARE * 100)}% of at least ${MIN_JUDGED_RUNS} runs agree on both sides`)}`)
     console.log(colors.dim(`  ${padEnd('case', 4)}  ${padEnd('title', DIFF_TITLE_WIDTH)}  ${padEnd('baseline', 8)}  ${padEnd('now', 8)}  change`))
@@ -238,7 +254,7 @@ async function printDiff({ suiteKey, modelVersion, cases, summaries }: { suiteKe
     })
     const count = (label: DiffLabel): number => labels.filter((candidate) => candidate === label).length
     console.log(`  ${colors.green(`${count('FIXED')} fixed`)} · ${count('REGRESSED') > 0 ? colors.red(`${count('REGRESSED')} regressed`) : '0 regressed'} · ${colors.yellow(`${count('unclear')} unclear`)} · ${colors.dim(`${count('same')} same`)}`)
-    return labels.filter((label) => label === 'REGRESSED').length
+    return { baseline: 'found', regressed: count('REGRESSED') }
 }
 
 function clearVerdict({ pass, fail }: VerdictCounts): Verdict | 'unclear' {
@@ -379,9 +395,15 @@ type RanDataset = {
 type DiffLabel = 'same' | 'unclear' | 'FIXED' | 'REGRESSED'
 
 type DatasetOutcome = {
-    broken: boolean
+    status: 'ok' | 'unchecked' | 'broken'
     reason: string
 }
+
+type DiffResult =
+    | { baseline: 'found', regressed: number }
+    | { baseline: 'missing' }
+    | { baseline: 'error', message: string }
+    | { baseline: 'skipped' }
 
 type PlannedRun = {
     candidate: EvalCase
