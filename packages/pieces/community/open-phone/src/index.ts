@@ -13,7 +13,7 @@ import { openPhoneAuth } from './lib/auth';
 export const openPhone = createPiece({
   displayName: 'OpenPhone',
   auth: openPhoneAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/open-phone.png',
   authors: ['Ani-4x', 'onyedikachi-david'],
   actions: [sendMessage, createContact, updateContact, getCallSummary],
