@@ -597,6 +597,16 @@ describe('a stream that never reaches its finish chunk', () => {
         expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
     })
 
+    it('still counts a stream cut off before any output as unbilled, since its usage is unknown', async () => {
+        activepiecesAiCost.drainUnbilledCalls()
+        const model = streamingModel({ provider: AIProviderName.ACTIVEPIECES, apiKey: MANAGED_KEY })
+
+        await streamThen(model, ({ reader }) => reader.cancel(new Error('client went away')))
+        await settled()
+
+        expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
+    })
+
     it('counts the call as unbilled when the stream died before naming a generation to ask about', async () => {
         activepiecesAiCost.drainUnbilledCalls()
         generationLookup.answer = async () => ({ costUsd: 0.5 })

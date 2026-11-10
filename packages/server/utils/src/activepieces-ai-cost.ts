@@ -157,7 +157,7 @@ async function recoverCostAndReport({ state, context }: SettleStreamParams): Pro
     }
     const generation = await lookupGeneration({ apiKey, generationId })
     if (isNil(generation)) {
-        report({ context, generationId, call: undefined, tokens: state.tokens, emptyCompletion: isEmptyCompletion({ producedOutput: state.producedOutput, tokens: state.tokens }) })
+        report({ context, generationId, call: undefined, tokens: state.tokens, emptyCompletion: !isNil(state.tokens) && isEmptyCompletion({ producedOutput: state.producedOutput, tokens: state.tokens }) })
         return
     }
     report({
