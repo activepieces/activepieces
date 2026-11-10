@@ -234,16 +234,34 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
         if (destinations.length === 0) {
             return { queued: 0, failedPlatformIds }
         }
+        const destinationsByPlatform = groupBy(destinations, (destination) => destination.platformId)
+        const platformIds = Object.keys(destinationsByPlatform)
+        const { data: platformLookups, error: lookupError } = await tryCatch(() => Promise.all([
+            eventDestinationHooks.get(log).listDeliveryEntitledPlatformIds({ platformIds }),
+            pieceCatalogHooks.get(log).listPieceSets({ platformIds }),
+        ]))
+        if (isNil(platformLookups)) {
+            log.error({ platformIds, err: lookupError }, '[pieceCatalogEvents] broadcast platform lookup failed')
+            return { queued: 0, failedPlatformIds: platformIds }
+        }
+        const [entitledPlatformIds, pieceSetsByPlatform] = platformLookups
+        const entitled = new Set(entitledPlatformIds)
         const webhookUrlPrefix = await domainHelper.getPublicApiUrl({ path: 'v1/webhooks' })
         let queued = 0
-        for (const [platformId, platformDestinations] of Object.entries(groupBy(destinations, (destination) => destination.platformId))) {
-            const deliveries = await planPieceCatalogDeliveries({ log, platformId, destinations: platformDestinations, changes, webhookUrlPrefix })
-                .catch((err: unknown) => {
-                    log.error({ platformId, err }, '[pieceCatalogEvents] broadcast platform failed')
-                    failedPlatformIds.push(platformId)
-                    return null
-                })
+        for (const [platformId, platformDestinations] of Object.entries(destinationsByPlatform)) {
+            if (!entitled.has(platformId)) {
+                continue
+            }
+            const { data: deliveries, error: planError } = tryCatchSync(() => planPieceCatalogDeliveries({
+                platformId,
+                destinations: platformDestinations,
+                changes,
+                pieceSets: pieceSetsByPlatform.get(platformId) ?? [],
+                webhookUrlPrefix,
+            }))
             if (isNil(deliveries)) {
+                log.error({ platformId, err: planError }, '[pieceCatalogEvents] broadcast platform failed')
+                failedPlatformIds.push(platformId)
                 continue
             }
             queued += deliveries.filter(({ internalFlowId }) => isNil(internalFlowId)).length
@@ -422,11 +440,7 @@ function deliveryJobFields({ format, hasHeaders }: DeliveryJobFieldsParams): Pic
     }
 }
 
-async function planPieceCatalogDeliveries({ log, platformId, destinations, changes, webhookUrlPrefix }: PlanPieceCatalogDeliveriesParams): Promise<PieceCatalogDelivery[]> {
-    if (!await eventDestinationHooks.get(log).isDeliveryEntitled({ platformId })) {
-        return []
-    }
-    const pieceSets = await pieceCatalogHooks.get(log).listPieceSets({ platformId })
+function planPieceCatalogDeliveries({ platformId, destinations, changes, pieceSets, webhookUrlPrefix }: PlanPieceCatalogDeliveriesParams): PieceCatalogDelivery[] {
     return changes.flatMap((change) => {
         const event = toPieceCatalogEvent({ platformId, change, pieceSets })
         return destinations
@@ -869,10 +883,10 @@ type BroadcastParams = {
 }
 
 type PlanPieceCatalogDeliveriesParams = {
-    log: FastifyBaseLogger
     platformId: PlatformId
     destinations: EventDestinationSchema[]
     changes: CatalogChange[]
+    pieceSets: PieceSetVisibility[]
     webhookUrlPrefix: string
 }
 

@@ -527,7 +527,7 @@ describe('Piece catalog events job', () => {
     it('S11 the seed path never broadcasts while the entitlement hook is at its default', async () => {
         const destUnentitled = await subscribe({ platformId: unentitled.platform.id })
         const destControl = await subscribe({ platformId: entitledA.platform.id })
-        eventDestinationHooks.set(() => ({ isDeliveryEntitled: async () => true }))
+        eventDestinationHooks.set(() => ({ isDeliveryEntitled: async () => true, listDeliveryEntitledPlatformIds: async ({ platformIds }) => platformIds }))
         registry = baseCatalog()
         await sync()
         await settleCatalogJobs()

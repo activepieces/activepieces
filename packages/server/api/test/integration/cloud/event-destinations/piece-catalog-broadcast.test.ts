@@ -4,10 +4,10 @@ import { FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { pieceSetCatalogHooks } from '../../../../src/app/ee/pieces/piece-set/piece-set-catalog-hooks'
 import { eventDestinationEntitlementHooks } from '../../../../src/app/ee/platform-webhooks/event-destination-entitlement-hooks'
-import { eventDestinationHooks } from '../../../../src/app/event-destinations/event-destinations-hooks'
+import { EventDestinationHooks, eventDestinationHooks } from '../../../../src/app/event-destinations/event-destinations-hooks'
 import { eventDestinationService } from '../../../../src/app/event-destinations/event-destinations.service'
 import { CatalogChange } from '../../../../src/app/pieces/piece-catalog/catalog-diff'
-import { PieceCatalogHooks, pieceCatalogHooks } from '../../../../src/app/pieces/piece-catalog/piece-catalog-hooks'
+import { PieceCatalogHooks, pieceCatalogHooks, PieceSetVisibility } from '../../../../src/app/pieces/piece-catalog/piece-catalog-hooks'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
 import { createMockEventDestination } from '../../../helpers/mocks'
@@ -101,13 +101,10 @@ describe('Piece catalog broadcast', () => {
     it('unsubscribed, disabled and unentitled destinations get nothing', async () => {
         const unsubscribed = await createTestContext(app, ENTITLED_PLAN)
         const disabled = await createTestContext(app, ENTITLED_PLAN)
-        const unentitled = await createTestContext(app, ENTITLED_PLAN)
+        const unentitled = await createTestContext(app, { plan: { eventStreamingEnabled: false } })
         await subscribe({ platformId: unsubscribed.platform.id, events: [ApplicationEventName.FLOW_CREATED] })
         await subscribe({ platformId: disabled.platform.id, enabled: false })
         await subscribe({ platformId: unentitled.platform.id })
-        eventDestinationHooks.set(() => ({
-            isDeliveryEntitled: async ({ platformId }) => platformId !== unentitled.platform.id,
-        }))
 
         const result = await eventDestinationService(app.log).broadcast({ changes: [buildChange()] })
 
@@ -225,18 +222,67 @@ describe('Piece catalog broadcast', () => {
         expect(keysFor('@test/piece-01')).toEqual(['default', 'inc'])
     })
 
-    it('one platform\'s piece-set failure does not block the others', async () => {
+    it('reads entitlement and piece sets once for every subscribed platform', async () => {
+        const platformIds: string[] = []
+        for (let index = 0; index < 3; index++) {
+            const context = await createTestContext(app, ENTITLED_PLAN)
+            await subscribe({ platformId: context.platform.id })
+            platformIds.push(context.platform.id)
+        }
+        const realEntitlement = eventDestinationEntitlementHooks(app.log)
+        const realPieceSets = pieceSetCatalogHooks(app.log)
+        const entitlementReads: string[][] = []
+        const pieceSetReads: string[][] = []
+        eventDestinationHooks.set((): EventDestinationHooks => ({
+            isDeliveryEntitled: async () => {
+                throw new Error('per-platform entitlement read')
+            },
+            listDeliveryEntitledPlatformIds: async (params) => {
+                entitlementReads.push([...params.platformIds].sort())
+                return realEntitlement.listDeliveryEntitledPlatformIds(params)
+            },
+        }))
+        pieceCatalogHooks.set((): PieceCatalogHooks => ({
+            listPieceSets: async (params) => {
+                pieceSetReads.push([...params.platformIds].sort())
+                return realPieceSets.listPieceSets(params)
+            },
+        }))
+
+        const result = await eventDestinationService(app.log).broadcast({ changes: [buildChange()] })
+
+        expect(result).toEqual({ queued: 3, failedPlatformIds: [] })
+        expect(entitlementReads).toEqual([[...platformIds].sort()])
+        expect(pieceSetReads).toEqual([[...platformIds].sort()])
+    })
+
+    it('a failed piece-set read reports every subscribed platform as failed and queues nothing', async () => {
+        const first = await createTestContext(app, ENTITLED_PLAN)
+        const second = await createTestContext(app, ENTITLED_PLAN)
+        await subscribe({ platformId: first.platform.id })
+        await subscribe({ platformId: second.platform.id })
+        pieceCatalogHooks.set((): PieceCatalogHooks => ({
+            listPieceSets: async () => {
+                throw new Error('piece set read failed')
+            },
+        }))
+
+        const result = await eventDestinationService(app.log).broadcast({ changes: [buildChange()] })
+
+        expect(result.queued).toBe(0)
+        expect([...result.failedPlatformIds].sort()).toEqual([first.platform.id, second.platform.id].sort())
+        expect(addSpy).not.toHaveBeenCalled()
+    })
+
+    it('one platform\'s malformed piece set does not block the others', async () => {
         const failing = await createTestContext(app, ENTITLED_PLAN)
         const healthy = await createTestContext(app, ENTITLED_PLAN)
         await subscribe({ platformId: failing.platform.id })
         const healthyDestinationId = await subscribe({ platformId: healthy.platform.id })
         pieceCatalogHooks.set((): PieceCatalogHooks => ({
-            listPieceSets: async ({ platformId }) => {
-                if (platformId === failing.platform.id) {
-                    throw new Error('piece set read failed')
-                }
-                return []
-            },
+            listPieceSets: async () => new Map([
+                [failing.platform.id, [{ id: 'broken', key: null, name: 'broken', isDefault: false, pieces: null as unknown as PieceSetVisibility['pieces'] }]],
+            ]),
         }))
 
         const result = await eventDestinationService(app.log).broadcast({ changes: [buildChange()] })
