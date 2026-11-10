@@ -7,6 +7,8 @@ const TRANSFER_TIMEOUT_MS = 300_000;
 const MAX_ERROR_TEXT = 500;
 const DEFAULT_PAGE_SIZE = 100;
 const MAX_ALL_ITEMS = 10_000;
+const SEARCH_MAX_ROWS = 2_000;
+const SEARCH_TIME_BUDGET_MS = 180_000;
 const MAX_REDIRECTS = 5;
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 const DATABASE_ID_PATTERN = /^\d+-\d+$/;
@@ -342,6 +344,38 @@ async function listPage({ auth, path, query, limit, skip, operation }: ListPageP
   return { items: collected.slice(0, wanted), hasMore: collected.length > wanted };
 }
 
+async function searchPage({ auth, path, query, limit, skip, matches, operation }: SearchPageParams): Promise<{ items: Record<string, unknown>[]; hasMore: boolean; scanLimitReached: boolean }> {
+  const wanted = positiveInteger({ value: limit, label: 'Limit' });
+  const start = skip === undefined || skip === null ? 0 : nonNegativeInteger({ value: skip, label: 'Skip' });
+  const needed = start + wanted + 1;
+  const deadline = Date.now() + SEARCH_TIME_BUDGET_MS;
+  const found: Record<string, unknown>[] = [];
+  let scanned = 0;
+  let exhausted = false;
+  while (found.length < needed && scanned < SEARCH_MAX_ROWS && Date.now() < deadline) {
+    const page = await request<unknown>({
+      auth,
+      method: HttpMethod.GET,
+      path,
+      query: { ...query, $top: DEFAULT_PAGE_SIZE, $skip: scanned },
+      operation,
+    });
+    const batch = records(page);
+    scanned += batch.length;
+    for (const row of batch) {
+      if (found.length < needed && matches(row)) {
+        found.push(row);
+      }
+    }
+    if (batch.length < DEFAULT_PAGE_SIZE) {
+      exhausted = true;
+      break;
+    }
+  }
+  const hasMore = found.length > start + wanted;
+  return { items: found.slice(start, start + wanted), hasMore, scanLimitReached: !hasMore && !exhausted };
+}
+
 async function listUpTo({ auth, path, query, limit, fallback, skip, operation }: ListUpToParams): Promise<Record<string, unknown>[]> {
   const wanted = lenientLimit({ value: limit, fallback });
   if (wanted === 'all') {
@@ -599,6 +633,7 @@ export const youtrackClient = {
   request,
   send,
   listPage,
+  searchPage,
   listAll,
   listUpTo,
   lenientLimit,
@@ -626,6 +661,7 @@ export const youtrackClient = {
   vendorMessage,
   verifiedTls,
   TRANSFER_TIMEOUT_MS,
+  SEARCH_MAX_ROWS,
 };
 
 type QueryValue = string | number | boolean | undefined | null;
@@ -653,6 +689,16 @@ type ListPageParams = {
   query?: Record<string, QueryValue>;
   limit: unknown;
   skip?: unknown;
+  operation: string;
+};
+
+type SearchPageParams = {
+  auth: unknown;
+  path: string;
+  query?: Record<string, QueryValue>;
+  limit: unknown;
+  skip?: unknown;
+  matches: (row: Record<string, unknown>) => boolean;
   operation: string;
 };
 

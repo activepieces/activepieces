@@ -335,6 +335,7 @@ export const findUsersActionOutputSchema: OutputSchema = {
   fields: [
     { key: 'items', label: 'Users', labelKey: 'login', listItems: [...userRefFields, { key: 'online', label: 'Online', format: 'boolean' }] },
     { key: 'hasMore', label: 'Has More', format: 'boolean' },
+    { key: 'scanLimitReached', label: 'Scan Limit Reached', format: 'boolean' },
   ],
 };
 
@@ -466,6 +467,7 @@ export const searchArticlesActionOutputSchema: OutputSchema = {
   fields: [
     { key: 'items', label: 'Articles', labelKey: 'summary', listItems: articleFields },
     { key: 'hasMore', label: 'Has More', format: 'boolean' },
+    { key: 'scanLimitReached', label: 'Scan Limit Reached', format: 'boolean' },
   ],
 };
 

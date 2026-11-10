@@ -330,7 +330,7 @@ describe('search text is also applied locally', () => {
       { id: '167-3', idReadable: 'SETUP-A-3', summary: 'Other', content: null },
     ]);
     const out = await call({ fn: searchArticlesAction.run, propsValue: { query: 'setup', limit: 10 } });
-    expect(out).toEqual({ items: [expect.objectContaining({ id: '167-1' }), expect.objectContaining({ id: '167-3' })], hasMore: false });
+    expect(out).toEqual({ items: [expect.objectContaining({ id: '167-1' }), expect.objectContaining({ id: '167-3' })], hasMore: false, scanLimitReached: false });
     expect(out.items[0]).not.toHaveProperty('content');
     expect(req(0).queryParams).toMatchObject({ query: 'setup' });
     expect(req(0).queryParams.fields).toContain(',content');
@@ -339,7 +339,7 @@ describe('search text is also applied locally', () => {
   it('search_articles returns an empty list for a word that matches nothing', async () => {
     ok([{ id: '167-1', idReadable: 'APT-A-1', summary: 'Release notes', content: 'Welcome' }]);
     const out = await call({ fn: searchArticlesAction.run, propsValue: { query: 'zzqxnomatch' } });
-    expect(out).toEqual({ items: [], hasMore: false });
+    expect(out).toEqual({ items: [], hasMore: false, scanLimitReached: false });
   });
 
   it('search_articles without search text keeps every row and does not fetch content', async () => {
@@ -358,6 +358,93 @@ describe('search text is also applied locally', () => {
     const out = await call({ fn: findUsersAction.run, propsValue: { query: 'Jane' } });
     expect(out.items.map((u) => u.id)).toEqual(['1-1', '1-3']);
     expect(req(0).queryParams).toMatchObject({ query: 'Jane' });
+  });
+});
+
+describe('search text pages through YouTrack before skip and limit', () => {
+  const users = ({ count, offset, match = [] }: { count: number; offset: number; match?: number[] }) =>
+    Array.from({ length: count }, (_, i) => {
+      const n = offset + i;
+      return match.includes(n) ? { id: `1-${n}`, login: `jane${n}` } : { id: `1-${n}`, login: `user${n}` };
+    });
+
+  it('find_users returns a match that only appears on the third provider page', async () => {
+    ok(users({ count: 100, offset: 0 }));
+    ok(users({ count: 100, offset: 100 }));
+    ok(users({ count: 30, offset: 200, match: [215] }));
+    const out = await call({ fn: findUsersAction.run, propsValue: { query: 'jane', limit: 5 } });
+    expect(out).toEqual({ items: [expect.objectContaining({ id: '1-215', login: 'jane215' })], hasMore: false, scanLimitReached: false });
+    expect(sendRequest).toHaveBeenCalledTimes(3);
+    expect([0, 1, 2].map((i) => req(i).queryParams.$skip)).toEqual(['0', '100', '200']);
+    expect(req(2).queryParams).toMatchObject({ query: 'jane', $top: '100' });
+  });
+
+  it('applies skip, limit and hasMore to matching rows, not provider rows', async () => {
+    ok(users({ count: 100, offset: 0, match: [3, 50, 99] }));
+    ok(users({ count: 100, offset: 100, match: [120, 180] }));
+    const out = await call({ fn: findUsersAction.run, propsValue: { query: 'jane', limit: 2, skip: 1 } });
+    expect(out.items.map((u) => u.id)).toEqual(['1-50', '1-99']);
+    expect(out.hasMore).toBe(true);
+    expect(out.scanLimitReached).toBe(false);
+    expect(sendRequest).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports hasMore false when the last match is the last one returned', async () => {
+    ok(users({ count: 100, offset: 0, match: [3, 50] }));
+    ok(users({ count: 10, offset: 100, match: [105] }));
+    const out = await call({ fn: findUsersAction.run, propsValue: { query: 'jane', limit: 2, skip: 1 } });
+    expect(out).toMatchObject({ hasMore: false, scanLimitReached: false });
+    expect(out.items.map((u) => u.id)).toEqual(['1-50', '1-105']);
+  });
+
+  it('returns an empty list when no page matches', async () => {
+    ok(users({ count: 100, offset: 0 }));
+    ok(users({ count: 40, offset: 100 }));
+    const out = await call({ fn: findUsersAction.run, propsValue: { query: 'jane' } });
+    expect(out).toEqual({ items: [], hasMore: false, scanLimitReached: false });
+  });
+
+  it('stops after the row cap and says so in scanLimitReached', async () => {
+    const pages = youtrackClient.SEARCH_MAX_ROWS / 100;
+    for (let i = 0; i < pages; i++) {
+      ok(users({ count: 100, offset: i * 100, match: i === 0 ? [7] : [] }));
+    }
+    const out = await call({ fn: findUsersAction.run, propsValue: { query: 'jane' } });
+    expect(out).toEqual({ items: [expect.objectContaining({ id: '1-7' })], hasMore: false, scanLimitReached: true });
+    expect(sendRequest).toHaveBeenCalledTimes(pages);
+  });
+
+  it('stops when the time budget is used up and says so', async () => {
+    const now = vi.spyOn(Date, 'now');
+    now.mockReturnValueOnce(0).mockReturnValueOnce(1_000).mockReturnValue(10_000_000);
+    ok(users({ count: 100, offset: 0 }));
+    try {
+      const out = await call({ fn: findUsersAction.run, propsValue: { query: 'jane' } });
+      expect(out).toEqual({ items: [], hasMore: false, scanLimitReached: true });
+      expect(sendRequest).toHaveBeenCalledTimes(1);
+    } finally {
+      now.mockRestore();
+    }
+  });
+
+  it('search_articles finds a match on page 3 and pages over matches', async () => {
+    const articles = ({ count, offset, match = [] }: { count: number; offset: number; match?: number[] }) =>
+      Array.from({ length: count }, (_, i) => ({ id: `167-${offset + i}`, summary: match.includes(offset + i) ? 'Runner setup' : 'Other', content: 'x' }));
+    ok(articles({ count: 100, offset: 0 }));
+    ok(articles({ count: 100, offset: 100 }));
+    ok(articles({ count: 100, offset: 200, match: [201, 250, 260] }));
+    const out = await call({ fn: searchArticlesAction.run, propsValue: { query: 'setup', limit: 1, skip: 1 } });
+    expect(out).toEqual({ items: [expect.objectContaining({ id: '167-250' })], hasMore: true, scanLimitReached: false });
+    expect(sendRequest).toHaveBeenCalledTimes(3);
+  });
+
+  it('without search text keeps the single-page provider skip and limit', async () => {
+    ok(users({ count: 3, offset: 4 }));
+    const out = await call({ fn: findUsersAction.run, propsValue: { limit: 2, skip: 4 } });
+    expect(req(0).queryParams).toMatchObject({ $top: '3', $skip: '4' });
+    expect(req(0).queryParams).not.toHaveProperty('query');
+    expect(out).toMatchObject({ hasMore: true, scanLimitReached: false });
+    expect(out.items).toHaveLength(2);
   });
 });
 
@@ -693,8 +780,8 @@ describe('new actions send the documented request', () => {
       responses: [[{ id: '1-2', login: 'jane' }]],
       method: 'GET',
       path: '/users',
-      query: { query: 'jane', $top: '3', $skip: '4', fields: 'id,login,fullName,email,banned,guest,online' },
-      output: { items: [expect.objectContaining({ login: 'jane' })], hasMore: false },
+      query: { query: 'jane', $top: '100', $skip: '0', fields: 'id,login,fullName,email,banned,guest,online' },
+      output: { items: [], hasMore: false, scanLimitReached: false },
     },
     {
       name: 'get_current_user',
@@ -805,7 +892,7 @@ describe('new actions send the documented request', () => {
       method: 'GET',
       path: '/articles',
       query: { query: 'setup' },
-      output: { items: [expect.objectContaining({ idReadable: 'APT-A-1', project_shortName: 'APT' })], hasMore: false },
+      output: { items: [expect.objectContaining({ idReadable: 'APT-A-1', project_shortName: 'APT' })], hasMore: false, scanLimitReached: false },
     },
     {
       name: 'get_article',
