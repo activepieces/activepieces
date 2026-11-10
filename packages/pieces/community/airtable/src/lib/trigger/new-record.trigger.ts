@@ -21,6 +21,7 @@ const STATE_KEY = 'new_record_state';
 const LEGACY_STATE_KEY = 'lastPoll';
 const NO_VIEW_OVERLAP_MS = 10 * 60 * 1000;
 const MAX_SEEN_IN_VIEW = 1000;
+const MAX_SEEN_WITHOUT_VIEW = 5000;
 const SAMPLE_SIZE = 5;
 const SAMPLE_WINDOWS_DAYS = [1, 7, 30, 365];
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -56,6 +57,25 @@ async function listCreatedAfter({
     .filter(({ createdMs }) => Number.isFinite(createdMs));
 }
 
+async function initialState({
+  auth,
+  propsValue,
+}: {
+  auth: AirtableAuthValue;
+  propsValue: NewRecordProps;
+}): Promise<NewRecordState> {
+  const floor = airtableCommon.pollStartCursor();
+  const existing = await listCreatedAfter({
+    auth,
+    propsValue: { ...propsValue, viewId: undefined },
+    createdAfter: floor,
+  });
+  return {
+    floor,
+    seen: existing.map(({ record, createdMs }) => [record.id, createdMs]),
+  };
+}
+
 async function loadState(store: Store): Promise<NewRecordState | null> {
   const state = await store.get<NewRecordState>(STATE_KEY);
   if (!isNil(state)) {
@@ -89,23 +109,18 @@ function nextState({
   hasView: boolean;
 }): NewRecordState {
   const seen = [...state.seen, ...emitted].sort((a, b) => a[1] - b[1]);
-  if (!hasView) {
-    const newest = seen.reduce(
-      (latest, [, createdMs]) => Math.max(latest, createdMs),
-      state.floor
-    );
-    const floor = Math.max(
-      state.floor,
-      Math.min(newest, Date.now()) - NO_VIEW_OVERLAP_MS
-    );
-    return { floor, seen: seen.filter(([, createdMs]) => createdMs > floor) };
-  }
   let floor = state.floor;
-  const overflow = Math.max(0, seen.length - MAX_SEEN_IN_VIEW);
-  if (overflow > 0) {
-    floor = Math.max(floor, seen[overflow - 1][1]);
+  if (!hasView && seen.length > 0) {
+    const newest = seen[seen.length - 1][1];
+    floor = Math.max(floor, Math.min(newest, Date.now()) - NO_VIEW_OVERLAP_MS);
   }
-  return { floor, seen: seen.filter(([, createdMs]) => createdMs > floor) };
+  const kept = seen.filter(([, createdMs]) => createdMs > floor);
+  const overflow =
+    kept.length - (hasView ? MAX_SEEN_IN_VIEW : MAX_SEEN_WITHOUT_VIEW);
+  if (overflow > 0) {
+    floor = Math.max(floor, kept[overflow - 1][1]);
+  }
+  return { floor, seen: kept.filter(([, createdMs]) => createdMs > floor) };
 }
 
 export const airtableNewRecordTrigger = createTrigger({
@@ -150,7 +165,10 @@ export const airtableNewRecordTrigger = createTrigger({
     }
     await saveState({
       store: context.store,
-      state: { floor: airtableCommon.pollStartCursor(), seen: [] },
+      state: await initialState({
+        auth: context.auth,
+        propsValue: context.propsValue,
+      }),
     });
   },
   async onDisable() {
@@ -161,7 +179,10 @@ export const airtableNewRecordTrigger = createTrigger({
     if (isNil(state)) {
       await saveState({
         store: context.store,
-        state: { floor: airtableCommon.pollStartCursor(), seen: [] },
+        state: await initialState({
+          auth: context.auth,
+          propsValue: context.propsValue,
+        }),
       });
       return [];
     }

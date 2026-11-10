@@ -17,6 +17,7 @@ import {
     resetVendor,
     startFakeAirtable,
     tick,
+    vendor,
 } from './support/fake-airtable'
 import { auth, findRecordContext, propertyContext, updatedRecordContext, updatedRecordTrigger as trigger } from './support/context'
 
@@ -84,6 +85,19 @@ describe('Airtable New or Updated Record behaviour', () => {
         expect(await trigger.run(ctx({ store }))).toEqual([])
     })
 
+    it('does not fire a record edited earlier in the same second as enable', async () => {
+        addRecord({ id: 'recBefore' })
+        addRecord({ id: 'recAfter' })
+        tick(60_100)
+        editRecord({ id: 'recBefore', at: tick(100) })
+        tick(500)
+        const { store } = memoryStore()
+        await trigger.onEnable(ctx({ store }))
+        editRecord({ id: 'recAfter', at: tick(200) })
+        expect(ids(await trigger.run(ctx({ store })))).toEqual(['recAfter'])
+        expect(await trigger.run(ctx({ store }))).toEqual([])
+    })
+
     it('fires a new record too', async () => {
         const { store } = memoryStore()
         await trigger.onEnable(ctx({ store }))
@@ -127,6 +141,15 @@ describe('Airtable New or Updated Record behaviour', () => {
         await trigger.onEnable(ctx({ store }))
         deleteField({ id: MOD_FIELD_ID })
         await expect(trigger.run(ctx({ store }))).rejects.toThrow(/Trigger Field "fldLastMod0000001" no longer exists.*pick Trigger Field again/)
+    })
+
+    it('fails instead of switching to a new column with the old name when the remembered field was deleted', async () => {
+        addRecord({ id: 'recA' })
+        const { store } = memoryStore()
+        await trigger.onEnable(ctx({ store, sortFields: 'Last Modified' }))
+        deleteField({ id: MOD_FIELD_ID })
+        vendor.fields.push({ id: 'fldReplace0000001', name: 'Last Modified', type: 'lastModifiedTime' })
+        await expect(trigger.run(ctx({ store, sortFields: 'Last Modified' }))).rejects.toThrow(/Trigger Field "Last Modified" no longer exists.*pick Trigger Field again/)
     })
 
     it('fails with a clear message when a renamed field was saved by name and never polled', async () => {

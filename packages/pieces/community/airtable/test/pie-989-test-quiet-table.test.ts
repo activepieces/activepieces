@@ -1,5 +1,4 @@
 import http from 'http'
-import dayjs from 'dayjs'
 import { vi } from 'vitest'
 import { newRecordContext, newRecordTrigger as airtableNewRecordTrigger, updatedRecordContext, updatedRecordTrigger as airtableUpdatedRecordTrigger } from './support/context'
 import { ids, memoryStore, portOf } from './support/fake-airtable'
@@ -36,7 +35,7 @@ beforeAll(async () => {
                 const [, field, iso] = isAfter
                 records = records.filter((r) => {
                     const value = r.fields[field]
-                    return dayjs(typeof value === 'string' ? value : undefined).valueOf() > dayjs(iso).valueOf()
+                    return typeof value === 'string' && Date.parse(value) > Date.parse(iso)
                 })
             }
             res.setHeader('content-type', 'application/json')

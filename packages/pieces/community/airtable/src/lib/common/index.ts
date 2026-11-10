@@ -292,10 +292,10 @@ async function resolveField({
     }
     return { name: idOrName };
   }
-  const field =
-    table.fields.find((candidate) => candidate.id === idOrName) ??
-    table.fields.find((candidate) => candidate.id === rememberedFieldId) ??
-    table.fields.find((candidate) => candidate.name === idOrName);
+  const field = isNil(rememberedFieldId)
+    ? table.fields.find((candidate) => candidate.id === idOrName) ??
+      table.fields.find((candidate) => candidate.name === idOrName)
+    : table.fields.find((candidate) => candidate.id === rememberedFieldId);
   if (isNil(field)) {
     throw new Error(
       `${label} "${idOrName}" no longer exists in table "${table.name}". It was deleted or renamed: open the step and pick ${label} again.`

@@ -166,6 +166,39 @@ function withModifiedTime({
     .filter(({ modifiedMs }) => Number.isFinite(modifiedMs));
 }
 
+async function initialState({
+  auth,
+  propsValue,
+  fieldName,
+}: {
+  auth: AirtableAuthValue;
+  propsValue: UpdatedRecordProps;
+  fieldName: string;
+}): Promise<UpdatedRecordState> {
+  const start: UpdatedRecordState = {
+    checkpoint: airtableCommon.pollStartCursor(),
+    seenAtCheckpoint: [],
+  };
+  const existing = withModifiedTime({
+    fieldName,
+    records: await airtableCommon.selectRecords({
+      token: auth.secret_text,
+      baseId: propsValue.base,
+      tableId: propsValue.tableId,
+      params: {
+        filterByFormula: modifiedAfterFormula({
+          fieldName,
+          epochMs: start.checkpoint,
+        }),
+      },
+    }),
+  });
+  if (existing.length === 0) {
+    return start;
+  }
+  return nextState({ state: start, records: existing, fresh: existing });
+}
+
 async function loadState(store: Store): Promise<UpdatedRecordState | null> {
   const state = await store.get<UpdatedRecordState>(STATE_KEY);
   if (!isNil(state)) {
@@ -256,7 +289,7 @@ export const airtableUpdatedRecordTrigger = createTrigger({
       .map(({ record }) => record);
   },
   async onEnable(context) {
-    await resolveTriggerField({
+    const field = await resolveTriggerField({
       auth: context.auth,
       propsValue: context.propsValue,
       store: context.store,
@@ -271,7 +304,11 @@ export const airtableUpdatedRecordTrigger = createTrigger({
     }
     await saveState({
       store: context.store,
-      state: { checkpoint: airtableCommon.pollStartCursor(), seenAtCheckpoint: [] },
+      state: await initialState({
+        auth: context.auth,
+        propsValue: context.propsValue,
+        fieldName: field.name,
+      }),
     });
   },
   async onDisable() {
@@ -288,7 +325,11 @@ export const airtableUpdatedRecordTrigger = createTrigger({
     if (isNil(state)) {
       await saveState({
         store: context.store,
-        state: { checkpoint: airtableCommon.pollStartCursor(), seenAtCheckpoint: [] },
+        state: await initialState({
+          auth: context.auth,
+          propsValue: context.propsValue,
+          fieldName: field.name,
+        }),
       });
       return [];
     }

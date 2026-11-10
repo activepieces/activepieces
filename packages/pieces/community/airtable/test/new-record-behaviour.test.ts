@@ -130,6 +130,33 @@ describe('Airtable New Record: enable and record in the same second', () => {
         expect(ids(await trigger.run(ctx({ store, viewId })))).toEqual(['recSameSecond'])
         expect(await trigger.run(ctx({ store, viewId }))).toEqual([])
     })
+
+    it.each([undefined, VIEW_ID])('does not fire a record created earlier in the same second as enable (view %s)', async (viewId) => {
+        addRecord({ id: 'recBefore', at: tick(100) })
+        addRecord({ id: 'recBeforeDraft', status: 'Draft', at: tick(100) })
+        tick(500)
+        const { store } = memoryStore()
+        await trigger.onEnable(ctx({ store, viewId }))
+        addRecord({ id: 'recAfter', at: tick(200) })
+        editRecord({ id: 'recBeforeDraft', status: 'Ready' })
+        expect(ids(await trigger.run(ctx({ store, viewId })))).toEqual(['recAfter'])
+        expect(await trigger.run(ctx({ store, viewId }))).toEqual([])
+    })
+})
+
+describe('Airtable New Record without a view: large imports', () => {
+    it('keeps the saved state well under the store limit and still fires every record once', async () => {
+        const { store, data } = memoryStore()
+        await trigger.onEnable(ctx({ store }))
+        Array.from({ length: 6000 }, (_, index) => addRecord({ id: `recBulk${String(index).padStart(10, '0')}`, at: tick(10) }))
+        expect(await trigger.run(ctx({ store }))).toHaveLength(6000)
+        const saved = data.get('new_record_state') ?? ''
+        expect(storedState({ data }).seen.length).toBeLessThanOrEqual(5000)
+        expect(saved.length).toBeLessThan(256 * 1024)
+        expect(await trigger.run(ctx({ store }))).toEqual([])
+        addRecord({ id: 'recAfterBulk', at: tick(1000) })
+        expect(ids(await trigger.run(ctx({ store })))).toEqual(['recAfterBulk'])
+    })
 })
 
 describe('Airtable New Record with a view: late view entrants', () => {
