@@ -174,11 +174,18 @@ export const slack = createPiece({
     verify: ({ webhookSecret, payload }) => {
       const timestamp = payload.headers['x-slack-request-timestamp'];
       const signature = payload.headers['x-slack-signature'];
-      const signatureBaseString = `v0:${timestamp}:${payload.rawBody}`;
-      const hmac = crypto.createHmac('sha256', webhookSecret as string);
-      hmac.update(signatureBaseString);
-      const computedSignature = `v0=${hmac.digest('hex')}`;
-      return signature === computedSignature;
+      if (typeof webhookSecret !== 'string' || !timestamp || !signature) {
+        return false;
+      }
+      const ageSeconds = Math.abs(Date.now() / 1000 - Number(timestamp));
+      if (Number.isNaN(ageSeconds) || ageSeconds > SLACK_MAX_REQUEST_AGE_SECONDS) {
+        return false;
+      }
+      const hmac = crypto.createHmac('sha256', webhookSecret);
+      hmac.update(`v0:${timestamp}:${payload.rawBody}`);
+      const expected = Buffer.from(`v0=${hmac.digest('hex')}`);
+      const received = Buffer.from(signature);
+      return expected.length === received.length && crypto.timingSafeEqual(expected, received);
     },
   },
   authors: [
@@ -311,6 +318,8 @@ export const slack = createPiece({
     newModalInteractionTrigger,
   ],
 });
+
+const SLACK_MAX_REQUEST_AGE_SECONDS = 5 * 60;
 
 type EventPayloadBody = {
   // Event payload
