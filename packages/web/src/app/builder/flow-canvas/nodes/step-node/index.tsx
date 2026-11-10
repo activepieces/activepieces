@@ -69,7 +69,11 @@ const ApStepCanvasNode = React.memo(
         ? () => setOpenedPieceSelectorStepNameOrAddButtonId(step.name)
         : undefined;
 
-    const { attributes, listeners, setNodeRef } = useDraggable({
+    const {
+      attributes: { 'aria-disabled': _ariaDisabled, ...attributes },
+      listeners,
+      setNodeRef,
+    } = useDraggable({
       id: step.name,
       disabled: isTrigger || readonly,
       data: {
