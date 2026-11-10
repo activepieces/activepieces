@@ -247,10 +247,12 @@ export const callDropdown = Property.Dropdown({
 
       return {
         disabled: false,
-        options: callsResponse.data.map((call) => ({
-          label: buildCallLabel({ call }),
-          value: call.id,
-        })),
+        options: disambiguateLabels({
+          options: callsResponse.data.map((call) => ({
+            label: buildCallLabel({ call }),
+            value: call.id,
+          })),
+        }),
       };
     } catch {
       return {
@@ -292,6 +294,23 @@ async function listAllContacts({
   return contacts;
 }
 
+function disambiguateLabels({
+  options,
+}: {
+  options: { label: string; value: string }[];
+}): { label: string; value: string }[] {
+  const counts = options.reduce(
+    (acc, option) =>
+      acc.set(option.label, (acc.get(option.label) ?? 0) + 1),
+    new Map<string, number>()
+  );
+  return options.map((option) =>
+    (counts.get(option.label) ?? 0) > 1
+      ? { ...option, label: `${option.label} · ${option.value}` }
+      : option
+  );
+}
+
 function buildCallLabel({ call }: { call: OpenPhoneCall }): string {
   const direction = call.direction === 'incoming' ? 'Incoming' : 'Outgoing';
   const date = new Date(call.createdAt).toLocaleString('en-US', {
@@ -299,6 +318,7 @@ function buildCallLabel({ call }: { call: OpenPhoneCall }): string {
     day: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
+    timeZone: 'UTC',
     timeZoneName: 'short',
   });
   const parts = [direction, date];
