@@ -1,6 +1,6 @@
 import { ActivepiecesError, AiProviderKeyStatus, AIProviderName, apId, classifyProviderOutcome, ErrorCode, isNil, PlatformId, ProviderOutcomeSignal, spreadIfDefined, toProviderOutcomeSignal, tryCatch, unique } from '@activepieces/core-utils'
 import { modelCatalog, modelTierCatalog } from '@activepieces/server-utils'
-import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, aiProviderCredentials, AIProviderModel, AIProviderModelType, AiProviderProjectScope, AiProviderToolConfig, aiProviderUtils, AIProviderWithoutSensitiveData, AiToolCapability, AiToolProvider, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
+import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, aiProviderCredentials, AIProviderModel, AIProviderModelType, AiProviderProjectScope, AiProviderToolConfig, aiProviderUtils, AIProviderWithoutSensitiveData, AiToolCapability, AiToolProvider, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, SelfServeTrialState, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { EntityManager, FindOptionsWhere, Not } from 'typeorm'
@@ -12,6 +12,7 @@ import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openroute
 import { flagService } from '../flags/flag.service'
 import { EncryptedObject, encryptUtils } from '../helper/encryption'
 import { sleep } from '../helper/sleep'
+import { billingProvider } from '../platform/billing-provider'
 import { platformConfigurationService } from '../platform/platform-configuration.service'
 import { platformService } from '../platform/platform.service'
 import { aiKeyScope, ProviderScope } from './ai-key-scope'
@@ -434,7 +435,11 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
 async function shouldHideActivepiecesAiProvider({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<boolean> {
     const { plan } = await platformService(log).getOneWithPlanOrThrow(platformId)
-    return plan.embeddingEnabled
+    if (!plan.embeddingEnabled) {
+        return false
+    }
+    const selfServeTrial = await billingProvider.get(log).getSelfServeTrialInfo({ platformId })
+    return selfServeTrial.state !== SelfServeTrialState.ACTIVE
 }
 
 
