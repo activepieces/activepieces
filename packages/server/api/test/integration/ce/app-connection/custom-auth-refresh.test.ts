@@ -28,7 +28,21 @@ const customAuthOf = (overrides: Record<string, unknown>) => ({
     ...overrides,
 })
 
-const saveCustomAuthPiece = async ({ pieceName, pieceVersion, platformId, hasRefresh }: { pieceName: string, pieceVersion: string, platformId: string | undefined, hasRefresh: boolean }): Promise<void> => {
+const secretTextAuth = {
+    type: PropertyType.SECRET_TEXT,
+    displayName: 'API Key',
+    required: true,
+}
+
+const saveCustomAuthPiece = async ({ pieceName, pieceVersion, platformId, hasRefresh, customAuthPosition = 'only' }: { pieceName: string, pieceVersion: string, platformId: string | undefined, hasRefresh: boolean, customAuthPosition?: 'only' | 'first' | 'second' }): Promise<void> => {
+    // Functions (generate) do not survive metadata serialization; the stored
+    // refresh is a plain object, so detection only checks for its presence.
+    const customAuth = customAuthOf(hasRefresh ? { refresh: { defaultExpiresIn: 3300 } } : {})
+    const auth = {
+        only: customAuth,
+        first: [customAuth, secretTextAuth],
+        second: [secretTextAuth, customAuth],
+    }[customAuthPosition]
     const mockPiece = createMockPieceMetadata({
         name: pieceName,
         version: pieceVersion,
@@ -37,9 +51,7 @@ const saveCustomAuthPiece = async ({ pieceName, pieceVersion, platformId, hasRef
         packageType: PackageType.REGISTRY,
         minimumSupportedRelease: '0.0.0',
         maximumSupportedRelease: '999.999.999',
-        // Functions (generate) do not survive metadata serialization; the stored
-        // refresh is a plain object, so detection only checks for its presence.
-        auth: customAuthOf(hasRefresh ? { refresh: { defaultExpiresIn: 3300 } } : {}),
+        auth,
     })
     await db.save('piece_metadata', mockPiece)
 }
@@ -96,6 +108,28 @@ describe('Custom auth token refresh — needRefresh', () => {
 
             const result = await appConnectionHandler(mockLog).needRefresh(connection, mockLog)
             expect(result).toBe(false)
+        })
+    })
+
+    describe('piece with several auth methods', () => {
+        it.each([
+            { customAuthPosition: 'first', hasRefresh: true },
+            { customAuthPosition: 'first', hasRefresh: false },
+            { customAuthPosition: 'second', hasRefresh: true },
+            { customAuthPosition: 'second', hasRefresh: false },
+        ] as const)('returns $hasRefresh when the CustomAuth method is $customAuthPosition in the auth list and hasRefresh is $hasRefresh', async ({ customAuthPosition, hasRefresh }) => {
+            const pieceName = `piece-${apId()}`
+            const platformId = apId()
+            await saveCustomAuthPiece({ pieceName, pieceVersion: '1.0.0', platformId, hasRefresh, customAuthPosition })
+
+            const connection = customAuthConnection({
+                platformId,
+                pieceName,
+                pieceVersion: '1.0.0',
+                value: { type: AppConnectionType.CUSTOM_AUTH, props: {} },
+            })
+
+            expect(await appConnectionHandler(mockLog).needRefresh(connection, mockLog)).toBe(hasRefresh)
         })
     })
 
