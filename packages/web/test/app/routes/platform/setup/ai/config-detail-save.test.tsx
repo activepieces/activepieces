@@ -145,15 +145,16 @@ const TEXT_MODEL = {
 
 const IMAGE_MODEL_ID = 'openai/gpt-image-2.5-flare';
 
+const gatewayKeyFields = {
+  accountId: '1c441b119970086c90b78ad3be4a478f',
+  gatewayId: 'my-gateway',
+};
+
 const gatewayConfig: AIProviderWithoutSensitiveData = {
   id: 'ai-provider-1',
   name: 'Cloudflare AI Gateway key',
   provider: AIProviderName.CLOUDFLARE_GATEWAY,
-  config: {
-    accountId: '1c441b119970086c90b78ad3be4a478f',
-    gatewayId: 'my-gateway',
-    models: [TEXT_MODEL],
-  },
+  config: { ...gatewayKeyFields, models: [TEXT_MODEL] },
   enabledForChat: false,
   modelScope: 'all',
   modelIds: [TEXT_MODEL.modelId],
@@ -251,7 +252,7 @@ describe('ConfigDetail save (manual models)', () => {
   it('is no longer dirty once the saved models come back from the server', async () => {
     const emptyKey: AIProviderWithoutSensitiveData = {
       ...gatewayConfig,
-      config: { ...gatewayConfig.config, models: [] },
+      config: { ...gatewayKeyFields, models: [] },
       modelIds: [],
     };
     render(emptyKey);
