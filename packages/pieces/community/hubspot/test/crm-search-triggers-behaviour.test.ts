@@ -240,6 +240,24 @@ describe('New Company behaviour', () => {
         expect(await newCompanyTrigger.run(ctx({ store, propsValue: props }))).toEqual([])
     })
 
+    it('a capped window that is all one future createdate does not pin the cursor there or hide companies created before it', async () => {
+        const store = memoryStore()
+        await newCompanyTrigger.onEnable(ctx({ store, propsValue: props }))
+        const futureAt = new Date(clock + 24 * 3600_000).toISOString()
+        const future = Array.from({ length: 10_050 }, (_, index) => String(100_000 + index))
+        future.forEach((id) => addCompany({ id, at: futureAt }))
+        expect(await newCompanyTrigger.run(ctx({ store, propsValue: props }))).toEqual([])
+        addCompany({ id: '1' })
+        expect(ids(await newCompanyTrigger.run(ctx({ store, propsValue: props })))).toEqual(['1'])
+        clock += 25 * 3600_000
+        const fired: string[] = []
+        for (let pollIndex = 0; pollIndex < 4; pollIndex++) {
+            fired.push(...ids(await newCompanyTrigger.run(ctx({ store, propsValue: props }))))
+        }
+        expect(fired).toHaveLength(future.length)
+        expect(new Set(fired)).toEqual(new Set(future))
+    }, 60_000)
+
     it('test() ends with the newest company and every sampleData key exists in a real run', async () => {
         addCompany({ id: 'older' })
         addCompany({ id: 'newest' })

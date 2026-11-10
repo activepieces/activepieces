@@ -62,6 +62,8 @@ function memoryStore() {
 }
 
 type Store = ReturnType<typeof memoryStore>
+const conversions = (events: unknown[]) => events.map((event) => hubspotTestKit.textField({ value: event, key: 'conversionId' }))
+
 const ctx = ({ store, propsValue = { formId: 'F1', allowMultipleFiles: false }, isRepublish }: { store: Store, propsValue?: Record<string, unknown>, isRepublish?: boolean }) =>
     hubspotTestKit.pollingContext({ store, propsValue, isRepublish })
 
@@ -106,4 +108,37 @@ describe('QA round 2: New Form Submission when the API order is oldest first', (
         await newFormSubmissionTrigger.run(ctx({ store }))
         expect(portal.calls.length).toBeLessThanOrEqual(48)
     }, 60_000)
+
+    it('a history longer than one poll deadline still reaches new submissions by resuming the page cursor', async () => {
+        Array.from({ length: 2_500 }, (_, i) => submit({ id: `old-${i}`, at: tick(1000) }))
+        const store = memoryStore()
+        tick()
+        await newFormSubmissionTrigger.onEnable(ctx({ store }))
+        submit({ id: 'fresh-1' })
+        msPerRequest = 1_000
+        let fired: string[] = []
+        for (let i = 0; i < 4; i++) fired = [...fired, ...conversions(await newFormSubmissionTrigger.run(ctx({ store })))]
+        expect(fired).toEqual(['fresh-1'])
+        submit({ id: 'fresh-2' })
+        expect(conversions(await newFormSubmissionTrigger.run(ctx({ store })))).toEqual(['fresh-2'])
+    }, 60_000)
+
+    it('a tied burst split by the poll deadline fires every submission exactly once', async () => {
+        Array.from({ length: 20 }, (_, i) => submit({ id: `old-${i}`, at: tick(1000) }))
+        const store = memoryStore()
+        tick()
+        await newFormSubmissionTrigger.onEnable(ctx({ store }))
+        const burstAt = tick()
+        const burst = Array.from({ length: 300 }, (_, i) => `burst-${String(i).padStart(3, '0')}`)
+        burst.forEach((id) => submit({ id, at: burstAt }))
+        msPerRequest = 20_000
+        let fired: string[] = []
+        for (let i = 0; i < 8; i++) fired = [...fired, ...conversions(await newFormSubmissionTrigger.run(ctx({ store })))]
+        msPerRequest = 0
+        submit({ id: 'later' })
+        fired = [...fired, ...conversions(await newFormSubmissionTrigger.run(ctx({ store })))]
+        expect(fired).toHaveLength(burst.length + 1)
+        expect([...fired].sort()).toEqual([...burst, 'later'].sort())
+    }, 60_000)
 })
+

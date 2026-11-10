@@ -9,6 +9,7 @@ const portal = vi.hoisted(() => ({
     inFlightReads: 0,
     peakReads: 0,
     failReads: false,
+    msPerRead: 0,
 }))
 
 vi.mock('@hubspot/api-client', () => {
@@ -37,6 +38,7 @@ vi.mock('@hubspot/api-client', () => {
                         portal.peakReads = Math.max(portal.peakReads, portal.inFlightReads)
                         await new Promise((resolve) => setTimeout(resolve, 1))
                         portal.inFlightReads -= 1
+                        clock += portal.msPerRead
                         if (portal.failReads) throw new Error('HTTP-Code: 429 Too Many Requests')
                         return { results: req.inputs.map(({ id }) => ({ id, properties: { email: `${id}@example.com`, hs_object_id: id }, createdAt: new Date(0), updatedAt: new Date(0), archived: false })) }
                     },
@@ -84,6 +86,7 @@ beforeEach(() => {
     portal.inFlightReads = 0
     portal.peakReads = 0
     portal.failReads = false
+    portal.msPerRead = 0
     clock = Date.parse('2026-11-01T10:00:00.000Z')
     vi.spyOn(Date, 'now').mockImplementation(() => clock)
     vi.spyOn(console, 'warn').mockImplementation(() => undefined)
@@ -202,5 +205,26 @@ describe.each([
         } else {
             expect(JSON.parse(saved!)).toMatchObject({ listId: 'L1', oldestFirst: true })
         }
+    })
+
+    it('a tied bulk add split by the contact-read deadline fires every member exactly once across polls', async () => {
+        Array.from({ length: 300 }, (_, i) => portal.members.push({ recordId: `old-${i}`, joinedAt: tick(1000) }))
+        const store = memoryStore()
+        tick()
+        await trigger.onEnable(ctx({ store }))
+        const bulkAt = tick()
+        const bulk = Array.from({ length: 1_000 }, (_, i) => `bulk-${String(i).padStart(4, '0')}`)
+        bulk.forEach((id) => portal.members.push({ recordId: id, joinedAt: bulkAt }))
+        portal.msPerRead = 30_000
+        const first = ids(await trigger.run(ctx({ store })))
+        expect(first.length).toBeGreaterThan(0)
+        expect(first.length).toBeLessThan(bulk.length)
+        portal.msPerRead = 0
+        let fired = [...first]
+        for (let i = 0; i < 3; i++) fired = [...fired, ...ids(await trigger.run(ctx({ store })))]
+        portal.members.push({ recordId: 'later', joinedAt: tick() })
+        for (let i = 0; i < 2; i++) fired = [...fired, ...ids(await trigger.run(ctx({ store })))]
+        expect(fired).toHaveLength(bulk.length + 1)
+        expect([...fired].sort()).toEqual([...bulk, 'later'].sort())
     })
 })

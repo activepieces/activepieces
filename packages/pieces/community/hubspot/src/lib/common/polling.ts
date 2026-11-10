@@ -171,7 +171,12 @@ async function readWindow<T extends CrmRecord>({
 		);
 	}
 	const firstEpoch = timed[0]?.epoch;
-	const allAtOneTime = !keyset && !complete && timed.length > 0 && timed.every((entry) => entry.epoch === firstEpoch);
+	const allAtOneTime =
+		!keyset &&
+		!complete &&
+		timed.length > 0 &&
+		firstEpoch <= latestAccepted &&
+		timed.every((entry) => entry.epoch === firstEpoch);
 	if (allAtOneTime) {
 		return { entries: [], complete: false, keysetTime: firstEpoch };
 	}
