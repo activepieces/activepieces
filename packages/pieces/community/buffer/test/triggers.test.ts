@@ -34,6 +34,15 @@ function memoryStore({ lastPoll }: { lastPoll?: number }) {
   };
 }
 
+function checkpointOf(store: ReturnType<typeof memoryStore>): unknown {
+  return store.data.get('pollCheckpoint');
+}
+
+function epochOf(store: ReturnType<typeof memoryStore>): unknown {
+  const saved = checkpointOf(store);
+  return typeof saved === 'object' && saved !== null && 'epoch' in saved ? saved.epoch : undefined;
+}
+
 function page({ nodes, endCursor, hasNextPage }: { nodes: unknown[]; endCursor: string | null; hasNextPage: boolean }) {
   return { status: 200, headers: {}, body: { data: { posts: { edges: nodes.map((node) => ({ node })), pageInfo: { endCursor, hasNextPage } } } } };
 }
@@ -68,7 +77,7 @@ describe('new_queue_item', () => {
     });
     expect(variablesOf({ index: 1 }).after).toBe('c1');
     expect(items).toEqual([{ id: 'p2', createdAt: '2026-11-10T10:30:00Z' }, { id: 'p3', createdAt: '2026-11-10T11:00:00Z' }]);
-    expect(store.data.get('lastPoll')).toBe(Date.parse('2026-11-10T11:00:00Z'));
+    expect(epochOf(store)).toBe(Date.parse('2026-11-10T11:00:00Z'));
   });
 
   it('lets a poll error throw instead of returning nothing, and keeps the checkpoint', async () => {
@@ -76,6 +85,7 @@ describe('new_queue_item', () => {
     const store = memoryStore({ lastPoll: 5 });
     await expect(poll({ fn: newQueueItem.run, store })).rejects.toThrow('UNEXPECTED');
     expect(store.data.get('lastPoll')).toBe(5);
+    expect(checkpointOf(store)).toBeUndefined();
   });
 
   it('uses a single small page with no time filter when testing', async () => {
@@ -99,7 +109,7 @@ describe('new_queue_item', () => {
     const first = await poll({ fn: newQueueItem.run, store });
     expect(sendRequest).toHaveBeenCalledTimes(10);
     expect(first).toHaveLength(1000);
-    expect(store.data.get('lastPoll')).toBe(Date.parse(backlog[999].createdAt));
+    expect(epochOf(store)).toBe(Date.parse(backlog[999].createdAt));
     sendRequest.mockReset();
     sendRequest.mockResolvedValueOnce(page({ nodes: backlog.slice(999), endCursor: null, hasNextPage: false }));
     const second = await poll({ fn: newQueueItem.run, store });
@@ -113,21 +123,22 @@ describe('new_queue_item', () => {
     const store = memoryStore({ lastPoll: Date.parse('2026-11-10T10:00:00Z') });
     sendRequest.mockResolvedValueOnce(page({ nodes: [{ id: 'a', createdAt: at }], endCursor: null, hasNextPage: false }));
     await expect(poll({ fn: newQueueItem.run, store })).resolves.toEqual([{ id: 'a', createdAt: at }]);
-    expect(store.data.get('lastPollIds')).toEqual({ epoch: Date.parse(at), ids: ['a'] });
+    expect(checkpointOf(store)).toEqual({ epoch: Date.parse(at), ids: ['a'] });
     sendRequest.mockResolvedValueOnce(page({ nodes: [{ id: 'a', createdAt: at }, { id: 'b', createdAt: at }], endCursor: null, hasNextPage: false }));
     await expect(poll({ fn: newQueueItem.run, store })).resolves.toEqual([{ id: 'b', createdAt: at }]);
-    expect(store.data.get('lastPollIds')).toEqual({ epoch: Date.parse(at), ids: ['a', 'b'] });
+    expect(checkpointOf(store)).toEqual({ epoch: Date.parse(at), ids: ['a', 'b'] });
     sendRequest.mockResolvedValueOnce(page({ nodes: [{ id: 'a', createdAt: at }, { id: 'b', createdAt: at }], endCursor: null, hasNextPage: false }));
     await expect(poll({ fn: newQueueItem.run, store })).resolves.toEqual([]);
-    expect(store.data.get('lastPoll')).toBe(Date.parse(at));
+    expect(epochOf(store)).toBe(Date.parse(at));
   });
 
-  it('ignores boundary IDs saved for a different checkpoint', async () => {
+  it('prefers the saved checkpoint over a stale legacy lastPoll', async () => {
     const at = '2026-11-10T11:00:00.000Z';
-    const store = memoryStore({ lastPoll: Date.parse(at) });
-    store.data.set('lastPollIds', { epoch: Date.parse(at) - 5, ids: ['a'] });
+    const store = memoryStore({ lastPoll: Date.parse('2026-11-01T00:00:00Z') });
+    store.data.set('pollCheckpoint', { epoch: Date.parse(at), ids: ['a'] });
     sendRequest.mockResolvedValueOnce(page({ nodes: [{ id: 'a', createdAt: at }], endCursor: null, hasNextPage: false }));
-    await expect(poll({ fn: newQueueItem.run, store })).resolves.toEqual([{ id: 'a', createdAt: at }]);
+    await expect(poll({ fn: newQueueItem.run, store })).resolves.toEqual([]);
+    expect(variablesOf({ index: 0 }).input.filter.createdAt).toEqual({ start: '2026-11-10T10:59:59.999Z' });
   });
 });
 
@@ -179,7 +190,7 @@ describe('new_sent_item past the page cap', () => {
     serve({ fresh });
     await expect(poll({ fn: newSentItem.run, store })).resolves.toEqual(fresh);
     expect(sendRequest).toHaveBeenCalledTimes(10);
-    expect(store.data.get('lastPoll')).toBe(Date.parse('2026-11-10T10:20:03Z'));
+    expect(epochOf(store)).toBe(Date.parse('2026-11-10T10:20:03Z'));
   });
 
   it('keeps delivering on later polls, without re-emitting, while the lookback stays over the cap', async () => {
@@ -194,7 +205,7 @@ describe('new_sent_item past the page cap', () => {
     sendRequest.mockReset();
     serve({ fresh: [second, first] });
     await expect(poll({ fn: newSentItem.run, store })).resolves.toEqual([]);
-    expect(store.data.get('lastPoll')).toBe(Date.parse('2026-11-10T10:20:03Z'));
+    expect(epochOf(store)).toBe(Date.parse('2026-11-10T10:20:03Z'));
   });
 
   it('delivers a post sent in the same millisecond as the checkpoint exactly once', async () => {
@@ -227,6 +238,7 @@ describe('trigger edge cases (QA)', () => {
     const store = memoryStore({ lastPoll: 42 });
     await expect(poll({ fn: newQueueItem.run, store })).resolves.toEqual([]);
     expect(store.data.get('lastPoll')).toBe(42);
+    expect(checkpointOf(store)).toBeUndefined();
   });
 
   it('omits the channel filter when no channels are chosen', async () => {
@@ -243,13 +255,96 @@ describe('trigger edge cases (QA)', () => {
     await expect(poll({ fn: newSentItem.run, store })).resolves.toHaveLength(1);
     sendRequest.mockResolvedValueOnce(page({ nodes: [node], endCursor: null, hasNextPage: false }));
     await expect(poll({ fn: newSentItem.run, store })).resolves.toEqual([]);
-    expect(store.data.get('lastPoll')).toBe(Date.parse('2026-11-10T10:30:05Z'));
+    expect(epochOf(store)).toBe(Date.parse('2026-11-10T10:30:05Z'));
   });
 
-  it('sets lastPoll on enable without calling Buffer', async () => {
+  it('sets the checkpoint on enable without calling Buffer', async () => {
     const store = memoryStore({});
     await Reflect.apply(newQueueItem.onEnable, undefined, [{ auth: AUTH, propsValue: { organizationId: ORG }, store }]);
-    expect(typeof store.data.get('lastPoll')).toBe('number');
+    expect(checkpointOf(store)).toEqual({ epoch: expect.any(Number), ids: [] });
     expect(sendRequest).not.toHaveBeenCalled();
+  });
+});
+
+describe('checkpoint upgrade and failure safety', () => {
+  const at = Date.parse('2026-11-10T11:00:00.000Z');
+  const boundary = { id: 'b0', createdAt: '2026-11-10T11:00:00.000Z' };
+  const newer = { id: 'n1', createdAt: '2026-11-10T11:05:00.000Z' };
+
+  function countingStore({ lastPoll }: { lastPoll?: number }) {
+    const store = memoryStore({ lastPoll });
+    const puts: string[] = [];
+    return {
+      store: { ...store, put: async (key: string, value: unknown): Promise<unknown> => { puts.push(key); return store.put(key, value); } },
+      data: store.data,
+      puts,
+    };
+  }
+
+  it('after an upgrade with only the legacy lastPoll, does not re-emit the post at exactly lastPoll and saves the new checkpoint in one write', async () => {
+    const { store, data, puts } = countingStore({ lastPoll: at });
+    sendRequest.mockResolvedValueOnce(page({ nodes: [boundary, newer], endCursor: null, hasNextPage: false }));
+    await expect(poll({ fn: newQueueItem.run, store: { ...store, data } })).resolves.toEqual([newer]);
+    expect(puts).toEqual(['pollCheckpoint']);
+    expect(data.get('pollCheckpoint')).toEqual({ epoch: Date.parse(newer.createdAt), ids: ['n1'] });
+    expect(data.get('lastPoll')).toBe(at);
+  });
+
+  it('after an upgrade with nothing new, writes nothing and still treats the legacy lastPoll as strict on the next check', async () => {
+    const { store, data, puts } = countingStore({ lastPoll: at });
+    sendRequest.mockResolvedValueOnce(page({ nodes: [boundary], endCursor: null, hasNextPage: false }));
+    await expect(poll({ fn: newQueueItem.run, store: { ...store, data } })).resolves.toEqual([]);
+    sendRequest.mockResolvedValueOnce(page({ nodes: [boundary], endCursor: null, hasNextPage: false }));
+    await expect(poll({ fn: newQueueItem.run, store: { ...store, data } })).resolves.toEqual([]);
+    expect(puts).toEqual([]);
+  });
+
+  it('applies the same strict legacy boundary to sent posts after an upgrade', async () => {
+    const { store, data, puts } = countingStore({ lastPoll: at });
+    const old = { id: 's0', status: 'sent', dueAt: '2026-11-10T11:00:00.000Z', sentAt: '2026-11-10T11:00:00.000Z' };
+    const fresh = { id: 's1', status: 'sent', dueAt: '2026-11-10T11:04:00.000Z', sentAt: '2026-11-10T11:04:02.000Z' };
+    sendRequest.mockResolvedValueOnce(page({ nodes: [fresh, old], endCursor: null, hasNextPage: false }));
+    await expect(poll({ fn: newSentItem.run, store: { ...store, data } })).resolves.toEqual([fresh]);
+    expect(puts).toEqual(['pollCheckpoint']);
+  });
+
+  it('writes the store exactly once per check that emits posts', async () => {
+    const { store, data, puts } = countingStore({ lastPoll: Date.parse('2026-11-10T10:00:00Z') });
+    sendRequest.mockResolvedValueOnce(page({ nodes: [boundary, newer], endCursor: null, hasNextPage: false }));
+    await poll({ fn: newQueueItem.run, store: { ...store, data } });
+    expect(puts).toEqual(['pollCheckpoint']);
+    sendRequest.mockResolvedValueOnce(page({ nodes: [newer, { id: 'n2', createdAt: newer.createdAt }], endCursor: null, hasNextPage: false }));
+    await expect(poll({ fn: newQueueItem.run, store: { ...store, data } })).resolves.toEqual([{ id: 'n2', createdAt: newer.createdAt }]);
+    expect(puts).toEqual(['pollCheckpoint', 'pollCheckpoint']);
+    expect(data.get('pollCheckpoint')).toEqual({ epoch: Date.parse(newer.createdAt), ids: ['n1', 'n2'] });
+  });
+
+  it('re-emits on the next check when saving the checkpoint fails, so nothing is lost', async () => {
+    const base = memoryStore({ lastPoll: Date.parse('2026-11-10T10:00:00Z') });
+    const failing = { ...base, put: async (): Promise<unknown> => { throw new Error('store down'); } };
+    sendRequest.mockResolvedValueOnce(page({ nodes: [boundary, newer], endCursor: null, hasNextPage: false }));
+    await expect(poll({ fn: newQueueItem.run, store: failing })).rejects.toThrow('store down');
+    expect(base.data.has('pollCheckpoint')).toBe(false);
+    sendRequest.mockResolvedValueOnce(page({ nodes: [boundary, newer], endCursor: null, hasNextPage: false }));
+    await expect(poll({ fn: newQueueItem.run, store: base })).resolves.toEqual([boundary, newer]);
+    sendRequest.mockResolvedValueOnce(page({ nodes: [boundary, newer], endCursor: null, hasNextPage: false }));
+    await expect(poll({ fn: newQueueItem.run, store: base })).resolves.toEqual([]);
+  });
+
+  it('keeps the existing checkpoint on republish and resets it on a fresh enable', async () => {
+    const store = memoryStore({ lastPoll: 1 });
+    store.data.set('pollCheckpoint', { epoch: at, ids: ['b0'] });
+    await Reflect.apply(newSentItem.onEnable, undefined, [{ auth: AUTH, propsValue: { organizationId: ORG }, store, isRepublish: true }]);
+    expect(store.data.get('pollCheckpoint')).toEqual({ epoch: at, ids: ['b0'] });
+    const before = Date.now();
+    await Reflect.apply(newSentItem.onEnable, undefined, [{ auth: AUTH, propsValue: { organizationId: ORG }, store, isRepublish: false }]);
+    expect(epochOf(store)).toBeGreaterThanOrEqual(before);
+  });
+
+  it('keeps a legacy lastPoll on republish so an upgraded flow resumes from it', async () => {
+    const store = memoryStore({ lastPoll: at });
+    await Reflect.apply(newQueueItem.onEnable, undefined, [{ auth: AUTH, propsValue: { organizationId: ORG }, store, isRepublish: true }]);
+    expect(store.data.has('pollCheckpoint')).toBe(false);
+    expect(store.data.get('lastPoll')).toBe(at);
   });
 });

@@ -90,6 +90,29 @@ async function fetchNewPosts({
   return pages.flat();
 }
 
+async function startPolling({ store, isRepublish }: { store: Store; isRepublish: boolean | undefined }): Promise<void> {
+  if (isRepublish === true) {
+    const saved = await store.get<unknown>(CHECKPOINT_KEY);
+    const legacy = await store.get<unknown>(LEGACY_LAST_POLL_KEY);
+    if (isCheckpoint(saved) || isEpoch(legacy)) {
+      return;
+    }
+  }
+  await store.put<PollCheckpoint>(CHECKPOINT_KEY, { epoch: Date.now(), ids: [] });
+}
+
+async function readCheckpoint(store: Store): Promise<{ epoch: number; seen: Set<string>; inclusive: boolean }> {
+  const saved = await store.get<unknown>(CHECKPOINT_KEY);
+  if (isCheckpoint(saved)) {
+    return { epoch: saved.epoch, seen: new Set(saved.ids), inclusive: true };
+  }
+  const legacy = await store.get<unknown>(LEGACY_LAST_POLL_KEY);
+  if (isEpoch(legacy)) {
+    return { epoch: legacy, seen: new Set(), inclusive: false };
+  }
+  throw new Error("lastPoll doesn't exist in the store.");
+}
+
 async function pollNewPosts({
   store,
   loadPosts,
@@ -99,25 +122,38 @@ async function pollNewPosts({
   loadPosts: (lastPoll: number) => Promise<BufferPost[]>;
   epochOf: (post: BufferPost) => number;
 }): Promise<BufferPost[]> {
-  const lastPoll = await store.get<number>(LAST_POLL_KEY);
-  if (lastPoll === null || lastPoll === undefined) {
-    throw new Error("lastPoll doesn't exist in the store.");
-  }
-  const boundary = await store.get<PollBoundary>(LAST_POLL_IDS_KEY);
-  const seenAtLastPoll = boundary !== null && boundary !== undefined && boundary.epoch === lastPoll ? boundary.ids : [];
-  const posts = await loadPosts(lastPoll);
+  const checkpoint = await readCheckpoint(store);
+  const posts = await loadPosts(checkpoint.epoch);
   const fresh = [...new Map(posts.map((post) => [post.id, post])).values()].filter((post) => {
     const epoch = epochOf(post);
-    return epoch > lastPoll || (epoch === lastPoll && !seenAtLastPoll.includes(post.id));
+    return epoch > checkpoint.epoch || (checkpoint.inclusive && epoch === checkpoint.epoch && !checkpoint.seen.has(post.id));
   });
-  const newest = fresh.reduce((acc, post) => Math.max(acc, epochOf(post)), lastPoll);
+  if (fresh.length === 0) {
+    return [];
+  }
+  const newest = fresh.reduce((acc, post) => Math.max(acc, epochOf(post)), checkpoint.epoch);
   const idsAtNewest = fresh.filter((post) => epochOf(post) === newest).map((post) => post.id);
-  await store.put<PollBoundary>(LAST_POLL_IDS_KEY, {
+  await store.put<PollCheckpoint>(CHECKPOINT_KEY, {
     epoch: newest,
-    ids: newest === lastPoll ? [...seenAtLastPoll, ...idsAtNewest] : idsAtNewest,
+    ids: newest === checkpoint.epoch ? [...checkpoint.seen, ...idsAtNewest] : idsAtNewest,
   });
-  await store.put<number>(LAST_POLL_KEY, newest);
   return fresh;
+}
+
+function isEpoch(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function isCheckpoint(value: unknown): value is PollCheckpoint {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'epoch' in value &&
+    isEpoch(value.epoch) &&
+    'ids' in value &&
+    Array.isArray(value.ids) &&
+    value.ids.every((id: unknown) => typeof id === 'string')
+  );
 }
 
 function reasonOf(error: unknown): string {
@@ -254,15 +290,16 @@ export const bufferFetch = {
   fetchIdeaGroups,
   fetchNewPosts,
   pollNewPosts,
+  startPolling,
 };
 
 const TRIGGER_PAGE_SIZE = 100;
 const TEST_PAGE_SIZE = 10;
 const MAX_TRIGGER_PAGES = 10;
-const LAST_POLL_KEY = 'lastPoll';
-const LAST_POLL_IDS_KEY = 'lastPollIds';
+const LEGACY_LAST_POLL_KEY = 'lastPoll';
+const CHECKPOINT_KEY = 'pollCheckpoint';
 
-type PollBoundary = { epoch: number; ids: string[] };
+type PollCheckpoint = { epoch: number; ids: string[] };
 
 export type Organization = { id: string; name: string };
 

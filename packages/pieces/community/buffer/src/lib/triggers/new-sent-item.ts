@@ -84,7 +84,7 @@ export const newSentItem = createTrigger({
     tags: [],
   } satisfies BufferPost,
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    await bufferFetch.startPolling({ store: context.store, isRepublish: context.isRepublish });
   },
   async onDisable(context) {
     await pollingHelper.onDisable(polling, context);
