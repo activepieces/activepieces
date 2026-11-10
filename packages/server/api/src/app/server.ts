@@ -22,6 +22,7 @@ import { enrichWideEventWithError, errorHandler } from './helper/error-handler'
 import { exceptionHandler } from './helper/exception-handler'
 import { networkUtils } from './helper/network-utils'
 import { rejectedPromiseHandler } from './helper/promise-handler'
+import { prototypePollutionGuard } from './helper/prototype-pollution-guard'
 import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
 import { mcpOAuthHttpController, mcpPlatformHttpController } from './mcp/oauth/mcp-oauth.controller'
@@ -229,6 +230,8 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         enrichWideEventWithError(error)
         done()
     })
+
+    prototypePollutionGuard.register({ app })
 
     await app.register(evlogFastify, {
         exclude: [
