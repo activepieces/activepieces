@@ -160,12 +160,26 @@ describe('Todoist Task Completed behaviour', () => {
     complete({ id: 'recent-a', at: now() - DAY, visibleFrom: 0 });
     const changed = memoryStore({ taskCompletedState: { cursor: twoDaysAgo, seen: [], projectId: 'project-a' } });
     await trigger.onEnable(ctx({ store: changed, isRepublish: true, projectId: 'project-b' }));
-    expect(vendor.requests[vendor.requests.length - 1].project_id).toBe('project-b');
+    expect((await changed.get<{ projectId: string }>('taskCompletedState'))?.projectId).toBe('project-b');
     advance();
     expect(await trigger.run(ctx({ store: changed, projectId: 'project-b' }))).toEqual([]);
+    expect(vendor.requests[vendor.requests.length - 1].project_id).toBe('project-b');
     const same = memoryStore({ taskCompletedState: { cursor: twoDaysAgo, seen: [], projectId: 'project-a' } });
     await trigger.onEnable(ctx({ store: same, isRepublish: true, projectId: 'project-a' }));
     expect(ids(await trigger.run(ctx({ store: same, projectId: 'project-a' })))).toEqual(['recent-a']);
+  });
+
+  it('starts at the enable time without calling Todoist, so nothing completed before enable can fire', async () => {
+    const store = memoryStore();
+    await trigger.onEnable(ctx({ store }));
+    expect(vendor.requests).toHaveLength(0);
+    const enabledAt = now();
+    complete({ id: 'listed-late', at: enabledAt - 1000, visibleFrom: enabledAt + 2 * MINUTE });
+    advance();
+    expect(await trigger.run(ctx({ store }))).toEqual([]);
+    complete({ id: 'after-enable', at: enabledAt + 1000 });
+    advance();
+    expect(ids(await trigger.run(ctx({ store })))).toEqual(['after-enable']);
   });
 
   it('writes the cursor and the seen set in one store write per poll', async () => {
@@ -230,7 +244,7 @@ describe('Todoist Task Completed behaviour', () => {
         complete({ id, at: now() - (index + 1) * 1000 });
       }
     };
-    advance(1);
+    advance(12);
     addBatch(650);
     vendor.requestCostMs = 12_000;
     const fired: string[] = [];
@@ -319,6 +333,13 @@ describe('Todoist Task Completed behaviour', () => {
     expect(ids(await trigger.test(ctx({ store: memoryStore() })))).toEqual(['two-months-ago']);
     Array.from({ length: 8 }, (_, index) => complete({ id: `today-${index}`, at: now() - (index + 1) * MINUTE }));
     expect(ids(await trigger.test(ctx({ store: memoryStore() })))).toEqual(['today-4', 'today-3', 'today-2', 'today-1', 'today-0']);
+  });
+
+  it('test() fails with a retry message instead of returning nothing when slow empty windows use up its time', async () => {
+    complete({ id: 'two-months-ago', at: now() - 60 * DAY });
+    vendor.requestCostMs = 9_000;
+    await expect(trigger.test(ctx({ store: memoryStore() }))).rejects.toThrow('Click Test again');
+    expect(vendor.requests).toHaveLength(3);
   });
 
   it('test() returns an empty list for an account with no completions', async () => {

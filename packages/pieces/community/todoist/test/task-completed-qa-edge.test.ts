@@ -30,6 +30,7 @@ describe('Todoist Task Completed QA edge cases', () => {
     let next = 0;
     let fired = 0;
     for (let poll = 0; poll < 100; poll++) {
+      advance(1);
       for (let k = 0; k < 10; k++) {
         complete({ id: `t${next++}`, at: now() - k * 1000 });
       }

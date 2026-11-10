@@ -35,11 +35,7 @@ export const todoistTaskCompletedTrigger = createTrigger({
 				return;
 			}
 		}
-		await resetCursor({
-			store: context.store,
-			token: context.auth.access_token,
-			projectId,
-		});
+		await resetCursor({ store: context.store, projectId });
 	},
 
 	async onDisable() {
@@ -327,27 +323,16 @@ async function fetchChunkAttempt({
 
 async function resetCursor({
 	store,
-	token,
 	projectId,
 }: {
 	store: Store;
-	token: string;
 	projectId: string | null;
 }): Promise<void> {
 	const now = Date.now();
-	const sinceMs = floorToSecond(now - OVERLAP_MS);
-	const { completions } = await fetchPages({
-		token,
-		projectId,
-		sinceMs,
-		untilMs: floorToSecond(now) + SECOND_MS,
-		startCursor: null,
-		deadline: now + POLL_DEADLINE_MS,
-	});
 	const state: CursorState = {
 		cursor: now,
-		seen: completions.filter(({ epochMs }) => epochMs >= sinceMs).map(({ task }) => completionKey(task)),
-		floor: sinceMs - SECOND_MS,
+		seen: [],
+		floor: now,
 		projectId,
 		chunkMs: MAX_CHUNK_MS,
 		resume: null,
@@ -367,7 +352,7 @@ async function pollNewCompletions({
 	const now = Date.now();
 	const state = await readState(store);
 	if (state === null || !isSameProject({ state, projectId })) {
-		await resetCursor({ store, token, projectId });
+		await resetCursor({ store, projectId });
 		return [];
 	}
 
@@ -475,7 +460,12 @@ async function latestCompletions({
 			startCursor: null,
 			deadline,
 		});
-		if (completions.length > 0 || !complete) {
+		if (completions.length === 0 && !complete) {
+			throw new Error(
+				'Todoist did not answer in time while looking for recently completed tasks. Click Test again in a moment.',
+			);
+		}
+		if (completions.length > 0) {
 			return completions
 				.sort((a, b) => b.epochMs - a.epochMs)
 				.slice(0, SAMPLE_SIZE)
