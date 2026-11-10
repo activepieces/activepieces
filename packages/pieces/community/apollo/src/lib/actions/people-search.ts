@@ -1,21 +1,20 @@
+import { Property, StoreScope, createAction } from '@activepieces/pieces-framework';
 import { apolloAuth } from '../auth';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import {
-  Property,
-  StoreScope,
-  createAction,
-} from '@activepieces/pieces-framework';
+import { QueryValue, apiKeyOf, buildQuery, recordsOf } from '../common/client';
+import { apolloInputs } from '../common/ai-props';
+import { apolloOutputSchemas } from '../common/output-schemas';
+import { apolloRequests } from '../common/requests';
 
 export const peopleSearch = createAction({
   auth: apolloAuth,
   name: 'peopleSearch',
   classification: 'SEARCH',
   displayName: 'People Search',
-  description:
-    'Search for people in the Apollo database (does not return email/phone, use enrichment for that)',
-  audience: 'both',
+  description: 'Search for people in the Apollo database (does not return email/phone, use enrichment for that). Uses no credits.',
+  audience: 'human',
   aiMetadata: {
-    description: 'Search the Apollo database for people using filters such as keywords, job titles, seniority, location, and their organization (domain, location, employee-count range). Use to find prospects matching criteria; note the results do not include email or phone, so use Match Person enrichment for contact details. Read-only and idempotent.',
+    description:
+      'Searches the Apollo people database by keywords, titles, seniority, location and employer filters, one page at a time. Results have no email or phone; use Match Person to enrich. Uses no credits.',
     idempotent: true,
   },
   props: {
@@ -36,8 +35,7 @@ export const peopleSearch = createAction({
     }),
     person_seniorities: Property.Array({
       displayName: 'Person Seniorities',
-      description:
-        'Filter by seniority levels (e.g., "senior", "manager", "director")',
+      description: 'Filter by seniority levels (e.g., "senior", "manager", "director")',
       required: false,
     }),
     organization_ids: Property.Array({
@@ -47,13 +45,12 @@ export const peopleSearch = createAction({
     }),
     organization_num_employees_ranges: Property.Array({
       displayName: 'Organization Employee Ranges',
-      description:
-        'Filter by organization employee count ranges (e.g., "1,10", "250,500")',
+      description: 'Filter by organization employee count ranges (e.g., "1,10", "250,500")',
       required: false,
     }),
     q_organization_domains: Property.Array({
       displayName: 'Organization Domains',
-      description: 'Filter by organization domains',
+      description: 'Filter by employer domains, without "www." (e.g., apollo.io). Up to 1,000.',
       required: false,
     }),
     organization_locations: Property.Array({
@@ -61,7 +58,16 @@ export const peopleSearch = createAction({
       description: 'Filter by organization locations',
       required: false,
     }),
-
+    page: Property.Number({
+      displayName: 'Page',
+      description: 'Page number, starting at 1 (default 1). Apollo returns at most 500 pages.',
+      required: false,
+    }),
+    per_page: Property.Number({
+      displayName: 'Results Per Page',
+      description: 'Results per page, 1-100 (Apollo default 10 when empty).',
+      required: false,
+    }),
     cacheResponse: Property.Checkbox({
       displayName: 'Cache Response',
       description: 'Store the response in the project store for future use.',
@@ -69,99 +75,42 @@ export const peopleSearch = createAction({
       defaultValue: false,
     }),
   },
+  outputSchema: apolloOutputSchemas.rawPeopleSearch,
   async run({ propsValue, auth, store }) {
-    const queryParams = new URLSearchParams();
-
-    if (propsValue.q_keywords) {
-      queryParams.append('q_keywords', propsValue.q_keywords);
-    }
-
-    if (propsValue.person_titles && propsValue.person_titles.length > 0) {
-      propsValue.person_titles.forEach((title: unknown) => {
-        queryParams.append('person_titles[]', title as string);
-      });
-    }
-    if (propsValue.person_locations && propsValue.person_locations.length > 0) {
-      propsValue.person_locations.forEach((location: unknown) => {
-        queryParams.append('person_locations[]', location as string);
-      });
-    }
-
-    if (
-      propsValue.person_seniorities &&
-      propsValue.person_seniorities.length > 0
-    ) {
-      propsValue.person_seniorities.forEach((seniority: unknown) => {
-        queryParams.append('person_seniorities[]', seniority as string);
-      });
-    }
-    if (propsValue.organization_ids && propsValue.organization_ids.length > 0) {
-      propsValue.organization_ids.forEach((id: unknown) => {
-        queryParams.append('organization_ids[]', id as string);
-      });
-    }
-
-    if (
-      propsValue.organization_num_employees_ranges &&
-      propsValue.organization_num_employees_ranges.length > 0
-    ) {
-      propsValue.organization_num_employees_ranges.forEach((range: unknown) => {
-        queryParams.append(
-          'organization_num_employees_ranges[]',
-          range as string
-        );
-      });
-    }
-
-    if (
-      propsValue.q_organization_domains &&
-      propsValue.q_organization_domains.length > 0
-    ) {
-      propsValue.q_organization_domains.forEach((domain: unknown) => {
-        queryParams.append('q_organization_domains[]', domain as string);
-      });
-    }
-
-    if (
-      propsValue.organization_locations &&
-      propsValue.organization_locations.length > 0
-    ) {
-      propsValue.organization_locations.forEach((location: unknown) => {
-        queryParams.append('organization_locations[]', location as string);
-      });
-    }
-
-    const cacheKey = `_apollo_people_search_${queryParams.toString()}`;
-
+    const page = apolloInputs.optionalInteger({ value: propsValue.page, label: 'Page', min: 1, max: 500 });
+    const perPage = apolloInputs.optionalInteger({ value: propsValue.per_page, label: 'Results Per Page', min: 1, max: 100 });
+    const domains = apolloInputs.stringList(propsValue.q_organization_domains);
+    const query: Record<string, QueryValue> = {
+      q_keywords: apolloInputs.optionalText(propsValue.q_keywords),
+      'person_titles[]': apolloInputs.stringList(propsValue.person_titles),
+      'person_locations[]': apolloInputs.stringList(propsValue.person_locations),
+      'person_seniorities[]': apolloInputs.stringList(propsValue.person_seniorities),
+      'organization_ids[]': apolloInputs.stringList(propsValue.organization_ids),
+      'organization_num_employees_ranges[]': apolloInputs.stringList(propsValue.organization_num_employees_ranges),
+      'q_organization_domains[]': domains,
+      'q_organization_domains_list[]': domains,
+      'organization_locations[]': apolloInputs.stringList(propsValue.organization_locations),
+      page,
+      per_page: perPage,
+    };
+    const cacheKey = `_apollo_people_search_${buildQuery(query).slice(1)}`;
     if (propsValue.cacheResponse) {
-      const cachedResult = await store.get(cacheKey, StoreScope.PROJECT);
-      if (cachedResult) {
-        return cachedResult;
+      const cached = await store.get<unknown>(cacheKey, StoreScope.PROJECT);
+      if (cached) {
+        return cached;
       }
     }
-
-    const result = await httpClient.sendRequest<{
-      people: Record<string, unknown>[];
-      pagination: Record<string, unknown>;
-    }>({
-      method: HttpMethod.POST,
-      url: `https://api.apollo.io/api/v1/mixed_people/api_search?${queryParams.toString()}`,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
-        'x-api-key': `${auth.secret_text}`,
-      },
-    });
-
+    const body = await apolloRequests.searchPeople({ apiKey: apiKeyOf(auth), query });
+    const people = recordsOf(body['people']);
+    const totalEntries = typeof body['total_entries'] === 'number' ? body['total_entries'] : null;
     const response = {
-      people: result.body.people || [],
-      pagination: result.body.pagination || {},
+      people,
+      pagination: { page: page ?? 1, per_page: perPage ?? null, total_entries: totalEntries },
+      total_entries: totalEntries,
     };
-
     if (propsValue.cacheResponse) {
       await store.put(cacheKey, response, StoreScope.PROJECT);
     }
-
     return response;
   },
 });
