@@ -6,7 +6,7 @@ export const convertJsonToXml = createAction({
   name: 'convert-json-to-xml',
   classification: 'READ',
   displayName: 'Convert JSON to XML',
-  description: 'Convert JSON to XML',
+  description: 'Turn JSON into XML text. For new flows, prefer Create XML.',
   aiMetadata: {
     description: 'Serializes a JSON object or array into an XML string, optionally prepending an XML declaration header and rendering the values under one designated key as tag attributes instead of child elements. Prefer Create XML for new work: this action merges list items into one element and does not read the "@_" attribute keys or "#text" that Convert XML to JSON returns. For the opposite direction use Convert XML to JSON. Requires valid JSON input, and attributes are only emitted for the nested key named by the attribute field (defaults to "attr"); deterministic and idempotent.',
     idempotent: true,
@@ -14,16 +14,19 @@ export const convertJsonToXml = createAction({
   props: {
     json: Property.Json({
       displayName: 'JSON',
+      description: 'List items merge into one element; Create XML keeps them apart.',
       required: true,
     }),
     attributes_key: Property.ShortText({
-      displayName: 'Attribute field',
-      description: "Field to add your tag's attributes",
+      displayName: 'Attributes Key',
+      description: 'Values under this key become tag attributes. Defaults to "attr".',
+      placeholder: 'attr',
+      advanced: true,
       required: false,
     }),
     header: Property.Checkbox({
-      displayName: 'Header',
-      description: 'Add XML header',
+      displayName: 'Include XML Declaration',
+      description: 'Start the output with <?xml version="1.0" encoding="UTF-8"?>.',
       required: false,
     }),
   },
