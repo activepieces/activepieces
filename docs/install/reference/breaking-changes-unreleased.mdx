@@ -8,6 +8,16 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Buffer 0.2.0: Create Post is no longer an agent tool
+
+From Buffer 0.2.0, **Create Post** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and the same `posts` output. Agents use the new **Create a Post** tool instead, which creates one post on one channel per call and takes a strict ISO 8601 schedule time.
+
+Create Post steps upgraded to 0.2.0 also send **Link URL** differently, because Buffer removes link assets on December 15, 2026. On Facebook, LinkedIn, Threads, Bluesky and Substack posts without images, the link is sent as a link card; on other services, or when images are attached, it is appended to the post text. Facebook posts are now sent as the `post` type.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used Create Post at **Create a Post**, calling it once per channel. Check flows that set Link URL, since the link now shows as a card or as text at the end of the post.
+
 #### Spotify 0.7.0: Update Playlist is no longer an agent tool, and Get Playback State returns an object when nothing is playing
 
 From Spotify 0.7.0, **Update Playlist** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and outputs. Agents use the new **Update Playlist Details** tool instead, which takes Public and Collaborative as yes/no choices and leaves any field it is not given unchanged.
