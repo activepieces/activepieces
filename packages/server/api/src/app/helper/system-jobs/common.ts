@@ -1,4 +1,4 @@
-import { FlowId, FlowRunId, PlatformId, ProjectId } from '@activepieces/core-utils'
+import { FlowId, FlowRunId, PlatformId, ProjectId, UserId } from '@activepieces/core-utils'
 import { Flow } from '@activepieces/shared'
 import { Job, JobsOptions, JobState } from 'bullmq'
 import { Dayjs } from 'dayjs'
@@ -49,7 +49,7 @@ type HardDeletePlatformSystemJobData = {
 
 type InviteRewardGrantSystemJobData = {
     platformId: PlatformId
-    email: string
+    userId: UserId
 }
 
 type ResumeDelayWaitpointSystemJobData = {

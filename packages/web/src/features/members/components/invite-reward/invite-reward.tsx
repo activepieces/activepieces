@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { billingUtils } from '@/features/billing';
+import { billingUtils } from '@/features/billing/utils/billing-utils';
 import { timedDismissal } from '@/lib/timed-dismissal';
 
 import { useInviteRewards } from '../../hooks/use-invite-rewards';
@@ -54,13 +54,16 @@ export function InviteRewardCard() {
           variant="ghost"
           size="icon-xs"
           aria-label={t('Dismiss')}
-          className="ms-auto -me-1 -mt-1 shrink-0 text-gray-11"
+          className="ms-auto shrink-0 text-gray-11"
           onClick={dismissCard}
         >
           <X className="size-3.5" />
         </Button>
       </div>
-      <Progress value={(rewards.claimed / rewards.maxRewards) * 100} />
+      <Progress
+        aria-label={t('Invite rewards earned')}
+        value={(rewards.claimed / rewards.maxRewards) * 100}
+      />
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs text-gray-11">
           {t('{claimed} of {max} rewards earned', {
@@ -92,13 +95,8 @@ export function InviteRewardButton() {
 
   return (
     <>
-      <Button
-        size="xs"
-        variant="outline"
-        className="text-current"
-        onClick={openInvite}
-      >
-        <Gift className="size-3.5" />
+      <Button size="sm" variant="basic" onClick={openInvite}>
+        <Gift className="size-4" />
         {t('Invite a teammate for +{credits}', {
           credits: billingUtils.formatCredits(rewards.creditsPerInvite),
         })}
@@ -137,7 +135,11 @@ export function InviteRewardNotifier() {
       return;
     }
     const seen = readSeenRewardIds(platformId);
-    const unseen = rewards.filter((reward) => !seen.includes(reward.id));
+    const unseen = rewards.filter(
+      (reward) =>
+        !seen.includes(reward.id) &&
+        dayjs().diff(reward.created, 'day') < TOAST_RECENT_DAYS,
+    );
     if (unseen.length === 0) {
       return;
     }
@@ -155,7 +157,9 @@ export function InviteRewardNotifier() {
       platformId,
       ids: [...seen, ...unseen.map((reward) => reward.id)],
     });
-    void queryClient.invalidateQueries({ queryKey: ['platform', platformId] });
+    queryClient
+      .invalidateQueries({ queryKey: ['platform', platformId] })
+      .catch(() => undefined);
   }, [platformId, rewards, queryClient]);
 
   return null;
@@ -208,6 +212,7 @@ function writeSeenRewardIds({
 
 const SEEN_STORAGE_PREFIX = 'ap_invite_reward_seen_';
 const CARD_DISMISSAL_DAYS = 7;
+const TOAST_RECENT_DAYS = 7;
 const cardDismissal = timedDismissal.create({
   storageKeyPrefix: 'ap-invite-reward-card-dismissed',
   durationHours: CARD_DISMISSAL_DAYS * 24,

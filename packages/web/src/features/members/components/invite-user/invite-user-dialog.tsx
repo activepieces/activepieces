@@ -214,7 +214,9 @@ const InviteUserDialogInternal = ({
         toast.success(toastMessage, { duration: 3000 });
       }
       refetch();
-      void queryClient.invalidateQueries({ queryKey: ['platform'] });
+      queryClient
+        .invalidateQueries({ queryKey: ['platform'] })
+        .catch(() => undefined);
       onInviteSuccess?.();
     },
     onError: (error) => {

@@ -98,7 +98,8 @@ describe('Invite reward', () => {
 
             const email = await joinAsNewMember({ platformId: mockPlatform.id })
 
-            const jobId = `invite-reward-grant-${mockPlatform.id}-${email}`
+            const member = await databaseConnection().getRepository('user').findOneByOrFail({ platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER })
+            const jobId = `invite-reward-grant-${mockPlatform.id}-${member.id}`
             await vi.waitFor(() => expect(autumnConsole.grantInviteReward).toHaveBeenCalledWith({ autumnCustomerId: CREDS.autumnCustomerId, inviteeEmail: email }))
             await vi.waitFor(async () => expect(await systemJobsSchedule(mockLog).getJobState(jobId)).toBe('delayed'))
         })

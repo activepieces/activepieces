@@ -382,7 +382,7 @@ async function consoleRequest<T>({ path, method = 'post', token, body, query }: 
         ? safeHttp.axios.get<ConsoleEnvelope<T>>(url, config)
         : safeHttp.axios.post<ConsoleEnvelope<T>>(url, body ?? {}, config))
     if (!isNil(error)) {
-        system.globalLogger().error({ error, url }, 'Autumn console request failed')
+        system.globalLogger().error({ err: error, url }, 'Autumn console request failed')
         throw error
     }
     assertNotNullOrUndefined(response, 'response')
