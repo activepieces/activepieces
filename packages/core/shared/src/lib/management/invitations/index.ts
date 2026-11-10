@@ -74,3 +74,5 @@ export const ListUserInvitationsRequest = z.object({
 })
 
 export type ListUserInvitationsRequest = z.infer<typeof ListUserInvitationsRequest>
+
+export const INVITATION_EXPIRY_SECONDS = 7 * 24 * 60 * 60
