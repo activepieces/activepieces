@@ -136,9 +136,10 @@ function sampleDataKeys(): string[] {
   return Object.keys(sample);
 }
 
-async function republish({ store, channel = CHANNEL_A }: { store: Store; channel?: string }) {
-  await trigger.onDisable(hookContext({ store, channel, isRepublish: true }));
-  await trigger.onEnable(hookContext({ store, channel, isRepublish: true }));
+async function republish({ store, from = CHANNEL_A, to = from }: { store: Store; from?: string; to?: string }) {
+  const isRepublish = from === to;
+  await trigger.onDisable(hookContext({ store, channel: from, isRepublish }));
+  await trigger.onEnable(hookContext({ store, channel: to, isRepublish }));
 }
 
 beforeEach(() => {
@@ -211,13 +212,13 @@ describe('YouTube New Video behaviour', () => {
     expect(seen.slice(0, 15)).toEqual(Array.from({ length: 15 }, (_, index) => `yt:video:v${14 - index}`));
   });
 
-  it('follows a channel switch A to B on republish without flooding B back catalogue', async () => {
+  it('follows a channel edit A to B without flooding B back catalogue', async () => {
     seedChannel({ channel: CHANNEL_A, prefix: 'a', count: 5 });
     seedChannel({ channel: CHANNEL_B, prefix: 'b', count: 15 });
     const { store, data } = memoryStore();
     await trigger.onEnable(hookContext({ store }));
 
-    await republish({ store, channel: CHANNEL_B });
+    await republish({ store, from: CHANNEL_A, to: CHANNEL_B });
     expect(await trigger.run(hookContext({ store, channel: CHANNEL_B }))).toEqual([]);
     expect(vendor.feedRequests.at(-1)).toBe(CHANNEL_B);
 
@@ -238,14 +239,25 @@ describe('YouTube New Video behaviour', () => {
     expect(ids(await trigger.run(hookContext({ store, channel: CHANNEL_B })))).toEqual(['bNew']);
   });
 
-  it('keeps the seen list when a new setting resolves to the same channel', async () => {
+  it('keeps the seen list when run sees a new setting that resolves to the same channel', async () => {
     seedChannel({ channel: CHANNEL_A, prefix: 'a', count: 5 });
     const { store } = memoryStore();
     await trigger.onEnable(hookContext({ store }));
     upload({ channel: CHANNEL_A, id: 'aNew' });
-    await republish({ store, channel: '@chanA' });
     expect(ids(await trigger.run(hookContext({ store, channel: '@chanA' })))).toEqual(['aNew']);
     expect(await trigger.run(hookContext({ store, channel: `https://www.youtube.com/channel/${CHANNEL_A}` }))).toEqual([]);
+  });
+
+  it('starts a fresh baseline when the channel setting is edited to another form of the same channel', async () => {
+    seedChannel({ channel: CHANNEL_A, prefix: 'a', count: 5 });
+    const { store, data } = memoryStore();
+    await trigger.onEnable(hookContext({ store }));
+    await republish({ store, from: CHANNEL_A, to: '@chanA' });
+    expect(data.get('_channel')).toEqual({ identifier: '@chanA', channelId: CHANNEL_A });
+    expect(await trigger.run(hookContext({ store, channel: '@chanA' }))).toEqual([]);
+    upload({ channel: CHANNEL_A, id: 'aNew' });
+    expect(ids(await trigger.run(hookContext({ store, channel: '@chanA' })))).toEqual(['aNew']);
+    expect(await trigger.run(hookContext({ store, channel: '@chanA' }))).toEqual([]);
   });
 
   it('test() uses the current channel setting and returns the newest videos oldest to newest, newest last', async () => {
@@ -276,7 +288,7 @@ describe('YouTube New Video behaviour', () => {
       channelId: CHANNEL_A,
       _seenVideoIds: Array.from({ length: 15 }, (_, index) => `yt:video:a${index}`),
     });
-    await republish({ store, channel: '@chanA' });
+    await republish({ store, from: '@chanA' });
     expect(await trigger.run(hookContext({ store, channel: '@chanA' }))).toEqual([]);
   });
 
