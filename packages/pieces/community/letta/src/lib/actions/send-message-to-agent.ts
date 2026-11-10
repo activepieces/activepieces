@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { lettaAuth } from '../common/auth';
-import { getLettaClient } from '../common/client';
+import { lettaApi } from '../common/client';
+import { lettaSchemas } from '../common/schemas';
 import { agentIdDropdown } from '../common/props';
 import type {
   MessageCreateParamsNonStreaming,
@@ -13,8 +14,8 @@ export const sendMessageToAgent = createAction({
   classification: 'WRITE',
   displayName: 'Send Message to Agent',
   description: 'Send message to an agent',
-  audience: 'both',
-  aiMetadata: { description: 'Sends a message to a specific Letta agent (by agent ID) and returns the agent\'s non-streaming response, optionally capping how many reasoning steps it may take. Use to converse with or prompt an existing agent. Not idempotent: each call appends a new message and advances the agent\'s stateful memory.', idempotent: false },
+  audience: 'human',
+  outputSchema: lettaSchemas.humanSendMessage,
   props: {
     agentId: agentIdDropdown,
     input: Property.LongText({
@@ -35,7 +36,7 @@ export const sendMessageToAgent = createAction({
       maxSteps,
     } = context.propsValue;
 
-    const client = getLettaClient(context.auth.props);
+    const client = await lettaApi.getLettaClient({ auth: context.auth.props });
 
     const body: MessageCreateParamsNonStreaming = {
       streaming: false,
@@ -46,14 +47,14 @@ export const sendMessageToAgent = createAction({
       body.max_steps = maxSteps;
     }
 
-    const response: LettaResponse = await client.agents.messages.create(
-      agentId,
-      body
+    const response: LettaResponse = await lettaApi.callLetta(() =>
+      client.agents.messages.create(agentId, body)
     );
 
     return {
       messages: response.messages,
       stopReason: response.stop_reason,
+      usage: response.usage,
       success: true,
     };
   },

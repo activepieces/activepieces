@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-ai",
-  "version": "0.15.0",
+  "version": "0.15.4",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -8,7 +8,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@ai-sdk/mcp": "1.0.11",
-    "@modelcontextprotocol/sdk": "1.26.0",
+    "@modelcontextprotocol/sdk": "1.32.0",
     "ajv": "8.18.0",
     "mime-types": "2.1.35",
     "zod": "4.3.6",
@@ -24,6 +24,6 @@
   "devDependencies": {
     "@types/mime-types": "2.1.1",
     "tslib": "2.6.2",
-    "vitest": "3.2.6"
+    "vitest": "5.0.5"
   }
 }

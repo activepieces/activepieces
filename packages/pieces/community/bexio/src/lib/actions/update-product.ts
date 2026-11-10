@@ -1,7 +1,8 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
 import { bexioCommonProps } from '../common/props';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 export const updateProductAction = createAction({
   auth: bexioAuth,
@@ -9,7 +10,8 @@ export const updateProductAction = createAction({
   classification: 'WRITE',
   displayName: 'Update Product',
   description: 'Update an existing product or service',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: bexioOutputSchemas.itemOutputSchema,
   aiMetadata: { description: 'Updates fields on an existing Bexio product/article (codes, names, prices, tax, unit, stock, dimensions, accounts) identified by its article id; only supplied fields change. Use to modify a known product; locate the article id with Find Product first. Idempotent: re-sending the same values converges to the same product state.', idempotent: true },
   props: {
     article_id: Property.Dropdown({
@@ -326,7 +328,7 @@ export const updateProductAction = createAction({
     }),
     is_stock: Property.Checkbox({
       displayName: 'Is Stock Item',
-      description: 'Whether this is a stock item (requires stock_edit scope)',
+      description: 'No longer used: Bexio only lets you set this when the product is created, so this action ignores it.',
       required: false,
     }),
     stock_id: Property.Dropdown({
@@ -492,61 +494,58 @@ export const updateProductAction = createAction({
 
     const requestBody: Record<string, unknown> = {};
 
-    if (props['user_id']) {
+    if (isSet(props['user_id'])) {
       requestBody['user_id'] = props['user_id'];
     }
-    if (props['intern_code']) {
+    if (isSet(props['intern_code'])) {
       requestBody['intern_code'] = props['intern_code'];
     }
-    if (props['intern_name']) {
+    if (isSet(props['intern_name'])) {
       requestBody['intern_name'] = props['intern_name'];
     }
-    if (props['intern_description']) {
+    if (isSet(props['intern_description'])) {
       requestBody['intern_description'] = props['intern_description'];
     }
-    if (props['contact_id']) {
+    if (isSet(props['contact_id'])) {
       requestBody['contact_id'] = props['contact_id'];
     }
-    if (props['deliverer_code']) {
+    if (isSet(props['deliverer_code'])) {
       requestBody['deliverer_code'] = props['deliverer_code'];
     }
-    if (props['deliverer_name']) {
+    if (isSet(props['deliverer_name'])) {
       requestBody['deliverer_name'] = props['deliverer_name'];
     }
-    if (props['deliverer_description']) {
+    if (isSet(props['deliverer_description'])) {
       requestBody['deliverer_description'] = props['deliverer_description'];
     }
-    if (props['purchase_price']) {
+    if (isSet(props['purchase_price'])) {
       requestBody['purchase_price'] = props['purchase_price'];
     }
-    if (props['sale_price']) {
+    if (isSet(props['sale_price'])) {
       requestBody['sale_price'] = props['sale_price'];
     }
-    if (props['purchase_total']) {
+    if (isSet(props['purchase_total'])) {
       requestBody['purchase_total'] = props['purchase_total'];
     }
-    if (props['sale_total']) {
+    if (isSet(props['sale_total'])) {
       requestBody['sale_total'] = props['sale_total'];
     }
-    if (props['currency_id']) {
+    if (isSet(props['currency_id'])) {
       requestBody['currency_id'] = props['currency_id'];
     }
-    if (props['tax_income_id']) {
+    if (isSet(props['tax_income_id'])) {
       requestBody['tax_income_id'] = props['tax_income_id'];
     }
-    if (props['tax_expense_id']) {
+    if (isSet(props['tax_expense_id'])) {
       requestBody['tax_expense_id'] = props['tax_expense_id'];
     }
-    if (props['unit_id']) {
+    if (isSet(props['unit_id'])) {
       requestBody['unit_id'] = props['unit_id'];
     }
-    if (props['is_stock'] !== undefined) {
-      requestBody['is_stock'] = props['is_stock'];
-    }
-    if (props['stock_id']) {
+    if (isSet(props['stock_id'])) {
       requestBody['stock_id'] = props['stock_id'];
     }
-    if (props['stock_place_id']) {
+    if (isSet(props['stock_place_id'])) {
       requestBody['stock_place_id'] = props['stock_place_id'];
     }
     if (props['stock_nr'] !== undefined) {
@@ -555,31 +554,31 @@ export const updateProductAction = createAction({
     if (props['stock_min_nr'] !== undefined) {
       requestBody['stock_min_nr'] = props['stock_min_nr'];
     }
-    if (props['width']) {
+    if (isSet(props['width'])) {
       requestBody['width'] = props['width'];
     }
-    if (props['height']) {
+    if (isSet(props['height'])) {
       requestBody['height'] = props['height'];
     }
-    if (props['weight']) {
+    if (isSet(props['weight'])) {
       requestBody['weight'] = props['weight'];
     }
-    if (props['volume']) {
+    if (isSet(props['volume'])) {
       requestBody['volume'] = props['volume'];
     }
-    if (props['remarks']) {
+    if (isSet(props['remarks'])) {
       requestBody['remarks'] = props['remarks'];
     }
-    if (props['delivery_price']) {
+    if (isSet(props['delivery_price'])) {
       requestBody['delivery_price'] = props['delivery_price'];
     }
-    if (props['article_group_id']) {
+    if (isSet(props['article_group_id'])) {
       requestBody['article_group_id'] = props['article_group_id'];
     }
-    if (props['account_id']) {
+    if (isSet(props['account_id'])) {
       requestBody['account_id'] = props['account_id'];
     }
-    if (props['expense_account_id']) {
+    if (isSet(props['expense_account_id'])) {
       requestBody['expense_account_id'] = props['expense_account_id'];
     }
 
@@ -593,3 +592,6 @@ export const updateProductAction = createAction({
   },
 });
 
+function isSet(value: unknown): boolean {
+  return value !== undefined && value !== null && value !== '';
+}

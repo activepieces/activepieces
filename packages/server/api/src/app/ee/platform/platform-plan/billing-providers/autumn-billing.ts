@@ -1,21 +1,31 @@
-import { isNil, tryCatch } from '@activepieces/core-utils'
-import { apDayjs } from '@activepieces/server-utils'
-import { AiCreditsAutoTopUpState, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, FeatureId, isConsumableFeatureId, PlanName, SeatsBillableFeature, UnconsumableFeatureId } from '@activepieces/shared'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
+import { apDayjs, wideEvent } from '@activepieces/server-utils'
+import { AiCreditsAutoTopUpState, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, FeatureId, isConsumableFeatureId, isEligibleForSelfServeTrial, notStartedSelfServeTrial, PlanName, SeatsBillableFeature, SelfServeTrialDates, SelfServeTrialInfo, SelfServeTrialState, UnconsumableFeatureId } from '@activepieces/shared'
 import { AutumnError, type GetCustomerResponse } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
-import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
+import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey, getEntitlementsRefreshKey, getSelfServeTrialEndedRefreshKey, getSelfServeTrialStartLockKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
-import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, emptyBillingOverview, TrackFeatureParams } from '../../../../platform/billing-provider'
+import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditCheckSpeed, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, emptyBillingOverview, GetSelfServeTrialInfoParams, ShouldBlockOnCreditsParams, TrackFeatureParams } from '../../../../platform/billing-provider'
+import { platformPlanTelemetry } from '../platform-plan-telemetry'
 import { assertSeatsNotBelowActiveUsers, platformPlanService } from '../platform-plan.service'
-import { autumnConsole, autumnUtils, BalanceCacheSnapshot, ConsoleCustomerCall, CreditsBalanceCache } from './autumn-utils'
+import { selfServeTrialUtils } from '../self-serve-trial-utils'
+import { trialSeatCleanup } from '../trial-seat-cleanup'
+import { autumnConsole, autumnUtils, BalanceCacheSnapshot, ConsoleCustomerCall, CreditsBalanceCache, SelfServeTrialStartResult } from './autumn-utils'
 
 const CREDITS_REFETCH_PERIOD_MS = 180 * 1000
 const CUSTOMER_STATE_REFRESH_DEBOUNCE_SECONDS = 15
 const CUSTOMER_STATE_MISS_DEBOUNCE_SECONDS = 60
 const CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS = 15
-const CREDITS_CACHE_READ_TIMEOUT_MS = 25
+const CREDITS_CACHE_READ_TIMEOUT_MS: Record<CreditCheckSpeed, number> = {
+    [CreditCheckSpeed.FAST]: 25,
+    [CreditCheckSpeed.NORMAL]: 400,
+    [CreditCheckSpeed.BACKGROUND]: 5000,
+}
+const SLOW_CREDITS_CACHE_READ_LOG_MS = 25
 const BILLING_OVERVIEW_TTL_SECONDS = 5 * 60
+const USAGE_EVENTS_PAGE_SIZE = 5000
+const SELF_SERVE_TRIAL_ENDED_REFRESH_CLAIM_SECONDS = 30 * 24 * 60 * 60
 const TRIAL_DURATION_UNITS: Partial<Record<string, 'day' | 'month' | 'year'>> = { day: 'day', month: 'month', year: 'year' }
 
 export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider => ({
@@ -149,16 +159,17 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
                 await platformPlanService(log).setAutumnCredentials({ platformId, ...credentials })
             },
         })
+        await selfServeTrialUtils.deleteCachedTrial(platformId)
         await autumnUtils.refreshEntitlements(log, platformId)
     },
     isBillingEnforced: async (platformId: string) => {
         return (await distributedStore.get<boolean>(getBillingEnforcedKey(platformId))) ?? false
     },
-    shouldBlockOnCredits: async (platformId: string) => {
-        return (await computeCreditsAndAppSumoState(log, platformId)).credits.blocked
+    shouldBlockOnCredits: async ({ platformId, creditCheckSpeed }: ShouldBlockOnCreditsParams) => {
+        return (await computeCreditsAndAppSumoState({ log, platformId, readTimeoutMs: CREDITS_CACHE_READ_TIMEOUT_MS[creditCheckSpeed] })).credits.blocked
     },
     getCreditsAndAppSumoState: async (platformId: string) => {
-        return computeCreditsAndAppSumoState(log, platformId)
+        return computeCreditsAndAppSumoState({ log, platformId, readTimeoutMs: CREDITS_CACHE_READ_TIMEOUT_MS[CreditCheckSpeed.NORMAL] })
     },
     getConsumablesUsage: async (platformId: string) => {
         const { credits, appSumo } = await resolveCreditsCache(log, platformId)
@@ -170,7 +181,105 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     getCreditUsage: async ({ platformId, startDate, endDate }) => {
         return autumnUtils.getCreditUsage(log, platformId, startDate, endDate)
     },
+    listUsageEvents: async ({ platformId, startMs, endMs, cursor }) => {
+        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
+        if (isNil(client)) {
+            return { events: [], nextCursor: null }
+        }
+        const page = await client.listEvents({
+            featureId: ConsumableFeatureId.AP_CREDITS,
+            customRange: { start: startMs, end: endMs },
+            limit: USAGE_EVENTS_PAGE_SIZE,
+            startCursor: cursor ?? '',
+        })
+        return {
+            events: page.list.map((event) => ({ id: event.id, timestamp: event.timestamp, properties: event.properties })),
+            nextCursor: page.nextCursor,
+        }
+    },
+    getSelfServeTrialInfo: async ({ platformId, bypassCacheAndFetchFromProvider = false }: GetSelfServeTrialInfoParams) => {
+        if (bypassCacheAndFetchFromProvider) {
+            return readSelfServeTrialInfo({ log, platformId, bypassCacheAndFetchFromProvider })
+        }
+        const { data, error } = await tryCatch(() => readSelfServeTrialInfo({ log, platformId, bypassCacheAndFetchFromProvider }))
+        if (!isNil(error) || isNil(data)) {
+            log.warn({ error, platform: { id: platformId } }, 'Failed to read the self-serve trial; treating the trial as unavailable')
+            return notStartedSelfServeTrial(SelfServeTrialState.INELIGIBLE)
+        }
+        return data
+    },
+    startSelfServeTrial: async (platformId: string) => {
+        const status = await distributedLock(log).runExclusive({
+            key: getSelfServeTrialStartLockKey(platformId),
+            timeoutInSeconds: AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS,
+            fn: async (): Promise<SelfServeTrialInfo> => {
+                await autumnUtils.ensureEnrolled(log, platformId)
+                const creds = await autumnConsole.getCreds(log, platformId)
+                assertNotNullOrUndefined(creds, 'Autumn credentials must exist before starting a self-serve trial')
+                const current = await readSelfServeTrialInfo({ log, platformId, bypassCacheAndFetchFromProvider: false })
+                if (current.state !== SelfServeTrialState.ELIGIBLE) {
+                    return current
+                }
+                const outcome = await autumnConsole.startSelfServeTrial(creds)
+                switch (outcome.result) {
+                    case SelfServeTrialStartResult.USED:
+                        throw new ActivepiecesError({ code: ErrorCode.SELF_SERVE_TRIAL_ALREADY_USED, params: {} })
+                    case SelfServeTrialStartResult.INELIGIBLE:
+                        return notStartedSelfServeTrial(SelfServeTrialState.INELIGIBLE)
+                    case SelfServeTrialStartResult.STARTED: {
+                        await selfServeTrialUtils.cacheTrialDates({ platformId, dates: { startedAt: outcome.startedAt, endsAt: outcome.endsAt } })
+                        rejectedPromiseHandler(platformPlanTelemetry(log).onSelfServeTrialStarted({ platformId, endsAt: outcome.endsAt }), log)
+                        return { state: SelfServeTrialState.ACTIVE, startedAt: outcome.startedAt, endsAt: outcome.endsAt, seatGraceEndsAt: null }
+                    }
+                }
+            },
+        })
+        const { error } = await tryCatch(() => autumnUtils.refreshEntitlements(log, platformId))
+        if (!isNil(error)) {
+            log.warn({ error, platform: { id: platformId } }, 'Self-serve trial start finished but the entitlements refresh failed; the next plan read retries it')
+        }
+        rejectedPromiseHandler(distributedStore.delete(getEntitlementsRefreshKey(platformId)), log)
+        return status
+    },
 })
+
+async function readSelfServeTrialInfo({ log, platformId, bypassCacheAndFetchFromProvider }: ReadSelfServeTrialInfoParams): Promise<SelfServeTrialInfo> {
+    if (isNil(await autumnConsole.getCreds(log, platformId))) {
+        return notStartedSelfServeTrial(SelfServeTrialState.INELIGIBLE)
+    }
+    const dates = bypassCacheAndFetchFromProvider
+        ? await autumnUtils.readSelfServeTrialDates(log, platformId)
+        : (await selfServeTrialUtils.readCachedTrialDates(platformId))?.dates ?? null
+    if (isNil(dates)) {
+        const { plan } = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        return notStartedSelfServeTrial(isEligibleForSelfServeTrial(plan) ? SelfServeTrialState.ELIGIBLE : SelfServeTrialState.INELIGIBLE)
+    }
+    const running = isTrialRunning(dates)
+    if (!running) {
+        rejectedPromiseHandler(refreshEntitlementsOnceAfterTrialEnded({ log, platformId, endsAt: dates.endsAt }), log)
+    }
+    return {
+        state: running ? SelfServeTrialState.ACTIVE : SelfServeTrialState.ENDED,
+        startedAt: dates.startedAt,
+        endsAt: dates.endsAt,
+        seatGraceEndsAt: await trialSeatCleanup(log).endsAt({ platformId, selfServeTrialDates: dates }),
+    }
+}
+
+async function refreshEntitlementsOnceAfterTrialEnded({ log, platformId, endsAt }: RefreshEntitlementsOnceAfterTrialEndedParams): Promise<void> {
+    const claimKey = getSelfServeTrialEndedRefreshKey({ platformId, endsAt })
+    await distributedStore.runOnceWithin(claimKey, SELF_SERVE_TRIAL_ENDED_REFRESH_CLAIM_SECONDS, async () => {
+        const { error } = await tryCatch(() => autumnUtils.refreshEntitlements(log, platformId))
+        if (!isNil(error)) {
+            await distributedStore.delete(claimKey)
+            throw error
+        }
+    })
+}
+
+function isTrialRunning(dates: SelfServeTrialDates): boolean {
+    return Date.parse(dates.endsAt) > Date.now()
+}
 
 async function withEnrolledCreds<T>({ log, platformId, fallback, fn }: WithEnrolledCredsParams<T>): Promise<T> {
     await autumnUtils.ensureEnrolled(log, platformId)
@@ -215,7 +324,7 @@ function toBillingInfo(customer: GetCustomerResponse, monthStart: string, monthE
         cancelAt: msToIso(subscription?.expiresAt) ?? null,
         trialEndsAt: msToIso(subscription?.trialEndsAt) ?? purchaseTrialEndsAt(purchase),
         scheduledPlanName: scheduledPlan?.plan?.name ?? null,
-        billingPortalAvailable: !isNil(customer.paymentMethod),
+        hasPaymentMethod: !isNil(customer.paymentMethod),
     }
 }
 
@@ -302,10 +411,15 @@ function msToIso(ms: number | null | undefined): string | null {
     return isNil(ms) ? null : apDayjs(ms).toISOString()
 }
 
-async function computeCreditsAndAppSumoState(log: FastifyBaseLogger, platformId: string): Promise<CreditsAndAppSumoState> {
-    const { data: snapshot, error } = await tryCatch(() => withTimeout(readCreditsCaches(platformId), CREDITS_CACHE_READ_TIMEOUT_MS))
+async function computeCreditsAndAppSumoState({ log, platformId, readTimeoutMs }: ComputeCreditsAndAppSumoStateParams): Promise<CreditsAndAppSumoState> {
+    const startedAt = performance.now()
+    const read = readCreditsCaches(platformId)
+    const { data: snapshot, error } = await tryCatch(() => withTimeout(read, readTimeoutMs))
+    const readMs = elapsedMs(startedAt)
+    wideEvent.set({ creditsGate: { readMs, readTimeoutMs, timedOut: error instanceof CreditsReadTimeoutError } })
     if (isNil(snapshot)) {
-        log.warn({ error, platform: { id: platformId } }, 'Credits gate cache read timed out or failed; failing open without gating this request')
+        log.warn({ error, platform: { id: platformId }, creditsGate: { readMs, readTimeoutMs } }, 'Credits gate cache read timed out or failed; failing open without gating this request')
+        read.then(() => log.info({ platform: { id: platformId }, creditsGate: { lateReadMs: elapsedMs(startedAt), readTimeoutMs } }, 'Credits gate cache read finished after the timeout')).catch(() => undefined)
         return {
             credits: computeCreditState({ balance: null, enforced: false }),
             appSumo: computeCreditState({ balance: null, enforced: true }),
@@ -315,8 +429,15 @@ async function computeCreditsAndAppSumoState(log: FastifyBaseLogger, platformId:
         credits: computeCreditState({ balance: snapshot.credits, enforced: snapshot.billingEnforced }),
         appSumo: computeCreditState({ balance: snapshot.appSumo, enforced: true }),
     }
+    if (isNil(wideEvent.current()) && readMs >= SLOW_CREDITS_CACHE_READ_LOG_MS) {
+        log.info({ platform: { id: platformId }, creditsGate: { readMs, readTimeoutMs } }, 'Credits gate cache read was slow')
+    }
     scheduleCreditsCacheMaintenance({ log, platformId, snapshot, state })
     return state
+}
+
+function elapsedMs(startedAt: number): number {
+    return Math.round(performance.now() - startedAt)
 }
 
 function scheduleCreditsCacheMaintenance({ log, platformId, snapshot, state }: CreditsCacheMaintenanceParams): void {
@@ -335,9 +456,11 @@ async function readCreditsCaches(platformId: string): Promise<CreditsCacheSnapsh
     return { billingEnforced: billingEnforced ?? false, credits, appSumo }
 }
 
+class CreditsReadTimeoutError extends Error {}
+
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
     return new Promise<T>((resolve, reject) => {
-        const timer = setTimeout(() => reject(new Error(`Timed out after ${timeoutMs}ms`)), timeoutMs)
+        const timer = setTimeout(() => reject(new CreditsReadTimeoutError(`Timed out after ${timeoutMs}ms`)), timeoutMs)
         promise.then(
             (value) => {
                 clearTimeout(timer)
@@ -491,9 +614,28 @@ type CurrentPlanSelection = {
     plan: AutumnPlan | null
 }
 
+type ComputeCreditsAndAppSumoStateParams = {
+    log: FastifyBaseLogger
+    platformId: string
+    readTimeoutMs: number
+}
+
 type ComputeCreditStateParams = {
     balance: CreditsBalanceCache | null
     enforced: boolean
+}
+
+type PlatformLogParams = {
+    log: FastifyBaseLogger
+    platformId: string
+}
+
+type RefreshEntitlementsOnceAfterTrialEndedParams = PlatformLogParams & {
+    endsAt: string
+}
+
+type ReadSelfServeTrialInfoParams = PlatformLogParams & {
+    bypassCacheAndFetchFromProvider: boolean
 }
 
 type WithEnrolledCredsParams<T> = {

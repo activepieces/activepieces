@@ -248,6 +248,7 @@ export const UserMemory = z.object({
     userId: z.string(),
     instructions: Nullable(z.string()),
     memories: z.array(z.string()).default([]),
+    importNudgeShownAt: Nullable(z.string()),
 })
 export type UserMemory = z.infer<typeof UserMemory>
 
@@ -284,9 +285,22 @@ export const GetAgentMemoryResponse = z.object({
 })
 export type GetAgentMemoryResponse = z.infer<typeof GetAgentMemoryResponse>
 
+export const MemoryImportNudgeResponse = z.object({
+    eligible: z.boolean(),
+})
+export type MemoryImportNudgeResponse = z.infer<typeof MemoryImportNudgeResponse>
+
+export const MemoryImportNudgeClaimResponse = z.object({
+    claimed: z.boolean(),
+})
+export type MemoryImportNudgeClaimResponse = z.infer<typeof MemoryImportNudgeClaimResponse>
+
 export const UpdateAgentMemoryRequest = z.object({
     instructions: Nullable(z.string()),
-    memories: z.optional(z.array(z.string())),
+    memories: z.optional(z.object({
+        next: z.array(z.string()),
+        base: z.array(z.string()),
+    })),
 })
 export type UpdateAgentMemoryRequest = z.infer<typeof UpdateAgentMemoryRequest>
 

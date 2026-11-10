@@ -150,7 +150,33 @@ describe('what a model call reports back for billing', () => {
             costUsd: 0.0042,
             inputTokens: 100,
             outputTokens: 20,
+            observedCostUsd: 0.0042,
         })
+    })
+
+    it.each(['generate', 'stream'] as const)('bills the tokens of a forced tool call that failed after its retry (%s)', async (path) => {
+        const usage = { inputTokens: { total: 9, noCache: 9, cacheRead: undefined, cacheWrite: undefined }, outputTokens: { total: 4, text: 4, reasoning: undefined } }
+        const failure = Object.assign(new Error('The model answered in text twice instead of calling the extractData tool'), { name: 'ForcedToolNotCalledError', usage })
+        const model = activepiecesAiCost.billedLanguageModel({
+            model: {
+                ...modelReturning({}),
+                doGenerate: async () => Promise.reject(failure),
+                doStream: async () => Promise.reject(failure),
+            },
+            provider: AIProviderName.META,
+            modelId: 'muse-spark-1.3',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.META }),
+        })
+        if (typeof model === 'string') {
+            throw new Error('expected a model object')
+        }
+
+        const outcome = await (path === 'generate' ? model.doGenerate({ prompt: [] }) : model.doStream({ prompt: [] })).then(() => 'completed', (error: Error) => error.name)
+
+        expect(outcome).toBe('ForcedToolNotCalledError')
+        expect(reported).toHaveLength(1)
+        expect(reported[0].call).toMatchObject({ inputTokens: 9, outputTokens: 4 })
     })
 
     it('bills a call on the customer own key at one fixed credit, whatever it cost us', async () => {
@@ -182,7 +208,7 @@ describe('what a model call reports back for billing', () => {
     it('counts a managed call whose cost never arrived, instead of quietly billing nothing', async () => {
         activepiecesAiCost.drainUnbilledCalls()
         const model = activepiecesAiCost.billedLanguageModel({
-            model: modelReturning({ content: [], finishReason: 'stop', usage: {}, response: { id: 'gen-xyz' } }),
+            model: modelReturning({ content: [{ type: 'text', text: 'hello' }], finishReason: 'stop', usage: {}, response: { id: 'gen-xyz' } }),
             provider: AIProviderName.ACTIVEPIECES,
             modelId: 'anthropic/claude-sonnet-5',
             billing: BILLING,
@@ -191,14 +217,115 @@ describe('what a model call reports back for billing', () => {
 
         await generateWith(model)
 
-        expect(reported).toHaveLength(0)
+        expect(reported.map((event) => event.call.charge)).toEqual([AiChargeBasis.USAGE_ONLY])
         expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
+    })
+
+    it('keeps the tokens of a managed call whose cost never arrived, so usage can still estimate it', async () => {
+        activepiecesAiCost.drainUnbilledCalls()
+        const model = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [], finishReason: 'stop', usage: { inputTokens: { total: 50 }, outputTokens: { total: 9 } }, response: { id: 'gen-tokens' } }),
+            provider: AIProviderName.ACTIVEPIECES,
+            modelId: 'anthropic/claude-sonnet-5',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES }),
+        })
+
+        await generateWith(model)
+
+        expect(reported[0].call).toMatchObject({ charge: AiChargeBasis.USAGE_ONLY, inputTokens: 50, outputTokens: 9 })
+        activepiecesAiCost.drainUnbilledCalls()
+    })
+
+    it.each(['stop', 'content-filter', 'other'])('does not count an empty %s completion as unbilled, since OpenRouter charges nothing for it', async (finishReason) => {
+        activepiecesAiCost.drainUnbilledCalls()
+        const model = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [{ type: 'text', text: '' }], finishReason, usage: {}, response: { id: 'gen-empty' } }),
+            provider: AIProviderName.ACTIVEPIECES,
+            modelId: 'google/gemini-3.7-flash',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES, apiKey: MANAGED_KEY }),
+        })
+
+        await generateWith(model)
+        await settled()
+
+        expect(reported.map((event) => event.call.charge)).toEqual([AiChargeBasis.USAGE_ONLY])
+        expect(activepiecesAiCost.drainUnbilledCalls()).toEqual([])
+    })
+
+    it('bills an empty completion on the cost OpenRouter recorded, since it only waives blank or error finishes', async () => {
+        generationLookup.answer = async () => ({ costUsd: 0.0002, inputTokens: 40, outputTokens: 0 })
+        const model = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [], finishReason: 'stop', usage: {}, response: { id: 'gen-empty-billed' } }),
+            provider: AIProviderName.ACTIVEPIECES,
+            modelId: 'google/gemini-3.7-flash',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES, apiKey: MANAGED_KEY }),
+        })
+
+        await generateWith(model)
+        await settled()
+
+        expect(reported[0].call).toMatchObject({ charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId: 'gen-empty-billed', costUsd: 0.0002 })
+    })
+
+    it('keeps the token counts the response gave when the looked-up cost comes without them', async () => {
+        generationLookup.answer = async () => ({ costUsd: 0.0004 })
+        const model = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [{ type: 'text', text: 'hi' }], finishReason: 'stop', usage: { inputTokens: { total: 30 }, outputTokens: { total: 4 } }, response: { id: 'gen-counts' } }),
+            provider: AIProviderName.ACTIVEPIECES,
+            modelId: 'google/gemini-3.7-flash',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES, apiKey: MANAGED_KEY }),
+        })
+
+        await generateWith(model)
+        await settled()
+
+        expect(reported[0].call).toMatchObject({ charge: AiChargeBasis.PROVIDER_REPORTED_COST, costUsd: 0.0004, inputTokens: 30, outputTokens: 4 })
+    })
+
+    it('still counts a call with no visible content that used output tokens, since reasoning is billed', async () => {
+        activepiecesAiCost.drainUnbilledCalls()
+        const model = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [], finishReason: 'stop', usage: { inputTokens: { total: 40 }, outputTokens: { total: 12, reasoning: 12 } }, response: { id: 'gen-reasoning' } }),
+            provider: AIProviderName.ACTIVEPIECES,
+            modelId: 'google/gemini-3.7-flash',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES }),
+        })
+
+        await generateWith(model)
+
+        expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
+    })
+
+    it('still counts a tool call that reported no cost, since that output is money lost', async () => {
+        activepiecesAiCost.drainUnbilledCalls()
+        const model = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [{ type: 'tool-call', toolCallId: 'c1', toolName: 'search', input: '{}' }], finishReason: 'tool-calls', usage: {}, response: { id: 'gen-tool' } }),
+            provider: AIProviderName.ACTIVEPIECES,
+            modelId: 'google/gemini-3.7-flash',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES }),
+        })
+
+        await generateWith(model)
+
+        expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
+    })
+
+    it('keeps tokens and reported cost on a fixed-credit report, without changing its credit', () => {
+        activepiecesAiCost.reportFixedCredits({ billing: BILLING, provider: AIProviderName.OPENAI, modelId: 'gpt-5', inputTokens: 12, outputTokens: 3, observedCostUsd: 0.0004 })
+
+        expect(reported[0].call).toMatchObject({ charge: AiChargeBasis.FIXED_CREDITS, credits: 1, inputTokens: 12, outputTokens: 3, observedCostUsd: 0.0004 })
     })
 
     it('says which project and model lost the charge, so the page names something to chase', async () => {
         activepiecesAiCost.drainUnbilledCalls()
         const model = activepiecesAiCost.billedLanguageModel({
-            model: modelReturning({ content: [], finishReason: 'stop', usage: {}, response: { id: 'gen-xyz' } }),
+            model: modelReturning({ content: [{ type: 'text', text: 'hello' }], finishReason: 'stop', usage: {}, response: { id: 'gen-xyz' } }),
             provider: AIProviderName.ACTIVEPIECES,
             modelId: 'anthropic/claude-sonnet-5',
             billing: BILLING,
@@ -234,10 +361,16 @@ describe('what a model call reports back for billing', () => {
         expect(reported).toHaveLength(0)
     })
 
-    it('leaves a customer own-key call unbilled when its credit is charged once for the whole turn', async () => {
+    it('reports a customer own-key call as usage only when its credit is charged once for the whole turn, so analytics still sees it', async () => {
         const model = activepiecesAiCost.billedLanguageModel({
-            model: modelReturning({ content: [], finishReason: 'stop', usage: {}, response: { id: 'resp-2' } }),
+            model: modelReturning({
+                content: [],
+                finishReason: 'stop',
+                usage: { inputTokens: { total: 50, cacheRead: 30, cacheWrite: 5 }, outputTokens: { total: 9, reasoning: 4 } },
+                response: { id: 'resp-2' },
+            }),
             provider: AIProviderName.OPENAI,
+            providerConfigId: 'key-1',
             modelId: 'gpt-5',
             billing: BILLING,
             charge: chargeFor({ provider: AIProviderName.OPENAI, turnAlreadyCharged: true }),
@@ -245,7 +378,67 @@ describe('what a model call reports back for billing', () => {
 
         await generateWith(model)
 
-        expect(reported).toHaveLength(0)
+        expect(reported).toHaveLength(1)
+        expect(reported[0].providerConfigId).toBe('key-1')
+        expect(reported[0].call).toEqual({
+            charge: AiChargeBasis.USAGE_ONLY,
+            generationId: 'resp-2',
+            inputTokens: 50,
+            outputTokens: 9,
+            cacheReadTokens: 30,
+            cacheWriteTokens: 5,
+            reasoningTokens: 4,
+        })
+    })
+
+    it('keeps the cost a customer own OpenRouter key reports, so analytics shows what the provider charged', async () => {
+        const model = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({
+                content: [],
+                finishReason: 'stop',
+                usage: { inputTokens: { total: 10 }, outputTokens: { total: 2 } },
+                response: { id: 'resp-3' },
+                providerMetadata: { openrouter: { usage: { cost: 0.0009 } } },
+            }),
+            provider: AIProviderName.OPENROUTER,
+            modelId: 'openai/gpt-5',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.OPENROUTER }),
+        })
+
+        await generateWith(model)
+
+        expect(reported[0].call).toEqual({
+            charge: AiChargeBasis.FIXED_CREDITS,
+            credits: 1,
+            generationId: 'resp-3',
+            inputTokens: 10,
+            outputTokens: 2,
+            observedCostUsd: 0.0009,
+        })
+    })
+
+    it('keeps the cost a LiteLLM gateway puts in its response header, only for custom providers', async () => {
+        const response = { id: 'resp-litellm', headers: { 'x-litellm-response-cost': '0.0031' } }
+        const custom = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [], finishReason: 'stop', usage: { inputTokens: { total: 7 }, outputTokens: { total: 1 } }, response }),
+            provider: AIProviderName.CUSTOM,
+            modelId: 'gpt-5',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.CUSTOM }),
+        })
+        const openAi = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [], finishReason: 'stop', usage: {}, response }),
+            provider: AIProviderName.OPENAI,
+            modelId: 'gpt-5',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.OPENAI }),
+        })
+
+        await generateWith(custom)
+        await generateWith(openAi)
+
+        expect(reported.map((event) => event.call.observedCostUsd)).toEqual([0.0031, undefined])
     })
 
     it('still bills a managed call on cost when the turn carries the own-key credit, since we pay per call either way', async () => {
@@ -266,7 +459,7 @@ describe('what a model call reports back for billing', () => {
         await generateWith(model)
 
         expect(reported).toHaveLength(1)
-        expect(reported[0].call).toEqual({ charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId: 'gen-def', costUsd: 0.001 })
+        expect(reported[0].call).toEqual({ charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId: 'gen-def', costUsd: 0.001, observedCostUsd: 0.001 })
     })
 
     it('bills an image model call that cannot be wrapped at the same fixed credit', () => {
@@ -300,27 +493,27 @@ describe('an embedding call on the managed provider', () => {
             generationId: 'embed-1',
             costUsd: 0.000012,
             inputTokens: 8,
+            observedCostUsd: 0.000012,
         })
     })
 
-    it('leaves a customer own-key embedding alone, we are not paying for it', async () => {
-        const raw = embeddingModelReturning({
-            embeddings: [[0.1]],
-            usage: { tokens: 8 },
-            providerMetadata: { openrouter: { usage: { cost: 0.5 } } },
-            response: { body: { id: 'embed-2' } },
-            warnings: [],
-        })
+    it('records a customer own-key embedding as usage only, never as a charge', async () => {
         const model = activepiecesAiCost.billedEmbeddingModel({
-            model: raw,
+            model: embeddingModelReturning({
+                embeddings: [[0.1]],
+                usage: { tokens: 8 },
+                response: { body: { id: 'embed-2' } },
+                warnings: [],
+            }),
             provider: AIProviderName.OPENAI,
             modelId: 'text-embedding-3-small',
             billing: BILLING,
         })
 
-        expect(model).toBe(raw)
         await embedWith(model)
-        expect(reported).toHaveLength(0)
+
+        expect(reported).toHaveLength(1)
+        expect(reported[0].call).toEqual({ charge: AiChargeBasis.USAGE_ONLY, generationId: 'embed-2', inputTokens: 8 })
     })
 
     it('bills on the cost even when the response carried no id, because OpenRouter marks it optional', async () => {
@@ -345,6 +538,7 @@ describe('an embedding call on the managed provider', () => {
             generationId: undefined,
             costUsd: 0.0004,
             inputTokens: 8,
+            observedCostUsd: 0.0004,
         })
     })
 
@@ -364,7 +558,7 @@ describe('an embedding call on the managed provider', () => {
 
         await embedWith(model)
 
-        expect(reported).toHaveLength(0)
+        expect(reported.map((event) => event.call.charge)).toEqual([AiChargeBasis.USAGE_ONLY])
         expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
     })
 
@@ -406,6 +600,7 @@ describe('a stream that never reaches its finish chunk', () => {
             costUsd: 0.0031,
             inputTokens: 40,
             outputTokens: 9,
+            observedCostUsd: 0.0031,
         })
     })
 
@@ -417,17 +612,60 @@ describe('a stream that never reaches its finish chunk', () => {
         await settled()
 
         expect(reported).toHaveLength(1)
-        expect(reported[0].call).toEqual({ charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId: 'gen-stream', costUsd: 0.0007 })
+        expect(reported[0].call).toEqual({ charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId: 'gen-stream', costUsd: 0.0007, observedCostUsd: 0.0007 })
     })
 
     it('counts the call as unbilled when the provider cannot tell us what it cost, so the alarm fires', async () => {
+        activepiecesAiCost.drainUnbilledCalls()
+        const model = streamingModel({
+            provider: AIProviderName.ACTIVEPIECES,
+            apiKey: MANAGED_KEY,
+            chunks: [{ type: 'response-metadata', id: 'gen-stream' }, { type: 'text-delta', id: 't1', delta: 'hello' }],
+        })
+
+        await streamThen(model, ({ reader }) => reader.cancel(new Error('client went away')))
+        await settled()
+
+        expect(reported.map((event) => event.call.charge)).toEqual([AiChargeBasis.USAGE_ONLY])
+        expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
+    })
+
+    it.each([
+        { type: 'source', sourceType: 'url', id: 's1', url: 'https://example.com' },
+        { type: 'tool-result', toolCallId: 'c1', toolName: 'search', result: {} },
+    ])('counts a finished stream whose only output is a $type part as unbilled, the same as a generate call', async (part) => {
+        activepiecesAiCost.drainUnbilledCalls()
+        const model = streamingModel({
+            provider: AIProviderName.ACTIVEPIECES,
+            apiKey: MANAGED_KEY,
+            chunks: [
+                { type: 'response-metadata', id: 'gen-part' },
+                part,
+                { type: 'finish', finishReason: 'stop', usage: {} },
+            ],
+        })
+
+        await streamThen(model, async ({ reader, writer }) => {
+            await writer.close()
+            for (;;) {
+                const { done } = await reader.read()
+                if (done) {
+                    return
+                }
+            }
+        })
+        await settled()
+
+        expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
+    })
+
+    it('still counts a stream cut off before any output as unbilled, since its usage is unknown', async () => {
         activepiecesAiCost.drainUnbilledCalls()
         const model = streamingModel({ provider: AIProviderName.ACTIVEPIECES, apiKey: MANAGED_KEY })
 
         await streamThen(model, ({ reader }) => reader.cancel(new Error('client went away')))
         await settled()
 
-        expect(reported).toHaveLength(0)
         expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
     })
 
@@ -439,7 +677,7 @@ describe('a stream that never reaches its finish chunk', () => {
         await streamThen(model, ({ reader }) => reader.cancel(new Error('client went away')))
         await settled()
 
-        expect(reported).toHaveLength(0)
+        expect(reported.map((event) => event.call.charge)).toEqual([AiChargeBasis.USAGE_ONLY])
         expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
     })
 
@@ -451,8 +689,35 @@ describe('a stream that never reaches its finish chunk', () => {
         await streamThen(model, ({ reader }) => reader.cancel(new Error('client went away')))
         await settled()
 
-        expect(reported).toHaveLength(0)
+        expect(reported.map((event) => event.call.charge)).toEqual([AiChargeBasis.USAGE_ONLY])
         expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
+    })
+
+    it('does not count a finished stream with no output as unbilled when the provider has no record of it', async () => {
+        activepiecesAiCost.drainUnbilledCalls()
+        const model = streamingModel({
+            provider: AIProviderName.ACTIVEPIECES,
+            apiKey: MANAGED_KEY,
+            chunks: [
+                { type: 'response-metadata', id: 'gen-empty-stream' },
+                { type: 'text-delta', id: 't1', delta: '' },
+                { type: 'finish', finishReason: 'content-filter', usage: { inputTokens: { total: 40 } } },
+            ],
+        })
+
+        await streamThen(model, async ({ reader, writer }) => {
+            await writer.close()
+            for (;;) {
+                const { done } = await reader.read()
+                if (done) {
+                    return
+                }
+            }
+        })
+        await settled()
+
+        expect(reported.map((event) => event.call.charge)).toEqual([AiChargeBasis.USAGE_ONLY])
+        expect(activepiecesAiCost.drainUnbilledCalls()).toEqual([])
     })
 
     it('still charges a customer own-key stream its fixed credit, the call was made either way', async () => {
@@ -463,6 +728,42 @@ describe('a stream that never reaches its finish chunk', () => {
 
         expect(reported).toHaveLength(1)
         expect(reported[0].call).toEqual({ charge: AiChargeBasis.FIXED_CREDITS, credits: 1, generationId: 'gen-stream' })
+    })
+
+    it('keeps the cache and reasoning tokens of a finished stream whose cost had to be looked up', async () => {
+        generationLookup.answer = async () => ({ costUsd: 0.004, inputTokens: 50, outputTokens: 9 })
+        const model = streamingModel({
+            provider: AIProviderName.ACTIVEPIECES,
+            apiKey: MANAGED_KEY,
+            chunks: [
+                { type: 'response-metadata', id: 'gen-stream' },
+                { type: 'finish', finishReason: 'stop', usage: { inputTokens: { total: 50, cacheRead: 30, cacheWrite: 5 }, outputTokens: { total: 9, reasoning: 4 } } },
+            ],
+        })
+
+        await streamThen(model, async ({ reader, writer }) => {
+            await writer.close()
+            for (;;) {
+                const { done } = await reader.read()
+                if (done) {
+                    return
+                }
+            }
+        })
+        await settled()
+
+        expect(reported).toHaveLength(1)
+        expect(reported[0].call).toEqual({
+            charge: AiChargeBasis.PROVIDER_REPORTED_COST,
+            generationId: 'gen-stream',
+            costUsd: 0.004,
+            inputTokens: 50,
+            outputTokens: 9,
+            cacheReadTokens: 30,
+            cacheWriteTokens: 5,
+            reasoningTokens: 4,
+            observedCostUsd: 0.004,
+        })
     })
 
     it('bills a finished stream once, and does not ask the provider again as it closes', async () => {
@@ -499,6 +800,7 @@ describe('a stream that never reaches its finish chunk', () => {
             costUsd: 0.002,
             inputTokens: 12,
             outputTokens: 5,
+            observedCostUsd: 0.002,
         })
     })
 })

@@ -2,16 +2,18 @@ name: Linear ticket check
 
 on:
   pull_request_target:
-    types: [opened, edited, reopened, synchronize]
+    types: [opened, edited, reopened, synchronize, ready_for_review]
 
 permissions:
   contents: read
+  issues: read
+  pull-requests: write
 
 jobs:
   linear-ticket-check:
     name: Linear ticket check
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 5
     concurrency:
       group: linear-ticket-check-${{ github.event.pull_request.number }}
       cancel-in-progress: true
@@ -24,10 +26,33 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: package.json
 
       - name: Check the Linear ticket
         env:
           LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
           PR_BODY: ${{ github.event.pull_request.body }}
         run: bun tools/scripts/linear-ticket-check.ts
+
+      # GITHUB_TOKEN cannot see org teams, so removing a reviewer from a PR with a team request fails with 422.
+      - name: Create GitHub App token
+        id: app-token
+        if: ${{ !github.event.pull_request.draft }}
+        continue-on-error: true
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-members: read
+          permission-pull-requests: write
+
+      - name: Request the Co-Owner's review and drop the round-robin pick
+        if: ${{ !github.event.pull_request.draft }}
+        continue-on-error: true
+        env:
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: bun tools/scripts/request-co-owner-review.ts

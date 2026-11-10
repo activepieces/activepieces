@@ -34,7 +34,10 @@ const ApAddButton = React.memo((props: ApButtonData) => {
 
   useDndMonitor({
     onDragMove(event: DragMoveEvent) {
-      setIsStepInsideDropzone(event.collisions?.[0]?.id === props.edgeId);
+      const isOver = event.collisions?.[0]?.id === props.edgeId;
+      if (isOver !== isStepInsideDropZone) {
+        setIsStepInsideDropzone(isOver);
+      }
     },
     onDragEnd() {
       setIsStepInsideDropzone(false);
@@ -114,6 +117,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                   },
                 )}
                 data-testid="add-action-button"
+                data-parent-step={props.parentStepName}
               >
                 {!isPieceSelectorOpen && (
                   <Plus className="w-3 h-3 stroke-[3px] text-gray-12" />

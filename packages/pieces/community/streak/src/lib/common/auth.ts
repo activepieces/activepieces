@@ -17,12 +17,12 @@ Your API key gives full access to your Streak account — keep it secret.`,
   validate: async ({ auth }) => {
     try {
       await streakApiCall({
-        apiKey: auth as unknown as string,
+        apiKey: auth,
         method: HttpMethod.GET,
         path: '/api/v1/users/me',
       });
       return { valid: true };
-    } catch (e) {
+    } catch {
       return {
         valid: false,
         error:

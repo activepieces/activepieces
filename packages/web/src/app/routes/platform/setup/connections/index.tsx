@@ -26,6 +26,7 @@ import {
   StatusTone,
   adminPageResources,
 } from '@/app/components/admin';
+import { DeleteConnectionsDialog } from '@/app/connections/delete-connections-dialog';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
@@ -38,12 +39,8 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
-import {
-  DefaultTag,
-  DeleteConnectionWarning,
-} from '@/components/custom/global-connection-utils';
+import { DefaultTag } from '@/components/custom/global-connection-utils';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
@@ -87,6 +84,7 @@ const GlobalConnectionsTable = () => {
   const [selectedRows, setSelectedRows] = useState<
     Array<AppConnectionWithoutSensitiveData>
   >([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { checkAccess } = useAuthorization();
   const location = useLocation();
 
@@ -228,6 +226,7 @@ const GlobalConnectionsTable = () => {
     gcTime: 0,
   });
   const isSample = !platform.plan.globalConnectionsEnabled;
+  const samplePage = useMemo(() => sampleData.globalConnectionsPage(), []);
 
   const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
@@ -247,14 +246,14 @@ const GlobalConnectionsTable = () => {
         ) => {
           return (
             <div onClick={(e) => e.stopPropagation()}>
-              <ConfirmationDeleteDialog
+              <DeleteConnectionsDialog
+                connections={selectedRows}
                 title={t('Delete Connections')}
                 message={t(
                   'The selected connections will be permanently deleted.',
                 )}
-                warning={<DeleteConnectionWarning />}
-                entityName="connections"
-                buttonText={t('Delete')}
+                open={showDeleteDialog}
+                onOpenChange={setShowDeleteDialog}
                 controlId={AdminControl.CONNECTIONS_CONNECTION_DELETE_CONFIRM}
                 mutationFn={async () => {
                   try {
@@ -282,13 +281,13 @@ const GlobalConnectionsTable = () => {
                     {`${t('Delete')} (${selectedRows.length})`}
                   </Button>
                 )}
-              </ConfirmationDeleteDialog>
+              </DeleteConnectionsDialog>
             </div>
           );
         },
       },
     ],
-    [bulkDeleteGlobalConnections, selectedRows],
+    [bulkDeleteGlobalConnections, selectedRows, showDeleteDialog],
   );
 
   return (
@@ -321,7 +320,7 @@ const GlobalConnectionsTable = () => {
         )}
         emptyStateIcon={<Globe />}
         columns={columns}
-        page={isSample ? sampleData.globalConnectionsPage() : globalConnections}
+        page={isSample ? samplePage : globalConnections}
         isLoading={isSample ? false : isLoadingGlobalConnections}
         isError={isGlobalConnectionsError}
         errorStateEntity={t('connections')}

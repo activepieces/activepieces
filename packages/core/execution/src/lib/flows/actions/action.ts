@@ -8,6 +8,7 @@ export enum FlowActionType {
     CODE = 'CODE',
     PIECE = 'PIECE',
     LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
+    PROCESS_IN_BATCHES = 'PROCESS_IN_BATCHES',
     ROUTER = 'ROUTER',
     AI_ROUTER = 'AI_ROUTER',
 }
@@ -110,6 +111,33 @@ export const LoopOnItemsActionSchema = z.object({
     ...commonActionProps,
     type: z.literal(FlowActionType.LOOP_ON_ITEMS),
     settings: LoopOnItemsActionSettings,
+})
+
+export const DEFAULT_BATCH_SIZE = 10
+
+export const MIN_BATCH_TIMEOUT_SECONDS = 3600
+
+export const ProcessInBatchesActionSettings = z.object({
+    ...commonActionSettings,
+    items: z.string(),
+    batchSize: z.number().default(DEFAULT_BATCH_SIZE),
+    timeoutSeconds: z.number().optional(),
+    errorHandlingOptions: ActionErrorHandlingOptions,
+})
+export type ProcessInBatchesActionSettings = z.infer<
+  typeof ProcessInBatchesActionSettings
+>
+
+export const ProcessInBatchesActionSettingsWithValidation = z.object({
+    items: z.string().min(1, formErrors.required),
+    batchSize: z.number().int(formErrors.batchSizeMustBeAWholeNumber).min(1, formErrors.batchSizeMustBeAtLeastOne).default(DEFAULT_BATCH_SIZE),
+    timeoutSeconds: z.number().int(formErrors.batchTimeoutMustBeAWholeNumber).min(MIN_BATCH_TIMEOUT_SECONDS, formErrors.batchTimeoutMustBeAtLeastOneHour).optional(),
+})
+
+export const ProcessInBatchesActionSchema = z.object({
+    ...commonActionProps,
+    type: z.literal(FlowActionType.PROCESS_IN_BATCHES),
+    settings: ProcessInBatchesActionSettings,
 })
 
 export enum BranchOperator {
@@ -356,6 +384,10 @@ export const FlowAction: z.ZodType<FlowAction> = z.lazy(() =>
             nextAction: FlowAction.optional(),
             firstLoopAction: FlowAction.optional(),
         }),
+        ProcessInBatchesActionSchema.extend({
+            nextAction: FlowAction.optional(),
+            firstLoopAction: FlowAction.optional(),
+        }),
         z.object({
             ...commonActionProps,
             type: z.literal(FlowActionType.ROUTER),
@@ -394,6 +426,7 @@ export const SingleActionSchema = z.discriminatedUnion('type', [
     CodeActionSchema,
     PieceActionSchema,
     LoopOnItemsActionSchema,
+    ProcessInBatchesActionSchema,
     RouterActionSchema,
     AiRouterActionSchema,
 ])
@@ -411,6 +444,7 @@ export type FlowAction =
     | (BaseActionProps & { type: FlowActionType.CODE, settings: CodeActionSettings, nextAction?: FlowAction, continueOnFailureBranches?: ContinueOnFailureBranches })
     | (BaseActionProps & { type: FlowActionType.PIECE, settings: PieceActionSettings, nextAction?: FlowAction, continueOnFailureBranches?: ContinueOnFailureBranches })
     | (BaseActionProps & { type: FlowActionType.LOOP_ON_ITEMS, settings: LoopOnItemsActionSettings, nextAction?: FlowAction, firstLoopAction?: FlowAction })
+    | (BaseActionProps & { type: FlowActionType.PROCESS_IN_BATCHES, settings: ProcessInBatchesActionSettings, nextAction?: FlowAction, firstLoopAction?: FlowAction })
     | (BaseActionProps & { type: FlowActionType.ROUTER, settings: RouterActionSettings, nextAction?: FlowAction, children: (FlowAction | null)[] })
     | (BaseActionProps & { type: FlowActionType.AI_ROUTER, settings: AiRouterActionSettings, nextAction?: FlowAction, children: (FlowAction | null)[] })
 
@@ -433,6 +467,13 @@ export type BranchedAction = RouterAction | AiRouterAction
 export type LoopOnItemsAction = BaseActionProps & {
     type: FlowActionType.LOOP_ON_ITEMS
     settings: LoopOnItemsActionSettings
+    nextAction?: FlowAction
+    firstLoopAction?: FlowAction
+}
+
+export type ProcessInBatchesAction = BaseActionProps & {
+    type: FlowActionType.PROCESS_IN_BATCHES
+    settings: ProcessInBatchesActionSettings
     nextAction?: FlowAction
     firstLoopAction?: FlowAction
 }

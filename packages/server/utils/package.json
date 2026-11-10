@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/server-utils",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "typings": "./dist/src/index.d.ts",
@@ -11,10 +11,11 @@
   "dependencies": {
     "@activepieces/ai-providers": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "@modelcontextprotocol/sdk": "1.27.1",
-    "evlog": "2.22.4",
+    "@modelcontextprotocol/sdk": "1.32.0",
+    "evlog": "2.33.1",
     "protobufjs": "7.6.6",
     "@ai-sdk/amazon-bedrock": "5.0.38",
+    "@ai-sdk/otel": "1.0.44",
     "@ai-sdk/anthropic": "4.0.25",
     "@ai-sdk/azure": "4.0.26",
     "@ai-sdk/google": "4.0.29",
@@ -22,6 +23,9 @@
     "@ai-sdk/openai-compatible": "3.0.18",
     "@ai-sdk/provider": "4.0.4",
     "@openrouter/ai-sdk-provider": "3.0.0",
+    "@opentelemetry/api": "1.9.1",
+    "@opentelemetry/exporter-trace-otlp-http": "0.223.0",
+    "@opentelemetry/sdk-trace-base": "2.12.0",
     "ai": "7.0.44",
     "async-mutex": "0.4.0",
     "axios": "1.20.0",
@@ -32,7 +36,7 @@
     "pidtree": "0.6.0",
     "pidusage": "4.0.1",
     "request-filtering-agent": "3.2.1",
-    "systeminformation": "5.31.7",
+    "systeminformation": "5.33.16",
     "tslib": "2.6.2",
     "zod": "4.3.6",
     "@activepieces/core-utils": "workspace:*",
@@ -42,6 +46,6 @@
     "@ai-sdk/devtools": "1.0.9",
     "@types/node": "24.11.0",
     "@types/pidusage": "2.0.5",
-    "vitest": "3.2.6"
+    "vitest": "5.0.5"
   }
 }

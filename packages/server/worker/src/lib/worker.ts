@@ -1,8 +1,8 @@
 import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS, actionRunCache, cacheUtils, createResolver, createSandboxRuntime, markDevPiecesRebuilt, Runtime } from '@activepieces/sandbox'
-import { aiCostReporter, createLogger, modelCatalog, modelTierCatalog, systemUsage, wideEvent } from '@activepieces/server-utils'
+import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, cacheUtils, CODE_CACHE_FIRST_SWEEP_DELAY_MS, CODE_CACHE_SWEEP_INTERVAL_MS, codeCacheEviction, createResolver, createSandboxRuntime, markDevPiecesRebuilt, Runtime } from '@activepieces/sandbox'
+import { aiCostReporter, aiObservability, createLogger, modelCatalog, modelTierCatalog, systemUsage, wideEvent } from '@activepieces/server-utils'
 import { ApEdition, ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, LONG_RUNNING_RPC_METHODS, SandboxInformation, WebsocketClientEvent, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
@@ -451,6 +451,7 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
                 }
             }
             workerSettings.set(response)
+            aiObservability.init({ enabled: response.EDITION === ApEdition.CLOUD })
             logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE, sandboxMemoryLimitKb: response.SANDBOX_MEMORY_LIMIT }, 'Worker settings loaded')
             resolve()
         })
@@ -619,10 +620,10 @@ function startCacheSweeper(): void {
     }
     cacheSweepFirstRunTimeout = setTimeout(() => {
         cacheSweepFirstRunTimeout = null
-        void sweepActionRunCache()
-        cacheSweepInterval = setInterval(() => void sweepActionRunCache(), ACTION_RUN_CACHE_SWEEP_INTERVAL_MS)
+        void sweepCodeCache()
+        cacheSweepInterval = setInterval(() => void sweepCodeCache(), CODE_CACHE_SWEEP_INTERVAL_MS)
         cacheSweepInterval.unref()
-    }, ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS)
+    }, CODE_CACHE_FIRST_SWEEP_DELAY_MS)
     cacheSweepFirstRunTimeout.unref()
 }
 
@@ -637,14 +638,14 @@ function stopCacheSweeper(): void {
     }
 }
 
-async function sweepActionRunCache(): Promise<void> {
-    const { error } = await tryCatch(() => actionRunCache.sweep({
+async function sweepCodeCache(): Promise<void> {
+    const { error } = await tryCatch(() => codeCacheEviction.sweep({
         basePath: sandboxConfig.getCacheBasePath(),
         log: logger,
         activeWindowMs: Math.max(ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, flowTimeoutMs()),
     }))
     if (error) {
-        logger.warn({ error }, 'Action-run code cache sweep failed')
+        logger.warn({ error }, 'Code cache sweep failed')
     }
     // Reclaims the directories left by earlier LATEST_CACHE_VERSION values. It rides the periodic
     // sweep rather than startup because it can only run once the rollout grace period has passed,

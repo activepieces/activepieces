@@ -18,6 +18,7 @@ import {
   ChatContainerScrollAnchor,
 } from '@/components/prompt-kit/chat-container';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ModelPicker, modelPickerUtils } from '@/features/agents';
@@ -46,6 +47,7 @@ import {
   MessageSkeletons,
   SetupRequiredState,
 } from './components/chat-empty-state';
+import { MemoryImportNudgeCard } from './components/memory-import-nudge-card';
 import { OnboardingQuestionCard } from './components/onboarding-question-card';
 import { OnboardingWelcome } from './components/onboarding-welcome';
 import {
@@ -136,7 +138,9 @@ function ChatBoxContent({
     wasCancelled,
     isLoadingHistory,
     error,
+    failed,
     sendMessage,
+    retryLastMessage,
     cancelStream,
     setConversationId,
     setModelPick,
@@ -255,8 +259,8 @@ function ChatBoxContent({
   const handleRetry = useCallback(() => {
     const lastUser = messages.findLast((m) => m.role === 'user');
     if (lastUser && !pickUnavailable)
-      void sendMessage(getTextFromParts(lastUser.parts));
-  }, [messages, sendMessage, pickUnavailable]);
+      retryLastMessage(getTextFromParts(lastUser.parts)).catch(() => undefined);
+  }, [messages, retryLastMessage, pickUnavailable]);
 
   const lastMessage = messages[messages.length - 1];
   const lastAssistantMessage = useMemo(
@@ -268,6 +272,18 @@ function ChatBoxContent({
     () => computeClaimedBuildIds(messages),
     [messages],
   );
+
+  const { embedState } = useEmbedding();
+  const onFirstReplyOfMainChat =
+    !incognito &&
+    !embedState.isEmbedded &&
+    isNil(agentId) &&
+    !builder &&
+    !isNil(conversationId) &&
+    !isAwaitingResponse &&
+    !wasCancelled &&
+    !failed &&
+    messages.filter((m) => m.role === 'assistant').length === 1;
 
   const hasBlockingCard = useChatStoreContext((s) =>
     chatStoreSelectors.hasBlockingCard({ state: s, lastAssistantMessage }),
@@ -445,6 +461,10 @@ function ChatBoxContent({
                     </div>
                   )}
 
+                {onFirstReplyOfMainChat && (
+                  <MemoryImportNudgeCard conversationId={conversationId} />
+                )}
+
                 {wasCancelled && (
                   <div className="flex items-center gap-2 py-2 text-xs text-gray-11 animate-in fade-in duration-200">
                     <Square className="h-3 w-3 fill-current" />
@@ -452,15 +472,23 @@ function ChatBoxContent({
                   </div>
                 )}
 
-                {error && (
+                {failed && (
                   <motion.div
-                    className="flex items-center gap-2 rounded-xl border border-danger-6 bg-danger-3 px-3 py-2 text-danger-11 text-sm"
+                    className={cn(
+                      'flex items-center gap-2 text-danger-11 text-sm',
+                      error &&
+                        'rounded-xl border border-danger-6 bg-danger-3 px-3 py-2',
+                    )}
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <AlertTriangle className="h-4 w-4 shrink-0" />
-                    <span className="flex-1">{error}</span>
+                    {error && (
+                      <>
+                        <AlertTriangle className="h-4 w-4 shrink-0" />
+                        <span className="flex-1">{error}</span>
+                      </>
+                    )}
                     <Button
                       variant="ghost"
                       size="xs"

@@ -56,6 +56,7 @@ export const CreateBarrierRequest = z.object({
     policy: BarrierPolicy.optional(),
     fanOut: BarrierFanOutSource.optional(),
     signals: z.array(z.object({ label: z.string().optional() })).optional(),
+    timeoutSeconds: z.number().int().positive().optional(),
 })
 export type CreateBarrierRequest = z.infer<typeof CreateBarrierRequest>
 
@@ -76,6 +77,7 @@ export type CreateWaitpointRequest = z.infer<typeof CreateWaitpointRequest>
 export const BarrierCreatedState = z.object({
     signalCount: z.number().int().nonnegative(),
     batchSize: z.number().int().positive(),
+    totalItems: z.number().int().nonnegative().optional(),
     signals: z.array(z.object({
         label: z.string().nullable(),
         confirmUrl: z.string(),
@@ -87,6 +89,7 @@ export type BarrierCreatedState = z.infer<typeof BarrierCreatedState>
 export const CreateWaitpointResponse = z.object({
     id: z.string(),
     resumeUrl: z.string(),
+    publicResumeUrl: z.string(),
     barrier: BarrierCreatedState.optional(),
 })
 export type CreateWaitpointResponse = z.infer<typeof CreateWaitpointResponse>

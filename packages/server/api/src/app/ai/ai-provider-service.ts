@@ -1,6 +1,6 @@
-import { ActivepiecesError, AiProviderKeyStatus, AIProviderName, apId, classifyProviderOutcome, ErrorCode, isNil, PlatformId, ProviderOutcomeSignal, spreadIfDefined, spreadIfNotUndefined, toProviderOutcomeSignal, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, AiProviderKeyStatus, AIProviderName, apId, classifyProviderOutcome, ErrorCode, isNil, PlatformId, ProviderOutcomeSignal, spreadIfDefined, toProviderOutcomeSignal, tryCatch, unique } from '@activepieces/core-utils'
 import { modelCatalog, modelTierCatalog } from '@activepieces/server-utils'
-import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, aiProviderCredentials, AIProviderModel, AIProviderModelType, AiProviderProjectScope, AiProviderToolConfig, aiProviderUtils, AIProviderWithoutSensitiveData, AiToolCapability, AiToolProvider, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
+import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, aiProviderCredentials, AIProviderModel, AIProviderModelType, AiProviderProjectScope, AiProviderToolConfig, aiProviderUtils, AIProviderWithoutSensitiveData, AiToolCapability, AiToolProvider, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, SelfServeTrialState, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { EntityManager, FindOptionsWhere, Not } from 'typeorm'
@@ -11,6 +11,8 @@ import { distributedLock, distributedStore } from '../database/redis-connections
 import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
 import { flagService } from '../flags/flag.service'
 import { EncryptedObject, encryptUtils } from '../helper/encryption'
+import { sleep } from '../helper/sleep'
+import { billingProvider } from '../platform/billing-provider'
 import { platformConfigurationService } from '../platform/platform-configuration.service'
 import { platformService } from '../platform/platform.service'
 import { aiKeyScope, ProviderScope } from './ai-key-scope'
@@ -27,7 +29,10 @@ const modelsCache = new Map<string, AIProviderModel[]>()
 
 const MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD = 500
 const MANAGED_OPENROUTER_KEY_LIMIT_RESET = 'monthly'
-const MANAGED_OPENROUTER_KEY_LOCK_TIMEOUT_SECONDS = 30
+const MANAGED_OPENROUTER_KEY_LOCK_TIMEOUT_SECONDS = 60
+const MANAGED_OPENROUTER_KEY_LIVE_WAIT_MS = 30_000
+const MANAGED_OPENROUTER_KEY_LIVE_POLL_MS = 1_000
+const MANAGED_OPENROUTER_KEY_LIVE_PASSES_IN_A_ROW = 3
 
 // A passing check must not lock out the next real failure, so the claim is a floor between
 // checks rather than a window that swallows them. A confirmed failure needs no floor: the row
@@ -47,6 +52,18 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const rows = await listVisibleRows({ platformId, log })
         const chatRowId = pickChatRow(rows)?.id
         return rows.map((row) => toConfigResponse({ row, enabledForChat: row.id === chatRowId }))
+    },
+
+    async getConfig({ platformId, configId }: { platformId: PlatformId, configId: string }): Promise<AIProviderWithoutSensitiveData> {
+        const rows = await aiProviderRepo().findBy({ platformId })
+        const row = rows.find((candidate) => candidate.id === configId)
+        if (isNil(row)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: configId, entityType: AI_PROVIDER_ENTITY_TYPES.provider },
+            })
+        }
+        return toConfigResponse({ row, enabledForChat: row.id === pickChatRow(rows)?.id })
     },
 
     async listForProject({ platformId, projectId }: { platformId: PlatformId, projectId: string }): Promise<ProjectAIProvider[]> {
@@ -351,8 +368,8 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const auth = await decryptRowAuth({ aiProvider, platformId, log })
         const { error } = await tryCatch(() => aiProviders[aiProvider.provider].validateConnection(auth, aiProvider.config, log))
         const signal = isNil(error) ? { statusCode: 200 } : toProviderOutcomeSignal(error)
-        const recorded = await aiProviderHealth(log).record({ platformId, providerId, signal, throttled: false, ...spreadIfNotUndefined('expectVersion', expectVersion) })
-        return recorded ?? aiProvider.status
+        const recorded = await aiProviderHealth(log).record({ platformId, providerId, signal, throttled: false, expectVersion: expectVersion ?? aiProvider.statusVersion })
+        return recorded ?? (await getRowByIdOrThrow({ platformId, configId: providerId })).status
     },
 
     async validateProviderCredentials(provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig): Promise<void> {
@@ -418,7 +435,11 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
 async function shouldHideActivepiecesAiProvider({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<boolean> {
     const { plan } = await platformService(log).getOneWithPlanOrThrow(platformId)
-    return plan.embeddingEnabled
+    if (!plan.embeddingEnabled) {
+        return false
+    }
+    const selfServeTrial = await billingProvider.get(log).getSelfServeTrialInfo({ platformId })
+    return selfServeTrial.state !== SelfServeTrialState.ACTIVE
 }
 
 
@@ -674,6 +695,9 @@ function hasManagedKey(auth: AIProviderAuthConfig | null): auth is AIProviderAut
 }
 
 async function findAvailableChatProviderRow({ platformId, scope, log }: { platformId: PlatformId, scope: ProviderScope, log: FastifyBaseLogger }): Promise<AIProviderSchema | null> {
+    if (flagService(log).aiCreditsEnabled()) {
+        await ensureManagedProviderRow({ platformId })
+    }
     const candidates = await aiProviderRepo().findBy([
         { platformId, enabledForChat: true },
         { platformId, provider: AIProviderName.ACTIVEPIECES },
@@ -716,6 +740,7 @@ async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { provide
                 limit_reset: MANAGED_OPENROUTER_KEY_LIMIT_RESET,
             })
             const minted: ActivePiecesProviderAuthConfig = { apiKey: key, apiKeyHash: data.hash }
+            await waitUntilKeyIsLive({ minted, platformId, log })
             const { data: stored, error } = await tryCatch(() => storeKeyIfAuthUnchanged({ providerId, platformId, observedAuth: current.auth, auth: minted }))
             if (isNil(stored) || managedKeyHash(stored) !== minted.apiKeyHash) {
                 await revokeManagedKey({ hash: minted.apiKeyHash, platformId, log })
@@ -729,6 +754,19 @@ async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { provide
             return stored
         },
     })
+}
+
+async function waitUntilKeyIsLive({ minted, platformId, log }: { minted: ActivePiecesProviderAuthConfig, platformId: PlatformId, log: FastifyBaseLogger }): Promise<void> {
+    const deadline = Date.now() + MANAGED_OPENROUTER_KEY_LIVE_WAIT_MS
+    let passesInARow = 0
+    while (Date.now() < deadline) {
+        passesInARow = await openRouterApi.isKeyLive({ key: minted.apiKey }) ? passesInARow + 1 : 0
+        if (passesInARow === MANAGED_OPENROUTER_KEY_LIVE_PASSES_IN_A_ROW) {
+            return
+        }
+        await sleep(MANAGED_OPENROUTER_KEY_LIVE_POLL_MS)
+    }
+    log.warn({ platform: { id: platformId }, openRouterKey: { hash: minted.apiKeyHash } }, '[aiProviderService#waitUntilKeyIsLive] New managed OpenRouter key is still not live, using it anyway')
 }
 
 async function storeKeyIfAuthUnchanged({ providerId, platformId, observedAuth, auth }: { providerId: string, platformId: PlatformId, observedAuth: EncryptedObject, auth: ActivePiecesProviderAuthConfig }): Promise<AIProviderAuthConfig> {
