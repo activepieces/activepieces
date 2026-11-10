@@ -40,7 +40,7 @@ export const createTaskAction = createAction({
 		dueDate: Property.ShortText({
 			displayName: 'Due Date',
 			description:
-				'An ISO 8601 date or date-time, such as 2026-03-01 or 2026-03-01T09:00:00Z. Times are UTC unless you add an offset (2026-03-01T09:00:00-06:00). A date without a time is sent as 12:00 UTC so the task stays on that day in any account time zone.',
+				'An ISO 8601 date or date-time, such as 2026-03-01 or 2026-03-01T09:00:00Z. Times are UTC unless you add an offset (2026-03-01T09:00:00-06:00). A date without a time is sent as 12:00 UTC, which keeps the task on that day for accounts between UTC-11 and UTC+11; for other time zones, give a time with an offset.',
 			required: true,
 		}),
 		endDate: Property.ShortText({

@@ -34,7 +34,7 @@ export const createTaskAiAction = createAction({
 		task_type_id: Property.ShortText({ displayName: 'Task Type ID', description: 'Use List Task Types to find the ID.', required: true }),
 		due_date: Property.ShortText({
 			displayName: 'Due Date',
-			description: 'ISO 8601, such as 2026-03-01T09:00:00Z. Times are UTC unless you give an offset (2026-03-01T09:00:00-06:00). A date without a time is sent as 12:00 UTC so the task stays on that day in any account time zone.',
+			description: 'ISO 8601, such as 2026-03-01T09:00:00Z. Times are UTC unless you give an offset (2026-03-01T09:00:00-06:00). A date without a time is sent as 12:00 UTC, which keeps the task on that day for accounts between UTC-11 and UTC+11; for other time zones, give a time with an offset.',
 			required: true,
 		}),
 		end_date: Property.ShortText({ displayName: 'End Date', description: 'Optional ISO 8601, not before Due Date. Times are UTC unless you give an offset; a date alone means 12:00 UTC. Defaults to 15 minutes after the due date.', required: false }),
