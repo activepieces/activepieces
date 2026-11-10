@@ -14,7 +14,7 @@ export const buffer = createPiece({
   description:
     'Schedule, publish and analyze social media posts across multiple channels with Buffer.',
   auth: bufferAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/buffer.png',
   categories: [PieceCategory.MARKETING],
   authors: ['sanket-a11y'],
@@ -24,6 +24,15 @@ export const buffer = createPiece({
     createCustomApiCallAction({
       baseUrl: () => bufferClient.apiUrl,
       auth: bufferAuth,
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${bufferClient.apiUrl}. Buffer's API is GraphQL and takes POST requests.`,
+          placeholder: bufferClient.apiUrl,
+        },
+        body: {
+          description: 'A GraphQL request: {"query": "...", "variables": {}}',
+        },
+      },
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.secret_text}`,
       }),

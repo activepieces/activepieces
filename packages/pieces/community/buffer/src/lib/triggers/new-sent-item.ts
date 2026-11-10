@@ -26,6 +26,7 @@ const polling: Polling<
       accessToken: auth.secret_text,
       organizationId: propsValue.organizationId,
       channelIds: propsValue.channelIds,
+      statuses: ['sent'],
       statusFilter: (status) => status?.toLowerCase() === 'sent',
     });
     return posts.map((post) => ({
@@ -55,7 +56,7 @@ export const newSentItem = createTrigger({
     channelIds: Property.MultiSelectDropdown<string, false, typeof bufferAuth>({
       auth: bufferAuth,
       displayName: 'Channels',
-      description: 'Limit results to specific channels (optional).',
+      description: 'Leave empty to watch every channel.',
       required: false,
       refreshers: ['organizationId'],
       options: async ({ auth, organizationId }) => {
@@ -71,6 +72,13 @@ export const newSentItem = createTrigger({
             auth.secret_text,
             organizationId as string,
           );
+          if (channels.length === 0) {
+            return {
+              disabled: false,
+              options: [],
+              placeholder: 'No channels found. Connect one in Buffer first.',
+            };
+          }
           return {
             disabled: false,
             options: channels.map((channel) => ({
@@ -81,13 +89,22 @@ export const newSentItem = createTrigger({
         } catch {
           return {
             disabled: true,
-            placeholder: 'Failed to load channels.',
+            placeholder: 'Failed to load channels. Check your connection.',
             options: [],
           };
         }
       },
     }),
   },
+  propertyGroups: [
+    {
+      key: 'watch',
+      display: 'section',
+      label: 'Watch',
+      icon: 'filter',
+      props: ['organizationId', 'channelIds'],
+    },
+  ],
   sampleData: {
     id: 'post_id_example',
     text: 'Hello from Buffer!',
