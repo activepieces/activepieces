@@ -85,7 +85,7 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
 
   const proceedCheckout = (intent: CheckoutIntent) => {
     const successUrl = planSelectorUtils.buildSuccessUrl(intent.action);
-    if (subscription?.billingPortalAvailable) {
+    if (subscription?.hasPaymentMethod) {
       openConfirmDialog({
         planId: intent.planId,
         planName: intent.planName,

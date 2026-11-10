@@ -28,6 +28,7 @@ export enum PlanName {
     ENTERPRISE = 'enterprise',
     APPSUMO = 'appsumo',
     FREE_LEGACY = 'free_legacy',
+    SELF_SERVE_TRIAL = 'self_serve_trial',
 }
 
 export enum AiCreditsAutoTopUpState {
@@ -240,11 +241,34 @@ export const Platform = z.object({
 export type Platform = z.infer<typeof Platform>
 export type PlatformWithoutFederatedAuth = Omit<Platform, 'federatedAuthProviders'>
 
+export const SelfServeTrialDates = z.object({
+    startedAt: z.string(),
+    endsAt: z.string(),
+})
+export type SelfServeTrialDates = z.infer<typeof SelfServeTrialDates>
+
+export enum SelfServeTrialState {
+    ELIGIBLE = 'eligible',
+    INELIGIBLE = 'ineligible',
+    ACTIVE = 'active',
+    ENDED = 'ended',
+    USED = 'used',
+    UNAVAILABLE = 'unavailable',
+}
+
+export const SelfServeTrialStatus = z.object({
+    state: z.enum(SelfServeTrialState),
+    startedAt: z.string().nullable(),
+    endsAt: z.string().nullable(),
+})
+export type SelfServeTrialStatus = z.infer<typeof SelfServeTrialStatus>
+
 export const PlatformWithoutSensitiveData = z.object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
     plan: PlatformPlanLimits,
     usage: PlatformUsage.optional(),
     billingEnforced: z.boolean().optional(),
+    selfServeTrial: SelfServeTrialDates.optional(),
     id: z.string(),
     created: DateOrString,
     updated: DateOrString,
@@ -337,10 +361,11 @@ export const PlatformBillingInformation = z.object({
     creditsFeature: Nullable(CreditsBillableFeature),
     appSumoCreditsFeature: Nullable(AppSumoCreditsBillableFeature),
     seatsFeature: Nullable(SeatsBillableFeature),
-    billingPortalAvailable: z.boolean(),
+    hasPaymentMethod: z.boolean(),
     billingEnforced: z.boolean(),
     billingUnavailable: z.boolean(),
     includedSeats: Nullable(z.number()),
     additionalSeats: Nullable(z.number()),
+    selfServeTrial: SelfServeTrialStatus,
 })
 export type PlatformBillingInformation = z.infer<typeof PlatformBillingInformation>
