@@ -1,5 +1,5 @@
 import { aiProviderCredentials, AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
-import { AgentPhase, agentToolSkills, PersistedAgentPartType } from '@activepieces/shared'
+import { AgentPhase, agentToolSkills, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { activepiecesAiCost, aiUtils } from '@activepieces/server-utils'
 import { LanguageModelV4StreamPart, SharedV4ProviderMetadata } from '@ai-sdk/provider'
 import { hasToolCall, isLoopFinished, isStepCount, LanguageModel, StopCondition, ToolSet, wrapLanguageModel } from 'ai'
@@ -57,6 +57,7 @@ async function run({ evalCase, mcp, modelId, auth, recordMode }: { evalCase: Eva
     return {
         transcript: renderTranscript(result),
         rejectedToolInputs: rejected,
+        toolCalls: turnToolCalls(result),
         stops: caseReplay.stops(),
         newFixtures: caseReplay.newFixtures(),
         costUsd: costUsd(),
@@ -127,6 +128,12 @@ function withCost({ model }: { model: LanguageModel }): { model: LanguageModel, 
 function rejectedToolParts(result: AgentTurnResult): string[] {
     return result.uiParts.flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL && !isNil(part.errorText) && REJECTED_PATTERN.test(part.errorText)
         ? [`${part.toolName}: ${part.errorText.slice(0, ERROR_PREVIEW_CHARS)}`]
+        : [])
+}
+
+function turnToolCalls(result: AgentTurnResult): TurnToolCall[] {
+    return result.uiParts.flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL
+        ? [{ toolName: part.toolName, input: part.input, output: part.output, errorText: part.errorText, errored: part.status === PersistedToolCallStatus.ERROR }]
         : [])
 }
 
@@ -208,8 +215,17 @@ type MintedKey = { apiKey: string, hash: string | null, provisionKey: string }
 export type TurnOutcome = {
     transcript: string
     rejectedToolInputs: string[]
+    toolCalls: TurnToolCall[]
     stops: ReplayStop[]
     newFixtures: RecordedToolCall[]
     costUsd: number | null
     steps: number
+}
+
+export type TurnToolCall = {
+    toolName: string
+    input: unknown
+    output: unknown
+    errorText: string | undefined
+    errored: boolean
 }

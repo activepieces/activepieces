@@ -1,22 +1,51 @@
 import { aiProviderCredentials, AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
+import { agentToolSkills } from '@activepieces/shared'
 import { aiUtils } from '@activepieces/server-utils'
 import { generateText, ModelMessage } from 'ai'
 import { z } from 'zod'
-import { TurnOutcome } from './agent-turn'
+import { TurnOutcome, TurnToolCall } from './agent-turn'
 import { EvalCase } from './eval-case'
 import { replay, ReplayStop } from './replay'
 
 async function grade({ evalCase, outcome, auth }: { evalCase: EvalCase, outcome: TurnOutcome, auth: Record<string, unknown> }): Promise<RunScores> {
     const rejectedToolCalls = outcome.rejectedToolInputs.length
+    const targetFailure = targetCallFailure({ evalCase, toolCalls: outcome.toolCalls })
+    const problems = isNil(targetFailure) ? outcome.rejectedToolInputs : [...outcome.rejectedToolInputs, targetFailure]
     const code: CodeScores = {
         rejectedToolCalls,
-        validToolCalls: rejectedToolCalls === 0 ? 'pass' : 'fail',
+        validToolCalls: problems.length === 0 ? 'pass' : 'fail',
         costUsd: outcome.costUsd,
         stepsToDecision: outcome.steps,
     }
-    const toolCalls = rejectedToolCalls === 0 ? 'Every tool call passed validation' : outcome.rejectedToolInputs.join(' | ')
+    const toolCalls = problems.length === 0 ? 'Every tool call passed validation' : problems.join(' | ')
     const judged = await judge({ evalCase, outcome, auth })
     return { ...code, ...judged, reasons: { ...judged.reasons, toolCalls } }
+}
+
+function targetCallFailure({ evalCase, toolCalls }: { evalCase: Pick<EvalCase, 'cutBeforeStep' | 'targetTool'>, toolCalls: TurnToolCall[] }): string | null {
+    const { cutBeforeStep, targetTool } = evalCase
+    if (isNil(cutBeforeStep) || isNil(targetTool)) {
+        return null
+    }
+    const failed = toolCalls.find((call) => agentToolSkills.effectiveToolCall({ toolName: call.toolName, input: call.input }).toolName === targetTool && !isNil(callFailure(call)))
+    return isNil(failed) ? null : `target ${targetTool} did not succeed: ${callFailure(failed)}`
+}
+
+function callFailure(call: TurnToolCall): string | null {
+    if (call.errored || !isNil(call.errorText)) {
+        return (call.errorText ?? 'the call errored').slice(0, FAILURE_PREVIEW_CHARS)
+    }
+    const { output } = call
+    if (typeof output !== 'object' || output === null) {
+        return null
+    }
+    if ('error' in output && !isNil(output.error)) {
+        return (typeof output.error === 'string' ? output.error : JSON.stringify(output.error)).slice(0, FAILURE_PREVIEW_CHARS)
+    }
+    if (('success' in output && output.success === false) || ('isError' in output && output.isError === true)) {
+        return JSON.stringify(output).slice(0, FAILURE_PREVIEW_CHARS)
+    }
+    return null
 }
 
 function verdictOf({ scores }: { scores: RunScores }): RunVerdict {
@@ -120,7 +149,7 @@ function endedNote({ stop }: { stop: ReplayStop }): string {
     if (stop.kind === 'write_input_differs') {
         return `The test ended the turn when the assistant called ${stop.toolName}, a tool that changes data, with input that differs from the recorded chat. Judge only what happened up to that call.\n`
     }
-    return `The test ended the turn when the assistant called ${stop.toolName}, a tool that changes data. Judge only what happened up to that call; calling it is not a fault by itself.\n`
+    return `The test ended the turn when the assistant called ${stop.toolName}, a tool that changes data and was not called at this point in the recorded chat. Judge only what happened up to that call.\n`
 }
 
 function renderContext({ messages }: { messages: ModelMessage[] }): string {
@@ -162,6 +191,7 @@ const JEV_ATTEMPTS = 3
 const RETRY_DELAY_MS = 2_000
 const JUDGE_TIMEOUT_MS = 2 * 60_000
 const CONTEXT_FIELD_MAX = 2_000
+const FAILURE_PREVIEW_CHARS = 160
 
 export const PROBLEM_TYPES = ['claimed_unfinished_work', 'wrong_build', 'ignored_correction', 'repeated_errors', 'unnecessary_questions', 'stopped_early', 'unnecessary_refusal', 'hallucinated', 'other'] as const
 
@@ -188,6 +218,7 @@ const JevResponse = z.object({
 export const evalChecks = {
     grade,
     verdictOf,
+    targetCallFailure,
     judgeModelId,
     reasonModelId: REASON_MODEL_ID,
 }
