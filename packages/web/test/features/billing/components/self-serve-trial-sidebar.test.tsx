@@ -2,7 +2,11 @@
  * @vitest-environment jsdom
  */
 /* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-to-have-attribute, jest-dom/prefer-to-have-class, jest-dom/prefer-to-have-text-content -- @testing-library/jest-dom is not a dependency of packages/web */
-import { SelfServeTrialInfo, SelfServeTrialState } from '@activepieces/shared';
+import {
+  SelfServeTrialInfo,
+  SelfServeTrialState,
+  StartedSelfServeTrial,
+} from '@activepieces/shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import dayjs from 'dayjs';
 import * as React from 'react';
@@ -68,7 +72,7 @@ function renderIndicator() {
   );
 }
 
-function graceEndingIn(days: number): SelfServeTrialInfo {
+function graceEndingIn(days: number): StartedSelfServeTrial {
   return {
     state: SelfServeTrialState.ENDED,
     startedAt: dayjs(NOW).subtract(10, 'day').toISOString(),

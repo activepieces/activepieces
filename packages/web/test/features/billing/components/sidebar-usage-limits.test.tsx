@@ -6,6 +6,7 @@ import {
   ApEdition,
   SelfServeTrialInfo,
   SelfServeTrialState,
+  StartedSelfServeTrial,
 } from '@activepieces/shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import dayjs from 'dayjs';
@@ -113,7 +114,7 @@ function unlimitedCredits({
   };
 }
 
-function graceEndingIn(days: number): SelfServeTrialInfo {
+function graceEndingIn(days: number): StartedSelfServeTrial {
   return {
     state: SelfServeTrialState.ENDED,
     startedAt: dayjs(NOW).subtract(10, 'day').toISOString(),
