@@ -1,9 +1,10 @@
-import { isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { AppConnectionStatus, pickDefaultConnectionExternalId } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 import { GateDecision, gateNoResponseMessage, normalizePieceName, questionTextSchema, questionTitleSchema, richOptionSchema, stableStringify } from './tool-primitives'
 
-export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened, accountAlreadyChosenFor, connectionChosenEarlierFor, pieceNeedsNoConnection }: {
+export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened, accountAlreadyChosenFor, connectionChosenEarlierFor, pieceNeedsNoConnection, autoPickedConnectionFor }: {
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     displayToolTimeoutMs: number
     onConnectionSelected?: (params: { pieceName: string, connectionExternalId: string, label: string, projectId: string }) => Promise<void>
@@ -12,8 +13,23 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
     accountAlreadyChosenFor?: (pieceName: string) => boolean
     connectionChosenEarlierFor?: (pieceName: string) => Promise<{ externalId: string, label: string } | null>
     pieceNeedsNoConnection?: (pieceName: string) => Promise<boolean>
+    autoPickedConnectionFor?: (pieceName: string) => Promise<PickedConnection | null>
 }): ToolSet {
     const unansweredCards = new Set<string>()
+
+    async function storeApprovedConnection({ input, payload }: { input: Record<string, unknown>, payload: Record<string, unknown> }): Promise<{ connectionExternalId?: string, label?: string }> {
+        const pieceName = normalizePieceName(typeof input['piece'] === 'string' ? input['piece'] : '')
+        const cardChoseAccount = typeof payload['connectionExternalId'] === 'string'
+        const autoPicked = cardChoseAccount || isNil(autoPickedConnectionFor) ? null : await autoPickedConnectionFor(pieceName)
+        const chosen = isNil(autoPicked) ? payload : { connectionExternalId: autoPicked.externalId, label: autoPicked.label, projectId: autoPicked.projectId }
+        const connectionExternalId = typeof chosen['connectionExternalId'] === 'string' ? chosen['connectionExternalId'] : undefined
+        const label = typeof chosen['label'] === 'string' ? chosen['label'] : undefined
+        const projectId = typeof chosen['projectId'] === 'string' ? chosen['projectId'] : ''
+        if (!isNil(connectionExternalId) && onConnectionSelected) {
+            await onConnectionSelected({ pieceName, connectionExternalId, label: label ?? connectionExternalId, projectId })
+        }
+        return { ...spreadIfDefined('connectionExternalId', connectionExternalId), ...spreadIfDefined('label', label) }
+    }
 
     function refuseIfAccountAlreadyChosen(input: Record<string, unknown>): { content: { type: string, text: string }[] } | undefined {
         const piece = typeof input['piece'] === 'string' ? input['piece'] : ''
@@ -108,18 +124,8 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
                 refuseWhen: refuseIfAccountAlreadyChosen,
                 dismissMessage: 'The user chose not to connect this service. Stop and ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"',
                 onApproved: async ({ input, payload = {} }) => {
-                    const connectionExternalId = payload['connectionExternalId']
-                    const label = payload['label']
-                    const projectId = payload['projectId']
-                    if (typeof connectionExternalId === 'string' && onConnectionSelected) {
-                        await onConnectionSelected({
-                            pieceName: normalizePieceName(typeof input['piece'] === 'string' ? input['piece'] : ''),
-                            connectionExternalId,
-                            label: typeof label === 'string' ? label : connectionExternalId,
-                            projectId: typeof projectId === 'string' ? projectId : '',
-                        })
-                    }
-                    return { connected: true, label: typeof label === 'string' ? label : 'Connected' }
+                    const { label } = await storeApprovedConnection({ input, payload })
+                    return { connected: true, label: label ?? 'Connected' }
                 },
             }),
         }),
@@ -159,21 +165,11 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
                 refuseWhen: async (input) => refuseIfAccountAlreadyChosen(input) ?? await refuseIfPickedEarlierInConversation(input) ?? await refuseIfNoConnectionNeeded(input),
                 dismissMessage: (input) => `The user chose not to select a ${typeof input['displayName'] === 'string' ? input['displayName'] : 'service'} account. Do not pick one on their behalf. Ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"`,
                 onApproved: async ({ input, payload = {} }) => {
-                    const connectionExternalId = payload['connectionExternalId']
-                    const label = payload['label']
-                    const projectId = payload['projectId']
-                    if (typeof connectionExternalId === 'string' && onConnectionSelected) {
-                        await onConnectionSelected({
-                            pieceName: normalizePieceName(typeof input['piece'] === 'string' ? input['piece'] : ''),
-                            connectionExternalId,
-                            label: typeof label === 'string' ? label : connectionExternalId,
-                            projectId: typeof projectId === 'string' ? projectId : '',
-                        })
-                    }
+                    const { connectionExternalId, label } = await storeApprovedConnection({ input, payload })
                     return {
                         selected: true,
-                        label: typeof label === 'string' ? label : 'Connected',
-                        ...spreadIfDefined('connectionExternalId', typeof connectionExternalId === 'string' ? connectionExternalId : undefined),
+                        label: label ?? 'Connected',
+                        ...spreadIfDefined('connectionExternalId', connectionExternalId),
                     }
                 },
             }),
@@ -284,4 +280,25 @@ function cardStillUnansweredMessage(displayName: string): string {
     return `The ${displayName} card was already shown in this turn and the user has not answered it, so it was not shown again. Do not ask for it again now. End your reply with one short line saying what you need from them, and continue when they answer.`
 }
 
+function preselectedConnection({ stored }: { stored: unknown }): PickedConnection | null {
+    if (!Array.isArray(stored)) {
+        return null
+    }
+    const healthy = stored.filter((connection): connection is PickedConnection & { updated?: string } => isObject(connection)
+        && connection['status'] === AppConnectionStatus.ACTIVE
+        && typeof connection['externalId'] === 'string'
+        && typeof connection['label'] === 'string'
+        && typeof connection['projectId'] === 'string')
+    const externalId = pickDefaultConnectionExternalId({
+        healthy,
+        updatedByExternalId: Object.fromEntries(healthy.map((connection) => [connection.externalId, connection.updated])),
+    })
+    const picked = healthy.find((connection) => connection.externalId === externalId)
+    return isNil(picked) ? null : { externalId: picked.externalId, label: picked.label, projectId: picked.projectId }
+}
+
+export const displayToolUtils = { preselectedConnection }
+
 type CardRefusal = { content: { type: string, text: string }[], notShown?: true }
+
+export type PickedConnection = { externalId: string, label: string, projectId: string }

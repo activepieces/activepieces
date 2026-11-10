@@ -58,4 +58,6 @@ type RunScriptParams = {
 
 }
 
-export type CreateScriptSessionParams = Omit<RunScriptParams, 'script'>
+export type CreateScriptSessionParams = Omit<RunScriptParams, 'script'> & {
+    flowVersionDir?: string
+}
