@@ -114,14 +114,12 @@ function normalizeContainer<
 }
 
 function normalizePlaylist(playlist: Playlist): Playlist {
+  const items = normalizeContainer(playlist.items ?? playlist.tracks);
+  const tracks = normalizeContainer(playlist.tracks);
   return {
     ...playlist,
-    ...(playlist.items !== undefined
-      ? { items: normalizeContainer(playlist.items) }
-      : {}),
-    ...(playlist.tracks !== undefined
-      ? { tracks: normalizeContainer(playlist.tracks) }
-      : {}),
+    ...(items !== undefined ? { items } : {}),
+    ...(tracks !== undefined ? { tracks } : {}),
   };
 }
 

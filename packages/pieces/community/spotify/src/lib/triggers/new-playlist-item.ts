@@ -10,6 +10,7 @@ import { SPOTIFY_PAGE_SIZE, SPOTIFY_PLAYLIST_MAX_ITEMS, SpotifyWebApi } from '..
 import { spotifyOutputSchemas } from '../output-schemas';
 
 const CHECKPOINT_KEY = 'new_playlist_item_checkpoint';
+const STABLE_READ_ATTEMPTS = 2;
 
 function toEntries({ items, playlistId }: { items: PlaylistItem[]; playlistId: string }): SpotifyPollEntry<NewPlaylistItem>[] {
   const occurrences = new Map<string, number>();
@@ -34,6 +35,30 @@ async function fetchWindow({ client, playlistId }: { client: SpotifyWebApi; play
     );
   }
   return res.items;
+}
+
+async function fetchStableWindow({
+  client,
+  playlistId,
+  snapshotId,
+}: {
+  client: SpotifyWebApi;
+  playlistId: string;
+  snapshotId: string | undefined;
+}): Promise<{ items: PlaylistItem[]; snapshotId: string | undefined } | null> {
+  let expected = snapshotId;
+  for (let attempt = 0; attempt < STABLE_READ_ATTEMPTS; attempt++) {
+    const items = await fetchWindow({ client, playlistId });
+    if (expected === undefined) {
+      return { items, snapshotId: expected };
+    }
+    const after = await client.getPlaylistSnapshotId({ playlistId });
+    if (after === expected) {
+      return { items, snapshotId: expected };
+    }
+    expected = after;
+  }
+  return null;
 }
 
 function isStored(value: unknown): value is StoredCheckpoint {
@@ -105,15 +130,18 @@ export default createTrigger({
     if (current !== null && snapshotId !== undefined && current.snapshotId === snapshotId) {
       return [];
     }
-    const items = await fetchWindow({ client, playlistId });
-    const entries = toEntries({ items, playlistId });
+    const read = await fetchStableWindow({ client, playlistId, snapshotId });
+    if (read === null) {
+      return [];
+    }
+    const entries = toEntries({ items: read.items, playlistId });
     if (current === null) {
-      await store.put(CHECKPOINT_KEY, toStored({ checkpoint: spotifyPolling.baseline({ entries }), playlistId, snapshotId }), StoreScope.FLOW);
+      await store.put(CHECKPOINT_KEY, toStored({ checkpoint: spotifyPolling.baseline({ entries }), playlistId, snapshotId: read.snapshotId }), StoreScope.FLOW);
       return [];
     }
     const result = spotifyPolling.newSince({ entries, checkpoint: current });
-    if (result.emitted.length > 0 || current.snapshotId !== snapshotId) {
-      await store.put(CHECKPOINT_KEY, toStored({ checkpoint: result.checkpoint, playlistId, snapshotId }), StoreScope.FLOW);
+    if (result.emitted.length > 0 || current.snapshotId !== read.snapshotId) {
+      await store.put(CHECKPOINT_KEY, toStored({ checkpoint: result.checkpoint, playlistId, snapshotId: read.snapshotId }), StoreScope.FLOW);
     }
     return result.emitted;
   },

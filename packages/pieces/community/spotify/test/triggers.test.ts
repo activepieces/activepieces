@@ -218,6 +218,65 @@ describe('new_playlist_item', () => {
   });
 });
 
+describe('new_playlist_item: playlist edited during a paged read', () => {
+  const A = playlistEntry({ n: 100, addedAt: '2026-02-01T00:00:00Z' });
+  const B = playlistEntry({ n: 101, addedAt: '2026-02-02T00:00:00Z' });
+
+  function editingApi({ edits }: { edits: number }) {
+    const state = {
+      snapshot: 1,
+      editsLeft: edits,
+      items: Array.from({ length: 50 }, (_, i) => playlistEntry({ n: i, addedAt: '2026-01-01T00:00:00Z' })),
+    };
+    const seen = stubFetch((url) => {
+      if (url.pathname === `/v1/playlists/${PL}`) {
+        return { status: 200, body: { snapshot_id: `snap-${state.snapshot}` } };
+      }
+      const offset = Number(url.searchParams.get('offset'));
+      const limit = Number(url.searchParams.get('limit'));
+      const items = state.items.slice(offset, offset + limit);
+      const body = { items, total: state.items.length, next: offset + limit < state.items.length ? 'https://api.spotify.com/v1/next' : null };
+      if (offset === 0 && limit === 50 && state.editsLeft > 0) {
+        state.editsLeft -= 1;
+        state.items = state.items.filter((_, index) => index !== 10);
+        state.snapshot += 1;
+      }
+      return { status: 200, body };
+    });
+    return { state, seen };
+  }
+
+  test('an edit that shifts an addition into a read page re-reads and fires both additions once', async () => {
+    const { store, data } = memoryStore();
+    const { state } = editingApi({ edits: 0 });
+    const ctx = { store, propsValue: { playlist_id: PL } };
+    await hook({ trigger: newPlaylistItem, name: 'onEnable', ctx });
+    state.items = [...state.items, A, B];
+    state.snapshot += 1;
+    state.editsLeft = 1;
+    const fired = await hook({ trigger: newPlaylistItem, name: 'run', ctx });
+    expect(fired).toMatchObject([{ item: { uri: uri(100) } }, { item: { uri: uri(101) } }]);
+    expect(data.get('new_playlist_item_checkpoint')).toMatchObject({ snapshotId: `snap-${state.snapshot}` });
+    expect(await hook({ trigger: newPlaylistItem, name: 'run', ctx })).toEqual([]);
+  });
+
+  test('a playlist that keeps changing saves nothing and the next poll fires each addition once', async () => {
+    const { store, data } = memoryStore();
+    const { state } = editingApi({ edits: 0 });
+    const ctx = { store, propsValue: { playlist_id: PL } };
+    await hook({ trigger: newPlaylistItem, name: 'onEnable', ctx });
+    const enabled = structuredClone(data.get('new_playlist_item_checkpoint'));
+    state.items = [...state.items, A, B];
+    state.snapshot += 1;
+    state.editsLeft = 2;
+    expect(await hook({ trigger: newPlaylistItem, name: 'run', ctx })).toEqual([]);
+    expect(data.get('new_playlist_item_checkpoint')).toEqual(enabled);
+    const fired = await hook({ trigger: newPlaylistItem, name: 'run', ctx });
+    expect(fired).toMatchObject([{ item: { uri: uri(100) } }, { item: { uri: uri(101) } }]);
+    expect(await hook({ trigger: newPlaylistItem, name: 'run', ctx })).toEqual([]);
+  });
+});
+
 describe('playlist size limits', () => {
   test('playlist_items_changed throws instead of returning [] when the page budget runs out', async () => {
     const { store } = memoryStore();

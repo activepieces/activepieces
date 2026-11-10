@@ -217,6 +217,23 @@ describe('get_playlist_items (P1: /tracks removed)', () => {
     expect(seen[0].url.searchParams.get('market')).toBe('DE');
     expect(out).toMatchObject({ items: { items: [{ item: media, track: media }] } });
   });
+
+  test('playlist info exposes a tracks-shaped response under items and keeps tracks', async () => {
+    const media = { id: TR, name: 'T', uri: `spotify:track:${TR}` };
+    stubFetch(() => ({ status: 200, body: { id: PL, name: 'P', uri: `spotify:playlist:${PL}`, tracks: { total: 1, items: [{ added_at: 'x', is_local: false, track: media }] } } }));
+    const out = await run({ action: getPlaylistInfo, propsValue: { playlist_id: PL } });
+    expect(out).toMatchObject({
+      items: { total: 1, items: [{ item: media, track: media }] },
+      tracks: { total: 1, items: [{ item: media, track: media }] },
+    });
+  });
+
+  test('playlist info with an items-shaped response adds no tracks key', async () => {
+    stubFetch(() => ({ status: 200, body: { id: PL, name: 'P', uri: `spotify:playlist:${PL}`, items: { total: 0, items: [] } } }));
+    const out = await run({ action: getPlaylistInfo, propsValue: { playlist_id: PL } });
+    expect(out).toMatchObject({ items: { total: 0, items: [] } });
+    expect(out).not.toHaveProperty('tracks');
+  });
 });
 
 describe('pagination', () => {
