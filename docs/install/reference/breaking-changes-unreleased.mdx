@@ -8,6 +8,16 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### beehiiv 0.5.0: four subscription actions are no longer agent tools, and List Posts returns posts
+
+From beehiiv 0.5.0, **Create Subscription**, **Update Subscription**, **Delete Subscription** and **List Subscriptions** are no longer offered to AI agents and MCP clients. They stay available as flow steps. Agents use the new tools instead: **Create Subscription (AI)**, **Update Subscription (AI)**, **Unsubscribe Subscriber**, **Delete Subscription (AI)** and **List Subscriptions (AI)**, which take plain publication and subscription IDs or emails. **List Publications** returns the publication ID. **Add Subscription to Automation**, **List Automations** and **List Posts** stay available to both flows and agents.
+
+Steps upgraded to 0.5.0 also behave differently. **List Posts** now returns posts (before, it returned automations), as an object with `items` and paging fields. **List Automations** and **List Posts** with Limit and Page empty fail past 10,000 items instead of silently stopping. **Create Subscription** and **Add Subscription to Automation** reject a Double Opt-in Override other than `on`, `off` or `not_set`. **List Subscriptions** with Limit and Cursor empty fails when more than 5,000 subscribers match. **Delete Subscription** returns `deleted` and `subscription_id` instead of an empty result. The piece needs Activepieces 0.88.2 or later.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used the four subscription actions at the matching new tool. Update flows that read List Posts output to use `items`, and set Limit and Page or Cursor on list steps that read very large lists.
+
 #### Spotify 0.7.0: Update Playlist is no longer an agent tool, and Get Playback State returns an object when nothing is playing
 
 From Spotify 0.7.0, **Update Playlist** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and outputs. Agents use the new **Update Playlist Details** tool instead, which takes Public and Collaborative as yes/no choices and leaves any field it is not given unchanged.
