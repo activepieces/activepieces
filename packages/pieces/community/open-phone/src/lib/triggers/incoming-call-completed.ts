@@ -19,7 +19,9 @@ export const incomingCallCompleted = createTrigger({
     description: 'Fires when an inbound call to the OpenPhone number ends, delivering the completed call details including voicemail data when present. Outbound calls are filtered out, so this only represents received calls. Use for inbound-call logging, voicemail handling, or follow-up. Can be scoped to a specific OpenPhone number or all numbers.',
   },
   props: {
-    phoneNumbers: phoneNumberDropdown,
+    phoneNumbers: phoneNumberDropdown({
+      description: 'Calls on this number start the flow.',
+    }),
   },
   sampleData: {
     event: 'call.completed',

@@ -1,8 +1,13 @@
-import { Property } from '@activepieces/pieces-framework';
+import {
+  AppConnectionValueForAuthProperty,
+  Property,
+} from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import {
   openPhoneCommon,
+  OpenPhoneContact,
   OpenPhoneContactsListResponse,
+  OpenPhoneCall,
   OpenPhoneCallsListResponse,
   OpenPhoneNumbersListResponse,
 } from './index';
@@ -12,7 +17,7 @@ export const contactDropdown = Property.Dropdown({
   auth: openPhoneAuth,
 
   displayName: 'Contact',
-  description: 'Select a contact',
+  description: 'Shows up to 2,000 contacts, sorted by name.',
   required: true,
   refreshers: [],
   options: async ({ auth }) => {
@@ -20,19 +25,22 @@ export const contactDropdown = Property.Dropdown({
       return {
         disabled: true,
         options: [],
-        placeholder: 'Please connect your OpenPhone account first',
+        placeholder: 'Connect your OpenPhone account first',
       };
     }
 
     try {
-      const response: OpenPhoneContactsListResponse =
-        await openPhoneCommon.makeRequest<OpenPhoneContactsListResponse>(
-          HttpMethod.GET,
-          '/v1/contacts?maxResults=50',
-          auth
-        );
+      const contacts = await listAllContacts({ auth });
 
-      const options = response.data.map((contact) => {
+      if (contacts.length === 0) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'No contacts found in this workspace',
+        };
+      }
+
+      const options = contacts.map((contact) => {
         const displayName =
           [contact.defaultFields.firstName, contact.defaultFields.lastName]
             .filter(Boolean)
@@ -51,82 +59,89 @@ export const contactDropdown = Property.Dropdown({
         disabled: false,
         options: options.sort((a, b) => a.label.localeCompare(b.label)),
       };
-    } catch (error) {
+    } catch {
       return {
         disabled: true,
         options: [],
-        placeholder: `Error loading contacts: ${error}`,
+        placeholder: 'Could not load contacts. Check your connection.',
       };
     }
   },
 });
 
-export const phoneNumberDropdown = Property.Dropdown({
-  auth: openPhoneAuth,
-  displayName: 'Phone Number',
-  description: 'Select a phone number to get calls from',
-  required: true,
-  refreshers: [],
-  options: async ({ auth }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Please connect your OpenPhone account first',
-      };
-    }
-
-    try {
-      const phoneNumbersResponse: OpenPhoneNumbersListResponse =
-        await openPhoneCommon.makeRequest<OpenPhoneNumbersListResponse>(
-          HttpMethod.GET,
-          '/v1/phone-numbers',
-          auth
-        );
-
-      if (
-        !phoneNumbersResponse.data ||
-        phoneNumbersResponse.data.length === 0
-      ) {
+export const phoneNumberDropdown = ({
+  description,
+}: {
+  description: string;
+}) =>
+  Property.Dropdown({
+    auth: openPhoneAuth,
+    displayName: 'OpenPhone Number',
+    description,
+    required: true,
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'No phone numbers found',
+          placeholder: 'Connect your OpenPhone account first',
         };
       }
 
-      const options = phoneNumbersResponse.data.map((phoneNumber) => {
-        const displayName =
-          phoneNumber.name || phoneNumber.formattedNumber || phoneNumber.number;
-        const numberInfo = phoneNumber.formattedNumber || phoneNumber.number;
-        const label = phoneNumber.name
-          ? `${displayName} (${numberInfo})`
-          : displayName;
+      try {
+        const phoneNumbersResponse: OpenPhoneNumbersListResponse =
+          await openPhoneCommon.makeRequest<OpenPhoneNumbersListResponse>(
+            HttpMethod.GET,
+            '/v1/phone-numbers',
+            auth
+          );
+
+        if (
+          !phoneNumbersResponse.data ||
+          phoneNumbersResponse.data.length === 0
+        ) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'No phone numbers found in this workspace',
+          };
+        }
+
+        const options = phoneNumbersResponse.data.map((phoneNumber) => {
+          const displayName =
+            phoneNumber.name ||
+            phoneNumber.formattedNumber ||
+            phoneNumber.number;
+          const numberInfo = phoneNumber.formattedNumber || phoneNumber.number;
+          const label = phoneNumber.name
+            ? `${displayName} (${numberInfo})`
+            : displayName;
+
+          return {
+            label,
+            value: phoneNumber.id,
+          };
+        });
 
         return {
-          label,
-          value: phoneNumber.id,
+          disabled: false,
+          options: options.sort((a, b) => a.label.localeCompare(b.label)),
         };
-      });
-
-      return {
-        disabled: false,
-        options: options.sort((a, b) => a.label.localeCompare(b.label)),
-      };
-    } catch (error) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: `Error loading phone numbers: ${error}`,
-      };
-    }
-  },
-});
+      } catch {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Could not load phone numbers. Check your connection.',
+        };
+      }
+    },
+  });
 
 export const participantDropdown = Property.Dropdown({
   auth: openPhoneAuth,
   displayName: 'Participant Phone Number',
-  description: 'Select a participant phone number to filter calls',
+  description: "The other person's number, from your contacts.",
   required: true,
   refreshers: [],
   options: async ({ auth }) => {
@@ -134,21 +149,16 @@ export const participantDropdown = Property.Dropdown({
       return {
         disabled: true,
         options: [],
-        placeholder: 'Please connect your OpenPhone account first',
+        placeholder: 'Connect your OpenPhone account first',
       };
     }
 
     try {
-      const contactsResponse: OpenPhoneContactsListResponse =
-        await openPhoneCommon.makeRequest<OpenPhoneContactsListResponse>(
-          HttpMethod.GET,
-          '/v1/contacts?maxResults=50',
-          auth
-        );
+      const contacts = await listAllContacts({ auth });
 
       const phoneNumbers = new Set<string>();
 
-      contactsResponse.data.forEach((contact) => {
+      contacts.forEach((contact) => {
         if (contact.defaultFields.phoneNumbers) {
           contact.defaultFields.phoneNumbers.forEach((phone) => {
             if (phone.value) {
@@ -160,14 +170,9 @@ export const participantDropdown = Property.Dropdown({
 
       if (phoneNumbers.size === 0) {
         return {
-          disabled: false,
-          options: [
-            {
-              label: 'Enter phone number manually (+1234567890)',
-              value: 'manual',
-            },
-          ],
-          placeholder: 'No contact phone numbers found',
+          disabled: true,
+          options: [],
+          placeholder: 'No phone numbers found in your contacts',
         };
       }
 
@@ -180,16 +185,11 @@ export const participantDropdown = Property.Dropdown({
         disabled: false,
         options: options.sort((a, b) => a.label.localeCompare(b.label)),
       };
-    } catch (error) {
+    } catch {
       return {
-        disabled: false,
-        options: [
-          {
-            label: 'Enter phone number manually (+1234567890)',
-            value: 'manual',
-          },
-        ],
-        placeholder: `Error loading participants: ${error}`,
+        disabled: true,
+        options: [],
+        placeholder: 'Could not load contacts. Check your connection.',
       };
     }
   },
@@ -198,7 +198,7 @@ export const participantDropdown = Property.Dropdown({
 export const callDropdown = Property.Dropdown({
   auth: openPhoneAuth,
   displayName: 'Call',
-  description: 'Select a call',
+  description: 'The call to summarize.',
   required: true,
   refreshers: ['phoneNumberId', 'participantNumber'],
   options: async ({ auth, phoneNumberId, participantNumber }) => {
@@ -206,7 +206,7 @@ export const callDropdown = Property.Dropdown({
       return {
         disabled: true,
         options: [],
-        placeholder: 'Please connect your OpenPhone account first',
+        placeholder: 'Connect your OpenPhone account first',
       };
     }
 
@@ -214,7 +214,7 @@ export const callDropdown = Property.Dropdown({
       return {
         disabled: true,
         options: [],
-        placeholder: 'Please select a phone number first',
+        placeholder: 'Select an OpenPhone number first',
       };
     }
 
@@ -222,7 +222,7 @@ export const callDropdown = Property.Dropdown({
       return {
         disabled: true,
         options: [],
-        placeholder: 'Please select a participant phone number first',
+        placeholder: 'Select a participant phone number first',
       };
     }
 
@@ -239,44 +239,85 @@ export const callDropdown = Property.Dropdown({
 
       if (!callsResponse.data || callsResponse.data.length === 0) {
         return {
-          disabled: false,
-          options: [
-            {
-              label: 'No calls found - Enter Call ID manually',
-              value: 'manual',
-            },
-          ],
-          placeholder: 'No calls available for selection',
+          disabled: true,
+          options: [],
+          placeholder: 'No calls found with this number',
         };
       }
 
-      const options = callsResponse.data.map((call) => {
-        const statusInfo = call.status ? ` - ${call.status}` : '';
-        const durationInfo = call.duration ? ` (${call.duration}s)` : '';
-        const dateInfo = new Date(call.createdAt).toLocaleDateString();
-        const directionInfo = call.direction === 'incoming' ? '↓' : '↑';
-
-        return {
-          label: `${directionInfo} ${call.id}${statusInfo}${durationInfo} - ${dateInfo}`,
+      return {
+        disabled: false,
+        options: callsResponse.data.map((call) => ({
+          label: buildCallLabel({ call }),
           value: call.id,
-        };
-      });
-
-      return {
-        disabled: false,
-        options: options.sort((a, b) => b.label.localeCompare(a.label)),
+        })),
       };
-    } catch (error) {
+    } catch {
       return {
-        disabled: false,
-        options: [
-          {
-            label: 'Enter Call ID manually (AC...)',
-            value: 'manual',
-          },
-        ],
-        placeholder: `Error loading calls: ${error}`,
+        disabled: true,
+        options: [],
+        placeholder: 'Could not load calls. Check your connection.',
       };
     }
   },
 });
+
+async function listAllContacts({
+  auth,
+}: {
+  auth: AppConnectionValueForAuthProperty<typeof openPhoneAuth>;
+}): Promise<OpenPhoneContact[]> {
+  const contacts: OpenPhoneContact[] = [];
+  let pageToken: string | null = null;
+
+  for (let page = 0; page < MAX_CONTACT_PAGES; page++) {
+    const tokenQuery: string = pageToken
+      ? `&pageToken=${encodeURIComponent(pageToken)}`
+      : '';
+    const response: OpenPhoneContactsListResponse =
+      await openPhoneCommon.makeRequest<OpenPhoneContactsListResponse>(
+        HttpMethod.GET,
+        `/v1/contacts?maxResults=50${tokenQuery}`,
+        auth
+      );
+
+    contacts.push(...response.data);
+    pageToken = response.nextPageToken;
+
+    if (!pageToken) {
+      break;
+    }
+  }
+
+  return contacts;
+}
+
+function buildCallLabel({ call }: { call: OpenPhoneCall }): string {
+  const direction = call.direction === 'incoming' ? 'Incoming' : 'Outgoing';
+  const date = new Date(call.createdAt).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  });
+  const parts = [direction, date];
+
+  if (call.duration > 0) {
+    parts.push(formatDuration({ seconds: call.duration }));
+  }
+
+  if (call.status && call.status !== 'completed') {
+    parts.push(call.status);
+  }
+
+  return parts.join(' · ');
+}
+
+function formatDuration({ seconds }: { seconds: number }): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  return minutes > 0 ? `${minutes}m ${remainder}s` : `${remainder}s`;
+}
+
+const MAX_CONTACT_PAGES = 40;

@@ -18,7 +18,9 @@ export const incomingMessageReceived = createTrigger({
     description: 'Fires when the OpenPhone number receives a new inbound SMS/MMS message, delivering the message text and sender details. Use to react to incoming texts (auto-reply, routing, logging). Can be scoped to a specific OpenPhone number or all numbers.',
   },
   props: {
-    phoneNumbers: phoneNumberDropdown,
+    phoneNumbers: phoneNumberDropdown({
+      description: 'Messages on this number start the flow.',
+    }),
   },
   sampleData: {
     event: 'message.received',
