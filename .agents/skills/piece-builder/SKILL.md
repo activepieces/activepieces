@@ -97,7 +97,7 @@ Both must pass. Lint failures (unused imports, `any` types, unused vars) block C
 
 Common TS errors: missing import in `src/index.ts`, missing `tsconfig.base.json` entry, missing `sampleData` on a trigger. Auth-shape errors are covered in the Quick Auth Reference below.
 
-**Test locally:** Add `AP_DEV_PIECES=<name>` to `packages/server/api/.env`, start with `npm start`, open `localhost:4200`.
+**Test locally:** Append `<name>` to the comma-separated `AP_DEV_PIECES` list in the repository-root `.env.dev`, start with `npm start`, open `localhost:4200`.
 
 ---
 
