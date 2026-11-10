@@ -61,6 +61,13 @@ type TrialEnded = {
     trialEndedAt: string
 }
 
+type TrialSeatsDeactivated = {
+    platformId: string
+    plan: string
+    deactivatedUsers: number
+    revokedInvites: number
+}
+
 type InviteSent = {
     platformId: string
     type: 'platform' | 'project'
@@ -231,6 +238,7 @@ export enum TelemetryEventName {
     PLAN_REACTIVATED = 'plan.reactivated',
     TRIAL_STARTED = 'trial.started',
     TRIAL_ENDED = 'trial.ended',
+    TRIAL_SEATS_DEACTIVATED = 'trial.seats.deactivated',
     INVITE_SENT = 'invite.sent',
     INVITE_ACCEPTED = 'invite.accepted',
     SALES_HANDOFF_CLICKED = 'sales.handoff.clicked',
@@ -267,7 +275,6 @@ export enum SalesLinkLocationInWebApp {
     ENTERPRISE_TRIAL_ENDED = 'enterprise_trial_ended',
     ENTERPRISE_TRIAL_ENDING = 'enterprise_trial_ending',
     ENTERPRISE_TRIAL_START = 'enterprise_trial_start',
-    ENTERPRISE_TRIAL_UNAVAILABLE = 'enterprise_trial_unavailable',
     ENTERPRISE_TRIAL_USED = 'enterprise_trial_used',
     LOCKED_FEATURE = 'locked_feature',
     PLAN_SELECTOR = 'plan_selector',
@@ -313,6 +320,7 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.PLAN_REACTIVATED, PlanChange>
     | BaseTelemetryEvent<TelemetryEventName.TRIAL_STARTED, TrialStarted>
     | BaseTelemetryEvent<TelemetryEventName.TRIAL_ENDED, TrialEnded>
+    | BaseTelemetryEvent<TelemetryEventName.TRIAL_SEATS_DEACTIVATED, TrialSeatsDeactivated>
     | BaseTelemetryEvent<TelemetryEventName.INVITE_SENT, InviteSent>
     | BaseTelemetryEvent<TelemetryEventName.INVITE_ACCEPTED, InviteAccepted>
     | BaseTelemetryEvent<TelemetryEventName.SALES_HANDOFF_CLICKED, SalesHandoffClicked>
@@ -338,6 +346,7 @@ export const CLOUD_ONLY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventName> = new 
     TelemetryEventName.PLAN_REACTIVATED,
     TelemetryEventName.TRIAL_STARTED,
     TelemetryEventName.TRIAL_ENDED,
+    TelemetryEventName.TRIAL_SEATS_DEACTIVATED,
     TelemetryEventName.SALES_HANDOFF_CLICKED,
     TelemetryEventName.ADMIN_NAV_LOCKED_CLICKED,
     TelemetryEventName.SIGNED_UP,

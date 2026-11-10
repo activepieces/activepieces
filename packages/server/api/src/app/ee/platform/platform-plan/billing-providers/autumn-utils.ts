@@ -171,6 +171,13 @@ export const autumnUtils = {
             }),
         )
     },
+    async readSelfServeTrialDates(log: FastifyBaseLogger, platformId: string): Promise<SelfServeTrialDates | null> {
+        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
+        if (isNil(client)) {
+            return null
+        }
+        return selfServeTrialUtils.latestTrialDates(await listSelfServeTrialSubscriptions(client))
+    },
     async refreshEntitlements(log: FastifyBaseLogger, platformId: string): Promise<void> {
         const client = await autumnUtils.resolveClientForPlatform(log, platformId)
         if (isNil(client)) {
@@ -549,15 +556,19 @@ function findActiveSelfServeTrialAddOn(customer: GetCustomerResponse): ActiveSel
     return { startedAt: subscription.startedAt, endsAt: subscription.trialEndsAt }
 }
 
+function listSelfServeTrialSubscriptions(client: AutumnCustomerClient): Promise<ListSubscriptionsList[]> {
+    return client.listSubscriptions({
+        planId: PlanName.SELF_SERVE_TRIAL,
+        statuses: [ListSubscriptionsStatusRequestBody.Active, ListSubscriptionsStatusRequestBody.Expired],
+    })
+}
+
 async function syncSelfServeTrialDates({ log, platformId, client, customer }: SyncSelfServeTrialDatesParams): Promise<SelfServeTrialDates | null> {
     const cachedDates = (await selfServeTrialUtils.readCachedTrialDates(platformId))?.dates ?? null
     if (isNil(cachedDates) && !selfServeTrialUtils.hasHadTrial(customer)) {
         return null
     }
-    const { data: subscriptions, error } = await tryCatch(() => client.listSubscriptions({
-        planId: PlanName.SELF_SERVE_TRIAL,
-        statuses: [ListSubscriptionsStatusRequestBody.Active, ListSubscriptionsStatusRequestBody.Expired],
-    }))
+    const { data: subscriptions, error } = await tryCatch(() => listSelfServeTrialSubscriptions(client))
     if (!isNil(error) || isNil(subscriptions)) {
         log.warn({ error, platform: { id: platformId } }, 'Failed to list the self-serve trial subscriptions; keeping the cached trial dates')
         return cachedDates

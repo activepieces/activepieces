@@ -2,6 +2,7 @@
  * @vitest-environment jsdom
  */
 /* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
+import { SelfServeTrialState } from '@activepieces/shared';
 import { render, screen } from '@testing-library/react';
 import dayjs from 'dayjs';
 import * as React from 'react';
@@ -23,6 +24,7 @@ vi.mock('@/hooks/platform-hooks', () => ({
       platform: {
         plan: { plan: state.plan },
         selfServeTrial: {
+          state: SelfServeTrialState.ACTIVE,
           startedAt: dayjs(state.endsAt).subtract(7, 'day').toISOString(),
           endsAt: state.endsAt,
           seatGraceEndsAt: null,

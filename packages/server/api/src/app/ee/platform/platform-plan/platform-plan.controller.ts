@@ -1,5 +1,5 @@
 import { SeekPage, tryCatch } from '@activepieces/core-utils'
-import { AdjustUnconsumableFeatureQuantityParams, CancelSubscriptionRequest, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan, SelfServeTrialStatus, SetupPaymentParams } from '@activepieces/shared'
+import { AdjustUnconsumableFeatureQuantityParams, CancelSubscriptionRequest, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan, SelfServeTrialInfo, SetupPaymentParams } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -139,7 +139,7 @@ async function getBillingInformation(log: FastifyBaseLogger, platformId: string)
         platformPlanService(log).getUsage(platform.id),
         billingProvider.get(log).getBillingOverview(platform.id),
         billingProvider.get(log).isBillingEnforced(platform.id),
-        billingProvider.get(log).getSelfServeTrialInfo(platform.id),
+        billingProvider.get(log).getSelfServeTrialInfo({ platformId: platform.id }),
     ])
 
     const { startDate: billingPeriodStart, endDate: nextBillingDate, nextBillingAmount, cancelAt, trialEndsAt, planName: autumnPlanName, scheduledPlanName, hasPaymentMethod, creditsResetInterval, planInterval, creditsFeature, appSumoCreditsFeature, seatsFeature, includedSeats, additionalSeats, unavailable: billingUnavailable } = overview
@@ -310,7 +310,7 @@ const SetupPaymentRequest = {
 const StartSelfServeTrialRequest = {
     schema: {
         response: {
-            [StatusCodes.OK]: SelfServeTrialStatus,
+            [StatusCodes.OK]: SelfServeTrialInfo,
         },
     },
     config: {

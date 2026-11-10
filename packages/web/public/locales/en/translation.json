@@ -3788,8 +3788,6 @@
   "Good first steps": "Good first steps",
   "Your Enterprise plan trial was already used": "Your Enterprise plan trial was already used",
   "Each platform owner can start the Enterprise plan trial once. Talk to our team to get more time.": "Each platform owner can start the Enterprise plan trial once. Talk to our team to get more time.",
-  "We could not start your trial": "We could not start your trial",
-  "The Enterprise plan trial is not available for your platform right now. Please try again later, or talk to our team.": "The Enterprise plan trial is not available for your platform right now. Please try again later, or talk to our team.",
   "This needs the Enterprise edition. Our team can set you up with a license.": "This needs the Enterprise edition. Our team can set you up with a license.",
   "Your Enterprise plan trial was already used. Our team can extend it or set you up on a plan.": "Your Enterprise plan trial was already used. Our team can extend it or set you up on a plan.",
   "Our team sets you up on the Enterprise plan and helps with the rollout.": "Our team sets you up on the Enterprise plan and helps with the rollout.",
@@ -3922,5 +3920,12 @@
   "Use the models and accounts you already pay for": "Use the models and accounts you already pay for",
   "Manage AI access for the whole platform in one place": "Manage AI access for the whole platform in one place",
   "{count, plural, =0 {last day} =1 {1 day left} other {# days left}}": "{count, plural, =0 {last day} =1 {1 day left} other {# days left}}",
-  "Every Enterprise plan feature is on until {day, select, today {today at {time}} tomorrow {tomorrow at {time}} other {{date}}}. Your credits are not affected.": "Every Enterprise plan feature is on until {day, select, today {today at {time}} tomorrow {tomorrow at {time}} other {{date}}}. Your credits are not affected."
+  "Every Enterprise plan feature is on until {day, select, today {today at {time}} tomorrow {tomorrow at {time}} other {{date}}}. Your credits are not affected.": "Every Enterprise plan feature is on until {day, select, today {today at {time}} tomorrow {tomorrow at {time}} other {{date}}}. Your credits are not affected.",
+  "Enterprise trial ended": "Enterprise trial ended",
+  "Extra users lose access {date}": "Extra users lose access {date}",
+  "Users and invitations added during the trial beyond the plan's {seats, plural, =1 {1 seat} other {# seats}} will be removed on {date}. Manage seats, or upgrade to keep them.": "Users and invitations added during the trial beyond the plan's {seats, plural, =1 {1 seat} other {# seats}} will be removed on {date}. Manage seats, or upgrade to keep them.",
+  "Your Enterprise trial has ended. Users added during it beyond the plan's {seats, plural, =1 {1 seat} other {# seats}} lose access on {date} unless an admin upgrades.": "Your Enterprise trial has ended. Users added during it beyond the plan's {seats, plural, =1 {1 seat} other {# seats}} lose access on {date} unless an admin upgrades.",
+  "Users deactivated after the trial": "Users deactivated after the trial",
+  "{plan} includes {limit, plural, =1 {1 seat} other {# seats}}. You have {users, plural, =1 {1 active user} other {# active users}} and {invitations, plural, =1 {1 pending invitation} other {# pending invitations}}. On {date}, the pending invitations sent during the trial will be deleted first, then the users added during the trial will be deactivated as needed to fit your seats.": "{plan} includes {limit, plural, =1 {1 seat} other {# seats}}. You have {users, plural, =1 {1 active user} other {# active users}} and {invitations, plural, =1 {1 pending invitation} other {# pending invitations}}. On {date}, the pending invitations sent during the trial will be deleted first, then the users added during the trial will be deactivated as needed to fit your seats.",
+  "Your Enterprise trial has ended and {plan} includes {target, plural, =1 {1 seat} other {# seats}}. Choose who to remove, or upgrade to keep everyone. If you don't, on {date} the pending invitations sent during the trial will be deleted first, then the users added during the trial will be deactivated as needed to fit your seats.": "Your Enterprise trial has ended and {plan} includes {target, plural, =1 {1 seat} other {# seats}}. Choose who to remove, or upgrade to keep everyone. If you don't, on {date} the pending invitations sent during the trial will be deleted first, then the users added during the trial will be deactivated as needed to fit your seats."
 }

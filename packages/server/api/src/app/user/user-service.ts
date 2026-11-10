@@ -3,7 +3,7 @@ import { ApEdition, newMemberSettingsUtils, PlatformRole, ProjectType, User, Use
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
-import { EntityManager, In, IsNull } from 'typeorm'
+import { EntityManager, In, IsNull, SelectQueryBuilder } from 'typeorm'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
@@ -136,8 +136,17 @@ export const userService = (log: FastifyBaseLogger) => ({
     async countByPlatformId(platformId: string): Promise<number> {
         return userRepo().countBy({ platformId })
     },
-    async countActiveByPlatformId({ platformId, entityManager }: CountActiveByPlatformIdParams): Promise<number> {
+    async countActiveByPlatformId({ platformId, entityManager }: ActiveByPlatformIdParams): Promise<number> {
         return userRepo(entityManager).countBy({ platformId, status: UserStatus.ACTIVE })
+    },
+    activeUsersQuery({ platformId, entityManager }: ActiveByPlatformIdParams): SelectQueryBuilder<UserSchema> {
+        return userRepo(entityManager)
+            .createQueryBuilder('user')
+            .where('user.platformId = :platformId', { platformId })
+            .andWhere('user.status = :status', { status: UserStatus.ACTIVE })
+    },
+    async lockActiveByPlatformId({ platformId, entityManager }: ActiveByPlatformIdParams): Promise<void> {
+        await this.activeUsersQuery({ platformId, entityManager }).setLock('for_no_key_update').select('user.id').getMany()
     },
     async list({ platformId, externalId, cursorRequest, limit }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
@@ -414,7 +423,7 @@ type GetUsersByIdentityIdParams = {
     identityId: string
 }
 
-type CountActiveByPlatformIdParams = {
+type ActiveByPlatformIdParams = {
     platformId: string
     entityManager?: EntityManager
 }

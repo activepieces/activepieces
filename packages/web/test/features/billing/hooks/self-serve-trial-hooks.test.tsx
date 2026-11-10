@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { ApEdition, SelfServeTrialState, SelfServeTrialStatus } from '@activepieces/shared';
+import { ApEdition, SelfServeTrialState, SelfServeTrialInfo } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import dayjs from 'dayjs';
@@ -37,8 +37,9 @@ const plansDialogOpen = () =>
 let isPlatformAdmin = true;
 let isEmbedded = false;
 let planTrialEndsAt: string | null = null;
+let seatGraceEndsAt: string | null = null;
 let usersLimit: number | null = 5;
-let status: SelfServeTrialStatus;
+let status: SelfServeTrialInfo;
 const startSelfServeTrial = vi.fn();
 
 vi.mock('@/hooks/authorization-hooks', () => ({
@@ -59,11 +60,13 @@ vi.mock('@/hooks/platform-hooks', () => ({
           usersLimit,
         },
         selfServeTrial:
-          planTrialEndsAt === null
+          planTrialEndsAt === null && seatGraceEndsAt === null
             ? undefined
             : {
+                state: SelfServeTrialState.ENDED,
                 startedAt: '2026-10-07T09:00:00.000Z',
-                endsAt: planTrialEndsAt,
+                endsAt: planTrialEndsAt ?? '2026-10-14T09:00:00.000Z',
+                seatGraceEndsAt,
               },
       },
     }),
@@ -77,10 +80,11 @@ vi.mock('@/features/billing/api/billing-plans-api', () => ({
   },
 }));
 
-const activeStatus = (endsAt: Date): SelfServeTrialStatus => ({
+const activeStatus = (endsAt: Date): SelfServeTrialInfo => ({
   state: SelfServeTrialState.ACTIVE,
   startedAt: dayjs(endsAt).subtract(7, 'day').toISOString(),
   endsAt: endsAt.toISOString(),
+  seatGraceEndsAt: null,
 });
 
 function queryWrapper(
@@ -97,6 +101,7 @@ beforeEach(() => {
   isPlatformAdmin = true;
   isEmbedded = false;
   planTrialEndsAt = null;
+  seatGraceEndsAt = null;
   usersLimit = 5;
   status = activeStatus(dayjs().add(3, 'day').toDate());
 });

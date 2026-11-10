@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils';
+import { ErrorCode, isNil } from '@activepieces/core-utils';
 import {
   ApEdition,
   ApFlagId,
@@ -15,6 +15,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
@@ -33,7 +34,6 @@ import {
   IncludedFeatures,
   LockedFeature,
   TrialAlreadyUsed,
-  TrialNotStarted,
   TrialStarted,
 } from './self-serve-trial-dialog-views';
 import { SelfServeTrialEndedDialog } from './self-serve-trial-notices';
@@ -47,6 +47,7 @@ export function SelfServeTrialDialog() {
     data: startedTrial,
     isPending: isStartingTrial,
     isError: trialStartFailed,
+    error: trialStartError,
     reset: resetTrialStart,
   } = selfServeTrialHooks.useStartSelfServeTrial((status) => {
     if (status.state !== SelfServeTrialState.ACTIVE) {
@@ -58,6 +59,10 @@ export function SelfServeTrialDialog() {
   const open = !isNil(payload);
   const view = dialogViewForStartResult({
     result: startedTrial?.state,
+    alreadyUsed: api.isApError(
+      trialStartError,
+      ErrorCode.SELF_SERVE_TRIAL_ALREADY_USED,
+    ),
     shouldOfferTrial:
       (shouldOfferTrial &&
         selfServeTrialFeatures.isIncludedInTrial(payload?.featureKey)) ||
@@ -90,8 +95,6 @@ export function SelfServeTrialDialog() {
         return <TrialStarted endsAt={startedTrial?.endsAt} onClose={close} />;
       case DialogView.ALREADY_USED:
         return <TrialAlreadyUsed />;
-      case DialogView.NOT_STARTED:
-        return <TrialNotStarted onClose={close} />;
       case DialogView.LOCKED:
         return (
           <LockedFeature featureKey={payload?.featureKey} onAction={close} />
@@ -318,20 +321,22 @@ function StartTrial({
 
 function dialogViewForStartResult({
   result,
+  alreadyUsed,
   shouldOfferTrial,
 }: {
   result: SelfServeTrialState | undefined;
+  alreadyUsed: boolean;
   shouldOfferTrial: boolean;
 }): DialogView {
+  if (alreadyUsed) {
+    return DialogView.ALREADY_USED;
+  }
   switch (result) {
     case SelfServeTrialState.ACTIVE:
       return DialogView.STARTED;
-    case SelfServeTrialState.USED:
     case SelfServeTrialState.ENDED:
       return DialogView.ALREADY_USED;
-    case SelfServeTrialState.UNAVAILABLE:
     case SelfServeTrialState.ELIGIBLE:
-      return DialogView.NOT_STARTED;
     case SelfServeTrialState.INELIGIBLE:
     case undefined:
       return shouldOfferTrial ? DialogView.START : DialogView.LOCKED;
@@ -351,6 +356,5 @@ enum DialogView {
   START = 'start',
   STARTED = 'started',
   ALREADY_USED = 'already_used',
-  NOT_STARTED = 'not_started',
   LOCKED = 'locked',
 }

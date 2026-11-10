@@ -1,5 +1,10 @@
 import { isNil } from '@activepieces/core-utils';
-import { ApEdition, ApFlagId, SelfServeTrialDates } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  SelfServeTrialInfo,
+  SelfServeTrialState,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { SquareArrowOutUpRight } from 'lucide-react';
 import React, { ReactNode } from 'react';
@@ -19,10 +24,9 @@ import { cn } from '@/lib/utils';
 import { billingQueries } from '../hooks/billing-hooks';
 import { useCreditsUsage } from '../hooks/use-credits-usage';
 import { billingUtils } from '../utils/billing-utils';
-import { selfServeTrialTime } from '../utils/self-serve-trial-utils';
 
 import { CreditsActionButton } from './credits-action-button';
-import { SelfServeTrialLine } from './self-serve-trial-sidebar';
+import { SeatGraceLine, SelfServeTrialLine } from './self-serve-trial-sidebar';
 
 export const SidebarUsageLimits = React.memo(() => {
   const { project } = projectCollectionUtils.useCurrentProject();
@@ -128,8 +132,10 @@ export const SidebarUsageLimits = React.memo(() => {
 
 SidebarUsageLimits.displayName = 'SidebarUsageLimits';
 
-function resolveNoticeLine(trial: SelfServeTrialDates | undefined): ReactNode {
-  return selfServeTrialTime.isRunning(trial) ? (
-    <SelfServeTrialLine endsAt={trial.endsAt} />
-  ) : null;
+function resolveNoticeLine(trial: SelfServeTrialInfo | undefined): ReactNode {
+  const graceEndsAt = trial?.seatGraceEndsAt;
+  if (trial?.state === SelfServeTrialState.ACTIVE) {
+    return <SelfServeTrialLine endsAt={trial.endsAt} />;
+  }
+  return isNil(graceEndsAt) ? null : <SeatGraceLine endsAt={graceEndsAt} />;
 }
