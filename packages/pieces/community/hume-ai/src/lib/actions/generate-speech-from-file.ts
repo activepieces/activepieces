@@ -4,6 +4,7 @@ import { humeAiAuth } from '../common/auth';
 
 export const generateSpeechFromFile = createAction({
   name: 'generate_speech_from_file',
+  classification: 'READ',
   displayName: 'Generate Speech from File',
   description: 'Convert audio file to speech using Hume AI\'s expressive text-to-speech technology',
   audience: 'both',

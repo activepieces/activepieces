@@ -22,8 +22,7 @@ export const stripeCheckoutSessionCompleted = createTrigger({
   name: 'checkout_session_completed',
   classification: 'READ',
   displayName: 'Checkout Session Completed',
-  description:
-    'Fires when a Stripe Checkout Session is successfully completed.',
+  description: 'Fires when a customer completes a Checkout session.',
   aiMetadata: {
     description:
       'Fires when a Stripe Checkout Session is successfully completed (the checkout.session.completed event), emitting the completed session including customer and payment details. An optional customer ID filter narrows firing to one customer. Use to react to a completed hosted checkout, such as fulfilling an order or granting access.',
@@ -31,8 +30,8 @@ export const stripeCheckoutSessionCompleted = createTrigger({
   props: {
     customer: Property.ShortText({
       displayName: 'Customer ID',
-      description:
-        'Only trigger for checkout sessions created by this customer ID (e.g., `cus_...`).',
+      description: 'Only sessions for this customer. Empty: all.',
+      placeholder: 'cus_...',
       required: false,
     }),
   },

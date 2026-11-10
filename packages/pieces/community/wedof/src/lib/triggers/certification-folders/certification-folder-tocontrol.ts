@@ -5,6 +5,7 @@ import { wedofCommon } from '../../common/wedof';
 export const certificationFolderToControl = createTrigger({
   auth: wedofAuth,
   name: 'certificationFolderToControl',
+  classification: 'READ',
   displayName: 'Dossier de certification à contrôler',
   description:
     "Se déclenche lorsqu'un dossier de certification passe à controler",

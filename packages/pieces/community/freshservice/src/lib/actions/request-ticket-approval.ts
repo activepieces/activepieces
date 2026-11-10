@@ -7,6 +7,7 @@ import { freshserviceCommon } from '../common/props';
 export const requestTicketApproval = createAction({
   auth: freshserviceAuth,
   name: 'request_ticket_approval',
+  classification: 'WRITE',
   displayName: 'Request Ticket Approval',
   description: 'Requests approval for a ticket from a specified agent.',
   audience: 'both',

@@ -16,7 +16,7 @@ export const triggerTaskTagUpdated = createTrigger({
   auth: clickupAuth,
   name: 'task_tag_updated',
   classification: 'READ',
-  displayName: 'Task Tag Updated',
+  displayName: 'Task Tag Updated in Space',
   description: 'Triggered when a tag is added or removed or renamed on a task.',
   aiMetadata: {
     description:
@@ -64,14 +64,17 @@ export const triggerTaskTagUpdated = createTrigger({
   outputSchema: taskEventTriggerOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const { workspace_id } = context.propsValue
+    const { workspace_id, space_id, list_id, task_id } = context.propsValue
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `https://api.clickup.com/api/v2/team/${workspace_id}/webhook`,
       body: {
         endpoint: context.webhookUrl,
-        events: [ClickupEventType.TASK_TAG_UPDATED]
+        events: [ClickupEventType.TASK_TAG_UPDATED],
+        space_id,
+        ...(list_id ? { list_id } : {}),
+        ...(task_id ? { task_id } : {}),
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,

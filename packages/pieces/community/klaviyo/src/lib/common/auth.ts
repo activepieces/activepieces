@@ -31,6 +31,8 @@ export const klaviyoAuth = [
         };
       }
     },
+    getConnectionIdentifier: async ({ auth }) =>
+      fetchAccountLabel(`Klaviyo-API-Key ${auth}`),
   }),
   PieceAuth.OAuth2({
     description: `
@@ -65,6 +67,8 @@ To connect via OAuth2, follow the [Klaviyo OAuth setup guide](https://developers
     pkce: true,
     pkceMethod: 'S256',
     authorizationMethod: OAuth2AuthorizationMethod.HEADER,
+    getConnectionIdentifier: async ({ auth }) =>
+      fetchAccountLabel(`Bearer ${auth.access_token}`),
   }),
 ];
 
@@ -78,3 +82,37 @@ export function getAuthorizationHeader(auth: KlaviyoAuthValue): string {
   }
   return `Bearer ${auth.access_token}`;
 }
+
+async function fetchAccountLabel(
+  authorization: string
+): Promise<string | undefined> {
+  try {
+    const response = await httpClient.sendRequest<KlaviyoAccounts>({
+      method: HttpMethod.GET,
+      url: 'https://a.klaviyo.com/api/accounts',
+      headers: {
+        Authorization: authorization,
+        revision: '2025-04-15',
+        accept: 'application/vnd.api+json',
+      },
+      timeout: 5000,
+    });
+    const contact = response.body.data?.[0]?.attributes?.contact_information;
+    return (
+      contact?.organization_name || contact?.default_sender_email || undefined
+    );
+  } catch {
+    return undefined;
+  }
+}
+
+type KlaviyoAccounts = {
+  data?: {
+    attributes?: {
+      contact_information?: {
+        organization_name?: string;
+        default_sender_email?: string;
+      };
+    };
+  }[];
+};

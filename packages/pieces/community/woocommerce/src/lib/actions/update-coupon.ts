@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
   HttpMethod,
@@ -7,6 +11,7 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { wooPathId } from '../common/path-id';
 import { updateCouponOutputSchema } from '../output-schemas';
 
 export const wooUpdateCoupon = createAction({
@@ -22,42 +27,80 @@ export const wooUpdateCoupon = createAction({
   },
   auth: wooAuth,
   outputSchema: updateCouponOutputSchema,
+  propertyGroups: [
+    {
+      key: 'coupon',
+      display: 'section',
+      label: 'Coupon to Update',
+      icon: 'tag',
+      props: ['id'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'sliders',
+      props: [
+        'changes_info',
+        'amount',
+        'discount_type',
+        'minimum_amount',
+        'usage_limit',
+        'date_expires',
+        'description',
+      ],
+    },
+  ],
   props: {
     id: Property.ShortText({
       displayName: 'Coupon ID',
-      description: 'Enter the coupon ID',
+      description: 'Find it in WooCommerce under Marketing > Coupons.',
+      placeholder: '123',
       required: true,
+    }),
+    changes_info: Property.MarkDown({
+      value: 'Empty fields keep their current value.',
+      variant: MarkdownVariant.INFO,
     }),
     amount: Property.Number({
       displayName: 'Amount',
+      description: "Discount size, as a percent or in your store's currency.",
       required: false,
+      width: 'half',
     }),
     discount_type: Property.StaticDropdown({
       displayName: 'Discount Type',
+      description: 'Percentage uses Amount as a percent; the fixed types as money.',
       required: false,
+      width: 'half',
       options: {
         options: [
-          { label: 'Percentage discount', value: 'percent' },
-          { label: 'Fixed cart discount', value: 'fixed_cart' },
-          { label: 'Fixed product discount', value: 'fixed_product' },
+          { label: 'Percentage', value: 'percent' },
+          { label: 'Fixed cart', value: 'fixed_cart' },
+          { label: 'Fixed product', value: 'fixed_product' },
         ],
       },
     }),
-    description: Property.LongText({
-      displayName: 'Description',
+    minimum_amount: Property.Number({
+      displayName: 'Minimum Spend',
+      description: 'Smallest order total the coupon works on.',
       required: false,
-    }),
-    date_expires: Property.DateTime({
-      displayName: 'Expires At',
-      description: 'Date the coupon stops working',
-      required: false,
+      width: 'half',
     }),
     usage_limit: Property.Number({
       displayName: 'Usage Limit',
+      description: 'How many times the coupon can be used in total.',
+      required: false,
+      width: 'half',
+    }),
+    date_expires: Property.DateTime({
+      displayName: 'Expiry Date',
+      description: 'The coupon stops working after this date.',
       required: false,
     }),
-    minimum_amount: Property.Number({
-      displayName: 'Minimum Spend',
+    description: Property.LongText({
+      displayName: 'Description',
+      description: 'Internal note shown only in WooCommerce admin.',
       required: false,
     }),
   },
@@ -88,7 +131,7 @@ export const wooUpdateCoupon = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.PUT,
-      url: `${trimmedBaseUrl}/wp-json/wc/v3/coupons/${id}`,
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/coupons/${wooPathId.encode({ id, label: 'Coupon ID' })}`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: configValue.auth.props.consumerKey,

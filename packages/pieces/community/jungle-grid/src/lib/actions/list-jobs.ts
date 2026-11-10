@@ -6,6 +6,7 @@ import { jungleGridCommon } from '../common';
 export const listJobs = createAction({
   auth: jungleGridAuth,
   name: 'list_jobs',
+  classification: 'SEARCH',
   displayName: 'List Jobs',
   description: 'List Jungle Grid jobs for the authenticated workspace, optionally filtered by status.',
   audience: 'both',

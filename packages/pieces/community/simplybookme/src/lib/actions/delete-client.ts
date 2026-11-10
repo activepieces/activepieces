@@ -10,6 +10,7 @@ import {
 export const deleteClient = createAction({
   auth: simplybookAuth,
   name: 'delete_client',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Client',
   description: 'Delete an existing client',
   audience: 'both',

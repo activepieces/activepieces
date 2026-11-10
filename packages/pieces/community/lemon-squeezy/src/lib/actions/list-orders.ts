@@ -1,8 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { lemonSqueezyAuth } from '../common/auth';
-import { LEMON_SQUEEZY_API_BASE, getLemonSqueezyHeaders, buildQueryString, fetchStoreOptions } from '../common/api';
-
+import { lsRequest, pageParams } from '../common/client';
+import { storeOptions } from '../common/props';
+import { rawSchemas } from '../common/output-schemas';
 export const listOrders = createAction({
   name: 'list_orders',
   classification: 'SEARCH',
@@ -11,6 +11,7 @@ export const listOrders = createAction({
   audience: 'both',
   aiMetadata: { description: 'List orders from Lemon Squeezy, optionally narrowed by store (empty store spans all stores), customer email, and order status (pending, paid, refunded, etc.), with page-based pagination. Use to find or audit orders by criteria; pair with Get Order for full detail on a single order. Read-only and idempotent.', idempotent: true },
   auth: lemonSqueezyAuth,
+  outputSchema: rawSchemas.orders,
   props: {
     storeId: Property.Dropdown({
       displayName: 'Store',
@@ -18,13 +19,7 @@ export const listOrders = createAction({
       required: false,
       auth: lemonSqueezyAuth,
       refreshers: ['auth'],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
-        }
-        const options = await fetchStoreOptions(auth.secret_text);
-        return { options };
-      },
+      options: async ({ auth }) => storeOptions({ auth }),
     }),
     userEmail: Property.ShortText({
       displayName: 'Customer Email',
@@ -68,15 +63,13 @@ export const listOrders = createAction({
     if (propsValue.storeId) queryParams['filter[store_id]'] = propsValue.storeId;
     if (propsValue.userEmail) queryParams['filter[user_email]'] = propsValue.userEmail;
     if (propsValue.status) queryParams['filter[status]'] = propsValue.status;
-    if (propsValue.page) queryParams['page[number]'] = String(propsValue.page);
-    if (propsValue.perPage) queryParams['page[size]'] = String(propsValue.perPage);
+    Object.assign(queryParams, pageParams(propsValue));
 
-    const url = `${LEMON_SQUEEZY_API_BASE}/orders${buildQueryString(queryParams)}`;
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url,
-      headers: getLemonSqueezyHeaders(auth.secret_text),
+    const response = await lsRequest({
+      apiKey: auth.secret_text,
+      method: 'GET',
+      path: '/orders',
+      query: queryParams,
     });
 
     return response.body;

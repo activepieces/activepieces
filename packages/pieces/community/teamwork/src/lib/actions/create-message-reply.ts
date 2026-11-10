@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createMessageReply = createAction({
 	name: 'create_message_reply',
+	classification: 'WRITE',
 	displayName: 'Create Message Reply',
 	description: 'Post a reply in a message thread.',
 	audience: 'both',

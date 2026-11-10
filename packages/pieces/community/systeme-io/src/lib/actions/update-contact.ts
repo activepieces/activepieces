@@ -1,14 +1,10 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, InputPropertyMap, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { systemeIoAuth } from '../common/auth';
-import { systemeIoCommon } from '../common/client';
+import { systemeIoCommon, systemeIoInput } from '../common/client';
 import { systemeIoProps } from '../common/props';
 import { updateContactActionOutputSchema } from '../output-schemas';
-
-interface ContactFieldUpdate {
-  field: string;
-  value: string;
-}
+import { contactLocaleOptions, optionalLocale } from '../common/dropdowns';
 
 export const updateContact = createAction({
   auth: systemeIoAuth,
@@ -16,8 +12,8 @@ export const updateContact = createAction({
   classification: 'WRITE',
   displayName: 'Update Contact',
   description: 'Update fields (name, phone, custom fields) of an existing contact using fields from your Systeme.io account',
-  audience: 'both',
-  aiMetadata: { description: 'Updates fields of an existing Systeme.io contact, identified by contact id, via a partial merge-patch of standard, account-defined, and manually-keyed custom fields (an empty value clears a field). Use to change a known contact\'s data such as name, phone, or custom attributes. Idempotent: applying the same field values yields the same result; only the provided fields are touched, and a call with no fields makes no change.', idempotent: true },
+  audience: 'human',
+  aiMetadata: { description: 'Updates fields of an existing Systeme.io contact, identified by contact id, via a partial merge-patch of standard, account-defined, and manually-keyed custom fields (an empty value clears a field), plus an optional language change. Use to change a known contact\'s data such as name, phone, or custom attributes. Idempotent: applying the same field values yields the same result; only the provided fields are touched, and a call with no fields makes no change.', idempotent: true },
   props: {
     contactId: systemeIoProps.contactIdDropdown,
     dynamicContactFields: Property.DynamicProperties({
@@ -36,19 +32,9 @@ export const updateContact = createAction({
             auth: auth.secret_text,
           });
 
-          let fields: any[] = [];
-          if (Array.isArray(response)) {
-            fields = response;
-          } else if (response && typeof response === 'object' && response !== null) {
-            const responseAny = response as any;
-            if (responseAny.items && Array.isArray(responseAny.items)) {
-              fields = responseAny.items;
-            }
-          }
+          const dynamicProps: InputPropertyMap = {};
 
-          const dynamicProps: any = {};
-
-          for (const field of fields) {
+          for (const field of contactFieldsOf(response)) {
             dynamicProps[field.slug] = Property.ShortText({
               displayName: field.fieldName || field.slug,
               description: `Update ${field.fieldName || field.slug} (leave empty to keep current value)`,
@@ -80,19 +66,29 @@ export const updateContact = createAction({
         }),
       },
     }),
+    locale: Property.StaticDropdown({
+      displayName: 'Language',
+      description: 'Optional. Change the contact\'s preferred language. Leave empty to keep the current language.',
+      required: false,
+      options: {
+        disabled: false,
+        options: contactLocaleOptions,
+      },
+    }),
   },
   outputSchema: updateContactActionOutputSchema,
   async run(context) {
     const { 
       contactId, 
       dynamicContactFields,
-      customFields
+      customFields,
+      locale,
     } = context.propsValue;
     
-    const fields: any[] = [];
+    const fields: { slug: string; value: string | null }[] = [];
     
     if (dynamicContactFields && typeof dynamicContactFields === 'object') {
-      const fieldsObj = dynamicContactFields as Record<string, any>;
+      const fieldsObj: Record<string, unknown> = dynamicContactFields;
       for (const key in fieldsObj) {
         if (Object.prototype.hasOwnProperty.call(fieldsObj, key)) {
           const value = fieldsObj[key];
@@ -107,18 +103,23 @@ export const updateContact = createAction({
     }
 
     if (customFields && Array.isArray(customFields)) {
-      for (const customField of customFields as any[]) {
-        if (customField.fieldSlug) {
+      for (const customField of customFields) {
+        const slug: unknown = isRecord(customField) ? customField['fieldSlug'] : undefined;
+        const fieldValue: unknown = isRecord(customField) ? customField['fieldValue'] : undefined;
+        if (typeof slug === 'string' && slug !== '') {
           fields.push({
-            slug: customField.fieldSlug,
-            value: customField.fieldValue || null
+            slug,
+            value: fieldValue ? String(fieldValue) : null
           });
         }
       }
     }
 
-    const updateData: any = {};
-    if (fields.length > 0) updateData.fields = fields;
+    const localeValue = optionalLocale(locale);
+    const updateData = {
+      ...(fields.length > 0 ? { fields } : {}),
+      ...(localeValue !== undefined ? { locale: localeValue } : {}),
+    };
 
     if (Object.keys(updateData).length === 0) {
       return {
@@ -130,7 +131,7 @@ export const updateContact = createAction({
 
     const response = await systemeIoCommon.apiCall({
       method: HttpMethod.PATCH,
-      url: `/contacts/${contactId}`,
+      url: `/contacts/${systemeIoInput.requireId({ value: contactId, name: 'Contact ID' })}`,
       body: updateData,
       auth: context.auth.secret_text,
       headers: {
@@ -152,3 +153,21 @@ export const updateContact = createAction({
     };
   },
 });
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function contactFieldsOf(response: unknown): { slug: string; fieldName?: string }[] {
+  const items: unknown = Array.isArray(response) ? response : isRecord(response) ? response['items'] : undefined;
+  if (!Array.isArray(items)) {
+    return [];
+  }
+  return items.flatMap((item: unknown) => {
+    if (!isRecord(item) || typeof item['slug'] !== 'string') {
+      return [];
+    }
+    const fieldName = item['fieldName'];
+    return [{ slug: item['slug'], fieldName: typeof fieldName === 'string' ? fieldName : undefined }];
+  });
+}

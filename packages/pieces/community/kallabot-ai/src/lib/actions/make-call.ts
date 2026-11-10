@@ -4,6 +4,7 @@ import { kallabotAuth } from '../..';
 
 export const makeCallAction = createAction({
   name: 'make-call',
+  classification: 'WRITE',
   displayName: 'Make Call',
   description: 'Initiate an outbound call using Kallabot AI agent.',
   audience: 'both',

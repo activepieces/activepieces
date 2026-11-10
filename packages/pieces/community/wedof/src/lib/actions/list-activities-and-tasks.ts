@@ -6,6 +6,7 @@ import { wedofCommon } from '../common/wedof';
 export const listActivitiesAndTasks = createAction({
   auth: wedofAuth,
   name: 'listActivitiesAndTasks',
+  classification: 'SEARCH',
   displayName: "Liste de toutes les activités et tâches d'un dossier",
   description: "Liste de toutes les activités et tâches d'un dossier (Dossier de formation / Dossier de certification)",
   audience: 'both',

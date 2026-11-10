@@ -11,6 +11,7 @@ interface Item {
 
 export const sendSms = createAction({
   name: 'sendSms',
+  classification: 'WRITE',
   displayName: 'Send SMS',
   auth: krispcallAuth,
   description: 'Send sms in Krispcall.',

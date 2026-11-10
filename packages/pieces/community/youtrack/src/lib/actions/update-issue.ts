@@ -8,6 +8,7 @@ import { updateIssueActionOutputSchema } from '../output-schemas';
 export const updateIssueAction = createAction({
   auth: youtrackAuth,
   name: 'update_issue',
+  classification: 'WRITE',
   outputSchema: updateIssueActionOutputSchema,
   displayName: 'Update Issue',
   description: 'Updates an existing issue - summary, description, or custom fields.',

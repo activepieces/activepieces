@@ -6,6 +6,7 @@ import { BASE_URL } from '../../../index';
 export const createMemory = createAction({
   auth:personalAiAuth,
   name: 'create_memory',
+  classification: 'WRITE',
   displayName: 'Create Memory',
   description: 'Upload memories to your AI assistant stack.',
   audience: 'both',

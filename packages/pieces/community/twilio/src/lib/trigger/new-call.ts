@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { twilioAuth } from '../..';
 import { AuthenticationType, DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
 
@@ -35,8 +35,8 @@ const polling: Polling<
 
     let currentUri:
       | string
-      | null = `/2010-04-01/Accounts/${account_sid}/Calls.json?PageSize=${
-      isTest ? 1 : 1000
+      | null = `/2010-04-01/Accounts/${account_sid}/Calls.json?${
+      isTest ? 'PageSize=10&Status=completed' : 'PageSize=1000'
     }`;
 
     const results = [];
@@ -135,18 +135,10 @@ export const twilioNewCall = createTrigger({
 
 
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   async test(context) {
     return await pollingHelper.test(polling, context);

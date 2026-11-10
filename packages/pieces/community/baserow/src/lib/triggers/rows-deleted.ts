@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import { baserowCommon, makeClient } from '../common';
-import { createWebhookTriggerHooks, dynamicWebhookInstructions } from '../common/webhook-trigger';
+import { createWebhookTriggerHooks, dynamicWebhookInstructions, webhookUrlInfo } from '../common/webhook-trigger';
 import { rowsDeletedTriggerOutputSchema } from '../output-schemas';
 
 const triggerHooks = createWebhookTriggerHooks({
@@ -15,15 +15,31 @@ export const rowsDeletedTrigger = createTrigger({
   outputSchema: rowsDeletedTriggerOutputSchema,
   auth: baserowAuth,
   displayName: 'Deleted Rows (Batch)',
-  description:
-    'Triggers when rows are deleted from a Baserow table. Returns all deleted row IDs from the event as a single batch.',
+  description: 'Triggers once with the IDs of all the rows deleted together.',
   aiMetadata: {
     description:
       'Fires when one or more rows are deleted from the selected Baserow table, delivering all deleted row IDs from a single delete event together as one batch. Use to process bulk deletions at once; for one event per row use Deleted Row.',
   },
   type: TriggerStrategy.WEBHOOK,
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Table to Watch',
+      icon: 'file',
+      props: ['table_id'],
+    },
+    {
+      key: 'setup',
+      display: 'section',
+      label: 'Webhook',
+      icon: 'send',
+      props: ['webhook_url', 'instructions'],
+    },
+  ],
   props: {
     table_id: baserowCommon.tableId(),
+    webhook_url: webhookUrlInfo(),
     instructions: dynamicWebhookInstructions('Rows deleted'),
   },
   sampleData: {

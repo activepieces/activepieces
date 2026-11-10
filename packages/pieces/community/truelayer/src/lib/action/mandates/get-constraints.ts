@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const getConstraints = createAction({
   auth: trueLayerCommon.auth,
   name: 'get-constraints',
+  classification: 'READ',
   displayName: 'Get Mandate Constraints',
   description: 'Retrieve the constraints defined on the mandate, as well as the current utilization of those constraints within the periods.',
   audience: 'both',

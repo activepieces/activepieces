@@ -7,6 +7,7 @@ import { googleChatAPIService } from '../common/requests';
 export const newMention = createTrigger({
   auth: googleChatApiAuth,
   name: 'newMention',
+  classification: 'READ',
   displayName: 'New Mention',
   description: 'Triggers when a new mention is received in Google Chat.',
   aiMetadata: {

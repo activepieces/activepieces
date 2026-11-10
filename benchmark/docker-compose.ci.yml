@@ -1,0 +1,53 @@
+# CI-only override layered on top of docker-compose.yml.
+#
+# Keeps bench-specific config out of the base file so smoke-test.yml and dev
+# `docker compose up` keep running with CE defaults (base is unchanged from
+# the pre-SRE-229 shape).
+#
+# Adds, as a group, everything the nightly benchmark needs that the smoke
+# test does NOT want:
+#   - cpuset pinning (requires ≥18 cores — breaks smaller dev hosts; fine
+#     on the 32-vCPU CI runner).
+#   - AP_EDITION=ee (smoke-test runs CE by design, since most self-hosters
+#     are on CE; shouldn't be forced to EE just because the bench stack is).
+#   - AP_NETWORK_MODE=UNRESTRICTED / AP_PROJECT_WORKER: prod-parity env
+#     (matches Kamal shared tag). Note: prod's Kamal also sets
+#     AP_PRE_WARM_CACHE=true, but that is dead config — the server does
+#     not read it (removed), the current prewarm toggle is
+#     AP_PREWARM_CACHE_ON_STARTUP. We don't set either so cold-boot
+#     behavior matches real prod.
+#   - NODE_OPTIONS heap: sized to WORKER_HEAP_MB from the matrix.
+#   - AP_EXECUTION_MODE=SANDBOX_PROCESS: prod mode. Smoke-test keeps the
+#     SANDBOX_CODE_ONLY base default.
+#   - AP_REUSE_SANDBOX: required explicitly via ${:?} so you can't forget
+#     to pass it per matrix cell. Smoke-test needs the mode-aware default
+#     from canReuseSandbox() (its verify-memory.sh measures warm reuse).
+#   - cpus / memory / replicas: overridden per cell by matrix env vars.
+#
+# Layer usage (CI and run-local, not smoke-test):
+#   docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.ci.yml up -d
+
+services:
+  app:
+    cpuset: "16-17"
+    environment:
+      AP_EDITION: ee
+      AP_NETWORK_MODE: UNRESTRICTED
+      AP_EXECUTION_MODE: ${AP_EXECUTION_MODE:-SANDBOX_PROCESS}
+
+  worker:
+    cpuset: "0-15"
+    environment:
+      AP_EDITION: ee
+      AP_NETWORK_MODE: UNRESTRICTED
+      AP_PROJECT_WORKER: 'false'
+      AP_EXECUTION_MODE: ${AP_EXECUTION_MODE:-SANDBOX_PROCESS}
+      AP_REUSE_SANDBOX: ${AP_REUSE_SANDBOX:?AP_REUSE_SANDBOX must be set (true|false) when using docker-compose.ci.yml}
+      AP_WORKER_CONCURRENCY: ${AP_WORKER_CONCURRENCY:-1}
+      NODE_OPTIONS: --max-old-space-size=${WORKER_HEAP_MB:-768}
+    deploy:
+      replicas: ${WORKER_REPLICAS:-4}
+      resources:
+        limits:
+          cpus: ${WORKER_CPUS:-0.5}
+          memory: ${WORKER_MEMORY:-1G}

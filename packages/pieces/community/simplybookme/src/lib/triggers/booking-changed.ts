@@ -5,6 +5,7 @@ import { simplybookAuth } from '../common';
 export const bookingChanged = createTrigger({
   auth: simplybookAuth,
   name: 'booking_changed',
+  classification: 'READ',
   displayName: 'Booking Change',
   description: 'Triggers when a booking is changed in SimplyBook.me',
   aiMetadata: {

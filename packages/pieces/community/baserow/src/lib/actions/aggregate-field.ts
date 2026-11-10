@@ -13,7 +13,7 @@ export const aggregateFieldAction = createAction({
   outputSchema: aggregateFieldOutputSchema,
   displayName: 'Aggregate Field',
   description:
-    'Calculates an aggregation (sum, average, min, max, count, etc.) over all values of a field in a grid view.',
+    'Calculates a sum, average, count and more over a column in a view.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -21,11 +21,27 @@ export const aggregateFieldAction = createAction({
     idempotent: true,
   },
   auth: baserowAuth,
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Location',
+      icon: 'location',
+      props: ['table_id'],
+    },
+    {
+      key: 'calculation',
+      display: 'section',
+      label: 'What to Calculate',
+      icon: 'sliders',
+      props: ['view_id', 'field_id', 'aggregation_type'],
+    },
+  ],
   props: {
     table_id: baserowCommon.tableId(),
     view_id: Property.Dropdown({
       displayName: 'View',
-      description: 'Select the grid view to aggregate.',
+      description: 'The grid view to use. Its filters apply to the result.',
       required: true,
       auth: baserowAuth,
       refreshers: ['auth', 'table_id'],
@@ -47,7 +63,7 @@ export const aggregateFieldAction = createAction({
     }),
     field_id: Property.Dropdown({
       displayName: 'Field',
-      description: 'Select the field to aggregate.',
+      description: 'The column to calculate over.',
       required: true,
       auth: baserowAuth,
       refreshers: ['auth', 'table_id'],
@@ -68,22 +84,22 @@ export const aggregateFieldAction = createAction({
       },
     }),
     aggregation_type: Property.StaticDropdown({
-      displayName: 'Aggregation Type',
+      displayName: 'Calculation',
       description:
-        'The calculation to run over the field. **Sum, Average, Min, Max, Median, Std Dev, and Variance** only work with number fields.',
+        'Sum, average, median, deviation and variance need a number column.',
       required: true,
       options: {
         disabled: false,
         options: [
           { label: 'Sum', value: 'sum' },
           { label: 'Average', value: 'average' },
-          { label: 'Min', value: 'min' },
-          { label: 'Max', value: 'max' },
-          { label: 'Count (non-empty)', value: 'not_empty_count' },
-          { label: 'Count (empty)', value: 'empty_count' },
-          { label: 'Count (unique values)', value: 'unique_count' },
+          { label: 'Minimum', value: 'min' },
+          { label: 'Maximum', value: 'max' },
+          { label: 'Count of Filled Cells', value: 'not_empty_count' },
+          { label: 'Count of Empty Cells', value: 'empty_count' },
+          { label: 'Count of Unique Values', value: 'unique_count' },
           { label: 'Median', value: 'median' },
-          { label: 'Standard deviation', value: 'std_dev' },
+          { label: 'Standard Deviation', value: 'std_dev' },
           { label: 'Variance', value: 'variance' },
         ],
       },

@@ -12,6 +12,7 @@ const TRIGGER_KEY = 'dimo-speed-trigger';
 export const speedTrigger = createTrigger({
 	auth: dimoAuth,
 	name: 'speed-trigger',
+	classification: 'READ',
 	displayName: 'Speed Trigger',
 	description: 'Triggers when vehicle speed meets specified conditions.',
 	aiMetadata: {

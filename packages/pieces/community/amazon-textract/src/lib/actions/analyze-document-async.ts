@@ -62,7 +62,7 @@ export const analyzeDocumentAsync = createAction({
     const { s3Bucket, s3Key, featureTypes, queries, clientRequestToken } = context.propsValue;
 
     try {
-      const client = createTextractClient(context.auth.props);
+      const client = await createTextractClient({ auth: context.auth.props, server: context.server });
 
       const resolvedFeatureTypes: FeatureType[] = [...(featureTypes as FeatureType[])];
       const startInput: ConstructorParameters<typeof StartDocumentAnalysisCommand>[0] = {

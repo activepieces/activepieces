@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const searchCompanies = createAction({
   auth: pubrioAuth,
   name: 'search_companies',
+  classification: 'SEARCH',
   displayName: 'Search Companies',
   description:
     'Search B2B companies by name, domain, location, industry, technology, or headcount',

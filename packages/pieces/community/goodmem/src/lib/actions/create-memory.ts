@@ -1,15 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { goodmemAuth } from '../../index';
-import { getBaseUrl, getCommonHeaders, extractAuthFromContext, spaceIdDropdown } from '../common';
+import { extractAuthFromContext, goodmemOutputSchemas, spaceIdDropdown } from '../common';
+import { goodmemApi, goodmemBuilders } from '../common/client';
 
 export const createMemory = createAction({
   auth: goodmemAuth,
   name: 'create_memory',
+  classification: 'WRITE',
   displayName: 'Create Memory',
   description: 'Store a document as a new memory in a space. The memory is processed asynchronously - chunked into searchable pieces and embedded into vectors. Accepts a file or plain text.',
-  audience: 'both',
-  aiMetadata: { description: 'Stores content as a new memory in a GoodMem space, which is then chunked and embedded asynchronously for later semantic retrieval. Provide the content either as a file or as plain text (the file takes priority when both are given), along with the target space ID. Use it to ingest documents into a memory store. Not idempotent: each call creates a separate memory, so repeated calls produce duplicates.', idempotent: false },
+  audience: 'human',
+  outputSchema: goodmemOutputSchemas.memory,
   props: {
     spaceId: spaceIdDropdown,
     file: Property.File({
@@ -45,97 +46,18 @@ export const createMemory = createAction({
   },
   async run(context) {
     const { spaceId, file, textContent, source, author, tags, metadata } = context.propsValue;
-    const { baseUrl: rawBaseUrl, apiKey } = extractAuthFromContext(context.auth);
-    const baseUrl = getBaseUrl(rawBaseUrl);
-
-    const requestBody: any = {
-      spaceId,
-    };
-
-    if (file && file.base64) {
-      // File provided — auto-detect content type from extension
-      const detectedMimeType = file.extension
-        ? getMimeType(file.extension)
-        : null;
-      const mimeType = detectedMimeType || 'application/octet-stream';
-
-      // For text file types, decode base64 and send as originalContent
-      if (mimeType.startsWith('text/')) {
-        const decoded = Buffer.from(file.base64, 'base64').toString('utf-8');
-        requestBody.contentType = mimeType;
-        requestBody.originalContent = decoded;
-      } else {
-        // For binary types (PDF, images, etc.), send as base64
-        requestBody.contentType = mimeType;
-        requestBody.originalContentB64 = file.base64;
-      }
-    } else if (textContent) {
-      // Plain text provided
-      requestBody.contentType = 'text/plain';
-      requestBody.originalContent = textContent;
-    } else {
-      return {
-        success: false,
-        error: 'No content provided. Please provide a file or text content.',
-      };
-    }
-
-    const mergedMetadata: any = {};
-    if (metadata && typeof metadata === 'object' && Object.keys(metadata).length > 0) {
-      Object.assign(mergedMetadata, metadata);
-    }
-    if (source) {
-      mergedMetadata.source = source;
-    }
-    if (author) {
-      mergedMetadata.author = author;
-    }
-    if (tags) {
-      mergedMetadata.tags = tags.split(',').map((t: string) => t.trim()).filter((t: string) => t.length > 0);
-    }
-    if (Object.keys(mergedMetadata).length > 0) {
-      requestBody.metadata = mergedMetadata;
-    }
-
-    try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: `${baseUrl}/v1/memories`,
-        headers: getCommonHeaders(apiKey),
-        body: requestBody,
-      });
-
-      return response.body;
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message || 'Failed to create memory',
-        details: error.response?.body || error,
-      };
-    }
+    const auth = extractAuthFromContext(context.auth);
+    const body = goodmemBuilders.buildMemoryRequestBody({
+      spaceId: goodmemBuilders.requireText({ value: spaceId, label: 'Space' }),
+      file: file ? { base64: file.base64, extension: file.extension, filename: file.filename } : null,
+      textContent: textContent ?? undefined,
+      metadata: goodmemBuilders.buildMemoryMetadata({
+        source: source ?? undefined,
+        author: author ?? undefined,
+        tags: tags ?? undefined,
+        metadata,
+      }),
+    });
+    return goodmemApi.createMemoryRequest({ auth, body });
   },
 });
-
-function getMimeType(extension: string): string | null {
-  const mimeTypes: Record<string, string> = {
-    pdf: 'application/pdf',
-    png: 'image/png',
-    jpg: 'image/jpeg',
-    jpeg: 'image/jpeg',
-    gif: 'image/gif',
-    webp: 'image/webp',
-    txt: 'text/plain',
-    html: 'text/html',
-    md: 'text/markdown',
-    csv: 'text/csv',
-    json: 'application/json',
-    xml: 'application/xml',
-    doc: 'application/msword',
-    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    xls: 'application/vnd.ms-excel',
-    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    ppt: 'application/vnd.ms-powerpoint',
-    pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  };
-  return mimeTypes[extension.toLowerCase().replace('.', '')] || null;
-}

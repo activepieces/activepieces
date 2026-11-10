@@ -13,7 +13,7 @@ const LoadingSpinner = React.memo(
     return (
       <LoaderCircle
         className={cn(
-          'animate-spin  duration-1500 stroke-foreground size-5',
+          'animate-spin  duration-1500 stroke-gray-12 size-5',
           {
             'size-[24px]': !isLarge,
             'size-[50px]': isLarge,

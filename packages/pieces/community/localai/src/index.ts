@@ -1,27 +1,14 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { askLocalAI } from './lib/actions/send-prompt';
+import { listModels } from './lib/actions/list-models';
+import { createEmbedding } from './lib/actions/create-embedding';
+import { textToSpeech } from './lib/actions/text-to-speech';
+import { transcribeAudio } from './lib/actions/transcribe-audio';
+import { localaiAuth } from './lib/auth';
+import { localaiCommon } from './lib/common';
 
-export const localaiAuth = PieceAuth.CustomAuth({
-  props: {
-    base_url: Property.ShortText({
-      displayName: 'Server URL',
-      description: 'LocalAI Instance URL',
-      required: true,
-    }),
-    access_token: Property.ShortText({
-      displayName: 'Access Token',
-      description: 'LocalAI Access Token',
-      required: false,
-    }),
-  },
-  required: true,
-});
 export const openai = createPiece({
   displayName: 'LocalAI',
   description:
@@ -32,16 +19,18 @@ export const openai = createPiece({
   auth: localaiAuth,
   actions: [
     askLocalAI,
+    listModels,
+    createEmbedding,
+    textToSpeech,
+    transcribeAudio,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth)?.props.base_url ?? '',
+      baseUrl: (auth) => (auth ? localaiCommon.baseUrl(auth) : ''),
       auth: localaiAuth,
-      authMapping: async (auth) => ({
-        Authorization: `Bearer ${
-          auth.props.access_token || ''
-        }`,
-      }),
+      authMapping: async (auth) => localaiCommon.authHeaders(auth),
     }),
   ],
   authors: ["hkboujrida","kishanprmr","MoShizzle","abuaboud"],
   triggers: [],
 });
+
+export { localaiAuth };

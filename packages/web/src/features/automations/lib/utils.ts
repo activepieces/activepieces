@@ -1,4 +1,9 @@
-import { FolderDto, PopulatedFlow, Table } from '@activepieces/shared';
+import {
+  AgentSummary,
+  FolderDto,
+  PopulatedFlow,
+  Table,
+} from '@activepieces/shared';
 
 import {
   AutomationsFilters,
@@ -13,7 +18,7 @@ export const FOLDER_PAGE_SIZE = 50;
 export const ROOT_ITEMS_LIMIT = 1000;
 
 export function getUpdatedDate(
-  item: PopulatedFlow | Table | FolderDto,
+  item: PopulatedFlow | Table | AgentSummary | FolderDto,
 ): number {
   return new Date(item.updated).getTime();
 }
@@ -21,38 +26,18 @@ export function getUpdatedDate(
 export function mergeAndSortItems({
   flows,
   tables,
+  agents,
   sort,
 }: {
   flows: PopulatedFlow[];
   tables: Table[];
+  agents: AgentSummary[];
   sort: AutomationsSort;
 }): TreeItem[] {
-  const items: TreeItem[] = [];
-
-  flows.forEach((flow) => {
-    items.push({
-      id: flow.id,
-      type: 'flow',
-      name: flow.version.displayName,
-      data: flow,
-      depth: 0,
-      folderId: null,
-    });
-  });
-
-  tables.forEach((table) => {
-    items.push({
-      id: table.id,
-      type: 'table',
-      name: table.name,
-      data: table,
-      depth: 0,
-      folderId: null,
-    });
-  });
-
-  items.sort(treeItemComparator(sort));
-  return items;
+  return toTreeItems({
+    content: { flows, tables, agents },
+    placeIn: () => null,
+  }).sort(treeItemComparator(sort));
 }
 
 export function buildFolderChildren({
@@ -68,31 +53,9 @@ export function buildFolderChildren({
   totalCount: number;
   sort: AutomationsSort;
 }): TreeItem[] {
-  const children: TreeItem[] = [];
-
-  content.flows.forEach((flow) => {
-    children.push({
-      id: flow.id,
-      type: 'flow',
-      name: flow.version.displayName,
-      data: flow,
-      depth: 1,
-      folderId,
-    });
-  });
-
-  content.tables.forEach((table) => {
-    children.push({
-      id: table.id,
-      type: 'table',
-      name: table.name,
-      data: table,
-      depth: 1,
-      folderId,
-    });
-  });
-
-  children.sort(treeItemComparator(sort));
+  const children = toTreeItems({ content, placeIn: () => folderId }).sort(
+    treeItemComparator(sort),
+  );
 
   const visible = children.slice(0, visibleCount);
   const remaining = totalCount - Math.min(visibleCount, children.length);
@@ -116,6 +79,7 @@ export function buildTreeItems({
   folders,
   rootFlows,
   rootTables,
+  rootAgents,
   folderContents,
   folderCounts,
   folderVisibleCounts,
@@ -127,6 +91,7 @@ export function buildTreeItems({
   folders: FolderDto[];
   rootFlows: PopulatedFlow[];
   rootTables: Table[];
+  rootAgents: AgentSummary[];
   folderContents: Map<string, FolderContent>;
   folderCounts: Map<string, number>;
   folderVisibleCounts: Map<string, number>;
@@ -156,10 +121,14 @@ export function buildTreeItems({
   const dedupedTables = rootTables.filter(
     (t) => !t.folderId || !folderIdSet.has(t.folderId),
   );
+  const dedupedAgents = rootAgents.filter(
+    (a) => !a.folderId || !folderIdSet.has(a.folderId),
+  );
 
   const rootItems = mergeAndSortItems({
     flows: dedupedFlows,
     tables: dedupedTables,
+    agents: dedupedAgents,
     sort,
   });
   const compareItems = treeItemComparator(sort);
@@ -215,6 +184,7 @@ export function buildTreeItems({
 export function buildFilteredTreeItems({
   flows,
   tables,
+  agents,
   folders,
   folderVisibleCounts,
   page,
@@ -227,6 +197,7 @@ export function buildFilteredTreeItems({
 }: {
   flows: PopulatedFlow[];
   tables: Table[];
+  agents: AgentSummary[];
   folders: FolderDto[];
   folderVisibleCounts: Map<string, number>;
   page: number;
@@ -244,37 +215,11 @@ export function buildFilteredTreeItems({
   const folderChildren = new Map<string, TreeItem[]>();
   const rootItems: TreeItem[] = [];
 
-  flows.forEach((flow) => {
-    const itemFolderId =
-      flow.folderId && folderMap.has(flow.folderId) ? flow.folderId : null;
-    const item: TreeItem = {
-      id: flow.id,
-      type: 'flow',
-      name: flow.version.displayName,
-      data: flow,
-      depth: itemFolderId ? 1 : 0,
-      folderId: itemFolderId,
-    };
-    if (item.folderId) {
-      const list = folderChildren.get(item.folderId) ?? [];
-      list.push(item);
-      folderChildren.set(item.folderId, list);
-    } else {
-      rootItems.push(item);
-    }
-  });
-
-  tables.forEach((table) => {
-    const itemFolderId =
-      table.folderId && folderMap.has(table.folderId) ? table.folderId : null;
-    const item: TreeItem = {
-      id: table.id,
-      type: 'table',
-      name: table.name,
-      data: table,
-      depth: itemFolderId ? 1 : 0,
-      folderId: itemFolderId,
-    };
+  toTreeItems({
+    content: { flows, tables, agents },
+    placeIn: (entityFolderId) =>
+      entityFolderId && folderMap.has(entityFolderId) ? entityFolderId : null,
+  }).forEach((item) => {
     if (item.folderId) {
       const list = folderChildren.get(item.folderId) ?? [];
       list.push(item);
@@ -423,6 +368,42 @@ export function groupTreeItemsByFolder(items: TreeItem[]): TreeRow[] {
     }
     return rows;
   }, []);
+}
+
+function toTreeItems({
+  content,
+  placeIn,
+}: {
+  content: FolderContent;
+  placeIn: (entityFolderId: string | null) => string | null;
+}): TreeItem[] {
+  const entries = [
+    ...content.flows.map((flow) => ({
+      id: flow.id,
+      type: 'flow' as const,
+      name: flow.version.displayName,
+      data: flow,
+      entityFolderId: flow.folderId ?? null,
+    })),
+    ...content.tables.map((table) => ({
+      id: table.id,
+      type: 'table' as const,
+      name: table.name,
+      data: table,
+      entityFolderId: table.folderId ?? null,
+    })),
+    ...content.agents.map((agent) => ({
+      id: agent.id,
+      type: 'agent' as const,
+      name: agent.displayName,
+      data: agent,
+      entityFolderId: agent.folderId ?? null,
+    })),
+  ];
+  return entries.map(({ entityFolderId, ...entry }) => {
+    const folderId = placeIn(entityFolderId);
+    return { ...entry, depth: folderId ? 1 : 0, folderId };
+  });
 }
 
 function treeItemComparator(

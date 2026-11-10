@@ -5,6 +5,7 @@ import { insightoAuth } from '../..';
 
 export const newCapturedForm = createTrigger({
   name: 'new_captured_form',
+  classification: 'READ',
   displayName: 'New Captured Form',
   description: 'Fires when a new form submission is captured in Insighto.ai',
   aiMetadata: {

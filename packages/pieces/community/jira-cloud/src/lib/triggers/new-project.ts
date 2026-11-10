@@ -5,6 +5,7 @@ import { getProjects } from '../common';
 import { projectTriggerOutputSchema } from '../output-schemas';
 export const newProject = createTrigger({
   name: 'new_project',
+  classification: 'READ',
   displayName: 'New Project',
   description: 'Triggers when a new project is created',
   aiMetadata: {
@@ -34,6 +35,9 @@ export const newProject = createTrigger({
     await context.store.put('projectIds', JSON.stringify(ids));
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete('projectIds');
   },
   async run(context) {

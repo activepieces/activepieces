@@ -6,10 +6,11 @@ import { useState } from 'react';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
+import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
 import { billingQueries } from '../hooks/billing-hooks';
 import { useCreditsUsage } from '../hooks/use-credits-usage';
-import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
 import { billingUtils } from '../utils/billing-utils';
 
 import { AutoRechargeConfigDialog } from './feature-usage/auto-recharge-config-dialog';
@@ -22,7 +23,8 @@ export function CreditsActionButton({
     useCreditsUsage();
   const { embedState } = useEmbedding();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
+  const { openDialog: openManagePlanDialog } =
+    billingDialogHooks.useManagePlanDialogStore();
   const [autoRechargeOpen, setAutoRechargeOpen] = useState(false);
 
   const canManageBilling =
@@ -48,6 +50,7 @@ export function CreditsActionButton({
     case 'upgrade':
       return (
         <Button
+          {...adminControl(AdminControl.BILLING_CREDITS_UPGRADE_OPEN)}
           variant={variant}
           size="sm"
           className={className}
@@ -61,6 +64,7 @@ export function CreditsActionButton({
       return (
         <>
           <Button
+            {...adminControl(AdminControl.BILLING_CREDITS_RECHARGE_OPEN)}
             variant={variant}
             size="sm"
             className={className}
@@ -87,4 +91,4 @@ type CreditsActionButtonProps = {
   variant?: CreditsActionButtonVariant;
 };
 
-type CreditsActionButtonVariant = 'basic' | 'accent' | 'default';
+type CreditsActionButtonVariant = 'basic' | 'secondary' | 'default';

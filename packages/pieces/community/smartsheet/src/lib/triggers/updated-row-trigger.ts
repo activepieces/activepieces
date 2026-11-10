@@ -15,6 +15,7 @@ const TRIGGER_KEY = 'smartsheet_updated_row_trigger';
 export const updatedRowTrigger = createTrigger({
 	auth: smartsheetAuth,
 	name: 'updated_row',
+	classification: 'READ',
 	displayName: 'Row Updated',
 	description: 'Triggers when an existing row is updated.',
 	aiMetadata: {

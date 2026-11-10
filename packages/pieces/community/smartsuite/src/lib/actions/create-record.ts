@@ -2,16 +2,18 @@ import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { smartsuiteAuth } from '../auth';
 import { smartsuiteCommon, formatRecordFields, transformRecordFields } from '../common/props';
-import { smartSuiteApiCall, TableStucture } from '../common';
+import { smartSuiteApi, SmartSuiteRecord } from '../common';
+import { smartSuiteClient } from '../common/client';
+import { outputSchemas } from '../output-schemas';
 
 export const createRecord = createAction({
 	name: 'create_record',
 	classification: 'WRITE',
 	displayName: 'Create a Record',
 	description: 'Creates a new record in the specified table.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
-		description: 'Adds a new record (row) to a SmartSuite table, with field values mapped against the live table schema. Use when an agent needs to insert data into a SmartSuite database; requires the target solution and table, plus the field values to set. Not idempotent — each call creates a separate record.',
+		description: 'Adds a new record (row) to a SmartSuite table using form fields built from the table schema; the output is keyed by field label. Agents should use Create Record (by Table ID) instead. Not idempotent: each call creates a separate record.',
 		idempotent: false,
 	},
 	auth: smartsuiteAuth,
@@ -20,51 +22,18 @@ export const createRecord = createAction({
 		tableId: smartsuiteCommon.tableId,
 		fields: smartsuiteCommon.tableFields,
 	},
+	outputSchema: outputSchemas['labelledRecord'],
 	async run({ auth, propsValue }) {
-		const { tableId, fields, solutionId } = propsValue;
-
-		const tableResponse = await smartSuiteApiCall<{
-			structure: TableStucture[];
-		}>({
-			apiKey: auth.props.apiKey,
-			accountId: auth.props.accountId,
-			method: HttpMethod.GET,
-			resourceUri: `/applications/${tableId}`,
+		const { tableId, fields } = propsValue;
+		const credentials = smartSuiteClient.credentialsOf(auth);
+		const table = await smartSuiteApi.getTable({ credentials, tableId });
+		const response = await smartSuiteClient.request<SmartSuiteRecord>({
+			credentials,
+			method: HttpMethod.POST,
+			path: `/applications/${smartSuiteClient.pathSegment({ value: tableId, label: 'Table' })}/records/`,
+			body: formatRecordFields({ tableSchema: table.structure, tableValues: fields ?? {} }),
+			operation: 'create record',
 		});
-		const tableSchema = tableResponse.structure;
-
-		const formattedFields = formatRecordFields(tableSchema, fields);
-
-		try {
-			const response = await smartSuiteApiCall<Record<string, any>>({
-				apiKey: auth.props.apiKey,
-				accountId: auth.props.accountId,
-				method: HttpMethod.POST,
-				resourceUri: `/applications/${tableId}/records/`,
-				body: formattedFields,
-			});
-
-			const transformedFields = transformRecordFields(tableSchema, response);
-
-			return transformedFields;
-		} catch (error: any) {
-			if (error.response?.status === 422) {
-				throw new Error(
-					`Invalid request: ${
-						error.response?.body?.message || 'Missing required fields or invalid data'
-					}`,
-				);
-			}
-
-			if (error.response?.status === 403) {
-				throw new Error('You do not have permission to create records in this table');
-			}
-
-			if (error.response?.status === 404) {
-				throw new Error(`Solution or table not found: ${solutionId}/${tableId}`);
-			}
-
-			throw new Error(`Failed to create record: ${error.message || 'Unknown error'}`);
-		}
+		return transformRecordFields({ tableSchema: table.structure, tableValues: response });
 	},
 });

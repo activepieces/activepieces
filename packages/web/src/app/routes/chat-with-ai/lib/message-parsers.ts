@@ -9,27 +9,18 @@ export function normalizePieceName(piece: string): string {
     : `@activepieces/piece-${shortName}`;
 }
 
-export function isConnectionHealthy(status: string): boolean {
-  return status === AppConnectionStatus.ACTIVE;
+export function isConnectionPickerData(
+  input: Record<string, unknown>,
+): input is Record<string, unknown> & ConnectionPickerData {
+  return (
+    typeof input['piece'] === 'string' &&
+    input['piece'].length > 0 &&
+    typeof input['displayName'] === 'string'
+  );
 }
 
-export function pickDefaultConnectionExternalId({
-  healthy,
-  updatedByExternalId,
-}: {
-  healthy: Array<{ externalId: string }>;
-  updatedByExternalId: Record<string, string | undefined>;
-}): string | null {
-  if (healthy.length === 0) return null;
-  const sorted = [...healthy].sort((a, b) => {
-    const aUpdated = updatedByExternalId[a.externalId];
-    const bUpdated = updatedByExternalId[b.externalId];
-    if (aUpdated && bUpdated) return bUpdated.localeCompare(aUpdated);
-    if (aUpdated) return -1;
-    if (bUpdated) return 1;
-    return 0;
-  });
-  return sorted[0].externalId;
+export function isConnectionHealthy(status: string): boolean {
+  return status === AppConnectionStatus.ACTIVE;
 }
 
 export function resolveConnectionCardState({

@@ -11,7 +11,7 @@ export const listPosts = createAction({
   outputSchema: listPostsActionOutputSchema,
   classification: 'READ',
   displayName: 'List Posts',
-  description: 'Lists the posts of a specified location.',
+  description: 'List the posts published on a location.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -19,15 +19,34 @@ export const listPosts = createAction({
     idempotent: true,
   },
   auth: googleAuth,
+  propertyGroups: [
+    {
+      key: 'business',
+      display: 'section',
+      label: 'Business',
+      icon: 'location',
+      props: ['account', 'location'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['maxResults'],
+    },
+  ],
   props: {
     account: googleBusinessCommon.account,
     location: googleBusinessCommon.location,
     maxResults: Property.Number({
       displayName: 'Maximum Results',
-      description:
-        'Stop after this many posts. Google returns at most 100 per request, so larger values are fetched over several requests.',
+      description: 'Stop after this many posts. Default 100.',
       required: false,
       defaultValue: 100,
+      display: 'stepper',
+      min: 1,
+      max: 1000,
+      step: 1,
     }),
   },
   async run(ctx) {

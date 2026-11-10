@@ -6,6 +6,7 @@ import { famulorCommon } from '../common';
 export const deleteLead = createAction({
   auth: famulorAuth,
   name: 'deleteLead',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Lead',
   description: 'Permanently delete a lead and abort any ongoing calls.',
   audience: 'both',

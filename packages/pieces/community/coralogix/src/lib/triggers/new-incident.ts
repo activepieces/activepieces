@@ -1,5 +1,6 @@
 import {
   createTrigger,
+  isNil,
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
@@ -12,6 +13,7 @@ const STORE_KEY = 'coralogix_seen_incident_ids';
 export const newIncident = createTrigger({
   auth: coralogixAuth,
   name: 'newIncident',
+  classification: 'READ',
   displayName: 'New Incident',
   description:
     'Triggers when a new incident appears in Coralogix. Polls on a schedule — ideal for paging on-call, creating Jira tickets, or posting to Slack.',
@@ -45,6 +47,9 @@ export const newIncident = createTrigger({
     subsystemName: ['payments'],
   },
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get(STORE_KEY))) {
+      return;
+    }
     const response = (await makeRequest(
       context.auth,
       'management',

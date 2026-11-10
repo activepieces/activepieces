@@ -1,10 +1,11 @@
 import { ChildProcess } from 'child_process'
-import { EngineOperation, EngineOperationType, EngineResponse } from '@activepieces/shared'
+import { EngineOperation, EngineOperationType, EngineResponse, WorkerRpcContract } from '@activepieces/shared'
 
 export type SandboxMount = {
     hostPath: string
     sandboxPath: string
     optional?: boolean
+    rw?: boolean
 }
 
 export type SandboxResourceLimits = {
@@ -59,6 +60,7 @@ export type SandboxInitOptions = {
 
 export type SandboxOptions = {
     timeoutInSeconds: number
+    engineRpc?: WorkerRpcContract
 }
 
 export type SandboxLogger = {

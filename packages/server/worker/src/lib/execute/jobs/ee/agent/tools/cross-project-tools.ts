@@ -8,7 +8,6 @@ import { AgentEventEmitter, cardTitleFields, extractUserFacingError, GateDecisio
 function createProgressGuard() {
     const failureCounts = new Map<string, number>()
     const succeededWrites = new Set<string>()
-    const loadedGuides = new Set<string>()
 
     const actionKey = ({ pieceName, actionName, input }: { pieceName: string, actionName: string, input: unknown }): string =>
         `${pieceName}::${actionName}::${stableStringify(input ?? {})}`
@@ -41,20 +40,15 @@ function createProgressGuard() {
             }
             failureCounts.set(key, (failureCounts.get(key) ?? 0) + 1)
         },
-        markGuideLoaded: (topic: string): boolean => {
-            if (loadedGuides.has(topic)) return true
-            loadedGuides.add(topic)
-            return false
-        },
     }
 }
 
-export function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides, taintState }: {
+export function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, isDeclaredReadOnly, taintState }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: AgentEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
-    guides: Record<string, string>
+    isDeclaredReadOnly?: (params: { pieceName: string, actionName: string }) => Promise<boolean | undefined>
     taintState: TaintState
 }): ToolSet {
     const progressGuard = createProgressGuard()
@@ -67,7 +61,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
 
     return {
         ap_discover_action_auth: tool({
-            description: 'Check what authentication a piece needs and find available connections. Call this BEFORE ap_execute_action to determine if auth is needed.',
+            description: 'Check what authentication a piece needs and find available connections. In chat you rarely need it: ap_show_connection_picker runs this check itself, so call the card directly. Use this only when you need the auth details without showing a card.',
             inputSchema: z.object({
                 ...cardTitleFields,
                 pieceName: z.string().describe('Piece name, e.g. "@activepieces/piece-gmail"'),
@@ -88,7 +82,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
         }),
 
         ap_execute_action: tool({
-            description: 'Execute a piece action once or in batch. Before the FIRST call to an action you have not already inspected this conversation, call ap_get_piece_props to get the exact prop names, required fields, dropdown values, and dynamic sub-field shapes — never guess the input shape (guessing fails validation and wastes turns). Use ap_discover_action_auth first to check if auth is needed. The system manages connections automatically after the user selects one. If a call fails, fix the input from the returned error and retry ONCE; do not re-send a near-identical call repeatedly. For batch execution, provide an items array where each element is a complete input object for one invocation.',
+            description: 'Execute a piece action once or in batch. Before the FIRST call to an action you have not already inspected this conversation, call ap_get_piece_props to get the exact prop names, required fields, dropdown values, and dynamic sub-field shapes — never guess the input shape (guessing fails validation and wastes turns). Get the connection through ap_show_connection_picker, which also checks whether the piece needs one. The system manages connections automatically after the user selects one. If a call fails, fix the input from the returned error and retry ONCE; do not re-send a near-identical call repeatedly. For batch execution, provide an items array where each element is a complete input object for one invocation.',
             inputSchema: z.object({
                 ...cardTitleFields,
                 pieceName: z.string().describe('Piece name, e.g. "@activepieces/piece-gmail"'),
@@ -110,12 +104,17 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                         return guardResult
                     }
                 }
-                const needsPreview = agentToolClassification.requiresActionPreview({
+                const { data: declaredReadOnly } = await tryCatch(async () => isDeclaredReadOnly?.({ pieceName: toolInput.pieceName, actionName: toolInput.actionName }))
+                const executedInputs = isBatch ? toolInput.items! : [toolInput.input ?? {}]
+                const gatedInputs = executedInputs.filter((input) => agentToolClassification.requiresActionPreview({
                     actionName: toolInput.actionName,
-                    input: toolInput.input,
+                    input,
                     needsConfirmation: toolInput.needsConfirmation,
                     tainted: taintState.tainted,
-                })
+                    declaredReadOnly: declaredReadOnly ?? undefined,
+                }))
+                const needsPreview = gatedInputs.length > 0
+                taintState.tainted = true
 
                 if (needsPreview) {
                     const previewData: ActionPreviewEvent = {
@@ -126,7 +125,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                         input: toolInput.input ?? {},
                         isBatch: !!isBatch,
                         batchCount: isBatch ? toolInput.items!.length : undefined,
-                        batchSamples: isBatch ? toolInput.items!.slice(0, 3) : undefined,
+                        batchSamples: isBatch ? gatedInputs.slice(0, 3) : undefined,
                     }
                     eventEmitter.emitActionPreview(previewData)
                     if (onGateOpened) {
@@ -138,7 +137,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                                 pieceName: toolInput.pieceName,
                                 actionName: toolInput.actionName,
                                 input: toolInput.input ?? {},
-                                items: isBatch ? toolInput.items!.slice(0, 3) : undefined,
+                                items: isBatch ? gatedInputs.slice(0, 3) : undefined,
                                 batchCount: isBatch ? toolInput.items!.length : undefined,
                             },
                         }))
@@ -179,6 +178,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 const isReadOnly = agentToolClassification.isReadOnlyActionCall({
                     actionName: toolInput.actionName,
                     input: toolInput.input,
+                    declaredReadOnly: declaredReadOnly ?? undefined,
                 })
                 if (!isReadOnly) {
                     eventEmitter.emitActionReceipt({
@@ -204,6 +204,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 status: z.string().optional().describe('Filter by status'),
             }),
             execute: async (input) => {
+                taintState.tainted = true
                 return truncateLargeResult(await executeWithTimeout('ap_list_across_projects', input))
             },
         }),
@@ -217,9 +218,6 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 input: z.record(z.string(), z.unknown()).optional().describe('Input for the read action (keep limits small)'),
             }),
             execute: async (toolInput) => {
-                if (!agentToolClassification.isReadOnlyActionCall({ actionName: toolInput.actionName, input: toolInput.input })) {
-                    return agentToolClassification.readOnlyRejection(toolInput.actionName)
-                }
                 taintState.tainted = true
                 const rawResult = await executeWithTimeout('ap_explore_data', toolInput)
                 return truncateLargeResult(rawResult)
@@ -237,6 +235,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 input: z.record(z.string(), z.unknown()).optional().describe('Optional extra values merged into `inputs`'),
             }),
             execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                taintState.tainted = true
                 const rawResult = await executeWithTimeout('ap_run_code', toolInput)
                 const resultObj = isObject(rawResult) ? rawResult as Record<string, unknown> : {}
                 const producedFiles = Array.isArray(resultObj['producedFiles']) ? resultObj['producedFiles'] : []
@@ -262,29 +261,21 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
             },
         }),
 
-        ap_load_guide: tool({
-            description: 'Load a detailed playbook into context before that kind of work (silent, internal). Topics: build_flow (constructing/validating/testing an automation), one_time_task (one-shot do-it-now action), error_handling (success/failure branches), http_fallback (calling an API directly when no connection exists), control_flow (routers/conditions & loops — exact operators and gotchas), state (remembering data across runs: Store vs Tables vs Sheets, dedup/idempotency), tables (the built-in Tables database), ai (native AI steps and their output shapes), about_activepieces (what Activepieces is — open source, self-hosting, editions/pricing, security, how integrations work, how you work).',
-            inputSchema: z.object({
-                topic: z.enum(['build_flow', 'one_time_task', 'error_handling', 'http_fallback', 'control_flow', 'state', 'tables', 'ai', 'about_activepieces']).describe('Which guide to load'),
-            }),
-            execute: async (toolInput) => {
-                const guide = guides[toolInput.topic]
-                if (!guide) {
-                    return `No guide found for "${toolInput.topic}".`
-                }
-                if (progressGuard.markGuideLoaded(toolInput.topic)) {
-                    return `You already loaded the "${toolInput.topic}" guide earlier in this turn — re-read it from the conversation above instead of reloading.`
-                }
-                return guide
-            },
-        }),
-
         ap_remember: tool({
             description: 'Save a durable fact or preference about THIS user so it carries across all future conversations (silent, internal). Call it whenever the user would otherwise have to repeat themselves next time: when they explicitly ask you to remember something ("remember I love cheese") — always honor that — or when they volunteer a durable personal fact, preference, default, or correction ("I love cheese", "I prefer TypeScript", "default notify channel is #ops", "always EU-based candidates", "stop asking me things you can find"). One short standalone statement per call. Duplicates and contradictions are reconciled automatically, so err toward saving when unsure. Do NOT use for one-off task details (those go in the brief).',
             inputSchema: z.object({
                 memory: z.string().describe('One concise durable preference/fact about the user'),
             }),
-            execute: async (toolInput) => {
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                if (taintState.tainted) {
+                    const label = `Remember: "${toolInput.memory}"`
+                    eventEmitter.emitActionPreview({ toolCallId, pieceName: '', actionName: 'ap_remember', actionDisplayName: label, input: toolInput, isBatch: false })
+                    await tryCatch(async () => onGateOpened?.({ gateId: toolCallId, toolName: 'ap_remember', displayName: label, toolInput }))
+                    const decision = await waitForApproval({ gateId: toolCallId })
+                    if (decision.outcome !== 'approved') {
+                        return { saved: false, message: decision.outcome === 'timeout' ? gateNoResponseMessage('memory approval') : 'The user chose not to save this. Do not retry it.' }
+                    }
+                }
                 return executeTool('ap_remember', toolInput)
             },
         }),

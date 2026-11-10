@@ -5,6 +5,7 @@ import { createServiceNowClient, servicenowAuth } from '../common/props';
 export const resolveIncidentAction = createAction({
   auth: servicenowAuth,
   name: 'resolve_incident',
+  classification: 'WRITE',
   displayName: 'Resolve or Close Incident',
   description:
     'Move an incident to Resolved or Closed with a close code and resolution notes',

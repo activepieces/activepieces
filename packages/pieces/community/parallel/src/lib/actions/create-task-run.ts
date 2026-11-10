@@ -6,6 +6,7 @@ import { parallelClient, TASK_PROCESSORS } from '../common/client';
 export const createTaskRunAction = createAction({
   auth: parallelAuth,
   name: 'create_task_run',
+  classification: 'READ',
   displayName: 'Create Task Run',
   description:
     'Initiate a Parallel research task. Returns immediately with a queued run; use Get Task Run Result to wait for completion.',

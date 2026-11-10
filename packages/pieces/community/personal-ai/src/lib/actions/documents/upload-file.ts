@@ -6,6 +6,7 @@ import { BASE_URL } from '../../../index';
 export const uploadFile = createAction({
   auth:personalAiAuth,
   name: 'upload_file',
+  classification: 'WRITE',
   displayName: 'Upload File',
   description: 'Upload a file to AI assistant.',
   audience: 'both',

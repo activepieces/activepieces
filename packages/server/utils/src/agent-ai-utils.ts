@@ -1,16 +1,22 @@
-import { AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils';
-import { agentPersistenceUtils, agentToolClassification, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared';
+import { ActivepiecesAiBilling, AIProviderName, isNil, spreadIfDefined, toError } from '@activepieces/core-utils';
+import { agentPersistenceUtils, agentToolClassification, agentToolSkills, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared';
 import { agentProviderOptions } from './agent-provider-options'
+import { AI_TRACE_RUNTIME_CONTEXT, AiTraceContext, aiObservability } from './ai-observability'
 import { ModelMessage, TelemetryOptions } from 'ai'
 import { createEvlogIntegration } from 'evlog/ai'
+import { modelCatalog } from './model-catalog'
 import { wideEvent } from './wide-event'
 
 
+const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
+const UNKNOWN_MODEL_OUTPUT_CEILING: Partial<Record<AIProviderName, number>> = {
+    [AIProviderName.COHERE]: 4_000,
+}
 const KEEP_RECENT_TOOL_RESULTS = 6
 const COLLAPSE_OUTPUT_OVER_CHARS = 600
 // Tool results that are the agent's working memory of an action's input schema — never collapsed,
 // so it doesn't re-discover or guess a schema it already fetched (A5 pin-discovered-schemas).
-const SCHEMA_TOOL_NAMES = new Set(['ap_get_piece_props', 'ap_prepare_action'])
+const SCHEMA_TOOL_NAMES = new Set(['ap_get_piece_props', 'ap_prepare_action', 'ap_load_skill', 'ap_get_tool_schema'])
 const CHARS_PER_TOKEN_ESTIMATE = 4
 
 
@@ -83,15 +89,8 @@ function sanitizeTruncatedAssistantTail(messages: ModelMessage[]): ModelMessage[
     return [...head, { ...last, content: sanitizedParts }]
 }
 
-/**
- * The response messages of a streamText turn. Each step's `response.messages` is
- * CUMULATIVE — it already contains every prior step's assistant/tool messages — so the
- * last step holds the complete set. Flat-mapping all steps instead would re-emit earlier
- * steps in a 4,3,2,1 staircase, persisting (and re-sending to the model) the same tool
- * call and reasoning block multiple times. Take the last step only.
- */
 function collectStepMessages(steps: Array<{ response: { messages: ModelMessage[] } }>): ModelMessage[] {
-    return steps[steps.length - 1]?.response.messages ?? []
+    return steps.flatMap((step) => step.response.messages)
 }
 
 function estimateTokenCount({ messages, systemPromptLength }: { messages: ModelMessage[], systemPromptLength: number }): number {
@@ -106,9 +105,11 @@ function estimateTokenCount({ messages, systemPromptLength }: { messages: ModelM
  * valid) and never mutates the input. Pure.
  */
 function collapseStaleToolOutputs({ messages }: { messages: ModelMessage[] }): ModelMessage[] {
+    const effectiveNames = effectiveToolNamesByCallId(messages)
+    const isPinned = (part: { toolCallId: string, toolName: string }): boolean => SCHEMA_TOOL_NAMES.has(effectiveNames.get(part.toolCallId) ?? part.toolName)
     const totalToolResults = messages.reduce((count, message) => {
         if (message.role !== 'tool' || !Array.isArray(message.content)) return count
-        return count + message.content.filter((part) => part.type === 'tool-result' && !SCHEMA_TOOL_NAMES.has(part.toolName)).length
+        return count + message.content.filter((part) => part.type === 'tool-result' && !isPinned(part)).length
     }, 0)
 
     const staleCount = totalToolResults - KEEP_RECENT_TOOL_RESULTS
@@ -122,7 +123,7 @@ function collapseStaleToolOutputs({ messages }: { messages: ModelMessage[] }): M
             // Pin discovered schemas: never collapse a piece-props/prepare result. These are the
             // agent's memory of an action's inputs — collapsing them makes it re-discover (or guess)
             // a schema it already fetched. They don't consume a stale slot either.
-            if (SCHEMA_TOOL_NAMES.has(part.toolName)) return part
+            if (isPinned(part)) return part
             const isStale = seen++ < staleCount
             if (!isStale) return part
             const serialized = typeof part.output === 'string' ? part.output : JSON.stringify(part.output)
@@ -136,12 +137,33 @@ function collapseStaleToolOutputs({ messages }: { messages: ModelMessage[] }): M
     })
 }
 
-function buildTelemetry({ functionId }: { functionId: string }): TelemetryOptions | undefined {
+function effectiveToolNamesByCallId(messages: ModelMessage[]): Map<string, string> {
+    return new Map(messages.flatMap((message) => {
+        if (message.role !== 'assistant' || !Array.isArray(message.content)) return []
+        return message.content
+            .filter((part) => part.type === 'tool-call')
+            .map((part): [string, string] => [part.toolCallId, agentToolSkills.effectiveToolCall({ toolName: part.toolName, input: part.input }).toolName])
+    }))
+}
+
+function buildTelemetry({ functionId, billing }: { functionId: string, billing?: ActivepiecesAiBilling }): AgentTelemetry {
     const logger = wideEvent.current()
-    if (isNil(logger)) {
-        return undefined
+    const posthog = aiObservability.integration()
+    if (isNil(logger) && isNil(posthog)) {
+        return {}
     }
-    return { functionId, integrations: [createEvlogIntegration(logger)] }
+    const integrations = [
+        ...(isNil(logger) ? [] : [createEvlogIntegration(logger)]),
+        ...(isNil(posthog) ? [] : [posthog]),
+        ...(globalThis.AI_SDK_TELEMETRY_INTEGRATIONS ?? []),
+    ]
+    if (isNil(posthog)) {
+        return { telemetry: { functionId, integrations } }
+    }
+    return {
+        telemetry: { functionId, integrations, includeRuntimeContext: AI_TRACE_RUNTIME_CONTEXT },
+        runtimeContext: aiObservability.runtimeContextOf({ billing }),
+    }
 }
 
 function toRecord(value: unknown): Record<string, unknown> {
@@ -151,6 +173,7 @@ function toRecord(value: unknown): Record<string, unknown> {
 type ContentPartLike = {
     type: string
     invalid?: boolean
+    error?: unknown
     text?: string
     toolCallId?: string
     toolName?: string
@@ -204,8 +227,9 @@ function buildStepParts({ content }: {
                 }
                 break
             case 'tool-call': {
-                const toolName = part.toolName ?? ''
-                const input = toRecord(part.args ?? part.input)
+                const effectiveCall = agentToolSkills.effectiveToolCall({ toolName: part.toolName ?? '', input: part.args ?? part.input })
+                const toolName = effectiveCall.toolName
+                const input = toRecord(effectiveCall.input)
                 if (toolName === 'ap_update_thinking_status') {
                     const statusText = typeof input['status'] === 'string' ? input['status'] : ''
                     if (statusText) {
@@ -214,6 +238,7 @@ function buildStepParts({ content }: {
                     break
                 }
                 const result = part.toolCallId ? resultMap.get(part.toolCallId) : undefined
+                const threw = result?.type === 'tool-error'
                 const rawOutput = result?.output ? agentPersistenceUtils.unwrapToolOutput(result.output) : undefined
                 const title = typeof input['title'] === 'string' ? input['title'] : undefined
                 const description = typeof input['description'] === 'string' ? input['description'] : undefined
@@ -225,7 +250,8 @@ function buildStepParts({ content }: {
                     ...spreadIfDefined('description', description),
                     input,
                     output: rawOutput,
-                    status: result && part.invalid !== true ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
+                    status: result && !threw && part.invalid !== true ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
+                    ...spreadIfDefined('errorText', threw && !isNil(result.error) ? toError(result.error).message : undefined),
                 })
                 if (toolName === 'ap_execute_action' && typeof rawOutput === 'object' && rawOutput !== null && 'batchProgress' in rawOutput) {
                     parts.push({
@@ -385,7 +411,20 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+async function affordableOutputTokens({ provider, modelIds, thinkingBudget }: { provider: AIProviderName, modelIds: (string | undefined)[], thinkingBudget: number }): Promise<number> {
+    const catalog = await modelCatalog.load()
+    const ceilings = modelIds.map((modelId) => isNil(modelId) ? undefined : catalog.lookup({ provider, modelId })?.maxOutputTokens ?? UNKNOWN_MODEL_OUTPUT_CEILING[provider])
+    return clampOutputTokens({ thinkingBudget, ceilings })
+}
+
+function clampOutputTokens({ thinkingBudget, ceilings }: { thinkingBudget: number, ceilings: (number | undefined)[] }): number {
+    const known = ceilings.filter((ceiling) => !isNil(ceiling))
+    return Math.min(thinkingBudget + MAX_RESPONSE_OUTPUT_TOKENS, ...known)
+}
+
 export const agentAiUtils = {
+    affordableOutputTokens,
+    clampOutputTokens,
     stripThinkingBlocks,
     sanitizeTruncatedAssistantTail,
     collectStepMessages,
@@ -399,3 +438,8 @@ export const agentAiUtils = {
 }
 
 export type { ContentPartLike }
+
+export type AgentTelemetry = {
+    telemetry?: TelemetryOptions<AiTraceContext>
+    runtimeContext?: AiTraceContext
+}

@@ -6,6 +6,7 @@ import { makeRequest } from '../common/client';
 export const createPptFromYoutubeVideo = createAction({
   auth: MagicSlidesAuth,
   name: 'createPptFromYoutube',
+  classification: 'WRITE',
   displayName: 'Create PPT from YouTube Video',
   description: 'Generates a PPT presentation from a YouTube video link.',
   audience: 'both',

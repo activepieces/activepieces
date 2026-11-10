@@ -6,6 +6,7 @@ import { manychatAuth } from '../auth';
 export const sendContentToUserAction = createAction({
 	auth: manychatAuth,
 	name: 'sendContentToUser',
+	classification: 'WRITE',
 	displayName: 'Send Content to User',
 	description: 'Sends a content to a user.',
 	audience: 'both',

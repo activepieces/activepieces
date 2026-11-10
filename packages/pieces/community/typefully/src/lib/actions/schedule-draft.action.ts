@@ -8,6 +8,7 @@ import { TypefullyDraft } from '../common/types';
 export const scheduleDraftAction = createAction({
 	auth: typefullyAuth,
 	name: 'typefully_schedule_draft',
+	classification: 'WRITE',
 	displayName: 'Schedule Draft',
 	description: 'Schedules an existing draft to be published at a specific time.',
 	audience: 'both',

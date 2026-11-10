@@ -1,28 +1,24 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { helpScoutApiRequest } from '../common/api';
+import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
+import { helpScoutApi } from '../common/api';
 import { helpScoutAuth } from '../common/auth';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { mailboxIdDropdown, userIdDropdown } from '../common/props';
+import { helpScoutOutputSchemas } from '../common/output-schemas';
 
 export const findConversation = createAction({
   auth: helpScoutAuth,
   name: 'find_conversation',
+  classification: 'SEARCH',
   displayName: 'Find Conversation',
   description: 'Finds an existing conversation using provided filter.',
-  audience: 'both',
-  aiMetadata: {
-    description:
-      'Searches Help Scout conversations by filters (subject, mailbox, status, assigned user, customer email, tags, or a raw query string) and returns the first match. Use to locate a conversation ID before replying, adding a note, or routing. At least one filter is required; read-only and idempotent.',
-    idempotent: true,
-  },
+  audience: 'human',
+  outputSchema: helpScoutOutputSchemas['findConversation'],
   props: {
-    subject: Property.ShortText({
-      displayName: 'Subject',
-      required: false,
-    }),
+    subject: Property.ShortText({ displayName: 'Subject', required: false }),
     mailboxId: mailboxIdDropdown(false),
     status: Property.StaticDropdown({
       displayName: 'Status',
+      description: 'Leave empty to search every status.',
       required: false,
       options: {
         options: [
@@ -36,70 +32,38 @@ export const findConversation = createAction({
       },
     }),
     assignTo: userIdDropdown('Assigned User'),
-    email: Property.ShortText({
-      displayName: 'Email',
-      required: false,
-    }),
-    tags: Property.Array({
-      displayName: 'Tags',
-      required: false,
-    }),
-    query: Property.ShortText({
-      displayName: 'Custom Query',
-      required: false,
-    }),
+    email: Property.ShortText({ displayName: 'Email', required: false }),
+    tags: Property.Array({ displayName: 'Tags', required: false }),
+    query: Property.ShortText({ displayName: 'Custom Query', required: false }),
   },
   async run({ auth, propsValue }) {
+    const tags = helpScoutApi.uniqueOrThrow({ values: helpScoutApi.toStringList(propsValue.tags), label: 'Tags' });
     if (
       !propsValue.query &&
       !propsValue.mailboxId &&
       !propsValue.status &&
-      !propsValue.tags &&
+      tags.length === 0 &&
       !propsValue.assignTo &&
       !propsValue.subject &&
       !propsValue.email
     ) {
       throw new Error('At least one search parameter must be provided.');
     }
-    if (propsValue.tags) {
-      const uniqueTags = new Set(propsValue.tags);
-      if (uniqueTags.size !== propsValue.tags.length) {
-        throw new Error('Tags must be unique.');
-      }
-    }
-
-    const query = [];
-
-    if (propsValue.subject) query.push(`subject:"${propsValue.subject}"`);
-    if (propsValue.email) query.push(`email:"${propsValue.email}"`);
+    const query: string[] = [];
+    if (propsValue.subject) query.push(`subject:"${helpScoutApi.escapeQueryValue(propsValue.subject)}"`);
+    if (propsValue.email) query.push(`email:"${helpScoutApi.escapeQueryValue(propsValue.email)}"`);
     if (propsValue.query) query.push(propsValue.query);
-
-    const queryParams: Record<string, any> = {};
-
-    if (propsValue.mailboxId) queryParams['mailbox'] = propsValue.mailboxId;
-    if (propsValue.status) queryParams['status'] = propsValue.status;
-    if (propsValue.tags) queryParams['tags'] = propsValue.tags.join(',');
-    if (propsValue.assignTo) queryParams['assigned_to'] = propsValue.assignTo;
-
-    if (query.length > 0) {
-      queryParams['query'] = `(${query.join(' AND ')})`;
-    }
-    const response = await helpScoutApiRequest({
+    const queryParams: QueryParams = { status: propsValue.status || 'all' };
+    if (propsValue.mailboxId) queryParams['mailbox'] = String(propsValue.mailboxId);
+    if (tags.length > 0) queryParams['tag'] = tags.join(',');
+    if (propsValue.assignTo) queryParams['assigned_to'] = String(propsValue.assignTo);
+    if (query.length > 0) queryParams['query'] = `(${query.join(' AND ')})`;
+    const response = await helpScoutApi.request({
       method: HttpMethod.GET,
-      url: '/conversations',
+      path: '/conversations',
       auth,
       queryParams,
     });
-    const { _embedded } = response.body as {
-      _embedded: {
-        conversations: { id: number; subject: string }[];
-      };
-    };
-
-    return {
-      found: _embedded.conversations.length > 0,
-      data:
-        _embedded.conversations.length > 0 ? _embedded.conversations[0] : {},
-    };
+    return helpScoutApi.findFirst({ body: response.body, key: 'conversations' });
   },
 });

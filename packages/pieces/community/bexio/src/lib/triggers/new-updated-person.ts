@@ -3,6 +3,7 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
 import dayjs from 'dayjs';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof bexioAuth>,
@@ -92,6 +93,7 @@ export const newUpdatedPersonTrigger = createTrigger({
   aiMetadata: {
     description: 'Fires when a person contact is created or its updated timestamp changes in Bexio. Emits each matching person with their name, address, contact details (email, phone), birthday, group memberships, and lead status. Use to react to new or modified individual contacts.',
   },
+  outputSchema: bexioOutputSchemas.contactSummaryOutputSchema,
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {
@@ -129,34 +131,16 @@ export const newUpdatedPersonTrigger = createTrigger({
     updated_at: '2019-04-08 13:17:32',
   },
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.test(polling, context);
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.poll(polling, context);
   },
 });
 

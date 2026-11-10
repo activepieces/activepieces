@@ -6,6 +6,7 @@ import { webexAuth } from '../common/auth';
 export const createRoom = createAction({
   auth: webexAuth,
   name: 'createRoom',
+  classification: 'WRITE',
   displayName: 'Create Room',
   description:
     'Create a new Webex room (space). The authenticated user is automatically added as a member.',

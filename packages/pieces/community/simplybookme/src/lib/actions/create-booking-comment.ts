@@ -4,6 +4,7 @@ import { simplybookAuth, makeJsonRpcCall, SimplybookAuth, bookingDropdown } from
 export const createBookingComment = createAction({
   auth: simplybookAuth,
   name: 'create_booking_comment',
+  classification: 'WRITE',
   displayName: 'Set Booking Comment',
   description: 'Set a comment for a booking',
   audience: 'both',

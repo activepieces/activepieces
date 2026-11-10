@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const resyncIntegration = createAction({
   auth: villageAuth,
   name: 'resync_integration',
+  classification: 'WRITE',
   displayName: 'Reset Integration',
   description:
     'Trigger a full resync of a Google or LinkedIn integration. Clears sync cursors and re-imports all contacts/calendar data; all graph operations use MERGE so it is fully idempotent.',

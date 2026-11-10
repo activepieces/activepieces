@@ -7,6 +7,7 @@ export const editListItem = createAction({
   auth: kizeoFormsAuth,
 
   name: 'edit_list_item',
+  classification: 'WRITE',
   displayName: 'Edit List Item',
   description: 'Edit a specific item in a list',
   audience: 'both',

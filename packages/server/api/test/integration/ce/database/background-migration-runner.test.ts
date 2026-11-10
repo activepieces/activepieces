@@ -1,0 +1,452 @@
+import { FastifyInstance } from 'fastify'
+import { QueryRunner } from 'typeorm'
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+import { BackgroundMigration } from '../../../../src/app/database/background-migration'
+import {
+    BACKGROUND_MIGRATION_HEARTBEAT_INTERVAL_MS,
+    BACKGROUND_MIGRATION_PROGRESS_READ_TIMEOUT_MS,
+    BACKGROUND_MIGRATIONS_TABLE,
+    backgroundMigrationRunner,
+} from '../../../../src/app/database/background-migration-runner'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { BackgroundMigrationNotCompleteError, migrationHelpers } from '../../../../src/app/database/migration-helpers'
+import { BackfillPieceTranslation1874000000000 } from '../../../../src/app/database/migration/postgres/background/1874000000000-BackfillPieceTranslation'
+import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from '../../../../src/app/database/migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
+import { RefetchMissingPieceTranslations1879000000000 } from '../../../../src/app/database/migration/postgres/background/1879000000000-RefetchMissingPieceTranslations'
+import { getBackgroundMigrations } from '../../../../src/app/database/postgres-connection'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+
+const { emittedSpy } = vi.hoisted(() => ({ emittedSpy: vi.fn() }))
+
+vi.mock('@activepieces/server-utils', async (importOriginal) => {
+    const original = await importOriginal<typeof import('@activepieces/server-utils')>()
+    return {
+        ...original,
+        createLogger: (...args: Parameters<typeof original.createLogger>) => {
+            const logger = original.createLogger(...args)
+            const emit = logger.emit.bind(logger)
+            logger.emit = (overrides) => {
+                emittedSpy(logger.getContext())
+                return emit(overrides)
+            }
+            return logger
+        },
+    }
+})
+
+let app: FastifyInstance | null = null
+
+beforeAll(async () => {
+    app = await setupTestEnvironment()
+})
+
+afterAll(async () => {
+    await teardownTestEnvironment()
+})
+
+describe('backgroundMigrationRunner', () => {
+    it('runs a pending background migration and records it in background_migrations', async () => {
+        const MigrationClass = makeTestMigration({ name: `HappyPath${Date.now()}` })
+        await backgroundMigrationRunner.run({
+            log: app!.log,
+            migrations: [MigrationClass],
+        })
+        const rows = await selectByName(new MigrationClass().name)
+        expect(rows).toHaveLength(1)
+    })
+
+    it('records a failed migration with its error and does not mark it completed', async () => {
+        const MigrationClass = makeTestMigration({
+            name: `Failing${Date.now()}`,
+            up: async () => { throw new Error('boom') },
+        })
+        await expect(
+            backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] }),
+        ).rejects.toThrow(/boom/)
+        const name = new MigrationClass().name
+        const completed = await selectCompletedByName(name)
+        expect(completed).toHaveLength(0)
+        const status = await backgroundMigrationRunner.getStatus({ migrations: [MigrationClass] })
+        expect(status.failedMigration?.name).toBe(name)
+        expect(status.failedMigration?.lastError).toMatch(/boom/)
+    })
+
+    it('clears failure state when a previously failed migration succeeds on retry', async () => {
+        let shouldFail = true
+        const name = `RetrySucceeds${Date.now()}`
+        const MigrationClass = makeTestMigration({
+            name,
+            up: async () => { if (shouldFail) throw new Error('transient') },
+        })
+        await expect(
+            backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] }),
+        ).rejects.toThrow(/transient/)
+        shouldFail = false
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] })
+        const status = await backgroundMigrationRunner.getStatus({ migrations: [MigrationClass] })
+        expect(status.failedMigration).toBeNull()
+        expect(status.pendingCount).toBe(0)
+    })
+
+    it('skips a migration that has already completed', async () => {
+        let upCalls = 0
+        const MigrationClass = makeTestMigration({
+            name: `Idempotent${Date.now()}`,
+            up: async () => { upCalls++ },
+        })
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] })
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] })
+        expect(upCalls).toBe(1)
+    })
+
+    it('assertBackgroundMigrationComplete gates a blocking migration until the backfill runs', async () => {
+        const backfill = makeTestMigration({ name: `GateBackfill${Date.now()}` })
+        const contract = async (queryRunner: QueryRunner): Promise<void> => {
+            await migrationHelpers.assertBackgroundMigrationComplete({
+                queryRunner,
+                migration: backfill,
+            })
+        }
+        const preRun = databaseConnection().createQueryRunner()
+        try {
+            await expect(contract(preRun)).rejects.toThrow(/GateBackfill.*has not completed/)
+        }
+        finally {
+            await preRun.release()
+        }
+
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [backfill] })
+
+        const postRun = databaseConnection().createQueryRunner()
+        try {
+            await expect(contract(postRun)).resolves.toBeUndefined()
+        }
+        finally {
+            await postRun.release()
+        }
+    })
+
+    it('assertBackgroundMigrationComplete rejects a backfill that only failed', async () => {
+        const backfill = makeTestMigration({
+            name: `FailedGate${Date.now()}`,
+            up: async () => { throw new Error('kaboom') },
+        })
+        await expect(
+            backgroundMigrationRunner.run({ log: app!.log, migrations: [backfill] }),
+        ).rejects.toThrow(/kaboom/)
+
+        const queryRunner = databaseConnection().createQueryRunner()
+        try {
+            await expect(migrationHelpers.assertBackgroundMigrationComplete({
+                queryRunner,
+                migration: backfill,
+            })).rejects.toThrow(/FailedGate.*has not completed/)
+        }
+        finally {
+            await queryRunner.release()
+        }
+    })
+
+    it('withBackgroundMigrationLock does NOT require completion — safe for down()', async () => {
+        const neverRanBackfill = makeTestMigration({ name: `NeverRan${Date.now()}` })
+        let fnRan = false
+        await migrationHelpers.withBackgroundMigrationLock({
+            log: app!.log,
+            migration: neverRanBackfill,
+            fn: async () => { fnRan = true },
+        })
+        expect(fnRan).toBe(true)
+    })
+
+    it('reports pending count via getStatus', async () => {
+        const done = makeTestMigration({ name: `StatusDone${Date.now()}` })
+        const pending = makeTestMigration({ name: `StatusPending${Date.now()}` })
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [done] })
+
+        const status = await backgroundMigrationRunner.getStatus({ migrations: [done, pending] })
+        expect(status.pendingCount).toBe(1)
+        expect(status.completedCount).toBeGreaterThanOrEqual(1)
+    })
+
+    it('listPending names every unfinished migration, including one whose pod died without recording a failure', async () => {
+        const done = makeTestMigration({ name: `PendingDone${Date.now()}` })
+        const failed = makeTestMigration({
+            name: `PendingFailed${Date.now()}`,
+            up: async () => {
+                throw new Error('canceling statement due to statement timeout')
+            },
+        })
+        const killedMidRun = makeTestMigration({ name: `PendingKilled${Date.now()}` })
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [done] })
+        await expect(backgroundMigrationRunner.run({ log: app!.log, migrations: [failed] })).rejects.toThrow(/statement timeout/)
+
+        const pending = await backgroundMigrationRunner.listPending({ migrations: [done, failed, killedMidRun] })
+
+        expect(pending).toEqual([new failed().name, new killedMidRun().name])
+    })
+
+    it('getStatus returns error-shape instead of throwing on DB failure', async () => {
+        const ds = databaseConnection()
+        const spy = vi.spyOn(ds, 'query').mockRejectedValueOnce(new Error('db down'))
+        const status = await backgroundMigrationRunner.getStatus({ migrations: [], dataSource: ds })
+        expect(status.error).toMatch(/db down/)
+        expect(status.pendingCount).toBe(0)
+        expect(status.completedCount).toBe(0)
+        expect(status.failedMigration).toBeNull()
+        spy.mockRestore()
+    })
+})
+
+describe('background migration progress events', () => {
+    afterEach(() => {
+        vi.useRealTimers()
+        emittedSpy.mockClear()
+    })
+
+    it('emits started and completed as their own events, not only inside the job wide event', async () => {
+        const MigrationClass = makeTestMigration({ name: `ProgressHappy${Date.now()}` })
+        const name = new MigrationClass().name
+
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] })
+
+        expect(progressPhasesFor(name)).toEqual(['started', 'completed'])
+        expect(progressEventsFor(name).at(-1)?.migration.elapsedMs).toEqual(expect.any(Number))
+    })
+
+    it('emits failed with the elapsed time when the migration throws', async () => {
+        const MigrationClass = makeTestMigration({
+            name: `ProgressFails${Date.now()}`,
+            up: async () => {
+                throw new Error('canceling statement due to statement timeout')
+            },
+        })
+        const name = new MigrationClass().name
+
+        await expect(
+            backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] }),
+        ).rejects.toThrow(/statement timeout/)
+
+        expect(progressPhasesFor(name)).toEqual(['started', 'failed'])
+        expect(progressEventsFor(name).at(-1)?.error?.message).toMatch(/statement timeout/)
+    })
+
+    it('emits a running heartbeat while a long migration is still in progress', async () => {
+        vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+        const name = `ProgressHeartbeat${Date.now()}`
+        const MigrationClass = makeTestMigration({
+            name,
+            up: async () => {
+                vi.advanceTimersByTime(BACKGROUND_MIGRATION_HEARTBEAT_INTERVAL_MS)
+                await vi.waitFor(() => expect(progressPhasesFor(name)).toContain('running'))
+            },
+        })
+
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] })
+
+        expect(progressPhasesFor(name)).toEqual(['started', 'running', 'completed'])
+        const heartbeat = progressEventsFor(name).find((event) => event.migration.phase === 'running')
+        expect(heartbeat?.migration.elapsedMs).toEqual(expect.any(Number))
+    })
+
+    it('still emits the heartbeat, without index details, when the progress read waits on a busy pool', { timeout: 30_000 }, async () => {
+        vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+        const ds = databaseConnection()
+        const query = ds.query.bind(ds)
+        const spy = vi.spyOn(ds, 'query').mockImplementation(async (sql: string, parameters?: unknown[]) =>
+            sql.includes('pg_stat_progress_create_index') ? new Promise<never>(() => undefined) : query(sql, parameters))
+        const name = `ProgressBusyPool${Date.now()}`
+        const MigrationClass = makeTestMigration({
+            name,
+            up: async () => {
+                vi.advanceTimersByTime(BACKGROUND_MIGRATION_HEARTBEAT_INTERVAL_MS)
+                await vi.waitFor(() => expect(progressPhasesFor(name)).toContain('running'), { timeout: BACKGROUND_MIGRATION_PROGRESS_READ_TIMEOUT_MS + 5_000 })
+            },
+        })
+
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] })
+        spy.mockRestore()
+
+        const heartbeat = progressEventsFor(name).find((event) => event.migration.phase === 'running')
+        expect(heartbeat?.migration.elapsedMs).toEqual(expect.any(Number))
+        expect(progressPhasesFor(name)).toEqual(['started', 'running', 'completed'])
+    })
+
+    it('drops a heartbeat that is still reading progress when the migration finishes', async () => {
+        vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+        const name = `ProgressLateHeartbeat${Date.now()}`
+        const MigrationClass = makeTestMigration({
+            name,
+            up: async () => {
+                vi.advanceTimersByTime(BACKGROUND_MIGRATION_HEARTBEAT_INTERVAL_MS)
+            },
+        })
+
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] })
+        await new Promise((resolve) => setTimeout(resolve, 200))
+
+        expect(progressPhasesFor(name)).toEqual(['started', 'completed'])
+    })
+})
+
+describe('getBackgroundMigrations', () => {
+    it('runs the quick piece-translation backfill before the hours-long flow_run index reshape', () => {
+        const order = getBackgroundMigrations()
+
+        expect(order.indexOf(BackfillPieceTranslation1874000000000)).toBeGreaterThanOrEqual(0)
+        expect(order.indexOf(BackfillPieceTranslation1874000000000)).toBeLessThan(order.indexOf(ReshapeFlowRunListIndexesForBarrierChildren1871000000000))
+        expect(order.at(-1)).toBe(ReshapeFlowRunListIndexesForBarrierChildren1871000000000)
+    })
+
+    it('runs the translation repair after the backfill and before the flow_run index reshape', () => {
+        const order = getBackgroundMigrations()
+
+        expect(order.indexOf(RefetchMissingPieceTranslations1879000000000)).toBeGreaterThan(order.indexOf(BackfillPieceTranslation1874000000000))
+        expect(order.indexOf(RefetchMissingPieceTranslations1879000000000)).toBeLessThan(order.indexOf(ReshapeFlowRunListIndexesForBarrierChildren1871000000000))
+    })
+})
+
+describe('runMigrationsWithCatchup', () => {
+    afterEach(() => vi.restoreAllMocks())
+
+    it('runs the backfill when a blocking migration throws BackgroundMigrationNotCompleteError', async () => {
+        const Backfill = makeTestMigration({ name: `CatchupBackfill${Date.now()}` })
+        const ds = databaseConnection()
+        let runMigrationsCalls = 0
+        vi.spyOn(ds, 'runMigrations').mockImplementation(async () => {
+            runMigrationsCalls++
+            if (runMigrationsCalls === 1) throw new BackgroundMigrationNotCompleteError(Backfill)
+            return []
+        })
+
+        await backgroundMigrationRunner.runMigrationsWithCatchup({ dataSource: ds, log: app!.log })
+        expect(runMigrationsCalls).toBe(2)
+        const rows = await selectByName(new Backfill().name)
+        expect(rows).toHaveLength(1)
+    })
+
+    it('rethrows non-NotComplete errors immediately', async () => {
+        const ds = databaseConnection()
+        vi.spyOn(ds, 'runMigrations').mockRejectedValueOnce(new Error('syntax error'))
+        await expect(
+            backgroundMigrationRunner.runMigrationsWithCatchup({ dataSource: ds, log: app!.log }),
+        ).rejects.toThrow(/syntax error/)
+    })
+
+    it('fails fast when the catchup backfill itself throws', async () => {
+        const BrokenBackfill = makeTestMigration({
+            name: `BrokenCatchup${Date.now()}`,
+            up: async () => { throw new Error('backfill bug') },
+        })
+        const ds = databaseConnection()
+        vi.spyOn(ds, 'runMigrations').mockRejectedValue(new BackgroundMigrationNotCompleteError(BrokenBackfill))
+        const promise = backgroundMigrationRunner.runMigrationsWithCatchup({ dataSource: ds, log: app!.log })
+        await expect(promise).rejects.toThrow(/Boot catchup.*BrokenCatchup/)
+        const thrown = await promise.catch(err => err)
+        expect(thrown.cause).toBeInstanceOf(Error)
+        expect(thrown.cause.message).toMatch(/backfill bug/)
+    })
+})
+
+describe('withBackgroundMigrationLock', () => {
+    it('serializes a concurrent runOne against the lock', async () => {
+        let migrationStarted = false
+        let releaseMigration: () => void = () => undefined
+        const migrationGate = new Promise<void>(resolve => { releaseMigration = resolve })
+        const SlowMigration = makeTestMigration({
+            name: `SlowLockMigration${Date.now()}`,
+            up: async () => {
+                migrationStarted = true
+                await migrationGate
+            },
+        })
+        const runnerPromise = backgroundMigrationRunner.run({ log: app!.log, migrations: [SlowMigration] })
+        let gotLock = false
+        let lockWaiter: Promise<void> | null = null
+        try {
+            await waitFor(() => migrationStarted, 2_000)
+            lockWaiter = migrationHelpers.withBackgroundMigrationLock({
+                log: app!.log,
+                migration: SlowMigration,
+                fn: async () => { gotLock = true },
+            })
+            await new Promise(resolve => setTimeout(resolve, 100))
+            expect(gotLock).toBe(false)
+
+            releaseMigration()
+            await runnerPromise
+            await lockWaiter
+            expect(gotLock).toBe(true)
+        }
+        finally {
+            releaseMigration()
+            await Promise.allSettled([runnerPromise, lockWaiter ?? Promise.resolve()])
+        }
+    })
+
+    it('acquires immediately when no migration is in-flight', async () => {
+        const Any = makeTestMigration({ name: `IdleLock${Date.now()}` })
+        const start = Date.now()
+        await migrationHelpers.withBackgroundMigrationLock({
+            log: app!.log,
+            migration: Any,
+            fn: async () => { /* no-op */ },
+        })
+        const elapsed = Date.now() - start
+        expect(elapsed).toBeLessThan(500)
+    })
+})
+
+function makeTestMigration({
+    name: migrationName,
+    up: upFn = async () => { /* no-op */ },
+}: {
+    name: string
+    up?: (queryRunner: QueryRunner) => Promise<void>
+}): new () => BackgroundMigration {
+    return class implements BackgroundMigration {
+        name = migrationName
+        release = '0.0.0-test'
+        transaction = false as const
+        public async up(queryRunner: QueryRunner): Promise<void> { await upFn(queryRunner) }
+        public async down(): Promise<void> { /* no-op */ }
+    }
+}
+
+async function waitFor(predicate: () => boolean, timeoutMs: number): Promise<void> {
+    const started = Date.now()
+    while (!predicate()) {
+        if (Date.now() - started > timeoutMs) throw new Error(`waitFor timed out after ${timeoutMs}ms`)
+        await new Promise(resolve => setTimeout(resolve, 25))
+    }
+}
+
+function progressEventsFor(name: string): ProgressEvent[] {
+    return emittedSpy.mock.calls
+        .map(([context]) => context)
+        .filter((context): context is ProgressEvent => isProgressEvent(context) && context.migration.name === name)
+}
+
+function progressPhasesFor(name: string): string[] {
+    return progressEventsFor(name).map((event) => event.migration.phase)
+}
+
+function isProgressEvent(context: unknown): context is ProgressEvent {
+    return typeof context === 'object' && context !== null && 'event' in context && context.event === 'background-migration.progress'
+}
+
+async function selectByName(name: string): Promise<{ name: string }[]> {
+    const rows = await databaseConnection().query(
+        `SELECT "name" FROM "${BACKGROUND_MIGRATIONS_TABLE}" WHERE "executed_at" IS NOT NULL`,
+    ) as { name: string }[]
+    return rows.filter(row => row.name === name)
+}
+
+async function selectCompletedByName(name: string): Promise<{ name: string }[]> {
+    return selectByName(name)
+}
+
+type ProgressEvent = {
+    event: 'background-migration.progress'
+    migration: { name: string, phase: string, elapsedMs?: number }
+    error?: { message: string }
+}

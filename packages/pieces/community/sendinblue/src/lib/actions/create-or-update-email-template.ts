@@ -59,10 +59,10 @@ export const createOrUpdateEmailTemplate = createAction({
 			description: 'Personalization used for the display name in the To field, for example {{contact.FIRSTNAME}}.',
 			required: false,
 		}),
-		is_active: Property.Checkbox({
+		is_active: brevoProps.optionalBoolean({
 			displayName: 'Active',
-			description: "Leave untouched to keep the template's current active state.",
-			required: false,
+			description:
+				"Whether the template is active. Leave empty or pick Leave unchanged to keep the template's current active state.",
 		}),
 		tag: Property.ShortText({
 			displayName: 'Tag',
@@ -123,7 +123,7 @@ export const createOrUpdateEmailTemplate = createAction({
 			htmlUrl: html_url,
 			replyTo: reply_to_email,
 			toField: to_field,
-			isActive: is_active,
+			isActive: brevoCommon.optionalBooleanValue(is_active),
 			tag,
 			attachmentUrl: attachment_url,
 		};

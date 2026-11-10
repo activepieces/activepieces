@@ -9,7 +9,7 @@ export const uploadFileAction = createAction({
   outputSchema: uploadFileOutputSchema,
   displayName: 'Upload File',
   description:
-    'Uploads a file to Baserow from a URL. Returns the uploaded file object that can be used in file fields.',
+    'Uploads a file from a link, ready to put in a file column.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -20,7 +20,8 @@ export const uploadFileAction = createAction({
   props: {
     url: Property.ShortText({
       displayName: 'File URL',
-      description: 'The public URL of the file to upload to Baserow.',
+      description: 'A public link Baserow can download the file from.',
+      placeholder: 'https://example.com/invoice.pdf',
       required: true,
     }),
   },

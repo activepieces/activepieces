@@ -4,6 +4,7 @@ import { googlePubsubAuth } from '../..';
 
 export const publishToTopic = createAction({
   name: 'publish_to_topic',
+  classification: 'WRITE',
   auth: googlePubsubAuth,
   displayName: 'Publish to topic',
   description: 'Publish message to topic',

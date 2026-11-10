@@ -6,6 +6,7 @@ import { oracleDbProps } from '../common/props';
 export const deleteRowAction = createAction({
   auth: oracleDbAuth,
   name: 'delete_row',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Row',
   description: 'Delete rows from an Oracle table',
   audience: 'both',

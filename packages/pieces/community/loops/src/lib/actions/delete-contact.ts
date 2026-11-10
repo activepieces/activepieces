@@ -1,53 +1,45 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { loopsAuth, LOOPS_BASE_URL } from '../auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { loopsAuth } from '../auth';
+import { loopsClient } from '../common/client';
+import { loopsSchemas } from '../common/schemas';
 
 export const deleteContact = createAction({
   name: 'delete_contact',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Contact',
-  description:
-    'Permanently deletes a contact from Loops by their email address or user ID.',
+  description: 'Permanently deletes a contact from Loops by their email address or user ID.',
   audience: 'both',
+  outputSchema: loopsSchemas.successWithMessage,
   aiMetadata: {
     description:
-      'Permanently deletes a contact from Loops, identified by email or internal user ID (at least one is required). Use to remove someone from the Loops audience. Idempotent: repeating the call for an already-deleted contact converges on the same removed state.',
-    idempotent: true,
+      'Permanently deletes one Loops contact, identified by exactly one of email or userId (fill one, leave the other empty). Cannot be undone. Not idempotent: deleting a contact that no longer exists fails with 404.',
+    idempotent: false,
   },
   auth: loopsAuth,
   props: {
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'The email address of the contact to delete.',
+      description: 'The email address of the contact to delete. Fill this or User ID, not both.',
       required: false,
     }),
     userId: Property.ShortText({
       displayName: 'User ID',
-      description: 'Your internal user ID of the contact to delete.',
+      description: 'Your internal user ID of the contact to delete. Fill this or Email, not both.',
       required: false,
     }),
   },
   async run(context) {
-    const { email, userId } = context.propsValue;
-
-    if (!email && !userId) {
-      throw new Error('At least one of "Email" or "User ID" must be provided.');
+    const email = (context.propsValue.email ?? '').trim();
+    const userId = (context.propsValue.userId ?? '').trim();
+    if ((email && userId) || (!email && !userId)) {
+      throw new Error('Provide exactly one of Email or User ID.');
     }
-
-    const body: Record<string, string> = {};
-    if (email) body['email'] = email;
-    if (userId) body['userId'] = userId;
-
-    const response = await httpClient.sendRequest<Record<string, unknown>>({
-      method: HttpMethod.DELETE,
-      url: `${LOOPS_BASE_URL}/contacts/delete`,
-      headers: {
-        Authorization: `Bearer ${context.auth.secret_text}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body,
+    return loopsClient.request<Record<string, unknown>>({
+      apiKey: context.auth.secret_text,
+      method: HttpMethod.POST,
+      path: '/contacts/delete',
+      body: email ? { email } : { userId },
     });
-
-    return response.body;
   },
 });

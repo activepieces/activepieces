@@ -3,6 +3,7 @@ import { ContentfulAuth, PropertyKeys, makeClient } from '../../common';
 
 export const ContentfulGetRecordAction = createAction({
   name: 'contentful_record_get',
+  classification: 'READ',
   auth: ContentfulAuth,
   displayName: 'Get Record',
   description: 'Gets a Contentful record for a given Content Model',

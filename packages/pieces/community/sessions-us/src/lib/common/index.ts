@@ -131,6 +131,7 @@ export function createSessionsUsWebhookTrigger(
   return createTrigger({
     auth: sessionAuth,
     name: data.name,
+    classification: 'READ',
     displayName: data.displayName,
     description: data.description,
     aiMetadata: data.aiMetadata,

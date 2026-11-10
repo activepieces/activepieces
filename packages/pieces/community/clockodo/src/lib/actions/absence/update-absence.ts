@@ -10,6 +10,7 @@ import { clockodoAuth } from '../../auth';
 export default createAction({
   auth: clockodoAuth,
   name: 'update_absence',
+  classification: 'WRITE',
   displayName: 'Update Absence',
   description: 'Updates an absence in clockodo',
   audience: 'both',

@@ -1,23 +1,10 @@
-import { Property, createAction } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod, HttpError } from "@activepieces/pieces-common";
-import { PdfCoSuccessResponse, PdfCoErrorResponse } from "../common/types";
+import { HttpMethod } from '@activepieces/pieces-common';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { pdfCoAuth } from '../auth';
-import { BASE_URL } from "../common/props";
-interface PdfConvertFromHtmlRequestBody {
-    html: string;
-    async: boolean;
-    name?: string;
-    margins?: string; // e.g., "10px", "5mm 5mm 5mm 5mm"
-    paperSize?: string; // "A4", "Letter", "200mm 300mm", etc.
-    orientation?: 'Portrait' | 'Landscape';
-    printBackground?: boolean;
-    mediaType?: 'print' | 'screen' | 'none';
-    header?: string; // HTML content
-    footer?: string; // HTML content
-    expiration?: number;
-    profiles?: Record<string, unknown>;
-    DoNotWaitFullLoad?:boolean
-}
+import { pdfCoClient } from '../common/client';
+import { pdfCoJobs } from '../common/jobs';
+import { PDF_CO_DEFAULTS, pdfCoProps } from '../common/props';
+import { pdfCoOutputSchemas } from '../output-schemas';
 
 export const convertHtmlToPdf = createAction({
     name: 'convert_html_to_pdf',
@@ -31,6 +18,7 @@ export const convertHtmlToPdf = createAction({
         idempotent: false,
     },
     auth: pdfCoAuth,
+    outputSchema: pdfCoOutputSchemas.legacyEdit,
     props: {
         html: Property.LongText({
             displayName: 'HTML Content',
@@ -49,11 +37,11 @@ export const convertHtmlToPdf = createAction({
         }),
         paperSize: Property.StaticDropdown({
             displayName: 'Paper Size',
-            description: 'Select a paper size. For custom sizes, input the value directly (e.g., \'200mm 300mm\') if your desired size isn\'t listed. Refer to PDF.co docs.',
+            description: 'Select a standard paper size. For another size, fill Custom Paper Size below.',
             required: false,
             options: {
                     disabled: false,
-                    placeholder: 'Select paper size or input custom',
+                    placeholder: 'Select paper size',
                     options: [
                         { label: "A4 (Default)", value: "A4" },
                         { label: "Letter", value: "Letter" },
@@ -125,74 +113,47 @@ export const convertHtmlToPdf = createAction({
             displayName: 'Profiles',
             description: 'JSON object for additional configurations.',
             required: false,
-        })
+        }),
+        customPaperSize: Property.ShortText({
+            displayName: 'Custom Paper Size',
+            description: 'Width and height with units, e.g. "200mm 300mm" or "8.5in 11in". Overrides Paper Size when set.',
+            required: false,
+        }),
+        saveOutputFile: pdfCoProps.saveOutputFile({ defaultValue: PDF_CO_DEFAULTS.saveOutputFileOnExistingActions }),
     },
-    async run(context) {
-        const { auth, propsValue } = context;
-
-        const requestBody: PdfConvertFromHtmlRequestBody = {
+    async run({ auth, propsValue, files }) {
+        const text = (value: unknown): string | undefined => (typeof value === 'string' && value !== '' ? value : undefined);
+        const customPaperSize = text(propsValue.customPaperSize)?.trim();
+        const orientation = text(propsValue.orientation);
+        const mediaType = text(propsValue.mediaType);
+        const profiles = pdfCoClient.serializeProfiles(propsValue.profiles);
+        const requestBody: Record<string, unknown> = {
             html: propsValue.html,
             async: false,
-            DoNotWaitFullLoad:propsValue.doNotWaitFullLoad
+            DoNotWaitFullLoad: propsValue.doNotWaitFullLoad,
+            ...(text(propsValue.name) === undefined ? {} : { name: propsValue.name }),
+            ...(text(propsValue.margins) === undefined ? {} : { margins: propsValue.margins }),
+            ...(customPaperSize !== undefined && customPaperSize !== ''
+                ? { paperSize: customPaperSize }
+                : propsValue.paperSize === undefined
+                  ? {}
+                  : { paperSize: propsValue.paperSize }),
+            ...(orientation === undefined ? {} : { orientation }),
+            ...(propsValue.printBackground === undefined ? {} : { printBackground: propsValue.printBackground }),
+            ...(mediaType === undefined ? {} : { mediaType }),
+            ...(text(propsValue.header) === undefined ? {} : { header: propsValue.header }),
+            ...(text(propsValue.footer) === undefined ? {} : { footer: propsValue.footer }),
+            ...(propsValue.expiration === undefined ? {} : { expiration: propsValue.expiration }),
+            ...(profiles === undefined ? {} : { profiles }),
         };
-
-        if (propsValue.name !== undefined && propsValue.name !== '') requestBody.name = propsValue.name;
-        if (propsValue.margins !== undefined && propsValue.margins !== '') requestBody.margins = propsValue.margins;
-        if (propsValue.paperSize !== undefined) requestBody.paperSize = propsValue.paperSize;
-        if (propsValue.orientation !== undefined) requestBody.orientation = propsValue.orientation as 'Portrait' | 'Landscape';
-        if (propsValue.printBackground !== undefined) requestBody.printBackground = propsValue.printBackground;
-        if (propsValue.mediaType !== undefined) requestBody.mediaType = propsValue.mediaType as  'print' | 'screen' | 'none';
-        if (propsValue.header !== undefined && propsValue.header !== '') requestBody.header = propsValue.header;
-        if (propsValue.footer !== undefined && propsValue.footer !== '') requestBody.footer = propsValue.footer;
-        if (propsValue.expiration !== undefined) requestBody.expiration = propsValue.expiration;
-        if (propsValue.profiles !== undefined && typeof propsValue.profiles === 'object' && propsValue.profiles !== null) {
-            requestBody.profiles = propsValue.profiles as Record<string, unknown>;
-        }
-
-        try {
-            const response = await httpClient.sendRequest<PdfCoSuccessResponse | PdfCoErrorResponse>({
+        const body = pdfCoClient.readRecord(
+            await pdfCoClient.request<unknown>({
+                apiKey: pdfCoClient.apiKeyOf(auth),
                 method: HttpMethod.POST,
-                url: `${BASE_URL}/pdf/convert/from/html`,
-                headers: {
-                    'x-api-key': auth.secret_text,
-                    'Content-Type': 'application/json',
-                },
+                path: '/v1/pdf/convert/from/html',
                 body: requestBody,
-            });
-
-            if (response.body.error) {
-                const errorBody = response.body as PdfCoErrorResponse;
-                let errorMessage = `PDF.co API Error (Convert HTML to PDF): Status ${errorBody.status}.`;
-                if (errorBody.message) {
-                    errorMessage += ` Message: ${errorBody.message}.`;
-                } else {
-                    errorMessage += ` An unspecified error occurred.`;
-                }
-                errorMessage += ` Raw response: ${JSON.stringify(errorBody)}`;
-                throw new Error(errorMessage);
-            }
-
-            const successBody = response.body as PdfCoSuccessResponse;
-            return {
-                outputUrl: successBody.url,
-                pageCount: successBody.pageCount,
-                outputName: successBody.name,
-                creditsUsed: successBody.credits,
-                remainingCredits: successBody.remainingCredits,
-            };
-
-        } catch (error) {
-            if (error instanceof HttpError) {
-                const responseBody = error.response?.body as (PdfCoErrorResponse | undefined);
-                let detailedMessage = `HTTP Error calling PDF.co API (Convert HTML to PDF): ${error.message}.`;
-                if (responseBody && responseBody.message) {
-                    detailedMessage += ` Server message: ${responseBody.message}.`;
-                } else if (responseBody) {
-                    detailedMessage += ` Server response: ${JSON.stringify(responseBody)}.`;
-                }
-                throw new Error(detailedMessage);
-            }
-            throw error;
-        }
+            }),
+        );
+        return pdfCoJobs.legacyEditOutput({ body, files, saveOutputFile: propsValue.saveOutputFile, fileName: propsValue.name });
     },
 });

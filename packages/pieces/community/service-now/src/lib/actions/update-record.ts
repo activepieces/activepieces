@@ -21,6 +21,7 @@ const UpdateRecordInputSchema = z.object({
 export const updateRecordAction = createAction({
   auth: servicenowAuth,
   name: 'update_record',
+  classification: 'WRITE',
   displayName: 'Update Record',
   description: 'Update an existing record in a specified table',
   audience: 'both',

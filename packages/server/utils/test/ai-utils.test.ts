@@ -1,6 +1,8 @@
-import { AIProviderName } from '@activepieces/core-utils'
-import { aiProviderCredentials } from '@activepieces/shared'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesAiCostEvent, AIProviderName } from '@activepieces/core-utils'
+import { ACTIVEPIECES_CHAT_TIERS, ACTIVEPIECES_IMAGE_TIERS, aiProviderCredentials } from '@activepieces/shared'
+import { generateText, jsonSchema, tool } from 'ai'
 import { describe, expect, it } from 'vitest'
+import { activepiecesAiCost } from '../src/activepieces-ai-cost'
 import { aiUtils, WebSearchOptions } from '../src/ai-utils'
 
 function anthropicSearchArgs(options: WebSearchOptions): Record<string, unknown> {
@@ -143,24 +145,119 @@ describe('aiUtils.createModelForImages', () => {
     })
 })
 
-describe('what the managed provider is asked to send back', () => {
-    function settingsFor({ provider, webSearchEnabled = false }: { provider: AIProviderName, webSearchEnabled?: boolean }): Record<string, unknown> | undefined {
-        const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider, auth: { apiKey: 'key' }, config: {} }), modelId: 'anthropic/claude-sonnet-5', webSearchEnabled })
-        return (model as unknown as { settings?: Record<string, unknown> }).settings
-    }
+describe('aiUtils.createModel on the managed Activepieces key', () => {
+    const managed = aiProviderCredentials({ provider: AIProviderName.ACTIVEPIECES, auth: { apiKey: 'sk-managed' }, config: {} })
 
-    it('asks OpenRouter to report what a managed call cost, which is the whole basis of the bill', () => {
-        expect(settingsFor({ provider: AIProviderName.ACTIVEPIECES })).toMatchObject({ usage: { include: true } })
+    it('refuses a model that no published tier or allow-list entry permits', () => {
+        expect(() => aiUtils.createModel({ credentials: managed, modelId: 'perplexity/sonar-deep-research', billing: null }))
+            .toThrow(/not available on Activepieces AI credits/)
     })
 
-    it('keeps asking for the cost when web search is on, rather than letting the plugin setting replace it', () => {
-        expect(settingsFor({ provider: AIProviderName.ACTIVEPIECES, webSearchEnabled: true })).toMatchObject({
+    it('runs a model the tiers permit', () => {
+        expect(() => aiUtils.createModel({ credentials: managed, modelId: ACTIVEPIECES_CHAT_TIERS[0].modelId, billing: null })).not.toThrow()
+    })
+
+    it('refuses an image model outside the managed image tiers', () => {
+        expect(() => aiUtils.createModelForImages({ credentials: managed, modelId: 'openai/gpt-5-image' }))
+            .toThrow(/not available on Activepieces AI credits/)
+        expect(() => aiUtils.createModel({ credentials: managed, modelId: 'openai/gpt-5-image', imageGeneration: true, billing: null }))
+            .toThrow(/not available on Activepieces AI credits/)
+    })
+
+    it('runs the managed default image model and an image model the admin chose', () => {
+        expect(() => aiUtils.createModelForImages({ credentials: managed, modelId: ACTIVEPIECES_IMAGE_TIERS[0].modelId })).not.toThrow()
+        expect(() => aiUtils.createModelForImages({ credentials: managed, modelId: 'openai/gpt-5-image', adminChosenImageModelId: 'openai/gpt-5-image' })).not.toThrow()
+    })
+
+    it('leaves a customer-supplied OpenRouter key unrestricted', () => {
+        const own = aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth: { apiKey: 'sk-own' }, config: {} })
+        expect(() => aiUtils.createModel({ credentials: own, modelId: 'perplexity/sonar-deep-research', billing: null })).not.toThrow()
+    })
+})
+
+describe('what the managed provider is asked to send back', () => {
+    async function settingsFor({ provider, webSearchEnabled = false }: { provider: AIProviderName, webSearchEnabled?: boolean }): Promise<Record<string, unknown>> {
+        const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider, auth: { apiKey: 'key' }, config: {} }), modelId: ACTIVEPIECES_CHAT_TIERS[0].modelId, webSearchEnabled, billing: null })
+        return sentBody(() => generateText({ model, prompt: 'hi', maxRetries: 0 }))
+    }
+
+    it('asks OpenRouter to report what a managed call cost, which is the whole basis of the bill', async () => {
+        expect(await settingsFor({ provider: AIProviderName.ACTIVEPIECES })).toMatchObject({ usage: { include: true } })
+    })
+
+    it('keeps asking for the cost when web search is on, rather than letting the plugin setting replace it', async () => {
+        expect(await settingsFor({ provider: AIProviderName.ACTIVEPIECES, webSearchEnabled: true })).toMatchObject({
             usage: { include: true },
             plugins: [{ id: 'web', max_results: 5 }],
         })
     })
 
-    it('does not ask for cost accounting on a customer own OpenRouter key, which we never pay for', () => {
-        expect(settingsFor({ provider: AIProviderName.OPENROUTER })).toEqual({})
+    it('asks a customer own OpenRouter key for its cost too, so AI usage shows what the provider charged', async () => {
+        expect(await settingsFor({ provider: AIProviderName.OPENROUTER })).toMatchObject({ usage: { include: true } })
     })
 })
+
+describe('aiUtils.createModel tool choice', () => {
+    it('asks the model to call a required tool instead of forcing tool_choice, which some models reject', async () => {
+        const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.ANTHROPIC, auth: { apiKey: 'key' }, config: {} }), modelId: 'claude-opus-5-5', billing: null })
+        const body = await sentBody(() => generateText({
+            model,
+            prompt: 'hi',
+            maxRetries: 0,
+            tools: { extractData: tool({ inputSchema: jsonSchema({ type: 'object', properties: {} }) }) },
+            toolChoice: 'required',
+        }))
+
+        expect(body.tool_choice).toEqual({ type: 'auto' })
+    })
+
+    it('bills the dollar cost of every attempt when a managed model answers a required tool in text first', async () => {
+        const reported: ActivepiecesAiCostEvent[] = []
+        activepiecesAiCost.setReporter((event) => reported.push(event))
+        const replies = [
+            { id: 'gen-text', choices: [{ index: 0, message: { role: 'assistant', content: 'The total is 1250.' }, finish_reason: 'stop' }], usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15, cost: 0.003 } },
+            { id: 'gen-tool', choices: [{ index: 0, message: { role: 'assistant', content: null, tool_calls: [{ id: 'call_1', type: 'function', function: { name: 'extractData', arguments: '{}' } }] }, finish_reason: 'tool_calls' }], usage: { prompt_tokens: 12, completion_tokens: 6, total_tokens: 18, cost: 0.004 } },
+        ]
+        const original = globalThis.fetch
+        globalThis.fetch = () => Promise.resolve(new Response(JSON.stringify(replies.shift()), { headers: { 'content-type': 'application/json' } }))
+        try {
+            const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth: { apiKey: 'key' }, config: {} }), modelId: 'anthropic/claude-opus-5.5', billing: BILLING, usageOnly: true })
+            await generateText({
+                model,
+                prompt: 'hi',
+                maxRetries: 0,
+                tools: { extractData: tool({ inputSchema: jsonSchema({ type: 'object', properties: {} }) }) },
+                toolChoice: 'required',
+            })
+        }
+        finally {
+            globalThis.fetch = original
+            activepiecesAiCost.setReporter(() => undefined)
+        }
+
+        expect(reported.map((event) => event.call?.observedCostUsd)).toEqual([0.003, 0.004])
+    })
+})
+
+async function sentBody(send: () => Promise<unknown>): Promise<Record<string, unknown>> {
+    const original = globalThis.fetch
+    let body: Record<string, unknown> = {}
+    globalThis.fetch = (_input, init) => {
+        body = typeof init?.body === 'string' ? JSON.parse(init.body) : {}
+        return Promise.resolve(new Response('{}'))
+    }
+    try {
+        await send().catch(() => undefined)
+    }
+    finally {
+        globalThis.fetch = original
+    }
+    return body
+}
+
+const BILLING: ActivepiecesAiBilling = {
+    source: ActivepiecesAiConsumerSource.AI_STEP_IN_FLOW,
+    platformId: 'platform-1',
+    projectId: 'project-1',
+    flowRun: { flowId: 'flow-1', flowRunId: 'run-1' },
+}

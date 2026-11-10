@@ -1,6 +1,6 @@
 {
   "Create stunning designs with Canva's powerful design automation tools": "Create stunning designs with Canva's powerful design automation tools",
-  "\nTo connect Canva, follow these steps:\n1. Go to https://www.canva.com/developers/integrations and sign in.\n2. Click **Create an integration** and fill in the app name and description.\n3. Under **Configure** → **Authentication**, set the redirect URL to the one shown above.\n4. Under **Configure** → **Scopes**, enable: `design:content:read`, `design:content:write`, `design:meta:read`, `asset:read`, `asset:write`, `folder:read`, `folder:write`.\n5. Copy the **Client ID** and **Client secret** and paste them abo": "\nTo connect Canva, follow these steps:\n1. Go to https://www.canva.com/developers/integrations and sign in.\n2. Click **Create an integration** and fill in the app name and description.\n3. Under **Configure** → **Authentication**, set the redirect URL to the one shown above.\n4. Under **Configure** → **Scopes**, enable: `design:content:read`, `design:content:write`, `design:meta:read`, `asset:read`, `asset:write`, `folder:read`, `folder:write`.\n5. Copy the **Client ID** and **Client secret** and paste them above.\n",
+  "\nTo connect Canva, follow these steps:\n1. Go to https://www.canva.com/developers/integrations and sign in.\n2. Click **Create an integration** and fill in the app name and description.\n3. Under **Configure** → **Authentication**, set the redirect URL to the one shown above.\n4. Under **Configure** → **Scopes**, enable: `design:content:read`, `design:content:write`, `design:meta:read`, `asset:read`, `asset:write`, `folder:read`, `folder:write`, `profile:read`.\n5. Copy the **Client ID** and **Client secret** an": "\nTo connect Canva, follow these steps:\n1. Go to https://www.canva.com/developers/integrations and sign in.\n2. Click **Create an integration** and fill in the app name and description.\n3. Under **Configure** → **Authentication**, set the redirect URL to the one shown above.\n4. Under **Configure** → **Scopes**, enable: `design:content:read`, `design:content:write`, `design:meta:read`, `asset:read`, `asset:write`, `folder:read`, `folder:write`, `profile:read`.\n5. Copy the **Client ID** and **Client secret** and paste them above.\n",
   "Create Design": "Create Design",
   "Get Design": "Get Design",
   "Upload Asset": "Upload Asset",
@@ -58,9 +58,9 @@
   "Query Parameters": "Abfrageparameter",
   "Body Type": "Körpertyp",
   "Body": "Körper",
-  "Response is Binary ?": "Response is Binary ?",
-  "No Error on Failure": "Kein Fehler bei Fehler",
-  "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Response is Binary": "Antwort ist binär",
+  "Return Error as Output": "Rückgabewert Fehler als Ausgabe",
+  "Timeout": "Timeout",
   "Follow redirects": "Follow redirects",
   "Choose how to create your design - preset templates or custom dimensions": "Choose how to create your design - preset templates or custom dimensions",
   "⚠️ Only fill this if you selected \"Preset Design Type\" above": "⚠️ Only fill this if you selected \"Preset Design Type\" above",
@@ -96,7 +96,11 @@
   "Select the folder to retrieve metadata for": "Select the folder to retrieve metadata for",
   "Select the asset to retrieve metadata for": "Select the asset to retrieve metadata for",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
+  "Appended to the URL as ?key=value.": "Wird als ?key=value an die URL angehängt.",
   "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
+  "On a failed request, output the error instead of failing the step.": "Bei einer fehlgeschlagenen Anfrage den Fehler ausgeben, statt den Schritt abzubrechen.",
+  "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Sekunden bis zur Antwort. Leer: bis zum Flow-Limit (10 Min.).",
+  "Follow 3xx redirects instead of returning them as the response.": "3xx-Weiterleitungen folgen, statt sie als Antwort zurückzugeben.",
   "📋 Preset Design Type (Document, Whiteboard, Presentation)": "📋 Preset Design Type (Document, Whiteboard, Presentation)",
   "📐 Custom Dimensions (Specify width & height)": "📐 Custom Dimensions (Specify width & height)",
   "Document (Canva Docs)": "Document (Canva Docs)",
@@ -136,9 +140,5 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
-  "HEAD": "HEAD",
-  "None": "Keine",
-  "JSON": "JSON",
-  "Form Data": "Formulardaten",
-  "Raw": "Rohe"
+  "HEAD": "HEAD"
 }

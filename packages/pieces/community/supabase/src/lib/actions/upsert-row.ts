@@ -1,4 +1,4 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction, MarkdownVariant, Property } from "@activepieces/pieces-framework";
 import { supabaseAuth } from '../auth';
 import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
@@ -12,12 +12,35 @@ export const upsertRow = createAction({
     audience: 'both',
     aiMetadata: { description: 'Inserts a row into a Supabase table, or updates the existing row when it collides on the specified unique conflict column. Use when you want to write a record without first checking whether it exists. Idempotent: requires a unique conflict column, and re-running with the same data converges to the same single row.', idempotent: true },
     auth: supabaseAuth,
+    propertyGroups: [
+        {
+            key: 'match',
+            display: 'section',
+            label: 'Match Existing Rows',
+            icon: 'filter',
+            props: ['table_name', 'on_conflict'],
+        },
+        {
+            key: 'values',
+            display: 'section',
+            label: 'Values',
+            icon: 'text',
+            props: ['match_info', 'row_data'],
+        },
+        {
+            key: 'output',
+            display: 'section',
+            label: 'Output',
+            icon: 'sliders',
+            props: ['count_upserted', 'return_upserted'],
+        },
+    ],
     props: {
         table_name: supabaseCommon.table_name,
         on_conflict: Property.Dropdown({
             auth: supabaseAuth,
-            displayName: 'Conflict Column',
-            description: 'Select the unique column to determine duplicates (required for upsert to work)',
+            displayName: 'Match Column',
+            description: 'A unique column. Rows with the same value here are updated.',
             required: true,
             refreshers: ['table_name'],
             options: async ({ auth, table_name }) => {
@@ -117,16 +140,20 @@ export const upsertRow = createAction({
                 }
             }
         }),
+        match_info: Property.MarkDown({
+            value: 'Rows with an existing match column value are updated; others are added.',
+            variant: MarkdownVariant.INFO,
+        }),
         row_data: supabaseCommon.upsert_fields,
         count_upserted: Property.Checkbox({
             displayName: 'Count Upserted Rows',
-            description: 'Whether to count the number of upserted rows',
+            description: 'Adds the number of written rows to the output.',
             required: false,
             defaultValue: false,
         }),
         return_upserted: Property.Checkbox({
             displayName: 'Return Upserted Rows',
-            description: 'Whether to return the upserted rows data',
+            description: 'Adds the written rows to the output.',
             required: false,
             defaultValue: false,
         })

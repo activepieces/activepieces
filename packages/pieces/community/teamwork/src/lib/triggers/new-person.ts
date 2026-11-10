@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const newPerson = createTrigger({
 	name: 'new_person',
+	classification: 'READ',
 	displayName: 'New Person',
 	description: 'Fires when a new person (user/contact) is added.',
 	aiMetadata: {

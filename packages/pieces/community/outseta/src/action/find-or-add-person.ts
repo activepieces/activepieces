@@ -5,6 +5,7 @@ import { customPropertiesProp, mergeCustomProperties } from '../common/custom-pr
 
 export const findOrAddPersonAction = createAction({
   name: 'find_or_add_person',
+  classification: 'WRITE',
   auth: outsetaAuth,
   displayName: 'Find or Add Person',
   description:

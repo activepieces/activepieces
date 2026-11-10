@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const listAccountsAction = createAction({
   name: 'list_accounts',
+  classification: 'SEARCH',
   auth: outsetaAuth,
   displayName: 'List Accounts',
   description: 'Retrieve a paginated list of accounts from your Outseta CRM.',

@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const submitUserAccountSelection = createAction({
   auth: trueLayerCommon.auth,
   name: 'submit-user-account-selection',
+  classification: 'WRITE',
   displayName: 'Submit User Account Selection',
   description: 'Submit the user account selection option given by the user. This API can be called using the `resource_token` associated with the payment or a backend bearer token.',
   audience: 'both',

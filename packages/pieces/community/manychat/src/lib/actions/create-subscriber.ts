@@ -7,6 +7,7 @@ import { isNil } from '@activepieces/pieces-framework';
 export const createSubscriberAction = createAction({
 	auth: manychatAuth,
 	name: 'createSubscriber',
+	classification: 'WRITE',
 	displayName: 'Create Subscriber',
 	description: 'Creates a Unified or a Whatsapp subscriber.',
 	audience: 'both',
