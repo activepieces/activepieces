@@ -25,11 +25,13 @@ const harness = vi.hoisted(() => ({
 }));
 
 vi.mock('@/features/tables/stores/store/ap-tables-server-state', () => ({
-  createServerState: (
-    _table: unknown,
-    fields: unknown[],
-    records: unknown[],
-  ) => ({
+  createServerState: ({
+    fields,
+    records,
+  }: {
+    fields: unknown[];
+    records: unknown[];
+  }) => ({
     deleteField: vi.fn(),
     createField: vi.fn(),
     fields,
@@ -93,7 +95,8 @@ const records: PopulatedRecord[] = [
   },
 ];
 
-const createStore = () => createApTableStore(table, fields, records);
+const createStore = () =>
+  createApTableStore({ table, fields, records, onSaveFailed: () => undefined });
 
 const cellsByIndex = (store: ApTableStore) =>
   [...store.getState().records[0].values].sort(

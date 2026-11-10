@@ -27,7 +27,12 @@ const table: Table = {
 
 describe('createApTableStore', () => {
   it('does not notify subscribers when the same cell is selected again', () => {
-    const store = createApTableStore(table, [], []);
+    const store = createApTableStore({
+      table,
+      fields: [],
+      records: [],
+      onSaveFailed: () => undefined,
+    });
     store.getState().setSelectedCell({ rowIdx: 0, columnIdx: 2 });
 
     const listener = vi.fn();
@@ -61,20 +66,25 @@ describe('createApTableStore', () => {
       value,
       fieldName,
     });
-    const store = createApTableStore(table, fields, [
-      {
-        id: 'record-1',
-        created: table.created,
-        updated: table.updated,
-        tableId: table.id,
-        projectId: table.projectId,
-        cells: {
-          c: cell('c', 'c-value'),
-          a: cell('a', 'a-value'),
-          b: cell('b', 'b-value'),
+    const store = createApTableStore({
+      table,
+      fields,
+      records: [
+        {
+          id: 'record-1',
+          created: table.created,
+          updated: table.updated,
+          tableId: table.id,
+          projectId: table.projectId,
+          cells: {
+            c: cell('c', 'c-value'),
+            a: cell('a', 'a-value'),
+            b: cell('b', 'b-value'),
+          },
         },
-      },
-    ]);
+      ],
+      onSaveFailed: () => undefined,
+    });
 
     const edit = { values: [{ fieldIndex: 0, value: 'a-edited' }] };
     store.getState().updateRecord(0, edit);

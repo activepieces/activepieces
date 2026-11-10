@@ -16,24 +16,38 @@ import { tablesApi } from '../../api/tables-api';
 
 import { ClientRecordData } from './ap-tables-client-state';
 
-export const createServerState = (
-  _table: Table,
-  _fields: Field[],
-  _records: PopulatedRecord[],
-  updateSavingStatus: (isSaving: boolean) => void,
-) => {
+export const createServerState = ({
+  table,
+  fields,
+  records,
+  updateSavingStatus,
+  onSaveFailed,
+}: {
+  table: Table;
+  fields: Field[];
+  records: PopulatedRecord[];
+  updateSavingStatus: (isSaving: boolean) => void;
+  onSaveFailed: (error: unknown) => void;
+}) => {
   const queue = new PromiseQueue();
+  let saveFailed = false;
 
-  const clonedTable: Table = JSON.parse(JSON.stringify(_table));
-  const clonedFields: Field[] = JSON.parse(JSON.stringify(_fields));
-  let clonedRecords: PopulatedRecord[] = JSON.parse(JSON.stringify(_records));
+  const clonedTable: Table = JSON.parse(JSON.stringify(table));
+  const clonedFields: Field[] = JSON.parse(JSON.stringify(fields));
+  let clonedRecords: PopulatedRecord[] = JSON.parse(JSON.stringify(records));
 
   function addPromiseToQueue(promise: () => Promise<void>) {
     queue.add(async () => {
+      if (saveFailed) {
+        return;
+      }
       updateSavingStatus(true);
       const { error } = await tryCatch(promise);
       if (!isNil(error)) {
+        saveFailed = true;
+        updateSavingStatus(false);
         errorReporting.report({ error, source: 'table-save' });
+        onSaveFailed(error);
         throw error;
       }
       updateSavingStatus(queue.size() === 1);

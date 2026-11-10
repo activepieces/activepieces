@@ -89,18 +89,25 @@ export type TableState = {
   serverRecords: PopulatedRecord[];
 };
 
-export const createApTableStore = (
-  table: Table,
-  fields: Field[],
-  records: PopulatedRecord[],
-) => {
+export const createApTableStore = ({
+  table,
+  fields,
+  records,
+  onSaveFailed,
+}: {
+  table: Table;
+  fields: Field[];
+  records: PopulatedRecord[];
+  onSaveFailed: (error: unknown) => void;
+}) => {
   return create<TableState>((set) => {
-    const serverState = createServerState(
+    const serverState = createServerState({
       table,
       fields,
       records,
-      (isSaving: boolean) => set({ isSaving }),
-    );
+      updateSavingStatus: (isSaving: boolean) => set({ isSaving }),
+      onSaveFailed,
+    });
     const selectedCell =
       records.length > 0
         ? {
