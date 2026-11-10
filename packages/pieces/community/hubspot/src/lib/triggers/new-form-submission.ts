@@ -14,6 +14,7 @@ import {
 	Property,
 } from '@activepieces/pieces-framework';
 import { formDropdown } from '../common/props';
+import { hubspotPolling } from '../common/polling';
 import { newFormSubmissionTriggerOutputSchema } from '../output-schemas';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
@@ -23,18 +24,19 @@ type Props = {
 };
 
 type FormSubmissionResponse = {
-	results: Array<{
-		conversionId: string;
-		submittedAt: number;
-		pageUrl: string;
-		values: Array<{ name: string; value: string }>;
-	}>;
-	paging?: {
-		next?: {
-			after: string;
-		};
-	};
+	results: FormSubmission[];
+	paging?: { next?: { after: string } };
 };
+
+type FormSubmission = {
+	conversionId: string;
+	submittedAt: number;
+	pageUrl: string;
+	values: Array<{ name: string; value: string }>;
+};
+
+const TEST_BUDGET_MS = 20_000;
+const TEST_SAMPLE_SIZE = 10;
 
 type FormField = {
 	name: string;
@@ -48,9 +50,14 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 		const authValue = auth as HubspotAuthValue;
 		const formId = propsValue.formId;
 
-		const submissions = [];
-		let after;
-		do {
+		const isTestMode = lastFetchEpochMS === 0;
+		const deadline = hubspotPolling.createPollDeadline(isTestMode ? TEST_BUDGET_MS : undefined);
+		let submissions: FormSubmission[] = [];
+		let reference: FormSubmission | undefined;
+		let newestFirst: boolean | undefined;
+		let after: string | undefined;
+		let reachedCheckpoint = false;
+		for (;;) {
 			const qs: QueryParams = { limit: '50' };
 			if (after) {
 				qs.after = after;
@@ -64,9 +71,32 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 					token: getHubspotAccessToken(authValue),
 				},
 			});
+			const page = response.body.results;
+			submissions = [...submissions, ...page];
+			reference = reference ?? page[0];
+			newestFirst = newestFirst ?? detectNewestFirst({ reference, page });
 			after = response.body.paging?.next?.after;
-			submissions.push(...response.body.results);
-		} while (after);
+			const pageHasOld = page.some((submission) => submission.submittedAt <= lastFetchEpochMS);
+			if (newestFirst === true && (isTestMode || pageHasOld)) {
+				reachedCheckpoint = true;
+				break;
+			}
+			if (!after) {
+				reachedCheckpoint = true;
+				break;
+			}
+			if (deadline.reached()) {
+				break;
+			}
+		}
+		if (!reachedCheckpoint) {
+			console.warn(`[hubspot] form ${formId} submissions read stopped at the poll deadline; the rest are read on the next poll`);
+		}
+		if (isTestMode) {
+			submissions = [...submissions].sort((a, b) => b.submittedAt - a.submittedAt).slice(0, TEST_SAMPLE_SIZE);
+		} else if (!reachedCheckpoint && newestFirst !== true) {
+			submissions = dropTrailingTies(submissions.filter((submission) => submission.submittedAt > lastFetchEpochMS));
+		}
 
 		const formFields = await httpClient.sendRequest<FormField[]>({
 			method: HttpMethod.GET,
@@ -114,12 +144,39 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 			});
 		}
 
-		return items.map((item) => ({
-			epochMilliSeconds: item.submittedAt,
-			data: item,
-		}));
+		return items
+			.map((item) => ({
+				epochMilliSeconds: item.submittedAt,
+				data: item,
+			}))
+			.sort((a, b) =>
+				lastFetchEpochMS === 0 ? b.epochMilliSeconds - a.epochMilliSeconds : a.epochMilliSeconds - b.epochMilliSeconds,
+			);
 	},
 };
+
+function detectNewestFirst({ reference, page }: { reference?: FormSubmission; page: FormSubmission[] }): boolean | undefined {
+	if (!reference) {
+		return undefined;
+	}
+	if (page.some((submission) => submission.submittedAt < reference.submittedAt)) {
+		return true;
+	}
+	if (page.some((submission) => submission.submittedAt > reference.submittedAt)) {
+		return false;
+	}
+	return undefined;
+}
+
+function dropTrailingTies(submissions: FormSubmission[]): FormSubmission[] {
+	const sorted = [...submissions].sort((a, b) => a.submittedAt - b.submittedAt);
+	const last = sorted[sorted.length - 1];
+	if (!last) {
+		return sorted;
+	}
+	const kept = sorted.filter((submission) => submission.submittedAt < last.submittedAt);
+	return kept.length > 0 ? kept : sorted;
+}
 
 export const newFormSubmissionTrigger = createTrigger({
 	auth: hubspotAuth,
@@ -165,7 +222,7 @@ export const newFormSubmissionTrigger = createTrigger({
 		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
-		return await pollingHelper.test(polling, context);
+		return hubspotPolling.sampleOldestToNewest({ items: await pollingHelper.test(polling, context) });
 	},
 	async run(context) {
 		return await pollingHelper.poll(polling, context);

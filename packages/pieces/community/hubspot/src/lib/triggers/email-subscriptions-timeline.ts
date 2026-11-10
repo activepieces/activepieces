@@ -8,6 +8,7 @@ import {
 	QueryParams,
 } from '@activepieces/pieces-common';
 import { getHubspotAccessToken, hubspotAuth } from '../auth';
+import { hubspotPolling } from '../common/polling';
 import {
 	AppConnectionValueForAuthProperty,
 	createTrigger,
@@ -46,12 +47,19 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Re
 			for (const item of response.body.timeline) {
 				items.push(item);
 			}
+			if (!lastFetchEpochMS) {
+				break;
+			}
 		} while (hasMore);
 
-		return items.map((item) => ({
-			epochMilliSeconds: item.timestamp as number,
-			data: item,
-		}));
+		return items
+			.map((item) => ({
+				epochMilliSeconds: Number(item.timestamp),
+				data: item,
+			}))
+			.sort((a, b) =>
+				lastFetchEpochMS ? a.epochMilliSeconds - b.epochMilliSeconds : b.epochMilliSeconds - a.epochMilliSeconds,
+			);
 	},
 };
 
@@ -75,7 +83,7 @@ export const newEmailSubscriptionsTimelineTrigger = createTrigger({
 		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
-		return await pollingHelper.test(polling, context);
+		return hubspotPolling.sampleOldestToNewest({ items: await pollingHelper.test(polling, context) });
 	},
 	async run(context) {
 		return await pollingHelper.poll(polling, context);

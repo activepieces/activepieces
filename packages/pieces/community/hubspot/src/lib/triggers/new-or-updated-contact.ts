@@ -1,23 +1,21 @@
-import { isNil } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { getHubspotAccessToken, hubspotAuth } from '../auth';
+import { hubspotPolling } from '../common/polling';
 import {
 	createTrigger,
 	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
+import { OBJECT_TYPE } from '../common/constants';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { Client } from '@hubspot/api-client';
-import { FilterOperatorEnum } from '../common/types';
-import dayjs from 'dayjs';
 
 import { crmObjectOutputSchema } from '../output-schemas';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>,{ additionalPropertiesToRetrieve?: string[] | string }> = {
+const polling = {
 	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, propsValue, lastFetchEpochMS }) {
+	async items({ auth, propsValue, lastFetchEpochMS, store }) {
 		const client = new Client({ accessToken: getHubspotAccessToken(auth), numberOfApiCallRetries: 3 });
 
 		// Extract properties once to avoid recomputation
@@ -25,51 +23,15 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>,{ a
 		const defaultContactProperties = getDefaultPropertiesForObject(OBJECT_TYPE.CONTACT);
 		const propertiesToRetrieve = [...defaultContactProperties, ...additionalProperties];
 
-		const items = [];
-		let after: string | undefined;
-
-		do {
-			const isTest = lastFetchEpochMS === 0;
-			const response = await client.crm.contacts.searchApi.doSearch({
-				limit: isTest ? 10 : MAX_SEARCH_PAGE_SIZE,
-				after,
-				properties: propertiesToRetrieve,
-				sorts: ['-lastmodifieddate'],
-				filterGroups: isTest
-					? []
-					: [
-							{
-								filters: [
-									{
-										propertyName: 'lastmodifieddate',
-										operator: FilterOperatorEnum.Gt,
-										value: lastFetchEpochMS.toString(),
-									},
-								],
-							},
-					  ],
-			});
-			after = response.paging?.next?.after;
-			items.push(...response.results);
-
-			// Stop fetching if it's a test
-			if (isTest) break;
-
-			// Stop fetching if it exceeds max search results or will encounter 400 status
-			if (
-				!isNil(after) &&
-				parseInt(after) + MAX_SEARCH_PAGE_SIZE > MAX_SEARCH_TOTAL_RESULTS
-			) {
-				break;
-			}
-		} while (after);
-
-		return items.map((item) => ({
-			epochMilliSeconds: dayjs(item.properties['lastmodifieddate']).valueOf(),
-			data: item,
-		}));
+		return hubspotPolling.pollSearchTrigger({
+			store,
+			search: (request) => client.crm.contacts.searchApi.doSearch(request),
+			timestampProperty: 'lastmodifieddate',
+			lastFetchEpochMS,
+			properties: propertiesToRetrieve,
+		});
 	},
-};
+} satisfies Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>,{ additionalPropertiesToRetrieve?: string[] | string }>;
 
 export const newOrUpdatedContactTrigger = createTrigger({
 	auth: hubspotAuth,
@@ -103,10 +65,10 @@ Pick more below.`,
 		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
-		return await pollingHelper.test(polling, context);
+		return hubspotPolling.sampleOldestToNewest({ items: await pollingHelper.test(polling, context) });
 	},
 	async run(context) {
-		return await pollingHelper.poll(polling, context);
+		return await hubspotPolling.poll({ polling, context });
 	},
 	sampleData: {
 		createdAt: '2024-12-06T10:52:58.322Z',
