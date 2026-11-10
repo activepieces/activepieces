@@ -28,6 +28,28 @@ const resolveItemsCount = ({
   return Array.isArray(value) ? value.length : null;
 };
 
+const countBatches = ({
+  itemsCount,
+  batchSize,
+}: {
+  itemsCount: number | null;
+  batchSize: number | undefined;
+}): number | null =>
+  itemsCount === null || !batchSize ? null : Math.ceil(itemsCount / batchSize);
+
+const resolveConcurrencyLimit = ({
+  isRateLimiterEnabled,
+  workerGroupsEnabled,
+  maxConcurrentJobs,
+}: {
+  isRateLimiterEnabled: boolean | null | undefined;
+  workerGroupsEnabled: boolean | undefined;
+  maxConcurrentJobs: number | null | undefined;
+}): number | null =>
+  isRateLimiterEnabled === true && workerGroupsEnabled !== true
+    ? maxConcurrentJobs ?? null
+    : null;
+
 const secondsToHours = (
   timeoutSeconds: number | undefined,
 ): number | undefined =>
@@ -44,6 +66,8 @@ const SECONDS_PER_HOUR = 3600;
 
 export const processInBatchesUtils = {
   resolveItemsCount,
+  countBatches,
+  resolveConcurrencyLimit,
   secondsToHours,
   hoursToSeconds,
 };

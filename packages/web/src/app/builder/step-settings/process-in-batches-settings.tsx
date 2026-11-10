@@ -3,7 +3,6 @@ import { ApFlagId, ProcessInBatchesAction } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   Activity,
-  ChevronRight,
   CircleHelp,
   FlaskConical,
   TriangleAlert,
@@ -13,11 +12,6 @@ import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 import {
   FormControl,
   FormDescription,
@@ -37,6 +31,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
+import { AdvancedSection } from '../piece-properties/advanced-section';
 import { TextInputWithMentions } from '../piece-properties/text-input-with-mentions';
 
 import { BatchFailureModeField } from './batch-failure-mode-field';
@@ -80,11 +75,19 @@ const ProcessInBatchesSettings = React.memo(
           name="settings.batchSize"
           render={({ field }) => (
             <FormItem className="flex flex-col gap-2">
-              <FormLabel showRequiredIndicator className="flex items-center">
-                <span>{t('Items per Batch')}</span>
+              <div className="flex items-center gap-1">
+                <FormLabel showRequiredIndicator>
+                  {t('Items per Batch')}
+                </FormLabel>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <CircleHelp className="size-3.5 text-gray-11" />
+                    <button
+                      type="button"
+                      aria-label={t('More info')}
+                      className="flex shrink-0 rounded-sm text-gray-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8"
+                    >
+                      <CircleHelp className="size-3.5" />
+                    </button>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-64">
                     {t(
@@ -92,7 +95,7 @@ const ProcessInBatchesSettings = React.memo(
                     )}
                   </TooltipContent>
                 </Tooltip>
-              </FormLabel>
+              </div>
               <FormControl>
                 <Input
                   {...field}
@@ -129,24 +132,18 @@ const ProcessInBatchesSettings = React.memo(
             )}
           </span>
         </div>
-        <Collapsible className="flex flex-col gap-4">
-          <CollapsibleTrigger className="group flex items-center justify-between text-sm font-medium text-gray-11 hover:text-gray-12">
-            <span>{t('Advanced')}</span>
-            <ChevronRight className="size-4 transition-transform group-data-[state=open]:rotate-90" />
-          </CollapsibleTrigger>
-          <CollapsibleContent className="flex flex-col gap-4">
-            <BatchFailureModeField readonly={readonly} />
-            <TimeoutField readonly={readonly} />
-            <Alert variant="warning">
-              <TriangleAlert />
-              <AlertDescription>
-                {t(
-                  'Retrying re-runs the whole list — anything a successful batch already sent happens again.',
-                )}
-              </AlertDescription>
-            </Alert>
-          </CollapsibleContent>
-        </Collapsible>
+        <AdvancedSection count={2} watchPaths={ADVANCED_WATCH_PATHS}>
+          <BatchFailureModeField readonly={readonly} />
+          <TimeoutField readonly={readonly} />
+          <Alert variant="warning">
+            <TriangleAlert />
+            <AlertDescription>
+              {t(
+                'Retrying re-runs the whole list — anything a successful batch already sent happens again.',
+              )}
+            </AlertDescription>
+          </Alert>
+        </AdvancedSection>
       </>
     );
   },
@@ -172,25 +169,33 @@ const BatchPlanSummary = () => {
     items,
     outputSampleData,
   });
-  const batchesCount =
-    itemsCount === null || !batchSize
-      ? null
-      : Math.ceil(itemsCount / batchSize);
-  const concurrencyLimit =
-    isRateLimiterEnabled === true && platform.plan.workerGroupsEnabled !== true
-      ? project.maxConcurrentJobs
-      : null;
+  const batchesCount = processInBatchesUtils.countBatches({
+    itemsCount,
+    batchSize,
+  });
+  const concurrencyLimit = processInBatchesUtils.resolveConcurrencyLimit({
+    isRateLimiterEnabled,
+    workerGroupsEnabled: platform.plan.workerGroupsEnabled,
+    maxConcurrentJobs: project.maxConcurrentJobs,
+  });
 
   return (
     <div className="rounded-lg border overflow-hidden">
       <div className="flex items-center py-3">
-        <PlanStat value={itemsCount} label={t('items')} />
+        <PlanStat
+          value={itemsCount}
+          label={t('{count, plural, =1 {item} other {items}}', {
+            count: itemsCount ?? 0,
+          })}
+        />
         <div className="w-px h-7 bg-gray-6 shrink-0" />
         <PlanStat value={batchSize ?? null} label={t('per batch')} />
         <div className="w-px h-7 bg-gray-6 shrink-0" />
         <PlanStat
           value={batchesCount}
-          label={t('batches')}
+          label={t('{count, plural, =1 {batch} other {batches}}', {
+            count: batchesCount ?? 0,
+          })}
           className="text-accent-11"
         />
       </div>
@@ -204,12 +209,14 @@ const BatchPlanSummary = () => {
           </span>
         </div>
       )}
-      <div className="flex items-center gap-2 border-t px-4 py-2 text-xs text-gray-11">
-        <FlaskConical className="size-3 shrink-0" />
-        <span>
-          {t('Based on your last test run — updates when you test again')}
-        </span>
-      </div>
+      {itemsCount !== null && (
+        <div className="flex items-center gap-2 border-t px-4 py-2 text-xs text-gray-11">
+          <FlaskConical className="size-3 shrink-0" />
+          <span>
+            {t('Based on your last test run — updates when you test again')}
+          </span>
+        </div>
+      )}
     </div>
   );
 };
@@ -266,7 +273,11 @@ const TimeoutField = ({ readonly }: ProcessInBatchesSettingsProps) => {
                 }
               />
             </FormControl>
-            <span className="text-sm text-gray-11">{t('hours')}</span>
+            <span className="text-sm text-gray-11">
+              {t('{count, plural, =1 {hour} other {hours}}', {
+                count: processInBatchesUtils.secondsToHours(field.value) ?? 0,
+              })}
+            </span>
           </div>
           <FormDescription>
             {isNil(maxPausedDays)
@@ -284,6 +295,8 @@ const TimeoutField = ({ readonly }: ProcessInBatchesSettingsProps) => {
     />
   );
 };
+
+const ADVANCED_WATCH_PATHS = ['settings.timeoutSeconds'];
 
 ProcessInBatchesSettings.displayName = 'ProcessInBatchesSettings';
 export { ProcessInBatchesSettings };

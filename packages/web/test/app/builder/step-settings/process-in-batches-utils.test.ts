@@ -67,6 +67,68 @@ describe('resolveItemsCount', () => {
   });
 });
 
+describe('countBatches', () => {
+  it('rounds a partial last batch up', () => {
+    expect(
+      processInBatchesUtils.countBatches({ itemsCount: 1000, batchSize: 10 }),
+    ).toBe(100);
+    expect(
+      processInBatchesUtils.countBatches({ itemsCount: 1001, batchSize: 10 }),
+    ).toBe(101);
+  });
+
+  it('returns null when the count or the batch size is unknown', () => {
+    expect(
+      processInBatchesUtils.countBatches({ itemsCount: null, batchSize: 10 }),
+    ).toBeNull();
+    expect(
+      processInBatchesUtils.countBatches({
+        itemsCount: 50,
+        batchSize: undefined,
+      }),
+    ).toBeNull();
+    expect(
+      processInBatchesUtils.countBatches({ itemsCount: 50, batchSize: 0 }),
+    ).toBeNull();
+  });
+});
+
+describe('resolveConcurrencyLimit', () => {
+  it('shows the project limit when the rate limiter is on', () => {
+    expect(
+      processInBatchesUtils.resolveConcurrencyLimit({
+        isRateLimiterEnabled: true,
+        workerGroupsEnabled: false,
+        maxConcurrentJobs: 5,
+      }),
+    ).toBe(5);
+  });
+
+  it('shows no limit with worker groups or without the rate limiter', () => {
+    expect(
+      processInBatchesUtils.resolveConcurrencyLimit({
+        isRateLimiterEnabled: true,
+        workerGroupsEnabled: true,
+        maxConcurrentJobs: 5,
+      }),
+    ).toBeNull();
+    expect(
+      processInBatchesUtils.resolveConcurrencyLimit({
+        isRateLimiterEnabled: false,
+        workerGroupsEnabled: false,
+        maxConcurrentJobs: 5,
+      }),
+    ).toBeNull();
+    expect(
+      processInBatchesUtils.resolveConcurrencyLimit({
+        isRateLimiterEnabled: true,
+        workerGroupsEnabled: false,
+        maxConcurrentJobs: null,
+      }),
+    ).toBeNull();
+  });
+});
+
 describe('timeout conversion', () => {
   it('round-trips whole hours through seconds', () => {
     expect(processInBatchesUtils.hoursToSeconds(1)).toBe(3600);

@@ -11,14 +11,12 @@ import {
   FormItem,
   FormLabel,
 } from '@/components/ui/form';
-
-type BatchFailureModeFieldProps = {
-  readonly: boolean;
-};
+import { cn } from '@/lib/utils';
 
 const BatchFailureModeField = React.memo(
   ({ readonly }: BatchFailureModeFieldProps) => {
     const form = useFormContext<ProcessInBatchesAction>();
+    const labelId = React.useId();
 
     return (
       <FormField
@@ -26,13 +24,14 @@ const BatchFailureModeField = React.memo(
         name="settings.errorHandlingOptions.continueOnFailure.value"
         render={({ field }) => (
           <FormItem className="flex flex-col gap-2">
-            <FormLabel>{t('If a batch fails')}</FormLabel>
+            <FormLabel id={labelId}>{t('If a batch fails')}</FormLabel>
             <FormControl>
               <RadioGroupPrimitive.Root
+                aria-labelledby={labelId}
                 disabled={readonly}
                 value={field.value === true ? CONTINUE : STOP}
                 onValueChange={(value) => field.onChange(value === CONTINUE)}
-                className="flex gap-0.75 rounded-lg border bg-gray-3 p-0.75"
+                className="flex h-9 gap-0.5 rounded-lg bg-gray-3 p-0.5"
               >
                 <RadioGroupPrimitive.Item value={STOP} className={segmentClass}>
                   {t('Stop the step')}
@@ -64,13 +63,16 @@ const BatchFailureModeField = React.memo(
 const STOP = 'stop';
 const CONTINUE = 'continue';
 
-const segmentClass = [
-  'flex h-8 grow items-center justify-center rounded-md border border-transparent',
-  'text-[13px] font-medium text-gray-11 outline-none transition-colors',
-  'hover:text-gray-12 focus-visible:ring-[3px] focus-visible:ring-ring/50',
-  'data-[state=checked]:border-border data-[state=checked]:bg-background data-[state=checked]:font-semibold data-[state=checked]:text-foreground data-[state=checked]:shadow-xs',
+const segmentClass = cn(
+  'flex grow items-center justify-center rounded-md text-sm font-medium text-gray-11 outline-none transition-all',
+  'hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-gray-8',
+  'data-[state=checked]:bg-panel data-[state=checked]:font-semibold data-[state=checked]:text-gray-12 data-[state=checked]:shadow-xs',
   'disabled:pointer-events-none disabled:opacity-50',
-].join(' ');
+);
 
 BatchFailureModeField.displayName = 'BatchFailureModeField';
 export { BatchFailureModeField };
+
+type BatchFailureModeFieldProps = {
+  readonly: boolean;
+};

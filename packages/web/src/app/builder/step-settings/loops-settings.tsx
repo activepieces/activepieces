@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import { LoopOnItemsAction } from '@activepieces/shared';
 import { t } from 'i18next';
-import { TriangleAlert } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
 import React from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
@@ -77,11 +77,11 @@ const LargeListWarning = () => {
   }
 
   return (
-    <Alert variant="warning">
-      <TriangleAlert />
+    <Alert variant="primary">
+      <Lightbulb />
       <AlertDescription>
         {t(
-          'This flow could run a lot faster. Your last test returned {count, number} items, and a loop handles them one by one. Process in Batches runs several at once.',
+          "This flow could run a lot faster. Your last test returned {count, number} items, and a loop handles them one by one. To run several at once, add a Process in Batches step above this loop and give it this loop's list. Then move this loop inside it and set the loop's Items to the batch's items.",
           { count: itemsCount },
         )}
       </AlertDescription>
