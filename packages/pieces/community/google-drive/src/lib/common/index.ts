@@ -4,10 +4,11 @@ import {
   AuthenticationType,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { Property } from '@activepieces/pieces-framework';
+import { Property, tryCatch } from '@activepieces/pieces-framework';
 import { drive as googleDrive, drive_v3 } from '@googleapis/drive';
 import { googleDriveAuth, GoogleDriveAuthValue, getAccessToken, createGoogleClient } from '../auth';
 import { driveDeadline } from './deadline';
+import { drivePool } from './pool';
 
 const FOLDER_DROPDOWN_PAGE_SIZE = 1000;
 const SHARED_DRIVES_PAGE_SIZE = 100;
@@ -107,7 +108,10 @@ function listCall<T>({
   call: (signal: AbortSignal) => Promise<T>;
 }): Promise<T> {
   return driveDeadline.runWithin({
-    ms: Math.min(LIST_CALL_TIMEOUT_MS, deadline - Date.now()),
+    ms:
+      wording === 'poll'
+        ? Math.min(LIST_CALL_TIMEOUT_MS, deadline - Date.now())
+        : deadline - Date.now(),
     message: timedOutMessage(wording),
     call,
   });
@@ -416,6 +420,140 @@ function resumableParams(
   };
 }
 
+async function listPassEntry({
+  drive,
+  entry,
+  maxPages,
+  deadline,
+  stopAt,
+}: {
+  drive: drive_v3.Drive;
+  entry: PassEntry;
+  maxPages: number | undefined;
+  deadline: number;
+  stopAt: ListingStop | undefined;
+}): Promise<PassOutcome> {
+  if (Date.now() >= deadline) {
+    return { entry, listing: undefined };
+  }
+  const { data, error } = await tryCatch(() =>
+    listPages({
+      drive,
+      params: entry.params,
+      maxPages,
+      deadline,
+      wording: 'poll',
+      stopAt,
+      startToken: entry.pageToken,
+    })
+  );
+  if (error !== null) {
+    if (Date.now() >= deadline) {
+      return { entry, listing: undefined };
+    }
+    throw error;
+  }
+  if (data.incomplete) {
+    throw incompleteSearchError({ params: entry.params, wording: 'poll' });
+  }
+  return { entry, listing: data };
+}
+
+function nextPassEntries({
+  outcomes,
+  watermark,
+  orderBy,
+}: {
+  outcomes: PassOutcome[];
+  watermark: number;
+  orderBy: string | undefined;
+}): PassEntry[] {
+  const notListed = outcomes.flatMap((outcome) =>
+    outcome.listing === undefined ? [outcome.entry] : []
+  );
+  const listed = outcomes.flatMap((outcome): PassEntry[] => {
+    const listing = outcome.listing;
+    if (listing === undefined) {
+      return [];
+    }
+    const heldBack = listing.files.some(
+      (file) => timestampOf({ file, orderBy }) > watermark
+    );
+    if (heldBack) {
+      return [outcome.entry];
+    }
+    if (listing.truncated && listing.nextPageToken) {
+      return [
+        { params: outcome.entry.params, pageToken: listing.nextPageToken },
+      ];
+    }
+    return [];
+  });
+  return [...notListed, ...listed];
+}
+
+async function runDrivePass({
+  drive,
+  entries,
+  startedAt,
+  resumed,
+  maxPages,
+  deadline,
+  stopAt,
+  orderBy,
+}: {
+  drive: drive_v3.Drive;
+  entries: PassEntry[];
+  startedAt: number;
+  resumed: boolean;
+  maxPages: number | undefined;
+  deadline: number;
+  stopAt: ListingStop | undefined;
+  orderBy: string;
+}): Promise<DriveListing> {
+  const outcomes = await drivePool.mapInPool({
+    items: entries,
+    concurrency: SHARED_DRIVE_LIST_CONCURRENCY,
+    map: (entry) => listPassEntry({ drive, entry, maxPages, deadline, stopAt }),
+  });
+  const listings = outcomes.flatMap((outcome) =>
+    outcome.listing === undefined ? [] : [outcome.listing]
+  );
+  const watermark = listings
+    .filter((listing) => listing.truncated)
+    .map((listing) => lastReadKey({ listing, orderBy }))
+    .reduce((lowest, key) => Math.min(lowest, key), Number.POSITIVE_INFINITY);
+  const pending = nextPassEntries({ outcomes, watermark, orderBy });
+  if (pending.length === 0 && !resumed) {
+    return mergeListings({ listings, orderBy });
+  }
+  const merged = mergeListings({
+    listings: listings.map((listing) => ({ ...listing, truncated: false })),
+    orderBy,
+  });
+  const files = merged.files.filter(
+    (file) => timestampOf({ file, orderBy }) <= watermark
+  );
+  if (pending.length === 0) {
+    return {
+      files,
+      truncated: true,
+      watermark: startedAt,
+      position: { startedAt, pending: [] },
+    };
+  }
+  console.warn(
+    `Google Drive: ${pending.length} of ${entries.length} drives are not fully searched yet; the next checks continue where this one stopped.`
+  );
+  return {
+    files,
+    truncated: true,
+    watermark: startedAt,
+    holdCursor: true,
+    position: { startedAt, pending },
+  };
+}
+
 async function listFilesAcrossCorpora({
   drive,
   params,
@@ -434,6 +572,18 @@ async function listFilesAcrossCorpora({
   resume?: ListingPosition;
 }): Promise<DriveListing> {
   const listingDeadline = deadline ?? Date.now() + LISTING_BUDGET_MS;
+  if (resume && 'pending' in resume) {
+    return runDrivePass({
+      drive,
+      entries: resume.pending,
+      startedAt: resume.startedAt,
+      resumed: true,
+      maxPages,
+      deadline: listingDeadline,
+      stopAt,
+      orderBy: params.orderBy ?? 'createdTime desc',
+    });
+  }
   if (resume) {
     const resumed = await listPages({
       drive,
@@ -465,6 +615,35 @@ async function listFilesAcrossCorpora({
   }
   if (params.corpora !== 'allDrives') {
     throw incompleteSearchError({ params, wording });
+  }
+  if (wording === 'poll') {
+    const startedAt = Date.now();
+    const driveIds = await listSharedDriveIds({
+      drive,
+      deadline: listingDeadline,
+      wording,
+    });
+    return runDrivePass({
+      drive,
+      entries: [
+        { params: resumableParams({ ...params, corpora: 'user' }) },
+        ...driveIds.map((driveId) => ({
+          params: resumableParams({
+            ...params,
+            corpora: 'drive',
+            driveId,
+            includeItemsFromAllDrives: true,
+            supportsAllDrives: true,
+          }),
+        })),
+      ],
+      startedAt,
+      resumed: false,
+      maxPages,
+      deadline: listingDeadline,
+      stopAt,
+      orderBy: params.orderBy ?? 'createdTime desc',
+    });
   }
 
   const userListing = await listCompleteCorpus({
@@ -690,7 +869,13 @@ export type ResumableParams = {
   includeItemsFromAllDrives?: boolean;
 };
 
-export type ListingPosition = { params: ResumableParams; pageToken: string };
+export type PassEntry = { params: ResumableParams; pageToken?: string };
+
+export type ListingPosition =
+  | { params: ResumableParams; pageToken: string }
+  | { startedAt: number; pending: PassEntry[] };
+
+type PassOutcome = { entry: PassEntry; listing: PageListing | undefined };
 
 export type DriveListing =
   | { files: drive_v3.Schema$File[]; truncated: false }
@@ -698,5 +883,6 @@ export type DriveListing =
       files: drive_v3.Schema$File[];
       truncated: true;
       watermark: number;
+      holdCursor?: boolean;
       position?: ListingPosition;
     };

@@ -89,3 +89,18 @@ describe('PIE-1069 search and list actions with an incomplete shared-drive searc
     await expect(driveSearchFiles.run(context)).rejects.toThrow('Try again');
   });
 });
+
+describe('search action page timeout', () => {
+  it('Search Files and Folders waits for a files.list page slower than the 10 s poll cap', async () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+    vi.mocked(drive_v3.Resource$Files.prototype.list).mockImplementation((async () => {
+      await new Promise((resolve) => setTimeout(resolve, 15_000));
+      return { status: 200, data: { files: [{ id: 'slow', name: 'report slow', mimeType: 'application/pdf' }] } };
+    }));
+    const context = driveTestContext.actionContext({ action: driveSearchFiles, propsValue: { query_term: 'name', operator: 'contains', value: 'report', type: 'all', parent_folder_id: undefined, include_team_drives: false } });
+    const run = driveSearchFiles.run(context);
+    await vi.advanceTimersByTimeAsync(16_000);
+    expect(idsOf(await run)).toEqual(['slow']);
+    vi.useRealTimers();
+  });
+});

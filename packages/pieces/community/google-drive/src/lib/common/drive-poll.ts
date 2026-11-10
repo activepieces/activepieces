@@ -1,6 +1,11 @@
 import { Store } from '@activepieces/pieces-framework';
 import { drive_v3 } from '@googleapis/drive';
-import { DriveListing, ListingPosition, ResumableParams } from './index';
+import {
+  DriveListing,
+  ListingPosition,
+  PassEntry,
+  ResumableParams,
+} from './index';
 
 async function onEnable({
   store,
@@ -16,7 +21,7 @@ async function onEnable({
   if (typeof cursor !== 'number') {
     return;
   }
-  const recent: DriveRecent = { from: cursor + 1, seen: [] };
+  const recent: DriveRecent = { cursor, from: cursor + 1, seen: [] };
   await store.put(RECENT_KEY, recent);
 }
 
@@ -54,6 +59,8 @@ function isDriveRecent(value: unknown): value is DriveRecent {
   return (
     typeof value === 'object' &&
     value !== null &&
+    'cursor' in value &&
+    typeof value.cursor === 'number' &&
     'from' in value &&
     typeof value.from === 'number' &&
     'seen' in value &&
@@ -85,13 +92,14 @@ function boundSeen({
 }): DriveRecent {
   const inWindow = seen.filter((entry) => entry.epoch >= from);
   if (inWindow.length <= MAX_SEEN) {
-    return { from, seen: inWindow };
+    return { cursor, from, seen: inWindow };
   }
   const narrowedFrom = Math.max(from, cursor);
   console.warn(
     `Google Drive: ${inWindow.length} items changed in the last few minutes; late-index re-checks are paused until the next quiet check.`
   );
   return {
+    cursor,
     from: narrowedFrom,
     seen: seen.filter((entry) => entry.epoch >= narrowedFrom),
   };
@@ -112,6 +120,9 @@ function nextCursor({
   capped: boolean;
   now: number;
 }): number {
+  if (listing.truncated && listing.holdCursor) {
+    return cursor;
+  }
   const lastEmitted = emitted[emitted.length - 1];
   if (capped && lastEmitted) {
     return Math.max(cursor, lastEmitted.epoch);
@@ -131,6 +142,9 @@ function combineListings(listings: DriveListing[]): DriveListing {
   const watermarks = listings.flatMap((listing) =>
     listing.truncated ? [listing.watermark] : []
   );
+  const holdCursor = listings.some(
+    (listing) => listing.truncated && listing.holdCursor === true
+  );
   return watermarks.length > 0
     ? {
         files,
@@ -139,6 +153,7 @@ function combineListings(listings: DriveListing[]): DriveListing {
           (lowest, watermark) => Math.min(lowest, watermark),
           Number.POSITIVE_INFINITY
         ),
+        holdCursor,
       }
     : { files, truncated: false };
 }
@@ -146,11 +161,20 @@ function combineListings(listings: DriveListing[]): DriveListing {
 function safePosition({
   listing,
   isDelivered,
+  cursorHeld,
 }: {
   listing: DriveListing;
   isDelivered: (file: drive_v3.Schema$File) => boolean;
+  cursorHeld: boolean;
 }): ListingPosition | null {
   if (!listing.truncated || !listing.position) {
+    return null;
+  }
+  if (
+    'pending' in listing.position &&
+    listing.position.pending.length === 0 &&
+    !cursorHeld
+  ) {
     return null;
   }
   return listing.files.every(isDelivered) ? listing.position : null;
@@ -229,9 +253,36 @@ function readParams(value: unknown): ResumableParams | undefined {
   };
 }
 
+function readPassEntry(value: unknown): PassEntry | null {
+  if (typeof value !== 'object' || value === null) {
+    return null;
+  }
+  const pageToken: unknown = Reflect.get(value, 'pageToken');
+  const params = readParams(Reflect.get(value, 'params'));
+  if (!params || (pageToken !== undefined && typeof pageToken !== 'string')) {
+    return null;
+  }
+  return pageToken === undefined ? { params } : { params, pageToken };
+}
+
+function readDrivePass(value: object): ListingPosition | null {
+  const startedAt: unknown = Reflect.get(value, 'startedAt');
+  const pending: unknown = Reflect.get(value, 'pending');
+  if (typeof startedAt !== 'number' || !Array.isArray(pending)) {
+    return null;
+  }
+  const entries = pending.map(readPassEntry);
+  return entries.every((entry): entry is PassEntry => entry !== null)
+    ? { startedAt, pending: entries }
+    : null;
+}
+
 function readPosition(value: unknown): ListingPosition | null {
   if (typeof value !== 'object' || value === null) {
     return null;
+  }
+  if ('pending' in value) {
+    return readDrivePass(value);
   }
   const pageToken: unknown = Reflect.get(value, 'pageToken');
   const params = readParams(Reflect.get(value, 'params'));
@@ -274,7 +325,8 @@ async function poll({
     throw new Error("lastPoll doesn't exist in the store.");
   }
   const stored = await store.get<unknown>(RECENT_KEY);
-  const recent = isDriveRecent(stored) ? stored : undefined;
+  const recent =
+    isDriveRecent(stored) && stored.cursor === cursor ? stored : undefined;
   const from = recent ? Math.min(recent.from, cursor + 1) : cursor + 1;
   const seen = (recent?.seen ?? []).filter((entry) => entry.epoch >= from);
   const seenKeys = new Set(seen.map(seenKey));
@@ -301,7 +353,9 @@ async function poll({
         Number.isFinite(entry.epoch) &&
         entry.epoch >= from &&
         entry.epoch <= now &&
-        (!listing.truncated || entry.epoch <= listing.watermark)
+        (!listing.truncated ||
+          listing.holdCursor === true ||
+          entry.epoch <= listing.watermark)
     );
   const fresh = entries
     .filter((entry) => !seenKeys.has(seenKey(entry)))
@@ -344,6 +398,7 @@ async function poll({
     positions: listings.map((streamListing) =>
       safePosition({
         listing: streamListing,
+        cursorHeld: listing.truncated && listing.holdCursor === true,
         isDelivered: (file) => {
           const entry = describe({ file, from, firedIds });
           return (
@@ -380,7 +435,7 @@ export const drivePoll = {
 
 type SeenEntry = { id: string; epoch: number };
 
-type DriveRecent = { from: number; seen: SeenEntry[] };
+type DriveRecent = { cursor: number; from: number; seen: SeenEntry[] };
 
 type Optional<T> = { valid: true; value: T | undefined } | { valid: false };
 

@@ -2,6 +2,7 @@ import { FilesService, tryCatch } from '@activepieces/pieces-framework';
 import { GoogleDriveAuthValue } from '../auth';
 import { driveDeadline } from './deadline';
 import { downloadFileFromDrive } from './get-file-content';
+import { drivePool } from './pool';
 
 function isDriveFile(value: unknown): value is DriveFile {
   return (
@@ -86,28 +87,24 @@ async function withFileContent({
     return items;
   }
 
-  const enriched: unknown[] = [];
-  for (let index = 0; index < items.length; index += FILE_CONTENT_CONCURRENCY) {
-    const batch = items.slice(index, index + FILE_CONTENT_CONCURRENCY);
-    const withContent = await Promise.all(
-      batch.map(async (item) => {
-        if (!isDriveFile(item)) {
-          return item;
-        }
-        const result = await downloadContent({
-          auth,
-          files,
-          file: item,
-          deadline,
-        });
-        return 'content' in result
-          ? { ...item, content: result.content }
-          : { ...item, contentError: result.error };
-      })
-    );
-    enriched.push(...withContent);
-  }
-  return enriched;
+  return drivePool.mapInPool({
+    items,
+    concurrency: FILE_CONTENT_CONCURRENCY,
+    map: async (item) => {
+      if (!isDriveFile(item)) {
+        return item;
+      }
+      const result = await downloadContent({
+        auth,
+        files,
+        file: item,
+        deadline,
+      });
+      return 'content' in result
+        ? { ...item, content: result.content }
+        : { ...item, contentError: result.error };
+    },
+  });
 }
 
 const FILE_CONTENT_CONCURRENCY = 5;

@@ -265,6 +265,55 @@ describe.each(triggers)('$name poll', (hooks) => {
   });
 });
 
+describe.each(triggers)('$name after a rollback and a re-upgrade', (hooks) => {
+  it('a version-0.14.0 poll, then an older-version poll that moves lastPoll, then a republish, then a poll that fires nothing old', async () => {
+    const store = driveTestContext.memoryStore();
+    await hooks.enable({ store });
+    add({ id: 'first', createdMs: 10_000, mimeType: hooks.mimeType });
+    clock += 60_000;
+    expect(ids(await hooks.run({ store }))).toEqual(['first']);
+    expect(store.read('driveRecent')).toEqual(expect.objectContaining({ cursor: store.read('lastPoll') }));
+    const sentByOlderVersion = ['older-1', 'older-2', 'older-3'];
+    sentByOlderVersion.forEach((id, index) => add({ id, createdMs: 70_000 + index * 1_000, mimeType: hooks.mimeType }));
+    clock += 60_000;
+    store.write('lastPoll', Date.parse(at(72_000)));
+    await hooks.enable({ store, isRepublish: true });
+    clock += 60_000;
+    expect(ids(await hooks.run({ store }))).toEqual([]);
+    add({ id: 'after-upgrade', createdMs: clock - START, mimeType: hooks.mimeType });
+    expect(await pollTimes({ hooks, store, times: 2 })).toEqual([['after-upgrade'], []]);
+  });
+});
+
+describe.each(triggers)('$name with Include Team Drives and more shared drives than one check can search', (hooks) => {
+  it('carries the unsearched drives over to the next checks and fires every file once', async () => {
+    const store = driveTestContext.memoryStore();
+    await hooks.enable({ store });
+    vendor.incompleteAllDrives = true;
+    vendor.msPerSharedDriveCall = 2_000;
+    vendor.sharedDrives = Array.from({ length: 40 }, (_, index) => `drive-${String(index).padStart(2, '0')}`);
+    const shared = vendor.sharedDrives.map((driveId, index) => {
+      const id = `${driveId}-file`;
+      add({ id, createdMs: 1_000 + index, mimeType: hooks.mimeType, driveId });
+      return id;
+    });
+    add({ id: 'mine', createdMs: 500, mimeType: hooks.mimeType });
+    const cursorBefore = Number(store.read('lastPoll'));
+    clock += 60_000;
+    const first = ids(await hooks.run({ store, teamDrives: true }));
+    expect(first.length).toBeGreaterThan(0);
+    expect(first.length).toBeLessThan(shared.length + 1);
+    expect(store.read('lastPoll')).toBe(cursorBefore);
+    const rest = await pollTimes({ hooks, store, times: 10, teamDrives: true });
+    const fired = [...first, ...rest.flat()];
+    expect([...fired].sort()).toEqual(['mine', ...shared].sort());
+    expect(Number(store.read('lastPoll'))).toBeGreaterThan(cursorBefore);
+    add({ id: 'later', createdMs: clock - START, mimeType: hooks.mimeType, driveId: 'drive-39' });
+    const after = await pollTimes({ hooks, store, times: 10, teamDrives: true });
+    expect(after.flat()).toEqual(['later']);
+  });
+});
+
 describe('New or Updated File poll', () => {
   const hooks = triggers[2];
 
