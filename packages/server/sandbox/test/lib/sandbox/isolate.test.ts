@@ -188,6 +188,18 @@ describe('isolateProcess', () => {
             expect(args).toContain('--dir=/root/custom_pieces=/host/custom:maybe')
         })
 
+        it('appends :rw suffix on writable mounts, taking precedence over optional', async () => {
+            const mounts: SandboxMount[] = [
+                { hostPath: '/host/codes/fv-1/.deno-cache', sandboxPath: '/root/codes/fv-1/.deno-cache', rw: true },
+                { hostPath: '/host/codes/fv-2/.deno-cache', sandboxPath: '/root/codes/fv-2/.deno-cache', rw: true, optional: true },
+            ]
+            await callCreate({ mounts })
+
+            const args: string[] = spawnMock.mock.calls[0][1]
+            expect(args).toContain('--dir=/root/codes/fv-1/.deno-cache=/host/codes/fv-1/.deno-cache:rw')
+            expect(args).toContain('--dir=/root/codes/fv-2/.deno-cache=/host/codes/fv-2/.deno-cache:rw')
+        })
+
         it('emits exactly one --dir per mount, no duplicates', async () => {
             const mounts: SandboxMount[] = [
                 { hostPath: '/host/a', sandboxPath: '/root/a' },

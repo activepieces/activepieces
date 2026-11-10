@@ -57,7 +57,7 @@ describe('mcpClientCatalog methods', () => {
     ]);
   });
 
-  it('gives every coding agent and editor a copyable agent prompt', () => {
+  it('gives coding agents and editors with a known config path a copyable agent prompt', () => {
     [
       'claude-code',
       'codex',
@@ -66,6 +66,9 @@ describe('mcpClientCatalog methods', () => {
       'cursor',
       'vscode',
       'windsurf',
+      'copilot-cli',
+      'zed',
+      'antigravity',
     ].forEach((key) =>
       expect(firstStep(key, 'agent')?.agentPrompt).toBeTruthy(),
     );
@@ -76,10 +79,10 @@ describe('mcpClientCatalog methods', () => {
     expect(methodKeys('unknown', false)).not.toContain('agent');
   });
 
-  it('gives Windsurf a serverUrl config', () => {
+  it('gives Devin a url config', () => {
     expect(
       JSON.parse(firstStep('windsurf', 'config')?.snippet ?? '{}'),
-    ).toEqual({ mcpServers: { activepieces: { serverUrl: SERVER_URL } } });
+    ).toEqual({ mcpServers: { activepieces: { url: SERVER_URL } } });
   });
 
   it('signs Gemini CLI in with /mcp auth', () => {
@@ -118,7 +121,29 @@ describe('mcpClientCatalog generated commands', () => {
 });
 
 describe('mcpClientCatalog keys', () => {
-  it('lists the same clients as before', () => {
+  it('quotes the platform name in the goose config', () => {
+    const goose = mcpClientCatalog
+      .clients({
+        serverUrl: SERVER_URL,
+        websiteName: 'Acme: AI',
+        isCloud: false,
+      })
+      .find((client) => client.key === 'goose');
+    const config = goose?.methods.find((method) => method.key === 'config');
+    expect(config?.instructions[0].snippet).toContain('name: "Acme: AI"');
+  });
+  it('offers Cline no agent setup, since its settings file has no fixed path', () => {
+    expect(methodKeys('cline', false)).toEqual(['config', 'terminal']);
+  });
+  it('sets up Devin without any CLI command', () => {
+    expect(methodKeys('windsurf', false)).toEqual(['config', 'agent']);
+    const steps =
+      clientNamed('windsurf', false)?.methods.flatMap(
+        (method) => method.instructions,
+      ) ?? [];
+    expect(steps.some((step) => step.command !== undefined)).toBe(false);
+  });
+  it('lists every client in catalog order', () => {
     expect(
       mcpClientCatalog
         .clients({
@@ -130,11 +155,16 @@ describe('mcpClientCatalog keys', () => {
     ).toEqual([
       'claude-code',
       'codex',
+      'copilot-cli',
+      'goose',
       'gemini-cli',
       'opencode',
       'windsurf',
       'cursor',
       'vscode',
+      'cline',
+      'zed',
+      'antigravity',
       'claude',
       'chatgpt',
       'unknown',

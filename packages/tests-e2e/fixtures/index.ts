@@ -3,9 +3,12 @@ import {
   AuthenticationPage,
   AutomationsPage,
   BuilderPage,
+  PasswordResetPage,
+  PlatformSwitcherPage,
   RunsPage,
 } from '../pages';
 import { e2eApi, E2eSession } from './api';
+import { e2eMail, Mailbox } from './mail';
 
 export const test = base.extend<CustomFixtures>({
   authenticationPage: async ({ page }, use) => {
@@ -22,6 +25,14 @@ export const test = base.extend<CustomFixtures>({
 
   runsPage: async ({ page }, use) => {
     await use(new RunsPage(page));
+  },
+
+  passwordResetPage: async ({ page }, use) => {
+    await use(new PasswordResetPage(page));
+  },
+
+  platformSwitcherPage: async ({ page }, use) => {
+    await use(new PlatformSwitcherPage(page));
   },
 
   session: async ({}, use) => {
@@ -43,6 +54,18 @@ export const test = base.extend<CustomFixtures>({
       await e2eApi.deleteConnection({ request, session, connectionId });
     }
   },
+
+  userCleanup: async ({ request, session }, use) => {
+    const userIds: string[] = [];
+    await use({ track: (userId) => userIds.push(userId) });
+    for (const userId of userIds) {
+      await e2eApi.deleteUser({ request, session, userId });
+    }
+  },
+
+  mailbox: async ({ request }, use) => {
+    await use(e2eMail.connect({ request }));
+  },
 });
 
 export { expect } from '@playwright/test';
@@ -52,7 +75,11 @@ type CustomFixtures = {
   automationsPage: AutomationsPage;
   builderPage: BuilderPage;
   runsPage: RunsPage;
+  passwordResetPage: PasswordResetPage;
+  platformSwitcherPage: PlatformSwitcherPage;
   session: E2eSession;
   flowCleanup: { track: (flowId: string) => void };
   connectionCleanup: { track: (connectionId: string) => void };
+  userCleanup: { track: (userId: string) => void };
+  mailbox: Mailbox;
 };
