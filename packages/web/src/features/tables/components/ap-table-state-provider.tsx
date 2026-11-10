@@ -12,6 +12,7 @@ import {
   useState,
 } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useStore } from 'zustand';
 
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
@@ -22,6 +23,7 @@ import {
   createApTableStore,
 } from '@/features/tables/stores/store/ap-tables-client-state';
 import { useResourceLock } from '@/hooks/use-resource-lock';
+import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import { fieldsApi } from '../api/fields-api';
@@ -43,8 +45,22 @@ export const TableStateProviderWithTable = ({
   fields: Field[];
   records: PopulatedRecord[];
 }) => {
+  const refreshTableState = useRefreshTableState();
   const tableStoreRef = useRef<ApTableStore>(
-    createApTableStore(table, fields, records),
+    createApTableStore({
+      table,
+      fields,
+      records,
+      onSaveFailed: (error) => {
+        toast.error(t('Your change was not saved'), {
+          id: 'failed-table-save',
+          description:
+            api.serverErrorMessage(error) ??
+            t('The table now shows the last saved version.'),
+        });
+        void refreshTableState();
+      },
+    }),
   );
   return (
     <TableContext.Provider value={tableStoreRef.current}>

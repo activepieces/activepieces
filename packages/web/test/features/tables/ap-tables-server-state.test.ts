@@ -30,7 +30,13 @@ describe('createServerState', () => {
   it('reports a failed table save', async () => {
     const failure = new Error('field create failed');
     fieldsApiMock.create.mockRejectedValue(failure);
-    const serverState = createServerState(table, [], [], () => undefined);
+    const serverState = createServerState({
+      table,
+      fields: [],
+      records: [],
+      updateSavingStatus: () => undefined,
+      onSaveFailed: () => undefined,
+    });
 
     serverState.createField({
       name: 'Email',

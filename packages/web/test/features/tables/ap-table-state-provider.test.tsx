@@ -38,8 +38,15 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const harness = vi.hoisted(() => ({
   lockEvents: [] as string[],
   probeMounts: { count: 0 },
-  captured: { refresh: undefined as undefined | (() => Promise<void>) },
+  captured: {
+    refresh: undefined as undefined | (() => Promise<void>),
+    onSaveFailed: undefined as undefined | ((error: unknown) => void),
+  },
 }));
+
+const toastMock = vi.hoisted(() => ({ error: vi.fn() }));
+
+vi.mock('sonner', () => ({ toast: toastMock }));
 
 vi.mock('@/hooks/use-resource-lock', () => ({
   useResourceLock: () => {
@@ -58,11 +65,20 @@ vi.mock('@/components/custom/route-loading-bar', () => ({
 }));
 
 vi.mock('@/features/tables/stores/store/ap-tables-client-state', () => ({
-  createApTableStore: () => ({}),
+  createApTableStore: ({
+    onSaveFailed,
+  }: {
+    onSaveFailed: (error: unknown) => void;
+  }) => {
+    harness.captured.onSaveFailed = onSaveFailed;
+    return {};
+  },
 }));
 
+const tablesApiMock = vi.hoisted(() => ({ getById: vi.fn() }));
+
 vi.mock('@/features/tables/api/tables-api', () => ({
-  tablesApi: { getById: vi.fn().mockResolvedValue({ id: 't1', name: 'T' }) },
+  tablesApi: tablesApiMock,
 }));
 
 vi.mock('@/features/tables/api/fields-api', () => ({
@@ -99,6 +115,10 @@ describe('ApTableStateProvider lock hoisting (GIT-1529)', () => {
     harness.lockEvents.length = 0;
     harness.probeMounts.count = 0;
     harness.captured.refresh = undefined;
+    harness.captured.onSaveFailed = undefined;
+    toastMock.error.mockClear();
+    tablesApiMock.getById.mockReset();
+    tablesApiMock.getById.mockResolvedValue({ id: 't1', name: 'T' });
     queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false, gcTime: 0 } },
     });
@@ -153,5 +173,59 @@ describe('ApTableStateProvider lock hoisting (GIT-1529)', () => {
     expect(harness.lockEvents).toEqual(['mount']);
     // ...but the keyed table subtree below it must have remounted
     expect(harness.probeMounts.count).toBe(2);
+  });
+  async function renderProvider() {
+    await act(async () => {
+      root.render(
+        <MemoryRouter initialEntries={['/tables/t1']}>
+          <QueryClientProvider client={queryClient}>
+            <Routes>
+              <Route
+                path="/tables/:tableId"
+                element={
+                  <ApTableStateProvider>
+                    <RefreshProbe />
+                  </ApTableStateProvider>
+                }
+              />
+            </Routes>
+          </QueryClientProvider>
+        </MemoryRouter>,
+      );
+    });
+    for (let i = 0; i < 5 && harness.probeMounts.count === 0; i++) {
+      await flush();
+    }
+  }
+
+  it('rebuilds the table from the server after a failed save (GIT-1989)', async () => {
+    await renderProvider();
+    expect(harness.probeMounts.count).toBe(1);
+
+    await act(async () => {
+      harness.captured.onSaveFailed?.(new Error('500'));
+    });
+    for (let i = 0; i < 5 && harness.probeMounts.count === 1; i++) {
+      await flush();
+    }
+
+    expect(toastMock.error).toHaveBeenCalledTimes(1);
+    expect(tablesApiMock.getById).toHaveBeenCalledTimes(2);
+    expect(harness.probeMounts.count).toBe(2);
+  });
+
+  it('keeps the editor closed when the reload after a failed save fails (GIT-1989)', async () => {
+    await renderProvider();
+    tablesApiMock.getById.mockRejectedValue(new Error('offline'));
+
+    await act(async () => {
+      harness.captured.onSaveFailed?.(new Error('500'));
+    });
+    for (let i = 0; i < 5; i++) {
+      await flush();
+    }
+
+    expect(harness.probeMounts.count).toBe(1);
+    expect(container.querySelector('a[href="/tables"]')).not.toBeNull();
   });
 });
