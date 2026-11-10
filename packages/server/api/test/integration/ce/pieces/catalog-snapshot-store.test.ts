@@ -46,6 +46,12 @@ describe('catalogSnapshotStore', () => {
 
         expect(loaded).toEqual(replacement)
     })
+
+    it('load rejects a stored value that is not a name to version map', async () => {
+        await databaseConnection().getRepository('flag').save({ id: PIECE_CATALOG_SNAPSHOT_FLAG_ID, value: { 'piece-000': 3 } })
+
+        await expect(catalogSnapshotStore(mockLog).load()).rejects.toThrow()
+    })
 })
 
 function buildSnapshot(count: number, version: string): Record<string, string> {

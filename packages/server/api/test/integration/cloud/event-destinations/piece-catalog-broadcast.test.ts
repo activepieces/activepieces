@@ -256,7 +256,7 @@ describe('Piece catalog broadcast', () => {
         expect(pieceSetReads).toEqual([[...platformIds].sort()])
     })
 
-    it('a failed piece-set read reports every subscribed platform as failed and queues nothing', async () => {
+    it('a failed piece-set read rejects the broadcast and queues nothing', async () => {
         const first = await createTestContext(app, ENTITLED_PLAN)
         const second = await createTestContext(app, ENTITLED_PLAN)
         await subscribe({ platformId: first.platform.id })
@@ -267,10 +267,8 @@ describe('Piece catalog broadcast', () => {
             },
         }))
 
-        const result = await eventDestinationService(app.log).broadcast({ changes: [buildChange()] })
+        await expect(eventDestinationService(app.log).broadcast({ changes: [buildChange()] })).rejects.toThrow('piece set read failed')
 
-        expect(result.queued).toBe(0)
-        expect([...result.failedPlatformIds].sort()).toEqual([first.platform.id, second.platform.id].sort())
         expect(addSpy).not.toHaveBeenCalled()
     })
 
