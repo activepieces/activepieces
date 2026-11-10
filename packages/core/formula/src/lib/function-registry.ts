@@ -425,7 +425,7 @@ export const AP_FUNCTIONS: ApFunction[] = [
         description: 'Calculates what percentage the value is of the total.',
         syntax: 'percentage(value; total)',
         example: 'percentage( 75 ; 100 )',
-        exampleResult: '75%',
+        exampleResult: '75',
         minArgs: 2,
         maxArgs: 2,
         argTypes: ['number', 'number'],

@@ -1,4 +1,4 @@
-import { formulaEvaluator } from '@activepieces/core-formula'
+import { AP_FUNCTIONS, formulaEvaluator } from '@activepieces/core-formula'
 import { describe, expect, it } from 'vitest'
 
 const ok = (expr: string, data: Record<string, unknown> = {}) =>
@@ -173,6 +173,10 @@ describe('absolute', () => {
 
 describe('percentage', () => {
     it('calculates percentage', () => expect(result('percentage(25;200)')).toBe(12.5))
+    it('registry example result matches what the function returns', () => {
+        const percentage = AP_FUNCTIONS.find((fn) => fn.name === 'percentage')
+        expect(percentage?.exampleResult).toBe(String(result(percentage?.example ?? '')))
+    })
     it('errors on zero total instead of returning Infinity', () => {
         expect(result('percentage(5;0)')).toBeNull()
         expect(error('percentage(5;0)')).toMatch(/divide by zero/i)
