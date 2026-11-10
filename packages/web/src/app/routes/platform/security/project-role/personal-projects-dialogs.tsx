@@ -4,6 +4,7 @@ import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -14,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 export function TurnOnPersonalProjectsDialog({
   onClose,
@@ -23,6 +25,7 @@ export function TurnOnPersonalProjectsDialog({
 }: TurnOnPersonalProjectsDialogProps) {
   const [createForExistingMembers, setCreateForExistingMembers] =
     useState(false);
+  const hasMembersToOffer = membersWithoutPersonalProject > 0;
 
   return (
     <Dialog
@@ -37,44 +40,43 @@ export function TurnOnPersonalProjectsDialog({
         <DialogHeader>
           <DialogTitle>{t('Turn on personal projects?')}</DialogTitle>
           <DialogDescription>
-            {t('New members get a personal project when they join.')}
+            {t('New members get their own personal project when they join.')}
           </DialogDescription>
         </DialogHeader>
-        <label
-          htmlFor={EXISTING_MEMBERS_CHECKBOX_ID}
-          className="flex cursor-pointer items-center gap-2 text-sm"
+        <DialogFooter
+          className={cn(
+            hasMembersToOffer &&
+              'flex-col sm:flex-row sm:items-center sm:justify-between',
+          )}
         >
-          <Checkbox
-            id={EXISTING_MEMBERS_CHECKBOX_ID}
-            checked={createForExistingMembers}
-            onCheckedChange={(checked) =>
-              setCreateForExistingMembers(checked === true)
-            }
-          />
-          {t('createForMembersWithoutPersonalProject', {
-            count: membersWithoutPersonalProject,
-          })}
-        </label>
-        {createForExistingMembers && (
-          <span className="flex items-center gap-1.5 pl-6 text-sm text-warning-11">
-            <TriangleAlert className="size-3.5 shrink-0" />
-            {t('createsPersonalProjectsNow', {
-              count: membersWithoutPersonalProject,
-            })}
-          </span>
-        )}
-        <DialogFooter>
-          <Button variant="outline" disabled={isPending} onClick={onClose}>
-            {t('Cancel')}
-          </Button>
-          <Button
-            loading={isPending}
-            onClick={() => onConfirm({ createForExistingMembers })}
-          >
-            {createForExistingMembers
-              ? t('turnOnAndCreate', { count: membersWithoutPersonalProject })
-              : t('Turn on')}
-          </Button>
+          {hasMembersToOffer && (
+            <label
+              htmlFor={EXISTING_MEMBERS_CHECKBOX_ID}
+              className="flex cursor-pointer items-center gap-2 text-sm"
+            >
+              <Checkbox
+                id={EXISTING_MEMBERS_CHECKBOX_ID}
+                checked={createForExistingMembers}
+                onCheckedChange={(checked) =>
+                  setCreateForExistingMembers(checked === true)
+                }
+              />
+              {t('createForExistingMembers', {
+                count: membersWithoutPersonalProject,
+              })}
+            </label>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" disabled={isPending} onClick={onClose}>
+              {t('Cancel')}
+            </Button>
+            <Button
+              loading={isPending}
+              onClick={() => onConfirm({ createForExistingMembers })}
+            >
+              {t('Turn on')}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -91,26 +93,32 @@ export function TurnOffPersonalProjectsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader className="mb-0">
+        <DialogHeader>
           <DialogTitle>{t('Turn off personal projects?')}</DialogTitle>
-          <DialogDescription className="pt-1 text-gray-12">
-            {t("New members won't get a personal project.")}
+          <DialogDescription>
+            {t('Members keep the personal projects they already have.')}
+            {personalProjectCount > 0 && (
+              <>
+                {' '}
+                <Link
+                  to={`/platform/projects?type=${ProjectType.PERSONAL}`}
+                  className="whitespace-nowrap font-medium text-accent-11 hover:underline"
+                >
+                  {t('manageAllPersonalProjectsInProjects', {
+                    count: personalProjectCount,
+                  })}
+                </Link>
+              </>
+            )}
           </DialogDescription>
-          {personalProjectCount > 0 && (
-            <p className="text-sm text-gray-11">
-              {t('Members keep their existing personal projects.')}{' '}
-              <Link
-                to={`/platform/projects?type=${ProjectType.PERSONAL}`}
-                className="whitespace-nowrap font-medium text-accent-11 hover:underline"
-              >
-                {t('manageAllPersonalProjectsInProjects', {
-                  count: personalProjectCount,
-                })}
-              </Link>
-            </p>
-          )}
         </DialogHeader>
-        <DialogFooter className="mt-2">
+        <Alert variant="warning" className="bg-warning-3">
+          <TriangleAlert className="size-4" />
+          <AlertDescription>
+            {t("New members won't get a personal project.")}
+          </AlertDescription>
+        </Alert>
+        <DialogFooter>
           <Button
             variant="outline"
             disabled={isPending}
@@ -118,7 +126,7 @@ export function TurnOffPersonalProjectsDialog({
           >
             {t('Cancel')}
           </Button>
-          <Button loading={isPending} onClick={onConfirm}>
+          <Button variant="destructive" loading={isPending} onClick={onConfirm}>
             {t('Turn off')}
           </Button>
         </DialogFooter>
