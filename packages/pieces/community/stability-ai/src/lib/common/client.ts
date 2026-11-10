@@ -19,6 +19,13 @@ class StabilityAiError extends Error {
   }
 }
 
+class StabilityResultTooLargeError extends StabilityAiError {
+  constructor({ message }: { message: string }) {
+    super({ message, status: undefined, responseBody: undefined });
+    this.name = 'StabilityResultTooLargeError';
+  }
+}
+
 function authHeaders(apiKey: string): Record<string, string> {
   return {
     Authorization: `Bearer ${apiKey.trim()}`,
@@ -83,7 +90,7 @@ function readHttpFailure(error: unknown): { status: number; body: unknown } | nu
   return { status: response['status'], body: response['body'] };
 }
 
-function toStabilityError({ error, timeoutMs }: { error: unknown; timeoutMs: number }): StabilityAiError {
+function toStabilityError({ error, timeoutMs, charged }: { error: unknown; timeoutMs: number; charged: boolean }): StabilityAiError {
   if (error instanceof StabilityAiError) {
     return error;
   }
@@ -104,8 +111,11 @@ function toStabilityError({ error, timeoutMs }: { error: unknown; timeoutMs: num
     });
   }
   if (error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError')) {
+    const message = `Stability AI did not respond within ${Math.round(timeoutMs / 1000)} seconds.`;
     return new StabilityAiError({
-      message: `Stability AI did not respond within ${Math.round(timeoutMs / 1000)} seconds.`,
+      message: charged
+        ? appendHint({ message, hint: 'The job may still have run and been charged; check your balance before running it again.' })
+        : message,
       status: undefined,
       responseBody: undefined,
     });
@@ -128,7 +138,7 @@ async function send<T>(request: HttpRequest): Promise<HttpResponse<T>> {
       redactBodyInErrors: true,
     });
   } catch (error) {
-    throw toStabilityError({ error, timeoutMs });
+    throw toStabilityError({ error, timeoutMs, charged: request.method === HttpMethod.POST });
   }
 }
 
@@ -320,10 +330,8 @@ async function saveFile({ files, fileName, data }: SaveFileParams): Promise<stri
       const sizeMb = Math.ceil((data.length / BYTES_PER_MB) * 100) / 100;
       const maximum = readMaximumFileSize(error);
       const limit = maximum === null ? 'the Activepieces file size limit' : `the Activepieces file size limit (${maximum})`;
-      throw new StabilityAiError({
+      throw new StabilityResultTooLargeError({
         message: `Stability AI generated the image and charged the credits, but the ${sizeMb} MB file is larger than ${limit}. Run the step again with Output Format set to WebP or JPEG.`,
-        status: undefined,
-        responseBody: undefined,
       });
     }
     throw error;
@@ -398,7 +406,10 @@ async function pollOnce({ apiKey, id, files, fileNamePrefix, outputFileName }: G
   try {
     return await getResult({ apiKey, id, files, fileNamePrefix, outputFileName, timeoutMs: POLL_TIMEOUT_MS });
   } catch (error) {
-    const base = toStabilityError({ error, timeoutMs: POLL_TIMEOUT_MS });
+    if (error instanceof StabilityResultTooLargeError) {
+      throw error;
+    }
+    const base = toStabilityError({ error, timeoutMs: POLL_TIMEOUT_MS, charged: false });
     throw new StabilityAiError({
       message: appendHint({
         message: base.message,

@@ -511,8 +511,16 @@ describe('Generate Image', () => {
     abort.name = 'AbortError';
     sendRequest.mockRejectedValueOnce(abort);
     await expect(runAction({ action: generateImage, propsValue: { model: 'core', prompt: 'p' } })).rejects.toThrow(
-      'Stability AI did not respond within 150 seconds.',
+      'Stability AI did not respond within 150 seconds. The job may still have run and been charged; check your balance before running it again.',
     );
+  });
+
+  it('does not mention charges when a read-only request times out', async () => {
+    const abort = new Error('This operation was aborted');
+    abort.name = 'AbortError';
+    sendRequest.mockRejectedValueOnce(abort);
+    const error = await runAction({ action: getAccountBalance, propsValue: {} }).catch((caught: unknown) => caught);
+    expect(error).toMatchObject({ message: expect.stringMatching(/did not respond within \d+ seconds\.$/) });
   });
 });
 
@@ -726,6 +734,25 @@ describe('Creative Upscale (async)', () => {
       status: 503,
       responseBody: { id: 'x', name: 'service_unavailable', errors: ['try later'] },
     });
+  });
+
+  it('does not suggest Get Generation Result when the finished image is too large to save', async () => {
+    vi.useFakeTimers();
+    respondJson({ status: 200, body: { id: GENERATION_ID } });
+    respondPng();
+    write.mockRejectedValueOnce(
+      fileSizeError('{"message":"File size is larger than maximum supported size","currentFileSize":"12 MB","maximumSupportSize":"10 MB"}'),
+    );
+    const pending = runAction({ action: creativeUpscale, propsValue: { image: PHOTO, prompt: 'a cat', wait_for_result: 'yes' } }).catch(
+      (caught: unknown) => caught,
+    );
+    await vi.advanceTimersByTimeAsync(20_000);
+    const error = await pending;
+    expect(sendRequest).toHaveBeenCalledTimes(2);
+    expect(error).toMatchObject({
+      message: expect.stringMatching(/larger than the Activepieces file size limit \(10 MB\)\. Run the step again with Output Format set to WebP or JPEG\.$/),
+    });
+    expect(error).not.toMatchObject({ message: expect.stringContaining('Get Generation Result') });
   });
 
   it('stops polling within the 240 second budget so agent tool calls get the id', async () => {
