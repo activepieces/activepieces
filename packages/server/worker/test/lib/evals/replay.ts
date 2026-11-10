@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils'
 import { RecordedToolCall } from './eval-case'
 
 function create({ recordedToolCalls }: { recordedToolCalls: RecordedToolCall[] }): Replay {
@@ -37,6 +38,27 @@ function create({ recordedToolCalls }: { recordedToolCalls: RecordedToolCall[] }
     }
 }
 
+async function resolveCall({ caseReplay, recordMode, toolName, input, live }: { caseReplay: Replay, recordMode: boolean, toolName: string, input: unknown, live: (() => Promise<unknown>) | undefined }): Promise<unknown> {
+    const read = isRead(toolName)
+    const fixture = caseReplay.take({ toolName, input, sameInputOnly: read })
+    if (fixture.found) {
+        return fixture.output
+    }
+    if (!read) {
+        return caseReplay.stop({ toolName, input, kind: 'unrecorded_write' })
+    }
+    if (!recordMode || isNil(live)) {
+        return caseReplay.stop({ toolName, input, kind: 'missing_fixture' })
+    }
+    const output = await live()
+    caseReplay.record({ toolName, input, output })
+    return output
+}
+
+function isRead(toolName: string): boolean {
+    return READ_TOOLS.has(toolName)
+}
+
 function inputKey(input: unknown): string {
     return JSON.stringify(normalized(input))
 }
@@ -59,9 +81,42 @@ function normalized(value: unknown): unknown {
 
 const CARD_TITLE_KEYS = new Set(['title', 'activeTitle', 'doneTitle'])
 const REPLAY_ENDED_MESSAGE = 'This tool is unavailable right now.'
+const READ_TOOLS = new Set([
+    'ap_discover_action_auth',
+    'ap_explore_data',
+    'ap_fetch_url',
+    'ap_find_records',
+    'ap_flow_structure',
+    'ap_get_piece_props',
+    'ap_get_run',
+    'ap_get_tool_schema',
+    'ap_list_across_projects',
+    'ap_list_agents',
+    'ap_list_ai_models',
+    'ap_list_connections',
+    'ap_list_flows',
+    'ap_list_folders',
+    'ap_list_runs',
+    'ap_list_tables',
+    'ap_load_skill',
+    'ap_read_step_code',
+    'ap_read_step_settings',
+    'ap_research_pieces',
+    'ap_resolve_property_chain',
+    'ap_resolve_property_options',
+    'ap_scrape_url',
+    'ap_search_actions',
+    'ap_search_triggers',
+    'ap_setup_guide',
+    'ap_validate_flow',
+    'ap_validate_step_config',
+    'ap_web_search',
+])
 
 export const replay = {
     create,
+    resolveCall,
+    isRead,
 }
 
 export type ReplayStop = {

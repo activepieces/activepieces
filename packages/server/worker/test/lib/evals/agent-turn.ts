@@ -11,7 +11,7 @@ import { evalToolSet, McpTools } from './tool-set'
 
 async function run({ evalCase, mcp, modelId, auth, recordMode }: { evalCase: EvalCase, mcp: McpTools, modelId: string, auth: Record<string, unknown>, recordMode: boolean }): Promise<TurnOutcome> {
     const caseReplay = replay.create({ recordedToolCalls: evalCase.recordedToolCalls })
-    const tools = evalToolSet.build({ mcp, replay: caseReplay, auth, recordMode })
+    const tools = evalToolSet.build({ mcp, caseReplay, auth, recordMode })
     const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
     const { model, costUsd } = withCost({ model: aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth, config: {} }), modelId, billing: null }) })
     const warnings: string[] = []

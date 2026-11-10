@@ -1,5 +1,5 @@
 import { aiProviderCredentials, AIProviderName, isNil } from '@activepieces/core-utils'
-import { AgentRunSource, agentToolPhases } from '@activepieces/shared'
+import { AgentRunSource } from '@activepieces/shared'
 import { aiUtils } from '@activepieces/server-utils'
 import { ToolExecutionOptions, ToolSet } from 'ai'
 import Fastify from 'fastify'
@@ -8,7 +8,7 @@ import { agentMcpClient } from '../../../src/lib/execute/jobs/ee/agent/agent-mcp
 import { agentToolPolicy } from '../../../src/lib/execute/jobs/ee/agent/agent-tool-policy'
 import { agentWorkerTools, GateDecision } from '../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
 import { EVAL_PROJECT } from './prompts'
-import { Replay } from './replay'
+import { replay, Replay } from './replay'
 
 async function connectMcp(): Promise<McpTools> {
     const baseUrl = devServerUrl()
@@ -30,11 +30,11 @@ async function connectMcp(): Promise<McpTools> {
     }
 }
 
-function build({ mcp, replay, auth, recordMode }: { mcp: McpTools, replay: Replay, auth: Record<string, unknown>, recordMode: boolean }): ToolSet {
+function build({ mcp, caseReplay, auth, recordMode }: { mcp: McpTools, caseReplay: Replay, auth: Record<string, unknown>, recordMode: boolean }): ToolSet {
     const taintState = agentWorkerTools.createTaintState({ carried: false })
     const eventEmitter = agentWorkerTools.createEventEmitter({ sendEvent: async () => {}, userId: EVAL_USER_ID, conversationId: mcp.conversationId })
-    const executeTool = async (toolName: string, toolInput: Record<string, unknown>): Promise<unknown> => resolveCall({
-        replay,
+    const executeTool = async (toolName: string, toolInput: Record<string, unknown>): Promise<unknown> => replay.resolveCall({
+        caseReplay,
         recordMode,
         toolName,
         input: toolInput,
@@ -54,14 +54,14 @@ function build({ mcp, replay, auth, recordMode }: { mcp: McpTools, replay: Repla
                     ...agentWorkerTools.createWebTools({ taintState }),
                     ...agentWorkerTools.createProviderSearchTools({ search: (request) => searchWeb({ request, auth }), billedAtCost: false, taintState }),
                 },
-                replay,
+                caseReplay,
                 recordMode,
             }),
             thinking: agentWorkerTools.createThinkingTools(),
             buildPlan: agentWorkerTools.createBuildPlanTools({ eventEmitter, getProjectId: () => EVAL_PROJECT.id }),
             email: {},
             agentSurface: agentWorkerTools.createAgentSurfaceTools({ executeTool, taintState, eventEmitter, waitForApproval: approve, onGateOpened: noop }),
-            mcp: replayed({ tools: mcp.toolSet, replay, recordMode }),
+            mcp: replayed({ tools: mcp.toolSet, caseReplay, recordMode }),
             configuredPiece: {},
             configuredFlow: {},
             knowledgeBase: {},
@@ -70,13 +70,13 @@ function build({ mcp, replay, auth, recordMode }: { mcp: McpTools, replay: Repla
     })
 }
 
-function replayed({ tools, replay, recordMode }: { tools: ToolSet, replay: Replay, recordMode: boolean }): ToolSet {
+function replayed({ tools, caseReplay, recordMode }: { tools: ToolSet, caseReplay: Replay, recordMode: boolean }): ToolSet {
     return Object.fromEntries(Object.entries(tools).map(([toolName, tool]) => {
         const liveExecute = tool.execute
         return [toolName, {
             ...tool,
-            execute: async (input: unknown, options: ToolExecutionOptions) => resolveCall({
-                replay,
+            execute: async (input: unknown, options: ToolExecutionOptions) => replay.resolveCall({
+                caseReplay,
                 recordMode,
                 toolName,
                 input,
@@ -84,20 +84,6 @@ function replayed({ tools, replay, recordMode }: { tools: ToolSet, replay: Repla
             }),
         }]
     }))
-}
-
-async function resolveCall({ replay, recordMode, toolName, input, live }: { replay: Replay, recordMode: boolean, toolName: string, input: unknown, live: (() => Promise<unknown>) | undefined }): Promise<unknown> {
-    const read = !agentToolPhases.isBuildOnlyTool(toolName)
-    const fixture = replay.take({ toolName, input, sameInputOnly: read })
-    if (fixture.found) {
-        return fixture.output
-    }
-    if (!recordMode || isNil(live)) {
-        return replay.stop({ toolName, input, kind: read ? 'missing_fixture' : 'unrecorded_write' })
-    }
-    const output = await live()
-    replay.record({ toolName, input, output })
-    return output
 }
 
 async function executeOnDevServer({ toolName, toolInput, conversationId }: { toolName: string, toolInput: Record<string, unknown>, conversationId: string }): Promise<unknown> {
