@@ -19,7 +19,9 @@ export const callRecordingCompleted = createTrigger({
     description: 'Fires when a call recording becomes available after a call ends, delivering the call details and a recording URL. Use to drive transcription, archival, or post-call processing. Can be scoped to a specific OpenPhone number or all numbers.',
   },
   props: {
-    phoneNumbers: phoneNumberDropdown,
+    phoneNumbers: phoneNumberDropdown({
+      description: 'Calls on this number start the flow.',
+    }),
   },
   sampleData: {
     event: 'call.recording.completed',

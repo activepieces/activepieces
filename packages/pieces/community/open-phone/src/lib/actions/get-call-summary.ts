@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { openPhoneAuth } from '../auth';
 import { openPhoneCommon, OpenPhoneCallSummaryResponse } from '../common';
@@ -18,7 +22,13 @@ export const getCallSummary = createAction({
   audience: 'both',
   aiMetadata: { description: 'Retrieves the AI-generated summary of a single call identified by its call ID (format AC...). Choose this to fetch the post-call summary text for a known call. Requires a valid call ID and an OpenPhone Business plan (summaries are unavailable otherwise). Idempotent read-only lookup.', idempotent: true },
   props: {
-    phoneNumberId: phoneNumberDropdown,
+    planNote: Property.MarkDown({
+      value: 'Call summaries need an OpenPhone Business plan.',
+      variant: MarkdownVariant.INFO,
+    }),
+    phoneNumberId: phoneNumberDropdown({
+      description: 'The OpenPhone number the call was on.',
+    }),
     participantNumber: participantDropdown,
     callId: callDropdown,
   },
