@@ -20,31 +20,43 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, propsValue, lastFetchEpochMS }) {
-    const posts = await bufferFetch.fetchNewPosts({
-      accessToken: auth.secret_text,
-      organizationId: propsValue.organizationId,
-      channelIds: propsValue.channelIds,
-      statuses: QUEUED_STATUSES,
-      sortField: 'createdAt',
-      windowField: 'createdAt',
-      windowStart: lastFetchEpochMS > 0 ? new Date(lastFetchEpochMS).toISOString() : undefined,
-      firstPageOnly: lastFetchEpochMS <= 0,
-    });
-    return posts.map((post) => ({
-      epochMilliSeconds: post.createdAt
-        ? new Date(post.createdAt).getTime()
-        : 0,
-      data: post,
-    }));
+    const posts = await loadQueuedPosts({ auth, propsValue, lastPoll: lastFetchEpochMS });
+    return posts.map((post) => ({ epochMilliSeconds: createdEpoch(post), data: post }));
   },
 };
+
+function loadQueuedPosts({
+  auth,
+  propsValue,
+  lastPoll,
+}: {
+  auth: AppConnectionValueForAuthProperty<typeof bufferAuth>;
+  propsValue: { organizationId: string; channelIds?: string[] };
+  lastPoll: number;
+}): Promise<BufferPost[]> {
+  return bufferFetch.fetchNewPosts({
+    accessToken: auth.secret_text,
+    organizationId: propsValue.organizationId,
+    channelIds: propsValue.channelIds,
+    statuses: QUEUED_STATUSES,
+    sortField: 'createdAt',
+    sortDirection: lastPoll > 0 ? 'asc' : 'desc',
+    windowField: 'createdAt',
+    windowStart: lastPoll > 0 ? new Date(lastPoll - 1).toISOString() : undefined,
+    firstPageOnly: lastPoll <= 0,
+  });
+}
+
+function createdEpoch(post: BufferPost): number {
+  return post.createdAt ? new Date(post.createdAt).getTime() : 0;
+}
 
 export const newQueueItem = createTrigger({
   auth: bufferAuth,
   name: 'new_queue_item',
   classification: 'READ',
   displayName: 'New Queue Item',
-  description: 'Triggers when a new post is queued in Buffer. Each check usually uses one Buffer API request (one more per 100 matching posts), which counts against your plan limit (Free: 600 a day).',
+  description: 'Triggers when a new post is queued in Buffer. Each check usually uses one Buffer API request (one more per 100 matching posts, at most 10 per check; any left over are picked up on the next check), which counts against your plan limit (Free: 600 a day).',
   aiMetadata: {
     description:
       'Fires once per newly created Buffer post that is not yet published (status draft, needs_approval, scheduled or sending) in the selected organization, optionally limited to specific channels. Represents the queued post.',
@@ -78,6 +90,10 @@ export const newQueueItem = createTrigger({
     return await pollingHelper.test(polling, context);
   },
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    return await bufferFetch.pollNewPosts({
+      store: context.store,
+      loadPosts: (lastPoll) => loadQueuedPosts({ auth: context.auth, propsValue: context.propsValue, lastPoll }),
+      epochOf: createdEpoch,
+    });
   },
 });

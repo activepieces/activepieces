@@ -1,4 +1,4 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property, Store } from '@activepieces/pieces-framework';
 import { bufferAuth } from './auth';
 import { bufferClient } from './client';
 import { bufferQueries as documents } from './queries';
@@ -40,6 +40,7 @@ async function fetchNewPosts({
   channelIds,
   statuses,
   sortField,
+  sortDirection,
   windowField,
   windowStart,
   firstPageOnly,
@@ -49,6 +50,7 @@ async function fetchNewPosts({
   channelIds?: string[];
   statuses: string[];
   sortField: 'createdAt' | 'dueAt';
+  sortDirection: 'asc' | 'desc';
   windowField: 'createdAt' | 'dueAt';
   windowStart: string | undefined;
   firstPageOnly: boolean;
@@ -69,7 +71,7 @@ async function fetchNewPosts({
       accessToken,
       query: documents.TRIGGER_POSTS,
       variables: {
-        input: { organizationId, filter, sort: [{ field: sortField, direction: 'desc' }] },
+        input: { organizationId, filter, sort: [{ field: sortField, direction: sortDirection }] },
         first: firstPageOnly ? TEST_PAGE_SIZE : TRIGGER_PAGE_SIZE,
         ...(after === undefined ? {} : { after }),
       },
@@ -85,7 +87,37 @@ async function fetchNewPosts({
     }
     after = next;
   }
-  throw new Error(`More than ${MAX_TRIGGER_PAGES * TRIGGER_PAGE_SIZE} matching posts appeared since the last check, more than one poll can read. Narrow the trigger to fewer channels.`);
+  return pages.flat();
+}
+
+async function pollNewPosts({
+  store,
+  loadPosts,
+  epochOf,
+}: {
+  store: Store;
+  loadPosts: (lastPoll: number) => Promise<BufferPost[]>;
+  epochOf: (post: BufferPost) => number;
+}): Promise<BufferPost[]> {
+  const lastPoll = await store.get<number>(LAST_POLL_KEY);
+  if (lastPoll === null || lastPoll === undefined) {
+    throw new Error("lastPoll doesn't exist in the store.");
+  }
+  const boundary = await store.get<PollBoundary>(LAST_POLL_IDS_KEY);
+  const seenAtLastPoll = boundary !== null && boundary !== undefined && boundary.epoch === lastPoll ? boundary.ids : [];
+  const posts = await loadPosts(lastPoll);
+  const fresh = [...new Map(posts.map((post) => [post.id, post])).values()].filter((post) => {
+    const epoch = epochOf(post);
+    return epoch > lastPoll || (epoch === lastPoll && !seenAtLastPoll.includes(post.id));
+  });
+  const newest = fresh.reduce((acc, post) => Math.max(acc, epochOf(post)), lastPoll);
+  const idsAtNewest = fresh.filter((post) => epochOf(post) === newest).map((post) => post.id);
+  await store.put<PollBoundary>(LAST_POLL_IDS_KEY, {
+    epoch: newest,
+    ids: newest === lastPoll ? [...seenAtLastPoll, ...idsAtNewest] : idsAtNewest,
+  });
+  await store.put<number>(LAST_POLL_KEY, newest);
+  return fresh;
 }
 
 function reasonOf(error: unknown): string {
@@ -221,11 +253,16 @@ export const bufferFetch = {
   fetchChannels,
   fetchIdeaGroups,
   fetchNewPosts,
+  pollNewPosts,
 };
 
 const TRIGGER_PAGE_SIZE = 100;
 const TEST_PAGE_SIZE = 10;
 const MAX_TRIGGER_PAGES = 10;
+const LAST_POLL_KEY = 'lastPoll';
+const LAST_POLL_IDS_KEY = 'lastPollIds';
+
+type PollBoundary = { epoch: number; ids: string[] };
 
 export type Organization = { id: string; name: string };
 

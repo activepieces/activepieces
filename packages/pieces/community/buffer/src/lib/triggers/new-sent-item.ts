@@ -20,36 +20,49 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, propsValue, lastFetchEpochMS }) {
-    const posts = await bufferFetch.fetchNewPosts({
-      accessToken: auth.secret_text,
-      organizationId: propsValue.organizationId,
-      channelIds: propsValue.channelIds,
-      statuses: ['sent'],
-      sortField: 'dueAt',
-      windowField: 'dueAt',
-      windowStart: lastFetchEpochMS > 0 ? new Date(lastFetchEpochMS - LOOKBACK_MS).toISOString() : undefined,
-      firstPageOnly: lastFetchEpochMS <= 0,
-    });
-    return posts.map((post) => ({
-      epochMilliSeconds: post.sentAt
-        ? new Date(post.sentAt).getTime()
-        : post.createdAt
-          ? new Date(post.createdAt).getTime()
-          : 0,
-      data: post,
-    }));
+    const posts = await loadSentPosts({ auth, propsValue, lastPoll: lastFetchEpochMS });
+    return posts.map((post) => ({ epochMilliSeconds: sentEpoch(post), data: post }));
   },
 };
+
+function loadSentPosts({
+  auth,
+  propsValue,
+  lastPoll,
+}: {
+  auth: AppConnectionValueForAuthProperty<typeof bufferAuth>;
+  propsValue: { organizationId: string; channelIds?: string[] };
+  lastPoll: number;
+}): Promise<BufferPost[]> {
+  return bufferFetch.fetchNewPosts({
+    accessToken: auth.secret_text,
+    organizationId: propsValue.organizationId,
+    channelIds: propsValue.channelIds,
+    statuses: ['sent'],
+    sortField: 'dueAt',
+    sortDirection: 'desc',
+    windowField: 'dueAt',
+    windowStart: lastPoll > 0 ? new Date(lastPoll - LOOKBACK_MS).toISOString() : undefined,
+    firstPageOnly: lastPoll <= 0,
+  });
+}
+
+function sentEpoch(post: BufferPost): number {
+  if (post.sentAt) {
+    return new Date(post.sentAt).getTime();
+  }
+  return post.createdAt ? new Date(post.createdAt).getTime() : 0;
+}
 
 export const newSentItem = createTrigger({
   auth: bufferAuth,
   name: 'new_sent_item',
   classification: 'READ',
   displayName: 'New Sent Post',
-  description: 'Triggers when a Buffer post is successfully published. Each check usually uses one Buffer API request (one more per 100 posts sent in the last 24 hours), which counts against your plan limit (Free: 600 a day).',
+  description: 'Triggers when a Buffer post is successfully published. Each check usually uses one Buffer API request (one more per 100 posts sent in the last 24 hours, at most 10 per check), which counts against your plan limit (Free: 600 a day).',
   aiMetadata: {
     description:
-      'Fires once per Buffer post that was published (status sent) in the selected organization, optionally limited to specific channels. Represents the sent post; posts whose scheduled time is more than a day before they were sent are not picked up.',
+      'Fires once per Buffer post that was published (status sent) in the selected organization, optionally limited to specific channels. Represents the sent post; posts whose scheduled time is more than a day before they were sent are not picked up, and when more than 1,000 posts were sent in that day only the 1,000 with the latest scheduled times are checked.',
   },
   type: TriggerStrategy.POLLING,
   props: {
@@ -80,6 +93,10 @@ export const newSentItem = createTrigger({
     return await pollingHelper.test(polling, context);
   },
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    return await bufferFetch.pollNewPosts({
+      store: context.store,
+      loadPosts: (lastPoll) => loadSentPosts({ auth: context.auth, propsValue: context.propsValue, lastPoll }),
+      epochOf: sentEpoch,
+    });
   },
 });
