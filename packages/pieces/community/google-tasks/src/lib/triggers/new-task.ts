@@ -188,7 +188,7 @@ export const newTaskTrigger = createTrigger({
     const next =
       mode === RUN_ON_NEW_ONLY
         ? await advanceNewOnly({ auth: context.auth, state, tasks: live, progress, deadlineMs })
-        : advanceNewAndEdited({ state, tasks: live, progress });
+        : advanceNewAndEdited({ state, tasks: live, progress, scanStartedAtMs: scan.startedAtMs });
     await context.store.put(STATE_KEY, next.state);
     return sortNewestFirst({ tasks: next.emitted });
   },
@@ -435,18 +435,24 @@ function advanceNewAndEdited({
   state,
   tasks,
   progress,
+  scanStartedAtMs,
 }: {
   state: TriggerState;
   tasks: LiveTask[];
   progress: ScanProgress;
+  scanStartedAtMs: number;
 }): { state: TriggerState; emitted: LiveTask[] } {
   const windowStartMs = Math.max(state.floorMs, state.cursorMs - OVERLAP_MS);
+  const now = Date.now();
   const recentKeys = new Set(state.recent.map(([hash]) => hash));
   const emitted: LiveTask[] = [];
   const added: RecentEntry[] = [];
   for (const task of tasks) {
     const updatedMs = Date.parse(task.updated);
     if (!Number.isFinite(updatedMs) || updatedMs < windowStartMs) {
+      continue;
+    }
+    if (updatedMs > scanStartedAtMs && updatedMs <= now) {
       continue;
     }
     const hash = hashKey({ key: `${task.id}|${task.updated}` });
@@ -456,10 +462,12 @@ function advanceNewAndEdited({
       emitted.push(task);
     }
   }
-  const recent = [...state.recent, ...added]
+  const kept = [...state.recent, ...added]
     .filter(([, updatedMs]) => updatedMs >= progress.cursorMs - OVERLAP_MS)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, RECENT_CAP);
+    .sort((a, b) => b[1] - a[1]);
+  const rereadable = kept.filter(([, updatedMs]) => updatedMs <= progress.cursorMs);
+  const newer = kept.filter(([, updatedMs]) => updatedMs > progress.cursorMs);
+  const recent = [...rereadable, ...newer].slice(0, RECENT_CAP);
   return { emitted, state: { ...state, ...progress, recent } };
 }
 

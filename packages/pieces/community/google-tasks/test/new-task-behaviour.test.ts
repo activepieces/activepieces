@@ -727,3 +727,47 @@ describe('Google Tasks New Task with requests aborted at the deadline', () => {
     await outcome;
   });
 });
+
+describe('Google Tasks New Task edits that land during a long resumed scan', () => {
+  it.each([
+    { label: 'new_and_edited, edits on pages not read yet', runOn: 'new_and_edited', ahead: true },
+    { label: 'Run on unset, edits on pages not read yet', runOn: '', ahead: true },
+    { label: 'new_and_edited, edits on pages already read', runOn: 'new_and_edited', ahead: false },
+    { label: 'Run on unset, edits on pages already read', runOn: '', ahead: false },
+  ])('fires each of 6,000 mid-scan edits exactly once ($label)', async ({ runOn, ahead }) => {
+    const total = 6_500;
+    const all = Array.from({ length: total }, (_, index) => `t-${index}`);
+    all.forEach((id) => addTask({ id, at: '2026-10-01T00:00:00.000Z' }));
+    const { store, data } = memoryStore();
+    await trigger.onEnable(hookContext({ store, runOn }));
+    all.forEach((id) => editTask({ id, change: { title: `${id} first edit` } }));
+    tick(5);
+    vendor.msPerCall = 25_000;
+    const emitted: string[] = [];
+    const midScanEdits: string[] = [];
+    const record = (events: unknown[]) =>
+      events.forEach((event) =>
+        emitted.push(`${String(field({ event, key: 'id' }))}|${String(field({ event, key: 'updated' }))}`),
+      );
+    record(await trigger.run(hookContext({ store, runOn })));
+    let next = 0;
+    while (storedState({ data }).scan !== null) {
+      for (let index = 0; index < 200 && midScanEdits.length < 6_000; index += 1) {
+        const id = all[ahead ? total - 1 - next : next];
+        next += 1;
+        editTask({ id, change: { title: `${id} mid-scan edit` } });
+        midScanEdits.push(`${id}|${findTask({ id }).updated}`);
+      }
+      record(await trigger.run(hookContext({ store, runOn })));
+    }
+    expect(midScanEdits).toHaveLength(6_000);
+    for (let poll = 0; poll < 80; poll += 1) {
+      tick(5);
+      record(await trigger.run(hookContext({ store, runOn })));
+    }
+    expect(storedState({ data }).scan).toBeNull();
+    expect(new Set(emitted).size).toBe(emitted.length);
+    const emittedSet = new Set(emitted);
+    expect(midScanEdits.filter((key) => !emittedSet.has(key))).toEqual([]);
+  });
+});
