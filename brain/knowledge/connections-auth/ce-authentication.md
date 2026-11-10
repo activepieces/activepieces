@@ -10,7 +10,7 @@ The core (all-editions) auth layer: user identity creation, sign-in, and JWT ses
 - **UserIdentity** (`user_identity`): email + bcrypt password + provider record, one per email, shared across platforms. Holds `tokenVersion` (rotating it invalidates all JWTs), `verified`, provider, avatar.
 - **User**: platform-specific record linking an identity to a platform + role.
 - `authenticationService`: `signUp`, `signInWithPassword`, `federatedAuthn` (OAuth/SAML callbacks), `switchPlatform`.
-- `accessTokenManager`: `generateToken` (7-day JWT), `generateEngineToken`/`generateWorkerToken` (long-lived), `verifyPrincipal` (checks tokenVersion + active status).
+- `accessTokenManager`: `generateToken` (7-day JWT), `generateEngineToken` (bounded to one job: longest job timeout + 1 h; minted per dequeue), `generateWorkerToken` (100-year JWT, minted by `docker-entrypoint.sh` from `AP_JWT_SECRET`), `verifyPrincipal` (checks tokenVersion + active status).
 
 ### How it works
 - Token is a short-lived JWT (7 days) signed with a shared secret. `PrincipalType`: USER, ENGINE, WORKER, SERVICE, UNKNOWN, ONBOARDING.
