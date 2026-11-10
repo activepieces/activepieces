@@ -6,24 +6,19 @@ function create({ recordedToolCalls }: { recordedToolCalls: RecordedToolCall[] }
     const stops: ReplayStop[] = []
     const recorded: RecordedToolCall[] = []
 
-    const take = ({ toolName, input, sameInputOnly }: { toolName: string, input: unknown, sameInputOnly: boolean }): RecordedLookup => {
+    const take = ({ toolName, input }: { toolName: string, input: unknown }): RecordedLookup => {
         const unused = (position: number): boolean => !used.has(position)
         const key = inputKey(input)
-        const sameInput = recordedToolCalls.findIndex((call, position) => unused(position) && call.toolName === toolName && inputKey(call.input) === key)
-        const sameTool = sameInputOnly ? -1 : recordedToolCalls.findIndex((call, position) => unused(position) && call.toolName === toolName)
-        const index = sameInput === -1 ? sameTool : sameInput
+        const index = recordedToolCalls.findIndex((call, position) => unused(position) && call.toolName === toolName && inputKey(call.input) === key)
         if (index === -1) {
-            return { found: false }
+            return { found: false, sameToolRecorded: recordedToolCalls.some((call, position) => unused(position) && call.toolName === toolName) }
         }
         used.add(index)
         return { found: true, output: recordedToolCalls[index].output }
     }
 
     const stop = ({ toolName, input, kind }: { toolName: string, input: unknown, kind: ReplayStop['kind'] }): unknown => {
-        const reason = kind === 'missing_fixture'
-            ? `no fixture for read "${toolName}" with input ${inputKey(input)} (run with --record to add one)`
-            : `"${toolName}" changes data and was not called at this point in the recorded chat`
-        stops.push({ toolName, kind, reason })
+        stops.push({ toolName, kind, reason: stopReason({ toolName, input, kind }) })
         return { error: REPLAY_ENDED_MESSAGE }
     }
 
@@ -40,12 +35,12 @@ function create({ recordedToolCalls }: { recordedToolCalls: RecordedToolCall[] }
 
 async function resolveCall({ caseReplay, recordMode, toolName, input, live }: { caseReplay: Replay, recordMode: boolean, toolName: string, input: unknown, live: (() => Promise<unknown>) | undefined }): Promise<unknown> {
     const read = isRead(toolName)
-    const fixture = caseReplay.take({ toolName, input, sameInputOnly: read })
-    if (fixture.found) {
+    const fixture = caseReplay.take({ toolName, input })
+    if (fixture.found === true) {
         return fixture.output
     }
     if (!read) {
-        return caseReplay.stop({ toolName, input, kind: 'unrecorded_write' })
+        return caseReplay.stop({ toolName, input, kind: fixture.sameToolRecorded ? 'write_input_differs' : 'unrecorded_write' })
     }
     if (!recordMode || isNil(live)) {
         return caseReplay.stop({ toolName, input, kind: 'missing_fixture' })
@@ -53,6 +48,18 @@ async function resolveCall({ caseReplay, recordMode, toolName, input, live }: { 
     const output = await live()
     caseReplay.record({ toolName, input, output })
     return output
+}
+
+function endsTurn(stop: ReplayStop): boolean {
+    return stop.kind !== 'missing_fixture'
+}
+
+function stopReason({ toolName, input, kind }: { toolName: string, input: unknown, kind: ReplayStop['kind'] }): string {
+    switch (kind) {
+        case 'missing_fixture': return `no fixture for read "${toolName}" with input ${inputKey(input)} (run with --record to add one)`
+        case 'unrecorded_write': return `"${toolName}" changes data and was not called at this point in the recorded chat`
+        case 'write_input_differs': return `"${toolName}" changes data and its input differs from the recording: ${inputKey(input)}`
+    }
 }
 
 function isRead(toolName: string): boolean {
@@ -117,18 +124,19 @@ export const replay = {
     create,
     resolveCall,
     isRead,
+    endsTurn,
 }
 
 export type ReplayStop = {
     toolName: string
-    kind: 'missing_fixture' | 'unrecorded_write'
+    kind: 'missing_fixture' | 'unrecorded_write' | 'write_input_differs'
     reason: string
 }
 
-type RecordedLookup = { found: true, output: unknown } | { found: false }
+type RecordedLookup = { found: true, output: unknown } | { found: false, sameToolRecorded: boolean }
 
 export type Replay = {
-    take: (params: { toolName: string, input: unknown, sameInputOnly: boolean }) => RecordedLookup
+    take: (params: { toolName: string, input: unknown }) => RecordedLookup
     stop: (params: { toolName: string, input: unknown, kind: ReplayStop['kind'] }) => unknown
     record: (call: RecordedToolCall) => void
     stops: () => ReplayStop[]

@@ -41,7 +41,7 @@ async function run({ evalCase, mcp, modelId, auth, recordMode }: { evalCase: Eva
             },
             error: () => {},
         },
-        stopWhen: [isLoopFinished(), ...TERMINAL_DISPLAY_TOOLS.map(hasToolCall), async () => caseReplay.stops().some((stop) => stop.kind === 'unrecorded_write'), ...gradedWindow({ evalCase })],
+        stopWhen: [isLoopFinished(), ...TERMINAL_DISPLAY_TOOLS.map(hasToolCall), async () => caseReplay.stops().some(replay.endsTurn), ...gradedWindow({ evalCase })],
     }))
 
     if (abortSignal.aborted) {

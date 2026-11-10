@@ -57,3 +57,36 @@ describe('replay.resolveCall', () => {
         expect(caseReplay.stops()).toEqual([])
     })
 })
+
+describe('replay matching for writes', () => {
+    const recordedToolCalls: RecordedToolCall[] = [{ toolName: 'ap_add_step', input: { flowId: 'f1', stepName: 'step_1' }, output: { success: true } }]
+
+    it('stops a write whose input differs from the recording instead of answering it', async () => {
+        const caseReplay = replay.create({ recordedToolCalls })
+
+        const output = await replay.resolveCall({ caseReplay, recordMode: false, toolName: 'ap_add_step', input: { flowId: 'f2', stepName: 'step_1' }, live: undefined })
+
+        expect(output).toEqual({ error: 'This tool is unavailable right now.' })
+        expect(caseReplay.stops()).toEqual([expect.objectContaining({ toolName: 'ap_add_step', kind: 'write_input_differs', reason: expect.stringContaining('input differs from the recording') })])
+        expect(caseReplay.stops().every(replay.endsTurn)).toBe(true)
+    })
+
+    it('uses each recording once, so a repeated write is unrecorded', async () => {
+        const caseReplay = replay.create({ recordedToolCalls })
+        const input = { flowId: 'f1', stepName: 'step_1' }
+
+        await replay.resolveCall({ caseReplay, recordMode: false, toolName: 'ap_add_step', input, live: undefined })
+        await replay.resolveCall({ caseReplay, recordMode: false, toolName: 'ap_add_step', input, live: undefined })
+
+        expect(caseReplay.stops().map((stop) => stop.kind)).toEqual(['unrecorded_write'])
+    })
+
+    it('does not end the turn for a read with no recording', async () => {
+        const caseReplay = replay.create({ recordedToolCalls: [{ toolName: 'ap_list_flows', input: { limit: 5 }, output: [] }] })
+
+        await replay.resolveCall({ caseReplay, recordMode: false, toolName: 'ap_list_flows', input: { limit: 10 }, live: undefined })
+
+        expect(caseReplay.stops().map((stop) => stop.kind)).toEqual(['missing_fixture'])
+        expect(caseReplay.stops().some(replay.endsTurn)).toBe(false)
+    })
+})

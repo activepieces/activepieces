@@ -4,7 +4,7 @@ import { generateText, ModelMessage } from 'ai'
 import { z } from 'zod'
 import { TurnOutcome } from './agent-turn'
 import { EvalCase } from './eval-case'
-import { ReplayStop } from './replay'
+import { replay, ReplayStop } from './replay'
 
 async function grade({ evalCase, outcome, auth }: { evalCase: EvalCase, outcome: TurnOutcome, auth: Record<string, unknown> }): Promise<RunScores> {
     const rejectedToolCalls = outcome.rejectedToolInputs.length
@@ -109,11 +109,18 @@ async function explainFailures({ auth, transcript, expectedBehavior, failed }: {
 
 function replayNoteFor({ stops }: { stops: ReplayStop[] }): string {
     const missingReads = stops.filter((stop) => stop.kind === 'missing_fixture').map((stop) => stop.toolName)
-    const write = stops.find((stop) => stop.kind === 'unrecorded_write')
+    const ended = stops.find(replay.endsTurn)
     return [
         missingReads.length === 0 ? '' : `This is a replayed test. These read tools had no recorded answer and replied "unavailable": ${[...new Set(missingReads)].join(', ')}. That is a limit of the test, not a fault of the assistant.\n`,
-        isNil(write) ? '' : `The test ended the turn when the assistant called ${write.toolName}, a tool that changes data. Judge only what happened up to that call; calling it is not a fault by itself.\n`,
+        isNil(ended) ? '' : endedNote({ stop: ended }),
     ].join('') + (stops.length === 0 ? '' : '\n')
+}
+
+function endedNote({ stop }: { stop: ReplayStop }): string {
+    if (stop.kind === 'write_input_differs') {
+        return `The test ended the turn when the assistant called ${stop.toolName}, a tool that changes data, with input that differs from the recorded chat. Judge only what happened up to that call.\n`
+    }
+    return `The test ended the turn when the assistant called ${stop.toolName}, a tool that changes data. Judge only what happened up to that call; calling it is not a fault by itself.\n`
 }
 
 function renderContext({ messages }: { messages: ModelMessage[] }): string {
