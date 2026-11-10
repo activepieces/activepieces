@@ -31,6 +31,7 @@ export const platformUserController: FastifyPluginAsyncZod = async (app) => {
             platformRole: req.body.platformRole,
             status: req.body.status,
             externalId: req.body.externalId,
+            actorId: req.principal.id,
         })
     })
 
