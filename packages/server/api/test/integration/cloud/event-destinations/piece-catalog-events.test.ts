@@ -923,6 +923,45 @@ describe('Piece catalog events job', () => {
         expect(await loadSnapshot()).toEqual(snapshotBefore)
     })
 
+    it('a failed platform lookup keeps the snapshot so the next run sends the batch once', async () => {
+        const destA = await subscribe({ platformId: entitledA.platform.id })
+        await seed(baseCatalog())
+        await insertOfficialPiece({ name: '@test/piece-00', version: '1.1.0' })
+        eventDestinationHooks.set(() => ({
+            isDeliveryEntitled: async () => true,
+            listDeliveryEntitledPlatformIds: async () => {
+                throw new Error('plan read failed')
+            },
+        }))
+
+        await expect(runCatalogJob()).rejects.toThrow('plan read failed')
+        const snapshotAfterFailure = await loadSnapshot()
+        const deliveriesAfterFailure = deliveriesTo(destA).length
+        eventDestinationHooks.set(eventDestinationEntitlementHooks)
+        await runCatalogJob()
+
+        expect(snapshotAfterFailure?.['@test/piece-00']).toBe('1.0.0')
+        expect(deliveriesAfterFailure).toBe(0)
+        expect(deliveriesTo(destA).map((delivery) => delivery.event.data.piece.version)).toEqual(['1.1.0'])
+        expect((await loadSnapshot())?.['@test/piece-00']).toBe('1.1.0')
+    })
+
+    it('a run with no changes does not rewrite the snapshot', async () => {
+        await seed(baseCatalog())
+        const saveSpy = vi.fn()
+        vi.spyOn(flagServiceModule, 'flagService').mockImplementation((log) => ({
+            ...originalFlagService(log),
+            save: async (params) => {
+                saveSpy()
+                return originalFlagService(log).save(params)
+            },
+        }))
+
+        await runCatalogJob()
+
+        expect(saveSpy).not.toHaveBeenCalled()
+    })
+
     it('job saves the snapshot then throws when one platform fails', async () => {
         await seed(baseCatalog())
         await insertOfficialPiece({ name: '@test/piece-00', version: '1.1.0' })

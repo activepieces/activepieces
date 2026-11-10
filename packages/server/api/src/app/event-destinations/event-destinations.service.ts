@@ -236,15 +236,10 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
         }
         const destinationsByPlatform = groupBy(destinations, (destination) => destination.platformId)
         const platformIds = Object.keys(destinationsByPlatform)
-        const { data: platformLookups, error: lookupError } = await tryCatch(() => Promise.all([
+        const [entitledPlatformIds, pieceSetsByPlatform] = await Promise.all([
             eventDestinationHooks.get(log).listDeliveryEntitledPlatformIds({ platformIds }),
             pieceCatalogHooks.get(log).listPieceSets({ platformIds }),
-        ]))
-        if (isNil(platformLookups)) {
-            log.error({ platformIds, err: lookupError }, '[pieceCatalogEvents] broadcast platform lookup failed')
-            return { queued: 0, failedPlatformIds: platformIds }
-        }
-        const [entitledPlatformIds, pieceSetsByPlatform] = platformLookups
+        ])
         const entitled = new Set(entitledPlatformIds)
         const webhookUrlPrefix = await domainHelper.getPublicApiUrl({ path: 'v1/webhooks' })
         let queued = 0

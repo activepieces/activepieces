@@ -1,6 +1,7 @@
 import { isNil } from '@activepieces/core-utils'
 import { ApFlagId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
 import { flagService } from '../../flags/flag.service'
 import { CatalogSnapshot } from './catalog-diff'
 
@@ -12,9 +13,11 @@ export const catalogSnapshotStore = (log: FastifyBaseLogger) => ({
         if (isNil(flag)) {
             return null
         }
-        return flag.value as CatalogSnapshot
+        return CatalogSnapshotSchema.parse(flag.value)
     },
     async save(snapshot: CatalogSnapshot): Promise<void> {
         await flagService(log).save({ id: PIECE_CATALOG_SNAPSHOT_FLAG_ID, value: snapshot })
     },
 })
+
+const CatalogSnapshotSchema: z.ZodType<CatalogSnapshot> = z.record(z.string(), z.string())

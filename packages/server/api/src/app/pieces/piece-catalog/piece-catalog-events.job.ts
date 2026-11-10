@@ -87,11 +87,9 @@ export const pieceCatalogEventsJob = (log: FastifyBaseLogger) => ({
         if (isCommunity() || system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE) === PieceSyncMode.OFFICIAL_AUTO) {
             return
         }
-        try {
-            await seedIfMissing({ allowEmptyCatalog: true, log })
-        }
-        catch (err) {
-            log.error({ err }, '[pieceCatalogEvents] boot seed failed')
+        const { error } = await tryCatch(() => seedIfMissing({ allowEmptyCatalog: true, log }))
+        if (!isNil(error)) {
+            log.error({ err: error }, '[pieceCatalogEvents] boot seed failed')
         }
     },
     async scheduleReconcile(): Promise<void> {
@@ -110,14 +108,15 @@ function isCommunity(): boolean {
 }
 
 async function isPiecesSyncRunning(log: FastifyBaseLogger): Promise<boolean> {
-    try {
+    const { data: running, error } = await tryCatch(async () => {
         const queuedSyncActive = (await systemJobsQueue.getActive()).some((job) => !isNil(job) && job.name === SystemJobName.PIECES_SYNC)
         return queuedSyncActive || await isAnySyncMarkedRunning()
-    }
-    catch (err) {
-        log.warn({ err }, '[pieceCatalogEvents] could not read the pieces sync state, skipping the auto seed')
+    })
+    if (isNil(running)) {
+        log.warn({ err: error }, '[pieceCatalogEvents] could not read the pieces sync state, skipping the auto seed')
         return true
     }
+    return running
 }
 
 async function markSyncRunning(syncId: string): Promise<void> {
@@ -162,7 +161,11 @@ async function run(log: FastifyBaseLogger): Promise<void> {
                 return
             }
             const { changes, nextSnapshot } = diffCatalog({ snapshot, current: await listOfficialLatest() })
-            const { queued, failedPlatformIds } = changes.length > 0 ? await eventDestinationService(log).broadcast({ changes }) : { queued: 0, failedPlatformIds: [] }
+            if (changes.length === 0) {
+                log.info({ changes: 0, queued: 0, failedPlatforms: 0, durationMs: Math.floor(performance.now() - startTime), seeded: false }, '[pieceCatalogEvents] run')
+                return
+            }
+            const { queued, failedPlatformIds } = await eventDestinationService(log).broadcast({ changes })
             await store.save(nextSnapshot)
             log.info({ changes: changes.length, queued, failedPlatforms: failedPlatformIds.length, durationMs: Math.floor(performance.now() - startTime), seeded: false }, '[pieceCatalogEvents] run')
             if (failedPlatformIds.length > 0) {
