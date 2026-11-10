@@ -4,6 +4,8 @@ import {
   HttpMethod,
   AuthenticationType,
   httpClient,
+  HttpError,
+  HttpResponse,
 } from '@activepieces/pieces-common';
 import { googleTasksAuth } from '../auth';
 
@@ -227,11 +229,39 @@ export async function getAllTasks({
         ...(pageToken ? { pageToken } : {}),
       },
     };
-    const response = await httpClient.sendRequest<TasksResponse>(request);
-    tasks.push(...(response.body.items ?? []));
-    pageToken = response.body.nextPageToken;
+    const deadlineGoverned = deadlineMs !== undefined && remainingMs <= REQUEST_TIMEOUT_MS;
+    const sent = await sendWithinDeadline({ request, deadlineGoverned, deadlineMs });
+    if (sent === DEADLINE_REACHED) {
+      return { tasks, complete: false, nextPageToken: pageToken };
+    }
+    tasks.push(...(sent.body.items ?? []));
+    pageToken = sent.body.nextPageToken;
   } while (pageToken);
   return { tasks, complete: true };
+}
+
+async function sendWithinDeadline({
+  request,
+  deadlineGoverned,
+  deadlineMs,
+}: {
+  request: HttpRequest;
+  deadlineGoverned: boolean;
+  deadlineMs?: number;
+}): Promise<HttpResponse<TasksResponse> | typeof DEADLINE_REACHED> {
+  try {
+    return await httpClient.sendRequest<TasksResponse>(request);
+  } catch (error) {
+    if (
+      deadlineGoverned &&
+      deadlineMs !== undefined &&
+      Date.now() >= deadlineMs &&
+      !(error instanceof HttpError)
+    ) {
+      return DEADLINE_REACHED;
+    }
+    throw error;
+  }
 }
 
 export async function createTask(
@@ -253,3 +283,4 @@ export async function createTask(
 }
 
 const REQUEST_TIMEOUT_MS = 20_000;
+const DEADLINE_REACHED = 'deadline_reached';

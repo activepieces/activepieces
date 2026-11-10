@@ -24,6 +24,7 @@ const vendor = {
   calls: 0,
   failNext: false,
   msPerCall: 0,
+  delayMs: 0,
   rejectPageTokens: false,
 };
 
@@ -67,8 +68,11 @@ function editTask({ id, change }: { id: string; change: Partial<VendorTask> }) {
 function installFakeVendor() {
   vi.stubGlobal(
     'fetch',
-    vi.fn(async (input: string | URL | Request) => {
+    vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
       vendor.calls += 1;
+      if (vendor.delayMs > 0) {
+        await waitOrAbort({ ms: vendor.delayMs, signal: init?.signal ?? undefined });
+      }
       if (vendor.msPerCall > 0) {
         clock += vendor.msPerCall;
         vi.setSystemTime(clock);
@@ -113,6 +117,16 @@ function installFakeVendor() {
       );
     }),
   );
+}
+
+function waitOrAbort({ ms, signal }: { ms: number; signal?: AbortSignal }): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener('abort', () => {
+      clearTimeout(timer);
+      reject(new DOMException('This operation was aborted', 'AbortError'));
+    });
+  });
 }
 
 function memoryStore() {
@@ -195,6 +209,7 @@ function storedState({ data }: { data: Map<string, string> }): {
   cursorMs: number;
   prunedAtMs: number;
   pending: { pageToken: string; startedAtMs: number } | null;
+  scan: { pageToken: string; windowMinMs: number; startedAtMs: number; maxUpdatedMs: number } | null;
 } {
   const raw = data.get('new_task_state');
   if (raw === undefined) throw new Error('no state');
@@ -206,6 +221,7 @@ beforeEach(() => {
   vendor.calls = 0;
   vendor.failNext = false;
   vendor.msPerCall = 0;
+  vendor.delayMs = 0;
   vendor.rejectPageTokens = false;
   clock = Date.parse('2026-11-01T10:00:00.000Z');
   vi.useFakeTimers({ toFake: ['Date'] });
@@ -608,5 +624,106 @@ describe('Google Tasks New Task baselines and prune under the time budget', () =
     const callsBefore = vendor.calls;
     expect(ids(await trigger.run(hookContext({ store })))).toEqual(['later']);
     expect(vendor.calls - callsBefore).toBe(1);
+  });
+});
+
+describe('Google Tasks New Task polls that keep hitting the time budget', () => {
+  it('resumes the same query window across slow polls and delivers every new task exactly once (new_only)', async () => {
+    addTask({ id: 'seed' });
+    const { store, data } = memoryStore();
+    await trigger.onEnable(hookContext({ store }));
+    const burst = Array.from({ length: 650 }, (_, index) => `burst-${index}`);
+    burst.forEach((id) => addTask({ id }));
+    tick(5);
+    const cursorBefore = storedState({ data }).cursorMs;
+    vendor.msPerCall = 25_000;
+    const fired: string[] = [];
+    for (let poll = 0; poll < 3; poll += 1) {
+      const batch = ids(await trigger.run(hookContext({ store })));
+      expect(batch.length).toBeGreaterThanOrEqual(199);
+      expect(batch.length).toBeLessThanOrEqual(200);
+      fired.push(...batch);
+      expect(storedState({ data }).scan).not.toBeNull();
+      expect(storedState({ data }).cursorMs).toBe(cursorBefore);
+      addTask({ id: `during-${poll}` });
+      tick(5);
+    }
+    fired.push(...ids(await trigger.run(hookContext({ store }))));
+    expect(storedState({ data }).scan).toBeNull();
+    expect(storedState({ data }).cursorMs).toBeGreaterThan(cursorBefore);
+    for (let poll = 0; poll < 3; poll += 1) {
+      tick(5);
+      fired.push(...ids(await trigger.run(hookContext({ store }))));
+    }
+    const expected = [...burst, 'during-0', 'during-1', 'during-2'];
+    expect([...fired].sort()).toEqual([...expected].sort());
+    expect(new Set(fired).size).toBe(fired.length);
+  });
+
+  it('resumes the same query window across slow polls and fires each edit exactly once (new_and_edited)', async () => {
+    const existing = Array.from({ length: 450 }, (_, index) => `old-${index}`);
+    existing.forEach((id) => addTask({ id }));
+    const { store } = memoryStore();
+    await trigger.onEnable(hookContext({ store, runOn: 'new_and_edited' }));
+    existing.forEach((id) => editTask({ id, change: { title: `${id} edited` } }));
+    tick(5);
+    vendor.msPerCall = 25_000;
+    const fired: string[] = [];
+    for (let poll = 0; poll < 6; poll += 1) {
+      fired.push(...ids(await trigger.run(hookContext({ store, runOn: 'new_and_edited' }))));
+      tick(5);
+    }
+    expect([...fired].sort()).toEqual([...existing].sort());
+  });
+});
+
+describe('Google Tasks New Task with requests aborted at the deadline', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(clock);
+  });
+
+  it('keeps the pages read before the deadline abort and resumes the baseline from the next page', async () => {
+    Array.from({ length: 500 }, (_, index) => `old-${index}`).forEach((id) =>
+      addTask({ id, at: '2026-10-01T00:00:00.000Z' }),
+    );
+    const { store, data } = memoryStore();
+    vendor.delayMs = 9_000;
+    const first = trigger.run(hookContext({ store }));
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(await first).toEqual([]);
+    expect(vendor.calls).toBe(5);
+    expect(storedState({ data }).pending?.pageToken).toBe('400');
+    expect(storedState({ data }).seen.length).toBe(400 * 8);
+    vendor.delayMs = 0;
+    expect(await trigger.run(hookContext({ store }))).toEqual([]);
+    expect(storedState({ data }).pending).toBeNull();
+    expect(storedState({ data }).seen.length).toBe(500 * 8);
+    clock = Date.now();
+    addTask({ id: 'new-1' });
+    tick(5);
+    expect(ids(await trigger.run(hookContext({ store })))).toEqual(['new-1']);
+  });
+
+  it('still throws when a single request times out before the overall deadline', async () => {
+    addTask({ id: 'a' });
+    const { store } = memoryStore();
+    vendor.delayMs = 25_000;
+    const enabling = trigger.onEnable(hookContext({ store }));
+    const outcome = expect(enabling).rejects.toThrow();
+    await vi.advanceTimersByTimeAsync(30_000);
+    await outcome;
+  });
+
+  it('test() throws a clear error instead of returning older tasks when the list cannot be read in time', async () => {
+    Array.from({ length: 2_500 }, (_, index) => `t-${index}`).forEach((id) =>
+      addTask({ id, at: '2026-10-01T00:00:00.000Z' }),
+    );
+    const { store } = memoryStore();
+    vendor.delayMs = 9_000;
+    const sampling = trigger.test(hookContext({ store }));
+    const outcome = expect(sampling).rejects.toThrow('too large to load a sample in time');
+    await vi.advanceTimersByTimeAsync(200_000);
+    await outcome;
   });
 });

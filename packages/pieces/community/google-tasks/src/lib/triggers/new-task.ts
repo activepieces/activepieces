@@ -20,6 +20,7 @@ const STATE_VERSION = 1;
 const OVERLAP_MS = 60_000;
 const POLL_BUDGET_MS = 40_000;
 const ENABLE_BUDGET_MS = 120_000;
+const TEST_BUDGET_MS = 150_000;
 const PRUNE_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const SEEN_CAP = 20_000;
 const RECENT_CAP = 5_000;
@@ -87,12 +88,17 @@ export const newTaskTrigger = createTrigger({
   },
   async test(context) {
     const mode = resolveRunOn({ value: context.propsValue.run_on });
-    const { tasks } = await getAllTasks({
+    const { tasks, complete } = await getAllTasks({
       auth: context.auth,
       taskListId: context.propsValue.tasks_list,
       params: listParams({ mode }),
-      deadlineMs: Date.now() + POLL_BUDGET_MS,
+      deadlineMs: Date.now() + TEST_BUDGET_MS,
     });
+    if (!complete) {
+      throw new Error(
+        'This task list is too large to load a sample in time, so the newest tasks could not be found. Try again.',
+      );
+    }
     return sortNewestFirst({ tasks: liveTasks({ tasks }) }).slice(0, SAMPLE_SIZE);
   },
   async onEnable(context) {
@@ -154,24 +160,73 @@ export const newTaskTrigger = createTrigger({
       );
       return [];
     }
-    const { tasks, complete } = await getAllTasks({
+    const scan: PollScan = state.scan ?? {
+      pageToken: '',
+      windowMinMs: Math.max(0, state.cursorMs - OVERLAP_MS),
+      startedAtMs: Date.now(),
+      maxUpdatedMs: state.cursorMs,
+    };
+    const listing = await listScanPage({
       auth: context.auth,
-      taskListId: list,
-      params: {
-        ...listParams({ mode }),
-        updatedMin: new Date(Math.max(0, state.cursorMs - OVERLAP_MS)).toISOString(),
-      },
+      store: context.store,
+      state,
+      scan,
+      mode,
       deadlineMs,
     });
-    const live = liveTasks({ tasks });
+    const live = liveTasks({ tasks: listing.tasks });
+    const maxUpdatedMs = maxUpdated({ fromMs: scan.maxUpdatedMs, tasks: live });
+    const progress: ScanProgress = listing.complete
+      ? {
+          cursorMs: Math.max(state.cursorMs, Math.min(maxUpdatedMs, scan.startedAtMs)),
+          scan: null,
+        }
+      : {
+          cursorMs: state.cursorMs,
+          scan: { ...scan, pageToken: listing.nextPageToken ?? scan.pageToken, maxUpdatedMs },
+        };
     const next =
       mode === RUN_ON_NEW_ONLY
-        ? await advanceNewOnly({ auth: context.auth, state, tasks: live, complete, deadlineMs })
-        : advanceNewAndEdited({ state, tasks: live, complete });
+        ? await advanceNewOnly({ auth: context.auth, state, tasks: live, progress, deadlineMs })
+        : advanceNewAndEdited({ state, tasks: live, progress });
     await context.store.put(STATE_KEY, next.state);
     return sortNewestFirst({ tasks: next.emitted });
   },
 });
+
+async function listScanPage({
+  auth,
+  store,
+  state,
+  scan,
+  mode,
+  deadlineMs,
+}: {
+  auth: OAuth2PropertyValue;
+  store: Store;
+  state: TriggerState;
+  scan: PollScan;
+  mode: RunOn;
+  deadlineMs: number;
+}): Promise<{ tasks: Task[]; complete: boolean; nextPageToken?: string }> {
+  try {
+    return await getAllTasks({
+      auth,
+      taskListId: state.list,
+      params: {
+        ...listParams({ mode }),
+        updatedMin: new Date(scan.windowMinMs).toISOString(),
+      },
+      deadlineMs,
+      startPageToken: scan.pageToken,
+    });
+  } catch (error) {
+    if (scan.pageToken !== '' && error instanceof HttpError && error.response.status === 400) {
+      await store.put(STATE_KEY, { ...state, scan: null });
+    }
+    throw error;
+  }
+}
 
 async function loadState({
   store,
@@ -219,6 +274,7 @@ async function baselineState({
       recent: [],
       prunedAtMs: now,
       pending: null,
+      scan: null,
     };
   }
   const { tasks, complete, nextPageToken } = await getAllTasks({
@@ -237,6 +293,7 @@ async function baselineState({
     recent: [],
     prunedAtMs: now,
     pending: complete ? null : { pageToken: nextPageToken ?? '', startedAtMs: now },
+    scan: null,
   };
 }
 
@@ -295,6 +352,7 @@ function legacyState({ list, lastPoll }: { list: string; lastPoll: number }): Tr
     recent: [],
     prunedAtMs: Date.now(),
     pending: null,
+    scan: null,
   };
 }
 
@@ -302,13 +360,13 @@ async function advanceNewOnly({
   auth,
   state,
   tasks,
-  complete,
+  progress,
   deadlineMs,
 }: {
   auth: OAuth2PropertyValue;
   state: TriggerState;
   tasks: LiveTask[];
-  complete: boolean;
+  progress: ScanProgress;
   deadlineMs: number;
 }): Promise<{ state: TriggerState; emitted: LiveTask[] }> {
   const seen = splitHashes({ seen: state.seen });
@@ -325,7 +383,10 @@ async function advanceNewOnly({
   }
   const merged = [...seen, ...added];
   const now = Date.now();
-  const pruneDue = merged.length > SEEN_CAP && now - state.prunedAtMs >= PRUNE_INTERVAL_MS;
+  const pruneDue =
+    progress.scan === null &&
+    merged.length > SEEN_CAP &&
+    now - state.prunedAtMs >= PRUNE_INTERVAL_MS;
   const pruned = pruneDue
     ? await pruneSeen({ auth, list: state.list, hashes: merged, deadlineMs })
     : null;
@@ -339,7 +400,7 @@ async function advanceNewOnly({
     emitted,
     state: {
       ...state,
-      cursorMs: complete ? nextCursor({ cursorMs: state.cursorMs, tasks }) : state.cursorMs,
+      ...progress,
       seen: capSeen({ hashes: kept }).join(''),
       prunedAtMs: pruneDue ? now : state.prunedAtMs,
     },
@@ -373,11 +434,11 @@ async function pruneSeen({
 function advanceNewAndEdited({
   state,
   tasks,
-  complete,
+  progress,
 }: {
   state: TriggerState;
   tasks: LiveTask[];
-  complete: boolean;
+  progress: ScanProgress;
 }): { state: TriggerState; emitted: LiveTask[] } {
   const windowStartMs = Math.max(state.floorMs, state.cursorMs - OVERLAP_MS);
   const recentKeys = new Set(state.recent.map(([hash]) => hash));
@@ -395,15 +456,14 @@ function advanceNewAndEdited({
       emitted.push(task);
     }
   }
-  const cursorMs = complete ? nextCursor({ cursorMs: state.cursorMs, tasks }) : state.cursorMs;
   const recent = [...state.recent, ...added]
-    .filter(([, updatedMs]) => updatedMs >= cursorMs - OVERLAP_MS)
+    .filter(([, updatedMs]) => updatedMs >= progress.cursorMs - OVERLAP_MS)
     .sort((a, b) => b[1] - a[1])
     .slice(0, RECENT_CAP);
-  return { emitted, state: { ...state, cursorMs, recent } };
+  return { emitted, state: { ...state, ...progress, recent } };
 }
 
-function nextCursor({ cursorMs, tasks }: { cursorMs: number; tasks: LiveTask[] }): number {
+function maxUpdated({ fromMs, tasks }: { fromMs: number; tasks: LiveTask[] }): number {
   const now = Date.now();
   return tasks.reduce((acc, task) => {
     const updatedMs = Date.parse(task.updated);
@@ -411,7 +471,7 @@ function nextCursor({ cursorMs, tasks }: { cursorMs: number; tasks: LiveTask[] }
       return acc;
     }
     return Math.max(acc, updatedMs);
-  }, cursorMs);
+  }, fromMs);
 }
 
 function listParams({ mode }: { mode: RunOn }): Record<string, string> {
@@ -496,6 +556,7 @@ function parseState({ raw }: { raw: unknown }): TriggerState | null {
   const recent = Reflect.get(raw, 'recent');
   const prunedAtMs = Reflect.get(raw, 'prunedAtMs');
   const pending = parsePending({ raw: Reflect.get(raw, 'pending') });
+  const scan = parseScan({ raw: Reflect.get(raw, 'scan') });
   if (
     v !== STATE_VERSION ||
     (mode !== RUN_ON_NEW_ONLY && mode !== RUN_ON_NEW_AND_EDITED) ||
@@ -506,11 +567,34 @@ function parseState({ raw }: { raw: unknown }): TriggerState | null {
     !Array.isArray(recent) ||
     !recent.every(isRecentEntry) ||
     !isFiniteNumber(prunedAtMs) ||
-    pending === undefined
+    pending === undefined ||
+    scan === undefined
   ) {
     return null;
   }
-  return { v, mode, list, cursorMs, floorMs, seen, recent, prunedAtMs, pending };
+  return { v, mode, list, cursorMs, floorMs, seen, recent, prunedAtMs, pending, scan };
+}
+
+function parseScan({ raw }: { raw: unknown }): PollScan | null | undefined {
+  if (raw === null || raw === undefined) {
+    return null;
+  }
+  if (typeof raw !== 'object') {
+    return undefined;
+  }
+  const pageToken = Reflect.get(raw, 'pageToken');
+  const windowMinMs = Reflect.get(raw, 'windowMinMs');
+  const startedAtMs = Reflect.get(raw, 'startedAtMs');
+  const maxUpdatedMs = Reflect.get(raw, 'maxUpdatedMs');
+  if (
+    typeof pageToken !== 'string' ||
+    !isFiniteNumber(windowMinMs) ||
+    !isFiniteNumber(startedAtMs) ||
+    !isFiniteNumber(maxUpdatedMs)
+  ) {
+    return undefined;
+  }
+  return { pageToken, windowMinMs, startedAtMs, maxUpdatedMs };
 }
 
 function parsePending({ raw }: { raw: unknown }): PendingBaseline | null | undefined {
@@ -544,6 +628,16 @@ type TriggerState = {
   recent: RecentEntry[];
   prunedAtMs: number;
   pending: PendingBaseline | null;
+  scan: PollScan | null;
 };
+
+type PollScan = {
+  pageToken: string;
+  windowMinMs: number;
+  startedAtMs: number;
+  maxUpdatedMs: number;
+};
+
+type ScanProgress = { cursorMs: number; scan: PollScan | null };
 
 type PendingBaseline = { pageToken: string; startedAtMs: number };
