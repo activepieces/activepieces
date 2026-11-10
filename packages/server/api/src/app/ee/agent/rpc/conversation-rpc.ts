@@ -9,7 +9,7 @@ import { chatToolBilling } from '.././chat-tool-billing'
 import { fileService } from '../../../file/file.service'
 import { filesService } from '../../../file/files-service'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
-import { creditsLeftAfter } from '../../../platform/billing-provider'
+import { CreditCheckSpeed, creditsLeftAfter } from '../../../platform/billing-provider'
 
 import { updateConversationForRun } from './rpc-shared'
 
@@ -136,7 +136,7 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
     },
 
     async agentCreditsLeft(input: AgentCreditsLeftRequest): Promise<number | null> {
-        return creditsLeftAfter({ platformId: input.platformId, pendingCredits: input.pendingCredits, log })
+        return creditsLeftAfter({ platformId: input.platformId, pendingCredits: input.pendingCredits, creditCheckSpeed: CreditCheckSpeed.BACKGROUND, log })
     },
 
     async heartbeatAgentConversation(input: HeartbeatAgentConversationRequest): Promise<void> {

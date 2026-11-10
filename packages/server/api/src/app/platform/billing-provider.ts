@@ -76,7 +76,7 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
 }))
 
 export async function assertCreditsAndAppSumoNotExceeded({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
-    const { credits, appSumo } = await billingProvider.get(log).getCreditsAndAppSumoState(platformId)
+    const { credits, appSumo } = await billingProvider.get(log).getCreditsAndAppSumoState({ platformId, creditCheckSpeed: CreditCheckSpeed.NORMAL })
     if (appSumo.blocked) {
         throw new ActivepiecesError({
             code: ErrorCode.QUOTA_EXCEEDED,
@@ -92,7 +92,7 @@ export async function assertCreditsAndAppSumoNotExceeded({ platformId, log }: { 
 }
 
 export async function assertCreditsNotExceeded({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
-    const { credits } = await billingProvider.get(log).getCreditsAndAppSumoState(platformId)
+    const { credits } = await billingProvider.get(log).getCreditsAndAppSumoState({ platformId, creditCheckSpeed: CreditCheckSpeed.NORMAL })
     if (credits.blocked) {
         throw new ActivepiecesError({
             code: ErrorCode.QUOTA_EXCEEDED,
@@ -101,8 +101,8 @@ export async function assertCreditsNotExceeded({ platformId, log }: { platformId
     }
 }
 
-export async function creditsLeftAfter({ platformId, pendingCredits, log }: { platformId: string, pendingCredits: number, log: FastifyBaseLogger }): Promise<number | null> {
-    const { data: state, error } = await tryCatch(() => billingProvider.get(log).getCreditsAndAppSumoState(platformId))
+export async function creditsLeftAfter({ platformId, pendingCredits, creditCheckSpeed, log }: CreditsLeftAfterParams): Promise<number | null> {
+    const { data: state, error } = await tryCatch(() => billingProvider.get(log).getCreditsAndAppSumoState({ platformId, creditCheckSpeed }))
     if (isNil(state)) {
         log.warn({ platform: { id: platformId }, error }, 'Credits check failed, allowing the request')
         return null
@@ -112,7 +112,7 @@ export async function creditsLeftAfter({ platformId, pendingCredits, log }: { pl
 }
 
 export async function hasCreditsLeft({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<boolean> {
-    const left = await creditsLeftAfter({ platformId, pendingCredits: 0, log })
+    const left = await creditsLeftAfter({ platformId, pendingCredits: 0, creditCheckSpeed: CreditCheckSpeed.NORMAL, log })
     return isNil(left) || left > 0
 }
 
@@ -193,6 +193,18 @@ type RunCreditsGateParams = {
     environment: RunEnvironment
     creditCheckSpeed: CreditCheckSpeed
     log: FastifyBaseLogger
+}
+
+type CreditsLeftAfterParams = {
+    platformId: string
+    pendingCredits: number
+    creditCheckSpeed: CreditCheckSpeed
+    log: FastifyBaseLogger
+}
+
+export type GetCreditsAndAppSumoStateParams = {
+    platformId: string
+    creditCheckSpeed: CreditCheckSpeed
 }
 
 export type ShouldBlockOnCreditsParams = {
@@ -434,7 +446,7 @@ export type BillingProvider = {
     activateLicense(params: ActivateLicenseParams): Promise<void>
     isBillingEnforced(platformId: string): Promise<boolean>
     shouldBlockOnCredits(params: ShouldBlockOnCreditsParams): Promise<boolean>
-    getCreditsAndAppSumoState(platformId: string): Promise<CreditsAndAppSumoState>
+    getCreditsAndAppSumoState(params: GetCreditsAndAppSumoStateParams): Promise<CreditsAndAppSumoState>
     getConsumablesUsage(platformId: string): Promise<ConsumablesUsage>
     getCreditUsage(params: CreditUsageByProjectParams): Promise<CreditUsage>
     listUsageEvents(params: ListUsageEventsParams): Promise<UsageEventsPage>
