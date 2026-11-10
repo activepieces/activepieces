@@ -92,8 +92,9 @@ Trial keys are free but rate-limited. Use a production key for live flows.
     name: 'Google Gemini',
     markdown: () =>
       t(`Follow these instructions to get your Google API Key:
-1. Go to https://console.cloud.google.com/apis/credentials.
-2. Once on the website, locate and click on the option to obtain your Google API Key.
+
+1. Go to https://aistudio.google.com/api-keys and sign in.
+2. Click **Create API key**, copy the key, and paste it below.
 `),
     logoUrl: 'https://cdn.activepieces.com/pieces/google-gemini.png',
     dashboardUrl: 'https://aistudio.google.com/usage',
