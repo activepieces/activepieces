@@ -247,6 +247,7 @@ async function findThemeId({ apiKey, theme }: { apiKey: string; theme: string })
       url: 'https://public-api.gamma.app/v1.0/themes',
       headers: { 'X-API-KEY': apiKey },
       queryParams: { query: wanted, limit: '50' },
+      timeout: 5000,
     });
     const match = (response.body.data ?? []).find(
       (t) => t.id === wanted || t.name.toLowerCase() === wanted.toLowerCase(),
