@@ -1,3 +1,4 @@
+import { tryCatch } from '@activepieces/pieces-framework';
 import { drive_v3 } from '@googleapis/drive';
 
 const LIST_CALL_TIMEOUT_MS = 10_000;
@@ -142,25 +143,30 @@ async function listSharedDrivesFiles({
 		const results = await Promise.all(
 			batch.map(async (driveId) => ({
 				driveId,
-				listing: await listPages({
-					drive,
-					params: {
-						...params,
-						corpora: 'drive',
-						driveId,
-						includeItemsFromAllDrives: true,
-						supportsAllDrives: true,
-					},
-					maxPages,
-					deadline,
-				}),
+				listing: await tryCatch(() =>
+					listPages({
+						drive,
+						params: {
+							...params,
+							corpora: 'drive',
+							driveId,
+							includeItemsFromAllDrives: true,
+							supportsAllDrives: true,
+						},
+						maxPages,
+						deadline,
+					}),
+				),
 			})),
 		);
 		for (const { driveId, listing } of results) {
-			if (listing.incomplete) {
+			if (listing.error) {
+				console.warn(`[google-sheets] could not list shared drive ${driveId}; it will be retried on the next check.`, listing.error);
+				incompleteDrives.push(driveId);
+			} else if (listing.data.incomplete) {
 				incompleteDrives.push(driveId);
 			} else {
-				files.push(...listing.files);
+				files.push(...listing.data.files);
 			}
 		}
 	}

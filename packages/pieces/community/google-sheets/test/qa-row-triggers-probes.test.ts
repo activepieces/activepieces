@@ -156,7 +156,7 @@ describe('QA probe: chunked snapshot storage', () => {
 		expect(await nuor({ store, triggerColumn: 'B' })).toEqual(['15001:evt-15000|changed']);
 		expect(await nuor({ store, triggerColumn: 'B' })).toEqual([]);
 		const snapshotKeys = [...data.keys()].filter((key) => key.startsWith(NUOR_SNAPSHOT)).sort();
-		expect(snapshotKeys).toEqual([NUOR_SNAPSHOT, `${NUOR_SNAPSHOT}_g2_0`, `${NUOR_SNAPSHOT}_g2_1`, `${NUOR_SNAPSHOT}_g2_2`]);
+		expect(snapshotKeys).toEqual([NUOR_SNAPSHOT, `${NUOR_SNAPSHOT}_g1_0`, `${NUOR_SNAPSHOT}_g1_1`, `${NUOR_SNAPSHOT}_g1_2`, `${NUOR_SNAPSHOT}_g2_0`, `${NUOR_SNAPSHOT}_g2_1`, `${NUOR_SNAPSHOT}_g2_2`]);
 	});
 
 	it('a failed manifest write keeps the old snapshot and the change is reported next time', async () => {

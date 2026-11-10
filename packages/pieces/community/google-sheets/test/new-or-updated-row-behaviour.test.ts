@@ -186,6 +186,8 @@ describe('New or Updated Row behaviour', () => {
 		const snapshotKeys = [...data.keys()].filter((key) => key.includes('-snapshot')).sort();
 		expect(snapshotKeys).toEqual([
 			'google-sheets-new-or-updated-row-snapshot',
+			'google-sheets-new-or-updated-row-snapshot_g1_0',
+			'google-sheets-new-or-updated-row-snapshot_g1_1',
 			'google-sheets-new-or-updated-row-snapshot_g2_0',
 			'google-sheets-new-or-updated-row-snapshot_g2_1',
 		]);
@@ -255,6 +257,86 @@ describe('New or Updated Row behaviour', () => {
 			await trigger.onEnable(ctx({ store, triggerColumn }));
 			tab().rows[2] = cells({ values: ['Dan', 'dan@x.io', 'open'] });
 			expect(await fire({ store, triggerColumn })).toEqual(['3:Dan|dan@x.io|open']);
+		});
+	});
+
+	describe('overlapping notifications', () => {
+		const SNAPSHOT_KEY = 'google-sheets-new-or-updated-row-snapshot';
+
+		function interleaved({ base, during }: { base: ReturnType<typeof memoryStore>['store']; during: () => Promise<void> }) {
+			const state = { done: false };
+			return {
+				...base,
+				get: async <T>(key: string): Promise<T | null> => {
+					const value = await base.get<T>(key);
+					if (!state.done && key === SNAPSHOT_KEY) {
+						state.done = true;
+						await during();
+					}
+					return value;
+				},
+			};
+		}
+
+		function rowsWith({ status }: { status: Record<number, string> }): FakeTab['rows'] {
+			const base = [['Order', 'Customer', 'Status'], ['1001', 'Ann', 'paid'], ['1002', 'Bob', 'open'], ['1003', 'Cat', 'open']];
+			return base.map((values, index) => cells({ values: status[index] === undefined ? values : [values[0], values[1], status[index]] }));
+		}
+
+		it('a run that read the snapshot before another run saved still reports its change', async () => {
+			const { store } = memoryStore();
+			await trigger.onEnable(ctx({ store }));
+			tab().rows = rowsWith({ status: { 1: 'refunded' } });
+			const other: string[] = [];
+			const overlapping = interleaved({
+				base: store,
+				during: async () => {
+					tab().rows = rowsWith({ status: { 2: 'shipped' } });
+					other.push(...(await fire({ store })));
+				},
+			});
+			const first = await fire({ store: overlapping });
+			expect(other).toEqual(['3:1002|Bob|shipped']);
+			expect(first).toContain('2:1001|Ann|refunded');
+		});
+
+		it('retries against the newest snapshot when two saves happened during its read, and never re-baselines silently', async () => {
+			const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+			const { store } = memoryStore();
+			await trigger.onEnable(ctx({ store }));
+			tab().rows = rowsWith({ status: { 1: 'refunded' } });
+			const overlapping = interleaved({
+				base: store,
+				during: async () => {
+					tab().rows = rowsWith({ status: { 2: 'shipped' } });
+					await fire({ store });
+					tab().rows = rowsWith({ status: { 2: 'shipped', 3: 'lost' } });
+					await fire({ store });
+				},
+			});
+			const first = await fire({ store: overlapping });
+			expect(first).toContain('2:1001|Ann|refunded');
+			expect(warn.mock.calls.some(([message]) => String(message).includes('new baseline'))).toBe(false);
+		});
+
+		it('throws instead of re-baselining when the snapshot keeps changing on every attempt', async () => {
+			const { store, data } = memoryStore();
+			await trigger.onEnable(ctx({ store }));
+			tab().rows = rowsWith({ status: { 1: 'refunded' } });
+			const original = data.get(SNAPSHOT_KEY) ?? '';
+			const churning = {
+				...store,
+				get: async <T>(key: string): Promise<T | null> => {
+					if (key === SNAPSHOT_KEY) {
+						const raw = data.get(key) ?? '';
+						data.set(key, raw.replace(/"generation":(\d+)/, (_match, generation) => `"generation":${Number(generation) + 2}`));
+					}
+					return store.get<T>(key);
+				},
+			};
+			await expect(trigger.run(ctx({ store: churning }))).rejects.toThrow(/notifications overlapped/);
+			data.set(SNAPSHOT_KEY, original);
+			expect(await fire({ store })).toEqual(['2:1001|Ann|refunded']);
 		});
 	});
 

@@ -10,12 +10,14 @@ const SHEET = 'application/vnd.google-apps.spreadsheet';
 
 type FakeFile = { id: string; name: string; mimeType: string; createdTime: string; driveId: string };
 type ListParams = { q?: string; corpora?: string; driveId?: string };
-type FakeDrive = { files: FakeFile[]; unsearched: Set<string>; stillIncomplete: Set<string>; corpora: (string | undefined)[]; hang: boolean };
+type FakeDrive = { files: FakeFile[]; unsearched: Set<string>; stillIncomplete: Set<string>; failing: Set<string>; hanging: Set<string>; corpora: (string | undefined)[]; hang: boolean };
 
 const drive: FakeDrive = {
 	files: [],
 	unsearched: new Set<string>(),
 	stillIncomplete: new Set<string>(),
+	failing: new Set<string>(),
+	hanging: new Set<string>(),
 	corpora: [],
 	hang: false,
 };
@@ -37,6 +39,10 @@ async function fakeFilesList(...args: unknown[]) {
 	const params = listParams({ value: args[0] });
 	drive.corpora.push(params.corpora);
 	if (drive.hang) return new Promise(() => undefined);
+	if (params.corpora === 'drive' && drive.hanging.has(params.driveId ?? '')) return new Promise(() => undefined);
+	if (params.corpora === 'drive' && drive.failing.has(params.driveId ?? '')) {
+		throw Object.assign(new Error('Internal Error'), { code: 500 });
+	}
 	const after = /createdTime > '([^']+)'/.exec(params.q ?? '');
 	const incomplete =
 		(params.corpora === 'allDrives' && drive.unsearched.size > 0) ||
@@ -83,6 +89,8 @@ beforeEach(() => {
 	drive.files = [];
 	drive.unsearched = new Set();
 	drive.stillIncomplete = new Set();
+	drive.failing = new Set();
+	drive.hanging = new Set();
 	drive.corpora = [];
 	drive.hang = false;
 	clock = Date.parse('2026-11-01T10:00:00.000Z');
@@ -154,6 +162,44 @@ describe('New Spreadsheet behaviour', () => {
 		vi.spyOn(store, 'delete').mockRejectedValueOnce(new Error('StorageError: delete failed'));
 		await expect(poll({ store })).rejects.toThrow(/StorageError/);
 		expect(await poll({ store })).toEqual(['shared-file']);
+		expect(await poll({ store })).toEqual([]);
+	});
+
+	it('keeps delivering other drives while one shared drive keeps failing, then delivers its files once', async () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const { store } = memoryStore();
+		await trigger.onEnable(ctx({ store, includeTeamDrives: true }));
+		addFile({ id: 'broken-file', driveId: 'shared-broken' });
+		addFile({ id: 'healthy-file', driveId: 'shared-ok' });
+		addFile({ id: 'mine-1' });
+		drive.unsearched = new Set(['shared-broken']);
+		drive.failing = new Set(['shared-broken']);
+		expect(await poll({ store })).toEqual(['mine-1', 'healthy-file']);
+		expect(await poll({ store })).toEqual([]);
+		addFile({ id: 'mine-2' });
+		expect(await poll({ store })).toEqual(['mine-2']);
+		drive.unsearched = new Set();
+		drive.failing = new Set();
+		expect(await poll({ store })).toEqual(['broken-file']);
+		expect(await poll({ store })).toEqual([]);
+	});
+
+	it('keeps delivering other drives while one shared drive times out, then delivers its files once', async () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const { store } = memoryStore();
+		await trigger.onEnable(ctx({ store, includeTeamDrives: true }));
+		addFile({ id: 'slow-file', driveId: 'shared-slow' });
+		addFile({ id: 'mine-1' });
+		drive.unsearched = new Set(['shared-slow']);
+		drive.hanging = new Set(['shared-slow']);
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		const pending = poll({ store });
+		await vi.advanceTimersByTimeAsync(10_000);
+		expect(await pending).toEqual(['mine-1']);
+		vi.useRealTimers();
+		drive.unsearched = new Set();
+		drive.hanging = new Set();
+		expect(await poll({ store })).toEqual(['slow-file']);
 		expect(await poll({ store })).toEqual([]);
 	});
 

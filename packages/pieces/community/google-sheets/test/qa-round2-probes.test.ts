@@ -140,7 +140,7 @@ describe('QA round 2: orphan cleanup never deletes live chunks', () => {
 		const manifest = JSON.parse(data.get(key) ?? '{}');
 		expect(manifest.chunkCount).toBe(1);
 		const keys = [...data.keys()].filter((entry) => entry.startsWith(key)).sort();
-		expect(keys).toEqual([key, `${key}_g2_0`]);
+		expect(keys).toEqual([key, `${key}_g1_0`, `${key}_g1_1`, `${key}_g1_2`, `${key}_g2_0`]);
 		tab().rows[10][0] = { value: 'again' };
 		expect(await nuor({ store })).toEqual(['11:again']);
 		tab().rows.push(cells({ values: ['tail'] }));

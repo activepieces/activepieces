@@ -7,6 +7,7 @@ const FINGERPRINT_LENGTH = 16;
 const ROWS_PER_CHUNK = 8000;
 const SNAPSHOT_VERSION = 2;
 const MAX_ORPHAN_CHUNKS = 64;
+const MAX_LOAD_ATTEMPTS = 3;
 
 const manifestSchema = z.object({
 	version: z.literal(SNAPSHOT_VERSION),
@@ -17,6 +18,7 @@ const manifestSchema = z.object({
 	chunkCount: z.number(),
 	rowCount: z.number(),
 	entryWidth: z.number(),
+	retained: z.optional(z.object({ generation: z.number(), chunkCount: z.number() })),
 });
 
 function fingerprint(value: unknown): string {
@@ -267,17 +269,46 @@ async function loadSnapshot({
 	key: string;
 	identity: SnapshotIdentity;
 }): Promise<RowFingerprint[] | null> {
-	const manifest = await readManifest({ store, key });
-	if (isNil(manifest)) {
-		return null;
+	let manifest = await readManifest({ store, key });
+	for (let attempt = 1; attempt <= MAX_LOAD_ATTEMPTS; attempt++) {
+		if (isNil(manifest) || !matchesIdentity({ manifest, identity })) {
+			return null;
+		}
+		const rows = await readChunks({ store, key, manifest });
+		if (!isNil(rows)) {
+			return rows;
+		}
+		const latest = await readManifest({ store, key });
+		if (isNil(latest) || latest.generation === manifest.generation) {
+			console.warn(
+				`[google-sheets] row snapshot ${key} generation ${manifest.generation} is incomplete; taking a new baseline.`,
+			);
+			return null;
+		}
+		manifest = latest;
 	}
-	if (
-		manifest.spreadsheetId !== identity.spreadsheetId ||
-		manifest.sheetId !== identity.sheetId ||
-		manifest.triggerColumn !== identity.triggerColumn
-	) {
-		return null;
-	}
+	throw new Error(
+		'The row snapshot kept changing while it was read, because notifications overlapped. Nothing was skipped; the next notification will compare again.',
+	);
+}
+
+function matchesIdentity({ manifest, identity }: { manifest: SnapshotManifest; identity: SnapshotIdentity }): boolean {
+	return (
+		manifest.spreadsheetId === identity.spreadsheetId &&
+		manifest.sheetId === identity.sheetId &&
+		manifest.triggerColumn === identity.triggerColumn
+	);
+}
+
+async function readChunks({
+	store,
+	key,
+	manifest,
+}: {
+	store: Store;
+	key: string;
+	manifest: SnapshotManifest;
+}): Promise<RowFingerprint[] | null> {
 	const rows: RowFingerprint[] = [];
 	for (let chunk = 0; chunk < manifest.chunkCount; chunk++) {
 		const encoded = await store.get<unknown>(chunkKey({ key, generation: manifest.generation, chunk }));
@@ -328,11 +359,13 @@ async function saveSnapshot({
 		chunkCount,
 		rowCount: rows.length,
 		entryWidth,
+		retained: isNil(previous) ? undefined : { generation: previous.generation, chunkCount: previous.chunkCount },
 	};
 	await store.put(key, manifest);
-	if (!isNil(previous) && previous.generation !== generation) {
-		for (let chunk = 0; chunk < previous.chunkCount; chunk++) {
-			await deleteChunk({ store, chunk: chunkKey({ key, generation: previous.generation, chunk }) });
+	const expired = previous?.retained;
+	if (!isNil(expired) && expired.generation !== generation) {
+		for (let chunk = 0; chunk < expired.chunkCount; chunk++) {
+			await deleteChunk({ store, chunk: chunkKey({ key, generation: expired.generation, chunk }) });
 		}
 	}
 	await deleteOrphanChunks({ store, key, generation, from: chunkCount, upTo: chunkCount + MAX_ORPHAN_CHUNKS });
