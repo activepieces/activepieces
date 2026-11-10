@@ -268,8 +268,8 @@ function report({ context, call, generationId, tokens, emptyCompletion = false }
     reporter({ billing: context.billing, provider: context.provider, ...spreadIfDefined('providerConfigId', context.providerConfigId), modelId: context.modelId, call })
 }
 
-function isEmptyCompletion({ producedOutput, tokens }: { producedOutput: boolean, tokens: AiCallTokens | undefined }): boolean {
-    return !producedOutput && (tokens?.outputTokens ?? 0) === 0
+function isEmptyCompletion({ producedOutput, tokens }: { producedOutput: boolean, tokens: AiCallTokens }): boolean {
+    return !producedOutput && (tokens.outputTokens ?? 0) === 0
 }
 
 function isOutputPart(part: LanguageModelV4Content | LanguageModelV4StreamPart): boolean {
@@ -279,7 +279,7 @@ function isOutputPart(part: LanguageModelV4Content | LanguageModelV4StreamPart):
     if (part.type === 'text-delta' || part.type === 'reasoning-delta') {
         return part.delta.length > 0
     }
-    return OUTPUT_PART_TYPES.has(part.type)
+    return !NON_OUTPUT_PART_TYPES.has(part.type) && !part.type.endsWith('-start') && !part.type.endsWith('-end')
 }
 
 function recordUnbilledCall({ context, generationId, reason }: RecordUnbilledCallParams): void {
@@ -312,7 +312,7 @@ function drainUnbilledCalls(): UnbilledCall[] {
 
 const FORCED_TOOL_NOT_CALLED_ERROR = 'ForcedToolNotCalledError'
 
-const OUTPUT_PART_TYPES: ReadonlySet<string> = new Set(['tool-input-start', 'tool-call', 'tool-result', 'tool-approval-request', 'file', 'reasoning-file', 'source', 'custom'])
+const NON_OUTPUT_PART_TYPES: ReadonlySet<string> = new Set(['stream-start', 'response-metadata', 'finish', 'raw', 'error'])
 
 const EmbeddingResponseBody = z.object({
     id: z.string().min(1),
