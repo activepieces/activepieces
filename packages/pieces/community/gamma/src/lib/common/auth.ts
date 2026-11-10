@@ -19,7 +19,7 @@ export const gammaAuth = PieceAuth.CustomAuth({
   props: {
     apiKey: PieceAuth.SecretText({
       displayName: "API Key",
-      description: "Paste your API key here.",
+      description: "Starts with sk-gamma-. Create one under Settings & Members → API Key.",
       required: true,
     }),
   },
