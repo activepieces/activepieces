@@ -78,13 +78,13 @@ async function billGenerate({ doGenerate, context }: BillGenerateParams): Promis
     const result = attempt.data
     const generationId = result.response?.id
     const tokens = tokensOf(result.usage)
-    report({
-        context,
-        generationId,
-        call: createBillingInfo({ context, generationId, providerMetadata: result.providerMetadata, usage: result.usage, headers: result.response?.headers }),
-        tokens,
-        emptyCompletion: isEmptyCompletion({ producedOutput: result.content.some(isOutputContent), tokens }),
-    })
+    const call = createBillingInfo({ context, generationId, providerMetadata: result.providerMetadata, usage: result.usage, headers: result.response?.headers })
+    if (isNil(call)) {
+        const producedOutput = result.content.some(isOutputPart)
+        recoverCostAndReport({ context, generationId, tokens, producedOutput }).catch(() => report({ context, generationId, call: undefined, tokens }))
+        return result
+    }
+    report({ context, generationId, call, tokens })
     return result
 }
 
@@ -118,7 +118,7 @@ function trackChunk({ chunk, controller, state, context }: TrackChunkParams): vo
     if (chunk.type === 'response-metadata') {
         state.generationId = chunk.id ?? state.generationId
     }
-    if (isOutputChunk(chunk)) {
+    if (isOutputPart(chunk)) {
         state.producedOutput = true
     }
     if (chunk.type === 'finish' && !state.reported) {
@@ -145,26 +145,27 @@ function settleStream({ state, context }: SettleStreamParams): void {
         report({ context, generationId: state.generationId, call: { charge: AiChargeBasis.USAGE_ONLY, generationId: state.generationId } })
         return
     }
-    recoverCostAndReport({ state, context }).catch(() => report({ context, generationId: state.generationId, call: undefined, tokens: state.tokens }))
+    const { generationId, tokens, producedOutput } = state
+    recoverCostAndReport({ context, generationId, tokens, producedOutput }).catch(() => report({ context, generationId, call: undefined, tokens }))
 }
 
-async function recoverCostAndReport({ state, context }: SettleStreamParams): Promise<void> {
-    const { generationId } = state
+async function recoverCostAndReport({ context, generationId, tokens, producedOutput }: RecoverCostParams): Promise<void> {
     const { apiKey } = context
     if (isNil(generationId) || isNil(apiKey)) {
-        report({ context, generationId, call: undefined, tokens: state.tokens })
+        report({ context, generationId, call: undefined, tokens })
         return
     }
     const generation = await lookupGeneration({ apiKey, generationId })
     if (isNil(generation)) {
-        report({ context, generationId, call: undefined, tokens: state.tokens, emptyCompletion: !isNil(state.tokens) && isEmptyCompletion({ producedOutput: state.producedOutput, tokens: state.tokens }) })
+        const finishedWithNoOutput = !isNil(tokens) && isEmptyCompletion({ producedOutput, tokens })
+        report({ context, generationId, call: undefined, tokens, emptyCompletion: finishedWithNoOutput })
         return
     }
     report({
         context,
         generationId,
         call: {
-            ...state.tokens,
+            ...tokens,
             charge: AiChargeBasis.PROVIDER_REPORTED_COST,
             generationId,
             costUsd: generation.costUsd,
@@ -271,18 +272,14 @@ function isEmptyCompletion({ producedOutput, tokens }: { producedOutput: boolean
     return !producedOutput && (tokens?.outputTokens ?? 0) === 0
 }
 
-function isOutputContent(part: LanguageModelV4Content): boolean {
+function isOutputPart(part: LanguageModelV4Content | LanguageModelV4StreamPart): boolean {
     if (part.type === 'text' || part.type === 'reasoning') {
         return part.text.length > 0
     }
-    return true
-}
-
-function isOutputChunk(chunk: LanguageModelV4StreamPart): boolean {
-    if (chunk.type === 'text-delta' || chunk.type === 'reasoning-delta') {
-        return chunk.delta.length > 0
+    if (part.type === 'text-delta' || part.type === 'reasoning-delta') {
+        return part.delta.length > 0
     }
-    return OUTPUT_CHUNK_TYPES.has(chunk.type)
+    return OUTPUT_PART_TYPES.has(part.type)
 }
 
 function recordUnbilledCall({ context, generationId, reason }: RecordUnbilledCallParams): void {
@@ -315,7 +312,7 @@ function drainUnbilledCalls(): UnbilledCall[] {
 
 const FORCED_TOOL_NOT_CALLED_ERROR = 'ForcedToolNotCalledError'
 
-const OUTPUT_CHUNK_TYPES: ReadonlySet<LanguageModelV4StreamPart['type']> = new Set(['tool-input-start', 'tool-call', 'file', 'reasoning-file', 'custom'])
+const OUTPUT_PART_TYPES: ReadonlySet<string> = new Set(['tool-input-start', 'tool-call', 'tool-result', 'tool-approval-request', 'file', 'reasoning-file', 'source', 'custom'])
 
 const EmbeddingResponseBody = z.object({
     id: z.string().min(1),
@@ -418,6 +415,13 @@ type TrackChunkParams = {
     controller: TransformStreamDefaultController<LanguageModelV4StreamPart>
     state: StreamState
     context: BillingContext
+}
+
+type RecoverCostParams = {
+    context: BillingContext
+    generationId: string | undefined
+    tokens: AiCallTokens | undefined
+    producedOutput: boolean
 }
 
 type SettleStreamParams = {

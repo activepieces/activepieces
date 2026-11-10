@@ -244,13 +244,30 @@ describe('what a model call reports back for billing', () => {
             provider: AIProviderName.ACTIVEPIECES,
             modelId: 'google/gemini-3.7-flash',
             billing: BILLING,
-            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES }),
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES, apiKey: MANAGED_KEY }),
         })
 
         await generateWith(model)
+        await settled()
 
         expect(reported.map((event) => event.call.charge)).toEqual([AiChargeBasis.USAGE_ONLY])
         expect(activepiecesAiCost.drainUnbilledCalls()).toEqual([])
+    })
+
+    it('bills an empty completion on the cost OpenRouter recorded, since it only waives blank or error finishes', async () => {
+        generationLookup.answer = async () => ({ costUsd: 0.0002, inputTokens: 40, outputTokens: 0 })
+        const model = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [], finishReason: 'stop', usage: {}, response: { id: 'gen-empty-billed' } }),
+            provider: AIProviderName.ACTIVEPIECES,
+            modelId: 'google/gemini-3.7-flash',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES, apiKey: MANAGED_KEY }),
+        })
+
+        await generateWith(model)
+        await settled()
+
+        expect(reported[0].call).toMatchObject({ charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId: 'gen-empty-billed', costUsd: 0.0002 })
     })
 
     it('still counts a call with no visible content that used output tokens, since reasoning is billed', async () => {
@@ -594,6 +611,35 @@ describe('a stream that never reaches its finish chunk', () => {
         await settled()
 
         expect(reported.map((event) => event.call.charge)).toEqual([AiChargeBasis.USAGE_ONLY])
+        expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
+    })
+
+    it.each([
+        { type: 'source', sourceType: 'url', id: 's1', url: 'https://example.com' },
+        { type: 'tool-result', toolCallId: 'c1', toolName: 'search', result: {} },
+    ])('counts a finished stream whose only output is a $type part as unbilled, the same as a generate call', async (part) => {
+        activepiecesAiCost.drainUnbilledCalls()
+        const model = streamingModel({
+            provider: AIProviderName.ACTIVEPIECES,
+            apiKey: MANAGED_KEY,
+            chunks: [
+                { type: 'response-metadata', id: 'gen-part' },
+                part,
+                { type: 'finish', finishReason: 'stop', usage: {} },
+            ],
+        })
+
+        await streamThen(model, async ({ reader, writer }) => {
+            await writer.close()
+            for (;;) {
+                const { done } = await reader.read()
+                if (done) {
+                    return
+                }
+            }
+        })
+        await settled()
+
         expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
     })
 
