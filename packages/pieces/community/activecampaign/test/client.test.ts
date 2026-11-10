@@ -23,11 +23,14 @@ describe('normalizeApiUrl', () => {
     ['https://acme.api-us1.com/api/3', 'https://acme.api-us1.com'],
     ['https://acme.api-us1.com/api/3/', 'https://acme.api-us1.com'],
     ['HTTPS://ACME.api-us1.com/API/3', 'https://acme.api-us1.com'],
+    ['http://acme.api-us1.com', 'https://acme.api-us1.com'],
+    ['HTTP://acme.api-us1.com/api/3/', 'https://acme.api-us1.com'],
+    ['http://acme.api-us1.com:8443', 'https://acme.api-us1.com:8443'],
   ])('%s -> %s', (input, expected) => {
     expect(activeCampaignApi.normalizeApiUrl(input)).toBe(expected);
   });
 
-  test.each(['http://acme.api-us1.com', 'https://user:pw@acme.api-us1.com', 'https://acme.api-us1.com?x=1', '', 'https://'])('rejects %s', (input) => {
+  test.each(['ftp://acme.api-us1.com', 'http://user:pw@acme.api-us1.com', 'https://user:pw@acme.api-us1.com', 'https://acme.api-us1.com?x=1', '', 'https://'])('rejects %s', (input) => {
     expect(() => activeCampaignApi.normalizeApiUrl(input)).toThrow();
   });
 });

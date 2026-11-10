@@ -134,11 +134,13 @@ describe('aiInput rules', () => {
     expect(aiInput.centsToDecimal('5')).toBe('0.05');
   });
 
-  test('isoDateTime is strict', () => {
+  test('isoDateTime is strict about the format and reads a date-time without an offset as UTC', () => {
     expect(aiInput.isoDateTime({ value: '2026-03-01', label: 'Due' })).toBe('2026-03-01T00:00:00.000Z');
     expect(aiInput.isoDateTime({ value: '2026-03-01T09:00:00+02:00', label: 'Due' })).toBe('2026-03-01T07:00:00.000Z');
     expect(() => aiInput.isoDateTime({ value: 'tomorrow 9am', label: 'Due' })).toThrow('ISO 8601');
-    expect(() => aiInput.isoDateTime({ value: '2026-03-01T09:00:00', label: 'Due' })).toThrow('ISO 8601');
+    expect(aiInput.isoDateTime({ value: '2026-03-01T09:00:00', label: 'Due' })).toBe('2026-03-01T09:00:00.000Z');
+    expect(() => aiInput.isoDateTime({ value: '2026-03-01 09:00:00', label: 'Due' })).toThrow('ISO 8601');
+    expect(() => aiInput.isoDateTime({ value: '2026-03-01T25:00', label: 'Due' })).toThrow('ISO 8601');
   });
 
   test.each(['2026-02-30', '2026-02-29', '2026-04-31', '2026-13-01', '2026-03-01T24:00:00Z', '2026-03-01T09:60:00Z', '2026-02-30T09:00:00Z'])(
@@ -436,13 +438,19 @@ describe('requests per action', () => {
     expect(seen).toHaveLength(0);
   });
 
+  test('create deal needs a contact or an account before any request', async () => {
+    const seen = route({});
+    await expect(createDealAiAction.run(ctx({ title: 'T', value: '1', currency: 'usd', stage_id: '4' }))).rejects.toThrow('Give a Contact ID or Email, an Account ID or both');
+    expect(seen).toHaveLength(0);
+  });
+
   test('a pipeline that does not auto-assign owners gets an Owner ID hint on create and update', async () => {
     route({
       'POST /api/3/deals': { status: 422, body: { errors: [{ title: 'The provided pipeline does not support auto-assigning deal owners. The deal owner id needs to be provided.', source: { pointer: '/data/attributes/owner' } }] } },
       'PUT /api/3/deals/8': { status: 422, body: { errors: [{ title: 'The provided pipeline does not support auto-assigning deal owners. The deal owner id needs to be provided.', source: { pointer: '/data/attributes/owner' } }] } },
     });
     const hint = 'This pipeline does not auto-assign owners: set Owner User ID (use List Users).';
-    await expect(createDealAiAction.run(ctx({ title: 'T', value: '1', currency: 'usd', pipeline_id: '1', stage_id: '1' }))).rejects.toThrow(
+    await expect(createDealAiAction.run(ctx({ title: 'T', value: '1', currency: 'usd', pipeline_id: '1', stage_id: '1', account_id: '5' }))).rejects.toThrow(
       `ActiveCampaign POST /deals failed (422): The provided pipeline does not support auto-assigning deal owners. The deal owner id needs to be provided. ${hint}`,
     );
     const error = await updateDealAiAction.run(ctx({ deal_id: '8', pipeline_id: '2' })).catch((caught: unknown) => caught);
@@ -453,7 +461,7 @@ describe('requests per action', () => {
 
   test('other deal 422s carry no owner hint', async () => {
     route({ 'POST /api/3/deals': { status: 422, body: { errors: [{ title: 'Stage does not exist' }] } } });
-    const error = await createDealAiAction.run(ctx({ title: 'T', value: '1', currency: 'usd', stage_id: '99' })).catch((caught: unknown) => String(caught));
+    const error = await createDealAiAction.run(ctx({ title: 'T', value: '1', currency: 'usd', stage_id: '99', account_id: '5' })).catch((caught: unknown) => String(caught));
     expect(error).toContain('Stage does not exist');
     expect(error).not.toContain('auto-assign');
   });

@@ -37,7 +37,7 @@ export const activecampaign = createPiece({
   minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/activecampaign.png',
   categories: [PieceCategory.MARKETING, PieceCategory.SALES_AND_CRM],
-  authors: ["kishanprmr","abuaboud"],
+  authors: ["kishanprmr","abuaboud","OdaiAhmed99"],
   actions: [
     addContactToAccountAction,
     addTagToContactAction,

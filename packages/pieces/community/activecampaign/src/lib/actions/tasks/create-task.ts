@@ -37,23 +37,36 @@ export const createTaskAction = createAction({
 		taskTypeId: activecampaignCommon.taskTypeId,
 		title: Property.ShortText({ displayName: 'Title', required: false }),
 		note: Property.LongText({ displayName: 'Note', required: false }),
-		dueDate: Property.DateTime({
+		dueDate: Property.ShortText({
 			displayName: 'Due Date',
-			description: 'Times are UTC unless the value carries an offset. A date without a time is sent as 12:00 UTC so the task stays on that day.',
+			description:
+				'An ISO 8601 date or date-time, such as 2026-03-01 or 2026-03-01T09:00:00Z. Times are UTC unless you add an offset (2026-03-01T09:00:00-06:00). A date without a time is sent as 12:00 UTC so the task stays on that day in any account time zone.',
 			required: true,
 		}),
-		endDate: Property.DateTime({ displayName: 'End Date', description: 'Defaults to 15 minutes after the due date.', required: false }),
+		endDate: Property.ShortText({
+			displayName: 'End Date',
+			description: 'Optional, in the same format as Due Date and not before it. A date without a time means 12:00 UTC. Defaults to 15 minutes after the due date.',
+			required: false,
+		}),
 		assigneeId: activecampaignCommon.userId({ displayName: 'Assignee', required: false }),
 	},
 	async run({ auth, propsValue }) {
+		const duedate = aiInput.isoDateTime({ value: propsValue.dueDate, label: 'Due Date', dateOnlyAt: 'noon' });
+		if (duedate === undefined) {
+			throw new Error('Due Date is required.');
+		}
+		const edate = aiInput.isoDateTime({ value: propsValue.endDate, label: 'End Date', dateOnlyAt: 'noon' });
+		if (edate !== undefined && Date.parse(edate) < Date.parse(duedate)) {
+			throw new Error('End Date must not be before Due Date.');
+		}
 		const dealTask = {
 			ownerType: propsValue.ownerType,
 			relid: aiInput.numericId({ value: propsValue.recordId, label: 'Contact or Deal ID' }),
 			dealTasktype: propsValue.taskTypeId,
 			title: aiInput.optionalText(propsValue.title),
 			note: aiInput.optionalText(propsValue.note),
-			duedate: aiInput.isoDateTime({ value: propsValue.dueDate, label: 'Due Date', dateOnlyAt: 'noon' }),
-			edate: aiInput.isoDateTime({ value: propsValue.endDate, label: 'End Date', dateOnlyAt: 'noon' }),
+			duedate,
+			edate,
 			assignee: aiInput.optionalText(propsValue.assigneeId),
 		};
 		return (await makeClient(auth.props).request({ method: 'POST', path: '/dealTasks', body: { dealTask } })).body;

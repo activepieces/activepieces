@@ -11,7 +11,7 @@ export const createDealAction = createAction({
 	name: 'activecampaign_create_deal_human',
 	classification: 'WRITE',
 	displayName: 'Create Deal',
-	description: 'Creates a deal in a pipeline stage.',
+	description: 'Creates a deal in a pipeline stage, linked to a contact, an account or both.',
 	audience: 'human',
 	aiMetadata: {
 		description: 'Creates a deal in a pipeline stage. Each call creates a deal.',
@@ -47,6 +47,11 @@ export const createDealAction = createAction({
 		}),
 	},
 	async run({ auth, propsValue }) {
+		const contact = aiInput.optionalText(propsValue.contactId);
+		const account = aiInput.optionalText(propsValue.accountId);
+		if (contact === undefined && account === undefined) {
+			throw new Error('Choose a Contact, an Account or both. ActiveCampaign requires a deal to have a contact or an account.');
+		}
 		const deal = {
 			title: propsValue.title,
 			value: aiInput.dollarsToCents({ value: propsValue.value, label: 'Value' }),
@@ -54,8 +59,8 @@ export const createDealAction = createAction({
 			group: propsValue.pipelineId,
 			stage: propsValue.stageId,
 			owner: aiInput.optionalText(propsValue.ownerId),
-			contact: aiInput.optionalText(propsValue.contactId),
-			account: aiInput.optionalText(propsValue.accountId),
+			contact,
+			account,
 			description: aiInput.optionalText(propsValue.description),
 			status: aiInput.dealStatusCode(propsValue.status),
 		};

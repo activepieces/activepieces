@@ -853,4 +853,19 @@ export const contactUnsubscribedTriggerOutputSchema = webhookSchema([
 	...webhookContactAccountFields,
 	{ key: 'account_id', label: 'ActiveCampaign Account Number' },
 	activeSubscriptionsField,
+	{
+		key: 'campaign',
+		label: 'Campaign',
+		description: 'Only when the contact used the unsubscribe link in a campaign email.',
+		children: [
+			{ key: 'id', label: 'Campaign ID' },
+			{ key: 'name', label: 'Campaign Name' },
+		],
+	},
+	{
+		key: 'unsubscribe',
+		label: 'Unsubscribe',
+		description: 'Only when the contact used the unsubscribe link in a campaign email.',
+		children: [{ key: 'reason', label: 'Unsubscribe Reason', description: 'The reason the contact gave, if any.' }],
+	},
 ]);

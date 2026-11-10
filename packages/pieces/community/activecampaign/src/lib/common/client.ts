@@ -27,7 +27,7 @@ function normalizeApiUrl(raw: unknown): string {
 	if (text === '') {
 		throw new ActiveCampaignConfigError('The API URL is empty. Copy it from Settings > Developer in ActiveCampaign, for example https://youraccount.api-us1.com.');
 	}
-	const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(text) ? text : `https://${text}`;
+	const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(text) ? text.replace(/^http:\/\//i, 'https://') : `https://${text}`;
 	let url: URL;
 	try {
 		url = new URL(withScheme);
@@ -35,7 +35,7 @@ function normalizeApiUrl(raw: unknown): string {
 		throw new ActiveCampaignConfigError(`The API URL "${text.slice(0, 100)}" is not a valid URL. Use the URL from Settings > Developer, for example https://youraccount.api-us1.com.`);
 	}
 	if (url.protocol !== 'https:') {
-		throw new ActiveCampaignConfigError('The API URL must start with https://.');
+		throw new ActiveCampaignConfigError('The API URL must start with https://, for example https://youraccount.api-us1.com.');
 	}
 	if (url.username !== '' || url.password !== '' || url.search !== '' || url.hash !== '') {
 		throw new ActiveCampaignConfigError('The API URL must not contain a user name, password, query or fragment. Use the URL from Settings > Developer.');

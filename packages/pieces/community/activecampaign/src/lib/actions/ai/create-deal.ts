@@ -16,7 +16,7 @@ export const createDealAiAction = createAction({
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Creates a deal in a pipeline or stage, with a value in the given currency, optionally linked to a contact and an account. Get pipeline and stage IDs from List Deal Pipelines and List Deal Stages, owner IDs from List Users. Pipelines that do not auto-assign owners reject a deal without an owner (422), so set Owner User ID when unsure. Each call creates a deal, so do not repeat it; use Update Deal to change one.',
+			'Creates a deal in a pipeline or stage, with a value in the given currency, linked to a contact, an account or both (one is required). Get pipeline and stage IDs from List Deal Pipelines and List Deal Stages, owner IDs from List Users. Pipelines that do not auto-assign owners reject a deal without an owner (422), so set Owner User ID when unsure. Each call creates a deal, so do not repeat it; use Update Deal to change one.',
 		idempotent: false,
 	},
 	outputSchema: dealAiOutputSchema,
@@ -32,7 +32,7 @@ export const createDealAiAction = createAction({
 			required: false,
 		}),
 		contact_id_or_email: aiProps.contactIdOrEmail({ displayName: 'Contact ID or Email', required: false }),
-		account_id: Property.ShortText({ displayName: 'Account ID', description: 'Use List Accounts to find the ID.', required: false }),
+		account_id: Property.ShortText({ displayName: 'Account ID', description: 'Give a Contact ID or Email, an Account ID or both. Use List Accounts to find the ID.', required: false }),
 		description: Property.LongText({ displayName: 'Description', required: false }),
 		status: aiProps.dealStatus,
 	},
@@ -42,6 +42,9 @@ export const createDealAiAction = createAction({
 		const stage = aiInput.optionalNumericId({ value: propsValue.stage_id, label: 'Stage ID' });
 		if (group === undefined && stage === undefined) {
 			throw new Error('Give a Pipeline ID or a Stage ID. Use List Deal Pipelines and List Deal Stages to find them.');
+		}
+		if (aiInput.optionalText(propsValue.contact_id_or_email) === undefined && aiInput.optionalText(propsValue.account_id) === undefined) {
+			throw new Error('Give a Contact ID or Email, an Account ID or both. ActiveCampaign requires a deal to have a contact or an account.');
 		}
 		const deal = {
 			title: aiInput.requireText({ value: propsValue.title, label: 'Title' }),

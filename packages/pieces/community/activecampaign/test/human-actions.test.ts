@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { OutputSchema } from '@activepieces/pieces-framework';
+import { OutputSchema, PropertyType } from '@activepieces/pieces-framework';
 import { activecampaign } from '../src/index';
 import { activecampaignCommon } from '../src/lib/common';
 import { createContactAction } from '../src/lib/actions/contacts/create-contact';
@@ -152,23 +152,31 @@ describe('new human actions', () => {
 
   test('create deal (human)', async () => {
     const seen = route({ 'POST /api/3/deals': { status: 201, body: { deal: { id: '8' } } } });
-    await createDealAction.run(ctx({ title: 'T', value: '1234.5', currency: 'usd', pipelineId: '1', stageId: '4', ownerId: '2' }));
-    expect(seen[0].body).toEqual({ deal: { title: 'T', value: 123450, currency: 'usd', group: '1', stage: '4', owner: '2' } });
+    await createDealAction.run(ctx({ title: 'T', value: '1234.5', currency: 'usd', pipelineId: '1', stageId: '4', ownerId: '2', contactId: '9' }));
+    expect(seen[0].body).toEqual({ deal: { title: 'T', value: 123450, currency: 'usd', group: '1', stage: '4', owner: '2', contact: '9' } });
+  });
+
+  test('create deal (human) needs a contact or an account before any request', async () => {
+    const seen = route({ 'POST /api/3/deals': { status: 201, body: { deal: { id: '8' } } } });
+    await expect(createDealAction.run(ctx({ title: 'T', value: '1', currency: 'usd', pipelineId: '1', stageId: '4' }))).rejects.toThrow('Choose a Contact, an Account or both');
+    expect(seen).toHaveLength(0);
+    await createDealAction.run(ctx({ title: 'T', value: '1', currency: 'usd', pipelineId: '1', stageId: '4', accountId: '5' }));
+    expect(seen[0].body).toMatchObject({ deal: { account: '5' } });
   });
 
   test('create deal (human) accepts the status codes 0, 1 and 2 as well as open, won and lost', async () => {
     const seen = route({ 'POST /api/3/deals': { status: 201, body: { deal: { id: '8' } } } });
     for (const status of ['0', '1', '2', 'open', 'won', 'lost']) {
-      await createDealAction.run(ctx({ title: 'T', value: '99', currency: 'usd', pipelineId: '1', stageId: '1', ownerId: '1', status }));
+      await createDealAction.run(ctx({ title: 'T', value: '99', currency: 'usd', pipelineId: '1', stageId: '1', ownerId: '1', accountId: '5', status }));
     }
-    expect(seen.map((request) => request.body)).toEqual([0, 1, 2, 0, 1, 2].map((status) => ({ deal: { title: 'T', value: 9900, currency: 'usd', group: '1', stage: '1', owner: '1', status } })));
-    await expect(createDealAction.run(ctx({ title: 'T', value: '99', currency: 'usd', pipelineId: '1', stageId: '1', status: 'closed' }))).rejects.toThrow('Status must be open, won or lost');
+    expect(seen.map((request) => request.body)).toEqual([0, 1, 2, 0, 1, 2].map((status) => ({ deal: { title: 'T', value: 9900, currency: 'usd', group: '1', stage: '1', owner: '1', account: '5', status } })));
+    await expect(createDealAction.run(ctx({ title: 'T', value: '99', currency: 'usd', pipelineId: '1', stageId: '1', accountId: '5', status: 'closed' }))).rejects.toThrow('Status must be open, won or lost');
   });
 
   test('create and update deal (human) explain a pipeline that needs an owner', async () => {
     const body = { errors: [{ title: 'The provided pipeline does not support auto-assigning deal owners. The deal owner id needs to be provided.' }] };
     route({ 'POST /api/3/deals': { status: 422, body }, 'PUT /api/3/deals/8': { status: 422, body } });
-    await expect(createDealAction.run(ctx({ title: 'T', value: '99', currency: 'usd', pipelineId: '1', stageId: '1' }))).rejects.toThrow(
+    await expect(createDealAction.run(ctx({ title: 'T', value: '99', currency: 'usd', pipelineId: '1', stageId: '1', contactId: '9' }))).rejects.toThrow(
       'This pipeline does not auto-assign owners: choose an Owner.',
     );
     await expect(updateDealAction.run(ctx({ dealId: '8', pipelineId: '2' }))).rejects.toThrow('This pipeline does not auto-assign owners: choose an Owner.');
@@ -194,10 +202,33 @@ describe('new human actions', () => {
 });
 
 describe('human create task dates', () => {
+  test('due and end dates are text props, so the engine passes a date-only value through unchanged', () => {
+    expect(createTaskAction.props.dueDate.type).toBe(PropertyType.SHORT_TEXT);
+    expect(createTaskAction.props.endDate.type).toBe(PropertyType.SHORT_TEXT);
+  });
+
   test('a mapped date-only due date is sent as noon UTC', async () => {
     const seen = route({ 'POST /api/3/dealTasks': { status: 201, body: { dealTask: { id: '11' } } } });
-    await createTaskAction.run(ctx({ ownerType: 'contact', recordId: '9', taskTypeId: '1', dueDate: '2026-11-25' }));
-    expect(seen[0].body).toMatchObject({ dealTask: { duedate: '2026-11-25T12:00:00.000Z' } });
+    await createTaskAction.run(ctx({ ownerType: 'contact', recordId: '9', taskTypeId: '1', dueDate: '2026-11-25', endDate: '2026-11-26' }));
+    expect(seen[0].body).toMatchObject({ dealTask: { duedate: '2026-11-25T12:00:00.000Z', edate: '2026-11-26T12:00:00.000Z' } });
+  });
+
+  test('a date-time keeps its time and offset; no offset means UTC', async () => {
+    const seen = route({ 'POST /api/3/dealTasks': { status: 201, body: { dealTask: { id: '11' } } } });
+    await createTaskAction.run(ctx({ ownerType: 'contact', recordId: '9', taskTypeId: '1', dueDate: '2026-11-25T09:00:00-06:00' }));
+    await createTaskAction.run(ctx({ ownerType: 'contact', recordId: '9', taskTypeId: '1', dueDate: '2026-11-25T09:30' }));
+    expect(seen.map((request) => request.body)).toEqual([
+      { dealTask: { ownerType: 'contact', relid: '9', dealTasktype: '1', duedate: '2026-11-25T15:00:00.000Z' } },
+      { dealTask: { ownerType: 'contact', relid: '9', dealTasktype: '1', duedate: '2026-11-25T09:30:00.000Z' } },
+    ]);
+  });
+
+  test('a bad or reversed date fails before any request', async () => {
+    const seen = route({ 'POST /api/3/dealTasks': { status: 201, body: { dealTask: { id: '11' } } } });
+    await expect(createTaskAction.run(ctx({ ownerType: 'contact', recordId: '9', taskTypeId: '1', dueDate: '25/11/2026' }))).rejects.toThrow('Due Date must be an ISO 8601 date');
+    await expect(createTaskAction.run(ctx({ ownerType: 'contact', recordId: '9', taskTypeId: '1', dueDate: '2026-02-30' }))).rejects.toThrow('Due Date must be an ISO 8601 date');
+    await expect(createTaskAction.run(ctx({ ownerType: 'contact', recordId: '9', taskTypeId: '1', dueDate: '2026-11-25', endDate: '2026-11-24' }))).rejects.toThrow('End Date must not be before Due Date');
+    expect(seen).toHaveLength(0);
   });
 });
 

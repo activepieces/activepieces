@@ -50,6 +50,7 @@ describe('trigger outputSchemas scored both ways against the live captures (samp
     'activecampaign_new_campaign_bounce',
   ];
   const optional = new Set(['task.note', 'contact.fields']);
+  const optionalByTrigger: Record<string, string[]> = { activecampaign_contact_unsubscribed: ['campaign', 'unsubscribe'] };
 
   test('all 13 triggers are scored', () => {
     expect([...captured].sort()).toEqual(Object.keys(activecampaign.triggers()).sort());
@@ -58,7 +59,7 @@ describe('trigger outputSchemas scored both ways against the live captures (samp
   test.each(captured)('%s has no dead and no unmodelled fields', (name) => {
     const trigger = activecampaign.triggers()[name];
     const { dead, unmodelled } = score({ fields: trigger.outputSchema?.fields ?? [], value: trigger.sampleData, path: '' });
-    expect(dead.filter((field) => !optional.has(field))).toEqual([]);
+    expect(dead.filter((field) => !optional.has(field) && !(optionalByTrigger[name] ?? []).includes(field))).toEqual([]);
     expect(unmodelled).toEqual([]);
   });
 

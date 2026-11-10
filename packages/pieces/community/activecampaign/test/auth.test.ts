@@ -36,9 +36,15 @@ describe('auth validate', () => {
     );
   });
 
-  test('an http:// URL is refused before any request', async () => {
+  test('an http:// URL is upgraded to https:// on the same host', async () => {
+    const urls = stubFetch({ status: 200, body: { user: { id: '1' } } });
+    expect(await validate({ apiUrl: 'http://acme.api-us1.com', apiKey: 'k' })).toEqual({ valid: true });
+    expect(urls).toEqual(['https://acme.api-us1.com/api/3/users/me']);
+  });
+
+  test('a non-http scheme is refused before any request', async () => {
     const urls = stubFetch({ status: 200, body: {} });
-    expect(errorOf(await validate({ apiUrl: 'http://acme.api-us1.com', apiKey: 'k' }))).toContain('https://');
+    expect(errorOf(await validate({ apiUrl: 'ftp://acme.api-us1.com', apiKey: 'k' }))).toContain('https://');
     expect(urls).toEqual([]);
   });
 });

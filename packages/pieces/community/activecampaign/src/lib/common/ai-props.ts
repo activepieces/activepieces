@@ -4,6 +4,7 @@ import { DEAL_STATUS_CODES, DEAL_STATUS_LABELS } from './constants';
 import { UnknownRecord, acData } from './types';
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const ISO_LOCAL_DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?$/;
 const ISO_DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?(Z|[+-]\d{2}:?\d{2})$/;
 const DECIMAL = /^(\d{1,13})(?:\.(\d{1,2}))?$/;
 const MAX_LIMIT = 100;
@@ -75,7 +76,7 @@ function isoDateTime({ value, label, dateOnlyAt = 'midnight' }: { value: unknown
 	if (text === undefined) {
 		return undefined;
 	}
-	const candidate = ISO_DATE.test(text) ? `${text}T${dateOnlyAt === 'noon' ? '12' : '00'}:00:00Z` : text;
+	const candidate = ISO_DATE.test(text) ? `${text}T${dateOnlyAt === 'noon' ? '12' : '00'}:00:00Z` : ISO_LOCAL_DATE_TIME.test(text) ? `${text}Z` : text;
 	if (!ISO_DATE_TIME.test(candidate) || Number.isNaN(Date.parse(candidate)) || !isCalendarDateTime(candidate)) {
 		throw new Error(`${label} must be an ISO 8601 date or date-time such as 2026-03-01 or 2026-03-01T09:00:00Z (got "${text.slice(0, 50)}").`);
 	}

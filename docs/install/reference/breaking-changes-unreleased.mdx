@@ -14,8 +14,11 @@ The 7 existing ActiveCampaign actions are now shown only in the flow builder: Cr
 
 The ActiveCampaign webhook triggers now ignore a delivery whose content is identical to one received in the previous 15 minutes (every field, including the event time and the record's values). Each trigger remembers up to 5,000 deliveries, so a trigger that receives more than 5,000 events within 15 minutes can run a late retry again. ActiveCampaign sends no delivery ID, so two genuinely separate events with identical content in the same second now run the flow once.
 
+ActiveCampaign requests now always verify the server's TLS certificate, and an API URL that starts with `http://` is sent to `https://` on the same host.
+
 #### What you need to do
 
 - If an agent or MCP client used one of the 7 actions as a tool, switch it to the matching new tool listed above.
+- If your self-hosted instance reaches ActiveCampaign through a proxy that inspects TLS traffic, add the proxy's CA certificate to `NODE_EXTRA_CA_CERTS`, or ActiveCampaign steps fail with a certificate error.
 - Flow steps that use these actions keep working unchanged. Steps keep running on the version they were built with until you upgrade them.
 
