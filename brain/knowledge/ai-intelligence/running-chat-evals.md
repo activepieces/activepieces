@@ -27,7 +27,7 @@ icon: 🧪
 - **Case verdict:** a `chat-core` case passes only when every run passes (pass^k, as Anthropic recommends for regression cases). Any other case passes when more than half pass. An unclear run doesn't count as a pass.
 - **Case summary:** after the runs, every case gets `expected`, `happened` and `means` lines (Haiku 5.5, only for cases with a failed or unclear run), e.g. "a user hits this about 1 time in 5".
 - **Diff:** each case shows `before → now` against the main baseline: `same`, `FIXED`, `REGRESSED` or `unclear`. A change counts only when at least 80% of at least 3 runs agree on both sides.
-- **Exit code:** 1 only on a clear result: a `chat-core` case where at least 80% of at least 3 runs fail, or a clear regression. A borderline case shows as failing in the table but never fails the run, because the agent samples like production chat (no fixed seed, no pinned provider) and two runs of the same case differ. `chat-prod-failures` failures alone never fail the run.
+- **Exit code:** 1 only on a clear result: a `chat-core` case where at least 80% of at least 3 runs fail, a clear regression, or a main baseline that could not be read. With no baseline at all the run ends with "Nothing to compare" and exits 0. A borderline case shows as failing in the table but never fails the run, because the agent samples like production chat (no fixed seed, no pinned provider) and two runs of the same case differ. `chat-prod-failures` failures alone never fail the run.
 
 ## Editing cases
 
@@ -36,13 +36,16 @@ All of these need `--dataset <name>`:
 - `--steps`: list each case's steps, to pick where the replay starts.
 - `--set-cut 3=4`: case 3 starts before step 4.
 - `--set-target 3=ap_build_flow`: the tool case 3 is testing.
-- `--record`: tool calls that have no recording run live against the dev server and are saved to the case in PostHog.
+- `--record`: reads that have no recording run live against the dev server and are saved to the case in PostHog. Writes never run live.
 
 ## Gotchas
 
 - `--upload` writes the run to PostHog as the main baseline. Only CI on main uses it, so never run it locally.
 - A full run costs about $0.03 per run, which comes to cases × 5 × $0.03.
-- A read with no recording replies "unavailable" and the agent carries on; a write that isn't recorded ends the turn. Neither fails the run by itself: the judge is told and grades what happened. Use `--record` to fill the gap.
+- A read with no recording replies "unavailable" and the agent carries on. A write ends the turn when it isn't recorded or its input differs from the recording. If that write is the case's target tool, the run fails the tool-call gate; otherwise the judge grades what happened. Use `--record` to fill a missing read.
+- Only tools on the read list (`READ_TOOLS` in `replay.ts`) count as reads. Any other tool is a write: it must match its recording exactly and never runs live. Add a new read-only tool there.
+- Recording lookup is exact except for whitespace, the top-level card titles (`title`, `activeTitle`, `doneTitle`) and short vs full `pieceName`. A change that makes the agent reword a query or URL misses the recording.
+- Recordings the current tools no longer accept (tool gone, or its input schema rejects the recorded input) are left out of the replay and listed as stale after the summary. Re-record those cases.
 
 ## Key files
 
