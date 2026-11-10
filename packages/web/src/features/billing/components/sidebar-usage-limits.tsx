@@ -30,7 +30,7 @@ import { CreditsActionButton } from './credits-action-button';
 import {
   SeatGraceLine,
   SelfServeTrialLine,
-  StartSelfServeTrialLine,
+  StartSelfServeTrialButton,
 } from './self-serve-trial-sidebar';
 
 export const SidebarUsageLimits = React.memo(() => {
@@ -48,10 +48,8 @@ export const SidebarUsageLimits = React.memo(() => {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { platform } = platformHooks.useCurrentPlatform();
   const shouldOfferTrial = selfServeTrialHooks.useShouldOfferTrial();
-  const noticeLine = resolveNoticeLine({
-    trial: platform.selfServeTrial,
-    shouldOfferTrial,
-  });
+  const noticeLine = resolveNoticeLine(platform.selfServeTrial);
+  const offerTrial = isNil(noticeLine) && shouldOfferTrial;
 
   const inWarning = !isUnlimited && severity !== 'default';
   const canManage = isPlatformAdmin && inWarning;
@@ -83,6 +81,9 @@ export const SidebarUsageLimits = React.memo(() => {
   }
 
   if (isNil(creditsRemaining)) {
+    if (offerTrial) {
+      return <StartSelfServeTrialButton />;
+    }
     return isNil(noticeLine) ? null : (
       <div className="flex w-full flex-col rounded-md border bg-gray-1 p-2.5">
         {noticeLine}
@@ -101,6 +102,7 @@ export const SidebarUsageLimits = React.memo(() => {
       {!isNil(noticeLine) && (
         <div className="flex border-b border-gray-5 pb-2">{noticeLine}</div>
       )}
+      {offerTrial && <StartSelfServeTrialButton />}
       <div className="flex h-5 items-center justify-between gap-2">
         <div className="flex items-baseline gap-1 min-w-0">
           <span className="text-sm font-semibold truncate">{creditsText}</span>
@@ -141,19 +143,10 @@ export const SidebarUsageLimits = React.memo(() => {
 
 SidebarUsageLimits.displayName = 'SidebarUsageLimits';
 
-function resolveNoticeLine({
-  trial,
-  shouldOfferTrial,
-}: {
-  trial: SelfServeTrialInfo | undefined;
-  shouldOfferTrial: boolean;
-}): ReactNode {
+function resolveNoticeLine(trial: SelfServeTrialInfo | undefined): ReactNode {
   const graceEndsAt = trial?.seatGraceEndsAt;
   if (trial?.state === SelfServeTrialState.ACTIVE) {
     return <SelfServeTrialLine endsAt={trial.endsAt} />;
   }
-  if (!isNil(graceEndsAt)) {
-    return <SeatGraceLine endsAt={graceEndsAt} />;
-  }
-  return shouldOfferTrial ? <StartSelfServeTrialLine /> : null;
+  return isNil(graceEndsAt) ? null : <SeatGraceLine endsAt={graceEndsAt} />;
 }

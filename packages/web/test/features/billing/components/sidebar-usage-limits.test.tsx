@@ -236,9 +236,10 @@ describe('sidebar usage card before the trial', () => {
   it('gives an admin who can start the trial a button that opens it', () => {
     state.shouldOfferTrial = true;
 
-    renderSidebar();
+    const view = renderSidebar();
 
     const line = screen.getByRole('button', { name: 'Start your free trial' });
+    expect(line.parentElement).toBe(view.container);
     expect(line.getAttribute('data-ap-control')).toBe('trial.start.open');
     expect(
       screen.getByText('Try the Enterprise plan free for 7 days'),
