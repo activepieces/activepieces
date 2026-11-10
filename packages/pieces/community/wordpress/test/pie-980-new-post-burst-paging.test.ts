@@ -32,6 +32,7 @@ function wpList(url: URL): Response {
     const key = (p: Post) => (orderby === 'id' ? p.id : orderby === 'modified' ? modifiedMs(p) : dateMs(p))
     const direction = q.get('order') === 'asc' ? 1 : -1
     const matching = posts
+        .filter((p) => (q.get('status') ?? 'publish').split(',').includes(p.status))
         .filter((p) => (after ? dateMs(p) > Date.parse(after) : true) && (before ? dateMs(p) < Date.parse(before) : true))
         .filter((p) => (modifiedAfter ? modifiedMs(p) > Date.parse(modifiedAfter) : true))
         .sort((a, b) => direction * (key(a) - key(b) || a.id - b.id))

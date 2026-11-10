@@ -227,6 +227,7 @@ async function pollNewPosts({
     budget,
   });
   const seenIds = new Set(state.seen.map(([id]) => id));
+  const unpublishedAtStart = new Set(state.unpublishedIds ?? []);
   const candidates = uniqueById({ posts: [...byDate.posts, ...byModified.posts, ...byId.posts] });
   const dateHorizonMs = byDate.cursor.complete ? Number.POSITIVE_INFINITY : byDate.cursor.ms;
   const fresh = candidates
@@ -234,13 +235,17 @@ async function pollNewPosts({
       (post) =>
         !seenIds.has(post.id) &&
         !(timeMs({ post, field: 'date' }) > dateHorizonMs) &&
-        (post.id > state.baselineId || timeMs({ post, field: 'date' }) > state.publishedFloorMs)
+        (unpublishedAtStart.has(post.id) ||
+          post.id > state.baselineId ||
+          timeMs({ post, field: 'date' }) > state.publishedFloorMs)
     )
     .sort((a, b) => compareOldestFirst({ a, b }));
+  const firedIds = new Set(fresh.map((post) => post.id));
   const pruned = pruneSeen({
     seen: [...state.seen, ...fresh.map(toSeenEntry)],
     baselineId: state.baselineId,
     publishedFloorMs: state.publishedFloorMs,
+    idFloor: byId.cursor.floorId,
   });
   return {
     posts: fresh,
@@ -250,6 +255,7 @@ async function pollNewPosts({
       byDate: byDate.cursor,
       byModified: byModified.cursor,
       byId: byId.cursor,
+      unpublishedIds: (state.unpublishedIds ?? []).filter((id) => !firedIds.has(id)),
     },
   };
 }
@@ -343,6 +349,9 @@ async function readWindow({
     .filter((ms) => Number.isFinite(ms))
     .reduce((acc, ms) => Math.max(acc, ms), cursor.ms);
   const ms = Math.max(cursor.ms, Math.min(newestKey, Date.now()));
+  if (!result.complete) {
+    console.warn(`WordPress New Post: the ${field} listing continues on the next poll.`);
+  }
   return {
     posts: result.posts,
     cursor: result.complete ? { ms, complete: true } : { ms, complete: false, resume: { startMs, page: result.nextPage } },
@@ -369,7 +378,7 @@ async function readPages({
   const posts: WordpressPost[] = [];
   for (let page = startPage; page < startPage + MAX_PAGES_PER_WINDOW; page++) {
     if (!budget.canStart({ reservedRequests: page === startPage ? firstPageReserve : reservedRequests })) {
-      console.warn(`WordPress New Post: poll time budget reached after ${posts.length} posts; the rest is read on the next poll.`);
+      console.warn(`WordPress New Post: poll time budget reached after ${posts.length} posts.`);
       return { posts, complete: false, requested: page > startPage, nextPage: page };
     }
     const result = await listPage({ auth, queryParams, page, budget });
@@ -386,7 +395,7 @@ async function readPages({
       return { posts, complete: true, requested: true, nextPage: page + 1 };
     }
   }
-  console.warn(`WordPress New Post: read the maximum of ${MAX_PAGES_PER_WINDOW} pages (${posts.length} posts); the rest is read on the next poll.`);
+  console.warn(`WordPress New Post: read the maximum of ${MAX_PAGES_PER_WINDOW} pages (${posts.length} posts).`);
   return { posts, complete: false, requested: true, nextPage: startPage + MAX_PAGES_PER_WINDOW };
 }
 
@@ -460,6 +469,7 @@ async function createBaseline({
           }),
         })
       : { posts: [] };
+  const unpublishedIds = await readUnpublishedIds({ auth, authors, budget });
   return {
     authors,
     baselineId: newestById?.id ?? 0,
@@ -468,7 +478,47 @@ async function createBaseline({
     byModified: { ms: modifiedMs, complete: true },
     byId: { floorId: newestById?.id ?? 0, topId: 0, resumePage: null },
     seen: futureDated.posts.slice(-SEEN_LIMIT).map(toSeenEntry),
+    unpublishedIds,
   };
+}
+
+async function readUnpublishedIds({
+  auth,
+  authors,
+  budget,
+}: {
+  auth: WordpressAuthValue;
+  authors: string | null;
+  budget: PollBudget;
+}): Promise<number[]> {
+  try {
+    const result = await readPages({
+      auth,
+      budget,
+      firstPageReserve: 1,
+      reservedRequests: 1,
+      queryParams: withAuthor({
+        authors,
+        queryParams: {
+          status: UNPUBLISHED_STATUSES,
+          orderby: 'modified',
+          order: 'desc',
+          per_page: String(PAGE_SIZE),
+          _fields: 'id',
+        },
+      }),
+    });
+    if (!result.complete) {
+      console.warn(`WordPress New Post: remembered the ${result.posts.length} most recently edited drafts only. An older draft that is later published with an earlier date does not fire.`);
+    }
+    return result.posts.map((post) => post.id).filter((id) => Number.isInteger(id));
+  } catch (error) {
+    if (error instanceof WordpressApiError && FORBIDDEN_LIST_STATUSES.includes(error.status)) {
+      console.warn('WordPress New Post: the connected user cannot list drafts. A draft that exists now and is later published with an earlier date does not fire.');
+      return [];
+    }
+    throw error;
+  }
 }
 
 async function migrateLegacyCursor({
@@ -575,17 +625,30 @@ function pruneSeen({
   seen,
   baselineId,
   publishedFloorMs,
+  idFloor,
 }: {
   seen: SeenEntry[];
   baselineId: number;
   publishedFloorMs: number;
+  idFloor: number;
 }): Pick<CursorState, 'seen' | 'baselineId' | 'publishedFloorMs'> {
   if (seen.length <= SEEN_LIMIT) {
     return { seen, baselineId, publishedFloorMs };
   }
-  const dropped = seen.slice(0, seen.length - SEEN_LIMIT);
+  const droppableIndexes = seen
+    .map(([id], index) => ({ id, index }))
+    .filter(({ id }) => id <= idFloor)
+    .slice(0, seen.length - SEEN_LIMIT)
+    .map(({ index }) => index);
+  const droppable = new Set(droppableIndexes);
+  const kept = seen.filter((_, index) => !droppable.has(index));
+  const overflow = Math.max(0, kept.length - SEEN_HARD_LIMIT);
+  if (overflow > 0) {
+    console.warn(`WordPress New Post: more than ${SEEN_HARD_LIMIT} posts are waiting for the id listing; the oldest ${overflow} fired posts are forgotten.`);
+  }
+  const dropped = [...seen.filter((_, index) => droppable.has(index)), ...kept.slice(0, overflow)];
   return {
-    seen: seen.slice(seen.length - SEEN_LIMIT),
+    seen: kept.slice(overflow),
     baselineId: dropped.reduce((acc, [id]) => Math.max(acc, id), baselineId),
     publishedFloorMs: dropped.reduce((acc, [, ms]) => Math.max(acc, ms), publishedFloorMs),
   };
@@ -597,6 +660,7 @@ const PAGE_SIZE = 100;
 const MAX_PAGES_PER_WINDOW = 10;
 const SAMPLE_SIZE = 5;
 const SEEN_LIMIT = 2000;
+const SEEN_HARD_LIMIT = 10_000;
 const REQUEST_TIMEOUT_MS = 15_000;
 const POLL_BUDGET_MS = 45_000;
 const MIN_REQUEST_ESTIMATE_MS = 2_000;
@@ -606,6 +670,8 @@ const MODIFIED_LOOKBACK_MS = 2 * 60 * 1000;
 const TIE_OVERLAP_MS = 1000;
 const LEGACY_SKEW_MS = 14 * 60 * 60 * 1000;
 const HAS_ZONE = /(?:[zZ]|[+-]\d{2}:?\d{2})$/;
+const UNPUBLISHED_STATUSES = 'draft,pending,future';
+const FORBIDDEN_LIST_STATUSES = [400, 401, 403];
 
 type TimeField = 'date' | 'modified';
 
@@ -630,6 +696,7 @@ type CursorState = {
   byModified: WindowCursor;
   byId?: IdCursor;
   seen: SeenEntry[];
+  unpublishedIds?: number[];
 };
 
 type WordpressPost = {

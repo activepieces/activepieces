@@ -24,6 +24,7 @@ const vendor: {
   requests: URL[];
   costMs: number;
   ignoreModifiedAfter: boolean;
+  forbidUnpublished: boolean;
 } = {
   posts: [],
   offsetMinutes: 0,
@@ -31,6 +32,7 @@ const vendor: {
   requests: [],
   costMs: 0,
   ignoreModifiedAfter: false,
+  forbidUnpublished: false,
 };
 
 let clock = Date.parse('2026-11-01T10:00:00.000Z');
@@ -109,7 +111,10 @@ function listPosts(url: URL): Response {
   const after = parseWpDate(q.get('after'));
   const before = parseWpDate(q.get('before'));
   const modifiedAfter = vendor.ignoreModifiedAfter ? undefined : parseWpDate(q.get('modified_after'));
-  const status = q.get('status') ?? 'publish';
+  const statuses = (q.get('status') ?? 'publish').split(',');
+  if (vendor.forbidUnpublished && statuses.some((status) => status !== 'publish')) {
+    return json({ body: { code: 'rest_invalid_param', message: 'Invalid parameter(s): status', data: { status: 400, params: { status: 'Status is forbidden.' } } }, status: 400 });
+  }
   const author = q.get('author');
   const orderby = q.get('orderby') ?? 'date';
   const direction = q.get('order') === 'asc' ? 1 : -1;
@@ -120,7 +125,7 @@ function listPosts(url: URL): Response {
   const page = Number(q.get('page') ?? 1);
   const key = (p: VendorPost) => (orderby === 'id' ? p.id : orderby === 'modified' ? p.modifiedMs : p.dateMs);
   const matching = vendor.posts
-    .filter((p) => p.status === status)
+    .filter((p) => statuses.includes(p.status))
     .filter((p) => (author ? String(p.author) === author : true))
     .filter((p) => (after === undefined || Math.floor(p.dateMs / 1000) * 1000 > after) && (before === undefined || p.dateMs < before))
     .filter((p) => modifiedAfter === undefined || Math.floor(p.modifiedMs / 1000) * 1000 > modifiedAfter)
@@ -228,6 +233,7 @@ beforeEach(() => {
   vendor.requests = [];
   vendor.costMs = 0;
   vendor.ignoreModifiedAfter = false;
+  vendor.forbidUnpublished = false;
   vi.useFakeTimers({ toFake: ['Date'] });
   setClock(Date.parse('2026-11-01T10:00:00.000Z'));
   vi.stubGlobal('fetch', async (input: string | URL | Request) => {
@@ -344,6 +350,91 @@ describe('WordPress New Post behaviour', () => {
     expect(await poll({ store })).toEqual([draft.id]);
     advance(5);
     expect(await poll({ store })).toEqual([]);
+  });
+
+  it('fires a draft that existed before an older published post id at enable, when it is published backdated through the editor', async () => {
+    const draft = publish({ status: 'draft' });
+    seedHistory();
+    const { store } = memoryStore();
+    await enable({ store });
+    advance(5);
+    expect(await poll({ store })).toEqual([]);
+    draft.status = 'publish';
+    draft.dateMs = clock - 10 * 24 * HOUR;
+    edit(draft);
+    advance(3);
+    expect(await poll({ store })).toEqual([draft.id]);
+    advance(2);
+    edit(draft);
+    advance(3);
+    expect(await poll({ store })).toEqual([]);
+  });
+
+  it('still enables and polls when the connected user cannot list drafts', async () => {
+    seedHistory();
+    publish({ status: 'draft' });
+    vendor.forbidUnpublished = true;
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const { store } = memoryStore();
+    await enable({ store });
+    expect(warn).toHaveBeenCalled();
+    advance(2);
+    const fresh = publish();
+    advance(3);
+    expect(await poll({ store })).toEqual([fresh.id]);
+  });
+
+  it('fires every post of a 4000-post import with old dates once, even after the fired list is pruned', async () => {
+    seedHistory();
+    const { store } = memoryStore();
+    await enable({ store });
+    const imported = Array.from({ length: 4000 }, (_, index) => publish({ dateMs: clock - 400 * 24 * HOUR + index * 1000 }).id);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const fired: number[] = [];
+    for (let i = 0; i < 6; i++) {
+      advance(5);
+      fired.push(...(await poll({ store })));
+    }
+    expect(fired.length).toBe(imported.length);
+    expect([...fired].sort((a, b) => a - b)).toEqual(imported);
+  });
+
+  it('keeps the store under the 512 KB limit during an import larger than the fired-post memory', async () => {
+    seedHistory();
+    const { store, data } = memoryStore();
+    await enable({ store });
+    Array.from({ length: 11_000 }, (_, index) => publish({ dateMs: clock - 400 * 24 * HOUR + index * 1000 }));
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const fired: number[] = [];
+    for (let i = 0; i < 12; i++) {
+      advance(5);
+      fired.push(...(await poll({ store })));
+      const size = [...data.values()].reduce((acc, value) => acc + value.length, 0);
+      expect(size).toBeLessThan(512 * 1024);
+    }
+    expect(fired.length).toBe(new Set(fired).size);
+    expect(fired.length).toBeGreaterThanOrEqual(10_000);
+  });
+
+  it('does not fire an imported post twice when new posts shift the pages of a resumed id scan after pruning', async () => {
+    seedHistory();
+    const { store } = memoryStore();
+    await enable({ store });
+    const imported = Array.from({ length: 3500 }, (_, index) => publish({ dateMs: clock - 400 * 24 * HOUR + index * 1000 }).id);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const fresh: number[] = [];
+    const fired: number[] = [];
+    for (let i = 0; i < 6; i++) {
+      advance(5);
+      fired.push(...(await poll({ store })));
+      fresh.push(...Array.from({ length: 150 }, () => publish().id));
+    }
+    for (let i = 0; i < 4; i++) {
+      advance(5);
+      fired.push(...(await poll({ store })));
+    }
+    expect(fired.length).toBe(new Set(fired).size);
+    expect([...fired].sort((a, b) => a - b)).toEqual([...imported, ...fresh].sort((a, b) => a - b));
   });
 
   it('skips the modified listing on WordPress before 5.7 instead of reading the whole site every poll', async () => {

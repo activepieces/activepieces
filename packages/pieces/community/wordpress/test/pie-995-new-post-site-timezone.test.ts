@@ -25,6 +25,7 @@ async function startFakeWordPress({ siteOffsetMinutes, posts }: { siteOffsetMinu
     const direction = url.searchParams.get('order') === 'asc' ? 1 : -1;
     const key = (p: Post) => (orderby === 'id' ? p.id : p.gmtMs);
     const matching = posts
+      .filter(() => (url.searchParams.get('status') ?? 'publish').split(',').includes('publish'))
       .filter((p) => (after === undefined || p.gmtMs > after) && (before === undefined || p.gmtMs < before))
       .filter((p) => modifiedAfter === undefined || p.gmtMs > modifiedAfter)
       .sort((a, b) => direction * (key(a) - key(b) || a.id - b.id));

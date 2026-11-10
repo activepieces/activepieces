@@ -114,7 +114,7 @@ function listPosts(url: URL): Response {
   const after = parseWpDate(q.get('after'));
   const before = parseWpDate(q.get('before'));
   const modifiedAfter = parseWpDate(q.get('modified_after'));
-  const status = q.get('status') ?? 'publish';
+  const statuses = (q.get('status') ?? 'publish').split(',');
   const author = q.get('author');
   const orderby = q.get('orderby') ?? 'date';
   const direction = q.get('order') === 'asc' ? 1 : -1;
@@ -125,7 +125,7 @@ function listPosts(url: URL): Response {
   const page = Number(q.get('page') ?? 1);
   const key = (p: VendorPost) => (orderby === 'id' ? p.id : orderby === 'modified' ? p.modifiedMs : p.dateMs);
   const matching = vendor.posts
-    .filter((p) => p.status === status)
+    .filter((p) => statuses.includes(p.status))
     .filter((p) => (author ? String(p.author) === author : true))
     .filter((p) => (after === undefined || Math.floor(p.dateMs / 1000) * 1000 > after) && (before === undefined || p.dateMs < before))
     .filter((p) => modifiedAfter === undefined || Math.floor(p.modifiedMs / 1000) * 1000 > modifiedAfter)
@@ -326,7 +326,7 @@ describe('QA: WordPress New Post edge cases', () => {
     expect(await poll({ store })).toEqual([]);
   });
 
-  it('never sends a status param, so drafts, private and scheduled posts stay excluded by the WP default', async () => {
+  it('lists only published posts for events; the one status request reads draft ids at enable', async () => {
     seedHistory();
     const { store } = memoryStore();
     await enable({ store });
@@ -337,7 +337,8 @@ describe('QA: WordPress New Post edge cases', () => {
     advance(1);
     expect(await poll({ store })).toEqual([live.id]);
     await trigger.test(hookContext({ store }));
-    expect(vendor.requests.every((url) => !url.searchParams.has('status'))).toBe(true);
+    const withStatus = vendor.requests.filter((url) => url.searchParams.has('status'));
+    expect(withStatus.every((url) => url.searchParams.get('status') === 'draft,pending,future' && url.searchParams.get('_fields') === 'id')).toBe(true);
   });
 
   for (const [label, status, code] of [
