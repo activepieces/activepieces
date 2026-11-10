@@ -20,6 +20,8 @@ packages/tests-e2e/
 
 This checklist says which parts of a feature need an E2E test, so that a client never finds a broken common path first. Each ticket marks every item in its acceptance criteria as ``E2E: `<test title>` `` or `no-e2e: <reason>`. A blank item is a forgotten item.
 
+Keep each feature spec to about 90 seconds.
+
 ### Every feature
 
 1. **Main job.** Write one sentence that says what the client comes to do. Test that job from start to end and assert the result, such as a form submission that starts a run that succeeds.
@@ -31,26 +33,18 @@ This checklist says which parts of a feature need an E2E test, so that a client 
 
 ### A feature with a list
 
-7. **Table test.** One test covers pagination, filters and search together. Seed a few more rows than one page holds, all with the unique prefix of the spec, and use a small page size. Search for the prefix, apply every filter of the list at the same time, then go to the next page and back. Assert the row ids on each page. Other specs add rows in parallel, so a list that the prefix does not scope is not stable.
-8. **Empty state.** Apply a filter that matches nothing, and assert the empty state.
+7. **Table test.** Test search, filters and pagination in one test. Create one more row than a page holds, put the same random word in every name, and make every row match every filter. Search for that word, turn on every filter, go to page 2 and back, and check that each row shows once.
+8. **Empty state.** Search for a word that no row has, and check the empty row of the table. If the page has its own empty state, stub every request the page makes with `page.route` to return nothing, because the test project is never empty.
 9. **Error state.** Make the list request fail, and assert `DataFetchErrorState`.
 
-The shared DataTable gets one deep test. Each other list proves only that its own filters reach the server and return its own rows.
+The shared DataTable has its own deep test, so each list needs only items 7 to 9.
 
 ### When the feature has the part
 
 10. **URL state.** After a reload or the Back button, the filters and the page stay the same.
-11. **Effect in a different feature.** The result shows where a different feature reads it, such as a new table in the flow step picker.
+11. **Shows in other features.** If another feature uses what this one creates, open it and check that the new item is there, such as a new table in the table picker of a flow step.
 12. **Bulk action.** Select only the rows of the spec, run the action, and assert the result for those rows.
 13. **White-labeling.** A client-facing page shows the platform branding, not "Activepieces".
-
-### Out of scope
-
-- Sort order: other specs add rows in parallel, so the order changes.
-- Deep filter combinations and edge cases: put them in API tests.
-- Visual checks.
-
-Keep each feature spec to about 90 seconds.
 
 ## Writing a spec
 
