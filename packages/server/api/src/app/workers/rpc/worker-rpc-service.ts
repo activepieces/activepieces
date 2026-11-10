@@ -228,6 +228,14 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             await jobBroker(log).extendLock(input)
         },
 
+        async beginShutdown() {
+            if (isNil(socket)) {
+                return
+            }
+            log.info({ connection: { id: socket.id } }, '[workerRpc#beginShutdown] Worker is stopping; no further jobs will be dispatched')
+            jobBroker(log).markConnectionStopping(socket.id)
+        },
+
         async getPieceArchive(input) {
             const { data } = await fileService(log).getDataOrThrow({
                 fileId: input.archiveId,
