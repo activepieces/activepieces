@@ -3,8 +3,8 @@ import { isPieceVisible, PieceCatalogEventData, PieceSelection } from '@activepi
 import { hooksFactory } from '../../helper/hooks-factory'
 
 export const pieceCatalogHooks = hooksFactory.create<PieceCatalogHooks>(() => ({
-    async listPieceSets(): Promise<PieceSetVisibility[]> {
-        return []
+    async listPieceSets(): Promise<Map<PlatformId, PieceSetVisibility[]>> {
+        return new Map()
     },
 }))
 
@@ -15,7 +15,7 @@ export function pieceSetsContaining({ pieceSets, name }: PieceSetsContainingPara
 }
 
 export type PieceCatalogHooks = {
-    listPieceSets(params: { platformId: PlatformId }): Promise<PieceSetVisibility[]>
+    listPieceSets(params: { platformIds: PlatformId[] }): Promise<Map<PlatformId, PieceSetVisibility[]>>
 }
 
 export type PieceSetVisibility = {
