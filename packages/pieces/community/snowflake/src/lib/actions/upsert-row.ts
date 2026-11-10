@@ -1,26 +1,28 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { snowflakeAuth } from '../auth';
 import {
-  configureConnection,
-  connect,
-  destroy,
-  execute,
   getTableColumnOptions,
   snowflakeCommonProps,
-  SnowflakeAuthValue,
+  toAuthValue,
+  withSnowflake,
 } from '../common';
+import { buildMerge } from '../common/merge';
+import { dmlCount } from '../common/operations';
+import { legacyUpsertOutputSchema } from '../common/output-schemas';
 
 export const upsertRowAction = createAction({
   name: 'upsert_row',
+  classification: 'WRITE',
   displayName: 'Upsert Row',
   description:
     'Insert a new row or update an existing one if a row with the same match column value already exists (MERGE INTO).',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Inserts a row into a Snowflake table, or updates the existing row when one already matches on the chosen match column, via MERGE INTO. Use when you want create-or-update semantics keyed on a stable identifier instead of separate insert/update logic. The match column must be among the supplied column values, and at least one other column is required. Idempotent when the match column is a stable unique key: repeating the call converges to the same row state.',
+      'MERGE-based create-or-update on a table and match column picked from dropdowns. Human-only; agents use Upsert Row by Key. Repeating the call with the same values converges to the same row.',
     idempotent: true,
   },
+  outputSchema: legacyUpsertOutputSchema,
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,
@@ -48,71 +50,39 @@ export const upsertRowAction = createAction({
             placeholder: 'Please select a table first',
           };
         }
-        return getTableColumnOptions(
-          auth as SnowflakeAuthValue,
-          table as string
-        );
+        return getTableColumnOptions({
+          auth: toAuthValue(auth),
+          table: String(table),
+        });
       },
     }),
     table_column_values: snowflakeCommonProps.table_column_values,
   },
   async run(context) {
-    const {
-      table,
-      match_column,
-      table_column_values: columnValues,
-    } = context.propsValue;
-
-    const columns = Object.keys(columnValues);
-    if (columns.length === 0) {
+    const { table, match_column, table_column_values } = context.propsValue;
+    const values = Object.fromEntries(Object.entries(table_column_values));
+    if (Object.keys(values).length === 0) {
       throw new Error('At least one column value must be provided.');
     }
-
-    if (!columns.includes(match_column)) {
+    if (!(match_column in values)) {
       throw new Error(
         `Match column "${match_column}" must be included in the column values. ` +
           `Please add a value for "${match_column}" in the columns to upsert.`
       );
     }
-
-    // Build MERGE INTO statement
-    // source: SELECT ? AS col1, ? AS col2, ...
-    const sourceSelects = columns.map((col) => `? AS ${col}`).join(', ');
-    const updateEntries = columns.filter((col) => col !== match_column);
-    if (updateEntries.length === 0) {
-      throw new Error(
-        'At least one column other than the match column must be provided to update.'
-      );
-    }
-    const updateSets = updateEntries
-      .map((col) => `target.${col} = source.${col}`)
-      .join(', ');
-    const insertCols = columns.join(', ');
-    const insertVals = columns.map((col) => `source.${col}`).join(', ');
-
-    const sql = `
-MERGE INTO ${table} AS target
-USING (SELECT ${sourceSelects}) AS source
-ON target.${match_column} = source.${match_column}
-WHEN MATCHED THEN
-  UPDATE SET ${updateSets}
-WHEN NOT MATCHED THEN
-  INSERT (${insertCols}) VALUES (${insertVals})
-    `.trim();
-
-    const binds = Object.values(columnValues) as string[];
-
-    const connection = configureConnection(context.auth as SnowflakeAuthValue);
-    await connect(connection);
-    try {
-      const result = await execute(connection, sql, binds);
-      return {
-        success: true,
-        rows_inserted: result?.[0]?.['number of rows inserted'] ?? null,
-        rows_updated: result?.[0]?.['number of rows updated'] ?? null,
-      };
-    } finally {
-      await destroy(connection);
-    }
+    const { sql, binds } = buildMerge({
+      table,
+      keyColumns: [match_column],
+      values,
+    });
+    const result = await withSnowflake({
+      auth: toAuthValue(context.auth),
+      fn: (session) => session.query({ sql, binds }),
+    });
+    return {
+      success: true,
+      rows_inserted: dmlCount({ result, key: 'number of rows inserted' }),
+      rows_updated: dmlCount({ result, key: 'number of rows updated' }),
+    };
   },
 });

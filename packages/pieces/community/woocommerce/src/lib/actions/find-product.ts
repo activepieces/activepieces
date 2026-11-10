@@ -7,13 +7,14 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { wooPathId } from '../common/path-id';
 import { findProductOutputSchema } from '../output-schemas';
 
 export const wooFindProduct = createAction({
   name: 'Find Product',
   classification: 'READ',
   displayName: 'Find Product',
-  description: 'Find a Product',
+  description: 'Get a product by its ID',
   audience: 'human',
   aiMetadata: {
     description:
@@ -25,7 +26,9 @@ export const wooFindProduct = createAction({
   props: {
     id: Property.ShortText({
       displayName: 'Product ID',
-      description: 'Enter the product ID',
+      description:
+        'Find it in WooCommerce under Products, next to each product.',
+      placeholder: '123',
       required: true,
     }),
   },
@@ -35,7 +38,7 @@ export const wooFindProduct = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${trimmedBaseUrl}/wp-json/wc/v3/products/${productId}`,
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/products/${wooPathId.encode({ id: productId, label: 'Product ID' })}`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: configValue.auth.props.consumerKey,

@@ -6,6 +6,7 @@ import {
   FlowOperationType,
   FlowTriggerType,
   PieceAction,
+  PieceAudienceFilter,
   PieceTrigger,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -175,6 +176,7 @@ async function applyPieceVersionChange({
   const piece = await piecesApi.get({
     name: pieceName,
     version: targetVersion,
+    audience: PieceAudienceFilter.ALL,
   });
   const changeType = getVersionChangeType({
     currentVersion,

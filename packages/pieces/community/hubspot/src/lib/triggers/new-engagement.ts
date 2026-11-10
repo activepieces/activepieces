@@ -74,7 +74,8 @@ export const newEngagementTrigger = createTrigger({
 	type: TriggerStrategy.POLLING,
 	props: {
 		eventType: Property.StaticDropdown({
-			displayName: 'Type',
+			displayName: 'Engagement Type',
+			description: 'Leave empty to trigger on every engagement type.',
 			required: false,
 			options: {
 				disabled: false,

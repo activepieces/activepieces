@@ -19,7 +19,7 @@ export const newIssueType = createTrigger({
   props: {
     projectId: getProjectIdDropdown({
       displayName: 'Project',
-      description: 'Select the project to watch for new issue types',
+      description: 'The project to watch for new issue types.',
       required: true,
     }),
   },
@@ -46,6 +46,9 @@ export const newIssueType = createTrigger({
     await context.store.put('issueTypeIds', JSON.stringify(ids));
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete('issueTypeIds');
   },
   async run(context) {

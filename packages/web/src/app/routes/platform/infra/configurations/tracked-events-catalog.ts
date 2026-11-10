@@ -8,6 +8,8 @@ import {
   Layers,
   LucideIcon,
   Mail,
+  MessageSquare,
+  Shield,
   User,
   Workflow,
 } from 'lucide-react';
@@ -133,6 +135,54 @@ const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
     group: 'billing',
     label: t('Opened a paid admin page'),
   },
+  [TelemetryEventName.PLATFORM_ADMIN_PAGE_VIEWED]: {
+    group: 'platformAdmin',
+    label: t('Opened a platform administration page'),
+  },
+  [TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED]: {
+    group: 'platformAdmin',
+    label: t('Used a control your plan does not include'),
+  },
+  [TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED]: {
+    group: 'platformAdmin',
+    label: t('Opened the upgrade options from a locked feature'),
+  },
+  [TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED]: {
+    group: 'platformAdmin',
+    label: t('Started a sales enquiry from a locked feature'),
+  },
+  [TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED]: {
+    group: 'platformAdmin',
+    label: t('Reached a plan limit'),
+  },
+  [TelemetryEventName.PLATFORM_ADMIN_CONTROL_CLICKED]: {
+    group: 'platformAdmin',
+    label: t('Clicked a button on a platform administration page'),
+  },
+  [TelemetryEventName.CONNECTION_SWITCH_DECIDED]: {
+    group: 'flows',
+    label: t("Chose an option when switching a step's connection"),
+  },
+  [TelemetryEventName.CONNECTION_REPLACE_OPENED]: {
+    group: 'flows',
+    label: t('Opened the replace connection dialog'),
+  },
+  [TelemetryEventName.CONNECTION_REPLACE_COMPLETED]: {
+    group: 'flows',
+    label: t('Replaced a connection'),
+  },
+  [TelemetryEventName.MEMORY_IMPORT_NUDGE_SHOWN]: {
+    group: 'chat',
+    label: t('Saw the memory import suggestion'),
+  },
+  [TelemetryEventName.MEMORY_IMPORT_NUDGE_CLICKED]: {
+    group: 'chat',
+    label: t('Opened memory import from chat'),
+  },
+  [TelemetryEventName.MEMORY_IMPORT_NUDGE_IMPORTED]: {
+    group: 'chat',
+    label: t('Imported memory from chat'),
+  },
 });
 
 const buildGroups = (): TrackedEventGroup[] => {
@@ -142,7 +192,13 @@ const buildGroups = (): TrackedEventGroup[] => {
     { id: 'emailCodes', title: t('Emailed sign-in codes'), icon: Mail },
     { id: 'flows', title: t('Flows and the builder'), icon: Workflow },
     { id: 'mcp', title: t('MCP'), icon: Layers },
+    { id: 'chat', title: t('Chat'), icon: MessageSquare },
     { id: 'billing', title: t('Billing'), icon: CreditCard },
+    {
+      id: 'platformAdmin',
+      title: t('Platform administration'),
+      icon: Shield,
+    },
   ];
   return definitions
     .map((definition) => ({
@@ -165,7 +221,9 @@ export type TrackedEventGroupId =
   | 'emailCodes'
   | 'flows'
   | 'mcp'
-  | 'billing';
+  | 'chat'
+  | 'billing'
+  | 'platformAdmin';
 
 export type TrackedEvent = {
   group: TrackedEventGroupId;

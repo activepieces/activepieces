@@ -13,6 +13,15 @@ export const listUsers = createAction({
   audience: 'human',
   aiMetadata: { description: 'List every member of the workspace, paging through all results, with toggles to include bots and disabled/deactivated users; read-only and repeatable. Use this to enumerate or scan all users; use Find User by ID or Find User by Handle when you already know which single user you want.', idempotent: true },
   outputSchema: listUsersActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['includeBots', 'includeDisabled'],
+    },
+  ],
   props: {
     includeBots: Property.Checkbox({
       displayName: 'Include Bots',

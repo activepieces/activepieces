@@ -24,7 +24,8 @@ import {
 import * as React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 
 const selectMock = vi.hoisted(() => ({
   onValueChange: undefined as undefined | ((value: string) => void),
@@ -87,10 +88,9 @@ vi.mock('@/app/routes/platform/setup/ai/providers-tab/key-status', () => ({
   KeyStatusBadge: () => null,
 }));
 
-vi.mock(
-  '@/app/routes/platform/setup/ai/providers-tab/model-selection-panel',
-  () => ({ ModelSelectionPanel: () => null }),
-);
+vi.mock('@/app/routes/platform/setup/ai/providers-tab/key-model-list', () => ({
+  KeyModelList: () => null,
+}));
 
 vi.mock(
   '@/app/routes/platform/setup/ai/providers-tab/project-selection-panel',
@@ -104,6 +104,14 @@ vi.mock('@/app/routes/platform/setup/ai/providers-tab/provider-logo', () => ({
 vi.mock('@/features/platform-admin', () => ({
   aiProviderApi: { listModelsForConfig: vi.fn() },
   aiProviderKeys: { configModels: () => ['ai-provider', 'models'] },
+}));
+
+vi.mock('@/features/platform-admin/hooks/platform-model-tier-hooks', () => ({
+  platformModelTierQueries: { useAdminList: () => ({ data: [] }) },
+}));
+
+vi.mock('@/features/platform-admin/hooks/ai-provider-hooks', () => ({
+  aiProviderQueries: { useAiProviderConfigs: () => ({ data: [] }) },
 }));
 
 vi.mock('@/lib/format-utils', () => ({
@@ -169,29 +177,31 @@ const narrowedConfig: AIProviderWithoutSensitiveData = {
 describe('ConfigDetail save (manual models)', () => {
   let container: HTMLDivElement;
   let root: Root;
-  let onSave: ReturnType<typeof vi.fn>;
+  let onSave: Mock<React.ComponentProps<typeof ConfigDetail>['onSave']>;
 
   const render = (config: AIProviderWithoutSensitiveData = gatewayConfig) => {
-    onSave = vi.fn().mockResolvedValue(undefined);
+    onSave = vi.fn().mockResolvedValue({ error: null });
     act(() => {
       root.render(
-        <ConfigDetail
-          config={config}
-          info={{
-            provider: AIProviderName.CLOUDFLARE_GATEWAY,
-            name: 'Cloudflare AI Gateway',
-            markdown: '',
-            logoUrl: '',
-          }}
-          projects={[]}
-          isSaving={false}
-          onSave={onSave}
-          onDelete={async () => undefined}
-          onReplaceCredentials={() => undefined}
-          isRechecking={false}
-          onRecheck={() => undefined}
-          onBack={() => undefined}
-        />,
+        <MemoryRouter>
+          <ConfigDetail
+            config={config}
+            info={{
+              provider: AIProviderName.CLOUDFLARE_GATEWAY,
+              name: 'Cloudflare AI Gateway',
+              markdown: () => '',
+              logoUrl: '',
+            }}
+            projects={[]}
+            isSaving={false}
+            onSave={onSave}
+            onDelete={async () => undefined}
+            onReplaceCredentials={() => undefined}
+            isRechecking={false}
+            onRecheck={() => undefined}
+            onBack={() => undefined}
+          />
+        </MemoryRouter>,
       );
     });
   };
@@ -206,28 +216,29 @@ describe('ConfigDetail save (manual models)', () => {
     });
   };
 
-  const clickChipButton = ({
+  const clickModelButton = ({
     modelId,
     selector,
   }: {
     modelId: string;
     selector: string;
   }) => {
-    const chip = Array.from(container.querySelectorAll('span')).find(
-      (candidate) => candidate.textContent?.startsWith(modelId),
+    const button = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(selector),
+    ).find((candidate) =>
+      candidate.parentElement?.textContent?.startsWith(modelId),
     );
-    const button = chip?.querySelector<HTMLButtonElement>(selector);
-    expect(button).toBeTruthy();
+    expect(button).toBeDefined();
     act(() => {
       button?.click();
     });
   };
 
   const flipTypeBadge = (modelId: string) =>
-    clickChipButton({ modelId, selector: 'button[title="Model Type"]' });
+    clickModelButton({ modelId, selector: 'button[title="Model Type"]' });
 
   const removeModel = (modelId: string) =>
-    clickChipButton({ modelId, selector: 'button:not([title])' });
+    clickModelButton({ modelId, selector: 'button:not([title])' });
 
   const setInputValue = ({
     matches,

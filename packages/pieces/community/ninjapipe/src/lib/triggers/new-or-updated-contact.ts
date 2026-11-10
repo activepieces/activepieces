@@ -1,7 +1,10 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { pollingHelper } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { buildPolling } from './common';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeSchemas } from '../output-schemas';
+import { ninjapipePolling } from './common';
+
+const polling = ninjapipePolling.buildPolling({ path: '/contacts', field: 'updated_at' });
 
 export const newOrUpdatedContact = createTrigger({
   auth: ninjapipeAuth,
@@ -10,21 +13,37 @@ export const newOrUpdatedContact = createTrigger({
   displayName: 'New or Updated Contact',
   description: 'Triggers when a contact is created or updated.',
   aiMetadata: {
-    description: 'Fires whenever a contact in NinjaPipe is created or has any field changed, detected by polling on the contact last-updated timestamp. The event payload is the current state of the affected contact, including its id, email, first_name, last_name, and updated_at. A given contact can fire this multiple times as it is edited; the payload does not distinguish a first creation from a later update.',
+    description:
+      'Fires whenever a NinjaPipe contact is created or changed, found by polling contacts sorted by updated_at. The payload is the current contact record. One contact can fire many times; the payload does not say whether it was a create or an update.',
   },
   type: TriggerStrategy.POLLING,
-  sampleData: { id: '1', email: 'example@ninjapipe.app', first_name: 'Jane', last_name: 'Doe', updated_at: '2024-01-01T00:00:00Z' },
+  outputSchema: ninjapipeSchemas.contact,
+  sampleData: {
+    id: '8bd9d1d9-4e0e-4606-aad9-bcb198b17d26',
+    first_name: 'Jane',
+    last_name: 'Doe',
+    email: 'jane@example.com',
+    phone: '+15550001',
+    status: 'Active',
+    owner_id: '01a55c1c-96af-4a4f-879b-e317def0769a',
+    assigned_to: null,
+    company_id: null,
+    slug: 'jane-doe',
+    fields: {},
+    created_at: '2026-10-25T15:33:09.636647+00:00',
+    updated_at: '2026-10-25T15:36:51.542+00:00',
+  },
   props: {},
   async test(context) {
-    return await pollingHelper.test(buildPolling('/contacts', 'updated_at'), context);
+    return pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(buildPolling('/contacts', 'updated_at'), context);
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(buildPolling('/contacts', 'updated_at'), context);
+    await pollingHelper.onDisable(polling, context);
   },
   async run(context) {
-    return await pollingHelper.poll(buildPolling('/contacts', 'updated_at'), context);
+    return pollingHelper.poll(polling, context);
   },
 });

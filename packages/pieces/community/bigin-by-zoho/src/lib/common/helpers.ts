@@ -28,6 +28,12 @@ export function formatDateTime(input: string | Date): string {
 }
 
 export function formatDateOnly(input: string | Date): string {
+  if (typeof input === 'string') {
+    const datePart = /^(\d{4}-\d{2}-\d{2})/.exec(input.trim());
+    if (datePart) {
+      return datePart[1];
+    }
+  }
   const date = new Date(input);
   const pad = (n: number) => n.toString().padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
@@ -43,4 +49,23 @@ export function getZohoBiginAccountAuthorizationUrl(
   }
 
   return 'https://accounts.zoho.com';
+}
+
+export function escapeCriteriaValue(value: string): string {
+  return value.replace(/[\\(),]/g, (ch) => `\\${ch}`);
+}
+
+export function formatCallDuration(minutes: number): string {
+  const totalSeconds = Math.max(0, Math.round(minutes * 60));
+  const mm = Math.floor(totalSeconds / 60);
+  const ss = totalSeconds % 60;
+  return `${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+}
+
+export function formatDateTimeKeepOffset(input: string | Date): string {
+  if (typeof input === 'string') {
+    const match = input.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.\d+)?([+-]\d{2}:\d{2})$/);
+    if (match) return `${match[1]}${match[2]}`;
+  }
+  return formatDateTime(input);
 }

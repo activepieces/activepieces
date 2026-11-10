@@ -2,6 +2,7 @@ import { SigningKey } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Key, MoreHorizontal, Trash } from 'lucide-react';
 
+import { AdminEmpty, SettingsRow } from '@/app/components/admin';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,18 +11,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemMedia,
-  ItemTitle,
-} from '@/components/ui/item';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { NewSigningKeyDialog, signingKeyApi } from '@/features/platform-admin';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 
 import { StepShell } from '../stepper';
@@ -43,9 +36,14 @@ export const SigningKeysStep = ({
       )}
       actions={
         <NewSigningKeyDialog onCreate={refetch}>
-          <Button size="sm">{t('New Signing Key')}</Button>
+          <Button
+            {...adminControl(AdminControl.EMBEDDING_SIGNING_KEY_NEW_OPEN)}
+          >
+            {t('New Signing Key')}
+          </Button>
         </NewSigningKeyDialog>
       }
+      flush
     >
       <SigningKeysList
         signingKeys={signingKeys}
@@ -66,77 +64,76 @@ const SigningKeysList = ({
   refetch: () => void;
 }) => {
   if (isLoading) {
-    return <SkeletonList numberOfItems={3} className="w-full h-[72px]" />;
-  }
-
-  if (signingKeys.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
-        <Key className="size-10" />
-        <p className="text-sm">{t('No signing keys yet')}</p>
+      <div className="p-5">
+        <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
       </div>
     );
   }
 
+  if (signingKeys.length === 0) {
+    return (
+      <AdminEmpty
+        framed={false}
+        icon={<Key />}
+        title={t('No signing keys yet')}
+      />
+    );
+  }
+
   return (
-    <ItemGroup className="gap-2">
+    <>
       {signingKeys.map((signingKey) => (
-        <Item
+        <SettingsRow
           key={signingKey.id}
-          variant="outline"
-          size="sm"
-          className="items-center"
-        >
-          <ItemMedia variant="icon">
-            <Key />
-          </ItemMedia>
-          <ItemContent className="gap-0">
-            <ItemTitle className="flex items-center gap-2">
-              {signingKey.displayName}
-            </ItemTitle>
-            <ItemDescription className="text-xs">
-              {' ' + t('Created')}{' '}
-              {formatUtils.formatDateToAgo(new Date(signingKey.created))}
-              <br />
-              <span className="text-xs text-muted-foreground">
-                kid: {signingKey.id}
+          icon={<Key />}
+          title={signingKey.displayName}
+          description={
+            <div className="flex flex-col text-xs">
+              <span>
+                {t('Created')}{' '}
+                {formatUtils.formatDateToAgo(new Date(signingKey.created))}
               </span>
-            </ItemDescription>
-          </ItemContent>
-          <ItemActions>
-            <DropdownMenu modal={true}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="size-8 p-0">
-                  <MoreHorizontal className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <ConfirmationDeleteDialog
-                  title={t('Delete Signing Key')}
-                  message={t(
-                    'Deleting this signing key will invalidate any tokens signed with it.',
+              <span>kid: {signingKey.id}</span>
+            </div>
+          }
+        >
+          <DropdownMenu modal={true}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon-sm" aria-label={t('Actions')}>
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <ConfirmationDeleteDialog
+                title={t('Delete Signing Key')}
+                message={t(
+                  'Deleting this signing key will invalidate any tokens signed with it.',
+                )}
+                entityName={t('Signing Key')}
+                buttonText={t('Delete')}
+                mutationFn={async () => {
+                  await signingKeyApi.delete(signingKey.id);
+                  refetch();
+                }}
+                onError={() => internalErrorToast()}
+                controlId={AdminControl.EMBEDDING_SIGNING_KEY_DELETE_CONFIRM}
+              >
+                <DropdownMenuItem
+                  {...adminControl(
+                    AdminControl.EMBEDDING_SIGNING_KEY_DELETE_OPEN,
                   )}
-                  entityName={t('Signing Key')}
-                  buttonText={t('Delete')}
-                  mutationFn={async () => {
-                    await signingKeyApi.delete(signingKey.id);
-                    refetch();
-                  }}
-                  onError={() => internalErrorToast()}
+                  className="text-danger-11 focus:text-danger-11"
+                  onSelect={(e) => e.preventDefault()}
                 >
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onSelect={(e) => e.preventDefault()}
-                  >
-                    <Trash className="size-4 mr-2 text-destructive" />
-                    {t('Delete Signing Key')}
-                  </DropdownMenuItem>
-                </ConfirmationDeleteDialog>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </ItemActions>
-        </Item>
+                  <Trash className="text-danger-11" />
+                  {t('Delete Signing Key')}
+                </DropdownMenuItem>
+              </ConfirmationDeleteDialog>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SettingsRow>
       ))}
-    </ItemGroup>
+    </>
   );
 };

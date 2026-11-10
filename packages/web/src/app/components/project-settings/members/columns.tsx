@@ -1,5 +1,7 @@
-import { Permission } from '@activepieces/core-utils';
+import { ErrorCode, Permission } from '@activepieces/core-utils';
 import {
+  InvitationType,
+  PlatformRole,
   ProjectMemberWithUser,
   UserInvitation,
   UserWithMetaInformation,
@@ -7,6 +9,7 @@ import {
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Info, Trash2, User, Shield, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
@@ -15,6 +18,7 @@ import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { UserAvatar } from '@/components/custom/user-avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
 import {
@@ -32,7 +36,12 @@ import {
 import { projectRoleQueries } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { userHooks } from '@/hooks/user-hooks';
+import { api } from '@/lib/api';
 import { formatUtils } from '@/lib/format-utils';
+
+import { LastProjectDialog } from './last-project-dialog';
 
 export type MemberRowData =
   | {
@@ -122,7 +131,7 @@ const RoleCell = ({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="h-4 w-4 text-orange-700 absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6" />
+              <Info className="h-4 w-4 text-warning-11 absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6" />
             </TooltipTrigger>
             <TooltipContent>
               <p>{t('Pending Invitation')}</p>
@@ -167,6 +176,14 @@ const ActionsCell = ({
 }) => {
   const { checkAccess } = useAuthorization();
   const { project } = projectCollectionUtils.useCurrentProject();
+  const { activeDefaultProjectIds, personalProjectsActive } =
+    platformHooks.useNewMemberSettings();
+  const { data: currentUser } = userHooks.useCurrentUser();
+  const isPlatformAdmin = currentUser?.platformRole === PlatformRole.ADMIN;
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isLastProjectOpen, setIsLastProjectOpen] = useState(false);
+  const isLastProject =
+    row.original.type === 'member' && row.original.data.isLastProject === true;
 
   const userHasPermissionToDelete =
     row.original.type === 'member'
@@ -180,16 +197,42 @@ const ActionsCell = ({
   const isPlatformAdminOrOperator =
     row.original.type === 'platform-admin-operator';
 
+  const isPlatformInvitation =
+    row.original.type === 'invitation' &&
+    row.original.data.type === InvitationType.PLATFORM;
+
+  const stillJoinsAsDefaultProject =
+    row.original.type === 'invitation' &&
+    row.original.data.type === InvitationType.PLATFORM &&
+    row.original.data.platformRole === PlatformRole.MEMBER &&
+    activeDefaultProjectIds.includes(project.id);
+
+  const revokesInvite =
+    row.original.type === 'invitation' &&
+    row.original.data.type === InvitationType.PLATFORM &&
+    row.original.data.platformRole === PlatformRole.MEMBER &&
+    !personalProjectsActive &&
+    activeDefaultProjectIds.length === 0;
+
   const deleteMember = async () => {
     if (row.original.type === 'member') {
       await projectMembersApi.delete(row.original.data.id);
+    } else if (isPlatformInvitation) {
+      await userInvitationApi.removeProject({
+        id: row.original.data.id,
+        projectId: project.id,
+      });
     } else {
       await userInvitationApi.delete(row.original.data.id);
     }
     refetch();
   };
 
-  if (isOwner || isPlatformAdminOrOperator) {
+  if (
+    isOwner ||
+    isPlatformAdminOrOperator ||
+    (isPlatformInvitation && !isPlatformAdmin)
+  ) {
     return null;
   }
 
@@ -201,31 +244,84 @@ const ActionsCell = ({
   return (
     <PermissionNeededTooltip hasPermission={userHasPermissionToDelete}>
       <ConfirmationDeleteDialog
+        open={isConfirmOpen}
+        onOpenChange={(open) => {
+          if (open && isLastProject) {
+            setIsLastProjectOpen(true);
+            return;
+          }
+          setIsConfirmOpen(open);
+        }}
+        onError={(error) => {
+          setIsConfirmOpen(false);
+          if (api.isApError(error, ErrorCode.LAST_PROJECT)) {
+            setIsLastProjectOpen(true);
+            refetch();
+            return;
+          }
+          internalErrorToast();
+        }}
         title={
-          row.original.type === 'invitation'
+          isPlatformInvitation
+            ? t('Remove from this project?')
+            : row.original.type === 'invitation'
             ? t('Remove Invitation')
             : t('Remove Member')
         }
         message={
-          row.original.type === 'invitation'
+          stillJoinsAsDefaultProject
+            ? t('removePlatformInviteFromDefaultProject', {
+                email: displayName,
+                projectName: project.displayName,
+              })
+            : revokesInvite
+            ? t('removePlatformInviteRevokesIt', {
+                email: displayName,
+              })
+            : isPlatformInvitation
+            ? t('removePlatformInviteFromProject', {
+                email: displayName,
+                projectName: project.displayName,
+              })
+            : row.original.type === 'invitation'
             ? t('This invitation will be revoked immediately.')
             : t('This member will lose access to the project immediately.')
         }
         mutationFn={() => deleteMember()}
         entityName={displayName}
+        buttonText={revokesInvite ? t('Revoke invite') : undefined}
       >
         <Button
           variant="ghost"
-          size="sm"
+          size="icon-sm"
           disabled={!userHasPermissionToDelete}
-          className="h-8 w-8 p-0"
         >
-          <Trash2 className="h-4 w-4 text-destructive" />
+          <Trash2 className="h-4 w-4 text-danger-11" />
         </Button>
       </ConfirmationDeleteDialog>
+      <LastProjectDialog
+        open={isLastProjectOpen}
+        onOpenChange={setIsLastProjectOpen}
+        memberName={displayName}
+      />
     </PermissionNeededTooltip>
   );
 };
+
+const PlatformInviteBadge = () => (
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge variant="outline" className="w-fit text-gray-11">
+          {t('Platform invite')}
+        </Badge>
+      </TooltipTrigger>
+      <TooltipContent>
+        {t('Invited to the platform with this project.')}
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
 
 export const membersTableColumns = ({
   refetch,
@@ -255,8 +351,11 @@ export const membersTableColumns = ({
             />
             <div className="flex flex-col gap-1 min-w-0">
               <TextWithTooltip tooltipMessage={email}>
-                <p className="text-sm text-orange-700">{email}</p>
+                <p className="text-sm text-warning-11">{email}</p>
               </TextWithTooltip>
+              {row.original.data.type === InvitationType.PLATFORM && (
+                <PlatformInviteBadge />
+              )}
             </div>
           </div>
         );
@@ -278,7 +377,7 @@ export const membersTableColumns = ({
             <div className="flex flex-col gap-1 min-w-0">
               <p className="text-sm font-medium leading-none">{name}</p>
               <TextWithTooltip tooltipMessage={email}>
-                <p className="text-sm text-muted-foreground">{email}</p>
+                <p className="text-sm text-gray-11">{email}</p>
               </TextWithTooltip>
             </div>
           </div>
@@ -299,7 +398,7 @@ export const membersTableColumns = ({
           <div className="flex flex-col gap-1 min-w-0">
             <p className="text-sm font-medium leading-none">{name}</p>
             <TextWithTooltip tooltipMessage={email}>
-              <p className="text-sm text-muted-foreground">{email}</p>
+              <p className="text-sm text-gray-11">{email}</p>
             </TextWithTooltip>
           </div>
         </div>

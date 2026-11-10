@@ -1,3 +1,4 @@
+import path from 'node:path'
 import { ensureTrailingSlash, isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
 import { BaseEngineOperation, BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowTrigger, FlowVersionState, Project, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
@@ -27,6 +28,7 @@ type EngineConstantsParams = {
     resumePayload?: ResumePayload
     runEnvironment?: RunEnvironment
     stepNameToTest?: string
+    entryStepName?: string
     logsFileId?: string
     timeoutInSeconds: number
     platformId: PlatformId
@@ -68,6 +70,7 @@ export class EngineConstants {
     public readonly resumePayload?: ResumePayload
     public readonly runEnvironment?: RunEnvironment
     public readonly stepNameToTest?: string
+    public readonly entryStepName?: string
     public readonly logsFileId?: string
     public readonly stepNames: string[] = []
     public readonly actionRunMode: boolean
@@ -113,6 +116,7 @@ export class EngineConstants {
         this.resumePayload = params.resumePayload
         this.runEnvironment = params.runEnvironment
         this.stepNameToTest = params.stepNameToTest
+        this.entryStepName = params.entryStepName
         this.logsFileId = params.logsFileId
         this.platformId = params.platformId
         this.timeoutInSeconds = params.timeoutInSeconds
@@ -132,6 +136,7 @@ export class EngineConstants {
             resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
             runEnvironment: input.runEnvironment,
             stepNameToTest: input.stepNameToTest ?? undefined,
+            entryStepName: input.entryStepName,
             logsFileId: input.logsFileId,
         })
     }
@@ -171,6 +176,7 @@ export class EngineConstants {
             contextVersion,
             stepNames: this.stepNames,
             pieceName,
+            flowVersionDir: path.resolve(this.baseCodeDirectory, this.flowVersionId),
         })
     }
     private async getProject(): Promise<Project> {

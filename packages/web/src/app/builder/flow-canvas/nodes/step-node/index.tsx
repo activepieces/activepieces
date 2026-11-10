@@ -16,7 +16,6 @@ import { stepsHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { flowCanvasConsts } from '../../utils/consts';
-import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 import { ApStepNode } from '../../utils/types';
 
 import { StepNodeChevron } from './step-node-chevron';
@@ -61,7 +60,10 @@ const ApStepCanvasNode = React.memo(
       [step, flowVersion],
     );
     const isTrigger = flowStructureUtil.isTrigger(step.type);
-    const isSkipped = flowCanvasUtils.isSkipped(step.name, flowVersion.trigger);
+    const isSkipped = flowStructureUtil.isSkipped({
+      stepName: step.name,
+      trigger: flowVersion.trigger,
+    });
     const chevronClickOverride =
       step.type === FlowTriggerType.EMPTY
         ? () => setOpenedPieceSelectorStepNameOrAddButtonId(step.name)
@@ -133,15 +135,15 @@ const ApStepCanvasNode = React.memo(
         }}
         onContextMenu={(e) => handleContextMenu(e)}
         className={cn(
-          'transition-all border-box rounded-md border border-solid border-border relative overflow-visible  group',
+          'transition-all rounded-md border border-solid border-gray-6 relative overflow-visible  group',
           {
-            'border-primary': isSelected,
-            'bg-background': !isDragging,
+            'border-accent-9': isSelected,
+            'bg-gray-1': !isDragging,
             'border-none': isDragging,
             'shadow-none': isDragging,
-            'bg-accent': isSkipped,
+            'bg-gray-4': isSkipped,
             'rounded-tl-none': isTrigger && !isHorizontal,
-            'hover:border-ring': !isSelected,
+            'hover:border-gray-8': !isSelected,
           },
         )}
         onClick={(e) => handleStepClick(e)}

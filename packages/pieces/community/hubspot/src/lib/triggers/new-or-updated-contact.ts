@@ -75,8 +75,8 @@ export const newOrUpdatedContactTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-or-updated-contact',
 	classification: 'READ',
-	displayName: 'Contact Recently Created or Updated',
-	description: 'Triggers when a contact recently created or updated.',
+	displayName: 'New or Updated Contact',
+	description: 'Triggers when a contact is created or updated.',
 	aiMetadata: {
 		description:
 			'Fires when a contact is created or modified in HubSpot. Each event represents one contact record with properties such as name, email, company, phone, lifecycle stage, and address. Polls by last-modified date, so both new and edited contacts trigger it.',
@@ -84,15 +84,13 @@ export const newOrUpdatedContactTrigger = createTrigger({
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                    
-                    firstname, lastname, email, company, website, mobilephone, phone, fax, address, city, state, zip, salutation, country, jobtitle, hs_createdate, hs_email_domain, hs_object_id, lastmodifieddate, hs_persona, hs_language, lifecyclestage, createdate, numemployees, annualrevenue, industry			
-                                    
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: firstname, lastname, email, company, website, mobilephone, phone, fax, address, city, state, zip, salutation, country, jobtitle, hs_createdate, hs_email_domain, hs_object_id, lastmodifieddate, hs_persona, hs_language, lifecyclestage, createdate, numemployees, annualrevenue, industry.
+
+Pick more below.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.CONTACT,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
 		}),
 	},

@@ -5,15 +5,13 @@ import {
   AppConnectionValueForAuthProperty,
   StaticPropsValue,
 } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  DedupeStrategy,
-  httpClient,
-  HttpMethod,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { posthogAuth, PostHogAuth } from '../..';
+import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { posthogAuth } from '../auth';
+import { posthogClient } from '../common/client';
+import { posthogOutputSchemas } from '../common/output-schemas';
+
+const PAGE_SIZE = 100;
+const MAX_PAGES = 10;
 
 const props = {
   event_name: Property.ShortText({
@@ -29,31 +27,34 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const { personal_api_key, project_id, api_host } = (auth as { props: PostHogAuth }).props;
-    const apiBase = api_host || 'https://us.posthog.com';
-
-    const queryParams: Record<string, string> = { limit: '100' };
+    const query: Record<string, string | number> = { limit: PAGE_SIZE };
     if (lastFetchEpochMS) {
-      queryParams['after'] = new Date(lastFetchEpochMS).toISOString();
+      query['after'] = new Date(lastFetchEpochMS).toISOString();
     }
-    if (propsValue.event_name) {
-      queryParams['event'] = propsValue.event_name;
+    const eventName = posthogClient.optionalText(propsValue.event_name);
+    if (eventName) {
+      query['event'] = eventName;
     }
 
-    const result = await httpClient.sendRequest<EventsResponse>({
+    const events: Record<string, unknown>[] = [];
+    let body = await posthogClient.request({
+      auth: auth.props,
       method: HttpMethod.GET,
-      url: `${apiBase}/api/projects/${project_id}/events/`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: personal_api_key,
-      },
-      queryParams,
+      path: posthogClient.projectPath({ auth: auth.props, segments: ['events'] }),
+      query,
     });
+    for (let pageNo = 1; ; pageNo++) {
+      const record = posthogClient.recordOf(body);
+      events.push(...posthogClient.arrayOf(record['results']).filter(posthogClient.isRecord));
+      const next = posthogClient.str(record['next']);
+      if (!lastFetchEpochMS || !next || pageNo >= MAX_PAGES) break;
+      body = await posthogClient.requestNext({ auth: auth.props, url: next });
+    }
 
-    return (result.body.results ?? []).map((event) => ({
-      epochMilliSeconds: new Date(event.timestamp).getTime(),
-      data: event,
-    }));
+    return events.flatMap((event) => {
+      const timestamp = typeof event['timestamp'] === 'string' ? Date.parse(event['timestamp']) : NaN;
+      return Number.isNaN(timestamp) ? [] : [{ epochMilliSeconds: timestamp, data: event }];
+    });
   },
 };
 
@@ -67,6 +68,7 @@ export const posthogNewEvent = createTrigger({
     description: 'Fires when a new analytics event is captured in the connected PostHog project; polls for recently captured events and emits each one. Optionally filter to a single event name, or leave it empty to fire on every event type.',
   },
   type: TriggerStrategy.POLLING,
+  outputSchema: posthogOutputSchemas.newEvent,
   props,
   sampleData: {
     id: '1',
@@ -88,17 +90,3 @@ export const posthogNewEvent = createTrigger({
     return await pollingHelper.poll(polling, context);
   },
 });
-
-type PostHogEvent = {
-  id: string;
-  distinct_id: string;
-  event: string;
-  timestamp: string;
-  properties: Record<string, unknown>;
-};
-
-type EventsResponse = {
-  count: number;
-  next: string | null;
-  results: PostHogEvent[];
-};

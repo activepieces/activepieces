@@ -26,16 +26,22 @@ export const getDatasetItems = createAction({
     offset: Property.Number({
       required: false,
       displayName: 'Offset',
-      description: 'Number of items that should be skipped at the start. The default value is `0`.',
-      defaultValue: 0
+      description: 'Items to skip from the start.',
+      defaultValue: 0,
+      width: 'half'
     }),
     limit: Property.Number({
       required: false,
       displayName: 'Limit',
-      description: 'Maximum number of results to return. Must be greater than 0.',
-      defaultValue: 50
+      description: 'Maximum number of items to return. Must be above 0.',
+      defaultValue: 50,
+      width: 'half'
     })
   },
+  propertyGroups: [
+    { key: 'source', display: 'section', label: 'Where to Read', icon: 'file', props: ['datasetId'] },
+    { key: 'paging', display: 'section', label: 'How Many Items', icon: 'filter', props: ['offset', 'limit'] },
+  ],
   async run(context) {
     const apifyToken = context.auth.props.apikey;
     const { datasetId, offset, limit } = context.propsValue;

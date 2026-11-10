@@ -2,6 +2,7 @@ import {
   Metadata,
   extractMustacheTokens,
   isNil,
+  isObject,
   parseToJsonIfPossible,
 } from '@activepieces/core-utils';
 import {
@@ -138,6 +139,8 @@ function parseDynamicValue({
     }
     case PropertyType.COLOR:
       return typeof value === 'string' && value !== '' ? value : undefined;
+    case PropertyType.OBJECT:
+      return isObject(parsed) ? parsed : undefined;
     default:
       return undefined;
   }

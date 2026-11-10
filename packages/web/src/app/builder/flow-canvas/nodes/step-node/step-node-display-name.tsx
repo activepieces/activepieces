@@ -37,7 +37,7 @@ const StepNodeDisplayName = ({
         <TextWithTooltip tooltipMessage={stepDisplayName} key={stepDisplayName}>
           <div
             className={cn('text-sm truncate grow shrink ', {
-              'text-accent-foreground/70': isSkipped,
+              'text-gray-12/70': isSkipped,
               'text-center': isHorizontal,
             })}
           >

@@ -4,14 +4,16 @@ import { attioAuth } from '../auth';
 import { formatInputFields, objectFields, objectTypeIdDropdown } from '../common/props';
 import { attioApiCall, attioPaginatedApiCall, buildMembersMap, normalizeRecord } from '../common/client';
 import { AttioRecordResponse } from '../common/types';
+import { findRecordOutputSchema } from '../output-schemas';
 
 export const findRecordAction = createAction({
 	name: 'find_record',
+	outputSchema: findRecordOutputSchema,
 	classification: 'SEARCH',
 	displayName: 'Find Record',
 	description: 'Search for records in Attio using filters and return matching results.',
-	audience: 'both',
-	aiMetadata: { description: 'Looks up records of a chosen Attio object type. Operates in two modes: supply a Record ID to fetch that exact record (all attribute filters are then ignored), or leave it empty and provide attribute filters to query for matching records (empty filters return all records). Use this to resolve a record before updating or referencing it. Read-only and idempotent.', idempotent: true },
+	audience: 'human',
+	aiMetadata: { description: 'Looks up records of a chosen Attio object type. Operates in two modes: supply a Record ID to fetch that exact record (all attribute filters are then ignored), or leave it empty and provide at least one attribute filter to query for matching records (fails when no filter is given). Use this to resolve a record before updating or referencing it. Read-only and idempotent.', idempotent: true },
 	auth: attioAuth,
 	props: {
 		objectTypeId: objectTypeIdDropdown({
@@ -56,6 +58,10 @@ export const findRecordAction = createAction({
 			inputFields,
 			true,
 		);
+
+		if (Object.keys(formattedFields).length === 0) {
+			throw new Error('Provide a Record ID or at least one attribute filter.');
+		}
 
 		// https://docs.attio.com/rest-api/endpoint-reference/records/list-records
 		const records = await attioPaginatedApiCall<AttioRecordResponse>({

@@ -1,6 +1,7 @@
 import { intercomAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { intercomClient } from '../common';
+import { findCompanyBy } from '../common/lookups';
+import { findCompanyOutputSchema } from '../output-schemas';
 
 export const findCompanyAction = createAction({
     auth: intercomAuth,
@@ -9,7 +10,7 @@ export const findCompanyAction = createAction({
     displayName: 'Find Company',
     description: 'Finds an existing company.',
     audience: 'both',
-    aiMetadata: { description: 'Look up a single existing company by either its name or its company ID (choose the search field). Read-only and repeatable; returns the first match plus a found flag. Use to resolve a company before tagging it or attaching it to a ticket.', idempotent: true },
+    aiMetadata: { description: 'Look up a single existing company by its exact name or your own Company ID (choose the search field). Returns found=false when nothing matches; a name lookup only finds companies that already have a contact attached; the company is under "company" ("user" is a legacy copy). Read-only and safe to retry.', idempotent: true },
     props: {
         searchField: Property.StaticDropdown({
             displayName: 'Search Field',
@@ -27,21 +28,20 @@ export const findCompanyAction = createAction({
             required: true,
         }),
     },
+    outputSchema: findCompanyOutputSchema,
     async run(context) {
         const { searchField, searchValue } = context.propsValue;
 
-        const client = intercomClient(context.auth);
-
-        const companyResponse = await client.companies.retrieve({
-            company_id: searchField === 'company_id' ? searchValue : undefined,
-            name: searchField === 'name' ? searchValue : undefined,
-            per_page:1
-
-        })
+        const company = await findCompanyBy({
+            auth: context.auth,
+            field: searchField === 'company_id' ? 'company_id' : 'name',
+            value: searchValue,
+        });
 
         return {
-            found: companyResponse.data.length > 0,
-            user: companyResponse.data.length > 0 ? companyResponse.data[0] : {},
+            found: company !== undefined,
+            company: company ?? {},
+            user: company ?? {},
         };
     },
 });

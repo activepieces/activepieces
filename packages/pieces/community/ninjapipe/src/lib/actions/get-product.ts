@@ -1,22 +1,23 @@
-﻿import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const getProduct = createAction({
   auth: ninjapipeAuth,
   name: 'get_product',
   classification: 'READ',
   displayName: 'Get Product',
-  description: 'Retrieves a product by ID.',
+  description: 'Gets one product by ID.',
   audience: 'both',
-  aiMetadata: { description: 'Fetch a single product by its ID to read its current details. Use when you already have the product ID; to find a product by name or SKU, list/search products first. Read-only and idempotent.', idempotent: true },
+  aiMetadata: { description: 'Fetch a single NinjaPipe product by ID. Read-only.', idempotent: true },
+  outputSchema: ninjapipeSchemas.product,
   props: {
-    productId: ninjapipeCommon.productDropdownRequired,
+    productId: ninjapipeProps.productRequired(),
   },
   async run(context) {
-    const auth = getAuth(context);
-    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.GET, path: `/products/${encodeURIComponent(String(context.propsValue.productId))}` });
-    return flattenCustomFields(response.body);
+    const id = ninjapipeClient.pathId({ value: context.propsValue.productId, field: 'Product' });
+    return ninjapipeClient.getRecord({ auth: ninjapipeClient.readAuth(context.auth), path: `/products/${id}`, operation: 'get product' });
   },
 });

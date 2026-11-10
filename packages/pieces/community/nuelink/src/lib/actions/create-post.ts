@@ -1,26 +1,29 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { nuelinkAuth } from '../..';
+import { nuelinkAuths } from '../auth';
+import { nuelinkClient } from '../common/client';
 
 export const createPost = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'createPost',
   classification: 'WRITE',
-  auth: nuelinkAuth,
+  auth: nuelinkAuths,
   displayName: 'Create Post',
-  description: 'Creates a post on nuelink.',
-  audience: 'both',
-  aiMetadata: { description: 'Publishes a social media post through Nuelink to the connected social channels, with a required caption and optional media URL, title (for Reels/videos/Pinterest), alt text, and flags to share Instagram Reels to the feed or treat videos as short-form vertical content. Choose this to publish or schedule content via Nuelink. Not idempotent: each call creates a new post.', idempotent: false },
+  description: 'Adds a post to the collection linked to your Nuelink automation token. Needs an Automation Token connection; with an API key, use Create Post in Collection.',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Adds a post to the single Nuelink collection tied to this connection\'s automation token; the post then follows that collection\'s channels and schedule. It cannot choose the collection, publish mode or time, and needs an Automation Token connection; prefer Create Post in Collection. Each call creates a new post, so retries duplicate it.',
+    idempotent: false,
+  },
   props: {
     body: Property.LongText({
       displayName: 'Caption',
       required: true,
-      description: 'The your post caption here',
+      description: 'The text of the post.',
     }),
     media: Property.LongText({
       displayName: 'Media',
       required: false,
-      description: 'Enter the media URL here',
+      description: 'Public URL of one image or video. Nuelink downloads it, so it must open without a login.',
     }),
     title: Property.LongText({
       displayName: 'Title',
@@ -45,24 +48,13 @@ export const createPost = createAction({
       defaultValue: false,
     }),
   },
-
   async run(context) {
-    const res = await httpClient.sendRequest<string[]>({
-      method: HttpMethod.POST,
-      url: 'https://nuelink.com/api/v1/pabbly',
-      headers: {
-        Authorization: `Bearer ${context.auth.secret_text}`,
-      },
-      body: {
-        body: context.propsValue.body,
-        media: context.propsValue.media,
-        title: context.propsValue.title,
-        altText: context.propsValue.altText,
-        shareToFeed: context.propsValue.shareToFeed,
-        postAsShort: context.propsValue.postAsShort
-      },
+    const token = nuelinkClient.legacyTokenOf({ auth: context.auth });
+    const { body, media, title, altText, shareToFeed, postAsShort } = context.propsValue;
+    const mediaUrl = typeof media === 'string' && media.trim().length > 0 ? media.trim() : undefined;
+    return nuelinkClient.legacyCreatePost({
+      token,
+      body: { body, media: mediaUrl, title, altText, shareToFeed, postAsShort },
     });
-    return res.body;
   },
-
 });

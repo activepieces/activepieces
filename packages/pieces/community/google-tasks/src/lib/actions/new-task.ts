@@ -22,6 +22,10 @@ export const googleTasksAddNewTaskAction = createAction({
     due: googleTasksCommon.due,
     completed: googleTasksCommon.completed,
   },
+  propertyGroups: [
+    { key: 'destination', display: 'section', label: 'Add to', icon: 'inbox', props: ['tasks_list'] },
+    { key: 'task', display: 'section', label: 'Task', icon: 'text', props: ['title', 'notes', 'due', 'completed'] },
+  ],
   async run({ auth, propsValue }) {
     const task: Task = {
       kind: 'tasks#task',
@@ -29,7 +33,7 @@ export const googleTasksAddNewTaskAction = createAction({
         ? TaskStatus.COMPLETED
         : TaskStatus.NEEDS_ACTION,
       title: propsValue.title,
-      completed: propsValue.completed ? new Date().toISOString() : '',
+      completed: propsValue.completed ? new Date().toISOString() : undefined,
       notes: propsValue.notes,
       due: propsValue.due
         ? `${new Date(propsValue.due).toISOString().split('T')[0]}T00:00:00Z`

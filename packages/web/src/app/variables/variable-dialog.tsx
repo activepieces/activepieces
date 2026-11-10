@@ -7,12 +7,12 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { MaskedInput } from '@/components/custom/masked-input';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -36,7 +36,6 @@ import { internalErrorToast } from '@/components/ui/sonner';
 import { variablesApi } from '@/features/variables/api/variables';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { cn } from '@/lib/utils';
 
 const FormSchema = z.object({
   name: z
@@ -81,7 +80,6 @@ function VariableForm(props: VariableFormProps) {
   const { existing, onOpenChange, onSaved } = props;
   const isEdit = !!existing;
   const projectId = authenticationSession.getProjectId();
-  const [valueVisible, setValueVisible] = useState(false);
   const [showValueField, setShowValueField] = useState(!isEdit);
 
   const form = useForm<FormValues>({
@@ -169,37 +167,12 @@ function VariableForm(props: VariableFormProps) {
               <FormItem>
                 <FormLabel>{t('Value')}</FormLabel>
                 <FormControl>
-                  <div className="relative">
-                    <Input
-                      {...field}
-                      type="text"
-                      autoComplete="off"
-                      spellCheck={false}
-                      className={cn(
-                        'pr-10',
-                        !valueVisible && '[-webkit-text-security:disc]',
-                      )}
-                      placeholder={
-                        isEdit ? t('Enter new value') : t('Enter the value')
-                      }
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
-                      onClick={() => setValueVisible((v) => !v)}
-                      aria-label={
-                        valueVisible ? t('Hide value') : t('Show value')
-                      }
-                    >
-                      {valueVisible ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
+                  <MaskedInput
+                    {...field}
+                    placeholder={
+                      isEdit ? t('Enter new value') : t('Enter the value')
+                    }
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

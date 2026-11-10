@@ -171,8 +171,8 @@ export interface CreateTaskAPIRequest {
   deadline?: string;
   deadline_allowchange?: number;
   task_checkbyowner?: number;
-  responsible_id?: string;
-  owner_id?: string;
+  responsible_id?: number | string;
+  owner_id?: number | string;
   type?: number;
   workflow_id?: number;
   workflow_stage_id?: number;
@@ -184,7 +184,7 @@ export interface CreateCRMAccountAPIRequest {
   first_name?: string;
   middle_name?: string;
   last_name?: string;
-  owner_id?: string;
+  owner_id?: number | string;
   account_category_id?: number;
   industry_id?: number;
   web?: string;
@@ -221,7 +221,7 @@ export interface CreateOpportunityAPIRequest {
   source_id?: number;
   start_date?: string;
   deadline?: string;
-  assignee_id?: string;
+  assignee_id?: number | string;
   customer_id?: number;
   contact_id?: number;
   pipeline_id?: number;

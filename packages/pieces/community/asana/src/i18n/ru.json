@@ -11,7 +11,7 @@
   "Task Description": "Описание задачи",
   "Due Date": "Срок сдачи",
   "Tags": "Теги",
-  "Assignee": "Assignee",
+  "Assignee": "Исполнитель",
   "Method": "Метод",
   "Headers": "Заголовки",
   "Query Parameters": "Параметры запроса",
@@ -31,5 +31,16 @@
   "PATCH": "ПАТЧ",
   "PUT": "ПОКУПИТЬ",
   "DELETE": "УДАЛИТЬ",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "Name": "Название",
+  "Description": "Описание",
+  "Task": "Задача",
+  "Where": "Где",
+  "Details": "Подробности",
+  "Workspace the task is created in.": "Рабочее пространство, в котором создаётся задача.",
+  "Project the task is added to. Archived projects are not listed.": "Проект, в который добавляется задача. Архивные проекты не отображаются.",
+  "Plain text shown in the task's description.": "Обычный текст, который отображается в описании задачи.",
+  "Day the task is due. For a due time too, use 2026-12-31T14:00:00Z.": "День, к которому нужно выполнить задачу. Чтобы указать и время, используйте 2026-12-31T14:00:00Z.",
+  "Pick tags, or type the names of existing tags.": "Выберите теги или введите названия существующих тегов.",
+  "Leave empty to keep the task unassigned.": "Оставьте пустым, чтобы задача осталась без исполнителя."
 }

@@ -9,32 +9,43 @@ export const updateClickupMessage = createAction({
   auth: clickupAuth,
   name: 'update_message',
   classification: 'WRITE',
-  description: 'Updates a message in a ClickUp channel',
+  description: 'Change the text of a chat message.',
   audience: 'both',
   aiMetadata: { description: 'Replace the content of an existing ClickUp chat message, identified by its message ID, within a workspace. Pick this to edit a message that was already posted; you must already know the message ID and supply the new content plus its format (Markdown or plain text). Overwrites the message content rather than appending, so re-running with the same content is effectively idempotent.', idempotent: false },
   displayName: 'Update Message',
   props: {
     workspace_id: clickupCommon.workspace_id(),
     message_id: Property.ShortText({
-      description: 'ID of the message to update',
+      description: 'Returned by Get Channel Messages or Create Message.',
       displayName: 'Message ID',
       required: true,
     }),
     content: Property.LongText({
-      description: 'Content of the message',
-      displayName: 'Message Content',
+      description: 'ClickUp formats Markdown in the message.',
+      displayName: 'Message',
       required: true,
+      placeholder: 'e.g. The release is live',
     }),
     content_format: Property.StaticDropdown({
-      description: 'Format of the message content',
-      displayName: 'Message Content Format',
+      description: 'How ClickUp should read the new text.',
+      displayName: 'Content Format',
       required: true,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Markdown', value: 'text/md' },
-          { label: 'Plain Text', value: 'text/plain' },
+          {
+            label: 'Markdown',
+            value: 'text/md',
+            icon: 'markdown',
+          },
+          {
+            label: 'Plain Text',
+            value: 'text/plain',
+            icon: 'text',
+          },
         ],
       },
+      defaultValue: 'text/md',
     }),
   },
 

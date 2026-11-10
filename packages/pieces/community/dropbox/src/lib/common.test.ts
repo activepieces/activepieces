@@ -51,3 +51,25 @@ describe('previewExtensionFor', () => {
     expect(dropboxCommon.previewExtensionFor(undefined)).toBe('pdf');
   });
 });
+
+describe('toApiPath', () => {
+  it('sends the root as an empty string when the user types a slash', () => {
+    expect(dropboxCommon.toApiPath('/')).toBe('');
+  });
+
+  it('treats blank input as the root', () => {
+    expect(dropboxCommon.toApiPath('  ')).toBe('');
+  });
+
+  it('keeps any other path unchanged', () => {
+    expect(dropboxCommon.toApiPath('/Reports/2026')).toBe('/Reports/2026');
+  });
+});
+
+describe('encodeApiArg', () => {
+  it('escapes non-ASCII characters as Dropbox requires in the API-Arg header', () => {
+    expect(dropboxCommon.encodeApiArg({ path: '/Café' })).toBe(
+      '{"path":"/Caf\\u00e9"}'
+    );
+  });
+});

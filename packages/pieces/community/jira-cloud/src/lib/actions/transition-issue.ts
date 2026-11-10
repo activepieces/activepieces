@@ -24,10 +24,29 @@ export const transitionIssueAction = createAction({
     idempotent: false,
   },
   outputSchema: legacyTransitionIssueOutputSchema,
+  propertyGroups: [
+    {
+      key: 'issue',
+      display: 'section',
+      label: 'Issue',
+      icon: 'inbox',
+      props: ['projectId', 'issueId'],
+    },
+    {
+      key: 'workflow',
+      display: 'section',
+      label: 'Workflow',
+      icon: 'send',
+      props: ['transitionId'],
+    },
+  ],
   props: {
     projectId: getProjectIdDropdown(),
     issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),
-    transitionId: issueStatusIdProp('Transition', true),
+    transitionId: {
+      ...issueStatusIdProp('Transition', true),
+      description: 'Moves the issue to the chosen status.',
+    },
   },
   async run(context) {
     const { issueId, transitionId } = context.propsValue;

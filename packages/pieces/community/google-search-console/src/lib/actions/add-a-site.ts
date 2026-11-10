@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleSearchConsoleAuth } from '../auth';
-import { createAuthClient } from '../../';
+import { gscInputs } from '../common/inputs';
+import { gscOps } from '../common/operations';
+import { gscOutputSchemas } from '../output-schemas';
 
 export const addSite = createAction({
   auth: googleSearchConsoleAuth,
@@ -9,18 +11,22 @@ export const addSite = createAction({
   displayName: 'Add a Site',
   description: "Adds a site to the set of the user's sites in Search Console.",
   audience: 'both',
-  aiMetadata: { description: "Add a site to the authenticated user's Google Search Console account so it can be managed and (after separate verification) monitored. Choose this when onboarding a new property. Requires the exact siteUrl (a URL-prefix property like 'https://example.com/' or a 'sc-domain:' property). Mutating, but adding an already-present site is effectively a no-op rather than a duplicate.", idempotent: false },
+  aiMetadata: {
+    description:
+      "Adds a property to the connected account's Search Console. The property stays unverified (permission siteUnverifiedUser) until someone verifies ownership in the Search Console UI; the API cannot verify it, and unverified properties return no data. Adding a property that is already there changes nothing, so it is safe to retry.",
+    idempotent: true,
+  },
   props: {
     siteUrl: Property.ShortText({
       displayName: 'Site URL',
+      description:
+        'A URL-prefix property such as "https://www.example.com/" (a missing trailing slash is added) or a domain property such as "sc-domain:example.com".',
       required: true,
     }),
   },
+  outputSchema: gscOutputSchemas.addSite,
   async run(context) {
-    const webmasters = createAuthClient(context.auth.access_token);
-    await webmasters.sites.add({
-      siteUrl: context.propsValue.siteUrl,
-    });
-    return { success: true };
+    const siteUrl = gscInputs.siteUrl({ value: context.propsValue.siteUrl });
+    return gscOps.addSite({ auth: context.auth, siteUrl });
   },
 });

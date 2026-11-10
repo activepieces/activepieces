@@ -1,18 +1,24 @@
-import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { shortIoApiCall } from '../common/client';
 import { shortIoAuth } from '../common/auth';
+import { shortIoLinkQueries } from '../common/link-queries';
+import { shortIoLinks } from '../common/links';
+import { shortIoSchemas } from '../common/output-schemas';
 import { domainIdDropdown, folderIdDropdown } from '../common/props';
+import { shortIoValues } from '../common/values';
 
 export const listLinksAction = createAction({
   auth: shortIoAuth,
   name: 'list-short-links',
   classification: 'SEARCH',
   displayName: 'List Links',
-  description:
-    'Retrieve all links on a domain, with pagination and date-range filters.',
-  audience: 'both',
-  aiMetadata: { description: 'Lists short links on a Short.io domain, with optional filters by folder, link ID, exact or before/after creation date, sort order, and a page token for paginating large result sets. Use to enumerate or search a domain\'s links, or to fetch the next page of a prior result. Requires a domain; read-only and idempotent.', idempotent: true },
+  description: 'Retrieve one page of links on a domain, with pagination and date-range filters.',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Lists one page of short links on a domain, with optional folder, link ID, creation-date and sort filters. Pass the returned nextPageToken as Page Token to get the next page. Read-only and idempotent.',
+    idempotent: true,
+  },
+  outputSchema: shortIoSchemas.legacyLinkList,
   props: {
     domain: {
       ...domainIdDropdown,
@@ -64,82 +70,26 @@ export const listLinksAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const {
-      domain: domainString,
-      limit,
-      idString,
-      createdAt,
-      beforeDate,
-      afterDate,
-      dateSortOrder,
-      pageToken,
-      folderId,
-    } = propsValue;
-
-    if (!domainString) {
-      throw new Error('Domain is required. Please select a domain.');
-    }
-
-    if (limit && (limit < 1 || limit > 150)) {
-      throw new Error('Limit must be between 1 and 150.');
-    }
-
-    const query: Record<string, string> = {};
-
-    const domainObject = JSON.parse(domainString as string);
-    query['domain_id'] = String(domainObject.id);
-
-    if (limit) query['limit'] = String(limit);
-    if (idString && idString.trim() !== '') query['idString'] = String(idString);
-    if (createdAt && createdAt.trim() !== '') query['createdAt'] = String(createdAt);
-    if (beforeDate) query['beforeDate'] = beforeDate;
-    if (afterDate) query['afterDate'] = afterDate;
-    if (dateSortOrder) query['dateSortOrder'] = String(dateSortOrder);
-    if (pageToken && pageToken.trim() !== '') query['pageToken'] = String(pageToken);
-    if (folderId) query['folderId'] = String(folderId);
-
-    try {
-      const response = await shortIoApiCall({
-        method: HttpMethod.GET,
-        auth,
-        resourceUri: '/api/links',
-        query,
-      });
-
-      const linkCount = (response as any)['count'] || ((response as any)['links'] ? (response as any)['links'].length : 0);
-      const hasNextPage = (response as any)['nextPageToken'] ? ' (more pages available)' : '';
-
-      return {
-        success: true,
-        message: `Retrieved ${linkCount} links successfully${hasNextPage}`,
-        data: response,
-      };
-    } catch (error: any) {
-      if (error.message.includes('400')) {
-        throw new Error(
-          'Invalid request parameters. Please check your filter values and try again.'
-        );
-      }
-      
-      if (error.message.includes('401') || error.message.includes('403')) {
-        throw new Error(
-          'Authentication failed or insufficient permissions. Please check your API key and domain access.'
-        );
-      }
-      
-      if (error.message.includes('404')) {
-        throw new Error(
-          'Domain not found. Please verify the domain exists and you have access to it.'
-        );
-      }
-      
-      if (error.message.includes('429')) {
-        throw new Error(
-          'Rate limit exceeded. Please wait a moment before trying again.'
-        );
-      }
-
-      throw new Error(`Failed to retrieve links: ${error.message}`);
-    }
+    const domain = shortIoLinks.parseDomainProp(propsValue.domain);
+    const limit = shortIoValues.optionalNumber({ value: propsValue.limit, label: 'Limit', min: 1, max: 150 });
+    const page = await shortIoLinkQueries.listPage({
+      auth,
+      domainId: domain.id,
+      query: {
+        limit,
+        idString: propsValue.idString?.trim(),
+        createdAt: propsValue.createdAt?.trim(),
+        beforeDate: propsValue.beforeDate,
+        afterDate: propsValue.afterDate,
+        dateSortOrder: propsValue.dateSortOrder,
+        pageToken: propsValue.pageToken?.trim(),
+        folderId: propsValue.folderId,
+      },
+    });
+    return {
+      success: true,
+      message: `Retrieved ${page.links.length} links on this page${page.nextPageToken ? ' (more pages available)' : ''}`,
+      data: { count: page.count, links: page.links, nextPageToken: page.nextPageToken },
+    };
   },
 });

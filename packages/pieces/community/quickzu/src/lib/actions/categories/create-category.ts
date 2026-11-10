@@ -1,10 +1,12 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { quickzuAuth } from '../../auth';
+import { quickzuOutputSchemas } from '../../common/output-schemas';
 import { makeClient } from '../../common';
 
 export const createCategoryAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_create_category',
+  outputSchema: quickzuOutputSchemas.category,
   classification: 'WRITE',
   displayName: 'Create Category',
   description: 'Creates a new category in store.',

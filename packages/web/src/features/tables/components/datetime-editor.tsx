@@ -71,7 +71,7 @@ function DatetimeEditor() {
             defaultMonth={date}
             onSelect={handleDaySelect}
           />
-          <div className="flex items-center justify-between gap-2 border-t border-border p-3">
+          <div className="flex items-center justify-between gap-2 border-t border-gray-6 p-3">
             <TimePicker date={date} setDate={setPendingDate} />
             <Button
               variant="ghost"

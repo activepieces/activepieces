@@ -4,11 +4,15 @@ import {
   UserWithMetaInformation,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Crown, User } from 'lucide-react';
+import { Gem, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { DataTable } from '@/components/custom/data-table';
+import {
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+} from '@/app/components/admin';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
@@ -18,6 +22,7 @@ import {
   platformUserHooks,
   platformUserMutations,
 } from '@/features/platform-admin/hooks/platform-user-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { UserActions } from './actions/user-actions';
 import { createUsersTableColumns } from './columns';
@@ -36,12 +41,8 @@ export type UserRowData =
 
 export default function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
-  const {
-    isOutOfSeats,
-    ensureSeatsAvailable,
-    handleSeatLimitError,
-    seatLimitDialog,
-  } = useSeatLimitGuard();
+  const { isOutOfSeats, handleSeatLimitError, seatLimitDialog } =
+    useSeatLimitGuard();
 
   const {
     data: usersData,
@@ -121,67 +122,59 @@ export default function UsersPage() {
   const columns = createUsersTableColumns();
 
   return (
-    <>
-      <div className="flex flex-col w-full">
-        <DashboardPageHeader
-          title={t('Users')}
-          description={t(
-            'Manage, delete, activate and deactivate users on platform',
+    <AdminPage>
+      <AdminPageHeader
+        title={t('Users')}
+        description={t(
+          'Manage, delete, activate and deactivate users on platform',
+        )}
+        resources={adminPageResources.users}
+      >
+        <Button
+          {...adminControl(AdminControl.USERS_INVITE_OPEN)}
+          onClick={() => setInviteOpen(true)}
+        >
+          {isOutOfSeats ? (
+            <Gem className="text-on-accent/90" />
+          ) : (
+            <UserRoundPlusIcon size={16} />
           )}
-        />
-        <DataTable
-          emptyStateTextTitle={t('No users found')}
-          emptyStateTextDescription={t('Start inviting users to your project')}
-          emptyStateIcon={<User className="size-14" />}
-          columns={columns}
-          page={{
-            data: combinedData,
-            next: usersData?.next || null,
-            previous: usersData?.previous || null,
-          }}
-          hidePagination={true}
-          isLoading={isLoading}
-          isError={isError}
-          errorStateEntity={t('users')}
-          onRetry={refetch}
-          toolbarButtons={[
-            <Button
-              key="invite"
-              className="gap-2"
-              size="sm"
-              onClick={() => {
-                if (ensureSeatsAvailable(1)) {
-                  setInviteOpen(true);
-                }
-              }}
-            >
-              {isOutOfSeats ? (
-                <Crown className="size-4 shrink-0 text-primary-foreground/90" />
-              ) : (
-                <UserRoundPlusIcon size={16} />
-              )}
-              <span className="text-sm font-medium">{t('Invite')}</span>
-            </Button>,
-          ]}
-          actions={[
-            (row) => (
-              <UserActions
-                row={row}
-                isUpdatingStatus={isUpdatingStatus}
-                onDelete={handleDelete}
-                onToggleStatus={handleToggleStatus}
-                onUpdate={refetch}
-              />
-            ),
-          ]}
-        />
-      </div>
+          {t('Invite')}
+        </Button>
+      </AdminPageHeader>
+      <AdminDataTable
+        emptyStateTextTitle={t('No users found')}
+        emptyStateTextDescription={t('Start inviting users to your project')}
+        emptyStateIcon={<User />}
+        columns={columns}
+        page={{
+          data: combinedData,
+          next: usersData?.next || null,
+          previous: usersData?.previous || null,
+        }}
+        hidePagination={true}
+        isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('users')}
+        onRetry={refetch}
+        actions={[
+          (row) => (
+            <UserActions
+              row={row}
+              isUpdatingStatus={isUpdatingStatus}
+              onDelete={handleDelete}
+              onToggleStatus={handleToggleStatus}
+              onUpdate={refetch}
+            />
+          ),
+        ]}
+      />
       <InviteUserDialog
         open={inviteOpen}
         setOpen={setInviteOpen}
         onInviteSuccess={refetch}
       />
       {seatLimitDialog}
-    </>
+    </AdminPage>
   );
 }

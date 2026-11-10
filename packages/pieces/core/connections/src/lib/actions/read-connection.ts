@@ -2,14 +2,9 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/pieces-framework';
 
 const markdown = `
-**Advanced Piece**
-<br>
-Use this piece if you are unsure which connection to use beforehand, such as when the connection external ID is sent through a webhook message.
+Use this step when the flow only learns which connection to use while it runs, for example from a webhook.
 
-**Notes:**
-- You can retrieve the external ID from the connection settings page by hovering over the connection name.
-- Use this action to retrieve connection values by their external IDs from this project.
-- After testing the step, you can use the dynamic value in the piece by clicking (X) and referring to this step.
+It returns that connection's credentials. To use them in a later step, turn on **Dynamic value** on that step's connection field and insert this step's output.
 `;
 
 export const readConnection = createAction({
@@ -17,7 +12,7 @@ export const readConnection = createAction({
   name: 'read_connection',
   classification: 'READ',
   displayName: 'Read Connection',
-  description: 'Fetch connection by name',
+  description: "Get a connection's credentials by its external ID",
   aiMetadata: { description: 'Looks up a stored app connection in the current project by its external ID, so a flow can resolve credentials at runtime instead of binding one fixed connection at build time (for example when the external ID arrives in a webhook payload). When the connection is known up front, configure the target piece action with its own auth instead. Requires the exact external ID and throws if no connection matches; read-only and idempotent.', idempotent: true },
   props: {
     info: Property.MarkDown({
@@ -25,7 +20,8 @@ export const readConnection = createAction({
     }),
     connection_name: Property.ShortText({
       displayName: 'Connection External ID',
-      description: undefined,
+      description: 'Hover the app icon on the Connections page to copy it.',
+      placeholder: '5Ohqs3kUGRvJy2V0wPZmT',
       required: true,
     }),
   },

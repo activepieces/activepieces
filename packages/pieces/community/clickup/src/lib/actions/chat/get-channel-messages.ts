@@ -14,27 +14,40 @@ export const getClickupChannelMessages = createAction({
   auth: clickupAuth,
   name: 'get_channel_messages',
   classification: 'SEARCH',
-  description: 'Gets all messages in a ClickUp channel',
+  description: 'Get the latest messages in a chat channel.',
   audience: 'both',
   aiMetadata: { description: 'Read-only: list the messages in a ClickUp Chat channel, given the workspace and channel IDs, with an optional limit (1-100) and markdown or plain-text content format. Use to read channel history; does not post anything. Safe to call repeatedly.', idempotent: true },
   displayName: 'Get Channel Messages',
   props: {
     workspace_id: clickupCommon.workspace_id(),
-    channel_id: clickupCommon.channel_id(),
+    channel_id: clickupCommon.channel_id(true),
     limit: Property.Number({
-      description: 'Limit the number of messages returned',
-      displayName: 'Limit',
+      description: 'How many messages to return, up to 100.',
+      displayName: 'Max Results',
       required: false,
       defaultValue: 50,
+      display: 'stepper',
+      min: 1,
+      max: 100,
+      step: 1,
     }),
     content_format: Property.StaticDropdown({
-      description: 'Format the content of the messages',
-      displayName: 'Format Content',
+      description: 'How the message text comes back.',
+      displayName: 'Content Format',
       required: false,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Markdown', value: 'text/md' },
-          { label: 'Plain Text', value: 'text/plain' },
+          {
+            label: 'Markdown',
+            value: 'text/md',
+            icon: 'markdown',
+          },
+          {
+            label: 'Plain Text',
+            value: 'text/plain',
+            icon: 'text',
+          },
         ],
       },
       defaultValue: 'text/md',
@@ -44,7 +57,10 @@ export const getClickupChannelMessages = createAction({
   outputSchema: channelMessagesOutputSchema,
   async run(configValue) {
     await propsValidation.validateZod(configValue.propsValue, {
-      limit: z.number().check(z.minimum(0), z.maximum(100, 'You can fetch between 1 and 100 messages')),
+      limit: z.number().check(
+        z.minimum(1, 'You can fetch between 1 and 100 messages'),
+        z.maximum(100, 'You can fetch between 1 and 100 messages')
+      ),
     });
 
     const { workspace_id, channel_id, limit, content_format } =

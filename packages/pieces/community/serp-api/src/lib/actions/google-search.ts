@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { COUNTRY_OPTIONS } from '../constants/countries';
 import { GOOGLE_DOMAIN_OPTIONS } from '../constants/google-domains';
@@ -13,53 +13,85 @@ export const googleSearch = createAction({
   name: 'google_search',
   classification: 'SEARCH',
   displayName: 'Google Search',
-  description: 'Retrieves organic search results for specific keywords with advanced filtering options for SEO monitoring and competitor analysis.',
+  description: 'Search Google and get the results as seen from a place and language.',
   audience: 'human',
   aiMetadata: { description: 'Runs a Google web search via SerpApi and returns organic results for a query. Use to look up current web information, check rankings, or research a topic with controls for location, language, country, device, and pagination. Read-only and idempotent; requires the search query and a SerpApi API key.', idempotent: true },
   outputSchema: googleSearchOutputSchema,
+  propertyGroups: [
+    { key: 'search', display: 'section', label: 'Search', icon: 'text', props: ['cost_note', 'query'] },
+    {
+      key: 'location',
+      display: 'section',
+      label: 'Location & language',
+      icon: 'location',
+      props: ['location_search', 'location', 'hl', 'gl', 'google_domain'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'filter',
+      props: ['num_results', 'start', 'safe', 'filter', 'device'],
+    },
+  ],
   props: {
+    cost_note: Property.MarkDown({
+      value: 'Every new search counts against your SerpApi plan. Repeating the same search within an hour is free if cached results are allowed.',
+      variant: MarkdownVariant.INFO,
+    }),
+
     query: Property.ShortText({
       displayName: 'Search Query',
-      description: 'Search query to execute',
+      description: 'What to search for on Google.',
+      placeholder: 'best running shoes',
       required: true,
     }),
 
     location_search: Property.ShortText({
-      displayName: 'Location Search',
-      description: 'Type location name to search',
+      displayName: 'Find Location',
+      description: 'Type a city or region, then pick the match in Location.',
+      placeholder: 'Austin',
       required: false,
     }),
 
     location: Property.Dropdown({
       auth: serpApiAuth,
       displayName: 'Location',
-      description: 'Geographic location for results',
+      description: 'Results as seen from this place.',
       required: false,
       refreshers: ['location_search'],
       options: async ({ auth, location_search }) => {
-        if (!auth || !location_search) {
+        if (!auth) {
           return {
             disabled: true,
             options: [],
-            placeholder: 'Type a location to search...',
+            placeholder: 'Connect your SerpApi account first',
+          };
+        }
+
+        if (typeof location_search !== 'string' || location_search.trim().length === 0) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Type a place in Find Location first',
           };
         }
 
         try {
-          const response = await httpClient.sendRequest({
+          const response = await httpClient.sendRequest<SerpApiLocation[]>({
             method: HttpMethod.GET,
             url: 'https://serpapi.com/locations.json',
             queryParams: {
-              q: location_search as string,
+              q: location_search,
               limit: '10',
             },
           });
 
-          if (response.body && Array.isArray(response.body)) {
+          if (Array.isArray(response.body) && response.body.length > 0) {
             return {
               disabled: false,
-              options: response.body.map((location: any) => ({
-                label: `${location.name}${location.country ? `, ${location.country}` : ''}`,
+              options: response.body.map((location) => ({
+                label: locationLabel(location),
                 value: location.canonical_name || location.name,
               })),
             };
@@ -68,22 +100,21 @@ export const googleSearch = createAction({
           return {
             disabled: false,
             options: [],
-            placeholder: 'No locations found',
+            placeholder: 'No places match. Try another name.',
           };
-        } catch (error) {
-          console.error('Error fetching locations:', error);
+        } catch {
           return {
             disabled: false,
             options: [],
-            placeholder: 'Error searching locations. Please check your API key.',
+            placeholder: 'Could not load places. Try another name.',
           };
         }
       },
     }),
 
     hl: Property.StaticDropdown({
-      displayName: 'Host Language (hl)',
-      description: 'Language for search results',
+      displayName: 'Language',
+      description: 'Language of the results.',
       required: false,
       defaultValue: 'en',
       options: {
@@ -91,9 +122,18 @@ export const googleSearch = createAction({
       },
     }),
 
+    gl: Property.StaticDropdown({
+      displayName: 'Country',
+      description: 'Country the results are for.',
+      required: false,
+      options: {
+        options: COUNTRY_OPTIONS,
+      },
+    }),
+
     google_domain: Property.StaticDropdown({
       displayName: 'Google Domain',
-      description: 'Google domain to use',
+      description: 'Which Google site to search, such as google.co.uk.',
       required: false,
       defaultValue: 'google.com',
       options: {
@@ -101,71 +141,59 @@ export const googleSearch = createAction({
       },
     }),
 
-    gl: Property.StaticDropdown({
-      displayName: 'Country (gl)',
-      description: 'Country for search results',
-      required: false,
-      options: {
-        options: COUNTRY_OPTIONS,
-      },
-    }),
-
-    no_cache: Property.StaticDropdown({
-      displayName: 'No Cache',
-      description: 'Force fresh results',
-      required: false,
-      defaultValue: 'false',
-      options: {
-        options: [
-          { label: 'false (Allow cache)', value: 'false' },
-          { label: 'true (Force fresh results)', value: 'true' },
-        ],
-      },
-    }),
-
-    async: Property.StaticDropdown({
-      displayName: 'Async',
-      description: 'Submit search asynchronously',
-      required: false,
-      defaultValue: 'false',
-      options: {
-        options: [
-          { label: 'false (Synchronous)', value: 'false' },
-          { label: 'true (Asynchronous)', value: 'true' },
-        ],
-      },
-    }),
-
     num_results: Property.Number({
       displayName: 'Number of Results',
-      description: 'Number of results to return (1-100)',
+      description: 'How many results to return, from 1 to 100.',
       required: false,
       defaultValue: 10,
+      display: 'stepper',
+      min: 1,
+      max: 100,
+      step: 1,
     }),
 
     start: Property.Number({
-      displayName: 'Start Position',
-      description: 'Starting position for pagination (0-990)',
+      displayName: 'Results to Skip',
+      description: 'Skip this many results to get later pages.',
       required: false,
       defaultValue: 0,
+      display: 'stepper',
+      min: 0,
+      max: 990,
+      step: 1,
     }),
 
     safe: Property.StaticDropdown({
       displayName: 'Safe Search',
-      description: 'Safe search filtering level',
+      description: 'Hide explicit results.',
       required: false,
       defaultValue: 'active',
+      width: 'half',
       options: {
         options: [
-          { label: 'Active (Enabled)', value: 'active' },
-          { label: 'Off (Disabled)', value: 'off' },
+          { label: 'On', value: 'active' },
+          { label: 'Off', value: 'off' },
+        ],
+      },
+    }),
+
+    filter: Property.StaticDropdown({
+      displayName: 'Similar Results',
+      description: 'Hide results Google treats as near duplicates.',
+      required: false,
+      defaultValue: '0',
+      width: 'half',
+      options: {
+        options: [
+          { label: 'Show', value: '0' },
+          { label: 'Hide', value: '1' },
         ],
       },
     }),
 
     device: Property.StaticDropdown({
-      displayName: 'Device Type',
-      description: 'Device type for search simulation',
+      displayName: 'Device',
+      description: 'Get the results a desktop, phone or tablet would see.',
       required: false,
       defaultValue: 'desktop',
       options: {
@@ -177,15 +205,30 @@ export const googleSearch = createAction({
       },
     }),
 
-    filter: Property.StaticDropdown({
-      displayName: 'Result Filter',
-      description: 'Filter duplicate results',
+    no_cache: Property.StaticDropdown({
+      displayName: 'Cached Results',
+      description: 'Cached results are free and up to an hour old.',
       required: false,
-      defaultValue: '0',
+      defaultValue: 'false',
+      advanced: true,
       options: {
         options: [
-          { label: 'Show similar results', value: '0' },
-          { label: 'Hide similar results', value: '1' },
+          { label: 'Allow cached results', value: 'false' },
+          { label: 'Always run a new search', value: 'true' },
+        ],
+      },
+    }),
+
+    async: Property.StaticDropdown({
+      displayName: 'Search Mode',
+      description: 'The ID-only option gives no results and needs cached results allowed.',
+      required: false,
+      defaultValue: 'false',
+      advanced: true,
+      options: {
+        options: [
+          { label: 'Wait for results', value: 'false' },
+          { label: 'Return the search ID only', value: 'true' },
         ],
       },
     }),
@@ -263,3 +306,14 @@ export const googleSearch = createAction({
     }
   },
 });
+
+function locationLabel(location: SerpApiLocation): string {
+  const place = location.canonical_name ? location.canonical_name.split(',').join(', ') : location.name;
+  return location.target_type ? `${place} (${location.target_type})` : place;
+}
+
+type SerpApiLocation = {
+  name: string;
+  canonical_name?: string;
+  target_type?: string;
+};

@@ -39,7 +39,7 @@ beforeAll(async () => {
 afterAll(async () => {
     await worker.stop()
     await app.close()
-}, 15_000)
+}, 60_000)
 
 async function saveSampleDataFile({ projectId, platformId, output }: { projectId: string, platformId: string, output: unknown }): Promise<string> {
     const file = createMockFile({

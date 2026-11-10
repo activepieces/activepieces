@@ -12,8 +12,8 @@ export const getTransactionsAction = createAction({
   aiMetadata: { description: "List all payment transactions (authorizations, captures, refunds, voids) recorded against a specific Shopify order, given the order ID. Use to inspect an order's financial history. Read-only and idempotent.", idempotent: true },
   props: {
     orderId: Property.Number({
-      displayName: 'Order',
-      description: 'The ID of the order.',
+      displayName: 'Order ID',
+      description: "From the order's URL in Shopify admin, not its #1001 number.",
       required: true,
     }),
   },

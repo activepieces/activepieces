@@ -1,12 +1,15 @@
 import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
+import { AgentRunSource, ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { Socket } from 'socket.io'
 import { aiRpcHandlers } from '../../ai/ai-rpc-handlers'
 import { websocketService } from '../../core/websockets.service'
 import { distributedStore, redisConnections } from '../../database/redis-connections'
+import { agentHelpers } from '../../ee/agent/agent-helpers'
 import { agentRpcHandlers } from '../../ee/agent/agent-rpc-handlers'
 import { chatPersonalizationService } from '../../ee/agent/personalization/chat-personalization-service'
+import { eventDestinationRpcHandlers } from '../../event-destinations/event-destinations-rpc-handlers'
 import { fileService, getLocationForFile } from '../../file/file.service'
 import { s3Helper } from '../../file/s3-helper'
 import { signedFileTransport } from '../../file/signed-file-transport'
@@ -20,28 +23,20 @@ import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
-import { shouldBlockRunOnCredits } from '../../platform/billing-provider'
+import { CreditCheckSpeed, shouldBlockRunOnCredits } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerRunStats } from '../../trigger/trigger-run/trigger-run-stats'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
-import { getPlatformGroupQueueName, getProjectGroupQueueName, QueueName, WorkerGroupAssignment } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
+import { WorkerGroupAssignment } from '../worker-groups/worker-group-queues'
+import { workerGroupRouting } from '../worker-groups/worker-group-routing'
 
 const FLOW_BUNDLE_PUBLISH_CLAIM_TTL_SECONDS = 60
 
 const getFlowBundlePublishClaimKey = (flowVersionId: string): string => `flow_bundle_publish_claim:${flowVersionId}`
-
-const getPollQueueName = (assignment: WorkerGroupAssignment | null): string => {
-    if (isNil(assignment)) {
-        return QueueName.WORKER_JOBS
-    }
-    return assignment.scope === WorkerGroupScope.PROJECT
-        ? getProjectGroupQueueName(assignment.id)
-        : getPlatformGroupQueueName(assignment.id)
-}
 
 let pagedForUnreadableAppVersion = false
 
@@ -78,7 +73,7 @@ function workerVersionIsCompatible({ log, workerVersion, workerId, rpcMethod }: 
     return false
 }
 
-export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAssignment | null = null, connectionId?: string): WorkerToApiContract {
+export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAssignment | null = null, socket?: Pick<Socket, 'id' | 'connected'>): WorkerToApiContract {
     return {
         async poll(input) {
             log.info({ worker: { id: input.workerId }, workerGroup: assignment ?? undefined }, '[workerRpc#poll] Poll request received')
@@ -86,8 +81,8 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             if (!workerVersionIsCompatible({ log, workerVersion: input.workerProps.version, workerId: input.workerId, rpcMethod: 'poll' })) {
                 return null
             }
-            const pollQueueName = getPollQueueName(assignment)
-            const job = await jobBroker(log).poll(pollQueueName, connectionId)
+            const pollQueueName = workerGroupRouting.resolveQueueForWorker(assignment)
+            const job = await jobBroker(log).poll(pollQueueName, socket)
             if (job) {
                 log.info({ worker: { id: input.workerId }, job: { id: job.jobId, type: job.jobData.jobType } }, '[workerRpc#poll] Returning job to worker')
             }
@@ -120,7 +115,8 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             const creditsExhausted = await shouldBlockRunOnCredits({
                 platformId,
                 environment,
-                log,
+                creditCheckSpeed: CreditCheckSpeed.BACKGROUND,
+                log: log.child({ rpc: 'submitPayloads', flowVersion: { id: flowVersionId } }),
             })
 
             const flowRuns = await Promise.all(
@@ -349,11 +345,24 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         },
 
         async getAgentConfig(input) {
-            return agentRpcHandlers(agentRpcLog(log, input)).getAgentConfig(input)
+            const config = await agentRpcHandlers(agentRpcLog(log, input)).getAgentConfig(input)
+            const { conversationId, runId, source } = input
+            const flowStepReplyUndeliverable = socket?.connected === false && source === AgentRunSource.FLOW_STEP && !isNil(runId)
+            if (flowStepReplyUndeliverable) {
+                log.warn({ conversation: { id: conversationId }, run: { id: runId } }, '[workerRpc#getAgentConfig] Worker disconnected before the config reply, handing the lock to the redelivered copy')
+                await agentHelpers.handLockToRedelivery({ conversationId, runId })
+            }
+            return config
         },
 
         async saveAgentMessages(input) {
             return agentRpcHandlers(agentRpcLog(log, input)).saveAgentMessages(input)
+        },
+        async beginAgentTask(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).beginAgentTask(input)
+        },
+        async finishAgentTask(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).finishAgentTask(input)
         },
 
         async saveAgentFile(input) {
@@ -403,6 +412,15 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
 
         async resolveAiProvider(input) {
             return aiRpcHandlers(log).resolveAiProvider(input)
+        },
+        async resolveAiModelCandidates(input) {
+            return aiRpcHandlers(log).resolveAiModelCandidates(input)
+        },
+        async reportAiKeyOutcome(input) {
+            return aiRpcHandlers(log).reportAiKeyOutcome(input)
+        },
+        async resolveEventDestinationHeaders(input) {
+            return eventDestinationRpcHandlers(log).resolveEventDestinationHeaders(input)
         },
         async saveFlowStepFile(input) {
             return aiRpcHandlers(log).saveFlowStepFile(input)

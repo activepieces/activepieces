@@ -1,8 +1,9 @@
 import { activeCampaignAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { makeClient } from '../common';
-import { CreateWebhookResponse } from '../common/types';
-import { WEBHOOK_SOURCES } from '../common/constants';
+import { activeCampaignWebhook } from '../common/webhook';
+import { campaignLinkClickedTriggerOutputSchema } from '../common/output-schemas';
+
+const STORE_KEY = 'activecampaign_campaign_link_clicked';
 
 export const campaignLinkClickedTrigger = createTrigger({
 	auth: activeCampaignAuth,
@@ -14,75 +15,66 @@ export const campaignLinkClickedTrigger = createTrigger({
 	aiMetadata: {
 		description: 'Fires when a contact clicks a tracked link inside a sent campaign email, firing only once per unique link per contact. Represents the click event with the contact and the campaign that contained the link.',
 	},
+	outputSchema: campaignLinkClickedTriggerOutputSchema,
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {
-		const client = makeClient(context.auth.props);
-		const res = await client.subscribeWebhook({
-			name: `Activepieces Deal Task Completed Hook`,
-			url: context.webhookUrl,
+		await activeCampaignWebhook.enable({
+			auth: context.auth.props,
+			store: context.store,
+			storeKey: STORE_KEY,
+			webhookUrl: context.webhookUrl,
+			hookName: 'Activepieces Campaign Link Click Hook',
 			events: ['click'],
-			sources: WEBHOOK_SOURCES,
 		});
-		await context.store.put<CreateWebhookResponse>('activecampaign_campaign_link_clicked', res);
 	},
 	async run(context) {
-		return [context.payload.body];
+		return activeCampaignWebhook.run({ store: context.store, storeKey: STORE_KEY, body: context.payload.body });
 	},
 	async onDisable(context) {
-		const webhook = await context.store.get<CreateWebhookResponse>(
-			'activecampaign_campaign_link_clicked',
-		);
-		if (webhook != null) {
-			const client = makeClient(context.auth.props);
-			await client.unsubscribeWebhook(webhook.webhook.id);
-		}
+		await activeCampaignWebhook.disable({ auth: context.auth.props, store: context.store, storeKey: STORE_KEY });
 	},
 	sampleData: {
-		type: 'deal_update',
-		date_time: '2024-02-28T04:45:41-06:00',
-		initiated_from: 'admin',
-		initiated_by: 'admin',
-		list: '0',
+		type: 'click',
+		date_time: '2026-11-08T06:24:28-06:00',
+		initiated_from: 'public',
+		initiated_by: 'contact',
+		list: [
+			{
+				id: '3',
+				name: 'Master Contact List',
+			},
+		],
+		campaign: {
+			id: '8',
+			status: '5',
+			name: 'AP trigger test (Copy) (Copy)',
+			type: 'single',
+			recipients: '4',
+			message: {
+				id: '9',
+				subject: 'testing campigns',
+			},
+		},
+		link: {
+			id: '22',
+			url: 'https://example.com',
+		},
 		contact: {
-			id: '3',
-			email: 'code.test@gmail.com',
-			first_name: 'John',
-			last_name: 'Wick',
-			phone: '',
-			ip: '0.0.0.0',
-			tags: '1233',
-			customer_acct_name: '',
-			orgname: '',
+			id: '8',
+			email: 'jane.doe@example.com',
+			first_name: 'Jane',
+			last_name: 'Doe',
+			phone: '+15550002',
+			ip: '203.0.113.10',
+			tags: '',
+			fields: [''],
+			customer_acct_name: 'AP QA Corp',
+			orgname: 'AP QA Corp',
 		},
-		customer_acct_name: '',
-		customer_acct_id: '0',
-		orgname: '',
-		deal: {
-			id: '1',
-			title: 'Test Deal',
-			create_date: '2024-02-28 04:36:09',
-			create_date_iso: '2024-02-28T04:36:09-06:00',
-			orgid: '1',
-			orgname: 'John Wick',
-			stageid: '1',
-			stage_title: 'To Contact',
-			pipelineid: '1',
-			pipeline_title: 'Test Pipeline',
-			value: '1,044,055.00',
-			value_raw: '1044055',
-			currency: 'usd',
-			currency_symbol: '$',
-			owner: '1',
-			owner_firstname: 'John',
-			owner_lastname: 'Wick',
-			contactid: '3',
-			contact_email: 'code.test@gmail.com',
-			contact_firstname: 'John',
-			contact_lastname: 'Wick',
-			status: '0',
-			fields: [{ id: '1', key: 'Forecasted Close Date', value: '2024-02-08 00:00:00' }],
-		},
-		updated_fields: ['value'],
+		customer_acct_name: 'AP QA Corp',
+		customer_acct_id: '1',
+		orgname: 'AP QA Corp',
+		account_id: '1000001',
 	},
 });

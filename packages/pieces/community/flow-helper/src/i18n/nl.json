@@ -1,9 +1,15 @@
 {
+  "Stop or fail a running flow, or get a link to the current run.": "Stop or fail a running flow, or get a link to the current run.",
   "Get Run Info": "Get Run Info",
   "Fail Flow": "Flow mislukt",
   "Stop Flow": "Stoppen met stroom",
-  "Fails the flow execution with a custom message.": "Fout bij uitvoeren van de stroom met een aangepast bericht.",
-  "Stops the flow immediately this step is reached.": "Stopt de stroom zodra deze stap is bereikt.",
+  "Gets this run's ID and a link to open it.": "Gets this run's ID and a link to open it.",
+  "Fails this step with your error message.": "Fails this step with your error message.",
+  "Ends the run at this step and marks it as succeeded.": "Ends the run at this step and marks it as succeeded.",
+  "Markdown": "Markdown",
   "Error Message": "Fout bericht",
-  "The error message to show when the flow fails.": "Het foutbericht om te laten zien wanneer de stroom mislukt."
+  "Outputs this run's ID and a link that opens the run.": "Outputs this run's ID and a link that opens the run.",
+  "The run fails here and later steps do not run. If Add Error Handler is on, only this step fails. The Failure branch runs and the flow continues.": "The run fails here and later steps do not run. If Add Error Handler is on, only this step fails. The Failure branch runs and the flow continues.",
+  "Shown as the step's error. Can include data from earlier steps.": "Shown as the step's error. Can include data from earlier steps.",
+  "The run ends here and is marked as succeeded. Steps after this one do not run.": "The run ends here and is marked as succeeded. Steps after this one do not run."
 }

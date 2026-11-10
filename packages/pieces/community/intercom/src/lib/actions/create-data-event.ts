@@ -2,6 +2,7 @@ import { intercomAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { intercomClient } from '../common';
 import dayjs from 'dayjs';
+import { dataEventOutputSchema } from '../output-schemas';
 
 export const createDataEventAction = createAction({
 	auth: intercomAuth,
@@ -49,11 +50,12 @@ export const createDataEventAction = createAction({
 			required: false,
 		}),
 	},
+	outputSchema: dataEventOutputSchema,
 	async run(context) {
 		const { identifierType, identifierValue, eventName, createdAt, metadata } =
 			context.propsValue;
 
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const createdAtUnix = createdAt ? dayjs(createdAt).unix() : dayjs().unix();
 		const stringMetadata = metadata

@@ -15,29 +15,37 @@ const loadV8IsolateSandbox = async (): Promise<CodeSandbox> => {
     return v8IsolateCodeSandboxModule.v8IsolateCodeSandbox
 }
 
-const loadDenoCodeSandbox = async (permissions: DenoPermission[]): Promise<CodeSandbox> => {
+const loadDenoCodeSandbox = async ({ permissions, codeStepMemoryLimitMb }: LoadDenoCodeSandboxParams): Promise<CodeSandbox> => {
     const denoCodeSandboxModule = await import('./deno-code-sandbox')
-    return denoCodeSandboxModule.denoCodeSandbox(permissions)
+    return denoCodeSandboxModule.denoCodeSandbox({ permissions, codeStepMemoryLimitMb })
 }
+
+const CODE_ONLY_SANDBOX_MEMORY_LIMIT_MB = 128
 
 const loadCodeSandbox = async ({ useDeno }: { useDeno: boolean }): Promise<CodeSandbox> => {
     const denoLoaders = {
-        [ExecutionMode.UNSANDBOXED]: () => loadDenoCodeSandbox([
-            DenoPermission.WRITE_TMP,
-            DenoPermission.READ_TMP,
-            DenoPermission.NET,
-            DenoPermission.ENV,
-            DenoPermission.SYS,
-        ]),
-        [ExecutionMode.SANDBOX_PROCESS]: () => loadDenoCodeSandbox([
-            DenoPermission.WRITE_TMP,
-            DenoPermission.READ_TMP,
-            DenoPermission.NET,
-            DenoPermission.ENV,
-            DenoPermission.SYS,
-        ]),
-        [ExecutionMode.SANDBOX_CODE_ONLY]: () => loadDenoCodeSandbox([]),
-        [ExecutionMode.SANDBOX_CODE_AND_PROCESS]: () => loadDenoCodeSandbox([]),
+        [ExecutionMode.UNSANDBOXED]: () => loadDenoCodeSandbox({
+            permissions: [
+                DenoPermission.WRITE_TMP,
+                DenoPermission.READ_TMP,
+                DenoPermission.NET,
+                DenoPermission.ENV,
+                DenoPermission.SYS,
+            ],
+            codeStepMemoryLimitMb: null,
+        }),
+        [ExecutionMode.SANDBOX_PROCESS]: () => loadDenoCodeSandbox({
+            permissions: [
+                DenoPermission.WRITE_TMP,
+                DenoPermission.READ_TMP,
+                DenoPermission.NET,
+                DenoPermission.ENV,
+                DenoPermission.SYS,
+            ],
+            codeStepMemoryLimitMb: null,
+        }),
+        [ExecutionMode.SANDBOX_CODE_ONLY]: () => loadDenoCodeSandbox({ permissions: [], codeStepMemoryLimitMb: CODE_ONLY_SANDBOX_MEMORY_LIMIT_MB }),
+        [ExecutionMode.SANDBOX_CODE_AND_PROCESS]: () => loadDenoCodeSandbox({ permissions: [], codeStepMemoryLimitMb: CODE_ONLY_SANDBOX_MEMORY_LIMIT_MB }),
     }
 
     const legacyLoaders = {
@@ -71,4 +79,9 @@ export const initCodeSandbox = async ({ useDeno }: { useDeno: boolean }): Promis
     }
 
     return instances[kind]
+}
+
+type LoadDenoCodeSandboxParams = {
+    permissions: DenoPermission[]
+    codeStepMemoryLimitMb: number | null
 }

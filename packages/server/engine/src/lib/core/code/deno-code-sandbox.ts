@@ -1,14 +1,15 @@
+import { existsSync } from 'node:fs'
 import { realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { dirname } from 'node:path'
+import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { deno, DenoPermission } from '@activepieces/core-utils'
+import { deno, DenoPermission, DenoSession, isNil } from '@activepieces/core-utils'
 import { ExecutionMode } from '@activepieces/shared'
 import { CodeSandbox } from './code-sandbox-common'
 
 export { DenoPermission } from '@activepieces/core-utils'
 
-export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
+export function denoCodeSandbox({ permissions, codeStepMemoryLimitMb }: DenoCodeSandboxParams): CodeSandbox {
     const sandbox: CodeSandbox = {
         async runCodeModule({ codeFilePath, inputs }) {
             // Deno compares permission paths after resolving symlinks (e.g. macOS
@@ -16,6 +17,10 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
             const realCodePath = await realpath(codeFilePath)
             const stepDir = dirname(realCodePath)
             const entryUrl = pathToFileURL(realCodePath).href
+            const rawEsmSiblingPath = join(stepDir, 'index.ts')
+            const asyncModuleRetryUrl = realCodePath.endsWith('.cjs') && existsSync(rawEsmSiblingPath)
+                ? pathToFileURL(rawEsmSiblingPath).href
+                : entryUrl
 
             return deno.run({
                 body: `
@@ -34,7 +39,7 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
             if (error?.code !== 'ERR_REQUIRE_ASYNC_MODULE') {
                 throw error;
             }
-            mod = await import(${JSON.stringify(entryUrl)});
+            mod = await import(${JSON.stringify(asyncModuleRetryUrl)});
         }
     }
     else {
@@ -52,14 +57,16 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
     if (typeof mod.code !== 'function') {
         throw new Error('Code step must export a "code" function');
     }
-    const result = await mod.code(${JSON.stringify(inputs)});
+    const result = await mod.code(data);
 `,
+                data: inputs,
                 permissions,
                 cwd: stepDir,
+                memoryLimitMb: codeStepMemoryLimitMb,
                 allowReadPaths: [stepDir],
                 resolveNodeModules: true,
                 env: buildPropagatedEnv(permissions),
-                denoDirBase: resolveDenoDirBase(stepDir),
+                denoDir: resolveWarmDenoDir(dirname(stepDir)),
             })
         },
 
@@ -76,15 +83,66 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
             })
         },
 
-        async createScriptSession({ scriptContext, functions }) {
+        async createScriptSession({ scriptContext, functions, flowVersionDir }) {
             const context: Record<string, unknown> = { ...scriptContext }
+            const bootstrapBody = Object.entries(functions).map(([key, value]) => `globalThis[${JSON.stringify(key)}] = ${value.toString()};`).join('\n')
+            const sessionDenoDir = isNil(flowVersionDir) || !existsSync(flowVersionDir) ? undefined : resolveWarmDenoDir(flowVersionDir)
+            let current: LiveScriptSession | null = null
+            let spawnInFlight: Promise<LiveScriptSession> | null = null
             let disposed = false
+
+            // Single-flight respawn: concurrent runs that find the child dead share one new
+            // spawn instead of each starting (and leaking) their own. The liveness check and
+            // the decision to spawn are synchronous, so no caller can clobber another's child.
+            const ensureLive = (): Promise<LiveScriptSession> => {
+                if (current !== null && current.session.isAlive()) {
+                    return Promise.resolve(current)
+                }
+                if (spawnInFlight === null) {
+                    current = null
+                    spawnInFlight = deno.createSession({
+                        bootstrapBody,
+                        permissions: [],
+                        cwd: tmpdir(),
+                        denoDir: sessionDenoDir,
+                    }).then((session) => {
+                        const live = { session, sentGlobals: new Map<string, SentGlobal>() }
+                        current = live
+                        spawnInFlight = null
+                        return live
+                    }).catch((error) => {
+                        spawnInFlight = null
+                        throw error
+                    })
+                }
+                return spawnInFlight
+            }
+
+            const syncGlobals = async ({ session, sentGlobals }: LiveScriptSession): Promise<void> => {
+                await Promise.all(Object.entries(context).map(([key, value]) => {
+                    const alreadySent = sentGlobals.get(key)
+                    if (alreadySent !== undefined && alreadySent.value === value) {
+                        return alreadySent.send
+                    }
+                    const send = session.setGlobal({ key, value })
+                    sentGlobals.set(key, { value, send })
+                    send.catch(() => {
+                        if (sentGlobals.get(key)?.send === send) {
+                            sentGlobals.delete(key)
+                        }
+                    })
+                    return send
+                }))
+            }
+
             return {
                 run: async (script: string) => {
                     if (disposed) {
                         throw new Error('Script session has been disposed')
                     }
-                    return sandbox.runScript({ script, scriptContext: context, functions })
+                    const live = await ensureLive()
+                    await syncGlobals(live)
+                    return live.session.run({ script })
                 },
                 setGlobal: async (key: string, value: unknown, noOverwrite = true) => {
                     if (noOverwrite && (key in context || key in functions)) {
@@ -94,6 +152,10 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
                 },
                 dispose: () => {
                     disposed = true
+                    current?.session.dispose()
+                    spawnInFlight?.then(({ session }) => session.dispose()).catch(() => undefined)
+                    current = null
+                    spawnInFlight = null
                 },
             }
         },
@@ -101,8 +163,16 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
     return sandbox
 }
 
-function resolveDenoDirBase(stepDir: string): string | undefined {
-    return process.env['AP_EXECUTION_MODE'] === ExecutionMode.SANDBOX_CODE_ONLY ? stepDir : undefined
+function resolveWarmDenoDir(flowVersionDir: string): string | undefined {
+    const mode = process.env['AP_EXECUTION_MODE']
+    const stepDirIsWritable = mode === ExecutionMode.SANDBOX_CODE_ONLY || mode === ExecutionMode.UNSANDBOXED
+    const cacheIsMounted = process.env['AP_DENO_CACHE_MOUNTED'] === 'true'
+    if (cacheIsMounted) {
+        // See brain/knowledge/decisions/000049-every-isolate-box-can-write-the-shared-deno-cache-because-the-engine-clears-its-umask.md
+        process.umask(0)
+    }
+    const cacheMountAvailable = stepDirIsWritable || cacheIsMounted
+    return cacheMountAvailable ? join(flowVersionDir, DENO_CACHE_DIR_NAME) : undefined
 }
 
 function buildPropagatedEnv(permissions: DenoPermission[]): Record<string, string> {
@@ -119,4 +189,21 @@ function buildPropagatedEnv(permissions: DenoPermission[]): Record<string, strin
         }
     }
     return env
+}
+
+const DENO_CACHE_DIR_NAME = '.deno-cache'
+
+type SentGlobal = {
+    value: unknown
+    send: Promise<void>
+}
+
+type LiveScriptSession = {
+    session: DenoSession
+    sentGlobals: Map<string, SentGlobal>
+}
+
+type DenoCodeSandboxParams = {
+    permissions: DenoPermission[]
+    codeStepMemoryLimitMb: number | null
 }

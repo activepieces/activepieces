@@ -4,14 +4,20 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { ExecutionMode, FlowVersionState, NetworkMode } from '@activepieces/shared'
-import { ApLogger } from '@activepieces/server-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const installMock = vi.fn()
-const buildMock = vi.fn()
+const { installMock, buildMock, transpileMock } = vi.hoisted(() => ({
+    installMock: vi.fn(),
+    buildMock: vi.fn(),
+    transpileMock: vi.fn(),
+}))
 
 vi.mock('../../../../../src/lib/utils/bun-runner', () => ({
     bunRunner: () => ({ install: installMock, build: buildMock }),
+}))
+
+vi.mock('../../../../../src/lib/cache/flow/code/deno-step-transpiler', () => ({
+    denoStepTranspiler: { toCommonJs: transpileMock },
 }))
 
 // eslint-disable-next-line import/first
@@ -20,6 +26,8 @@ import { codeBuilder } from '../../../../../src/lib/cache/flow/code/code-builder
 import { codeCache } from '../../../../../src/lib/cache/flow/code/code-cache'
 // eslint-disable-next-line import/first
 import { SandboxSettings } from '../../../../../src/lib/types'
+// eslint-disable-next-line import/first
+import { testLogger } from '../../../../helpers/logger'
 
 const folders: string[] = []
 
@@ -29,22 +37,7 @@ function uniqueFolder(): string {
     return folder
 }
 
-function createNoopLog(): ApLogger {
-    const log: ApLogger = {
-        level: 'silent',
-        silent: () => undefined,
-        info: () => undefined,
-        warn: () => undefined,
-        error: () => undefined,
-        fatal: () => undefined,
-        debug: () => undefined,
-        trace: () => undefined,
-        child: () => log,
-    }
-    return log
-}
-
-const noopLog = createNoopLog()
+const noopLog = testLogger.noop
 
 const getSettings = (): SandboxSettings => ({
     EXECUTION_MODE: ExecutionMode.SANDBOX_CODE_AND_PROCESS,
@@ -97,9 +90,13 @@ function mockBuildSuccess(): void {
     })
 }
 
+const TRANSPILED_SOURCE = 'exports.code = async () => 42'
+
 beforeEach(() => {
     installMock.mockReset()
     buildMock.mockReset()
+    transpileMock.mockReset()
+    transpileMock.mockResolvedValue({ code: TRANSPILED_SOURCE })
 })
 
 afterEach(async () => {
@@ -150,7 +147,7 @@ describe('codeBuilder.processCodeStep', () => {
         await expect(runStub(stub)).rejects.toThrow('boom `backtick` and ${injection}')
     })
 
-    it('writes the source verbatim as index.ts and keeps node_modules when install succeeds', async () => {
+    it('transpiles a deno step to index.cjs, keeps the raw index.ts beside it, and keeps node_modules', async () => {
         const codesFolderPath = uniqueFolder()
         const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
         mockInstallSuccess()
@@ -160,9 +157,39 @@ describe('codeBuilder.processCodeStep', () => {
         ).resolves.toBe('success')
 
         expect(installMock).toHaveBeenCalledTimes(1)
+        expect(transpileMock).toHaveBeenCalledWith({ source: SOURCE })
+        const ref = { flowVersionId: artifact.flowVersionId, stepName: artifact.name }
+        await expect(readFile(codeCache(codesFolderPath).transpiledStepPath(ref), 'utf8')).resolves.toBe(TRANSPILED_SOURCE)
+        await expect(readFile(codeCache(codesFolderPath).stepEntryPath(ref), 'utf8')).resolves.toBe(SOURCE)
+        expect(existsSync(join(codeCache(codesFolderPath).stepDir(ref), 'node_modules'))).toBe(true)
+        await expect(readFile(join(codeCache(codesFolderPath).stepDir(ref), 'package.json'), 'utf8')).resolves.toContain('@types/node')
+    })
+
+    it('falls back to the raw index.ts when the transpiler asks for ESM (top-level await)', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{}')
+        transpileMock.mockResolvedValue({ fallbackToEsm: true })
+
+        await expect(
+            codeBuilder(noopLog, getSettings).processCodeStep({ artifact, codesFolderPath }),
+        ).resolves.toBe('success')
+
         const ref = { flowVersionId: artifact.flowVersionId, stepName: artifact.name }
         await expect(readFile(codeCache(codesFolderPath).stepEntryPath(ref), 'utf8')).resolves.toBe(SOURCE)
-        await expect(readFile(join(codeCache(codesFolderPath).stepDir(ref), 'package.json'), 'utf8')).resolves.toContain('@types/node')
+        expect(existsSync(codeCache(codesFolderPath).transpiledStepPath(ref))).toBe(false)
+    })
+
+    it('falls back to the raw index.ts when the transpiler fails, without failing the build', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{}')
+        transpileMock.mockRejectedValue(new Error('deno exploded'))
+
+        await expect(
+            codeBuilder(noopLog, getSettings).processCodeStep({ artifact, codesFolderPath }),
+        ).resolves.toBe('success')
+
+        const ref = { flowVersionId: artifact.flowVersionId, stepName: artifact.name }
+        await expect(readFile(codeCache(codesFolderPath).stepEntryPath(ref), 'utf8')).resolves.toBe(SOURCE)
     })
 
     it('compiles a legacy step (useDeno false) to index.js and removes node_modules', async () => {
@@ -271,10 +298,9 @@ describe('codeBuilder.processCodeStep', () => {
     it('rebuilds when the entry module was deleted out of band, instead of serving a phantom cache hit', async () => {
         const codesFolderPath = uniqueFolder()
         const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
-        const entryPath = codeCache(codesFolderPath).stepEntryPath({
-            flowVersionId: artifact.flowVersionId,
-            stepName: artifact.name,
-        })
+        const ref = { flowVersionId: artifact.flowVersionId, stepName: artifact.name }
+        const transpiledPath = codeCache(codesFolderPath).transpiledStepPath(ref)
+        const rawEntryPath = codeCache(codesFolderPath).stepEntryPath(ref)
         mockInstallSuccess()
 
         const builder = codeBuilder(noopLog, getSettings)
@@ -285,11 +311,13 @@ describe('codeBuilder.processCodeStep', () => {
         await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('success')
         expect(installMock).toHaveBeenCalledTimes(1)
 
-        await rm(entryPath)
+        await rm(transpiledPath)
+        await rm(rawEntryPath)
 
         await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('success')
         expect(installMock).toHaveBeenCalledTimes(2)
-        await expect(readFile(entryPath, 'utf8')).resolves.toBe(SOURCE)
+        await expect(readFile(transpiledPath, 'utf8')).resolves.toBe(TRANSPILED_SOURCE)
+        await expect(readFile(rawEntryPath, 'utf8')).resolves.toBe(SOURCE)
     })
 
     it('rebuilds when node_modules was deleted out of band and the step declares dependencies', async () => {
@@ -315,7 +343,7 @@ describe('codeBuilder.processCodeStep', () => {
     it('builds once when concurrent runs provision the same step, instead of each rebuilding over the others', async () => {
         const codesFolderPath = uniqueFolder()
         const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
-        const entryPath = codeCache(codesFolderPath).stepEntryPath({
+        const entryPath = codeCache(codesFolderPath).transpiledStepPath({
             flowVersionId: artifact.flowVersionId,
             stepName: artifact.name,
         })
@@ -330,6 +358,45 @@ describe('codeBuilder.processCodeStep', () => {
 
         expect(statuses).toEqual(Array.from({ length: concurrentCount }, () => 'success'))
         expect(installMock).toHaveBeenCalledTimes(1)
-        await expect(readFile(entryPath, 'utf8')).resolves.toBe(SOURCE)
+        await expect(readFile(entryPath, 'utf8')).resolves.toBe(TRANSPILED_SOURCE)
     })
+})
+
+describe('codeBuilder in-place rebuilds', () => {
+    it('keeps node_modules across a rebuild and only replaces the build outputs', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
+        const ref = { flowVersionId: artifact.flowVersionId, stepName: artifact.name }
+        const stepDir = codeCache(codesFolderPath).stepDir(ref)
+        mockInstallSuccess()
+
+        await expect(
+            codeBuilder(noopLog, getSettings).processCodeStep({ artifact, codesFolderPath }),
+        ).resolves.toBe('success')
+
+        const markerPath = join(stepDir, 'node_modules', 'marker.txt')
+        await writeFile(markerPath, 'installed-earlier', 'utf8')
+
+        const changedSource = 'export const code = async () => 43'
+        const changedArtifact = { ...artifact, sourceCode: { ...artifact.sourceCode, code: changedSource } }
+        await expect(
+            codeBuilder(noopLog, getSettings).processCodeStep({ artifact: changedArtifact, codesFolderPath }),
+        ).resolves.toBe('success')
+
+        await expect(readFile(markerPath, 'utf8')).resolves.toBe('installed-earlier')
+        await expect(readFile(codeCache(codesFolderPath).stepEntryPath(ref), 'utf8')).resolves.toBe(changedSource)
+    })
+
+    it('installs dependencies with force so an interrupted earlier install is fully re-linked', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
+        mockInstallSuccess()
+
+        await expect(
+            codeBuilder(noopLog, getSettings).processCodeStep({ artifact, codesFolderPath }),
+        ).resolves.toBe('success')
+
+        expect(installMock).toHaveBeenCalledWith(expect.objectContaining({ force: true }))
+    })
+
 })

@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { billingMutations, billingQueries } from '../hooks/billing-hooks';
 
@@ -70,7 +71,7 @@ export function KeepPlanDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-2 rounded-lg border p-4 text-sm">
+        <div className="flex flex-col gap-2 rounded-xl border p-4 text-sm">
           {!isNil(priceLabel) && (
             <DetailRow label={t('Price')} value={priceLabel} />
           )}
@@ -98,6 +99,7 @@ export function KeepPlanDialog({
             {t('Cancel')}
           </Button>
           <Button
+            {...adminControl(AdminControl.BILLING_KEEP_PLAN_SUBMIT)}
             type="button"
             loading={isPending}
             onClick={() => reactivate()}

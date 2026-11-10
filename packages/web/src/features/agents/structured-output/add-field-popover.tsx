@@ -81,7 +81,7 @@ export const AddFieldPopover = ({
                   <div className="flex items-center">
                     <FieldTypeIcon
                       type={AgentOutputFieldType.TEXT}
-                      className="h-4 w-4 mr-2 text-muted-foreground"
+                      className="h-4 w-4 mr-2 text-gray-11"
                     />
                     <span>Text</span>
                   </div>
@@ -90,7 +90,7 @@ export const AddFieldPopover = ({
                   <div className="flex items-center">
                     <FieldTypeIcon
                       type={AgentOutputFieldType.NUMBER}
-                      className="h-4 w-4 mr-2 text-muted-foreground"
+                      className="h-4 w-4 mr-2 text-gray-11"
                     />
                     <span>Number</span>
                   </div>
@@ -99,7 +99,7 @@ export const AddFieldPopover = ({
                   <div className="flex items-center">
                     <FieldTypeIcon
                       type={AgentOutputFieldType.BOOLEAN}
-                      className="h-4 w-4 mr-2 text-muted-foreground"
+                      className="h-4 w-4 mr-2 text-gray-11"
                     />
                     <span>Yes/No</span>
                   </div>

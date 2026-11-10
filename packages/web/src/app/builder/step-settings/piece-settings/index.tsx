@@ -10,9 +10,13 @@ import {
   PieceActionSettings,
   PieceTrigger,
   PieceTriggerSettings,
+  PropertyExecutionType,
 } from '@activepieces/shared';
 import React from 'react';
+import { useFormContext } from 'react-hook-form';
 
+import { AutoFormFieldWrapper } from '@/app/builder/piece-properties/auto-form-field-wrapper';
+import { FormField } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
@@ -23,7 +27,7 @@ import { GenericPropertiesForm } from '../../piece-properties/generic-properties
 import { PieceNotAvailableAlert } from '../piece-not-available-alert';
 import { useStepSettingsContext } from '../step-settings-context';
 
-import { ConnectionSelect } from './connection-select';
+import { ConnectionSelectWithSwitchConfirmation } from './switch-connection-confirmation-dialog';
 
 const PieceSettings = React.memo((props: PieceSettingsProps) => {
   const {
@@ -33,6 +37,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     updateFormSchema,
     updatePropertySettingsSchema,
   } = useStepSettingsContext();
+  const form = useFormContext<PieceAction | PieceTrigger>();
 
   const actionName = (props.step.settings as PieceActionSettings).actionName;
   const selectedAction = actionName
@@ -63,10 +68,14 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
   );
 
   const { data: frontendUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
+  const { data: embedSubdomainUrl } = flagsHooks.useFlag<string>(
+    ApFlagId.EMBED_SUBDOMAIN_URL,
+  );
+  const publicLinkBaseUrl = embedSubdomainUrl ?? frontendUrl;
   const markdownVariables = {
     webhookUrl: `${webhookPrefixUrl}/${props.flowId}`,
-    formUrl: `${frontendUrl}forms/${props.flowId}`,
-    chatUrl: `${frontendUrl}chats/${props.flowId}`,
+    formUrl: `${publicLinkBaseUrl}forms/${props.flowId}`,
+    chatUrl: `${publicLinkBaseUrl}chats/${props.flowId}`,
     pausedFlowTimeoutDays: pausedFlowTimeoutDays?.toString() ?? '',
     webhookTimeoutSeconds: webhookTimeoutSeconds?.toString() ?? '',
   };
@@ -75,6 +84,10 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     !isNil(selectedAction) && (selectedAction.requireAuth ?? true);
   const showAuthForTrigger =
     !isNil(selectedTrigger) && (selectedTrigger.requireAuth ?? true);
+  const pieceAuth = pieceModel?.auth;
+  const authDynamicInputModeToggled =
+    form.getValues().settings.propertySettings['auth']?.type ===
+    PropertyExecutionType.DYNAMIC;
 
   if (!pieceModel && pieceModelNotFound) {
     return (
@@ -142,12 +155,36 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
 
       {pieceModel && (
         <>
-          {pieceModel.auth && (showAuthForAction || showAuthForTrigger) && (
-            <ConnectionSelect
-              isTrigger={!isNil(selectedTrigger)}
-              piece={pieceModel}
-              disabled={props.readonly}
-            ></ConnectionSelect>
+          {pieceAuth && (showAuthForAction || showAuthForTrigger) && (
+            <FormField
+              control={form.control}
+              key={
+                authDynamicInputModeToggled
+                  ? 'auth-dynamic'
+                  : `auth-${form.getValues().settings.input.auth}`
+              }
+              name={'settings.input.auth'}
+              render={({ field }) => (
+                <AutoFormFieldWrapper
+                  property={pieceAuth}
+                  propertyName="auth"
+                  field={field}
+                  disabled={props.readonly}
+                  inputName="settings.input.auth"
+                  allowDynamicValues={isNil(selectedTrigger)}
+                  dynamicInputModeToggled={authDynamicInputModeToggled}
+                  isForConnectionSelect={true}
+                >
+                  <ConnectionSelectWithSwitchConfirmation
+                    piece={pieceModel}
+                    stepProps={(selectedAction ?? selectedTrigger)?.props ?? {}}
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={props.readonly}
+                  />
+                </AutoFormFieldWrapper>
+              )}
+            />
           )}
           {selectedAction && (
             <>

@@ -52,7 +52,12 @@ const GenericActionOrTriggerItem = ({
       };
   const pieceSelectorItemInfo = getPieceSelectorItemInfo(item);
   return (
-    <CardListItem className="p-2 w-full" onClick={onClick} style={style}>
+    <CardListItem
+      className="p-2 w-full"
+      onClick={onClick}
+      style={style}
+      data-testid={`action-or-trigger-${pieceSelectorItemInfo.displayName}`}
+    >
       <div className="flex gap-3 items-center w-full min-w-0">
         <div
           className={cn({
@@ -76,10 +81,7 @@ const GenericActionOrTriggerItem = ({
               {pieceSelectorItemInfo.displayName}
             </div>
             {pieceSelectorItemInfo.classification && (
-              <Badge
-                variant="accent"
-                className="shrink-0 px-1.5 py-0 text-xss font-normal"
-              >
+              <Badge variant="secondary" className="font-normal">
                 {ACTION_CLASSIFICATION_BADGES[
                   pieceSelectorItemInfo.classification
                 ].label()}
@@ -87,7 +89,7 @@ const GenericActionOrTriggerItem = ({
             )}
           </div>
           <div
-            className={cn('text-xs text-muted-foreground', {
+            className={cn('text-xs text-gray-11', {
               truncate: hidePieceIconAndDescription,
             })}
           >
