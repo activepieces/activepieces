@@ -1,5 +1,5 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Permission, ProjectRole, RoleType, SeekPage } from '@activepieces/core-utils'
-import { ApplicationEventName, InvitationStatus, InvitationType, ListUserInvitationsRequest, PlatformRole, Principal, PrincipalType, ProjectType, RemoveProjectFromInvitationResponse, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationEvent, UserInvitationWithLink } from '@activepieces/shared'
+import { ApplicationEventName, INVITATION_EXPIRY_SECONDS, InvitationStatus, InvitationType, ListUserInvitationsRequest, PlatformRole, Principal, PrincipalType, ProjectType, RemoveProjectFromInvitationResponse, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, ServicePrincipal, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationEvent, UserInvitationWithLink, UserPrincipal } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -19,7 +19,7 @@ import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
-import { INVITATION_EXPIRY_SECONDS, userInvitationsService } from './user-invitation.service'
+import { userInvitationsService } from './user-invitation.service'
 
 export const invitationModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(invitationController, { prefix: '/v1/user-invitations' })
@@ -160,7 +160,10 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
         switch (invitation.type) {
             case InvitationType.PROJECT: {
                 assertNotNullOrUndefined(invitation.projectId, 'projectId')
-                await assertPrincipalHasPermissionToProject(app, request, reply, request.principal, invitation.projectId, Permission.WRITE_INVITATION)
+                const platformAdmin = await isPlatformAdmin({ principal: request.principal, log: request.log })
+                if (!platformAdmin) {
+                    await assertPrincipalHasPermissionToProject(app, request, reply, request.principal, invitation.projectId, Permission.WRITE_INVITATION)
+                }
                 break
             }
             case InvitationType.PLATFORM:
@@ -285,6 +288,14 @@ async function assertPrincipalHasPermissionToProject<R extends Principal & { pla
     }
     await platformMustHaveFeatureEnabled((platform) => platform.plan.projectRolesEnabled).call(fastify, request, reply)
     await assertRoleHasPermission(request.principal, projectId, permission, request.log)
+}
+
+async function isPlatformAdmin({ principal, log }: IsPlatformAdminParams): Promise<boolean> {
+    if (principal.type === PrincipalType.SERVICE) {
+        return true
+    }
+    const user = await userService(log).getOneOrFail({ id: principal.id })
+    return user.platformRole === PlatformRole.ADMIN && user.platformId === principal.platform.id
 }
 
 
@@ -433,4 +444,9 @@ type InvitationEventSourceParams = {
     request: FastifyRequest
     invitation: UserInvitation
     userId: string | null
+}
+
+type IsPlatformAdminParams = {
+    principal: UserPrincipal | ServicePrincipal
+    log: FastifyBaseLogger
 }

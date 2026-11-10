@@ -22,6 +22,7 @@ export enum SystemJobName {
     RUN_BACKGROUND_MIGRATIONS = 'run-background-migrations',
     AUDIT_LOG_RETENTION = 'audit-log-retention',
     INVITE_REWARD_GRANT = 'invite-reward-grant',
+    TRIAL_SEAT_GRACE_SWEEP = 'trial-seat-grace-sweep',
 }
 
 type DeleteFlowDurableSystemJobData =  {
@@ -83,6 +84,7 @@ type SystemJobDataMap = {
     [SystemJobName.RUN_BACKGROUND_MIGRATIONS]: Record<string, never>
     [SystemJobName.AUDIT_LOG_RETENTION]: Record<string, never>
     [SystemJobName.INVITE_REWARD_GRANT]: InviteRewardGrantSystemJobData
+    [SystemJobName.TRIAL_SEAT_GRACE_SWEEP]: Record<string, never>
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never

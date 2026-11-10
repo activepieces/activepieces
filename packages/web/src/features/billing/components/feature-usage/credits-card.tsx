@@ -28,7 +28,7 @@ export const CreditsCard = ({
   const footer = resolveFooter(info);
   const switchesToPlanName =
     info.scheduledPlanName ??
-    (info.billingPortalAvailable ? info.autumnPlanName : t('Free'));
+    (info.hasPaymentMethod ? info.autumnPlanName : t('Free'));
 
   return (
     <div className={cn('flex flex-col rounded-xl border bg-panel', className)}>

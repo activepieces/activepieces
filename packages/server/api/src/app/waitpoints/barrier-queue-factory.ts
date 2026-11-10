@@ -89,6 +89,7 @@ export type BarrierFanOutPayload = {
     entryStepName: string
     batchStepName: string
     seedSteps: Record<string, unknown>
+    batchSize: number
     batches: unknown[][]
 }
 

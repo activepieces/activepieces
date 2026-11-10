@@ -15,7 +15,8 @@ function _deleteAction(
                 parentStep.nextAction = stepToUpdate.nextAction
             }
             switch (parentStep.type) {
-                case FlowActionType.LOOP_ON_ITEMS: {
+                case FlowActionType.LOOP_ON_ITEMS:
+                case FlowActionType.PROCESS_IN_BATCHES: {
                     if (
                         parentStep.firstLoopAction &&
                         parentStep.firstLoopAction.name === name

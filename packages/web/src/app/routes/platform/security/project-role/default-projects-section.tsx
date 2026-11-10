@@ -15,7 +15,7 @@ import {
   ItemTitle,
 } from '@/components/ui/item';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { PLATFORM_FEATURES, useFeatureGate } from '@/features/billing';
+import { LockedGem, useLockedFeature } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -30,9 +30,9 @@ export function DefaultProjectsSection() {
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [showsAll, setShowsAll] = useState(false);
-  const gate = useFeatureGate({
-    locked: !platform.plan.projectRolesEnabled,
-    feature: PLATFORM_FEATURES.projectRoles,
+  const lockedFeature = useLockedFeature({
+    unlocked: platform.plan.projectRolesEnabled,
+    featureKey: 'CUSTOM_ROLES',
   });
 
   const { mutateAsync: setDefaultProjects, isPending } =
@@ -48,7 +48,7 @@ export function DefaultProjectsSection() {
     setIsDialogOpen(false);
   };
 
-  const defaultProjects: DefaultProject[] = gate.locked
+  const defaultProjects: DefaultProject[] = lockedFeature.locked
     ? sampleData.defaultProjects()
     : teamProjects
         .filter((project) => platform.defaultProjectIds.includes(project.id))
@@ -63,8 +63,8 @@ export function DefaultProjectsSection() {
   const hiddenCount = defaultProjects.length - visibleProjects.length;
 
   const openDialog = () => {
-    if (gate.locked) {
-      gate.open();
+    if (lockedFeature.locked) {
+      lockedFeature.showLockedDialog();
       return;
     }
     setIsDialogOpen(true);
@@ -92,7 +92,7 @@ export function DefaultProjectsSection() {
           className="shrink-0"
           onClick={openDialog}
         >
-          {gate.crown}
+          {lockedFeature.locked && <LockedGem />}
           {t('Add project')}
         </AnimatedIconButton>
       </div>
@@ -122,10 +122,10 @@ export function DefaultProjectsSection() {
                   {t('projectMemberCount', { count: project.memberCount })}
                 </span>
                 <span className="flex w-8 shrink-0 justify-center">
-                  {gate.locked ? (
+                  {lockedFeature.locked ? (
                     removeIconButton({
                       projectName: project.displayName,
-                      onClick: gate.open,
+                      onClick: lockedFeature.showLockedDialog,
                     })
                   ) : (
                     <RemoveDefaultProjectButton
@@ -157,7 +157,6 @@ export function DefaultProjectsSection() {
         isSaving={isPending}
         onSave={saveDefaultProjects}
       />
-      {gate.dialog}
     </section>
   );
 }
