@@ -10,17 +10,34 @@ export const transcribeAudio = createAction({
   classification: 'READ',
   displayName: 'Transcribe Audio',
   description:
-    'Transcribe pre-recorded audio files with speaker diarization and advanced features',
-  aiMetadata: { description: 'Transcribes a pre-recorded audio file with a GreenPT speech-to-text model (green-s or green-s-pro), with optional speaker diarization, punctuation, smart formatting, filler words, numeral conversion, and sentiment, topic, or intent analysis. Requires the audio as a file input, supplied either as base64 data or as a URL the engine fetches, language is auto-detected unless a code is supplied, and only the plain transcript text is returned. Use this for speech input; use Ask GreenPT for text generation. Read-only inference and idempotent: nothing is created and the same file with the same options yields the same transcript.', idempotent: true },
+    'Turn a recorded audio file into text.',
+  aiMetadata: { description: 'Transcribes a pre-recorded audio file with a GreenPT speech-to-text model (green-s or green-s-pro), with optional speaker diarization, punctuation, smart formatting, filler words, numeral conversion, and sentiment, topic, or intent analysis. Requires the audio as a file input, supplied either as base64 data or as a URL the engine fetches, language defaults to English unless a code is supplied, and only the plain transcript text is returned. Use this for speech input; use Ask GreenPT for text generation. Read-only inference and idempotent: nothing is created and the same file with the same options yields the same transcript.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'audio',
+      display: 'section',
+      label: 'Audio',
+      icon: 'file',
+      props: ['audioUrl', 'model', 'language'],
+    },
+    {
+      key: 'transcript',
+      display: 'section',
+      label: 'Transcript',
+      icon: 'text',
+      props: ['punctuate', 'smart_format', 'filler_words', 'numerals'],
+    },
+  ],
   props: {
     audioUrl: Property.File({
       displayName: 'Audio File',
-      description: 'Audio file to transcribe (WAV, MP3, FLAC, etc.)',
+      description: 'The recording to transcribe, such as WAV, MP3 or FLAC.',
       required: true,
     }),
     model: Property.StaticDropdown({
       displayName: 'Model',
-      description: 'Speech-to-text model to use',
+      description: 'Pro handles mixed languages.',
+      width: 'half',
       required: false,
       defaultValue: 'green-s',
       options: {
@@ -39,56 +56,64 @@ export const transcribeAudio = createAction({
     }),
     language: Property.ShortText({
       displayName: 'Language',
-      description:
-        'Language code (e.g., en, fr, de). Auto-detected if not specified',
+      description: 'Empty: English.',
+      placeholder: 'fr, or multi (Pro)',
+      width: 'half',
       required: false,
-    }),
-    diarize: Property.Checkbox({
-      displayName: 'Speaker Diarization',
-      description: 'Enable speaker diarization to identify different speakers',
-      required: false,
-      defaultValue: false,
     }),
     punctuate: Property.Checkbox({
-      displayName: 'Punctuate',
-      description: 'Add punctuation and capitalization to transcript',
+      displayName: 'Add Punctuation',
+      description: 'Add punctuation and capital letters.',
       required: false,
       defaultValue: true,
     }),
     smart_format: Property.Checkbox({
       displayName: 'Smart Format',
-      description:
-        'Apply formatting to transcript output for improved readability',
+      description: 'Format dates and amounts. English and Green S only.',
       required: false,
       defaultValue: false,
     }),
     filler_words: Property.Checkbox({
       displayName: 'Include Filler Words',
-      description: 'Include filler words like "uh" and "um" in transcript',
+      description: 'Keep words like "uh" and "um".',
       required: false,
       defaultValue: false,
     }),
     numerals: Property.Checkbox({
-      displayName: 'Convert Numerals',
-      description: 'Convert numbers from written format to numerical format',
+      displayName: 'Use Digits for Numbers',
+      description: 'Write numbers as digits, such as 42 instead of forty-two.',
+      required: false,
+      defaultValue: false,
+    }),
+    diarize: Property.Checkbox({
+      displayName: 'Identify Speakers',
+      description:
+        "Detects who is speaking; labels are not in this step's output.",
+      advanced: true,
       required: false,
       defaultValue: false,
     }),
     sentiment: Property.Checkbox({
       displayName: 'Analyze Sentiment',
-      description: 'Analyze sentiment throughout the transcript',
+      description:
+        "Runs sentiment analysis; results are not in this step's output.",
+      advanced: true,
       required: false,
       defaultValue: false,
     }),
     topics: Property.Checkbox({
       displayName: 'Detect Topics',
-      description: 'Detect topics throughout the transcript',
+      description:
+        "Detects topics; results are not in this step's output.",
+      advanced: true,
       required: false,
       defaultValue: false,
     }),
     intents: Property.Checkbox({
       displayName: 'Recognize Intents',
-      description: 'Recognize speaker intent throughout the transcript',
+      description:
+        "Recognizes intents; results are not in this step's output.",
+      advanced: true,
       required: false,
       defaultValue: false,
     }),
