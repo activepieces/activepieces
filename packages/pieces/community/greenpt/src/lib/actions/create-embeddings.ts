@@ -10,19 +10,20 @@ export const createEmbeddings = createAction({
   classification: 'READ',
   displayName: 'Create Embeddings',
   description:
-    'Generate embeddings for text input using GreenPT models for semantic search and similarity matching',
+    'Turn text into vectors for semantic search and similarity matching.',
   aiMetadata: { description: 'Converts text into embedding vectors with GreenPT\'s fixed green-embedding model, returned as floats or base64; newline-separated input is split so each non-empty line is embedded as its own vector, while single-line input embeds one string. Use for semantic search, clustering, or similarity scoring, rather than Ask GreenPT which returns generated text. Idempotent: no resource is created and the same text with the same encoding format yields the same vectors.', idempotent: true },
   props: {
     input: Property.LongText({
-      displayName: 'Input Text',
-      description:
-        'Input text to embed. Can be a single string or multiple texts separated by newlines',
+      displayName: 'Text',
+      description: 'One text per line; each line becomes its own vector.',
+      placeholder: 'First text to embed\nSecond text to embed',
       required: true,
     }),
     encoding_format: Property.StaticDropdown({
       displayName: 'Encoding Format',
-      description: 'The format to return the embeddings in',
+      description: 'Float returns lists of numbers; Base64 returns compact strings.',
       required: false,
+      advanced: true,
       defaultValue: 'float',
       options: {
         disabled: false,
