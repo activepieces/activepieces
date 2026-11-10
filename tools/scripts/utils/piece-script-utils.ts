@@ -7,6 +7,7 @@ import { cwd } from 'node:process'
 import * as semver from 'semver'
 import { tryCatch } from '@activepieces/core-utils'
 import { readPackageJson } from './files'
+import { cloudApiFetch } from './cloud-api-fetch'
 import { StatusCodes } from 'http-status-codes'
 import { pieceTranslation, PieceMetadata } from '@activepieces/pieces-framework'
 
@@ -67,9 +68,9 @@ export const pieceMetadataExists = async (
     pieceName: string,
     pieceVersion: string
 ): Promise<boolean> => {
-    const cloudResponse = await fetch(
-        `${AP_CLOUD_API_BASE}/pieces/${pieceName}?version=${pieceVersion}`
-    );
+    const cloudResponse = await cloudApiFetch.fetchWithRetry({
+        url: `${AP_CLOUD_API_BASE}/pieces/${pieceName}?version=${pieceVersion}`,
+    });
 
     const pieceExist: Record<number, boolean> = {
         [StatusCodes.OK]: true,
@@ -80,7 +81,7 @@ export const pieceMetadataExists = async (
         pieceExist[cloudResponse.status] === null ||
         pieceExist[cloudResponse.status] === undefined
     ) {
-        throw new Error(await cloudResponse.text());
+        throw new Error(`[pieceMetadataExists] ${pieceName}@${pieceVersion} unexpected status=${cloudResponse.status}`);
     }
 
     return pieceExist[cloudResponse.status];
