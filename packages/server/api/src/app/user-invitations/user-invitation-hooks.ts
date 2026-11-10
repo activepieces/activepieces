@@ -8,7 +8,7 @@ export const userInvitationHooks = hooksFactory.create<UserInvitationHooks>(() =
 
 export type InvitedUserJoinedParams = {
     platformId: string
-    userId: string
+    identityId: string
 }
 
 export type UserInvitationHooks = {

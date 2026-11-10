@@ -3,6 +3,7 @@ import { InvitationStatus, InvitationType, InviteRewardSummary, PlatformRole, Pr
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { inviteRewardService } from '../../../../src/app/ee/invite-reward/invite-reward.service'
 import { autumnConsole } from '../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils'
 import { systemJobsSchedule } from '../../../../src/app/helper/system-jobs/system-job'
 import { billingProvider } from '../../../../src/app/platform/billing-provider'
@@ -71,6 +72,16 @@ describe('Invite reward', () => {
             expect(autumnConsole.grantInviteReward).not.toHaveBeenCalled()
         })
 
+        it('still grants when the member is removed before the job runs', async () => {
+            const { mockPlatform } = await setupPlatform()
+            const identity = createMockUserIdentity({ verified: true })
+            await databaseConnection().getRepository('user_identity').save(identity)
+
+            await inviteRewardService(mockLog).grantOnJoin({ platformId: mockPlatform.id, identityId: identity.id })
+
+            expect(autumnConsole.grantInviteReward).toHaveBeenCalledWith({ autumnCustomerId: CREDS.autumnCustomerId, inviteeEmail: identity.email })
+        })
+
         it('does nothing when the platform has no billing account', async () => {
             const { mockPlatform } = await setupPlatform()
             vi.mocked(autumnConsole.getCreds).mockResolvedValue(null)
@@ -98,8 +109,8 @@ describe('Invite reward', () => {
 
             const email = await joinAsNewMember({ platformId: mockPlatform.id })
 
-            const member = await databaseConnection().getRepository('user').findOneByOrFail({ platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER })
-            const jobId = `invite-reward-grant-${mockPlatform.id}-${member.id}`
+            const identity = await databaseConnection().getRepository('user_identity').findOneByOrFail({ email })
+            const jobId = `invite-reward-grant-${mockPlatform.id}-${identity.id}`
             await vi.waitFor(() => expect(autumnConsole.grantInviteReward).toHaveBeenCalledWith({ autumnCustomerId: CREDS.autumnCustomerId, inviteeEmail: email }))
             await vi.waitFor(async () => expect(await systemJobsSchedule(mockLog).getJobState(jobId)).toBe('delayed'))
         })
