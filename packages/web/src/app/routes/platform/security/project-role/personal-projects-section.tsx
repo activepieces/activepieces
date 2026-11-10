@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/item';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { Switch } from '@/components/ui/switch';
-import { PLATFORM_FEATURES, useFeatureGate } from '@/features/billing';
+import { useLockedFeature } from '@/features/billing';
 import {
   newMemberSettingsMutations,
   newMemberSettingsQueries,
@@ -31,9 +31,9 @@ export function PersonalProjectsSection() {
   const [openDialog, setOpenDialog] = useState<'turn-on' | 'turn-off' | null>(
     null,
   );
-  const gate = useFeatureGate({
-    locked: !platform.plan.projectRolesEnabled,
-    feature: PLATFORM_FEATURES.projectRoles,
+  const lockedFeature = useLockedFeature({
+    unlocked: platform.plan.projectRolesEnabled,
+    featureKey: 'CUSTOM_ROLES',
   });
   const { mutateAsync: updateSettings, isPending: isUpdating } =
     newMemberSettingsMutations.useUpdateNewMemberSettings();
@@ -41,17 +41,17 @@ export function PersonalProjectsSection() {
     newMemberSettingsMutations.useCreateMissingPersonalProjects();
   const { data: summary, refetch: refetchSummary } =
     newMemberSettingsQueries.usePersonalProjectsSummary({
-      enabled: !gate.locked,
+      enabled: !lockedFeature.locked,
     });
   const [isCheckingMembers, setIsCheckingMembers] = useState(false);
   const [membersToOffer, setMembersToOffer] = useState(0);
   const isPending = isUpdating || isCreatingMissing || isCheckingMembers;
 
-  const isEnabled = gate.locked || platform.autoCreatePersonalProjects;
+  const isEnabled = lockedFeature.locked || platform.autoCreatePersonalProjects;
 
   const onCheckedChange = async (checked: boolean) => {
-    if (gate.locked) {
-      gate.open();
+    if (lockedFeature.locked) {
+      lockedFeature.showLockedDialog();
       return;
     }
     if (!checked) {
@@ -148,7 +148,6 @@ export function PersonalProjectsSection() {
         isPending={isPending}
         onConfirm={turnOff}
       />
-      {gate.dialog}
     </section>
   );
 }
