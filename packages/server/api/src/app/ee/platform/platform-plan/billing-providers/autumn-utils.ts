@@ -1,6 +1,6 @@
 import { assertNotNullOrUndefined, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil, safeHttp } from '@activepieces/server-utils'
-import { ApEdition, ConsumableFeatureId, FeatureFlagId, isFreeLegacyEligible, PlanName, PlatformPlanLimits, PurchasablePlan, SelfServeTrialDates, UnconsumableFeatureId } from '@activepieces/shared'
+import { ApEdition, ConsumableFeatureId, FeatureFlagId, InviteRewardSummary, isFreeLegacyEligible, PlanName, PlatformPlanLimits, PurchasablePlan, SelfServeTrialDates, UnconsumableFeatureId } from '@activepieces/shared'
 import {
     AggregateEventsRange,
     type AggregateEventsResponse,
@@ -412,6 +412,21 @@ export const autumnConsole = {
     async compFreeLegacy({ autumnCustomerId }: { autumnCustomerId: string }): Promise<void> {
         await consoleRequest({ path: '/api/v1/billing/free-legacy', token: consoleSecretOrThrow(), body: { autumnCustomerId } })
     },
+    async grantInviteReward({ autumnCustomerId, inviteeEmail }: { autumnCustomerId: string, inviteeEmail: string }): Promise<ConsoleInviteRewardGrant> {
+        return consoleRequest<ConsoleInviteRewardGrant>({
+            path: '/api/v1/invite-rewards',
+            token: consoleSecretOrThrow(),
+            body: { autumnCustomerId, inviteeEmail },
+        })
+    },
+    async listInviteRewards({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<InviteRewardSummary> {
+        return consoleRequest<InviteRewardSummary>({
+            method: 'get',
+            path: '/api/v1/invite-rewards',
+            token: autumnApiKey,
+            query: { autumnCustomerId },
+        })
+    },
     async getCreds(log: FastifyBaseLogger, platformId: string): Promise<ConsoleCustomerCall | null> {
         return autumnUtils.loadAutumnCreds(log, platformId)
     },
@@ -429,7 +444,7 @@ async function consoleRequest<T>({ path, method = 'post', token, body, query, ex
         : safeHttp.axios.post<ConsoleEnvelope<T>>(url, body ?? {}, config))
     if (!isNil(error)) {
         if (!isAxiosError(error) || isNil(error.response) || !expectedErrorStatuses.includes(error.response.status)) {
-            system.globalLogger().error({ error, url }, 'Autumn console request failed')
+            system.globalLogger().error({ err: error, url }, 'Autumn console request failed')
         }
         throw error
     }
@@ -809,6 +824,8 @@ export type ConsoleCustomerCall = {
     autumnCustomerId: string
     autumnApiKey: string
 }
+
+export type ConsoleInviteRewardGrant = { granted: true, credits: number, rewardsEarned: number } | { granted: false, reason: string }
 
 type ConfigureAutoTopUpOnConsoleParams =
     | {

@@ -7,7 +7,7 @@ import {
   UserInvitationWithLink,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CopyIcon, DownloadIcon } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
@@ -49,6 +49,7 @@ import { errorReporting } from '@/lib/error-reporting';
 import { formatUtils } from '@/lib/format-utils';
 
 import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
+import { InviteRewardHint } from '../invite-reward/invite-reward-hint';
 
 import { DefaultProjectsNote } from './default-projects-note';
 import { InvitedProjectSelect } from './invited-project-select';
@@ -139,6 +140,7 @@ const InviteUserDialogInternal = ({
     ApFlagId.SMTP_CONFIGURED,
   );
   const { refetch } = userInvitationsHooks.useInvitations();
+  const queryClient = useQueryClient();
   const { project } = projectCollectionUtils.useCurrentProjectOrNull();
   const { checkAccess } = useAuthorization();
   const location = useLocation();
@@ -212,6 +214,9 @@ const InviteUserDialogInternal = ({
         toast.success(toastMessage, { duration: 3000 });
       }
       refetch();
+      queryClient
+        .invalidateQueries({ queryKey: ['platform'] })
+        .catch(() => undefined);
       onInviteSuccess?.();
     },
     onError: (error) => {
@@ -413,6 +418,7 @@ const InviteUserDialogInternal = ({
               <DialogTitle>{dialogTitle}</DialogTitle>
               <DialogDescription>{dialogDescription}</DialogDescription>
             </DialogHeader>
+            {!hasLinks && <InviteRewardHint />}
 
             {!hasLinks ? (
               <Form {...form}>

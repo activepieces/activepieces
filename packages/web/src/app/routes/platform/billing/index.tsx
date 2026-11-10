@@ -36,6 +36,7 @@ import {
   useCancelSubscriptionGuard,
   billingDialogHooks,
 } from '@/features/billing';
+import { BonusCreditsLine } from '@/features/members';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -192,7 +193,11 @@ function PlanTab({ platform, info }: PlanTabProps) {
               </div>
             }
           >
-            <CreditsCard info={info} className={adminSurface.card} />
+            <CreditsCard
+              info={info}
+              className={adminSurface.card}
+              footerExtra={<BonusCreditsLine />}
+            />
             {isPaid &&
               isNil(info.trialEndsAt) &&
               !isNil(displayedCreditsFeature) && (
