@@ -5,6 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const capture = vi.fn();
 
+vi.mock('i18next', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('i18next')>()),
+  t: (key: string) => key,
+}));
+
 vi.mock('@/components/providers/telemetry-provider', () => ({
   useTelemetry: () => ({ capture }),
 }));
@@ -33,18 +38,30 @@ import {
 describe('invite reward offer tracking', () => {
   beforeEach(() => {
     capture.mockReset();
+    localStorage.clear();
   });
 
   it('records a sidebar card click and opens the invite dialog', () => {
     render(<InviteRewardCard />);
 
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('button', { name: 'Invite' }));
 
     expect(capture).toHaveBeenCalledWith({
       name: TelemetryEventName.INVITE_REWARD_OFFER_CLICKED,
       payload: { surface: InviteRewardSurface.SIDEBAR_CARD, rewardsEarned: 2 },
     });
     screen.getByText('invite dialog');
+  });
+
+  it('hides the sidebar card for the week after it is dismissed', () => {
+    const { unmount } = render(<InviteRewardCard />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+
+    expect(screen.queryAllByRole('button', { name: 'Invite' })).toEqual([]);
+    unmount();
+    render(<InviteRewardCard />);
+    expect(screen.queryAllByRole('button', { name: 'Invite' })).toEqual([]);
   });
 
   it('records a low-credits alert click', () => {

@@ -1,8 +1,9 @@
 import { isNil, tryCatchSync } from '@activepieces/core-utils';
 import { InviteRewardSurface, TelemetryEventName } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Gift } from 'lucide-react';
+import { Gift, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -10,6 +11,7 @@ import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { billingUtils } from '@/features/billing';
+import { timedDismissal } from '@/lib/timed-dismissal';
 
 import { useInviteRewards } from '../../hooks/use-invite-rewards';
 import { InviteUserDialog } from '../invite-user/invite-user-dialog';
@@ -22,10 +24,26 @@ export function InviteRewardCard() {
     rewardsEarned: rewards.claimed,
     open: () => setInviteOpen(true),
   });
+  const [dismissedAt, setDismissedAt] = useState(() =>
+    isNil(rewards.platformId)
+      ? undefined
+      : cardDismissal.read({ platformId: rewards.platformId }),
+  );
 
-  if (!rewards.visible) {
+  if (
+    !rewards.visible ||
+    isNil(rewards.platformId) ||
+    cardDismissal.isActive({ dismissedAt })
+  ) {
     return null;
   }
+  const platformId = rewards.platformId;
+
+  const dismissCard = () => {
+    const timestamp = dayjs().toISOString();
+    setDismissedAt(timestamp);
+    cardDismissal.write({ platformId, dismissedAt: timestamp });
+  };
 
   return (
     <div className="flex flex-col w-full gap-2 p-2.5 bg-gray-1 rounded-md border">
@@ -36,6 +54,15 @@ export function InviteRewardCard() {
             credits: billingUtils.formatCredits(rewards.creditsPerInvite),
           })}
         </span>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          aria-label={t('Dismiss')}
+          className="ms-auto -me-1 -mt-1 shrink-0 text-gray-11"
+          onClick={dismissCard}
+        >
+          <X className="size-3.5" />
+        </Button>
       </div>
       <Progress value={(rewards.claimed / rewards.maxRewards) * 100} />
       <div className="flex items-center justify-between gap-2">
@@ -120,10 +147,12 @@ export function InviteRewardNotifier() {
     }
     unseen.forEach((reward) =>
       toast.success(
-        t('+{credits} credits: {email} joined your team', {
+        t('Congrats 🎉 You got {credits} extra credits', {
           credits: billingUtils.formatCredits(reward.credits),
-          email: reward.email,
         }),
+        {
+          description: t('{email} joined your team.', { email: reward.email }),
+        },
       ),
     );
     writeSeenRewardIds({
@@ -182,3 +211,8 @@ function writeSeenRewardIds({
 }
 
 const SEEN_STORAGE_PREFIX = 'ap_invite_reward_seen_';
+const CARD_DISMISSAL_DAYS = 7;
+const cardDismissal = timedDismissal.create({
+  storageKeyPrefix: 'ap-invite-reward-card-dismissed',
+  durationHours: CARD_DISMISSAL_DAYS * 24,
+});
