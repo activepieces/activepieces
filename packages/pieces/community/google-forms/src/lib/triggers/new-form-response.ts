@@ -350,7 +350,7 @@ function latestPerResponse({ responses }: { responses: FormResponse[] }): FormRe
   const byId = responses.reduce((acc, response) => {
     const known = acc.get(response.responseId);
     const isNewer = known === undefined || (toEpochMs(response.lastSubmittedTime) ?? 0) > (toEpochMs(known.lastSubmittedTime) ?? 0);
-    return isNewer ? new Map(acc).set(response.responseId, response) : acc;
+    return isNewer ? acc.set(response.responseId, response) : acc;
   }, new Map<string, FormResponse>());
   return [...byId.values()];
 }
