@@ -14,6 +14,7 @@ let counter = 0
 
 function tick(ms = 1000): number {
     clock += ms
+    vi.setSystemTime(clock)
     return clock
 }
 
@@ -70,10 +71,12 @@ beforeEach(() => {
     vendor.maxPageSize = 1000
     clock = Date.parse('2026-11-01T10:00:00.000Z')
     counter = 0
-    vi.spyOn(Date, 'now').mockImplementation(() => clock)
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(clock)
 })
 
 afterEach(() => {
+    vi.useRealTimers()
     vi.restoreAllMocks()
 })
 
