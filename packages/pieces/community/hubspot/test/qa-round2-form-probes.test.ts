@@ -13,6 +13,7 @@ const portal: { submissions: Submission[], newestFirst: boolean, timeline: Timel
     calls: [],
 }
 let msPerRequest = 0
+let failFields = false
 let clock = Date.parse('2026-11-01T10:00:00.000Z')
 const tick = (ms = 60_000) => {
     clock += ms
@@ -79,6 +80,9 @@ beforeEach(() => {
         const url = new URL(typeof input === 'string' || input instanceof URL ? String(input) : input.url)
         portal.calls.push(url.pathname)
         clock += msPerRequest
+        if (failFields && url.pathname.startsWith('/forms/v2/fields/')) {
+            return new Response(JSON.stringify({ message: 'bad gateway' }), { status: 502, headers: { 'content-type': 'application/json' } })
+        }
         return new Response(JSON.stringify(route(url)), { status: 200, headers: { 'content-type': 'application/json' } })
     }))
 })
@@ -96,6 +100,7 @@ describe('QA round 2: New Form Submission when the API order is oldest first', (
 
     afterEach(() => {
         msPerRequest = 0
+        failFields = false
     })
 
     it('each poll is bounded by the deadline (requests per poll stay under the budget)', async () => {
@@ -140,5 +145,17 @@ describe('QA round 2: New Form Submission when the API order is oldest first', (
         expect(fired).toHaveLength(burst.length + 1)
         expect([...fired].sort()).toEqual([...burst, 'later'].sort())
     }, 60_000)
+
+    it('a failed form-fields request keeps the position, so the next poll still delivers the submissions', async () => {
+        const store = memoryStore()
+        tick()
+        await newFormSubmissionTrigger.onEnable(ctx({ store }))
+        submit({ id: 'fresh-1' })
+        submit({ id: 'fresh-2' })
+        failFields = true
+        await expect(newFormSubmissionTrigger.run(ctx({ store }))).rejects.toThrow()
+        failFields = false
+        expect(conversions(await newFormSubmissionTrigger.run(ctx({ store })))).toEqual(['fresh-1', 'fresh-2'])
+    })
 })
 

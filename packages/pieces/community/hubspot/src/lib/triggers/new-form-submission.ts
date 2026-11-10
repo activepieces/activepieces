@@ -16,7 +16,7 @@ import {
 	Property,
 } from '@activepieces/pieces-framework';
 import { formDropdown } from '../common/props';
-import { hubspotPolling } from '../common/polling';
+import { hubspotPolling, TieCursor } from '../common/polling';
 import { newFormSubmissionTriggerOutputSchema } from '../output-schemas';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
@@ -43,7 +43,7 @@ const FORM_TIE_KEY = 'formSubmissionTie';
 const FORM_RESUME_KEY = 'formSubmissionResume';
 const LAST_POLL_KEY = 'lastPoll';
 
-type FormTie = { formId: string; time: number; ids: string[] };
+type FormTie = TieCursor & { formId: string };
 
 type FormResume = { formId: string; after: string };
 
@@ -60,9 +60,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 		const formId = propsValue.formId;
 
 		const isTestMode = lastFetchEpochMS === 0;
-		const submissions = isTestMode
-			? await fetchNewestSubmissions({ authValue, formId })
-			: await fetchSubmissionsSince({ authValue, formId, since: lastFetchEpochMS, store });
+		const savedTie = isTestMode ? null : await store.get<FormTie>(FORM_TIE_KEY);
+		const tie = savedTie?.formId === formId ? savedTie : undefined;
+		const fetched = isTestMode
+			? { submissions: await fetchNewestSubmissions({ authValue, formId }), groupComplete: true }
+			: await fetchSubmissionsSince({ authValue, formId, since: lastFetchEpochMS, tie, store });
+		const submissions = fetched.submissions;
 
 		const formFields = await httpClient.sendRequest<FormField[]>({
 			method: HttpMethod.GET,
@@ -108,6 +111,18 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 				...submission,
 				values: formattedValues,
 			});
+		}
+
+		if (!isTestMode) {
+			const next = hubspotPolling.advanceTie({
+				cursor: tie,
+				processed: submissions.map((submission) => ({ time: submission.submittedAt, id: submission.conversionId })),
+				groupComplete: fetched.groupComplete,
+			});
+			if (!isNil(next)) {
+				await store.put<FormTie>(FORM_TIE_KEY, { ...next, formId });
+				await store.put(LAST_POLL_KEY, next.time);
+			}
 		}
 
 		return items
@@ -161,18 +176,18 @@ async function fetchSubmissionsSince({
 	authValue,
 	formId,
 	since,
+	tie,
 	store,
 }: {
 	authValue: HubspotAuthValue;
 	formId: string;
 	since: number;
+	tie?: FormTie;
 	store: Store;
-}): Promise<FormSubmission[]> {
-	const savedTie = await store.get<FormTie>(FORM_TIE_KEY);
-	const tie = savedTie?.formId === formId && savedTie.time === since ? savedTie : undefined;
-	const seenAtTie = new Set(tie?.ids ?? []);
-	const isNew = (submission: FormSubmission) =>
-		submission.submittedAt > since || (submission.submittedAt === since && !isNil(tie) && !seenAtTie.has(submission.conversionId));
+}): Promise<{ submissions: FormSubmission[]; groupComplete: boolean }> {
+	const isAfterTie = hubspotPolling.tieFilter({ cursor: tie, since });
+	const isNew = (submission: FormSubmission) => isAfterTie({ time: submission.submittedAt, id: submission.conversionId });
+	const tieActive = tie?.time === since && (!isNil(tie.afterId) || !isNil(tie.ids));
 	const savedResume = await store.get<FormResume>(FORM_RESUME_KEY);
 	const resume = savedResume?.formId === formId ? savedResume : undefined;
 
@@ -198,7 +213,7 @@ async function fetchSubmissionsSince({
 		const pageFresh = page.submissions.filter(isNew);
 		fresh = [...fresh, ...pageFresh];
 		const pageReachesSince = page.submissions.some(
-			(submission) => submission.submittedAt < since || (submission.submittedAt === since && isNil(tie)),
+			(submission) => submission.submittedAt < since || (submission.submittedAt === since && !tieActive),
 		);
 		if (newestFirst === true && pageReachesSince) {
 			reachedCheckpoint = true;
@@ -227,15 +242,15 @@ async function fetchSubmissionsSince({
 	} else if (newestFirst !== false) {
 		await store.delete(FORM_RESUME_KEY);
 	}
-	const sorted = [...fresh].sort((a, b) => a.submittedAt - b.submittedAt || a.conversionId.localeCompare(b.conversionId));
+	const sorted = [...fresh].sort(
+		(a, b) => a.submittedAt - b.submittedAt || hubspotPolling.compareIds({ a: a.conversionId, b: b.conversionId }),
+	);
 	const last = sorted[sorted.length - 1];
-	if (!isNil(last)) {
-		const idsAtLast = sorted.filter((submission) => submission.submittedAt === last.submittedAt).map((submission) => submission.conversionId);
-		const ids = last.submittedAt === since ? [...new Set([...seenAtTie, ...idsAtLast])] : idsAtLast;
-		await store.put<FormTie>(FORM_TIE_KEY, { formId, time: last.submittedAt, ids });
-		await store.put(LAST_POLL_KEY, last.submittedAt);
+	if (reachedCheckpoint || newestFirst === true || isNil(last)) {
+		return { submissions: sorted, groupComplete: true };
 	}
-	return sorted;
+	const earlier = sorted.filter((submission) => submission.submittedAt < last.submittedAt);
+	return earlier.length > 0 ? { submissions: earlier, groupComplete: true } : { submissions: sorted, groupComplete: false };
 }
 
 async function fetchResumePage({ authValue, formId, after }: { authValue: HubspotAuthValue; formId: string; after: string }) {

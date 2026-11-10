@@ -227,4 +227,24 @@ describe.each([
         expect(fired).toHaveLength(bulk.length + 1)
         expect([...fired].sort()).toEqual([...bulk, 'later'].sort())
     })
+
+    it('a tied bulk add larger than the seen-id limit keeps a constant-size cursor and fires every member once', async () => {
+        const store = memoryStore()
+        tick()
+        await trigger.onEnable(ctx({ store }))
+        const bulkAt = tick()
+        const bulk = Array.from({ length: 12_000 }, (_, i) => `bulk-${String(i).padStart(5, '0')}`)
+        bulk.forEach((id) => portal.members.push({ recordId: id, joinedAt: bulkAt }))
+        portal.msPerRead = 10_000
+        let fired: string[] = []
+        let largestCursor = 0
+        for (let i = 0; i < 40 && fired.length < bulk.length; i++) {
+            fired = [...fired, ...ids(await trigger.run(ctx({ store })))]
+            largestCursor = Math.max(largestCursor, (store.data.get('listMembershipTie') ?? '').length)
+        }
+        expect(fired).toHaveLength(bulk.length)
+        expect(new Set(fired).size).toBe(bulk.length)
+        expect(largestCursor).toBeLessThan(1_000)
+    }, 60_000)
 })
+

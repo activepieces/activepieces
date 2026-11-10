@@ -12,6 +12,7 @@ const CURSOR_KEY = 'hubspotSearchCursor';
 const LAST_POLL_KEY = 'lastPoll';
 const OBJECT_ID_PROPERTY = 'hs_object_id';
 const FUTURE_TOLERANCE_MS = 5 * 60_000;
+const TIE_IDS_LIMIT = 10_000;
 
 function createPollDeadline(budgetMs = POLL_BUDGET_MS): PollDeadline {
 	const endsAt = Date.now() + budgetMs;
@@ -336,12 +337,60 @@ async function pollPropertyChanges<T extends CrmRecord>({
 	return changes.map((change) => change.item);
 }
 
+function tieFilter({ cursor, since }: { cursor?: TieCursor; since: number }): (entry: TieEntry) => boolean {
+	const active = cursor?.time === since ? cursor : undefined;
+	const seen = new Set(active?.ids ?? []);
+	return (entry) => {
+		if (entry.time !== since || isNil(active)) {
+			return entry.time > since;
+		}
+		if (seen.has(entry.id)) {
+			return false;
+		}
+		if (!isNil(active.afterId)) {
+			return compareIds({ a: entry.id, b: active.afterId }) > 0;
+		}
+		return !isNil(active.ids);
+	};
+}
+
+function advanceTie({
+	cursor,
+	processed,
+	groupComplete,
+}: {
+	cursor?: TieCursor;
+	processed: TieEntry[];
+	groupComplete: boolean;
+}): TieCursor | undefined {
+	const last = processed[processed.length - 1];
+	if (isNil(last)) {
+		return undefined;
+	}
+	const previous = cursor?.time === last.time ? cursor : undefined;
+	if (groupComplete) {
+		const carried = (previous?.ids ?? []).filter((id) => compareIds({ a: id, b: last.id }) > 0);
+		return { time: last.time, afterId: last.id, ...(carried.length > 0 ? { ids: carried } : {}) };
+	}
+	const ids = [...new Set([...(previous?.ids ?? []), ...processed.filter((entry) => entry.time === last.time).map((entry) => entry.id)])];
+	if (ids.length > TIE_IDS_LIMIT) {
+		console.warn(
+			`[hubspot] more than ${TIE_IDS_LIMIT} items share one timestamp and could not be read in one poll; the rest of that millisecond is skipped`,
+		);
+		return { time: last.time };
+	}
+	return { time: last.time, ...(isNil(previous?.afterId) ? {} : { afterId: previous.afterId }), ids };
+}
+
 function sampleOldestToNewest<T>({ items }: { items: T[] }): T[] {
 	return [...items].reverse();
 }
 
 export const hubspotPolling = {
 	sampleOldestToNewest,
+	compareIds,
+	tieFilter,
+	advanceTie,
 	createPollDeadline,
 	toEpoch,
 	mapInBatches,
@@ -351,6 +400,10 @@ export const hubspotPolling = {
 };
 
 export type PollDeadline = { reached: () => boolean };
+
+export type TieCursor = { time: number; afterId?: string; ids?: string[] };
+
+export type TieEntry = { time: number; id: string };
 
 export type SearchFilter = { propertyName: string; operator: FilterOperatorEnum; value?: string };
 

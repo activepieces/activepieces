@@ -12,7 +12,7 @@ import { Client } from '@hubspot/api-client';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
-import { hubspotPolling, PollDeadline } from '../common/polling';
+import { hubspotPolling, PollDeadline, TieCursor } from '../common/polling';
 import { newContactInListTriggerOutputSchema } from '../output-schemas';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
@@ -40,11 +40,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 		}
 
 		const savedTie = await store.get<ListTie>(LIST_TIE_KEY);
-		const tie = savedTie?.listId === listId && savedTie.time === lastFetchEpochMS ? savedTie : undefined;
-		const seenAtTie = new Set(tie?.ids ?? []);
-		const isNew = (member: ListMember) =>
-			member.joinedAt > lastFetchEpochMS || (member.joinedAt === lastFetchEpochMS && !isNil(tie) && !seenAtTie.has(member.recordId));
-		const members = await fetchMembersJoinedSince({ client, listId, since: lastFetchEpochMS, tieActive: !isNil(tie), isNew, store });
+		const tie = savedTie?.listId === listId ? savedTie : undefined;
+		const isAfterTie = hubspotPolling.tieFilter({ cursor: tie, since: lastFetchEpochMS });
+		const isNew = (member: ListMember) => isAfterTie({ time: member.joinedAt, id: member.recordId });
+		const tieActive = tie?.time === lastFetchEpochMS && (!isNil(tie.afterId) || !isNil(tie.ids));
+		const fetched = await fetchMembersJoinedSince({ client, listId, since: lastFetchEpochMS, tieActive, isNew, store });
+		const { members, groupComplete } = completeGroupsOnly(fetched);
 		const { contacts, processed } = await readContacts({
 			client,
 			members,
@@ -52,16 +53,27 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 			deadline: contactDeadline,
 		});
 		const read = members.slice(0, processed);
-		const last = read[read.length - 1];
-		if (!isNil(last)) {
-			const idsAtLast = read.filter((member) => member.joinedAt === last.joinedAt).map((member) => member.recordId);
-			const ids = last.joinedAt === lastFetchEpochMS ? [...new Set([...seenAtTie, ...idsAtLast])] : idsAtLast;
-			await store.put<ListTie>(LIST_TIE_KEY, { listId, time: last.joinedAt, ids });
-			await store.put(LAST_POLL_KEY, last.joinedAt);
+		const next = hubspotPolling.advanceTie({
+			cursor: tie,
+			processed: read.map((member) => ({ time: member.joinedAt, id: member.recordId })),
+			groupComplete,
+		});
+		if (!isNil(next)) {
+			await store.put<ListTie>(LIST_TIE_KEY, { ...next, listId });
+			await store.put(LAST_POLL_KEY, next.time);
 		}
 		return toItems({ members: read, contacts });
 	},
 };
+
+function completeGroupsOnly({ members, complete, order }: FetchedMembers): { members: ListMember[]; groupComplete: boolean } {
+	if (complete || order === 'newest-first') {
+		return { members, groupComplete: true };
+	}
+	const last = members[members.length - 1];
+	const earlier = isNil(last) ? [] : members.filter((member) => member.joinedAt < last.joinedAt);
+	return earlier.length > 0 ? { members: earlier, groupComplete: true } : { members, groupComplete: false };
+}
 
 function toItems({ members, contacts }: { members: ListMember[]; contacts: Map<string, ContactRecord> }) {
 	return members.flatMap((member) => {
@@ -109,7 +121,7 @@ function detectOrder({ order, reference, members }: { order: JoinOrder; referenc
 }
 
 function byJoinTime({ a, b }: { a: ListMember; b: ListMember }): number {
-	return a.joinedAt - b.joinedAt || a.recordId.localeCompare(b.recordId);
+	return a.joinedAt - b.joinedAt || hubspotPolling.compareIds({ a: a.recordId, b: b.recordId });
 }
 
 async function fetchNewestMembers({ client, listId }: { client: Client; listId: string }): Promise<ListMember[]> {
@@ -140,7 +152,7 @@ async function fetchMembersJoinedSince({
 	tieActive: boolean;
 	isNew: (member: ListMember) => boolean;
 	store: Store;
-}): Promise<ListMember[]> {
+}): Promise<FetchedMembers> {
 	const saved = await store.get<ListCursor>(LIST_CURSOR_KEY);
 	const resumable = saved?.listId === listId && saved.oldestFirst === true ? saved : undefined;
 	const deadline = hubspotPolling.createPollDeadline(MEMBERSHIP_BUDGET_MS);
@@ -197,7 +209,7 @@ async function fetchMembersJoinedSince({
 	if (!reachedCheckpoint) {
 		console.warn(`[hubspot] list ${listId} membership read stopped at the poll deadline; the rest are read on the next poll`);
 	}
-	return [...joined].sort((a, b) => byJoinTime({ a, b }));
+	return { members: [...joined].sort((a, b) => byJoinTime({ a, b })), complete: reachedCheckpoint, order };
 }
 
 async function fetchResumePage({ client, listId, after }: { client: Client; listId: string; after: string }) {
@@ -357,6 +369,8 @@ type ContactRecord = Awaited<ReturnType<Client['crm']['contacts']['batchApi']['r
 
 type ListCursor = { listId: string; after?: string; oldestFirst?: boolean };
 
-type ListTie = { listId: string; time: number; ids: string[] };
+type ListTie = TieCursor & { listId: string };
+
+type FetchedMembers = { members: ListMember[]; complete: boolean; order: JoinOrder };
 
 type JoinOrder = 'unknown' | 'newest-first' | 'oldest-first';
