@@ -77,7 +77,13 @@ async function billGenerate({ doGenerate, context }: BillGenerateParams): Promis
     }
     const result = attempt.data
     const generationId = result.response?.id
-    report({ context, generationId, call: createBillingInfo({ context, generationId, providerMetadata: result.providerMetadata, usage: result.usage, headers: result.response?.headers }), tokens: tokensOf(result.usage) })
+    const tokens = tokensOf(result.usage)
+    const call = createBillingInfo({ context, generationId, providerMetadata: result.providerMetadata, usage: result.usage, headers: result.response?.headers })
+    if (isNil(call) && context.basis === AiChargeBasis.PROVIDER_REPORTED_COST) {
+        recoverCostAndReport({ context, generationId, tokens }).catch(() => report({ context, generationId, call: undefined, tokens }))
+        return result
+    }
+    report({ context, generationId, call, tokens })
     return result
 }
 
@@ -135,26 +141,25 @@ function settleStream({ state, context }: SettleStreamParams): void {
         report({ context, generationId: state.generationId, call: { charge: AiChargeBasis.USAGE_ONLY, generationId: state.generationId } })
         return
     }
-    recoverCostAndReport({ state, context }).catch(() => report({ context, generationId: state.generationId, call: undefined, tokens: state.tokens }))
+    recoverCostAndReport({ context, generationId: state.generationId, tokens: state.tokens }).catch(() => report({ context, generationId: state.generationId, call: undefined, tokens: state.tokens }))
 }
 
-async function recoverCostAndReport({ state, context }: SettleStreamParams): Promise<void> {
-    const { generationId } = state
+async function recoverCostAndReport({ context, generationId, tokens }: RecoverCostAndReportParams): Promise<void> {
     const { apiKey } = context
     if (isNil(generationId) || isNil(apiKey)) {
-        report({ context, generationId, call: undefined, tokens: state.tokens })
+        report({ context, generationId, call: undefined, tokens })
         return
     }
     const generation = await lookupGeneration({ apiKey, generationId })
     if (isNil(generation)) {
-        report({ context, generationId, call: undefined, tokens: state.tokens })
+        report({ context, generationId, call: undefined, tokens })
         return
     }
     report({
         context,
         generationId,
         call: {
-            ...state.tokens,
+            ...tokens,
             charge: AiChargeBasis.PROVIDER_REPORTED_COST,
             generationId,
             costUsd: generation.costUsd,
@@ -390,6 +395,12 @@ type TrackChunkParams = {
 type SettleStreamParams = {
     state: StreamState
     context: BillingContext
+}
+
+type RecoverCostAndReportParams = {
+    context: BillingContext
+    generationId: string | undefined
+    tokens: AiCallTokens | undefined
 }
 
 type CreateBillingInfoParams = {

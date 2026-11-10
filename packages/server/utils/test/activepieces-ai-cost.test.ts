@@ -221,6 +221,47 @@ describe('what a model call reports back for billing', () => {
         expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
     })
 
+    it('asks OpenRouter what a managed call cost when the response left it out, as a stream already does', async () => {
+        generationLookup.answer = async () => ({ costUsd: 0.0017, inputTokens: 55, outputTokens: 12 })
+        activepiecesAiCost.drainUnbilledCalls()
+        const model = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [], finishReason: 'stop', usage: { inputTokens: { total: 50 }, outputTokens: { total: 10 } }, response: { id: 'gen-no-cost' } }),
+            provider: AIProviderName.ACTIVEPIECES,
+            modelId: 'z-ai/glm-5.3',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES, apiKey: MANAGED_KEY }),
+        })
+
+        await generateWith(model)
+        await settled()
+
+        expect(reported).toHaveLength(1)
+        expect(reported[0].call).toEqual({
+            charge: AiChargeBasis.PROVIDER_REPORTED_COST,
+            generationId: 'gen-no-cost',
+            costUsd: 0.0017,
+            inputTokens: 55,
+            outputTokens: 12,
+            observedCostUsd: 0.0017,
+        })
+        expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(0)
+    })
+    it('still counts a managed call as unbilled when OpenRouter cannot say what it cost either', async () => {
+        activepiecesAiCost.drainUnbilledCalls()
+        const model = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [], finishReason: 'stop', usage: {}, response: { id: 'gen-no-cost' } }),
+            provider: AIProviderName.ACTIVEPIECES,
+            modelId: 'z-ai/glm-5.3',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES, apiKey: MANAGED_KEY }),
+        })
+
+        await generateWith(model)
+        await settled()
+
+        expect(reported.map((event) => event.call.charge)).toEqual([AiChargeBasis.USAGE_ONLY])
+        expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
+    })
     it('keeps the tokens of a managed call whose cost never arrived, so usage can still estimate it', async () => {
         activepiecesAiCost.drainUnbilledCalls()
         const model = activepiecesAiCost.billedLanguageModel({
