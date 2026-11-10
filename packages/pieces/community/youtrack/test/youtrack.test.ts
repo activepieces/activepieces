@@ -546,10 +546,33 @@ describe('existing actions', () => {
   it('link_issues accepts an old readable ID after a project rename by matching the database id', async () => {
     ok({ id: '2-3', idReadable: 'NEW-3', summary: 'T' });
     ok(undefined);
-    ok([{ linkType: { name: 'Depend', sourceToTarget: 'is required for', targetToSource: 'depends on' }, issues: [{ id: '2-3', idReadable: 'NEW-3' }] }]);
+    ok([{ direction: 'INWARD', linkType: { name: 'Depend', sourceToTarget: 'is required for', targetToSource: 'depends on' }, issues: [{ id: '2-3', idReadable: 'NEW-3' }] }]);
     expect(await call({ fn: linkIssuesAction.run, propsValue: { sourceIssue: '2-1', targetIssueId: 'OLD-3', linkType: 'depends on' } }))
       .toEqual({ success: true, link_type: 'depends on', target_issue: 'OLD-3' });
     expect(req(1).body).toEqual({ query: 'depends on OLD-3', issues: [{ id: '2-1' }] });
+  });
+
+  it('link_issues does not accept a reverse link of the same type as the requested direction', async () => {
+    ok({ id: '2-3', idReadable: 'APT-3' });
+    ok(undefined);
+    ok([
+      { direction: 'OUTWARD', linkType: { name: 'Depend', sourceToTarget: 'is required for', targetToSource: 'depends on' }, issues: [{ id: '2-3' }] },
+      { direction: 'INWARD', linkType: { name: 'Depend', sourceToTarget: 'is required for', targetToSource: 'depends on' }, issues: [] },
+    ]);
+    await expect(call({ fn: linkIssuesAction.run, propsValue: { sourceIssue: '2-1', targetIssueId: 'APT-3', linkType: 'depends on' } }))
+      .rejects.toThrow('link to APT-3 is not on the issue');
+
+    ok({ id: '2-3', idReadable: 'APT-3' });
+    ok(undefined);
+    ok([{ direction: 'OUTWARD', linkType: { name: 'Subtask', sourceToTarget: 'parent for', targetToSource: 'subtask of' }, issues: [{ id: '2-3' }] }]);
+    expect(await call({ fn: linkIssuesAction.run, propsValue: { sourceIssue: '2-1', targetIssueId: 'APT-3', linkType: 'parent for' } }))
+      .toMatchObject({ success: true });
+
+    ok({ id: '2-3', idReadable: 'APT-3' });
+    ok(undefined);
+    ok([{ direction: 'BOTH', linkType: { name: 'Relates', sourceToTarget: 'relates to', targetToSource: 'relates to' }, issues: [{ id: '2-3' }] }]);
+    expect(await call({ fn: linkIssuesAction.run, propsValue: { sourceIssue: '2-1', targetIssueId: 'APT-3', linkType: 'relates to' } }))
+      .toMatchObject({ success: true });
   });
 
   it('link_issues verifies every one of several targets', async () => {

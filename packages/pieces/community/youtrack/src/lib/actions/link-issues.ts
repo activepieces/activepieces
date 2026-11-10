@@ -5,11 +5,17 @@ import { issueDropdown, resolveIssue } from '../common';
 import { youtrackClient } from '../common/client';
 import { linkIssuesActionOutputSchema } from '../output-schemas';
 
+function phrasesForDirection({ type, direction }: { type: Record<string, unknown>; direction: unknown }): unknown[] {
+  if (direction === 'OUTWARD') return [type['sourceToTarget']];
+  if (direction === 'INWARD') return [type['targetToSource']];
+  return [type['sourceToTarget'], type['targetToSource'], type['name']];
+}
+
 function hasLink({ links, linkType, targetId }: { links: Record<string, unknown>[]; linkType: string; targetId: string }): boolean {
   const wantedType = linkType.toLowerCase();
   return links.some((link) => {
     const type = youtrackClient.recordOf(link['linkType']);
-    const phrases = [type['sourceToTarget'], type['targetToSource'], type['name']]
+    const phrases = phrasesForDirection({ type, direction: link['direction'] })
       .filter((p): p is string => typeof p === 'string')
       .map((p) => p.toLowerCase());
     if (!phrases.includes(wantedType)) return false;
