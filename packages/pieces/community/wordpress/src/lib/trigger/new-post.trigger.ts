@@ -1,17 +1,9 @@
-import {
-  AppConnectionValueForAuthProperty,
-  createTrigger,
-  PiecePropValueSchema,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { wordpressCommon } from '../common';
+import { createTrigger, isNil, TriggerStrategy } from '@activepieces/pieces-framework';
+import { QueryParams } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { wordpressAuth } from '../..';
+import { wordpressCommon } from '../common';
+import { wordpressApi, WordpressApiError, WordpressAuthValue } from '../common/client';
 import { newPostTriggerOutputSchema } from '../output-schemas';
 
 export const wordpressNewPost = createTrigger({
@@ -122,57 +114,529 @@ export const wordpressNewPost = createTrigger({
   },
   description: 'Triggers when a new post is published',
   aiMetadata: {
-    description: 'Fires when a new post is published on the WordPress site, optionally filtered to specific authors. Each event represents one newly published post and emits that post record. Polls periodically, so there may be a short delay after publishing.',
+    description: 'Fires when a new post is published on the WordPress site, optionally filtered to specific authors. Each event represents one newly published post, including a post published with an earlier publish date, and emits that post record. Edits to existing posts do not fire, except an edit that moves the publish date of an older post to the current time, which fires like a newly published post. Polls periodically, so there may be a short delay after publishing.',
   },
   props: {
     authors: wordpressCommon.authors,
   },
   type: TriggerStrategy.POLLING,
   async test(ctx) {
-    return await pollingHelper.test(polling, ctx);
+    const { items } = await wordpressApi.list<WordpressPost>({
+      auth: ctx.auth,
+      path: '/posts',
+      queryParams: withAuthor({
+        authors: normalizeAuthors(ctx.propsValue.authors),
+        queryParams: { orderby: 'date', order: 'desc', per_page: String(SAMPLE_SIZE), page: '1' },
+      }),
+      timeout: REQUEST_TIMEOUT_MS,
+    });
+    return [...items].sort((a, b) => compareOldestFirst({ a, b }));
   },
   async onEnable(ctx) {
-    await pollingHelper.onEnable(polling, ctx);
+    const authors = normalizeAuthors(ctx.propsValue.authors);
+    const existing = await ctx.store.get<CursorState>(STATE_KEY);
+    if (ctx.isRepublish && !isNil(existing) && existing.authors === authors) {
+      return;
+    }
+    const legacyLastPoll = await ctx.store.get<number>(LEGACY_STATE_KEY);
+    const budget = createBudget({ startedAt: Date.now() });
+    if (ctx.isRepublish && isNil(existing) && !isNil(legacyLastPoll)) {
+      const migrated = await migrateLegacyCursor({ auth: ctx.auth, authors, legacyLastPoll, budget });
+      await ctx.store.put(STATE_KEY, migrated);
+      await ctx.store.delete(LEGACY_STATE_KEY);
+      return;
+    }
+    await ctx.store.put(STATE_KEY, await createBaseline({ auth: ctx.auth, authors, budget }));
+    await ctx.store.delete(LEGACY_STATE_KEY);
   },
-  async onDisable(ctx) {
-    await pollingHelper.onDisable(polling, ctx);
+  async onDisable() {
+    return;
   },
   async run(ctx) {
-    return await pollingHelper.poll(polling, ctx);
+    const budget = createBudget({ startedAt: Date.now() });
+    const authors = normalizeAuthors(ctx.propsValue.authors);
+    const existing = await ctx.store.get<CursorState>(STATE_KEY);
+    if (!isNil(existing)) {
+      return pollAndStore({ auth: ctx.auth, authors, state: existing, store: ctx.store, budget });
+    }
+    const legacyLastPoll = await ctx.store.get<number>(LEGACY_STATE_KEY);
+    if (isNil(legacyLastPoll)) {
+      await ctx.store.put(STATE_KEY, await createBaseline({ auth: ctx.auth, authors, budget }));
+      return [];
+    }
+    const migrated = await migrateLegacyCursor({ auth: ctx.auth, authors, legacyLastPoll, budget });
+    await ctx.store.put(STATE_KEY, migrated);
+    await ctx.store.delete(LEGACY_STATE_KEY);
+    return pollAndStore({ auth: ctx.auth, authors, state: migrated, store: ctx.store, budget });
   },
 });
 
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof wordpressAuth>,
-  { authors: string | undefined }
-> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const items = await getPosts(auth.props, propsValue.authors!, lastFetchEpochMS);
-    return items.map((item) => ({
-      epochMilliSeconds: dayjs(item.date).valueOf(),
-      data: item,
-    }));
-  },
+async function pollAndStore({
+  auth,
+  authors,
+  state,
+  store,
+  budget,
+}: {
+  auth: WordpressAuthValue;
+  authors: string | null;
+  state: CursorState;
+  store: { put: <T>(key: string, value: T) => Promise<T> };
+  budget: PollBudget;
+}): Promise<WordpressPost[]> {
+  const result = await pollNewPosts({ auth, authors, state, budget });
+  await store.put(STATE_KEY, result.state);
+  return result.posts;
+}
+
+async function pollNewPosts({
+  auth,
+  authors,
+  state,
+  budget,
+}: {
+  auth: WordpressAuthValue;
+  authors: string | null;
+  state: CursorState;
+  budget: PollBudget;
+}): Promise<{ posts: WordpressPost[]; state: CursorState }> {
+  const byDate = await readWindow({
+    auth,
+    authors,
+    field: 'date',
+    cursor: state.byDate,
+    lookbackMs: DATE_LOOKBACK_MS,
+    budget,
+    firstPageReserve: 0,
+    reservedRequests: LISTING_COUNT - 1,
+  });
+  const byModified = await readWindow({
+    auth,
+    authors,
+    field: 'modified',
+    cursor: state.byModified,
+    lookbackMs: MODIFIED_LOOKBACK_MS,
+    budget,
+    firstPageReserve: 1,
+    reservedRequests: 1,
+  });
+  const byId = await readIdListing({
+    auth,
+    authors,
+    cursor: state.byId ?? { floorId: state.baselineId, topId: state.baselineId, resumePage: null },
+    budget,
+  });
+  const seenIds = new Set(state.seen.map(([id]) => id));
+  const candidates = uniqueById({ posts: [...byDate.posts, ...byModified.posts, ...byId.posts] });
+  const dateHorizonMs = byDate.cursor.complete ? Number.POSITIVE_INFINITY : byDate.cursor.ms;
+  const fresh = candidates
+    .filter(
+      (post) =>
+        !seenIds.has(post.id) &&
+        !(timeMs({ post, field: 'date' }) > dateHorizonMs) &&
+        (post.id > state.baselineId || timeMs({ post, field: 'date' }) > state.publishedFloorMs)
+    )
+    .sort((a, b) => compareOldestFirst({ a, b }));
+  const pruned = pruneSeen({
+    seen: [...state.seen, ...fresh.map(toSeenEntry)],
+    baselineId: state.baselineId,
+    publishedFloorMs: state.publishedFloorMs,
+  });
+  return {
+    posts: fresh,
+    state: {
+      ...state,
+      ...pruned,
+      byDate: byDate.cursor,
+      byModified: byModified.cursor,
+      byId: byId.cursor,
+    },
+  };
+}
+
+async function readIdListing({
+  auth,
+  authors,
+  cursor,
+  budget,
+}: {
+  auth: WordpressAuthValue;
+  authors: string | null;
+  cursor: IdCursor;
+  budget: PollBudget;
+}): Promise<{ posts: WordpressPost[]; cursor: IdCursor }> {
+  const queryParams = withAuthor({
+    authors,
+    queryParams: { orderby: 'id', order: 'desc', per_page: String(PAGE_SIZE) },
+  });
+  const firstPage = cursor.resumePage ?? 1;
+  const posts: WordpressPost[] = [];
+  let topId = cursor.resumePage === null ? cursor.floorId : cursor.topId;
+  for (let page = firstPage; page < firstPage + MAX_PAGES_PER_WINDOW; page++) {
+    if (!budget.canStart({ reservedRequests: 0 })) {
+      console.warn(`WordPress New Post: poll time budget reached in the id listing after ${posts.length} posts; the rest is read on the next poll.`);
+      return { posts, cursor: page === firstPage ? cursor : { floorId: cursor.floorId, topId, resumePage: page } };
+    }
+    const result = await listPage({ auth, queryParams, page, budget });
+    if (isNil(result)) {
+      return { posts, cursor: { floorId: Math.max(cursor.floorId, topId), topId: 0, resumePage: null } };
+    }
+    const newer = result.items.filter((post) => post.id > cursor.floorId);
+    posts.push(...newer);
+    topId = newer.reduce((acc, post) => Math.max(acc, post.id), topId);
+    const totalPages = result.total_pages ?? (result.items.length < PAGE_SIZE ? page : page + 1);
+    if (newer.length < result.items.length || result.items.length === 0 || page >= totalPages) {
+      return { posts, cursor: { floorId: Math.max(cursor.floorId, topId), topId: 0, resumePage: null } };
+    }
+  }
+  console.warn(`WordPress New Post: read the maximum of ${MAX_PAGES_PER_WINDOW} pages in the id listing; the rest is read on the next poll.`);
+  return { posts, cursor: { floorId: cursor.floorId, topId, resumePage: firstPage + MAX_PAGES_PER_WINDOW } };
+}
+
+async function readWindow({
+  auth,
+  authors,
+  field,
+  cursor,
+  lookbackMs,
+  budget,
+  firstPageReserve,
+  reservedRequests,
+}: {
+  auth: WordpressAuthValue;
+  authors: string | null;
+  field: TimeField;
+  cursor: WindowCursor;
+  lookbackMs: number;
+  budget: PollBudget;
+  firstPageReserve: number;
+  reservedRequests: number;
+}): Promise<{ posts: WordpressPost[]; cursor: WindowCursor }> {
+  const startMs = cursor.resume
+    ? cursor.resume.startMs
+    : Math.max(0, cursor.ms - (cursor.complete ? lookbackMs : TIE_OVERLAP_MS));
+  const startPage = cursor.resume?.page ?? 1;
+  const windowParam = field === 'date' ? 'after' : 'modified_after';
+  const result = await readPages({
+    auth,
+    budget,
+    startPage,
+    firstPageReserve,
+    reservedRequests,
+    ignoresWindow: (first) =>
+      field === 'modified' && startPage === 1 && startMs > 0 && timeMs({ post: first, field }) <= startMs - TIE_OVERLAP_MS,
+    queryParams: withAuthor({
+      authors,
+      queryParams: {
+        orderby: field,
+        order: 'asc',
+        per_page: String(PAGE_SIZE),
+        ...(startMs > 0 ? { [windowParam]: new Date(startMs).toISOString() } : {}),
+      },
+    }),
+  });
+  if (!result.requested) {
+    return { posts: [], cursor };
+  }
+  const newestKey = result.posts
+    .map((post) => timeMs({ post, field }))
+    .filter((ms) => Number.isFinite(ms))
+    .reduce((acc, ms) => Math.max(acc, ms), cursor.ms);
+  const ms = Math.max(cursor.ms, Math.min(newestKey, Date.now()));
+  return {
+    posts: result.posts,
+    cursor: result.complete ? { ms, complete: true } : { ms, complete: false, resume: { startMs, page: result.nextPage } },
+  };
+}
+
+async function readPages({
+  auth,
+  queryParams,
+  budget,
+  startPage = 1,
+  firstPageReserve = 0,
+  reservedRequests = 0,
+  ignoresWindow,
+}: {
+  auth: WordpressAuthValue;
+  queryParams: QueryParams;
+  budget: PollBudget;
+  startPage?: number;
+  firstPageReserve?: number;
+  reservedRequests?: number;
+  ignoresWindow?: (first: WordpressPost) => boolean;
+}): Promise<PageReadResult> {
+  const posts: WordpressPost[] = [];
+  for (let page = startPage; page < startPage + MAX_PAGES_PER_WINDOW; page++) {
+    if (!budget.canStart({ reservedRequests: page === startPage ? firstPageReserve : reservedRequests })) {
+      console.warn(`WordPress New Post: poll time budget reached after ${posts.length} posts; the rest is read on the next poll.`);
+      return { posts, complete: false, requested: page > startPage, nextPage: page };
+    }
+    const result = await listPage({ auth, queryParams, page, budget });
+    if (isNil(result)) {
+      return { posts, complete: true, requested: true, nextPage: page };
+    }
+    if (page === startPage && result.items.length > 0 && ignoresWindow?.(result.items[0])) {
+      console.warn('WordPress New Post: this site ignores modified_after (WordPress before 5.7); the modified listing is skipped.');
+      return { posts: [], complete: false, requested: false, nextPage: startPage };
+    }
+    posts.push(...result.items);
+    const totalPages = result.total_pages ?? (result.items.length < PAGE_SIZE ? page : page + 1);
+    if (result.items.length === 0 || page >= totalPages) {
+      return { posts, complete: true, requested: true, nextPage: page + 1 };
+    }
+  }
+  console.warn(`WordPress New Post: read the maximum of ${MAX_PAGES_PER_WINDOW} pages (${posts.length} posts); the rest is read on the next poll.`);
+  return { posts, complete: false, requested: true, nextPage: startPage + MAX_PAGES_PER_WINDOW };
+}
+
+async function listPage({
+  auth,
+  queryParams,
+  page,
+  budget,
+}: {
+  auth: WordpressAuthValue;
+  queryParams: QueryParams;
+  page: number;
+  budget: PollBudget;
+}): Promise<{ items: WordpressPost[]; total_pages: number | undefined } | null> {
+  const startedAt = Date.now();
+  try {
+    return await wordpressApi.list<WordpressPost>({
+      auth,
+      path: '/posts',
+      queryParams: { ...queryParams, page: String(page) },
+      timeout: REQUEST_TIMEOUT_MS,
+    });
+  } catch (error) {
+    if (page > 1 && error instanceof WordpressApiError && error.code === 'rest_post_invalid_page_number') {
+      return null;
+    }
+    throw error;
+  } finally {
+    budget.record({ durationMs: Date.now() - startedAt });
+  }
+}
+
+function createBudget({ startedAt }: { startedAt: number }): PollBudget {
+  const deadline = startedAt + POLL_BUDGET_MS;
+  let slowestMs = 0;
+  const estimate = () => Math.min(Math.max(slowestMs, MIN_REQUEST_ESTIMATE_MS), REQUEST_TIMEOUT_MS);
+  return {
+    canStart: ({ reservedRequests }) => Date.now() + estimate() * (1 + reservedRequests) <= deadline,
+    record: ({ durationMs }) => {
+      slowestMs = Math.max(slowestMs, durationMs);
+    },
+  };
+}
+
+async function createBaseline({
+  auth,
+  authors,
+  budget,
+}: {
+  auth: WordpressAuthValue;
+  authors: string | null;
+  budget: PollBudget;
+}): Promise<CursorState> {
+  const startedAt = Date.now();
+  const [newestById, newestByDate, newestByModified] = await Promise.all(
+    (['id', 'date', 'modified'] as const).map((orderby) => newestPost({ auth, authors, orderby }))
+  );
+  budget.record({ durationMs: Date.now() - startedAt });
+  const now = Date.now();
+  const newestDateMs = finiteOrZero(newestByDate ? timeMs({ post: newestByDate, field: 'date' }) : 0);
+  const publishedFloorMs = Math.min(newestDateMs, now);
+  const modifiedMs = Math.min(finiteOrZero(newestByModified ? timeMs({ post: newestByModified, field: 'modified' }) : 0), now);
+  const futureDated =
+    newestDateMs > now
+      ? await readPages({
+          auth,
+          budget,
+          queryParams: withAuthor({
+            authors,
+            queryParams: { orderby: 'date', order: 'asc', per_page: String(PAGE_SIZE), after: new Date(now).toISOString() },
+          }),
+        })
+      : { posts: [] };
+  return {
+    authors,
+    baselineId: newestById?.id ?? 0,
+    publishedFloorMs,
+    byDate: { ms: publishedFloorMs, complete: true },
+    byModified: { ms: modifiedMs, complete: true },
+    byId: { floorId: newestById?.id ?? 0, topId: 0, resumePage: null },
+    seen: futureDated.posts.slice(-SEEN_LIMIT).map(toSeenEntry),
+  };
+}
+
+async function migrateLegacyCursor({
+  auth,
+  authors,
+  legacyLastPoll,
+  budget,
+}: {
+  auth: WordpressAuthValue;
+  authors: string | null;
+  legacyLastPoll: number;
+  budget: PollBudget;
+}): Promise<CursorState> {
+  const baseline = await createBaseline({ auth, authors, budget });
+  const windowStartMs = Math.max(0, Math.min(legacyLastPoll, Date.now()) - LEGACY_SKEW_MS);
+  const pending = await readPages({
+    auth,
+    budget,
+    queryParams: withAuthor({
+      authors,
+      queryParams: {
+        orderby: 'date',
+        order: 'asc',
+        per_page: String(PAGE_SIZE),
+        after: new Date(windowStartMs).toISOString(),
+      },
+    }),
+  });
+  if (!pending.complete) {
+    console.warn('WordPress New Post: could not read all posts since the last check while upgrading; continuing from now.');
+    return baseline;
+  }
+  const alreadyHandled = pending.posts.filter((post) => dayjs(post.date).valueOf() <= legacyLastPoll);
+  return {
+    ...baseline,
+    publishedFloorMs: windowStartMs,
+    byDate: { ms: windowStartMs, complete: false },
+    seen: uniqueSeen({ entries: [...baseline.seen, ...alreadyHandled.map(toSeenEntry)] }),
+  };
+}
+
+async function newestPost({
+  auth,
+  authors,
+  orderby,
+}: {
+  auth: WordpressAuthValue;
+  authors: string | null;
+  orderby: 'id' | 'date' | 'modified';
+}): Promise<WordpressPost | undefined> {
+  const { items } = await wordpressApi.list<WordpressPost>({
+    auth,
+    path: '/posts',
+    queryParams: withAuthor({ authors, queryParams: { orderby, order: 'desc', per_page: '1', page: '1' } }),
+    timeout: REQUEST_TIMEOUT_MS,
+  });
+  return items[0];
+}
+
+function withAuthor({ authors, queryParams }: { authors: string | null; queryParams: QueryParams }): QueryParams {
+  return authors ? { ...queryParams, author: authors } : queryParams;
+}
+
+function normalizeAuthors(authors: unknown): string | null {
+  if (isNil(authors)) {
+    return null;
+  }
+  const value = String(authors).trim();
+  return value === '' ? null : value;
+}
+
+function timeMs({ post, field }: { post: WordpressPost; field: TimeField }): number {
+  const gmt = field === 'date' ? post.date_gmt : post.modified_gmt;
+  const local = field === 'date' ? post.date : post.modified;
+  const raw = typeof gmt === 'string' && gmt !== '' && !gmt.startsWith('0000') ? gmt : local;
+  if (typeof raw !== 'string' || raw === '') {
+    return Number.NaN;
+  }
+  return Date.parse(HAS_ZONE.test(raw) ? raw : `${raw}Z`);
+}
+
+function finiteOrZero(ms: number): number {
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+function compareOldestFirst({ a, b }: { a: WordpressPost; b: WordpressPost }): number {
+  const byTime = finiteOrZero(timeMs({ post: a, field: 'date' })) - finiteOrZero(timeMs({ post: b, field: 'date' }));
+  return byTime !== 0 ? byTime : a.id - b.id;
+}
+
+function uniqueById({ posts }: { posts: WordpressPost[] }): WordpressPost[] {
+  return [...new Map(posts.map((post) => [post.id, post])).values()];
+}
+
+function uniqueSeen({ entries }: { entries: SeenEntry[] }): SeenEntry[] {
+  return [...new Map(entries.map((entry) => [entry[0], entry])).values()].slice(-SEEN_LIMIT);
+}
+
+function toSeenEntry(post: WordpressPost): SeenEntry {
+  return [post.id, finiteOrZero(timeMs({ post, field: 'date' }))];
+}
+
+function pruneSeen({
+  seen,
+  baselineId,
+  publishedFloorMs,
+}: {
+  seen: SeenEntry[];
+  baselineId: number;
+  publishedFloorMs: number;
+}): Pick<CursorState, 'seen' | 'baselineId' | 'publishedFloorMs'> {
+  if (seen.length <= SEEN_LIMIT) {
+    return { seen, baselineId, publishedFloorMs };
+  }
+  const dropped = seen.slice(0, seen.length - SEEN_LIMIT);
+  return {
+    seen: seen.slice(seen.length - SEEN_LIMIT),
+    baselineId: dropped.reduce((acc, [id]) => Math.max(acc, id), baselineId),
+    publishedFloorMs: dropped.reduce((acc, [, ms]) => Math.max(acc, ms), publishedFloorMs),
+  };
+}
+
+const STATE_KEY = 'wordpress_new_post_cursor';
+const LEGACY_STATE_KEY = 'lastPoll';
+const PAGE_SIZE = 100;
+const MAX_PAGES_PER_WINDOW = 10;
+const SAMPLE_SIZE = 5;
+const SEEN_LIMIT = 2000;
+const REQUEST_TIMEOUT_MS = 15_000;
+const POLL_BUDGET_MS = 45_000;
+const MIN_REQUEST_ESTIMATE_MS = 2_000;
+const LISTING_COUNT = 3;
+const DATE_LOOKBACK_MS = 60 * 60 * 1000;
+const MODIFIED_LOOKBACK_MS = 2 * 60 * 1000;
+const TIE_OVERLAP_MS = 1000;
+const LEGACY_SKEW_MS = 14 * 60 * 60 * 1000;
+const HAS_ZONE = /(?:[zZ]|[+-]\d{2}:?\d{2})$/;
+
+type TimeField = 'date' | 'modified';
+
+type SeenEntry = [number, number];
+
+type PageReadResult = { posts: WordpressPost[]; complete: boolean; requested: boolean; nextPage: number };
+
+type PollBudget = {
+  canStart: (params: { reservedRequests: number }) => boolean;
+  record: (params: { durationMs: number }) => void;
 };
 
-const getPosts = async (
-  auth: PiecePropValueSchema<typeof wordpressAuth>,
-  authors: string,
-  startDate: number
-) => {
-  //WordPress accepts date only if they come after the start of the unix time stamp in 1970
-  let afterDate = dayjs(startDate).toISOString();
-  if (startDate === 0) {
-    afterDate = dayjs(startDate).add(1, 'day').toISOString();
-  }
-  const getPostsParams = {
-    websiteUrl: auth.website_url.trim(),
-    username: auth.username,
-    password: auth.password,
-    authors: authors,
-    afterDate: afterDate,
-    page: 1,
-  };
-  return (await wordpressCommon.getPosts(getPostsParams)).posts;
+type IdCursor = { floorId: number; topId: number; resumePage: number | null };
+
+type WindowCursor = { ms: number; complete: boolean; resume?: { startMs: number; page: number } };
+
+type CursorState = {
+  authors: string | null;
+  baselineId: number;
+  publishedFloorMs: number;
+  byDate: WindowCursor;
+  byModified: WindowCursor;
+  byId?: IdCursor;
+  seen: SeenEntry[];
+};
+
+type WordpressPost = {
+  id: number;
+  date: string;
+  date_gmt?: string | null;
+  modified?: string;
+  modified_gmt?: string | null;
+  [key: string]: unknown;
 };
