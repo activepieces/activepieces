@@ -192,6 +192,7 @@ describe('worker integration', () => {
                 getPiece: vi.fn(),
                 getPieceArchive: vi.fn(),
                 extendLock: vi.fn(),
+                beginShutdown: vi.fn(),
                 recordTriggerRun: vi.fn(),
                 disableFlow: vi.fn(),
                 ...overrides,
@@ -543,6 +544,7 @@ describe('worker integration', () => {
                     getPiece: vi.fn(),
                     getPieceArchive: vi.fn(),
                     extendLock: vi.fn(),
+                    beginShutdown: vi.fn(),
                     disableFlow: vi.fn(),
                 } as unknown as WorkerToApiContract)
                 serverSockets.push(serverSocket)

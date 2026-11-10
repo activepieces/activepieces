@@ -3,8 +3,8 @@ import { ConsumeJobRequest } from '@activepieces/shared'
 import { Worker as BullMQWorker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
+import { WAITER_TIMEOUT_MS } from './queue-timing'
 
-const WAITER_TIMEOUT_MS = 50_000
 const ERROR_RETRY_DELAY_MS = 5_000
 
 function createQueueDispatcher(params: {
