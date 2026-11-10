@@ -244,7 +244,9 @@ function parseOrUndefined<T extends z.ZodType>(schema: T, value: unknown): z.inf
 
 function report({ context, call, generationId, tokens }: ReportParams): void {
     if (isNil(call)) {
-        recordUnbilledCall({ context, generationId, reason: isNil(generationId) ? UnbilledCallReason.NO_GENERATION_ID : UnbilledCallReason.PROVIDER_REPORTED_NO_COST })
+        if (!isEmptyCompletion(tokens)) {
+            recordUnbilledCall({ context, generationId, reason: isNil(generationId) ? UnbilledCallReason.NO_GENERATION_ID : UnbilledCallReason.PROVIDER_REPORTED_NO_COST })
+        }
         reporter?.({ billing: context.billing, provider: context.provider, ...spreadIfDefined('providerConfigId', context.providerConfigId), modelId: context.modelId, call: { charge: AiChargeBasis.USAGE_ONLY, generationId, ...tokens } })
         return
     }
@@ -253,6 +255,10 @@ function report({ context, call, generationId, tokens }: ReportParams): void {
         return
     }
     reporter({ billing: context.billing, provider: context.provider, ...spreadIfDefined('providerConfigId', context.providerConfigId), modelId: context.modelId, call })
+}
+
+function isEmptyCompletion(tokens: AiCallTokens | undefined): boolean {
+    return tokens?.outputTokens === 0
 }
 
 function recordUnbilledCall({ context, generationId, reason }: RecordUnbilledCallParams): void {

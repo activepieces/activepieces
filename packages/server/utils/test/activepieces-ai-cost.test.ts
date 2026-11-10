@@ -237,6 +237,37 @@ describe('what a model call reports back for billing', () => {
         activepiecesAiCost.drainUnbilledCalls()
     })
 
+    it('does not count an empty completion as unbilled, since OpenRouter charges nothing for it', async () => {
+        activepiecesAiCost.drainUnbilledCalls()
+        const model = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [], finishReason: 'stop', usage: { inputTokens: { total: 40 }, outputTokens: { total: 0 } }, response: { id: 'gen-empty' } }),
+            provider: AIProviderName.ACTIVEPIECES,
+            modelId: 'google/gemini-3.7-flash',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES }),
+        })
+
+        await generateWith(model)
+
+        expect(reported[0].call).toMatchObject({ charge: AiChargeBasis.USAGE_ONLY, inputTokens: 40, outputTokens: 0 })
+        expect(activepiecesAiCost.drainUnbilledCalls()).toEqual([])
+    })
+
+    it('still counts a call that produced output but reported no cost, since that is money lost', async () => {
+        activepiecesAiCost.drainUnbilledCalls()
+        const model = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [], finishReason: 'stop', usage: { inputTokens: { total: 40 }, outputTokens: { total: 12 } }, response: { id: 'gen-output' } }),
+            provider: AIProviderName.ACTIVEPIECES,
+            modelId: 'google/gemini-3.7-flash',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES }),
+        })
+
+        await generateWith(model)
+
+        expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
+    })
+
     it('keeps tokens and reported cost on a fixed-credit report, without changing its credit', () => {
         activepiecesAiCost.reportFixedCredits({ billing: BILLING, provider: AIProviderName.OPENAI, modelId: 'gpt-5', inputTokens: 12, outputTokens: 3, observedCostUsd: 0.0004 })
 
@@ -569,6 +600,32 @@ describe('a stream that never reaches its finish chunk', () => {
 
         expect(reported.map((event) => event.call.charge)).toEqual([AiChargeBasis.USAGE_ONLY])
         expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
+    })
+
+    it('does not count a finished stream with no output as unbilled when the provider has no record of it', async () => {
+        activepiecesAiCost.drainUnbilledCalls()
+        const model = streamingModel({
+            provider: AIProviderName.ACTIVEPIECES,
+            apiKey: MANAGED_KEY,
+            chunks: [
+                { type: 'response-metadata', id: 'gen-empty-stream' },
+                { type: 'finish', finishReason: 'stop', usage: { inputTokens: { total: 40 }, outputTokens: { total: 0 } } },
+            ],
+        })
+
+        await streamThen(model, async ({ reader, writer }) => {
+            await writer.close()
+            for (;;) {
+                const { done } = await reader.read()
+                if (done) {
+                    return
+                }
+            }
+        })
+        await settled()
+
+        expect(reported.map((event) => event.call.charge)).toEqual([AiChargeBasis.USAGE_ONLY])
+        expect(activepiecesAiCost.drainUnbilledCalls()).toEqual([])
     })
 
     it('still charges a customer own-key stream its fixed credit, the call was made either way', async () => {
