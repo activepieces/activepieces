@@ -1,10 +1,10 @@
-import { isNil } from '@activepieces/core-utils'
+import { apId, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs, apVersionUtil } from '@activepieces/server-utils'
 import { ApEdition, PieceSyncMode, PieceType } from '@activepieces/shared'
 import { UnrecoverableError } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
-import { distributedLock } from '../../database/redis-connections'
+import { distributedLock, redisConnections } from '../../database/redis-connections'
 import { eventDestinationService } from '../../event-destinations/event-destinations.service'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
@@ -21,6 +21,8 @@ const LOCK_TIMEOUT_SECONDS = 120
 const BASE_JOB_ID = 'piece-catalog-events'
 const FOLLOW_UP_JOB_ID = 'piece-catalog-events-follow-up'
 const RECONCILE_CRON = '45 * * * *'
+const RUNNING_SYNCS_KEY = 'pieces-sync:running'
+const RUNNING_SYNC_TTL_MS = 2 * 60 * 60 * 1000
 
 export const pieceCatalogEventsJob = (log: FastifyBaseLogger) => ({
     register(): void {
@@ -45,6 +47,27 @@ export const pieceCatalogEventsJob = (log: FastifyBaseLogger) => ({
             job: { name: SystemJobName.PIECE_CATALOG_EVENTS, data: {}, jobId },
             schedule: { type: 'one-time', date: apDayjs() },
         })
+    },
+    async onSyncStarted(): Promise<string | null> {
+        if (isCommunity()) {
+            return null
+        }
+        const syncId = apId()
+        const { error } = await tryCatch(() => markSyncRunning(syncId))
+        if (!isNil(error)) {
+            log.warn({ err: error }, '[pieceCatalogEvents] could not record the running pieces sync')
+            return null
+        }
+        return syncId
+    },
+    async onSyncStopped(syncId: string | null): Promise<void> {
+        if (isNil(syncId)) {
+            return
+        }
+        const { error } = await tryCatch(() => markSyncFinished(syncId))
+        if (!isNil(error)) {
+            log.warn({ err: error }, '[pieceCatalogEvents] could not clear the running pieces sync')
+        }
     },
     async onSyncFinished({ added, deleted, fetchFailed }: SyncFinishedParams): Promise<void> {
         if (isCommunity()) {
@@ -88,12 +111,30 @@ function isCommunity(): boolean {
 
 async function isPiecesSyncRunning(log: FastifyBaseLogger): Promise<boolean> {
     try {
-        return (await systemJobsQueue.getActive()).some((job) => !isNil(job) && job.name === SystemJobName.PIECES_SYNC)
+        const queuedSyncActive = (await systemJobsQueue.getActive()).some((job) => !isNil(job) && job.name === SystemJobName.PIECES_SYNC)
+        return queuedSyncActive || await isAnySyncMarkedRunning()
     }
     catch (err) {
         log.warn({ err }, '[pieceCatalogEvents] could not read the pieces sync state, skipping the auto seed')
         return true
     }
+}
+
+async function markSyncRunning(syncId: string): Promise<void> {
+    const redis = await redisConnections.useExisting()
+    await redis.zadd(RUNNING_SYNCS_KEY, Date.now() + RUNNING_SYNC_TTL_MS, syncId)
+}
+
+async function markSyncFinished(syncId: string): Promise<void> {
+    const redis = await redisConnections.useExisting()
+    await redis.zrem(RUNNING_SYNCS_KEY, syncId)
+}
+
+async function isAnySyncMarkedRunning(): Promise<boolean> {
+    const redis = await redisConnections.useExisting()
+    const now = Date.now()
+    await redis.zremrangebyscore(RUNNING_SYNCS_KEY, '-inf', now)
+    return await redis.zcount(RUNNING_SYNCS_KEY, now, '+inf') > 0
 }
 
 async function findIdleJobId(log: FastifyBaseLogger): Promise<string | null> {

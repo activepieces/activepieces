@@ -43,6 +43,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
             log.info('Piece sync service is disabled')
             return
         }
+        const runningSyncId = await pieceCatalogEventsJob(log).onSyncStarted()
         try {
             log.info('Starting piece synchronization')
             const startTime = performance.now()
@@ -76,6 +77,9 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
         }
         catch (error) {
             log.error({ error }, 'Error syncing pieces')
+        }
+        finally {
+            await pieceCatalogEventsJob(log).onSyncStopped(runningSyncId)
         }
     },
 })

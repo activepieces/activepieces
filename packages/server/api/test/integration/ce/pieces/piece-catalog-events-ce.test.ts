@@ -251,12 +251,15 @@ describe('Piece catalog events in community edition', () => {
         await insertOfficialPiece({ name: '@test/piece-a', version: '1.0.0' })
         const job = catalogJobModule.pieceCatalogEventsJob(app.log)
 
+        const runningSyncId = await job.onSyncStarted()
+        await job.onSyncStopped(runningSyncId)
         await job.onSyncFinished({ added: 1, deleted: 0, fetchFailed: 0 })
         await job.enqueue()
         await job.scheduleReconcile()
         await withSyncMode('NONE', () => job.seedAtBootIfSyncOff())
         await job.seedAtBootIfSyncOff()
 
+        expect(runningSyncId).toBeNull()
         expect(await catalogSnapshotStore(app.log).load()).toBeNull()
         await expectNoCatalogJobs()
         await expectNoDeliveries()

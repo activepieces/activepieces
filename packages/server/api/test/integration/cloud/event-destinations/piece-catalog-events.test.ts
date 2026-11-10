@@ -637,6 +637,46 @@ describe('Piece catalog events job', () => {
         expect(Object.keys(await loadSnapshot() ?? {})).toHaveLength(30)
     })
 
+    it('the reconcile does not seed mid boot sync when no pieces sync job is queued', async () => {
+        const destA = await subscribe({ platformId: entitledA.platform.id, changeTypes: ALL_CHANGE_TYPES })
+        registry = baseCatalog()
+        fetchDelayMs = 100
+        const officialRows = async (): Promise<number> => databaseConnection().getRepository('piece_metadata').countBy({ pieceType: PieceType.OFFICIAL })
+        const syncPromise = sync()
+        const deadline = Date.now() + 20_000
+        while (await officialRows() < 5 && Date.now() < deadline) {
+            await sleep(20)
+        }
+
+        await runReconcileJob()
+        const rowsAtCheckpoint = await officialRows()
+        const snapshotMidSync = await loadSnapshot()
+        await syncPromise
+        fetchDelayMs = 0
+        await settleCatalogJobs()
+
+        expect(rowsAtCheckpoint).toBeGreaterThanOrEqual(5)
+        expect(rowsAtCheckpoint).toBeLessThan(90)
+        expect(snapshotMidSync).toBeNull()
+        expect(deliveriesTo(destA)).toHaveLength(0)
+        expect(Object.keys(await loadSnapshot() ?? {})).toHaveLength(30)
+    })
+
+    it('a running sync left by a crashed replica stops blocking the reconcile seed after two hours', async () => {
+        await insertOfficialPiece({ name: '@test/auto-a', version: '1.0.0' })
+        await catalogJobModule.pieceCatalogEventsJob(app.log).onSyncStarted()
+
+        await runReconcileJob()
+        const snapshotWhileRunning = await loadSnapshot()
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(Date.now() + 2 * 60 * 60 * 1000 + 1000)
+        await runReconcileJob()
+        vi.useRealTimers()
+
+        expect(snapshotWhileRunning).toBeNull()
+        expect(await loadSnapshot()).toEqual({ '@test/auto-a': '1.0.0' })
+    })
+
     it('S17 AP_PIECES_SYNC_MODE=NONE: the boot seed sends 0, then a bump and a new piece via admin POST send exactly 2', async () => {
         const destA = await subscribe({ platformId: entitledA.platform.id })
         await withSyncMode('NONE', async () => {
