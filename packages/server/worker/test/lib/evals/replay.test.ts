@@ -1,4 +1,6 @@
+import { jsonSchema, tool, ToolSet } from 'ai'
 import { describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 import { RecordedToolCall } from './eval-case'
 import { replay } from './replay'
 
@@ -130,5 +132,56 @@ describe('replay input matching', () => {
 
     it('ignores card titles only at the top level, not title fields inside the data', () => {
         expect(matches({ recorded: { records: [{ title: 'Buy milk' }] }, called: { records: [{ title: 'Buy eggs' }] } })).toBe(false)
+    })
+})
+
+describe('replay.splitStale', () => {
+    const tools: ToolSet = {
+        ap_list_flows: tool({ inputSchema: z.object({ limit: z.number(), status: z.enum(['ENABLED', 'DISABLED']).optional() }) }),
+        ap_add_step: tool({ inputSchema: jsonSchema({
+            type: 'object',
+            properties: { flowId: { type: 'string' }, stepName: { type: 'string' }, kind: { type: 'string', enum: ['PIECE', 'CODE'] } },
+            required: ['flowId', 'stepName'],
+            additionalProperties: false,
+        }) }),
+    }
+
+    it('keeps recordings the current tools still accept', async () => {
+        const recordedToolCalls: RecordedToolCall[] = [
+            { toolName: 'ap_list_flows', input: { limit: 5 }, output: [] },
+            { toolName: 'ap_add_step', input: { flowId: 'f1', stepName: 'step_1', kind: 'PIECE' }, output: { success: true } },
+        ]
+
+        const { fresh, stale } = await replay.splitStale({ tools, recordedToolCalls })
+
+        expect(fresh).toEqual(recordedToolCalls)
+        expect(stale).toEqual([])
+    })
+
+    it('flags a recording whose input a zod schema now rejects', async () => {
+        const { fresh, stale } = await replay.splitStale({ tools, recordedToolCalls: [{ toolName: 'ap_list_flows', input: { limit: 5, status: 'ARCHIVED' }, output: [] }] })
+
+        expect(fresh).toEqual([])
+        expect(stale).toEqual([expect.objectContaining({ toolName: 'ap_list_flows', reason: expect.stringContaining('rejects the recorded input') })])
+    })
+
+    it('flags a missing required field, an unknown field and a removed enum value in a JSON schema', async () => {
+        const { stale } = await replay.splitStale({ tools, recordedToolCalls: [
+            { toolName: 'ap_add_step', input: { flowId: 'f1' }, output: null },
+            { toolName: 'ap_add_step', input: { flowId: 'f1', stepName: 's', oldField: 1 }, output: null },
+            { toolName: 'ap_add_step', input: { flowId: 'f1', stepName: 's', kind: 'BRANCH' }, output: null },
+        ] })
+
+        expect(stale.map((recording) => recording.reason)).toEqual([
+            expect.stringContaining('missing required stepName'),
+            expect.stringContaining('unknown oldField'),
+            expect.stringContaining('kind "BRANCH" is not an allowed value'),
+        ])
+    })
+
+    it('flags a recording for a tool the agent is no longer offered', async () => {
+        const { stale } = await replay.splitStale({ tools, recordedToolCalls: [{ toolName: 'ap_removed_tool', input: {}, output: null }] })
+
+        expect(stale).toEqual([{ toolName: 'ap_removed_tool', reason: 'the agent is no longer offered this tool' }])
     })
 })

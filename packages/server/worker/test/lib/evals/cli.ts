@@ -12,6 +12,7 @@ import { posthogDataset } from './posthog-dataset'
 import { posthogExperiments, UploadedRun, VerdictCounts } from './posthog-experiments'
 import { progressTable } from './progress-table'
 import { evalPrompts } from './prompts'
+import { StaleRecording } from './replay'
 import { resultsBrowser } from './results-browser'
 import { evalToolSet, McpTools } from './tool-set'
 
@@ -157,6 +158,7 @@ async function reportDataset({ name, cases, results, explained, live, browse, re
     const failing = summaries.filter((summary) => summary.verdict === 'fail').length
     const clearlyFailing = summaries.filter((summary) => clearVerdict(summary) === 'fail').length
     console.log(`${colors.green(`${summaries.length - failing} pass`)} · ${failing > 0 ? colors.red(`${failing} fail`) : `${failing} fail`} ${colors.dim(`(${clearlyFailing} clearly)`)} · ${summaries.length} cases`)
+    printStale({ cases, results })
     if (recordMode) {
         await saveFixtures({ cases, results })
         return { status: 'ok', reason: '' }
@@ -177,6 +179,17 @@ async function reportDataset({ name, cases, results, explained, live, browse, re
     }
 }
 
+function printStale({ cases, results }: { cases: EvalCase[], results: CaseResult[] }): void {
+    const lines = cases.flatMap((candidate) => {
+        const stale = results.find((result) => result.candidate.id === candidate.id && result.staleRecordings.length > 0)?.staleRecordings ?? []
+        return stale.map((recording) => `  case ${candidate.caseNumber} · ${recording.toolName}: ${recording.reason}`)
+    })
+    if (lines.length === 0) {
+        return
+    }
+    console.log(colors.yellow(`\nStale recordings, left out of the replay (re-record these cases):\n${lines.join('\n')}`))
+}
+
 async function runPool({ runs, run, onResult }: { runs: PlannedRun[], run: (planned: PlannedRun) => Promise<CaseResult>, onResult: (result: CaseResult) => void }): Promise<CaseResult[]> {
     const queue = [...runs]
     const results: CaseResult[] = []
@@ -195,10 +208,10 @@ async function evaluate({ candidate, trial, mcp, modelId, auth, recordMode }: { 
     const { data, error } = await tryCatch(async () => {
         const outcome = await evalAgentTurn.run({ evalCase: candidate, mcp, modelId, auth, recordMode })
         const scores = await evalChecks.grade({ evalCase: candidate, outcome, auth })
-        return { scores, stops: outcome.stops.map((stop) => stop.reason), transcript: outcome.transcript, newFixtures: outcome.newFixtures }
+        return { scores, stops: outcome.stops.map((stop) => stop.reason), transcript: outcome.transcript, newFixtures: outcome.newFixtures, staleRecordings: outcome.staleRecordings }
     })
     if (error) {
-        return { candidate, trial, verdict: 'fail', scores: crashedScores({ reason: error.message }), stops: [], transcript: '', newFixtures: [] }
+        return { candidate, trial, verdict: 'fail', scores: crashedScores({ reason: error.message }), stops: [], transcript: '', newFixtures: [], staleRecordings: [] }
     }
     return { candidate, trial, verdict: evalChecks.verdictOf({ scores: data.scores }), ...data }
 }
@@ -412,4 +425,5 @@ type PlannedRun = {
 
 type CaseResult = UploadedRun & {
     newFixtures: RecordedToolCall[]
+    staleRecordings: StaleRecording[]
 }

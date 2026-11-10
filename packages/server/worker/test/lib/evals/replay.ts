@@ -1,4 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
+import { asSchema, ToolSet } from 'ai'
 import { RecordedToolCall } from './eval-case'
 
 function create({ recordedToolCalls }: { recordedToolCalls: RecordedToolCall[] }): Replay {
@@ -48,6 +49,56 @@ async function resolveCall({ caseReplay, recordMode, toolName, input, live }: { 
     const output = await live()
     caseReplay.record({ toolName, input, output })
     return output
+}
+
+async function splitStale({ tools, recordedToolCalls }: { tools: ToolSet, recordedToolCalls: RecordedToolCall[] }): Promise<{ fresh: RecordedToolCall[], stale: StaleRecording[] }> {
+    const checked = await Promise.all(recordedToolCalls.map(async (call) => ({ call, problem: await staleness({ tools, call }) })))
+    return {
+        fresh: checked.flatMap(({ call, problem }) => isNil(problem) ? [call] : []),
+        stale: checked.flatMap(({ call, problem }) => isNil(problem) ? [] : [{ toolName: call.toolName, reason: problem }]),
+    }
+}
+
+async function staleness({ tools, call }: { tools: ToolSet, call: RecordedToolCall }): Promise<string | null> {
+    const tool = tools[call.toolName]
+    if (isNil(tool)) {
+        return 'the agent is no longer offered this tool'
+    }
+    const schema = asSchema(tool.inputSchema)
+    if (!isNil(schema.validate)) {
+        const result = await schema.validate(call.input)
+        return result.success === true ? null : `the tool's input schema rejects the recorded input: ${result.error.message.slice(0, STALE_REASON_CHARS)}`
+    }
+    const problem = jsonSchemaProblem({ schema: await schema.jsonSchema, input: call.input })
+    return isNil(problem) ? null : `the tool's input schema rejects the recorded input: ${problem}`
+}
+
+function jsonSchemaProblem({ schema, input }: { schema: unknown, input: unknown }): string | null {
+    if (!isRecord(schema)) {
+        return null
+    }
+    if (!isRecord(input)) {
+        return 'the input is not an object'
+    }
+    const properties = isRecord(schema['properties']) ? schema['properties'] : {}
+    const required = Array.isArray(schema['required']) ? schema['required'].filter((key): key is string => typeof key === 'string') : []
+    const missing = required.filter((key) => !(key in input))
+    if (missing.length > 0) {
+        return `missing required ${missing.join(', ')}`
+    }
+    const unknownKeys = schema['additionalProperties'] === false ? Object.keys(input).filter((key) => !(key in properties)) : []
+    if (unknownKeys.length > 0) {
+        return `unknown ${unknownKeys.join(', ')}`
+    }
+    const badEnum = Object.entries(input).find(([key, value]) => {
+        const property = properties[key]
+        return isRecord(property) && Array.isArray(property['enum']) && !property['enum'].includes(value)
+    })
+    return isNil(badEnum) ? null : `${badEnum[0]} ${JSON.stringify(badEnum[1])} is not an allowed value`
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function endsTurn(stop: ReplayStop): boolean {
@@ -104,6 +155,7 @@ const CARD_TITLE_KEYS = new Set(['title', 'activeTitle', 'doneTitle'])
 const PIECE_NAME_KEY = 'pieceName'
 const PIECE_PREFIX = '@activepieces/piece-'
 const REPLAY_ENDED_MESSAGE = 'This tool is unavailable right now.'
+const STALE_REASON_CHARS = 200
 const READ_TOOLS = new Set([
     'ap_discover_action_auth',
     'ap_explore_data',
@@ -141,6 +193,12 @@ export const replay = {
     resolveCall,
     isRead,
     endsTurn,
+    splitStale,
+}
+
+export type StaleRecording = {
+    toolName: string
+    reason: string
 }
 
 export type ReplayStop = {
