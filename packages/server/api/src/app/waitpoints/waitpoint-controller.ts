@@ -71,6 +71,7 @@ function buildBarrierState({ flowRunId, created, publicApiUrl }: BuildBarrierSta
     return {
         signalCount: created.signalCount,
         batchSize: created.batchSize,
+        ...(isNil(created.totalItems) ? {} : { totalItems: created.totalItems }),
         ...(truncatedForSize ? { signalsTruncated: true } : {}),
         ...(inlineable ? { signals: created.signals.map((signal) => toSignalLink({ flowRunId, signal, publicApiUrl })) } : {}),
     }

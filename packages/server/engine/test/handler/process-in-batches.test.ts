@@ -171,6 +171,28 @@ describe('process in batches executor', () => {
         expect(result.steps['batches'].output).toMatchObject({ batchSize: 3, total: 2 })
     })
 
+    it('reports the item count the server kept for a retried hand-over, not the one it sent', async () => {
+        mockCreateWaitpoint.mockResolvedValue({
+            id: 'barrier-id',
+            resumeUrl: 'http://localhost/resume',
+            barrier: { signalCount: 2, batchSize: 2, totalItems: 4 },
+        })
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ [1,2,3] }}',
+            batchSize: 2,
+            firstLoopAction: buildCodeAction({ name: 'echo_step', input: {} }),
+        })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
+        })
+
+        expect(result.steps['batches'].output).toMatchObject({ totalItems: 4, batchSize: 2, total: 2 })
+    })
+
     it('keys the barrier by the loop iteration path but sends the bare batch step name', async () => {
         const action = buildProcessInBatchesAction({
             name: 'batches',
@@ -480,6 +502,82 @@ describe('process in batches executor', () => {
         })
 
         expect(result.verdict.status).toEqual(FlowRunStatus.FAILED)
+    })
+
+    it('continues the flow past items that are not a list when continue on failure is on', async () => {
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ 5 }}',
+            firstLoopAction: buildCodeAction({ name: 'echo_step', input: {} }),
+            continueOnFailure: true,
+        })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
+        })
+
+        expect(result.verdict.status).toEqual(FlowRunStatus.RUNNING)
+        expect(result.steps['batches'].status).toEqual(StepOutputStatus.FAILED)
+        expect(result.steps['batches'].errorMessage).toContain('must be a list')
+        expect(mockCreateWaitpoint).not.toHaveBeenCalled()
+    })
+
+    it('continues the flow past a loop-scoped reference when continue on failure is on', async () => {
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ [1] }}',
+            batchSize: 1,
+            firstLoopAction: buildCodeAction({ name: 'echo_step', input: { value: '{{ inner.output }}' } }),
+            continueOnFailure: true,
+        })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState: await insideLoopIteration({ stepName: 'inner' }),
+            constants: generateMockEngineConstants({ stepNames: ['inner'] }),
+        })
+
+        expect(result.verdict.status).toEqual(FlowRunStatus.RUNNING)
+        expect(result.getStepOutput('batches')?.status).toEqual(StepOutputStatus.FAILED)
+        expect(mockCreateWaitpoint).not.toHaveBeenCalled()
+    })
+
+    it('still fails a tested step on items that are not a list when continue on failure is on', async () => {
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ 5 }}',
+            continueOnFailure: true,
+        })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ stepNameToTest: 'batches' }),
+        })
+
+        expect(result.verdict.status).toEqual(FlowRunStatus.FAILED)
+    })
+
+    it('keeps a refused hand-over fatal when continue on failure is on, because the server may already hold its barrier', async () => {
+        mockCreateWaitpoint.mockRejectedValue(new Error('This step already started 2 batches, but its items now split into 3'))
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ [1,2,3] }}',
+            batchSize: 1,
+            firstLoopAction: buildCodeAction({ name: 'echo_step', input: {} }),
+            continueOnFailure: true,
+        })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
+        })
+
+        expect(result.verdict.status).toEqual(FlowRunStatus.FAILED)
+        expect(mockCreateWaitpoint).toHaveBeenCalledTimes(1)
     })
 
     it('resumes with the released summary as the step output', async () => {

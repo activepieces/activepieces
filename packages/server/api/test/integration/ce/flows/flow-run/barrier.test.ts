@@ -1778,6 +1778,29 @@ describe('fan-out dispatch', () => {
         })
     })
 
+    it('reports the kept source item count when a retried fan-out create resolves fewer items into the same number of batches', async () => {
+        const { flowRun } = await createFanOutParentRun()
+        await withBarrierQueuePaused(async () => {
+            const first = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4], batchSize: 2 })
+            expect(first).toMatchObject({ signalCount: 2, batchSize: 2, totalItems: 4 })
+
+            const retried = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3], batchSize: 2 })
+
+            expect(retried).toMatchObject({ signalCount: 2, batchSize: 2, totalItems: 4 })
+        })
+    })
+
+    it('reports the kept source batch size when a retried fan-out create asks for a different one', async () => {
+        const { flowRun } = await createFanOutParentRun()
+        await withBarrierQueuePaused(async () => {
+            await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4], batchSize: 2 })
+
+            const retried = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4], batchSize: 3 })
+
+            expect(retried).toMatchObject({ signalCount: 2, batchSize: 2, totalItems: 4 })
+        })
+    })
+
     it('refuses a retried fan-out create whose items split into a different number of batches', async () => {
         const { flowRun } = await createFanOutParentRun()
         await withBarrierQueuePaused(async () => {

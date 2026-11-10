@@ -71,17 +71,15 @@ export const barrierService = (log: FastifyBaseLogger) => ({
             return { inserted: true, barrier, signals }
         })
 
-        if (!isNil(params.fanOut) && creation.barrier.status === WaitpointStatus.PENDING) {
-            if (!creation.inserted) {
-                assertSameBatchCount({ existingSignalCount: creation.signals.length, requestedSignalCount: signalCount })
-            }
-            await startFanOut({
+        const keptSource = !isNil(params.fanOut) && creation.barrier.status === WaitpointStatus.PENDING
+            ? await startFanOut({
                 barrierId: creation.barrier.id,
                 projectId: params.projectId,
-                source: { entryStepName: params.fanOut.entryStepName, batchStepName: params.fanOut.batchStepName, seedSteps: params.fanOut.seedSteps, batches },
+                source: { entryStepName: params.fanOut.entryStepName, batchStepName: params.fanOut.batchStepName, seedSteps: params.fanOut.seedSteps, batchSize, batches },
+                reusedSignalCount: creation.inserted ? null : creation.signals.length,
                 log,
             })
-        }
+            : null
         if (creation.inserted) {
             if (!isNil(creation.barrier.resumeDateTime)) {
                 await waitpointTimeoutJob.schedule({
@@ -95,7 +93,13 @@ export const barrierService = (log: FastifyBaseLogger) => ({
             await barrierQueue(log).enqueueEvaluation({ barrierId: creation.barrier.id, projectId: params.projectId })
         }
 
-        return { barrier: creation.barrier, signals: creation.signals, signalCount: creation.signals.length, batchSize }
+        return {
+            barrier: creation.barrier,
+            signals: creation.signals,
+            signalCount: creation.signals.length,
+            batchSize: keptSource?.batchSize ?? batchSize,
+            ...spreadIfDefined('totalItems', isNil(keptSource) ? params.fanOut?.items.length : countItems(keptSource.batches)),
+        }
     },
 
     async findById({ barrierId, projectId }: FindByIdParams): Promise<Waitpoint | null> {
@@ -273,9 +277,18 @@ async function lockOpenBarrier({ barrierId, projectId, entityManager }: LockForD
         .getOne()
 }
 
-async function startFanOut({ barrierId, projectId, source, log }: StartFanOutParams): Promise<void> {
-    await distributedStore.putIfAbsent(barrierSourceKey(barrierId), source, SOURCE_TTL_SECONDS)
+async function startFanOut({ barrierId, projectId, source, reusedSignalCount, log }: StartFanOutParams): Promise<BarrierFanOutPayload> {
+    if (!isNil(reusedSignalCount)) {
+        assertSameBatchCount({ existingSignalCount: reusedSignalCount, requestedSignalCount: source.batches.length })
+    }
+    const written = await distributedStore.putIfAbsent(barrierSourceKey(barrierId), source, SOURCE_TTL_SECONDS)
+    const kept = written ? source : await distributedStore.get<BarrierFanOutPayload>(barrierSourceKey(barrierId))
     await barrierQueue(log).addFanOutDispatch({ barrierId, projectId })
+    return kept ?? source
+}
+
+function countItems(batches: unknown[][]): number {
+    return batches.reduce((count, batch) => count + batch.length, 0)
 }
 
 async function closeBarrier({ barrier, timedOut }: CloseBarrierParams): Promise<BarrierSummary | null> {
@@ -435,6 +448,7 @@ export type CreateBarrierResult = {
     signals: WaitpointSignal[]
     signalCount: number
     batchSize: number
+    totalItems?: number
 }
 
 export type ReceiveSignalParams = {
@@ -510,6 +524,7 @@ type StartFanOutParams = {
     barrierId: string
     projectId: string
     source: BarrierFanOutPayload
+    reusedSignalCount: number | null
     log: FastifyBaseLogger
 }
 

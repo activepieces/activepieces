@@ -77,6 +77,7 @@ export type CreateWaitpointRequest = z.infer<typeof CreateWaitpointRequest>
 export const BarrierCreatedState = z.object({
     signalCount: z.number().int().nonnegative(),
     batchSize: z.number().int().positive(),
+    totalItems: z.number().int().nonnegative().optional(),
     signals: z.array(z.object({
         label: z.string().nullable(),
         confirmUrl: z.string(),

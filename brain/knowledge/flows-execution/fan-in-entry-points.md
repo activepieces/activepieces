@@ -283,3 +283,13 @@ run id. The loop *rail* presentation reuses fine; the data path underneath it do
   `packages/server/api/dist/**/fan-in-barrier.d.ts` from the pre-rename design and a same-named test helper
   in `barrier.test.ts`. Check `src/`, not `dist/`, before scoping a server ticket to "add the children
   endpoint" — it is already there.
+- **Continue on Failure covers a hand-over failure only until the `POST` starts.** Items that are not a
+  list, a loop-scoped reference, or a resolver error let the flow continue. A refusal or a network error
+  from `POST /v1/waitpoints` stays fatal, because the server may already hold a barrier. A failed run
+  deletes its barriers (`deleteForFinishedRun`); a run that continued would leave that barrier dispatching
+  children for a step it has moved past.
+- **A retried fan-out create keeps the first attempt's work, and the step reports that work.** The source
+  is written with `putIfAbsent`, and `create` returns the kept source's `batchSize` and `totalItems`, so the
+  step output matches what the children run, not what the retry resolved. Two limits remain: the source TTL
+  is 1 day, so a later retry with the same batch count writes its own chunking; and a reused `COMPLETED`
+  barrier has no source left, so it reports the retry's own item count.

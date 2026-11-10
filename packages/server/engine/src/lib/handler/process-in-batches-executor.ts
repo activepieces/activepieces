@@ -2,6 +2,7 @@ import { extractMustacheTokens, isNil, isString, spreadIfDefined } from '@active
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { BarrierFanOutSource, BarrierSummary, DEFAULT_BATCH_SIZE, ExecutionError, ExecutionErrorType, FlowActionType, FlowRunStatus, flowStructureUtil, GenericStepOutput, PauseType, ProcessInBatchesAction, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import { z } from 'zod'
+import { continueIfFailureHandler } from '../helper/error-handling'
 import { waitpointClient } from '../piece-context/waitpoint-client'
 import { utils } from '../utils'
 import { BaseExecutor, failStep } from './base-executor'
@@ -27,6 +28,7 @@ async function handOverToDispatcher({ action, executionState, constants }: Execu
         type: FlowActionType.PROCESS_IN_BATCHES,
         status: StepOutputStatus.RUNNING,
     })
+    let barrierMayExist = false
 
     const { data: result, error } = await utils.tryCatchAndThrowOnEngineError(async () => {
         const { resolvedInput, censoredInput } = await constants.getPropsResolver({ contextVersion: LATEST_CONTEXT_VERSION }).resolve<ResolvedSettings>({
@@ -49,6 +51,7 @@ async function handOverToDispatcher({ action, executionState, constants }: Execu
             return succeed({ action, executionState, stepOutput, output: emptySummary({ totalItems: items.length, batchSize: requestedBatchSize }), stepStartTime })
         }
 
+        barrierMayExist = true
         const created = await waitpointClient.create({
             apiUrl: constants.internalApiUrl,
             engineToken: constants.engineToken,
@@ -74,7 +77,7 @@ async function handOverToDispatcher({ action, executionState, constants }: Execu
         const paused = stepOutput
             .setOutput({
                 barrierId: created.id,
-                totalItems: items.length,
+                totalItems: created.barrier?.totalItems ?? items.length,
                 batchSize: created.barrier?.batchSize ?? requestedBatchSize,
                 total: created.barrier?.signalCount ?? 0,
             })
@@ -86,7 +89,8 @@ async function handOverToDispatcher({ action, executionState, constants }: Execu
     })
 
     if (error) {
-        return failStep({ action, executionState, stepOutput, error, durationMs: performance.now() - stepStartTime })
+        const failed = await failStep({ action, executionState, stepOutput, error, durationMs: performance.now() - stepStartTime })
+        return barrierMayExist ? failed : continueIfFailureHandler(failed, action, constants)
     }
     return result
 }
