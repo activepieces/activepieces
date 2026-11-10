@@ -343,8 +343,16 @@ async function fetchSample({
     deadline,
     maxPages: 1,
   });
-  const merged = new Map([...responses, ...found].map((response) => [response.responseId, response]));
-  return newestFirst({ responses: [...merged.values()], runOn });
+  return newestFirst({ responses: latestPerResponse({ responses: [...responses, ...found] }), runOn });
+}
+
+function latestPerResponse({ responses }: { responses: FormResponse[] }): FormResponse[] {
+  const byId = responses.reduce((acc, response) => {
+    const known = acc.get(response.responseId);
+    const isNewer = known === undefined || (toEpochMs(response.lastSubmittedTime) ?? 0) > (toEpochMs(known.lastSubmittedTime) ?? 0);
+    return isNewer ? new Map(acc).set(response.responseId, response) : acc;
+  }, new Map<string, FormResponse>());
+  return [...byId.values()];
 }
 
 const STATE_KEY = 'new_response_state';

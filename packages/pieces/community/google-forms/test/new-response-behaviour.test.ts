@@ -10,12 +10,14 @@ const vendor: {
   calls: { filter: string | undefined; pageToken: string | undefined; pageSize: string | undefined }[];
   failNext: boolean;
   msPerCall: number;
+  beforeUnfiltered: (() => void) | null;
 } = {
   responses: [],
   maxPageSize: 50,
   calls: [],
   failNext: false,
   msPerCall: 0,
+  beforeUnfiltered: null,
 };
 
 let clock = Date.parse('2026-11-01T10:00:00.000Z');
@@ -76,6 +78,11 @@ function installFakeForms(): void {
     const query = request.queryParams ?? {};
     vendor.calls.push({ filter: query['filter'], pageToken: query['pageToken'], pageSize: query['pageSize'] });
     clock += vendor.msPerCall;
+    if (query['filter'] === undefined && vendor.beforeUnfiltered !== null) {
+      const hook = vendor.beforeUnfiltered;
+      vendor.beforeUnfiltered = null;
+      hook();
+    }
     if (vendor.failNext) {
       vendor.failNext = false;
       throw new Error('Request failed with status 503');
@@ -165,6 +172,7 @@ beforeEach(() => {
   vendor.maxPageSize = 50;
   vendor.failNext = false;
   vendor.msPerCall = 0;
+  vendor.beforeUnfiltered = null;
   clock = Date.parse('2026-11-01T10:00:00.000Z');
   installFakeForms();
 });
@@ -449,6 +457,25 @@ describe('New Response test()', () => {
     const sample = await trigger.test(hookContext({ store: memoryStore().store, runOn }));
     expect(sample.map(responseIdOf)).toEqual(['a-recent-2', 'a-recent-1', 'history-5000', 'history-4999', 'history-4998']);
     expect(vendor.calls.filter((call) => call.filter === undefined)).toHaveLength(1);
+  });
+
+  it.each(['new_only', 'new_and_edited'])('run_on=%s keeps the newest copy of a response edited between the window reads and the fallback page', async (runOn) => {
+    for (let index = 0; index < 10; index += 1) {
+      submit({ id: `history-${index}`, ms: Date.parse('2024-01-01T00:00:00.000Z') + index * 60_000 });
+    }
+    submit({ id: 'recent' });
+    vendor.beforeUnfiltered = () => {
+      edit({ id: 'recent' });
+      vendor.responses = vendor.responses.map((response) =>
+        response.responseId === 'recent'
+          ? { ...response, answers: { q1: { questionId: 'q1', textAnswers: { answers: [{ value: 'recent-edited' }] } } } }
+          : response,
+      );
+    };
+    const sample = await trigger.test(hookContext({ store: memoryStore().store, runOn }));
+    expect(sample.map(responseIdOf)[0]).toBe('recent');
+    expect(JSON.stringify(sample[0])).toContain('recent-edited');
+    expect(sample.map(responseIdOf).filter((id) => id === 'recent')).toHaveLength(1);
   });
 
   it('works on a form with no responses', async () => {
