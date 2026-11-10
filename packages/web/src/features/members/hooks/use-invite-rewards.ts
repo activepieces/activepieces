@@ -23,7 +23,7 @@ export function useInviteRewards(): InviteRewardsState {
   });
 
   if (isNil(summary)) {
-    return HIDDEN;
+    return { ...HIDDEN, platformId: platform.id };
   }
 
   const claimed = summary.rewards.length;
@@ -64,9 +64,8 @@ function resolveSeatsLeft({
 const INVITE_REWARDS_QUERY_KEY = 'invite-rewards';
 const INVITE_REWARDS_STALE_MS = 60_000;
 
-const HIDDEN: InviteRewardsState = {
+const HIDDEN: Omit<InviteRewardsState, 'platformId'> = {
   visible: false,
-  platformId: null,
   creditsPerInvite: 0,
   claimed: 0,
   maxRewards: 0,
@@ -77,7 +76,7 @@ const HIDDEN: InviteRewardsState = {
 
 export type InviteRewardsState = {
   visible: boolean;
-  platformId: string | null;
+  platformId: string;
   creditsPerInvite: number;
   claimed: number;
   maxRewards: number;

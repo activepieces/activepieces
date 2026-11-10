@@ -88,9 +88,17 @@ describe('useInviteRewards', () => {
 
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
-    await waitFor(() => expect(getSummary).toHaveBeenCalled());
-    await waitFor(() => expect(result.current.platformId).toBe('platform_1'));
+    await waitFor(() => expect(result.current.maxRewards).toBe(4));
     expect(result.current.visible).toBe(false);
+  });
+
+  it('knows the platform while the rewards are still loading', () => {
+    getSummary.mockReturnValue(new Promise(() => undefined));
+
+    const { result } = renderHook(() => useInviteRewards(), { wrapper });
+
+    expect(result.current.visible).toBe(false);
+    expect(result.current.platformId).toBe('platform_1');
   });
 
   it('hides the offer once all four rewards are earned', async () => {

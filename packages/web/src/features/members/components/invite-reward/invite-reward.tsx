@@ -25,24 +25,20 @@ export function InviteRewardCard() {
     open: () => setInviteOpen(true),
   });
   const [dismissedAt, setDismissedAt] = useState(() =>
-    isNil(rewards.platformId)
-      ? undefined
-      : cardDismissal.read({ platformId: rewards.platformId }),
+    cardDismissal.read({ platformId: rewards.platformId }),
   );
 
-  if (
-    !rewards.visible ||
-    isNil(rewards.platformId) ||
-    cardDismissal.isActive({ dismissedAt })
-  ) {
+  if (!rewards.visible || cardDismissal.isActive({ dismissedAt })) {
     return null;
   }
-  const platformId = rewards.platformId;
 
   const dismissCard = () => {
     const timestamp = dayjs().toISOString();
     setDismissedAt(timestamp);
-    cardDismissal.write({ platformId, dismissedAt: timestamp });
+    cardDismissal.write({
+      platformId: rewards.platformId,
+      dismissedAt: timestamp,
+    });
   };
 
   return (
@@ -137,7 +133,7 @@ export function InviteRewardNotifier() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (isNil(platformId) || rewards.length === 0) {
+    if (rewards.length === 0) {
       return;
     }
     const seen = readSeenRewardIds(platformId);

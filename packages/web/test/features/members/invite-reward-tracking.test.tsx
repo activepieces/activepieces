@@ -64,6 +64,17 @@ describe('invite reward offer tracking', () => {
     expect(screen.queryAllByRole('button', { name: 'Invite' })).toEqual([]);
   });
 
+  it('stays hidden on a fresh page load within the week after a dismissal', () => {
+    localStorage.setItem(
+      'ap-invite-reward-card-dismissed:platform_1',
+      new Date().toISOString(),
+    );
+
+    render(<InviteRewardCard />);
+
+    expect(screen.queryAllByRole('button', { name: 'Invite' })).toEqual([]);
+  });
+
   it('records a low-credits alert click', () => {
     render(<InviteRewardButton />);
 
