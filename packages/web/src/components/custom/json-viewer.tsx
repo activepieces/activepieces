@@ -5,6 +5,7 @@ import React, { useMemo } from 'react';
 import ReactJson from 'react-json-view';
 import { toast } from 'sonner';
 
+import { clipboardUtils } from '@/components/custom/clipboard/clipboard-utils';
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,11 +52,12 @@ const JsonViewer = React.memo(
     }, [unclearJson]);
 
     const viewerTheme = syntaxTheme.jsonView(resolvedTheme);
-    const handleCopy = () => {
-      navigator.clipboard.writeText(JSON.stringify(json, null, 2));
-      toast.success(t('Copied to clipboard'), {
-        duration: 1000,
-      });
+    const handleCopy = async () => {
+      if (await clipboardUtils.copy(JSON.stringify(json, null, 2))) {
+        toast.success(t('Copied to clipboard'), {
+          duration: 1000,
+        });
+      }
     };
 
     const handleDownload = () => {

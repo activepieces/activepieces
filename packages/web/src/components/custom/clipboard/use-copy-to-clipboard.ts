@@ -1,6 +1,6 @@
-import { t } from 'i18next';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
+
+import { clipboardUtils } from './clipboard-utils';
 
 export function useCopyToClipboard() {
   const [isCopied, setIsCopied] = useState(false);
@@ -17,31 +17,19 @@ export function useCopyToClipboard() {
     };
   }, []);
 
-  const copy = useCallback((text: string) => {
-    writeToClipboard(text)
-      .then(() => {
-        if (!isMounted.current) {
-          return;
-        }
-        setIsCopied(true);
-        if (resetTimer.current) {
-          clearTimeout(resetTimer.current);
-        }
-        resetTimer.current = setTimeout(
-          () => setIsCopied(false),
-          COPIED_RESET_MS,
-        );
-      })
-      .catch(() => {
-        toast.error(t('Failed to copy to clipboard'), { duration: 3000 });
-      });
+  const copy = useCallback(async (text: string) => {
+    const copied = await clipboardUtils.copy(text);
+    if (!copied || !isMounted.current) {
+      return;
+    }
+    setIsCopied(true);
+    if (resetTimer.current) {
+      clearTimeout(resetTimer.current);
+    }
+    resetTimer.current = setTimeout(() => setIsCopied(false), COPIED_RESET_MS);
   }, []);
 
   return { isCopied, copy };
-}
-
-async function writeToClipboard(text: string): Promise<void> {
-  await navigator.clipboard.writeText(text);
 }
 
 const COPIED_RESET_MS = 3000;

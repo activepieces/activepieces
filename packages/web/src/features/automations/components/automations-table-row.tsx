@@ -28,6 +28,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
+import { clipboardUtils } from '@/components/custom/clipboard/clipboard-utils';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { LoadingSpinner } from '@/components/custom/spinner';
@@ -296,11 +297,12 @@ export const AutomationsTableRow = ({
           <DropdownMenuContent align="end">
             {item.type === 'folder' && (
               <DropdownMenuItem
-                onClick={() => {
+                onClick={async () => {
                   const url = new URL(window.location.href);
                   url.searchParams.set('folder', item.id);
-                  navigator.clipboard.writeText(url.toString());
-                  toast.success(t('URL copied to clipboard'));
+                  if (await clipboardUtils.copy(url.toString())) {
+                    toast.success(t('URL copied to clipboard'));
+                  }
                 }}
               >
                 <Link className="h-4 w-4 mr-2" />

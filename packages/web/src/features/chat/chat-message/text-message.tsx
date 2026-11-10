@@ -9,6 +9,7 @@ import React from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import { clipboardUtils } from '@/components/custom/clipboard/clipboard-utils';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
@@ -132,9 +133,11 @@ const CopyCode = ({
         variant="ghost"
         className="gap-2"
         size="xs"
-        onClick={() => {
+        onClick={async () => {
+          if (!(await clipboardUtils.copy(textToCopy))) {
+            return;
+          }
           setIsCopied(true);
-          navigator.clipboard.writeText(textToCopy);
           setTimeout(() => setIsCopied(false), 1500);
         }}
       >

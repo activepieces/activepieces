@@ -1,8 +1,8 @@
-import { tryCatch } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { Copy, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { clipboardUtils } from '@/components/custom/clipboard/clipboard-utils';
 import { JsonViewer } from '@/components/custom/json-viewer';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,12 +36,9 @@ const DataDisplayTabs = ({
       typeof copyableData === 'string'
         ? copyableData
         : JSON.stringify(copyableData, null, 2);
-    const { error } = await tryCatch(() => navigator.clipboard.writeText(text));
-    if (error) {
-      toast.error(t('Failed to copy to clipboard'), { duration: 3000 });
-      return;
+    if (await clipboardUtils.copy(text)) {
+      toast.success(t('Copied to clipboard'), { duration: 1000 });
     }
-    toast.success(t('Copied to clipboard'), { duration: 1000 });
   };
 
   const handleDownload = () => {

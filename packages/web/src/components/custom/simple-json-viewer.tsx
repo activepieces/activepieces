@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import ReactJson from 'react-json-view';
 import { toast } from 'sonner';
 
+import { clipboardUtils } from '@/components/custom/clipboard/clipboard-utils';
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import { syntaxTheme } from '@/lib/syntax-theme';
@@ -29,8 +30,10 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
   const formattedJson =
     typeof data === 'string' ? data : JSON.stringify(data, null, 2);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(formattedJson);
+  const handleCopy = async () => {
+    if (!(await clipboardUtils.copy(formattedJson))) {
+      return;
+    }
     setCopied(true);
     toast.success(t('Copied to clipboard'), {
       duration: 1000,
