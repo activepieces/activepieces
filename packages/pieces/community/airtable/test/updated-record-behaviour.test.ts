@@ -4,6 +4,7 @@ import {
     BASE_ID,
     MOD_FIELD_ID,
     NAME_FIELD_ID,
+    STATUS_FIELD_ID,
     TABLE_ID,
     VIEW_ID,
     addRecord,
@@ -121,6 +122,24 @@ describe('Airtable New or Updated Record behaviour', () => {
         const { store } = memoryStore()
         await trigger.onEnable(ctx({ store }))
         renameField({ id: NAME_FIELD_ID, name: 'Title' })
+        expect(await trigger.run(ctx({ store }))).toEqual([])
+    })
+
+    it('fires a record from before enable whose values are swapped between two columns later in the same second', async () => {
+        addRecord({ id: 'recA' })
+        tick(60_100)
+        const record = vendor.records.find((candidate) => candidate.id === 'recA')
+        if (!record) throw new Error('missing recA')
+        record.values[NAME_FIELD_ID] = 'Ready'
+        record.values[STATUS_FIELD_ID] = 'Done'
+        editRecord({ id: 'recA', at: tick(100) })
+        tick(300)
+        const { store } = memoryStore()
+        await trigger.onEnable(ctx({ store }))
+        record.values[NAME_FIELD_ID] = 'Done'
+        record.values[STATUS_FIELD_ID] = 'Ready'
+        editRecord({ id: 'recA', at: tick(200) })
+        expect(ids(await trigger.run(ctx({ store })))).toEqual(['recA'])
         expect(await trigger.run(ctx({ store }))).toEqual([])
     })
 

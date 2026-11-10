@@ -206,14 +206,39 @@ async function initialState({
       items: existing,
       at: state.checkpoint,
       limit: MAX_VERSIONS_AT_ENABLE,
+      fieldIds: await fieldIdsByName({ auth, propsValue }),
     }),
   };
 }
 
-function recordVersion(record: AirtableRawRecord): string {
-  const values = Object.values(record.fields)
-    .map((value) => JSON.stringify(value))
-    .sort();
+async function fieldIdsByName({
+  auth,
+  propsValue,
+}: {
+  auth: AirtableAuthValue;
+  propsValue: UpdatedRecordProps;
+}): Promise<FieldIdsByName> {
+  const table: AirtableTable | undefined = await airtableCommon.fetchTable({
+    token: auth.secret_text,
+    baseId: propsValue.base,
+    tableId: propsValue.tableId,
+  });
+  return new Map((table?.fields ?? []).map((field) => [field.name, field.id]));
+}
+
+function recordVersion({
+  record,
+  fieldIds,
+}: {
+  record: AirtableRawRecord;
+  fieldIds: FieldIdsByName;
+}): string {
+  const values = Object.entries(record.fields)
+    .map(([name, value]): [string, unknown] => [
+      fieldIds.get(name) ?? name,
+      value,
+    ])
+    .sort(([a], [b]) => a.localeCompare(b));
   return createHash('sha256')
     .update(JSON.stringify(values))
     .digest('base64')
@@ -223,17 +248,19 @@ function recordVersion(record: AirtableRawRecord): string {
 function versionsAt({
   items,
   at,
+  fieldIds,
   limit,
 }: {
   items: ModifiedRecord[];
   at: number;
+  fieldIds: FieldIdsByName;
   limit?: number;
 }): Record<string, string> {
   return Object.fromEntries(
     items
       .filter(({ modifiedMs }) => modifiedMs === at)
       .slice(0, limit)
-      .map(({ record }) => [record.id, recordVersion(record)])
+      .map(({ record }) => [record.id, recordVersion({ record, fieldIds })])
   );
 }
 
@@ -255,12 +282,18 @@ function refreshVersions({
 function changedSinceEnable({
   state,
   record,
+  fieldIds,
 }: {
   state: UpdatedRecordState;
   record: AirtableRawRecord;
+  fieldIds: FieldIdsByName | null;
 }): boolean {
   const version = state.versionsAtCheckpoint?.[record.id];
-  return !isNil(version) && version !== recordVersion(record);
+  return (
+    !isNil(version) &&
+    !isNil(fieldIds) &&
+    version !== recordVersion({ record, fieldIds })
+  );
 }
 
 async function loadState(store: Store): Promise<UpdatedRecordState | null> {
@@ -290,10 +323,12 @@ function nextState({
   state,
   records,
   fresh,
+  fieldIds = null,
 }: {
   state: UpdatedRecordState;
   records: ModifiedRecord[];
   fresh: ModifiedRecord[];
+  fieldIds?: FieldIdsByName | null;
 }): UpdatedRecordState {
   const checkpoint = fresh.reduce(
     (latest, { modifiedMs }) => Math.max(latest, modifiedMs),
@@ -311,12 +346,13 @@ function nextState({
     checkpoint,
     seenAtCheckpoint: [...new Set([...previous, ...idsAt({ items: fresh, at: checkpoint })])],
     ...(isNil(state.versionsAtCheckpoint) ||
+    isNil(fieldIds) ||
     Date.now() >= checkpoint + ONE_SECOND_MS
       ? {}
       : {
           versionsAtCheckpoint: refreshVersions({
             versions: state.versionsAtCheckpoint,
-            current: versionsAt({ items: records, at: checkpoint }),
+            current: versionsAt({ items: records, at: checkpoint, fieldIds }),
           }),
         }),
   };
@@ -423,6 +459,12 @@ export const airtableUpdatedRecordTrigger = createTrigger({
         },
       }),
     });
+    const fieldIds = isNil(state.versionsAtCheckpoint)
+      ? null
+      : await fieldIdsByName({
+          auth: context.auth,
+          propsValue: context.propsValue,
+        });
     const seenAtCheckpoint = new Set(state.seenAtCheckpoint ?? []);
     const fresh = records
       .filter(
@@ -431,7 +473,7 @@ export const airtableUpdatedRecordTrigger = createTrigger({
           (modifiedMs === state.checkpoint &&
             !isNil(state.seenAtCheckpoint) &&
             (!seenAtCheckpoint.has(record.id) ||
-              changedSinceEnable({ state, record })))
+              changedSinceEnable({ state, record, fieldIds })))
       )
       .sort(
         (a, b) =>
@@ -439,7 +481,7 @@ export const airtableUpdatedRecordTrigger = createTrigger({
       );
     await saveState({
       store: context.store,
-      state: nextState({ state, records, fresh }),
+      state: nextState({ state, records, fresh, fieldIds }),
     });
     return fresh.map(({ record }) => record);
   },
@@ -448,6 +490,7 @@ export const airtableUpdatedRecordTrigger = createTrigger({
 type UpdatedRecordProps = StaticPropsValue<typeof props>;
 type AirtableAuthValue = AppConnectionValueForAuthProperty<typeof airtableAuth>;
 type RememberedField = { saved: string; fieldId: string };
+type FieldIdsByName = Map<string, string>;
 type ModifiedRecord = { record: AirtableRawRecord; modifiedMs: number };
 type UpdatedRecordState = {
   checkpoint: number;
