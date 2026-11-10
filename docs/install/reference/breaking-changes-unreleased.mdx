@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### OpenPhone 0.2.0: Update Contact keeps fields whose value is empty
+
+Before OpenPhone 0.2.0, an **Update Contact** field (first name, last name, company, role, source, source URL, external ID) whose value was empty, either typed and cleared or mapped from a step that returned nothing, was sent as empty and cleared that value on the contact. From 0.2.0, an empty field leaves the current value unchanged, and a step where every field is empty fails with "At least one field must be provided to update".
+
+#### What you need to do
+
+If a flow relies on Update Contact to clear one of these fields, clear it in OpenPhone instead, or keep the step on 0.1.7.
+
 #### Spotify 0.7.0: Update Playlist is no longer an agent tool, and Get Playback State returns an object when nothing is playing
 
 From Spotify 0.7.0, **Update Playlist** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and outputs. Agents use the new **Update Playlist Details** tool instead, which takes Public and Collaborative as yes/no choices and leaves any field it is not given unchanged.

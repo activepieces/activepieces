@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { openPhoneAuth } from '../auth';
 import {
@@ -18,115 +22,148 @@ export const updateContact = createAction({
   description: 'Update an existing contact in your OpenPhone workspace',
   audience: 'both',
   aiMetadata: { description: 'Updates an existing OpenPhone contact identified by its contact ID, changing any of name, company, role, emails, phone numbers, custom fields, or source. Choose this to modify a contact that already exists rather than create one. Requires a valid contact ID and at least one field to change; supplied email/phone arrays replace the existing ones. Idempotent — re-applying the same field values leaves the contact in the same state.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'target',
+      display: 'section',
+      label: 'Contact to Update',
+      icon: 'user',
+      props: ['contactId'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'sliders',
+      props: ['changesNote', 'firstName', 'lastName', 'company', 'role'],
+    },
+    {
+      key: 'details',
+      display: 'section',
+      label: 'Emails and Phones',
+      icon: 'inbox',
+      props: ['listsNote', 'emails', 'phoneNumbers'],
+    },
+  ],
   props: {
     contactId: contactDropdown,
+    changesNote: Property.MarkDown({
+      value: 'Empty fields keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
     firstName: Property.ShortText({
       displayName: 'First Name',
-      description: "The contact's first name",
+      placeholder: 'Jane',
+      width: 'half',
       required: false,
     }),
     lastName: Property.ShortText({
       displayName: 'Last Name',
-      description: "The contact's last name",
+      placeholder: 'Doe',
+      width: 'half',
       required: false,
     }),
     company: Property.ShortText({
       displayName: 'Company',
-      description: "The contact's company name",
+      placeholder: 'Acme Inc.',
+      width: 'half',
       required: false,
     }),
     role: Property.ShortText({
       displayName: 'Role',
-      description: "The contact's role",
+      placeholder: 'Sales Manager',
+      width: 'half',
       required: false,
+    }),
+    listsNote: Property.MarkDown({
+      value: "A list you add here replaces the contact's current list.",
+      variant: MarkdownVariant.WARNING,
     }),
     emails: Property.Array({
       displayName: 'Email Addresses',
-      description:
-        'List of email addresses for the contact (replaces existing emails)',
+      description: 'Each email needs a label, such as work or personal.',
       required: false,
       properties: {
         name: Property.ShortText({
           displayName: 'Email Label',
-          description:
-            'Label for this email address (e.g., "work", "personal")',
+          placeholder: 'work',
           required: true,
         }),
         value: Property.ShortText({
           displayName: 'Email Address',
-          description: 'The email address (set to empty to remove)',
+          description: 'Leave empty to remove this email.',
+          placeholder: 'jane@example.com',
           required: false,
         }),
         id: Property.ShortText({
           displayName: 'Email ID',
-          description:
-            'The unique identifier for existing email field (required for updates)',
+          description: 'ID of the existing email to change.',
           required: false,
         }),
       },
     }),
     phoneNumbers: Property.Array({
       displayName: 'Phone Numbers',
-      description:
-        'List of phone numbers for the contact (replaces existing phone numbers)',
+      description: 'Each number needs a label, such as mobile or work.',
       required: false,
       properties: {
         name: Property.ShortText({
           displayName: 'Phone Label',
-          description: 'Label for this phone number (e.g., "mobile", "work")',
+          placeholder: 'mobile',
           required: true,
         }),
         value: Property.ShortText({
           displayName: 'Phone Number',
-          description:
-            'The phone number (set to empty to remove, preferably in E.164 format)',
+          description: 'Leave empty to remove this number.',
+          placeholder: '+15555555555',
           required: false,
         }),
         id: Property.ShortText({
           displayName: 'Phone ID',
-          description:
-            'The unique identifier for existing phone number field (required for updates)',
+          description: 'ID of the existing number to change.',
           required: false,
         }),
       },
     }),
     customFields: Property.Array({
       displayName: 'Custom Fields',
-      description: 'Custom fields for the contact',
+      description: 'Values for custom fields set up in OpenPhone.',
       required: false,
       properties: {
         key: Property.ShortText({
           displayName: 'Field Key',
-          description: 'The identifying key for the custom field',
+          description: "The custom field's key in OpenPhone.",
           required: true,
         }),
         value: Property.ShortText({
           displayName: 'Field Value',
-          description:
-            'The value for the custom field (set to empty to remove)',
+          description: 'Leave empty to clear this field.',
           required: false,
         }),
         id: Property.ShortText({
           displayName: 'Field ID',
-          description:
-            'The unique identifier for the custom field (required for updates)',
+          description: 'ID of the existing custom field to change.',
           required: false,
         }),
       },
     }),
     source: Property.ShortText({
       displayName: 'Source',
-      description: "Update the contact's source",
+      description: 'Where the contact came from.',
+      advanced: true,
       required: false,
     }),
     sourceUrl: Property.ShortText({
       displayName: 'Source URL',
-      description: 'Update the link to the contact in the source system',
+      description: 'A link to the contact in the system it came from.',
+      placeholder: 'https://crm.example.com/contacts/123',
+      advanced: true,
       required: false,
     }),
     externalId: Property.ShortText({
       displayName: 'External ID',
-      description: 'Update the unique identifier from an external system',
+      description: "The contact's ID in another system, up to 75 characters.",
+      advanced: true,
       required: false,
     }),
   },
@@ -194,24 +231,35 @@ export const updateContact = createAction({
 
     const requestBody: UpdateOpenPhoneContactRequest = {};
 
-    const hasDefaultFields =
-      firstName || lastName || company || role || emails || phoneNumbers;
-    if (hasDefaultFields) {
+    const trimmedFirstName = nonEmpty(firstName);
+    const trimmedLastName = nonEmpty(lastName);
+    const trimmedCompany = nonEmpty(company);
+    const trimmedRole = nonEmpty(role);
+    const hasEmails = Array.isArray(emails) && emails.length > 0;
+    const hasPhoneNumbers =
+      Array.isArray(phoneNumbers) && phoneNumbers.length > 0;
+
+    if (
+      trimmedFirstName ||
+      trimmedLastName ||
+      trimmedCompany ||
+      trimmedRole ||
+      hasEmails ||
+      hasPhoneNumbers
+    ) {
       requestBody.defaultFields = {};
 
-      if (firstName !== undefined) {
-        requestBody.defaultFields.firstName = firstName
-          ? firstName.trim()
-          : null;
+      if (trimmedFirstName) {
+        requestBody.defaultFields.firstName = trimmedFirstName;
       }
-      if (lastName !== undefined) {
-        requestBody.defaultFields.lastName = lastName ? lastName.trim() : null;
+      if (trimmedLastName) {
+        requestBody.defaultFields.lastName = trimmedLastName;
       }
-      if (company !== undefined) {
-        requestBody.defaultFields.company = company ? company.trim() : null;
+      if (trimmedCompany) {
+        requestBody.defaultFields.company = trimmedCompany;
       }
-      if (role !== undefined) {
-        requestBody.defaultFields.role = role ? role.trim() : null;
+      if (trimmedRole) {
+        requestBody.defaultFields.role = trimmedRole;
       }
 
       if (emails && Array.isArray(emails) && emails.length > 0) {
@@ -259,18 +307,19 @@ export const updateContact = createAction({
       }));
     }
 
-    if (source !== undefined) {
-      requestBody.source = source ? source.trim() : null;
+    const trimmedSource = nonEmpty(source);
+    if (trimmedSource) {
+      requestBody.source = trimmedSource;
     }
 
-    if (sourceUrl !== undefined) {
-      requestBody.sourceUrl =
-        sourceUrl && sourceUrl.trim() ? sourceUrl.trim() : null;
+    const trimmedSourceUrl = nonEmpty(sourceUrl);
+    if (trimmedSourceUrl) {
+      requestBody.sourceUrl = trimmedSourceUrl;
     }
 
-    if (externalId !== undefined) {
-      requestBody.externalId =
-        externalId && externalId.trim() ? externalId.trim() : null;
+    const trimmedExternalId = nonEmpty(externalId);
+    if (trimmedExternalId) {
+      requestBody.externalId = trimmedExternalId;
     }
 
     if (Object.keys(requestBody).length === 0) {
@@ -292,3 +341,8 @@ export const updateContact = createAction({
     }
   },
 });
+
+function nonEmpty(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
