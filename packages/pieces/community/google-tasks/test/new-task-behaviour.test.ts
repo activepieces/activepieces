@@ -771,3 +771,62 @@ describe('Google Tasks New Task edits that land during a long resumed scan', () 
     expect(midScanEdits.filter((key) => !emittedSet.has(key))).toEqual([]);
   });
 });
+
+async function runOverlapScenario({ runOn, perGroup }: { runOn: string; perGroup: number }) {
+  const fresh = Array.from({ length: perGroup }, (_, index) => `n-${index}`);
+  const old = Array.from({ length: perGroup }, (_, index) => `o-${index}`);
+  [...fresh, ...old].forEach((id) => addTask({ id, at: '2026-10-01T00:00:00.000Z' }));
+  const { store, data } = memoryStore();
+  await trigger.onEnable(hookContext({ store, runOn }));
+  const oldTime = Date.parse(tick(2));
+  old.forEach((id, index) => {
+    findTask({ id }).updated = new Date(oldTime + (index % 60) * 1_000).toISOString();
+  });
+  tick(2);
+  const emitted: string[] = [];
+  const record = (events: unknown[]) =>
+    events.forEach((event) =>
+      emitted.push(`${String(field({ event, key: 'id' }))}|${String(field({ event, key: 'updated' }))}`),
+    );
+  record(await trigger.run(hookContext({ store, runOn })));
+  const freshTime = Date.parse(tick(5));
+  fresh.forEach((id, index) => {
+    findTask({ id }).updated = new Date(freshTime + (index % 60) * 1_000).toISOString();
+  });
+  tick(2);
+  vendor.msPerCall = 25_000;
+  let maxStateChars = 0;
+  let scanPolls = 0;
+  do {
+    record(await trigger.run(hookContext({ store, runOn })));
+    maxStateChars = Math.max(maxStateChars, (data.get('new_task_state') ?? '').length);
+    scanPolls += 1;
+  } while (storedState({ data }).scan !== null);
+  vendor.msPerCall = 0;
+  for (let poll = 0; poll < 3; poll += 1) {
+    tick(5);
+    record(await trigger.run(hookContext({ store, runOn })));
+  }
+  const freshKeys = fresh.map((id) => `${id}|${findTask({ id }).updated}`);
+  const oldKeys = old.map((id) => `${id}|${findTask({ id }).updated}`);
+  return { emitted, freshKeys, oldKeys, maxStateChars, scanPolls };
+}
+
+describe('Google Tasks New Task dedupe keys for the old and the new cursor', () => {
+  it.each([
+    { label: 'new_and_edited', runOn: 'new_and_edited' },
+    { label: 'Run on unset', runOn: '' },
+  ])('3,000 keys near the old cursor and 3,000 edits five minutes later each fire exactly once ($label)', async ({ runOn }) => {
+    const { emitted, freshKeys, oldKeys, scanPolls } = await runOverlapScenario({ runOn, perGroup: 3_000 });
+    expect(scanPolls).toBeGreaterThan(1);
+    expect(new Set(emitted).size).toBe(emitted.length);
+    expect([...emitted].sort()).toEqual([...oldKeys, ...freshKeys].sort());
+  });
+
+  it('keeps the state under 512 KiB with 5,000 keys for each cursor', async () => {
+    const { emitted, freshKeys, oldKeys, maxStateChars } = await runOverlapScenario({ runOn: 'new_and_edited', perGroup: 5_000 });
+    expect([...emitted].sort()).toEqual([...oldKeys, ...freshKeys].sort());
+    expect(maxStateChars).toBeGreaterThanOrEqual(10_000 * 17);
+    expect(maxStateChars * 2).toBeLessThan(512 * 1024);
+  });
+});

@@ -25,6 +25,8 @@ const PRUNE_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const SEEN_CAP = 20_000;
 const RECENT_CAP = 5_000;
 const HASH_LENGTH = 8;
+const RECENT_TIME_LENGTH = 9;
+const RECENT_TIME_MAX = 36 ** RECENT_TIME_LENGTH - 1;
 const SAMPLE_SIZE = 5;
 
 export const newTaskTrigger = createTrigger({
@@ -271,7 +273,7 @@ async function baselineState({
       cursorMs: now,
       floorMs: now + 1,
       seen: '',
-      recent: [],
+      recent: '',
       prunedAtMs: now,
       pending: null,
       scan: null,
@@ -290,7 +292,7 @@ async function baselineState({
     cursorMs: now,
     floorMs: 0,
     seen: mergeSeen({ seen: '', tasks: liveTasks({ tasks }) }),
-    recent: [],
+    recent: '',
     prunedAtMs: now,
     pending: complete ? null : { pageToken: nextPageToken ?? '', startedAtMs: now },
     scan: null,
@@ -349,7 +351,7 @@ function legacyState({ list, lastPoll }: { list: string; lastPoll: number }): Tr
     cursorMs: lastPoll,
     floorMs: lastPoll + 1,
     seen: '',
-    recent: [],
+    recent: '',
     prunedAtMs: Date.now(),
     pending: null,
     scan: null,
@@ -444,7 +446,8 @@ function advanceNewAndEdited({
 }): { state: TriggerState; emitted: LiveTask[] } {
   const windowStartMs = Math.max(state.floorMs, state.cursorMs - OVERLAP_MS);
   const now = Date.now();
-  const recentKeys = new Set(state.recent.map(([hash]) => hash));
+  const previous = decodeRecent({ recent: state.recent });
+  const recentKeys = new Set(previous.map(([hash]) => hash));
   const emitted: LiveTask[] = [];
   const added: RecentEntry[] = [];
   for (const task of tasks) {
@@ -462,13 +465,37 @@ function advanceNewAndEdited({
       emitted.push(task);
     }
   }
-  const kept = [...state.recent, ...added]
+  const kept = [...previous, ...added]
     .filter(([, updatedMs]) => updatedMs >= progress.cursorMs - OVERLAP_MS)
     .sort((a, b) => b[1] - a[1]);
-  const rereadable = kept.filter(([, updatedMs]) => updatedMs <= progress.cursorMs);
-  const newer = kept.filter(([, updatedMs]) => updatedMs > progress.cursorMs);
-  const recent = [...rereadable, ...newer].slice(0, RECENT_CAP);
+  const cursorOverlap = kept
+    .filter(([, updatedMs]) => updatedMs <= progress.cursorMs)
+    .slice(0, RECENT_CAP);
+  const newest = kept.slice(0, RECENT_CAP);
+  const keptHashes = new Set([...cursorOverlap, ...newest].map(([hash]) => hash));
+  const recent = encodeRecent({ entries: kept.filter(([hash]) => keptHashes.has(hash)) });
   return { emitted, state: { ...state, ...progress, recent } };
+}
+
+function encodeRecent({ entries }: { entries: RecentEntry[] }): string {
+  return entries
+    .map(
+      ([hash, updatedMs]) =>
+        hash + Math.min(updatedMs, RECENT_TIME_MAX).toString(36).padStart(RECENT_TIME_LENGTH, '0'),
+    )
+    .join('');
+}
+
+function decodeRecent({ recent }: { recent: string }): RecentEntry[] {
+  const width = HASH_LENGTH + RECENT_TIME_LENGTH;
+  const entries: RecentEntry[] = [];
+  for (let index = 0; index + width <= recent.length; index += width) {
+    entries.push([
+      recent.slice(index, index + HASH_LENGTH),
+      parseInt(recent.slice(index + HASH_LENGTH, index + width), 36),
+    ]);
+  }
+  return entries;
 }
 
 function maxUpdated({ fromMs, tasks }: { fromMs: number; tasks: LiveTask[] }): number {
@@ -542,15 +569,6 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
-function isRecentEntry(value: unknown): value is RecentEntry {
-  return (
-    Array.isArray(value) &&
-    value.length === 2 &&
-    typeof value[0] === 'string' &&
-    isFiniteNumber(value[1])
-  );
-}
-
 function parseState({ raw }: { raw: unknown }): TriggerState | null {
   if (typeof raw !== 'object' || raw === null) {
     return null;
@@ -572,8 +590,8 @@ function parseState({ raw }: { raw: unknown }): TriggerState | null {
     !isFiniteNumber(cursorMs) ||
     !isFiniteNumber(floorMs) ||
     typeof seen !== 'string' ||
-    !Array.isArray(recent) ||
-    !recent.every(isRecentEntry) ||
+    typeof recent !== 'string' ||
+    recent.length % (HASH_LENGTH + RECENT_TIME_LENGTH) !== 0 ||
     !isFiniteNumber(prunedAtMs) ||
     pending === undefined ||
     scan === undefined
@@ -633,7 +651,7 @@ type TriggerState = {
   cursorMs: number;
   floorMs: number;
   seen: string;
-  recent: RecentEntry[];
+  recent: string;
   prunedAtMs: number;
   pending: PendingBaseline | null;
   scan: PollScan | null;
