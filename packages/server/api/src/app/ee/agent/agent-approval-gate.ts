@@ -198,6 +198,7 @@ type StoredConnection = {
     project: string
     status: string
     grantedScopes: string[]
+    updated?: string
 }
 
 type SelectedConnection = Pick<StoredConnection, 'externalId' | 'label' | 'projectId'>

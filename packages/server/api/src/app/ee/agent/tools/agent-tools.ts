@@ -109,6 +109,7 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
                     projectId: project.id,
                     status: info.status,
                     grantedScopes: info.grantedScopes,
+                    updated: c.updated,
                 }
             })
         }),
@@ -935,6 +936,7 @@ type ConnectionWithScopes = {
     projectId: string
     status: AppConnectionStatus
     grantedScopes: string[]
+    updated: string
 }
 
 type FindConnectionsResult =

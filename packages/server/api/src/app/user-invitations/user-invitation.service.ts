@@ -291,22 +291,13 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             },
         })
         if (isNil(invitation)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityId: `id=${id}`,
-                    entityType: 'UserInvitation',
-                },
-            })
+            throw invitationNotFound(id)
         }
         return invitation
     },
     async accept({ invitationId, platformId }: AcceptParams): Promise<AcceptResult> {
         const invitation = await this.getOneOrThrow({ id: invitationId, platformId })
-        const firstAcceptance = invitation.status !== InvitationStatus.ACCEPTED
-        await repo().update(invitation.id, {
-            status: InvitationStatus.ACCEPTED,
-        })
+        const firstAcceptance = await acceptIfPending({ id: invitation.id, platformId })
         if (firstAcceptance) {
             rejectedPromiseHandler(telemetry(log).trackPlatform({
                 platformId,
@@ -321,12 +312,12 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         }
         const identity = await userIdentityService(log).getIdentityByEmail(invitation.email)
         if (isNil(identity)) {
-            return { registered: false }
+            return { registered: false, firstAcceptance }
         }
         await this.provisionUserInvitation({
             email: invitation.email,
         })
-        return { registered: true }
+        return { registered: true, firstAcceptance }
     },
     async getAcceptedAdminOrOperatorInviteRole({ email, platformId, entityManager }: GetAcceptedAdminOrOperatorInviteRoleParams): Promise<PlatformRole | null> {
         const latestInvitation = await repo(entityManager).createQueryBuilder('user_invitation')
@@ -427,6 +418,26 @@ async function deleteIfUnchanged({ invitation }: { invitation: UserInvitation })
         platformRole: isNil(invitation.platformRole) ? IsNull() : invitation.platformRole,
         projectId: isNil(invitation.projectId) ? IsNull() : invitation.projectId,
         projectRoleId: isNil(invitation.projectRoleId) ? IsNull() : invitation.projectRoleId,
+    })
+}
+
+async function acceptIfPending({ id, platformId }: { id: string, platformId: string }): Promise<boolean> {
+    const accepted = await repo().createQueryBuilder()
+        .update()
+        .set({ status: InvitationStatus.ACCEPTED })
+        .where('"id" = :id AND "platformId" = :platformId AND "status" = :pending', { id, platformId, pending: InvitationStatus.PENDING })
+        .returning('id')
+        .execute()
+    return rowsOf(accepted).length > 0
+}
+
+function invitationNotFound(id: string): ActivepiecesError {
+    return new ActivepiecesError({
+        code: ErrorCode.ENTITY_NOT_FOUND,
+        params: {
+            entityId: `id=${id}`,
+            entityType: 'UserInvitation',
+        },
     })
 }
 
@@ -612,6 +623,7 @@ type AcceptParams = {
 
 type AcceptResult = {
     registered: boolean
+    firstAcceptance: boolean
 }
 
 export type CreateInvitationRecordParams = {
