@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { Client } from 'pg';
 import format from 'pg-format';
 
@@ -24,7 +25,19 @@ function valueFilters({ column, typeName, direction }: { column: string; typeNam
     return [finite, notFuture];
 }
 
-function buildShape({ table, orderBy, direction, primaryKey, typeName }: { table: WatchedTable; orderBy: string; direction: unknown; primaryKey: string[]; typeName: string | null }): QueryShape {
+function helperNames(): HelperNames {
+    const tag = crypto.randomBytes(6).toString('hex');
+    return {
+        order: `__ap_${tag}_order`,
+        key: `__ap_${tag}_key`,
+        tie: `__ap_${tag}_tie`,
+        atCursor: `__ap_${tag}_at_cursor`,
+        isLast: `__ap_${tag}_is_last`,
+        tieColumn: `__ap_${tag}_tie_`,
+    };
+}
+
+function buildShape({ table, orderBy, direction, primaryKey, typeName }: { table: WatchedTable; orderBy: string; direction: unknown; primaryKey: KeyColumn[]; typeName: string | null }): QueryShape {
     if (!isOrderDirection(direction)) {
         throw new Error(JSON.stringify({
             message: 'Invalid order direction',
@@ -32,32 +45,30 @@ function buildShape({ table, orderBy, direction, primaryKey, typeName }: { table
         }));
     }
     const column = format.ident(orderBy);
-    const contentKeyed = primaryKey.length === 0;
-    const ties = contentKeyed ? ['t.__ap_ctid'] : primaryKey.map((name) => format('t.%I', name));
-    const keyParts = contentKeyed ? ['t.__ap_row_hash', 't.__ap_row_ordinal'] : ties;
+    const withoutPrimaryKey = primaryKey.length === 0;
+    const ties = withoutPrimaryKey ? ['t.tableoid', 't.ctid'] : primaryKey.map((keyColumn) => format('t.%I', keyColumn.name));
     return {
         relation: format('%I.%I', table.table_schema, table.table_name),
-        contentKeyed,
-        sampleTies: contentKeyed ? ['t.ctid'] : ties,
         column,
         ties,
-        tieCast: contentKeyed ? '::tid' : '',
-        key: contentKeyed ? `jsonb_build_array(${keyParts.join(', ')})::text` : `md5(jsonb_build_array(${keyParts.join(', ')})::text)`,
-        tieText: `jsonb_build_array(${ties.map((tie) => `to_jsonb(${tie}) #>> '{}'`).join(', ')})::text`,
+        tieCasts: withoutPrimaryKey ? ['::oid', '::tid'] : primaryKey.map((keyColumn) => `::${keyColumn.type}`),
+        key: withoutPrimaryKey ? 'md5(jsonb_build_array(t.tableoid, t.ctid, md5(t::text))::text)' : `md5(jsonb_build_array(${ties.join(', ')})::text)`,
+        tieText: `jsonb_build_array(${ties.map((tie) => `${tie}::text`).join(', ')})::text`,
         filters: [`t.${column} IS NOT NULL`, ...valueFilters({ column, typeName, direction })],
         typeName,
+        names: helperNames(),
         newer: direction === 'DESC' ? '>' : '<',
         oldestFirst: direction === 'DESC' ? 'ASC' : 'DESC',
         newestFirst: direction === 'DESC' ? 'DESC' : 'ASC',
     };
 }
 
-async function loadPrimaryKey({ client, table }: { client: Client; table: WatchedTable }): Promise<string[]> {
+async function loadPrimaryKey({ client, table }: { client: Client; table: WatchedTable }): Promise<KeyColumn[]> {
     const result = await client.query<Record<string, unknown>>(format(
-        'SELECT a.attname AS name FROM pg_index i JOIN LATERAL unnest(i.indkey) WITH ORDINALITY AS k(attnum, ord) ON true JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = k.attnum WHERE i.indrelid = to_regclass(%L) AND i.indisprimary AND k.ord <= i.indnkeyatts ORDER BY k.ord',
+        'SELECT a.attname AS name, format_type(a.atttypid, a.atttypmod) AS type FROM pg_index i JOIN LATERAL unnest(i.indkey) WITH ORDINALITY AS k(attnum, ord) ON true JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = k.attnum WHERE i.indrelid = to_regclass(%L) AND i.indisprimary AND k.ord <= i.indnkeyatts ORDER BY k.ord',
         format('%I.%I', table.table_schema, table.table_name),
     ));
-    return result.rows.map((row) => String(row['name']));
+    return result.rows.map((row) => ({ name: String(row['name']), type: String(row['type']) }));
 }
 
 async function loadTypeName({ client, table, orderBy }: { client: Client; table: WatchedTable; orderBy: string }): Promise<string | null> {
@@ -102,7 +113,7 @@ function parseState({ raw }: { raw: unknown }): CursorState | null {
     }
     const candidate: Record<string, unknown> = { ...raw };
     const { v, props, value, seen, after } = candidate;
-    if (v !== 2 || typeof props !== 'string') {
+    if (v !== 3 || typeof props !== 'string') {
         return null;
     }
     if (value !== null && typeof value !== 'string') {
@@ -114,15 +125,7 @@ function parseState({ raw }: { raw: unknown }): CursorState | null {
     if (!isStringList(seen)) {
         return null;
     }
-    return { v: 2, props, value, seen, after };
-}
-
-function fromClause({ shape, range, keyed }: { shape: QueryShape; range: string[]; keyed: string[] }): string {
-    if (!shape.contentKeyed) {
-        return `${shape.relation} t WHERE ${[...range, ...keyed].join(' AND ')}`;
-    }
-    const inner = `(SELECT t.*, t.ctid AS __ap_ctid, md5(t::text) AS __ap_row_hash, row_number() OVER (PARTITION BY md5(t::text) ORDER BY t.ctid) AS __ap_row_ordinal FROM ${shape.relation} t WHERE ${range.join(' AND ')}) t`;
-    return keyed.length === 0 ? inner : `${inner} WHERE ${keyed.join(' AND ')}`;
+    return { v: 3, props, value, seen, after };
 }
 
 function literalList({ values }: { values: string[] }): string {
@@ -130,7 +133,7 @@ function literalList({ values }: { values: string[] }): string {
 }
 
 function afterCondition({ shape, after }: { shape: QueryShape; after: string[] }): string {
-    return `(${shape.ties.join(', ')}) > (${after.map((value) => `${format.literal(value)}${shape.tieCast}`).join(', ')})`;
+    return `(${shape.ties.join(', ')}) > (${after.map((value, index) => `${format.literal(value)}${shape.tieCasts[index] ?? ''}`).join(', ')})`;
 }
 
 function warnOverflow(): void {
@@ -138,43 +141,66 @@ function warnOverflow(): void {
 }
 
 function emptyState({ props }: { props: string }): CursorState {
-    return { v: 2, props, value: null, seen: [], after: null };
+    return { v: 3, props, value: null, seen: [], after: null };
+}
+
+function userRow({ row, shape }: { row: Record<string, unknown>; shape: QueryShape }): Record<string, unknown> {
+    const helpers = new Set(Object.values(shape.names));
+    return Object.fromEntries(Object.entries(row).filter(([column]) => !helpers.has(column) && !column.startsWith(shape.names.tieColumn)));
 }
 
 async function stateAtValue({ client, shape, props, value }: { client: Client; shape: QueryShape; props: string; value: string }): Promise<CursorState> {
+    const { names } = shape;
     const result = await client.query<Record<string, unknown>>(
-        `SELECT ${shape.key} AS __ap_key, ${shape.tieText} AS __ap_tie FROM ${fromClause({ shape, range: [`t.${shape.column} = ${format.literal(value)}`], keyed: [] })} ORDER BY ${shape.ties.map((tie) => `${tie} DESC`).join(', ')} LIMIT ${SEEN_KEYS_LIMIT + 1}`,
+        `SELECT ${shape.key} AS ${names.key}, ${shape.tieText} AS ${names.tie} FROM ${shape.relation} t WHERE t.${shape.column} = ${format.literal(value)} ORDER BY ${shape.ties.map((tie) => `${tie} DESC`).join(', ')} LIMIT ${SEEN_KEYS_LIMIT + 1}`,
     );
     const rows = result.rows;
     if (rows.length > SEEN_KEYS_LIMIT) {
         warnOverflow();
-        return { v: 2, props, value, seen: [], after: parseTieText({ raw: rows[0]['__ap_tie'] }) };
+        return { v: 3, props, value, seen: [], after: parseTieText({ raw: rows[0][names.tie] }) };
     }
-    return { v: 2, props, value, seen: rows.map((row) => String(row['__ap_key'])), after: null };
+    return { v: 3, props, value, seen: rows.map((row) => String(row[names.key])), after: null };
 }
 
 async function baselineState({ client, shape, props }: { client: Client; shape: QueryShape; props: string }): Promise<CursorState> {
+    const { names } = shape;
     const result = await client.query<Record<string, unknown>>(
-        `SELECT to_jsonb(t.${shape.column}) #>> '{}' AS __ap_order FROM ${shape.relation} t WHERE ${shape.filters.join(' AND ')} ORDER BY t.${shape.column} ${shape.newestFirst} LIMIT 1`,
+        `SELECT to_jsonb(t.${shape.column}) #>> '{}' AS ${names.order} FROM ${shape.relation} t WHERE ${shape.filters.join(' AND ')} ORDER BY t.${shape.column} ${shape.newestFirst} LIMIT 1`,
     );
     const top = result.rows[0];
     if (top === undefined) {
         return emptyState({ props });
     }
-    return stateAtValue({ client, shape, props, value: String(top['__ap_order']) });
+    return stateAtValue({ client, shape, props, value: String(top[names.order]) });
 }
 
-async function legacyValue({ client, shape, value }: { client: Client; shape: QueryShape; value: string }): Promise<string> {
+function pad({ value, width }: { value: number; width: number }): string {
+    return String(value).padStart(width, '0');
+}
+
+function workerWallClock({ instant }: { instant: Date }): string {
+    const date = `${pad({ value: instant.getFullYear(), width: 4 })}-${pad({ value: instant.getMonth() + 1, width: 2 })}-${pad({ value: instant.getDate(), width: 2 })}`;
+    const time = `${pad({ value: instant.getHours(), width: 2 })}:${pad({ value: instant.getMinutes(), width: 2 })}:${pad({ value: instant.getSeconds(), width: 2 })}.${pad({ value: instant.getMilliseconds(), width: 3 })}`;
+    return `${date}T${time}`;
+}
+
+function legacyWindow({ shape, value }: { shape: QueryShape; value: string }): LegacyWindow {
     const millisecondIso = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
-    if ((shape.typeName !== 'timestamp' && shape.typeName !== 'timestamptz') || !millisecondIso.test(value)) {
-        return value;
+    if (!millisecondIso.test(value)) {
+        return { low: value, high: null };
     }
-    const windowEnd = new Date(Date.parse(value) + 1).toISOString();
-    const result = await client.query<Record<string, unknown>>(
-        `SELECT to_jsonb(t.${shape.column}) #>> '{}' AS __ap_order FROM ${shape.relation} t WHERE t.${shape.column} >= ${format.literal(value)} AND t.${shape.column} < ${format.literal(windowEnd)} ORDER BY t.${shape.column} ${shape.newestFirst} LIMIT 1`,
-    );
-    const exact = result.rows[0];
-    return exact === undefined ? value : String(exact['__ap_order']);
+    const instant = new Date(Date.parse(value));
+    if (shape.typeName === 'timestamptz') {
+        return { low: value, high: new Date(instant.getTime() + 1).toISOString() };
+    }
+    if (shape.typeName === 'timestamp') {
+        const low = workerWallClock({ instant });
+        return { low, high: new Date(Date.parse(`${low}Z`) + 1).toISOString().slice(0, 23) };
+    }
+    if (shape.typeName === 'date') {
+        return { low: workerWallClock({ instant }).slice(0, 10), high: null };
+    }
+    return { low: value, high: null };
 }
 
 async function migrateLegacyState({ client, shape, props, legacy }: { client: Client; shape: QueryShape; props: string; legacy: unknown }): Promise<CursorState> {
@@ -182,11 +208,25 @@ async function migrateLegacyState({ client, shape, props, legacy }: { client: Cl
         return baselineState({ client, shape, props });
     }
     const value = legacy.slice(0, legacy.lastIndexOf('|'));
+    const deliveredHash = legacy.slice(legacy.lastIndexOf('|') + 1);
     if (value === 'null' || value === 'undefined') {
         return baselineState({ client, shape, props });
     }
+    const window = legacyWindow({ shape, value });
+    const { names } = shape;
+    const range = window.high === null
+        ? `t.${shape.column} = ${format.literal(window.low)}`
+        : `t.${shape.column} >= ${format.literal(window.low)} AND t.${shape.column} < ${format.literal(window.high)}`;
     try {
-        return await stateAtValue({ client, shape, props, value: await legacyValue({ client, shape, value }) });
+        const result = await client.query<Record<string, unknown>>(
+            `SELECT t.*, to_jsonb(t.${shape.column}) #>> '{}' AS ${names.order}, ${shape.key} AS ${names.key} FROM ${shape.relation} t WHERE ${range} ORDER BY t.${shape.column} ${shape.newestFirst}, ${shape.ties.map((tie) => `${tie} ASC`).join(', ')} LIMIT ${SEEN_KEYS_LIMIT}`,
+        );
+        const delivered = result.rows.find((row) => crypto.createHash('md5').update(JSON.stringify(userRow({ row, shape }))).digest('hex') === deliveredHash);
+        if (delivered !== undefined) {
+            return { v: 3, props, value: String(delivered[names.order]), seen: [String(delivered[names.key])], after: null };
+        }
+        const fallback = shape.newer === '<' && window.high !== null ? window.high : window.low;
+        return { v: 3, props, value: fallback, seen: [], after: null };
     } catch (error) {
         if (isDataException(error)) {
             return baselineState({ client, shape, props });
@@ -206,24 +246,26 @@ function tieClause({ shape, state, cursor }: { shape: QueryShape; state: CursorS
 }
 
 function pageQuery({ shape, state }: { shape: QueryShape; state: CursorState }): string {
-    const { column, key, newer, oldestFirst, newestFirst, ties, tieText } = shape;
+    const { column, key, newer, oldestFirst, newestFirst, ties, tieText, names } = shape;
     const cursor = state.value;
     const atCursor = cursor === null ? 'false' : `(t.${column} = ${format.literal(cursor)})`;
-    const range = cursor === null ? shape.filters : [...shape.filters, `t.${column} ${newer}= ${format.literal(cursor)}`];
+    const conditions = cursor === null ? shape.filters : [...shape.filters, `t.${column} ${newer}= ${format.literal(cursor)}`];
     const tieCondition = cursor === null ? null : tieClause({ shape, state, cursor });
-    const keyed = tieCondition === null ? [] : [tieCondition];
-    const tieColumns = ties.map((tie, index) => `${tie} AS __ap_tie_${index}`).join(', ');
-    const outerTieOrder = ties.map((_tie, index) => `page.__ap_tie_${index} ASC`).join(', ');
-    return `SELECT page.*, (page.${column} = first_value(page.${column}) OVER (ORDER BY page.${column} ${newestFirst})) AS __ap_is_last FROM (SELECT t.*, to_jsonb(t.${column}) #>> '{}' AS __ap_order, ${key} AS __ap_key, ${tieText} AS __ap_tie, ${tieColumns}, ${atCursor} AS __ap_at_cursor FROM ${fromClause({ shape, range, keyed })} ORDER BY t.${column} ${oldestFirst}, ${ties.map((tie) => `${tie} ASC`).join(', ')} LIMIT ${ROWS_PER_POLL}) page ORDER BY page.${column} ${oldestFirst}, ${outerTieOrder}`;
+    const where = tieCondition === null ? conditions : [...conditions, tieCondition];
+    const tieColumns = ties.map((tie, index) => `${tie} AS ${names.tieColumn}${index}`).join(', ');
+    const outerTieOrder = ties.map((_tie, index) => `page.${names.tieColumn}${index} ASC`).join(', ');
+    const inner = `SELECT t.*, to_jsonb(t.${column}) #>> '{}' AS ${names.order}, ${key} AS ${names.key}, ${tieText} AS ${names.tie}, ${tieColumns}, ${atCursor} AS ${names.atCursor} FROM ${shape.relation} t WHERE ${where.join(' AND ')} ORDER BY t.${column} ${oldestFirst}, ${ties.map((tie) => `${tie} ASC`).join(', ')} LIMIT ${ROWS_PER_POLL}`;
+    return `SELECT page.*, (page.${column} = first_value(page.${column}) OVER (ORDER BY page.${column} ${newestFirst})) AS ${names.isLast} FROM (${inner}) page ORDER BY page.${column} ${oldestFirst}, ${outerTieOrder}`;
 }
 
 async function nextState({ client, shape, state, page }: { client: Client; shape: QueryShape; state: CursorState; page: Record<string, unknown>[] }): Promise<CursorState> {
+    const { names } = shape;
     const last = page[page.length - 1];
-    const tiedKeys = page.filter((row) => row['__ap_is_last'] === true).map((row) => String(row['__ap_key']));
-    if (last['__ap_at_cursor'] !== true) {
-        return { v: 2, props: state.props, value: String(last['__ap_order']), seen: tiedKeys, after: null };
+    const tiedKeys = page.filter((row) => row[names.isLast] === true).map((row) => String(row[names.key]));
+    if (last[names.atCursor] !== true) {
+        return { v: 3, props: state.props, value: String(last[names.order]), seen: tiedKeys, after: null };
     }
-    const lastTie = parseTieText({ raw: last['__ap_tie'] });
+    const lastTie = parseTieText({ raw: last[names.tie] });
     if (state.after !== null) {
         return { ...state, after: lastTie };
     }
@@ -233,13 +275,9 @@ async function nextState({ client, shape, state, page }: { client: Client; shape
     }
     warnOverflow();
     const remaining = await client.query<Record<string, unknown>>(
-        `SELECT ${shape.key} AS __ap_key FROM ${fromClause({ shape, range: [`t.${shape.column} = ${format.literal(String(state.value))}`], keyed: [afterCondition({ shape, after: lastTie }), `${shape.key} IN (${literalList({ values: state.seen })})`] })}`,
+        `SELECT ${shape.key} AS ${names.key} FROM ${shape.relation} t WHERE t.${shape.column} = ${format.literal(String(state.value))} AND ${afterCondition({ shape, after: lastTie })} AND ${shape.key} IN (${literalList({ values: state.seen })})`,
     );
-    return { ...state, seen: remaining.rows.map((row) => String(row['__ap_key'])), after: lastTie };
-}
-
-function stripHelpers({ row }: { row: Record<string, unknown> }): Record<string, unknown> {
-    return Object.fromEntries(Object.entries(row).filter(([column]) => !column.startsWith(HELPER_PREFIX)));
+    return { ...state, seen: remaining.rows.map((row) => String(row[names.key])), after: lastTie };
 }
 
 async function enable({ client, store, settings, isRepublish }: { client: Client; store: CursorStore; settings: TriggerSettings; isRepublish: boolean }): Promise<void> {
@@ -293,13 +331,13 @@ async function poll({ client, store, settings }: { client: Client; store: Cursor
     if (existing === null) {
         await store.delete(LEGACY_STORE_KEY);
     }
-    return page.map((row) => stripHelpers({ row })).reverse();
+    return page.map((row) => userRow({ row, shape })).reverse();
 }
 
 async function sample({ client, settings }: { client: Client; settings: TriggerSettings }): Promise<Record<string, unknown>[]> {
     const shape = await resolveShape({ client, settings });
     const result = await client.query<Record<string, unknown>>(
-        `SELECT t.* FROM ${shape.relation} t WHERE ${shape.filters.join(' AND ')} ORDER BY t.${shape.column} ${shape.newestFirst}, ${shape.sampleTies.map((tie) => `${tie} DESC`).join(', ')} LIMIT 5`,
+        `SELECT t.* FROM ${shape.relation} t WHERE ${shape.filters.join(' AND ')} ORDER BY t.${shape.column} ${shape.newestFirst}, ${shape.ties.map((tie) => `${tie} DESC`).join(', ')} LIMIT 5`,
     );
     return result.rows;
 }
@@ -308,26 +346,43 @@ const ROWS_PER_POLL = 500;
 const SEEN_KEYS_LIMIT = 2000;
 const CURSOR_STORE_KEY = 'new_row_cursor';
 const LEGACY_STORE_KEY = 'lastItem';
-const HELPER_PREFIX = '__ap_';
+
+type KeyColumn = {
+    name: string;
+    type: string;
+};
+
+type HelperNames = {
+    order: string;
+    key: string;
+    tie: string;
+    atCursor: string;
+    isLast: string;
+    tieColumn: string;
+};
 
 type QueryShape = {
     relation: string;
-    contentKeyed: boolean;
-    sampleTies: string[];
     column: string;
     ties: string[];
-    tieCast: string;
+    tieCasts: string[];
     key: string;
     tieText: string;
     filters: string[];
     typeName: string | null;
+    names: HelperNames;
     newer: '>' | '<';
     oldestFirst: OrderDirection;
     newestFirst: OrderDirection;
 };
 
+type LegacyWindow = {
+    low: string;
+    high: string | null;
+};
+
 type CursorState = {
-    v: 2;
+    v: 3;
     props: string;
     value: string | null;
     seen: string[];
