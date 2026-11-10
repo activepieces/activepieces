@@ -65,10 +65,6 @@ export function PersonalProjectsSection() {
     const membersWithoutPersonalProject = fresh.isError
       ? 0
       : fresh.data?.membersWithoutPersonalProject ?? 0;
-    if (membersWithoutPersonalProject === 0) {
-      await turnOn({ createForExistingMembers: false });
-      return;
-    }
     setMembersToOffer(membersWithoutPersonalProject);
     setOpenDialog('turn-on');
   };
@@ -111,23 +107,25 @@ export function PersonalProjectsSection() {
       <div className="flex flex-col gap-1">
         <h2 className="text-base font-medium">{t('Personal projects')}</h2>
         <p className="max-w-2xl text-sm text-gray-11">
-          {t('A private project for every new member.')}
+          {t('A private project for each member.')}
         </p>
       </div>
       <Item variant="outline" size="sm" className="flex-nowrap bg-panel">
         <ItemContent className="min-w-0">
-          <ItemTitle>{t('Automatic personal project creation')}</ItemTitle>
+          <ItemTitle>{t('Auto-create personal projects')}</ItemTitle>
           <ItemDescription>
-            {t(
-              "Turn off if you don't want new members to get a personal project.",
-            )}
+            {isEnabled
+              ? t('New members get a personal project when they join.')
+              : t(
+                  'Turn on to give new members a personal project when they join.',
+                )}
           </ItemDescription>
         </ItemContent>
         <ItemActions>
           <Switch
             checked={isEnabled}
             disabled={isPending}
-            aria-label={t('Automatic personal project creation')}
+            aria-label={t('Auto-create personal projects')}
             onCheckedChange={onCheckedChange}
             {...adminControl(AdminControl.PROJECTS_AUTO_PERSONAL_TOGGLE)}
           />
