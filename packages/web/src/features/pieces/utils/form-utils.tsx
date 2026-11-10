@@ -24,7 +24,7 @@ import {
   formErrors,
   LoopOnItemsActionSchema,
   ProcessInBatchesActionSchema,
-  ProcessInBatchesActionSettings,
+  ProcessInBatchesActionSettingsWithValidation,
   PieceActionSchema,
   PieceActionSettings,
   PieceTrigger,
@@ -605,7 +605,8 @@ export const formUtils = {
                 .int(formErrors.batchSizeMustBeAWholeNumber)
                 .min(1, formErrors.batchSizeMustBeAtLeastOne),
               timeoutSeconds:
-                ProcessInBatchesActionSettings.shape.timeoutSeconds,
+                ProcessInBatchesActionSettingsWithValidation.shape
+                  .timeoutSeconds,
             }),
           }).shape,
         );
