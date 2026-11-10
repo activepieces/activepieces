@@ -132,8 +132,10 @@ export const newOrUpdatedRowTrigger = createTrigger({
 			rowHashes.push(rowHash);
 		}
 
-		// store compressed values
-		await context.store.put(`${sheetId}`, rowHashes);
+		const keepSnapshot = context.isRepublish === true && !isNil(await context.store.get(`${sheetId}`));
+		if (!keepSnapshot) {
+			await context.store.put(`${sheetId}`, rowHashes);
+		}
 
 		// create file watch notification
 		const fileNotificationRes = await createFileNotification(

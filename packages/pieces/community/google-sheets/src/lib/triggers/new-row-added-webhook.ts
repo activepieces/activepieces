@@ -4,6 +4,7 @@ import {
 	TriggerStrategy,
 	WebhookRenewStrategy,
 	createTrigger,
+	isNil,
 } from '@activepieces/pieces-framework';
 
 import {
@@ -59,7 +60,10 @@ export const newRowAddedTrigger = createTrigger({
 		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
 		const currentSheetValues = await getWorkSheetValues(context.auth, spreadsheetId, sheetName);
 
-		await context.store.put(`${sheetId}`, currentSheetValues.length);
+		const keepSnapshot = context.isRepublish === true && !isNil(await context.store.get(`${sheetId}`));
+		if (!keepSnapshot) {
+			await context.store.put(`${sheetId}`, currentSheetValues.length);
+		}
 
 		const fileNotificationRes = await createFileNotification(
 			context.auth,
