@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { ALL_PRINCIPAL_TYPES, EnginePrincipal, Principal, PrincipalType, WorkerPrincipal } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -92,9 +92,7 @@ function engineTokenTtlSeconds(): number {
         system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
         system.getNumberOrThrow(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS),
     )
-    const jobBoundTtlSeconds = longestJobTimeoutSeconds + ENGINE_TOKEN_TTL_MARGIN_SECONDS
-    const configured = system.getNumber(AppSystemProp.ENGINE_TOKEN_TTL_SECONDS)
-    return isNil(configured) ? jobBoundTtlSeconds : Math.max(configured, jobBoundTtlSeconds)
+    return longestJobTimeoutSeconds + ENGINE_TOKEN_TTL_MARGIN_SECONDS
 }
 
 async function assertUserSession(log: FastifyBaseLogger, decoded: Principal | Principal): Promise<void> {

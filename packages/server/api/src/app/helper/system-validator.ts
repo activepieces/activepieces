@@ -240,7 +240,6 @@ const systemPropValidators: {
 
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: booleanValidator,
     [AppSystemProp.ENFORCE_CONNECTION_PIECE_BINDING]: booleanValidator,
-    [AppSystemProp.ENGINE_TOKEN_TTL_SECONDS]: positiveIntegerValidator,
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: (value: string) => {
         const days = parseInt(value)
         if (isNaN(days) || days < 0) {
