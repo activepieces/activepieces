@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, isNil, ProjectRole, RoleType, SeekPage, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
-import { ApEdition, DEFAULT_BRAND_LOGOS, InvitationStatus, InvitationType, PlatformRole, RemoveProjectFromInvitationResponse, TelemetryEventName, UserInvitation, UserInvitationPreview, UserInvitationWithLink } from '@activepieces/shared'
+import { ApEdition, DEFAULT_BRAND_LOGOS, INVITATION_EXPIRY_SECONDS, InvitationStatus, InvitationType, PlatformRole, RemoveProjectFromInvitationResponse, TelemetryEventName, UserInvitation, UserInvitationPreview, UserInvitationWithLink } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { JsonWebTokenError } from 'jsonwebtoken'
@@ -255,10 +255,41 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         const query = repo(entityManager)
             .createQueryBuilder('invitation')
             .select('COUNT(DISTINCT LOWER(invitation.email))', 'count')
-        const result = await withinReservationWindow(query, platformId)
+        const result = await invitationsHoldingSeats(query, platformId)
             .andWhere(EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER)
             .getRawOne<{ count: string }>()
         return Number(result?.count ?? 0)
+    },
+    async lockPendingInvites({ platformId, entityManager }: CountReservedSeatsParams): Promise<void> {
+        await invitationsHoldingSeats(repo(entityManager).createQueryBuilder('invitation').select('invitation.id'), platformId)
+            .setLock('pessimistic_write')
+            .getMany()
+    },
+    async revokeNewestInvitedBetween({ platformId, from, to, limit, entityManager }: RevokeNewestInvitedBetweenParams): Promise<number> {
+        const rows: { revoked: string }[] = await entityManager.query(`
+            WITH newest_emails AS (
+                SELECT LOWER(invitation.email) AS email
+                FROM user_invitation invitation
+                WHERE invitation."platformId" = $1
+                AND invitation.status = ANY($2)
+                AND invitation.updated > $3
+                AND ${EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER}
+                GROUP BY LOWER(invitation.email)
+                HAVING MIN(invitation.created) >= $4
+                AND MIN(invitation.created) <= $5
+                ORDER BY MIN(invitation.created) DESC
+                LIMIT $6
+            ), deleted AS (
+                DELETE FROM user_invitation invitation
+                WHERE invitation."platformId" = $1
+                AND invitation.status = ANY($2)
+                AND invitation.updated > $3
+                AND LOWER(invitation.email) IN (SELECT email FROM newest_emails)
+                RETURNING LOWER(invitation.email) AS email
+            )
+            SELECT COUNT(DISTINCT email) AS revoked FROM deleted
+        `, [platformId, SEAT_HOLDING_STATUSES, getInvitationExpiryCutoff(), from, to, limit])
+        return Number(rows[0]?.revoked ?? 0)
     },
     async countAdditionalSeatsNeeded({
         email,
@@ -269,7 +300,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         if (!addsNewUser) {
             return 0
         }
-        const alreadyReserved = await withinReservationWindow(repo(entityManager).createQueryBuilder('invitation'), platformId)
+        const alreadyReserved = await invitationsHoldingSeats(repo(entityManager).createQueryBuilder('invitation'), platformId)
             .andWhere('LOWER(invitation.email) = :email', { email: email.toLowerCase().trim() })
             .getExists()
         return alreadyReserved ? 0 : 1
@@ -398,20 +429,20 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
     },
 })
 
-export const INVITATION_EXPIRY_SECONDS = dayjs.duration(7, 'days').asSeconds()
-
 export function getInvitationExpiryCutoff(): string {
     return dayjs().subtract(INVITATION_EXPIRY_SECONDS, 'seconds').toISOString()
 }
 
-function withinReservationWindow<T extends ObjectLiteral>(query: SelectQueryBuilder<T>, platformId: string): SelectQueryBuilder<T> {
+function invitationsHoldingSeats<T extends ObjectLiteral>(query: SelectQueryBuilder<T>, platformId: string): SelectQueryBuilder<T> {
     return query
         .where('invitation.platformId = :platformId', { platformId })
-        .andWhere('invitation.status IN (:...statuses)', { statuses: [InvitationStatus.PENDING, InvitationStatus.ACCEPTED] })
+        .andWhere('invitation.status IN (:...statuses)', { statuses: SEAT_HOLDING_STATUSES })
         .andWhere('invitation.updated > :expiryCutoff', { expiryCutoff: getInvitationExpiryCutoff() })
 }
 
-const EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER = `NOT EXISTS (
+const SEAT_HOLDING_STATUSES = [InvitationStatus.PENDING, InvitationStatus.ACCEPTED]
+
+export const EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER = `NOT EXISTS (
     SELECT 1
     FROM user_identity identity
     INNER JOIN "user" existing_user
@@ -419,7 +450,6 @@ const EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER = `NOT EXISTS (
         AND existing_user."platformId" = invitation."platformId"
     WHERE LOWER(identity.email) = LOWER(invitation.email)
 )`
-
 
 async function replacePlatformInvites({ email, platformId, entityManager }: ReplacePlatformInvitesParams): Promise<ReplacedPlatformInvite> {
     const invitations = await repo(entityManager).find({
@@ -679,6 +709,14 @@ export type CountAdditionalSeatsNeededParams = {
 export type CountReservedSeatsParams = {
     platformId: string
     entityManager?: EntityManager
+}
+
+type RevokeNewestInvitedBetweenParams = {
+    platformId: string
+    from: string
+    to: string
+    limit: number
+    entityManager: EntityManager
 }
 
 type GetOneByPlatformIdAndEmailParams = {
