@@ -1,10 +1,12 @@
 import { formulaEvaluator } from '@activepieces/core-formula'
+import { deno } from '@activepieces/core-utils'
 import { ApFile, LATEST_CONTEXT_VERSION, PieceAuth, Property } from '@activepieces/pieces-framework'
 import { FlowActionType, FlowTriggerType, GenericStepOutput, PropertyExecutionType, PropertySettings, StepOutputStatus } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { propsProcessor } from '../../src/lib/variables/props-processor'
 import { createPropsResolver } from '../../src/lib/variables/props-resolver'
+import { scriptEvaluator } from '../../src/lib/variables/script-evaluator'
 
 const propsResolverService = createPropsResolver({
     projectId: 'PROJECT_ID',
@@ -1028,5 +1030,41 @@ describe('Array Flatter Processor', () => {
             { id: '1', name: 'item1' },
         ])
         expect(errors).toEqual({})
+    })
+})
+
+describe('Props resolver with a provided script session', () => {
+    it('reuses the session across resolves, refreshes a changed step view and leaves disposal to the owner', async () => {
+        const createSession = vi.spyOn(deno, 'createSession')
+        const scriptSession = scriptEvaluator.initSession()
+        const dispose = vi.spyOn(scriptSession, 'dispose')
+        const resolver = createPropsResolver({
+            projectId: 'PROJECT_ID',
+            engineToken: 'WORKER_TOKEN',
+            apiUrl: 'http://127.0.0.1:3000',
+            contextVersion: LATEST_CONTEXT_VERSION,
+            stepNames: ['trigger', 'step_1'],
+            scriptSession,
+        })
+        const buildState = (price: number): Promise<FlowExecutorContext> => FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: { price },
+        }))
+        try {
+            const first = await resolver.resolve({ unresolvedInput: '{{ step_1.output.price * 2 }}', executionState: await buildState(1) })
+            const second = await resolver.resolve({ unresolvedInput: '{{ step_1.output.price * 2 }}', executionState: await buildState(5) })
+
+            expect(first.resolvedInput).toBe(2)
+            expect(second.resolvedInput).toBe(10)
+            expect(createSession).toHaveBeenCalledTimes(1)
+            expect(dispose).not.toHaveBeenCalled()
+        }
+        finally {
+            createSession.mockRestore()
+            dispose.mockRestore()
+            await scriptSession.dispose()
+        }
     })
 })

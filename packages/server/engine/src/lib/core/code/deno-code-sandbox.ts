@@ -145,7 +145,7 @@ export function denoCodeSandbox({ permissions, codeStepMemoryLimitMb }: DenoCode
                     return live.session.run({ script })
                 },
                 setGlobal: async (key: string, value: unknown, noOverwrite = true) => {
-                    if (noOverwrite && (key in context || key in functions)) {
+                    if (key in functions || (noOverwrite && key in context)) {
                         return
                     }
                     context[key] = value

@@ -4,14 +4,22 @@ import { CreateScriptSessionParams, ScriptSession } from './code-sandbox-common'
 
 export function createSharedScriptSession(buildParams: () => Promise<CreateScriptSessionParams>): SharedScriptSession {
     let sessionPromise: Promise<ScriptSession> | null = null
+    let disposed = false
     return {
         get: () => {
             if (isNil(sessionPromise)) {
-                sessionPromise = initCodeSandbox({ useDeno: true }).then(async (codeSandbox) => codeSandbox.createScriptSession(await buildParams()))
+                const creating = initCodeSandbox({ useDeno: true }).then(async (codeSandbox) => codeSandbox.createScriptSession(await buildParams()))
+                creating.catch(() => {
+                    if (!disposed && sessionPromise === creating) {
+                        sessionPromise = null
+                    }
+                })
+                sessionPromise = creating
             }
             return sessionPromise
         },
         dispose: async () => {
+            disposed = true
             const pendingSession = sessionPromise
             if (isNil(pendingSession)) {
                 return

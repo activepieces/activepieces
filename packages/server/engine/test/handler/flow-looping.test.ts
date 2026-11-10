@@ -1,10 +1,41 @@
+import { deno } from '@activepieces/core-utils'
 import { FlowAction, FlowRunStatus, LoopStepOutput } from '@activepieces/shared'
 import {  FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
+import { operationScope } from '../../src/lib/helper/operation-scope'
 import { buildCodeAction, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
 
 
 describe('flow with looping', () => {
+
+    afterEach(async () => {
+        vi.restoreAllMocks()
+        await operationScope.disposeAll()
+    })
+
+    it('evaluates expressions on the loop item per iteration through one script session', async () => {
+        const createSession = vi.spyOn(deno, 'createSession')
+        const result = await flowExecutor.execute({
+            action: buildSimpleLoopAction({
+                name: 'loop',
+                loopItems: '{{ [4,5,6] }}',
+                firstLoopAction: buildCodeAction({
+                    name: 'echo_step',
+                    input: {
+                        item: '{{ loop.output.item * 10 }}',
+                        index: '{{ loop.output.index + 0 }}',
+                    },
+                }),
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ stepNames: ['loop', 'echo_step'] }),
+        })
+
+        const loopOut = result.steps.loop as LoopStepOutput
+        const echoed = loopOut.output?.iterations.map((iteration) => iteration.echo_step.output)
+        expect(echoed).toEqual([{ item: 40, index: 1 }, { item: 50, index: 2 }, { item: 60, index: 3 }])
+        expect(createSession).toHaveBeenCalledTimes(1)
+    })
 
     it('should execute iterations', async () => {
         const codeAction = buildCodeAction({
