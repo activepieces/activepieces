@@ -31,7 +31,7 @@ async function replaceTokensAsync(
 }
 
 
-export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVersion, stepNames, pieceName }: PropsResolverParams) => {
+export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVersion, stepNames, pieceName, flowVersionDir }: PropsResolverParams) => {
     return {
         resolve: async <T = unknown>(params: ResolveInputParams): Promise<ResolveResult<T>> => {
             const { unresolvedInput, executionState } = params
@@ -42,7 +42,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 }
             }
             const getStepView = createMemoizedStepViewGetter(executionState)
-            const scriptSession = scriptEvaluator.initSession()
+            const scriptSession = scriptEvaluator.initSession({ flowVersionDir })
             try {
                 const resolveOptions = {
                     engineToken,
@@ -330,4 +330,5 @@ type PropsResolverParams = {
     contextVersion: ContextVersion | undefined
     stepNames: string[]
     pieceName?: string
+    flowVersionDir?: string
 }

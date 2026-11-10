@@ -13,8 +13,8 @@ How an Engineering project gets a second engineer who approves the scope before 
 **Co-Owner** — the engineer named by the project's Co-Owner label, from the code-owner team of the area the project changes most, and never the project Lead. Approves the scope and reviews every PR. Does not build and does not take over. Can change during the project. _Avoid_: "second pair of eyes"
 **Area lead** — one per code-owner team (core, pieces, platform). Names Owners and Co-Owners, covers absences, and breaks an Owner–Co-Owner tie in 1 business day.
 **Product decider** — the PM, or the founder or Owner the approach note names when the project has no PM.
-**Approach note** — problem, acceptance criteria with IDs (AC-1, AC-2), approach, the rejected alternative, the five cost answers, the product decider and the Co-Owner. The Owner posts it with `/ask <ticket>` in the Discord #questions forum.
-**Review window** — 1 business day from the approach note post. A concern inside it changes the plan. When it ends, the Owner runs `/decide` in the post, so the result reaches Linear.
+**Approach note** — problem, acceptance criteria with IDs (AC-1, AC-2), approach, the rejected alternative, the five cost answers, the product decider and the Co-Owner. The Owner posts it in the Discord #questions forum with `/ask <ticket>` or the `ask` tool of the Discord MCP server (see *discord-questions*).
+**Review window** — 1 business day from the approach note post. A concern inside it changes the plan. When it ends, the Owner runs `/decide` in the post or calls the `decide` tool, so the result reaches Linear.
 **Scope approved** — the Co-Owner moves the project to the status Ready for Development. The gate: agents build a ticket of a co-owned project only while the project status is Ready for Development or later. When the scope grows, the Owner moves the project back to Backlog, and the Co-Owner moves it forward again after a review.
 **Late concern** — a concern after the review window. It becomes a follow-up ticket with the `late-concern` label and does not hold the merge, unless it is in a blocking class.
 **Blocking class** — security, data loss, the code breaks an acceptance criterion, or an undeclared breaking change for self-hosters. It blocks at any time. A concern marked blocking with no class counts as non-blocking.
@@ -111,13 +111,15 @@ Two projects, ending 2026-12-04. For each concern, record where it first appears
 - Other projects also use Ready for Development. The status means "Co-Owner approved" only on a project with a Co-Owner label.
 - The gate fails closed: an agent that cannot read the project, its labels or its status stops.
 - The ruleset accepts any code-owner approval, so GitHub does not enforce the Co-Owner. The pilot counts merges without one.
-- GitHub round-robin adds a second reviewer even when the Co-Owner is already requested, unless the team's code review assignment has "Count existing requests" on.
+- GitHub round-robin picks a reviewer the moment the PR opens, before any Co-Owner request can exist, so "Count existing requests" never prevents it. The `Linear ticket check` workflow removes that pick: the first user request within 5 seconds after a team request, unless it is the Co-Owner. An author's own `--reviewer` request lands after the pick, so it stays. GitHub has already notified the pick, so the removal does not stop that email.
+- The workflow removes nothing when the Co-Owner is the author, when the Co-Owner is not in every requested team (the ruleset needs a code owner of each team), or when someone requested the pick again later.
+- The workflow cannot read team membership, so `TEAM_MEMBERS` in `tools/scripts/request-co-owner-review.ts` copies it. When a team changes, update the list from `gh api orgs/activepieces/teams/<team>/members`. A missing login fails safe: the pick stays. Delete the removal code when the pilot ends.
 - A Co-Owner without write access is skipped as a code owner, so the PR cannot merge on that approval.
-- Agents cannot read Discord. A window result or a concern reaches Linear only through `/decide`.
+- An agent reads a Discord post only through the `read` tool of the Discord MCP server, when its engineer has connected it (see *discord-questions*). A window result or a concern reaches Linear only through `/decide` or the `decide` tool.
 - A concern in a private message does not count. Only the Discord post of the approach note, or the PR, is on the record.
 
 ## Key files
 
 - `.claude/rules/linear-tickets.md` — the agent rule for co-owned projects
 - `.github/CODEOWNERS` — the three code-owner teams
-- `github.com/activepieces/ap-discord-bot` — `/ask` and `/decide`
+- `github.com/activepieces/ap-discord-bot` — `/ask`, `/decide` and the Discord MCP server

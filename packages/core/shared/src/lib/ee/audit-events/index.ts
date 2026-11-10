@@ -4,6 +4,7 @@ import { z } from 'zod'
 import * as zMini from 'zod/mini'
 import { UserIdentityProvider } from '../../core/authentication/user-identity'
 import { UserWithMetaInformation } from '../../core/user/user'
+import { UserInvitation } from '../../management/invitations'
 import { SigningKey } from '../signing-key'
 export const ListAuditEventsRequest = z.object({
     limit: z.coerce.number().optional(),
@@ -51,6 +52,9 @@ export enum ApplicationEventName {
     USER_SIGNED_IN = 'user.signed.in',
     USER_PASSWORD_RESET = 'user.password.reset',
     USER_EMAIL_VERIFIED = 'user.email.verified',
+    USER_INVITATION_SENT = 'user.invitation.sent',
+    USER_INVITATION_ACCEPTED = 'user.invitation.accepted',
+    USER_INVITATION_DELETED = 'user.invitation.deleted',
     SIGNING_KEY_CREATED = 'signing.key.created',
     AUDIT_LOG_RETENTION_UPDATED = 'audit.log.retention.updated',
     EMAIL_SIGN_IN_ENABLED = 'authentication.email.enabled',
@@ -609,6 +613,30 @@ export const ProjectRoleEvent = z.object({
 
 export type ProjectRoleEvent = z.infer<typeof ProjectRoleEvent>
 
+export const UserInvitationEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.union([
+        z.literal(ApplicationEventName.USER_INVITATION_SENT),
+        z.literal(ApplicationEventName.USER_INVITATION_ACCEPTED),
+        z.literal(ApplicationEventName.USER_INVITATION_DELETED),
+    ]),
+    data: z.object({
+        invitation: zMini.pick(UserInvitation, {
+            id: true,
+            email: true,
+            type: true,
+            platformRole: true,
+            projectId: true,
+        }),
+        projectRole: Nullable(zMini.pick(ProjectRole, {
+            id: true,
+            name: true,
+        })),
+    }),
+})
+
+export type UserInvitationEvent = z.infer<typeof UserInvitationEvent>
+
 export const ProjectReleaseEvent = z.object({
     ...BaseAuditEventProps,
     action: z.literal(ApplicationEventName.PROJECT_RELEASE_CREATED),
@@ -709,6 +737,7 @@ export const ApplicationEvent = z.union([
     AuthenticationSettingEvent,
     AuthenticationDomainEvent,
     ProjectRoleEvent,
+    UserInvitationEvent,
     ProjectReleaseEvent,
     ProjectReplacedEvent,
     FlowApprovalEvent,
@@ -832,6 +861,12 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return 'SAML identity provider connection replaced'
         case ApplicationEventName.SSO_DISABLED:
             return 'Single sign-on disabled'
+        case ApplicationEventName.USER_INVITATION_SENT:
+            return `Invited ${event.data.invitation.email}`
+        case ApplicationEventName.USER_INVITATION_ACCEPTED:
+            return `${event.data.invitation.email} accepted the invitation`
+        case ApplicationEventName.USER_INVITATION_DELETED:
+            return `Deleted the invitation for ${event.data.invitation.email}`
         case ApplicationEventName.PROJECT_ROLE_CREATED:
             return `${event.data.projectRole.name} is created`
         case ApplicationEventName.PROJECT_ROLE_UPDATED:
