@@ -7,7 +7,7 @@ import {
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Gem } from 'lucide-react';
+import { ArrowRight, Gem } from 'lucide-react';
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -36,6 +36,7 @@ import { useUpgradeClick } from '../hooks/use-upgrade-click';
 import {
   selfServeTrialCopy,
   selfServeTrialTime,
+  TRIAL_DAYS,
 } from '../utils/self-serve-trial-utils';
 
 import { useSalesLink } from './current-subscription-card';
@@ -77,6 +78,35 @@ export function SelfServeTrialLine({ endsAt }: { endsAt: string }) {
       </TooltipTrigger>
       <TooltipContent side="right" className="max-w-64">
         {selfServeTrialCopy.trialEndSummary(endsAt)}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+export function StartSelfServeTrialLine() {
+  const { openDialog } = billingDialogHooks.useSelfServeTrialDialogStore();
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          {...adminControl(AdminControl.TRIAL_START_OPEN)}
+          type="button"
+          onClick={() => openDialog({})}
+          className="-mx-1.5 -my-1 flex min-w-0 grow items-center justify-between gap-2 rounded-md px-1.5 py-1 text-xs font-semibold text-gray-12 transition-colors duration-150 hover:bg-gray-4"
+        >
+          <span className="flex min-w-0 items-center gap-1.5 whitespace-nowrap">
+            <Gem className="size-3.5 shrink-0 -translate-y-px text-accent-11" />
+            <span className="min-w-0 truncate">
+              {t('Start your free trial')}
+            </span>
+          </span>
+          <ArrowRight className="size-3.5 shrink-0 text-gray-11" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="right" className="max-w-64">
+        {t('Try the Enterprise plan free for {days} days', {
+          days: TRIAL_DAYS,
+        })}
       </TooltipContent>
     </Tooltip>
   );

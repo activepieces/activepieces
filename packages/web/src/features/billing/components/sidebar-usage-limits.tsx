@@ -22,11 +22,16 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { billingQueries } from '../hooks/billing-hooks';
+import { selfServeTrialHooks } from '../hooks/self-serve-trial-hooks';
 import { useCreditsUsage } from '../hooks/use-credits-usage';
 import { billingUtils } from '../utils/billing-utils';
 
 import { CreditsActionButton } from './credits-action-button';
-import { SeatGraceLine, SelfServeTrialLine } from './self-serve-trial-sidebar';
+import {
+  SeatGraceLine,
+  SelfServeTrialLine,
+  StartSelfServeTrialLine,
+} from './self-serve-trial-sidebar';
 
 export const SidebarUsageLimits = React.memo(() => {
   const { project } = projectCollectionUtils.useCurrentProject();
@@ -42,7 +47,11 @@ export const SidebarUsageLimits = React.memo(() => {
   } = useCreditsUsage();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { platform } = platformHooks.useCurrentPlatform();
-  const noticeLine = resolveNoticeLine(platform.selfServeTrial);
+  const shouldOfferTrial = selfServeTrialHooks.useShouldOfferTrial();
+  const noticeLine = resolveNoticeLine({
+    trial: platform.selfServeTrial,
+    shouldOfferTrial,
+  });
 
   const inWarning = !isUnlimited && severity !== 'default';
   const canManage = isPlatformAdmin && inWarning;
@@ -132,10 +141,19 @@ export const SidebarUsageLimits = React.memo(() => {
 
 SidebarUsageLimits.displayName = 'SidebarUsageLimits';
 
-function resolveNoticeLine(trial: SelfServeTrialInfo | undefined): ReactNode {
+function resolveNoticeLine({
+  trial,
+  shouldOfferTrial,
+}: {
+  trial: SelfServeTrialInfo | undefined;
+  shouldOfferTrial: boolean;
+}): ReactNode {
   const graceEndsAt = trial?.seatGraceEndsAt;
   if (trial?.state === SelfServeTrialState.ACTIVE) {
     return <SelfServeTrialLine endsAt={trial.endsAt} />;
   }
-  return isNil(graceEndsAt) ? null : <SeatGraceLine endsAt={graceEndsAt} />;
+  if (!isNil(graceEndsAt)) {
+    return <SeatGraceLine endsAt={graceEndsAt} />;
+  }
+  return shouldOfferTrial ? <StartSelfServeTrialLine /> : null;
 }
