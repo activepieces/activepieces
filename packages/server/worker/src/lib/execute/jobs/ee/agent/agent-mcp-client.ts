@@ -43,7 +43,12 @@ async function connectMcpClient({ mcpCredentials, conversationId, log }: {
         return { mcpClient: null, mcpToolSet: {} }
     }
 
-    const allMcpTools = await client.tools()
+    const { data: allMcpTools, error: listError } = await tryCatch(() => client.tools())
+    if (!allMcpTools) {
+        log.warn({ error: listError }, 'Failed to list MCP tools — chat will work without MCP tools')
+        await client.close().catch(() => undefined)
+        return { mcpClient: null, mcpToolSet: {} }
+    }
     const mcpToolSet: Record<string, unknown> = {}
     for (const [name, tool] of Object.entries(allMcpTools)) {
         if (!agentToolPhases.isAgentHiddenTool(name)) {
