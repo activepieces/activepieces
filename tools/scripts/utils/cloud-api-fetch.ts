@@ -10,9 +10,6 @@ async function fetchWithRetry({ url, init = {}, maxAttempts = MAX_ATTEMPTS, base
         if (outcome.response !== null && !isRetryableStatus(outcome.response.status)) {
             return outcome.response
         }
-        if (outcome.response !== null) {
-            await outcome.response.body?.cancel().catch(() => undefined)
-        }
         lastFailure = outcome.response !== null ? `status=${outcome.response.status}` : describeError(outcome.error)
         console.warn(`[cloudApiFetch] ${method} ${url} attempt=${attempt}/${maxAttempts} failed: ${lastFailure}`)
         if (attempt < maxAttempts) {
@@ -23,10 +20,21 @@ async function fetchWithRetry({ url, init = {}, maxAttempts = MAX_ATTEMPTS, base
 }
 
 function attemptFetch({ url, init, timeoutMs }: { url: string, init: RequestInit, timeoutMs: number }): Promise<AttemptOutcome> {
-    return fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) }).then(
-        (response): AttemptOutcome => ({ response, error: null }),
-        (error: unknown): AttemptOutcome => ({ response: null, error: error instanceof Error ? error : new Error(String(error)) }),
-    )
+    return fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) })
+        .then(bufferResponse)
+        .then(
+            (response): AttemptOutcome => ({ response, error: null }),
+            (error: unknown): AttemptOutcome => ({ response: null, error: error instanceof Error ? error : new Error(String(error)) }),
+        )
+}
+
+async function bufferResponse(response: Response): Promise<Response> {
+    const body = await response.arrayBuffer()
+    return new Response(body.byteLength === 0 ? null : body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+    })
 }
 
 function isRetryableStatus(status: number): boolean {

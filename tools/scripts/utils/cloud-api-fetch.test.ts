@@ -16,6 +16,14 @@ function stubFetch(steps: Step[]): ReturnType<typeof spyOn> {
         if (step instanceof Error) {
             throw step
         }
+        if (step === 'body-drops') {
+            return new Response(new ReadableStream({
+                start(controller) {
+                    controller.enqueue(new TextEncoder().encode('[{"name":"@activepieces/piece-'))
+                    controller.error(new TypeError('terminated'))
+                },
+            }), { status: 200 })
+        }
         return new Response(step.body ?? null, { status: step.status })
     })
 }
@@ -60,6 +68,13 @@ describe('fetchWithRetry', () => {
         expect(fetchSpy).toHaveBeenCalledTimes(2)
     })
 
+    it('retries when the connection drops while the body downloads', async () => {
+        const fetchSpy = stubFetch(['body-drops', { status: 200, body: '[{"name":"@activepieces/piece-gmail","version":"0.1.0"}]' }])
+        const response = await cloudApiFetch.fetchWithRetry({ url: REGISTRY_URL, baseDelayMs: 1 })
+        expect(await response.json()).toEqual([{ name: '@activepieces/piece-gmail', version: '0.1.0' }])
+        expect(fetchSpy).toHaveBeenCalledTimes(2)
+    })
+
     it('does not retry a 409', async () => {
         const fetchSpy = stubFetch([{ status: 409, body: 'exists' }])
         const response = await cloudApiFetch.fetchWithRetry({ url: REGISTRY_URL, init: { method: 'POST', body: '{}' }, baseDelayMs: 1 })
@@ -83,4 +98,4 @@ describe('fetchWithRetry', () => {
     })
 })
 
-type Step = { status: number, body?: string } | Error | 'hang'
+type Step = { status: number, body?: string } | Error | 'hang' | 'body-drops'
