@@ -573,7 +573,11 @@ describe('Flow Operations API', () => {
             expect(body.version.state).toBe(FlowVersionState.LOCKED)
         })
 
-        it('rejects a batch size below one at the API boundary', async () => {
+        it.each([
+            { batchSize: 0 },
+            { batchSize: 2.5 },
+            { batchSize: 10, timeoutSeconds: 1800 },
+        ])('saves an out-of-range batch setting and marks the step invalid (%o)', async (batchSettings) => {
             const ctx = await setup()
 
             const createResponse = await ctx.post('/v1/flows', {
@@ -590,13 +594,16 @@ describe('Flow Operations API', () => {
                         type: FlowActionType.PROCESS_IN_BATCHES,
                         displayName: 'Process in Batches',
                         name: 'step_1',
-                        settings: { items: '{{ trigger }}', batchSize: 0 },
+                        settings: { items: '{{ trigger }}', ...batchSettings },
                         valid: true,
                     },
                 },
             })
 
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const batchStep = response?.json().version.trigger.nextAction
+            expect(batchStep.valid).toBe(false)
+            expect(batchStep.settings).toMatchObject(batchSettings)
         })
     })
 

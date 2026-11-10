@@ -10,6 +10,7 @@ import {
     FlowVersionState,
     LATEST_FLOW_SCHEMA_VERSION,
     ProcessInBatchesAction,
+    ProcessInBatchesActionSettingsWithValidation,
     StepLocationRelativeToParent,
     UpdateActionRequest,
 } from '../../src'
@@ -122,12 +123,11 @@ describe('Process in Batches step', () => {
         expect(flowVersion.valid).toBe(true)
     })
 
-    it.each([0, -1, 1.5])('marks the step invalid for a batch size of %s without clamping it', (batchSize) => {
-        const flowVersion = applyAll([addBatchStep({ batchSize })])
-        const step = getBatchStepOrThrow(flowVersion)
+    it.each([0, -1, 1.5])('keeps a batch size of %s as sent and fails the validation schema', (batchSize) => {
+        const step = getBatchStepOrThrow(applyAll([addBatchStep({ batchSize })]))
 
-        expect(step.valid).toBe(false)
         expect(step.settings.batchSize).toBe(batchSize)
+        expect(ProcessInBatchesActionSettingsWithValidation.safeParse(step.settings).success).toBe(false)
     })
 
     it('rejects a mention expression as a batch size at the API boundary', () => {
@@ -135,8 +135,10 @@ describe('Process in Batches step', () => {
         expect(result.success).toBe(false)
     })
 
-    it('reports the batch size floor with a message that is a translation key', () => {
-        const result = UpdateActionRequest.safeParse(batchStepUpdateRequest(0))
+    it('accepts a batch size below one in the request and reports it in the validation schema with a translation key', () => {
+        expect(UpdateActionRequest.safeParse(batchStepUpdateRequest(0)).success).toBe(true)
+
+        const result = ProcessInBatchesActionSettingsWithValidation.safeParse({ items: '{{ trigger }}', batchSize: 0 })
         expect(result.success).toBe(false)
         expect(JSON.stringify(result.error)).toContain('batchSizeMustBeAtLeastOne')
     })
