@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import {
   AppConnectionValueForAuthProperty,
   DropdownState,
@@ -196,7 +197,45 @@ async function initialState({
   if (existing.length === 0) {
     return start;
   }
-  return nextState({ state: start, records: existing, fresh: existing });
+  const state = nextState({ state: start, records: existing, fresh: existing });
+  return {
+    ...state,
+    versionsAtCheckpoint: versionsAt({
+      items: existing,
+      at: state.checkpoint,
+    }),
+  };
+}
+
+function recordVersion(record: AirtableRawRecord): string {
+  return createHash('sha256')
+    .update(JSON.stringify(record.fields))
+    .digest('base64');
+}
+
+function versionsAt({
+  items,
+  at,
+}: {
+  items: ModifiedRecord[];
+  at: number;
+}): Record<string, string> {
+  return Object.fromEntries(
+    items
+      .filter(({ modifiedMs }) => modifiedMs === at)
+      .map(({ record }) => [record.id, recordVersion(record)])
+  );
+}
+
+function changedSinceEnable({
+  state,
+  record,
+}: {
+  state: UpdatedRecordState;
+  record: AirtableRawRecord;
+}): boolean {
+  const version = state.versionsAtCheckpoint?.[record.id];
+  return !isNil(version) && version !== recordVersion(record);
 }
 
 async function loadState(store: Store): Promise<UpdatedRecordState | null> {
@@ -246,6 +285,14 @@ function nextState({
   return {
     checkpoint,
     seenAtCheckpoint: [...new Set([...previous, ...idsAt({ items: fresh, at: checkpoint })])],
+    ...(isNil(state.versionsAtCheckpoint)
+      ? {}
+      : {
+          versionsAtCheckpoint: {
+            ...state.versionsAtCheckpoint,
+            ...versionsAt({ items: records, at: checkpoint }),
+          },
+        }),
   };
 }
 
@@ -357,7 +404,8 @@ export const airtableUpdatedRecordTrigger = createTrigger({
           modifiedMs > state.checkpoint ||
           (modifiedMs === state.checkpoint &&
             !isNil(state.seenAtCheckpoint) &&
-            !seenAtCheckpoint.has(record.id))
+            (!seenAtCheckpoint.has(record.id) ||
+              changedSinceEnable({ state, record })))
       )
       .sort(
         (a, b) =>
@@ -378,4 +426,5 @@ type ModifiedRecord = { record: AirtableRawRecord; modifiedMs: number };
 type UpdatedRecordState = {
   checkpoint: number;
   seenAtCheckpoint: string[] | null;
+  versionsAtCheckpoint?: Record<string, string>;
 };

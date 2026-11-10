@@ -98,6 +98,21 @@ describe('Airtable New or Updated Record behaviour', () => {
         expect(await trigger.run(ctx({ store }))).toEqual([])
     })
 
+    it('fires a record from before enable that is edited again later in the same second', async () => {
+        addRecord({ id: 'recA' })
+        tick(60_100)
+        editRecord({ id: 'recA', at: tick(100) })
+        tick(300)
+        const { store } = memoryStore()
+        await trigger.onEnable(ctx({ store }))
+        editRecord({ id: 'recA', status: 'Done', at: tick(200) })
+        expect(ids(await trigger.run(ctx({ store })))).toEqual(['recA'])
+        expect(await trigger.run(ctx({ store }))).toEqual([])
+        editRecord({ id: 'recA', status: 'Ready', at: tick(100) })
+        expect(ids(await trigger.run(ctx({ store })))).toEqual(['recA'])
+        expect(await trigger.run(ctx({ store }))).toEqual([])
+    })
+
     it('fires a new record too', async () => {
         const { store } = memoryStore()
         await trigger.onEnable(ctx({ store }))
