@@ -4,9 +4,8 @@ import { BasePage } from './base';
 export class InvitationPage extends BasePage {
   url = `/invitation`;
 
-  async open(link: string) {
-    const { pathname, search } = new URL(link);
-    await this.page.goto(`${pathname}${search}`);
+  async open(link: URL) {
+    await this.page.goto(`${link.pathname}${link.search}`);
   }
 
   async expectInvitedAs(email: string) {
