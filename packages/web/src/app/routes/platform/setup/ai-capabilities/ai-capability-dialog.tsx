@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { adminLayout } from '@/app/components/admin';
+import { MaskedInput } from '@/components/custom/masked-input';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -38,7 +39,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -377,10 +377,8 @@ function CapabilityForm({
                 <FormItem>
                   <FormLabel>{t('API Key')}</FormLabel>
                   <FormControl>
-                    <Input
+                    <MaskedInput
                       {...field}
-                      type="password"
-                      autoComplete="off"
                       placeholder={
                         source === savedKeyProvider
                           ? t('Enter a new key to replace the saved one')
