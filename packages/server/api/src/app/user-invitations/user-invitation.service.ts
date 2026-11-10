@@ -1,7 +1,8 @@
-import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, isNil, ProjectRole, RoleType, SeekPage, spreadIfDefined, unique } from '@activepieces/core-utils'
-import { ApEdition, INVITATION_EXPIRY_SECONDS, InvitationStatus, InvitationType, PlatformRole, RemoveProjectFromInvitationResponse, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, isNil, ProjectRole, RoleType, SeekPage, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ApEdition, DEFAULT_BRAND_LOGOS, INVITATION_EXPIRY_SECONDS, InvitationStatus, InvitationType, PlatformRole, RemoveProjectFromInvitationResponse, TelemetryEventName, UserInvitation, UserInvitationPreview, UserInvitationWithLink } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { JsonWebTokenError } from 'jsonwebtoken'
 import { EntityManager, In, IsNull, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
@@ -19,6 +20,7 @@ import { telemetry } from '../helper/telemetry.utils'
 import { platformService } from '../platform/platform.service'
 import { ProjectEntity } from '../project/project-entity'
 import { userService } from '../user/user-service'
+import { resumePageHooks } from '../waitpoints/resume-page-hooks'
 import { UserInvitationEntity } from './user-invitation.entity'
 
 export const userInvitationRepo = repoFactory(UserInvitationEntity)
@@ -27,11 +29,23 @@ const projectRepo = repoFactory(ProjectEntity)
 
 export const userInvitationsService = (log: FastifyBaseLogger) => ({
     async getOneByInvitationTokenOrThrow(invitationToken: string): Promise<UserInvitation> {
-        const decodedToken = await jwtUtils.decodeAndVerify<UserInvitationToken>({
+        const key = await jwtUtils.getJwtSecret()
+        const { data: decodedToken, error } = await tryCatch(() => jwtUtils.decodeAndVerify<UserInvitationToken>({
             jwt: invitationToken,
-            key: await jwtUtils.getJwtSecret(),
+            key,
             audience: JwtAudience.USER_INVITATION,
-        })
+        }))
+        if (error instanceof JsonWebTokenError) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'UserInvitation',
+                },
+            })
+        }
+        if (isNil(decodedToken)) {
+            throw error
+        }
         const invitation = await repo().findOneBy({
             id: decodedToken.id,
         })
@@ -45,6 +59,19 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             })
         }
         return invitation
+    },
+    async getPreviewByInvitationToken(invitationToken: string): Promise<UserInvitationPreview> {
+        const invitation = await this.getOneByInvitationTokenOrThrow(invitationToken)
+        const platform = await platformService(log).getOneOrThrow(invitation.platformId)
+        const theme = await resumePageHooks.get(log).getTheme({ platformId: invitation.platformId })
+        const memberCount = await userService(log).countActiveByPlatformId({ platformId: invitation.platformId })
+        return {
+            email: invitation.email,
+            platformName: platform.name,
+            platformLogoUrl: theme.logos.logoIconUrl === DEFAULT_BRAND_LOGOS.logoIconUrl ? null : theme.logos.logoIconUrl,
+            memberCount,
+            status: invitation.status,
+        }
     },
     async provisionUserInvitation({ email }: ProvisionUserInvitationParams): Promise<void> {
         const invitations = await repo().createQueryBuilder('user_invitation')
