@@ -7,31 +7,42 @@ export const findMeetingByQueryAction = createAction({
 	auth: firefliesAiAuth,
 	name: 'find_meeting_by_query',
 	classification: 'SEARCH',
-	displayName: 'Find Meeting by Call Deatils',
-	description: 'Searches meetings based on provided parameters.',
+	displayName: 'Search Meetings',
+	description: 'Finds meetings by title, host, participant or date.',
 	audience: 'both',
 	aiMetadata: { description: 'Searches Fireflies meeting transcripts, optionally filtered by title, host email, participant email, and/or date, paging through all matches. Use when locating meetings by attributes rather than a known ID; leaving all filters empty returns the full meeting history. Read-only and idempotent.', idempotent: true },
 	props: {
 		title: Property.ShortText({
 			displayName: 'Meeting Title',
 			required: false,
+			icon: 'text',
+			placeholder: 'Weekly sync',
 		}),
 		hostEmail: Property.ShortText({
 			displayName: 'Host Email',
-			description: 'Filter meetings by host email.',
 			required: false,
+			icon: 'user',
+			placeholder: 'ana@acme.com',
 		}),
 		participantEmail: Property.ShortText({
 			displayName: 'Participant Email',
-			description: 'Filter meetings by participant email',
+			description: 'Meetings with this email among the attendees.',
 			required: false,
+			icon: 'users',
+			placeholder: 'sam@acme.com',
 		}),
 		date: Property.DateTime({
 			displayName: 'Date',
-			description: 'Filter meetings on this date (YYYY-MM-DD).',
+			description: 'Meetings from this day (UTC).',
 			required: false,
+			icon: 'calendar',
 		}),
 	},
+	propertyGroups: [
+		{ key: 'meeting', display: 'builder', label: 'Meeting', icon: 'text', props: ['title'] },
+		{ key: 'people', display: 'builder', label: 'People', icon: 'users', props: ['hostEmail', 'participantEmail'] },
+		{ key: 'time', display: 'builder', label: 'Time', icon: 'calendar', props: ['date'] },
+	],
 	async run({ propsValue, auth }) {
 		const filterVariables: Record<string, any> = {};
 
