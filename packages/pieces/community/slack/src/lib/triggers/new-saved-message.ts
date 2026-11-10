@@ -1,6 +1,6 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
-import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
+import { getTeamId, getUserId, SlackAuthValue } from '../common/auth-helpers';
 import { appWebhookSetupInfo } from '../common/props';
 import { newSavedMessageTriggerOutputSchema } from '../output-schemas';
 
@@ -34,17 +34,21 @@ export const newSavedMessageTrigger = createTrigger({
 	run: async (context) => {
 		const payloadBody = context.payload.body as PayloadBody;
 
-		if (payloadBody.event.type === 'star_added' && payloadBody.event.item.type ==='message') {
-			return [payloadBody.event.item];
+		if (payloadBody.event.type !== 'star_added' || payloadBody.event.item.type !== 'message') {
+			return [];
 		}
-
-		return [];
+		const userId = await getUserId(context.auth as SlackAuthValue);
+		if (payloadBody.event.user !== userId) {
+			return [];
+		}
+		return [payloadBody.event.item];
 	},
 });
 
 type PayloadBody = {
 	event: {
 		type: string;
+		user: string;
 		event_ts: string;
         item:{
             type:string

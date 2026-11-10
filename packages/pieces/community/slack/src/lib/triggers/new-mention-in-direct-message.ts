@@ -6,6 +6,7 @@ import {
 import { slackAuth } from '../auth';
 import { appWebhookSetupInfo, userId } from '../common/props';
 import { getTeamId, getUserId, SlackAuthValue } from '../common/auth-helpers';
+import { canConnectionSeeConversation } from '../common/utils';
 import { newMentionInDirectMessageTriggerOutputSchema } from '../output-schemas';
 
 export const newMentionInDirectMessageTrigger = createTrigger({
@@ -87,7 +88,8 @@ export const newMentionInDirectMessageTrigger = createTrigger({
     //check for mention
     if (
       context.propsValue.user &&
-      payloadBody.event.text?.includes(`<@${context.propsValue.user}>`)
+      payloadBody.event.text?.includes(`<@${context.propsValue.user}>`) &&
+      (await canConnectionSeeConversation({ auth: context.auth as SlackAuthValue, channel: payloadBody.event.channel, channelType: payloadBody.event.channel_type }))
     ) {
       return [payloadBody.event];
     }

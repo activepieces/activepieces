@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { appWebhookSetupInfo, userId } from '../common/props';
 import { slackAuth } from '../auth';
-import { parseCommand } from '../common/utils';
+import { canConnectionSeeConversation, parseCommand } from '../common/utils';
 import { getTeamId, getUserId, SlackAuthValue } from '../common/auth-helpers';
 import { newCommandInDirectMessageTriggerOutputSchema } from '../output-schemas';
 
@@ -107,7 +107,7 @@ export const newCommandInDirectMessageTrigger = createTrigger({
         commands
       );
 
-      if (parsedCommand) {
+      if (parsedCommand && (await canConnectionSeeConversation({ auth: context.auth as SlackAuthValue, channel: payloadBody.event.channel, channelType: payloadBody.event.channel_type }))) {
         return [
           {
             ...payloadBody.event,

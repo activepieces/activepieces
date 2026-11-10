@@ -1,7 +1,9 @@
-import { ApFile } from '@activepieces/pieces-framework';
-import { Block, ConversationsRepliesResponse, KnownBlock, WebClient, WebClientOptions } from '@slack/web-api';
+import { ApFile, isNil, tryCatch } from '@activepieces/pieces-framework';
+import { Block, ConversationsRepliesResponse, ErrorCode, KnownBlock, WebClient, WebClientOptions } from '@slack/web-api';
+import { getBotToken, getUserToken, SlackAuthValue } from './auth-helpers';
 
 const SLACK_SECTION_TEXT_MAX_LENGTH = 3000;
+const PRIVATE_CONVERSATION_TYPES = ['im', 'group'];
 
 export function textToSectionBlocks(text: string): (KnownBlock | Block)[] {
   if (text.length <= SLACK_SECTION_TEXT_MAX_LENGTH) {
@@ -215,4 +217,31 @@ export async function fetchAllThreadReplies({ client, channel, ts, cursor: start
     has_more: Boolean(cursor),
     response_metadata: { ...firstPage.response_metadata, next_cursor: cursor ?? '' },
   };
+}
+
+export async function canConnectionSeeConversation({ auth, channel, channelType }: { auth: SlackAuthValue; channel: string; channelType: string }): Promise<boolean> {
+  if (!PRIVATE_CONVERSATION_TYPES.includes(channelType)) {
+    return true;
+  }
+  const { error: botError } = await tryCatch(() => new WebClient(getBotToken(auth)).conversations.info({ channel }));
+  if (isNil(botError)) {
+    return true;
+  }
+  throwUnlessSlackRefused(botError);
+  const userToken = getUserToken(auth);
+  if (isNil(userToken)) {
+    return false;
+  }
+  const { error: userError } = await tryCatch(() => new WebClient(userToken).conversations.history({ channel, limit: 1 }));
+  if (isNil(userError)) {
+    return true;
+  }
+  throwUnlessSlackRefused(userError);
+  return false;
+}
+
+function throwUnlessSlackRefused(error: Error): void {
+  if (!('code' in error) || error.code !== ErrorCode.PlatformError) {
+    throw error;
+  }
 }

@@ -6,6 +6,7 @@ import {
 import { appWebhookSetupInfo, onlyBotChannels, slackChannels, multiSelectChannelInfo, userIds, usergroupIds } from '../common/props';
 import { slackAuth } from '../auth';
 import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
+import { canConnectionSeeConversation } from '../common/utils';
 import { newMentionTriggerOutputSchema } from '../output-schemas';
 
 export const newMention = createTrigger({
@@ -109,6 +110,10 @@ export const newMention = createTrigger({
     );
 
     if (!userMentioned && !usergroupMentioned) {
+      return [];
+    }
+
+    if (!(await canConnectionSeeConversation({ auth: context.auth as SlackAuthValue, channel: payloadBody.event.channel, channelType: payloadBody.event.channel_type }))) {
       return [];
     }
 
