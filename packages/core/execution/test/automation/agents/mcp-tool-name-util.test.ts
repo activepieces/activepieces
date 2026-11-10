@@ -118,3 +118,19 @@ describe('suggestToolName', () => {
         }
     })
 })
+
+describe('uniqueToolName', () => {
+    it('keeps the readable name when nothing else uses it', () => {
+        expect(mcpToolNameUtils.uniqueToolName({ sourceName: 'Researcher', taken: [] })).toBe('researcher')
+    })
+
+    it('adds the first free number when two agents share a name', () => {
+        expect(mcpToolNameUtils.uniqueToolName({ sourceName: 'Researcher', taken: ['researcher', 'researcher_2'] })).toBe('researcher_3')
+    })
+
+    it('stays within the provider length limit when it adds a number', () => {
+        const name = mcpToolNameUtils.uniqueToolName({ sourceName: 'a'.repeat(64), taken: [mcpToolNameUtils.suggestToolName('a'.repeat(64))] })
+        expect(mcpToolNameUtils.isProviderSafeIdentifier(name)).toBe(true)
+        expect(name.endsWith('_2')).toBe(true)
+    })
+})

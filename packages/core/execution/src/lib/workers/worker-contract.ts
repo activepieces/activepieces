@@ -185,6 +185,7 @@ export type AgentConfigResponse = {
     aiTools: AgentAiToolsConfig
     emailEnabled: boolean
     agentsAvailable: boolean
+    agentToolsAvailable?: boolean
     userEmail: string
     source: AgentRunSource
     platformTier?: { id: string, name: string }

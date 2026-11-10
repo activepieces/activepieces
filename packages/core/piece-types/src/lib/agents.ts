@@ -8,6 +8,7 @@ export enum AgentToolType {
     FLOW = 'FLOW',
     MCP = 'MCP',
     KNOWLEDGE_BASE = 'KNOWLEDGE_BASE',
+    AGENT = 'AGENT',
 }
 
 export enum FieldControlMode {
@@ -161,11 +162,20 @@ export const AgentKnowledgeBaseTool = z.object({
 })
 export type AgentKnowledgeBaseTool = z.infer<typeof AgentKnowledgeBaseTool>
 
+export const AgentAgentTool = z.object({
+    type: z.literal(AgentToolType.AGENT),
+    toolName: z.string().check(z.minLength(1)),
+    externalAgentId: z.string().check(z.minLength(1)),
+    agentDisplayName: z.optional(z.string()),
+})
+export type AgentAgentTool = z.infer<typeof AgentAgentTool>
+
 export const AgentTool = z.discriminatedUnion('type', [
     AgentPieceTool,
     AgentFlowTool,
     AgentMcpTool,
     AgentKnowledgeBaseTool,
+    AgentAgentTool,
 ])
 export type AgentTool = z.infer<typeof AgentTool>
 
@@ -289,6 +299,20 @@ function suggestToolName(sourceName: string): string {
     return toValidToolName(sanitizeToolName(sourceName))
 }
 
+function uniqueToolName({ sourceName, taken }: { sourceName: string, taken: string[] }): string {
+    const base = suggestToolName(sourceName)
+    const isFree = (name: string) => !taken.includes(name)
+    if (isFree(base)) {
+        return base
+    }
+    const suffixed = (n: number) => `${base.slice(0, MAX_IDENTIFIER_LENGTH - String(n).length - 1)}_${n}`
+    let n = 2
+    while (!isFree(suffixed(n))) {
+        n += 1
+    }
+    return suffixed(n)
+}
+
 function isProviderSafeIdentifier(name: string): boolean {
     return PROVIDER_TOOL_NAME_PATTERN.test(name)
 }
@@ -317,7 +341,7 @@ const MAX_PREFIX_LENGTH = 53
 const MAX_IDENTIFIER_LENGTH = 64
 const PROVIDER_TOOL_NAME_PATTERN = /^[a-zA-Z_][a-zA-Z0-9_-]{0,63}$/
 
-export const mcpToolNameUtils = { createToolName, createPieceToolName, toValidToolName, suggestToolName, isProviderSafeIdentifier, toProviderSafeIdentifier }
+export const mcpToolNameUtils = { createToolName, createPieceToolName, toValidToolName, suggestToolName, uniqueToolName, isProviderSafeIdentifier, toProviderSafeIdentifier }
 
 export type ToolCallBase = z.infer<typeof toolCallBaseSchema>
 

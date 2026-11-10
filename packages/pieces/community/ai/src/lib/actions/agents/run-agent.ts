@@ -30,6 +30,11 @@ const agentToolArrayItems: ArraySubProps<boolean> = {
     required: false,
   }),
 
+  externalAgentId: Property.ShortText({
+    displayName: 'Agent External ID',
+    required: false,
+  }),
+
   serverUrl: Property.ShortText({
     displayName: 'MCP Server URL',
     required: false,
@@ -63,7 +68,7 @@ export const runAgent = createAction({
   classification: 'WRITE',
   displayName: 'Run Agent',
   description: 'Let an agent use tools and work step by step until the task is done.',
-  aiMetadata: { description: 'Runs an agent that reasons over your prompt and calls the piece actions you attach to this step, iterating until the task is done. Pick it when the work needs tool use or an unknown number of steps; prefer askAi for a single prompt-in/answer-out call, or classifyText and extractStructuredData for one narrow analysis. Sub-flow, MCP and knowledge-base tools are not supported on this step. Requires a prompt and an AI Model; not idempotent, as the agent performs side effects through its tools.', idempotent: false },
+  aiMetadata: { description: 'Runs an agent that reasons over your prompt and calls the tools you attach to this step (piece actions, sub-flows, MCP servers and knowledge bases), iterating until the task is done. Pick it when the work needs tool use or an unknown number of steps; prefer askAi for a single prompt-in/answer-out call, or classifyText and extractStructuredData for one narrow analysis. Requires a prompt and an AI Model; not idempotent, as the agent performs side effects through its tools.', idempotent: false },
   auth: PieceAuth.None(),
   props: {
     [AgentPieceProps.AGENT_ID]: Property.ShortText({

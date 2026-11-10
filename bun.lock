@@ -114,7 +114,7 @@
     },
     "packages/core/execution": {
       "name": "@activepieces/core-execution",
-      "version": "0.29.1",
+      "version": "0.30.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -146,7 +146,7 @@
     },
     "packages/core/piece-types": {
       "name": "@activepieces/core-piece-types",
-      "version": "0.14.0",
+      "version": "0.15.0",
       "dependencies": {
         "@activepieces/core-utils": "workspace:*",
         "tslib": "2.6.2",
@@ -345,7 +345,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.15.4",
+      "version": "0.15.5",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -11050,7 +11050,7 @@
     },
     "packages/pieces/framework": {
       "name": "@activepieces/pieces-framework",
-      "version": "0.42.0",
+      "version": "0.43.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",

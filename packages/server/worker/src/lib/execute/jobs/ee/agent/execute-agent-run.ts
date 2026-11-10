@@ -1,6 +1,6 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AiCallContext, AIProviderName, AiUsageEnvironment, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { aiUtils, wideEvent } from '@activepieces/server-utils'
-import { AGENT_RUN_USAGE_ORIGIN, AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, RpcTimeoutError, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
+import { AGENT_RUN_USAGE_ORIGIN, AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentAgentTool, ResolvedAgentFlowTool, RpcTimeoutError, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, LanguageModel, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { toResolvedAiFile } from '../../ai/ai-files'
@@ -53,6 +53,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
 
         const configuredTools = agentToolPolicy.withValidNames({ tools: data.tools ?? [] })
         const configuredFlowTools = agentToolPolicy.withValidNames({ tools: data.flowTools ?? [], reserved: configuredTools.map((tool) => tool.toolName) })
+        const configuredAgentTools = agentToolPolicy.withValidNames({ tools: data.agentTools ?? [], reserved: [...configuredTools, ...configuredFlowTools].map((tool) => tool.toolName) })
         const configuredPieceTools = configuredTools.filter(isPieceTool)
         const configuredKnowledgeBaseTools = configuredTools.filter(isKnowledgeBaseTool)
         const reportedTools = [...configuredPieceTools, ...configuredKnowledgeBaseTools]
@@ -248,10 +249,12 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
                 emailEnabled: config.emailEnabled,
                 agentsAvailable: config.agentsAvailable,
+                agentToolsAvailable: config.agentToolsAvailable === true,
                 abortSignal: abortController.signal,
                 source,
                 configuredPieceTools,
                 configuredFlowTools,
+                configuredAgentTools,
                 configuredKnowledgeBaseTools,
                 structuredOutput: data.structuredOutput ?? [],
                 captureStructured: (output) => {
@@ -637,7 +640,7 @@ function pickImageGenerator({ falApiKey, imageModelId, credentials, providerConf
     }
 }
 
-function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools, projects, projectId, conversationId, flowRunId, runId, platformId, userId, userEmail, dryRun, discoveryOnly, emailEnabled, agentsAvailable, abortSignal, source, runKey, knowledgeBaseKey, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
+function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools, projects, projectId, conversationId, flowRunId, runId, platformId, userId, userEmail, dryRun, discoveryOnly, emailEnabled, agentsAvailable, agentToolsAvailable, abortSignal, source, runKey, knowledgeBaseKey, configuredPieceTools, configuredFlowTools, configuredAgentTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
     ctx: JobContext
     runKey: () => RunKey
     knowledgeBaseKey: { provider?: AIProviderName, providerConfigId?: string }
@@ -658,9 +661,11 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
     discoveryOnly: boolean
     emailEnabled: boolean
     agentsAvailable: boolean
+    agentToolsAvailable: boolean
     abortSignal: AbortSignal
     configuredPieceTools: AgentPieceTool[]
     configuredFlowTools: ResolvedAgentFlowTool[]
+    configuredAgentTools: ResolvedAgentAgentTool[]
     configuredKnowledgeBaseTools: AgentKnowledgeBaseTool[]
     structuredOutput: AgentOutputField[]
     captureStructured: (output: Record<string, unknown>) => void
@@ -820,7 +825,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
     })
     const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate, isDeclaredReadOnly, taintState })
     const agentSurfaceTools = agentsAvailable && !dryRun && !discoveryOnly
-        ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool, taintState, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate })
+        ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool, taintState, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate, agentToolsOn: agentToolsAvailable })
         : {}
     const thinkingTools = agentWorkerTools.createThinkingTools()
     const buildPlanTools = agentWorkerTools.createBuildPlanTools({
@@ -876,6 +881,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
         runFlowTool: ({ toolName, flowId, flowVersionId, returnsResponse, toolInput }) => ctx.apiClient.executeFlowTool({ conversationId, ...spreadIfDefined('runId', runId), ...spreadIfDefined('flowRunId', flowRunId), toolName, flowId, ...spreadIfDefined('flowVersionId', flowVersionId), toolInput, returnsResponse }),
         log,
     })
+    const configuredAgentToolSet = agentWorkerTools.createConfiguredAgentTools({ tools: dryRun || discoveryOnly ? [] : configuredAgentTools })
     const knowledgeBaseTools = agentWorkerTools.createConfiguredKnowledgeBaseTools({
         taintState,
         tools: dryRun || discoveryOnly ? [] : configuredKnowledgeBaseTools,
@@ -899,6 +905,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
             mcp: mcpTools as ToolSet,
             configuredPiece: configuredTools,
             configuredFlow: configuredFlowToolSet,
+            configuredAgent: configuredAgentToolSet,
             knowledgeBase: knowledgeBaseTools,
             completion: completionTool,
         },

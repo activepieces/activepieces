@@ -54,7 +54,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
             }
             : agentHelpers.jobFieldsFromConfig({ config: linked.config })
         const { tools, structuredOutput, provider } = runFields
-        const supportedToolTypes = [AgentToolType.PIECE, AgentToolType.MCP, AgentToolType.FLOW, AgentToolType.KNOWLEDGE_BASE]
+        const supportedToolTypes = [AgentToolType.PIECE, AgentToolType.MCP, AgentToolType.FLOW, AgentToolType.KNOWLEDGE_BASE, AgentToolType.AGENT]
         const supportedTools = (tools ?? []).filter((tool) => supportedToolTypes.includes(tool.type))
         const unsupported = unique((tools ?? []).map((tool) => tool.type)).filter((type) => !supportedToolTypes.includes(type))
         if (unsupported.length > 0) {
@@ -72,7 +72,10 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 params: { message: `Two tools are both named ${duplicated.join(', ')}: each tool on a step needs its own name, or one silently replaces the other` },
             })
         }
-        const flowTools = await agentHelpers.resolveFlowTools({ projectId, tools: tools ?? [], log: request.log })
+        const [flowTools, agentTools] = await Promise.all([
+            agentHelpers.resolveFlowTools({ projectId, tools: tools ?? [], log: request.log }),
+            agentHelpers.resolveAgentTools({ projectId, tools: tools ?? [], log: request.log }),
+        ])
         await agentHelpers.assertRunProviderConfigured({ platformId: platform.id, provider, providerConfigId: runFields.providerConfigId, modelTierId: runFields.modelTierId, scope: agentHelpers.runScopeOrThrow({ projectId }), log: request.log })
         await assertCreditsAndAppSumoNotExceeded({ platformId: platform.id, log: request.log })
         const { ownerId } = await projectService(request.log).getOneOrThrow(projectId)
@@ -102,6 +105,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 environment: flowRun.environment,
                 waitpointId,
                 flowTools,
+                agentTools,
                 ...spreadIfDefined('agentId', linked?.id),
                 ...runFields,
                 tools: supportedTools,

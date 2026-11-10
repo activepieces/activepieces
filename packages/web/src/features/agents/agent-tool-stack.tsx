@@ -1,7 +1,14 @@
 import { unique } from '@activepieces/core-utils';
 import { AgentToolType } from '@activepieces/shared';
 import { t } from 'i18next';
-import { BookOpen, LucideIcon, Server, Unplug, Workflow } from 'lucide-react';
+import {
+  BookOpen,
+  Bot,
+  LucideIcon,
+  Server,
+  Unplug,
+  Workflow,
+} from 'lucide-react';
 
 import {
   Tooltip,
@@ -103,4 +110,5 @@ const NON_PIECE_TOOL_KINDS: {
   },
   { type: AgentToolType.FLOW, icon: Workflow, label: 'Flows' },
   { type: AgentToolType.MCP, icon: Server, label: 'MCP Servers' },
+  { type: AgentToolType.AGENT, icon: Bot, label: 'Agents' },
 ];

@@ -47,6 +47,7 @@ function selectToolsForSource({ source, groups }: { source: AgentRunSource, grou
     const configured = {
         ...groups.configuredPiece,
         ...groups.configuredFlow,
+        ...groups.configuredAgent,
         ...groups.knowledgeBase,
     }
     if (source === AgentRunSource.AGENT_BUILDER) {
@@ -90,6 +91,7 @@ export type AgentToolGroups = {
     mcp: ToolSet
     configuredPiece: ToolSet
     configuredFlow: ToolSet
+    configuredAgent: ToolSet
     knowledgeBase: ToolSet
     completion: ToolSet
 }

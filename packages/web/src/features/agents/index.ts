@@ -1,5 +1,6 @@
 export { AgentTimeline } from './agent-timeline';
 export { AddToolDropdown } from './agent-tools/add-agent-tool-dropwdown';
+export { AgentAgentToolComponent } from './agent-tools/components/agent-tool';
 export { AgentFlowToolComponent } from './agent-tools/components/flow-tool';
 export { AgentMcpToolComponent } from './agent-tools/components/mcp-tool';
 export {
@@ -8,6 +9,7 @@ export {
 } from './agent-tools/components/knowledge-base-tool';
 export { useKnowledgeBaseEmbeddingSource } from './agent-tools/knowledge-base-dialog/knowledge-base-hooks';
 export { AgentPieceToolComponent } from './agent-tools/components/piece-tool';
+export { AgentAgentToolDialog } from './agent-tools/agent-tool-dialog';
 export { AgentFlowToolDialog } from './agent-tools/flow-tool-dialog';
 export { AgentMcpDialog } from './agent-tools/mcp-tool-dialog';
 export { PieceActionsList } from './agent-tools/piece-tool-dialog/dialog-pages/piece-actions-list';

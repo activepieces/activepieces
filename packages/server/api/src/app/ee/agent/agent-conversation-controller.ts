@@ -148,9 +148,12 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         await assertCreditsAndAppSumoNotExceeded({ platformId, log })
 
         const carriesConfiguredTools = !isNil(agentConfig) && !isBuilder
-        const flowTools = carriesConfiguredTools
-            ? await agentHelpers.resolveFlowTools({ projectId: runScope.projectId, tools: agentConfig.tools, log: runLog })
-            : []
+        const [flowTools, agentTools] = carriesConfiguredTools
+            ? await Promise.all([
+                agentHelpers.resolveFlowTools({ projectId: runScope.projectId, tools: agentConfig.tools, log: runLog }),
+                agentHelpers.resolveAgentTools({ projectId: runScope.projectId, tools: agentConfig.tools, log: runLog }),
+            ])
+            : [[], []]
 
         // Claim ownership atomically in the DB — the single source of truth that
         // saveAgentMessages/updateAgentProgress/heartbeat fence against. A late write from the
@@ -192,6 +195,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
                 modelName: conversation.modelName ?? null,
                 files,
                 flowTools,
+                agentTools,
                 ...spreadIfDefined('source', conversation.source === AgentRunSource.CHAT ? undefined : conversation.source),
                 ...spreadIfDefined('messageSource', request.body.messageSource),
                 ...(isBuilder ? { promptOverride: { system: agentPrompt.buildBuilderSystemPrompt({ agent }) } } : {}),
