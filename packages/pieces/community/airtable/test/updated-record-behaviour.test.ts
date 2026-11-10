@@ -143,6 +143,29 @@ describe('Airtable New or Updated Record behaviour', () => {
         expect(await trigger.run(ctx({ store }))).toEqual([])
     })
 
+    it('a step saved by name enables without schema access when a record changed in the enable second', async () => {
+        addRecord({ id: 'recBefore' })
+        addRecord({ id: 'recAfter' })
+        tick(60_100)
+        editRecord({ id: 'recBefore', at: tick(100) })
+        tick(300)
+        const forwardFetch = globalThis.fetch
+        vi.stubGlobal('fetch', (input: string | URL, init?: RequestInit) => {
+            if (!String(input).includes('/meta/bases/')) return forwardFetch(input, init)
+            return Promise.resolve(new Response(JSON.stringify({ error: { type: 'INVALID_PERMISSIONS_OR_MODEL_NOT_FOUND' } }), { status: 403, headers: { 'content-type': 'application/json' } }))
+        })
+        try {
+            const { store } = memoryStore()
+            await trigger.onEnable(ctx({ store, sortFields: 'Last Modified' }))
+            editRecord({ id: 'recAfter', at: tick(200) })
+            expect(ids(await trigger.run(ctx({ store, sortFields: 'Last Modified' })))).toEqual(['recAfter'])
+            expect(await trigger.run(ctx({ store, sortFields: 'Last Modified' }))).toEqual([])
+        }
+        finally {
+            vi.stubGlobal('fetch', forwardFetch)
+        }
+    })
+
     it('keeps the enable-second versions bounded and drops them once that second has passed', async () => {
         tick(60_100)
         const at = tick(100)

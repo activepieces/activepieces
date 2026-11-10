@@ -200,13 +200,17 @@ async function initialState({
     return start;
   }
   const state = nextState({ state: start, records: existing, fresh: existing });
+  const fieldIds = await fieldIdsByName({ auth, propsValue });
+  if (isNil(fieldIds)) {
+    return state;
+  }
   return {
     ...state,
     versionsAtCheckpoint: versionsAt({
       items: existing,
       at: state.checkpoint,
       limit: MAX_VERSIONS_AT_ENABLE,
-      fieldIds: await fieldIdsByName({ auth, propsValue }),
+      fieldIds,
     }),
   };
 }
@@ -217,13 +221,20 @@ async function fieldIdsByName({
 }: {
   auth: AirtableAuthValue;
   propsValue: UpdatedRecordProps;
-}): Promise<FieldIdsByName> {
-  const table: AirtableTable | undefined = await airtableCommon.fetchTable({
-    token: auth.secret_text,
-    baseId: propsValue.base,
-    tableId: propsValue.tableId,
-  });
-  return new Map((table?.fields ?? []).map((field) => [field.name, field.id]));
+}): Promise<FieldIdsByName | null> {
+  try {
+    const table: AirtableTable | undefined = await airtableCommon.fetchTable({
+      token: auth.secret_text,
+      baseId: propsValue.base,
+      tableId: propsValue.tableId,
+    });
+    if (isNil(table)) {
+      return null;
+    }
+    return new Map(table.fields.map((field) => [field.name, field.id]));
+  } catch {
+    return null;
+  }
 }
 
 function recordVersion({
