@@ -159,7 +159,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.219.0",
+      "version": "0.220.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -182,7 +182,7 @@
     },
     "packages/core/utils": {
       "name": "@activepieces/core-utils",
-      "version": "0.13.1",
+      "version": "0.13.2",
       "dependencies": {
         "deepmerge-ts": "8.0.2",
         "ipaddr.js": "2.3.0",
@@ -208,7 +208,7 @@
     },
     "packages/pieces/common": {
       "name": "@activepieces/pieces-common",
-      "version": "0.15.1",
+      "version": "0.15.2",
       "dependencies": {
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -6060,7 +6060,7 @@
     },
     "packages/pieces/community/microsoft-outlook": {
       "name": "@activepieces/piece-microsoft-outlook",
-      "version": "0.7.6",
+      "version": "0.7.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10764,7 +10764,7 @@
     },
     "packages/pieces/core/http": {
       "name": "@activepieces/piece-http",
-      "version": "0.13.2",
+      "version": "0.13.3",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
