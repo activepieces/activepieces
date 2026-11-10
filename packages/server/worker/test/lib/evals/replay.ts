@@ -67,26 +67,42 @@ function isRead(toolName: string): boolean {
 }
 
 function inputKey(input: unknown): string {
-    return JSON.stringify(normalized(input))
+    return JSON.stringify(normalized(withoutCardTitles(input)))
+}
+
+function withoutCardTitles(input: unknown): unknown {
+    if (typeof input !== 'object' || input === null || Array.isArray(input)) {
+        return input
+    }
+    return Object.fromEntries(Object.entries(input).filter(([key]) => !CARD_TITLE_KEYS.has(key)))
 }
 
 function normalized(value: unknown): unknown {
     if (typeof value === 'string') {
-        return value.trim().toLowerCase().replace(/\s+/g, ' ').replace(/^@activepieces\/piece-/, '').replace(/^https?:\/\/(www\.)?/, '').replace(/[?#].*$/, '').replace(/\/+$/, '')
+        return value.trim().replace(/\s+/g, ' ')
     }
     if (Array.isArray(value)) {
         return value.map(normalized)
     }
     if (typeof value === 'object' && value !== null) {
         return Object.fromEntries(Object.entries(value)
-            .filter(([key]) => !CARD_TITLE_KEYS.has(key))
             .sort(([a], [b]) => a.localeCompare(b))
-            .map(([key, inner]) => [key, normalized(inner)]))
+            .map(([key, inner]) => [key, key === PIECE_NAME_KEY && typeof inner === 'string' ? canonicalPieceName(inner.trim()) : normalized(inner)]))
     }
     return value
 }
 
+function canonicalPieceName(pieceName: string): string {
+    if (pieceName.startsWith('@')) {
+        return pieceName
+    }
+    const short = pieceName.startsWith('piece-') ? pieceName.slice('piece-'.length) : pieceName
+    return `${PIECE_PREFIX}${short.replace(/_/g, '-')}`
+}
+
 const CARD_TITLE_KEYS = new Set(['title', 'activeTitle', 'doneTitle'])
+const PIECE_NAME_KEY = 'pieceName'
+const PIECE_PREFIX = '@activepieces/piece-'
 const REPLAY_ENDED_MESSAGE = 'This tool is unavailable right now.'
 const READ_TOOLS = new Set([
     'ap_discover_action_auth',

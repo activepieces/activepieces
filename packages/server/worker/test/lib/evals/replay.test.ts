@@ -90,3 +90,45 @@ describe('replay matching for writes', () => {
         expect(caseReplay.stops().some(replay.endsTurn)).toBe(false)
     })
 })
+
+describe('replay input matching', () => {
+    const matches = ({ recorded, called }: { recorded: unknown, called: unknown }): boolean => {
+        const caseReplay = replay.create({ recordedToolCalls: [{ toolName: 'ap_list_flows', input: recorded, output: 'recorded' }] })
+        return caseReplay.take({ toolName: 'ap_list_flows', input: called }).found
+    }
+
+    it('ignores surrounding and repeated whitespace', () => {
+        expect(matches({ recorded: { query: 'send  email\n' }, called: { query: ' send email' } })).toBe(true)
+    })
+
+    it('ignores card title keys and key order', () => {
+        expect(matches({
+            recorded: { title: 'Looking up flows', activeTitle: 'a', doneTitle: 'b', limit: 5, status: 'ENABLED' },
+            called: { status: 'ENABLED', limit: 5, title: 'Checking your flows' },
+        })).toBe(true)
+    })
+
+    it('treats the short and full forms of a piece name as the same piece', () => {
+        expect(matches({ recorded: { pieceName: '@activepieces/piece-google-sheets' }, called: { pieceName: 'google_sheets' } })).toBe(true)
+        expect(matches({ recorded: { pieceName: 'piece-gmail' }, called: { pieceName: '@activepieces/piece-gmail' } })).toBe(true)
+    })
+
+    it('does not ignore letter case', () => {
+        expect(matches({ recorded: { query: 'Send Email' }, called: { query: 'send email' } })).toBe(false)
+    })
+
+    it('does not ignore query strings, fragments, protocol or trailing slashes in URLs', () => {
+        expect(matches({ recorded: { url: 'https://example.com/docs?page=1' }, called: { url: 'https://example.com/docs?page=2' } })).toBe(false)
+        expect(matches({ recorded: { url: 'https://example.com/docs#a' }, called: { url: 'https://example.com/docs#b' } })).toBe(false)
+        expect(matches({ recorded: { url: 'https://example.com/docs' }, called: { url: 'http://example.com/docs' } })).toBe(false)
+        expect(matches({ recorded: { url: 'https://example.com/docs/' }, called: { url: 'https://example.com/docs' } })).toBe(false)
+    })
+
+    it('strips the piece prefix only from the pieceName field', () => {
+        expect(matches({ recorded: { query: '@activepieces/piece-gmail' }, called: { query: 'gmail' } })).toBe(false)
+    })
+
+    it('ignores card titles only at the top level, not title fields inside the data', () => {
+        expect(matches({ recorded: { records: [{ title: 'Buy milk' }] }, called: { records: [{ title: 'Buy eggs' }] } })).toBe(false)
+    })
+})
