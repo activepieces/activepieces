@@ -239,7 +239,7 @@ describe('sidebar usage card before the trial', () => {
     const view = renderSidebar();
 
     const line = screen.getByRole('button', { name: 'Start your free trial' });
-    expect(line.parentElement).toBe(view.container);
+    expect(view.container.innerHTML).toMatch(/^<button/);
     expect(line.getAttribute('data-ap-control')).toBe('trial.start.open');
     expect(
       screen.getByText('Try the Enterprise plan free for 7 days'),
@@ -262,8 +262,11 @@ describe('sidebar usage card before the trial', () => {
 
     renderSidebar();
 
-    expect(screen.getByText('Start your free trial')).toBeTruthy();
-    expect(screen.getByText('credits')).toBeTruthy();
+    const rows = screen.getAllByText(/^(Start your free trial|credits)$/);
+    expect(rows.map((row) => row.textContent)).toEqual([
+      'Start your free trial',
+      'credits',
+    ]);
   });
 
   it('gives way to the running trial line', () => {
