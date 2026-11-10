@@ -113,6 +113,31 @@ describe('Airtable New or Updated Record behaviour', () => {
         expect(await trigger.run(ctx({ store }))).toEqual([])
     })
 
+    it('does not fire a record saved at enable when a column is only renamed', async () => {
+        addRecord({ id: 'recA' })
+        tick(60_100)
+        editRecord({ id: 'recA', at: tick(100) })
+        tick(300)
+        const { store } = memoryStore()
+        await trigger.onEnable(ctx({ store }))
+        renameField({ id: NAME_FIELD_ID, name: 'Title' })
+        expect(await trigger.run(ctx({ store }))).toEqual([])
+    })
+
+    it('keeps the enable-second versions bounded and drops them once that second has passed', async () => {
+        tick(60_100)
+        const at = tick(100)
+        Array.from({ length: 1500 }, (_, index) => addRecord({ id: `recBulk${String(index).padStart(10, '0')}`, at }))
+        tick(300)
+        const { store, data } = memoryStore()
+        await trigger.onEnable(ctx({ store }))
+        const atEnable = JSON.parse(data.get('updated_record_state') ?? '{}')
+        expect(Object.keys(atEnable.versionsAtCheckpoint)).toHaveLength(1000)
+        tick(1000)
+        expect(await trigger.run(ctx({ store }))).toEqual([])
+        expect(JSON.parse(data.get('updated_record_state') ?? '{}').versionsAtCheckpoint).toBeUndefined()
+    })
+
     it('fires a new record too', async () => {
         const { store } = memoryStore()
         await trigger.onEnable(ctx({ store }))

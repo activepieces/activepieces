@@ -94,7 +94,9 @@ const STATE_KEY = 'updated_record_state';
 const LEGACY_STATE_KEY = 'lastPoll';
 const REMEMBERED_FIELD_KEY = 'updated_record_trigger_field';
 const TIE_OVERLAP_MS = 1000;
+const ONE_SECOND_MS = 1000;
 const SAMPLE_SIZE = 5;
+const MAX_VERSIONS_AT_ENABLE = 1000;
 
 async function resolveTriggerField({
   auth,
@@ -203,27 +205,50 @@ async function initialState({
     versionsAtCheckpoint: versionsAt({
       items: existing,
       at: state.checkpoint,
+      limit: MAX_VERSIONS_AT_ENABLE,
     }),
   };
 }
 
 function recordVersion(record: AirtableRawRecord): string {
+  const values = Object.values(record.fields)
+    .map((value) => JSON.stringify(value))
+    .sort();
   return createHash('sha256')
-    .update(JSON.stringify(record.fields))
-    .digest('base64');
+    .update(JSON.stringify(values))
+    .digest('base64')
+    .slice(0, 16);
 }
 
 function versionsAt({
   items,
   at,
+  limit,
 }: {
   items: ModifiedRecord[];
   at: number;
+  limit?: number;
 }): Record<string, string> {
   return Object.fromEntries(
     items
       .filter(({ modifiedMs }) => modifiedMs === at)
+      .slice(0, limit)
       .map(({ record }) => [record.id, recordVersion(record)])
+  );
+}
+
+function refreshVersions({
+  versions,
+  current,
+}: {
+  versions: Record<string, string>;
+  current: Record<string, string>;
+}): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(versions).map(([id, version]) => [
+      id,
+      current[id] ?? version,
+    ])
   );
 }
 
@@ -285,13 +310,14 @@ function nextState({
   return {
     checkpoint,
     seenAtCheckpoint: [...new Set([...previous, ...idsAt({ items: fresh, at: checkpoint })])],
-    ...(isNil(state.versionsAtCheckpoint)
+    ...(isNil(state.versionsAtCheckpoint) ||
+    Date.now() >= checkpoint + ONE_SECOND_MS
       ? {}
       : {
-          versionsAtCheckpoint: {
-            ...state.versionsAtCheckpoint,
-            ...versionsAt({ items: records, at: checkpoint }),
-          },
+          versionsAtCheckpoint: refreshVersions({
+            versions: state.versionsAtCheckpoint,
+            current: versionsAt({ items: records, at: checkpoint }),
+          }),
         }),
   };
 }
