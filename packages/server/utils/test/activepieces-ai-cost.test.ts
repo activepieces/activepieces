@@ -208,7 +208,7 @@ describe('what a model call reports back for billing', () => {
     it('counts a managed call whose cost never arrived, instead of quietly billing nothing', async () => {
         activepiecesAiCost.drainUnbilledCalls()
         const model = activepiecesAiCost.billedLanguageModel({
-            model: modelReturning({ content: [], finishReason: 'stop', usage: {}, response: { id: 'gen-xyz' } }),
+            model: modelReturning({ content: [{ type: 'text', text: 'hello' }], finishReason: 'stop', usage: {}, response: { id: 'gen-xyz' } }),
             provider: AIProviderName.ACTIVEPIECES,
             modelId: 'anthropic/claude-sonnet-5',
             billing: BILLING,
@@ -237,10 +237,10 @@ describe('what a model call reports back for billing', () => {
         activepiecesAiCost.drainUnbilledCalls()
     })
 
-    it('does not count an empty completion as unbilled, since OpenRouter charges nothing for it', async () => {
+    it.each(['stop', 'content-filter', 'other'])('does not count an empty %s completion as unbilled, since OpenRouter charges nothing for it', async (finishReason) => {
         activepiecesAiCost.drainUnbilledCalls()
         const model = activepiecesAiCost.billedLanguageModel({
-            model: modelReturning({ content: [], finishReason: 'stop', usage: { inputTokens: { total: 40 }, outputTokens: { total: 0 } }, response: { id: 'gen-empty' } }),
+            model: modelReturning({ content: [{ type: 'text', text: '' }], finishReason, usage: {}, response: { id: 'gen-empty' } }),
             provider: AIProviderName.ACTIVEPIECES,
             modelId: 'google/gemini-3.7-flash',
             billing: BILLING,
@@ -249,14 +249,29 @@ describe('what a model call reports back for billing', () => {
 
         await generateWith(model)
 
-        expect(reported[0].call).toMatchObject({ charge: AiChargeBasis.USAGE_ONLY, inputTokens: 40, outputTokens: 0 })
+        expect(reported.map((event) => event.call.charge)).toEqual([AiChargeBasis.USAGE_ONLY])
         expect(activepiecesAiCost.drainUnbilledCalls()).toEqual([])
     })
 
-    it('still counts a call that produced output but reported no cost, since that is money lost', async () => {
+    it('still counts a call with no visible content that used output tokens, since reasoning is billed', async () => {
         activepiecesAiCost.drainUnbilledCalls()
         const model = activepiecesAiCost.billedLanguageModel({
-            model: modelReturning({ content: [], finishReason: 'stop', usage: { inputTokens: { total: 40 }, outputTokens: { total: 12 } }, response: { id: 'gen-output' } }),
+            model: modelReturning({ content: [], finishReason: 'stop', usage: { inputTokens: { total: 40 }, outputTokens: { total: 12, reasoning: 12 } }, response: { id: 'gen-reasoning' } }),
+            provider: AIProviderName.ACTIVEPIECES,
+            modelId: 'google/gemini-3.7-flash',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES }),
+        })
+
+        await generateWith(model)
+
+        expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
+    })
+
+    it('still counts a tool call that reported no cost, since that output is money lost', async () => {
+        activepiecesAiCost.drainUnbilledCalls()
+        const model = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [{ type: 'tool-call', toolCallId: 'c1', toolName: 'search', input: '{}' }], finishReason: 'tool-calls', usage: {}, response: { id: 'gen-tool' } }),
             provider: AIProviderName.ACTIVEPIECES,
             modelId: 'google/gemini-3.7-flash',
             billing: BILLING,
@@ -277,7 +292,7 @@ describe('what a model call reports back for billing', () => {
     it('says which project and model lost the charge, so the page names something to chase', async () => {
         activepiecesAiCost.drainUnbilledCalls()
         const model = activepiecesAiCost.billedLanguageModel({
-            model: modelReturning({ content: [], finishReason: 'stop', usage: {}, response: { id: 'gen-xyz' } }),
+            model: modelReturning({ content: [{ type: 'text', text: 'hello' }], finishReason: 'stop', usage: {}, response: { id: 'gen-xyz' } }),
             provider: AIProviderName.ACTIVEPIECES,
             modelId: 'anthropic/claude-sonnet-5',
             billing: BILLING,
@@ -569,7 +584,11 @@ describe('a stream that never reaches its finish chunk', () => {
 
     it('counts the call as unbilled when the provider cannot tell us what it cost, so the alarm fires', async () => {
         activepiecesAiCost.drainUnbilledCalls()
-        const model = streamingModel({ provider: AIProviderName.ACTIVEPIECES, apiKey: MANAGED_KEY })
+        const model = streamingModel({
+            provider: AIProviderName.ACTIVEPIECES,
+            apiKey: MANAGED_KEY,
+            chunks: [{ type: 'response-metadata', id: 'gen-stream' }, { type: 'text-delta', id: 't1', delta: 'hello' }],
+        })
 
         await streamThen(model, ({ reader }) => reader.cancel(new Error('client went away')))
         await settled()
@@ -609,7 +628,8 @@ describe('a stream that never reaches its finish chunk', () => {
             apiKey: MANAGED_KEY,
             chunks: [
                 { type: 'response-metadata', id: 'gen-empty-stream' },
-                { type: 'finish', finishReason: 'stop', usage: { inputTokens: { total: 40 }, outputTokens: { total: 0 } } },
+                { type: 'text-delta', id: 't1', delta: '' },
+                { type: 'finish', finishReason: 'content-filter', usage: { inputTokens: { total: 40 } } },
             ],
         })
 
