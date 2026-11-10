@@ -169,8 +169,8 @@ async function recoverCostAndReport({ context, generationId, tokens, producedOut
             charge: AiChargeBasis.PROVIDER_REPORTED_COST,
             generationId,
             costUsd: generation.costUsd,
-            inputTokens: generation.inputTokens,
-            outputTokens: generation.outputTokens,
+            inputTokens: generation.inputTokens ?? tokens?.inputTokens,
+            outputTokens: generation.outputTokens ?? tokens?.outputTokens,
             observedCostUsd: generation.costUsd,
         },
     })

@@ -270,6 +270,22 @@ describe('what a model call reports back for billing', () => {
         expect(reported[0].call).toMatchObject({ charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId: 'gen-empty-billed', costUsd: 0.0002 })
     })
 
+    it('keeps the token counts the response gave when the looked-up cost comes without them', async () => {
+        generationLookup.answer = async () => ({ costUsd: 0.0004 })
+        const model = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [{ type: 'text', text: 'hi' }], finishReason: 'stop', usage: { inputTokens: { total: 30 }, outputTokens: { total: 4 } }, response: { id: 'gen-counts' } }),
+            provider: AIProviderName.ACTIVEPIECES,
+            modelId: 'google/gemini-3.7-flash',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES, apiKey: MANAGED_KEY }),
+        })
+
+        await generateWith(model)
+        await settled()
+
+        expect(reported[0].call).toMatchObject({ charge: AiChargeBasis.PROVIDER_REPORTED_COST, costUsd: 0.0004, inputTokens: 30, outputTokens: 4 })
+    })
+
     it('still counts a call with no visible content that used output tokens, since reasoning is billed', async () => {
         activepiecesAiCost.drainUnbilledCalls()
         const model = activepiecesAiCost.billedLanguageModel({
