@@ -537,6 +537,26 @@ describe('denoCodeSandbox permission boundary', () => {
             }
         })
 
+        it('replaces a step view when overwrite is requested, and never replaces an injected function', async () => {
+            const session = await denoCodeSandbox.createScriptSession({
+                scriptContext: {},
+                functions: { double: (n: number) => n * 2 },
+            })
+            try {
+                await session.setGlobal('step_1', { out: 5 })
+                expect(await session.run('step_1.out')).toBe(5)
+
+                await session.setGlobal('step_1', { out: 6 }, false)
+                expect(await session.run('step_1.out')).toBe(6)
+
+                await session.setGlobal('double', 1, false)
+                expect(await session.run('double(2)')).toBe(4)
+            }
+            finally {
+                session.dispose()
+            }
+        })
+
         it('rejects runs after dispose', async () => {
             const session = await denoCodeSandbox.createScriptSession({
                 scriptContext: {},
