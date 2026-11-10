@@ -384,6 +384,22 @@ describe('New Response store written by 0.7.x', () => {
     await trigger.onEnable(hookContext({ store, isRepublish: true }));
     expect(await poll({ store })).toEqual(['during-upgrade']);
   });
+
+  it('upgrade to new_only keeps the 0.7.x checkpoint: undelivered new responses fire once, older edited responses never', async () => {
+    submit({ id: 'older-edited' });
+    submit({ id: 'delivered' });
+    const lastPoll = Date.parse(vendor.responses[1].lastSubmittedTime);
+    const { store } = memoryStore();
+    await store.put('lastPoll', lastPoll);
+    edit({ id: 'older-edited' });
+    submit({ id: 'created-after-last-poll' });
+    await trigger.onEnable(hookContext({ store, runOn: 'new_only', isRepublish: true }));
+    expect(await poll({ store, runOn: 'new_only' })).toEqual(['created-after-last-poll']);
+    expect(await poll({ store, runOn: 'new_only' })).toEqual([]);
+    edit({ id: 'created-after-last-poll' });
+    edit({ id: 'older-edited' });
+    expect(await poll({ store, runOn: 'new_only' })).toEqual([]);
+  });
 });
 
 describe('New Response test()', () => {
@@ -420,6 +436,18 @@ describe('New Response test()', () => {
     const sample = await trigger.test(hookContext({ store: memoryStore().store }));
     expect(sample.map(responseIdOf)[0]).toBe('recent');
     expect(sample).toHaveLength(5);
+    expect(vendor.calls.filter((call) => call.filter === undefined)).toHaveLength(1);
+  });
+
+  it.each(['new_only', 'new_and_edited'])('run_on=%s keeps recent responses found in the windows when the fallback page of a large form misses them', async (runOn) => {
+    vendor.maxPageSize = 5000;
+    for (let index = 0; index < 5001; index += 1) {
+      submit({ id: `history-${String(index).padStart(4, '0')}`, ms: Date.parse('2024-01-01T00:00:00.000Z') + index * 1_000 });
+    }
+    submit({ id: 'a-recent-1' });
+    submit({ id: 'a-recent-2' });
+    const sample = await trigger.test(hookContext({ store: memoryStore().store, runOn }));
+    expect(sample.map(responseIdOf)).toEqual(['a-recent-2', 'a-recent-1', 'history-5000', 'history-4999', 'history-4998']);
     expect(vendor.calls.filter((call) => call.filter === undefined)).toHaveLength(1);
   });
 

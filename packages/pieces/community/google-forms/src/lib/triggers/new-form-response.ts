@@ -318,6 +318,7 @@ async function fetchSample({
 }): Promise<FormResponse[]> {
   const startedAt = Date.now();
   const deadline = startedAt + POLL_DEADLINE_MS;
+  let found: FormResponse[] = [];
   for (const windowMs of SAMPLE_WINDOWS_MS) {
     const windowStartMs = startedAt - windowMs;
     const { responses, complete } = await listResponses({
@@ -333,6 +334,7 @@ async function fetchSample({
     if (inWindow.length >= SAMPLE_SIZE || !complete) {
       return newestFirst({ responses: inWindow.length > 0 ? inWindow : responses, runOn });
     }
+    found = responses;
   }
   const { responses } = await listResponses({
     auth,
@@ -341,7 +343,8 @@ async function fetchSample({
     deadline,
     maxPages: 1,
   });
-  return newestFirst({ responses, runOn });
+  const merged = new Map([...responses, ...found].map((response) => [response.responseId, response]));
+  return newestFirst({ responses: [...merged.values()], runOn });
 }
 
 const STATE_KEY = 'new_response_state';
