@@ -138,7 +138,7 @@ If you see a red error message under the input, it usually means one of:
 - **Type mismatch** — you passed text where a number is expected, or similar. Wrap the value in `to_number(...)` or `to_date(...)` if it needs converting.
 - **Unknown function** — the function name was renamed or removed. Re-insert it with `/` to pick a current name.
 
-Fix every error the preview shows before publishing. Only the editor checks the number of values: when the flow runs, `uppercase(a; b)` still returns `A` with no error. An unknown function or an empty value does fail the step.
+Fix every error the preview shows before publishing. Only the editor checks the number of values: when the flow runs, `uppercase(a; b)` still returns `A` with no error. An unknown function or an empty slot between semicolons does fail the step.
 
 ## See also
 
