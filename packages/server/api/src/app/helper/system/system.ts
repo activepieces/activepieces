@@ -1,7 +1,7 @@
 import os from 'os'
 import path from 'path'
 import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
-import { ApEdition, DefaultProjectRole, ExecutionMode, FileLocation, NetworkMode, PieceSyncMode } from '@activepieces/shared'
+import { ApEdition, CredentialProxyPolicy, DefaultProjectRole, ExecutionMode, FileLocation, NetworkMode, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { DatabaseType } from '../../database/database-type'
 import { RedisType } from '../../database/redis/types'
@@ -24,6 +24,8 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.APP_WEBHOOK_SECRETS]: '{}',
     [AppSystemProp.AUTUMN_CONSOLE_URL]: 'https://console.activepieces.com',
     [AppSystemProp.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
+    [AppSystemProp.CREDENTIAL_PROXY_GRANT_TTL_MARGIN_SECONDS]: '600',
+    [AppSystemProp.CREDENTIAL_PROXY_POLICY]: CredentialProxyPolicy.PERMISSIVE,
     [AppSystemProp.PORT]: '3000',
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: '30',
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: '30',

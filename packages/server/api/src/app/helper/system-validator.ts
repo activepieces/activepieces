@@ -1,6 +1,6 @@
 import { inspect } from 'util'
 import { isNil, tryCatchSync } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, DefaultProjectRole, ExecutionMode, FileLocation, maxBarrierSignalsBounds, NetworkMode, PieceSyncMode } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, CredentialProxyPolicy, DefaultProjectRole, ExecutionMode, FileLocation, maxBarrierSignalsBounds, NetworkMode, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { DatabaseType } from '../database/database-type'
 import { RedisType } from '../database/redis/types'
@@ -240,6 +240,9 @@ const systemPropValidators: {
 
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: booleanValidator,
     [AppSystemProp.ENFORCE_CONNECTION_PIECE_BINDING]: booleanValidator,
+    [AppSystemProp.CREDENTIAL_PROXY_GRANT_TTL_MARGIN_SECONDS]: positiveIntegerValidator,
+    [AppSystemProp.CREDENTIAL_PROXY_POLICY]: enumValidator(Object.values(CredentialProxyPolicy)),
+    [AppSystemProp.CREDENTIAL_PROXY_SECRET]: stringValidator,
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: (value: string) => {
         const days = parseInt(value)
         if (isNaN(days) || days < 0) {

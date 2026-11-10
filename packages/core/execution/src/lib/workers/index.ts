@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { BaseModelSchema } from '@activepieces/core-utils'
 import { EngineResponseStatus } from '../engine/engine-operation'
+import { CredentialProxyPolicy } from '../credential-proxy/credential-proxy-dto'
 import { JobData } from './job-data'
 
 export enum WorkerMachineStatus {
@@ -141,6 +142,8 @@ export const WorkerSettingsResponse = z.object({
     PAGE_ONCALL_WEBHOOK: z.string().optional(),
     APP_VERSION: z.string().optional(),
     PROJECT_WORKER: z.boolean().optional(),
+    CREDENTIAL_PROXY_ENABLED: z.boolean().optional(),
+    CREDENTIAL_PROXY_POLICY: z.enum(CredentialProxyPolicy).optional(),
 })
 
 export type WorkerSettingsResponse = z.infer<typeof WorkerSettingsResponse>

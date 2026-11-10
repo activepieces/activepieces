@@ -44,6 +44,11 @@ export type OnboardingPrincipal = {
     tokenVersion?: string
 }
 
+export type CredentialProxyPrincipal = {
+    id: ApId
+    type: PrincipalType.CREDENTIAL_PROXY
+}
+
 export type PrincipalForType<T extends PrincipalType> = Extract<Principal, { type: T }>
 
 export type PrincipalForTypes<R extends readonly PrincipalType[]> = PrincipalForType<R[number]>
@@ -55,3 +60,4 @@ export type Principal =
     | UserPrincipal
     | EnginePrincipal
     | OnboardingPrincipal
+    | CredentialProxyPrincipal

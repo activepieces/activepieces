@@ -110,6 +110,12 @@ describe('oauth2Util.formatOAuth2Response', () => {
         expect(formatted.expires_in).toBeUndefined()
     })
 
+    it('keeps provider extras in data but strips the token fields from it', () => {
+        const formatted = util.formatOAuth2Response({ access_token: 'token', refresh_token: 'refresh', expires_in: 3600, instance_url: 'https://acme.example.com' } as never)
+        expect(formatted.data).toEqual({ instance_url: 'https://acme.example.com' })
+        expect(formatted.access_token).toBe('token')
+    })
+
     it('drops zero, negative, and infinite expires_in', () => {
         expect(util.formatOAuth2Response({ access_token: 'token', expires_in: 0 } as never).expires_in).toBeUndefined()
         expect(util.formatOAuth2Response({ access_token: 'token', expires_in: '-5' } as never).expires_in).toBeUndefined()

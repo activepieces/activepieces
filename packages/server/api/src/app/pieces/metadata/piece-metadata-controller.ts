@@ -196,7 +196,7 @@ async function assertProjectAccess({ principal, projectId, log }: AssertProjectA
 }
 
 function getPlatformId(principal: Principal): string | undefined {
-    return principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.ONBOARDING ? undefined : principal.platform?.id
+    return principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.ONBOARDING || principal.type === PrincipalType.CREDENTIAL_PROXY ? undefined : principal.platform?.id
 }
 
 function filterModelActionsByAudience(piece: PieceMetadataModel, audience: PieceAudienceFilter | undefined): PieceMetadataModel {

@@ -13,6 +13,7 @@ export const rbacService = (log: FastifyBaseLogger) => ({
             case PrincipalType.UNKNOWN:
             case PrincipalType.WORKER:
             case PrincipalType.ONBOARDING:
+            case PrincipalType.CREDENTIAL_PROXY:
                 throw new ActivepiecesError({
                     code: ErrorCode.AUTHORIZATION,
                     params: {

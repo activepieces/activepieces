@@ -13,21 +13,18 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
     formatOAuth2Response: (response: Omit<BaseOAuth2ConnectionValue, 'claimed_at'>): BaseOAuth2ConnectionValue => {
         const secondsSinceEpoch = Math.round(Date.now() / 1000)
         const expiresIn = Number(response.expires_in)
-        const formattedResponse: BaseOAuth2ConnectionValue = {
+        return {
             ...response,
             expires_in: Number.isFinite(expiresIn) && expiresIn > 0 ? expiresIn : undefined,
-            data: response,
+            data: deleteProps(response, [
+                'access_token',
+                'expires_in',
+                'refresh_token',
+                'scope',
+                'token_type',
+            ]),
             claimed_at: secondsSinceEpoch,
         }
-
-        deleteProps(formattedResponse.data, [
-            'access_token',
-            'expires_in',
-            'refresh_token',
-            'scope',
-            'token_type',
-        ])
-        return formattedResponse
     },
     isExpired: (connection: BaseOAuth2ConnectionValue): boolean => {
         const secondsSinceEpoch = Math.round(Date.now() / 1000)
