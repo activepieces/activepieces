@@ -99,7 +99,7 @@ describe('Google Calendar New Event trigger sample data', () => {
     const emitted = await newEvent.run(
       hookContext({
         payload: { headers: { 'x-goog-resource-state': 'exists' }, body: {} },
-        store: memoryStore({ google_calendar_sync_token: 'sync-1', google_calendar_created_floor: Date.parse('2026-09-30T00:00:00.000Z') }),
+        store: memoryStore({ google_calendar_sync_token: 'sync-1', google_calendar_new_event_state: { seen: [], createdFloorMs: Date.parse('2026-09-30T00:00:00.000Z'), invites: [], inviteFloorMs: 0 } }),
       })
     );
 

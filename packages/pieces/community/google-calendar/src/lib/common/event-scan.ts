@@ -21,6 +21,7 @@ const REQUEST_TIMEOUT_MS = 10_000;
 const VISIBILITY_MARGIN_MS = 60_000;
 const SEEN_LIMIT = 500;
 const SEEN_MAX_CHARS = 150_000;
+const LEGACY_RESUME_LIMIT_MS = 24 * 60 * 60 * 1000;
 
 async function scanUpdatedEvents({
   auth,
@@ -234,7 +235,12 @@ async function pollUpdatedEvents({
   skippedItems: string;
 }): Promise<ListedEvent[]> {
   const deadlineMs = Date.now() + LISTING_BUDGET_MS;
-  const checkpoint = await readCheckpoint({ store, storeKey, watchKey });
+  const checkpoint = await readCheckpoint({
+    store,
+    storeKey,
+    watchKey,
+    triggerName,
+  });
   if (isNil(checkpoint)) {
     await store.put<ScanCheckpoint>(storeKey, baselineCheckpoint({ watchKey }));
     return [];
@@ -298,14 +304,21 @@ async function restoreOrBaseline({
   storeKey,
   watchKey,
   isRepublish,
+  triggerName,
 }: {
   store: Store;
   storeKey: string;
   watchKey: string;
   isRepublish: boolean | undefined;
+  triggerName: string;
 }): Promise<void> {
   if (isRepublish) {
-    const existing = await readCheckpoint({ store, storeKey, watchKey });
+    const existing = await readCheckpoint({
+      store,
+      storeKey,
+      watchKey,
+      triggerName,
+    });
     if (!isNil(existing)) {
       await store.put<ScanCheckpoint>(storeKey, existing);
       return;
@@ -318,10 +331,12 @@ async function readCheckpoint({
   store,
   storeKey,
   watchKey,
+  triggerName,
 }: {
   store: Store;
   storeKey: string;
   watchKey: string;
+  triggerName: string;
 }): Promise<ScanCheckpoint | null> {
   const saved = await store.get<ScanCheckpoint>(storeKey);
   if (!isNil(saved)) {
@@ -344,10 +359,11 @@ async function readCheckpoint({
   if (isNil(legacyLastPoll)) {
     return null;
   }
+  const resumeFromMs = legacyResumeFrom({ legacyLastPoll, triggerName });
   return {
     watchKey,
-    scannedThroughMs: legacyLastPoll + 1,
-    createdFloorMs: legacyLastPoll + 1,
+    scannedThroughMs: resumeFromMs,
+    createdFloorMs: resumeFromMs,
     seen: [],
   };
 }
@@ -362,6 +378,26 @@ async function readLegacyLastPoll({
     return legacyLastPoll;
   }
   return null;
+}
+
+function legacyResumeFrom({
+  legacyLastPoll,
+  triggerName,
+}: {
+  legacyLastPoll: number;
+  triggerName: string;
+}): number {
+  const savedFromMs = legacyLastPoll + 1;
+  const limitMs = Date.now() - LEGACY_RESUME_LIMIT_MS;
+  if (savedFromMs >= limitMs) {
+    return savedFromMs;
+  }
+  const skippedFrom = new Date(savedFromMs).toISOString();
+  const resumeFrom = new Date(limitMs).toISOString();
+  console.warn(
+    `[google-calendar] ${triggerName}: the position saved by the previous version (${skippedFrom}) is more than 24 hours old. Changes between ${skippedFrom} and ${resumeFrom} were skipped and will not fire; continuing from ${resumeFrom}.`
+  );
+  return limitMs;
 }
 
 function baselineCheckpoint({ watchKey }: { watchKey: string }): ScanCheckpoint {

@@ -14,6 +14,8 @@ const google: FakeGoogle = {
   expireNextIncremental: false,
   failFullListings: 0,
   fullListingsWithItems: 0,
+  slowPageMs: 0,
+  listingTimeouts: [],
 };
 
 beforeEach(() => {
@@ -23,11 +25,14 @@ beforeEach(() => {
   google.expireNextIncremental = false;
   google.failFullListings = 0;
   google.fullListingsWithItems = 0;
+  google.slowPageMs = 0;
+  google.listingTimeouts = [];
   vi.spyOn(httpClient, 'sendRequest').mockImplementation((request) => Reflect.apply(fakeGoogle, undefined, [request]));
   vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -84,6 +89,29 @@ describe('New Event after Google invalidates the sync token (410)', () => {
 
     expect((await push({ store })).map(idOf)).toEqual(['new-invite']);
     expect(await push({ store })).toEqual([]);
+  });
+
+  it('stops the full listing at the time budget, fires what it listed, re-syncs from now and logs the skipped window', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.parse('2026-11-01T10:00:00.000Z'));
+    const { store, data } = memoryStore();
+    await trigger.onEnable(hookContext({ store }));
+
+    seedEvents({ prefix: 'burst', count: 4 * PAGE_SIZE });
+    google.expireNextIncremental = true;
+    google.slowPageMs = 8_000;
+    const fired = (await push({ store })).map(idOf);
+
+    expect(fired).toHaveLength(2 * PAGE_SIZE);
+    expect(new Set(fired).size).toBe(2 * PAGE_SIZE);
+    expect(google.listingTimeouts).toEqual([10_000, 10_000]);
+    expect(stored({ data, key: SYNC_TOKEN_KEY })).toBe(`tok-${google.version}`);
+    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('did not finish within 25 s'));
+    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('were skipped and will not fire'));
+
+    google.slowPageMs = 0;
+    expect(await push({ store })).toEqual([]);
+    expect(google.fullListingsWithItems).toBe(1);
   });
 
   it('throws and keeps the stored sync token when the full listing after 410 fails', async () => {
@@ -325,6 +353,10 @@ async function fakeGoogle(request: HttpRequest): Promise<{ status: number; heade
   if (params['fields'] === undefined && offset === 0) {
     google.fullListingsWithItems += 1;
   }
+  if (params['fields'] === undefined && google.slowPageMs > 0) {
+    google.listingTimeouts.push(request.timeout ?? 0);
+    vi.setSystemTime(Date.now() + google.slowPageMs);
+  }
   const page: Record<string, unknown> = { kind: 'calendar#events' };
   if (params['fields'] === undefined) {
     page['items'] = pageItems;
@@ -427,6 +459,8 @@ type FakeGoogle = {
   expireNextIncremental: boolean;
   failFullListings: number;
   fullListingsWithItems: number;
+  slowPageMs: number;
+  listingTimeouts: number[];
 };
 
 type VendorEvent = {

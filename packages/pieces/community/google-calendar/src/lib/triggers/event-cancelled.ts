@@ -111,6 +111,7 @@ export const eventCancelled = createTrigger({
       storeKey: CHECKPOINT_STORE_KEY,
       watchKey,
       isRepublish: context.isRepublish,
+      triggerName: TRIGGER_NAME,
     });
   },
 

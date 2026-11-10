@@ -199,10 +199,11 @@ describe('New Event Matching Search behaviour', () => {
     expect(warn).not.toHaveBeenCalled();
   });
 
-  it('re-baselines and logs when a switched-off flow or old saved state is older than Google accepts', async () => {
+  it('re-baselines and logs when a republished flow was off for longer than Google accepts', async () => {
     vendor.goneAfterDays = 20;
     const { store, data } = memoryStore();
-    data.set('lastPoll', JSON.stringify(clock - 30 * DAY));
+    await trigger.onEnable(hookContext({ store }));
+    tick(30 * 24 * 60);
     await trigger.onEnable(hookContext({ store, isRepublish: true }));
     createEvent({ id: 'during-gap', summary: 'Interview during gap' });
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
@@ -213,6 +214,24 @@ describe('New Event Matching Search behaviour', () => {
 
     createEvent({ id: 'after', summary: 'Interview after' });
     expect(await poll({ store })).toEqual(['after']);
+    expect(await poll({ store })).toEqual([]);
+  });
+
+  it('resumes at most 24 hours back from an old lastPoll of the previous version and logs the skipped part', async () => {
+    const { store, data } = memoryStore();
+    data.set('lastPoll', JSON.stringify(clock - 30 * DAY));
+    createEvent({ id: 'weeks-old', summary: 'Interview weeks ago', at: clock - 10 * DAY });
+    createEvent({ id: 'old-edited', summary: 'Interview edited today', at: clock - 10 * DAY });
+    editEvent({ id: 'old-edited' });
+    createEvent({ id: 'recent', summary: 'Interview this morning', at: clock - 2 * 60 * MINUTE });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    await trigger.onEnable(hookContext({ store, isRepublish: true }));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('is more than 24 hours old'));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('were skipped and will not fire'));
+
+    expect(await poll({ store })).toEqual(['recent']);
+    expect(Date.parse(vendor.requests[0]['updatedMin'])).toBeGreaterThanOrEqual(clock - DAY - 10 * MINUTE);
     expect(await poll({ store })).toEqual([]);
   });
 
@@ -279,6 +298,21 @@ describe('New Event Matching Search behaviour', () => {
     await trigger.onEnable(hookContext({ store, isRepublish: true }));
 
     expect(await poll({ store })).toEqual(['missed']);
+    expect(await poll({ store })).toEqual([]);
+  });
+
+  it('does not fire again an invitation the previous version fired when the organizer edits it after the upgrade', async () => {
+    const { store, data } = memoryStore();
+    createInvite({ id: 'fired-invite', summary: 'Interview with Acme', createdAt: clock });
+    data.set('lastPoll', JSON.stringify(Date.parse(eventById({ id: 'fired-invite' }).updated)));
+    editInvite({ id: 'fired-invite' });
+    createInvite({ id: 'new-invite', summary: 'Interview with Globex', createdAt: clock + MINUTE });
+
+    await trigger.onEnable(hookContext({ store, isRepublish: true }));
+
+    expect(await poll({ store })).toEqual(['new-invite']);
+    expect(await poll({ store })).toEqual([]);
+    editInvite({ id: 'fired-invite' });
     expect(await poll({ store })).toEqual([]);
   });
 

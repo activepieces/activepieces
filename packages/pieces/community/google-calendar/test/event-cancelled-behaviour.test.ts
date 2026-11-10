@@ -195,6 +195,23 @@ describe('Event Cancelled behaviour: whole calendar', () => {
     expect(await poll({ store })).toEqual([]);
   });
 
+  it('resumes at most 24 hours back from an old lastPoll of the previous version and logs the skipped part', async () => {
+    const { store, data } = memoryStore();
+    data.set('lastPoll', JSON.stringify(clock));
+    createEvent({ id: 'cancelled-weeks-ago' });
+    deleteEvent({ id: 'cancelled-weeks-ago' });
+    tick(20 * 24 * 60);
+    createEvent({ id: 'cancelled-today' });
+    deleteEvent({ id: 'cancelled-today' });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    await trigger.onEnable(hookContext({ store, isRepublish: true }));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('were skipped and will not fire'));
+
+    expect(await poll({ store })).toEqual(['cancelled-today']);
+    expect(await poll({ store })).toEqual([]);
+  });
+
   it('asks Google for deleted items without expanding recurring events', async () => {
     const { store } = memoryStore();
     await trigger.onEnable(hookContext({ store }));

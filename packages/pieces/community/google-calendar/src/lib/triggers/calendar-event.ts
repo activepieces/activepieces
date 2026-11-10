@@ -93,6 +93,7 @@ export const calendarEventChanged = createTrigger({
       storeKey: CHECKPOINT_STORE_KEY,
       watchKey: buildWatchKey({ propsValue: context.propsValue }),
       isRepublish: context.isRepublish,
+      triggerName: TRIGGER_NAME,
     });
   },
   async onDisable() {

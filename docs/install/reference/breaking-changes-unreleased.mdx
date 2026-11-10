@@ -16,7 +16,7 @@ From Google Calendar 0.14.0, **New Event Matching Search** reads every result pa
 
 Both triggers also fire once for each new invitation from another organizer that you have not answered yet, including an invitation to a meeting created before the trigger was turned on and an invitation to a single occurrence of someone else's series. An invitation you accept or decline before the trigger sees it does not fire, and later edits, replies and republishes do not fire it again. Invitations you receive through a group address follow the own-event rule: they fire only when the meeting was created after the trigger was turned on.
 
-After upgrading, New Event Matching Search may fire once, late, for matching events that the old version skipped (it only read the first page of results).
+After upgrading, New Event Matching Search, New or Updated Event and Event Cancelled continue from where the old version stopped, but look back at most 24 hours: anything older is skipped and logged. Within those 24 hours, New Event Matching Search may fire once, late, for matching events that the old version skipped (it only read the first page of results). Invitations to meetings created before the old version's last check do not fire after the upgrade, so an invitation the old version already sent does not fire again.
 
 **New or Updated Event** no longer fires for deleted or cancelled events. Every saved change fires once, including a second edit of an event that already fired. After a long quiet period it keeps working instead of failing on Google's "too old" error. A flow that was off for so long that Google rejects its saved position restarts from now and logs the skipped period.
 

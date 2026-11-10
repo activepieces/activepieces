@@ -5,6 +5,7 @@ import {
   HttpRequest,
   HttpResponse,
 } from '@activepieces/pieces-common';
+import { isNil } from '@activepieces/pieces-framework';
 import { randomUUID } from 'crypto';
 import { googleCalendarCommon, GoogleCalendarAuthValue, getAccessToken } from '.';
 import {
@@ -50,7 +51,9 @@ export async function watchEvent(
   const sixDaysFromNowMs = Date.now() + 6 * 24 * 60 * 60 * 1000;
   const request: HttpRequest = {
     method: HttpMethod.POST,
-    url: `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events/watch`,
+    url: `${googleCalendarCommon.baseUrl}/calendars/${encodeURIComponent(
+      calendarId
+    )}/events/watch`,
     body: {
       id: randomUUID(),
       type: GoogleWatchType.WEBHOOK,
@@ -88,12 +91,18 @@ export async function listEventsForFullSync({
   authProp,
   withItems,
   keepItem,
+  deadlineMs,
 }: {
   calendarId: string;
   authProp: GoogleCalendarAuthValue;
   withItems: boolean;
   keepItem?: (event: GoogleCalendarEvent) => boolean;
-}): Promise<{ items: GoogleCalendarEvent[]; nextSyncToken: string | undefined }> {
+  deadlineMs?: number;
+}): Promise<{
+  items: GoogleCalendarEvent[];
+  nextSyncToken: string | undefined;
+  complete: boolean;
+}> {
   const accessToken = await getAccessToken(authProp);
   const qParams: Record<string, string> = withItems
     ? { ...SYNC_SERIES_PARAMS }
@@ -102,17 +111,21 @@ export async function listEventsForFullSync({
   let nextSyncToken: string | undefined;
   const items: GoogleCalendarEvent[] = [];
   do {
+    if (!isNil(deadlineMs) && deadlineMs - Date.now() < REQUEST_TIMEOUT_MS) {
+      return { items, nextSyncToken: undefined, complete: false };
+    }
     if (pageToken) {
       qParams['pageToken'] = pageToken;
     }
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events`,
+      url: `${googleCalendarCommon.baseUrl}/calendars/${encodeURIComponent(calendarId)}/events`,
       queryParams: qParams,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: accessToken,
       },
+      timeout: REQUEST_TIMEOUT_MS,
     };
     const { body: res } = await httpClient.sendRequest<GoogleCalendarEventList>(
       request
@@ -126,7 +139,7 @@ export async function listEventsForFullSync({
     pageToken = res.nextPageToken;
     nextSyncToken = res.nextSyncToken;
   } while (pageToken);
-  return { items, nextSyncToken };
+  return { items, nextSyncToken, complete: true };
 }
 
 export async function listEventsWithSyncToken({
@@ -156,7 +169,7 @@ export async function listEventsWithSyncToken({
     }
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events`,
+      url: `${googleCalendarCommon.baseUrl}/calendars/${encodeURIComponent(calendarId)}/events`,
       queryParams: qParams,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
@@ -355,7 +368,7 @@ async function listEventsUpdatedSince({
     const response: HttpResponse<EventListPage> =
       await httpClient.sendRequest<EventListPage>({
         method: HttpMethod.GET,
-        url: `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events`,
+        url: `${googleCalendarCommon.baseUrl}/calendars/${encodeURIComponent(calendarId)}/events`,
         queryParams: qParams,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,

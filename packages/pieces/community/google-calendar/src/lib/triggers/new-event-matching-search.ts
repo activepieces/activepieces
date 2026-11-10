@@ -340,11 +340,21 @@ async function readCheckpoint({
     store,
     storeKey: CHECKPOINT_STORE_KEY,
     watchKey,
+    triggerName: TRIGGER_NAME,
   });
   if (isNil(base)) {
     return null;
   }
-  return { ...base, ...(await readStoredInvites({ store })) };
+  const saved = await store.get<MatchingSearchCheckpoint>(CHECKPOINT_STORE_KEY);
+  if (!isNil(saved)) {
+    return { ...base, ...(await readStoredInvites({ store })) };
+  }
+  const legacyLastPoll = await eventScan.readLegacyLastPoll({ store });
+  return {
+    ...base,
+    invites: [],
+    inviteFloorMs: isNil(legacyLastPoll) ? 0 : legacyLastPoll + 1,
+  };
 }
 
 async function saveBaseline({

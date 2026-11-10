@@ -54,23 +54,6 @@ describe('New Event keeps its memory in one store value', () => {
     expect(await trigger.run(pushContext({ store }))).toEqual([]);
     expect(await rememberedInvites({ store })).toEqual([]);
   });
-
-  it('reads the separate keys of the previous version once and then keeps everything in one value', async () => {
-    const { store, data } = memoryStore();
-    await trigger.onEnable(hookContext({ store }));
-    data.delete(STATE_KEY);
-    await store.put('google_calendar_seen_events', [{ id: 'already-fired', createdMs: Date.parse('2026-10-01T10:01:00Z') }]);
-    await store.put('google_calendar_created_floor', Date.parse('2026-10-01T10:00:00Z'));
-    await store.put('google_calendar_seen_invites', [{ id: 'old-invite', createdMs: Date.parse('2026-10-01T10:01:00Z') }]);
-    await store.put('google_calendar_invite_floor', 0);
-    vi.setSystemTime(Date.parse('2026-10-01T10:05:00Z'));
-    change({ event: ownEvent({ id: 'already-fired', createdIso: '2026-10-01T10:01:00Z' }) });
-    change({ event: invitation({ id: 'old-invite', createdIso: '2026-10-01T10:01:00Z' }) });
-    change({ event: ownEvent({ id: 'new-one' }) });
-    expect(idsOf(await trigger.run(pushContext({ store })))).toEqual(['new-one']);
-    expect(await rememberedInvites({ store })).toEqual(['old-invite']);
-    expect(await trigger.run(pushContext({ store }))).toEqual([]);
-  });
 });
 
 function change({ event }: { event: Record<string, unknown> }): void {

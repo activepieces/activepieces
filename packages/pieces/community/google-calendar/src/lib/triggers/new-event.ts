@@ -29,10 +29,6 @@ import { eventOutputSchema } from '../output-schemas';
 const WATCH_STORE_KEY = 'google_calendar_watch';
 const SYNC_TOKEN_STORE_KEY = 'google_calendar_sync_token';
 const LEGACY_SEEN_EVENT_IDS_STORE_KEY = 'google_calendar_seen_event_ids';
-const SEEN_EVENTS_STORE_KEY = 'google_calendar_seen_events';
-const CREATED_FLOOR_STORE_KEY = 'google_calendar_created_floor';
-const SEEN_INVITES_STORE_KEY = 'google_calendar_seen_invites';
-const INVITE_FLOOR_STORE_KEY = 'google_calendar_invite_floor';
 const STATE_STORE_KEY = 'google_calendar_new_event_state';
 const SEEN_EVENTS_LIMIT = 500;
 const SAMPLE_SIZE = 5;
@@ -220,10 +216,6 @@ export const newEvent = createTrigger({
       inviteFloorMs: carried.inviteFloorMs,
     });
     await context.store.delete(SYNC_TOKEN_STORE_KEY);
-    await context.store.delete(SEEN_EVENTS_STORE_KEY);
-    await context.store.delete(CREATED_FLOOR_STORE_KEY);
-    await context.store.delete(SEEN_INVITES_STORE_KEY);
-    await context.store.delete(INVITE_FLOOR_STORE_KEY);
     await context.store.delete(LEGACY_SEEN_EVENT_IDS_STORE_KEY);
   },
 
@@ -303,19 +295,13 @@ export const newEvent = createTrigger({
       syncToken,
       authProp: auth,
     });
-    const fullResync = incremental.syncTokenInvalid;
-    const { items, nextSyncToken } = fullResync
+    const { items, nextSyncToken } = incremental.syncTokenInvalid
       ? await listChangedSinceTurnOn({
           calendarId,
           auth,
           store: context.store,
         })
       : incremental;
-    if (fullResync) {
-      console.warn(
-        `[google-calendar] new_event: Google answered 410 (sync token no longer valid); ran a full re-sync and checked ${items.length} events changed since the trigger was turned on. Only events created since turn-on that were not seen yet fire.`
-      );
-    }
 
     const newEvents = await judgeEvents({
       items,
@@ -480,12 +466,31 @@ async function listChangedSinceTurnOn({
 }> {
   const { createdFloorMs } = await readState({ store });
   const sinceMs = isNil(createdFloorMs) ? Date.now() : createdFloorMs;
-  return listEventsForFullSync({
+  const full = await listEventsForFullSync({
     calendarId,
     authProp: auth,
     withItems: true,
     keepItem: (event) => changedSince({ event, sinceMs }),
+    deadlineMs: Date.now() + eventScan.listingBudgetMs,
   });
+  if (full.complete) {
+    console.warn(
+      `[google-calendar] new_event: Google answered 410 (sync token no longer valid); ran a full re-sync and checked ${full.items.length} events changed since the trigger was turned on. Only events created since turn-on that were not seen yet fire.`
+    );
+    return { items: full.items, nextSyncToken: full.nextSyncToken };
+  }
+  const nextSyncToken = await getInitialSyncToken({
+    calendarId,
+    authProp: auth,
+  });
+  console.warn(
+    `[google-calendar] new_event: Google answered 410 (sync token no longer valid) and the full re-sync did not finish within ${
+      eventScan.listingBudgetMs / 1000
+    } s; checked ${full.items.length} events, then re-synced from now without listing the rest. Other events created between ${new Date(
+      sinceMs
+    ).toISOString()} and now were skipped and will not fire.`
+  );
+  return { items: full.items, nextSyncToken };
 }
 
 async function readState({
@@ -505,16 +510,11 @@ async function readState({
       fromStateKey: true,
     };
   }
-  const legacySeen = await store.get<SeenEvent[]>(SEEN_EVENTS_STORE_KEY);
-  const legacyFloorMs = await store.get<number>(CREATED_FLOOR_STORE_KEY);
-  const legacyInvites = await store.get<SeenInvite[]>(SEEN_INVITES_STORE_KEY);
-  const legacyInviteFloorMs = await store.get<number>(INVITE_FLOOR_STORE_KEY);
   return {
-    seen: Array.isArray(legacySeen) ? legacySeen : [],
-    createdFloorMs: typeof legacyFloorMs === 'number' ? legacyFloorMs : null,
-    invites: Array.isArray(legacyInvites) ? legacyInvites : [],
-    inviteFloorMs:
-      typeof legacyInviteFloorMs === 'number' ? legacyInviteFloorMs : 0,
+    seen: [],
+    createdFloorMs: null,
+    invites: [],
+    inviteFloorMs: 0,
     fromStateKey: false,
   };
 }
