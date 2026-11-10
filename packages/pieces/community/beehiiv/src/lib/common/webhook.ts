@@ -51,11 +51,11 @@ async function disable({
 	storeKey: string;
 }): Promise<void> {
 	const webhookId = await store.get<string>(storeKey);
-	if (isNil(webhookId) || webhookId === '') {
-		return;
+	if (!isNil(webhookId) && webhookId !== '') {
+		await removeWebhook({ apiKey: apiKeyOf(auth), publicationId, webhookId });
+		await store.delete(storeKey);
 	}
-	await removeWebhook({ apiKey: apiKeyOf(auth), publicationId, webhookId });
-	await store.delete(storeKey);
+	await store.delete(`${storeKey}-seen-events`);
 }
 
 async function removeWebhook({ apiKey, publicationId, webhookId }: { apiKey: string; publicationId: string; webhookId: string }): Promise<void> {
@@ -92,13 +92,23 @@ async function eventsFrom({
 	if (eventId === undefined) {
 		return [payload['data']];
 	}
-	const dedupeKey = `${storeKey}-seen-events`;
-	const seen = (await store.get<string[]>(dedupeKey)) ?? [];
-	if (seen.includes(eventId)) {
+	const slotKeys = DEDUPE_SEEDS.map((seed, index) => `${storeKey}-evt-${index}-${hashSlot({ value: eventId, seed })}`);
+	const stored = await Promise.all(slotKeys.map((key) => store.get<string>(key)));
+	if (stored.includes(eventId)) {
 		return [];
 	}
-	await store.put(dedupeKey, [...seen, eventId].slice(-MAX_SEEN_EVENTS));
+	await Promise.all(slotKeys.map((key) => store.put(key, eventId)));
 	return [payload['data']];
+}
+
+function hashSlot({ value, seed }: { value: string; seed: number }): number {
+	let hash = seed;
+	for (let index = 0; index < value.length; index++) {
+		hash = Math.imul(hash ^ value.charCodeAt(index), 16777619);
+	}
+	hash = Math.imul(hash ^ (hash >>> 16), 2246822507);
+	hash = Math.imul(hash ^ (hash >>> 13), 3266489909);
+	return ((hash ^ (hash >>> 16)) >>> 0) % DEDUPE_SLOTS;
 }
 
 function parsePayload(text: string): unknown {
@@ -117,7 +127,8 @@ function headerValue({ headers, name }: { headers: Record<string, string> | unde
 	return match !== undefined && match[1] !== '' ? match[1] : undefined;
 }
 
-const MAX_SEEN_EVENTS = 200;
+const DEDUPE_SLOTS = 4096;
+const DEDUPE_SEEDS = [2166136261, 3735928559];
 
 export const beehiivWebhook = {
 	enable,

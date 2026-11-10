@@ -80,13 +80,56 @@ describe('webhook triggers', () => {
     expect(await newSubscriberCreatedTrigger.run(hookContext({ store, body: event, headers: { 'svix-id': 'msg_1' } }))).toEqual([]);
   });
 
-  test('dedupe memory is bounded to 200 IDs', async () => {
+  test('two different events delivered concurrently are both remembered', async () => {
     const store = memoryStore();
-    for (let index = 0; index < 205; index++) {
+    const first = { uid: 'evt_a', data: { id: 'a' } };
+    const second = { uid: 'evt_b', data: { id: 'b' } };
+    const results = await Promise.all([
+      newSubscriberCreatedTrigger.run(hookContext({ store, body: first })),
+      newSubscriberCreatedTrigger.run(hookContext({ store, body: second })),
+    ]);
+    expect(results).toEqual([[{ id: 'a' }], [{ id: 'b' }]]);
+    expect(await newSubscriberCreatedTrigger.run(hookContext({ store, body: first }))).toEqual([]);
+    expect(await newSubscriberCreatedTrigger.run(hookContext({ store, body: second }))).toEqual([]);
+  });
+
+  test('many concurrent different events are all remembered', async () => {
+    const store = memoryStore();
+    const events = Array.from({ length: 20 }, (_, index) => ({ uid: `evt_${index}`, data: { id: index } }));
+    const first = await Promise.all(events.map((event) => newSubscriberCreatedTrigger.run(hookContext({ store, body: event }))));
+    expect(first.flat()).toHaveLength(20);
+    const again = await Promise.all(events.map((event) => newSubscriberCreatedTrigger.run(hookContext({ store, body: event }))));
+    expect(again.flat()).toEqual([]);
+  });
+
+  test('the same event delivered twice runs once', async () => {
+    const store = memoryStore();
+    const event = { uid: 'evt_same', data: SUBSCRIPTION };
+    const results = [];
+    for (let attempt = 0; attempt < 3; attempt++) {
+      results.push(await newSubscriberCreatedTrigger.run(hookContext({ store, body: event })));
+    }
+    expect(results).toEqual([[SUBSCRIPTION], [], []]);
+  });
+
+  test('dedupe memory is bounded to a fixed number of store keys', async () => {
+    const store = memoryStore();
+    for (let index = 0; index < 20000; index++) {
       await newSubscriberCreatedTrigger.run(hookContext({ store, body: { uid: `evt_${index}`, data: { id: index } } }));
     }
-    const seen = store.data.get(`${KEY}-seen-events`);
-    expect(Array.isArray(seen) ? seen.length : 0).toBe(200);
+    const dedupeKeys = [...store.data.keys()].filter((key) => key.startsWith(`${KEY}-evt-`));
+    expect(dedupeKeys.length).toBeGreaterThan(0);
+    expect(dedupeKeys.length).toBeLessThanOrEqual(8192);
+    expect(store.data.has(`${KEY}-seen-events`)).toBe(false);
+    expect(await newSubscriberCreatedTrigger.run(hookContext({ store, body: { uid: 'evt_19999', data: { id: 19999 } } }))).toEqual([]);
+  });
+
+  test('onDisable also removes the legacy dedupe list', async () => {
+    const store = memoryStore({ initial: { [KEY]: 'ep_1', [`${KEY}-seen-events`]: ['evt_1'] } });
+    stubBeehiiv({ replies: [{ status: 204 }] });
+    await newSubscriberCreatedTrigger.onDisable(hookContext({ store }));
+    expect(store.data.has(KEY)).toBe(false);
+    expect(store.data.has(`${KEY}-seen-events`)).toBe(false);
   });
 
   test('a body without data emits nothing', async () => {
