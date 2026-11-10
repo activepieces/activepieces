@@ -5,18 +5,17 @@ export const rotateImage = createAction({
   audience: 'both',
   name: 'rotate_image',
   classification: 'READ',
-  description: 'Rotates an image',
+  description: 'Turn an image clockwise by 90, 180 or 270 degrees.',
   aiMetadata: { description: 'Rotates an image clockwise by a fixed 90, 180, or 270 degrees and writes the result as a new file in the source format. Use it to reorient a photo or scan (get_meta_data can report the stored EXIF orientation first); use crop_image to trim edges or resize_image to change dimensions. Only those three degree values are accepted, so arbitrary angles are not supported; deterministic and idempotent.', idempotent: true },
-  displayName: 'Rotate an image',
+  displayName: 'Rotate Image',
   props: {
     image: Property.File({
       displayName: 'Image',
       required: true,
     }),
     degree: Property.StaticDropdown({
-      displayName: 'Degree',
-      description:
-        'Specifies the degree of clockwise rotation applied to the image.',
+      displayName: 'Angle',
+      description: 'How far to turn the image clockwise.',
       required: true,
       options: {
         options: [
@@ -28,11 +27,15 @@ export const rotateImage = createAction({
     }),
     resultFileName: Property.ShortText({
       displayName: 'Result File Name',
-      description:
-        'Specifies the output file name for the result image (without extension).',
+      description: 'File name for the result, without the extension.',
       required: false,
+      advanced: true,
     }),
   },
+  propertyGroups: [
+    { key: 'source', display: 'section', label: 'Source', icon: 'file', props: ['image'] },
+    { key: 'rotation', display: 'section', label: 'Rotation', icon: 'sliders', props: ['degree'] },
+  ],
   async run(context) {
     const image = await jimp.read(context.propsValue.image.data);
     await image.rotate(-context.propsValue.degree);

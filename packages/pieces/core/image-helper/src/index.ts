@@ -10,10 +10,10 @@ import { convertImageFormat } from './lib/actions/convert-image.action';
 
 export const imageHelper = createPiece({
   displayName: 'Image Helper',
-  description: 'Tools for image manipulations',
+  description: 'Crop, resize, rotate, compress and convert images.',
 
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/new-core/image-helper.svg',
   authors: ["AbdullahBitar","kishanprmr","abuaboud"],
   categories: [PieceCategory.CORE],
