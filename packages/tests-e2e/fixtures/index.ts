@@ -1,4 +1,5 @@
 import { test as base } from '@playwright/test';
+import type { APIRequestContext } from '@playwright/test';
 import { e2eApi, E2eResource, E2eSession } from './api';
 import { e2eMail, Mailbox } from './mail';
 
@@ -10,8 +11,9 @@ export const test = base.extend<CustomFixtures>({
   cleanup: async ({ request, session }, use) => {
     const tracked: TrackedRecord[] = [];
     await use({ track: (record) => tracked.push(record) });
-    for (const { resource, id } of [...tracked].reverse()) {
-      await e2eApi.deleteById({ request, session, resource, id });
+    const failures = await deleteTracked({ request, session, records: [...tracked].reverse() });
+    if (failures.length > 0) {
+      throw new Error(`Cleanup could not delete ${failures.length} tracked record(s):\n${failures.join('\n')}`);
     }
   },
 
@@ -21,6 +23,20 @@ export const test = base.extend<CustomFixtures>({
 });
 
 export { expect } from '@playwright/test';
+
+async function deleteTracked({ request, session, records }: { request: APIRequestContext; session: E2eSession; records: TrackedRecord[] }): Promise<string[]> {
+  const failures: string[] = [];
+  for (const { resource, id } of records) {
+    const failure = await e2eApi.deleteById({ request, session, resource, id }).then(
+      () => null,
+      (error: unknown) => (error instanceof Error ? error.message : String(error)),
+    );
+    if (failure !== null) {
+      failures.push(failure);
+    }
+  }
+  return failures;
+}
 
 export type Cleanup = { track: (record: TrackedRecord) => void };
 
