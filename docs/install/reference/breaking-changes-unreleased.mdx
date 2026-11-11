@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### GitHub 0.12.0: Update Issue (Agent) no longer clears labels and assignees
+
+When an AI agent used **Update Issue (Agent)** to change something else, such as the title, the agent path filled the **Labels** and **Assignees** lists it left out with empty lists and sent them. Each such update removed every label and every assignee from the issue. From GitHub 0.12.0 an empty Labels or Assignees list is not sent, so the issue keeps its current labels and assignees. Two new fields, **Clear Labels** and **Clear Assignees**, remove them on purpose.
+
+#### What you need to do
+
+If an agent or a flow step relied on an empty Labels or Assignees list to clear an issue, set **Clear Labels** or **Clear Assignees** instead. If an agent ran this action on an earlier GitHub version, check that your issues still have the labels and assignees you expect. Run Agent steps keep running on the version they were built with until you upgrade them.
+
 #### Spotify 0.7.0: Update Playlist is no longer an agent tool, and Get Playback State returns an object when nothing is playing
 
 From Spotify 0.7.0, **Update Playlist** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and outputs. Agents use the new **Update Playlist Details** tool instead, which takes Public and Collaborative as yes/no choices and leaves any field it is not given unchanged.
