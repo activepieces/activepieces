@@ -12,7 +12,7 @@ export const createPost = createAction({
   classification: 'WRITE',
   displayName: 'Create Post',
   description:
-    'Create a post in Buffer and add it to the queue, share it next, share it now, or schedule it for a custom time.',
+    'Create a post in Buffer and add it to the queue, share it next, share it now, or schedule it for a custom time. Each run also loads your channel list (one extra Buffer API request, counted against your plan limit; Free: 600 a day).',
   audience: 'human',
   aiMetadata: {
     description:

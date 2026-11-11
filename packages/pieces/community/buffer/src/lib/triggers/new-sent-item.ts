@@ -59,7 +59,7 @@ export const newSentItem = createTrigger({
   name: 'new_sent_item',
   classification: 'READ',
   displayName: 'New Sent Post',
-  description: 'Triggers when a Buffer post is successfully published. Each check usually uses one Buffer API request (one more per 100 posts sent in the last 24 hours, at most 10 per check), which counts against your plan limit (Free: 600 a day).',
+  description: 'Triggers when a Buffer post is successfully published. Each check usually uses one Buffer API request (one more per 100 posts sent in the last 24 hours, at most 10 per check), which counts against your plan limit (Free: 600 a day). If more than 1,000 posts are sent in one day, only the 1,000 with the latest scheduled times are checked.',
   aiMetadata: {
     description:
       'Fires once per Buffer post that was published (status sent) in the selected organization, optionally limited to specific channels. Represents the sent post; posts whose scheduled time is more than a day before they were sent are not picked up, and when more than 1,000 posts were sent in that day only the 1,000 with the latest scheduled times are checked.',

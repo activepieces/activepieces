@@ -25,12 +25,12 @@ export const listIdeas = createAction({
     }),
     groupIds: Property.Array({
       displayName: 'Group IDs',
-      description: 'Only ideas in these board columns (IDs from List Idea Groups).',
+      description: 'Only ideas in these board columns (IDs from List Idea Groups). Do not combine with Board Column.',
       required: false,
     }),
     membership: Property.StaticDropdown<string, false>({
       displayName: 'Board Column',
-      description: 'grouped: only ideas in a column. ungrouped: only ideas outside every column. Leave empty for all.',
+      description: 'grouped: only ideas in a column. ungrouped: only ideas outside every column. Leave empty for all. Do not combine with Group IDs.',
       required: false,
       options: {
         disabled: false,
@@ -58,6 +58,9 @@ export const listIdeas = createAction({
     const organizationId = bufferAiProps.requiredId({ value: p.organizationId, label: 'Organization ID' });
     const groups = bufferAiProps.idList({ value: p.groupIds, label: 'Group IDs' });
     const membership = bufferAiProps.oneOf({ value: p.membership, allowed: MEMBERSHIPS, label: 'Board Column' });
+    if (groups !== undefined && membership !== undefined) {
+      throw new Error('Give either Group IDs or Board Column, not both. Buffer accepts only one group filter.');
+    }
     const tagIds = bufferAiProps.idList({ value: p.tagIds, label: 'Tag IDs' });
     const includeUntagged = bufferAiProps.yes(p.includeUntagged);
     if (includeUntagged && tagIds === undefined) {

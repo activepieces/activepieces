@@ -29,7 +29,7 @@ export const buffer = createPiece({
   minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/buffer.png',
   categories: [PieceCategory.MARKETING],
-  authors: ['sanket-a11y'],
+  authors: ['sanket-a11y', 'OdaiAhmed99'],
   actions: [
     createPost,
     createIdea,

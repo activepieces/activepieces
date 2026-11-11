@@ -281,7 +281,7 @@ describe('checkpoint upgrade and failure safety', () => {
     };
   }
 
-  it('after an upgrade with only the legacy lastPoll, does not re-emit the post at exactly lastPoll and saves the new checkpoint in one write', async () => {
+  it('upgrade from 0.1.5 store: with only the legacy lastPoll, does not re-emit the post at exactly lastPoll and saves the new checkpoint in one write', async () => {
     const { store, data, puts } = countingStore({ lastPoll: at });
     sendRequest.mockResolvedValueOnce(page({ nodes: [boundary, newer], endCursor: null, hasNextPage: false }));
     await expect(poll({ fn: newQueueItem.run, store: { ...store, data } })).resolves.toEqual([newer]);

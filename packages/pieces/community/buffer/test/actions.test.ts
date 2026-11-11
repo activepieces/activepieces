@@ -399,6 +399,11 @@ describe('list actions', () => {
     expect(variablesOf({ index: 0 })).toEqual({ input: { organizationId: ORG, groupFilter: { membership: 'ungrouped' } }, first: 20, after: 'n1' });
     expect(result).toEqual({ ideas: [], nextCursor: 'n2', hasNextPage: true });
   });
+
+  it('rejects Group IDs together with Board Column before calling Buffer', async () => {
+    await expect(call({ fn: listIdeas.run, propsValue: { organizationId: ORG, groupIds: ['g1'], membership: 'grouped' } })).rejects.toThrow('Give either Group IDs or Board Column, not both');
+    expect(sendRequest).not.toHaveBeenCalled();
+  });
 });
 
 describe('action edge cases (QA)', () => {
