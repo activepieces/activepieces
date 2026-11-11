@@ -8935,7 +8935,7 @@
     },
     "packages/pieces/community/stability-ai": {
       "name": "@activepieces/piece-stability-ai",
-      "version": "0.3.2",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8944,6 +8944,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/stable-diffusion-webui": {
