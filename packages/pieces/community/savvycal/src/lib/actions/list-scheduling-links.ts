@@ -5,6 +5,7 @@ import { savvyCalAuth, getToken } from '../auth';
 export const listSchedulingLinksAction = createAction({
   auth: savvyCalAuth,
   name: 'list_scheduling_links',
+  classification: 'SEARCH',
   displayName: 'List Scheduling Links',
   description: 'Returns all scheduling links configured in your SavvyCal account.',
   audience: 'both',

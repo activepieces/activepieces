@@ -14,6 +14,7 @@ interface SavvyCalWorkflowRule {
 export const getWorkflowRulesAction = createAction({
   auth: savvyCalAuth,
   name: 'get_workflow_rules',
+  classification: 'READ',
   displayName: 'Get Workflow Rules',
   description: 'Returns the rules configured for a specific workflow.',
   audience: 'both',

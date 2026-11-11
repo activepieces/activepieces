@@ -19,6 +19,7 @@ import { savvyCalAuth, getToken } from '../auth';
 export const createEventAction = createAction({
   auth: savvyCalAuth,
   name: 'create_event',
+  classification: 'WRITE',
   displayName: 'Create Event',
   description: 'Books a meeting on a scheduling link at a specific time slot.',
   audience: 'both',
@@ -54,7 +55,7 @@ export const createEventAction = createAction({
             placeholder: 'Please connect your account first',
           };
         try {
-          const options = await buildLinkOptions(getToken(auth), team_id as string | null);
+          const options = await buildLinkOptions(getToken(auth), team_id);
           return { disabled: false, options };
         } catch {
           return {

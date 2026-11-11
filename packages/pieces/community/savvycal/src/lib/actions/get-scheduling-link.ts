@@ -12,6 +12,7 @@ import { savvyCalAuth, getToken } from '../auth';
 export const getSchedulingLinkAction = createAction({
   auth: savvyCalAuth,
   name: 'get_scheduling_link',
+  classification: 'READ',
   displayName: 'Get Scheduling Link',
   description: 'Retrieves the details of a specific scheduling link by its ID.',
   audience: 'both',
@@ -42,7 +43,7 @@ export const getSchedulingLinkAction = createAction({
       options: async ({ auth, team_id }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
         try {
-          const options = await buildLinkOptions(getToken(auth), team_id as string | null);
+          const options = await buildLinkOptions(getToken(auth), team_id);
           return { disabled: false, options };
         } catch {
           return { disabled: true, options: [], placeholder: 'Failed to load scheduling links.' };

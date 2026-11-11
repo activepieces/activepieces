@@ -6,6 +6,7 @@ import { savvyCalAuth, getToken } from '../auth';
 export const getEventAction = createAction({
   auth: savvyCalAuth,
   name: 'get_event',
+  classification: 'READ',
   displayName: 'Get Event',
   description: 'Retrieves the details of a specific scheduled meeting by its ID.',
   audience: 'both',

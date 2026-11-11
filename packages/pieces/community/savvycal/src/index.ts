@@ -10,6 +10,8 @@ import { createEventAction } from './lib/actions/create-event';
 import { findEventsByEmailAction } from './lib/actions/find-events-by-email';
 import { listSchedulingLinksAction } from './lib/actions/list-scheduling-links';
 import { getSchedulingLinkAction } from './lib/actions/get-scheduling-link';
+import { createSchedulingLinkAction } from './lib/actions/create-scheduling-link';
+import { updateSchedulingLinkAction } from './lib/actions/update-scheduling-link';
 import { deleteSchedulingLinkAction } from './lib/actions/delete-scheduling-link';
 import { duplicateSchedulingLinkAction } from './lib/actions/duplicate-scheduling-link';
 import { toggleSchedulingLinkAction } from './lib/actions/toggle-scheduling-link';
@@ -41,6 +43,8 @@ export const savvyCal = createPiece({
 
     listSchedulingLinksAction,
     getSchedulingLinkAction,
+    createSchedulingLinkAction,
+    updateSchedulingLinkAction,
     getLinkSlotsAction,
     toggleSchedulingLinkAction,
     duplicateSchedulingLinkAction,
