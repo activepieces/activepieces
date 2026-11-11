@@ -1,14 +1,16 @@
 import { faker } from '@faker-js/faker';
 import { expect, test } from '../../../fixtures';
 import { e2eApi } from '../../../fixtures/api';
+import { InvitationPage } from '../../../pages/invitation.page';
 
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Invitation page', () => {
-  test('invitation link shows a page and accepts on click', async ({ page, request, session, mailbox, invitationPage, invitationCleanup }) => {
+  test('invitation link shows a page and accepts on click', async ({ page, request, session, mailbox, cleanup }) => {
+    const invitationPage = new InvitationPage(page);
     const email = faker.internet.email({ provider: 'example.com' }).toLowerCase();
     const invitation = await e2eApi.invitePlatformMember({ request, session, email });
-    invitationCleanup.track(invitation.id);
+    cleanup.track({ resource: 'user-invitations', id: invitation.id });
     const link = await mailbox.linkTo({ to: email, path: '/invitation' });
 
     await invitationPage.open(link);
@@ -20,7 +22,8 @@ test.describe('Invitation page', () => {
     expect(await e2eApi.readInvitationStatus({ request, link })).toBe('ACCEPTED');
   });
 
-  test('dead invitation link shows that it no longer works', async ({ request, session, mailbox, invitationPage }) => {
+  test('dead invitation link shows that it no longer works', async ({ page, request, session, mailbox }) => {
+    const invitationPage = new InvitationPage(page);
     const email = faker.internet.email({ provider: 'example.com' }).toLowerCase();
     const invitation = await e2eApi.invitePlatformMember({ request, session, email });
     const link = await mailbox.linkTo({ to: email, path: '/invitation' });

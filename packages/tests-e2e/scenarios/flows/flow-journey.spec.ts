@@ -1,9 +1,15 @@
 import { randomInt } from 'node:crypto';
 import { test } from '../../fixtures';
 import { e2eFlows } from '../../fixtures/flows';
+import { AutomationsPage } from '../../pages/automations.page';
+import { BuilderPage } from '../../pages/builder.page';
+import { RunsPage } from '../../pages/runs.page';
 
 test.describe('Flow journey', () => {
-  test('build, test, publish and run a webhook flow with a code step', async ({ automationsPage, builderPage, runsPage, flowCleanup }) => {
+  test('build, test, publish and run a webhook flow with a code step', async ({ page, cleanup }) => {
+    const automationsPage = new AutomationsPage(page);
+    const builderPage = new BuilderPage(page);
+    const runsPage = new RunsPage(page);
     test.setTimeout(240000);
     const flowName = e2eFlows.uniqueName('journey');
     const sampleValue = randomInt(1, 1000000);
@@ -11,7 +17,7 @@ test.describe('Flow journey', () => {
 
     const flowId = await test.step('Create a flow from the automations page', async () => {
       const id = await automationsPage.createFlow();
-      flowCleanup.track(id);
+      cleanup.track({ resource: 'flows', id });
       await builderPage.nameNewFlow(flowName);
       return id;
     });

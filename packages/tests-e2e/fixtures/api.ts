@@ -70,10 +70,6 @@ async function signIn({ request, email, password }: { request: APIRequestContext
   return request.post('/api/v1/authentication/sign-in', { data: { email, password } });
 }
 
-async function deleteUser({ request, session, userId }: { request: APIRequestContext; session: E2eSession; userId: string }) {
-  await deleteById({ request, session, resource: 'users', id: userId });
-}
-
 async function deleteStaleData({ request, session }: { request: APIRequestContext; session: E2eSession }) {
   const staleFlows = await listStale({ request, session, resource: 'flows', nameOf: (flow: FlowSummary) => flow.version.displayName, cursor: undefined });
   for (const flow of staleFlows) {
@@ -143,7 +139,7 @@ function redact({ session, text }: { session: E2eSession; text: string }) {
   return text.replaceAll(session.token, '***');
 }
 
-async function deleteById({ request, session, resource, id }: { request: APIRequestContext; session: E2eSession; resource: Resource; id: string }) {
+async function deleteById({ request, session, resource, id }: { request: APIRequestContext; session: E2eSession; resource: E2eResource; id: string }) {
   const response = await request.delete(`/api/v1/${resource}/${id}`, {
     headers: { Authorization: `Bearer ${session.token}` },
   });
@@ -155,7 +151,7 @@ async function deleteById({ request, session, resource, id }: { request: APIRequ
 async function listStale<T extends { id: string; created: string }>({ request, session, resource, nameOf, cursor }: {
   request: APIRequestContext;
   session: E2eSession;
-  resource: Resource;
+  resource: E2eResource;
   nameOf: (item: T) => string;
   cursor: string | undefined;
 }): Promise<T[]> {
@@ -187,15 +183,14 @@ export const e2eApi = {
   deleteInvitation,
   signUp,
   signIn,
-  deleteUser,
+  deleteById,
   deleteStaleData,
   describeFlow,
   describeRun,
 };
 
 export type E2eSession = { token: string; projectId: string };
-
-type Resource = 'flows' | 'app-connections' | 'users' | 'user-invitations';
+export type E2eResource = string;
 type FlowSummary = { id: string; created: string; version: { displayName: string } };
 type ConnectionSummary = { id: string; created: string; displayName: string };
 type FlowState = {

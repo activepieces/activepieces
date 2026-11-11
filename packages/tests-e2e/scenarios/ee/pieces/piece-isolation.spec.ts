@@ -3,6 +3,7 @@ import { gzipSync } from 'node:zlib';
 import { randomInt } from 'node:crypto';
 import { test } from '../../../fixtures';
 import { e2eFlows } from '../../../fixtures/flows';
+import { BuilderPage } from '../../../pages/builder.page';
 
 /**
  * EE: Bad piece isolation test.
@@ -14,7 +15,7 @@ import { e2eFlows } from '../../../fixtures/flows';
  * Requires a platform admin token (EE only).
  */
 test.describe('Piece isolation — EE', () => {
-  test('broken custom piece does not prevent webhook flow from running', async ({ automationsPage, builderPage, request, session, flowCleanup }) => {
+  test('broken custom piece does not prevent webhook flow from running', async ({ page, request, session, cleanup }) => {
     test.setTimeout(180000);
 
     const authHeaders = { Authorization: `Bearer ${session.token}` };
@@ -49,9 +50,9 @@ test.describe('Piece isolation — EE', () => {
 
     // Even if the upload succeeds and bun fails to install the broken piece,
     // a regular Webhook flow must still execute successfully
-    const { webhookUrl } = await e2eFlows.publishWebhookEchoFlow({ automationsPage, builderPage, flowCleanup });
+    const { webhookUrl } = await e2eFlows.publishWebhookEchoFlow({ page, cleanup });
     const value = randomInt(1, 1000000);
-    await builderPage.expectSyncWebhookResponse({
+    await new BuilderPage(page).expectSyncWebhookResponse({
       url: `${webhookUrl}/sync?value=${value}`,
       expected: { value: String(value) },
     });
