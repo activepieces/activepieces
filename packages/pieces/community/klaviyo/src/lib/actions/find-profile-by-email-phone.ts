@@ -1,28 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { klaviyoAuth, KlaviyoAuthValue } from '../common/auth';
-import { makeRequest } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
-
-interface KlaviyoProfile {
-  type: string;
-  id: string;
-  attributes: {
-    email?: string;
-    phone_number?: string;
-    first_name?: string;
-    last_name?: string;
-    external_id?: string;
-    organization?: string;
-    locale?: string;
-    title?: string;
-    image?: string;
-    created?: string;
-    updated?: string;
-    last_event_date?: string;
-    location?: object;
-    properties?: object;
-  };
-}
+import { klaviyoAuth } from '../common/auth';
+import { equalsFilter, klaviyoApi } from '../common/client';
+import { normalizePhone } from '../common/props';
+import { klaviyoOutputSchemas } from '../common/output-schemas';
 
 export const findProfileByEmailPhone = createAction({
   auth: klaviyoAuth,
@@ -32,14 +12,15 @@ export const findProfileByEmailPhone = createAction({
   description: 'Find a profile using email or phone number.',
   audience: 'both',
   aiMetadata: {
-    description: 'Looks up a Klaviyo profile by exact email address or phone number and returns matching profiles with their IDs. The search value is auto-detected as an email (must contain "@" and be valid) or a phone number (E.164 recommended). Use to resolve a contact into a profile ID before update/subscribe/list actions. Read-only and idempotent.',
+    description: 'Looks up a Klaviyo profile by exact email address or phone number and returns matching profiles with their IDs. The search value is auto-detected as an email (contains "@") or a phone number; phone numbers must be E.164 (spaces, dashes, dots and brackets are removed, and a missing leading + is added). Use to resolve a contact into a profile ID before update/subscribe/list actions; to browse profiles use List Profiles. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: klaviyoOutputSchemas.findProfile,
   props: {
     search_query: Property.ShortText({
       displayName: 'Email or Phone Number',
       description:
-        'Enter an email address or phone number (E.164 format recommended)',
+        'Enter an email address or a phone number in E.164 format with the country code (e.g. +15005550006). Spaces, dashes, dots and brackets are removed before searching.',
       required: true,
     }),
     include_additional_data: Property.Checkbox({
@@ -51,87 +32,72 @@ export const findProfileByEmailPhone = createAction({
   },
   async run({ auth, propsValue }) {
     const { search_query, include_additional_data } = propsValue;
-
-    if (!search_query || search_query.trim().length === 0) {
+    const trimmedQuery = (search_query ?? '').trim();
+    if (trimmedQuery.length === 0) {
       throw new Error('Email or phone number is required');
     }
-
-    const trimmedQuery = search_query.trim();
-
-    let filter = '';
     const isEmail = trimmedQuery.includes('@');
-
+    let filter: string;
+    let searched: string;
     if (isEmail) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(trimmedQuery)) {
+      if (!EMAIL.test(trimmedQuery)) {
         throw new Error('Please enter a valid email address');
       }
-      filter = `equals(email,"${trimmedQuery}")`;
+      searched = trimmedQuery;
+      filter = equalsFilter({ field: 'email', value: trimmedQuery });
     } else {
-      const phoneRegex = /^[\+]?[1-9][\d\s\-\(\)\.]{7,15}$/;
-      if (!phoneRegex.test(trimmedQuery)) {
+      searched = normalizePhone(trimmedQuery);
+      if (!E164.test(searched)) {
         throw new Error(
-          'Please enter a valid phone number (E.164 format recommended, e.g., +1234567890)'
+          'Please enter a valid phone number in E.164 format with the country code, e.g. +15005550006'
         );
       }
-      filter = `equals(phone_number,"${trimmedQuery}")`;
+      filter = equalsFilter({ field: 'phone_number', value: searched });
     }
-
-    // Build query parameters
-    const queryParams = new URLSearchParams();
-    queryParams.append('filter', filter);
-    queryParams.append('page[size]', '50');
-
-    if (include_additional_data) {
-      queryParams.append(
-        'additional-fields[profile]',
-        'subscriptions,predictive_analytics'
-      );
-    }
-
-    const response = await makeRequest(
-      auth as KlaviyoAuthValue,
-      HttpMethod.GET,
-      `/profiles?${queryParams.toString()}`
-    );
-
-    const profiles: KlaviyoProfile[] = response.data || [];
-
-    if (profiles.length === 0) {
+    const page = await klaviyoApi.listPage({
+      auth,
+      path: '/profiles',
+      query: {
+        filter,
+        'page[size]': 100,
+        'additional-fields[profile]': include_additional_data ? 'subscriptions,predictive_analytics' : undefined,
+      },
+    });
+    const kind = isEmail ? 'email' : 'phone number';
+    if (page.items.length === 0) {
       return {
         success: false,
-        message: `No profile found with ${
-          isEmail ? 'email' : 'phone number'
-        }: ${trimmedQuery}`,
+        message: `No profile found with ${kind}: ${searched}`,
         profiles: [],
         count: 0,
       };
     }
-
-    const formattedProfiles = profiles.map((profile) => ({
-      id: profile.id,
-      email: profile.attributes.email,
-      phone_number: profile.attributes.phone_number,
-      first_name: profile.attributes.first_name,
-      last_name: profile.attributes.last_name,
-      external_id: profile.attributes.external_id,
-      full_name:
-        [profile.attributes.first_name, profile.attributes.last_name]
-          .filter(Boolean)
-          .join(' ') || null,
-      created: profile.attributes.created,
-      updated: profile.attributes.updated,
-      full_profile: profile.attributes,
-    }));
-
+    const formattedProfiles = page.items.map((profile) => {
+      const firstName = profile.attributes['first_name'];
+      const lastName = profile.attributes['last_name'];
+      return {
+        id: profile.id,
+        email: profile.attributes['email'],
+        phone_number: profile.attributes['phone_number'],
+        first_name: firstName,
+        last_name: lastName,
+        external_id: profile.attributes['external_id'],
+        full_name: [firstName, lastName].filter((part) => typeof part === 'string' && part !== '').join(' ') || null,
+        created: profile.attributes['created'],
+        updated: profile.attributes['updated'],
+        full_profile: profile.attributes,
+      };
+    });
     return {
       success: true,
-      message: `Found ${profiles.length} profile(s) matching ${
-        isEmail ? 'email' : 'phone number'
-      }: ${trimmedQuery}`,
+      message: `Found ${formattedProfiles.length} profile(s) matching ${kind}: ${searched}`,
       profiles: formattedProfiles,
-      count: profiles.length,
-      raw_response: response,
+      count: formattedProfiles.length,
+      raw_response: { data: page.items },
     };
   },
 });
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const E164 = /^\+[1-9]\d{6,14}$/;

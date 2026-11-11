@@ -6,46 +6,15 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
-  HttpMethod,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { klaviyoAuth, KlaviyoAuthValue } from '../common/auth';
-import { makeRequest } from '../common/client';
-
-interface KlaviyoProfile {
-  type: string;
-  id: string;
-  attributes: {
-    email?: string;
-    phone_number?: string;
-    external_id?: string;
-    first_name?: string;
-    last_name?: string;
-    organization?: string;
-    locale?: string;
-    title?: string;
-    image?: string;
-    created: string;
-    updated: string;
-    last_event_date?: string;
-    joined_group_at?: string;
-    location?: {
-      address1?: string;
-      address2?: string;
-      city?: string;
-      country?: string;
-      region?: string;
-      zip?: string;
-      timezone?: string;
-      ip?: string;
-      latitude?: number;
-      longitude?: number;
-    };
-    properties?: object;
-  };
-}
+import { klaviyoApi, pathFor } from '../common/client';
+import { listOptions, segmentOptions } from '../common/props';
+import { klaviyoInputs } from '../common/ai-props';
+import { klaviyoOutputSchemas } from '../common/output-schemas';
 
 const props = {
   targetType: Property.StaticDropdown({
@@ -61,149 +30,32 @@ const props = {
   }),
   listId: Property.Dropdown({
     displayName: 'List',
-    description: 'Select the list to monitor for new profile additions.',
+    description: 'Select the list to monitor for new profile additions, or type its exact name.',
     required: false,
     auth: klaviyoAuth,
     refreshers: ['auth', 'targetType'],
-    options: async ({ auth, targetType }) => {
-      if ((targetType as unknown as string) !== 'list') {
-        return { disabled: true, options: [] };
+    refreshOnSearch: true,
+    options: async ({ auth, targetType }, { searchValue }) => {
+      if (targetType !== 'list') {
+        return { disabled: true, placeholder: 'Choose List as the target type', options: [] };
       }
-      if (!auth) {
-        return { disabled: true, placeholder: 'Connect your account', options: [] };
-      }
-      try {
-        const lists = await makeRequest(auth as KlaviyoAuthValue, HttpMethod.GET, '/lists', {});
-        return {
-          disabled: false,
-          options: (lists.data || []).map((list: any) => ({
-            label: list.attributes.name || list.id,
-            value: list.id,
-          })),
-        };
-      } catch {
-        return { disabled: true, placeholder: 'Error loading lists', options: [] };
-      }
+      return listOptions({ auth, searchValue });
     },
   }),
   segmentId: Property.Dropdown({
     displayName: 'Segment',
-    description: 'Select the segment to monitor for new profile additions.',
+    description: 'Select the segment to monitor for new profile additions, or type its exact name.',
     required: false,
     auth: klaviyoAuth,
     refreshers: ['auth', 'targetType'],
-    options: async ({ auth, targetType }) => {
-      if ((targetType as unknown as string) !== 'segment') {
-        return { disabled: true, options: [] };
+    refreshOnSearch: true,
+    options: async ({ auth, targetType }, { searchValue }) => {
+      if (targetType !== 'segment') {
+        return { disabled: true, placeholder: 'Choose Segment as the target type', options: [] };
       }
-      if (!auth) {
-        return { disabled: true, placeholder: 'Connect your account', options: [] };
-      }
-      try {
-        const segments = await makeRequest(auth as KlaviyoAuthValue, HttpMethod.GET, '/segments', {});
-        return {
-          disabled: false,
-          options: (segments.data || []).map((segment: any) => ({
-            label: segment.attributes.name || segment.id,
-            value: segment.id,
-          })),
-        };
-      } catch {
-        return { disabled: true, placeholder: 'Error loading segments', options: [] };
-      }
+      return segmentOptions({ auth, searchValue });
     },
   }),
-};
-
-const polling: Polling<KlaviyoAuthValue, StaticPropsValue<typeof props>> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const { targetType, listId, segmentId } = propsValue;
-
-    if (targetType === 'list' && !listId) {
-      throw new Error('Please select a list to monitor.');
-    }
-    if (targetType === 'segment' && !segmentId) {
-      throw new Error('Please select a segment to monitor.');
-    }
-
-    const targetId = targetType === 'list' ? listId : segmentId;
-    const basePath = targetType === 'list'
-      ? `/lists/${targetId}/profiles`
-      : `/segments/${targetId}/profiles`;
-
-    // Use joined_group_at to only fetch profiles added since the last poll
-    const since = lastFetchEpochMS
-      ? new Date(lastFetchEpochMS).toISOString()
-      : dayjs().subtract(24, 'hours').toISOString();
-
-    const queryParams = new URLSearchParams();
-    queryParams.append('filter', `greater-than(joined_group_at,${since})`);
-    queryParams.append('page[size]', '100');
-    queryParams.append('sort', 'joined_group_at');
-
-    const allProfiles: KlaviyoProfile[] = [];
-
-    let response = await makeRequest(
-      auth,
-      HttpMethod.GET,
-      `${basePath}?${queryParams.toString()}`
-    );
-
-    allProfiles.push(...(response.data || []));
-
-    // Paginate through remaining results
-    while (response.links?.next && allProfiles.length < 1000) {
-      const cursorMatch = (response.links.next as string).match(/page%5Bcursor%5D=([^&]+)/);
-      if (!cursorMatch) break;
-
-      const cursor = decodeURIComponent(cursorMatch[1]);
-      const pageParams = new URLSearchParams();
-      pageParams.append('filter', `greater-than(joined_group_at,${since})`);
-      pageParams.append('page[size]', '100');
-      pageParams.append('page[cursor]', cursor);
-      pageParams.append('sort', 'joined_group_at');
-
-      response = await makeRequest(auth, HttpMethod.GET, `${basePath}?${pageParams.toString()}`);
-      allProfiles.push(...(response.data || []));
-    }
-
-    return allProfiles.map((profile) => {
-      const loc = profile.attributes.location ?? {};
-      return {
-        epochMilliSeconds: dayjs(profile.attributes.joined_group_at ?? profile.attributes.created).valueOf(),
-        data: {
-          id: profile.id,
-          email: profile.attributes.email ?? null,
-          phone_number: profile.attributes.phone_number ?? null,
-          external_id: profile.attributes.external_id ?? null,
-          first_name: profile.attributes.first_name ?? null,
-          last_name: profile.attributes.last_name ?? null,
-          full_name: [profile.attributes.first_name, profile.attributes.last_name].filter(Boolean).join(' ') || null,
-          organization: profile.attributes.organization ?? null,
-          locale: profile.attributes.locale ?? null,
-          title: profile.attributes.title ?? null,
-          image: profile.attributes.image ?? null,
-          created: profile.attributes.created,
-          updated: profile.attributes.updated,
-          joined_group_at: profile.attributes.joined_group_at ?? null,
-          last_event_date: profile.attributes.last_event_date ?? null,
-          address1: loc.address1 ?? null,
-          address2: loc.address2 ?? null,
-          city: loc.city ?? null,
-          country: loc.country ?? null,
-          region: loc.region ?? null,
-          zip: loc.zip ?? null,
-          timezone: loc.timezone ?? null,
-          ip: loc.ip ?? null,
-          latitude: loc.latitude ?? null,
-          longitude: loc.longitude ?? null,
-          target_type: targetType,
-          target_id: targetId,
-        },
-      };
-    });
-  },
 };
 
 export const profileAddedToListOrSegmentTrigger = createTrigger({
@@ -216,6 +68,7 @@ export const profileAddedToListOrSegmentTrigger = createTrigger({
     description: 'Fires when a profile joins a chosen Klaviyo list or segment, polling by the profile join timestamp. The monitored target is configurable as either a specific list or a specific segment, so each event represents one profile newly added to that particular group.',
   },
   props,
+  outputSchema: klaviyoOutputSchemas.triggerGroupProfile,
   sampleData: {
     id: '01JZTTZ2NNC8ZCP45SM4J84RG2',
     email: 'sarah.mason@klaviyo-demo.com',
@@ -247,15 +100,56 @@ export const profileAddedToListOrSegmentTrigger = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async test(context) {
-    return await pollingHelper.test(polling, { ...context, auth: context.auth as KlaviyoAuthValue, propsValue: context.propsValue as StaticPropsValue<typeof props> });
+    return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, { ...context, auth: context.auth as KlaviyoAuthValue, propsValue: context.propsValue as StaticPropsValue<typeof props> });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, { ...context, auth: context.auth as KlaviyoAuthValue, propsValue: context.propsValue as StaticPropsValue<typeof props> });
+    await pollingHelper.onDisable(polling, context);
   },
   async run(context) {
-    return await pollingHelper.poll(polling, { ...context, auth: context.auth as KlaviyoAuthValue, propsValue: context.propsValue as StaticPropsValue<typeof props> });
+    return await pollingHelper.poll(polling, context);
   },
 });
+
+const POLL_CAP = 1000;
+
+const polling: Polling<KlaviyoAuthValue, StaticPropsValue<typeof props>> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+    const { targetType, listId, segmentId } = propsValue;
+    if (targetType === 'list' && !listId) {
+      throw new Error('Please select a list to monitor.');
+    }
+    if (targetType === 'segment' && !segmentId) {
+      throw new Error('Please select a segment to monitor.');
+    }
+    const targetId = targetType === 'list' ? listId : segmentId;
+    if (targetId === undefined || targetId === null || targetId === '') {
+      throw new Error('Please select a list or segment to monitor.');
+    }
+    const since = lastFetchEpochMS
+      ? new Date(lastFetchEpochMS).toISOString()
+      : dayjs().subtract(24, 'hours').toISOString();
+    const profiles = await klaviyoApi.pollAfter({
+      auth,
+      path: `${pathFor([targetType === 'list' ? 'lists' : 'segments', String(targetId)])}/profiles`,
+      field: 'joined_group_at',
+      since,
+      cap: POLL_CAP,
+    });
+    return profiles.map((profile) => {
+      const joinedAt = profile.attributes['joined_group_at'];
+      return {
+        epochMilliSeconds: dayjs(String(joinedAt ?? profile.attributes['created'])).valueOf(),
+        data: {
+          ...klaviyoInputs.triggerProfile(profile),
+          joined_group_at: joinedAt ?? null,
+          target_type: targetType,
+          target_id: targetId,
+        },
+      };
+    });
+  },
+};
