@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Google Sheets 0.20.0: row triggers match rows by content, and the Test sample has no header row
+
+**New or Updated Row** now compares rows by their content instead of their position. Inserting, deleting or sorting rows, and changing only a column's display format, no longer runs the flow for every row below the change. A row whose cells are all cleared now runs the flow once with blank values, unless it is the last row of data. With a Trigger Column, a new row runs the flow once that column is filled, not while it is still empty. **New Row Added** runs only for rows added below the last row it has seen; rows inserted higher up, sorting and edits do not run it. Both row triggers now work on tabs named like a cell (for example `Q1` or `FY24`), and their Test sample no longer shows the header row as data. **New Worksheet** no longer runs for the spreadsheet's first tab when the flow is turned on. **Get Next Rows** no longer skips rows after a blank row, the last row of a full sheet, or a batch that failed to read.
+
+#### What you need to do
+
+Nothing for most flows. Upgrading republishes the flow, which takes a fresh baseline of the sheet, so a change made while the flow is being republished does not run it (same as today). If a flow relied on New or Updated Row running for every row after a sort or insert, or on New Row Added running for edited rows, use New or Updated Row with a Trigger Column instead.
+
 #### Google Tasks 0.8.0: New Task can ignore edits
 
 **New Task** has a new **Run on** setting. **New tasks only** runs the flow once per task; renaming, editing, moving or completing a task no longer runs it again. **New and edited tasks** keeps the old behaviour. Steps keep running the old code until you upgrade them to 0.8.0. On upgraded steps, tasks found in one check are delivered newest first, and an edit made within a minute of the previous check is no longer lost.
