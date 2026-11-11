@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import type { APIRequestContext } from '@playwright/test';
@@ -82,6 +83,70 @@ async function deleteStaleData({ request, session }: { request: APIRequestContex
   return { flows: staleFlows.length, connections: staleConnections.length };
 }
 
+async function seedFlow({ request, session, template, publish, onCreated }: {
+  request: APIRequestContext;
+  session: E2eSession;
+  template: FlowTemplate;
+  publish: boolean;
+  onCreated: (flowId: string) => void;
+}): Promise<SeededFlow> {
+  const [source] = template.flows;
+  const flowName = uniqueName(source.displayName);
+  const flow = await callApi<{ id: string; version: { schemaVersion: string | null } }>({
+    request,
+    session,
+    method: 'POST',
+    path: '/api/v1/flows',
+    data: { displayName: flowName, projectId: session.projectId },
+  });
+  onCreated(flow.id);
+  const trigger = await withInstalledPieceVersions({ request, session, trigger: source.trigger });
+  await callApi({
+    request,
+    session,
+    method: 'POST',
+    path: `/api/v1/flows/${flow.id}`,
+    data: {
+      type: 'IMPORT_FLOW',
+      request: { displayName: flowName, trigger, schemaVersion: source.schemaVersion ?? flow.version.schemaVersion, notes: source.notes ?? null },
+    },
+  });
+  if (publish) {
+    await callApi({ request, session, method: 'POST', path: `/api/v1/flows/${flow.id}`, data: { type: 'LOCK_AND_PUBLISH', request: {} } });
+  }
+  const flags = await callApi<{ WEBHOOK_URL_PREFIX: string }>({ request, session, method: 'GET', path: '/api/v1/flags' });
+  return { flowId: flow.id, flowName, webhookUrl: `${flags.WEBHOOK_URL_PREFIX}/${flow.id}` };
+}
+
+async function seedSecretTextConnection({ request, session, pieceName, secret, onCreated }: {
+  request: APIRequestContext;
+  session: E2eSession;
+  pieceName: string;
+  secret: string;
+  onCreated: (connectionId: string) => void;
+}): Promise<SeededConnection> {
+  const connection = await callApi<SeededConnection>({
+    request,
+    session,
+    method: 'POST',
+    path: '/api/v1/app-connections',
+    data: {
+      externalId: `e2e_${randomUUID().replaceAll('-', '')}`,
+      displayName: uniqueName('connection'),
+      pieceName,
+      projectId: session.projectId,
+      type: 'SECRET_TEXT',
+      value: { type: 'SECRET_TEXT', secret_text: secret },
+    },
+  });
+  onCreated(connection.id);
+  return { id: connection.id, externalId: connection.externalId, displayName: connection.displayName };
+}
+
+function uniqueName(label: string) {
+  return `${E2E_PREFIX}${label} ${randomUUID().slice(0, 8)}`;
+}
+
 async function describeFlow({ request, session, flowId }: { request: APIRequestContext; session: E2eSession; flowId: string }) {
   const flow = await readJson<FlowState>({ request, session, path: `/api/v1/flows/${flowId}`, params: {} });
   const runs = await readJson<{ data: RunSummary[] }>({
@@ -135,6 +200,43 @@ async function readJson<T>({ request, session, path, params }: {
   return { body: await response.json() };
 }
 
+async function withInstalledPieceVersions({ request, session, trigger }: { request: APIRequestContext; session: E2eSession; trigger: unknown }): Promise<unknown> {
+  const text = JSON.stringify(trigger);
+  const pieceNames = [...new Set([...text.matchAll(/"pieceName":"([^"]+)"/g)].map(([, name]) => name))];
+  const versions = new Map(await Promise.all(pieceNames.map(async (pieceName) => [pieceName, await readPieceVersion({ request, session, pieceName })] as const)));
+  return JSON.parse(text, (_key, value: unknown) => isPieceSettings(value) ? { ...value, pieceVersion: versions.get(value.pieceName) } : value);
+}
+
+async function readPieceVersion({ request, session, pieceName }: { request: APIRequestContext; session: E2eSession; pieceName: string }): Promise<string> {
+  const piece = await callApi<{ version: string }>({
+    request,
+    session,
+    method: 'GET',
+    path: `/api/v1/pieces/${encodeURIComponent(pieceName)}`,
+    params: { projectId: session.projectId },
+  });
+  return piece.version;
+}
+
+function isPieceSettings(value: unknown): value is { pieceName: string; pieceVersion: string } {
+  return typeof value === 'object' && value !== null && 'pieceName' in value && typeof value.pieceName === 'string' && 'pieceVersion' in value;
+}
+
+async function callApi<T>({ request, session, method, path, data, params }: {
+  request: APIRequestContext;
+  session: E2eSession;
+  method: 'GET' | 'POST';
+  path: string;
+  data?: unknown;
+  params?: Record<string, string>;
+}): Promise<T> {
+  const response = await request.fetch(path, { method, headers: { Authorization: `Bearer ${session.token}` }, data, params });
+  if (!response.ok()) {
+    throw new Error(`${method} ${path} failed with ${response.status()}: ${await response.text()}`);
+  }
+  return response.json();
+}
+
 function redact({ session, text }: { session: E2eSession; text: string }) {
   return text.replaceAll(session.token, '***');
 }
@@ -143,9 +245,14 @@ async function deleteById({ request, session, resource, id }: { request: APIRequ
   const response = await request.delete(`/api/v1/${resource}/${id}`, {
     headers: { Authorization: `Bearer ${session.token}` },
   });
-  if (!response.ok() && response.status() !== 404) {
-    throw new Error(`Deleting ${resource} ${id} failed with ${response.status()}: ${await response.text()}`);
+  if (response.ok()) {
+    return;
   }
+  const body = await response.text();
+  if (response.status() === 404 && !body.includes(UNKNOWN_ROUTE_MESSAGE)) {
+    return;
+  }
+  throw new Error(`Deleting ${resource} ${id} failed with ${response.status()}: ${body}`);
 }
 
 async function listStale<T extends { id: string; created: string }>({ request, session, resource, nameOf, cursor }: {
@@ -170,6 +277,7 @@ async function listStale<T extends { id: string; created: string }>({ request, s
 }
 
 const STALE_AFTER_MS = 60 * 60 * 1000;
+const UNKNOWN_ROUTE_MESSAGE = 'Route not found';
 
 export const STORAGE_STATE = path.join(__dirname, '..', '.auth', 'user.json');
 export const E2E_PREFIX = 'E2E ';
@@ -184,6 +292,10 @@ export const e2eApi = {
   signUp,
   signIn,
   deleteById,
+  seedFlow,
+  seedSecretTextConnection,
+  uniqueName,
+  callApi,
   deleteStaleData,
   describeFlow,
   describeRun,
@@ -191,6 +303,9 @@ export const e2eApi = {
 
 export type E2eSession = { token: string; projectId: string };
 export type E2eResource = string;
+export type FlowTemplate = { flows: { displayName: string; trigger: unknown; schemaVersion?: string | null; notes?: unknown }[] };
+export type SeededFlow = { flowId: string; flowName: string; webhookUrl: string };
+export type SeededConnection = { id: string; externalId: string; displayName: string };
 type FlowSummary = { id: string; created: string; version: { displayName: string } };
 type ConnectionSummary = { id: string; created: string; displayName: string };
 type FlowState = {
