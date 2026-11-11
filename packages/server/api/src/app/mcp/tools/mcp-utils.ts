@@ -935,11 +935,9 @@ function rankActionsByIntent({ actions, forIntent }: { actions: RankableAction[]
         if (c === 'single') return -1
         return 0
     }
-    const otherNames = actions.map((a) => a.name).filter((name) => IDENTIFIER_NAME.test(name)).map((name) => name.toLowerCase()).sort((a, b) => b.length - a.length)
+    const siblingNames = collectSiblingNames(actions)
     const scored = actions.map((a) => {
-        const haystack = otherNames
-            .filter((name) => name !== a.name.toLowerCase())
-            .reduce((text, name) => text.split(name).join(' '), `${a.displayName} ${a.description} ${a.aiDescription ?? ''}`.toLowerCase())
+        const haystack = intentHaystack({ action: a, siblingNames })
         const tokenScore = tokens.reduce((acc, t) => acc + (haystack.includes(t) ? 1 : 0), 0)
         return { name: a.name, score: tokenScore + cardinalityBonus(a.cardinality), isAi: a.audience === AI_AUDIENCE }
     })
@@ -948,6 +946,21 @@ function rankActionsByIntent({ actions, forIntent }: { actions: RankableAction[]
         .sort((a, b) => b.score - a.score || Number(b.isAi) - Number(a.isAi))
         .slice(0, 5)
         .map((s) => s.name)
+}
+
+function collectSiblingNames(actions: RankableAction[]): string[] {
+    return actions.flatMap((a) => [
+        ...(IDENTIFIER_NAME.test(a.name) ? [a.name.toLowerCase()] : []),
+        ...(a.displayName.trim().includes(' ') ? [a.displayName.trim().toLowerCase()] : []),
+    ]).sort((a, b) => b.length - a.length)
+}
+
+function intentHaystack({ action, siblingNames }: { action: RankableAction, siblingNames: string[] }): string {
+    const ownNames = [action.name.toLowerCase(), action.displayName.trim().toLowerCase()]
+    const description = siblingNames
+        .filter((name) => !ownNames.includes(name))
+        .reduce((text, name) => text.split(name).join(' '), `${action.description} ${action.aiDescription ?? ''}`.toLowerCase())
+    return `${action.displayName.toLowerCase()} ${description}`
 }
 
 const AI_AUDIENCE = 'ai'

@@ -498,6 +498,25 @@ describe('mcpUtils.rankActionsByIntent — AI actions and their human twins', ()
         expect(ranked).toEqual(['drive_search_files', 'drive_create_folder'])
     })
 
+    it('does not count an intent word that only appears in another action\'s display name', () => {
+        const actions = [
+            action({ name: 'searchMessages', displayName: 'Search Messages', description: 'Search messages in the workspace' }),
+            action({ name: 'slack_update_message', displayName: 'Update Message', description: 'Edit a message', aiDescription: 'Take the ts from Search Messages or Get Channel History.', audience: 'ai' }),
+            action({ name: 'slack_search_messages', displayName: 'Search Messages', description: 'Search the workspace for messages', audience: 'ai' }),
+        ]
+        const ranked = mcpUtils.rankActionsByIntent({ actions, forIntent: 'search messages for a keyword' })
+        expect(ranked).toEqual(['slack_search_messages', 'searchMessages'])
+    })
+
+    it('still counts the words in an action\'s own display name when it contains another action\'s display name', () => {
+        const actions = [
+            action({ name: 'send_message', displayName: 'Send Message', description: 'Send a message' }),
+            action({ name: 'send_message_to_user', displayName: 'Send Message To User', description: 'Direct message a user' }),
+        ]
+        const ranked = mcpUtils.rankActionsByIntent({ actions, forIntent: 'send message to a user' })
+        expect(ranked).toEqual(['send_message_to_user', 'send_message'])
+    })
+
     it('keeps the piece order for equal scores when the piece has no AI actions', () => {
         const actions = [
             action({ name: 'create_row', displayName: 'Create Row', description: 'Add a row to a sheet' }),
