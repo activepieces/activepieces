@@ -1,6 +1,7 @@
 import { apId } from '@activepieces/core-utils'
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import {
+    EngineResponseStatus,
     Flow,
     FlowStatus,
     FlowTriggerType,
@@ -16,6 +17,7 @@ import { StatusCodes } from 'http-status-codes'
 import { flowSideEffects } from '../../../../src/app/flows/flow/flow-service-side-effects'
 import { appEventRoutingService } from '../../../../src/app/trigger/app-event-routing/app-event-routing.service'
 import { triggerSourceService } from '../../../../src/app/trigger/trigger-source/trigger-source-service'
+import { userInteractionWatcher } from '../../../../src/app/workers/user-interaction-watcher'
 import { db } from '../../../helpers/db'
 import { createMockFlow, createMockFlowVersion, createMockPieceMetadata } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
@@ -88,6 +90,29 @@ describe('POST /v1/test-trigger with the simulation strategy', () => {
 
         expect(await listSimulationSources(flowId)).toHaveLength(1)
         expect(await db.findBy('app_event_routing', { flowId })).toHaveLength(1)
+    })
+})
+
+describe('POST /v1/test-trigger with the test function strategy', () => {
+    it('lists the samples in the order the trigger returned them, newest first', async () => {
+        const { ctx, flowId, flowVersionId } = await createDraftFlowWithTrigger({ triggerType: TriggerStrategy.POLLING })
+        const samples = [{ row: 105 }, { row: 104 }, { row: 103 }, { row: 102 }, { row: 101 }]
+        const submit = vi.spyOn(userInteractionWatcher, 'submitAndWaitForResponse').mockResolvedValue({
+            status: EngineResponseStatus.OK,
+            response: { output: samples },
+        })
+        try {
+            const testResponse = await ctx.post('/v1/test-trigger', { projectId: ctx.project.id, flowId, flowVersionId, testStrategy: TriggerTestStrategy.TEST_FUNCTION })
+            expect(testResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(testResponse?.json().data.map((event: { payload: unknown }) => event.payload)).toEqual(samples)
+        }
+        finally {
+            submit.mockRestore()
+        }
+
+        const listResponse = await ctx.get('/v1/trigger-events', { projectId: ctx.project.id, flowId, limit: '5' })
+        expect(listResponse?.statusCode).toBe(StatusCodes.OK)
+        expect(listResponse?.json().data.map((event: { payload: unknown }) => event.payload)).toEqual(samples)
     })
 })
 
