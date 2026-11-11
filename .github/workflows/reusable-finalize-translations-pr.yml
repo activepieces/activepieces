@@ -110,7 +110,18 @@ jobs:
           BRANCH_NAME: ${{ inputs.branch_name }}
         run: git push origin --delete $BRANCH_NAME
 
+      - name: Rename changed strings in Crowdin
+        id: crowdin
+        if: steps.ahead.outputs.changes == 'true'
+        env:
+          CROWDIN_RENAME_TOKEN: ${{ secrets.CROWDIN_RENAME_TOKEN }}
+          CROWDIN_PROJECT_ID: ${{ vars.CROWDIN_PROJECT_ID }}
+          CROWDIN_RENAME_DRY_RUN: ${{ vars.CROWDIN_RENAME_DRY_RUN }}
+          CROWDIN_AUTO_APPROVERS: ${{ vars.CROWDIN_AUTO_APPROVERS }}
+        run: bun tools/scripts/i18n/crowdin-rename.ts --base origin/main --journal "$RUNNER_TEMP/crowdin-rename-journal.jsonl"
+
       - name: Create Pull Request
+        id: pr
         if: steps.ahead.outputs.changes == 'true'
         uses: actions/github-script@v8
         with:
@@ -132,17 +143,54 @@ jobs:
               issue_number: pullRequest.number,
               labels: ['skip-changelog', 'translations', 'auto-merge']
             });
-            await github.rest.pulls.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pullRequest.number,
-              merge_method: 'squash'
-            });
+            const pull = { owner: context.repo.owner, repo: context.repo.repo, pull_number: pullRequest.number };
+            const mergeAttempts = 3;
+            let merged = false;
+            for (let attempt = 1; attempt <= mergeAttempts && !merged; attempt++) {
+              try {
+                await github.rest.pulls.merge({ ...pull, merge_method: 'squash' });
+                merged = true;
+              } catch (error) {
+                core.warning(`Merge attempt ${attempt} failed: ${error.message}`);
+                const { data: current } = await github.rest.pulls.get(pull).catch(() => ({ data: { merged: false } }));
+                merged = current.merged === true;
+                if (!merged && attempt < mergeAttempts) {
+                  await new Promise((resolve) => setTimeout(resolve, 20000));
+                }
+              }
+            }
+            if (!merged) {
+              await github.rest.pulls.update({ ...pull, state: 'closed' }).catch((error) => core.warning(`Could not close the PR: ${error.message}`));
+              await github.rest.git.deleteRef({ owner: context.repo.owner, repo: context.repo.repo, ref: `heads/${branchName}` }).catch((error) => core.warning(`Could not delete the branch: ${error.message}`));
+              core.setFailed(`The translations PR #${pullRequest.number} did not merge after ${mergeAttempts} attempts. It was closed so nobody merges it after the Crowdin renames are undone.`);
+              return;
+            }
+            core.setOutput('merged', 'true');
 
             await github.rest.git.deleteRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
               ref: `heads/${branchName}`
-            });
+            }).catch((error) => core.warning(`Could not delete the branch: ${error.message}`));
 
+      - name: Undo the Crowdin renames when the translations PR did not merge
+        if: (failure() || cancelled()) && steps.pr.outputs.merged != 'true' && steps.crowdin.outcome != 'skipped'
+        env:
+          CROWDIN_RENAME_TOKEN: ${{ secrets.CROWDIN_RENAME_TOKEN }}
+          CROWDIN_PROJECT_ID: ${{ vars.CROWDIN_PROJECT_ID }}
+        run: bun tools/scripts/i18n/crowdin-rename.ts --undo "$RUNNER_TEMP/crowdin-rename-journal.jsonl" --journal "$RUNNER_TEMP/crowdin-rename-undo-journal.jsonl"
 
+      - name: Keep the Crowdin rename journal
+        if: always() && steps.crowdin.outcome != 'skipped'
+        uses: actions/upload-artifact@v6
+        with:
+          name: crowdin-rename-journal
+          path: ${{ runner.temp }}/crowdin-rename-*.jsonl
+          if-no-files-found: ignore
+          retention-days: 90
+
+      - name: Fail when Crowdin could not rename every string
+        if: steps.crowdin.outputs.failed != '' && steps.crowdin.outputs.failed != '0'
+        run: |
+          echo "::error::Crowdin could not rename ${{ steps.crowdin.outputs.failed }} strings. They lose their translations on the next Crowdin sync. See the job summary."
+          exit 1
