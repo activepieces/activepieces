@@ -18,7 +18,7 @@ function mountCopyButton(writeText: () => Promise<void>) {
   render(
     <DataDisplayTabs data={{ a: 1 }} title="Output" copyableData={{ a: 1 }} />,
   );
-  return screen.getByRole('button', { name: 'Copy to clipboard' });
+  return screen.getByRole('button', { name: 'Copy' });
 }
 
 describe('DataDisplayTabs copy button', () => {
@@ -34,27 +34,21 @@ describe('DataDisplayTabs copy button', () => {
     fireEvent.click(copyButton);
 
     await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith(
-        'Failed to copy to clipboard',
-        expect.anything(),
-      ),
+      expect(toast.error).toHaveBeenCalledWith('Failed to copy to clipboard'),
     );
     expect(toast.success).not.toHaveBeenCalled();
   });
 
-  it('confirms a resolved clipboard write', async () => {
+  it('copies the data on a resolved clipboard write', async () => {
     const writeText = vi.fn(() => Promise.resolve());
     const copyButton = mountCopyButton(writeText);
 
     fireEvent.click(copyButton);
 
     await waitFor(() =>
-      expect(toast.success).toHaveBeenCalledWith(
-        'Copied to clipboard',
-        expect.anything(),
-      ),
+      expect(writeText).toHaveBeenCalledWith(JSON.stringify({ a: 1 }, null, 2)),
     );
-    expect(writeText).toHaveBeenCalledWith(JSON.stringify({ a: 1 }, null, 2));
     expect(toast.error).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
   });
 });

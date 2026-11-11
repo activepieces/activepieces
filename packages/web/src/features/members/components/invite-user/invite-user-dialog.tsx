@@ -17,8 +17,8 @@ import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { clipboardUtils } from '@/components/custom/clipboard/clipboard-utils';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
+import { clipboardUtils } from '@/components/custom/clipboard/use-copy-to-clipboard';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -346,16 +346,10 @@ const InviteUserDialogInternal = ({
     mutate({ ...data, emails: emailsToInvite });
   };
 
-  const copyAllLinks = async () => {
-    const text = resultsWithLinks
-      .map((r) => `${r.email}: ${r.link}`)
-      .join('\n');
-    if (await clipboardUtils.copy(text)) {
-      toast.success(t('All invitation links copied successfully'), {
-        duration: 3000,
-      });
-    }
-  };
+  const copyAllLinks = () =>
+    clipboardUtils.copy({
+      value: resultsWithLinks.map((r) => `${r.email}: ${r.link}`).join('\n'),
+    });
 
   const downloadCsv = () => {
     const rows = [

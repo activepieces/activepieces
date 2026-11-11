@@ -32,25 +32,17 @@ describe('JsonViewer copy button', () => {
     );
 
     await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith(
-        'Failed to copy to clipboard',
-        expect.anything(),
-      ),
+      expect(toast.error).toHaveBeenCalledWith('Failed to copy to clipboard'),
     );
     expect(toast.success).not.toHaveBeenCalled();
   });
 
-  it('confirms a resolved clipboard write', async () => {
+  it('copies the json on a resolved clipboard write', async () => {
     const writeText = vi.fn(() => Promise.resolve());
     clickCopy(writeText);
 
-    await waitFor(() =>
-      expect(toast.success).toHaveBeenCalledWith(
-        'Copied to clipboard',
-        expect.anything(),
-      ),
-    );
-    expect(writeText).toHaveBeenCalledWith('42');
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith('42'));
     expect(toast.error).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
   });
 });
