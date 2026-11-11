@@ -136,8 +136,13 @@ export function ApTableStateProvider({
     await refetchTableState();
     remountTableState();
   }, [refetchTableState, remountTableState]);
+  const isLoading = isTableLoading || isFieldsLoading || isRecordsLoading;
+  const missedUpdateWhileLoading = useMissedUpdateWhileLoading({
+    tableId,
+    isLoading,
+  });
 
-  if (isTableLoading || isFieldsLoading || isRecordsLoading) {
+  if (isLoading) {
     return <RouteLoadingBar />;
   }
 
@@ -184,6 +189,7 @@ export function ApTableStateProvider({
           records={records.data}
         >
           <RefreshOnTableUpdated
+            missedUpdateWhileLoading={missedUpdateWhileLoading}
             tableId={table.id}
             refetch={refetchTableState}
             remount={remountTableState}
@@ -252,11 +258,38 @@ function TableLockProvider({
   );
 }
 
+function useMissedUpdateWhileLoading({
+  tableId,
+  isLoading,
+}: {
+  tableId: string | undefined;
+  isLoading: boolean;
+}) {
+  const socket = useSocket();
+  const missed = useRef(false);
+  const loading = useRef(isLoading);
+  loading.current = isLoading;
+  useEffect(() => {
+    const onTableUpdated = (event: TableUpdatedEvent) => {
+      if (loading.current && event.tableId === tableId) {
+        missed.current = true;
+      }
+    };
+    socket.on(WebsocketClientEvent.TABLE_UPDATED, onTableUpdated);
+    return () => {
+      socket.off(WebsocketClientEvent.TABLE_UPDATED, onTableUpdated);
+    };
+  }, [socket, tableId]);
+  return missed;
+}
+
 function RefreshOnTableUpdated({
+  missedUpdateWhileLoading,
   tableId,
   refetch,
   remount,
 }: {
+  missedUpdateWhileLoading: React.MutableRefObject<boolean>;
   tableId: string;
   refetch: () => Promise<void>;
   remount: () => void;
@@ -306,12 +339,16 @@ function RefreshOnTableUpdated({
     };
     socket.on(WebsocketClientEvent.TABLE_UPDATED, onTableUpdated);
     socket.on('connect', requestRefresh);
+    if (missedUpdateWhileLoading.current) {
+      missedUpdateWhileLoading.current = false;
+      requestRefresh();
+    }
     return () => {
       socket.off(WebsocketClientEvent.TABLE_UPDATED, onTableUpdated);
       socket.off('connect', requestRefresh);
       clearTimeout(timer);
     };
-  }, [socket, store, tableId, refetch, remount]);
+  }, [socket, store, tableId, refetch, remount, missedUpdateWhileLoading]);
   return null;
 }
 

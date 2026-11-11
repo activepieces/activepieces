@@ -32,11 +32,11 @@ export const createServerState = (
     queue.add(async () => {
       updateSavingStatus(true);
       const { error } = await tryCatch(promise);
+      updateSavingStatus(queue.size() === 1);
       if (!isNil(error)) {
         errorReporting.report({ error, source: 'table-save' });
         throw error;
       }
-      updateSavingStatus(queue.size() === 1);
     });
   }
   return {
