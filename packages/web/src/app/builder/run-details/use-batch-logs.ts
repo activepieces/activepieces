@@ -70,9 +70,9 @@ export const useBatchLogs = (stepName: string | undefined): BatchLogs => {
     return { kind: 'steps', steps, childRunId: selectedChild?.id ?? null };
   }
   return {
-    kind: batchUtils.childState({
+    kind: batchUtils.missingLogsReason({
       output,
-      batchIndex: current,
+      dispatchIndex: current,
       child: selectedChild,
     }),
     childRunId: selectedChild?.id ?? null,

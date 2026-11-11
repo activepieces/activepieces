@@ -38,7 +38,6 @@ export const BatchBrowser = ({ stepName }: { stepName: string }) => {
   const jumpTarget = batchUtils.parseJumpTarget({
     query,
     total,
-    isTotalExact: header.kind === 'finished',
   });
 
   if (isNil(output)) {
@@ -182,7 +181,7 @@ const BatchProgress = ({
     {header.kind === 'finished' && header.timedOut && (
       <span className="text-xs text-warning-11">
         {t('Stopped waiting after the timeout, with {running} still running', {
-          running: formatUtils.formatNumber(header.running),
+          running: formatUtils.formatNumber(header.stillRunning),
         })}
       </span>
     )}
@@ -217,13 +216,13 @@ const BatchStatTiles = ({ header }: { header: BatchHeaderState }) => {
     },
     {
       label: t('Failed'),
-      value: header.failed,
+      value: header.unsuccessful,
       tone: 'text-danger-11',
       dot: 'bg-destructive',
     },
     {
       label: t('Running'),
-      value: header.running,
+      value: header.stillRunning,
       tone: 'text-accent-11',
       dot: 'bg-primary',
     },
@@ -420,9 +419,9 @@ const BatchRow = ({
   const dispatchIndex = run?.dispatchIndex ?? fallbackDispatchIndex ?? 0;
   const badge = batchUtils.batchStatusBadge(
     isNil(run)
-      ? batchUtils.childState({
+      ? batchUtils.missingLogsReason({
           output,
-          batchIndex: dispatchIndex,
+          dispatchIndex,
           child: null,
         })
       : run.status,
@@ -465,9 +464,9 @@ const BatchDetail = ({
     enabled: true,
   });
   const run = data?.data[0] ?? null;
-  const state = batchUtils.childState({
+  const state = batchUtils.missingLogsReason({
     output,
-    batchIndex: dispatchIndex,
+    dispatchIndex,
     child: null,
   });
   const badge = batchUtils.batchStatusBadge(isNil(run) ? state : run.status);
@@ -527,19 +526,19 @@ const StatusBadge = ({ badge }: { badge: BatchStatusBadge }) => (
 function progressGradient({
   total,
   succeeded,
-  failed,
-  running,
+  unsuccessful,
+  stillRunning,
 }: {
   total: number;
   succeeded: number;
-  failed: number;
-  running: number;
+  unsuccessful: number;
+  stillRunning: number;
 }): string {
   let cursor = 0;
   const stops = [
     { color: 'var(--success-9)', value: succeeded },
-    { color: 'var(--danger-9)', value: failed },
-    { color: 'var(--accent-9)', value: running },
+    { color: 'var(--danger-9)', value: unsuccessful },
+    { color: 'var(--accent-9)', value: stillRunning },
   ].flatMap(({ color, value }) => {
     if (value === 0) {
       return [];
