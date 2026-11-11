@@ -9,6 +9,9 @@ import {
   PurchasablePlan,
   AdjustUnconsumableFeatureQuantityParams,
   CancelSubscriptionRequest,
+  ApEdition,
+  ApFlagId,
+  PlanName,
 } from '@activepieces/shared';
 import {
   QueryClient,
@@ -21,13 +24,94 @@ import { t } from 'i18next';
 import { toast } from 'sonner';
 
 import { internalErrorToast } from '@/components/ui/sonner';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 
 import { platformBillingApi } from '../api/billing-plans-api';
 import { planSelectorUtils } from '../components/plan-selector-utils';
+import { FeatureKey, platformFeatures } from '../utils/platform-features';
 
 import { billingDialogHooks } from './billing-dialog-hooks';
+
+export function refreshBillingCaches(queryClient: QueryClient) {
+  queryClient.invalidateQueries({ queryKey: ['platform'] });
+  queryClient.invalidateQueries({ queryKey: ['flags'] });
+  queryClient.invalidateQueries({
+    queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY,
+  });
+}
+
+function applyOptimisticAutoTopUp(
+  info: PlatformBillingInformation,
+  params: ConsumableProductAutoTopupParams,
+): PlatformBillingInformation {
+  const autoTopUp: AutoTopUpConfig =
+    params.state === AiCreditsAutoTopUpState.DISABLED
+      ? {
+          featureId: params.featureId,
+          enabled: false,
+          threshold: 0,
+          quantity: 0,
+          maxMonthlyTopUps: null,
+        }
+      : {
+          featureId: params.featureId,
+          enabled: true,
+          threshold: params.minThreshold,
+          quantity: params.creditsToAdd,
+          maxMonthlyTopUps: params.maxMonthlyTopUps,
+        };
+  return params.featureId === ConsumableFeatureId.AP_CREDITS
+    ? {
+        ...info,
+        creditsFeature: isNil(info.creditsFeature)
+          ? info.creditsFeature
+          : { ...info.creditsFeature, autoTopUp },
+      }
+    : {
+        ...info,
+        appSumoCreditsFeature: isNil(info.appSumoCreditsFeature)
+          ? info.appSumoCreditsFeature
+          : { ...info.appSumoCreditsFeature, autoTopUp },
+      };
+}
+
+function restoreBillingSubscription(
+  queryClient: QueryClient,
+  previous: [QueryKey, PlatformBillingInformation | undefined][] | undefined,
+): void {
+  previous?.forEach(([key, data]) =>
+    queryClient.setQueryData<PlatformBillingInformation>(key, data),
+  );
+}
+
+export function usePlanThatHasFeature(
+  featureKey: FeatureKey | undefined,
+): PlanThatHasFeatureInfo {
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { platform } = platformHooks.useCurrentPlatform();
+  const planThatHasFeature = platformFeatures.planThatHasFeature({
+    featureKey,
+    edition,
+  });
+  const projectLimit = platform.plan.billedTeamProjectsLimit;
+  const reachedOwnPlanLimit =
+    featureKey === 'PROJECTS' && !isNil(projectLimit) && projectLimit > 0;
+  const limitReached = t(
+    "You've reached your plan's {count, plural, =1 {1 team project} other {# team projects}}",
+    { count: projectLimit ?? 0 },
+  );
+  return {
+    planThatHasFeature,
+    label: reachedOwnPlanLimit
+      ? limitReached
+      : platformFeatures.includedInPlanLabel(planThatHasFeature),
+    badge: reachedOwnPlanLimit
+      ? limitReached
+      : platformFeatures.planBadgeLabel(planThatHasFeature),
+  };
+}
 
 export const PLATFORM_BILLING_SUBSCRIPTION_KEY = [
   'platform-billing-subscription',
@@ -271,58 +355,6 @@ export const billingQueries = {
   },
 };
 
-export function refreshBillingCaches(queryClient: QueryClient) {
-  queryClient.invalidateQueries({ queryKey: ['platform'] });
-  queryClient.invalidateQueries({ queryKey: ['flags'] });
-  queryClient.invalidateQueries({
-    queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY,
-  });
-}
-
-function applyOptimisticAutoTopUp(
-  info: PlatformBillingInformation,
-  params: ConsumableProductAutoTopupParams,
-): PlatformBillingInformation {
-  const autoTopUp: AutoTopUpConfig =
-    params.state === AiCreditsAutoTopUpState.DISABLED
-      ? {
-          featureId: params.featureId,
-          enabled: false,
-          threshold: 0,
-          quantity: 0,
-          maxMonthlyTopUps: null,
-        }
-      : {
-          featureId: params.featureId,
-          enabled: true,
-          threshold: params.minThreshold,
-          quantity: params.creditsToAdd,
-          maxMonthlyTopUps: params.maxMonthlyTopUps,
-        };
-  return params.featureId === ConsumableFeatureId.AP_CREDITS
-    ? {
-        ...info,
-        creditsFeature: isNil(info.creditsFeature)
-          ? info.creditsFeature
-          : { ...info.creditsFeature, autoTopUp },
-      }
-    : {
-        ...info,
-        appSumoCreditsFeature: isNil(info.appSumoCreditsFeature)
-          ? info.appSumoCreditsFeature
-          : { ...info.appSumoCreditsFeature, autoTopUp },
-      };
-}
-
-function restoreBillingSubscription(
-  queryClient: QueryClient,
-  previous: [QueryKey, PlatformBillingInformation | undefined][] | undefined,
-): void {
-  previous?.forEach(([key, data]) =>
-    queryClient.setQueryData<PlatformBillingInformation>(key, data),
-  );
-}
-
 type SeatLimitExceededCheckout = {
   params: CheckoutPlanParams;
   targetSeats: number;
@@ -337,4 +369,10 @@ type CheckoutOptions = {
 type CancelSubscriptionOptions = {
   onDone?: () => void;
   onSeatLimitExceeded?: (request: CancelSubscriptionRequest) => void;
+};
+
+type PlanThatHasFeatureInfo = {
+  planThatHasFeature: PlanName;
+  label: string;
+  badge: string;
 };
