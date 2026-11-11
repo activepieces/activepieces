@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { CodeAction, FlowRunStatus, PieceAction } from '@activepieces/shared'
+import { CodeAction, FlowRunStatus, PieceAction, ProcessInBatchesAction } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import {  FlowExecutorContext } from '../handler/context/flow-execution-context'
 
@@ -28,7 +28,7 @@ export async function runWithExponentialBackoff<T extends CodeAction | PieceActi
 
 export async function continueIfFailureHandler(
     executionState: FlowExecutorContext,
-    action: CodeAction | PieceAction,
+    action: CodeAction | PieceAction | ProcessInBatchesAction,
     constants: EngineConstants,
 ): Promise<FlowExecutorContext> {
     const continueOnFailure = action.settings.errorHandlingOptions?.continueOnFailure?.value
