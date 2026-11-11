@@ -1,30 +1,42 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { bufferClient } from './client';
+import { BufferApiError, bufferClient } from './client';
+import { bufferQueries } from './queries';
 
 export const bufferAuth = PieceAuth.SecretText({
-  displayName: 'Access Token',
+  displayName: 'API Key',
   description: `
-**How to get your Buffer access token:**
+**How to get your Buffer API key:**
 
-1. Sign in to Buffer at https://buffer.com and open the [Developer Apps](https://publish.buffer.com/developers/apps) page.
-2. Click **Create New App** and fill in the basic details (callback URL can be any placeholder).
-3. After the app is created, copy the **Access Token** shown on the app's page.
-4. Paste it below.
+1. Sign in to Buffer and open **Settings → API** (https://publish.buffer.com/settings/api).
+2. Click **Create key**, give it a name, and copy the key. Buffer shows it only once.
+3. Paste it below.
 
-The token is sent as a Bearer token to the Buffer GraphQL API (https://api.buffer.com).`,
+The key acts as you: it reaches every organization and channel on your Buffer account. All your keys and MCP connections share one request limit (Free plan: 150 requests per 15 minutes and 600 per day).`,
   required: true,
   validate: async ({ auth }) => {
     try {
       await bufferClient.graphql<{ account: { id: string } }>({
         accessToken: auth,
-        query: `query { account { id } }`,
+        query: bufferQueries.ACCOUNT_ID,
+        operation: 'check the API key',
       });
       return { valid: true };
-    } catch (e) {
+    } catch (error) {
+      if (error instanceof BufferApiError && (error.status === 401 || error.code === 'UNAUTHENTICATED' || error.code === 'UNAUTHORIZED')) {
+        return {
+          valid: false,
+          error: 'Buffer rejected this API key. Create a new key in Buffer under Settings → API and paste it here.',
+        };
+      }
+      if (error instanceof BufferApiError && (error.status === 429 || error.code === 'RATE_LIMIT_EXCEEDED')) {
+        return {
+          valid: false,
+          error: 'Buffer rate-limited this account, so the key could not be checked. Wait a few minutes and try again.',
+        };
+      }
       return {
         valid: false,
-        error:
-          'Invalid Buffer access token. Make sure the token has the required scopes and try again.',
+        error: error instanceof Error ? error.message : 'Buffer could not check the API key.',
       };
     }
   },
