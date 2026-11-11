@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### ManyChat 0.2.0: Set Custom Field is no longer an agent tool
+
+From ManyChat 0.2.0, **Set Custom Field** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs. Agents use the new **Set Subscriber Custom Fields** tool instead, which sets 1 to 20 fields in one call by field ID or name. Set Custom Field steps upgraded to 0.2.0 send date values as `YYYY-MM-DD` and date-time values with an explicit time zone offset, as ManyChat documents. The piece needs Activepieces 0.86.4 or later.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used Set Custom Field at **Set Subscriber Custom Fields**. Flows that use Set Custom Field as a step keep working unchanged.
+
 #### Google Drive 0.14.0: file triggers, downloads and search across shared drives
 
 From Google Drive 0.14.0, the **New File** trigger with **Include File Content** on fires for a file whose download fails. That run has a `contentError` field with the reason instead of `content`. Before, one failed download (for example a Google Form, which Drive can't download) failed the whole poll, and every new file in that poll was lost. The trigger's output can now carry the `content` and `contentError` keys.
