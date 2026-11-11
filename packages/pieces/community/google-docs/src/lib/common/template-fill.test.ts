@@ -149,6 +149,46 @@ describe('templateFill.scan', () => {
   });
 });
 
+describe('templateFill.scan floating images', () => {
+  it('lists a floating image in document order and finds it by alt text', () => {
+    const scan = templateFill.scan({
+      document: {
+        tabs: [
+          {
+            tabProperties: { tabId: 't.0' },
+            documentTab: {
+              body: {
+                content: [
+                  paragraphWithImage('kix.inline'),
+                  { paragraph: { elements: [{ textRun: { content: 'text' } }], positionedObjectIds: ['kix.float'] } },
+                ],
+              },
+              inlineObjects: { 'kix.inline': image({ title: 'Logo' }) },
+              positionedObjects: {
+                'kix.float': {
+                  positionedObjectProperties: { embeddedObject: { description: 'Stamp', imageProperties: {} } },
+                },
+                'kix.drawing': { positionedObjectProperties: { embeddedObject: {} } },
+              },
+            },
+          },
+        ],
+      },
+      format: '{{KEY}}',
+    });
+
+    expect(scan.images.map((found) => found.objectId)).toEqual(['kix.inline', 'kix.float']);
+    expect(scan.otherObjects.map((found) => found.objectId)).toEqual(['kix.drawing']);
+    expect(
+      templateFill.plan({
+        scan,
+        format: '{{KEY}}',
+        images: [{ imageObjectId: 'stamp', url: 'https://example.com/s.png' }],
+      }).requests,
+    ).toEqual([{ replaceImage: { imageObjectId: 'kix.float', uri: 'https://example.com/s.png' } }]);
+  });
+});
+
 describe('templateFill.plan', () => {
   it('builds the same request as before for a plain key', () => {
     const plan = templateFill.plan({

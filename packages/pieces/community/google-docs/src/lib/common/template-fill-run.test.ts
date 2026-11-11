@@ -75,6 +75,18 @@ describe('runTemplateFill', () => {
     expect(clients.trashFile).toHaveBeenCalledWith('copy-id');
   });
 
+  it('names the leftover copy when moving it to the trash also fails', async () => {
+    const clients = stubClients();
+    clients.batchUpdate.mockRejectedValue(new Error('There was a problem retrieving the image.'));
+    clients.trashFile.mockRejectedValue(new Error('insufficientFilePermissions'));
+
+    await expect(
+      runTemplateFill({ clients, input: { ...baseInput, createCopy: true, values: { name: 'Ada' } } }),
+    ).rejects.toThrow(
+      'There was a problem retrieving the image. The new document copy-id could not be moved to the trash (insufficientFilePermissions). Delete it by hand.',
+    );
+  });
+
   it('never trashes the template when an in-place fill fails', async () => {
     const clients = stubClients();
     clients.batchUpdate.mockRejectedValue(new Error('boom'));

@@ -249,6 +249,6 @@ async function createTemplateClients(auth: GoogleDocsAuthValue): Promise<Templat
   };
 }
 
-const PARAGRAPH_FIELDS = 'paragraph(elements(textRun(content),inlineObjectElement(inlineObjectId)))';
+const PARAGRAPH_FIELDS = 'paragraph(elements(textRun(content),inlineObjectElement(inlineObjectId)),positionedObjectIds)';
 
 const TEMPLATE_FIELDS = `title,tabs(tabProperties(tabId),documentTab(body(content(${PARAGRAPH_FIELDS},table,tableOfContents)),headers,footers,footnotes,inlineObjects,positionedObjects),childTabs)`;

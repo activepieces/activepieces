@@ -108,11 +108,25 @@ async function applyRequests({
   try {
     return await clients.batchUpdate({ documentId, requests });
   } catch (error) {
-    if (isCopy) {
-      await clients.trashFile(documentId).catch(() => undefined);
+    if (!isCopy) {
+      throw error;
     }
-    throw error;
+    const cleanupError = await clients.trashFile(documentId).then(
+      () => undefined,
+      (trashError: unknown) => trashError,
+    );
+    if (cleanupError === undefined) {
+      throw error;
+    }
+    throw new Error(
+      `${errorMessage(error)} The new document ${documentId} could not be moved to the trash (${errorMessage(cleanupError)}). Delete it by hand.`,
+      { cause: error },
+    );
   }
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 const MAX_INPUTS = 100;

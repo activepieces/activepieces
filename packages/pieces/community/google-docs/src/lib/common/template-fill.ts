@@ -22,6 +22,7 @@ function scan({ document, format }: { document: docs_v1.Schema$Document; format:
 
   listTabs(document).forEach(({ tabId, documentTab }, tabIndex) => {
     const inlineObjects = documentTab.inlineObjects ?? {};
+    const positionedObjects = documentTab.positionedObjects ?? {};
     const seenImages = new Set<string>();
     const inFirstTab = tabIndex === 0;
 
@@ -42,13 +43,19 @@ function scan({ document, format }: { document: docs_v1.Schema$Document; format:
         tokensByKey.set(key, tokens);
       }
 
-      for (const element of elements) {
-        const objectId = element.inlineObjectElement?.inlineObjectId;
-        if (!objectId || seenImages.has(objectId)) {
-          continue;
-        }
-        const embeddedObject = inlineObjects[objectId]?.inlineObjectProperties?.embeddedObject;
-        if (!embeddedObject?.imageProperties) {
+      const anchoredObjects = [
+        ...elements.flatMap((element) => {
+          const objectId = element.inlineObjectElement?.inlineObjectId;
+          return objectId ? [{ objectId, embeddedObject: inlineObjects[objectId]?.inlineObjectProperties?.embeddedObject }] : [];
+        }),
+        ...(paragraph.positionedObjectIds ?? []).map((objectId) => ({
+          objectId,
+          embeddedObject: positionedObjects[objectId]?.positionedObjectProperties?.embeddedObject,
+        })),
+      ];
+
+      for (const { objectId, embeddedObject } of anchoredObjects) {
+        if (seenImages.has(objectId) || !embeddedObject?.imageProperties) {
           continue;
         }
         seenImages.add(objectId);
@@ -62,10 +69,9 @@ function scan({ document, format }: { document: docs_v1.Schema$Document; format:
       }
     }
 
-    const otherObjectIds = [
-      ...Object.keys(inlineObjects).filter((objectId) => !seenImages.has(objectId)),
-      ...Object.keys(documentTab.positionedObjects ?? {}),
-    ];
+    const otherObjectIds = [...Object.keys(inlineObjects), ...Object.keys(positionedObjects)].filter(
+      (objectId) => !seenImages.has(objectId),
+    );
     otherObjects.push(...otherObjectIds.map((objectId) => ({ objectId, tabId, inFirstTab })));
   });
 
