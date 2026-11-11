@@ -1206,6 +1206,9 @@
       "@activepieces/piece-salesloft": [
         "packages/pieces/community/salesloft/src/index.ts"
       ],
+      "@activepieces/piece-salla": [
+        "packages/pieces/community/salla/src/index.ts"
+      ],
       "@activepieces/piece-savvycal": [
         "packages/pieces/community/savvycal/src/index.ts"
       ],
