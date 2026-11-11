@@ -4,8 +4,9 @@ import { z } from 'zod'
 import { PROBLEM_TYPES, RunScores, RunVerdict } from './checks'
 import { EvalCase } from './eval-case'
 import { posthogDataset } from './posthog-dataset'
+import { ToolFingerprints } from './tool-changes'
 
-async function upload({ runs, suiteKey, runSource, applicationVersion, modelVersion, promptVersion }: UploadParams): Promise<string> {
+async function upload({ runs, suiteKey, runSource, applicationVersion, modelVersion, promptVersion, toolFingerprints }: UploadParams): Promise<string> {
     const scorers = await scorerIds()
     const id = randomUUID()
     const uploaded = runs.map((run) => ({ run, itemId: randomUUID() }))
@@ -22,7 +23,7 @@ async function upload({ runs, suiteKey, runSource, applicationVersion, modelVers
             application_version: applicationVersion,
             model_version: modelVersion,
             prompt_version: promptVersion,
-            expected_item_count: uploaded.length,
+            expected_item_count: uploaded.length + 1,
             expected_result_count: results.length,
         },
     })
@@ -33,6 +34,11 @@ async function upload({ runs, suiteKey, runSource, applicationVersion, modelVers
             body: { items: batch.map(itemFor), results: batch.flatMap(({ run, itemId }) => resultsFor({ scores: run.scores, itemId, scorers })) },
         })
     }
+    await posthogDataset.request({
+        path: `${EXPERIMENTS_PATH}${id}/upload/`,
+        method: 'POST',
+        body: { items: [{ id: randomUUID(), case_key: TOOL_DEFINITIONS_KEY, trial: '0', payload: { input: { tools: toolFingerprints }, output: '', expected_output: {}, metadata: {} } }], results: [] },
+    })
     await posthogDataset.request({ path: `${EXPERIMENTS_PATH}${id}/complete/`, method: 'POST', body: {} })
     return id
 }
@@ -62,11 +68,20 @@ async function baseline({ suiteKey, modelVersion }: { suiteKey: string, modelVer
         })
     }
     const counts = new Map<string, VerdictCounts>()
-    for (const key of new Set(items.map((item) => item.case_key))) {
+    for (const key of new Set(items.map((item) => item.case_key).filter((key) => key !== TOOL_DEFINITIONS_KEY))) {
         const failed = items.filter((item) => item.case_key === key && failedByItem.has(item.id)).map((item) => failedByItem.get(item.id) === true)
         counts.set(key, { pass: failed.filter((value) => !value).length, fail: failed.filter(Boolean).length })
     }
-    return { applicationVersion: latest.application_version ?? 'unknown', counts }
+    return { applicationVersion: latest.application_version ?? 'unknown', counts, toolFingerprints: await readToolFingerprints({ experimentId: latest.id, items }) }
+}
+
+async function readToolFingerprints({ experimentId, items }: { experimentId: string, items: ExperimentItem[] }): Promise<ToolFingerprints | null> {
+    const item = items.find((candidate) => candidate.case_key === TOOL_DEFINITIONS_KEY)
+    if (isNil(item)) {
+        return null
+    }
+    const payload = ToolDefinitionsPayload.safeParse(await posthogDataset.request({ path: `${EXPERIMENTS_PATH}${experimentId}/items/${item.id}/payload/` }))
+    return payload.success && !isNil(payload.data.data) ? payload.data.data.input.tools : null
 }
 
 function caseKey(candidate: EvalCase): string {
@@ -181,6 +196,7 @@ const UPLOAD_BATCH_RUNS = 100
 const CELLS_BATCH = 50
 const PAGE_SIZE = 100
 const SHORT_SHA = 8
+const TOOL_DEFINITIONS_KEY = 'tool-definitions'
 const TRANSCRIPT_MAX_CHARS = 20_000
 
 const Scorer = z.object({ id: z.string(), name: z.string(), archived: z.boolean(), current_version_id: z.string() })
@@ -188,6 +204,7 @@ const ScorerPage = z.object({ results: z.array(Scorer) })
 const ExperimentPage = z.object({ results: z.array(z.object({ id: z.string(), application_version: z.string().nullable() })) })
 const ExperimentItem = z.object({ id: z.string(), case_key: z.string() })
 const ItemPage = z.object({ next_cursor: z.string().nullable(), results: z.array(ExperimentItem) })
+const ToolDefinitionsPayload = z.object({ data: z.object({ input: z.object({ tools: z.record(z.string(), z.string()) }) }).nullable() })
 const ResultCells = z.object({ results: z.array(z.object({ item_id: z.string(), status: z.string(), value: z.unknown() })) })
 
 export const posthogExperiments = {
@@ -233,6 +250,7 @@ export type VerdictCounts = {
 export type Baseline = {
     applicationVersion: string
     counts: Map<string, VerdictCounts>
+    toolFingerprints: ToolFingerprints | null
 }
 
 type UploadParams = {
@@ -242,4 +260,5 @@ type UploadParams = {
     applicationVersion: string
     modelVersion: string
     promptVersion: string
+    toolFingerprints: ToolFingerprints
 }

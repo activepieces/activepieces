@@ -9,11 +9,12 @@ import { evalChecks, RunScores, RunVerdict, Verdict } from './checks'
 import { colors } from './colors'
 import { evalCase, EvalCase, RecordedToolCall } from './eval-case'
 import { posthogDataset } from './posthog-dataset'
-import { posthogExperiments, UploadedRun, VerdictCounts } from './posthog-experiments'
+import { Baseline, posthogExperiments, UploadedRun, VerdictCounts } from './posthog-experiments'
 import { progressTable } from './progress-table'
 import { evalPrompts } from './prompts'
-import { StaleRecording } from './replay'
+import { replay, StaleRecording } from './replay'
 import { resultsBrowser } from './results-browser'
+import { toolChanges, ToolFingerprints } from './tool-changes'
 import { evalToolSet, McpTools } from './tool-set'
 
 async function main(): Promise<void> {
@@ -64,13 +65,16 @@ async function main(): Promise<void> {
 
     const [auth, mcp] = await Promise.all([evalAgentTurn.resolveAuth(), evalToolSet.connectMcp()])
     console.log(`Dev server MCP tools run in project "${mcp.projectName}"`)
+    const toolFingerprints = await toolChanges.fingerprints({ tools: evalToolSet.build({ mcp, caseReplay: replay.create({ recordedToolCalls: [] }), auth, recordMode: false }) })
     const live = Boolean(process.stdout.isTTY) && !values.verbose
     const browse = live && Boolean(process.stdin.isTTY)
     const ran: RanDataset[] = []
     let explained = new Map<string, CaseExplanation>()
     try {
         for (const dataset of datasets) {
-            ran.push(await runDataset({ dataset, repeats, recordMode, upload: values.upload, verbose: values.verbose, live, modelId: values.model, auth, mcp }))
+            const baselineRead: BaselineRead = values.upload || recordMode ? { kind: 'skipped' } : await readBaseline({ suiteKey: dataset.name, modelVersion: values.model })
+            const changedTools = changedSinceBaseline({ baselineRead, toolFingerprints })
+            ran.push({ ...await runDataset({ dataset, repeats, recordMode, upload: values.upload, verbose: values.verbose, live, modelId: values.model, auth, mcp, baselineRead, changedTools }), baselineRead, changedTools })
         }
         if (!recordMode) {
             console.log(colors.dim('\nWriting a short summary for each case…'))
@@ -86,7 +90,7 @@ async function main(): Promise<void> {
     }
     const outcomes: DatasetOutcome[] = []
     for (const dataset of ran) {
-        outcomes.push(await reportDataset({ ...dataset, explained, live, browse, recordMode, upload: values.upload, modelId: values.model }))
+        outcomes.push(await reportDataset({ ...dataset, explained, live, browse, recordMode, upload: values.upload, modelId: values.model, toolFingerprints }))
     }
     const broken = outcomes.filter((outcome) => outcome.status === 'broken')
     const unchecked = outcomes.filter((outcome) => outcome.status === 'unchecked')
@@ -104,10 +108,54 @@ function finalLine({ broken, unchecked }: { broken: DatasetOutcome[], unchecked:
     return colors.bold(colors.green('✓ Nothing broke'))
 }
 
-async function runDataset({ dataset, repeats, recordMode, upload, verbose, live, modelId, auth, mcp }: { dataset: { name: string, cases: EvalCase[] }, repeats: number, recordMode: boolean, upload: boolean, verbose: boolean, live: boolean, modelId: string, auth: Record<string, unknown>, mcp: McpTools }): Promise<RanDataset> {
+async function readBaseline({ suiteKey, modelVersion }: { suiteKey: string, modelVersion: string }): Promise<BaselineRead> {
+    const { data, error } = await tryCatch(() => posthogExperiments.baseline({ suiteKey, modelVersion }))
+    if (error) {
+        return { kind: 'error', message: error.message }
+    }
+    return isNil(data) ? { kind: 'missing' } : { kind: 'found', baseline: data }
+}
+
+function changedSinceBaseline({ baselineRead, toolFingerprints }: { baselineRead: BaselineRead, toolFingerprints: ToolFingerprints }): string[] | null {
+    if (baselineRead.kind !== 'found' || isNil(baselineRead.baseline.toolFingerprints)) {
+        return null
+    }
+    return toolChanges.changed({ before: baselineRead.baseline.toolFingerprints, now: toolFingerprints })
+}
+
+function printToolChanges({ baselineRead, changedTools }: { baselineRead: BaselineRead, changedTools: string[] | null }): void {
+    if (baselineRead.kind !== 'found') {
+        return
+    }
+    if (isNil(changedTools)) {
+        console.log(colors.dim('Tool changes not checked: the main baseline has no tool definitions (uploaded before this check, or its payload expired after 30 days).'))
+        return
+    }
+    if (changedTools.length === 0) {
+        console.log(colors.dim('No tool description or input schema changed vs main.'))
+        return
+    }
+    console.log(colors.yellow(`Tools whose description or input schema changed vs main: ${changedTools.join(', ')}. Cases that use them run first.`))
+}
+
+function printUntested({ cases, changedTools }: { cases: EvalCase[], changedTools: string[] | null }): void {
+    const lines = cases.flatMap((candidate) => {
+        const tools = toolChanges.untested({ evalCase: candidate, changedTools: changedTools ?? [] })
+        return tools.length === 0 ? [] : [`  case ${candidate.caseNumber} · ${candidate.title}: ${tools.join(', ')}`]
+    })
+    if (lines.length === 0) {
+        return
+    }
+    console.log(colors.yellow(`\nThese cases answer a tool you changed from recordings, so their result does not test your change. Use the agent bench for that:\n${lines.join('\n')}`))
+}
+
+async function runDataset({ dataset, repeats, recordMode, upload, verbose, live, modelId, auth, mcp, baselineRead, changedTools }: { dataset: { name: string, cases: EvalCase[] }, repeats: number, recordMode: boolean, upload: boolean, verbose: boolean, live: boolean, modelId: string, auth: Record<string, unknown>, mcp: McpTools, baselineRead: BaselineRead, changedTools: string[] | null }): Promise<Omit<RanDataset, 'baselineRead' | 'changedTools'>> {
     const { name, cases } = dataset
     console.log(`\n${colors.bold(colors.cyan(`=== ${name}`))}: ${cases.length} case(s) × ${repeats} run(s) · model ${modelId} · judge ${evalChecks.judgeModelId()} (reasons ${evalChecks.reasonModelId}) · web and catalog reads run live · ${recordMode ? 'RECORD mode: missing workspace reads run live on the dev server and are saved to PostHog; writes never run' : 'workspace reads and writes replay recordings'}${upload ? ' · UPLOADS a main baseline to PostHog' : ' · nothing is uploaded'}`)
-    const runs = cases.flatMap((candidate) => Array.from({ length: repeats }, (_, trial) => ({ candidate, trial })))
+    printToolChanges({ baselineRead, changedTools })
+    const touched = (candidate: EvalCase): boolean => toolChanges.touches({ evalCase: candidate, changedTools: changedTools ?? [] })
+    const ordered = [...cases.filter(touched), ...cases.filter((candidate) => !touched(candidate))]
+    const runs = ordered.flatMap((candidate) => Array.from({ length: repeats }, (_, trial) => ({ candidate, trial })))
     const table = live ? progressTable.create({ cases, repeats, verdictOf: (counts) => caseVerdict({ datasetName: name, ...counts }) }) : null
     const results = await runPool({
         runs,
@@ -146,7 +194,7 @@ function printExplanation({ summary, title, explanation }: { summary: CaseSummar
     console.log(`      ${colors.dim('means   ')}  ${colors.bold(explanation.means)}`)
 }
 
-async function reportDataset({ name, cases, results, explained, live, browse, recordMode, upload, modelId }: RanDataset & { explained: Map<string, CaseExplanation>, live: boolean, browse: boolean, recordMode: boolean, upload: boolean, modelId: string }): Promise<DatasetOutcome> {
+async function reportDataset({ name, cases, results, explained, live, browse, recordMode, upload, modelId, toolFingerprints, baselineRead, changedTools }: RanDataset & { explained: Map<string, CaseExplanation>, live: boolean, browse: boolean, recordMode: boolean, upload: boolean, modelId: string, toolFingerprints: ToolFingerprints }): Promise<DatasetOutcome> {
     if (live && !browse) {
         results.filter((result) => result.verdict === 'fail').sort((a, b) => a.candidate.caseNumber - b.candidate.caseNumber || a.trial - b.trial).forEach((result) => print({ result, verbose: false }))
     }
@@ -164,10 +212,11 @@ async function reportDataset({ name, cases, results, explained, live, browse, re
         return { status: 'ok', reason: '' }
     }
     if (upload) {
-        const experimentId = await posthogExperiments.upload({ runs: results, suiteKey: name, runSource: isNil(process.env['CI']) ? 'local' : 'ci', applicationVersion: gitSha(), modelVersion: modelId, promptVersion: promptVersion() })
+        const experimentId = await posthogExperiments.upload({ runs: results, suiteKey: name, runSource: isNil(process.env['CI']) ? 'local' : 'ci', applicationVersion: gitSha(), modelVersion: modelId, promptVersion: promptVersion(), toolFingerprints })
         console.log(`\nUploaded main baseline for ${name}: experiment ${experimentId}`)
     }
-    const diff: DiffResult = upload ? { baseline: 'skipped' } : await printDiff({ suiteKey: name, modelVersion: modelId, cases, summaries })
+    const diff = printDiff({ baselineRead, suiteKey: name, modelVersion: modelId, cases, summaries })
+    printUntested({ cases, changedTools })
     if (MUST_PASS_DATASETS.has(name) && clearlyFailing > 0) {
         return { status: 'broken', reason: `${clearlyFailing} ${name} case(s) clearly fail` }
     }
@@ -246,16 +295,19 @@ function average(values: (number | null)[]): number | null {
     return known.length === 0 ? null : known.reduce((total, value) => total + value, 0) / known.length
 }
 
-async function printDiff({ suiteKey, modelVersion, cases, summaries }: { suiteKey: string, modelVersion: string, cases: EvalCase[], summaries: CaseSummary[] }): Promise<DiffResult> {
-    const { data: found, error } = await tryCatch(() => posthogExperiments.baseline({ suiteKey, modelVersion }))
-    if (error) {
-        console.log(colors.red(`\nCould not read the main baseline from PostHog: ${error.message}`))
-        return { baseline: 'error', message: error.message }
+function printDiff({ baselineRead, suiteKey, modelVersion, cases, summaries }: { baselineRead: BaselineRead, suiteKey: string, modelVersion: string, cases: EvalCase[], summaries: CaseSummary[] }): DiffResult {
+    if (baselineRead.kind === 'skipped') {
+        return { baseline: 'skipped' }
     }
-    if (isNil(found)) {
+    if (baselineRead.kind === 'error') {
+        console.log(colors.red(`\nCould not read the main baseline from PostHog: ${baselineRead.message}`))
+        return { baseline: 'error', message: baselineRead.message }
+    }
+    if (baselineRead.kind === 'missing') {
         console.log(colors.yellow(`\nNo main baseline in PostHog yet for ${suiteKey} on ${modelVersion}, so there is nothing to compare against.`))
         return { baseline: 'missing' }
     }
+    const found = baselineRead.baseline
     console.log(`\n${colors.bold(`Diff vs main baseline ${found.applicationVersion.slice(0, SHORT_SHA)}`)} ${colors.dim(`same model · a change counts only when at least ${Math.round(CLEAR_SHARE * 100)}% of at least ${MIN_JUDGED_RUNS} runs agree on both sides`)}`)
     console.log(colors.dim(`  ${padEnd('case', 4)}  ${padEnd('title', DIFF_TITLE_WIDTH)}  ${padEnd('baseline', 8)}  ${padEnd('now', 8)}  change`))
     const labels = cases.map((candidate) => {
@@ -403,7 +455,15 @@ type RanDataset = {
     name: string
     cases: EvalCase[]
     results: CaseResult[]
+    baselineRead: BaselineRead
+    changedTools: string[] | null
 }
+
+type BaselineRead =
+    | { kind: 'found', baseline: Baseline }
+    | { kind: 'missing' }
+    | { kind: 'error', message: string }
+    | { kind: 'skipped' }
 
 type DiffLabel = 'same' | 'unclear' | 'FIXED' | 'REGRESSED'
 
