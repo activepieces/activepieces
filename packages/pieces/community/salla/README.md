@@ -1,3 +1,3 @@
 # pieces-salla
 
-Salla (salla.com) e-commerce piece: orders, products, customers and store events.
+Salla (salla.com) e-commerce piece: order actions, AI order tools and order triggers.

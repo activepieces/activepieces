@@ -29,7 +29,7 @@ import { orderPaymentUpdatedTrigger } from './lib/triggers/order-payment-updated
 
 export const salla = createPiece({
   displayName: 'Salla',
-  description: 'Saudi e-commerce platform for online stores: orders, products, customers and store events.',
+  description: 'Saudi e-commerce platform for online stores: manage orders and react to order events.',
   auth: sallaAuth,
   minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/salla.png',
