@@ -13,6 +13,25 @@ describe('posthogExperiments.baseline', () => {
         request.mockReset()
     })
 
+    function mockBaseline({ items, cells, payload }: { items: unknown[], cells: unknown[], payload: unknown }): void {
+        request.mockImplementation(async ({ path, query }) => {
+            if (path === '/ai_observability/offline_experiments/') {
+                return { results: [{ id: 'exp-1', application_version: 'abc' }] }
+            }
+            if (path === '/llm_analytics/score_definitions/') {
+                const name = scorerNames.find((candidate) => candidate === query?.['search'])
+                return { results: [{ id: `def-${name}`, name, archived: false, current_version_id: `ver-${name}` }] }
+            }
+            if (path.endsWith('/items/')) {
+                return { next_cursor: null, results: items }
+            }
+            if (path === '/ai_observability/offline_experiments/exp-1/items/tools/payload/') {
+                return payload
+            }
+            return { results: cells }
+        })
+    }
+
     it('never creates scorers and reports no baseline when they are missing', async () => {
         request.mockImplementation(async ({ path }) => path.startsWith('/ai_observability/') ? { results: [{ id: 'exp-1', application_version: 'abc' }] } : { results: [] })
 
@@ -23,21 +42,10 @@ describe('posthogExperiments.baseline', () => {
     })
 
     it('reads pass and fail counts per case using only GET requests', async () => {
-        request.mockImplementation(async ({ path, query }) => {
-            if (path === '/ai_observability/offline_experiments/') {
-                return { results: [{ id: 'exp-1', application_version: 'abc' }] }
-            }
-            if (path === '/llm_analytics/score_definitions/') {
-                const name = scorerNames.find((candidate) => candidate === query?.['search'])
-                return { results: [{ id: `def-${name}`, name, archived: false, current_version_id: `ver-${name}` }] }
-            }
-            if (path.endsWith('/items/')) {
-                return { next_cursor: null, results: [{ id: 'i1', case_key: 'case-1' }, { id: 'i2', case_key: 'case-1' }] }
-            }
-            return { results: [
-                { item_id: 'i1', status: 'ok', value: true },
-                { item_id: 'i2', status: 'ok', value: false },
-            ] }
+        mockBaseline({
+            items: [{ id: 'i1', case_key: 'case-1' }, { id: 'i2', case_key: 'case-1' }],
+            cells: [{ item_id: 'i1', status: 'ok', value: true }, { item_id: 'i2', status: 'ok', value: false }],
+            payload: null,
         })
 
         const found = await posthogExperiments.baseline({ suiteKey: 'chat-core', modelVersion: 'm' })
@@ -47,21 +55,10 @@ describe('posthogExperiments.baseline', () => {
     })
 
     it('reads the tool definitions saved with the baseline and keeps them out of the case counts', async () => {
-        request.mockImplementation(async ({ path, query }) => {
-            if (path === '/ai_observability/offline_experiments/') {
-                return { results: [{ id: 'exp-1', application_version: 'abc' }] }
-            }
-            if (path === '/llm_analytics/score_definitions/') {
-                const name = scorerNames.find((candidate) => candidate === query?.['search'])
-                return { results: [{ id: `def-${name}`, name, archived: false, current_version_id: `ver-${name}` }] }
-            }
-            if (path.endsWith('/items/')) {
-                return { next_cursor: null, results: [{ id: 'i1', case_key: 'case-1' }, { id: 'tools', case_key: 'tool-definitions' }] }
-            }
-            if (path === '/ai_observability/offline_experiments/exp-1/items/tools/payload/') {
-                return { available: true, data: { input: { tools: { ap_list_flows: 'abc123' } } } }
-            }
-            return { results: [{ item_id: 'i1', status: 'ok', value: true }] }
+        mockBaseline({
+            items: [{ id: 'i1', case_key: 'case-1' }, { id: 'tools', case_key: 'tool-definitions' }],
+            cells: [{ item_id: 'i1', status: 'ok', value: true }],
+            payload: { available: true, data: { input: { tools: { ap_list_flows: 'abc123' } } } },
         })
 
         const found = await posthogExperiments.baseline({ suiteKey: 'chat-core', modelVersion: 'm' })
@@ -71,22 +68,7 @@ describe('posthogExperiments.baseline', () => {
     })
 
     it('reports no tool definitions when the baseline has none or its payload expired', async () => {
-        request.mockImplementation(async ({ path, query }) => {
-            if (path === '/ai_observability/offline_experiments/') {
-                return { results: [{ id: 'exp-1', application_version: 'abc' }] }
-            }
-            if (path === '/llm_analytics/score_definitions/') {
-                const name = scorerNames.find((candidate) => candidate === query?.['search'])
-                return { results: [{ id: `def-${name}`, name, archived: false, current_version_id: `ver-${name}` }] }
-            }
-            if (path.endsWith('/items/')) {
-                return { next_cursor: null, results: [{ id: 'tools', case_key: 'tool-definitions' }] }
-            }
-            if (path.endsWith('/payload/')) {
-                return { available: false, data: null }
-            }
-            return { results: [] }
-        })
+        mockBaseline({ items: [{ id: 'tools', case_key: 'tool-definitions' }], cells: [], payload: { available: false, data: null } })
 
         const found = await posthogExperiments.baseline({ suiteKey: 'chat-core', modelVersion: 'm' })
 
