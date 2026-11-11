@@ -85,6 +85,17 @@ export const webhookService = {
             }
         }
         const { flow } = flowExecutionResult
+        if (flowExecutionResult.appEventsOnly) {
+            pinoLogger.warn({ flow: { id: flowId } }, 'Webhook received for a flow that only accepts app events')
+            wideEvent.set({ webhook: { flowFound: false } })
+            return {
+                status: StatusCodes.NOT_FOUND,
+                body: {},
+                headers: {
+                    [webhookHeader]: webhookRequestId,
+                },
+            }
+        }
 
         // data() consumes the request body stream (streaming any file straight to storage), which
         // can only be read once. The handshake check and the payload resolution below both need it,

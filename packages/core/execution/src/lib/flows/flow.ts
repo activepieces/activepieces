@@ -33,13 +33,14 @@ export const FlowCreator = z.discriminatedUnion('type', [
 ])
 export type FlowCreator = z.infer<typeof FlowCreator>
 
-export const flowExecutionStateKey = (flowId: FlowId) => `flow-execution-state:${flowId}`
+export const flowExecutionStateKey = (flowId: FlowId) => `flow-execution-state:v2:${flowId}`
 
 export type FlowExecutionState = {
     exists: false
 } | {
     exists: true
     handshakeConfiguration: WebhookHandshakeConfiguration | undefined
+    appEventsOnly: boolean
     flow: Flow
     platformId: string
 }

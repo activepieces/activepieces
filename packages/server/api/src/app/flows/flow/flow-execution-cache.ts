@@ -1,6 +1,6 @@
 import { FlowId, isNil } from '@activepieces/core-utils'
 import { apDayjsDuration } from '@activepieces/server-utils'
-import { FlowExecutionState, flowExecutionStateKey } from '@activepieces/shared'
+import { FlowExecutionState, flowExecutionStateKey, TriggerStrategy } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../../database/redis-connections'
 import { projectService } from '../../project/project-service'
@@ -45,6 +45,7 @@ async function getFlowExecutionCache(params: GetParams, log: FastifyBaseLogger):
     return {
         exists: true,
         handshakeConfiguration: await webhookHandshake.getWebhookHandshakeConfiguration({ triggerSource, logger: log }) ?? undefined,
+        appEventsOnly: triggerSource?.type === TriggerStrategy.APP_WEBHOOK,
         flow,
         platformId: await projectService(log).getPlatformId(flow.projectId),
     }
