@@ -724,6 +724,9 @@
       "@activepieces/piece-jina-ai": [
         "packages/pieces/community/jina-ai/src/index.ts"
       ],
+      "@activepieces/piece-jobspipe": [
+        "packages/pieces/community/jobspipe/src/index.ts"
+      ],
       "@activepieces/piece-jungle-grid": [
         "packages/pieces/community/jungle-grid/src/index.ts"
       ],
