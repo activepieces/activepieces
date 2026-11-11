@@ -26,6 +26,78 @@ const CHANNEL_STORE_KEY = 'googlesheets_new_row_added';
 const SNAPSHOT_STORE_KEY = 'googlesheets_new_row_added_snapshot';
 const NO_TRIGGER_COLUMN = 'first_cell';
 
+function legacyStoreKey(sheetId: number): string {
+	return `${sheetId}`;
+}
+
+async function findAddedRows({
+	store,
+	identity,
+	current,
+}: {
+	store: Store;
+	identity: SnapshotIdentity;
+	current: RowFingerprint[];
+}): Promise<{ indexes: number[]; legacy: boolean; unchanged: boolean }> {
+	const previous = await rowSnapshot.loadSnapshot({ store, key: SNAPSHOT_STORE_KEY, identity });
+	if (!isNil(previous)) {
+		const { changes, lastKnownIndex } = rowSnapshot.diffRows({ previous, current, pairMovedRowsByTrigger: true });
+		return {
+			indexes: changes
+				.filter(
+					(change) =>
+						change.kind === 'new' &&
+						change.index > lastKnownIndex &&
+						!rowSnapshot.isEmptyRow(change.current),
+				)
+				.map((change) => change.index),
+			legacy: false,
+			unchanged: rowSnapshot.sameRows({ previous, current }),
+		};
+	}
+	const legacyRowCount = await store.get<unknown>(legacyStoreKey(identity.sheetId));
+	if (typeof legacyRowCount === 'number') {
+		return {
+			indexes: current
+				.map((_row, index) => index)
+				.filter((index) => index >= legacyRowCount),
+			legacy: true,
+			unchanged: false,
+		};
+	}
+	console.info('[google-sheets] new_row_added: no row snapshot for these settings, taking a new baseline.');
+	return { indexes: [], legacy: false, unchanged: false };
+}
+
+async function readAddedRows({
+	auth,
+	spreadsheetId,
+	sheetName,
+	indexes,
+	headerCount,
+}: {
+	auth: GoogleSheetsAuthValue;
+	spreadsheetId: string;
+	sheetName: string;
+	indexes: number[];
+	headerCount: number;
+}): Promise<{ row: number; values: Record<string, string> }[]> {
+	if (indexes.length === 0) {
+		return [];
+	}
+	const first = indexes[0];
+	const last = indexes[indexes.length - 1];
+	const displayValues = await getWorkSheetValues({
+		auth,
+		spreadsheetId,
+		sheetName,
+		range: `${first + 1}:${last + 1}`,
+	});
+	return indexes.flatMap((index) =>
+		mapRowsToColumnLabels([displayValues[index - first] ?? []], index, headerCount),
+	);
+}
+
 export const newRowAddedTrigger = createTrigger({
 	auth: googleSheetsAuth,
 	name: 'googlesheets_new_row_added',
@@ -162,75 +234,3 @@ export const newRowAddedTrigger = createTrigger({
 	},
 	sampleData: {},
 });
-
-function legacyStoreKey(sheetId: number): string {
-	return `${sheetId}`;
-}
-
-async function findAddedRows({
-	store,
-	identity,
-	current,
-}: {
-	store: Store;
-	identity: SnapshotIdentity;
-	current: RowFingerprint[];
-}): Promise<{ indexes: number[]; legacy: boolean; unchanged: boolean }> {
-	const previous = await rowSnapshot.loadSnapshot({ store, key: SNAPSHOT_STORE_KEY, identity });
-	if (!isNil(previous)) {
-		const { changes, lastKnownIndex } = rowSnapshot.diffRows({ previous, current, pairMovedRowsByTrigger: true });
-		return {
-			indexes: changes
-				.filter(
-					(change) =>
-						change.kind === 'new' &&
-						change.index > lastKnownIndex &&
-						!rowSnapshot.isEmptyRow(change.current),
-				)
-				.map((change) => change.index),
-			legacy: false,
-			unchanged: rowSnapshot.sameRows({ previous, current }),
-		};
-	}
-	const legacyRowCount = await store.get<unknown>(legacyStoreKey(identity.sheetId));
-	if (typeof legacyRowCount === 'number') {
-		return {
-			indexes: current
-				.map((_row, index) => index)
-				.filter((index) => index >= legacyRowCount),
-			legacy: true,
-			unchanged: false,
-		};
-	}
-	console.info('[google-sheets] new_row_added: no row snapshot for these settings, taking a new baseline.');
-	return { indexes: [], legacy: false, unchanged: false };
-}
-
-async function readAddedRows({
-	auth,
-	spreadsheetId,
-	sheetName,
-	indexes,
-	headerCount,
-}: {
-	auth: GoogleSheetsAuthValue;
-	spreadsheetId: string;
-	sheetName: string;
-	indexes: number[];
-	headerCount: number;
-}): Promise<{ row: number; values: Record<string, string> }[]> {
-	if (indexes.length === 0) {
-		return [];
-	}
-	const first = indexes[0];
-	const last = indexes[indexes.length - 1];
-	const displayValues = await getWorkSheetValues({
-		auth,
-		spreadsheetId,
-		sheetName,
-		range: `${first + 1}:${last + 1}`,
-	});
-	return indexes.flatMap((index) =>
-		mapRowsToColumnLabels([displayValues[index - first] ?? []], index, headerCount),
-	);
-}

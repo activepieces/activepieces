@@ -30,6 +30,121 @@ const ALL_COLUMNS = 'all_columns';
 const CHANNEL_STORE_KEY = 'google-sheets-new-or-updated-row';
 const SNAPSHOT_STORE_KEY = 'google-sheets-new-or-updated-row-snapshot';
 
+function triggerColumnIndexOf(triggerColumn: string): number | undefined {
+	return triggerColumn === ALL_COLUMNS ? undefined : labelToColumn(triggerColumn);
+}
+
+function legacyStoreKey(sheetId: number): string {
+	return `${sheetId}`;
+}
+
+function isStringArray(value: unknown): value is string[] {
+	return Array.isArray(value) && value.every((entry) => typeof entry === 'string');
+}
+
+function shouldFire({ change, anyColumn }: { change: RowChange; anyColumn: boolean }): boolean {
+	if (change.kind === 'edited') {
+		const previous = change.previous;
+		if (isNil(previous)) {
+			return false;
+		}
+		return anyColumn ? previous.full !== change.current.full : previous.trigger !== change.current.trigger;
+	}
+	if (rowSnapshot.isEmptyRow(change.current)) {
+		return false;
+	}
+	return anyColumn || !rowSnapshot.hasBlankTrigger(change.current);
+}
+
+function legacyChangedRows({
+	displayValues,
+	legacyHashes,
+	triggerColumn,
+}: {
+	displayValues: SheetCellValue[][];
+	legacyHashes: string[];
+	triggerColumn: string;
+}): number[] {
+	return displayValues.flatMap((row, index) => {
+		if (isNil(row) || row.length === 0) {
+			return [];
+		}
+		const watched = triggerColumn === ALL_COLUMNS ? undefined : row[labelToColumn(triggerColumn)];
+		const target =
+			triggerColumn === ALL_COLUMNS ? row : !isNil(watched) && watched !== '' ? [watched] : [];
+		const hash = crypto.createHash('md5').update(JSON.stringify(target)).digest('hex');
+		const previous = legacyHashes[index];
+		return isNil(previous) || previous !== hash ? [index] : [];
+	});
+}
+
+async function findChangedRows({
+	store,
+	identity,
+	current,
+	readDisplayValues,
+}: {
+	store: Store;
+	identity: SnapshotIdentity;
+	current: ReturnType<typeof rowSnapshot.fingerprintRows>;
+	readDisplayValues: () => Promise<SheetCellValue[][]>;
+}): Promise<{ indexes: number[]; legacy: boolean; unchanged: boolean }> {
+	const previous = await rowSnapshot.loadSnapshot({ store, key: SNAPSHOT_STORE_KEY, identity });
+	if (!isNil(previous)) {
+		const anyColumn = identity.triggerColumn === ALL_COLUMNS;
+		const { changes } = rowSnapshot.diffRows({ previous, current });
+		return {
+			indexes: changes.filter((change) => shouldFire({ change, anyColumn })).map((change) => change.index),
+			legacy: false,
+			unchanged: rowSnapshot.sameRows({ previous, current }),
+		};
+	}
+	const legacyHashes = await store.get<unknown>(legacyStoreKey(identity.sheetId));
+	if (isStringArray(legacyHashes)) {
+		return {
+			indexes: legacyChangedRows({
+				displayValues: await readDisplayValues(),
+				legacyHashes,
+				triggerColumn: identity.triggerColumn,
+			}),
+			legacy: true,
+			unchanged: false,
+		};
+	}
+	console.info('[google-sheets] new_or_updated_row: no row snapshot for these settings, taking a new baseline.');
+	return { indexes: [], legacy: false, unchanged: false };
+}
+
+async function readChangedRows({
+	auth,
+	spreadsheetId,
+	sheetName,
+	indexes,
+	headerCount,
+}: {
+	auth: GoogleSheetsAuthValue;
+	spreadsheetId: string;
+	sheetName: string;
+	indexes: number[];
+	headerCount: number;
+}): Promise<{ row: number; values: Record<string, string> }[]> {
+	if (indexes.length === 0) {
+		return [];
+	}
+	const first = indexes[0];
+	const last = indexes[indexes.length - 1];
+	const displayValues = await getWorkSheetValues({
+		auth,
+		spreadsheetId,
+		sheetName,
+		range: `${first + 1}:${last + 1}`,
+	});
+	return indexes.map((index) => ({
+		row: index + 1,
+		values: labelRowValues({ row: displayValues[index - first], headerCount }),
+	}));
+}
+
 export const newOrUpdatedRowTrigger = createTrigger({
 	auth: googleSheetsAuth,
 	name: 'google-sheets-new-or-updated-row',
@@ -241,118 +356,3 @@ export const newOrUpdatedRowTrigger = createTrigger({
 
 	sampleData: {},
 });
-
-function triggerColumnIndexOf(triggerColumn: string): number | undefined {
-	return triggerColumn === ALL_COLUMNS ? undefined : labelToColumn(triggerColumn);
-}
-
-function legacyStoreKey(sheetId: number): string {
-	return `${sheetId}`;
-}
-
-function isStringArray(value: unknown): value is string[] {
-	return Array.isArray(value) && value.every((entry) => typeof entry === 'string');
-}
-
-function shouldFire({ change, anyColumn }: { change: RowChange; anyColumn: boolean }): boolean {
-	if (change.kind === 'edited') {
-		const previous = change.previous;
-		if (isNil(previous)) {
-			return false;
-		}
-		return anyColumn ? previous.full !== change.current.full : previous.trigger !== change.current.trigger;
-	}
-	if (rowSnapshot.isEmptyRow(change.current)) {
-		return false;
-	}
-	return anyColumn || !rowSnapshot.hasBlankTrigger(change.current);
-}
-
-function legacyChangedRows({
-	displayValues,
-	legacyHashes,
-	triggerColumn,
-}: {
-	displayValues: SheetCellValue[][];
-	legacyHashes: string[];
-	triggerColumn: string;
-}): number[] {
-	return displayValues.flatMap((row, index) => {
-		if (isNil(row) || row.length === 0) {
-			return [];
-		}
-		const watched = triggerColumn === ALL_COLUMNS ? undefined : row[labelToColumn(triggerColumn)];
-		const target =
-			triggerColumn === ALL_COLUMNS ? row : !isNil(watched) && watched !== '' ? [watched] : [];
-		const hash = crypto.createHash('md5').update(JSON.stringify(target)).digest('hex');
-		const previous = legacyHashes[index];
-		return isNil(previous) || previous !== hash ? [index] : [];
-	});
-}
-
-async function findChangedRows({
-	store,
-	identity,
-	current,
-	readDisplayValues,
-}: {
-	store: Store;
-	identity: SnapshotIdentity;
-	current: ReturnType<typeof rowSnapshot.fingerprintRows>;
-	readDisplayValues: () => Promise<SheetCellValue[][]>;
-}): Promise<{ indexes: number[]; legacy: boolean; unchanged: boolean }> {
-	const previous = await rowSnapshot.loadSnapshot({ store, key: SNAPSHOT_STORE_KEY, identity });
-	if (!isNil(previous)) {
-		const anyColumn = identity.triggerColumn === ALL_COLUMNS;
-		const { changes } = rowSnapshot.diffRows({ previous, current });
-		return {
-			indexes: changes.filter((change) => shouldFire({ change, anyColumn })).map((change) => change.index),
-			legacy: false,
-			unchanged: rowSnapshot.sameRows({ previous, current }),
-		};
-	}
-	const legacyHashes = await store.get<unknown>(legacyStoreKey(identity.sheetId));
-	if (isStringArray(legacyHashes)) {
-		return {
-			indexes: legacyChangedRows({
-				displayValues: await readDisplayValues(),
-				legacyHashes,
-				triggerColumn: identity.triggerColumn,
-			}),
-			legacy: true,
-			unchanged: false,
-		};
-	}
-	console.info('[google-sheets] new_or_updated_row: no row snapshot for these settings, taking a new baseline.');
-	return { indexes: [], legacy: false, unchanged: false };
-}
-
-async function readChangedRows({
-	auth,
-	spreadsheetId,
-	sheetName,
-	indexes,
-	headerCount,
-}: {
-	auth: GoogleSheetsAuthValue;
-	spreadsheetId: string;
-	sheetName: string;
-	indexes: number[];
-	headerCount: number;
-}): Promise<{ row: number; values: Record<string, string> }[]> {
-	if (indexes.length === 0) {
-		return [];
-	}
-	const first = indexes[0];
-	const last = indexes[indexes.length - 1];
-	const displayValues = await getWorkSheetValues({
-		auth,
-		spreadsheetId,
-		sheetName,
-		range: `${first + 1}:${last + 1}`,
-	});
-	return indexes.map((index) => ({
-		row: index + 1,
-		values: labelRowValues({ row: displayValues[index - first], headerCount }),
-	}));
-}
