@@ -28,6 +28,7 @@ const switchPlatform = vi.mocked(authenticationApi.switchPlatform);
 describe('authenticationSession', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    window.sessionStorage.clear();
     window.localStorage.setItem('projectId', 'project-on-previous-platform');
     vi.stubGlobal('location', { href: '' });
   });
@@ -65,7 +66,48 @@ describe('authenticationSession', () => {
 
     expect(authenticationSession.getProjectId()).toBeNull();
   });
+
+  it('keeps this tab in its project when another tab switches project', () => {
+    signIn({ platformId: 'platform-a', projectId: 'project-a' });
+
+    window.localStorage.setItem('projectId', 'project-b');
+
+    expect(authenticationSession.getProjectId()).toBe('project-a');
+  });
+
+  it('opens a new tab in the last project used', () => {
+    signIn({ platformId: 'platform-a', projectId: 'project-a' });
+
+    window.sessionStorage.clear();
+
+    expect(authenticationSession.getProjectId()).toBe('project-a');
+  });
+
+  it('follows another tab that switched platform', () => {
+    signIn({ platformId: 'platform-a', projectId: 'project-a' });
+
+    window.localStorage.setItem(
+      'token',
+      userToken({ platformId: 'platform-b' }),
+    );
+    window.localStorage.setItem('projectId', 'project-b');
+
+    expect(authenticationSession.getProjectId()).toBe('project-b');
+  });
 });
+
+function signIn({
+  platformId,
+  projectId,
+}: {
+  platformId: string;
+  projectId: string;
+}): void {
+  authenticationSession.saveResponse(
+    switchResponse({ platformId, projectId }),
+    false,
+  );
+}
 
 function switchResponse({
   platformId,
