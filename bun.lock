@@ -1172,15 +1172,17 @@
     },
     "packages/pieces/community/beehiiv": {
       "name": "@activepieces/piece-beehiiv",
-      "version": "0.4.2",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "undici": "7.30.1",
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/bettermode": {
@@ -1481,15 +1483,17 @@
     },
     "packages/pieces/community/buffer": {
       "name": "@activepieces/piece-buffer",
-      "version": "0.1.5",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "undici": "7.30.1",
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/bumpups": {
@@ -4010,7 +4014,7 @@
     },
     "packages/pieces/community/google-forms": {
       "name": "@activepieces/piece-google-forms",
-      "version": "0.7.5",
+      "version": "0.8.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8935,7 +8939,7 @@
     },
     "packages/pieces/community/stability-ai": {
       "name": "@activepieces/piece-stability-ai",
-      "version": "0.3.2",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8944,6 +8948,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/stable-diffusion-webui": {
@@ -10353,15 +10358,17 @@
     },
     "packages/pieces/community/youtrack": {
       "name": "@activepieces/piece-youtrack",
-      "version": "0.2.3",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "undici": "7.30.1",
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/youtube": {

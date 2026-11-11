@@ -1,8 +1,9 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { beehiivAuth } from '../common/auth';
 import { automationId, customFields, publicationId } from '../common/props';
-import { beehiivApiCall } from '../common/client';
+import { apiKeyOf, beehiivClient, pathFor } from '../common/client';
+import { DOUBLE_OPT_VALUES, aiInput } from '../common/ai-props';
+import { beehiivOutputSchemas } from '../common/output-schemas';
 
 export const createSubscriptionAction = createAction({
 	auth: beehiivAuth,
@@ -10,8 +11,9 @@ export const createSubscriptionAction = createAction({
 	classification: 'WRITE',
 	displayName: 'Create Subscription',
 	description: 'Creates a new subscription.',
-	audience: 'both',
-	aiMetadata: { description: 'Adds a new subscriber (by email) to a beehiiv publication, optionally setting tier, UTM attribution, custom fields, and enrolling them into automations on creation. Use to subscribe someone to a newsletter. Requires the publication ID and email; not idempotent — each call creates a subscription, and re-running may produce duplicate or reactivated subscribers.', idempotent: false },
+	audience: 'human',
+	aiMetadata: { description: 'Adds a subscriber (by email) to a beehiiv publication with optional tier, UTM attribution, custom fields and automation enrollment. If the email already exists, beehiiv returns the existing subscription instead of creating a duplicate. Unknown custom field names are returned in warnings. Repeating with Automation IDs can enroll the subscriber again, and with Send Welcome Email = yes can resend the welcome email.', idempotent: false },
+	outputSchema: beehiivOutputSchemas.humanCreateOrUpdateSubscription,
 	props: {
 		publicationId: publicationId,
 		email: Property.ShortText({
@@ -76,7 +78,7 @@ export const createSubscriptionAction = createAction({
 		}),
 		double_opt_override: Property.ShortText({
 			displayName: 'Double Opt-in Override',
-			description: 'Override publication double-opt settings for this subscription.',
+			description: 'Override the publication double opt-in setting for this subscriber: on, off or not_set.',
 			required: false,
 		}),
 		premium_tier_ids: Property.Array({
@@ -84,7 +86,10 @@ export const createSubscriptionAction = createAction({
 			description: 'The IDs of the premium tiers this subscription is associated with.',
 			required: false,
 		}),
-		automation_ids: automationId('Automation IDs','Enroll the subscription into automations after their subscription has been created.',false),
+		automation_ids: automationId({
+			displayName: 'Automation IDs',
+			description: 'Enroll the subscription into automations after their subscription has been created. The automation needs an active "Add by API" trigger.',
+		}),
 	},
 	async run(context) {
 		const {
@@ -99,17 +104,19 @@ export const createSubscriptionAction = createAction({
 			referring_site,
 			send_welcome_email,
 			stripe_customer_id,
-			double_opt_override,
 		} = context.propsValue;
+		const doubleOptOverride = aiInput.oneOf({ value: aiInput.optionalText(context.propsValue.double_opt_override)?.toLowerCase(), label: 'Double Opt-in Override', allowed: DOUBLE_OPT_VALUES });
+		const customFields = Object.entries(context.propsValue.custom_fields ?? {})
+			.filter(([, value]) => hasValue(value))
+			.map(([name, value]) => ({ name, value }));
+		const automationIds = aiInput.textList({ value: context.propsValue.automation_ids, label: 'Automation IDs' });
+		const premiumTierIds = aiInput.textList({ value: context.propsValue.premium_tier_ids, label: 'Premium Tier IDs' });
 
-		const customFields = context.propsValue.custom_fields ?? {};
-		const automationIds = context.propsValue.automation_ids ?? [];
-		const premiumTierIds = context.propsValue.premium_tier_ids ?? [];
-
-		const response = await beehiivApiCall({
-			apiKey: context.auth.secret_text,
-			method: HttpMethod.POST,
-			resourceUri: `/publications/${publicationId}/subscriptions`,
+		const response = await beehiivClient.request({
+			apiKey: apiKeyOf(context.auth),
+			method: 'POST',
+			path: `${pathFor(['publications', publicationId])}/subscriptions`,
+			operation: 'create subscription',
 			body: {
 				email,
 				reactivate_existing,
@@ -119,18 +126,22 @@ export const createSubscriptionAction = createAction({
 				utm_medium,
 				referring_site,
 				referral_code,
-				double_opt_override,
+				double_opt_override: doubleOptOverride,
 				tier,
-				premium_tier_ids: premiumTierIds.length > 0 ? premiumTierIds : undefined,
+				premium_tier_ids: premiumTierIds,
 				stripe_customer_id,
-				automation_ids: automationIds.length > 0 ? automationIds : undefined,
-				custom_fields: Object.entries(customFields).map(([key, value]) => ({
-					name: key,
-					value: value,
-				})),
+				automation_ids: automationIds,
+				custom_fields: customFields.length > 0 ? customFields : undefined,
 			},
 		});
 
-		return response;
+		return response.body;
 	},
 });
+
+function hasValue(value: unknown): boolean {
+	if (Array.isArray(value)) {
+		return value.length > 0;
+	}
+	return value !== undefined && value !== null && value !== '';
+}
