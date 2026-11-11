@@ -205,7 +205,7 @@ function Steps({
       >
         {check.prompt && (
           <CopyButton
-            textToCopy={check.prompt}
+            value={check.prompt}
             variant="outline"
             size="sm"
             className={cn('h-9 self-start font-normal', FOCUS_RING)}
@@ -407,7 +407,7 @@ function FrameHeader({ label, text }: { label: string; text: string }) {
         {label}
       </span>
       <CopyButton
-        textToCopy={text}
+        value={text}
         variant="ghost"
         size="sm"
         className={cn(

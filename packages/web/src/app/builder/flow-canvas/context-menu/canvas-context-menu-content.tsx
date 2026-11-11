@@ -19,8 +19,8 @@ import {
   RouteOff,
   Trash,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
+import { clipboardUtils } from '@/components/custom/clipboard/use-copy-to-clipboard';
 import { Shortcut, ShortcutProps } from '@/components/custom/shortcut';
 import {
   ContextMenuContent,
@@ -229,12 +229,11 @@ export const CanvasContextMenuContent = ({
 
         {showCopyReference && (
           <ContextMenuItem
-            onClick={() => {
-              navigator.clipboard.writeText(
-                `{{${selectedNodes[0]}['output']}}`,
-              );
-              toast.success(t('Reference copied to clipboard'));
-            }}
+            onClick={() =>
+              clipboardUtils.copy({
+                value: `{{${selectedNodes[0]}['output']}}`,
+              })
+            }
             className="flex items-center gap-2"
           >
             <Braces className="w-4 h-4"></Braces> {t('Copy reference')}
