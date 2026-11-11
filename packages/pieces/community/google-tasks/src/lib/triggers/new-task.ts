@@ -17,7 +17,6 @@ const RUN_ON_NEW_AND_EDITED = 'new_and_edited';
 const STATE_KEY = 'new_task_state';
 const LEGACY_CURSOR_KEY = 'lastPoll';
 const STATE_VERSION = 1;
-const LEGACY_RESUME_MAX_AGE_MS = 60 * 60 * 1000;
 const OVERLAP_MS = 60_000;
 const POLL_BUDGET_MS = 40_000;
 const ENABLE_BUDGET_MS = 120_000;
@@ -108,17 +107,15 @@ export const newTaskTrigger = createTrigger({
   async onEnable(context) {
     const mode = resolveRunOn({ value: context.propsValue.run_on });
     const list = context.propsValue.tasks_list;
-    const existing = parseState({ raw: await context.store.get(STATE_KEY) });
-    if (context.isRepublish && existing && existing.mode === mode && existing.list === list) {
+    const existing = context.isRepublish
+      ? parseState({ raw: await context.store.get(STATE_KEY) })
+      : null;
+    if (existing && existing.mode === mode && existing.list === list) {
       return;
     }
-    const legacyCursor = existing
-      ? null
-      : legacyCursorMs({ raw: await context.store.get(LEGACY_CURSOR_KEY) });
     const lastPollMs =
-      legacyCursor !== null &&
-      (context.isRepublish || Date.now() - legacyCursor <= LEGACY_RESUME_MAX_AGE_MS)
-        ? legacyCursor
+      context.isRepublish && !existing
+        ? legacyCursorMs({ raw: await context.store.get(LEGACY_CURSOR_KEY) })
         : null;
     if (lastPollMs !== null && mode === RUN_ON_NEW_AND_EDITED) {
       await context.store.put(STATE_KEY, legacyState({ list, lastPoll: lastPollMs }));

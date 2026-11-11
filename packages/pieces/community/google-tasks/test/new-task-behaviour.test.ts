@@ -564,27 +564,28 @@ describe('Google Tasks New Task behaviour (Run on = new_and_edited and legacy)',
     expect(await trigger.run(hookContext({ store }))).toEqual([]);
   });
 
-  it('keeps the upgrade gap when the server publishes the upgrade without isRepublish because run_on is a new input', async () => {
+  it('starts from now, like main, when the upgrade publishes without isRepublish, even if the list changed', async () => {
     for (const runOn of ['new_only', '']) {
       vendor.lists.clear();
       addTask({ id: 'old' });
+      addTask({ id: 'other-list-task', list: 'list-2' });
       const { store, data } = memoryStore();
-      tick(1);
-      data.set('lastPoll', JSON.stringify(clock));
+      data.set('lastPoll', JSON.stringify(clock - 60_000));
       tick(3);
-      addTask({ id: 'gap' });
+      addTask({ id: 'gap', list: 'list-2' });
       tick(1);
-      await trigger.onDisable(hookContext({ store, isRepublish: false, runOn }));
-      await trigger.onEnable(hookContext({ store, isRepublish: false, runOn }));
+      await trigger.onDisable(hookContext({ store, isRepublish: false, runOn, list: 'list-2' }));
+      await trigger.onEnable(hookContext({ store, isRepublish: false, runOn, list: 'list-2' }));
       expect(data.has('lastPoll')).toBe(false);
       tick(5);
-      expect(ids(await trigger.run(hookContext({ store, runOn })))).toEqual(['gap']);
+      expect(await trigger.run(hookContext({ store, runOn, list: 'list-2' }))).toEqual([]);
+      addTask({ id: 'after-enable', list: 'list-2' });
       tick(5);
-      expect(await trigger.run(hookContext({ store, runOn }))).toEqual([]);
+      expect(ids(await trigger.run(hookContext({ store, runOn, list: 'list-2' })))).toEqual(['after-enable']);
     }
   });
 
-  it('starts from now when a flow turned off more than an hour before is upgraded and turned on', async () => {
+  it('starts from now when a flow turned off before the upgrade is turned on again', async () => {
     for (const runOn of ['new_only', '']) {
       vendor.lists.clear();
       addTask({ id: 'old' });
