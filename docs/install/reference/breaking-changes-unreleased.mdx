@@ -8,6 +8,25 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### YouTrack 0.3.0: calls to YouTrack now verify the TLS certificate
+
+From YouTrack 0.3.0, the piece checks the certificate of your YouTrack server on the connection check, triggers, dropdowns and every dedicated action, including attachment downloads. Before, certificate checks were skipped, so a self-hosted YouTrack Server behind a self-signed, private-CA or expired certificate worked. With 0.3.0 these calls fail with a certificate error for such servers. The **Custom API Call** action is the exception: it still uses the shared HTTP client and does not check the certificate. YouTrack Cloud (`*.youtrack.cloud`) and servers with a publicly trusted certificate are not affected.
+
+#### What you need to do
+
+If you self-host YouTrack on a self-signed or private-CA certificate, give it a publicly trusted certificate (for example from Let's Encrypt), or add your CA to Activepieces before upgrading YouTrack steps or connections to 0.3.0. To add the CA, set both `NODE_EXTRA_CA_CERTS` and `AP_SANDBOX_PROPAGATED_ENV_VARS=NODE_EXTRA_CA_CERTS` on the container. Only the path is passed to the engine, so the file must be readable at that path where pieces run.
+
+With `AP_EXECUTION_MODE` set to `SANDBOX_PROCESS` or `SANDBOX_CODE_AND_PROCESS`, pieces run in an isolate sandbox that sees only `/bin`, `/lib`, `/usr/bin`, `/usr/lib`, `/usr/local` and `/usr/src/node_modules` from the container, and its `/etc` is replaced. Put the CA file under `/usr/local` in the image, for example:
+
+```dockerfile
+FROM activepieces/activepieces:<version>
+COPY my-ca.pem /usr/local/share/ca-certificates/my-ca.pem
+ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/my-ca.pem
+ENV AP_SANDBOX_PROPAGATED_ENV_VARS=NODE_EXTRA_CA_CERTS
+```
+
+In the other execution modes, any path in the container works.
+
 #### Spotify 0.7.0: Update Playlist is no longer an agent tool, and Get Playback State returns an object when nothing is playing
 
 From Spotify 0.7.0, **Update Playlist** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and outputs. Agents use the new **Update Playlist Details** tool instead, which takes Public and Collaborative as yes/no choices and leaves any field it is not given unchanged.
