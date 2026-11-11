@@ -564,6 +564,47 @@ describe('Google Tasks New Task behaviour (Run on = new_and_edited and legacy)',
     expect(await trigger.run(hookContext({ store }))).toEqual([]);
   });
 
+  it('keeps the upgrade gap when the server publishes the upgrade without isRepublish because run_on is a new input', async () => {
+    for (const runOn of ['new_only', '']) {
+      vendor.lists.clear();
+      addTask({ id: 'old' });
+      const { store, data } = memoryStore();
+      tick(1);
+      data.set('lastPoll', JSON.stringify(clock));
+      tick(3);
+      addTask({ id: 'gap' });
+      tick(1);
+      await trigger.onDisable(hookContext({ store, isRepublish: false, runOn }));
+      await trigger.onEnable(hookContext({ store, isRepublish: false, runOn }));
+      expect(data.has('lastPoll')).toBe(false);
+      tick(5);
+      expect(ids(await trigger.run(hookContext({ store, runOn })))).toEqual(['gap']);
+      tick(5);
+      expect(await trigger.run(hookContext({ store, runOn }))).toEqual([]);
+    }
+  });
+
+  it('starts from now when a flow turned off more than an hour before is upgraded and turned on', async () => {
+    for (const runOn of ['new_only', '']) {
+      vendor.lists.clear();
+      addTask({ id: 'old' });
+      const { store, data } = memoryStore();
+      tick(1);
+      data.set('lastPoll', JSON.stringify(clock));
+      tick(30);
+      addTask({ id: 'while-off' });
+      editTask({ id: 'old', change: { title: 'Edited while off' } });
+      tick(60);
+      await trigger.onEnable(hookContext({ store, runOn }));
+      expect(data.has('lastPoll')).toBe(false);
+      tick(5);
+      expect(await trigger.run(hookContext({ store, runOn }))).toEqual([]);
+      addTask({ id: 'after-enable' });
+      tick(5);
+      expect(ids(await trigger.run(hookContext({ store, runOn })))).toEqual(['after-enable']);
+    }
+  });
+
   it('fires a task created in the upgrade gap when the new_only baseline needs several polls', async () => {
     Array.from({ length: 300 }, (_, index) => `old-${index}`).forEach((id) =>
       addTask({ id, at: '2026-10-01T00:00:00.000Z' }),
