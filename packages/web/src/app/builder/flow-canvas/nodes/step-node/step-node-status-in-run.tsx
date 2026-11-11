@@ -25,7 +25,7 @@ const ApStepNodeStatusInRun = ({
     return null;
   }
   if (
-    batchUtils.isSkippedOnEmptyItems({
+    batchUtils.isSkippedWithoutBatches({
       stepType,
       stepOutput: stepOutput?.output,
     })
