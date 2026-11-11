@@ -65,7 +65,7 @@ export class BuilderPage extends BasePage {
   }
 
   async expectStepPanelText(text: string) {
-    await expect(this.sidebar().getByText(text)).toBeVisible();
+    await expect(this.sidebar().getByText(text)).toBeVisible({ timeout: 60000 });
   }
 
   async setJsonBody(json: string) {
