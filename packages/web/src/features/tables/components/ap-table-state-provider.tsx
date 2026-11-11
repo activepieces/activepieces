@@ -300,16 +300,23 @@ function RefreshOnTableUpdated({
     let timer: ReturnType<typeof setTimeout> | undefined;
     let requested = false;
     let stale = false;
+    let disposed = false;
     const isBusy = () =>
       store?.getState().isSaving === true ||
       !isNil(document.querySelector('[data-editing="true"]'));
     const refreshWhenIdle = async () => {
+      if (disposed) {
+        return;
+      }
       if (isBusy()) {
         timer = setTimeout(runRefresh, BUSY_RETRY_MS);
         return;
       }
       stale = false;
       await refetch();
+      if (disposed) {
+        return;
+      }
       if (stale || isBusy()) {
         timer = setTimeout(runRefresh, BUSY_RETRY_MS);
         return;
@@ -344,6 +351,7 @@ function RefreshOnTableUpdated({
       requestRefresh();
     }
     return () => {
+      disposed = true;
       socket.off(WebsocketClientEvent.TABLE_UPDATED, onTableUpdated);
       socket.off('connect', requestRefresh);
       clearTimeout(timer);
