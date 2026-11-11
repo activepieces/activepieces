@@ -111,6 +111,10 @@ vi.mock('@/features/pieces', () => ({
 }));
 
 import { DynamicDropdownPieceProperty } from '@/app/builder/piece-properties/dynamic-dropdown-piece-property';
+import {
+  DynamicPropertiesContext,
+  DynamicPropertiesProvider,
+} from '@/app/builder/piece-properties/dynamic-properties-context';
 
 const dropdownState = (values: unknown[]): DropdownState<unknown> => ({
   disabled: false,
@@ -121,6 +125,13 @@ const DROPDOWN_PATH = 'settings.input.selection';
 const CHILD_DROPDOWN_PATH = 'settings.input.childSelection';
 
 let formInstance: UseFormReturn | undefined;
+let notifyAuthReconnectedFn: (() => void) | undefined;
+
+const ContextCapture = () => {
+  const { notifyAuthReconnected } = React.useContext(DynamicPropertiesContext);
+  notifyAuthReconnectedFn = notifyAuthReconnected;
+  return null;
+};
 
 const Harness = ({
   multiple,
@@ -141,13 +152,16 @@ const Harness = ({
   });
   formInstance = form;
   return (
-    <FormProvider {...form}>
-      <ValueBridge
-        form={form}
-        multiple={multiple}
-        refreshOnSearch={refreshOnSearch}
-      />
-    </FormProvider>
+    <DynamicPropertiesProvider>
+      <ContextCapture />
+      <FormProvider {...form}>
+        <ValueBridge
+          form={form}
+          multiple={multiple}
+          refreshOnSearch={refreshOnSearch}
+        />
+      </FormProvider>
+    </DynamicPropertiesProvider>
   );
 };
 
@@ -432,6 +446,19 @@ describe('DynamicDropdownPieceProperty refresher change', () => {
     resolveOptions(['sheet-a', 'sheet-b']);
 
     expect(formInstance!.getValues(DROPDOWN_PATH)).toBeNull();
+  });
+
+  it('resets and reloads options when the same connection is reconnected', () => {
+    mount();
+    resolveOptions(['sheet-a', 'sheet-b']);
+    act(() => formInstance!.setValue(DROPDOWN_PATH, 'sheet-b'));
+
+    act(() => notifyAuthReconnectedFn!());
+    expect(mutateCalls).toHaveLength(2);
+    expect(formInstance!.getValues(DROPDOWN_PATH)).toBeNull();
+
+    resolveOptions(['sheet-a', 'sheet-b']);
+    expect(formInstance!.getValues(DROPDOWN_PATH)).toBe('sheet-b');
   });
 
   describe('a saved value that is not among the options', () => {

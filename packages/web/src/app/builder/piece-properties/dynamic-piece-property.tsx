@@ -63,9 +63,12 @@ const DynamicPropertiesImplementation = React.memo(
       undefined,
     );
     const optionsRequestId = useRef(0);
-    const { propertyLoadingFinished, propertyLoadingStarted } = useContext(
-      DynamicPropertiesContext,
-    );
+    const {
+      propertyLoadingFinished,
+      propertyLoadingStarted,
+      authReconnectVersion,
+    } = useContext(DynamicPropertiesContext);
+    const previousAuthReconnectVersion = useRef(authReconnectVersion);
     const [propertyMap, setPropertyMap] = useState<
       PiecePropertyMap | undefined
     >(undefined);
@@ -122,10 +125,14 @@ const DynamicPropertiesImplementation = React.memo(
       if (!isNil(currentValue) && Object.keys(currentValue).length > 0) {
         lastKnownValue.current = { ...currentValue };
       }
-      if (!deepEqual(previousRefresherValues.current, refresherValues)) {
+      const hasRefresherChanged =
+        !deepEqual(previousRefresherValues.current, refresherValues) ||
+        previousAuthReconnectVersion.current !== authReconnectVersion;
+      if (hasRefresherChanged) {
         clearPropertyValue();
       }
       previousRefresherValues.current = refresherValues;
+      previousAuthReconnectVersion.current = authReconnectVersion;
       const requestId = ++optionsRequestId.current;
       const restoreLastKnownValue = () => {
         if (!isNil(lastKnownValue.current)) {
@@ -186,7 +193,7 @@ const DynamicPropertiesImplementation = React.memo(
           },
         },
       );
-    }, [refresherValues]);
+    }, [refresherValues, authReconnectVersion]);
 
     return (
       <>

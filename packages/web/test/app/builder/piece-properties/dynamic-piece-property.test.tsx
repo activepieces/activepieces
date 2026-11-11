@@ -79,6 +79,10 @@ vi.mock('@/features/pieces', async () => {
 });
 
 import { DynamicProperties } from '@/app/builder/piece-properties/dynamic-piece-property';
+import {
+  DynamicPropertiesContext,
+  DynamicPropertiesProvider,
+} from '@/app/builder/piece-properties/dynamic-properties-context';
 
 const shortTextSchema = (fieldNames: string[]): PiecePropertyMap => {
   const schema: PiecePropertyMap = {};
@@ -92,6 +96,13 @@ const shortTextSchema = (fieldNames: string[]): PiecePropertyMap => {
 };
 
 let formInstance: UseFormReturn | undefined;
+let notifyAuthReconnectedFn: (() => void) | undefined;
+
+const ContextCapture = () => {
+  const { notifyAuthReconnected } = React.useContext(DynamicPropertiesContext);
+  notifyAuthReconnectedFn = notifyAuthReconnected;
+  return null;
+};
 
 const Harness = () => {
   const form = useForm<FieldValues>({
@@ -105,20 +116,23 @@ const Harness = () => {
   });
   formInstance = form;
   return (
-    <FormProvider {...form}>
-      <DynamicProperties
-        refreshers={['items']}
-        propertyName="fields"
-        pieceName="@activepieces/piece-test"
-        pieceVersion="0.0.1"
-        actionOrTriggerName="test_action"
-        disabled={false}
-        placedInside="stepSettings"
-        updateFormSchema={null}
-        propertySettings={null}
-        updatePropertySettingsSchema={null}
-      />
-    </FormProvider>
+    <DynamicPropertiesProvider>
+      <ContextCapture />
+      <FormProvider {...form}>
+        <DynamicProperties
+          refreshers={['items']}
+          propertyName="fields"
+          pieceName="@activepieces/piece-test"
+          pieceVersion="0.0.1"
+          actionOrTriggerName="test_action"
+          disabled={false}
+          placedInside="stepSettings"
+          updateFormSchema={null}
+          propertySettings={null}
+          updatePropertySettingsSchema={null}
+        />
+      </FormProvider>
+    </DynamicPropertiesProvider>
   );
 };
 
@@ -257,6 +271,27 @@ describe('DynamicProperties refresher change', () => {
 
     expect(formInstance!.getValues('settings.input.fields')).toEqual({
       firstName: 'John',
+    });
+  });
+
+  it('resets and reloads dynamic properties when the same connection is reconnected', () => {
+    mount();
+    resolveOptions(shortTextSchema(['firstName', 'lastName']));
+
+    act(() => {
+      formInstance!.setValue('settings.input.fields.firstName', 'John');
+      formInstance!.setValue('settings.input.fields.lastName', 'Doe');
+    });
+
+    act(() => notifyAuthReconnectedFn!());
+    expect(mutateCalls).toHaveLength(2);
+    expect(formInstance!.getValues('settings.input.fields')).toBeNull();
+
+    resolveOptions(shortTextSchema(['firstName', 'email']));
+
+    expect(formInstance!.getValues('settings.input.fields')).toEqual({
+      firstName: 'John',
+      email: '',
     });
   });
 });

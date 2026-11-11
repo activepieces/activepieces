@@ -45,9 +45,11 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       placeholder: t('Select an option'),
       options: [],
     });
-    const { propertyLoadingFinished, propertyLoadingStarted } = useContext(
-      DynamicPropertiesContext,
-    );
+    const {
+      propertyLoadingFinished,
+      propertyLoadingStarted,
+      authReconnectVersion,
+    } = useContext(DynamicPropertiesContext);
     const { mutate, isPending, error } = piecesHooks.usePieceOptions<
       PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN
     >({
@@ -151,10 +153,12 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       );
     };
 
+    const trackedRefresherState = [...refresherValues, authReconnectVersion];
+
     useEffect(() => {
       if (
         !isFirstRender.current &&
-        !deepEqual(previousValues.current, refresherValues)
+        !deepEqual(previousValues.current, trackedRefresherState)
       ) {
         if (!isNil(props.value)) {
           valueToRestore.current = props.value;
@@ -163,10 +167,10 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
         props.onChange(null);
       }
 
-      previousValues.current = refresherValues;
+      previousValues.current = trackedRefresherState;
       isFirstRender.current = false;
       refresh();
-    }, refresherValues);
+    }, trackedRefresherState);
 
     const selectOptions = dropdownState.options.map((option) => ({
       label: option.label,

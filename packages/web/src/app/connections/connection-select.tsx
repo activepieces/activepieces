@@ -24,8 +24,9 @@ import {
   X,
   LucideIcon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 
+import { DynamicPropertiesContext } from '@/app/builder/piece-properties/dynamic-properties-context';
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { SearchableSelect } from '@/components/custom/searchable-select';
@@ -65,6 +66,7 @@ export function ConnectionSelect({
   const [selectConnectionOpen, setSelectConnectionOpen] = useState(false);
   const [reconnectConnection, setReconnectConnection] =
     useState<AppConnectionWithoutSensitiveData | null>(null);
+  const { notifyAuthReconnected } = useContext(DynamicPropertiesContext);
   //in case of reconnection we need to use the piece version from the connection
   const { pieceModel: pieceWithCorrectVersion, isLoading: isLoadingPiece } =
     piecesHooks.usePiece({
@@ -149,8 +151,14 @@ export function ConnectionSelect({
             connection?.externalId,
           );
           if (!isNil(createdValue)) {
+            const isReconnectedSameConnection =
+              !isNil(reconnectConnection) &&
+              connection?.externalId === reconnectConnection.externalId;
             await refetch();
             onChange(createdValue);
+            if (isReconnectedSameConnection) {
+              notifyAuthReconnected();
+            }
           }
         }}
       ></CreateOrEditConnectionDialog>

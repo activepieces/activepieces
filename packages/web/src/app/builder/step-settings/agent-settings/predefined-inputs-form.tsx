@@ -25,6 +25,7 @@ import { appConnectionsQueries } from '@/features/connections';
 import { piecesHooks } from '@/features/pieces';
 import { authenticationSession } from '@/lib/authentication-session';
 
+import { DynamicPropertiesProvider } from '../../piece-properties/dynamic-properties-context';
 import { selectGenericFormComponentForProperty } from '../../piece-properties/properties-utils';
 
 const createPredefinedInputsFormSchema = (requireAuth: boolean) =>
@@ -174,7 +175,8 @@ export const PredefinedInputsForm = () => {
     );
   }
   return (
-    <Form {...form}>
+    <DynamicPropertiesProvider>
+      <Form {...form}>
       <ScrollArea className="h-full">
         {pieceHasAuth && !isNil(selectedPiece) && (
           <div className="flex flex-col gap-2 p-4 border-b">
@@ -275,5 +277,6 @@ export const PredefinedInputsForm = () => {
         )}
       </ScrollArea>
     </Form>
+    </DynamicPropertiesProvider>
   );
 };
