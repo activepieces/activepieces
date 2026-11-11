@@ -200,6 +200,18 @@ describe.each(['new_only', 'new_and_edited', undefined])('New Response behaviour
     expect(await poll({ store, runOn })).toEqual(['new-2']);
   });
 
+  it('keeps the checkpoint when an older server calls onDisable without isRepublish during a republish', async () => {
+    tick({ minutes: 1 });
+    const { store } = await enabled({ runOn });
+    submit({ id: 'new-1' });
+    expect(await poll({ store, runOn })).toEqual(['new-1']);
+    submit({ id: 'between' });
+    await trigger.onDisable(hookContext({ store, runOn }));
+    await trigger.onEnable(hookContext({ store, runOn, isRepublish: true }));
+    expect(await poll({ store, runOn })).toEqual(['between']);
+    expect(await poll({ store, runOn })).toEqual([]);
+  });
+
   it('fires both responses that share one millisecond when the second shows up a poll later', async () => {
     submit({ id: 'seed' });
     tick({ minutes: 1 });
@@ -381,6 +393,36 @@ describe('New Response store written by 0.7.x', () => {
     submit({ id: 'next' });
     edit({ id: 'delivered' });
     expect((await poll({ store })).sort()).toEqual(['delivered', 'next']);
+  });
+
+  it('reads the old lastPoll key only until it is migrated, not on every poll', async () => {
+    submit({ id: 'delivered' });
+    const lastPoll = Date.parse(vendor.responses[0].lastSubmittedTime);
+    const { store, data } = memoryStore();
+    await store.put('lastPoll', lastPoll);
+    const reads: string[] = [];
+    const deletes: string[] = [];
+    const tracked: Store = {
+      put: store.put,
+      get: async <T>(key: string) => {
+        reads.push(key);
+        return store.get<T>(key);
+      },
+      delete: async (key: string) => {
+        deletes.push(key);
+        await store.delete(key);
+      },
+    };
+    expect(await poll({ store: tracked })).toEqual([]);
+    expect(reads).toEqual(['new_response_state', 'lastPoll']);
+    expect(deletes).toEqual(['lastPoll']);
+    expect(data.has('lastPoll')).toBe(false);
+    reads.length = 0;
+    deletes.length = 0;
+    submit({ id: 'next' });
+    expect(await poll({ store: tracked })).toEqual(['next']);
+    expect(reads).toEqual(['new_response_state']);
+    expect(deletes).toEqual([]);
   });
 
   it('keeps the old checkpoint across the version-upgrade republish', async () => {

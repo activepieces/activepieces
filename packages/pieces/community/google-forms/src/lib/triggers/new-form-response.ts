@@ -26,7 +26,7 @@ export const newResponse = createTrigger({
   props: {
     info: Property.MarkDown({
       value:
-        'Checks the form every few minutes. With **New responses only**, each response starts the flow once, when it is first sent. With **New and edited responses**, it also starts the flow again every time the respondent edits and resends it. Only responses sent after the flow is published count. Upgrading the piece version in the builder pre-selects **New responses only**; choose **New and edited responses** to keep the old behaviour.',
+        'Checks the form every few minutes. With **New responses only**, each response starts the flow once, when it is first sent. With **New and edited responses**, it also starts the flow again every time the respondent edits and resends it (respondents can only edit when **Allow response editing** is on in the form settings). Only responses sent after the flow is published count. Upgrading the piece version in the builder pre-selects **New responses only**; choose **New and edited responses** to keep the old behaviour.',
       variant: MarkdownVariant.INFO,
     }),
     form_id: googleFormsCommon.form_id,
@@ -34,7 +34,7 @@ export const newResponse = createTrigger({
     run_on: Property.StaticDropdown<string>({
       displayName: 'Run On',
       description:
-        'Choose whether an edited response starts the flow again. Empty means "New and edited responses". Edits need "Allow response editing" on the form.',
+        'Choose whether an edited response starts the flow again.',
       required: false,
       defaultValue: RUN_ON_NEW_ONLY,
       options: {
@@ -97,26 +97,26 @@ export const newResponse = createTrigger({
     const runOn = resolveRunOn(context.propsValue.run_on);
     if (context.isRepublish) {
       const existing = await loadState(context.store);
-      if (existing !== null && stateMatches({ state: existing, formId, runOn })) {
-        await saveState({ store: context.store, state: { ...existing, formId, runOn } });
+      if (existing.state !== null && stateMatches({ state: existing.state, formId, runOn })) {
+        await saveState({
+          store: context.store,
+          state: { ...existing.state, formId, runOn },
+          dropLegacy: existing.fromLegacy,
+        });
         return;
       }
     }
-    await saveState({ store: context.store, state: baselineState({ formId, runOn }) });
+    await saveState({ store: context.store, state: baselineState({ formId, runOn }), dropLegacy: true });
   },
-  async onDisable(context) {
-    if (context.isRepublish) {
-      return;
-    }
-    await context.store.delete(STATE_KEY);
-    await context.store.delete(LEGACY_STATE_KEY);
+  async onDisable() {
+    return;
   },
   async run(context) {
     const formId = context.propsValue.form_id;
     const runOn = resolveRunOn(context.propsValue.run_on);
-    const state = await loadState(context.store);
+    const { state, fromLegacy } = await loadState(context.store);
     if (state === null || !stateMatches({ state, formId, runOn })) {
-      await saveState({ store: context.store, state: baselineState({ formId, runOn }) });
+      await saveState({ store: context.store, state: baselineState({ formId, runOn }), dropLegacy: fromLegacy });
       return [];
     }
     const { responses, complete } = await listResponses({
@@ -131,7 +131,7 @@ export const newResponse = createTrigger({
       );
     }
     const { fresh, nextState } = selectFresh({ responses, state, runOn, formId });
-    await saveState({ store: context.store, state: nextState });
+    await saveState({ store: context.store, state: nextState, dropLegacy: fromLegacy });
     return fresh;
   },
 });
@@ -166,21 +166,32 @@ function stateMatches({ state, formId, runOn }: { state: PollState; formId: stri
   return sameForm && sameMode;
 }
 
-async function loadState(store: Store): Promise<PollState | null> {
+async function loadState(store: Store): Promise<{ state: PollState | null; fromLegacy: boolean }> {
   const state = await store.get<PollState>(STATE_KEY);
   if (state !== null && state !== undefined) {
-    return state;
+    return { state, fromLegacy: false };
   }
   const legacyLastPoll = await store.get<number>(LEGACY_STATE_KEY);
   if (typeof legacyLastPoll === 'number' && Number.isFinite(legacyLastPoll)) {
-    return { cursorMs: legacyLastPoll + 1, scannedMs: legacyLastPoll + 1, seen: [] };
+    return {
+      state: { cursorMs: legacyLastPoll + 1, scannedMs: legacyLastPoll + 1, seen: [] },
+      fromLegacy: true,
+    };
   }
-  return null;
+  return { state: null, fromLegacy: legacyLastPoll !== null && legacyLastPoll !== undefined };
 }
 
-async function saveState({ store, state }: { store: Store; state: PollState }): Promise<void> {
+async function saveState({
+  store,
+  state,
+  dropLegacy,
+}: {
+  store: Store;
+  state: PollState;
+  dropLegacy: boolean;
+}): Promise<void> {
   await store.put(STATE_KEY, state);
-  if ((await store.get<number>(LEGACY_STATE_KEY)) !== null) {
+  if (dropLegacy) {
     await store.delete(LEGACY_STATE_KEY);
   }
 }
