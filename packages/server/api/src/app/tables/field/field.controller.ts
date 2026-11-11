@@ -5,6 +5,7 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { EntitySourceType, ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { editorSession } from '../../flows/flow/editor-session'
 import { TableEntity } from '../table/table.entity'
 import { FieldEntity } from './field.entity'
 import { fieldService } from './field.service'
@@ -12,7 +13,7 @@ import { fieldService } from './field.service'
 export const fieldController: FastifyPluginAsyncZod = async (fastify) => {
 
     fastify.post('/', CreateRequest, async (request, reply) => {
-        const response = await fieldService.create({ request: request.body, projectId: request.projectId })
+        const response = await fieldService.create({ request: request.body, projectId: request.projectId, editorSessionId: editorSession.idFromRequest(request) })
         await reply.status(StatusCodes.CREATED).send(response)
     },
     )
@@ -37,6 +38,7 @@ export const fieldController: FastifyPluginAsyncZod = async (fastify) => {
         return fieldService.delete({
             id: request.params.id,
             projectId: request.projectId,
+            editorSessionId: editorSession.idFromRequest(request),
         })
     },
     )
@@ -55,6 +57,7 @@ export const fieldController: FastifyPluginAsyncZod = async (fastify) => {
             id: request.params.id,
             projectId: request.projectId,
             request: request.body,
+            editorSessionId: editorSession.idFromRequest(request),
         })
     },
     )

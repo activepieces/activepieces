@@ -1,5 +1,11 @@
 import { isNil } from '@activepieces/core-utils';
-import { Field, Table, PopulatedRecord } from '@activepieces/shared';
+import {
+  Field,
+  Table,
+  PopulatedRecord,
+  TableUpdatedEvent,
+  WebsocketClientEvent,
+} from '@activepieces/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { FileX } from 'lucide-react';
@@ -7,6 +13,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -15,6 +22,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useStore } from 'zustand';
 
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
+import { useSocket } from '@/components/providers/socket-provider';
 import { buttonVariants } from '@/components/ui/button';
 import {
   TableState,
@@ -22,6 +30,7 @@ import {
   createApTableStore,
 } from '@/features/tables/stores/store/ap-tables-client-state';
 import { useResourceLock } from '@/hooks/use-resource-lock';
+import { editorSession } from '@/lib/editor-session';
 import { cn } from '@/lib/utils';
 
 import { fieldsApi } from '../api/fields-api';
@@ -121,6 +130,8 @@ export function ApTableStateProvider({
     ]);
     setRefreshKey((key) => key + 1);
   }, [queryClient, tableId]);
+
+  useRefreshOnTableUpdated({ tableId, refresh: refreshTableState });
 
   if (isTableLoading || isFieldsLoading || isRecordsLoading) {
     return <RouteLoadingBar />;
@@ -231,5 +242,41 @@ function TableLockProvider({
     </TableLockContext.Provider>
   );
 }
+
+function useRefreshOnTableUpdated({
+  tableId,
+  refresh,
+}: {
+  tableId: string | undefined;
+  refresh: () => Promise<void>;
+}) {
+  const socket = useSocket();
+  useEffect(() => {
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    const refreshWhenNotEditing = () => {
+      retry = undefined;
+      if (document.querySelector('[data-editing="true"]')) {
+        retry = setTimeout(refreshWhenNotEditing, EDITING_RETRY_MS);
+        return;
+      }
+      refresh().catch(() => undefined);
+    };
+    const onTableUpdated = (event: TableUpdatedEvent) => {
+      const isOtherEditorOnThisTable =
+        event.tableId === tableId &&
+        event.editorSessionId !== editorSession.getId();
+      if (isOtherEditorOnThisTable && isNil(retry)) {
+        refreshWhenNotEditing();
+      }
+    };
+    socket.on(WebsocketClientEvent.TABLE_UPDATED, onTableUpdated);
+    return () => {
+      socket.off(WebsocketClientEvent.TABLE_UPDATED, onTableUpdated);
+      clearTimeout(retry);
+    };
+  }, [socket, tableId, refresh]);
+}
+
+const EDITING_RETRY_MS = 1000;
 
 type TableLockContextValue = ReturnType<typeof useResourceLock>;
