@@ -6,13 +6,11 @@ import { hasToolCall, isLoopFinished, isStepCount, LanguageModel, StopCondition,
 import { AgentTurnResult, runAgentTurn } from '../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 import { EvalCase, RecordedToolCall } from './eval-case'
 import { evalPrompts } from './prompts'
-import { replay, ReplayStop, StaleRecording } from './replay'
+import { replay, ReplayStop } from './replay'
 import { evalToolSet, McpTools } from './tool-set'
 
-async function run({ evalCase, mcp, modelId, auth, recordMode }: { evalCase: EvalCase, mcp: McpTools, modelId: string, auth: Record<string, unknown>, recordMode: boolean }): Promise<TurnOutcome> {
-    const schemaTools = evalToolSet.build({ mcp, caseReplay: replay.create({ recordedToolCalls: [] }), auth, recordMode })
-    const { fresh, stale } = await replay.splitStale({ tools: schemaTools, recordedToolCalls: evalCase.recordedToolCalls })
-    const caseReplay = replay.create({ recordedToolCalls: fresh })
+async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, recordMode }: { evalCase: EvalCase, recordedToolCalls: RecordedToolCall[], mcp: McpTools, modelId: string, auth: Record<string, unknown>, recordMode: boolean }): Promise<TurnOutcome> {
+    const caseReplay = replay.create({ recordedToolCalls })
     const tools = evalToolSet.build({ mcp, caseReplay, auth, recordMode })
     const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
     const { model, costUsd } = withCost({ model: aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth, config: {} }), modelId, billing: null }) })
@@ -62,7 +60,6 @@ async function run({ evalCase, mcp, modelId, auth, recordMode }: { evalCase: Eva
         toolCalls: turnToolCalls(result),
         stops: caseReplay.stops(),
         newFixtures: caseReplay.newFixtures(),
-        staleRecordings: stale,
         costUsd: costUsd(),
         steps,
     }
@@ -221,7 +218,6 @@ export type TurnOutcome = {
     toolCalls: TurnToolCall[]
     stops: ReplayStop[]
     newFixtures: RecordedToolCall[]
-    staleRecordings: StaleRecording[]
     costUsd: number | null
     steps: number
 }
