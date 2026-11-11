@@ -66,6 +66,16 @@ describe('custom fields dynamic prop', () => {
     expect(Reflect.get(Object(fields['Rate']), 'type')).toBe('NUMBER');
   });
 
+  test('a boolean custom field is an optional Yes/No choice with no default, so leaving it alone sends nothing', async () => {
+    stubBeehiiv({ replies: [{ body: { data: [{ id: '4', kind: 'boolean', display: 'VIP' }], total_pages: 1 } }] });
+    const fields = await customFields.props({ auth: AUTH, publicationId: PUB }, CTX);
+    const vip = Object(fields['VIP']);
+    expect(Reflect.get(vip, 'type')).toBe('STATIC_DROPDOWN');
+    expect(Reflect.get(vip, 'defaultValue')).toBeUndefined();
+    expect(Reflect.get(vip, 'required')).toBe(false);
+    expect(Reflect.get(vip, 'options')).toEqual({ options: [{ label: 'Yes', value: true }, { label: 'No', value: false }] });
+  });
+
   test('a failed load shows a markdown note instead of throwing', async () => {
     stubBeehiiv({ replies: [{ status: 401, body: { errors: [{ message: 'bad key' }] } }] });
     const fields = await customFields.props({ auth: AUTH, publicationId: PUB }, CTX);

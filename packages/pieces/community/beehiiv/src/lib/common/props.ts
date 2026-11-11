@@ -138,7 +138,12 @@ export const customFields = Property.DynamicProperties({
 						fields[field.display] = Property.Number({ displayName: field.display, required: false });
 						break;
 					case 'boolean':
-						fields[field.display] = Property.Checkbox({ displayName: field.display, required: false });
+						fields[field.display] = Property.StaticDropdown<boolean>({
+							displayName: field.display,
+							description: 'Leave empty to keep the current value.',
+							required: false,
+							options: { options: [{ label: 'Yes', value: true }, { label: 'No', value: false }] },
+						});
 						break;
 					case 'date':
 					case 'datetime':

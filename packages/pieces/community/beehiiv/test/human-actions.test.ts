@@ -118,10 +118,10 @@ describe('human action requests', () => {
   test('Update Subscription sends unsubscribe only when checked, and never logs', async () => {
     const log = vi.spyOn(console, 'log');
     const seen = stubBeehiiv({ replies: [{ body: { data: SUBSCRIPTION } }] });
-    await updateSubscriptionAction.run(actionContext({ propsValue: { publicationId: PUB, subscriptionId: SUBSCRIPTION.id, unsubscribe: false, tier: 'free', custom_fields: { Company: 'Acme', Blank: '' } } }));
+    await updateSubscriptionAction.run(actionContext({ propsValue: { publicationId: PUB, subscriptionId: SUBSCRIPTION.id, unsubscribe: false, tier: 'free', custom_fields: { Company: 'Acme', Blank: '', VIP: undefined, Active: false } } }));
     expect(seen[0].method).toBe('PUT');
     expect(seen[0].path).toBe(`/v2/publications/${PUB}/subscriptions/${SUBSCRIPTION.id}`);
-    expect(seen[0].body).toEqual({ tier: 'free', custom_fields: [{ name: 'Company', value: 'Acme' }] });
+    expect(seen[0].body).toEqual({ tier: 'free', custom_fields: [{ name: 'Company', value: 'Acme' }, { name: 'Active', value: false }] });
     expect(log).not.toHaveBeenCalled();
   });
 
