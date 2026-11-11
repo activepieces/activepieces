@@ -75,12 +75,27 @@ describe('authenticationSession', () => {
     expect(authenticationSession.getProjectId()).toBe('project-a');
   });
 
-  it('opens a new tab in the last project used', () => {
+  it('opens a new tab in the last project used, then keeps it', () => {
     signIn({ platformId: 'platform-a', projectId: 'project-a' });
-
     window.sessionStorage.clear();
 
     expect(authenticationSession.getProjectId()).toBe('project-a');
+
+    window.localStorage.setItem('projectId', 'project-b');
+
+    expect(authenticationSession.getProjectId()).toBe('project-a');
+  });
+
+  it('follows another tab that signed in as someone else', () => {
+    signIn({ platformId: 'platform-a', projectId: 'project-a' });
+
+    window.localStorage.setItem(
+      'token',
+      userToken({ platformId: 'platform-a', userId: 'user-2' }),
+    );
+    window.localStorage.setItem('projectId', 'project-b');
+
+    expect(authenticationSession.getProjectId()).toBe('project-b');
   });
 
   it('follows another tab that switched platform', () => {
@@ -133,12 +148,18 @@ function switchResponse({
   };
 }
 
-function userToken({ platformId }: { platformId: string }): string {
+function userToken({
+  platformId,
+  userId = 'user-1',
+}: {
+  platformId: string;
+  userId?: string;
+}): string {
   const encode = (value: object): string =>
     Buffer.from(JSON.stringify(value)).toString('base64url');
   return [
     encode({ alg: 'HS256', typ: 'JWT' }),
-    encode({ id: 'user-1', type: 'USER', platform: { id: platformId } }),
+    encode({ id: userId, type: 'USER', platform: { id: platformId } }),
     'signature',
   ].join('.');
 }

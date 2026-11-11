@@ -51,11 +51,14 @@ export const authenticationSession = {
     if (isNil(token)) {
       return null;
     }
-    const projectId =
-      window.sessionStorage.getItem(tabProjectIdKey()) ??
-      ApStorage.getInstance().getItem(projectIdKey);
-    if (!isNil(projectId)) {
-      return projectId;
+    const tabProjectId = window.sessionStorage.getItem(tabProjectIdKey());
+    if (!isNil(tabProjectId)) {
+      return tabProjectId;
+    }
+    const lastUsedProjectId = ApStorage.getInstance().getItem(projectIdKey);
+    if (!isNil(lastUsedProjectId)) {
+      window.sessionStorage.setItem(tabProjectIdKey(), lastUsedProjectId);
+      return lastUsedProjectId;
     }
     const decodedJwt = getDecodedJwt(token);
     if ('projectId' in decodedJwt && typeof decodedJwt.projectId === 'string') {
@@ -160,5 +163,5 @@ function removeProjectId(): void {
 }
 
 function tabProjectIdKey(): string {
-  return `${projectIdKey}:${authenticationSession.getPlatformId()}`;
+  return `${projectIdKey}:${authenticationSession.getPlatformId()}:${authenticationSession.getCurrentUserId()}`;
 }
