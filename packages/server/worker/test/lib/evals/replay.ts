@@ -1,5 +1,6 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, isObject } from '@activepieces/core-utils'
 import { asSchema, ToolSet } from 'ai'
+import { agentWorkerTools } from '../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
 import { RecordedToolCall } from './eval-case'
 
 function create({ recordedToolCalls }: { recordedToolCalls: RecordedToolCall[] }): Replay {
@@ -78,13 +79,13 @@ async function staleness({ tools, call }: { tools: ToolSet, call: RecordedToolCa
 }
 
 function jsonSchemaProblem({ schema, input }: { schema: unknown, input: unknown }): string | null {
-    if (!isRecord(schema)) {
+    if (!isObject(schema)) {
         return null
     }
-    if (!isRecord(input)) {
+    if (!isObject(input)) {
         return 'the input is not an object'
     }
-    const properties = isRecord(schema['properties']) ? schema['properties'] : {}
+    const properties = isObject(schema['properties']) ? schema['properties'] : {}
     const required = Array.isArray(schema['required']) ? schema['required'].filter((key): key is string => typeof key === 'string') : []
     const missing = required.filter((key) => !(key in input))
     if (missing.length > 0) {
@@ -96,13 +97,9 @@ function jsonSchemaProblem({ schema, input }: { schema: unknown, input: unknown 
     }
     const badEnum = Object.entries(input).find(([key, value]) => {
         const property = properties[key]
-        return isRecord(property) && Array.isArray(property['enum']) && !property['enum'].includes(value)
+        return isObject(property) && Array.isArray(property['enum']) && !property['enum'].includes(value)
     })
     return isNil(badEnum) ? null : `${badEnum[0]} ${JSON.stringify(badEnum[1])} is not an allowed value`
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function endsTurn(stop: ReplayStop): boolean {
@@ -130,10 +127,7 @@ function inputKey(input: unknown): string {
 }
 
 function withoutCardTitles(input: unknown): unknown {
-    if (typeof input !== 'object' || input === null || Array.isArray(input)) {
-        return input
-    }
-    return Object.fromEntries(Object.entries(input).filter(([key]) => !CARD_TITLE_KEYS.has(key)))
+    return isObject(input) ? Object.fromEntries(Object.entries(input).filter(([key]) => !CARD_TITLE_KEYS.has(key))) : input
 }
 
 function normalized(value: unknown): unknown {
@@ -146,22 +140,13 @@ function normalized(value: unknown): unknown {
     if (typeof value === 'object' && value !== null) {
         return Object.fromEntries(Object.entries(value)
             .sort(([a], [b]) => a.localeCompare(b))
-            .map(([key, inner]) => [key, key === PIECE_NAME_KEY && typeof inner === 'string' ? canonicalPieceName(inner.trim()) : normalized(inner)]))
+            .map(([key, inner]) => [key, key === PIECE_NAME_KEY && typeof inner === 'string' ? agentWorkerTools.normalizePieceName(inner.trim()) : normalized(inner)]))
     }
     return value
 }
 
-function canonicalPieceName(pieceName: string): string {
-    if (pieceName.startsWith('@')) {
-        return pieceName
-    }
-    const short = pieceName.startsWith('piece-') ? pieceName.slice('piece-'.length) : pieceName
-    return `${PIECE_PREFIX}${short.replace(/_/g, '-')}`
-}
-
 const CARD_TITLE_KEYS = new Set(['title', 'activeTitle', 'doneTitle'])
 const PIECE_NAME_KEY = 'pieceName'
-const PIECE_PREFIX = '@activepieces/piece-'
 const REPLAY_ENDED_MESSAGE = 'This tool is unavailable right now.'
 const STALE_REASON_CHARS = 200
 const LIVE_TOOLS = new Set([
@@ -177,14 +162,12 @@ const LIVE_TOOLS = new Set([
     'ap_web_search',
 ])
 const READ_TOOLS = new Set([
+    ...LIVE_TOOLS,
     'ap_discover_action_auth',
     'ap_explore_data',
-    'ap_fetch_url',
     'ap_find_records',
     'ap_flow_structure',
-    'ap_get_piece_props',
     'ap_get_run',
-    'ap_get_tool_schema',
     'ap_list_across_projects',
     'ap_list_agents',
     'ap_list_ai_models',
@@ -193,19 +176,12 @@ const READ_TOOLS = new Set([
     'ap_list_folders',
     'ap_list_runs',
     'ap_list_tables',
-    'ap_load_skill',
     'ap_read_step_code',
     'ap_read_step_settings',
-    'ap_research_pieces',
     'ap_resolve_property_chain',
     'ap_resolve_property_options',
-    'ap_scrape_url',
-    'ap_search_actions',
-    'ap_search_triggers',
-    'ap_setup_guide',
     'ap_validate_flow',
     'ap_validate_step_config',
-    'ap_web_search',
 ])
 
 export const replay = {

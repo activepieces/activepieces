@@ -1,4 +1,4 @@
-import { aiProviderCredentials, AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
+import { aiProviderCredentials, AIProviderName, isNil, isObject, tryCatch } from '@activepieces/core-utils'
 import { agentToolSkills } from '@activepieces/shared'
 import { aiUtils } from '@activepieces/server-utils'
 import { generateText, ModelMessage } from 'ai'
@@ -27,23 +27,26 @@ function targetCallFailure({ evalCase, toolCalls }: { evalCase: Pick<EvalCase, '
     if (isNil(cutBeforeStep) || isNil(targetTool)) {
         return null
     }
-    const failed = toolCalls.find((call) => agentToolSkills.effectiveToolCall({ toolName: call.toolName, input: call.input }).toolName === targetTool && !isNil(callFailure(call)))
-    return isNil(failed) ? null : `target ${targetTool} did not succeed: ${callFailure(failed)}`
+    const failure = toolCalls
+        .filter((call) => agentToolSkills.effectiveToolCall({ toolName: call.toolName, input: call.input }).toolName === targetTool)
+        .map(callFailure)
+        .find((reason) => !isNil(reason))
+    return isNil(failure) ? null : `target ${targetTool} did not succeed: ${failure.slice(0, FAILURE_PREVIEW_CHARS)}`
 }
 
 function callFailure(call: TurnToolCall): string | null {
     if (call.errored || !isNil(call.errorText)) {
-        return (call.errorText ?? 'the call errored').slice(0, FAILURE_PREVIEW_CHARS)
+        return call.errorText ?? 'the call errored'
     }
     const { output } = call
-    if (typeof output !== 'object' || output === null) {
+    if (!isObject(output)) {
         return null
     }
-    if ('error' in output && !isNil(output.error)) {
-        return (typeof output.error === 'string' ? output.error : JSON.stringify(output.error)).slice(0, FAILURE_PREVIEW_CHARS)
+    if (!isNil(output['error'])) {
+        return typeof output['error'] === 'string' ? output['error'] : JSON.stringify(output['error'])
     }
-    if (('success' in output && output.success === false) || ('isError' in output && output.isError === true)) {
-        return JSON.stringify(output).slice(0, FAILURE_PREVIEW_CHARS)
+    if (output['success'] === false || output['isError'] === true) {
+        return JSON.stringify(output)
     }
     return null
 }
@@ -141,15 +144,8 @@ function replayNoteFor({ stops }: { stops: ReplayStop[] }): string {
     const ended = stops.find(replay.endsTurn)
     return [
         missingReads.length === 0 ? '' : `This is a replayed test. These read tools had no recorded answer and replied "unavailable": ${[...new Set(missingReads)].join(', ')}. That is a limit of the test, not a fault of the assistant.\n`,
-        isNil(ended) ? '' : endedNote({ stop: ended }),
+        isNil(ended) ? '' : `The test ended the turn: ${ended.reason}. Judge only what happened up to that call.\n`,
     ].join('') + (stops.length === 0 ? '' : '\n')
-}
-
-function endedNote({ stop }: { stop: ReplayStop }): string {
-    if (stop.kind === 'write_input_differs') {
-        return `The test ended the turn when the assistant called ${stop.toolName}, a tool that changes data, with input that differs from the recorded chat. Judge only what happened up to that call.\n`
-    }
-    return `The test ended the turn when the assistant called ${stop.toolName}, a tool that changes data and was not called at this point in the recorded chat. Judge only what happened up to that call.\n`
 }
 
 function renderContext({ messages }: { messages: ModelMessage[] }): string {

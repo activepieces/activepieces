@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto'
+import { cryptoUtils } from '@activepieces/server-utils'
 import { asSchema, ToolSet } from 'ai'
 import { EvalCase } from './eval-case'
 import { replay } from './replay'
@@ -6,7 +6,7 @@ import { replay } from './replay'
 async function fingerprints({ tools }: { tools: ToolSet }): Promise<ToolFingerprints> {
     const entries = await Promise.all(Object.entries(tools).map(async ([name, tool]) => {
         const definition = JSON.stringify({ description: tool.description ?? '', inputSchema: await asSchema(tool.inputSchema).jsonSchema })
-        return [name, createHash('sha256').update(definition).digest('hex').slice(0, HASH_CHARS)] as const
+        return [name, cryptoUtils.hashSHA256(definition).slice(0, HASH_CHARS)] as const
     }))
     return Object.fromEntries(entries)
 }
