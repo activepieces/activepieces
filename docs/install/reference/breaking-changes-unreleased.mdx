@@ -18,6 +18,14 @@ Steps upgraded to 0.5.0 also behave differently. **List Posts** now returns post
 
 Point any Run Agent step or MCP client that used the four subscription actions at the matching new tool. Update flows that read List Posts output to use `items`, and set Limit and Page or Cursor on list steps that read very large lists.
 
+#### Stability AI 0.4.0: Text to Image is no longer an AI agent tool
+
+**Text to Image** (the legacy SDXL 1.0 action) is now shown only in the flow builder. AI agents and MCP clients get the new **Generate Image** tool (`generate_image`) instead, which uses Stable Image Ultra, Core or Stable Diffusion 3.5. Text to Image also now rejects `steps` above 50, `samples` outside 1–10 and width × height pairs SDXL 1.0 does not support before calling Stability AI, and it sends a `weight` of 0 instead of replacing it with 1. The engine picker offers only SDXL 1.0; the other six engines are no longer in Stability AI's documentation.
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses Text to Image as a tool, switch it to Generate Image. If a flow uses an engine other than `stable-diffusion-xl-1024-v1-0`, choose SDXL 1.0 or move the step to Generate Image. Steps keep running on the version they were built with until you upgrade them.
+
 #### YouTrack 0.3.0: calls to YouTrack now verify the TLS certificate
 
 From YouTrack 0.3.0, the piece checks the certificate of your YouTrack server on the connection check, triggers, dropdowns and every dedicated action, including attachment downloads. Before, certificate checks were skipped, so a self-hosted YouTrack Server behind a self-signed, private-CA or expired certificate worked. With 0.3.0 these calls fail with a certificate error for such servers. The **Custom API Call** action is the exception: it still uses the shared HTTP client and does not check the certificate. YouTrack Cloud (`*.youtrack.cloud`) and servers with a publicly trusted certificate are not affected.
