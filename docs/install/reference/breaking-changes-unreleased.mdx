@@ -14,4 +14,4 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 #### What you need to do
 
-Nothing for most flows. The first notification after upgrading uses the old rule once, then the new rule applies. If a flow relied on New or Updated Row running for every row after a sort or insert, or on New Row Added running for edited rows, use New or Updated Row with a Trigger Column instead.
+Nothing for most flows. Upgrading republishes the flow, which takes a fresh baseline of the sheet, so a change made while the flow is being republished does not run it (same as today). If a flow relied on New or Updated Row running for every row after a sort or insert, or on New Row Added running for edited rows, use New or Updated Row with a Trigger Column instead.

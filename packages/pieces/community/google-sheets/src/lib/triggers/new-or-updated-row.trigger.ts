@@ -9,7 +9,7 @@ import {
 	TriggerStrategy,
 	WebhookRenewStrategy,
 } from '@activepieces/pieces-framework';
-import { googleSheetsAuth, labelToColumn } from '../common/common';
+import { googleSheetsAuth, GoogleSheetsAuthValue, labelToColumn } from '../common/common';
 import { commonProps } from '../common/props';
 import { googleSheetsNewOrUpdatedRowTriggerOutputSchema } from '../output-schemas';
 import {
@@ -43,14 +43,14 @@ export const newOrUpdatedRowTrigger = createTrigger({
 	props: {
 		info: Property.MarkDown({
 			value:
-				'Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nRows that only move (insert, delete, sort) and format-only changes do not fire.',
+				'Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nRows that only move (insert, delete, sort) and format-only changes do not fire. With a Trigger Column, a new row fires once that column is filled.',
 		}),
 		...commonProps,
 		trigger_column: Property.Dropdown({
 			auth: googleSheetsAuth,
 			displayName: 'Trigger Column',
 			description:
-				'Fire only when this column changes. A new row fires once this column is filled. Any Column fires on any cell.',
+				'Fire only when this column changes. Any Column fires on any cell.',
 			required: false,
 			refreshers: ['spreadsheetId', 'sheetId'],
 			defaultValue: ALL_COLUMNS,
@@ -164,12 +164,6 @@ export const newOrUpdatedRowTrigger = createTrigger({
 		const identity: SnapshotIdentity = { spreadsheetId, sheetId, triggerColumn };
 
 		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
-		const displayValues = await getWorkSheetValues({
-			auth: context.auth,
-			spreadsheetId,
-			sheetName,
-			valueRenderOption: 'FORMATTED_VALUE',
-		});
 		const rawValues = await getWorkSheetValues({
 			auth: context.auth,
 			spreadsheetId,
@@ -185,7 +179,20 @@ export const newOrUpdatedRowTrigger = createTrigger({
 			store: context.store,
 			identity,
 			current,
-			displayValues,
+			readDisplayValues: () =>
+				getWorkSheetValues({
+					auth: context.auth,
+					spreadsheetId,
+					sheetName,
+					valueRenderOption: 'FORMATTED_VALUE',
+				}),
+		});
+		const changedRows = await readChangedRows({
+			auth: context.auth,
+			spreadsheetId,
+			sheetName,
+			indexes: changedIndexes.indexes,
+			headerCount: (rawValues[0] ?? []).length,
 		});
 
 		if (!changedIndexes.unchanged) {
@@ -200,17 +207,10 @@ export const newOrUpdatedRowTrigger = createTrigger({
 			await context.store.delete(legacyStoreKey(sheetId));
 		}
 
-		const headerCount = (displayValues[0] ?? []).length;
-		return changedIndexes.indexes.map((index) => {
-			const row = {
-				row: index + 1,
-				values: labelRowValues({ row: displayValues[index], headerCount }),
-			};
-			return {
-				...row,
-				[DEDUPE_KEY_PROPERTY]: hashObject(row),
-			};
-		});
+		return changedRows.map((row) => ({
+			...row,
+			[DEDUPE_KEY_PROPERTY]: hashObject(row),
+		}));
 	},
 
 	async test(context) {
@@ -294,12 +294,12 @@ async function findChangedRows({
 	store,
 	identity,
 	current,
-	displayValues,
+	readDisplayValues,
 }: {
 	store: Store;
 	identity: SnapshotIdentity;
 	current: ReturnType<typeof rowSnapshot.fingerprintRows>;
-	displayValues: SheetCellValue[][];
+	readDisplayValues: () => Promise<SheetCellValue[][]>;
 }): Promise<{ indexes: number[]; legacy: boolean; unchanged: boolean }> {
 	const previous = await rowSnapshot.loadSnapshot({ store, key: SNAPSHOT_STORE_KEY, identity });
 	if (!isNil(previous)) {
@@ -315,7 +315,7 @@ async function findChangedRows({
 	if (isStringArray(legacyHashes)) {
 		return {
 			indexes: legacyChangedRows({
-				displayValues,
+				displayValues: await readDisplayValues(),
 				legacyHashes,
 				triggerColumn: identity.triggerColumn,
 			}),
@@ -325,4 +325,34 @@ async function findChangedRows({
 	}
 	console.info('[google-sheets] new_or_updated_row: no row snapshot for these settings, taking a new baseline.');
 	return { indexes: [], legacy: false, unchanged: false };
+}
+
+async function readChangedRows({
+	auth,
+	spreadsheetId,
+	sheetName,
+	indexes,
+	headerCount,
+}: {
+	auth: GoogleSheetsAuthValue;
+	spreadsheetId: string;
+	sheetName: string;
+	indexes: number[];
+	headerCount: number;
+}): Promise<{ row: number; values: Record<string, string> }[]> {
+	if (indexes.length === 0) {
+		return [];
+	}
+	const first = indexes[0];
+	const last = indexes[indexes.length - 1];
+	const displayValues = await getWorkSheetValues({
+		auth,
+		spreadsheetId,
+		sheetName,
+		range: `${first + 1}:${last + 1}`,
+	});
+	return indexes.map((index) => ({
+		row: index + 1,
+		values: labelRowValues({ row: displayValues[index - first], headerCount }),
+	}));
 }

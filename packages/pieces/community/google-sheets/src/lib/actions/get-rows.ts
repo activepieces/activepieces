@@ -16,11 +16,12 @@ export const getRowsAction = createAction({
   auth: googleSheetsAuth,
   name: 'get_next_rows',
   classification: 'READ',
-  description: 'Read the next batch of rows from a worksheet, continuing where the last run left off.',
+  description:
+    'Read the next batch of rows from a worksheet, continuing where the last run left off. A batch of only blank rows returns an empty list mid-sheet, so do not stop at the first empty result.',
   audience: 'human',
   aiMetadata: {
     description:
-      'Reads the next batch of rows from a worksheet, advancing a cursor stored under a memory key so successive calls walk through the sheet without reprocessing rows. Use to iterate a sheet in chunks across runs. Not idempotent — each non-test call moves the stored cursor forward and returns a different batch.',
+      'Reads the next batch of rows from a worksheet, advancing a cursor stored under a memory key so successive calls walk through the sheet without reprocessing rows. Use to iterate a sheet in chunks across runs. Not idempotent — each non-test call moves the stored cursor forward and returns a different batch. A batch made only of blank rows returns an empty list even when more rows follow, so an empty result does not mean the end of the sheet.',
     idempotent: false,
   },
   displayName: 'Get Next Rows',

@@ -21,9 +21,11 @@ const sheetsFactory = () => ({
         spreadsheets: {
             get: async () => ({ data: { sheets: [{ properties: { sheetId: 0, title: 'Sheet1' } }] } }),
             values: {
-                get: async (params: { valueRenderOption?: string }) => {
+                get: async (params: { range?: string, valueRenderOption?: string }) => {
                     valuesGetCalls.push(params.valueRenderOption)
-                    return { data: { values: render(params.valueRenderOption) } }
+                    const rowRange = /!(\d+):(\d+)$/.exec(params.range ?? '')
+                    const values = render(params.valueRenderOption)
+                    return { data: { values: rowRange ? values.slice(Number(rowRange[1]) - 1, Number(rowRange[2])) : values } }
                 },
             },
         },

@@ -8,6 +8,7 @@ const ROWS_PER_CHUNK = 8000;
 const SNAPSHOT_VERSION = 2;
 const MAX_ORPHAN_CHUNKS = 64;
 const MAX_LOAD_ATTEMPTS = 3;
+const WRITE_ID_BYTES = 4;
 
 const manifestSchema = z.object({
 	version: z.literal(SNAPSHOT_VERSION),
@@ -15,10 +16,19 @@ const manifestSchema = z.object({
 	sheetId: z.number(),
 	triggerColumn: z.string(),
 	generation: z.number(),
+	writeId: z.string(),
 	chunkCount: z.number(),
 	rowCount: z.number(),
 	entryWidth: z.number(),
-	retained: z.optional(z.object({ generation: z.number(), chunkCount: z.number() })),
+	retained: z.optional(
+		z.object({
+			generation: z.number(),
+			writeId: z.string(),
+			chunkCount: z.number(),
+			rowCount: z.number(),
+			entryWidth: z.number(),
+		}),
+	),
 });
 
 function fingerprint(value: unknown): string {
@@ -274,12 +284,21 @@ async function loadSnapshot({
 		if (isNil(manifest) || !matchesIdentity({ manifest, identity })) {
 			return null;
 		}
-		const rows = await readChunks({ store, key, manifest });
+		const rows = await readChunks({ store, key, written: manifest });
 		if (!isNil(rows)) {
 			return rows;
 		}
 		const latest = await readManifest({ store, key });
-		if (isNil(latest) || latest.generation === manifest.generation) {
+		if (isNil(latest) || isSameWrite({ left: latest, right: manifest })) {
+			const retained = isNil(manifest.retained)
+				? null
+				: await readChunks({ store, key, written: manifest.retained });
+			if (!isNil(retained)) {
+				console.warn(
+					`[google-sheets] row snapshot ${key} generation ${manifest.generation} was overwritten by an overlapping notification; comparing against generation ${manifest.retained?.generation}.`,
+				);
+				return retained;
+			}
 			console.warn(
 				`[google-sheets] row snapshot ${key} generation ${manifest.generation} is incomplete; taking a new baseline.`,
 			);
@@ -290,6 +309,10 @@ async function loadSnapshot({
 	throw new Error(
 		'The row snapshot kept changing while it was read, because notifications overlapped. Nothing was skipped; the next notification will compare again.',
 	);
+}
+
+function isSameWrite({ left, right }: { left: SnapshotManifest; right: SnapshotManifest }): boolean {
+	return left.generation === right.generation && left.writeId === right.writeId;
 }
 
 function matchesIdentity({ manifest, identity }: { manifest: SnapshotManifest; identity: SnapshotIdentity }): boolean {
@@ -303,28 +326,32 @@ function matchesIdentity({ manifest, identity }: { manifest: SnapshotManifest; i
 async function readChunks({
 	store,
 	key,
-	manifest,
+	written,
 }: {
 	store: Store;
 	key: string;
-	manifest: SnapshotManifest;
+	written: WrittenSnapshot;
 }): Promise<RowFingerprint[] | null> {
 	const rows: RowFingerprint[] = [];
-	for (let chunk = 0; chunk < manifest.chunkCount; chunk++) {
-		const encoded = await store.get<unknown>(chunkKey({ key, generation: manifest.generation, chunk }));
-		if (typeof encoded !== 'string' || encoded.length % manifest.entryWidth !== 0) {
+	for (let chunk = 0; chunk < written.chunkCount; chunk++) {
+		const stored = await store.get<unknown>(chunkKey({ key, generation: written.generation, chunk }));
+		if (typeof stored !== 'string' || !stored.startsWith(written.writeId)) {
 			return null;
 		}
-		for (let offset = 0; offset < encoded.length; offset += manifest.entryWidth) {
+		const encoded = stored.slice(written.writeId.length);
+		if (encoded.length % written.entryWidth !== 0) {
+			return null;
+		}
+		for (let offset = 0; offset < encoded.length; offset += written.entryWidth) {
 			const full = encoded.slice(offset, offset + FINGERPRINT_LENGTH);
 			const trigger =
-				manifest.entryWidth > FINGERPRINT_LENGTH
-					? encoded.slice(offset + FINGERPRINT_LENGTH, offset + manifest.entryWidth)
+				written.entryWidth > FINGERPRINT_LENGTH
+					? encoded.slice(offset + FINGERPRINT_LENGTH, offset + written.entryWidth)
 					: full;
 			rows.push({ full, trigger });
 		}
 	}
-	return rows.length === manifest.rowCount ? rows : null;
+	return rows.length === written.rowCount ? rows : null;
 }
 
 async function saveSnapshot({
@@ -340,6 +367,7 @@ async function saveSnapshot({
 }): Promise<void> {
 	const previous = await readManifest({ store, key });
 	const generation = (previous?.generation ?? 0) + 1;
+	const writeId = crypto.randomBytes(WRITE_ID_BYTES).toString('hex');
 	const separateTrigger = rows.some((row) => row.trigger !== row.full);
 	const entryWidth = separateTrigger ? FINGERPRINT_LENGTH * 2 : FINGERPRINT_LENGTH;
 	const chunkCount = Math.ceil(rows.length / ROWS_PER_CHUNK);
@@ -348,7 +376,7 @@ async function saveSnapshot({
 			.slice(chunk * ROWS_PER_CHUNK, (chunk + 1) * ROWS_PER_CHUNK)
 			.map((row) => (separateTrigger ? row.full + row.trigger : row.full))
 			.join('');
-		await store.put(chunkKey({ key, generation, chunk }), encoded);
+		await store.put(chunkKey({ key, generation, chunk }), writeId + encoded);
 	}
 	const manifest: SnapshotManifest = {
 		version: SNAPSHOT_VERSION,
@@ -356,10 +384,19 @@ async function saveSnapshot({
 		sheetId: identity.sheetId,
 		triggerColumn: identity.triggerColumn,
 		generation,
+		writeId,
 		chunkCount,
 		rowCount: rows.length,
 		entryWidth,
-		retained: isNil(previous) ? undefined : { generation: previous.generation, chunkCount: previous.chunkCount },
+		retained: isNil(previous)
+			? undefined
+			: {
+					generation: previous.generation,
+					writeId: previous.writeId,
+					chunkCount: previous.chunkCount,
+					rowCount: previous.rowCount,
+					entryWidth: previous.entryWidth,
+				},
 	};
 	await store.put(key, manifest);
 	const expired = previous?.retained;
@@ -436,3 +473,5 @@ export type SnapshotIdentity = {
 };
 
 type SnapshotManifest = z.infer<typeof manifestSchema>;
+
+type WrittenSnapshot = Pick<SnapshotManifest, 'generation' | 'writeId' | 'chunkCount' | 'rowCount' | 'entryWidth'>;

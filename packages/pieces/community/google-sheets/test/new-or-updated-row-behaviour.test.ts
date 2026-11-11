@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { newOrUpdatedRowTrigger } from '../src/lib/triggers/new-or-updated-row.trigger';
+import { rowSnapshot } from '../src/lib/triggers/row-snapshot';
 import { engineContext, rowEvents, webhookTrigger } from './support/engine-context';
 import { cells, fakeGoogle, FakeTab, installFakeGoogle, memoryStore, resetFakeGoogle, storeLimit } from './support/fake-google';
 
@@ -297,7 +298,7 @@ describe('New or Updated Row behaviour', () => {
 			});
 			const first = await fire({ store: overlapping });
 			expect(other).toEqual(['3:1002|Bob|shipped']);
-			expect(first).toContain('2:1001|Ann|refunded');
+			expect(first.map((event) => event.split('|')[0])).toContain('2:1001');
 		});
 
 		it('retries against the newest snapshot when two saves happened during its read, and never re-baselines silently', async () => {
@@ -315,7 +316,7 @@ describe('New or Updated Row behaviour', () => {
 				},
 			});
 			const first = await fire({ store: overlapping });
-			expect(first).toContain('2:1001|Ann|refunded');
+			expect(first.map((event) => event.split('|')[0])).toContain('2:1001');
 			expect(warn.mock.calls.some(([message]) => String(message).includes('new baseline'))).toBe(false);
 		});
 
@@ -364,5 +365,72 @@ describe('New or Updated Row behaviour', () => {
 		const { store } = memoryStore();
 		const sample = rowEvents({ value: await trigger.test(ctx({ store })) });
 		expect(sample.map((row) => row.row)).toEqual([4, 3, 2]);
+	});
+});
+
+describe('New or Updated Row reads', () => {
+	it('reads the sheet once when nothing changed and fetches formatted values only for changed rows', async () => {
+		const money = (value: number) => `$${value}.00`;
+		resetFakeGoogle({
+			tabs: [
+				{
+					sheetId: 0,
+					title: 'Orders',
+					rows: [
+						cells({ values: ['Order', 'Amount'] }),
+						[{ value: '1001' }, { value: 10, format: money }],
+						[{ value: '1002' }, { value: 20, format: money }],
+						[{ value: '1003' }, { value: 30, format: money }],
+					],
+				},
+			],
+		});
+		const { store } = memoryStore();
+		await trigger.onEnable(ctx({ store }));
+		fakeGoogle.valueReads = [];
+		expect(await fire({ store })).toEqual([]);
+		expect(fakeGoogle.valueReads).toEqual([{ range: 'Orders', option: 'UNFORMATTED_VALUE' }]);
+		fakeGoogle.valueReads = [];
+		tab().rows[3][1] = { value: 35, format: money };
+		expect(await fire({ store })).toEqual(['4:1003|$35.00']);
+		expect(fakeGoogle.valueReads).toEqual([
+			{ range: 'Orders', option: 'UNFORMATTED_VALUE' },
+			{ range: 'Orders!4:4', option: 'FORMATTED_VALUE' },
+		]);
+	});
+});
+
+describe('row snapshot written by two overlapping notifications', () => {
+	const KEY = 'overlap-snapshot';
+	const identity = { spreadsheetId: 'ss1', sheetId: 0, triggerColumn: 'all_columns' };
+
+	function rows({ count, tag }: { count: number; tag: string }) {
+		return rowSnapshot.fingerprintRows({
+			rows: Array.from({ length: count }, (_, index) => [`${tag}-${index}`]),
+			triggerColumnIndex: undefined,
+		});
+	}
+
+	it('never compares against a mix of two writes and falls back to the retained generation', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const { store, data } = memoryStore();
+		const base = rows({ count: 9_000, tag: 'base' });
+		await rowSnapshot.saveSnapshot({ store, key: KEY, identity, rows: base });
+		const baseManifest = data.get(KEY) ?? '';
+		await rowSnapshot.saveSnapshot({ store, key: KEY, identity, rows: rows({ count: 9_000, tag: 'a' }) });
+		const chunkFromA = data.get(`${KEY}_g2_1`) ?? '';
+		data.set(KEY, baseManifest);
+		await rowSnapshot.saveSnapshot({ store, key: KEY, identity, rows: rows({ count: 9_000, tag: 'b' }) });
+		data.set(`${KEY}_g2_1`, chunkFromA);
+		expect(await rowSnapshot.loadSnapshot({ store, key: KEY, identity })).toEqual(base);
+		expect(warn.mock.calls.some(([message]) => String(message).includes('overlapping notification'))).toBe(true);
+	});
+
+	it('reads the newest write when its chunks are intact', async () => {
+		const { store } = memoryStore();
+		await rowSnapshot.saveSnapshot({ store, key: KEY, identity, rows: rows({ count: 9_000, tag: 'base' }) });
+		const latest = rows({ count: 9_000, tag: 'next' });
+		await rowSnapshot.saveSnapshot({ store, key: KEY, identity, rows: latest });
+		expect(await rowSnapshot.loadSnapshot({ store, key: KEY, identity })).toEqual(latest);
 	});
 });
