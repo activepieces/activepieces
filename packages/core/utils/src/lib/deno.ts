@@ -1,7 +1,6 @@
 import type { ChildProcessWithoutNullStreams } from 'node:child_process'
 import { nanoid } from 'nanoid'
 import { sandboxError, SandboxErrorPayload } from './sandbox-error'
-import { tryCatch } from './try-catch'
 
 export const deno = {
     /**
@@ -9,29 +8,12 @@ export const deno = {
      * output to a `result` variable. Resolves with the result, or rejects with
      * an Error carrying the process stdout/stderr.
      */
-    async run({ body, data, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, allowReadPaths = [], resolveNodeModules = false, env = {}, denoDir, timeoutMs }: DenoProgramParams): Promise<unknown> {
-        const keepDenoDir = denoDir !== undefined
+    async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, allowReadPaths = [], resolveNodeModules = false, env = {}, denoDirBase, timeoutMs }: DenoProgramParams): Promise<unknown> {
+        const marker = newResultMarker()
         const { os } = await getNodeApis()
-        const dataDir = data === undefined ? undefined : await writeDataFile(data)
-        const dataFile = dataDir === undefined ? undefined : `${dataDir}/${DATA_FILE_NAME}`
-        const { data: spawned, error: spawnError } = await tryCatch(() => spawnDeno({ entry: '-', dataFile, permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDir }))
-        if (spawnError !== null) {
-            if (dataDir !== undefined) {
-                await removeDir(dataDir)
-            }
-            throw spawnError
-        }
-        const { child, denoPath, denoDir: resolvedDenoDir } = spawned
-        child.stdin.end(buildRunProgram({ body, tmpDir: os.tmpdir() }))
+        const { child, denoPath, denoDir } = await spawnDeno({ entry: '-', permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDirBase })
+        child.stdin.end(buildRunProgram({ body, marker, tmpDir: os.tmpdir() }))
         const killTimer = timeoutMs === undefined ? undefined : setTimeout(() => child.kill('SIGKILL'), timeoutMs)
-        const cleanup = (): void => {
-            if (!keepDenoDir) {
-                removeDir(resolvedDenoDir).catch(() => undefined)
-            }
-            if (dataDir !== undefined) {
-                removeDir(dataDir).catch(() => undefined)
-            }
-        }
 
         return new Promise((resolve, reject) => {
             let capturedStdout = ''
@@ -50,13 +32,13 @@ export const deno = {
 
             child.on('close', (code, signal) => {
                 clearTimeout(killTimer)
-                cleanup()
+                void removeDenoDir(denoDir)
                 if (settled) {
                     return
                 }
                 settled = true
 
-                const { userOutput, resultJson } = extractResult(capturedStdout)
+                const { userOutput, resultJson } = extractResult(capturedStdout, marker)
                 if (userOutput.trim()) {
                     console.log(userOutput.trimEnd())
                 }
@@ -92,7 +74,7 @@ export const deno = {
 
             child.on('error', (error) => {
                 clearTimeout(killTimer)
-                cleanup()
+                void removeDenoDir(denoDir)
                 if (settled) {
                     return
                 }
@@ -199,12 +181,12 @@ export const deno = {
         }
 
         child.on('close', (code, signal) => {
-            void removeDir(denoDir)
+            void removeDenoDir(denoDir)
             failAllPending(sandboxError.build({ error: `Deno session exited with code ${code} and signal ${signal}`, stdout: '', stderr: capturedStderr }))
         })
 
         child.on('error', (error) => {
-            void removeDir(denoDir)
+            void removeDenoDir(denoDir)
             failAllPending(sandboxError.build({ error: `Failed to spawn deno (${denoPath}): ${error.message}`, stdout: '', stderr: capturedStderr }))
         })
 
@@ -270,41 +252,30 @@ async function getNodeApis(): Promise<NodeApis> {
     return nodeApisCache
 }
 
-async function removeDir(dir: string): Promise<void> {
+async function removeDenoDir(denoDir: string): Promise<void> {
     const { fs } = await getNodeApis()
-    await fs.rm(dir, { recursive: true, force: true }).catch(() => undefined)
+    await fs.rm(denoDir, { recursive: true, force: true }).catch(() => undefined)
 }
 
 function newResultMarker(): string {
-    return `__AP_DENO_RESULT_${nanoid()}__`
+    return `__AP_DENO_RESULT_${nanoid()}__` // Random so it's not guessable and potentially printed by user code
 }
 
-async function writeDataFile(data: unknown): Promise<string> {
-    const { os, fs } = await getNodeApis()
-    const dataDir = await fs.mkdtemp(`${os.tmpdir()}/ap-deno-data-`)
-    const { error } = await tryCatch(() => fs.writeFile(`${dataDir}/${DATA_FILE_NAME}`, JSON.stringify(data) ?? 'null', 'utf8'))
-    if (error !== null) {
-        await removeDir(dataDir)
-        throw error
-    }
-    return dataDir
-}
-
-async function spawnDeno({ entry, dataFile, permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDir }: SpawnDenoParams): Promise<{ child: ChildProcessWithoutNullStreams, denoPath: string, denoDir: string }> {
+async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDirBase }: SpawnDenoParams): Promise<{ child: ChildProcessWithoutNullStreams, denoPath: string, denoDir: string }> {
     const { childProcess, os, fs } = await getNodeApis()
     const denoPath = resolveDenoPath()
-    const resolvedDenoDir = denoDir ?? await fs.mkdtemp(`${os.tmpdir()}/ap-deno-`)
-    if (denoDir !== undefined) {
-        await fs.mkdir(denoDir, { recursive: true })
+    const denoDir = await fs.mkdtemp(`${denoDirBase ?? os.tmpdir()}/ap-deno-`)
+    let entryArg: string
+    if (typeof entry === 'string') {
+        entryArg = entry
     }
-    const readPaths = dataFile === undefined ? allowReadPaths : [...allowReadPaths, dataFile]
-    const entryArg = typeof entry === 'string' ? entry : `${resolvedDenoDir}/main.mjs`
-    if (typeof entry !== 'string') {
-        const { error } = await tryCatch(() => fs.writeFile(entryArg, entry.body))
-        if (error !== null) {
-            if (denoDir === undefined) {
-                await removeDir(resolvedDenoDir)
-            }
+    else {
+        entryArg = `${denoDir}/main.mjs`
+        try {
+            await fs.writeFile(entryArg, entry.body)
+        }
+        catch (error) {
+            await removeDenoDir(denoDir)
             throw error
         }
     }
@@ -318,19 +289,18 @@ async function spawnDeno({ entry, dataFile, permissions, cwd, memoryLimitMb, all
         resolveNodeModules ? '--node-modules-dir=manual' : '--no-npm',
         ...(memoryLimitMb === null ? [] : [`--v8-flags=--max-old-space-size=${memoryLimitMb}`]),
         ...toPermissionFlags({ permissions, tmpDir: os.tmpdir() }),
-        ...permissions.includes(DenoPermission.ALL) ? [] : readPaths.map((path) => `--allow-read=${path}`),
+        ...permissions.includes(DenoPermission.ALL) ? [] : allowReadPaths.map((path) => `--allow-read=${path}`),
         entryArg,
-        ...dataFile === undefined ? [] : [dataFile],
     ], {
         cwd,
         env: {
             PATH: process.env['PATH'] ?? '',
             ...env,
-            DENO_DIR: resolvedDenoDir,
+            DENO_DIR: denoDir,
         },
         stdio: ['pipe', 'pipe', 'pipe'],
     })
-    return { child, denoPath, denoDir: resolvedDenoDir }
+    return { child, denoPath, denoDir }
 }
 
 function resolveDenoPath(): string {
@@ -365,17 +335,14 @@ function toPermissionFlags({ permissions, tmpDir }: { permissions: DenoPermissio
     })
 }
 
-function buildRunProgram({ body, tmpDir }: { body: string, tmpDir: string }): string {
+function buildRunProgram({ body, marker, tmpDir }: { body: string, marker: string, tmpDir: string }): string {
     return `
 ${sandboxError.payloadSourceFor({ tmpDir })}
-const log = console.log;
-const marker = '__AP_DENO_RESULT_' + crypto.randomUUID() + '__';
-log(${JSON.stringify(MARKER_HEADER_PREFIX)} + marker);
 let settled = false;
 const emit = (payload) => {
     if (settled) return;
     settled = true;
-    log(marker + JSON.stringify(payload));
+    console.log(${JSON.stringify(marker)} + JSON.stringify(payload));
 };
 globalThis.addEventListener('unhandledrejection', (event) => {
     event.preventDefault();
@@ -388,7 +355,6 @@ globalThis.addEventListener('unhandledrejection', (event) => {
     Deno.exit(1);
 });
 try {
-    const data = Deno.args.length > 0 ? JSON.parse(await Deno.readTextFile(Deno.args[0])) : undefined;
 ${body}
     await new Promise((resolve) => setTimeout(resolve, 0));
     emit({ success: true, result: result ?? null });
@@ -505,31 +471,20 @@ for await (const chunk of Deno.stdin.readable) {
     }
 }`
 
-function extractResult(stdout: string): { userOutput: string, resultJson: string | null } {
-    if (!stdout.startsWith(MARKER_HEADER_PREFIX)) {
+function extractResult(stdout: string, marker: string): { userOutput: string, resultJson: string | null } {
+    const idx = stdout.lastIndexOf(marker)
+    if (idx === -1) {
         return { userOutput: stdout, resultJson: null }
     }
-    const headerEnd = stdout.indexOf('\n')
-    if (headerEnd === -1) {
-        return { userOutput: '', resultJson: null }
-    }
-    const marker = stdout.slice(MARKER_HEADER_PREFIX.length, headerEnd)
-    const output = stdout.slice(headerEnd + 1)
-    const idx = output.lastIndexOf(marker)
-    if (idx === -1) {
-        return { userOutput: output, resultJson: null }
-    }
-    const after = output.slice(idx + marker.length)
+    const after = stdout.slice(idx + marker.length)
     const newline = after.indexOf('\n')
     const resultJson = newline === -1 ? after : after.slice(0, newline)
     const trailing = newline === -1 ? '' : after.slice(newline + 1)
-    return { userOutput: output.slice(0, idx) + trailing, resultJson }
+    return { userOutput: stdout.slice(0, idx) + trailing, resultJson }
 }
 
 const DEFAULT_MEMORY_LIMIT_MB = 128
 const DEFAULT_SESSION_IDLE_TIMEOUT_MS = 30_000
-const MARKER_HEADER_PREFIX = '__AP_DENO_MARKER__'
-const DATA_FILE_NAME = 'data.json'
 
 export enum DenoPermission {
     ALL = 'ALL',
@@ -543,14 +498,13 @@ export enum DenoPermission {
 
 type DenoProgramParams = {
     body: string
-    data?: unknown
     permissions: DenoPermission[]
     cwd?: string
     memoryLimitMb?: number | null
     allowReadPaths?: string[]
     resolveNodeModules?: boolean
     env?: Record<string, string>
-    denoDir?: string
+    denoDirBase?: string
     timeoutMs?: number
 }
 
@@ -594,14 +548,13 @@ type PendingSessionCommand = {
 
 type SpawnDenoParams = {
     entry: string | { body: string }
-    dataFile?: string
     permissions: DenoPermission[]
     cwd?: string
     memoryLimitMb: number | null
     allowReadPaths: string[]
     resolveNodeModules: boolean
     env: Record<string, string>
-    denoDir?: string
+    denoDirBase?: string
 }
 
 type NodeApis = {
