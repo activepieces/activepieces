@@ -60,6 +60,46 @@ describe('replay.resolveCall', () => {
     })
 })
 
+describe('replay live tools', () => {
+    it('runs a web or catalog read live even when it has a recording, and never saves it', async () => {
+        const caseReplay = replay.create({ recordedToolCalls: [{ toolName: 'ap_web_search', input: { query: 'crm' }, output: 'old answer' }] })
+        const live = vi.fn(async () => 'fresh answer')
+
+        const output = await replay.resolveCall({ caseReplay, recordMode: true, toolName: 'ap_web_search', input: { query: 'crm' }, live })
+
+        expect(output).toBe('fresh answer')
+        expect(live).toHaveBeenCalledOnce()
+        expect(caseReplay.stops()).toEqual([])
+        expect(caseReplay.newFixtures()).toEqual([])
+    })
+
+    it('runs a live tool with no recording outside record mode', async () => {
+        const caseReplay = replay.create({ recordedToolCalls: [] })
+        const live = vi.fn(async () => ({ actions: [] }))
+
+        await replay.resolveCall({ caseReplay, recordMode: false, toolName: 'ap_search_actions', input: { query: 'send email' }, live })
+
+        expect(live).toHaveBeenCalledOnce()
+        expect(caseReplay.stops()).toEqual([])
+    })
+
+    it('still answers a workspace read from its recording', async () => {
+        const caseReplay = replay.create({ recordedToolCalls: [{ toolName: 'ap_list_flows', input: { limit: 5 }, output: ['recorded flow'] }] })
+        const live = vi.fn(async () => [])
+
+        const output = await replay.resolveCall({ caseReplay, recordMode: false, toolName: 'ap_list_flows', input: { limit: 5 }, live })
+
+        expect(output).toEqual(['recorded flow'])
+        expect(live).not.toHaveBeenCalled()
+    })
+
+    it('treats every live tool as a read', () => {
+        expect(['ap_web_search', 'ap_fetch_url', 'ap_search_actions', 'ap_get_piece_props', 'ap_load_skill'].every((name) => replay.isLive(name) && replay.isRead(name))).toBe(true)
+        expect(replay.isLive('ap_list_flows')).toBe(false)
+        expect(replay.isLive('ap_resolve_property_options')).toBe(false)
+    })
+})
+
 describe('replay matching for writes', () => {
     const recordedToolCalls: RecordedToolCall[] = [{ toolName: 'ap_add_step', input: { flowId: 'f1', stepName: 'step_1' }, output: { success: true } }]
 
@@ -177,6 +217,13 @@ describe('replay.splitStale', () => {
             expect.stringContaining('unknown oldField'),
             expect.stringContaining('kind "BRANCH" is not an allowed value'),
         ])
+    })
+
+    it('leaves recordings of live tools out of the replay without flagging them', async () => {
+        const { fresh, stale } = await replay.splitStale({ tools, recordedToolCalls: [{ toolName: 'ap_web_search', input: { query: 'crm' }, output: 'old' }] })
+
+        expect(fresh).toEqual([])
+        expect(stale).toEqual([])
     })
 
     it('flags a recording for a tool the agent is no longer offered', async () => {

@@ -106,7 +106,7 @@ function finalLine({ broken, unchecked }: { broken: DatasetOutcome[], unchecked:
 
 async function runDataset({ dataset, repeats, recordMode, upload, verbose, live, modelId, auth, mcp }: { dataset: { name: string, cases: EvalCase[] }, repeats: number, recordMode: boolean, upload: boolean, verbose: boolean, live: boolean, modelId: string, auth: Record<string, unknown>, mcp: McpTools }): Promise<RanDataset> {
     const { name, cases } = dataset
-    console.log(`\n${colors.bold(colors.cyan(`=== ${name}`))}: ${cases.length} case(s) × ${repeats} run(s) · model ${modelId} · judge ${evalChecks.judgeModelId()} (reasons ${evalChecks.reasonModelId}) · ${recordMode ? 'RECORD mode: missing reads run live on the dev server and are saved to PostHog; writes never run' : 'fixtures only'}${upload ? ' · UPLOADS a main baseline to PostHog' : ' · nothing is uploaded'}`)
+    console.log(`\n${colors.bold(colors.cyan(`=== ${name}`))}: ${cases.length} case(s) × ${repeats} run(s) · model ${modelId} · judge ${evalChecks.judgeModelId()} (reasons ${evalChecks.reasonModelId}) · web and catalog reads run live · ${recordMode ? 'RECORD mode: missing workspace reads run live on the dev server and are saved to PostHog; writes never run' : 'workspace reads and writes replay recordings'}${upload ? ' · UPLOADS a main baseline to PostHog' : ' · nothing is uploaded'}`)
     const runs = cases.flatMap((candidate) => Array.from({ length: repeats }, (_, trial) => ({ candidate, trial })))
     const table = live ? progressTable.create({ cases, repeats, verdictOf: (counts) => caseVerdict({ datasetName: name, ...counts }) }) : null
     const results = await runPool({

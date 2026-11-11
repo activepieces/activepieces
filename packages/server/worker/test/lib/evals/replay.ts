@@ -35,6 +35,9 @@ function create({ recordedToolCalls }: { recordedToolCalls: RecordedToolCall[] }
 }
 
 async function resolveCall({ caseReplay, recordMode, toolName, input, live }: { caseReplay: Replay, recordMode: boolean, toolName: string, input: unknown, live: (() => Promise<unknown>) | undefined }): Promise<unknown> {
+    if (isLive(toolName) && !isNil(live)) {
+        return live()
+    }
     const read = isRead(toolName)
     const fixture = caseReplay.take({ toolName, input })
     if (fixture.found === true) {
@@ -52,7 +55,8 @@ async function resolveCall({ caseReplay, recordMode, toolName, input, live }: { 
 }
 
 async function splitStale({ tools, recordedToolCalls }: { tools: ToolSet, recordedToolCalls: RecordedToolCall[] }): Promise<{ fresh: RecordedToolCall[], stale: StaleRecording[] }> {
-    const checked = await Promise.all(recordedToolCalls.map(async (call) => ({ call, problem: await staleness({ tools, call }) })))
+    const replayable = recordedToolCalls.filter((call) => !isLive(call.toolName))
+    const checked = await Promise.all(replayable.map(async (call) => ({ call, problem: await staleness({ tools, call }) })))
     return {
         fresh: checked.flatMap(({ call, problem }) => isNil(problem) ? [call] : []),
         stale: checked.flatMap(({ call, problem }) => isNil(problem) ? [] : [{ toolName: call.toolName, reason: problem }]),
@@ -117,6 +121,10 @@ function isRead(toolName: string): boolean {
     return READ_TOOLS.has(toolName)
 }
 
+function isLive(toolName: string): boolean {
+    return LIVE_TOOLS.has(toolName)
+}
+
 function inputKey(input: unknown): string {
     return JSON.stringify(normalized(withoutCardTitles(input)))
 }
@@ -156,6 +164,18 @@ const PIECE_NAME_KEY = 'pieceName'
 const PIECE_PREFIX = '@activepieces/piece-'
 const REPLAY_ENDED_MESSAGE = 'This tool is unavailable right now.'
 const STALE_REASON_CHARS = 200
+const LIVE_TOOLS = new Set([
+    'ap_fetch_url',
+    'ap_get_piece_props',
+    'ap_get_tool_schema',
+    'ap_load_skill',
+    'ap_research_pieces',
+    'ap_scrape_url',
+    'ap_search_actions',
+    'ap_search_triggers',
+    'ap_setup_guide',
+    'ap_web_search',
+])
 const READ_TOOLS = new Set([
     'ap_discover_action_auth',
     'ap_explore_data',
@@ -192,6 +212,7 @@ export const replay = {
     create,
     resolveCall,
     isRead,
+    isLive,
     endsTurn,
     splitStale,
 }

@@ -36,13 +36,14 @@ All of these need `--dataset <name>`:
 - `--steps`: list each case's steps, to pick where the replay starts.
 - `--set-cut 3=4`: case 3 starts before step 4.
 - `--set-target 3=ap_build_flow`: the tool case 3 is testing.
-- `--record`: reads that have no recording run live against the dev server and are saved to the case in PostHog. Writes never run live.
+- `--record`: workspace reads that have no recording run live against the dev server and are saved to the case in PostHog. Writes never run live. Live tools are never saved.
 
 ## Gotchas
 
 - `--upload` writes the run to PostHog as the main baseline. Only CI on main uses it, so never run it locally.
 - A full run costs about $0.03 per run, which comes to cases × 5 × $0.03.
-- A read with no recording replies "unavailable" and the agent carries on. A write ends the turn when it isn't recorded or its input differs from the recording. If that write is the case's target tool, the run fails the tool-call gate; otherwise the judge grades what happened. Use `--record` to fill a missing read.
+- Web and catalog reads (`LIVE_TOOLS` in `replay.ts`: web search, fetch and scrape, piece search and props, skills, tool schemas, setup guides) always run live with your branch's code and ignore their recordings, since their answer doesn't depend on the user. Every run makes real web searches. Workspace reads (flows, runs, connections, tables, dropdown options) stay recorded because the dev server doesn't have the user's data.
+- A workspace read with no recording replies "unavailable" and the agent carries on. A write ends the turn when it isn't recorded or its input differs from the recording. If that write is the case's target tool, the run fails the tool-call gate; otherwise the judge grades what happened. Use `--record` to fill a missing read.
 - Only tools on the read list (`READ_TOOLS` in `replay.ts`) count as reads. Any other tool is a write: it must match its recording exactly and never runs live. Add a new read-only tool there.
 - Recording lookup is exact except for whitespace, the top-level card titles (`title`, `activeTitle`, `doneTitle`) and short vs full `pieceName`. A change that makes the agent reword a query or URL misses the recording.
 - Recordings the current tools no longer accept (tool gone, or its input schema rejects the recorded input) are left out of the replay and listed as stale after the summary. Re-record those cases.
