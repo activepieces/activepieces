@@ -20,7 +20,15 @@ function formatLastUsed(row: McpOAuthGrant): LastUsed {
   };
 }
 
-export const grantUtils = { formatLastUsed };
+function connectedLabel(lastUsedAt: string | null): string {
+  return lastUsedAt
+    ? t('Used {ago}', {
+        ago: formatUtils.formatDateToAgo(new Date(lastUsedAt)),
+      })
+    : t('Connected');
+}
+
+export const grantUtils = { formatLastUsed, connectedLabel };
 
 export type LastUsed = {
   label: string;

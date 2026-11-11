@@ -1,7 +1,7 @@
 import { aiProviderCredentials, AIProviderName } from '@activepieces/core-utils'
 import { AIProviderConfig, AIProviderModelType, VertexProviderConfig } from '@activepieces/core-piece-types'
 import { describe, expect, it } from 'vitest'
-import { buildOpenAICompatibleHeaders, createLanguageModel } from './create-language-model'
+import { buildOpenAICompatibleHeaders, createLanguageModel, withAutoToolChoice } from './create-language-model'
 
 type ModelIdentity = { provider: string, modelId: string, settings?: { plugins?: unknown[] } }
 
@@ -103,7 +103,7 @@ async function replyingWith<T>({ replies, send }: {
         return Promise.resolve(new Response(JSON.stringify(reply), { headers: { 'content-type': 'application/json' } }))
     }
     try {
-        const result = await send(buildFor(AIProviderName.META))
+        const result = await send(withAutoToolChoice(buildFor(AIProviderName.META)))
         return { bodies, result }
     }
     finally {
@@ -234,13 +234,13 @@ describe('createLanguageModel', () => {
         })
     })
 
-    describe('Meta, which only accepts tool_choice auto', () => {
+    describe('withAutoToolChoice, on Meta which only accepts tool_choice auto', () => {
         const tools = [
             { type: 'function' as const, name: 'extractData', inputSchema: { type: 'object' as const, properties: {} } },
             { type: 'function' as const, name: 'search', inputSchema: { type: 'object' as const, properties: {} } },
         ]
         const sendToMeta = (toolChoice: Parameters<ReturnType<typeof createLanguageModel>['doGenerate']>[0]['toolChoice']) => {
-            const model = buildFor(AIProviderName.META)
+            const model = withAutoToolChoice(buildFor(AIProviderName.META))
             return captureSentRequest(() => model.doGenerate({ tools, toolChoice, prompt: [{ role: 'user', content: [{ type: 'text', text: 'hi' }] }] }))
         }
         const toolNames = (body: Record<string, unknown>) => (Array.isArray(body.tools) ? body.tools.map((tool: { name: string }) => tool.name) : [])
@@ -333,6 +333,38 @@ describe('createLanguageModel', () => {
             expect(bodies.every((body) => body.stream !== true)).toBe(true)
             expect(result).toContainEqual(expect.objectContaining({ type: 'tool-call', toolName: 'extractData' }))
         })
+    })
+
+    it.each(supportedProviders.filter((provider) => provider !== AIProviderName.VERTEX))('never sends a forced tool_choice to %s', async (provider) => {
+        const model = withAutoToolChoice(buildFor(provider))
+        const { body } = await captureSentRequest(() => model.doGenerate(forcedCall))
+
+        expect(JSON.stringify(body)).toContain('Reply only by calling the extractData tool')
+    })
+
+    it.each([
+        { type: 'required' as const },
+        { type: 'tool' as const, toolName: 'extractData' },
+    ])('hands the provider tool_choice auto when the caller forces $type', async (toolChoice) => {
+        const seen: unknown[] = []
+        const provider = buildFor(AIProviderName.ANTHROPIC)
+        if (typeof provider === 'string') {
+            throw new Error('expected a model object')
+        }
+        const model = withAutoToolChoice({
+            ...provider,
+            doGenerate: async (params) => {
+                seen.push(params.toolChoice)
+                return { content: [{ type: 'tool-call', toolCallId: 'call_1', toolName: 'extractData', input: '{}' }], finishReason: { unified: 'tool-calls', raw: undefined }, usage: { inputTokens: { total: 1, noCache: 1, cacheRead: undefined, cacheWrite: undefined }, outputTokens: { total: 1, text: 1, reasoning: undefined } }, warnings: [] }
+            },
+        })
+        if (typeof model === 'string') {
+            throw new Error('expected a model object')
+        }
+
+        await model.doGenerate({ ...forcedCall, toolChoice })
+
+        expect(seen).toEqual([{ type: 'auto' }])
     })
 
     it.each([

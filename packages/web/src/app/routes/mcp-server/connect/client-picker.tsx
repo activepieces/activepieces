@@ -1,173 +1,145 @@
 import { t } from 'i18next';
-import { ChevronRight, Search } from 'lucide-react';
+import { ArrowRight, SearchX } from 'lucide-react';
 import { useState } from 'react';
 
 import { BackLink } from '@/components/custom/back-link';
-import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { SearchInput } from '@/components/custom/search-input';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-
-import { ClientIcon } from '../client-icon';
 import {
-  CatalogClient,
-  ClientGroup,
-  mcpClientCatalog,
-} from '../mcp-client-catalog';
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+
+import { CatalogClient, mcpClientCatalog } from '../mcp-client-catalog';
 import { useMcpNav } from '../mcp-nav';
 import { PageBand } from '../page-band';
 
-import { ClientCard } from './client-card';
+import { clientSearch } from './client-search';
+import { ClientTile } from './client-tile';
+import { GrantsLoadError } from './grants-load-error';
+import { useConnectHome } from './use-connect-home';
 
-export function ClientPicker({
-  clients,
-  serverUrl,
-}: {
-  clients: CatalogClient[];
-  serverUrl: string;
-}) {
+export function ClientPicker({ clients }: { clients: CatalogClient[] }) {
+  const home = useConnectHome({ clients });
   const nav = useMcpNav();
   const [search, setSearch] = useState('');
-  const query = search.trim().toLowerCase();
-  const matchingClients = clients.filter(
-    (client) => query === '' || client.name.toLowerCase().includes(query),
-  );
+  const anyClient = home.allClients.find((client) => client.group === 'other');
+  const isSearching = search.trim().length > 0;
+  const groups = mcpClientCatalog
+    .groups()
+    .filter((group) => isSearching || group.key !== 'other');
+  const matches = clientSearch.groupMatching({
+    groups,
+    clients: home.allClients,
+    query: search,
+  });
+  const openAnyClient = anyClient
+    ? () => nav.showClient(anyClient.key)
+    : undefined;
 
   return (
-    <div className="flex flex-col bg-gray-1">
-      <div className="border-b">
-        <PageBand className="flex flex-col gap-4.5 pb-6 pt-8">
+    <div className="@container w-full">
+      <PageBand className="flex flex-col gap-8 pb-16 pt-8">
+        <div className="flex flex-col gap-4">
           <BackLink label={t('Back')} onClick={nav.showLanding} />
-          <div className="flex flex-wrap items-end gap-6">
-            <div className="flex flex-1 flex-col gap-1.5">
-              <h1 className="text-2xl font-semibold leading-8 tracking-tight">
-                {t('Where do you want to use it?')}
-              </h1>
-              <p className="text-sm text-gray-11">
-                {t(
-                  'Pick a client for step-by-step setup, or copy the link and paste it wherever you like.',
-                )}
+          <div className="grid gap-x-2.5 gap-y-2 @min-[860px]:grid-cols-3 @min-[860px]:items-center @min-[860px]:gap-y-1">
+            <h1 className="text-2xl/8 font-medium tracking-tight @min-[860px]:col-span-2">
+              {t('Where do you want to use it?')}
+            </h1>
+            <div className="order-last mt-2 @min-[860px]:order-none @min-[860px]:mt-0">
+              <SearchInput
+                autoFocus
+                value={search}
+                onChange={setSearch}
+                placeholder={t('Search {total} clients', {
+                  total: home.namedCount,
+                })}
+              />
+            </div>
+            <p className="text-sm text-gray-11 @min-[860px]:col-span-2">
+              {t('Pick a client for step-by-step setup.')}
+            </p>
+            {openAnyClient && (
+              <p className="text-sm text-gray-11 @min-[860px]:text-right">
+                {t('Not listed?')} <AnyClientLink onOpen={openAnyClient} />
               </p>
-            </div>
-            <div className="flex shrink-0 items-center gap-2.5 rounded-md border bg-gray-3/40 py-2 pl-3.5 pr-2">
-              <span className="font-mono text-xs text-gray-11">
-                {abbreviateServerUrl(serverUrl)}
-              </span>
-              <CopyButton textToCopy={serverUrl} variant="default" size="sm">
-                {t('Copy')}
-              </CopyButton>
-            </div>
+            )}
           </div>
-          <div className="relative flex items-center">
-            <Search className="pointer-events-none absolute left-3.5 size-4 text-gray-11" />
-            <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={t('Search {total} clients', {
-                total: clients.length,
-              })}
-              className="h-11 pl-10 pr-36"
-              autoFocus
-            />
-            <Button
-              variant="link"
-              className="absolute right-3.5 h-auto text-xs font-semibold"
-              onClick={() => nav.showClient('unknown')}
-            >
-              {t('Client not listed?')}
-            </Button>
-          </div>
-        </PageBand>
-      </div>
+          {home.isStatusError && (
+            <GrantsLoadError onRetry={() => home.refetchStatus()} />
+          )}
+        </div>
 
-      <PageBand className="flex flex-col gap-7 py-7">
-        {mcpClientCatalog.groups().map((group) => {
-          const groupClients = matchingClients.filter(
-            (client) => client.group === group.key,
-          );
-          if (groupClients.length === 0) {
-            return null;
-          }
-          return (
-            <ClientGroupSection
-              key={group.key}
-              group={group}
-              clients={groupClients}
-            />
-          );
-        })}
-        {matchingClients.length === 0 && (
-          <span className="text-sm text-gray-11">
-            {t('No client matches your search.')}
-          </span>
+        {matches.length === 0 ? (
+          <Empty className="min-h-80 rounded-xl border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <SearchX />
+              </EmptyMedia>
+              <EmptyTitle>
+                {t('No clients match “{query}”', { query: search.trim() })}
+              </EmptyTitle>
+              <EmptyDescription>
+                {t('Check the spelling, or set it up as any MCP client.')}
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent className="flex-row flex-wrap justify-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setSearch('')}>
+                {t('Clear search')}
+              </Button>
+              {openAnyClient && (
+                <Button variant="ghost" size="sm" onClick={openAnyClient}>
+                  {t('Use any MCP client')}
+                  <ArrowRight />
+                </Button>
+              )}
+            </EmptyContent>
+          </Empty>
+        ) : (
+          <div className="flex flex-col gap-10">
+            {matches.map(({ group, clients: groupClients }) => (
+              <section key={group.key} className="flex flex-col gap-3">
+                <h2 className="text-sm/5 font-medium text-gray-12">
+                  {group.label}
+                  <span className="text-gray-11">
+                    {' · '}
+                    {groupClients.length}
+                  </span>
+                </h2>
+                <div className="grid gap-2.5 @min-[440px]:grid-cols-2 @min-[860px]:grid-cols-3">
+                  {groupClients.map((client) => (
+                    <ClientTile
+                      key={client.key}
+                      client={client}
+                      status={home.statusByClient.get(client.key)}
+                      isStatusLoading={home.isStatusLoading}
+                      onOpen={() => nav.showClient(client.key)}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
         )}
       </PageBand>
     </div>
   );
 }
 
-function ClientGroupSection({
-  group,
-  clients,
-}: {
-  group: ClientGroup;
-  clients: CatalogClient[];
-}) {
-  const nav = useMcpNav();
-  const isCatchAll = group.key === 'other';
-
+function AnyClientLink({ onOpen }: { onOpen: () => void }) {
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold">{group.label}</span>
-        {!isCatchAll && (
-          <>
-            <span className="text-xs font-semibold text-gray-11">
-              {clients.length}
-            </span>
-            <span className="text-xs text-gray-11">· {group.tagline}</span>
-          </>
-        )}
-      </div>
-      {isCatchAll ? (
-        clients.map((client) => (
-          <button
-            key={client.key}
-            type="button"
-            onClick={() => nav.showClient(client.key)}
-            className="flex items-center gap-3.5 rounded-md border border-dashed bg-gray-3/40 px-4.5 py-4 text-left transition-colors hover:border-gray-8"
-          >
-            <ClientIcon icon={client.icon} className="size-8.5" />
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span className="text-sm font-semibold">{client.name}</span>
-              <span className="truncate text-xs text-gray-11">
-                {client.setupHint}
-              </span>
-            </div>
-            <span className="hidden shrink-0 items-center gap-1.5 rounded-md border bg-gray-1 px-3.5 py-2 text-sm font-semibold sm:flex">
-              {t('See the raw config')}
-              <ChevronRight className="size-3.5" />
-            </span>
-          </button>
-        ))
-      ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-3">
-          {clients.map((client) => (
-            <ClientCard
-              key={client.key}
-              client={client}
-              onClick={() => nav.showClient(client.key)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+    <Button
+      variant="link"
+      size="sm"
+      className="h-auto gap-1 p-0 font-medium text-gray-12"
+      onClick={onOpen}
+    >
+      {t('Use any MCP client')}
+      <ArrowRight className="size-3.5" />
+    </Button>
   );
-}
-
-function abbreviateServerUrl(serverUrl: string): string {
-  try {
-    return `…${new URL(serverUrl).pathname}`;
-  } catch {
-    return serverUrl;
-  }
 }

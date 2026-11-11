@@ -62,12 +62,12 @@ export const setPublicAccess = createAction({
       return { ...res.data, webViewLink: file.data.webViewLink, downloadUrl: null };
     }
 
-    const content = await downloadFileFromDrive(
-      context.auth,
-      context.files,
+    const content = await downloadFileFromDrive({
+      auth: context.auth,
+      files: context.files,
       fileId,
-      file.data.name!
-    );
+      fileName: file.data.name ?? undefined,
+    });
     return { ...res.data, downloadUrl: content };
   },
 });
