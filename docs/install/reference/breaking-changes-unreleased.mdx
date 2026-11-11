@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Constant Contact 0.4.0: reconnect to use campaign and sender-address actions
+
+Constant Contact 0.4.0 asks for more permissions when you connect: email campaigns (`campaign_data`), account sender addresses (`account_read`) and offline access (`offline_access`). Connections created before 0.4.0 keep working for contact actions and triggers, but the new campaign and sender-address actions fail with a permission error until the connection is reconnected. On upgraded **Create or Update Contact** steps, the Phone Number input is now saved to the contact; it was silently ignored before. A phone number longer than 25 characters, or one Constant Contact rejects, now fails the step instead of being dropped. The piece needs Activepieces 0.88.2 or later.
+
+#### What you need to do
+
+Reconnect your Constant Contact connection if you want to use the campaign or sender-address actions. Check that Create or Update Contact steps pass a valid phone number of at most 25 characters, or leave Phone Number empty.
+
 #### Google Drive 0.14.0: file triggers, downloads and search across shared drives
 
 From Google Drive 0.14.0, the **New File** trigger with **Include File Content** on fires for a file whose download fails. That run has a `contentError` field with the reason instead of `content`. Before, one failed download (for example a Google Form, which Drive can't download) failed the whole poll, and every new file in that poll was lost. The trigger's output can now carry the `content` and `contentError` keys.
