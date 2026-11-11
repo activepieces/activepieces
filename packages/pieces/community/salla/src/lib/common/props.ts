@@ -3,6 +3,7 @@ import { sallaAuth } from '../auth';
 import { SallaAuth, SallaQuery, sallaApi } from './client';
 import { sallaUtils } from './helpers';
 import { TriStateInput, sallaProducts } from './products';
+import { sallaWebhooks } from './webhooks';
 
 async function loadOptions({
   auth,
@@ -430,12 +431,155 @@ const webhookRule = ({ description = DEFAULT_RULE_DESCRIPTION }: { description?:
     advanced: true,
   });
 
+function customerGroupOptions({ auth }: { auth: SallaAuth | undefined }): Promise<DropdownState> {
+  return loadOptions({
+    auth,
+    path: '/customers/groups',
+    maxItems: CUSTOMER_GROUP_DROPDOWN_LIMIT,
+    emptyHint: 'No customer groups found. Create one in Salla under Customers > Customer Groups.',
+    toOption: (item) => {
+      const id = idOf(item);
+      return id ? { label: textOf(item['name']) || `Group ${id}`, value: id } : undefined;
+    },
+  });
+}
+
+const customerGroup = <R extends boolean>({ required, displayName = 'Customer Group', description }: DropdownFactoryParams<R>) =>
+  Property.Dropdown<string, R, typeof sallaAuth>({
+    displayName,
+    description: description ?? 'A customer group in this store, for example VIP Customers.',
+    required,
+    refreshers: [],
+    auth: sallaAuth,
+    options: async ({ auth }) => customerGroupOptions({ auth }),
+  });
+
+const customerGroups = <R extends boolean>({ required, displayName = 'Customer Groups', description }: DropdownFactoryParams<R>) =>
+  Property.MultiSelectDropdown<string, R, typeof sallaAuth>({
+    displayName,
+    description: description ?? 'One or more customer groups in this store.',
+    required,
+    refreshers: [],
+    auth: sallaAuth,
+    options: async ({ auth }) => customerGroupOptions({ auth }),
+  });
+
+function couponLabel(item: Record<string, unknown>): string {
+  const code = textOf(item['code']) || `Coupon ${textOf(item['id'])}`;
+  const amount = sallaUtils.amountOf(item['amount']);
+  const type = textOf(item['type']).toLowerCase();
+  const currency = sallaApi.isRecord(item['amount']) ? textOf(item['amount']['currency']) : '';
+  const discount =
+    amount === undefined ? '' : type === 'percentage' || type === 'p' ? `${amount}%` : `${amount} ${currency}`.trim();
+  const parts = [code, discount, textOf(item['status'])].filter((part) => part.length > 0);
+  return parts.join(' · ');
+}
+
+const coupon = <R extends boolean>({ required, displayName = 'Coupon', description }: DropdownFactoryParams<R>) =>
+  Property.Dropdown<string, R, typeof sallaAuth>({
+    displayName,
+    description: description ?? 'Pick a coupon or search by its code. In a flow, map the numeric coupon ID (for example 1622617640), not the code.',
+    required,
+    refreshers: [],
+    auth: sallaAuth,
+    refreshOnSearch: true,
+    options: async ({ auth }, { searchValue }) => {
+      const search = typeof searchValue === 'string' ? searchValue.trim() : '';
+      return loadOptions({
+        auth,
+        path: '/coupons',
+        query: search ? { keyword: search } : undefined,
+        maxItems: DROPDOWN_LIMIT,
+        emptyHint: search
+          ? 'No coupon matches this search.'
+          : 'No coupons found. The Salla app needs the Marketing (read) scope.',
+        toOption: (item) => {
+          const id = idOf(item);
+          return id ? { label: couponLabel(item), value: id } : undefined;
+        },
+      });
+    },
+  });
+
+function abandonedCartLabel(item: Record<string, unknown>): string {
+  const customer = sallaApi.isRecord(item['customer']) ? item['customer'] : {};
+  const name = textOf(customer['name']) || textOf(customer['mobile']);
+  const amount = sallaUtils.amountOf(item['total']);
+  const currency = sallaApi.isRecord(item['total']) ? textOf(item['total']['currency']) : textOf(item['currency']);
+  const age = sallaUtils.amountOf(item['age_in_minutes']);
+  const parts = [
+    `Cart ${textOf(item['id'])}`,
+    name,
+    amount !== undefined ? `${amount} ${currency}`.trim() : '',
+    age !== undefined ? `${Math.round(age)} min old` : '',
+  ].filter((part) => part.length > 0);
+  return parts.join(' · ');
+}
+
+const abandonedCart = <R extends boolean>({ required, displayName = 'Abandoned Cart', description }: DropdownFactoryParams<R>) =>
+  Property.Dropdown<string, R, typeof sallaAuth>({
+    displayName,
+    description:
+      description ?? 'Pick an abandoned cart or search by customer ID or mobile number. In a flow, map the numeric cart ID (for example 1097962121).',
+    required,
+    refreshers: [],
+    auth: sallaAuth,
+    refreshOnSearch: true,
+    options: async ({ auth }, { searchValue }) => {
+      const search = typeof searchValue === 'string' ? searchValue.trim() : '';
+      return loadOptions({
+        auth,
+        path: '/carts/abandoned',
+        query: search ? { keyword: search } : undefined,
+        maxItems: DROPDOWN_LIMIT,
+        emptyHint: search
+          ? 'No abandoned cart matches this search.'
+          : 'No abandoned carts found. The Salla app needs the Abandoned Carts (read) scope.',
+        toOption: (item) => {
+          const id = idOf(item);
+          return id ? { label: abandonedCartLabel(item), value: id } : undefined;
+        },
+      });
+    },
+  });
+
+async function webhookEventOptions({ auth }: { auth: SallaAuth | undefined }): Promise<DropdownState> {
+  if (!auth) {
+    return { disabled: true, options: [], placeholder: 'Connect your Salla account first.' };
+  }
+  try {
+    const events = await sallaWebhooks.listWebhookEvents({ auth });
+    const options = events.map((entry) => ({
+      label: entry.label === entry.event ? entry.event : `${entry.label} (${entry.event})`,
+      value: entry.event,
+    }));
+    return {
+      disabled: false,
+      options,
+      placeholder: options.length === 0 ? 'Salla returned no webhook events. The Salla app needs the Webhooks (read) scope.' : undefined,
+    };
+  } catch (error) {
+    return { disabled: true, options: [], placeholder: describeLoadError(error) };
+  }
+}
+
+const webhookEvent = <R extends boolean>({ required, displayName = 'Event', description }: DropdownFactoryParams<R>) =>
+  Property.Dropdown<string, R, typeof sallaAuth>({
+    displayName,
+    description: description ?? 'The Salla store event that starts the flow, for example order.created or customer.updated.',
+    required,
+    refreshers: [],
+    auth: sallaAuth,
+    options: async ({ auth }) => webhookEventOptions({ auth }),
+  });
+
 const DEFAULT_RULE_DESCRIPTION =
   'Optional condition Salla checks before sending the event, so the flow only runs for matching orders. Put text values in backticks. Examples: `total > 100` or ``payment_method = `mada` AND total > 50``. Order fields you can use include id, reference_id, customer_id, status_id, branch_id, coupon_code, total, sub_total, shipping_cost, payment_method and currency.';
 
 const DROPDOWN_LIMIT = 60;
 const CATEGORY_DROPDOWN_LIMIT = 500;
 const BRAND_DROPDOWN_LIMIT = 300;
+const CUSTOMER_GROUP_DROPDOWN_LIMIT = 300;
 const DEFAULT_PRODUCT_DESCRIPTION =
   'Pick a product or search by name or SKU. In a flow, map the numeric product ID (for example 1672932878).';
 const DEFAULT_ORDER_DESCRIPTION =
@@ -460,6 +604,13 @@ export const sallaProps = {
   triState,
   variantOptions,
   categoryOptions,
+  customerGroup,
+  customerGroups,
+  coupon,
+  abandonedCart,
+  webhookEvent,
+  customerGroupOptions,
+  webhookEventOptions,
 };
 
 type DropdownOption = { label: string; value: string };

@@ -48,10 +48,33 @@ import { aiListStockChangeReasonsAction } from './lib/actions/ai/list-stock-chan
 import { newProductTrigger } from './lib/triggers/new-product';
 import { productLowStockTrigger } from './lib/triggers/product-low-stock';
 import { productPriceOrStatusChangedTrigger } from './lib/triggers/product-price-or-status-changed';
+import { createCustomerAction } from './lib/actions/create-customer';
+import { updateCustomerAction } from './lib/actions/update-customer';
+import { getCustomerAction } from './lib/actions/get-customer';
+import { findCustomersAction } from './lib/actions/find-customers';
+import { addCustomersToGroupAction } from './lib/actions/add-customers-to-group';
+import { createCouponAction } from './lib/actions/create-coupon';
+import { findCouponsAction } from './lib/actions/find-coupons';
+import { getCouponAction } from './lib/actions/get-coupon';
+import { findAbandonedCartsAction } from './lib/actions/find-abandoned-carts';
+import { getAbandonedCartAction } from './lib/actions/get-abandoned-cart';
+import { aiCreateCustomerAction } from './lib/actions/ai/create-customer';
+import { aiUpdateCustomerAction } from './lib/actions/ai/update-customer';
+import { aiListCustomersAction } from './lib/actions/ai/list-customers';
+import { aiAddCustomersToGroupAction } from './lib/actions/ai/add-customers-to-group';
+import { aiCreateCouponAction } from './lib/actions/ai/create-coupon';
+import { aiListCouponsAction } from './lib/actions/ai/list-coupons';
+import { aiListAbandonedCartsAction } from './lib/actions/ai/list-abandoned-carts';
+import { aiListCustomerGroupsAction } from './lib/actions/ai/list-customer-groups';
+import { newCustomerTrigger } from './lib/triggers/new-customer';
+import { customerUpdatedTrigger } from './lib/triggers/customer-updated';
+import { abandonedCartTrigger } from './lib/triggers/abandoned-cart';
+import { newReviewTrigger } from './lib/triggers/new-review';
+import { anyStoreEventTrigger } from './lib/triggers/any-store-event';
 
 export const salla = createPiece({
   displayName: 'Salla',
-  description: 'Saudi e-commerce platform for online stores: manage orders, products and stock, and react to order and product events.',
+  description: 'Saudi e-commerce platform for online stores: manage orders, products, stock, customers and coupons, and react to store events.',
   auth: sallaAuth,
   minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/salla.png',
@@ -95,6 +118,24 @@ export const salla = createPiece({
     aiListCategoriesAction,
     aiListBrandsAction,
     aiListStockChangeReasonsAction,
+    createCustomerAction,
+    updateCustomerAction,
+    getCustomerAction,
+    findCustomersAction,
+    addCustomersToGroupAction,
+    createCouponAction,
+    findCouponsAction,
+    getCouponAction,
+    findAbandonedCartsAction,
+    getAbandonedCartAction,
+    aiCreateCustomerAction,
+    aiUpdateCustomerAction,
+    aiListCustomersAction,
+    aiAddCustomersToGroupAction,
+    aiCreateCouponAction,
+    aiListCouponsAction,
+    aiListAbandonedCartsAction,
+    aiListCustomerGroupsAction,
     createCustomApiCallAction({
       auth: sallaAuth,
       baseUrl: () => BASE_URL,
@@ -113,5 +154,10 @@ export const salla = createPiece({
     newProductTrigger,
     productLowStockTrigger,
     productPriceOrStatusChangedTrigger,
+    newCustomerTrigger,
+    customerUpdatedTrigger,
+    abandonedCartTrigger,
+    newReviewTrigger,
+    anyStoreEventTrigger,
   ],
 });

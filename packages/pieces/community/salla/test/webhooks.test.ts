@@ -115,7 +115,28 @@ describe('parseEvent, verifiedEvent and dedupeKey', () => {
     if (event) {
       expect(sallaWebhooks.dedupeKey(event)).toBe('order.created:2116149737:Sun Jun 26 2022 12:21:48 GMT+0300');
     }
-    expect(sallaWebhooks.dedupeKey({ event: 'x', data: {} })).toBe('x:unknown:');
+  });
+
+  it('falls back to the cart, order or customer id when data has no id', () => {
+    const createdAt = 'Tue Nov 10 2026 12:36:49 GMT+0300';
+    expect(
+      sallaWebhooks.dedupeKey({ event: 'e', createdAt, data: { cart: { id: 11 }, order: { id: 22 }, customer: { id: 33 } } }),
+    ).toBe(`e:cart-11:${createdAt}`);
+    expect(sallaWebhooks.dedupeKey({ event: 'e', createdAt, data: { cart: { total: 5 }, order: { id: ' 22 ' }, customer: { id: 33 } } })).toBe(
+      `e:order-22:${createdAt}`,
+    );
+    expect(sallaWebhooks.dedupeKey({ event: 'e', createdAt, data: { cart: 'x', order: { id: '' }, customer: { id: 33 } } })).toBe(
+      `e:customer-33:${createdAt}`,
+    );
+  });
+
+  it('falls back to a short sha256 of data when no id is found', () => {
+    expect(sallaWebhooks.dedupeKey({ event: 'x', data: {} })).toBe('x:sha256-44136fa355b3678a:');
+    const first = sallaWebhooks.dedupeKey({ event: 'x', data: { coupon: { code: 'A' } } });
+    const second = sallaWebhooks.dedupeKey({ event: 'x', data: { coupon: { code: 'B' } } });
+    expect(first).toMatch(/^x:sha256-[0-9a-f]{16}:$/);
+    expect(first).not.toBe(second);
+    expect(sallaWebhooks.dedupeKey({ event: 'x', data: { coupon: { code: 'A' } } })).toBe(first);
   });
 });
 

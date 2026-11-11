@@ -165,8 +165,44 @@ function verifiedEvent({
 
 function dedupeKey(event: SallaWebhookEvent): string {
   const id = event.data['id'];
-  const idPart = typeof id === 'number' || typeof id === 'string' ? String(id) : 'unknown';
+  const idPart = typeof id === 'number' || typeof id === 'string' ? String(id) : fallbackIdPart(event.data);
   return `${event.event}:${idPart}:${event.createdAt ?? ''}`;
+}
+
+function fallbackIdPart(data: Record<string, unknown>): string {
+  for (const key of ['cart', 'order', 'customer']) {
+    const nested = data[key];
+    if (!sallaApi.isRecord(nested)) {
+      continue;
+    }
+    const nestedId = nested['id'];
+    if (typeof nestedId === 'number' || (typeof nestedId === 'string' && nestedId.trim().length > 0)) {
+      return `${key}-${String(nestedId).trim()}`;
+    }
+  }
+  const digest = crypto.createHash('sha256').update(JSON.stringify(data)).digest('hex');
+  return `sha256-${digest.slice(0, 16)}`;
+}
+
+async function listWebhookEvents({ auth }: { auth: SallaAuth }): Promise<SallaWebhookEventOption[]> {
+  const response = await sallaApi.request<unknown[]>({ auth, method: HttpMethod.GET, path: '/webhooks/events' });
+  const data = Array.isArray(response.body.data) ? response.body.data : [];
+  const seen = new Set<string>();
+  const events: SallaWebhookEventOption[] = [];
+  for (const entry of data) {
+    if (!sallaApi.isRecord(entry) || typeof entry['event'] !== 'string') {
+      continue;
+    }
+    const event = entry['event'].trim();
+    if (event.length === 0 || seen.has(event)) {
+      continue;
+    }
+    seen.add(event);
+    const label = typeof entry['label'] === 'string' && entry['label'].trim().length > 0 ? entry['label'].trim() : event;
+    const id = entry['id'];
+    events.push({ event, label, id: typeof id === 'number' || typeof id === 'string' ? id : null });
+  }
+  return events;
 }
 
 const WEBHOOK_TOKEN_HEADER = 'X-Activepieces-Webhook-Token';
@@ -179,6 +215,7 @@ export const sallaWebhooks = {
   parseEvent,
   verifiedEvent,
   dedupeKey,
+  listWebhookEvents,
 };
 
 export { WEBHOOK_TOKEN_HEADER };
@@ -196,4 +233,10 @@ type SallaWebhookEvent = {
   data: Record<string, unknown>;
 };
 
-export type { StoredSallaWebhook, SallaWebhookEvent };
+type SallaWebhookEventOption = {
+  event: string;
+  label: string;
+  id: number | string | null;
+};
+
+export type { StoredSallaWebhook, SallaWebhookEvent, SallaWebhookEventOption };

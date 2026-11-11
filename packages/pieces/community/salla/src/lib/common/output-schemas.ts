@@ -535,6 +535,202 @@ const productPriceStatusEvent: OutputSchema = {
   ],
 };
 
+const customerFlatFields: OutputSchemaField[] = [
+  { key: 'full_name', label: 'Full Name' },
+  { key: 'mobile_full', label: 'Mobile', description: 'With the country code, for example +966555555555.' },
+  { key: 'email', label: 'Email', format: 'email' },
+  { key: 'city', label: 'City' },
+  { key: 'country', label: 'Country', description: 'In the connection response language (Arabic by default).' },
+  { key: 'country_code', label: 'Country Code', description: 'Two letters, for example SA.' },
+  { key: 'gender', label: 'Gender', description: 'male or female.' },
+  { key: 'group_names', label: 'Group Names', description: 'Comma separated. Empty when Salla returns only group IDs.' },
+  { key: 'birthday_date', label: 'Birthday', format: 'date' },
+  { key: 'customer_url', label: 'Customer Profile Page', format: 'url' },
+  { key: 'admin_url', label: 'Admin Customer Page', format: 'url' },
+  { key: 'updated_at_iso', label: 'Updated At', format: 'datetime' },
+];
+
+const customerFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Customer ID', format: 'number' },
+  { key: 'first_name', label: 'First Name' },
+  { key: 'last_name', label: 'Last Name' },
+  ...customerFlatFields,
+  { key: 'mobile', label: 'Mobile (without country code)' },
+  { key: 'mobile_code', label: 'Mobile Country Code' },
+  { key: 'avatar', label: 'Avatar', format: 'image' },
+  { key: 'currency', label: 'Currency' },
+  { key: 'location', label: 'Location' },
+  { key: 'group_ids', label: 'Group IDs', description: 'IDs of the customer groups the customer belongs to.' },
+];
+
+const customerStatsFields: OutputSchemaField[] = [
+  { key: 'created_at_iso', label: 'Created At', format: 'datetime' },
+  { key: 'orders_count', label: 'Orders Count', format: 'number', description: 'Present only when Include Stats is on.' },
+  { key: 'orders_amount', label: 'Orders Amount', format: 'number', description: 'Total spent. Present only when Include Stats is on.' },
+  { key: 'orders_average', label: 'Average Order Amount', format: 'number' },
+  { key: 'orders_complete_ratio', label: 'Completed Orders %', format: 'number' },
+  { key: 'orders_cancel_ratio', label: 'Cancelled Orders %', format: 'number' },
+  { key: 'orders_cancel', label: 'Cancelled Orders', format: 'number' },
+  { key: 'latest_purchase_iso', label: 'Latest Purchase', format: 'datetime' },
+  { key: 'wallet_balance', label: 'Wallet Balance', format: 'number' },
+  { key: 'total_points', label: 'Loyalty Points', format: 'number' },
+  { key: 'is_blocked', label: 'Blocked', format: 'boolean' },
+  { key: 'block_reason', label: 'Block Reason' },
+];
+
+const customerGroupFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Group ID', format: 'number' },
+  { key: 'name', label: 'Name' },
+];
+
+const couponFlatFields: OutputSchemaField[] = [
+  { key: 'type_normalized', label: 'Type', description: 'percentage or fixed.' },
+  { key: 'amount_value', label: 'Discount', format: 'number', description: 'Percent for percentage coupons, money for fixed ones.' },
+  { key: 'minimum_amount_value', label: 'Minimum Purchase', format: 'number' },
+  { key: 'maximum_amount_value', label: 'Maximum Discount', format: 'number', description: '0 or empty means no cap.' },
+  { key: 'currency', label: 'Currency' },
+  { key: 'start_date_iso', label: 'Starts At', format: 'datetime' },
+  { key: 'expiry_date_iso', label: 'Expires At', format: 'datetime' },
+  { key: 'created_at_iso', label: 'Created At', format: 'datetime' },
+];
+
+const couponFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Coupon ID', format: 'number' },
+  { key: 'code', label: 'Code' },
+  { key: 'status', label: 'Status', description: 'active, inactive or deleted.' },
+  ...couponFlatFields,
+  { key: 'updated_at_iso', label: 'Updated At', format: 'datetime' },
+  { key: 'free_shipping', label: 'Free Shipping', format: 'boolean' },
+  { key: 'is_sale_products_exclude', label: 'Excludes Sale Products', format: 'boolean' },
+  { key: 'is_apply_with_offer', label: 'Applies With Offers', format: 'boolean' },
+  { key: 'show_maximum_amount', label: 'Shows Maximum Discount', format: 'boolean' },
+  { key: 'applied_in', label: 'Applies In', description: 'all, web or app.' },
+  { key: 'usage_limit', label: 'Usage Limit', format: 'number' },
+  { key: 'usage_limit_per_user', label: 'Usage Limit per Customer', format: 'number' },
+  { key: 'usage_count', label: 'Times Used', format: 'number', description: 'From the coupon statistics, paid orders only.' },
+  { key: 'customer_count', label: 'Customers Who Used It', format: 'number' },
+  { key: 'sales_amount', label: 'Sales With This Coupon', format: 'number' },
+  { key: 'include_product_ids', label: 'Included Product IDs' },
+  { key: 'exclude_product_ids', label: 'Excluded Product IDs' },
+  { key: 'include_category_ids', label: 'Included Category IDs' },
+  { key: 'exclude_category_ids', label: 'Excluded Category IDs' },
+  { key: 'include_customer_group_ids', label: 'Included Customer Group IDs' },
+  { key: 'exclude_customer_group_ids', label: 'Excluded Customer Group IDs' },
+  { key: 'exclude_brands_ids', label: 'Excluded Brand IDs' },
+  { key: 'include_payment_methods', label: 'Payment Methods' },
+  { key: 'is_group', label: 'Group Coupon', format: 'boolean' },
+  { key: 'group_name', label: 'Group Name' },
+  { key: 'group_codes', label: 'Group Codes', description: 'Comma separated codes of a group coupon.' },
+  { key: 'marketing_active', label: 'Has Marketer', format: 'boolean' },
+  { key: 'marketing_name', label: 'Marketer Name' },
+  { key: 'marketing_url', label: 'Marketer Link', format: 'url' },
+];
+
+const couponSummaryFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Coupon ID', format: 'number' },
+  { key: 'code', label: 'Code' },
+  { key: 'status', label: 'Status', description: 'active, inactive or deleted.' },
+  ...couponFlatFields,
+  { key: 'free_shipping', label: 'Free Shipping', format: 'boolean' },
+  { key: 'usage_limit', label: 'Usage Limit', format: 'number' },
+  { key: 'usage_limit_per_user', label: 'Usage Limit per Customer', format: 'number' },
+  { key: 'is_group', label: 'Group Coupon', format: 'boolean' },
+];
+
+const cartFlatFields: OutputSchemaField[] = [
+  { key: 'total_amount', label: 'Total', format: 'number' },
+  { key: 'subtotal_amount', label: 'Subtotal', format: 'number' },
+  { key: 'total_discount_amount', label: 'Discount', format: 'number' },
+  { key: 'currency', label: 'Currency' },
+  { key: 'checkout_url', label: 'Checkout Link', format: 'url', description: 'Send it to the customer to finish the purchase.' },
+  { key: 'customer_id', label: 'Customer ID', format: 'number' },
+  { key: 'customer_name', label: 'Customer Name' },
+  { key: 'customer_mobile', label: 'Customer Mobile', description: 'With the country code, for example +966560000000.' },
+  { key: 'customer_email', label: 'Customer Email', format: 'email' },
+  { key: 'customer_city', label: 'Customer City' },
+  { key: 'customer_country', label: 'Customer Country' },
+  { key: 'coupon_code', label: 'Coupon Code' },
+  { key: 'item_count', label: 'Item Lines', format: 'number' },
+  { key: 'item_quantity', label: 'Total Quantity', format: 'number' },
+  { key: 'created_at_iso', label: 'Created At', format: 'datetime' },
+  { key: 'updated_at_iso', label: 'Updated At', format: 'datetime' },
+];
+
+const cartItemFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Item ID', format: 'number' },
+  { key: 'product_id', label: 'Product ID', format: 'number' },
+  { key: 'quantity', label: 'Quantity', format: 'number' },
+];
+
+const cartFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Cart ID', format: 'number' },
+  { key: 'status', label: 'Status', description: 'active or purchased.' },
+  { key: 'age_in_minutes', label: 'Age (minutes)', format: 'number' },
+  ...cartFlatFields,
+  { key: 'product_ids', label: 'Product IDs' },
+  { key: 'items', label: 'Items', labelKey: 'product_id', listItems: cartItemFields },
+];
+
+const reviewFields: OutputSchemaField[] = [
+  { key: 'review_type', label: 'Review Type', description: 'rating, ask, shipping or testimonial.' },
+  { key: 'rating_number', label: 'Rating', format: 'number', description: '1 to 5 stars.' },
+  { key: 'content', label: 'Review Text' },
+  { key: 'customer_id', label: 'Customer ID', format: 'number' },
+  { key: 'customer_name', label: 'Customer Name' },
+  { key: 'customer_mobile', label: 'Customer Mobile' },
+  { key: 'product_id', label: 'Product ID', format: 'number' },
+  { key: 'product_name', label: 'Product Name' },
+  { key: 'order_id', label: 'Order ID', format: 'number' },
+  { key: 'order_reference_id', label: 'Order Reference Number', format: 'number' },
+  { key: 'review_date', label: 'Review Date', format: 'date' },
+];
+
+const customer: OutputSchema = { fields: [...customerFields, ...customerStatsFields] };
+
+const customerList: OutputSchema = listOf({ key: 'customers', label: 'Customers', fields: customerFields, labelKey: 'full_name' });
+
+const customerGroupList: OutputSchema = listOf({ key: 'groups', label: 'Customer Groups', fields: customerGroupFields, labelKey: 'name' });
+
+const addCustomersToGroup: OutputSchema = {
+  fields: [
+    { key: 'group_id', label: 'Group ID', format: 'number' },
+    { key: 'customer_ids', label: 'Customer IDs Sent' },
+    { key: 'count', label: 'Customers Sent', format: 'number' },
+    { key: 'message', label: 'Salla Message' },
+  ],
+};
+
+const coupon: OutputSchema = { fields: couponFields };
+
+const couponList: OutputSchema = listOf({ key: 'coupons', label: 'Coupons', fields: couponSummaryFields, labelKey: 'code' });
+
+const abandonedCart: OutputSchema = { fields: cartFields };
+
+const abandonedCartList: OutputSchema = listOf({ key: 'carts', label: 'Abandoned Carts', fields: cartFields, labelKey: 'customer_name' });
+
+const customerEvent: OutputSchema = { fields: [...customerFields, eventMetaField] };
+
+const abandonedCartEvent: OutputSchema = {
+  fields: [
+    ...cartFields.map((field) =>
+      field.key === 'status' ? { ...field, description: 'active, or purchased when the cart was recovered.' } : field,
+    ),
+    eventMetaField,
+  ],
+};
+
+const reviewEvent: OutputSchema = { fields: [...reviewFields, eventMetaField] };
+
+const anyStoreEvent: OutputSchema = {
+  fields: [
+    { key: 'event', label: 'Event Name', description: 'For example order.created or customer.updated.' },
+    { key: 'store_id', label: 'Store ID', format: 'number' },
+    { key: 'created_at', label: 'Sent At' },
+    { key: 'data', label: 'Event Data', description: 'The record the event is about. Its fields depend on the event.' },
+    eventMetaField,
+  ],
+};
+
 export const sallaOutputSchemas = {
   getOrder,
   order,
@@ -564,4 +760,16 @@ export const sallaOutputSchemas = {
   productEvent,
   lowStockEvent,
   productPriceStatusEvent,
+  customer,
+  customerList,
+  customerGroupList,
+  addCustomersToGroup,
+  coupon,
+  couponList,
+  abandonedCart,
+  abandonedCartList,
+  customerEvent,
+  abandonedCartEvent,
+  reviewEvent,
+  anyStoreEvent,
 };

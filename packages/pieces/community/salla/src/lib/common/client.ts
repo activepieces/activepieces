@@ -4,8 +4,8 @@ class SallaApiError extends Error {
   readonly status: number;
   readonly responseBody: unknown;
 
-  constructor({ status, responseBody }: { status: number; responseBody: unknown }) {
-    super(buildErrorMessage({ status, responseBody }));
+  constructor({ status, responseBody, path }: { status: number; responseBody: unknown; path?: string }) {
+    super(buildErrorMessage({ status, responseBody, path }));
     this.name = 'SallaApiError';
     this.status = status;
     this.responseBody = responseBody;
@@ -38,7 +38,7 @@ async function request<T = unknown>({
       } catch (error) {
         const httpError = readHttpErrorLike(error);
         if (httpError) {
-          throw new SallaApiError(httpError);
+          throw new SallaApiError({ ...httpError, path });
         }
         throw error;
       }
@@ -204,7 +204,7 @@ function readLanguage(auth: SallaAuth): string | undefined {
   return trimmed.length > 0 && trimmed !== 'default' ? trimmed : undefined;
 }
 
-function buildErrorMessage({ status, responseBody }: { status: number; responseBody: unknown }): string {
+function buildErrorMessage({ status, responseBody, path }: { status: number; responseBody: unknown; path?: string }): string {
   const vendorMessage = extractVendorMessage(responseBody);
   if (status === 401) {
     const missingScopes = extractMissingScopes(vendorMessage);
@@ -214,8 +214,16 @@ function buildErrorMessage({ status, responseBody }: { status: number; responseB
     return `Salla rejected the access token (401${vendorMessage ? `: ${vendorMessage}` : ''}). Reconnect the Salla connection. If it keeps failing, check that the app still has access to the store.`;
   }
   const base = vendorMessage ? `Salla API error (${status}): ${vendorMessage}` : `Salla API error (${status})`;
-  const hint = STATUS_HINTS[status];
+  const hint = status === 429 && isCustomersPath(path) ? CUSTOMERS_RATE_LIMIT_HINT : STATUS_HINTS[status];
   return hint ? `${base}. ${hint}.` : `${base}.`;
+}
+
+function isCustomersPath(path: string | undefined): boolean {
+  if (typeof path !== 'string') {
+    return false;
+  }
+  const normalized = path.trim().startsWith('/') ? path.trim() : `/${path.trim()}`;
+  return normalized === '/customers' || normalized.startsWith('/customers/') || normalized.startsWith('/customers?');
 }
 
 function extractVendorMessage(responseBody: unknown): string | undefined {
@@ -352,10 +360,13 @@ const GENERIC_MESSAGES = new Map<string, string>([
   ['error', 'request failed'],
 ]);
 
+const CUSTOMERS_RATE_LIMIT_HINT =
+  'Salla rate limit reached. Customer endpoints allow only 500 requests per 10 minutes for each IP address. Wait a few minutes, then retry';
+
 const STATUS_HINTS: Record<number, string> = {
   400: 'Check the values sent to Salla',
   403: 'Salla blocked this request for the connected store. Check that the app is still installed and allowed for this store',
-  404: 'Check the ID. Order actions need the internal order ID (for example 2116149737), not the reference number customers see',
+  404: 'Check the ID: the record may have been deleted, or the ID belongs to another store. For orders, use the internal order ID (for example 2116149737), not the reference number customers see',
   405: 'Salla does not allow this operation on the record',
   410: 'The record no longer exists in Salla',
   422: 'Fix the listed fields and try again',

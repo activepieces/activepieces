@@ -96,6 +96,23 @@ function timezoneOffsetMs({ timezone, instant }: { timezone: string; instant: nu
   }
 }
 
+function wallClockFromDateTimeProp(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  const text = value.trim();
+  if (text.length === 0) {
+    return undefined;
+  }
+  const utc = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?Z$/i.exec(text);
+  if (!utc) {
+    return text;
+  }
+  const [, date, hour, minute, second = '00'] = utc;
+  const time = `${hour}:${minute}:${second}`;
+  return time === '00:00:00' ? date : `${date} ${time}`;
+}
+
 function toStoreDate(value: string | undefined | null): string | undefined {
   if (value === undefined || value === null || value.trim().length === 0) {
     return undefined;
@@ -414,6 +431,7 @@ const ORDER_STATUS_SLUGS = [
 export const sallaUtils = {
   toIsoDate,
   toStoreDate,
+  wallClockFromDateTimeProp,
   amountOf,
   normalizeDigits,
   withOrderExtras,
