@@ -289,16 +289,7 @@ export const beehiivOutputSchemas = {
 			{ key: 'subscription_id', label: 'Subscription ID' },
 		],
 	} satisfies OutputSchema,
-	humanListSubscriptions: {
-		itemLabel: '{email}',
-		fields: [
-			{ key: 'subscriptions', label: 'Subscriptions (all-results mode)', value: '', listItems: subscriptionFields },
-			{ key: 'data', label: 'Subscriptions (Limit/Cursor mode)', labelKey: 'email', listItems: subscriptionFields },
-			{ key: 'limit', label: 'Limit (Limit/Cursor mode)', format: 'number' },
-			{ key: 'has_more', label: 'Has More (Limit/Cursor mode)', format: 'boolean' },
-			{ key: 'next_cursor', label: 'Next Cursor (Limit/Cursor mode)' },
-		],
-	} satisfies OutputSchema,
+	humanListSubscriptions: topLevelArray({ label: 'Subscriptions', itemLabel: '{email}', fields: subscriptionFields }),
 	humanAddToAutomation: {
 		fields: journeyFields,
 	} satisfies OutputSchema,

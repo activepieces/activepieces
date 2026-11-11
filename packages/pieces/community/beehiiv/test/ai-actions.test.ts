@@ -322,8 +322,9 @@ describe('QA round 2: limit modelled and Create Segment messages', () => {
     for (const action of withTotals) {
       expect((action.outputSchema?.fields ?? []).map((field) => field.key)).toContain('limit');
     }
-    const humanList = beehiiv.actions()['list_subscriptions'].outputSchema?.fields.map((field) => field.key);
-    expect(humanList).toContain('limit');
+    const humanList = beehiiv.actions()['list_subscriptions'].outputSchema;
+    expect(humanList?.fields).toHaveLength(1);
+    expect(humanList?.fields[0]).toMatchObject({ value: '' });
   });
 
   test('List Publications returned keys are all modelled', async () => {
