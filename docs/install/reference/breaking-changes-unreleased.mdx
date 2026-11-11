@@ -16,6 +16,22 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 Nothing for most flows. Upgrading republishes the flow, which takes a fresh baseline of the sheet, so a change made while the flow is being republished does not run it (same as today). If a flow relied on New or Updated Row running for every row after a sort or insert, or on New Row Added running for edited rows, use New or Updated Row with a Trigger Column instead.
 
+#### Google Tasks 0.8.0: New Task can ignore edits
+
+**New Task** has a new **Run on** setting. **New tasks only** runs the flow once per task; renaming, editing, moving or completing a task no longer runs it again. **New and edited tasks** keeps the old behaviour. Steps keep running the old code until you upgrade them to 0.8.0. On upgraded steps, tasks found in one check are delivered newest first, and an edit made within a minute of the previous check is no longer lost.
+
+#### What you need to do
+
+Upgrading a New Task step to 0.8.0 in the builder pre-selects **New tasks only**. To keep running the flow on edits, choose **New and edited tasks** when you upgrade the step.
+
+#### GitHub 0.12.0: Update Issue (Agent) no longer clears labels and assignees
+
+When an AI agent used **Update Issue (Agent)** to change something else, such as the title, the agent path filled the **Labels** and **Assignees** lists it left out with empty lists and sent them. Each such update removed every label and every assignee from the issue. From GitHub 0.12.0 an empty Labels or Assignees list is not sent, so the issue keeps its current labels and assignees. Two new fields, **Clear Labels** and **Clear Assignees**, remove them on purpose.
+
+#### What you need to do
+
+If an agent or a flow step relied on an empty Labels or Assignees list to clear an issue, set **Clear Labels** or **Clear Assignees** instead. If an agent ran this action on an earlier GitHub version, check that your issues still have the labels and assignees you expect. Agents run the latest GitHub version available on your instance, so existing agents switch to the new behaviour as soon as GitHub 0.12.0 is installed, without an upgrade.
+
 #### beehiiv 0.5.0: four subscription actions are no longer agent tools, and List Posts returns posts
 
 From beehiiv 0.5.0, **Create Subscription**, **Update Subscription**, **Delete Subscription** and **List Subscriptions** are no longer offered to AI agents and MCP clients. They stay available as flow steps. Agents use the new tools instead: **Create Subscription (AI)**, **Update Subscription (AI)**, **Unsubscribe Subscriber**, **Delete Subscription (AI)** and **List Subscriptions (AI)**, which take plain publication and subscription IDs or emails. **List Publications** returns the publication ID. **Add Subscription to Automation**, **List Automations** and **List Posts** stay available to both flows and agents.
