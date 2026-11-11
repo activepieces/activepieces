@@ -245,9 +245,14 @@ async function deleteById({ request, session, resource, id }: { request: APIRequ
   const response = await request.delete(`/api/v1/${resource}/${id}`, {
     headers: { Authorization: `Bearer ${session.token}` },
   });
-  if (!response.ok() && response.status() !== 404) {
-    throw new Error(`Deleting ${resource} ${id} failed with ${response.status()}: ${await response.text()}`);
+  if (response.ok()) {
+    return;
   }
+  const body = await response.text();
+  if (response.status() === 404 && !body.includes(UNKNOWN_ROUTE_MESSAGE)) {
+    return;
+  }
+  throw new Error(`Deleting ${resource} ${id} failed with ${response.status()}: ${body}`);
 }
 
 async function listStale<T extends { id: string; created: string }>({ request, session, resource, nameOf, cursor }: {
@@ -272,6 +277,7 @@ async function listStale<T extends { id: string; created: string }>({ request, s
 }
 
 const STALE_AFTER_MS = 60 * 60 * 1000;
+const UNKNOWN_ROUTE_MESSAGE = 'Route not found';
 
 export const STORAGE_STATE = path.join(__dirname, '..', '.auth', 'user.json');
 export const E2E_PREFIX = 'E2E ';
