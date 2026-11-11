@@ -52,6 +52,8 @@ Tag every test of the feature with `@feature:<slug>`, so a query can list which 
 
 Project roles, a second project and the mail catcher exist only in EE. A test that needs one of them lives under `scenarios/ee/`. The CE spec of the same feature does not branch on the edition; its ticket marks that check `no-e2e: EE only`.
 
+For the role gate and project isolation, an EE spec imports `test` from `fixtures/access.ts`. `secondProject` is a new team project with an admin session for it. `viewer` is a new user with the Viewer role in that project and its own session, invited and accepted through the mail catcher. Both are deleted after the test. Assert what the server answers the viewer, and first check that the viewer can read, so a 403 means the role and not a missing membership. `scenarios/ee/access/access-fixtures.spec.ts` shows both checks.
+
 ### Data
 
 - Create what the spec needs, and name each flow and connection with `e2eFlows.uniqueName()` (prefix `E2E `).
