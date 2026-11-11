@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, connectionTemplate, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, MemoryImportNudgeClaimResponse, MemoryImportNudgeResponse, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
+import { AgentAbortReason, AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, MemoryImportNudgeClaimResponse, MemoryImportNudgeResponse, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -161,10 +161,10 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         if (wasStreaming) {
             log.info({ ...spreadIfDefined('preemptedRunId', preemptedRunId ?? undefined) }, '[agentConversationController] Cancelling in-flight run before new message')
             const cancelPromises = [
-                agentApprovalGate.requestCancel({ conversationId }),
+                agentApprovalGate.requestCancel({ conversationId, reason: AgentAbortReason.PREEMPTED }),
             ]
             if (preemptedRunId) {
-                cancelPromises.push(agentApprovalGate.requestCancel({ conversationId, runId: preemptedRunId }))
+                cancelPromises.push(agentApprovalGate.requestCancel({ conversationId, runId: preemptedRunId, reason: AgentAbortReason.PREEMPTED }))
             }
             await Promise.all(cancelPromises)
             const stillOwned = await updateConversationForRun({
@@ -231,10 +231,10 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         const activeRunId = conversation.activeRunId
         log.info({ ...spreadIfDefined('activeRunId', activeRunId ?? undefined) }, '[agentConversationController] Cancel requested')
         const cancelPromises = [
-            agentApprovalGate.requestCancel({ conversationId }),
+            agentApprovalGate.requestCancel({ conversationId, reason: AgentAbortReason.USER_CANCEL }),
         ]
         if (activeRunId) {
-            cancelPromises.push(agentApprovalGate.requestCancel({ conversationId, runId: activeRunId }))
+            cancelPromises.push(agentApprovalGate.requestCancel({ conversationId, runId: activeRunId, reason: AgentAbortReason.USER_CANCEL }))
         }
         await Promise.all(cancelPromises)
         await agentHelpers.conversationRepo().update(conversationId, {

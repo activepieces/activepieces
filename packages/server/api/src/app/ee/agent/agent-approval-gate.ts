@@ -1,4 +1,6 @@
+import { AgentAbortReason } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
 import { distributedStore } from '../../database/redis-connections'
 import { pubsub } from '../../helper/pubsub'
 
@@ -12,6 +14,7 @@ const CANCEL_KEY_PREFIX = 'chat-cancel:'
 const AVAILABLE_CONNECTIONS_PREFIX = 'chat-conn-avail:'
 const SELECTED_CONNECTION_PREFIX = 'chat-conn-sel:'
 const PENDING_GATE_PREFIX = 'chat-pending-gate:v2:'
+const AgentAbortReasonSchema = z.enum(AgentAbortReason)
 
 function decisionKey(gateId: string): string {
     return `${KEY_PREFIX}${gateId}`
@@ -89,17 +92,21 @@ async function waitForDecision({ gateId, timeoutMs }: { gateId: string, timeoutM
     })
 }
 
-async function requestCancel({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<void> {
+async function requestCancel({ conversationId, runId, reason }: { conversationId: string, runId?: string, reason: AgentAbortReason }): Promise<void> {
     const key = runId ? `${CANCEL_KEY_PREFIX}${conversationId}:${runId}` : `${CANCEL_KEY_PREFIX}${conversationId}`
-    await distributedStore.put(key, { cancelled: true }, CANCEL_TTL_SECONDS)
+    await distributedStore.put(key, { cancelled: true, reason }, CANCEL_TTL_SECONDS)
 }
 
-async function isCancelled({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<boolean> {
+async function getCancelReason({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<AgentAbortReason | null> {
     const key = runId
         ? `${CANCEL_KEY_PREFIX}${conversationId}:${runId}`
         : `${CANCEL_KEY_PREFIX}${conversationId}`
-    const raw = await distributedStore.get<{ cancelled: boolean }>(key)
-    return raw?.cancelled === true
+    const raw = await distributedStore.get<{ cancelled: boolean, reason?: unknown }>(key)
+    if (raw?.cancelled !== true) {
+        return null
+    }
+    const parsed = AgentAbortReasonSchema.safeParse(raw.reason)
+    return parsed.success ? parsed.data : AgentAbortReason.USER_CANCEL
 }
 
 async function clearCancel({ conversationId }: { conversationId: string }): Promise<void> {
@@ -170,7 +177,7 @@ export const agentApprovalGate = {
     consumeApproval,
     waitForDecision,
     requestCancel,
-    isCancelled,
+    getCancelReason,
     clearCancel,
     storeAvailableConnections,
     getAvailableConnections,
