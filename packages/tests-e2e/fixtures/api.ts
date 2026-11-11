@@ -295,6 +295,7 @@ export const e2eApi = {
   seedFlow,
   seedSecretTextConnection,
   uniqueName,
+  callApi,
   deleteStaleData,
   describeFlow,
   describeRun,

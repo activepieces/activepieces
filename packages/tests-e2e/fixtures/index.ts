@@ -19,9 +19,9 @@ export const test = base.extend<CustomFixtures>({
 
   seed: async ({ request, session, cleanup }, use) => {
     await use({
-      flow: ({ template, publish }) => e2eApi.seedFlow({
+      flow: ({ template, publish, session: projectSession }) => e2eApi.seedFlow({
         request,
-        session,
+        session: projectSession ?? session,
         template,
         publish,
         onCreated: (flowId) => cleanup.track({ resource: 'flows', id: flowId }),
@@ -59,7 +59,7 @@ async function deleteTracked({ request, session, records }: { request: APIReques
 
 export type Cleanup = { track: (record: TrackedRecord) => void };
 export type Seed = {
-  flow: (params: { template: FlowTemplate; publish: boolean }) => Promise<SeededFlow>;
+  flow: (params: { template: FlowTemplate; publish: boolean; session?: E2eSession }) => Promise<SeededFlow>;
   secretTextConnection: (params: { pieceName: string; secret: string }) => Promise<SeededConnection>;
 };
 
