@@ -4,6 +4,7 @@ import { getBotToken, getUserToken, SlackAuthValue } from './auth-helpers';
 
 const SLACK_SECTION_TEXT_MAX_LENGTH = 3000;
 const PRIVATE_CONVERSATION_TYPES = ['im', 'group'];
+const SLACK_ACCESS_REFUSED_ERRORS = ['channel_not_found', 'not_in_channel', 'missing_scope', 'access_denied', 'no_permission'];
 
 export function textToSectionBlocks(text: string): (KnownBlock | Block)[] {
   if (text.length <= SLACK_SECTION_TEXT_MAX_LENGTH) {
@@ -241,7 +242,11 @@ export async function canConnectionSeeConversation({ auth, channel, channelType 
 }
 
 function throwUnlessSlackRefused(error: Error): void {
-  if (!('code' in error) || error.code !== ErrorCode.PlatformError) {
+  if (!('code' in error) || error.code !== ErrorCode.PlatformError || !('data' in error) || !isAccessRefusal(error.data)) {
     throw error;
   }
+}
+
+function isAccessRefusal(data: unknown): boolean {
+  return typeof data === 'object' && data !== null && 'error' in data && typeof data.error === 'string' && SLACK_ACCESS_REFUSED_ERRORS.includes(data.error);
 }

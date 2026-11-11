@@ -17,6 +17,12 @@ vi.mock('@slack/web-api', async (importOriginal) => {
       if (visibleTo.get(this.token ?? '')?.has(channel)) {
         return { ok: true };
       }
+      if (channel === 'G0DOWN') {
+        throw Object.assign(new Error('An API error occurred: internal_error'), {
+          code: original.ErrorCode.PlatformError,
+          data: { ok: false, error: 'internal_error' },
+        });
+      }
       throw Object.assign(new Error('An API error occurred: channel_not_found'), {
         code: original.ErrorCode.PlatformError,
         data: { ok: false, error: 'channel_not_found' },
@@ -107,6 +113,11 @@ describe('Slack triggers only fire for events the connection can see', () => {
   it('ignores a private channel neither the bot nor the user is in', async () => {
     const event = message({ channel: 'G0A', channelType: 'group', user: 'UA' });
     expect(await newMessageTrigger.run(ctx({ propsValue: { ignoreBots: false }, event }))).toEqual([]);
+  });
+
+  it('fails the run instead of dropping the event when Slack has an internal error', async () => {
+    const event = message({ channel: 'G0DOWN', channelType: 'group', user: 'UC' });
+    await expect(newMessageTrigger.run(ctx({ propsValue: { ignoreBots: false }, event }))).rejects.toThrow('internal_error');
   });
 
   it('ignores New Message In Channel for a private channel id the connection cannot see', async () => {

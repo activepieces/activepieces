@@ -25,7 +25,7 @@ describe('slack button click forward', () => {
     };
     const result = slack.events?.parseAndReply({
       payload: {
-        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        headers: { 'content-type': 'application/x-www-form-urlencoded', 'x-slack-request-timestamp': String(Math.floor(Date.now() / 1000)) },
         body: { payload: JSON.stringify(interaction) },
         method: 'POST',
         queryParams: {},
