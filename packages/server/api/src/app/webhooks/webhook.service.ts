@@ -85,18 +85,6 @@ export const webhookService = {
             }
         }
         const { flow } = flowExecutionResult
-        if (flowExecutionResult.appEventsOnly) {
-            pinoLogger.warn({ flow: { id: flowId } }, 'Webhook received for a flow that only accepts app events')
-            wideEvent.set({ webhook: { flowFound: false } })
-            return {
-                status: StatusCodes.NOT_FOUND,
-                body: {},
-                headers: {
-                    [webhookHeader]: webhookRequestId,
-                },
-            }
-        }
-
         // data() consumes the request body stream (streaming any file straight to storage), which
         // can only be read once. The handshake check and the payload resolution below both need it,
         // so memoize — a second call would stream an empty body and hand the run a 0-byte file URL.
@@ -112,6 +100,18 @@ export const webhookService = {
         })
         const flowVersionIdToRun = await webhookService.getFlowVersionIdToRun(flowVersionToRun, flow)
         wideEvent.set({ flowVersion: { id: flowVersionIdToRun } })
+
+        if (flowExecutionResult.appEventVersionIds.includes(flowVersionIdToRun)) {
+            pinoLogger.warn({ flow: { id: flowId } }, 'Webhook received for a flow version that only accepts app events')
+            wideEvent.set({ webhook: { flowFound: false } })
+            return {
+                status: StatusCodes.NOT_FOUND,
+                body: {},
+                headers: {
+                    [webhookHeader]: webhookRequestId,
+                },
+            }
+        }
 
         // Handshake pings can arrive both during the publish window (when flow.status is still
         // DISABLED before the transaction completes) and after the flow is ENABLED (third-party

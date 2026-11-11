@@ -40,7 +40,7 @@ export type FlowExecutionState = {
 } | {
     exists: true
     handshakeConfiguration: WebhookHandshakeConfiguration | undefined
-    appEventsOnly: boolean
+    appEventVersionIds: string[]
     flow: Flow
     platformId: string
 }

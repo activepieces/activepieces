@@ -47,6 +47,7 @@ vi.mock('../../../../src/app/flows/flow/flow-execution-cache', () => ({
             exists: true,
             platformId: 'plat-1',
             handshakeConfiguration: undefined,
+            appEventVersionIds: [],
             flow: {
                 id: 'flow-1',
                 projectId: 'proj-1',

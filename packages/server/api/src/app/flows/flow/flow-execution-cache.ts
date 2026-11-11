@@ -37,15 +37,16 @@ async function getFlowExecutionCache(params: GetParams, log: FastifyBaseLogger):
             exists: false,
         }
     }
-    const triggerSource = await triggerSourceService(log).getByFlowId({
+    const triggerSources = await Promise.all([false, true].map((simulate) => triggerSourceService(log).getByFlowId({
         flowId: flow.id,
         projectId: flow.projectId,
-        simulate: params.simulate,
-    })
+        simulate,
+    })))
+    const triggerSource = triggerSources[params.simulate ? 1 : 0]
     return {
         exists: true,
         handshakeConfiguration: await webhookHandshake.getWebhookHandshakeConfiguration({ triggerSource, logger: log }) ?? undefined,
-        appEventsOnly: triggerSource?.type === TriggerStrategy.APP_WEBHOOK,
+        appEventVersionIds: triggerSources.flatMap((source) => source?.type === TriggerStrategy.APP_WEBHOOK ? [source.flowVersionId] : []),
         flow,
         platformId: await projectService(log).getPlatformId(flow.projectId),
     }

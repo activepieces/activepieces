@@ -557,52 +557,77 @@ describe('Webhook Service', () => {
         expect(response?.statusCode).toBe(StatusCodes.OK)
     })
 
-    it('returns NOT FOUND for a flow whose trigger only accepts app events', async () => {
-        const { mockProject, mockPlatform, mockOwner } = await mockAndSaveBasicSetup()
-        const mockFlow = createMockFlow({
-            projectId: mockProject.id,
-            status: FlowStatus.ENABLED,
-        })
-        await db.save('flow', [mockFlow])
-        const mockFlowVersion = createMockFlowVersion({
-            flowId: mockFlow.id,
-        })
-        await db.save('flow_version', [mockFlowVersion])
-        await db.update('flow', mockFlow.id, {
-            publishedVersionId: mockFlowVersion.id,
-        })
-        await db.save('trigger_source', [{
-            id: apId(),
-            created: new Date().toISOString(),
-            updated: new Date().toISOString(),
-            flowId: mockFlow.id,
-            flowVersionId: mockFlowVersion.id,
-            projectId: mockProject.id,
-            pieceName: '@activepieces/piece-slack',
-            pieceVersion: '0.23.3',
-            triggerName: 'new-message',
-            type: TriggerStrategy.APP_WEBHOOK,
-            simulate: false,
-            schedule: null,
-            deleted: null,
-        }])
-        const mockToken = await generateMockToken({
-            type: PrincipalType.USER,
-            platform: {
-                id: mockPlatform.id,
-            },
-            id: mockOwner.id,
+    it('returns NOT FOUND when the version that would run only accepts app events', async () => {
+        const { ctxToken, flowId } = await saveFlowWithTriggerSources({
+            published: TriggerStrategy.APP_WEBHOOK,
+            draft: null,
         })
 
-        const responses = await Promise.all(['', '/sync'].map((suffix) => app?.inject({
-            method: 'POST',
-            url: `/api/v1/webhooks/${mockFlow.id}${suffix}`,
-            headers: {
-                authorization: `Bearer ${mockToken}`,
-            },
-            body: { type: 'event_callback' },
-        })))
+        const statuses = await Promise.all(['', '/sync'].map((suffix) => postWebhook({ url: `/api/v1/webhooks/${flowId}${suffix}`, token: ctxToken })))
 
-        expect(responses.map((response) => response?.statusCode)).toEqual([StatusCodes.NOT_FOUND, StatusCodes.NOT_FOUND])
+        expect(statuses).toEqual([StatusCodes.NOT_FOUND, StatusCodes.NOT_FOUND])
+    })
+
+    it('keeps production webhooks working while an app-event draft is being tested', async () => {
+        const { ctxToken, flowId } = await saveFlowWithTriggerSources({
+            published: TriggerStrategy.WEBHOOK,
+            draft: TriggerStrategy.APP_WEBHOOK,
+        })
+
+        expect(await postWebhook({ url: `/api/v1/webhooks/${flowId}`, token: ctxToken })).toBe(StatusCodes.OK)
+        expect(await postWebhook({ url: `/api/v1/webhooks/${flowId}/draft`, token: ctxToken })).toBe(StatusCodes.NOT_FOUND)
+    })
+
+    it('still blocks an app-event published version while a plain webhook draft is being tested', async () => {
+        const { ctxToken, flowId } = await saveFlowWithTriggerSources({
+            published: TriggerStrategy.APP_WEBHOOK,
+            draft: TriggerStrategy.WEBHOOK,
+        })
+
+        expect(await postWebhook({ url: `/api/v1/webhooks/${flowId}`, token: ctxToken })).toBe(StatusCodes.NOT_FOUND)
+        expect(await postWebhook({ url: `/api/v1/webhooks/${flowId}/draft`, token: ctxToken })).toBe(StatusCodes.OK)
     })
 })
+
+async function saveFlowWithTriggerSources({ published, draft }: { published: TriggerStrategy, draft: TriggerStrategy | null }): Promise<{ ctxToken: string, flowId: string }> {
+    const { mockProject, mockPlatform, mockOwner } = await mockAndSaveBasicSetup()
+    const mockFlow = createMockFlow({ projectId: mockProject.id, status: FlowStatus.ENABLED })
+    await db.save('flow', [mockFlow])
+    const publishedVersion = createMockFlowVersion({ flowId: mockFlow.id, created: '2026-01-01T00:00:00.000Z' })
+    const draftVersion = createMockFlowVersion({ flowId: mockFlow.id, created: '2026-01-02T00:00:00.000Z' })
+    await db.save('flow_version', [publishedVersion, draftVersion])
+    await db.update('flow', mockFlow.id, { publishedVersionId: publishedVersion.id })
+    const sources = [
+        { type: published, flowVersionId: publishedVersion.id, simulate: false },
+        ...(draft === null ? [] : [{ type: draft, flowVersionId: draftVersion.id, simulate: true }]),
+    ]
+    await db.save('trigger_source', sources.map((source) => ({
+        id: apId(),
+        created: new Date().toISOString(),
+        updated: new Date().toISOString(),
+        flowId: mockFlow.id,
+        projectId: mockProject.id,
+        pieceName: '@activepieces/piece-slack',
+        pieceVersion: '0.23.3',
+        triggerName: 'new-message',
+        schedule: null,
+        deleted: null,
+        ...source,
+    })))
+    const ctxToken = await generateMockToken({
+        type: PrincipalType.USER,
+        platform: { id: mockPlatform.id },
+        id: mockOwner.id,
+    })
+    return { ctxToken, flowId: mockFlow.id }
+}
+
+async function postWebhook({ url, token }: { url: string, token: string }): Promise<number | undefined> {
+    const response = await app?.inject({
+        method: 'POST',
+        url,
+        headers: { authorization: `Bearer ${token}` },
+        body: { type: 'event_callback' },
+    })
+    return response?.statusCode
+}
