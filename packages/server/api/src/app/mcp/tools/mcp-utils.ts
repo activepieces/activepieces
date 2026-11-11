@@ -935,13 +935,23 @@ function rankActionsByIntent({ actions, forIntent }: { actions: RankableAction[]
         if (c === 'single') return -1
         return 0
     }
+    const otherNames = actions.map((a) => a.name).filter((name) => IDENTIFIER_NAME.test(name)).map((name) => name.toLowerCase()).sort((a, b) => b.length - a.length)
     const scored = actions.map((a) => {
-        const haystack = `${a.displayName} ${a.description} ${a.aiDescription ?? ''}`.toLowerCase()
+        const haystack = otherNames
+            .filter((name) => name !== a.name.toLowerCase())
+            .reduce((text, name) => text.split(name).join(' '), `${a.displayName} ${a.description} ${a.aiDescription ?? ''}`.toLowerCase())
         const tokenScore = tokens.reduce((acc, t) => acc + (haystack.includes(t) ? 1 : 0), 0)
-        return { name: a.name, score: tokenScore + cardinalityBonus(a.cardinality) }
+        return { name: a.name, score: tokenScore + cardinalityBonus(a.cardinality), isAi: a.audience === AI_AUDIENCE }
     })
-    return scored.filter((s) => s.score > 0).sort((a, b) => b.score - a.score).slice(0, 5).map((s) => s.name)
+    return scored
+        .filter((s) => s.score > 0)
+        .sort((a, b) => b.score - a.score || Number(b.isAi) - Number(a.isAi))
+        .slice(0, 5)
+        .map((s) => s.name)
 }
+
+const AI_AUDIENCE = 'ai'
+const IDENTIFIER_NAME = /[_-]|[a-z][A-Z]/
 
 const INTENT_STOP_WORDS = new Set(['the', 'all', 'any', 'and', 'for', 'with', 'get', 'from', 'into', 'out', 'list', 'show', 'find', 'see', 'view', 'fetch', 'pull'])
 
@@ -1081,4 +1091,5 @@ export type RankableAction = {
     description: string
     cardinality: ActionCardinality
     aiDescription?: string
+    audience?: string
 }
