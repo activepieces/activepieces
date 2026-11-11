@@ -1,28 +1,30 @@
 import { randomUUID } from 'node:crypto';
-import type { APIRequestContext } from '@playwright/test';
 import { e2eApi, E2E_PREFIX, E2eSession } from './api';
 import { test as base } from './index';
 
 export const test = base.extend<AccessFixtures>({
   secondProject: async ({ request, session, cleanup }, use) => {
-    const project = await postJson<{ id: string }>({
+    const project = await e2eApi.callApi<{ id: string }>({
       request,
       session,
+      method: 'POST',
       path: '/api/v1/projects',
       data: { displayName: `${E2E_PREFIX}project ${randomUUID().slice(0, 8)}` },
-    });
+    }).catch(explainFreePlan);
     cleanup.track({ resource: 'projects', id: project.id });
     await use({ id: project.id, session: { token: session.token, projectId: project.id } });
   },
 
   viewer: async ({ request, session, secondProject, mailbox, cleanup }, use) => {
     const email = `e2e-viewer-${randomUUID().slice(0, 8)}@example.com`;
-    await postJson({
+    const invitation = await e2eApi.callApi<{ id: string }>({
       request,
       session,
+      method: 'POST',
       path: '/api/v1/user-invitations',
       data: { type: 'PROJECT', email, projectId: secondProject.id, projectRole: 'Viewer' },
-    });
+    }).catch(explainFreePlan);
+    cleanup.track({ resource: 'user-invitations', id: invitation.id });
     await e2eApi.acceptInvitation({ request, link: await mailbox.linkTo({ to: email, path: '/invitation' }) });
     const { userId } = await e2eApi.signUp({ request, email, password: VIEWER_PASSWORD });
     cleanup.track({ resource: 'users', id: userId });
@@ -37,12 +39,11 @@ export const test = base.extend<AccessFixtures>({
 
 export { expect } from '@playwright/test';
 
-async function postJson<T>({ request, session, path, data }: { request: APIRequestContext; session: E2eSession; path: string; data: unknown }): Promise<T> {
-  const response = await request.post(path, { headers: { Authorization: `Bearer ${session.token}` }, data });
-  if (!response.ok()) {
-    throw new Error(`POST ${path} failed with ${response.status()}: ${await response.text()}`);
+function explainFreePlan(error: unknown): never {
+  if (error instanceof Error && error.message.includes(' failed with 402:')) {
+    throw new Error(`${error.message}\nThe platform is on the free plan. Set E2E_LICENSE_KEY, so global setup activates an EE license with team projects and project roles.`);
   }
-  return response.json();
+  throw error;
 }
 
 const VIEWER_PASSWORD = 'E2e-Viewer-Pass-1!';
