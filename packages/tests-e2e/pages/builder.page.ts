@@ -64,6 +64,10 @@ export class BuilderPage extends BasePage {
     await this.replaceText({ field: this.sidebar().getByRole('textbox', { name, exact: true }), text: value });
   }
 
+  async expectStepPanelText(text: string) {
+    await expect(this.sidebar().getByText(text)).toBeVisible();
+  }
+
   async setJsonBody(json: string) {
     await this.replaceEditorText({ testId: 'json-editor', text: json });
   }
