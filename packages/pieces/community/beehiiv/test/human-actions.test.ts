@@ -265,6 +265,18 @@ describe('QA round 2: both-audience lists', () => {
     }
   });
 
+  test('List Posts fetch-all caps at 1,000 posts when Expand Results includes content, 10,000 otherwise', async () => {
+    const fullPage = { data: Array.from({ length: 100 }, (_, index) => ({ id: `p${index}` })), total_pages: 12, total_results: 1200 };
+    stubBeehiiv({ replies: [{ body: fullPage }] });
+    await expect(
+      listPostsAction.run(actionContext({ propsValue: { publicationId: PUB, audience: 'all', platform: 'all', status: 'all', expand: ['stats', 'free_web_content'] } })),
+    ).rejects.toThrow('more than 1000 items');
+    vi.restoreAllMocks();
+    stubBeehiiv({ replies: [{ body: fullPage }] });
+    const statsOnly = await listPostsAction.run(actionContext({ propsValue: { publicationId: PUB, audience: 'all', platform: 'all', status: 'all', expand: ['stats'] } }));
+    expect(statsOnly.items).toHaveLength(1200);
+  });
+
   test('List Automations all-results mode still returns a bare array', async () => {
     stubBeehiiv({ replies: [{ body: { data: [{ id: 'aut_1' }], total_pages: 1 } }] });
     const result = await listAutomationsAction.run(actionContext({ propsValue: { publicationId: PUB } }));

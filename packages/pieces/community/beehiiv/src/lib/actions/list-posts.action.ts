@@ -12,11 +12,11 @@ export const listPostsAction = createAction({
 	classification: 'SEARCH',
 	displayName: 'List Posts',
 	description:
-		'Retrieves posts of a publication, newest first by default. With Limit and Page empty it returns all matching posts; otherwise it returns only the requested page with paging info.',
+		'Retrieves posts of a publication, newest first by default. With Limit and Page empty it returns all matching posts (up to 10,000, or 1,000 when content is expanded); otherwise it returns only the requested page with paging info.',
 	audience: 'both',
 	aiMetadata: {
 		description:
-			'Lists posts of a beehiiv publication (Publication ID from "List Publications"), filtered by Audience (all, free, premium), Platform (all, web, email, both), Status (all, draft, confirmed = published or scheduled, archived), Content Tags (any tag matches) and Slugs, sorted by Order By and Direction (default created, newest first). Agents should always set Limit (1-100) and Page (1-100): the result is { items, page, limit, total_pages, total_results, has_more }; call again with Page + 1 while has_more is true. With Limit and Page both empty it returns every match in items (fails past 10,000; narrow the filters). Expand Results adds stats or rendered HTML; content can be very large, so in lists request only Stats and use "Get Post" for one post body. Read-only.',
+			'Lists posts of a beehiiv publication (Publication ID from "List Publications"), filtered by Audience (all, free, premium), Platform (all, web, email, both), Status (all, draft, confirmed = published or scheduled, archived), Content Tags (any tag matches) and Slugs, sorted by Order By and Direction (default created, newest first). Agents should always set Limit (1-100) and Page (1-100): the result is { items, page, limit, total_pages, total_results, has_more }; call again with Page + 1 while has_more is true. With Limit and Page both empty it returns every match in items (fails past 10,000, or past 1,000 when Expand Results includes any content; narrow the filters). Expand Results adds stats or rendered HTML; content can be very large, so in lists request only Stats and use "Get Post" for one post body. Read-only.',
 		idempotent: true,
 	},
 	outputSchema: beehiivOutputSchemas.humanListPosts,
@@ -120,13 +120,14 @@ export const listPostsAction = createAction({
 		const { publicationId, page, limit, status, platform, audience } = context.propsValue;
 		const apiKey = apiKeyOf(context.auth);
 		const path = `${pathFor(['publications', publicationId])}/posts`;
+		const expand = aiInput.textList({ value: context.propsValue.expand, label: 'Expand Results' });
 		const query = {
 			audience,
 			platform,
 			status,
 			order_by: aiInput.oneOf({ value: context.propsValue.order_by, label: 'Order By', allowed: ORDER_BY_VALUES }) ?? 'created',
 			direction: aiInput.oneOf({ value: context.propsValue.direction, label: 'Direction', allowed: DIRECTION_VALUES }) ?? 'desc',
-			'expand[]': aiInput.textList({ value: context.propsValue.expand, label: 'Expand Results' }),
+			'expand[]': expand,
 			'content_tags[]': aiInput.textList({ value: context.propsValue.content_tags, label: 'Content Tags' }),
 			'slugs[]': aiInput.textList({ value: context.propsValue.slugs, label: 'Slugs' }),
 		};
@@ -137,7 +138,7 @@ export const listPostsAction = createAction({
 				path,
 				operation: 'list posts',
 				query,
-				maxItems: MAX_ITEMS,
+				maxItems: expand?.some((field) => field !== 'stats') ? MAX_ITEMS_WITH_CONTENT : MAX_ITEMS,
 				retryPending: true,
 			});
 			return { items, total_results: items.length, has_more: false };
@@ -156,6 +157,8 @@ export const listPostsAction = createAction({
 });
 
 const MAX_ITEMS = 10_000;
+
+const MAX_ITEMS_WITH_CONTENT = 1_000;
 
 const DEFAULT_LIMIT = 10;
 

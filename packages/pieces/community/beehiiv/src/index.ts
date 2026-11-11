@@ -21,7 +21,7 @@ export const beehiiv = createPiece({
 	auth: beehiivAuth,
 	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/beehiiv.png',
-	authors: ['onyedikachi-david', 'kishanprmr', 'tosh2308'],
+	authors: ['onyedikachi-david', 'kishanprmr', 'tosh2308', 'OdaiAhmed99'],
 	categories: [PieceCategory.MARKETING],
 	actions: [
 		createSubscriptionAction,
