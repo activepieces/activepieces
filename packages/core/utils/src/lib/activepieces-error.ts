@@ -46,6 +46,7 @@ export type ApErrorParams =
     | FeatureDisabledErrorParams
     | SignUpDisabledParams
     | LastProjectParams
+    | SelfServeTrialAlreadyUsedParams
     | SystemInvalidErrorParams
     | SystemPropNotDefinedErrorParams
     | TestTriggerFailedErrorParams
@@ -467,6 +468,11 @@ ErrorCode.LAST_PROJECT,
 Record<string, never>
 >
 
+export type SelfServeTrialAlreadyUsedParams = BaseErrorParams<
+ErrorCode.SELF_SERVE_TRIAL_ALREADY_USED,
+Record<string, never>
+>
+
 export type AuthenticationParams = BaseErrorParams<
 ErrorCode.AUTHENTICATION,
 {
@@ -648,6 +654,7 @@ export enum ErrorCode {
     AI_CREDIT_LIMIT_EXCEEDED = 'AI_CREDIT_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
     LAST_PROJECT = 'LAST_PROJECT',
+    SELF_SERVE_TRIAL_ALREADY_USED = 'SELF_SERVE_TRIAL_ALREADY_USED',
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',
     SYSTEM_PROP_NOT_DEFINED = 'SYSTEM_PROP_NOT_DEFINED',
     TEST_TRIGGER_FAILED = 'TEST_TRIGGER_FAILED',
