@@ -16,6 +16,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 Upgrading a New Task step to 0.8.0 in the builder pre-selects **New tasks only**. To keep running the flow on edits, choose **New and edited tasks** when you upgrade the step.
 
+#### Google Forms 0.8.0: New Response can ignore edited responses
+
+**New Response** has a new **Run on** setting. **New responses only** runs the flow once per response, even when the respondent edits it later. **New and edited responses** keeps the old behaviour. Steps saved before 0.8.0 keep running on edits.
+
+#### What you need to do
+
+Upgrading a New Response step to 0.8.0 in the builder pre-selects **New responses only**. To keep running the flow when a respondent edits an answer, choose **New and edited responses** when you upgrade the step.
+
 #### Buffer 0.2.0: Create Post is no longer an agent tool
 
 From Buffer 0.2.0, **Create Post** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and the same `posts` output. Agents use the new **Create a Post** tool instead, which creates one post on one channel per call and takes a strict ISO 8601 schedule time.
