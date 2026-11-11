@@ -369,14 +369,31 @@ describe('Google Tasks New Task behaviour (Run on = new_only)', () => {
     expect(await trigger.run(hookContext({ store }))).toEqual([]);
   });
 
-  it('clears its state on disable but not on republish', async () => {
+  it('keeps its state when onDisable runs without isRepublish before a republish, as older servers do', async () => {
     addTask({ id: 'a' });
     const { store, data } = memoryStore();
     await trigger.onEnable(hookContext({ store }));
-    await trigger.onDisable(hookContext({ store, isRepublish: true }));
-    expect(data.has('new_task_state')).toBe(true);
+    tick(5);
+    expect(await trigger.run(hookContext({ store }))).toEqual([]);
+    const before = data.get('new_task_state');
+    addTask({ id: 'during-republish' });
     await trigger.onDisable(hookContext({ store }));
-    expect(data.has('new_task_state')).toBe(false);
+    expect(data.get('new_task_state')).toBe(before);
+    await trigger.onEnable(hookContext({ store, isRepublish: true }));
+    expect(data.get('new_task_state')).toBe(before);
+    tick(5);
+    expect(ids(await trigger.run(hookContext({ store })))).toEqual(['during-republish']);
+  });
+
+  it('starts from now again when the flow is turned off and on', async () => {
+    addTask({ id: 'a' });
+    const { store } = memoryStore();
+    await trigger.onEnable(hookContext({ store }));
+    await trigger.onDisable(hookContext({ store }));
+    addTask({ id: 'while-off' });
+    await trigger.onEnable(hookContext({ store }));
+    tick(5);
+    expect(await trigger.run(hookContext({ store }))).toEqual([]);
   });
 
   it('throws on a vendor error and leaves its state untouched so the next poll retries', async () => {
@@ -526,6 +543,61 @@ describe('Google Tasks New Task behaviour (Run on = new_and_edited and legacy)',
     expect(await trigger.run(hookContext({ store, runOn: '' }))).toEqual([]);
   });
 
+  it('fires a task created between the last old-version poll and an upgrade to new_only', async () => {
+    addTask({ id: 'before-last-poll' });
+    const { store, data } = memoryStore();
+    tick(1);
+    data.set('lastPoll', JSON.stringify(clock));
+    tick(3);
+    addTask({ id: 'call-the-dentist' });
+    tick(1);
+    await trigger.onDisable(hookContext({ store, isRepublish: true }));
+    await trigger.onEnable(hookContext({ store, isRepublish: true }));
+    expect(data.has('lastPoll')).toBe(false);
+    tick(5);
+    expect(ids(await trigger.run(hookContext({ store })))).toEqual(['call-the-dentist']);
+    tick(5);
+    expect(await trigger.run(hookContext({ store }))).toEqual([]);
+    editTask({ id: 'call-the-dentist', change: { title: 'Edited' } });
+    editTask({ id: 'before-last-poll', change: { title: 'Edited' } });
+    tick(5);
+    expect(await trigger.run(hookContext({ store }))).toEqual([]);
+  });
+
+  it('fires a task created in the upgrade gap when the new_only baseline needs several polls', async () => {
+    Array.from({ length: 300 }, (_, index) => `old-${index}`).forEach((id) =>
+      addTask({ id, at: '2026-10-01T00:00:00.000Z' }),
+    );
+    const { store, data } = memoryStore();
+    data.set('lastPoll', JSON.stringify(clock));
+    tick(3);
+    addTask({ id: 'gap' });
+    tick(1);
+    vendor.msPerCall = 50_000;
+    await trigger.onEnable(hookContext({ store, isRepublish: true }));
+    vendor.msPerCall = 0;
+    expect(storedState({ data }).pending).not.toBeNull();
+    for (let poll = 0; poll < 5 && storedState({ data }).pending !== null; poll += 1) {
+      tick(5);
+      expect(await trigger.run(hookContext({ store }))).toEqual([]);
+    }
+    expect(storedState({ data }).pending).toBeNull();
+    tick(5);
+    expect(ids(await trigger.run(hookContext({ store })))).toEqual(['gap']);
+  });
+
+  it('starts from the stored lastPoll when the first new_only event after the upgrade is a poll', async () => {
+    addTask({ id: 'old' });
+    const { store, data } = memoryStore();
+    data.set('lastPoll', JSON.stringify(clock));
+    tick(3);
+    addTask({ id: 'gap' });
+    tick(1);
+    expect(await trigger.run(hookContext({ store }))).toEqual([]);
+    tick(5);
+    expect(ids(await trigger.run(hookContext({ store })))).toEqual(['gap']);
+  });
+
   it('rejects an unknown Run on value', async () => {
     const { store } = memoryStore();
     await expect(trigger.run(hookContext({ store, runOn: 'yes' }))).rejects.toThrow('Run on');
@@ -559,7 +631,7 @@ describe('Google Tasks New Task baselines and prune under the time budget', () =
     const startedAt = clock;
     expect(await trigger.run(hookContext({ store }))).toEqual([]);
     expect(vendor.calls).toBe(2);
-    expect(storedState({ data }).pending).toEqual({ pageToken: '200', startedAtMs: startedAt });
+    expect(storedState({ data }).pending).toEqual({ pageToken: '200', startedAtMs: startedAt, seenUntilMs: null });
     vendor.msPerCall = 0;
     tick(5);
     expect(await trigger.run(hookContext({ store }))).toEqual([]);
@@ -605,7 +677,7 @@ describe('Google Tasks New Task baselines and prune under the time budget', () =
     expect(await trigger.run(hookContext({ store }))).toEqual([]);
   });
 
-  it('records an incomplete prune so the next poll does not retry the full listing', async () => {
+  it('retries an incomplete prune after an hour instead of a full day', async () => {
     Array.from({ length: 19_995 }, (_, index) => `old-${index}`).forEach((id) =>
       addTask({ id, at: '2026-10-01T00:00:00.000Z' }),
     );
@@ -616,7 +688,9 @@ describe('Google Tasks New Task baselines and prune under the time budget', () =
     tick(5);
     vendor.msPerCall = 15_000;
     expect(ids(await trigger.run(hookContext({ store })))).toHaveLength(10);
-    expect(storedState({ data }).prunedAtMs).toBeGreaterThanOrEqual(clock - 60_000);
+    const retryAtMs = storedState({ data }).prunedAtMs + 24 * 60 * 60_000;
+    expect(retryAtMs).toBeGreaterThan(clock + 59 * 60_000);
+    expect(retryAtMs).toBeLessThanOrEqual(clock + 60 * 60_000);
     expect(storedState({ data }).seen.length).toBe(20_000 * 8);
     vendor.msPerCall = 0;
     addTask({ id: 'later' });
@@ -624,6 +698,12 @@ describe('Google Tasks New Task baselines and prune under the time budget', () =
     const callsBefore = vendor.calls;
     expect(ids(await trigger.run(hookContext({ store })))).toEqual(['later']);
     expect(vendor.calls - callsBefore).toBe(1);
+    tick(60);
+    addTask({ id: 'after-an-hour' });
+    const retryCallsBefore = vendor.calls;
+    expect(ids(await trigger.run(hookContext({ store })))).toEqual(['after-an-hour']);
+    expect(vendor.calls - retryCallsBefore).toBeGreaterThan(1);
+    expect(storedState({ data }).prunedAtMs).toBe(clock);
   });
 });
 

@@ -22,6 +22,7 @@ const POLL_BUDGET_MS = 40_000;
 const ENABLE_BUDGET_MS = 120_000;
 const TEST_BUDGET_MS = 150_000;
 const PRUNE_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const PRUNE_RETRY_MS = 60 * 60 * 1000;
 const SEEN_CAP = 20_000;
 const RECENT_CAP = 5_000;
 const HASH_LENGTH = 8;
@@ -46,7 +47,7 @@ export const newTaskTrigger = createTrigger({
     run_on: Property.StaticDropdown<string, false>({
       displayName: 'Run on',
       description:
-        'Choose whether editing a task runs the flow again. Empty means "New and edited tasks".',
+        'Whether edits run the flow again. Empty means "New and edited tasks".',
       required: false,
       defaultValue: RUN_ON_NEW_ONLY,
       options: {
@@ -106,17 +107,20 @@ export const newTaskTrigger = createTrigger({
   async onEnable(context) {
     const mode = resolveRunOn({ value: context.propsValue.run_on });
     const list = context.propsValue.tasks_list;
-    if (context.isRepublish) {
-      const existing = parseState({ raw: await context.store.get(STATE_KEY) });
-      if (existing && existing.mode === mode && existing.list === list) {
-        return;
-      }
-      const legacyCursor = await context.store.get(LEGACY_CURSOR_KEY);
-      if (!existing && mode === RUN_ON_NEW_AND_EDITED && isFiniteNumber(legacyCursor)) {
-        await context.store.put(STATE_KEY, legacyState({ list, lastPoll: legacyCursor }));
-        await context.store.delete(LEGACY_CURSOR_KEY);
-        return;
-      }
+    const existing = context.isRepublish
+      ? parseState({ raw: await context.store.get(STATE_KEY) })
+      : null;
+    if (existing && existing.mode === mode && existing.list === list) {
+      return;
+    }
+    const lastPollMs =
+      context.isRepublish && !existing
+        ? legacyCursorMs({ raw: await context.store.get(LEGACY_CURSOR_KEY) })
+        : null;
+    if (lastPollMs !== null && mode === RUN_ON_NEW_AND_EDITED) {
+      await context.store.put(STATE_KEY, legacyState({ list, lastPoll: lastPollMs }));
+      await context.store.delete(LEGACY_CURSOR_KEY);
+      return;
     }
     await context.store.put(
       STATE_KEY,
@@ -124,17 +128,14 @@ export const newTaskTrigger = createTrigger({
         auth: context.auth,
         list,
         mode,
+        lastPollMs,
         deadlineMs: Date.now() + ENABLE_BUDGET_MS,
       }),
     );
     await context.store.delete(LEGACY_CURSOR_KEY);
   },
-  async onDisable(context) {
-    if (context.isRepublish) {
-      return;
-    }
-    await context.store.delete(STATE_KEY);
-    await context.store.delete(LEGACY_CURSOR_KEY);
+  async onDisable() {
+    return;
   },
   async run(context) {
     const mode = resolveRunOn({ value: context.propsValue.run_on });
@@ -142,9 +143,10 @@ export const newTaskTrigger = createTrigger({
     const state = await loadState({ store: context.store, list, mode });
     const deadlineMs = Date.now() + POLL_BUDGET_MS;
     if (!state) {
+      const lastPollMs = legacyCursorMs({ raw: await context.store.get(LEGACY_CURSOR_KEY) });
       await context.store.put(
         STATE_KEY,
-        await baselineState({ auth: context.auth, list, mode, deadlineMs }),
+        await baselineState({ auth: context.auth, list, mode, lastPollMs, deadlineMs }),
       );
       await context.store.delete(LEGACY_CURSOR_KEY);
       return [];
@@ -257,11 +259,13 @@ async function baselineState({
   auth,
   list,
   mode,
+  lastPollMs,
   deadlineMs,
 }: {
   auth: OAuth2PropertyValue;
   list: string;
   mode: RunOn;
+  lastPollMs: number | null;
   deadlineMs: number;
 }): Promise<TriggerState> {
   const now = Date.now();
@@ -285,16 +289,22 @@ async function baselineState({
     params: listParams({ mode }),
     deadlineMs,
   });
+  const startedAtMs = lastPollMs ?? now;
   return {
     v: STATE_VERSION,
     mode,
     list,
-    cursorMs: now,
+    cursorMs: startedAtMs,
     floorMs: 0,
-    seen: mergeSeen({ seen: '', tasks: liveTasks({ tasks }) }),
+    seen: mergeSeen({
+      seen: '',
+      tasks: updatedUntil({ tasks: liveTasks({ tasks }), untilMs: lastPollMs }),
+    }),
     recent: '',
     prunedAtMs: now,
-    pending: complete ? null : { pageToken: nextPageToken ?? '', startedAtMs: now },
+    pending: complete
+      ? null
+      : { pageToken: nextPageToken ?? '', startedAtMs, seenUntilMs: lastPollMs },
     scan: null,
   };
 }
@@ -322,11 +332,12 @@ async function continueBaseline({
     });
     return {
       ...state,
-      seen: mergeSeen({ seen: state.seen, tasks: liveTasks({ tasks }) }),
+      seen: mergeSeen({
+        seen: state.seen,
+        tasks: updatedUntil({ tasks: liveTasks({ tasks }), untilMs: pending.seenUntilMs }),
+      }),
       cursorMs: complete ? pending.startedAtMs : state.cursorMs,
-      pending: complete
-        ? null
-        : { pageToken: nextPageToken ?? pending.pageToken, startedAtMs: pending.startedAtMs },
+      pending: complete ? null : { ...pending, pageToken: nextPageToken ?? pending.pageToken },
     };
   } catch (error) {
     if (pending.pageToken !== '' && error instanceof HttpError && error.response.status === 400) {
@@ -341,6 +352,26 @@ function mergeSeen({ seen, tasks }: { seen: string; tasks: LiveTask[] }): string
     hashes: [...splitHashes({ seen }), ...tasks.map((task) => hashKey({ key: task.id }))],
   });
   return capSeen({ hashes }).join('');
+}
+
+function updatedUntil({
+  tasks,
+  untilMs,
+}: {
+  tasks: LiveTask[];
+  untilMs: number | null;
+}): LiveTask[] {
+  if (untilMs === null) {
+    return tasks;
+  }
+  return tasks.filter((task) => {
+    const updatedMs = Date.parse(task.updated);
+    return !Number.isFinite(updatedMs) || updatedMs <= untilMs;
+  });
+}
+
+function legacyCursorMs({ raw }: { raw: unknown }): number | null {
+  return isFiniteNumber(raw) ? raw : null;
 }
 
 function legacyState({ list, lastPoll }: { list: string; lastPoll: number }): TriggerState {
@@ -404,9 +435,26 @@ async function advanceNewOnly({
       ...state,
       ...progress,
       seen: capSeen({ hashes: kept }).join(''),
-      prunedAtMs: pruneDue ? now : state.prunedAtMs,
+      prunedAtMs: nextPrunedAtMs({ state, pruneDue, pruned: pruned !== null, now }),
     },
   };
+}
+
+function nextPrunedAtMs({
+  state,
+  pruneDue,
+  pruned,
+  now,
+}: {
+  state: TriggerState;
+  pruneDue: boolean;
+  pruned: boolean;
+  now: number;
+}): number {
+  if (!pruneDue) {
+    return state.prunedAtMs;
+  }
+  return pruned ? now : now - PRUNE_INTERVAL_MS + PRUNE_RETRY_MS;
 }
 
 async function pruneSeen({
@@ -632,10 +680,15 @@ function parsePending({ raw }: { raw: unknown }): PendingBaseline | null | undef
   }
   const pageToken = Reflect.get(raw, 'pageToken');
   const startedAtMs = Reflect.get(raw, 'startedAtMs');
-  if (typeof pageToken !== 'string' || !isFiniteNumber(startedAtMs)) {
+  const seenUntilMs = Reflect.get(raw, 'seenUntilMs') ?? null;
+  if (
+    typeof pageToken !== 'string' ||
+    !isFiniteNumber(startedAtMs) ||
+    (seenUntilMs !== null && !isFiniteNumber(seenUntilMs))
+  ) {
     return undefined;
   }
-  return { pageToken, startedAtMs };
+  return { pageToken, startedAtMs, seenUntilMs };
 }
 
 type RunOn = typeof RUN_ON_NEW_ONLY | typeof RUN_ON_NEW_AND_EDITED;
@@ -666,4 +719,4 @@ type PollScan = {
 
 type ScanProgress = { cursorMs: number; scan: PollScan | null };
 
-type PendingBaseline = { pageToken: string; startedAtMs: number };
+type PendingBaseline = { pageToken: string; startedAtMs: number; seenUntilMs: number | null };
