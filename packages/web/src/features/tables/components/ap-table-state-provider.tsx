@@ -122,16 +122,20 @@ export function ApTableStateProvider({
   // rebuilds the table store from freshly fetched server state without
   // reloading the document (a full reload breaks the embed SDK handshake
   // inside an iframe)
-  const refreshTableState = useCallback(async () => {
+  const refetchTableState = useCallback(async () => {
     await Promise.all([
       queryClient.refetchQueries({ queryKey: ['table', tableId] }),
       queryClient.refetchQueries({ queryKey: ['fields', tableId] }),
       queryClient.refetchQueries({ queryKey: ['records', tableId] }),
     ]);
-    setRefreshKey((key) => key + 1);
   }, [queryClient, tableId]);
-
-  useRefreshOnTableUpdated({ tableId, refresh: refreshTableState });
+  const remountTableState = useCallback(() => {
+    setRefreshKey((key) => key + 1);
+  }, []);
+  const refreshTableState = useCallback(async () => {
+    await refetchTableState();
+    remountTableState();
+  }, [refetchTableState, remountTableState]);
 
   if (isTableLoading || isFieldsLoading || isRecordsLoading) {
     return <RouteLoadingBar />;
@@ -179,6 +183,11 @@ export function ApTableStateProvider({
           fields={fields}
           records={records.data}
         >
+          <RefreshOnTableUpdated
+            tableId={table.id}
+            refetch={refetchTableState}
+            remount={remountTableState}
+          />
           {children}
         </TableStateProviderWithTable>
       </TableLockProvider>
@@ -243,40 +252,69 @@ function TableLockProvider({
   );
 }
 
-function useRefreshOnTableUpdated({
+function RefreshOnTableUpdated({
   tableId,
-  refresh,
+  refetch,
+  remount,
 }: {
-  tableId: string | undefined;
-  refresh: () => Promise<void>;
+  tableId: string;
+  refetch: () => Promise<void>;
+  remount: () => void;
 }) {
   const socket = useSocket();
+  const store = useContext(TableContext);
   useEffect(() => {
-    let retry: ReturnType<typeof setTimeout> | undefined;
-    const refreshWhenNotEditing = () => {
-      retry = undefined;
-      if (document.querySelector('[data-editing="true"]')) {
-        retry = setTimeout(refreshWhenNotEditing, EDITING_RETRY_MS);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let requested = false;
+    let stale = false;
+    const isBusy = () =>
+      store?.getState().isSaving === true ||
+      !isNil(document.querySelector('[data-editing="true"]'));
+    const refreshWhenIdle = async () => {
+      if (isBusy()) {
+        timer = setTimeout(runRefresh, BUSY_RETRY_MS);
         return;
       }
-      refresh().catch(() => undefined);
+      stale = false;
+      await refetch();
+      if (stale || isBusy()) {
+        timer = setTimeout(runRefresh, BUSY_RETRY_MS);
+        return;
+      }
+      remount();
+    };
+    const runRefresh = () => {
+      refreshWhenIdle().catch(() => {
+        requested = false;
+      });
+    };
+    const requestRefresh = () => {
+      stale = true;
+      if (requested) {
+        return;
+      }
+      requested = true;
+      runRefresh();
     };
     const onTableUpdated = (event: TableUpdatedEvent) => {
       const isOtherEditorOnThisTable =
         event.tableId === tableId &&
         event.editorSessionId !== editorSession.getId();
-      if (isOtherEditorOnThisTable && isNil(retry)) {
-        refreshWhenNotEditing();
+      if (isOtherEditorOnThisTable) {
+        requestRefresh();
       }
     };
     socket.on(WebsocketClientEvent.TABLE_UPDATED, onTableUpdated);
+    socket.on('connect', requestRefresh);
     return () => {
       socket.off(WebsocketClientEvent.TABLE_UPDATED, onTableUpdated);
-      clearTimeout(retry);
+      socket.off('connect', requestRefresh);
+      clearTimeout(timer);
     };
-  }, [socket, tableId, refresh]);
+  }, [socket, store, tableId, refetch, remount]);
+  return null;
 }
 
-const EDITING_RETRY_MS = 1000;
+const BUSY_RETRY_MS = 1000;
 
 type TableLockContextValue = ReturnType<typeof useResourceLock>;

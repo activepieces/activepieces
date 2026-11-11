@@ -137,7 +137,7 @@ export const fieldService = {
         return field
     },
 
-    async reorder({ projectId, tableId, fieldIds }: ReorderParams): Promise<Field[]> {
+    async reorder({ projectId, tableId, fieldIds, editorSessionId }: ReorderParams): Promise<Field[]> {
         await fieldRepo().query(
             `
             UPDATE "field" AS f
@@ -150,6 +150,7 @@ export const fieldService = {
             `,
             [fieldIds, projectId, tableId],
         )
+        await tableSideEffects.onTableChanged({ projectId, tableId, editorSessionId })
         return this.getAll({ projectId, tableId })
     },
 
@@ -215,6 +216,7 @@ type ReorderParams = {
     projectId: string
     tableId: string
     fieldIds: string[]
+    editorSessionId?: string | null
 }
 
 type CountParams = {

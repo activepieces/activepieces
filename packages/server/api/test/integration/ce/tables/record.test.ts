@@ -580,6 +580,17 @@ describe('Record API', () => {
             expect(pushes).toEqual([{ room: ctx.project.id, payload: { tableId: table.id, editorSessionId } }])
         })
 
+        it('tells the project when columns are reordered', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const pushes = draftPushes.capture({ event: WebsocketClientEvent.TABLE_UPDATED })
+
+            const response = await ctx.post('/v1/fields/reorder', { tableId: table.id, fieldIds: [field.id] })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(pushes).toEqual([{ room: ctx.project.id, payload: { tableId: table.id, editorSessionId: null } }])
+        })
+
         it('stays quiet when an update changes nothing', async () => {
             const ctx = await setup()
             const { table, field } = await createTableWithField(ctx)

@@ -48,6 +48,7 @@ export const fieldController: FastifyPluginAsyncZod = async (fastify) => {
             projectId: request.projectId,
             tableId: request.body.tableId,
             fieldIds: request.body.fieldIds,
+            editorSessionId: editorSession.idFromRequest(request),
         })
     },
     )
