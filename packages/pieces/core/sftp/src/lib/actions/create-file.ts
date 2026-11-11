@@ -34,15 +34,18 @@ export const createFile = createAction({
     name: 'create_file',
     classification: 'WRITE',
     displayName: 'Create File from Text',
-    description: 'Create a new file in the given path',
+    description: 'Write text to a file, replacing any file already at that path.',
     aiMetadata: { description: 'Writes a text string to a file at a given path on the connected FTP, FTPS or SFTP server, creating missing parent directories and overwriting any existing file at that path. Choose this when the content is plain text you already hold as a string; prefer Upload File when the content is a binary or file object produced by an earlier step. Requires the full remote path (e.g. ./myfolder/notes.txt); idempotent, since the same path and content always converge on the same stored file, but note it clobbers whatever was there before.', idempotent: true },
     props: {
         fileName: Property.ShortText({
             displayName: 'File Path',
+            description: 'Where to save the file. Missing folders are created.',
+            placeholder: './reports/notes.txt',
             required: true,
         }),
         fileContent: Property.LongText({
-            displayName: 'File content',
+            displayName: 'File Content',
+            description: 'Text to write into the file.',
             required: true,
         }),
     },
