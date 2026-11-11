@@ -7,7 +7,7 @@ export const sallaAuth = PieceAuth.OAuth2({
 1. Sign in to the [Salla Partners Portal](https://portal.salla.partners) and open **My Apps**, then **Create App**. Choose a **Private** app of the **General** type.
 2. Open the app's **App Details**. Under **App Settings**, set **OAuth Mode** to **Custom Mode**.
 3. Paste the **Redirect URL** shown above into the app's **Callback URLs** field and save.
-4. Under **App Scopes**, tick at least **Orders** (read & write), **Webhooks** (read & write), **Customers** (read), **Payments** (read) and **Branches** (read). Each scope is either read or read & write.
+4. Under **App Scopes**, tick at least **Orders** (read & write), **Products** (read & write), **Webhooks** (read & write), **Customers** (read), **Categories** (read), **Brands** (read), **Payments** (read) and **Branches** (read). Each scope is either read or read & write.
 5. Give the app access to your store: install it on a Salla demo store, or add your store URL under **Merchant Store Access Requests** and approve the request as the store owner.
 6. Copy the app's **Client ID** and **Client Secret** into the fields below, then click **Connect** and approve the access in Salla.
 

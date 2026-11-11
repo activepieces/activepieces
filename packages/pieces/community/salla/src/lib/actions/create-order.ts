@@ -39,7 +39,7 @@ export const createOrderAction = createAction({
       display: 'section',
       label: 'Delivery',
       description: 'Needed when a product requires shipping. The address fields are the Saudi National Address.',
-      icon: 'location',
+      icon: 'send',
       props: ['delivery_method', 'branch', 'courier_id', ...addressPropNames()],
     },
     {

@@ -282,6 +282,259 @@ const orderStatusEvent: OutputSchema = {
   ],
 };
 
+const productStatusDescription = 'sale (on sale), out (out of stock) or hidden.';
+
+const productFlatFields: OutputSchemaField[] = [
+  { key: 'price_amount', label: 'Price', format: 'number' },
+  { key: 'sale_price_amount', label: 'Sale Price', format: 'number', description: 'Empty when the product has no sale price.' },
+  { key: 'regular_price_amount', label: 'Regular Price', format: 'number' },
+  { key: 'taxed_price_amount', label: 'Price With Tax', format: 'number' },
+  { key: 'cost_price_amount', label: 'Cost Price', format: 'number' },
+  { key: 'currency', label: 'Currency' },
+  { key: 'sale_end_date', label: 'Sale Ends On', format: 'date' },
+  { key: 'main_image_url', label: 'Main Image', format: 'image' },
+  { key: 'customer_url', label: 'Store Page', format: 'url' },
+  { key: 'admin_url', label: 'Admin Page', format: 'url' },
+  { key: 'brand_id', label: 'Brand ID', format: 'number' },
+  { key: 'brand_name', label: 'Brand Name' },
+  { key: 'category_names', label: 'Categories', description: 'Category names, comma separated.' },
+  { key: 'updated_at_iso', label: 'Updated At', format: 'datetime' },
+];
+
+const productImageItemFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Image ID', format: 'number' },
+  { key: 'url', label: 'URL', format: 'image' },
+  { key: 'main', label: 'Main Image', format: 'boolean' },
+  { key: 'alt', label: 'Alt Text' },
+  { key: 'type', label: 'Type', description: 'image or video.' },
+  { key: 'video_url', label: 'Video URL', format: 'url' },
+  { key: 'sort', label: 'Sort Order', format: 'number' },
+];
+
+const productSkuFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Variant ID', format: 'number' },
+  { key: 'sku', label: 'SKU' },
+  { key: 'barcode', label: 'Barcode' },
+  money({ key: 'price', label: 'Price' }),
+  { key: 'stock_quantity', label: 'Stock Quantity', format: 'number' },
+  { key: 'unlimited_quantity', label: 'Unlimited Quantity', format: 'boolean' },
+  { key: 'is_default', label: 'Default Variant', format: 'boolean' },
+];
+
+const productOptionFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Option ID', format: 'number' },
+  { key: 'name', label: 'Option Name' },
+  { key: 'display_type', label: 'Display Type' },
+  {
+    key: 'values',
+    label: 'Values',
+    labelKey: 'name',
+    listItems: [
+      { key: 'id', label: 'Value ID', format: 'number' },
+      { key: 'name', label: 'Value' },
+      { key: 'is_out_of_stock', label: 'Out of Stock', format: 'boolean' },
+    ],
+  },
+];
+
+const productFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Product ID', format: 'number' },
+  { key: 'name', label: 'Name' },
+  { key: 'sku', label: 'SKU' },
+  { key: 'type', label: 'Product Type', description: 'product, service, group_products, codes, digital, food, booking or donating.' },
+  { key: 'status', label: 'Status', description: productStatusDescription },
+  { key: 'quantity', label: 'Quantity', format: 'number' },
+  { key: 'unlimited_quantity', label: 'Unlimited Quantity', format: 'boolean' },
+  { key: 'notify_quantity', label: 'Low Stock Threshold', format: 'number' },
+  { key: 'is_available', label: 'Available', format: 'boolean' },
+  ...productFlatFields,
+  { key: 'description', label: 'Description', format: 'html' },
+  { key: 'mpn', label: 'MPN' },
+  { key: 'gtin', label: 'GTIN' },
+  { key: 'weight', label: 'Weight', format: 'number' },
+  { key: 'weight_type', label: 'Weight Unit' },
+  { key: 'require_shipping', label: 'Requires Shipping', format: 'boolean' },
+  { key: 'hide_quantity', label: 'Hide Quantity', format: 'boolean' },
+  { key: 'maximum_quantity_per_order', label: 'Maximum Quantity per Order', format: 'number' },
+  { key: 'sold_quantity', label: 'Sold Quantity', format: 'number' },
+  { key: 'views', label: 'Views', format: 'number' },
+  { key: 'with_tax', label: 'Price Includes Tax', format: 'boolean' },
+  { key: 'promotion', label: 'Promotion', children: [{ key: 'title', label: 'Title' }, { key: 'sub_title', label: 'Subtitle' }] },
+  { key: 'metadata', label: 'SEO', children: [{ key: 'title', label: 'Title' }, { key: 'description', label: 'Description' }, { key: 'url', label: 'URL' }] },
+  { key: 'images', label: 'Images', labelKey: 'url', listItems: productImageItemFields },
+  { key: 'categories', label: 'Category List', labelKey: 'name', listItems: [{ key: 'id', label: 'Category ID', format: 'number' }, { key: 'name', label: 'Name' }] },
+  { key: 'skus', label: 'Variants', labelKey: 'sku', listItems: productSkuFields },
+  { key: 'options', label: 'Options', labelKey: 'name', listItems: productOptionFields },
+];
+
+const productSummaryFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Product ID', format: 'number' },
+  { key: 'name', label: 'Name' },
+  { key: 'sku', label: 'SKU' },
+  { key: 'type', label: 'Product Type' },
+  { key: 'status', label: 'Status', description: productStatusDescription },
+  { key: 'quantity', label: 'Quantity', format: 'number' },
+  { key: 'unlimited_quantity', label: 'Unlimited Quantity', format: 'boolean' },
+  { key: 'is_available', label: 'Available', format: 'boolean' },
+  ...productFlatFields,
+  { key: 'sold_quantity', label: 'Sold Quantity', format: 'number' },
+];
+
+const variantFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Variant ID', format: 'number' },
+  { key: 'label', label: 'Label', description: 'Option values and SKU, for example Red / M · TSHIRT-RED-M.' },
+  { key: 'option_values', label: 'Option Values' },
+  { key: 'product_id', label: 'Product ID', format: 'number' },
+  { key: 'sku', label: 'SKU' },
+  { key: 'barcode', label: 'Barcode' },
+  { key: 'price_amount', label: 'Price', format: 'number' },
+  { key: 'sale_price_amount', label: 'Sale Price', format: 'number' },
+  { key: 'regular_price_amount', label: 'Regular Price', format: 'number' },
+  { key: 'cost_price_amount', label: 'Cost Price', format: 'number' },
+  { key: 'currency', label: 'Currency' },
+  { key: 'stock_quantity_number', label: 'Stock Quantity', format: 'number' },
+  { key: 'unlimited_quantity', label: 'Unlimited Quantity', format: 'boolean' },
+  { key: 'notify_low', label: 'Low Stock Threshold', format: 'number' },
+  { key: 'mpn', label: 'MPN' },
+  { key: 'gtin', label: 'GTIN' },
+  { key: 'weight', label: 'Weight', format: 'number' },
+  { key: 'weight_type', label: 'Weight Unit' },
+  { key: 'is_default', label: 'Default Variant', format: 'boolean' },
+  { key: 'updated_at_iso', label: 'Updated At', format: 'datetime' },
+];
+
+const categoryFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Category ID', format: 'number' },
+  { key: 'name', label: 'Name' },
+  { key: 'path', label: 'Path', description: 'Full path, for example Clothes > Shirts.' },
+  { key: 'parent_id', label: 'Parent Category ID', format: 'number', description: 'Empty for a top-level category.' },
+  { key: 'depth', label: 'Depth', format: 'number', description: '0 for a top-level category.' },
+  { key: 'status', label: 'Status', description: 'active or hidden.' },
+  { key: 'sort_order', label: 'Sort Order', format: 'number' },
+  { key: 'image', label: 'Image', format: 'image' },
+  { key: 'url', label: 'Store Page', format: 'url' },
+];
+
+const brandFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Brand ID', format: 'number' },
+  { key: 'name', label: 'Name' },
+  { key: 'description', label: 'Description' },
+  { key: 'logo', label: 'Logo', format: 'image' },
+  { key: 'banner', label: 'Banner', format: 'image' },
+  { key: 'status', label: 'Status' },
+  { key: 'en_char', label: 'English Name' },
+  { key: 'ar_char', label: 'Arabic Name' },
+];
+
+const product: OutputSchema = { fields: productFields };
+
+const productList: OutputSchema = listOf({ key: 'products', label: 'Products', fields: productSummaryFields, labelKey: 'name' });
+
+const deleteProduct: OutputSchema = {
+  fields: [
+    { key: 'product_id', label: 'Product ID', format: 'number' },
+    { key: 'deleted', label: 'Deleted', format: 'boolean' },
+    { key: 'message', label: 'Salla Message' },
+  ],
+};
+
+const productStatus: OutputSchema = {
+  fields: [
+    { key: 'product_id', label: 'Product ID', format: 'number' },
+    { key: 'status', label: 'New Status', description: productStatusDescription },
+    { key: 'message', label: 'Salla Message' },
+  ],
+};
+
+const stockAdjustment: OutputSchema = {
+  fields: [
+    { key: 'queued', label: 'Queued', format: 'boolean', description: 'Salla queues stock changes. They can take a few minutes to show.' },
+    { key: 'message', label: 'Salla Message' },
+    { key: 'line_count', label: 'Lines Sent', format: 'number' },
+    {
+      key: 'lines',
+      label: 'Lines',
+      labelKey: 'identifier',
+      listItems: [
+        { key: 'identifier_type', label: 'Identifier Type', description: 'id (product ID), variant_id or sku.' },
+        { key: 'identifier', label: 'Identifier' },
+        { key: 'quantity', label: 'Quantity', format: 'number' },
+        { key: 'mode', label: 'Mode', description: 'increment (add), decrement (remove) or overwrite (set).' },
+        { key: 'branch_id', label: 'Branch ID', format: 'number' },
+        { key: 'reason_id', label: 'Reason ID', format: 'number' },
+        { key: 'unlimited_quantity', label: 'Unlimited Quantity', format: 'boolean' },
+      ],
+    },
+  ],
+};
+
+const stockChangeReasons: OutputSchema = listOf({
+  key: 'reasons',
+  label: 'Reasons',
+  fields: [
+    { key: 'id', label: 'Reason ID', format: 'number' },
+    { key: 'name', label: 'Name' },
+  ],
+  labelKey: 'name',
+});
+
+const productPrice: OutputSchema = { fields: productFields };
+
+const variant: OutputSchema = { fields: variantFields };
+
+const productImage: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'Image ID', format: 'number' },
+    { key: 'product_id', label: 'Product ID', format: 'number' },
+    { key: 'url', label: 'Image', format: 'image' },
+    { key: 'thumbnail_url', label: 'Thumbnail', format: 'image' },
+    { key: 'sort', label: 'Sort Order', format: 'number' },
+    { key: 'default', label: 'Main Image', format: 'boolean' },
+    { key: 'alt_seo', label: 'Alt Text' },
+    { key: 'type', label: 'Type', description: 'image or video.' },
+    { key: 'video_url', label: 'Video URL', format: 'url' },
+    { key: 'three_d_image_url', label: '3D Model URL', format: 'url' },
+  ],
+};
+
+const categoryList: OutputSchema = listOf({ key: 'categories', label: 'Categories', fields: categoryFields, labelKey: 'path' });
+
+const brandList: OutputSchema = listOf({ key: 'brands', label: 'Brands', fields: brandFields, labelKey: 'name' });
+
+const productEvent: OutputSchema = { fields: [...productFields, eventMetaField] };
+
+const lowStockEvent: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'Product ID', format: 'number' },
+    { key: 'name', label: 'Name' },
+    { key: 'sku', label: 'SKU' },
+    { key: 'quantity', label: 'Quantity Left', format: 'number' },
+    { key: 'notify_quantity', label: 'Low Stock Threshold', format: 'number' },
+    ...productFields.filter((field) => !['id', 'name', 'sku', 'quantity', 'notify_quantity'].includes(field.key)),
+    eventMetaField,
+  ],
+};
+
+const productPriceStatusEvent: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'Product ID', format: 'number' },
+    { key: 'sku', label: 'SKU' },
+    { key: 'mpn', label: 'MPN' },
+    { key: 'gtin', label: 'GTIN' },
+    { key: 'status', label: 'New Status', description: `Sent on status changes: ${productStatusDescription}` },
+    { key: 'price_amount', label: 'Price', format: 'number', description: 'Sent on price changes.' },
+    { key: 'sale_price_amount', label: 'Sale Price', format: 'number', description: 'Sent on price changes. Empty when there is no sale price.' },
+    { key: 'sale_price', label: 'Sale Details', children: [{ key: 'amount', label: 'Amount', format: 'number' }, { key: 'expired_at', label: 'Sale Ends On', format: 'date' }] },
+    { key: 'regular_price', label: 'Regular Price', format: 'number' },
+    { key: 'taxed_price', label: 'Price With Tax', format: 'number' },
+    { key: 'tax', label: 'Tax', format: 'number' },
+    { key: 'cost', label: 'Cost Price', format: 'number' },
+    { key: 'currency', label: 'Currency' },
+    { key: 'with_tax', label: 'Price Includes Tax', format: 'boolean' },
+    eventMetaField,
+  ],
+};
+
 export const sallaOutputSchemas = {
   getOrder,
   order,
@@ -297,4 +550,18 @@ export const sallaOutputSchemas = {
   sendInvoice,
   orderEvent,
   orderStatusEvent,
+  product,
+  productList,
+  deleteProduct,
+  productStatus,
+  stockAdjustment,
+  stockChangeReasons,
+  productPrice,
+  variant,
+  productImage,
+  categoryList,
+  brandList,
+  productEvent,
+  lowStockEvent,
+  productPriceStatusEvent,
 };

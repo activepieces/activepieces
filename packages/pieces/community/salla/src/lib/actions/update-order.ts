@@ -48,7 +48,7 @@ export const updateOrderAction = createAction({
       display: 'section',
       label: 'Delivery',
       description: 'To change the address, fill every National Address field: Salla rejects a partial address.',
-      icon: 'location',
+      icon: 'send',
       props: ['delivery_method', 'branch', 'courier_id', ...addressPropNames()],
     },
     {

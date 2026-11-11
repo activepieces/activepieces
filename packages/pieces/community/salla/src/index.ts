@@ -26,10 +26,32 @@ import { orderUpdatedTrigger } from './lib/triggers/order-updated';
 import { orderCancelledTrigger } from './lib/triggers/order-cancelled';
 import { orderRefundedTrigger } from './lib/triggers/order-refunded';
 import { orderPaymentUpdatedTrigger } from './lib/triggers/order-payment-updated';
+import { createProductAction } from './lib/actions/create-product';
+import { updateProductAction } from './lib/actions/update-product';
+import { getProductAction } from './lib/actions/get-product';
+import { findProductsAction } from './lib/actions/find-products';
+import { deleteProductAction } from './lib/actions/delete-product';
+import { changeProductStatusAction } from './lib/actions/change-product-status';
+import { adjustStockAction } from './lib/actions/adjust-stock';
+import { updateProductPriceAction } from './lib/actions/update-product-price';
+import { updateVariantAction } from './lib/actions/update-variant';
+import { addProductImageAction } from './lib/actions/add-product-image';
+import { aiCreateProductAction } from './lib/actions/ai/create-product';
+import { aiUpdateProductAction } from './lib/actions/ai/update-product';
+import { aiListProductsAction } from './lib/actions/ai/list-products';
+import { aiAdjustStockAction } from './lib/actions/ai/adjust-stock';
+import { aiUpdateVariantAction } from './lib/actions/ai/update-variant';
+import { aiAddProductImageAction } from './lib/actions/ai/add-product-image';
+import { aiListCategoriesAction } from './lib/actions/ai/list-categories';
+import { aiListBrandsAction } from './lib/actions/ai/list-brands';
+import { aiListStockChangeReasonsAction } from './lib/actions/ai/list-stock-change-reasons';
+import { newProductTrigger } from './lib/triggers/new-product';
+import { productLowStockTrigger } from './lib/triggers/product-low-stock';
+import { productPriceOrStatusChangedTrigger } from './lib/triggers/product-price-or-status-changed';
 
 export const salla = createPiece({
   displayName: 'Salla',
-  description: 'Saudi e-commerce platform for online stores: manage orders and react to order events.',
+  description: 'Saudi e-commerce platform for online stores: manage orders, products and stock, and react to order and product events.',
   auth: sallaAuth,
   minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/salla.png',
@@ -54,6 +76,25 @@ export const salla = createPiece({
     aiListPaymentMethodsAction,
     aiListBranchesAction,
     aiGetStoreInfoAction,
+    createProductAction,
+    updateProductAction,
+    getProductAction,
+    findProductsAction,
+    deleteProductAction,
+    changeProductStatusAction,
+    adjustStockAction,
+    updateProductPriceAction,
+    updateVariantAction,
+    addProductImageAction,
+    aiCreateProductAction,
+    aiUpdateProductAction,
+    aiListProductsAction,
+    aiAdjustStockAction,
+    aiUpdateVariantAction,
+    aiAddProductImageAction,
+    aiListCategoriesAction,
+    aiListBrandsAction,
+    aiListStockChangeReasonsAction,
     createCustomApiCallAction({
       auth: sallaAuth,
       baseUrl: () => BASE_URL,
@@ -69,5 +110,8 @@ export const salla = createPiece({
     orderCancelledTrigger,
     orderRefundedTrigger,
     orderPaymentUpdatedTrigger,
+    newProductTrigger,
+    productLowStockTrigger,
+    productPriceOrStatusChangedTrigger,
   ],
 });

@@ -101,7 +101,7 @@ export const findOrdersAction = createAction({
         required: false,
         description: 'Only orders handled by one of these branches or warehouses.',
       }),
-      icon: 'location',
+      icon: 'filter',
     },
     sort_by: Property.StaticDropdown<SortBy, false>({
       displayName: 'Sort By',
