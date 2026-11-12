@@ -3392,7 +3392,6 @@
   "Locked for changes": "Locked for changes",
   "Our team can extend your trial or set you up on the Enterprise plan.": "Our team can extend your trial or set you up on the Enterprise plan.",
   "Enterprise trial": "Enterprise trial",
-  "Start your free trial": "Start your free trial",
   "Enterprise trial ended": "Enterprise trial ended",
   "Users and invitations added during the trial beyond the plan's {seats, plural, =1 {1 seat} other {# seats}} will be removed on {date}. Manage seats, or upgrade to keep them.": "Users and invitations added during the trial beyond the plan's {seats, plural, =1 {1 seat} other {# seats}} will be removed on {date}. Manage seats, or upgrade to keep them.",
   "Your Enterprise trial has ended. Users added during it beyond the plan's {seats, plural, =1 {1 seat} other {# seats}} lose access on {date} unless an admin upgrades.": "Your Enterprise trial has ended. Users added during it beyond the plan's {seats, plural, =1 {1 seat} other {# seats}} lose access on {date} unless an admin upgrades.",
