@@ -56,7 +56,7 @@ export const updateOrderAction = createAction({
       display: 'section',
       label: 'Payment',
       icon: 'tag',
-      props: ['payment_status', 'payment_method', 'accepted_methods', 'store_bank_id', 'receipt_image_url'],
+      props: ['payment_status', 'payment_method', 'accepted_methods', 'store_bank_id', 'receipt_image_url', 'cash_on_delivery_fee'],
     },
     {
       key: 'receiver',
@@ -157,6 +157,12 @@ export const updateOrderAction = createAction({
       placeholder: 'https://example.com/receipts/order-1001.pdf',
       required: false,
     }),
+    cash_on_delivery_fee: Property.Number({
+      displayName: 'Cash on Delivery Fee',
+      description: 'Optional fee for cash on delivery, for example 10. Used only when Payment Method is Cash on delivery. Leave empty for no fee. The store currency is used automatically.',
+      width: 'half',
+      required: false,
+    }),
     receiver_name: Property.ShortText({
       displayName: 'Receiver Name',
       description: 'Name of the person who receives the order, for example "Omar Alharbi". Leave empty to keep it.',
@@ -235,6 +241,7 @@ export const updateOrderAction = createAction({
           storeBankId: propsValue.store_bank_id ?? undefined,
           receiptImagePath: propsValue.receipt_image_url ?? undefined,
           acceptedMethods: propsValue.accepted_methods ?? [],
+          cashOnDeliveryFee: propsValue.cash_on_delivery_fee ?? undefined,
         },
         couponCode: propsValue.coupon_code ?? undefined,
         employeeIds: sallaUtils.toStringList(propsValue.employee_ids),

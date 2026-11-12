@@ -175,10 +175,16 @@ async function addOrderNote({ auth, orderId, note }: { auth: SallaAuth; orderId:
     method: HttpMethod.POST,
     path: `/orders/${id}/histories`,
     body: { note: text },
+    keepLargeIds: true,
   });
   const data = sallaApi.isRecord(response.body.data) ? response.body.data : {};
+  const entryId = data['id'];
   const createdAtIso = sallaUtils.toIsoDate(data['created_at']);
-  return createdAtIso ? { ...data, created_at_iso: createdAtIso } : { ...data };
+  return {
+    ...data,
+    id: typeof entryId === 'string' || typeof entryId === 'number' ? String(entryId) : null,
+    ...(createdAtIso ? { created_at_iso: createdAtIso } : {}),
+  };
 }
 
 async function getInvoicePdf({ auth, orderId }: { auth: SallaAuth; orderId: unknown }): Promise<{ order_id: number; url: string | undefined }> {
@@ -195,22 +201,33 @@ async function getInvoicePdf({ auth, orderId }: { auth: SallaAuth; orderId: unkn
 
 async function sendInvoice({ auth, orderId }: { auth: SallaAuth; orderId: unknown }): Promise<{ order_id: number; message: string | undefined }> {
   const id = sallaUtils.requireId({ value: orderId, label: 'Order ID' });
-  const response = await sallaApi.request<unknown>({
-    auth,
-    method: HttpMethod.POST,
-    path: `/orders/${id}/send-invoice`,
-  });
-  const data = response.body.data;
-  const message = sallaApi.isRecord(data) && typeof data['message'] === 'string' ? data['message'] : undefined;
-  return { order_id: Number(id), message };
+  try {
+    const response = await sallaApi.request<unknown>({
+      auth,
+      method: HttpMethod.POST,
+      path: `/orders/${id}/send-invoice`,
+    });
+    const data = response.body.data;
+    const message = sallaApi.isRecord(data) && typeof data['message'] === 'string' ? data['message'] : undefined;
+    return { order_id: Number(id), message };
+  } catch (error) {
+    if (sallaApi.isSallaApiError(error) && error.status === 422) {
+      throw new Error(
+        `Salla refused to send the invoice. It sends invoices only for orders whose status is Completed, so check the status of order ${id}. Salla said: ${sallaApi.extractVendorMessage(error.responseBody) ?? error.message}`,
+      );
+    }
+    throw error;
+  }
 }
 
 async function createOrder({ auth, input }: { auth: SallaAuth; input: CreateOrderInput }): Promise<Record<string, unknown>> {
+  const isCashOnDelivery = trimmed(input.payment.method) === COD_METHOD;
+  const cashOnDeliveryCurrency = isCashOnDelivery ? await fetchStoreCurrency(auth) : undefined;
   const response = await sallaApi.request<unknown>({
     auth,
     method: HttpMethod.POST,
     path: '/orders',
-    body: buildCreateOrderBody(input),
+    body: buildCreateOrderBody({ ...input, payment: { ...input.payment, cashOnDeliveryCurrency } }),
   });
   return sallaUtils.withOrderExtras(response.body.data);
 }
@@ -231,10 +248,14 @@ function buildCreateOrderBody(input: CreateOrderInput): Record<string, unknown> 
     payment: {
       status: input.payment.status,
       method: trimmed(input.payment.method),
-      accepted_methods: trimmed(input.payment.acceptedMethod),
+      accepted_methods: acceptedMethods(input.payment.acceptedMethod),
       reference_id: sallaUtils.optionalNumber({ value: input.payment.referenceId, label: 'Bank or subscription ID' }),
       receipt_image_path: trimmed(input.payment.receiptImagePath),
-      cash_on_delivery: buildCashOnDelivery(input.payment.cashOnDeliveryFee),
+      cash_on_delivery: buildCashOnDelivery({
+        method: trimmed(input.payment.method),
+        fee: input.payment.cashOnDeliveryFee,
+        currency: input.payment.cashOnDeliveryCurrency,
+      }),
     },
     delivery_method: input.deliveryMethod,
     branch_id: sallaUtils.optionalNumber({ value: input.branchId, label: 'Branch ID' }),
@@ -256,7 +277,11 @@ async function updateOrder({
   input: UpdateOrderInput;
 }): Promise<Record<string, unknown>> {
   const id = sallaUtils.requireId({ value: orderId, label: 'Order ID' });
-  const body = buildUpdateOrderBody(input);
+  const isCashOnDelivery = trimmed(input.payment?.method) === COD_METHOD;
+  const cashOnDeliveryCurrency = isCashOnDelivery ? await fetchStoreCurrency(auth) : undefined;
+  const body = buildUpdateOrderBody(
+    input.payment ? { ...input, payment: { ...input.payment, cashOnDeliveryCurrency } } : input,
+  );
   if (Object.keys(body).length === 0) {
     throw new Error('Nothing to update. Fill at least one field to change on the order.');
   }
@@ -286,6 +311,11 @@ function buildUpdateOrderBody(input: UpdateOrderInput): Record<string, unknown> 
         store_bank_id: sallaUtils.optionalNumber({ value: input.payment.storeBankId, label: 'Store bank ID' }),
         receipt_image_path: trimmed(input.payment.receiptImagePath),
         accepted_methods: input.payment.acceptedMethods && input.payment.acceptedMethods.length > 0 ? input.payment.acceptedMethods : undefined,
+        cash_on_delivery: buildCashOnDelivery({
+          method: trimmed(input.payment.method),
+          fee: input.payment.cashOnDeliveryFee,
+          currency: input.payment.cashOnDeliveryCurrency,
+        }),
       })
     : {};
   const employees = (input.employeeIds ?? []).map((value) => Number(sallaUtils.requireId({ value, label: 'Employee ID' })));
@@ -302,15 +332,38 @@ function buildUpdateOrderBody(input: UpdateOrderInput): Record<string, unknown> 
   });
 }
 
-function buildCashOnDelivery(fee: string | number | undefined): { amount: number } | undefined {
-  const amount = sallaUtils.optionalNumber({ value: fee, label: 'Cash on delivery fee' });
-  if (amount === undefined) {
+function acceptedMethods(method: string | undefined): string[] | undefined {
+  const value = trimmed(method);
+  return value ? [value] : undefined;
+}
+
+function buildCashOnDelivery({
+  method,
+  fee,
+  currency,
+}: {
+  method: string | undefined;
+  fee: string | number | undefined;
+  currency: string | undefined;
+}): { amount: number; currency: string } | undefined {
+  if (method !== COD_METHOD) {
     return undefined;
   }
+  const amount = sallaUtils.optionalNumber({ value: fee, label: 'Cash on delivery fee' }) ?? 0;
   if (amount < 0) {
     throw new Error('Cash on delivery fee cannot be negative.');
   }
-  return { amount };
+  if (!currency) {
+    throw new Error('Could not read the store currency, which Salla needs for cash on delivery orders. Try again.');
+  }
+  return { amount, currency };
+}
+
+async function fetchStoreCurrency(auth: SallaAuth): Promise<string | undefined> {
+  const response = await sallaApi.request<unknown>({ auth, method: HttpMethod.GET, path: '/store/info' });
+  const data = sallaApi.isRecord(response.body) ? response.body['data'] : undefined;
+  const currency = sallaApi.isRecord(data) ? data['currency'] : undefined;
+  return typeof currency === 'string' && currency.trim().length > 0 ? currency.trim() : undefined;
 }
 
 function buildReceiver(receiver: ReceiverInput): Record<string, unknown> {
@@ -387,6 +440,7 @@ function trimmed(value: string | undefined | null): string | undefined {
 }
 
 const ORDERS_PER_PAGE = 30;
+const COD_METHOD = 'cod';
 const CANCEL_NOT_ALLOWED_MESSAGE = 'Update Order Status does not cancel orders. Use the Cancel Order action to cancel this order.';
 const CREATE_ADDRESS_REQUIRED_KEYS = ['country', 'city', 'district', 'block', 'street_number', 'address_line', 'postal_code', 'short_address', 'geo_coordinates'];
 const UPDATE_ADDRESS_REQUIRED_KEYS = [...CREATE_ADDRESS_REQUIRED_KEYS, 'building_number', 'additional_number'];
@@ -479,6 +533,7 @@ type CreateOrderInput = {
     referenceId?: string | number;
     receiptImagePath?: string;
     cashOnDeliveryFee?: string | number;
+    cashOnDeliveryCurrency?: string;
   };
   deliveryMethod?: 'shipping' | 'pickup';
   branchId?: string | number;
@@ -501,6 +556,8 @@ type UpdateOrderInput = {
     storeBankId?: string | number;
     receiptImagePath?: string;
     acceptedMethods?: string[];
+    cashOnDeliveryFee?: string | number;
+    cashOnDeliveryCurrency?: string;
   };
   couponCode?: string;
   employeeIds?: Array<string | number>;

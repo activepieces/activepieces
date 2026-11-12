@@ -43,13 +43,27 @@ function productPath({ by, value }: { by: ProductLookup; value: unknown }): stri
 }
 
 async function createProduct({ auth, input }: { auth: SallaAuth; input: CreateProductInput }): Promise<Record<string, unknown>> {
+  const body = buildCreateProductBody(input);
   const response = await sallaApi.request<unknown>({
     auth,
     method: HttpMethod.POST,
     path: '/products',
-    body: buildCreateProductBody(input),
+    body,
   });
-  return withProductExtras(response.body.data);
+  const product = withProductExtras(response.body.data);
+  const requestedStatus = PRODUCT_STATUSES.find((status) => status === body['status']);
+  if (requestedStatus === undefined || product['status'] === requestedStatus) {
+    return product;
+  }
+  try {
+    await changeProductStatus({ auth, productId: product['id'], status: requestedStatus });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `The product was created with ID ${String(product['id'] ?? 'unknown')}, but Salla did not set its status to "${requestedStatus}". ${reason}`,
+    );
+  }
+  return { ...product, status: requestedStatus };
 }
 
 function buildCreateProductBody(input: CreateProductInput): Record<string, unknown> {
@@ -87,13 +101,53 @@ async function updateProduct({
 }): Promise<Record<string, unknown>> {
   const path = productPath({ by, value });
   const body = buildUpdateProductBody(input);
+  const current = await sallaApi.request<unknown>({ auth, method: HttpMethod.GET, path });
+  const channelsBefore = channelsOf(current.body.data);
   const response = await sallaApi.request<unknown>({
     auth,
     method: HttpMethod.PUT,
     path,
     body,
+    omitLanguage: true,
   });
-  return withProductExtras(response.body.data);
+  const product = withProductExtras(response.body.data);
+  const channelsAfter = channelsOf(product);
+  if (channelsBefore === undefined || (channelsAfter !== undefined && sameChannels({ first: channelsBefore, second: channelsAfter }))) {
+    return product;
+  }
+  try {
+    await setSalesChannels({ auth, productId: product['id'], channels: channelsBefore });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `The product was updated, but Salla changed its sales channels to ${(channelsAfter ?? []).join(', ') || 'none'} and putting back ${channelsBefore.join(', ')} failed. ${reason}`,
+    );
+  }
+  return { ...product, channels: channelsBefore, show_in_app: channelsBefore.includes('app') };
+}
+
+function channelsOf(product: unknown): string[] | undefined {
+  if (!sallaApi.isRecord(product) || !Array.isArray(product['channels'])) {
+    return undefined;
+  }
+  return product['channels'].filter((channel): channel is string => typeof channel === 'string');
+}
+
+function sameChannels({ first, second }: { first: string[]; second: string[] }): boolean {
+  return first.length === second.length && first.every((channel) => second.includes(channel));
+}
+
+async function setSalesChannels({ auth, productId, channels }: { auth: SallaAuth; productId: unknown; channels: string[] }): Promise<void> {
+  const id = Number(sallaUtils.requireId({ value: productId, label: 'Product ID' }));
+  await sallaApi.request<unknown>({
+    auth,
+    method: HttpMethod.POST,
+    path: '/products/actions',
+    body: {
+      operations: [{ action_name: 'sale-channels', value: { channels } }],
+      filters: { select_all: false, unselected_ids: [], ids: [id] },
+    },
+  });
 }
 
 function buildUpdateProductBody(input: UpdateProductInput): Record<string, unknown> {
@@ -395,7 +449,19 @@ async function updateVariant({
     path: `/products/variants/${encodeURIComponent(id)}`,
     body,
   });
-  return withVariantExtras({ variant: response.body.data, productId: ownerId });
+  const variant = response.body.data;
+  const ownerProductId = ownerId ?? (sallaApi.isRecord(variant) ? idText(variant['product_id']) : undefined);
+  const optionNames = ownerProductId === undefined ? undefined : await readOptionNames({ auth, productId: ownerProductId });
+  return withVariantExtras({ variant, optionNames, productId: ownerProductId === undefined ? undefined : Number(ownerProductId) });
+}
+
+async function readOptionNames({ auth, productId }: { auth: SallaAuth; productId: string | number }): Promise<Map<string, string> | undefined> {
+  try {
+    const response = await sallaApi.request<unknown>({ auth, method: HttpMethod.GET, path: `/products/${productId}` });
+    return optionValueNames(response.body.data);
+  } catch {
+    return undefined;
+  }
 }
 
 function buildUpdateVariantBody(input: UpdateVariantInput): Record<string, unknown> {

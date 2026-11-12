@@ -193,6 +193,11 @@ export const aiUpdateOrderAction = createAction({
       description: 'Comma-separated payment method slugs the customer may pay with, for example bank, credit_card. Leave empty to keep them unchanged.',
       required: false,
     }),
+    cash_on_delivery_fee: Property.Number({
+      displayName: 'Cash on Delivery Fee',
+      description: 'Optional fee for cash on delivery, for example 10. Used only when payment_method is cod. Leave empty for no fee. The store currency is used automatically.',
+      required: false,
+    }),
     coupon_code: Property.ShortText({
       displayName: 'Coupon Code',
       description: 'Store coupon code to apply, for example SUMMER20.',
@@ -247,6 +252,7 @@ export const aiUpdateOrderAction = createAction({
           storeBankId: propsValue.store_bank_id ?? undefined,
           receiptImagePath: propsValue.receipt_image_url,
           acceptedMethods: acceptedMethods.length > 0 ? acceptedMethods : undefined,
+          cashOnDeliveryFee: propsValue.cash_on_delivery_fee ?? undefined,
         },
         couponCode: propsValue.coupon_code,
         employeeIds: employeeIds.length > 0 ? employeeIds : undefined,

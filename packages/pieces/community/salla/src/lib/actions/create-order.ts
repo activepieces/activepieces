@@ -141,7 +141,7 @@ export const createOrderAction = createAction({
     ...orderAddressProps(),
     payment_status: Property.StaticDropdown<PaymentStatus, true>({
       displayName: 'Payment Status',
-      description: 'Paid needs a payment method. Pending payment needs the method the store will accept.',
+      description: 'Paid works only with Payment Method Bank transfer or Cash on delivery. Pending payment needs Accepted Payment Method.',
       display: 'cards',
       required: true,
       defaultValue: 'pending_payment',
@@ -154,7 +154,7 @@ export const createOrderAction = createAction({
     }),
     payment_method: Property.StaticDropdown<string, false>({
       displayName: 'Payment Method',
-      description: 'How the customer paid. Needed when Payment Status is Paid.',
+      description: 'How the customer paid. Needed when Payment Status is Paid, and Salla then accepts only Bank transfer or Cash on delivery.',
       width: 'half',
       required: false,
       options: { options: paymentMethodOptions({ includeSubscription: true }) },
@@ -181,7 +181,7 @@ export const createOrderAction = createAction({
     }),
     cash_on_delivery_fee: Property.Number({
       displayName: 'Cash on Delivery Fee',
-      description: 'Fee charged for cash on delivery, in the store currency, for example 10. Needed when Payment Method is Cash on delivery; use 0 for no fee.',
+      description: 'Optional fee for cash on delivery, for example 10. Used only when Payment Method is Cash on delivery. Leave empty for no fee. The store currency is used automatically.',
       width: 'half',
       required: false,
     }),

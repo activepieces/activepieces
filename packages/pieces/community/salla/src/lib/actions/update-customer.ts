@@ -70,14 +70,14 @@ export const updateCustomerAction = createAction({
     }),
     gender: Property.StaticDropdown<CustomerGender, false>({
       displayName: 'Gender',
-      description: 'Male or Female. Leave empty to keep it.',
+      description: 'Male or Female. Leave empty to keep it. Salla accepts it but may not save it: on our test store it was never returned afterwards.',
       width: 'half',
       required: false,
       options: { options: genderOptions() },
     }),
     birthday: Property.DateTime({
       displayName: 'Birthday',
-      description: 'New date of birth, for example 1990-05-15. Salla keeps the day only. Leave empty to keep it.',
+      description: 'New date of birth, for example 1990-05-15. Salla keeps the day only. Leave empty to keep it. Salla accepts it but may not save it: on our test store it was never returned afterwards.',
       width: 'half',
       required: false,
     }),

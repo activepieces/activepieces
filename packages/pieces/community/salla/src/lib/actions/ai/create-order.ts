@@ -71,7 +71,7 @@ export const aiCreateOrderAction = createAction({
     }),
     payment_status: Property.StaticDropdown({
       displayName: 'Payment Status',
-      description: 'paid when the customer already paid (then set payment_method), pending_payment when Salla should wait for payment (then set accepted_method).',
+      description: 'paid when the customer already paid (then set payment_method to bank or cod; Salla accepts paid only with those two), pending_payment when Salla should wait for payment (then set accepted_method, which is required).',
       required: true,
       options: {
         disabled: false,
@@ -83,7 +83,7 @@ export const aiCreateOrderAction = createAction({
     }),
     payment_method: Property.StaticDropdown({
       displayName: 'Payment Method',
-      description: 'How the order was paid: credit_card, mada, bank, cod or subscription. Required when payment_status is paid.',
+      description: 'How the order was paid: credit_card, mada, bank, cod or subscription. Required when payment_status is paid, and then it must be bank or cod.',
       required: false,
       options: {
         disabled: false,
@@ -122,7 +122,7 @@ export const aiCreateOrderAction = createAction({
     }),
     cash_on_delivery_fee: Property.Number({
       displayName: 'Cash on Delivery Fee',
-      description: 'Fee charged for cash on delivery, in the store currency, for example 10. Required when payment_method is cod; use 0 for no fee.',
+      description: 'Optional fee for cash on delivery, for example 10. Used only when payment_method is cod. Leave empty for no fee. The store currency is used automatically.',
       required: false,
     }),
     delivery_method: Property.StaticDropdown({

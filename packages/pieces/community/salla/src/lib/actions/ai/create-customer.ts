@@ -52,7 +52,7 @@ export const aiCreateCustomerAction = createAction({
     }),
     gender: Property.StaticDropdown({
       displayName: 'Gender',
-      description: 'male or female. Leave empty to not set it.',
+      description: 'male or female. Leave empty to not set it. Salla accepts it but may not save it, so it can come back empty.',
       required: false,
       options: {
         disabled: false,
@@ -64,7 +64,7 @@ export const aiCreateCustomerAction = createAction({
     }),
     birthday: Property.ShortText({
       displayName: 'Birthday',
-      description: 'Date of birth, format YYYY-MM-DD, for example 1994-03-21.',
+      description: 'Date of birth, format YYYY-MM-DD, for example 1994-03-21. Salla accepts it but may not save it, so it can come back empty.',
       required: false,
     }),
     group_ids: Property.Array({

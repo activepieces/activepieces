@@ -20,11 +20,13 @@ async function request<T = unknown>({
   body,
   timeout,
   sleep = defaultSleep,
+  omitLanguage = false,
+  keepLargeIds = false,
 }: SallaRequestParams): Promise<SallaResponse<T>> {
   const httpRequest: HttpRequest = {
     method,
     url: buildUrl({ path, query }),
-    headers: buildHeaders(auth),
+    headers: buildHeaders({ auth, omitLanguage }),
     body,
     timeout: timeout ?? REQUEST_TIMEOUT_MS,
     retries: method === HttpMethod.GET ? GET_RETRIES : 0,
@@ -33,17 +35,40 @@ async function request<T = unknown>({
     sleep,
     send: async () => {
       try {
+        if (keepLargeIds) {
+          const response = await httpClient.sendRequest<string>({ ...httpRequest, responseType: 'text' });
+          return { status: response.status, body: parseKeepingLargeIds<T>(response.body) };
+        }
         const response = await httpClient.sendRequest<SallaEnvelope<T>>(httpRequest);
         return { status: response.status, body: response.body ?? {} };
       } catch (error) {
         const httpError = readHttpErrorLike(error);
         if (httpError) {
-          throw new SallaApiError({ ...httpError, path });
+          throw new SallaApiError({ ...httpError, responseBody: parseJsonText(httpError.responseBody), path });
         }
         throw error;
       }
     },
   });
+}
+
+function parseKeepingLargeIds<T>(text: unknown): SallaEnvelope<T> {
+  if (typeof text !== 'string' || text.trim().length === 0) {
+    return {};
+  }
+  const parsed: SallaEnvelope<T> | null = JSON.parse(text.replace(LARGE_ID_VALUE, '$1"$2"'));
+  return parsed ?? {};
+}
+
+function parseJsonText(value: unknown): unknown {
+  if (typeof value !== 'string' || !/^\s*[{[]/.test(value)) {
+    return value;
+  }
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
 }
 
 async function withRateLimitRetry<T>({
@@ -183,12 +208,12 @@ function buildQueryString(query: SallaQuery | undefined): string {
   return params.toString();
 }
 
-function buildHeaders(auth: SallaAuth): Record<string, string> {
+function buildHeaders({ auth, omitLanguage }: { auth: SallaAuth; omitLanguage: boolean }): Record<string, string> {
   const headers: Record<string, string> = {
     Authorization: `Bearer ${auth.access_token}`,
     Accept: 'application/json',
   };
-  const language = readLanguage(auth);
+  const language = omitLanguage ? undefined : readLanguage(auth);
   if (language) {
     headers['Accept-Language'] = language;
   }
@@ -344,6 +369,7 @@ function defaultSleep(ms: number): Promise<void> {
 
 const BASE_URL = 'https://api.salla.dev/admin/v2';
 const REQUEST_TIMEOUT_MS = 30000;
+const LARGE_ID_VALUE = /("id"\s*:\s*)(-?\d{16,})(?=\s*[,}])/g;
 const GET_RETRIES = 2;
 const MAX_RATE_LIMIT_RETRIES = 2;
 const RATE_LIMIT_BASE_DELAY_MS = 2000;
@@ -422,6 +448,8 @@ type SallaRequestParams = {
   body?: unknown;
   timeout?: number;
   sleep?: (ms: number) => Promise<void>;
+  omitLanguage?: boolean;
+  keepLargeIds?: boolean;
 };
 
 export type { SallaAuth, SallaQuery, SallaQueryValue, SallaEnvelope, SallaResponse, SallaRequestParams };

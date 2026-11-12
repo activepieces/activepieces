@@ -62,7 +62,7 @@ export const aiCreateProductAction = createAction({
     }),
     status: Property.StaticDropdown({
       displayName: 'Status',
-      description: 'sale (on sale), out (out of stock) or hidden. Leave empty for the Salla default.',
+      description: 'sale (on sale), out (out of stock) or hidden. Leave empty for the Salla default. sale needs at least one image in image_urls.',
       required: false,
       options: { disabled: false, options: STATUS_OPTIONS },
     }),

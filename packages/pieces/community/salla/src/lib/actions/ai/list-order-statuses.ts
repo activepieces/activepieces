@@ -30,4 +30,4 @@ export const aiListOrderStatusesAction = createAction({
 });
 
 
-const STATUS_KEYS = ['id', 'name', 'slug', 'type', 'is_active', 'message', 'sort', 'parent'];
+const STATUS_KEYS = ['id', 'name', 'slug', 'type', 'is_active', 'message', 'sort', 'parent', 'original'];

@@ -83,14 +83,109 @@ describe('createProduct and updateProduct', () => {
     expect(result).toMatchObject({ id: 9, name: 'Shirt', price_amount: null });
   });
 
-  it('PUTs by ID or SKU and refuses an empty update without calling Salla', async () => {
+  it('makes no second call when Salla returns the requested status', async () => {
+    const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(respond({ body: { data: { id: 9, status: 'hidden' } }, status: 201 }));
+    const result = await sallaProducts.createProduct({ auth, input: { name: 'Shirt', productType: 'product', price: 50, status: 'hidden' } });
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy.mock.calls[0][0].body).toMatchObject({ status: 'hidden' });
+    expect(result).toMatchObject({ id: 9, status: 'hidden' });
+  });
+
+  it('makes no second call when no status is requested', async () => {
+    const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(respond({ body: { data: { id: 9, status: 'sale' } }, status: 201 }));
+    const result = await sallaProducts.createProduct({ auth, input: { name: 'Shirt', productType: 'product', price: 50 } });
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(result).toMatchObject({ id: 9, status: 'sale' });
+  });
+
+  it('sets the status with one status call when Salla ignores the requested status', async () => {
+    const spy = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request: HttpRequest) => {
+      if (pathOf(request) === '/products/9/status') {
+        return ok({ data: { message: 'updated' } });
+      }
+      return respond({ body: { data: { id: 9, name: 'Shirt', status: 'sale' } }, status: 201 });
+    });
+    const result = await sallaProducts.createProduct({ auth, input: { name: 'Shirt', productType: 'product', price: 50, status: 'hidden' } });
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(spy.mock.calls.map(([request]) => pathOf(request))).toEqual(['/products', '/products/9/status']);
+    expect(spy.mock.calls[1][0]).toMatchObject({ method: HttpMethod.POST, body: { status: 'hidden' } });
+    expect(result).toMatchObject({ id: 9, name: 'Shirt', status: 'hidden' });
+  });
+
+  it('says the product was created and gives its ID when the status call fails', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request: HttpRequest) => {
+      if (pathOf(request) === '/products/9/status') {
+        throw new HttpError({}, { status: 422, responseBody: { error: { message: 'please add an image to the product first' } } });
+      }
+      return respond({ body: { data: { id: 9, status: 'hidden' } }, status: 201 });
+    });
+    const attempt = sallaProducts.createProduct({ auth, input: { name: 'Shirt', productType: 'product', price: 50, status: 'sale' } });
+    await expect(attempt).rejects.toThrow('The product was created with ID 9, but Salla did not set its status to "sale".');
+    await expect(attempt).rejects.toThrow('please add an image to the product first');
+  });
+
+  it('reads the product, then PUTs by ID or SKU, and refuses an empty update without calling Salla', async () => {
     const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(ok({ data: { id: 9 } }));
     await sallaProducts.updateProduct({ auth, by: 'id', value: 9, input: { name: 'New' } });
     await sallaProducts.updateProduct({ auth, by: 'sku', value: 'TS 1', input: { price: '5' } });
-    expect(spy.mock.calls[0][0]).toMatchObject({ method: HttpMethod.PUT, url: `${BASE_URL}/products/9`, body: { name: 'New' } });
-    expect(spy.mock.calls[1][0]).toMatchObject({ method: HttpMethod.PUT, url: `${BASE_URL}/products/sku/TS%201`, body: { price: 5 } });
+    expect(spy.mock.calls[0][0]).toMatchObject({ method: HttpMethod.GET, url: `${BASE_URL}/products/9` });
+    expect(spy.mock.calls[1][0]).toMatchObject({ method: HttpMethod.PUT, url: `${BASE_URL}/products/9`, body: { name: 'New' } });
+    expect(spy.mock.calls[2][0]).toMatchObject({ method: HttpMethod.GET, url: `${BASE_URL}/products/sku/TS%201` });
+    expect(spy.mock.calls[3][0]).toMatchObject({ method: HttpMethod.PUT, url: `${BASE_URL}/products/sku/TS%201`, body: { price: 5 } });
     await expect(sallaProducts.updateProduct({ auth, by: 'id', value: 9, input: {} })).rejects.toThrow('Nothing to update');
+    expect(spy).toHaveBeenCalledTimes(4);
+  });
+
+  it('sends the update without Accept-Language so Salla saves the name in the store language', async () => {
+    const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(ok({ data: { id: 9 } }));
+    await sallaProducts.updateProduct({ auth: { access_token: 'token', props: { language: 'en' } }, by: 'id', value: 9, input: { name: 'New' } });
+    expect(spy.mock.calls[0][0].headers).toMatchObject({ 'Accept-Language': 'en' });
+    expect(spy.mock.calls[1][0].method).toBe(HttpMethod.PUT);
+    expect(spy.mock.calls[1][0].headers).not.toHaveProperty('Accept-Language');
+  });
+
+  function mockProductUpdate({ before, after, restoreFails = false }: { before: string[]; after: string[]; restoreFails?: boolean }) {
+    return vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request: HttpRequest) => {
+      if (pathOf(request) === '/products/actions') {
+        if (restoreFails) {
+          throw new HttpError({}, { status: 422, responseBody: { error: { message: 'not allowed' } } });
+        }
+        return ok({ data: { message: 'updated' } });
+      }
+      if (request.method === HttpMethod.GET) {
+        return ok({ data: { id: 9, channels: before, show_in_app: before.includes('app') } });
+      }
+      return respond({ body: { data: { id: 9, name: 'New', channels: after, show_in_app: after.includes('app') } }, status: 201 });
+    });
+  }
+
+  it('makes no extra call when the sales channels did not change', async () => {
+    const spy = mockProductUpdate({ before: ['web', 'app'], after: ['app', 'web'] });
+    const result = await sallaProducts.updateProduct({ auth, by: 'id', value: 9, input: { name: 'New' } });
     expect(spy).toHaveBeenCalledTimes(2);
+    expect(result).toMatchObject({ id: 9, channels: ['app', 'web'], show_in_app: true });
+  });
+
+  it('puts the sales channels back when Salla resets them on update', async () => {
+    const spy = mockProductUpdate({ before: ['web', 'app'], after: ['web'] });
+    const result = await sallaProducts.updateProduct({ auth, by: 'sku', value: 'TS-1', input: { quantity: 30 } });
+    expect(spy.mock.calls.map(([request]) => `${request.method} ${pathOf(request)}`)).toEqual([
+      'GET /products/sku/TS-1',
+      'PUT /products/sku/TS-1',
+      'POST /products/actions',
+    ]);
+    expect(spy.mock.calls[2][0].body).toEqual({
+      operations: [{ action_name: 'sale-channels', value: { channels: ['web', 'app'] } }],
+      filters: { select_all: false, unselected_ids: [], ids: [9] },
+    });
+    expect(result).toMatchObject({ id: 9, name: 'New', channels: ['web', 'app'], show_in_app: true });
+  });
+
+  it('says the product was updated when putting the sales channels back fails', async () => {
+    mockProductUpdate({ before: ['web', 'app'], after: ['web'], restoreFails: true });
+    await expect(sallaProducts.updateProduct({ auth, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow(
+      'The product was updated, but Salla changed its sales channels to web and putting back web, app failed.',
+    );
   });
 });
 
@@ -216,12 +311,35 @@ describe('updateVariant and updateProductPrice', () => {
     expect(result).toMatchObject({ id: 11, label: 'Variant 11 · S-1', price_amount: 9 });
   });
 
-  it('fills product_id in the output only when the product ID is given', async () => {
+  it('fills product_id in the output when the product ID is given or Salla returns it', async () => {
     vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(ok({ data: { id: 11 } }));
     const withProduct = await sallaProducts.updateVariant({ auth, variantId: '11', productId: '1672932878', input: { price: '9' } });
     const withoutProduct = await sallaProducts.updateVariant({ auth, variantId: '11', input: { price: '9' } });
     expect(withProduct['product_id']).toBe(1672932878);
     expect(withoutProduct['product_id']).toBeNull();
+  });
+
+  it('names the option values from the product that Salla reports for the variant', async () => {
+    const spy = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request: HttpRequest) => {
+      if (pathOf(request) === '/products/5') {
+        return ok({ data: productWithOptions });
+      }
+      return ok({ data: { id: 11, sku: 'S-1', product_id: 5, related_option_values: [101, 201] } });
+    });
+    const result = await sallaProducts.updateVariant({ auth, variantId: '11', input: { price: '9' } });
+    expect(spy.mock.calls.map(([request]) => `${request.method} ${pathOf(request)}`)).toEqual(['PUT /products/variants/11', 'GET /products/5']);
+    expect(result).toMatchObject({ id: 11, product_id: 5, option_values: 'Red / M', label: 'Red / M · S-1' });
+  });
+
+  it('still returns the updated variant when the product cannot be read', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request: HttpRequest) => {
+      if (pathOf(request) === '/products/5') {
+        throw new HttpError({}, { status: 404, responseBody: { error: { message: 'Not found' } } });
+      }
+      return ok({ data: { id: 11, sku: 'S-1', related_option_values: [101] } });
+    });
+    const result = await sallaProducts.updateVariant({ auth, variantId: '11', productId: 5, input: { price: '9' } });
+    expect(result).toMatchObject({ id: 11, product_id: 5, option_values: null, label: 'Variant 11 · S-1' });
   });
 
   it('uses the price request builder for the call', async () => {

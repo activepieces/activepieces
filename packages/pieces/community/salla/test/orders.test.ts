@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common';
+import { HttpError, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common';
 import { sallaApi } from '../src/lib/common/client';
 import { AddressInput, CreateOrderInput, sallaOrders } from '../src/lib/common/orders';
 
@@ -296,6 +296,72 @@ describe('buildCreateOrderBody', () => {
     );
     expect(() => sallaOrders.buildCreateOrderBody(baseCreateInput({ customer: { id: 'abc' } }))).toThrow('Customer ID must be a number');
   });
+
+  it('sends cash_on_delivery with amount 0 and the currency for cash on delivery without a fee', () => {
+    const body = sallaOrders.buildCreateOrderBody(
+      baseCreateInput({ payment: { status: 'paid', method: 'cod', cashOnDeliveryCurrency: 'SAR' } }),
+    );
+    expect(body['payment']).toEqual({ status: 'paid', method: 'cod', cash_on_delivery: { amount: 0, currency: 'SAR' } });
+  });
+
+  it('sends the cash on delivery fee with the currency', () => {
+    const body = sallaOrders.buildCreateOrderBody(
+      baseCreateInput({ payment: { status: 'paid', method: 'cod', cashOnDeliveryFee: '10', cashOnDeliveryCurrency: 'SAR' } }),
+    );
+    expect(body['payment']).toEqual({ status: 'paid', method: 'cod', cash_on_delivery: { amount: 10, currency: 'SAR' } });
+  });
+
+  it('throws when cash on delivery has no currency', () => {
+    expect(() => sallaOrders.buildCreateOrderBody(baseCreateInput({ payment: { status: 'paid', method: 'cod' } }))).toThrow(
+      'Could not read the store currency, which Salla needs for cash on delivery orders. Try again.',
+    );
+  });
+
+  it('leaves cash_on_delivery out for other payment methods even when a fee is given', () => {
+    const body = sallaOrders.buildCreateOrderBody(
+      baseCreateInput({ payment: { status: 'paid', method: 'bank', cashOnDeliveryFee: 10, cashOnDeliveryCurrency: 'SAR' } }),
+    );
+    expect(body['payment']).toEqual({ status: 'paid', method: 'bank' });
+  });
+
+  it('sends the accepted method as an array', () => {
+    const body = sallaOrders.buildCreateOrderBody(
+      baseCreateInput({ payment: { status: 'pending_payment', acceptedMethod: ' credit_card ' } }),
+    );
+    expect(body['payment']).toEqual({ status: 'pending_payment', accepted_methods: ['credit_card'] });
+  });
+});
+
+describe('createOrder', () => {
+  function mockCreateOrder({ currency }: { currency: string }) {
+    return vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request: HttpRequest) => {
+      if (new URL(request.url).pathname.endsWith('/store/info')) {
+        return { status: 200, headers: {}, body: { data: { id: 1, currency } } };
+      }
+      return { status: 200, headers: {}, body: { data: { id: 7, reference_id: 1001 } } };
+    });
+  }
+
+  function pathsOf(spy: ReturnType<typeof mockCreateOrder>): string[] {
+    return spy.mock.calls.map(([request]) => new URL(request.url).pathname.replace('/admin/v2', ''));
+  }
+
+  it('reads the store currency for cash on delivery and sends it in the body', async () => {
+    const spy = mockCreateOrder({ currency: ' SAR ' });
+    await sallaOrders.createOrder({ auth, input: baseCreateInput({ payment: { status: 'paid', method: 'cod' } }) });
+    expect(pathsOf(spy)).toEqual(['/store/info', '/orders']);
+    const createRequest = spy.mock.calls[1][0];
+    expect(createRequest.method).toBe(HttpMethod.POST);
+    expect(createRequest.body).toMatchObject({ payment: { status: 'paid', method: 'cod', cash_on_delivery: { amount: 0, currency: 'SAR' } } });
+  });
+
+  it('does not read the store currency for other payment methods', async () => {
+    const spy = mockCreateOrder({ currency: 'SAR' });
+    await sallaOrders.createOrder({ auth, input: baseCreateInput({ payment: { status: 'paid', method: 'bank', cashOnDeliveryFee: 5 } }) });
+    expect(pathsOf(spy)).toEqual(['/orders']);
+    expect(spy.mock.calls[0][0].body).toMatchObject({ payment: { status: 'paid', method: 'bank' } });
+    expect(JSON.stringify(spy.mock.calls[0][0].body)).not.toContain('cash_on_delivery');
+  });
 });
 
 describe('buildUpdateOrderBody and updateOrder', () => {
@@ -361,5 +427,109 @@ describe('buildUpdateOrderBody and updateOrder', () => {
     expect(sent.method).toBe(HttpMethod.PUT);
     expect(sent.url).toBe('https://api.salla.dev/admin/v2/orders/1');
     expect(sent.body).toEqual({ coupon_code: 'SAVE10' });
+  });
+
+  it('sends cash_on_delivery with amount 0 and the currency when the new method is cash on delivery without a fee', () => {
+    expect(sallaOrders.buildUpdateOrderBody({ payment: { method: 'cod', cashOnDeliveryCurrency: 'SAR' } })).toEqual({
+      payment: { method: 'cod', cash_on_delivery: { amount: 0, currency: 'SAR' } },
+    });
+  });
+
+  it('sends the cash on delivery fee with the currency', () => {
+    expect(sallaOrders.buildUpdateOrderBody({ payment: { method: 'cod', cashOnDeliveryFee: '12.5', cashOnDeliveryCurrency: 'SAR' } })).toEqual({
+      payment: { method: 'cod', cash_on_delivery: { amount: 12.5, currency: 'SAR' } },
+    });
+  });
+
+  it('throws when the new method is cash on delivery and there is no currency', () => {
+    expect(() => sallaOrders.buildUpdateOrderBody({ payment: { method: 'cod' } })).toThrow(
+      'Could not read the store currency, which Salla needs for cash on delivery orders. Try again.',
+    );
+  });
+
+  it('leaves cash_on_delivery out for other methods even when a fee is given', () => {
+    expect(sallaOrders.buildUpdateOrderBody({ payment: { method: 'bank', cashOnDeliveryFee: 10, cashOnDeliveryCurrency: 'SAR' } })).toEqual({
+      payment: { method: 'bank' },
+    });
+  });
+
+  function mockUpdateOrder({ currency }: { currency: string }) {
+    return vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request: HttpRequest) => {
+      if (new URL(request.url).pathname.endsWith('/store/info')) {
+        return { status: 200, headers: {}, body: { data: { id: 1, currency } } };
+      }
+      return { status: 200, headers: {}, body: { data: { id: 1 } } };
+    });
+  }
+
+  it('updateOrder reads the store currency when the new method is cash on delivery and sends it in the body', async () => {
+    const spy = mockUpdateOrder({ currency: 'SAR' });
+    await sallaOrders.updateOrder({ auth, orderId: '1', input: { payment: { method: 'cod', cashOnDeliveryFee: 5 } } });
+    expect(spy.mock.calls.map(([request]) => new URL(request.url).pathname.replace('/admin/v2', ''))).toEqual(['/store/info', '/orders/1']);
+    const sent = spy.mock.calls[1][0];
+    expect(sent.method).toBe(HttpMethod.PUT);
+    expect(sent.body).toEqual({ payment: { method: 'cod', cash_on_delivery: { amount: 5, currency: 'SAR' } } });
+  });
+
+  it('updateOrder does not read the store currency for other methods or when payment is not changed', async () => {
+    const spy = mockUpdateOrder({ currency: 'SAR' });
+    await sallaOrders.updateOrder({ auth, orderId: '1', input: { payment: { method: 'bank', cashOnDeliveryFee: 5 } } });
+    await sallaOrders.updateOrder({ auth, orderId: '1', input: { couponCode: 'SAVE10' } });
+    expect(spy.mock.calls.map(([request]) => new URL(request.url).pathname.replace('/admin/v2', ''))).toEqual(['/orders/1', '/orders/1']);
+    expect(spy.mock.calls[0][0].body).toEqual({ payment: { method: 'bank' } });
+  });
+});
+
+describe('sendInvoice', () => {
+  it('POSTs to send-invoice and returns the message', async () => {
+    const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue({ status: 200, headers: {}, body: { data: { message: 'sent' } } });
+    expect(await sallaOrders.sendInvoice({ auth, orderId: '7' })).toEqual({ order_id: 7, message: 'sent' });
+    expect(spy.mock.calls[0][0]).toMatchObject({ method: HttpMethod.POST, url: 'https://api.salla.dev/admin/v2/orders/7/send-invoice' });
+  });
+
+  it('explains in English that only Completed orders get an invoice and keeps the Salla message', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockRejectedValue(
+      new HttpError({}, { status: 422, responseBody: { error: { message: 'يجب أن تكون حالة الطلب مكتمل' } } }),
+    );
+    const attempt = sallaOrders.sendInvoice({ auth, orderId: 7 });
+    await expect(attempt).rejects.toThrow(
+      'Salla refused to send the invoice. It sends invoices only for orders whose status is Completed, so check the status of order 7. Salla said: يجب أن تكون حالة الطلب مكتمل',
+    );
+    await expect(attempt).rejects.toThrow('يجب أن تكون حالة الطلب مكتمل');
+  });
+
+  it('passes other errors through unchanged', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockRejectedValue(new HttpError({}, { status: 404, responseBody: { error: { message: 'Not found' } } }));
+    await expect(sallaOrders.sendInvoice({ auth, orderId: 7 })).rejects.toThrow('Salla API error (404): Not found');
+  });
+});
+
+describe('addOrderNote', () => {
+  it('keeps a history ID that is too large for a number exact, as text', async () => {
+    const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue({
+      status: 201,
+      headers: {},
+      body: '{"status":201,"data":{"id": 3506120883028506601,"note":"id: 9999999999999999999","customized":{"id":857090988},"created_at":{"date":"2026-11-12 16:33:14.000000","timezone":"Asia/Riyadh"}}}',
+    });
+    const entry = await sallaOrders.addOrderNote({ auth, orderId: 7, note: ' Packed ' });
+    expect(spy.mock.calls[0][0]).toMatchObject({ method: HttpMethod.POST, responseType: 'text', body: { note: 'Packed' } });
+    expect(entry['id']).toBe('3506120883028506601');
+    expect(entry['note']).toBe('id: 9999999999999999999');
+    expect(entry['customized']).toEqual({ id: 857090988 });
+    expect(entry['created_at_iso']).toBe('2026-11-12T13:33:14.000Z');
+  });
+
+  it('returns a small history ID as text too', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockResolvedValue({ status: 201, headers: {}, body: '{"data":{"id":42,"note":"Packed"}}' });
+    const entry = await sallaOrders.addOrderNote({ auth, orderId: 7, note: 'Packed' });
+    expect(entry['id']).toBe('42');
+    expect(entry).not.toHaveProperty('created_at_iso');
+  });
+
+  it('reads the Salla error message from a text error body', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockRejectedValue(
+      new HttpError({}, { status: 404, responseBody: '{"status":404,"success":false,"error":{"message":"Order not found"}}' }),
+    );
+    await expect(sallaOrders.addOrderNote({ auth, orderId: 7, note: 'Packed' })).rejects.toThrow('Salla API error (404): Order not found');
   });
 });

@@ -323,6 +323,27 @@ describe('isCancelStatus', () => {
     expect(sallaUtils.isCancelStatus({ value: '999', statuses })).toBe(false);
     expect(sallaUtils.isCancelStatus({ value: '100', statuses: [] })).toBe(false);
   });
+
+  describe('with live Salla status rows that carry their own ID and an original ID', () => {
+    const liveStatuses: SallaOrderStatus[] = [
+      { id: '1591241134', name: 'Canceled', slug: 'canceled', type: 'custom', isActive: true, originalId: '525144736' },
+      { id: '857090988', name: 'Under review', slug: 'under_review', type: 'custom', isActive: true, originalId: '566146469' },
+    ];
+
+    it('blocks the row ID of the canceled status', () => {
+      expect(sallaUtils.isCancelStatus({ value: '1591241134', statuses: liveStatuses })).toBe(true);
+    });
+
+    it('blocks the original ID of the canceled status', () => {
+      expect(sallaUtils.isCancelStatus({ value: '525144736', statuses: liveStatuses })).toBe(true);
+      expect(sallaUtils.isCancelStatus({ value: 525144736, statuses: liveStatuses })).toBe(true);
+    });
+
+    it('does not block the original ID of a status that is not a cancel', () => {
+      expect(sallaUtils.isCancelStatus({ value: '566146469', statuses: liveStatuses })).toBe(false);
+      expect(sallaUtils.isCancelStatus({ value: '857090988', statuses: liveStatuses })).toBe(false);
+    });
+  });
 });
 
 describe('resolveStatusTarget', () => {

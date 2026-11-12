@@ -9,11 +9,11 @@ export const sendOrderInvoiceAction = createAction({
   name: 'send_order_invoice',
   classification: 'WRITE',
   displayName: 'Send Order Invoice',
-  description: 'Sends the order invoice to the customer.',
+  description: 'Sends the order invoice to the customer. Salla sends invoices only for orders whose status is Completed.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Makes Salla send the invoice of one order, by its internal order ID (2116149737), to the customer on the order. Use Get Order Invoice PDF instead when you only need the PDF link. Each call sends the invoice again, so do not retry blindly.',
+      'Makes Salla send the invoice of one order, by its internal order ID (2116149737), to the customer on the order. Salla sends invoices only for orders whose status is Completed and rejects any other order. Use Get Order Invoice PDF instead when you only need the PDF link. Each call sends the invoice again, so do not retry blindly.',
     idempotent: false,
   },
   outputSchema: sallaOutputSchemas.sendInvoice,

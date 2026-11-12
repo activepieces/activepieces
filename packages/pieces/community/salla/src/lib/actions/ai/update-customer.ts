@@ -56,7 +56,7 @@ export const aiUpdateCustomerAction = createAction({
     }),
     gender: Property.StaticDropdown({
       displayName: 'Gender',
-      description: 'male or female. Leave empty to keep the current gender.',
+      description: 'male or female. Leave empty to keep the current gender. Salla accepts it but may not save it, so it can come back empty.',
       required: false,
       options: {
         disabled: false,
@@ -68,7 +68,7 @@ export const aiUpdateCustomerAction = createAction({
     }),
     birthday: Property.ShortText({
       displayName: 'Birthday',
-      description: 'New date of birth, format YYYY-MM-DD, for example 1994-03-21.',
+      description: 'New date of birth, format YYYY-MM-DD, for example 1994-03-21. Salla accepts it but may not save it, so it can come back empty.',
       required: false,
     }),
     group_ids: Property.Array({

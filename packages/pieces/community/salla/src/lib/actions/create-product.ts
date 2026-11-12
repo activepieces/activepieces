@@ -72,7 +72,7 @@ export const createProductAction = createAction({
     }),
     status: Property.StaticDropdown<ProductStatus, false>({
       displayName: 'Status',
-      description: 'On Sale, Out of Stock or Hidden. Leave empty to let Salla decide.',
+      description: 'On Sale, Out of Stock or Hidden. Leave empty to let Salla decide. On Sale needs at least one image.',
       required: false,
       options: { options: productStatusOptions() },
     }),

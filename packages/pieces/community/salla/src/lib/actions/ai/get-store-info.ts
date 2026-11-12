@@ -14,7 +14,7 @@ export const aiGetStoreInfoAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Gets the profile of the connected Salla store: id, name, plan, status, currency, store URL, contact email and mobile, and default branch. Use it to learn the store currency or to confirm which store the connection points at; it takes no input.',
+      'Gets the profile of the connected Salla store: id, name, plan, status, currency, store URL, contact email, logo and description. Use it to learn the store currency or to confirm which store the connection points at; it takes no input.',
     idempotent: true,
   },
   outputSchema: sallaOutputSchemas.storeInfo,
@@ -29,16 +29,15 @@ export const aiGetStoreInfoAction = createAction({
 
 const STORE_KEYS = [
   'id',
-  'username',
   'name',
   'entity',
+  'type',
   'email',
-  'mobile',
+  'avatar',
   'plan',
   'status',
   'verified',
   'currency',
   'domain',
-  'created_at',
-  'default_branch',
+  'description',
 ];

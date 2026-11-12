@@ -367,15 +367,20 @@ function isCancelStatus({ value, statuses }: { value: string | number; statuses:
   if (!/^\d+$/.test(text)) {
     return false;
   }
-  const match = statuses.find((status) => status.id === text);
-  if (!match) {
-    return false;
-  }
-  if (match.slug && CANCEL_SLUGS.includes(match.slug.toLowerCase())) {
+  const matches = statuses.filter((status) => status.id === text || status.originalId === text);
+  return matches.some((match) => isCancelRow({ row: match, statuses }));
+}
+
+function isCancelRow({ row, statuses }: { row: SallaOrderStatus; statuses: SallaOrderStatus[] }): boolean {
+  if (hasCancelSlug(row)) {
     return true;
   }
-  const linkedIds = [match.parentId, match.originalId].filter((id): id is string => typeof id === 'string');
-  return statuses.some((status) => linkedIds.includes(status.id) && !!status.slug && CANCEL_SLUGS.includes(status.slug.toLowerCase()));
+  const linkedIds = [row.parentId, row.originalId].filter((id): id is string => typeof id === 'string');
+  return statuses.some((status) => linkedIds.includes(status.id) && hasCancelSlug(status));
+}
+
+function hasCancelSlug(status: SallaOrderStatus): boolean {
+  return !!status.slug && CANCEL_SLUGS.includes(status.slug.toLowerCase());
 }
 
 function resolveStatusTarget({

@@ -42,6 +42,7 @@ const orderCustomerFields: OutputSchemaField[] = [
 const orderUrlFields: OutputSchemaField[] = [
   { key: 'customer', label: 'Customer Order Page', format: 'url' },
   { key: 'admin', label: 'Admin Order Page', format: 'url' },
+  { key: 'checkout', label: 'Checkout Link', format: 'url', description: 'Where the customer pays a pending-payment order.' },
 ];
 
 const orderAmountsFields: OutputSchemaField[] = [
@@ -93,6 +94,17 @@ const orderFields: OutputSchemaField[] = [
   { key: 'amounts', label: 'Amounts', children: orderAmountsFields },
   { key: 'customer', label: 'Customer Details', children: orderCustomerFields },
   { key: 'urls', label: 'Links', children: orderUrlFields },
+  {
+    key: 'receiver',
+    label: 'Receiver',
+    description: 'Set when someone other than the customer receives the order.',
+    children: [
+      { key: 'name', label: 'Name' },
+      { key: 'email', label: 'Email', format: 'email' },
+      { key: 'phone', label: 'Phone' },
+      { key: 'notify', label: 'Notify Receiver', format: 'boolean' },
+    ],
+  },
   { key: 'source', label: 'Source' },
   { key: 'shipping_status', label: 'Shipping Status' },
   { key: 'draft', label: 'Draft', format: 'boolean' },
@@ -111,8 +123,11 @@ const orderSummaryFields: OutputSchemaField[] = [
 
 const orderItemFields: OutputSchemaField[] = [
   { key: 'id', label: 'Item ID', format: 'number' },
+  { key: 'product_id', label: 'Product ID', format: 'number' },
+  { key: 'product_sku_id', label: 'Variant ID', format: 'number', description: 'Empty when the product has no variants.' },
   { key: 'name', label: 'Product Name' },
   { key: 'sku', label: 'SKU' },
+  { key: 'thumbnail', label: 'Thumbnail', format: 'image' },
   { key: 'quantity', label: 'Quantity', format: 'number' },
   { key: 'currency', label: 'Currency' },
   { key: 'weight', label: 'Weight', format: 'number' },
@@ -147,7 +162,7 @@ const orderItemFields: OutputSchemaField[] = [
 ];
 
 const orderHistoryFields: OutputSchemaField[] = [
-  { key: 'id', label: 'History Entry ID', format: 'number' },
+  { key: 'id', label: 'History Entry ID', description: 'Text, because the ID is too large to keep exact as a number.' },
   { key: 'status', label: 'Order Status Name' },
   { key: 'note', label: 'Note' },
   { key: 'created_at_iso', label: 'Created At', format: 'datetime', description: 'Added by Activepieces from the Salla date.' },
@@ -164,6 +179,12 @@ const orderStatusFields: OutputSchemaField[] = [
   { key: 'message', label: 'Customer Message' },
   { key: 'sort', label: 'Sort Order', format: 'number' },
   { key: 'parent', label: 'Parent Status', children: [{ key: 'id', label: 'ID', format: 'number' }, { key: 'name', label: 'Name' }] },
+  {
+    key: 'original',
+    label: 'Original Status',
+    description: "The built-in Salla status this one is based on. An order's status ID is this original ID.",
+    children: [{ key: 'id', label: 'ID', format: 'number' }, { key: 'name', label: 'Name' }],
+  },
 ];
 
 const paymentMethodFields: OutputSchemaField[] = [
@@ -187,18 +208,17 @@ const branchFields: OutputSchemaField[] = [
 
 const storeInfoFields: OutputSchemaField[] = [
   { key: 'id', label: 'Store ID', format: 'number' },
-  { key: 'username', label: 'Username' },
   { key: 'name', label: 'Store Name' },
   { key: 'entity', label: 'Entity Type' },
+  { key: 'type', label: 'Store Type', description: 'For example demo for a test store.' },
   { key: 'email', label: 'Email', format: 'email' },
-  { key: 'mobile', label: 'Mobile' },
+  { key: 'avatar', label: 'Logo', format: 'image' },
   { key: 'plan', label: 'Plan' },
   { key: 'status', label: 'Status' },
   { key: 'verified', label: 'Verified', format: 'boolean' },
   { key: 'currency', label: 'Currency' },
   { key: 'domain', label: 'Store URL', format: 'url' },
-  { key: 'created_at', label: 'Created At' },
-  { key: 'default_branch', label: 'Default Branch', children: [{ key: 'id', label: 'ID', format: 'number' }, { key: 'name', label: 'Name' }] },
+  { key: 'description', label: 'Description' },
 ];
 
 const eventMetaField: OutputSchemaField = {
@@ -304,6 +324,7 @@ const productFlatFields: OutputSchemaField[] = [
   { key: 'brand_id', label: 'Brand ID', format: 'number' },
   { key: 'brand_name', label: 'Brand Name' },
   { key: 'category_names', label: 'Categories', description: 'Category names, comma separated.' },
+  { key: 'category_ids', label: 'Category IDs', description: 'Numeric IDs of the categories the product is in.' },
   { key: 'updated_at_iso', label: 'Updated At', format: 'datetime' },
 ];
 
@@ -548,11 +569,12 @@ const customerFlatFields: OutputSchemaField[] = [
   { key: 'city', label: 'City' },
   { key: 'country', label: 'Country', description: 'In the connection response language (Arabic by default).' },
   { key: 'country_code', label: 'Country Code', description: 'Two letters, for example SA.' },
-  { key: 'gender', label: 'Gender', description: 'male or female.' },
+  { key: 'gender', label: 'Gender', description: 'male or female. Often empty: Salla may not save the gender sent by Create or Update Customer.' },
   { key: 'group_names', label: 'Group Names', description: 'Comma separated. Empty when Salla returns only group IDs.' },
-  { key: 'birthday_date', label: 'Birthday', format: 'date' },
+  { key: 'birthday_date', label: 'Birthday', format: 'date', description: 'Often empty: Salla may not save the birthday sent by Create or Update Customer.' },
   { key: 'customer_url', label: 'Customer Profile Page', format: 'url' },
   { key: 'admin_url', label: 'Admin Customer Page', format: 'url' },
+  { key: 'created_at_iso', label: 'Created At', format: 'datetime' },
   { key: 'updated_at_iso', label: 'Updated At', format: 'datetime' },
 ];
 
@@ -569,25 +591,28 @@ const customerFields: OutputSchemaField[] = [
   { key: 'group_ids', label: 'Group IDs', description: 'IDs of the customer groups the customer belongs to.' },
 ];
 
+const statsOnly = 'Present only when Include Stats is on.';
+
 const customerStatsFields: OutputSchemaField[] = [
-  { key: 'created_at_iso', label: 'Created At', format: 'datetime' },
-  { key: 'orders_count', label: 'Orders Count', format: 'number', description: 'Present only when Include Stats is on.' },
-  { key: 'orders_amount', label: 'Orders Amount', format: 'number', description: 'Total spent. Present only when Include Stats is on.' },
-  { key: 'orders_average', label: 'Average Order Amount', format: 'number' },
-  { key: 'orders_complete_ratio', label: 'Completed Orders %', format: 'number' },
-  { key: 'orders_cancel_ratio', label: 'Cancelled Orders %', format: 'number' },
-  { key: 'orders_cancel', label: 'Cancelled Orders', format: 'number' },
-  { key: 'latest_purchase_iso', label: 'Latest Purchase', format: 'datetime' },
-  { key: 'wallet_balance', label: 'Wallet Balance', format: 'number' },
-  { key: 'total_points', label: 'Loyalty Points', format: 'number' },
-  { key: 'is_blocked', label: 'Blocked', format: 'boolean' },
-  { key: 'block_reason', label: 'Block Reason' },
+  { key: 'orders_count', label: 'Orders Count', format: 'number', description: statsOnly },
+  { key: 'orders_amount', label: 'Orders Amount', format: 'number', description: `Total spent. ${statsOnly}` },
+  { key: 'orders_average', label: 'Average Order Amount', format: 'number', description: statsOnly },
+  { key: 'orders_complete_ratio', label: 'Completed Orders %', format: 'number', description: statsOnly },
+  { key: 'orders_cancel_ratio', label: 'Cancelled Orders %', format: 'number', description: statsOnly },
+  { key: 'orders_cancel', label: 'Cancelled Orders', format: 'number', description: statsOnly },
+  { key: 'latest_purchase_iso', label: 'Latest Purchase', format: 'datetime', description: statsOnly },
+  { key: 'wallet_balance', label: 'Wallet Balance', format: 'number', description: statsOnly },
+  { key: 'total_points', label: 'Loyalty Points', format: 'number', description: statsOnly },
+  { key: 'is_blocked', label: 'Blocked', format: 'boolean', description: statsOnly },
+  { key: 'block_reason', label: 'Block Reason', description: statsOnly },
 ];
 
 const customerGroupFields: OutputSchemaField[] = [
   { key: 'id', label: 'Group ID', format: 'number' },
   { key: 'name', label: 'Name' },
 ];
+
+const couponStatsOnly = 'Empty on create. Filled by Get Coupon with Include Stats on.';
 
 const couponFlatFields: OutputSchemaField[] = [
   { key: 'type_normalized', label: 'Type', description: 'percentage or fixed.' },
@@ -613,9 +638,9 @@ const couponFields: OutputSchemaField[] = [
   { key: 'applied_in', label: 'Applies In', description: 'all, web or app.' },
   { key: 'usage_limit', label: 'Usage Limit', format: 'number' },
   { key: 'usage_limit_per_user', label: 'Usage Limit per Customer', format: 'number' },
-  { key: 'usage_count', label: 'Times Used', format: 'number', description: 'From the coupon statistics, paid orders only.' },
-  { key: 'customer_count', label: 'Customers Who Used It', format: 'number' },
-  { key: 'sales_amount', label: 'Sales With This Coupon', format: 'number' },
+  { key: 'usage_count', label: 'Times Used', format: 'number', description: `From the coupon statistics, paid orders only. ${couponStatsOnly}` },
+  { key: 'customer_count', label: 'Customers Who Used It', format: 'number', description: couponStatsOnly },
+  { key: 'sales_amount', label: 'Sales With This Coupon', format: 'number', description: couponStatsOnly },
   { key: 'include_product_ids', label: 'Included Product IDs' },
   { key: 'exclude_product_ids', label: 'Excluded Product IDs' },
   { key: 'include_category_ids', label: 'Included Category IDs' },
