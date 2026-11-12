@@ -73,11 +73,14 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                     if (!isNil(invitation.projectId) && !isNil(invitation.projectRoleId)) {
                         await addToInvitedProject({ invitation, userId: user.id, log, context, failsWithoutProjectRoles: false })
                     }
-                    await userService(log).update({
-                        id: user.id,
-                        platformId: invitation.platformId,
-                        platformRole: invitation.platformRole,
-                    })
+                    const platform = await platformService(log).getOneOrThrow(invitation.platformId)
+                    if (platform.ownerId !== user.id) {
+                        await userService(log).update({
+                            id: user.id,
+                            platformId: invitation.platformId,
+                            platformRole: invitation.platformRole,
+                        })
+                    }
                     break
                 }
                 case InvitationType.PROJECT: {
