@@ -204,6 +204,20 @@ describe('Change Product Status keeps the sales channels', () => {
       'Salla put back the sales channels web, app, but that put the product on sale and setting it to "out" again failed',
     );
   });
+
+  it('keeps channels the merchant changed later when clearing the saved channels failed after a restore', async () => {
+    const store = memoryStore();
+    store.delete = async () => {
+      throw new Error('store down');
+    };
+    const salla = fakeSalla({ status: 'sale', channels: ['web', 'app'] });
+    await sallaProducts.changeProductStatus({ auth, productId: 9, status: 'hidden', store });
+    await sallaProducts.changeProductStatus({ auth, productId: 9, status: 'sale', store });
+    expect(salla.product).toEqual({ status: 'sale', channels: ['web', 'app'] });
+    salla.product.channels = ['web'];
+    await sallaProducts.changeProductStatus({ auth, productId: 9, status: 'out', store });
+    expect(salla.product).toEqual({ status: 'out', channels: ['web'] });
+  });
 });
 
 describe('Update Product status keeps the product as asked', () => {

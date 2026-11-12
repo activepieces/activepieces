@@ -518,7 +518,11 @@ async function forgetHiddenChannels({ store, key }: { store: Store; key: string 
   try {
     await store.delete(key, StoreScope.PROJECT);
   } catch {
-    return;
+    try {
+      await store.put<HiddenChannels>(key, { channels: [], at: Date.now() }, StoreScope.PROJECT);
+    } catch {
+      return;
+    }
   }
 }
 
