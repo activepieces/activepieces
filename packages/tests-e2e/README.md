@@ -57,7 +57,7 @@ For the role gate and project isolation, an EE spec imports `test` from `fixture
 - Isolation through the API: seed the record into the default project, and assert that the viewer, who is not a member there, gets a 403 when it reads or lists it. Do not use the admin for this check: the admin is a member of every project.
 - Isolation in a list page: seed one record with the same unique prefix into each project, open the list in the default project, and search by the prefix. Assert that the own record shows and the other one does not. The own record proves that the list loaded. The admin may run this check, because the page lists only the project it opens.
 
-`scenarios/ee/access/access-fixtures.spec.ts` shows both checks.
+`scenarios/ee/project/automations-flows.spec.ts` shows the role gate and the isolation in a list page. `scenarios/ee/access/access-fixtures.spec.ts` shows the isolation through the API.
 
 ### Data
 
