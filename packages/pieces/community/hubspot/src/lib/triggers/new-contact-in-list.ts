@@ -287,7 +287,7 @@ export const newContactInListTrigger = createTrigger({
 				}
 
 				const authValue = auth as HubspotAuthValue;
-				const client = new Client({ accessToken: getHubspotAccessToken(authValue) });
+				const client = new Client({ accessToken: getHubspotAccessToken(authValue), numberOfApiCallRetries: 3 });
 				let offset = 0;
 				let hasMore = true;
 				const options: DropdownOption<string>[] = [];
