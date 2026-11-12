@@ -143,7 +143,7 @@ function renderTranscript(result: AgentTurnResult): string {
             return [`ASSISTANT: ${part.text}`]
         }
         if (part.type === PersistedAgentPartType.TOOL_CALL) {
-            const output = part.errorText ?? JSON.stringify(part.output ?? null)
+            const output = replay.isStopOutput(part.output) ? STOPPED_RESULT : part.errorText ?? JSON.stringify(part.output ?? null)
             return [`TOOL_CALL: ${part.toolName} ${truncate(JSON.stringify(part.input))}`, `TOOL_RESULT: ${truncate(output)}`]
         }
         return []
@@ -151,7 +151,7 @@ function renderTranscript(result: AgentTurnResult): string {
 }
 
 function truncate(text: string): string {
-    return text.length <= TRANSCRIPT_FIELD_MAX ? text : `${text.slice(0, TRANSCRIPT_FIELD_MAX)}…`
+    return text.length <= TRANSCRIPT_FIELD_MAX ? text : `${text.slice(0, TRANSCRIPT_FIELD_MAX)}${TRUNCATED_MARK}`
 }
 
 async function resolveAuth(): Promise<Record<string, unknown>> {
@@ -198,6 +198,8 @@ const MINTED_KEY_LIMIT_USD = 25
 const TURN_TIMEOUT_MS = 5 * 60_000
 const TRANSCRIPT_FIELD_MAX = 2_000
 const ERROR_PREVIEW_CHARS = 160
+const STOPPED_RESULT = '(not run: this is a replayed test, writes never run and the test ends the turn here)'
+const TRUNCATED_MARK = '… (the test cut this text short, the real call was complete)'
 const TIER = { id: 'smart', thinkingBudget: 10_000 }
 const MAX_STEPS_TO_TARGET = 5
 const TERMINAL_DISPLAY_TOOLS = ['ap_show_questions', 'ap_show_quick_replies', 'ap_show_connection_picker', 'ap_show_connection_required', 'ap_show_project_picker']
