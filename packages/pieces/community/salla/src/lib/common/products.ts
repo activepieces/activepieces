@@ -123,36 +123,17 @@ async function putProductKeepingChannels({
   const current = await sallaApi.request<unknown>({ auth, method: HttpMethod.GET, path });
   const productId = sallaApi.isRecord(current.body.data) ? idText(current.body.data['id']) : undefined;
   const channelsNow = channelsOf(current.body.data);
-  if (productId === undefined) {
+  if (productId === undefined || channelsNow === undefined) {
     return putAndRestoreChannels({ auth, path, body, channelsBefore: channelsNow });
   }
-  const updateKey = `${CHANNELS_STORE_KEY_PREFIX}${productId}`;
-  const failedRestoreKey = `${FAILED_RESTORE_STORE_KEY_PREFIX}${productId}`;
-  const [overlappingUpdate, failedRestore] = await Promise.all([
-    readOverlappingUpdate({ store, key: updateKey, since: startedAt }),
-    readFailedRestore({ store, key: failedRestoreKey, channelsNow }),
-  ]);
-  const channelsBefore = overlappingUpdate?.channels ?? failedRestore?.channels ?? channelsNow;
-  if (channelsBefore === undefined) {
+  const key = `${CHANNELS_STORE_KEY_PREFIX}${productId}`;
+  const saved = isWebOnly(channelsNow) ? await readSavedChannels({ store, key, since: startedAt }) : undefined;
+  const channelsBefore = saved?.channels ?? channelsNow;
+  if (isWebOnly(channelsBefore)) {
     return putAndRestoreChannels({ auth, path, body, channelsBefore });
   }
-  const updateId = await markUpdateRunning({ store, key: updateKey, channels: channelsBefore, joining: overlappingUpdate });
-  try {
-    return await putAndRestoreChannels({
-      auth,
-      path,
-      body,
-      channelsBefore,
-      recovery: {
-        save: (failed) => saveFailedRestore({ store, key: failedRestoreKey, failed }),
-        clear: () => deleteQuietly({ store, key: failedRestoreKey }),
-      },
-    });
-  } finally {
-    if (updateId !== undefined) {
-      await markUpdateFinished({ store, key: updateKey, updateId });
-    }
-  }
+  const tracker = await trackChannels({ store, key, channels: channelsBefore, state: saved?.state === 'restore_failed' ? 'restore_failed' : 'updating' });
+  return putAndRestoreChannels({ auth, path, body, channelsBefore, tracker });
 }
 
 async function putAndRestoreChannels({
@@ -160,13 +141,13 @@ async function putAndRestoreChannels({
   path,
   body,
   channelsBefore,
-  recovery,
+  tracker,
 }: {
   auth: SallaAuth;
   path: string;
   body: Record<string, unknown>;
   channelsBefore: string[] | undefined;
-  recovery?: ChannelRecovery;
+  tracker?: ChannelsTracker;
 }): Promise<Record<string, unknown>> {
   const response = await sallaApi
     .request<unknown>({
@@ -177,9 +158,10 @@ async function putAndRestoreChannels({
       omitLanguage: true,
     })
     .catch(async (error: unknown) => {
-      const mayHaveBeenSaved = !sallaApi.isSallaApiError(error) || error.status >= 500;
-      if (mayHaveBeenSaved && channelsBefore !== undefined) {
-        await restoreAfterUnclearUpdate({ auth, path, channelsBefore, recovery });
+      if (sallaApi.isSallaApiError(error) && error.status < 500 && error.status !== 408) {
+        await tracker?.updateRejected();
+      } else if (channelsBefore !== undefined) {
+        await restoreAfterUnclearUpdate({ auth, path, channelsBefore, tracker });
       }
       throw error;
     });
@@ -189,19 +171,19 @@ async function putAndRestoreChannels({
     return product;
   }
   if (channelsAfter !== undefined && sameChannels({ first: channelsBefore, second: channelsAfter })) {
-    await recovery?.clear();
+    await tracker?.channelsRight();
     return product;
   }
   try {
     await setSalesChannels({ auth, productId: product['id'], channels: channelsBefore });
   } catch (error) {
-    await recovery?.save({ channels: channelsBefore, left: channelsAfter ?? CHANNELS_AFTER_PRODUCT_PUT, confirmed: true });
+    await tracker?.restoreFailed();
     const reason = error instanceof Error ? error.message : String(error);
     throw new Error(
       `The product was updated, but Salla changed its sales channels to ${(channelsAfter ?? []).join(', ') || 'none'} and putting back ${channelsBefore.join(', ')} failed. Run this step again to put them back. ${reason}`,
     );
   }
-  await recovery?.clear();
+  await tracker?.channelsRight();
   return { ...product, channels: channelsBefore, show_in_app: channelsBefore.includes('app') };
 }
 
@@ -209,76 +191,94 @@ async function restoreAfterUnclearUpdate({
   auth,
   path,
   channelsBefore,
-  recovery,
+  tracker,
 }: {
   auth: SallaAuth;
   path: string;
   channelsBefore: string[];
-  recovery: ChannelRecovery | undefined;
+  tracker: ChannelsTracker | undefined;
 }): Promise<void> {
   const product = await sallaApi
     .request<unknown>({ auth, method: HttpMethod.GET, path, timeout: CHANNELS_RECHECK_TIMEOUT_MS })
     .then((response) => response.body.data)
     .catch(() => undefined);
   const channelsSeen = channelsOf(product);
-  if (channelsSeen === undefined || sameChannels({ first: channelsBefore, second: channelsSeen })) {
-    if (sameChannels({ first: channelsBefore, second: CHANNELS_AFTER_PRODUCT_PUT })) {
-      return;
-    }
-    await recovery?.save({ channels: channelsBefore, left: CHANNELS_AFTER_PRODUCT_PUT, confirmed: false });
+  if (channelsSeen === undefined || !isWebOnly(channelsSeen) || isWebOnly(channelsBefore)) {
     return;
   }
   try {
     await setSalesChannels({ auth, productId: sallaApi.isRecord(product) ? product['id'] : undefined, channels: channelsBefore });
   } catch {
-    await recovery?.save({ channels: channelsBefore, left: channelsSeen, confirmed: true });
+    await tracker?.restoreFailed();
     return;
   }
-  await recovery?.clear();
+  await tracker?.channelsRight();
 }
 
-async function readFailedRestore({
-  store,
-  key,
-  channelsNow,
-}: {
-  store: Store;
-  key: string;
-  channelsNow: string[] | undefined;
-}): Promise<FailedRestore | undefined> {
-  if (channelsNow === undefined) {
+async function readSavedChannels({ store, key, since }: { store: Store; key: string; since: number }): Promise<SavedChannels | undefined> {
+  const saved = await getSavedChannels({ store, key });
+  if (saved === undefined) {
     return undefined;
   }
+  const age = Math.abs(Date.now() - saved.at);
+  switch (saved.state) {
+    case 'updating':
+      return age < CHANNELS_UPDATING_MAX_MS ? saved : undefined;
+    case 'restore_failed':
+      return age < CHANNELS_RESTORE_FAILED_MAX_MS ? saved : undefined;
+    case 'done':
+      return saved.at >= since && age < CHANNELS_UPDATING_MAX_MS ? saved : undefined;
+  }
+}
+
+async function getSavedChannels({ store, key }: { store: Store; key: string }): Promise<SavedChannels | undefined> {
   try {
     const saved = await store.get<unknown>(key, StoreScope.PROJECT);
-    if (saved === null || saved === undefined) {
+    if (!sallaApi.isRecord(saved) || typeof saved['by'] !== 'string' || typeof saved['at'] !== 'number') {
       return undefined;
     }
-    const failedRestore = parseFailedRestore(saved);
-    const usable =
-      failedRestore !== undefined &&
-      Math.abs(Date.now() - failedRestore.failedAt) < (failedRestore.confirmed ? FAILED_RESTORE_MAX_MS : UNCONFIRMED_RESTORE_MAX_MS) &&
-      sameChannels({ first: failedRestore.left, second: channelsNow });
-    if (!usable) {
-      await deleteQuietly({ store, key });
+    const state = SAVED_CHANNELS_STATES.find((known) => known === saved['state']);
+    const channels = stringList(saved['channels']);
+    if (state === undefined || channels === undefined) {
       return undefined;
     }
-    return failedRestore;
+    return { channels, state, by: saved['by'], at: saved['at'] };
   } catch {
     return undefined;
   }
 }
 
-function parseFailedRestore(saved: unknown): FailedRestore | undefined {
-  if (!sallaApi.isRecord(saved) || typeof saved['failedAt'] !== 'number' || typeof saved['confirmed'] !== 'boolean') {
-    return undefined;
-  }
-  const channels = stringList(saved['channels']);
-  const left = stringList(saved['left']);
-  if (channels === undefined || left === undefined) {
-    return undefined;
-  }
-  return { channels, left, confirmed: saved['confirmed'], failedAt: saved['failedAt'] };
+async function trackChannels({
+  store,
+  key,
+  channels,
+  state,
+}: {
+  store: Store;
+  key: string;
+  channels: string[];
+  state: 'updating' | 'restore_failed';
+}): Promise<ChannelsTracker> {
+  const by = randomUUID();
+  const save = async (next: SavedChannelsState): Promise<void> => {
+    try {
+      await store.put<SavedChannels>(key, { channels, state: next, by, at: Date.now() }, StoreScope.PROJECT);
+    } catch {
+      return;
+    }
+  };
+  const saveDoneIfStillOwn = async ({ onlyWhileUpdating }: { onlyWhileUpdating: boolean }): Promise<void> => {
+    const saved = await getSavedChannels({ store, key });
+    if (saved !== undefined && saved.by === by && (!onlyWhileUpdating || saved.state === 'updating')) {
+      await save('done');
+    }
+  };
+  await save(state);
+  return {
+    restoreFailed: () => save('restore_failed'),
+    updateRejected: () => saveDoneIfStillOwn({ onlyWhileUpdating: true }),
+    channelsRight: () => saveDoneIfStillOwn({ onlyWhileUpdating: false }),
+  };
 }
 
 function stringList(value: unknown): string[] | undefined {
@@ -288,95 +288,8 @@ function stringList(value: unknown): string[] | undefined {
   return value.filter((item): item is string => typeof item === 'string');
 }
 
-async function saveFailedRestore({ store, key, failed }: { store: Store; key: string; failed: Omit<FailedRestore, 'failedAt'> }): Promise<void> {
-  try {
-    await store.put<FailedRestore>(key, { ...failed, failedAt: Date.now() }, StoreScope.PROJECT);
-  } catch {
-    return;
-  }
-}
-
-async function deleteQuietly({ store, key }: { store: Store; key: string }): Promise<void> {
-  try {
-    await store.delete(key, StoreScope.PROJECT);
-  } catch {
-    return;
-  }
-}
-
-async function readOverlappingUpdate({ store, key, since }: { store: Store; key: string; since: number }): Promise<ChannelsUpdate | undefined> {
-  try {
-    const update = parseChannelsUpdate(await store.get<unknown>(key, StoreScope.PROJECT));
-    if (update === undefined) {
-      return undefined;
-    }
-    const now = Date.now();
-    const running = stillRunning({ running: update.running, now });
-    if (running.length > 0) {
-      return { channels: update.channels, running };
-    }
-    const finishedAt = update.finishedAt;
-    const finishedDuringThisUpdate = finishedAt !== undefined && finishedAt >= since && finishedAt - now < CHANNELS_UPDATE_MAX_MS;
-    return finishedDuringThisUpdate ? { channels: update.channels, running, finishedAt } : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-function stillRunning({ running, now }: { running: RunningUpdate[]; now: number }): RunningUpdate[] {
-  return running.filter((update) => Math.abs(now - update.startedAt) < CHANNELS_UPDATE_MAX_MS);
-}
-
-function parseChannelsUpdate(saved: unknown): ChannelsUpdate | undefined {
-  if (!sallaApi.isRecord(saved) || !Array.isArray(saved['running'])) {
-    return undefined;
-  }
-  const finishedAt = saved['finishedAt'];
-  const channels = stringList(saved['channels']);
-  const running = saved['running'].flatMap((update): RunningUpdate[] =>
-    sallaApi.isRecord(update) && typeof update['id'] === 'string' && typeof update['startedAt'] === 'number'
-      ? [{ id: update['id'], startedAt: update['startedAt'] }]
-      : [],
-  );
-  const validFinish = finishedAt === undefined || finishedAt === null || typeof finishedAt === 'number';
-  if (channels === undefined || running.length !== saved['running'].length || !validFinish) {
-    return undefined;
-  }
-  return { channels, running, finishedAt: typeof finishedAt === 'number' ? finishedAt : undefined };
-}
-
-async function markUpdateRunning({
-  store,
-  key,
-  channels,
-  joining,
-}: {
-  store: Store;
-  key: string;
-  channels: string[];
-  joining: ChannelsUpdate | undefined;
-}): Promise<string | undefined> {
-  const id = randomUUID();
-  try {
-    await store.put<ChannelsUpdate>(key, { channels, running: [...(joining?.running ?? []), { id, startedAt: Date.now() }] }, StoreScope.PROJECT);
-    return id;
-  } catch {
-    return undefined;
-  }
-}
-
-async function markUpdateFinished({ store, key, updateId }: { store: Store; key: string; updateId: string }): Promise<void> {
-  try {
-    const update = parseChannelsUpdate(await store.get<unknown>(key, StoreScope.PROJECT));
-    if (update === undefined || !update.running.some((running) => running.id === updateId)) {
-      return;
-    }
-    const now = Date.now();
-    const running = stillRunning({ running: update.running, now }).filter((other) => other.id !== updateId);
-    await store.put<ChannelsUpdate>(key, { channels: update.channels, running, finishedAt: running.length === 0 ? now : undefined }, StoreScope.PROJECT);
-  } catch {
-    return;
-  }
+function isWebOnly(channels: string[]): boolean {
+  return sameChannels({ first: channels, second: ['web'] });
 }
 
 function channelsOf(product: unknown): string[] | undefined {
@@ -1089,12 +1002,10 @@ const IMAGE_UPLOAD_TIMEOUT_MS = 60000;
 const PRODUCT_TYPES: ProductType[] = ['product', 'service', 'group_products', 'codes', 'digital', 'food', 'booking', 'donating'];
 const PRODUCT_STATUSES: ProductStatus[] = ['sale', 'out', 'hidden'];
 const CHANNELS_STORE_KEY_PREFIX = 'salla_product_channels_';
-const CHANNELS_UPDATE_MAX_MS = 4 * 60 * 1000;
-const CHANNELS_AFTER_PRODUCT_PUT: string[] = ['web'];
+const CHANNELS_UPDATING_MAX_MS = 5 * 60 * 1000;
+const CHANNELS_RESTORE_FAILED_MAX_MS = 24 * 60 * 60 * 1000;
 const CHANNELS_RECHECK_TIMEOUT_MS = 10000;
-const FAILED_RESTORE_STORE_KEY_PREFIX = 'salla_product_channels_failed_restore_';
-const FAILED_RESTORE_MAX_MS = 24 * 60 * 60 * 1000;
-const UNCONFIRMED_RESTORE_MAX_MS = 5 * 60 * 1000;
+const SAVED_CHANNELS_STATES: SavedChannelsState[] = ['updating', 'done', 'restore_failed'];
 const WEIGHT_TYPES: WeightType[] = ['kg', 'g', 'lb', 'oz'];
 const STOCK_IDENTIFIER_TYPES: StockIdentifierType[] = ['id', 'variant_id', 'sku'];
 const STOCK_MODES: StockMode[] = ['increment', 'decrement', 'overwrite'];
@@ -1332,13 +1243,15 @@ type BrandListResult = {
   truncated: boolean;
 };
 
-type RunningUpdate = { id: string; startedAt: number };
+type SavedChannelsState = 'updating' | 'done' | 'restore_failed';
 
-type ChannelsUpdate = { channels: string[]; running: RunningUpdate[]; finishedAt?: number };
+type SavedChannels = { channels: string[]; state: SavedChannelsState; by: string; at: number };
 
-type FailedRestore = { channels: string[]; left: string[]; confirmed: boolean; failedAt: number };
-
-type ChannelRecovery = { save: (failed: Omit<FailedRestore, 'failedAt'>) => Promise<void>; clear: () => Promise<void> };
+type ChannelsTracker = {
+  restoreFailed: () => Promise<void>;
+  updateRejected: () => Promise<void>;
+  channelsRight: () => Promise<void>;
+};
 
 export type {
   ProductStatus,
