@@ -73,7 +73,7 @@ describe('Postgres New Row behaviour', () => {
     expect(await poll({ store, table })).toEqual([]);
   });
 
-  it('keeps the cursor when an older server republishes without isRepublish', async () => {
+  it('keeps the cursor when onDisable runs on a republish', async () => {
     const table = await newTable({ columns: 'id serial primary key, created_at timestamptz not null, name text' });
     await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01T10:00:00Z', 'a')`);
     const { store, data } = memoryStore();
