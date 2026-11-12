@@ -27,8 +27,8 @@ export const modelTierCatalog = {
 
     fallbackTiers({ surface, modelId }: { surface: ModelTierSurface, modelId: string }): ModelTier[] {
         const { tiers, findTier } = modelTierCatalog.current(surface)
-        const failing = findTier({ tierId: modelId })?.modelId ?? modelId
-        return tiers.filter((tier, index) => tier.modelId !== failing && tiers.findIndex((other) => other.modelId === tier.modelId) === index)
+        const seen = new Set([findTier({ tierId: modelId })?.modelId ?? modelId])
+        return tiers.filter((tier) => !seen.has(tier.modelId) && seen.add(tier.modelId))
     },
 }
 
