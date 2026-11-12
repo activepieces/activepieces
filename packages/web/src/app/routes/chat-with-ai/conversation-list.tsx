@@ -3,7 +3,6 @@ import {
   InfiniteData,
   QueryKey,
   useInfiniteQuery,
-  useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -19,10 +18,17 @@ import {
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 
 import { SettingsHubDialog } from '@/app/components/settings-hub/settings-hub-dialog';
+import { compactShortcut } from '@/components/custom/shortcut';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
+import { chatHistoryUtils } from '@/features/chat/lib/chat-history-utils';
+import {
+  chatPendingDeletes,
+  usePendingDeletes,
+} from '@/features/chat/lib/chat-pending-deletes';
+import { chatQueryKeys } from '@/features/chat/lib/chat-query-keys';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { useConversationIndicators } from '@/features/chat/lib/use-conversation-indicators';
 import { cn } from '@/lib/utils';
@@ -71,7 +77,7 @@ export function ConversationList({
     QueryKey,
     string | undefined
   >({
-    queryKey: ['chat-conversations', agentId ?? 'chat'],
+    queryKey: chatQueryKeys.conversationList(agentId),
     initialPageParam: undefined,
     getNextPageParam: (lastPage) => lastPage.next ?? undefined,
     queryFn: ({ pageParam }) =>
@@ -84,22 +90,37 @@ export function ConversationList({
 
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
-  const { mutate: deleteConv } = useMutation({
-    mutationFn: (id: string) => chatApi.deleteConversation(id),
-    onSuccess: (_data, deletedId) => {
-      void queryClient.invalidateQueries({
-        queryKey: ['chat-conversations', agentId ?? 'chat'],
-      });
-      if (selectedIdRef.current === deletedId) {
-        onNewChat?.();
+  const deleteConv = (id: string) => {
+    const wasSelected = selectedIdRef.current === id;
+    const bringBack = () => {
+      if (wasSelected && mountedRef.current && !selectedIdRef.current) {
+        onSelect?.(id);
       }
-    },
-  });
+    };
+    chatPendingDeletes.removeWithUndo({
+      queryClient,
+      id,
+      onUndo: bringBack,
+      onFailed: bringBack,
+    });
+    if (wasSelected) onNewChat?.();
+  };
 
+  const pendingDeletes = usePendingDeletes((state) => state.ids);
   const allConversations = useMemo(
-    () => conversationPages?.pages.flatMap((page) => page.data) ?? [],
-    [conversationPages],
+    () =>
+      (conversationPages?.pages.flatMap((page) => page.data) ?? []).filter(
+        (c) => !pendingDeletes.has(c.id),
+      ),
+    [conversationPages, pendingDeletes],
   );
 
   const { getIndicator, markRead } = useConversationIndicators({
@@ -109,13 +130,14 @@ export function ConversationList({
     loaded: conversationsLoaded,
   });
 
-  const conversations = useMemo(() => {
-    if (!searchQuery.trim()) return allConversations;
-    const query = searchQuery.toLowerCase();
-    return allConversations.filter((c) =>
-      (c.title ?? '').toLowerCase().includes(query),
-    );
-  }, [allConversations, searchQuery]);
+  const conversations = useMemo(
+    () =>
+      chatHistoryUtils.filterByTitle({
+        conversations: allConversations,
+        query: searchQuery,
+      }),
+    [allConversations, searchQuery],
+  );
 
   const checkFades = useCallback(() => {
     const el = listRef.current;
@@ -207,14 +229,14 @@ export function ConversationList({
       <div className="mb-2 flex flex-col gap-px">
         <button
           type="button"
-          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-xs font-semibold px-2 py-1 text-gray-11 transition-colors hover:text-gray-12"
+          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-xs font-semibold px-2 py-1 text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] hover:text-gray-12"
           onClick={() => toggleGroup(label)}
         >
           {label}
           <ChevronDown
             size={10}
             className={cn(
-              'shrink-0 transition-transform duration-150',
+              'shrink-0 transition-transform duration-(--dur-micro) ease-[ease] motion-reduce:transition-none',
               isCollapsed && '-rotate-90',
             )}
           />
@@ -227,7 +249,7 @@ export function ConversationList({
                 type="button"
                 key={conv.id}
                 className={cn(
-                  'group flex items-center w-full px-2 py-1.5 rounded-md bg-transparent border-none cursor-pointer text-left text-xs transition-colors hover:bg-gray-3 relative',
+                  'group flex items-center w-full px-2 py-1.5 rounded-md bg-transparent border-none cursor-pointer text-left text-xs transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 relative',
                   mobile && 'px-3 py-2.5 text-sm',
                   selectedId === conv.id &&
                     'bg-gray-3 font-semibold border-l-2 border-l-accent-9',
@@ -235,12 +257,10 @@ export function ConversationList({
                 onClick={() => handleClick(conv)}
               >
                 <span className="overflow-hidden text-ellipsis whitespace-nowrap pr-5 flex-1">
-                  {conv.title
-                    ? chatUtils.sanitizeTitle(conv.title)
-                    : t('New conversation')}
+                  {chatUtils.displayTitle(conv.title)}
                 </span>
                 {indicator && (
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 transition-opacity group-hover:opacity-0">
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 transition-opacity duration-(--dur-micro) ease-[ease] group-hover:opacity-0">
                     <ConversationStatusDot state={indicator} />
                   </span>
                 )}
@@ -249,8 +269,9 @@ export function ConversationList({
                     <span
                       role="button"
                       tabIndex={0}
+                      aria-label={t('Delete')}
                       className={cn(
-                        'absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded-md text-gray-11 hover:text-danger-11 hover:bg-danger-3 transition-all',
+                        'absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded-md text-gray-11 hover:text-danger-11 hover:bg-danger-3 transition-[opacity,color,background-color] duration-(--dur-micro) ease-[ease]',
                         mobile && 'opacity-100 p-1.5',
                       )}
                       onClick={(e) => handleDelete(e, conv.id)}
@@ -286,7 +307,7 @@ export function ConversationList({
           <button
             type="button"
             className={cn(
-              'flex grow items-center justify-between gap-1.5 px-2 py-1.5 rounded-md border border-gray-6 bg-transparent cursor-pointer text-xs text-gray-12 transition-colors hover:bg-gray-4',
+              'flex grow items-center justify-between gap-1.5 px-2 py-1.5 rounded-md border border-gray-6 bg-transparent cursor-pointer text-xs text-gray-12 transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-4',
               mobile && 'px-3 py-2.5 text-sm',
             )}
             onClick={() => {
@@ -297,7 +318,15 @@ export function ConversationList({
               <Plus size={mobile ? 16 : 14} />
               {t('New chat')}
             </span>
-            {!mobile && <span className="text-xs opacity-50">⇧⌘O</span>}
+            {!mobile && (
+              <span className="text-xs opacity-50">
+                {compactShortcut({
+                  shortcutKey: 'O',
+                  withCtrl: true,
+                  withShift: true,
+                })}
+              </span>
+            )}
           </button>
           {onCollapse !== undefined && (
             <ConversationsToggle open onClick={onCollapse} />
@@ -356,7 +385,7 @@ export function ConversationList({
           <button
             type="button"
             className={cn(
-              'flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md bg-transparent cursor-pointer text-xs text-gray-12 transition-colors hover:bg-gray-4',
+              'flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md bg-transparent cursor-pointer text-xs text-gray-12 transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-4',
               mobile && 'px-3 py-2.5 text-sm',
             )}
             onClick={() => setSettingsOpen(true)}

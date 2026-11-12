@@ -16,6 +16,7 @@ type EditableTextProps = {
   disallowEditingOnClick?: boolean;
   isEditing: boolean;
   setIsEditing: (isEditing: boolean) => void;
+  ariaLabel?: string;
 };
 
 const EditableText = ({
@@ -27,6 +28,7 @@ const EditableText = ({
   disallowEditingOnClick,
   isEditing,
   setIsEditing,
+  ariaLabel,
 }: EditableTextProps) => {
   const [value, setValue] = useState(initialValue);
   const isEditingPreviousRef = useRef(false);
@@ -55,6 +57,7 @@ const EditableText = ({
         window.getSelection &&
         document.createRange
       ) {
+        editableTextRef.current.focus();
         const range = document.createRange();
         const sel = window.getSelection();
         range.selectNodeContents(editableTextRef.current);
@@ -115,6 +118,8 @@ const EditableText = ({
       ref={editableTextRef}
       contentEditable
       suppressContentEditableWarning={true}
+      role="textbox"
+      aria-label={ariaLabel}
       className={`${className}  focus:outline-hidden break-all`}
       onBlur={() => {
         emitChangedValue();
