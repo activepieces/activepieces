@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 
+import { Dot } from '@/components/custom/dot';
 import { ChatSparkIcon } from '@/components/icons/chat-spark';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,6 +16,7 @@ import { useChatWidth } from './chat-window';
 
 export function ChatNotch({ className }: { className?: string }) {
   const hidden = useChatWidth() !== 'closed';
+  const needsYou = useChatPanel((s) => s.gateOpen);
   return (
     <div
       className={cn(
@@ -42,7 +44,9 @@ export function ChatNotch({ className }: { className?: string }) {
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
-              aria-label={t('Chat')}
+              aria-label={
+                needsYou ? t('Chat is waiting for your answer') : t('Chat')
+              }
               aria-hidden={hidden || undefined}
               tabIndex={hidden ? -1 : 0}
               onClick={() => useChatPanel.getState().setOpen(true)}
@@ -54,10 +58,17 @@ export function ChatNotch({ className }: { className?: string }) {
               )}
             >
               <ChatSparkIcon
+                spark={!needsYou}
                 strokeWidth={1.5}
                 className="size-6"
                 sparkClassName="fill-accent-9 stroke-accent-9"
               />
+              {needsYou && (
+                <Dot
+                  aria-hidden
+                  className="absolute top-3.25 left-6.5 size-2.5 bg-accent-9"
+                />
+              )}
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right" className="flex items-center gap-2">

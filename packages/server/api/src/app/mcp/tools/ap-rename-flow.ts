@@ -48,6 +48,7 @@ export const apRenameFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                 })
                 return {
                     content: [{ type: 'text', text: `✅ Flow renamed to "${displayName}".` }],
+                    ...mcpUtils.apResourceMeta({ kind: 'flow', id: flowId, projectId: mcp.projectId, op: 'update', label: displayName }),
                 }
             }
             catch (err) {

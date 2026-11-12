@@ -59,6 +59,7 @@ export const apLockAndPublishTool = ({ mcp, userId }: McpToolContext, log: Fasti
                 })
                 return {
                     content: [{ type: 'text', text: `✅ Flow "${flow.version.displayName}" published and enabled successfully.` }],
+                    ...mcpUtils.apResourceMeta({ kind: 'flow', id: flowId, projectId: mcp.projectId, op: 'update', label: flow.version.displayName }),
                 }
             }
             catch (err) {

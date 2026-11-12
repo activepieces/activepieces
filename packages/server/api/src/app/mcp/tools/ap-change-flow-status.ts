@@ -67,6 +67,7 @@ export const apChangeFlowStatusTool = ({ mcp, userId }: McpToolContext, log: Fas
                 const action = status === FlowStatus.ENABLED ? 'enabled' : 'disabled'
                 return {
                     content: [{ type: 'text', text: `✅ Flow "${flow.version.displayName}" ${action} successfully.` }],
+                    ...mcpUtils.apResourceMeta({ kind: 'flow', id: flowId, projectId: mcp.projectId, op: 'update', label: flow.version.displayName }),
                 }
             }
             catch (err) {

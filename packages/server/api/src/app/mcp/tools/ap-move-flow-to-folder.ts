@@ -43,6 +43,7 @@ export const apMoveFlowToFolderTool = ({ mcp, userId }: McpToolContext, log: Fas
                 return {
                     content: [{ type: 'text', text: `✅ Flow "${flow.version.displayName}" ${describeOutcome({ moved, folderName: folder?.displayName })}.` }],
                     structuredContent: { flowId: flow.id, folderId, folderName: folder?.displayName ?? null, moved },
+                    ...mcpUtils.apResourceMeta({ kind: 'flow', id: flow.id, projectId: mcp.projectId, op: 'update', label: flow.version.displayName }),
                 }
             }
             catch (err) {

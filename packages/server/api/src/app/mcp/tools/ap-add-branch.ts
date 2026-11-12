@@ -78,6 +78,7 @@ export const apAddBranchTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                         type: 'text',
                         text: `✅ Branch "${branchName}" added at index ${branchIndex} in router "${routerStepName}". Use ap_add_step with stepLocationRelativeToParent=INSIDE_BRANCH and branchIndex=${branchIndex} to add steps inside this branch.${invalidWarning}`,
                     }],
+                    ...mcpUtils.apResourceMeta({ kind: 'flow', id: flowId, projectId: mcp.projectId, op: 'update', label: flow.version.displayName }),
                 }
             }
             catch (err) {

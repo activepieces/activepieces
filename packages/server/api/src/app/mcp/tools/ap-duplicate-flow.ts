@@ -67,6 +67,7 @@ export const apDuplicateFlowTool = ({ mcp, userId }: McpToolContext, log: Fastif
                             type: 'text',
                             text: `✅ Flow duplicated successfully.\n  Original: "${sourceFlow.version.displayName}" (id: ${sourceFlow.id})\n  Copy: "${updatedFlow.version.displayName}" (id: ${updatedFlow.id})\n\nNote: Connections are not copied — use ap_flow_structure on the new flow to check configuration status and re-configure steps as needed.`,
                         }],
+                        ...mcpUtils.apResourceMeta({ kind: 'flow', id: updatedFlow.id, projectId: mcp.projectId, op: 'create', label: updatedFlow.version.displayName }),
                     }
                 }
                 catch (importErr) {

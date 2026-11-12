@@ -1,4 +1,4 @@
-import { isNil, tryCatch } from '@activepieces/core-utils'
+import { isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils, mcpTransport } from '@activepieces/server-utils'
 import { AgentMcpTool, agentToolPhases, McpAuthConfig, McpAuthType, mcpToolNameUtils } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
@@ -6,10 +6,11 @@ import { asSchema, jsonSchema, Tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { agentWorkerTools } from './agent-worker-tools'
-import { cardTitleFields, plainJsonSchema, TaintState } from './tools/tool-primitives'
+import { cardTitleFields, plainJsonSchema, resultMeta, TaintState, toolHasExecute, withoutApResource } from './tools/tool-primitives'
 
 const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
 const MCP_OFFLOAD_BYTES = 64 * 1024
+const AP_MCP_TOOL_PREFIX = 'ap_'
 const CARD_TITLE_SCHEMA = asSchema(z.object(cardTitleFields))
 
 const MCP_CONNECTOR_NAME_PATTERN = /^mcp__([^_]+)__/
@@ -291,7 +292,10 @@ async function maybeOffloadMcpResult({ result, toolName, saveLargeResult }: {
     if (fileId === null) {
         return null
     }
-    return { content: [{ type: 'text', text: agentAiUtils.buildLargeResultPreview({ payload: result, byteSize, fileId, label: toolName }) }] }
+    return {
+        content: [{ type: 'text', text: agentAiUtils.buildLargeResultPreview({ payload: result, byteSize, fileId, label: toolName }) }],
+        ...spreadIfDefined('_meta', resultMeta(result)),
+    }
 }
 
 function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelectedAuth, saveLargeResult }: {
@@ -355,6 +359,23 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelecte
     return result
 }
 
+function withApResourceFromApMcpOnly({ ownTools, apMcpToolSet, stepMcpTools }: {
+    ownTools: ToolSet
+    apMcpToolSet: Record<string, unknown>
+    stepMcpTools: ToolSet
+}): ToolSet {
+    const tools: ToolSet = { ...ownTools, ...stepMcpTools }
+    const trustedToolNames = new Set(Object.keys(apMcpToolSet).filter((name) => name.startsWith(AP_MCP_TOOL_PREFIX) && !(name in stepMcpTools)))
+    return Object.fromEntries(Object.entries(tools).map(([name, tool]) => {
+        if (trustedToolNames.has(name) || !toolHasExecute(tool)) {
+            return [name, tool]
+        }
+        const originalExecute = tool.execute.bind(tool)
+        const execute = async (args: unknown, options?: ToolExecutionOptions<undefined>) => withoutApResource(await originalExecute(args, options))
+        return [name, Object.assign({}, tool, { execute })]
+    }))
+}
+
 export type McpConnection = {
     mcpClient: Awaited<ReturnType<typeof createMCPClient>> | null
     mcpToolSet: Record<string, unknown>
@@ -367,6 +388,7 @@ export const agentMcpClient = {
     closeAgentMcpTools,
     withStepMcpTools,
     withToolTimeouts,
+    withApResourceFromApMcpOnly,
     classifyMcpAuthError,
     redactMcpAuthSecrets,
 }

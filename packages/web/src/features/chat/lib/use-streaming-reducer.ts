@@ -17,6 +17,7 @@ import { chatDebug } from '@/lib/chat-debug-logger';
 
 import { ChatUIMessage } from './chat-types';
 import { chunkReducer, StreamingState } from './chunk-reducer';
+import { followAlong, RunContext } from './follow/follow-along';
 
 const THROTTLE_MS = 100;
 const STALE_CHECK_INTERVAL_MS = 15_000;
@@ -64,6 +65,7 @@ export function useStreamingReducer({
   const chunkBufferRef = useRef<UIMessageChunk[]>([]);
   const throttleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
+  const followRunRef = useRef<RunContext | null>(null);
 
   const onTitleUpdateRef = useRef(onTitleUpdate);
   onTitleUpdateRef.current = onTitleUpdate;
@@ -140,6 +142,10 @@ export function useStreamingReducer({
     }
     chunkBufferRef.current = [];
     reducerStateRef.current = null;
+    if (followRunRef.current) {
+      followAlong.endRun(followRunRef.current);
+      followRunRef.current = null;
+    }
   }, []);
 
   useEffect(() => {
@@ -259,6 +265,18 @@ export function useStreamingReducer({
           updatePhase('streaming');
           lastChunkTimeRef.current = Date.now();
           const chunks = Array.isArray(event.data) ? event.data : [event.data];
+          if (!followRunRef.current) {
+            const sentRunId = activeRunIdRef.current;
+            followRunRef.current = {
+              conversationId,
+              runId:
+                sentRunId ??
+                event.runId ??
+                `${conversationId}:${expectedGeneration}`,
+              attach: sentRunId ? 'sent' : 'resumed',
+            };
+          }
+          followAlong.onChunks({ chunks, ctx: followRunRef.current });
           for (const chunk of chunks) {
             chunkBufferRef.current.push(chunk as UIMessageChunk);
           }

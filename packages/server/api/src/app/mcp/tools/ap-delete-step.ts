@@ -62,6 +62,7 @@ export const apDeleteStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                 const draftWarning = mcpUtils.publishedFlowWarning(flow.publishedVersionId)
                 return {
                     content: [{ type: 'text', text: `✅ Successfully deleted step "${stepName}" from flow.${draftWarning}` }],
+                    ...mcpUtils.apResourceMeta({ kind: 'flow', id: flowId, projectId: mcp.projectId, op: 'update', label: flow.version.displayName }),
                 }
             }
             catch (err) {

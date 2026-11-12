@@ -322,6 +322,7 @@ export const SendAgentMessageRequest = z.object({
     runId: z.string().optional(),
     files: z.array(AgentMessageFile).max(10).optional(),
     messageSource: AgentMessageSource.optional(),
+    pageContext: z.unknown().optional(),
 }).refine(
     (val) => val.content.length > 0 || (val.files && val.files.length > 0),
     { message: formErrors.messageRequiresContentOrFiles },
