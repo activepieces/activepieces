@@ -223,6 +223,12 @@ const getOrder: OutputSchema = {
   fields: [
     ...orderFields,
     { key: 'items', label: 'Items', description: 'Present only when Include Items is on.', labelKey: 'name', listItems: orderItemFields },
+    {
+      key: 'items_truncated',
+      label: 'More Items Available',
+      format: 'boolean',
+      description: 'Present only when Include Items is on. True when the order has more than 500 items and only the first 500 are listed.',
+    },
   ],
 };
 

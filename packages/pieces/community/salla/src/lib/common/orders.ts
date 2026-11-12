@@ -60,8 +60,8 @@ async function getOrder({
   if (!includeItems) {
     return order;
   }
-  const { items } = await listOrderItems({ auth, orderId: id });
-  return { ...order, items };
+  const { items, truncated } = await listOrderItems({ auth, orderId: id });
+  return { ...order, items, items_truncated: truncated };
 }
 
 async function listOrderItems({ auth, orderId }: { auth: SallaAuth; orderId: unknown }): Promise<OrderItemsResult> {

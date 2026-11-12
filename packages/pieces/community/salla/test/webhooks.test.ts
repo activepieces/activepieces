@@ -113,7 +113,7 @@ describe('parseEvent, verifiedEvent and dedupeKey', () => {
     const event = sallaWebhooks.parseEvent(orderCreatedBody);
     expect(event).toBeDefined();
     if (event) {
-      expect(sallaWebhooks.dedupeKey(event)).toBe('order.created:2116149737:Sun Jun 26 2022 12:21:48 GMT+0300');
+      expect(sallaWebhooks.dedupeKey(event)).toMatch(/^order\.created:2116149737:Sun Jun 26 2022 12:21:48 GMT\+0300:[0-9a-f]{16}$/);
     }
   });
 
@@ -121,20 +121,29 @@ describe('parseEvent, verifiedEvent and dedupeKey', () => {
     const createdAt = 'Tue Nov 10 2026 12:36:49 GMT+0300';
     expect(
       sallaWebhooks.dedupeKey({ event: 'e', createdAt, data: { cart: { id: 11 }, order: { id: 22 }, customer: { id: 33 } } }),
-    ).toBe(`e:cart-11:${createdAt}`);
-    expect(sallaWebhooks.dedupeKey({ event: 'e', createdAt, data: { cart: { total: 5 }, order: { id: ' 22 ' }, customer: { id: 33 } } })).toBe(
-      `e:order-22:${createdAt}`,
+    ).toMatch(new RegExp(`^e:cart-11:${createdAt.replace('+', '\\+')}:[0-9a-f]{16}$`));
+    expect(sallaWebhooks.dedupeKey({ event: 'e', createdAt, data: { cart: { total: 5 }, order: { id: ' 22 ' }, customer: { id: 33 } } })).toMatch(
+      new RegExp(`^e:order-22:${createdAt.replace('+', '\\+')}:[0-9a-f]{16}$`),
     );
-    expect(sallaWebhooks.dedupeKey({ event: 'e', createdAt, data: { cart: 'x', order: { id: '' }, customer: { id: 33 } } })).toBe(
-      `e:customer-33:${createdAt}`,
+    expect(sallaWebhooks.dedupeKey({ event: 'e', createdAt, data: { cart: 'x', order: { id: '' }, customer: { id: 33 } } })).toMatch(
+      new RegExp(`^e:customer-33:${createdAt.replace('+', '\\+')}:[0-9a-f]{16}$`),
     );
   });
 
+  it('keeps two different changes to the same order in the same second apart, and an identical retry together', () => {
+    const createdAt = 'Tue Nov 10 2026 12:36:49 GMT+0300';
+    const paid = sallaWebhooks.dedupeKey({ event: 'order.updated', createdAt, data: { id: 7, status: { slug: 'payment_pending' } } });
+    const shipped = sallaWebhooks.dedupeKey({ event: 'order.updated', createdAt, data: { id: 7, status: { slug: 'in_progress' } } });
+    const retry = sallaWebhooks.dedupeKey({ event: 'order.updated', createdAt, data: { id: 7, status: { slug: 'payment_pending' } } });
+    expect(paid).not.toBe(shipped);
+    expect(retry).toBe(paid);
+  });
+
   it('falls back to a short sha256 of data when no id is found', () => {
-    expect(sallaWebhooks.dedupeKey({ event: 'x', data: {} })).toBe('x:sha256-44136fa355b3678a:');
+    expect(sallaWebhooks.dedupeKey({ event: 'x', data: {} })).toBe('x:sha256-44136fa355b3678a::44136fa355b3678a');
     const first = sallaWebhooks.dedupeKey({ event: 'x', data: { coupon: { code: 'A' } } });
     const second = sallaWebhooks.dedupeKey({ event: 'x', data: { coupon: { code: 'B' } } });
-    expect(first).toMatch(/^x:sha256-[0-9a-f]{16}:$/);
+    expect(first).toMatch(/^x:sha256-[0-9a-f]{16}::[0-9a-f]{16}$/);
     expect(first).not.toBe(second);
     expect(sallaWebhooks.dedupeKey({ event: 'x', data: { coupon: { code: 'A' } } })).toBe(first);
   });

@@ -166,7 +166,11 @@ function verifiedEvent({
 function dedupeKey(event: SallaWebhookEvent): string {
   const id = event.data['id'];
   const idPart = typeof id === 'number' || typeof id === 'string' ? String(id) : fallbackIdPart(event.data);
-  return `${event.event}:${idPart}:${event.createdAt ?? ''}`;
+  return `${event.event}:${idPart}:${event.createdAt ?? ''}:${contentDigest(event.data)}`;
+}
+
+function contentDigest(data: Record<string, unknown>): string {
+  return crypto.createHash('sha256').update(JSON.stringify(data)).digest('hex').slice(0, 16);
 }
 
 function fallbackIdPart(data: Record<string, unknown>): string {
@@ -180,8 +184,7 @@ function fallbackIdPart(data: Record<string, unknown>): string {
       return `${key}-${String(nestedId).trim()}`;
     }
   }
-  const digest = crypto.createHash('sha256').update(JSON.stringify(data)).digest('hex');
-  return `sha256-${digest.slice(0, 16)}`;
+  return `sha256-${contentDigest(data)}`;
 }
 
 async function listWebhookEvents({ auth }: { auth: SallaAuth }): Promise<SallaWebhookEventOption[]> {
