@@ -1,6 +1,8 @@
 import { t } from 'i18next';
 import { motion } from 'motion/react';
 
+import { MOTION } from '@/features/workspace/lib/chat-layout';
+
 import { OnboardingJourneyPattern } from './onboarding-journey-pattern';
 
 export function OnboardingWelcome() {
@@ -12,9 +14,9 @@ export function OnboardingWelcome() {
       <div className="mx-auto w-full max-w-3xl px-4 sm:px-6">
         <div className="flex flex-col items-start gap-4">
           <motion.h1
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }}
+            transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
             className="text-balance font-serif text-3xl font-semibold leading-tight"
           >
             <span
@@ -29,9 +31,13 @@ export function OnboardingWelcome() {
             <span aria-hidden> 👋</span>
           </motion.h1>
           <motion.p
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, ease: 'easeOut', delay: 0.25 }}
+            transition={{
+              duration: MOTION.base,
+              ease: MOTION.easeOut,
+              delay: STAGGER_S,
+            }}
             className="max-w-xl text-base leading-relaxed text-gray-12"
           >
             {t(
@@ -43,3 +49,5 @@ export function OnboardingWelcome() {
     </div>
   );
 }
+
+const STAGGER_S = 0.03;

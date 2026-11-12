@@ -1,7 +1,8 @@
 import { t } from 'i18next';
 import { Repeat } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { cn } from '@/lib/utils';
 
 import {
@@ -18,6 +19,7 @@ export function UseCaseCard({
 }: UseCaseCardProps) {
   const theme = useCaseCardArt.resolveTheme(card.imageId);
   const interactive = !isNil(onSelect);
+  const reduced = useReducedMotion();
 
   return (
     <motion.button
@@ -26,17 +28,17 @@ export function UseCaseCard({
       aria-hidden={!interactive}
       tabIndex={interactive ? undefined : -1}
       className={cn(
-        'group relative flex min-h-[148px] flex-col justify-between rounded-xl p-4 text-left ring-1 transition-shadow duration-300',
+        'group relative flex min-h-[148px] flex-col justify-between rounded-xl p-4 text-left ring-1 transition-shadow duration-(--dur-base) ease-(--ease-ap-out)',
         interactive ? 'cursor-pointer' : 'cursor-default',
         useCaseCardArt.CARD_SURFACE,
         theme.ring,
         className,
       )}
       onClick={interactive ? () => onSelect(card.prompt) : undefined}
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: reduced ? 0 : 4 }}
       animate={{ opacity: 1, y: 0 }}
-      whileTap={interactive ? { scale: 0.985 } : undefined}
-      transition={{ type: 'spring', stiffness: 320, damping: 26, delay }}
+      whileTap={interactive && !reduced ? { scale: 0.985 } : undefined}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut, delay }}
     >
       <div className="flex items-start justify-between">
         <UseCaseDoodle
@@ -57,7 +59,7 @@ export function UseCaseCard({
       {interactive && (
         <DoodleArrow
           className={cn(
-            'absolute bottom-4 right-4 size-4 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100 motion-safe:translate-x-1.5',
+            'absolute bottom-4 right-4 size-4 opacity-0 transition-[opacity,translate] duration-(--dur-base) ease-(--ease-ap-out) group-hover:translate-x-0 group-hover:opacity-100 motion-safe:translate-x-1.5',
             theme.ink,
           )}
         />

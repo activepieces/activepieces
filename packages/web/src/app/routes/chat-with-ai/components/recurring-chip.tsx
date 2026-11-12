@@ -32,7 +32,7 @@ export function RecurringChip({ onSend }: { onSend: () => void }) {
     <button
       type="button"
       onClick={onSend}
-      className="recurring-chip flex w-fit max-w-full items-start gap-2 text-left text-sm cursor-pointer min-w-0 rounded-md pl-1 pr-2 py-1 transition-colors"
+      className="recurring-chip flex w-fit max-w-full items-start gap-2 text-left text-sm cursor-pointer min-w-0 rounded-md pl-1 pr-2 py-1 transition-colors duration-(--dur-micro) ease-[ease]"
     >
       <svg
         width="16"

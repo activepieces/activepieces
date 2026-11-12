@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { cn } from '@/lib/utils';
 
 import { InteractiveCardShell } from './interactive-card-shell';
@@ -44,9 +45,9 @@ export function McpReconnectCard({
     >
       <motion.div
         className="flex items-center gap-3 rounded-xl border bg-gray-1 p-3"
-        initial={{ opacity: 0, y: 8 }}
+        initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
+        transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
       >
         <ConnectorIcon logoUrl={reconnect.logoUrl} />
         <div className="min-w-0 flex-1">
@@ -59,9 +60,9 @@ export function McpReconnectCard({
         </div>
         {continued ? (
           <motion.span
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
             className="flex shrink-0 items-center justify-center"
           >
             <Check className="h-5 w-5 text-success-11" />

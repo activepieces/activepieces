@@ -1,7 +1,7 @@
 import { SubagentActivity, SubagentTimelineEntry } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, Loader2, Maximize2, Minimize2, Search, X } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { createContext, useEffect, useRef, useState } from 'react';
 
 import {
@@ -17,6 +17,7 @@ import {
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { useElementSize } from '@/hooks/use-element-size';
 import { cn } from '@/lib/utils';
 
@@ -41,6 +42,7 @@ export function TaskPanel({
 }) {
   const [fullscreen, setFullscreen] = useState(false);
   const docked = useDocked();
+  const reduced = useReducedMotion();
   const selected = tasks.find(
     ({ toolCallId }) => toolCallId === selectedToolCallId,
   );
@@ -73,7 +75,7 @@ export function TaskPanel({
               type="button"
               onClick={() => onSelect(toolCallId)}
               className={cn(
-                'flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs transition-colors hover:bg-gray-3',
+                'flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3',
                 toolCallId === selected.toolCallId
                   ? 'bg-gray-3 text-gray-12'
                   : 'text-gray-11',
@@ -122,10 +124,10 @@ export function TaskPanel({
 
   return (
     <motion.aside
-      initial={{ opacity: 0, x: 24 }}
+      initial={{ opacity: 0, x: reduced ? 0 : 8 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.25 }}
-      className="flex h-full w-[460px] shrink-0 flex-col border-l bg-panel xl:w-[540px]"
+      transition={{ duration: MOTION.move, ease: MOTION.easeOut }}
+      className="flex h-full w-[460px] shrink-0 flex-col border-l bg-panel @min-[80rem]/chat-room:w-[540px]"
     >
       {body}
     </motion.aside>
@@ -142,7 +144,10 @@ export function TaskPanelLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => setChatAreaWidth(room.width), [room.width, setChatAreaWidth]);
   return (
     <TaskPanelSlotContext.Provider value={slot}>
-      <div ref={roomRef} className="flex h-full min-w-0 flex-1">
+      <div
+        ref={roomRef}
+        className="@container/chat-room flex h-full min-w-0 flex-1"
+      >
         {children}
         <div ref={setSlot} className="contents" />
       </div>
@@ -169,7 +174,7 @@ function TaskDetails({
   return (
     <ChatContainerRoot className="min-h-0 flex-1">
       <ChatContainerContent
-        className={cn('mx-auto px-5 py-5', wide && 'max-w-3xl')}
+        className={cn('@container/task mx-auto px-5 py-5', wide && 'max-w-3xl')}
       >
         <div className="flex items-start gap-3">
           <div className="min-w-0 flex-1">
@@ -220,12 +225,7 @@ function TaskDetails({
               count: pages.length,
             })}
           >
-            <div
-              className={cn(
-                'grid grid-cols-1 gap-2',
-                wide ? 'sm:grid-cols-3' : 'sm:grid-cols-2',
-              )}
-            >
+            <div className="grid grid-cols-1 gap-2 @sm/task:grid-cols-2 @2xl/task:grid-cols-3">
               {pages.map((page) => (
                 <SourceCard key={page.url} url={page.url} title={page.title} />
               ))}
@@ -244,11 +244,12 @@ function TimelineItem({
   entry: SubagentTimelineEntry;
   active: boolean;
 }) {
+  const reduced = useReducedMotion();
   return (
     <motion.li
-      initial={{ opacity: 0, y: 6 }}
+      initial={{ opacity: 0, y: reduced ? 0 : 4 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
       className="flex gap-3"
     >
       <span className="flex size-5 shrink-0 items-center justify-center">
@@ -328,7 +329,7 @@ function SourceCard({ url, title }: { url: string; title?: string }) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex flex-col gap-1.5 rounded-lg border p-3 transition-colors hover:bg-gray-3"
+      className="flex flex-col gap-1.5 rounded-lg border p-3 transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3"
     >
       <span className="flex items-center gap-1.5 text-xs text-gray-11">
         <FaviconOrGlobe url={url} size="sm" />
