@@ -326,7 +326,7 @@ function StartTrial({
           </ul>
         </div>
       </div>
-      <aside className="relative flex flex-1 flex-col justify-between gap-8 border-t bg-gray-2 p-8 md:border-t-0 md:border-l">
+      <aside className="relative flex flex-1 flex-col justify-between gap-8 border-t bg-gray-1 p-8 md:border-t-0 md:border-l">
         <DialogClose className="absolute top-4 right-4 rounded-md opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-gray-8 focus-visible:outline-hidden">
           <X className="size-4" />
           <span className="sr-only">{t('Close')}</span>
