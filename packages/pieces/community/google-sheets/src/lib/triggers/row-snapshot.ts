@@ -20,6 +20,7 @@ const manifestSchema = z.object({
 	chunkCount: z.number(),
 	rowCount: z.number(),
 	entryWidth: z.number(),
+	readAt: z.optional(z.number()),
 	retained: z.optional(
 		z.object({
 			generation: z.number(),
@@ -278,7 +279,7 @@ async function loadSnapshot({
 	store: Store;
 	key: string;
 	identity: SnapshotIdentity;
-}): Promise<RowFingerprint[] | null> {
+}): Promise<LoadedSnapshot | null> {
 	let manifest = await readManifest({ store, key });
 	for (let attempt = 1; attempt <= MAX_LOAD_ATTEMPTS; attempt++) {
 		if (isNil(manifest) || !matchesIdentity({ manifest, identity })) {
@@ -286,18 +287,23 @@ async function loadSnapshot({
 		}
 		const rows = await readChunks({ store, key, written: manifest });
 		if (!isNil(rows)) {
-			return rows;
+			return { rows, generation: manifest.generation, writeId: manifest.writeId, comparedWriteId: manifest.writeId };
 		}
 		const latest = await readManifest({ store, key });
 		if (isNil(latest) || isSameWrite({ left: latest, right: manifest })) {
 			const retained = isNil(manifest.retained)
 				? null
 				: await readChunks({ store, key, written: manifest.retained });
-			if (!isNil(retained)) {
+			if (!isNil(retained) && !isNil(manifest.retained)) {
 				console.warn(
-					`[google-sheets] row snapshot ${key} generation ${manifest.generation} was overwritten by an overlapping notification; comparing against generation ${manifest.retained?.generation}.`,
+					`[google-sheets] row snapshot ${key} generation ${manifest.generation} was overwritten by an overlapping notification; comparing against generation ${manifest.retained.generation}.`,
 				);
-				return retained;
+				return {
+					rows: retained,
+					generation: manifest.generation,
+					writeId: manifest.writeId,
+					comparedWriteId: manifest.retained.writeId,
+				};
 			}
 			console.warn(
 				`[google-sheets] row snapshot ${key} generation ${manifest.generation} is incomplete; taking a new baseline.`,
@@ -309,6 +315,41 @@ async function loadSnapshot({
 	throw new Error(
 		'The row snapshot kept changing while it was read, because notifications overlapped. Nothing was skipped; the next notification will compare again.',
 	);
+}
+
+async function saveSnapshotIfNewer({
+	store,
+	key,
+	identity,
+	rows,
+	loaded,
+	readAt,
+}: {
+	store: Store;
+	key: string;
+	identity: SnapshotIdentity;
+	rows: RowFingerprint[];
+	loaded: LoadedSnapshot | null;
+	readAt: number;
+}): Promise<boolean> {
+	const latest = await readManifest({ store, key });
+	const nobodySaved =
+		isNil(latest) ||
+		!matchesIdentity({ manifest: latest, identity }) ||
+		(!isNil(loaded) && latest.generation === loaded.generation && latest.writeId === loaded.writeId);
+	const storedReadAt = latest?.readAt;
+	if (!nobodySaved && !isNil(storedReadAt) && storedReadAt >= readAt) {
+		console.info(
+			`[google-sheets] row snapshot ${key} was already saved from a newer read by an overlapping notification; keeping it.`,
+		);
+		return false;
+	}
+	await saveSnapshot({ store, key, identity, rows, readAt });
+	return true;
+}
+
+function readTimestamp(): number {
+	return performance.timeOrigin + performance.now();
 }
 
 function isSameWrite({ left, right }: { left: SnapshotManifest; right: SnapshotManifest }): boolean {
@@ -359,11 +400,13 @@ async function saveSnapshot({
 	key,
 	identity,
 	rows,
+	readAt,
 }: {
 	store: Store;
 	key: string;
 	identity: SnapshotIdentity;
 	rows: RowFingerprint[];
+	readAt: number;
 }): Promise<void> {
 	const previous = await readManifest({ store, key });
 	const generation = (previous?.generation ?? 0) + 1;
@@ -388,6 +431,7 @@ async function saveSnapshot({
 		chunkCount,
 		rowCount: rows.length,
 		entryWidth,
+		readAt,
 		retained: isNil(previous)
 			? undefined
 			: {
@@ -447,6 +491,8 @@ export const rowSnapshot = {
 	hasBlankTrigger,
 	loadSnapshot,
 	saveSnapshot,
+	saveSnapshotIfNewer,
+	readTimestamp,
 };
 
 export type RowFingerprint = {
@@ -470,6 +516,13 @@ export type SnapshotIdentity = {
 	spreadsheetId: string;
 	sheetId: number;
 	triggerColumn: string;
+};
+
+export type LoadedSnapshot = {
+	rows: RowFingerprint[];
+	generation: number;
+	writeId: string;
+	comparedWriteId: string;
 };
 
 type SnapshotManifest = z.infer<typeof manifestSchema>;

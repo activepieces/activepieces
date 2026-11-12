@@ -1,25 +1,17 @@
 import {
 	createTrigger,
-	DEDUPE_KEY_PROPERTY,
 	isNil,
 	Property,
 	Store,
 	TriggerStrategy,
 	WebhookRenewStrategy,
 } from '@activepieces/pieces-framework';
-import { googleSheetsAuth, GoogleSheetsAuthValue } from '../common/common';
+import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
 import { googlesheetsNewRowAddedTriggerOutputSchema } from '../output-schemas';
-import {
-	getWorkSheetName,
-	getWorkSheetValues,
-	hashObject,
-	isChangeContentMessage,
-	isSyncMessage,
-	mapRowsToColumnLabels,
-	sheetIdentity,
-} from './helpers';
-import { RowFingerprint, rowSnapshot, SnapshotIdentity } from './row-snapshot';
+import { getWorkSheetName, getWorkSheetValues, mapRowsToColumnLabels, sheetIdentity } from './helpers';
+import { LoadedSnapshot, RowFingerprint, rowSnapshot, SnapshotIdentity } from './row-snapshot';
+import { rowRun } from './row-run';
 import { sheetChannel } from './sheet-channel';
 
 const CHANNEL_STORE_KEY = 'googlesheets_new_row_added';
@@ -33,15 +25,20 @@ function legacyStoreKey(sheetId: number): string {
 async function findAddedRows({
 	store,
 	identity,
+	previous,
 	current,
 }: {
 	store: Store;
 	identity: SnapshotIdentity;
+	previous: LoadedSnapshot | null;
 	current: RowFingerprint[];
-}): Promise<{ indexes: number[]; legacy: boolean; unchanged: boolean }> {
-	const previous = await rowSnapshot.loadSnapshot({ store, key: SNAPSHOT_STORE_KEY, identity });
+}): Promise<{ indexes: number[]; legacy: boolean; unchanged: boolean; loaded: LoadedSnapshot | null; base: string }> {
 	if (!isNil(previous)) {
-		const { changes, lastKnownIndex } = rowSnapshot.diffRows({ previous, current, pairMovedRowsByTrigger: true });
+		const { changes, lastKnownIndex } = rowSnapshot.diffRows({
+			previous: previous.rows,
+			current,
+			pairMovedRowsByTrigger: true,
+		});
 		return {
 			indexes: changes
 				.filter(
@@ -52,7 +49,9 @@ async function findAddedRows({
 				)
 				.map((change) => change.index),
 			legacy: false,
-			unchanged: rowSnapshot.sameRows({ previous, current }),
+			unchanged: rowSnapshot.sameRows({ previous: previous.rows, current }),
+			loaded: previous,
+			base: previous.comparedWriteId,
 		};
 	}
 	const legacyRowCount = await store.get<unknown>(legacyStoreKey(identity.sheetId));
@@ -63,39 +62,12 @@ async function findAddedRows({
 				.filter((index) => index >= legacyRowCount),
 			legacy: true,
 			unchanged: false,
+			loaded: null,
+			base: `legacy-${legacyRowCount}`,
 		};
 	}
 	console.info('[google-sheets] new_row_added: no row snapshot for these settings, taking a new baseline.');
-	return { indexes: [], legacy: false, unchanged: false };
-}
-
-async function readAddedRows({
-	auth,
-	spreadsheetId,
-	sheetName,
-	indexes,
-	headerCount,
-}: {
-	auth: GoogleSheetsAuthValue;
-	spreadsheetId: string;
-	sheetName: string;
-	indexes: number[];
-	headerCount: number;
-}): Promise<{ row: number; values: Record<string, string> }[]> {
-	if (indexes.length === 0) {
-		return [];
-	}
-	const first = indexes[0];
-	const last = indexes[indexes.length - 1];
-	const displayValues = await getWorkSheetValues({
-		auth,
-		spreadsheetId,
-		sheetName,
-		range: `${first + 1}:${last + 1}`,
-	});
-	return indexes.flatMap((index) =>
-		mapRowsToColumnLabels([displayValues[index - first] ?? []], index, headerCount),
-	);
+	return { indexes: [], legacy: false, unchanged: false, loaded: null, base: 'baseline' };
 }
 
 export const newRowAddedTrigger = createTrigger({
@@ -123,19 +95,14 @@ export const newRowAddedTrigger = createTrigger({
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {
 		const { spreadsheetId, sheetId } = sheetIdentity(context.propsValue);
-		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
-		const rawValues = await getWorkSheetValues({
-			auth: context.auth,
-			spreadsheetId,
-			sheetName,
-			valueRenderOption: 'UNFORMATTED_VALUE',
-		});
+		const { grid, readAt } = await rowRun.readRows({ auth: context.auth, spreadsheetId, sheetId });
 
 		await rowSnapshot.saveSnapshot({
 			store: context.store,
 			key: SNAPSHOT_STORE_KEY,
 			identity: { spreadsheetId, sheetId, triggerColumn: NO_TRIGGER_COLUMN },
-			rows: rowSnapshot.fingerprintRowsByFirstCell({ rows: rawValues }),
+			rows: rowSnapshot.fingerprintRowsByFirstCell({ rows: grid.raw }),
+			readAt,
 		});
 		await context.store.delete(legacyStoreKey(sheetId));
 
@@ -156,57 +123,40 @@ export const newRowAddedTrigger = createTrigger({
 		});
 	},
 	async run(context) {
-		const headers = context.payload.headers;
-		if (isSyncMessage(headers) || !isChangeContentMessage(headers)) {
-			return [];
-		}
-		if (
-			await sheetChannel.isForeignNotification({
-				store: context.store,
-				storeKey: CHANNEL_STORE_KEY,
-				headers,
-			})
-		) {
+		const handle = await rowRun.shouldHandleNotification({
+			store: context.store,
+			channelStoreKey: CHANNEL_STORE_KEY,
+			headers: context.payload.headers,
+		});
+		if (!handle) {
 			return [];
 		}
 
 		const { spreadsheetId, sheetId } = sheetIdentity(context.propsValue);
 		const identity: SnapshotIdentity = { spreadsheetId, sheetId, triggerColumn: NO_TRIGGER_COLUMN };
 
-		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
-		const rawValues = await getWorkSheetValues({
-			auth: context.auth,
-			spreadsheetId,
-			sheetName,
-			valueRenderOption: 'UNFORMATTED_VALUE',
-		});
-		const current = rowSnapshot.fingerprintRowsByFirstCell({ rows: rawValues });
+		const previous = await rowSnapshot.loadSnapshot({ store: context.store, key: SNAPSHOT_STORE_KEY, identity });
+		const { grid, readAt } = await rowRun.readRows({ auth: context.auth, spreadsheetId, sheetId });
+		const current = rowSnapshot.fingerprintRowsByFirstCell({ rows: grid.raw });
 
-		const added = await findAddedRows({ store: context.store, identity, current });
-		const events = await readAddedRows({
-			auth: context.auth,
-			spreadsheetId,
-			sheetName,
-			indexes: added.indexes,
-			headerCount: (rawValues[0] ?? []).length,
-		});
+		const added = await findAddedRows({ store: context.store, identity, previous, current });
+		const events = rowRun.labelRows({ display: grid.display, indexes: added.indexes });
 
 		if (!added.unchanged) {
-			await rowSnapshot.saveSnapshot({
+			await rowSnapshot.saveSnapshotIfNewer({
 				store: context.store,
 				key: SNAPSHOT_STORE_KEY,
 				identity,
 				rows: current,
+				loaded: added.loaded,
+				readAt,
 			});
 		}
 		if (added.legacy) {
 			await context.store.delete(legacyStoreKey(sheetId));
 		}
 
-		return events.map((row) => ({
-			...row,
-			[DEDUPE_KEY_PROPERTY]: hashObject(row),
-		}));
+		return rowRun.withDedupeKeys({ events, base: added.base });
 	},
 	async onRenew(context) {
 		const { spreadsheetId } = sheetIdentity(context.propsValue);

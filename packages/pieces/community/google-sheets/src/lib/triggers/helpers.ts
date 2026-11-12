@@ -1,4 +1,4 @@
-import { sheets as googleSheets } from '@googleapis/sheets';
+import { sheets as googleSheets, sheets_v4 } from '@googleapis/sheets';
 import { drive as googleDrive, drive_v3 } from '@googleapis/drive';
 import { nanoid } from 'nanoid';
 import dayjs from 'dayjs';
@@ -112,16 +112,90 @@ export async function deleteFileNotification(
 	});
 }
 
+export async function readSheetGrid({
+	auth,
+	spreadsheetId,
+	sheetName,
+}: {
+	auth: GoogleSheetsAuthValue;
+	spreadsheetId: string;
+	sheetName: string;
+}): Promise<SheetGrid> {
+	const authClient = await createGoogleClient(auth);
+	const sheets = googleSheets({ version: 'v4', auth: authClient });
+	const res = await sheets.spreadsheets.get({
+		spreadsheetId,
+		ranges: [googleSheetsCommon.sheetRange({ sheetName })],
+		includeGridData: true,
+		fields: 'sheets(properties(sheetId,title),data(startRow,rowData(values(effectiveValue,formattedValue))))',
+	});
+	const data = res.data.sheets?.[0]?.data?.[0];
+	return sheetGridFromRowData({ rowData: data?.rowData ?? [], startRow: data?.startRow ?? 0 });
+}
+
+export function sheetGridFromRowData({
+	rowData,
+	startRow,
+}: {
+	rowData: sheets_v4.Schema$RowData[];
+	startRow: number;
+}): SheetGrid {
+	const raw: SheetCellValue[][] = [];
+	const display: string[][] = [];
+	for (let index = 0; index < startRow; index++) {
+		raw.push([]);
+		display.push([]);
+	}
+	for (const row of rowData) {
+		const cells = row.values ?? [];
+		const rawRow = cells.map((cell) => unformattedValue(cell));
+		const displayRow = cells.map((cell) => cell.formattedValue ?? '');
+		let end = cells.length;
+		while (end > 0 && rawRow[end - 1] === '' && displayRow[end - 1] === '') {
+			end -= 1;
+		}
+		raw.push(rawRow.slice(0, end));
+		display.push(displayRow.slice(0, end));
+	}
+	let rows = raw.length;
+	while (rows > 0 && raw[rows - 1].length === 0) {
+		rows -= 1;
+	}
+	return { raw: raw.slice(0, rows), display: display.slice(0, rows) };
+}
+
+function unformattedValue(cell: sheets_v4.Schema$CellData): SheetCellValue {
+	const value = cell.effectiveValue;
+	if (isNil(value)) {
+		return '';
+	}
+	if (!isNil(value.numberValue)) {
+		return value.numberValue;
+	}
+	if (!isNil(value.boolValue)) {
+		return value.boolValue;
+	}
+	if (!isNil(value.stringValue)) {
+		return value.stringValue;
+	}
+	if (!isNil(value.errorValue)) {
+		return cell.formattedValue ?? '#ERROR!';
+	}
+	return '';
+}
+
 export function isSyncMessage(headers: Record<string, string>) {
 	return headers['x-goog-resource-state'] === 'sync';
 }
 
 export function isChangeContentMessage(headers: Record<string, string>) {
-	// https://developers.google.com/drive/api/guides/push#respond-to-notifications
-	return (
-		headers['x-goog-resource-state'] === 'update' &&
-		['content', 'properties', 'content,properties'].includes(headers['x-goog-changed'])
-	);
+	if (headers['x-goog-resource-state'] !== 'update') {
+		return false;
+	}
+	const changed = (headers['x-goog-changed'] ?? '')
+		.split(',')
+		.map((entry) => entry.trim().toLowerCase());
+	return changed.includes('content') || changed.includes('properties');
 }
 
 export function hashObject(obj: Record<string, unknown>): string {
@@ -156,21 +230,6 @@ export function mapRowsToColumnLabels(rowValues: any[][], oldRowCount: number, h
 	return result;
 }
 
-export function labelRowValues({
-	row,
-	headerCount,
-}: {
-	row: SheetCellValue[] | undefined;
-	headerCount: number;
-}): Record<string, string> {
-	const values: Record<string, string> = {};
-	for (let column = 0; column < headerCount; column++) {
-		const cell = row?.[column];
-		values[columnToLabel(column)] = isNil(cell) ? '' : String(cell);
-	}
-	return values;
-}
-
 export function sheetIdentity({
 	spreadsheetId,
 	sheetId,
@@ -195,3 +254,8 @@ export interface WebhookInformation {
 export type SheetValueRenderOption = 'FORMATTED_VALUE' | 'UNFORMATTED_VALUE';
 
 export type SheetCellValue = string | number | boolean | null | undefined;
+
+export type SheetGrid = {
+	raw: SheetCellValue[][];
+	display: string[][];
+};

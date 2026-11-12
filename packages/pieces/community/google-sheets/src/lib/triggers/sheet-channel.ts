@@ -48,6 +48,13 @@ async function openChannel({
 		throw saved.error;
 	}
 	if (!isNil(previous) && previous.id !== created.data.id) {
+		const kept = await tryCatch(() => store.put<WebhookInformation>(previousChannelKey(storeKey), previous));
+		if (kept.error) {
+			console.warn(
+				`[google-sheets] could not remember replaced channel ${previous.id}; its last notifications will be ignored.`,
+				kept.error,
+			);
+		}
 		await stopChannel({ auth, channel: previous, reason: 'that it replaced' });
 	}
 }
@@ -64,6 +71,19 @@ async function closeChannel({
 	const channel = await store.get<WebhookInformation>(storeKey);
 	await stopChannel({ auth, channel, reason: 'on disable' });
 	await store.delete(storeKey);
+	await store.delete(previousChannelKey(storeKey));
+}
+
+function previousChannelKey(storeKey: string): string {
+	return `${storeKey}_previous`;
+}
+
+function isLive(channel: WebhookInformation): boolean {
+	if (isNil(channel.expiration) || channel.expiration === '') {
+		return true;
+	}
+	const expiration = Number(channel.expiration);
+	return Number.isNaN(expiration) || expiration > Date.now();
 }
 
 async function isForeignNotification({
@@ -80,7 +100,11 @@ async function isForeignNotification({
 		return false;
 	}
 	const channel = await store.get<WebhookInformation>(storeKey);
-	return !isNil(channel) && !isNil(channel.id) && channel.id !== channelId;
+	if (isNil(channel) || isNil(channel.id) || channel.id === channelId) {
+		return false;
+	}
+	const previous = await store.get<WebhookInformation>(previousChannelKey(storeKey));
+	return isNil(previous) || previous.id !== channelId || !isLive(previous);
 }
 
 export const sheetChannel = {
