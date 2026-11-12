@@ -244,7 +244,7 @@ function StartTrial({
   const hasPostTrialActivationCallback = !isNil(
     payload?.postTrialActivationCallback,
   );
-  const featureName = selfServeTrialFeatures.name(featureKey);
+  const featureName = selfServeTrialFeatures.nameInSentence(featureKey);
   const highlights = selfServeTrialFeatures.highlights(featureKey);
 
   return (
