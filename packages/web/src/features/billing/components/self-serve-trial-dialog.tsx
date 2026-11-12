@@ -6,13 +6,12 @@ import {
 import confetti from 'canvas-confetti';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Check, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Check } from 'lucide-react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogTitle,
@@ -64,12 +63,7 @@ export function SelfServeTrialDialog() {
     runPostTrialActivationCallback();
   });
   const open = !isNil(payload);
-  useEffect(() => {
-    if (!isNil(payload)) {
-      resetTrialStart();
-    }
-  }, [payload, resetTrialStart]);
-  const view = dialogViewForStartResult({
+  const liveView = dialogViewForStartResult({
     result: startedTrial?.state,
     alreadyUsed: api.isApError(
       trialStartError,
@@ -80,6 +74,10 @@ export function SelfServeTrialDialog() {
         selfServeTrialFeatures.isIncludedInTrial(shownPayload?.featureKey)) ||
       trialStartFailed,
   });
+  const [view, setView] = useState(liveView);
+  if (open && liveView !== view) {
+    setView(liveView);
+  }
   const busy = isStartingTrial;
   const close = () => {
     if (busy) {
@@ -87,6 +85,7 @@ export function SelfServeTrialDialog() {
     }
     confetti.reset();
     closeDialog();
+    resetTrialStart();
   };
   const postTrialActivationCallback = payload?.postTrialActivationCallback;
 
@@ -132,7 +131,7 @@ export function SelfServeTrialDialog() {
       <SelfServeTrialEndedDialog />
       <Dialog open={open} onOpenChange={(next) => !next && close()}>
         <DialogContent
-          showCloseButton={!busy && view !== DialogView.START}
+          showCloseButton={!busy}
           onEscapeKeyDown={(event) => {
             if (busy) {
               event.preventDefault();
@@ -150,12 +149,7 @@ export function SelfServeTrialDialog() {
               returnFocus.focus();
             }
           }}
-          className={cn(
-            'flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:rounded-2xl',
-            view === DialogView.START
-              ? 'shadow-[0_1px_2px_rgb(0_0_0/0.04),0_4px_12px_-4px_rgb(0_0_0/0.06)] sm:max-w-[50rem]'
-              : 'sm:max-w-[60rem]',
-          )}
+          className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 shadow-lift sm:max-w-[50rem] sm:rounded-2xl"
         >
           {!isNil(shownPayload) && (
             <div
@@ -210,7 +204,7 @@ export function TrialTimeline({
       what: t(
         'You are back on {plan}. Your flows, connections and settings are kept.',
         {
-          plan: info?.autumnPlanName,
+          plan: info?.autumnPlanName ?? t('Free'),
         },
       ),
     },
@@ -219,27 +213,27 @@ export function TrialTimeline({
     <ol className="flex flex-col">
       {steps.map((step, index) => (
         <li key={step.when} className="flex gap-3">
-          <span className="flex flex-col items-center">
-            <span className="grid size-4 shrink-0 place-items-center">
-              {index === 0 && !started && (
-                <Check className="size-4 text-success-11" />
+          <span className="flex w-2 flex-col items-center gap-1.5 pt-1">
+            <span
+              className={cn(
+                'size-2 shrink-0 rounded-full',
+                index === 0 ? 'bg-accent-9' : 'bg-gray-8',
               )}
-              {index === 0 && started && (
-                <span className="size-2.5 rounded-full bg-accent-9" />
-              )}
-              {index > 0 && <span className="size-2 rounded-full bg-gray-8" />}
-            </span>
+            />
             {index < steps.length - 1 && (
-              <span className="my-1 w-px flex-1 bg-gray-6" />
+              <span className="w-px flex-1 bg-gray-6" />
             )}
           </span>
-          <span className="flex flex-col gap-0.5 pb-5">
-            <span className="text-sm font-medium text-gray-12">
+          <span
+            className={cn(
+              'flex flex-col gap-0.5',
+              index < steps.length - 1 && 'pb-6',
+            )}
+          >
+            <span className="text-xs font-medium text-gray-11">
               {step.when}
             </span>
-            <span className="text-sm leading-relaxed text-gray-11">
-              {step.what}
-            </span>
+            <span className="text-sm text-gray-12">{step.what}</span>
           </span>
         </li>
       ))}
@@ -260,8 +254,14 @@ function StartTrial({
   isError: boolean;
   onStart: () => void;
 }) {
-  const featureName = selfServeTrialFeatures.nameInSentence(featureKey);
   const highlights = selfServeTrialFeatures.highlights(featureKey);
+  const isClicked = (keys: FeatureKey[]) =>
+    featureKey !== undefined && keys.includes(featureKey);
+  const featureName = highlights.some((feature) =>
+    isClicked(feature.featureKeys),
+  )
+    ? selfServeTrialFeatures.nameInSentence(featureKey)
+    : null;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto md:flex-row">
@@ -293,12 +293,9 @@ function StartTrial({
           <span className="text-xs font-medium text-gray-11">
             {t('What you get')}
           </span>
-          <ul className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-flow-col md:grid-rows-3">
-            {highlights.map((feature, index) => {
-              const highlighted =
-                index === 0 &&
-                featureKey !== undefined &&
-                feature.featureKeys.includes(featureKey);
+          <ul className="grid gap-x-6 gap-y-4 sm:grid-cols-2 md:grid-flow-col md:grid-rows-3">
+            {highlights.map((feature) => {
+              const highlighted = isClicked(feature.featureKeys);
               return (
                 <li key={feature.title} className="flex items-start gap-2.5">
                   <feature.icon
@@ -316,7 +313,7 @@ function StartTrial({
                     >
                       {feature.shortTitle ?? feature.title}
                     </span>
-                    <span className="text-xs text-gray-11">
+                    <span className="truncate text-xs text-gray-11">
                       {feature.detail}
                     </span>
                   </span>
@@ -326,13 +323,9 @@ function StartTrial({
           </ul>
         </div>
       </div>
-      <aside className="relative flex flex-1 flex-col justify-between gap-8 border-t bg-gray-2 p-8 md:border-t-0 md:border-l">
-        <DialogClose className="absolute top-4 right-4 rounded-md opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-gray-8 focus-visible:outline-hidden">
-          <X className="size-4" />
-          <span className="sr-only">{t('Close')}</span>
-        </DialogClose>
-        <StartTrialSchedule />
-        <div className="flex flex-col items-stretch gap-3">
+      <aside className="flex flex-1 flex-col justify-between gap-8 border-t bg-gray-2 p-8 md:border-t-0 md:border-l">
+        <TrialTimeline started={false} />
+        <div className="flex flex-col items-stretch gap-2 bg-gray-2 max-md:sticky max-md:bottom-0">
           {isError && (
             <p className="text-sm text-danger-11">
               {t('We could not start your trial. Please try again.')}
@@ -348,67 +341,14 @@ function StartTrial({
               ? t('Start trial and save')
               : t('Start free trial')}
           </Button>
-          <span className="flex items-center justify-center gap-1 text-sm text-gray-11">
-            {t('or')}
-            <SelfServeTrialSalesLink
-              locationInWebApp={
-                SalesLinkLocationInWebApp.ENTERPRISE_TRIAL_START
-              }
-              variant="link"
-              className="h-auto p-0"
-              featureKey={featureKey}
-            />
-          </span>
+          <SelfServeTrialSalesLink
+            locationInWebApp={SalesLinkLocationInWebApp.ENTERPRISE_TRIAL_START}
+            className="h-10"
+            featureKey={featureKey}
+          />
         </div>
       </aside>
     </div>
-  );
-}
-
-function StartTrialSchedule() {
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { data: info } = billingQueries.usePlatformSubscription(platform.id);
-  const endDate = dayjs().add(SELF_SERVE_TRIAL_DAYS, 'day');
-  const steps = [
-    { when: t('Today'), what: t('Full access for your team') },
-    {
-      when: selfServeTrialTime.formatDate(endDate.subtract(1, 'day')),
-      what: t('We email you a reminder'),
-    },
-    {
-      when: selfServeTrialTime.formatDate(endDate),
-      what: t('Back on {plan}, nothing lost', { plan: info?.autumnPlanName }),
-    },
-  ];
-  return (
-    <ol className="flex flex-col pt-1">
-      {steps.map((step, index) => (
-        <li key={step.when} className="flex gap-3">
-          <span className="flex w-2 flex-col items-center gap-1.5 pt-1">
-            <span
-              className={cn(
-                'size-2 shrink-0 rounded-full',
-                index === 0 ? 'bg-accent-9' : 'bg-gray-8',
-              )}
-            />
-            {index < steps.length - 1 && (
-              <span className="w-px flex-1 bg-gray-6" />
-            )}
-          </span>
-          <span
-            className={cn(
-              'flex flex-col gap-0.5',
-              index < steps.length - 1 && 'pb-6',
-            )}
-          >
-            <span className="text-xs font-medium text-gray-11">
-              {step.when}
-            </span>
-            <span className="text-sm text-gray-12">{step.what}</span>
-          </span>
-        </li>
-      ))}
-    </ol>
   );
 }
 

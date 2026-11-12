@@ -18,6 +18,14 @@ function list(): SelfServeTrialFeature[] {
   const names = featureNames();
   return [
     {
+      icon: Sparkles,
+      title: names.UNIVERSAL_AI,
+      benefit: t('Use your own AI provider accounts in every flow and agent.'),
+      detail: t('OpenAI, Anthropic and more'),
+      featureKeys: ['UNIVERSAL_AI'],
+      isOnPlan: (plan) => plan.aiProvidersEnabled,
+    },
+    {
       icon: KeyRound,
       title: names.SSO,
       benefit: t('Your team signs in with your identity provider.'),
@@ -40,14 +48,6 @@ function list(): SelfServeTrialFeature[] {
       detail: t('Vault, AWS or CyberArk'),
       featureKeys: ['SECRET_MANAGERS'],
       isOnPlan: (plan) => plan.secretManagersEnabled,
-    },
-    {
-      icon: Sparkles,
-      title: names.UNIVERSAL_AI,
-      benefit: t('Use your own AI provider accounts in every flow and agent.'),
-      detail: t('OpenAI, Anthropic and more'),
-      featureKeys: ['UNIVERSAL_AI'],
-      isOnPlan: (plan) => plan.aiProvidersEnabled,
     },
     {
       icon: UserCog,
@@ -83,15 +83,11 @@ function highlights(
 ): SelfServeTrialFeature[] {
   const all = list();
   const clicked = all.find(
-    (feature) =>
-      featureKey !== undefined && feature.featureKeys.includes(featureKey),
+    (feature) => !isNil(featureKey) && feature.featureKeys.includes(featureKey),
   );
-  const byPriority = HIGHLIGHT_PRIORITY.map((key) =>
-    all.find((feature) => feature.featureKeys.includes(key)),
-  ).filter((feature): feature is SelfServeTrialFeature => !isNil(feature));
   const ordered = isNil(clicked)
-    ? byPriority
-    : [clicked, ...byPriority.filter((feature) => feature !== clicked)];
+    ? all
+    : [clicked, ...all.filter((feature) => feature !== clicked)];
   return ordered.slice(0, HIGHLIGHT_COUNT);
 }
 
@@ -352,16 +348,6 @@ export const selfServeTrialFeatures = {
 };
 
 const HIGHLIGHT_COUNT = 6;
-
-const HIGHLIGHT_PRIORITY: FeatureKey[] = [
-  'UNIVERSAL_AI',
-  'SSO',
-  'AUDIT_LOGS',
-  'SECRET_MANAGERS',
-  'CUSTOM_ROLES',
-  'USERS',
-  'GLOBAL_CONNECTIONS',
-];
 
 const FEATURES_NOT_IN_TRIAL: FeatureKey[] = ['DEDICATED_WORKERS'];
 

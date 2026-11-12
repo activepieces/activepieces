@@ -15,7 +15,11 @@ const SELF_HOSTED_FEATURES: FeatureKey[] = [
 
 describe('plan named on locked screens', () => {
   it.each([
-    { featureKey: 'UNIVERSAL_AI', edition: ApEdition.CLOUD, plan: PlanName.PLUS },
+    {
+      featureKey: 'UNIVERSAL_AI',
+      edition: ApEdition.CLOUD,
+      plan: PlanName.PLUS,
+    },
     { featureKey: 'SSO', edition: ApEdition.CLOUD, plan: PlanName.TEAM },
     { featureKey: 'PROJECTS', edition: ApEdition.CLOUD, plan: PlanName.TEAM },
     {
@@ -23,7 +27,11 @@ describe('plan named on locked screens', () => {
       edition: ApEdition.CLOUD,
       plan: PlanName.ENTERPRISE,
     },
-    { featureKey: 'USERS', edition: ApEdition.CLOUD, plan: PlanName.ENTERPRISE },
+    {
+      featureKey: 'USERS',
+      edition: ApEdition.CLOUD,
+      plan: PlanName.ENTERPRISE,
+    },
     ...SELF_HOSTED_FEATURES.flatMap((featureKey) =>
       [ApEdition.COMMUNITY, ApEdition.ENTERPRISE].map((edition) => ({
         featureKey,
