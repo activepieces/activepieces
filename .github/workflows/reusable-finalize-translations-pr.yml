@@ -183,16 +183,21 @@ jobs:
           script: |
             const branchName = `${{ inputs.branch_name }}`;
             const repo = { owner: context.repo.owner, repo: context.repo.repo };
-            const { data: pulls } = await github.rest.pulls.list({ ...repo, head: `${repo.owner}:${branchName}`, state: 'all' });
-            if (pulls.some((pull) => pull.merged_at !== null)) {
+            const listPulls = async () => (await github.rest.pulls.list({ ...repo, head: `${repo.owner}:${branchName}`, state: 'all' })).data;
+            const pulls = await listPulls();
+            for (const pull of pulls.filter((pull) => pull.state === 'open')) {
+              await github.rest.pulls.update({ ...repo, pull_number: pull.number, state: 'closed' });
+            }
+            const after = await listPulls();
+            if (after.some((pull) => pull.merged_at !== null)) {
               core.notice('The translations PR merged after all, so the Crowdin renames stay.');
               return;
             }
-            const open = pulls.filter((pull) => pull.state === 'open');
-            for (const pull of open) {
-              await github.rest.pulls.update({ ...repo, pull_number: pull.number, state: 'closed' });
+            if (after.some((pull) => pull.state === 'open')) {
+              core.setFailed('The translations PR is still open, so the Crowdin renames stay. Close or merge it by hand.');
+              return;
             }
-            if (pulls.length > 0) {
+            if (after.length > 0) {
               await github.rest.git.deleteRef({ ...repo, ref: `heads/${branchName}` }).catch((error) => core.warning(`Could not delete the branch: ${error.message}`));
             }
             core.setOutput('safe_to_undo', 'true');
@@ -213,8 +218,8 @@ jobs:
           if-no-files-found: ignore
           retention-days: 90
 
-      - name: Fail when Crowdin could not rename every string
+      - name: Fail when a Crowdin change did not go through
         if: steps.crowdin.outputs.failed != '' && steps.crowdin.outputs.failed != '0'
         run: |
-          echo "::error::Crowdin could not rename ${{ steps.crowdin.outputs.failed }} strings. They lose their translations on the next Crowdin sync. See the job summary."
+          echo "::error::${{ steps.crowdin.outputs.failed }} Crowdin changes did not go through. A string that was not renamed loses its translations on the next Crowdin sync. See the job summary."
           exit 1

@@ -16,9 +16,9 @@ async function run({ client, pieces, autoApprovers, dryRun, journal }: RunParams
 
 async function undo({ client, lines, journal }: UndoParams): Promise<UndoCounts> {
     const attempted = lines.filter((line) => line.kind === 'pending' || (line.kind === 'rename' && line.status === 'renamed'))
-    const latestByString = new Map(attempted.map((line) => [line.stringId, line]))
+    const latestByRename = new Map(attempted.map((line) => [`${line.stringId}\u0000${line.before?.text}\u0000${line.after?.text}`, line]))
     let counts: UndoCounts = { undone: 0, failed: 0 }
-    for (const line of [...latestByString.values()].reverse()) {
+    for (const line of [...latestByRename.values()].reverse()) {
         const outcome = await undoOne({ client, line, journal })
         counts = { undone: counts.undone + outcome.undone, failed: counts.failed + outcome.failed }
     }
@@ -34,10 +34,13 @@ function summarize({ lines, counts, dryRun }: SummarizeParams): string {
     const review = renames.filter((line) => line.needsReview === true && (line.status === 'renamed' || line.status === 'would-rename'))
     const problems = lines.filter((line) => line.kind === 'skip' || line.status === 'error' || line.status === 'precondition-failed')
     const heading = dryRun ? '## Crowdin rename (dry run, nothing written)' : '## Crowdin rename'
+    const reviewHeading = dryRun
+        ? '### Translations kept after a rewording (a Crowdin issue would ask a translator to review each)'
+        : '### Translations kept after a rewording (a Crowdin issue asks a translator to review each)'
     const totals = `${dryRun ? counts.wouldRename : counts.renamed} ${dryRun ? 'would be renamed' : 'renamed'}, ${counts.skipped} skipped, ${counts.failed} failed.`
     const reviewTable = review.length === 0 ? [] : [
         '',
-        '### Translations kept after a rewording (a translator should review them)',
+        reviewHeading,
         '',
         '| Piece | Old English | New English | Languages |',
         '|---|---|---|---|',
@@ -49,7 +52,7 @@ function summarize({ lines, counts, dryRun }: SummarizeParams): string {
         '',
         '| Piece | Old English | Reason |',
         '|---|---|---|',
-        ...problems.map((line) => `| ${line.piece} | ${cell(line.before?.text)} | ${line.kind === 'skip' ? line.status : `${line.status}: ${cell(line.message)}`} |`),
+        ...problems.map((line) => `| ${line.piece} | ${cell(line.before?.text)} | ${line.kind === 'skip' ? line.status : `${line.kind} ${line.status}: ${cell(line.message)}`} |`),
     ]
     return [heading, '', totals, ...reviewTable, ...problemTable, ''].join('\n')
 }
@@ -126,11 +129,64 @@ async function applyRename({ client, piece, fileId, action, dryRun, journal }: A
     cleanup.problems.forEach((message) => journal({ kind: 'cleanup', piece, fileId, stringId: action.stringId, status: 'error', message }))
     let counts: RunCounts = { ...EMPTY_COUNTS, renamed: 1, writes: 1, failed: cleanup.problems.length }
     for (const path of cleanup.paths) {
-        const deleted = await deleteTranslations({ client, path })
+        const deleted = await deleteIfPresent({ client, path })
         journal({ kind: 'cleanup', piece, fileId, stringId: action.stringId, status: deleted.ok ? 'deleted' : 'error', message: deleted.ok ? path : `${path}: ${deleted.message}` })
         counts = addCounts({ left: counts, right: deleted.ok ? { ...EMPTY_COUNTS, writes: 1 } : { ...EMPTY_COUNTS, failed: 1 } })
     }
+    for (const language of action.needsReview ? action.keptLanguages : []) {
+        const problem = await openReviewIssue({ client, action, language })
+        journal({ kind: 'review-issue', piece, fileId, stringId: action.stringId, language, before: checked.before, after, status: problem === null ? 'opened' : 'error', message: problem ?? undefined })
+        counts = addCounts({ left: counts, right: problem === null ? { ...EMPTY_COUNTS, writes: 1 } : { ...EMPTY_COUNTS, failed: 1 } })
+    }
     return counts
+}
+
+async function openReviewIssue({ client, action, language }: { client: CrowdinClient, action: RenameAction, language: string }): Promise<string | null> {
+    try {
+        await client.post({
+            path: '/comments',
+            body: {
+                stringId: action.stringId,
+                targetLanguageId: language,
+                type: 'issue',
+                issueType: 'translation_mistake',
+                text: reviewIssueText({ oldText: action.oldText, newText: action.newText }),
+            },
+        })
+        return null
+    }
+    catch (error) {
+        return messageOf({ error })
+    }
+}
+
+function reviewIssueText({ oldText, newText }: { oldText: string, newText: string }): string {
+    return [
+        REVIEW_ISSUE_PREFIX,
+        '',
+        `Old English: ${oldText}`,
+        `New English: ${newText}`,
+        '',
+        'This translation was written for the old English and is no longer approved. Please check it against the new English, correct it if needed, approve it, then resolve this issue.',
+    ].join('\n')
+}
+
+async function deleteReviewIssues({ client, line }: { client: CrowdinClient, line: JournalLine }): Promise<string | null> {
+    if (line.needsReview !== true || line.stringId === undefined) {
+        return null
+    }
+    try {
+        const issues = await client.list<{ id: number, text: string }>({ path: `/comments?stringId=${line.stringId}&type=issue&issueStatus=unresolved` })
+        const problems: string[] = []
+        for (const { id } of issues.filter(({ text }) => text.startsWith(REVIEW_ISSUE_PREFIX))) {
+            const deleted = await deleteIfPresent({ client, path: `/comments/${id}` })
+            problems.push(...(deleted.ok ? [] : [deleted.message]))
+        }
+        return problems.length === 0 ? null : `review issues not removed: ${problems.join('; ')}`
+    }
+    catch (error) {
+        return `review issues not removed: ${messageOf({ error })}`
+    }
 }
 
 async function readBeforeRename({ client, action }: { client: CrowdinClient, action: RenameAction }): Promise<BeforeRename> {
@@ -195,7 +251,7 @@ async function cleanupPaths({ client, action }: { client: CrowdinClient, action:
     return { paths: [...cleared, ...machine], problems }
 }
 
-async function deleteTranslations({ client, path }: { client: CrowdinClient, path: string }): Promise<{ ok: true } | { ok: false, message: string }> {
+async function deleteIfPresent({ client, path }: { client: CrowdinClient, path: string }): Promise<{ ok: true } | { ok: false, message: string }> {
     try {
         await client.del({ path })
         return { ok: true }
@@ -217,9 +273,9 @@ async function undoOne({ client, line, journal }: { client: CrowdinClient, line:
         return { undone: 0, failed: 1 }
     }
     if (current.text === before.text && current.identifier === before.identifier) {
-        const lostApprovals = await restoreApprovals({ client, translationIds: line.reapproveOnUndo ?? [] })
-        journal({ ...undoLine, status: 'already-undone', message: lostApprovalsMessage({ lostApprovals }) })
-        return { undone: 0, failed: lostApprovals.length === 0 ? 0 : 1 }
+        const leftovers = await restoreAfterUndo({ client, line })
+        journal({ ...undoLine, status: 'already-undone', message: leftovers ?? undefined })
+        return { undone: 0, failed: leftovers === null ? 0 : 1 }
     }
     if (current.text !== after.text) {
         journal({ ...undoLine, status: 'precondition-failed', message: 'Crowdin no longer holds the renamed English' })
@@ -238,9 +294,19 @@ async function undoOne({ client, line, journal }: { client: CrowdinClient, line:
         journal({ ...undoLine, status: 'error', message: messageOf({ error }) })
         return { undone: 0, failed: 1 }
     }
+    const leftovers = await restoreAfterUndo({ client, line })
+    journal({ ...undoLine, status: 'undone', message: leftovers ?? undefined })
+    return { undone: 1, failed: leftovers === null ? 0 : 1 }
+}
+
+async function restoreAfterUndo({ client, line }: { client: CrowdinClient, line: JournalLine }): Promise<string | null> {
     const lostApprovals = await restoreApprovals({ client, translationIds: line.reapproveOnUndo ?? [] })
-    journal({ ...undoLine, status: 'undone', message: lostApprovalsMessage({ lostApprovals }) })
-    return { undone: 1, failed: lostApprovals.length === 0 ? 0 : 1 }
+    const issueProblem = await deleteReviewIssues({ client, line })
+    const problems = [
+        ...(lostApprovals.length === 0 ? [] : [`approvals not restored for translations ${lostApprovals.join(', ')}`]),
+        ...(issueProblem === null ? [] : [issueProblem]),
+    ]
+    return problems.length === 0 ? null : problems.join('; ')
 }
 
 async function restoreApprovals({ client, translationIds }: { client: CrowdinClient, translationIds: number[] }): Promise<number[]> {
@@ -257,10 +323,6 @@ async function restoreApprovals({ client, translationIds }: { client: CrowdinCli
         }
     }
     return lostApprovals
-}
-
-function lostApprovalsMessage({ lostApprovals }: { lostApprovals: number[] }): string | undefined {
-    return lostApprovals.length === 0 ? undefined : `approvals not restored for translations ${lostApprovals.join(', ')}`
 }
 
 async function readPerLanguage({ client, languages, pathFor }: ReadPerLanguageParams): Promise<Record<string, Attribution[]>> {
@@ -390,13 +452,14 @@ async function renameOrUndo({ token, projectId, dryRun }: { token: string, proje
 
 const PATHS_FOLDER = 'tools/i18n-paths'
 const MAX_CELL_LENGTH = 120
+const REVIEW_ISSUE_PREFIX = 'The English text of this string changed (automatic note from the Activepieces translations job).'
 const GIT_MAX_BUFFER = 256 * 1024 * 1024
 const EMPTY_COUNTS: RunCounts = { renamed: 0, wouldRename: 0, skipped: 0, failed: 0, writes: 0 }
 
 export const crowdinRename = { run, undo, exitCode, summarize, pieceOf, changedPieces }
 
 export type JournalLine = {
-    kind: 'rename' | 'pending' | 'skip' | 'cleanup' | 'undo' | 'piece-error'
+    kind: 'rename' | 'pending' | 'skip' | 'cleanup' | 'review-issue' | 'undo' | 'piece-error'
     piece: string
     status: string
     fileId?: number
@@ -406,6 +469,7 @@ export type JournalLine = {
     updateOption?: RenameAction['updateOption']
     changeClass?: RenameAction['changeClass']
     keptLanguages?: string[]
+    language?: string
     reapproveOnUndo?: number[]
     needsReview?: boolean
     message?: string

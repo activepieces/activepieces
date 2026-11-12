@@ -41,7 +41,7 @@ function create({ token, projectId, readOnly = false, fetchImpl = fetch, sleep =
         get: <T>({ path }: { path: string }) => request<T>({ method: 'GET', path }),
         list,
         patch: ({ path, body }: { path: string, body: unknown }) => request<unknown>({ method: 'PATCH', path, body }),
-        post: ({ path, body }: { path: string, body: unknown }) => request<unknown>({ method: 'POST', path, body }),
+        post: <T>({ path, body }: { path: string, body: unknown }) => request<T>({ method: 'POST', path, body }),
         del: ({ path }: { path: string }) => request<unknown>({ method: 'DELETE', path }),
     }
 }
@@ -84,7 +84,7 @@ export type CrowdinClient = {
     get: <T>(params: { path: string }) => Promise<T>
     list: <T>(params: { path: string }) => Promise<T[]>
     patch: (params: { path: string, body: unknown }) => Promise<unknown>
-    post: (params: { path: string, body: unknown }) => Promise<unknown>
+    post: <T>(params: { path: string, body: unknown }) => Promise<T>
     del: (params: { path: string }) => Promise<unknown>
 }
 
