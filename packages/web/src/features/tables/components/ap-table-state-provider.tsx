@@ -46,14 +46,19 @@ export const TableStateProviderWithTable = ({
   table,
   fields,
   records,
+  selectedCell,
 }: {
   children: React.ReactNode;
   table: Table;
   fields: Field[];
   records: PopulatedRecord[];
+  selectedCell?: TableState['selectedCell'];
 }) => {
   const tableStoreRef = useRef<ApTableStore>(
-    createApTableStore(table, fields, records),
+    withSelectedCell({
+      store: createApTableStore(table, fields, records),
+      selectedCell,
+    }),
   );
   return (
     <TableContext.Provider value={tableStoreRef.current}>
@@ -137,7 +142,7 @@ export function ApTableStateProvider({
     remountTableState();
   }, [refetchTableState, remountTableState]);
   const isLoading = isTableLoading || isFieldsLoading || isRecordsLoading;
-  const scrollTopBeforeRefresh = useRef<number | null>(null);
+  const viewBeforeRefresh = useRef<TableView | null>(null);
   const missedUpdateWhileLoading = useMissedUpdateWhileLoading({
     tableId,
     isLoading,
@@ -188,10 +193,11 @@ export function ApTableStateProvider({
           table={table}
           fields={fields}
           records={records.data}
+          selectedCell={viewBeforeRefresh.current?.selectedCell}
         >
           <RefreshOnTableUpdated
             missedUpdateWhileLoading={missedUpdateWhileLoading}
-            scrollTopBeforeRefresh={scrollTopBeforeRefresh}
+            viewBeforeRefresh={viewBeforeRefresh}
             tableId={table.id}
             refetch={refetchTableState}
             remount={remountTableState}
@@ -287,13 +293,13 @@ function useMissedUpdateWhileLoading({
 
 function RefreshOnTableUpdated({
   missedUpdateWhileLoading,
-  scrollTopBeforeRefresh,
+  viewBeforeRefresh,
   tableId,
   refetch,
   remount,
 }: {
   missedUpdateWhileLoading: React.MutableRefObject<boolean>;
-  scrollTopBeforeRefresh: React.MutableRefObject<number | null>;
+  viewBeforeRefresh: React.MutableRefObject<TableView | null>;
   tableId: string;
   refetch: () => Promise<void>;
   remount: () => void;
@@ -326,7 +332,10 @@ function RefreshOnTableUpdated({
         timer = setTimeout(runRefresh, BUSY_RETRY_MS);
         return;
       }
-      scrollTopBeforeRefresh.current = gridElement()?.scrollTop ?? null;
+      viewBeforeRefresh.current = {
+        scrollTop: gridElement()?.scrollTop ?? 0,
+        selectedCell: store?.getState().selectedCell ?? null,
+      };
       remount();
     };
     const runRefresh = () => {
@@ -352,12 +361,17 @@ function RefreshOnTableUpdated({
     };
     socket.on(WebsocketClientEvent.TABLE_UPDATED, onTableUpdated);
     socket.on('connect', requestRefresh);
-    const savedScrollTop = scrollTopBeforeRefresh.current;
-    scrollTopBeforeRefresh.current = null;
-    if (!isNil(savedScrollTop)) {
-      requestAnimationFrame(() => {
-        gridElement()?.scrollTo({ top: savedScrollTop, behavior: 'instant' });
-      });
+    const savedView = viewBeforeRefresh.current;
+    viewBeforeRefresh.current = null;
+    if (!isNil(savedView)) {
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          gridElement()?.scrollTo({
+            top: savedView.scrollTop,
+            behavior: 'instant',
+          });
+        }),
+      );
     }
     if (missedUpdateWhileLoading.current) {
       missedUpdateWhileLoading.current = false;
@@ -376,9 +390,22 @@ function RefreshOnTableUpdated({
     refetch,
     remount,
     missedUpdateWhileLoading,
-    scrollTopBeforeRefresh,
+    viewBeforeRefresh,
   ]);
   return null;
+}
+
+function withSelectedCell({
+  store,
+  selectedCell,
+}: {
+  store: ApTableStore;
+  selectedCell: TableState['selectedCell'] | undefined;
+}): ApTableStore {
+  if (selectedCell !== undefined) {
+    store.setState({ selectedCell });
+  }
+  return store;
 }
 
 function gridElement(): HTMLElement | null {
@@ -386,5 +413,10 @@ function gridElement(): HTMLElement | null {
 }
 
 const BUSY_RETRY_MS = 1000;
+
+type TableView = {
+  scrollTop: number;
+  selectedCell: TableState['selectedCell'];
+};
 
 type TableLockContextValue = ReturnType<typeof useResourceLock>;
