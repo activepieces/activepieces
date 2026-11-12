@@ -4,14 +4,13 @@ import ReactCodeMirror, {
   EditorState,
   EditorView,
 } from '@uiw/react-codemirror';
-import { CodeIcon, Copy } from 'lucide-react';
+import { CodeIcon } from 'lucide-react';
 import React from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { useTheme } from '@/components/providers/theme-provider';
-import { Button } from '@/components/ui/button';
 import { syntaxTheme } from '@/lib/syntax-theme';
 import { cn } from '@/lib/utils';
 
@@ -77,9 +76,12 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
                       <span>{match[1]}</span>
                     </div>
                   </div>
-                  <CopyCode
-                    textToCopy={String(children).trim()}
-                    className="absolute top-2 right-2 text-xs text-gray-11"
+                  <CopyButton
+                    value={String(children).trim()}
+                    variant="ghost"
+                    size="icon-xs"
+                    tooltipSide="bottom"
+                    className="absolute top-2 right-2 text-gray-11"
                   />
                 </div>
               ) : (
@@ -100,7 +102,7 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
         </Markdown>
         {role === 'bot' && (
           <CopyButton
-            textToCopy={content}
+            value={content}
             tooltipSide="bottom"
             size="icon-xs"
             className="mt-2"
@@ -117,30 +119,3 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
   },
 );
 TextMessage.displayName = 'TextMessage';
-
-const CopyCode = ({
-  textToCopy,
-  className,
-}: {
-  textToCopy: string;
-  className?: string;
-}) => {
-  const [isCopied, setIsCopied] = React.useState(false);
-  return (
-    <div className={className}>
-      <Button
-        variant="ghost"
-        className="gap-2"
-        size="xs"
-        onClick={() => {
-          setIsCopied(true);
-          navigator.clipboard.writeText(textToCopy);
-          setTimeout(() => setIsCopied(false), 1500);
-        }}
-      >
-        <Copy className="size-4" />
-        <span className="text-xs">{isCopied ? 'Copied!' : 'Copy Code'}</span>
-      </Button>
-    </div>
-  );
-};

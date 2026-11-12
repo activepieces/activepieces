@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/item';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { Switch } from '@/components/ui/switch';
-import { PLATFORM_FEATURES, useFeatureGate } from '@/features/billing';
+import { useLockedFeature } from '@/features/billing';
 import {
   newMemberSettingsMutations,
   newMemberSettingsQueries,
@@ -31,9 +31,9 @@ export function PersonalProjectsSection() {
   const [openDialog, setOpenDialog] = useState<'turn-on' | 'turn-off' | null>(
     null,
   );
-  const gate = useFeatureGate({
-    locked: !platform.plan.projectRolesEnabled,
-    feature: PLATFORM_FEATURES.projectRoles,
+  const lockedFeature = useLockedFeature({
+    unlocked: platform.plan.projectRolesEnabled,
+    featureKey: 'CUSTOM_ROLES',
   });
   const { mutateAsync: updateSettings, isPending: isUpdating } =
     newMemberSettingsMutations.useUpdateNewMemberSettings();
@@ -41,17 +41,17 @@ export function PersonalProjectsSection() {
     newMemberSettingsMutations.useCreateMissingPersonalProjects();
   const { data: summary, refetch: refetchSummary } =
     newMemberSettingsQueries.usePersonalProjectsSummary({
-      enabled: !gate.locked,
+      enabled: !lockedFeature.locked,
     });
   const [isCheckingMembers, setIsCheckingMembers] = useState(false);
   const [membersToOffer, setMembersToOffer] = useState(0);
   const isPending = isUpdating || isCreatingMissing || isCheckingMembers;
 
-  const isEnabled = gate.locked || platform.autoCreatePersonalProjects;
+  const isEnabled = lockedFeature.locked || platform.autoCreatePersonalProjects;
 
   const onCheckedChange = async (checked: boolean) => {
-    if (gate.locked) {
-      gate.open();
+    if (lockedFeature.locked) {
+      lockedFeature.showLockedDialog();
       return;
     }
     if (!checked) {
@@ -65,10 +65,6 @@ export function PersonalProjectsSection() {
     const membersWithoutPersonalProject = fresh.isError
       ? 0
       : fresh.data?.membersWithoutPersonalProject ?? 0;
-    if (membersWithoutPersonalProject === 0) {
-      await turnOn({ createForExistingMembers: false });
-      return;
-    }
     setMembersToOffer(membersWithoutPersonalProject);
     setOpenDialog('turn-on');
   };
@@ -111,23 +107,25 @@ export function PersonalProjectsSection() {
       <div className="flex flex-col gap-1">
         <h2 className="text-base font-medium">{t('Personal projects')}</h2>
         <p className="max-w-2xl text-sm text-gray-11">
-          {t('A private project for every new member.')}
+          {t('A private project for each member.')}
         </p>
       </div>
       <Item variant="outline" size="sm" className="flex-nowrap bg-panel">
         <ItemContent className="min-w-0">
-          <ItemTitle>{t('Automatic personal project creation')}</ItemTitle>
+          <ItemTitle>{t('Auto-create personal projects')}</ItemTitle>
           <ItemDescription>
-            {t(
-              "Turn off if you don't want new members to get a personal project.",
-            )}
+            {isEnabled
+              ? t('New members get a personal project when they join.')
+              : t(
+                  'Turn on to give new members a personal project when they join.',
+                )}
           </ItemDescription>
         </ItemContent>
         <ItemActions>
           <Switch
             checked={isEnabled}
             disabled={isPending}
-            aria-label={t('Automatic personal project creation')}
+            aria-label={t('Auto-create personal projects')}
             onCheckedChange={onCheckedChange}
             {...adminControl(AdminControl.PROJECTS_AUTO_PERSONAL_TOGGLE)}
           />
@@ -148,7 +146,6 @@ export function PersonalProjectsSection() {
         isPending={isPending}
         onConfirm={turnOff}
       />
-      {gate.dialog}
     </section>
   );
 }

@@ -1,5 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { spotifyCommon, makeClient } from '../common';
+import { spotifyCommon, makeClient, spotifyValidate } from '../common';
+import { spotifyIds } from '../common/ids';
+import { spotifyOutputSchemas } from '../output-schemas';
 
 export default createAction({
   name: 'add_playlist_items',
@@ -9,28 +11,32 @@ export default createAction({
   description: 'Adds tracks or episodes to the playlist',
   audience: 'both',
   aiMetadata: {
-    description: "Adds tracks or episodes (by their Spotify URIs) to the playlist identified by its id, optionally at a given position. Use it to append items to an existing playlist. Not idempotent: repeating the call adds the items again, creating duplicates.",
+    description: "Adds tracks or episodes (Spotify URIs or open.spotify.com links) to a playlist, optionally at a 0-based position. Lists over 100 items are sent in batches of 100. Use it to append items; to overwrite the whole playlist use Replace Playlist Items. Not idempotent: repeating the call adds the items again, creating duplicates.",
     idempotent: false,
   },
+  outputSchema: spotifyOutputSchemas['playlistAdd'],
   props: {
     playlist_id: spotifyCommon.playlist_id(true),
     items: Property.Array({
       displayName: 'Items',
-      description: "URI's of the items to add",
+      description: 'Track or episode URIs (spotify:track:…) or open.spotify.com links',
       required: true,
     }),
     position: Property.Number({
       displayName: 'Position',
+      description: '0-based position to insert at. Leave empty to append to the end.',
       required: false,
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient({
-      auth,
-    });
-    await client.addItemsToPlaylist(propsValue.playlist_id as string, {
-      uris: propsValue.items as string[],
-      position: propsValue.position,
-    });
+    const playlistId = spotifyIds.parse({ kind: 'playlist', value: propsValue.playlist_id, label: 'Playlist' });
+    const uris = spotifyIds.parseUriList({ value: propsValue.items, kinds: ['track', 'episode'], label: 'Items' });
+    if (uris.length === 0) {
+      throw new Error('Items is empty: give at least one track or episode URI.');
+    }
+    const position = spotifyValidate.optionalInteger({ value: propsValue.position, field: 'Position', min: 0 });
+    const client = makeClient({ auth });
+    const res = await client.addItemsToPlaylist({ playlistId, uris, position });
+    return { playlist_id: playlistId, snapshot_id: res.snapshot_id, added: res.added };
   },
 });

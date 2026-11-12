@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -21,6 +22,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { LockedFeatureUsage } from '@/features/billing';
 import { globalConnectionsQueries } from '@/features/connections';
 import {
   CreateProjectButton,
@@ -91,6 +93,10 @@ export default function ProjectsPage() {
       request: { limit: 9999 },
       extraKeys: [],
     });
+  const teamProjectsCount = allProjects.filter(
+    (project) => project.type === ProjectType.TEAM,
+  ).length;
+
   const allProjectsWithGlobalConnectionsCount = useMemo(() => {
     return allProjects.map((project) => ({
       ...project,
@@ -384,7 +390,18 @@ export default function ProjectsPage() {
         description={t('Manage your automation projects')}
         resources={adminPageResources.projects}
       >
-        <CreateProjectButton variant="full" projects={allProjects} />
+        <LockedFeatureUsage
+          featureKey="PROJECTS"
+          unlocked={
+            isNil(platform.plan.billedTeamProjectsLimit) ||
+            teamProjectsCount < platform.plan.billedTeamProjectsLimit
+          }
+          used={teamProjectsCount}
+          limit={platform.plan.billedTeamProjectsLimit}
+          label={t('team projects')}
+        >
+          <CreateProjectButton variant="full" projects={allProjects} />
+        </LockedFeatureUsage>
       </AdminPageHeader>
       <AdminDataTable
         emptyStateTextTitle={t('No projects found')}
