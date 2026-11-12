@@ -22,6 +22,7 @@ import {
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
 import { useTts } from '@/features/chat/lib/use-tts';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { cn } from '@/lib/utils';
 
 import {
@@ -42,6 +43,7 @@ import { ThinkingBlock } from './activity-accordion';
 import { BatchProgressCard } from './batch-progress-card';
 import { CardSkeleton } from './card-skeletons';
 import { ConnectionPickerCard } from './connection-picker-card';
+import { ExpiredGateCard, hasExpiredGate } from './expired-gate-card';
 import { FeedbackButtons } from './feedback-buttons';
 import { FlowBuildCard } from './flow-build-card';
 import { GeneratedImageCard } from './generated-image-card';
@@ -60,9 +62,12 @@ import { ToolShimmerPills } from './tool-shimmer-pills';
 const PROSE_CLASSES = 'max-w-none break-words';
 
 const ACTION_BUTTON_CLASS =
-  'flex h-6 w-6 items-center justify-center rounded-md text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-8';
+  'flex h-6 w-6 items-center justify-center rounded-md text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 hover:text-gray-12 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-8';
 
 const EMPTY_BUILD_IDS: ReadonlySet<string> = new Set();
+const RISE_PX = 4;
+const SLIDE_PX = 8;
+const STAGGER_S = 0.03;
 
 export const AssistantMessage = memo(function AssistantMessage({
   message,
@@ -85,6 +90,7 @@ export const AssistantMessage = memo(function AssistantMessage({
 }) {
   const approveGate = useChatStoreContext((s) => s.approveGate);
   const toolCallMeta = useChatStoreContext((s) => s.toolCallMeta);
+  const reduced = useReducedMotion();
 
   const { blocks, hasContent, sources } = useMemo(
     () =>
@@ -104,6 +110,10 @@ export const AssistantMessage = memo(function AssistantMessage({
 
   const { isSpeaking, isSupported: isTtsSupported, speak, stop } = useTts();
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+  const expired = useMemo(
+    () => !isStreaming && hasExpiredGate(message.parts),
+    [isStreaming, message.parts],
+  );
 
   const hasRenderedContent = blocks.some((b) => b.kind !== 'thinking');
   const hasThinkingContent = blocks.some((b) => b.kind === 'thinking');
@@ -123,9 +133,13 @@ export const AssistantMessage = memo(function AssistantMessage({
   return (
     <motion.div
       className="py-3 group/msg"
-      initial={isFromHistory || isStreaming ? false : { opacity: 0, y: 10 }}
+      initial={
+        isFromHistory || isStreaming
+          ? false
+          : { opacity: 0, y: reduced ? 0 : RISE_PX }
+      }
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       <Message>
         <div className="min-w-0 flex-1">
@@ -141,13 +155,19 @@ export const AssistantMessage = memo(function AssistantMessage({
             isResumed={isResumed}
           />
 
+          {expired && (
+            <ExpiredGateCard
+              onSendPrompt={isLastMessage ? onSendPrompt : undefined}
+            />
+          )}
+
           {!isStreaming && sources.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 pt-2">
               <motion.span
                 className="text-xs text-gray-11"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
               >
                 {t('Sources')}
               </motion.span>
@@ -157,9 +177,13 @@ export const AssistantMessage = memo(function AssistantMessage({
                   <motion.span
                     key={source.key}
                     className="inline-flex"
-                    initial={{ opacity: 0, y: 4 }}
+                    initial={{ opacity: 0, y: reduced ? 0 : RISE_PX }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.25, delay: 0.1 + i * 0.06 }}
+                    transition={{
+                      duration: MOTION.base,
+                      ease: MOTION.easeOut,
+                      delay: i * STAGGER_S,
+                    }}
                   >
                     {source.href ? (
                       <Source href={source.href} title={source.title} />
@@ -176,7 +200,7 @@ export const AssistantMessage = memo(function AssistantMessage({
 
           <MessageActions
             className={cn(
-              'gap-1 transition-opacity',
+              'gap-1 transition-opacity duration-(--dur-micro) ease-[ease]',
               isLastMessage
                 ? 'opacity-100'
                 : 'opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100',
@@ -250,7 +274,6 @@ function MessageBlocks({
   setIsAccordionOpen: (open: boolean) => void;
   isResumed?: boolean;
 }) {
-  const prefersReducedMotion = useReducedMotion();
   const lastThinkingIdx = blocks.findLastIndex((b) => b.kind === 'thinking');
   const lastTextIdx = blocks.findLastIndex((b) => b.kind === 'text');
   const hasActiveDisplayCard = blocks.some(
@@ -334,21 +357,21 @@ function MessageBlocks({
                   {showLiveGroup && (
                     <motion.div
                       key={segmentKey}
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={
-                        prefersReducedMotion
-                          ? { duration: 0.12 }
-                          : {
-                              height: {
-                                duration: 0.3,
-                                ease: [0.32, 0.72, 0, 1],
-                              },
-                              opacity: { duration: 0.2, ease: 'easeOut' },
-                            }
-                      }
-                      style={{ overflow: 'hidden' }}
+                      initial={{ opacity: 0 }}
+                      animate={{
+                        opacity: 1,
+                        transition: {
+                          duration: MOTION.base,
+                          ease: MOTION.easeOut,
+                        },
+                      }}
+                      exit={{
+                        opacity: 0,
+                        transition: {
+                          duration: MOTION.fast,
+                          ease: MOTION.easeOut,
+                        },
+                      }}
                     >
                       <ToolShimmerPills
                         toolSteps={lastSegmentToolSteps}
@@ -556,12 +579,12 @@ function CardGroup({
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="flex w-full items-center gap-1.5 text-left text-sm text-gray-11 transition-colors hover:text-gray-12"
+          className="flex w-full items-center gap-1.5 text-left text-sm text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] hover:text-gray-12"
         >
           <span>{t('chatOutcomeCount', { count: cards.length })}</span>
           <ChevronDown
             className={cn(
-              'size-3.5 shrink-0 opacity-50 transition-transform duration-300',
+              'size-3.5 shrink-0 opacity-50 transition-transform duration-(--dur-base) ease-(--ease-ap-out) motion-reduce:transition-none',
               open && 'rotate-180',
             )}
           />
@@ -682,14 +705,15 @@ function DisplayToolCard({
 
 function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
   const pairs = useMemo(() => parseAnswerPairs(answersText), [answersText]);
+  const reduced = useReducedMotion();
   if (pairs.length === 0) return null;
 
   return (
     <motion.div
       className="flex justify-end my-2"
-      initial={{ opacity: 0, x: 16 }}
+      initial={{ opacity: 0, x: reduced ? 0 : SLIDE_PX }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.25 }}
+      transition={{ duration: MOTION.move, ease: MOTION.easeOut }}
     >
       <div className="max-w-[80%] bg-gray-3 rounded-xl rounded-br-md px-4 py-3 space-y-3">
         {pairs.map((pair, i) => (
