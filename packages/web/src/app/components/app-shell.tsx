@@ -1,11 +1,15 @@
 import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId, TemplateType } from '@activepieces/shared';
+import { t } from 'i18next';
+import { RefreshCw, X } from 'lucide-react';
 import { Suspense, useLayoutEffect, useRef, useState } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { SocketProvider } from '@/components/providers/socket-provider';
+import { Button } from '@/components/ui/button';
 import { SidebarInset } from '@/components/ui/sidebar-shadcn';
 import {
   CreditsUsageAlert,
@@ -15,14 +19,19 @@ import {
 } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
 import { templatesHooks } from '@/features/templates';
+import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
+import { useChatOn } from '@/features/workspace/lib/use-chat-on';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { useSessionProjectId } from '@/hooks/use-session-project-id';
 import { authenticationSession } from '@/lib/authentication-session';
+import { errorReporting } from '@/lib/error-reporting';
 import { RouteHandle, useShellMatch } from '@/lib/shell-handle';
 import { cn } from '@/lib/utils';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
+import { ChatContentColumn } from './chat-panel/chat-content-column';
+import { ChatPanel, useChatWidth } from './chat-panel/chat-window';
 import { GlobalSearchProvider } from './global-search/global-search-context';
 import { ProjectDashboardLayoutHeader } from './project-layout/project-dashboard-layout-header';
 import { AppSidebar } from './sidebar/app-sidebar';
@@ -82,11 +91,13 @@ function BarePage() {
 function AppShell({ handle }: { handle: RouteHandle }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const embedded = useEmbedding().embedState.isEmbedded;
+  const chatOn = useChatOn();
   const projectId = useSessionProjectId();
   const isPlatformAdmin = useIsPlatformAdmin();
   const isPlatform = handle.shell === 'platform';
   const isBuilder = handle.shell === 'builder';
-  const tightInset = isBuilder;
+  const chatWidth = useChatWidth();
+  const tightInset = isBuilder && chatWidth !== 'left' && chatWidth !== 'right';
   const headerProjectId =
     handle.projectHeader === true && !isNil(projectId) && projectId !== ''
       ? projectId
@@ -130,7 +141,29 @@ function AppShell({ handle }: { handle: RouteHandle }) {
                   embedded && isBuilder && 'border-l',
                 )}
               >
-                <div className="relative isolate flex min-w-0 flex-1 flex-col overflow-hidden">
+                {chatOn && handle.chat !== 'full' && (
+                  <ErrorBoundary
+                    fallbackRender={({ resetErrorBoundary }) => (
+                      <ChatPanelError
+                        onRetry={resetErrorBoundary}
+                        onClose={() => {
+                          useChatPanel.getState().setOpen(false);
+                          resetErrorBoundary();
+                        }}
+                      />
+                    )}
+                    onError={(error, info) =>
+                      errorReporting.report({
+                        error,
+                        componentStack: info.componentStack,
+                        source: 'react-error-boundary',
+                      })
+                    }
+                  >
+                    <ChatPanel />
+                  </ErrorBoundary>
+                )}
+                <ChatContentColumn>
                   {!isBuilder && <SelfServeTrialEndingAlert />}
                   {!isNil(headerProjectId) && (
                     <ProjectHeader projectId={headerProjectId} />
@@ -141,7 +174,7 @@ function AppShell({ handle }: { handle: RouteHandle }) {
                       <Outlet />
                     </Suspense>
                   </div>
-                </div>
+                </ChatContentColumn>
               </div>
             </div>
           </SidebarInset>
@@ -160,6 +193,42 @@ function usePageScrollReset() {
     if (pageRef.current) pageRef.current.scrollTop = 0;
   }, [pathname]);
   return pageRef;
+}
+
+function ChatPanelError({
+  onRetry,
+  onClose,
+}: {
+  onRetry: () => void;
+  onClose: () => void;
+}) {
+  const chatWidth = useChatWidth();
+  if (chatWidth === 'closed') return null;
+  return (
+    <div
+      role="alert"
+      className={cn(
+        'flex shrink-0 flex-col items-start gap-3 bg-gray-1 p-4',
+        chatWidth === 'full' ? 'flex-1' : 'w-72',
+        chatWidth === 'right' && 'order-last border-l',
+        chatWidth !== 'right' && chatWidth !== 'full' && 'border-r',
+      )}
+    >
+      <p className="text-sm text-gray-11">
+        {t("Chat couldn't load. Your chats are safe.")}
+      </p>
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" onClick={onRetry}>
+          <RefreshCw className="size-4" />
+          {t('Try again')}
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onClose}>
+          <X className="size-4" />
+          {t('Close')}
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 function ProjectHeader({ projectId }: { projectId: string }) {

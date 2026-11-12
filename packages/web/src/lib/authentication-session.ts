@@ -19,6 +19,10 @@ export const authenticationSession = {
   setProjectId(projectId: string) {
     saveProjectId(projectId);
   },
+  subscribe(listener: () => void): () => void {
+    window.addEventListener('storage', listener);
+    return () => window.removeEventListener('storage', listener);
+  },
   saveResponse(response: AuthenticationResponse, isEmbedding: boolean) {
     if (isEmbedding) {
       ApStorage.setInstanceToSessionStorage();
@@ -129,6 +133,7 @@ export const authenticationSession = {
   clearSession() {
     removeProjectId();
     ApStorage.getInstance().removeItem(tokenKey);
+    window.dispatchEvent(new Event('storage'));
   },
   logOut() {
     const hadSession = !isNil(this.getToken());
