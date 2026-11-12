@@ -74,14 +74,17 @@ export async function watchEvent(
 export async function getInitialSyncToken({
   calendarId,
   authProp,
+  deadlineMs,
 }: {
   calendarId: string;
   authProp: GoogleCalendarAuthValue;
+  deadlineMs?: number;
 }): Promise<string | undefined> {
   const { nextSyncToken } = await listEventsForFullSync({
     calendarId,
     authProp,
     withItems: false,
+    deadlineMs,
   });
   return nextSyncToken;
 }

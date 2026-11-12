@@ -92,6 +92,22 @@ describe('getInitialSyncToken', () => {
     expect(captured[1]['pageToken']).toBe('page-2');
     expect(captured[2]['pageToken']).toBe('page-3');
   });
+  it('stops at the deadline without a sync token instead of paging the whole calendar', async () => {
+    const captured = stubHttpClient([
+      { nextPageToken: 'page-2' },
+      { nextPageToken: 'page-3' },
+      { nextSyncToken: 'sync-late' },
+    ]);
+
+    const token = await getInitialSyncToken({
+      calendarId: 'primary',
+      authProp: AUTH,
+      deadlineMs: Date.now(),
+    });
+
+    expect(token).toBeUndefined();
+    expect(captured).toHaveLength(0);
+  });
 });
 
 describe('listEventsForFullSync', () => {

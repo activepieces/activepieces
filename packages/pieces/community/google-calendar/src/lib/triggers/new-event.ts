@@ -302,7 +302,11 @@ export const newEvent = createTrigger({
     const auth = context.auth as GoogleCalendarAuthValue;
     const syncToken = await context.store.get<string>(SYNC_TOKEN_STORE_KEY);
     if (isNil(syncToken)) {
-      const fresh = await getInitialSyncToken({ calendarId, authProp: auth });
+      const fresh = await getInitialSyncToken({
+        calendarId,
+        authProp: auth,
+        deadlineMs: Date.now() + eventScan.listingBudgetMs,
+      });
       if (!isNil(fresh)) {
         await context.store.put<string>(SYNC_TOKEN_STORE_KEY, fresh);
       }
@@ -501,7 +505,15 @@ async function listChangedSinceTurnOn({
   const nextSyncToken = await getInitialSyncToken({
     calendarId,
     authProp: auth,
+    deadlineMs: Date.now() + eventScan.listingBudgetMs,
   });
+  if (isNil(nextSyncToken)) {
+    throw new Error(
+      `Google Calendar answered 410 (sync token no longer valid) and the calendar is too large to re-sync within ${
+        eventScan.listingBudgetMs / 1000
+      } s. The trigger keeps its previous state and retries at the next notification.`
+    );
+  }
   console.warn(
     `[google-calendar] new_event: Google answered 410 (sync token no longer valid) and the full re-sync did not finish within ${
       eventScan.listingBudgetMs / 1000

@@ -1,6 +1,21 @@
 import { isNil } from '@activepieces/pieces-framework';
 import { GoogleCalendarEvent } from './types';
 
+function findSelfAttendee({
+  event,
+}: {
+  event: GoogleCalendarEvent;
+}): { responseStatus: string } | undefined {
+  return (event.attendees ?? []).find((attendee) => attendee.self === true);
+}
+
+function createdTimeOf({ event }: { event: GoogleCalendarEvent }): number {
+  const createdMs = Date.parse(event.created);
+  return Number.isNaN(createdMs) ? Date.now() : createdMs;
+}
+
+const INVITE_LIMIT = 500;
+
 export const calendarInvites = {
   isInvite({ event }: { event: GoogleCalendarEvent }): boolean {
     return (
@@ -89,21 +104,6 @@ export const calendarInvites = {
     };
   },
 };
-
-function findSelfAttendee({
-  event,
-}: {
-  event: GoogleCalendarEvent;
-}): { responseStatus: string } | undefined {
-  return (event.attendees ?? []).find((attendee) => attendee.self === true);
-}
-
-function createdTimeOf({ event }: { event: GoogleCalendarEvent }): number {
-  const createdMs = Date.parse(event.created);
-  return Number.isNaN(createdMs) ? Date.now() : createdMs;
-}
-
-const INVITE_LIMIT = 500;
 
 export type SeenInvite = {
   id: string;
