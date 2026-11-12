@@ -1,11 +1,7 @@
 import { ActivepiecesError, AIProviderName, ErrorCode, isNil, tryCatchSync, unique } from '@activepieces/core-utils'
 import { ModelTier, modelTierCatalog, ModelTierSurface } from '@activepieces/server-utils'
-import { ACTIVEPIECES_CHAT_TIERS, AgentRunSource, AI_PROVIDER_ENTITY_TYPES, AiProviderCredentials, AiProviderModelScope, AIProviderModelType, aiProviderUtils } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, AI_PROVIDER_ENTITY_TYPES, AiProviderCredentials, AiProviderModelScope, AIProviderModelType, aiProviderUtils } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-
-function surfaceOf({ source }: { source: AgentRunSource | undefined }): ModelTierSurface {
-    return modelTierCatalog.surfaceFor({ source })
-}
 
 function findTier({ tierId, surface }: { tierId: string | null, surface: ModelTierSurface }): ModelTier | undefined {
     return isNil(tierId) ? undefined : modelTierCatalog.current(surface).findTier({ tierId })
@@ -154,7 +150,7 @@ function resolveModelIdForAnalytics({ provider, selectedModel, surface, pinned }
 }
 
 export const agentModelResolution = {
-    surfaceOf,
+    surfaceOf: modelTierCatalog.surfaceFor,
     findTier,
     resolveTier,
     resolveRunTier,

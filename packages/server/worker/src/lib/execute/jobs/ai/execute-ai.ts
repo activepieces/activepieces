@@ -74,11 +74,11 @@ async function callTheModel({ ctx, data }: { ctx: JobContext, data: ExecuteAiJob
 async function withModel<T>({ ctx, data, attempt }: { ctx: JobContext, data: ExecuteAiJobData, attempt: (run: CandidateRun) => Promise<T> }): Promise<T> {
     if (isNil(data.modelTierId)) {
         const resolved = await resolveSpecificModel({ ctx, data })
-        const modelIds = resolved.provider === AIProviderName.ACTIVEPIECES
-            ? [data.modelId, ...modelTierCatalog.fallbackTiers({ surface: 'flow', modelId: data.modelId }).map((tier) => tier.modelId)]
-            : [data.modelId]
+        const fallbacks = resolved.provider === AIProviderName.ACTIVEPIECES
+            ? modelTierCatalog.fallbackTiers({ surface: 'flow', modelId: data.modelId }).map((tier) => tier.modelId)
+            : []
         return runWithFallback({
-            candidates: modelIds.map((modelId) => ({ ...resolved, modelId, status: 'active' })),
+            candidates: [data.modelId, ...fallbacks].map((modelId) => ({ ...resolved, modelId, status: 'active' })),
             tierName: data.modelId,
             log: ctx.log,
             attempt,
