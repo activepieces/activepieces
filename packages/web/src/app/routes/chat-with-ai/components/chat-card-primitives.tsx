@@ -6,6 +6,7 @@ import { forwardRef, KeyboardEvent, ReactNode, Ref } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { cn } from '@/lib/utils';
 
 import { AnswerPair } from '../lib/message-parsers';
@@ -16,9 +17,9 @@ export function AnsweredQuestionsCard({ pairs }: AnsweredQuestionsCardProps) {
   return (
     <motion.div
       className="flex justify-end my-2"
-      initial={{ opacity: 0, x: 16 }}
+      initial={{ opacity: 0, x: 8 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.25 }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       <div className="max-w-[80%] bg-gray-3 rounded-xl rounded-br-md px-4 py-3 space-y-3">
         {pairs.map((pair, i) => (
@@ -59,13 +60,18 @@ export function ChatCard({ children, className }: ChatCardProps) {
   return (
     <motion.div
       className={cn(
-        'rounded-xl border border-gray-6/60 bg-panel p-4 shadow-lg backdrop-blur-sm transition-colors',
+        'rounded-xl border border-gray-6/60 bg-panel p-4 shadow-lg backdrop-blur-sm transition-colors duration-(--dur-micro) ease-[ease]',
         className,
       )}
-      initial={{ opacity: 0, y: 16, scale: 0.98 }}
+      initial={{ opacity: 0, y: 4, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 8, scale: 0.98 }}
-      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+      exit={{
+        opacity: 0,
+        y: 4,
+        scale: 0.98,
+        transition: { duration: MOTION.fast, ease: MOTION.easeOut },
+      }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       {children}
     </motion.div>
@@ -124,7 +130,7 @@ export function ChatOptionBadge({
     <span
       aria-hidden
       className={cn(
-        'flex size-7 shrink-0 items-center justify-center rounded-md bg-gray-5 text-xs font-medium text-gray-11 transition-colors',
+        'flex size-7 shrink-0 items-center justify-center rounded-md bg-gray-5 text-xs font-medium text-gray-11 transition-colors duration-(--dur-micro) ease-[ease]',
         active && 'bg-gray-12 text-gray-1',
         className,
       )}
@@ -166,7 +172,7 @@ export const ChatOptionRow = forwardRef<HTMLDivElement, ChatOptionRowProps>(
         onBlur={onBlur}
         onKeyDown={onKeyDown}
         className={cn(
-          'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-normal cursor-pointer transition-colors hover:bg-gray-3 outline-none',
+          'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-normal cursor-pointer transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 outline-none',
           focused && !selected && 'bg-gray-3 hover:bg-gray-4',
           selected && 'bg-gray-4 hover:bg-gray-5',
         )}
@@ -202,14 +208,14 @@ export function ChatAnswerInputRow({
       onFocus={onRowFocus}
       onBlur={onRowBlur}
       className={cn(
-        'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-normal cursor-text transition-colors hover:bg-gray-3 focus-within:bg-gray-3',
+        'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-normal cursor-text transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 focus-within:bg-gray-3',
         active && 'bg-gray-3 hover:bg-gray-4',
       )}
     >
       <span
         aria-hidden
         className={cn(
-          'flex size-7 shrink-0 items-center justify-center rounded-md bg-gray-5 text-gray-12 transition-colors group-focus-within:bg-gray-12 group-focus-within:text-gray-1',
+          'flex size-7 shrink-0 items-center justify-center rounded-md bg-gray-5 text-gray-12 transition-colors duration-(--dur-micro) ease-[ease] group-focus-within:bg-gray-12 group-focus-within:text-gray-1',
           active && 'bg-gray-12 text-gray-1',
         )}
       >

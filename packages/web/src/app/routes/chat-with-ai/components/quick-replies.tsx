@@ -2,6 +2,7 @@ import { CornerDownRight } from 'lucide-react';
 import { motion } from 'motion/react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 
 import { RECURRING_AUTOMATION_REPLY, RecurringChip } from './recurring-chip';
 
@@ -33,10 +34,14 @@ export function QuickReplies({
           key={`${i}-${reply}`}
           type="button"
           onClick={() => onSend(reply)}
-          className="flex w-full items-start gap-2 text-left text-sm text-gray-11 hover:text-gray-12 transition-colors cursor-pointer min-w-0 pl-1"
-          initial={{ opacity: 0, y: 6 }}
+          className="flex w-full items-start gap-2 text-left text-sm text-gray-11 hover:text-gray-12 transition-colors duration-(--dur-micro) ease-[ease] cursor-pointer min-w-0 pl-1"
+          initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: i * 0.06, ease: 'easeOut' }}
+          transition={{
+            duration: MOTION.base,
+            delay: i * STAGGER_S,
+            ease: MOTION.easeOut,
+          }}
         >
           <CornerDownRight className="size-4 shrink-0 mt-0.5" />
           <TextWithTooltip tooltipMessage={reply}>
@@ -46,12 +51,12 @@ export function QuickReplies({
       ))}
       {offerRecurringAutomation && (
         <motion.div
-          initial={{ opacity: 0, y: 6 }}
+          initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{
-            duration: 0.25,
-            delay: contextualReplies.length * 0.06,
-            ease: 'easeOut',
+            duration: MOTION.base,
+            delay: contextualReplies.length * STAGGER_S,
+            ease: MOTION.easeOut,
           }}
         >
           <RecurringChip onSend={() => onSend(RECURRING_AUTOMATION_REPLY)} />
@@ -60,3 +65,5 @@ export function QuickReplies({
     </div>
   );
 }
+
+const STAGGER_S = 0.03;

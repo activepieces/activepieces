@@ -266,12 +266,18 @@ const ChatBody = memo(function ChatBody({
     <AIChatBox
       key={newChatToken}
       incognito={false}
+      compact={!full}
+      autoFocusComposer={newChatToken > 0}
       conversationId={conversationId}
       initialPrompt={prompt}
       onConversationCreated={(id) => {
         useChatPanel.getState().conversationCreated(id);
         showOnPage(id);
         invalidate();
+      }}
+      onConversationMissing={() => {
+        useChatPanel.getState().conversationMissing();
+        showOnPage(null);
       }}
       onTitleUpdate={(next) => {
         const id = useChatPanel.getState().conversationId;

@@ -16,6 +16,7 @@ import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { toolIconUtils } from '@/features/chat/lib/tool-icons';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { cn } from '@/lib/utils';
 
 export function ThinkingBlock({
@@ -51,7 +52,7 @@ export function ThinkingBlock({
     <motion.div
       initial={isStreaming ? false : { opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       <Collapsible open={isOpen} onOpenChange={handleOpenChange}>
         <button
@@ -61,7 +62,7 @@ export function ThinkingBlock({
           className={cn(
             'flex items-center gap-1.5 text-sm text-gray-11 text-left w-full',
             isExpandable &&
-              'hover:text-gray-12 transition-colors cursor-pointer',
+              'hover:text-gray-12 transition-colors duration-(--dur-micro) ease-[ease] cursor-pointer',
           )}
         >
           {isStreaming ? (
@@ -73,7 +74,7 @@ export function ThinkingBlock({
           )}
           <ChevronDown
             className={cn(
-              'size-3.5 shrink-0 transition-all duration-300',
+              'size-3.5 shrink-0 transition-[rotate,opacity] duration-(--dur-base) ease-(--ease-ap-out) motion-reduce:transition-none',
               isOpen && 'rotate-180',
               isExpandable ? 'opacity-50 text-gray-11' : 'opacity-0',
             )}
@@ -317,7 +318,7 @@ function ToolStepRow({
           <button
             type="button"
             onClick={() => setCodeOpen(!codeOpen)}
-            className="flex items-center gap-1 text-xs text-gray-11 hover:text-gray-12 transition-colors"
+            className="flex items-center gap-1 text-xs text-gray-11 hover:text-gray-12 transition-colors duration-(--dur-micro) ease-[ease]"
           >
             <Code className="size-3 shrink-0" />
             {codeOpen ? t('Hide code') : t('View code')}

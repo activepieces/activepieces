@@ -1,5 +1,6 @@
 import { motion, useReducedMotion } from 'motion/react';
 
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { cn } from '@/lib/utils';
 
 import {
@@ -37,13 +38,11 @@ export function ShowcaseCard({
     <motion.div
       className={cn(
         'overflow-hidden rounded-xl border bg-panel shadow-sm',
-        !isList && 'p-4 sm:p-5',
+        !isList && 'p-4 @chat-sm/chat:p-5',
       )}
-      initial={
-        animate && streaming ? { opacity: 0, y: 16, scale: 0.98 } : false
-      }
+      initial={animate && streaming ? { opacity: 0, y: 4, scale: 0.98 } : false}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       {!isList && (
         <>
@@ -62,7 +61,9 @@ export function ShowcaseCard({
       <div
         className={cn(
           'grid grid-cols-1',
-          isList ? 'divide-y divide-gray-6/60' : 'mt-4 gap-2.5 sm:grid-cols-2',
+          isList
+            ? 'divide-y divide-gray-6/60'
+            : 'mt-4 gap-2.5 @chat-sm/chat:grid-cols-2',
         )}
       >
         {tiles.map((tile, i) => (
@@ -81,7 +82,7 @@ export function ShowcaseCard({
             className={cn(
               'flex w-full animate-pulse items-center',
               isList
-                ? 'gap-4 px-4 py-4 sm:px-5'
+                ? 'gap-4 px-4 py-4 @chat-sm/chat:px-5'
                 : 'gap-3 rounded-xl border bg-gray-1 p-3',
             )}
           >

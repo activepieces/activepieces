@@ -10,6 +10,7 @@ import {
   getProjectName,
   projectCollectionUtils,
 } from '@/features/projects';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { userHooks } from '@/hooks/user-hooks';
 
 import { ProjectPickerData } from '../lib/message-parsers';
@@ -26,10 +27,14 @@ import {
 const MAX_COLLAPSED = 3;
 
 const VIEW_TRANSITION = {
-  initial: { opacity: 0, x: 12 },
+  initial: { opacity: 0, x: 8 },
   animate: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: -12 },
-  transition: { duration: 0.2 },
+  exit: {
+    opacity: 0,
+    x: -8,
+    transition: { duration: MOTION.fast, ease: MOTION.easeOut },
+  },
+  transition: { duration: MOTION.base, ease: MOTION.easeOut },
 };
 
 export function ProjectPickerCard({
@@ -237,14 +242,14 @@ function ProjectGrid({ projects, search, onSelect }: ProjectGridProps) {
   }
 
   return (
-    <div className="mt-4 grid max-h-72 grid-cols-1 gap-3 overflow-auto pr-1 sm:grid-cols-2">
+    <div className="mt-4 grid max-h-72 grid-cols-1 gap-3 overflow-auto pr-1 @chat-sm/chat:grid-cols-2">
       {filtered.map(({ project, name }) => {
         return (
           <button
             key={project.id}
             type="button"
             onClick={() => onSelect(project.id, name)}
-            className="group flex items-center justify-between gap-3 rounded-xl border bg-gray-1 px-5 py-4 text-left transition-colors hover:border-gray-7"
+            className="group flex items-center justify-between gap-3 rounded-xl border bg-gray-1 px-5 py-4 text-left transition-colors duration-(--dur-micro) ease-[ease] hover:border-gray-7"
           >
             <ApProjectDisplay
               title={name}
@@ -254,7 +259,7 @@ function ProjectGrid({ projects, search, onSelect }: ProjectGridProps) {
               titleClassName="text-sm"
               framePersonalIcon
             />
-            <span className="inline-flex h-7 min-w-12 shrink-0 items-center justify-center rounded-xl bg-gray-3 px-3 text-sm font-medium text-gray-12 transition-colors group-hover:bg-gray-4">
+            <span className="inline-flex h-7 min-w-12 shrink-0 items-center justify-center rounded-xl bg-gray-3 px-3 text-sm font-medium text-gray-12 transition-colors duration-(--dur-micro) ease-[ease] group-hover:bg-gray-4">
               {t('Use')}
             </span>
           </button>

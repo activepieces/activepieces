@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { ImageDialog } from '@/features/chat/chat-message/image-dialog';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 
 export function GeneratedImageCard({ image }: { image: ImageGeneratedEvent }) {
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -15,9 +16,9 @@ export function GeneratedImageCard({ image }: { image: ImageGeneratedEvent }) {
     <>
       <motion.div
         className="max-w-md overflow-hidden rounded-xl border bg-panel"
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
       >
         <button
           type="button"
