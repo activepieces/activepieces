@@ -1,12 +1,17 @@
+import { readFileSync } from 'fs';
+import path from 'path';
+
 import {
   BarrierSignalStatus,
   FlowActionType,
   FlowRunStatus,
+  isFlowRunStateTerminal,
 } from '@activepieces/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
   BatchStepRunOutput,
+  FAILED_BATCH_STATUSES,
   batchUtils,
 } from '@/app/builder/run-details/batch-utils';
 
@@ -224,6 +229,31 @@ describe('batchUtils.missingLogsReason', () => {
       expect(batchUtils.missingLogsCopy(reason)).not.toBeNull();
     }
   });
+
+  it('fills every placeholder its English copy names', () => {
+    const translations: Record<string, string> = JSON.parse(
+      readFileSync(
+        path.resolve(
+          __dirname,
+          '../../../../public/locales/en/translation.json',
+        ),
+        'utf-8',
+      ),
+    );
+    for (const reason of [
+      'pending',
+      'neverStarted',
+      'failedToDispatch',
+      'didNotRun',
+      'stillRunning',
+      'logsUnavailable',
+    ] as const) {
+      const copy = batchUtils.missingLogsCopy(reason);
+      for (const key of [copy?.title ?? '', copy?.description ?? '']) {
+        expect(placeholders(translations[key])).toEqual(placeholders(key));
+      }
+    }
+  });
 });
 
 describe('batchUtils.isDispatchComplete', () => {
@@ -276,6 +306,7 @@ describe('batchUtils.headerState', () => {
       total: 10,
       succeeded: 5,
       unsuccessful: 5,
+      notDispatched: 1,
       stillRunning: 0,
       timedOut: false,
     });
@@ -287,9 +318,21 @@ describe('batchUtils.headerState', () => {
       total: 3,
       succeeded: 1,
       unsuccessful: 1,
+      notDispatched: 1,
       stillRunning: 1,
       timedOut: true,
     });
+  });
+});
+
+describe('FAILED_BATCH_STATUSES', () => {
+  it('lists every finished status except success, as the server counts a batch unsuccessful', () => {
+    const unsuccessful = Object.values(FlowRunStatus).filter(
+      (status) =>
+        status !== FlowRunStatus.SUCCEEDED &&
+        isFlowRunStateTerminal({ status, ignoreInternalError: false }),
+    );
+    expect([...FAILED_BATCH_STATUSES].sort()).toEqual(unsuccessful.sort());
   });
 });
 
@@ -436,3 +479,7 @@ describe('batchUtils.failureMessage', () => {
     expect(batchUtils.failureMessage('')).toBeNull();
   });
 });
+
+function placeholders(text: string | undefined): string[] {
+  return [...(text ?? '').matchAll(/\{(\w+)\}/g)].map(([, name]) => name);
+}
