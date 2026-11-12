@@ -111,6 +111,7 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
 
         <Form {...form}>
           <form
+            data-editing="true"
             onSubmit={form.handleSubmit(async (data) => {
               form.reset();
               setOpen(false);

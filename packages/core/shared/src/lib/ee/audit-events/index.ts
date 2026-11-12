@@ -11,7 +11,7 @@ export const ListAuditEventsRequest = z.object({
     cursor: z.string().optional(),
     action: OptionalArrayFromQuery(z.string()),
     projectId: OptionalArrayFromQuery(z.string()),
-    userId: z.string().optional(),
+    userId: OptionalArrayFromQuery(z.string()),
     createdBefore: z.string().optional(),
     createdAfter: z.string().optional(),
     order: z.enum(['ASC', 'DESC']).optional(),
