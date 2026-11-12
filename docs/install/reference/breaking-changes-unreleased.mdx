@@ -24,6 +24,14 @@ From Google Sheets 0.21.0, **New Row Added** and **New or Updated Row** also run
 
 If a flow uses New or Updated Row with a Trigger Column, open the trigger and check that the value is a column letter, not a header name, then turn the flow on again. If a flow after a row trigger can't handle a run for a value that was changed back, or for extra keys past the last header, add a Branch step to filter those runs.
 
+#### Gmail 0.19.0: New Email and Send Email no longer return HTTP request details
+
+This is a security fix. The output of the **New Email** trigger and the **Send Email** action included the raw HTTP request, which could expose proxy credentials. From Gmail 0.19.0, the New Email `thread` field contains only `data`; the `config`, `headers`, `request` and `status` keys are removed. Send Email now returns only `data`, `status` and `statusText`.
+
+#### What you need to do
+
+If a flow reads `thread.config`, `thread.headers`, `thread.request` or `thread.status` from New Email, or any key other than `data`, `status` and `statusText` from Send Email, update it to read from `data` instead.
+
 #### Google Drive 0.14.0: file triggers, downloads and search across shared drives
 
 From Google Drive 0.14.0, the **New File** trigger with **Include File Content** on fires for a file whose download fails. That run has a `contentError` field with the reason instead of `content`. Before, one failed download (for example a Google Form, which Drive can't download) failed the whole poll, and every new file in that poll was lost. The trigger's output can now carry the `content` and `contentError` keys.

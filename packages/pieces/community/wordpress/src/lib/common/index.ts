@@ -341,44 +341,6 @@ export const wordpressCommon = {
       };
     },
   }),
-  async getPosts(params: {
-    websiteUrl: string;
-    username: string;
-    password: string;
-    authors: string | undefined;
-    afterDate: string;
-    page: number;
-  }) {
-    const queryParams: Record<string, string> = {
-      orderby: 'date',
-      order: 'desc',
-      before: new Date().toISOString(),
-      after: params.afterDate,
-      per_page: '100',
-      page: params.page.toString(),
-    };
-    if (params.authors) {
-      queryParams['author'] = params.authors;
-    }
-    const request: HttpRequest = {
-      method: HttpMethod.GET,
-      url: `${params.websiteUrl}/wp-json/wp/v2/posts`,
-      authentication: {
-        type: AuthenticationType.BASIC,
-        username: params.username,
-        password: params.password,
-      },
-      queryParams: queryParams,
-    };
-    const response = await httpClient.sendRequest<{ date: string }[]>(request);
-    return {
-      posts: response.body,
-      totalPages:
-        response.headers && response.headers[PAGE_HEADER]
-          ? Number(response.headers[PAGE_HEADER])
-          : 0,
-    };
-  },
   async getMedia(params: {
     websiteUrl: string;
     username: string;
