@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Postgres 0.7.0: New Row no longer runs again for updated rows
+
+**New Row** now runs once per row. Before, updating a row ran the flow again for it. Rows that share the same order value as the last one delivered now run the flow instead of being skipped, rows with an empty order value are skipped instead of stopping the trigger, and timestamp columns without a time zone are compared in the database, so workers west of UTC no longer skip rows. Each check delivers at most 500 rows; the rest follow on the next checks. With Descending order on a `timestamptz` or `date` column, a row dated after the database's current time waits until that time; `timestamp` columns (without a time zone) are not held back. When upgrading, rows at the last delivered value that are already in the table don't run again.
+
+#### What you need to do
+
+Nothing for most flows; the trigger keeps its place when upgraded. If a flow relied on New Row running again when a row is updated, use a separate trigger or schedule for updates.
+
 #### RSS 0.8.0: New Item in Feed and New Items in Multiple Feeds fire on a different set of items
 
 From RSS 0.8.0, both RSS triggers keep a separate cursor for each feed URL instead of one shared marker. The output of each run is the same feed item as before, with the same keys and one value change listed below. What changes is mostly which items start a run:

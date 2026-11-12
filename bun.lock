@@ -7375,7 +7375,7 @@
     },
     "packages/pieces/community/postgres": {
       "name": "@activepieces/piece-postgres",
-      "version": "0.6.1",
+      "version": "0.7.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7386,9 +7386,11 @@
         "pg-format": "1.0.4",
       },
       "devDependencies": {
+        "@electric-sql/pglite": "0.3.14",
         "@types/pg": "8.16.0",
         "@types/pg-format": "1.0.5",
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/posthog": {
