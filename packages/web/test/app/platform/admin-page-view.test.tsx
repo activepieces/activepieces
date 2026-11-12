@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const capture = vi.fn();
 let ssoEnabled = true;
 let aiProvidersEnabled = true;
+let eventStreamingEnabled = true;
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
@@ -23,7 +24,12 @@ vi.mock('@/hooks/platform-hooks', () => ({
   platformHooks: {
     useCurrentPlatform: () => ({
       platform: {
-        plan: { ssoEnabled, aiProvidersEnabled, managePiecesEnabled: true },
+        plan: {
+          ssoEnabled,
+          aiProvidersEnabled,
+          eventStreamingEnabled,
+          managePiecesEnabled: true,
+        },
       },
     }),
   },
@@ -50,6 +56,22 @@ vi.mock('@/app/routes/platform/infra/health', () => ({
 vi.mock('@/app/routes/platform/security/sso', () => ({
   SSOPage: () => <div>sso</div>,
 }));
+vi.mock('@/app/components/locked-feature-guard', () => ({
+  LockedFeatureGuard: ({
+    locked,
+    children,
+  }: React.PropsWithChildren<{ locked: boolean }>) =>
+    locked ? <div>upgrade card</div> : <>{children}</>,
+}));
+vi.mock('@/app/routes/platform/security/sso/saml-setup-page', () => ({
+  SamlSetupPage: () => <div>saml setup</div>,
+}));
+vi.mock(
+  '@/app/routes/platform/infra/event-destinations/destination-form',
+  () => ({
+    default: () => <div>destination form</div>,
+  }),
+);
 vi.mock('@/app/routes/platform/setup/ai', () => ({
   default: ({ section }: { section: string }) => <div>{section} ai</div>,
 }));
@@ -86,6 +108,7 @@ const capturedViews = () =>
 beforeEach(() => {
   ssoEnabled = true;
   aiProvidersEnabled = true;
+  eventStreamingEnabled = true;
   capture.mockClear();
 });
 
@@ -132,5 +155,25 @@ describe('admin page view telemetry', () => {
     visit('/platform/ai');
     expect(await screen.findByText('providers ai')).toBeDefined();
     expect(capturedViews()).toEqual([{ page: '/platform/ai', locked: true }]);
+  });
+
+  it('counts a locked view of a plan-guarded page and keeps the page hidden', async () => {
+    ssoEnabled = false;
+    visit('/platform/sso/saml');
+    expect(await screen.findByText('upgrade card')).toBeDefined();
+    expect(screen.queryByText('saml setup')).toBeNull();
+    expect(capturedViews()).toEqual([
+      { page: '/platform/sso/saml', locked: true },
+    ]);
+  });
+
+  it('counts a locked view of the new event destination page', async () => {
+    eventStreamingEnabled = false;
+    visit('/platform/audit-log/streaming/new');
+    expect(await screen.findByText('upgrade card')).toBeDefined();
+    expect(screen.queryByText('destination form')).toBeNull();
+    expect(capturedViews()).toEqual([
+      { page: '/platform/audit-log/streaming/new', locked: true },
+    ]);
   });
 });
