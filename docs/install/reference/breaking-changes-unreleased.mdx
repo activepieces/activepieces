@@ -8,6 +8,38 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Google Calendar 0.14.0: Google Calendar triggers fire once per event and no longer miss events
+
+From Google Calendar 0.14.0, **New Event Matching Search** reads every result page and fires once for each new matching event. A new recurring series fires once, not once per occurrence. Cancelled events never fire. An event that was edited within seconds of being created still counts as new: the trigger no longer requires the created and updated times to be within 5 seconds of each other.
+
+**New Event** fires only for your own events created after the trigger was turned on. Edits, reschedules, renames, cancellations and moved occurrences of a recurring series no longer fire it, and a new series fires once.
+
+Both triggers also fire once for each new invitation from another organizer that you have not answered yet, including an invitation to a meeting created before the trigger was turned on and an invitation to a single occurrence of someone else's series. An invitation you accept or decline before the trigger sees it does not fire, and later edits, replies and republishes do not fire it again. Invitations you receive through a group address follow the own-event rule: they fire only when the meeting was created after the trigger was turned on.
+
+After upgrading, New Event Matching Search, New or Updated Event and Event Cancelled continue from where the old version stopped, but look back at most 24 hours: anything older is skipped and logged. Within those 24 hours, New Event Matching Search may fire once, late, for matching events that the old version skipped (it only read the first page of results). Invitations to meetings created before the old version's last check do not fire after the upgrade, so an invitation the old version already sent does not fire again.
+
+**New or Updated Event** no longer fires for deleted or cancelled events. Every saved change fires once, including a second edit of an event that already fired. After a long quiet period it keeps working instead of failing on Google's "too old" error. A flow that was off for so long that Google rejects its saved position restarts from now and logs the skipped period.
+
+**Event Cancelled** fires once when a whole recurring series is deleted, not once per occurrence. With **Cancellation Reasons**, each cancellation now belongs to exactly one reason, checked in this order: rescheduled, declined, deleted, other. "Event Deleted" now includes your own deleted meetings that kept their title, and "Other Cancellations" only matches what no other reason covers. With **Target Specific Event**, a cancellation fires even when Google leaves out the update time, and an event that no longer exists fires once as deleted. If Google can't be reached to read the selected event when Event Cancelled with **Target Specific Event** is turned on, the flow still turns on: the next check reads the event, records its status without firing, and fails visibly while Google keeps rejecting the request (an event that no longer exists counts as cancelled). Google errors now fail the check instead of being skipped silently.
+
+**Event Start (Time Before)** no longer fires a reminder before it is due (the old version could fire up to 5 minutes early). A reminder whose check ran late or failed fires at the next check if the event hasn't started yet; once the event has started, its reminder is dropped (with Time Before above 0). An event booked after its reminder time fires at the next check if it hasn't started. Time Before = 0 fires when the event starts, a rescheduled event fires again for its new start, and a negative Time Before is an error.
+
+With **Target Specific Event** ticked and no event selected, **Event Cancelled**, **Event Ends** and **Event Start (Time Before)** now refuse to turn on and fail each check with "Select the event to watch, or untick Target Specific Event", instead of staying on and never running. These three triggers and **New Event Matching Search** now list calendars shared with you read-only.
+
+**New Event** keeps its position across a republish of the same calendar, so meetings created just before or during the publish fire once. **New Calendar** no longer fires for a calendar that was hidden from the list and shown again.
+
+**Event Ends** fires once for every event that ends between checks, including more than one page of events and events that end at the same moment.
+
+After upgrading, Event Start (Time Before) and Event Ends do not repeat anything the old version already fired, and they fire once for all-day ends and reminders it had not fired yet. A reminder or event end that the old version skipped in the 14 hours before the upgrade may fire once, late, at the first check after the upgrade; older ones are not sent.
+
+For **Event Start (Time Before)** and **Event Ends**, all-day events start and end at midnight in the calendar's time zone, not UTC. With **Target Specific Event**, a cancelled event no longer fires, and a read error fails the check (the reminder fires at the next check) instead of being hidden.
+
+**New Calendar** fires only for calendars added after the trigger was turned on. Calendars that already existed no longer fire when you widen the filters later, or when they are renamed or their access changes so that they start to match. If you widen the filters in the same publish as this upgrade, an existing calendar that now matches can fire once.
+
+#### What you need to do
+
+If a flow relied on New Event or New Event Matching Search firing for each occurrence of a series or for edits, use **New or Updated Event** instead. If a flow used New or Updated Event to catch deletions, use **Event Cancelled**. If a flow filters Event Cancelled by reason, check the new reason order. Other flows keep working without changes.
+
 #### Gmail 0.19.0: New Email and Send Email no longer return HTTP request details
 
 This is a security fix. The output of the **New Email** trigger and the **Send Email** action included the raw HTTP request, which could expose proxy credentials. From Gmail 0.19.0, the New Email `thread` field contains only `data`; the `config`, `headers`, `request` and `status` keys are removed. Send Email now returns only `data`, `status` and `statusText`.
