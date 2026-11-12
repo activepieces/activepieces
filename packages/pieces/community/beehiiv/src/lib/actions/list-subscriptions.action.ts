@@ -1,24 +1,24 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { beehiivAuth } from '../common/auth';
 import { publicationId } from '../common/props';
-import { beehiivApiCall } from '../common/client';
+import { apiKeyOf, beehiivClient, pathFor } from '../common/client';
 import { isNil } from '@activepieces/pieces-framework';
-
-type SubscriptionListResponse = {
-	data: Record<string, unknown>[];
-	has_more: boolean;
-	next_cursor: string | null;
-};
+import { beehiivOutputSchemas } from '../common/output-schemas';
 
 export const listSubscriptionsAction = createAction({
 	auth: beehiivAuth,
 	name: 'list_subscriptions',
 	classification: 'SEARCH',
 	displayName: 'List Subscriptions',
-	description: 'Retrieves all subscriptions for a Beehiiv publication.',
-	audience: 'both',
-	aiMetadata: { description: 'Lists subscriptions for a beehiiv publication, optionally filtered by status (active, inactive, pending, etc.). Operates in two modes: when neither limit nor cursor is set it auto-paginates and returns every matching subscription; when a limit or cursor is provided it returns a single page with a next-cursor for manual pagination. Use to look up or enumerate subscribers. Read-only and idempotent.', idempotent: true },
+	description:
+		'Retrieves subscriptions for a Beehiiv publication. With Limit and Cursor empty it returns every match (up to 5,000); set Limit or Cursor to get one page with a next cursor.',
+	audience: 'human',
+	aiMetadata: {
+		description:
+			'Lists subscriptions for a beehiiv publication, optionally filtered by status. With no limit or cursor it returns every match up to 5,000 and fails if more remain; with a limit or cursor it returns one page plus next_cursor. Read-only.',
+		idempotent: true,
+	},
+	outputSchema: beehiivOutputSchemas.humanListSubscriptions,
 	props: {
 		publicationId: publicationId,
 		status: Property.StaticDropdown({
@@ -43,56 +43,39 @@ export const listSubscriptionsAction = createAction({
 		}),
 		cursor: Property.ShortText({
 			displayName: 'Cursor',
-			description:
-				'Cursor token for fetching the next page of results. Leave empty to start from the beginning.',
+			description: 'Cursor token for fetching the next page of results. Leave empty to start from the beginning.',
 			required: false,
 		}),
 	},
 	async run(context) {
 		const { publicationId, status, cursor, limit } = context.propsValue;
-
-		const baseParams: Record<string, string | number | undefined> = {
+		const apiKey = apiKeyOf(context.auth);
+		const path = `${pathFor(['publications', publicationId])}/subscriptions`;
+		const query = {
 			order_by: 'created',
 			direction: 'desc',
+			status: status && status !== 'all' ? status : undefined,
 		};
 
-		if (status && status !== 'all') {
-			baseParams['status'] = status;
-		}
-
 		if (!isNil(cursor) || !isNil(limit)) {
-			return beehiivApiCall<SubscriptionListResponse>({
-				apiKey: context.auth.secret_text,
-				method: HttpMethod.GET,
-				resourceUri: `/publications/${publicationId}/subscriptions`,
-				query: {
-					...baseParams,
-					...(isNil(limit) ? {} : { limit }),
-					...(isNil(cursor) || cursor === '' ? {} : { cursor }),
-				},
+			const response = await beehiivClient.request({
+				apiKey,
+				method: 'GET',
+				path,
+				operation: 'list subscriptions',
+				query: { ...query, limit: isNil(limit) ? undefined : limit, cursor: isNil(cursor) || cursor === '' ? undefined : cursor },
 			});
+			return response.body;
 		}
 
-		const allData: Record<string, unknown>[] = [];
-		let nextCursor: string | undefined;
-
-		do {
-			const response = await beehiivApiCall<SubscriptionListResponse>({
-				apiKey: context.auth.secret_text,
-				method: HttpMethod.GET,
-				resourceUri: `/publications/${publicationId}/subscriptions`,
-				query: {
-					...baseParams,
-					limit: 100,
-					...(nextCursor ? { cursor: nextCursor } : {}),
-				},
-			});
-
-			if (!response.data || response.data.length === 0) break;
-			allData.push(...response.data);
-			nextCursor = response.next_cursor ?? undefined;
-		} while (nextCursor);
-
-		return allData;
+		return beehiivClient.listAllCursor<Record<string, unknown>>({
+			apiKey,
+			path,
+			operation: 'list subscriptions',
+			query,
+			maxItems: MAX_SUBSCRIPTIONS,
+		});
 	},
 });
+
+const MAX_SUBSCRIPTIONS = 5_000;

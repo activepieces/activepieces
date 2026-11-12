@@ -50,7 +50,7 @@ export const googleTasks = createPiece({
   displayName: 'Google Tasks',
   description: 'Task list management application',
 
-  authors: ["Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ["Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud","OdaiAhmed99"],
   triggers: [newTaskTrigger],
   auth: googleTasksAuth,
 });

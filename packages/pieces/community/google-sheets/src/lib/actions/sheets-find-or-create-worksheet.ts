@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
-import { createGoogleClient, googleSheetsAuth } from '../common/common';
+import { createGoogleClient, googleSheetsAuth, googleSheetsCommon } from '../common/common';
 import { sheetsFindOrCreateWorksheetActionOutputSchema } from '../output-schemas';
 
 export const sheetsFindOrCreateWorksheet = createAction({
@@ -72,7 +72,7 @@ export const sheetsFindOrCreateWorksheet = createAction({
 		if (headers.length > 0) {
 			await sheetsApi.spreadsheets.values.append({
 				spreadsheetId: spreadsheet_id,
-				range: `${title}!A1`,
+				range: googleSheetsCommon.sheetRange({ sheetName: title, range: 'A1' }),
 				valueInputOption: 'RAW',
 				requestBody: {
 					majorDimension: 'ROWS',

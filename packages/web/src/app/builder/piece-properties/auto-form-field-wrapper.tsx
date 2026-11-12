@@ -13,8 +13,8 @@ import { Calendar, File } from 'lucide-react';
 import React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
-import { toast } from 'sonner';
 
+import { clipboardUtils } from '@/components/custom/clipboard/use-copy-to-clipboard';
 import { ReadMoreDescription } from '@/components/custom/read-more-description';
 import { Button } from '@/components/ui/button';
 import { FormItem, FormLabel } from '@/components/ui/form';
@@ -132,19 +132,16 @@ function AutoFormFielWrapperErrorBoundary({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              navigator.clipboard.writeText(
-                JSON.stringify({
+            onClick={() =>
+              clipboardUtils.copy({
+                value: {
                   stringifiedValue: stringifyValue(field.value),
                   property,
                   dynamicInputModeToggled,
                   disabled: field.disabled,
-                }),
-              );
-              toast(t('Info copied to clipboard, please send it to support'), {
-                duration: 3000,
-              });
-            }}
+                },
+              })
+            }
           >
             {t('Info')}
           </Button>

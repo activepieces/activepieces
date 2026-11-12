@@ -18,7 +18,7 @@ export const replaceAllText = createAction({
 		// second run matches zero occurrences). Caveat noted below for the
 		// overlapping find/replace-literals edge case.
 		description:
-			'Find-and-replaces every occurrence of a literal string across a whole Google Docs document. Pick this for a bare ad-hoc text edit; use Edit Template File instead for placeholder-token merges or image swaps. Idempotent for normal use (a repeat run matches nothing and leaves the same end state); the exception is overlapping find/replace literals (e.g. replacing "a" with "ab"), which can re-match on a second run.',
+			'Find-and-replaces every occurrence of a literal string across a whole Google Docs document. Pick this for a bare ad-hoc text edit; use Fill Template instead for placeholder-token merges or image swaps. Idempotent for normal use (a repeat run matches nothing and leaves the same end state); the exception is overlapping find/replace literals (e.g. replacing "a" with "ab"), which can re-match on a second run.',
 		idempotent: true,
 	},
 	outputSchema: replaceAllTextActionOutputSchema,
