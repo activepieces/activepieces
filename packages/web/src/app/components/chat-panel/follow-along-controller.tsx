@@ -16,6 +16,7 @@ import {
   useFollowHold,
 } from '@/features/chat/lib/follow/follow-hold';
 import { pageFocus } from '@/features/chat/lib/follow/page-focus';
+import { useAiFieldHighlights } from '@/features/chat/lib/follow/use-ai-highlight';
 import { resourceRegistry } from '@/features/chat/lib/resources/registry';
 import {
   chatPanelUtils,
@@ -24,6 +25,7 @@ import {
 import { authenticationSession } from '@/lib/authentication-session';
 
 export function FollowAlongController() {
+  useAiFieldHighlights();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const queryClient = useQueryClient();

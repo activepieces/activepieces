@@ -67,7 +67,11 @@ describe('ChatInput queue', () => {
     view.rerender(input({ isStreaming: false, chatSession: 1, onSend }));
 
     expect(onSend).toHaveBeenCalledTimes(1);
-    expect(onSend).toHaveBeenCalledWith('Then do this', undefined);
+    expect(onSend).toHaveBeenCalledWith(
+      'Then do this',
+      undefined,
+      expect.objectContaining({ pageContext: null }),
+    );
   });
 
   it('puts the text back in the composer on Cancel', () => {

@@ -8,7 +8,10 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { PanelImperativeHandle } from 'react-resizable-panels';
 import { usePrevious } from 'react-use';
 
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import {
+  useBuilderStateContext,
+  useBuilderStore,
+} from '@/app/builder/builder-hooks';
 import { DataSelector } from '@/app/builder/data-selector';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import { RightSideBarType } from '@/app/builder/types';
@@ -19,6 +22,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
+import { useOpenBuilder } from '@/features/chat/lib/page-context';
 import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useElementSize } from '@/hooks/use-element-size';
@@ -72,6 +76,7 @@ const BuilderPage = () => {
       removeAllStepTestsListeners();
     };
   }, [removeAllStepTestsListeners]);
+  useOpenBuilder(useBuilderStore());
   flowCanvasHooks.useShowBuilderIsSavingWarningBeforeLeaving();
   flowCanvasHooks.useFlushPendingEditsOnLeave();
   flowCanvasHooks.useRefreshDraftOnPush();

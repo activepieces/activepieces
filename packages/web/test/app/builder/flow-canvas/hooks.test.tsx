@@ -2,6 +2,8 @@
 /* eslint-disable testing-library/no-unnecessary-act */
 import {
   EmptyTrigger,
+  FlowAction,
+  FlowActionType,
   FlowOperationRequest,
   FlowDraftUpdatedEvent,
   FlowOperationStatus,
@@ -33,6 +35,7 @@ import {
 import { flowCanvasHooks } from '@/app/builder/flow-canvas/hooks';
 import { useFlowLock } from '@/app/builder/flow-canvas/widgets/use-flow-lock';
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
+import { followAlong } from '@/features/chat/lib/follow/follow-along';
 import { editorSession } from '@/lib/editor-session';
 
 declare global {
@@ -115,11 +118,30 @@ vi.mock('@/hooks/authorization-hooks', () => ({
 
 vi.mock('@/components/providers/socket-provider', () => ({
   useSocket: () => socketHarness.socket,
+  emitInProject: ({ send }: { send: () => void }) => send(),
+  dropHeldEmits: () => undefined,
 }));
 
 vi.mock('@/features/flows/api/flows-api', () => ({
   flowsApi: flowsApiMock,
 }));
+
+vi.mock('@/features/chat/lib/follow/follow-along', () => {
+  const api = {
+    flash: vi.fn(),
+    isFollowing: vi.fn((_resource: { kind: string; id: string }) => false),
+    flashWhenFollowed: ({
+      resource,
+      keys,
+    }: {
+      resource: { kind: string; id: string };
+      keys: string[];
+    }) => {
+      if (api.isFollowing(resource)) api.flash(keys);
+    },
+  };
+  return { followAlong: api };
+});
 
 describe('useFlushPendingEditsOnLeave', () => {
   let container: HTMLDivElement;
@@ -246,6 +268,135 @@ describe('useRefreshDraftOnPush', () => {
     await vi.advanceTimersByTimeAsync(0);
 
     expect(flowsApiMock.get).not.toHaveBeenCalled();
+  });
+
+  it('sheens the changed steps when the chat that edits this flow is followed', async () => {
+    vi.mocked(followAlong.flash).mockClear();
+    vi.mocked(followAlong.isFollowing).mockReturnValue(true);
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    flowsApiMock.get.mockResolvedValue(flowWithRenamedTrigger());
+    mount(store);
+
+    sendDraftPush({ flowId: 'flow-1', editorSessionId: 'other-session' });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(followAlong.isFollowing).toHaveBeenCalledWith({
+      kind: 'flow',
+      id: 'flow-1',
+    });
+    expect(followAlong.flash).toHaveBeenCalledWith(['flow-step:trigger']);
+  });
+
+  it('does not sheen a step whose only difference is an unset setting', async () => {
+    vi.mocked(followAlong.flash).mockClear();
+    vi.mocked(followAlong.isFollowing).mockReturnValue(true);
+    const local = flowWithDraftVersion({ versionId: 'draft-1' });
+    const trigger: EmptyTrigger = {
+      name: 'trigger',
+      valid: false,
+      displayName: 'Select Trigger',
+      type: FlowTriggerType.EMPTY,
+      settings: { sampleData: undefined },
+      lastUpdatedDate: '2026-01-01T00:00:00.000Z',
+    };
+    const store = createStore({
+      ...local,
+      version: { ...local.version, trigger },
+    });
+    flowsApiMock.get.mockResolvedValue(
+      flowWithDraftVersion({
+        versionId: 'draft-1',
+        displayName: 'Renamed by the chat',
+      }),
+    );
+    mount(store);
+
+    sendDraftPush({ flowId: 'flow-1', editorSessionId: 'other-session' });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(store.getState().flowVersion.displayName).toBe(
+      'Renamed by the chat',
+    );
+    expect(followAlong.flash).toHaveBeenCalledWith(['flow-name:flow-1']);
+  });
+
+  it('does not sheen an edit this tab made while the push was loading', async () => {
+    vi.mocked(followAlong.flash).mockClear();
+    vi.mocked(followAlong.isFollowing).mockReturnValue(true);
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    const server = flowWithRenamedTrigger();
+    flowsApiMock.get.mockResolvedValue({
+      ...server,
+      version: { ...server.version, displayName: 'Renamed by the chat' },
+    });
+    mount(store);
+
+    sendDraftPush({ flowId: 'flow-1', editorSessionId: 'other-session' });
+    act(() => {
+      const { flowVersion } = store.getState();
+      store.setState({
+        flowVersion: {
+          ...flowVersion,
+          trigger: { ...flowVersion.trigger, displayName: 'Renamed trigger' },
+        },
+      });
+    });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(store.getState().flowVersion.displayName).toBe(
+      'Renamed by the chat',
+    );
+    expect(followAlong.flash).toHaveBeenCalledWith(['flow-name:flow-1']);
+  });
+
+  it('sheens a step the chat skipped', async () => {
+    vi.mocked(followAlong.flash).mockClear();
+    vi.mocked(followAlong.isFollowing).mockReturnValue(true);
+    const store = createStore(flowWithChain([codeStep({ name: 'step_a' })]));
+    flowsApiMock.get.mockResolvedValue(
+      flowWithChain([codeStep({ name: 'step_a', skip: true })]),
+    );
+    mount(store);
+
+    sendDraftPush({ flowId: 'flow-1', editorSessionId: 'other-session' });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(followAlong.flash).toHaveBeenCalledWith(['flow-step:step_a']);
+  });
+
+  it('sheens a step the chat moved, not the steps around it', async () => {
+    vi.mocked(followAlong.flash).mockClear();
+    vi.mocked(followAlong.isFollowing).mockReturnValue(true);
+    const names = (order: string[]) =>
+      order.map((name) => codeStep({ name }));
+    const store = createStore(
+      flowWithChain(names(['step_a', 'step_b', 'step_x', 'step_c'])),
+    );
+    flowsApiMock.get.mockResolvedValue(
+      flowWithChain(names(['step_x', 'step_a', 'step_b', 'step_c'])),
+    );
+    mount(store);
+
+    sendDraftPush({ flowId: 'flow-1', editorSessionId: 'other-session' });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(followAlong.flash).toHaveBeenCalledWith(['flow-step:step_x']);
+  });
+
+  it('shows a collaborator edit without the sheen when no chat follows the flow', async () => {
+    vi.mocked(followAlong.flash).mockClear();
+    vi.mocked(followAlong.isFollowing).mockReturnValue(false);
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    flowsApiMock.get.mockResolvedValue(flowWithRenamedTrigger());
+    mount(store);
+
+    sendDraftPush({ flowId: 'flow-1', editorSessionId: 'other-session' });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(store.getState().flowVersion.trigger.displayName).toBe(
+      'Renamed trigger',
+    );
+    expect(followAlong.flash).not.toHaveBeenCalled();
   });
 
   it('shows the newest draft after a push with no Editor Session id', async () => {
@@ -742,6 +893,54 @@ function renameTrigger(displayName: string): FlowOperationRequest {
       displayName,
       type: FlowTriggerType.EMPTY,
       settings: {},
+    },
+  };
+}
+
+function flowWithRenamedTrigger(): PopulatedFlow {
+  const flow = flowWithDraftVersion({ versionId: 'draft-1' });
+  return {
+    ...flow,
+    version: {
+      ...flow.version,
+      trigger: { ...flow.version.trigger, displayName: 'Renamed trigger' },
+    },
+  };
+}
+
+function codeStep({
+  name,
+  skip = false,
+}: {
+  name: string;
+  skip?: boolean;
+}): FlowAction {
+  return {
+    name,
+    valid: true,
+    displayName: name,
+    skip,
+    type: FlowActionType.CODE,
+    lastUpdatedDate: '2026-01-01T00:00:00.000Z',
+    settings: {
+      sourceCode: { code: '', packageJson: '{}' },
+      input: {},
+      errorHandlingOptions: undefined,
+    },
+  };
+}
+
+function flowWithChain(steps: FlowAction[]): PopulatedFlow {
+  const flow = flowWithDraftVersion({ versionId: 'draft-1' });
+  const nextAction = steps.reduceRight<FlowAction | undefined>(
+    (next, step) => ({ ...step, nextAction: next }),
+    undefined,
+  );
+  return {
+    ...flow,
+    version: {
+      ...flow.version,
+      trigger: { ...flow.version.trigger, nextAction },
     },
   };
 }
