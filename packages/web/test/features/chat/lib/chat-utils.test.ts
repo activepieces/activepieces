@@ -5,10 +5,12 @@ import {
   PersistedAgentRole,
 } from '@activepieces/shared';
 import { mcpToolNameUtils } from '@activepieces/shared';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { AnyToolPart } from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
+
+vi.mock('i18next', () => ({ t: (key: string) => key }));
 
 function buildPlanMessage(
   data: Record<string, unknown>,
@@ -280,5 +282,13 @@ describe('chatUtils — tool pill active/done labels', () => {
     expect(chatUtils.formatToolActionName({ part })).toBe('Generating image');
     expect(chatUtils.formatToolDoneTitle({ part })).toBe('Generated image');
     expect(chatUtils.formatToolActionName({ part })).not.toContain('mascot');
+  });
+});
+
+describe('chatUtils.displayTitle', () => {
+  it('labels a chat without a usable title as New chat', () => {
+    expect(chatUtils.displayTitle(null)).toBe('New chat');
+    expect(chatUtils.displayTitle('**')).toBe('New chat');
+    expect(chatUtils.displayTitle('**Leads** sync')).toBe('Leads sync');
   });
 });
