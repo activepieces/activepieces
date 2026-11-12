@@ -1,127 +1,36 @@
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,
-  PiecePropValueSchema,
+  isNil,
   Property,
+  Store,
+  tryCatch,
 } from '@activepieces/pieces-framework';
+import { specificEvent } from '../common/specific-event';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { googleCalendarCommon, getAccessToken } from '../common';
-import { GoogleCalendarEvent } from '../common/types';
-import { googleCalendarAuth } from '../common';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
 import {
   AuthenticationType,
   httpClient,
   HttpMethod,
-  HttpRequest,
 } from '@activepieces/pieces-common';
-import { getEvents } from '../common/helper';
+import {
+  googleCalendarCommon,
+  googleCalendarAuth,
+  getAccessToken,
+} from '../common';
+import { GoogleCalendarEvent } from '../common/types';
+import { eventScan, ListedEvent } from '../common/event-scan';
 import { eventOutputSchema } from '../output-schemas';
 
-
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof googleCalendarAuth>,
-  {
-    calendar_id: string | undefined;
-    specific_event: boolean | undefined;
-    event_id: string | undefined;
-    cancellation_reason: string[] | undefined;
-  }
-> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const {
-      calendar_id: calendarId,
-      specific_event,
-      event_id,
-      cancellation_reason,
-    } = propsValue;
-
-    if (!calendarId) {
-      return [];
-    }
-
-    if (specific_event && !event_id) {
-      return [];
-    }
-
-    let minUpdated: Date;
-    if (lastFetchEpochMS === 0) {
-      minUpdated = new Date();
-      minUpdated.setDate(minUpdated.getDate() - 1);
-    } else {
-      minUpdated = new Date(lastFetchEpochMS);
-    }
-
-    let events: GoogleCalendarEvent[] = [];
-
-    if (specific_event && event_id) {
-      const eventRequest: HttpRequest = {
-        method: HttpMethod.GET,
-        url: `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events/${event_id}`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: await getAccessToken(auth),
-        },
-      };
-
-      try {
-        const eventResponse = await httpClient.sendRequest<GoogleCalendarEvent>(
-          eventRequest
-        );
-        const event = eventResponse.body;
-
-        const updatedTime = new Date(event.updated ?? 0).getTime();
-        if (updatedTime > lastFetchEpochMS && event.status === 'cancelled') {
-          events = [event];
-        }
-      } catch (error) {
-        console.error('Error fetching specific event:', error);
-        return [];
-      }
-    } else {
-      const allEvents = await getEvents(calendarId, true, auth, minUpdated);
-      events = allEvents.filter((event) => event.status === 'cancelled');
-    }
-
-    if (cancellation_reason && cancellation_reason.length > 0) {
-      events = events.filter((event) => {
-        return cancellation_reason.some((reason) => {
-          switch (reason) {
-            case 'deleted':
-              return !event.summary || event.summary.includes('Deleted');
-            case 'declined':
-              return (
-                event.attendees?.some(
-                  (attendee) => attendee.responseStatus === 'declined'
-                ) || false
-              );
-            case 'rescheduled':
-              return (
-                event.summary?.toLowerCase().includes('rescheduled') ||
-                event.description?.toLowerCase().includes('rescheduled') ||
-                false
-              );
-            case 'other':
-              return true;
-            default:
-              return true;
-          }
-        });
-      });
-    }
-
-    return events.map((event) => {
-      return {
-        epochMilliSeconds: new Date(event.updated!).getTime(),
-        data: event,
-      };
-    });
-  },
+const CHECKPOINT_STORE_KEY = 'event_cancelled_checkpoint';
+const PINNED_STORE_KEY = 'event_cancelled_pinned';
+const TRIGGER_NAME = 'event_cancelled';
+const SAMPLE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+const SAMPLE_SIZE = 5;
+const RESCHEDULED_WORD = 'rescheduled';
+const CANCELLATION_QUERY: Record<string, string> = {
+  showDeleted: 'true',
+  singleEvents: 'false',
 };
 
 export const eventCancelled = createTrigger({
@@ -131,7 +40,8 @@ export const eventCancelled = createTrigger({
   displayName: 'Event Cancelled',
   description: 'Fires when an event is canceled or deleted.',
   aiMetadata: {
-    description: 'Fires when an event in the selected calendar transitions to a cancelled (or deleted) state, detected by polling. Each fired item is the cancelled event; can optionally be filtered by cancellation reason (deleted, attendee declined, rescheduled, other) and scoped to a single specific event.',
+    description:
+      'Fires when an event in the selected calendar is cancelled or deleted, detected by polling. Each fired item is the cancelled event. Deleting a whole recurring series fires once for the series; cancelling one occurrence fires once for that occurrence. Optionally scoped to one specific event, and filtered by cancellation reason. Each cancellation has exactly one reason, checked in this order: rescheduled (the title or description contains "rescheduled"), declined (an attendee declined), deleted (you organize the event, or Google returned only its id), other (someone else cancelled a meeting you were invited to).',
   },
   propertyGroups: [
     {
@@ -143,7 +53,7 @@ export const eventCancelled = createTrigger({
     },
   ],
   props: {
-    calendar_id: googleCalendarCommon.calendarDropdown('writer'),
+    calendar_id: googleCalendarCommon.calendarDropdown(),
     specific_event: Property.Checkbox({
       displayName: 'Target Specific Event',
       description: 'Watch one event instead of the whole calendar.',
@@ -153,7 +63,8 @@ export const eventCancelled = createTrigger({
     event_id: googleCalendarCommon.eventDropdown(false),
     cancellation_reason: Property.StaticMultiSelectDropdown({
       displayName: 'Cancellation Reasons',
-      description: 'Leave empty to fire on every cancellation.',
+      description:
+        'Leave empty to fire on every cancellation. Each cancellation has one reason, checked in this order: Rescheduled (title or description says "rescheduled"), Attendee Declined, Event Deleted (you organize it, or only its id is left), Other (someone else cancelled a meeting you were invited to).',
       required: false,
       advanced: true,
       options: {
@@ -180,18 +91,329 @@ export const eventCancelled = createTrigger({
   },
 
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    const { calendar_id, specific_event, event_id } = context.propsValue;
+    const watchKey = buildWatchKey({ propsValue: context.propsValue });
+    if (specific_event) {
+      const pinnedEventId = specificEvent.require({ eventId: event_id });
+      if (!calendar_id) {
+        return;
+      }
+      await restoreOrBaselinePinned({
+        auth: context.auth,
+        store: context.store,
+        calendarId: calendar_id,
+        eventId: pinnedEventId,
+        watchKey,
+        isRepublish: context.isRepublish,
+      });
+      return;
+    }
+    await eventScan.restoreOrBaseline({
+      store: context.store,
+      storeKey: CHECKPOINT_STORE_KEY,
+      watchKey,
+      isRepublish: context.isRepublish,
+      triggerName: TRIGGER_NAME,
+    });
   },
 
-  async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+  async onDisable() {
+    return;
   },
 
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    const { calendar_id, specific_event, event_id, cancellation_reason } =
+      context.propsValue;
+    if (!calendar_id) {
+      return [];
+    }
+    const watchKey = buildWatchKey({ propsValue: context.propsValue });
+    if (specific_event) {
+      const pinnedEventId = specificEvent.require({ eventId: event_id });
+      const cancelled = await pollPinnedEvent({
+        auth: context.auth,
+        store: context.store,
+        calendarId: calendar_id,
+        eventId: pinnedEventId,
+        watchKey,
+      });
+      return cancelled.filter((event) =>
+        matchesReasons({ event, reasons: cancellation_reason })
+      );
+    }
+    const listed = await eventScan.pollUpdatedEvents({
+      auth: context.auth,
+      store: context.store,
+      storeKey: CHECKPOINT_STORE_KEY,
+      watchKey,
+      calendarId: calendar_id,
+      query: CANCELLATION_QUERY,
+      triggerName: TRIGGER_NAME,
+      skippedItems: 'Cancellations',
+    });
+    return newCancellations({ listed }).filter((event) =>
+      matchesReasons({ event, reasons: cancellation_reason })
+    );
   },
 
   async test(context) {
-    return await pollingHelper.test(polling, context);
+    const { calendar_id, specific_event, event_id, cancellation_reason } =
+      context.propsValue;
+    if (!calendar_id) {
+      return [];
+    }
+    if (specific_event) {
+      if (!event_id) {
+        return [];
+      }
+      const fetched = await fetchPinnedEvent({
+        auth: context.auth,
+        calendarId: calendar_id,
+        eventId: event_id,
+      });
+      return fetched.cancelled &&
+        matchesReasons({ event: fetched.event, reasons: cancellation_reason })
+        ? [fetched.event]
+        : [];
+    }
+    const listed = await eventScan.sampleUpdatedEvents({
+      auth: context.auth,
+      calendarId: calendar_id,
+      query: CANCELLATION_QUERY,
+      lookbackMs: SAMPLE_WINDOW_MS,
+      triggerName: TRIGGER_NAME,
+    });
+    const newestFirst = [...listed].sort(
+      (left, right) => right.updatedMs - left.updatedMs
+    );
+    return newCancellations({ listed: newestFirst })
+      .filter((event) => matchesReasons({ event, reasons: cancellation_reason }))
+      .slice(0, SAMPLE_SIZE);
   },
 });
+
+function newCancellations({
+  listed,
+}: {
+  listed: ListedEvent[];
+}): GoogleCalendarEvent[] {
+  const cancelledSeries = new Set(
+    listed
+      .filter(({ event }) => event.status === 'cancelled' && !event.recurringEventId)
+      .map(({ event }) => event.id)
+  );
+  return listed
+    .filter(
+      ({ event, previous }) =>
+        event.status === 'cancelled' &&
+        previous?.cancelled !== true &&
+        !(event.recurringEventId && cancelledSeries.has(event.recurringEventId))
+    )
+    .map(({ event }) => event);
+}
+
+function cancellationReasonOf({
+  event,
+}: {
+  event: CancelledEvent;
+}): CancellationReason {
+  const mentionsRescheduled = [event.summary, event.description].some(
+    (text) =>
+      typeof text === 'string' &&
+      text.trim().toLowerCase().includes(RESCHEDULED_WORD)
+  );
+  if (mentionsRescheduled) {
+    return 'rescheduled';
+  }
+  if (
+    (event.attendees ?? []).some(
+      (attendee) => attendee.responseStatus === 'declined'
+    )
+  ) {
+    return 'declined';
+  }
+  if (event.organizer?.self === true || !event.summary) {
+    return 'deleted';
+  }
+  return 'other';
+}
+
+function matchesReasons({
+  event,
+  reasons,
+}: {
+  event: CancelledEvent;
+  reasons: string[] | undefined;
+}): boolean {
+  if (isNil(reasons) || reasons.length === 0) {
+    return true;
+  }
+  return reasons.includes(cancellationReasonOf({ event }));
+}
+
+async function pollPinnedEvent({
+  auth,
+  store,
+  calendarId,
+  eventId,
+  watchKey,
+}: {
+  auth: AppConnectionValueForAuthProperty<typeof googleCalendarAuth>;
+  store: Store;
+  calendarId: string;
+  eventId: string;
+  watchKey: string;
+}): Promise<CancelledEvent[]> {
+  const fetched = await fetchPinnedEvent({ auth, calendarId, eventId });
+  const wasCancelled = await previouslyCancelled({
+    store,
+    watchKey,
+    fetched,
+  });
+  await store.put<PinnedState>(PINNED_STORE_KEY, {
+    watchKey,
+    cancelled: fetched.cancelled,
+  });
+  if (isNil(wasCancelled) || wasCancelled || !fetched.cancelled) {
+    return [];
+  }
+  return [fetched.event];
+}
+
+async function previouslyCancelled({
+  store,
+  watchKey,
+  fetched,
+}: {
+  store: Store;
+  watchKey: string;
+  fetched: PinnedFetch;
+}): Promise<boolean | null> {
+  const saved = await store.get<PinnedState>(PINNED_STORE_KEY);
+  if (!isNil(saved)) {
+    return saved.watchKey === watchKey ? saved.cancelled : null;
+  }
+  const legacyLastPoll = await eventScan.readLegacyLastPoll({ store });
+  if (isNil(legacyLastPoll)) {
+    return null;
+  }
+  if (!fetched.cancelled) {
+    return false;
+  }
+  const updatedMs = Date.parse(fetched.event.updated ?? '');
+  return Number.isNaN(updatedMs) || updatedMs <= legacyLastPoll;
+}
+
+async function restoreOrBaselinePinned({
+  auth,
+  store,
+  calendarId,
+  eventId,
+  watchKey,
+  isRepublish,
+}: {
+  auth: AppConnectionValueForAuthProperty<typeof googleCalendarAuth>;
+  store: Store;
+  calendarId: string;
+  eventId: string;
+  watchKey: string;
+  isRepublish: boolean | undefined;
+}): Promise<void> {
+  if (isRepublish) {
+    const saved = await store.get<PinnedState>(PINNED_STORE_KEY);
+    if (!isNil(saved) && saved.watchKey === watchKey) {
+      return;
+    }
+    if (isNil(saved) && !isNil(await eventScan.readLegacyLastPoll({ store }))) {
+      return;
+    }
+  }
+  const fetched = await tryCatch(() =>
+    fetchPinnedEvent({ auth, calendarId, eventId })
+  );
+  if (fetched.error) {
+    const status = eventScan.httpStatusOf(fetched.error);
+    console.warn(
+      `[google-calendar] ${TRIGGER_NAME}: could not read event ${eventId} while enabling${
+        isNil(status) ? '' : ` (HTTP ${status})`
+      }; its status is recorded at the next check.`
+    );
+    await store.delete(PINNED_STORE_KEY);
+    return;
+  }
+  await store.put<PinnedState>(PINNED_STORE_KEY, {
+    watchKey,
+    cancelled: fetched.data.cancelled,
+  });
+}
+
+async function fetchPinnedEvent({
+  auth,
+  calendarId,
+  eventId,
+}: {
+  auth: AppConnectionValueForAuthProperty<typeof googleCalendarAuth>;
+  calendarId: string;
+  eventId: string;
+}): Promise<PinnedFetch> {
+  const response = await tryCatch(async () =>
+    httpClient.sendRequest<CancelledEvent>({
+      method: HttpMethod.GET,
+      url: `${googleCalendarCommon.baseUrl}/calendars/${encodeURIComponent(
+        calendarId
+      )}/events/${encodeURIComponent(eventId)}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: await getAccessToken(auth),
+      },
+      timeout: eventScan.requestTimeoutMs,
+    })
+  );
+  if (response.error) {
+    const status = eventScan.httpStatusOf(response.error);
+    if (status === 404 || status === 410) {
+      return { cancelled: true, event: { id: eventId, status: 'cancelled' } };
+    }
+    throw response.error;
+  }
+  const event = response.data.body;
+  return { cancelled: event.status === 'cancelled', event };
+}
+
+function buildWatchKey({
+  propsValue,
+}: {
+  propsValue: {
+    calendar_id?: string;
+    specific_event?: boolean;
+    event_id?: string;
+  };
+}): string {
+  return JSON.stringify([
+    propsValue.calendar_id ?? '',
+    propsValue.specific_event === true,
+    propsValue.specific_event === true ? propsValue.event_id ?? '' : '',
+  ]);
+}
+
+type CancellationReason = 'rescheduled' | 'declined' | 'deleted' | 'other';
+
+type CancelledEvent = {
+  id: string;
+  status?: string;
+  updated?: string;
+  summary?: string;
+  description?: string;
+  organizer?: { self?: boolean };
+  attendees?: { responseStatus?: string }[];
+};
+
+type PinnedFetch = {
+  cancelled: boolean;
+  event: CancelledEvent;
+};
+
+type PinnedState = {
+  watchKey: string;
+  cancelled: boolean;
+};

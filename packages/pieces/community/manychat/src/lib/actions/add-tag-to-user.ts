@@ -1,52 +1,36 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { manychatAuth } from '../auth';
-import { BASE_URL, subscriberId, tagIdDropdown } from '../common/props';
+import { manychatClient, manychatUtils } from '../common/client';
+import { manychatData, manychatInput, subscriberId, tagIdDropdown } from '../common/props';
+import { manychatOutputSchemas } from '../common/output-schemas';
 
 export const addTagToUserAction = createAction({
 	auth: manychatAuth,
 	name: 'addTagToUser',
 	classification: 'WRITE',
 	displayName: 'Add Tag to User',
-	description: 'Adds a tag to a user.',
+	description: 'Adds a tag to a user and returns the updated user.',
 	audience: 'both',
-	aiMetadata: { description: 'Assigns an existing tag to a Manychat subscriber, identified by subscriber ID and tag ID, then returns the updated subscriber info. Use to label or segment a known contact (e.g. mark them as a lead). Idempotent: re-adding the same tag leaves the subscriber in the same state.', idempotent: true },
+	aiMetadata: {
+		description:
+			'Assigns an existing tag to a ManyChat subscriber by subscriber ID and tag ID, then returns the updated subscriber. Use to label or segment a known contact; get tag IDs from "List Tags" and create new ones with "Create Tag". Re-adding a tag the subscriber already has leaves the same state.',
+		idempotent: true,
+	},
+	outputSchema: manychatOutputSchemas.subscriber,
 	props: {
 		subscriberId: subscriberId,
 		tagId: tagIdDropdown,
 	},
 	async run({ auth, propsValue }) {
-		const { subscriberId, tagId } = propsValue;
-
-		const addTagResponse = await httpClient.sendRequest<{ status: string }>({
-			url: `${BASE_URL}/subscriber/addTag`,
-			method: HttpMethod.POST,
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: auth.secret_text,
-			},
-			body: {
-				subscriber_id: subscriberId,
-				tag_id: tagId,
-			},
+		const apiKey = manychatUtils.apiKeyOf(auth);
+		const id = manychatInput.subscriberIdText({ value: propsValue.subscriberId, label: 'User ID' });
+		await manychatClient.request({
+			apiKey,
+			method: 'POST',
+			path: '/subscriber/addTag',
+			operation: 'add tag to subscriber',
+			body: { subscriber_id: manychatInput.apiId(id), tag_id: propsValue.tagId },
 		});
-
-		if (addTagResponse.body.status !== 'success') {
-			throw Error(`Unexpected Error occured : ${JSON.stringify(addTagResponse.body)}`);
-		}
-
-		const userResponse = await httpClient.sendRequest<{ data: Record<string, any> }>({
-			method: HttpMethod.GET,
-			url: `${BASE_URL}/subscriber/getInfo`,
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: auth.secret_text,
-			},
-			queryParams: {
-				subscriber_id: `${subscriberId}`,
-			},
-		});
-
-		return userResponse.body.data;
+		return manychatData.getSubscriber({ apiKey, subscriberId: id });
 	},
 });
