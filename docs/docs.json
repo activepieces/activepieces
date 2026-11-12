@@ -127,6 +127,8 @@
                      "flows/publishing-flows",
                      "flows/flow-approvals",
                      "flows/debugging-runs",
+                     "flows/managing-memory",
+                     "flows/managing-queues",
                     "flows/versioning",
                     "flows/template-library",
                     "flows/canvas-controls"

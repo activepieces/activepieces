@@ -85,7 +85,7 @@ function OutputViewerShell({
               </Tooltip>
             </TooltipProvider>
             <CopyButton
-              textToCopy={serializedJson}
+              value={serializedJson}
               variant="ghost"
               tooltipSide="bottom"
             />

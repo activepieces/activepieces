@@ -18,7 +18,7 @@ export const googleForms = createPiece({
   minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-forms.png',
   categories: [PieceCategory.FORMS_AND_SURVEYS],
-  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud","Startouf"],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud","Startouf","OdaiAhmed99"],
   auth: googleFormsAuth,
   actions: [
     formsGetForm,

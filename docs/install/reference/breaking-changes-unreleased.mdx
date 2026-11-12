@@ -8,6 +8,191 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### ManyChat 0.2.0: Set Custom Field is no longer an agent tool
+
+From ManyChat 0.2.0, **Set Custom Field** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs. Agents use the new **Set Subscriber Custom Fields** tool instead, which sets 1 to 20 fields in one call by field ID or name. Set Custom Field steps upgraded to 0.2.0 send date values as `YYYY-MM-DD` and date-time values with an explicit time zone offset, as ManyChat documents. The piece needs Activepieces 0.86.4 or later.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used Set Custom Field at **Set Subscriber Custom Fields**. Flows that use Set Custom Field as a step keep working unchanged.
+
+#### Postgres 0.7.0: New Row no longer runs again for updated rows
+
+**New Row** now runs once per row. Before, updating a row ran the flow again for it. Rows that share the same order value as the last one delivered now run the flow instead of being skipped, rows with an empty order value are skipped instead of stopping the trigger, and timestamp columns without a time zone are compared in the database, so workers west of UTC no longer skip rows. Each check delivers at most 500 rows; the rest follow on the next checks. With Descending order on a `timestamptz` or `date` column, a row dated after the database's current time waits until that time; `timestamp` columns (without a time zone) are not held back. When upgrading, rows at the last delivered value that are already in the table don't run again.
+
+#### What you need to do
+
+Nothing for most flows; the trigger keeps its place when upgraded. If a flow relied on New Row running again when a row is updated, use a separate trigger or schedule for updates.
+
+#### RSS 0.8.0: New Item in Feed and New Items in Multiple Feeds fire on a different set of items
+
+From RSS 0.8.0, both RSS triggers keep a separate cursor for each feed URL instead of one shared marker. The output of each run is the same feed item as before, with the same keys and one value change listed below. What changes is mostly which items start a run:
+
+- Items published in the same second as the last delivered item now fire. Before, they were dropped.
+- An article that appears in two of the watched feeds (same guid, or for short ids like `42` the same guid and the same link) fires once, not once per feed.
+- Feeds that list items oldest first now fire only the new items. Before, they could fire old items again, or miss new ones.
+- A slow feed no longer holds up the other feeds: each feed gets 20 seconds. A feed that fails or times out is skipped (only the trigger log shows it) and is checked again on the next poll, without re-sending its old items. The poll fails only when every feed fails.
+- Turning a trigger off and on again starts from the feed's current items, so old items are not replayed.
+- An item whose link is relative (for example `posts/1`) in a feed that has no site link now returns a full link, resolved against the feed URL. Before, the relative path was returned.
+- Turning on New Items in Multiple Feeds now fails when none of the feeds can be loaded at that moment. Before, it turned on anyway. Turn it on again once at least one feed answers.
+- A feed served in a legacy encoding (for example ISO-8859-1 or Shift_JIS, declared in the HTTP header or the XML declaration) now returns readable text. Before, accented and non-Latin characters arrived as "�".
+- A feed (or, for Find Site Feeds, a web page) larger than 20 MB now fails with a "too large" error in both triggers and in the Read Feed, Read Multiple Feeds and Find Site Feeds actions. In New Items in Multiple Feeds only that feed is skipped.
+
+#### What you need to do
+
+Nothing is required. When an existing RSS trigger is upgraded to 0.8.0, its old marker is carried over to each feed, so items published after the last delivered one fire on the next poll and older items do not fire again. On self-hosted servers older than 0.93.0, the previous version deletes its publish-date marker when the flow is republished for the upgrade, so only the feed that holds the last delivered item carries over; the other feeds start from their current items and skip what they published since the last poll. If a flow relied on one article firing once per feed, or on old items replaying after a feed came back from an outage, change that flow.
+
+#### HubSpot 0.14.0: polling triggers fire for changes they used to miss
+
+From HubSpot 0.14.0, the polling triggers change which items they fire for:
+- Property-change triggers also fire when the watched property is cleared, and their output includes the object's default properties next to the watched one.
+- Updated Deal Stage fires for a deal that entered the stage and moved on before the next check. On custom pipelines where HubSpot has no per-stage entry date, it keeps the old behaviour.
+- New COS Blog Article set to "Both" fires again when a draft is published.
+- Search triggers deliver every record when more than 10,000 change between two checks, oldest first, across several checks.
+- Testing a trigger shows the newest item in the builder.
+
+#### What you need to do
+
+Nothing. Flows may see runs they did not get before, so check any flow that assumed a cleared property or a published draft would not start it.
+
+#### Google Calendar 0.14.0: Google Calendar triggers fire once per event and no longer miss events
+
+From Google Calendar 0.14.0, **New Event Matching Search** reads every result page and fires once for each new matching event. A new recurring series fires once, not once per occurrence. Cancelled events never fire. An event that was edited within seconds of being created still counts as new: the trigger no longer requires the created and updated times to be within 5 seconds of each other.
+
+**New Event** fires only for your own events created after the trigger was turned on. Edits, reschedules, renames, cancellations and moved occurrences of a recurring series no longer fire it, and a new series fires once.
+
+Both triggers also fire once for each new invitation from another organizer that you have not answered yet, including an invitation to a meeting created before the trigger was turned on and an invitation to a single occurrence of someone else's series. An invitation you accept or decline before the trigger sees it does not fire, and later edits, replies and republishes do not fire it again. Invitations you receive through a group address follow the own-event rule: they fire only when the meeting was created after the trigger was turned on.
+
+After upgrading, New Event Matching Search, New or Updated Event and Event Cancelled continue from where the old version stopped, but look back at most 24 hours: anything older is skipped and logged. Within those 24 hours, New Event Matching Search may fire once, late, for matching events that the old version skipped (it only read the first page of results). Invitations to meetings created before the old version's last check do not fire after the upgrade, so an invitation the old version already sent does not fire again.
+
+**New or Updated Event** no longer fires for deleted or cancelled events. Every saved change fires once, including a second edit of an event that already fired. After a long quiet period it keeps working instead of failing on Google's "too old" error. A flow that was off for so long that Google rejects its saved position restarts from now and logs the skipped period.
+
+**Event Cancelled** fires once when a whole recurring series is deleted, not once per occurrence. With **Cancellation Reasons**, each cancellation now belongs to exactly one reason, checked in this order: rescheduled, declined, deleted, other. "Event Deleted" now includes your own deleted meetings that kept their title, and "Other Cancellations" only matches what no other reason covers. With **Target Specific Event**, a cancellation fires even when Google leaves out the update time, and an event that no longer exists fires once as deleted. If Google can't be reached to read the selected event when Event Cancelled with **Target Specific Event** is turned on, the flow still turns on: the next check reads the event, records its status without firing, and fails visibly while Google keeps rejecting the request (an event that no longer exists counts as cancelled). Google errors now fail the check instead of being skipped silently.
+
+**Event Start (Time Before)** no longer fires a reminder before it is due (the old version could fire up to 5 minutes early). A reminder whose check ran late or failed fires at the next check if the event hasn't started yet; once the event has started, its reminder is dropped (with Time Before above 0). An event booked after its reminder time fires at the next check if it hasn't started. Time Before = 0 fires when the event starts, a rescheduled event fires again for its new start, and a negative Time Before is an error.
+
+With **Target Specific Event** ticked and no event selected, **Event Cancelled**, **Event Ends** and **Event Start (Time Before)** now refuse to turn on and fail each check with "Select the event to watch, or untick Target Specific Event", instead of staying on and never running. These three triggers and **New Event Matching Search** now list calendars shared with you read-only.
+
+**New Event** keeps its position across a republish of the same calendar, so meetings created just before or during the publish fire once. **New Calendar** no longer fires for a calendar that was hidden from the list and shown again.
+
+**Event Ends** fires once for every event that ends between checks, including more than one page of events and events that end at the same moment.
+
+After upgrading, Event Start (Time Before) and Event Ends do not repeat anything the old version already fired, and they fire once for all-day ends and reminders it had not fired yet. A reminder or event end that the old version skipped in the 14 hours before the upgrade may fire once, late, at the first check after the upgrade; older ones are not sent.
+
+For **Event Start (Time Before)** and **Event Ends**, all-day events start and end at midnight in the calendar's time zone, not UTC. With **Target Specific Event**, a cancelled event no longer fires, and a read error fails the check (the reminder fires at the next check) instead of being hidden.
+
+**New Calendar** fires only for calendars added after the trigger was turned on. Calendars that already existed no longer fire when you widen the filters later, or when they are renamed or their access changes so that they start to match. If you widen the filters in the same publish as this upgrade, an existing calendar that now matches can fire once.
+
+#### What you need to do
+
+If a flow relied on New Event or New Event Matching Search firing for each occurrence of a series or for edits, use **New or Updated Event** instead. If a flow used New or Updated Event to catch deletions, use **Event Cancelled**. If a flow filters Event Cancelled by reason, check the new reason order. Other flows keep working without changes.
+
+#### Gmail 0.19.0: New Email and Send Email no longer return HTTP request details
+
+This is a security fix. The output of the **New Email** trigger and the **Send Email** action included the raw HTTP request, which could expose proxy credentials. From Gmail 0.19.0, the New Email `thread` field contains only `data`; the `config`, `headers`, `request` and `status` keys are removed. Send Email now returns only `data`, `status` and `statusText`.
+
+#### What you need to do
+
+If a flow reads `thread.config`, `thread.headers`, `thread.request` or `thread.status` from New Email, or any key other than `data`, `status` and `statusText` from Send Email, update it to read from `data` instead.
+
+#### Google Drive 0.14.0: file triggers, downloads and search across shared drives
+
+From Google Drive 0.14.0, the **New File** trigger with **Include File Content** on fires for a file whose download fails. That run has a `contentError` field with the reason instead of `content`. Before, one failed download (for example a Google Form, which Drive can't download) failed the whole poll, and every new file in that poll was lost. The trigger's output can now carry the `content` and `contentError` keys.
+
+New File downloads up to 5 files at a time and stops at a deadline, so the poll ends before the trigger timeout. A file still downloading at the deadline gets a `contentError`. All three Drive triggers now detect an incomplete search across shared drives and search each drive on its own, instead of skipping files in drives Google didn't search. When one check can't search every drive in time, the next checks carry on with the drives that are left.
+
+- Exported Google Docs, Sheets and Slides are now saved as `.docx`, `.xlsx` and `.pptx`. Before, they were saved as `.gdoc`, `.gsheet` or `.gslides`, or with no extension when a name was given. In Download File, the export extension is now added to the name you give, so `invoice.pdf` for a Google Doc is saved as `invoice.pdf.docx`. This applies to Download File, Download File Content, List Files, List Folder Contents, Set Public Access and the trigger file content. A failed file lookup now fails with Google's own message.
+- The three Drive triggers now send a large backlog over several checks, oldest first: at most 500 files per check, or 50 with Include File Content on. They also fire for files that Google lists a few minutes late, except while a large backlog is still being sent.
+- With Include Team Drives on, Find File or Folder and the agent tool Search Files and Folders return files from every shared drive. When Google can't search a drive, they fail with a clear error instead of returning a partial list. Both search actions now stop with an error after 120 seconds, where before they had no limit. List Files and List Folder Contents now report `incompleteSearch` as `true` when Google could not search the whole folder.
+- Export Folder as Zip now fails when Google can't search the whole folder, instead of building a zip with files missing.
+- Search Files and Folders now escapes the search value. A value escaped by hand, like `O\'Brien`, now searches for a literal backslash: type `O'Brien` instead.
+- Find File or Folder and Search Files and Folders now fail with an error when Search By or Match isn't a Drive search term, instead of sending it to Google.
+
+#### What you need to do
+
+If a flow after New File reads `content`, check for `contentError` first (for example with a Branch step), because a run can now arrive without `content`.
+
+If a flow matches on the name of a downloaded Google Doc, Sheet or Slides file, update it for the new extension.
+
+#### Google Sheets 0.20.0: row triggers match rows by content, and the Test sample has no header row
+
+**New or Updated Row** now compares rows by their content instead of their position. Inserting, deleting or sorting rows, and changing only a column's display format, no longer runs the flow for every row below the change. A row whose cells are all cleared now runs the flow once with blank values, unless it is the last row of data. With a Trigger Column, a new row runs the flow once that column is filled, not while it is still empty. **New Row Added** runs only for rows added below the last row it has seen; rows inserted higher up, sorting and edits do not run it. Both row triggers now work on tabs named like a cell (for example `Q1` or `FY24`), and their Test sample no longer shows the header row as data. **New Worksheet** no longer runs for the spreadsheet's first tab when the flow is turned on. **Get Next Rows** no longer skips rows after a blank row, the last row of a full sheet, or a batch that failed to read.
+
+#### What you need to do
+
+Nothing for most flows. Upgrading republishes the flow, which takes a fresh baseline of the sheet, so a change made while the flow is being republished does not run it (same as today). If a flow relied on New or Updated Row running for every row after a sort or insert, or on New Row Added running for edited rows, use New or Updated Row with a Trigger Column instead.
+
+#### Google Tasks 0.8.0: New Task can ignore edits
+
+**New Task** has a new **Run on** setting. **New tasks only** runs the flow once per task; renaming, editing, moving or completing a task no longer runs it again. **New and edited tasks** keeps the old behaviour. Steps keep running the old code until you upgrade them to 0.8.0. On upgraded steps, tasks found in one check are delivered newest first, and an edit made within a minute of the previous check is no longer lost.
+
+#### What you need to do
+
+Upgrading a New Task step to 0.8.0 in the builder pre-selects **New tasks only**. To keep running the flow on edits, choose **New and edited tasks** when you upgrade the step.
+
+#### GitHub 0.12.0: Update Issue (Agent) no longer clears labels and assignees
+
+When an AI agent used **Update Issue (Agent)** to change something else, such as the title, the agent path filled the **Labels** and **Assignees** lists it left out with empty lists and sent them. Each such update removed every label and every assignee from the issue. From GitHub 0.12.0 an empty Labels or Assignees list is not sent, so the issue keeps its current labels and assignees. Two new fields, **Clear Labels** and **Clear Assignees**, remove them on purpose.
+
+#### What you need to do
+
+If an agent or a flow step relied on an empty Labels or Assignees list to clear an issue, set **Clear Labels** or **Clear Assignees** instead. If an agent ran this action on an earlier GitHub version, check that your issues still have the labels and assignees you expect. Agents run the latest GitHub version available on your instance, so existing agents switch to the new behaviour as soon as GitHub 0.12.0 is installed, without an upgrade.
+
+#### beehiiv 0.5.0: four subscription actions are no longer agent tools, and List Posts returns posts
+
+From beehiiv 0.5.0, **Create Subscription**, **Update Subscription**, **Delete Subscription** and **List Subscriptions** are no longer offered to AI agents and MCP clients. They stay available as flow steps. Agents use the new tools instead: **Create Subscription (AI)**, **Update Subscription (AI)**, **Unsubscribe Subscriber**, **Delete Subscription (AI)** and **List Subscriptions (AI)**, which take plain publication and subscription IDs or emails. **List Publications** returns the publication ID. **Add Subscription to Automation**, **List Automations** and **List Posts** stay available to both flows and agents.
+
+Steps upgraded to 0.5.0 also behave differently. **List Posts** now returns posts (before, it returned automations), as an object with `items` and paging fields. **List Automations** and **List Posts** with Limit and Page empty fail past 10,000 items (1,000 for List Posts when Expand Results includes content) instead of silently stopping. **Create Subscription** and **Add Subscription to Automation** reject a Double Opt-in Override other than `on`, `off` or `not_set`. **List Subscriptions** with Limit and Cursor empty fails when more than 5,000 subscribers match. **Delete Subscription** returns `deleted` and `subscription_id` instead of an empty result. The piece needs Activepieces 0.88.2 or later.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used the four subscription actions at the matching new tool. Update flows that read List Posts output to use `items`, and set Limit and Page or Cursor on list steps that read very large lists.
+
+#### Google Forms 0.8.0: New Response can ignore edited responses
+
+**New Response** has a new **Run on** setting. **New responses only** runs the flow once per response, even when the respondent edits it later. **New and edited responses** keeps the old behaviour. Steps saved before 0.8.0 keep running on edits.
+
+#### What you need to do
+
+Upgrading a New Response step to 0.8.0 in the builder pre-selects **New responses only**. To keep running the flow when a respondent edits an answer, choose **New and edited responses** when you upgrade the step.
+
+#### Buffer 0.2.0: Create Post is no longer an agent tool
+
+From Buffer 0.2.0, **Create Post** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and the same `posts` output. Agents use the new **Create a Post** tool instead, which creates one post on one channel per call and takes a strict ISO 8601 schedule time.
+
+Create Post steps upgraded to 0.2.0 also send **Link URL** differently, because Buffer removes link assets on December 15, 2026. On Facebook, LinkedIn, Threads, Bluesky and Substack posts without images, the link is sent as a link card; on other services, or when images are attached, it is appended to the post text. Facebook posts are now sent as the `post` type.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used Create Post at **Create a Post**, calling it once per channel. Check flows that set Link URL, since the link now shows as a card or as text at the end of the post.
+
+#### Stability AI 0.4.0: Text to Image is no longer an AI agent tool
+
+**Text to Image** (the legacy SDXL 1.0 action) is now shown only in the flow builder. AI agents and MCP clients get the new **Generate Image** tool (`generate_image`) instead, which uses Stable Image Ultra, Core or Stable Diffusion 3.5. Text to Image also now rejects `steps` above 50, `samples` outside 1–10 and width × height pairs SDXL 1.0 does not support before calling Stability AI, and it sends a `weight` of 0 instead of replacing it with 1. The engine picker offers only SDXL 1.0; the other six engines are no longer in Stability AI's documentation.
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses Text to Image as a tool, switch it to Generate Image. If a flow uses an engine other than `stable-diffusion-xl-1024-v1-0`, choose SDXL 1.0 or move the step to Generate Image. Steps keep running on the version they were built with until you upgrade them.
+
+#### YouTrack 0.3.0: calls to YouTrack now verify the TLS certificate
+
+From YouTrack 0.3.0, the piece checks the certificate of your YouTrack server on the connection check, triggers, dropdowns and every dedicated action, including attachment downloads. Before, certificate checks were skipped, so a self-hosted YouTrack Server behind a self-signed, private-CA or expired certificate worked. With 0.3.0 these calls fail with a certificate error for such servers. The **Custom API Call** action is the exception: it still uses the shared HTTP client and does not check the certificate. YouTrack Cloud (`*.youtrack.cloud`) and servers with a publicly trusted certificate are not affected.
+
+#### What you need to do
+
+If you self-host YouTrack on a self-signed or private-CA certificate, give it a publicly trusted certificate (for example from Let's Encrypt), or add your CA to Activepieces before upgrading YouTrack steps or connections to 0.3.0. To add the CA, set both `NODE_EXTRA_CA_CERTS` and `AP_SANDBOX_PROPAGATED_ENV_VARS=NODE_EXTRA_CA_CERTS` on the container. Only the path is passed to the engine, so the file must be readable at that path where pieces run.
+
+With `AP_EXECUTION_MODE` set to `SANDBOX_PROCESS` or `SANDBOX_CODE_AND_PROCESS`, pieces run in an isolate sandbox that sees only `/bin`, `/lib`, `/usr/bin`, `/usr/lib`, `/usr/local` and `/usr/src/node_modules` from the container, and its `/etc` is replaced. Put the CA file under `/usr/local` in the image, for example:
+
+```dockerfile
+FROM activepieces/activepieces:<version>
+COPY my-ca.pem /usr/local/share/ca-certificates/my-ca.pem
+ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/my-ca.pem
+ENV AP_SANDBOX_PROPAGATED_ENV_VARS=NODE_EXTRA_CA_CERTS
+```
+
+In the other execution modes, any path in the container works.
+
 #### Spotify 0.7.0: Update Playlist is no longer an agent tool, and Get Playback State returns an object when nothing is playing
 
 From Spotify 0.7.0, **Update Playlist** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and outputs. Agents use the new **Update Playlist Details** tool instead, which takes Public and Collaborative as yes/no choices and leaves any field it is not given unchanged.

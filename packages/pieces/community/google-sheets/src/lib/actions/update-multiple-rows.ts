@@ -188,7 +188,7 @@ export const updateMultipleRowsAction = createAction({
       }
 
       values.push({
-        range: `${sheetName}!A${rowId}:ZZZ${rowId}`,
+        range: googleSheetsCommon.sheetRange({ sheetName, range: `A${rowId}:ZZZ${rowId}` }),
         majorDimension: Dimension.ROWS,
         values: [formattedValues],
       });

@@ -274,10 +274,9 @@ function RoleDialogBody({
                 <ConfirmationDeleteDialog
                   isDanger={true}
                   title={t('Delete role')}
-                  message={t(
-                    'Deleting this role will remove {count} project member(s) and all associated invitations.',
-                    { count: projectRole.userCount },
-                  )}
+                  message={t('deleteProjectRoleMessage', {
+                    count: projectRole.userCount,
+                  })}
                   entityName={`${t('Project Role')} ${projectRole.name}`}
                   buttonText={t('Delete role')}
                   mutationFn={async () => {

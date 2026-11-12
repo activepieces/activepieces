@@ -8,12 +8,7 @@ import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
-import {
-  Item,
-  ItemContent,
-  ItemDescription,
-  ItemTitle,
-} from '@/components/ui/item';
+import { Item, ItemContent, ItemTitle } from '@/components/ui/item';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { LockedGem, useLockedFeature } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
@@ -80,9 +75,7 @@ export function DefaultProjectsSection() {
         <div className="flex min-w-0 flex-col gap-1">
           <h2 className="text-base font-medium">{t('Default projects')}</h2>
           <p className="max-w-2xl text-sm text-gray-11">
-            {t(
-              'New Members join these as Editors, including anyone who signs up through open sign-up or SSO.',
-            )}
+            {t('New members join these as Editors.')}
           </p>
         </div>
         <AnimatedIconButton
@@ -100,9 +93,6 @@ export function DefaultProjectsSection() {
         <Item variant="outline" size="sm" className="bg-panel">
           <ItemContent>
             <ItemTitle>{t('No default projects yet')}</ItemTitle>
-            <ItemDescription>
-              {t('New Members will join it as an Editor.')}
-            </ItemDescription>
           </ItemContent>
         </Item>
       ) : (

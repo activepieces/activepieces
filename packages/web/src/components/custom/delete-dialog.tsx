@@ -139,7 +139,7 @@ export const ConfirmationDeleteDialog = ({
             onClick={() => mutate()}
             {...adminControl(controlId)}
           >
-            {isDanger && <TriangleAlert className="size-4 mr-2" />}
+            {isDanger && <TriangleAlert className="size-4" />}
             {buttonText || t('Remove')}
           </Button>
         </DialogFooter>

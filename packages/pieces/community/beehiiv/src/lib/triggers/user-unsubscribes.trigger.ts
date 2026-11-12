@@ -1,9 +1,9 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { publicationId } from '../common/props';
 import { beehiivAuth } from '../common/auth';
-import { beehiivApiCall, WebhookPayload } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/pieces-framework';
+import { apiKeyOf, beehiivClient, pathFor } from '../common/client';
+import { beehiivWebhook } from '../common/webhook';
+import { beehiivOutputSchemas } from '../common/output-schemas';
 
 const TRIGGER_KEY = 'user-unsubscribes-trigger';
 
@@ -12,44 +12,51 @@ export const userUnsubscribesTrigger = createTrigger({
 	name: 'beehiiv_user_unsubscribes',
 	classification: 'READ',
 	displayName: 'User Unsubscribes',
-	description: 'Triggers when a user unsubscribes.',
+	description: 'Triggers when a subscriber unsubscribes or is deleted from the publication (Unsubscribe Source is empty for deletions). Requires a paid beehiiv plan.',
 	aiMetadata: {
-		description: 'Fires when a subscriber is removed/unsubscribed from the selected beehiiv publication (subscription.deleted event), emitting the affected subscription record.',
+		description: 'Fires once per subscription that is unsubscribed or deleted in the selected beehiiv publication (subscription.deleted event), emitting the subscription with unsubscribed_at and unsubscribe_source; unsubscribe_source is empty when it was a deletion. Retried deliveries of the same event are ignored.',
 	},
 	props: {
 		publicationId: publicationId,
 	},
+	outputSchema: beehiivOutputSchemas.unsubscribePayload,
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {
-		const { publicationId } = context.propsValue;
-
-		const response = await beehiivApiCall<{ data: { id: string } }>({
-			apiKey: context.auth.secret_text,
-			method: HttpMethod.POST,
-			resourceUri: `/publications/${publicationId}/webhooks`,
-			body: {
-				url: context.webhookUrl,
-				event_types: ['subscription.deleted'],
-			},
+		await beehiivWebhook.enable({
+			auth: context.auth,
+			publicationId: context.propsValue.publicationId,
+			webhookUrl: context.webhookUrl,
+			eventTypes: ['subscription.deleted'],
+			description: 'Activepieces trigger: User Unsubscribes',
+			store: context.store,
+			storeKey: TRIGGER_KEY,
 		});
-
-		await context.store.put<string>(TRIGGER_KEY, response.data.id);
 	},
 	async onDisable(context) {
-		const { publicationId } = context.propsValue;
-
-		const webhookId = await context.store.get<string>(TRIGGER_KEY);
-		if (!isNil(webhookId)) {
-			await beehiivApiCall({
-				apiKey: context.auth.secret_text,
-				method: HttpMethod.DELETE,
-				resourceUri: `/publications/${publicationId}/webhooks/${webhookId}`,
-			});
-		}
+		await beehiivWebhook.disable({
+			auth: context.auth,
+			publicationId: context.propsValue.publicationId,
+			store: context.store,
+			storeKey: TRIGGER_KEY,
+		});
+	},
+	async test(context) {
+		const page = await beehiivClient.listCursorPage<Record<string, unknown>>({
+			apiKey: apiKeyOf(context.auth),
+			path: `${pathFor(['publications', context.propsValue.publicationId])}/subscriptions`,
+			operation: 'list subscriptions',
+			query: { status: 'inactive', order_by: 'created', direction: 'desc' },
+			limit: 5,
+		});
+		return page.items;
 	},
 	async run(context) {
-		const payload = context.payload.body as WebhookPayload;
-		return [payload.data];
+		return beehiivWebhook.eventsFrom({
+			body: context.payload.body,
+			headers: context.payload.headers,
+			store: context.store,
+			storeKey: TRIGGER_KEY,
+		});
 	},
 	sampleData: {
 		created: 1666800076,

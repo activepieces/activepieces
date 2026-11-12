@@ -29,7 +29,7 @@ export function DocumentPreview({
 
   const actions = (
     <>
-      <CopyButton textToCopy={markdown} variant="ghost" size="icon-sm" />
+      <CopyButton value={markdown} variant="ghost" size="icon-sm" />
       <DownloadButton
         fileName={fileName}
         textToDownload={markdown}
