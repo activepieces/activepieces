@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { Gift } from 'lucide-react';
 
-import { billingUtils } from '@/features/billing';
+import { billingUtils } from '@/features/billing/utils/billing-utils';
 
 import { useInviteRewards } from '../../hooks/use-invite-rewards';
 

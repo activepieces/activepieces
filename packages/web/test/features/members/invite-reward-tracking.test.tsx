@@ -4,6 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const capture = vi.fn();
+const offer = { visible: true };
 
 vi.mock('i18next', async (importOriginal) => ({
   ...(await importOriginal<typeof import('i18next')>()),
@@ -15,10 +16,10 @@ vi.mock('@/components/providers/telemetry-provider', () => ({
 }));
 vi.mock('@/features/members/hooks/use-invite-rewards', () => ({
   useInviteRewards: () => ({
-    visible: true,
+    visible: offer.visible,
     platformId: 'platform_1',
     creditsPerInvite: 1000,
-    claimed: 2,
+    rewardsEarned: 2,
     maxRewards: 4,
     rewardsLeft: 2,
     rewards: [],
@@ -39,6 +40,7 @@ describe('invite reward offer tracking', () => {
   beforeEach(() => {
     capture.mockReset();
     localStorage.clear();
+    offer.visible = true;
   });
 
   it('records a sidebar card click and opens the invite dialog', () => {
@@ -51,6 +53,25 @@ describe('invite reward offer tracking', () => {
       payload: { surface: InviteRewardSurface.SIDEBAR_CARD, rewardsEarned: 2 },
     });
     screen.getByText('invite dialog');
+  });
+
+  it('keeps an open invite dialog when the offer hides, so an invitation link is not lost', () => {
+    const { rerender } = render(<InviteRewardCard />);
+    fireEvent.click(screen.getByRole('button', { name: 'Invite' }));
+
+    offer.visible = false;
+    rerender(<InviteRewardCard />);
+
+    expect(screen.queryAllByRole('button', { name: 'Invite' })).toEqual([]);
+    screen.getByText('invite dialog');
+  });
+
+  it('renders nothing when there is no offer and no open dialog', () => {
+    offer.visible = false;
+
+    const { container } = render(<InviteRewardButton />);
+
+    expect(container.innerHTML).toBe('');
   });
 
   it('hides the sidebar card for the week after it is dismissed', () => {

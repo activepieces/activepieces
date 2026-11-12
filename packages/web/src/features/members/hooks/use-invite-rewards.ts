@@ -26,8 +26,8 @@ export function useInviteRewards(): InviteRewardsState {
     return { ...HIDDEN, platformId: platform.id };
   }
 
-  const claimed = summary.rewards.length;
-  const rewardsLeft = Math.max(0, summary.maxRewards - claimed);
+  const rewardsEarned = summary.rewards.length;
+  const rewardsUnderCap = Math.max(0, summary.maxRewards - rewardsEarned);
   const seatsLeft = resolveSeatsLeft({
     usersLimit: platform.plan.usersLimit,
     usedSeats:
@@ -35,12 +35,12 @@ export function useInviteRewards(): InviteRewardsState {
   });
 
   return {
-    visible: summary.eligible && rewardsLeft > 0 && seatsLeft > 0,
+    visible: summary.eligible && rewardsUnderCap > 0 && seatsLeft > 0,
     platformId: platform.id,
     creditsPerInvite: summary.creditsPerInvite,
-    claimed,
+    rewardsEarned,
     maxRewards: summary.maxRewards,
-    rewardsLeft: Math.min(rewardsLeft, seatsLeft),
+    rewardsLeft: Math.min(rewardsUnderCap, seatsLeft),
     rewards: summary.rewards,
     bonusCredits: summary.rewards.reduce(
       (total, reward) => total + reward.credits,
@@ -67,7 +67,7 @@ const INVITE_REWARDS_STALE_MS = 60_000;
 const HIDDEN: Omit<InviteRewardsState, 'platformId'> = {
   visible: false,
   creditsPerInvite: 0,
-  claimed: 0,
+  rewardsEarned: 0,
   maxRewards: 0,
   rewardsLeft: 0,
   rewards: [],
@@ -78,7 +78,7 @@ export type InviteRewardsState = {
   visible: boolean;
   platformId: string;
   creditsPerInvite: number;
-  claimed: number;
+  rewardsEarned: number;
   maxRewards: number;
   rewardsLeft: number;
   rewards: InviteReward[];

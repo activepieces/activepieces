@@ -17,20 +17,13 @@ import { useInviteRewards } from '../../hooks/use-invite-rewards';
 import { InviteUserDialog } from '../invite-user/invite-user-dialog';
 
 export function InviteRewardCard() {
-  const rewards = useInviteRewards();
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const openInvite = useOpenInviteWithTracking({
-    surface: InviteRewardSurface.SIDEBAR_CARD,
-    rewardsEarned: rewards.claimed,
-    open: () => setInviteOpen(true),
-  });
+  const { rewards, openInvite, dialog } = useInviteOffer(
+    InviteRewardSurface.SIDEBAR_CARD,
+  );
   const [dismissedAt, setDismissedAt] = useState(() =>
     cardDismissal.read({ platformId: rewards.platformId }),
   );
-
-  if (!rewards.visible || cardDismissal.isActive({ dismissedAt })) {
-    return null;
-  }
+  const showCard = rewards.visible && !cardDismissal.isActive({ dismissedAt });
 
   const dismissCard = () => {
     const timestamp = dayjs().toISOString();
@@ -42,66 +35,64 @@ export function InviteRewardCard() {
   };
 
   return (
-    <div className="flex flex-col w-full gap-2 p-2.5 bg-gray-1 rounded-md border">
-      <div className="flex items-start gap-2">
-        <Gift className="size-4 shrink-0 mt-0.5 text-accent-11" />
-        <span className="text-sm font-medium">
-          {t('Invite teammates, get {credits} credits each', {
-            credits: billingUtils.formatCredits(rewards.creditsPerInvite),
-          })}
-        </span>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label={t('Dismiss')}
-          className="ms-auto shrink-0 text-gray-11"
-          onClick={dismissCard}
-        >
-          <X className="size-3.5" />
-        </Button>
-      </div>
-      <Progress
-        aria-label={t('Invite rewards earned')}
-        value={(rewards.claimed / rewards.maxRewards) * 100}
-      />
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs text-gray-11">
-          {t('{claimed} of {max} rewards earned', {
-            claimed: rewards.claimed,
-            max: rewards.maxRewards,
-          })}
-        </span>
-        <Button size="xs" onClick={openInvite}>
-          {t('Invite')}
-        </Button>
-      </div>
-      <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
-    </div>
+    <>
+      {showCard && (
+        <div className="flex flex-col w-full gap-2 p-2.5 bg-gray-1 rounded-md border">
+          <div className="flex items-start gap-2">
+            <Gift className="size-4 shrink-0 mt-0.5 text-accent-11" />
+            <span className="text-sm font-medium">
+              {t('Invite teammates, get {credits} credits each', {
+                credits: billingUtils.formatCredits(rewards.creditsPerInvite),
+              })}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-label={t('Dismiss')}
+              className="ms-auto shrink-0 text-gray-11"
+              onClick={dismissCard}
+            >
+              <X className="size-3.5" />
+            </Button>
+          </div>
+          <Progress
+            aria-label={t('Invite rewards earned')}
+            value={(rewards.rewardsEarned / rewards.maxRewards) * 100}
+          />
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs text-gray-11">
+              {t('{claimed} of {max} rewards earned', {
+                claimed: rewards.rewardsEarned,
+                max: rewards.maxRewards,
+              })}
+            </span>
+            <Button size="xs" onClick={openInvite}>
+              {t('Invite')}
+            </Button>
+          </div>
+        </div>
+      )}
+      {dialog}
+    </>
   );
 }
 
 export function InviteRewardButton() {
-  const rewards = useInviteRewards();
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const openInvite = useOpenInviteWithTracking({
-    surface: InviteRewardSurface.CREDITS_ALERT,
-    rewardsEarned: rewards.claimed,
-    open: () => setInviteOpen(true),
-  });
-
-  if (!rewards.visible) {
-    return null;
-  }
+  const { rewards, openInvite, dialog } = useInviteOffer(
+    InviteRewardSurface.CREDITS_ALERT,
+  );
 
   return (
     <>
-      <Button size="sm" variant="basic" onClick={openInvite}>
-        <Gift className="size-4" />
-        {t('Invite a teammate for +{credits}', {
-          credits: billingUtils.formatCredits(rewards.creditsPerInvite),
-        })}
-      </Button>
-      <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
+      {rewards.visible && (
+        <Button size="sm" variant="basic" onClick={openInvite}>
+          <Gift className="size-4" />
+          {t('Invite a teammate for +{credits}', {
+            credits: billingUtils.formatCredits(rewards.creditsPerInvite),
+          })}
+        </Button>
+      )}
+      {dialog}
     </>
   );
 }
@@ -165,23 +156,22 @@ export function InviteRewardNotifier() {
   return null;
 }
 
-function useOpenInviteWithTracking({
-  surface,
-  rewardsEarned,
-  open,
-}: {
-  surface: InviteRewardSurface;
-  rewardsEarned: number;
-  open: () => void;
-}): () => void {
+function useInviteOffer(surface: InviteRewardSurface) {
+  const rewards = useInviteRewards();
   const { capture } = useTelemetry();
-  return () => {
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const openInvite = () => {
     capture({
       name: TelemetryEventName.INVITE_REWARD_OFFER_CLICKED,
-      payload: { surface, rewardsEarned },
+      payload: { surface, rewardsEarned: rewards.rewardsEarned },
     });
-    open();
+    setInviteOpen(true);
   };
+  const dialog =
+    rewards.visible || inviteOpen ? (
+      <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
+    ) : null;
+  return { rewards, openInvite, dialog };
 }
 
 function seenStorageKey(platformId: string): string {

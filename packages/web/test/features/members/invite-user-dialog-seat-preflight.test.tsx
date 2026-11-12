@@ -25,7 +25,7 @@ vi.mock('@/lib/error-reporting', () => ({
   errorReporting: { report: vi.fn() },
 }));
 
-vi.mock('@/features/billing', () => ({
+vi.mock('@/features/billing/hooks/use-seat-limit-guard', () => ({
   useSeatLimitGuard: () => ({
     handleSeatLimitError: () => false,
     ensureSeatsAvailable: mocks.ensureSeatsAvailable,

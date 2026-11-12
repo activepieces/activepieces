@@ -33,6 +33,7 @@ export const inviteRewardService = (log: FastifyBaseLogger) => ({
         }
         const creds = await autumnConsole.getCreds(log, platformId)
         if (isNil(creds)) {
+            log.info({ platform: { id: platformId } }, '[inviteReward#grantOnJoin] no billing account, no reward')
             return
         }
         const result = await autumnConsole.grantInviteReward({ autumnCustomerId: creds.autumnCustomerId, inviteeEmail: identity.email })
@@ -62,7 +63,7 @@ export const inviteRewardService = (log: FastifyBaseLogger) => ({
     },
 })
 
-const GRANT_ATTEMPTS = 10
+const GRANT_ATTEMPTS = 14
 const GRANT_RETRY_BASE_DELAY_MS = 30_000
 
 const NOT_ELIGIBLE: InviteRewardSummary = {

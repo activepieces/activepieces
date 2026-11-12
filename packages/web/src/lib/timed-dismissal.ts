@@ -34,24 +34,24 @@ export const timedDismissal = {
   create,
 };
 
-export type DismissalRef = {
+type DismissalRef = {
   platformId: string;
 };
 
-export type WriteDismissalParams = DismissalRef & {
+type WriteDismissalParams = DismissalRef & {
   dismissedAt: string;
 };
 
-export type IsActiveParams = {
+type IsActiveParams = {
   dismissedAt: string | undefined;
 };
 
-export type CreateTimedDismissalParams = {
+type CreateTimedDismissalParams = {
   storageKeyPrefix: string;
   durationHours: number;
 };
 
-export type TimedDismissal = {
+type TimedDismissal = {
   read: (params: DismissalRef) => string | undefined;
   write: (params: WriteDismissalParams) => void;
   isActive: (params: IsActiveParams) => boolean;

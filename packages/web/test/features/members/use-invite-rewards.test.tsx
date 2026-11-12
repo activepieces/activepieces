@@ -66,7 +66,7 @@ describe('useInviteRewards', () => {
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
     await waitFor(() => expect(result.current.visible).toBe(true));
-    expect(result.current.claimed).toBe(1);
+    expect(result.current.rewardsEarned).toBe(1);
     expect(result.current.rewardsLeft).toBe(3);
     expect(result.current.bonusCredits).toBe(1000);
   });
