@@ -16,7 +16,7 @@ export const aiUpdateCustomerAction = createAction({
       'Changes an existing Salla customer found by customer_id; only the fields you fill are sent and the rest stay as they are. Salla\'s docs do not say whether group_ids replaces the customer\'s groups or adds to them, so to add customers to a group without touching their other groups use Add Customers to Group. Find the customer_id with List Customers; a new email or mobile must not belong to another customer.',
     idempotent: true,
   },
-  outputSchema: sallaOutputSchemas.customer,
+  outputSchema: sallaOutputSchemas.savedCustomer,
   props: {
     customer_id: Property.Number({
       displayName: 'Customer ID',

@@ -16,7 +16,7 @@ export const aiCreateCustomerAction = createAction({
       'Creates a new Salla customer from a first name, last name and mobile number with its country code, plus optional email, gender, birthday and customer groups. Use List Customers first to check the customer does not already exist, and Update Customer to change one; the email and mobile must be unique in the store. Not safe to retry: after a success, a second call fails because the mobile is already taken.',
     idempotent: false,
   },
-  outputSchema: sallaOutputSchemas.customer,
+  outputSchema: sallaOutputSchemas.savedCustomer,
   props: {
     first_name: Property.ShortText({
       displayName: 'First Name',

@@ -180,6 +180,26 @@ describe('withProductExtras', () => {
     });
   });
 
+  it('turns quantities Salla sends as text into numbers, leaving other text alone', () => {
+    const result = sallaProducts.withProductExtras({
+      id: 1,
+      quantity: '50',
+      notify_quantity: '10',
+      sold_quantity: '1',
+      maximum_quantity_per_order: 3,
+      weight: 'heavy',
+      skus: [{ id: 11, stock_quantity: '0' }, { id: 12, stock_quantity: 5 }, 'junk'],
+    });
+    expect(result).toMatchObject({
+      quantity: 50,
+      notify_quantity: 10,
+      sold_quantity: 1,
+      maximum_quantity_per_order: 3,
+      weight: 'heavy',
+      skus: [{ id: 11, stock_quantity: 0 }, { id: 12, stock_quantity: 5 }, 'junk'],
+    });
+  });
+
   it('returns {} for a non-object', () => {
     expect(sallaProducts.withProductExtras(undefined)).toEqual({});
     expect(sallaProducts.withProductExtras([1])).toEqual({});
@@ -234,6 +254,10 @@ describe('withVariantExtras', () => {
     });
     expect(sallaProducts.withVariantExtras({ variant: { id: 13, sku: 'S-1' }, optionNames })['label']).toBe('Variant 13 · S-1');
     expect(sallaProducts.withVariantExtras({ variant: 'junk' })).toEqual({});
+  });
+
+  it('turns a text low-stock threshold and weight into numbers', () => {
+    expect(sallaProducts.withVariantExtras({ variant: { id: 14, notify_low: '3', weight: '0.5' } })).toMatchObject({ notify_low: 3, weight: 0.5 });
   });
 });
 

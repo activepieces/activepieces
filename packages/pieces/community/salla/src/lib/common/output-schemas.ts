@@ -687,6 +687,8 @@ const reviewFields: OutputSchemaField[] = [
 
 const customer: OutputSchema = { fields: [...customerFields, ...customerStatsFields] };
 
+const savedCustomer: OutputSchema = { fields: customerFields };
+
 const customerList: OutputSchema = listOf({ key: 'customers', label: 'Customers', fields: customerFields, labelKey: 'full_name' });
 
 const customerGroupList: OutputSchema = listOf({ key: 'groups', label: 'Customer Groups', fields: customerGroupFields, labelKey: 'name' });
@@ -706,7 +708,12 @@ const couponList: OutputSchema = listOf({ key: 'coupons', label: 'Coupons', fiel
 
 const abandonedCart: OutputSchema = { fields: cartFields };
 
-const abandonedCartList: OutputSchema = listOf({ key: 'carts', label: 'Abandoned Carts', fields: cartFields, labelKey: 'customer_name' });
+const abandonedCartList: OutputSchema = listOf({
+  key: 'carts',
+  label: 'Abandoned Carts',
+  fields: cartFields.filter((field) => field.key !== 'status'),
+  labelKey: 'customer_name',
+});
 
 const customerEvent: OutputSchema = { fields: [...customerFields, eventMetaField] };
 
@@ -761,6 +768,7 @@ export const sallaOutputSchemas = {
   lowStockEvent,
   productPriceStatusEvent,
   customer,
+  savedCustomer,
   customerList,
   customerGroupList,
   addCustomersToGroup,

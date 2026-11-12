@@ -273,7 +273,7 @@ async function listStockChangeReasons({ auth }: { auth: SallaAuth }): Promise<St
   });
   const data = Array.isArray(response.body.data) ? response.body.data : [];
   const reasons = data.filter(sallaApi.isRecord);
-  return { reasons, count: reasons.length };
+  return { reasons, count: reasons.length, truncated: false };
 }
 
 async function updateProductPrice({ auth, input }: { auth: SallaAuth; input: ProductPriceInput }): Promise<Record<string, unknown>> {
@@ -369,7 +369,7 @@ function withVariantExtras({
     stock_quantity_number: sallaUtils.amountOf(variant['stock_quantity']) ?? null,
     updated_at_iso: sallaUtils.toIsoDate(variant['updated_at']) ?? null,
   };
-  return { ...flat, ...variant };
+  return { ...flat, ...variant, ...numbersFromText({ record: variant, keys: VARIANT_NUMBER_FIELDS }) };
 }
 
 async function updateVariant({
@@ -634,7 +634,28 @@ function withProductExtras(product: unknown): Record<string, unknown> {
     category_names: categoryNames.length > 0 ? categoryNames.join(', ') : null,
     updated_at_iso: sallaUtils.toIsoDate(product['updated_at']) ?? null,
   };
-  return { ...flat, ...product };
+  const numbers = numbersFromText({ record: product, keys: PRODUCT_NUMBER_FIELDS });
+  if (Array.isArray(product['skus'])) {
+    numbers['skus'] = product['skus'].map((sku) =>
+      sallaApi.isRecord(sku) ? { ...sku, ...numbersFromText({ record: sku, keys: SKU_NUMBER_FIELDS }) } : sku,
+    );
+  }
+  return { ...flat, ...product, ...numbers };
+}
+
+function numbersFromText({ record, keys }: { record: Record<string, unknown>; keys: readonly string[] }): Record<string, unknown> {
+  const numbers: Record<string, unknown> = {};
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value !== 'string') {
+      continue;
+    }
+    const parsed = sallaUtils.amountOf(value);
+    if (parsed !== undefined) {
+      numbers[key] = parsed;
+    }
+  }
+  return numbers;
 }
 
 function positiveOrNull(value: number | undefined): number | null {
@@ -732,6 +753,9 @@ function trimmed(value: string | undefined | null): string | undefined {
 }
 
 const PRODUCTS_PER_PAGE = 60;
+const PRODUCT_NUMBER_FIELDS = ['quantity', 'notify_quantity', 'sold_quantity', 'maximum_quantity_per_order', 'views', 'weight'] as const;
+const SKU_NUMBER_FIELDS = ['stock_quantity'] as const;
+const VARIANT_NUMBER_FIELDS = ['notify_low', 'weight'] as const;
 const MAX_VARIANTS = 500;
 const MAX_CATEGORIES = 500;
 const MAX_BRANDS = 500;
@@ -910,6 +934,7 @@ type StockAdjustmentResult = {
 type StockReasonListResult = {
   reasons: Record<string, unknown>[];
   count: number;
+  truncated: boolean;
 };
 
 type ProductPriceInput = {

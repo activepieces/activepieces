@@ -16,7 +16,7 @@ export const createCustomerAction = createAction({
       'Creates one new Salla customer from a first name, last name and mobile number with its country code, plus optional email, gender, birthday and groups. Use Update Customer to change a customer who already exists, and Find Customers first if the person may already be in the store. Salla rejects a mobile or email already used by another customer; each call creates a separate customer, so do not retry blindly.',
     idempotent: false,
   },
-  outputSchema: sallaOutputSchemas.customer,
+  outputSchema: sallaOutputSchemas.savedCustomer,
   propertyGroups: [
     {
       key: 'customer',

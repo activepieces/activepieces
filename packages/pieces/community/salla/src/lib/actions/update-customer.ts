@@ -17,7 +17,7 @@ export const updateCustomerAction = createAction({
       'Updates one Salla customer, picked by numeric customer ID, and changes only the fields you fill: name, mobile, email, gender, birthday or groups. Use Create Customer for a new person and Add Customers to Group to add customers to a group without touching their other groups. Sending the same values again gives the same result, so it is safe to retry.',
     idempotent: true,
   },
-  outputSchema: sallaOutputSchemas.customer,
+  outputSchema: sallaOutputSchemas.savedCustomer,
   propertyGroups: [
     {
       key: 'target',

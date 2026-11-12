@@ -273,7 +273,7 @@ describe('listCategories, listBrands and listStockChangeReasons', () => {
     const brands = await sallaProducts.listBrands({ auth });
     const reasons = await sallaProducts.listStockChangeReasons({ auth });
     expect(brands).toEqual({ brands: [{ id: 1, name: 'Acme' }], count: 1, truncated: false });
-    expect(reasons).toEqual({ reasons: [{ id: 4, name: 'Restock' }], count: 1 });
+    expect(reasons).toEqual({ reasons: [{ id: 4, name: 'Restock' }], count: 1, truncated: false });
     expect(new URL(spy.mock.calls[0][0].url).searchParams.has('keyword')).toBe(false);
     expect(pathOf(spy.mock.calls[1][0])).toBe('/products/quantities/quantity-change-reason');
   });
