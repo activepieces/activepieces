@@ -374,3 +374,25 @@ describe('agentMcpClient — the auth config never reaches a log line', () => {
         expect(JSON.stringify(warnCalls)).not.toContain(secret)
     })
 })
+
+describe('agentMcpClient.connect — the platform MCP server', () => {
+    it('runs the turn without MCP tools when listing them answers a 502, instead of failing the run', async () => {
+        const client = fakeMcpClient()
+        client.tools = async () => {
+            throw new Error('MCP HTTP Transport Error: POSTing to endpoint (HTTP 502): {"title":"Error 502: Bad gateway"}')
+        }
+        const close = vi.spyOn(client, 'close')
+        mockCreateMCPClient.mockResolvedValueOnce(client)
+        const { log, warnCalls } = createTestLogger()
+
+        const connection = await agentMcpClient.connect({
+            mcpCredentials: { mcpServerUrl: 'https://cloud.example.com/mcp', mcpToken: 'platform-token' },
+            conversationId: 'conversation-1',
+            log,
+        })
+
+        expect(connection).toEqual({ mcpClient: null, mcpToolSet: {} })
+        expect(close).toHaveBeenCalledTimes(1)
+        expect(warnCalls).toHaveLength(1)
+    })
+})
