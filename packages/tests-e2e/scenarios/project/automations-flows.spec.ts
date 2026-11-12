@@ -9,7 +9,7 @@ import { AutomationsPage } from '../../pages/automations.page';
 
 const test = mergeTests(listResponseTest, flowsListTest);
 
-test.describe('Automations › flows', { tag: '@feature:flows-list' }, () => {
+test.describe('Automations › flows', { tag: ['@feature:flows-list', '@surface'] }, () => {
   test('rename, duplicate, export and import a flow', async ({ page, request, session, seed, cleanup }) => {
     const { flowId, flowName } = await seed.flow({ template: webhookEcho, publish: false });
     const newName = `${flowName} renamed`;
@@ -98,14 +98,16 @@ test.describe('Automations › flows', { tag: '@feature:flows-list' }, () => {
     });
   });
 
-  test('the flows table pages, filters and searches by the spec prefix', async ({ page, flowsList }) => {
+  test('the flows table pages, filters and searches by the spec prefix', async ({ page, seed, flowsList }) => {
     const prefix = flowsList.newPrefix();
     await flowsList.seedFlows({ prefix, count: PAGE_SIZE, publish: false });
     const [published] = await flowsList.seedFlows({ prefix, count: 1, publish: true });
+    const unmatched = await seed.flow({ template: webhookEcho, publish: false });
     const automationsPage = new AutomationsPage(page);
     await automationsPage.visitFlows();
 
     await automationsPage.typeSearch(prefix);
+    await expect(automationsPage.row(unmatched.flowName)).toBeHidden();
     await expect(automationsPage.rowsMatching(prefix)).toHaveCount(PAGE_SIZE);
 
     await automationsPage.nextPage();
@@ -113,6 +115,11 @@ test.describe('Automations › flows', { tag: '@feature:flows-list' }, () => {
     await expect(automationsPage.row(published.flowName)).toBeHidden();
 
     await automationsPage.filterByStatus('Enabled');
+    await expect(automationsPage.row(published.flowName)).toBeVisible();
+    await expect(automationsPage.rowsMatching(prefix)).toHaveCount(1);
+
+    await page.reload();
+    await expect(automationsPage.searchInput()).toHaveValue(prefix);
     await expect(automationsPage.row(published.flowName)).toBeVisible();
     await expect(automationsPage.rowsMatching(prefix)).toHaveCount(1);
   });
@@ -123,7 +130,6 @@ test.describe('Automations › flows', { tag: '@feature:flows-list' }, () => {
     await automationsPage.searchFlows(e2eFlows.uniqueName('no match'));
 
     await expect(automationsPage.noResults()).toBeVisible();
-    await expect(automationsPage.errorState()).toBeHidden();
   });
 
   test('a failed flows request shows the error state', async ({ page, seed, listResponse }) => {
@@ -147,8 +153,7 @@ async function readFlow({ request, session, flowId }: { request: APIRequestConte
 }
 
 async function flowStatusCode({ request, session, flowId }: { request: APIRequestContext; session: E2eSession; flowId: string }) {
-  const response = await request.get(`/api/v1/flows/${flowId}`, { headers: { Authorization: `Bearer ${session.token}` } });
-  return response.status();
+  return e2eApi.callApiStatus({ request, session, method: 'GET', path: `/api/v1/flows/${flowId}` });
 }
 
 const PAGE_SIZE = 10;

@@ -44,10 +44,10 @@ Many people and agents write specs at the same time, so a feature adds new files
   });
   ```
 
-  `createVariable` stands for the feature's own seed call, in the same file. Make the call with `e2eApi.callApi({ request, session, method, path, data })`, which sends the session token and fails on any status that is not 2xx; do not write a fetch helper of your own. A spec that needs the fixtures of two features joins them with `mergeTests(variablesTest, connectionsTest)` from `@playwright/test`.
+  `createVariable` stands for the feature's own seed call, in the same file. Make the call with `e2eApi.callApi({ request, session, method, path, data })`, which sends the session token and fails on any status that is not 2xx; do not write a fetch helper of your own. To assert a status that is not 2xx, such as a 403 or a 404, use `e2eApi.callApiStatus({ request, session, method, path })`, which returns the status. A spec that needs the fixtures of two features joins them with `mergeTests(variablesTest, connectionsTest)` from `@playwright/test`.
 - A feature PR never edits `fixtures/index.ts`, `fixtures/api.ts` or another feature's page object. It may add methods to the page object of its own page, such as `automations.page.ts` for Automations › flows, but it does not change what an existing method does for the specs that already call it. There is one exception: when a second feature needs a helper that the first feature wrote, a separate PR moves the helper into `fixtures/api.ts` first, and the second feature PR builds on it.
 
-Tag every test of the feature with `@feature:<slug>`, so a query can list which features have a passing spec: `test.describe('Variables', { tag: '@feature:variables' }, () => { … })`.
+Tag every test of the feature with `@feature:<slug>`, so a query can list which features have a passing spec: `test.describe('Variables', { tag: '@feature:variables' }, () => { … })`. When the ticket names a tier, such as `@surface`, add that tag too: `{ tag: ['@feature:variables', '@surface'] }`.
 
 Project roles, a second project and the mail catcher exist only in EE. A test that needs one of them lives under `scenarios/ee/`. The CE spec of the same feature does not branch on the edition; its ticket marks that check `no-e2e: EE only`.
 

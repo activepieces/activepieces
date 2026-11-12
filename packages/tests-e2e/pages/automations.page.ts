@@ -36,7 +36,7 @@ export class AutomationsPage extends BasePage {
   }
 
   async typeSearch(term: string): Promise<void> {
-    await this.page.getByTestId('automations-search-input').fill(term);
+    await this.searchInput().fill(term);
     await this.page.waitForURL((url) => url.searchParams.get('search') === term);
   }
 
@@ -49,6 +49,10 @@ export class AutomationsPage extends BasePage {
 
   async nextPage(): Promise<void> {
     await this.page.getByTestId('automations-next-page').click();
+  }
+
+  searchInput() {
+    return this.page.getByTestId('automations-search-input');
   }
 
   row(name: string) {
@@ -89,7 +93,7 @@ export class AutomationsPage extends BasePage {
     await this.page.getByRole('menuitem', { name: 'Export' }).click();
     const download = await downloaded;
     const buffer = await readFile(await download.path());
-    const template: FlowTemplateFile = JSON.parse(buffer.toString('utf-8').replace(/^﻿/, ''));
+    const template: FlowTemplateFile = JSON.parse(buffer.toString('utf-8').replace(/^\uFEFF/, ''));
     return { file: { name: download.suggestedFilename(), mimeType: 'application/json', buffer }, template };
   }
 

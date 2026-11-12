@@ -237,6 +237,16 @@ async function callApi<T>({ request, session, method, path, data, params }: {
   return response.json();
 }
 
+async function callApiStatus({ request, session, method, path }: {
+  request: APIRequestContext;
+  session: E2eSession;
+  method: 'GET' | 'DELETE';
+  path: string;
+}): Promise<number> {
+  const response = await request.fetch(path, { method, headers: { Authorization: `Bearer ${session.token}` } });
+  return response.status();
+}
+
 function redact({ session, text }: { session: E2eSession; text: string }) {
   return text.replaceAll(session.token, '***');
 }
@@ -296,6 +306,7 @@ export const e2eApi = {
   seedSecretTextConnection,
   uniqueName,
   callApi,
+  callApiStatus,
   deleteStaleData,
   describeFlow,
   describeRun,
