@@ -611,13 +611,19 @@ function buildUpdateFields({
   tableFields: AirtableField[];
   fields: Record<string, unknown>;
 }): Record<string, unknown> {
-  return Object.fromEntries(
+  const updatedFields = Object.fromEntries(
     writableFieldsOf(tableFields).flatMap((field) =>
       fields[updateToggleKey(field.id)] === true
         ? [[field.id, valueToWrite({ field, value: fields[field.id] })]]
         : []
     )
   );
+  if (Object.keys(updatedFields).length === 0) {
+    throw new Error(
+      'No field is turned on. Turn on the fields this step should write.'
+    );
+  }
+  return updatedFields;
 }
 
 export const airtableCommon = {
@@ -876,7 +882,10 @@ export const airtableCommon = {
             ],
             [
               field.id,
-              buildFieldValueProperty({ field, displayName: 'New value' }),
+              buildFieldValueProperty({
+                field,
+                displayName: `${field.name} — New Value`,
+              }),
             ],
           ])
       );

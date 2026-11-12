@@ -8,7 +8,7 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
-#### Airtable's Update Record writes only the fields you turn on, and Clean Record is gone
+#### Airtable 1.0.0: Update Record writes only the fields you turn on, and Clean Record is gone
 
 "Update Airtable Record" listed every field of the table and wrote every one that was not empty. That made clearing a field impossible, and it also wrote a value to checkbox columns nobody had touched: a checkbox in a step form has no empty state, so the builder stored `false` for it and the step sent that `false` on every run, unticking the box in Airtable.
 
@@ -20,7 +20,7 @@ The piece is at `1.0.0`. A step stays on the version it was built with until som
 
 #### What you need to do
 
-Nothing until you move an Airtable step to `1.0.0`. When you do, the builder resets that step's settings, as it does for any major piece upgrade: reconfigure the step, and turn on the fields it should write. A step on `1.0.0` with no field turned on writes nothing.
+Nothing until you move an Airtable step to `1.0.0`. When you do, the builder resets that step's settings, as it does for any major piece upgrade: reconfigure the step, and turn on the fields it should write. A step on `1.0.0` with no field turned on fails with an error that asks you to turn one on.
 
 Replace every "Clean Record" step with "Update Airtable Record": turn on the fields to clear, and leave their values empty.
 

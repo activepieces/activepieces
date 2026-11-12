@@ -105,27 +105,32 @@ describe('Update Record writes only the fields that are turned on', () => {
   it('ignores fields Airtable does not let this piece write', () => {
     const written = airtableCommon.buildUpdateFields({
       tableFields,
-      fields: { [toggle('fldNotes')]: true, fldNotes: 'anything' },
+      fields: {
+        [toggle('fldName')]: true,
+        fldName: 'Acme',
+        [toggle('fldNotes')]: true,
+        fldNotes: 'anything',
+      },
     });
 
-    expect(written).toEqual({});
+    expect(written).toEqual({ fldName: 'Acme' });
   });
 
-  it('writes nothing when no field is turned on', () => {
-    const written = airtableCommon.buildUpdateFields({
-      tableFields,
-      fields: { [toggle('fldName')]: false, fldName: 'Acme' },
-    });
-
-    expect(written).toEqual({});
+  it('fails when no field is turned on', () => {
+    expect(() =>
+      airtableCommon.buildUpdateFields({
+        tableFields,
+        fields: { [toggle('fldName')]: false, fldName: 'Acme' },
+      })
+    ).toThrow('No field is turned on.');
   });
 
-  it('writes nothing for a step saved before the toggles existed', () => {
-    const written = airtableCommon.buildUpdateFields({
-      tableFields,
-      fields: { fldName: 'Acme', fldDone: true, fldOwner: ['recOwner'] },
-    });
-
-    expect(written).toEqual({});
+  it('fails for a step saved before the toggles existed', () => {
+    expect(() =>
+      airtableCommon.buildUpdateFields({
+        tableFields,
+        fields: { fldName: 'Acme', fldDone: true, fldOwner: ['recOwner'] },
+      })
+    ).toThrow('No field is turned on.');
   });
 });
