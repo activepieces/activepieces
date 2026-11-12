@@ -731,6 +731,10 @@ function parentFolderDropdown({
   });
 }
 
+function hasId(file: drive_v3.Schema$File): boolean {
+  return Boolean(file.id);
+}
+
 export const common = {
   properties: {
     parentFolder: parentFolderDropdown({
@@ -748,6 +752,7 @@ export const common = {
 
   listingBudgetMs: LISTING_BUDGET_MS,
   testSampleMaxPages: TEST_SAMPLE_MAX_PAGES,
+  hasId,
   actionListingBudgetMs: ACTION_LISTING_BUDGET_MS,
   watchFolderHint: WATCH_FOLDER_HINT,
   parentFolderDropdown,

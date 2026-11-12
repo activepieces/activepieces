@@ -11,7 +11,6 @@ import {
 } from '@activepieces/pieces-common';
 
 import dayjs from 'dayjs';
-import type { drive_v3 } from '@googleapis/drive';
 import { googleDriveAuth } from '../auth';
 import { common } from '../common';
 import { drivePoll } from '../common/drive-poll';
@@ -135,7 +134,7 @@ function buildPolling({
         createdTime: lastFetchEpochMS,
         includeTeamDrive: propsValue.include_team_drives,
         maxPages: lastFetchEpochMS === 0 ? common.testSampleMaxPages : undefined,
-        accept: lastFetchEpochMS === 0 ? hasId : undefined,
+        accept: lastFetchEpochMS === 0 ? common.hasId : undefined,
         deadline: listingDeadline,
       });
       return listing.files.map((item) => ({
@@ -144,10 +143,6 @@ function buildPolling({
       }));
     },
   };
-}
-
-function hasId(file: drive_v3.Schema$File): boolean {
-  return Boolean(file.id);
 }
 
 type NewFileProps = {
