@@ -138,8 +138,12 @@ function coerceValue({ property, value }: { property: PieceProperty, value: unkn
 }
 
 function matchOption({ options, value }: { options: { value: unknown }[], value: unknown }): unknown {
-  const match = options.find((option) => option.value === value) ?? options.find((option) => String(option.value) === String(value));
+  const match = options.find((option) => option.value === value) ?? options.find((option) => isScalar(option.value) && String(option.value) === value);
   return isNil(match) ? value : match.value;
+}
+
+function isScalar(value: unknown): value is number | boolean {
+  return typeof value === 'number' || typeof value === 'boolean';
 }
 
   export const piecePropertiesUtils = {

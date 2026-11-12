@@ -17,6 +17,13 @@ describe('piecePropertiesUtils.coerceInput', () => {
     expect(coerced).toEqual({ hour_of_the_day: 11, days: [1, 2], run_on_weekends: false, timezone: 'UTC' });
   });
 
+  it('keeps an object option that was copied as is', () => {
+    const objectProps = {
+      target: Property.StaticDropdown({ displayName: 'Target', required: true, options: { options: [{ label: 'A', value: { id: 'a' } }, { label: 'B', value: { id: 'b' } }] } }),
+    };
+    expect(piecePropertiesUtils.coerceInput({ props: objectProps, input: { target: { id: 'b' } } })).toEqual({ target: { id: 'b' } });
+  });
+
   it('leaves values that match no option, references and unknown keys as they are', () => {
     const input = { hour_of_the_day: '25', run_on_weekends: '{{trigger.weekend}}', note: 'false' };
     expect(piecePropertiesUtils.coerceInput({ props, input })).toEqual(input);
