@@ -1,12 +1,14 @@
 import { isNil, isObject } from '@activepieces/core-utils';
 import { create } from 'zustand';
 
+import { keepComposerFocus } from '@/features/chat/lib/keep-composer-focus';
 import { authenticationSession } from '@/lib/authentication-session';
 import { CHAT_ROUTE } from '@/lib/route-utils';
 import { safeStorage } from '@/lib/safe-storage';
 import { parseHandle } from '@/lib/shell-handle';
 
 import { chatLayoutUtils } from './chat-layout';
+import { layoutMove } from './layout-move';
 
 function bindRouter(next: ChatRouter): () => void {
   router = next;
@@ -26,18 +28,36 @@ function useChatRoute(): string {
 function expand(): void {
   const current = router;
   if (!current || current.isFullPage()) return;
-  current.navigate({
-    to: routeFor(useChatPanel.getState().conversationId),
-    replace: false,
-    state: { [EXPANDED_STATE]: true },
+  layoutMove.run({
+    waitForRoute: true,
+    update: () => {
+      keepComposerFocus.keep();
+      current.navigate({
+        to: routeFor(useChatPanel.getState().conversationId),
+        replace: false,
+        state: { [EXPANDED_STATE]: true },
+      });
+    },
   });
 }
 
 function collapse(side: ChatPanelSide): void {
   const current = router;
   if (!current) return;
-  useChatPanel.getState().dock(side);
-  if (current.isFullPage()) current.navigate(backFromFullPage(current));
+  const panel = useChatPanel.getState();
+  if (!current.isFullPage()) {
+    keepComposerFocus.keep();
+    panel.dock(side);
+    return;
+  }
+  layoutMove.run({
+    waitForRoute: true,
+    update: () => {
+      keepComposerFocus.keep();
+      panel.dock(side);
+      current.navigate(backFromFullPage(current));
+    },
+  });
 }
 
 function backFromFullPage(current: ChatRouter): ChatNavTarget {
@@ -253,13 +273,21 @@ const initChatPanel = (
     conversationId: readConversationId(),
     lastPage: readLastPage(),
     panelMounted: false,
+    docks: 0,
     newChatToken: 0,
     pendingPrompt: undefined,
     setOpen: (open) => {
       if (open === get().open) return;
-      update({ open });
+      layoutMove.run({ waitForRoute: false, update: () => update({ open }) });
     },
-    dock: (side) => update({ open: true, mode: side }),
+    dock: (side) =>
+      layoutMove.run({
+        waitForRoute: false,
+        update: () => {
+          set({ docks: get().docks + 1 });
+          update({ open: true, mode: side });
+        },
+      }),
     setDockWidth: (width) =>
       update({ dockWidth: chatLayoutUtils.dockWidthFor(width) }),
     newChat: (prompt) => {
@@ -314,6 +342,7 @@ export const chatPanelUtils = {
   showOnFullPage,
   forgetConversation,
   followRouter,
+  routeCommitted: layoutMove.routeCommitted,
 };
 
 export type ChatPanelSide = 'left' | 'right';
@@ -358,6 +387,7 @@ type ChatPanelState = SavedChatPanel & {
   conversationId: string | null;
   lastPage: string | null;
   panelMounted: boolean;
+  docks: number;
   newChatToken: number;
   pendingPrompt?: string;
   setOpen: (open: boolean) => void;

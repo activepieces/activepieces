@@ -1,6 +1,11 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronsUpDown, PanelLeftClose, Search } from 'lucide-react';
+import {
+  ChevronsUpDown,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Search,
+} from 'lucide-react';
 import React, { ComponentType, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -34,6 +39,7 @@ import {
 } from '@/features/billing';
 import { PlatformSwitcher } from '@/features/projects';
 import { useRailOpenState } from '@/features/workspace/lib/rail-collapsed';
+import { useChatEnabled } from '@/features/workspace/lib/use-chat-on';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -61,9 +67,9 @@ export function AppSidebar({ mode }: { mode: AppSidebarMode }) {
 
   return (
     <SidebarProvider
-      open={isPlatform || rail.open}
-      onOpenChange={isPlatform ? keepOpen : rail.onOpenChange}
-      keyboardShortcut={!isPlatform}
+      open={rail.open}
+      onOpenChange={rail.onOpenChange}
+      keyboardShortcut
       shortcutIgnoresEditable
       className="contents"
       style={SIDEBAR_STYLE}
@@ -205,27 +211,52 @@ function AppHeader() {
 }
 
 function PlatformHeader() {
-  const { platform } = platformHooks.useCurrentPlatform();
+  const chatOn = useChatEnabled();
   const { checkAccess } = useAuthorization();
+  const { toggleSidebar } = useSidebar();
   const chevronRef = useRef<ChevronLeftIconHandle>(null);
   const defaultRoute = determineDefaultRoute({
     checkAccess,
-    chatEnabled: platform.plan.chatEnabled,
+    chatEnabled: chatOn,
   });
 
   return (
     <SidebarHeader>
       <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton asChild>
+        <SidebarMenuItem className="flex items-center gap-1">
+          <SidebarMenuButton
+            asChild
+            tooltip={t('Back to app')}
+            className="min-w-0 flex-1"
+          >
             <Link
               to={defaultRoute}
               onMouseEnter={() => chevronRef.current?.startAnimation()}
               onMouseLeave={() => chevronRef.current?.stopAnimation()}
             >
               <ChevronLeftIcon ref={chevronRef} className="size-4" size={16} />
-              <span>{t('Back to app')}</span>
+              <span className={sidebarStyles.labelFade}>
+                {t('Back to app')}
+              </span>
             </Link>
+          </SidebarMenuButton>
+          <div className="shrink-0 group-data-[collapsible=icon]:hidden">
+            <HeaderIconButton
+              label={t('Close sidebar')}
+              icon={PanelLeftClose}
+              onClick={toggleSidebar}
+            />
+          </div>
+        </SidebarMenuItem>
+        <SidebarMenuItem className="hidden group-data-[collapsible=icon]:block">
+          <SidebarMenuButton
+            tooltip={t('Open sidebar')}
+            aria-label={t('Open sidebar')}
+            aria-expanded={false}
+            className="text-gray-11"
+            onClick={toggleSidebar}
+          >
+            <PanelLeftOpen />
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
@@ -239,7 +270,7 @@ function HeaderActions({ children }: { children: React.ReactNode }) {
   return (
     <div
       inert={state === 'collapsed' && !isMobile}
-      className="absolute top-0 left-[calc(var(--sidebar-width)-1rem-4.125rem)] flex w-[4.125rem] items-center justify-end gap-0.5 transition-opacity duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none"
+      className="absolute top-0 left-[calc(var(--sidebar-width)-1rem-4.125rem)] flex w-[4.125rem] items-center justify-end gap-0.5 transition-opacity duration-(--dur-fast) ease-(--ease-ap-out) group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none"
     >
       {children}
     </div>
@@ -327,10 +358,6 @@ function HeaderIconButton({
       <TooltipContent side="right">{label}</TooltipContent>
     </Tooltip>
   );
-}
-
-function keepOpen() {
-  return undefined;
 }
 
 const BRAND_BUTTON =

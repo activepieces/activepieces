@@ -67,6 +67,10 @@ function shownDockWidth({
   );
 }
 
+function prefersReducedMotion(): boolean {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 function rootFontSize(): number {
   return parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
 }
@@ -124,6 +128,7 @@ const chatLayoutUtils = {
   dockWidthFor,
   cardInnerWidth,
   shownDockWidth,
+  prefersReducedMotion,
   toastPlacementFor,
   motionCssVars,
   applyMotionVars,

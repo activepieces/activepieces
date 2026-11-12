@@ -1,17 +1,17 @@
 const labelFade =
-  'whitespace-nowrap transition-opacity duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none';
+  'whitespace-nowrap transition-opacity duration-(--dur-fast) ease-(--ease-ap-out) group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none';
 
 const hideWhenCollapsed =
-  'grid grid-rows-[1fr] opacity-100 transition-[grid-template-rows,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[collapsible=icon]:grid-rows-[0fr] group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none';
+  'grid grid-rows-[1fr] opacity-100 transition-opacity duration-(--dur-fast) ease-(--ease-ap-out) group-data-[collapsible=icon]:grid-rows-[0fr] group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none';
 
 const showWhenCollapsed =
-  'grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[collapsible=icon]:grid-rows-[1fr] group-data-[collapsible=icon]:opacity-100 motion-reduce:transition-none';
+  'grid grid-rows-[0fr] opacity-0 transition-opacity duration-(--dur-fast) ease-(--ease-ap-out) group-data-[collapsible=icon]:grid-rows-[1fr] group-data-[collapsible=icon]:opacity-100 motion-reduce:transition-none';
 
 const expand =
-  'grid transition-[grid-template-rows,opacity,visibility] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none';
+  'grid transition-[opacity,visibility] duration-(--dur-fast) ease-(--ease-ap-out) motion-reduce:transition-none';
 
 const rotate =
-  'transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none';
+  'transition-transform duration-(--dur-fast) ease-(--ease-ap-out) motion-reduce:transition-none';
 
 const menuSurface =
   'rounded-xl p-1.5 [&_[data-slot=dropdown-menu-item]]:rounded-md [&_[data-slot=dropdown-menu-radio-item]]:rounded-md [&_[data-slot=dropdown-menu-sub-trigger]]:rounded-md';
