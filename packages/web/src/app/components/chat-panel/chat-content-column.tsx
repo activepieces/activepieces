@@ -5,14 +5,15 @@ import { cn } from '@/lib/utils';
 import { useChatWidth } from './chat-window';
 
 export function ChatContentColumn({ children }: { children: React.ReactNode }) {
-  const full = useChatWidth() === 'full';
+  const chatWidth = useChatWidth();
+  const full = chatWidth === 'full';
   return (
     <div
       id={pageColumnUtils.ID}
-      inert={full}
+      inert={full || chatWidth === 'sheet'}
       className={cn(
         'relative isolate flex min-w-0 flex-1 flex-col overflow-hidden',
-        !full && '[view-transition-name:ap-page]',
+        !full && chatWidth !== 'sheet' && '[view-transition-name:ap-page]',
       )}
     >
       {children}

@@ -11,6 +11,7 @@ import { parseHandle } from '@/lib/shell-handle';
 
 import { chatLayoutUtils } from './chat-layout';
 import { layoutMove } from './layout-move';
+import { windowSizeHooks } from './window-size-hooks';
 
 function bindRouter(next: ChatRouter): () => void {
   router = next;
@@ -58,20 +59,33 @@ function openBeside({
 }): boolean {
   const current = router;
   if (!current) return false;
-  const { pathname, search } = current.location();
-  if (`${pathname}${search}` === route.split('#')[0]) return true;
+  const { pathname, search, hash } = current.location();
+  const page = route.split('#')[0];
+  if (`${pathname}${search}` === page) return true;
   const panel = useChatPanel.getState();
+  const behind =
+    hash === SHEET_HASH || (current.isFullPage() && windowSizeHooks.isPhone());
   const show = () => {
     keepComposerFocus.keep();
     if (current.isFullPage()) panel.dock(panel.mode);
-    current.navigate({ to: route, replace: !push });
+    if (behind && push) {
+      current.navigate({ to: page, replace: false });
+    }
+    current.navigate({
+      to: behind ? `${page}${SHEET_HASH}` : route,
+      replace: !push,
+    });
   };
   if (current.isFullPage()) {
     layoutMove.run({ waitForRoute: true, update: show });
   } else {
     show();
   }
-  panel.announce(t('Opened {name} beside the chat.', { name }));
+  panel.announce(
+    behind
+      ? t('Opened {name} behind the chat.', { name })
+      : t('Opened {name} beside the chat.', { name }),
+  );
   return true;
 }
 
@@ -284,6 +298,7 @@ const LAST_CONVERSATION_KEY = 'chat:last-conv';
 const TAB_LAST_PAGE_KEY = 'chat:last-page';
 const EXPANDED_STATE = 'chatExpanded';
 const AUTO_FOLLOW_KEY = 'chat:auto-follow';
+const SHEET_HASH = '#chat';
 
 const DEFAULTS: SavedChatPanel = {
   open: false,
@@ -401,6 +416,7 @@ export const chatPanelUtils = {
   forgetConversation,
   followRouter,
   routeCommitted: layoutMove.routeCommitted,
+  SHEET_HASH,
 };
 
 export type ChatPanelSide = 'left' | 'right';

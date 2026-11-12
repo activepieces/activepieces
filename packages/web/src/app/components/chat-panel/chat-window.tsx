@@ -1,7 +1,16 @@
+import { isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useLocation, useMatches, useNavigate } from 'react-router-dom';
 
+import { chatDom } from '@/features/chat/lib/chat-dom';
 import { chatScrollAnchor } from '@/features/chat/lib/chat-scroll-anchor';
 import {
   ChatWidth,
@@ -20,6 +29,7 @@ import { useShellHandle } from '@/lib/shell-handle';
 import { cn } from '@/lib/utils';
 
 import { FollowAlongController } from './follow-along-controller';
+import { useSheetSwipe } from './use-sheet-swipe';
 
 const loadChatChrome = () =>
   import('./chat-chrome').then((m) => ({ default: m.ChatChrome }));
@@ -48,13 +58,15 @@ function useDockWidth(dragWidth: number | null = null): number {
 export function useChatWidth(): ChatWidth {
   const fullPage = useShellHandle().chat === 'full';
   const chatOn = useChatOn();
+  const sheetOpen = useLocation().hash === chatPanelUtils.SHEET_HASH;
   const docked = useChatPanel((s) => s.open);
   const mode = useChatPanel((s) => s.mode);
   const phone = windowSizeHooks.useIsPhone();
   return chatLayoutUtils.widthFor({
     fullPage,
-    open: chatOn && !phone && docked,
+    open: chatOn && (phone ? sheetOpen : docked),
     mode,
+    phone,
   });
 }
 
@@ -67,14 +79,38 @@ export function useActiveConversationId(): string | null {
   return fullPage ? urlId : storeId;
 }
 
+export function useChatSheet() {
+  const navigate = useNavigate();
+  const { pathname, search, state } = useLocation();
+  const show = useCallback(
+    () =>
+      navigate(`${pathname}${search}${chatPanelUtils.SHEET_HASH}`, {
+        state: { ...stateObject(state), [SHEET_STATE]: true },
+      }),
+    [navigate, pathname, search, state],
+  );
+  const hide = useCallback(() => {
+    if (stateObject(state)[SHEET_STATE] === true) {
+      navigate(-1);
+      return;
+    }
+    navigate(`${pathname}${search}`, { replace: true, state });
+  }, [navigate, pathname, search, state]);
+  return { show, hide };
+}
+
 export function ChatPanel() {
   const chatWidth = useChatWidth();
   const mode = useChatPanel((s) => s.mode);
   const [dragWidth, setDragWidth] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const scrimRef = useRef<HTMLButtonElement>(null);
+  const sheet = useChatSheet();
   const full = chatWidth === 'full';
   const visible = chatWidth !== 'closed';
+  const sheetOpen = chatWidth === 'sheet';
+  const phone = windowSizeHooks.useIsPhone() && !full;
   const side = full ? 'left' : mode;
   const width = useDockWidth(dragWidth);
   const cardWidth = useCardWidth();
@@ -104,6 +140,8 @@ export function ChatPanel() {
     }, PREWARM_MS);
     return () => clearTimeout(prewarm);
   }, [mounted]);
+
+  useChatKeys({ chatWidth, sheet });
 
   useEffect(() => {
     useChatPanel.getState().setPanelMounted(true);
@@ -139,28 +177,67 @@ export function ChatPanel() {
     );
   };
 
+  const swipe = useSheetSwipe({
+    enabled: phone && sheetOpen,
+    panelRef,
+    scrimRef,
+    onDismiss: sheet.hide,
+  });
+
   return (
     <>
+      {phone && (
+        <button
+          type="button"
+          ref={scrimRef}
+          tabIndex={-1}
+          aria-label={t('Close chat')}
+          aria-hidden={!sheetOpen || undefined}
+          onClick={sheet.hide}
+          className={cn(
+            'fixed inset-0 z-40 cursor-default bg-scrim transition-opacity motion-reduce:duration-(--dur-fast)',
+            sheetOpen
+              ? 'duration-(--dur-sheet) ease-(--ease-ap-drawer)'
+              : 'pointer-events-none opacity-0 duration-(--dur-move) ease-(--ease-ap-out)',
+          )}
+        />
+      )}
       <aside
         ref={panelRef}
         id={chatLayoutUtils.PANEL_ID}
         aria-label={t('Chat')}
+        role={phone && sheetOpen ? 'dialog' : undefined}
+        aria-modal={phone && sheetOpen ? true : undefined}
         inert={!visible}
-        style={{ width: full ? '100%' : visible ? width : 0 }}
+        onPointerDown={phone ? swipe.onPointerDown : undefined}
+        style={
+          phone ? undefined : { width: full ? '100%' : visible ? width : 0 }
+        }
         className={cn(
-          'relative flex shrink-0 flex-col overflow-hidden bg-gray-1 [view-transition-name:ap-chat]',
-          side === 'right' && 'order-last',
-          visible && !full && (side === 'left' ? 'border-r' : 'border-l'),
+          phone
+            ? [
+                'fixed inset-x-0 top-2 bottom-0 z-40 flex flex-col overflow-hidden rounded-t-xl border bg-gray-1 shadow-over transition-[translate,opacity,visibility] motion-reduce:transition-[opacity,visibility] motion-reduce:duration-(--dur-fast)',
+                sheetOpen
+                  ? 'transition-[translate,opacity] duration-(--dur-sheet) ease-(--ease-ap-drawer) motion-reduce:transition-opacity'
+                  : 'invisible translate-y-full duration-(--dur-move) ease-(--ease-ap-out) motion-reduce:translate-y-0 motion-reduce:opacity-0',
+              ]
+            : [
+                'relative flex shrink-0 flex-col overflow-hidden bg-gray-1 [view-transition-name:ap-chat]',
+                side === 'right' && 'order-last',
+                visible && !full && (side === 'left' ? 'border-r' : 'border-l'),
+              ],
         )}
       >
         <ChatRouterBinding />
         <FollowAlongController />
         <ChatAnnouncer />
         <div
-          style={{ width: full ? '100%' : `${width}px` }}
+          style={phone ? undefined : { width: full ? '100%' : `${width}px` }}
           className={cn(
-            '@container/chat absolute inset-y-0 flex flex-col',
-            side === 'left' ? 'left-0' : 'right-0',
+            '@container/chat flex flex-col',
+            phone
+              ? 'min-h-0 flex-1'
+              : ['absolute inset-y-0', side === 'left' ? 'left-0' : 'right-0'],
           )}
         >
           {mounted && (
@@ -169,7 +246,7 @@ export function ChatPanel() {
             </Suspense>
           )}
         </div>
-        {visible && !full && (
+        {visible && !full && !phone && (
           <div
             role="separator"
             aria-orientation="vertical"
@@ -182,6 +259,7 @@ export function ChatPanel() {
               if (event.button !== 0) return;
               event.preventDefault();
               event.currentTarget.setPointerCapture(event.pointerId);
+              cancelOnEscape(event);
               setDragWidth(width);
             }}
             onPointerMove={(event) => {
@@ -228,6 +306,100 @@ function ChatAnnouncer() {
       {announcement && <span key={announcement.id}>{announcement.text}</span>}
     </div>
   );
+}
+
+function useChatKeys({
+  chatWidth,
+  sheet,
+}: {
+  chatWidth: ChatWidth;
+  sheet: ReturnType<typeof useChatSheet>;
+}) {
+  const latest = useRef({ chatWidth, sheet });
+  latest.current = { chatWidth, sheet };
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) =>
+      handleChatKey({ event, ...latest.current });
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+}
+
+function handleChatKey({
+  event,
+  chatWidth,
+  sheet,
+}: {
+  event: KeyboardEvent;
+  chatWidth: ChatWidth;
+  sheet: ReturnType<typeof useChatSheet>;
+}): void {
+  const full = chatWidth === 'full';
+  const focusInChat = chatDom.inChat(document.activeElement);
+  const shortcut = chatDom.shortcutOf(event);
+  if (shortcut === 'newChat') {
+    event.preventDefault();
+    chatPanelUtils.startNewChat();
+    if (!full && chatWidth !== 'sheet' && windowSizeHooks.isPhone()) {
+      sheet.show();
+    }
+    return;
+  }
+  if (shortcut === 'toggle') {
+    event.preventDefault();
+    if (chatWidth === 'sheet') {
+      sheet.hide();
+    } else if (!full && windowSizeHooks.isPhone()) {
+      sheet.show();
+    } else if (full || (chatWidth !== 'closed' && !focusInChat)) {
+      chatDom.composer()?.focus();
+    } else {
+      useChatPanel.getState().setOpen(chatWidth === 'closed');
+    }
+    return;
+  }
+  if (
+    event.key === 'Escape' &&
+    !full &&
+    chatWidth !== 'closed' &&
+    focusInChat &&
+    !hasText(document.activeElement) &&
+    !hasText(chatDom.composer()) &&
+    chatDom.escapeFree(event)
+  ) {
+    chatDom.claimEscape(event);
+    if (chatWidth === 'sheet') sheet.hide();
+    else useChatPanel.getState().setOpen(false);
+  }
+}
+
+function cancelOnEscape(event: React.PointerEvent<HTMLElement>): void {
+  const handle = event.currentTarget;
+  const pointerId = event.pointerId;
+  const onKey = (key: KeyboardEvent) => {
+    if (key.key !== 'Escape') return;
+    key.preventDefault();
+    key.stopImmediatePropagation();
+    handle.releasePointerCapture(pointerId);
+  };
+  window.addEventListener('keydown', onKey, true);
+  handle.addEventListener(
+    'lostpointercapture',
+    () => window.removeEventListener('keydown', onKey, true),
+    { once: true },
+  );
+}
+
+function hasText(element: Element | null): boolean {
+  return (
+    (element instanceof HTMLTextAreaElement ||
+      element instanceof HTMLInputElement) &&
+    element.value.trim().length > 0
+  );
+}
+
+function stateObject(state: unknown): Record<string, unknown> {
+  return isObject(state) ? state : {};
 }
 
 function ChatRouterBinding() {
@@ -290,6 +462,7 @@ function useComposerFocus({
   }, [visible, panelRef]);
 }
 
+const SHEET_STATE = 'chatSheet';
 function focusComposerWhenReady(panel: HTMLElement): (() => void) | undefined {
   const focus = () => {
     const input = panel.querySelector('textarea');

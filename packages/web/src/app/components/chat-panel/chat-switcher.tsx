@@ -209,6 +209,7 @@ export function ChatSwitcher({
               ref={triggerRef}
               variant="ghost"
               autoFocus={refocusTitle}
+              aria-keyshortcuts="Shift+Meta+H Shift+Control+H"
               onClick={(event) => {
                 opener.current = event.detail === 0 ? 'keyboard' : 'pointer';
               }}
@@ -762,9 +763,10 @@ const DELETE = 'switcher:delete';
 const SKELETON_WIDTHS = ['w-2/3', 'w-1/2', 'w-3/4'];
 const WIDTH_CLASS: Record<Exclude<ChatSwitcherLayout, 'full'>, string> = {
   dock: 'w-[min(calc(var(--radix-popover-trigger-width)_-_16px),360px)]',
+  sheet: 'w-[calc(var(--radix-popover-trigger-width)_-_16px)]',
 };
 
 type CloseFocus = 'title' | 'composer' | 'none';
 
 export type ChatSwitcherOpener = 'pointer' | 'keyboard';
-type ChatSwitcherLayout = 'dock' | 'full';
+type ChatSwitcherLayout = 'dock' | 'full' | 'sheet';
