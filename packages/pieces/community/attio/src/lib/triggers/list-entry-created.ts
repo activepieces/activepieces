@@ -5,11 +5,13 @@ import { attioAuth } from '../auth';
 import { listIdDropdown } from '../common/props';
 import { ListWebhookPayload, WebhookResponse } from '../common/types';
 import { isNil } from '@activepieces/pieces-framework';
+import { createEntryOutputSchema } from '../output-schemas';
 
 const TRIGGER_KEY = 'new-list-entry-trigger';
 
 export const listEntryCreatedTrigger = createTrigger({
 	name: 'list_entry_created',
+	outputSchema: createEntryOutputSchema,
 	classification: 'READ',
 	displayName: 'List Entry Created',
 	description: 'Triggers when a new entry is added.',

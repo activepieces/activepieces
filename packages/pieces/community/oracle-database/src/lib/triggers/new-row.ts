@@ -66,6 +66,7 @@ const polling: Polling<
 export const newRowTrigger = createTrigger({
   auth: oracleDbAuth,
   name: 'new_row',
+  classification: 'READ',
   displayName: 'New Row',
   description: 'Triggers when a new row is created',
   aiMetadata: {
@@ -94,19 +95,11 @@ export const newRowTrigger = createTrigger({
   sampleData: {},
 
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      store: context.store,
-      propsValue: context.propsValue,
-      auth: context.auth,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      store: context.store,
-      propsValue: context.propsValue,
-      auth: context.auth,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {

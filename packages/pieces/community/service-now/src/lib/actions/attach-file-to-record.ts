@@ -24,6 +24,7 @@ const AttachFileInputSchema = z
 
 export const attachFileToRecordAction = createAction({
   name: 'attach_file_to_record',
+  classification: 'WRITE',
   displayName: 'Attach File to Record',
   description: 'Upload and attach a file to a record',
   audience: 'both',

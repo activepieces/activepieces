@@ -12,6 +12,7 @@ const polling = createQuickbooksCdcPolling<QuickbooksBill>({
 export const newBill = createTrigger({
 	auth: quickbooksAuth,
 	name: 'new_bill',
+	classification: 'READ',
 	displayName: 'New Bill',
 	description: 'Triggers when a new bill (accounts payable) is created in QuickBooks.',
 	aiMetadata: {

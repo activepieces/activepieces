@@ -9,6 +9,7 @@ import { assertIdPrefix } from '../../common/validation';
 export const updateContext = createAction({
   auth: hedyAuth,
   name: 'update-context',
+  classification: 'WRITE',
   displayName: 'Update Session Context',
   description: 'Update an existing session context.',
   audience: 'both',

@@ -10,6 +10,7 @@ import { lobstermailAuth } from '../..';
 export const getEmail = createAction({
   auth: lobstermailAuth,
   name: 'get_email',
+  classification: 'READ',
   displayName: 'Get Email',
   description: 'Get a single email with full body content.',
   audience: 'both',

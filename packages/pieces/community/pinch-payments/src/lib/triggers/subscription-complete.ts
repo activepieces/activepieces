@@ -5,6 +5,7 @@ import { createWebhook, deleteWebhook, WebhookResponse } from '../common/client'
 export const subscriptionCompleteTrigger = createTrigger({
   auth: pinchPaymentsAuth,
   name: 'subscription_complete',
+  classification: 'READ',
   displayName: 'Subscription Complete',
   description: 'Triggers when a subscription is run to completion',
   aiMetadata: {

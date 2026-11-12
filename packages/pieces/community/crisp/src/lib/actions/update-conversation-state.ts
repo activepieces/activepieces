@@ -7,6 +7,7 @@ import { crispApiCall } from '../common/client';
 export const updateConversationStateAction = createAction({
 	auth: crispAuth,
 	name: 'change_state',
+	classification: 'WRITE',
 	displayName: 'Change Conversation State',
 	description: 'Updates the state of a conversation.',
 	audience: 'both',

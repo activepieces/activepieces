@@ -10,6 +10,7 @@ import { lobstermailAuth } from '../..';
 export const searchEmails = createAction({
   auth: lobstermailAuth,
   name: 'search_emails',
+  classification: 'SEARCH',
   displayName: 'Search Emails',
   description: 'Search emails across inboxes using full-text search and optional filters. Rate limited to 30 requests/minute.',
   audience: 'both',

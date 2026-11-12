@@ -142,7 +142,7 @@ export const trelloAuth = PieceAuth.BasicAuth({
 export const trello = createPiece({
   displayName: 'Trello',
   description: 'Project management tool for teams',
-  minimumSupportedRelease: '0.87.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/trello.png',
   authors: ["Salem-Alaa", "kishanprmr", "MoShizzle", "khaledmashaly", "abuaboud", "AshotZaqoyan", "OdaiAhmed99"],
   categories: [PieceCategory.PRODUCTIVITY],
@@ -172,7 +172,19 @@ export const trello = createPiece({
           key: auth.username,
           token: auth.password
         }
-      }
+      },
+      props: {
+        url: {
+          description: 'Full URL, or a path relative to https://api.trello.com/1',
+          placeholder: '/members/me/boards',
+        },
+        headers: {
+          description: 'Extra headers to send. Trello needs none for sign-in.',
+        },
+        queryParams: {
+          description: 'Appended as ?key=value. Your API key and token are added for you.',
+        },
+      },
     })
   ],
   triggers: [cardMovedTrigger, newCardTrigger, deadlineTrigger],

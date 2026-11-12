@@ -28,6 +28,7 @@ import { returningAiAuth } from '../auth';
 export const reactMessage = createAction({
   auth: returningAiAuth,
   name: 'reactMessage', 
+  classification: 'WRITE',
   displayName: 'React to Message',
   description: 'Add an emoji reaction to a specific message as a chosen user.',
   audience: 'both',

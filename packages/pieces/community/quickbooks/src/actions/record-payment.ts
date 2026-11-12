@@ -7,6 +7,7 @@ import { QuickbooksCustomer, QuickbooksPayment, QuickbooksRef } from '../lib/typ
 export const recordPaymentAction = createAction({
 	auth: quickbooksAuth,
 	name: 'record_payment',
+	classification: 'WRITE',
 	displayName: 'Record Payment',
 	description: 'Records a customer payment in QuickBooks, optionally applying it to invoices.',
 	audience: 'both',

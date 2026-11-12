@@ -16,7 +16,7 @@ export const ConversationsToggle = ({
     size="icon"
     aria-label={open ? t('Collapse conversations') : t('Expand conversations')}
     onClick={onClick}
-    className="size-[30px] shrink-0 text-muted-foreground"
+    className="size-[30px] shrink-0 text-gray-11"
   >
     {open ? <PanelLeftCloseIcon size={14} /> : <HistoryIcon size={14} />}
   </Button>

@@ -35,6 +35,7 @@ const FindFileInputSchema = z
 
 export const findFileAction = createAction({
   name: 'find_file',
+  classification: 'SEARCH',
   displayName: 'Find File',
   auth: servicenowAuth,
   description: 'List or download file attachments from a record',

@@ -5,6 +5,7 @@ import { sendIdentityGraphQLRequest } from '../../common/helpers';
 const identityApiCustomQueryAction = createAction({
 	requireAuth: false,
 	name: 'identity-custom-query',
+	classification: 'WRITE',
 	displayName: 'Identity : Custom Query',
 	description: 'Custom Identity Query.',
 	audience: 'both',
@@ -32,6 +33,7 @@ const identityApiCustomQueryAction = createAction({
 const totalVehicleCountAction = createAction({
 	requireAuth: false,
 	name: 'identity-total-vehicle-count',
+	classification: 'READ',
 	displayName: 'Identity : Total Vehicle Count',
 	description: 'Get total vehicle count.',
 	audience: 'both',
@@ -45,6 +47,7 @@ const totalVehicleCountAction = createAction({
 const getDeveloperLicenseInfoAction = createAction({
 	requireAuth: false,
 	name: 'identity-get-developer-license-info',
+	classification: 'READ',
 	displayName: 'Identity : Get Developer License Info',
 	description: 'Get developer license info by tokenId.',
 	audience: 'both',
@@ -68,6 +71,7 @@ const getDeveloperLicenseInfoAction = createAction({
 const getVehicleByDevLicenseAction = createAction({
 	requireAuth: false,
 	name: 'identity-get-vehicle-by-dev-license',
+	classification: 'SEARCH',
 	displayName: 'Identity : Get Vehicle By Dev License',
 	description: 'Get vehicles by developer license 0x address.',
 	audience: 'both',
@@ -91,6 +95,7 @@ const getVehicleByDevLicenseAction = createAction({
 const getTotalVehicleCountForOwnerAction = createAction({
 	requireAuth: false,
 	name: 'identity-get-total-vehicle-count-for-owner',
+	classification: 'READ',
 	displayName: 'Identity : Get Total Vehicle Count For Owner.',
 	description: 'Get total vehicle count for an owner.',
 	audience: 'both',
@@ -114,6 +119,7 @@ const getTotalVehicleCountForOwnerAction = createAction({
 const getVehicleMMYByOwnerAction = createAction({
 	requireAuth: false,
 	name: 'identity-get-vehicle-mmy-by-owner',
+	classification: 'SEARCH',
 	displayName: 'Identity : Get Vehicle MMY By Owner',
 	description: 'Get vehicle MMY by owner address.',
 	audience: 'both',
@@ -137,6 +143,7 @@ const getVehicleMMYByOwnerAction = createAction({
 const getVehicleMMYByTokenIdAction = createAction({
 	requireAuth: false,
 	name: 'identity-get-vehicle-mmy-by-tokenid',
+	classification: 'READ',
 	displayName: 'Identity : Get Vehicle MMY By TokenId',
 	description: 'Get vehicle MMY by tokenId.',
 	audience: 'both',
@@ -160,6 +167,7 @@ const getVehicleMMYByTokenIdAction = createAction({
 const getSacdForVehicleAction = createAction({
 	requireAuth: false,
 	name: 'identity-get-sacd-for-vehicle',
+	classification: 'READ',
 	displayName: 'Identity : Get SACD For Vehicle',
 	description: 'Get SACD for a vehicle by tokenId.',
 	audience: 'both',
@@ -183,6 +191,7 @@ const getSacdForVehicleAction = createAction({
 const getRewardsByOwnerAction = createAction({
 	requireAuth: false,
 	name: 'identity-get-rewards-by-owner',
+	classification: 'READ',
 	displayName: 'Identity : Get Rewards By Owner',
 	description: 'Get rewards by owner address.',
 	audience: 'both',
@@ -206,6 +215,7 @@ const getRewardsByOwnerAction = createAction({
 const getRewardHistoryByOwnerAction = createAction({
 	requireAuth: false,
 	name: 'identity-get-reward-history-by-owner',
+	classification: 'SEARCH',
 	displayName: 'Identity : Get Reward History By Owner',
 	description: 'Get reward history by owner address.',
 	audience: 'both',
@@ -229,6 +239,7 @@ const getRewardHistoryByOwnerAction = createAction({
 const getDeviceDefinitionByTokenIdAction = createAction({
 	requireAuth: false,
 	name: 'identity-get-device-definition-by-tokenid',
+	classification: 'READ',
 	displayName: 'Identity : Get Device Definition',
 	description: 'Get device definition by vehicle tokenId.',
 	audience: 'both',
@@ -252,6 +263,7 @@ const getDeviceDefinitionByTokenIdAction = createAction({
 const getDeviceDefinitionByDefinitionIdAction = createAction({
 	requireAuth: false,
 	name: 'identity-get-device-definition-by-definitionid',
+	classification: 'READ',
 	displayName: 'Identity : Get Device Definition By DefinitionId',
 	description: 'Get device definition by definitionId.',
 	audience: 'both',
@@ -275,6 +287,7 @@ const getDeviceDefinitionByDefinitionIdAction = createAction({
 const getOwnerVehiclesAction = createAction({
 	requireAuth: false,
 	name: 'identity-get-owner-vehicles',
+	classification: 'SEARCH',
 	displayName: 'Identity : Get Owner Vehicles',
 	description: 'Get vehicles owned by an address.',
 	audience: 'both',
@@ -298,6 +311,7 @@ const getOwnerVehiclesAction = createAction({
 const getDeveloperSharedVehiclesFromOwnerAction = createAction({
 	requireAuth: false,
 	name: 'identity-get-developer-shared-vehicles-from-owner',
+	classification: 'SEARCH',
 	displayName: 'Identity : Get Developer Shared Vehicles From Owner',
 	description: 'Get vehicles shared with a developer license from an owner.',
 	audience: 'both',
@@ -325,6 +339,7 @@ const getDeveloperSharedVehiclesFromOwnerAction = createAction({
 const getDCNsByOwnerAction = createAction({
 	requireAuth: false,
 	name: 'identity-get-dcns-by-owner',
+	classification: 'SEARCH',
 	displayName: 'Identity : Get DCNs By Owner',
 	description: 'Get DCNs by owner address.',
 	audience: 'both',

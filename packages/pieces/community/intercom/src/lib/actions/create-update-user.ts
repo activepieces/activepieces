@@ -2,10 +2,12 @@ import { intercomAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { intercomClient } from '../common';
 import dayjs from 'dayjs';
+import { contactOutputSchema } from '../output-schemas';
 
 export const createOrUpdateUserAction = createAction({
 	auth: intercomAuth,
 	name: 'create-or-update-user',
+	classification: 'WRITE',
 	displayName: 'Create/Update User',
 	description: 'Update a user within intercom given an email address.',
 	audience: 'both',
@@ -36,8 +38,9 @@ export const createOrUpdateUserAction = createAction({
 			required: false,
 		}),
 	},
+	outputSchema: contactOutputSchema,
 	async run(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const contact = await client.contacts.search({
 			query: {

@@ -1,29 +1,29 @@
 import {
   httpClient,
-  HttpMethod,
-  HttpMessageBody,
+  HttpError,
   HttpHeaders,
+  HttpMessageBody,
+  HttpMethod,
 } from '@activepieces/pieces-common';
+import type { FiletopdfApiError, FiletopdfAuthValue } from './types';
 
-/**
- * Single entry point for every FileToPDF call. Sends the API key in the
- * `x-api-key` header (the API has no bearer scheme) and asks for the JSON
- * envelope by default so conversions return base64 PDF + metadata. Any non-2xx
- * is converted to a friendly Error.
- */
-export async function filetopdfApiCall<T extends HttpMessageBody>({
-  apiKey,
+function baseUrl(): string {
+  return BASE_URL;
+}
+
+async function request<T extends HttpMessageBody>({
+  auth,
   method,
-  resourceUri,
+  path,
   body,
   headers,
-}: FileToPdfRequest): Promise<T> {
+}: RequestParams & { auth: FiletopdfAuthValue }): Promise<T> {
   try {
     const response = await httpClient.sendRequest<T>({
       method,
-      url: `${BASE_URL}${resourceUri}`,
+      url: `${baseUrl()}${path}`,
       headers: {
-        'x-api-key': apiKey,
+        'x-api-key': auth.secret_text,
         Accept: 'application/json',
         ...headers,
       },
@@ -31,31 +31,11 @@ export async function filetopdfApiCall<T extends HttpMessageBody>({
     });
     return response.body;
   } catch (e) {
-    const response = isRecord(e) ? e['response'] : undefined;
-    if (isRecord(response) && typeof response['status'] === 'number') {
-      throwFriendly(response['status'], response['body']);
+    if (e instanceof HttpError) {
+      throwFriendly({ status: e.response.status, body: e.response.body });
     }
     throw new Error(e instanceof Error ? e.message : 'FileToPDF request failed.');
   }
-}
-
-const BASE_URL = 'https://api.filetopdf.dev';
-
-/**
- * Error codes that mean "the connection/plan is misconfigured" rather than "this
- * one input was bad". Mirrors the Zapier middleware + Pipedream connector so every
- * FileToPDF integration surfaces the same friendly guidance.
- */
-const CONFIG_ERROR_CODES = new Set([
-  'missing_api_key',
-  'forbidden',
-  'subscription_required',
-  'payment_required',
-  'upgrade_required',
-]);
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
 }
 
 function safeJsonParse(value: string): unknown {
@@ -66,33 +46,40 @@ function safeJsonParse(value: string): unknown {
   }
 }
 
-/**
- * Normalise the API's error envelope from an unknown response body into the
- * fields worth special-casing. Anything missing or mistyped is dropped.
- */
-function readErrorEnvelope(body: unknown): FileToPdfError {
+function readErrorEnvelope(body: unknown): FiletopdfApiError {
   const raw = typeof body === 'string' ? safeJsonParse(body) : body;
-  if (!isRecord(raw) || !isRecord(raw['error'])) {
+  if (typeof raw !== 'object' || raw === null || !('error' in raw)) {
     return {};
   }
-  const error = raw['error'];
+  const error = raw.error;
+  if (typeof error !== 'object' || error === null) {
+    return {};
+  }
   return {
-    code: typeof error['code'] === 'string' ? error['code'] : undefined,
-    message: typeof error['message'] === 'string' ? error['message'] : undefined,
-    upgrade_url: typeof error['upgrade_url'] === 'string' ? error['upgrade_url'] : undefined,
-    parameter: typeof error['parameter'] === 'string' ? error['parameter'] : undefined,
-    remaining: typeof error['remaining'] === 'number' ? error['remaining'] : undefined,
+    code: 'code' in error && typeof error.code === 'string' ? error.code : undefined,
+    message: 'message' in error && typeof error.message === 'string' ? error.message : undefined,
+    upgrade_url:
+      'upgrade_url' in error && typeof error.upgrade_url === 'string' ? error.upgrade_url : undefined,
+    parameter:
+      'parameter' in error && typeof error.parameter === 'string' ? error.parameter : undefined,
+    remaining:
+      'remaining' in error && typeof error.remaining === 'number' ? error.remaining : undefined,
     concurrent_limit:
-      typeof error['concurrent_limit'] === 'number' ? error['concurrent_limit'] : undefined,
+      'concurrent_limit' in error && typeof error.concurrent_limit === 'number'
+        ? error.concurrent_limit
+        : undefined,
   };
 }
 
-/**
- * Friendly, plain-English messages for the error codes worth special-casing.
- * Ported verbatim from the Zapier middleware so the copy stays identical across
- * integrations. Everything else falls back to the API's own message + code.
- */
-function friendlyMessage(code: string, error: FileToPdfError, status: number): string {
+function friendlyMessage({
+  code,
+  error,
+  status,
+}: {
+  code: string;
+  error: FiletopdfApiError;
+  status: number;
+}): string {
   switch (code) {
     case 'upgrade_required': {
       const param = error.parameter
@@ -124,33 +111,29 @@ function friendlyMessage(code: string, error: FileToPdfError, status: number): s
   }
 }
 
-/**
- * Turn a non-2xx FileToPDF error envelope into a clean thrown Error. The message
- * is the friendly text plus the stable error code, mirroring the Zapier/Pipedream
- * connectors. Config-type codes are prefixed so they read as connection problems.
- */
-function throwFriendly(status: number, body: unknown): never {
+function throwFriendly({ status, body }: { status: number; body: unknown }): never {
   const error = readErrorEnvelope(body);
   const code = error.code || 'error';
-  const message = friendlyMessage(code, error, status);
+  const message = friendlyMessage({ code, error, status });
   const prefix = CONFIG_ERROR_CODES.has(code) ? 'FileToPDF connection problem: ' : '';
   throw new Error(`${prefix}${message} (${code})`);
 }
 
-type FileToPdfError = {
-  code?: string;
-  message?: string;
-  upgrade_url?: string;
-  parameter?: string;
-  remaining?: number;
-  concurrent_limit?: number;
-};
+export const filetopdfClient = { baseUrl, request };
 
-interface FileToPdfRequest {
-  apiKey: string;
+const BASE_URL = 'https://api.filetopdf.dev';
+
+const CONFIG_ERROR_CODES = new Set([
+  'missing_api_key',
+  'forbidden',
+  'subscription_required',
+  'payment_required',
+  'upgrade_required',
+]);
+
+type RequestParams = {
   method: HttpMethod;
-  resourceUri: string;
+  path: string;
   body?: HttpMessageBody;
-  /** Extra headers (e.g. multipart boundary from form-data.getHeaders()). */
   headers?: HttpHeaders;
-}
+};

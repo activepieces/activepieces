@@ -6,6 +6,7 @@ import { wedofCommon } from '../../common/wedof';
 export const createRegistrationFolder = createAction({
   auth: wedofAuth,
   name: 'createRegistrationFolder',
+  classification: 'WRITE',
   displayName: "Créer un dossier de formation hors CPF",
   description: "Permet de créer un nouveau dossier de formation",
   audience: 'both',

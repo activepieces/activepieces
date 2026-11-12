@@ -1,10 +1,12 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { amazonS3CombinedAuth, S3AuthProps } from '../auth';
 import { resolveS3Client } from '../common';
+import { deleteFileOutputSchema } from '../output-schemas';
 
 export const deleteFile = createAction({
   auth: amazonS3CombinedAuth,
   name: 'deleteFile',
+  outputSchema: deleteFileOutputSchema,
   classification: 'DESTRUCTIVE',
   displayName: 'Delete File',
   description: 'Deletes an existing file.',

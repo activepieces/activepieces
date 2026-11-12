@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const newPersonEventTrigger = createTrigger({
   name: 'new_person_event',
+  classification: 'READ',
   auth: outsetaAuth,
   displayName: 'New Person Event',
   description: 'Triggers on person-scoped events (lifecycle, login, email engagement, list, segment, support ticket).',

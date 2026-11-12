@@ -10,6 +10,7 @@ const FieldsSchema = z.array(z.string()).optional();
 export const searchKnowledgeArticlesAction = createAction({
   auth: servicenowAuth,
   name: 'search_knowledge_articles',
+  classification: 'SEARCH',
   displayName: 'Search Knowledge Articles',
   description:
     'Search published knowledge base articles using free text. Requires the Knowledge API plugin to be active.',

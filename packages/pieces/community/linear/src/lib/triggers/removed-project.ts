@@ -1,79 +1,41 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { linearAuth } from '../..';
-import { makeClient } from '../common/client';
+import { linearWebhook } from '../common/webhook';
+import { projectWebhookOutputSchema } from '../output-schemas';
+import { linearWebhookSamples } from '../common/webhook-samples';
 
 export const linearRemovedProject = createTrigger({
   auth: linearAuth,
   name: 'removed_project',
   classification: 'READ',
   displayName: 'Removed Project',
-  description: 'Triggers when an existing Linear project is removed',
+  description: 'Triggers when a project in a public team is deleted.',
   aiMetadata: {
-    description: 'Fires when an existing project is deleted anywhere in the Linear workspace. Represents the project as it was at the time of removal.',
+    description: 'Fires when an existing project is deleted anywhere in the Linear workspace. Represents the project as it was at the time of removal. Only public teams are covered: events in private teams do not fire it.',
   },
   props: {},
-  sampleData: {
-    action: 'remove',
-    data: {
-      id: 'project_1',
-      name: 'Test project',
-      description: 'This is a test project',
-      state: 'planned',
-      color: '#000000',
-      icon: null,
-      startDate: '2023-09-05',
-      targetDate: '2023-12-05',
-      creator: {
-        id: 'user_1',
-        name: 'Test user',
-        email: 'test@gmail.com',
-      },
-      teams: [
-        {
-          id: 'team_1',
-          name: 'Test team',
-          key: 'test-team',
-        },
-      ],
-      createdAt: '2023-09-05T12:00:00.000Z',
-      updatedAt: '2023-09-05T12:00:00.000Z',
-    },
-    type: 'Project',
-    actor: { id: 'user_1', name: 'Test user', type: 'user' },
-    createdAt: '2023-09-05T12:00:00.000Z',
-    url: 'https://linear.app/test-team/project/project_1',
-    organizationId: 'org_1',
-    webhookTimestamp: 1693915200000,
-    webhookId: 'webhook_1',
-  },
+  sampleData: linearWebhookSamples.removedProjectSample,
+  outputSchema: projectWebhookOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const client = makeClient(context.auth);
-    const webhook = await client.createWebhook({
-      label: 'ActivePieces Removed Project',
-      url: context.webhookUrl,
-      resourceTypes: ['Project'],
-      allPublicTeams: true,
+    await linearWebhook.register({
+      auth: context.auth,
+      store: context.store,
+      storeKey: '_removed_project_trigger',
+      input: {
+        label: 'ActivePieces Removed Project',
+        url: context.webhookUrl,
+        resourceTypes: ['Project'],
+        allPublicTeams: true,
+      },
     });
-    if (webhook.success && webhook.webhook) {
-      await context.store?.put<WebhookInformation>(
-        '_removed_project_trigger',
-        {
-          webhookId: (await webhook.webhook).id,
-        }
-      );
-    } else {
-      console.error('Failed to create the webhook');
-    }
   },
   async onDisable(context) {
-    const client = makeClient(context.auth);
-    const response = await context.store?.get<WebhookInformation>(
-      '_removed_project_trigger'
-    );
-    if (response && response.webhookId) {
-      await client.deleteWebhook(response.webhookId);
-    }
+    await linearWebhook.unregister({
+      auth: context.auth,
+      store: context.store,
+      storeKey: '_removed_project_trigger',
+    });
   },
   async run(context) {
     const body = context.payload.body as { action: string; data: unknown };
@@ -83,7 +45,3 @@ export const linearRemovedProject = createTrigger({
     return [];
   },
 });
-
-interface WebhookInformation {
-  webhookId: string;
-}

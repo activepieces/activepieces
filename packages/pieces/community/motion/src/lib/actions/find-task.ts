@@ -16,6 +16,7 @@ import {
 export const findTask = createAction({
   auth: motionAuth,
   name: 'find-task',
+  classification: 'SEARCH',
   displayName: 'Find Task',
   description: 'Finds an existing task.',
   audience: 'both',

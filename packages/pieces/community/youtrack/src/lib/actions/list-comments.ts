@@ -1,37 +1,45 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../auth';
-import { issueDropdown, youtrackApiCall } from '../common';
+import { issueDropdown } from '../common';
+import { youtrackClient } from '../common/client';
 import { listCommentsActionOutputSchema } from '../output-schemas';
 
 export const listCommentsAction = createAction({
   auth: youtrackAuth,
   name: 'list_comments',
+  classification: 'SEARCH',
   outputSchema: listCommentsActionOutputSchema,
   displayName: 'List Comments',
   description: 'Lists all comments on an issue with author details and timestamps.',
   audience: 'both',
-  aiMetadata: { description: 'List the comments on an issue, given its ID, with author and timestamp details (capped by an optional limit). Use to read the discussion on a known issue. Read-only and idempotent.', idempotent: true },
+  aiMetadata: {
+    description:
+      'List the comments on an issue, given its ID, with author and timestamp details (up to Limit, default 100). Use to read the discussion on an issue or to find a comment ID for Update Comment or Delete Comment. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     issue: issueDropdown,
     limit: Property.Number({ displayName: 'Limit', description: 'Max comments. Default 100.', required: false, defaultValue: 100 }),
   },
   async run(context) {
-    const { baseUrl, apiToken } = context.auth.props;
-    const limit = context.propsValue.limit ?? 100;
-    const response = await youtrackApiCall<Array<Record<string, unknown>>>({
-      baseUrl,
-      token: apiToken,
-      method: HttpMethod.GET,
-      path: '/issues/' + context.propsValue.issue + '/comments',
-      queryParams: { fields: 'id,text,author(name,login),created,updated', '$top': String(limit) },
+    const items = await youtrackClient.listUpTo({
+      auth: context.auth,
+      path: `/issues/${youtrackClient.segment({ value: context.propsValue.issue, label: 'Issue' })}/comments`,
+      query: { fields: 'id,text,author(name,login),created,updated' },
+      limit: context.propsValue.limit,
+      fallback: 100,
+      operation: 'list comments',
     });
-    const data = response.body;
-    return (data || []).map((c) => ({
-      id: c['id'], text: c['text'],
-      author_name: (c['author'] as Record<string, unknown>)?.['name'] ?? null,
-      author_login: (c['author'] as Record<string, unknown>)?.['login'] ?? null,
-      created: c['created'], updated: c['updated'],
-    }));
+    return items.map((c) => {
+      const author = youtrackClient.recordOf(c['author']);
+      return {
+        id: c['id'],
+        text: c['text'],
+        author_name: author['name'] ?? null,
+        author_login: author['login'] ?? null,
+        created: c['created'],
+        updated: c['updated'],
+      };
+    });
   },
 });

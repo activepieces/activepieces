@@ -25,7 +25,7 @@ export const createMessageBatchAction = createAction({
         {
           custom_id: 'request-1',
           params: {
-            model: 'claude-3-5-haiku-latest',
+            model: 'claude-haiku-5-5',
             max_tokens: 1024,
             messages: [{ role: 'user', content: 'Hello, Claude!' }],
           },

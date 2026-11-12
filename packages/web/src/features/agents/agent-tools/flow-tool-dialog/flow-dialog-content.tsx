@@ -81,8 +81,8 @@ export const FlowDialogContent = ({
               <div
                 className={`
                   flex items-center gap-4 px-4 py-2 h-14 rounded-md cursor-pointer
-                  hover:bg-accent hover:text-accent-foreground
-                  ${selected ? 'bg-accent' : ''}
+                  hover:bg-gray-4 hover:text-gray-12
+                  ${selected ? 'bg-gray-4' : ''}
                   ${!isSelectable ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
                 onClick={() => isSelectable && toggleFlow(flow)}
@@ -100,7 +100,7 @@ export const FlowDialogContent = ({
                   </div>
 
                   {helperText && (
-                    <div className="text-xs text-muted-foreground truncate">
+                    <div className="text-xs text-gray-11 truncate">
                       {helperText}
                     </div>
                   )}
@@ -113,7 +113,7 @@ export const FlowDialogContent = ({
               </div>
 
               {index < filteredFlows.length - 1 && (
-                <div className="h-px bg-border my-1" />
+                <div className="h-px bg-gray-6 my-1" />
               )}
             </div>
           );
@@ -122,15 +122,15 @@ export const FlowDialogContent = ({
 
       {filteredFlows.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="mb-5 flex size-14 items-center justify-center rounded-xl border bg-muted/40">
-            <Workflow className="size-7 text-muted-foreground" />
+          <div className="mb-5 flex size-14 items-center justify-center rounded-xl border bg-gray-3/40">
+            <Workflow className="size-7 text-gray-11" />
           </div>
 
-          <div className="text-base font-semibold text-foreground">
+          <div className="text-base font-semibold text-gray-12">
             {t('No flows found')}
           </div>
 
-          <div className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
+          <div className="mt-2 max-w-sm text-sm leading-relaxed text-gray-11">
             {searchQuery
               ? t('Try adjusting your search or create a new flow.')
               : t('Create a flow to use it as a tool in your agent.')}

@@ -1,28 +1,7 @@
-import {
-  AppConnectionValueForAuthProperty,
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { localaiAuth } from '../..';
-
-const billingIssueMessage = `Error Occurred: 429 \n
-
-1. Set LocalAI API Url. \n
-2. Generate a new API key (optional). \n
-3. Attempt the process again. \n
-
-For guidance, visit: https://localai.io/`;
-
-const unaurthorizedMessage = `Error Occurred: 401 \n
-
-Ensure that your API key is valid. \n
-`;
+import { localaiAuth } from '../auth';
+import { localaiCommon } from '../common';
 
 export const askLocalAI = createAction({
   audience: 'both',
@@ -31,54 +10,12 @@ export const askLocalAI = createAction({
   classification: 'READ',
   displayName: 'Ask LocalAI',
   description: 'Ask LocalAI anything you want!',
-  aiMetadata: { description: 'Sends a prompt to a chat model running on your own self-hosted LocalAI server, through the OpenAI-compatible completions endpoint at the server URL stored on the connection, with optional sampling controls and a roles array for system or assistant priming; unlike the hosted-vendor pieces it keeps no conversation memory, so every call is stateless. Pick it only when inference must stay on your own LocalAI instance rather than a cloud provider such as OpenAI, Groq, or DeepSeek, and use the piece\'s Custom API Call action for LocalAI endpoints other than chat completions, such as embeddings, images, or audio. Requires a question and a model id that actually exists on that instance, since the dropdown lists only what the server reports and the default gpt-3.5-turbo may not be installed; not idempotent: each call produces a fresh completion.', idempotent: false },
+  aiMetadata: { description: 'Sends a prompt to a chat model running on your own self-hosted LocalAI server, through the OpenAI-compatible chat completions endpoint at the server URL stored on the connection, with optional sampling controls and a roles array for system or assistant priming, and returns the reply as plain text. It keeps no conversation memory, so every call is stateless. Pick it only when inference must stay on your own LocalAI instance rather than a cloud provider such as OpenAI, Groq, or DeepSeek. Requires a question and a model id installed on that instance: call list_models first when unsure which ids exist. Use create_embedding for vectors, text_to_speech or transcribe_audio for audio, and the Custom API Call action for other LocalAI endpoints. Not idempotent: each call produces a fresh completion.', idempotent: false },
   props: {
-    model: Property.Dropdown({
-      auth: localaiAuth,
+    model: localaiCommon.modelDropdown({
       displayName: 'Model',
-      required: true,
       description:
-        'The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.',
-      refreshers: [],
-      defaultValue: 'gpt-3.5-turbo',
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Enter your api key first',
-            options: [],
-          };
-        }
-
-        const authValue = auth as AppConnectionValueForAuthProperty<typeof localaiAuth>;
-        try {
-          const response = await httpClient.sendRequest<{
-            data: { id: string }[];
-          }>({
-            url: authValue.props.base_url + '/models',
-            method: HttpMethod.GET,
-            authentication: {
-              type: AuthenticationType.BEARER_TOKEN,
-              token: authValue.props.access_token as string,
-            },
-          });
-          return {
-            disabled: false,
-            options: response.body.data.map((model) => {
-              return {
-                label: model.id,
-                value: model.id,
-              };
-            }),
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: "Couldn't Load Models",
-          };
-        }
-      },
+        'The chat model on your LocalAI server that will write the answer.',
     }),
     prompt: Property.LongText({
       displayName: 'Question',
@@ -87,144 +24,161 @@ export const askLocalAI = createAction({
     temperature: Property.Number({
       displayName: 'Temperature',
       required: false,
-      description:
-        'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
+      description: 'Higher is more random, lower is more focused. Defaults to 0.9.',
     }),
     maxTokens: Property.Number({
       displayName: 'Maximum Tokens',
       required: false,
-      description:
-        "The maximum number of tokens to generate. Requests can use up to 2,048 or 4,096 tokens shared between prompt and completion, don't set the value to maximum and leave some tokens for the input. The exact limit varies by model. (One token is roughly 4 characters for normal English text)",
+      description: 'Longest answer to generate, in tokens. Defaults to 2048.',
     }),
     topP: Property.Number({
       displayName: 'Top P',
       required: false,
-      description:
-        'An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.',
+      description: 'Nucleus sampling, from 0 to 1. Defaults to 1.',
     }),
     frequencyPenalty: Property.Number({
       displayName: 'Frequency penalty',
       required: false,
-      description:
-        "Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.",
+      description: 'From -2 to 2. Higher repeats lines less. Defaults to 0.',
     }),
     presencePenalty: Property.Number({
       displayName: 'Presence penalty',
       required: false,
-      description:
-        "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the mode's likelihood to talk about new topics.",
+      description: 'From -2 to 2. Higher moves to new topics. Defaults to 0.6.',
     }),
     roles: Property.Json({
       displayName: 'Roles',
       required: false,
-      description: 'Array of roles to specify more accurate response',
+      description: 'Messages sent before the question, each with a role and content.',
       defaultValue: [
         { role: 'system', content: 'You are a helpful assistant.' },
       ],
     }),
   },
   async run({ auth, propsValue }) {
-    const openai = new OpenAI({
-      baseURL: auth.props.base_url,
-      apiKey: auth.props.access_token,
-    });
-    let billingIssue = false;
-    let unaurthorized = false;
-    let model = 'gpt-3.5-turbo';
-    if (propsValue.model) {
-      model = propsValue.model;
-    }
-    let temperature = 0.9;
-    if (propsValue.temperature) {
-      temperature = Number(propsValue.temperature);
-    }
-    let maxTokens = 2048;
-    if (propsValue.maxTokens) {
-      maxTokens = Number(propsValue.maxTokens);
-    }
-    let topP = 1;
-    if (propsValue.topP) {
-      topP = Number(propsValue.topP);
-    }
-    let frequencyPenalty = 0.0;
-    if (propsValue.frequencyPenalty) {
-      frequencyPenalty = Number(propsValue.frequencyPenalty);
-    }
-    let presencePenalty = 0.6;
-    if (propsValue.presencePenalty) {
-      presencePenalty = Number(propsValue.presencePenalty);
-    }
+    const roles = parseRoles(propsValue.roles);
 
-    const rolesArray = propsValue.roles
-      ? (propsValue.roles as unknown as any[])
-      : [];
-    const roles = rolesArray.map((item) => {
-      const rolesEnum = ['system', 'user', 'assistant'];
-      if (!rolesEnum.includes(item.role)) {
-        throw new Error(
-          'The only available roles are: [system, user, assistant]'
-        );
-      }
-
-      return {
-        role: item.role,
-        content: item.content,
-      };
-    });
-
-    const maxRetries = 4;
-    let retries = 0;
-    let response: string | undefined;
-    while (retries < maxRetries) {
-      try {
-        response = (
-          await openai.chat.completions.create({
-            model: model,
-            messages: [
-              ...roles,
-              {
-                role: 'user',
-                content: propsValue['prompt'],
-              },
-            ],
-            temperature: temperature,
-            max_tokens: maxTokens,
-            top_p: topP,
-            frequency_penalty: frequencyPenalty,
-            presence_penalty: presencePenalty,
-          })
-        )?.choices[0]?.message?.content?.trim();
-        break; // Break out of the loop if the request is successful
-      } catch (error: any) {
-        if (error?.message?.includes('code 429')) {
-          billingIssue = true;
-          if (retries + 1 === maxRetries) {
-            throw error;
-          }
-          // Calculate the time delay for the next retry using exponential backoff
-          const delay = Math.pow(6, retries) * 1000;
-          console.log(`Retrying in ${delay} milliseconds...`);
-          await sleep(delay); // Wait for the calculated delay
-          retries++;
-          break;
-        } else {
-          if (error?.message?.includes('code 401')) {
-            unaurthorized = true;
-          }
-          throw error;
-        }
-      }
+    try {
+      const completion = await localaiCommon
+        .client(auth)
+        .chat.completions.create({
+          model: propsValue.model,
+          messages: [...roles, { role: 'user', content: propsValue.prompt }],
+          temperature: propsValue.temperature ?? 0.9,
+          max_tokens: propsValue.maxTokens ?? 2048,
+          top_p: propsValue.topP ?? 1,
+          frequency_penalty: propsValue.frequencyPenalty ?? 0,
+          presence_penalty: propsValue.presencePenalty ?? 0.6,
+        });
+      return completion.choices[0]?.message?.content?.trim();
+    } catch (error) {
+      throw localaiCommon.friendlyError(error);
     }
-    if (billingIssue) {
-      throw new Error(billingIssueMessage);
-    }
-    if (unaurthorized) {
-      throw new Error(unaurthorizedMessage);
-    }
-    return response;
   },
 });
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function parseRoles(value: unknown): ChatMessage[] {
+  if (value === undefined || value === null || value === '') {
+    return [];
+  }
+  if (!Array.isArray(value)) {
+    throw new Error(
+      'Roles must be an array of { "role": "system" | "user" | "assistant", "content": "..." }.'
+    );
+  }
+  return value.map((item: unknown) => toMessage(item));
 }
+
+function toMessage(item: unknown): ChatMessage {
+  if (
+    typeof item !== 'object' ||
+    item === null ||
+    !('role' in item) ||
+    !isRole(item.role)
+  ) {
+    throw new Error('The only available roles are: [system, user, assistant]');
+  }
+  const content = 'content' in item ? item.content : '';
+  if (typeof content === 'string') {
+    return { role: item.role, content };
+  }
+  if (!Array.isArray(content)) {
+    throw new Error(
+      'Each role content must be text or an array of content parts.'
+    );
+  }
+  if (item.role === 'user') {
+    return { role: 'user', content: content.map(toUserPart) };
+  }
+  return { role: item.role, content: content.map(toTextPart) };
+}
+
+function toUserPart(part: unknown): ChatCompletionContentPart {
+  if (isImagePart(part)) {
+    return {
+      type: 'image_url',
+      image_url: {
+        url: part.image_url.url,
+        ...(part.image_url.detail ? { detail: part.image_url.detail } : {}),
+      },
+    };
+  }
+  return toTextPart(part);
+}
+
+function toTextPart(part: unknown): ChatCompletionContentPartText {
+  if (
+    typeof part === 'object' &&
+    part !== null &&
+    'type' in part &&
+    part.type === 'text' &&
+    'text' in part &&
+    typeof part.text === 'string'
+  ) {
+    return { type: 'text', text: part.text };
+  }
+  throw new Error(
+    'Content parts must be { "type": "text", "text": "..." }, or { "type": "image_url", "image_url": { "url": "..." } } in user messages.'
+  );
+}
+
+function isImagePart(part: unknown): part is ImagePart {
+  if (
+    typeof part !== 'object' ||
+    part === null ||
+    !('type' in part) ||
+    part.type !== 'image_url' ||
+    !('image_url' in part)
+  ) {
+    return false;
+  }
+  const image = part.image_url;
+  if (
+    typeof image !== 'object' ||
+    image === null ||
+    !('url' in image) ||
+    typeof image.url !== 'string'
+  ) {
+    return false;
+  }
+  return (
+    !('detail' in image) ||
+    image.detail === undefined ||
+    image.detail === 'auto' ||
+    image.detail === 'low' ||
+    image.detail === 'high'
+  );
+}
+
+function isRole(role: unknown): role is 'system' | 'user' | 'assistant' {
+  return role === 'system' || role === 'user' || role === 'assistant';
+}
+
+type ChatMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam;
+type ChatCompletionContentPart = OpenAI.Chat.Completions.ChatCompletionContentPart;
+type ChatCompletionContentPartText =
+  OpenAI.Chat.Completions.ChatCompletionContentPartText;
+type ImagePart = {
+  type: 'image_url';
+  image_url: { url: string; detail?: 'auto' | 'low' | 'high' };
+};

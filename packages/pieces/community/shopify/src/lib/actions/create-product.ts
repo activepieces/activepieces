@@ -6,35 +6,55 @@ import { ShopifyImage, ShopifyProductStatuses } from '../common/types';
 export const createProductAction = createAction({
   auth: shopifyAuth,
   name: 'create_product',
+  classification: 'WRITE',
   displayName: 'Create Product',
   description: 'Create a new product.',
   audience: 'both',
   aiMetadata: { description: 'Create a new product in the Shopify store with a title and optional description, type, image, status, vendor, and tags. Not idempotent: each call adds a separate product, so calling repeatedly creates duplicates. Use only to add a brand-new product, not to update an existing one.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'details',
+      display: 'section',
+      label: 'Details',
+      icon: 'type',
+      props: ['title', 'bodyHtml', 'productImage'],
+    },
+    {
+      key: 'organise',
+      display: 'section',
+      label: 'Organise',
+      icon: 'tag',
+      props: ['productType', 'vendor', 'tags', 'productStatus'],
+    },
+  ],
   props: {
     title: Property.ShortText({
       displayName: 'Title',
+      placeholder: 'Organic cotton T-shirt',
       required: true,
     }),
     bodyHtml: Property.LongText({
       displayName: 'Description',
-      description: 'Product description (supports HTML)',
+      description: 'HTML is allowed.',
+      placeholder: '<p>Soft and breathable.</p>',
       required: false,
     }),
     productType: Property.ShortText({
       displayName: 'Product Type',
-      description:
-        'A categorization for the product used for filtering and searching products',
+      description: 'Your own category, used to filter products.',
+      placeholder: 'Shirts',
       required: false,
+      width: 'half',
     }),
     productImage: Property.File({
       displayName: 'Product Image',
-      description: 'The public URL or the base64 image to use',
+      description: 'A file, or a public URL to an image.',
       required: false,
     }),
-    status: Property.StaticDropdown({
+    productStatus: Property.StaticDropdown({
       displayName: 'Status',
-      required: true,
-      defaultValue: ShopifyProductStatuses.DRAFT,
+      description: "Leave empty to use Shopify's default.",
+      required: false,
       options: {
         options: [
           {
@@ -54,17 +74,27 @@ export const createProductAction = createAction({
     }),
     vendor: Property.ShortText({
       displayName: 'Vendor',
+      placeholder: 'Acme',
       required: false,
+      width: 'half',
     }),
     tags: Property.ShortText({
       displayName: 'Tags',
-      description: 'A string of comma-separated tags for filtering and search',
+      description: 'Separate tags with commas.',
+      placeholder: 'sale, summer',
       required: false,
     }),
   },
   async run({ auth, propsValue }) {
-    const { title, bodyHtml, vendor, productType, tags, productImage } =
-      propsValue;
+    const {
+      title,
+      bodyHtml,
+      vendor,
+      productType,
+      tags,
+      productImage,
+      productStatus,
+    } = propsValue;
 
     const images: Partial<ShopifyImage>[] = [];
     if (productImage) {
@@ -81,6 +111,7 @@ export const createProductAction = createAction({
         product_type: productType,
         tags,
         images,
+        ...(productStatus ? { status: productStatus } : {}),
       },
       auth
     );

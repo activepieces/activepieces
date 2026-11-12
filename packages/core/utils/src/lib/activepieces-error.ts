@@ -25,6 +25,7 @@ export type ApErrorParams =
     | ExistingUserErrorParams
     | FlowOperationErrorParams
     | FlowOperationInProgressErrorParams
+    | FlowRunNotRetryableErrorParams
     | FlowRunRetryOutsideRetentionErrorParams
     | InvalidApiKeyParams
     | InvalidAppConnectionParams
@@ -44,18 +45,24 @@ export type ApErrorParams =
     | QuotaExceededParams
     | FeatureDisabledErrorParams
     | SignUpDisabledParams
+    | LastProjectParams
+    | SelfServeTrialAlreadyUsedParams
     | SystemInvalidErrorParams
     | SystemPropNotDefinedErrorParams
     | TestTriggerFailedErrorParams
     | TriggerUpdateStatusErrorParams
     | TriggerFailedErrorParams
     | ValidationErrorParams
+    | AgentRunSupersededErrorParams
+    | AgentRunBusyErrorParams
+    | RequiredActionsMissingErrorParams
     | FileTooLargeErrorParams
     | InvitationOnlySignUpParams
     | UserIsInActiveErrorParams
     | UserNotFoundOnPlatformErrorParams
     | DomainIsNotAllowedErrorParams
     | EmailAuthIsDisabledParams
+    | SignInMethodNotAllowedParams
     | ExistingAlertChannelErrorParams
     | EmailAlreadyHasActivationKey
     | AIProviderModelNotSupportedParams
@@ -76,6 +83,7 @@ export type ApErrorParams =
     | SandboxExecutionTimeoutParams
     | SandboxInternalErrorParams
     | InvalidCustomDomainErrorParams
+    | EventDestinationUrlChangeRequiresHeadersParams
     | McpPieceRequiresConnectionParams
     | McpPieceConnectionMismatchParams
     | ErrorUpdatingSubscriptionParams
@@ -96,6 +104,7 @@ export type ApErrorParams =
     | ExecutionStateMissingParams
     | GenericErrorParams
     | SandboxCapacityExceededParams
+    | EventDestinationFormatNotSupportedByWebhookParams
 
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
@@ -156,6 +165,13 @@ export type ChatContextLimitExceededParams = BaseErrorParams<ErrorCode.CHAT_CONT
 
 export type EmailAuthIsDisabledParams = BaseErrorParams<ErrorCode.EMAIL_AUTH_DISABLED, Record<string, never>>
 
+export type SignInMethodNotAllowedParams = BaseErrorParams<ErrorCode.SIGN_IN_METHOD_NOT_ALLOWED, {
+    platformName: string
+    allowedMethods: SignInMethod[]
+} | Record<string, never>>
+
+export type SignInMethod = 'EMAIL' | 'GOOGLE' | 'SAML'
+
 export type AuthorizationErrorParams = BaseErrorParams<
 ErrorCode.AUTHORIZATION,
 Record<string, string> &
@@ -188,6 +204,14 @@ export type SystemInvalidErrorParams = BaseErrorParams<
 ErrorCode.SYSTEM_PROP_INVALID,
 {
     prop: string
+}
+>
+
+export type FlowRunNotRetryableErrorParams = BaseErrorParams<
+ErrorCode.FLOW_RUN_NOT_RETRYABLE,
+{
+    flowRunId: FlowRunId
+    status: string
 }
 >
 
@@ -325,6 +349,31 @@ ErrorCode.VALIDATION,
 }
 >
 
+export type AgentRunSupersededErrorParams = BaseErrorParams<
+ErrorCode.AGENT_RUN_SUPERSEDED,
+{
+    message: string
+}
+>
+
+export type AgentRunBusyErrorParams = BaseErrorParams<
+ErrorCode.AGENT_RUN_BUSY,
+{
+    message: string
+}
+>
+
+export type RequiredActionsMissingErrorParams = BaseErrorParams<
+ErrorCode.REQUIRED_ACTIONS_MISSING,
+{
+    message: string
+    mode: 'any' | 'all'
+    requiredActions: Record<string, string[]>
+    missingActions: Record<string, string[]>
+    skippedActions: Record<string, string[]>
+}
+>
+
 export type FileTooLargeErrorParams = BaseErrorParams<
 ErrorCode.FILE_TOO_LARGE,
 {
@@ -414,6 +463,16 @@ ErrorCode.SIGN_UP_DISABLED,
 Record<string, never>
 >
 
+export type LastProjectParams = BaseErrorParams<
+ErrorCode.LAST_PROJECT,
+Record<string, never>
+>
+
+export type SelfServeTrialAlreadyUsedParams = BaseErrorParams<
+ErrorCode.SELF_SERVE_TRIAL_ALREADY_USED,
+Record<string, never>
+>
+
 export type AuthenticationParams = BaseErrorParams<
 ErrorCode.AUTHENTICATION,
 {
@@ -460,6 +519,10 @@ export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PRO
 
 export type FlowExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.FLOW_EXTERNAL_ID_ALREADY_EXISTS, {
     externalId: string
+}>
+
+export type EventDestinationUrlChangeRequiresHeadersParams = BaseErrorParams<ErrorCode.EVENT_DESTINATION_URL_CHANGE_REQUIRES_HEADERS, {
+    headerNames: string[]
 }>
 
 export type McpPieceRequiresConnectionParams = BaseErrorParams<ErrorCode.MCP_PIECE_REQUIRES_CONNECTION, {
@@ -532,6 +595,10 @@ export type GenericErrorParams = BaseErrorParams<ErrorCode.GENERIC_ERROR, {
 
 export type SandboxCapacityExceededParams = BaseErrorParams<ErrorCode.SANDBOX_CAPACITY_EXCEEDED, Record<string, never>>
 
+export type EventDestinationFormatNotSupportedByWebhookParams = BaseErrorParams<ErrorCode.EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK, {
+    format: string
+}>
+
 export enum ErrorCode {
     INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
     MACHINE_NOT_CONNECTED = 'MACHINE_NOT_CONNECTED',
@@ -557,12 +624,14 @@ export enum ErrorCode {
     SANDBOX_CAPACITY_EXCEEDED = 'SANDBOX_CAPACITY_EXCEEDED',
     TRIGGER_EXECUTION_FAILED = 'TRIGGER_EXECUTION_FAILED',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
+    SIGN_IN_METHOD_NOT_ALLOWED = 'SIGN_IN_METHOD_NOT_ALLOWED',
     EXISTING_USER = 'EXISTING_USER',
     EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',
     PROJECT_EXTERNAL_ID_ALREADY_EXISTS = 'PROJECT_EXTERNAL_ID_ALREADY_EXISTS',
     FLOW_EXTERNAL_ID_ALREADY_EXISTS = 'FLOW_EXTERNAL_ID_ALREADY_EXISTS',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
     FLOW_OPERATION_IN_PROGRESS = 'FLOW_OPERATION_IN_PROGRESS',
+    FLOW_RUN_NOT_RETRYABLE = 'FLOW_RUN_NOT_RETRYABLE',
     FLOW_RUN_RETRY_OUTSIDE_RETENTION = 'FLOW_RUN_RETRY_OUTSIDE_RETENTION',
     INVALID_API_KEY = 'INVALID_API_KEY',
     INVALID_APP_CONNECTION = 'INVALID_APP_CONNECTION',
@@ -584,6 +653,8 @@ export enum ErrorCode {
     FEATURE_DISABLED = 'FEATURE_DISABLED',
     AI_CREDIT_LIMIT_EXCEEDED = 'AI_CREDIT_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
+    LAST_PROJECT = 'LAST_PROJECT',
+    SELF_SERVE_TRIAL_ALREADY_USED = 'SELF_SERVE_TRIAL_ALREADY_USED',
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',
     SYSTEM_PROP_NOT_DEFINED = 'SYSTEM_PROP_NOT_DEFINED',
     TEST_TRIGGER_FAILED = 'TEST_TRIGGER_FAILED',
@@ -592,12 +663,16 @@ export enum ErrorCode {
     USER_IS_INACTIVE = 'USER_IS_INACTIVE',
     USER_NOT_FOUND_ON_PLATFORM = 'USER_NOT_FOUND_ON_PLATFORM',
     VALIDATION = 'VALIDATION',
+    AGENT_RUN_SUPERSEDED = 'AGENT_RUN_SUPERSEDED',
+    AGENT_RUN_BUSY = 'AGENT_RUN_BUSY',
+    REQUIRED_ACTIONS_MISSING = 'REQUIRED_ACTIONS_MISSING',
     FILE_TOO_LARGE = 'FILE_TOO_LARGE',
     INVALID_LICENSE_KEY = 'INVALID_LICENSE_KEY',
     EMAIL_ALREADY_HAS_ACTIVATION_KEY = 'EMAIL_ALREADY_HAS_ACTIVATION_KEY',
     INVALID_SMTP_CREDENTIALS = 'INVALID_SMTP_CREDENTIALS',
     INVALID_GIT_CREDENTIALS = 'INVALID_GIT_CREDENTIALS',
     INVALID_RELEASE_TYPE = 'INVALID_RELEASE_TYPE',
+    EVENT_DESTINATION_URL_CHANGE_REQUIRES_HEADERS = 'EVENT_DESTINATION_URL_CHANGE_REQUIRES_HEADERS',
     MCP_PIECE_REQUIRES_CONNECTION = 'MCP_PIECE_REQUIRES_CONNECTION',
     MCP_PIECE_CONNECTION_MISMATCH = 'MCP_PIECE_CONNECTION_MISMATCH',
     SUBFLOW_FAILED = 'SUBFLOW_FAILED',
@@ -612,4 +687,5 @@ export enum ErrorCode {
     RESUME_LOGS_FILE_MISSING = 'RESUME_LOGS_FILE_MISSING',
     EXECUTION_STATE_MISSING = 'EXECUTION_STATE_MISSING',
     GENERIC_ERROR = 'GENERIC_ERROR',
+    EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK = 'EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK',
 }

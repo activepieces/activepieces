@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const getPaymentRefunds = createAction({
   auth: trueLayerCommon.auth,
   name: 'get-payment-refunds',
+  classification: 'SEARCH',
   displayName: 'Get Payment Refunds',
   description: 'Returns all refunds of a payment.',
   audience: 'both',

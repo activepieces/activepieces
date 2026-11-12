@@ -5,6 +5,7 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 export const createTaskComment = createAction({
 	name: 'create_task_comment',
+	classification: 'WRITE',
 	displayName: 'Create Task Comment',
 	description: 'Leave a comment in a task.',
 	audience: 'both',

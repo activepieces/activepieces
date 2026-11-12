@@ -1,4 +1,5 @@
 import { ApErrorParams, ErrorCode, isNil } from '@activepieces/core-utils';
+import { EDITOR_SESSION_ID_HEADER } from '@activepieces/shared';
 import axios, {
   AxiosError,
   AxiosRequestConfig,
@@ -10,6 +11,7 @@ import qs from 'qs';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import { chatDebug } from '@/lib/chat-debug-logger';
+import { editorSession } from '@/lib/editor-session';
 export const CLOUD_HOSTNAME = 'cloud.activepieces.com';
 
 export const isRunningCloudInDevMode = import.meta.env.MODE === 'cloud';
@@ -34,6 +36,7 @@ const disallowedRoutes = [
   '/v1/human-input',
   '/v1/authn/local/reset-password',
   '/v1/user-invitations/accept',
+  '/v1/user-invitations/preview',
   '/v1/webhooks',
 ];
 //This is important to avoid redirecting to sign-in page when the user is deleted for embedding scenarios
@@ -79,6 +82,9 @@ function request<TResponse>(
         isApWebsite,
         authenticationSession.getToken(),
       ),
+      ...(isApWebsite
+        ? { [EDITOR_SESSION_ID_HEADER]: editorSession.getId() }
+        : {}),
     },
   })
     .then((response) => {

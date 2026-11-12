@@ -28,6 +28,7 @@ export enum PlanName {
     ENTERPRISE = 'enterprise',
     APPSUMO = 'appsumo',
     FREE_LEGACY = 'free_legacy',
+    SELF_SERVE_TRIAL = 'self_serve_trial',
 }
 
 export enum AiCreditsAutoTopUpState {
@@ -75,6 +76,29 @@ export type FeatureId = ConsumableFeatureId | UnconsumableFeatureId | FeatureFla
 
 export function isConsumableFeatureId(value: string): value is ConsumableFeatureId {
     return Object.values<string>(ConsumableFeatureId).includes(value)
+}
+
+const FREE_PLAN_CONCURRENT_JOBS_LIMIT = 5
+const PLUS_PLAN_CONCURRENT_JOBS_LIMIT = 10
+const TEAM_PLAN_CONCURRENT_JOBS_LIMIT = 20
+const ENTERPRISE_PLAN_CONCURRENT_JOBS_LIMIT = 30
+
+export function getConcurrentJobsLimitForCloudPlan(planName: string | null | undefined): number {
+    switch (planName ?? PlanName.FREE) {
+        case PlanName.FREE:
+            return FREE_PLAN_CONCURRENT_JOBS_LIMIT
+        case PlanName.APPSUMO:
+        case PlanName.FREE_LEGACY:
+        case PlanName.PLUS:
+        case PlanName.PLUS_ANNUAL:
+        case PlanName.PLUS_CHAT:
+            return PLUS_PLAN_CONCURRENT_JOBS_LIMIT
+        case PlanName.TEAM:
+        case PlanName.TEAM_ANNUAL:
+            return TEAM_PLAN_CONCURRENT_JOBS_LIMIT
+        default:
+            return ENTERPRISE_PLAN_CONCURRENT_JOBS_LIMIT
+    }
 }
 
 
@@ -133,26 +157,31 @@ export type PlatformPlanWithOnlyLimits = PlatformPlanLimits
 
 export const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
 
-const hexColor = z.string().regex(HEX_COLOR_PATTERN, 'invalidHexColor')
+export const ThemeHexColor = z.string().regex(HEX_COLOR_PATTERN, 'invalidHexColor')
 
 export const PlatformThemeColors = z.object({
-    avatar: hexColor.optional(),
-    'blue-link': hexColor.optional(),
-    danger: hexColor.optional(),
-    selection: hexColor.optional(),
+    avatar: ThemeHexColor.optional(),
+    'blue-link': ThemeHexColor.optional(),
+    danger: ThemeHexColor.optional(),
+    selection: ThemeHexColor.optional(),
     primary: z.object({
-        dark: hexColor.optional(),
-        light: hexColor.optional(),
-        medium: hexColor.optional(),
+        dark: ThemeHexColor.optional(),
+        light: ThemeHexColor.optional(),
+        medium: ThemeHexColor.optional(),
     }).optional(),
     warn: z.object({
-        default: hexColor.optional(),
-        light: hexColor.optional(),
-        dark: hexColor.optional(),
+        default: ThemeHexColor.optional(),
+        light: ThemeHexColor.optional(),
+        dark: ThemeHexColor.optional(),
     }).optional(),
     success: z.object({
-        default: hexColor.optional(),
-        light: hexColor.optional(),
+        default: ThemeHexColor.optional(),
+        light: ThemeHexColor.optional(),
+    }).optional(),
+    status: z.object({
+        danger: ThemeHexColor.optional(),
+        warning: ThemeHexColor.optional(),
+        success: ThemeHexColor.optional(),
     }).optional(),
 })
 export type PlatformThemeColors = z.infer<typeof PlatformThemeColors>
@@ -207,15 +236,49 @@ export const Platform = z.object({
     autoCreatePersonalProjects: z.boolean(),
     pinnedPieces: z.array(z.string()),
     pieceSelectorConfig: Nullable(PieceSelectorConfig),
+    auditLogRetentionDays: Nullable(z.number().int()),
 })
 export type Platform = z.infer<typeof Platform>
 export type PlatformWithoutFederatedAuth = Omit<Platform, 'federatedAuthProviders'>
+
+export const SelfServeTrialDates = z.object({
+    startedAt: z.string(),
+    endsAt: z.string(),
+})
+export type SelfServeTrialDates = z.infer<typeof SelfServeTrialDates>
+
+export enum SelfServeTrialState {
+    ELIGIBLE = 'eligible',
+    INELIGIBLE = 'ineligible',
+    ACTIVE = 'active',
+    ENDED = 'ended',
+}
+
+export const StartedSelfServeTrial = z.object({
+    state: z.enum([SelfServeTrialState.ACTIVE, SelfServeTrialState.ENDED]),
+    startedAt: z.string(),
+    endsAt: z.string(),
+    seatGraceEndsAt: z.string().nullable(),
+})
+export type StartedSelfServeTrial = z.infer<typeof StartedSelfServeTrial>
+
+export const NotStartedSelfServeTrial = z.object({
+    state: z.enum([SelfServeTrialState.ELIGIBLE, SelfServeTrialState.INELIGIBLE]),
+    startedAt: z.null(),
+    endsAt: z.null(),
+    seatGraceEndsAt: z.null(),
+})
+export type NotStartedSelfServeTrial = z.infer<typeof NotStartedSelfServeTrial>
+
+export const SelfServeTrialInfo = z.discriminatedUnion('state', [StartedSelfServeTrial, NotStartedSelfServeTrial])
+export type SelfServeTrialInfo = z.infer<typeof SelfServeTrialInfo>
 
 export const PlatformWithoutSensitiveData = z.object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
     plan: PlatformPlanLimits,
     usage: PlatformUsage.optional(),
     billingEnforced: z.boolean().optional(),
+    selfServeTrial: StartedSelfServeTrial.optional(),
     id: z.string(),
     created: DateOrString,
     updated: DateOrString,
@@ -237,8 +300,14 @@ export const PlatformWithoutSensitiveData = z.object({
     autoCreatePersonalProjects: z.boolean(),
     pinnedPieces: z.array(z.string()),
     pieceSelectorConfig: Nullable(PieceSelectorConfig),
+    auditLogRetentionDays: Nullable(z.number().int()),
 })
 export type PlatformWithoutSensitiveData = z.infer<typeof PlatformWithoutSensitiveData>
+
+export const PlatformResponse = PlatformWithoutSensitiveData.extend({
+    defaultProjectIds: z.array(z.string()),
+})
+export type PlatformResponse = z.infer<typeof PlatformResponse>
 
 export const AutoTopUpConfig = z.object({
     featureId: z.enum(ConsumableFeatureId),
@@ -302,10 +371,11 @@ export const PlatformBillingInformation = z.object({
     creditsFeature: Nullable(CreditsBillableFeature),
     appSumoCreditsFeature: Nullable(AppSumoCreditsBillableFeature),
     seatsFeature: Nullable(SeatsBillableFeature),
-    billingPortalAvailable: z.boolean(),
+    hasPaymentMethod: z.boolean(),
     billingEnforced: z.boolean(),
     billingUnavailable: z.boolean(),
     includedSeats: Nullable(z.number()),
     additionalSeats: Nullable(z.number()),
+    selfServeTrial: SelfServeTrialInfo,
 })
 export type PlatformBillingInformation = z.infer<typeof PlatformBillingInformation>

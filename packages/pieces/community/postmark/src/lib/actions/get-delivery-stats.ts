@@ -5,6 +5,7 @@ import { DeliveryStatsResponse, postmarkClient } from '../common/client';
 
 export const getDeliveryStats = createAction({
   name: 'get_delivery_stats',
+  classification: 'READ',
   displayName: 'Get Delivery Stats',
   description: 'Retrieve delivery statistics for the current Postmark server.',
   audience: 'both',

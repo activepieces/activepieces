@@ -6,6 +6,7 @@ import { wedofCommon } from '../../common/wedof';
 export const declareCertificationFolderFailed = createAction({
   auth: wedofAuth,
   name: 'declareCertificationFolderFailed',
+  classification: 'WRITE',
   displayName: 'Passer un dossier de certification à l’état : Échoué',
   description: "Change l'état d'un dossier de certification vers : Échoué",
   audience: 'both',

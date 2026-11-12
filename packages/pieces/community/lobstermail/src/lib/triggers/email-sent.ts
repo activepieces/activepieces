@@ -10,6 +10,7 @@ import { lobstermailAuth } from '../..';
 export const emailSentTrigger = createTrigger({
   auth: lobstermailAuth,
   name: 'email_sent',
+  classification: 'READ',
   displayName: 'Email Sent',
   description:
     'Triggers when an outbound email is successfully delivered. Use for audit logs, CRM updates, or confirming delivery.',

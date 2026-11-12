@@ -13,8 +13,8 @@ import { Calendar, File } from 'lucide-react';
 import React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
-import { toast } from 'sonner';
 
+import { clipboardUtils } from '@/components/custom/clipboard/use-copy-to-clipboard';
 import { ReadMoreDescription } from '@/components/custom/read-more-description';
 import { Button } from '@/components/ui/button';
 import { FormItem, FormLabel } from '@/components/ui/form';
@@ -126,25 +126,22 @@ function AutoFormFielWrapperErrorBoundary({
     <ErrorBoundary
       fallbackRender={() => (
         <div className="text-sm  flex items-center justify-between">
-          <div className="text-destructive">
+          <div className="text-danger-11">
             {t('input value is invalid, please contact support')}
           </div>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              navigator.clipboard.writeText(
-                JSON.stringify({
+            onClick={() =>
+              clipboardUtils.copy({
+                value: {
                   stringifiedValue: stringifyValue(field.value),
                   property,
                   dynamicInputModeToggled,
                   disabled: field.disabled,
-                }),
-              );
-              toast(t('Info copied to clipboard, please send it to support'), {
-                duration: 3000,
-              });
-            }}
+                },
+              })
+            }
           >
             {t('Info')}
           </Button>
@@ -265,10 +262,10 @@ function PropertyTypeTooltip({ property }: { property: PieceProperty }) {
     <Tooltip>
       <TooltipTrigger asChild>
         {property.type === PropertyType.FILE ? (
-          <File className="w-4 h-4 stroke-foreground/55"></File>
+          <File className="w-4 h-4 stroke-gray-12/55"></File>
         ) : (
           property.type === PropertyType.DATE_TIME && (
-            <Calendar className="w-4 h-4 stroke-foreground/55"></Calendar>
+            <Calendar className="w-4 h-4 stroke-gray-12/55"></Calendar>
           )
         )}
       </TooltipTrigger>

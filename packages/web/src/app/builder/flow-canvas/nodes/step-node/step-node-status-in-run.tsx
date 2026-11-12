@@ -24,7 +24,12 @@ const ApStepNodeStatusInRun = ({ stepName }: { stepName: string }) => {
     : ({ variant: 'default', text: t('Testing...') } as const);
   return (
     <StepNodeBadgeContainer>
-      <div className={flowRunUtils.getStatusContainerClassName(variant, true)}>
+      <div
+        className={flowRunUtils.getStatusContainerClassName({
+          variant,
+          withPaddingAndAnimation: true,
+        })}
+      >
         <StepStatusIcon
           status={stepStatusInRun}
           size="3"

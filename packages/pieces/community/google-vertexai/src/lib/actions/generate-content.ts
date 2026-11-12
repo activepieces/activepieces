@@ -17,6 +17,7 @@ interface FileItem {
 export const generateContent = createAction({
   auth: vertexAiAuth,
   name: 'generate_content',
+  classification: 'READ',
   displayName: 'Generate Content',
   description: 'Call a Gemini model on Vertex AI to generate a text response.',
   audience: 'both',

@@ -1,22 +1,40 @@
 import { AIProviderName, tryCatch } from '@activepieces/core-utils';
-import { AIProviderWithoutSensitiveData, Project } from '@activepieces/shared';
+import {
+  AIProviderWithoutSensitiveData,
+  PlatformModelTier,
+  Project,
+} from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Bot, ChevronRight, MessageSquare, Plus, Trash2 } from 'lucide-react';
+import {
+  ChevronRight,
+  Cpu,
+  Layers,
+  LayoutGrid,
+  Lock,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import {
+  AdminEmpty,
+  AdminPageHeader,
+  AdminSection,
+  SettingsPanel,
+  adminPageResources,
+  adminSurface,
+} from '@/app/components/admin';
+import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { LogoPlate } from '@/components/custom/logo-plate';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { Avatar, AvatarGroup, AvatarGroupCount } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -24,19 +42,21 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
+import { LockedFeatureRow } from '@/features/billing';
 import {
   aiProviderKeys,
   aiProviderMutations,
   aiProviderQueries,
 } from '@/features/platform-admin';
+import { platformModelTierQueries } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
-
-import { SectionHeader } from '../components/section-header';
 
 import { ConfigDetail } from './config-detail';
 import { ConnectProviderDialog } from './connect-provider-dialog';
+import { DefaultChatModelCard } from './default-chat-model-card';
 import { KeyStatusBadge, keyStatusText } from './key-status';
 import { ProjectSwatch } from './project-selection-panel';
 import { ProviderLogo } from './provider-logo';
@@ -53,32 +73,36 @@ export function ProvidersTab() {
   >(undefined);
 
   const queryClient = useQueryClient();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const locked = !platform.plan.aiProvidersEnabled;
   const {
     data: providers,
     isLoading,
     isError: isProvidersError,
     refetch,
   } = aiProviderQueries.useAiProviderConfigs();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const allowWrite = platform.plan.aiProvidersEnabled;
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
+  const { data: tiers } = platformModelTierQueries.useAdminList();
   const configs = (providers ?? []).filter(
     (provider) => provider.provider !== AIProviderName.ACTIVEPIECES,
   );
-  const chatProviderRow = (providers ?? []).find(
-    (provider) => provider.enabledForChat,
+  const hasCredits = (providers ?? []).some(
+    (provider) => provider.provider === AIProviderName.ACTIVEPIECES,
   );
 
-  const { mutate: toggleChatProvider, isPending: isSwitchingChatProvider } =
-    aiProviderMutations.useToggleChatProvider({
-      onSuccess: () => {
-        refetch();
-        toast.success(t('Chat provider updated'));
-      },
-    });
   const { mutateAsync: deleteProvider } =
     aiProviderMutations.useDeleteAiProvider({
       onSuccess: () => refetch(),
+      onError: (error) => {
+        const data = error.response?.data;
+        toast.error(
+          t(
+            data?.params?.message ??
+              data?.message ??
+              'Could not delete this key',
+          ),
+        );
+      },
     });
   const { mutate: recheckProvider, isPending: isRechecking } =
     aiProviderMutations.useRecheckAiProvider({
@@ -90,6 +114,16 @@ export function ProvidersTab() {
           return;
         }
         toast.error(label ?? t('Could not reach this provider'));
+      },
+      onError: (error) => {
+        const data = error.response?.data;
+        toast.error(
+          t(
+            data?.params?.message ??
+              data?.message ??
+              'Could not check this key',
+          ),
+        );
       },
     });
   const { mutateAsync: updateProvider, isPending: isSaving } =
@@ -111,11 +145,13 @@ export function ProvidersTab() {
   const openConfig = (id: string) => {
     const next = new URLSearchParams(searchParams);
     next.set('config', id);
+    next.delete(CONFIG_TAB_PARAM);
     setSearchParams(next);
   };
   const closeConfig = () => {
     const next = new URLSearchParams(searchParams);
     next.delete('config');
+    next.delete(CONFIG_TAB_PARAM);
     setSearchParams(next);
   };
   const openConnect = (provider?: AIProviderName) => {
@@ -140,13 +176,10 @@ export function ProvidersTab() {
       openConfig(createdId);
       return;
     }
+    const next = new URLSearchParams(searchParams);
+    next.set(CONFIG_TAB_PARAM, 'settings');
+    setSearchParams(next, { replace: true });
     setCredentialsVersion((version) => version + 1);
-  };
-  const selectChatConfig = (configId: string) => {
-    const row = (providers ?? []).find((config) => config.id === configId);
-    if (row) {
-      toggleChatProvider({ providerId: row.id, displayName: row.name });
-    }
   };
 
   const connectedProviders = [...new Set(configs.map((c) => c.provider))];
@@ -164,7 +197,7 @@ export function ProvidersTab() {
   const activeInfo = activeConfig
     ? providerInfoOf({ provider: activeConfig.provider })
     : undefined;
-  if (activeConfig && activeInfo && allowWrite) {
+  if (activeConfig && activeInfo && !locked) {
     return (
       <>
         <ConfigDetail
@@ -180,6 +213,11 @@ export function ProvidersTab() {
           }
           onDelete={() => deleteProvider(activeConfig.id)}
           onReplaceCredentials={() => openReplaceCredentials(activeConfig)}
+          initialTab={
+            searchParams.get(CONFIG_TAB_PARAM) === 'settings'
+              ? 'settings'
+              : 'models'
+          }
           isRechecking={isRechecking}
           onRecheck={() => recheckProvider(activeConfig.id)}
           onBack={closeConfig}
@@ -195,88 +233,85 @@ export function ProvidersTab() {
     );
   }
 
-  return (
+  const page = (
     <>
-      <div className="flex flex-col gap-6">
-        <div className="flex items-start justify-between gap-3">
-          <SectionHeader
-            title={t('Providers')}
-            isPageTitle
-            count={configs.length}
-            description={
-              configs.length === 0
-                ? t(
-                    'Connect a provider to turn on chat, agents, and AI steps across your platform.',
-                  )
-                : t('Each key has its own models and project access.')
-            }
-          />
-          {allowWrite && (
-            <Button
-              size="sm"
-              className="shrink-0"
-              onClick={() => openConnect()}
-            >
-              <Plus className="size-4" />
-              {t('Add key')}
-            </Button>
-          )}
-        </div>
-
-        {isProvidersError ? (
-          <DataFetchErrorState entity={t('AI providers')} onRetry={refetch} />
-        ) : configs.length === 0 ? (
-          <EmptyProviders onConnect={openConnect} allowWrite={allowWrite} />
-        ) : (
-          <>
-            {allowWrite && (
-              <ChatProviderRow
-                configs={providers ?? []}
-                value={chatProviderRow?.id ?? null}
-                isSwitching={isSwitchingChatProvider}
-                onChange={selectChatConfig}
-              />
-            )}
-            <div className="flex flex-col gap-6">
-              {connectedProviders.map((provider) => (
-                <ProviderGroup
-                  key={provider}
-                  provider={provider}
-                  configs={configs.filter(
-                    (config) => config.provider === provider,
-                  )}
-                  projects={projects}
-                  allowWrite={allowWrite}
-                  onAdd={() => openConnect(provider)}
-                  onOpen={openConfig}
-                  onDelete={(id) => deleteProvider(id)}
-                />
-              ))}
-            </div>
-            {available.length > 0 && (
-              <section className="flex flex-col gap-4 border-t border-border/60 pt-6">
-                <SectionHeader
-                  title={t('Also available')}
-                  count={available.length}
-                  description={t(
-                    'Bring your own API key to connect any of these.',
-                  )}
-                />
-                <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                  {available.map((info) => (
-                    <AvailableProviderCard
-                      key={info.provider}
-                      info={info}
-                      allowWrite={allowWrite}
-                      onConnect={() => openConnect(info.provider)}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-          </>
+      <AdminPageHeader
+        title={t('Providers')}
+        badge={
+          locked && configs.length > 0 ? (
+            <Badge variant="secondary" className="gap-1 rounded-full px-2">
+              <Lock className="size-3" />
+              {t('Read-only')}
+            </Badge>
+          ) : undefined
+        }
+        description={
+          locked && configs.length > 0
+            ? t(
+                "Your plan doesn't include your own AI keys. You can still delete them.",
+              )
+            : configs.length === 0
+            ? t(
+                'Connect a provider to turn on chat, agents, and AI steps across your platform.',
+              )
+            : t('Each key has its own models and project access.')
+        }
+        resources={adminPageResources.aiProviders}
+      >
+        {!locked && (
+          <Button
+            onClick={() => openConnect()}
+            {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
+          >
+            <Plus className="size-4" />
+            {t('Add key')}
+          </Button>
         )}
-      </div>
+      </AdminPageHeader>
+
+      {!locked && !isProvidersError && (configs.length > 0 || hasCredits) && (
+        <DefaultChatModelCard
+          configs={configs}
+          tiers={tiers ?? []}
+          projectIds={(projects ?? []).map((project) => project.id)}
+        />
+      )}
+      {isProvidersError ? (
+        <DataFetchErrorState entity={t('AI providers')} onRetry={refetch} />
+      ) : configs.length === 0 ? (
+        <EmptyProviders onConnect={openConnect} />
+      ) : (
+        <>
+          {locked && (
+            <LockedFeatureRow
+              unlocked={false}
+              featureKey="UNIVERSAL_AI"
+              line={t('Adding or changing AI keys is locked.')}
+            />
+          )}
+          {connectedProviders.map((provider) => (
+            <ProviderGroup
+              key={provider}
+              provider={provider}
+              configs={configs.filter((config) => config.provider === provider)}
+              projects={projects}
+              tiers={tiers ?? []}
+              locked={locked}
+              onAdd={() => openConnect(provider)}
+              onOpen={openConfig}
+              onDelete={(id) => deleteProvider(id)}
+            />
+          ))}
+          {!locked && available.length > 0 && (
+            <AdminSection title={t('Also available')}>
+              <ProviderTileGrid
+                providers={available}
+                onConnect={(provider) => openConnect(provider)}
+              />
+            </AdminSection>
+          )}
+        </>
+      )}
 
       <ConnectProviderDialog
         open={dialogOpen}
@@ -287,13 +322,23 @@ export function ProvidersTab() {
       />
     </>
   );
+
+  if (configs.length === 0 && !isProvidersError) {
+    return (
+      <PlanFeatureSample feature="aiProviders">
+        <div className="flex flex-col gap-6">{page}</div>
+      </PlanFeatureSample>
+    );
+  }
+  return page;
 }
 
 function ProviderGroup({
   provider,
   configs,
   projects,
-  allowWrite,
+  tiers,
+  locked,
   onAdd,
   onOpen,
   onDelete,
@@ -301,7 +346,8 @@ function ProviderGroup({
   provider: AIProviderName;
   configs: AIProviderWithoutSensitiveData[];
   projects: Project[];
-  allowWrite: boolean;
+  tiers: PlatformModelTier[];
+  locked: boolean;
   onAdd: () => void;
   onOpen: (id: string) => void;
   onDelete: (id: string) => Promise<unknown>;
@@ -312,58 +358,59 @@ function ProviderGroup({
   }
 
   return (
-    <section
-      className={cn(
-        'overflow-hidden rounded-xl border border-border/60 bg-card',
-        CARD_SHADOW,
-      )}
-    >
-      <div className="flex items-center gap-3 px-5 py-4">
+    <SettingsPanel flush>
+      <header className="flex items-center gap-3 px-4 py-3">
         <ProviderLogo info={info} />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium leading-none">{info.name}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {t('configurationsCount', { count: configs.length })}
-          </p>
-        </div>
-        {allowWrite && (
-          <Button variant="ghost" size="sm" onClick={onAdd}>
+        <h2 className="min-w-0 flex-1 truncate text-sm font-medium text-gray-12">
+          {info.name}
+        </h2>
+        {!locked && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onAdd}
+            {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
+          >
             <Plus className="size-4" />
             {t('Add key')}
           </Button>
         )}
-      </div>
-      <div className="border-t border-border/60 px-5 pb-1 pt-3">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          {t('Keys')}
-        </p>
-      </div>
-      <div>
-        {configs.map((config) => (
-          <ConfigRow
-            key={config.id}
-            config={config}
-            projects={projects}
-            allowWrite={allowWrite}
-            onOpen={() => onOpen(config.id)}
-            onDelete={() => onDelete(config.id)}
-          />
-        ))}
-      </div>
-    </section>
+      </header>
+      <p className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium text-gray-11">
+        {t('Keys')}
+        <span className="tabular-nums">{configs.length}</span>
+      </p>
+      {configs.map((config) => (
+        <ConfigRow
+          key={config.id}
+          config={config}
+          projects={projects}
+          tierCount={
+            tiers.filter((tier) =>
+              tier.entries.some((entry) => entry.configId === config.id),
+            ).length
+          }
+          locked={locked}
+          onOpen={() => onOpen(config.id)}
+          onDelete={() => onDelete(config.id)}
+        />
+      ))}
+    </SettingsPanel>
   );
 }
 
 function ConfigRow({
   config,
   projects,
-  allowWrite,
+  tierCount,
+  locked,
   onOpen,
   onDelete,
 }: {
   config: AIProviderWithoutSensitiveData;
   projects: Project[];
-  allowWrite: boolean;
+  tierCount: number;
+  locked: boolean;
   onOpen: () => void;
   onDelete: () => Promise<unknown>;
 }) {
@@ -388,51 +435,57 @@ function ConfigRow({
 
   return (
     <div
-      role={allowWrite ? 'button' : undefined}
-      tabIndex={allowWrite ? 0 : undefined}
-      onClick={allowWrite ? onOpen : undefined}
+      role={locked ? undefined : 'button'}
+      tabIndex={locked ? undefined : 0}
+      onClick={locked ? undefined : onOpen}
       onKeyDown={(event) => {
-        if (allowWrite && (event.key === 'Enter' || event.key === ' ')) {
+        if (!locked && (event.key === 'Enter' || event.key === ' ')) {
           event.preventDefault();
           onOpen();
         }
       }}
       className={cn(
-        'group flex items-center gap-4 px-5 py-3 transition-colors',
-        allowWrite &&
-          'cursor-pointer hover:bg-muted/50 active:bg-muted focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'group flex items-center gap-4 px-4 py-3 transition-colors',
+        !locked &&
+          'cursor-pointer hover:bg-gray-4 active:bg-gray-5 focus-visible:bg-gray-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
       )}
     >
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex items-center gap-2">
-          <p className="truncate text-sm font-medium leading-none">
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <p className="truncate text-sm font-semibold text-gray-12">
             {config.name}
           </p>
-          {config.enabledForChat && (
-            <span className="shrink-0 rounded-full bg-primary/10 px-2 py-px text-[11px] font-medium text-primary">
-              {t('Chat')}
-            </span>
-          )}
           <KeyStatusBadge status={config.status} />
         </div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <p className="w-fit truncate text-xs text-muted-foreground">
-              {modelsLabel}
-              <span aria-hidden> · </span>
-              {projectsLabel}
-            </p>
-          </TooltipTrigger>
-          {config.modelIds.length > 0 && (
-            <TooltipContent className="max-w-64">
-              {config.modelIds.join(', ')}
-            </TooltipContent>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-11 [&_svg]:text-gray-9">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex items-center gap-1">
+                <Cpu className="size-3.5" />
+                {modelsLabel}
+              </span>
+            </TooltipTrigger>
+            {config.modelIds.length > 0 && (
+              <TooltipContent className="max-w-64">
+                {config.modelIds.join(', ')}
+              </TooltipContent>
+            )}
+          </Tooltip>
+          <span className="inline-flex items-center gap-1">
+            <LayoutGrid className="size-3.5" />
+            {projectsLabel}
+          </span>
+          {tierCount > 0 && (
+            <span className="inline-flex items-center gap-1">
+              <Layers className="size-3.5" />
+              {t('usedByTiersCount', { count: tierCount })}
+            </span>
           )}
-        </Tooltip>
+        </div>
       </div>
 
       {config.projectScope !== 'all' && (
-        <div className="flex min-w-0 items-center gap-1.5">
+        <div className="flex min-w-0 items-center gap-2">
           <ProjectChips
             projects={namedProjects}
             excluded={config.projectScope === 'except'}
@@ -441,39 +494,45 @@ function ConfigRow({
         </div>
       )}
 
-      {allowWrite && (
-        <div
-          className="flex shrink-0 items-center gap-1"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="px-2 text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
-                onClick={() => setDeleteOpen(true)}
-              >
-                <Trash2 className="size-4" />
-                <span className="sr-only">{t('Delete')}</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{t('Delete')}</TooltipContent>
-          </Tooltip>
-          <ChevronRight className="size-4 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-foreground" />
-          <ConfirmationDeleteDialog
-            open={deleteOpen}
-            onOpenChange={setDeleteOpen}
-            title={t('Delete {name}', { name: config.name })}
-            message={t('Steps and agents using this key will stop working.')}
-            entityName={config.name}
-            showToast={true}
-            mutationFn={async () => {
-              await onDelete();
-            }}
-          />
-        </div>
-      )}
+      <div
+        className="flex shrink-0 items-center gap-1"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className={cn(
+                'text-gray-11 opacity-0 transition-opacity hover:bg-danger-3 hover:text-danger-11 focus-visible:opacity-100 group-hover:opacity-100',
+                locked && 'opacity-100',
+              )}
+              onClick={() => setDeleteOpen(true)}
+              {...adminControl(AdminControl.AI_PROVIDER_KEY_DELETE_OPEN)}
+            >
+              <Trash2 className="size-4" />
+              <span className="sr-only">{t('Delete')}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t('Delete')}</TooltipContent>
+        </Tooltip>
+        {!locked && (
+          <ChevronRight className="size-4 text-gray-11 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12" />
+        )}
+        <ConfirmationDeleteDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          title={t('Delete {name}', { name: config.name })}
+          message={t('Flows and agents that use this key will fail.')}
+          entityName={config.name}
+          showToast={true}
+          onError={() => undefined}
+          controlId={AdminControl.AI_PROVIDER_KEY_DELETE_CONFIRM}
+          mutationFn={async () => {
+            await onDelete();
+          }}
+        />
+      </div>
     </div>
   );
 }
@@ -494,7 +553,7 @@ function ProjectChips({
       <TooltipTrigger asChild>
         <span className="flex min-w-0 items-center gap-1">
           {excluded && (
-            <span className="shrink-0 text-sm text-muted-foreground">
+            <span className="shrink-0 text-sm text-gray-11">
               {t('All except')}
             </span>
           )}
@@ -502,7 +561,7 @@ function ProjectChips({
             <ProjectSwatch key={project.id} project={project} />
           ))}
           {rest > 0 && (
-            <span className="text-sm text-muted-foreground tabular-nums">
+            <span className="text-sm text-gray-11 tabular-nums">
               {t('+{count}', { count: rest })}
             </span>
           )}
@@ -520,223 +579,166 @@ function ProjectChips({
   );
 }
 
-function ChatProviderRow({
-  configs,
-  value,
-  isSwitching,
-  onChange,
-}: {
-  configs: AIProviderWithoutSensitiveData[];
-  value: string | null;
-  isSwitching: boolean;
-  onChange: (configId: string) => void;
-}) {
-  return (
-    <div
-      className={cn(
-        'flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3',
-        CARD_SHADOW,
-      )}
-    >
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted/60">
-        <MessageSquare className="size-4 text-muted-foreground" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium leading-none">{t('Chat provider')}</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          {t('Powers the built-in chat for everyone on this platform')}
-        </p>
-      </div>
-      <Select
-        value={value ?? undefined}
-        onValueChange={onChange}
-        disabled={isSwitching}
-      >
-        <SelectTrigger className="w-52">
-          <SelectValue placeholder={t('Select provider')} />
-        </SelectTrigger>
-        <SelectContent>
-          {configs.map((config) => {
-            const info = providerInfoOf({ provider: config.provider });
-            return (
-              <SelectItem key={config.id} value={config.id}>
-                <div className="flex items-center gap-2">
-                  {info && <ProviderLogo info={info} size="sm" />}
-                  <span className="truncate">{config.name}</span>
-                </div>
-              </SelectItem>
-            );
-          })}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
-
 function EmptyProviders({
   onConnect,
-  allowWrite,
 }: {
   onConnect: (provider?: AIProviderName) => void;
-  allowWrite: boolean;
 }) {
-  const recommended = RECOMMENDED_PROVIDERS.map((provider) =>
-    SUPPORTED_AI_PROVIDERS.find((info) => info.provider === provider),
-  ).filter((info): info is AiProviderInfo => info !== undefined);
-  const others = SUPPORTED_AI_PROVIDERS.filter(
-    ({ provider }) => !RECOMMENDED_PROVIDERS.includes(provider),
-  );
-
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col items-center gap-4 rounded-xl border border-border/60 bg-card px-6 py-14 text-center">
-        <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10">
-          <Bot className="size-5 text-primary" />
-        </div>
-        <div className="flex flex-col gap-1">
-          <p className="text-base font-semibold tracking-tight">
-            {t('Connect your first provider')}
-          </p>
-          <p className="max-w-md text-sm text-muted-foreground">
-            {t(
-              'Bring an API key, then pick which models and projects can use it. Chat, agents, and AI steps run through it.',
-            )}
-          </p>
-        </div>
-        {allowWrite && (
-          <Button onClick={() => onConnect()}>
+    <>
+      <AdminEmpty
+        media={<ProviderFaces />}
+        title={t('No providers yet')}
+        description={t('Add an API key to turn on chat, agents and AI steps.')}
+        action={
+          <Button
+            variant="outline"
+            onClick={() => onConnect()}
+            {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
+          >
             <Plus className="size-4" />
-            {t('Connect a provider')}
+            {t('Add key')}
           </Button>
-        )}
-      </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {recommended.map((info) => (
-          <AvailableProviderCard
-            key={info.provider}
-            info={info}
-            tagline={recommendedTagline({ provider: info.provider })}
-            recommended
-            allowWrite={allowWrite}
-            onConnect={() => onConnect(info.provider)}
+        }
+      />
+      <AdminSection title={t('Choose a provider')}>
+        <ProviderTileGrid
+          providers={SUPPORTED_AI_PROVIDERS}
+          onConnect={onConnect}
+        />
+      </AdminSection>
+    </>
+  );
+}
+
+function ProviderFaces() {
+  const ranked = byImportance(SUPPORTED_AI_PROVIDERS);
+  const shown = ranked.slice(0, PROVIDER_FACES_SHOWN);
+  return (
+    <AvatarGroup>
+      {shown.map((info) => (
+        <Avatar key={info.provider} size="lg" className="size-9">
+          <LogoPlate
+            src={info.logoUrl}
+            alt={info.name}
+            border
+            className="size-full rounded-full"
+            innerClassName="p-2"
           />
-        ))}
-      </div>
-      <div className="flex flex-col gap-3">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          {t('Or choose another provider')}
-        </p>
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          {others.map((info) => (
-            <AvailableProviderCard
-              key={info.provider}
-              info={info}
-              allowWrite={allowWrite}
-              onConnect={() => onConnect(info.provider)}
-            />
-          ))}
-        </div>
-      </div>
+        </Avatar>
+      ))}
+      <AvatarGroupCount className="size-9 border border-gray-6 text-xs font-medium tabular-nums">
+        {t('+{count}', { count: ranked.length - shown.length })}
+      </AvatarGroupCount>
+    </AvatarGroup>
+  );
+}
+
+function ProviderTileGrid({
+  providers,
+  onConnect,
+}: {
+  providers: AiProviderInfo[];
+  onConnect: (provider: AIProviderName) => void;
+}) {
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {byImportance(providers).map((info) => (
+        <ProviderTile
+          key={info.provider}
+          info={info}
+          recommended={RECOMMENDED_PROVIDERS.includes(info.provider)}
+          onConnect={() => onConnect(info.provider)}
+        />
+      ))}
     </div>
   );
 }
 
-function AvailableProviderCard({
+function ProviderTile({
   info,
-  tagline,
   recommended,
-  allowWrite,
   onConnect,
 }: {
   info: AiProviderInfo;
-  tagline?: string;
-  recommended?: boolean;
-  allowWrite: boolean;
+  recommended: boolean;
   onConnect: () => void;
 }) {
   return (
-    <div
+    <button
+      type="button"
+      onClick={onConnect}
       className={cn(
-        'flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4 transition-colors hover:border-border',
-        CARD_SHADOW,
+        adminSurface.card,
+        'group flex min-w-0 items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
+        recommended && 'border-accent-8',
       )}
+      {...adminControl(AdminControl.AI_PROVIDER_OPEN)}
     >
       <ProviderLogo info={info} />
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <p className="truncate text-sm font-medium leading-none">{info.name}</p>
-        {tagline && (
-          <p className="truncate text-xs text-muted-foreground">{tagline}</p>
-        )}
-      </div>
-      {allowWrite && (
-        <Button
-          size="sm"
-          variant={recommended ? 'default' : 'outline'}
-          onClick={onConnect}
-        >
-          {t('Connect')}
-        </Button>
-      )}
-    </div>
+      <span className="flex min-w-0 flex-1">
+        <TextWithTooltip tooltipMessage={info.name}>
+          <span className="truncate text-sm font-medium text-gray-12">
+            {info.name}
+          </span>
+        </TextWithTooltip>
+      </span>
+      <ChevronRight className="size-4 shrink-0 text-gray-9 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12" />
+    </button>
   );
+}
+
+function byImportance(providers: AiProviderInfo[]): AiProviderInfo[] {
+  const rank = (provider: AIProviderName) => {
+    const index = PROVIDERS_BY_IMPORTANCE.indexOf(provider);
+    return index === -1 ? PROVIDERS_BY_IMPORTANCE.length : index;
+  };
+  return [...providers].sort((a, b) => rank(a.provider) - rank(b.provider));
 }
 
 function ProvidersSkeleton() {
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-start justify-between gap-3">
+    <>
+      <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
-          <Skeleton className="h-5 w-28" />
+          <Skeleton className="h-8 w-40" />
           <Skeleton className="h-4 w-72" />
         </div>
-        <Skeleton className="h-8 w-24 rounded-md" />
+        <Skeleton className="h-9 w-24 rounded-lg" />
       </div>
       <div
-        className={cn(
-          'flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3',
-          CARD_SHADOW,
-        )}
+        className={cn(adminSurface.card, 'flex items-center gap-4 px-5 py-4')}
       >
-        <Skeleton className="size-9 shrink-0 rounded-xl" />
+        <Skeleton className="size-9 shrink-0 rounded-lg" />
         <div className="flex flex-1 flex-col gap-2">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-3 w-64" />
         </div>
-        <Skeleton className="h-9 w-52 rounded-md" />
+        <Skeleton className="h-9 w-52 rounded-lg" />
       </div>
       {[0, 1].map((group) => (
         <section
           key={group}
-          className={cn(
-            'overflow-hidden rounded-xl border border-border/60 bg-card',
-            CARD_SHADOW,
-          )}
+          className={cn(adminSurface.card, 'flex flex-col overflow-hidden')}
         >
-          <div className="flex items-center gap-3 px-5 py-4">
-            <Skeleton className="size-8 shrink-0 rounded-lg" />
+          <div className="flex items-center gap-4 border-b p-5">
             <div className="flex flex-1 flex-col gap-2">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-3 w-20" />
             </div>
-            <Skeleton className="h-8 w-20 rounded-md" />
-          </div>
-          <div className="border-t border-border/60 px-5 pb-1 pt-3">
-            <Skeleton className="h-3 w-10" />
+            <Skeleton className="h-8 w-20 rounded-lg" />
           </div>
           {[0, 1].map((row) => (
-            <div key={row} className="flex flex-col gap-2 px-5 py-3.5">
+            <div key={row} className="flex flex-col gap-2 px-5 py-4">
               <Skeleton className="h-4 w-44" />
               <Skeleton className="h-3 w-56" />
             </div>
           ))}
         </section>
       ))}
-    </div>
+    </>
   );
 }
-
-const CARD_SHADOW =
-  'shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)]';
 
 function providerInfoOf({
   provider,
@@ -748,22 +750,33 @@ function providerInfoOf({
   );
 }
 
+const CONFIG_TAB_PARAM = 'tab';
+
+const PROVIDER_FACES_SHOWN = 5;
+
 const RECOMMENDED_PROVIDERS: AIProviderName[] = [
   AIProviderName.ANTHROPIC,
   AIProviderName.OPENAI,
 ];
 
-function recommendedTagline({
-  provider,
-}: {
-  provider: AIProviderName;
-}): string | undefined {
-  switch (provider) {
-    case AIProviderName.ANTHROPIC:
-      return t('Claude models — strong for chat and agents');
-    case AIProviderName.OPENAI:
-      return t('GPT models — broad ecosystem and tooling');
-    default:
-      return undefined;
-  }
-}
+const PROVIDERS_BY_IMPORTANCE: AIProviderName[] = [
+  AIProviderName.ANTHROPIC,
+  AIProviderName.OPENAI,
+  AIProviderName.GOOGLE,
+  AIProviderName.AZURE,
+  AIProviderName.BEDROCK,
+  AIProviderName.VERTEX,
+  AIProviderName.META,
+  AIProviderName.MISTRAL,
+  AIProviderName.COHERE,
+  AIProviderName.XAI,
+  AIProviderName.DEEPSEEK,
+  AIProviderName.OPENROUTER,
+  AIProviderName.QWEN,
+  AIProviderName.NVIDIA,
+  AIProviderName.MOONSHOT,
+  AIProviderName.MINIMAX,
+  AIProviderName.ZAI,
+  AIProviderName.CLOUDFLARE_GATEWAY,
+  AIProviderName.CUSTOM,
+];

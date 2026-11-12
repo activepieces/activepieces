@@ -233,6 +233,7 @@ const updateFields = Property.DynamicProperties({
 
 export const updateRecordAction = createAction({
   name: 'update_record',
+  classification: 'WRITE',
   displayName: 'Update Record',
   description: 'Update an existing record in Fireberry.',
   audience: 'both',

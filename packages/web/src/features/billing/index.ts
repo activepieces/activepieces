@@ -19,7 +19,11 @@ export { CancelSubscriptionDialog } from './components/cancel-subscription-dialo
 export { Error } from './components/error';
 export { LicenseKey } from './components/license-key';
 export { Success } from './components/success';
-export { billingMutations, billingQueries } from './hooks/billing-hooks';
+export {
+  billingKeys,
+  billingMutations,
+  billingQueries,
+} from './hooks/billing-hooks';
 export { billingUtils } from './utils/billing-utils';
 export { useSeatLimitGuard } from './hooks/use-seat-limit-guard';
 export { useTeamProjectLimitGuard } from './hooks/use-team-project-limit-guard';
@@ -28,12 +32,28 @@ export {
   DROP_TO_FREE_WARNING,
   planSelectorUtils,
 } from './components/plan-selector-utils';
-export { useManagePlanDialogStore } from './stores/manage-plan-dialog-state';
+export { billingDialogHooks } from './hooks/billing-dialog-hooks';
 export { AutomaticTrialActivation } from './components/automatic-trial-activation';
-export { useFeatureGate, UpgradeFeatureDialog } from './hooks/use-feature-gate';
-export type { PlatformFeature } from './hooks/use-feature-gate';
-export { RequestTrial } from './components/request-trial';
-export type { FeatureKey } from './components/request-trial';
-export { TIER_LABELS } from './utils/feature-tier';
-export type { FeatureTier } from './utils/feature-tier';
-export { PLATFORM_FEATURES } from './utils/platform-features';
+export { useUpgradeClick } from './hooks/use-upgrade-click';
+export type { FeatureKey } from './utils/platform-features';
+export { PLATFORM_FEATURES, platformFeatures } from './utils/platform-features';
+export { SelfServeTrialBillingStatus } from './components/current-subscription-card';
+export { SelfServeTrialDialog } from './components/self-serve-trial-dialog';
+export { SelfServeTrialEndingAlert } from './components/self-serve-trial-notices';
+export { EnterprisePlanIndicator } from './components/self-serve-trial-sidebar';
+export { selfServeTrialHooks } from './hooks/self-serve-trial-hooks';
+export { selfServeTrialTime } from './utils/self-serve-trial-utils';
+export { LockedGem } from './components/locked-feature';
+export { PlanBadge } from './components/locked-feature';
+export { seatUtils } from './utils/billing-utils';
+export { LockedFeatureRow } from './components/locked-feature';
+export { SelfServeTrialSalesLink } from './components/current-subscription-card';
+export { LockedFeatureCard } from './components/locked-feature';
+export { LockedFeatureUsage } from './components/locked-feature';
+export {
+  ActionWhenLocked,
+  useLockedFeature,
+} from './hooks/self-serve-trial-hooks';
+export type { LockedFeature } from './hooks/self-serve-trial-hooks';
+export { enterpriseDocs } from './utils/billing-utils';
+export { usePlanThatHasFeature } from './hooks/billing-hooks';

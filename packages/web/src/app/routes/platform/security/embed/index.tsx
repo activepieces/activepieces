@@ -1,22 +1,22 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   ApEdition,
   ApFlagId,
   EmbedSubdomainStatus,
   SigningKey,
 } from '@activepieces/shared';
+import dayjs from 'dayjs';
 import { t } from 'i18next';
-import {
-  ExternalLink,
-  Globe,
-  Key,
-  ListChecks,
-  ShieldCheck,
-} from 'lucide-react';
+import { Globe, Key, ListChecks, ShieldCheck, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 
+import {
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+} from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { SkeletonList } from '@/components/ui/skeleton';
 import {
   embedSubdomainQueries,
@@ -24,6 +24,7 @@ import {
 } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { sampleData } from '../../sample-data';
 
@@ -57,6 +58,9 @@ const EmbedPage = () => {
   const isLoading = (isCloud && isSubdomainLoading) || isKeysLoading;
 
   const allowedEmbedOrigins = platform.allowedEmbedOrigins ?? [];
+  const trialEndsAt = platform.selfServeTrial?.endsAt;
+  const showActivepiecesAiTrialNote =
+    isCloud && !isNil(trialEndsAt) && dayjs(trialEndsAt).isAfter(dayjs());
 
   const allSteps: Record<StepKind, StepDef> = {
     hostname: {
@@ -130,31 +134,39 @@ const EmbedPage = () => {
     (displayedStep?.kind === 'hostname' || displayedStep?.kind === 'dns');
 
   return (
-    <div className="w-full max-w-4/5 2xl:max-w-6xl mx-auto py-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-medium">{t('Embed Onboarding')}</h1>
-        <div className="text-sm text-muted-foreground">
-          {description}
-          <Button
-            variant="link"
-            size="sm"
-            className="h-auto p-0 mt-0.5 ml-1"
-            asChild
-          >
+    <AdminPage width="content">
+      <AdminPageHeader
+        title={t('Embed Onboarding')}
+        description={
+          <>
+            {description}{' '}
             <a
+              {...adminControl(AdminControl.EMBEDDING_DOCS_LINK)}
               href="https://www.activepieces.com/docs/embedding/overview"
               target="_blank"
               rel="noopener noreferrer"
+              className="text-accent-11 underline"
             >
               {t('Read more')}
-              <ExternalLink className="size-3" />
             </a>
-          </Button>
-        </div>
-      </div>
-      <Separator className="mt-4 mb-12" />
+          </>
+        }
+        resources={adminPageResources.embedding}
+      />
 
-      <div className="grid grid-cols-[16rem_1fr] gap-16">
+      {showActivepiecesAiTrialNote && (
+        <Alert>
+          <Sparkles className="size-4" />
+          <AlertTitle>{t('Activepieces AI is on for your trial')}</AlertTitle>
+          <AlertDescription>
+            {t(
+              "Plans that include Embedding don't usually come with the Activepieces AI provider. You can use both together only during the trial.",
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-[14rem_1fr]">
         <Stepper
           steps={steps}
           completion={stepCompletion}
@@ -186,7 +198,7 @@ const EmbedPage = () => {
           ) : null}
         </div>
       </div>
-    </div>
+    </AdminPage>
   );
 };
 

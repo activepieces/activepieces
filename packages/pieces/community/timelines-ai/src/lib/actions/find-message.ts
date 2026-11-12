@@ -4,6 +4,7 @@ import { timelinesAiAuth, timelinesAiCommon } from '../common';
 export const findMessage = createAction({
   auth: timelinesAiAuth,
   name: 'findMessage',
+  classification: 'READ',
   displayName: 'Find Message',
   description: 'Lookup a message by its WhatsApp message ID.',
   audience: 'both',

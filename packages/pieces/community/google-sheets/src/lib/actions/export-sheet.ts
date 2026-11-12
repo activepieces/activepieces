@@ -21,6 +21,22 @@ export const exportSheetAction = createAction({
     idempotent: true,
   },
   auth: googleSheetsAuth,
+  propertyGroups: [
+    {
+      key: 'spreadsheet',
+      display: 'section',
+      label: 'Spreadsheet',
+      icon: 'file',
+      props: ['spreadsheetId', 'sheetId'],
+    },
+    {
+      key: 'export',
+      display: 'section',
+      label: 'Export',
+      icon: 'paperclip',
+      props: ['format', 'returnAsText'],
+    },
+  ],
   props: {
     ...commonProps,
     format: Property.StaticDropdown({

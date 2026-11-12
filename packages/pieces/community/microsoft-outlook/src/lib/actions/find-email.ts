@@ -12,27 +12,31 @@ export const findEmailAction = createAction({
 	name: 'findEmail',
 	classification: 'SEARCH',
 	displayName: 'Find Email',
-	description: 'Searches for emails using full-text search.',
+	description: 'Search your mailbox by keywords, sender or subject.',
 	audience: 'human',
 	aiMetadata: { description: 'Searches the Outlook mailbox for messages matching a full-text query (supports field syntax like from:, subject:, hasAttachments:), optionally scoped to one folder and capped by a max-results count. Use this to locate emails and obtain their message IDs for follow-up actions. Idempotent read-only lookup.', idempotent: true },
 	outputSchema: findEmailActionOutputSchema,
 	props: {
 		searchQuery: Property.ShortText({
 			displayName: 'Search Query',
-			description:
-				'Search terms to find emails (e.g., "from:john@example.com", "subject:urgent", "hasAttachments:true")',
+			description: 'Words to find. Narrow with from:, subject: or hasAttachments:true.',
+			placeholder: 'from:jane@example.com invoice',
 			required: true,
 		}),
 		folderId: mailFolderIdDropdown({
 			displayName: 'Folder',
-			description: 'Search in a specific folder. Leave empty to search all folders.',
+			description: 'Leave empty to search every folder.',
 			required: false,
 		}),
 		top: Property.Number({
 			displayName: 'Max Results',
-			description: 'Maximum number of results to return (1-1000).',
+			description: 'How many emails to return, up to 1000.',
 			required: false,
 			defaultValue: 25,
+			display: 'stepper',
+			min: 1,
+			max: 1000,
+			step: 1,
 		}),
 	},
 	async run(context) {

@@ -10,6 +10,7 @@ import { lobstermailAuth } from '../..';
 export const newEmailTrigger = createTrigger({
   auth: lobstermailAuth,
   name: 'new_email',
+  classification: 'READ',
   displayName: 'New Email Received',
   description: 'Triggers instantly when a new email is received in an inbox.',
   aiMetadata: {

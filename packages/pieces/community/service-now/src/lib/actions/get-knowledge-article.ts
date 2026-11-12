@@ -5,6 +5,7 @@ import { createServiceNowClient, servicenowAuth } from '../common/props';
 export const getKnowledgeArticleAction = createAction({
   auth: servicenowAuth,
   name: 'get_knowledge_article',
+  classification: 'READ',
   displayName: 'Get Knowledge Article',
   description:
     'Retrieve the full content of a knowledge article by sys_id',

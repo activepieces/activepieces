@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const testRunMonitor = createAction({
   auth: pubrioAuth,
   name: 'test_run_monitor',
+  classification: 'WRITE',
   displayName: 'Test Run Monitor',
   description: 'Perform a test run of a monitor',
   audience: 'both',

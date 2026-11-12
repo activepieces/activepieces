@@ -65,6 +65,22 @@ describe('csvToJsonAction', () => {
     });
     await expect(csvToJsonAction.run(ctx)).rejects.toThrow();
   });
+
+  test('strips a leading byte-order mark from the first header', async () => {
+    const csvText = '\uFEFFname,age\nAlice,30';
+    const ctx = createMockActionContext({
+      propsValue: { csv_text: csvText, has_headers: true, delimiter_type: ',' },
+    });
+    const result = await csvToJsonAction.run(ctx);
+    expect(result).toEqual([{ name: 'Alice', age: '30' }]);
+  });
+
+  test('throws a readable message if input is not a string', async () => {
+    const ctx = createMockActionContext({
+      propsValue: { csv_text: 123 as unknown as string, has_headers: true, delimiter_type: ',' },
+    });
+    await expect(csvToJsonAction.run(ctx)).rejects.toThrow(/^The input should be a string\.$/);
+  });
 });
 
 describe('jsonToCsvAction', () => {
@@ -111,6 +127,31 @@ describe('jsonToCsvAction', () => {
       propsValue: { markdown: '', json_array: { not: 'an array' } as unknown as unknown[], delimiter_type: ',' },
     });
     await expect(jsonToCsvAction.run(ctx)).rejects.toThrow();
+  });
+
+  test('includes columns from every row, not only the first', async () => {
+    const jsonArray = [{ a: 1 }, { a: 2, b: 3 }];
+    const ctx = createMockActionContext({
+      propsValue: { markdown: '', json_array: jsonArray, delimiter_type: ',' },
+    });
+    const result = await jsonToCsvAction.run(ctx);
+    expect(result).toBe('a,b\n1,\n2,3\n');
+  });
+
+  test('returns an empty string for an empty array', async () => {
+    const ctx = createMockActionContext({
+      propsValue: { markdown: '', json_array: [], delimiter_type: ',' },
+    });
+    const result = await jsonToCsvAction.run(ctx);
+    expect(result).toBe('');
+  });
+
+  test('throws a readable message if input is not an array', async () => {
+    const ctx = createMockActionContext({
+      propsValue: { markdown: '', json_array: { not: 'an array' } as unknown as unknown[], delimiter_type: ',' },
+    });
+    await expect(jsonToCsvAction.run(ctx)).rejects.toThrow(/^The input should be a JSON array\.$/);
+    await expect(jsonToCsvAction.run(ctx)).rejects.not.toThrow(/^\{/);
   });
 });
 

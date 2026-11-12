@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const lookupTechnology = createAction({
   auth: pubrioAuth,
   name: 'lookup_technology',
+  classification: 'READ',
   displayName: 'Lookup Technology',
   description: 'Look up technologies used by a company',
   audience: 'both',

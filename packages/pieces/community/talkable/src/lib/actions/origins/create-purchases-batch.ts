@@ -5,6 +5,7 @@ import { TALKABLE_API_URL } from '../../common/constants';
 
 export const createPurchasesBatch = createAction({
   name: 'create_purchases_batch', // Must be a unique across the piece, this shouldn't be changed.
+  classification: 'WRITE',
   auth: talkableAuth,
   displayName: 'Create batch of purchases',
   description: 'Create batch of purchases in Talkable',

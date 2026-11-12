@@ -167,3 +167,102 @@
 .dark .pp .pp-rcard .pp-ic { color: #c9c8d2; }
 .dark .pp .pp-reveal { background: #202026; }
 .dark .pp .pp-fb-row { border-bottom-color: #2d2d34; }
+
+/* ==========================================================================
+   Piece version range chart for install/architecture/piece-syncing
+   All rules are scoped under .vr to avoid touching Mintlify's own styles.
+   ========================================================================== */
+.vr {
+  --vr-accent: #9675FF;
+  --vr-accent-fg: #ffffff;
+  --vr-marker: #171717;
+  --vr-fg: #171717;
+  --vr-muted: #737373;
+  --vr-border: #e5e5e5;
+  --vr-bg: #ffffff;
+
+  box-sizing: border-box;
+  border: 1px solid var(--vr-border);
+  border-radius: 12px;
+  background: var(--vr-bg);
+  padding: 20px 16px 16px;
+  margin: 16px 0 24px;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--vr-fg);
+}
+.vr *, .vr *::before, .vr *::after { box-sizing: border-box; }
+
+.vr-intro { margin-bottom: 20px; font-size: 13px; color: var(--vr-muted); }
+
+.vr-row { display: grid; grid-template-columns: 200px 1fr; gap: 12px; }
+.vr-lane { position: relative; margin: 0 24px 0 0; }
+
+.vr-head { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+.vr-marker-label {
+  position: absolute; top: 0; transform: translateX(-50%);
+  font-size: 13px; font-weight: 600; white-space: nowrap;
+  transition: left 120ms ease;
+}
+
+.vr-labels, .vr-bars { display: flex; flex-direction: column; gap: 10px; padding: 8px 0 16px; }
+.vr-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 30px; }
+.vr-name { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vr-status { font-size: 12px; font-weight: 600; }
+.vr-status-on { color: var(--vr-accent); }
+.vr-status-off { color: var(--vr-muted); }
+
+.vr-track { position: relative; height: 30px; }
+.vr-bar {
+  position: absolute; top: 0; bottom: 0;
+  display: flex; align-items: center;
+  padding: 0 10px; border-radius: 6px;
+  font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+.vr-bar-on { background: var(--vr-accent); color: var(--vr-accent-fg); border: 1px solid var(--vr-accent); }
+.vr-bar-off { background: transparent; color: var(--vr-fg); border: 1.5px dashed var(--vr-muted); }
+.vr-bar-short .vr-bar-text { position: absolute; right: calc(100% + 8px); color: var(--vr-fg); }
+.vr-marker {
+  position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; z-index: 1;
+  background: var(--vr-marker); pointer-events: none;
+  transition: left 120ms ease;
+}
+
+.vr-axis { position: relative; height: 28px; border-top: 1px solid var(--vr-muted); }
+.vr-tick {
+  position: absolute; top: 0; padding-top: 12px; transform: translateX(-50%);
+  font-size: 12px; color: var(--vr-muted); white-space: nowrap;
+}
+.vr-tick::before {
+  content: ""; position: absolute; top: 0; left: 50%; width: 1px; height: 6px; background: var(--vr-muted);
+}
+.vr-axis-caption { margin-top: 4px; text-align: right; font-size: 12px; color: var(--vr-muted); }
+
+.vr-control { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; margin-top: 16px; cursor: pointer; }
+.vr-control-label { font-weight: 600; }
+.vr-control-value { font-weight: 600; min-width: 56px; text-align: right; }
+.vr-slider { width: 100%; margin: 0; accent-color: var(--vr-accent); cursor: pointer; }
+
+@media (max-width: 520px) {
+  .vr-row { grid-template-columns: 112px 1fr; gap: 8px; }
+  .vr-label { flex-direction: column; align-items: flex-start; justify-content: center; gap: 0; height: 36px; line-height: 1.2; }
+  .vr-name { font-size: 12px; }
+  .vr-track { height: 36px; }
+  .vr-lane { margin-right: 16px; }
+  .vr-bar { font-size: 0; padding: 0; }
+  .vr-tick:nth-child(even) { display: none; }
+  .vr-control { grid-template-columns: 1fr auto; }
+  .vr-control-label { grid-column: 1 / -1; }
+}
+
+.dark .vr {
+  --vr-accent: #9675FF;
+  --vr-accent-fg: #ffffff;
+  --vr-marker: #e8e8ea;
+  --vr-fg: #e8e8ea;
+  --vr-muted: #9a9aa5;
+  --vr-border: #2d2d34;
+  --vr-bg: #1b1b20;
+}

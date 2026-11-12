@@ -2,17 +2,19 @@ import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { attioAuth } from '../auth';
 import { attioPaginatedApiCall, buildMembersMap, normalizeRecord } from '../common/client';
-import { AttioRecordResponse } from '../common/types';
+import { AttioListEntryResponse } from '../common/types';
 import { formatInputFields, listFields, listIdDropdown } from '../common/props';
+import { findListEntryOutputSchema } from '../output-schemas';
 
 export const findListEntryAction = createAction({
 	name: 'find_list_entry',
+	outputSchema: findListEntryOutputSchema,
 	classification: 'SEARCH',
 	displayName: 'Find List Entry',
 	description:
 		'Search for entries in a specific list in Attio using filters and return matching results.',
-	audience: 'both',
-	aiMetadata: { description: 'Queries the entries of a specific Attio list, returning entries that match the supplied attribute filters (leaving filters empty returns all entries in the list). Use this to find list entries before updating or referencing them. Read-only and idempotent.', idempotent: true },
+	audience: 'human',
+	aiMetadata: { description: 'Queries the entries of a specific Attio list, returning entries that match the supplied attribute filters; at least one filter is required. Use this to find list entries before updating or referencing them. Read-only and idempotent.', idempotent: true },
 	auth: attioAuth,
 	props: {
 		listId: listIdDropdown({
@@ -32,8 +34,12 @@ export const findListEntryAction = createAction({
 
 		const formattedFields = await formatInputFields(accessToken, 'lists', listId, inputFields, true);
 
+		if (Object.keys(formattedFields).length === 0) {
+			throw new Error('Provide at least one attribute filter.');
+		}
+
 		// https://docs.attio.com/rest-api/endpoint-reference/entries/list-entries
-		const records = await attioPaginatedApiCall<AttioRecordResponse>({
+		const entries = await attioPaginatedApiCall<AttioListEntryResponse>({
 			method: HttpMethod.POST,
 			accessToken,
 			resourceUri: `/lists/${listId}/entries/query`,
@@ -42,6 +48,7 @@ export const findListEntryAction = createAction({
 			},
 		});
 
+		const records = entries.map(({ entry_values, ...entry }) => ({ ...entry, values: entry_values }));
 		const membersMap = await buildMembersMap(accessToken, records);
 		return {
 			found: records.length > 0,

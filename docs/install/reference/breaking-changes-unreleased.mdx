@@ -1,0 +1,139 @@
+---
+title: "Unreleased breaking changes"
+description: "Changes merged to main that no self-hosted release contains yet."
+hidden: true
+---
+
+Entries here move to [Breaking Changes](/install/reference/breaking-changes) automatically when the release that contains them is tagged. Add new entries at the top, right under the heading below.
+
+## What has changed?
+
+#### Gmail 0.19.0: New Email and Send Email no longer return HTTP request details
+
+This is a security fix. The output of the **New Email** trigger and the **Send Email** action included the raw HTTP request, which could expose proxy credentials. From Gmail 0.19.0, the New Email `thread` field contains only `data`; the `config`, `headers`, `request` and `status` keys are removed. Send Email now returns only `data`, `status` and `statusText`.
+
+#### What you need to do
+
+If a flow reads `thread.config`, `thread.headers`, `thread.request` or `thread.status` from New Email, or any key other than `data`, `status` and `statusText` from Send Email, update it to read from `data` instead.
+
+#### Google Drive 0.14.0: file triggers, downloads and search across shared drives
+
+From Google Drive 0.14.0, the **New File** trigger with **Include File Content** on fires for a file whose download fails. That run has a `contentError` field with the reason instead of `content`. Before, one failed download (for example a Google Form, which Drive can't download) failed the whole poll, and every new file in that poll was lost. The trigger's output can now carry the `content` and `contentError` keys.
+
+New File downloads up to 5 files at a time and stops at a deadline, so the poll ends before the trigger timeout. A file still downloading at the deadline gets a `contentError`. All three Drive triggers now detect an incomplete search across shared drives and search each drive on its own, instead of skipping files in drives Google didn't search. When one check can't search every drive in time, the next checks carry on with the drives that are left.
+
+- Exported Google Docs, Sheets and Slides are now saved as `.docx`, `.xlsx` and `.pptx`. Before, they were saved as `.gdoc`, `.gsheet` or `.gslides`, or with no extension when a name was given. In Download File, the export extension is now added to the name you give, so `invoice.pdf` for a Google Doc is saved as `invoice.pdf.docx`. This applies to Download File, Download File Content, List Files, List Folder Contents, Set Public Access and the trigger file content. A failed file lookup now fails with Google's own message.
+- The three Drive triggers now send a large backlog over several checks, oldest first: at most 500 files per check, or 50 with Include File Content on. They also fire for files that Google lists a few minutes late, except while a large backlog is still being sent.
+- With Include Team Drives on, Find File or Folder and the agent tool Search Files and Folders return files from every shared drive. When Google can't search a drive, they fail with a clear error instead of returning a partial list. Both search actions now stop with an error after 120 seconds, where before they had no limit. List Files and List Folder Contents now report `incompleteSearch` as `true` when Google could not search the whole folder.
+- Export Folder as Zip now fails when Google can't search the whole folder, instead of building a zip with files missing.
+- Search Files and Folders now escapes the search value. A value escaped by hand, like `O\'Brien`, now searches for a literal backslash: type `O'Brien` instead.
+- Find File or Folder and Search Files and Folders now fail with an error when Search By or Match isn't a Drive search term, instead of sending it to Google.
+
+#### What you need to do
+
+If a flow after New File reads `content`, check for `contentError` first (for example with a Branch step), because a run can now arrive without `content`.
+
+If a flow matches on the name of a downloaded Google Doc, Sheet or Slides file, update it for the new extension.
+
+#### Google Sheets 0.20.0: row triggers match rows by content, and the Test sample has no header row
+
+**New or Updated Row** now compares rows by their content instead of their position. Inserting, deleting or sorting rows, and changing only a column's display format, no longer runs the flow for every row below the change. A row whose cells are all cleared now runs the flow once with blank values, unless it is the last row of data. With a Trigger Column, a new row runs the flow once that column is filled, not while it is still empty. **New Row Added** runs only for rows added below the last row it has seen; rows inserted higher up, sorting and edits do not run it. Both row triggers now work on tabs named like a cell (for example `Q1` or `FY24`), and their Test sample no longer shows the header row as data. **New Worksheet** no longer runs for the spreadsheet's first tab when the flow is turned on. **Get Next Rows** no longer skips rows after a blank row, the last row of a full sheet, or a batch that failed to read.
+
+#### What you need to do
+
+Nothing for most flows. Upgrading republishes the flow, which takes a fresh baseline of the sheet, so a change made while the flow is being republished does not run it (same as today). If a flow relied on New or Updated Row running for every row after a sort or insert, or on New Row Added running for edited rows, use New or Updated Row with a Trigger Column instead.
+
+#### Google Tasks 0.8.0: New Task can ignore edits
+
+**New Task** has a new **Run on** setting. **New tasks only** runs the flow once per task; renaming, editing, moving or completing a task no longer runs it again. **New and edited tasks** keeps the old behaviour. Steps keep running the old code until you upgrade them to 0.8.0. On upgraded steps, tasks found in one check are delivered newest first, and an edit made within a minute of the previous check is no longer lost.
+
+#### What you need to do
+
+Upgrading a New Task step to 0.8.0 in the builder pre-selects **New tasks only**. To keep running the flow on edits, choose **New and edited tasks** when you upgrade the step.
+
+#### GitHub 0.12.0: Update Issue (Agent) no longer clears labels and assignees
+
+When an AI agent used **Update Issue (Agent)** to change something else, such as the title, the agent path filled the **Labels** and **Assignees** lists it left out with empty lists and sent them. Each such update removed every label and every assignee from the issue. From GitHub 0.12.0 an empty Labels or Assignees list is not sent, so the issue keeps its current labels and assignees. Two new fields, **Clear Labels** and **Clear Assignees**, remove them on purpose.
+
+#### What you need to do
+
+If an agent or a flow step relied on an empty Labels or Assignees list to clear an issue, set **Clear Labels** or **Clear Assignees** instead. If an agent ran this action on an earlier GitHub version, check that your issues still have the labels and assignees you expect. Agents run the latest GitHub version available on your instance, so existing agents switch to the new behaviour as soon as GitHub 0.12.0 is installed, without an upgrade.
+
+#### beehiiv 0.5.0: four subscription actions are no longer agent tools, and List Posts returns posts
+
+From beehiiv 0.5.0, **Create Subscription**, **Update Subscription**, **Delete Subscription** and **List Subscriptions** are no longer offered to AI agents and MCP clients. They stay available as flow steps. Agents use the new tools instead: **Create Subscription (AI)**, **Update Subscription (AI)**, **Unsubscribe Subscriber**, **Delete Subscription (AI)** and **List Subscriptions (AI)**, which take plain publication and subscription IDs or emails. **List Publications** returns the publication ID. **Add Subscription to Automation**, **List Automations** and **List Posts** stay available to both flows and agents.
+
+Steps upgraded to 0.5.0 also behave differently. **List Posts** now returns posts (before, it returned automations), as an object with `items` and paging fields. **List Automations** and **List Posts** with Limit and Page empty fail past 10,000 items (1,000 for List Posts when Expand Results includes content) instead of silently stopping. **Create Subscription** and **Add Subscription to Automation** reject a Double Opt-in Override other than `on`, `off` or `not_set`. **List Subscriptions** with Limit and Cursor empty fails when more than 5,000 subscribers match. **Delete Subscription** returns `deleted` and `subscription_id` instead of an empty result. The piece needs Activepieces 0.88.2 or later.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used the four subscription actions at the matching new tool. Update flows that read List Posts output to use `items`, and set Limit and Page or Cursor on list steps that read very large lists.
+
+#### Google Forms 0.8.0: New Response can ignore edited responses
+
+**New Response** has a new **Run on** setting. **New responses only** runs the flow once per response, even when the respondent edits it later. **New and edited responses** keeps the old behaviour. Steps saved before 0.8.0 keep running on edits.
+
+#### What you need to do
+
+Upgrading a New Response step to 0.8.0 in the builder pre-selects **New responses only**. To keep running the flow when a respondent edits an answer, choose **New and edited responses** when you upgrade the step.
+
+#### Buffer 0.2.0: Create Post is no longer an agent tool
+
+From Buffer 0.2.0, **Create Post** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and the same `posts` output. Agents use the new **Create a Post** tool instead, which creates one post on one channel per call and takes a strict ISO 8601 schedule time.
+
+Create Post steps upgraded to 0.2.0 also send **Link URL** differently, because Buffer removes link assets on December 15, 2026. On Facebook, LinkedIn, Threads, Bluesky and Substack posts without images, the link is sent as a link card; on other services, or when images are attached, it is appended to the post text. Facebook posts are now sent as the `post` type.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used Create Post at **Create a Post**, calling it once per channel. Check flows that set Link URL, since the link now shows as a card or as text at the end of the post.
+
+#### Stability AI 0.4.0: Text to Image is no longer an AI agent tool
+
+**Text to Image** (the legacy SDXL 1.0 action) is now shown only in the flow builder. AI agents and MCP clients get the new **Generate Image** tool (`generate_image`) instead, which uses Stable Image Ultra, Core or Stable Diffusion 3.5. Text to Image also now rejects `steps` above 50, `samples` outside 1–10 and width × height pairs SDXL 1.0 does not support before calling Stability AI, and it sends a `weight` of 0 instead of replacing it with 1. The engine picker offers only SDXL 1.0; the other six engines are no longer in Stability AI's documentation.
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses Text to Image as a tool, switch it to Generate Image. If a flow uses an engine other than `stable-diffusion-xl-1024-v1-0`, choose SDXL 1.0 or move the step to Generate Image. Steps keep running on the version they were built with until you upgrade them.
+
+#### YouTrack 0.3.0: calls to YouTrack now verify the TLS certificate
+
+From YouTrack 0.3.0, the piece checks the certificate of your YouTrack server on the connection check, triggers, dropdowns and every dedicated action, including attachment downloads. Before, certificate checks were skipped, so a self-hosted YouTrack Server behind a self-signed, private-CA or expired certificate worked. With 0.3.0 these calls fail with a certificate error for such servers. The **Custom API Call** action is the exception: it still uses the shared HTTP client and does not check the certificate. YouTrack Cloud (`*.youtrack.cloud`) and servers with a publicly trusted certificate are not affected.
+
+#### What you need to do
+
+If you self-host YouTrack on a self-signed or private-CA certificate, give it a publicly trusted certificate (for example from Let's Encrypt), or add your CA to Activepieces before upgrading YouTrack steps or connections to 0.3.0. To add the CA, set both `NODE_EXTRA_CA_CERTS` and `AP_SANDBOX_PROPAGATED_ENV_VARS=NODE_EXTRA_CA_CERTS` on the container. Only the path is passed to the engine, so the file must be readable at that path where pieces run.
+
+With `AP_EXECUTION_MODE` set to `SANDBOX_PROCESS` or `SANDBOX_CODE_AND_PROCESS`, pieces run in an isolate sandbox that sees only `/bin`, `/lib`, `/usr/bin`, `/usr/lib`, `/usr/local` and `/usr/src/node_modules` from the container, and its `/etc` is replaced. Put the CA file under `/usr/local` in the image, for example:
+
+```dockerfile
+FROM activepieces/activepieces:<version>
+COPY my-ca.pem /usr/local/share/ca-certificates/my-ca.pem
+ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/my-ca.pem
+ENV AP_SANDBOX_PROPAGATED_ENV_VARS=NODE_EXTRA_CA_CERTS
+```
+
+In the other execution modes, any path in the container works.
+
+#### Spotify 0.7.0: Update Playlist is no longer an agent tool, and Get Playback State returns an object when nothing is playing
+
+From Spotify 0.7.0, **Update Playlist** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and outputs. Agents use the new **Update Playlist Details** tool instead, which takes Public and Collaborative as yes/no choices and leaves any field it is not given unchanged.
+
+Once a **Get Playback State** step is upgraded to 0.7.0, it returns `{ "is_playing": false, "device": null, "item": null }` when nothing is playing, instead of an empty string.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used Update Playlist at **Update Playlist Details**. If a flow checks Get Playback State for an empty result, check `is_playing` (or `item` being empty) instead before upgrading the step to 0.7.0.
+
+#### ActiveCampaign 0.2.0: the existing actions are no longer AI agent tools, and webhook triggers skip duplicate deliveries
+
+The 7 existing ActiveCampaign actions are now shown only in the flow builder: Create Contact, Update Contact, Add Tag to Contact, Add Contact to Account, Create Account, Update Account and Subscribe or Unsubscribe Contact From List. AI agents and MCP clients get new tools instead: **Create or Update Contact (AI)** (replaces Create Contact and Update Contact), **Add Tag to Contact (AI)**, **Associate Contact with Account (AI)**, **Create Account (AI)**, **Update Account (AI)**, and **Subscribe Contact to List** plus **Unsubscribe Contact from List** (together they replace Subscribe or Unsubscribe Contact From List). The new tools take IDs as text and accept a contact's email in place of its ID.
+
+The ActiveCampaign webhook triggers now ignore a delivery whose content is identical to one received in the previous 15 minutes (every field, including the event time and the record's values). Each trigger remembers up to 5,000 deliveries, so a trigger that receives more than 5,000 events within 15 minutes can run a late retry again. ActiveCampaign sends no delivery ID, so two genuinely separate events with identical content in the same second now run the flow once.
+
+ActiveCampaign requests now always verify the server's TLS certificate, and an API URL that starts with `http://` is sent to `https://` on the same host.
+
+#### What you need to do
+
+- If an agent or MCP client used one of the 7 actions as a tool, switch it to the matching new tool listed above.
+- If your self-hosted instance reaches ActiveCampaign through a proxy that inspects TLS traffic, add the proxy's CA certificate to `NODE_EXTRA_CA_CERTS`, or ActiveCampaign steps fail with a certificate error.
+- Flow steps that use these actions keep working unchanged. Steps keep running on the version they were built with until you upgrade them.

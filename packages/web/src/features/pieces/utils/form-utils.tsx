@@ -2,6 +2,7 @@ import {
   Metadata,
   extractMustacheTokens,
   isNil,
+  isObject,
   parseToJsonIfPossible,
 } from '@activepieces/core-utils';
 import {
@@ -20,7 +21,10 @@ import {
   AppConnectionScope,
   AppConnectionType,
   CodeActionSchema,
+  formErrors,
   LoopOnItemsActionSchema,
+  ProcessInBatchesActionSchema,
+  ProcessInBatchesActionSettingsWithValidation,
   PieceActionSchema,
   PieceActionSettings,
   PieceTrigger,
@@ -138,6 +142,8 @@ function parseDynamicValue({
     }
     case PropertyType.COLOR:
       return typeof value === 'string' && value !== '' ? value : undefined;
+    case PropertyType.OBJECT:
+      return isObject(parsed) ? parsed : undefined;
     default:
       return undefined;
   }
@@ -586,6 +592,21 @@ export const formUtils = {
           z.object({
             settings: z.object({
               items: z.string().min(1),
+            }),
+          }).shape,
+        );
+      case FlowActionType.PROCESS_IN_BATCHES:
+        return ProcessInBatchesActionSchema.omit({ settings: true }).extend(
+          z.object({
+            settings: z.object({
+              items: z.string().min(1, formErrors.required),
+              batchSize: z
+                .number({ error: formErrors.batchSizeMustBeAWholeNumber })
+                .int(formErrors.batchSizeMustBeAWholeNumber)
+                .min(1, formErrors.batchSizeMustBeAtLeastOne),
+              timeoutSeconds:
+                ProcessInBatchesActionSettingsWithValidation.shape
+                  .timeoutSeconds,
             }),
           }).shape,
         );

@@ -1,10 +1,11 @@
-import { isNil, isObject, tryCatch } from '@activepieces/core-utils'
+import { applyFunctionToValuesSync, connectionTemplate, extractMustacheTokens, isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { BranchOperator, EngineResponse, EngineResponseStatus, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions, WorkerJobType } from '@activepieces/shared'
+import { BranchOperator, EngineResponse, EngineResponseStatus, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, PropertyExecutionType, PropertySettings, singleValueConditions, WorkerJobType } from '@activepieces/shared'
 import type { BranchedAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { expressionRewriter } from '../../flows/flow-version/migrations/expression-rewriter'
+import { flowFolderService } from '../../flows/folder/folder.service'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
@@ -120,7 +121,7 @@ function coerceEmptyContainerInputs({ props, input }: { props: PiecePropertyMap,
             continue
         }
         const value = coerced[propName]
-        const valueProvided = value !== undefined && value !== null && value !== ''
+        const valueProvided = isValueProvided(value)
         // An empty free-form bag means "none", so normalize a wrong-shape empty container
         // (`[]` for an OBJECT prop, `{}` for an ARRAY prop) to the prop's type rather than
         // letting validation bounce it.
@@ -154,7 +155,7 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
             : (prop.type === PropertyType.DYNAMIC ? ' — DYNAMIC: resolve sub-fields with ap_get_piece_props' : '')
         allProps.push(`${propName} (${prop.type}${prop.required ? ', required' : ''}${optionsHint})`)
         const value = input[propName]
-        const valueProvided = value !== undefined && value !== null && value !== ''
+        const valueProvided = isValueProvided(value)
         if (prop.required && !valueProvided) {
             const descriptionHint = prop.description ? ` — ${prop.description}` : ''
             if (RESOLVABLE_PROP_TYPES.has(prop.type)) {
@@ -244,6 +245,22 @@ async function rejectUnknownInputProps(params: DetectUnknownInputPropsParams): P
     return { content: [{ type: 'text', text: `❌ ${message}` }] }
 }
 
+async function dropUnknownInputProps(params: DetectUnknownInputPropsParams): Promise<{ input: Record<string, unknown>, unknownKeys: string[], message: string }> {
+    const input = isObject(params.input) ? params.input : {}
+    const { unknownKeys, message } = await detectUnknownInputProps(params)
+    const knownInput = Object.fromEntries(Object.entries(input).filter(([key]) => !unknownKeys.includes(key)))
+    return { input: knownInput, unknownKeys, message }
+}
+
+async function keepKnownInputProps({ callerInput, ...params }: DetectUnknownInputPropsParams & { callerInput: Record<string, unknown> }): Promise<{ input: Record<string, unknown>, error: McpToolResult | null }> {
+    const { input, unknownKeys } = await dropUnknownInputProps(params)
+    const callerSentUnknownKey = unknownKeys.some((key) => key in callerInput)
+    if (callerSentUnknownKey) {
+        return { input, error: await rejectUnknownInputProps({ ...params, input: callerInput }) }
+    }
+    return { input, error: null }
+}
+
 const MAX_PROP_DEPTH = 3
 
 function buildPropSummaries(props: PiecePropertyMap, depth = 0): PropSummary[] {
@@ -300,27 +317,35 @@ function exampleValueForProp(prop: PropSummary): unknown {
             return RESOLUTION_SENTINEL
         case PropertyType.DYNAMIC:
             return prop.dynamicFields && prop.dynamicFields.length > 0
-                ? buildExampleInput(prop.dynamicFields)
+                ? buildExampleInput({ props: prop.dynamicFields })
                 : RESOLUTION_SENTINEL
         default:
             return prop.defaultValue ?? `<${prop.displayName}>`
     }
 }
 
-function buildExampleInput(props: PropSummary[]): Record<string, unknown> {
+function buildExampleInput({ props, providedInput = {} }: { props: PropSummary[], providedInput?: Record<string, unknown> }): Record<string, unknown> {
     const example: Record<string, unknown> = {}
     for (const prop of props) {
-        if (prop.required) {
+        const provided = providedInput[prop.name]
+        const childFields = childFieldsOf({ prop, provided })
+        if (!isNil(childFields) && isObject(provided)) {
+            example[prop.name] = { ...provided, ...buildExampleInput({ props: childFields, providedInput: provided }) }
+        }
+        else if (isValueProvided(provided)) {
+            example[prop.name] = provided
+        }
+        else if (prop.required) {
             example[prop.name] = exampleValueForProp(prop)
         }
     }
     return example
 }
 
-function buildRequiredInputs(props: PropSummary[]): { provideNow: string[], needsResolution: string[] } {
+function buildRequiredInputs({ props, providedInput = {} }: { props: PropSummary[], providedInput?: Record<string, unknown> }): { provideNow: string[], needsResolution: string[] } {
     const provideNow: string[] = []
     const needsResolution: string[] = []
-    for (const prop of props.filter((p) => p.required)) {
+    for (const prop of props.filter((p) => p.required && !isPropGiven({ prop: p, providedInput }))) {
         if (RESOLVABLE_PROP_TYPES.has(prop.type)) {
             needsResolution.push(prop.name)
         }
@@ -329,6 +354,28 @@ function buildRequiredInputs(props: PropSummary[]): { provideNow: string[], need
         }
     }
     return { provideNow, needsResolution }
+}
+
+function isValueProvided(value: unknown): boolean {
+    return value !== undefined && value !== null && value !== ''
+}
+
+function childFieldsOf({ prop, provided }: { prop: PropSummary, provided: unknown }): PropSummary[] | null {
+    const hasChildFields = prop.type === PropertyType.DYNAMIC && isObject(provided) && !isNil(prop.dynamicFields) && prop.dynamicFields.length > 0
+    return hasChildFields ? prop.dynamicFields ?? null : null
+}
+
+function isPropGiven({ prop, providedInput }: { prop: PropSummary, providedInput: Record<string, unknown> }): boolean {
+    const provided = providedInput[prop.name]
+    if (!isValueProvided(provided)) {
+        return false
+    }
+    const childFields = childFieldsOf({ prop, provided })
+    if (isNil(childFields) || !isObject(provided)) {
+        return true
+    }
+    const missingChildren = buildRequiredInputs({ props: childFields, providedInput: provided })
+    return missingChildren.provideNow.length === 0 && missingChildren.needsResolution.length === 0
 }
 
 function flattenOutputSchemaFields(fields: OutputSchemaField[], prefix = ''): string[] {
@@ -416,11 +463,24 @@ async function lookupPieceComponent({ pieceName, componentName, componentType, p
     const component = componentMap[componentName]
     if (isNil(component)) {
         const available = Object.keys(componentMap)
-        const suggestion = available.find((name) => name.includes(componentName))
-        const hint = suggestion ? ` Did you mean "${suggestion}"?` : ''
-        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}".${hint} Available: ${available.join(', ')}` }], isError: true } }
+        const closestName = closestComponentName({ guess: componentName, available })
+        const hint = isNil(closestName) ? '' : ` Did you mean "${closestName}"?`
+        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}".${hint} Available: ${available.join(', ')}` }], isError: true }, ...spreadIfDefined('closestName', closestName) }
     }
     return { piece, component, pieceName: normalized }
+}
+
+function closestComponentName({ guess, available }: { guess: string, available: string[] }): string | undefined {
+    const wanted = comparableName(guess)
+    if (wanted.length === 0) {
+        return undefined
+    }
+    const matches = available.filter((name) => comparableName(name).endsWith(wanted))
+    return matches.length === 1 ? matches[0] : undefined
+}
+
+function comparableName(name: string): string {
+    return name.toLowerCase().replace(/[^a-z0-9]/g, '').replace(/s$/, '')
 }
 
 function findResolvableProps({ props, componentProps, auth, providedInput }: FindResolvablePropsParams): PropSummary[] {
@@ -498,10 +558,29 @@ function publishedFlowWarning(publishedVersionId: string | null | undefined): st
 
 function resolveConnectionExternalId({ connectionExternalId, input }: { connectionExternalId: unknown, input: unknown }): string | undefined {
     if (typeof connectionExternalId === 'string') {
-        return connectionExternalId
+        return normalizeAuth(connectionExternalId)
     }
     const inlineAuth = isObject(input) ? input.auth : undefined
-    return typeof inlineAuth === 'string' ? inlineAuth : undefined
+    return typeof inlineAuth === 'string' ? normalizeAuth(inlineAuth) : undefined
+}
+
+async function resolveFolder({ projectId, folderName, log }: { projectId: string, folderName: string | undefined, log: FastifyBaseLogger }): Promise<ResolveFolderResult> {
+    if (isNil(folderName)) {
+        return { folderId: undefined, folderName: undefined }
+    }
+    const folder = await flowFolderService(log).getOneByDisplayNameCaseInsensitive({ projectId, displayName: folderName })
+    if (isNil(folder)) {
+        return { error: { content: [{ type: 'text', text: `❌ Folder "${folderName}" does not exist. Create it with ap_create_folder first, then retry.` }], isError: true } }
+    }
+    return { folderId: folder.id, folderName: folder.displayName }
+}
+
+function folderSuffix(folderName: string | undefined): string {
+    return isNil(folderName) ? '' : ` in folder "${folderName}"`
+}
+
+function normalizeAuth(auth: string | undefined): string | undefined {
+    return connectionTemplate.unwrapExternalId(auth) ?? auth
 }
 
 function validateAuth(auth: string | undefined): McpToolResult | null {
@@ -604,10 +683,14 @@ function rewriteAllReferences<C = unknown>({ input, loopItems, conditions, trigg
 }): { input?: Record<string, unknown>, loopItems?: string, conditions?: C } {
     const stepNames = flowStructureUtil.getAllSteps(trigger).map(s => s.name)
     return {
-        input: input ? expressionRewriter.rewriteDeep(input, stepNames, true) : undefined,
-        loopItems: loopItems != null ? expressionRewriter.rewriteStepReferences({ input: loopItems, stepNames, idempotent: true }) : loopItems,
-        conditions: conditions ? expressionRewriter.rewriteDeep(conditions, stepNames, true) : conditions,
+        input: input ? expressionRewriter.rewriteDeep(applyFunctionToValuesSync<Record<string, unknown>>(input, normalizeFormulaText), stepNames, true) : undefined,
+        loopItems: loopItems != null ? expressionRewriter.rewriteStepReferences({ input: normalizeFormulaText(loopItems), stepNames, idempotent: true }) : loopItems,
+        conditions: conditions ? expressionRewriter.rewriteDeep(applyFunctionToValuesSync<C>(conditions, normalizeFormulaText), stepNames, true) : conditions,
     }
+}
+
+function normalizeFormulaText(text: string): string {
+    return text.replace(DOUBLE_BRACED_FORMULA, (_match, version: string, expression: string) => `ap-formula-v${version}::{${expression}}::ap-formula-v${version}`)
 }
 
 function extractOptionsArray(options: unknown): Array<{ label: string, value: unknown }> | null {
@@ -624,6 +707,13 @@ function extractOptionsArray(options: unknown): Array<{ label: string, value: un
 }
 
 const RESOLVE_TIMEOUT_MS = 30_000
+const DOUBLE_BRACED_FORMULA = /ap-formula-v(\d+)::\{\{\s*([A-Za-z_]\w*\s*\([\s\S]*?\))\s*\}\}::ap-formula-v\1/g
+
+const CONTAINER_PROP_TYPES = new Set<PropertyType>([PropertyType.ARRAY, PropertyType.OBJECT, PropertyType.JSON])
+
+const ContainerCheckedProp = z.object({ type: z.enum(PropertyType), properties: z.unknown().optional() })
+
+const FOLDER_NAME_SCHEMA = z.string().trim().min(1).max(255).optional().describe('Name of an existing folder to place it in. For a solution of several flows and tables, create the folder with ap_create_folder in an earlier step than the calls that use it (never in the same step, they run at once), then pass the same folderName to each of them.')
 
 async function executePropertyResolution({ pieceName, pieceVersion, actionOrTriggerName, propertyName, auth, input, searchValue, projectId, platformId, log }: {
     pieceName: string
@@ -678,6 +768,85 @@ async function executePropertyResolution({ pieceName, pieceVersion, actionOrTrig
         return { status: 'dynamic', props: options }
     }
     return { status: 'failed', message: 'Unrecognized options format' }
+}
+
+async function resolveDynamicPropertySettings({ pieceName, pieceVersion, componentName, componentType, input, propertySettings, changedKeys = [], projectId, platformId, log }: {
+    pieceName: string
+    pieceVersion: string
+    componentName: string
+    componentType: 'action' | 'trigger'
+    input: Record<string, unknown>
+    propertySettings?: unknown
+    changedKeys?: string[]
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<Record<string, PropertySettings>> {
+    const current = z.record(z.string(), PropertySettings).safeParse(propertySettings).data ?? {}
+    const { data: piece } = await tryCatch(() => pieceMetadataService(log).getOrThrow({ platformId, name: pieceName, version: pieceVersion }))
+    const component = isNil(piece) ? undefined : (componentType === 'action' ? piece.actions[componentName] : piece.triggers[componentName])
+    if (isNil(component)) {
+        return current
+    }
+    const needingSchema = Object.entries(component.props).filter(([name, prop]) => {
+        const watchedKeys = [name, ...('refreshers' in prop ? prop.refreshers : [])]
+        const needsSchema = isNil(current[name]?.schema) || watchedKeys.some((key) => changedKeys.includes(key))
+        return prop.type === PropertyType.DYNAMIC && !isNil(input[name]) && needsSchema
+    })
+    const refreshed = await Promise.all(needingSchema.map(async ([name]) => {
+        const type = current[name]?.type ?? PropertyExecutionType.MANUAL
+        const { data: result } = await tryCatch(() => executePropertyResolution({ pieceName, pieceVersion, actionOrTriggerName: componentName, propertyName: name, input, projectId, platformId, log }))
+        const settings: PropertySettings = result?.status === 'dynamic' ? { type, schema: result.props } : { type }
+        return [name, settings] as const
+    }))
+    return syncContainerExecutionTypes({ props: component.props, input, propertySettings: { ...current, ...Object.fromEntries(refreshed) } })
+}
+
+function syncContainerExecutionTypes({ props, input, propertySettings }: {
+    props: PiecePropertyMap
+    input: Record<string, unknown>
+    propertySettings: Record<string, PropertySettings>
+}): Record<string, PropertySettings> {
+    const topLevelFields = Object.entries(props).map(([name, prop]) => ({ name, type: containerExecutionType({ prop, value: input[name] }) }))
+    const claimedByTopLevel = new Set(topLevelFields.filter(({ type }) => !isNil(type)).map(({ name }) => name))
+    const childFields = Object.entries(props)
+        .flatMap(([name, prop]) => dynamicChildFields({ prop, value: input[name], schema: propertySettings[name]?.schema }))
+        .filter(({ name }) => !claimedByTopLevel.has(name))
+        .map(({ name, prop, value }) => ({ name, type: containerExecutionType({ prop, value }) }))
+    const updates = [...topLevelFields, ...childFields].flatMap(({ name, type }): [string, PropertySettings][] => {
+        if (isNil(type) || (propertySettings[name]?.type ?? PropertyExecutionType.MANUAL) === type) {
+            return []
+        }
+        return [[name, { ...propertySettings[name], type }]]
+    })
+    return { ...propertySettings, ...Object.fromEntries(updates) }
+}
+
+function dynamicChildFields({ prop, value, schema }: { prop: ContainerCheckedProp, value: unknown, schema: unknown }): { name: string, prop: ContainerCheckedProp, value: unknown }[] {
+    if (prop.type !== PropertyType.DYNAMIC || !isObject(value)) {
+        return []
+    }
+    const children = z.record(z.string(), ContainerCheckedProp).safeParse(schema).data ?? {}
+    return Object.entries(children).map(([name, child]) => ({ name, prop: child, value: value[name] }))
+}
+
+function containerExecutionType({ prop, value }: { prop: ContainerCheckedProp, value: unknown }): PropertyExecutionType | undefined {
+    const isStructuredArray = prop.type === PropertyType.ARRAY && !isNil(prop.properties)
+    if (!CONTAINER_PROP_TYPES.has(prop.type) || isStructuredArray) {
+        return undefined
+    }
+    if (isWholeReference(value)) {
+        return PropertyExecutionType.DYNAMIC
+    }
+    return Array.isArray(value) || isObject(value) ? PropertyExecutionType.MANUAL : undefined
+}
+
+function isWholeReference(value: unknown): boolean {
+    if (typeof value !== 'string') {
+        return false
+    }
+    const tokens = extractMustacheTokens(value)
+    return tokens.length === 1 && tokens[0].token === value.trim()
 }
 
 // Classify an action by how many records it returns, from its name. This is the signal the agent
@@ -766,13 +935,36 @@ function rankActionsByIntent({ actions, forIntent }: { actions: RankableAction[]
         if (c === 'single') return -1
         return 0
     }
+    const siblingNames = collectSiblingNames(actions)
     const scored = actions.map((a) => {
-        const haystack = `${a.displayName} ${a.description} ${a.aiDescription ?? ''}`.toLowerCase()
+        const haystack = intentHaystack({ action: a, siblingNames })
         const tokenScore = tokens.reduce((acc, t) => acc + (haystack.includes(t) ? 1 : 0), 0)
-        return { name: a.name, score: tokenScore + cardinalityBonus(a.cardinality) }
+        return { name: a.name, score: tokenScore + cardinalityBonus(a.cardinality), isAi: a.audience === AI_AUDIENCE }
     })
-    return scored.filter((s) => s.score > 0).sort((a, b) => b.score - a.score).slice(0, 5).map((s) => s.name)
+    return scored
+        .filter((s) => s.score > 0)
+        .sort((a, b) => b.score - a.score || Number(b.isAi) - Number(a.isAi))
+        .slice(0, 5)
+        .map((s) => s.name)
 }
+
+function collectSiblingNames(actions: RankableAction[]): string[] {
+    return actions.flatMap((a) => [
+        ...(IDENTIFIER_NAME.test(a.name) ? [a.name.toLowerCase()] : []),
+        ...(a.displayName.trim().includes(' ') ? [a.displayName.trim().toLowerCase()] : []),
+    ]).sort((a, b) => b.length - a.length)
+}
+
+function intentHaystack({ action, siblingNames }: { action: RankableAction, siblingNames: string[] }): string {
+    const ownNames = [action.name.toLowerCase(), action.displayName.trim().toLowerCase()]
+    const description = siblingNames
+        .filter((name) => !ownNames.includes(name))
+        .reduce((text, name) => text.split(name).join(' '), `${action.description} ${action.aiDescription ?? ''}`.toLowerCase())
+    return `${action.displayName.toLowerCase()} ${description}`
+}
+
+const AI_AUDIENCE = 'ai'
+const IDENTIFIER_NAME = /[_-]|[a-z][A-Z]/
 
 const INTENT_STOP_WORDS = new Set(['the', 'all', 'any', 'and', 'for', 'with', 'get', 'from', 'into', 'out', 'list', 'show', 'find', 'see', 'view', 'fetch', 'pull'])
 
@@ -787,8 +979,11 @@ export const mcpUtils = {
     publishedFlowWarning,
     diagnosePieceProps,
     coerceEmptyContainerInputs,
+    normalizeFormulaText,
     detectUnknownInputProps,
     rejectUnknownInputProps,
+    dropUnknownInputProps,
+    keepKnownInputProps,
     buildPropSummaries,
     buildExampleInput,
     buildRequiredInputs,
@@ -800,6 +995,9 @@ export const mcpUtils = {
     findResolvableProps,
     resolveConnectionExternalId,
     validateAuth,
+    normalizeAuth,
+    folderSuffix,
+    resolveFolder,
     fillDefaultsForMissingOptionalProps,
     buildErrorHandlingOptions,
     resolveLatestPieceVersion,
@@ -809,9 +1007,12 @@ export const mcpUtils = {
     rewriteAllReferences,
     extractOptionsArray,
     executePropertyResolution,
+    resolveDynamicPropertySettings,
+    syncContainerExecutionTypes,
     RESOLVE_TIMEOUT_MS,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
+    FOLDER_NAME_SCHEMA,
 }
 
 export type { PropSummary }
@@ -878,8 +1079,14 @@ type LookupPieceComponentParams = {
 }
 
 type LookupPieceComponentResult =
-    | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string, outputSchema?: OutputSchema, aiMetadata?: AiMetadata, sampleData?: unknown }, pieceName: string, error?: never }
-    | { error: McpToolResult, piece?: never, component?: never, pieceName?: never }
+    | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string, outputSchema?: OutputSchema, aiMetadata?: AiMetadata, sampleData?: unknown }, pieceName: string, error?: never, closestName?: never }
+    | { error: McpToolResult, closestName?: string, piece?: never, component?: never, pieceName?: never }
+
+type ContainerCheckedProp = z.infer<typeof ContainerCheckedProp>
+
+type ResolveFolderResult =
+    | { folderId: string | undefined, folderName: string | undefined, error?: never }
+    | { error: McpToolResult, folderId?: never, folderName?: never }
 
 type ResolveRouterStepResult =
     | { routerStep: BranchedAction, error?: never }
@@ -897,4 +1104,5 @@ export type RankableAction = {
     description: string
     cardinality: ActionCardinality
     aiDescription?: string
+    audience?: string
 }

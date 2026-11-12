@@ -7,6 +7,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const addOrUpdateSubscriber = createAction({
   auth: smooveAuth,
   name: 'addOrUpdateSubscriber',
+  classification: 'WRITE',
   displayName: 'Add or Update Subscriber',
   description: 'Create or update subscriber data, and subscribe/unsubscribe from lists',
   audience: 'both',

@@ -4,6 +4,7 @@ import { simplybookAuth, makeJsonRpcCall, SimplybookAuth } from '../common';
 export const findClient = createAction({
   auth: simplybookAuth,
   name: 'find_client',
+  classification: 'SEARCH',
   displayName: 'Get Client List',
   description: 'Returns list of clients associated with company. Search by phone number, email address, or name.',
   audience: 'both',

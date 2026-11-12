@@ -6,6 +6,7 @@ import { postizApiCall } from '../common';
 export const listPosts = createAction({
   auth: postizAuth,
   name: 'list_posts',
+  classification: 'SEARCH',
   displayName: 'List Posts',
   description: 'Retrieve posts within a date range',
   audience: 'both',

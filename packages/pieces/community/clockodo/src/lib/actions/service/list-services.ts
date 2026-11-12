@@ -5,6 +5,7 @@ import { createAction } from '@activepieces/pieces-framework';
 export default createAction({
   auth: clockodoAuth,
   name: 'list_services',
+  classification: 'SEARCH',
   displayName: 'Get Services',
   description: 'Fetches services from clockodo',
   audience: 'both',

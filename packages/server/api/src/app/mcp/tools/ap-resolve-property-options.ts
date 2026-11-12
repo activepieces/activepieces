@@ -10,7 +10,7 @@ export const apResolvePropertyOptionsTool = (mcp: ProjectScopedMcpServer, log: F
         title: 'ap_resolve_property_options',
         description: 'Resolve dropdown options for a single piece property. Returns the available options with labels and values (IDs). Use this to discover valid values for DROPDOWN fields (e.g. Slack channels, Google Sheets, email labels). Always use the `value` from the returned options, not the `label`.',
         inputSchema: resolvePropertyOptionsInput.shape,
-        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
         execute: async (args) => {
             const { pieceName, actionOrTriggerName, type, propertyName, auth, input: providedInput, searchValue } = resolvePropertyOptionsInput.parse(args)
 

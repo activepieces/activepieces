@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const enrichPersonEmail = createAction({
   auth: villageAuth,
   name: 'enrich_person_email',
+  classification: 'READ',
   displayName: 'Enrich Person Email',
   description:
     'Find the email address for a person by LinkedIn URL or generic URL. Returns the verified email address if found, or null if unavailable.',

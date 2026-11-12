@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const getMerchantAccountPaymentSources = createAction({
   auth: trueLayerCommon.auth,
   name: 'get-merchant-account-payment-sources',
+  classification: 'SEARCH',
   displayName: 'Get Payment Sources',
   description: 'Get the payment sources from which the merchant account has received payments.',
   audience: 'both',

@@ -6,6 +6,7 @@ export const certificationFolderSurveyLongTermExperienceAnswered =
   createTrigger({
     auth: wedofAuth,
     name: 'certificationFolderSurveyLongTermExperienceAnswered',
+    classification: 'READ',
     displayName: 'Enquête "Situation professionnelle au moins un an" répondue',
     description:
       "Se déclenche lorsqu'un une enquête de au moins un an de cursus est répondue",

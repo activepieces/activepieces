@@ -1,0 +1,101 @@
+import { create } from 'zustand';
+
+import type { BillingCycle } from '../components/plan-selector-utils';
+import type { FeatureKey } from '../utils/platform-features';
+
+const useManagePlanDialogStore = create<ManagePlanDialogStore>((set) => ({
+  isOpen: false,
+  openDialog: () => set({ isOpen: true }),
+  closeDialog: () => set({ isOpen: false }),
+}));
+
+const useTrialSeatDialogStore = create<TrialSeatDialogStore>((set) => ({
+  isOpen: false,
+  openDialog: () => set({ isOpen: true }),
+  closeDialog: () => set({ isOpen: false }),
+}));
+
+const useConfirmPurchaseDialogStore = create<ConfirmPurchaseDialogStore>(
+  (set) => ({
+    purchase: null,
+    openDialog: (purchase) => set({ purchase }),
+    closeDialog: () => set({ purchase: null }),
+  }),
+);
+
+const usePlanSwitchSuccessDialogStore = create<PlanSwitchSuccessDialogStore>(
+  (set) => ({
+    planId: null,
+    openDialog: (planId) => set({ planId }),
+    closeDialog: () => set({ planId: null }),
+  }),
+);
+
+const useSelfServeTrialDialogStore = create<SelfServeTrialDialogStore>(
+  (set) => ({
+    payload: null,
+    returnFocus: null,
+    openDialog: (payload) =>
+      set({
+        payload,
+        returnFocus:
+          document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null,
+      }),
+    closeDialog: () => set({ payload: null }),
+  }),
+);
+
+export const billingDialogHooks = {
+  useManagePlanDialogStore,
+  useTrialSeatDialogStore,
+  useConfirmPurchaseDialogStore,
+  usePlanSwitchSuccessDialogStore,
+  useSelfServeTrialDialogStore,
+};
+
+export type SelfServeTrialDialogPayload = {
+  featureKey?: FeatureKey;
+  postTrialActivationCallback?: () => Promise<unknown> | void;
+};
+
+type PlanPurchase = {
+  planId: string;
+  planName: string;
+  priceAmount: string;
+  billingCycle: BillingCycle;
+  features: string[];
+  successUrl: string;
+};
+
+type ManagePlanDialogStore = {
+  isOpen: boolean;
+  openDialog: () => void;
+  closeDialog: () => void;
+};
+
+type TrialSeatDialogStore = {
+  isOpen: boolean;
+  openDialog: () => void;
+  closeDialog: () => void;
+};
+
+type ConfirmPurchaseDialogStore = {
+  purchase: PlanPurchase | null;
+  openDialog: (purchase: PlanPurchase) => void;
+  closeDialog: () => void;
+};
+
+type PlanSwitchSuccessDialogStore = {
+  planId: string | null;
+  openDialog: (planId: string) => void;
+  closeDialog: () => void;
+};
+
+type SelfServeTrialDialogStore = {
+  payload: SelfServeTrialDialogPayload | null;
+  returnFocus: HTMLElement | null;
+  openDialog: (payload: SelfServeTrialDialogPayload) => void;
+  closeDialog: () => void;
+};

@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const merchantAccountDisableSweeping = createAction({
   auth: trueLayerCommon.auth,
   name: 'merchant-account-disable-sweeping',
+  classification: 'DESTRUCTIVE',
   displayName: 'Disable Sweeping',
   description: 'Disable automatic sweeping for a merchant account.',
   audience: 'both',

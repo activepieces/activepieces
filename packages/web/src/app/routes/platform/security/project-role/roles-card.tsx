@@ -1,5 +1,5 @@
 import { ProjectRole, SeekPage } from '@activepieces/core-utils';
-import { isNil } from '@activepieces/shared';
+import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useState } from 'react';
 
@@ -11,7 +11,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { PlatformRolesList } from './platform-roles-list';
 import { ProjectRoleDialog } from './project-role-dialog';
@@ -26,16 +28,19 @@ export function RolesCard({
   refetch,
 }: RolesCardProps) {
   const { platform } = platformHooks.useCurrentPlatform();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const [activeTab, setActiveTab] = useState<RolesTab>('project');
 
   const projectRolesCount =
     isLoading || isError ? null : projectRoles?.data.length ?? 0;
   const platformRolesCount = PLATFORM_ROLE_COUNT;
 
-  const newRoleButton = !platform.plan.customRolesEnabled ? (
+  const lockedOnCommunity =
+    edition === ApEdition.COMMUNITY && !platform.plan.customRolesEnabled;
+  const newRoleButton = lockedOnCommunity ? (
     <Tooltip>
       <TooltipTrigger>
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm" disabled>
+        <AnimatedIconButton icon={PlusIcon} iconSize={16} disabled>
           {t('New role')}
         </AnimatedIconButton>
       </TooltipTrigger>
@@ -45,64 +50,48 @@ export function RolesCard({
     </Tooltip>
   ) : (
     <ProjectRoleDialog mode="create" onSave={() => refetch()}>
-      <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+      <AnimatedIconButton
+        icon={PlusIcon}
+        iconSize={16}
+        {...adminControl(AdminControl.ROLES_NEW_OPEN)}
+      >
         {t('New role')}
       </AnimatedIconButton>
     </ProjectRoleDialog>
   );
 
   return (
-    <section className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-base font-medium">{t('Roles')}</h2>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          {t(
-            'Two kinds. A platform role is one per person and decides console access and which projects they see. A project role is chosen per project and decides what they can do inside it.',
-          )}
-        </p>
+    <Tabs
+      value={activeTab}
+      onValueChange={(value) => setActiveTab(toRolesTab(value))}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <TabsList>
+          <TabsTrigger value="project" className="gap-2">
+            {t('Project roles')}
+            {!isNil(projectRolesCount) && (
+              <span className="text-gray-11">{projectRolesCount}</span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="platform" className="gap-2">
+            {t('Platform roles')}
+            <span className="text-gray-11">{platformRolesCount}</span>
+          </TabsTrigger>
+        </TabsList>
+        {activeTab === 'project' && newRoleButton}
       </div>
-      <Tabs
-        value={activeTab}
-        onValueChange={(value) => setActiveTab(toRolesTab(value))}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <TabsList>
-            <TabsTrigger value="project" className="gap-2">
-              {t('Project roles')}
-              {!isNil(projectRolesCount) && (
-                <span className="text-muted-foreground">
-                  {projectRolesCount}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="platform" className="gap-2">
-              {t('Platform roles')}
-              <span className="text-muted-foreground">
-                {platformRolesCount}
-              </span>
-            </TabsTrigger>
-          </TabsList>
-          {activeTab === 'project' ? (
-            newRoleButton
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              {t("Built in \u2014 platform roles can't be added or changed.")}
-            </p>
-          )}
-        </div>
-        <TabsContent value="project">
-          <ProjectRolesList
-            projectRoles={projectRoles}
-            isLoading={isLoading}
-            isError={isError}
-            refetch={refetch}
-          />
-        </TabsContent>
-        <TabsContent value="platform">
-          <PlatformRolesList />
-        </TabsContent>
-      </Tabs>
-    </section>
+      <TabsContent value="project">
+        <ProjectRolesList
+          projectRoles={projectRoles}
+          isLoading={isLoading}
+          isError={isError}
+          refetch={refetch}
+        />
+      </TabsContent>
+      <TabsContent value="platform">
+        <PlatformRolesList />
+      </TabsContent>
+    </Tabs>
   );
 }
 

@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 export const searchCertificationFolder = createAction({
     auth: wedofAuth,
     name: 'searchCertificationFolder',
+    classification: 'SEARCH',
     displayName: 'Rechercher un ou plusieurs dossiers de certifications',
     description: 'Liste les dossiers de certifications en fonction des critères sélectionnés',
     audience: 'both',

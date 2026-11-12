@@ -1,7 +1,10 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { shortIoApiCall } from '../common/client';
 import { shortIoAuth } from '../common/auth';
+import { shortIoClient } from '../common/client';
+import { shortIoLinkBody } from '../common/link-body';
+import { shortIoLinks } from '../common/links';
+import { shortIoSchemas } from '../common/output-schemas';
 import { domainIdDropdown, linkIdDropdown, folderIdDropdown } from '../common/props';
 
 export const updateShortLinkAction = createAction({
@@ -11,8 +14,9 @@ export const updateShortLinkAction = createAction({
   displayName: 'Update Short Link',
   description:
     "Update an existing short link's original URL, path, title, or other properties using its link ID.",
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: "Updates properties of an existing short link identified by its link ID — destination URL, path/slug, title, folder, UTM tags, expiration, cloaking, A/B split, and analytics integrations. Use to modify a link you already created rather than making a new one. Only the fields you set are changed; idempotent — re-sending the same values keyed on the link ID yields the same result.", idempotent: true },
+  outputSchema: shortIoSchemas.legacyLink,
   props: {
     domain: domainIdDropdown,
     linkId: linkIdDropdown,
@@ -90,7 +94,7 @@ export const updateShortLinkAction = createAction({
     ttl: Property.Number({
       displayName: 'Time to Live (in seconds)',
       description:
-        '⚠️ CAUTION: Link will be PERMANENTLY DELETED after this many seconds. This action cannot be undone. Use with extreme caution.',
+        'Permanently deletes the link this many seconds from now (minimum 604800 = 7 days). Short.io may delete it up to 2 hours later. This cannot be undone.',
       required: false,
     }),
     androidURL: Property.ShortText({
@@ -150,137 +154,31 @@ export const updateShortLinkAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const { 
-      linkId, 
-      domain: domainString,
-      originalURL,
-      path,
-      title,
-      folderId,
-      cloaking,
-      password,
-      redirectType,
-      expiresAt,
-      expiredURL,
-      tags,
-      utmSource,
-      utmMedium,
-      utmCampaign,
-      utmTerm,
-      utmContent,
-      ttl,
-      androidURL,
-      iphoneURL,
-      createdAt,
-      clicksLimit,
-      passwordContact,
-      skipQS,
-      archived,
-      splitURL,
-      splitPercent,
-      integrationAdroll,
-      integrationFB,
-      integrationGA,
-      integrationGTM,
-    } = propsValue;
-
-    if (clicksLimit && clicksLimit < 1) {
-      throw new Error('Clicks limit must be at least 1');
-    }
-    
-    if (splitPercent && (splitPercent < 1 || splitPercent > 100)) {
-      throw new Error('Split percent must be between 1 and 100');
-    }
-
-    if (redirectType && !['301', '302', '303', '307', '308'].includes(redirectType)) {
-      throw new Error('Invalid redirect type. Must be one of: 301, 302, 303, 307, 308');
-    }
-
-    const query: Record<string, string> = {};
-    if (domainString) {
-      const domainObject = JSON.parse(domainString as string);
-      query['domain_id'] = String(domainObject.id);
-    }
-
-    const optionalParams = {
-      originalURL,
-      path,
-      title,
-      folderId,
-      cloaking,
-      password,
-      redirectType,
-      expiresAt,
-      expiredURL,
-      tags,
-      utmSource,
-      utmMedium,
-      utmCampaign,
-      utmTerm,
-      utmContent,
-      ttl: ttl ? ttl * 1000 : undefined,
-      androidURL,
-      iphoneURL,
-      createdAt,
-      clicksLimit,
-      passwordContact,
-      skipQS,
-      archived,
-      splitURL,
-      splitPercent,
-      integrationAdroll,
-      integrationFB,
-      integrationGA,
-      integrationGTM,
-    };
-
-    const body: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(optionalParams)) {
-      if (value !== null && value !== undefined && value !== '') {
-        body[key] = value;
-      }
-    }
-
+    const domain = shortIoLinks.parseDomainProp(propsValue.domain);
+    const linkId = shortIoClient.seg({ value: propsValue.linkId, label: 'Short Link' });
+    const body = shortIoLinkBody.legacyLinkBody({ values: { ...propsValue }, now: Date.now() });
     try {
-      const response = await shortIoApiCall({
+      const response = await shortIoClient.request({
         method: HttpMethod.POST,
         auth,
-        resourceUri: `/links/${linkId}`,
-        query,
+        path: `/links/${linkId}`,
+        query: { domain_id: domain.id },
         body,
       });
-
       return {
         success: true,
         message: 'Short link updated successfully',
-        data: response,
+        data: shortIoLinks.scrubLink(response),
       };
-    } catch (error: any) {
-      if (error.message.includes('400')) {
-        throw new Error(
-          'Invalid request parameters. Please check your input values and try again.'
-        );
-      }
-      
-      if (error.message.includes('401') || error.message.includes('403')) {
-        throw new Error(
-          'Authentication failed. Please check your API key and permissions.'
-        );
-      }
-      
-      if (error.message.includes('404')) {
-        throw new Error(
-          'Short link not found. Please check the link ID and try again.'
-        );
-      }
-      
-      if (error.message.includes('429')) {
-        throw new Error(
-          'Rate limit exceeded. Please wait a moment before trying again.'
-        );
-      }
-
-      throw new Error(`Failed to update short link: ${error.message}`);
+    } catch (error) {
+      return shortIoClient.rethrowWithHint({
+        error,
+        hints: {
+          404: 'Short link not found. Check the link and domain.',
+          400: 'Short.io rejected the link settings.',
+          409: 'Another link on this domain already uses this path.',
+        },
+      });
     }
   },
 });

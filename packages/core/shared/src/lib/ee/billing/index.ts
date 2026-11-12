@@ -1,6 +1,6 @@
 import { isNil, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { AiCreditsAutoTopUpState, ConsumableFeatureId, PlanName, PlatformPlanWithOnlyLimits, UnconsumableFeatureId } from '../../management/platform'
+import { AiCreditsAutoTopUpState, ConsumableFeatureId, NotStartedSelfServeTrial, PlanName, PlatformPlanWithOnlyLimits, UnconsumableFeatureId } from '../../management/platform'
 
 export const AdjustUnconsumableFeatureQuantityParams = z.object({
     featureId: z.enum(UnconsumableFeatureId),
@@ -30,6 +30,10 @@ export const PurchasablePlan = z.object({
     includedSeats: Nullable(z.number()),
     includedCredits: Nullable(z.number()),
     creditsResetInterval: Nullable(z.string()),
+    creditTopUp: Nullable(z.object({
+        price: z.number(),
+        credits: z.number(),
+    })),
 })
 export type PurchasablePlan = z.infer<typeof PurchasablePlan>
 
@@ -74,7 +78,7 @@ export const AUTUMN_FREE_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'free',
     tablesEnabled: true,
     eventStreamingEnabled: false,
-    includedCredits: 100,
+    includedCredits: 1000,
     activeFlowsLimit: undefined,
     projectsLimit: 1,
     embeddingEnabled: false,
@@ -166,3 +170,21 @@ export const isFreeLegacyEligible = ({ plan, created }: { plan?: string | null, 
     const createdAt = Date.parse(created)
     return !Number.isNaN(createdAt) && createdAt < Date.parse(FREE_LEGACY_CUTOFF_ISO)
 }
+
+export const SELF_SERVE_TRIAL_PLANS: readonly string[] = [
+    PlanName.FREE,
+    PlanName.FREE_LEGACY,
+    PlanName.PLUS,
+    PlanName.PLUS_ANNUAL,
+    PlanName.TEAM,
+    PlanName.TEAM_ANNUAL,
+]
+
+export const isEligibleForSelfServeTrial = (plan: string | null | undefined): boolean => !isNil(plan) && SELF_SERVE_TRIAL_PLANS.includes(plan)
+
+export const notStartedSelfServeTrial = (state: NotStartedSelfServeTrial['state']): NotStartedSelfServeTrial => ({
+    state,
+    startedAt: null,
+    endsAt: null,
+    seatGraceEndsAt: null,
+})

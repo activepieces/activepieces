@@ -1,19 +1,25 @@
 import { isNil, SuggestionType } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ExternalLink, Info, TriangleAlert } from 'lucide-react';
+import { ExternalLink, Info, Puzzle, TriangleAlert } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
-import { LockedAlert } from '@/components/custom/locked-alert';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
-import { RequestTrial } from '@/features/billing';
+import { LockedFeatureRow } from '@/features/billing';
 import { pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
-import { projectCollectionUtils } from '@/features/projects';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -85,13 +91,27 @@ export function PiecesPanel({
       ) : isError ? (
         <PiecesUnavailableAlert error={error} onRetry={refetch} />
       ) : rows.length === 0 ? (
-        <div className="rounded-lg border px-4 py-10 text-sm text-muted-foreground">
-          {isSearching
-            ? t('No piece or action matches your search.')
-            : t('No pieces are reachable in this project.')}
-        </div>
+        <Empty className="rounded-xl border py-12">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Puzzle />
+            </EmptyMedia>
+            <EmptyTitle>
+              {isSearching
+                ? t('No piece or action matches your search.')
+                : t('No pieces are reachable in this project.')}
+            </EmptyTitle>
+            {!isSearching && (
+              <EmptyDescription>
+                {t(
+                  'Pieces show up here once they are allowed in this project.',
+                )}
+              </EmptyDescription>
+            )}
+          </EmptyHeader>
+        </Empty>
       ) : (
-        <div className="rounded-lg border">
+        <div className="rounded-xl border">
           <VirtualizedList
             items={visibleRows}
             estimateSize={COLLAPSED_ROW_HEIGHT}
@@ -107,7 +127,7 @@ export function PiecesPanel({
             <button
               type="button"
               onClick={() => setShowAll(true)}
-              className="w-full border-t px-4 py-3 text-sm font-medium hover:bg-muted/40"
+              className="w-full border-t px-4 py-3 text-sm font-medium hover:bg-gray-3/40"
             >
               {t('Show {count} more pieces', { count: hiddenCount })}
             </button>
@@ -127,23 +147,9 @@ function PiecesUnavailableAlert({
   }
 
   return (
-    <Alert variant="destructive">
-      <TriangleAlert />
-      <AlertTitle>{t('The pieces failed to load')}</AlertTitle>
-      <AlertDescription>
-        {t(
-          'Nothing is listed below because the request failed, not because the project is empty.',
-        )}
-      </AlertDescription>
-      <Button
-        variant="outline"
-        size="sm"
-        className="col-start-2 mt-3 w-fit"
-        onClick={() => onRetry()}
-      >
-        {t('Try again')}
-      </Button>
-    </Alert>
+    <div className="rounded-xl border">
+      <DataFetchErrorState entity={t('pieces')} onRetry={onRetry} />
+    </div>
   );
 }
 
@@ -184,21 +190,14 @@ function RunActionDisabledAlert({
 function PieceSetBanner({ projectId }: { projectId: string | null }) {
   const { platform } = platformHooks.useCurrentPlatform();
   const isPlatformAdmin = useIsPlatformAdmin();
-  const { data: projects = [] } = projectCollectionUtils.useAll();
-  const pieceSetId =
-    projects.find((project) => project.id === projectId)?.pieceSetId ?? null;
-  const { data: pieceSet } = pieceSetQueries.usePieceSet(pieceSetId ?? '');
+  const { data: pieceSet } = pieceSetQueries.useProjectPieceSet(projectId);
 
   if (!platform.plan.managePiecesEnabled) {
     return (
-      <LockedAlert
-        title={t('Control Pieces')}
-        description={t(
-          'Every piece below is reachable by any connected client. Restricting the list to a chosen set is an enterprise feature.',
-        )}
-        button={
-          <RequestTrial featureKey="ENTERPRISE_PIECES" buttonVariant="basic" />
-        }
+      <LockedFeatureRow
+        unlocked={false}
+        featureKey="PIECES"
+        line={t('Choosing which pieces connected clients can reach is locked.')}
       />
     );
   }
@@ -225,8 +224,8 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
         >
           <Link
             to={
-              pieceSetId
-                ? `/platform/pieces/piece-sets/${pieceSetId}`
+              pieceSet
+                ? `/platform/pieces/piece-sets/${pieceSet.id}`
                 : PIECE_SETS_LIST_ROUTE
             }
           >

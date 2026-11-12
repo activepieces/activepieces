@@ -32,6 +32,22 @@ export const insertRowAction = createAction({
 		idempotent: false,
 	},
 	displayName: 'Add Row',
+	propertyGroups: [
+		{
+			key: 'spreadsheet',
+			display: 'section',
+			label: 'Spreadsheet',
+			icon: 'file',
+			props: ['spreadsheetId', 'sheetId'],
+		},
+		{
+			key: 'new_row',
+			display: 'section',
+			label: 'New Row',
+			icon: 'text',
+			props: ['first_row_headers', 'values'],
+		},
+	],
 	props: {
 		...commonProps,
 		first_row_headers: isFirstRowHeaderProp(),
@@ -92,11 +108,11 @@ async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {
 	const request: HttpRequest = {
 		method: HttpMethod.POST,
 		url: `https://sheets.googleapis.com/v4/spreadsheets/${spreadSheetId}/values/${encodeURIComponent(
-			`${range}!A:A`,
+			googleSheetsCommon.sheetRange({ sheetName: range, range: 'A:A' }),
 		)}:append`,
 		body: {
 			majorDimension,
-			range: `${range}!A:A`,
+			range: googleSheetsCommon.sheetRange({ sheetName: range, range: 'A:A' }),
 			values: values.map((val) => ({ values: val })),
 		},
 		authentication: {

@@ -5,6 +5,7 @@ import { clockodoAuth } from '../../auth';
 export default createAction({
   auth: clockodoAuth,
   name: 'delete_absence',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Absence',
   description: 'Deletes an absence in clockodo',
   audience: 'both',

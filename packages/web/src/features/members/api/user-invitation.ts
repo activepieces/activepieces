@@ -1,8 +1,10 @@
 import { SeekPage } from '@activepieces/core-utils';
 import {
   ListUserInvitationsRequest,
+  RemoveProjectFromInvitationResponse,
   SendUserInvitationRequest,
   UserInvitation,
+  UserInvitationPreview,
   UserInvitationWithLink,
 } from '@activepieces/shared';
 
@@ -15,8 +17,22 @@ export const userInvitationApi = {
   list: (request: ListUserInvitationsRequest) => {
     return api.get<SeekPage<UserInvitation>>('/v1/user-invitations', request);
   },
+  listAll: (request: Omit<ListUserInvitationsRequest, 'cursor'>) => {
+    return listAllPages({ request, cursor: undefined });
+  },
+  removeProject({ id, projectId }: { id: string; projectId: string }) {
+    return api.post<RemoveProjectFromInvitationResponse>(
+      `/v1/user-invitations/${id}/remove-project`,
+      { projectId },
+    );
+  },
   delete(id: string): Promise<void> {
     return api.delete<void>(`/v1/user-invitations/${id}`);
+  },
+  preview(token: string): Promise<UserInvitationPreview> {
+    return api.get<UserInvitationPreview>('/v1/user-invitations/preview', {
+      token,
+    });
   },
   accept(token: string): Promise<{ registered: boolean }> {
     return api.post<{ registered: boolean }>(`/v1/user-invitations/accept`, {
@@ -24,3 +40,23 @@ export const userInvitationApi = {
     });
   },
 };
+
+async function listAllPages({
+  request,
+  cursor,
+}: {
+  request: Omit<ListUserInvitationsRequest, 'cursor'>;
+  cursor: string | undefined;
+}): Promise<UserInvitation[]> {
+  const page = await api.get<SeekPage<UserInvitation>>('/v1/user-invitations', {
+    ...request,
+    cursor,
+  });
+  if (!page.next) {
+    return page.data;
+  }
+  return [
+    ...page.data,
+    ...(await listAllPages({ request, cursor: page.next })),
+  ];
+}

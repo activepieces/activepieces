@@ -1,10 +1,10 @@
 import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { Copy, Download } from 'lucide-react';
+import { Download } from 'lucide-react';
 import React, { useMemo } from 'react';
 import ReactJson from 'react-json-view';
-import { toast } from 'sonner';
 
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { syntaxTheme } from '@/lib/syntax-theme';
 import { cn } from '@/lib/utils';
 
 type JsonViewerProps = {
@@ -44,19 +45,12 @@ const JsonViewer = React.memo(
     hideHeader = false,
     className,
   }: JsonViewerProps) => {
-    const { theme } = useTheme();
+    const { resolvedTheme } = useTheme();
     const json = useMemo(() => {
       return removeUndefined(unclearJson);
     }, [unclearJson]);
 
-    const viewerTheme = theme === 'dark' ? 'bright' : 'rjv-default';
-    const handleCopy = () => {
-      navigator.clipboard.writeText(JSON.stringify(json, null, 2));
-      toast.success(t('Copied to clipboard'), {
-        duration: 1000,
-      });
-    };
-
+    const viewerTheme = syntaxTheme.jsonView(resolvedTheme);
     const handleDownload = () => {
       const blob = new Blob([JSON.stringify(json, null, 2)], {
         type: 'application/json',
@@ -71,14 +65,14 @@ const JsonViewer = React.memo(
     return (
       <div
         className={cn(
-          'rounded-lg border border-solid border-dividers overflow-hidden relative',
+          'rounded-xl border border-solid border-gray-6 overflow-hidden relative',
           className,
         )}
       >
         {!hideHeader && (
-          <div className="px-3 py-2 flex border-solid border-b border-dividers justify-center items-center">
+          <div className="px-3 py-2 flex border-solid border-b border-gray-6 justify-center items-center">
             <div className="grow justify-center items-center">
-              <span className="text-md">{title}</span>
+              <span>{title}</span>
             </div>
             <div className="flex items-center gap-0">
               {!hideDownload && (
@@ -100,16 +94,12 @@ const JsonViewer = React.memo(
                 </TooltipProvider>
               )}
               <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant={'ghost'} size={'sm'} onClick={handleCopy}>
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    {t('Copy to clipboard')}
-                  </TooltipContent>
-                </Tooltip>
+                <CopyButton
+                  value={json}
+                  variant="ghost"
+                  size="icon-sm"
+                  tooltipSide="bottom"
+                />
               </TooltipProvider>
             </div>
           </div>
@@ -139,6 +129,7 @@ const JsonViewer = React.memo(
                       style={{
                         overflowX: 'auto',
                         padding: '0.5rem',
+                        backgroundColor: 'transparent',
                         wordBreak: 'break-word',
                       }}
                       theme={viewerTheme}

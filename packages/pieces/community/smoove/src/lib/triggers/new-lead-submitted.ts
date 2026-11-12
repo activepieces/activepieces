@@ -150,6 +150,7 @@ async function fetchSubmissionsForPage(
 export const newLeadSubmitted = createTrigger({
     auth: smooveAuth,
     name: 'newLeadSubmitted',
+    classification: 'READ',
     displayName: 'New Lead Submitted',
     description: 'Fires when a lead submits via form, popup, or mobile campaign',
     aiMetadata: {
@@ -213,13 +214,11 @@ export const newLeadSubmitted = createTrigger({
     },
     
     async onEnable(context) {
-        const { store, auth, propsValue } = context;
-        await pollingHelper.onEnable(polling, { store, auth, propsValue });
+        await pollingHelper.onEnable(polling, context);
     },
     
     async onDisable(context) {
-        const { store, auth, propsValue } = context;
-        await pollingHelper.onDisable(polling, { store, auth, propsValue });
+        await pollingHelper.onDisable(polling, context);
     },
     
     async run(context) {

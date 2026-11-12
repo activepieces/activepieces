@@ -10,6 +10,7 @@ import { lobstermailAuth } from '../..';
 export const threadReplyTrigger = createTrigger({
   auth: lobstermailAuth,
   name: 'thread_reply',
+  classification: 'READ',
   displayName: 'Thread Reply Received',
   description:
     'Triggers when someone replies to an existing email thread. Useful for follow-up and support automation.',

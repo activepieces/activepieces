@@ -21,7 +21,7 @@ export const ReadMoreDescription = ({
   };
 
   return (
-    <p className="text-muted-foreground text-xs whitespace-pre-wrap">
+    <p className="text-gray-11 text-xs whitespace-pre-wrap">
       {beginText}
       {itCanOverflow && (
         <>
@@ -33,7 +33,7 @@ export const ReadMoreDescription = ({
             {endText}
           </span>
           <span
-            className="text-primary ml-2 cursor-pointer"
+            className="text-accent-11 ml-2 cursor-pointer"
             role="button"
             tabIndex={0}
             aria-expanded={isExpanded}

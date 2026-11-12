@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const listCadModelsAction = createAction({
   name: 'list_cad_models',
+  classification: 'SEARCH',
   displayName: 'List CAD Models',
   description: 'Retrieve a list of your generated 3D models',
   audience: 'both',

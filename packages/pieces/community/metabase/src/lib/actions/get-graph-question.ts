@@ -5,6 +5,7 @@ import { chromium } from 'playwright';
 
 export const getGraphQuestion = createAction({
   name: 'getGraphQuestion',
+  classification: 'READ',
   auth: metabaseAuth,
   requireAuth: true,
   displayName: 'Get the graph of the question',

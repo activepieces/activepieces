@@ -69,7 +69,7 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
         const { displayName, pieceName, status, cursor, limit, scope } = request.query
 
         const appConnections = await appConnectionService(request.log).list({
-            pieceName,
+            pieceNames: pieceName,
             displayName,
             status,
             scope,
@@ -126,15 +126,11 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
     )
 
     app.post('/replace', ReplaceAppConnectionsRequest, async (request, reply) => {
-        const { sourceAppConnectionId, targetAppConnectionId, deleteSourceConnection, applyToPublishedVersions } = request.body
         await appConnectionService(request.log).replace({
-            sourceAppConnectionId,
-            targetAppConnectionId,
+            ...request.body,
             projectId: request.projectId,
             platformId: request.principal.platform.id,
             userId: request.principal.id,
-            deleteSourceConnection,
-            applyToPublishedVersions,
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
     })
@@ -232,7 +228,7 @@ const ReplaceAppConnectionsRequest = {
     config: {
         security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE],
-            Permission.WRITE_APP_CONNECTION,
+            Permission.REPLACE_APP_CONNECTION,
             {
                 type: ProjectResourceType.BODY,
             },

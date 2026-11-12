@@ -6,6 +6,7 @@ import { jungleGridCommon } from '../common';
 export const getJobRuntime = createAction({
   auth: jungleGridAuth,
   name: 'get_job_runtime',
+  classification: 'READ',
   displayName: 'Get Job Runtime',
   description: 'Get runtime tails, exit code, and runtime availability details for a Jungle Grid job.',
   audience: 'both',

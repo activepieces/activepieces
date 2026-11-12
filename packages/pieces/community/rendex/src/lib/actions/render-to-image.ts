@@ -3,18 +3,26 @@ import {
   Property,
   DynamicPropsValue,
 } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { rendexAuth } from '../common/auth';
-import { RENDEX_BASE_URL } from '../common/common';
+import { rendexClient } from '../common/client';
+import { RENDEX_LIMITS, rendexInput } from '../common/common';
+import { renderToImageOutputSchema } from '../common/output-schemas';
 
 export const renderToImage = createAction({
   auth: rendexAuth,
   name: 'render_to_image',
+  classification: 'READ',
   displayName: 'Render to Image',
   description:
     'Render raw HTML, a URL, or Markdown to an image (PNG, JPEG, WebP) or a PDF.',
-  audience: 'both',
-  aiMetadata: { description: 'Renders source content into a downloadable image (PNG/JPEG/WebP) or PDF via the Rendex screenshot API, returning the rendered file. The Source mode determines what the content input means: raw HTML markup, a live page URL to capture, or Markdown. Use to turn HTML/Markdown or a webpage into a captured image or PDF; optionally capture the full scrollable page instead of just the viewport. Not idempotent: each call performs a fresh remote render that produces a new file, and in URL mode the capture reflects the live page at request time.', idempotent: false },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Human flow-builder version of Render Screenshot: renders HTML, a URL or Markdown chosen with a Source switch into a PNG, JPEG, WebP or PDF file. Agents should use Render Screenshot, which takes URL, HTML or Markdown directly and exposes viewport, element, wait and extraction options. Each call spends one Rendex credit and creates a new file, so retries render again.',
+    idempotent: false,
+  },
+  outputSchema: renderToImageOutputSchema,
   props: {
     source_type: Property.StaticDropdown({
       displayName: 'Source',
@@ -86,54 +94,36 @@ export const renderToImage = createAction({
   async run(context) {
     const { auth, propsValue, files } = context;
     const { source_type, content, format, full_page } = propsValue;
-
-    // The Source values ("html" | "url" | "markdown") map 1:1 onto both the
-    // dynamic field key and the Rendex request field, so the value is forwarded
-    // under the same name.
     const sourceValue = content[source_type];
     if (!sourceValue) {
       throw new Error('Please provide content for the selected source.');
     }
-
-    const body: Record<string, unknown> = {
-      [source_type]: sourceValue,
-      format: format ?? 'png',
-      fullPage: full_page ?? false,
-    };
-
-    const response = await httpClient.sendRequest<RendexRenderResponse>({
+    if (typeof sourceValue === 'string' && source_type !== 'url') {
+      rendexInput.checkContentSize({ value: sourceValue, label: source_type === 'markdown' ? 'Markdown' : 'HTML', maxBytes: RENDEX_LIMITS.MAX_SOURCE_BYTES });
+    }
+    const { data, meta } = await rendexClient.request({
+      auth,
       method: HttpMethod.POST,
-      url: `${RENDEX_BASE_URL}/v1/screenshot/json`,
-      headers: {
-        Authorization: `Bearer ${auth.secret_text}`,
-        'Content-Type': 'application/json',
+      path: '/v1/screenshot/json',
+      body: {
+        [source_type]: sourceValue,
+        format: format ?? 'png',
+        fullPage: full_page ?? false,
+        ...(source_type === 'url' ? {} : { waitUntil: 'load' }),
       },
-      body,
+      timeoutMs: RENDEX_LIMITS.RENDER_TIMEOUT_MS,
+      operation: 'render the image',
     });
-
-    const { image, ...metadata } = response.body.data;
+    const record = rendexInput.isRecord(data) ? data : {};
+    const image = record['image'];
+    if (typeof image !== 'string' || image === '') {
+      throw new Error('Rendex could not render the image: the response had no image data.');
+    }
+    const metadata = Object.fromEntries(Object.entries(record).filter(([key]) => key !== 'image'));
     const file = await files.write({
-      fileName: `rendex-capture.${metadata.format}`,
+      fileName: `rendex-capture.${String(metadata['format'] ?? format ?? 'png')}`,
       data: Buffer.from(image, 'base64'),
     });
-
-    return { file, ...metadata };
+    return { file, ...metadata, usage: meta?.['usage'] ?? null };
   },
 });
-
-type RendexRenderResponse = {
-  data: {
-    image: string;
-    contentType: string;
-    url: string;
-    width: number;
-    height: number;
-    format: string;
-    bytesSize: number;
-    capturedAt: string;
-    quality: string;
-    waitStrategy: string;
-    loadTimeMs: number;
-    renderingEngine: string;
-  };
-};

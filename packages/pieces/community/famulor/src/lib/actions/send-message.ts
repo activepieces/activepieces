@@ -6,6 +6,7 @@ import { famulorCommon } from '../common';
 export const sendMessage = createAction({
   auth: famulorAuth,
   name: 'sendMessage',
+  classification: 'WRITE',
   displayName: 'Send Message',
   description: 'Send a message to an existing conversation and receive the assistant\'s reply.',
   audience: 'both',

@@ -53,6 +53,7 @@ export type GetRecordsParams = {
     fields?: any[];
     offset?: number;
     limit?: number;
+    order?: string;
 };
 
 export type CreateRecordParams = {

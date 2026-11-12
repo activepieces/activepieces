@@ -1,5 +1,5 @@
-import { ErrorCode, PlatformUsageMetric } from '@activepieces/core-utils'
-import { InvitationStatus, InvitationType, Platform, PlatformRole, PrincipalType, Project, User, UserStatus } from '@activepieces/shared'
+import { ErrorCode, PlatformUsageMetric, ProjectRole, SeekPage } from '@activepieces/core-utils'
+import { DefaultProjectRole, InvitationStatus, InvitationType, Platform, PlatformRole, PrincipalType, Project, User, UserInvitation, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
@@ -96,6 +96,16 @@ describe('Seat reservation (ADR-0010) + active-user floor (ADR-0009)', () => {
             })
 
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
+        })
+
+        it('refuses re-sending an expired invite when the seats are full', async () => {
+            const { mockOwnerToken, mockPlatform, mockProject } = await setupPlatform({ usersLimit: 1 })
+            const expiredEmail = faker.internet.email().toLowerCase()
+            await seedInvitation({ platformId: mockPlatform.id, status: InvitationStatus.PENDING, email: expiredEmail, createdDaysAgo: 8 })
+
+            const response = await invite({ token: mockOwnerToken, projectId: mockProject.id, email: expiredEmail })
+
+            expectSeatQuotaExceeded(response)
         })
 
         it('counts accepted-but-not-yet-provisioned invitations toward the seat limit', async () => {
@@ -197,6 +207,32 @@ describe('Seat reservation (ADR-0010) + active-user floor (ADR-0009)', () => {
             await expect(
                 assertSeatsNotBelowActiveUsers({ platformId: mockPlatform.id, targetLimit: 2, log: mockLog }),
             ).resolves.toBeUndefined()
+        })
+    })
+
+    describe('Listing invites that hold a seat', () => {
+        it('lists project invites of every project when no project is given', async () => {
+            const { mockOwnerToken, mockPlatform, mockProject } = await setupPlatform({ usersLimit: 10 })
+            const adminRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.ADMIN })
+            const projectInvitation = createMockUserInvitation({
+                platformId: mockPlatform.id,
+                projectId: mockProject.id,
+                type: InvitationType.PROJECT,
+                projectRole: adminRole,
+                status: InvitationStatus.PENDING,
+            })
+            await db.save('user_invitation', projectInvitation)
+
+            const response = await app!.inject({
+                method: 'GET',
+                url: '/api/v1/user-invitations',
+                headers: { authorization: `Bearer ${mockOwnerToken}` },
+                query: { type: InvitationType.PROJECT },
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            const emails = response.json<SeekPage<UserInvitation>>().data.map((invitation) => invitation.email)
+            expect(emails).toEqual([projectInvitation.email])
         })
     })
 })

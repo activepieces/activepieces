@@ -10,6 +10,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 export const createSession = createAction({
   auth: sessionAuth,
   name: 'create_session',
+  classification: 'WRITE',
   displayName: 'Create Session',
   description: 'Quickly create a session.',
   audience: 'both',

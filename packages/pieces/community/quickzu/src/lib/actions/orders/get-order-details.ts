@@ -1,10 +1,13 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { quickzuAuth } from '../../auth';
-import { makeClient, quickzuCommon } from '../../common';
+import { quickzuOutputSchemas } from '../../common/output-schemas';
+import { makeClient, quickzuCommon, requireValue } from '../../common';
 
 export const getOrderDetailsAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_get_order_details',
+  outputSchema: quickzuOutputSchemas.order,
+  classification: 'READ',
   displayName: 'Get Order Details',
   description: 'Retrieves order details from store.',
   audience: 'both',
@@ -20,6 +23,6 @@ export const getOrderDetailsAction = createAction({
     const { orderId } = context.propsValue;
 
     const client = makeClient(context.auth);
-    return await client.getOrderDetails(orderId!);
+    return await client.getOrderDetails(requireValue({ value: orderId, label: 'Order' }));
   },
 });
