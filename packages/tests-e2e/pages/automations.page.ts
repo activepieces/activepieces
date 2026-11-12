@@ -24,6 +24,22 @@ export class AutomationsPage extends BasePage {
     }
     return flowId;
   }
+
+  async search(term: string): Promise<void> {
+    await this.page.goto(`${this.url}?search=${encodeURIComponent(term)}`);
+  }
+
+  row(name: string) {
+    return this.page.getByText(name, { exact: true });
+  }
+
+  errorState() {
+    return this.page.getByTestId('data-fetch-error-state');
+  }
+
+  async retryAfterError(): Promise<void> {
+    await this.page.getByTestId('data-fetch-error-retry').click();
+  }
 }
 
 const FLOW_URL = /\/flows\/([^/?#]+)/;
