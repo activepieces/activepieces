@@ -1,8 +1,9 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { beehiivAuth } from '../common/auth';
 import { publicationId, subscriptionId } from '../common/props';
-import { beehiivApiCall } from '../common/client';
+import { apiKeyOf, beehiivClient, pathFor } from '../common/client';
+import { aiInput } from '../common/ai-props';
+import { beehiivOutputSchemas } from '../common/output-schemas';
 
 export const deleteSubscriptionAction = createAction({
 	auth: beehiivAuth,
@@ -10,8 +11,13 @@ export const deleteSubscriptionAction = createAction({
 	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Subscription',
 	description: 'Permanently deletes a subscription from a Beehiiv publication.',
-	audience: 'both',
-	aiMetadata: { description: 'Permanently deletes a subscription from a beehiiv publication, identified by publication ID and subscription ID. Use to remove a subscriber entirely (distinct from unsubscribing, which Update Subscription handles). Idempotent in effect — once deleted, repeating the call leaves the subscriber absent, though a subsequent call may error on the missing ID.', idempotent: true },
+	audience: 'human',
+	aiMetadata: {
+		description:
+			'Permanently deletes a subscription from a beehiiv publication by publication and subscription ID. This is not an unsubscribe: the record is removed. Running it again fails with not found.',
+		idempotent: false,
+	},
+	outputSchema: beehiivOutputSchemas.humanDeleteSubscription,
 	props: {
 		publicationId: publicationId,
 		subscriptionId: subscriptionId(true),
@@ -19,12 +25,13 @@ export const deleteSubscriptionAction = createAction({
 	async run(context) {
 		const { publicationId, subscriptionId } = context.propsValue;
 
-		const response = await beehiivApiCall({
-			apiKey: context.auth.secret_text,
-			method: HttpMethod.DELETE,
-			resourceUri: `/publications/${publicationId}/subscriptions/${subscriptionId}`,
+		await beehiivClient.request({
+			apiKey: apiKeyOf(context.auth),
+			method: 'DELETE',
+			path: pathFor(['publications', publicationId, 'subscriptions', aiInput.requireText({ value: subscriptionId, label: 'Subscription ID' })]),
+			operation: 'delete subscription',
 		});
 
-		return response;
+		return { deleted: true, subscription_id: subscriptionId };
 	},
 });

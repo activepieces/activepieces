@@ -90,7 +90,7 @@ export function SpreadsheetPreview({
   const actions = (
     <>
       <CopyButton
-        textToCopy={previewUtils.buildTsv(table)}
+        value={previewUtils.buildTsv(table)}
         variant="ghost"
         size="icon-sm"
       />

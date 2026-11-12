@@ -79,8 +79,10 @@ Reusable flow/table blueprints. Types: OFFICIAL (Activepieces-curated, platformI
 
 - **Flows** — the versioned trigger + action graph, DRAFT/LOCKED, publishing
 - **Draft Refresh** — how an open builder tab takes a different writer's save: Draft Write, Draft Push, Editor Session, Resource Lock
-- **Flow Runs** — the status state machine and RunTimeline phases
+- **Flow Runs** — the status state machine, RunTimeline phases, waitpoints and the fan-in barrier
 - **Action Runs** — a single step executed outside any flow, synchronously
+- **Fan-in entry points** — what a caller of the barrier has to deal with, and what the next one inherits
+- **Fan-out prior art** — how n8n / Make / Zapier / Temporal / Inngest / Trigger.dev handle batched fan-out, and which stated reasons transfer
 - **Triggers** — POLLING / WEBHOOK / APP_WEBHOOK / MANUAL
 - **Human Input** — forms, approvals, the resume confirmation page
 - **Subflows** — flow-calls-flow: Callable Flow, Call Flow, streaming fan-out
