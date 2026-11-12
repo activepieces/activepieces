@@ -14,7 +14,7 @@ export const changeProductStatusAction = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Sets the status of one Salla product, by its numeric product ID (1672932878), to sale (on sale), out (out of stock) or hidden. Use Delete Product to remove a product for good and Update Product to change anything else. Setting the same status again gives the same result, so it is safe to retry.',
+      'Sets the status of one Salla product, by its numeric product ID (1672932878), to sale (on sale), out (out of stock) or hidden. The product keeps its sales channels (web store, app): Salla clears them when a product is hidden, so the step saves them and puts them back when the product is shown again; a product hidden outside Activepieces comes back on the web store only. Use Delete Product to remove a product for good and Update Product to change anything else. Setting the same status again gives the same result, so it is safe to retry.',
     idempotent: true,
   },
   outputSchema: sallaOutputSchemas.productStatus,
@@ -29,7 +29,7 @@ export const changeProductStatusAction = createAction({
       options: { options: productStatusOptions() },
     }),
   },
-  async run({ auth, propsValue }) {
-    return sallaProducts.changeProductStatus({ auth, productId: propsValue.product, status: propsValue.status });
+  async run({ auth, propsValue, store }) {
+    return sallaProducts.changeProductStatus({ auth, productId: propsValue.product, status: propsValue.status, store });
   },
 });

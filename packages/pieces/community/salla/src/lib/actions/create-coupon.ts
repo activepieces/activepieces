@@ -101,7 +101,7 @@ export const createCouponAction = createAction({
     }),
     expiry_date: Property.DateTime({
       displayName: 'Expiry Date',
-      description: 'Last day the coupon works, in store time (Asia/Riyadh), at least one day after today, for example 2026-12-31.',
+      description: 'Last day the coupon works, in store time (Asia/Riyadh), at least one day after today, for example 2026-12-31. With no time set, it works until 23:59:59 that day.',
       width: 'half',
       required: true,
     }),

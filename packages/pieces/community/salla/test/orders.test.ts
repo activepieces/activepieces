@@ -385,7 +385,7 @@ describe('buildUpdateOrderBody and updateOrder', () => {
     expect(sallaOrders.buildUpdateOrderBody({})).toEqual({});
     expect(
       sallaOrders.buildUpdateOrderBody({
-        customer: { name: ' ', email: '' },
+        customerId: ' ',
         payment: { status: '', acceptedMethods: [] },
         receiver: {},
         couponCode: ' ',
@@ -398,7 +398,7 @@ describe('buildUpdateOrderBody and updateOrder', () => {
   it('converts IDs to numbers', () => {
     expect(
       sallaOrders.buildUpdateOrderBody({
-        customer: { id: '15' },
+        customerId: '15',
         courierId: '9',
         branchId: 4,
         employeeIds: ['7', 8],

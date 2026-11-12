@@ -54,7 +54,7 @@ export const aiCreateCouponAction = createAction({
     expiry_date: Property.ShortText({
       displayName: 'Expiry Date',
       description:
-        'Last day the coupon works, store time (Asia/Riyadh), format YYYY-MM-DD or YYYY-MM-DD HH:MM:SS, for example 2026-12-31. Must be at least tomorrow.',
+        'Last day the coupon works, store time (Asia/Riyadh), format YYYY-MM-DD or YYYY-MM-DD HH:MM:SS, for example 2026-12-31. A date with no time works until 23:59:59 that day. Must be at least tomorrow.',
       required: true,
     }),
     free_shipping: Property.StaticDropdown({

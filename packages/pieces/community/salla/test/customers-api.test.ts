@@ -67,7 +67,7 @@ describe('createCustomer', () => {
       auth,
       input: { firstName: 'Ali', lastName: 'Saleh', mobile: '0501234567', countryCode: 'SA', groupIds: ['3'] },
     });
-    const sent = spy.mock.calls[0][0];
+    const sent = spy.mock.calls[spy.mock.calls.length - 1][0];
     expect(sent.method).toBe(HttpMethod.POST);
     expect(sent.url).toBe(`${BASE_URL}/customers`);
     expect(sent.retries).toBe(0);
@@ -86,6 +86,55 @@ describe('createCustomer', () => {
     const spy = vi.spyOn(httpClient, 'sendRequest');
     await expect(sallaCustomers.createCustomer({ auth, input: { firstName: 'Ali', lastName: 'Saleh', mobile: '' } })).rejects.toThrow('mobile number');
     expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+describe('createCustomer refuses a mobile or email another customer already has', () => {
+  const existing = { id: 19041486, first_name: 'APcloud2', last_name: 'Tester', mobile: 551119876, mobile_code: '+966', email: 'apcloud.c1.tester2@example.com' };
+
+  function mockSearch(found: (keyword: string) => unknown[]) {
+    return vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request: HttpRequest) => {
+      if (request.method === HttpMethod.GET) {
+        return ok({ data: found(paramsOf(request).get('keyword') ?? ''), pagination: onePage });
+      }
+      return respond({ body: { data: { id: 77, first_name: 'Dup', last_name: 'Probe' } }, status: 201 });
+    });
+  }
+
+  it('sends nothing when the mobile belongs to another customer, because Salla would overwrite that customer', async () => {
+    const spy = mockSearch((keyword) => (keyword === '551119876' ? [existing] : []));
+    await expect(
+      sallaCustomers.createCustomer({ auth, input: { firstName: 'Dup', lastName: 'Probe', mobile: '+966 0551119876', email: 'dup.probe@example.com' } }),
+    ).rejects.toThrow('Customer 19041486 already has the mobile +966551119876');
+    expect(spy.mock.calls.map(([request]) => request.method)).toEqual([HttpMethod.GET]);
+  });
+
+  it('sends nothing when the email belongs to another customer, whatever its letter case', async () => {
+    const spy = mockSearch((keyword) => (keyword === 'apcloud.c1.tester2@example.com' ? [existing] : []));
+    await expect(
+      sallaCustomers.createCustomer({ auth, input: { firstName: 'Dup', lastName: 'Probe', mobile: '+966551119111', email: ' APCloud.C1.Tester2@example.com ' } }),
+    ).rejects.toThrow('Customer 19041486 already has the email apcloud.c1.tester2@example.com');
+    expect(spy.mock.calls.every(([request]) => request.method === HttpMethod.GET)).toBe(true);
+  });
+
+  it('creates the customer when the search only finds partial matches', async () => {
+    const spy = mockSearch(() => [
+      { ...existing, mobile: 5511198760, email: 'other@example.com' },
+      { ...existing, mobile_code: '+971', email: 'apcloud.c1.tester2@example.com.sa' },
+    ]);
+    const result = await sallaCustomers.createCustomer({
+      auth,
+      input: { firstName: 'Dup', lastName: 'Probe', mobile: '+966551119876', email: 'apcloud.c1.tester2@example.com' },
+    });
+    expect(spy.mock.calls.map(([request]) => request.method)).toEqual([HttpMethod.GET, HttpMethod.GET, HttpMethod.POST]);
+    expect(result).toMatchObject({ id: 77 });
+  });
+
+  it('searches by the national number without the country code', async () => {
+    const spy = mockSearch(() => []);
+    await sallaCustomers.createCustomer({ auth, input: { firstName: 'Ali', lastName: 'Saleh', mobile: '0501234567', countryCode: 'SA' } });
+    const searches = spy.mock.calls.map(([request]) => request).filter((request) => request.method === HttpMethod.GET);
+    expect(searches.map((request) => [pathOf(request), paramsOf(request).get('keyword')])).toEqual([['/customers', '501234567']]);
   });
 });
 

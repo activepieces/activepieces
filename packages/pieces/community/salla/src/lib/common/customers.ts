@@ -42,13 +42,74 @@ async function getCustomer({
 }
 
 async function createCustomer({ auth, input }: { auth: SallaAuth; input: CreateCustomerInput }): Promise<Record<string, unknown>> {
+  const body = buildCreateCustomerBody(input);
+  await refuseTakenMobileOrEmail({ auth, body });
   const response = await sallaApi.request<unknown>({
     auth,
     method: HttpMethod.POST,
     path: '/customers',
-    body: buildCreateCustomerBody(input),
+    body,
   });
   return withCustomerExtras(response.body.data);
+}
+
+async function refuseTakenMobileOrEmail({ auth, body }: { auth: SallaAuth; body: Record<string, unknown> }): Promise<void> {
+  const mobile = String(body['mobile']);
+  const dialCode = String(body['mobile_code_country']);
+  const sameMobile = await findCustomer({
+    auth,
+    keyword: mobile,
+    matches: (customer) => nationalDigits(customer['mobile']) === mobile && dialCodeOf(customer['mobile_code']) === dialCode,
+  });
+  if (sameMobile) {
+    throw new Error(
+      `Customer ${String(sameMobile['id'])} already has the mobile ${dialCode}${mobile}. Salla would overwrite that customer's name and email instead of adding a new customer, so nothing was sent. Use Update Customer to change that customer.`,
+    );
+  }
+  const email = typeof body['email'] === 'string' ? body['email'].toLowerCase() : undefined;
+  if (!email) {
+    return;
+  }
+  const sameEmail = await findCustomer({
+    auth,
+    keyword: email,
+    matches: (customer) => typeof customer['email'] === 'string' && customer['email'].trim().toLowerCase() === email,
+  });
+  if (sameEmail) {
+    throw new Error(
+      `Customer ${String(sameEmail['id'])} already has the email ${email}. Salla would add a second customer with the same email, so nothing was sent. Use Update Customer to change that customer, or use another email.`,
+    );
+  }
+}
+
+async function findCustomer({
+  auth,
+  keyword,
+  matches,
+}: {
+  auth: SallaAuth;
+  keyword: string;
+  matches: (customer: Record<string, unknown>) => boolean;
+}): Promise<Record<string, unknown> | undefined> {
+  const response = await sallaApi.request<unknown>({
+    auth,
+    method: HttpMethod.GET,
+    path: '/customers',
+    query: { keyword, per_page: CUSTOMERS_PER_PAGE },
+  });
+  const customers = Array.isArray(response.body.data) ? response.body.data.filter(sallaApi.isRecord) : [];
+  return customers.find(matches);
+}
+
+function nationalDigits(value: unknown): string | undefined {
+  const text = typeof value === 'number' ? String(value) : typeof value === 'string' ? sallaUtils.normalizeDigits(value).replace(/\D/g, '') : '';
+  const digits = text.replace(/^0+/, '');
+  return digits.length > 0 ? digits : undefined;
+}
+
+function dialCodeOf(value: unknown): string | undefined {
+  const digits = typeof value === 'number' ? String(value) : typeof value === 'string' ? value.replace(/\D/g, '') : '';
+  return digits.length > 0 ? `+${digits}` : undefined;
 }
 
 function buildCreateCustomerBody(input: CreateCustomerInput): Record<string, unknown> {

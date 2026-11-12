@@ -25,7 +25,7 @@ const required = {
   type: 'percentage',
   amount: 10,
   free_shipping: false,
-  expiry_date: '2026-12-31',
+  expiry_date: '2026-12-31 23:59:59',
   exclude_sale_products: false,
   maximum_amount: 50,
 };
@@ -96,7 +96,7 @@ describe('buildCreateCouponBody', () => {
     expect(() => coupon({ expiryDate: '' })).toThrow('Give the coupon expiry date, for example 2026-12-31.');
     expect(() => coupon({ expiryDate: '2026-02-30' })).toThrow('Expiry date "2026-02-30" is not a valid date.');
     expect(() => coupon({ expiryDate: '2026-11-11' })).toThrow('Today is 2026-11-11, so use 2026-11-12 or later; you gave 2026-11-11.');
-    expect(coupon({ expiryDate: '2026-11-12' })['expiry_date']).toBe('2026-11-12');
+    expect(coupon({ expiryDate: '2026-11-12' })['expiry_date']).toBe('2026-11-12 23:59:59');
     expect(coupon({ expiryDate: '2026-12-31T23:59' })['expiry_date']).toBe('2026-12-31 23:59:00');
   });
 
