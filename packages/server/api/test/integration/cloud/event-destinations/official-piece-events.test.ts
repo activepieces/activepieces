@@ -5,6 +5,7 @@ import { validatorCompiler } from 'fastify-type-provider-zod'
 import { Repository } from 'typeorm'
 import { Mock } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { redisHelper } from '../../../../src/app/database/redis'
 import { redisConnections } from '../../../../src/app/database/redis-connections'
 import { adminPlatformModule } from '../../../../src/app/ee/platform/admin/admin-platform.controller'
 import * as eventDestinationsModule from '../../../../src/app/event-destinations/event-destinations.service'
@@ -189,7 +190,7 @@ beforeEach(async () => {
     await connection.getRepository('piece_metadata').createQueryBuilder().delete().execute()
     await connection.getRepository('event_destination').createQueryBuilder().delete().execute()
     const redis = await redisConnections.useExisting()
-    const claimKeys = await redis.keys('official-piece-added:*')
+    const claimKeys = await redisHelper.scanAll(redis, 'official-piece-added:*')
     if (claimKeys.length > 0) {
         await redis.del(...claimKeys)
     }
