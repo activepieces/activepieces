@@ -3695,6 +3695,19 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/genaya": {
+      "name": "@activepieces/piece-genaya",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/gender-api": {
       "name": "@activepieces/piece-gender-api",
       "version": "0.2.0",
@@ -12063,6 +12076,8 @@
     "@activepieces/piece-gamma": ["@activepieces/piece-gamma@workspace:packages/pieces/community/gamma"],
 
     "@activepieces/piece-gcloud-pubsub": ["@activepieces/piece-gcloud-pubsub@workspace:packages/pieces/community/gcloud-pubsub"],
+
+    "@activepieces/piece-genaya": ["@activepieces/piece-genaya@workspace:packages/pieces/community/genaya"],
 
     "@activepieces/piece-gender-api": ["@activepieces/piece-gender-api@workspace:packages/pieces/community/gender-api"],
 
