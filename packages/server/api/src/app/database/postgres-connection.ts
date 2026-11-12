@@ -467,6 +467,7 @@ import { AddIsDefaultToProject1877000000000 } from './migration/postgres/1877000
 import { AddAiUsageTables1878000000000 } from './migration/postgres/1878000000000-AddAiUsageTables'
 import { AddReplaceAppConnectionPermission1879000000000 } from './migration/postgres/1879000000000-AddReplaceAppConnectionPermission'
 import { AddImportNudgeShownAtToUserMemory1880000000000 } from './migration/postgres/1880000000000-AddImportNudgeShownAtToUserMemory'
+import { ClearAiUsageCopiedFromSharedCustomers1881000000000 } from './migration/postgres/1881000000000-ClearAiUsageCopiedFromSharedCustomers'
 import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
 import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from './migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
 import { BackfillPieceTranslation1874000000000 } from './migration/postgres/background/1874000000000-BackfillPieceTranslation'
@@ -961,6 +962,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAiUsageTables1878000000000,
         AddReplaceAppConnectionPermission1879000000000,
         AddImportNudgeShownAtToUserMemory1880000000000,
+        ClearAiUsageCopiedFromSharedCustomers1881000000000,
     ]
     return migrations
 }

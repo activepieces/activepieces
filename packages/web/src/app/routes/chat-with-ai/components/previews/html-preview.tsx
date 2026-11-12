@@ -64,7 +64,7 @@ export function HtmlPreview({
         label={t('Open in new tab')}
         onClick={openInNewTab}
       />
-      <CopyButton textToCopy={html} variant="ghost" size="icon-sm" />
+      <CopyButton value={html} variant="ghost" size="icon-sm" />
       <DownloadButton
         fileName={fileName}
         textToDownload={html}

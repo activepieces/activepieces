@@ -37,7 +37,7 @@ export function CollapsibleJson({
               <code>{jsonString}</code>
             </pre>
             <div className="absolute top-2 right-2">
-              <CopyButton textToCopy={jsonString} />
+              <CopyButton value={jsonString} />
             </div>
           </div>
           {description && <p className="text-xs text-gray-11">{description}</p>}

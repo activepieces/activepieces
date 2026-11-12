@@ -45,7 +45,7 @@ Records security-relevant actions for compliance and forensics, persisted to the
 - A `DELETE` does not shrink the table file; Postgres reuses the space. A one-time shrink needs `pg_repack` or `VACUUM FULL`.
 - `AP_AUDIT_LOG_RETENTION_PAUSED` is read by the app server that picks up the hourly job, and every app server runs the system-job worker. A pause set on only some servers does not stop the cleanup.
 - The piece-upgrade revert (`POST /v1/admin/flows/revert-upgrade`) reads `flow.pieces.upgraded` rows, so it can only revert upgrades still inside the platform's retention period.
-- A new event's docs page renders from `openapi-schema`, which resolves against `docs/openapi.json`. Nothing regenerates that file; commit its entries by hand. `z.toJSONSchema(schema, { target: 'draft-2020-12', io: 'input' | 'output' })` plus `$id: '#/components/schemas/<name>[Input]'` reproduces the existing entries exactly. The four `flow.approval.*` pages point at schemas that are not in the file.
+- A new event's docs page renders from `openapi-schema`, which resolves against `docs/openapi.json`. Nothing in CI regenerates that file; update it from a server dump as *api-endpoints* describes, or by hand. `z.toJSONSchema(schema, { target: 'draft-2020-12', io: 'input' | 'output' })` plus `$id: '#/components/schemas/<name>[Input]'` reproduces the existing entries exactly. The four `flow.approval.*` pages point at schemas that are not in the file.
 
 ### Key files
 Entry point: `auditLogService`, wired up in `auditEventModule` which calls `.setup()` and mounts the controller at `/v1/audit-events`. Retention: `auditLogRetention` (the job) and `auditLogRetentionCeiling` (the only reader of the env ceiling).
