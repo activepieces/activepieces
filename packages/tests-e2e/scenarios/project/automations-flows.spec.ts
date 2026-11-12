@@ -107,8 +107,8 @@ test.describe('Automations › flows', { tag: ['@feature:flows-list', '@surface'
     await automationsPage.visitFlows();
 
     await automationsPage.typeSearch(prefix);
-    await expect(automationsPage.row(unmatched.flowName)).toBeHidden();
     await expect(automationsPage.rowsMatching(prefix)).toHaveCount(PAGE_SIZE);
+    await expect(automationsPage.row(unmatched.flowName)).toBeHidden();
 
     await automationsPage.nextPage();
     await expect(automationsPage.rowsMatching(prefix)).toHaveCount(1);
