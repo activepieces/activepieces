@@ -159,11 +159,11 @@ See [Official piece events](#official-piece-events) below for what fires them an
 
 ### Official piece events
 
-Official piece events fire when official pieces are added to your instance: on self-hosted, when the hourly piece sync inserts them; on Cloud, when a piece is published. Custom and private pieces do not send them. When one sync adds several versions of a piece, you get one event, for the newest version. A version that is older than one you already have sends nothing.
+Official piece events fire when official piece versions are added to your instance: on self-hosted, when the piece sync inserts them (at startup, every hour, and on `POST /v1/pieces/sync`); on Cloud, when a piece is published. Custom and private pieces do not send them. Every added version sends one event. `official_piece.added` is sent once per piece, for the first version of it that your instance gets, and every other version sends a version event.
 
 Patch versions are frequent, so subscribe to `official_piece.patch_version.added` only if you need them.
 
-The envelope carries `platformId` but no project or user: there is no `projectId`, `userId`, `userEmail`, or `ip`. `changeType` is `new` for `official_piece.added`, `major` or `minor` for `official_piece.minor_or_major_version.added`, and `patch` for `official_piece.patch_version.added`. `minimumSupportedRelease` and `maximumSupportedRelease` are the Activepieces releases the version supports.
+The envelope carries `platformId` but no project or user: there is no `projectId`, `userId`, `userEmail`, or `ip`. `changeType` is `new` for `official_piece.added`, `major` or `minor` for `official_piece.minor_or_major_version.added`, and `patch` for `official_piece.patch_version.added`. `previousVersion` is the newest version your instance had before this one. The sync adds the newest versions first, so `version` can be lower than `previousVersion`, and `changeType` then describes the difference between the two. `minimumSupportedRelease` and `maximumSupportedRelease` are the Activepieces releases the version supports.
 
 ```json
 {
@@ -179,10 +179,10 @@ The envelope carries `platformId` but no project or user: there is no `projectId
 To find out which of your piece sets show the piece, call `GET /v1/piece-sets?limit=100` with a platform [API key](/endpoints/overview) as a Bearer token. Pass the `next` value of each response as `cursor` until `next` is `null`. For each set, read `config.pieces`: when `mode` is `include_all`, the set shows every piece except those in `exceptions`; when `mode` is `exclude_all`, it shows only the pieces in `exceptions`. A piece that no set shows is not available in any project. The handler flow that the destination form generates already has this request as an HTTP step in each official piece branch.
 
 <Note>
-Expect a burst after you upgrade Activepieces. The piece sync only adds versions that your release supports, so the first sync after an upgrade adds every version that the new release now supports, and sends one event for each piece that has one.
+Expect a burst after you upgrade Activepieces. The piece sync only adds versions that your release supports, so the first sync after an upgrade adds every version that the new release now supports, and sends one event for each of them.
 </Note>
 
-An event can arrive more than once, and an event that is not delivered is not sent again. Every send gets a new `id`, so use `data.piece.name` plus `data.piece.version` as the idempotency key. Activepieces does not replay events your endpoint missed. To catch up after an outage, compare what you have against `GET /v1/pieces`.
+Every send gets a new `id`, so if you store these events, key them by `data.piece.name` plus `data.piece.version`. An event that is not delivered is not sent again: Activepieces does not replay events your endpoint missed. To catch up after an outage, compare what you have against `GET /v1/pieces`.
 
 ## Requirements
 
