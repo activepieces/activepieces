@@ -55,7 +55,7 @@ async function baseline({ suiteKey, modelVersion }: { suiteKey: string, modelVer
         return null
     }
     const items = await collectItems({ experimentId: latest.id, cursor: undefined, collected: [] })
-    const failedByItem = new Map<string, boolean>()
+    const gateValues = new Map<string, boolean[]>()
     for (const batch of chunk(items, CELLS_BATCH)) {
         const cells = ResultCells.parse(await posthogDataset.request({
             path: `${EXPERIMENTS_PATH}${latest.id}/result_cells/`,
@@ -63,14 +63,21 @@ async function baseline({ suiteKey, modelVersion }: { suiteKey: string, modelVer
         }))
         cells.results.forEach((cell) => {
             if (cell.status === 'ok' && typeof cell.value === 'boolean') {
-                failedByItem.set(cell.item_id, (failedByItem.get(cell.item_id) ?? false) || !cell.value)
+                gateValues.set(cell.item_id, [...(gateValues.get(cell.item_id) ?? []), cell.value])
             }
         })
     }
+    const verdictOf = (itemId: string): RunVerdict => {
+        const values = gateValues.get(itemId) ?? []
+        if (values.includes(false)) {
+            return 'fail'
+        }
+        return values.length === gates.length ? 'pass' : 'unknown'
+    }
     const counts = new Map<string, VerdictCounts>()
     for (const key of new Set(items.map((item) => item.case_key).filter((key) => key !== TOOL_DEFINITIONS_KEY))) {
-        const failed = items.filter((item) => item.case_key === key && failedByItem.has(item.id)).map((item) => failedByItem.get(item.id) === true)
-        counts.set(key, { pass: failed.filter((value) => !value).length, fail: failed.filter(Boolean).length })
+        const verdicts = items.filter((item) => item.case_key === key).map((item) => verdictOf(item.id))
+        counts.set(key, { pass: verdicts.filter((verdict) => verdict === 'pass').length, fail: verdicts.filter((verdict) => verdict === 'fail').length })
     }
     return { applicationVersion: latest.application_version ?? 'unknown', counts, toolFingerprints: await readToolFingerprints({ experimentId: latest.id, items }) }
 }

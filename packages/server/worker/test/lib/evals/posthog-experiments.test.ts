@@ -44,7 +44,12 @@ describe('posthogExperiments.baseline', () => {
     it('reads pass and fail counts per case using only GET requests', async () => {
         mockBaseline({
             items: [{ id: 'i1', case_key: 'case-1' }, { id: 'i2', case_key: 'case-1' }],
-            cells: [{ item_id: 'i1', status: 'ok', value: true }, { item_id: 'i2', status: 'ok', value: false }],
+            cells: [
+                { item_id: 'i1', status: 'ok', value: true },
+                { item_id: 'i1', status: 'ok', value: true },
+                { item_id: 'i1', status: 'ok', value: true },
+                { item_id: 'i2', status: 'ok', value: false },
+            ],
             payload: null,
         })
 
@@ -52,6 +57,25 @@ describe('posthogExperiments.baseline', () => {
 
         expect(found?.counts.get('case-1')).toEqual({ pass: 1, fail: 1 })
         expect(request.mock.calls.every(([params]) => (params.method ?? 'GET') === 'GET')).toBe(true)
+    })
+
+    it('counts a run as pass only when every gate passed, like the current run does', async () => {
+        mockBaseline({
+            items: [{ id: 'i1', case_key: 'case-1' }, { id: 'i2', case_key: 'case-1' }],
+            cells: [
+                { item_id: 'i1', status: 'ok', value: true },
+                { item_id: 'i1', status: 'ok', value: true },
+                { item_id: 'i1', status: 'ok', value: true },
+                { item_id: 'i2', status: 'not_applicable', value: null },
+                { item_id: 'i2', status: 'ok', value: true },
+                { item_id: 'i2', status: 'ok', value: true },
+            ],
+            payload: null,
+        })
+
+        const found = await posthogExperiments.baseline({ suiteKey: 'chat-core', modelVersion: 'm' })
+
+        expect(found?.counts.get('case-1')).toEqual({ pass: 1, fail: 0 })
     })
 
     it('reads the tool definitions saved with the baseline and keeps them out of the case counts', async () => {
