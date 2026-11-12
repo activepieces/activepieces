@@ -46,7 +46,13 @@ function Step({
   );
 }
 
-function ImportMemoryContent({ onClose }: { onClose: () => void }) {
+function ImportMemoryContent({
+  onClose,
+  onImported,
+}: {
+  onClose: () => void;
+  onImported?: () => void;
+}) {
   const { invalidate } = useChatMemoryActions();
   const [text, setText] = useState('');
 
@@ -55,6 +61,7 @@ function ImportMemoryContent({ onClose }: { onClose: () => void }) {
     onSuccess: () => {
       invalidate();
       toast.success(t('Memory imported'));
+      onImported?.();
       onClose();
     },
     onError: () => toast.error(t('Could not read the pasted memory')),
@@ -76,7 +83,7 @@ function ImportMemoryContent({ onClose }: { onClose: () => void }) {
               {EXPORT_PROMPT}
             </p>
             <CopyButton
-              textToCopy={EXPORT_PROMPT}
+              value={EXPORT_PROMPT}
               variant="outline"
               size="icon-sm"
               className="absolute right-3 top-3"
@@ -117,9 +124,11 @@ function ImportMemoryContent({ onClose }: { onClose: () => void }) {
 export function ImportMemoryDialog({
   open,
   onOpenChange,
+  onImported,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onImported?: () => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -127,6 +136,7 @@ export function ImportMemoryDialog({
         <ImportMemoryContent
           key={open ? 'open' : 'closed'}
           onClose={() => onOpenChange(false)}
+          onImported={onImported}
         />
       </DialogContent>
     </Dialog>

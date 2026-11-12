@@ -12,6 +12,7 @@ import { EngineConstants, ResolvedExecuteFlowOperation } from './context/engine-
 import { FlowExecutorContext } from './context/flow-execution-context'
 import { loopExecutor } from './loop-executor'
 import { pieceExecutor } from './piece-executor'
+import { processInBatchesExecutor } from './process-in-batches-executor'
 import { routerExecuter } from './router-executor'
 
 let executors: Record<FlowActionType, BaseExecutor<FlowAction>> | null = null
@@ -23,6 +24,7 @@ function getExecutors(): Record<FlowActionType, BaseExecutor<FlowAction>> {
         [FlowActionType.CODE]: codeExecutor,
         [FlowActionType.LOOP_ON_ITEMS]: loopExecutor,
         [FlowActionType.PIECE]: pieceExecutor,
+        [FlowActionType.PROCESS_IN_BATCHES]: processInBatchesExecutor,
         [FlowActionType.ROUTER]: routerExecuter,
         [FlowActionType.AI_ROUTER]: aiRouterExecuter,
     }
