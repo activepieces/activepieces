@@ -332,9 +332,6 @@ async function restoreOrBaselinePinned({
     fetchPinnedEvent({ auth, calendarId, eventId })
   );
   if (fetched.error) {
-    // Don't block turning the flow on: the next check reads the event again,
-    // records its status without firing, and fails visibly if Google still
-    // rejects the request.
     const status = eventScan.httpStatusOf(fetched.error);
     console.warn(
       `[google-calendar] ${TRIGGER_NAME}: could not read event ${eventId} while enabling${

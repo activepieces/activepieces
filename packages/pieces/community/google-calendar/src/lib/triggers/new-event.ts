@@ -222,8 +222,6 @@ export const newEvent = createTrigger({
       await stopWatchEvent(watch, auth);
     }
     if (readIsRepublish(context)) {
-      // A republish runs onDisable then onEnable. Keep the sync token and the
-      // seen list so changes not yet processed are still delivered, once.
       await context.store.delete(WATCH_STORE_KEY);
       return;
     }
@@ -622,8 +620,6 @@ type NewEventState = {
 };
 
 function readIsRepublish(context: unknown): boolean {
-  // The engine passes isRepublish to webhook hooks; the framework type for
-  // webhook hooks does not declare it yet.
   return (context as { isRepublish?: boolean }).isRepublish === true;
 }
 

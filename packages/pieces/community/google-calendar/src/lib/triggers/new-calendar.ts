@@ -10,9 +10,6 @@ import { getCalendars } from '../common/helper';
 import { CalendarObject } from '../common/types';
 import { calendarOutputSchema } from '../output-schemas';
 
-// Before hidden calendars were read, the known list lived under 'calendars'
-// and left them out. The list that includes them has its own key, written in
-// one store call, so a poll never saves half of its state.
 const LEGACY_KNOWN_CALENDARS_STORE_KEY = 'calendars';
 const KNOWN_CALENDARS_STORE_KEY = 'calendars_with_hidden';
 const SAMPLE_SIZE = 5;
@@ -104,8 +101,6 @@ export const newCalendar = createTrigger({
       return [];
     }
     const knownIds = new Set(known.ids);
-    // A list saved before hidden calendars were read leaves them out; on the
-    // first poll after that change, learn hidden calendars without firing.
     const knownIncludesHidden = known.includesHidden;
     const fresh = filterCalendars({
       calendars: calendars.filter(

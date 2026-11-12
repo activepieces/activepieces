@@ -164,9 +164,6 @@ async function listPinnedEvent({
   return { events: [event], timeZone, complete: true };
 }
 
-// A "before start" reminder whose check comes after the meeting has started
-// is dropped: the reminder is no longer useful. A lead time of 0 is due at
-// the start itself, so it still fires at the first check after it.
 function startedBeforeReminder({
   entry,
   anchor,
