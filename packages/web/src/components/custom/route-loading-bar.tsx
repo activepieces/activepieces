@@ -1,5 +1,7 @@
 import { createPortal } from 'react-dom';
 
+import { pageColumnUtils } from '@/lib/page-column-utils';
+
 export function RouteLoadingBar() {
   const bar = (
     <div className="absolute top-0 left-0 right-0 h-0.5 overflow-hidden bg-accent-5 z-50">
@@ -7,7 +9,7 @@ export function RouteLoadingBar() {
     </div>
   );
 
-  const container = document.getElementById('dashboard-content-container');
+  const container = pageColumnUtils.element();
   if (container) {
     return createPortal(bar, container);
   }

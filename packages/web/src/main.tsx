@@ -3,11 +3,13 @@ import * as ReactDOM from 'react-dom/client';
 
 import './i18n';
 import { App } from './app/app';
+import { chatLayoutUtils } from './features/workspace/lib/chat-layout';
 import { acquisitionUtils } from './lib/acquisition-utils';
 import { errorReporting } from './lib/error-reporting';
 import { reloadOnceForStaleChunk } from './lib/lazy-with-retry';
 
 acquisitionUtils.stashAcquisitionParams();
+chatLayoutUtils.applyMotionVars({ root: document.documentElement });
 
 window.addEventListener('vite:preloadError', (event) => {
   if (reloadOnceForStaleChunk('vite-preload')) {
