@@ -63,9 +63,10 @@ async function downloadContent({
     }
     lastError = error === null ? 'Download returned no content' : error.message;
     const backoff = attempt * CONTENT_RETRY_DELAY_MS + jitterMs();
-    if (attempt < CONTENT_DOWNLOAD_ATTEMPTS && Date.now() + backoff < deadline) {
-      await delay(backoff);
+    if (attempt >= CONTENT_DOWNLOAD_ATTEMPTS || Date.now() + backoff >= deadline) {
+      break;
     }
+    await delay(backoff);
   }
   return { error: lastError };
 }
