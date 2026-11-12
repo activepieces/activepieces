@@ -1,25 +1,15 @@
 /**
  * @vitest-environment jsdom
  */
-import {
-  ApEdition,
-  SelfServeTrialState,
-  SelfServeTrialInfo,
-} from '@activepieces/shared';
+import { ApEdition, SelfServeTrialState, SelfServeTrialInfo } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import dayjs from 'dayjs';
 import * as React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-import { billingDialogHooks } from '@/features/billing/hooks/billing-dialog-hooks';
 import { PLATFORM_BILLING_SUBSCRIPTION_KEY } from '@/features/billing/hooks/billing-hooks';
-import {
-  ActionWhenLocked,
-  selfServeTrialHooks,
-  useActionWhenLocked,
-  useLockedFeature,
-} from '@/features/billing/hooks/self-serve-trial-hooks';
+import { ActionWhenLocked, selfServeTrialHooks, useActionWhenLocked, useLockedFeature } from '@/features/billing/hooks/self-serve-trial-hooks';
+import { billingDialogHooks } from '@/features/billing/hooks/billing-dialog-hooks';
 
 const state = vi.hoisted(() => ({
   trialEnded: false,
@@ -34,11 +24,15 @@ vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: { useFlag: () => ({ data: state.edition }) },
 }));
 
+
 const trialDialogPayload = () =>
   billingDialogHooks.useSelfServeTrialDialogStore.getState().payload;
 
 const plansDialogOpen = () =>
   billingDialogHooks.useManagePlanDialogStore.getState().isOpen;
+
+
+
 
 let isPlatformAdmin = true;
 let isEmbedded = false;
@@ -117,12 +111,9 @@ describe('starting the trial fails', () => {
     startSelfServeTrial.mockRejectedValueOnce(new Error('network lost'));
     const client = new QueryClient();
     const invalidate = vi.spyOn(client, 'invalidateQueries');
-    const { result } = renderHook(
-      () => selfServeTrialHooks.useStartSelfServeTrial(),
-      {
-        wrapper: queryWrapper(client),
-      },
-    );
+    const { result } = renderHook(() => selfServeTrialHooks.useStartSelfServeTrial(), {
+      wrapper: queryWrapper(client),
+    });
 
     await act(async () => {
       result.current.mutate();
@@ -157,33 +148,20 @@ describe('enterprise lockedFeature', () => {
 
   describe('action when a feature is locked', () => {
     it.each([
-      {
-        edition: ApEdition.COMMUNITY,
-        actionWhenLocked: ActionWhenLocked.SWITCH_EDITION,
-      },
+      { edition: ApEdition.COMMUNITY, actionWhenLocked: ActionWhenLocked.SWITCH_EDITION },
       { member: true, actionWhenLocked: ActionWhenLocked.ASK_ADMIN },
       { embedded: true, actionWhenLocked: ActionWhenLocked.ASK_ADMIN },
       { offer: true, actionWhenLocked: ActionWhenLocked.START_TRIAL },
-      {
-        trialEnded: true,
-        actionWhenLocked: ActionWhenLocked.UPGRADE_AFTER_TRIAL,
-      },
+      { trialEnded: true, actionWhenLocked: ActionWhenLocked.UPGRADE_AFTER_TRIAL },
       { actionWhenLocked: ActionWhenLocked.UPGRADE },
-    ])(
-      'is $actionWhenLocked for %j',
-      ({ actionWhenLocked, member = false, embedded = false, ...setup }) => {
-        Object.assign(state, setup);
-        isPlatformAdmin = !member;
-        isEmbedded = embedded;
-        planTrialEndsAt = state.trialEnded
-          ? dayjs().subtract(1, 'day').toISOString()
-          : null;
-        const { result } = renderHook(() =>
-          useActionWhenLocked({ featureKey: undefined }),
-        );
-        expect(result.current).toBe(actionWhenLocked);
-      },
-    );
+    ])('is $actionWhenLocked for %j', ({ actionWhenLocked, member = false, embedded = false, ...setup }) => {
+      Object.assign(state, setup);
+      isPlatformAdmin = !member;
+      isEmbedded = embedded;
+      planTrialEndsAt = state.trialEnded ? dayjs().subtract(1, 'day').toISOString() : null;
+      const { result } = renderHook(() => useActionWhenLocked({ featureKey: undefined }));
+      expect(result.current).toBe(actionWhenLocked);
+    });
 
     it('never offers the trial for dedicated workers', () => {
       state.offer = true;
@@ -203,23 +181,21 @@ describe('enterprise lockedFeature', () => {
       { offer: true, click: 'trial with callback' },
     ])('opens $click for %j', ({ click, unlocked = false, ...setup }) => {
       Object.assign(state, setup);
-      planTrialEndsAt = state.trialEnded
-        ? dayjs().subtract(1, 'day').toISOString()
-        : null;
+      planTrialEndsAt = state.trialEnded ? dayjs().subtract(1, 'day').toISOString() : null;
       const action = vi.fn();
       const lockedFeature = renderHook(() =>
         useLockedFeature({ unlocked, featureKey: 'AUDIT_LOGS' }),
       ).result;
-      act(() => lockedFeature.current.runOrShowLockedDialog(action));
+      act(() =>
+        lockedFeature.current.runOrShowLockedDialog(action),
+      );
       const payload = trialDialogPayload();
       const outcomes = [
         action.mock.calls.length > 0 && 'ran',
         state.openWindow.mock.calls.length > 0 && 'guide',
         plansDialogOpen() && 'plans',
         payload?.featureKey === 'AUDIT_LOGS' &&
-          (payload.postTrialActivationCallback
-            ? 'trial with callback'
-            : 'trial'),
+          (payload.postTrialActivationCallback ? 'trial with callback' : 'trial'),
       ];
       expect(outcomes.filter((outcome) => outcome !== false)).toEqual([click]);
     });

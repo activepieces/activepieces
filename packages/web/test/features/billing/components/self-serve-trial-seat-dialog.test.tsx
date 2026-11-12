@@ -2,24 +2,13 @@
  * @vitest-environment jsdom
  */
 /* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
-import {
-  SelfServeTrialState,
-  UpgradeLocationInWebApp,
-} from '@activepieces/shared';
+import { SelfServeTrialState, UpgradeLocationInWebApp } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import * as React from 'react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-
 import { SelfServeTrialSeatDialog } from '@/features/billing/components/self-serve-trial-sidebar';
 import { billingDialogHooks } from '@/features/billing/hooks/billing-dialog-hooks';
-
 import { icuI18n } from '../../../i18n/icu-i18n';
 
 const state = vi.hoisted<TestState>(() => ({
