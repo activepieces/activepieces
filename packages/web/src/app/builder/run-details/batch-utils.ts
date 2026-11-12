@@ -118,6 +118,7 @@ function headerState(output: BatchStepRunOutput | null): BatchHeaderState {
     total,
     succeeded,
     unsuccessful: failed + rejected + canceled + notDispatched,
+    notDispatched,
     stillRunning,
     timedOut,
   };
@@ -345,6 +346,7 @@ export const BATCH_PAGE_SIZE = 50;
 export const FAILED_BATCH_STATUSES = [
   ...FAILED_STATES,
   FlowRunStatus.LOG_SIZE_EXCEEDED,
+  FlowRunStatus.CANCELED,
 ];
 
 export type BatchStepRunOutput = z.infer<typeof BatchStepRunOutput>;
@@ -371,6 +373,7 @@ export type BatchHeaderState =
       total: number;
       succeeded: number;
       unsuccessful: number;
+      notDispatched: number;
       stillRunning: number;
       timedOut: boolean;
     };

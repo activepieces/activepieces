@@ -95,6 +95,17 @@ export const BatchBrowser = ({ stepName }: { stepName: string }) => {
           })}
         </span>
       )}
+      {failedOnly &&
+        jumpTarget.kind !== 'index' &&
+        header.kind === 'finished' &&
+        header.notDispatched > 0 && (
+          <span className="text-xs text-gray-11">
+            {t(
+              '{count, plural, =1 {# batch did not start, so it has no run to show. Find it by batch number.} other {# batches did not start, so they have no run to show. Find one by batch number.}}',
+              { count: header.notDispatched },
+            )}
+          </span>
+        )}
       {jumpTarget.kind === 'index' ? (
         <JumpedBatch
           output={output}
