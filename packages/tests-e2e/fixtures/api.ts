@@ -237,13 +237,14 @@ async function callApi<T>({ request, session, method, path, data, params }: {
   return response.json();
 }
 
-async function callApiStatus({ request, session, method, path }: {
+async function callApiStatus({ request, session, method, path, data }: {
   request: APIRequestContext;
   session: E2eSession;
-  method: 'GET' | 'DELETE';
+  method: 'GET' | 'POST' | 'DELETE';
   path: string;
+  data?: unknown;
 }): Promise<number> {
-  const response = await request.fetch(path, { method, headers: { Authorization: `Bearer ${session.token}` } });
+  const response = await request.fetch(path, { method, headers: { Authorization: `Bearer ${session.token}` }, data });
   return response.status();
 }
 
