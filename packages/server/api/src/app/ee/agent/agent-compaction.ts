@@ -1,8 +1,9 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, ErrorCode, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, ErrorCode, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { aiProviderUtils } from '@activepieces/shared'
+import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { generateText, LanguageModel, ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 
@@ -13,6 +14,7 @@ const MIN_MESSAGES_BEFORE_COMPACTION = 6
 const MAX_TOOL_RESULT_CHARS_FOR_SUMMARY = 2_000
 const SUMMARY_OUTPUT_RESERVE_TOKENS = 4_000
 const COMPACTION_TIMEOUT_MS = 35_000
+const MAX_SUMMARY_INPUT_TOKENS_PER_PASS = 32_000
 
 const COMPACTION_SYSTEM_PROMPT = readFileSync(
     path.resolve('packages/server/api/src/assets/prompts/chat-compaction-prompt.md'),
@@ -69,13 +71,14 @@ function snapToSafeMessageBoundary({ messages, rawCutoff }: {
     return idx
 }
 
-async function compactMessages({ messages, existingSummary, summarizedUpToIndex, provider, reservedTokens, model, log, billing }: {
+async function compactMessages({ messages, existingSummary, summarizedUpToIndex, provider, reservedTokens, model, providerOptions, log, billing }: {
     messages: ModelMessage[]
     existingSummary: string | null
     summarizedUpToIndex: number | null
     provider: AIProviderName
     reservedTokens: number
     model: LanguageModel
+    providerOptions?: SharedV3ProviderOptions
     log: FastifyBaseLogger
     billing?: ActivepiecesAiBilling
 }): Promise<{ summary: string, summarizedUpToIndex: number }> {
@@ -84,12 +87,13 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
         targetTokens: contextBudget({ provider, reservedTokens }) * RECENT_WINDOW_RATIO,
     })
     const rawCutoff = messages.length - recentWindowSize
-    const newCutoffIndex = snapToSafeMessageBoundary({ messages, rawCutoff })
+    const windowCutoffIndex = snapToSafeMessageBoundary({ messages, rawCutoff })
 
     const startIndex = summarizedUpToIndex ?? 0
-    if (newCutoffIndex <= startIndex) {
+    if (windowCutoffIndex <= startIndex) {
         return { summary: existingSummary ?? '', summarizedUpToIndex: startIndex }
     }
+    const newCutoffIndex = cutoffForOnePass({ messages, startIndex, windowCutoffIndex })
     const messagesToSummarize = messages.slice(startIndex, newCutoffIndex)
 
     let contentToSummarize = ''
@@ -98,7 +102,10 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
     }
 
     const texts = messagesToSummarize.map((msg) => extractTextContent(msg))
-    const summaryInputTokens = contextBudget({ provider, reservedTokens: SUMMARY_OUTPUT_RESERVE_TOKENS }) * COMPACTION_THRESHOLD
+    const summaryInputTokens = Math.min(
+        contextBudget({ provider, reservedTokens: SUMMARY_OUTPUT_RESERVE_TOKENS }) * COMPACTION_THRESHOLD,
+        MAX_SUMMARY_INPUT_TOKENS_PER_PASS,
+    )
         - tokensIn(COMPACTION_SYSTEM_PROMPT)
         - tokensIn(contentToSummarize)
     const perMessageTokens = fairShareCap({ lengths: texts.map(tokensIn), budget: summaryInputTokens })
@@ -113,6 +120,7 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
         totalMessages: messages.length,
         messagesToSummarize: messagesToSummarize.length,
         newCutoffIndex,
+        windowCutoffIndex,
         recentWindowSize,
         hadExistingSummary: !!existingSummary,
     }, 'Compacting chat messages')
@@ -122,6 +130,7 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
         instructions: COMPACTION_SYSTEM_PROMPT,
         ...agentAiUtils.buildTelemetry({ functionId: 'agent-compaction', billing }),
         prompt: contentToSummarize,
+        ...spreadIfDefined('providerOptions', providerOptions),
         maxOutputTokens: SUMMARY_OUTPUT_RESERVE_TOKENS,
         abortSignal: AbortSignal.timeout(COMPACTION_TIMEOUT_MS),
     }))
@@ -131,6 +140,31 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
     }
 
     return { summary: data.text, summarizedUpToIndex: newCutoffIndex }
+}
+
+function cutoffForOnePass({ messages, startIndex, windowCutoffIndex }: {
+    messages: ModelMessage[]
+    startIndex: number
+    windowCutoffIndex: number
+}): number {
+    let tokens = 0
+    let end = startIndex
+    while (end < windowCutoffIndex) {
+        tokens += tokensIn(extractTextContent(messages[end]))
+        if (end > startIndex && tokens > MAX_SUMMARY_INPUT_TOKENS_PER_PASS) {
+            break
+        }
+        end++
+    }
+    const snapped = snapToSafeMessageBoundary({ messages, rawCutoff: end })
+    if (snapped > startIndex) {
+        return snapped
+    }
+    let forward = end
+    while (forward < windowCutoffIndex && messages[forward].role === 'tool') {
+        forward++
+    }
+    return forward
 }
 
 function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provider, reservedTokens }: {

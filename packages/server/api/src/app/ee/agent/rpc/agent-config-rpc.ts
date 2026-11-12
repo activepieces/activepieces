@@ -292,13 +292,14 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                 models: compactionModels,
                 billing: compactionBilling,
                 log,
-                run: (model) => agentCompaction.compactMessages({
+                run: ({ model, candidate }) => agentCompaction.compactMessages({
                     messages: llmHistory,
                     existingSummary: previous.summary,
                     summarizedUpToIndex: previous.summarizedUpToIndex,
                     provider: contextProvider,
                     reservedTokens: payloadReservedTokens,
                     model,
+                    providerOptions: agentAiUtils.buildProviderOptions({ provider: candidate.config.provider, tier: { id: tier.id, thinkingBudget: 0 }, modelId: candidate.modelId, disableThinking: true }),
                     log,
                     billing: compactionBilling,
                 }),
@@ -381,9 +382,9 @@ function smallestContextProvider({ configs }: { configs: GetProviderConfigRespon
     return configs.reduce((smallest, config) => aiProviderUtils.getMaxContextTokens({ provider: config.provider }) < aiProviderUtils.getMaxContextTokens({ provider: smallest.provider }) ? config : smallest).provider
 }
 
-async function onFirstModelThatAnswers<T>({ models, billing, run, log }: { models: { config: GetProviderConfigResponse, modelId: string }[], billing: ActivepiecesAiBilling, run: (model: LanguageModel) => Promise<T>, log: FastifyBaseLogger }): Promise<T> {
+async function onFirstModelThatAnswers<T>({ models, billing, run, log }: { models: { config: GetProviderConfigResponse, modelId: string }[], billing: ActivepiecesAiBilling, run: (params: { model: LanguageModel, candidate: { config: GetProviderConfigResponse, modelId: string } }) => Promise<T>, log: FastifyBaseLogger }): Promise<T> {
     for (const [index, candidate] of models.entries()) {
-        const attempt = await tryCatch(() => run(aiUtils.createModel({ credentials: candidate.config, modelId: candidate.modelId, providerConfigId: candidate.config.configId, billing, usageOnly: true })))
+        const attempt = await tryCatch(() => run({ model: aiUtils.createModel({ credentials: candidate.config, modelId: candidate.modelId, providerConfigId: candidate.config.configId, billing, usageOnly: true }), candidate }))
         if (attempt.error === null) {
             return attempt.data
         }
