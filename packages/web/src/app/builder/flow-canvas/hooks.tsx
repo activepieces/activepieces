@@ -1,8 +1,13 @@
-import { Permission, isNil } from '@activepieces/core-utils';
+import { Permission, deepEquals, isNil, prune } from '@activepieces/core-utils';
 import {
+  FlowAction,
+  FlowActionType,
   FlowDraftUpdatedEvent,
   FlowRunStatus,
+  FlowTrigger,
+  FlowVersion,
   FlowVersionState,
+  PopulatedFlow,
   flowStructureUtil,
   WebsocketClientEvent,
   RunEnvironment,
@@ -19,9 +24,15 @@ import { useDebouncedCallback } from 'use-debounce';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useSocket } from '@/components/providers/socket-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
+import {
+  followAlong,
+  useFollowAlong,
+} from '@/features/chat/lib/follow/follow-along';
+import { aiHighlight } from '@/features/chat/lib/follow/use-ai-highlight';
 import { appConnectionsQueries } from '@/features/connections';
 import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
 import { flowsApi } from '@/features/flows';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { editorSession } from '@/lib/editor-session';
@@ -144,6 +155,7 @@ const useRefreshDraftAndMakeNewDraftEditable = () => {
 
 const useRefreshDraftOnPush = () => {
   const socket = useSocket();
+  const store = useBuilderStore();
   const flowId = useBuilderStateContext((state) => state.flow.id);
   const refreshDraft = useRefreshDraftAndMakeNewDraftEditable();
   useEffect(() => {
@@ -154,14 +166,221 @@ const useRefreshDraftOnPush = () => {
       ) {
         return;
       }
-      refreshDraft().catch(() => undefined);
+      let beforeApply: FlowSnapshot | null = null;
+      const stopWatching = store.subscribe((state, previous) => {
+        if (
+          state.flow !== previous.flow ||
+          state.flowVersion !== previous.flowVersion
+        ) {
+          beforeApply = {
+            flow: previous.flow,
+            flowVersion: previous.flowVersion,
+          };
+        }
+      });
+      refreshDraft()
+        .then((applied) => {
+          if (!applied || beforeApply === null) return;
+          const { flow, flowVersion } = store.getState();
+          followAlong.flashWhenFollowed({
+            resource: { kind: 'flow', id: flowId },
+            keys: changedFlowParts({
+              before: beforeApply,
+              after: { flow, flowVersion },
+            }),
+          });
+        })
+        .catch(() => undefined)
+        .finally(stopWatching);
     };
     socket.on(WebsocketClientEvent.FLOW_DRAFT_UPDATED, refreshOnPush);
     return () => {
       socket.off(WebsocketClientEvent.FLOW_DRAFT_UPDATED, refreshOnPush);
     };
-  }, [socket, flowId, refreshDraft]);
+  }, [socket, store, flowId, refreshDraft]);
 };
+
+function changedFlowParts({
+  before,
+  after,
+}: {
+  before: FlowSnapshot;
+  after: FlowSnapshot;
+}): string[] {
+  const placesBefore = stepPlaces(before.flowVersion.trigger);
+  const placesAfter = stepPlaces(after.flowVersion.trigger);
+  const steps = flowStructureUtil
+    .getAllSteps(after.flowVersion.trigger)
+    .filter((step) => {
+      const old = flowStructureUtil.getStep(
+        step.name,
+        before.flowVersion.trigger,
+      );
+      return (
+        !old ||
+        old.type !== step.type ||
+        old.displayName !== step.displayName ||
+        isSkipped(old) !== isSkipped(step) ||
+        !deepEquals({ a: prune(old.settings), b: prune(step.settings) }) ||
+        wasMoved({
+          name: step.name,
+          before: placesBefore,
+          after: placesAfter,
+        })
+      );
+    })
+    .map((step) => `${STEP_KEY_PREFIX}${step.name}`);
+  const renamed =
+    before.flowVersion.displayName !== after.flowVersion.displayName;
+  const statusChanged =
+    before.flow.status !== after.flow.status ||
+    before.flow.publishedVersionId !== after.flow.publishedVersionId;
+  return [
+    ...steps,
+    ...(renamed ? [`flow-name:${after.flow.id}`] : []),
+    ...(statusChanged ? [`flow-status:${after.flow.id}`] : []),
+  ];
+}
+
+function isSkipped(step: FlowAction | FlowTrigger): boolean {
+  return 'skip' in step && step.skip === true;
+}
+
+function stepPlaces(trigger: FlowTrigger): Map<string, StepPlace> {
+  return new Map(chainPlaces({ first: trigger, container: 'root' }));
+}
+
+function chainPlaces({
+  first,
+  container,
+}: {
+  first: FlowAction | FlowTrigger | null | undefined;
+  container: string;
+}): [string, StepPlace][] {
+  const chain = stepsInChain(first);
+  const names = chain.map((step) => step.name);
+  return chain.flatMap((step, index): [string, StepPlace][] => [
+    [step.name, { container, chain: names, index }],
+    ...childChains(step).flatMap(({ head, slot }) =>
+      chainPlaces({ first: head, container: `${step.name}:${slot}` }),
+    ),
+  ]);
+}
+
+function stepsInChain(
+  first: FlowAction | FlowTrigger | null | undefined,
+): (FlowAction | FlowTrigger)[] {
+  if (isNil(first)) return [];
+  return [first, ...stepsInChain(first.nextAction)];
+}
+
+function childChains(
+  step: FlowAction | FlowTrigger,
+): { head: FlowAction | null | undefined; slot: string }[] {
+  switch (step.type) {
+    case FlowActionType.LOOP_ON_ITEMS:
+      return [{ head: step.firstLoopAction, slot: 'loop' }];
+    case FlowActionType.ROUTER:
+    case FlowActionType.AI_ROUTER:
+      return step.children.map((head, index) => ({
+        head,
+        slot: `branch-${index}`,
+      }));
+    case FlowActionType.CODE:
+    case FlowActionType.PIECE:
+      return [
+        { head: step.continueOnFailureBranches?.onSuccess, slot: 'success' },
+        { head: step.continueOnFailureBranches?.onFailure, slot: 'failure' },
+      ];
+    default:
+      return [];
+  }
+}
+
+function wasMoved({
+  name,
+  before,
+  after,
+}: {
+  name: string;
+  before: Map<string, StepPlace>;
+  after: Map<string, StepPlace>;
+}): boolean {
+  const old = before.get(name);
+  const now = after.get(name);
+  if (!old || !now) return false;
+  if (old.container !== now.container) return true;
+  const kept = new Set([...before.keys()].filter((key) => after.has(key)));
+  const was = neighbours({ place: old, kept });
+  const is = neighbours({ place: now, kept });
+  return was.previous !== is.previous && was.next !== is.next;
+}
+
+function neighbours({ place, kept }: { place: StepPlace; kept: Set<string> }): {
+  previous: string | null;
+  next: string | null;
+} {
+  return {
+    previous:
+      place.chain
+        .slice(0, place.index)
+        .filter((name) => kept.has(name))
+        .at(-1) ?? null,
+    next:
+      place.chain.slice(place.index + 1).find((name) => kept.has(name)) ?? null,
+  };
+}
+
+const usePanToFlashedStep = () => {
+  const { fitView, getViewport } = useReactFlow();
+  const flashes = useFollowAlong((state) => state.flashes);
+  const seen = useRef(flashes);
+  useEffect(() => {
+    const previous = seen.current;
+    seen.current = flashes;
+    const last = Object.entries(flashes)
+      .filter(
+        ([key, token]) =>
+          key.startsWith(STEP_KEY_PREFIX) && previous[key] !== token,
+      )
+      .map(([key]) => key.slice(STEP_KEY_PREFIX.length))
+      .at(-1);
+    if (!last || isStepVisible(last) || !aiHighlight.claimScroll()) return;
+    const { zoom } = getViewport();
+    fitView({
+      nodes: [{ id: last }],
+      duration: chatLayoutUtils.prefersReducedMotion() ? 0 : PAN_DURATION_MS,
+      minZoom: zoom,
+      maxZoom: zoom,
+    }).catch(() => undefined);
+  }, [flashes, fitView, getViewport]);
+};
+
+function isStepVisible(stepName: string): boolean {
+  const node = document.querySelector(
+    `.react-flow__node[data-id="${CSS.escape(stepName)}"]`,
+  );
+  const pane = node?.closest('.react-flow');
+  if (!node || !pane) return true;
+  const rect = node.getBoundingClientRect();
+  const view = pane.getBoundingClientRect();
+  return (
+    rect.top >= view.top &&
+    rect.bottom <= view.bottom - 64 &&
+    rect.left >= view.left &&
+    rect.right <= view.right
+  );
+}
+
+const STEP_KEY_PREFIX = 'flow-step:';
+const PAN_DURATION_MS = 450;
+
+type FlowSnapshot = {
+  flow: PopulatedFlow;
+  flowVersion: FlowVersion;
+};
+
+type StepPlace = { container: string; chain: string[]; index: number };
 
 const useRefreshDraftOnReconnectAndReturn = () => {
   const socket = useSocket();
@@ -363,6 +582,7 @@ export const flowCanvasHooks = {
   useRefreshDraftOnReconnectAndReturn,
   useIsFocusInsideListMapperModeInput,
   useFocusOnStep,
+  usePanToFlashedStep,
   useResizeCanvas,
   useSwitchToDraft,
   useListenToExistingRun,
