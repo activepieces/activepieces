@@ -67,10 +67,23 @@ describe('Postgres New Row behaviour', () => {
     const { store, data } = memoryStore();
     await trigger.onEnable(hookContext({ store, table }));
     await trigger.onDisable(hookContext({ store, table }));
-    expect(data.size).toBe(0);
+    expect(data.has('new_row_cursor')).toBe(true);
     await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01T11:00:00Z', 'while-off')`);
     await trigger.onEnable(hookContext({ store, table }));
     expect(await poll({ store, table })).toEqual([]);
+  });
+
+  it('keeps the cursor when an older server republishes without isRepublish', async () => {
+    const table = await newTable({ columns: 'id serial primary key, created_at timestamptz not null, name text' });
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01T10:00:00Z', 'a')`);
+    const { store, data } = memoryStore();
+    await trigger.onEnable(hookContext({ store, table }));
+    const cursor = data.get('new_row_cursor');
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01T11:00:00Z', 'before-republish')`);
+    await trigger.onDisable(hookContext({ store, table }));
+    expect(data.get('new_row_cursor')).toEqual(cursor);
+    await trigger.onEnable(hookContext({ store, table, isRepublish: true }));
+    expect(await poll({ store, table })).toEqual(['before-republish']);
   });
 
   it('does not re-fire a row when it is updated, with or without a primary key', async () => {
@@ -287,8 +300,8 @@ describe('Postgres New Row behaviour', () => {
     await trigger.onEnable(hookContext({ store: second.store, table: naive }));
     const third = memoryStore();
     await trigger.onEnable(hookContext({ store: third.store, table: naive, orderBy: 'day' }));
-    await db.exec(`INSERT INTO ${naive} (created_at, day, name) VALUES ('2099-01-01 00:00:00', '2099-01-01', 'far-future'), ('-infinity', '-infinity', 'minus-infinite'), ('2026-11-01 11:00:00', '2026-11-02', 'normal')`);
-    expect(await poll({ store: second.store, table: naive })).toEqual(['normal']);
+    await db.exec(`INSERT INTO ${naive} (created_at, day, name) VALUES ('2026-11-01 10:30:00', '2099-01-01', 'far-future'), ('-infinity', '-infinity', 'minus-infinite'), ('2026-11-01 11:00:00', '2026-11-02', 'normal')`);
+    expect(await poll({ store: second.store, table: naive })).toEqual(['normal', 'far-future']);
     expect(await poll({ store: third.store, table: naive, orderBy: 'day' })).toEqual(['normal']);
     await db.exec(`INSERT INTO ${naive} (created_at, day, name) VALUES ('2026-11-01 12:00:00', '2026-11-03', 'normal-2')`);
     expect(await poll({ store: second.store, table: naive })).toEqual(['normal-2']);
@@ -506,12 +519,12 @@ describe('Postgres New Row behaviour', () => {
     await viaRepublish.store.put('lastItem', legacy);
     await trigger.onEnable(hookContext({ store: viaRepublish.store, table, isRepublish: true }));
     expect(viaRepublish.data.has('lastItem')).toBe(false);
-    expect(await poll({ store: viaRepublish.store, table })).toEqual(['after-checkpoint', 'delivered-tie']);
+    expect(await poll({ store: viaRepublish.store, table })).toEqual(['after-checkpoint']);
     expect(await poll({ store: viaRepublish.store, table })).toEqual([]);
 
     const viaRun = memoryStore();
     await viaRun.store.put('lastItem', legacy);
-    expect(await poll({ store: viaRun.store, table })).toEqual(['after-checkpoint', 'delivered-tie']);
+    expect(await poll({ store: viaRun.store, table })).toEqual(['after-checkpoint']);
     expect(viaRun.data.has('lastItem')).toBe(false);
     expect(await poll({ store: viaRun.store, table })).toEqual([]);
 

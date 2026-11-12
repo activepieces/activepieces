@@ -70,22 +70,20 @@ describe('QA round 3: Postgres New Row', () => {
     expect(new Set(all.filter((name) => name !== 'same')).size).toBe(300);
   });
 
-  it('naive timestamp in a database session west of UTC: a row ahead of the session clock waits, nothing after it is lost', async () => {
+  it('naive timestamp in a database session west of UTC delivers rows written in UTC wall-clock time on the next poll', async () => {
     const table = await newTable({ columns: 'id serial primary key, created_at timestamp(3) not null, name text' });
     await db.exec(`SET TimeZone = 'America/Los_Angeles'`);
     try {
-      await db.exec(`INSERT INTO ${table} (created_at, name) VALUES (localtimestamp - interval '1 hour', 'past')`);
+      await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ((now() AT TIME ZONE 'UTC') - interval '1 hour', 'past')`);
       const { store } = memoryStore();
       await trigger.onEnable(hookContext({ store, table }));
-      await db.exec(`INSERT INTO ${table} (created_at, name) VALUES (now() AT TIME ZONE 'UTC', 'utc-wall-clock'), (localtimestamp + interval '2 seconds', 'two-seconds-ahead')`);
+      await db.exec(`INSERT INTO ${table} (created_at, name) VALUES (now() AT TIME ZONE 'UTC', 'utc-wall-clock')`);
+      expect(await poll({ store, table })).toEqual(['utc-wall-clock']);
       expect(await poll({ store, table })).toEqual([]);
-      await db.exec(`INSERT INTO ${table} (created_at, name) VALUES (localtimestamp, 'session-now')`);
-      expect(await poll({ store, table })).toEqual(['session-now']);
-      await new Promise((resolve) => setTimeout(resolve, 2500));
-      expect(await poll({ store, table })).toEqual(['two-seconds-ahead']);
-      expect(await poll({ store, table })).toEqual([]);
+      await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ((now() AT TIME ZONE 'UTC') + interval '1 second', 'utc-later')`);
+      expect(await poll({ store, table })).toEqual(['utc-later']);
       const sample = await trigger.test(hookContext({ store, table }));
-      expect(names({ events: sample })).not.toContain('utc-wall-clock');
+      expect(names({ events: sample })).toContain('utc-wall-clock');
     } finally {
       await db.exec(`SET TimeZone = 'UTC'`);
     }

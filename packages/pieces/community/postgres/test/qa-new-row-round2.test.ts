@@ -77,14 +77,14 @@ describe('QA round 2: Postgres New Row', () => {
     expect(await poll({ store, table })).toEqual([]);
   });
 
-  it('does not lose rows written after a naive timestamp row dated two hours ahead', async () => {
-    const table = await newTable({ columns: 'id serial primary key, created_at timestamp not null, name text' });
-    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES (localtimestamp - interval '1 hour', 'past')`);
+  it('does not lose rows written after a timestamptz row dated two hours ahead', async () => {
+    const table = await newTable({ columns: 'id serial primary key, created_at timestamptz not null, name text' });
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES (now() - interval '1 hour', 'past')`);
     const { store } = memoryStore();
     await trigger.onEnable(hookContext({ store, table }));
-    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES (localtimestamp + interval '2 hours', 'two-hours-ahead')`);
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES (now() + interval '2 hours', 'two-hours-ahead')`);
     const fired = await poll({ store, table });
-    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES (localtimestamp, 'written-now')`);
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES (now(), 'written-now')`);
     fired.push(...(await poll({ store, table })));
     expect(fired).toContain('written-now');
   });

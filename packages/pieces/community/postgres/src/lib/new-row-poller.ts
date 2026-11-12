@@ -14,14 +14,10 @@ function valueFilters({ column, typeName, direction }: { column: string; typeNam
         return [];
     }
     const finite = `isfinite(t.${column})`;
-    if (direction === 'ASC') {
+    if (direction === 'ASC' || typeName === 'timestamp') {
         return [finite];
     }
-    const notFuture = {
-        timestamptz: `t.${column} <= now()`,
-        timestamp: `t.${column} <= localtimestamp`,
-        date: `t.${column} <= current_date`,
-    }[typeName];
+    const notFuture = typeName === 'timestamptz' ? `t.${column} <= now()` : `t.${column} <= current_date`;
     return [finite, notFuture];
 }
 
@@ -223,7 +219,7 @@ async function migrateLegacyState({ client, shape, props, legacy }: { client: Cl
         );
         const delivered = result.rows.find((row) => crypto.createHash('md5').update(JSON.stringify(userRow({ row, shape }))).digest('hex') === deliveredHash);
         if (delivered !== undefined) {
-            return { v: 3, props, value: String(delivered[names.order]), seen: [String(delivered[names.key])], after: null };
+            return stateAtValue({ client, shape, props, value: String(delivered[names.order]) });
         }
         const fallback = shape.newer === '<' && window.high !== null ? window.high : window.low;
         return { v: 3, props, value: fallback, seen: [], after: null };
@@ -295,14 +291,6 @@ async function enable({ client, store, settings, isRepublish }: { client: Client
     await store.delete(LEGACY_STORE_KEY);
 }
 
-async function disable({ store, isRepublish }: { store: CursorStore; isRepublish: boolean }): Promise<void> {
-    if (isRepublish) {
-        return;
-    }
-    await store.delete(CURSOR_STORE_KEY);
-    await store.delete(LEGACY_STORE_KEY);
-}
-
 async function poll({ client, store, settings }: { client: Client; store: CursorStore; settings: TriggerSettings }): Promise<Record<string, unknown>[]> {
     const props = fingerprint({ settings });
     const shape = await resolveShape({ client, settings });
@@ -346,6 +334,12 @@ const ROWS_PER_POLL = 500;
 const SEEN_KEYS_LIMIT = 2000;
 const CURSOR_STORE_KEY = 'new_row_cursor';
 const LEGACY_STORE_KEY = 'lastItem';
+
+export const newRowPoller = {
+    enable,
+    poll,
+    sample,
+};
 
 type KeyColumn = {
     name: string;
@@ -393,13 +387,6 @@ type CursorStore = {
     get<T>(key: string): Promise<T | null>;
     put<T>(key: string, value: T): Promise<T>;
     delete(key: string): Promise<void>;
-};
-
-export const newRowPoller = {
-    enable,
-    disable,
-    poll,
-    sample,
 };
 
 export type OrderDirection = 'ASC' | 'DESC';

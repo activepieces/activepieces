@@ -10,11 +10,11 @@ export const newRow = createTrigger({
     displayName: 'New Row',
     description: 'Triggers when a new row is added to a table',
     aiMetadata: {
-      description: "Fires once for each new row in a PostgreSQL table, found by polling on an order column (a created timestamp or auto-increment ID). Each event is one row's column values. Rows that share an order value each fire; edits do not re-fire when the table has a primary key. Rows with an empty, infinite, NaN or future order value are skipped until valid; at most 500 rows per check, oldest first.",
+      description: "Fires once for each new row in a PostgreSQL table, found by polling on an order column (a created timestamp or auto-increment ID). Each event is one row's column values. Rows that share an order value each fire; edits do not re-fire when the table has a primary key. Rows with an empty, infinite or NaN order value are skipped, and future timestamptz or date values wait until they are reached; at most 500 rows per check, oldest first.",
     },
     props: {
         description: Property.MarkDown({
-            value: "**How it works**\n- Each check delivers rows whose order value is newer than the last row delivered: up to 500 per check, the oldest first; the rest follow on the next check. Within a check, flows run newest first.\n- Rows that share a value each fire once. Rows with an empty, infinite or NaN value are skipped.\n- With Descending order on a date or timestamp column, a future-dated row waits until the database's current time reaches it (for columns without a time zone, the server's clock and time zone).\n\n**Limits**\n- Edits don't fire a row again when the table has a primary key. Without one, rows are tracked by content and storage position: any UPDATE of a row at the newest value (even one that changes nothing), VACUUM FULL or CLUSTER can fire rows at that value again, and a new row identical to a deleted one that reuses its storage slot can be missed.\n- When more than 2,000 rows share one value, a later row with that value fires only if it sorts after the last row delivered (by primary key, or by storage position without one, so VACUUM, VACUUM FULL or CLUSTER can hide it).\n- A row whose transaction commits after a newer row was delivered can be missed.",
+            value: "**How it works**\n- Each check delivers rows whose order value is newer than the last row delivered: up to 500 per check, the oldest first; the rest follow on the next check. Within a check, flows run newest first.\n- Rows that share a value each fire once. Rows with an empty, infinite or NaN value are skipped.\n- With Descending order on a `timestamptz` or `date` column, a future-dated row waits until the database's current time reaches it. Columns without a time zone (`timestamp`) are not held back.\n\n**Limits**\n- Edits don't fire a row again when the table has a primary key. Without one, rows are tracked by content and storage position: any UPDATE of a row at the newest value (even one that changes nothing), VACUUM FULL or CLUSTER can fire rows at that value again, and a new row identical to a deleted one that reuses its storage slot can be missed.\n- When more than 2,000 rows share one value, a later row with that value fires only if it sorts after the last row delivered (by primary key, or by storage position without one, so VACUUM, VACUUM FULL or CLUSTER can hide it).\n- A row whose transaction commits after a newer row was delivered can be missed.\n- Without a primary key, rows are matched by their text form, which for `timestamptz` columns depends on the connection's time zone: if it changes, rows at the newest value can fire once more.",
             variant: MarkdownVariant.INFO,
         }),
         table: postgresCommon.table,
@@ -64,8 +64,8 @@ export const newRow = createTrigger({
             await client.end();
         }
     },
-    async onDisable(context) {
-        await newRowPoller.disable({ store: context.store, isRepublish: context.isRepublish === true });
+    async onDisable() {
+        return;
     },
     async run(context) {
         const client = await pgClient(context.auth);
