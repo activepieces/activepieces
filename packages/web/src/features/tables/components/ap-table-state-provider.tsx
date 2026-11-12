@@ -137,6 +137,7 @@ export function ApTableStateProvider({
     remountTableState();
   }, [refetchTableState, remountTableState]);
   const isLoading = isTableLoading || isFieldsLoading || isRecordsLoading;
+  const scrollTopBeforeRefresh = useRef<number | null>(null);
   const missedUpdateWhileLoading = useMissedUpdateWhileLoading({
     tableId,
     isLoading,
@@ -190,6 +191,7 @@ export function ApTableStateProvider({
         >
           <RefreshOnTableUpdated
             missedUpdateWhileLoading={missedUpdateWhileLoading}
+            scrollTopBeforeRefresh={scrollTopBeforeRefresh}
             tableId={table.id}
             refetch={refetchTableState}
             remount={remountTableState}
@@ -285,11 +287,13 @@ function useMissedUpdateWhileLoading({
 
 function RefreshOnTableUpdated({
   missedUpdateWhileLoading,
+  scrollTopBeforeRefresh,
   tableId,
   refetch,
   remount,
 }: {
   missedUpdateWhileLoading: React.MutableRefObject<boolean>;
+  scrollTopBeforeRefresh: React.MutableRefObject<number | null>;
   tableId: string;
   refetch: () => Promise<void>;
   remount: () => void;
@@ -303,6 +307,7 @@ function RefreshOnTableUpdated({
     let disposed = false;
     const isBusy = () =>
       store?.getState().isSaving === true ||
+      (store?.getState().selectedRecords.size ?? 0) > 0 ||
       !isNil(document.querySelector('[data-editing="true"]'));
     const refreshWhenIdle = async () => {
       if (disposed) {
@@ -321,6 +326,7 @@ function RefreshOnTableUpdated({
         timer = setTimeout(runRefresh, BUSY_RETRY_MS);
         return;
       }
+      scrollTopBeforeRefresh.current = gridElement()?.scrollTop ?? null;
       remount();
     };
     const runRefresh = () => {
@@ -346,6 +352,13 @@ function RefreshOnTableUpdated({
     };
     socket.on(WebsocketClientEvent.TABLE_UPDATED, onTableUpdated);
     socket.on('connect', requestRefresh);
+    const savedScrollTop = scrollTopBeforeRefresh.current;
+    scrollTopBeforeRefresh.current = null;
+    if (!isNil(savedScrollTop)) {
+      requestAnimationFrame(() => {
+        gridElement()?.scrollTo({ top: savedScrollTop, behavior: 'instant' });
+      });
+    }
     if (missedUpdateWhileLoading.current) {
       missedUpdateWhileLoading.current = false;
       requestRefresh();
@@ -356,8 +369,20 @@ function RefreshOnTableUpdated({
       socket.off('connect', requestRefresh);
       clearTimeout(timer);
     };
-  }, [socket, store, tableId, refetch, remount, missedUpdateWhileLoading]);
+  }, [
+    socket,
+    store,
+    tableId,
+    refetch,
+    remount,
+    missedUpdateWhileLoading,
+    scrollTopBeforeRefresh,
+  ]);
   return null;
+}
+
+function gridElement(): HTMLElement | null {
+  return document.querySelector<HTMLElement>('.rdg');
 }
 
 const BUSY_RETRY_MS = 1000;
