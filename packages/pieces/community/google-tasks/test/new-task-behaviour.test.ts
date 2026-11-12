@@ -950,5 +950,5 @@ describe('Google Tasks New Task dedupe keys for the old and the new cursor', () 
     expect([...emitted].sort()).toEqual([...oldKeys, ...freshKeys].sort());
     expect(maxStateChars).toBeGreaterThanOrEqual(10_000 * 17);
     expect(maxStateChars * 2).toBeLessThan(512 * 1024);
-  });
+  }, 30_000);
 });

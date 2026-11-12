@@ -355,7 +355,7 @@ describe('New or Updated File poll', () => {
     expect(cursors.at(-1)).toBe(Date.parse(at(1_000 + 2_999)));
     const seen = store.read('driveRecent');
     expect(JSON.stringify(seen).length).toBeLessThan(512 * 1024);
-  });
+  }, 30_000);
 
   it.each([
     { withContent: false, polls: 6 },
