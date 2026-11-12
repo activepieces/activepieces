@@ -280,7 +280,7 @@ export const newFormSubmissionTrigger = createTrigger({
 	name: 'new-form-submission',
 	classification: 'READ',
 	displayName: 'New Form Submission',
-	description: 'Triggers when a form is submitted.',
+	description: 'Triggers when a form is submitted. HubSpot returns submissions newest first, so if thousands arrive between two checks, a check can stop before reaching the oldest of them and those are skipped.',
 	aiMetadata: {
 		description:
 			'Fires when the selected HubSpot form receives a submission. Each event represents one submission, with field values mapped to their human-readable form labels plus metadata such as submission timestamp, conversion ID, and page URL. Polls the form-integrations submissions API.',

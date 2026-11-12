@@ -264,4 +264,24 @@ describe('QA round 2: property-change catch-up with more than 1,000 emitted chan
         console.info(`[qa] duplicates after 1,000-key eviction: ${dupes.length}`)
         expect(dupes.every((id) => all.slice(0, 100).includes(id))).toBe(true)
     }, 180_000)
+
+    it('records re-edited during a catch-up fire once while their key is among the last 5,000 emitted', async () => {
+        const store = memoryStore()
+        Array.from({ length: 12_000 }, () => create({ id: newId(), at: tick(10) }))
+        tick()
+        await newCompanyPropertyChangeTrigger.onEnable(ctx({ store, propsValue: { propertyName: 'industry' } }))
+        const all = crm.tables.companies.map((r) => r.id)
+        all.forEach((id) => changeIndustry({ id, at: tick(10) }))
+        const first = ids(await newCompanyPropertyChangeTrigger.run(ctx({ store, propsValue: { propertyName: 'industry' } })))
+        expect(first.length).toBeGreaterThan(5_200)
+        const reEdited = first.slice(first.length - 5_000 + 100, first.length - 5_000 + 200)
+        reEdited.forEach((id) => {
+            rec(id).properties.hs_lastmodifieddate = tick(10)
+        })
+        const rest = await drain({ trigger: newCompanyPropertyChangeTrigger, store, propsValue: { propertyName: 'industry' }, polls: 3 })
+        const fired = [...first, ...rest]
+        expect(new Set(fired)).toEqual(new Set(all))
+        expect(duplicates(fired)).toEqual([])
+        expect(store.data.get('hubspotSearchCursor')?.length ?? 0).toBeLessThan(512 * 1024)
+    }, 180_000)
 })

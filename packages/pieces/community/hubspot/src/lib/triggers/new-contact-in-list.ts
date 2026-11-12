@@ -165,7 +165,7 @@ async function fetchMembersJoinedSince({
 	if (resumable && !isNil(resumable.after) && order !== 'newest-first' && !headHasFresh) {
 		after = resumable.after;
 		const resumed = await fetchResumePage({ client, listId, after });
-		if (isNil(resumed)) {
+		if (isNil(resumed) || !resumed.members.some((member) => member.joinedAt <= since)) {
 			after = undefined;
 		} else {
 			page = resumed;
@@ -357,7 +357,7 @@ const MEMBERSHIP_PAGE_SIZE = 250;
 const CONTACT_BATCH_SIZE = 100;
 const TEST_SAMPLE_SIZE = 5;
 const TEST_BUDGET_MS = 20_000;
-const CONTACT_READ_BUDGET_MS = 50_000;
+const CONTACT_READ_BUDGET_MS = 45_000;
 const MEMBERSHIP_BUDGET_MS = 35_000;
 const LIST_CURSOR_KEY = 'listMembershipCursor';
 const LIST_TIE_KEY = 'listMembershipTie';
