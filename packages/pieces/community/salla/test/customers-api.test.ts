@@ -130,6 +130,37 @@ describe('createCustomer refuses a mobile or email another customer already has'
     expect(result).toMatchObject({ id: 77 });
   });
 
+  it('finds the customer with the same mobile on a later page of search results', async () => {
+    const partial = (id: number) => ({ ...existing, id, mobile: Number(`${id}551119876`), email: `p${id}@example.com` });
+    const spy = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request: HttpRequest) => {
+      if (request.method !== HttpMethod.GET) {
+        return respond({ body: { data: { id: 77 } }, status: 201 });
+      }
+      const page = Number(paramsOf(request).get('page') ?? '1');
+      const rows = page === 1 ? Array.from({ length: 60 }, (_, index) => partial(index + 1)) : [existing];
+      return ok({ data: rows, pagination: { currentPage: page, totalPages: 2 } });
+    });
+    await expect(
+      sallaCustomers.createCustomer({ auth, input: { firstName: 'Dup', lastName: 'Probe', mobile: '+966551119876' } }),
+    ).rejects.toThrow('Customer 19041486 already has the mobile +966551119876');
+    expect(spy.mock.calls.every(([request]) => request.method === HttpMethod.GET)).toBe(true);
+  });
+
+  it('sends nothing when the search has more results than it can check', async () => {
+    const spy = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request: HttpRequest) => {
+      if (request.method !== HttpMethod.GET) {
+        return respond({ body: { data: { id: 77 } }, status: 201 });
+      }
+      const page = Number(paramsOf(request).get('page') ?? '1');
+      const rows = Array.from({ length: 60 }, (_, index) => ({ ...existing, id: page * 100 + index, mobile: 1, email: 'x@example.com' }));
+      return ok({ data: rows, pagination: { currentPage: page, totalPages: 99 } });
+    });
+    await expect(
+      sallaCustomers.createCustomer({ auth, input: { firstName: 'Dup', lastName: 'Probe', mobile: '+966551119876' } }),
+    ).rejects.toThrow('could not check them all');
+    expect(spy.mock.calls.every(([request]) => request.method === HttpMethod.GET)).toBe(true);
+  });
+
   it('searches by the national number without the country code', async () => {
     const spy = mockSearch(() => []);
     await sallaCustomers.createCustomer({ auth, input: { firstName: 'Ali', lastName: 'Saleh', mobile: '0501234567', countryCode: 'SA' } });

@@ -110,7 +110,7 @@ async function updateProduct({
     return putProductKeepingChannels({ auth, path, body: fields, store });
   }
   const product = Object.keys(fields).length > 0 ? await putProductKeepingChannels({ auth, path, body: fields, store }) : await readProduct({ auth, path });
-  if (product['status'] === requestedStatus) {
+  if (product['status'] === requestedStatus && !(await channelsRestorePending({ store, productId: product['id'] }))) {
     return product;
   }
   try {
@@ -431,18 +431,21 @@ async function changeProductStatus({
   const path = `/products/${id}`;
   const before = store ? await readProduct({ auth, path }) : undefined;
   const channelsBefore = channelsOf(before);
-  const key = `${HIDDEN_CHANNELS_STORE_KEY_PREFIX}${id}`;
+  const key = hiddenChannelsKey(id);
   if (store && target === 'hidden' && before?.['status'] !== 'hidden' && channelsBefore !== undefined && channelsBefore.length > 0) {
     await store.put<HiddenChannels>(key, { channels: channelsBefore, at: Date.now() }, StoreScope.PROJECT);
+  }
+  const wasHidden = before?.['status'] === 'hidden' || channelsBefore === undefined || channelsBefore.length === 0;
+  const saved = store && target !== 'hidden' ? await readHiddenChannels({ store, key }) : undefined;
+  if (store && saved && wasHidden && !saved.restoring) {
+    await store.put<HiddenChannels>(key, { channels: saved.channels, at: saved.at, restoring: true }, StoreScope.PROJECT);
   }
   const message = await postProductStatus({ auth, productId: id, status: target });
   const result: ProductStatusResult = { product_id: Number(id), status: target, message };
   if (!store || target === 'hidden') {
     return result;
   }
-  const saved = await readHiddenChannels({ store, key });
-  const wasHidden = before?.['status'] === 'hidden' || channelsBefore === undefined || channelsBefore.length === 0;
-  const wanted = wasHidden ? saved : channelsBefore;
+  const wanted = wasHidden || saved?.restoring ? saved?.channels : channelsBefore;
   if (wanted === undefined || wanted.length === 0) {
     return result;
   }
@@ -450,18 +453,37 @@ async function changeProductStatus({
   if (channelsAfter === undefined || !sameChannels({ first: wanted, second: channelsAfter })) {
     try {
       await setSalesChannels({ auth, productId: id, channels: wanted });
-      if (target !== 'sale') {
-        await postProductStatus({ auth, productId: id, status: target });
-      }
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       throw new Error(
-        `The product status is now "${target}", but Salla changed its sales channels to ${(channelsAfter ?? []).join(', ') || 'none'} and putting back ${wanted.join(', ')} failed. Set the sales channels in Salla. ${reason}`,
+        `The product status is now "${target}", but Salla changed its sales channels to ${(channelsAfter ?? []).join(', ') || 'none'} and putting back ${wanted.join(', ')} failed. Run this step again to put them back, or set the sales channels in Salla. ${reason}`,
       );
+    }
+    if (target !== 'sale') {
+      try {
+        await postProductStatus({ auth, productId: id, status: target });
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : String(error);
+        throw new Error(
+          `Salla put back the sales channels ${wanted.join(', ')}, but that put the product on sale and setting it to "${target}" again failed. Run this step again, or set the status to "${target}" in Salla. ${reason}`,
+        );
+      }
     }
   }
   await forgetHiddenChannels({ store, key });
   return result;
+}
+
+async function channelsRestorePending({ store, productId }: { store: Store; productId: unknown }): Promise<boolean> {
+  if (typeof productId !== 'number' && typeof productId !== 'string') {
+    return false;
+  }
+  const saved = await readHiddenChannels({ store, key: hiddenChannelsKey(String(productId)) });
+  return saved?.restoring === true;
+}
+
+function hiddenChannelsKey(id: string): string {
+  return `${HIDDEN_CHANNELS_STORE_KEY_PREFIX}${id}`;
 }
 
 async function postProductStatus({ auth, productId, status }: { auth: SallaAuth; productId: unknown; status: ProductStatus }): Promise<string | undefined> {
@@ -475,10 +497,18 @@ async function postProductStatus({ auth, productId, status }: { auth: SallaAuth;
   return messageOf(response.body.data);
 }
 
-async function readHiddenChannels({ store, key }: { store: Store; key: string }): Promise<string[] | undefined> {
+async function readHiddenChannels({ store, key }: { store: Store; key: string }): Promise<HiddenChannels | undefined> {
   try {
     const saved = await store.get<unknown>(key, StoreScope.PROJECT);
-    return sallaApi.isRecord(saved) ? stringList(saved['channels']) : undefined;
+    if (!sallaApi.isRecord(saved)) {
+      return undefined;
+    }
+    const channels = stringList(saved['channels']);
+    if (channels === undefined || channels.length === 0) {
+      return undefined;
+    }
+    const at = typeof saved['at'] === 'number' ? saved['at'] : Date.now();
+    return { channels, at, restoring: saved['restoring'] === true };
   } catch {
     return undefined;
   }
@@ -1328,7 +1358,7 @@ type SavedChannelsState = 'updating' | 'done' | 'restore_failed';
 
 type SavedChannels = { channels: string[]; state: SavedChannelsState; by: string; at: number };
 
-type HiddenChannels = { channels: string[]; at: number };
+type HiddenChannels = { channels: string[]; at: number; restoring?: boolean };
 
 type ChannelsTracker = {
   restoreFailed: () => Promise<void>;

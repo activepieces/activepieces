@@ -91,14 +91,20 @@ async function findCustomer({
   keyword: string;
   matches: (customer: Record<string, unknown>) => boolean;
 }): Promise<Record<string, unknown> | undefined> {
-  const response = await sallaApi.request<unknown>({
+  const { items, truncated } = await sallaApi.fetchPaged<unknown>({
     auth,
-    method: HttpMethod.GET,
     path: '/customers',
-    query: { keyword, per_page: CUSTOMERS_PER_PAGE },
+    query: { keyword },
+    maxItems: DUPLICATE_SEARCH_LIMIT,
+    perPage: CUSTOMERS_PER_PAGE,
   });
-  const customers = Array.isArray(response.body.data) ? response.body.data.filter(sallaApi.isRecord) : [];
-  return customers.find(matches);
+  const match = items.filter(sallaApi.isRecord).find(matches);
+  if (match === undefined && truncated) {
+    throw new Error(
+      `Searching Salla for customers matching ${keyword} found more than ${DUPLICATE_SEARCH_LIMIT} results, so Activepieces could not check them all for the same mobile or email. Nothing was sent. Check in Salla that no customer has it, then add the customer there.`,
+    );
+  }
+  return match;
 }
 
 function nationalDigits(value: unknown): string | undefined {
@@ -451,6 +457,7 @@ function trimmed(value: string | undefined | null): string | undefined {
 }
 
 const CUSTOMERS_PER_PAGE = 60;
+const DUPLICATE_SEARCH_LIMIT = 300;
 const MAX_CUSTOMER_GROUPS = 500;
 const MIN_NATIONAL_DIGITS = 6;
 const MAX_NATIONAL_DIGITS = 13;
