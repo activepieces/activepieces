@@ -16,7 +16,7 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { telemetry } from '../helper/telemetry.utils'
-import { platformService } from '../platform/platform.service'
+import { platformRepo, platformService } from '../platform/platform.service'
 import { ProjectEntity } from '../project/project-entity'
 import { userService } from '../user/user-service'
 import { UserInvitationEntity } from './user-invitation.entity'
@@ -73,8 +73,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                     if (!isNil(invitation.projectId) && !isNil(invitation.projectRoleId)) {
                         await addToInvitedProject({ invitation, userId: user.id, log, context, failsWithoutProjectRoles: false })
                     }
-                    const platform = await platformService(log).getOneOrThrow(invitation.platformId)
-                    if (platform.ownerId !== user.id) {
+                    if (context.ownerIdByPlatformId.get(invitation.platformId) !== user.id) {
                         await userService(log).update({
                             id: user.id,
                             platformId: invitation.platformId,
@@ -483,18 +482,21 @@ async function loadProvisioningContext({ invitations, log }: LoadProvisioningCon
     const projectRoleIds = unique(withProject.map((invitation) => invitation.projectRoleId).filter((id): id is string => !isNil(id)))
     const projectIds = unique(withProject.map((invitation) => invitation.projectId).filter((id): id is string => !isNil(id)))
     const platformIds = unique(withProject.map((invitation) => invitation.platformId))
-    const [projectRoles, liveProjects, platforms] = await Promise.all([
+    const invitedPlatformIds = unique(invitations.map((invitation) => invitation.platformId))
+    const [projectRoles, liveProjects, platforms, invitedPlatforms] = await Promise.all([
         projectRoleIds.length === 0 ? [] : projectRoleRepo().findBy([
             { id: In(projectRoleIds), platformId: In(platformIds) },
             { id: In(projectRoleIds), type: RoleType.DEFAULT },
         ]),
         projectIds.length === 0 ? [] : projectRepo().findBy({ id: In(projectIds), platformId: In(platformIds) }),
         Promise.all(platformIds.map((platformId) => platformService(log).getOneWithPlanOrThrow(platformId))),
+        platformRepo().findBy({ id: In(invitedPlatformIds) }),
     ])
     return {
         projectRoleById: new Map(projectRoles.map((projectRole) => [projectRole.id, projectRole])),
         liveProjectPlatformIdById: new Map(liveProjects.map((project) => [project.id, project.platformId])),
         projectRolesEnabledByPlatformId: new Map(platforms.map((platform) => [platform.id, platform.plan.projectRolesEnabled])),
+        ownerIdByPlatformId: new Map(invitedPlatforms.map((platform) => [platform.id, platform.ownerId])),
     }
 }
 
@@ -607,6 +609,7 @@ type ProvisioningContext = {
     projectRoleById: Map<string, ProjectRole>
     liveProjectPlatformIdById: Map<string, string>
     projectRolesEnabledByPlatformId: Map<string, boolean>
+    ownerIdByPlatformId: Map<string, string>
 }
 
 type AddToInvitedProjectParams = {
