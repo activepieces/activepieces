@@ -9,6 +9,7 @@ import { t } from 'i18next';
 import { Check } from 'lucide-react';
 import { useState } from 'react';
 
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -27,7 +28,7 @@ import {
   SELF_SERVE_TRIAL_DAYS,
   selfServeTrialHooks,
 } from '../hooks/self-serve-trial-hooks';
-import { enterpriseMotion } from '../utils/billing-utils';
+import { billingUtils, enterpriseMotion } from '../utils/billing-utils';
 import { FeatureKey } from '../utils/platform-features';
 import { selfServeTrialFeatures } from '../utils/self-serve-trial-features';
 import { selfServeTrialTime } from '../utils/self-serve-trial-utils';
@@ -149,7 +150,7 @@ export function SelfServeTrialDialog() {
               returnFocus.focus();
             }
           }}
-          className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 shadow-lift sm:max-w-[50rem] sm:rounded-2xl"
+          className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 shadow-(--lift) sm:max-w-[50rem] sm:rounded-2xl"
         >
           {!isNil(shownPayload) && (
             <div
@@ -202,7 +203,11 @@ export function TrialTimeline({
     {
       when: selfServeTrialTime.formatDate(endDate),
       what: t('Back on {plan}, work kept', {
-        plan: info?.autumnPlanName ?? t('Free'),
+        plan:
+          info?.autumnPlanName ??
+          (info && billingUtils.isPaidPlan(info.plan.plan)
+            ? info.plan.plan
+            : t('Free')),
       }),
     },
   ];
@@ -214,7 +219,7 @@ export function TrialTimeline({
             <span
               className={cn(
                 'size-2 shrink-0 rounded-full',
-                index === 0 ? 'bg-accent-9' : 'bg-gray-8',
+                index === 0 ? 'bg-accent-10' : 'bg-gray-8',
               )}
             />
             {index < steps.length - 1 && (
@@ -254,9 +259,7 @@ function StartTrial({
   const highlights = selfServeTrialFeatures.highlights(featureKey);
   const isClicked = (keys: FeatureKey[]) =>
     featureKey !== undefined && keys.includes(featureKey);
-  const featureName = highlights.some((feature) =>
-    isClicked(feature.featureKeys),
-  )
+  const featureName = isClicked(highlights[0]?.featureKeys ?? [])
     ? selfServeTrialFeatures.nameInSentence(featureKey)
     : null;
 
@@ -310,9 +313,11 @@ function StartTrial({
                     >
                       {feature.shortTitle ?? feature.title}
                     </span>
-                    <span className="truncate text-xs text-gray-11">
-                      {feature.detail}
-                    </span>
+                    <TextWithTooltip tooltipMessage={feature.detail}>
+                      <span className="truncate text-xs text-gray-11">
+                        {feature.detail}
+                      </span>
+                    </TextWithTooltip>
                   </span>
                 </li>
               );
@@ -320,9 +325,9 @@ function StartTrial({
           </ul>
         </div>
       </div>
-      <aside className="flex flex-1 flex-col justify-between gap-8 border-t bg-gray-2 p-8 md:border-t-0 md:border-l">
+      <div className="flex flex-1 flex-col justify-between gap-8 border-t bg-gray-2 p-8 md:border-t-0 md:border-l">
         <TrialTimeline started={false} />
-        <div className="flex flex-col items-stretch gap-2 bg-gray-2 max-md:sticky max-md:bottom-0">
+        <div className="flex flex-col items-stretch gap-2">
           {isError && (
             <p className="text-sm text-danger-11">
               {t('We could not start your trial. Please try again.')}
@@ -344,7 +349,7 @@ function StartTrial({
             featureKey={featureKey}
           />
         </div>
-      </aside>
+      </div>
     </div>
   );
 }
