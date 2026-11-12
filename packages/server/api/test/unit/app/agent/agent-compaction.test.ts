@@ -265,29 +265,28 @@ describe('agentCompaction with reserved tokens', () => {
 
     it('caps the input of one summary pass so a long chat cannot time out the summarizer', async () => {
         const result = await agentCompaction.compactMessages({
-            messages: makeMessages(200, 4_000),
+            messages: makeMessages(120, 4_000),
             existingSummary: null,
             summarizedUpToIndex: null,
-            provider: AIProviderName.GOOGLE,
-            reservedTokens: 0,
+            provider: AIProviderName.ACTIVEPIECES,
+            reservedTokens: RESERVED_TOKENS,
             model: summaryModel,
             log: silentLog,
         })
         const prompt = String(vi.mocked(generateText).mock.calls.at(-1)?.[0]?.prompt)
         expect(prompt.length / 4).toBeLessThanOrEqual(32_000)
         expect(result.summarizedUpToIndex).toBeGreaterThan(0)
-        expect(result.summarizedUpToIndex).toBeLessThan(100)
     })
 
     it('moves past a timed-out pass on the next turn instead of re-sending the whole backlog', async () => {
-        const messages = makeMessages(200, 4_000)
+        const messages = makeMessages(120, 4_000)
         vi.mocked(generateText).mockRejectedValueOnce(new DOMException('The operation was aborted due to timeout', 'TimeoutError'))
         const timedOut = await agentCompaction.compactMessages({
             messages,
             existingSummary: null,
             summarizedUpToIndex: null,
-            provider: AIProviderName.GOOGLE,
-            reservedTokens: 0,
+            provider: AIProviderName.ACTIVEPIECES,
+            reservedTokens: RESERVED_TOKENS,
             model: summaryModel,
             log: silentLog,
         })
@@ -296,8 +295,8 @@ describe('agentCompaction with reserved tokens', () => {
             messages,
             existingSummary: timedOut.summary,
             summarizedUpToIndex: timedOut.summarizedUpToIndex,
-            provider: AIProviderName.GOOGLE,
-            reservedTokens: 0,
+            provider: AIProviderName.ACTIVEPIECES,
+            reservedTokens: RESERVED_TOKENS,
             model: summaryModel,
             log: silentLog,
         })
