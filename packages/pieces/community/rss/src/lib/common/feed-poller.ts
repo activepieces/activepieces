@@ -499,10 +499,6 @@ function itemKey({ item, feedUrl }: { item: FeedParser.Item; feedUrl: string }):
 	return hashKey({ identity });
 }
 
-// Links (and link-derived guids) can carry a tracking parameter that changes on every fetch, e.g.
-// Bing News. For items dated at or after the cursor, title + date is a second identity that does not
-// depend on the link, so such an item is not fired again; a different title in the same second still fires.
-// An undated item without its own guid uses its title alone.
 function contentKey({ item }: { item: FeedParser.Item }): string | null {
 	if (!item.title) {
 		return null;

@@ -31,8 +31,6 @@ export const rssNewItemListTrigger = createTrigger({
     });
   },
   async onDisable(): Promise<void> {
-    // Nothing to clean up. Older servers call this on every republish without isRepublish,
-    // so deleting the cursors here would drop items published since the last poll.
   },
   async run(context): Promise<unknown[]> {
     return rssFeedPoller.poll({ store: context.store, urls: context.propsValue.rss_feed_urls });

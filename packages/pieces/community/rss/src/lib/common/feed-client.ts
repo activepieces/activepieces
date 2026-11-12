@@ -233,8 +233,6 @@ function describeCause({ cause }: { cause: unknown }): string {
 	return cause instanceof Error ? cause.message : '';
 }
 
-// feedparser (sax) decodes bytes as UTF-8 unless a BOM says UTF-16, so a feed served in a
-// legacy charset must be decoded here: the HTTP charset wins, then the XML declaration.
 function decodeBody({ body, contentType }: FetchedBody): Buffer | string {
 	if (hasUnicodeBom({ body })) {
 		return body;
