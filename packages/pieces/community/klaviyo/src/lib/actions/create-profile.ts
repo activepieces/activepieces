@@ -1,19 +1,22 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { klaviyoAuth, KlaviyoAuthValue } from '../common/auth';
-import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { klaviyoAuth } from '../common/auth';
+import { duplicateProfileId, KlaviyoApiError, klaviyoApi } from '../common/client';
+import { klaviyoInputs } from '../common/ai-props';
+import { klaviyoOutputSchemas } from '../common/output-schemas';
 
 export const createProfile = createAction({
   auth: klaviyoAuth,
   name: 'createProfile',
   classification: 'WRITE',
   displayName: 'Create Profile',
-  description: 'Add new user profile with email/SMS subscription options',
-  audience: 'both',
+  description: 'Add a new profile. Fails if a profile with the same email, phone number or external ID already exists; use Create or Update Profile to upsert.',
+  audience: 'human',
   aiMetadata: {
-    description: 'Creates a new profile (contact) in Klaviyo with identity, location, and custom-property attributes. Use when adding a person who is not yet in Klaviyo; to modify someone who already exists use Update Profile. Requires at least one identifier (email, phone number, or external ID); not idempotent, so each call creates a profile.',
+    description: 'Creates a new profile (contact) in Klaviyo with identity, location, and custom-property attributes. Fails with HTTP 409 and the existing profile ID when the email, phone number or external ID is already in use. Does not change marketing consent. Not idempotent.',
     idempotent: false,
   },
+  outputSchema: klaviyoOutputSchemas.rawProfile,
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -121,112 +124,39 @@ export const createProfile = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const {
-      email,
-      phone_number,
-      external_id,
-      first_name,
-      last_name,
-      organization,
-      locale,
-      title,
-      image,
-      address1,
-      address2,
-      city,
-      country,
-      region,
-      zip,
-      timezone,
-      ip,
-      latitude,
-      longitude,
-      custom_properties,
-      include_subscriptions,
-      include_predictive_analytics,
-    } = propsValue;
-
-    if (!email && !phone_number && !external_id) {
+    const attributes = klaviyoInputs.profileAttributes(propsValue);
+    if (attributes['email'] === undefined && attributes['phone_number'] === undefined && attributes['external_id'] === undefined) {
       throw new Error(
         'At least one identifier is required: email, phone_number, or external_id'
       );
     }
-
-    const attributes: Record<string, any> = {};
-
-    if (email) attributes['email'] = email;
-    if (phone_number) attributes['phone_number'] = phone_number;
-    if (external_id) attributes['external_id'] = external_id;
-
-    if (first_name) attributes['first_name'] = first_name;
-    if (last_name) attributes['last_name'] = last_name;
-    if (organization) attributes['organization'] = organization;
-    if (locale) attributes['locale'] = locale;
-    if (title) attributes['title'] = title;
-    if (image) attributes['image'] = image;
-
-    const hasLocationData =
-      address1 ||
-      address2 ||
-      city ||
-      country ||
-      region ||
-      zip ||
-      timezone ||
-      ip ||
-      latitude ||
-      longitude;
-    if (hasLocationData) {
-      attributes['location'] = {};
-      if (address1) attributes['location']['address1'] = address1;
-      if (address2) attributes['location']['address2'] = address2;
-      if (city) attributes['location']['city'] = city;
-      if (country) attributes['location']['country'] = country;
-      if (region) attributes['location']['region'] = region;
-      if (zip) attributes['location']['zip'] = zip;
-      if (timezone) attributes['location']['timezone'] = timezone;
-      if (ip) attributes['location']['ip'] = ip;
-      if (latitude) attributes['location']['latitude'] = latitude;
-      if (longitude) attributes['location']['longitude'] = longitude;
+    const additionalFields = [
+      propsValue.include_subscriptions ? 'subscriptions' : undefined,
+      propsValue.include_predictive_analytics ? 'predictive_analytics' : undefined,
+    ].filter((field): field is string => field !== undefined);
+    try {
+      const response = await klaviyoApi.send({
+        auth,
+        method: HttpMethod.POST,
+        path: '/profiles',
+        query: { 'additional-fields[profile]': additionalFields.join(',') },
+        body: { data: { type: 'profile', attributes } },
+      });
+      return response.body;
+    } catch (error) {
+      if (error instanceof KlaviyoApiError && error.status === 409) {
+        const existingId = duplicateProfileId(error.responseBody);
+        throw new KlaviyoApiError({
+          method: HttpMethod.POST,
+          path: '/profiles',
+          status: 409,
+          responseBody: error.responseBody,
+          hint: existingId === undefined
+            ? 'A profile with this identifier already exists. Use Update Profile or Create or Update Profile instead.'
+            : `A profile with this identifier already exists (profile ID ${existingId}). Use Update Profile or Create or Update Profile instead.`,
+        });
+      }
+      throw error;
     }
-
-    if (custom_properties) {
-      attributes['properties'] = custom_properties;
-    }
-
-    const body = {
-      data: {
-        type: 'profile',
-        attributes,
-      },
-    };
-
-    const queryParams = new URLSearchParams();
-    const additionalFields = [];
-
-    if (include_subscriptions) {
-      additionalFields.push('subscriptions');
-    }
-    if (include_predictive_analytics) {
-      additionalFields.push('predictive_analytics');
-    }
-
-    if (additionalFields.length > 0) {
-      queryParams.append(
-        'additional-fields[profile]',
-        additionalFields.join(',')
-      );
-    }
-
-    const endpoint = `/profiles${
-      queryParams.toString() ? '?' + queryParams.toString() : ''
-    }`;
-
-    return await makeRequest(
-      auth as KlaviyoAuthValue,
-      HttpMethod.POST,
-      endpoint,
-      body
-    );
   },
 });

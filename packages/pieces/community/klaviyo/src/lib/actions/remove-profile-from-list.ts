@@ -1,8 +1,10 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { klaviyoAuth, KlaviyoAuthValue } from '../common/auth';
-import { listIdDropdown, profileIdsMultiSelectDropdown } from '../common/props';
+import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest, normalizeProfileIds } from '../common/client';
+import { klaviyoAuth } from '../common/auth';
+import { listIdDropdown, profileIdsMultiSelectDropdown } from '../common/props';
+import { klaviyoApi, normalizeProfileIds, pathFor } from '../common/client';
+import { klaviyoInputs } from '../common/ai-props';
+import { klaviyoOutputSchemas } from '../common/output-schemas';
 
 export const removeProfileFromList = createAction({
   auth: klaviyoAuth,
@@ -12,47 +14,35 @@ export const removeProfileFromList = createAction({
   description: 'Remove profiles from a specific list.',
   audience: 'both',
   aiMetadata: {
-    description: 'Removes one or more profiles (by profile ID) from a Klaviyo list, ending their membership without changing subscription consent. Use to take profiles off a list; requires a list ID and at least one profile ID (max 1000 per call). Idempotent, since removing a profile that is not a member is a no-op.',
+    description: 'Removes one or more profiles (by profile ID) from a Klaviyo list, ending their membership without changing subscription consent. Use to take profiles off a list; requires a list ID and 1-1000 profile IDs. Idempotent, since removing a profile that is not a member is a no-op.',
     idempotent: true,
   },
+  outputSchema: klaviyoOutputSchemas.listMembershipRemoved,
   props: {
     list_id: listIdDropdown,
     profile_ids: profileIdsMultiSelectDropdown,
   },
   async run({ propsValue, auth }) {
-    const { list_id, profile_ids: rawProfileIds } = propsValue;
-    const profile_ids = normalizeProfileIds(rawProfileIds);
-
-    if (!profile_ids || profile_ids.length === 0) {
+    const listId = klaviyoInputs.requireText({ value: propsValue.list_id, label: 'List Id' });
+    const profileIds = normalizeProfileIds(propsValue.profile_ids);
+    if (profileIds.length === 0) {
       throw new Error('At least one profile must be selected');
     }
-
-    if (profile_ids.length > 1000) {
-      throw new Error('Maximum of 1000 profiles can be removed at once');
+    if (profileIds.length > MAX_PROFILES) {
+      throw new Error(`Maximum of ${MAX_PROFILES} profiles can be removed at once`);
     }
-
-    const data = {
-      data: profile_ids.map((id: string) => ({
-        type: 'profile',
-        id,
-      })),
+    await klaviyoApi.send({
+      auth,
+      method: HttpMethod.DELETE,
+      path: `${pathFor(['lists', listId])}/relationships/profiles`,
+      body: { data: profileIds.map((id) => ({ type: 'profile', id })) },
+    });
+    return {
+      success: true,
+      message: `Successfully removed ${profileIds.length} profile(s) from the list`,
+      profiles_removed: profileIds.length,
     };
-
-    const response = await makeRequest(
-      auth as KlaviyoAuthValue,
-      HttpMethod.DELETE,
-      `/lists/${list_id}/relationships/profiles`,
-      data
-    );
-
-    if (!response) {
-      return {
-        success: true,
-        message: `Successfully removed ${profile_ids.length} profile(s) from the list`,
-        profiles_removed: profile_ids.length,
-      };
-    }
-
-    return response;
   },
 });
+
+const MAX_PROFILES = 1000;

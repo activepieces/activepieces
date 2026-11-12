@@ -1,8 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { profileIdDropdown, countryCode } from '../common/props';
-import { klaviyoAuth, KlaviyoAuthValue } from '../common/auth';
-import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { klaviyoAuth } from '../common/auth';
+import { klaviyoApi, pathFor } from '../common/client';
+import { klaviyoInputs } from '../common/ai-props';
+import { klaviyoOutputSchemas } from '../common/output-schemas';
 
 export const updateProfile = createAction({
   auth: klaviyoAuth,
@@ -10,11 +12,12 @@ export const updateProfile = createAction({
   classification: 'WRITE',
   displayName: 'Update Profile',
   description: 'Update existing profile data and preferences.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
-    description: 'Updates an existing Klaviyo profile by its profile ID, overwriting only the supplied identity, location, and custom-property fields. Use when modifying a known profile; the profile ID is required, so resolve it first (e.g. via Find Profile by Email/Phone). Idempotent: re-running with the same input leaves the profile in the same state.',
+    description: 'Updates an existing Klaviyo profile by its profile ID, overwriting only the supplied identity, location, and custom-property fields. Does not change marketing consent. Idempotent: re-running with the same input leaves the profile in the same state.',
     idempotent: true,
   },
+  outputSchema: klaviyoOutputSchemas.rawProfile,
   props: {
     profile_id: profileIdDropdown,
     email: Property.ShortText({
@@ -67,7 +70,6 @@ export const updateProfile = createAction({
       description: 'URL pointing to profile image location',
       required: false,
     }),
-    // Location fields
     address1: Property.ShortText({
       displayName: 'Address 1',
       description: 'First line of street address',
@@ -133,110 +135,44 @@ export const updateProfile = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const {
-      profile_id,
-      email,
-      phone_number,
-      external_id,
-      anonymous_id,
-      first_name,
-      last_name,
-      organization,
-      locale,
-      title,
-      image,
-      address1,
-      address2,
-      city,
-      country,
-      region,
-      zip,
-      timezone,
-      ip,
-      latitude,
-      longitude,
-      custom_properties,
-      include_subscriptions,
-      include_predictive_analytics,
-    } = propsValue;
-
-    const attributes: Record<string, any> = {};
-
-    if (email !== undefined) attributes['email'] = email;
-    if (phone_number !== undefined) attributes['phone_number'] = phone_number;
-    if (external_id !== undefined) attributes['external_id'] = external_id;
-    if (anonymous_id !== undefined) attributes['anonymous_id'] = anonymous_id;
-    if (first_name !== undefined) attributes['first_name'] = first_name;
-    if (last_name !== undefined) attributes['last_name'] = last_name;
-    if (organization !== undefined) attributes['organization'] = organization;
-    if (locale !== undefined) attributes['locale'] = locale;
-    if (title !== undefined) attributes['title'] = title;
-    if (image !== undefined) attributes['image'] = image;
-
-    const hasLocationData =
-      address1 !== undefined ||
-      address2 !== undefined ||
-      city !== undefined ||
-      country !== undefined ||
-      region !== undefined ||
-      zip !== undefined ||
-      timezone !== undefined ||
-      ip !== undefined ||
-      latitude !== undefined ||
-      longitude !== undefined;
-
-    if (hasLocationData) {
-      const location: Record<string, any> = {};
-      if (address1 !== undefined) location['address1'] = address1;
-      if (address2 !== undefined) location['address2'] = address2;
-      if (city !== undefined) location['city'] = city;
-      if (country !== undefined) location['country'] = country;
-      if (region !== undefined) location['region'] = region;
-      if (zip !== undefined) location['zip'] = zip;
-      if (timezone !== undefined) location['timezone'] = timezone;
-      if (ip !== undefined) location['ip'] = ip;
-      if (latitude !== undefined) location['latitude'] = latitude;
-      if (longitude !== undefined) location['longitude'] = longitude;
-
+    const profileId = klaviyoInputs.requireText({ value: propsValue.profile_id, label: 'Profile Id' });
+    const attributes: Record<string, unknown> = {};
+    const textFields: UpdateTextField[] = ['email', 'phone_number', 'external_id', 'anonymous_id', 'first_name', 'last_name', 'organization', 'locale', 'title', 'image'];
+    for (const field of textFields) {
+      const value = propsValue[field];
+      if (value !== undefined) {
+        attributes[field] = value;
+      }
+    }
+    const location: Record<string, unknown> = {};
+    const locationFields: UpdateLocationField[] = ['address1', 'address2', 'city', 'country', 'region', 'zip', 'timezone', 'ip', 'latitude', 'longitude'];
+    for (const field of locationFields) {
+      const value = propsValue[field];
+      if (value !== undefined) {
+        location[field] = value;
+      }
+    }
+    if (Object.keys(location).length > 0) {
       attributes['location'] = location;
     }
-
-    if (custom_properties !== undefined) {
-      attributes['properties'] = custom_properties;
+    if (propsValue.custom_properties !== undefined) {
+      attributes['properties'] = propsValue.custom_properties;
     }
-
-    const body = {
-      data: {
-        type: 'profile',
-        id: profile_id,
-        attributes,
-      },
-    };
-
-    const queryParams: string[] = [];
-    const additionalFields: string[] = [];
-
-    if (include_subscriptions) {
-      additionalFields.push('subscriptions');
-    }
-    if (include_predictive_analytics) {
-      additionalFields.push('predictive_analytics');
-    }
-
-    if (additionalFields.length > 0) {
-      queryParams.push(
-        `additional-fields[profile]=${additionalFields.join(',')}`
-      );
-    }
-
-    const queryString =
-      queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
-
-    return await makeRequest(
-      auth as KlaviyoAuthValue,
-      HttpMethod.PATCH,
-      `/profiles/${profile_id}${queryString}`,
-      body
-    );
+    const additionalFields = [
+      propsValue.include_subscriptions ? 'subscriptions' : undefined,
+      propsValue.include_predictive_analytics ? 'predictive_analytics' : undefined,
+    ].filter((field): field is string => field !== undefined);
+    const response = await klaviyoApi.send({
+      auth,
+      method: HttpMethod.PATCH,
+      path: pathFor(['profiles', profileId]),
+      query: { 'additional-fields[profile]': additionalFields.join(',') },
+      body: { data: { type: 'profile', id: profileId, attributes } },
+    });
+    return response.body;
   },
 });
+
+type UpdateTextField = 'email' | 'phone_number' | 'external_id' | 'anonymous_id' | 'first_name' | 'last_name' | 'organization' | 'locale' | 'title' | 'image';
+
+type UpdateLocationField = 'address1' | 'address2' | 'city' | 'country' | 'region' | 'zip' | 'timezone' | 'ip' | 'latitude' | 'longitude';

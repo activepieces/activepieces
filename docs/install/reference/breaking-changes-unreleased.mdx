@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Klaviyo 0.3.0: four profile actions are no longer agent tools
+
+From Klaviyo 0.3.0, **Create Profile**, **Update Profile**, **Subscribe Profile** and **Unsubscribe Profile** are no longer offered to AI agents and MCP clients. They stay available as flow steps with the same inputs. Agents use the new tools instead: **Create or Update Profile** in place of Create Profile and Update Profile, **Subscribe Profile to Marketing** and **Unsubscribe Profile from Marketing**. Subscribe Profile can now pick any profile in the account, not only members of the chosen list, and its `job_id` output is empty when Klaviyo returns no job ID. Existing OAuth connections must be reconnected to use List Metrics, the New Event trigger and the tag actions. The piece needs Activepieces 0.88.2 or later.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used the four actions at the matching new tool. Reconnect Klaviyo OAuth connections that need metrics or tags.
+
 #### Google Drive 0.14.0: file triggers, downloads and search across shared drives
 
 From Google Drive 0.14.0, the **New File** trigger with **Include File Content** on fires for a file whose download fails. That run has a `contentError` field with the reason instead of `content`. Before, one failed download (for example a Google Form, which Drive can't download) failed the whole poll, and every new file in that poll was lost. The trigger's output can now carry the `content` and `contentError` keys.

@@ -1,23 +1,33 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { klaviyoAuth, KlaviyoAuthValue } from '../common/auth';
-import { listIdDropdown, profileIdsMultiSelectDropdown } from '../common/props';
-import { fetchProfilesByIds, makeRequest, normalizeProfileIds } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { klaviyoAuth } from '../common/auth';
+import { allProfileIdsMultiSelectDropdown, listIdDropdown } from '../common/props';
+import {
+  ConsentChannel,
+  consentProfiles,
+  jobIdOf,
+  klaviyoApi,
+  normalizeProfileIds,
+  subscribeJobBody,
+} from '../common/client';
+import { klaviyoInputs } from '../common/ai-props';
+import { klaviyoOutputSchemas } from '../common/output-schemas';
 
 export const subscribeProfile = createAction({
   auth: klaviyoAuth,
   name: 'subscribeProfile',
   classification: 'WRITE',
   displayName: 'Subscribe Profile',
-  description: 'Subscribe profiles to email or SMS marketing on a list.',
-  audience: 'both',
+  description: 'Subscribe profiles to email or SMS marketing, optionally on a list. This grants marketing consent: it re-subscribes profiles that had unsubscribed or were suppressed, and a double opt-in list sends a confirmation email. Klaviyo queues the change; Job ID is null when Klaviyo returns no job ID.',
+  audience: 'human',
   aiMetadata: {
-    description: 'Opts profiles in to email and/or SMS marketing consent via a bulk subscription job, optionally scoped to a list. At least one channel must be selected; enabling historical import bypasses double opt-in and requires a consent date. Use this for consent changes rather than Add Profile to List (which only sets membership). Not idempotent: each call queues a new subscription job (max 1000 profiles).',
+    description: 'Opts profiles in to email and/or SMS marketing consent via a bulk subscription job, optionally scoped to a list. Grants consent: it lifts unsubscribe, spam-report and manual suppressions, and a double opt-in list sends a confirmation email. Enabling historical import bypasses double opt-in and requires a consent date. Not idempotent: a repeat may send another confirmation email (max 1000 profiles).',
     idempotent: false,
   },
+  outputSchema: klaviyoOutputSchemas.subscribeProfile,
   props: {
     list_id: listIdDropdown,
-    profile_ids: profileIdsMultiSelectDropdown,
+    profile_ids: allProfileIdsMultiSelectDropdown,
     subscribe_email: Property.Checkbox({
       displayName: 'Subscribe to Email',
       description: 'Subscribe selected profiles to email marketing.',
@@ -49,21 +59,15 @@ export const subscribeProfile = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const {
-      list_id,
-      profile_ids: rawProfileIds,
-      subscribe_email,
-      subscribe_sms,
-      historical_import,
-      consented_at,
-      custom_source,
-    } = propsValue;
-    const profile_ids = normalizeProfileIds(rawProfileIds);
-
-    if (!profile_ids || profile_ids.length === 0) {
+    const { subscribe_email, subscribe_sms, historical_import } = propsValue;
+    const listId = klaviyoInputs.optionalText(propsValue.list_id);
+    const consentedAt = klaviyoInputs.isoDateTime({ value: propsValue.consented_at, label: 'Consent Date' });
+    const customSource = klaviyoInputs.optionalText(propsValue.custom_source);
+    const profileIds = normalizeProfileIds(propsValue.profile_ids);
+    if (profileIds.length === 0) {
       throw new Error('At least one profile must be selected.');
     }
-    if (profile_ids.length > 1000) {
+    if (profileIds.length > 1000) {
       throw new Error('Maximum of 1000 profiles can be subscribed at once.');
     }
     if (!subscribe_email && !subscribe_sms) {
@@ -71,73 +75,36 @@ export const subscribeProfile = createAction({
         'At least one subscription channel must be selected (Email or SMS).'
       );
     }
-    if (historical_import && !consented_at) {
+    if (historical_import && consentedAt === undefined) {
       throw new Error(
         'Consent Date is required when Historical Import is enabled.'
       );
     }
-
-    // Batch-fetch profile details to include email/phone_number (required by Klaviyo)
-    const profileMap = await fetchProfilesByIds(auth as KlaviyoAuthValue, profile_ids as string[]);
-
-    const profileData = (profile_ids as string[]).map((profileId) => {
-      const attrs = profileMap.get(profileId) ?? {};
-      const subscriptions: any = {};
-
-      if (subscribe_email) {
-        subscriptions.email = { marketing: { consent: 'SUBSCRIBED' } };
-        if (historical_import && consented_at) {
-          subscriptions.email.marketing.consented_at = consented_at;
-        }
-      }
-      if (subscribe_sms) {
-        subscriptions.sms = { marketing: { consent: 'SUBSCRIBED' } };
-        if (historical_import && consented_at) {
-          subscriptions.sms.marketing.consented_at = consented_at;
-        }
-      }
-
-      const profileAttrs: any = { subscriptions };
-      if (subscribe_email && attrs.email) profileAttrs.email = attrs.email;
-      if (subscribe_sms && attrs.phone_number)
-        profileAttrs.phone_number = attrs.phone_number;
-
-      return { type: 'profile', id: profileId, attributes: profileAttrs };
+    const channels: ConsentChannel[] = [];
+    if (subscribe_email) {
+      channels.push('email');
+    }
+    if (subscribe_sms) {
+      channels.push('sms');
+    }
+    const profiles = await consentProfiles({ auth, profileIds, channels });
+    const response = await klaviyoApi.send({
+      auth,
+      method: HttpMethod.POST,
+      path: '/profile-subscription-bulk-create-jobs',
+      body: subscribeJobBody({
+        profiles,
+        listId,
+        customSource,
+        historicalImport: historical_import === true,
+        consentedAt,
+      }),
     });
-
-    const requestBody: any = {
-      data: {
-        type: 'profile-subscription-bulk-create-job',
-        attributes: {
-          profiles: { data: profileData },
-        },
-      },
-    };
-
-    if (list_id) {
-      requestBody.data.relationships = {
-        list: { data: { type: 'list', id: list_id } },
-      };
-    }
-    if (custom_source) {
-      requestBody.data.attributes.custom_source = custom_source;
-    }
-    if (historical_import) {
-      requestBody.data.attributes.historical_import = true;
-    }
-
-    const response = await makeRequest(
-      auth as unknown as KlaviyoAuthValue,
-      HttpMethod.POST,
-      '/profile-subscription-bulk-create-jobs',
-      requestBody
-    );
-
     return {
       success: true,
-      job_id: response?.data?.id,
-      profiles_count: profileData.length,
-      list_id: list_id || null,
+      job_id: jobIdOf(response.body),
+      profiles_count: profiles.length,
+      list_id: listId ?? null,
       subscribed_email: subscribe_email ?? false,
       subscribed_sms: subscribe_sms ?? false,
       historical_import: historical_import ?? false,

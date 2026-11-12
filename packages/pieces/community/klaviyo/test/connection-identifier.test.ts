@@ -102,7 +102,7 @@ describe('klaviyo getConnectionIdentifier', () => {
     expect(seen[0].url).toBe('https://a.klaviyo.com/api/accounts');
     expect(seen[0].method).toBe('GET');
     expect(seen[0].auth).toBe('Klaviyo-API-Key pk_123');
-    expect(seen[0].headers.get('revision')).toBe('2025-04-15');
+    expect(seen[0].headers.get('revision')).toBe('2026-10-15');
   });
 
   test('oauth: organization_name from /api/accounts with the bearer token and revision', async () => {
@@ -118,7 +118,7 @@ describe('klaviyo getConnectionIdentifier', () => {
     expect(seen[0].url).toBe('https://a.klaviyo.com/api/accounts');
     expect(seen[0].method).toBe('GET');
     expect(seen[0].auth).toBe('Bearer TKN');
-    expect(seen[0].headers.get('revision')).toBe('2025-04-15');
+    expect(seen[0].headers.get('revision')).toBe('2026-10-15');
   });
 
   test.each([

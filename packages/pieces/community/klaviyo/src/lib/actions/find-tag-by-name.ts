@@ -1,15 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { klaviyoAuth, KlaviyoAuthValue } from '../common/auth';
-import { makeRequest } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
-
-interface KlaviyoTag {
-  type: string;
-  id: string;
-  attributes: {
-    name?: string;
-  };
-}
+import { klaviyoAuth } from '../common/auth';
+import { klaviyoApi, quoteFilterValue, textOf } from '../common/client';
+import { klaviyoOutputSchemas } from '../common/output-schemas';
 
 export const findTagByName = createAction({
   auth: klaviyoAuth,
@@ -19,9 +11,10 @@ export const findTagByName = createAction({
   description: 'Find tags whose name contains the search query.',
   audience: 'both',
   aiMetadata: {
-    description: 'Searches Klaviyo tags by a partial (contains) name match and returns matching tags with their IDs. Use to discover tag IDs by keyword. Requires a search value; matching is substring-based, not exact. Read-only and idempotent.',
+    description: 'Searches Klaviyo tags by a partial (contains) name match and returns matching tags with their IDs. Use to discover tag IDs by keyword, for example before Add Tag to List or Segment. Requires a search value; matching is substring-based, not exact. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: klaviyoOutputSchemas.findTag,
   props: {
     search_query: Property.ShortText({
       displayName: 'Tag Name',
@@ -30,29 +23,22 @@ export const findTagByName = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { search_query } = propsValue;
-
-    if (!search_query || search_query.trim().length === 0) {
+    const trimmedQuery = (propsValue.search_query ?? '').trim();
+    if (trimmedQuery.length === 0) {
       throw new Error('Tag name is required');
     }
-
-    const trimmedQuery = search_query.trim();
-    const filter = `contains(name,"${trimmedQuery.replace(/"/g, '\\"')}")`;
-
-    const queryParams = new URLSearchParams();
-    queryParams.append('filter', filter);
-    queryParams.append('page[size]', '50');
-    queryParams.append('sort', 'name');
-
-    const response = await makeRequest(
-      auth as KlaviyoAuthValue,
-      HttpMethod.GET,
-      `/tags?${queryParams.toString()}`
-    );
-
-    const tags: KlaviyoTag[] = response.data || [];
-
-    if (tags.length === 0) {
+    const { items } = await klaviyoApi.listAll({
+      auth,
+      path: '/tags',
+      query: {
+        filter: `contains(name,${quoteFilterValue(trimmedQuery)})`,
+        'page[size]': 50,
+        sort: 'name',
+      },
+      maxItems: MAX_TAGS,
+      what: `tags containing "${trimmedQuery}"`,
+    });
+    if (items.length === 0) {
       return {
         success: false,
         message: `No tags found containing "${trimmedQuery}"`,
@@ -60,18 +46,14 @@ export const findTagByName = createAction({
         count: 0,
       };
     }
-
-    const formattedTags = tags.map((tag) => ({
-      id: tag.id,
-      name: tag.attributes.name ?? '',
-    }));
-
     return {
       success: true,
-      message: `Found ${tags.length} tag(s) containing "${trimmedQuery}"`,
-      tags: formattedTags,
-      count: tags.length,
+      message: `Found ${items.length} tag(s) containing "${trimmedQuery}"`,
+      tags: items.map((tag) => ({ id: tag.id, name: textOf(tag.attributes['name']) ?? '' })),
+      count: items.length,
       search_query: trimmedQuery,
     };
   },
 });
+
+const MAX_TAGS = 500;
