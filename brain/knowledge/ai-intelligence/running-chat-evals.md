@@ -41,7 +41,7 @@ All of these need `--dataset <name>`:
 
 ## Gotchas
 
-- `--upload` writes the run to PostHog as the main baseline. Only CI on main uses it, so never run it locally.
+- `--upload` writes the run to PostHog as the main baseline. The CLI refuses it unless HEAD is `origin/main`, the worktree is clean and `--repeats` is at least 3. No CI job runs it yet, so someone uploads by hand after main changes.
 - A full run costs about $0.03 per run, which comes to cases × 5 × $0.03.
 - Web and catalog reads (`LIVE_TOOLS` in `replay.ts`: web search, fetch and scrape, piece search and props, skills, tool schemas, setup guides) always run live with your branch's code and ignore their recordings, since their answer doesn't depend on the user. Every run makes real web searches. Workspace reads (flows, runs, connections, tables, dropdown options) stay recorded because the dev server doesn't have the user's data.
 - A workspace read with no recording replies "unavailable" and the agent carries on. A write ends the turn when it isn't recorded or its input differs from the recording. If that write is the case's target tool, the run fails the tool-call gate; otherwise the judge grades what happened. Use `--record` to fill a missing read.

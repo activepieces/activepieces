@@ -47,6 +47,10 @@ async function main(): Promise<void> {
     if (values.upload && (recordMode || onlyCases.size > 0)) {
         throw new Error('--upload is for the full main run only: drop --case and --record')
     }
+    const uploadRefusal = values.upload ? uploadProblem({ repeats }) : null
+    if (!isNil(uploadRefusal)) {
+        throw new Error(`--upload refused: ${uploadRefusal}`)
+    }
     const datasets = await Promise.all(datasetNames.map(async (name) => ({
         name,
         cases: (await posthogDataset.loadItems({ datasetName: name }))
@@ -362,8 +366,25 @@ function diffLabel({ before, now }: { before: Verdict | 'unclear', now: Verdict 
     return now === 'fail' ? 'REGRESSED' : 'FIXED'
 }
 
+function uploadProblem({ repeats }: { repeats: number }): string | null {
+    if (repeats < MIN_JUDGED_RUNS) {
+        return `pass --repeats ${MIN_JUDGED_RUNS} or more, or no case in the baseline can ever be compared`
+    }
+    if (git(['status', '--porcelain']).length > 0) {
+        return 'the baseline must match a commit: commit or stash your changes'
+    }
+    if (git(['rev-parse', 'HEAD']) !== git(['rev-parse', 'origin/main'])) {
+        return 'a main baseline must come from main: check out the latest origin/main'
+    }
+    return null
+}
+
+function git(args: string[]): string {
+    return execFileSync('git', args, { encoding: 'utf-8' }).trim()
+}
+
 function gitSha(): string {
-    return process.env['GITHUB_SHA'] ?? execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf-8' }).trim()
+    return process.env['GITHUB_SHA'] ?? git(['rev-parse', 'HEAD'])
 }
 
 function promptVersion(): string {
