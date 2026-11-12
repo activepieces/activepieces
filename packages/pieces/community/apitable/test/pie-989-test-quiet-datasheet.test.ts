@@ -84,7 +84,6 @@ describe('PIE-989 (C1139) testing a polling trigger on a populated but quiet sou
             auth: { type: AppConnectionType.CUSTOM_AUTH, props: { token: 'tok', apiTableUrl: baseUrl } },
             propsValue: { space_id: 'spc1', datasheet_id: 'dst1' },
         }))
-        console.log('APITABLE NEW test() items:', out.length, 'formulas:', JSON.stringify(seenFormulas))
         expect(out.length).toBeGreaterThan(0)
         expect(out.map((event) => recordIdOf({ event }))).toEqual(['recApi2', 'recApi1', 'recApi0'])
     })
