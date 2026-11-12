@@ -85,6 +85,7 @@ For the role gate and project isolation, an EE spec imports `test` from `fixture
 - Keep `if` out of specs. A spec runs the same steps on every run, so a green run always proves the same thing.
 - A page object may branch only when the app can correctly be in either of two states and the spec cannot choose which, such as an empty project or one with flows (see `AutomationsPage.createFlow`). Never branch to work around a bug or a flaky step: that hides the failure the spec exists to catch.
 - Name a page object method that asserts `expect…`, so lint counts it as an assertion.
+- To test the empty state or the error state of a list, answer its list request in the browser with `listResponse.empty({ page, resource })` or `listResponse.fail({ page, resource })` from `fixtures/list-response.ts`. `resource` is the API path, as in `cleanup.track`. `empty` answers with an empty page, and `fail` answers with a 500. Each call returns a function that removes the fake answer, so the next request reaches the server again, for a retry check. The app tries a failed request three more times first, so give the error-state assertion `{ timeout: listResponse.ERROR_STATE_TIMEOUT_MS }`. A page can show its error state only when nothing else loaded, so empty the other lists of the page too. `scenarios/project/automations-flows.spec.ts` shows this.
 
 ### Proving the spec
 
