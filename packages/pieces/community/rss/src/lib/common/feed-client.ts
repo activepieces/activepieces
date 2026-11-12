@@ -7,19 +7,23 @@ import { tryCatch } from '@activepieces/pieces-framework';
 
 async function fetchFeed({ url }: { url: string }): Promise<ParsedFeed> {
 	const response = await sendGet({ url, accept: FEED_ACCEPT });
-	return parseFeed({ body: response.body, url });
+	return parseFeed({ body: decodeBody(response), url });
 }
 
 async function fetchItems({ url }: { url: string }): Promise<FeedParser.Item[]> {
 	const response = await sendGet({ url, accept: FEED_ACCEPT });
-	const { items } = await runFeedParser({ body: response.body, url, options: { addmeta: true } });
+	const { items } = await runFeedParser({
+		body: decodeBody(response),
+		url,
+		options: { addmeta: true },
+	});
 	return items;
 }
 
 async function fetchPage({ url }: { url: string }): Promise<FetchedPage> {
 	const response = await sendGet({ url, accept: PAGE_ACCEPT });
 	return {
-		body: new TextDecoder().decode(response.body),
+		body: toText({ body: decodeBody(response) }),
 		contentType: response.contentType,
 	};
 }
@@ -229,6 +233,51 @@ function describeCause({ cause }: { cause: unknown }): string {
 	return cause instanceof Error ? cause.message : '';
 }
 
+// feedparser (sax) decodes bytes as UTF-8 unless a BOM says UTF-16, so a feed served in a
+// legacy charset must be decoded here: the HTTP charset wins, then the XML declaration.
+function decodeBody({ body, contentType }: FetchedBody): Buffer | string {
+	if (hasUnicodeBom({ body })) {
+		return body;
+	}
+	const label = charsetFromContentType({ contentType }) ?? charsetFromXmlDeclaration({ body });
+	if (label === null || UNICODE_CHARSET.test(label)) {
+		return body;
+	}
+	const { data: decoder } = tryCatchSync(() => new TextDecoder(label));
+	return decoder ? decoder.decode(body) : body;
+}
+
+function toText({ body }: { body: Buffer | string }): string {
+	return typeof body === 'string' ? body : new TextDecoder().decode(body);
+}
+
+function hasUnicodeBom({ body }: { body: Buffer }): boolean {
+	return (
+		(body[0] === 0xef && body[1] === 0xbb && body[2] === 0xbf) ||
+		(body[0] === 0xfe && body[1] === 0xff) ||
+		(body[0] === 0xff && body[1] === 0xfe)
+	);
+}
+
+function charsetFromContentType({ contentType }: { contentType: string }): string | null {
+	const match = /;\s*charset\s*=\s*"?([^";\s]+)"?/i.exec(contentType);
+	return match ? match[1].toLowerCase() : null;
+}
+
+function charsetFromXmlDeclaration({ body }: { body: Buffer }): string | null {
+	const head = body.subarray(0, XML_DECLARATION_SCAN_BYTES).toString('latin1');
+	const match = /^\s*<\?xml[^>]*?\sencoding\s*=\s*["']([^"']+)["']/i.exec(head);
+	return match ? match[1].toLowerCase() : null;
+}
+
+function tryCatchSync<T>(fn: () => T): { data: T | null } {
+	try {
+		return { data: fn() };
+	} catch {
+		return { data: null };
+	}
+}
+
 function runFeedParser({
 	body,
 	url,
@@ -323,6 +372,8 @@ const DEFAULT_LIMIT = 20;
 const FETCH_TIMEOUT_MS = 20_000;
 const MAX_LIMIT = 100;
 const MAX_RESPONSE_BYTES = 20 * 1024 * 1024;
+const XML_DECLARATION_SCAN_BYTES = 512;
+const UNICODE_CHARSET = /^(utf-?8|utf-?16(le|be)?|unicode-1-1-utf-8)$/;
 const FEED_ACCEPT =
 	'application/rss+xml, application/atom+xml, application/rdf+xml;q=0.9, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.8';
 const PAGE_ACCEPT = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';

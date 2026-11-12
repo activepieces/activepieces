@@ -111,7 +111,8 @@ describe('Greptile P1 #1: relative links on items with an empty guid collide acr
     setFeed({ path, items: [{ guid: '', link: 'posts/1', at: '2026-10-20T08:00:00Z' }] });
     const store = fakeFeeds.memoryStore();
     await single.onEnable(singleContext({ store, path }));
-    expect(fakeFeeds.storeValue({ store, key: cursorKeyFor({ path }) })).toHaveProperty('seen', [hash({ identity: 'posts/1' })]);
+    const cursor = fakeFeeds.storeValue({ store, key: cursorKeyFor({ path }) }) as { seen: string[] };
+    expect(cursor.seen[0]).toBe(hash({ identity: 'posts/1' }));
   });
 });
 

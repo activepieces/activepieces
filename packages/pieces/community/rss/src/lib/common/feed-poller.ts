@@ -42,13 +42,6 @@ async function enable({
 	await clearLegacy({ store });
 }
 
-async function disable({ store, urls }: { store: Store; urls: unknown[] }): Promise<void> {
-	await Promise.all(
-		normalizeUrls({ urls }).map((url) => store.delete(cursorKey({ url }))),
-	);
-	await clearLegacy({ store });
-}
-
 async function poll({ store, urls }: { store: Store; urls: unknown[] }): Promise<FeedParser.Item[]> {
 	const feedUrls = normalizeUrls({ urls });
 	const cursors = await loadCursors({ store, urls: feedUrls });
@@ -88,6 +81,9 @@ async function poll({ store, urls }: { store: Store; urls: unknown[] }): Promise
 						},
 					],
 				};
+			}
+			if (feed.items.length === 0) {
+				return { ...acc, nextCursors: [...acc.nextCursors, { url: feed.url, cursor }] };
 			}
 			const seen = new Set(cursor.seen);
 			const next = advanceCursor({ cursor, items: feed.items, feedUrl: feed.url, now });
@@ -167,7 +163,7 @@ async function sample({ urls }: { urls: unknown[] }): Promise<FeedParser.Item[]>
 	return sortNewestFirst({ items: [...unique.values()].reverse() }).slice(0, SAMPLE_SIZE);
 }
 
-export const rssFeedPoller = { enable, disable, poll, sample };
+export const rssFeedPoller = { enable, poll, sample };
 
 function normalizeUrls({ urls }: { urls: unknown[] }): string[] {
 	const feedUrls = [
@@ -295,8 +291,13 @@ function advanceCursor({
 		const published = publishedAtOf({ item });
 		return published === null || floor === null || published >= floor;
 	});
+	const atCursor = items.filter((item) => publishedAt !== null && publishedAtOf({ item }) === publishedAt);
 	const required = [...new Set(keysNewestFirst({ items: stillComparable, feedUrl }))];
-	const requiredSet = new Set(required);
+	const requiredItemKeys = new Set(required);
+	const atCursorContent = [...new Set(contentKeys({ items: atCursor }))].filter(
+		(key) => !requiredItemKeys.has(key),
+	);
+	const requiredSet = new Set([...required, ...atCursorContent]);
 	const retained = cursor.seen
 		.filter((key) => !requiredSet.has(key))
 		.slice(0, MAX_RETAINED_PREVIOUS_KEYS);
@@ -307,7 +308,7 @@ function advanceCursor({
 		.slice(0, MAX_RETAINED_PREVIOUS_KEYS);
 	return {
 		publishedAt,
-		seen: [...required, ...retained].slice(0, MAX_SEEN_KEYS),
+		seen: [...required, ...atCursorContent, ...retained].slice(0, MAX_SEEN_KEYS),
 		cross: [...requiredCross, ...retainedCross].slice(0, MAX_CROSS_KEYS),
 		...overflowFlag({ count: required.length }),
 	};
@@ -385,6 +386,12 @@ function isNewForCursor({
 		return false;
 	}
 	const published = publishedAtOf({ item });
+	if (published !== null && published === cursor.publishedAt) {
+		const content = contentKey({ item });
+		if (content !== null && seen.has(content)) {
+			return false;
+		}
+	}
 	if (cursor.overflow === true) {
 		return published !== null && (cursor.publishedAt === null || published > cursor.publishedAt);
 	}
@@ -490,6 +497,21 @@ function itemKey({ item, feedUrl }: { item: FeedParser.Item; feedUrl: string }):
 		: item.link ||
 			(item.title ? `${item.title}|${published ?? ''}` : JSON.stringify({ ...item, meta: undefined }));
 	return hashKey({ identity });
+}
+
+// Links (and link-derived guids) can carry a tracking parameter that changes on every fetch, e.g.
+// Bing News. For items dated exactly at the cursor, title + date is a second identity that does not
+// depend on the link, so such an item is not fired again; a different title in the same second still fires.
+function contentKey({ item }: { item: FeedParser.Item }): string | null {
+	const published = publishedAtOf({ item });
+	return item.title && published !== null ? hashKey({ identity: `c|${item.title}|${published}` }) : null;
+}
+
+function contentKeys({ items }: { items: FeedParser.Item[] }): string[] {
+	return items.flatMap((item) => {
+		const key = contentKey({ item });
+		return key === null ? [] : [key];
+	});
 }
 
 function previousItemKey({ item, feedUrl }: { item: FeedParser.Item; feedUrl: string }): string | null {
