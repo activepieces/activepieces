@@ -3958,6 +3958,7 @@
   "Search by batch number": "Search by batch number",
   "Only {total} batches": "Only {total} batches",
   "No failed batches": "No failed batches",
+  "{count, plural, =1 {# batch did not start, so it has no run to show. Find it by batch number.} other {# batches did not start, so they have no run to show. Find one by batch number.}}": "{count, plural, =1 {# batch did not start, so it has no run to show. Find it by batch number.} other {# batches did not start, so they have no run to show. Find one by batch number.}}",
   "No batches found": "No batches found",
   "Expected": "Expected",
   "{total} batches · still running": "{total} batches · still running",
