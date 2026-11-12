@@ -1,5 +1,5 @@
 import { PopulatedFlow } from '@activepieces/core-execution'
-import { ApId, BaseModelSchema, Permission } from '@activepieces/core-utils'
+import { ApId, ApResourceKind, BaseModelSchema, Permission } from '@activepieces/core-utils'
 import { z } from 'zod'
 
 export type McpId = ApId
@@ -65,8 +65,19 @@ export type McpToolDefinition = {
     execute: (args: Record<string, unknown>) => Promise<McpToolResult>
 }
 
+export const ApResource = z.object({
+    v: z.literal(1),
+    kind: ApResourceKind,
+    id: z.string().min(1),
+    projectId: z.string().min(1),
+    label: z.string(),
+    op: z.enum(['create', 'update', 'delete']),
+})
+export type ApResource = z.infer<typeof ApResource>
+
 export type McpToolResult = {
     content: Array<{ type: 'text', text: string }>
     structuredContent?: Record<string, unknown>
     isError?: boolean
+    _meta?: Record<string, unknown> & { apResource?: ApResource }
 }

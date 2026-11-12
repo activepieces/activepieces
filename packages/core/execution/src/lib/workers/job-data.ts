@@ -1,6 +1,6 @@
 
 import { z } from 'zod'
-import { AiCallContext, AIProviderName, AiStepAction, AiUsageEnvironment, AiUsageOrigin, isNil } from '@activepieces/core-utils'
+import { AiCallContext, AIProviderName, AiStepAction, AiUsageEnvironment, AiUsageOrigin, ApId, ApResourceKind, isNil } from '@activepieces/core-utils'
 import { ResumeReason, StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
@@ -310,6 +310,15 @@ export const AgentPromptOverride = z.object({
 })
 export type AgentPromptOverride = z.infer<typeof AgentPromptOverride>
 
+export const AgentPageContext = z.object({
+    kind: ApResourceKind,
+    id: ApId,
+    projectId: ApId,
+    label: z.string().max(200).optional(),
+    stepName: z.string().max(128).optional(),
+})
+export type AgentPageContext = z.infer<typeof AgentPageContext>
+
 export const ResolvedAgentFlowTool = z.object({
     toolName: z.string(),
     flowId: z.string(),
@@ -331,6 +340,7 @@ export const ExecuteAgentRunJobData = z.object({
     userMessage: z.string(),
     source: z.enum(AgentRunSource).optional(),
     messageSource: z.enum(['onboarding']).optional(),
+    pageContext: AgentPageContext.optional(),
     agentId: z.string().optional(),
     flowId: z.string().optional(),
     flowRunId: z.string().optional(),

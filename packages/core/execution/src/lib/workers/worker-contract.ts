@@ -7,7 +7,7 @@ import { SourceCode } from '../flows/actions/action'
 import { FlowVersion, FlowVersionState } from '../flows/flow-version'
 import { TriggerRunStatus } from '../flows/triggers/trigger-run'
 import { AgentEvent } from './agent-events'
-import { AgentPromptOverride, AgentRunSource, PersonalizationScope } from './job-data'
+import { AgentPageContext, AgentPromptOverride, AgentRunSource, PersonalizationScope } from './job-data'
 import { ConsumeJobRequest, ConsumeJobResponse, WorkerMachineHealthcheckRequest } from './index'
 
 export type SubmitPayloadsRequest = {
@@ -135,6 +135,7 @@ export type GetAgentConfigRequest = {
     userId: string
     source?: AgentRunSource
     messageSource?: 'onboarding'
+    pageContext?: AgentPageContext
     agentId?: string
     flowRunId?: string
     waitpointId?: string

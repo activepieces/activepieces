@@ -123,6 +123,7 @@ export const apUpdateBranchTool = ({ mcp, userId }: McpToolContext, log: Fastify
                         type: 'text',
                         text: `✅ Branch ${branchIndex} of router "${routerStepName}" updated: ${updatedParts.join(', ')}. Steps inside the branch are unchanged.${invalidWarning}`,
                     }],
+                    ...mcpUtils.apResourceMeta({ kind: 'flow', id: flowId, projectId: mcp.projectId, op: 'update', label: flow.version.displayName }),
                 }
             }
             catch (err) {

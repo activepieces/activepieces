@@ -1,6 +1,6 @@
 import { PersonalizationUseCase } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   CSSProperties,
@@ -11,11 +11,18 @@ import {
   useRef,
   useState,
 } from 'react';
-import { matchPath, useLocation, useNavigate } from 'react-router-dom';
+import { matchPath, useLocation } from 'react-router-dom';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { DEFAULT_USE_CASES } from '@/features/chat/use-cases/default-use-cases';
@@ -25,6 +32,12 @@ import {
 } from '@/features/chat/use-cases/use-case-card';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { MOTION } from '@/features/workspace/lib/chat-layout';
+import {
+  chatPanelUtils,
+  useChatPanel,
+} from '@/features/workspace/lib/chat-panel-open';
+import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { routesThatRequireProjectId } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
@@ -176,27 +189,75 @@ function CollapseOnInput({
 }
 
 export function SetupRequiredState() {
-  const navigate = useNavigate();
+  const isAdmin = useIsPlatformAdmin();
+
+  const connect = () => {
+    chatPanelUtils.openBeside({
+      route: '/platform/ai',
+      push: true,
+      name: t('AI providers'),
+    });
+    if (!windowSizeHooks.isPhone()) {
+      useChatPanel.getState().setOpen(true);
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center gap-4 py-20 flex-1 min-w-0">
-      <div className="flex items-center justify-center h-16 w-16 rounded-xl bg-gray-3">
-        <Settings className="h-8 w-8 text-gray-11" />
-      </div>
-      <div className="space-y-2">
-        <h2 className="text-xl font-semibold">
-          {t('Set up an AI provider to get started')}
-        </h2>
-        <p className="text-gray-11 text-sm max-w-md">
-          {t(
-            'AI Chat requires an AI provider. Add your provider in the AI settings to start chatting.',
+    <ChatNotice
+      icon={<Sparkles className="size-5 text-gray-11" />}
+      title={t('Chat needs an AI provider')}
+      body={
+        isAdmin
+          ? t('Connect an AI provider to start chatting.')
+          : t('Ask an admin to connect an AI provider.')
+      }
+      action={
+        isAdmin ? (
+          <Button size="sm" onClick={connect}>
+            {t('Connect an AI provider')}
+          </Button>
+        ) : null
+      }
+    />
+  );
+}
+
+function ChatNotice({
+  icon,
+  title,
+  body,
+  action,
+}: {
+  icon: ReactNode;
+  title: string;
+  body?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="@container flex h-full min-w-0 flex-1 flex-col">
+      <Empty className="items-center justify-center gap-3 rounded-none px-4 pt-4 pb-6 text-center md:px-4 md:pt-4 md:pb-6 @chat-md:px-6">
+        <EmptyHeader className="items-center gap-0 text-center">
+          <EmptyMedia
+            variant="icon"
+            className="mb-3 rounded-lg @chat-md:size-12"
+          >
+            {icon}
+          </EmptyMedia>
+          <EmptyTitle
+            className="text-gray-12 @chat-md:text-xl"
+            role="heading"
+            aria-level={2}
+          >
+            {title}
+          </EmptyTitle>
+          {body && (
+            <EmptyDescription className="mt-1 max-w-md text-sm">
+              {body}
+            </EmptyDescription>
           )}
-        </p>
-      </div>
-      <Button onClick={() => navigate('/platform/ai')} className="gap-2">
-        <Settings className="h-4 w-4" />
-        {t('Go to AI Settings')}
-      </Button>
+        </EmptyHeader>
+        {action}
+      </Empty>
     </div>
   );
 }

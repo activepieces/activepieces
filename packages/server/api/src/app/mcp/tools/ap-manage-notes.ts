@@ -126,7 +126,7 @@ export const apManageNotesTool = ({ mcp, userId }: McpToolContext, log: FastifyB
                     UPDATE: '✅ Note updated successfully.',
                     DELETE: '✅ Note deleted successfully.',
                 }
-                return { content: [{ type: 'text', text: messages[op] }] }
+                return { content: [{ type: 'text', text: messages[op] }], ...mcpUtils.apResourceMeta({ kind: 'flow', id: flowId, projectId: mcp.projectId, op: 'update', label: flow.version.displayName }) }
             }
             catch (err) {
                 return mcpUtils.mcpToolError('Note operation failed', err)

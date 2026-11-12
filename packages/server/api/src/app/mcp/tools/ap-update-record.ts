@@ -4,7 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
 import { mcpUtils } from './mcp-utils'
-import { formatPopulatedRecord, resolveFieldNamesForTable, resolveInternalTableId, tableNotFoundError } from './table-utils'
+import { formatPopulatedRecord, resolveFieldNamesForTable, resolveTable, tableNotFoundError } from './table-utils'
 
 const updateRecordInput = z.object({
     tableId: z.string().describe('The table ID'),
@@ -28,12 +28,12 @@ export const apUpdateRecordTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                     return { content: [{ type: 'text', text: '❌ No fields provided to update.' }] }
                 }
 
-                const resolvedTableId = await resolveInternalTableId({ projectId: mcp.projectId, tableId })
-                if (isNil(resolvedTableId)) {
+                const table = await resolveTable({ projectId: mcp.projectId, tableId })
+                if (isNil(table)) {
                     return tableNotFoundError(tableId)
                 }
 
-                const { fieldMap, errors } = await resolveFieldNamesForTable(mcp.projectId, resolvedTableId, fieldNames)
+                const { fieldMap, errors } = await resolveFieldNamesForTable(mcp.projectId, table.id, fieldNames)
                 if (errors.length > 0) {
                     return { content: [{ type: 'text', text: `❌ Field resolution error:\n${errors.join('\n')}` }] }
                 }
@@ -46,7 +46,7 @@ export const apUpdateRecordTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                 const { record: updated } = await recordService.update({
                     id: recordId,
                     projectId: mcp.projectId,
-                    request: { tableId: resolvedTableId, cells },
+                    request: { tableId: table.id, cells },
                 })
 
                 return {
@@ -54,6 +54,7 @@ export const apUpdateRecordTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                         type: 'text',
                         text: `✅ Record updated:\n${formatPopulatedRecord(updated)}`,
                     }],
+                    ...mcpUtils.apResourceMeta({ kind: 'table', id: table.id, projectId: mcp.projectId, op: 'update', label: table.name }),
                 }
             }
             catch (err) {

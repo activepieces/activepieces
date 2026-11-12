@@ -65,7 +65,14 @@ vi.mock('@/hooks/authorization-hooks', () => ({
 }));
 
 vi.mock('@/lib/authentication-session', () => ({
-  authenticationSession: { getProjectId: () => 'project-1' },
+  authenticationSession: {
+    getProjectId: () => 'project-1',
+    appendProjectRoutePrefix: (path: string) => `/projects/project-1${path}`,
+  },
+}));
+
+vi.mock('@/features/workspace/lib/use-open-in-app', () => ({
+  useOpenInApp: () => ({ open: vi.fn(), onLinkClick: vi.fn() }),
 }));
 
 vi.mock('@/components/custom/searchable-select', () => ({

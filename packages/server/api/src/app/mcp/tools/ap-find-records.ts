@@ -4,7 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
 import { mcpUtils } from './mcp-utils'
-import { formatPopulatedRecord, resolveFieldNamesForTable, resolveInternalTableId, tableNotFoundError } from './table-utils'
+import { formatPopulatedRecord, resolveFieldNamesForTable, resolveTable, tableNotFoundError } from './table-utils'
 
 const OPERATOR_VALUES = [
     FilterOperator.EQ,
@@ -42,8 +42,8 @@ export const apFindRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                 const { tableId, filters, limit } = findRecordsInput.parse(args)
                 const effectiveLimit = limit ?? 50
 
-                const resolvedTableId = await resolveInternalTableId({ projectId: mcp.projectId, tableId })
-                if (isNil(resolvedTableId)) {
+                const table = await resolveTable({ projectId: mcp.projectId, tableId })
+                if (isNil(table)) {
                     return tableNotFoundError(tableId)
                 }
 
@@ -51,7 +51,7 @@ export const apFindRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                 let fields = undefined
                 if (filters && filters.length > 0) {
                     const fieldNames = filters.map(f => f.fieldName)
-                    const resolved = await resolveFieldNamesForTable(mcp.projectId, resolvedTableId, fieldNames)
+                    const resolved = await resolveFieldNamesForTable(mcp.projectId, table.id, fieldNames)
                     fields = resolved.fields
 
                     for (const filter of filters) {
@@ -74,7 +74,7 @@ export const apFindRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                 }
 
                 const result = await recordService.list({
-                    tableId: resolvedTableId,
+                    tableId: table.id,
                     projectId: mcp.projectId,
                     filters: resolvedFilters,
                     limit: effectiveLimit,

@@ -121,10 +121,12 @@ export const apUpdateTriggerTool = ({ mcp, userId }: McpToolContext, log: Fastif
                             type: 'text',
                             text: `⚠️ Trigger updated but still invalid. ${hint}${draftWarning}`,
                         }],
+                        ...mcpUtils.apResourceMeta({ kind: 'flow', id: flowId, projectId: mcp.projectId, op: 'update', label: flow.version.displayName }),
                     }
                 }
                 return {
                     content: [{ type: 'text', text: `✅ Successfully updated trigger to "${resolvedPieceName}/${triggerName}".${draftWarning}` }],
+                    ...mcpUtils.apResourceMeta({ kind: 'flow', id: flowId, projectId: mcp.projectId, op: 'update', label: flow.version.displayName }),
                 }
             }
             catch (err) {

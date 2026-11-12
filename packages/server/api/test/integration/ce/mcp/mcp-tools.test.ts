@@ -337,6 +337,18 @@ describe('MCP Tools integration', () => {
         expect(text(structure)).toContain('Renamed Flow')
     })
 
+    it('flow writes tag their result with the resource they changed, failures do not', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Tagged')
+
+        const renamed = await apRenameFlowTool({ mcp }, mockLog).execute({ flowId, displayName: 'Tagged again' })
+        const missing = await apRenameFlowTool({ mcp }, mockLog).execute({ flowId: apId(), displayName: 'Nope' })
+
+        expect(renamed._meta?.apResource).toEqual({ v: 1, kind: 'flow', id: flowId, projectId: ctx.project.id, op: 'update', label: 'Tagged again' })
+        expect(missing._meta).toBeUndefined()
+    })
+
     it('ap_add_step and ap_update_step mark a list or JSON field holding one whole reference as dynamic, and a real value back as manual', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
