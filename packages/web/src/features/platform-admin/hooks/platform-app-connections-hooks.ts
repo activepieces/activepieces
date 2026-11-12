@@ -28,11 +28,12 @@ export const platformAppConnectionsQueries = {
         const status = searchParams.getAll('status') as AppConnectionStatus[];
         const projectIds = searchParams.getAll('projectIds');
         const ownerIds = searchParams.getAll('ownerIds');
+        const pieceNames = searchParams.getAll('pieceName');
         return platformAppConnectionsApi.list({
           cursor: cursor ?? undefined,
           limit: limit ? parseInt(limit) : undefined,
           displayName: searchParams.get('displayName') ?? undefined,
-          pieceName: searchParams.get('pieceName') ?? undefined,
+          pieceName: pieceNames.length > 0 ? pieceNames : undefined,
           status: status.length > 0 ? status : undefined,
           projectIds: projectIds.length > 0 ? projectIds : undefined,
           ownerIds: ownerIds.length > 0 ? ownerIds : undefined,
