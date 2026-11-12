@@ -198,7 +198,8 @@ export async function listEventsWithSyncToken({
 
 export async function getCalendars(
   authProp: GoogleCalendarAuthValue,
-  minAccessRole?: 'writer'
+  minAccessRole?: 'writer',
+  options: { showHidden?: boolean } = {}
 ): Promise<CalendarObject[]> {
   const token = await getAccessToken(authProp);
   const calendars: CalendarObject[] = [];
@@ -210,6 +211,9 @@ export async function getCalendars(
     };
     if (minAccessRole) {
       queryParams['minAccessRole'] = minAccessRole;
+    }
+    if (options.showHidden) {
+      queryParams['showHidden'] = 'true';
     }
     if (pageToken) {
       queryParams['pageToken'] = pageToken;

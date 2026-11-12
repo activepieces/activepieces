@@ -36,6 +36,28 @@ describe('New Calendar behaviour', () => {
     expect(google.pageRequests).toBeGreaterThan(4);
   });
 
+  it('does not fire a calendar that is hidden and shown again (PIE-1137)', async () => {
+    google.calendars.push(calendar({ id: 'holidays', accessRole: 'reader' }));
+    const { store } = memoryStore();
+    await trigger.onEnable(hookContext({ store }));
+    const holidays = google.calendars.find((entry) => entry.id === 'holidays');
+    if (holidays) holidays.hidden = true;
+    expect(await trigger.run(hookContext({ store }))).toEqual([]);
+    if (holidays) holidays.hidden = false;
+    expect(await trigger.run(hookContext({ store }))).toEqual([]);
+  });
+
+  it('learns calendars that were already hidden before the upgrade without firing them', async () => {
+    google.calendars.push(calendar({ id: 'old-hidden', accessRole: 'reader' }));
+    google.calendars[google.calendars.length - 1].hidden = true;
+    const { store } = memoryStore();
+    await store.put('calendars', ['me@example.com']);
+    expect(await trigger.run(hookContext({ store }))).toEqual([]);
+    google.calendars.push(calendar({ id: 'brand-new', accessRole: 'reader' }));
+    google.calendars[google.calendars.length - 1].hidden = true;
+    expect(idsOf(await trigger.run(hookContext({ store })))).toEqual(['brand-new']);
+  });
+
   it('test() returns the same shape as a run, newest listed first, filters applied', async () => {
     const { store } = memoryStore();
     await trigger.onEnable(hookContext({ store }));
@@ -94,8 +116,9 @@ async function answer(request: HttpRequest): Promise<unknown> {
   const query: Record<string, string> = { ...(request.queryParams ?? {}) };
   const pageSize = Math.min(Number(query['maxResults'] ?? 100), GOOGLE_MAX_PAGE);
   const offset = query['pageToken'] ? Number(query['pageToken']) : 0;
-  const items = google.calendars.slice(offset, offset + pageSize);
-  const next = offset + pageSize < google.calendars.length ? String(offset + pageSize) : undefined;
+  const visible = query['showHidden'] === 'true' ? google.calendars : google.calendars.filter((entry) => entry.hidden !== true);
+  const items = visible.slice(offset, offset + pageSize);
+  const next = offset + pageSize < visible.length ? String(offset + pageSize) : undefined;
   return {
     status: 200,
     headers: {},
@@ -129,4 +152,5 @@ type FakeCalendar = {
   summary: string;
   accessRole: string;
   primary?: boolean;
+  hidden?: boolean;
 };

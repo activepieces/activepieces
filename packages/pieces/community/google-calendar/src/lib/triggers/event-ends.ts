@@ -4,6 +4,7 @@ import {
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
+import { specificEvent } from '../common/specific-event';
 import { googleCalendarCommon, googleCalendarAuth } from '../common';
 import { rangeEvents } from '../common/range-events';
 import { rangeReminders } from '../common/range-reminders';
@@ -33,7 +34,7 @@ export const eventEnds = createTrigger({
     },
   ],
   props: {
-    calendar_id: googleCalendarCommon.calendarDropdown('writer'),
+    calendar_id: googleCalendarCommon.calendarDropdown(),
     specific_event: Property.Checkbox({
       displayName: 'Target Specific Event',
       description: 'Watch one event instead of the whole calendar.',
@@ -74,6 +75,9 @@ export const eventEnds = createTrigger({
   },
 
   async onEnable(context) {
+    if (context.propsValue.specific_event) {
+      specificEvent.require({ eventId: context.propsValue.event_id });
+    }
     await rangeReminders.enable({
       store: context.store,
       storeKey: STORE_KEY,
@@ -89,7 +93,10 @@ export const eventEnds = createTrigger({
 
   async run(context) {
     const { calendar_id, specific_event, event_id } = context.propsValue;
-    if (!calendar_id || (specific_event && !event_id)) {
+    if (specific_event) {
+      specificEvent.require({ eventId: event_id });
+    }
+    if (!calendar_id) {
       return [];
     }
     return rangeReminders.poll({

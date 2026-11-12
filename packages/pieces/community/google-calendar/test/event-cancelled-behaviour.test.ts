@@ -301,17 +301,23 @@ describe('Event Cancelled behaviour: one specific event', () => {
     expect(await poll({ store, pinned: 'pinned' })).toEqual(['pinned']);
   });
 
-  it('fails to turn on when the event cannot be read, and fires a cancellation after a later turn-on', async () => {
+  it('turns on when the event cannot be read, fails the check while Google rejects it, then records the status without firing', async () => {
     createEvent({ id: 'pinned' });
     const { store } = memoryStore();
     vendor.getFailure = 503;
-    await expect(trigger.onEnable(hookContext({ store, pinned: 'pinned' }))).rejects.toThrow('Could not read the selected event');
+    await trigger.onEnable(hookContext({ store, pinned: 'pinned' }));
+    await expect(poll({ store, pinned: 'pinned' })).rejects.toThrow();
 
     vendor.getFailure = undefined;
-    await trigger.onEnable(hookContext({ store, pinned: 'pinned' }));
+    expect(await poll({ store, pinned: 'pinned' })).toEqual([]);
     deleteEvent({ id: 'pinned' });
     expect(await poll({ store, pinned: 'pinned' })).toEqual(['pinned']);
     expect(await poll({ store, pinned: 'pinned' })).toEqual([]);
+  });
+
+  it('refuses to turn on when Target Specific Event has no event', async () => {
+    const { store } = memoryStore();
+    await expect(trigger.onEnable(hookContext({ store, pinned: '' }))).rejects.toThrow('Select the event to watch');
   });
 
   it('fires a cancellation that happened after the last check of the previous version', async () => {

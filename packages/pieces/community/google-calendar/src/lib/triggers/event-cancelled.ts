@@ -6,6 +6,7 @@ import {
   Store,
   tryCatch,
 } from '@activepieces/pieces-framework';
+import { specificEvent } from '../common/specific-event';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
@@ -52,7 +53,7 @@ export const eventCancelled = createTrigger({
     },
   ],
   props: {
-    calendar_id: googleCalendarCommon.calendarDropdown('writer'),
+    calendar_id: googleCalendarCommon.calendarDropdown(),
     specific_event: Property.Checkbox({
       displayName: 'Target Specific Event',
       description: 'Watch one event instead of the whole calendar.',
@@ -93,14 +94,15 @@ export const eventCancelled = createTrigger({
     const { calendar_id, specific_event, event_id } = context.propsValue;
     const watchKey = buildWatchKey({ propsValue: context.propsValue });
     if (specific_event) {
-      if (!calendar_id || !event_id) {
+      const pinnedEventId = specificEvent.require({ eventId: event_id });
+      if (!calendar_id) {
         return;
       }
       await restoreOrBaselinePinned({
         auth: context.auth,
         store: context.store,
         calendarId: calendar_id,
-        eventId: event_id,
+        eventId: pinnedEventId,
         watchKey,
         isRepublish: context.isRepublish,
       });
@@ -127,14 +129,12 @@ export const eventCancelled = createTrigger({
     }
     const watchKey = buildWatchKey({ propsValue: context.propsValue });
     if (specific_event) {
-      if (!event_id) {
-        return [];
-      }
+      const pinnedEventId = specificEvent.require({ eventId: event_id });
       const cancelled = await pollPinnedEvent({
         auth: context.auth,
         store: context.store,
         calendarId: calendar_id,
-        eventId: event_id,
+        eventId: pinnedEventId,
         watchKey,
       });
       return cancelled.filter((event) =>
@@ -332,13 +332,17 @@ async function restoreOrBaselinePinned({
     fetchPinnedEvent({ auth, calendarId, eventId })
   );
   if (fetched.error) {
+    // Don't block turning the flow on: the next check reads the event again,
+    // records its status without firing, and fails visibly if Google still
+    // rejects the request.
     const status = eventScan.httpStatusOf(fetched.error);
-    throw new Error(
-      `Could not read the selected event (${eventId}) from Google Calendar${
+    console.warn(
+      `[google-calendar] ${TRIGGER_NAME}: could not read event ${eventId} while enabling${
         isNil(status) ? '' : ` (HTTP ${status})`
-      }, so the trigger cannot record its current status. Check that the event still exists and the connection can read this calendar, then turn the flow on again.`,
-      { cause: fetched.error }
+      }; its status is recorded at the next check.`
     );
+    await store.delete(PINNED_STORE_KEY);
+    return;
   }
   await store.put<PinnedState>(PINNED_STORE_KEY, {
     watchKey,

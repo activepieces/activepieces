@@ -95,6 +95,7 @@ async function poll({
         !isNil(entry) &&
         entry.dueMs > fromMs &&
         entry.dueMs <= throughMs &&
+        !startedBeforeReminder({ entry, anchor, nowMs }) &&
         !seenKeys.has(entry.key) &&
         !isCoveredBy({ entry, handled }) &&
         (isNil(legacy) ||
@@ -161,6 +162,25 @@ async function listPinnedEvent({
     ? await rangeEvents.getCalendarTimeZone({ auth, calendarId })
     : undefined;
   return { events: [event], timeZone, complete: true };
+}
+
+// A "before start" reminder whose check comes after the meeting has started
+// is dropped: the reminder is no longer useful. A lead time of 0 is due at
+// the start itself, so it still fires at the first check after it.
+function startedBeforeReminder({
+  entry,
+  anchor,
+  nowMs,
+}: {
+  entry: DueEntry;
+  anchor: 'start' | 'end';
+  nowMs: number;
+}): boolean {
+  return (
+    anchor === 'start' &&
+    entry.scheduledMs < entry.startMs &&
+    nowMs >= entry.startMs
+  );
 }
 
 function toDueEntry({

@@ -10,7 +10,11 @@ import { getCalendars } from '../common/helper';
 import { CalendarObject } from '../common/types';
 import { calendarOutputSchema } from '../output-schemas';
 
-const KNOWN_CALENDARS_STORE_KEY = 'calendars';
+// Before hidden calendars were read, the known list lived under 'calendars'
+// and left them out. The list that includes them has its own key, written in
+// one store call, so a poll never saves half of its state.
+const LEGACY_KNOWN_CALENDARS_STORE_KEY = 'calendars';
+const KNOWN_CALENDARS_STORE_KEY = 'calendars_with_hidden';
 const SAMPLE_SIZE = 5;
 
 export const newCalendar = createTrigger({
@@ -20,7 +24,7 @@ export const newCalendar = createTrigger({
   displayName: 'New Calendar',
   description: 'Fires when a new calendar is created or becomes accessible.',
   aiMetadata: {
-    description: 'Fires when a calendar newly appears in the connected account\'s calendar list, whether created or shared in, detected by polling. Each fired item is the new calendar. Can be filtered by access role, a name/description text match, and an option to exclude shared calendars; changing a filter later does not fire for calendars that already existed.',
+    description: 'Fires when a calendar newly appears in the connected account\'s calendar list, whether created or shared in, detected by polling. Each fired item is the new calendar. Can be filtered by access role, a name/description text match, and an option to exclude shared calendars; changing a filter later does not fire for calendars that already existed, and hiding a calendar from the list and showing it again does not fire it.',
   },
   propertyGroups: [
     {
@@ -76,11 +80,13 @@ export const newCalendar = createTrigger({
   async onEnable(context) {
     if (
       context.isRepublish &&
-      !isNil(await context.store.get(KNOWN_CALENDARS_STORE_KEY))
+      !isNil(await readKnown({ store: context.store }))
     ) {
       return;
     }
-    const calendars = await getCalendars(context.auth);
+    const calendars = await getCalendars(context.auth, undefined, {
+      showHidden: true,
+    });
     await saveKnown({ store: context.store, calendars });
   },
 
@@ -89,15 +95,24 @@ export const newCalendar = createTrigger({
   },
 
   async run(context) {
-    const calendars = await getCalendars(context.auth);
-    const known = await context.store.get<string[]>(KNOWN_CALENDARS_STORE_KEY);
-    if (!Array.isArray(known)) {
+    const calendars = await getCalendars(context.auth, undefined, {
+      showHidden: true,
+    });
+    const known = await readKnown({ store: context.store });
+    if (isNil(known)) {
       await saveKnown({ store: context.store, calendars });
       return [];
     }
-    const knownIds = new Set(known);
+    const knownIds = new Set(known.ids);
+    // A list saved before hidden calendars were read leaves them out; on the
+    // first poll after that change, learn hidden calendars without firing.
+    const knownIncludesHidden = known.includesHidden;
     const fresh = filterCalendars({
-      calendars: calendars.filter((calendar) => !knownIds.has(calendar.id)),
+      calendars: calendars.filter(
+        (calendar) =>
+          !knownIds.has(calendar.id) &&
+          (knownIncludesHidden || calendar.hidden !== true)
+      ),
       filters: context.propsValue,
     });
     await saveKnown({ store: context.store, calendars });
@@ -124,6 +139,22 @@ async function saveKnown({
     KNOWN_CALENDARS_STORE_KEY,
     calendars.map((calendar) => calendar.id)
   );
+}
+
+async function readKnown({
+  store,
+}: {
+  store: Store;
+}): Promise<{ ids: string[]; includesHidden: boolean } | null> {
+  const current = await store.get<string[]>(KNOWN_CALENDARS_STORE_KEY);
+  if (Array.isArray(current)) {
+    return { ids: current, includesHidden: true };
+  }
+  const legacy = await store.get<string[]>(LEGACY_KNOWN_CALENDARS_STORE_KEY);
+  if (Array.isArray(legacy)) {
+    return { ids: legacy, includesHidden: false };
+  }
+  return null;
 }
 
 function filterCalendars({

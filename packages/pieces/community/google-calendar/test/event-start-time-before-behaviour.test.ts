@@ -104,6 +104,44 @@ describe('Event Start (Time Before) behaviour', () => {
     expect(idsOf(await trigger.run(hookContext({ store })))).toEqual([]);
   });
 
+  it('drops a late reminder once the meeting has started (whole calendar)', async () => {
+    addTimedEvent({ id: 'client-call', start: '2026-10-01T09:30:00Z', end: '2026-10-01T11:00:00Z' });
+    const { store } = memoryStore();
+    setNow({ iso: '2026-10-01T09:00:00Z' });
+    await trigger.onEnable(hookContext({ store }));
+    setNow({ iso: '2026-10-01T10:00:00Z' });
+    expect(idsOf(await trigger.run(hookContext({ store })))).toEqual([]);
+    setNow({ iso: '2026-10-01T10:05:00Z' });
+    expect(idsOf(await trigger.run(hookContext({ store })))).toEqual([]);
+  });
+
+  it('drops a late reminder once the meeting has started (specific event)', async () => {
+    addTimedEvent({ id: 'client-call', start: '2026-10-01T09:30:00Z', end: '2026-10-01T11:00:00Z' });
+    const props = { ...WHOLE_CALENDAR, specific_event: true, event_id: 'client-call' };
+    const { store } = memoryStore();
+    setNow({ iso: '2026-10-01T09:00:00Z' });
+    await trigger.onEnable(hookContext({ store, propsValue: props }));
+    setNow({ iso: '2026-10-01T10:00:00Z' });
+    expect(idsOf(await trigger.run(hookContext({ store, propsValue: props })))).toEqual([]);
+  });
+
+  it('still delivers a late reminder while the meeting has not started', async () => {
+    addTimedEvent({ id: 'standup', start: '2026-10-01T10:17:00Z', end: '2026-10-01T10:32:00Z' });
+    const { store } = memoryStore();
+    setNow({ iso: '2026-10-01T09:00:00Z' });
+    await trigger.onEnable(hookContext({ store }));
+    setNow({ iso: '2026-10-01T10:00:00Z' });
+    expect(idsOf(await trigger.run(hookContext({ store })))).toEqual([]);
+    setNow({ iso: '2026-10-01T10:15:00Z' });
+    expect(idsOf(await trigger.run(hookContext({ store })))).toEqual(['standup']);
+  });
+
+  it('refuses to turn on when Target Specific Event has no event', async () => {
+    const props = { ...WHOLE_CALENDAR, specific_event: true, event_id: undefined };
+    const { store } = memoryStore();
+    await expect(trigger.onEnable(hookContext({ store, propsValue: props }))).rejects.toThrow('Select the event to watch');
+  });
+
   it('reads an all-day event in Sydney as midnight Sydney time', async () => {
     fakeCalendar.timeZone = 'Australia/Sydney';
     addAllDayEvent({ id: 'offsite', startDate: '2026-10-02', endDate: '2026-10-03' });
@@ -246,7 +284,7 @@ describe('Event Start (Time Before) behaviour', () => {
   it('checks at most 7 days back after a long pause and logs it', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     addTimedEvent({ id: 'old', start: '2026-10-20T10:15:00Z', end: '2026-10-20T11:00:00Z' });
-    addTimedEvent({ id: 'recent', start: '2026-10-28T10:15:00Z', end: '2026-10-28T11:00:00Z' });
+    addTimedEvent({ id: 'recent', start: '2026-10-31T10:10:00Z', end: '2026-10-31T11:00:00Z' });
     const { store } = memoryStore();
     setNow({ iso: '2026-10-01T10:00:00Z' });
     await trigger.onEnable(hookContext({ store }));

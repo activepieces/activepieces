@@ -43,7 +43,7 @@ export const newEventMatchingSearch = createTrigger({
     },
   ],
   props: {
-    calendar_id: googleCalendarCommon.calendarDropdown('writer'),
+    calendar_id: googleCalendarCommon.calendarDropdown(),
     search_term: Property.ShortText({
       displayName: 'Search Term',
       description: 'Matched against title, description, location and guests.',

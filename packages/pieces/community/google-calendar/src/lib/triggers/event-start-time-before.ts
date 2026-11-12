@@ -4,6 +4,7 @@ import {
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
+import { specificEvent } from '../common/specific-event';
 import { googleCalendarCommon, googleCalendarAuth } from '../common';
 import { rangeEvents } from '../common/range-events';
 import { rangeReminders } from '../common/range-reminders';
@@ -22,7 +23,7 @@ export const eventStartTimeBefore = createTrigger({
   description:
     'Fires at a specified amount of time before an event starts (e.g., a reminder).',
   aiMetadata: {
-    description: 'Fires once per event a configurable lead time (in minutes, hours, or days) before it begins in the selected calendar, acting as a pre-event reminder; a lead time of 0 fires when the event starts. Each fired item is the upcoming event. A reminder whose check was late or failed still fires at the next check (up to 7 days late), never before it is due; an event booked after its reminder time fires at the next check if it has not started yet; a rescheduled event fires again for its new start time. All-day events start at midnight in the calendar\'s time zone. Cancelled events never fire. Can watch all events or a single specific event.',
+    description: 'Fires once per event a configurable lead time (in minutes, hours, or days) before it begins in the selected calendar, acting as a pre-event reminder; a lead time of 0 fires when the event starts. Each fired item is the upcoming event. A reminder whose check was late or failed still fires at the next check if the event has not started yet (up to 7 days late), never before it is due; with a lead time above 0, an event that has already started gets no reminder; an event booked after its reminder time fires at the next check if it has not started yet; a rescheduled event fires again for its new start time. All-day events start at midnight in the calendar\'s time zone. Cancelled events never fire. Can watch all events or a single specific event.',
   },
   propertyGroups: [
     {
@@ -41,7 +42,7 @@ export const eventStartTimeBefore = createTrigger({
     },
   ],
   props: {
-    calendar_id: googleCalendarCommon.calendarDropdown('writer'),
+    calendar_id: googleCalendarCommon.calendarDropdown(),
     specific_event: Property.Checkbox({
       displayName: 'Target Specific Event',
       description: 'Watch one event instead of the whole calendar.',
@@ -102,6 +103,9 @@ export const eventStartTimeBefore = createTrigger({
   },
 
   async onEnable(context) {
+    if (context.propsValue.specific_event) {
+      specificEvent.require({ eventId: context.propsValue.event_id });
+    }
     await rangeReminders.enable({
       store: context.store,
       storeKey: STORE_KEY,
@@ -118,7 +122,10 @@ export const eventStartTimeBefore = createTrigger({
   async run(context) {
     const { calendar_id, specific_event, event_id, time_value, time_unit } =
       context.propsValue;
-    if (!calendar_id || isNil(time_value) || (specific_event && !event_id)) {
+    if (specific_event) {
+      specificEvent.require({ eventId: event_id });
+    }
+    if (!calendar_id || isNil(time_value)) {
       return [];
     }
     return rangeReminders.poll({

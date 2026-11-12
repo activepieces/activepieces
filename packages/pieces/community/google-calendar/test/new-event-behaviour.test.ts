@@ -58,6 +58,29 @@ describe('New Event behaviour', () => {
     expect(await pushFromEveryChannel({ store })).toEqual([]);
   });
 
+  it('delivers, once, events created before and during a republish (PIE-1140)', async () => {
+    const { store } = memoryStore();
+    await trigger.onEnable(hookContext({ store }));
+    createEvent({ id: 'queued-before-publish' });
+    await trigger.onDisable(hookContext({ store, isRepublish: true }));
+    createEvent({ id: 'during-publish' });
+    await trigger.onEnable(hookContext({ store, isRepublish: true }));
+    expect(liveChannelIds()).toHaveLength(1);
+    expect((await pushFromEveryChannel({ store })).sort()).toEqual(['during-publish', 'queued-before-publish']);
+    createEvent({ id: 'after-publish' });
+    expect(await pushFromEveryChannel({ store })).toEqual(['after-publish']);
+    expect(await pushFromEveryChannel({ store })).toEqual([]);
+  });
+
+  it('starts fresh on a republish that switches calendar', async () => {
+    const { store } = memoryStore();
+    await trigger.onEnable(hookContext({ store }));
+    createEvent({ id: 'on-old-calendar' });
+    await trigger.onDisable(hookContext({ store, isRepublish: true }));
+    await trigger.onEnable(hookContext({ store, isRepublish: true, calendarId: 'team@example.com' }));
+    expect(await pushFromEveryChannel({ store })).toEqual([]);
+  });
+
   it('does not fire when a meeting that existed before enabling is rescheduled or renamed', async () => {
     const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     createEvent({ id: 'existing', createdAt: monthAgo });
@@ -502,15 +525,16 @@ function memoryStore(): { store: Store } {
   return { store };
 }
 
-function hookContext({ store, headers }: { store: Store; headers?: Record<string, string> }): Parameters<typeof trigger.run>[0] {
-  return Reflect.apply(fakeContext, undefined, [{ store, headers }]);
+function hookContext({ store, headers, isRepublish, calendarId }: { store: Store; headers?: Record<string, string>; isRepublish?: boolean; calendarId?: string }): Parameters<typeof trigger.run>[0] {
+  return Reflect.apply(fakeContext, undefined, [{ store, headers, isRepublish, calendarId }]);
 }
 
-function fakeContext({ store, headers }: { store: Store; headers?: Record<string, string> }) {
+function fakeContext({ store, headers, isRepublish, calendarId }: { store: Store; headers?: Record<string, string>; isRepublish?: boolean; calendarId?: string }) {
   return {
     store,
+    isRepublish,
     auth: { type: AppConnectionType.OAUTH2, access_token: 'token-123', data: {} },
-    propsValue: { calendar_id: 'primary', event_types: undefined, search_filter: undefined, exclude_all_day: false },
+    propsValue: { calendar_id: calendarId ?? 'primary', event_types: undefined, search_filter: undefined, exclude_all_day: false },
     webhookUrl: 'https://cloud.example.com/api/v1/webhooks/flow-1',
     payload: { headers: headers ?? {}, body: {}, queryParams: {} },
     files: {},

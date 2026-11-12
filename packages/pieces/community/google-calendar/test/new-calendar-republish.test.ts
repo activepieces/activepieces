@@ -22,12 +22,12 @@ describe('newCalendar republish', () => {
     calendarsInAccount.push(calendar('work'), calendar('personal'));
     const { store, data } = memoryStore();
     await newCalendar.onEnable(hookContext({ store }));
-    expect(data.get('calendars')).toEqual(['work', 'personal']);
+    expect(data.get('calendars_with_hidden')).toEqual(['work', 'personal']);
 
     calendarsInAccount.push(calendar('travel'));
     await newCalendar.onDisable(hookContext({ store, isRepublish: true }));
     await newCalendar.onEnable(hookContext({ store, isRepublish: true }));
-    expect(data.get('calendars')).toEqual(['work', 'personal']);
+    expect(data.get('calendars_with_hidden')).toEqual(['work', 'personal']);
 
     const emitted = await newCalendar.run(hookContext({ store }));
     expect(emitted.map((item) => (item as { id: string }).id)).toEqual(['travel']);
@@ -42,7 +42,7 @@ describe('newCalendar republish', () => {
     await newCalendar.onDisable(hookContext({ store }));
     await newCalendar.onEnable(hookContext({ store }));
 
-    expect(data.get('calendars')).toEqual(['work', 'travel']);
+    expect(data.get('calendars_with_hidden')).toEqual(['work', 'travel']);
   });
 });
 

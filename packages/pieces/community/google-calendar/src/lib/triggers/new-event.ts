@@ -28,6 +28,7 @@ import { eventOutputSchema } from '../output-schemas';
 
 const WATCH_STORE_KEY = 'google_calendar_watch';
 const SYNC_TOKEN_STORE_KEY = 'google_calendar_sync_token';
+const CALENDAR_ID_STORE_KEY = 'google_calendar_new_event_calendar_id';
 const LEGACY_SEEN_EVENT_IDS_STORE_KEY = 'google_calendar_seen_event_ids';
 const STATE_STORE_KEY = 'google_calendar_new_event_state';
 const SEEN_EVENTS_LIMIT = 500;
@@ -169,15 +170,27 @@ export const newEvent = createTrigger({
     const auth = context.auth as GoogleCalendarAuthValue;
     const enableStartedMs = Date.now();
 
-    const initialSyncToken = await getInitialSyncToken({
+    const resumable = await resumableAfterRepublish({
+      isRepublish: readIsRepublish(context),
+      store: context.store,
       calendarId,
-      authProp: auth,
     });
+
+    const initialSyncToken = resumable
+      ? null
+      : await getInitialSyncToken({
+          calendarId,
+          authProp: auth,
+        });
 
     const response = await watchEvent(calendarId, context.webhookUrl, auth);
 
     const { error } = await tryCatch(async () => {
       await context.store.put<GoogleWatchResponse>(WATCH_STORE_KEY, response);
+      await context.store.put<string>(CALENDAR_ID_STORE_KEY, calendarId);
+      if (resumable) {
+        return;
+      }
       const carried = await readState({ store: context.store });
       await context.store.put<NewEventState>(STATE_STORE_KEY, {
         seen: [],
@@ -207,6 +220,12 @@ export const newEvent = createTrigger({
 
     if (watch) {
       await stopWatchEvent(watch, auth);
+    }
+    if (readIsRepublish(context)) {
+      // A republish runs onDisable then onEnable. Keep the sync token and the
+      // seen list so changes not yet processed are still delivered, once.
+      await context.store.delete(WATCH_STORE_KEY);
+      return;
     }
     const carried = await readState({ store: context.store });
     await context.store.put<NewEventState>(STATE_STORE_KEY, {
@@ -589,3 +608,28 @@ type NewEventState = {
   invites: SeenInvite[];
   inviteFloorMs: number;
 };
+
+function readIsRepublish(context: unknown): boolean {
+  // The engine passes isRepublish to webhook hooks; the framework type for
+  // webhook hooks does not declare it yet.
+  return (context as { isRepublish?: boolean }).isRepublish === true;
+}
+
+async function resumableAfterRepublish({
+  isRepublish,
+  store,
+  calendarId,
+}: {
+  isRepublish: boolean;
+  store: Store;
+  calendarId: string;
+}): Promise<boolean> {
+  if (!isRepublish) {
+    return false;
+  }
+  const [token, savedCalendarId] = await Promise.all([
+    store.get<string>(SYNC_TOKEN_STORE_KEY),
+    store.get<string>(CALENDAR_ID_STORE_KEY),
+  ]);
+  return !isNil(token) && savedCalendarId === calendarId;
+}

@@ -19,12 +19,13 @@ const HOUR_MS = 60 * 60 * 1000;
 const MINUTE_MS = 60 * 1000;
 const PREVIOUS_POLL_MS = 5 * MINUTE_MS;
 const NEW_POLL_MS = 30 * MINUTE_MS;
-const LEAD_MS = 15 * MINUTE_MS;
+// Longer than NEW_POLL_MS, so each reminder's check comes before its meeting starts.
+const LEAD_MS = 60 * MINUTE_MS;
 const DAY_START_MS = Date.parse('2026-10-02T00:00:00Z');
 const ZONES = ['UTC', 'America/Los_Angeles', 'Australia/Sydney'];
 const UPGRADE_HOURS = Array.from({ length: 29 }, (_, index) => index - 14);
 const ENDS_PROPS = { calendar_id: 'primary', specific_event: false };
-const TIME_BEFORE_PROPS = { calendar_id: 'primary', specific_event: false, time_value: 15, time_unit: 'minutes' };
+const TIME_BEFORE_PROPS = { calendar_id: 'primary', specific_event: false, time_value: 60, time_unit: 'minutes' };
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] });

@@ -17,7 +17,10 @@ const STORE_LIMIT_BYTES = 512 * 1024;
 const EVENT_COUNT = 30;
 const ENABLED_AT_MS = Date.parse('2026-10-01T10:00:00Z');
 const ENDS_PROPS = { calendar_id: 'primary', specific_event: false };
-const TIME_BEFORE_PROPS = { calendar_id: 'primary', specific_event: false, time_value: 15, time_unit: 'minutes' };
+// A 2-hour lead keeps every reminder's meeting in the future while the dense
+// listing is spread over several checks; reminders after the start are dropped.
+const LEAD_MS = 2 * 60 * MINUTE_MS;
+const TIME_BEFORE_PROPS = { calendar_id: 'primary', specific_event: false, time_value: 2, time_unit: 'hours' };
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] });
@@ -33,7 +36,7 @@ afterEach(() => {
 
 describe('Event Start (Time Before) and Event Ends on a calendar too dense to list in one check', () => {
   it('Time Before continues from the saved page on later checks and fires every reminder once, never early', async () => {
-    const dueById = addDenseEvents({ anchor: 'start', leadMs: 15 * MINUTE_MS });
+    const dueById = addDenseEvents({ anchor: 'start', leadMs: LEAD_MS });
     const { fired, firstCheckPages } = await checkEveryFiveMinutes({ trigger: 'time-before' });
     expectEachOnceNotEarly({ fired, dueById });
     expect(firstCheckPages).toBe(2);
@@ -47,7 +50,7 @@ describe('Event Start (Time Before) and Event Ends on a calendar too dense to li
   });
 
   it('starts the same window again when Google rejects the saved page position, without firing anything twice', async () => {
-    const dueById = addDenseEvents({ anchor: 'start', leadMs: 15 * MINUTE_MS });
+    const dueById = addDenseEvents({ anchor: 'start', leadMs: LEAD_MS });
     const { fired } = await checkEveryFiveMinutes({ trigger: 'time-before', rejectTokenAtCheck: 2 });
     expectEachOnceNotEarly({ fired, dueById });
   });
@@ -74,9 +77,9 @@ function addBurst({ anchor }: { anchor: 'start' | 'end' }): Map<string, number> 
   for (let index = 0; index < 1500; index++) {
     const id = `burst-${index}`;
     if (anchor === 'start') {
-      const startMs = Date.parse('2026-10-01T10:20:00Z') + index * 200;
+      const startMs = Date.parse('2026-10-01T10:05:00Z') + LEAD_MS + index * 200;
       addTimedEvent({ id, start: new Date(startMs).toISOString(), end: new Date(startMs + 30 * MINUTE_MS).toISOString() });
-      dueById.set(id, startMs - 15 * MINUTE_MS);
+      dueById.set(id, startMs - LEAD_MS);
       continue;
     }
     const startMs = Date.parse('2026-10-01T09:50:00Z') + index * 200;
@@ -102,7 +105,7 @@ describe('Event Start (Time Before) and Event Ends stay under the 512 KB store l
       for (let index = 0; index < 600; index++) {
         const id = `${'y'.repeat(990)}-${index}`;
         const dueMs = Date.parse('2026-10-01T10:09:00.050Z') + index * 99;
-        const startMs = trigger === 'time-before' ? dueMs + 15 * MINUTE_MS : dueMs - 3 * MINUTE_MS;
+        const startMs = trigger === 'time-before' ? dueMs + LEAD_MS : dueMs - 3 * MINUTE_MS;
         const endMs = trigger === 'time-before' ? startMs + 30 * MINUTE_MS : dueMs;
         addTimedEvent({ id, start: new Date(startMs).toISOString(), end: new Date(endMs).toISOString() });
         dueById.set(id, dueMs);
@@ -115,7 +118,7 @@ describe('Event Start (Time Before) and Event Ends stay under the 512 KB store l
       fakeCalendar.pageSize = 600;
       const dueById = new Map<string, number>();
       const dueMs = Date.parse('2026-10-01T10:09:30Z');
-      const startMs = trigger === 'time-before' ? dueMs + 15 * MINUTE_MS : dueMs - 3 * MINUTE_MS;
+      const startMs = trigger === 'time-before' ? dueMs + LEAD_MS : dueMs - 3 * MINUTE_MS;
       const endMs = trigger === 'time-before' ? startMs + 30 * MINUTE_MS : dueMs;
       for (let index = 0; index < 1200; index++) {
         const id = `${'z'.repeat(990)}-${index}`;
@@ -127,7 +130,7 @@ describe('Event Start (Time Before) and Event Ends stay under the 512 KB store l
         const laterStartMs = startMs + 30 * MINUTE_MS + index * 1000;
         const laterEndMs = laterStartMs + (trigger === 'time-before' ? 30 : 3) * MINUTE_MS;
         addTimedEvent({ id, start: new Date(laterStartMs).toISOString(), end: new Date(laterEndMs).toISOString() });
-        dueById.set(id, trigger === 'time-before' ? laterStartMs - 15 * MINUTE_MS : laterEndMs);
+        dueById.set(id, trigger === 'time-before' ? laterStartMs - LEAD_MS : laterEndMs);
       }
       const { fired } = await checkEveryFiveMinutes({ trigger, storeLimitBytes: STORE_LIMIT_BYTES });
       expectEachOnceNotEarly({ fired, dueById });
@@ -154,10 +157,10 @@ function addLongIdEvents({
   const dueById = new Map<string, number>();
   for (let index = 0; index < count; index++) {
     const id = `${'x'.repeat(990)}-${index}`;
-    const startMs = Date.parse(trigger === 'time-before' ? '2026-10-01T10:20:00Z' : '2026-10-01T10:00:30Z') + index * spacingMs;
+    const startMs = (trigger === 'time-before' ? Date.parse('2026-10-01T10:05:00Z') + LEAD_MS : Date.parse('2026-10-01T10:00:30Z')) + index * spacingMs;
     const endMs = startMs + (trigger === 'time-before' ? 30 : 3) * MINUTE_MS;
     addTimedEvent({ id, start: new Date(startMs).toISOString(), end: new Date(endMs).toISOString() });
-    dueById.set(id, trigger === 'time-before' ? startMs - 15 * MINUTE_MS : endMs);
+    dueById.set(id, trigger === 'time-before' ? startMs - LEAD_MS : endMs);
   }
   return dueById;
 }
@@ -179,7 +182,7 @@ function sizeLimitedStore({ store, limitBytes }: { store: Store; limitBytes: num
 function addDenseEvents({ anchor, leadMs }: { anchor: 'start' | 'end'; leadMs: number }): Map<string, number> {
   const dueById = new Map<string, number>();
   for (let index = 0; index < EVENT_COUNT; index++) {
-    const anchorMs = Date.parse('2026-10-01T10:20:00Z') + index * 10_000;
+    const anchorMs = Date.parse('2026-10-01T10:20:00Z') + (anchor === 'start' ? leadMs - 15 * MINUTE_MS : 0) + index * 10_000;
     const startMs = anchor === 'start' ? anchorMs : anchorMs - 15 * MINUTE_MS;
     const endMs = anchor === 'start' ? anchorMs + 30 * MINUTE_MS : anchorMs;
     const id = `dense-${index}`;

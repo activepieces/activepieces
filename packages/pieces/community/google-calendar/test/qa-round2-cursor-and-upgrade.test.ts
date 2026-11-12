@@ -157,14 +157,14 @@ describe('Event Start (Time Before) handled mark on an unfinished listing that f
     fakeCalendar.pageSize = 600;
     fakeCalendar.listDelayMs = 8_000;
     setNow({ iso: '2026-10-01T10:00:00Z' });
-    await eventStartTimeBefore.onEnable(reminderContext({ store, propsValue: TIME_BEFORE_PROPS }));
+    await eventStartTimeBefore.onEnable(reminderContext({ store, propsValue: BURST_PROPS }));
     setNow({ iso: '2026-10-01T10:10:00Z' });
-    const fired = idsOf(await eventStartTimeBefore.run(reminderContext({ store, propsValue: TIME_BEFORE_PROPS })));
+    const fired = idsOf(await eventStartTimeBefore.run(reminderContext({ store, propsValue: BURST_PROPS })));
     data.set('event_start_checkpoint', JSON.stringify(asPreviousBuildCheckpoint({ raw: data.get('event_start_checkpoint') })));
     for (const [index, time] of ['10:15', '10:20', '10:25'].entries()) {
       fakeCalendar.rejectNextPageToken = index === 0;
       setNow({ iso: `2026-10-01T${time}:00Z` });
-      fired.push(...idsOf(await eventStartTimeBefore.run(reminderContext({ store, propsValue: TIME_BEFORE_PROPS }))));
+      fired.push(...idsOf(await eventStartTimeBefore.run(reminderContext({ store, propsValue: BURST_PROPS }))));
     }
     expect(fired).toHaveLength(1500);
     expect(new Set(fired).size).toBe(1500);
@@ -172,7 +172,7 @@ describe('Event Start (Time Before) handled mark on an unfinished listing that f
 });
 
 function addReminders({ count, firstDueIso, spacingMs, prefix }: { count: number; firstDueIso: string; spacingMs: number; prefix?: string }): void {
-  const firstStartMs = Date.parse(firstDueIso) + 15 * 60 * 1000;
+  const firstStartMs = Date.parse(firstDueIso) + BURST_LEAD_MS;
   for (let index = 0; index < count; index++) {
     const startMs = firstStartMs + index * spacingMs;
     addTimedEvent({ id: `${prefix ?? 'burst'}-${index}`, start: new Date(startMs).toISOString(), end: new Date(startMs + 30 * 60 * 1000).toISOString() });
@@ -184,12 +184,12 @@ async function checkEveryFiveMinutes({ rejectTokenAtCheck }: { rejectTokenAtChec
   fakeCalendar.pageSize = 600;
   fakeCalendar.listDelayMs = 8_000;
   setNow({ iso: '2026-10-01T10:00:00Z' });
-  await eventStartTimeBefore.onEnable(reminderContext({ store, propsValue: TIME_BEFORE_PROPS }));
+  await eventStartTimeBefore.onEnable(reminderContext({ store, propsValue: BURST_PROPS }));
   const fired: string[] = [];
   for (let check = 1; check <= 20; check++) {
     fakeCalendar.rejectNextPageToken = check === rejectTokenAtCheck;
     vi.setSystemTime(Date.parse('2026-10-01T10:05:00Z') + check * 5 * 60 * 1000);
-    fired.push(...idsOf(await eventStartTimeBefore.run(reminderContext({ store, propsValue: TIME_BEFORE_PROPS }))));
+    fired.push(...idsOf(await eventStartTimeBefore.run(reminderContext({ store, propsValue: BURST_PROPS }))));
   }
   return fired;
 }
@@ -258,6 +258,11 @@ const TIME_BEFORE_PROPS = {
   time_value: 15,
   time_unit: 'minutes',
 };
+
+// A 2-hour lead keeps every burst meeting in the future while the listing is
+// spread over several checks; reminders after the start are dropped.
+const BURST_LEAD_MS = 2 * 60 * 60 * 1000;
+const BURST_PROPS = { ...TIME_BEFORE_PROPS, time_value: 2, time_unit: 'hours' };
 
 const ENDS_PROPS = {
   calendar_id: 'primary',
