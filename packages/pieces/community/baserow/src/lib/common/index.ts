@@ -39,10 +39,12 @@ export function formatFieldValues({
   input,
   fields,
   skipEmpty,
+  withLinkBy,
 }: {
   input: DynamicPropsValue;
   fields: BaserowField[];
   skipEmpty: boolean;
+  withLinkBy: boolean;
 }): Record<string, unknown> {
   const fieldsByName = new Map(fields.map((field) => [field.name, field]));
   const result: Record<string, unknown> = {};
@@ -62,6 +64,7 @@ export function formatFieldValues({
           fieldName: key,
           value,
           linkBy: readLinkBy(input[linkByKey(key)]),
+          withLinkBy,
         });
         if (references.length > 0 || !skipEmpty) {
           result[key] = references;
@@ -191,10 +194,12 @@ function toLinkedRowReferences({
   fieldName,
   value,
   linkBy,
+  withLinkBy,
 }: {
   fieldName: string;
   value: unknown;
   linkBy: BaserowLinkBy;
+  withLinkBy: boolean;
 }): number[] | string[] {
   const byPrimaryFieldValue = linkBy === BaserowLinkBy.PRIMARY_FIELD_VALUE;
   const items = toFieldItems({
@@ -206,7 +211,7 @@ function toLinkedRowReferences({
       typeof item === 'string' ? item.trim() : String(item)
     );
   }
-  return items.map((item) => toRowId({ fieldName, item }));
+  return items.map((item) => toRowId({ fieldName, item, withLinkBy }));
 }
 
 function toFieldItems({
@@ -240,14 +245,19 @@ function isBlankItem(item: unknown): boolean {
 function toRowId({
   fieldName,
   item,
+  withLinkBy,
 }: {
   fieldName: string;
   item: unknown;
+  withLinkBy: boolean;
 }): number {
   const rowId = asPositiveInteger(item);
   if (rowId !== undefined) return rowId;
+  const hint = withLinkBy
+    ? `To link rows by the value of the linked table's primary field, set "${fieldName} — Link By" to "Primary Field Value".`
+    : 'This action only links rows by row ID; Update Row can link them by primary field value instead.';
   throw new Error(
-    `Field "${fieldName}": "${String(item)}" is not a row ID. To link rows by the value of the linked table's primary field, set "${fieldName} — Link By" to "Primary field value".`
+    `Field "${fieldName}": "${String(item)}" is not a row ID. ${hint}`
   );
 }
 
@@ -420,6 +430,9 @@ export const baserowCommon = {
                 fields[field.name] = Property.DateTime({
                   displayName: field.name,
                   required: false,
+                  description: field.date_include_time
+                    ? undefined
+                    : 'Only the date is saved. A mapped date and time is read in UTC, so a time near midnight can land on the day before or after.',
                   placeholder: field.date_include_time
                     ? '2026-01-31T14:30:00Z'
                     : '2026-01-31',
@@ -443,7 +456,7 @@ export const baserowCommon = {
                 fields[linkByKey(field.name)] = Property.StaticDropdown({
                   displayName: `${field.name} — Link By`,
                   description:
-                    'Row ID uses the number of each row. Primary field value matches the text in the primary field of the linked table, even when it looks like a number.',
+                    'Row ID uses the number of each row. Primary Field Value matches the text in the primary field of the linked table, even when it looks like a number.',
                   required: false,
                   defaultValue: BaserowLinkBy.ROW_ID,
                   options: {
@@ -451,7 +464,7 @@ export const baserowCommon = {
                     options: [
                       { label: 'Row ID', value: BaserowLinkBy.ROW_ID },
                       {
-                        label: 'Primary field value',
+                        label: 'Primary Field Value',
                         value: BaserowLinkBy.PRIMARY_FIELD_VALUE,
                       },
                     ],

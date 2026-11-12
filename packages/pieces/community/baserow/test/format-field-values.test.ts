@@ -11,6 +11,7 @@ describe('formatFieldValues', () => {
         input: { compte_id: ['12', 7, ' 3 '] },
         fields: [linkField({ name: 'compte_id' })],
         skipEmpty: true,
+        withLinkBy: true,
       });
 
       expect(result).toEqual({ compte_id: [12, 7, 3] });
@@ -20,11 +21,22 @@ describe('formatFieldValues', () => {
       const fields = [linkField({ name: 'compte_id' })];
 
       expect(() =>
-        formatFieldValues({ input: { compte_id: ['L9PnbzEm'] }, fields, skipEmpty: true })
+        formatFieldValues({ input: { compte_id: ['L9PnbzEm'] }, fields, skipEmpty: true, withLinkBy: true })
       ).toThrow('Field "compte_id": "L9PnbzEm" is not a row ID');
       expect(() =>
-        formatFieldValues({ input: { compte_id: ['9ma8Kx3m'] }, fields, skipEmpty: true })
-      ).toThrow('set "compte_id — Link By" to "Primary field value"');
+        formatFieldValues({ input: { compte_id: ['9ma8Kx3m'] }, fields, skipEmpty: true, withLinkBy: true })
+      ).toThrow('set "compte_id — Link By" to "Primary Field Value"');
+    });
+
+    it('points to Update Row instead of a Link By setting when the action has none', () => {
+      expect(() =>
+        formatFieldValues({
+          input: { compte_id: ['L9PnbzEm'] },
+          fields: [linkField({ name: 'compte_id' })],
+          skipEmpty: false,
+          withLinkBy: false,
+        })
+      ).toThrow('This action only links rows by row ID; Update Row can link them by primary field value instead.');
     });
 
     it('sends every value as text when linking by primary field value, even numeric ones', () => {
@@ -35,6 +47,7 @@ describe('formatFieldValues', () => {
         },
         fields: [linkField({ name: 'compte_id' })],
         skipEmpty: true,
+        withLinkBy: true,
       });
 
       expect(result).toEqual({ compte_id: ['L9PnbzEm', '1042', '1043'] });
@@ -48,6 +61,7 @@ describe('formatFieldValues', () => {
         },
         fields: [linkField({ name: 'compte_id' })],
         skipEmpty: true,
+        withLinkBy: true,
       });
 
       expect(result).toEqual({ compte_id: ['L9PnbzEm'] });
@@ -58,7 +72,7 @@ describe('formatFieldValues', () => {
       const fields = [linkField({ name: 'compte_id' })];
 
       expect(
-        formatFieldValues({ input: { compte_id: linkedRows }, fields, skipEmpty: true })
+        formatFieldValues({ input: { compte_id: linkedRows }, fields, skipEmpty: true, withLinkBy: true })
       ).toEqual({ compte_id: [5] });
       expect(
         formatFieldValues({
@@ -68,6 +82,7 @@ describe('formatFieldValues', () => {
           },
           fields,
           skipEmpty: true,
+          withLinkBy: true,
         })
       ).toEqual({ compte_id: ['Acme'] });
     });
@@ -77,6 +92,7 @@ describe('formatFieldValues', () => {
         input: { compte_id: [['1', '2']] },
         fields: [linkField({ name: 'compte_id' })],
         skipEmpty: true,
+        withLinkBy: true,
       });
 
       expect(result).toEqual({ compte_id: [1, 2] });
@@ -86,8 +102,8 @@ describe('formatFieldValues', () => {
       const fields = [linkField({ name: 'compte_id' })];
       const input = { compte_id: ['', null, '  '] };
 
-      expect(formatFieldValues({ input, fields, skipEmpty: true })).toEqual({});
-      expect(formatFieldValues({ input, fields, skipEmpty: false })).toEqual({ compte_id: [] });
+      expect(formatFieldValues({ input, fields, skipEmpty: true, withLinkBy: true })).toEqual({});
+      expect(formatFieldValues({ input, fields, skipEmpty: false, withLinkBy: true })).toEqual({ compte_id: [] });
     });
 
     it('never sends the Link by setting to Baserow', () => {
@@ -95,6 +111,7 @@ describe('formatFieldValues', () => {
         input: { compte_id: ['1'], __link_by__compte_id: BaserowLinkBy.ROW_ID },
         fields: [linkField({ name: 'compte_id' })],
         skipEmpty: true,
+        withLinkBy: true,
       });
 
       expect(result).toEqual({ compte_id: [1] });
@@ -105,6 +122,7 @@ describe('formatFieldValues', () => {
         input: { __link_by__notes: 'kept' },
         fields: [textField({ name: '__link_by__notes' })],
         skipEmpty: true,
+        withLinkBy: true,
       });
 
       expect(result).toEqual({ __link_by__notes: 'kept' });
@@ -117,6 +135,7 @@ describe('formatFieldValues', () => {
         input: { date_naissance: '1963-01-28T00:00:00.000Z' },
         fields: [dateField({ name: 'date_naissance', includeTime: false })],
         skipEmpty: true,
+        withLinkBy: true,
       });
 
       expect(result).toEqual({ date_naissance: '1963-01-28' });
@@ -127,6 +146,7 @@ describe('formatFieldValues', () => {
         input: { date_debut: '2026-09-09T15:30:00.000Z' },
         fields: [dateField({ name: 'date_debut', includeTime: true })],
         skipEmpty: true,
+        withLinkBy: true,
       });
 
       expect(result).toEqual({ date_debut: '2026-09-09T15:30:00.000Z' });
@@ -137,6 +157,7 @@ describe('formatFieldValues', () => {
         input: { date_naissance: '' },
         fields: [dateField({ name: 'date_naissance', includeTime: false })],
         skipEmpty: false,
+        withLinkBy: true,
       });
 
       expect(result).toEqual({ date_naissance: null });
@@ -149,6 +170,7 @@ describe('formatFieldValues', () => {
         input: { assignes: [5, '7', ' 9 '] },
         fields: [collaboratorField({ name: 'assignes' })],
         skipEmpty: true,
+        withLinkBy: true,
       });
 
       expect(result).toEqual({ assignes: [{ id: 5 }, { id: 7 }, { id: 9 }] });
@@ -159,6 +181,7 @@ describe('formatFieldValues', () => {
         input: { assignes: [{ id: 3, name: 'Jean' }] },
         fields: [collaboratorField({ name: 'assignes' })],
         skipEmpty: true,
+        withLinkBy: true,
       });
 
       expect(result).toEqual({ assignes: [{ id: 3 }] });
@@ -168,10 +191,10 @@ describe('formatFieldValues', () => {
       const fields = [collaboratorField({ name: 'assignes' })];
 
       expect(() =>
-        formatFieldValues({ input: { assignes: ['jean@exemple.fr'] }, fields, skipEmpty: true })
+        formatFieldValues({ input: { assignes: ['jean@exemple.fr'] }, fields, skipEmpty: true, withLinkBy: true })
       ).toThrow('Field "assignes": "jean@exemple.fr" is not a Baserow user ID');
       expect(() =>
-        formatFieldValues({ input: { assignes: ['7-jean'] }, fields, skipEmpty: true })
+        formatFieldValues({ input: { assignes: ['7-jean'] }, fields, skipEmpty: true, withLinkBy: true })
       ).toThrow('is not a Baserow user ID');
     });
 
@@ -179,8 +202,8 @@ describe('formatFieldValues', () => {
       const fields = [collaboratorField({ name: 'assignes' })];
       const input = { assignes: ['', null] };
 
-      expect(formatFieldValues({ input, fields, skipEmpty: true })).toEqual({});
-      expect(formatFieldValues({ input, fields, skipEmpty: false })).toEqual({ assignes: [] });
+      expect(formatFieldValues({ input, fields, skipEmpty: true, withLinkBy: true })).toEqual({});
+      expect(formatFieldValues({ input, fields, skipEmpty: false, withLinkBy: true })).toEqual({ assignes: [] });
     });
   });
 });

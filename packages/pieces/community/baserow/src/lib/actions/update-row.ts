@@ -80,6 +80,7 @@ export const updateRowAction = createAction({
       input: tableFieldsInput,
       fields: tableSchema,
       skipEmpty: true,
+      withLinkBy: true,
     });
 
     if (createMissingSelectOptions) {

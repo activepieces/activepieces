@@ -59,6 +59,7 @@ export const cleanRowAction = createAction({
       input: table_fields!,
       fields: tableSchema,
       skipEmpty: false,
+      withLinkBy: false,
     });
     return await client.updateRow(table_id!, row_id!, formattedFields);
   },

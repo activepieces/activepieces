@@ -134,6 +134,7 @@ export const upsertRowAction = createAction({
       input: table_fields!,
       fields: tableSchema,
       skipEmpty: true,
+      withLinkBy: true,
     });
 
     const matchFieldId = parseInt(match_field!.replace('field_', ''), 10);

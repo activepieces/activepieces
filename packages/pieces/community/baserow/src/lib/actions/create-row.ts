@@ -69,6 +69,7 @@ export const createRowAction = createAction({
       input: tableFieldsInput,
       fields: tableSchema,
       skipEmpty: true,
+      withLinkBy: true,
     });
 
     if (createMissingSelectOptions) {
