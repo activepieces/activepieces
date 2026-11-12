@@ -42,9 +42,10 @@ export const updateProductPriceAction = createAction({
       required: false,
     }),
   },
-  async run({ auth, propsValue }) {
+  async run({ auth, propsValue, store }) {
     return sallaProducts.updateProductPrice({
       auth,
+      store,
       input: {
         sku: propsValue.sku,
         price: propsValue.price,

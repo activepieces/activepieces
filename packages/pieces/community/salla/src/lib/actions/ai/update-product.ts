@@ -200,10 +200,11 @@ export const aiUpdateProductAction = createAction({
       required: false,
     }),
   },
-  async run({ auth, propsValue }) {
+  async run({ auth, propsValue, store }) {
     const target = resolveTarget({ productId: propsValue.product_id, productSku: propsValue.product_sku });
     return sallaProducts.updateProduct({
       auth,
+      store,
       by: target.by,
       value: target.value,
       input: {

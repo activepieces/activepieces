@@ -2,18 +2,32 @@ import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const sallaAuth = PieceAuth.OAuth2({
-  description: `Connect a Salla store through your own private Salla app.
+  description: `Salla connects through your own private app. It is free and takes about 5 minutes to set up.
 
-1. Sign in to the [Salla Partners Portal](https://portal.salla.partners) and open **My Apps**, then **Create App**. Choose a **Private** app of the **General** type.
-2. Open the app's **App Details**. Under **App Settings**, set **OAuth Mode** to **Custom Mode**.
-3. Paste the **Redirect URL** shown above into the app's **Callback URLs** field and save.
-4. Under **App Scopes**, tick at least **Orders** (read & write), **Products** (read & write), **Customers** (read & write), **Marketing** (read & write, for coupons), **Webhooks** (read & write), **Categories** (read), **Brands** (read), **Abandoned Carts** (read), **Reviews** (read), **Payments** (read) and **Branches** (read). Each scope is either read or read & write.
-5. Give the app access to your store: install it on a Salla demo store, or add your store URL under **Merchant Store Access Requests** and approve the request as the store owner.
-6. Copy the app's **Client ID** and **Client Secret** into the fields below, then click **Connect** and approve the access in Salla.
+**Step 1 · Create the app**
+In the [Salla Partners Portal](https://portal.salla.partners), go to **My Apps** → **Create App** and choose **Private** and **General**.
 
-Notes:
-- If you add a scope to the Salla app later, reconnect this connection so the new scope reaches the token.
-- Salla expires a refresh token that is not used for a month. If the connection stays idle that long, reconnect it.`,
+**Step 2 · Turn on login**
+In the app, open **App Details** → **App Settings**:
+- **OAuth Mode:** Custom Mode
+- **Callback URLs:** paste this URL, then save
+
+\`\`\`text
+{{redirectUrl}}
+\`\`\`
+
+**Step 3 · Tick the permissions** (under **App Scopes**)
+- **Read & write:** Orders, Products, Customers, Marketing, Webhooks
+- **Read:** Categories, Brands, Abandoned Carts, Reviews, Payments, Branches
+
+**Step 4 · Give the app access to your store**
+- **To test:** under **App Testing**, click **Create Demo Store**, then **Install App**.
+- **Your live store:** under **Merchant Store Access Requests**, add your store URL, then approve the request as the store owner.
+
+**Step 5 · Connect**
+Copy the **Client ID** and **Client Secret** from **App Keys** into the fields below, click **Connect**, and approve in the Salla window.
+
+**Good to know:** if you tick a new permission later, or the connection sits unused for a month, reconnect it.`,
   required: true,
   authUrl: 'https://accounts.salla.sa/oauth2/auth',
   tokenUrl: 'https://accounts.salla.sa/oauth2/token',

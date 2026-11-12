@@ -1,4 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
+import { Store, StoreScope } from '@activepieces/pieces-framework';
 import { SallaAuth, SallaQuery, sallaApi } from './client';
 import { sallaUtils } from './helpers';
 
@@ -93,16 +94,38 @@ async function updateProduct({
   by,
   value,
   input,
+  store,
 }: {
   auth: SallaAuth;
   by: ProductLookup;
   value: unknown;
   input: UpdateProductInput;
+  store: Store;
 }): Promise<Record<string, unknown>> {
   const path = productPath({ by, value });
   const body = buildUpdateProductBody(input);
+  return putProductKeepingChannels({ auth, path, body, store });
+}
+
+async function putProductKeepingChannels({
+  auth,
+  path,
+  body,
+  store,
+}: {
+  auth: SallaAuth;
+  path: string;
+  body: Record<string, unknown>;
+  store: Store;
+}): Promise<Record<string, unknown>> {
   const current = await sallaApi.request<unknown>({ auth, method: HttpMethod.GET, path });
-  const channelsBefore = channelsOf(current.body.data);
+  const productId = sallaApi.isRecord(current.body.data) ? idText(current.body.data['id']) : undefined;
+  const storeKey = productId === undefined ? undefined : `${CHANNELS_STORE_KEY_PREFIX}${productId}`;
+  const pendingChannels = storeKey === undefined ? undefined : await readPendingChannels({ store, key: storeKey });
+  const channelsBefore = pendingChannels ?? channelsOf(current.body.data);
+  if (storeKey !== undefined && channelsBefore !== undefined) {
+    await savePendingChannels({ store, key: storeKey, channels: channelsBefore });
+  }
   const response = await sallaApi.request<unknown>({
     auth,
     method: HttpMethod.PUT,
@@ -124,6 +147,30 @@ async function updateProduct({
     );
   }
   return { ...product, channels: channelsBefore, show_in_app: channelsBefore.includes('app') };
+}
+
+async function readPendingChannels({ store, key }: { store: Store; key: string }): Promise<string[] | undefined> {
+  try {
+    const saved = await store.get<unknown>(key, StoreScope.PROJECT);
+    if (!sallaApi.isRecord(saved) || typeof saved['expiresAt'] !== 'number' || saved['expiresAt'] <= Date.now()) {
+      return undefined;
+    }
+    const channels = saved['channels'];
+    if (!Array.isArray(channels) || !channels.every((channel) => typeof channel === 'string')) {
+      return undefined;
+    }
+    return channels.filter((channel): channel is string => typeof channel === 'string');
+  } catch {
+    return undefined;
+  }
+}
+
+async function savePendingChannels({ store, key, channels }: { store: Store; key: string; channels: string[] }): Promise<void> {
+  try {
+    await store.put<PendingChannels>(key, { channels, expiresAt: Date.now() + CHANNELS_STORE_TTL_MS }, StoreScope.PROJECT);
+  } catch {
+    return;
+  }
 }
 
 function channelsOf(product: unknown): string[] | undefined {
@@ -330,8 +377,11 @@ async function listStockChangeReasons({ auth }: { auth: SallaAuth }): Promise<St
   return { reasons, count: reasons.length, truncated: false };
 }
 
-async function updateProductPrice({ auth, input }: { auth: SallaAuth; input: ProductPriceInput }): Promise<Record<string, unknown>> {
+async function updateProductPrice({ auth, input, store }: { auth: SallaAuth; input: ProductPriceInput; store: Store }): Promise<Record<string, unknown>> {
   const request = buildProductPriceRequest(input);
+  if (request.method === HttpMethod.PUT) {
+    return putProductKeepingChannels({ auth, path: request.path, body: request.body, store });
+  }
   const response = await sallaApi.request<unknown>({
     auth,
     method: request.method,
@@ -832,6 +882,8 @@ const IMAGE_UPLOAD_TIMEOUT_MS = 60000;
 
 const PRODUCT_TYPES: ProductType[] = ['product', 'service', 'group_products', 'codes', 'digital', 'food', 'booking', 'donating'];
 const PRODUCT_STATUSES: ProductStatus[] = ['sale', 'out', 'hidden'];
+const CHANNELS_STORE_KEY_PREFIX = 'salla_product_channels_';
+const CHANNELS_STORE_TTL_MS = 60000;
 const WEIGHT_TYPES: WeightType[] = ['kg', 'g', 'lb', 'oz'];
 const STOCK_IDENTIFIER_TYPES: StockIdentifierType[] = ['id', 'variant_id', 'sku'];
 const STOCK_MODES: StockMode[] = ['increment', 'decrement', 'overwrite'];
@@ -1068,6 +1120,8 @@ type BrandListResult = {
   count: number;
   truncated: boolean;
 };
+
+type PendingChannels = { channels: string[]; expiresAt: number };
 
 export type {
   ProductStatus,

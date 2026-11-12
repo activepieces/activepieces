@@ -256,11 +256,12 @@ export const updateProductAction = createAction({
       required: false,
     }),
   },
-  async run({ auth, propsValue }) {
+  async run({ auth, propsValue, store }) {
     const by: ProductLookup = propsValue.find_by === 'sku' ? 'sku' : 'id';
     const value = by === 'sku' ? requireText({ value: propsValue.lookup_sku, message: SKU_MISSING }) : requireText({ value: propsValue.product, message: PRODUCT_MISSING });
     return sallaProducts.updateProduct({
       auth,
+      store,
       by,
       value,
       input: {

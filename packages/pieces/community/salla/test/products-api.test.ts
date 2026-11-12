@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { HttpError, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common';
+import { Store, StoreScope } from '@activepieces/pieces-framework';
 import { BASE_URL } from '../src/lib/common/client';
 import { sallaProducts } from '../src/lib/common/products';
 import { sallaProps } from '../src/lib/common/props';
@@ -16,6 +17,27 @@ function respond({ body, status }: { body: unknown; status: number }) {
 
 function pathOf(request: HttpRequest): string {
   return new URL(request.url).pathname.replace('/admin/v2', '');
+}
+
+function fakeStore(initial: Record<string, unknown> = {}): { store: Store; saved: Map<string, string>; scopes: Array<StoreScope | undefined> } {
+  const saved = new Map(Object.entries(initial).map(([key, value]) => [key, JSON.stringify(value)]));
+  const scopes: Array<StoreScope | undefined> = [];
+  const store: Store = {
+    async put<T>(key: string, value: T, scope?: StoreScope): Promise<T> {
+      scopes.push(scope);
+      saved.set(key, JSON.stringify(value));
+      return value;
+    },
+    async get<T>(key: string, scope?: StoreScope): Promise<T | null> {
+      scopes.push(scope);
+      const raw = saved.get(key);
+      return raw === undefined ? null : JSON.parse(raw);
+    },
+    async delete(key: string): Promise<void> {
+      saved.delete(key);
+    },
+  };
+  return { store, saved, scopes };
 }
 
 const productWithOptions = {
@@ -126,19 +148,19 @@ describe('createProduct and updateProduct', () => {
 
   it('reads the product, then PUTs by ID or SKU, and refuses an empty update without calling Salla', async () => {
     const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(ok({ data: { id: 9 } }));
-    await sallaProducts.updateProduct({ auth, by: 'id', value: 9, input: { name: 'New' } });
-    await sallaProducts.updateProduct({ auth, by: 'sku', value: 'TS 1', input: { price: '5' } });
+    await sallaProducts.updateProduct({ auth, store: fakeStore().store, by: 'id', value: 9, input: { name: 'New' } });
+    await sallaProducts.updateProduct({ auth, store: fakeStore().store, by: 'sku', value: 'TS 1', input: { price: '5' } });
     expect(spy.mock.calls[0][0]).toMatchObject({ method: HttpMethod.GET, url: `${BASE_URL}/products/9` });
     expect(spy.mock.calls[1][0]).toMatchObject({ method: HttpMethod.PUT, url: `${BASE_URL}/products/9`, body: { name: 'New' } });
     expect(spy.mock.calls[2][0]).toMatchObject({ method: HttpMethod.GET, url: `${BASE_URL}/products/sku/TS%201` });
     expect(spy.mock.calls[3][0]).toMatchObject({ method: HttpMethod.PUT, url: `${BASE_URL}/products/sku/TS%201`, body: { price: 5 } });
-    await expect(sallaProducts.updateProduct({ auth, by: 'id', value: 9, input: {} })).rejects.toThrow('Nothing to update');
+    await expect(sallaProducts.updateProduct({ auth, store: fakeStore().store, by: 'id', value: 9, input: {} })).rejects.toThrow('Nothing to update');
     expect(spy).toHaveBeenCalledTimes(4);
   });
 
   it('sends the update without Accept-Language so Salla saves the name in the store language', async () => {
     const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(ok({ data: { id: 9 } }));
-    await sallaProducts.updateProduct({ auth: { access_token: 'token', props: { language: 'en' } }, by: 'id', value: 9, input: { name: 'New' } });
+    await sallaProducts.updateProduct({ auth: { access_token: 'token', props: { language: 'en' } }, store: fakeStore().store, by: 'id', value: 9, input: { name: 'New' } });
     expect(spy.mock.calls[0][0].headers).toMatchObject({ 'Accept-Language': 'en' });
     expect(spy.mock.calls[1][0].method).toBe(HttpMethod.PUT);
     expect(spy.mock.calls[1][0].headers).not.toHaveProperty('Accept-Language');
@@ -161,14 +183,14 @@ describe('createProduct and updateProduct', () => {
 
   it('makes no extra call when the sales channels did not change', async () => {
     const spy = mockProductUpdate({ before: ['web', 'app'], after: ['app', 'web'] });
-    const result = await sallaProducts.updateProduct({ auth, by: 'id', value: 9, input: { name: 'New' } });
+    const result = await sallaProducts.updateProduct({ auth, store: fakeStore().store, by: 'id', value: 9, input: { name: 'New' } });
     expect(spy).toHaveBeenCalledTimes(2);
     expect(result).toMatchObject({ id: 9, channels: ['app', 'web'], show_in_app: true });
   });
 
   it('puts the sales channels back when Salla resets them on update', async () => {
     const spy = mockProductUpdate({ before: ['web', 'app'], after: ['web'] });
-    const result = await sallaProducts.updateProduct({ auth, by: 'sku', value: 'TS-1', input: { quantity: 30 } });
+    const result = await sallaProducts.updateProduct({ auth, store: fakeStore().store, by: 'sku', value: 'TS-1', input: { quantity: 30 } });
     expect(spy.mock.calls.map(([request]) => `${request.method} ${pathOf(request)}`)).toEqual([
       'GET /products/sku/TS-1',
       'PUT /products/sku/TS-1',
@@ -181,9 +203,77 @@ describe('createProduct and updateProduct', () => {
     expect(result).toMatchObject({ id: 9, name: 'New', channels: ['web', 'app'], show_in_app: true });
   });
 
+  it('uses the channels Salla returns when no update is in flight and remembers them for 60 seconds', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    const { store, saved, scopes } = fakeStore();
+    const spy = mockProductUpdate({ before: ['web', 'app'], after: ['web'] });
+    const result = await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
+    expect(spy.mock.calls[2][0].body).toMatchObject({ operations: [{ action_name: 'sale-channels', value: { channels: ['web', 'app'] } }] });
+    expect(result).toMatchObject({ channels: ['web', 'app'] });
+    expect(JSON.parse(saved.get('salla_product_channels_9') ?? 'null')).toEqual({ channels: ['web', 'app'], expiresAt: 1_060_000 });
+    expect(scopes.every((scope) => scope === StoreScope.PROJECT)).toBe(true);
+  });
+
+  it('restores the channels saved by an overlapping update when Salla shows its temporary web-only value', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    const { store, saved } = fakeStore({ salla_product_channels_9: { channels: ['web', 'app'], expiresAt: 1_030_000 } });
+    const spy = mockProductUpdate({ before: ['web'], after: ['web'] });
+    const result = await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
+    expect(spy.mock.calls.map(([request]) => `${request.method} ${pathOf(request)}`)).toEqual(['GET /products/9', 'PUT /products/9', 'POST /products/actions']);
+    expect(spy.mock.calls[2][0].body).toMatchObject({ operations: [{ action_name: 'sale-channels', value: { channels: ['web', 'app'] } }] });
+    expect(result).toMatchObject({ channels: ['web', 'app'], show_in_app: true });
+    expect(JSON.parse(saved.get('salla_product_channels_9') ?? 'null')).toEqual({ channels: ['web', 'app'], expiresAt: 1_060_000 });
+  });
+
+  it('ignores an expired or malformed saved record and uses the channels Salla returns', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    const expired = fakeStore({ salla_product_channels_9: { channels: ['web', 'app'], expiresAt: 999_999 } });
+    const malformed = fakeStore({ salla_product_channels_9: { channels: 'web,app', expiresAt: 2_000_000 } });
+    const spy = mockProductUpdate({ before: ['web'], after: ['web'] });
+    await sallaProducts.updateProduct({ auth, store: expired.store, by: 'id', value: 9, input: { quantity: 30 } });
+    await sallaProducts.updateProduct({ auth, store: malformed.store, by: 'id', value: 9, input: { quantity: 30 } });
+    expect(spy).toHaveBeenCalledTimes(4);
+    expect(JSON.parse(expired.saved.get('salla_product_channels_9') ?? 'null')).toEqual({ channels: ['web'], expiresAt: 1_060_000 });
+  });
+
+  it('Update Product Price puts the sales channels back after its full-product PUT', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    const { store, saved } = fakeStore();
+    const spy = mockProductUpdate({ before: ['web', 'app'], after: ['web'] });
+    const result = await sallaProducts.updateProductPrice({ auth, store, input: { sku: 'TS-1', price: 10, salePrice: 8 } });
+    expect(spy.mock.calls.map(([request]) => `${request.method} ${pathOf(request)}`)).toEqual([
+      'GET /products/sku/TS-1',
+      'PUT /products/sku/TS-1',
+      'POST /products/actions',
+    ]);
+    expect(spy.mock.calls[1][0].body).toEqual({ price: 10, sale_price: 8 });
+    expect(spy.mock.calls[2][0].body).toMatchObject({ operations: [{ action_name: 'sale-channels', value: { channels: ['web', 'app'] } }] });
+    expect(result).toMatchObject({ channels: ['web', 'app'], show_in_app: true });
+    expect(JSON.parse(saved.get('salla_product_channels_9') ?? 'null')).toEqual({ channels: ['web', 'app'], expiresAt: 1_060_000 });
+  });
+
+  it('Update Product Price with only a price makes one call and does not touch the store', async () => {
+    const { store, scopes } = fakeStore();
+    const spy = mockProductUpdate({ before: ['web', 'app'], after: ['web'] });
+    await sallaProducts.updateProductPrice({ auth, store, input: { sku: 'TS-1', price: 10 } });
+    expect(spy.mock.calls.map(([request]) => `${request.method} ${pathOf(request)}`)).toEqual(['POST /products/sku/TS-1/price']);
+    expect(scopes).toEqual([]);
+  });
+
+  it('keeps updating when the project store fails', async () => {
+    const failing: Store = {
+      put: () => Promise.reject(new Error('store down')),
+      get: () => Promise.reject(new Error('store down')),
+      delete: () => Promise.reject(new Error('store down')),
+    };
+    mockProductUpdate({ before: ['web', 'app'], after: ['web'] });
+    const result = await sallaProducts.updateProduct({ auth, store: failing, by: 'id', value: 9, input: { quantity: 30 } });
+    expect(result).toMatchObject({ channels: ['web', 'app'] });
+  });
+
   it('says the product was updated when putting the sales channels back fails', async () => {
     mockProductUpdate({ before: ['web', 'app'], after: ['web'], restoreFails: true });
-    await expect(sallaProducts.updateProduct({ auth, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow(
+    await expect(sallaProducts.updateProduct({ auth, store: fakeStore().store, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow(
       'The product was updated, but Salla changed its sales channels to web and putting back web, app failed.',
     );
   });
@@ -344,10 +434,11 @@ describe('updateVariant and updateProductPrice', () => {
 
   it('uses the price request builder for the call', async () => {
     const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(ok({ data: { id: 1 } }));
-    await sallaProducts.updateProductPrice({ auth, input: { sku: 'TS-1', price: 10 } });
-    await sallaProducts.updateProductPrice({ auth, input: { sku: 'TS-1', price: 10, costPrice: 4 } });
+    await sallaProducts.updateProductPrice({ auth, store: fakeStore().store, input: { sku: 'TS-1', price: 10 } });
+    await sallaProducts.updateProductPrice({ auth, store: fakeStore().store, input: { sku: 'TS-1', price: 10, costPrice: 4 } });
     expect(spy.mock.calls[0][0]).toMatchObject({ method: HttpMethod.POST, url: `${BASE_URL}/products/sku/TS-1/price`, body: { price: 10 } });
-    expect(spy.mock.calls[1][0]).toMatchObject({ method: HttpMethod.PUT, url: `${BASE_URL}/products/sku/TS-1`, body: { price: 10, cost_price: 4 } });
+    expect(spy.mock.calls[1][0]).toMatchObject({ method: HttpMethod.GET, url: `${BASE_URL}/products/sku/TS-1` });
+    expect(spy.mock.calls[2][0]).toMatchObject({ method: HttpMethod.PUT, url: `${BASE_URL}/products/sku/TS-1`, body: { price: 10, cost_price: 4 } });
   });
 });
 
