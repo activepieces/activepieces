@@ -6,10 +6,12 @@ function widthFor({
   fullPage,
   open,
   mode,
+  phone,
 }: {
   fullPage: boolean;
   open: boolean;
   mode: ChatPanelSide;
+  phone: boolean;
 }): ChatWidth {
   if (fullPage) {
     return 'full';
@@ -17,13 +19,15 @@ function widthFor({
   if (!open) {
     return 'closed';
   }
-  return mode;
+  return phone ? 'sheet' : mode;
 }
 
 function toastPlacementFor(chatWidth: ChatWidth | null): ToastPlacement {
   switch (chatWidth) {
     case 'full':
       return { position: 'top-center', offset: { top: FULL_TOAST_TOP } };
+    case 'sheet':
+      return { position: 'top-center', offset: undefined };
     case 'right':
       return { position: 'bottom-left', offset: undefined };
     default:
@@ -142,7 +146,7 @@ export { chatLayoutUtils, MOTION };
 
 type CubicBezier = [number, number, number, number];
 
-export type ChatWidth = ChatPanelSide | 'full' | 'closed';
+export type ChatWidth = ChatPanelSide | 'sheet' | 'full' | 'closed';
 type ToastPlacement = {
   position: NonNullable<ToasterProps['position']>;
   offset: ToasterProps['offset'];

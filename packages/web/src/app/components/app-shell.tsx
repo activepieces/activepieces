@@ -35,7 +35,11 @@ import {
   PageSkeleton,
 } from './chat-panel/chat-content-column';
 import { ChatNotch } from './chat-panel/chat-notch';
-import { ChatPanel, useChatWidth } from './chat-panel/chat-window';
+import {
+  ChatPanel,
+  useChatSheet,
+  useChatWidth,
+} from './chat-panel/chat-window';
 import { GlobalSearchProvider } from './global-search/global-search-context';
 import { ProjectDashboardLayoutHeader } from './project-layout/project-dashboard-layout-header';
 import { AppSidebar } from './sidebar/app-sidebar';
@@ -124,7 +128,9 @@ function AppShell({ handle }: { handle: RouteHandle }) {
           !embedded && 'max-md:h-svh max-md:flex-col',
         )}
       >
-        <AppSidebar mode={isPlatform ? 'platform' : 'app'} />
+        <div className="contents" inert={chatWidth === 'sheet'}>
+          <AppSidebar mode={isPlatform ? 'platform' : 'app'} />
+        </div>
         <div
           className={cn(
             'flex h-svh flex-1 min-w-0',
@@ -219,7 +225,12 @@ function ChatPanelError({
   onClose: () => void;
 }) {
   const chatWidth = useChatWidth();
+  const sheet = useChatSheet();
   if (chatWidth === 'closed') return null;
+  const close = () => {
+    if (chatWidth === 'sheet') sheet.hide();
+    onClose();
+  };
   return (
     <div
       role="alert"
@@ -238,7 +249,7 @@ function ChatPanelError({
           <RefreshCw className="size-4" />
           {t('Try again')}
         </Button>
-        <Button variant="ghost" size="sm" onClick={onClose}>
+        <Button variant="ghost" size="sm" onClick={close}>
           <X className="size-4" />
           {t('Close')}
         </Button>

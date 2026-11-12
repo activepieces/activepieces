@@ -1,7 +1,12 @@
 import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import React from 'react';
-import { Navigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  Navigate,
+  useLocation,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { projectCollectionUtils } from '@/features/projects';
@@ -48,6 +53,7 @@ const RedirectToCurrentProjectRoute: React.FC<
   const currentProjectId = authenticationSession.getProjectId();
   const params = useParams();
   const [searchParams] = useSearchParams();
+  const { hash } = useLocation();
   if (isNil(currentProjectId)) {
     return <NoProjectsState />;
   }
@@ -63,7 +69,7 @@ const RedirectToCurrentProjectRoute: React.FC<
   }`;
   return (
     <Navigate
-      to={`/projects/${currentProjectId}${pathWithParamsAndSearchParams}`}
+      to={`/projects/${currentProjectId}${pathWithParamsAndSearchParams}${hash}`}
       replace
     />
   );

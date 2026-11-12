@@ -21,6 +21,7 @@ import {
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
+import { routeLocation } from '@/lib/route-location';
 import { shellHandles } from '@/lib/shell-handle';
 
 import { AppShellRoute } from '../components/app-shell';
@@ -131,6 +132,8 @@ const routes = [
 
 export const memoryRouter = createMemoryRouter(routes);
 const browserRouter = createBrowserRouter(routes);
+routeLocation.track(memoryRouter);
+routeLocation.track(browserRouter);
 
 const ApRouter = () => {
   const { embedState } = useEmbedding();

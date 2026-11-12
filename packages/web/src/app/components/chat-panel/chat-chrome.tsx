@@ -10,10 +10,12 @@ import {
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { memo, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
+import { ChatAppLinks } from '@/app/routes/chat-with-ai/components/chat-app-links';
+import { Shortcut, ShortcutProps } from '@/components/custom/shortcut';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,11 +39,16 @@ import {
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
 import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
+import { cn } from '@/lib/utils';
 
 import { ChatHistoryList } from './chat-history-list';
 import { historyMotion } from './chat-history-motion';
 import { ChatSwitcher, ChatSwitcherOpener } from './chat-switcher';
-import { useActiveConversationId, useChatWidth } from './chat-window';
+import {
+  useActiveConversationId,
+  useChatSheet,
+  useChatWidth,
+} from './chat-window';
 
 export function ChatChrome() {
   const full = useChatWidth() === 'full';
@@ -56,6 +63,7 @@ export function ChatChrome() {
         {railed && railOpen && (
           <motion.aside
             key="chats"
+            data-chat-rail=""
             aria-label={t('Chats')}
             initial={{ width: 0, opacity: 0 }}
             animate={{ width: RAIL_WIDTH_PX, opacity: 1 }}
@@ -111,6 +119,7 @@ function ChatPane({
   const [switcher, setSwitcher] = useState<SwitcherState>(SWITCHER_CLOSED);
   const reduced = useReducedMotion();
   const full = layout === 'full';
+  const sheet = layout === 'sheet';
   const chatShown = layout !== 'closed';
   const phone = windowSizeHooks.useIsPhone();
   const railed = full && !phone;
@@ -124,7 +133,43 @@ function ChatPane({
     setSwitcher(SWITCHER_CLOSED);
   }
 
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (chatDom.shortcutOf(event) === 'history') {
+        event.preventDefault();
+        if (!chatShown) {
+          useChatPanel.getState().setOpen(true);
+          setSwitcher({ open: true, openedBy: 'keyboard' });
+          return;
+        }
+        if (railed) {
+          onRailOpenChange(!railOpen);
+          if (!railOpen) requestAnimationFrame(focusRailSearch);
+          return;
+        }
+        setHistoryOpen(false);
+        setSwitcher((current) => ({
+          open: !current.open,
+          openedBy: 'keyboard',
+        }));
+        return;
+      }
+      if (
+        chatShown &&
+        event.key === 'Escape' &&
+        historyOpen &&
+        chatDom.inChat(document.activeElement) &&
+        chatDom.escapeFree(event)
+      ) {
+        chatDom.claimEscape(event);
+        setHistoryOpen(false);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [chatShown, historyOpen, railed, railOpen, onRailOpenChange]);
   const embedded = useEmbedding().embedState.isEmbedded;
+  const chatSheet = useChatSheet();
 
   const openConversation = (id: string) => {
     setHistoryOpen(false);
@@ -145,8 +190,17 @@ function ChatPane({
     <>
       <div
         data-chat-header
-        className="relative flex h-14 shrink-0 items-center gap-2 pr-3 pl-1 @chat-sm/chat:pl-4"
+        className={cn(
+          'relative flex h-14 shrink-0 items-center gap-2 pr-3 pl-1 @chat-sm/chat:pl-4',
+          sheet && 'touch-none select-none',
+        )}
       >
+        {sheet && (
+          <span
+            aria-hidden
+            className="absolute top-2 left-1/2 h-1 w-9 -translate-x-1/2 rounded-full bg-gray-6"
+          />
+        )}
         <div className="flex min-w-0 flex-1 items-center gap-1">
           {historyOpen ? (
             <motion.div
@@ -181,7 +235,7 @@ function ChatPane({
               )}
               <ChatSwitcher
                 conversationId={conversationId}
-                layout={railed ? 'full' : 'dock'}
+                layout={railed ? 'full' : sheet ? 'sheet' : 'dock'}
                 typing={typingId !== null && typingId === conversationId}
                 open={switcher.open}
                 openedBy={switcher.openedBy}
@@ -201,7 +255,12 @@ function ChatPane({
           {!full && (
             <HeaderButton
               label={t('Close')}
-              onClick={() => useChatPanel.getState().setOpen(false)}
+              shortcut={TOGGLE_SHORTCUT}
+              onClick={() =>
+                sheet
+                  ? chatSheet.hide()
+                  : useChatPanel.getState().setOpen(false)
+              }
             >
               <X />
             </HeaderButton>
@@ -263,31 +322,33 @@ const ChatBody = memo(function ChatBody({
     if (full) chatPanelUtils.showOnFullPage(id);
   };
   return (
-    <AIChatBox
-      key={newChatToken}
-      incognito={false}
-      compact={!full}
-      autoFocusComposer={newChatToken > 0}
-      conversationId={conversationId}
-      initialPrompt={prompt}
-      onConversationCreated={(id) => {
-        useChatPanel.getState().conversationCreated(id);
-        showOnPage(id);
-        invalidate();
-      }}
-      onConversationMissing={() => {
-        useChatPanel.getState().conversationMissing();
-        showOnPage(null);
-      }}
-      onTitleUpdate={(next) => {
-        const id = useChatPanel.getState().conversationId;
-        if (id) {
-          chatConversations.setTitle({ queryClient, id, title: next });
-          onTitleTyped(id);
-        }
-        invalidate();
-      }}
-    />
+    <ChatAppLinks>
+      <AIChatBox
+        key={newChatToken}
+        incognito={false}
+        compact={!full}
+        autoFocusComposer={newChatToken > 0}
+        conversationId={conversationId}
+        initialPrompt={prompt}
+        onConversationCreated={(id) => {
+          useChatPanel.getState().conversationCreated(id);
+          showOnPage(id);
+          invalidate();
+        }}
+        onConversationMissing={() => {
+          useChatPanel.getState().conversationMissing();
+          showOnPage(null);
+        }}
+        onTitleUpdate={(next) => {
+          const id = useChatPanel.getState().conversationId;
+          if (id) {
+            chatConversations.setTitle({ queryClient, id, title: next });
+            onTitleTyped(id);
+          }
+          invalidate();
+        }}
+      />
+    </ChatAppLinks>
   );
 });
 
@@ -336,6 +397,14 @@ function LayoutMenu() {
   );
 }
 
+function focusRailSearch() {
+  document
+    .querySelector<HTMLElement>(
+      '[data-chat-rail] input, [data-chat-rail] li button',
+    )
+    ?.focus();
+}
+
 function RailToggle({
   open,
   onOpenChange,
@@ -356,7 +425,11 @@ function RailToggle({
 
 function NewChatButton({ onClick }: { onClick: () => void }) {
   return (
-    <HeaderButton label={t('New chat')} onClick={onClick}>
+    <HeaderButton
+      label={t('New chat')}
+      shortcut={NEW_CHAT_SHORTCUT}
+      onClick={onClick}
+    >
       <Plus />
     </HeaderButton>
   );
@@ -364,10 +437,12 @@ function NewChatButton({ onClick }: { onClick: () => void }) {
 
 function HeaderButton({
   label,
+  shortcut,
   children,
   ...props
 }: React.ComponentProps<typeof Button> & {
   label: string;
+  shortcut?: ShortcutProps;
 }) {
   return (
     <Tooltip delayDuration={HEADER_TOOLTIP_DELAY_MS}>
@@ -388,6 +463,7 @@ function HeaderButton({
         className="pointer-events-none flex items-center gap-2"
       >
         {label}
+        {shortcut && <Shortcut variant="compact" {...shortcut} />}
       </TooltipContent>
     </Tooltip>
   );
@@ -395,6 +471,12 @@ function HeaderButton({
 
 const HEADER_TOOLTIP_DELAY_MS = 500;
 const RAIL_WIDTH_PX = 288;
+const TOGGLE_SHORTCUT: ShortcutProps = { shortcutKey: 'J', withCtrl: true };
+const NEW_CHAT_SHORTCUT: ShortcutProps = {
+  shortcutKey: 'O',
+  withCtrl: true,
+  withShift: true,
+};
 const SWITCHER_CLOSED: SwitcherState = { open: false, openedBy: 'pointer' };
 
 function titleFade() {
