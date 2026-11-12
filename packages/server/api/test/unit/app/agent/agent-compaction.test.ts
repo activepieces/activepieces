@@ -12,6 +12,8 @@ vi.mock('ai', async (importOriginal) => ({
 
 const summaryModel = new MockLanguageModelV3()
 const silentLog = Fastify({ logger: false }).log
+const RESERVED_TOKENS = 11_872 + 52_000
+const SUMMARIZER = { provider: AIProviderName.OPENROUTER, modelId: 'z-ai/glm-5.3' }
 
 function makeMessages(count: number, charsPer = 100): ModelMessage[] {
     return Array.from({ length: count }, (_, i) => ({
@@ -224,7 +226,6 @@ describe('agentCompaction.buildCompactedPayload', () => {
 })
 
 describe('agentCompaction with reserved tokens', () => {
-    const RESERVED_TOKENS = 11_872 + 52_000
 
     it('compacts a history that fits the window only if output and tool schemas were free', () => {
         expect(agentCompaction.shouldCompact({
@@ -251,21 +252,73 @@ describe('agentCompaction with reserved tokens', () => {
         expect(payloadTokens + RESERVED_TOKENS).toBeLessThanOrEqual(200_000)
     })
 
-    it('sizes the recent window by tokens, so a few huge messages are summarized', async () => {
+    it('sizes the recent window by tokens, and summarizes a big backlog in bounded passes that always move forward', async () => {
         const messages: ModelMessage[] = Array.from({ length: 12 }, (_, i) => ({
             role: i % 2 === 0 ? 'user' as const : 'assistant' as const,
             content: 'x'.repeat(78_000),
         }))
+        const indexes = await compactRepeatedly({ messages, passes: 12 })
+        indexes.slice(1).forEach((index, i) => {
+            expect(index > indexes[i] || index >= 8).toBe(true)
+        })
+        expect(indexes.at(-1)).toBeGreaterThanOrEqual(8)
+    })
+
+    it('caps the input of one summary pass so a long chat cannot time out the summarizer', async () => {
         const result = await agentCompaction.compactMessages({
+            messages: makeMessages(120, 4_000),
+            existingSummary: null,
+            summarizedUpToIndex: null,
+            provider: AIProviderName.ACTIVEPIECES,
+            reservedTokens: RESERVED_TOKENS,
+            model: summaryModel,
+            summarizer: SUMMARIZER,
+            log: silentLog,
+        })
+        expect(lastPromptTokens()).toBeLessThanOrEqual(32_000)
+        expect(result.summarizedUpToIndex).toBeGreaterThan(0)
+    })
+
+    it('moves past a timed-out pass on the next turn instead of re-sending the whole backlog', async () => {
+        const messages = makeMessages(120, 4_000)
+        vi.mocked(generateText).mockRejectedValueOnce(new DOMException('The operation was aborted due to timeout', 'TimeoutError'))
+        const timedOut = await agentCompaction.compactMessages({
             messages,
+            existingSummary: null,
+            summarizedUpToIndex: null,
+            provider: AIProviderName.ACTIVEPIECES,
+            reservedTokens: RESERVED_TOKENS,
+            model: summaryModel,
+            summarizer: SUMMARIZER,
+            log: silentLog,
+        })
+        expect(timedOut.summarizedUpToIndex).toBe(0)
+        const next = await agentCompaction.compactMessages({
+            messages,
+            existingSummary: timedOut.summary,
+            summarizedUpToIndex: timedOut.summarizedUpToIndex,
+            provider: AIProviderName.ACTIVEPIECES,
+            reservedTokens: RESERVED_TOKENS,
+            model: summaryModel,
+            summarizer: SUMMARIZER,
+            log: silentLog,
+        })
+        expect(next.summarizedUpToIndex).toBeGreaterThan(0)
+        expect(lastPromptTokens()).toBeLessThanOrEqual(32_000)
+    })
+
+    it('turns reasoning off for the summary model', async () => {
+        await agentCompaction.compactMessages({
+            messages: makeMessages(40, 20_000),
             existingSummary: null,
             summarizedUpToIndex: null,
             provider: AIProviderName.ANTHROPIC,
             reservedTokens: RESERVED_TOKENS,
             model: summaryModel,
+            summarizer: { provider: AIProviderName.ANTHROPIC, modelId: 'claude-sonnet-4-6' },
             log: silentLog,
         })
-        expect(result.summarizedUpToIndex).toBeGreaterThanOrEqual(8)
+        expect(vi.mocked(generateText).mock.calls.at(-1)?.[0]?.providerOptions?.anthropic).toEqual({ thinking: { type: 'disabled' } })
     })
 
     it('bounds the summary request so oversized documents cannot overflow it', async () => {
@@ -280,6 +333,7 @@ describe('agentCompaction with reserved tokens', () => {
             provider: AIProviderName.ANTHROPIC,
             reservedTokens: RESERVED_TOKENS,
             model: summaryModel,
+            summarizer: SUMMARIZER,
             log: silentLog,
         })
         const request = vi.mocked(generateText).mock.calls.at(-1)?.[0]
@@ -301,6 +355,7 @@ describe('agentCompaction with reserved tokens', () => {
             provider: AIProviderName.OPENROUTER,
             reservedTokens: 66_000,
             model: summaryModel,
+            summarizer: SUMMARIZER,
             log: silentLog,
         })
         const prompt = String(vi.mocked(generateText).mock.calls.at(-1)?.[0]?.prompt)
@@ -325,6 +380,7 @@ describe('agentCompaction with reserved tokens', () => {
             provider: AIProviderName.OPENROUTER,
             reservedTokens: 66_000,
             model: summaryModel,
+            summarizer: SUMMARIZER,
             log: silentLog,
         })
         const request = vi.mocked(generateText).mock.calls.at(-1)?.[0]
@@ -339,6 +395,7 @@ describe('agentCompaction with reserved tokens', () => {
             provider: AIProviderName.ANTHROPIC,
             reservedTokens: RESERVED_TOKENS,
             model: summaryModel,
+            summarizer: SUMMARIZER,
             log: silentLog,
         })
         const request = vi.mocked(generateText).mock.calls.at(-1)?.[0]
@@ -355,8 +412,33 @@ describe('agentCompaction with reserved tokens', () => {
             provider: AIProviderName.ANTHROPIC,
             reservedTokens: RESERVED_TOKENS,
             model: summaryModel,
+            summarizer: SUMMARIZER,
             log: silentLog,
         })
         expect(result).toEqual({ summary: 'earlier summary', summarizedUpToIndex: 4 })
     })
 })
+
+async function compactRepeatedly({ messages, passes }: { messages: ModelMessage[], passes: number }): Promise<number[]> {
+    const indexes: number[] = []
+    let state: { summary: string | null, summarizedUpToIndex: number | null } = { summary: null, summarizedUpToIndex: null }
+    for (let i = 0; i < passes; i++) {
+        const result = await agentCompaction.compactMessages({
+            messages,
+            existingSummary: state.summary,
+            summarizedUpToIndex: state.summarizedUpToIndex,
+            provider: AIProviderName.ANTHROPIC,
+            reservedTokens: RESERVED_TOKENS,
+            model: summaryModel,
+            summarizer: SUMMARIZER,
+            log: silentLog,
+        })
+        indexes.push(result.summarizedUpToIndex)
+        state = result
+    }
+    return indexes
+}
+
+function lastPromptTokens(): number {
+    return String(vi.mocked(generateText).mock.calls.at(-1)?.[0]?.prompt).length / 4
+}

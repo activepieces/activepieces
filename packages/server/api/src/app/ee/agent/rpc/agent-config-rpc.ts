@@ -292,13 +292,14 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                 models: compactionModels,
                 billing: compactionBilling,
                 log,
-                run: (model) => agentCompaction.compactMessages({
+                run: ({ model, candidate }) => agentCompaction.compactMessages({
                     messages: llmHistory,
                     existingSummary: previous.summary,
                     summarizedUpToIndex: previous.summarizedUpToIndex,
                     provider: contextProvider,
                     reservedTokens: payloadReservedTokens,
                     model,
+                    summarizer: { provider: candidate.config.provider, modelId: candidate.modelId },
                     log,
                     billing: compactionBilling,
                 }),
@@ -381,9 +382,9 @@ function smallestContextProvider({ configs }: { configs: GetProviderConfigRespon
     return configs.reduce((smallest, config) => aiProviderUtils.getMaxContextTokens({ provider: config.provider }) < aiProviderUtils.getMaxContextTokens({ provider: smallest.provider }) ? config : smallest).provider
 }
 
-async function onFirstModelThatAnswers<T>({ models, billing, run, log }: { models: { config: GetProviderConfigResponse, modelId: string }[], billing: ActivepiecesAiBilling, run: (model: LanguageModel) => Promise<T>, log: FastifyBaseLogger }): Promise<T> {
+async function onFirstModelThatAnswers<T>({ models, billing, run, log }: { models: CompactionCandidate[], billing: ActivepiecesAiBilling, run: (params: { model: LanguageModel, candidate: CompactionCandidate }) => Promise<T>, log: FastifyBaseLogger }): Promise<T> {
     for (const [index, candidate] of models.entries()) {
-        const attempt = await tryCatch(() => run(aiUtils.createModel({ credentials: candidate.config, modelId: candidate.modelId, providerConfigId: candidate.config.configId, billing, usageOnly: true })))
+        const attempt = await tryCatch(() => run({ model: aiUtils.createModel({ credentials: candidate.config, modelId: candidate.modelId, providerConfigId: candidate.config.configId, billing, usageOnly: true }), candidate }))
         if (attempt.error === null) {
             return attempt.data
         }
@@ -408,3 +409,5 @@ function tierFieldsOf({ tierRun }: { tierRun: AgentTierRun | null }): Pick<Agent
 }
 
 const TOOL_SCHEMA_TOKEN_ESTIMATE = 12_000
+
+type CompactionCandidate = { config: GetProviderConfigResponse, modelId: string }
