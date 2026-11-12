@@ -218,6 +218,7 @@ export const sallaWebhooks = {
   parseEvent,
   verifiedEvent,
   dedupeKey,
+  contentDigest,
   listWebhookEvents,
 };
 

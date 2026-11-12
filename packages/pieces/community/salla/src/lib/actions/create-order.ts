@@ -392,6 +392,17 @@ function readCreateReceiver({ values, notify }: { values: ReceiverFormValues; no
   return receiver ? { ...receiver, notify } : undefined;
 }
 
+function readIdentifierType({ value, line }: { value: unknown; line: number }): 'id' | 'sku' {
+  const text = typeof value === 'string' ? value.trim().toLowerCase() : value;
+  if (text === undefined || text === null || text === '' || text === 'id') {
+    return 'id';
+  }
+  if (text === 'sku') {
+    return 'sku';
+  }
+  throw new Error(`Product row ${line}: Find Product By must be id or sku, but got "${String(value)}".`);
+}
+
 function readProductLines(rows: unknown): ProductLineInput[] {
   return sallaUtils.toRecordList({ value: rows, label: 'Products' }).map((row, index) => {
     if (typeof row !== 'object' || row === null) {
@@ -401,7 +412,7 @@ function readProductLines(rows: unknown): ProductLineInput[] {
     const identifier = Reflect.get(row, 'identifier');
     const quantity = Reflect.get(row, 'quantity');
     return {
-      identifierType: identifierType === 'sku' ? 'sku' : 'id',
+      identifierType: readIdentifierType({ value: identifierType, line: index + 1 }),
       identifier: typeof identifier === 'number' || typeof identifier === 'string' ? identifier : '',
       quantity: typeof quantity === 'number' || typeof quantity === 'string' ? quantity : undefined,
     };

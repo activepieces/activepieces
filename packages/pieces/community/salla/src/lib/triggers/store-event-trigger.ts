@@ -56,7 +56,7 @@ function eventDedupeKey(event: SallaWebhookEvent): string {
   const customerId = idText(nestedId({ record: event.data, key: 'customer' })) ?? '';
   const productId = idText(nestedId({ record: event.data, key: 'product' })) ?? '';
   const orderId = idText(nestedId({ record: event.data, key: 'order' })) ?? '';
-  return `${event.event}:${customerId}:${productId}:${orderId}:${event.createdAt ?? ''}`;
+  return `${event.event}:${customerId}:${productId}:${orderId}:${event.createdAt ?? ''}:${sallaWebhooks.contentDigest(event.data)}`;
 }
 
 function ruleFor({ event, rule }: { event: string; rule: string | undefined | null }): string | undefined {
