@@ -9,6 +9,7 @@ import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
 import { outsetaCustomProperties } from '../common/custom-properties';
 import { pipelineDropdown } from '../common/dropdowns';
+import { outsetaFields } from '../common/fields';
 import { outsetaErrors } from '../common/errors';
 import { outsetaMappers } from '../common/mappers';
 import { OutsetaDeal } from '../common/outseta-types';
@@ -19,16 +20,16 @@ export const getDealAction = createAction({
   auth: outsetaAuth,
   displayName: 'Retrieve Deal',
   description:
-    'Retrieve a deal by its UID, or by the email of an associated contact within a pipeline. Returns found=false when nothing matches.',
+    'Retrieve a deal by its UID, or by the email of an associated contact within a pipeline (the most recently created deal when the contact has several). Returns found=false when nothing matches.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Fetches a single Outseta CRM deal by its UID, or by a contact email within a chosen pipeline, returning amount, due date, pipeline and stage, the associated account, contact emails and custom properties. Pick the lookup mode first, then fill the fields it reveals. Returns found=false instead of failing. Read-only and idempotent.',
+      'Fetches a single Outseta CRM deal by its UID, or by a contact email within a chosen pipeline (the most recently created deal when that contact has several), returning amount, due date, pipeline and stage, the associated account, contact emails and custom properties. Pick the lookup mode first, then fill the fields it reveals. Returns found=false instead of failing. Read-only and idempotent.',
     idempotent: true,
   },
   props: {
     lookupBy: Property.StaticDropdown({
-      displayName: 'Find deal by',
+      displayName: 'Find Deal By',
       required: true,
       defaultValue: 'uid',
       display: 'cards',
@@ -42,7 +43,7 @@ export const getDealAction = createAction({
             icon: 'tag',
           },
           {
-            label: 'Contact + pipeline',
+            label: 'Contact + Pipeline',
             value: 'contact',
             description: 'Search a pipeline by contact email',
             icon: 'users',
@@ -59,7 +60,7 @@ export const getDealAction = createAction({
         if (asText(propsValue['lookupBy']) === 'contact') {
           return {
             contactEmail: Property.ShortText({
-              displayName: 'Contact email',
+              displayName: 'Contact Email',
               description: 'An email attached to the deal.',
               required: true,
               placeholder: 'jane@example.com',
@@ -92,7 +93,7 @@ export const getDealAction = createAction({
             client,
             contactEmail: requireText({
               value: asText(lookup['contactEmail']),
-              label: 'Contact email',
+              label: 'Contact Email',
             }),
             pipelineUid: requireText({
               value: asText(lookup['pipelineUid']),
@@ -151,7 +152,7 @@ async function dealByUid({
   uid: string;
 }): Promise<OutsetaDeal | null> {
   const { data, error } = await tryCatch(() =>
-    client.get<OutsetaDeal>(`/api/v1/crm/deals/${uid}?${DEAL_FIELDS}`)
+    client.get<OutsetaDeal>(`/api/v1/crm/deals/${uid}?${outsetaFields.deal}`)
   );
 
   if (error) {
@@ -176,7 +177,7 @@ async function dealByContact({
   const deals = await client.getAllPages<OutsetaDeal>(
     `/api/v1/crm/deals?DealPipelineStage.DealPipeline.Uid=${encodeURIComponent(
       pipelineUid
-    )}&${DEAL_FIELDS}`
+    )}&orderBy=Created%20DESC&${outsetaFields.deal}`
   );
 
   const wanted = contactEmail.toLowerCase();
@@ -189,6 +190,3 @@ async function dealByContact({
     ) ?? null
   );
 }
-
-const DEAL_FIELDS =
-  'fields=*,DealPipelineStage.Uid,DealPipelineStage.Name,DealPipelineStage.DealPipeline.Uid,DealPipelineStage.DealPipeline.Name,DealPeople.Person.Uid,DealPeople.Person.Email,Account.Uid,Account.Name';

@@ -7,6 +7,7 @@ import {
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
 import { outsetaCustomProperties } from '../common/custom-properties';
+import { outsetaFields } from '../common/fields';
 import { outsetaErrors } from '../common/errors';
 import { outsetaLookup } from '../common/lookup';
 import { outsetaMappers } from '../common/mappers';
@@ -29,7 +30,7 @@ export const getPersonAction = createAction({
     {
       key: 'lookup',
       display: 'tabs',
-      label: 'Find person by',
+      label: 'Find Person By',
       description: 'Fill one of the two — whichever tab you leave filled is the one used.',
       props: ['email', 'personUid'],
     },
@@ -90,7 +91,7 @@ async function personByUid({
   uid: string;
 }): Promise<OutsetaPerson | null> {
   const { data, error } = await tryCatch(() =>
-    client.get<OutsetaPerson>(`/api/v1/crm/people/${uid}?${PERSON_FIELDS}`)
+    client.get<OutsetaPerson>(`/api/v1/crm/people/${uid}?${outsetaFields.person}`)
   );
 
   if (error) {
@@ -111,7 +112,7 @@ async function personByEmail({
   email: string;
 }): Promise<OutsetaPerson | null> {
   const people = await client.getAllPages<OutsetaPerson>(
-    `/api/v1/crm/people?Email=${encodeURIComponent(email)}&${PERSON_FIELDS}`
+    `/api/v1/crm/people?Email=${encodeURIComponent(email)}&${outsetaFields.person}`
   );
 
   return (
@@ -120,6 +121,3 @@ async function personByEmail({
     ) ?? null
   );
 }
-
-const PERSON_FIELDS =
-  'fields=*,MailingAddress.*,PersonAccount.IsPrimary,PersonAccount.Role,PersonAccount.Account.Uid,PersonAccount.Account.Name,PersonAccount.Account.AccountStage';

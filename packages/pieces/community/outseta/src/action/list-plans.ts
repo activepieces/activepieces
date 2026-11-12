@@ -40,11 +40,18 @@ export const listPlansAction = createAction({
       icon: 'sliders',
       props: ['sortBy', 'direction'],
     },
-    { key: 'paging', display: 'footer', props: ['limit', 'page'] },
+    {
+      key: 'page',
+      display: 'builder',
+      label: 'Paging',
+      icon: 'sliders',
+      props: ['page'],
+    },
+    { key: 'paging', display: 'footer', props: ['limit'] },
   ],
   props: {
     name: Property.ShortText({
-      displayName: 'Name contains',
+      displayName: 'Name Contains',
       required: false,
       icon: 'text',
       placeholder: 'Pro',
@@ -56,20 +63,20 @@ export const listPlansAction = createAction({
       options: {
         disabled: false,
         options: [
-          { label: 'Active only', value: 'true' },
-          { label: 'Inactive only', value: 'false' },
+          { label: 'Active Only', value: 'true' },
+          { label: 'Inactive Only', value: 'false' },
         ],
       },
     }),
     isPerUser: Property.StaticDropdown({
-      displayName: 'Per-user pricing',
+      displayName: 'Per-User Pricing',
       required: false,
       icon: 'users',
       options: {
         disabled: false,
         options: [
-          { label: 'Per-user only', value: 'true' },
-          { label: 'Flat-rate only', value: 'false' },
+          { label: 'Per-User Only', value: 'true' },
+          { label: 'Flat-Rate Only', value: 'false' },
         ],
       },
     }),
@@ -84,8 +91,8 @@ export const listPlansAction = createAction({
         { label: 'Created', value: 'Created' },
         { label: 'Updated', value: 'Updated' },
         { label: 'Name', value: 'Name' },
-        { label: 'Monthly rate', value: 'MonthlyRate' },
-        { label: 'Annual rate', value: 'AnnualRate' },
+        { label: 'Monthly Rate', value: 'MonthlyRate' },
+        { label: 'Annual Rate', value: 'AnnualRate' },
       ],
       defaultValue: 'Name',
     }),

@@ -43,7 +43,7 @@ function page() {
 
 function sortBy({ options, defaultValue }: SortByParams) {
   return Property.StaticDropdown({
-    displayName: 'Sort by',
+    displayName: 'Sort By',
     required: false,
     defaultValue,
     icon: 'sliders',

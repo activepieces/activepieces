@@ -40,7 +40,14 @@ export const listDiscountsAction = createAction({
       icon: 'sliders',
       props: ['sortBy', 'direction'],
     },
-    { key: 'paging', display: 'footer', props: ['limit', 'page'] },
+    {
+      key: 'page',
+      display: 'builder',
+      label: 'Paging',
+      icon: 'sliders',
+      props: ['page'],
+    },
+    { key: 'paging', display: 'footer', props: ['limit'] },
   ],
   props: {
     search: Property.ShortText({
@@ -56,7 +63,7 @@ export const listDiscountsAction = createAction({
       icon: 'filter',
       options: {
         disabled: false,
-        options: [{ label: 'Still redeemable only', value: 'true' }],
+        options: [{ label: 'Still Redeemable Only', value: 'true' }],
       },
     }),
     isActive: Property.StaticDropdown({
@@ -66,8 +73,8 @@ export const listDiscountsAction = createAction({
       options: {
         disabled: false,
         options: [
-          { label: 'Active only', value: 'true' },
-          { label: 'Inactive only', value: 'false' },
+          { label: 'Active Only', value: 'true' },
+          { label: 'Inactive Only', value: 'false' },
         ],
       },
     }),

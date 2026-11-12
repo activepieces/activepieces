@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { outsetaFields } from '../common/fields';
 import { outsetaCustomProperties } from '../common/custom-properties';
 import { outsetaListProps } from '../common/list-props';
 import { outsetaMappers } from '../common/mappers';
@@ -42,7 +43,14 @@ export const listPersonsAction = createAction({
       icon: 'sliders',
       props: ['sortBy', 'direction'],
     },
-    { key: 'paging', display: 'footer', props: ['limit', 'page'] },
+    {
+      key: 'page',
+      display: 'builder',
+      label: 'Paging',
+      icon: 'sliders',
+      props: ['page'],
+    },
+    { key: 'paging', display: 'footer', props: ['limit'] },
   ],
   props: {
     search: Property.ShortText({
@@ -53,25 +61,25 @@ export const listPersonsAction = createAction({
       placeholder: 'jane',
     }),
     email: Property.ShortText({
-      displayName: 'Email contains',
+      displayName: 'Email Contains',
       required: false,
       icon: 'user',
       placeholder: '@example.com',
     }),
     firstName: Property.ShortText({
-      displayName: 'First name contains',
+      displayName: 'First Name Contains',
       required: false,
       icon: 'text',
       placeholder: 'Jane',
     }),
     lastName: Property.ShortText({
-      displayName: 'Last name contains',
+      displayName: 'Last Name Contains',
       required: false,
       icon: 'text',
       placeholder: 'Doe',
     }),
     title: Property.ShortText({
-      displayName: 'Job title contains',
+      displayName: 'Job Title Contains',
       required: false,
       icon: 'tag',
       placeholder: 'Head of',
@@ -93,8 +101,8 @@ export const listPersonsAction = createAction({
         { label: 'Created', value: 'Created' },
         { label: 'Updated', value: 'Updated' },
         { label: 'Email', value: 'Email' },
-        { label: 'First name', value: 'FirstName' },
-        { label: 'Last name', value: 'LastName' },
+        { label: 'First Name', value: 'FirstName' },
+        { label: 'Last Name', value: 'LastName' },
       ],
       defaultValue: 'Created',
     }),
@@ -132,7 +140,7 @@ export const listPersonsAction = createAction({
     });
 
     const result = await client.getPage<OutsetaPerson>(
-      `/api/v1/crm/people?${query}&${PERSON_FIELDS}`
+      `/api/v1/crm/people?${query}&${outsetaFields.person}`
     );
 
     const customPropertyNames = await outsetaCustomProperties.names({
@@ -148,6 +156,3 @@ export const listPersonsAction = createAction({
     };
   },
 });
-
-const PERSON_FIELDS =
-  'fields=*,MailingAddress.*,PersonAccount.IsPrimary,PersonAccount.Role,PersonAccount.Account.Uid,PersonAccount.Account.Name,PersonAccount.Account.AccountStage';

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { outsetaFields } from '../common/fields';
 import { outsetaMappers } from '../common/mappers';
 import { OutsetaTransaction } from '../common/outseta-types';
 
@@ -33,7 +34,7 @@ export const getLastPaymentAction = createAction({
     });
 
     const page = await client.getPage<OutsetaTransaction>(
-      `/api/v1/billing/transactions/${context.propsValue.accountUid}?BillingTransactionType=${PAYMENT_TRANSACTION_TYPE}&limit=1&orderBy=Created%20DESC&fields=*,Invoice.Uid,Invoice.Number,Invoice.BillingInvoiceStatus`
+      `/api/v1/billing/transactions/${context.propsValue.accountUid}?BillingTransactionType=${PAYMENT_TRANSACTION_TYPE}&limit=1&orderBy=Created%20DESC&${outsetaFields.transaction}`
     );
 
     const payment = page.items[0];

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { outsetaFields } from '../common/fields';
 import { outsetaCustomProperties } from '../common/custom-properties';
 import { pipelineDropdown, pipelineStageDropdown } from '../common/dropdowns';
 import { outsetaListProps } from '../common/list-props';
@@ -50,7 +51,14 @@ export const listDealsAction = createAction({
       icon: 'sliders',
       props: ['sortBy', 'direction'],
     },
-    { key: 'paging', display: 'footer', props: ['limit', 'page'] },
+    {
+      key: 'page',
+      display: 'builder',
+      label: 'Paging',
+      icon: 'sliders',
+      props: ['page'],
+    },
+    { key: 'paging', display: 'footer', props: ['limit'] },
   ],
   props: {
     search: Property.ShortText({
@@ -60,18 +68,18 @@ export const listDealsAction = createAction({
       placeholder: 'renewal',
     }),
     name: Property.ShortText({
-      displayName: 'Name contains',
+      displayName: 'Name Contains',
       required: false,
       icon: 'text',
       placeholder: 'renewal',
     }),
     minAmount: Property.Number({
-      displayName: 'Amount at least',
+      displayName: 'Amount At Least',
       required: false,
       icon: 'sliders',
     }),
     maxAmount: Property.Number({
-      displayName: 'Amount at most',
+      displayName: 'Amount At Most',
       required: false,
       icon: 'sliders',
     }),
@@ -84,7 +92,7 @@ export const listDealsAction = createAction({
       description: 'Only return deals at this stage. Pick a pipeline first.',
     }),
     dueDateRange: Property.DateRange({
-      displayName: 'Due date',
+      displayName: 'Due Date',
       required: false,
       display: 'dropdown',
       icon: 'calendar',
@@ -107,7 +115,7 @@ export const listDealsAction = createAction({
         { label: 'Updated', value: 'Updated' },
         { label: 'Name', value: 'Name' },
         { label: 'Amount', value: 'Amount' },
-        { label: 'Due date', value: 'DueDate' },
+        { label: 'Due Date', value: 'DueDate' },
       ],
       defaultValue: 'Created',
     }),
@@ -153,7 +161,7 @@ export const listDealsAction = createAction({
     });
 
     const result = await client.getPage<OutsetaDeal>(
-      `/api/v1/crm/deals?${query}&${DEAL_FIELDS}`
+      `/api/v1/crm/deals?${query}&${outsetaFields.deal}`
     );
 
     const customPropertyNames = await outsetaCustomProperties.names({
@@ -169,6 +177,3 @@ export const listDealsAction = createAction({
     };
   },
 });
-
-const DEAL_FIELDS =
-  'fields=*,DealPipelineStage.Uid,DealPipelineStage.Name,DealPipelineStage.DealPipeline.Uid,DealPipelineStage.DealPipeline.Name,DealPeople.Person.Uid,DealPeople.Person.Email,Account.Uid,Account.Name';

@@ -16,7 +16,7 @@ export const listCasesAction = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Lists Outseta support tickets with optional filters (free-text search, submitter UID or email, source, subject, submitted or created date range) and sorting, returning subject, body, source, submitter and assignment. Read-only and idempotent.',
+      'Lists Outseta support tickets with optional filters (free-text search, status, submitter UID or email, source, subject, submitted or created date range) and sorting, returning subject, body, status (Open, Closed or Spam), source, submitter and assignment. Read-only and idempotent.',
     idempotent: true,
   },
   propertyGroups: [
@@ -30,7 +30,7 @@ export const listCasesAction = createAction({
     {
       key: 'submitter',
       display: 'builder',
-      label: 'Submitted by',
+      label: 'Submitted By',
       icon: 'user',
       props: ['fromPersonUid', 'fromPersonEmail'],
     },
@@ -48,7 +48,14 @@ export const listCasesAction = createAction({
       icon: 'sliders',
       props: ['sortBy', 'direction'],
     },
-    { key: 'paging', display: 'footer', props: ['limit', 'page'] },
+    {
+      key: 'page',
+      display: 'builder',
+      label: 'Paging',
+      icon: 'sliders',
+      props: ['page'],
+    },
+    { key: 'paging', display: 'footer', props: ['limit'] },
   ],
   props: {
     search: Property.ShortText({
@@ -58,31 +65,31 @@ export const listCasesAction = createAction({
       placeholder: 'refund',
     }),
     subject: Property.ShortText({
-      displayName: 'Subject contains',
+      displayName: 'Subject Contains',
       required: false,
       icon: 'text',
       placeholder: 'invoice',
     }),
     status: Property.StaticDropdown({
-      displayName: 'Status is',
+      displayName: 'Status Is',
       required: false,
       icon: 'filter',
       options: { disabled: false, options: outsetaEnums.supportCaseStatus.options },
     }),
     source: Property.StaticDropdown({
-      displayName: 'Source is',
+      displayName: 'Source Is',
       required: false,
       icon: 'filter',
       options: { disabled: false, options: outsetaEnums.supportCaseSource.options },
     }),
     fromPersonUid: Property.ShortText({
-      displayName: 'Submitter UID is',
+      displayName: 'Submitter UID Is',
       required: false,
       icon: 'user',
       placeholder: 'dQG7vBzQ',
     }),
     fromPersonEmail: Property.ShortText({
-      displayName: 'Submitter email is',
+      displayName: 'Submitter Email Is',
       required: false,
       icon: 'user',
       placeholder: 'jane@example.com',
@@ -104,7 +111,7 @@ export const listCasesAction = createAction({
         { label: 'Created', value: 'Created' },
         { label: 'Updated', value: 'Updated' },
         { label: 'Submitted', value: 'SubmittedDateTime' },
-        { label: 'Last activity', value: 'LastActivity' },
+        { label: 'Last Activity', value: 'LastActivity' },
       ],
       defaultValue: 'Created',
     }),

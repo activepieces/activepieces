@@ -7,6 +7,7 @@ import {
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
 import { outsetaCustomProperties } from '../common/custom-properties';
+import { outsetaFields } from '../common/fields';
 import { outsetaErrors } from '../common/errors';
 import { outsetaLookup } from '../common/lookup';
 import { outsetaMappers } from '../common/mappers';
@@ -18,18 +19,18 @@ export const getAccountAction = createAction({
   auth: outsetaAuth,
   displayName: 'Retrieve Account',
   description:
-    'Retrieve an account by its UID, or by the email of its primary contact. Returns the account, its addresses, its primary contact and which plan it is on. Returns found=false when nothing matches.',
+    'Retrieve an account by its UID, or by the email of a person on it (if the person belongs to several accounts, the first one is used). Returns the account, its addresses, its primary contact and which plan it is on. Returns found=false when nothing matches.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Fetches a single Outseta CRM account by its UID or by a contact email, returning account fields, billing and mailing address, primary contact, custom properties, and the current subscription UID plus plan UID and name. For subscription dates, rate, quantity or add-ons use Retrieve Subscription, which also accepts an account UID. Fill exactly one lookup field. Returns found=false instead of failing. Read-only and idempotent.',
+      'Fetches a single Outseta CRM account by its UID or by the email of any person on it (resolved to that person\'s first account), returning account fields, billing and mailing address, primary contact, custom properties, and the current subscription UID plus plan UID and name. For subscription dates, rate, quantity or add-ons use Retrieve Subscription, which also accepts an account UID. Fill exactly one lookup field. Returns found=false instead of failing. Read-only and idempotent.',
     idempotent: true,
   },
   propertyGroups: [
     {
       key: 'lookup',
       display: 'tabs',
-      label: 'Find account by',
+      label: 'Find Account By',
       description: 'Fill one of the two — whichever tab you leave filled is the one used.',
       props: ['accountUid', 'primaryContactEmail'],
     },
@@ -41,8 +42,9 @@ export const getAccountAction = createAction({
       placeholder: '1QpnM0nW',
     }),
     primaryContactEmail: Property.ShortText({
-      displayName: 'Contact email',
-      description: 'Resolved to the account this person belongs to.',
+      displayName: 'Contact Email',
+      description:
+        'The email of any person on the account, not only its primary contact. If the person belongs to several accounts, the first one is used.',
       required: false,
       placeholder: 'jane@example.com',
     }),
@@ -58,7 +60,7 @@ export const getAccountAction = createAction({
       { key: 'accountUid', label: 'Account UID', value: context.propsValue.accountUid },
       {
         key: 'primaryContactEmail',
-        label: 'Contact email',
+        label: 'Contact Email',
         value: context.propsValue.primaryContactEmail,
       },
     ]);
@@ -99,7 +101,7 @@ async function accountByUid({
   uid: string;
 }): Promise<OutsetaAccount | null> {
   const { data, error } = await tryCatch(() =>
-    client.get<OutsetaAccount>(`/api/v1/crm/accounts/${uid}?${ACCOUNT_FIELDS}`)
+    client.get<OutsetaAccount>(`/api/v1/crm/accounts/${uid}?${outsetaFields.account}`)
   );
 
   if (error) {
@@ -131,6 +133,3 @@ async function accountUidByEmail({
 
   return outsetaMappers.toArray(person?.PersonAccount)[0]?.Account?.Uid ?? null;
 }
-
-const ACCOUNT_FIELDS =
-  'fields=*,BillingAddress.*,MailingAddress.*,PrimaryContact.Uid,PrimaryContact.Email,PrimaryContact.FirstName,PrimaryContact.LastName,CurrentSubscription.Uid,CurrentSubscription.Plan.Uid,CurrentSubscription.Plan.Name';

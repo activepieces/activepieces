@@ -28,7 +28,7 @@ export const getSubscriptionAction = createAction({
     {
       key: 'lookup',
       display: 'tabs',
-      label: 'Find subscription by',
+      label: 'Find Subscription By',
       description: 'Fill one of the two — whichever tab you leave filled is the one used.',
       props: ['subscriptionUid', 'accountUid'],
     },

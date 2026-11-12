@@ -102,6 +102,8 @@ function person({
   customPropertyNames,
 }: WithCustomProperties<OutsetaPerson>) {
   const membership = firstMembership(raw);
+  const accountStage =
+    membership?.Account?.AccountStage ?? raw.Account?.AccountStage ?? null;
   return {
     uid: raw.Uid ?? null,
     email: raw.Email ?? null,
@@ -121,8 +123,8 @@ function person({
     ...address('mailing_address', raw.MailingAddress),
     account_uid: membership?.Account?.Uid ?? raw.Account?.Uid ?? null,
     account_name: membership?.Account?.Name ?? raw.Account?.Name ?? null,
-    account_stage:
-      membership?.Account?.AccountStage ?? raw.Account?.AccountStage ?? null,
+    account_stage: accountStage,
+    account_stage_label: outsetaEnums.accountStage.label(accountStage),
     account_role: outsetaEnums.accountRole.label(membership?.Role),
     is_primary_contact: membership?.IsPrimary ?? null,
     custom_properties: customPropertiesOf({
@@ -301,6 +303,7 @@ function transaction(raw: OutsetaTransaction) {
     account_uid: raw.Account?.Uid ?? null,
     invoice_uid: raw.Invoice?.Uid ?? null,
     invoice_number: raw.Invoice?.Number ?? null,
+    invoice_status: raw.Invoice?.BillingInvoiceStatus ?? null,
     invoice_status_label: outsetaEnums.billingInvoiceStatus.label(
       raw.Invoice?.BillingInvoiceStatus
     ),

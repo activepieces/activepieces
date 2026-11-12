@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { outsetaFields } from '../common/fields';
 import { outsetaEnums } from '../common/enums';
 import { outsetaListProps } from '../common/list-props';
 import { outsetaMappers } from '../common/mappers';
@@ -22,27 +23,40 @@ export const listTransactionsAction = createAction({
   },
   propertyGroups: [
     {
+      key: 'account',
+      display: 'section',
+      label: 'Account',
+      icon: 'user',
+      props: ['accountUid'],
+    },
+    {
       key: 'transaction',
-      display: 'builder',
+      display: 'section',
       label: 'Transaction',
       icon: 'filter',
       props: ['transactionType', 'minAmount', 'maxAmount'],
     },
     {
       key: 'dates',
-      display: 'builder',
+      display: 'section',
       label: 'Dates',
       icon: 'calendar',
       props: ['transactionDateRange'],
     },
     {
       key: 'sort',
-      display: 'builder',
+      display: 'section',
       label: 'Sort',
       icon: 'sliders',
       props: ['sortBy', 'direction'],
     },
-    { key: 'paging', display: 'footer', props: ['limit', 'page'] },
+    {
+      key: 'paging',
+      display: 'section',
+      label: 'Paging',
+      icon: 'sliders',
+      props: ['limit', 'page'],
+    },
   ],
   props: {
     accountUid: Property.ShortText({
@@ -52,7 +66,7 @@ export const listTransactionsAction = createAction({
       placeholder: '1QpnM0nW',
     }),
     transactionType: Property.StaticDropdown({
-      displayName: 'Type is',
+      displayName: 'Type Is',
       required: false,
       icon: 'filter',
       options: {
@@ -61,17 +75,17 @@ export const listTransactionsAction = createAction({
       },
     }),
     minAmount: Property.Number({
-      displayName: 'Amount at least',
+      displayName: 'Amount At Least',
       required: false,
       icon: 'sliders',
     }),
     maxAmount: Property.Number({
-      displayName: 'Amount at most',
+      displayName: 'Amount At Most',
       required: false,
       icon: 'sliders',
     }),
     transactionDateRange: Property.DateRange({
-      displayName: 'Transaction date',
+      displayName: 'Transaction Date',
       required: false,
       display: 'dropdown',
       icon: 'calendar',
@@ -79,7 +93,7 @@ export const listTransactionsAction = createAction({
     sortBy: outsetaListProps.sortBy({
       options: [
         { label: 'Created', value: 'Created' },
-        { label: 'Transaction date', value: 'TransactionDate' },
+        { label: 'Transaction Date', value: 'TransactionDate' },
         { label: 'Amount', value: 'Amount' },
       ],
       defaultValue: 'Created',
@@ -115,7 +129,7 @@ export const listTransactionsAction = createAction({
     });
 
     const result = await client.getPage<OutsetaTransaction>(
-      `/api/v1/billing/transactions/${context.propsValue.accountUid}?${query}&fields=*,Invoice.Uid,Invoice.Number,Invoice.BillingInvoiceStatus`
+      `/api/v1/billing/transactions/${context.propsValue.accountUid}?${query}&${outsetaFields.transaction}`
     );
 
     return {

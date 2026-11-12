@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { outsetaFields } from '../common/fields';
 import { outsetaCustomProperties } from '../common/custom-properties';
 import { outsetaEnums } from '../common/enums';
 import { outsetaListProps } from '../common/list-props';
@@ -43,7 +44,14 @@ export const listAccountsAction = createAction({
       icon: 'sliders',
       props: ['sortBy', 'direction'],
     },
-    { key: 'paging', display: 'footer', props: ['limit', 'page'] },
+    {
+      key: 'page',
+      display: 'builder',
+      label: 'Paging',
+      icon: 'sliders',
+      props: ['page'],
+    },
+    { key: 'paging', display: 'footer', props: ['limit'] },
   ],
   props: {
     search: Property.ShortText({
@@ -54,19 +62,19 @@ export const listAccountsAction = createAction({
       placeholder: 'Acme',
     }),
     name: Property.ShortText({
-      displayName: 'Name contains',
+      displayName: 'Name Contains',
       required: false,
       icon: 'text',
       placeholder: 'Acme',
     }),
     accountStage: Property.StaticDropdown({
-      displayName: 'Stage is',
+      displayName: 'Stage Is',
       required: false,
       icon: 'filter',
       options: { disabled: false, options: outsetaEnums.accountStage.options },
     }),
     clientIdentifier: Property.ShortText({
-      displayName: 'Client identifier is',
+      displayName: 'Client Identifier Is',
       required: false,
       icon: 'tag',
       placeholder: 'crm-1234',
@@ -125,7 +133,7 @@ export const listAccountsAction = createAction({
     });
 
     const result = await client.getPage<OutsetaAccount>(
-      `/api/v1/crm/accounts?${query}&${ACCOUNT_FIELDS}`
+      `/api/v1/crm/accounts?${query}&${outsetaFields.account}`
     );
 
     const customPropertyNames = await outsetaCustomProperties.names({
@@ -141,7 +149,3 @@ export const listAccountsAction = createAction({
     };
   },
 });
-
-
-const ACCOUNT_FIELDS =
-  'fields=*,BillingAddress.*,MailingAddress.*,PrimaryContact.Uid,PrimaryContact.Email,PrimaryContact.FirstName,PrimaryContact.LastName,CurrentSubscription.Uid,CurrentSubscription.Plan.Uid,CurrentSubscription.Plan.Name';

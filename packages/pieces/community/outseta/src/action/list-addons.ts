@@ -41,17 +41,24 @@ export const listAddOnsAction = createAction({
       icon: 'sliders',
       props: ['sortBy', 'direction'],
     },
-    { key: 'paging', display: 'footer', props: ['limit', 'page'] },
+    {
+      key: 'page',
+      display: 'builder',
+      label: 'Paging',
+      icon: 'sliders',
+      props: ['page'],
+    },
+    { key: 'paging', display: 'footer', props: ['limit'] },
   ],
   props: {
     name: Property.ShortText({
-      displayName: 'Name contains',
+      displayName: 'Name Contains',
       required: false,
       icon: 'text',
       placeholder: 'Extra seat',
     }),
     billingAddOnType: Property.StaticDropdown({
-      displayName: 'Billing type is',
+      displayName: 'Billing Type Is',
       required: false,
       icon: 'filter',
       options: { disabled: false, options: outsetaEnums.billingAddOnType.options },
