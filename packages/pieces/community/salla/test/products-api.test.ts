@@ -172,17 +172,25 @@ describe('createProduct and updateProduct', () => {
     after,
     restoreFails = false,
     putFails,
+    putLands = false,
+    recheckFails = false,
+    onGet,
     onPut,
   }: {
     before: string[];
     after: string[];
     restoreFails?: boolean;
     putFails?: number | 'timeout';
+    putLands?: boolean;
+    recheckFails?: boolean;
+    onGet?: () => void;
     onPut?: () => void;
   }) {
+    const salla = { putAttempted: false };
     return vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request: HttpRequest) => {
       if (request.method === HttpMethod.PUT) {
         onPut?.();
+        salla.putAttempted = true;
         if (putFails === 'timeout') {
           throw new Error('timeout of 30000ms exceeded');
         }
@@ -197,7 +205,12 @@ describe('createProduct and updateProduct', () => {
         return ok({ data: { message: 'updated' } });
       }
       if (request.method === HttpMethod.GET) {
-        return ok({ data: { id: 9, channels: before, show_in_app: before.includes('app') } });
+        onGet?.();
+        if (salla.putAttempted && recheckFails) {
+          throw new HttpError({}, { status: 503, responseBody: { error: { message: 'down' } } });
+        }
+        const channels = salla.putAttempted && putLands ? after : before;
+        return ok({ data: { id: 9, channels, show_in_app: channels.includes('app') } });
       }
       return respond({ body: { data: { id: 9, name: 'New', channels: after, show_in_app: after.includes('app') } }, status: 201 });
     });
@@ -226,12 +239,22 @@ describe('createProduct and updateProduct', () => {
   });
 
   const CHANNELS_KEY = 'salla_product_channels_9';
+  const FAILED_RESTORE_KEY = 'salla_product_channels_failed_restore_9';
+  const DAY_MS = 24 * 60 * 60 * 1000;
 
   function savedUpdate(saved: Map<string, string>): unknown {
     return JSON.parse(saved.get(CHANNELS_KEY) ?? 'null');
   }
 
-  it('marks the update as running only while it runs, then removes the mark', async () => {
+  function savedFailedRestore(saved: Map<string, string>): unknown {
+    return JSON.parse(saved.get(FAILED_RESTORE_KEY) ?? 'null');
+  }
+
+  function callsOf(spy: { mock: { calls: Array<[HttpRequest]> } }): string[] {
+    return spy.mock.calls.map(([request]) => `${request.method} ${pathOf(request)}`);
+  }
+
+  it('marks the update as running while it runs, then as finished', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
     const { store, saved, scopes } = fakeStore();
     const duringPut: unknown[] = [];
@@ -239,163 +262,292 @@ describe('createProduct and updateProduct', () => {
     const result = await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
     expect(spy.mock.calls[2][0].body).toMatchObject({ operations: [{ action_name: 'sale-channels', value: { channels: ['web', 'app'] } }] });
     expect(result).toMatchObject({ channels: ['web', 'app'] });
-    expect(duringPut).toEqual([{ channels: ['web', 'app'], updateId: expect.any(String), startedAt: 1_000_000 }]);
-    expect(saved.has(CHANNELS_KEY)).toBe(false);
+    expect(duringPut).toEqual([{ channels: ['web', 'app'], running: [{ id: expect.any(String), startedAt: 1_000_000 }] }]);
+    expect(savedUpdate(saved)).toEqual({ channels: ['web', 'app'], running: [], finishedAt: 1_000_000 });
     expect(scopes.every((scope) => scope === StoreScope.PROJECT)).toBe(true);
   });
 
   it('keeps a change the merchant makes right after an update finishes', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
-    const { store, saved } = fakeStore();
+    const { store } = fakeStore();
     mockProductUpdate({ before: ['web', 'app'], after: ['web'] });
     await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
     vi.restoreAllMocks();
     vi.spyOn(Date, 'now').mockReturnValue(1_005_000);
     const spy = mockProductUpdate({ before: ['web'], after: ['web'] });
     const result = await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 31 } });
-    expect(spy.mock.calls.map(([request]) => `${request.method} ${pathOf(request)}`)).toEqual(['GET /products/9', 'PUT /products/9']);
+    expect(callsOf(spy)).toEqual(['GET /products/9', 'PUT /products/9']);
     expect(result).toMatchObject({ channels: ['web'], show_in_app: false });
-    expect(saved.has(CHANNELS_KEY)).toBe(false);
   });
 
-  it('uses the channels of an update that is still running when Salla shows its temporary web-only value', async () => {
+  it('uses the channels of an update that is still running, and leaves that update marked as running', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
-    const { store, saved } = fakeStore({ [CHANNELS_KEY]: { channels: ['web', 'app'], updateId: 'other-update', startedAt: 990_000 } });
+    const other = { id: 'other-update', startedAt: 990_000 };
+    const { store, saved } = fakeStore({ [CHANNELS_KEY]: { channels: ['web', 'app'], running: [other] } });
     const duringPut: unknown[] = [];
     const spy = mockProductUpdate({ before: ['web'], after: ['web'], onPut: () => duringPut.push(savedUpdate(saved)) });
     const result = await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
-    expect(spy.mock.calls.map(([request]) => `${request.method} ${pathOf(request)}`)).toEqual(['GET /products/9', 'PUT /products/9', 'POST /products/actions']);
+    expect(callsOf(spy)).toEqual(['GET /products/9', 'PUT /products/9', 'POST /products/actions']);
     expect(spy.mock.calls[2][0].body).toMatchObject({ operations: [{ action_name: 'sale-channels', value: { channels: ['web', 'app'] } }] });
     expect(result).toMatchObject({ channels: ['web', 'app'], show_in_app: true });
-    expect(duringPut).toEqual([{ channels: ['web', 'app'], updateId: expect.not.stringMatching(/^other-update$/), startedAt: 1_000_000 }]);
-    expect(saved.has(CHANNELS_KEY)).toBe(false);
+    expect(duringPut).toEqual([{ channels: ['web', 'app'], running: [other, { id: expect.any(String), startedAt: 1_000_000 }] }]);
+    expect(savedUpdate(saved)).toEqual({ channels: ['web', 'app'], running: [other] });
   });
 
-  it('leaves the mark alone when a later overlapping update has taken it over', async () => {
+  it('stays marked as running while an update that joined later is still running', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
     const { store, saved } = fakeStore();
-    const later = { channels: ['web', 'app'], updateId: 'later-update', startedAt: 1_000_000 };
-    mockProductUpdate({ before: ['web', 'app'], after: ['web'], onPut: () => saved.set(CHANNELS_KEY, JSON.stringify(later)) });
+    const later = { id: 'later-update', startedAt: 1_000_000 };
+    const join = () => {
+      const mark: { channels: string[]; running: Array<{ id: string; startedAt: number }> } = JSON.parse(saved.get(CHANNELS_KEY) ?? '{}');
+      saved.set(CHANNELS_KEY, JSON.stringify({ ...mark, running: [...mark.running, later] }));
+    };
+    mockProductUpdate({ before: ['web', 'app'], after: ['web'], onPut: join });
     await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
-    expect(savedUpdate(saved)).toEqual(later);
+    expect(savedUpdate(saved)).toEqual({ channels: ['web', 'app'], running: [later] });
   });
 
-  it('ignores a mark that is over four minutes old or malformed, and uses the channels Salla returns', async () => {
+  it('stops counting an update that never reported its end after four minutes, even when other updates keep joining', async () => {
+    const lost = { id: 'lost-update', startedAt: 900_000 };
+    const { store, saved } = fakeStore({ [CHANNELS_KEY]: { channels: ['web', 'app'], running: [lost] } });
     vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    mockProductUpdate({ before: ['web'], after: ['web'] });
+    const joined = await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
+    expect(joined).toMatchObject({ channels: ['web', 'app'] });
+    expect(savedUpdate(saved)).toEqual({ channels: ['web', 'app'], running: [lost] });
+    vi.restoreAllMocks();
+    vi.spyOn(Date, 'now').mockReturnValue(1_140_000);
+    const spy = mockProductUpdate({ before: ['web'], after: ['web'] });
+    const result = await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 31 } });
+    expect(callsOf(spy)).toEqual(['GET /products/9', 'PUT /products/9']);
+    expect(result).toMatchObject({ channels: ['web'] });
+    expect(savedUpdate(saved)).toEqual({ channels: ['web'], running: [], finishedAt: 1_140_000 });
+  });
+
+  it('uses the channels of an update that finished after this one started reading the product', async () => {
+    const clock = { now: 1_000_000 };
+    vi.spyOn(Date, 'now').mockImplementation(() => clock.now);
+    const { store, saved } = fakeStore({ [CHANNELS_KEY]: { channels: ['web', 'app'], running: [], finishedAt: 1_000_500 } });
+    const spy = mockProductUpdate({
+      before: ['web'],
+      after: ['web'],
+      onGet: () => {
+        clock.now = 1_001_000;
+      },
+    });
+    const result = await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
+    expect(callsOf(spy)).toEqual(['GET /products/9', 'PUT /products/9', 'POST /products/actions']);
+    expect(spy.mock.calls[2][0].body).toMatchObject({ operations: [{ action_name: 'sale-channels', value: { channels: ['web', 'app'] } }] });
+    expect(result).toMatchObject({ channels: ['web', 'app'], show_in_app: true });
+    expect(savedUpdate(saved)).toEqual({ channels: ['web', 'app'], running: [], finishedAt: 1_001_000 });
+  });
+
+  it('keeps the app listing when a second update reads the product mid-update and continues after the first one finished', async () => {
+    const clock = { now: 1_000_000 };
+    vi.spyOn(Date, 'now').mockImplementation(() => {
+      clock.now += 1;
+      return clock.now;
+    });
+    const { store } = fakeStore();
+    const salla = { channels: ['web', 'app'], reads: 0 };
+    const gate: { open: () => void } = { open: () => undefined };
+    const secondReadMayReturn = new Promise<void>((resolve) => {
+      gate.open = resolve;
+    });
+    const second: Array<Promise<Record<string, unknown>>> = [];
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request: HttpRequest) => {
+      if (request.method === HttpMethod.GET) {
+        salla.reads += 1;
+        const seen = [...salla.channels];
+        if (salla.reads === 2) {
+          await secondReadMayReturn;
+        }
+        return ok({ data: { id: 9, channels: seen } });
+      }
+      if (request.method === HttpMethod.PUT) {
+        salla.channels = ['web'];
+        return respond({ body: { data: { id: 9, channels: ['web'] } }, status: 201 });
+      }
+      if (second.length === 0) {
+        second.push(sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 31 } }));
+        while (salla.reads < 2) {
+          await new Promise((resolve) => setImmediate(resolve));
+        }
+      }
+      salla.channels = ['web', 'app'];
+      return ok({ data: { message: 'updated' } });
+    });
+    const first = await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
+    gate.open();
+    const [secondResult] = await Promise.all(second);
+    expect(first).toMatchObject({ channels: ['web', 'app'] });
+    expect(secondResult).toMatchObject({ channels: ['web', 'app'], show_in_app: true });
+    expect(salla).toEqual({ channels: ['web', 'app'], reads: 2 });
+  });
+
+  it('ignores a mark that is too old, finished before this update started or malformed, and uses the channels Salla returns', async () => {
     const marks = [
-      { channels: ['web', 'app'], updateId: 'crashed-update', startedAt: 760_000 },
-      { channels: ['web', 'app'], updateId: 'far-future', startedAt: 1_240_000 },
-      { channels: 'web,app', updateId: 'bad-channels', startedAt: 999_000 },
-      { channels: ['web', 'app'], startedAt: 999_000 },
+      { channels: ['web', 'app'], running: [{ id: 'crashed-update', startedAt: 760_000 }] },
+      { channels: ['web', 'app'], running: [{ id: 'far-future', startedAt: 1_240_000 }] },
+      { channels: ['web', 'app'], running: [] },
+      { channels: ['web', 'app'], running: [], finishedAt: 999_999 },
+      { channels: ['web', 'app'], running: [], finishedAt: 1_240_000 },
+      { channels: ['web', 'app'], running: [], finishedAt: 'soon' },
+      { channels: 'web,app', running: [{ id: 'bad-channels', startedAt: 999_000 }] },
+      { channels: ['web', 'app'], running: 'bad-list' },
+      { channels: ['web', 'app'], running: [{ id: 'no-start' }] },
+      { channels: ['web', 'app'], running: [{ startedAt: 999_000 }] },
+      { channels: ['web', 'app'], updateIds: ['old-shape'], startedAt: 999_000 },
       { channels: ['web', 'app'], expiresAt: 2_000_000 },
     ];
     for (const mark of marks) {
+      vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
       const { store, saved } = fakeStore({ [CHANNELS_KEY]: mark });
       const spy = mockProductUpdate({ before: ['web'], after: ['web'] });
       const result = await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
       expect(spy).toHaveBeenCalledTimes(2);
       expect(result).toMatchObject({ channels: ['web'] });
-      expect(saved.has(CHANNELS_KEY)).toBe(false);
+      expect(savedUpdate(saved)).toEqual({ channels: ['web'], running: [], finishedAt: 1_000_000 });
       vi.restoreAllMocks();
-      vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
     }
   });
 
-  it('removes the mark when the update or the channel restore fails', async () => {
+  it('marks the update as finished when the update or the channel restore fails', async () => {
     const failedPut = fakeStore();
     mockProductUpdate({ before: ['web', 'app'], after: ['web'], putFails: 422 });
     await expect(sallaProducts.updateProduct({ auth, store: failedPut.store, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow();
-    expect(failedPut.saved.has(CHANNELS_KEY)).toBe(false);
+    expect(savedUpdate(failedPut.saved)).toMatchObject({ running: [], finishedAt: expect.any(Number) });
     vi.restoreAllMocks();
     const failedRestore = fakeStore();
     mockProductUpdate({ before: ['web', 'app'], after: ['web'], restoreFails: true });
     await expect(sallaProducts.updateProduct({ auth, store: failedRestore.store, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow(
       'putting back web, app failed',
     );
-    expect(failedRestore.saved.has(CHANNELS_KEY)).toBe(false);
+    expect(savedUpdate(failedRestore.saved)).toMatchObject({ running: [], finishedAt: expect.any(Number) });
   });
-
-  const FAILED_RESTORE_KEY = 'salla_product_channels_failed_restore_9';
-  const DAY_MS = 24 * 60 * 60 * 1000;
-
-  function savedFailedRestore(saved: Map<string, string>): unknown {
-    return JSON.parse(saved.get(FAILED_RESTORE_KEY) ?? 'null');
-  }
 
   it('a retry after a failed channel restore puts the original channels back', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
     const { store, saved, scopes } = fakeStore();
     mockProductUpdate({ before: ['web', 'app'], after: ['web'], restoreFails: true });
     await expect(sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow('Run this step again to put them back.');
-    expect(savedFailedRestore(saved)).toEqual({ channels: ['web', 'app'], left: ['web'], failedAt: 1_000_000 });
-    expect(saved.has(CHANNELS_KEY)).toBe(false);
+    expect(savedFailedRestore(saved)).toEqual({ channels: ['web', 'app'], left: ['web'], confirmed: true, failedAt: 1_000_000 });
     vi.restoreAllMocks();
     vi.spyOn(Date, 'now').mockReturnValue(1_008_000);
     const spy = mockProductUpdate({ before: ['web'], after: ['web'] });
     const result = await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
-    expect(spy.mock.calls.map(([request]) => `${request.method} ${pathOf(request)}`)).toEqual(['GET /products/9', 'PUT /products/9', 'POST /products/actions']);
+    expect(callsOf(spy)).toEqual(['GET /products/9', 'PUT /products/9', 'POST /products/actions']);
     expect(spy.mock.calls[2][0].body).toMatchObject({ operations: [{ action_name: 'sale-channels', value: { channels: ['web', 'app'] } }] });
     expect(result).toMatchObject({ channels: ['web', 'app'], show_in_app: true });
-    expect(saved.size).toBe(0);
+    expect(saved.has(FAILED_RESTORE_KEY)).toBe(false);
     expect(scopes.every((scope) => scope === StoreScope.PROJECT)).toBe(true);
   });
 
-  it('a retry puts the channels back when Salla saved the update but the call timed out or got a 5xx', async () => {
+  it('puts the channels back right away when Salla saved the update but the call timed out or got a 5xx', async () => {
     for (const putFails of [502, 'timeout'] as const) {
-      vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
       const { store, saved } = fakeStore();
-      mockProductUpdate({ before: ['web', 'app'], after: ['web'], putFails });
-      await expect(sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow();
-      expect(savedFailedRestore(saved)).toEqual({ channels: ['web', 'app'], left: ['web'], failedAt: 1_000_000 });
-      vi.restoreAllMocks();
-      vi.spyOn(Date, 'now').mockReturnValue(1_020_000);
-      const spy = mockProductUpdate({ before: ['web'], after: ['web'] });
-      const result = await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
-      expect(spy.mock.calls[2][0].body).toMatchObject({ operations: [{ action_name: 'sale-channels', value: { channels: ['web', 'app'] } }] });
-      expect(result).toMatchObject({ channels: ['web', 'app'] });
-      expect(saved.size).toBe(0);
+      const spy = mockProductUpdate({ before: ['web', 'app'], after: ['web'], putFails, putLands: true });
+      await expect(sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow(
+        putFails === 'timeout' ? 'timeout of 30000ms exceeded' : '502',
+      );
+      expect(callsOf(spy)).toEqual(['GET /products/9', 'PUT /products/9', 'GET /products/9', 'POST /products/actions']);
+      expect(spy.mock.calls[3][0].body).toMatchObject({ operations: [{ action_name: 'sale-channels', value: { channels: ['web', 'app'] } }] });
+      expect(saved.has(FAILED_RESTORE_KEY)).toBe(false);
       vi.restoreAllMocks();
     }
   });
 
-  it('a retry changes no channels when the failed update never reached the product', async () => {
+  it('saves the channels for a retry when Salla saved a failed update and they cannot be put back right away', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    const { store, saved } = fakeStore();
+    mockProductUpdate({ before: ['web', 'app'], after: ['web'], putFails: 502, putLands: true, restoreFails: true });
+    await expect(sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow('502');
+    expect(savedFailedRestore(saved)).toEqual({ channels: ['web', 'app'], left: ['web'], confirmed: true, failedAt: 1_000_000 });
+    vi.restoreAllMocks();
+    vi.spyOn(Date, 'now').mockReturnValue(1_020_000);
+    const spy = mockProductUpdate({ before: ['web'], after: ['web'] });
+    const result = await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
+    expect(spy.mock.calls[2][0].body).toMatchObject({ operations: [{ action_name: 'sale-channels', value: { channels: ['web', 'app'] } }] });
+    expect(result).toMatchObject({ channels: ['web', 'app'] });
+    expect(saved.has(FAILED_RESTORE_KEY)).toBe(false);
+  });
+
+  it('saves the channels for a retry when the update failed unclearly and the product cannot be read', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    const { store, saved } = fakeStore();
+    const spy = mockProductUpdate({ before: ['web', 'app'], after: ['web'], putFails: 'timeout', recheckFails: true });
+    await expect(sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow('timeout of 30000ms exceeded');
+    expect(callsOf(spy)).toEqual(['GET /products/9', 'PUT /products/9', 'GET /products/9']);
+    expect(savedFailedRestore(saved)).toEqual({ channels: ['web', 'app'], left: ['web'], confirmed: false, failedAt: 1_000_000 });
+  });
+
+  it('a retry puts the channels back when Salla saves a failed update only after the product was read again', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    const { store, saved } = fakeStore();
+    const failed = mockProductUpdate({ before: ['web', 'app'], after: ['web'], putFails: 'timeout' });
+    await expect(sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow('timeout of 30000ms exceeded');
+    expect(callsOf(failed)).toEqual(['GET /products/9', 'PUT /products/9', 'GET /products/9']);
+    expect(savedFailedRestore(saved)).toEqual({ channels: ['web', 'app'], left: ['web'], confirmed: false, failedAt: 1_000_000 });
+    vi.restoreAllMocks();
+    vi.spyOn(Date, 'now').mockReturnValue(1_030_000);
+    const spy = mockProductUpdate({ before: ['web'], after: ['web'] });
+    const result = await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
+    expect(spy.mock.calls[2][0].body).toMatchObject({ operations: [{ action_name: 'sale-channels', value: { channels: ['web', 'app'] } }] });
+    expect(result).toMatchObject({ channels: ['web', 'app'] });
+    expect(saved.has(FAILED_RESTORE_KEY)).toBe(false);
+  });
+
+  it('keeps a merchant change made more than five minutes after a failed update that never changed the channels', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
     const { store, saved } = fakeStore();
     mockProductUpdate({ before: ['web', 'app'], after: ['web'], putFails: 502 });
-    await expect(sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow();
+    await expect(sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow('502');
     vi.restoreAllMocks();
-    vi.spyOn(Date, 'now').mockReturnValue(1_020_000);
-    const spy = mockProductUpdate({ before: ['web', 'app'], after: ['app', 'web'] });
-    await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
-    expect(spy).toHaveBeenCalledTimes(2);
-    expect(saved.size).toBe(0);
+    vi.spyOn(Date, 'now').mockReturnValue(1_300_000);
+    const spy = mockProductUpdate({ before: ['web'], after: ['web'] });
+    const result = await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
+    expect(callsOf(spy)).toEqual(['GET /products/9', 'PUT /products/9']);
+    expect(result).toMatchObject({ channels: ['web'] });
+    expect(saved.has(FAILED_RESTORE_KEY)).toBe(false);
   });
 
-  it('saves no recovery record when Salla rejects the update or the product was on web only', async () => {
-    const rejected = fakeStore();
-    mockProductUpdate({ before: ['web', 'app'], after: ['web'], putFails: 422 });
-    await expect(sallaProducts.updateProduct({ auth, store: rejected.store, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow();
-    expect(rejected.saved.size).toBe(0);
-    vi.restoreAllMocks();
-    const webOnly = fakeStore();
-    mockProductUpdate({ before: ['web'], after: ['web'], putFails: 502 });
-    await expect(sallaProducts.updateProduct({ auth, store: webOnly.store, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow();
-    expect(webOnly.saved.size).toBe(0);
+  it('clears an older recovery record when an unclear failure is repaired right away', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    const { store, saved } = fakeStore({ [FAILED_RESTORE_KEY]: { channels: ['web', 'app'], left: ['web'], confirmed: true, failedAt: 990_000 } });
+    const spy = mockProductUpdate({ before: ['web'], after: ['web'], putFails: 502 });
+    await expect(sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow('502');
+    expect(callsOf(spy)).toEqual(['GET /products/9', 'PUT /products/9', 'GET /products/9', 'POST /products/actions']);
+    expect(saved.has(FAILED_RESTORE_KEY)).toBe(false);
+  });
+
+  it('does not read the product again or save anything when Salla rejects the update', async () => {
+    const { store, saved } = fakeStore();
+    const spy = mockProductUpdate({ before: ['web', 'app'], after: ['web'], putFails: 422, putLands: true });
+    await expect(sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow();
+    expect(callsOf(spy)).toEqual(['GET /products/9', 'PUT /products/9']);
+    expect(saved.has(FAILED_RESTORE_KEY)).toBe(false);
+  });
+
+  it('saves nothing after an unclear failure on a product that was on web only', async () => {
+    const { store, saved } = fakeStore();
+    mockProductUpdate({ before: ['web'], after: ['web'], putFails: 502, recheckFails: true });
+    await expect(sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow();
+    expect(saved.has(FAILED_RESTORE_KEY)).toBe(false);
   });
 
   it('clears a recovery record another update left once this update has the channels right', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
     const { store, saved } = fakeStore();
-    const record = { channels: ['web', 'app'], left: ['web'], failedAt: 1_000_000 };
+    const record = { channels: ['web', 'app'], left: ['web'], confirmed: true, failedAt: 1_000_000 };
     mockProductUpdate({ before: ['web', 'app'], after: ['web'], onPut: () => saved.set(FAILED_RESTORE_KEY, JSON.stringify(record)) });
     const result = await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
     expect(result).toMatchObject({ channels: ['web', 'app'] });
-    expect(saved.size).toBe(0);
+    expect(saved.has(FAILED_RESTORE_KEY)).toBe(false);
   });
 
   it('keeps the recovery record when Salla returns the product without channels', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
-    const record = { channels: ['web', 'app'], left: ['web'], failedAt: 990_000 };
+    const record = { channels: ['web', 'app'], left: ['web'], confirmed: true, failedAt: 990_000 };
     const { store, saved } = fakeStore({ [FAILED_RESTORE_KEY]: record });
     const spy = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async () => ok({ data: { id: 9, name: 'New' } }));
     await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
@@ -405,17 +557,17 @@ describe('createProduct and updateProduct', () => {
 
   it('Update Product Price also recovers the channels a failed restore left behind', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
-    const { store, saved } = fakeStore({ [FAILED_RESTORE_KEY]: { channels: ['web', 'app'], left: ['web'], failedAt: 990_000 } });
+    const { store, saved } = fakeStore({ [FAILED_RESTORE_KEY]: { channels: ['web', 'app'], left: ['web'], confirmed: true, failedAt: 990_000 } });
     const spy = mockProductUpdate({ before: ['web'], after: ['web'] });
     const result = await sallaProducts.updateProductPrice({ auth, store, input: { sku: 'TS-1', price: 10, salePrice: 8 } });
     expect(spy.mock.calls[2][0].body).toMatchObject({ operations: [{ action_name: 'sale-channels', value: { channels: ['web', 'app'] } }] });
     expect(result).toMatchObject({ channels: ['web', 'app'] });
-    expect(saved.size).toBe(0);
+    expect(saved.has(FAILED_RESTORE_KEY)).toBe(false);
   });
 
   it('keeps the recovery record while the retry still cannot restore the channels', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
-    const record = { channels: ['web', 'app'], left: ['web'], failedAt: 990_000 };
+    const record = { channels: ['web', 'app'], left: ['web'], confirmed: true, failedAt: 990_000 };
     const failedPut = fakeStore({ [FAILED_RESTORE_KEY]: record });
     mockProductUpdate({ before: ['web'], after: ['web'], putFails: 422 });
     await expect(sallaProducts.updateProduct({ auth, store: failedPut.store, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow();
@@ -427,16 +579,18 @@ describe('createProduct and updateProduct', () => {
     await expect(sallaProducts.updateProduct({ auth, store: failedAgain.store, by: 'id', value: 9, input: { quantity: 30 } })).rejects.toThrow(
       'putting back web, app failed',
     );
-    expect(savedFailedRestore(failedAgain.saved)).toEqual({ channels: ['web', 'app'], left: ['web'], failedAt: 1_000_000 });
+    expect(savedFailedRestore(failedAgain.saved)).toEqual({ channels: ['web', 'app'], left: ['web'], confirmed: true, failedAt: 1_000_000 });
   });
 
   it('drops the recovery record when the channels changed since the failure, or it is too old or malformed', async () => {
     const cases = [
-      { now: 1_000_000, before: ['app'], record: { channels: ['web', 'app'], left: ['web'], failedAt: 990_000 } },
-      { now: 1_000_000, before: ['web', 'app'], record: { channels: ['web', 'app'], left: ['web'], failedAt: 990_000 } },
-      { now: 990_000 + DAY_MS, before: ['web'], record: { channels: ['web', 'app'], left: ['web'], failedAt: 990_000 } },
-      { now: 1_000_000, before: ['web'], record: { channels: ['web', 'app'], left: ['web'], failedAt: 1_000_000 + DAY_MS } },
-      { now: 1_000_000, before: ['web'], record: { channels: ['web', 'app'], failedAt: 990_000 } },
+      { now: 1_000_000, before: ['app'], record: { channels: ['web', 'app'], left: ['web'], confirmed: true, failedAt: 990_000 } },
+      { now: 1_000_000, before: ['web', 'app'], record: { channels: ['web', 'app'], left: ['web'], confirmed: true, failedAt: 990_000 } },
+      { now: 990_000 + DAY_MS, before: ['web'], record: { channels: ['web', 'app'], left: ['web'], confirmed: true, failedAt: 990_000 } },
+      { now: 1_000_000, before: ['web'], record: { channels: ['web', 'app'], left: ['web'], confirmed: true, failedAt: 1_000_000 + DAY_MS } },
+      { now: 1_290_000, before: ['web'], record: { channels: ['web', 'app'], left: ['web'], confirmed: false, failedAt: 990_000 } },
+      { now: 1_000_000, before: ['web'], record: { channels: ['web', 'app'], left: ['web'], failedAt: 990_000 } },
+      { now: 1_000_000, before: ['web'], record: { channels: ['web', 'app'], confirmed: true, failedAt: 990_000 } },
       { now: 1_000_000, before: ['web'], record: { channels: 'web,app', left: ['web'], failedAt: 990_000 } },
       { now: 1_000_000, before: ['web'], record: { channels: ['web', 'app'], left: 'web', failedAt: 990_000 } },
       { now: 1_000_000, before: ['web'], record: { channels: ['web', 'app'], left: ['web'] } },
@@ -448,7 +602,7 @@ describe('createProduct and updateProduct', () => {
       const result = await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
       expect(spy.mock.calls.map(([request]) => request.method)).toEqual([HttpMethod.GET, HttpMethod.PUT]);
       expect(result).toMatchObject({ channels: before });
-      expect(saved.size).toBe(0);
+      expect(saved.has(FAILED_RESTORE_KEY)).toBe(false);
       vi.restoreAllMocks();
     }
   });
@@ -456,13 +610,13 @@ describe('createProduct and updateProduct', () => {
   it('an update that is still running wins over a recovery record', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
     const { store, saved } = fakeStore({
-      [CHANNELS_KEY]: { channels: ['web', 'app', 'pos'], updateId: 'other-update', startedAt: 995_000 },
-      [FAILED_RESTORE_KEY]: { channels: ['web', 'app'], left: ['web'], failedAt: 990_000 },
+      [CHANNELS_KEY]: { channels: ['web', 'app', 'pos'], running: [{ id: 'other-update', startedAt: 995_000 }] },
+      [FAILED_RESTORE_KEY]: { channels: ['web', 'app'], left: ['web'], confirmed: true, failedAt: 990_000 },
     });
     const spy = mockProductUpdate({ before: ['web'], after: ['web'] });
     await sallaProducts.updateProduct({ auth, store, by: 'id', value: 9, input: { quantity: 30 } });
     expect(spy.mock.calls[2][0].body).toMatchObject({ operations: [{ action_name: 'sale-channels', value: { channels: ['web', 'app', 'pos'] } }] });
-    expect(saved.size).toBe(0);
+    expect(saved.has(FAILED_RESTORE_KEY)).toBe(false);
   });
 
   it('Update Product Price puts the sales channels back after its full-product PUT', async () => {
@@ -471,16 +625,12 @@ describe('createProduct and updateProduct', () => {
     const duringPut: unknown[] = [];
     const spy = mockProductUpdate({ before: ['web', 'app'], after: ['web'], onPut: () => duringPut.push(savedUpdate(saved)) });
     const result = await sallaProducts.updateProductPrice({ auth, store, input: { sku: 'TS-1', price: 10, salePrice: 8 } });
-    expect(spy.mock.calls.map(([request]) => `${request.method} ${pathOf(request)}`)).toEqual([
-      'GET /products/sku/TS-1',
-      'PUT /products/sku/TS-1',
-      'POST /products/actions',
-    ]);
+    expect(callsOf(spy)).toEqual(['GET /products/sku/TS-1', 'PUT /products/sku/TS-1', 'POST /products/actions']);
     expect(spy.mock.calls[1][0].body).toEqual({ price: 10, sale_price: 8 });
     expect(spy.mock.calls[2][0].body).toMatchObject({ operations: [{ action_name: 'sale-channels', value: { channels: ['web', 'app'] } }] });
     expect(result).toMatchObject({ channels: ['web', 'app'], show_in_app: true });
-    expect(duringPut).toEqual([{ channels: ['web', 'app'], updateId: expect.any(String), startedAt: 1_000_000 }]);
-    expect(saved.has(CHANNELS_KEY)).toBe(false);
+    expect(duringPut).toEqual([{ channels: ['web', 'app'], running: [{ id: expect.any(String), startedAt: 1_000_000 }] }]);
+    expect(savedUpdate(saved)).toEqual({ channels: ['web', 'app'], running: [], finishedAt: 1_000_000 });
   });
 
   it('Update Product Price with only a price makes one call and does not touch the store', async () => {
