@@ -11,6 +11,9 @@ on:
 jobs:
   finalize:
     runs-on: ubuntu-latest
+    concurrency:
+      group: finalize-translations
+      cancel-in-progress: false
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -160,9 +163,7 @@ jobs:
               }
             }
             if (!merged) {
-              await github.rest.pulls.update({ ...pull, state: 'closed' }).catch((error) => core.warning(`Could not close the PR: ${error.message}`));
-              await github.rest.git.deleteRef({ owner: context.repo.owner, repo: context.repo.repo, ref: `heads/${branchName}` }).catch((error) => core.warning(`Could not delete the branch: ${error.message}`));
-              core.setFailed(`The translations PR #${pullRequest.number} did not merge after ${mergeAttempts} attempts. It was closed so nobody merges it after the Crowdin renames are undone.`);
+              core.setFailed(`The translations PR #${pullRequest.number} did not merge after ${mergeAttempts} attempts.`);
               return;
             }
             core.setOutput('merged', 'true');
@@ -173,8 +174,31 @@ jobs:
               ref: `heads/${branchName}`
             }).catch((error) => core.warning(`Could not delete the branch: ${error.message}`));
 
+      - name: Close the translations PR when it did not merge
+        id: close
+        if: (failure() || cancelled()) && steps.ahead.outputs.changes == 'true' && steps.pr.outputs.merged != 'true'
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.CROWDIN_PRS }}
+          script: |
+            const branchName = `${{ inputs.branch_name }}`;
+            const repo = { owner: context.repo.owner, repo: context.repo.repo };
+            const { data: pulls } = await github.rest.pulls.list({ ...repo, head: `${repo.owner}:${branchName}`, state: 'all' });
+            if (pulls.some((pull) => pull.merged_at !== null)) {
+              core.notice('The translations PR merged after all, so the Crowdin renames stay.');
+              return;
+            }
+            const open = pulls.filter((pull) => pull.state === 'open');
+            for (const pull of open) {
+              await github.rest.pulls.update({ ...repo, pull_number: pull.number, state: 'closed' });
+            }
+            if (pulls.length > 0) {
+              await github.rest.git.deleteRef({ ...repo, ref: `heads/${branchName}` }).catch((error) => core.warning(`Could not delete the branch: ${error.message}`));
+            }
+            core.setOutput('safe_to_undo', 'true');
+
       - name: Undo the Crowdin renames when the translations PR did not merge
-        if: (failure() || cancelled()) && steps.pr.outputs.merged != 'true' && steps.crowdin.outcome != 'skipped'
+        if: (failure() || cancelled()) && steps.close.outputs.safe_to_undo == 'true' && steps.crowdin.outcome != 'skipped'
         env:
           CROWDIN_RENAME_TOKEN: ${{ secrets.CROWDIN_RENAME_TOKEN }}
           CROWDIN_PROJECT_ID: ${{ vars.CROWDIN_PROJECT_ID }}

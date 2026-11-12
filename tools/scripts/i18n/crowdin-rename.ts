@@ -15,9 +15,10 @@ async function run({ client, pieces, autoApprovers, dryRun, journal }: RunParams
 }
 
 async function undo({ client, lines, journal }: UndoParams): Promise<UndoCounts> {
-    const renamed = lines.filter((line) => line.kind === 'rename' && line.status === 'renamed').reverse()
+    const attempted = lines.filter((line) => line.kind === 'pending' || (line.kind === 'rename' && line.status === 'renamed'))
+    const latestByString = new Map(attempted.map((line) => [line.stringId, line]))
     let counts: UndoCounts = { undone: 0, failed: 0 }
-    for (const line of renamed) {
+    for (const line of [...latestByString.values()].reverse()) {
         const outcome = await undoOne({ client, line, journal })
         counts = { undone: counts.undone + outcome.undone, failed: counts.failed + outcome.failed }
     }
@@ -109,12 +110,18 @@ async function applyRename({ client, piece, fileId, action, dryRun, journal }: A
         journal({ ...line, status: 'would-rename', before: { identifier: action.oldText, text: action.oldText } })
         return { ...EMPTY_COUNTS, wouldRename: 1 }
     }
-    const patched = await patchString({ client, action })
-    if (!patched.ok) {
-        journal({ ...line, status: patched.status, before: patched.before, message: patched.message })
+    const checked = await readBeforeRename({ client, action })
+    if (!checked.ok) {
+        journal({ ...line, status: checked.status, before: checked.before, message: checked.message })
         return { ...EMPTY_COUNTS, failed: 1 }
     }
-    journal({ ...line, status: 'renamed', before: patched.before })
+    journal({ ...line, kind: 'pending', status: 'patching', before: checked.before })
+    const problem = await patchString({ client, action })
+    if (problem !== null) {
+        journal({ ...line, status: 'error', before: checked.before, message: problem })
+        return { ...EMPTY_COUNTS, failed: 1 }
+    }
+    journal({ ...line, status: 'renamed', before: checked.before })
     const cleanup = await cleanupPaths({ client, action })
     cleanup.problems.forEach((message) => journal({ kind: 'cleanup', piece, fileId, stringId: action.stringId, status: 'error', message }))
     let counts: RunCounts = { ...EMPTY_COUNTS, renamed: 1, writes: 1, failed: cleanup.problems.length }
@@ -126,15 +133,18 @@ async function applyRename({ client, piece, fileId, action, dryRun, journal }: A
     return counts
 }
 
-async function patchString({ client, action }: { client: CrowdinClient, action: RenameAction }): Promise<PatchOutcome> {
-    const assumedBefore = { identifier: action.oldText, text: action.oldText }
+async function readBeforeRename({ client, action }: { client: CrowdinClient, action: RenameAction }): Promise<BeforeRename> {
     const current = await readString({ client, stringId: action.stringId })
     if (current === null) {
-        return { ok: false, status: 'error', before: assumedBefore, message: 'could not read the string before renaming it' }
+        return { ok: false, status: 'error', before: { identifier: action.oldText, text: action.oldText }, message: 'could not read the string before renaming it' }
     }
     if (current.text !== action.oldText) {
         return { ok: false, status: 'precondition-failed', before: current, message: 'Crowdin no longer holds the old English' }
     }
+    return { ok: true, before: current }
+}
+
+async function patchString({ client, action }: { client: CrowdinClient, action: RenameAction }): Promise<string | null> {
     try {
         await client.patch({
             path: `/strings/${action.stringId}?updateOption=${action.updateOption}`,
@@ -143,14 +153,11 @@ async function patchString({ client, action }: { client: CrowdinClient, action: 
                 { op: 'replace', path: '/text', value: action.newText },
             ],
         })
-        return { ok: true, before: current }
+        return null
     }
     catch (error) {
         const afterError = await readString({ client, stringId: action.stringId })
-        if (afterError !== null && afterError.text === action.newText) {
-            return { ok: true, before: current }
-        }
-        return { ok: false, status: 'error', before: current, message: messageOf({ error }) }
+        return afterError !== null && afterError.text === action.newText ? null : messageOf({ error })
     }
 }
 
@@ -210,8 +217,9 @@ async function undoOne({ client, line, journal }: { client: CrowdinClient, line:
         return { undone: 0, failed: 1 }
     }
     if (current.text === before.text && current.identifier === before.identifier) {
-        journal({ ...undoLine, status: 'already-undone' })
-        return { undone: 0, failed: 0 }
+        const lostApprovals = await restoreApprovals({ client, translationIds: line.reapproveOnUndo ?? [] })
+        journal({ ...undoLine, status: 'already-undone', message: lostApprovalsMessage({ lostApprovals }) })
+        return { undone: 0, failed: lostApprovals.length === 0 ? 0 : 1 }
     }
     if (current.text !== after.text) {
         journal({ ...undoLine, status: 'precondition-failed', message: 'Crowdin no longer holds the renamed English' })
@@ -230,17 +238,29 @@ async function undoOne({ client, line, journal }: { client: CrowdinClient, line:
         journal({ ...undoLine, status: 'error', message: messageOf({ error }) })
         return { undone: 0, failed: 1 }
     }
+    const lostApprovals = await restoreApprovals({ client, translationIds: line.reapproveOnUndo ?? [] })
+    journal({ ...undoLine, status: 'undone', message: lostApprovalsMessage({ lostApprovals }) })
+    return { undone: 1, failed: lostApprovals.length === 0 ? 0 : 1 }
+}
+
+async function restoreApprovals({ client, translationIds }: { client: CrowdinClient, translationIds: number[] }): Promise<number[]> {
     const lostApprovals: number[] = []
-    for (const translationId of line.reapproveOnUndo ?? []) {
+    for (const translationId of translationIds) {
         try {
-            await client.post({ path: '/approvals', body: { translationId } })
+            const approvals = await client.list<{ id: number }>({ path: `/approvals?translationId=${translationId}` })
+            if (approvals.length === 0) {
+                await client.post({ path: '/approvals', body: { translationId } })
+            }
         }
         catch {
             lostApprovals.push(translationId)
         }
     }
-    journal({ ...undoLine, status: 'undone', message: lostApprovals.length === 0 ? undefined : `approvals not restored for translations ${lostApprovals.join(', ')}` })
-    return { undone: 1, failed: lostApprovals.length === 0 ? 0 : 1 }
+    return lostApprovals
+}
+
+function lostApprovalsMessage({ lostApprovals }: { lostApprovals: number[] }): string | undefined {
+    return lostApprovals.length === 0 ? undefined : `approvals not restored for translations ${lostApprovals.join(', ')}`
 }
 
 async function readPerLanguage({ client, languages, pathFor }: ReadPerLanguageParams): Promise<Record<string, Attribution[]>> {
@@ -376,7 +396,7 @@ const EMPTY_COUNTS: RunCounts = { renamed: 0, wouldRename: 0, skipped: 0, failed
 export const crowdinRename = { run, undo, exitCode, summarize, pieceOf, changedPieces }
 
 export type JournalLine = {
-    kind: 'rename' | 'skip' | 'cleanup' | 'undo' | 'piece-error'
+    kind: 'rename' | 'pending' | 'skip' | 'cleanup' | 'undo' | 'piece-error'
     piece: string
     status: string
     fileId?: number
@@ -406,7 +426,7 @@ type StringText = {
     text: string
 }
 
-type PatchOutcome = { ok: true, before: StringText } | { ok: false, status: 'error' | 'precondition-failed', before: StringText, message: string }
+type BeforeRename = { ok: true, before: StringText } | { ok: false, status: 'error' | 'precondition-failed', before: StringText, message: string }
 
 type UndoCounts = {
     undone: number

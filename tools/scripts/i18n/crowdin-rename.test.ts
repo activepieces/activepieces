@@ -10,7 +10,7 @@ const FILE_PATH = '/main/packages/pieces/community/dropbox/src/i18n/translation.
 
 const clone = <T>(value: unknown): T => JSON.parse(JSON.stringify(value))
 
-const fakeCrowdin = ({ strings = [{ id: 1, identifier: 'Upload a file', text: 'Upload a file' }], failPatchFor = [], patchLandsButErrorsFor = [], failApprovals = false }: FakeParams = {}) => {
+const fakeCrowdin = ({ strings = [{ id: 1, identifier: 'Upload a file', text: 'Upload a file' }], failPatchFor = [], patchLandsButErrorsFor = [], failApprovals = false, approvals = DEFAULT_APPROVALS }: FakeParams = {}) => {
     const state = {
         strings: clone<FakeString[]>(strings),
         translations: {
@@ -18,10 +18,7 @@ const fakeCrowdin = ({ strings = [{ id: 1, identifier: 'Upload a file', text: 'U
             de: [{ translationId: 20, stringId: 1, user: { username: 'robot' } }],
         },
         everyJaTranslation: [{ id: 10, user: { username: 'human' } }, { id: 11, user: { username: 'robot' } }],
-        approvals: {
-            ja: [{ translationId: 10, stringId: 1, user: { username: 'human' } }],
-            de: [{ translationId: 20, stringId: 1, user: { username: 'robot' } }],
-        },
+        approvals: clone<FakeApprovals>(approvals),
     }
     const writes: string[] = []
     const read = (path: string): unknown => {
@@ -53,6 +50,10 @@ const fakeCrowdin = ({ strings = [{ id: 1, identifier: 'Upload a file', text: 'U
         if (approvals) {
             return approvals[1] === 'ja' ? state.approvals.ja : state.approvals.de
         }
+        const approvalsOfTranslation = /^\/approvals\?translationId=(\d+)$/.exec(path)
+        if (approvalsOfTranslation) {
+            return [...state.approvals.ja, ...state.approvals.de].filter(({ translationId }) => String(translationId) === approvalsOfTranslation[1])
+        }
         throw new Error(`fake Crowdin has no list for ${path}`)
     }
     const client: CrowdinClient = {
@@ -67,6 +68,9 @@ const fakeCrowdin = ({ strings = [{ id: 1, identifier: 'Upload a file', text: 'U
             state.strings = state.strings.map((string) => string.id === id
                 ? { ...string, identifier: operations.find((operation) => operation.path === '/identifier')?.value ?? string.identifier, text: operations.find((operation) => operation.path === '/text')?.value ?? string.text }
                 : string)
+            if (!path.endsWith('keep_translations_and_approvals')) {
+                state.approvals = { ja: state.approvals.ja.filter(({ stringId }) => stringId !== id), de: state.approvals.de.filter(({ stringId }) => stringId !== id) }
+            }
             if (patchLandsButErrorsFor.includes(id)) {
                 throw new CrowdinError({ method: 'PATCH', path, status: 502, detail: 'Bad Gateway' })
             }
@@ -78,6 +82,7 @@ const fakeCrowdin = ({ strings = [{ id: 1, identifier: 'Upload a file', text: 'U
                 throw new CrowdinError({ method: 'POST', path, status: 400, detail: 'Invalid' })
             }
             writes.push(`POST ${path} ${JSON.stringify(body)}`)
+            state.approvals.ja.push({ translationId: clone<{ translationId: number }>(body).translationId, stringId: 1, user: { username: 'ci' } })
             return {}
         },
         del: async ({ path }) => {
@@ -86,6 +91,11 @@ const fakeCrowdin = ({ strings = [{ id: 1, identifier: 'Upload a file', text: 'U
         },
     }
     return { client, writes, state }
+}
+
+const DEFAULT_APPROVALS: FakeApprovals = {
+    ja: [{ translationId: 10, stringId: 1, user: { username: 'human' } }],
+    de: [{ translationId: 20, stringId: 1, user: { username: 'robot' } }],
 }
 
 const dropbox = ({ newEnglish = 'Send a file' }: { newEnglish?: string } = {}) => ({
@@ -148,11 +158,11 @@ describe('crowdinRename.run', () => {
     })
 
     it('does not touch a string that already has the new text', async () => {
-        const { client, writes } = fakeCrowdin({ strings: [{ id: 1, identifier: 'Upload a file', text: 'Upload a file' }, { id: 2, identifier: 'Old', text: 'Old' }] })
+        const { client, writes } = fakeCrowdin({ strings: [{ id: 1, identifier: 'Upload a file', text: 'Upload a file' }, { id: 2, identifier: 'old folder', text: 'old folder' }] })
         const { journal } = collect()
-        const pieces = [{ piece: 'community/dropbox', oldEnglishByPath: { a: 'Old' }, newEnglishByPath: { a: 'OLD' } }]
+        const pieces = [{ piece: 'community/dropbox', oldEnglishByPath: { a: 'old folder' }, newEnglishByPath: { a: 'Old Folder' } }]
         await crowdinRename.run({ client, pieces, autoApprovers: [], dryRun: false, journal })
-        const second = fakeCrowdin({ strings: [{ id: 2, identifier: 'OLD', text: 'OLD' }] })
+        const second = fakeCrowdin({ strings: [{ id: 2, identifier: 'Old Folder', text: 'Old Folder' }] })
 
         const counts = await crowdinRename.run({ client: second.client, pieces, autoApprovers: [], dryRun: false, journal })
 
@@ -187,6 +197,7 @@ describe('crowdinRename.run', () => {
         expect(writes).toEqual(['PATCH /strings/2?updateOption=clear_translations_and_approvals'])
         expect(counts).toMatchObject({ renamed: 1, failed: 1 })
         expect(lines.filter(({ kind }) => kind === 'rename').map(({ status }) => status)).toEqual(['error', 'renamed'])
+        expect(lines.filter(({ stringId }) => stringId === 1).map(({ kind, status }) => `${kind} ${status}`)).toEqual(['pending patching', 'rename error'])
     })
 })
 
@@ -211,13 +222,63 @@ describe('crowdinRename.undo', () => {
         const first = fakeCrowdin()
         const { lines, journal } = collect()
         await crowdinRename.run({ client: first.client, pieces: [dropbox()], autoApprovers: ['robot'], dryRun: false, journal })
-        const second = fakeCrowdin({ strings: first.state.strings, failApprovals: true })
+        const second = fakeCrowdin({ strings: first.state.strings, approvals: first.state.approvals, failApprovals: true })
 
         const counts = await crowdinRename.undo({ client: second.client, lines, journal })
 
         expect(second.state.strings[0].text).toBe('Upload a file')
         expect(counts).toEqual({ undone: 1, failed: 1 })
         expect(lines.find(({ kind }) => kind === 'undo')?.message).toContain('10')
+    })
+
+    it('renames back a string whose rename landed although the run recorded an error', async () => {
+        const { client, writes, state } = fakeCrowdin({ strings: [{ id: 1, identifier: 'Send a file', text: 'Send a file' }] })
+        const { journal } = collect()
+        const before = { identifier: 'Upload a file', text: 'Upload a file' }
+        const after = { identifier: 'Send a file', text: 'Send a file' }
+        const lines: JournalLine[] = [
+            { kind: 'pending', piece: 'community/dropbox', status: 'patching', stringId: 1, before, after, reapproveOnUndo: [] },
+            { kind: 'rename', piece: 'community/dropbox', status: 'error', stringId: 1, before, after, message: 'Bad Gateway' },
+        ]
+
+        const counts = await crowdinRename.undo({ client, lines, journal })
+
+        expect(writes).toEqual(['PATCH /strings/1?updateOption=keep_translations_and_approvals'])
+        expect(state.strings[0].text).toBe('Upload a file')
+        expect(counts).toEqual({ undone: 1, failed: 0 })
+    })
+
+    it('leaves a string alone when its unfinished rename never landed', async () => {
+        const { client, writes } = fakeCrowdin()
+        const { journal } = collect()
+        const lines: JournalLine[] = [{
+            kind: 'pending',
+            piece: 'community/dropbox',
+            status: 'patching',
+            stringId: 1,
+            before: { identifier: 'Upload a file', text: 'Upload a file' },
+            after: { identifier: 'Send a file', text: 'Send a file' },
+            reapproveOnUndo: [10],
+        }]
+
+        const counts = await crowdinRename.undo({ client, lines, journal })
+
+        expect(writes).toEqual([])
+        expect(counts).toEqual({ undone: 0, failed: 0 })
+    })
+
+    it('restores a missing approval on a second undo when the English is already back', async () => {
+        const first = fakeCrowdin()
+        const { lines, journal } = collect()
+        await crowdinRename.run({ client: first.client, pieces: [dropbox()], autoApprovers: ['robot'], dryRun: false, journal })
+        const failing = fakeCrowdin({ strings: first.state.strings, approvals: first.state.approvals, failApprovals: true })
+        await crowdinRename.undo({ client: failing.client, lines, journal })
+        const retry = fakeCrowdin({ strings: failing.state.strings, approvals: failing.state.approvals })
+
+        const counts = await crowdinRename.undo({ client: retry.client, lines, journal })
+
+        expect(retry.writes).toEqual(['POST /approvals {"translationId":10}'])
+        expect(counts).toEqual({ undone: 0, failed: 0 })
     })
 
     it('has nothing to undo when nothing was renamed', async () => {
@@ -308,4 +369,16 @@ type FakeParams = {
     failPatchFor?: number[]
     patchLandsButErrorsFor?: number[]
     failApprovals?: boolean
+    approvals?: FakeApprovals
+}
+
+type FakeApproval = {
+    translationId: number
+    stringId: number
+    user: { username: string }
+}
+
+type FakeApprovals = {
+    ja: FakeApproval[]
+    de: FakeApproval[]
 }
