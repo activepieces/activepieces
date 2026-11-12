@@ -21,7 +21,7 @@ export function JsonPreview({
 
   const actions = (
     <>
-      <CopyButton textToCopy={pretty} variant="ghost" size="icon-sm" />
+      <CopyButton value={pretty} variant="ghost" size="icon-sm" />
       <DownloadButton
         fileName={fileName}
         textToDownload={pretty}

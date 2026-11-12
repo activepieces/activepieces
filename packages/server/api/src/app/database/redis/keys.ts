@@ -6,13 +6,16 @@ export const getPlatformPlanNameKey = (platformId: PlatformId): string => `platf
 export const getCreditsBalanceKey = (platformId: PlatformId): string => `platform_plan:credits:${platformId}`
 export const getAppSumoAiCreditsBalanceKey = (platformId: PlatformId): string => `platform_plan:appsumo-ai-credits:${platformId}`
 export const getBillingEnforcedKey = (platformId: PlatformId): string => `platform_plan:billing-enforced:${platformId}`
-export const getBillingOverviewKey = (platformId: PlatformId): string => `platform_plan:billing-overview:v2:${platformId}`
+export const getBillingOverviewKey = (platformId: PlatformId): string => `platform_plan:billing-overview:v3:${platformId}`
 export const getEntitlementsForceRefreshKey = (platformId: PlatformId): string => `platform_plan:entitlements-force-refresh:${platformId}`
 export const getEntitlementsRefreshKey = (platformId: PlatformId): string => `platform_plan:entitlements-refresh:${platformId}`
 export const getCustomerStateRefreshKey = (platformId: PlatformId): string => `platform_plan:customer-state-refresh:${platformId}`
 export const getCustomerStateMissKey = (platformId: PlatformId): string => `platform_plan:customer-state-miss:${platformId}`
 export const getEnrollAttemptKey = (platformId: PlatformId): string => `platform_plan:autumn-enroll-attempt:${platformId}`
 export const getAutumnEnrollLockKey = (platformId: PlatformId): string => `autumn_enroll_${platformId}`
+export const getSelfServeTrialStartLockKey = (platformId: PlatformId): string => `self_serve_trial_start_${platformId}`
+export const getSelfServeTrialDatesCacheKey = (platformId: PlatformId): string => `platform_plan:self-serve-trial:${platformId}`
+export const getSelfServeTrialEndedRefreshKey = ({ platformId, endsAt }: { platformId: PlatformId, endsAt: string }): string => `self_serve_trial_ended_refresh_${platformId}_${endsAt}`
 export const getFreeLegacyCompAttemptKey = (platformId: PlatformId): string => `platform_plan:free-legacy-comp-attempt:${platformId}`
 export const getBillingOverviewFetchLockKey = (platformId: PlatformId): string => `billing_overview_fetch_${platformId}`
 export const getCustomerStateFetchLockKey = (platformId: PlatformId): string => `customer_state_fetch_${platformId}`
@@ -27,3 +30,4 @@ export const getJobReclaimCountKey = (jobId: ApId): string => `job_reclaim_count
 export const BILLING_ENFORCED_TTL_SECONDS = 24 * 60 * 60
 export const PLATFORM_PLAN_NAME_TTL_SECONDS = 24 * 60 * 60
 export const AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS = 60
+export const SELF_SERVE_TRIAL_DATES_CACHE_TTL_SECONDS = 24 * 60 * 60

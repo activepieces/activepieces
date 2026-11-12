@@ -9,6 +9,7 @@ import {
 	objectToArray,
 	stringifyArray,
 	ValueInputOption,
+	googleSheetsCommon,
 } from '../common/common';
 import { getWorkSheetName } from '../triggers/helpers';
 import { sheetsAddRowAtTopActionOutputSchema } from '../output-schemas';
@@ -115,7 +116,7 @@ export const sheetsAddRowAtTop = createAction({
 
 		const updateResponse = await sheets.spreadsheets.values.update({
 			spreadsheetId,
-			range: `${sheetName}!A${targetRow}:ZZZ${targetRow}`,
+			range: googleSheetsCommon.sheetRange({ sheetName, range: `A${targetRow}:ZZZ${targetRow}` }),
 			valueInputOption: as_string ? ValueInputOption.RAW : ValueInputOption.USER_ENTERED,
 			requestBody: {
 				majorDimension: Dimension.ROWS,

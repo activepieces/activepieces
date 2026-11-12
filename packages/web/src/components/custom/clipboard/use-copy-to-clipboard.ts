@@ -1,47 +1,46 @@
+import { tryCatch } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 export function useCopyToClipboard() {
   const [isCopied, setIsCopied] = useState(false);
-  const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isMounted = useRef(true);
+  const resetTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-      if (resetTimer.current) {
-        clearTimeout(resetTimer.current);
-      }
-    };
-  }, []);
-
-  const copy = useCallback((text: string) => {
-    writeToClipboard(text)
-      .then(() => {
-        if (!isMounted.current) {
-          return;
-        }
-        setIsCopied(true);
-        if (resetTimer.current) {
-          clearTimeout(resetTimer.current);
-        }
-        resetTimer.current = setTimeout(
-          () => setIsCopied(false),
-          COPIED_RESET_MS,
-        );
-      })
-      .catch(() => {
-        toast.error(t('Failed to copy to clipboard'), { duration: 3000 });
-      });
-  }, []);
+  const copy = async (params: CopyParams) => {
+    if (!(await writeToClipboard(params))) {
+      return;
+    }
+    setIsCopied(true);
+    clearTimeout(resetTimer.current);
+    resetTimer.current = setTimeout(() => setIsCopied(false), COPIED_RESET_MS);
+  };
 
   return { isCopied, copy };
 }
 
-async function writeToClipboard(text: string): Promise<void> {
-  await navigator.clipboard.writeText(text);
+export const clipboardUtils = { copy: copyWithToast };
+
+async function copyWithToast(params: CopyParams): Promise<void> {
+  if (await writeToClipboard(params)) {
+    toast.success(t('Copied to clipboard'));
+  }
+}
+
+async function writeToClipboard({ value }: CopyParams): Promise<boolean> {
+  const text =
+    typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+  const { error } = await tryCatch(() => navigator.clipboard.writeText(text));
+  if (error) {
+    console.error('Failed to copy to clipboard', error);
+    toast.error(t('Failed to copy to clipboard'));
+    return false;
+  }
+  return true;
 }
 
 const COPIED_RESET_MS = 3000;
+
+export type CopyParams = {
+  value: unknown;
+};

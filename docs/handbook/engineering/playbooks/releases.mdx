@@ -27,7 +27,7 @@ All changes flow through a staging environment before reaching production. There
   2. Run `continuous-delivery-cloud.yml` by hand with `hotfix_prs` set to the PR numbers, for example `17001,17005`. The gate cherry-picks only those PRs, oldest first, onto the commit Cloud runs (branch `hotfix/cloud/<run id>-<attempt>`), builds a `version.sha.pick` image, and runs the E2E matrix and the upgrade test on it. The rest of `main` waits for the next full gate run.
   3. The run summary names what Cloud runs and what this run adds. The approval and the deploy are the same as any other Cloud deploy.
 
-  The run stops when a PR is not merged into `main`, is already on Cloud, does not apply cleanly, or changes a migration (set `allow_migrations` only when the migration needs nothing Cloud lacks). A hotfix deploy records no Linear release; the next full gate run does. That run deploys `main` only if `main` contains every picked PR.
+  The run stops when a PR is not merged into `main`, is already on Cloud, does not apply cleanly, or changes a migration (set `allow_migrations` only when the migration needs nothing Cloud lacks). A hotfix deploy records no Linear release; the next full gate run does. No step checks that its candidate contains every picked PR, so check it before you approve that run.
 
   To ship all of `main` at once instead, leave `hotfix_prs` empty: the gate takes the newest commit that passed `e2e-staging`, or the commit named in `sha`.
 
@@ -66,7 +66,7 @@ Then, for the candidate:
 2. The `report` job posts the `e2e-matrix` and `upgrade-test` commit statuses on the candidate SHA. A red upgrade test says whether the candidate broke or the setup failed before the upgrade.
 3. The run summary lists the tickets between the commit Cloud runs and the candidate.
 4. The `approve` job waits for approval in the `production` GitHub Environment. It starts only when every check passed. A newer candidate cancels an older one that still waits.
-5. Under the `promote-production` lock, the `deploy` job reads the Cloud version again and refuses to deploy when the canary and the fleet run different images, when Cloud changed after the cut, or when the candidate lacks a PR that Cloud runs (a downgrade, or a fix shipped through another path). Then the breaking-migration check, the canary, the fleet, and the Linear "Cloud" release.
+5. Under the `promote-production` lock, the `deploy` job reads the Cloud version again and refuses to deploy when the canary and the fleet run different images, or when Cloud changed after the cut. It does not check that the candidate contains every hotfix Cloud runs. Then the breaking-migration check, the canary, the fleet, and the Linear "Cloud" release.
 
 If the gate refuses because the canary and the fleet differ (for example after `emergency-cloud-deploy.yml`, which deploys only the fleet), deploy the fleet's tag to the canary from `mrsk/prod`: `kamal deploy --version <tag> --config-file=config/app-canary.yml --skip-push`, then the same with `config/worker-canary.yml`.
 

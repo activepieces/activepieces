@@ -82,6 +82,7 @@ export const aiUsageEvent = {
         const costs = await costsOf(input)
         return {
             v: 1,
+            platformId: input.billing.platformId,
             ...dimensions,
             runId: runIdOf({ input, origin: dimensions.origin }),
             inputTokens: input.inputTokens ?? 0,

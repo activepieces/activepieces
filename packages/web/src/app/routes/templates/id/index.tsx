@@ -12,11 +12,11 @@ import { t } from 'i18next';
 import { ArrowLeft, ArrowRight, Link, ExternalLink } from 'lucide-react';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 
 import { FlowCanvas } from '@/app/builder/flow-canvas';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import { BuilderStateProvider } from '@/app/builder/state/builder-state-provider';
+import { clipboardUtils } from '@/components/custom/clipboard/use-copy-to-clipboard';
 import { TagWithBright } from '@/components/custom/tag-with-bright';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -120,15 +120,10 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
     }
   };
 
-  const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/templates/${template.id}`;
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success(t('Link copied to clipboard!'));
-    } catch (error) {
-      toast.error(t('Failed to copy link'));
-    }
-  };
+  const handleShare = () =>
+    clipboardUtils.copy({
+      value: `${window.location.origin}/templates/${template.id}`,
+    });
 
   return (
     <div className="h-screen w-full flex flex-col overflow-hidden absolute inset-0">

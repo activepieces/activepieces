@@ -19,7 +19,7 @@ import {
 import { ReactFlowInstance, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import type { PointerEvent } from 'react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { BuilderState, useBuilderStateContext } from '../builder-hooks';
@@ -123,17 +123,21 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
     handleNoteDragEnd({ e, getNoteById, moveNote, reactFlow });
   };
 
-  const sensors = useSensors(
-    useSensor(PointerSensorIgnoringInteractiveItems, {
+  const pointerSensorOptions = useMemo(
+    () => ({
       activationConstraint: {
         distance: 10,
       },
-      onActivation: ({ event }) => {
+      onActivation: ({ event }: { event: Event }) => {
         if (event instanceof PointerEvent) {
           setCursorPositionOnActivation({ x: event.clientX, y: event.clientY });
         }
       },
     }),
+    [],
+  );
+  const sensors = useSensors(
+    useSensor(PointerSensorIgnoringInteractiveItems, pointerSensorOptions),
     useSensor(TouchSensor),
   );
   return (

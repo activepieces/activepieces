@@ -2,8 +2,28 @@ import { googleDriveAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { drive as googleDrive } from '@googleapis/drive';
 import { common } from '../common';
-import { buildDriveSearchQuery } from '../common/search-query';
+import {
+  buildDriveSearchQuery,
+  DRIVE_SEARCH_FIELD_CHOICES,
+  DRIVE_SEARCH_OPERATOR_CHOICES,
+  DriveSearchFieldChoice,
+  DriveSearchOperatorChoice,
+} from '../common/search-query';
 import { searchFolderActionOutputSchema } from '../output-schemas';
+
+const FIELD_LABELS: Record<DriveSearchFieldChoice, string> = {
+  name: 'File Name',
+  fullText: 'Text Inside the File',
+  mimeType: 'File Type',
+};
+
+const OPERATOR_CARDS: Record<
+  DriveSearchOperatorChoice,
+  { label: string; description: string; icon: string }
+> = {
+  contains: { label: 'Contains', description: 'Partial match', icon: 'filter' },
+  '=': { label: 'Equals', description: 'Exact match', icon: 'tag' },
+};
 
 export const googleDriveSearchFolder = createAction({
   auth: googleDriveAuth,
@@ -35,11 +55,10 @@ export const googleDriveSearchFolder = createAction({
       description: 'Match the file name, the text inside it, or its type.',
       defaultValue: 'name',
       options: {
-        options: [
-          { label: 'File Name', value: 'name' },
-          { label: 'Text Inside the File', value: 'fullText' },
-          { label: 'File Type', value: 'mimeType' },
-        ],
+        options: DRIVE_SEARCH_FIELD_CHOICES.map((value): DropdownChoice => ({
+          label: FIELD_LABELS[value],
+          value,
+        })),
       },
       required: true,
     }),
@@ -49,10 +68,10 @@ export const googleDriveSearchFolder = createAction({
       required: true,
       display: 'cards',
       options: {
-        options: [
-          { label: 'Contains', value: 'contains', description: 'Partial match', icon: 'filter' },
-          { label: 'Equals', value: '=', description: 'Exact match', icon: 'tag' },
-        ],
+        options: DRIVE_SEARCH_OPERATOR_CHOICES.map((value): DropdownChoice => ({
+          ...OPERATOR_CARDS[value],
+          value,
+        })),
       },
       defaultValue: 'contains',
     }),
@@ -94,31 +113,28 @@ export const googleDriveSearchFolder = createAction({
       type: context.propsValue.type ?? 'all',
     });
 
-    const allFiles: any[] = [];
-    let pageToken: string | undefined = undefined;
-    do {
-      const listParams: Record<string, any> = {
+    const listing = await common.listFilesAcrossCorpora({
+      drive,
+      params: {
         q: finalQuery,
-        fields: 'nextPageToken, files(id, name, mimeType, createdTime, modifiedTime)',
-        includeItemsFromAllDrives: context.propsValue.include_team_drives,
+        fields:
+          'nextPageToken, incompleteSearch, files(id, name, mimeType, createdTime, modifiedTime)',
+        includeItemsFromAllDrives: context.propsValue.include_team_drives ?? false,
         supportsAllDrives: true,
         corpora: context.propsValue.include_team_drives ? 'allDrives' : 'user',
         pageSize: 1000,
-      };
-      if (pageToken) listParams.pageToken = pageToken;
-      const response = await drive.files.list(listParams);
-      if (response.status !== 200) {
-        console.error(response);
-        throw new Error('Error searching for the file/folder');
-      }
-      allFiles.push(...(response.data.files ?? []));
-      pageToken = response.data.nextPageToken ?? undefined;
-    } while (pageToken);
-
-    if (allFiles.length > 0) {
-      return allFiles;
-    } else {
-      return [];
-    }
+      },
+      maxPages: undefined,
+      deadline: Date.now() + common.actionListingBudgetMs,
+      wording: 'action',
+    });
+    return listing.files;
   },
 });
+
+type DropdownChoice = {
+  label: string;
+  value: string;
+  description?: string;
+  icon?: string;
+};

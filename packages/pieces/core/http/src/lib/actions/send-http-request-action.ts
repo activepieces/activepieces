@@ -19,7 +19,7 @@ import {
 import { assertNotNullOrUndefined, isEmpty } from '@activepieces/pieces-framework';
 import FormData from 'form-data';
 import { httpMethodDropdown } from '../common/props';
-import { ProxyAgent } from 'undici';
+import { Agent, Dispatcher, ProxyAgent } from 'undici';
 
 enum AuthType {
   NONE = 'NONE',
@@ -308,14 +308,16 @@ export const httpSendRequestAction = createAction({
     assertNotNullOrUndefined(method, 'Method');
     assertNotNullOrUndefined(url, 'URL');
 
+    const timeoutMs = timeout ? timeout * 1000 : undefined;
     const request: HttpRequest = {
       method,
       url,
       headers: headers as HttpHeaders,
       queryParams: queryParams as QueryParams,
-      timeout: timeout ? timeout * 1000 : 0,
+      timeout: timeoutMs ?? 0,
       followRedirects,
     };
+    let dispatcher: Dispatcher | undefined = use_proxy || timeoutMs === undefined ? undefined : new Agent({ connect: { timeout: timeoutMs } });
 
     switch (authType) {
       case AuthType.BASIC:
@@ -367,58 +369,64 @@ export const httpSendRequestAction = createAction({
           proxyUrl = `http://${proxySettings.proxy_host}:${proxySettings.proxy_port}`;
         }
 
-        return await httpClient.sendRequest(request, {
-          dispatcher: new ProxyAgent(proxyUrl),
+        dispatcher ??= new ProxyAgent({
+          uri: proxyUrl,
+          proxyTls: { timeout: timeoutMs },
+          requestTls: { timeout: timeoutMs },
         });
       }
-      return await httpClient.sendRequest(request);
+      return await httpClient.sendRequest(request, { dispatcher });
     };
 
-    let attempts = 0;
+    try {
+      let attempts = 0;
 
-    while (attempts < 3) {
-      try {
-        const response = await apiRequest();
-        return handleBinaryResponse(
-          response.body,
-          response.status,
-          response.headers,
-          response_is_binary
-        );
-      } catch (error) {
-        attempts++;
-        const status = error instanceof HttpError ? error.response.status : 0;
+      while (attempts < 3) {
+        try {
+          const response = await apiRequest();
+          return handleBinaryResponse(
+            response.body,
+            response.status,
+            response.headers,
+            response_is_binary
+          );
+        } catch (error) {
+          attempts++;
+          const status = error instanceof HttpError ? error.response.status : 0;
 
-        switch (failureMode) {
-          case 'retry_all': {
-            if (attempts < 3) continue;
-            throw error;
-          }
-          case 'retry_5xx': {
-            if (status >= 500 && status < 600) {
+          switch (failureMode) {
+            case 'retry_all': {
               if (attempts < 3) continue;
               throw error;
             }
-            return toFailsafeOutput({ error, requestBody: request.body });
-          }
-
-          case 'continue_all':
-            return toFailsafeOutput({ error, requestBody: request.body });
-          case 'continue_4xx':
-            if (status >= 400 && status < 500) {
+            case 'retry_5xx': {
+              if (status >= 500 && status < 600) {
+                if (attempts < 3) continue;
+                throw error;
+              }
               return toFailsafeOutput({ error, requestBody: request.body });
             }
-            if (attempts < 3) continue;
-            throw error;
-          case 'continue_none':
-            throw error;
-          default:
-            throw error;
+
+            case 'continue_all':
+              return toFailsafeOutput({ error, requestBody: request.body });
+            case 'continue_4xx':
+              if (status >= 400 && status < 500) {
+                return toFailsafeOutput({ error, requestBody: request.body });
+              }
+              if (attempts < 3) continue;
+              throw error;
+            case 'continue_none':
+              throw error;
+            default:
+              throw error;
+          }
         }
       }
-    }
 
-    throw new Error('Unexpected error occured');
+      throw new Error('Unexpected error occured');
+    } finally {
+      await dispatcher?.close().catch(() => undefined);
+    }
   },
 });
 

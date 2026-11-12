@@ -1,12 +1,9 @@
-// =============================================================================
-// YouTrack Piece - Main Entry Point
-// =============================================================================
-
 import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/pieces-framework';
 
 import { youtrackAuth } from './lib/auth';
+import { youtrackClient } from './lib/common/client';
 
 import { createIssueAction } from './lib/actions/create-issue';
 import { getIssueAction } from './lib/actions/get-issue';
@@ -26,6 +23,29 @@ import { listCommentsAction } from './lib/actions/list-comments';
 import { addUserToTeamAction } from './lib/actions/add-user-to-team';
 import { linkIssuesAction } from './lib/actions/link-issues';
 import { listAttachmentsAction } from './lib/actions/list-attachments';
+import { listProjectsAction } from './lib/actions/list-projects';
+import { getProjectAction } from './lib/actions/get-project';
+import { listProjectCustomFieldsAction } from './lib/actions/list-project-custom-fields';
+import { findUsersAction } from './lib/actions/find-users';
+import { getCurrentUserAction } from './lib/actions/get-current-user';
+import { listGroupsAction } from './lib/actions/list-groups';
+import { listAgileBoardsAction } from './lib/actions/list-agile-boards';
+import { listSprintsAction } from './lib/actions/list-sprints';
+import { createSprintAction } from './lib/actions/create-sprint';
+import { addIssueToSprintAction } from './lib/actions/add-issue-to-sprint';
+import { listLinkTypesAction } from './lib/actions/list-link-types';
+import { getIssueLinksAction } from './lib/actions/get-issue-links';
+import { findWorkItemsAction } from './lib/actions/find-work-items';
+import { addWorkItemAction } from './lib/actions/add-work-item';
+import { deleteWorkItemAction } from './lib/actions/delete-work-item';
+import { searchArticlesAction } from './lib/actions/search-articles';
+import { getArticleAction } from './lib/actions/get-article';
+import { createArticleAction } from './lib/actions/create-article';
+import { updateArticleAction } from './lib/actions/update-article';
+import { listSavedSearchesAction } from './lib/actions/list-saved-searches';
+import { deleteIssueAction } from './lib/actions/delete-issue';
+import { updateCommentAction } from './lib/actions/update-comment';
+import { deleteCommentAction } from './lib/actions/delete-comment';
 import { newIssueTrigger } from './lib/triggers/new-issue';
 import { updatedIssueTrigger } from './lib/triggers/updated-issue';
 
@@ -38,7 +58,7 @@ export const youtrack = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/youtrack.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: youtrackAuth,
-  authors: ['cumonvip1'],
+  authors: ['cumonvip1', 'OdaiAhmed99'],
   actions: [
     createIssueAction,
     getIssueAction,
@@ -58,14 +78,34 @@ export const youtrack = createPiece({
     addUserToTeamAction,
     linkIssuesAction,
     listAttachmentsAction,
+    listProjectsAction,
+    getProjectAction,
+    listProjectCustomFieldsAction,
+    findUsersAction,
+    getCurrentUserAction,
+    listGroupsAction,
+    listAgileBoardsAction,
+    listSprintsAction,
+    createSprintAction,
+    addIssueToSprintAction,
+    listLinkTypesAction,
+    getIssueLinksAction,
+    findWorkItemsAction,
+    addWorkItemAction,
+    deleteWorkItemAction,
+    searchArticlesAction,
+    getArticleAction,
+    createArticleAction,
+    updateArticleAction,
+    listSavedSearchesAction,
+    deleteIssueAction,
+    updateCommentAction,
+    deleteCommentAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => {
-        const baseUrl = auth?.props.baseUrl ?? '';
-        return baseUrl.replace(/\/+$/, '') + '/api';
-      },
+      baseUrl: (auth) => youtrackClient.normalizeBaseUrl(auth?.props.baseUrl) + '/api',
       auth: youtrackAuth,
       authMapping: async (auth) => {
-        return { Authorization: 'Bearer ' + auth.props.apiToken };
+        return { Authorization: 'Bearer ' + String(auth.props.apiToken).trim() };
       },
     }),
   ],

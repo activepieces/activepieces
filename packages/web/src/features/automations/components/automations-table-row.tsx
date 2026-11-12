@@ -25,9 +25,9 @@ import {
   Workflow,
 } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
+import { clipboardUtils } from '@/components/custom/clipboard/use-copy-to-clipboard';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { LoadingSpinner } from '@/components/custom/spinner';
@@ -299,8 +299,9 @@ export const AutomationsTableRow = ({
                 onClick={() => {
                   const url = new URL(window.location.href);
                   url.searchParams.set('folder', item.id);
-                  navigator.clipboard.writeText(url.toString());
-                  toast.success(t('URL copied to clipboard'));
+                  return clipboardUtils.copy({
+                    value: url.toString(),
+                  });
                 }}
               >
                 <Link className="h-4 w-4 mr-2" />

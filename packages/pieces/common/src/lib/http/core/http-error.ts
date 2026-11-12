@@ -55,12 +55,24 @@ export function toFailsafeOutput({ error, requestBody }: FailsafeOutputParams) {
   return {
     response: {
       status: 0,
-      body: error instanceof Error ? error.message : String(error),
+      body: describeError(error),
     },
     request: {
       body: requestBody,
     },
   };
+}
+
+function describeError(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return String(error);
+  }
+  const cause = error.cause;
+  if (!(cause instanceof Error)) {
+    return error.message;
+  }
+  const code = 'code' in cause && typeof cause.code === 'string' ? `${cause.code}: ` : '';
+  return `${error.message} (${code}${cause.message})`;
 }
 
 export type HttpErrorParams = {

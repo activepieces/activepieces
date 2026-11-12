@@ -223,7 +223,7 @@ async function resolveConnectedPieceNames(opts: ToolSearchParams, log: FastifyBa
         cursorRequest: null,
         scope: undefined,
         displayName: undefined,
-        pieceName: undefined,
+        pieceNames: undefined,
         externalIds: undefined,
         limit: CONNECTION_LOOKUP_CAP,
     }))

@@ -1,7 +1,6 @@
-import { PlatformAdminSurface } from '@activepieces/shared';
+import { SalesLinkLocationInWebApp } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Gem, Server } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 import {
   AdminPage,
@@ -13,7 +12,7 @@ import {
 import { sampleData } from '@/app/routes/platform/sample-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useOpenSales } from '@/features/billing';
+import { SelfServeTrialSalesLink } from '@/features/billing';
 import { WorkerGroupsLockReason } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
@@ -27,10 +26,6 @@ export function LockedWorkerGroups({
   reason: WorkerGroupsLockReason;
 }) {
   const copy = lockCopy(reason);
-  const openSales = useOpenSales({
-    featureKey: 'DEDICATED_WORKERS',
-    surface: PlatformAdminSurface.SAMPLE,
-  });
 
   return (
     <AdminPage className="max-w-6xl">
@@ -46,7 +41,7 @@ export function LockedWorkerGroups({
               <h2 className="text-base font-semibold tracking-tight text-gray-12">
                 {copy.title}
               </h2>
-              {reason === 'cloud' ? (
+              {reason === WorkerGroupsLockReason.CLOUD ? (
                 <Badge variant="secondary">
                   <Server />
                   {t('Self-hosted')}
@@ -61,15 +56,20 @@ export function LockedWorkerGroups({
             <p className="text-sm text-gray-11">{copy.description}</p>
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2">
-            <LockAction
-              action={copy.secondary}
-              variant="outline"
-              openSales={openSales}
-            />
-            <LockAction
-              action={copy.primary}
+            <Button variant="outline" asChild>
+              <a
+                {...adminControl(AdminControl.WORKERS_DOCS_LINK)}
+                href={copy.guide.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {copy.guide.label}
+              </a>
+            </Button>
+            <SelfServeTrialSalesLink
+              locationInWebApp={SalesLinkLocationInWebApp.LOCKED_FEATURE}
               variant="default"
-              openSales={openSales}
+              featureKey="DEDICATED_WORKERS"
             />
           </div>
         </div>
@@ -93,101 +93,43 @@ export function LockedWorkerGroups({
   );
 }
 
-function LockAction({
-  action,
-  variant,
-  openSales,
-}: {
-  action: LockActionCopy;
-  variant: 'default' | 'outline';
-  openSales: () => void;
-}) {
-  if ('href' in action) {
-    return (
-      <Button variant={variant} asChild>
-        <a
-          {...adminControl(AdminControl.PLAN_SAMPLE_LINK)}
-          href={action.href}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {action.label}
-        </a>
-      </Button>
-    );
-  }
-  if ('to' in action) {
-    return (
-      <Button variant={variant} asChild>
-        <Link {...adminControl(AdminControl.PLAN_SAMPLE_LINK)} to={action.to}>
-          {action.label}
-        </Link>
-      </Button>
-    );
-  }
-  return (
-    <Button variant={variant} onClick={openSales}>
-      {action.label}
-    </Button>
-  );
-}
-
 function lockCopy(reason: WorkerGroupsLockReason): LockCopy {
   const setupGuide = { label: t('Setup guide'), href: DOCS_URL };
-  const talkToSales = { label: t('Talk to sales') };
   switch (reason) {
-    case 'cloud':
+    case WorkerGroupsLockReason.CLOUD:
       return {
         title: t('Worker groups run on your own servers'),
         description: t(
           'Available on self-hosted Activepieces. Talk to sales to set it up.',
         ),
-        secondary: setupGuide,
-        primary: talkToSales,
+        guide: setupGuide,
       };
-    case 'community':
+    case WorkerGroupsLockReason.COMMUNITY:
       return {
         title: t('Worker groups need the Enterprise edition'),
         description: t(
           'Switch your Activepieces to the Enterprise edition to use them.',
         ),
-        secondary: {
+        guide: {
           label: t('How to switch'),
           href: adminDocs.url(
             'install/configure-operate/enterprise-license#billing-page-not-showing',
           ),
         },
-        primary: talkToSales,
       };
-    case 'no-license':
+    case WorkerGroupsLockReason.NOT_IN_PLAN:
       return {
-        title: t('Add your license key to use worker groups'),
+        title: t('Your plan doesn’t include worker groups'),
         description: t(
-          'Worker groups come with an Enterprise license. Add yours in Billing.',
+          'Talk to sales to add them to your plan, then follow the setup guide to start your first group.',
         ),
-        secondary: talkToSales,
-        primary: { label: t('Add license key'), to: '/platform/billing' },
-      };
-    case 'not-in-license':
-      return {
-        title: t('Your license doesn’t include worker groups'),
-        description: t(
-          'Ask us to add them to your license, then follow the setup guide to start your first group.',
-        ),
-        secondary: setupGuide,
-        primary: talkToSales,
+        guide: setupGuide,
       };
   }
 }
 
-type LockActionCopy =
-  | { label: string; href: string }
-  | { label: string; to: string }
-  | { label: string };
-
 type LockCopy = {
   title: string;
   description: string;
-  secondary: LockActionCopy;
-  primary: LockActionCopy;
+  guide: { label: string; href: string };
 };

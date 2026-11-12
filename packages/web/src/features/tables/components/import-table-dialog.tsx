@@ -374,7 +374,7 @@ const ImportTableForm = ({
               <CopyButton
                 variant="ghost"
                 withoutTooltip={true}
-                textToCopy={serverError}
+                value={serverError}
               />
             </div>
           </div>
