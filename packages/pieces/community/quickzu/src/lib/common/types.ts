@@ -78,7 +78,7 @@ export type ProductDiscountInput = {
   promo_code?: string;
   title: string;
   type: DiscountValueType;
-  value: string;
+  value: number;
 };
 
 export type BusinessTimingInput = {
@@ -89,4 +89,10 @@ export type BusinessTimingInput = {
       end: string;
     };
   };
+};
+
+export type Order = {
+  _id: string;
+  order_id: number;
+  status: string;
 };

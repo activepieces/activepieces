@@ -6,6 +6,7 @@ import {
 	getHeaderRow,
 	googleSheetsAuth,
 	ValueInputOption,
+	googleSheetsCommon,
 } from '../common/common';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { getWorkSheetName } from '../triggers/helpers';
@@ -116,7 +117,7 @@ export const sheetsAddColumn = createAction({
 		);
 
 		const response = await sheets.spreadsheets.values.update({
-			range: `${sheetName}!${columnLabel}1`,
+			range: googleSheetsCommon.sheetRange({ sheetName, range: `${columnLabel}1` }),
 			spreadsheetId: spreadsheet_id,
 			valueInputOption: ValueInputOption.USER_ENTERED,
 			requestBody: {

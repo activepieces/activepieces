@@ -4,12 +4,20 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createMemory } from './lib/actions/create-memory';
 import { retrieveMemories } from './lib/actions/retrieve-memories';
 import { deleteMemory } from './lib/actions/delete-memory';
 import { getMemory } from './lib/actions/get-memory';
 import { createSpace } from './lib/actions/create-space';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { listSpaces } from './lib/actions/list-spaces';
+import { aiCreateSpace } from './lib/actions/ai-create-space';
+import { aiStoreMemory } from './lib/actions/ai-store-memory';
+import { aiRetrieveMemories } from './lib/actions/ai-retrieve-memories';
+import { aiListMemories } from './lib/actions/ai-list-memories';
+import { aiListModels } from './lib/actions/ai-list-models';
+import { goodmemApi } from './lib/common/client';
+import { goodmemValidationMessage } from './lib/common/errors';
 
 export const goodmemAuth = PieceAuth.CustomAuth({
   displayName: 'GoodMem Authentication',
@@ -30,23 +38,16 @@ export const goodmemAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      const baseUrl = auth.baseUrl.replace(/\/$/, '');
-      await httpClient.sendRequest({
+      await goodmemApi.request({
+        auth: { baseUrl: auth.baseUrl, apiKey: auth.apiKey },
         method: HttpMethod.GET,
-        url: `${baseUrl}/v1/spaces`,
-        headers: {
-          'X-API-Key': auth.apiKey,
-          'Content-Type': 'application/json',
-        },
+        path: '/v1/spaces',
+        action: 'connection check',
+        query: { maxResults: 1 },
       });
-      return {
-        valid: true,
-      };
+      return { valid: true };
     } catch (error) {
-      return {
-        valid: false,
-        error: 'Invalid API key or base URL. Please check your credentials.',
-      };
+      return { valid: false, error: goodmemValidationMessage(error) };
     }
   },
   required: true,
@@ -57,7 +58,7 @@ export const goodmem = createPiece({
   description:
     'Store documents as memories with vector embeddings and perform similarity-based semantic retrieval using GoodMem',
   auth: goodmemAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/goodmem.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['bashareid', 'sanket-a11y'],
@@ -67,6 +68,12 @@ export const goodmem = createPiece({
     retrieveMemories,
     getMemory,
     deleteMemory,
+    listSpaces,
+    aiCreateSpace,
+    aiStoreMemory,
+    aiRetrieveMemories,
+    aiListMemories,
+    aiListModels,
   ],
   triggers: [],
 });

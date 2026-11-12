@@ -192,7 +192,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                 ? tryCatch(() => appConnectionService(log).list({
                     projectId: selectedProjectId,
                     platformId,
-                    pieceName: undefined,
+                    pieceNames: undefined,
                     displayName: undefined,
                     status: undefined,
                     cursorRequest: null,

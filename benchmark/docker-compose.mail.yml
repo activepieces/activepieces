@@ -1,0 +1,27 @@
+# Overlay that adds a Mailpit SMTP catcher, so a spec can read the mail the app sends.
+#
+# Usage (e2e-matrix.yml adds it to the EE configs only):
+#   docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.mail.yml up -d
+#
+# With SMTP set, the app mails the invitation link instead of showing it in the invite dialog,
+# so the CE configs run without this overlay and keep testing the setup most self-hosters have.
+# The SMTP variables live here, not in docker-compose.yml: the app reads an empty AP_SMTP_HOST
+# as set, so a `${AP_SMTP_HOST:-}` default there would make every send fail.
+services:
+  mailpit:
+    image: axllent/mailpit:v1.32.0@sha256:0790692be935ea4420d085694f7985b1f692ca6a8771ab0e0bd8ba75ac180498
+    environment:
+      # The app always logs in over plain SMTP, which Mailpit refuses unless both are set.
+      MP_SMTP_AUTH_ACCEPT_ANY: 'true'
+      MP_SMTP_AUTH_ALLOW_INSECURE: 'true'
+    networks:
+      - bench
+
+  app:
+    environment:
+      AP_SMTP_HOST: mailpit
+      AP_SMTP_PORT: 1025
+      AP_SMTP_USERNAME: e2e
+      AP_SMTP_PASSWORD: e2e
+      AP_SMTP_SENDER_EMAIL: e2e@example.com
+      AP_SMTP_SENDER_NAME: E2E

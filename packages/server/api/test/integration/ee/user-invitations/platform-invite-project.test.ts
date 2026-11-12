@@ -320,7 +320,7 @@ describe('A platform where someone has no project is still theirs', () => {
         const response = await app?.inject({ method: 'GET', url: '/api/v1/platforms', headers: { authorization: `Bearer ${token}` } })
 
         expect(response?.statusCode).toBe(StatusCodes.OK)
-        expect(response?.json()).toStrictEqual([{ platformId: mockPlatform.id, platformName: mockPlatform.name, projects: [] }])
+        expect(response?.json()).toStrictEqual([{ platformId: mockPlatform.id, platformName: mockPlatform.name, isOwner: false, projects: [] }])
     })
 
 
