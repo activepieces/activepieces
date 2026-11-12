@@ -143,7 +143,7 @@ If they seem new, end with: "Want to try it on the ticket you're working on?" (m
 - **Feature:**
   - the user's goal in one line;
   - a "done when" you can check;
-  - 3 to 6 acceptance criteria, each testable;
+  - 3 to 6 acceptance criteria, each testable, covering the E2E checklist under "What to test" in `packages/tests-e2e/README.md`;
   - which surfaces it touches (API, UI, worker, MCP, chat tools);
   - editions, with zero setup on self-hosted;
   - flag or rollout;

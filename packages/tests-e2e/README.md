@@ -16,6 +16,36 @@ packages/tests-e2e/
 └── playwright.config.ts
 ```
 
+## What to test
+
+This checklist says which parts of a feature need an E2E test, so that a client never finds a broken common path first. Each ticket marks every item in its acceptance criteria as ``E2E: `<test title>` `` or `no-e2e: <reason>`. A blank item is a forgotten item.
+
+Keep each feature spec to about 90 seconds.
+
+### Every feature
+
+1. **Main job.** Write one sentence that says what the client comes to do. Test that job from start to end and assert the result, such as a form submission that starts a run that succeeds.
+2. **Persistence.** Create, edit and delete a record, and reload the page after each step. The change stays, and a deleted record does not come back.
+3. **Role gate.** A user with a lower role cannot do the main write. Assert the server response, not only a hidden button.
+4. **Project isolation.** A different project does not show the data of the spec.
+5. **Edition and plan gate.** A locked feature shows the upgrade state, not a blank page or a 402 toast. The CE and EE configurations of `e2e-matrix.yml` run this item.
+6. **Invalid input.** For each form, leave one required field empty. The user sees the error message, and the app saves no partial record.
+
+### A feature with a list
+
+7. **Table test.** Test search, filters and pagination in one test. Create one more row than a page holds, put the same random word in every name, and make every row match every filter. Search for that word, turn on every filter, go to page 2 and back, and check that each row shows once.
+8. **Empty state.** Search for a word that no row has, and check the empty row of the table. If the page has its own empty state, stub every request the page makes with `page.route` to return nothing, because the test project is never empty.
+9. **Error state.** Make the list request fail, and assert `DataFetchErrorState`.
+
+The shared DataTable has its own deep test, so each list needs only items 7 to 9.
+
+### When the feature has the part
+
+10. **URL state.** After a reload or the Back button, the filters and the page stay the same.
+11. **Shows in other features.** If another feature uses what this one creates, open it and check that the new item is there, such as a new table in the table picker of a flow step.
+12. **Bulk action.** Select only the rows of the spec, run the action, and assert the result for those rows.
+13. **White-labeling.** A client-facing page shows the platform branding, not "Activepieces".
+
 ## Writing a spec
 
 This section is the one set of E2E guidelines, for people and agents. Other pages link here instead of repeating it.
