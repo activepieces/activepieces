@@ -20,6 +20,10 @@ function useShellHandle(): RouteHandle {
   return useShellMatch().handle;
 }
 
+function parseHandle(value: unknown): RouteHandle | null {
+  return isRouteHandle(value) ? value : null;
+}
+
 function isRouteHandle(value: unknown): value is RouteHandle {
   return isObject(value) && SHELLS.some((shell) => shell === value.shell);
 }
@@ -52,7 +56,13 @@ const CHAT_ALLOWED: Record<RouteHandle['shell'], boolean> = {
   platform: false,
 };
 
-export { useShellMatch, useShellHandle, shellHandles, CHAT_ALLOWED };
+export {
+  useShellMatch,
+  useShellHandle,
+  parseHandle,
+  shellHandles,
+  CHAT_ALLOWED,
+};
 
 export type RouteHandle = {
   shell: (typeof SHELLS)[number];
