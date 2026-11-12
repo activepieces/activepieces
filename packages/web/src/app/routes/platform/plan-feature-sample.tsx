@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
@@ -47,6 +48,13 @@ export function PlanFeatureGuard({
       {children}
     </LockedFeatureGuard>
   );
+}
+
+export function usePlanFeatureLocked(feature: PlanFeature | undefined) {
+  const { platform } = platformHooks.useCurrentPlatform();
+  return isNil(feature)
+    ? false
+    : PLAN_FEATURE_SAMPLES[feature].isLocked(platform.plan);
 }
 
 const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
@@ -149,7 +157,7 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
   },
 };
 
-type PlanFeature =
+export type PlanFeature =
   | 'sso'
   | 'projectRoles'
   | 'globalConnections'

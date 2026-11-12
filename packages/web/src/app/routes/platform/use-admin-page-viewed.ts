@@ -5,10 +5,17 @@ import { useLatest } from 'react-use';
 import { useInsideFeatureSample } from '@/app/components/feature-sample';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 
-export function useAdminPageViewed(page: string) {
+export function useAdminPageViewed({
+  page,
+  lockedByPlan,
+}: {
+  page: string;
+  lockedByPlan: boolean;
+}) {
   const { capture } = useTelemetry();
   const latestCapture = useLatest(capture);
-  const locked = useInsideFeatureSample();
+  const insideFeatureSample = useInsideFeatureSample();
+  const locked = insideFeatureSample || lockedByPlan;
 
   useEffect(() => {
     latestCapture.current({
