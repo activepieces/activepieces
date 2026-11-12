@@ -340,6 +340,7 @@ export const BATCH_PAGE_SIZE = 50;
 export const FAILED_BATCH_STATUSES = [
   ...FAILED_STATES,
   FlowRunStatus.LOG_SIZE_EXCEEDED,
+  FlowRunStatus.CANCELED,
 ];
 
 export type BatchStepRunOutput = z.infer<typeof BatchStepRunOutput>;
