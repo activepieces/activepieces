@@ -155,4 +155,5 @@ export type FrontendErrorSource =
   | 'unhandled-rejection'
   | 'chunk-preload'
   | 'query'
-  | 'table-save';
+  | 'table-save'
+  | 'chat-layout-move';
