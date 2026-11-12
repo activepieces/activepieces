@@ -263,6 +263,8 @@ const ImportFlowDialog = (
             </span>
             <Input
               id="file-input"
+              data-testid="import-flow-file-input"
+              aria-label={t('Flow')}
               type="file"
               accept={props.insideBuilder ? '.json' : '.json,.zip'}
               ref={fileInputRef}
@@ -308,7 +310,11 @@ const ImportFlowDialog = (
           )}
         </div>
         {errorMessage && (
-          <FormError formMessageId="import-flow-error-message" className="mt-4">
+          <FormError
+            formMessageId="import-flow-error-message"
+            data-testid="import-flow-error"
+            className="mt-4"
+          >
             {errorMessage}
           </FormError>
         )}

@@ -46,7 +46,10 @@ export const AutomationsSelectionBar = ({
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
         >
-          <div className="flex items-center gap-3 bg-gray-1 border rounded-xl shadow-lg p-2">
+          <div
+            className="flex items-center gap-3 bg-gray-1 border rounded-xl shadow-lg p-2"
+            data-testid="automations-selection-bar"
+          >
             {!embedState.hideFolders && (
               <Button
                 variant="ghost"

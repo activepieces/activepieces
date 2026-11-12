@@ -222,6 +222,7 @@ export const AutomationsTable = ({
                   >
                     <div
                       className={cn(rowClassName)}
+                      data-testid="automations-row"
                       onClick={(e) =>
                         onRowClick(group.item, e.ctrlKey || e.metaKey)
                       }
@@ -268,6 +269,7 @@ export const AutomationsTable = ({
                         <div
                           key={`${child.type}-${child.id}`}
                           className={cn(rowClassName, 'border-t')}
+                          data-testid="automations-row"
                           onClick={(e) =>
                             onRowClick(child, e.ctrlKey || e.metaKey)
                           }
@@ -312,6 +314,7 @@ export const AutomationsTable = ({
                 <div
                   key={`${group.item.type}-${group.item.id}`}
                   className={cn(rowClassName, 'border-b')}
+                  data-testid="automations-row"
                   onClick={(e) =>
                     onRowClick(group.item, e.ctrlKey || e.metaKey)
                   }

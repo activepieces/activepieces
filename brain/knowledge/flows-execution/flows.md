@@ -109,5 +109,6 @@ Entry point: `flowService`, exported from `flows/flow/flow.service.ts` and calle
 - `packages/web/src/components/custom/smart-output-viewer/` — friendly and raw output rendering for test-step and run details
 - `packages/web/src/lib/path-utils.ts` — dot/bracket path resolution with the wrapper-key fallback
 - `packages/web/src/app/routes/automations/index.tsx` — flows list page
+- `packages/web/src/features/automations/` — flows list data hook, rows, filters, pagination, selection bar, rename and folder dialogs
 
-Paths verified 2026-07-17. An earlier version pointed the shared flow types at `packages/core/shared/src/lib/automation/flows/`; they moved to `packages/core/execution/src/lib/flows/`. `expression-rewriter.ts` also left that tree and now lives in the server's `flow-version/migrations/`.
+Paths verified 2026-11-12. An earlier version pointed the shared flow types at `packages/core/shared/src/lib/automation/flows/`; they moved to `packages/core/execution/src/lib/flows/`. `expression-rewriter.ts` also left that tree and now lives in the server's `flow-version/migrations/`.
