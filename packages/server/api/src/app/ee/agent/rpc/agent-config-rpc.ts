@@ -299,7 +299,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                     provider: contextProvider,
                     reservedTokens: payloadReservedTokens,
                     model,
-                    providerOptions: agentAiUtils.buildProviderOptions({ provider: candidate.config.provider, tier: { id: tier.id, thinkingBudget: 0 }, modelId: candidate.modelId, disableThinking: true }),
+                    providerOptions: agentAiUtils.buildProviderOptions({ provider: candidate.config.provider, tier, modelId: candidate.modelId, disableThinking: true }),
                     log,
                     billing: compactionBilling,
                 }),
@@ -382,7 +382,7 @@ function smallestContextProvider({ configs }: { configs: GetProviderConfigRespon
     return configs.reduce((smallest, config) => aiProviderUtils.getMaxContextTokens({ provider: config.provider }) < aiProviderUtils.getMaxContextTokens({ provider: smallest.provider }) ? config : smallest).provider
 }
 
-async function onFirstModelThatAnswers<T>({ models, billing, run, log }: { models: { config: GetProviderConfigResponse, modelId: string }[], billing: ActivepiecesAiBilling, run: (params: { model: LanguageModel, candidate: { config: GetProviderConfigResponse, modelId: string } }) => Promise<T>, log: FastifyBaseLogger }): Promise<T> {
+async function onFirstModelThatAnswers<T>({ models, billing, run, log }: { models: CompactionCandidate[], billing: ActivepiecesAiBilling, run: (params: { model: LanguageModel, candidate: CompactionCandidate }) => Promise<T>, log: FastifyBaseLogger }): Promise<T> {
     for (const [index, candidate] of models.entries()) {
         const attempt = await tryCatch(() => run({ model: aiUtils.createModel({ credentials: candidate.config, modelId: candidate.modelId, providerConfigId: candidate.config.configId, billing, usageOnly: true }), candidate }))
         if (attempt.error === null) {
@@ -409,3 +409,5 @@ function tierFieldsOf({ tierRun }: { tierRun: AgentTierRun | null }): Pick<Agent
 }
 
 const TOOL_SCHEMA_TOKEN_ESTIMATE = 12_000
+
+type CompactionCandidate = { config: GetProviderConfigResponse, modelId: string }

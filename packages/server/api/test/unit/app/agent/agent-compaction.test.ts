@@ -12,6 +12,7 @@ vi.mock('ai', async (importOriginal) => ({
 
 const summaryModel = new MockLanguageModelV3()
 const silentLog = Fastify({ logger: false }).log
+const RESERVED_TOKENS = 11_872 + 52_000
 
 function makeMessages(count: number, charsPer = 100): ModelMessage[] {
     return Array.from({ length: count }, (_, i) => ({
@@ -224,7 +225,6 @@ describe('agentCompaction.buildCompactedPayload', () => {
 })
 
 describe('agentCompaction with reserved tokens', () => {
-    const RESERVED_TOKENS = 11_872 + 52_000
 
     it('compacts a history that fits the window only if output and tool schemas were free', () => {
         expect(agentCompaction.shouldCompact({
@@ -273,8 +273,7 @@ describe('agentCompaction with reserved tokens', () => {
             model: summaryModel,
             log: silentLog,
         })
-        const prompt = String(vi.mocked(generateText).mock.calls.at(-1)?.[0]?.prompt)
-        expect(prompt.length / 4).toBeLessThanOrEqual(32_000)
+        expect(lastPromptTokens()).toBeLessThanOrEqual(32_000)
         expect(result.summarizedUpToIndex).toBeGreaterThan(0)
     })
 
@@ -301,8 +300,7 @@ describe('agentCompaction with reserved tokens', () => {
             log: silentLog,
         })
         expect(next.summarizedUpToIndex).toBeGreaterThan(0)
-        const prompt = String(vi.mocked(generateText).mock.calls.at(-1)?.[0]?.prompt)
-        expect(prompt.length / 4).toBeLessThanOrEqual(32_000)
+        expect(lastPromptTokens()).toBeLessThanOrEqual(32_000)
     })
 
     it('sends the provider options it is given, so reasoning can be turned off for the summary', async () => {
@@ -422,7 +420,7 @@ async function compactRepeatedly({ messages, passes }: { messages: ModelMessage[
             existingSummary: state.summary,
             summarizedUpToIndex: state.summarizedUpToIndex,
             provider: AIProviderName.ANTHROPIC,
-            reservedTokens: 11_872 + 52_000,
+            reservedTokens: RESERVED_TOKENS,
             model: summaryModel,
             log: silentLog,
         })
@@ -430,4 +428,8 @@ async function compactRepeatedly({ messages, passes }: { messages: ModelMessage[
         state = result
     }
     return indexes
+}
+
+function lastPromptTokens(): number {
+    return String(vi.mocked(generateText).mock.calls.at(-1)?.[0]?.prompt).length / 4
 }

@@ -150,21 +150,14 @@ function cutoffForOnePass({ messages, startIndex, windowCutoffIndex }: {
     let tokens = 0
     let end = startIndex
     while (end < windowCutoffIndex) {
-        tokens += tokensIn(extractTextContent(messages[end]))
-        if (end > startIndex && tokens > MAX_SUMMARY_INPUT_TOKENS_PER_PASS) {
+        const next = tokensIn(extractTextContent(messages[end]))
+        if (end > startIndex && tokens + next > MAX_SUMMARY_INPUT_TOKENS_PER_PASS && messages[end].role !== 'tool') {
             break
         }
+        tokens += next
         end++
     }
-    const snapped = snapToSafeMessageBoundary({ messages, rawCutoff: end })
-    if (snapped > startIndex) {
-        return snapped
-    }
-    let forward = end
-    while (forward < windowCutoffIndex && messages[forward].role === 'tool') {
-        forward++
-    }
-    return forward
+    return end
 }
 
 function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provider, reservedTokens }: {
