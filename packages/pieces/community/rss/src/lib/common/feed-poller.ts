@@ -291,13 +291,13 @@ function advanceCursor({
 		const published = publishedAtOf({ item });
 		return published === null || floor === null || published >= floor;
 	});
-	const atCursor = items.filter((item) => publishedAt !== null && publishedAtOf({ item }) === publishedAt);
+	const atOrAfterCursor = items.filter((item) => needsContentKey({ item, publishedAt }));
 	const required = [...new Set(keysNewestFirst({ items: stillComparable, feedUrl }))];
 	const requiredItemKeys = new Set(required);
-	const atCursorContent = [...new Set(contentKeys({ items: atCursor }))].filter(
+	const atOrAfterCursorContent = [...new Set(contentKeys({ items: atOrAfterCursor }))].filter(
 		(key) => !requiredItemKeys.has(key),
 	);
-	const requiredSet = new Set([...required, ...atCursorContent]);
+	const requiredSet = new Set([...required, ...atOrAfterCursorContent]);
 	const retained = cursor.seen
 		.filter((key) => !requiredSet.has(key))
 		.slice(0, MAX_RETAINED_PREVIOUS_KEYS);
@@ -308,7 +308,7 @@ function advanceCursor({
 		.slice(0, MAX_RETAINED_PREVIOUS_KEYS);
 	return {
 		publishedAt,
-		seen: [...required, ...atCursorContent, ...retained].slice(0, MAX_SEEN_KEYS),
+		seen: [...required, ...atOrAfterCursorContent, ...retained].slice(0, MAX_SEEN_KEYS),
 		cross: [...requiredCross, ...retainedCross].slice(0, MAX_CROSS_KEYS),
 		...overflowFlag({ count: required.length }),
 	};
@@ -386,7 +386,7 @@ function isNewForCursor({
 		return false;
 	}
 	const published = publishedAtOf({ item });
-	if (published !== null && published === cursor.publishedAt) {
+	if (needsContentKey({ item, publishedAt: cursor.publishedAt })) {
 		const content = contentKey({ item });
 		if (content !== null && seen.has(content)) {
 			return false;
@@ -500,11 +500,36 @@ function itemKey({ item, feedUrl }: { item: FeedParser.Item; feedUrl: string }):
 }
 
 // Links (and link-derived guids) can carry a tracking parameter that changes on every fetch, e.g.
-// Bing News. For items dated exactly at the cursor, title + date is a second identity that does not
+// Bing News. For items dated at or after the cursor, title + date is a second identity that does not
 // depend on the link, so such an item is not fired again; a different title in the same second still fires.
+// An undated item without its own guid uses its title alone.
 function contentKey({ item }: { item: FeedParser.Item }): string | null {
+	if (!item.title) {
+		return null;
+	}
 	const published = publishedAtOf({ item });
-	return item.title && published !== null ? hashKey({ identity: `c|${item.title}|${published}` }) : null;
+	if (published !== null) {
+		return hashKey({ identity: `c|${item.title}|${published}` });
+	}
+	return hasOwnGuid({ item }) ? null : hashKey({ identity: `c|${item.title}|undated` });
+}
+
+function needsContentKey({
+	item,
+	publishedAt,
+}: {
+	item: FeedParser.Item;
+	publishedAt: number | null;
+}): boolean {
+	const published = publishedAtOf({ item });
+	if (published === null) {
+		return !hasOwnGuid({ item });
+	}
+	return publishedAt !== null && published >= publishedAt;
+}
+
+function hasOwnGuid({ item }: { item: FeedParser.Item }): boolean {
+	return Boolean(item.guid) && item.guid !== item.link;
 }
 
 function contentKeys({ items }: { items: FeedParser.Item[] }): string[] {
