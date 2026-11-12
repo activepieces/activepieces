@@ -1,7 +1,8 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AiCallContext, AIProviderName, AiUsageEnvironment, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { aiUtils, wideEvent } from '@activepieces/server-utils'
-import { AGENT_RUN_USAGE_ORIGIN, AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, RpcTimeoutError, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
+import { AGENT_RUN_USAGE_ORIGIN, AgentAbortReason, AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, RpcTimeoutError, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, LanguageModel, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
+import { z } from 'zod'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { toResolvedAiFile } from '../../ai/ai-files'
 import { agentMcpClient, McpConnection } from './agent-mcp-client'
@@ -25,6 +26,7 @@ const HEARTBEAT_INTERVAL_MS = 15_000
 const MAIN_RUN_CREDIT_KEY = 'main'
 const RETRY_MAX_ATTEMPTS = 3
 const RETRY_BASE_DELAY_MS = 1_000
+const AgentAbortReasonSchema = z.enum(AgentAbortReason)
 // A turn quiet this long with NO tool call and NO reasoning block in flight is REPORTED as idle —
 // a monitoring signal for the console. It never aborts the turn (see streamChunksToClient): tool/
 // approval waits and extended thinking legitimately hold the stream silent, so those suspend it,
@@ -184,7 +186,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             // idle watchdog, so it lands in the existing cancel-save branch (status → IDLE).
             turnWallClockTimer = setTimeout(() => {
                 log.error({ conversation: { id: conversationId }, maxTurnMs: MAX_AGENT_TURN_WALL_CLOCK_MS }, 'Chat turn exceeded max wall-clock — aborting')
-                abortController.abort()
+                abortTurn({ abortController, reason: AgentAbortReason.WALL_CLOCK })
             }, MAX_AGENT_TURN_WALL_CLOCK_MS)
 
             const checkCancelled = async () => {
@@ -192,7 +194,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                     toolName: '__cancel_check', toolInput: { conversationId, runId }, platformId, userId, source,
                 }))
                 if (response?.result === true) {
-                    abortController.abort()
+                    abortTurn({ abortController, reason: parseAbortReason(response.cancelReason) })
                 }
             }
 
@@ -357,7 +359,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 if (streamError) {
                     log.warn({ error: streamError, conversation: { id: conversationId } }, 'Stream error occurred during abort')
                 }
-                log.info({ conversation: { id: conversationId }, completedSteps: accumulatedResponseMessages.length }, 'Chat agent cancelled by user')
+                log.info({ conversation: { id: conversationId }, completedSteps: accumulatedResponseMessages.length, abortReason: abortReasonOf(abortController.signal) }, 'Chat agent turn aborted')
                 const thinkingDurationMs = Date.now() - thinkingStartTime
                 const cancelSavePayload = {
                     conversationId,
@@ -521,6 +523,28 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer, source, log })
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
     },
+}
+
+function abortTurn({ abortController, reason }: { abortController: AbortController, reason: AgentAbortReason }): void {
+    if (abortController.signal.aborted) {
+        return
+    }
+    wideEvent.set({ agentRun: { abortReason: reason } })
+    abortController.abort(new DOMException(reason, 'AbortError'))
+}
+
+function parseAbortReason(value: unknown): AgentAbortReason {
+    const parsed = AgentAbortReasonSchema.safeParse(value)
+    return parsed.success ? parsed.data : AgentAbortReason.USER_CANCEL
+}
+
+function abortReasonOf(signal: AbortSignal): AgentAbortReason | undefined {
+    const reason: unknown = signal.reason
+    if (!(reason instanceof DOMException)) {
+        return undefined
+    }
+    const parsed = AgentAbortReasonSchema.safeParse(reason.message)
+    return parsed.success ? parsed.data : undefined
 }
 
 function answeredByOf({ answeredBy }: { answeredBy: TurnModel }): Pick<SaveAgentMessagesRequest, 'answeredBy'> {

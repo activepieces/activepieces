@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, unique } from '@activepieces/core-utils'
-import { Agent, AgentConversation, AgentConversationStatus, AgentHistoryMessage, AgentRunFlowReference, AgentRunListItem, AgentRunSource, CreateAgentConversationRequest, PersistedAgentMessage, PersistedAgentRole, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest } from '@activepieces/shared'
+import { Agent, AgentAbortReason, AgentConversation, AgentConversationStatus, AgentHistoryMessage, AgentRunFlowReference, AgentRunListItem, AgentRunSource, CreateAgentConversationRequest, PersistedAgentMessage, PersistedAgentRole, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
@@ -252,7 +252,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
     async deleteConversation({ id, platformId, userId }: ConversationIdentifier): Promise<void> {
         const conversation = await this.getConversationOrThrow({ id, platformId, userId })
         if (conversation.status === AgentConversationStatus.STREAMING) {
-            await agentApprovalGate.requestCancel({ conversationId: id })
+            await agentApprovalGate.requestCancel({ conversationId: id, reason: AgentAbortReason.CONVERSATION_DELETED })
             await agentHelpers.conversationRepo().update(id, {
                 status: AgentConversationStatus.IDLE,
             })
