@@ -29,6 +29,21 @@ export const aiUpdateOrderAction = createAction({
       description: 'Numeric ID of an existing Salla customer to move the order to, for example 1209983424. Find it with List Customers. Leave empty to keep the current customer.',
       required: false,
     }),
+    customer_name: Property.ShortText({
+      displayName: 'Customer Name',
+      description: 'Not supported, leave empty: Salla cannot change a customer\'s name from an order. Use Update Customer.',
+      required: false,
+    }),
+    customer_mobile: Property.ShortText({
+      displayName: 'Customer Mobile',
+      description: 'Not supported, leave empty: Salla cannot change a customer\'s mobile from an order. Use Update Customer.',
+      required: false,
+    }),
+    customer_email: Property.ShortText({
+      displayName: 'Customer Email',
+      description: 'Not supported, leave empty: Salla cannot change a customer\'s email from an order. Use Update Customer.',
+      required: false,
+    }),
     receiver_name: Property.ShortText({
       displayName: 'Receiver Name',
       description: 'Name of the person receiving the order, for example Ahmed Al-Harbi.',
@@ -195,6 +210,7 @@ export const aiUpdateOrderAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
+    sallaOrders.refuseCustomerDetails({ name: propsValue.customer_name, mobile: propsValue.customer_mobile, email: propsValue.customer_email });
     const acceptedMethods = sallaUtils.toStringList(propsValue.accepted_methods);
     const employeeIds = sallaUtils.toStringList(propsValue.employee_ids);
     return sallaOrders.updateOrder({

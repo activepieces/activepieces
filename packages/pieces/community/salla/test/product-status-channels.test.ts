@@ -30,7 +30,23 @@ function memoryStore(): Store {
   };
 }
 
-type ProductState = { status: 'sale' | 'out' | 'hidden'; channels: string[] };
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function toStatus(value: unknown): ProductState['status'] {
+  if (value === 'sale' || value === 'out' || value === 'hidden') {
+    return value;
+  }
+  throw new Error(`unexpected status ${String(value)}`);
+}
+
+function channelsIn(operations: unknown): string[] {
+  const first = Array.isArray(operations) ? operations[0] : undefined;
+  const value = isRecord(first) ? first['value'] : undefined;
+  const channels = isRecord(value) ? value['channels'] : undefined;
+  return Array.isArray(channels) ? channels.filter((channel): channel is string => typeof channel === 'string') : [];
+}
 
 function fakeSalla({ status, channels, putResetsChannels = false }: ProductState & { putResetsChannels?: boolean }) {
   const product: ProductState = { status, channels: [...channels] };
@@ -39,16 +55,15 @@ function fakeSalla({ status, channels, putResetsChannels = false }: ProductState
   vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request: HttpRequest) => {
     const path = pathOf(request);
     calls.push(`${request.method} ${path}`);
-    const body = (request.body ?? {}) as Record<string, unknown>;
+    const body = isRecord(request.body) ? request.body : {};
     if (request.method === HttpMethod.POST && path === '/products/9/status') {
-      const next = body['status'] as ProductState['status'];
+      const next = toStatus(body['status']);
       product.status = next;
       product.channels = next === 'hidden' ? [] : next === 'sale' ? ['web'] : product.channels;
       return { status: 201, headers: {}, body: { data: { message: 'updated' } } };
     }
     if (request.method === HttpMethod.POST && path === '/products/actions') {
-      const operations = body['operations'] as Array<{ value: { channels: string[] } }>;
-      product.channels = [...operations[0].value.channels];
+      product.channels = channelsIn(body['operations']);
       product.status = 'sale';
       return { status: 200, headers: {}, body: { success: true } };
     }
@@ -163,3 +178,5 @@ describe('Update Product status keeps the product as asked', () => {
     expect(salla.product).toEqual({ status: 'out', channels: ['web', 'app'] });
   });
 });
+
+type ProductState = { status: 'sale' | 'out' | 'hidden'; channels: string[] };

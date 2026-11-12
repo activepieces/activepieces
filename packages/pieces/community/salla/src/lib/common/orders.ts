@@ -325,6 +325,15 @@ async function updateOrder({
   return sallaUtils.withOrderExtras(response.body.data);
 }
 
+function refuseCustomerDetails({ name, mobile, email }: { name: unknown; mobile: unknown; email: unknown }): void {
+  const filled = [name, mobile, email].some((value) => (typeof value === 'string' ? value.trim().length > 0 : value !== undefined && value !== null));
+  if (filled) {
+    throw new Error(
+      'Salla cannot change a customer\'s name, mobile or email from an order: it moves the order to the store\'s visitor customer instead. Nothing was sent. Clear Customer Name, Customer Mobile and Customer Email, and use Update Customer to change the customer.',
+    );
+  }
+}
+
 function buildUpdateOrderBody(input: UpdateOrderInput): Record<string, unknown> {
   const customerId = sallaUtils.optionalNumber({ value: input.customerId, label: 'Customer ID' });
   const payment = input.payment
@@ -482,6 +491,7 @@ export const sallaOrders = {
   createOrder,
   buildCreateOrderBody,
   updateOrder,
+  refuseCustomerDetails,
   buildUpdateOrderBody,
 };
 

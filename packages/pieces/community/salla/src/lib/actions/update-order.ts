@@ -73,6 +73,24 @@ export const updateOrderAction = createAction({
       description:
         'Move the order to this existing customer. Search by name or mobile, or map a customer ID such as 1227534533. Leave empty to keep the current customer. To change a customer\'s name, mobile or email, use Update Customer.',
     }),
+    customer_name: Property.ShortText({
+      displayName: 'Customer Name (not supported)',
+      description: 'Leave empty. Salla cannot change a customer\'s name from an order; use Update Customer.',
+      advanced: true,
+      required: false,
+    }),
+    customer_mobile: Property.ShortText({
+      displayName: 'Customer Mobile (not supported)',
+      description: 'Leave empty. Salla cannot change a customer\'s mobile from an order; use Update Customer.',
+      advanced: true,
+      required: false,
+    }),
+    customer_email: Property.ShortText({
+      displayName: 'Customer Email (not supported)',
+      description: 'Leave empty. Salla cannot change a customer\'s email from an order; use Update Customer.',
+      advanced: true,
+      required: false,
+    }),
     delivery_method: Property.StaticDropdown<DeliveryMethod | 'unchanged', false>({
       displayName: 'Delivery Method',
       description: 'Shipping sends the order to the address below; Pickup needs a branch.',
@@ -199,6 +217,7 @@ export const updateOrderAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
+    sallaOrders.refuseCustomerDetails({ name: propsValue.customer_name, mobile: propsValue.customer_mobile, email: propsValue.customer_email });
     const deliveryMethod = propsValue.delivery_method;
     return sallaOrders.updateOrder({
       auth,
