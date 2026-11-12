@@ -13,32 +13,32 @@ export const airtableDeleteRecordsBatchAction = createAction({
   auth: airtableAuth,
   name: 'delete_records_batch',
   classification: 'DESTRUCTIVE',
-  displayName: 'Delete Records Batch (Agent)',
+  displayName: 'Delete Records Batch',
   description: 'Delete up to 10 records by ID in one call.',
   audience: 'ai',
   outputSchema: deleteRecordsBatchActionOutputSchema,
   aiMetadata: {
     description:
-      'Permanently deletes up to 10 records from a table in one call, given their record IDs. Use to remove several rows at once; to delete a single record use Delete Record (Agent). Effectively idempotent: the end state is the records gone (a repeat call reports the already-deleted IDs).',
+      'Permanently deletes up to 10 records from a table in one call, given their record IDs. Use to remove several rows at once; to delete a single record use Delete Record. Effectively idempotent: the end state is the records gone (a repeat call reports the already-deleted IDs).',
     idempotent: true,
   },
   props: {
     base_id: Property.ShortText({
       displayName: 'Base ID',
       description:
-        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases (Agent).',
+        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases.',
       required: true,
     }),
     table_id_or_name: Property.ShortText({
       displayName: 'Table ID or Name',
       description:
-        'The table ID (e.g. "tblXXXXXXXXXXXXXX") or its exact name. Resolve it with Get Base Schema (Agent).',
+        'The table ID (e.g. "tblXXXXXXXXXXXXXX") or its exact name. Resolve it with Get Base Schema.',
       required: true,
     }),
     record_ids: Property.Array({
       displayName: 'Record IDs',
       description:
-        'A list of up to 10 record IDs to delete, e.g. ["recAAA", "recBBB"]. Resolve IDs with Search Records (Agent) or List Records (Agent).',
+        'A list of up to 10 record IDs to delete, e.g. ["recAAA", "recBBB"]. Resolve IDs with Search Records or List Records.',
       required: true,
     }),
   },
@@ -90,7 +90,7 @@ export const airtableDeleteRecordsBatchAction = createAction({
       }
       if (status === 404) {
         throw new Error(
-          `Base "${base_id}" or table "${table_id_or_name}" was not found. Verify the IDs with List Bases (Agent) and Get Base Schema (Agent).`
+          `Base "${base_id}" or table "${table_id_or_name}" was not found. Verify the IDs with List Bases and Get Base Schema.`
         );
       }
       if (status === 422) {
