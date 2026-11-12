@@ -1,5 +1,5 @@
 import { apId, isNil } from '@activepieces/core-utils'
-import { AgentConversationStatus, AgentPromptOverride, AgentRunSource, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_TEXT_LENGTH, PersistedAgentRole, SimulateAgentRequest, WorkerJobType } from '@activepieces/shared'
+import { AgentConversationStatus, AgentPromptOverride, AgentRunSource, ApEnvironment, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_TEXT_LENGTH, PersistedAgentRole, SimulateAgentRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -33,6 +33,10 @@ async function checkApiKeyPreHandler(req: FastifyRequest, res: FastifyReply): Pr
     }
 }
 
+function isDevelopment(): boolean {
+    return system.get(AppSystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT
+}
+
 export const agentEvalModule: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preHandler', checkApiKeyPreHandler)
     await app.register(agentEvalController, { prefix: '/v1/agents' })
@@ -54,6 +58,9 @@ const agentEvalController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/eval/mcp-credentials', McpCredentialsRoute, async (request, reply) => {
+        if (!isDevelopment()) {
+            return reply.status(StatusCodes.NOT_FOUND).send({ message: 'Not found' })
+        }
         const platform = await platformService(request.log).getOldestPlatform()
         if (isNil(platform)) {
             return reply.status(StatusCodes.NOT_FOUND).send({ message: 'No platform exists on this instance' })
@@ -71,6 +78,9 @@ const agentEvalController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/eval/execute-tool', ExecuteToolRoute, async (request, reply) => {
+        if (!isDevelopment() || !isEvalConversationId(request.body.conversationId)) {
+            return reply.status(StatusCodes.NOT_FOUND).send({ message: 'Not found' })
+        }
         const platform = await platformService(request.log).getOldestPlatform()
         if (isNil(platform)) {
             return reply.status(StatusCodes.NOT_FOUND).send({ message: 'No platform exists on this instance' })
