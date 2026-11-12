@@ -23,19 +23,24 @@ function apiValues({ grid, from, to }: { grid: string[][], from: number, to: num
 }
 
 vi.mock(h.sheetsPath, () => ({
-    sheets: () => ({
-        spreadsheets: {
-            get: async () => ({ data: { sheets: [{ properties: { sheetId: 0, title: 'Orders', index: 0 } }] } }),
-            values: {
-                get: async ({ range }: { range: string }) => {
-                    if (range === 'Orders') return { data: { values: apiValues({ grid: h.grid, from: 1, to: h.grid.length }) } }
-                    const m = /^Orders!(\d+):(\d+)$/.exec(range)
-                    if (!m) throw new Error(`unexpected range ${range}`)
-                    return { data: { values: apiValues({ grid: h.grid, from: Number(m[1]), to: Number(m[2]) }) } }
+    sheets: () => {
+        const valuesGet = async ({ range }: { range: string }) => {
+            if (range === 'Orders') return { data: { values: apiValues({ grid: h.grid, from: 1, to: h.grid.length }) } }
+            const m = /^Orders!(\d+):(\d+)$/.exec(range)
+            if (!m) throw new Error(`unexpected range ${range}`)
+            return { data: { values: apiValues({ grid: h.grid, from: Number(m[1]), to: Number(m[2]) }) } }
+        }
+        return {
+            spreadsheets: {
+                get: async (params: unknown) => {
+                    const grid = await import('./support/grid-data')
+                    if (grid.isGridRequest({ params })) return grid.gridViaValues({ params, valuesGet })
+                    return { data: { sheets: [{ properties: { sheetId: 0, title: 'Orders', index: 0 } }] } }
                 },
+                values: { get: valuesGet },
             },
-        },
-    }),
+        }
+    },
 }))
 vi.mock(h.drivePath, () => ({
     drive: () => ({

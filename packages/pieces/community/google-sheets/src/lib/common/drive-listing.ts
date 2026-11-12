@@ -5,6 +5,7 @@ const LIST_CALL_TIMEOUT_MS = 10_000;
 const LISTING_BUDGET_MS = 25_000;
 const SHARED_DRIVES_PAGE_SIZE = 100;
 const SHARED_DRIVE_LIST_CONCURRENCY = 5;
+const SAMPLE_MAX_PAGES = 10;
 const LISTING_TIMED_OUT =
 	'Google Drive took too long to list spreadsheets. Nothing was skipped; the next check will try again.';
 
@@ -45,11 +46,13 @@ async function listPages({
 	params,
 	maxPages,
 	deadline,
+	accept,
 }: {
 	drive: drive_v3.Drive;
 	params: drive_v3.Params$Resource$Files$List;
 	maxPages: number | undefined;
 	deadline: number;
+	accept: FileFilter | undefined;
 }): Promise<{ files: drive_v3.Schema$File[]; incomplete: boolean }> {
 	const files: drive_v3.Schema$File[] = [];
 	let pageToken: string | undefined = undefined;
@@ -68,6 +71,9 @@ async function listPages({
 		if (maxPages && pagesFetched >= maxPages) {
 			break;
 		}
+		if (accept && (files.some(accept) || Date.now() >= deadline)) {
+			break;
+		}
 	} while (pageToken);
 	return { files, incomplete: false };
 }
@@ -82,13 +88,15 @@ async function listCompleteCorpus({
 	params,
 	maxPages,
 	deadline,
+	accept,
 }: {
 	drive: drive_v3.Drive;
 	params: drive_v3.Params$Resource$Files$List;
 	maxPages: number | undefined;
 	deadline: number;
+	accept: FileFilter | undefined;
 }): Promise<drive_v3.Schema$File[]> {
-	const result = await listPages({ drive, params, maxPages, deadline });
+	const result = await listPages({ drive, params, maxPages, deadline, accept });
 	if (result.incomplete) {
 		throw incompleteSearchError({ params });
 	}
@@ -129,12 +137,14 @@ async function listSharedDrivesFiles({
 	maxPages,
 	deadline,
 	driveIds,
+	accept,
 }: {
 	drive: drive_v3.Drive;
 	params: drive_v3.Params$Resource$Files$List;
 	maxPages: number | undefined;
 	deadline: number;
 	driveIds: string[];
+	accept: FileFilter | undefined;
 }): Promise<DriveFileListing> {
 	const files: drive_v3.Schema$File[] = [];
 	const incompleteDrives: string[] = [];
@@ -155,6 +165,7 @@ async function listSharedDrivesFiles({
 						},
 						maxPages,
 						deadline,
+						accept,
 					}),
 				),
 			})),
@@ -192,13 +203,15 @@ async function listFilesAcrossCorpora({
 	drive,
 	params,
 	maxPages,
+	accept,
 }: {
 	drive: drive_v3.Drive;
 	params: drive_v3.Params$Resource$Files$List;
 	maxPages: number | undefined;
+	accept?: FileFilter;
 }): Promise<DriveFileListing> {
 	const deadline = Date.now() + LISTING_BUDGET_MS;
-	const primary = await listPages({ drive, params, maxPages, deadline });
+	const primary = await listPages({ drive, params, maxPages, deadline, accept });
 	if (!primary.incomplete) {
 		return { files: primary.files, incompleteDrives: [] };
 	}
@@ -210,9 +223,10 @@ async function listFilesAcrossCorpora({
 		params: { ...params, corpora: 'user' },
 		maxPages,
 		deadline,
+		accept,
 	});
 	const driveIds = await listSharedDriveIds({ drive, deadline });
-	const shared = await listSharedDrivesFiles({ drive, params, maxPages, deadline, driveIds });
+	const shared = await listSharedDrivesFiles({ drive, params, maxPages, deadline, driveIds, accept });
 	return {
 		files: mergeNewestFirst([...userFiles, ...shared.files]),
 		incompleteDrives: shared.incompleteDrives,
@@ -222,8 +236,11 @@ async function listFilesAcrossCorpora({
 export const driveListing = {
 	listFilesAcrossCorpora,
 	listingBudgetMs: LISTING_BUDGET_MS,
+	sampleMaxPages: SAMPLE_MAX_PAGES,
 	listCallTimeoutMs: LIST_CALL_TIMEOUT_MS,
 };
+
+export type FileFilter = (file: drive_v3.Schema$File) => boolean;
 
 export type DriveFileListing = {
 	files: drive_v3.Schema$File[];

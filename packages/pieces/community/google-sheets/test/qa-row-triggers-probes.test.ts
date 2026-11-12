@@ -257,7 +257,7 @@ describe('QA probe: channel id after a renew whose old-channel stop failed', () 
 	it.each([
 		{ name: 'NUOR', trigger: newOrUpdatedRowTrigger, key: NUOR_CHANNEL, run: nuor },
 		{ name: 'NRA', trigger: newRowAddedTrigger, key: NRA_CHANNEL, run: nra },
-	])('$name: old channel ignored, new channel processed, state untouched by the foreign push', async ({ trigger, key, run }) => {
+	])('$name: the replaced channel is still processed, the row fires once, an unknown channel is ignored', async ({ trigger, key, run }) => {
 		const { store, data } = memoryStore();
 		await trigger.onEnable(ctx({ store }));
 		const oldId = (await store.get<{ id: string }>(key))?.id ?? '';
@@ -268,11 +268,11 @@ describe('QA probe: channel id after a renew whose old-channel stop failed', () 
 		expect(fakeGoogle.liveChannels.has(oldId)).toBe(true);
 		tab().rows.push(cells({ values: ['1004', 'Dan', 'open'] }));
 		const snapshotBefore = [...data.entries()].filter(([entryKey]) => entryKey.includes('snapshot'));
-		const readsBefore = fakeGoogle.valueReads.length;
-		expect(await run({ store, headers: { ...CHANGE, 'x-goog-channel-id': oldId } })).toEqual([]);
-		expect(fakeGoogle.valueReads.length).toBe(readsBefore);
+		const readsBefore = fakeGoogle.gridReads.length;
+		expect(await run({ store, headers: { ...CHANGE, 'x-goog-channel-id': 'someone-else' } })).toEqual([]);
+		expect(fakeGoogle.gridReads.length).toBe(readsBefore);
 		expect([...data.entries()].filter(([entryKey]) => entryKey.includes('snapshot'))).toEqual(snapshotBefore);
-		expect(await run({ store, headers: { ...CHANGE, 'x-goog-channel-id': newId } })).toEqual(['5:1004|Dan|open']);
+		expect(await run({ store, headers: { ...CHANGE, 'x-goog-channel-id': oldId } })).toEqual(['5:1004|Dan|open']);
 		expect(await run({ store, headers: { ...CHANGE, 'x-goog-channel-id': newId } })).toEqual([]);
 	});
 });

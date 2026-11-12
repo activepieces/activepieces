@@ -8,6 +8,22 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Google Sheets 0.21.0: row triggers fire for more changes, and Trigger Column must be a column letter
+
+From Google Sheets 0.21.0, **New Row Added** and **New or Updated Row** also run the flow in three cases where they stayed silent before:
+
+- A cell changed back to an earlier value within 30 seconds. Before, the second change was dropped as a duplicate of the first.
+- Rows changed while the trigger renews its Google watch channel (every 12 hours). Before, that change was lost.
+- Notifications where Google reports a content change together with another change type, for example `content, permissions`. Before, these were ignored.
+
+**New or Updated Row** events now include cells past the last header column, labelled by their column letter, the same as New Row Added and the Test sample. Before, those cells were left out, and every cell was left out when row 1 was blank.
+
+**Trigger Column** must now be a column letter, such as `B` or `aa`. Lower-case letters now work. A header name like `Status` is rejected with a clear message when the flow is turned on; before, the flow turned on but never ran.
+
+#### What you need to do
+
+If a flow uses New or Updated Row with a Trigger Column, open the trigger and check that the value is a column letter, not a header name, then turn the flow on again. If a flow after a row trigger can't handle a run for a value that was changed back, or for extra keys past the last header, add a Branch step to filter those runs.
+
 #### Google Drive 0.14.0: file triggers, downloads and search across shared drives
 
 From Google Drive 0.14.0, the **New File** trigger with **Include File Content** on fires for a file whose download fails. That run has a `contentError` field with the reason instead of `content`. Before, one failed download (for example a Google Form, which Drive can't download) failed the whole poll, and every new file in that poll was lost. The trigger's output can now carry the `content` and `contentError` keys.

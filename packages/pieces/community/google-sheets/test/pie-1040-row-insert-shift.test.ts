@@ -17,19 +17,24 @@ function render(option?: string): Array<Array<string | number>> {
 }
 
 const sheetsFactory = () => ({
-    sheets: () => ({
-        spreadsheets: {
-            get: async () => ({ data: { sheets: [{ properties: { sheetId: 0, title: 'Sheet1' } }] } }),
-            values: {
-                get: async (params: { range?: string, valueRenderOption?: string }) => {
-                    valuesGetCalls.push(params.valueRenderOption)
-                    const rowRange = /!(\d+):(\d+)$/.exec(params.range ?? '')
-                    const values = render(params.valueRenderOption)
-                    return { data: { values: rowRange ? values.slice(Number(rowRange[1]) - 1, Number(rowRange[2])) : values } }
+    sheets: () => {
+        const valuesGet = async (params: { range?: string, valueRenderOption?: string }) => {
+            valuesGetCalls.push(params.valueRenderOption)
+            const rowRange = /!(\d+):(\d+)$/.exec(params.range ?? '')
+            const values = render(params.valueRenderOption)
+            return { data: { values: rowRange ? values.slice(Number(rowRange[1]) - 1, Number(rowRange[2])) : values } }
+        }
+        return {
+            spreadsheets: {
+                get: async (params: unknown) => {
+                    const grid = await import('./support/grid-data')
+                    if (grid.isGridRequest({ params })) return grid.gridViaValues({ params, valuesGet })
+                    return { data: { sheets: [{ properties: { sheetId: 0, title: 'Sheet1' } }] } }
                 },
+                values: { get: valuesGet },
             },
-        },
-    }),
+        }
+    },
 })
 const driveFactory = () => ({
     drive: () => ({
