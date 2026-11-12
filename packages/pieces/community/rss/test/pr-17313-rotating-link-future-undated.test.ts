@@ -99,4 +99,23 @@ describe.each([
       expect(await trigger.run(contextFor({ kind, store, path }))).toEqual([]);
     }
   });
+  it('undated items with stable links and a reused title each fire once', async () => {
+    const path = `/stable-undated/${kind}/feed.xml`;
+    const store = fakeFeeds.memoryStore();
+    const trigger = kind === 'single' ? single : multi;
+    const feed = (slugs: string[]): void => {
+      const body = slugs.map((slug) => `<item><title>Daily</title><link>https://example.com/${slug}</link></item>`).join('');
+      server.set(path, {
+        body: `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>t</title><description>d</description>${body}</channel></rss>`,
+      });
+    };
+    feed(['d0']);
+    await trigger.onEnable(contextFor({ kind, store, path }));
+    feed(['d2', 'd0']);
+    expect((await trigger.run(contextFor({ kind, store, path }))).map((item) => Reflect.get(item as object, 'link'))).toEqual(['https://example.com/d2']);
+    feed(['d4', 'd2', 'd0']);
+    expect((await trigger.run(contextFor({ kind, store, path }))).map((item) => Reflect.get(item as object, 'link'))).toEqual(['https://example.com/d4']);
+    feed(['d4', 'd2', 'd0']);
+    expect(await trigger.run(contextFor({ kind, store, path }))).toEqual([]);
+  });
 });

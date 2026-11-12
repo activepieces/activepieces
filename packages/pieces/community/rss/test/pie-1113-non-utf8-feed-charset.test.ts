@@ -1,18 +1,8 @@
-// ---------------------------------------------------------------------------------------------
-// C0558 – RSS triggers write the raw response bytes into FeedParser. sax (non-strict, as
-// feedparser uses it) only sniffs BOM/UTF-16 and otherwise decodes as UTF-8, and neither the
-// HTTP charset nor the XML declaration is honoured, so legacy-encoded feeds turn every
-// non-ASCII character into U+FFFD.
-// ---------------------------------------------------------------------------------------------
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import * as path from 'path'
 import * as http from 'http'
 import { AddressInfo } from 'net'
 
-// --- inlined helpers (local stand-in for publishers' feed URLs) ---
-// A local HTTP server stands in for the publishers' feed URLs; everything else is the real
-// piece code: rssNewItemTrigger / rssNewItemListTrigger hooks, pollingHelper, the
-// pieces-common fetch client and feedparser.
 
 type FeedItem = { guid: string; title: string; pubDate: Date }
 
@@ -103,9 +93,7 @@ function feedText(encodingLabel: string, titles: { guid: string; title: string; 
     return `<?xml version="1.0" encoding="${encodingLabel}"?>\n<rss version="2.0"><channel><title>Feed</title><link>https://example.com/</link><description>d</description>${items}</channel></rss>\n`
 }
 
-// Node's TextEncoder only writes UTF-8, so build legacy bytes explicitly.
 const latin1 = (s: string) => Buffer.from(s, 'latin1')
-// "ニュース" (news) in Shift_JIS.
 const SJIS_NEWS = Buffer.from([0x83, 0x6a, 0x83, 0x85, 0x81, 0x5b, 0x83, 0x58])
 
 async function newTitlesFromSingle(route: string, before: Buffer, after: Buffer, contentType: string) {

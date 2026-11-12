@@ -507,7 +507,20 @@ function contentKey({ item }: { item: FeedParser.Item }): string | null {
 	if (published !== null) {
 		return hashKey({ identity: `c|${item.title}|${published}` });
 	}
-	return hasOwnGuid({ item }) ? null : hashKey({ identity: `c|${item.title}|undated` });
+	return hasOwnGuid({ item })
+		? null
+		: hashKey({ identity: `c|${item.title}|undated|${stableLinkOf({ link: item.link })}` });
+}
+
+function stableLinkOf({ link }: { link: string | null | undefined }): string {
+	if (!link) {
+		return '';
+	}
+	if (URL.canParse(link)) {
+		const url = new URL(link);
+		return `${url.origin}${url.pathname}`;
+	}
+	return link.split(/[?#]/)[0];
 }
 
 function needsContentKey({
