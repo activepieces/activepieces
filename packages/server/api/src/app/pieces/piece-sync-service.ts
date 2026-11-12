@@ -72,8 +72,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
             if ((added > 0 || deleted > 0) && isToolSearchEnabled()) {
                 rejectedPromiseHandler(toolSearchReindexJob(log).enqueue({ type: 'all' }), log)
             }
-            const existingOfficialPieces = dbPieces.filter((piece) => piece.pieceType === PieceType.OFFICIAL)
-            rejectedPromiseHandler(eventDestinationService(log).triggerOnAllPlatforms({ existingPieces: existingOfficialPieces, addedPieces }), log)
+            rejectedPromiseHandler(eventDestinationService(log).triggerOnAllPlatforms({ addedPieces }), log)
         }
         catch (error) {
             log.error({ error }, 'Error syncing pieces')
@@ -112,7 +111,7 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
                 return
             }
             const pieceMetadata = await response.json()
-            const { data: savedPiece, error } = await tryCatch(() => pieceMetadataService(log).create({
+            const { data: created, error } = await tryCatch(() => pieceMetadataService(log).create({
                 pieceMetadata,
                 packageType: pieceMetadata.packageType,
                 pieceType: pieceMetadata.pieceType,
@@ -123,11 +122,13 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
             }
             else {
                 added++
+                const { piece: savedPiece, previousVersion } = created
                 if (savedPiece.pieceType === PieceType.OFFICIAL && isNil(savedPiece.platformId)) {
                     addedPieces.push({
                         name: savedPiece.name,
                         displayName: savedPiece.displayName,
                         version: savedPiece.version,
+                        previousVersion,
                         minimumSupportedRelease: savedPiece.minimumSupportedRelease,
                         maximumSupportedRelease: savedPiece.maximumSupportedRelease,
                         deprecated: savedPiece.deprecated,

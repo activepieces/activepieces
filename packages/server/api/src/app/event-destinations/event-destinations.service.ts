@@ -16,7 +16,6 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { PieceMetadataSchema } from '../pieces/metadata/piece-metadata-entity'
-import { isNewerVersion, lastVersionOfEachPiece } from '../pieces/metadata/utils'
 import { projectService } from '../project/project-service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
@@ -241,8 +240,8 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
         const { data, cursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage<EventDestinationSchema>(data, cursor)
     },
-    triggerOnAllPlatforms: async ({ existingPieces, addedPieces }: TriggerOnAllPlatformsParams): Promise<void> => {
-        const changes = findPieceChanges({ existingPieces, addedPieces })
+    triggerOnAllPlatforms: async ({ addedPieces }: TriggerOnAllPlatformsParams): Promise<void> => {
+        const changes = addedPieces.map(toPieceChange)
         if (changes.length === 0) {
             return
         }
@@ -439,27 +438,18 @@ async function triggerPieceEventsForDestinations({ log, destinations, changes, w
     }
 }
 
-function findPieceChanges({ existingPieces, addedPieces }: FindPieceChangesParams): OfficialPieceEventData['piece'][] {
-    const newestExistingVersions = new Map(lastVersionOfEachPiece(existingPieces).map((piece) => [piece.name, piece.version]))
-    return lastVersionOfEachPiece(addedPieces)
-        .flatMap((piece) => {
-            const previousVersion = newestExistingVersions.get(piece.name) ?? null
-            if (!isNil(previousVersion) && !isNewerVersion(piece.version, previousVersion)) {
-                return []
-            }
-            return [{
-                name: piece.name,
-                displayName: piece.displayName,
-                version: piece.version,
-                previousVersion,
-                changeType: isNil(previousVersion) ? 'new' : pieceChangeType({ previousVersion, version: piece.version }),
-                pieceType: 'OFFICIAL' as const,
-                minimumSupportedRelease: piece.minimumSupportedRelease ?? null,
-                maximumSupportedRelease: piece.maximumSupportedRelease ?? null,
-                deprecated: piece.deprecated ?? false,
-            }]
-        })
-        .sort((a, b) => a.name.localeCompare(b.name))
+function toPieceChange(piece: AddedPiece): OfficialPieceEventData['piece'] {
+    return {
+        name: piece.name,
+        displayName: piece.displayName,
+        version: piece.version,
+        previousVersion: piece.previousVersion,
+        changeType: isNil(piece.previousVersion) ? 'new' : pieceChangeType({ previousVersion: piece.previousVersion, version: piece.version }),
+        pieceType: 'OFFICIAL' as const,
+        minimumSupportedRelease: piece.minimumSupportedRelease ?? null,
+        maximumSupportedRelease: piece.maximumSupportedRelease ?? null,
+        deprecated: piece.deprecated ?? false,
+    }
 }
 
 function pieceChangeType({ previousVersion, version }: PieceChangeTypeParams): PieceChangeType {
@@ -917,11 +907,8 @@ type TriggerPieceEventsForDestinationsParams = {
 }
 
 type TriggerOnAllPlatformsParams = {
-    existingPieces: Pick<PieceMetadataSchema, 'name' | 'version'>[]
     addedPieces: AddedPiece[]
 }
-
-type FindPieceChangesParams = TriggerOnAllPlatformsParams
 
 type PieceChangeTypeParams = {
     previousVersion: string
@@ -979,4 +966,6 @@ type WebhookRouteSuffixParams = {
     flowId: string
 }
 
-export type AddedPiece = Pick<PieceMetadataSchema, 'name' | 'displayName' | 'version' | 'minimumSupportedRelease' | 'maximumSupportedRelease' | 'deprecated'>
+export type AddedPiece = Pick<PieceMetadataSchema, 'name' | 'displayName' | 'version' | 'minimumSupportedRelease' | 'maximumSupportedRelease' | 'deprecated'> & {
+    previousVersion: string | null
+}

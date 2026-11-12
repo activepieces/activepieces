@@ -2,8 +2,10 @@ import { apId } from '@activepieces/core-utils'
 import { ApEdition, ApplicationEventName, EventDestinationScope, PackageType, PieceType, WorkerJobType } from '@activepieces/shared'
 import fastify, { FastifyInstance } from 'fastify'
 import { validatorCompiler } from 'fastify-type-provider-zod'
+import { Repository } from 'typeorm'
 import { Mock } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { redisConnections } from '../../../../src/app/database/redis-connections'
 import { adminPlatformModule } from '../../../../src/app/ee/platform/admin/admin-platform.controller'
 import * as eventDestinationsModule from '../../../../src/app/event-destinations/event-destinations.service'
 import { system } from '../../../../src/app/helper/system/system'
@@ -186,6 +188,11 @@ beforeEach(async () => {
     const connection = databaseConnection()
     await connection.getRepository('piece_metadata').createQueryBuilder().delete().execute()
     await connection.getRepository('event_destination').createQueryBuilder().delete().execute()
+    const redis = await redisConnections.useExisting()
+    const claimKeys = await redis.keys('official-piece-added:*')
+    if (claimKeys.length > 0) {
+        await redis.del(...claimKeys)
+    }
     addSpy = vi.fn<JobQueueAdd>()
     vi.spyOn(jobQueueModule, 'jobQueue').mockImplementation((log) => ({ ...originalJobQueue(log), add: addSpy }))
     vi.spyOn(eventDestinationsModule, 'eventDestinationService').mockImplementation((log) => {
@@ -259,7 +266,7 @@ describe('Official piece events', () => {
         expect(deliveriesTo(withoutPatch)).toEqual([])
     })
 
-    it('a sync that adds several versions of one piece sends one event for the newest', async () => {
+    it('a sync that adds several versions of a new piece sends one added event and a version event for each other version', async () => {
         const destinationId = await subscribe({ platformId: entitledA.platform.id })
 
         await sync([
@@ -269,18 +276,21 @@ describe('Official piece events', () => {
         ])
 
         const sent = deliveriesTo(destinationId)
-        expect(sent).toHaveLength(1)
-        expect(sent[0].event.action).toBe(ApplicationEventName.OFFICIAL_PIECE_ADDED)
-        expect(sent[0].event.data.piece.version).toBe('0.3.0')
+        expect(sent.map((delivery) => delivery.event.data.piece.version).sort()).toEqual(['0.1.0', '0.2.0', '0.3.0'])
+        expect(sent.filter((delivery) => delivery.event.action === ApplicationEventName.OFFICIAL_PIECE_ADDED)).toHaveLength(1)
+        expect(sent.filter((delivery) => delivery.event.data.piece.previousVersion === null)).toHaveLength(1)
     })
 
-    it('a sync that adds a version older than the newest one sends nothing', async () => {
+    it('a sync that adds a version older than the newest one sends a version event against the newest', async () => {
         await seed([{ name: '@test/gmail', version: '0.9.0' }])
         const destinationId = await subscribe({ platformId: entitledA.platform.id })
 
         await sync([{ name: '@test/gmail', version: '0.8.4' }])
 
-        expect(deliveriesTo(destinationId)).toEqual([])
+        const sent = deliveriesTo(destinationId)
+        expect(sent).toHaveLength(1)
+        expect(sent[0].event.action).toBe(ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED)
+        expect(sent[0].event.data.piece).toMatchObject({ version: '0.8.4', previousVersion: '0.9.0', changeType: 'minor' })
     })
 
     it('a sync that adds nothing sends nothing', async () => {
@@ -290,6 +300,19 @@ describe('Official piece events', () => {
         await sync([])
 
         expect(deliveriesTo(destinationId)).toEqual([])
+    })
+
+    it('a sync that read the pieces before another replica inserted one sends nothing for it and keeps one row', async () => {
+        const destinationId = await subscribe({ platformId: entitledA.platform.id })
+        await sync([{ name: '@test/raced', version: '1.0.0' }])
+        expect(deliveriesTo(destinationId)).toHaveLength(1)
+        addSpy.mockClear()
+        vi.spyOn(Repository.prototype, 'find').mockResolvedValueOnce([])
+
+        await sync([])
+
+        expect(deliveriesTo(destinationId)).toEqual([])
+        expect(await databaseConnection().getRepository('piece_metadata').countBy({ name: '@test/raced' })).toBe(1)
     })
 
     it('a custom piece with the same name does not count as an existing version', async () => {
@@ -331,8 +354,8 @@ describe('Official piece events', () => {
 
         const installLines = infoSpy.mock.calls.filter(([, message]) => message === '[pieceMetadataService#create] Piece version installed')
         expect(installLines.map(([fields]) => fields)).toEqual(expect.arrayContaining([
-            expect.objectContaining({ piece: { name: '@test/logged', version: '1.0.0', type: PieceType.OFFICIAL } }),
-            expect.objectContaining({ piece: { name: '@test/logged', version: '1.1.0', type: PieceType.OFFICIAL } }),
+            expect.objectContaining({ piece: expect.objectContaining({ name: '@test/logged', version: '1.0.0', type: PieceType.OFFICIAL }) }),
+            expect.objectContaining({ piece: expect.objectContaining({ name: '@test/logged', version: '1.1.0', type: PieceType.OFFICIAL }) }),
         ]))
         expect(installLines).toHaveLength(2)
     })

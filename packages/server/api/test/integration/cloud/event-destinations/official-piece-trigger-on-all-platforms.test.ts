@@ -14,16 +14,15 @@ const ENTITLED_PLAN = { plan: { eventStreamingEnabled: true } }
 
 const PIECE_EVENTS = [ApplicationEventName.OFFICIAL_PIECE_ADDED, ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED, ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED]
 
-const added = (name: string, version: string): AddedPiece => ({
+const added = (name: string, version: string, previousVersion: string | null = null): AddedPiece => ({
     name,
     displayName: name,
     version,
+    previousVersion,
     minimumSupportedRelease: '0.30.0',
     maximumSupportedRelease: '999.999.999',
     deprecated: false,
 })
-
-const existing = (name: string, version: string) => ({ name, version })
 
 const subscribe = async ({ platformId, events = PIECE_EVENTS, enabled = true }: SubscribeParams): Promise<string> => {
     const destination = createMockEventDestination({
@@ -75,8 +74,7 @@ describe('triggerOnAllPlatforms for official piece events', () => {
         const secondDestinationId = await subscribe({ platformId: second.platform.id })
 
         await eventDestinationService(app.log).triggerOnAllPlatforms({
-            existingPieces: [existing('@activepieces/piece-gmail', '1.0.0')],
-            addedPieces: [added('@activepieces/piece-gmail', '1.1.0')],
+            addedPieces: [added('@activepieces/piece-gmail', '1.1.0', '1.0.0')],
         })
 
         const jobs = queuedJobs()
@@ -111,7 +109,7 @@ describe('triggerOnAllPlatforms for official piece events', () => {
         await subscribe({ platformId: disabled.platform.id, enabled: false })
         await subscribe({ platformId: unentitled.platform.id })
 
-        await eventDestinationService(app.log).triggerOnAllPlatforms({ existingPieces: [], addedPieces: [added('@test/a', '1.0.0')] })
+        await eventDestinationService(app.log).triggerOnAllPlatforms({ addedPieces: [added('@test/a', '1.0.0')] })
 
         expect(addSpy).not.toHaveBeenCalled()
     })
@@ -121,7 +119,7 @@ describe('triggerOnAllPlatforms for official piece events', () => {
         const otherEvents = Object.values(ApplicationEventName).filter((event) => !PIECE_EVENTS.includes(event))
         await subscribe({ platformId: ctx.platform.id, events: otherEvents })
 
-        await eventDestinationService(app.log).triggerOnAllPlatforms({ existingPieces: [], addedPieces: [added('@test/a', '1.0.0')] })
+        await eventDestinationService(app.log).triggerOnAllPlatforms({ addedPieces: [added('@test/a', '1.0.0')] })
 
         expect(addSpy).not.toHaveBeenCalled()
     })
@@ -139,8 +137,7 @@ describe('triggerOnAllPlatforms for official piece events', () => {
         await subscribe({ platformId: ctx.platform.id, events: PIECE_EVENTS.filter((event) => event !== action) })
 
         await eventDestinationService(app.log).triggerOnAllPlatforms({
-            existingPieces: previous === null ? [] : [existing('@test/a', previous)],
-            addedPieces: [added('@test/a', version)],
+            addedPieces: [added('@test/a', version, previous)],
         })
 
         expect(addSpy).toHaveBeenCalledTimes(1)
@@ -150,58 +147,18 @@ describe('triggerOnAllPlatforms for official piece events', () => {
         expect(job.data.payload.data.piece).toMatchObject({ version, previousVersion: previous, changeType })
     })
 
-    it('compares with the newest existing version, whatever the row order', async () => {
+    it('every added version sends its own event, an older one included', async () => {
         const ctx = await createTestContext(app, ENTITLED_PLAN)
         await subscribe({ platformId: ctx.platform.id })
 
         await eventDestinationService(app.log).triggerOnAllPlatforms({
-            existingPieces: [existing('@test/a', '1.2.0'), existing('@test/a', '1.10.0'), existing('@test/a', '1.9.0')],
-            addedPieces: [added('@test/a', '1.10.1')],
+            addedPieces: [added('@test/a', '0.3.0'), added('@test/a', '0.2.0', '0.3.0'), added('@test/a', '0.3.1', '0.3.0')],
         })
 
-        expect(queuedJobs().map((job) => job.data.payload.data.piece)).toEqual([expect.objectContaining({ version: '1.10.1', previousVersion: '1.10.0', changeType: 'patch' })])
-    })
-
-    it('several added versions of one piece send one event for the newest', async () => {
-        const ctx = await createTestContext(app, ENTITLED_PLAN)
-        await subscribe({ platformId: ctx.platform.id })
-
-        await eventDestinationService(app.log).triggerOnAllPlatforms({
-            existingPieces: [],
-            addedPieces: [added('@test/a', '0.1.0'), added('@test/a', '0.3.0'), added('@test/a', '0.2.0')],
-        })
-
-        expect(queuedJobs().map((job) => [job.data.payload.action, job.data.payload.data.piece.version])).toEqual([[ApplicationEventName.OFFICIAL_PIECE_ADDED, '0.3.0']])
-    })
-
-    it.each([
-        { label: 'an older version', version: '0.8.4' },
-        { label: 'the same version', version: '0.9.0' },
-    ])('$label than the newest existing one sends nothing', async ({ version }) => {
-        const ctx = await createTestContext(app, ENTITLED_PLAN)
-        await subscribe({ platformId: ctx.platform.id })
-
-        await eventDestinationService(app.log).triggerOnAllPlatforms({
-            existingPieces: [existing('@test/a', '0.9.0')],
-            addedPieces: [added('@test/a', version)],
-        })
-
-        expect(addSpy).not.toHaveBeenCalled()
-    })
-
-    it('existing versions of other pieces do not count, and events go out in piece name order', async () => {
-        const ctx = await createTestContext(app, ENTITLED_PLAN)
-        await subscribe({ platformId: ctx.platform.id })
-
-        await eventDestinationService(app.log).triggerOnAllPlatforms({
-            existingPieces: [existing('@test/slack', '5.0.0')],
-            addedPieces: [added('@test/slack', '5.1.0'), added('@test/asana', '1.0.0'), added('@test/gmail', '1.0.0')],
-        })
-
-        expect(queuedJobs().map((job) => [job.data.payload.data.piece.name, job.data.payload.data.piece.changeType])).toEqual([
-            ['@test/asana', 'new'],
-            ['@test/gmail', 'new'],
-            ['@test/slack', 'minor'],
+        expect(queuedJobs().map((job) => [job.data.payload.action, job.data.payload.data.piece.version, job.data.payload.data.piece.previousVersion])).toEqual([
+            [ApplicationEventName.OFFICIAL_PIECE_ADDED, '0.3.0', null],
+            [ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED, '0.2.0', '0.3.0'],
+            [ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED, '0.3.1', '0.3.0'],
         ])
     })
 
@@ -218,7 +175,7 @@ describe('triggerOnAllPlatforms for official piece events', () => {
         })
         const addedPieces = Array.from({ length: 60 }, (_, index) => added(`@test/bulk-${String(index).padStart(2, '0')}`, '1.0.0'))
 
-        await eventDestinationService(app.log).triggerOnAllPlatforms({ existingPieces: [], addedPieces })
+        await eventDestinationService(app.log).triggerOnAllPlatforms({ addedPieces })
 
         expect(addSpy).toHaveBeenCalledTimes(60)
         expect(maxInFlight).toBe(25)
@@ -243,7 +200,7 @@ describe('triggerOnAllPlatforms for official piece events', () => {
             },
         }))
 
-        await eventDestinationService(app.log).triggerOnAllPlatforms({ existingPieces: [], addedPieces: [added('@test/a', '1.0.0')] })
+        await eventDestinationService(app.log).triggerOnAllPlatforms({ addedPieces: [added('@test/a', '1.0.0')] })
 
         expect(addSpy).toHaveBeenCalledTimes(3)
         expect(entitlementReads).toEqual([[...platformIds].sort()])
@@ -269,7 +226,7 @@ describe('triggerOnAllPlatforms for official piece events', () => {
             },
         }))
 
-        await eventDestinationService(app.log).triggerOnAllPlatforms({ existingPieces: [], addedPieces: [added('@test/a', '1.0.0')] })
+        await eventDestinationService(app.log).triggerOnAllPlatforms({ addedPieces: [added('@test/a', '1.0.0')] })
 
         expect(entitlementReads).toEqual([1, 1])
         expect(new Set(queuedJobs().map((job) => job.data.webhookId))).toEqual(new Set(destinations.map((destination) => destination.id)))
