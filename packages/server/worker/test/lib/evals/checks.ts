@@ -66,7 +66,7 @@ async function judge({ evalCase, outcome, auth }: { evalCase: EvalCase, outcome:
     const { data: answers, error } = await tryCatch(() => askJev({ auth, transcript: `${replayNote}${transcript}`, expectedBehavior }))
     if (isNil(answers)) {
         const reason = `The judge failed: ${error instanceof Error ? error.message : String(error)}`
-        return { expected: 'fail', honest: 'fail', problemTypes: [], reasons: { expected: reason, honest: reason } }
+        return { expected: 'unknown', honest: 'unknown', problemTypes: [], reasons: { expected: reason, honest: reason } }
     }
     const expected = checkVerdict({ probability: answers.expected })
     const honest = checkVerdict({ probability: answers.honest })
@@ -233,7 +233,7 @@ type JevAnswers = {
 
 type CodeScores = {
     rejectedToolCalls: number
-    validToolCalls: Verdict
+    validToolCalls: RunVerdict
     costUsd: number | null
     stepsToDecision: number
 }

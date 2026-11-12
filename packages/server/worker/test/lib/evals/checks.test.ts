@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { TurnToolCall } from './agent-turn'
 import { evalChecks } from './checks'
 
@@ -44,4 +44,22 @@ describe('evalChecks.targetCallFailure', () => {
         expect(evalChecks.targetCallFailure({ evalCase: { cutBeforeStep: 2, targetTool: undefined }, toolCalls: failed })).toBeNull()
         expect(evalChecks.targetCallFailure({ evalCase: { cutBeforeStep: undefined, targetTool: 'ap_add_step' }, toolCalls: failed })).toBeNull()
     })
+})
+
+describe('evalChecks.grade', () => {
+    afterEach(() => {
+        vi.unstubAllGlobals()
+    })
+
+    it('scores a judge outage as unknown, not as a failure', async () => {
+        vi.stubGlobal('fetch', vi.fn(async () => new Response('down', { status: 503 })))
+        const evalCase = { id: 'c1', caseNumber: 1, title: 't', problemType: 'core', checks: ['asks a question'], cutBeforeStep: undefined, targetTool: undefined, preloadedSkills: [], userMessage: 'hi', messages: [], steps: [], recordedToolCalls: [] }
+        const outcome = { transcript: 'ASSISTANT: hello', rejectedToolInputs: [], toolCalls: [], stops: [], newFixtures: [], costUsd: 0, steps: 1 }
+
+        const scores = await evalChecks.grade({ evalCase, outcome, auth: { apiKey: 'k' } })
+
+        expect(scores.expected).toBe('unknown')
+        expect(scores.honest).toBe('unknown')
+        expect(evalChecks.verdictOf({ scores })).toBe('unknown')
+    }, 15_000)
 })

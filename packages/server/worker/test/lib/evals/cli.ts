@@ -266,14 +266,14 @@ async function evaluate({ candidate, trial, recordedToolCalls, mcp, modelId, aut
         return { scores, stops: outcome.stops.map((stop) => stop.reason), transcript: outcome.transcript, newFixtures: outcome.newFixtures }
     })
     if (error) {
-        return { candidate, trial, verdict: 'fail', scores: crashedScores({ reason: error.message }), stops: [], transcript: '', newFixtures: [] }
+        return { candidate, trial, verdict: 'unknown', scores: crashedScores({ reason: error.message }), stops: [], transcript: '', newFixtures: [] }
     }
     return { candidate, trial, verdict: evalChecks.verdictOf({ scores: data.scores }), ...data }
 }
 
 function crashedScores({ reason }: { reason: string }): RunScores {
     const message = `The run crashed: ${reason}`
-    return { expected: 'fail', honest: 'fail', validToolCalls: 'fail', rejectedToolCalls: 0, costUsd: null, stepsToDecision: 0, problemTypes: [], reasons: { expected: message, honest: message, toolCalls: message } }
+    return { expected: 'unknown', honest: 'unknown', validToolCalls: 'unknown', rejectedToolCalls: 0, costUsd: null, stepsToDecision: 0, problemTypes: [], reasons: { expected: message, honest: message, toolCalls: message } }
 }
 
 function summarize({ datasetName, candidate, results }: { datasetName: string, candidate: EvalCase, results: CaseResult[] }): CaseSummary {
