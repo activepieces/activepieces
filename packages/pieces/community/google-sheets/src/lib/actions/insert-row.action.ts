@@ -108,11 +108,11 @@ async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {
 	const request: HttpRequest = {
 		method: HttpMethod.POST,
 		url: `https://sheets.googleapis.com/v4/spreadsheets/${spreadSheetId}/values/${encodeURIComponent(
-			`${range}!A:A`,
+			googleSheetsCommon.sheetRange({ sheetName: range, range: 'A:A' }),
 		)}:append`,
 		body: {
 			majorDimension,
-			range: `${range}!A:A`,
+			range: googleSheetsCommon.sheetRange({ sheetName: range, range: 'A:A' }),
 			values: values.map((val) => ({ values: val })),
 		},
 		authentication: {

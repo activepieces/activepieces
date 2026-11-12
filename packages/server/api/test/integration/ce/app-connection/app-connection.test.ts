@@ -374,6 +374,73 @@ describe('AppConnection CE API', () => {
             expect(body.data).toHaveLength(1)
             expect(body.data[0].pieceName).toBe(mockPieceA.name)
         })
+
+        it('should return connections of every piece when pieceName has several values', async () => {
+            const ctx = await setup()
+            const pieces = ['piece-multi-a', 'piece-multi-b', 'piece-multi-c'].map((name) => createMockPieceMetadata({
+                name,
+                platformId: ctx.platform.id,
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            }))
+            await db.save('piece_metadata', pieces)
+            for (const piece of pieces) {
+                pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(piece)
+                await ctx.post('/v1/app-connections', {
+                    externalId: `multi-${piece.name}`,
+                    displayName: piece.name,
+                    pieceName: piece.name,
+                    projectId: ctx.project.id,
+                    type: AppConnectionType.SECRET_TEXT,
+                    value: { type: AppConnectionType.SECRET_TEXT, secret_text: 's' },
+                    pieceVersion: piece.version,
+                })
+            }
+
+            const response = await ctx.get('/v1/app-connections', {
+                projectId: ctx.project.id,
+                pieceName: ['piece-multi-a', 'piece-multi-b'],
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const returnedPieceNames = response?.json().data.map((connection: { pieceName: string }) => connection.pieceName)
+            expect(returnedPieceNames).toHaveLength(2)
+            expect(returnedPieceNames).toEqual(expect.arrayContaining(['piece-multi-a', 'piece-multi-b']))
+        })
+    })
+
+    describeWithAuth('GET /v1/platform-app-connections (List)', () => app!, (setup) => {
+        it('should return connections of every piece when pieceName has several values', async () => {
+            const ctx = await setup()
+            const pieces = ['platform-multi-a', 'platform-multi-b', 'platform-multi-c'].map((name) => createMockPieceMetadata({
+                name,
+                platformId: ctx.platform.id,
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            }))
+            await db.save('piece_metadata', pieces)
+            for (const piece of pieces) {
+                pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(piece)
+                await ctx.post('/v1/app-connections', {
+                    externalId: `platform-${piece.name}`,
+                    displayName: piece.name,
+                    pieceName: piece.name,
+                    projectId: ctx.project.id,
+                    type: AppConnectionType.SECRET_TEXT,
+                    value: { type: AppConnectionType.SECRET_TEXT, secret_text: 's' },
+                    pieceVersion: piece.version,
+                })
+            }
+
+            const response = await ctx.get('/v1/platform-app-connections', {
+                pieceName: ['platform-multi-a', 'platform-multi-b'],
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const returnedPieceNames = response?.json().data.map((connection: { pieceName: string }) => connection.pieceName)
+            expect(returnedPieceNames).toHaveLength(2)
+            expect(returnedPieceNames).toEqual(expect.arrayContaining(['platform-multi-a', 'platform-multi-b']))
+        })
     })
 
     describeWithAuth('GET /v1/app-connections/:id', () => app!, (setup) => {

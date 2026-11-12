@@ -61,6 +61,7 @@ CPU / RAM / disk / per-executor RSS travel from worker to app **piggyback on eve
 - **`hyperdxToken` wins over `otlpEnabled`.** `resolveRemote` picks the first matching drain (Axiom → HyperDX → Loki → Better Stack → OTLP), so setting an Axiom or HyperDX token silently disables `AP_OTEL_ENABLED`. To send logs to a generic OTLP collector, unset the other provider tokens.
 - **The Betterstack drain requires both `betterstackToken` and `betterstackHost`.** Setting only one silently falls through to the next drain.
 - **Worker machine info is in-band with polling, not scheduled.** If a worker stops polling (crash, network partition), its numbers on the health page freeze — there is no separate heartbeat.
+- **Stay on evlog 2.33 or later.** Before 2.33, evlog's `mergeInto` (behind request-scoped `log.info/warn/error(fields)`, `wideEvent.set` and `apLogger.child`) followed a `__proto__` key in logged fields straight into `Object.prototype`, so logging one raw-`JSON.parse`d object polluted every object in the process. Fastify's JSON parser rejects `__proto__`; axios, socket.io, Redis, jsonb columns and any parser built with `getDefaultJsonParser('ignore', …)` keep it. `ap-logger-prototype-pollution.test.ts` fails on an older evlog. When proving a test against another dependency version, delete `node_modules/.vite` first: vitest caches transformed files with the old import path baked in and quietly tests the old copy.
 
 ### Key files
 
