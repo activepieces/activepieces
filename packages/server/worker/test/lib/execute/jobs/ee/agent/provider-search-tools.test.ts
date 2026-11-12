@@ -1,10 +1,25 @@
 import { WebSearchResult } from '@activepieces/server-utils'
 import { ToolExecutionOptions } from 'ai'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { TaintState } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/tool-primitives'
 import { createProviderSearchTools } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/web-media-tools'
 
 describe('ap_web_search over the provider\'s own search', () => {
+    afterEach(() => {
+        vi.useRealTimers()
+        vi.restoreAllMocks()
+    })
+
+    it('gives up on a slow search with a result the agent can carry on from', async () => {
+        vi.useFakeTimers()
+        vi.spyOn(AbortSignal, 'timeout').mockImplementation(fakeTimeoutSignal)
+        const pending = runSearch({ search: hangUntilAborted, taintState: { tainted: false } })
+
+        await vi.advanceTimersByTimeAsync(45_000)
+
+        expect(await pending).toEqual({ content: [{ type: 'text', text: expect.stringMatching(/^Web search failed: no answer within 45 seconds/) }] })
+    })
+
     it('taints the turn before the model sees a single result', async () => {
         const taintState: TaintState = { tainted: false }
 
@@ -48,8 +63,20 @@ describe('ap_web_search over the provider\'s own search', () => {
     })
 })
 
+function fakeTimeoutSignal(ms: number): AbortSignal {
+    const controller = new AbortController()
+    setTimeout(() => controller.abort(new DOMException('The operation was aborted due to timeout', 'TimeoutError')), ms)
+    return controller.signal
+}
+
+function hangUntilAborted({ abortSignal }: { abortSignal: AbortSignal }): Promise<WebSearchResult> {
+    return new Promise((_resolve, reject) => {
+        abortSignal.addEventListener('abort', () => reject(abortSignal.reason))
+    })
+}
+
 async function runSearch({ search, taintState, billedAtCost = false }: {
-    search: () => Promise<WebSearchResult>
+    search: (request: { abortSignal: AbortSignal }) => Promise<WebSearchResult>
     taintState: TaintState
     billedAtCost?: boolean
 }): Promise<unknown> {

@@ -41,6 +41,25 @@ describe('aiUtils.searchWeb', () => {
 
         expect(Object.keys(mockGenerateText.mock.calls[0][0].tools ?? {})).toEqual(['web_search'])
     })
+
+    it('searches with thinking turned off so one slow search does not stall the turn', async () => {
+        await searchAnthropic()
+
+        expect(mockGenerateText.mock.calls[0][0].providerOptions).toEqual({ anthropic: { thinking: { type: 'disabled' } } })
+    })
+
+    it('turns reasoning off on OpenRouter too', async () => {
+        await aiUtils.searchWeb({
+            credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth: { apiKey: 'key' }, config: {} }),
+            modelId: 'z-ai/glm-4.6',
+            billing: null,
+            system: 'Search.',
+            prompt: 'activepieces pricing',
+            abortSignal: new AbortController().signal,
+        })
+
+        expect(mockGenerateText.mock.calls[0][0].providerOptions?.openrouter?.reasoning).not.toHaveProperty('max_tokens')
+    })
 })
 
 function searchAnthropic(): ReturnType<typeof aiUtils.searchWeb> {
