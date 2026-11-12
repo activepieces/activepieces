@@ -55,7 +55,7 @@ export function PlatformNav() {
               to: '/platform/users/roles',
               label: t('Roles & Access'),
               locked: !platform.plan.projectRolesEnabled,
-              tier: PLATFORM_FEATURES.projectRoles.tier,
+              featureKey: PLATFORM_FEATURES.projectRoles.featureKey,
             },
           ],
         },
@@ -69,7 +69,7 @@ export function PlatformNav() {
               to: '/platform/connections/global',
               label: t('Global Connections'),
               locked: !platform.plan.globalConnectionsEnabled,
-              tier: PLATFORM_FEATURES.globalConnections.tier,
+              featureKey: PLATFORM_FEATURES.globalConnections.featureKey,
             },
           ],
         },
@@ -88,7 +88,7 @@ export function PlatformNav() {
               to: '/platform/pieces/piece-sets',
               label: t('Piece Sets'),
               locked: !platform.plan.managePiecesEnabled,
-              tier: PLATFORM_FEATURES.pieces.tier,
+              featureKey: PLATFORM_FEATURES.pieces.featureKey,
             },
           ],
         },
@@ -97,14 +97,14 @@ export function PlatformNav() {
           label: t('Templates'),
           icon: LayoutGridIcon,
           locked: !platform.plan.manageTemplatesEnabled,
-          tier: PLATFORM_FEATURES.templates.tier,
+          featureKey: PLATFORM_FEATURES.templates.featureKey,
         },
         {
           to: '/platform/ai',
           label: t('AI Center'),
           icon: SparklesIcon,
           locked: !platform.plan.aiProvidersEnabled,
-          tier: PLATFORM_FEATURES.aiProviders.tier,
+          featureKey: PLATFORM_FEATURES.aiProviders.featureKey,
           subItems:
             edition === ApEdition.COMMUNITY
               ? undefined
@@ -129,14 +129,14 @@ export function PlatformNav() {
           label: t('Authentication'),
           icon: LogInIcon,
           locked: !platform.plan.ssoEnabled,
-          tier: PLATFORM_FEATURES.sso.tier,
+          featureKey: PLATFORM_FEATURES.sso.featureKey,
         },
         {
           to: '/platform/secret-managers',
           label: t('Secret Managers'),
           icon: KeyRoundIcon,
           locked: !platform.plan.secretManagersEnabled,
-          tier: PLATFORM_FEATURES.secretManagers.tier,
+          featureKey: PLATFORM_FEATURES.secretManagers.featureKey,
         },
         {
           to: '/platform/audit-log',
@@ -148,13 +148,13 @@ export function PlatformNav() {
               label: t('Events'),
               end: true,
               locked: !platform.plan.auditLogEnabled,
-              tier: PLATFORM_FEATURES.auditLogs.tier,
+              featureKey: PLATFORM_FEATURES.auditLogs.featureKey,
             },
             {
               to: '/platform/audit-log/streaming',
               label: t('Event Streaming'),
               locked: !platform.plan.eventStreamingEnabled,
-              tier: PLATFORM_FEATURES.eventStreaming.tier,
+              featureKey: PLATFORM_FEATURES.eventStreaming.featureKey,
             },
           ],
         },
@@ -168,14 +168,14 @@ export function PlatformNav() {
           label: t('API Keys'),
           icon: FileJson2Icon,
           locked: !platform.plan.apiKeysEnabled,
-          tier: PLATFORM_FEATURES.apiKeys.tier,
+          featureKey: PLATFORM_FEATURES.apiKeys.featureKey,
         },
         {
           to: '/platform/embedding',
           label: t('Embedding'),
           icon: FrameIcon,
           locked: !platform.plan.embeddingEnabled,
-          tier: PLATFORM_FEATURES.embedding.tier,
+          featureKey: PLATFORM_FEATURES.embedding.featureKey,
         },
         {
           to: '/platform/mcp',
@@ -285,7 +285,7 @@ export function PlatformNav() {
                   label={item.label}
                   icon={item.icon}
                   locked={item.locked}
-                  tier={item.tier}
+                  featureKey={item.featureKey}
                   subItems={item.subItems}
                 />
               ))}
@@ -299,5 +299,5 @@ export function PlatformNav() {
 
 type PlatformNavItem = Pick<
   SidebarItemType,
-  'to' | 'label' | 'icon' | 'locked' | 'tier' | 'subItems'
+  'to' | 'label' | 'icon' | 'locked' | 'featureKey' | 'subItems'
 >;

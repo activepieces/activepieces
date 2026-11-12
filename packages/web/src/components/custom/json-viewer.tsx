@@ -1,10 +1,10 @@
 import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { Copy, Download } from 'lucide-react';
+import { Download } from 'lucide-react';
 import React, { useMemo } from 'react';
 import ReactJson from 'react-json-view';
-import { toast } from 'sonner';
 
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,13 +51,6 @@ const JsonViewer = React.memo(
     }, [unclearJson]);
 
     const viewerTheme = syntaxTheme.jsonView(resolvedTheme);
-    const handleCopy = () => {
-      navigator.clipboard.writeText(JSON.stringify(json, null, 2));
-      toast.success(t('Copied to clipboard'), {
-        duration: 1000,
-      });
-    };
-
     const handleDownload = () => {
       const blob = new Blob([JSON.stringify(json, null, 2)], {
         type: 'application/json',
@@ -101,16 +94,12 @@ const JsonViewer = React.memo(
                 </TooltipProvider>
               )}
               <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant={'ghost'} size={'sm'} onClick={handleCopy}>
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    {t('Copy to clipboard')}
-                  </TooltipContent>
-                </Tooltip>
+                <CopyButton
+                  value={json}
+                  variant="ghost"
+                  size="icon-sm"
+                  tooltipSide="bottom"
+                />
               </TooltipProvider>
             </div>
           </div>

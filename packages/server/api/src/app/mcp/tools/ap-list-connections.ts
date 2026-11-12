@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/core-utils'
+import { isNil, Permission } from '@activepieces/core-utils'
 import { AppConnectionStatus, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -45,6 +45,7 @@ export const apListConnectionsTool = (mcp: ProjectScopedMcpServer, log: FastifyB
             try {
                 const params = listConnectionsSchema.parse(args ?? {})
                 const project = await projectService(log).getOneOrThrow(mcp.projectId)
+                const pieceName = mcpUtils.normalizePieceName(params.pieceName)
                 const connections = await appConnectionService(log).list({
                     projectId: mcp.projectId,
                     platformId: project.platformId,
@@ -52,7 +53,7 @@ export const apListConnectionsTool = (mcp: ProjectScopedMcpServer, log: FastifyB
                     scope: undefined,
                     displayName: params.displayName,
                     status: params.status,
-                    pieceName: mcpUtils.normalizePieceName(params.pieceName),
+                    pieceNames: isNil(pieceName) ? undefined : [pieceName],
                     limit: 200,
                     externalIds: undefined,
                 })

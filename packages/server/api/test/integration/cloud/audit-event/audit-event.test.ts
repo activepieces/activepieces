@@ -1,3 +1,4 @@
+import { apId } from '@activepieces/core-utils'
 import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -69,6 +70,29 @@ describe('Audit Event API', () => {
                     expect.objectContaining({ id: mockAuditEvents1[1].id }),
                 ]),
             )
+        })
+
+        it('should return events of every user when userId has several values', async () => {
+            const ctx = await createTestContext(app!, {
+                plan: {
+                    auditLogEnabled: true,
+                },
+            })
+            const [userA, userB, userC] = [apId(), apId(), apId()]
+            const events = [userA, userB, userC].map((userId) => createAuditEvent({
+                platformId: ctx.platform.id,
+                userId,
+            }))
+            await db.save('audit_event', events)
+
+            const response = await ctx.get('/v1/audit-events', {
+                userId: [userA, userB],
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const returnedUserIds = response?.json().data.map((event: { userId: string }) => event.userId)
+            expect(returnedUserIds).toHaveLength(2)
+            expect(returnedUserIds).toEqual(expect.arrayContaining([userA, userB]))
         })
 
         it('should return forbidden if the user is not the owner', async () => {
