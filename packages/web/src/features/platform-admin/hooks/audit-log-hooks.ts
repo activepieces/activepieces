@@ -29,13 +29,13 @@ export const auditLogQueries = {
         const limit = searchParams.get(LIMIT_QUERY_PARAM);
         const action = searchParams.getAll('action');
         const projectId = searchParams.getAll('projectId');
-        const userId = searchParams.get('userId');
+        const userId = searchParams.getAll('userId');
         return auditEventsApi.list({
           cursor: cursor ?? undefined,
           limit: limit ? parseInt(limit) : undefined,
           action: action ?? undefined,
           projectId: projectId ?? undefined,
-          userId: userId ?? undefined,
+          userId: userId.length > 0 ? userId : undefined,
           createdBefore: searchParams.get('createdBefore') ?? undefined,
           createdAfter: searchParams.get('createdAfter') ?? undefined,
         });

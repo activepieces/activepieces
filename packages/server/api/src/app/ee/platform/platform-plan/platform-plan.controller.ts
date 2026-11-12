@@ -1,10 +1,11 @@
 import { SeekPage, tryCatch } from '@activepieces/core-utils'
-import { AdjustUnconsumableFeatureQuantityParams, CancelSubscriptionRequest, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan, SetupPaymentParams } from '@activepieces/shared'
+import { AdjustUnconsumableFeatureQuantityParams, CancelSubscriptionRequest, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan, SelfServeTrialInfo, SetupPaymentParams } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { authnRateLimit } from '../../../core/security/rate-limit'
 import { getEntitlementsForceRefreshKey } from '../../../database/redis/keys'
 import { distributedStore } from '../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
@@ -119,6 +120,10 @@ export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
         return {}
     })
 
+    app.post('/self-serve-trial', StartSelfServeTrialRequest, async (request) => {
+        return billingProvider.get(request.log).startSelfServeTrial(request.principal.platform.id)
+    })
+
     app.post('/setup-payment', SetupPaymentRequest, async (request) => {
         return billingProvider.get(request.log).setupPayment({
             redirectUrl: request.body.redirectUrl,
@@ -129,14 +134,15 @@ export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
 
 async function getBillingInformation(log: FastifyBaseLogger, platformId: string): Promise<PlatformBillingInformation> {
     const platform = await platformService(log).getOneOrThrow(platformId)
-    const [platformPlan, usage, overview, billingEnforced] = await Promise.all([
+    const [platformPlan, usage, overview, billingEnforced, selfServeTrial] = await Promise.all([
         platformPlanService(log).getOrCreateForPlatform(platform.id),
         platformPlanService(log).getUsage(platform.id),
         billingProvider.get(log).getBillingOverview(platform.id),
         billingProvider.get(log).isBillingEnforced(platform.id),
+        billingProvider.get(log).getSelfServeTrialInfo({ platformId: platform.id }),
     ])
 
-    const { startDate: billingPeriodStart, endDate: nextBillingDate, nextBillingAmount, cancelAt, trialEndsAt, planName: autumnPlanName, scheduledPlanName, billingPortalAvailable, creditsResetInterval, planInterval, creditsFeature, appSumoCreditsFeature, seatsFeature, includedSeats, additionalSeats, unavailable: billingUnavailable } = overview
+    const { startDate: billingPeriodStart, endDate: nextBillingDate, nextBillingAmount, cancelAt, trialEndsAt, planName: autumnPlanName, scheduledPlanName, hasPaymentMethod, creditsResetInterval, planInterval, creditsFeature, appSumoCreditsFeature, seatsFeature, includedSeats, additionalSeats, unavailable: billingUnavailable } = overview
 
     const usageWithCredits = usage.creditsRemaining === null
         ? { ...usage, creditsUsed: await fetchUnlimitedCreditsUsed({ log, platformId: platform.id, startDate: billingPeriodStart, endDate: nextBillingDate, fallback: usage.creditsUsed }) }
@@ -156,11 +162,12 @@ async function getBillingInformation(log: FastifyBaseLogger, platformId: string)
         creditsFeature,
         appSumoCreditsFeature,
         seatsFeature,
-        billingPortalAvailable,
+        hasPaymentMethod,
         billingEnforced,
         billingUnavailable,
         includedSeats,
         additionalSeats,
+        selfServeTrial,
     }
 }
 
@@ -298,6 +305,18 @@ const SetupPaymentRequest = {
         },
     },
     config: PLATFORM_ADMIN_ONLY,
+}
+
+const StartSelfServeTrialRequest = {
+    schema: {
+        response: {
+            [StatusCodes.OK]: SelfServeTrialInfo,
+        },
+    },
+    config: {
+        ...PLATFORM_ADMIN_ONLY,
+        rateLimit: authnRateLimit,
+    },
 }
 
 type RefreshWhenAppliedImmediatelyParams = {

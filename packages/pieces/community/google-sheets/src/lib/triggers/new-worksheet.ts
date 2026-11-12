@@ -6,6 +6,8 @@ import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
 import { createGoogleClient } from '../common/common';
 import { newWorksheetTriggerOutputSchema } from '../output-schemas';
 
+const FIRST_TAB_ID = 0;
+
 export const newWorksheetTrigger = createTrigger({
 	auth: googleSheetsAuth,
 	name: 'new-worksheet',
@@ -23,6 +25,9 @@ export const newWorksheetTrigger = createTrigger({
 	},
 	outputSchema: newWorksheetTriggerOutputSchema,
 	async onEnable(context) {
+		if (context.isRepublish && !isNil(await context.store.get('worksheets'))) {
+			return;
+		}
 		const ids: number[] = [];
 		const authClient = await createGoogleClient(context.auth);
 		const sheets = googleSheets({ version: 'v4', auth: authClient });
@@ -32,13 +37,10 @@ export const newWorksheetTrigger = createTrigger({
 		if (response.data.sheets) {
 			for (const sheet of response.data.sheets) {
 				const sheetId = sheet.properties?.sheetId;
-				if (sheetId) {
+				if (!isNil(sheetId)) {
 					ids.push(sheetId);
 				}
 			}
-		}
-		if (context.isRepublish && !isNil(await context.store.get('worksheets'))) {
-			return;
 		}
 		await context.store.put('worksheets', JSON.stringify(ids));
 	},
@@ -77,21 +79,27 @@ export const newWorksheetTrigger = createTrigger({
 		if (isNil(response.data.sheets) || response.data.sheets.length === 0) {
 			return [];
 		}
-		// Filter valid worksheetss
+		const hasFirstTab = response.data.sheets.some((sheet) => sheet.properties?.sheetId === FIRST_TAB_ID);
+		const knownIds =
+			hasFirstTab && !parsedExistingIds.includes(FIRST_TAB_ID)
+				? [FIRST_TAB_ID, ...parsedExistingIds]
+				: parsedExistingIds;
 		const newWorksheets = response.data.sheets.filter((sheet) => {
-			const sheetId = sheet.properties?.sheetId ?? undefined;
-			return sheetId !== undefined && !parsedExistingIds.includes(sheetId);
+			const sheetId = sheet.properties?.sheetId;
+			return !isNil(sheetId) && !knownIds.includes(sheetId);
 		});
 
 		const newIds = newWorksheets
-			.map((sheet) => sheet.properties?.sheetId ?? undefined)
-			.filter((id): id is number => id !== undefined);
+			.map((sheet) => sheet.properties?.sheetId)
+			.filter((id): id is number => !isNil(id));
 
 		if (newIds.length === 0) {
+			if (knownIds !== parsedExistingIds) {
+				await context.store.put('worksheets', JSON.stringify(knownIds));
+			}
 			return [];
 		}
-		// Store new IDs
-		await context.store.put('worksheets', JSON.stringify([...newIds, ...parsedExistingIds]));
+		await context.store.put('worksheets', JSON.stringify([...newIds, ...knownIds]));
 		return newWorksheets;
 	},
 	sampleData: {

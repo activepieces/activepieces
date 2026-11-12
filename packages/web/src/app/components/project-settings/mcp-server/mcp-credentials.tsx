@@ -32,7 +32,7 @@ export function McpCredentials() {
           <div className="bg-gray-3/50 rounded-md px-3 py-2 text-sm flex-1 overflow-x-auto">
             {serverUrl}
           </div>
-          <CopyButton textToCopy={serverUrl} />
+          <CopyButton value={serverUrl} />
         </div>
       </div>
 

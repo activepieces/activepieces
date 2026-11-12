@@ -90,6 +90,7 @@ type CreateKeyRequest = {
     limit_reset?: LimitReset
     include_byok_in_limit?: boolean
     expires_at?: Date
+    external?: { user: string }
 }
 type CreateKeyResponse = {
     key: string

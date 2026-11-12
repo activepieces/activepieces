@@ -1,9 +1,12 @@
-import { PlatformAdminSurface, TelemetryEventName } from '@activepieces/shared';
+import {
+  PlanName,
+  UpgradeLocationInWebApp,
+  TelemetryEventName,
+} from '@activepieces/shared';
 
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 
-import { FeatureKey } from '../components/request-trial';
-import { FeatureTier } from '../utils/feature-tier';
+import { FeatureKey } from '../utils/platform-features';
 
 import { billingDialogHooks } from './billing-dialog-hooks';
 
@@ -11,10 +14,14 @@ export function useUpgradeClick() {
   const { capture } = useTelemetry();
   const { openDialog } = billingDialogHooks.useManagePlanDialogStore();
 
-  return ({ feature, tier, surface }: UpgradeClickParams) => {
+  return ({ feature, plan, locationInWebApp }: UpgradeClickParams) => {
     capture({
       name: TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED,
-      payload: { feature: feature ?? null, tier: tier ?? null, surface },
+      payload: {
+        feature: feature ?? null,
+        tier: plan ?? null,
+        surface: locationInWebApp,
+      },
     });
     openDialog();
   };
@@ -22,6 +29,6 @@ export function useUpgradeClick() {
 
 type UpgradeClickParams = {
   feature?: FeatureKey;
-  tier?: FeatureTier;
-  surface: PlatformAdminSurface;
+  plan?: PlanName;
+  locationInWebApp: UpgradeLocationInWebApp;
 };

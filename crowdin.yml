@@ -9,6 +9,14 @@ files:
   - type: i18next_json
     source: packages/web/public/locales/en/translation.json
     translation: /packages/web/public/locales/%two_letters_code%/translation.json
+    languages_mapping:
+      two_letters_code:
+        zh-CN: zh
+        zh-TW: zh-TW
   - type: json
     source: packages/pieces/**/**/src/i18n/translation.json
     translation: /packages/pieces/**/**/src/i18n/%two_letters_code%.json
+    languages_mapping:
+      two_letters_code:
+        zh-CN: zh
+        zh-TW: zh-TW

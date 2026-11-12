@@ -78,4 +78,3 @@ The four calls a run emits to the app during execution: `updateRunProgress`, `up
 
 - **Workers** — the poll loop, worker groups, slots and reservations, and its gotchas: the version gate, system-job edition skew, `kamal app exec` leaking a permanent worker, serial per-queue dispatch as the real throughput cap, the silent mid-poll-loop wedge, and why polling starves first
 - **Benchmark CLI** — measuring throughput; queue-wait vs service-time
-- **Deno Code Steps by Execution Mode** — where the deno child runs, its permission set, tmp dir and warm cache per `AP_EXECUTION_MODE`, and how the legacy path differs

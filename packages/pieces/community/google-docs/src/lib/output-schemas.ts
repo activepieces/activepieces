@@ -161,23 +161,63 @@ export const editTemplateActionOutputSchema: OutputSchema = {
     {
       key: 'documentId',
       label: 'Document ID',
-      value: 'data.documentId',
+    },
+    {
+      key: 'documentName',
+      label: 'Document Name',
+    },
+    {
+      key: 'documentUrl',
+      label: 'Document Link',
+      format: 'url',
+    },
+    {
+      key: 'createdNewDocument',
+      label: 'Created a New Document',
+      format: 'boolean',
+    },
+    {
+      key: 'templateId',
+      label: 'Template ID',
+    },
+    {
+      key: 'totalReplacements',
+      label: 'Total Replacements',
+      format: 'number',
+    },
+    {
+      key: 'replacements',
+      label: 'Replacements',
+      labelKey: 'placeholder',
+      listItems: [
+        {
+          key: 'placeholder',
+          label: 'Placeholder',
+        },
+        {
+          key: 'occurrences',
+          label: 'Times Replaced',
+          format: 'number',
+        },
+      ],
+    },
+    {
+      key: 'placeholdersNotFound',
+      label: 'Placeholders Not Found',
+    },
+    {
+      key: 'unfilledPlaceholders',
+      label: 'Placeholders Left Unfilled',
+    },
+    {
+      key: 'imagesReplaced',
+      label: 'Images Replaced',
+      format: 'number',
     },
     {
       key: 'requiredRevisionId',
       label: 'Revision ID',
       value: 'data.writeControl.requiredRevisionId',
-    },
-    {
-      key: 'status',
-      label: 'Status Code',
-      value: 'status',
-      format: 'number',
-    },
-    {
-      key: 'statusText',
-      label: 'Status Text',
-      value: 'statusText',
     },
   ],
 };

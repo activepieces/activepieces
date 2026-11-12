@@ -111,7 +111,7 @@ function usageEventsOf({ platformId, raw, startMs, endMs }: { platformId: string
     const unique = [...new Map(raw.filter((event) => event.timestamp >= startMs && event.timestamp < endMs).map((event) => [event.id, event])).values()]
     const events = unique.flatMap((event) => {
         const parsed = AiUsageBlock.safeParse(sanitizeObjectForPostgresql(event.properties['usage']))
-        return parsed.success ? [{ platformId, timestampMs: event.timestamp, block: parsed.data }] : []
+        return parsed.success && parsed.data.platformId === platformId ? [{ platformId, timestampMs: event.timestamp, block: parsed.data }] : []
     })
     return { events, skipped: unique.length - events.length }
 }

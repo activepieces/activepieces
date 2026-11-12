@@ -76,7 +76,7 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
             scope: AppConnectionScope.PROJECT,
             cursorRequest: null,
             limit: 10000,
-            pieceName: undefined,
+            pieceNames: undefined,
             displayName: undefined,
             status: undefined,
         })

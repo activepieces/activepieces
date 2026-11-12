@@ -127,6 +127,8 @@
                      "flows/publishing-flows",
                      "flows/flow-approvals",
                      "flows/debugging-runs",
+                     "flows/managing-memory",
+                     "flows/managing-queues",
                     "flows/versioning",
                     "flows/template-library",
                     "flows/canvas-controls"
@@ -440,7 +442,23 @@
                           "admin-guide/security/audit-logs/user-invitation-accepted",
                           "admin-guide/security/audit-logs/user-invitation-deleted",
                           "admin-guide/security/audit-logs/signing-key-created",
-                          "admin-guide/security/audit-logs/audit-log-retention-updated"
+                          "admin-guide/security/audit-logs/audit-log-retention-updated",
+                          "admin-guide/security/audit-logs/authentication-email-enabled",
+                          "admin-guide/security/audit-logs/authentication-email-disabled",
+                          "admin-guide/security/audit-logs/authentication-google-enabled",
+                          "admin-guide/security/audit-logs/authentication-google-disabled",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-added",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-removed",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-enforcement-enabled",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-enforcement-disabled",
+                          "admin-guide/security/audit-logs/sso-domain-added",
+                          "admin-guide/security/audit-logs/sso-domain-verified",
+                          "admin-guide/security/audit-logs/sso-domain-verification-cancelled",
+                          "admin-guide/security/audit-logs/sso-domain-removed",
+                          "admin-guide/security/audit-logs/sso-domain-expired",
+                          "admin-guide/security/audit-logs/sso-saml-connected",
+                          "admin-guide/security/audit-logs/sso-saml-replaced",
+                          "admin-guide/security/audit-logs/sso-saml-disabled"
                         ]
                       }
                     ]
@@ -475,7 +493,23 @@
                           "admin-guide/security/audit-logs/user-invitation-accepted",
                           "admin-guide/security/audit-logs/user-invitation-deleted",
                           "admin-guide/security/audit-logs/signing-key-created",
-                          "admin-guide/security/audit-logs/audit-log-retention-updated"
+                          "admin-guide/security/audit-logs/audit-log-retention-updated",
+                          "admin-guide/security/audit-logs/authentication-email-enabled",
+                          "admin-guide/security/audit-logs/authentication-email-disabled",
+                          "admin-guide/security/audit-logs/authentication-google-enabled",
+                          "admin-guide/security/audit-logs/authentication-google-disabled",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-added",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-removed",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-enforcement-enabled",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-enforcement-disabled",
+                          "admin-guide/security/audit-logs/sso-domain-added",
+                          "admin-guide/security/audit-logs/sso-domain-verified",
+                          "admin-guide/security/audit-logs/sso-domain-verification-cancelled",
+                          "admin-guide/security/audit-logs/sso-domain-removed",
+                          "admin-guide/security/audit-logs/sso-domain-expired",
+                          "admin-guide/security/audit-logs/sso-saml-connected",
+                          "admin-guide/security/audit-logs/sso-saml-replaced",
+                          "admin-guide/security/audit-logs/sso-saml-disabled"
                         ]
                       },
                       "admin-guide/guides/event-streaming"

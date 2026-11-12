@@ -30,7 +30,7 @@ export function SvgPreview({ svg }: { svg: string }) {
 
   const actions = (
     <>
-      <CopyButton textToCopy={svg} variant="ghost" size="icon-sm" />
+      <CopyButton value={svg} variant="ghost" size="icon-sm" />
       <DownloadButton
         fileName="image"
         textToDownload={svg}

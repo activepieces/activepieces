@@ -36,7 +36,7 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
         const queryBuilder = auditLogRepo().createQueryBuilder('audit_event')
             .where({ platformId })
         if (!isNil(userId)) {
-            queryBuilder.andWhere({ userId })
+            queryBuilder.andWhere({ userId: In(userId) })
         }
         if (!isNil(action)) {
             queryBuilder.andWhere({ action: In(action) })
@@ -70,7 +70,7 @@ type ListParams = {
     platformId: string
     cursorRequest: Cursor | null
     limit: number
-    userId?: string
+    userId?: string[]
     action?: string[]
     projectId?: string[]
     createdBefore?: string

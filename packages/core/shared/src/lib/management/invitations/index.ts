@@ -33,6 +33,16 @@ export const UserInvitationWithLink = UserInvitation.extend({
 
 export type UserInvitationWithLink = z.infer<typeof UserInvitationWithLink>
 
+export const UserInvitationPreview = z.object({
+    email: z.string(),
+    platformName: z.string(),
+    platformLogoUrl: Nullable(z.string()),
+    memberCount: z.number(),
+    status: z.enum(InvitationStatus),
+})
+
+export type UserInvitationPreview = z.infer<typeof UserInvitationPreview>
+
 export const RemoveProjectFromInvitationResponse = z.object({
     revoked: z.boolean(),
     invitation: UserInvitation.nullable(),
@@ -74,3 +84,5 @@ export const ListUserInvitationsRequest = z.object({
 })
 
 export type ListUserInvitationsRequest = z.infer<typeof ListUserInvitationsRequest>
+
+export const INVITATION_EXPIRY_SECONDS = 7 * 24 * 60 * 60

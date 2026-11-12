@@ -28,6 +28,7 @@ export enum PlanName {
     ENTERPRISE = 'enterprise',
     APPSUMO = 'appsumo',
     FREE_LEGACY = 'free_legacy',
+    SELF_SERVE_TRIAL = 'self_serve_trial',
 }
 
 export enum AiCreditsAutoTopUpState {
@@ -240,11 +241,44 @@ export const Platform = z.object({
 export type Platform = z.infer<typeof Platform>
 export type PlatformWithoutFederatedAuth = Omit<Platform, 'federatedAuthProviders'>
 
+export const SelfServeTrialDates = z.object({
+    startedAt: z.string(),
+    endsAt: z.string(),
+})
+export type SelfServeTrialDates = z.infer<typeof SelfServeTrialDates>
+
+export enum SelfServeTrialState {
+    ELIGIBLE = 'eligible',
+    INELIGIBLE = 'ineligible',
+    ACTIVE = 'active',
+    ENDED = 'ended',
+}
+
+export const StartedSelfServeTrial = z.object({
+    state: z.enum([SelfServeTrialState.ACTIVE, SelfServeTrialState.ENDED]),
+    startedAt: z.string(),
+    endsAt: z.string(),
+    seatGraceEndsAt: z.string().nullable(),
+})
+export type StartedSelfServeTrial = z.infer<typeof StartedSelfServeTrial>
+
+export const NotStartedSelfServeTrial = z.object({
+    state: z.enum([SelfServeTrialState.ELIGIBLE, SelfServeTrialState.INELIGIBLE]),
+    startedAt: z.null(),
+    endsAt: z.null(),
+    seatGraceEndsAt: z.null(),
+})
+export type NotStartedSelfServeTrial = z.infer<typeof NotStartedSelfServeTrial>
+
+export const SelfServeTrialInfo = z.discriminatedUnion('state', [StartedSelfServeTrial, NotStartedSelfServeTrial])
+export type SelfServeTrialInfo = z.infer<typeof SelfServeTrialInfo>
+
 export const PlatformWithoutSensitiveData = z.object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
     plan: PlatformPlanLimits,
     usage: PlatformUsage.optional(),
     billingEnforced: z.boolean().optional(),
+    selfServeTrial: StartedSelfServeTrial.optional(),
     id: z.string(),
     created: DateOrString,
     updated: DateOrString,
@@ -337,10 +371,11 @@ export const PlatformBillingInformation = z.object({
     creditsFeature: Nullable(CreditsBillableFeature),
     appSumoCreditsFeature: Nullable(AppSumoCreditsBillableFeature),
     seatsFeature: Nullable(SeatsBillableFeature),
-    billingPortalAvailable: z.boolean(),
+    hasPaymentMethod: z.boolean(),
     billingEnforced: z.boolean(),
     billingUnavailable: z.boolean(),
     includedSeats: Nullable(z.number()),
     additionalSeats: Nullable(z.number()),
+    selfServeTrial: SelfServeTrialInfo,
 })
 export type PlatformBillingInformation = z.infer<typeof PlatformBillingInformation>

@@ -3,6 +3,7 @@ import { Brain, ChevronDown, Volume2, VolumeOff } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { memo, useMemo, useState } from 'react';
 
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Markdown } from '@/components/prompt-kit/markdown';
 import {
@@ -41,7 +42,6 @@ import { ThinkingBlock } from './activity-accordion';
 import { BatchProgressCard } from './batch-progress-card';
 import { CardSkeleton } from './card-skeletons';
 import { ConnectionPickerCard } from './connection-picker-card';
-import { CopyIconButton } from './copy-icon-button';
 import { FeedbackButtons } from './feedback-buttons';
 import { FlowBuildCard } from './flow-build-card';
 import { GeneratedImageCard } from './generated-image-card';
@@ -185,7 +185,13 @@ export const AssistantMessage = memo(function AssistantMessage({
             {hasContent && !isStreaming && (
               <>
                 <MessageAction tooltip={t('Copy')}>
-                  <CopyIconButton textToCopy={fullText} className="h-6 w-6" />
+                  <CopyButton
+                    value={fullText}
+                    variant="ghost"
+                    size="icon-xs"
+                    withoutTooltip
+                    className="h-6 w-6"
+                  />
                 </MessageAction>
                 {isTtsSupported && (
                   <MessageAction

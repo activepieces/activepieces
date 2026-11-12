@@ -92,7 +92,7 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
             const result = await appConnectionService(log).list({
                 projectId: project.id,
                 platformId,
-                pieceName: normalizedPiece,
+                pieceNames: [normalizedPiece],
                 cursorRequest: null,
                 displayName: undefined,
                 status: undefined,
@@ -168,7 +168,7 @@ async function listConnectionsAcrossProjects({ projects, platformId, log }: {
             const result = await appConnectionService(log).list({
                 projectId: project.id,
                 platformId,
-                pieceName: undefined,
+                pieceNames: undefined,
                 cursorRequest: null,
                 displayName: undefined,
                 status: undefined,
@@ -299,7 +299,7 @@ async function resolveConnectionToPin({ piece, pieceName, projectId, platformId,
     const { data } = await appConnectionService(log).list({
         projectId,
         platformId,
-        pieceName,
+        pieceNames: [pieceName],
         displayName: undefined,
         status: undefined,
         cursorRequest: null,

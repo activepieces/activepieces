@@ -4,7 +4,7 @@ import {
     piecePropertiesUtils,
     PiecePropertyMap,
 } from '@activepieces/pieces-framework'
-import { AiRouterActionSettingsWithValidation, CodeActionSettings, FlowActionType, FlowOperationRequest, FlowOperationType, flowPieceUtil, flowStructureUtil, FlowTrigger, FlowTriggerType, LoopOnItemsActionSettings, PieceActionSettings, PieceTriggerSettings, RouterActionSettingsWithValidation, SourceCode, Step } from '@activepieces/shared'
+import { AiRouterActionSettingsWithValidation, CodeActionSettings, FlowActionType, FlowOperationRequest, FlowOperationType, flowPieceUtil, flowStructureUtil, FlowTrigger, FlowTriggerType, LoopOnItemsActionSettings, PieceActionSettings, PieceTriggerSettings, ProcessInBatchesActionSettingsWithValidation, RouterActionSettingsWithValidation, SourceCode, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
@@ -12,6 +12,7 @@ import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-servi
 const loopSettingsValidator = LoopOnItemsActionSettings.and(z.object({
     items: z.string().min(1),
 }))
+const processInBatchesSettingsValidator = ProcessInBatchesActionSettingsWithValidation
 const routerSettingsValidator = RouterActionSettingsWithValidation
 const aiRouterSettingsValidator = AiRouterActionSettingsWithValidation
 const codeSettingsValidator = CodeActionSettings.and(z.object({
@@ -36,6 +37,11 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                 switch (clonedRequest.request.action.type) {
                     case FlowActionType.LOOP_ON_ITEMS:
                         clonedRequest.request.action.valid = loopSettingsValidator.safeParse(
+                            clonedRequest.request.action.settings,
+                        ).success
+                        break
+                    case FlowActionType.PROCESS_IN_BATCHES:
+                        clonedRequest.request.action.valid = processInBatchesSettingsValidator.safeParse(
                             clonedRequest.request.action.settings,
                         ).success
                         break
@@ -71,6 +77,11 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                 switch (clonedRequest.request.type) {
                     case FlowActionType.LOOP_ON_ITEMS:
                         clonedRequest.request.valid = loopSettingsValidator.safeParse(
+                            clonedRequest.request.settings,
+                        ).success
+                        break
+                    case FlowActionType.PROCESS_IN_BATCHES:
+                        clonedRequest.request.valid = processInBatchesSettingsValidator.safeParse(
                             clonedRequest.request.settings,
                         ).success
                         break

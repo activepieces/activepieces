@@ -29,11 +29,11 @@ export const driveDownloadFile = createAction({
     }),
   },
   run: async ({ auth, propsValue, files }) => {
-    return downloadFileFromDrive(
+    return downloadFileFromDrive({
       auth,
       files,
-      propsValue.file_id,
-      propsValue.destination_file_name
-    );
+      fileId: propsValue.file_id,
+      fileName: propsValue.destination_file_name,
+    });
   },
 });

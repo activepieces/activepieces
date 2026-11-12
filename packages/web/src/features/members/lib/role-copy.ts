@@ -92,7 +92,7 @@ function memberDescription({
   }
   if (personalProjectsEnabled) {
     return t(
-      "Access to personal project and any team projects they're invited to",
+      "Access to their personal project and any team projects they're invited to.",
     );
   }
   if (hasDefaultProjects) {
@@ -100,7 +100,7 @@ function memberDescription({
       "Access to any team projects they're invited to. New members also join the default projects.",
     );
   }
-  return t("Access to the team projects they're invited to");
+  return t("Access to any team projects they're invited to.");
 }
 
 function sortProjectRoles({ roles }: { roles: ProjectRole[] }): ProjectRole[] {

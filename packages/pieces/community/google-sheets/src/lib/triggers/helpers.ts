@@ -3,7 +3,7 @@ import { drive as googleDrive, drive_v3 } from '@googleapis/drive';
 import { nanoid } from 'nanoid';
 import dayjs from 'dayjs';
 import crypto from 'crypto';
-import { columnToLabel, createGoogleClient, GoogleSheetsAuthValue } from '../common/common';
+import { columnToLabel, createGoogleClient, GoogleSheetsAuthValue, googleSheetsCommon } from '../common/common';
 import { isNil } from '@activepieces/pieces-framework';
 
 export async function getWorkSheetName(
@@ -45,18 +45,27 @@ export async function getWorkSheetGridSize(
 	return sheetRange
 }
 
-export async function getWorkSheetValues(
-	auth: GoogleSheetsAuthValue,
-	spreadsheetId: string,
-	range?: string,
-) {
+export async function getWorkSheetValues({
+	auth,
+	spreadsheetId,
+	sheetName,
+	range,
+	valueRenderOption = 'FORMATTED_VALUE',
+}: {
+	auth: GoogleSheetsAuthValue;
+	spreadsheetId: string;
+	sheetName: string;
+	range?: string;
+	valueRenderOption?: SheetValueRenderOption;
+}): Promise<SheetCellValue[][]> {
 	const authClient = await createGoogleClient(auth);
 
 	const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 	const res = await sheets.spreadsheets.values.get({
 		spreadsheetId: spreadsheetId,
-		range: range,
+		range: googleSheetsCommon.sheetRange({ sheetName, range }),
+		valueRenderOption,
 	});
 
 	return res.data.values ?? [];
@@ -147,6 +156,34 @@ export function mapRowsToColumnLabels(rowValues: any[][], oldRowCount: number, h
 	return result;
 }
 
+export function labelRowValues({
+	row,
+	headerCount,
+}: {
+	row: SheetCellValue[] | undefined;
+	headerCount: number;
+}): Record<string, string> {
+	const values: Record<string, string> = {};
+	for (let column = 0; column < headerCount; column++) {
+		const cell = row?.[column];
+		values[columnToLabel(column)] = isNil(cell) ? '' : String(cell);
+	}
+	return values;
+}
+
+export function sheetIdentity({
+	spreadsheetId,
+	sheetId,
+}: {
+	spreadsheetId: string | null | undefined;
+	sheetId: string | number | null | undefined;
+}): { spreadsheetId: string; sheetId: number } {
+	if (isNil(spreadsheetId) || spreadsheetId === '' || isNil(sheetId) || sheetId === '') {
+		throw new Error('Please select a spreadsheet and sheet first.');
+	}
+	return { spreadsheetId, sheetId: Number(sheetId) };
+}
+
 export interface WebhookInformation {
 	kind?: string | null;
 	id?: string | null;
@@ -154,3 +191,7 @@ export interface WebhookInformation {
 	resourceUri?: string | null;
 	expiration?: string | null;
 }
+
+export type SheetValueRenderOption = 'FORMATTED_VALUE' | 'UNFORMATTED_VALUE';
+
+export type SheetCellValue = string | number | boolean | null | undefined;

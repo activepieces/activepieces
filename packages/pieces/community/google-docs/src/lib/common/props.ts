@@ -3,9 +3,9 @@ import { DropdownOption, isNil, Property } from '@activepieces/pieces-framework'
 import { drive as googleDrive, drive_v3 } from '@googleapis/drive';
 import { driveQuery } from './drive-query';
 
-export const folderIdProp = Property.Dropdown({
+export const folderIdPropWith = ({ description }: { description: string }) => Property.Dropdown({
 	displayName: 'Folder',
-	description: 'Leave empty to include all of Drive.',
+	description,
 	refreshers: [],
 	refreshOnSearch: true,
 	auth: googleDocsAuth,
@@ -56,9 +56,11 @@ export const folderIdProp = Property.Dropdown({
 	},
 });
 
-export const documentIdProp = ({ description }: { description?: string } = {}) =>
+export const folderIdProp = folderIdPropWith({ description: 'Leave empty to include all of Drive.' });
+
+export const documentIdProp = ({ displayName, description }: { displayName?: string; description?: string } = {}) =>
 	Property.Dropdown({
-		displayName: 'Document',
+		displayName: displayName ?? 'Document',
 		description,
 		auth: googleDocsAuth,
 		required: true,

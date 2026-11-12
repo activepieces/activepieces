@@ -39,7 +39,10 @@ const ApBigAddButtonCanvasNode = React.memo(
     const isShowingDropIndicator = !isNil(activeDraggingStep);
     useDndMonitor({
       onDragMove(event: DragMoveEvent) {
-        setIsStepInsideDropzone(event.over?.id === draggableId);
+        const isOver = event.over?.id === draggableId;
+        if (isOver !== isIsStepInsideDropzone) {
+          setIsStepInsideDropzone(isOver);
+        }
       },
       onDragEnd() {
         setIsStepInsideDropzone(false);

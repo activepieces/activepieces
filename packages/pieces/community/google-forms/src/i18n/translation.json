@@ -44,11 +44,15 @@
   "Request": "Request",
   "Data to send": "Data to send",
   "New Response": "New Response",
-  "Triggers when someone submits or edits a response to the form.": "Triggers when someone submits or edits a response to the form.",
+  "Triggers when someone submits a response to the form. Can also trigger when a respondent edits their response.": "Triggers when someone submits a response to the form. Can also trigger when a respondent edits their response.",
   "Markdown": "Markdown",
   "Form": "Form",
   "Include Shared Drives": "Include Shared Drives",
-  "Checks the form every few minutes. A response starts the flow when it is sent or edited after the flow is published.": "Checks the form every few minutes. A response starts the flow when it is sent or edited after the flow is published.",
+  "Run On": "Run On",
+  "Checks the form every few minutes. With **New responses only**, each response starts the flow once, when it is first sent. With **New and edited responses**, it also starts the flow again every time the respondent edits and resends it (respondents can only edit when **Allow response editing** is on in the form settings). Only responses sent after the flow is published count. Upgrading the piece version in the builder pre-selects **New responses only**; choose **New and edited responses** to keep the old beh": "Checks the form every few minutes. With **New responses only**, each response starts the flow once, when it is first sent. With **New and edited responses**, it also starts the flow again every time the respondent edits and resends it (respondents can only edit when **Allow response editing** is on in the form settings). Only responses sent after the flow is published count. Upgrading the piece version in the builder pre-selects **New responses only**; choose **New and edited responses** to keep the old behaviour.",
   "The form to watch for new responses.": "The form to watch for new responses.",
-  "Also include forms stored in shared drives.": "Also include forms stored in shared drives."
+  "Also include forms stored in shared drives.": "Also include forms stored in shared drives.",
+  "Choose whether an edited response starts the flow again.": "Choose whether an edited response starts the flow again.",
+  "New responses only": "New responses only",
+  "New and edited responses": "New and edited responses"
 }

@@ -1,4 +1,4 @@
-import { googleSheetsAuth } from '../common/common';
+import { googleSheetsAuth, googleSheetsCommon } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
 	areSheetIdsValid,
@@ -122,7 +122,7 @@ export const createColumnAction = createAction({
 		);
 
 		const response = await sheets.spreadsheets.values.update({
-			range: `${sheetName}!${columnLabel}1`,
+			range: googleSheetsCommon.sheetRange({ sheetName, range: `${columnLabel}1` }),
 			spreadsheetId,
 			valueInputOption: ValueInputOption.USER_ENTERED,
 			requestBody: {

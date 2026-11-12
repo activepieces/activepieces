@@ -1,4 +1,3 @@
-import { StepLocationRelativeToParent } from '@activepieces/shared';
 import { BaseEdge, EdgeProps } from '@xyflow/react';
 
 import { flowCanvasConsts } from '../utils/consts';
@@ -63,9 +62,7 @@ export const ApLoopStartLineCanvasEdge = ({
         >
           <ApAddButton
             edgeId={id}
-            stepLocationRelativeToParent={
-              StepLocationRelativeToParent.INSIDE_LOOP
-            }
+            stepLocationRelativeToParent={data.stepLocationRelativeToParent}
             parentStepName={source}
           ></ApAddButton>
         </foreignObject>

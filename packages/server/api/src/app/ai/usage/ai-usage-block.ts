@@ -10,6 +10,7 @@ const tokenCounter = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)
 
 export const AiUsageBlock = z.object({
     v: z.literal(1),
+    platformId: z.string().min(1).max(ID_MAX),
     origin: z.enum(AiUsageOrigin),
     environment: z.enum(AiUsageEnvironment),
     projectId: nullableId,

@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { ApEdition, AppSumoCreditsBillableFeature, CancellationReason, ConsumableFeatureId, ConsumableProductAutoTopupParams, CreditsBillableFeature, FlowRun, PurchasablePlan, RunEnvironment, SeatsBillableFeature, UnconsumableFeatureId } from '@activepieces/shared'
+import { ApEdition, AppSumoCreditsBillableFeature, CancellationReason, ConsumableFeatureId, ConsumableProductAutoTopupParams, CreditsBillableFeature, FlowRun, notStartedSelfServeTrial, PurchasablePlan, RunEnvironment, SeatsBillableFeature, SelfServeTrialInfo, SelfServeTrialState, UnconsumableFeatureId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { AiUsageBlock } from '../ai/usage/ai-usage-block'
 import { hooksFactory } from '../helper/hooks-factory'
@@ -72,6 +72,12 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     },
     listUsageEvents: async () => {
         return { events: [], nextCursor: null }
+    },
+    getSelfServeTrialInfo: async () => {
+        return notStartedSelfServeTrial(SelfServeTrialState.INELIGIBLE)
+    },
+    startSelfServeTrial: async () => {
+        return notStartedSelfServeTrial(SelfServeTrialState.INELIGIBLE)
     },
 }))
 
@@ -157,7 +163,7 @@ export function emptyBillingOverview({ startDate, endDate, unavailable = false }
         planInterval: null,
         planName: null,
         scheduledPlanName: null,
-        billingPortalAvailable: false,
+        hasPaymentMethod: false,
         creditsResetInterval: null,
         creditsFeature: null,
         appSumoCreditsFeature: null,
@@ -357,7 +363,7 @@ export type BillingInfo = {
     trialEndsAt: string | null
     planName: string | null
     scheduledPlanName: string | null
-    billingPortalAvailable: boolean
+    hasPaymentMethod: boolean
     creditsResetInterval: string | null
     planInterval: string | null
 }
@@ -438,6 +444,13 @@ export type BillingProvider = {
     getConsumablesUsage(platformId: string): Promise<ConsumablesUsage>
     getCreditUsage(params: CreditUsageByProjectParams): Promise<CreditUsage>
     listUsageEvents(params: ListUsageEventsParams): Promise<UsageEventsPage>
+    getSelfServeTrialInfo(params: GetSelfServeTrialInfoParams): Promise<SelfServeTrialInfo>
+    startSelfServeTrial(platformId: string): Promise<SelfServeTrialInfo>
+}
+
+export type GetSelfServeTrialInfoParams = {
+    platformId: string
+    bypassCacheAndFetchFromProvider?: boolean
 }
 
 export type ListUsageEventsParams = {

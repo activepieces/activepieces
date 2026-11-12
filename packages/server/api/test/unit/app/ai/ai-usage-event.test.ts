@@ -45,7 +45,7 @@ function report(overrides: Partial<ReportAiUsageRequest>): ReportAiUsageRequest 
 describe('aiUsageEvent.blockOf', () => {
     it('prices a managed call at what we bill, exactly', async () => {
         const event = await aiUsageEvent.blockOf(report({ provider: AIProviderName.ACTIVEPIECES, usage: { type: AiChargeBasis.PROVIDER_REPORTED_COST, costUsd: 0.002 } }))
-        expect(event).toMatchObject({ v: 1, reportedCostUsd: 0.002, estimatedCostUsd: 0, managedCredits: 4, unpriced: false })
+        expect(event).toMatchObject({ v: 1, platformId: 'platform-1', reportedCostUsd: 0.002, estimatedCostUsd: 0, managedCredits: 4, unpriced: false })
     })
 
     it('prices a managed fixed-credit call (image) at credits times the credit value', async () => {

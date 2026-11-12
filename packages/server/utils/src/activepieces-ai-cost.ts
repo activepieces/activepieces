@@ -1,5 +1,5 @@
 import { ActivepiecesAiBilling, ActivepiecesAiCall, ActivepiecesAiConsumerSource, ActivepiecesAiCostReporter, AiCallTokens, AiCharge, AiChargeBasis, AIProviderName, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { EmbeddingModelV4Result, isJSONObject, LanguageModelV4GenerateResult, LanguageModelV4StreamPart, LanguageModelV4StreamResult, LanguageModelV4Usage, SharedV4ProviderMetadata } from '@ai-sdk/provider'
+import { EmbeddingModelV4Result, isJSONObject, LanguageModelV4Content, LanguageModelV4GenerateResult, LanguageModelV4StreamPart, LanguageModelV4StreamResult, LanguageModelV4Usage, SharedV4ProviderMetadata } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel, wrapEmbeddingModel, wrapLanguageModel } from 'ai'
 import { z } from 'zod'
 import { lookupGeneration } from './openrouter-generation'
@@ -77,7 +77,14 @@ async function billGenerate({ doGenerate, context }: BillGenerateParams): Promis
     }
     const result = attempt.data
     const generationId = result.response?.id
-    report({ context, generationId, call: createBillingInfo({ context, generationId, providerMetadata: result.providerMetadata, usage: result.usage, headers: result.response?.headers }), tokens: tokensOf(result.usage) })
+    const tokens = tokensOf(result.usage)
+    const call = createBillingInfo({ context, generationId, providerMetadata: result.providerMetadata, usage: result.usage, headers: result.response?.headers })
+    if (isNil(call)) {
+        const producedOutput = result.content.some(isOutputPart)
+        recoverCostAndReport({ context, generationId, tokens, producedOutput }).catch(() => report({ context, generationId, call: undefined, tokens }))
+        return result
+    }
+    report({ context, generationId, call, tokens })
     return result
 }
 
@@ -99,7 +106,7 @@ async function billEmbed({ doEmbed, context }: BillEmbedParams): Promise<Embeddi
 }
 
 function billedStream({ context, headers }: { context: BillingContext, headers: ResponseHeaders }): TransformStream<LanguageModelV4StreamPart, LanguageModelV4StreamPart> {
-    const state: StreamState = { reported: false, headers }
+    const state: StreamState = { reported: false, producedOutput: false, headers }
     return new TransformStream({
         transform: (chunk, controller) => trackChunk({ chunk, controller, state, context }),
         flush: () => settleStream({ state, context }),
@@ -110,6 +117,9 @@ function billedStream({ context, headers }: { context: BillingContext, headers: 
 function trackChunk({ chunk, controller, state, context }: TrackChunkParams): void {
     if (chunk.type === 'response-metadata') {
         state.generationId = chunk.id ?? state.generationId
+    }
+    if (isOutputPart(chunk)) {
+        state.producedOutput = true
     }
     if (chunk.type === 'finish' && !state.reported) {
         state.tokens = tokensOf(chunk.usage)
@@ -135,31 +145,32 @@ function settleStream({ state, context }: SettleStreamParams): void {
         report({ context, generationId: state.generationId, call: { charge: AiChargeBasis.USAGE_ONLY, generationId: state.generationId } })
         return
     }
-    recoverCostAndReport({ state, context }).catch(() => report({ context, generationId: state.generationId, call: undefined, tokens: state.tokens }))
+    const { generationId, tokens, producedOutput } = state
+    recoverCostAndReport({ context, generationId, tokens, producedOutput }).catch(() => report({ context, generationId, call: undefined, tokens }))
 }
 
-async function recoverCostAndReport({ state, context }: SettleStreamParams): Promise<void> {
-    const { generationId } = state
+async function recoverCostAndReport({ context, generationId, tokens, producedOutput }: RecoverCostParams): Promise<void> {
     const { apiKey } = context
     if (isNil(generationId) || isNil(apiKey)) {
-        report({ context, generationId, call: undefined, tokens: state.tokens })
+        report({ context, generationId, call: undefined, tokens })
         return
     }
     const generation = await lookupGeneration({ apiKey, generationId })
     if (isNil(generation)) {
-        report({ context, generationId, call: undefined, tokens: state.tokens })
+        const finishedWithNoOutput = !isNil(tokens) && isEmptyCompletion({ producedOutput, tokens })
+        report({ context, generationId, call: undefined, tokens, emptyCompletion: finishedWithNoOutput })
         return
     }
     report({
         context,
         generationId,
         call: {
-            ...state.tokens,
+            ...tokens,
             charge: AiChargeBasis.PROVIDER_REPORTED_COST,
             generationId,
             costUsd: generation.costUsd,
-            inputTokens: generation.inputTokens,
-            outputTokens: generation.outputTokens,
+            inputTokens: generation.inputTokens ?? tokens?.inputTokens,
+            outputTokens: generation.outputTokens ?? tokens?.outputTokens,
             observedCostUsd: generation.costUsd,
         },
     })
@@ -242,9 +253,11 @@ function parseOrUndefined<T extends z.ZodType>(schema: T, value: unknown): z.inf
     return parsed.success ? parsed.data : undefined
 }
 
-function report({ context, call, generationId, tokens }: ReportParams): void {
+function report({ context, call, generationId, tokens, emptyCompletion = false }: ReportParams): void {
     if (isNil(call)) {
-        recordUnbilledCall({ context, generationId, reason: isNil(generationId) ? UnbilledCallReason.NO_GENERATION_ID : UnbilledCallReason.PROVIDER_REPORTED_NO_COST })
+        if (!emptyCompletion) {
+            recordUnbilledCall({ context, generationId, reason: isNil(generationId) ? UnbilledCallReason.NO_GENERATION_ID : UnbilledCallReason.PROVIDER_REPORTED_NO_COST })
+        }
         reporter?.({ billing: context.billing, provider: context.provider, ...spreadIfDefined('providerConfigId', context.providerConfigId), modelId: context.modelId, call: { charge: AiChargeBasis.USAGE_ONLY, generationId, ...tokens } })
         return
     }
@@ -253,6 +266,20 @@ function report({ context, call, generationId, tokens }: ReportParams): void {
         return
     }
     reporter({ billing: context.billing, provider: context.provider, ...spreadIfDefined('providerConfigId', context.providerConfigId), modelId: context.modelId, call })
+}
+
+function isEmptyCompletion({ producedOutput, tokens }: { producedOutput: boolean, tokens: AiCallTokens }): boolean {
+    return !producedOutput && (tokens.outputTokens ?? 0) === 0
+}
+
+function isOutputPart(part: LanguageModelV4Content | LanguageModelV4StreamPart): boolean {
+    if (part.type === 'text' || part.type === 'reasoning') {
+        return part.text.length > 0
+    }
+    if (part.type === 'text-delta' || part.type === 'reasoning-delta') {
+        return part.delta.length > 0
+    }
+    return !NON_OUTPUT_PART_TYPES.has(part.type) && !part.type.endsWith('-start') && !part.type.endsWith('-end')
 }
 
 function recordUnbilledCall({ context, generationId, reason }: RecordUnbilledCallParams): void {
@@ -284,6 +311,8 @@ function drainUnbilledCalls(): UnbilledCall[] {
 }
 
 const FORCED_TOOL_NOT_CALLED_ERROR = 'ForcedToolNotCalledError'
+
+const NON_OUTPUT_PART_TYPES: ReadonlySet<string> = new Set(['stream-start', 'response-metadata', 'finish', 'raw', 'error'])
 
 const EmbeddingResponseBody = z.object({
     id: z.string().min(1),
@@ -360,6 +389,7 @@ type ReportProviderCostParams = ReportFixedCreditsParams & AiCallTokens & {
 
 type StreamState = {
     reported: boolean
+    producedOutput: boolean
     generationId?: string
     headers: ResponseHeaders
     tokens?: AiCallTokens
@@ -387,6 +417,13 @@ type TrackChunkParams = {
     context: BillingContext
 }
 
+type RecoverCostParams = {
+    context: BillingContext
+    generationId: string | undefined
+    tokens: AiCallTokens | undefined
+    producedOutput: boolean
+}
+
 type SettleStreamParams = {
     state: StreamState
     context: BillingContext
@@ -407,6 +444,7 @@ type ReportParams = {
     call: ActivepiecesAiCall | undefined
     generationId?: string
     tokens?: AiCallTokens
+    emptyCompletion?: boolean
 }
 
 type CreateEmbeddingBillingInfoParams = {

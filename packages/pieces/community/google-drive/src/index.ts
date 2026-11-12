@@ -83,7 +83,8 @@ export const googleDrive = createPiece({
     'AbdulTheActivePiecer',
     'khaledmashaly',
     'abuaboud',
-    'geekyme'
+    'geekyme',
+    'OdaiAhmed99'
   ],
   triggers: [newFile, newFolder, newOrUpdatedFile],
   actions: [

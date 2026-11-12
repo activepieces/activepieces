@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import { PlanName, TelemetryEventName } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../../../database/redis-connections'
@@ -13,6 +13,46 @@ export const platformPlanTelemetry = (log: FastifyBaseLogger) => ({
             event: {
                 name: TelemetryEventName.CHECKOUT_STARTED,
                 payload: { platformId, plan: planId },
+            },
+        })
+    },
+
+    async onSelfServeTrialStarted({ platformId, endsAt }: SelfServeTrialStartedParams): Promise<void> {
+        if (isNil(endsAt)) {
+            return
+        }
+        await telemetry(log).trackPlatform({
+            platformId,
+            event: {
+                name: TelemetryEventName.TRIAL_STARTED,
+                payload: { platformId, plan: PlanName.SELF_SERVE_TRIAL, trialEndsAt: endsAt },
+            },
+        })
+    },
+
+    async onSelfServeTrialEnded({ platformId, trialEndsAt, endedAt }: SelfServeTrialEndedParams): Promise<void> {
+        const claimKey = `self_serve_trial_ended_${platformId}_${trialEndsAt}`
+        await distributedStore.runOnceWithin(claimKey, SELF_SERVE_TRIAL_ENDED_EVENT_DEDUP_SECONDS, async () => {
+            const { error } = await tryCatch(() => telemetry(log).trackPlatform({
+                platformId,
+                event: {
+                    name: TelemetryEventName.TRIAL_ENDED,
+                    payload: { platformId, plan: PlanName.SELF_SERVE_TRIAL, trialEndedAt: endedAt },
+                },
+            }))
+            if (!isNil(error)) {
+                await distributedStore.delete(claimKey)
+                throw error
+            }
+        })
+    },
+
+    async onTrialSeatsDeactivated({ platformId, deactivatedUsers, revokedInvites }: TrialSeatsDeactivatedParams): Promise<void> {
+        await telemetry(log).trackPlatform({
+            platformId,
+            event: {
+                name: TelemetryEventName.TRIAL_SEATS_DEACTIVATED,
+                payload: { platformId, plan: PlanName.SELF_SERVE_TRIAL, deactivatedUsers, revokedInvites },
             },
         })
     },
@@ -93,6 +133,8 @@ const UNKNOWN_PLAN = 'unknown'
 
 const PLAN_CHANGE_ONCE_SECONDS = 24 * 60 * 60
 
+const SELF_SERVE_TRIAL_ENDED_EVENT_DEDUP_SECONDS = 31 * 24 * 60 * 60
+
 const FREE_PLANS: ReadonlySet<string> = new Set([PlanName.FREE, PlanName.FREE_LEGACY, PlanName.APPSUMO])
 
 type PlanActionParams = {
@@ -119,4 +161,21 @@ type PlanChangeKeyParams = {
 type TrackPlanChangeParams = PlanChangeKeyParams & {
     trialEndsAt: string | null
     log: FastifyBaseLogger
+}
+
+type SelfServeTrialStartedParams = {
+    platformId: string
+    endsAt: string | null
+}
+
+type SelfServeTrialEndedParams = {
+    platformId: string
+    trialEndsAt: string
+    endedAt: string
+}
+
+type TrialSeatsDeactivatedParams = {
+    platformId: string
+    deactivatedUsers: number
+    revokedInvites: number
 }

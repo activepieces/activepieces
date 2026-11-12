@@ -1,98 +1,9 @@
-import {
-	Property,
-	Store,
-	StoreScope,
-	createAction,
-} from '@activepieces/pieces-framework';
-import {
-	areSheetIdsValid,
-	googleSheetsAuth,
-	GoogleSheetsAuthValue,
-	googleSheetsCommon,
-	mapRowsToHeaderNames,
-} from '../common/common';
-import { isNil } from '@activepieces/pieces-framework';
-import { HttpError } from '@activepieces/pieces-common';
+import { Property, createAction, isNil } from '@activepieces/pieces-framework';
+import { areSheetIdsValid, googleSheetsAuth } from '../common/common';
 import * as z from 'zod/mini';
 import { propsValidation } from '@activepieces/pieces-common';
-import { getWorkSheetGridSize } from '../triggers/helpers';
+import { nextRows } from '../common/next-rows';
 import { sheetsGetNextRowsActionOutputSchema } from '../output-schemas';
-
-async function getRows(
-	store: Store,
-	auth: GoogleSheetsAuthValue,
-	spreadsheetId: string,
-	sheetId: number,
-	memKey: string,
-	groupSize: number,
-	startRow: number,
-	headerRow: number,
-	useHeaderNames: boolean,
-	testing: boolean,
-) {
-	const sheetGridRange = await getWorkSheetGridSize(auth, spreadsheetId, sheetId);
-	const existingGridRowCount = sheetGridRange.rowCount ?? 0;
-	const memVal = await store.get(memKey, StoreScope.FLOW);
-
-	let startingRow;
-	if (isNil(memVal) || memVal === '') startingRow = startRow || 1;
-	else {
-		startingRow = parseInt(memVal as string);
-		if (isNaN(startingRow)) {
-			throw Error(
-				'The value stored in memory key : ' +
-					memKey +
-					' is ' +
-					memVal +
-					' and it is not a number',
-			);
-		}
-	}
-
-	if (startingRow < 1)
-		throw Error('Starting row : ' + startingRow + ' is less than 1' + memVal);
-
-	if (startingRow > existingGridRowCount - 1) {
-		return [];
-	}
-
-	const endRow = Math.min(startingRow + groupSize, existingGridRowCount);
-
-	if (testing == false) await store.put(memKey, endRow, StoreScope.FLOW);
-
-	const row = await googleSheetsCommon.getGoogleSheetRows({
-		auth,
-		sheetId: sheetId,
-		spreadsheetId: spreadsheetId,
-		rowIndex_s: startingRow,
-		rowIndex_e: endRow - 1,
-		headerRow: headerRow,
-	});
-
-	if (row.length == 0) {
-		const allRows = await googleSheetsCommon.getGoogleSheetRows({
-			spreadsheetId: spreadsheetId,
-			auth,
-			sheetId: sheetId,
-			rowIndex_s: undefined,
-			rowIndex_e: undefined,
-			headerRow: headerRow,
-		});
-		const lastRow = allRows.length + 1;
-		if (testing == false) await store.put(memKey, lastRow, StoreScope.FLOW);
-	}
-
-	const finalRows = await mapRowsToHeaderNames(
-		row,
-		useHeaderNames,
-		spreadsheetId,
-		sheetId,
-		headerRow,
-		auth,
-	);
-
-	return finalRows;
-}
 
 export const sheetsGetNextRows = createAction({
 	auth: googleSheetsAuth,
@@ -163,7 +74,7 @@ export const sheetsGetNextRows = createAction({
 			use_header_names,
 		} = propsValue;
 
-		if (!areSheetIdsValid(spreadsheet_id, sheet_id)) {
+		if (!areSheetIdsValid(spreadsheet_id, sheet_id) || isNil(spreadsheet_id) || isNil(sheet_id)) {
 			throw new Error('Please provide a spreadsheet id and worksheet id.');
 		}
 
@@ -172,26 +83,18 @@ export const sheetsGetNextRows = createAction({
 			group_size: z.number().check(z.minimum(1)),
 		});
 
-		try {
-			return await getRows(
-				store,
-				auth,
-				spreadsheet_id as string,
-				sheet_id as number,
-				mem_key,
-				group_size,
-				start_row,
-				header_row,
-				use_header_names as boolean,
-				false,
-			);
-		} catch (error) {
-			if (error instanceof HttpError) {
-				const errorBody = error.response.body as any;
-				throw new Error(errorBody['error']['message']);
-			}
-			throw error;
-		}
+		return await nextRows.readNextRows({
+			store,
+			auth,
+			spreadsheetId: spreadsheet_id,
+			sheetId: sheet_id,
+			memKey: mem_key,
+			groupSize: group_size,
+			startRow: start_row,
+			headerRow: header_row,
+			useHeaderNames: use_header_names === true,
+			testing: false,
+		});
 	},
 	async test({ store, auth, propsValue }) {
 		const {
@@ -204,29 +107,21 @@ export const sheetsGetNextRows = createAction({
 			use_header_names,
 		} = propsValue;
 
-		if (!areSheetIdsValid(spreadsheet_id, sheet_id)) {
+		if (!areSheetIdsValid(spreadsheet_id, sheet_id) || isNil(spreadsheet_id) || isNil(sheet_id)) {
 			throw new Error('Please provide a spreadsheet id and worksheet id.');
 		}
 
-		try {
-			return await getRows(
-				store,
-				auth,
-				spreadsheet_id as string,
-				sheet_id as number,
-				mem_key,
-				group_size,
-				start_row,
-				header_row,
-				use_header_names as boolean,
-				true,
-			);
-		} catch (error) {
-			if (error instanceof HttpError) {
-				const errorBody = error.response.body as any;
-				throw new Error(errorBody['error']['message']);
-			}
-			throw error;
-		}
+		return await nextRows.readNextRows({
+			store,
+			auth,
+			spreadsheetId: spreadsheet_id,
+			sheetId: sheet_id,
+			memKey: mem_key,
+			groupSize: group_size,
+			startRow: start_row,
+			headerRow: header_row,
+			useHeaderNames: use_header_names === true,
+			testing: true,
+		});
 	},
 });
