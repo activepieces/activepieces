@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sallaAuth } from '../auth';
+import { sallaUtils } from '../common/helpers';
 import { sallaOutputSchemas } from '../common/output-schemas';
 import { ProductLookup, ProductStatus, WeightType, sallaProducts } from '../common/products';
 import { sallaProps } from '../common/props';
@@ -271,8 +272,8 @@ export const updateProductAction = createAction({
         price: propsValue.price ?? undefined,
         salePrice: propsValue.sale_price ?? undefined,
         costPrice: propsValue.cost_price ?? undefined,
-        saleStart: propsValue.sale_start ?? undefined,
-        saleEnd: propsValue.sale_end ?? undefined,
+        saleStart: sallaUtils.wallClockFromDateTimeProp(propsValue.sale_start),
+        saleEnd: sallaUtils.wallClockFromDateTimeProp(propsValue.sale_end),
         sku: propsValue.sku ?? undefined,
         quantity: propsValue.quantity ?? undefined,
         unlimitedQuantity: propsValue.unlimited_quantity ?? undefined,

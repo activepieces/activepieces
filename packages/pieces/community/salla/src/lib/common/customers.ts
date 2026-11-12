@@ -169,7 +169,7 @@ function resolveMobile({
       );
     }
     dialCode = code;
-    national = digits.startsWith(code) && digits.length >= code.length + MIN_PREFIXED_NATIONAL_DIGITS ? digits.slice(code.length) : digits;
+    national = digits;
   }
   national = national.replace(/^0+/, '');
   if (national.length < MIN_NATIONAL_DIGITS || national.length > MAX_NATIONAL_DIGITS) {
@@ -393,7 +393,6 @@ const CUSTOMERS_PER_PAGE = 60;
 const MAX_CUSTOMER_GROUPS = 500;
 const MIN_NATIONAL_DIGITS = 6;
 const MAX_NATIONAL_DIGITS = 13;
-const MIN_PREFIXED_NATIONAL_DIGITS = 8;
 
 const CUSTOMER_GENDERS: CustomerGender[] = ['male', 'female'];
 

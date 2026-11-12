@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sallaAuth } from '../auth';
 import { CUSTOMER_GENDERS, CustomerGender, sallaCustomers } from '../common/customers';
+import { sallaUtils } from '../common/helpers';
 import { sallaOutputSchemas } from '../common/output-schemas';
 import { sallaProps } from '../common/props';
 
@@ -101,7 +102,7 @@ export const createCustomerAction = createAction({
         mobile: propsValue.mobile,
         email: propsValue.email ?? undefined,
         gender: propsValue.gender ?? undefined,
-        birthday: propsValue.birthday ?? undefined,
+        birthday: sallaUtils.wallClockFromDateTimeProp(propsValue.birthday),
         groupIds: propsValue.groups ?? [],
         mobileCountryCode: propsValue.mobile_country_code ?? undefined,
         countryCode: propsValue.country_code ?? undefined,

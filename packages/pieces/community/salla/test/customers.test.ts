@@ -58,10 +58,18 @@ describe('resolveMobile', () => {
     expect(sallaCustomers.resolveMobile({ mobile: '(050) 123.4567', mobileCountryCode: '+966' })).toEqual(saudi);
   });
 
-  it('does not repeat the code when the number already starts with it', () => {
-    expect(sallaCustomers.resolveMobile({ mobile: '966501234567', mobileCountryCode: '+966' })).toEqual(saudi);
-    expect(sallaCustomers.resolveMobile({ mobile: '966501234567', countryCode: 'SA' })).toEqual(saudi);
+  it('does not repeat the code when an international number already carries it', () => {
     expect(sallaCustomers.resolveMobile({ mobile: '+966501234567', mobileCountryCode: '966' })).toEqual(saudi);
+    expect(sallaCustomers.resolveMobile({ mobile: '00966501234567', countryCode: 'SA' })).toEqual(saudi);
+  });
+
+  it('keeps every digit of a national number that happens to start with its calling code', () => {
+    expect(sallaCustomers.resolveMobile({ mobile: '55999999999', mobileCountryCode: '+55' })).toEqual({
+      mobile: '55999999999',
+      mobile_code_country: '+55',
+      country_code: 'BR',
+    });
+    expect(sallaCustomers.resolveMobile({ mobile: '20123456789', countryCode: 'EG' })).toMatchObject({ mobile: '20123456789', mobile_code_country: '+20' });
   });
 
   it('keeps a short number that only looks like it starts with the code', () => {

@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sallaAuth } from '../auth';
+import { sallaUtils } from '../common/helpers';
 import { sallaOutputSchemas } from '../common/output-schemas';
 import { sallaProducts } from '../common/products';
 
@@ -48,7 +49,7 @@ export const updateProductPriceAction = createAction({
         sku: propsValue.sku,
         price: propsValue.price,
         salePrice: propsValue.sale_price ?? undefined,
-        saleEnd: propsValue.sale_end ?? undefined,
+        saleEnd: sallaUtils.wallClockFromDateTimeProp(propsValue.sale_end),
       },
     });
   },
