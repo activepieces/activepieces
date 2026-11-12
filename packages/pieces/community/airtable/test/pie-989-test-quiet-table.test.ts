@@ -90,7 +90,6 @@ describe('PIE-989 (C1139) testing a polling trigger on a populated but quiet sou
             store: memoryStore().store,
             propsValue: { base: 'appBase', tableId: 'tblOld', sortFields: 'Last Modified', viewId: undefined },
         }))
-        console.log('AIRTABLE UPDATED test() items:', out.length, 'formulas:', JSON.stringify(seenFormulas))
         expect(out.length).toBeGreaterThan(0)
         expect(ids(out).at(-1)).toBe('recOld0')
     })

@@ -76,6 +76,35 @@ describe('Airtable New or Updated Record behaviour', () => {
         expect(ids(await trigger.run(ctx({ store })))).toEqual(['recA'])
     })
 
+    it('polls without reading the table schema once the Trigger Field is known', async () => {
+        addRecord({ id: 'recA' })
+        tick()
+        const { store } = memoryStore()
+        await trigger.onEnable(ctx({ store }))
+        vendor.requests = []
+        expect(await trigger.run(ctx({ store }))).toEqual([])
+        editRecord({ id: 'recA' })
+        expect(ids(await trigger.run(ctx({ store })))).toEqual(['recA'])
+        expect(await trigger.run(ctx({ store }))).toEqual([])
+        expect(vendor.requests.filter((url) => url.pathname.includes('/meta/bases/'))).toHaveLength(0)
+    })
+
+    it('reads the schema once when the Trigger Field was renamed, then polls by the new name', async () => {
+        addRecord({ id: 'recA' })
+        tick()
+        const { store } = memoryStore()
+        await trigger.onEnable(ctx({ store }))
+        renameField({ id: MOD_FIELD_ID, name: 'Last Edited' })
+        editRecord({ id: 'recA' })
+        vendor.requests = []
+        expect(ids(await trigger.run(ctx({ store })))).toEqual(['recA'])
+        expect(vendor.requests.filter((url) => url.pathname.includes('/meta/bases/'))).toHaveLength(1)
+        vendor.requests = []
+        editRecord({ id: 'recA' })
+        expect(ids(await trigger.run(ctx({ store })))).toEqual(['recA'])
+        expect(vendor.requests.filter((url) => url.pathname.includes('/meta/bases/'))).toHaveLength(0)
+    })
+
     it('fires a record edited later in the same second as enable', async () => {
         addRecord({ id: 'recA' })
         tick(60_300)
@@ -225,13 +254,13 @@ describe('Airtable New or Updated Record behaviour', () => {
         await expect(trigger.run(ctx({ store }))).rejects.toThrow(/Trigger Field "fldLastMod0000001" no longer exists.*pick Trigger Field again/)
     })
 
-    it('fails instead of switching to a new column with the old name when the remembered field was deleted', async () => {
+    it('keeps polling by the remembered name when the field was replaced by a new column with the same name', async () => {
         addRecord({ id: 'recA' })
         const { store } = memoryStore()
         await trigger.onEnable(ctx({ store, sortFields: 'Last Modified' }))
         deleteField({ id: MOD_FIELD_ID })
         vendor.fields.push({ id: 'fldReplace0000001', name: 'Last Modified', type: 'lastModifiedTime' })
-        await expect(trigger.run(ctx({ store, sortFields: 'Last Modified' }))).rejects.toThrow(/Trigger Field "Last Modified" no longer exists.*pick Trigger Field again/)
+        await expect(trigger.run(ctx({ store, sortFields: 'Last Modified' }))).resolves.toEqual([])
     })
 
     it('fails with a clear message when a renamed field was saved by name and never polled', async () => {
@@ -244,6 +273,7 @@ describe('Airtable New or Updated Record behaviour', () => {
         addRecord({ id: 'recA' })
         const { store, data } = memoryStore()
         await trigger.onEnable(ctx({ store }))
+        data.delete('updated_record_trigger_field')
         editRecord({ id: 'recA' })
         const before = new Map(data)
         const forwardFetch = globalThis.fetch

@@ -343,15 +343,18 @@ async function findRecord({
   const escapedSearchValue = (searchValue ?? '')
     .replace(/\\/g, '\\\\')
     .replace(/"/g, '\\"');
-  const searchFieldName = (
-    await resolveField({
-      token,
-      baseId,
-      tableId,
-      idOrName: searchField ?? '',
-      label: 'Search Field',
-    })
-  ).name;
+  const savedSearchField = searchField ?? '';
+  const searchFieldName = FIELD_ID_PATTERN.test(savedSearchField)
+    ? (
+        await resolveField({
+          token,
+          baseId,
+          tableId,
+          idOrName: savedSearchField,
+          label: 'Search Field',
+        })
+      ).name
+    : savedSearchField;
   if (/[{}]/.test(searchFieldName)) {
     throw new Error(
       'Search Field must not contain "{" or "}" because Airtable cannot escape braces inside a field reference.'

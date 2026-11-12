@@ -128,15 +128,52 @@ async function resolveTriggerField({
   if (
     remember &&
     !isNil(field.id) &&
-    field.id !== saved &&
-    remembered?.fieldId !== field.id
+    (remembered?.saved !== saved ||
+      remembered.fieldId !== field.id ||
+      remembered.fieldName !== field.name)
   ) {
     await store.put<RememberedField>(REMEMBERED_FIELD_KEY, {
       saved,
       fieldId: field.id,
+      fieldName: field.name,
     });
   }
   return field;
+}
+
+async function cachedTriggerField({
+  auth,
+  propsValue,
+  store,
+}: {
+  auth: AirtableAuthValue;
+  propsValue: UpdatedRecordProps;
+  store: Store;
+}): Promise<ResolvedField> {
+  const remembered = await store.get<RememberedField>(REMEMBERED_FIELD_KEY);
+  if (
+    !isNil(remembered) &&
+    remembered.saved === propsValue.sortFields &&
+    typeof remembered.fieldName === 'string'
+  ) {
+    return { id: remembered.fieldId, name: remembered.fieldName };
+  }
+  return resolveTriggerField({ auth, propsValue, store, remember: true });
+}
+
+function isUnknownFieldError(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null || !('error' in error)) {
+    return false;
+  }
+  const type = error.error;
+  const message =
+    'message' in error && typeof error.message === 'string'
+      ? error.message
+      : '';
+  return (
+    type === 'UNKNOWN_FIELD_NAME' ||
+    (type === 'INVALID_FILTER_BY_FORMULA' && /unknown field/i.test(message))
+  );
 }
 
 function modifiedAfterFormula({
@@ -435,11 +472,10 @@ export const airtableUpdatedRecordTrigger = createTrigger({
     return;
   },
   async run(context) {
-    const field = await resolveTriggerField({
+    let field = await cachedTriggerField({
       auth: context.auth,
       propsValue: context.propsValue,
       store: context.store,
-      remember: true,
     });
     const state = await loadState(context.store);
     if (isNil(state)) {
@@ -453,22 +489,39 @@ export const airtableUpdatedRecordTrigger = createTrigger({
       });
       return [];
     }
-    const records = withModifiedTime({
-      fieldName: field.name,
-      records: await airtableCommon.selectRecords({
+    const listChanged = (fieldName: string) =>
+      airtableCommon.selectRecords({
         token: context.auth.secret_text,
         baseId: context.propsValue.base,
         tableId: context.propsValue.tableId,
         params: {
           filterByFormula: modifiedAfterFormula({
-            fieldName: field.name,
+            fieldName,
             epochMs: state.checkpoint - TIE_OVERLAP_MS,
           }),
           ...(context.propsValue.viewId
             ? { view: context.propsValue.viewId }
             : {}),
         },
-      }),
+      });
+    let changed: AirtableRawRecord[];
+    try {
+      changed = await listChanged(field.name);
+    } catch (error) {
+      if (!isUnknownFieldError(error)) {
+        throw error;
+      }
+      field = await resolveTriggerField({
+        auth: context.auth,
+        propsValue: context.propsValue,
+        store: context.store,
+        remember: true,
+      });
+      changed = await listChanged(field.name);
+    }
+    const records = withModifiedTime({
+      fieldName: field.name,
+      records: changed,
     });
     const fieldIds = isNil(state.versionsAtCheckpoint)
       ? null
@@ -500,7 +553,7 @@ export const airtableUpdatedRecordTrigger = createTrigger({
 
 type UpdatedRecordProps = StaticPropsValue<typeof props>;
 type AirtableAuthValue = AppConnectionValueForAuthProperty<typeof airtableAuth>;
-type RememberedField = { saved: string; fieldId: string };
+type RememberedField = { saved: string; fieldId: string; fieldName?: string };
 type FieldIdsByName = Map<string, string>;
 type ModifiedRecord = { record: AirtableRawRecord; modifiedMs: number };
 type UpdatedRecordState = {

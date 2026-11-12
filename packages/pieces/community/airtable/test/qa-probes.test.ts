@@ -238,7 +238,9 @@ describe('QA probes: New or Updated Record', () => {
 describe('QA probes: Find Airtable Record', () => {
     it('an old flow with a saved field name finds the record, also when the schema cannot be read', async () => {
         addRecord({ id: 'recFindMe' })
+        vendor.requests = []
         expect(ids(await findRecord({ searchField: 'Name', searchValue: 'recFindMe' }))).toEqual(['recFindMe'])
+        expect(vendor.requests.filter((url) => url.pathname.includes('/meta/bases/'))).toHaveLength(0)
         const restore = blockMetaApi()
         try {
             expect(ids(await findRecord({ searchField: 'Name', searchValue: 'recFindMe' }))).toEqual(['recFindMe'])
