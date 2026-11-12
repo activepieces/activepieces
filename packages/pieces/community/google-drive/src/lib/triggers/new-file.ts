@@ -133,7 +133,8 @@ function buildPolling({
         parent: propsValue.parentFolder,
         createdTime: lastFetchEpochMS,
         includeTeamDrive: propsValue.include_team_drives,
-        maxPages: lastFetchEpochMS === 0 ? 1 : undefined,
+        maxPages: lastFetchEpochMS === 0 ? common.testSampleMaxPages : undefined,
+        accept: lastFetchEpochMS === 0 ? common.hasId : undefined,
         deadline: listingDeadline,
       });
       return listing.files.map((item) => ({
