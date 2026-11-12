@@ -7,6 +7,7 @@ import confetti from 'canvas-confetti';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Check, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +29,7 @@ import {
   selfServeTrialHooks,
 } from '../hooks/self-serve-trial-hooks';
 import { enterpriseMotion } from '../utils/billing-utils';
+import { FeatureKey } from '../utils/platform-features';
 import { selfServeTrialFeatures } from '../utils/self-serve-trial-features';
 import { selfServeTrialTime } from '../utils/self-serve-trial-utils';
 
@@ -42,6 +44,10 @@ import { SelfServeTrialEndedDialog } from './self-serve-trial-notices';
 export function SelfServeTrialDialog() {
   const { payload, returnFocus, closeDialog } =
     billingDialogHooks.useSelfServeTrialDialogStore();
+  const [shownPayload, setShownPayload] = useState(payload);
+  if (!isNil(payload) && payload !== shownPayload) {
+    setShownPayload(payload);
+  }
   const shouldOfferTrial = selfServeTrialHooks.useShouldOfferTrial();
   const {
     mutate: startSelfServeTrial,
@@ -58,6 +64,11 @@ export function SelfServeTrialDialog() {
     runPostTrialActivationCallback();
   });
   const open = !isNil(payload);
+  useEffect(() => {
+    if (!isNil(payload)) {
+      resetTrialStart();
+    }
+  }, [payload, resetTrialStart]);
   const view = dialogViewForStartResult({
     result: startedTrial?.state,
     alreadyUsed: api.isApError(
@@ -66,7 +77,7 @@ export function SelfServeTrialDialog() {
     ),
     shouldOfferTrial:
       (shouldOfferTrial &&
-        selfServeTrialFeatures.isIncludedInTrial(payload?.featureKey)) ||
+        selfServeTrialFeatures.isIncludedInTrial(shownPayload?.featureKey)) ||
       trialStartFailed,
   });
   const busy = isStartingTrial;
@@ -76,7 +87,6 @@ export function SelfServeTrialDialog() {
     }
     confetti.reset();
     closeDialog();
-    resetTrialStart();
   };
   const postTrialActivationCallback = payload?.postTrialActivationCallback;
 
@@ -85,6 +95,10 @@ export function SelfServeTrialDialog() {
       case DialogView.START:
         return (
           <StartTrial
+            featureKey={shownPayload?.featureKey}
+            hasPostTrialActivationCallback={
+              !isNil(shownPayload?.postTrialActivationCallback)
+            }
             isPending={isStartingTrial}
             isError={trialStartFailed}
             onStart={() => {
@@ -98,7 +112,10 @@ export function SelfServeTrialDialog() {
         return <TrialAlreadyUsed />;
       case DialogView.LOCKED:
         return (
-          <LockedFeature featureKey={payload?.featureKey} onAction={close} />
+          <LockedFeature
+            featureKey={shownPayload?.featureKey}
+            onAction={close}
+          />
         );
     }
   };
@@ -136,11 +153,11 @@ export function SelfServeTrialDialog() {
           className={cn(
             'flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:rounded-2xl',
             view === DialogView.START
-              ? 'shadow-[0_1px_2px_rgb(0_0_0/0.04),0_4px_12px_-4px_rgb(0_0_0/0.06)] sm:max-w-[46.5rem]'
+              ? 'shadow-[0_1px_2px_rgb(0_0_0/0.04),0_4px_12px_-4px_rgb(0_0_0/0.06)] sm:max-w-[50rem]'
               : 'sm:max-w-[60rem]',
           )}
         >
-          {open && (
+          {!isNil(shownPayload) && (
             <div
               key={view}
               className={cn(
@@ -231,25 +248,24 @@ export function TrialTimeline({
 }
 
 function StartTrial({
+  featureKey,
+  hasPostTrialActivationCallback,
   isPending,
   isError,
   onStart,
 }: {
+  featureKey: FeatureKey | undefined;
+  hasPostTrialActivationCallback: boolean;
   isPending: boolean;
   isError: boolean;
   onStart: () => void;
 }) {
-  const { payload } = billingDialogHooks.useSelfServeTrialDialogStore();
-  const featureKey = payload?.featureKey;
-  const hasPostTrialActivationCallback = !isNil(
-    payload?.postTrialActivationCallback,
-  );
   const featureName = selfServeTrialFeatures.nameInSentence(featureKey);
   const highlights = selfServeTrialFeatures.highlights(featureKey);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto md:flex-row">
-      <div className="flex flex-col gap-8 p-8 md:w-[29rem] md:shrink-0">
+      <div className="flex flex-col gap-8 p-8 md:w-[32rem] md:shrink-0">
         <div className="flex flex-col gap-2 pr-8 md:pr-0">
           <DialogTitle className="text-2xl font-semibold tracking-tight">
             {featureName
@@ -277,7 +293,7 @@ function StartTrial({
           <span className="text-xs font-medium text-gray-11">
             {t('What you get')}
           </span>
-          <ul className="grid grid-cols-2 gap-x-4 gap-y-4 md:grid-flow-col md:grid-rows-3">
+          <ul className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-flow-col md:grid-rows-3">
             {highlights.map((feature, index) => {
               const highlighted =
                 index === 0 &&
