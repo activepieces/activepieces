@@ -299,7 +299,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                     provider: contextProvider,
                     reservedTokens: payloadReservedTokens,
                     model,
-                    providerOptions: agentAiUtils.buildProviderOptions({ provider: candidate.config.provider, tier, modelId: candidate.modelId, disableThinking: true }),
+                    summarizer: { provider: candidate.config.provider, modelId: candidate.modelId },
                     log,
                     billing: compactionBilling,
                 }),

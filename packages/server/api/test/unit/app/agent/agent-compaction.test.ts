@@ -13,6 +13,7 @@ vi.mock('ai', async (importOriginal) => ({
 const summaryModel = new MockLanguageModelV3()
 const silentLog = Fastify({ logger: false }).log
 const RESERVED_TOKENS = 11_872 + 52_000
+const SUMMARIZER = { provider: AIProviderName.OPENROUTER, modelId: 'z-ai/glm-5.3' }
 
 function makeMessages(count: number, charsPer = 100): ModelMessage[] {
     return Array.from({ length: count }, (_, i) => ({
@@ -271,6 +272,7 @@ describe('agentCompaction with reserved tokens', () => {
             provider: AIProviderName.ACTIVEPIECES,
             reservedTokens: RESERVED_TOKENS,
             model: summaryModel,
+            summarizer: SUMMARIZER,
             log: silentLog,
         })
         expect(lastPromptTokens()).toBeLessThanOrEqual(32_000)
@@ -287,6 +289,7 @@ describe('agentCompaction with reserved tokens', () => {
             provider: AIProviderName.ACTIVEPIECES,
             reservedTokens: RESERVED_TOKENS,
             model: summaryModel,
+            summarizer: SUMMARIZER,
             log: silentLog,
         })
         expect(timedOut.summarizedUpToIndex).toBe(0)
@@ -297,25 +300,25 @@ describe('agentCompaction with reserved tokens', () => {
             provider: AIProviderName.ACTIVEPIECES,
             reservedTokens: RESERVED_TOKENS,
             model: summaryModel,
+            summarizer: SUMMARIZER,
             log: silentLog,
         })
         expect(next.summarizedUpToIndex).toBeGreaterThan(0)
         expect(lastPromptTokens()).toBeLessThanOrEqual(32_000)
     })
 
-    it('sends the provider options it is given, so reasoning can be turned off for the summary', async () => {
-        const providerOptions = { openrouter: { reasoning: { enabled: false } } }
+    it('turns reasoning off for the summary model', async () => {
         await agentCompaction.compactMessages({
             messages: makeMessages(40, 20_000),
             existingSummary: null,
             summarizedUpToIndex: null,
-            provider: AIProviderName.OPENROUTER,
+            provider: AIProviderName.ANTHROPIC,
             reservedTokens: RESERVED_TOKENS,
             model: summaryModel,
-            providerOptions,
+            summarizer: { provider: AIProviderName.ANTHROPIC, modelId: 'claude-sonnet-4-6' },
             log: silentLog,
         })
-        expect(vi.mocked(generateText).mock.calls.at(-1)?.[0]?.providerOptions).toEqual(providerOptions)
+        expect(vi.mocked(generateText).mock.calls.at(-1)?.[0]?.providerOptions?.anthropic).toEqual({ thinking: { type: 'disabled' } })
     })
 
     it('bounds the summary request so oversized documents cannot overflow it', async () => {
@@ -330,6 +333,7 @@ describe('agentCompaction with reserved tokens', () => {
             provider: AIProviderName.ANTHROPIC,
             reservedTokens: RESERVED_TOKENS,
             model: summaryModel,
+            summarizer: SUMMARIZER,
             log: silentLog,
         })
         const request = vi.mocked(generateText).mock.calls.at(-1)?.[0]
@@ -351,6 +355,7 @@ describe('agentCompaction with reserved tokens', () => {
             provider: AIProviderName.OPENROUTER,
             reservedTokens: 66_000,
             model: summaryModel,
+            summarizer: SUMMARIZER,
             log: silentLog,
         })
         const prompt = String(vi.mocked(generateText).mock.calls.at(-1)?.[0]?.prompt)
@@ -375,6 +380,7 @@ describe('agentCompaction with reserved tokens', () => {
             provider: AIProviderName.OPENROUTER,
             reservedTokens: 66_000,
             model: summaryModel,
+            summarizer: SUMMARIZER,
             log: silentLog,
         })
         const request = vi.mocked(generateText).mock.calls.at(-1)?.[0]
@@ -389,6 +395,7 @@ describe('agentCompaction with reserved tokens', () => {
             provider: AIProviderName.ANTHROPIC,
             reservedTokens: RESERVED_TOKENS,
             model: summaryModel,
+            summarizer: SUMMARIZER,
             log: silentLog,
         })
         const request = vi.mocked(generateText).mock.calls.at(-1)?.[0]
@@ -405,6 +412,7 @@ describe('agentCompaction with reserved tokens', () => {
             provider: AIProviderName.ANTHROPIC,
             reservedTokens: RESERVED_TOKENS,
             model: summaryModel,
+            summarizer: SUMMARIZER,
             log: silentLog,
         })
         expect(result).toEqual({ summary: 'earlier summary', summarizedUpToIndex: 4 })
@@ -422,6 +430,7 @@ async function compactRepeatedly({ messages, passes }: { messages: ModelMessage[
             provider: AIProviderName.ANTHROPIC,
             reservedTokens: RESERVED_TOKENS,
             model: summaryModel,
+            summarizer: SUMMARIZER,
             log: silentLog,
         })
         indexes.push(result.summarizedUpToIndex)

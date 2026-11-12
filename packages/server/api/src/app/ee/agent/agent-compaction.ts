@@ -1,9 +1,8 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, ErrorCode, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, ErrorCode, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { aiProviderUtils } from '@activepieces/shared'
-import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { generateText, LanguageModel, ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 
@@ -15,6 +14,7 @@ const MAX_TOOL_RESULT_CHARS_FOR_SUMMARY = 2_000
 const SUMMARY_OUTPUT_RESERVE_TOKENS = 4_000
 const COMPACTION_TIMEOUT_MS = 35_000
 const MAX_SUMMARY_INPUT_TOKENS_PER_PASS = 32_000
+const SUMMARY_TIER = { id: 'agent-compaction', thinkingBudget: 0 }
 
 const COMPACTION_SYSTEM_PROMPT = readFileSync(
     path.resolve('packages/server/api/src/assets/prompts/chat-compaction-prompt.md'),
@@ -71,14 +71,14 @@ function snapToSafeMessageBoundary({ messages, rawCutoff }: {
     return idx
 }
 
-async function compactMessages({ messages, existingSummary, summarizedUpToIndex, provider, reservedTokens, model, providerOptions, log, billing }: {
+async function compactMessages({ messages, existingSummary, summarizedUpToIndex, provider, reservedTokens, model, summarizer, log, billing }: {
     messages: ModelMessage[]
     existingSummary: string | null
     summarizedUpToIndex: number | null
     provider: AIProviderName
     reservedTokens: number
     model: LanguageModel
-    providerOptions?: SharedV3ProviderOptions
+    summarizer: { provider: AIProviderName, modelId: string }
     log: FastifyBaseLogger
     billing?: ActivepiecesAiBilling
 }): Promise<{ summary: string, summarizedUpToIndex: number }> {
@@ -93,7 +93,7 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
     if (windowCutoffIndex <= startIndex) {
         return { summary: existingSummary ?? '', summarizedUpToIndex: startIndex }
     }
-    const newCutoffIndex = cutoffForOnePass({ messages, startIndex, windowCutoffIndex })
+    const { end: newCutoffIndex, texts } = cutoffForOnePass({ messages, startIndex, windowCutoffIndex })
     const messagesToSummarize = messages.slice(startIndex, newCutoffIndex)
 
     let contentToSummarize = ''
@@ -101,7 +101,6 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
         contentToSummarize += `Previous conversation summary:\n${existingSummary}\n\nNew messages since last summary:\n`
     }
 
-    const texts = messagesToSummarize.map((msg) => extractTextContent(msg))
     const summaryInputTokens = Math.min(
         contextBudget({ provider, reservedTokens: SUMMARY_OUTPUT_RESERVE_TOKENS }) * COMPACTION_THRESHOLD,
         MAX_SUMMARY_INPUT_TOKENS_PER_PASS,
@@ -130,7 +129,7 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
         instructions: COMPACTION_SYSTEM_PROMPT,
         ...agentAiUtils.buildTelemetry({ functionId: 'agent-compaction', billing }),
         prompt: contentToSummarize,
-        ...spreadIfDefined('providerOptions', providerOptions),
+        providerOptions: agentAiUtils.buildProviderOptions({ provider: summarizer.provider, tier: SUMMARY_TIER, modelId: summarizer.modelId, disableThinking: true }),
         maxOutputTokens: SUMMARY_OUTPUT_RESERVE_TOKENS,
         abortSignal: AbortSignal.timeout(COMPACTION_TIMEOUT_MS),
     }))
@@ -146,18 +145,21 @@ function cutoffForOnePass({ messages, startIndex, windowCutoffIndex }: {
     messages: ModelMessage[]
     startIndex: number
     windowCutoffIndex: number
-}): number {
+}): { end: number, texts: string[] } {
     let tokens = 0
     let end = startIndex
+    const texts: string[] = []
     while (end < windowCutoffIndex) {
-        const next = tokensIn(extractTextContent(messages[end]))
+        const text = extractTextContent(messages[end])
+        const next = tokensIn(text)
         if (end > startIndex && tokens + next > MAX_SUMMARY_INPUT_TOKENS_PER_PASS && messages[end].role !== 'tool') {
             break
         }
+        texts.push(text)
         tokens += next
         end++
     }
-    return end
+    return { end, texts }
 }
 
 function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provider, reservedTokens }: {
