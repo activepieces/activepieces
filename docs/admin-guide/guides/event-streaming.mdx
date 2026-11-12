@@ -1,6 +1,6 @@
 ---
 title: "Event Streaming"
-description: "Stream audit events to Datadog, PostHog, Grafana Loki, or any OpenTelemetry backend, or to a webhook as raw JSON"
+description: "Stream audit events and official piece events to Datadog, PostHog, Grafana Loki, or any OpenTelemetry backend, or to a webhook as raw JSON"
 icon: "webhook"
 ---
 
@@ -8,12 +8,12 @@ icon: "webhook"
 
 ## Overview
 
-Event Streaming sends every platform [audit event](/admin-guide/security/audit-logs/overview) to a destination of your choice, as it happens. Each destination has a **format**:
+Event Streaming sends your platform's [audit events](/admin-guide/security/audit-logs/overview) and [official piece events](#official-piece-events) to a destination of your choice, as they happen. Each destination has a **format**:
 
 - **OpenTelemetry (OTLP).** Each event is sent as an OpenTelemetry log record over OTLP/HTTP. This works with Datadog, PostHog, Grafana Loki, Grafana Cloud, New Relic, Honeycomb, Dynatrace, Elastic, SigNoz, Axiom, Better Stack, and any other backend that accepts OTLP logs. No collector or agent is needed in between.
-- **Raw JSON.** The audit event is posted as-is to any webhook URL. Point it at a flow inside Activepieces and route each event to Slack, Gmail, Microsoft Teams, custom HTTP, and so on.
+- **Raw JSON.** The event is posted as-is to any webhook URL. Point it at a flow inside Activepieces and route each event to Slack, Gmail, Microsoft Teams, custom HTTP, and so on.
 
-Use it to react to flow run failures, new sign-ins, project releases, or any other audit event with the tools you already use.
+Use it to react to flow run failures, new sign-ins, project releases, new piece versions, or any other event with the tools you already use.
 
 ## Quick start
 
@@ -55,7 +55,7 @@ Every log record carries:
 | `timeUnixNano` | when the event happened (the event's `created`) |
 | `eventName` | the event name, for example `flow.run.finished` |
 | `severityText` / `severityNumber` | `INFO` / `9` |
-| `body` | the full audit event as a JSON string — the same bytes the Raw JSON format sends |
+| `body` | the full event as a JSON string — the same bytes the Raw JSON format sends |
 | `attributes` | `action`, `id`, `platformId`, `projectId`, `projectDisplayName`, `userId`, `userEmail`, `ip`, plus every field of `data` as a dotted key, for example `data.flowRun.status` |
 
 An attribute is left out when the event does not have that field. Lists inside `data` are sent as one JSON string. Because every field is an attribute, you can filter and alert on it in your backend without a parser — for example `data.flowRun.status:FAILED` in Datadog.
@@ -109,12 +109,12 @@ Where the table says Protobuf, pick **Protobuf**: the backend documents no JSON 
 
 ### Raw JSON
 
-The destination receives the audit event itself as the JSON body, with `Content-Type: application/json`. This is also what every destination created before formats existed keeps sending.
+The destination receives the event itself as the JSON body, with `Content-Type: application/json`. This is also what every destination created before formats existed keeps sending.
 
 - `action` — the event name (for example `flow.run.finished`).
 - `data` — event-specific payload, including details like the flow id, run id, status, or affected user.
 - `id`, `created`, `updated` — event identifiers and timestamps.
-- `platformId`, `projectId` — context fields present on every event.
+- `platformId`, `projectId` — context fields. `platformId` is on every event; `projectId` is on project-scoped audit events and absent on platform-level events, including official piece events.
 - `userId`, `userEmail`, `ip` — who did it and from where. These are filled in for events that come from a user request. The four `flow.run.*` events are emitted by a worker rather than a request, so they carry none of them.
 
 A handler flow on this instance gets the JSON of its destination's format: the raw event for Raw JSON, and the OTLP/JSON request for the OpenTelemetry JSON encoding. A flow webhook accepts only JSON, so a destination that points at one cannot use the Protobuf encoding: the setup page switches it to JSON (and back to Protobuf if you then enter a URL that is not a flow webhook, unless you picked JSON yourself), and the API rejects Protobuf for a flow webhook URL with a `400`.
@@ -135,7 +135,7 @@ Values are masked as you type; select the eye icon to show one.
 
 The API behaves the same way: `GET` returns each header key with a `null` value, and sending `null` for a key on update keeps whatever is stored.
 
-A stored value is bound to the URL it was saved against. **If you change the URL, you must re-enter every header value in the same save** — as soon as you change the URL, the form asks for a new value on each saved header you have not retyped, and the API answers `400` if an update changes the URL while keeping a stored value. This is what makes "write-only" true: without it, anyone who can edit a destination could point it at their own endpoint and have the next audit event deliver the secret for them.
+A stored value is bound to the URL it was saved against. **If you change the URL, you must re-enter every header value in the same save** — as soon as you change the URL, the form asks for a new value on each saved header you have not retyped, and the API answers `400` if an update changes the URL while keeping a stored value. This is what makes "write-only" true: without it, anyone who can edit a destination could point it at their own endpoint and have the next event deliver the secret for them.
 
 ## Test, enable, and disable
 
@@ -149,9 +149,45 @@ Each destination has an **Enabled** switch on the listing page. A disabled desti
 
 You can subscribe a destination to any audit event — flow lifecycle, run status, folder/connection changes, user activity, and platform admin actions. See the [Audit Log Events catalog](/admin-guide/security/audit-logs/overview#event-catalog) for the full list and per-event payload details.
 
+You can also subscribe to three official piece events. They are not audit events and do not appear in the audit log:
+
+- `official_piece.added` — an official piece that you did not have yet was added.
+- `official_piece.minor_or_major_version.added` — a new major or minor version of an official piece was added.
+- `official_piece.patch_version.added` — a new patch version of an official piece was added.
+
+See [Official piece events](#official-piece-events) below for what fires them and what they carry.
+
+### Official piece events
+
+Official piece events fire when official piece versions are added to your instance: on self-hosted, when the piece sync inserts them (at startup, every hour, and on `POST /v1/pieces/sync`); on Cloud, when a piece is published. Custom and private pieces do not send them. Every added version sends one event. `official_piece.added` is sent once per piece, for the first version of it that your instance gets, and every other version sends a version event.
+
+Patch versions are frequent, so subscribe to `official_piece.patch_version.added` only if you need them.
+
+The envelope carries `platformId` but no project or user: there is no `projectId`, `userId`, `userEmail`, or `ip`. `changeType` is `new` for `official_piece.added`, `major` or `minor` for `official_piece.minor_or_major_version.added`, and `patch` for `official_piece.patch_version.added`. `previousVersion` is the newest version your instance had before this one. The sync adds the newest versions first, so `version` can be lower than `previousVersion`, and `changeType` then describes the difference between the two. `minimumSupportedRelease` and `maximumSupportedRelease` are the Activepieces releases the version supports.
+
+```json
+{
+  "id": "…", "created": "…", "updated": "…", "platformId": "…",
+  "action": "official_piece.minor_or_major_version.added",
+  "data": {
+    "piece": { "name": "@activepieces/piece-gmail", "displayName": "Gmail", "version": "0.9.0", "previousVersion": "0.8.3",
+               "changeType": "minor", "pieceType": "OFFICIAL", "minimumSupportedRelease": "0.88.2", "maximumSupportedRelease": null, "deprecated": false }
+  }
+}
+```
+
+To find out which of your piece sets show the piece, call `GET /v1/piece-sets?limit=100` with a platform [API key](/endpoints/overview) as a Bearer token. Pass the `next` value of each response as `cursor` until `next` is `null`. For each set, read `config.pieces`: when `mode` is `include_all`, the set shows every piece except those in `exceptions`; when `mode` is `exclude_all`, it shows only the pieces in `exceptions`. A piece that no set shows is not available in any project. The handler flow that the destination form generates already has this request as an HTTP step in each official piece branch.
+
+<Note>
+Expect a burst after you upgrade Activepieces. The piece sync only adds versions that your release supports, so the first sync after an upgrade adds every version that the new release now supports, and sends one event for each of them.
+</Note>
+
+Every send gets a new `id`, so if you store these events, key them by `data.piece.name` plus `data.piece.version`. An event that is not delivered is not sent again: Activepieces does not replay events your endpoint missed. To catch up after an outage, compare what you have against `GET /v1/pieces`.
+
 ## Requirements
 
 - **Enterprise Edition**: Event Streaming requires a plan with Event Streaming enabled. Without it, no events are delivered.
+- **Official piece events**: they need the same Event Streaming entitlement and run on the Enterprise and Cloud editions only.
 - **Platform admin**: only platform admins can configure destinations.
 - **HTTPS endpoint**: use HTTPS for any external endpoint. Audit events carry user emails and IP addresses, and Activepieces does not reject an `http://` URL for you.
 - **Publicly accessible**: external endpoints must be reachable from your Activepieces server. Handler flows on this same instance are delivered internally, so they work even when the instance is not publicly reachable (for example, behind an internal load balancer).
@@ -163,7 +199,7 @@ You can subscribe a destination to any audit event — flow lifecycle, run statu
 - **`415` or a decode error from an OpenTelemetry backend**: the backend does not accept the selected encoding. Switch the encoding to **Protobuf**.
 - **Test fails**: check that your URL is valid and uses HTTPS. The test reports the status code returned by the endpoint, which usually names the problem.
 - **Missing events**: make sure the event type is selected in your destination configuration.
-- **A field is missing**: the field is not on that event. The four `flow.run.*` events carry no `userId`, `userEmail`, or `ip`, because a worker emits them rather than a user request.
+- **A field is missing**: the field is not on that event. The four `flow.run.*` events carry no `userId`, `userEmail`, or `ip`, because a worker emits them rather than a user request. Official piece events carry no `projectId`, `userId`, `userEmail`, or `ip`.
 
 ## See also
 

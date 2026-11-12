@@ -1,9 +1,10 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, partition, PlatformId, ProjectId, SeekPage, spreadIfDefined, spreadIfNotUndefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, chunk, Cursor, ErrorCode, groupBy, isNil, partition, PlatformId, ProjectId, SeekPage, spreadIfDefined, spreadIfNotUndefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { OtlpExportLogsRequest, otlpLogs, PostForStatusFailure, safeHttp } from '@activepieces/server-utils'
-import { AgentRunSource, ApplicationEvent, ApplicationEventName, buildMockEvent, CreatePlatformEventDestinationRequestBody, EventDestination, EventDestinationFormat, EventDestinationHeaders, EventDestinationHeadersRequest, EventDestinationJobData, EventDestinationScope, EventDestinationTestError, EventPayload, FlowRunEvent, LATEST_JOB_DATA_SCHEMA_VERSION, TestPlatformEventDestinationResponse, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
+import { AgentRunSource, ApplicationEvent, ApplicationEventName, buildMockEvent, CreatePlatformEventDestinationRequestBody, EventDestination, EventDestinationFormat, EventDestinationHeaders, EventDestinationHeadersRequest, EventDestinationJobData, EventDestinationScope, EventDestinationTestError, EventPayload, FlowRunEvent, LATEST_JOB_DATA_SCHEMA_VERSION, OfficialPieceEvent, OfficialPieceEventData, PieceChangeType, TestPlatformEventDestinationResponse, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { ArrayContains, FindOptionsWhere } from 'typeorm'
+import semver from 'semver'
+import { ArrayContains, ArrayOverlap, FindOptionsWhere } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
@@ -14,6 +15,7 @@ import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { PieceMetadataSchema } from '../pieces/metadata/piece-metadata-entity'
 import { projectService } from '../project/project-service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
@@ -38,6 +40,10 @@ const FLOW_RUN_EVENT_ACTIONS: ReadonlySet<ApplicationEventName> = new Set([
     ApplicationEventName.FLOW_RUN_RESUMED,
     ApplicationEventName.FLOW_RUN_RETRIED,
 ])
+
+const PIECE_EVENTS = [ApplicationEventName.OFFICIAL_PIECE_ADDED, ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED, ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED]
+const PIECE_EVENT_DISPATCH_CHUNK_SIZE = 25
+const PIECE_EVENT_DESTINATION_PAGE_SIZE = 100
 
 const WEBHOOK_PATH_MARKER = '/v1/webhooks/'
 
@@ -177,7 +183,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
         if (destinations.length === 0) {
             return
         }
-        const { data: entitled, error: entitlementError } = await tryCatch(() => eventDestinationHooks.get(log).isDeliveryEntitled({ platformId }))
+        const { data: entitled, error: entitlementError } = await tryCatch(() => eventDestinationHooks.get(log).doesPlatformHaveEventStreamingEnabled({ platformId }))
         if (!isNil(entitlementError)) {
             log.warn({ error: entitlementError, platform: { id: platformId } }, 'Failed to resolve event streaming entitlement, dropping the event')
             return
@@ -213,6 +219,40 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
                 body: buildDeliveryBody({ format: destination.format, event: enrichedEvent }),
             }),
         ))
+    },
+    listSubscribedToEvents: async ({ events, cursorRequest, limit }: ListSubscribedToEventsParams): Promise<SeekPage<EventDestinationSchema>> => {
+        const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
+        const paginator = buildPaginator({
+            entity: EventDestinationEntity,
+            query: {
+                limit,
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor,
+            },
+        })
+        const queryBuilder = eventDestinationRepo()
+            .createQueryBuilder('event_destination')
+            .where({
+                scope: EventDestinationScope.PLATFORM,
+                enabled: true,
+                events: ArrayOverlap(events),
+            })
+        const { data, cursor } = await paginator.paginate(queryBuilder)
+        return paginationHelper.createPage<EventDestinationSchema>(data, cursor)
+    },
+    triggerOnAllPlatforms: async ({ addedPieces }: TriggerOnAllPlatformsParams): Promise<void> => {
+        const changes = addedPieces.map(toPieceChange)
+        if (changes.length === 0) {
+            return
+        }
+        const webhookUrlPrefix = await domainHelper.getPublicApiUrl({ path: 'v1/webhooks' })
+        let cursorRequest: Cursor = null
+        do {
+            const page = await eventDestinationService(log).listSubscribedToEvents({ events: PIECE_EVENTS, cursorRequest, limit: PIECE_EVENT_DESTINATION_PAGE_SIZE })
+            await triggerPieceEventsForDestinations({ log, destinations: page.data, changes, webhookUrlPrefix })
+            cursorRequest = page.next
+        } while (!isNil(cursorRequest))
+        log.info({ changeCount: changes.length }, '[eventDestinationService#triggerOnAllPlatforms] Sent piece events')
     },
     resolveDeliveryHeaders: async ({ platformId, destinationId, destinationUrl }: ResolveDeliveryHeadersParams): Promise<EventDestinationHeaders | null> => {
         const destination = await eventDestinationRepo().findOneBy({ id: destinationId, platformId, url: destinationUrl })
@@ -367,6 +407,91 @@ function deliveryJobFields({ format, hasHeaders }: DeliveryJobFieldsParams): Pic
     return {
         ...(format === EventDestinationFormat.OTLP_PROTOBUF ? { contentType: PROTOBUF_CONTENT_TYPE } : {}),
         ...(hasHeaders ? { hasHeaders } : {}),
+    }
+}
+
+async function triggerPieceEventsForDestinations({ log, destinations, changes, webhookUrlPrefix }: TriggerPieceEventsForDestinationsParams): Promise<void> {
+    if (destinations.length === 0) {
+        return
+    }
+    const destinationsByPlatform = groupBy(destinations, (destination) => destination.platformId)
+    const entitledPlatformIds = new Set(await eventDestinationHooks.get(log).fetchPlatformIdsWithEventStreamingEnabled({ platformIds: Object.keys(destinationsByPlatform) }))
+    for (const [platformId, platformDestinations] of Object.entries(destinationsByPlatform)) {
+        if (!entitledPlatformIds.has(platformId)) {
+            continue
+        }
+        const deliveries = planPieceEventDeliveries({ platformId, destinations: platformDestinations, changes, webhookUrlPrefix })
+        for (const batch of chunk(deliveries, PIECE_EVENT_DISPATCH_CHUNK_SIZE)) {
+            await Promise.all(batch.map(({ destination, internalFlowId, body }) =>
+                dispatchEventToDestination({
+                    log,
+                    platformId,
+                    destinationId: destination.id,
+                    destinationUrl: destination.url,
+                    internalFlowId,
+                    format: destination.format,
+                    storedHeaders: destination.headers,
+                    body,
+                }),
+            ))
+        }
+    }
+}
+
+function toPieceChange(piece: AddedPiece): OfficialPieceEventData['piece'] {
+    return {
+        name: piece.name,
+        displayName: piece.displayName,
+        version: piece.version,
+        previousVersion: piece.previousVersion,
+        changeType: isNil(piece.previousVersion) ? 'new' : pieceChangeType({ previousVersion: piece.previousVersion, version: piece.version }),
+        pieceType: 'OFFICIAL' as const,
+        minimumSupportedRelease: piece.minimumSupportedRelease ?? null,
+        maximumSupportedRelease: piece.maximumSupportedRelease ?? null,
+        deprecated: piece.deprecated ?? false,
+    }
+}
+
+function pieceChangeType({ previousVersion, version }: PieceChangeTypeParams): PieceChangeType {
+    if (isNil(semver.valid(previousVersion)) || isNil(semver.valid(version))) {
+        return 'patch'
+    }
+    switch (semver.diff(previousVersion, version)) {
+        case 'major':
+        case 'premajor':
+            return 'major'
+        case 'minor':
+        case 'preminor':
+            return 'minor'
+        default:
+            return 'patch'
+    }
+}
+
+function planPieceEventDeliveries({ platformId, destinations, changes, webhookUrlPrefix }: PlanPieceEventDeliveriesParams): PieceEventDelivery[] {
+    return changes.flatMap((change) => {
+        const event = toPieceEvent({ platformId, change })
+        return destinations
+            .filter((destination) => destination.events.includes(event.action))
+            .map((destination) => ({
+                ...classifyDestination({ destination, webhookUrlPrefix }),
+                body: buildDeliveryBody({ format: destination.format, event }),
+            }))
+    })
+}
+
+function toPieceEvent({ platformId, change }: ToPieceEventParams): OfficialPieceEvent {
+    const now = new Date().toISOString()
+    const data = { piece: change }
+    const envelope = { id: apId(), created: now, updated: now, platformId }
+    switch (change.changeType) {
+        case 'new':
+            return { ...envelope, action: ApplicationEventName.OFFICIAL_PIECE_ADDED, data }
+        case 'major':
+        case 'minor':
+            return { ...envelope, action: ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED, data }
+        case 'patch':
+            return { ...envelope, action: ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED, data }
     }
 }
 
@@ -768,6 +893,44 @@ type DispatchEventParams = {
     body: unknown
 }
 
+type ListSubscribedToEventsParams = {
+    events: ApplicationEventName[]
+    cursorRequest: Cursor
+    limit: number
+}
+
+type TriggerPieceEventsForDestinationsParams = {
+    log: FastifyBaseLogger
+    destinations: EventDestinationSchema[]
+    changes: OfficialPieceEventData['piece'][]
+    webhookUrlPrefix: string
+}
+
+type TriggerOnAllPlatformsParams = {
+    addedPieces: AddedPiece[]
+}
+
+type PieceChangeTypeParams = {
+    previousVersion: string
+    version: string
+}
+
+type PlanPieceEventDeliveriesParams = {
+    platformId: PlatformId
+    destinations: EventDestinationSchema[]
+    changes: OfficialPieceEventData['piece'][]
+    webhookUrlPrefix: string
+}
+
+type PieceEventDelivery = ClassifiedDestination & {
+    body: DeliveryBody
+}
+
+type ToPieceEventParams = {
+    platformId: PlatformId
+    change: OfficialPieceEventData['piece']
+}
+
 type ResolveDeliveryHeadersParams = {
     platformId: PlatformId
     destinationId: string
@@ -801,4 +964,8 @@ type MatchInternalWebhookFlowIdParams = {
 type WebhookRouteSuffixParams = {
     destinationUrl: string
     flowId: string
+}
+
+export type AddedPiece = Pick<PieceMetadataSchema, 'name' | 'displayName' | 'version' | 'minimumSupportedRelease' | 'maximumSupportedRelease' | 'deprecated'> & {
+    previousVersion: string | null
 }

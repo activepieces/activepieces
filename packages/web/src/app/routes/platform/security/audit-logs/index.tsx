@@ -81,12 +81,20 @@ export default function AuditLogsPage() {
       type: 'select',
       title: t('Action'),
       accessorKey: 'action',
-      options: Object.values(ApplicationEventName).map((action) => {
-        return {
-          label: eventLabels[action],
-          value: action,
-        };
-      }),
+      options: Object.values(ApplicationEventName)
+        .filter(
+          (action) =>
+            action !== ApplicationEventName.OFFICIAL_PIECE_ADDED &&
+            action !==
+              ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED &&
+            action !== ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED,
+        )
+        .map((action) => {
+          return {
+            label: eventLabels[action],
+            value: action,
+          };
+        }),
       icon: Wand,
     },
     {
@@ -765,6 +773,20 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
         rows.push({ label: t('Reason'), value: event.data.rejectionReason });
       }
       return rows;
+    }
+    case ApplicationEventName.OFFICIAL_PIECE_ADDED:
+    case ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED:
+    case ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED: {
+      const { piece } = event.data;
+      return [
+        { label: t('Piece'), value: piece.displayName },
+        {
+          label: t('Version'),
+          value: isNil(piece.previousVersion)
+            ? piece.version
+            : `${piece.previousVersion} → ${piece.version}`,
+        },
+      ];
     }
   }
 }

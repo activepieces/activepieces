@@ -26,6 +26,10 @@ import {
     FlowRunEvent,
     FlowUpdatedEvent,
     FolderEvent,
+    OfficialPieceAddedEvent,
+    OfficialPieceEventData,
+    OfficialPieceMinorOrMajorVersionAddedEvent,
+    OfficialPiecePatchVersionAddedEvent,
     ProjectReleaseEvent,
     ProjectReplacedEvent,
     ProjectRoleEvent,
@@ -60,6 +64,23 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
         projectDisplayName: project.displayName,
     }
     const flow = { id: apId(), externalId: apId(), created: isoNow, updated: isoNow }
+    const pieceEnvelope = {
+        id: apId(),
+        created: isoNow,
+        updated: isoNow,
+        platformId,
+    }
+    const piece: OfficialPieceEventData['piece'] = {
+        name: '@activepieces/piece-gmail',
+        displayName: 'Gmail',
+        version: '0.9.0',
+        previousVersion: '0.8.3',
+        changeType: 'minor',
+        pieceType: 'OFFICIAL',
+        minimumSupportedRelease: '0.88.2',
+        maximumSupportedRelease: null,
+        deprecated: false,
+    }
     const flowVersion = {
         id: apId(),
         displayName: 'Sample flow',
@@ -447,6 +468,30 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                     flowDisplayName: flowVersion.displayName,
                     rejectionReason: event === ApplicationEventName.FLOW_APPROVAL_REJECTED ? 'Needs stricter validation' : null,
                 },
+            }
+            return mock
+        }
+        case ApplicationEventName.OFFICIAL_PIECE_ADDED: {
+            const mock: OfficialPieceAddedEvent = {
+                ...pieceEnvelope,
+                action: ApplicationEventName.OFFICIAL_PIECE_ADDED,
+                data: { piece: { ...piece, previousVersion: null, changeType: 'new' } },
+            }
+            return mock
+        }
+        case ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED: {
+            const mock: OfficialPieceMinorOrMajorVersionAddedEvent = {
+                ...pieceEnvelope,
+                action: ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED,
+                data: { piece },
+            }
+            return mock
+        }
+        case ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED: {
+            const mock: OfficialPiecePatchVersionAddedEvent = {
+                ...pieceEnvelope,
+                action: ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED,
+                data: { piece: { ...piece, version: '0.9.1', previousVersion: '0.9.0', changeType: 'patch' } },
             }
             return mock
         }

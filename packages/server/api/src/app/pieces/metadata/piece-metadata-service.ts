@@ -5,9 +5,10 @@ import { ActionExistence, EXACT_VERSION_REGEX, flowPieceUtil, PackageType, Piece
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
-import { EntityManager, FindOptionsSelect, In, IsNull } from 'typeorm'
+import { EntityManager, FindOptionsSelect, In, IsNull, Not } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
+import { distributedStore } from '../../database/redis-connections'
 import { resolveVisibility } from '../../ee/pieces/filters/piece-filtering-utils'
 import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { projectService } from '../../project/project-service'
@@ -17,6 +18,8 @@ import { pieceTranslationService } from './piece-translation-service'
 import { filterActionsByAudience, filterPieceBasedOnType, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled, pieceListUtils } from './utils'
 
 export const pieceRepos = repoFactory(PieceMetadataEntity)
+
+const NEW_OFFICIAL_PIECE_CLAIM_TTL_SECONDS = 60 * 60
 
 export const pieceMetadataService = (log: FastifyBaseLogger) => {
     return {
@@ -152,42 +155,14 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             pieceType,
             archiveId,
             publishCacheRefresh = true,
-        }: CreateParams): Promise<PieceMetadataSchema> {
-            const existingMetadata = await pieceRepos().findOneBy({
-                name: pieceMetadata.name,
-                version: pieceMetadata.version,
-                platformId: platformId ?? IsNull(),
-            })
-            if (!isNil(existingMetadata)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.VALIDATION,
-                    params: {
-                        message: `piece_metadata_already_exists name=${pieceMetadata.name} version=${pieceMetadata.version}`,
-                    },
-                })
-            }
-            const createdDate = await findOldestCreatedDate({
-                name: pieceMetadata.name,
-                platformId,
-            })
-            const pieceRow = {
-                id: apId(),
-                packageType,
-                pieceType,
-                archiveId,
-                platformId,
-                created: createdDate,
-                ...pieceMetadata,
-            }
-            const savedPiece = await transaction(async (entityManager) => {
-                const piece = await pieceRepos(entityManager).save(pieceRow)
-                await pieceTranslationService.save({ pieceMetadataId: pieceRow.id, i18n: pieceMetadata.i18n, entityManager })
-                return piece
-            })
+        }: CreateParams): Promise<CreatedPieceVersion> {
+            const inserted = await insertPieceVersion({ pieceMetadata, platformId, packageType, pieceType, archiveId })
+            const created = isNil(inserted.previousVersion) && isNil(platformId) ? await claimNewOfficialPiece({ inserted }) : inserted
+            log.info({ piece: { name: pieceMetadata.name, version: pieceMetadata.version, previousVersion: created.previousVersion, type: pieceType }, platform: { id: platformId } }, '[pieceMetadataService#create] Piece version installed')
             if (publishCacheRefresh) {
                 await pieceCache(log).invalidate()
             }
-            return savedPiece
+            return created
         },
 
         async bulkDelete(pieces: { name: string, version: string }[]): Promise<void> {
@@ -250,6 +225,15 @@ async function findFlowsUsingPiece({ pieceName, platformId, log }: FindFlowsUsin
         }
     }
     return [...flowNamesById.values()]
+}
+
+function pieceAlreadyExistsError({ name, version }: PieceAlreadyExistsErrorParams): ActivepiecesError {
+    return new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: {
+            message: `piece_metadata_already_exists name=${name} version=${version}`,
+        },
+    })
 }
 
 function buildPieceInUseMessage(flowNames: string[]): string {
@@ -326,17 +310,51 @@ export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | Piec
     })
 }
 
-const findOldestCreatedDate = async ({ name, platformId }: { name: string, platformId?: string }): Promise<string> => {
-    const piece = await pieceRepos().findOne({
-        where: {
-            name,
-            platformId: platformId ?? IsNull(),
-        },
-        order: {
-            created: 'ASC',
-        },
+async function claimNewOfficialPiece({ inserted }: ClaimNewOfficialPieceParams): Promise<CreatedPieceVersion> {
+    const { piece } = inserted
+    const claimed = await distributedStore.putIfAbsent(`official-piece-added:${piece.name}`, true, NEW_OFFICIAL_PIECE_CLAIM_TTL_SECONDS)
+    if (claimed) {
+        return inserted
+    }
+    const otherVersions = await pieceRepos().find({
+        select: { version: true },
+        where: { name: piece.name, platformId: IsNull(), version: Not(piece.version) },
     })
-    return piece?.created ?? dayjs().toISOString()
+    return { piece, previousVersion: newestVersion(otherVersions) }
+}
+
+function newestVersion(versions: Pick<PieceMetadataSchema, 'version'>[]): string | null {
+    return versions.reduce<string | null>((newest, { version }) => isNil(newest) || isNewerVersion(version, newest) ? version : newest, null)
+}
+
+async function insertPieceVersion({ pieceMetadata, platformId, packageType, pieceType, archiveId }: InsertPieceVersionParams): Promise<CreatedPieceVersion> {
+    const existingVersions = await pieceRepos().find({
+        select: { version: true, created: true },
+        where: { name: pieceMetadata.name, platformId: platformId ?? IsNull() },
+    })
+    if (existingVersions.some((existing) => existing.version === pieceMetadata.version)) {
+        throw pieceAlreadyExistsError({ name: pieceMetadata.name, version: pieceMetadata.version })
+    }
+    const previousVersion = newestVersion(existingVersions)
+    const oldestCreated = existingVersions.reduce<string | null>((oldest, existing) => isNil(oldest) || existing.created < oldest ? existing.created : oldest, null)
+    const pieceRow = {
+        id: apId(),
+        packageType,
+        pieceType,
+        archiveId,
+        platformId,
+        created: oldestCreated ?? dayjs().toISOString(),
+        ...pieceMetadata,
+    }
+    const piece = await transaction(async (entityManager) => {
+        const { raw: insertedRows } = await pieceRepos(entityManager).createQueryBuilder().insert().into('piece_metadata').values(pieceRow).orIgnore().returning('id').execute()
+        if (!Array.isArray(insertedRows) || insertedRows.length === 0) {
+            throw pieceAlreadyExistsError({ name: pieceMetadata.name, version: pieceMetadata.version })
+        }
+        await pieceTranslationService.save({ pieceMetadataId: pieceRow.id, i18n: pieceMetadata.i18n, entityManager })
+        return pieceRepos(entityManager).findOneByOrFail({ id: pieceRow.id })
+    })
+    return { piece, previousVersion }
 }
 
 const sortByVersionDescending = <T extends { version: string }>(a: T, b: T): number => {
@@ -610,11 +628,22 @@ type DeleteParams = {
     platformId: string
 }
 
+type PieceAlreadyExistsErrorParams = {
+    name: string
+    version: string
+}
+
 type FindFlowsUsingPieceParams = {
     pieceName: string
     platformId: string
     log: FastifyBaseLogger
 }
+
+type ClaimNewOfficialPieceParams = {
+    inserted: CreatedPieceVersion
+}
+
+type InsertPieceVersionParams = Omit<CreateParams, 'publishCacheRefresh' | 'projectId'>
 
 type CreateParams = {
     pieceMetadata: PieceMetadata
@@ -690,3 +719,7 @@ type PieceKey = {
     maximumSupportedRelease?: string
 }
 
+export type CreatedPieceVersion = {
+    piece: PieceMetadataSchema
+    previousVersion: string | null
+}

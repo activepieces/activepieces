@@ -82,6 +82,9 @@ export enum ApplicationEventName {
     FLOW_APPROVAL_GRANTED = 'flow.approval.granted',
     FLOW_APPROVAL_REJECTED = 'flow.approval.rejected',
     FLOW_APPROVAL_WITHDRAWN = 'flow.approval.withdrawn',
+    OFFICIAL_PIECE_ADDED = 'official_piece.added',
+    OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED = 'official_piece.minor_or_major_version.added',
+    OFFICIAL_PIECE_PATCH_VERSION_ADDED = 'official_piece.patch_version.added',
 }
 
 const BaseAuditEventProps = {
@@ -714,6 +717,47 @@ export const FlowApprovalEvent = z.object({
 })
 export type FlowApprovalEvent = z.infer<typeof FlowApprovalEvent>
 
+export const PieceChangeType = z.enum(['new', 'major', 'minor', 'patch'])
+export type PieceChangeType = z.infer<typeof PieceChangeType>
+
+export const OfficialPieceEventData = z.object({
+    piece: z.object({
+        name: z.string(),
+        displayName: z.string(),
+        version: z.string(),
+        previousVersion: Nullable(z.string()),
+        changeType: PieceChangeType,
+        pieceType: z.enum(['OFFICIAL', 'CUSTOM']),
+        minimumSupportedRelease: Nullable(z.string()),
+        maximumSupportedRelease: Nullable(z.string()),
+        deprecated: z.boolean(),
+    }),
+})
+export type OfficialPieceEventData = z.infer<typeof OfficialPieceEventData>
+
+export const OfficialPieceAddedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.OFFICIAL_PIECE_ADDED),
+    data: OfficialPieceEventData,
+})
+export type OfficialPieceAddedEvent = z.infer<typeof OfficialPieceAddedEvent>
+
+export const OfficialPieceMinorOrMajorVersionAddedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED),
+    data: OfficialPieceEventData,
+})
+export type OfficialPieceMinorOrMajorVersionAddedEvent = z.infer<typeof OfficialPieceMinorOrMajorVersionAddedEvent>
+
+export const OfficialPiecePatchVersionAddedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED),
+    data: OfficialPieceEventData,
+})
+export type OfficialPiecePatchVersionAddedEvent = z.infer<typeof OfficialPiecePatchVersionAddedEvent>
+
+export type OfficialPieceEvent = OfficialPieceAddedEvent | OfficialPieceMinorOrMajorVersionAddedEvent | OfficialPiecePatchVersionAddedEvent
+
 export const ApplicationEvent = z.union([
     AgentAuditEvent,
     AgentActionExecutedEvent,
@@ -741,6 +785,9 @@ export const ApplicationEvent = z.union([
     ProjectReleaseEvent,
     ProjectReplacedEvent,
     FlowApprovalEvent,
+    OfficialPieceAddedEvent,
+    OfficialPieceMinorOrMajorVersionAddedEvent,
+    OfficialPiecePatchVersionAddedEvent,
 ])
 
 export type ApplicationEvent = z.infer<typeof ApplicationEvent>
@@ -890,6 +937,11 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `Approval rejected for flow ${event.data.flowDisplayName ?? event.data.flowId}${event.data['rejectionReason'] ? ` (${event.data['rejectionReason']})` : ''}`
         case ApplicationEventName.FLOW_APPROVAL_WITHDRAWN:
             return `Approval request withdrawn for flow ${event.data.flowDisplayName ?? event.data.flowId}`
+        case ApplicationEventName.OFFICIAL_PIECE_ADDED:
+            return `Piece ${event.data.piece.displayName} added`
+        case ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED:
+        case ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED:
+            return `Piece ${event.data.piece.displayName} updated ${event.data.piece.previousVersion} → ${event.data.piece.version}`
     }
 }
 

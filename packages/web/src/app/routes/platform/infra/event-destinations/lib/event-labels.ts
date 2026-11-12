@@ -87,6 +87,13 @@ export const buildEventLabels = (): EventLabelsMap => {
     [ApplicationEventName.FLOW_APPROVAL_WITHDRAWN]: t(
       'Flow approval withdrawn',
     ),
+    [ApplicationEventName.OFFICIAL_PIECE_ADDED]: t('Official piece added'),
+    [ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED]: t(
+      'Official piece version added',
+    ),
+    [ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED]: t(
+      'Official piece patch added',
+    ),
   };
 };
 

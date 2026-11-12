@@ -7,6 +7,7 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { eventDestinationService } from '../../../event-destinations/event-destinations.service'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
@@ -43,7 +44,7 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
 ) => {
 
     app.post('/pieces', CreatePieceRequest, async (req): Promise<PieceMetadataModel> => {
-        const savedPiece = await pieceMetadataService(req.log).create({
+        const { piece: savedPiece, previousVersion } = await pieceMetadataService(req.log).create({
             pieceMetadata: req.body as PieceMetadata,
             packageType: PackageType.REGISTRY,
             pieceType: PieceType.OFFICIAL,
@@ -51,6 +52,7 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         if (isToolSearchEnabled()) {
             rejectedPromiseHandler(toolSearchReindexJob(req.log).enqueue({ type: 'all' }), req.log)
         }
+        rejectedPromiseHandler(eventDestinationService(req.log).triggerOnAllPlatforms({ addedPieces: [{ ...savedPiece, previousVersion }] }), req.log)
         return savedPiece
     },
     )
