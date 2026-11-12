@@ -1,32 +1,62 @@
 import type { Page, Route } from '@playwright/test';
+import { test as base } from './index';
 
-async function empty({ page, resource }: { page: Page; resource: string }): Promise<() => Promise<void>> {
-  return answerListRequest({
-    page,
-    resource,
-    answer: (route) => route.fulfill({ status: 200, json: { data: [], next: null, previous: null } }),
-  });
-}
+export const test = base.extend<{ listResponse: ListResponse }>({
+  listResponse: async ({ page }, use) => {
+    const fakes: ListFake[] = [];
+    const answer = async ({ resource, status, json }: FakeAnswer): Promise<() => Promise<void>> => {
+      const fake = await fakeListRequest({ page, resource, status, json });
+      fakes.push(fake);
+      return fake.restore;
+    };
+    await use({
+      empty: ({ resource }) => answer({ resource, status: 200, json: { data: [], next: null, previous: null } }),
+      fail: ({ resource }) => answer({ resource, status: 500, json: { message: 'E2E list failure' } }),
+      ERROR_STATE_TIMEOUT_MS: 15_000,
+    });
+    const unused = fakes.filter((fake) => fake.hits() === 0).map((fake) => fake.resource);
+    if (unused.length > 0) {
+      throw new Error(noRequestMessage(unused));
+    }
+  },
+});
 
-async function fail({ page, resource }: { page: Page; resource: string }): Promise<() => Promise<void>> {
-  return answerListRequest({
-    page,
-    resource,
-    answer: (route) => route.fulfill({ status: 500, json: { message: 'E2E list failure' } }),
-  });
-}
-
-async function answerListRequest({ page, resource, answer }: { page: Page; resource: string; answer: (route: Route) => Promise<void> }): Promise<() => Promise<void>> {
+async function fakeListRequest({ page, resource, status, json }: FakeAnswer & { page: Page }): Promise<ListFake> {
+  let hits = 0;
   const isListRequest = (url: URL) => url.pathname.endsWith(`/v1/${resource}`);
   const handler = async (route: Route) => {
     if (route.request().method() !== 'GET') {
       await route.fallback();
       return;
     }
-    await answer(route);
+    hits += 1;
+    await route.fulfill({ status, json });
   };
   await page.route(isListRequest, handler);
-  return () => page.unroute(isListRequest, handler);
+  return {
+    resource,
+    hits: () => hits,
+    restore: async () => {
+      await page.unroute(isListRequest, handler);
+      if (hits === 0) {
+        throw new Error(noRequestMessage([resource]));
+      }
+    },
+  };
 }
 
-export const listResponse = { empty, fail, ERROR_STATE_TIMEOUT_MS: 15_000 };
+function noRequestMessage(resources: string[]): string {
+  return `No GET request reached the fake answer for ${resources.join(', ')}. Check the resource name against the API path, and set the fake before the page opens.`;
+}
+
+export { expect } from '@playwright/test';
+
+type FakeAnswer = { resource: string; status: number; json: unknown };
+
+type ListFake = { resource: string; hits: () => number; restore: () => Promise<void> };
+
+export type ListResponse = {
+  empty: (params: { resource: string }) => Promise<() => Promise<void>>;
+  fail: (params: { resource: string }) => Promise<() => Promise<void>>;
+  ERROR_STATE_TIMEOUT_MS: number;
+};
