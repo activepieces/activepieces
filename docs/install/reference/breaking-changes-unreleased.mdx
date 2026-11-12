@@ -40,6 +40,14 @@ For **Event Start (Time Before)** and **Event Ends**, all-day events start and e
 
 If a flow relied on New Event or New Event Matching Search firing for each occurrence of a series or for edits, use **New or Updated Event** instead. If a flow used New or Updated Event to catch deletions, use **Event Cancelled**. If a flow filters Event Cancelled by reason, check the new reason order. Other flows keep working without changes.
 
+#### Gmail 0.19.0: New Email and Send Email no longer return HTTP request details
+
+This is a security fix. The output of the **New Email** trigger and the **Send Email** action included the raw HTTP request, which could expose proxy credentials. From Gmail 0.19.0, the New Email `thread` field contains only `data`; the `config`, `headers`, `request` and `status` keys are removed. Send Email now returns only `data`, `status` and `statusText`.
+
+#### What you need to do
+
+If a flow reads `thread.config`, `thread.headers`, `thread.request` or `thread.status` from New Email, or any key other than `data`, `status` and `statusText` from Send Email, update it to read from `data` instead.
+
 #### Google Drive 0.14.0: file triggers, downloads and search across shared drives
 
 From Google Drive 0.14.0, the **New File** trigger with **Include File Content** on fires for a file whose download fails. That run has a `contentError` field with the reason instead of `content`. Before, one failed download (for example a Google Form, which Drive can't download) failed the whole poll, and every new file in that poll was lost. The trigger's output can now carry the `content` and `contentError` keys.
