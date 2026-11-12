@@ -193,20 +193,17 @@ export function TrialTimeline({
         }
       : {
           when: t('Today'),
-          what: t('Everything turns on. Your credits stay the same.'),
+          what: t('Full access, same credits'),
         },
     {
       when: selfServeTrialTime.formatDate(endDate.subtract(1, 'day')),
-      what: t('We remind you the day before it ends.'),
+      what: t('We remind you'),
     },
     {
       when: selfServeTrialTime.formatDate(endDate),
-      what: t(
-        'You are back on {plan}. Your flows, connections and settings are kept.',
-        {
-          plan: info?.autumnPlanName ?? t('Free'),
-        },
-      ),
+      what: t('Back on {plan}, work kept', {
+        plan: info?.autumnPlanName ?? t('Free'),
+      }),
     },
   ];
   return (
