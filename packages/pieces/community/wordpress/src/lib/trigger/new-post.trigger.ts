@@ -245,7 +245,7 @@ async function pollNewPosts({
     seen: [...state.seen, ...fresh.map(toSeenEntry)],
     baselineId: state.baselineId,
     publishedFloorMs: state.publishedFloorMs,
-    idFloor: byId.cursor.floorId,
+    idFloor: (byId.cursor.pendingIds ?? []).reduce((acc, id) => Math.min(acc, id - 1), byId.cursor.floorId),
   });
   return {
     posts: fresh,
@@ -271,32 +271,71 @@ async function readIdListing({
   cursor: IdCursor;
   budget: PollBudget;
 }): Promise<{ posts: WordpressPost[]; cursor: IdCursor }> {
+  const posts: WordpressPost[] = [];
+  let pendingIds = cursor.pendingIds ?? [];
+  while (pendingIds.length > 0) {
+    if (!budget.canStart({ reservedRequests: 0 })) {
+      console.warn(`WordPress New Post: poll time budget reached while reading ${pendingIds.length} new posts; the rest is read on the next poll.`);
+      return { posts, cursor: { ...cursor, pendingIds } };
+    }
+    const batch = pendingIds.slice(0, PAGE_SIZE);
+    posts.push(...(await readPostsByIds({ auth, ids: batch, budget })));
+    pendingIds = pendingIds.slice(batch.length);
+  }
   const queryParams = withAuthor({
     authors,
-    queryParams: { orderby: 'id', order: 'desc', per_page: String(PAGE_SIZE) },
+    queryParams: { orderby: 'id', order: 'desc', per_page: String(PAGE_SIZE), _fields: 'id' },
   });
   const firstPage = cursor.resumePage ?? 1;
-  const posts: WordpressPost[] = [];
   let topId = cursor.resumePage === null ? cursor.floorId : cursor.topId;
+  const done = (): IdCursor => ({ floorId: Math.max(cursor.floorId, topId), topId: 0, resumePage: null, pendingIds });
   for (let page = firstPage; page < firstPage + MAX_PAGES_PER_WINDOW; page++) {
     if (!budget.canStart({ reservedRequests: 0 })) {
       console.warn(`WordPress New Post: poll time budget reached in the id listing after ${posts.length} posts; the rest is read on the next poll.`);
-      return { posts, cursor: page === firstPage ? cursor : { floorId: cursor.floorId, topId, resumePage: page } };
+      return { posts, cursor: page === firstPage ? { ...cursor, pendingIds } : { floorId: cursor.floorId, topId, resumePage: page, pendingIds } };
     }
     const result = await listPage({ auth, queryParams, page, budget });
     if (isNil(result)) {
-      return { posts, cursor: { floorId: Math.max(cursor.floorId, topId), topId: 0, resumePage: null } };
+      return { posts, cursor: done() };
     }
-    const newer = result.items.filter((post) => post.id > cursor.floorId);
-    posts.push(...newer);
-    topId = newer.reduce((acc, post) => Math.max(acc, post.id), topId);
+    const newerIds = result.items.map((post) => post.id).filter((id) => Number.isInteger(id) && id > cursor.floorId);
+    topId = newerIds.reduce((acc, id) => Math.max(acc, id), topId);
+    if (newerIds.length > 0) {
+      if (budget.canStart({ reservedRequests: 0 })) {
+        posts.push(...(await readPostsByIds({ auth, ids: newerIds, budget })));
+      } else {
+        pendingIds = [...pendingIds, ...newerIds];
+      }
+    }
     const totalPages = result.total_pages ?? (result.items.length < PAGE_SIZE ? page : page + 1);
-    if (newer.length < result.items.length || result.items.length === 0 || page >= totalPages) {
-      return { posts, cursor: { floorId: Math.max(cursor.floorId, topId), topId: 0, resumePage: null } };
+    if (newerIds.length < result.items.length || result.items.length === 0 || page >= totalPages) {
+      return { posts, cursor: done() };
+    }
+    if (pendingIds.length > 0) {
+      return { posts, cursor: { floorId: cursor.floorId, topId, resumePage: page + 1, pendingIds } };
     }
   }
   console.warn(`WordPress New Post: read the maximum of ${MAX_PAGES_PER_WINDOW} pages in the id listing; the rest is read on the next poll.`);
-  return { posts, cursor: { floorId: cursor.floorId, topId, resumePage: firstPage + MAX_PAGES_PER_WINDOW } };
+  return { posts, cursor: { floorId: cursor.floorId, topId, resumePage: firstPage + MAX_PAGES_PER_WINDOW, pendingIds } };
+}
+
+async function readPostsByIds({
+  auth,
+  ids,
+  budget,
+}: {
+  auth: WordpressAuthValue;
+  ids: number[];
+  budget: PollBudget;
+}): Promise<WordpressPost[]> {
+  const result = await listPage({
+    auth,
+    budget,
+    page: 1,
+    queryParams: { include: ids.join(','), orderby: 'id', order: 'desc', per_page: String(ids.length) },
+  });
+  const wanted = new Set(ids);
+  return (result?.items ?? []).filter((post) => wanted.has(post.id));
 }
 
 async function readWindow({
@@ -517,8 +556,19 @@ async function readUnpublishedIds({
       console.warn('WordPress New Post: the connected user cannot list drafts. A draft that exists now and is later published with an earlier date does not fire.');
       return [];
     }
+    if (isTransientError(error)) {
+      console.warn('WordPress New Post: could not list drafts (server error or timeout). A draft that exists now and is later published with an earlier date does not fire.');
+      return [];
+    }
     throw error;
   }
+}
+
+function isTransientError(error: unknown): boolean {
+  if (error instanceof WordpressApiError) {
+    return error.status >= 500 || error.status === 408 || error.status === 429;
+  }
+  return error instanceof Error && /timeout|timed out|abort|ECONNRESET|ETIMEDOUT/i.test(`${error.name} ${error.message}`);
 }
 
 async function migrateLegacyCursor({
@@ -684,7 +734,7 @@ type PollBudget = {
   record: (params: { durationMs: number }) => void;
 };
 
-type IdCursor = { floorId: number; topId: number; resumePage: number | null };
+type IdCursor = { floorId: number; topId: number; resumePage: number | null; pendingIds?: number[] };
 
 type WindowCursor = { ms: number; complete: boolean; resume?: { startMs: number; page: number } };
 

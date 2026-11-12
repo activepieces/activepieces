@@ -33,6 +33,7 @@ function wpList(url: URL): Response {
     const direction = q.get('order') === 'asc' ? 1 : -1
     const matching = posts
         .filter((p) => (q.get('status') ?? 'publish').split(',').includes(p.status))
+        .filter(((ids: Set<number> | null) => (p: { id: number }) => ids === null || ids.has(p.id))(q.get('include') ? new Set(q.get('include')!.split(',').map(Number)) : null))
         .filter((p) => (after ? dateMs(p) > Date.parse(after) : true) && (before ? dateMs(p) < Date.parse(before) : true))
         .filter((p) => (modifiedAfter ? modifiedMs(p) > Date.parse(modifiedAfter) : true))
         .sort((a, b) => direction * (key(a) - key(b) || a.id - b.id))

@@ -60,6 +60,7 @@ function jsonResponse({ status, body, headers = {} }: { status: number, body: un
 function wpList(url: URL): Response {
     const q = url.searchParams
     let list = posts.filter((p) => (q.get('status') ?? 'publish').split(',').includes(p.status))
+    if (q.get('include')) list = list.filter(((ids: Set<number> | null) => (p: { id: number }) => ids === null || ids.has(p.id))(q.get('include') ? new Set(q.get('include')!.split(',').map(Number)) : null))
     if (q.get('after')) list = list.filter((p) => p._date > Date.parse(q.get('after')!))
     if (q.get('before')) list = list.filter((p) => p._date < Date.parse(q.get('before')!))
     if (q.get('modified_after')) list = list.filter((p) => p._modified > Date.parse(q.get('modified_after')!))

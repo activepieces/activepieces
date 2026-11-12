@@ -126,6 +126,7 @@ function listPosts(url: URL): Response {
   const key = (p: VendorPost) => (orderby === 'id' ? p.id : orderby === 'modified' ? p.modifiedMs : p.dateMs);
   const matching = vendor.posts
     .filter((p) => statuses.includes(p.status))
+    .filter(((ids: Set<number> | null) => (p: { id: number }) => ids === null || ids.has(p.id))(q.get('include') ? new Set(q.get('include')!.split(',').map(Number)) : null))
     .filter((p) => (author ? String(p.author) === author : true))
     .filter((p) => (after === undefined || Math.floor(p.dateMs / 1000) * 1000 > after) && (before === undefined || p.dateMs < before))
     .filter((p) => modifiedAfter === undefined || Math.floor(p.modifiedMs / 1000) * 1000 > modifiedAfter)

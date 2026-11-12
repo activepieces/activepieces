@@ -126,6 +126,7 @@ function listPosts(url: URL): Response {
   const key = (p: VendorPost) => (orderby === 'id' ? p.id : orderby === 'modified' ? p.modifiedMs : p.dateMs);
   const matching = vendor.posts
     .filter((p) => statuses.includes(p.status))
+    .filter(((ids: Set<number> | null) => (p: { id: number }) => ids === null || ids.has(p.id))(q.get('include') ? new Set(q.get('include')!.split(',').map(Number)) : null))
     .filter((p) => (author ? String(p.author) === author : true))
     .filter((p) => (after === undefined || Math.floor(p.dateMs / 1000) * 1000 > after) && (before === undefined || p.dateMs < before))
     .filter((p) => modifiedAfter === undefined || Math.floor(p.modifiedMs / 1000) * 1000 > modifiedAfter)
@@ -603,6 +604,43 @@ describe('QA: WordPress New Post edge cases', () => {
 });
 
 describe('QA round 2: budget, pre-marking and migration ordering', () => {
+  it('reads only ids in the id listing and fetches full posts only for new ids', async () => {
+    seedHistory();
+    const { store } = memoryStore();
+    await enable({ store });
+    advance(1);
+    vendor.requests.length = 0;
+    expect(await poll({ store })).toEqual([]);
+    const idListing = vendor.requests.filter((url) => url.searchParams.get('orderby') === 'id');
+    expect(idListing.length).toBeGreaterThan(0);
+    expect(idListing.every((url) => url.searchParams.get('_fields') === 'id' && !url.searchParams.has('include'))).toBe(true);
+    advance(1);
+    const backdated = publish({ dateMs: clock - 30 * 24 * HOUR });
+    advance(1);
+    vendor.requests.length = 0;
+    expect(await poll({ store })).toEqual([backdated.id]);
+    const byInclude = vendor.requests.filter((url) => url.searchParams.has('include'));
+    expect(byInclude.map((url) => url.searchParams.get('include'))).toEqual([String(backdated.id)]);
+    expect(byInclude[0].searchParams.has('_fields')).toBe(false);
+  });
+
+  for (const status of [500, 503]) {
+    it(`enables with a warning when the drafts read fails with ${status}`, async () => {
+      seedHistory();
+      const { store } = memoryStore();
+      vendor.fault = (url) => (url.searchParams.has('status') ? wpError({ status, code: 'internal_server_error' }) : undefined);
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      await enable({ store });
+      expect(warn.mock.calls.some(([message]) => String(message).includes('could not list drafts'))).toBe(true);
+      vendor.fault = undefined;
+      advance(1);
+      const live = publish();
+      advance(1);
+      expect(await poll({ store })).toEqual([live.id]);
+    });
+  }
+
   async function timedPoll(store: TestStore): Promise<{ ids: number[]; elapsedMs: number }> {
     const start = clock;
     const ids = await poll({ store });
