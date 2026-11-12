@@ -63,6 +63,16 @@ async function deleteConversation(id: string): Promise<void> {
   return api.delete<void>(`/v1/agents/conversations/${id}`);
 }
 
+function deleteConversationOnExit(id: string): void {
+  api
+    .any<void>(`/v1/agents/conversations/${id}`, {
+      method: 'DELETE',
+      adapter: 'fetch',
+      fetchOptions: { keepalive: true },
+    })
+    .catch(() => undefined);
+}
+
 async function sendMessage({
   conversationId,
   content,
@@ -180,6 +190,7 @@ export const chatApi = {
   getMessages,
   updateConversation,
   deleteConversation,
+  deleteConversationOnExit,
   sendMessage,
   approveToolCall,
   cancelConversation,
