@@ -38,7 +38,6 @@ export class AddEmailDomainAndSsoProviderTables1882000000000 implements Migratio
                 "updated" timestamp with time zone NOT NULL DEFAULT now(),
                 "platformId" character varying(21) NOT NULL,
                 "protocol" character varying NOT NULL,
-                "vendor" character varying NOT NULL,
                 "status" character varying NOT NULL,
                 "config" jsonb NOT NULL,
                 CONSTRAINT "pk_sso_provider" PRIMARY KEY ("id"),

@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { SsoDomainVerificationStatus, SsoProviderProtocol, SsoProviderStatus, SsoProviderVendor } from '@activepieces/shared'
+import { SsoDomainVerificationStatus, SsoProviderProtocol, SsoProviderStatus } from '@activepieces/shared'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { createMockPlatform, createMockUser, createMockUserIdentity } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
@@ -110,7 +110,6 @@ async function saveSsoProvider({ platformId, status }: SaveSsoProviderParams): P
         id,
         platformId,
         protocol: SsoProviderProtocol.SAML,
-        vendor: SsoProviderVendor.GENERIC,
         status,
         config: { idpMetadata: '<md:EntityDescriptor />', idpCertificate: 'certificate', spEntityId: 'Activepieces' },
     })

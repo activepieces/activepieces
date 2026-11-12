@@ -18,10 +18,6 @@ export const SsoProviderEntity = new EntitySchema<SsoProviderSchema>({
             type: String,
             nullable: false,
         },
-        vendor: {
-            type: String,
-            nullable: false,
-        },
         status: {
             type: String,
             nullable: false,
