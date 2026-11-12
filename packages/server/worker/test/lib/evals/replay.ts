@@ -102,6 +102,10 @@ function jsonSchemaProblem({ schema, input }: { schema: unknown, input: unknown 
     return isNil(badEnum) ? null : `${badEnum[0]} ${JSON.stringify(badEnum[1])} is not an allowed value`
 }
 
+function isStopOutput(output: unknown): boolean {
+    return isObject(output) && output['error'] === REPLAY_ENDED_MESSAGE
+}
+
 function endsTurn(stop: ReplayStop): boolean {
     return stop.kind !== 'missing_fixture'
 }
@@ -190,6 +194,7 @@ export const replay = {
     isRead,
     isLive,
     endsTurn,
+    isStopOutput,
     splitStale,
 }
 

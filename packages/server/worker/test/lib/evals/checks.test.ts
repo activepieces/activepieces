@@ -17,10 +17,8 @@ describe('evalChecks.targetCallFailure', () => {
         expect(failure).toContain('Invalid input')
     })
 
-    it('fails when the replay blocked the target call', () => {
-        const failure = evalChecks.targetCallFailure({ evalCase, toolCalls: [call({ output: { error: 'This tool is unavailable right now.' } })] })
-
-        expect(failure).toContain('unavailable')
+    it('leaves a target call the replay stopped to the judge', () => {
+        expect(evalChecks.targetCallFailure({ evalCase, toolCalls: [call({ output: { error: 'This tool is unavailable right now.' } })] })).toBeNull()
     })
 
     it('fails when the target call returned an error result', () => {
@@ -29,7 +27,7 @@ describe('evalChecks.targetCallFailure', () => {
     })
 
     it('finds the target inside an ap_lazy_tool call', () => {
-        const lazy = call({ toolName: 'ap_lazy_tool', input: { tool: 'ap_add_step', input: { flowId: 'f1' } }, output: { error: 'This tool is unavailable right now.' } })
+        const lazy = call({ toolName: 'ap_lazy_tool', input: { tool: 'ap_add_step', input: { flowId: 'f1' } }, output: { error: 'step not found' } })
 
         expect(evalChecks.targetCallFailure({ evalCase, toolCalls: [lazy] })).not.toBeNull()
     })

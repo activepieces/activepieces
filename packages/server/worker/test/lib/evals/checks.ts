@@ -39,7 +39,7 @@ function callFailure(call: TurnToolCall): string | null {
         return call.errorText ?? 'the call errored'
     }
     const { output } = call
-    if (!isObject(output)) {
+    if (!isObject(output) || replay.isStopOutput(output)) {
         return null
     }
     if (!isNil(output['error'])) {

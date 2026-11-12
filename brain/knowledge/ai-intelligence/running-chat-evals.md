@@ -21,7 +21,7 @@ icon: 🧪
 
 ## Reading the result
 
-- In a terminal a live table shows each case's title (`metadata.title` in PostHog, falling back to its check), one mark per run (✓, ✗, spinner, `·` not started), runs done, cost so far and elapsed time. A case gets its verdict as soon as the remaining runs can't change it. Outside a terminal (CI logs) it prints line by line.
+- In a terminal a live table shows each case's title (`metadata.title` in PostHog, falling back to its check), one mark per run (✓, ✗, spinner, `·` not started), runs done, cost so far and elapsed time. A case gets its verdict as soon as the remaining runs can't change it. Outside a terminal it prints line by line.
 - When the runs finish, a results browser opens: ↑↓ to move, Enter to open a case's runs and then a run's failure reasons and transcript, Esc to go back, a case number to jump, q to quit. The verdicts and the baseline diff print after you quit.
 - **Judge:** Jev 1.14 answers each check (`EVALS_JUDGE_MODEL` overrides it) and sees the user message plus the replayed steps. P(pass) between 0.35 and 0.65 is `unclear` (`?`), never a guess. A failed check gets a one-line reason from Haiku 5.5. There is no 1–10 score.
 - **Case verdict:** a `chat-core` case passes only when every run passes (pass^k, as Anthropic recommends for regression cases). Any other case passes when more than half pass. An unclear run doesn't count as a pass.
@@ -41,10 +41,10 @@ All of these need `--dataset <name>`:
 
 ## Gotchas
 
-- `--upload` writes the run to PostHog as the main baseline. The CLI refuses it unless HEAD is `origin/main`, the worktree is clean and `--repeats` is at least 3. No CI job runs it yet, so someone uploads by hand after main changes.
+- `--upload` writes the run to PostHog as the main baseline. The CLI refuses it unless HEAD is `origin/main`, the worktree is clean and `--repeats` is at least 3. Upload by hand after main changes; the evals don't run in CI.
 - A full run costs about $0.03 per run, which comes to cases × 5 × $0.03.
 - Web and catalog reads (`LIVE_TOOLS` in `replay.ts`: web search, fetch and scrape, piece search and props, skills, tool schemas, setup guides) always run live with your branch's code and ignore their recordings, since their answer doesn't depend on the user. Every run makes real web searches. Workspace reads (flows, runs, connections, tables, dropdown options) stay recorded because the dev server doesn't have the user's data.
-- A workspace read with no recording replies "unavailable" and the agent carries on. A write ends the turn when it isn't recorded or its input differs from the recording. If that write is the case's target tool, the run fails the tool-call gate; otherwise the judge grades what happened. Use `--record` to fill a missing read.
+- A workspace read with no recording replies "unavailable" and the agent carries on. A write ends the turn when it isn't recorded or its input differs from the recording. That stop never fails the tool-call gate, even on the case's target tool: the input passed the tool's schema, so the judge grades whether it was right. Use `--record` to fill a missing read.
 - Only tools on the read list (`READ_TOOLS` in `replay.ts`) count as reads. Any other tool is a write: it must match its recording exactly and never runs live. Add a new read-only tool there.
 - Recording lookup is exact except for whitespace, the top-level card titles (`title`, `activeTitle`, `doneTitle`) and short vs full `pieceName`. A change that makes the agent reword a query or URL misses the recording.
 - The tool change check only sees descriptions and input schemas. A change inside a tool's code that keeps both is not detected, and a recorded output never reflects it. The saved definitions expire with the baseline payload after 30 days; after that the run says the changes were not checked.
