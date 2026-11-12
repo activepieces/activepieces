@@ -144,6 +144,7 @@ export const wordpress = createPiece({
     'AbdulTheActivePiecer',
     'khaledmashaly',
     'abuaboud',
+    'OdaiAhmed99',
   ],
   actions: [
     createWordPressPost,

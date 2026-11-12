@@ -604,6 +604,43 @@ describe('QA: WordPress New Post edge cases', () => {
 });
 
 describe('QA round 2: budget, pre-marking and migration ordering', () => {
+  it('keeps the modified listing on after a DST fall-back returns a post from the repeated hour first', async () => {
+    seedHistory();
+    const { store } = memoryStore();
+    const draft = publish({ status: 'draft', dateMs: clock - 10 * 24 * HOUR });
+    const firstEdited = publish({ dateMs: clock - 20 * 24 * HOUR });
+    const laterEdited = publish({ dateMs: clock - 21 * 24 * HOUR });
+    await enable({ store });
+    advance(10);
+    edit(firstEdited);
+    advance(50);
+    edit(laterEdited);
+    advance(1);
+    expect(await poll({ store })).toEqual([]);
+    advance(5);
+    // America/New_York fall-back: the site maps modified_after to local time, which in the repeated hour reads 1 h early.
+    vendor.fault = (url) => {
+      const after = url.searchParams.get('modified_after');
+      if (url.searchParams.get('orderby') !== 'modified' || after === null) return undefined;
+      const shifted = new URL(url);
+      shifted.searchParams.set('modified_after', new Date(Date.parse(after) - HOUR).toISOString());
+      return listPosts(shifted);
+    };
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    expect(await poll({ store })).toEqual([]);
+    expect(warn.mock.calls.some(([message]) => String(message).includes('before 5.7'))).toBe(false);
+    for (let i = 0; i < 3; i++) {
+      advance(5);
+      expect(await poll({ store })).toEqual([]);
+    }
+    advance(5);
+    draft.status = 'publish';
+    edit(draft);
+    advance(1);
+    expect(await poll({ store })).toEqual([draft.id]);
+    expect(warn.mock.calls.some(([message]) => String(message).includes('before 5.7'))).toBe(false);
+  });
+
   it('reads only ids in the id listing and fetches full posts only for new ids', async () => {
     seedHistory();
     const { store } = memoryStore();

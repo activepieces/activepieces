@@ -369,7 +369,7 @@ async function readWindow({
     firstPageReserve,
     reservedRequests,
     ignoresWindow: (first) =>
-      field === 'modified' && startPage === 1 && startMs > 0 && timeMs({ post: first, field }) <= startMs - TIE_OVERLAP_MS,
+      field === 'modified' && startPage === 1 && startMs > 0 && timeMs({ post: first, field }) <= startMs - IGNORED_WINDOW_MARGIN_MS,
     queryParams: withAuthor({
       authors,
       queryParams: {
@@ -382,6 +382,9 @@ async function readWindow({
   });
   if (!result.requested) {
     return { posts: [], cursor };
+  }
+  if (result.ignoredWindow) {
+    return { posts: [], cursor: { ms: Math.max(cursor.ms, Date.now()), complete: true } };
   }
   const newestKey = result.posts
     .map((post) => timeMs({ post, field }))
@@ -426,7 +429,7 @@ async function readPages({
     }
     if (page === startPage && result.items.length > 0 && ignoresWindow?.(result.items[0])) {
       console.warn('WordPress New Post: this site ignores modified_after (WordPress before 5.7); the modified listing is skipped.');
-      return { posts: [], complete: false, requested: false, nextPage: startPage };
+      return { posts: [], complete: true, requested: true, ignoredWindow: true, nextPage: startPage };
     }
     posts.push(...result.items);
     const totalPages = result.total_pages ?? (result.items.length < PAGE_SIZE ? page : page + 1);
@@ -718,6 +721,9 @@ const LISTING_COUNT = 3;
 const DATE_LOOKBACK_MS = 60 * 60 * 1000;
 const MODIFIED_LOOKBACK_MS = 2 * 60 * 1000;
 const TIE_OVERLAP_MS = 1000;
+// WordPress compares modified_after with the local post_modified, so after a DST fall-back a post edited in the
+// repeated hour can come back up to 1 h before the window. Only a gap larger than that means modified_after is ignored.
+const IGNORED_WINDOW_MARGIN_MS = 2 * 60 * 60 * 1000;
 const LEGACY_SKEW_MS = 14 * 60 * 60 * 1000;
 const HAS_ZONE = /(?:[zZ]|[+-]\d{2}:?\d{2})$/;
 const UNPUBLISHED_STATUSES = 'draft,pending,future';
@@ -727,7 +733,7 @@ type TimeField = 'date' | 'modified';
 
 type SeenEntry = [number, number];
 
-type PageReadResult = { posts: WordpressPost[]; complete: boolean; requested: boolean; nextPage: number };
+type PageReadResult = { posts: WordpressPost[]; complete: boolean; requested: boolean; nextPage: number; ignoredWindow?: boolean };
 
 type PollBudget = {
   canStart: (params: { reservedRequests: number }) => boolean;
