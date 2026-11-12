@@ -26,9 +26,10 @@ import {
     FlowRunEvent,
     FlowUpdatedEvent,
     FolderEvent,
-    PieceCatalogEventData,
-    PieceCreatedEvent,
-    PieceVersionCreatedEvent,
+    OfficialPieceAddedEvent,
+    OfficialPieceEventData,
+    OfficialPieceMinorOrMajorVersionAddedEvent,
+    OfficialPiecePatchVersionAddedEvent,
     ProjectReleaseEvent,
     ProjectReplacedEvent,
     ProjectRoleEvent,
@@ -63,13 +64,13 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
         projectDisplayName: project.displayName,
     }
     const flow = { id: apId(), externalId: apId(), created: isoNow, updated: isoNow }
-    const catalogEnvelope = {
+    const pieceEnvelope = {
         id: apId(),
         created: isoNow,
         updated: isoNow,
         platformId,
     }
-    const catalogPiece: PieceCatalogEventData['piece'] = {
+    const piece: OfficialPieceEventData['piece'] = {
         name: '@activepieces/piece-gmail',
         displayName: 'Gmail',
         version: '0.9.0',
@@ -77,11 +78,9 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
         changeType: 'minor',
         pieceType: 'OFFICIAL',
         minimumSupportedRelease: '0.88.2',
+        maximumSupportedRelease: null,
         deprecated: false,
     }
-    const catalogPieceSets: PieceCatalogEventData['pieceSets'] = [
-        { id: apId(), key: null, name: 'Default', isDefault: true },
-    ]
     const flowVersion = {
         id: apId(),
         displayName: 'Sample flow',
@@ -472,25 +471,27 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
             }
             return mock
         }
-        case ApplicationEventName.PIECE_CREATED: {
-            const mock: PieceCreatedEvent = {
-                ...catalogEnvelope,
-                action: ApplicationEventName.PIECE_CREATED,
-                data: {
-                    piece: { ...catalogPiece, previousVersion: null, changeType: 'new' },
-                    pieceSets: catalogPieceSets,
-                },
+        case ApplicationEventName.OFFICIAL_PIECE_ADDED: {
+            const mock: OfficialPieceAddedEvent = {
+                ...pieceEnvelope,
+                action: ApplicationEventName.OFFICIAL_PIECE_ADDED,
+                data: { piece: { ...piece, previousVersion: null, changeType: 'new' } },
             }
             return mock
         }
-        case ApplicationEventName.PIECE_VERSION_CREATED: {
-            const mock: PieceVersionCreatedEvent = {
-                ...catalogEnvelope,
-                action: ApplicationEventName.PIECE_VERSION_CREATED,
-                data: {
-                    piece: catalogPiece,
-                    pieceSets: catalogPieceSets,
-                },
+        case ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED: {
+            const mock: OfficialPieceMinorOrMajorVersionAddedEvent = {
+                ...pieceEnvelope,
+                action: ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED,
+                data: { piece },
+            }
+            return mock
+        }
+        case ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED: {
+            const mock: OfficialPiecePatchVersionAddedEvent = {
+                ...pieceEnvelope,
+                action: ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED,
+                data: { piece: { ...piece, version: '0.9.1', previousVersion: '0.9.0', changeType: 'patch' } },
             }
             return mock
         }

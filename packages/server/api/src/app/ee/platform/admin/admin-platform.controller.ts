@@ -1,17 +1,19 @@
 import { isNil } from '@activepieces/core-utils'
 import { ActionClassification, AiMetadata, Audience, ErrorHandlingOptionsParam, type OutputSchema, PieceMetadata, PieceMetadataModel, PropertyGroup, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
 import { AdminRetryRunsRequestBody, AgentConversation, AgentRunSource, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
-import { FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { IsNull, Not } from 'typeorm'
 import { z } from 'zod'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { eventDestinationService } from '../../../event-destinations/event-destinations.service'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
-import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
-import { pieceCatalogEventsJob } from '../../../pieces/piece-catalog/piece-catalog-events.job'
+import { PieceMetadataSchema } from '../../../pieces/metadata/piece-metadata-entity'
+import { pieceMetadataService, pieceRepos } from '../../../pieces/metadata/piece-metadata-service'
 import { isToolSearchEnabled } from '../../../tool-search/tool-search-flag'
 import { toolSearchReindexJob } from '../../../tool-search/tool-search-reindex.job'
 import { CANARY_WORKER_GROUP_ID, platformWorkerGroupService } from '../../../workers/worker-groups/platform-worker-group.service'
@@ -34,6 +36,14 @@ async function checkCertainKeyPreHandler(
     }
 }
 
+async function triggerPieceEvents({ piece, log }: TriggerPieceEventsParams): Promise<void> {
+    const existingPieces = await pieceRepos().find({
+        select: { name: true, version: true },
+        where: { name: piece.name, version: Not(piece.version), pieceType: PieceType.OFFICIAL, platformId: IsNull() },
+    })
+    await eventDestinationService(log).triggerOnAllPlatforms({ existingPieces, addedPieces: [piece] })
+}
+
 export const adminPlatformModule: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preHandler', checkCertainKeyPreHandler)
     await app.register(adminPlatformController, { prefix: '/v1/admin/' })
@@ -52,7 +62,7 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         if (isToolSearchEnabled()) {
             rejectedPromiseHandler(toolSearchReindexJob(req.log).enqueue({ type: 'all' }), req.log)
         }
-        rejectedPromiseHandler(pieceCatalogEventsJob(req.log).enqueue(), req.log)
+        rejectedPromiseHandler(triggerPieceEvents({ piece: savedPiece, log: req.log }), req.log)
         return savedPiece
     },
     )
@@ -219,4 +229,9 @@ const SyncAllConversationsRequest = {
     config: {
         security: securityAccess.public(),
     },
+}
+
+type TriggerPieceEventsParams = {
+    piece: PieceMetadataSchema
+    log: FastifyBaseLogger
 }

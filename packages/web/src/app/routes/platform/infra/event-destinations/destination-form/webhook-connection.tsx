@@ -21,7 +21,7 @@ import { HorizontalSeparatorWithText } from '@/components/ui/separator';
 import { flowHooks } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
+import { api, API_URL } from '@/lib/api';
 
 import { destinationErrors } from '../lib/destination-errors';
 import {
@@ -182,6 +182,7 @@ const GenerateHandlerFlowCard = ({
           label: eventLabels[name],
         })),
         labels: handlerFlowLabels({ selectedEvents, eventLabels }),
+        pieceSetsUrl: `${API_URL}/v1/piece-sets`,
       }),
       selectedEvents,
     });
@@ -271,6 +272,7 @@ function handlerFlowLabels({
     eventTypeRouterDisplayName: t('Event type checker'),
     runStatusRouterDisplayName: t('Run status check'),
     failedRunBranchName: t('Failed run'),
+    listPieceSetsStepDisplayName: t('List piece sets'),
     otherwiseBranchName: t('Otherwise'),
     noteContent: t(
       '**Audit event handler**\n\nThis flow runs whenever any of these events fire:\n\n{events}\n\n**Add your channel** (Slack, Gmail, Teams, HTTP…) inside each branch below.\n\nOnce you are done:\n\n1. **Publish this flow** so it can receive events.\n2. Head back to the **Event Streaming** tab and create the destination to start sending events here.',

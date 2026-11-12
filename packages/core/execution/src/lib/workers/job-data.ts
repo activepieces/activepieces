@@ -58,10 +58,9 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.RENEW_WEBHOOK:
             return 'veryLow'
         case WorkerJobType.EXECUTE_WEBHOOK:
+        case WorkerJobType.EVENT_DESTINATION:
         case WorkerJobType.EXECUTE_PERSONALIZATION_RESEARCH:
             return 'medium'
-        case WorkerJobType.EVENT_DESTINATION:
-            return job.lowPriority === true ? 'low' : 'medium'
         case WorkerJobType.EXECUTE_FLOW:
             return getExecuteFlowPriority(job)
         case WorkerJobType.EXECUTE_PROPERTY:
@@ -384,7 +383,6 @@ export const EventDestinationJobData = z.object({
     payload: z.unknown(), // EE audit-event schema stays in @activepieces/shared; engine does not need it
     contentType: z.enum(['application/json', 'application/x-protobuf']).optional(),
     hasHeaders: z.boolean().optional(),
-    lowPriority: z.boolean().optional(),
     jobType: z.literal(WorkerJobType.EVENT_DESTINATION),
 })
 

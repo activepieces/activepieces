@@ -1,7 +1,7 @@
 import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { aiCostReporter, aiObservability, apDayjs, apVersionUtil, onCallService, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, AuditLogRetentionUpdatedEvent, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPiecesRevertedEvent, FlowPiecesUpgradedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, PieceCreatedEvent, PieceVersionCreatedEvent, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserInvitationEvent, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation, VariableWithoutSensitiveData } from '@activepieces/shared'
+import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, AuditLogRetentionUpdatedEvent, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPiecesRevertedEvent, FlowPiecesUpgradedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, OfficialPieceAddedEvent, OfficialPieceMinorOrMajorVersionAddedEvent, OfficialPiecePatchVersionAddedEvent, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserInvitationEvent, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation, VariableWithoutSensitiveData } from '@activepieces/shared'
 import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
@@ -60,7 +60,6 @@ import { appearanceHelper } from './ee/helper/appearance-helper'
 import { licenseKeyUsageReportModule } from './ee/license-key-usage-report/license-key-usage-report-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
-import { pieceSetCatalogHooks } from './ee/pieces/piece-set/piece-set-catalog-hooks'
 import { pieceSetRequiredActions } from './ee/pieces/piece-set/piece-set-required-actions'
 import { pieceSetModule } from './ee/pieces/piece-set/piece-set.module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
@@ -120,8 +119,6 @@ import { communityPiecesModule } from './pieces/community-piece-module'
 import { startDevPieceWatcher } from './pieces/dev-piece-watcher'
 import { pieceModule } from './pieces/metadata/piece-metadata-controller'
 import { pieceMetadataService } from './pieces/metadata/piece-metadata-service'
-import { pieceCatalogEventsJob } from './pieces/piece-catalog/piece-catalog-events.job'
-import { pieceCatalogHooks } from './pieces/piece-catalog/piece-catalog-hooks'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { billingProvider } from './platform/billing-provider'
 import { piecesReportModule } from './platform/pieces-report/pieces-report.module'
@@ -249,14 +246,11 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(folderModule)
     await pieceSyncService(app.log).setup()
     toolSearchReindexJob(app.log).register()
-    pieceCatalogEventsJob(app.log).register()
     // Boot backfill: build the tool-search index if the flag is on but it is empty or only partially
     // embedded (a populated deployment fires no sync delta, and a build that failed midway leaves rows
     // unembedded). Fire-and-forget — a no-op once fully built, and must never block or fail boot.
     rejectedPromiseHandler(toolSearchReindexJob(app.log).backfillIfNeeded(), app.log)
     await toolSearchReindexJob(app.log).scheduleRecurringReconcile()
-    await pieceCatalogEventsJob(app.log).scheduleReconcile()
-    await pieceCatalogEventsJob(app.log).seedAtBootIfSyncOff()
     await pieceMetadataService(app.log).setup()
     await app.register(pieceModule)
     await app.register(collaborativeModule)
@@ -416,7 +410,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
             eventDestinationHooks.set(eventDestinationEntitlementHooks)
-            pieceCatalogHooks.set(pieceSetCatalogHooks)
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformTeardownJobs(app.log).hardDeletePlatformHandler(data))
             break
@@ -466,7 +459,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
             eventDestinationHooks.set(eventDestinationEntitlementHooks)
-            pieceCatalogHooks.set(pieceSetCatalogHooks)
             break
         case ApEdition.COMMUNITY:
             await app.register(denoMigrationModule)
@@ -621,8 +613,9 @@ function registerOpenApiSchemas() {
     globalRegistry.add(ProjectRoleEvent, { id: ApplicationEventName.PROJECT_ROLE_CREATED })
     globalRegistry.add(UserInvitationEvent, { id: ApplicationEventName.USER_INVITATION_SENT })
     globalRegistry.add(ProjectReleaseEvent, { id: ApplicationEventName.PROJECT_RELEASE_CREATED })
-    globalRegistry.add(PieceCreatedEvent, { id: ApplicationEventName.PIECE_CREATED })
-    globalRegistry.add(PieceVersionCreatedEvent, { id: ApplicationEventName.PIECE_VERSION_CREATED })
+    globalRegistry.add(OfficialPieceAddedEvent, { id: ApplicationEventName.OFFICIAL_PIECE_ADDED })
+    globalRegistry.add(OfficialPieceMinorOrMajorVersionAddedEvent, { id: ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED })
+    globalRegistry.add(OfficialPiecePatchVersionAddedEvent, { id: ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED })
     globalRegistry.add(Template, { id: 'template' })
     globalRegistry.add(Folder, { id: 'folder' })
     globalRegistry.add(UserWithMetaInformation, { id: 'user' })

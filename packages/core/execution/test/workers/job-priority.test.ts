@@ -39,18 +39,4 @@ describe('getDefaultJobPriority', () => {
 
         expect(JOB_PRIORITY[parentResume]).toBeLessThan(JOB_PRIORITY[child])
     })
-
-    it('returns low for a low-priority event destination job and medium otherwise', () => {
-        const eventDestinationJob = {
-            schemaVersion: 1,
-            platformId: 'platform-id',
-            webhookId: 'webhook-id',
-            webhookUrl: 'https://example.com/hook',
-            payload: {},
-            jobType: WorkerJobType.EVENT_DESTINATION as const,
-        }
-
-        expect(getDefaultJobPriority({ ...eventDestinationJob, lowPriority: true })).toBe('low')
-        expect(getDefaultJobPriority(eventDestinationJob)).toBe('medium')
-    })
 })

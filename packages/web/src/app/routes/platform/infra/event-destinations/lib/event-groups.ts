@@ -125,10 +125,11 @@ function buildEventGroups(): EventGroup[] {
     },
     {
       key: 'pieces',
-      title: t('Pieces'),
+      title: t('Official pieces'),
       events: [
-        ApplicationEventName.PIECE_CREATED,
-        ApplicationEventName.PIECE_VERSION_CREATED,
+        ApplicationEventName.OFFICIAL_PIECE_ADDED,
+        ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED,
+        ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED,
       ],
     },
   ];

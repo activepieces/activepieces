@@ -56,10 +56,6 @@ export const EventDestinationEntity = new EntitySchema<EventDestinationSchema>({
             type: 'jsonb',
             nullable: true,
         },
-        eventFilters: {
-            type: 'jsonb',
-            nullable: true,
-        },
         format: {
             type: String,
             nullable: false,

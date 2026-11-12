@@ -184,6 +184,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 await pieceTranslationService.save({ pieceMetadataId: pieceRow.id, i18n: pieceMetadata.i18n, entityManager })
                 return piece
             })
+            log.info({ piece: { name: pieceMetadata.name, version: pieceMetadata.version, type: pieceType }, platform: { id: platformId } }, '[pieceMetadataService#create] Piece version installed')
             if (publishCacheRefresh) {
                 await pieceCache(log).invalidate()
             }

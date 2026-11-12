@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
-import { ApplicationEventName, PieceChangeType } from '../audit-events'
+import { ApplicationEventName } from '../audit-events'
 
 const HEADER_NAME_PATTERN = /^[A-Za-z0-9!#$%&'*+\-.^_`|~]+$/
 
@@ -55,16 +55,6 @@ export const EventDestinationHeadersRequest = z.record(HeaderName, HeaderValue.n
 
 export type EventDestinationHeadersRequest = z.infer<typeof EventDestinationHeadersRequest>
 
-export const EventDestinationFilters = z.object({
-    piece: z.object({
-        changeTypes: z.array(PieceChangeType).min(1),
-    }).optional(),
-})
-
-export type EventDestinationFilters = z.infer<typeof EventDestinationFilters>
-
-export const DEFAULT_PIECE_CHANGE_TYPES: readonly PieceChangeType[] = ['new', 'major', 'minor']
-
 export const ListPlatformEventDestinationsRequestBody = z.object({
     cursor: z.string().optional(),
     limit: z.coerce.number().optional(),
@@ -78,7 +68,6 @@ export const CreatePlatformEventDestinationRequestBody = z.object({
     enabled: z.boolean().optional(),
     headers: EventDestinationHeadersRequest.nullish(),
     format: z.enum(EventDestinationFormat).optional(),
-    eventFilters: EventDestinationFilters.nullish(),
 })
 
 export type CreatePlatformEventDestinationRequestBody = z.infer<typeof CreatePlatformEventDestinationRequestBody>

@@ -361,7 +361,6 @@ export type FlagType =
     | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
     | BaseFlagStructure<ApFlagId.TEMPLATES_CATEGORIES, string[]>
-    | BaseFlagStructure<ApFlagId.PIECE_CATALOG_SNAPSHOT, Record<string, string>>
 
 type BaseFlagStructure<K extends ApFlagId, V> = {
     id: K

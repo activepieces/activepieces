@@ -141,7 +141,6 @@ function eventDestinations(): EventDestination[] {
     enabled: true,
     headers: null,
     format,
-    eventFilters: null,
   }));
 }
 

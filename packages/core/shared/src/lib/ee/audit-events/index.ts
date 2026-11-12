@@ -82,8 +82,9 @@ export enum ApplicationEventName {
     FLOW_APPROVAL_GRANTED = 'flow.approval.granted',
     FLOW_APPROVAL_REJECTED = 'flow.approval.rejected',
     FLOW_APPROVAL_WITHDRAWN = 'flow.approval.withdrawn',
-    PIECE_CREATED = 'piece.created',
-    PIECE_VERSION_CREATED = 'piece.version.created',
+    OFFICIAL_PIECE_ADDED = 'official_piece.added',
+    OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED = 'official_piece.minor_or_major_version.added',
+    OFFICIAL_PIECE_PATCH_VERSION_ADDED = 'official_piece.patch_version.added',
 }
 
 const BaseAuditEventProps = {
@@ -719,7 +720,7 @@ export type FlowApprovalEvent = z.infer<typeof FlowApprovalEvent>
 export const PieceChangeType = z.enum(['new', 'major', 'minor', 'patch'])
 export type PieceChangeType = z.infer<typeof PieceChangeType>
 
-export const PieceCatalogEventData = z.object({
+export const OfficialPieceEventData = z.object({
     piece: z.object({
         name: z.string(),
         displayName: z.string(),
@@ -728,30 +729,34 @@ export const PieceCatalogEventData = z.object({
         changeType: PieceChangeType,
         pieceType: z.enum(['OFFICIAL', 'CUSTOM']),
         minimumSupportedRelease: Nullable(z.string()),
+        maximumSupportedRelease: Nullable(z.string()),
         deprecated: z.boolean(),
     }),
-    pieceSets: z.array(z.object({
-        id: z.string(),
-        key: Nullable(z.string()),
-        name: z.string(),
-        isDefault: z.boolean(),
-    })),
 })
-export type PieceCatalogEventData = z.infer<typeof PieceCatalogEventData>
+export type OfficialPieceEventData = z.infer<typeof OfficialPieceEventData>
 
-export const PieceCreatedEvent = z.object({
+export const OfficialPieceAddedEvent = z.object({
     ...BaseAuditEventProps,
-    action: z.literal(ApplicationEventName.PIECE_CREATED),
-    data: PieceCatalogEventData,
+    action: z.literal(ApplicationEventName.OFFICIAL_PIECE_ADDED),
+    data: OfficialPieceEventData,
 })
-export type PieceCreatedEvent = z.infer<typeof PieceCreatedEvent>
+export type OfficialPieceAddedEvent = z.infer<typeof OfficialPieceAddedEvent>
 
-export const PieceVersionCreatedEvent = z.object({
+export const OfficialPieceMinorOrMajorVersionAddedEvent = z.object({
     ...BaseAuditEventProps,
-    action: z.literal(ApplicationEventName.PIECE_VERSION_CREATED),
-    data: PieceCatalogEventData,
+    action: z.literal(ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED),
+    data: OfficialPieceEventData,
 })
-export type PieceVersionCreatedEvent = z.infer<typeof PieceVersionCreatedEvent>
+export type OfficialPieceMinorOrMajorVersionAddedEvent = z.infer<typeof OfficialPieceMinorOrMajorVersionAddedEvent>
+
+export const OfficialPiecePatchVersionAddedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED),
+    data: OfficialPieceEventData,
+})
+export type OfficialPiecePatchVersionAddedEvent = z.infer<typeof OfficialPiecePatchVersionAddedEvent>
+
+export type OfficialPieceEvent = OfficialPieceAddedEvent | OfficialPieceMinorOrMajorVersionAddedEvent | OfficialPiecePatchVersionAddedEvent
 
 export const ApplicationEvent = z.union([
     AgentAuditEvent,
@@ -780,8 +785,9 @@ export const ApplicationEvent = z.union([
     ProjectReleaseEvent,
     ProjectReplacedEvent,
     FlowApprovalEvent,
-    PieceCreatedEvent,
-    PieceVersionCreatedEvent,
+    OfficialPieceAddedEvent,
+    OfficialPieceMinorOrMajorVersionAddedEvent,
+    OfficialPiecePatchVersionAddedEvent,
 ])
 
 export type ApplicationEvent = z.infer<typeof ApplicationEvent>
@@ -931,9 +937,10 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `Approval rejected for flow ${event.data.flowDisplayName ?? event.data.flowId}${event.data['rejectionReason'] ? ` (${event.data['rejectionReason']})` : ''}`
         case ApplicationEventName.FLOW_APPROVAL_WITHDRAWN:
             return `Approval request withdrawn for flow ${event.data.flowDisplayName ?? event.data.flowId}`
-        case ApplicationEventName.PIECE_CREATED:
+        case ApplicationEventName.OFFICIAL_PIECE_ADDED:
             return `Piece ${event.data.piece.displayName} added`
-        case ApplicationEventName.PIECE_VERSION_CREATED:
+        case ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED:
+        case ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED:
             return `Piece ${event.data.piece.displayName} updated ${event.data.piece.previousVersion} → ${event.data.piece.version}`
     }
 }

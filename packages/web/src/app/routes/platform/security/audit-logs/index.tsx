@@ -84,8 +84,10 @@ export default function AuditLogsPage() {
       options: Object.values(ApplicationEventName)
         .filter(
           (action) =>
-            action !== ApplicationEventName.PIECE_CREATED &&
-            action !== ApplicationEventName.PIECE_VERSION_CREATED,
+            action !== ApplicationEventName.OFFICIAL_PIECE_ADDED &&
+            action !==
+              ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED &&
+            action !== ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED,
         )
         .map((action) => {
           return {
@@ -772,8 +774,9 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       }
       return rows;
     }
-    case ApplicationEventName.PIECE_CREATED:
-    case ApplicationEventName.PIECE_VERSION_CREATED: {
+    case ApplicationEventName.OFFICIAL_PIECE_ADDED:
+    case ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED:
+    case ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED: {
       const { piece } = event.data;
       return [
         { label: t('Piece'), value: piece.displayName },

@@ -1,6 +1,6 @@
 ---
 title: "Event Streaming"
-description: "Stream audit events and piece catalog events to Datadog, PostHog, Grafana Loki, or any OpenTelemetry backend, or to a webhook as raw JSON"
+description: "Stream audit events and official piece events to Datadog, PostHog, Grafana Loki, or any OpenTelemetry backend, or to a webhook as raw JSON"
 icon: "webhook"
 ---
 
@@ -8,7 +8,7 @@ icon: "webhook"
 
 ## Overview
 
-Event Streaming sends your platform's [audit events](/admin-guide/security/audit-logs/overview) and [piece catalog events](#piece-catalog-events) to a destination of your choice, as they happen. Each destination has a **format**:
+Event Streaming sends your platform's [audit events](/admin-guide/security/audit-logs/overview) and [official piece events](#official-piece-events) to a destination of your choice, as they happen. Each destination has a **format**:
 
 - **OpenTelemetry (OTLP).** Each event is sent as an OpenTelemetry log record over OTLP/HTTP. This works with Datadog, PostHog, Grafana Loki, Grafana Cloud, New Relic, Honeycomb, Dynatrace, Elastic, SigNoz, Axiom, Better Stack, and any other backend that accepts OTLP logs. No collector or agent is needed in between.
 - **Raw JSON.** The event is posted as-is to any webhook URL. Point it at a flow inside Activepieces and route each event to Slack, Gmail, Microsoft Teams, custom HTTP, and so on.
@@ -114,7 +114,7 @@ The destination receives the event itself as the JSON body, with `Content-Type: 
 - `action` — the event name (for example `flow.run.finished`).
 - `data` — event-specific payload, including details like the flow id, run id, status, or affected user.
 - `id`, `created`, `updated` — event identifiers and timestamps.
-- `platformId`, `projectId` — context fields. `platformId` is on every event; `projectId` is on project-scoped audit events and absent on platform-level events, including piece catalog events.
+- `platformId`, `projectId` — context fields. `platformId` is on every event; `projectId` is on project-scoped audit events and absent on platform-level events, including official piece events.
 - `userId`, `userEmail`, `ip` — who did it and from where. These are filled in for events that come from a user request. The four `flow.run.*` events are emitted by a worker rather than a request, so they carry none of them.
 
 A handler flow on this instance gets the JSON of its destination's format: the raw event for Raw JSON, and the OTLP/JSON request for the OpenTelemetry JSON encoding. A flow webhook accepts only JSON, so a destination that points at one cannot use the Protobuf encoding: the setup page switches it to JSON (and back to Protobuf if you then enter a URL that is not a flow webhook, unless you picked JSON yourself), and the API rejects Protobuf for a flow webhook URL with a `400`.
@@ -149,45 +149,45 @@ Each destination has an **Enabled** switch on the listing page. A disabled desti
 
 You can subscribe a destination to any audit event — flow lifecycle, run status, folder/connection changes, user activity, and platform admin actions. See the [Audit Log Events catalog](/admin-guide/security/audit-logs/overview#event-catalog) for the full list and per-event payload details.
 
-You can also subscribe to two piece catalog events. They are not audit events and do not appear in the audit log:
+You can also subscribe to three official piece events. They are not audit events and do not appear in the audit log:
 
-- `piece.created` — a new piece was added to the catalog.
-- `piece.version.created` — a new version of an existing piece was added.
+- `official_piece.added` — an official piece that you did not have yet was added.
+- `official_piece.minor_or_major_version.added` — a new major or minor version of an official piece was added.
+- `official_piece.patch_version.added` — a new patch version of an official piece was added.
 
-See [Piece catalog events](#piece-catalog-events) below for what fires them and what they carry.
+See [Official piece events](#official-piece-events) below for what fires them and what they carry.
 
-### Piece catalog events
+### Official piece events
 
-Piece catalog events fire only for **official** pieces, and only for the **latest version** of each piece. Custom and private pieces do not send them. An event can arrive up to about an hour after the catalog changes: the piece sync runs every hour, and a check at minute 45 of each hour picks up anything it missed.
+Official piece events fire when official pieces are added to your instance: on self-hosted, when the hourly piece sync inserts them; on Cloud, when a piece is published. Custom and private pieces do not send them. When one sync adds several versions of a piece, you get one event, for the newest version. A version that is older than one you already have sends nothing.
 
-By default a destination receives `new`, `major`, and `minor` changes. To also receive patch releases, tick **Also send patch version updates** on the Events step; it appears once you select a piece event. Patch updates are frequent, so leave it off unless you need them.
+Patch versions are frequent, so subscribe to `official_piece.patch_version.added` only if you need them.
 
-Through the API, the filter is `eventFilters: { piece: { changeTypes: [...] } }`, with values `new`, `major`, `minor`, and `patch`. Send `eventFilters: null` for the default. The form exposes only the patch toggle, so a filter set through the API with a different list, for example only `new`, is replaced when you save the destination from the UI.
-
-The envelope carries `platformId` but no project or user: there is no `projectId`, `userId`, `userEmail`, or `ip`. `changeType` is `new` for `piece.created`, and `major`, `minor`, or `patch` for `piece.version.created`. `pieceSets` lists the piece sets on your platform that include the piece. A piece set's `key` can be `null`.
+The envelope carries `platformId` but no project or user: there is no `projectId`, `userId`, `userEmail`, or `ip`. `changeType` is `new` for `official_piece.added`, `major` or `minor` for `official_piece.minor_or_major_version.added`, and `patch` for `official_piece.patch_version.added`. `minimumSupportedRelease` and `maximumSupportedRelease` are the Activepieces releases the version supports.
 
 ```json
 {
   "id": "…", "created": "…", "updated": "…", "platformId": "…",
-  "action": "piece.version.created",
+  "action": "official_piece.minor_or_major_version.added",
   "data": {
     "piece": { "name": "@activepieces/piece-gmail", "displayName": "Gmail", "version": "0.9.0", "previousVersion": "0.8.3",
-               "changeType": "minor", "pieceType": "OFFICIAL", "minimumSupportedRelease": "0.88.2", "deprecated": false },
-    "pieceSets": [{ "id": "…", "key": "default", "name": "Default", "isDefault": true }]
+               "changeType": "minor", "pieceType": "OFFICIAL", "minimumSupportedRelease": "0.88.2", "maximumSupportedRelease": null, "deprecated": false }
   }
 }
 ```
 
+To find out which of your piece sets show the piece, call `GET /v1/piece-sets?limit=100` with a platform [API key](/endpoints/overview) as a Bearer token. Pass the `next` value of each response as `cursor` until `next` is `null`. For each set, read `config.pieces`: when `mode` is `include_all`, the set shows every piece except those in `exceptions`; when `mode` is `exclude_all`, it shows only the pieces in `exceptions`. A piece that no set shows is not available in any project. The handler flow that the destination form generates already has this request as an HTTP step in each official piece branch.
+
 <Note>
-Expect a burst after you upgrade Activepieces. The upgrade sends one event for each official piece that is new or has a newer version since your previous release — about 200 events when going from 0.86 to 0.93, before your change-type filter applies. With the default filter, fewer arrive. The first start on a release that includes piece catalog events only records a baseline of the catalog and sends nothing.
+Expect a burst after you upgrade Activepieces. The piece sync only adds versions that your release supports, so the first sync after an upgrade adds every version that the new release now supports, and sends one event for each piece that has one.
 </Note>
 
-An event can arrive more than once, and an event that is not delivered is not sent again. If the background job that detects catalog changes fails partway, its next run can send the same batch again, and every send gets a new `id`, so use `data.piece.name` plus `data.piece.version` as the idempotency key. Activepieces does not replay events your endpoint missed. To catch up after an outage, compare what you have against `GET /v1/pieces`.
+An event can arrive more than once, and an event that is not delivered is not sent again. Every send gets a new `id`, so use `data.piece.name` plus `data.piece.version` as the idempotency key. Activepieces does not replay events your endpoint missed. To catch up after an outage, compare what you have against `GET /v1/pieces`.
 
 ## Requirements
 
 - **Enterprise Edition**: Event Streaming requires a plan with Event Streaming enabled. Without it, no events are delivered.
-- **Piece catalog events**: they need the same Event Streaming entitlement and run on the Enterprise and Cloud editions only.
+- **Official piece events**: they need the same Event Streaming entitlement and run on the Enterprise and Cloud editions only.
 - **Platform admin**: only platform admins can configure destinations.
 - **HTTPS endpoint**: use HTTPS for any external endpoint. Audit events carry user emails and IP addresses, and Activepieces does not reject an `http://` URL for you.
 - **Publicly accessible**: external endpoints must be reachable from your Activepieces server. Handler flows on this same instance are delivered internally, so they work even when the instance is not publicly reachable (for example, behind an internal load balancer).
@@ -199,7 +199,7 @@ An event can arrive more than once, and an event that is not delivered is not se
 - **`415` or a decode error from an OpenTelemetry backend**: the backend does not accept the selected encoding. Switch the encoding to **Protobuf**.
 - **Test fails**: check that your URL is valid and uses HTTPS. The test reports the status code returned by the endpoint, which usually names the problem.
 - **Missing events**: make sure the event type is selected in your destination configuration.
-- **A field is missing**: the field is not on that event. The four `flow.run.*` events carry no `userId`, `userEmail`, or `ip`, because a worker emits them rather than a user request. Piece catalog events carry no `projectId`, `userId`, `userEmail`, or `ip`.
+- **A field is missing**: the field is not on that event. The four `flow.run.*` events carry no `userId`, `userEmail`, or `ip`, because a worker emits them rather than a user request. Official piece events carry no `projectId`, `userId`, `userEmail`, or `ip`.
 
 ## See also
 

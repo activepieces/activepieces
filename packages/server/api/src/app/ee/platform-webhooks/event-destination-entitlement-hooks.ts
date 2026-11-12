@@ -1,15 +1,15 @@
 import { PlatformId } from '@activepieces/core-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
-import { EventDestinationHooks, IsDeliveryEntitledParams, ListDeliveryEntitledPlatformIdsParams } from '../../event-destinations/event-destinations-hooks'
+import { DoesPlatformHaveEventStreamingEnabledParams, EventDestinationHooks, FetchPlatformIdsWithEventStreamingEnabledParams } from '../../event-destinations/event-destinations-hooks'
 import { platformPlanRepo, platformPlanService } from '../platform/platform-plan/platform-plan.service'
 
 export const eventDestinationEntitlementHooks = (log: FastifyBaseLogger): EventDestinationHooks => ({
-    async isDeliveryEntitled({ platformId }: IsDeliveryEntitledParams): Promise<boolean> {
+    async doesPlatformHaveEventStreamingEnabled({ platformId }: DoesPlatformHaveEventStreamingEnabledParams): Promise<boolean> {
         const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
         return plan.eventStreamingEnabled
     },
-    async listDeliveryEntitledPlatformIds({ platformIds }: ListDeliveryEntitledPlatformIdsParams): Promise<PlatformId[]> {
+    async fetchPlatformIdsWithEventStreamingEnabled({ platformIds }: FetchPlatformIdsWithEventStreamingEnabledParams): Promise<PlatformId[]> {
         if (platformIds.length === 0) {
             return []
         }
