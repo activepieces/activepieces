@@ -32,6 +32,30 @@ describe('classifyChange', () => {
         expect(renamePlan.classifyChange({ oldEnglish: 'Format: YYYY-MM-DD', newEnglish: 'Format: YYYYMMDD' })).toBe('reworded')
     })
 
+    it('treats a case change inside a word, a code value or a format as a rewording', () => {
+        expect(renamePlan.classifyChange({ oldEnglish: 'Format: YYYY-MM-DD', newEnglish: 'Format: yyyy-mm-dd' })).toBe('reworded')
+        expect(renamePlan.classifyChange({ oldEnglish: 'Use {Name}', newEnglish: 'Use {name}' })).toBe('reworded')
+        expect(renamePlan.classifyChange({ oldEnglish: 'Open https://example.com/Settings', newEnglish: 'Open https://example.com/settings' })).toBe('reworded')
+        expect(renamePlan.classifyChange({ oldEnglish: 'Month as MM', newEnglish: 'Month as mm' })).toBe('reworded')
+        expect(renamePlan.classifyChange({ oldEnglish: 'Github', newEnglish: 'GitHub' })).toBe('reworded')
+    })
+
+    it('treats words that join or split as a rewording', () => {
+        expect(renamePlan.classifyChange({ oldEnglish: 'ageRanges', newEnglish: 'Age Ranges' })).toBe('reworded')
+        expect(renamePlan.classifyChange({ oldEnglish: 'Path user.name', newEnglish: 'Path username' })).toBe('reworded')
+    })
+
+    it('treats punctuation inside a word as a rewording', () => {
+        expect(renamePlan.classifyChange({ oldEnglish: 'Status != active', newEnglish: 'Status = active' })).toBe('reworded')
+        expect(renamePlan.classifyChange({ oldEnglish: 'Format key:value', newEnglish: 'Format key value' })).toBe('reworded')
+    })
+
+    it('keeps capitalised hyphenated words, quotes and brackets around words as trivial', () => {
+        expect(renamePlan.classifyChange({ oldEnglish: 'Send e-mail', newEnglish: 'Send E-Mail' })).toBe('case-only')
+        expect(renamePlan.classifyChange({ oldEnglish: 'Response is Binary ?', newEnglish: 'Response is Binary' })).toBe('punct-whitespace-only')
+        expect(renamePlan.classifyChange({ oldEnglish: 'Set to “true” (optional)', newEnglish: 'Set to "true" (Optional).' })).toBe('punct-whitespace-only')
+    })
+
     it('sees a rewording', () => {
         expect(renamePlan.classifyChange({ oldEnglish: 'Upload a file', newEnglish: 'Send a file to Dropbox' })).toBe('reworded')
     })

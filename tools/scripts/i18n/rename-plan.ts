@@ -1,10 +1,12 @@
 function classifyChange({ oldEnglish, newEnglish }: EnglishChange): ChangeClass {
-    if (oldEnglish.toLowerCase() === newEnglish.toLowerCase()) {
-        return 'case-only'
+    const oldWords = wordsOf(oldEnglish)
+    const newWords = wordsOf(newEnglish)
+    const sameWords = oldWords.length === newWords.length
+        && oldWords.every((oldWord, index) => oldWord === newWords[index] || isCapitalisationOnly({ oldWord, newWord: newWords[index] }))
+    if (!sameWords) {
+        return 'reworded'
     }
-    const sameLetters = stripSafePunctuationAndWhitespace(oldEnglish) === stripSafePunctuationAndWhitespace(newEnglish)
-    const sameNumbers = numbersIn(oldEnglish).join(' ') === numbersIn(newEnglish).join(' ')
-    return sameLetters && sameNumbers ? 'punct-whitespace-only' : 'reworded'
+    return oldEnglish.toLowerCase() === newEnglish.toLowerCase() ? 'case-only' : 'punct-whitespace-only'
 }
 
 function changedStrings({ oldEnglishByPath, newEnglishByPath }: ChangedStringsParams): ChangedString[] {
@@ -135,12 +137,22 @@ function isAuto({ userName, autoApprovers }: { userName: string | null, autoAppr
     return userName !== null && autoApprovers.includes(userName)
 }
 
-function stripSafePunctuationAndWhitespace(text: string): string {
-    return text.normalize('NFKC').toLowerCase().replace(DASH_VARIANT, '-').replace(SAFE_PUNCTUATION_OR_WHITESPACE, '')
+function wordsOf(text: string): string[] {
+    return text.normalize('NFKC')
+        .replace(DASH_VARIANT, '-')
+        .replace(CURLY_SINGLE_QUOTE, '\'')
+        .replace(CURLY_DOUBLE_QUOTE, '"')
+        .split(WHITESPACE)
+        .map((word) => word.replace(OPENING_PUNCTUATION, '').replace(CLOSING_PUNCTUATION, ''))
+        .filter((word) => word.length > 0)
 }
 
-function numbersIn(text: string): string[] {
-    return text.match(NUMBER) ?? []
+function isCapitalisationOnly({ oldWord, newWord }: { oldWord: string, newWord: string }): boolean {
+    return PLAIN_WORD.test(oldWord) && PLAIN_WORD.test(newWord) && lowerFirstLetters(oldWord) === lowerFirstLetters(newWord)
+}
+
+function lowerFirstLetters(word: string): string {
+    return word.replace(FIRST_LETTER, (letter) => letter.toLowerCase())
 }
 
 function toKey(english: string): string {
@@ -151,8 +163,13 @@ const MAX_KEY_LENGTH = 512
 const LONGEST_RENAMEABLE = 510
 const TRIVIAL_CLASSES: ChangeClass[] = ['case-only', 'punct-whitespace-only']
 const DASH_VARIANT = /[\u2010-\u2015\u2212]/g
-const SAFE_PUNCTUATION_OR_WHITESPACE = /[.,;:!?'"`\u2018\u2019\u201c\u201d\u2026\s]/g
-const NUMBER = /\d+(?:[.,]\d+)*/g
+const CURLY_SINGLE_QUOTE = /[\u2018\u2019]/g
+const CURLY_DOUBLE_QUOTE = /[\u201c\u201d]/g
+const WHITESPACE = /\s+/
+const OPENING_PUNCTUATION = /^['"(]+/
+const CLOSING_PUNCTUATION = /[.,;:!?'")]+$/
+const PLAIN_WORD = /^\p{L}+(?:['-]\p{L}+)*$/u
+const FIRST_LETTER = /(?<=^|['-])\p{L}/gu
 
 export const renamePlan = { classifyChange, changedStrings, match, decide, machineTranslationIds }
 
