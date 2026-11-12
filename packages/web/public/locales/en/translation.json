@@ -3944,7 +3944,7 @@
   "This batch failed to start": "This batch failed to start",
   "It could not be sent to run, so nothing in it ran.": "It could not be sent to run, so nothing in it ran.",
   "This batch did not run": "This batch did not run",
-  "This step ran more than {limit} batches, so the summary does not say whether this batch failed to start or never started. Either way, nothing in it ran.": "This step ran more than {count} batches, so the summary does not say whether this batch failed to start or never started. Either way, nothing in it ran.",
+  "This step ran more than {limit} batches, so the summary does not say whether this batch failed to start or never started. Either way, nothing in it ran.": "This step ran more than {limit} batches, so the summary does not say whether this batch failed to start or never started. Either way, nothing in it ran.",
   "The step stopped waiting for it, so its changes can still happen after the flow moved on.": "The step stopped waiting for it, so its changes can still happen after the flow moved on.",
   "It finished, but its logs are not available. They may be past the retention window, or the batch stopped before it wrote any.": "It finished, but its logs are not available. They may be past the retention window, or the batch stopped before it wrote any."
 }
