@@ -1,5 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Store, StoreScope } from '@activepieces/pieces-framework';
+import { randomUUID } from 'crypto';
 import { SallaAuth, SallaQuery, sallaApi } from './client';
 import { sallaUtils } from './helpers';
 
@@ -121,11 +122,30 @@ async function putProductKeepingChannels({
   const current = await sallaApi.request<unknown>({ auth, method: HttpMethod.GET, path });
   const productId = sallaApi.isRecord(current.body.data) ? idText(current.body.data['id']) : undefined;
   const storeKey = productId === undefined ? undefined : `${CHANNELS_STORE_KEY_PREFIX}${productId}`;
-  const pendingChannels = storeKey === undefined ? undefined : await readPendingChannels({ store, key: storeKey });
-  const channelsBefore = pendingChannels ?? channelsOf(current.body.data);
-  if (storeKey !== undefined && channelsBefore !== undefined) {
-    await savePendingChannels({ store, key: storeKey, channels: channelsBefore });
+  const runningUpdate = storeKey === undefined ? undefined : await readRunningUpdate({ store, key: storeKey });
+  const channelsBefore = runningUpdate?.channels ?? channelsOf(current.body.data);
+  const updateId =
+    storeKey === undefined || channelsBefore === undefined ? undefined : await markUpdateRunning({ store, key: storeKey, channels: channelsBefore });
+  try {
+    return await putAndRestoreChannels({ auth, path, body, channelsBefore });
+  } finally {
+    if (storeKey !== undefined && updateId !== undefined) {
+      await clearRunningUpdate({ store, key: storeKey, updateId });
+    }
   }
+}
+
+async function putAndRestoreChannels({
+  auth,
+  path,
+  body,
+  channelsBefore,
+}: {
+  auth: SallaAuth;
+  path: string;
+  body: Record<string, unknown>;
+  channelsBefore: string[] | undefined;
+}): Promise<Record<string, unknown>> {
   const response = await sallaApi.request<unknown>({
     auth,
     method: HttpMethod.PUT,
@@ -149,25 +169,46 @@ async function putProductKeepingChannels({
   return { ...product, channels: channelsBefore, show_in_app: channelsBefore.includes('app') };
 }
 
-async function readPendingChannels({ store, key }: { store: Store; key: string }): Promise<string[] | undefined> {
+async function readRunningUpdate({ store, key }: { store: Store; key: string }): Promise<RunningUpdate | undefined> {
   try {
     const saved = await store.get<unknown>(key, StoreScope.PROJECT);
-    if (!sallaApi.isRecord(saved) || typeof saved['expiresAt'] !== 'number' || saved['expiresAt'] <= Date.now()) {
+    if (!sallaApi.isRecord(saved) || typeof saved['updateId'] !== 'string' || typeof saved['startedAt'] !== 'number') {
+      return undefined;
+    }
+    const age = Date.now() - saved['startedAt'];
+    if (age < 0 || age >= CHANNELS_UPDATE_MAX_MS) {
       return undefined;
     }
     const channels = saved['channels'];
     if (!Array.isArray(channels) || !channels.every((channel) => typeof channel === 'string')) {
       return undefined;
     }
-    return channels.filter((channel): channel is string => typeof channel === 'string');
+    return {
+      channels: channels.filter((channel): channel is string => typeof channel === 'string'),
+      updateId: saved['updateId'],
+      startedAt: saved['startedAt'],
+    };
   } catch {
     return undefined;
   }
 }
 
-async function savePendingChannels({ store, key, channels }: { store: Store; key: string; channels: string[] }): Promise<void> {
+async function markUpdateRunning({ store, key, channels }: { store: Store; key: string; channels: string[] }): Promise<string | undefined> {
+  const updateId = randomUUID();
   try {
-    await store.put<PendingChannels>(key, { channels, expiresAt: Date.now() + CHANNELS_STORE_TTL_MS }, StoreScope.PROJECT);
+    await store.put<RunningUpdate>(key, { channels, updateId, startedAt: Date.now() }, StoreScope.PROJECT);
+    return updateId;
+  } catch {
+    return undefined;
+  }
+}
+
+async function clearRunningUpdate({ store, key, updateId }: { store: Store; key: string; updateId: string }): Promise<void> {
+  try {
+    const saved = await store.get<unknown>(key, StoreScope.PROJECT);
+    if (sallaApi.isRecord(saved) && saved['updateId'] === updateId) {
+      await store.delete(key, StoreScope.PROJECT);
+    }
   } catch {
     return;
   }
@@ -883,7 +924,7 @@ const IMAGE_UPLOAD_TIMEOUT_MS = 60000;
 const PRODUCT_TYPES: ProductType[] = ['product', 'service', 'group_products', 'codes', 'digital', 'food', 'booking', 'donating'];
 const PRODUCT_STATUSES: ProductStatus[] = ['sale', 'out', 'hidden'];
 const CHANNELS_STORE_KEY_PREFIX = 'salla_product_channels_';
-const CHANNELS_STORE_TTL_MS = 60000;
+const CHANNELS_UPDATE_MAX_MS = 60000;
 const WEIGHT_TYPES: WeightType[] = ['kg', 'g', 'lb', 'oz'];
 const STOCK_IDENTIFIER_TYPES: StockIdentifierType[] = ['id', 'variant_id', 'sku'];
 const STOCK_MODES: StockMode[] = ['increment', 'decrement', 'overwrite'];
@@ -1121,7 +1162,7 @@ type BrandListResult = {
   truncated: boolean;
 };
 
-type PendingChannels = { channels: string[]; expiresAt: number };
+type RunningUpdate = { channels: string[]; updateId: string; startedAt: number };
 
 export type {
   ProductStatus,
