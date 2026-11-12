@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Senja 0.3.0: Create Testimonial picks its form and images in new fields
+
+In **Create Testimonial**, **Form** is now a dropdown of the project's forms instead of a text field for the form ID, and **Media (Images)** takes one entry per image, with an **Image URL** and an optional **Alt Text**, instead of a JSON object typed on each line. Steps keep running the old code until you upgrade them to 0.3.0.
+
+#### What you need to do
+
+Upgrading a Senja step to 0.3.0 in the builder resets its settings, as with any minor version change: fill them in again. In Create Testimonial, pick the form from the dropdown and enter each image in the new fields.
+
 #### Google Drive 0.14.0: file triggers, downloads and search across shared drives
 
 From Google Drive 0.14.0, the **New File** trigger with **Include File Content** on fires for a file whose download fails. That run has a `contentError` field with the reason instead of `content`. Before, one failed download (for example a Google Form, which Drive can't download) failed the whole poll, and every new file in that poll was lost. The trigger's output can now carry the `content` and `contentError` keys.

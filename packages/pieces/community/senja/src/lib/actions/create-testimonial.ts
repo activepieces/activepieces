@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, tryCatch } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { senjaAuth } from '../../';
 import {
@@ -226,11 +226,17 @@ export const createTestimonialAction = createAction({
       return mapTestimonial({ testimonial: created.body });
     }
 
-    const response = await senjaApiCall<{ testimonial: Record<string, unknown> }>({
-      token: context.auth.secret_text,
-      method: HttpMethod.GET,
-      path: `/testimonials/${createdId}`,
-    });
+    const { data: response, error } = await tryCatch(() =>
+      senjaApiCall<{ testimonial: Record<string, unknown> }>({
+        token: context.auth.secret_text,
+        method: HttpMethod.GET,
+        path: `/testimonials/${createdId}`,
+      }),
+    );
+
+    if (error || !response.body.testimonial) {
+      return mapTestimonial({ testimonial: created.body });
+    }
 
     return mapTestimonial({ testimonial: response.body.testimonial });
   },
