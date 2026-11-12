@@ -8,6 +8,19 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### HubSpot 0.14.0: polling triggers fire for changes they used to miss
+
+From HubSpot 0.14.0, the polling triggers change which items they fire for:
+- Property-change triggers also fire when the watched property is cleared, and their output includes the object's default properties next to the watched one.
+- Updated Deal Stage fires for a deal that entered the stage and moved on before the next check. On custom pipelines where HubSpot has no per-stage entry date, it keeps the old behaviour.
+- New COS Blog Article set to "Both" fires again when a draft is published.
+- Search triggers deliver every record when more than 10,000 change between two checks, oldest first, across several checks.
+- Testing a trigger shows the newest item in the builder.
+
+#### What you need to do
+
+Nothing. Flows may see runs they did not get before, so check any flow that assumed a cleared property or a published draft would not start it.
+
 #### Google Calendar 0.14.0: Google Calendar triggers fire once per event and no longer miss events
 
 From Google Calendar 0.14.0, **New Event Matching Search** reads every result page and fires once for each new matching event. A new recurring series fires once, not once per occurrence. Cancelled events never fire. An event that was edited within seconds of being created still counts as new: the trigger no longer requires the created and updated times to be within 5 seconds of each other.
