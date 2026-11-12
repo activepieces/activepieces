@@ -7,7 +7,7 @@ import {
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Gem, Gift } from 'lucide-react';
+import { Gem } from 'lucide-react';
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -36,7 +36,6 @@ import { useUpgradeClick } from '../hooks/use-upgrade-click';
 import {
   selfServeTrialCopy,
   selfServeTrialTime,
-  TRIAL_DAYS,
 } from '../utils/self-serve-trial-utils';
 
 import { useSalesLink } from './current-subscription-card';
@@ -78,32 +77,6 @@ export function SelfServeTrialLine({ endsAt }: { endsAt: string }) {
       </TooltipTrigger>
       <TooltipContent side="right" className="max-w-64">
         {selfServeTrialCopy.trialEndSummary(endsAt)}
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
-export function StartSelfServeTrialButton() {
-  const { openDialog } = billingDialogHooks.useSelfServeTrialDialogStore();
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          {...adminControl(AdminControl.TRIAL_START_OPEN)}
-          type="button"
-          variant="outline"
-          size="xs"
-          className="w-full gap-1.5 font-semibold"
-          onClick={() => openDialog({})}
-        >
-          <Gift className="text-accent-11" />
-          {t('Start your free trial')}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="right" className="max-w-64">
-        {t('Try the Enterprise plan free for {days} days', {
-          days: TRIAL_DAYS,
-        })}
       </TooltipContent>
     </Tooltip>
   );
