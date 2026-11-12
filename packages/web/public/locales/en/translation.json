@@ -3915,5 +3915,17 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "Try {feature} free for {days} days": "Try {feature} free for {days} days",
+  "You get the full Enterprise plan, no card needed.": "You get the full Enterprise plan, no card needed.",
+  "Full access for your team": "Full access for your team",
+  "We email you a reminder": "We email you a reminder",
+  "Back on {plan}, nothing lost": "Back on {plan}, nothing lost",
+  "Okta, Google or any SAML": "Okta, Google or any SAML",
+  "Stream events to your SIEM": "Stream events to your SIEM",
+  "Vault, AWS or CyberArk": "Vault, AWS or CyberArk",
+  "OpenAI, Anthropic and more": "OpenAI, Anthropic and more",
+  "Who can build vs. publish": "Who can build vs. publish",
+  "And unlimited projects": "And unlimited projects",
+  "Connect an app once": "Connect an app once"
 }
