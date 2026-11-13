@@ -32,11 +32,12 @@ export const validateEmail = createAction({
         return cachedResponse
       }
     }
-    const res = await httpClient.sendRequest<string[]>({
+    const res = await httpClient.sendRequest<Record<string, unknown>>({
       method: HttpMethod.GET,
-      url: `https://api.zerobounce.net/v2/validate?email=${propsValue.email}&api_key=${auth.secret_text}`,
+      url: 'https://api.zerobounce.net/v2/validate',
+      queryParams: { email: propsValue.email, api_key: auth.secret_text },
     });
-    if (propsValue.cacheResponse) {
+    if (propsValue.cacheResponse && isNil(res.body['error'])) {
       await store.put(key, res.body, StoreScope.PROJECT);
     }
     return res.body;
