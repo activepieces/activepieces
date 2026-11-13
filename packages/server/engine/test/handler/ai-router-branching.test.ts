@@ -105,6 +105,18 @@ describe('ai router', () => {
         })
     })
 
+    it('sends the model the step picked', async () => {
+        const calls = answerWith({ matched: ['Billing'] })
+
+        await execute(buildAiRouter({
+            model: 'cloudflare/clef-flash',
+            routes: [{ branchName: 'Billing', description: 'Payments' }],
+            children: [null],
+        }))
+
+        expect(calls[0]).toMatchObject({ model: 'cloudflare/clef-flash' })
+    })
+
     it('sends at most the first 20,000 characters of the input', async () => {
         const calls = answerWith({ matched: ['Billing'] })
 
@@ -383,6 +395,18 @@ describe('ai router pauses the run while the worker decides', () => {
         expect(calls[0]).toMatchObject({ waitpointId: 'mock-waitpoint-id', flowId: 'flowId', flowRunId: 'flowRunId' })
         expect(result.steps.billing).toBeUndefined()
         expect(result.steps.otherwise).toBeUndefined()
+    })
+
+    it('carries the picked model when it starts the decision', async () => {
+        const calls = answerWith({ requestId: 'req-1' }, 202)
+
+        await executeInFlow(buildAiRouter({
+            model: 'google/gemini-decision-1',
+            routes: [{ branchName: 'Billing', description: 'Payments' }],
+            children: [null],
+        }))
+
+        expect(calls[0]).toMatchObject({ model: 'google/gemini-decision-1', waitpointId: 'mock-waitpoint-id' })
     })
 
     it('resumes with the worker answer, runs that route, and asks nothing a second time', async () => {
