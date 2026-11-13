@@ -29,5 +29,11 @@ jobs:
           SSH_HOST: ${{ secrets.PREVIEW_HOST }}
 
       - name: Remove Environment
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          ssh preview-server -t -t 'bash -ic "cd /root/environments && npm run build && node dist/index.js remove ${{ github.head_ref }}; exit"'
+          if [[ ! "$HEAD_REF" =~ ^[A-Za-z0-9._/-]+$ ]]; then
+            echo "Branch name contains unsupported characters" >&2
+            exit 1
+          fi
+          ssh preview-server -t -t "bash -ic \"cd /root/environments && npm run build && node dist/index.js remove ${HEAD_REF}; exit\""
