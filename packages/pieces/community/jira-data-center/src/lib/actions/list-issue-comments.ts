@@ -7,6 +7,7 @@ import { getProjectIdDropdown, getIssueIdDropdown } from '../common/props';
 export const listIssueCommentsAction = createAction({
 	auth: jiraDataCenterAuth,
 	name: 'list_issue_comments',
+	classification: 'SEARCH',
 	displayName: 'List Issue Comments',
 	description: 'Returns all comments for an issue.',
 	audience: 'both',

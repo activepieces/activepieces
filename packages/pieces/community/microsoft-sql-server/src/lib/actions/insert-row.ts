@@ -10,6 +10,7 @@ export const insertRowAction = createAction({
   name: 'insert_row',
   displayName: 'Insert Row',
   description: 'Inserts a new row into a table and returns it',
+  classification: 'WRITE',
   audience: 'both',
   aiMetadata: {
     description:

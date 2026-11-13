@@ -8,6 +8,7 @@ import { assertIdPrefix } from '../../common/validation';
 export const deleteContext = createAction({
   auth: hedyAuth,
   name: 'delete-context',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Session Context',
   description: 'Delete a session context.',
   audience: 'both',

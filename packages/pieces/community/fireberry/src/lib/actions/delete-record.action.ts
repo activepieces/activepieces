@@ -75,6 +75,7 @@ const recordsToDeleteDropdown = Property.MultiSelectDropdown({
 
 export const deleteRecordAction = createAction({
   name: 'delete_record',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Records',
   description: 'Delete records from Fireberry.',
   audience: 'both',

@@ -1,3 +1,4 @@
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth } from '@activepieces/pieces-framework';
 
 export const typeformAuth = PieceAuth.OAuth2({
@@ -19,4 +20,17 @@ export const typeformAuth = PieceAuth.OAuth2({
     'images:write',
     'offline',
   ],
+  getConnectionIdentifier: async ({ auth }) => {
+    try {
+      const response = await httpClient.sendRequest<{ email?: string; alias?: string }>({
+        method: HttpMethod.GET,
+        url: 'https://api.typeform.com/me',
+        headers: { Authorization: `Bearer ${auth.access_token}` },
+        timeout: 5000,
+      });
+      return response.body.email || response.body.alias || undefined;
+    } catch {
+      return undefined;
+    }
+  },
 });

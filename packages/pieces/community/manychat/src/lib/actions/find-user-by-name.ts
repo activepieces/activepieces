@@ -6,6 +6,7 @@ import { manychatAuth } from '../auth';
 export const findUserByNameAction = createAction({
 	auth: manychatAuth,
 	name: 'findUserByName',
+	classification: 'SEARCH',
 	displayName: 'Find User by Name',
 	description: 'Finds a user by name.',
 	audience: 'both',

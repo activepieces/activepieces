@@ -7,6 +7,7 @@ export const deleteListItem = createAction({
   auth: kizeoFormsAuth,
 
   name: 'delete_list_item',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete List Item',
   description: 'Delete a specific item from a list',
   audience: 'both',

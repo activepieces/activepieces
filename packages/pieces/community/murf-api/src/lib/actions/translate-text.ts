@@ -7,6 +7,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const translateText = createAction({
   auth: murfAuth,
   name: "translateText",
+  classification: 'READ',
   displayName: "Translate Text",
   description: "Translate one or more texts to the target language.",
   audience: 'both',

@@ -26,7 +26,7 @@ export const pipelineDropdown = Property.Dropdown({
     }
     try {
       const response = await streakApiCall<StreakPipeline[]>({
-        apiKey: auth.secret_text as string,
+        apiKey: auth.secret_text,
         method: HttpMethod.GET,
         path: '/api/v1/pipelines',
       });
@@ -71,7 +71,7 @@ export const stageDropdown = Property.Dropdown({
     }
     try {
       const response = await streakApiCall<Record<string, StreakStage>>({
-        apiKey: auth.secret_text as string,
+        apiKey: auth.secret_text,
         method: HttpMethod.GET,
         path: `/api/v1/pipelines/${pipelineKey}/stages`,
       });
@@ -112,18 +112,33 @@ export const boxDropdown = Property.Dropdown({
       };
     }
     try {
-      const response = await streakApiCall<StreakBox[]>({
-        apiKey: auth.secret_text as string,
-        method: HttpMethod.GET,
-        path: `/api/v1/pipelines/${pipelineKey}/boxes`,
-        queryParams: {
-          sortBy: 'lastUpdatedTimestamp',
-          limit: '200',
-        },
-      });
+      const boxes = new Map<string, StreakBox>();
+      for (let page = 0; page < BOX_DROPDOWN_MAX_PAGES; page++) {
+        const response = await streakApiCall<StreakBox[]>({
+          apiKey: auth.secret_text,
+          method: HttpMethod.GET,
+          path: `/api/v1/pipelines/${pipelineKey}/boxes`,
+          queryParams: {
+            sortBy: 'lastUpdatedTimestamp',
+            limit: String(BOX_DROPDOWN_PAGE_SIZE),
+            page: String(page),
+          },
+        });
+        const pageBoxes = response.body ?? [];
+        const sizeBefore = boxes.size;
+        for (const box of pageBoxes) {
+          boxes.set(box.boxKey ?? box.key, box);
+        }
+        if (
+          pageBoxes.length < BOX_DROPDOWN_PAGE_SIZE ||
+          boxes.size === sizeBefore
+        ) {
+          break;
+        }
+      }
       return {
         disabled: false,
-        options: (response.body ?? []).map((b) => ({
+        options: [...boxes.values()].map((b) => ({
           label: b.name,
           value: b.boxKey ?? b.key,
         })),
@@ -155,7 +170,7 @@ export const teamDropdown = Property.Dropdown({
     }
     try {
       const response = await streakApiCall<StreakTeamsResponse>({
-        apiKey: auth.secret_text as string,
+        apiKey: auth.secret_text,
         method: HttpMethod.GET,
         path: '/api/v2/users/me/teams',
       });
@@ -175,3 +190,6 @@ export const teamDropdown = Property.Dropdown({
     }
   },
 });
+
+const BOX_DROPDOWN_PAGE_SIZE = 200;
+const BOX_DROPDOWN_MAX_PAGES = 10;

@@ -6,6 +6,7 @@ import { makeRequest } from '../common/client';
 export const listIncidents = createAction({
   auth: coralogixAuth,
   name: 'listIncidents',
+  classification: 'SEARCH',
   displayName: 'List Incidents',
   description: 'Retrieve a filtered list of Coralogix incidents.',
   audience: 'both',

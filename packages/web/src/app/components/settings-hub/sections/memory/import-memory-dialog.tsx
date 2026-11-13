@@ -33,10 +33,10 @@ function Step({
   return (
     <div className="flex gap-4">
       <div className="flex flex-col items-center">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-3 text-xs font-medium text-gray-11">
           {number}
         </span>
-        {!last && <span className="mt-1 w-px flex-1 bg-border" />}
+        {!last && <span className="mt-1 w-px flex-1 bg-gray-6" />}
       </div>
       <div className={last ? 'flex-1 space-y-3' : 'flex-1 space-y-3 pb-6'}>
         <p className="text-sm font-medium">{title}</p>
@@ -46,7 +46,13 @@ function Step({
   );
 }
 
-function ImportMemoryContent({ onClose }: { onClose: () => void }) {
+function ImportMemoryContent({
+  onClose,
+  onImported,
+}: {
+  onClose: () => void;
+  onImported?: () => void;
+}) {
   const { invalidate } = useChatMemoryActions();
   const [text, setText] = useState('');
 
@@ -55,6 +61,7 @@ function ImportMemoryContent({ onClose }: { onClose: () => void }) {
     onSuccess: () => {
       invalidate();
       toast.success(t('Memory imported'));
+      onImported?.();
       onClose();
     },
     onError: () => toast.error(t('Could not read the pasted memory')),
@@ -71,14 +78,15 @@ function ImportMemoryContent({ onClose }: { onClose: () => void }) {
           number={1}
           title={t('Copy this prompt into a chat with your other AI provider')}
         >
-          <div className="relative rounded-lg border bg-muted/40 p-4">
-            <p className="max-h-28 overflow-hidden whitespace-pre-wrap pr-12 text-sm text-muted-foreground [mask-image:linear-gradient(to_bottom,black_55%,transparent)]">
+          <div className="relative rounded-xl border bg-gray-3/40 p-4">
+            <p className="max-h-28 overflow-hidden whitespace-pre-wrap pr-12 text-sm text-gray-11 [mask-image:linear-gradient(to_bottom,black_55%,transparent)]">
               {EXPORT_PROMPT}
             </p>
             <CopyButton
-              textToCopy={EXPORT_PROMPT}
+              value={EXPORT_PROMPT}
               variant="outline"
-              className="absolute right-3 top-3 h-8 w-8"
+              size="icon-sm"
+              className="absolute right-3 top-3"
             />
           </div>
         </Step>
@@ -116,16 +124,19 @@ function ImportMemoryContent({ onClose }: { onClose: () => void }) {
 export function ImportMemoryDialog({
   open,
   onOpenChange,
+  onImported,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onImported?: () => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl" overlayClassName="bg-black/20">
+      <DialogContent className="max-w-xl" overlayClassName="bg-scrim/40">
         <ImportMemoryContent
           key={open ? 'open' : 'closed'}
           onClose={() => onOpenChange(false)}
+          onImported={onImported}
         />
       </DialogContent>
     </Dialog>

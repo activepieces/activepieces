@@ -8,25 +8,40 @@ export const githubCreateCommentOnAIssue = createAction({
   auth: githubAuth,
   name: 'createCommentOnAIssue',
   classification: 'WRITE',
-  displayName: 'Create comment on a issue',
-  description:
-    'Adds a comment to the specified issue (also works with pull requests)',
+  displayName: 'Create Comment on Issue',
+  description: 'Adds a comment to an issue or pull request.',
   audience: 'human',
   aiMetadata: {
     description:
       'Posts a comment on an issue (or pull request, which shares the issue number space) in a repository. Use to add a reply or note to an existing issue/PR identified by its number. Not idempotent: each call appends a new comment.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'issue',
+      display: 'section',
+      label: 'Issue',
+      icon: 'inbox',
+      props: ['repository', 'issue_number'],
+    },
+    {
+      key: 'comment',
+      display: 'section',
+      label: 'Comment',
+      icon: 'reply',
+      props: ['comment'],
+    },
+  ],
   props: {
     repository: githubCommon.repositoryDropdown,
     issue_number: Property.Number({
-      displayName: 'Issue number',
-      description: 'The number of the issue to comment on',
+      displayName: 'Issue Number',
+      description: 'Pull request numbers work too.',
       required: true,
     }),
     comment: Property.LongText({
       displayName: 'Comment',
-      description: 'The comment to add to the issue',
+      description: 'Markdown is supported.',
       required: true,
     }),
   },

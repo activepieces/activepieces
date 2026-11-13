@@ -17,11 +17,17 @@ export const listCommentReplies = createAction({
       'Lists the replies made to one Instagram comment, given the parent comment id. A comment with no replies returns an empty list. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'account', display: 'section', label: 'Account', icon: 'user', props: ['page'] },
+    { key: 'comment', display: 'section', label: 'Parent comment', icon: 'reply', props: ['comment_id'] },
+  ],
   props: {
     page: instagramCommon.page,
     comment_id: Property.ShortText({
-      displayName: 'Parent Comment ID',
+      displayName: 'Comment ID',
+      description: 'The comment whose replies to list, from List Comments.',
       required: true,
+      placeholder: '17858893269000001',
     }),
   },
   async run({ propsValue }) {

@@ -109,6 +109,7 @@ export type ShopifyTransaction = {
   kind: ShopifyTransactionKinds;
   parent_id: number;
   test: boolean;
+  authorization?: string;
 };
 
 export type ShopifyFulfillment = {

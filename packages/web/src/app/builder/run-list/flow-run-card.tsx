@@ -62,7 +62,7 @@ const FlowRunCard = React.memo(
     return (
       <CardListItem
         className={cn('px-3 group', {
-          'bg-accent text-accent-foreground': run.id === viewedRunId,
+          'bg-gray-5 text-gray-12': run.id === viewedRunId,
         })}
         style={{ height: `${FLOW_CARD_HEIGHT}px` }}
         onClick={() => {
@@ -77,8 +77,10 @@ const FlowRunCard = React.memo(
                 <TooltipTrigger>
                   <Icon
                     className={cn('w-5 h-5', {
-                      'text-success': variant === 'success',
-                      'text-destructive': variant === 'error',
+                      'text-success-11': variant === 'success',
+                      'text-danger-11': variant === 'error',
+                      'text-warning-11': variant === 'warning',
+                      'text-accent-11': variant === 'primary',
                     })}
                   />
                 </TooltipTrigger>
@@ -87,8 +89,10 @@ const FlowRunCard = React.memo(
             ) : (
               <Icon
                 className={cn('w-5 h-5', {
-                  'text-success': variant === 'success',
-                  'text-destructive': variant === 'error',
+                  'text-success-11': variant === 'success',
+                  'text-danger-11': variant === 'error',
+                  'text-warning-11': variant === 'warning',
+                  'text-accent-11': variant === 'primary',
                 })}
               />
             )}
@@ -107,7 +111,7 @@ const FlowRunCard = React.memo(
             status: run.status,
             ignoreInternalError: false,
           }) && (
-            <p className="flex gap-1 text-xs text-muted-foreground">
+            <p className="flex gap-1 text-xs text-gray-11">
               <Timer className="h-3.5 w-3.5" />
               {t('Took')}{' '}
               {formatUtils.formatDuration(
@@ -120,14 +124,10 @@ const FlowRunCard = React.memo(
             </p>
           )}
           {run.status === FlowRunStatus.RUNNING && (
-            <p className="flex gap-1 text-xs text-muted-foreground">
-              {t('Running')}...
-            </p>
+            <p className="flex gap-1 text-xs text-gray-11">{t('Running')}...</p>
           )}
           {run.status === FlowRunStatus.QUEUED && (
-            <p className="flex gap-1 text-xs text-muted-foreground">
-              {t('Queued')}...
-            </p>
+            <p className="flex gap-1 text-xs text-gray-11">{t('Queued')}...</p>
           )}
         </div>
         <div className="ml-auto font-medium">
@@ -151,7 +151,7 @@ const FlowRunCard = React.memo(
                         variant="ghost"
                         size={'icon'}
                         className={cn(
-                          'group-hover:opacity-100 opacity-0 rounded-full bg-accent drop-shadow-md',
+                          'group-hover:opacity-100 opacity-0 rounded-full bg-gray-4 drop-shadow-md',
                           {
                             'opacity-100': isRetryDropdownOpen,
                           },

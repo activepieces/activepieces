@@ -1,6 +1,7 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 export const findAccountAction = createAction({
   auth: bexioAuth,
@@ -8,7 +9,8 @@ export const findAccountAction = createAction({
   classification: 'SEARCH',
   displayName: 'Find Account',
   description: 'Search for accounts using various criteria',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: bexioOutputSchemas.accountArrayOutputSchema,
   aiMetadata: { description: 'Searches the Bexio chart of accounts by number, name, type, or account group with operators such as contains, equals, or comparison, with paging. Use to resolve an account to its id before booking a manual entry or assigning an account on a product/position. Read-only and idempotent.', idempotent: true },
   props: {
     search_criteria: Property.Array({

@@ -22,10 +22,12 @@ export const updateEventProps = {
   start_date_time: Property.DateTime({
     displayName: 'Start Time',
     required: false,
+    width: 'half',
   }),
   end_date_time: Property.DateTime({
     displayName: 'End Time',
     required: false,
+    width: 'half',
   }),
   location: Property.ShortText({
     displayName: 'Location',
@@ -123,6 +125,29 @@ export const updateEventAction = createAction({
   description: 'Updates an existing event; empty fields keep their value.',
   audience: 'human',
   aiMetadata: { description: 'Updates the fields of an existing Google Calendar event identified by calendar and event ID (title, times, location, description, color, attendees, guest permissions); unset fields retain their current values. Use to modify or reschedule an event that already exists rather than creating a new one. Requires the event ID. Idempotent: applying the same field values repeatedly leaves the event in the same state.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'event',
+      display: 'section',
+      label: 'Event',
+      icon: 'calendar',
+      props: ['calendar_id', 'eventId'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'text',
+      props: ['hint', 'title', 'start_date_time', 'end_date_time', 'location', 'description', 'colorId'],
+    },
+    {
+      key: 'guests',
+      display: 'section',
+      label: 'Guests',
+      icon: 'users',
+      props: ['attendees', 'guests_can_modify', 'guests_can_invite_others', 'guests_can_see_other_guests'],
+    },
+  ],
   props: updateEventProps,
   outputSchema: eventOutputSchema,
   run: runUpdateEvent,

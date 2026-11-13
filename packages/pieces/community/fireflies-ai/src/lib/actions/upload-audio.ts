@@ -6,6 +6,7 @@ import { BASE_URL } from '../common';
 export const uploadAudioAction = createAction({
 	auth: firefliesAiAuth,
 	name: 'upload_audio',
+	classification: 'WRITE',
 	displayName: 'Upload Audio',
 	description:
 		'Creates a new meeeting in Fireflies for transcription (requires a publicly accessible URL).',

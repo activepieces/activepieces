@@ -7,6 +7,7 @@ import { microsoftPowerBiAuth } from '../auth';
 export const exportReportToFileAction = createAction({
   auth: microsoftPowerBiAuth,
   name: 'export_report_to_file',
+  classification: 'READ',
   displayName: 'Export Report to File',
   description: 'Exports a Power BI report to a PDF, PPTX, or PNG file.',
   audience: 'both',

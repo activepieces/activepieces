@@ -1,3 +1,4 @@
+import { brandColors } from '@activepieces/shared';
 import { LineChart, Clock } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -33,17 +34,17 @@ export const TagWithBright = ({
       <Badge
         variant="outline"
         className={`border-0 h-fit relative overflow-hidden ${
-          size === 'sm' ? 'text-xs px-2 py-1' : 'text-sm'
+          size === 'sm' ? '' : 'text-sm'
         }`}
         style={{
           backgroundColor: color,
-          color: '#000000',
+          color: brandColors.onPrimaryFor({ hex: color }),
         }}
       >
         <span
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.9) 50%, transparent 100%)`,
+            background: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%)`,
             animation: 'shine 2.5s ease-out infinite',
             width: '100%',
             transform: 'translateX(-100%)',
@@ -56,7 +57,7 @@ export const TagWithBright = ({
           <Clock className="relative font-medium mr-1.5 w-3.5 h-3.5" />
         )}
         {prefix && <span className="relative font-medium mr-1">{prefix}</span>}
-        <span className="relative font-bold">{title}</span>
+        <span className="relative font-semibold">{title}</span>
       </Badge>
     </>
   );

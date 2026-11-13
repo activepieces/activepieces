@@ -1,22 +1,26 @@
-import { actualBudgetAuth } from '../..';
 import { createAction } from '@activepieces/pieces-framework';
-import * as api from '@actual-app/api';
-import { initializeAndDownloadBudget } from '../common/common';
-
+import { actualBudgetAuth } from '../common/auth';
+import { withBudget } from '../common/client';
+import { actualOutputSchemas } from '../common/output-schemas';
 
 export const getAccounts = createAction({
   auth: actualBudgetAuth,
   name: 'get_accounts',
   classification: 'SEARCH',
   displayName: 'Get Accounts',
-  description: 'Get your accounts',
-  audience: 'both',
-  aiMetadata: { description: 'Lists all accounts from an Actual Budget server. Use it to discover available accounts and their IDs, typically to resolve the account ID required by the import-transaction actions. Takes no input; read-only and idempotent.', idempotent: true },
+  description: 'Gets every account in the budget (open and closed).',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Builder version of List Accounts: returns the raw array of all accounts (id, name, offbudget, closed) without balances. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {},
+  outputSchema: actualOutputSchemas.accountsArray,
   async run(context) {
-    await initializeAndDownloadBudget(api, context.auth.props)
-    const accounts = await api.getAccounts();
-    await api.shutdown();
-    return accounts;
+    return withBudget({
+      auth: context.auth.props,
+      fn: (api) => api.getAccounts(),
+    });
   },
 });

@@ -1,5 +1,6 @@
 import { DropdownOption, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { codaClient, CodaTableColumn } from './types';
+import { codaApi } from './client';
 import { codaAuth } from '../auth';
 
 export const docIdDropdown = Property.Dropdown({
@@ -43,7 +44,7 @@ export const docIdDropdown = Property.Dropdown({
 			return {
 				disabled: true,
 				options: [],
-				placeholder: 'Error listing docs, please check connection or API key permissions.',
+				placeholder: dropdownErrorPlaceholder({ error, what: 'docs' }),
 			};
 		}
 	},
@@ -92,7 +93,7 @@ export const tableIdDropdown = Property.Dropdown({
 			return {
 				disabled: true,
 				options: [],
-				placeholder: 'Error listing tables. Check document ID or permissions.',
+				placeholder: dropdownErrorPlaceholder({ error, what: 'tables' }),
 			};
 		}
 	},
@@ -130,60 +131,10 @@ export const tableRowsDynamicProps = Property.DynamicProperties({
 				nextPageToken = columnsResponse.nextPageToken;
 			} while (nextPageToken);
 
-			if (columns.length > 0) {
-				for (const column of columns) {
-					if (column.calculated) {
-						continue;
-					}
-
-					switch (column.format.type.toLowerCase()) {
-						case 'text':
-						case 'link':
-						case 'email':
-							fields[column.id] = Property.ShortText({
-								displayName: column.name,
-								required: false,
-							});
-							break;
-						case 'select':
-						case 'lookup':
-							fields[column.id] = Property.ShortText({
-								displayName: column.name,
-								required: false,
-								description: column.format.isArray
-									? 'Provide options as comma seprated values.'
-									: '',
-							});
-							break;
-
-						case 'number':
-						case 'currency':
-						case 'percent':
-						case 'slider':
-						case 'scale':
-						case 'duration':
-							fields[column.id] = Property.Number({
-								displayName: column.name,
-								required: false,
-							});
-							break;
-						case 'date':
-						case 'dateTime':
-						case 'time':
-							fields[column.id] = Property.DateTime({
-								displayName: column.name,
-								required: false,
-							});
-							break;
-						case 'checkbox':
-							fields[column.id] = Property.Checkbox({
-								displayName: column.name,
-								required: false,
-							});
-							break;
-						default:
-							break;
-					}
+			for (const column of columns) {
+				const field = columnToProperty(column);
+				if (field) {
+					fields[column.id] = field;
 				}
 			}
 			return fields;
@@ -205,7 +156,7 @@ export const columnIdsDropdown = (displayName: string, singleSelect = true) => {
 			if (!auth || !docId || !tableId) {
 				return {
 					disabled: true,
-					placeholder: 'Connect your Coda account first.',
+					placeholder: !auth ? 'Connect your Coda account first.' : 'Select a document and table first.',
 					options: [],
 				};
 			}
@@ -241,9 +192,57 @@ export const columnIdsDropdown = (displayName: string, singleSelect = true) => {
 				return {
 					disabled: true,
 					options: [],
-					placeholder: 'Error listing docs, please check connection or API key permissions.',
+					placeholder: dropdownErrorPlaceholder({ error, what: 'columns' }),
 				};
 			}
 		},
 	});
 };
+
+function dropdownErrorPlaceholder({ error, what }: { error: unknown; what: string }): string {
+	const status = codaApi.statusOf(error);
+	if (status === 401 || status === 403) {
+		return `Could not list ${what}: the Coda API token is invalid or has no access. Reconnect your account.`;
+	}
+	if (status === 404) {
+		return `Could not list ${what}: the selected doc or table was not found.`;
+	}
+	if (status === 429) {
+		return `Could not list ${what}: Coda rate limit reached. Wait a few seconds and refresh.`;
+	}
+	return `Could not list ${what}: ${error instanceof Error ? error.message : 'unknown error'}`;
+}
+
+export function columnToProperty(column: CodaTableColumn) {
+	if (column.calculated) {
+		return undefined;
+	}
+	switch (column.format.type) {
+		case 'text':
+		case 'link':
+		case 'email':
+			return Property.ShortText({ displayName: column.name, required: false });
+		case 'select':
+		case 'lookup':
+			return Property.ShortText({
+				displayName: column.name,
+				required: false,
+				description: column.format.isArray ? 'Provide options as comma-separated values.' : '',
+			});
+		case 'number':
+		case 'currency':
+		case 'percent':
+		case 'slider':
+		case 'scale':
+		case 'duration':
+			return Property.Number({ displayName: column.name, required: false });
+		case 'date':
+		case 'dateTime':
+		case 'time':
+			return Property.DateTime({ displayName: column.name, required: false });
+		case 'checkbox':
+			return Property.Checkbox({ displayName: column.name, required: false });
+		default:
+			return undefined;
+	}
+}

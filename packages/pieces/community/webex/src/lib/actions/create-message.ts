@@ -11,6 +11,7 @@ import { fetchRooms, roomIdDropdown } from '../common/props';
 export const createMessage = createAction({
   auth: webexAuth,
   name: 'createMessage',
+  classification: 'WRITE',
   displayName: 'Create Message',
   description:
     'Post a plain text or rich text message to a Webex room or send a direct message',

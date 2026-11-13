@@ -242,7 +242,7 @@ export const AddMcpToolForm = ({
         />
 
         {authType === McpAuthType.ACCESS_TOKEN && (
-          <div className="space-y-4 p-4 border rounded-lg">
+          <div className="space-y-4 p-4 border rounded-xl">
             <FormField
               control={form.control}
               name="accessToken"
@@ -260,7 +260,7 @@ export const AddMcpToolForm = ({
         )}
 
         {authType === McpAuthType.API_KEY && (
-          <div className="space-y-4 p-4 border rounded-lg">
+          <div className="space-y-4 p-4 border rounded-xl">
             <FormField
               control={form.control}
               name="apiKeyHeader"
@@ -292,7 +292,7 @@ export const AddMcpToolForm = ({
         )}
 
         {authType === McpAuthType.HEADERS && (
-          <div className="space-y-4 p-4 border rounded-lg">
+          <div className="space-y-4 p-4 border rounded-xl">
             {headers?.map((header, index) => (
               <div key={index} className="flex gap-2 items-end">
                 <FormField

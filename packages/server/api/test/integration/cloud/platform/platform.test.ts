@@ -41,9 +41,13 @@ function deletionJobIds(platformId: string) {
 
 beforeAll(async () => {
     app = await setupTestEnvironment()
+    process.env.AP_GOOGLE_CLIENT_ID = 'test-google-client-id'
+    process.env.AP_GOOGLE_CLIENT_SECRET = 'test-google-client-secret'
 })
 
 afterAll(async () => {
+    delete process.env.AP_GOOGLE_CLIENT_ID
+    delete process.env.AP_GOOGLE_CLIENT_SECRET
     await teardownTestEnvironment()
 })
 describe('Platform API', () => {
@@ -578,10 +582,12 @@ describe('Platform API', () => {
             expect(Object.keys(responseBody).sort()).toStrictEqual([
                 'allowedAuthDomains',
                 'allowedEmbedOrigins',
+                'auditLogRetentionDays',
                 'autoCreatePersonalProjects',
                 'billingEnforced',
                 'cloudAuthEnabled',
                 'created',
+                'defaultProjectIds',
                 'emailAuthEnabled',
                 'enforceAllowedAuthDomains',
                 'favIconUrl',

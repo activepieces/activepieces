@@ -7,6 +7,7 @@ import { API_ENDPOINTS, AI_MODELS, FORMALITY_LEVELS, LANGUAGES } from '../common
 export const createSocialMediaCaption = createAction({
   auth: textcortexAuth,
   name: 'create_social_media_caption',
+  classification: 'READ',
   displayName: 'Create Social Media Caption',
   description: 'Generate a caption tailored for a specific social media channel (requires channel and keywords).',
   audience: 'both',

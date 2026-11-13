@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const addPeopleToProject = createAction({
 	name: 'add_people_to_project',
+	classification: 'WRITE',
 	displayName: 'Add People to Project',
 	description: 'Add existing users to a project.',
 	audience: 'both',

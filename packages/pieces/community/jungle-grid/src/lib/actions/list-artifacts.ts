@@ -6,6 +6,7 @@ import { jungleGridCommon } from '../common';
 export const listArtifacts = createAction({
   auth: jungleGridAuth,
   name: 'list_artifacts',
+  classification: 'SEARCH',
   displayName: 'List Job Artifacts',
   description: 'List files produced by a Jungle Grid job when managed artifact storage is available.',
   audience: 'both',

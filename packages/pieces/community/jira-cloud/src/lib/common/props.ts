@@ -16,14 +16,16 @@ import dayjs from 'dayjs';
 export function getProjectIdDropdown(data?: DropdownParams) {
 	return Property.Dropdown({
 		auth: jiraCloudAuth,
-		displayName: data?.displayName ?? 'Project ID or Key',
+		displayName: data?.displayName ?? 'Project',
 		description: data?.description,
 		required: data?.required ?? true,
 		refreshers: data?.refreshers ?? [],
 		options: async ({ auth }) => {
 			if (!auth) {
 				return {
+					disabled: true,
 					options: [],
+					placeholder: 'Please connect your account first',
 				};
 			}
 
@@ -43,7 +45,7 @@ export function getProjectIdDropdown(data?: DropdownParams) {
 export function getIssueIdDropdown(data?: DropdownParams) {
 	return Property.Dropdown({
 		auth: jiraCloudAuth,
-		displayName: data?.displayName ?? 'Issue ID or Key',
+		displayName: data?.displayName ?? 'Issue',
 		description: data?.description,
 		required: data?.required ?? true,
 		refreshers: data?.refreshers ?? [],
@@ -52,6 +54,7 @@ export function getIssueIdDropdown(data?: DropdownParams) {
 				return {
 					disabled: true,
 					options: [],
+					placeholder: auth ? 'Select a project first' : 'Please connect your account first',
 				};
 			}
 			let hasMore = true
@@ -131,7 +134,9 @@ export function getUsersDropdown(data?: DropdownParams) {
 		options: async ({ auth }) => {
 			if (!auth) {
 				return {
+					disabled: true,
 					options: [],
+					placeholder: 'Please connect your account first',
 				};
 			}
 
@@ -240,7 +245,7 @@ export const issueTypeIdProp = (displayName: string, required = true) =>
 				return {
 					disabled: true,
 					options: [],
-					placeholder: 'Please connect your account first',
+					placeholder: auth ? 'Select a project first' : 'Please connect your account first',
 				};
 			}
 
@@ -338,7 +343,7 @@ export const issueIdOrKeyProp = (displayName: string, required = true) =>
 				options.push(
 					...issueList.issues.map((issue) => ({
 						value: issue.id,
-						label: issue.key,
+						label: `[${issue.key}] ${issue.fields.summary}`,
 					})),
 				);
 				nextPageToken = issueList.isLast ? undefined : issueList.nextPageToken;
@@ -362,7 +367,7 @@ export const issueStatusIdProp = (displayName: string, required = true) =>
 				return {
 					disabled: true,
 					options: [],
-					placeholder: 'Please connect your account first and select an issue.',
+					placeholder: auth ? 'Select an issue first' : 'Please connect your account first',
 				};
 			}
 
@@ -514,7 +519,7 @@ export async function createPropertyDefinition(
 		case 'date':
 			return Property.DateTime({
 				displayName: field.name,
-				description: 'Provide date in YYYY-MM-DD format.',
+				description: 'Only the date is sent; the time is ignored.',
 				required: isRequired,
 			});
 
@@ -534,14 +539,16 @@ export async function createPropertyDefinition(
 			return Property.ShortText({
 				displayName: field.name,
 				required: isRequired,
-				description: 'Provide project key.',
+				description: 'The project key, not its name.',
+				placeholder: 'PROJ',
 			});
 
 		case 'issuelink':
 			return Property.ShortText({
 				displayName: field.name,
 				required: isRequired,
-				description: 'Provide issue key.',
+				description: 'The issue key, not its ID.',
+				placeholder: 'PROJ-123',
 			});
 		default:
 			return null;

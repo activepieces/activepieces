@@ -7,7 +7,7 @@ export const migrateConnectionIds: Migration = {
         return {
             ...flowVersion,
             schemaVersion: '2',
-            connectionIds: flowStructureUtil.extractConnectionIds(flowVersion),
+            connectionIds: flowStructureUtil.extractFlowConnectionIds(flowVersion),
         }
     },
 } 

@@ -22,7 +22,7 @@ export const LimitsSection = ({ control, disabled }: LimitsSectionProps) => {
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
         <h2 className="text-base font-semibold">{t('Limits')}</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-gray-11">
           {t('Guardrails that apply to every project on this platform.')}
         </p>
       </div>

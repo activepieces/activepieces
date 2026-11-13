@@ -10,6 +10,7 @@ import { lobstermailAuth } from '../..';
 export const listEmails = createAction({
   auth: lobstermailAuth,
   name: 'list_emails',
+  classification: 'SEARCH',
   displayName: 'List Emails',
   description: 'List emails in a specific inbox.',
   audience: 'both',

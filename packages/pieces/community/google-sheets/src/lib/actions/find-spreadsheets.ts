@@ -9,6 +9,7 @@ import { googleSheetsAuth } from '../common/common';
 import { includeTeamDrivesProp } from '../common/props';
 import { getAccessToken } from '../common/common';
 import { findSpreadsheetsActionOutputSchema } from '../output-schemas';
+import { driveQuery } from '../common/drive-query';
 
 export const findSpreadsheets = createAction({
 	name: 'find_spreadsheets',
@@ -43,9 +44,9 @@ export const findSpreadsheets = createAction({
 		const queries = ["mimeType='application/vnd.google-apps.spreadsheet'", 'trashed=false'];
 
 		if (propsValue.exact_match) {
-			queries.push(`name = '${searchValue}'`);
+			queries.push(`name = '${driveQuery.escapeLiteral(searchValue)}'`);
 		} else {
-			queries.push(`name contains '${searchValue}'`);
+			queries.push(`name contains '${driveQuery.escapeLiteral(searchValue)}'`);
 		}
 
 		const files = [];

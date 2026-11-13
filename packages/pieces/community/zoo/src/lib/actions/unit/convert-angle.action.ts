@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertAngleAction = createAction({
   name: 'convert_angle',
+  classification: 'READ',
   displayName: 'Convert Angle',
   description: 'Convert angle measurements between different units',
   audience: 'both',

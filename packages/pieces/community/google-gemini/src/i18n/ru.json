@@ -30,5 +30,6 @@
   "PATCH": "ПАТЧ",
   "PUT": "ПОКУПИТЬ",
   "DELETE": "УДАЛИТЬ",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "Saved for the whole project, so other flows that use this key join the same conversation.": "Сохраняется для всего проекта, поэтому другие потоки с этим ключом продолжают ту же беседу."
 }

@@ -21,8 +21,8 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Test size-check logic
-        run: bun test tools/scripts/pr-size-check.test.ts
+      - name: Test the tools/scripts logic
+        run: bun test ./tools/scripts
 
       - name: Check PR size by area
         env:

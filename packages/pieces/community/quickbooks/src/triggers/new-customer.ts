@@ -51,6 +51,7 @@ const polling: Polling<
 export const newCustomer = createTrigger({
   auth: quickbooksAuth,
   name: 'new_customer',
+  classification: 'READ',
   displayName: 'New Customer',
   description: 'Triggers when a new customer is created.',
   aiMetadata: {

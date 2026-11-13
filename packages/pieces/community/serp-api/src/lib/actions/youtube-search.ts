@@ -1,9 +1,4 @@
-/**
- * @fileoverview YouTube Search action for SerpApi
- * Provides comprehensive YouTube search functionality with quality and duration filters
- */
-
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { COUNTRY_OPTIONS } from '../constants/countries';
 import { LANGUAGE_OPTIONS } from '../constants/languages';
@@ -16,20 +11,30 @@ export const youtubeSearch = createAction({
   name: 'youtube_search',
   classification: 'SEARCH',
   displayName: 'YouTube Search',
-  description: 'Retrieve top video content results from YouTube for specific keywords or topics with advanced filtering.',
+  description: 'Search YouTube and get the matching videos.',
   audience: 'human',
   aiMetadata: { description: 'Searches YouTube via SerpApi for videos matching a query. Use to find video content on a topic, discover channels, or research what is being published, scoped by language and country. Read-only and idempotent; requires the search query and a SerpApi API key.', idempotent: true },
   outputSchema: youtubeSearchOutputSchema,
+  propertyGroups: [
+    { key: 'search', display: 'section', label: 'Search', icon: 'text', props: ['cost_note', 'query'] },
+    { key: 'location', display: 'section', label: 'Language & country', icon: 'location', props: ['hl', 'gl'] },
+  ],
   props: {
+    cost_note: Property.MarkDown({
+      value: 'Every new search counts against your SerpApi plan. Repeating the same search within an hour is free if cached results are allowed.',
+      variant: MarkdownVariant.INFO,
+    }),
+
     query: Property.ShortText({
       displayName: 'Search Query',
-      description: 'YouTube search query',
+      description: 'What to search YouTube for.',
+      placeholder: 'home workout',
       required: true,
     }),
 
     hl: Property.StaticDropdown({
-      displayName: 'Host Language (hl)',
-      description: 'Language for search results',
+      displayName: 'Language',
+      description: 'Language of the results.',
       required: false,
       defaultValue: 'en',
       options: {
@@ -38,8 +43,8 @@ export const youtubeSearch = createAction({
     }),
 
     gl: Property.StaticDropdown({
-      displayName: 'Country (gl)',
-      description: 'Country for search results',
+      displayName: 'Country',
+      description: 'Country the results are for.',
       required: false,
       options: {
         options: COUNTRY_OPTIONS,
@@ -47,40 +52,43 @@ export const youtubeSearch = createAction({
     }),
 
     no_cache: Property.StaticDropdown({
-      displayName: 'No Cache',
-      description: 'Force fresh results',
+      displayName: 'Cached Results',
+      description: 'Cached results are free and up to an hour old.',
       required: false,
       defaultValue: 'false',
+      advanced: true,
       options: {
         options: [
-          { label: 'false (Allow cache)', value: 'false' },
-          { label: 'true (Force fresh results)', value: 'true' },
+          { label: 'Allow cached results', value: 'false' },
+          { label: 'Always run a new search', value: 'true' },
         ],
       },
     }),
 
     async: Property.StaticDropdown({
-      displayName: 'Async',
-      description: 'Submit search asynchronously',
+      displayName: 'Search Mode',
+      description: 'The ID-only option gives no results and needs cached results allowed.',
       required: false,
       defaultValue: 'false',
+      advanced: true,
       options: {
         options: [
-          { label: 'false (Synchronous)', value: 'false' },
-          { label: 'true (Asynchronous)', value: 'true' },
+          { label: 'Wait for results', value: 'false' },
+          { label: 'Return the search ID only', value: 'true' },
         ],
       },
     }),
 
     output: Property.StaticDropdown({
-      displayName: 'Output',
-      description: 'Output format for results',
+      displayName: 'Response Format',
+      description: 'JSON gives structured data; HTML is the raw results page.',
       required: false,
       defaultValue: 'json',
+      advanced: true,
       options: {
         options: [
-          { label: 'JSON (Structured)', value: 'json' },
-          { label: 'HTML (Raw)', value: 'html' },
+          { label: 'JSON', value: 'json' },
+          { label: 'Raw HTML', value: 'html' },
         ],
       },
     }),

@@ -6,6 +6,7 @@ export const contactAddedToList = brevoRegisterTrigger({
 	name: 'contact_added_to_list',
 	displayName: 'Contact Added to List',
 	description: 'Triggers when a contact is added to one of your lists.',
+	note: 'Fires for every list. To act on one list only, check list_id in a later step.',
 	aiDescription:
 		`Fires when a contact is added to any Brevo list. The payload carries the contact email and a list_id array of the lists it was added to. Brevo subscribes at account level, so this fires for every list; filter on list_id downstream when only one list matters. ${WEBHOOK_ID_NOTE}`,
 	type: 'marketing',

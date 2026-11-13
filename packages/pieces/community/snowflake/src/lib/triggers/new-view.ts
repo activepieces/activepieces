@@ -9,14 +9,10 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { snowflakeAuth } from '../auth';
-import {
-  configureConnection,
-  connect,
-  destroy,
-  execute,
-  snowflakeCommonProps,
-  SnowflakeAuthValue,
-} from '../common';
+import { snowflakeCommonProps, toAuthValue, withSnowflake } from '../common';
+import { newViewOutputSchema } from '../common/output-schemas';
+import { qualifiedName } from '../common/sql';
+import { mapView } from '../common/mappers';
 
 type NewViewProps = {
   database: string;
@@ -43,33 +39,25 @@ const polling: Polling<
     const { database, schema } = propsValue;
     if (!database || !schema) return [];
 
-    const connection = configureConnection(auth as SnowflakeAuthValue);
-    await connect(connection);
-    try {
-      const result = await execute(
-        connection,
-        `SHOW VIEWS IN SCHEMA ${database}.${schema}`,
-        []
-      );
+    {
+      const result = (
+        await withSnowflake({
+          auth: toAuthValue(auth),
+          fn: (session) =>
+            session.query({
+              sql: `SHOW VIEWS IN SCHEMA ${qualifiedName({
+                value: `${database}.${schema}`,
+                maxParts: 2,
+                label: 'Schema',
+              })}`,
+            }),
+        })
+      ).rows;
 
-      if (!result) return [];
-
-      return (result as Record<string, unknown>[]).map((view) => ({
+      return result.map((view) => ({
         epochMilliSeconds: toEpochMs(view['created_on']),
-        data: {
-          view_name: view['name'],
-          database_name: view['database_name'],
-          schema_name: view['schema_name'],
-          owner: view['owner'],
-          comment: view['comment'],
-          text: view['text'],
-          is_secure: view['is_secure'],
-          is_materialized: view['is_materialized'],
-          created_on: view['created_on'],
-        },
+        data: mapView(view),
       }));
-    } finally {
-      await destroy(connection);
     }
   },
 };
@@ -80,6 +68,8 @@ export const newViewTrigger = createTrigger({
   displayName: 'New View',
   description:
     'Triggers when a new view is created in the selected schema. Checked by polling every few minutes.',
+  classification: 'READ',
+  outputSchema: newViewOutputSchema,
   aiMetadata: {
     description:
       "Fires when a new view is created in the selected Snowflake database and schema, detected by polling and comparing each view's creation time against the last-seen watermark. Each newly created view produces one event with its name, owner, definition text, and metadata.",

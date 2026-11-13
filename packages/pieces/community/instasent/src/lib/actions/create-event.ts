@@ -7,6 +7,7 @@ import { BOOLEAN_OPTIONS } from '../common/constants';
 
 export const createEvent = createAction({
     name: 'add_event',
+    classification: 'WRITE',
     displayName: 'Add Event',
     description: 'Add a contact event',
     audience: 'both',

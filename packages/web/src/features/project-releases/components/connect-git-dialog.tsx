@@ -182,8 +182,8 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
             </div>
 
             <DialogFooter>
-              <DialogClose>
-                <Button type="button" variant={'outline'} loading={isPending}>
+              <DialogClose asChild>
+                <Button type="button" variant={'outline'}>
                   {t('Cancel')}
                 </Button>
               </DialogClose>

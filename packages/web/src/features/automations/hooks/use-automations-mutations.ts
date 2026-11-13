@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  Agent,
   FlowOperationType,
   PopulatedFlow,
   Table,
@@ -8,9 +9,12 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { agentsApi } from '@/features/agents/api/agents';
+import { describeUsage } from '@/features/agents/delete-agent-dialog';
+import { blankAgentUtils } from '@/features/agents/lib/blank-agent';
 import { flowsApi } from '@/features/flows/api/flows-api';
 import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 import { foldersApi } from '@/features/folders/api/folders-api';
@@ -37,6 +41,7 @@ type MutationDeps = {
 export function useAutomationsMutations(deps: MutationDeps) {
   const openNewWindow = useNewWindow();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const projectId = authenticationSession.getProjectId() ?? '';
 
@@ -76,6 +81,24 @@ export function useAutomationsMutations(deps: MutationDeps) {
       },
     });
 
+  const { mutate: createAgentMutation, isPending: isCreatingAgent } =
+    useMutation<Agent, Error, string | undefined>({
+      mutationFn: async (folderId) =>
+        agentsApi.create(
+          blankAgentUtils.request({
+            projectId,
+            folderId: toFolderId(folderId),
+          }),
+        ),
+      onSuccess: (agent) => {
+        deps.invalidateRoot();
+        navigate(`/projects/${agent.projectId}/agents/${agent.id}`, {
+          state: { backTo: `${location.pathname}${location.search}` },
+        });
+      },
+      onError: () => toast.error(t('Failed to create agent')),
+    });
+
   const { mutate: exportFlows, isPending: isExportFlowsPending } =
     flowHooks.useExportFlows();
 
@@ -102,20 +125,22 @@ export function useAutomationsMutations(deps: MutationDeps) {
 
   const { mutateAsync: bulkDelete, isPending: isDeleting } = useMutation({
     mutationFn: async (selectedItems: SelectedItemsMap) => {
-      const { flowIds, tableIds, folderIds } =
+      const { flowIds, tableIds, agentIds, folderIds } =
         getSelectedIdsByType(selectedItems);
+      await assertAgentsNotInUse(agentIds);
       await Promise.all([
         ...flowIds.map((id) => flowsApi.delete(id)),
         ...tableIds.map((id) => tablesApi.delete(id)),
-        ...folderIds.map((id) => foldersApi.delete(id)),
+        ...agentIds.map((id) => agentsApi.delete(id)),
       ]);
+      await Promise.all(folderIds.map((id) => foldersApi.delete(id)));
     },
     onSuccess: () => {
       deps.clearSelection();
       deps.invalidateAll();
       toast.success(t('Items deleted successfully'));
     },
-    onError: () => toast.error(t('Failed to delete items')),
+    onError: () => deps.invalidateAll(),
   });
 
   const { mutateAsync: bulkMoveTo, isPending: isBulkMoving } = useMutation({
@@ -126,12 +151,13 @@ export function useAutomationsMutations(deps: MutationDeps) {
       selectedItems: SelectedItemsMap;
       targetFolderId: string;
     }) => {
-      const { flowIds, tableIds } = getSelectedIdsByType(selectedItems);
-      const folderId =
-        isNil(targetFolderId) || targetFolderId === UncategorizedFolderId
-          ? null
-          : targetFolderId;
+      const { flowIds, tableIds, agentIds } =
+        getSelectedIdsByType(selectedItems);
+      const folderId = toFolderId(targetFolderId);
       await Promise.all([
+        ...agentIds.map((id) =>
+          agentsApi.update(id, { folderId, goLive: false }),
+        ),
         ...flowIds.map((id) =>
           flowsApi.update(id, {
             type: FlowOperationType.CHANGE_FOLDER,
@@ -169,6 +195,11 @@ export function useAutomationsMutations(deps: MutationDeps) {
         });
       } else if (item.type === 'table') {
         await tablesApi.update(item.id, { name: newName });
+      } else if (item.type === 'agent') {
+        await agentsApi.update(item.id, {
+          displayName: newName,
+          goLive: false,
+        });
       } else if (item.type === 'folder') {
         await foldersApi.renameFolder(item.id, { displayName: newName });
       }
@@ -215,10 +246,7 @@ export function useAutomationsMutations(deps: MutationDeps) {
       item: TreeItem;
       targetFolderId: string;
     }) => {
-      const folderId =
-        isNil(targetFolderId) || targetFolderId === UncategorizedFolderId
-          ? null
-          : targetFolderId;
+      const folderId = toFolderId(targetFolderId);
       if (item.type === 'flow') {
         await flowsApi.update(item.id, {
           type: FlowOperationType.CHANGE_FOLDER,
@@ -226,6 +254,8 @@ export function useAutomationsMutations(deps: MutationDeps) {
         });
       } else if (item.type === 'table') {
         await tablesApi.update(item.id, { folderId });
+      } else if (item.type === 'agent') {
+        await agentsApi.update(item.id, { folderId, goLive: false });
       }
     },
     onSuccess: (_data, { item, targetFolderId }) => {
@@ -295,8 +325,10 @@ export function useAutomationsMutations(deps: MutationDeps) {
     createFlow: (folderId?: string) => startFromScratch(folderId),
     createTable: (name: string, folderId?: string) =>
       createTableMutation({ name, folderId }),
+    createAgent: (folderId?: string) => createAgentMutation(folderId),
     isCreateFlowPending,
     isCreatingTable,
+    isCreatingAgent,
     handleDeleteItem: deleteItem,
     handleBulkDelete: bulkDelete,
     handleBulkMoveTo: (
@@ -317,6 +349,31 @@ export function useAutomationsMutations(deps: MutationDeps) {
     isDuplicating,
     isExporting: isExportFlowsPending || isExportingTable,
   };
+}
+
+async function assertAgentsNotInUse(agentIds: string[]): Promise<void> {
+  const agents = await Promise.all(
+    agentIds.map((id) => agentsApi.get(id, { includeUsage: true })),
+  );
+  const inUse = agents.find(
+    (agent) => (agent.publishedFlowsUsingAgent?.total ?? 0) > 0,
+  );
+  if (inUse) {
+    throw new Error(
+      t('{name} cannot be deleted. {usage}', {
+        name: inUse.displayName,
+        usage: describeUsage(inUse.publishedFlowsUsingAgent),
+      }),
+    );
+  }
+}
+
+function toFolderId(folderId: string | undefined): string | null {
+  return isNil(folderId) ||
+    folderId === '' ||
+    folderId === UncategorizedFolderId
+    ? null
+    : folderId;
 }
 
 function isFlowTreeItem(

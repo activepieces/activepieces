@@ -5,6 +5,7 @@ import { makeClient } from '../../common/client';
 export const createReceivablesInvoice = createAction({
     auth: oracleFusionCloudErpAuth,
     name: 'create_receivables_invoice',
+    classification: 'WRITE',
     displayName: 'Create Receivables Invoice',
     description: 'Creates a new receivables (AR) invoice in Oracle Fusion Cloud ERP.',
     audience: 'both',

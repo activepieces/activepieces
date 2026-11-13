@@ -50,6 +50,7 @@ const SAMPLE_INVOICE = {
 export const generateEinvoice = createAction({
   auth: polydocAuth,
   name: 'generate_einvoice',
+  classification: 'WRITE',
   displayName: 'Generate E-Invoice',
   description: 'Generate a hybrid e-invoice PDF (Factur-X / ZUGFeRD, EN 16931) from a visual layout plus structured invoice data.',
   aiMetadata: {

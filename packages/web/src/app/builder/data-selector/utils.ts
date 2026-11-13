@@ -3,6 +3,7 @@ import {
   flowCanvasUtils,
   FlowAction,
   FlowActionType,
+  flowStructureUtil,
   FlowTrigger,
   FlowTriggerType,
 } from '@activepieces/shared';
@@ -318,7 +319,7 @@ function traverseStep(
     stepNode.data = { ...stepNode.data, stepName: step.name };
   }
 
-  const cofEnabled = flowCanvasUtils.hasContinueOnFailureBranches(step);
+  const cofEnabled = flowStructureUtil.hasContinueOnFailureBranches(step);
   if (cofEnabled) {
     const branch = flowCanvasUtils.getStepBranchRelativeTo(
       step,
@@ -368,7 +369,7 @@ function traverseStep(
           data: {
             type: 'chunk',
             displayName: t('On success'),
-            displayNameClassName: 'text-success-800 dark:text-success-200',
+            displayNameClassName: 'text-success-11',
           },
           children: stepNode.children,
         };
@@ -378,8 +379,7 @@ function traverseStep(
           data: {
             type: 'chunk',
             displayName: t('On failure'),
-            displayNameClassName:
-              'text-destructive-800 dark:text-destructive-200',
+            displayNameClassName: 'text-danger-11',
           },
           children: [errorMessageLeaf],
         };
@@ -478,6 +478,26 @@ function flattenVisibleRows({
   });
 }
 
+function shouldShowStepAsFlatList({
+  isFocusInsideListMapperModeInput,
+  stepOutput,
+}: {
+  isFocusInsideListMapperModeInput: boolean;
+  stepOutput: unknown;
+}): boolean {
+  return isFocusInsideListMapperModeInput && containsListOfObjects(stepOutput);
+}
+
+function containsListOfObjects(value: unknown): boolean {
+  if (Array.isArray(value)) {
+    return value.some((item) => isObject(item) || containsListOfObjects(item));
+  }
+  if (isObject(value)) {
+    return Object.values(value).some(containsListOfObjects);
+  }
+  return false;
+}
+
 export const dataSelectorUtils = {
   isTestStepNode: (
     node: DataSelectorTreeNode,
@@ -486,6 +506,7 @@ export const dataSelectorUtils = {
   traverseStep,
   filterBy,
   flattenVisibleRows,
+  shouldShowStepAsFlatList,
 };
 
 export type DataSelectorRow = {

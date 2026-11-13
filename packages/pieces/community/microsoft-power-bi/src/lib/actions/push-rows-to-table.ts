@@ -10,6 +10,7 @@ type PowerBIRow = {
 export const pushRowsToDatasetTableAction = createAction({
     auth:microsoftPowerBiAuth,
     name: 'push_rows_to_dataset_table',
+    classification: 'WRITE',
     displayName: 'Push Rows to Dataset Table',
     description: 'Add rows to a table in a Power BI dataset (supports Push, Streaming, and PushStreaming modes)',
     audience: 'both',

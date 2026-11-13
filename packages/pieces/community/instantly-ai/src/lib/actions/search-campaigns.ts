@@ -6,6 +6,7 @@ import { instantlyAiAuth } from '../auth';
 export const searchCampaignsAction = createAction({
   auth: instantlyAiAuth,
   name: 'search_campaigns',
+  classification: 'SEARCH',
   displayName: 'Search Campaigns',
   description: 'Searchs for campaigns using various filters.',
   audience: 'both',

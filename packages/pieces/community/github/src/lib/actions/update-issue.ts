@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { githubAuth } from '../auth';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -9,28 +13,60 @@ export const githubUpdateIssueAction = createAction({
   name: 'update_issue',
   classification: 'WRITE',
   displayName: 'Update Issue',
-  description: 'Updates an existing issue.',
+  description:
+    "Changes an issue's text, state, milestone, labels or assignees.",
   audience: 'human',
   aiMetadata: {
     description:
       'Edits an existing issue (by number) in a repository, setting only the fields you provide — title, body, state (open/closed) and state reason, milestone, labels, or assignees. Use to modify, close, or reopen an issue. Idempotent: applying the same field values again leaves the issue in the same state. Note that labels and assignees here replace the existing set rather than append.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'issue',
+      display: 'section',
+      label: 'Issue to update',
+      icon: 'inbox',
+      props: ['repository', 'issue_number'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'text',
+      props: [
+        'changesNote',
+        'title',
+        'body',
+        'state',
+        'state_reason',
+        'milestone',
+        'labels',
+        'assignees',
+      ],
+    },
+  ],
   props: {
     repository: githubCommon.repositoryDropdown,
     issue_number: githubCommon.issueDropdown(),
+    changesNote: Property.MarkDown({
+      value:
+        'Fields left empty keep their current value. Labels and assignees you pick replace the current ones.',
+      variant: MarkdownVariant.INFO,
+    }),
     title: Property.ShortText({
       displayName: 'Title',
       required: false,
     }),
     body: Property.LongText({
-      displayName: 'Body',
+      displayName: 'Description',
+      description: 'Markdown is supported.',
       required: false,
     }),
     state: Property.StaticDropdown({
       displayName: 'State',
-      description: 'The new state of the issue.',
       required: false,
+      width: 'half',
       options: {
         options: [
           { label: 'Open', value: 'open' },
@@ -41,8 +77,9 @@ export const githubUpdateIssueAction = createAction({
     state_reason: Property.StaticDropdown({
       displayName: 'State Reason',
       description:
-        'The reason for the state change. (Only used if State is changed).',
+        'Why the issue was closed or reopened. Ignored unless State changes.',
       required: false,
+      width: 'half',
       options: {
         options: [
           { label: 'Completed', value: 'completed' },
@@ -66,9 +103,10 @@ export const githubUpdateIssueAction = createAction({
     if (propsValue.state !== undefined) body.state = propsValue.state;
     if (propsValue.state_reason !== undefined)
       body.state_reason = propsValue.state_reason;
-    if (propsValue.assignees !== undefined)
+    if (propsValue.assignees !== undefined && propsValue.assignees.length > 0)
       body.assignees = propsValue.assignees;
-    if (propsValue.labels !== undefined) body.labels = propsValue.labels;
+    if (propsValue.labels !== undefined && propsValue.labels.length > 0)
+      body.labels = propsValue.labels;
     if (propsValue.milestone !== undefined)
       body.milestone = propsValue.milestone;
 

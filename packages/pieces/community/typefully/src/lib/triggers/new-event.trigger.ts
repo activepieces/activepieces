@@ -39,6 +39,7 @@ async function fetchLatestDraft(apiKey: string) {
 export const newEventTrigger = createTrigger({
 	auth: typefullyAuth,
 	name: 'typefully_new_event',
+	classification: 'READ',
 	displayName: 'New Event',
 	description: 'Triggers when a webhook event is received from Typefully.',
 	aiMetadata: {

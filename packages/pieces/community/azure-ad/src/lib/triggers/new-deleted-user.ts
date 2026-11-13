@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger, isNil } from '@activepieces/pieces-framework';
 import { azureAdAuth } from '../auth';
 import { callGraphApi, fetchGraphDeltaChanges } from '../common';
 
@@ -22,6 +22,9 @@ export const newDeletedUserTrigger = createTrigger({
         '@removed': { reason: 'changed' },
     },
     async onEnable(context) {
+        if (context.isRepublish && !isNil(await context.store.get(STORE_KEY))) {
+            return;
+        }
         await fetchGraphDeltaChanges({
             accessToken: context.auth.access_token,
             store: context.store,
@@ -32,6 +35,9 @@ export const newDeletedUserTrigger = createTrigger({
         });
     },
     async onDisable(context) {
+        if (context.isRepublish) {
+            return;
+        }
         await context.store.delete(STORE_KEY);
     },
     async test(context) {

@@ -14,6 +14,7 @@ const QuantitySchema = z.number().int().min(1).max(100).default(1);
 export const submitCatalogItemAction = createAction({
   auth: servicenowAuth,
   name: 'submit_catalog_item',
+  classification: 'WRITE',
   displayName: 'Submit Catalog Request',
   description:
     'Order a catalog item. Submits a service catalog request and returns the resulting request number.',

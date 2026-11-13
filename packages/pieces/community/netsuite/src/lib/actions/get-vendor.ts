@@ -5,6 +5,7 @@ import { NetSuiteClient } from '../common/client';
 
 export const getVendor = createAction({
   name: 'getVendor',
+  classification: 'READ',
   auth: netsuiteAuth,
   displayName: 'Get Vendor',
   description: 'Gets vendor details from NetSuite.',

@@ -6,6 +6,7 @@ import { listPayers, pinchPaymentsClient } from '../common/client';
 export const createOrUpdateScheduledPaymentAction = createAction({
   auth: pinchPaymentsAuth,
   name: 'create_or_update_scheduled_payment',
+  classification: 'WRITE',
   displayName: 'Create or Update Scheduled Payment',
   description: 'Create a new scheduled payment or update an existing one',
   audience: 'both',

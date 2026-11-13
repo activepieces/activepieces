@@ -7,7 +7,7 @@ const { mockIdentify, mockIsProductTelemetryEnabled } = vi.hoisted(() => ({
 }))
 
 vi.mock('posthog-node', () => ({
-    PostHog: vi.fn(() => ({ identify: mockIdentify, capture: vi.fn(), flush: vi.fn(), shutdown: vi.fn() })),
+    PostHog: vi.fn(function () { return { identify: mockIdentify, capture: vi.fn(), flush: vi.fn(), shutdown: vi.fn() } }),
 }))
 
 vi.mock('../../../../src/app/platform/platform-configuration.service', () => ({

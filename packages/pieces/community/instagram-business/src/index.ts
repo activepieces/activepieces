@@ -32,7 +32,7 @@ import { instagramCommon } from './lib/common';
 export const instagramBusiness = createPiece({
   displayName: 'Instagram for Business',
   description: 'Grow your business on Instagram',
-  minimumSupportedRelease: '0.87.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/instagram.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   authors: ["kishanprmr","MoShizzle","abuaboud"],

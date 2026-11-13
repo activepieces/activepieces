@@ -42,5 +42,5 @@ export const runActionInput = z.object({
         const parsed = parseToJsonIfPossible(value)
         return isObject(parsed) ? parsed : value
     }, z.record(z.string(), z.unknown()).optional()).describe('Fully-resolved input for the action. Keys must match the piece action\'s props. Pass raw values — do NOT wrap in {{...}}. Omit if the action has no props.'),
-    connectionExternalId: z.string().optional().describe('externalId from ap_list_connections. Required if the piece needs auth. Auto-wrapped as {{connections[\'externalId\']}}.'),
+    connectionExternalId: z.string().optional().describe('externalId from ap_list_connections. Required if the piece needs auth. Pass the plain id, not a template.'),
 })

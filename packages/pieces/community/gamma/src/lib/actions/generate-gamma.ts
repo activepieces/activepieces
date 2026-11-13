@@ -5,6 +5,7 @@ import { gammaAuth } from '../common/auth';
 export const generateGamma = createAction({
   auth: gammaAuth,
   name: 'generateGamma',
+  classification: 'WRITE',
   displayName: 'Generate Gamma',
   description: 'Create a new Gamma generation job.',
   audience: 'both',

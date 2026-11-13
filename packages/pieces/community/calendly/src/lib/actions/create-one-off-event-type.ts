@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { calendlyAuth } from '../auth';
 import { calendlyCommon, CalendlyRecord } from '../common';
@@ -17,37 +17,71 @@ export const createOneOffEventTypeAction = createAction({
     idempotent: false,
   },
   outputSchema: eventTypeOutputSchema,
+  propertyGroups: [
+    {
+      key: 'meeting',
+      display: 'section',
+      label: 'Event',
+      icon: 'type',
+      props: ['name', 'duration', 'host'],
+    },
+    {
+      key: 'window',
+      display: 'section',
+      label: 'Booking Window',
+      icon: 'calendar',
+      props: ['bookingInfo', 'startDate', 'endDate', 'timezone'],
+    },
+    {
+      key: 'location',
+      display: 'section',
+      label: 'Location',
+      icon: 'location',
+      props: ['locationKind', 'location'],
+    },
+  ],
   props: {
     name: Property.ShortText({
       displayName: 'Name',
+      description: 'Shown to invitees. Up to 55 characters.',
+      placeholder: 'Intro Call',
       required: true,
     }),
     duration: Property.Number({
-      displayName: 'Duration (minutes)',
+      displayName: 'Duration',
+      description: 'Length in minutes, up to 720.',
       required: true,
+    }),
+    bookingInfo: Property.MarkDown({
+      value: 'Invitees can book from Start Date through End Date.',
+      variant: MarkdownVariant.INFO,
     }),
     startDate: Property.ShortText({
       displayName: 'Start Date',
-      description: 'First bookable date, YYYY-MM-DD.',
+      placeholder: 'YYYY-MM-DD',
+      width: 'half',
       required: true,
     }),
     endDate: Property.ShortText({
       displayName: 'End Date',
-      description: 'Last bookable date, YYYY-MM-DD.',
+      placeholder: 'YYYY-MM-DD',
+      width: 'half',
       required: true,
     }),
     timezone: Property.ShortText({
       displayName: 'Timezone',
-      description: "IANA timezone such as America/New_York. Defaults to the host's timezone.",
+      description: "Empty: the host's timezone.",
+      placeholder: 'America/New_York',
       required: false,
     }),
     host: Property.ShortText({
       displayName: 'Host',
-      description: 'User URI or UUID of the host. Leave empty for the connected user.',
+      description: 'User URI or ID. Empty: the connected user.',
+      placeholder: 'https://api.calendly.com/users/…',
       required: false,
     }),
     locationKind: Property.StaticDropdown({
-      displayName: 'Location',
+      displayName: 'Type',
       required: false,
       options: {
         options: [
@@ -56,17 +90,18 @@ export const createOneOffEventTypeAction = createAction({
           { label: 'Microsoft Teams', value: 'microsoft_teams_conference' },
           { label: 'Webex', value: 'webex_conference' },
           { label: 'GoToMeeting', value: 'gotomeeting_conference' },
-          { label: 'In person', value: 'physical' },
-          { label: 'Phone call (invitee calls host)', value: 'inbound_call' },
-          { label: 'Phone call (host calls invitee)', value: 'outbound_call' },
+          { label: 'In Person', value: 'physical' },
+          { label: 'Invitee Calls Host', value: 'inbound_call' },
+          { label: 'Host Calls Invitee', value: 'outbound_call' },
           { label: 'Custom', value: 'custom' },
-          { label: 'Ask invitee', value: 'ask_invitee' },
+          { label: 'Ask Invitee', value: 'ask_invitee' },
         ],
       },
     }),
     location: Property.ShortText({
-      displayName: 'Location Details',
-      description: 'Address for in person, text for custom, or the phone number for inbound calls.',
+      displayName: 'Details',
+      description: 'In Person: address. Invitee Calls Host: phone number. Custom: text.',
+      placeholder: '123 Main St, Springfield',
       required: false,
     }),
   },

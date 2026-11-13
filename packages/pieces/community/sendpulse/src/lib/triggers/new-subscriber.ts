@@ -11,6 +11,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const newSubscriberTrigger = createTrigger({
   auth: sendpulseAuth,
   name: 'new_subscriber',
+  classification: 'READ',
   displayName: 'New Subscriber',
   description: 'Fires when new subscriber is added',
   aiMetadata: {

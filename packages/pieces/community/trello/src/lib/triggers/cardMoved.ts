@@ -10,12 +10,15 @@ export const cardMovedTrigger = createTrigger({
 	auth: trelloAuth,
 	name: 'card_moved_to_list',
 	classification: 'READ',
-	displayName: 'Card Moved to list',
-	description: 'Trigger when a card is moved to the list specified',
+	displayName: 'Card Moved to List',
+	description: 'Fires when a card is moved into the chosen list.',
 	outputSchema: cardMovedTriggerOutputSchema,
 	aiMetadata: {
 		description: 'Fires when a card is moved into the specified list on a board (from a different list). Represents a card transitioning to a new stage; emits the moved card with its full details.',
 	},
+	propertyGroups: [
+		{ key: 'watch', display: 'section', label: 'Where to Watch', icon: 'inbox', props: ['board_id', 'list_id'] },
+	],
 	props: {
 		board_id: trelloCommon.board_id,
 		list_id: trelloCommon.list_id,
@@ -34,7 +37,7 @@ export const cardMovedTrigger = createTrigger({
 			(webhook) => webhook.idModel === element_id && webhook.callbackURL === context.webhookUrl,
 		);
 		if (webhook) {
-			context.webhookUrl = webhook.callbackURL;
+			await context.store.put('webhook_id', webhook.id);
 			return;
 		}
 		const response = await trelloCommon.create_webhook(

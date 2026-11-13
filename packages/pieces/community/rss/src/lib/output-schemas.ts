@@ -204,3 +204,108 @@ export const newItemListTriggerOutputSchema: OutputSchema = {
     },
   ],
 };
+
+const feedItemFields: OutputSchema['fields'] = [
+  { key: 'id', label: 'Item ID' },
+  { key: 'title', label: 'Title' },
+  { key: 'link', label: 'Link', format: 'url' },
+  { key: 'author', label: 'Author' },
+  { key: 'published_at', label: 'Published At', format: 'datetime' },
+  { key: 'updated_at', label: 'Updated At', format: 'datetime' },
+  { key: 'summary', label: 'Summary', format: 'html' },
+  { key: 'content', label: 'Content', format: 'html' },
+  { key: 'categories', label: 'Categories' },
+  { key: 'image_url', label: 'Image', format: 'image' },
+];
+
+const enclosuresField: OutputSchema['fields'][number] = {
+  key: 'enclosures',
+  label: 'Enclosures',
+  labelKey: 'url',
+  listItems: [
+    { key: 'url', label: 'URL', format: 'url' },
+    { key: 'type', label: 'Media Type' },
+    { key: 'length', label: 'Size', format: 'filesize' },
+  ],
+};
+
+export const rssFindSiteFeedsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'feeds',
+      label: 'Feeds',
+      labelKey: 'title',
+      listItems: [
+        { key: 'url', label: 'Feed URL', format: 'url' },
+        { key: 'title', label: 'Title' },
+        { key: 'format', label: 'Format' },
+      ],
+    },
+    { key: 'count', label: 'Feeds Found', format: 'number' },
+  ],
+};
+
+export const rssReadFeedOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'feed',
+      label: 'Feed',
+      children: [
+        { key: 'title', label: 'Title' },
+        { key: 'description', label: 'Description' },
+        { key: 'site_url', label: 'Site URL', format: 'url' },
+        { key: 'feed_url', label: 'Feed URL', format: 'url' },
+        { key: 'language', label: 'Language' },
+        { key: 'author', label: 'Author' },
+        { key: 'updated_at', label: 'Updated At', format: 'datetime' },
+        { key: 'image_url', label: 'Image', format: 'image' },
+        { key: 'format', label: 'Format' },
+      ],
+    },
+    {
+      key: 'items',
+      label: 'Items',
+      labelKey: 'title',
+      listItems: [...feedItemFields, enclosuresField],
+    },
+    { key: 'count', label: 'Items Returned', format: 'number' },
+    { key: 'total_in_feed', label: 'Total Items in Feed', format: 'number' },
+  ],
+};
+
+export const rssReadMultipleFeedsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'items',
+      label: 'Items',
+      labelKey: 'title',
+      listItems: [
+        ...feedItemFields,
+        { key: 'enclosures', label: 'Enclosures' },
+        { key: 'feed_title', label: 'Feed Title' },
+        { key: 'feed_url', label: 'Feed URL', format: 'url' },
+      ],
+    },
+    { key: 'count', label: 'Items Returned', format: 'number' },
+    {
+      key: 'feeds',
+      label: 'Loaded Feeds',
+      labelKey: 'title',
+      listItems: [
+        { key: 'feed_url', label: 'Feed URL', format: 'url' },
+        { key: 'title', label: 'Title' },
+        { key: 'site_url', label: 'Site URL', format: 'url' },
+        { key: 'item_count', label: 'Items in Feed', format: 'number' },
+      ],
+    },
+    {
+      key: 'failed',
+      label: 'Failed Feeds',
+      labelKey: 'feed_url',
+      listItems: [
+        { key: 'feed_url', label: 'Feed URL', format: 'url' },
+        { key: 'error', label: 'Error' },
+      ],
+    },
+  ],
+};

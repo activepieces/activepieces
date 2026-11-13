@@ -3,6 +3,7 @@ import { Paperclip } from 'lucide-react';
 import { motion } from 'motion/react';
 import { memo } from 'react';
 
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import {
   Message,
   MessageAction,
@@ -13,8 +14,6 @@ import { ChatUIMessage } from '@/features/chat/lib/chat-types';
 import { cn } from '@/lib/utils';
 
 import { getTextFromParts } from '../lib/message-parsers';
-
-import { CopyIconButton } from './copy-icon-button';
 
 export const UserMessage = memo(function UserMessage({
   message,
@@ -49,13 +48,13 @@ export const UserMessage = memo(function UserMessage({
     >
       <div className="max-w-[80%]">
         <Message className="flex-row-reverse">
-          <div className="bg-muted rounded-2xl rounded-br-md px-2.5 py-1 text-sm">
+          <div className="bg-gray-3 rounded-xl rounded-br-md px-2.5 py-1 text-sm">
             {fileNames.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-1.5">
                 {fileNames.map((name, i) => (
                   <span
                     key={i}
-                    className="inline-flex items-center gap-1 rounded-md bg-background/60 px-2 py-0.5 text-xs text-muted-foreground"
+                    className="inline-flex items-center gap-1 rounded-md bg-gray-1/60 px-2 py-0.5 text-xs text-gray-11"
                   >
                     <Paperclip className="size-3" />
                     <span className="max-w-[150px] truncate">{name}</span>
@@ -77,7 +76,13 @@ export const UserMessage = memo(function UserMessage({
           )}
         >
           <MessageAction tooltip={t('Copy')}>
-            <CopyIconButton textToCopy={content} className="h-6 w-6" />
+            <CopyButton
+              value={content}
+              variant="ghost"
+              size="icon-xs"
+              withoutTooltip
+              className="h-6 w-6"
+            />
           </MessageAction>
         </MessageActions>
       </div>

@@ -2,10 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { JinaAICommon } from '../common';
 import { jinaAiAuth } from '../auth';
+import { deepsearchQueryOutputSchema } from '../output-schemas';
 
 export const deepSearchQueryAction = createAction({
   auth:jinaAiAuth,
   name: 'deepsearch_query',
+  outputSchema: deepsearchQueryOutputSchema,
   classification: 'READ',
   displayName: 'DeepSearch Query',
   description:

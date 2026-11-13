@@ -1,11 +1,13 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { parseurAuth, parseurCommon } from '../common';
-import { parserDropdown } from '../common/properties';
-import { WebhookInformation } from '../common/types';
+import { parseurAuth } from '../auth';
+import { parseurApi } from '../common/api';
+import { parseurProps } from '../common/props';
+import type { ParseurWebhookInformation } from '../common/types';
 
-export const newDocumentProcessed = createTrigger({
+export const newDocumentProcessedTrigger = createTrigger({
   auth: parseurAuth,
   name: 'newDocumentProcessed',
+  classification: 'READ',
   displayName: 'New Document Processed',
   description:
     'Fires when a new document is successfully processed and parsed by Parseur.',
@@ -14,35 +16,34 @@ export const newDocumentProcessed = createTrigger({
       'Fires when a document in the selected Parseur mailbox is successfully parsed, emitting the document with its extracted/structured fields. Use to react to newly available parsed data.',
   },
   props: {
-    mailboxId: parserDropdown({ required: true }),
+    mailboxId: parseurProps.parserId({ required: true }),
   },
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const webhookCreateResponse = await parseurCommon.createWebhook({
-      apiKey: context.auth.secret_text,
+    const webhook = await parseurApi.createWebhook({
+      auth: context.auth,
       event: 'document.processed',
       target: context.webhookUrl,
-      category: 'CUSTOM',
     });
-    await parseurCommon.enableWebhook({
-      apiKey: context.auth.secret_text,
-      webhookId: webhookCreateResponse.id,
-      mailboxId: context.propsValue.mailboxId as number,
+    await parseurApi.enableWebhook({
+      auth: context.auth,
+      webhookId: webhook.id,
+      mailboxId: context.propsValue.mailboxId,
     });
-    await context.store.put<WebhookInformation>('_newDocumentProcessed', {
-      webhookId: webhookCreateResponse.id,
+    await context.store.put<ParseurWebhookInformation>('_newDocumentProcessed', {
+      webhookId: webhook.id,
     });
   },
   async onDisable(context) {
-    const webhookInfo = await context.store.get<WebhookInformation>(
+    const webhookInfo = await context.store.get<ParseurWebhookInformation>(
       '_newDocumentProcessed'
     );
     if (!webhookInfo) {
       return;
     }
-    await parseurCommon.deleteWebhook({
-      apiKey: context.auth.secret_text,
+    await parseurApi.deleteWebhook({
+      auth: context.auth,
       webhookId: webhookInfo.webhookId,
     });
     await context.store.delete('_newDocumentProcessed');

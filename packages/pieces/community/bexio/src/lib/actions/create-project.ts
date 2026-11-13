@@ -1,6 +1,7 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 export const createProjectAction = createAction({
   auth: bexioAuth,
@@ -8,7 +9,8 @@ export const createProjectAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Project',
   description: 'Create a new project',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: bexioOutputSchemas.projectOutputSchema,
   aiMetadata: { description: 'Creates a new Bexio project linked to a contact, with status, type, responsible user, optional dates, and optional invoicing/budget settings. Use to set up a project before tracking time or billing against it. Requires a name, project status, project type, contact, and user. Not idempotent: each call creates a separate project.', idempotent: false },
   props: {
     document_nr: Property.ShortText({

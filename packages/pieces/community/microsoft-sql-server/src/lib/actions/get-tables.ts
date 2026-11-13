@@ -8,6 +8,7 @@ export const getTablesAction = createAction({
   name: 'get_tables',
   displayName: 'Get Tables',
   description: 'Returns a list of tables in the database',
+  classification: 'SEARCH',
   audience: 'both',
   aiMetadata: {
     description:

@@ -1,0 +1,6 @@
+name,email,age,status,joined
+Ann,ann@x.com,34,Paid,2026-01-15
+bob,BOB@x.com,9,paid,2025-12-01
+Cy,cy@x.com,10,trial,
+Dee,ann@x.com,,Trial,2026-03-02
+Eve, eve@x.com ,100,PAID,not a date

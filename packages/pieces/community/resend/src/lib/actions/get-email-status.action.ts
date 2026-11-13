@@ -16,7 +16,8 @@ export const getEmailStatus = createAction({
   props: {
     email_id: Property.ShortText({
       displayName: 'Email ID',
-      description: 'The ID returned when you sent the email',
+      description: 'The ID returned by Send Email or List Sent Emails.',
+      placeholder: '4ef9a417-02e9-4d39-ad75-9611e0fcc33c',
       required: true,
     }),
   },

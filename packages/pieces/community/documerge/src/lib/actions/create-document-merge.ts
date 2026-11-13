@@ -5,6 +5,7 @@ import { DocuMergeClient } from '../common/client';
 export const createDocumentMerge = createAction({
   auth: documergeAuth,
   name: 'create_document_merge',
+  classification: 'WRITE',
   displayName: 'Create Document Merge',
   description: 'Send data to your Merge URL',
   audience: 'both',

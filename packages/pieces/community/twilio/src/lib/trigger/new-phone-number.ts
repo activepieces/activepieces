@@ -1,7 +1,6 @@
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,
-  PiecePropValueSchema,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import {
@@ -116,8 +115,8 @@ export const twilioNewPhoneNumber = createTrigger({
     voice_method: 'POST',
     sms_url: 'https://demo.twilio.com/welcome/sms/',
     sms_method: 'POST',
-    date_created: '2025-08-28T11:44:10+00:00',
-    date_updated: '2025-08-28T11:44:10+00:00',
+    date_created: 'Thu, 28 Aug 2025 11:44:10 +0000',
+    date_updated: 'Thu, 28 Aug 2025 11:44:10 +0000',
     capabilities: {
       voice: true,
       sms: true,
@@ -128,18 +127,10 @@ export const twilioNewPhoneNumber = createTrigger({
   type: TriggerStrategy.POLLING,
 
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   async test(context) {
     return await pollingHelper.test(polling, context);

@@ -14,11 +14,15 @@ import {
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { PiecesLockedBanner } from '@/app/routes/platform/setup/pieces/pieces-locked-banner';
+import {
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  StatusDot,
+  adminPageResources,
+} from '@/app/components/admin';
 import {
   CURSOR_QUERY_PARAM,
-  DataTable,
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -31,12 +35,15 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { CreatePieceSetDialog } from './create-piece-set-dialog';
 import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
 import { EditPieceSetDialog } from './edit-piece-set-dialog';
 
 export const PieceSetsTab = () => {
+  const { platform } = platformHooks.useCurrentPlatform();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [duplicatingSet, setDuplicatingSet] = useState<PieceSet | null>(null);
@@ -45,13 +52,14 @@ export const PieceSetsTab = () => {
   const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
   const limitParam = searchParams.get('limit');
   const limit = limitParam ? parseInt(limitParam, 10) : undefined;
+  const name = searchParams.get('name') ?? undefined;
 
   const {
     data: pieceSetsPage,
     isLoading,
     isError,
     refetch,
-  } = pieceSetQueries.usePieceSets({ cursor, limit });
+  } = pieceSetQueries.usePieceSets({ cursor, limit, name });
   const { mutate: deleteSet } = pieceSetMutations.useDeletePieceSet();
 
   const pieceSets = useMemo(() => pieceSetsPage?.data ?? [], [pieceSetsPage]);
@@ -68,12 +76,7 @@ export const PieceSetsTab = () => {
           />
         ),
         cell: ({ row }) => (
-          <div
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() =>
-              navigate(`/platform/pieces/piece-sets/${row.original.id}`)
-            }
-          >
+          <div className="flex items-center gap-2">
             <span className="font-medium">{row.original.name}</span>
             {row.original.isDefault && (
               <Badge variant="default">{t('Default')}</Badge>
@@ -90,7 +93,7 @@ export const PieceSetsTab = () => {
           row.original.key ? (
             <span className="font-mono text-sm">{row.original.key}</span>
           ) : (
-            <span className="text-muted-foreground">—</span>
+            <span className="text-gray-11">—</span>
           ),
       },
       {
@@ -107,20 +110,22 @@ export const PieceSetsTab = () => {
           const includesNewPieces =
             row.original.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL;
           return (
-            <Badge variant={includesNewPieces ? 'success' : 'outline'}>
+            <StatusDot tone={includesNewPieces ? 'success' : 'neutral'}>
               {includesNewPieces ? t('Yes') : t('No')}
-            </Badge>
+            </StatusDot>
           );
         },
       },
       {
         id: 'actions',
         size: 80,
+        notClickable: true,
         cell: ({ row }) => (
           <div className="flex justify-end gap-1">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  {...adminControl(AdminControl.PIECE_SETS_EDIT_OPEN)}
                   variant="ghost"
                   size="sm"
                   onClick={() => setEditingSet(row.original)}
@@ -133,6 +138,7 @@ export const PieceSetsTab = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  {...adminControl(AdminControl.PIECE_SETS_DUPLICATE_OPEN)}
                   variant="ghost"
                   size="sm"
                   onClick={() => setDuplicatingSet(row.original)}
@@ -145,6 +151,7 @@ export const PieceSetsTab = () => {
             <ConfirmationDeleteDialog
               title={t('Delete {name}', { name: row.original.name })}
               entityName={t('Piece Set')}
+              controlId={AdminControl.PIECE_SETS_DELETE_CONFIRM}
               message={t(
                 'Projects assigned to this set will be reassigned to the default set.',
               )}
@@ -153,35 +160,46 @@ export const PieceSetsTab = () => {
               }}
             >
               <Button
+                {...adminControl(AdminControl.PIECE_SETS_DELETE_OPEN)}
                 variant="ghost"
                 size="sm"
                 disabled={row.original.isDefault}
               >
-                <Trash2 className="size-4 text-destructive" />
+                <Trash2 className="size-4 text-danger-11" />
               </Button>
             </ConfirmationDeleteDialog>
           </div>
         ),
       },
     ],
-    [deleteSet, navigate, setDuplicatingSet, setEditingSet],
+    [deleteSet, setDuplicatingSet, setEditingSet],
   );
 
   return (
-    <>
-      <DashboardPageHeader
+    <AdminPage>
+      <AdminPageHeader
         title={t('Piece Sets')}
         description={t(
-          'Group pieces into sets and choose which projects can use each one',
+          'A piece set decides which pieces (actions/triggers) a project can see. It can also set required actions that a flow must include before it can be published.',
         )}
-      />
-      <PiecesLockedBanner message={t('Piece sets need a higher plan.')} />
-      <DataTable
-        emptyStateTextTitle={t('No piece sets found')}
-        emptyStateTextDescription={t(
-          'Create a piece set to control which pieces are available to specific projects',
-        )}
-        emptyStateIcon={<Layers className="size-14" />}
+        resources={adminPageResources.pieces}
+      >
+        <CreatePieceSetDialog onCreated={() => refetch()} />
+      </AdminPageHeader>
+      <AdminDataTable
+        emptyStateTextTitle={
+          platform.plan.managePiecesEnabled
+            ? t('No piece sets found')
+            : t('No piece sets yet')
+        }
+        emptyStateTextDescription={
+          platform.plan.managePiecesEnabled
+            ? t(
+                'Create a piece set to control which pieces are available to specific projects',
+              )
+            : ''
+        }
+        emptyStateIcon={<Layers />}
         columns={columns}
         filters={[
           {
@@ -200,10 +218,9 @@ export const PieceSetsTab = () => {
         isError={isError}
         errorStateEntity={t('piece sets')}
         onRetry={refetch}
-        clientFiltering={true}
-        toolbarButtons={[
-          <CreatePieceSetDialog key="create" onCreated={() => refetch()} />,
-        ]}
+        onRowClick={(pieceSet) =>
+          navigate(`/platform/pieces/piece-sets/${pieceSet.id}`)
+        }
       />
       {duplicatingSet && (
         <DuplicatePieceSetDialog
@@ -226,6 +243,6 @@ export const PieceSetsTab = () => {
           currentKey={editingSet.key ?? null}
         />
       )}
-    </>
+    </AdminPage>
   );
 };

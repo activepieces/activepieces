@@ -205,6 +205,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                     version: flowVersionMap.get(flow.id)!,
                     triggerSource: triggerSource ? {
                         schedule: triggerSource.schedule,
+                        pieceName: triggerSource.pieceName,
                     } : undefined,
                 }
             })

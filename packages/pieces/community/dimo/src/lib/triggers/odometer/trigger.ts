@@ -12,6 +12,7 @@ const TRIGGER_KEY = 'dimo-odometer-trigger';
 export const odometerTrigger = createTrigger({
 	auth: dimoAuth,
 	name: 'odometer-trigger',
+	classification: 'READ',
 	displayName: 'Odometer Trigger',
 	description: 'Triggers when vehicle odometer meets the specified condition.',
 	aiMetadata: {

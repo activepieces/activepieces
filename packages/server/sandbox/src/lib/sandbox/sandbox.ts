@@ -3,12 +3,19 @@ import { randomBytes, timingSafeEqual } from 'crypto'
 import { createServer, Server as HttpServer } from 'http'
 import path from 'path'
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
-import { createNotifyServer, createRpcClient, EngineContract, EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout, RpcTimeoutError, WorkerNotifyContract } from '@activepieces/shared'
+import { createNotifyServer, createRpcClient, createRpcServer, EngineContract, EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout, RpcTimeoutError, WorkerNotifyContract, WorkerRpcContract } from '@activepieces/shared'
 import { Socket, Server as SocketIOServer } from 'socket.io'
 import treeKill from 'tree-kill'
 import { cacheUtils } from '../cache/cache-paths'
 import { assertSafeCodeNamespace, assertSafePathSegment } from '../utils/path-safety'
 import { Sandbox, SandboxInitOptions, SandboxLogger, SandboxMount, SandboxOptions, SandboxProcessMaker, SandboxResult } from './types'
+
+const PING_INTERVAL_MS = 25_000
+const MAX_NODE_TIMER_MS = 2 ** 31 - 1
+
+function heartbeatTimeoutMs(timeLimitSeconds: number): number {
+    return Math.min(timeLimitSeconds * 1000, MAX_NODE_TIMER_MS - PING_INTERVAL_MS)
+}
 
 function assertSandboxPathUnderRoot(mount: SandboxMount): void {
     const normalized = path.posix.normalize(mount.sandboxPath)
@@ -86,6 +93,8 @@ export function createSandbox(
         const ioServer = new SocketIOServer(server, {
             path: '/worker/ws',
             maxHttpBufferSize: options.maxHttpBufferSizeBytes,
+            pingInterval: PING_INTERVAL_MS,
+            pingTimeout: heartbeatTimeoutMs(options.timeLimitSeconds),
             cors: { origin: '*' },
         })
         wireConnectionHandler(ioServer)
@@ -240,6 +249,8 @@ export function createSandbox(
                     },
                 }, log)
 
+                createRpcServer<WorkerRpcContract>(executeSocket, executeOptions.engineRpc ?? unsupportedEngineRpc, log)
+
                 timeout = setTimeout(async () => {
                     killedByTimeout = true
                     log.debug({ sandbox: { id: sandboxId } }, 'Killing sandbox by timeout')
@@ -296,6 +307,7 @@ export function createSandbox(
                     clearTimeout(timeout)
                 }
                 executeSocket?.removeAllListeners('rpc-notify')
+                executeSocket?.removeAllListeners('rpc')
                 executeProcess?.removeAllListeners('close')
                 executeProcess?.removeAllListeners('error')
             }
@@ -447,6 +459,12 @@ function authenticateHandshake({ getExpectedToken, log, sandboxId }: {
         }
         next()
     }
+}
+
+const unsupportedEngineRpc: WorkerRpcContract = {
+    async forceReinstallPiece(): Promise<void> {
+        throw new Error('Engine RPC is not supported for this execution')
+    },
 }
 
 type ProcessExitParams = {

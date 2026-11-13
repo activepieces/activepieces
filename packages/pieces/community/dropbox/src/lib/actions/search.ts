@@ -5,6 +5,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { dropboxAuth } from '../auth';
+import { dropboxCommon } from '../common';
 import { searchOutputSchema } from '../output-schemas';
 
 export const dropboxSearch = createAction({
@@ -16,31 +17,54 @@ export const dropboxSearch = createAction({
   aiMetadata: { description: 'Searches a Dropbox account for files and folders whose name or content matches a query string (minimum 3 characters), optionally scoped to a path and filtered by file status, extensions, categories, or account. Use to locate items and obtain their paths/IDs before acting on them. Read-only; repeating the same search is safe and returns the same matches.', idempotent: true },
   displayName: 'Search',
   outputSchema: searchOutputSchema,
+  propertyGroups: [
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search',
+      icon: 'filter',
+      props: ['query', 'filename_only'],
+    },
+    {
+      key: 'where',
+      display: 'section',
+      label: 'Where to Look',
+      icon: 'location',
+      props: ['path', 'file_status', 'file_extensions', 'file_categories'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['order_by', 'max_results'],
+    },
+  ],
   props: {
     query: Property.ShortText({
       displayName: 'Query',
-      description: 'The search string. Must be at least 3 characters.',
+      description: 'Words to find in file and folder names or contents.',
+      placeholder: 'invoice',
       required: true,
     }),
     path: Property.ShortText({
       displayName: 'Path',
-      description:
-        'The path to search in. If not specified, the search is performed from the root.',
+      description: 'Folder to search in. Empty: the whole Dropbox.',
+      placeholder: '/Reports',
       required: false,
     }),
     max_results: Property.Number({
       displayName: 'Max Results',
-      description:
-        'The maximum number of search results to return (up to 1000). Default is 100 if not specified.',
+      description: 'Maximum matches to return, up to 1,000. Empty: 100.',
       required: false,
     }),
     order_by: Property.StaticDropdown({
       displayName: 'Order By',
-      description: 'Specified property of the order of search results.',
+      description: 'How to sort the matches. Empty: by relevance.',
       options: {
         options: [
           { label: 'Relevance', value: 'relevance' },
-          { label: 'Modified Time', value: 'modified_time' },
+          { label: 'Last Modified', value: 'modified_time' },
         ],
       },
       defaultValue: 'relevance',
@@ -48,7 +72,7 @@ export const dropboxSearch = createAction({
     }),
     file_status: Property.StaticDropdown({
       displayName: 'File Status',
-      description: 'Restricts search to the given file status.',
+      description: 'Current or deleted files. Empty: current files.',
       options: {
         options: [
           { label: 'Active', value: 'active' },
@@ -60,40 +84,47 @@ export const dropboxSearch = createAction({
     }),
     filename_only: Property.Checkbox({
       displayName: 'Filename Only',
-      description: 'Restricts search to only match on filenames.',
+      description: 'Match names only, not file contents.',
       defaultValue: false,
       required: false,
     }),
     file_extensions: Property.ShortText({
       displayName: 'File Extensions',
-      description:
-        'Restricts search to only the extensions specified (comma-separated).',
+      description: 'Comma-separated, without the dot.',
+      placeholder: 'pdf, docx',
       required: false,
     }),
     file_categories: Property.ShortText({
       displayName: 'File Categories',
       description:
-        'Restricts search to only the file categories specified (comma-separated).',
+        'Comma-separated: image, document, pdf, spreadsheet, presentation, audio, video, folder, paper, others.',
+      placeholder: 'image, pdf',
       required: false,
     }),
     account_id: Property.ShortText({
       displayName: 'Account ID',
-      description: 'Restricts results to the given account id.',
+      description: "Team accounts: only this member's files. Starts with dbid:.",
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {
     const options = {
-      path: context.propsValue.path || '',
+      path: dropboxCommon.toApiPath(context.propsValue.path || ''),
       max_results: context.propsValue.max_results || 100,
+      order_by: toSearchOrderBy(context.propsValue.order_by),
       file_status: context.propsValue.file_status,
       filename_only: context.propsValue.filename_only,
-      file_extensions: context.propsValue.file_extensions
-        ? context.propsValue.file_extensions.split(',')
-        : undefined,
-      file_categories: context.propsValue.file_categories
-        ? context.propsValue.file_categories.split(',')
-        : undefined,
+      file_extensions: nonEmptyOrUndefined(
+        splitCommaList(context.propsValue.file_extensions)
+          .map((extension) => extension.replace(/^\./, ''))
+          .filter((extension) => extension.length > 0)
+      ),
+      file_categories: nonEmptyOrUndefined(
+        splitCommaList(context.propsValue.file_categories).map((category) =>
+          category.toLowerCase()
+        )
+      ),
       account_id: context.propsValue.account_id,
     };
 
@@ -118,3 +149,24 @@ export const dropboxSearch = createAction({
     return result.body;
   },
 });
+
+function toSearchOrderBy(value: string | undefined): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+  return value === 'modified_time' ? 'last_modified_time' : value;
+}
+
+function splitCommaList(value: string | undefined): string[] {
+  if (!value) {
+    return [];
+  }
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+}
+
+function nonEmptyOrUndefined(items: string[]): string[] | undefined {
+  return items.length > 0 ? items : undefined;
+}

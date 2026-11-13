@@ -16,7 +16,7 @@ export const createAudience = createAction({
   props: {
     name: Property.ShortText({
       displayName: 'Audience Name',
-      description: 'A label for this audience, e.g. "Newsletter Subscribers"',
+      placeholder: 'Newsletter Subscribers',
       required: true,
     }),
   },

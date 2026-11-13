@@ -8,8 +8,8 @@ export const addSubscriberToGroupAction = createAction({
 	auth: mailerLiteAuth,
 	name: 'add_subscriber_to_group',
 	classification: 'WRITE',
-	displayName: 'Add Subscriber to a Group',
-	description: 'Adds existing subscriber to a specific group.',
+	displayName: 'Add Subscriber to Group',
+	description: 'Add an existing subscriber to a group.',
 	audience: 'both',
 	aiMetadata: {
 		description:
@@ -17,6 +17,15 @@ export const addSubscriberToGroupAction = createAction({
 		idempotent: true,
 	},
 	outputSchema: addSubscriberToGroupOutputSchema,
+	propertyGroups: [
+		{
+			key: 'membership',
+			display: 'section',
+			label: 'Membership',
+			icon: 'users',
+			props: ['subscriberId', 'subscriberGroupId'],
+		},
+	],
 	props: {
 		subscriberId: mailerLiteCommon.subscriberId(true),
 		subscriberGroupId: mailerLiteCommon.subscriberGroupId(true),

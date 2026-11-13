@@ -1,16 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { lemlistAuth } from '../common/constants';
 import { campaignsDropdown } from '../common/props';
-import { lemlistApiService } from '../common/requests';
+import { lemlistLeads } from '../common/requests';
+import { lemlistSchemas } from '../common/schemas';
 
 export const resumeLeadFromAllOrSpecificCampaigns = createAction({
   auth: lemlistAuth,
   name: 'resumeLeadFromAllOrSpecificCampaigns',
   classification: 'WRITE',
   displayName: 'Resume Lead From All or Specific Campaigns',
-  description: 'Resume a lead’s outreach across all or specific campaigns.',
-  audience: 'both',
-  aiMetadata: { description: 'Resumes (restarts) outreach sequencing for a previously paused lead, identified by email. Operates in two modes: supply a campaign to resume the lead only in that campaign, or leave the campaign empty to resume across all campaigns. Idempotent: re-running leaves the lead active.', idempotent: true },
+  description: 'Resume a lead’s outreach across all or specific campaigns. Resumed leads can receive emails right away.',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Resumes outreach for a paused lead, identified by email, in one campaign or, with no campaign, in all campaigns. Resumed leads can receive real emails from running campaigns. Idempotent.',
+    idempotent: true,
+  },
   props: {
     campaignId: campaignsDropdown({ refreshers: ['auth'], required: false }),
     email: Property.ShortText({
@@ -19,10 +24,13 @@ export const resumeLeadFromAllOrSpecificCampaigns = createAction({
       required: true,
     }),
   },
-  async run({ auth, propsValue: { campaignId, email } }) {
-    return await lemlistApiService.resumeLeadInSpecificOrAllCampaigns(auth, {
-      campaignId: campaignId as string,
-      leadEmail: email as string,
+  outputSchema: lemlistSchemas.leadList,
+  async run({ auth, propsValue }) {
+    return lemlistLeads.setLeadPaused({
+      apiKey: auth.secret_text,
+      lead: propsValue.email,
+      campaignId: propsValue.campaignId,
+      paused: false,
     });
   },
 });

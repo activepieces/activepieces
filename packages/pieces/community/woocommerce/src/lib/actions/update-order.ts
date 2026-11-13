@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
   HttpMethod,
@@ -7,6 +11,7 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { wooPathId } from '../common/path-id';
 import { updateOrderOutputSchema } from '../output-schemas';
 
 export const wooUpdateOrder = createAction({
@@ -22,19 +27,41 @@ export const wooUpdateOrder = createAction({
   },
   auth: wooAuth,
   outputSchema: updateOrderOutputSchema,
+  propertyGroups: [
+    {
+      key: 'order',
+      display: 'section',
+      label: 'Order to Update',
+      icon: 'inbox',
+      props: ['id'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'sliders',
+      props: ['changes_info', 'status', 'transaction_id', 'customer_note'],
+    },
+  ],
   props: {
     id: Property.ShortText({
       displayName: 'Order ID',
-      description: 'Enter the order ID',
+      description: 'The number after # in WooCommerce > Orders.',
+      placeholder: '123',
       required: true,
+    }),
+    changes_info: Property.MarkDown({
+      value: 'Empty fields keep their current value.',
+      variant: MarkdownVariant.INFO,
     }),
     status: Property.StaticDropdown({
       displayName: 'Status',
-      description: 'New status for the order',
+      description: 'New status for the order.',
+      width: 'half',
       required: false,
       options: {
         options: [
-          { label: 'Pending', value: 'pending' },
+          { label: 'Pending payment', value: 'pending' },
           { label: 'Processing', value: 'processing' },
           { label: 'On hold', value: 'on-hold' },
           { label: 'Completed', value: 'completed' },
@@ -46,18 +73,20 @@ export const wooUpdateOrder = createAction({
     }),
     customer_note: Property.LongText({
       displayName: 'Customer Note',
-      description: 'Note shown to the customer',
+      description: 'The note the customer left at checkout.',
       required: false,
     }),
     transaction_id: Property.ShortText({
       displayName: 'Transaction ID',
-      description: 'Payment transaction reference',
+      description: 'Payment reference from your payment gateway.',
+      width: 'half',
       required: false,
     }),
   },
   async run(configValue) {
     const trimmedBaseUrl = configValue.auth.props.baseUrl.replace(/\/$/, '');
-    const { id, status, customer_note, transaction_id } = configValue.propsValue;
+    const { id, status, customer_note, transaction_id } =
+      configValue.propsValue;
 
     const body: Record<string, string> = {};
     if (status) {
@@ -72,7 +101,7 @@ export const wooUpdateOrder = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.PUT,
-      url: `${trimmedBaseUrl}/wp-json/wc/v3/orders/${id}`,
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/orders/${wooPathId.encode({ id, label: 'Order ID' })}`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: configValue.auth.props.consumerKey,

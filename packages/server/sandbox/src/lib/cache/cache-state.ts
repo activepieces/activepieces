@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises'
+import { readFile, rm } from 'node:fs/promises'
 import { join } from 'path'
 import { isNil } from '@activepieces/core-utils'
 import { fileSystemUtils, memoryLock } from '@activepieces/server-utils'
@@ -48,6 +48,9 @@ export const cacheState = (folderPath: string) => {
                     }
                 },
             })
+        },
+        clear: async (): Promise<void> => {
+            await rm(cachePath(folderPath), { force: true })
         },
         saveCache: async (key: string, value: string): Promise<CacheMap> => {
             await fileSystemUtils.threadSafeMkdir(folderPath)

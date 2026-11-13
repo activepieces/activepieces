@@ -5,7 +5,7 @@ import {
 	OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 import { addContactToCampaign } from './lib/action/add-contact-to-campaign';
 import { addFileToRecord } from './lib/action/add-file-to-record';
@@ -126,7 +126,8 @@ export const salesforceAuth = PieceAuth.OAuth2({
 		environment: Property.ShortText({
 			displayName: 'Salesforce Domain',
 			description:
-				'Enter your Salesforce domain. Use "login.salesforce.com" for Production, "test.salesforce.com" for Sandbox, or your custom My Domain (e.g. "mycompany.my.salesforce.com" or "mycompany.sandbox.my.salesforce.com").',
+				'login.salesforce.com for production, test.salesforce.com for a sandbox, or your My Domain.',
+			placeholder: 'mycompany.my.salesforce.com',
 			required: true,
 			defaultValue: 'login.salesforce.com',
 		}),
@@ -138,12 +139,32 @@ export const salesforceAuth = PieceAuth.OAuth2({
 	scope: ['refresh_token', 'full', 'api'],
 	pkce: true,
 	pkceMethod: 'S256',
+	getConnectionIdentifier: async ({ auth }) => {
+		const identityUrl = auth.data['id'];
+		if (typeof identityUrl !== 'string' || !identityUrl.startsWith('https://')) {
+			return undefined;
+		}
+		try {
+			const response = await httpClient.sendRequest<{ email?: string; username?: string }>({
+				method: HttpMethod.GET,
+				url: identityUrl,
+				headers: {
+					Authorization: `Bearer ${auth.access_token}`,
+					Accept: 'application/json',
+				},
+				timeout: 5000,
+			});
+			return response.body.email || response.body.username || undefined;
+		} catch {
+			return undefined;
+		}
+	},
 });
 
 export const salesforce = createPiece({
 	displayName: 'Salesforce',
 	description: 'CRM software solutions and enterprise cloud computing',
-	minimumSupportedRelease: '0.87.0',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/salesforce.png',
 	authors: [
 		'HKudria',
@@ -267,6 +288,12 @@ export const salesforce = createPiece({
 			authMapping: async (auth) => ({
 				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
 			}),
+			props: {
+				url: {
+					description: 'Full URL, or a path relative to your Salesforce instance URL.',
+					placeholder: '/services/data/v56.0/sobjects/Account',
+				},
+			},
 		}),
 	],
 	triggers: [

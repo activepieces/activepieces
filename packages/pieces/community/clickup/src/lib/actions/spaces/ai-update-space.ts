@@ -25,25 +25,48 @@ export const clickupUpdateSpace = createAction({
       displayName: 'Space Name',
       required: false,
     }),
-    multiple_assignees: Property.Checkbox({
-      description: 'Allow tasks in this space to have multiple assignees',
+    multiple_assignees: clickupCommon.optionalBoolean({
       displayName: 'Multiple Assignees',
-      required: false,
+      description:
+        'Allow tasks in this space to have multiple assignees. Leave empty or pick Leave unchanged to keep the current setting.',
     }),
   },
   async run(configValue) {
-    const { space_id, name, multiple_assignees } = configValue.propsValue;
-    const body: Record<string, unknown> = {};
+    const { space_id, name } = configValue.propsValue;
+    const accessToken = getAccessTokenOrThrow(configValue.auth);
+    const multiple_assignees =
+      clickupCommon.optionalBooleanValue(
+        configValue.propsValue.multiple_assignees
+      ) ??
+      (await currentMultipleAssignees({
+        accessToken,
+        spaceId: String(space_id),
+      }));
+    const body: Record<string, unknown> = { multiple_assignees };
     if (name !== undefined) body['name'] = name;
-    if (multiple_assignees !== undefined)
-      body['multiple_assignees'] = multiple_assignees;
     const response = await callClickUpApi(
       HttpMethod.PUT,
       `space/${space_id}`,
-      getAccessTokenOrThrow(configValue.auth),
+      accessToken,
       body
     );
 
     return response.body;
   },
 });
+
+async function currentMultipleAssignees({
+  accessToken,
+  spaceId,
+}: {
+  accessToken: string;
+  spaceId: string;
+}): Promise<boolean> {
+  const response = await callClickUpApi<{ multiple_assignees: boolean }>(
+    HttpMethod.GET,
+    `space/${spaceId}`,
+    accessToken,
+    undefined
+  );
+  return response.body.multiple_assignees;
+}

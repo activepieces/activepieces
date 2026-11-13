@@ -13,6 +13,7 @@ export const signNowOAuth2Auth = PieceAuth.OAuth2({
   // SignNow does not accept access_type or prompt params — suppress both with empty strings
   extra: { access_type: '' },
   prompt: 'omit',
+  getConnectionIdentifier: async ({ auth }) => fetchSignNowUserLabel(auth.access_token),
 });
 
 export const signNowApiKeyAuth = PieceAuth.CustomAuth({
@@ -48,6 +49,7 @@ export const signNowApiKeyAuth = PieceAuth.CustomAuth({
       return { valid: false, error: (e as Error).message };
     }
   },
+  getConnectionIdentifier: async ({ auth }) => fetchSignNowUserLabel(auth.apiKey),
 });
 
 export const signNowAuth = [signNowOAuth2Auth, signNowApiKeyAuth];
@@ -63,3 +65,29 @@ export function getSignNowBearerToken(auth: SignNowAuthValue): string {
   }
   return (auth as Extract<SignNowAuthValue, { type: AppConnectionType.CUSTOM_AUTH }>).props.apiKey.trim();
 }
+
+async function fetchSignNowUserLabel(token: string): Promise<string | undefined> {
+  try {
+    const response = await httpClient.sendRequest<SignNowUser>({
+      method: HttpMethod.GET,
+      url: 'https://api.signnow.com/user',
+      headers: {
+        Authorization: `Bearer ${token.trim()}`,
+        Accept: 'application/json',
+      },
+      timeout: 5000,
+    });
+    const user = response.body;
+    const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+    return user.primary_email || user.emails?.find(Boolean) || fullName || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+type SignNowUser = {
+  primary_email?: string;
+  emails?: string[];
+  first_name?: string;
+  last_name?: string;
+};

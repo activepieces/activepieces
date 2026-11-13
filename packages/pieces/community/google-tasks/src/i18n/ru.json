@@ -26,5 +26,11 @@
   "DELETE": "УДАЛИТЬ",
   "HEAD": "HEAD",
   "New Task": "Новая задача",
-  "Triggers when a task is created": "Триггеры при создании задачи"
+  "Triggers when a task is created": "Триггеры при создании задачи",
+  "Task List": "Список задач",
+  "Google Tasks keeps the date only; the time is ignored.": "Google Tasks сохраняет только дату; время игнорируется.",
+  "Add the task already checked off.": "Добавить задачу сразу отмеченной как выполненная.",
+  "Triggers when a task is added or edited in a list.": "Срабатывает, когда задача добавлена или изменена в списке.",
+  "Markdown": "Markdown",
+  "Edits to a task fire this trigger again, so the same task can arrive more than once.": "Изменения задачи снова запускают этот триггер, поэтому одна и та же задача может прийти несколько раз."
 }

@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { GoogleTrendsSearchConfig, SerpApiEngine } from '../types';
@@ -9,20 +9,37 @@ export const googleTrendsSearch = createAction({
   name: 'google_trends_search',
   classification: 'SEARCH',
   displayName: 'Google Trends Search',
-  description: 'Discover trending keywords over time to inform content strategy and market research with geographic insights.',
+  description: 'See how interest in a search term changes over time and by region.',
   audience: 'human',
   aiMetadata: { description: 'Queries Google Trends via SerpApi for interest in a keyword over time and across regions. Use to gauge a topic\'s popularity trajectory, compare geographic interest, or find related/rising queries for content and market research. Read-only and idempotent; requires the query, a SerpApi API key, and a chosen data type (interest over time, by region, related topics, or related queries).', idempotent: true },
   outputSchema: googleTrendsSearchOutputSchema,
+  propertyGroups: [
+    { key: 'search', display: 'section', label: 'Search', icon: 'text', props: ['cost_note', 'query'] },
+    {
+      key: 'measure',
+      display: 'section',
+      label: 'What to measure',
+      icon: 'sliders',
+      props: ['data_type', 'time_period', 'property_filter', 'category'],
+    },
+    { key: 'region', display: 'section', label: 'Region & language', icon: 'location', props: ['geo', 'hl'] },
+  ],
   props: {
+    cost_note: Property.MarkDown({
+      value: 'Every new search counts against your SerpApi plan. Repeating the same search within an hour is free if cached results are allowed.',
+      variant: MarkdownVariant.INFO,
+    }),
+
     query: Property.ShortText({
       displayName: 'Search Query',
-      description: 'The keyword or topic to analyze trends for (e.g., "artificial intelligence", "cryptocurrency", "climate change")',
+      description: 'Up to 5 terms, comma-separated, for Interest Over Time or Compare Terms by Region.',
       required: true,
+      placeholder: 'coffee, tea',
     }),
 
     hl: Property.StaticDropdown({
-      displayName: 'Host Language (hl)',
-      description: 'Language for search results',
+      displayName: 'Language',
+      description: 'Language of the results.',
       required: false,
       defaultValue: 'en',
       options: {
@@ -183,8 +200,8 @@ export const googleTrendsSearch = createAction({
     }),
 
     geo: Property.StaticDropdown({
-      displayName: 'Geographic Location',
-      description: 'Location from where you want the search to originate.',
+      displayName: 'Region',
+      description: 'Region whose search interest is measured.',
       required: false,
       defaultValue: '',
       options: {
@@ -435,13 +452,13 @@ export const googleTrendsSearch = createAction({
 
     data_type: Property.StaticDropdown({
       displayName: 'Data Type',
-      description: 'Type of trends data to retrieve',
+      description: 'What to measure about the search term.',
       required: false,
       defaultValue: 'TIMESERIES',
       options: {
         options: [
           { label: 'Interest Over Time', value: 'TIMESERIES' },
-          { label: 'Compared breakdown by region', value: 'GEO_MAP' },
+          { label: 'Compare Terms by Region', value: 'GEO_MAP' },
           { label: 'Interest by Region', value: 'GEO_MAP_0' },
           { label: 'Related Topics', value: 'RELATED_TOPICS' },
           { label: 'Related Queries', value: 'RELATED_QUERIES' },
@@ -451,9 +468,10 @@ export const googleTrendsSearch = createAction({
 
     time_period: Property.StaticDropdown({
       displayName: 'Time Period',
-      description: 'Time range for the trends data',
+      description: 'How far back to look.',
       required: false,
       defaultValue: 'today 12-m',
+      width: 'half',
       options: {
         options: [
           { label: 'Past Hour', value: 'now 1-H' },
@@ -471,16 +489,17 @@ export const googleTrendsSearch = createAction({
 
     category: Property.Number({
       displayName: 'Category',
-      description: 'Google Trends category ID (0 for all categories)',
+      description: "Category ID from SerpApi's Google Trends list; 0 means all.",
       required: false,
       defaultValue: 0,
     }),
 
     property_filter: Property.StaticDropdown({
-      displayName: 'Property Filter (grop)',
-      description: 'Filter by Google property',
+      displayName: 'Search Source',
+      description: 'Which Google search the interest comes from.',
       required: false,
       defaultValue: '',
+      width: 'half',
       options: {
         options: [
           { label: 'Web Search', value: '' },
@@ -493,40 +512,43 @@ export const googleTrendsSearch = createAction({
     }),
 
     no_cache: Property.StaticDropdown({
-      displayName: 'No Cache',
-      description: 'Force SerpApi to fetch the Google results even if a cached version is already present.',
+      displayName: 'Cached Results',
+      description: 'Cached results are free and up to an hour old.',
       required: false,
       defaultValue: 'false',
+      advanced: true,
       options: {
         options: [
-          { label: 'false (Allow cache)', value: 'false' },
-          { label: 'true (Force fresh results)', value: 'true' },
+          { label: 'Allow cached results', value: 'false' },
+          { label: 'Always run a new search', value: 'true' },
         ],
       },
     }),
 
     async: Property.StaticDropdown({
-      displayName: 'Async',
-      description: 'Defines the way you want to submit your search to SerpApi. It can be set to false (default) to open an HTTP connection and keep it open until you got your search results, or true to just submit your search to SerpApi and retrieve them later.',
+      displayName: 'Search Mode',
+      description: 'The ID-only option gives no results and needs cached results allowed.',
       required: false,
       defaultValue: 'false',
+      advanced: true,
       options: {
         options: [
-          { label: 'false (Synchronous)', value: 'false' },
-          { label: 'true (Asynchronous)', value: 'true' },
+          { label: 'Wait for results', value: 'false' },
+          { label: 'Return the search ID only', value: 'true' },
         ],
       },
     }),
 
     output: Property.StaticDropdown({
-      displayName: 'Output',
-      description: 'Defines the final output format you want.',
+      displayName: 'Response Format',
+      description: 'JSON gives structured data; HTML is the raw results page.',
       required: false,
       defaultValue: 'json',
+      advanced: true,
       options: {
         options: [
-          { label: 'JSON (Structured)', value: 'json' },
-          { label: 'HTML (Raw)', value: 'html' },
+          { label: 'JSON', value: 'json' },
+          { label: 'Raw HTML', value: 'html' },
         ],
       },
     }),

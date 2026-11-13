@@ -6,6 +6,7 @@ import { jungleGridCommon } from '../common';
 export const submitJob = createAction({
   auth: jungleGridAuth,
   name: 'submit_job',
+  classification: 'WRITE',
   displayName: 'Submit Job',
   description:
     'Submit a Jungle Grid job and return immediately with job metadata. This action does not wait for completion.',

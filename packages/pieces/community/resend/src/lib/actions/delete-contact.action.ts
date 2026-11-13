@@ -14,6 +14,15 @@ export const deleteContact = createAction({
   description: 'Remove a contact from an audience',
   audience: 'both',
   aiMetadata: { description: 'Permanently removes a contact from a Resend audience, identified by audience ID and contact ID. Use this to delete a subscriber from a list. Effectively idempotent — once removed, repeating the call has no further effect.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'contact',
+      display: 'section',
+      label: 'Contact to Delete',
+      icon: 'user',
+      props: ['audience_id', 'contact_id'],
+    },
+  ],
   props: {
     audience_id: resendProps.audienceId,
     contact_id: resendProps.contactId,

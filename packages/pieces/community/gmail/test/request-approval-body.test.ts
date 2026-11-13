@@ -22,10 +22,11 @@ vi.mock('../src/lib/auth', () => ({
 import { requestApprovalInEmail } from '../src/lib/actions/request-approval-in-email';
 
 const RESUME_URL = 'https://ap.test/resume';
+const PUBLIC_RESUME_URL = 'https://embed.example.com/resume';
 
 type ApprovalContext = Parameters<typeof requestApprovalInEmail.run>[0];
 
-function buildContext(propsValue: Record<string, unknown>): ApprovalContext {
+function buildContext(propsValue: Record<string, unknown>, publicResumeUrl?: string): ApprovalContext {
   const context = createMockActionContext({
     propsValue: {
       receiver: 'approver@example.com',
@@ -38,7 +39,7 @@ function buildContext(propsValue: Record<string, unknown>): ApprovalContext {
     ...context,
     run: {
       ...context.run,
-      createWaitpoint: async () => ({ id: 'waitpoint-1', resumeUrl: RESUME_URL }),
+      createWaitpoint: async () => ({ id: 'waitpoint-1', resumeUrl: RESUME_URL, publicResumeUrl }),
       waitForWaitpoint: () => undefined,
     },
   } as unknown as ApprovalContext;
@@ -77,5 +78,15 @@ describe('request approval in email — body type', () => {
     const html = await sentHtml();
     expect(html).toContain('<p><strong>bold</strong></p>');
     expect(html).toContain(`${RESUME_URL}/confirm`);
+  });
+
+  test('the email links to the public resume url when the server sends one', async () => {
+    await requestApprovalInEmail.run(
+      buildContext({ body_type: 'plain_text', body: 'Please approve' }, PUBLIC_RESUME_URL)
+    );
+
+    const html = await sentHtml();
+    expect(html).toContain(`${PUBLIC_RESUME_URL}/confirm`);
+    expect(html).not.toContain(`${RESUME_URL}/confirm`);
   });
 });

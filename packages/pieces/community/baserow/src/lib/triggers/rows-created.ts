@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import { baserowCommon, makeClient } from '../common';
-import { createWebhookTriggerHooks, dynamicWebhookInstructions } from '../common/webhook-trigger';
+import { createWebhookTriggerHooks, dynamicWebhookInstructions, webhookUrlInfo } from '../common/webhook-trigger';
 import { listRowsOutputSchema } from '../output-schemas';
 
 const triggerHooks = createWebhookTriggerHooks({
@@ -15,15 +15,31 @@ export const rowsCreatedTrigger = createTrigger({
   outputSchema: listRowsOutputSchema,
   auth: baserowAuth,
   displayName: 'New Rows (Batch)',
-  description:
-    'Triggers when new rows are created in a Baserow table. Returns all rows from the event as a single batch.',
+  description: 'Triggers once with all the rows created together, as one list.',
   aiMetadata: {
     description:
       'Fires when one or more new rows are created in the selected Baserow table, delivering all rows from a single create event together as one batch. Use to process bulk inserts at once; for one event per row use New Row.',
   },
   type: TriggerStrategy.WEBHOOK,
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Table to Watch',
+      icon: 'file',
+      props: ['table_id'],
+    },
+    {
+      key: 'setup',
+      display: 'section',
+      label: 'Webhook',
+      icon: 'send',
+      props: ['webhook_url', 'instructions'],
+    },
+  ],
   props: {
     table_id: baserowCommon.tableId(),
+    webhook_url: webhookUrlInfo(),
     instructions: dynamicWebhookInstructions('Rows created'),
   },
   sampleData: {

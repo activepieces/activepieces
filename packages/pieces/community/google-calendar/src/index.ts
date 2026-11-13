@@ -97,6 +97,12 @@ export const googleCalendar = createPiece({
           Authorization: `Bearer ${await getAccessToken(auth as GoogleCalendarAuthValue)}`,
         };
       },
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${googleCalendarCommon.baseUrl}`,
+          placeholder: '/calendars/primary/events',
+        },
+      },
     }),
   ],
   triggers: [calendarEventChanged,

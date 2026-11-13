@@ -5,6 +5,7 @@ import { chatDropdown } from '../common/properties';
 export const sendFileToExistingChat = createAction({
   auth: timelinesAiAuth,
   name: 'sendFileToExistingChat',
+  classification: 'WRITE',
   displayName: 'Send File to Existing Chat',
   description: 'Similar to above: send a file attachment to a chat using URL or file input and name.',
   audience: 'both',

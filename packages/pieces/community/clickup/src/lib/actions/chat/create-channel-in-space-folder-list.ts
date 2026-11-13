@@ -9,57 +9,84 @@ export const createClickupChannelInSpaceFolderOrList = createAction({
   auth: clickupAuth,
   name: 'create_channel_in_space_folder_list',
   classification: 'WRITE',
-  description:
-    'Creates a channel in a ClickUp workspace in a space, folder or list',
+  description: 'Create a chat channel attached to a space, folder or list.',
   audience: 'both',
   aiMetadata: { description: 'Create a Chat channel attached to a specific location (space, folder, or list) in a ClickUp workspace, set via the location type and ID. Each call creates a new channel, so it is not idempotent. Use this variant when the channel should be tied to a location; use Create Channel for a standalone workspace channel.', idempotent: false },
   displayName: 'Create Channel in Space/Folder/List',
   props: {
     workspace_id: clickupCommon.workspace_id(),
     description: Property.ShortText({
-      description: 'Description of the channel',
-      displayName: 'Channel Description',
+      description: 'What the channel is for.',
+      displayName: 'Description',
       required: false,
       defaultValue: '',
+      width: 'half',
     }),
     topic: Property.ShortText({
-      description: 'Topic of the channel',
-      displayName: 'Channel Topic',
+      description: 'A short line shown at the top of the channel.',
+      displayName: 'Topic',
       required: false,
       defaultValue: '',
+      width: 'half',
     }),
     locationType: Property.StaticDropdown({
-      description: 'Type of location',
-      displayName: 'Location Type',
+      description: 'What the channel belongs to.',
+      displayName: 'Attach To',
       required: true,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Folder', value: 'folder' },
           { label: 'Space', value: 'space' },
+          { label: 'Folder', value: 'folder' },
           { label: 'List', value: 'list' },
         ],
       },
       defaultValue: 'folder',
     }),
     locationId: Property.ShortText({
-      description: 'ID of the location',
+      description: 'The number at the end of the space, folder or list URL.',
       displayName: 'Location ID',
       required: true,
+      placeholder: 'e.g. 901204567890',
     }),
-    // TODO: add user ids
     visibility: Property.StaticDropdown({
-      description: 'Visibility of the channel',
-      displayName: 'Channel Visibility',
+      description: 'Who can see and join the channel.',
+      displayName: 'Visibility',
       required: true,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Public', value: 'PUBLIC' },
-          { label: 'Private', value: 'PRIVATE' },
+          {
+            label: 'Public',
+            value: 'PUBLIC',
+            icon: 'users',
+          },
+          {
+            label: 'Private',
+            value: 'PRIVATE',
+            icon: 'user',
+          },
         ],
       },
-      defaultValue: 'public',
+      defaultValue: 'PUBLIC',
     }),
   },
+  propertyGroups: [
+    {
+      key: 'location',
+      display: 'section',
+      label: 'Location',
+      icon: 'inbox',
+      props: ['workspace_id', 'locationType', 'locationId'],
+    },
+    {
+      key: 'channel',
+      display: 'section',
+      label: 'Channel',
+      icon: 'text',
+      props: ['description', 'topic', 'visibility'],
+    },
+  ],
 
   outputSchema: channelOutputSchema,
   async run(configValue) {

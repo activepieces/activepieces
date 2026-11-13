@@ -19,6 +19,22 @@ export const appendToPage = createAction({
       'Appends new block content (parsed from markdown) to the end of an existing Notion page or block. Use when an agent must add to a page without altering existing content; requires the target page/block id. Not idempotent: each call appends again, duplicating the content on repeat.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'page',
+      display: 'section',
+      label: 'Page',
+      icon: 'file',
+      props: ['pageId'],
+    },
+    {
+      key: 'content',
+      display: 'section',
+      label: 'Content',
+      icon: 'text',
+      props: ['content'],
+    },
+  ],
   props: {
     pageId: notionCommon.page,
     content: Property.LongText({

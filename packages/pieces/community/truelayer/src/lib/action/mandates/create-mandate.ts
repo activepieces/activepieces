@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const createMandate = createAction({
   auth: trueLayerCommon.auth,
   name: 'create-mandate',
+  classification: 'WRITE',
   displayName: 'Create Mandate',
   description: 'Create a new mandate. This API must be called using a backend bearer token.',
   audience: 'both',

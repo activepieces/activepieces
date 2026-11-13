@@ -28,5 +28,6 @@
   "Record Deleted": "Record Deleted",
   "Triggers when a new record is added to the selected table.": "Triggers when a new record is added to the selected table.",
   "Triggers when a record is updated in the selected table.": "Triggers when a record is updated in the selected table.",
-  "Triggers when a record is deleted from the selected table.": "Triggers when a record is deleted from the selected table."
+  "Triggers when a record is deleted from the selected table.": "Triggers when a record is deleted from the selected table.",
+  "Empty fields keep their current value.": "Kolom yang kosong mempertahankan nilainya saat ini."
 }

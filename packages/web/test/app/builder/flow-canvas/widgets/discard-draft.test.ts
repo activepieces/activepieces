@@ -15,6 +15,7 @@ const makePublishedFlow = () =>
 
 const makeDeps = (overrides: Partial<RunDiscardDeps> = {}): RunDiscardDeps => ({
   flow: { id: 'flow-1', publishedVersionId: 'v3' },
+  savePendingEdits: vi.fn(async () => undefined),
   overWriteDraftWithVersion: vi.fn(async () => undefined),
   fetchFlow: vi.fn(async () => makePublishedFlow()),
   setFlow: vi.fn(),
@@ -34,6 +35,35 @@ describe('runDiscard', () => {
     expect(deps.fetchFlow).not.toHaveBeenCalled();
     expect(deps.setFlow).not.toHaveBeenCalled();
     expect(deps.setVersion).not.toHaveBeenCalled();
+  });
+
+  it('saves the pending edits before it overwrites the draft', async () => {
+    const order: string[] = [];
+    const deps = makeDeps({
+      savePendingEdits: vi.fn(async () => {
+        order.push('save');
+      }),
+      overWriteDraftWithVersion: vi.fn(async () => {
+        order.push('overwrite');
+      }),
+    });
+
+    await runDiscard(deps);
+
+    expect(order).toEqual(['save', 'overwrite']);
+  });
+
+  it('stops quietly when a pending edit fails to save', async () => {
+    const deps = makeDeps({
+      savePendingEdits: vi.fn(async () => {
+        throw new Error('Request failed with status code 400');
+      }),
+    });
+
+    await expect(runDiscard(deps)).resolves.toBeUndefined();
+
+    expect(deps.overWriteDraftWithVersion).not.toHaveBeenCalled();
+    expect(deps.setFlow).not.toHaveBeenCalled();
   });
 
   it('overwrites the draft with the published version content first', async () => {

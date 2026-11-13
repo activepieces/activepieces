@@ -1,8 +1,9 @@
-import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { shortIoApiCall } from '../common/client';
 import { shortIoAuth } from '../common/auth';
+import { shortIoLinks } from '../common/links';
+import { shortIoSchemas } from '../common/output-schemas';
 import { domainIdDropdown } from '../common/props';
+import { shortIoStats } from '../common/stats';
 
 export const domainStatisticsAction = createAction({
   auth: shortIoAuth,
@@ -10,8 +11,13 @@ export const domainStatisticsAction = createAction({
   classification: 'READ',
   displayName: 'Domain Statistics',
   description: 'Retrieve usage stats (clicks, conversions) for a domain within a time period.',
-  audience: 'both',
-  aiMetadata: { description: 'Retrieves aggregate click and link statistics for a whole Short.io domain over a chosen time window — either a preset range (today, last 7/30 days, this/last month) or a custom start/end date. Use to report on overall domain performance rather than a single link. Custom range requires both start and end dates; read-only and idempotent.', idempotent: true },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Retrieves aggregate click and link statistics for a whole Short.io domain over a preset period (today, last 7/30 days, this/last month) or a custom start/end date. Custom range requires both dates. Read-only and idempotent.',
+    idempotent: true,
+  },
+  outputSchema: shortIoSchemas.legacyDomainStats,
   props: {
     domainId: {
       ...domainIdDropdown,
@@ -30,20 +36,21 @@ export const domainStatisticsAction = createAction({
           { label: 'Yesterday', value: 'yesterday' },
           { label: 'Last 7 Days', value: 'last7' },
           { label: 'Last 30 Days', value: 'last30' },
-          { label: 'This Month', value: 'thisMonth' },
-          { label: 'Last Month', value: 'lastMonth' },
+          { label: 'This Month', value: 'month' },
+          { label: 'Last Month', value: 'lastmonth' },
+          { label: 'All Time', value: 'total' },
           { label: 'Custom Date Range', value: 'custom' },
         ],
       },
     }),
     startDate: Property.DateTime({
       displayName: 'Start Date',
-      description: 'Start date for statistics (required when period is "Custom").',
+      description: 'Start date for statistics (required when period is "Custom"). The calendar day you pick is sent as is.',
       required: false,
     }),
     endDate: Property.DateTime({
       displayName: 'End Date',
-      description: 'End date for statistics (required when period is "Custom").',
+      description: 'End date for statistics (required when period is "Custom"). The calendar day you pick is sent as is.',
       required: false,
     }),
     tz: Property.ShortText({
@@ -67,90 +74,23 @@ export const domainStatisticsAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const { domainId: domainString, period, startDate, endDate, tz, clicksChartInterval } = propsValue;
-
-    if (!domainString) {
-      throw new Error('Domain is required. Please select a domain.');
-    }
-
-    const domainObject = JSON.parse(domainString as string);
-
-    if (period === 'custom') {
-      if (!startDate || !endDate) {
-        throw new Error('Start Date and End Date are both required when using custom period.');
-      }
-      
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      
-      if (start >= end) {
-        throw new Error('Start date must be before end date.');
-      }
-    }
-
-    if (tz && tz.trim() !== '') {
-      const tzValue = tz.trim();
-      if (tzValue.length < 3 || tzValue.includes(' ')) {
-        throw new Error('Invalid timezone format. Use standard timezone names like UTC, America/New_York, Europe/London.');
-      }
-    }
-
-    const query: Record<string, string> = {
-      period,
+    const domain = shortIoLinks.parseDomainProp(propsValue.domainId);
+    const stats = await shortIoStats.domainStatistics({
+      auth,
+      domainId: domain.id,
+      period: propsValue.period,
+      startDate: propsValue.startDate,
+      endDate: propsValue.endDate,
+      tz: propsValue.tz,
+      clicksChartInterval: propsValue.clicksChartInterval,
+      ignoreDatesForPresets: true,
+    });
+    const clicks = Number(stats['clicks'] ?? 0);
+    const links = Number(stats['links'] ?? 0);
+    return {
+      success: true,
+      message: `Retrieved statistics for ${propsValue.period}: ${clicks} clicks across ${links} links`,
+      data: stats,
     };
-
-    if (period === 'custom' && startDate && endDate) {
-      query['startDate'] = new Date(startDate).toISOString().split('T')[0];
-      query['endDate'] = new Date(endDate).toISOString().split('T')[0];
-    }
-
-    if (tz && tz.trim() !== '') query['tz'] = tz.trim();
-    if (clicksChartInterval) query['clicksChartInterval'] = clicksChartInterval;
-
-    try {
-      const response = await shortIoApiCall({
-        method: HttpMethod.GET,
-        auth,
-        url: `https://statistics.short.io/statistics/domain/${domainObject.id}`,
-        query,
-      });
-
-      const stats = response as any;
-      const clicks = stats['clicks'] || 0;
-      const links = stats['links'] || 0;
-      const periodLabel = period === 'custom' ? 'custom period' : period.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
-
-      return {
-        success: true,
-        message: `Retrieved statistics for ${periodLabel}: ${clicks} clicks across ${links} links`,
-        data: response,
-      };
-    } catch (error: any) {
-      if (error.message.includes('400')) {
-        throw new Error(
-          'Invalid request parameters. Please check your date range, timezone, and other settings.'
-        );
-      }
-      
-      if (error.message.includes('401') || error.message.includes('403')) {
-        throw new Error(
-          'Authentication failed or insufficient permissions. Please check your API key and domain access.'
-        );
-      }
-      
-      if (error.message.includes('404')) {
-        throw new Error(
-          'Domain not found. Please verify the domain exists and you have access to its statistics.'
-        );
-      }
-      
-      if (error.message.includes('429')) {
-        throw new Error(
-          'Rate limit exceeded. Please wait a moment before trying again.'
-        );
-      }
-
-      throw new Error(`Failed to retrieve domain statistics: ${error.message}`);
-    }
   },
 });

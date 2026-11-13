@@ -7,8 +7,9 @@ import { legacyGetAttachmentOutputSchema } from '../output-schemas';
 export const getIssueAttachmentAction = createAction({
     auth: jiraCloudAuth,
     name: 'get-issue-attachment',
+    classification: 'READ',
     displayName: 'Get Issue Attachment',
-    description: 'Retrieves an attachment from an issue.',
+    description: "Gets an attachment's details and downloads its file.",
     audience: 'human',
     aiMetadata: {
         description:
@@ -19,6 +20,8 @@ export const getIssueAttachmentAction = createAction({
     props: {
         attachmentId: Property.ShortText({
             displayName: 'Attachment ID',
+            description: "Found in a Get Issue step's output, under fields → attachment.",
+            placeholder: '10001',
             required: true
         })
     },

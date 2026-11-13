@@ -11,7 +11,7 @@ export const sendEmail = createAction({
   classification: 'WRITE',
   displayName: 'Send Email',
   description: 'Sends an email using the Maileroo API.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description: 'Sends a custom email through Maileroo with inline subject and body content (plain text or HTML), optionally with CC/BCC, reply-to, file attachments, and open/click tracking. Choose this to compose and deliver a one-off message; use the template action instead when the body comes from a saved Maileroo template. The sender address must belong to a verified domain, and the content type prop must match whether the content is plain or HTML. Not idempotent: each call dispatches a new email.',
     idempotent: false,

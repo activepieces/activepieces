@@ -25,6 +25,7 @@ import type { PolyDocParams } from '../common/types';
 export const convertToPdf = createAction({
   auth: polydocAuth,
   name: 'convert_to_pdf',
+  classification: 'WRITE',
   displayName: 'Convert to PDF',
   description: 'Convert HTML, a URL, or a saved template to a PDF.',
   aiMetadata: {

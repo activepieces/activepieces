@@ -2,14 +2,16 @@ import { gristAuth } from '../..';
 import { createAction } from '@activepieces/pieces-framework';
 import { commonProps } from '../common/props';
 import { GristAPIClient, transformTableColumnValues } from '../common/helpers';
+import { gristCreateRecordOutputSchema } from '../output-schemas';
 
 export const gristCreateRecordAction = createAction({
   auth: gristAuth,
   name: 'grist-create-record',
+  outputSchema: gristCreateRecordOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Record',
   description: 'Creates a new record in specific table.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Adds one new row to a Grist table, mapping the values you supply onto that table\'s columns. Use it to append data to a known document/table; requires the document and table identifiers. Not idempotent — each call inserts another record even with identical input.', idempotent: false },
   props: {
     workspace_id: commonProps.workspace_id,

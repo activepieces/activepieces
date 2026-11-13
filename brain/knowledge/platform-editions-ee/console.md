@@ -27,7 +27,7 @@ self-signed JWT, see your own usage read-only. Easy to forget this repo is not p
 | Layer | What |
 |---|---|
 | Server | Fastify 5 + `fastify-type-provider-zod` + `@supabase/supabase-js`. Runs `.ts` under `tsx`, **no bundler** — so its `build` target is `tsc --noEmit`, a typecheck. |
-| Web | React 19, react-router 7 (`BrowserRouter`, not framework mode), Vite 6, Tailwind 4, TanStack Query 5, shadcn/ui on Radix. One flat routes file, no lazy loading. |
+| Web | React 19, react-router 7 (`BrowserRouter`, not framework mode), Vite 8, Tailwind 4, TanStack Query 5, shadcn/ui on Radix. One flat routes file, no lazy loading. |
 | Shared | Plain TS + zod, no build step, imported as source. |
 | Ports | web **5757**, API **5858**. |
 

@@ -4,6 +4,7 @@ import { matomoAuth } from '../auth';
 
 export const addAnnotationAction = createAction({
   name: 'add_annotation',
+  classification: 'WRITE',
   auth: matomoAuth,
   displayName: 'Add Annotation',
   description: 'Add an annotation to a Matomo site',

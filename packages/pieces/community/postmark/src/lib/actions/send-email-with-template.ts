@@ -19,6 +19,7 @@ type SendEmailWithTemplateProps = {
 
 export const sendEmailWithTemplate = createAction({
   name: 'send_email_with_template',
+  classification: 'WRITE',
   displayName: 'Send Email With Template',
   description: 'Send an email using a Postmark template ID and template model.',
   audience: 'both',

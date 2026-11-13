@@ -1,8 +1,10 @@
-import { ActivepiecesError, apId, ApId, ApplicationEventName, Cursor, ErrorCode, Flow, FlowApprovalRequest, FlowApprovalRequestState, FlowOperationType, FlowStatus, FlowVersionState, isNil, PlatformId, PopulatedFlowApprovalRequest, Principal, PrincipalType, ProjectId, SeekPage, TelemetryEventName, UserId } from '@activepieces/shared'
+import { ActivepiecesError, apId, ApId, ApplicationEventName, Cursor, ErrorCode, Flow, FlowApprovalRequest, FlowApprovalRequestState, FlowOperationType, FlowStatus, FlowVersion, FlowVersionState, isNil, PlatformId, PopulatedFlowApprovalRequest, Principal, PrincipalType, ProjectId, SeekPage, TelemetryEventName, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
 import { flowExecutionCache } from '../../../flows/flow/flow-execution-cache'
+import { flowPublishUtils } from '../../../flows/flow/flow-publish-utils'
+import { flowSideEffects } from '../../../flows/flow/flow-service-side-effects'
 import { flowService } from '../../../flows/flow/flow.service'
 import { flowVersionRepo, flowVersionService } from '../../../flows/flow-version/flow-version.service'
 import { applicationEvents } from '../../../helper/application-events'
@@ -17,19 +19,15 @@ import { FlowApprovalRequestEntity } from './flow-approval-request.entity'
 const flowApprovalRequestRepo = repoFactory(FlowApprovalRequestEntity)
 
 export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
-    async submitForApproval({ flow, userId, projectId, platformId, requestedStatus }: SubmitParams): Promise<FlowApprovalRequest> {
-        const draft = await flowVersionService(log).getFlowVersionOrThrow({
-            flowId: flow.id,
-            versionId: undefined,
-        })
+    async submitForApproval({ flow, flowVersionToPublish, userId, projectId, platformId, requestedStatus }: SubmitParams): Promise<FlowApprovalRequest> {
         return transaction(async (entityManager) => {
-            const lockedVersion = draft.state === FlowVersionState.LOCKED
-                ? draft
+            const lockedVersion = flowVersionToPublish.state === FlowVersionState.LOCKED
+                ? flowVersionToPublish
                 : await flowVersionService(log).applyOperation({
                     userId,
                     projectId,
                     platformId,
-                    flowVersion: draft,
+                    flowVersion: flowVersionToPublish,
                     userOperation: { type: FlowOperationType.LOCK_FLOW, request: {} },
                     entityManager,
                 })
@@ -87,57 +85,75 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
         }
         assertStateIsPending(approval.state)
 
-        const flow = await flowService(log).getOneOrThrow({ id: approval.flowId, projectId: approval.projectId })
         const lockedVersion = await flowVersionService(log).getFlowVersionOrThrow({
-            flowId: flow.id,
+            flowId: approval.flowId,
             versionId: approval.flowVersionId,
         })
-
         const decidedAt = new Date().toISOString()
         const approverId = approverPrincipal.type === PrincipalType.SERVICE ? null : approverPrincipal.id
 
-        await transaction(async (entityManager) => {
-            const updateResult = await flowApprovalRequestRepo(entityManager)
-                .createQueryBuilder()
-                .update()
-                .set({
-                    state: FlowApprovalRequestState.APPROVED,
-                    approverId,
-                    decidedAt,
-                })
-                .where({ id: approval.id, state: FlowApprovalRequestState.PENDING })
-                .returning(['id'])
-                .execute()
-            assertRowsAffected(updateResult.raw?.length)
-            await flowService(log).setPublishedVersion({ flow, lockedVersion, entityManager })
-        })
+        await flowService(log).withStatusLock({
+            id: approval.flowId,
+            fn: async () => {
+                const flow = await flowService(log).getOneOrThrow({ id: approval.flowId, projectId: approval.projectId })
+                const republishParams = {
+                    previouslyPublished: flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)
+                        ? await flowVersionService(log).getFlowVersionOrThrow({ flowId: flow.id, versionId: flow.publishedVersionId })
+                        : undefined,
+                    toPublish: lockedVersion,
+                    requestedStatus: approval.requestedStatus,
+                }
+                const isRepublish = flowPublishUtils.isRepublish(republishParams)
+                const isTriggerUnchanged = flowPublishUtils.isTriggerUnchanged(republishParams)
 
-        if (flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)) {
-            await triggerSourceService(log).disable({
-                flowId: flow.id,
-                projectId: flow.projectId,
-                simulate: false,
-                ignoreError: true,
-            })
-        }
-        await flowExecutionCache(log).invalidate(flow.id)
-        await flowService(log).applyStatusChangeForPublishedFlow({
-            id: flow.id,
-            projectId: approval.projectId,
-            newStatus: approval.requestedStatus,
+                await transaction(async (entityManager) => {
+                    const updateResult = await flowApprovalRequestRepo(entityManager)
+                        .createQueryBuilder()
+                        .update()
+                        .set({
+                            state: FlowApprovalRequestState.APPROVED,
+                            approverId,
+                            decidedAt,
+                        })
+                        .where({ id: approval.id, state: FlowApprovalRequestState.PENDING })
+                        .returning(['id'])
+                        .execute()
+                    assertRowsAffected(updateResult.raw?.length)
+                    await flowService(log).setPublishedVersion({ flow, lockedVersion, entityManager })
+                })
+
+                if (flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)) {
+                    await triggerSourceService(log).disable({
+                        flowId: flow.id,
+                        projectId: flow.projectId,
+                        simulate: false,
+                        ignoreError: true,
+                        isRepublish,
+                        isTriggerUnchanged,
+                    })
+                }
+                await flowExecutionCache(log).invalidate(flow.id)
+                await flowService(log).changeStatusHoldingLock({
+                    id: flow.id,
+                    projectId: approval.projectId,
+                    newStatus: approval.requestedStatus,
+                    isRepublish,
+                    isTriggerUnchanged,
+                })
+            },
         })
         rejectedPromiseHandler(telemetry(log).trackProject({
             projectId: approval.projectId,
             event: {
                 name: TelemetryEventName.FLOW_PUBLISHED,
-                payload: { flowId: flow.id },
+                payload: { flowId: approval.flowId },
             },
         }), log)
         applicationEvents(log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_APPROVAL_GRANTED,
             data: {
                 approvalRequestId: approval.id,
-                flowId: flow.id,
+                flowId: approval.flowId,
                 flowVersionId: approval.flowVersionId,
                 flowDisplayName: lockedVersion.displayName,
             },
@@ -199,7 +215,7 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async withdraw({ requestId, projectId, request }: WithdrawParams): Promise<void> {
+    async withdraw({ requestId, projectId, request, editorSessionId }: WithdrawParams): Promise<void> {
         const approval = await this.getOneOrThrow({ requestId, projectId })
         assertStateIsPending(approval.state)
 
@@ -218,6 +234,7 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
             assertRowsAffected(deleteResult.raw?.length)
             await flowVersionRepo(entityManager).update({ id: lockedVersion.id }, { state: FlowVersionState.DRAFT })
         })
+        await flowSideEffects(log).onDraftWritten({ flowId: approval.flowId, projectId: approval.projectId, editorSessionId })
 
         applicationEvents(log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_APPROVAL_WITHDRAWN,
@@ -308,6 +325,7 @@ function assertRowsAffected(affected: number | null | undefined): void {
 
 type SubmitParams = {
     flow: Flow
+    flowVersionToPublish: FlowVersion
     userId: UserId | null
     projectId: ProjectId
     platformId: PlatformId
@@ -329,6 +347,7 @@ type WithdrawParams = {
     requestId: ApId
     projectId: ProjectId
     request: FastifyRequest
+    editorSessionId: string | null
 }
 
 type ListParams = {

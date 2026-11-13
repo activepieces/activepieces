@@ -125,10 +125,27 @@ function passSearch(
   if (!searchQuery) {
     return true;
   }
-  return JSON.stringify({ data })
+  return JSON.stringify({
+    data,
+    aliases: CORE_ACTION_SEARCH_ALIASES[data.type],
+  })
     .toLowerCase()
-    .includes(searchQuery?.toLowerCase());
+    .includes(searchQuery.toLowerCase());
 }
+
+const CORE_ACTION_SEARCH_ALIASES: Partial<
+  Record<PrimitiveStepMetadata['type'], string[]>
+> = {
+  [FlowActionType.PROCESS_IN_BATCHES]: [
+    'loop',
+    'bulk',
+    'batch',
+    'parallel',
+    'iterate',
+    'foreach',
+  ],
+  [FlowActionType.LOOP_ON_ITEMS]: ['bulk', 'iterate', 'foreach', 'each'],
+};
 
 type UseStepMetadata = {
   step: FlowAction | FlowTrigger | undefined;

@@ -8,6 +8,7 @@ import { crispApiCall } from '../common/client';
 export const createOrUpdateContactAction = createAction({
 	auth: crispAuth,
 	name: 'create_update_contact',
+	classification: 'WRITE',
 	displayName: 'Create/Update Contact',
 	description: 'Creates a new contact or updates an existing contact.',
 	audience: 'both',

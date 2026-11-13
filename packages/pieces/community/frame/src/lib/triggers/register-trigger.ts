@@ -29,6 +29,7 @@ export const frameRegisterTrigger = ({
   createTrigger({
     auth: frameAuth,
     name: `frame_trigger_${name}`,
+    classification: 'READ',
     displayName,
     description,
     aiMetadata: aiMetadata ?? {

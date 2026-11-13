@@ -5,12 +5,14 @@ import { attioAuth } from '../auth';
 import { objectTypeIdDropdown } from '../common/props';
 import { ObjectWebhookPayload, WebhookResponse } from '../common/types';
 import { isNil } from '@activepieces/pieces-framework';
+import { createRecordOutputSchema } from '../output-schemas';
 
 const TRIGGER_KEY = 'new-record-trigger';
 
 export const recordCreatedTrigger = createTrigger({
 	auth: attioAuth,
 	name: 'record_created',
+	outputSchema: createRecordOutputSchema,
 	classification: 'READ',
 	displayName: 'Record Created',
 	description: 'Triggers when a new record such as person,company or deal is created.',

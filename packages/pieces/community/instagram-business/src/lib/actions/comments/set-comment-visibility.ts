@@ -14,16 +14,25 @@ export const setCommentVisibility = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Hides an Instagram comment from everyone except its author, or unhides a previously hidden one, controlled by the Hidden toggle. Unlike Delete Comment this is reversible and the comment is not destroyed. Idempotent — setting the same state twice leaves the comment unchanged.',
+      'Hides an Instagram comment from everyone except its author, or unhides a previously hidden one, controlled by the Hide Comment toggle. Unlike Delete Comment this is reversible and the comment is not destroyed. Idempotent — setting the same state twice leaves the comment unchanged.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'account', display: 'section', label: 'Account', icon: 'user', props: ['page'] },
+    { key: 'comment', display: 'section', label: 'Comment', icon: 'reply', props: ['comment_id', 'hidden'] },
+  ],
   props: {
     page: instagramCommon.page,
-    comment_id: Property.ShortText({ displayName: 'Comment ID', required: true }),
-    hidden: Property.Checkbox({
-      displayName: 'Hidden',
-      description: 'On hides the comment, off makes it visible again.',
+    comment_id: Property.ShortText({
+      displayName: 'Comment ID',
+      description: 'The id from List Comments or another comment step.',
       required: true,
+      placeholder: '17858893269000001',
+    }),
+    hidden: Property.Checkbox({
+      displayName: 'Hide Comment',
+      description: 'On hides the comment, off makes it visible again.',
+      required: false,
       defaultValue: true,
     }),
   },
@@ -34,7 +43,7 @@ export const setCommentVisibility = createAction({
       method: HttpMethod.POST,
       resourceUri: `/${propsValue.comment_id}`,
       accessToken: page.accessToken,
-      body: { hide: propsValue.hidden },
+      body: { hide: propsValue.hidden ?? true },
     });
 
     return { success: result.success ?? true, id: propsValue.comment_id };

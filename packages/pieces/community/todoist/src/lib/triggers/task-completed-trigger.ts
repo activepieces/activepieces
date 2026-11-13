@@ -46,7 +46,7 @@ export const todoistTaskCompletedTrigger = createTrigger({
 	name: 'task_completed',
 	classification: 'READ',
 	displayName: 'Task Completed',
-	description: 'Triggers when a new task is completed',
+	description: 'Fires when a task is marked complete.',
 	aiMetadata: {
 		description: 'Fires when a Todoist task is marked completed, emitting the completed task record. Polls for tasks closed since the last check, optionally limited to a single project (all projects if left blank).',
 	},
@@ -55,24 +55,16 @@ export const todoistTaskCompletedTrigger = createTrigger({
 
 	props: {
 		project_id: todoistProjectIdDropdown(
-			'Leave it blank if you want to get completed tasks from all your projects.',
+			'Leave empty to watch every project.',
 		),
 	},
 
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

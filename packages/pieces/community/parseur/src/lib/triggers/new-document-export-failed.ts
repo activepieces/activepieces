@@ -1,11 +1,13 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { parseurAuth, parseurCommon } from '../common';
-import { parserDropdown } from '../common/properties';
-import { WebhookInformation } from '../common/types';
+import { parseurAuth } from '../auth';
+import { parseurApi } from '../common/api';
+import { parseurProps } from '../common/props';
+import type { ParseurWebhookInformation } from '../common/types';
 
-export const newDocumentExportFailed = createTrigger({
+export const newDocumentExportFailedTrigger = createTrigger({
   auth: parseurAuth,
   name: 'newDocumentExportFailed',
+  classification: 'READ',
   displayName: 'New Document Export Failed',
   description:
     'Fires when an automated export endpoint (webhook / integration) fails for a processed document.',
@@ -13,34 +15,35 @@ export const newDocumentExportFailed = createTrigger({
     description:
       'Fires when delivering a successfully parsed document to a configured export target (webhook or downstream integration) fails for the selected Parseur mailbox. Use to detect and handle export/delivery failures.',
   },
-  props: { mailboxId: parserDropdown({ required: true }) },
+  props: {
+    mailboxId: parseurProps.parserId({ required: true }),
+  },
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const response = await parseurCommon.createWebhook({
-      apiKey: context.auth.secret_text,
+    const webhook = await parseurApi.createWebhook({
+      auth: context.auth,
       event: 'document.export_failed',
       target: context.webhookUrl,
-      category: 'CUSTOM',
     });
-    await parseurCommon.enableWebhook({
-      apiKey: context.auth.secret_text,
-      webhookId: response.id,
-      mailboxId: context.propsValue.mailboxId as number,
+    await parseurApi.enableWebhook({
+      auth: context.auth,
+      webhookId: webhook.id,
+      mailboxId: context.propsValue.mailboxId,
     });
-    await context.store.put<WebhookInformation>('_newDocumentExportFailed', {
-      webhookId: response.id,
+    await context.store.put<ParseurWebhookInformation>('_newDocumentExportFailed', {
+      webhookId: webhook.id,
     });
   },
   async onDisable(context) {
-    const webhookInfo = await context.store.get<WebhookInformation>(
+    const webhookInfo = await context.store.get<ParseurWebhookInformation>(
       '_newDocumentExportFailed'
     );
     if (!webhookInfo) {
       return;
     }
-    await parseurCommon.deleteWebhook({
-      apiKey: context.auth.secret_text,
+    await parseurApi.deleteWebhook({
+      auth: context.auth,
       webhookId: webhookInfo.webhookId,
     });
     await context.store.delete('_newDocumentExportFailed');

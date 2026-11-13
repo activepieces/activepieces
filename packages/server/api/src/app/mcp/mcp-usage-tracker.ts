@@ -1,10 +1,10 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
-import { isAppSumoCreditedPlan, McpToolResult, PopulatedMcpServer } from '@activepieces/shared'
+import { McpToolDefinition, McpToolResult, PopulatedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { trackBillingAndSendTelemetry } from '../platform/billing-and-telemetry'
-import { assertCreditsAndAppSumoNotExceeded, CreditUsageSource, McpCallCreditConsumptionProperties } from '../platform/billing-provider'
+import { assertCreditsNotExceeded, CreditUsageSource, McpCallCreditConsumptionProperties } from '../platform/billing-provider'
 import { projectService } from '../project/project-service'
 import { INTERNAL_CHAT_CLIENT_ID } from './oauth/token/mcp-oauth-token.service'
 
@@ -27,6 +27,27 @@ export const mcpUsageTracker = (log: FastifyBaseLogger) => ({
     },
 })
 
+export function withCallBilling({ execute, toolName, projectId, billing }: WithCallBillingParams): McpToolDefinition['execute'] {
+    if (!BILLABLE_TOOL_NAMES.includes(toolName)) {
+        return execute
+    }
+    return async (args) => {
+        const refusal = await billing.refusalWhenOutOfCredits({ toolName })
+        if (!isNil(refusal)) {
+            return refusal
+        }
+        const result = await execute(args)
+        if (actionRan(result)) {
+            billing.charge({ toolName, projectId })
+        }
+        return result
+    }
+}
+
+function actionRan(result: McpToolResult): boolean {
+    return result.isError !== true || typeof result.structuredContent?.runId === 'string'
+}
+
 async function resolvePlatformId({ mcp, log }: { mcp: PopulatedMcpServer, log: FastifyBaseLogger }): Promise<string | null> {
     if (!isNil(mcp.platformId)) {
         return mcp.platformId
@@ -42,7 +63,7 @@ async function resolvePlatformId({ mcp, log }: { mcp: PopulatedMcpServer, log: F
 // A credits lookup that fails for its own reasons must not take the tool down with it, so anything
 // that is not a definite "out of credits" lets the call through, as the chat personalization path does.
 async function refusalWhenOutOfCredits({ platformId, toolName, log }: RefusalParams): Promise<McpToolResult | null> {
-    const { error } = await tryCatch(() => assertCreditsAndAppSumoNotExceeded({ platformId, log }))
+    const { error } = await tryCatch(() => assertCreditsNotExceeded({ platformId, log }))
     if (isNil(error)) {
         return null
     }
@@ -72,7 +93,6 @@ async function chargeCall({ platformId, projectId, toolName, clientId, log }: Ch
             log,
             licenseKey: platformPlan.licenseKey,
             credits: usage,
-            ...(isAppSumoCreditedPlan(platformPlan.plan) ? { appSumo: { ...usage, idempotencyKey: `mcpAppSumo:${apId()}` } } : {}),
         })
     })
     if (!isNil(error)) {
@@ -87,9 +107,18 @@ const EXEMPT_FROM_BILLING: McpCallBilling = {
 
 export const MCP_CALL_CREDITS = 1
 
+export const BILLABLE_TOOL_NAMES: string[] = ['ap_run_action']
+
 export type McpCallBilling = {
     refusalWhenOutOfCredits: (params: { toolName: string }) => Promise<McpToolResult | null>
     charge: (params: { toolName: string, projectId: string | null }) => void
+}
+
+type WithCallBillingParams = {
+    execute: McpToolDefinition['execute']
+    toolName: string
+    projectId: string | null
+    billing: McpCallBilling
 }
 
 type ResolveCallBillingParams = {

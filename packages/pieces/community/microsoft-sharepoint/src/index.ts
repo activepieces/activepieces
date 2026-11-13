@@ -23,6 +23,7 @@ import { findSiteAction } from './lib/actions/find-site';
 import { moveFileAction } from './lib/actions/move-file';
 import { publishPageAction } from './lib/actions/publish-page';
 
+import { microsoftSharePointAiActions } from './lib/actions/ai';
 import { microsoftSharePointAuth } from './lib/auth';
 import { newFileInFolderTrigger } from './lib/triggers/new-file-in-folder';
 import { newFileInSubfoldersTrigger } from './lib/triggers/new-file-in-subfolders';
@@ -36,7 +37,7 @@ import { updatedListItemTrigger } from './lib/triggers/updated-list-item';
 export const microsoftSharePoint = createPiece({
   displayName: 'Microsoft SharePoint',
   auth: microsoftSharePointAuth,
-  minimumSupportedRelease: '0.78.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-sharepoint.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
   authors: ['kishanprmr', 'pranith124', 'onyedikachi-david'],
@@ -56,6 +57,7 @@ export const microsoftSharePoint = createPiece({
     getFolderContentsAction,
     getSiteInformationAction,
     findSiteAction,
+    ...microsoftSharePointAiActions,
     createCustomApiCallAction({
       auth: microsoftSharePointAuth,
       baseUrl: (auth) => {

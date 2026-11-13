@@ -7,6 +7,7 @@ const MAX_BULK_LINKEDIN_IDS = 100;
 export const getPersonPathsBulk = createAction({
   auth: villageAuth,
   name: 'get_person_paths_bulk',
+  classification: 'READ',
   displayName: 'Get Person Paths (Bulk)',
   description:
     'Find introduction paths to multiple people in a single request. Provide up to 100 LinkedIn IDs (the slug after linkedin.com/in/) and get connection paths for each.',

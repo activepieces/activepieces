@@ -133,6 +133,15 @@ export const eventCancelled = createTrigger({
   aiMetadata: {
     description: 'Fires when an event in the selected calendar transitions to a cancelled (or deleted) state, detected by polling. Each fired item is the cancelled event; can optionally be filtered by cancellation reason (deleted, attendee declined, rescheduled, other) and scoped to a single specific event.',
   },
+  propertyGroups: [
+    {
+      key: 'event',
+      display: 'section',
+      label: 'Event',
+      icon: 'calendar',
+      props: ['calendar_id', 'specific_event', 'event_id'],
+    },
+  ],
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     specific_event: Property.Checkbox({
@@ -171,36 +180,18 @@ export const eventCancelled = createTrigger({
   },
 
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.poll(polling, context);
   },
 
   async test(context) {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.test(polling, context);
   },
 });

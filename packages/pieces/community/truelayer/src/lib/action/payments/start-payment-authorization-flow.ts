@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const startPaymentAuthorizationFlow = createAction({
   auth: trueLayerCommon.auth,
   name: 'start-payment-authorization-flow',
+  classification: 'WRITE',
   displayName: 'Start Payment Authorization Flow',
   description: 'Start the authorization flow for a payment. This API can be called using the `resource_token` associated with the payment or a backend bearer token.',
   audience: 'both',

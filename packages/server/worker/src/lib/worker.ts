@@ -1,9 +1,9 @@
 import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS, actionRunCache, cacheUtils, createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
-import { aiCostReporter, createLogger, modelCatalog, systemUsage, wideEvent } from '@activepieces/server-utils'
-import { ApEdition, ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, LONG_RUNNING_RPC_METHODS, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
+import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, cacheUtils, CODE_CACHE_FIRST_SWEEP_DELAY_MS, CODE_CACHE_SWEEP_INTERVAL_MS, codeCacheEviction, createResolver, createSandboxRuntime, markDevPiecesRebuilt, Runtime } from '@activepieces/sandbox'
+import { aiCostReporter, aiObservability, createLogger, modelCatalog, modelTierCatalog, systemUsage, wideEvent } from '@activepieces/server-utils'
+import { ApEdition, ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, LONG_RUNNING_RPC_METHODS, SandboxInformation, WebsocketClientEvent, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
 import { createApiToWorkerHandlers } from './api-notify-service'
@@ -62,10 +62,12 @@ export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         versionChecker.assertReleaseReadable()
         modelCatalog.load().catch(() => undefined)
+        await modelTierCatalog.warmUp()
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
         const projectWorker = system.getBoolean(WorkerSystemProp.PROJECT_WORKER) ?? true
+        const workerGroupScope = system.get(WorkerSystemProp.WORKER_GROUP_SCOPE)
         socket = io(socketUrl.url, {
-            auth: { token: workerToken, workerId, workerGroupId, projectWorker },
+            auth: { token: workerToken, workerId, workerGroupId, projectWorker, workerGroupScope },
             path: socketUrl.path,
             transports: ['websocket'],
             reconnection: true,
@@ -114,10 +116,15 @@ export const worker = {
             logger.error({ error: error.message }, 'Socket.IO connection error')
         })
 
+        socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
+            logger.info('Dev pieces rebuilt, sandboxes will be replaced before their next job')
+            markDevPiecesRebuilt()
+        })
+
         createNotifyServer<ApiToWorkerContract>(socket, createApiToWorkerHandlers({
             getRuntime: () => runtime,
             apiClient,
-            getPublicApiUrl: () => ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
+            getInternalApiUrl: getApiUrl,
             log: logger,
         }), logger)
 
@@ -143,6 +150,10 @@ export const worker = {
         socket = null
         stopHealthServer()
         logger.info('Worker stopped')
+    },
+
+    stopPolling(): void {
+        polling = false
     },
 }
 
@@ -190,7 +201,7 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
             const { error: prewarmError } = await tryCatch(() => createdRuntime.prewarm({
                 log: logger,
                 apiClient,
-                publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
+                internalApiUrl: getApiUrl(),
             }))
             if (prewarmError) {
                 logger.error({ error: prewarmError }, 'Prewarm failed, continuing without a warm cache')
@@ -349,6 +360,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
         ...spreadIfDefined('run', isAgentJob && 'runId' in jobData ? { id: jobData.runId } : undefined),
         ...spreadIfDefined('conversation', 'conversationId' in jobData ? { id: jobData.conversationId } : undefined),
         ...spreadIfDefined('flowVersion', 'flowVersionId' in jobData ? { id: jobData.flowVersionId } : undefined),
+        ...spreadIfDefined('waitpoint', 'parentWaitpointId' in jobData && jobData.parentWaitpointId != null ? { id: jobData.parentWaitpointId } : undefined),
     })
     return wideEvent.run({
         logger: jobLogger,
@@ -418,6 +430,13 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
             if (!isNil(localExecutionMode)) {
                 response.EXECUTION_MODE = localExecutionMode
             }
+            const localSandboxMemoryLimit = system.get(WorkerSystemProp.SANDBOX_MEMORY_LIMIT)
+            if (!isNil(localSandboxMemoryLimit) && localSandboxMemoryLimit !== '') {
+                if (!/^[1-9]\d*$/.test(localSandboxMemoryLimit)) {
+                    throw new Error(`AP_SANDBOX_MEMORY_LIMIT must be a positive integer in KB. Got: ${localSandboxMemoryLimit}`)
+                }
+                response.SANDBOX_MEMORY_LIMIT = localSandboxMemoryLimit
+            }
             const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
             if (!isNil(workerGroupId)) {
                 if (response.EDITION === ApEdition.CLOUD) {
@@ -432,7 +451,8 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
                 }
             }
             workerSettings.set(response)
-            logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE }, 'Worker settings loaded')
+            aiObservability.init({ enabled: response.EDITION === ApEdition.CLOUD })
+            logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE, sandboxMemoryLimitKb: response.SANDBOX_MEMORY_LIMIT }, 'Worker settings loaded')
             resolve()
         })
     })
@@ -600,10 +620,10 @@ function startCacheSweeper(): void {
     }
     cacheSweepFirstRunTimeout = setTimeout(() => {
         cacheSweepFirstRunTimeout = null
-        void sweepActionRunCache()
-        cacheSweepInterval = setInterval(() => void sweepActionRunCache(), ACTION_RUN_CACHE_SWEEP_INTERVAL_MS)
+        void sweepCodeCache()
+        cacheSweepInterval = setInterval(() => void sweepCodeCache(), CODE_CACHE_SWEEP_INTERVAL_MS)
         cacheSweepInterval.unref()
-    }, ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS)
+    }, CODE_CACHE_FIRST_SWEEP_DELAY_MS)
     cacheSweepFirstRunTimeout.unref()
 }
 
@@ -618,14 +638,14 @@ function stopCacheSweeper(): void {
     }
 }
 
-async function sweepActionRunCache(): Promise<void> {
-    const { error } = await tryCatch(() => actionRunCache.sweep({
+async function sweepCodeCache(): Promise<void> {
+    const { error } = await tryCatch(() => codeCacheEviction.sweep({
         basePath: sandboxConfig.getCacheBasePath(),
         log: logger,
         activeWindowMs: Math.max(ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, flowTimeoutMs()),
     }))
     if (error) {
-        logger.warn({ error }, 'Action-run code cache sweep failed')
+        logger.warn({ error }, 'Code cache sweep failed')
     }
     // Reclaims the directories left by earlier LATEST_CACHE_VERSION values. It rides the periodic
     // sweep rather than startup because it can only run once the rollout grace period has passed,

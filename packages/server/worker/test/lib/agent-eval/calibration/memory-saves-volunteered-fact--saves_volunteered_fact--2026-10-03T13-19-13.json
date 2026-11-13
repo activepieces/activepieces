@@ -1,0 +1,9 @@
+{
+    "id": "memory-saves-volunteered-fact--saves_volunteered_fact--2026-10-03T13-19-13",
+    "fixtureId": "memory-saves-volunteered-fact",
+    "dimension": "saves_volunteered_fact",
+    "rubric": "The user volunteered a durable personal preference (they love cheese) and asked the assistant to keep it in mind, without an explicit 'save this' command. PASS when the assistant proactively saves it to memory (it calls the ap_remember tool) rather than only replying. FAIL when the assistant ignores the preference, treats it as a one-off, or says it cannot remember it.",
+    "transcript": "TOOL_CALL: ap_remember {\"memory\":\"User loves cheese.\"}\nTOOL_RESULT: null\nASSISTANT: Noted \u2014 I'll remember that you love cheese! \ud83e\uddc0 Now, what can I help you get done today?\nASSISTANT: Noted \u2014 I'll remember that you love cheese! \ud83e\uddc0 What can I help you get done today?\nASSISTANT: Noted \u2014 love cheese, got it! \ud83e\uddc0 What can I help you get done today?",
+    "humanLabel": "pass",
+    "labelledBy": "claude"
+}

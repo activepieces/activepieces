@@ -8,6 +8,7 @@ import { TypefullyDraft, TypefullyPaginatedResponse } from '../common/types';
 export const listDraftsAction = createAction({
 	auth: typefullyAuth,
 	name: 'typefully_list_drafts',
+	classification: 'SEARCH',
 	displayName: 'List Drafts',
 	description: 'List drafts with optional filters.',
 	audience: 'both',

@@ -16,7 +16,7 @@ describe('StepDataPanelHeader', () => {
 
     expect(view).toContain('Paused');
     expect(view).not.toContain('Success');
-    expect(view).not.toContain('bg-success-100');
+    expect(view).not.toContain('bg-success-3');
   });
 
   it('labels a running step in run view as Running', () => {
@@ -43,6 +43,6 @@ describe('StepDataPanelHeader', () => {
     );
 
     expect(view).toContain('Success');
-    expect(view).toContain('bg-success-100');
+    expect(view).toContain('bg-success-3');
   });
 });

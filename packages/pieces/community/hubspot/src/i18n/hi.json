@@ -311,5 +311,6 @@
   "Note": "Note",
   "Task": "Task",
   "Meeting": "Meeting",
-  "Call": "Call"
+  "Call": "Call",
+  "Fields left empty keep their current value.": "खाली छोड़े गए फ़ील्ड अपना मौजूदा मान बनाए रखते हैं।"
 }

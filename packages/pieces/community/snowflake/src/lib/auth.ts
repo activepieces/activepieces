@@ -2,37 +2,16 @@ import {
   PieceAuth,
   Property,
   OAuth2AuthorizationMethod,
+  AppConnectionType,
 } from '@activepieces/pieces-framework';
-import snowflake from 'snowflake-sdk';
+import {
+  buildConnectionOptions,
+  buildCustomAuthOptions,
+  withConnectionOptions,
+} from './common/client';
 
-// Suppress the SDK's verbose INFO/DEBUG logs so they don't corrupt stdout IPC
-snowflake.configure({ logLevel: 'ERROR' } as Parameters<
-  typeof snowflake.configure
->[0]);
-
-function formatPrivateKey(privateKey: string): string {
-  const lines = privateKey
-    .replace('-----BEGIN PRIVATE KEY-----', '')
-    .replace('-----END PRIVATE KEY-----', '')
-    .trim()
-    .split(' ');
-  return [
-    '-----BEGIN PRIVATE KEY-----',
-    ...lines,
-    '-----END PRIVATE KEY-----',
-  ].join('\n');
-}
-
-function connectAsync(conn: snowflake.Connection): Promise<void> {
-  return new Promise((resolve, reject) =>
-    conn.connect((err) => (err ? reject(err) : resolve()))
-  );
-}
-
-function destroyAsync(conn: snowflake.Connection): Promise<void> {
-  return new Promise((resolve, reject) =>
-    conn.destroy((err) => (err ? reject(err) : resolve()))
-  );
+function optionalString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() !== '' ? value : undefined;
 }
 
 export const snowflakeOAuth2Auth = PieceAuth.OAuth2({
@@ -120,17 +99,22 @@ Enter the **Client ID** and **Client Secret** in the Activepieces OAuth2 setting
   },
   validate: async ({ auth }) => {
     try {
-      const conn = snowflake.createConnection({
-        account: auth.props!['account'] as string,
-        authenticator: 'OAUTH',
-        token: auth.access_token,
-        database: auth.props!['database'] as string | undefined,
-        warehouse: auth.props!['warehouse'] as string | undefined,
-        role: auth.props!['role'] as string | undefined,
-        application: 'ActivePieces',
+      await withConnectionOptions({
+        options: buildConnectionOptions({
+          auth: {
+            type: AppConnectionType.OAUTH2,
+            access_token: auth.access_token,
+            props: {
+              account: String(auth.props?.['account'] ?? ''),
+              database: optionalString(auth.props?.['database']),
+              warehouse: optionalString(auth.props?.['warehouse']),
+              role: optionalString(auth.props?.['role']),
+            },
+          },
+        }),
+        statementTimeoutSeconds: 60,
+        fn: (session) => session.query({ sql: 'SELECT CURRENT_USER()' }),
       });
-      await connectAsync(conn);
-      await destroyAsync(conn);
       return { valid: true };
     } catch (e) {
       return { valid: false, error: (e as Error).message };
@@ -177,7 +161,7 @@ ALTER USER <your_username>
   SET RSA_PUBLIC_KEY='<contents of rsa_key.pub, excluding the BEGIN/END lines>';
 \`\`\`
 
-**3. Paste the private key** — copy the full contents of \`rsa_key.p8\` (including the \`-----BEGIN PRIVATE KEY-----\` header and footer) into the **Private Key** field below.`,
+**3. Paste the private key** — copy the full contents of \`rsa_key.p8\` (including the \`-----BEGIN PRIVATE KEY-----\` or \`-----BEGIN ENCRYPTED PRIVATE KEY-----\` header and footer) into the **Private Key** field below. Line breaks may be pasted as spaces.`,
   props: {
     account: Property.ShortText({
       displayName: 'Account Identifier',
@@ -237,26 +221,11 @@ ALTER USER <your_username>
       };
     }
     try {
-      const connectionOptions: snowflake.ConnectionOptions = {
-        account: auth.account,
-        username: auth.username,
-        database: auth.database,
-        warehouse: auth.warehouse,
-        role: auth.role,
-        application: 'ActivePieces',
-      };
-      if (auth.privateKey) {
-        connectionOptions.authenticator = 'SNOWFLAKE_JWT';
-        connectionOptions.privateKey = formatPrivateKey(auth.privateKey);
-        if (auth.privateKeyPassphrase) {
-          connectionOptions.privateKeyPass = auth.privateKeyPassphrase;
-        }
-      } else {
-        connectionOptions.password = auth.password;
-      }
-      const conn = snowflake.createConnection(connectionOptions);
-      await connectAsync(conn);
-      await destroyAsync(conn);
+      await withConnectionOptions({
+        options: buildCustomAuthOptions({ props: auth }),
+        statementTimeoutSeconds: 60,
+        fn: (session) => session.query({ sql: 'SELECT CURRENT_USER()' }),
+      });
       return { valid: true };
     } catch (e) {
       return { valid: false, error: (e as Error).message };

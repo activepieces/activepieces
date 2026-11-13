@@ -1,90 +1,54 @@
-import { HttpMethod } from '@activepieces/pieces-common';
-import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import { zohoDeskApiCall } from '.';
-import { zohoDeskAuth } from './auth';
+import { DropdownState, Property } from '@activepieces/pieces-framework';
+import { zohoDeskAuth } from '../auth';
+import { zohoDeskApi } from './api';
 
-interface DropdownParams {
-	displayName: string;
-	description?: string;
-	required: boolean;
+function orgId<R extends boolean>({ required, displayName = 'Organization', description }: PropParams<R>) {
+  return Property.Dropdown({
+    auth: zohoDeskAuth,
+    displayName,
+    description,
+    refreshers: [],
+    required,
+    options: async ({ auth }) => {
+      if (!auth) {
+        return disabledOptions({ placeholder: 'Please connect your account first.' });
+      }
+      const organizations = await zohoDeskApi.listOrganizations({ auth });
+      return {
+        disabled: false,
+        options: organizations.map((org) => ({ label: org.companyName, value: org.id })),
+      };
+    },
+  });
 }
 
-export const organizationId = (params: DropdownParams) =>
-	Property.Dropdown({
-		auth: zohoDeskAuth,
-		displayName: params.displayName,
-		description: params.description,
-		refreshers: [],
-		required: params.required,
-		options: async ({ auth }) => {
-			if (!auth) {
-				return {
-					placeholder: 'Please connect your account first.',
-					options: [],
-					disabled: true,
-				};
-			}
-			const authValue = auth as PiecePropValueSchema<typeof zohoDeskAuth>;
+function departmentId<R extends boolean>({ required, displayName = 'Department', description }: PropParams<R>) {
+  return Property.Dropdown({
+    auth: zohoDeskAuth,
+    displayName,
+    description,
+    refreshers: ['orgId'],
+    required,
+    options: async ({ auth, orgId }) => {
+      if (!auth) {
+        return disabledOptions({ placeholder: 'Please connect your account first.' });
+      }
+      if (!orgId) {
+        return disabledOptions({ placeholder: 'Please select organization first.' });
+      }
+      const departments = await zohoDeskApi.listDepartments({ auth, orgId: String(orgId) });
+      return {
+        disabled: false,
+        options: departments.map((department) => ({ label: department.name, value: department.id })),
+      };
+    },
+  });
+}
 
-			const response = await zohoDeskApiCall<{ data: { id: string; companyName: string }[] }>({
-				auth: authValue,
-				method: HttpMethod.GET,
-				resourceUri: '/organizations',
-			});
+function disabledOptions({ placeholder }: { placeholder: string }): DropdownState<never> {
+  return { disabled: true, options: [], placeholder };
+}
 
-			return {
-				disabled: false,
-				options: response.data.map((org) => {
-					return {
-						label: org.companyName,
-						value: org.id,
-					};
-				}),
-			};
-		},
-	});
+export const zohoDeskProps = { orgId, departmentId };
 
-export const departmentId = (params: DropdownParams) =>
-	Property.Dropdown({
-		auth: zohoDeskAuth,
-		displayName: params.displayName,
-		description: params.description,
-		refreshers: ['orgId'],
-		required: params.required,
-		options: async ({ auth, orgId }) => {
-			if (!auth) {
-				return {
-					placeholder: 'Please connect your account first.',
-					options: [],
-					disabled: true,
-				};
-			}
-
-			if (!orgId) {
-				return {
-					placeholder: 'Please select organization first.',
-					options: [],
-					disabled: true,
-				};
-			}
-
-			const authValue = auth as PiecePropValueSchema<typeof zohoDeskAuth>;
-
-			const response = await zohoDeskApiCall<{ data: { id: string; name: string }[] }>({
-				auth: authValue,
-				method: HttpMethod.GET,
-				resourceUri: `/departments`,
-				orgId: orgId as string,
-			});
-
-			return {
-				disabled: false,
-				options: response.data.map((department) => {
-					return {
-						label: department.name,
-						value: department.id,
-					};
-				}),
-			};
-		},
-	});
+export type PropParams<R extends boolean> = { required: R; displayName?: string; description?: string };

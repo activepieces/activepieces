@@ -131,4 +131,42 @@ describe('flow with looping', () => {
         expect(() => JSON.stringify(result.steps)).not.toThrow()
     })
 
+    it('should yield to the event loop between iterations', async () => {
+        const iterationCount = 50
+        let macrotaskTicks = 0
+        let keepTicking = true
+        const tick = (): void => {
+            if (!keepTicking) {
+                return
+            }
+            macrotaskTicks++
+            setImmediate(tick)
+        }
+        setImmediate(tick)
+        const ticksAtLoopUpserts: number[] = []
+        const originalUpsertStep = FlowExecutorContext.prototype.upsertStep
+        const upsertSpy = vi.spyOn(FlowExecutorContext.prototype, 'upsertStep').mockImplementation(function (this: FlowExecutorContext, stepName, stepOutput) {
+            if (stepName === 'loop') {
+                ticksAtLoopUpserts.push(macrotaskTicks)
+            }
+            return originalUpsertStep.call(this, stepName, stepOutput)
+        })
+
+        const result = await flowExecutor.execute({
+            action: buildSimpleLoopAction({
+                name: 'loop',
+                loopItems: `{{ Array.from({ length: ${iterationCount} }, (_, i) => i) }}`,
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ stepNames: ['loop'] }),
+        }).finally(() => {
+            keepTicking = false
+            upsertSpy.mockRestore()
+        })
+
+        const loopOut = result.steps.loop as LoopStepOutput
+        expect(loopOut.output?.iterations.length).toBe(iterationCount)
+        expect(new Set(ticksAtLoopUpserts).size).toBeGreaterThanOrEqual(iterationCount)
+    })
+
 })

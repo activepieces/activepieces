@@ -1,6 +1,6 @@
 
 import { z } from 'zod'
-import { AIProviderName, AiStepAction, isNil } from '@activepieces/core-utils'
+import { AiCallContext, AIProviderName, AiStepAction, AiUsageEnvironment, AiUsageOrigin, isNil } from '@activepieces/core-utils'
 import { ResumeReason, StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
@@ -37,14 +37,18 @@ export const JOB_PRIORITY = {
 const TESTING_EXECUTE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'high'
 const ASYNC_EXECUTE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'medium'
 const SYNC_EXECUTE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'high'
+const FAN_IN_CHILD_EXECUTE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'low'
 export const RATE_LIMIT_PRIORITY: keyof typeof JOB_PRIORITY = 'lowest'
 
-function getExecuteFlowPriority(environment: RunEnvironment, workerHandlerId: string | undefined | null): keyof typeof JOB_PRIORITY {
-    switch (environment) {
+function getExecuteFlowPriority(job: ExecuteFlowJobData): keyof typeof JOB_PRIORITY {
+    switch (job.environment) {
         case RunEnvironment.TESTING:
             return TESTING_EXECUTE_FLOW_PRIORITY
         case RunEnvironment.PRODUCTION:
-            return isNil(workerHandlerId) ? ASYNC_EXECUTE_FLOW_PRIORITY : SYNC_EXECUTE_FLOW_PRIORITY
+            if (!isNil(job.parentWaitpointId)) {
+                return FAN_IN_CHILD_EXECUTE_FLOW_PRIORITY
+            }
+            return isNil(job.workerHandlerId) ? ASYNC_EXECUTE_FLOW_PRIORITY : SYNC_EXECUTE_FLOW_PRIORITY
     }
 }
 
@@ -58,7 +62,7 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.EXECUTE_PERSONALIZATION_RESEARCH:
             return 'medium'
         case WorkerJobType.EXECUTE_FLOW:
-            return getExecuteFlowPriority(job.environment, job.workerHandlerId)
+            return getExecuteFlowPriority(job)
         case WorkerJobType.EXECUTE_PROPERTY:
         case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
         case WorkerJobType.EXECUTE_VALIDATION:
@@ -129,11 +133,13 @@ const ExecuteFlowJobDataCommon = z.object({
     stepNameToTest: z.string().optional(),
     sampleData: z.record(z.string(), z.unknown()).optional(),
     logsFileId: z.string(),
+    parentWaitpointId: z.string().optional(),
 })
 
 export const BeginExecuteFlowJobData = ExecuteFlowJobDataCommon.extend({
     executionType: z.literal(ExecutionType.BEGIN),
     executeTrigger: z.boolean().optional(),
+    entryStepName: z.string().optional(),
 })
 export type BeginExecuteFlowJobData = z.infer<typeof BeginExecuteFlowJobData>
 
@@ -289,6 +295,13 @@ export enum AgentRunSource {
     AGENT_BUILDER = 'AGENT_BUILDER',
 }
 
+export const AGENT_RUN_USAGE_ORIGIN: Record<AgentRunSource, AiUsageOrigin> = {
+    [AgentRunSource.CHAT]: AiUsageOrigin.CHAT,
+    [AgentRunSource.FLOW_STEP]: AiUsageOrigin.FLOW_AGENT_STEP,
+    [AgentRunSource.AGENT]: AiUsageOrigin.AGENT,
+    [AgentRunSource.AGENT_BUILDER]: AiUsageOrigin.AGENT_BUILDER,
+}
+
 export const AgentPromptOverride = z.object({
     system: z.string().optional(),
     projectSelected: z.string().optional(),
@@ -319,7 +332,9 @@ export const ExecuteAgentRunJobData = z.object({
     source: z.enum(AgentRunSource).optional(),
     messageSource: z.enum(['onboarding']).optional(),
     agentId: z.string().optional(),
+    flowId: z.string().optional(),
     flowRunId: z.string().optional(),
+    environment: z.enum(AiUsageEnvironment).optional(),
     waitpointId: z.string().optional(),
     tools: z.array(AgentTool).optional(),
     flowTools: z.array(ResolvedAgentFlowTool).optional(),
@@ -328,6 +343,7 @@ export const ExecuteAgentRunJobData = z.object({
     provider: z.enum(AIProviderName).optional(),
     providerConfigId: z.string().optional(),
     modelName: z.string().nullable(),
+    modelTierId: z.string().optional(),
     files: z.array(z.object({
         name: z.string(),
         mimeType: z.string(),
@@ -365,6 +381,8 @@ export const EventDestinationJobData = z.object({
     webhookId: z.string(),
     webhookUrl: z.string(),
     payload: z.unknown(), // EE audit-event schema stays in @activepieces/shared; engine does not need it
+    contentType: z.enum(['application/json', 'application/x-protobuf']).optional(),
+    hasHeaders: z.boolean().optional(),
     jobType: z.literal(WorkerJobType.EVENT_DESTINATION),
 })
 
@@ -415,10 +433,12 @@ const AiStepJobBase = z.object({
     provider: z.enum(AIProviderName),
     providerConfigId: z.string().optional(),
     modelId: z.string(),
+    modelTierId: z.string().optional(),
     prompt: z.string().optional(),
     maxOutputTokens: z.number().optional(),
     temperature: z.number().optional(),
     webSearch: AiStepWebSearch.optional(),
+    callContext: AiCallContext.optional(),
 })
 
 export const AskAiJobData = AiStepJobBase.extend({

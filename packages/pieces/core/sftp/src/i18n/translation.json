@@ -67,5 +67,6 @@
   "Trigger when a new file is created or modified.": "Trigger when a new file is created or modified.",
   "Path": "Path",
   "Ignore hidden files": "Ignore hidden files",
-  "The path to watch for new files": "The path to watch for new files"
+  "The path to watch for new files": "The path to watch for new files",
+  "FTP/SFTP": "FTP/SFTP"
 }

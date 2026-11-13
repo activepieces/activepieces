@@ -7,6 +7,7 @@ import { googleChatAPIService } from '../common/requests';
 export const sendAMessage = createAction({
   auth: googleChatApiAuth,
   name: 'sendAMessage',
+  classification: 'WRITE',
   displayName: 'Send a Message',
   description: 'Send a message to a space or direct conversation.',
   audience: 'both',

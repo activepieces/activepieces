@@ -1,7 +1,6 @@
-import { AIProviderName, isNil, omit } from '@activepieces/core-utils';
+import { isNil, omit } from '@activepieces/core-utils';
 import {
   AgentPieceProps,
-  AgentProviderModel,
   PieceAction,
   PieceActionSettings,
 } from '@activepieces/shared';
@@ -12,7 +11,7 @@ import { agentLinkUtils } from '@/app/builder/step-settings/agent-settings/agent
 import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
 import { FormField } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AIModelSelector, AgentStructuredOutput } from '@/features/agents';
+import { AgentStructuredOutput } from '@/features/agents';
 import { useAgentsAvailable } from '@/features/agents/hooks/agents-hooks';
 
 import {
@@ -88,7 +87,12 @@ export const AgentSettings = (props: AgentSettingsProps) => {
   return (
     <div className="w-full">
       <div className="flex flex-col gap-4 w-full">
-        {showAgentPicker && <AgentLink disabled={props.readonly} />}
+        {showAgentPicker && (
+          <AgentLink
+            disabled={props.readonly}
+            pieceVersion={props.step.settings.pieceVersion}
+          />
+        )}
         {Object.keys(properties).map((propertyName) => {
           return (
             <FormField
@@ -135,39 +139,13 @@ const selectAgentFormComponentForProperty = (
 
   switch (propertyName) {
     case AgentPieceProps.AGENT_TOOLS: {
-      const providerModel = params.form?.watch?.(
-        'settings.input.aiProviderModel',
-      ) as AgentProviderModel | undefined;
-      return (
-        <AgentTools
-          disabled={disabled}
-          toolsField={field}
-          selectedProvider={
-            providerModel?.provider as AIProviderName | undefined
-          }
-        />
-      );
+      return <AgentTools disabled={disabled} toolsField={field} />;
     }
     case AgentPieceProps.STRUCTURED_OUTPUT: {
       return (
         <AgentStructuredOutput
           disabled={disabled}
           structuredOutputField={field}
-        />
-      );
-    }
-    case AgentPieceProps.AI_PROVIDER_MODEL: {
-      const providerModel = field.value as AgentProviderModel | undefined;
-      const provider = providerModel?.provider;
-      const model = providerModel?.model;
-      const configId = providerModel?.configId;
-      return (
-        <AIModelSelector
-          defaultModel={model}
-          defaultProvider={provider}
-          defaultConfigId={configId}
-          onChange={field.onChange}
-          disabled={disabled}
         />
       );
     }

@@ -6,6 +6,7 @@ import { BASE_URL } from '../../../index';
 export const updateDocument = createAction({
   auth:personalAiAuth,
   name: 'update_document',
+  classification: 'WRITE',
   displayName: 'Update Document',
   description: 'Update an existing document in AI assistant.',
   audience: 'both',

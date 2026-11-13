@@ -1,30 +1,31 @@
 import { LucideIcon } from 'lucide-react';
 import { ReactNode } from 'react';
 
+import { SettingsPanel } from '@/app/components/admin';
 import { cn } from '@/lib/utils';
 
 export const StepShell = ({
   title,
   description,
   actions,
+  flush,
   children,
 }: {
   title: string;
   description: string;
   actions?: ReactNode;
+  flush?: boolean;
   children: ReactNode;
 }) => {
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-base font-medium">{title}</h2>
-          <p className="text-sm text-muted-foreground">{description}</p>
-        </div>
-        {actions && <div className="shrink-0">{actions}</div>}
-      </div>
+    <SettingsPanel
+      title={title}
+      description={description}
+      action={actions}
+      flush={flush}
+    >
       {children}
-    </div>
+    </SettingsPanel>
   );
 };
 
@@ -59,14 +60,13 @@ export const Stepper = ({
                 aria-current={isActive ? 'step' : undefined}
                 className={cn(
                   'flex size-8 items-center justify-center transition-colors',
-                  isComplete && 'text-success-600',
-                  !isComplete && isActive && 'text-primary',
+                  isComplete && 'text-success-11',
+                  !isComplete && isActive && 'text-accent-11',
                   !isComplete &&
                     !isActive &&
                     !isLocked &&
-                    'text-muted-foreground hover:text-primary',
-                  isLocked &&
-                    'text-muted-foreground cursor-not-allowed opacity-60',
+                    'text-gray-11 hover:text-accent-11',
+                  isLocked && 'text-gray-11 cursor-not-allowed opacity-60',
                 )}
               >
                 <Icon className="size-5" />
@@ -75,7 +75,7 @@ export const Stepper = ({
                 <div
                   className={cn(
                     'w-px flex-1 my-2',
-                    isComplete ? 'bg-success-600' : 'bg-border',
+                    isComplete ? 'bg-success-10' : 'bg-gray-6',
                   )}
                 />
               )}
@@ -86,16 +86,12 @@ export const Stepper = ({
               disabled={isLocked}
               className={cn(
                 'flex-1 text-left pt-1.5 pb-12 text-sm transition-colors',
-                isActive && 'font-medium text-foreground',
-                !isActive &&
-                  !isLocked &&
-                  'text-muted-foreground hover:text-foreground',
-                isLocked &&
-                  'text-muted-foreground cursor-not-allowed opacity-60',
+                isActive && 'font-medium text-gray-12',
+                !isActive && !isLocked && 'text-gray-11 hover:text-gray-12',
+                isLocked && 'text-gray-11 cursor-not-allowed opacity-60',
               )}
             >
-              <span className="mr-1">{index + 1}.</span>
-              {step.title}
+              {`${index + 1}. ${step.title}`}
             </button>
           </li>
         );

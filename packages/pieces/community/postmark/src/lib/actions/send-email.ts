@@ -26,6 +26,7 @@ function assertBodyProvided(textBody?: string, htmlBody?: string): void {
 
 export const sendEmail = createAction({
   name: 'send_email',
+  classification: 'WRITE',
   displayName: 'Send Email',
   description: 'Send a single transactional email using Postmark.',
   audience: 'both',

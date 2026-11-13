@@ -33,10 +33,10 @@ const StepDataPanelHeader = ({
     <div
       className={cn(
         'flex items-center justify-between px-3 py-2 shrink-0 gap-2',
-        status === 'success' && 'bg-success-100',
-        status === 'failed' && 'bg-destructive/10',
-        status === 'testing' && 'bg-primary/10',
-        status === 'paused' && 'bg-muted',
+        status === 'success' && 'bg-success-3',
+        status === 'failed' && 'bg-danger-3',
+        status === 'testing' && 'bg-accent-3',
+        status === 'paused' && 'bg-warning-3',
       )}
     >
       <StepDataPanelStatusBadge status={status} viewMode={viewMode} />
@@ -44,9 +44,9 @@ const StepDataPanelHeader = ({
         <span
           className={cn(
             'text-xs truncate',
-            status === 'success' && 'text-success-700/80',
-            status === 'failed' && 'text-destructive/80',
-            status === 'paused' && 'text-muted-foreground',
+            status === 'success' && 'text-success-11',
+            status === 'failed' && 'text-danger-11/80',
+            status === 'paused' && 'text-warning-11',
           )}
         >
           {formatUtils.formatDateWithTime(new Date(lastTestDate), false)}
@@ -69,7 +69,7 @@ const StepDataPanelStatusBadge = ({
     return (
       <div className="flex items-center gap-1.5 text-sm">
         <StepStatusIcon status={StepOutputStatus.FAILED} size="4.5" />
-        <span className="text-destructive-700 dark:text-destructive-200 font-medium">
+        <span className="text-danger-11 font-medium">
           {viewMode === 'run' ? t('Failed') : t('Test Failed')}
         </span>
       </div>
@@ -85,7 +85,7 @@ const StepDataPanelStatusBadge = ({
   }
   if (status === 'testing') {
     return (
-      <div className="flex items-center gap-1.5 text-sm text-primary">
+      <div className="flex items-center gap-1.5 text-sm text-accent-11">
         <Loader2 className="size-4 animate-spin" />
         <span className="font-medium">
           {viewMode === 'run' ? t('Running') : t('Testing...')}
@@ -96,7 +96,7 @@ const StepDataPanelStatusBadge = ({
   return (
     <div className="flex items-center gap-1.5 text-sm">
       <StepStatusIcon status={StepOutputStatus.SUCCEEDED} size="4.5" />
-      <span className="text-success-700 font-medium">
+      <span className="text-success-11 font-medium">
         {viewMode === 'run' ? t('Success') : t('Tested Successfully')}
       </span>
     </div>

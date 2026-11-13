@@ -1,142 +1,64 @@
-import {
-	DropdownOption,
-	Property,
-	createAction,
-} from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { smartsuiteAuth } from '../auth';
 import { smartsuiteCommon, transformRecordFields } from '../common/props';
-import { smartSuiteApiCall, TableStucture } from '../common';
+import { smartSuiteApi } from '../common';
+import { smartSuiteClient } from '../common/client';
+import { smartSuiteInputs } from '../common/inputs';
+import { outputSchemas } from '../output-schemas';
+
+const HARD_MAX_RECORDS = 10_000;
 
 export const findRecords = createAction({
 	name: 'find_records',
 	classification: 'SEARCH',
 	displayName: 'Find Records',
 	description: 'Searches for records in the specified table based on criteria.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
-		description: 'Searches a SmartSuite table for records where a chosen field exactly matches a given value, paging through all results. Use when an agent needs to look up records by a field value (for example to find a record before updating or deleting it); requires the solution, table, the field to match on, and the value to match. Idempotent — it only reads data.',
+		description: 'Finds SmartSuite records where one chosen field equals a value, keyed by field label. Agents should use List Records (by Table ID) with a filter instead. Read-only and idempotent.',
 		idempotent: true,
 	},
 	auth: smartsuiteAuth,
 	props: {
 		solutionId: smartsuiteCommon.solutionId,
 		tableId: smartsuiteCommon.tableId,
-		searchField: Property.Dropdown({
-			auth: smartsuiteAuth,
-			displayName: 'Search Field',
-			required: true,
-			refreshers: ['tableId'],
-			options: async ({ auth, tableId }) => {
-				if (!auth || !tableId) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const { apiKey, accountId } = auth.props;
-
-				const response = await smartSuiteApiCall<{
-					structure: TableStucture[];
-				}>({
-					apiKey,
-					accountId,
-					method: HttpMethod.GET,
-					resourceUri: `/applications/${tableId}`,
-				});
-
-				const options: DropdownOption<string>[] = [];
-
-				for (const field of response.structure) {
-					if (field.params.is_auto_generated || field.params.system) {
-						continue;
-					}
-
-					options.push({ label: field.label, value: field.slug });
-				}
-				return {
-					disabled: false,
-					options,
-				};
-			},
-		}),
+		searchField: smartsuiteCommon.tableFieldDropdown({ displayName: 'Search Field', required: true }),
 		searchValue: Property.ShortText({
 			displayName: 'Search Value',
 			required: true,
 		}),
+		maxRecords: Property.Number({
+			displayName: 'Max Records',
+			description: `Stop after this many matches (1-${HARD_MAX_RECORDS}). Leave empty to return all matches up to ${HARD_MAX_RECORDS}; Has More tells you if more exist.`,
+			required: false,
+		}),
 	},
+	outputSchema: outputSchemas['findRecords'],
 	async run({ auth, propsValue }) {
-		const { solutionId, tableId, searchField, searchValue } = propsValue;
-
-		try {
-			const tableResponse = await smartSuiteApiCall<{
-				structure: TableStucture[];
-			}>({
-				apiKey: auth.props.apiKey,
-				accountId: auth.props.accountId,
-				method: HttpMethod.GET,
-				resourceUri: `/applications/${tableId}`,
-			});
-			const tableSchema = tableResponse.structure;
-
-			const matchedRecords = [];
-
-			const qs = { limit: 100, offset: 0 };
-			let hasMore = true;
-
-			do {
-				const response = await smartSuiteApiCall<{ items: Record<string, any>[] }>({
-					accountId: auth.props.accountId,
-					apiKey: auth.props.apiKey,
-					method: HttpMethod.POST,
-					resourceUri: `/applications/${tableId}/records/list/`,
-					query: qs,
-					body: {
-						filter: {
-							operator: 'and',
-							fields: [
-								{
-									field: searchField,
-									comparison: 'is',
-									value: searchValue,
-								},
-							],
-						},
-					},
-				});
-				const items = response.items || [];
-				matchedRecords.push(...items);
-
-				hasMore = items.length > 0;
-				if (hasMore) {
-					qs.offset = Number(qs.offset) + Number(qs.limit);
-				}
-			} while (hasMore);
-
-			return {
-				found: matchedRecords.length > 0,
-				result: matchedRecords.map((record) => transformRecordFields(tableSchema, record)),
-			};
-		} catch (error: any) {
-			if (error.response?.status === 400) {
-				throw new Error(
-					`Invalid filter or sort criteria: ${
-						error.response?.body?.message || 'Please check your filter JSON format'
-					}`,
-				);
-			}
-
-			if (error.response?.status === 403) {
-				throw new Error('You do not have permission to access this table');
-			}
-
-			if (error.response?.status === 404) {
-				throw new Error(`Solution or table not found: ${solutionId}/${tableId}`);
-			}
-
-			throw new Error(`Failed to find records: ${error.message || 'Unknown error'}`);
-		}
+		const { tableId, searchField, searchValue } = propsValue;
+		const maxRecords = smartSuiteInputs.integerInRange({
+			value: propsValue.maxRecords,
+			label: 'Max Records',
+			min: 1,
+			max: HARD_MAX_RECORDS,
+			fallback: HARD_MAX_RECORDS,
+		});
+		const field = smartSuiteInputs.requireText({ value: searchField, label: 'Search Field' });
+		const credentials = smartSuiteClient.credentialsOf(auth);
+		const table = await smartSuiteApi.getTable({ credentials, tableId });
+		const { items, hasMore } = await smartSuiteApi.collectRecords({
+			credentials,
+			tableId,
+			filter: {
+				operator: 'and',
+				fields: [{ field, comparison: 'is', value: searchValue }],
+			},
+			maxRecords,
+		});
+		return {
+			found: items.length > 0,
+			result: items.map((record) => transformRecordFields({ tableSchema: table.structure, tableValues: record })),
+			hasMore,
+		};
 	},
 });

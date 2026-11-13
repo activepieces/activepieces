@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getOpenApiSchemaAction = createAction({
   name: 'get_openapi_schema',
+  classification: 'READ',
   displayName: 'Get OpenAPI Schema',
   description: 'Retrieve the OpenAPI schema for the Zoo API',
   audience: 'both',

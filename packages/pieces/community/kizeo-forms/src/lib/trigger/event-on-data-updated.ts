@@ -15,6 +15,7 @@ const triggerNameInStore = 'event_on_data_updated_trigger';
 export const eventOnDataUpdated = createTrigger({
   auth: kizeoFormsAuth,
   name: 'event_on_data_updated',
+  classification: 'READ',
   displayName: 'Event On Data Updated',
   description: 'Handle EventOnData update event via webhooks',
   aiMetadata: {

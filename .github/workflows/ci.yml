@@ -131,6 +131,10 @@ jobs:
           if [ "$RUN_ALL" = "true" ]; then
             FILTERS="$FILTERS $(npx tsx tools/scripts/test-filters.ts)"
           fi
+          if [ -z "${FILTERS// /}" ]; then
+            echo "Only api is affected and the api-tests jobs cover it, so there is nothing to build here."
+            exit 0
+          fi
           npx turbo run typecheck build test $FILTERS
 
       - name: Check new migrations are rollback-safe

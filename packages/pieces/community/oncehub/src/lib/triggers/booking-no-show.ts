@@ -5,6 +5,7 @@ import { oncehubAuth } from '../common/auth';
 export const bookingNoshow = createTrigger({
   auth: oncehubAuth,
   name: 'bookingNoshow',
+  classification: 'READ',
   displayName: 'Booking No-Show',
   description: 'Triggered when User sets the completed booking to No-show',
   aiMetadata: {

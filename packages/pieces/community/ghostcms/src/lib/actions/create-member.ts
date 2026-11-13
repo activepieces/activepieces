@@ -1,14 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-import { ghostAuth } from '../..';
+import { ghostAuth } from '../auth';
 import { common } from '../common';
+import { ghostOriginalMembersOutputSchema } from '../output-schemas';
 
 export const createMember = createAction({
   name: 'create_member',
+  outputSchema: ghostOriginalMembersOutputSchema,
+  classification: 'WRITE',
   displayName: 'Create Member',
   description: 'Create a new member',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new member in a Ghost publication from an email (required), with optional name, internal note, and newsletter subscriptions. Use to add a subscriber/member to the audience. Not idempotent: each call creates a member and re-running with the same email may produce a duplicate or error.', idempotent: false },
   auth: ghostAuth,
   props: {

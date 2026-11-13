@@ -5,6 +5,7 @@ import { stopFlow } from "./lib/actions/stop-flow";
 
 export const flowHelper = createPiece({
   displayName: "Flow Helper",
+  description: "Stop or fail a running flow, or get a link to the current run.",
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/flow-helper.svg",

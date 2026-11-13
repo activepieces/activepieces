@@ -4,6 +4,7 @@ import { kallabotAuth } from '../..';
 
 export const createCampaignAction = createAction({
     name: 'create-campaign',
+    classification: 'WRITE',
     displayName: 'Create Campaign',
     description: 'Create a new outbound calling campaign.',
     audience: 'both',

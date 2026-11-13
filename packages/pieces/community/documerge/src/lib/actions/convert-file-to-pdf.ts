@@ -6,6 +6,7 @@ import { DocuMergeClient } from '../common/client';
 export const convertFileToPdf = createAction({
   auth: documergeAuth,
   name: 'convert_file_to_pdf',
+  classification: 'READ',
   displayName: 'Convert File to PDF',
   description: 'Convert a given file to PDF',
   audience: 'both',

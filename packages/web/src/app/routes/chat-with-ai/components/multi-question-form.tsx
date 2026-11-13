@@ -123,9 +123,15 @@ export function MultiQuestionForm({
   }
 
   function handleSkip() {
+    const answersWithoutSkipped = withoutStep({
+      record: answers,
+      step: currentStep,
+    });
+    setAnswers(answersWithoutSkipped);
+    setAnswerValues((prev) => withoutStep({ record: prev, step: currentStep }));
     if (isLastStep) {
       if (submitted) return;
-      const lines = buildRecap(answers);
+      const lines = buildRecap(answersWithoutSkipped);
       if (lines.length === 0) {
         onDismiss?.();
         return;
@@ -140,11 +146,11 @@ export function MultiQuestionForm({
   if (submitted) {
     return (
       <motion.div
-        className="my-3 flex items-center gap-2 text-sm text-muted-foreground"
+        className="my-3 flex items-center gap-2 text-sm text-gray-11"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
-        <Check className="size-4 text-green-600 dark:text-green-400" />
+        <Check className="size-4 text-success-11" />
         <span>{t('Answers submitted')}</span>
       </motion.div>
     );
@@ -167,7 +173,7 @@ export function MultiQuestionForm({
           >
             <Label
               htmlFor={fieldId}
-              className="block text-base font-semibold leading-snug text-foreground"
+              className="block text-base font-semibold leading-snug text-gray-12"
             >
               {q.question}
             </Label>
@@ -178,8 +184,7 @@ export function MultiQuestionForm({
         <>
           <Button
             variant="ghost"
-            size="icon"
-            className="h-7 w-7"
+            size="icon-xs"
             onClick={() => setCurrentStep((s) => s - 1)}
             disabled={currentStep === 0}
             aria-label={t('Back')}
@@ -194,8 +199,7 @@ export function MultiQuestionForm({
           </span>
           <Button
             variant="ghost"
-            size="icon"
-            className="h-7 w-7"
+            size="icon-xs"
             onClick={() => handleNext()}
             disabled={!currentAnswer}
             aria-label={t('Next')}
@@ -303,151 +307,153 @@ function ChoiceBody({
       (o) => (!!o.icon || !!o.piece) && o.label.length <= MAX_ICON_GRID_LABEL,
     );
 
-  if (useIconGrid) {
-    return (
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {options.map((option) => {
-          const selected = answer === option.label;
-          return (
-            <button
-              key={option.label}
-              type="button"
-              onClick={() => onPick(option.label)}
-              aria-pressed={selected}
-              className={cn(
-                'flex flex-col items-center gap-2 rounded-xl border border-border/60 px-3 py-4 text-center text-sm transition-colors hover:bg-muted',
-                selected && 'border-primary/50 bg-primary/5',
-              )}
-            >
-              <OptionIcon
-                piece={option.piece}
-                icon={option.icon}
-                selected={selected}
-                variant="grid"
-              />
-              <span className="leading-snug">{option.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
-
   return (
     <div>
-      <div role="menu" aria-label={question.question} className="gap-0">
-        {options.map((option, i) => {
-          const selected = answer === option.label;
-          const isFirst = i === 0;
-          const isLast = i === options.length - 1;
-          return (
-            <Fragment key={option.label}>
-              {i > 0 && (
-                <div className="px-3">
-                  <Separator
-                    className={cn(
-                      'bg-border/60 transition-opacity duration-150',
-                      isMidSepHidden(i) && 'opacity-0',
-                    )}
-                  />
-                </div>
-              )}
-              <div
-                role="menuitemradio"
-                tabIndex={
-                  focusedRow === i || (focusedRow === null && isFirst) ? 0 : -1
-                }
-                aria-checked={selected}
-                ref={(el) => {
-                  optionRefs.current[i] = el;
-                  if (isFirst) setFirstOptionEl(el);
-                  if (isLast) lastOptionRef.current = el;
-                }}
+      {useIconGrid ? (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {options.map((option) => {
+            const selected = answer === option.label;
+            return (
+              <button
+                key={option.label}
+                type="button"
                 onClick={() => onPick(option.label)}
-                onMouseEnter={() => setHoveredRow(i)}
-                onMouseLeave={() =>
-                  setHoveredRow((prev) => (prev === i ? null : prev))
-                }
-                onFocus={() => setFocusedRow(i)}
-                onBlur={() =>
-                  setFocusedRow((prev) => (prev === i ? null : prev))
-                }
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    onPick(option.label);
-                    return;
-                  }
-                  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                    e.preventDefault();
-                    return;
-                  }
-                  if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    if (isLast) {
-                      customAnswerInputRef.current?.focus();
-                    } else {
-                      setFocusedRow(i + 1);
-                      optionRefs.current[i + 1]?.focus();
-                    }
-                    return;
-                  }
-                  if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    if (isFirst) {
-                      customAnswerInputRef.current?.focus();
-                    } else {
-                      setFocusedRow(i - 1);
-                      optionRefs.current[i - 1]?.focus();
-                    }
-                    return;
-                  }
-                }}
+                aria-pressed={selected}
                 className={cn(
-                  'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-pointer transition-colors hover:bg-muted outline-none',
-                  focusedRow === i && !selected && 'bg-muted',
-                  selected && 'bg-muted-foreground/15',
+                  'flex flex-col items-center gap-2 rounded-xl border border-gray-6/60 px-3 py-4 text-center text-sm transition-colors hover:bg-gray-3',
+                  selected && 'border-accent-7 bg-accent-3 hover:bg-accent-4',
                 )}
               >
-                {option.piece || option.icon ? (
-                  <OptionIcon
-                    piece={option.piece}
-                    icon={option.icon}
-                    selected={selected || focusedRow === i}
-                    variant="list"
-                  />
-                ) : (
-                  <span
-                    aria-hidden
-                    className={cn(
-                      'flex size-8 shrink-0 items-center justify-center rounded-md bg-muted-foreground/10 text-xs font-medium text-muted-foreground transition-colors',
-                      focusedRow === i && 'bg-foreground text-background',
-                      selected && 'bg-foreground text-background',
-                    )}
-                  >
-                    {i + 1}
-                  </span>
+                <OptionIcon
+                  piece={option.piece}
+                  icon={option.icon}
+                  selected={selected}
+                  variant="grid"
+                />
+                <span className="leading-snug">{option.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div role="menu" aria-label={question.question} className="gap-0">
+          {options.map((option, i) => {
+            const selected = answer === option.label;
+            const isFirst = i === 0;
+            const isLast = i === options.length - 1;
+            return (
+              <Fragment key={option.label}>
+                {i > 0 && (
+                  <div className="px-3">
+                    <Separator
+                      className={cn(
+                        'bg-gray-6/60 transition-opacity duration-150',
+                        isMidSepHidden(i) && 'opacity-0',
+                      )}
+                    />
+                  </div>
                 )}
-                <span className="flex-1 min-w-0 leading-snug">
-                  <span className="block">{option.label}</span>
-                  {option.description && (
-                    <span className="block text-xs text-muted-foreground">
-                      {option.description}
+                <div
+                  role="menuitemradio"
+                  tabIndex={
+                    focusedRow === i || (focusedRow === null && isFirst)
+                      ? 0
+                      : -1
+                  }
+                  aria-checked={selected}
+                  ref={(el) => {
+                    optionRefs.current[i] = el;
+                    if (isFirst) setFirstOptionEl(el);
+                    if (isLast) lastOptionRef.current = el;
+                  }}
+                  onClick={() => onPick(option.label)}
+                  onMouseEnter={() => setHoveredRow(i)}
+                  onMouseLeave={() =>
+                    setHoveredRow((prev) => (prev === i ? null : prev))
+                  }
+                  onFocus={() => setFocusedRow(i)}
+                  onBlur={() =>
+                    setFocusedRow((prev) => (prev === i ? null : prev))
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      onPick(option.label);
+                      return;
+                    }
+                    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                      e.preventDefault();
+                      return;
+                    }
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      if (isLast) {
+                        customAnswerInputRef.current?.focus();
+                      } else {
+                        setFocusedRow(i + 1);
+                        optionRefs.current[i + 1]?.focus();
+                      }
+                      return;
+                    }
+                    if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      if (isFirst) {
+                        customAnswerInputRef.current?.focus();
+                      } else {
+                        setFocusedRow(i - 1);
+                        optionRefs.current[i - 1]?.focus();
+                      }
+                      return;
+                    }
+                  }}
+                  className={cn(
+                    'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-pointer transition-colors hover:bg-gray-3 outline-none',
+                    focusedRow === i &&
+                      !selected &&
+                      'bg-gray-3 hover:bg-gray-4',
+                    selected && 'bg-gray-4 hover:bg-gray-5',
+                  )}
+                >
+                  {option.piece || option.icon ? (
+                    <OptionIcon
+                      piece={option.piece}
+                      icon={option.icon}
+                      selected={selected || focusedRow === i}
+                      variant="list"
+                    />
+                  ) : (
+                    <span
+                      aria-hidden
+                      className={cn(
+                        'flex size-8 shrink-0 items-center justify-center rounded-md bg-gray-5 text-xs font-medium text-gray-11 transition-colors',
+                        focusedRow === i && 'bg-gray-12 text-gray-1',
+                        selected && 'bg-gray-12 text-gray-1',
+                      )}
+                    >
+                      {i + 1}
                     </span>
                   )}
-                </span>
-              </div>
-            </Fragment>
-          );
-        })}
-      </div>
+                  <span className="flex-1 min-w-0 leading-snug">
+                    <span className="block">{option.label}</span>
+                    {option.description && (
+                      <span className="block text-xs text-gray-11">
+                        {option.description}
+                      </span>
+                    )}
+                  </span>
+                </div>
+              </Fragment>
+            );
+          })}
+        </div>
+      )}
 
       {allowCustom && (
         <>
           <div className="px-3">
             <Separator
               className={cn(
-                'bg-border/60 transition-opacity duration-150',
+                'bg-gray-6/60 transition-opacity duration-150',
                 isBottomSepHidden && 'opacity-0',
               )}
             />
@@ -464,15 +470,15 @@ function ChoiceBody({
               setFocusedRow((prev) => (prev === 'custom' ? null : prev))
             }
             className={cn(
-              'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-text transition-colors hover:bg-muted focus-within:bg-muted',
-              isCustomTextActive && 'bg-muted',
+              'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-text transition-colors hover:bg-gray-3 focus-within:bg-gray-3',
+              isCustomTextActive && 'bg-gray-3 hover:bg-gray-4',
             )}
           >
             <span
               aria-hidden
               className={cn(
-                'flex size-8 shrink-0 items-center justify-center rounded-md bg-muted-foreground/10 text-muted-foreground transition-colors group-focus-within:bg-foreground group-focus-within:text-background',
-                isCustomTextActive && 'bg-foreground text-background',
+                'flex size-8 shrink-0 items-center justify-center rounded-md bg-gray-5 text-gray-11 transition-colors group-focus-within:bg-gray-12 group-focus-within:text-gray-1',
+                isCustomTextActive && 'bg-gray-12 text-gray-1',
               )}
             >
               <Pencil className="size-3.5" />
@@ -490,17 +496,21 @@ function ChoiceBody({
               }}
               onChange={(e) => setAnswer(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'ArrowUp') {
+                if (e.key === 'ArrowUp' && lastOptionRef.current) {
                   e.preventDefault();
-                  lastOptionRef.current?.focus();
+                  lastOptionRef.current.focus();
                   return;
                 }
-                if (e.key === 'ArrowDown') {
+                if (e.key === 'ArrowDown' && firstOptionRef.current) {
                   e.preventDefault();
-                  firstOptionRef.current?.focus();
+                  firstOptionRef.current.focus();
                   return;
                 }
-                if (e.key === 'Enter' && (answer ?? '').trim()) {
+                if (
+                  e.key === 'Enter' &&
+                  !e.nativeEvent.isComposing &&
+                  (answer ?? '').trim()
+                ) {
                   e.preventDefault();
                   onPick((answer ?? '').trim());
                 }
@@ -509,11 +519,7 @@ function ChoiceBody({
             <Button
               type="button"
               variant={isCustomTextActive ? 'default' : 'outline'}
-              size={isCustomTextActive ? 'icon' : 'sm'}
-              className={cn(
-                'h-7 shrink-0',
-                isCustomTextActive ? 'w-7' : 'px-2.5 text-sm',
-              )}
+              size={isCustomTextActive ? 'icon-xs' : 'xs'}
               onClick={() =>
                 isCustomTextActive ? onPick((answer ?? '').trim()) : onSkip()
               }
@@ -529,5 +535,17 @@ function ChoiceBody({
         </>
       )}
     </div>
+  );
+}
+
+function withoutStep<T>({
+  record,
+  step,
+}: {
+  record: Record<number, T>;
+  step: number;
+}): Record<number, T> {
+  return Object.fromEntries(
+    Object.entries(record).filter(([key]) => Number(key) !== step),
   );
 }

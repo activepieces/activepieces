@@ -88,7 +88,7 @@ export interface CloseCRMContact {
 export interface CloseCRMSearchQuery {
 	query: {
 		type: string;
-		queries: any[];
+		queries: unknown[];
 	};
 	_fields: {
 		contact: string[];
@@ -99,7 +99,7 @@ export interface CloseCRMSearchQuery {
 export interface CloseCRMSearchQuery {
 	query: {
 		type: string;
-		queries: any[];
+		queries: unknown[];
 	};
 }
 

@@ -142,7 +142,7 @@ const ProjectReleasesPage = () => {
                 <ApplyButton
                   onSuccess={refetch}
                   variant="ghost"
-                  className="size-8 p-0"
+                  size="icon-sm"
                   request={{
                     projectId: authenticationSession.getProjectId()!,
                     type: ProjectReleaseType.ROLLBACK,

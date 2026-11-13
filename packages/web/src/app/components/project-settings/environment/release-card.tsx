@@ -17,7 +17,7 @@ const ReleaseCard = () => {
         </div>
         <div className="flex grow flex-col">
           <div className="text-lg">{t('Releases')}</div>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-gray-11">
             {t('Enable releases to easily create and manage project releases.')}
           </div>
         </div>
@@ -29,8 +29,8 @@ const ReleaseCard = () => {
                 releasesEnabled: !project.releasesEnabled,
               })
             }
-            className={cn('', {
-              'text-destructive': project.releasesEnabled,
+            className={cn({
+              'text-danger-11': project.releasesEnabled,
             })}
           >
             {project.releasesEnabled ? t('Disable') : t('Enable')}

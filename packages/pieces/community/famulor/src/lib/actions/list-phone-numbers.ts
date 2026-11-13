@@ -6,6 +6,7 @@ import { famulorCommon } from '../common';
 export const listPhoneNumbers = createAction({
   auth: famulorAuth,
   name: 'listPhoneNumbers',
+  classification: 'SEARCH',
   displayName: 'List Phone Numbers',
   description: 'List all phone numbers linked to your account.',
   audience: 'both',

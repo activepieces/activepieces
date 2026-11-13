@@ -1,172 +1,38 @@
 import { propsValidation } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { formatDateTime, zohoBookingsAuth, zohoBookingsCommon } from '../common';
+import * as z from 'zod/mini';
+import { zohoBookingsAuth } from '../auth';
+import { zohoBookingsApi } from '../common/api';
+import { zohoBookingsProps } from '../common/props';
+import { bookAppointmentOutputSchema } from '../output-schemas';
 
-export const bookAppointment = createAction({
+export const bookAppointmentAction = createAction({
   auth: zohoBookingsAuth,
   name: 'bookAppointment',
+  outputSchema: bookAppointmentOutputSchema,
+  classification: 'WRITE',
   displayName: 'Book Appointment',
   description: 'Book an appointment for a customer for a desired service',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Create a new appointment in a Zoho Bookings workspace for a given service, customer (name/email/phone), and start time. Assign the booking to exactly one of staff, resource, or group (the call fails if none is supplied). Not idempotent: each call books a separate appointment.',
     idempotent: false,
   },
   props: {
-    workspace_id: Property.Dropdown({
-      auth: zohoBookingsAuth,
-      displayName: 'Workspace',
+    workspace_id: zohoBookingsProps.workspaceId({
+      required: true,
       description: 'Select the workspace for the appointment',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Authentication required',
-            options: [],
-          };
-        }
-
-        try {
-          const location = (auth as any).props?.['location'] || 'zoho.com';
-          const workspaces = await zohoBookingsCommon.fetchWorkspaces(
-            (auth as any).access_token,
-            location
-          );
-
-          return {
-            options: workspaces.map((workspace: any) => ({
-              label: workspace.name,
-              value: workspace.id,
-            })),
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: 'Failed to load workspaces',
-            options: [],
-          };
-        }
-      },
     }),
-    service_id: Property.Dropdown({
-      auth: zohoBookingsAuth,
-      displayName: 'Service',
+    service_id: zohoBookingsProps.serviceId({
+      required: true,
       description: 'Select the service for which the appointment is booked',
-      required: true,
-      refreshers: ['workspace_id'],
-      options: async ({ auth, workspace_id }) => {
-        if (!workspace_id || !auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please enter workspace ID first',
-            options: [],
-          };
-        }
-
-        try {
-          const location = (auth as any).props?.['location'] || 'zoho.com';
-          const services = await zohoBookingsCommon.fetchServices(
-            (auth as any).access_token,
-            location,
-            workspace_id as string
-          );
-
-          return {
-            options: services.map((service: any) => ({
-              label: `${service.name} (${service.duration})`,
-              value: service.id,
-            })),
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: 'Failed to load services',
-            options: [],
-          };
-        }
-      },
     }),
-    staff_id: Property.Dropdown({
-      auth: zohoBookingsAuth,
-      displayName: 'Staff',
-      description:
-        'Select the staff member (use this OR resource_id OR group_id)',
+    staff_id: zohoBookingsProps.staffId({
       required: false,
-      refreshers: ['service_id'],
-      options: async ({ auth, service_id }) => {
-        if (!service_id || !auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please select service first',
-            options: [],
-          };
-        }
-
-        try {
-          const location = (auth as any).props?.['location'] || 'zoho.com';
-          const staff = await zohoBookingsCommon.fetchStaff(
-            (auth as any).access_token,
-            location,
-            service_id as string
-          );
-
-          return {
-            options: staff.map((member: any) => ({
-              label: `${member.name} - ${member.designation || 'Staff'}`,
-              value: member.id,
-            })),
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: 'Failed to load staff',
-            options: [],
-          };
-        }
-      },
+      description: 'Select the staff member (use this OR resource_id OR group_id)',
     }),
-    resource_id: Property.Dropdown({
-      auth: zohoBookingsAuth,
-      displayName: 'Resource',
-      description: 'Select the resource (use this OR staff_id OR group_id)',
-      required: false,
-      refreshers: ['service_id'],
-      options: async ({ auth, service_id }) => {
-        if (!service_id || !auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please select service first',
-            options: [],
-          };
-        }
-
-        try {
-          const location = auth.props?.['location'] as string || 'zoho.com';
-          const resources = await zohoBookingsCommon.fetchResources(
-            auth.access_token,
-            location,
-            service_id as string
-          );
-
-          return {
-            options: resources.map((resource: any) => ({
-              label: resource.name,
-              value: resource.id,
-            })),
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: 'Failed to load resources',
-            options: [],
-          };
-        }
-      },
-    }),
+    resource_id: zohoBookingsProps.resourceId({ required: false }),
     group_id: Property.ShortText({
       displayName: 'Group ID',
       description:
@@ -223,86 +89,45 @@ export const bookAppointment = createAction({
   },
   async run(context) {
     const { auth, propsValue } = context;
-    const location = auth.props?.['location'] as string || 'zoho.com';
 
-    // Validate props using Zod schema
-    await propsValidation.validateZod(
-      propsValue,
-      zohoBookingsCommon.bookAppointmentSchema
-    );
+    await propsValidation.validateZod(propsValue, schema);
 
-    // Validate that at least one of staff_id, resource_id, or group_id is provided
-    if (
-      !propsValue.staff_id &&
-      !propsValue.resource_id &&
-      !propsValue.group_id
-    ) {
-      throw new Error(
-        'Either staff_id, resource_id, or group_id must be provided'
-      );
+    if (!propsValue.staff_id && !propsValue.resource_id && !propsValue.group_id) {
+      throw new Error('Either staff_id, resource_id, or group_id must be provided');
     }
 
-    // Prepare customer details
-    const customer_details = {
-      name: String(propsValue.customer_name),
-      email: String(propsValue.customer_email),
-      phone_number: String(propsValue.customer_phone),
-    };
-    const customer_details_json = JSON.stringify(customer_details);
-    // Prepare form data
-    const formData = new FormData();
-    formData.append('service_id', propsValue.service_id as string);
-    formData.append('from_time', formatDateTime(propsValue.from_time));
-    
-    formData.append('customer_details', customer_details_json);
-
-    // Add optional staff/resource/group ID
-    if (propsValue.staff_id != null && propsValue.staff_id) {
-      formData.append('staff_id', propsValue.staff_id as string);
-    }
-    if (propsValue.resource_id != null && propsValue.resource_id) {
-      formData.append('resource_id', propsValue.resource_id as string);
-    }
-    if (propsValue.group_id != null && propsValue.group_id) {
-      formData.append('group_id', propsValue.group_id as string);
-    }
-
-    // Add optional fields
-    if (propsValue.to_time) {
-      formData.append('to_time', formatDateTime(propsValue.to_time));
-    }
-    if (propsValue.timezone) {
-      formData.append('timezone', propsValue.timezone);
-    }
-    if (propsValue.notes) {
-      formData.append('notes', propsValue.notes);
-    }
-    if (propsValue.additional_fields) {
-      formData.append(
-        'additional_fields',
-        JSON.stringify(propsValue.additional_fields)
-      );
-    }
-    if (propsValue.cost_paid) {
-      formData.append(
-        'payment_info',
-        JSON.stringify({ cost_paid: propsValue.cost_paid.toString() })
-      );
-    }
-    
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${zohoBookingsCommon.baseUrl(location)}/appointment`,
-      headers: {
-        Authorization: `Zoho-oauthtoken ${auth.access_token}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: formData,
+    return await zohoBookingsApi.bookAppointment({
+      auth,
+      serviceId: propsValue.service_id,
+      fromTime: propsValue.from_time,
+      customerName: propsValue.customer_name,
+      customerEmail: propsValue.customer_email,
+      customerPhone: propsValue.customer_phone,
+      staffId: propsValue.staff_id,
+      resourceId: propsValue.resource_id,
+      groupId: propsValue.group_id,
+      toTime: propsValue.to_time,
+      timezone: propsValue.timezone,
+      notes: propsValue.notes,
+      additionalFields: propsValue.additional_fields,
+      costPaid: propsValue.cost_paid,
     });
-
-    if (response.body.response.status === 'failure') {
-      throw new Error(`${response.body.response.errormessage}`);
-    }
-    return response.body.response;
   },
 });
+
+const schema = {
+  workspace_id: z.string().check(z.minLength(1)),
+  service_id: z.string().check(z.minLength(1)),
+  staff_id: z.optional(z.string()),
+  resource_id: z.optional(z.string()),
+  group_id: z.optional(z.string()),
+  from_time: z.string(),
+  to_time: z.optional(z.string()),
+  timezone: z.optional(z.string()),
+  customer_name: z.string().check(z.minLength(1)),
+  customer_email: z.string().check(z.email()),
+  customer_phone: z.string().check(z.minLength(1)),
+  notes: z.optional(z.string()),
+  additional_fields: z.optional(z.record(z.string(), z.unknown())),
+  cost_paid: z.optional(z.number().check(z.minimum(0))),
+};

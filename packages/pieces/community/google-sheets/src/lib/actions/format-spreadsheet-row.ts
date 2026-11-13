@@ -18,6 +18,29 @@ export const formatRowAction = createAction({
 		idempotent: true,
 	},
 	displayName: 'Format Row(s)',
+	propertyGroups: [
+		{
+			key: 'spreadsheet',
+			display: 'section',
+			label: 'Spreadsheet',
+			icon: 'file',
+			props: ['spreadsheetId', 'sheetId'],
+		},
+		{
+			key: 'target_rows',
+			display: 'section',
+			label: 'Rows',
+			icon: 'markdown',
+			props: ['startingRow', 'endingRow'],
+		},
+		{
+			key: 'style',
+			display: 'section',
+			label: 'Style',
+			icon: 'type',
+			props: ['bgColor', 'textColor', 'bold', 'italic', 'strikethrough'],
+		},
+	],
 	props: {
 		...commonProps,
 		startingRow: Property.Number({
@@ -35,11 +58,13 @@ export const formatRowAction = createAction({
 			displayName: 'Background Color',
 			description: 'Provide a HEX color code (example: #FFD966)',
 			required: false,
+			width: 'half',
 		}),
 		textColor: Property.ShortText({
 			displayName: 'Text Color',
 			description: 'Provide a HEX color code (example: #FFD966)',
 			required: false,
+			width: 'half',
 		}),
 		bold: Property.Checkbox({
 			displayName: 'Bold',

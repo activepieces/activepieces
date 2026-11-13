@@ -51,6 +51,7 @@ const polling: Polling<
 export const newInvoice = createTrigger({
   auth: quickbooksAuth,
   name: 'new_invoice',
+  classification: 'READ',
   displayName: 'New Invoice',
   description: 'Triggers when an invoice is created .',
   aiMetadata: {

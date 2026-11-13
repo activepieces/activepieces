@@ -8,6 +8,7 @@ import { insightlyAuth } from '../common/common';
 export const updatedRecord = createTrigger({
     auth: insightlyAuth,
     name: 'updated_record',
+    classification: 'READ',
     displayName: 'Updated Record',
     description: 'Fires when an existing record is updated in Insightly (requires webhook setup)',
     aiMetadata: {

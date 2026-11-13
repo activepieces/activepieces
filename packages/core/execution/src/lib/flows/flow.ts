@@ -57,12 +57,13 @@ export const Flow = z.object({
     timeSavedPerRun: Nullable(z.number()),
     templateId: Nullable(z.string()),
     createdBy: Nullable(FlowCreator),
+    workerGroupId: Nullable(z.string()),
 })
 
 export type Flow = z.infer<typeof Flow>
 export const PopulatedFlow = Flow.extend({
     version: FlowVersion,
-    triggerSource: zMini.optional(zMini.pick(TriggerSource, { schedule: true })),
+    triggerSource: zMini.optional(zMini.partial(zMini.pick(TriggerSource, { schedule: true, pieceName: true }), { pieceName: true })),
 })
 
 export type PopulatedFlow = z.infer<typeof PopulatedFlow>

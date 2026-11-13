@@ -1,14 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { lemonSqueezyAuth } from '../common/auth';
-import {
-  LEMON_SQUEEZY_API_BASE,
-  getLemonSqueezyHeaders,
-  fetchStoreOptions,
-  fetchProductOptions,
-  fetchVariantOptions,
-} from '../common/api';
-
+import { isoDateOrUndefined, lsRequest, numericId } from '../common/client';
+import { storeOptions, productOptions, variantOptions } from '../common/props';
+import { rawSchemas } from '../common/output-schemas';
 export const createCheckout = createAction({
   name: 'create_checkout',
   classification: 'WRITE',
@@ -17,6 +11,7 @@ export const createCheckout = createAction({
   audience: 'both',
   aiMetadata: { description: 'Create a hosted Lemon Squeezy checkout URL for a given store and product variant, optionally pre-filling customer email/name, applying a discount code, overriding the price, attaching custom data, or setting a redirect and expiry. Use to generate a payable link to send a customer. Not idempotent: each call creates a new checkout, so repeated calls yield distinct URLs. Requires a store and variant ID.', idempotent: false },
   auth: lemonSqueezyAuth,
+  outputSchema: rawSchemas.checkout,
   props: {
     storeId: Property.Dropdown({
       displayName: 'Store',
@@ -24,13 +19,7 @@ export const createCheckout = createAction({
       required: true,
       auth: lemonSqueezyAuth,
       refreshers: ['auth'],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
-        }
-        const options = await fetchStoreOptions(auth.secret_text);
-        return { options };
-      },
+      options: async ({ auth }) => storeOptions({ auth }),
     }),
     productId: Property.Dropdown({
       displayName: 'Product',
@@ -38,13 +27,7 @@ export const createCheckout = createAction({
       required: false,
       auth: lemonSqueezyAuth,
       refreshers: ['auth', 'storeId'],
-      options: async ({ auth, storeId }) => {
-        if (!auth) {
-          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
-        }
-        const options = await fetchProductOptions(auth.secret_text, storeId as string | undefined);
-        return { options };
-      },
+      options: async ({ auth, storeId }) => productOptions({ auth, storeId }),
     }),
     variantId: Property.Dropdown({
       displayName: 'Variant',
@@ -52,13 +35,7 @@ export const createCheckout = createAction({
       required: true,
       auth: lemonSqueezyAuth,
       refreshers: ['auth', 'productId'],
-      options: async ({ auth, productId }) => {
-        if (!auth) {
-          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
-        }
-        const options = await fetchVariantOptions(auth.secret_text, productId as string | undefined);
-        return { options };
-      },
+      options: async ({ auth, productId }) => variantOptions({ auth, productId }),
     }),
     customerEmail: Property.ShortText({
       displayName: 'Customer Email',
@@ -98,55 +75,42 @@ export const createCheckout = createAction({
   },
   async run(context) {
     const { auth, propsValue } = context;
+    const storeId = numericId({ value: propsValue.storeId, label: 'Store' });
+    const variantId = numericId({ value: propsValue.variantId, label: 'Variant' });
+    const expiresAt = isoDateOrUndefined({ value: propsValue.expiresAt, label: 'Expires At' });
+
+    const customData = propsValue.customData;
+    if (customData !== undefined && customData !== null && (typeof customData !== 'object' || Array.isArray(customData))) {
+      throw new Error('Custom Data must be a JSON object of key-value pairs, for example {"user_id": "123"}.');
+    }
+    const customPrice = propsValue.customPrice;
+    if (customPrice !== undefined && customPrice !== null && (!Number.isInteger(Number(customPrice)) || Number(customPrice) < 0)) {
+      throw new Error('Custom Price must be a whole number of cents (0 or more).');
+    }
 
     const checkoutData: Record<string, unknown> = {};
     if (propsValue.customerEmail) checkoutData['email'] = propsValue.customerEmail;
     if (propsValue.customerName) checkoutData['name'] = propsValue.customerName;
     if (propsValue.discountCode) checkoutData['discount_code'] = propsValue.discountCode;
-    if (propsValue.customData) checkoutData['custom'] = propsValue.customData;
-
-    const checkoutOptions: Record<string, unknown> = {};
-    if (propsValue.redirectUrl) checkoutOptions['redirect_url'] = propsValue.redirectUrl;
+    if (customData && Object.keys(customData).length > 0) checkoutData['custom'] = customData;
 
     const attributes: Record<string, unknown> = {};
+    if (Object.keys(checkoutData).length > 0) attributes['checkout_data'] = checkoutData;
+    if (propsValue.redirectUrl) attributes['product_options'] = { redirect_url: propsValue.redirectUrl };
+    if (customPrice !== undefined && customPrice !== null) attributes['custom_price'] = Number(customPrice);
+    if (expiresAt) attributes['expires_at'] = expiresAt;
 
-    if (Object.keys(checkoutData).length > 0) {
-      attributes['checkout_data'] = checkoutData;
-    }
-
-    if (Object.keys(checkoutOptions).length > 0) {
-      attributes['checkout_options'] = checkoutOptions;
-    }
-
-    if (propsValue.customPrice != null) {
-      attributes['custom_price'] = propsValue.customPrice;
-    }
-
-    if (propsValue.expiresAt) {
-      attributes['expires_at'] = propsValue.expiresAt;
-    }
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${LEMON_SQUEEZY_API_BASE}/checkouts`,
-      headers: getLemonSqueezyHeaders(auth.secret_text),
+    const response = await lsRequest({
+      apiKey: auth.secret_text,
+      method: 'POST',
+      path: '/checkouts',
       body: {
         data: {
           type: 'checkouts',
           attributes,
           relationships: {
-            store: {
-              data: {
-                type: 'stores',
-                id: String(propsValue.storeId),
-              },
-            },
-            variant: {
-              data: {
-                type: 'variants',
-                id: String(propsValue.variantId),
-              },
-            },
+            store: { data: { type: 'stores', id: storeId } },
+            variant: { data: { type: 'variants', id: variantId } },
           },
         },
       },

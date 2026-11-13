@@ -215,11 +215,17 @@ export const newPinOnBoard = createTrigger({
       .slice(0, 5);
   },
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get(LAST_POLL_KEY))) {
+      return;
+    }
     await context.store.put(LAST_POLL_KEY, Date.now());
     await context.store.delete(PENDING_BOOKMARK_KEY);
     await context.store.delete(PENDING_MAX_EPOCH_KEY);
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete(PENDING_BOOKMARK_KEY);
     await context.store.delete(PENDING_MAX_EPOCH_KEY);
   },

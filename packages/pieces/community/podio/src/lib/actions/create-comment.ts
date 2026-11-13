@@ -1,19 +1,23 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
+import { podioClient } from '../common/client';
+import { podioProps } from '../common/props';
 import { podioAuth } from '../auth';
-import { podioApiCall, getAccessToken, silentProperty, hookProperty, dynamicAppProperty, dynamicSpaceProperty, dynamicOrgProperty } from '../common';
+import { createCommentOutputSchema } from '../output-schemas';
 
 export const createCommentAction = createAction({
   auth: podioAuth,
   name: 'create_comment',
+  outputSchema: createCommentOutputSchema,
+  classification: 'WRITE',
   displayName: 'Create Comment',
   description: 'Post a comment on an item or task.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Posts a text comment on a Podio item or task, chosen via the comment-on type and object id, with optional file or embed attachments. Use to add a note or reply to a record; requires the target type/id and comment text. Not idempotent — each call posts a separate comment.', idempotent: false },
   props: {
-    orgId: dynamicOrgProperty,
-    spaceId: dynamicSpaceProperty,
-    appId: dynamicAppProperty,
+    orgId: podioProps.orgId({ required: true }),
+    spaceId: podioProps.spaceId({ required: true }),
+    appId: podioProps.appId({ required: true }),
 
     type: Property.Dropdown({
       auth: podioAuth,
@@ -30,111 +34,7 @@ export const createCommentAction = createAction({
         };
       },
     }),
-    id: Property.Dropdown({
-      auth: podioAuth,
-      displayName: 'Object',
-      description: 'Select the specific object to comment on',
-      required: true,
-      refreshers: ['type', 'appId', 'spaceId'],
-      options: async ({ auth, type, appId, spaceId }) => {
-        if (!auth || !type) {
-          return {
-            disabled: true,
-            placeholder: !auth ? 'Connect your Podio account first' : 'Select an object type first',
-            options: [],
-          };
-        }
-
-        try {
-          const accessToken = getAccessToken(auth as any);
-
-          switch (type) {
-            case 'item': {
-              if (!appId) {
-                return {
-                  disabled: true,
-                  placeholder: 'Select an app first to load items',
-                  options: [],
-                };
-              }
-              const itemResponse = await podioApiCall<{ items: any[] }>({
-                method: HttpMethod.POST,
-                accessToken,
-                resourceUri: `/item/app/${appId}/filter/`,
-                body: { limit: 30 },
-              });
-              return {
-                options: itemResponse.items?.map((item: any) => ({
-                  label: item.title || `Item ${item.item_id}`,
-                  value: item.item_id,
-                })) || [],
-              };
-            }
-
-            case 'task': {
-              const userInfo = await podioApiCall<any>({
-                method: HttpMethod.GET,
-                accessToken,
-                resourceUri: '/user/status',
-              });
-              const userId = userInfo?.user?.user_id;
-              
-              if (!userId) {
-                return {
-                  disabled: true,
-                  options: [],
-                  placeholder: 'Could not determine user ID for task filtering',
-                };
-              }
-
-              const taskQueryParams: any = {
-                responsible: userId,
-                limit: 30,
-                view: 'full',
-                sort_by: 'created_on',
-                sort_desc: 'true'
-              };
-
-              if (spaceId) {
-                taskQueryParams.space = spaceId;
-              }
-              
-              const taskResponse = await podioApiCall<any[]>({
-                method: HttpMethod.GET,
-                accessToken,
-                resourceUri: '/task/',
-                queryParams: taskQueryParams,
-              });
-              
-              return {
-                options: taskResponse?.map((task: any) => {
-                  let label = task.text || `Task ${task.task_id}`;
-                  if (task.ref?.title) {
-                    label += ` → ${task.ref.title}`;
-                  }
-                  return {
-                    label,
-                    value: task.task_id,
-                  };
-                }) || [],
-              };
-            }
-
-            default:
-              return {
-                options: [],
-                placeholder: 'Please select Item or Task',
-              };
-          }
-        } catch (error) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: `Failed to load ${type}s. Check your permissions.`,
-          };
-        }
-      },
-    }),
+    id: podioProps.commentObjectId({ required: true }),
 
     value: Property.LongText({
       displayName: 'Comment Text',
@@ -170,11 +70,10 @@ export const createCommentAction = createAction({
       defaultValue: false,
     }),
 
-    silent: silentProperty,
-    hook: hookProperty,
+    silent: podioProps.silent({ required: false }),
+    hook: podioProps.hook({ required: false }),
   },
   async run(context) {
-    const accessToken = getAccessToken(context.auth);
     const { 
       appId,
       spaceId,
@@ -214,7 +113,7 @@ export const createCommentAction = createAction({
       throw new Error('Embed ID must be a number.');
     }
 
-    const body: any = {
+    const body: CreateCommentBody = {
       value: value.trim(),
     };
 
@@ -238,24 +137,31 @@ export const createCommentAction = createAction({
       body.alert_invite = alertInvite;
     }
 
-    const queryParams: any = {};
+    const queryParams: QueryParams = {};
     if (typeof silent === 'boolean') {
-      queryParams.silent = silent.toString();
+      queryParams['silent'] = silent.toString();
     }
     if (typeof hook === 'boolean') {
-      queryParams.hook = hook.toString();
+      queryParams['hook'] = hook.toString();
     }
 
-    const response = await podioApiCall<{
+    return await podioClient.request<{
       comment_id: number;
     }>({
       method: HttpMethod.POST,
-      accessToken,
-      resourceUri: `/comment/${type}/${id}`,
+      auth: context.auth,
+      path: `/comment/${type}/${id}`,
       body,
-      queryParams,
+      query: queryParams,
     });
-
-    return response;
   },
-}); 
+});
+
+type CreateCommentBody = {
+  value: string;
+  external_id?: string;
+  file_ids?: unknown[];
+  embed_id?: number;
+  embed_url?: string;
+  alert_invite?: boolean;
+};

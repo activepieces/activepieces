@@ -3,14 +3,16 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { attioAuth } from '../auth';
 import { attioApiCall } from '../common/client';
 import { taskIdDropdown } from '../common/props';
+import { deleteTaskOutputSchema } from '../output-schemas';
 
 export const deleteTaskAction = createAction({
 	auth: attioAuth,
 	name: 'delete_task',
+	outputSchema: deleteTaskOutputSchema,
 	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Task',
 	description: 'Permanently delete a task by its ID.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Permanently deletes a task identified by its ID. Use this to remove a task you no longer need; the deletion cannot be undone. Effectively idempotent on end-state — once the task is gone, repeating the call has no further effect (though the second call may error on the missing task).', idempotent: true },
 	props: {
 		task_id: taskIdDropdown({

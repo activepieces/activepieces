@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getUserSessionAction = createAction({
   name: 'get_user_session',
+  classification: 'READ',
   displayName: 'Get User Session',
   description: 'Get details about a specific user session',
   audience: 'both',

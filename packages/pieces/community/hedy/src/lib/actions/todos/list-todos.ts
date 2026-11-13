@@ -24,6 +24,7 @@ function extractTodos(result: unknown): Todo[] {
 export const listTodos = createAction({
   auth: hedyAuth,
   name: 'list-todos',
+  classification: 'SEARCH',
   displayName: 'List Todos',
   description: 'Retrieve todos assigned to you in Hedy.',
   audience: 'both',

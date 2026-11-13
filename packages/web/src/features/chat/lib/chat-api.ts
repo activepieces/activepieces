@@ -10,6 +10,8 @@ import {
   GetAgentMemoryResponse,
   ImportAgentMemoryRequest,
   InstructAgentMemoryRequest,
+  MemoryImportNudgeClaimResponse,
+  MemoryImportNudgeResponse,
   UpdateAgentConversationRequest,
   UpdateAgentMemoryRequest,
 } from '@activepieces/shared';
@@ -136,12 +138,18 @@ async function getPendingGate(
   return api.get(`/v1/agents/conversations/${conversationId}/pending-gate`);
 }
 
-async function recordLanding(): Promise<void> {
-  return api.post<void>('/v1/agents/funnel/landing');
-}
-
 async function getMemory(): Promise<GetAgentMemoryResponse> {
   return api.get<GetAgentMemoryResponse>('/v1/agents/memory');
+}
+
+async function getMemoryImportNudge(): Promise<MemoryImportNudgeResponse> {
+  return api.get<MemoryImportNudgeResponse>('/v1/agents/memory/import-nudge');
+}
+
+async function claimMemoryImportNudge(): Promise<MemoryImportNudgeClaimResponse> {
+  return api.post<MemoryImportNudgeClaimResponse>(
+    '/v1/agents/memory/import-nudge/claim',
+  );
 }
 
 async function saveMemory(
@@ -178,8 +186,9 @@ export const chatApi = {
   submitMessageFeedback,
   getPickerConnections,
   getPendingGate,
-  recordLanding,
   getMemory,
+  getMemoryImportNudge,
+  claimMemoryImportNudge,
   saveMemory,
   importMemory,
   instructMemory,
@@ -190,4 +199,5 @@ export type PendingGate = {
   toolName: string;
   displayName: string;
   toolInput: Record<string, unknown>;
+  taskTitle?: string;
 };

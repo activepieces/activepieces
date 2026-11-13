@@ -1,4 +1,10 @@
-import { AiToolCapability, AiToolProvider } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import {
+  AI_PROVIDER_CAPABILITIES,
+  AIProviderWithoutSensitiveData,
+  AiToolCapability,
+  AiToolProvider,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 
 export type AiToolProviderInfo = {
@@ -6,6 +12,7 @@ export type AiToolProviderInfo = {
   name: string;
   description: string;
   signupUrl: string;
+  logoUrl: string;
 };
 
 export type AiToolCapabilityInfo = {
@@ -19,15 +26,14 @@ export const AI_TOOL_CATALOG: AiToolCapabilityInfo[] = [
   {
     capability: AiToolCapability.WEB_SEARCH,
     name: t('Web Search'),
-    description: t(
-      'Let the assistant search the live web for current information. When off, it falls back to the model’s built-in search if available.',
-    ),
+    description: t('Search the live web for current information.'),
     providers: [
       {
         id: AiToolProvider.TAVILY,
         name: 'Tavily',
         description: t('Search API built for AI agents.'),
         signupUrl: 'https://app.tavily.com',
+        logoUrl: 'https://cdn.activepieces.com/pieces/tavily.jpg',
       },
     ],
   },
@@ -35,7 +41,7 @@ export const AI_TOOL_CATALOG: AiToolCapabilityInfo[] = [
     capability: AiToolCapability.WEB_SCRAPING,
     name: t('Web Scraping'),
     description: t(
-      'Let the assistant extract the full clean content of a web page as markdown, including JavaScript-rendered pages.',
+      'Read any web page as clean text, including JavaScript pages.',
     ),
     providers: [
       {
@@ -43,21 +49,21 @@ export const AI_TOOL_CATALOG: AiToolCapabilityInfo[] = [
         name: 'Firecrawl',
         description: t('Clean markdown extraction, handles JS-rendered pages.'),
         signupUrl: 'https://www.firecrawl.dev',
+        logoUrl: 'https://cdn.activepieces.com/pieces/firecrawl.png',
       },
       {
         id: AiToolProvider.APIFY,
         name: 'Apify',
         description: t('Heavy-duty crawling and content extraction.'),
         signupUrl: 'https://console.apify.com',
+        logoUrl: 'https://cdn.activepieces.com/pieces/apify.png',
       },
     ],
   },
   {
     capability: AiToolCapability.IMAGE_GENERATION,
     name: t('Image Generation'),
-    description: t(
-      'Let the assistant generate images — realistic photos, marketing graphics with text, brand logos, and abstract art. The model is chosen automatically per request.',
-    ),
+    description: t('Create images, from photos to graphics with text.'),
     providers: [
       {
         id: AiToolProvider.FAL,
@@ -66,7 +72,76 @@ export const AI_TOOL_CATALOG: AiToolCapabilityInfo[] = [
           'One key for Flux, Ideogram, Recraft and more — the assistant picks the right model.',
         ),
         signupUrl: 'https://fal.ai/dashboard/keys',
+        logoUrl: 'https://cdn.activepieces.com/pieces/fal-ai.png',
       },
     ],
   },
+  {
+    capability: AiToolCapability.EMBEDDINGS,
+    name: t('Embeddings'),
+    description: t('Index knowledge-base files so agents can search them.'),
+    providers: [],
+  },
 ];
+
+function providerCovers({
+  capability,
+  provider,
+}: {
+  capability: AiToolCapability;
+  provider: AIProviderWithoutSensitiveData;
+}): boolean {
+  const providerCapabilities = AI_PROVIDER_CAPABILITIES[provider.provider];
+  switch (capability) {
+    case AiToolCapability.WEB_SEARCH:
+      return !isNil(providerCapabilities.webSearch);
+    case AiToolCapability.IMAGE_GENERATION:
+      return !isNil(providerCapabilities.defaultImageModel);
+    case AiToolCapability.EMBEDDINGS:
+      return providerCapabilities.supportsEmbedding;
+    case AiToolCapability.WEB_SCRAPING:
+      return false;
+  }
+}
+
+function eligibleProviders({
+  capability,
+  providers,
+}: {
+  capability: AiToolCapability;
+  providers: AIProviderWithoutSensitiveData[];
+}): AIProviderWithoutSensitiveData[] {
+  return providers.filter(
+    (provider) =>
+      provider.projectScope === 'all' &&
+      providerCovers({ capability, provider }),
+  );
+}
+
+function servesByDefault({
+  capability,
+  provider,
+}: {
+  capability: AiToolCapability;
+  provider: AIProviderWithoutSensitiveData;
+}): boolean {
+  const defaultImageModel =
+    AI_PROVIDER_CAPABILITIES[provider.provider].defaultImageModel;
+  const defaultModelAllowed =
+    capability !== AiToolCapability.IMAGE_GENERATION ||
+    provider.modelScope !== 'selected' ||
+    (!isNil(defaultImageModel) &&
+      provider.modelIds.includes(defaultImageModel));
+  if (capability === AiToolCapability.EMBEDDINGS) {
+    return providerCovers({ capability, provider });
+  }
+  return (
+    eligibleProviders({ capability, providers: [provider] }).length > 0 &&
+    defaultModelAllowed
+  );
+}
+
+export const aiCapabilitySources = {
+  eligibleProviders,
+  servesByDefault,
+};

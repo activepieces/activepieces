@@ -7,6 +7,7 @@ import * as z from 'zod/mini'
 export const generateImageFromText = createAction({
 	auth: runwayAuth,
 	name: 'generate_image_from_text',
+	classification: 'READ',
 	displayName: 'Generate Image From Text',
 	description: 'Generates an image using a text prompt via Runway\'s AI models',
 	audience: 'both',

@@ -14,7 +14,7 @@ export const apResolvePropertyChainTool = (mcp: ProjectScopedMcpServer, log: Fas
         title: 'ap_resolve_property_chain',
         description: 'Resolve a chain of dependent dropdown properties in one call. For actions with cascading fields (e.g. Spreadsheet → Sheet → Columns), this resolves each property sequentially, feeding each selected value into the next resolution. Pass `selectedValue` for properties whose value you already know; the tool stops and returns options when it hits a property without a `selectedValue`. Always use `value` from returned options, not `label`.',
         inputSchema: resolvePropertyChainInput.shape,
-        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
         execute: async (args) => {
             try {
                 const { pieceName, actionOrTriggerName, type, propertyChain, auth, currentInput: providedInput } = resolvePropertyChainInput.parse(args)

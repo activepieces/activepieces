@@ -10,6 +10,7 @@ import {
 export const getNoteAction = createAction({
   auth: granolaAuth,
   name: 'get_note',
+  classification: 'READ',
   displayName: 'Get Note',
   description: 'Retrieve a single meeting note by its ID, with optional transcript.',
   audience: 'both',

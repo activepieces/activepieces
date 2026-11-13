@@ -102,7 +102,7 @@ const EmbedPage = React.memo(() => {
       return data;
     },
   });
-  const { setThemeWithoutPersisting } = useTheme();
+  const { setPreferenceWithoutPersisting } = useTheme();
   const { i18n } = useTranslation();
   const { checkAccess } = useAuthorization();
   const initState = (event: MessageEvent<ActivepiecesVendorInit>) => {
@@ -111,7 +111,7 @@ const EmbedPage = React.memo(() => {
       event.data.type === ActivepiecesVendorEventName.VENDOR_INIT
     ) {
       if (event.data.data.jwtToken) {
-        setThemeWithoutPersisting(event.data.data.mode ?? 'light');
+        setPreferenceWithoutPersisting(event.data.data.mode ?? 'light');
         mutateAsync(
           {
             externalAccessToken: event.data.data.jwtToken,
@@ -134,6 +134,8 @@ const EmbedPage = React.memo(() => {
                   isEmbedded: true,
                   hideFlowNameInBuilder:
                     event.data.data.hideFlowNameInBuilder ?? false,
+                  hideConnectionsInBuilder:
+                    event.data.data.hideConnectionsInBuilder ?? true,
                   disableNavigationInBuilder:
                     event.data.data.disableNavigationInBuilder !== false,
                   hideFolders: event.data.data.hideFolders ?? false,
@@ -159,6 +161,8 @@ const EmbedPage = React.memo(() => {
                   hidePageHeader: event.data.data.hidePageHeader ?? false,
                   hideActiveUsers: event.data.data.hideActiveUsers ?? false,
                   hideGlobalSearch: event.data.data.hideGlobalSearch ?? false,
+                  hideReplaceConnection:
+                    event.data.data.hideReplaceConnection ?? false,
                   formulasDocsUrl: event.data.data.formulasDocsUrl,
                   gtmContainerId: event.data.data.gtmContainerId,
                   clarityProjectId: event.data.data.clarityProjectId,

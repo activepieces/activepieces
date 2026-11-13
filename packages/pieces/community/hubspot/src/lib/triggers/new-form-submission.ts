@@ -133,11 +133,27 @@ export const newFormSubmissionTrigger = createTrigger({
 	},
 	outputSchema: newFormSubmissionTriggerOutputSchema,
 	type: TriggerStrategy.POLLING,
+	propertyGroups: [
+		{
+			key: 'form',
+			display: 'section',
+			label: 'Form',
+			icon: 'file',
+			props: ['formId'],
+		},
+		{
+			key: 'files',
+			display: 'section',
+			label: 'Uploaded Files',
+			icon: 'paperclip',
+			props: ['allowMultipleFiles'],
+		},
+	],
 	props: {
 		formId: formDropdown,
 		allowMultipleFiles: Property.Checkbox({
 			displayName: 'Allow Multiple Files',
-			description: 'Return all file fields as array',
+			description: 'Returns every uploaded file as a list; off keeps only the last one.',
 			required: true,
 			defaultValue: false,
 		}),

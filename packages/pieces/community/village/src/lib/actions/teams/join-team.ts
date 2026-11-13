@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const joinTeam = createAction({
   auth: villageAuth,
   name: 'join_team',
+  classification: 'WRITE',
   displayName: 'Join Team',
   description:
     'Join a team using an invite link. Provide the invite link code (the part after /join/ in the URL).',

@@ -42,6 +42,7 @@ const getStatusDescription = (status: string): string => {
 export const getTaskDetails = createAction({
 	auth: runwayAuth,
 	name: 'get_task_details',
+	classification: 'READ',
 	displayName: 'Get Task Details',
 	description: 'Retrieve details of an existing Runway task by its ID',
 	audience: 'both',

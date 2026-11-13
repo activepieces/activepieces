@@ -3,7 +3,6 @@ import { PanelBottom, PanelRight } from 'lucide-react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 type StepDataPanelViewToggleProps = {
   disabled?: boolean;
@@ -29,7 +28,7 @@ const StepDataPanelViewToggle = ({
       size="sm"
       onClick={() => setStepDataPanelView(isSplit ? 'drawer' : 'split')}
       disabled={disabled}
-      className={cn('text-sm shrink-0', className)}
+      className={className}
       aria-label={toggleLabel}
     >
       <ToggleIcon className="size-4" />

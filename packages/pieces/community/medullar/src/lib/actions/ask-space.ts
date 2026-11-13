@@ -6,6 +6,7 @@ import { getUser, medullarCommon, medullarPropsCommon } from '../common';
 export const askSpace = createAction({
   auth: medullarAuth,
   name: 'askSpace',
+  classification: 'WRITE',
   displayName: 'Ask Space',
   description: 'Ask anything to a Space',
   audience: 'both',

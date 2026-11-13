@@ -8,6 +8,7 @@ import { crispApiCall } from '../common/client';
 export const findUserProfileAction = createAction({
 	auth: crispAuth,
 	name: 'find_user_profile',
+	classification: 'READ',
 	displayName: 'Find User Profile',
 	description: 'Finds a user profile by email address.',
 	audience: 'both',

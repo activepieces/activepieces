@@ -91,25 +91,25 @@ export const EmbeddedMcpAuthorizeDialog = () => {
         className="min-w-[400px] max-w-[440px]"
       >
         <DialogHeader>
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Plug className="h-5 w-5 text-primary" />
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-accent-3">
+            <Plug className="h-5 w-5 text-accent-11" />
           </div>
           <DialogTitle className="text-center text-xl">
             {t('Authorize Application')}
           </DialogTitle>
           <DialogDescription className="text-center">
-            <span className="font-semibold text-foreground">{clientName}</span>{' '}
+            <span className="font-semibold text-gray-12">{clientName}</span>{' '}
             {t('wants to connect to your Activepieces account')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-3">
           <PermissionItem
-            icon={<Workflow className="h-4 w-4 text-primary" />}
+            icon={<Workflow className="h-4 w-4 text-accent-11" />}
             text={t('Build, test, and manage automations')}
           />
           <PermissionItem
-            icon={<Lock className="h-4 w-4 text-primary" />}
+            icon={<Lock className="h-4 w-4 text-accent-11" />}
             text={t('Use connections and execute flows')}
           />
         </div>
@@ -117,7 +117,7 @@ export const EmbeddedMcpAuthorizeDialog = () => {
         <Separator />
 
         {approveMutation.isError && (
-          <div className="rounded-md border border-destructive/50 bg-destructive-100 p-3 text-sm text-destructive">
+          <div className="rounded-md border border-danger-7 bg-danger-3 p-3 text-sm text-danger-11">
             {t('Authorization failed. Please try again.')}
           </div>
         )}

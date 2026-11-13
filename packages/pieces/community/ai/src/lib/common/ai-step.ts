@@ -99,9 +99,10 @@ export type AiStepFile = {
 
 export type AiStepRequest = {
   action: AiStepAction;
-  provider: string;
+  provider?: string;
   providerConfigId?: string;
-  modelId: string;
+  modelId?: string;
+  modelTierId?: string;
   prompt?: string;
   text?: string;
   categories?: string[];

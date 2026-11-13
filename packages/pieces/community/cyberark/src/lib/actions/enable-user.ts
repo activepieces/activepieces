@@ -7,6 +7,7 @@ import { getAuthToken, CyberArkAuth } from '../common/auth-helper';
 export const enableUser = createAction({
   auth: cyberarkAuth,
   name: 'enable_user',
+  classification: 'WRITE',
   displayName: 'Enable User',
   description: 'Enables a specific user in the Vault',
   audience: 'both',

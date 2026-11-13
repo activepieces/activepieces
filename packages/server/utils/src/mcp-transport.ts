@@ -56,16 +56,26 @@ function createSafeMcpFetch({ extraHeaders, timeoutMs, maxResponseBytes }: {
         const response = await safeHttp.axios.request<Readable | ArrayBuffer>({
             method, url, headers, data: init?.body,
             validateStatus: () => true,
+            maxRedirects: 0,
             ...(wantsEventStream
                 ? { responseType: 'stream', timeout: 0, ...(isNil(init?.signal) ? {} : { signal: init.signal }) }
                 : { responseType: 'arraybuffer', timeout: timeoutMs, maxContentLength: maxResponseBytes, maxBodyLength: maxResponseBytes }),
         })
-        const body = response.data instanceof Readable ? Readable.toWeb(response.data) : Buffer.from(response.data)
-        return new Response(body, {
+        return new Response(toResponseBody({ status: response.status, data: response.data }), {
             status: response.status,
             headers: normalizeResponseHeaders(response.headers),
         })
     }
+}
+
+function toResponseBody({ status, data }: { status: number, data: Readable | ArrayBuffer }): ResponseBody {
+    if (NULL_BODY_STATUSES.includes(status)) {
+        if (data instanceof Readable) {
+            data.destroy()
+        }
+        return null
+    }
+    return data instanceof Readable ? Readable.toWeb(data) : Buffer.from(data)
 }
 
 function isHttpUrl(value: string): boolean {
@@ -107,6 +117,9 @@ export const mcpTransport = {
 }
 
 const EVENT_STREAM_MEDIA_TYPE = 'text/event-stream'
+const NULL_BODY_STATUSES = [101, 103, 204, 205, 304]
 
 export const DEFAULT_MCP_TIMEOUT_MS = 30_000
 export const DEFAULT_MCP_MAX_RESPONSE_BYTES = 5 * 1024 * 1024
+
+type ResponseBody = ConstructorParameters<typeof Response>[0]

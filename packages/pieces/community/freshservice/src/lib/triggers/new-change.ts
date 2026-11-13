@@ -42,6 +42,7 @@ const polling: Polling<
 export const newChange = createTrigger({
   auth: freshserviceAuth,
   name: 'new_change',
+  classification: 'READ',
   displayName: 'New Change',
   description: 'Triggers when a new change request is created in Freshservice.',
   aiMetadata: {
@@ -73,19 +74,11 @@ export const newChange = createTrigger({
   },
 
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {

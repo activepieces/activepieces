@@ -1,11 +1,17 @@
 import { t } from 'i18next';
 
-import { CenteredPage } from '@/app/components/centered-page';
+import {
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+} from '@/app/components/admin';
 import { projectRoleQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { sampleData } from '../../sample-data';
 
+import { DefaultProjectsSection } from './default-projects-section';
+import { PersonalProjectsSection } from './personal-projects-section';
 import { RolesCard } from './roles-card';
 
 const ProjectRolePage = () => {
@@ -17,19 +23,21 @@ const ProjectRolePage = () => {
   const roles = isSample ? sampleData.projectRolesPage() : data;
 
   return (
-    <CenteredPage
-      title={t('Roles & Access')}
-      description={t('What new members get, and what each role can do.')}
-      widthClassName="max-w-4xl"
-      className="min-h-full bg-muted/50 dark:bg-background"
-    >
+    <AdminPage width="content">
+      <AdminPageHeader
+        title={t('Roles & Access')}
+        description={t('Manage roles and where new members land')}
+        resources={adminPageResources.roles}
+      />
       <RolesCard
         projectRoles={roles}
         isLoading={isSample ? false : isLoading}
         isError={isSample ? false : isError}
         refetch={refetch}
       />
-    </CenteredPage>
+      <PersonalProjectsSection />
+      <DefaultProjectsSection />
+    </AdminPage>
   );
 };
 

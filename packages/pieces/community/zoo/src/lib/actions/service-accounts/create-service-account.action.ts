@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const createServiceAccountAction = createAction({
   name: 'create_service_account',
+  classification: 'WRITE',
   displayName: 'Create Service Account',
   description: 'Create a new service account for your organization',
   audience: 'both',

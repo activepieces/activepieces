@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const conversationStarted = createTrigger({
   auth: oncehubAuth,
   name: 'conversationStarted',
+  classification: 'READ',
   displayName: 'Conversation Started',
   description:
     'Triggered when website visitor starts interacting with a chatbot.',

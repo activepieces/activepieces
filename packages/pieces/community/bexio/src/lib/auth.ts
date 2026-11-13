@@ -30,15 +30,35 @@ export const bexioAuth = PieceAuth.OAuth2({
   validate: async ({ auth }) => {
     try {
       const client = new BexioClient(auth);
-      await client.get('/users/me');
+      await client.get('/3.0/users/me');
       return {
         valid: true,
       };
     } catch (error) {
+      const status = readStatus(error);
+      if (status === 401 || status === 403) {
+        return {
+          valid: false,
+          error: `Bexio rejected the connection (HTTP ${status}). Reconnect the account and make sure the Bexio app grants the requested scopes.`,
+        };
+      }
       return {
         valid: false,
-        error: 'Authentication failed. Please check your connection and try again.',
+        error: status
+          ? `Bexio could not validate the connection (HTTP ${status}). Try again later.`
+          : 'Bexio could not be reached to validate the connection. Try again later.',
       };
     }
   },
 });
+
+function readStatus(error: unknown): number | undefined {
+  if (typeof error !== 'object' || error === null || !('response' in error)) {
+    return undefined;
+  }
+  const response = error.response;
+  if (typeof response !== 'object' || response === null || !('status' in response)) {
+    return undefined;
+  }
+  return typeof response.status === 'number' ? response.status : undefined;
+}

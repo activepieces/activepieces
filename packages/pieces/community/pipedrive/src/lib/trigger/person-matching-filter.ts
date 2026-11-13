@@ -94,6 +94,9 @@ export const personMatchingFilterTrigger = createTrigger({
 		filterId: filterIdProp('people', true),
 	},
 	async onEnable(context) {
+		if (context.isRepublish && !isNil(await context.store.get('persons'))) {
+			return;
+		}
 		const ids: number[] = [];
 		const response = await pipedrivePaginatedV2ApiCall<{ id: number }>({
 			accessToken: context.auth.access_token,
@@ -114,6 +117,9 @@ export const personMatchingFilterTrigger = createTrigger({
 		await context.store.put('persons', JSON.stringify(ids));
 	},
 	async onDisable(context) {
+		if (context.isRepublish) {
+			return;
+		}
 		await context.store.delete('persons');
 	},
 	async test(context) {

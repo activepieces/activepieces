@@ -1,113 +1,48 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { createRecord } from './lib/actions/create-record';
 import { deleteRecord } from './lib/actions/delete-record';
 import { getRecord } from './lib/actions/get-record';
-import { makeAPICall } from './lib/actions/make-api-call';
+import { customApiCallAuthHeaders, makeAPICall } from './lib/actions/make-api-call';
+import { queryRecords } from './lib/actions/query-records';
 import { searchRecords } from './lib/actions/search-record';
 import { updateRecord } from './lib/actions/update-record';
-import { instanceLogin, isBaseUrl } from './lib/common';
+import { addTagsToRecordAction } from './lib/actions/ai/add-tags-to-record';
+import { convertLeadAction } from './lib/actions/ai/convert-lead';
+import { createModuleRecordAction } from './lib/actions/ai/create-module-record';
+import { deleteRecordByIdAction } from './lib/actions/ai/delete-record-by-id';
+import { describeModuleAction } from './lib/actions/ai/describe-module';
+import { downloadAttachmentAction } from './lib/actions/ai/download-attachment';
+import { findOrCreateRecordAction } from './lib/actions/ai/find-or-create-record';
+import { findRecordsByEmailOrPhoneAction } from './lib/actions/ai/find-records-by-email-or-phone';
+import { getAccountHierarchyAction } from './lib/actions/ai/get-account-hierarchy';
+import { getCurrentUserAction } from './lib/actions/ai/get-current-user';
+import { getPicklistDependencyAction } from './lib/actions/ai/get-picklist-dependency';
+import { getRecordByIdAction } from './lib/actions/ai/get-record-by-id';
+import { getRecordTagsAction } from './lib/actions/ai/get-record-tags';
+import { linkRecordsAction } from './lib/actions/ai/link-records';
+import { listChangedRecordsAction } from './lib/actions/ai/list-changed-records';
+import { listModulesAction } from './lib/actions/ai/list-modules';
+import { listRelatedRecordsAction } from './lib/actions/ai/list-related-records';
+import { listRelationTypesAction } from './lib/actions/ai/list-relation-types';
+import { queryRelatedRecordsAction } from './lib/actions/ai/query-related-records';
+import { removeTagsFromRecordAction } from './lib/actions/ai/remove-tags-from-record';
+import { reopenRecordAction } from './lib/actions/ai/reopen-record';
+import { searchModuleRecordsAction } from './lib/actions/ai/search-module-records';
+import { unlinkRecordsAction } from './lib/actions/ai/unlink-records';
+import { updateRecordFieldsAction } from './lib/actions/ai/update-record-fields';
+import { vtigerAuth } from './lib/auth';
+import { isRecord, restBaseUrl } from './lib/rest-client';
 import { newOrUpdatedRecord } from './lib/triggers/new-or-updated-record';
-import { queryRecords } from './lib/actions/query-records';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-
-const markdownProperty = `
-To obtain your Access Key, follow these steps:
-
-1. Login to Vtiger CRM:
-Open a web browser and log in to your Vtiger CRM instance.
-
-2. Navigate to User Profile:
-In the top right corner, click on your profile name.
-Select "My Preferences."
-
-3. The system will generate an access key for you.
-Copy and securely store the access key. This key will be used for authentication when making API requests.
-Note:
-
-Access keys are sensitive information, and they should be kept secure.
-Treat the access key like a password. Do not share it publicly or expose it in an insecure manner.
-`;
-
-export const vtigerAuth = PieceAuth.CustomAuth({
-  description: markdownProperty,
-  props: {
-    instance_url: Property.ShortText({
-      displayName: 'VTiger Instance URL',
-      description:
-        'For the instance URL, add the url without the endpoint. For example enter https://<instance>.od2.vtiger.com instead of https://<instance>.od2.vtiger.com/restapi/v1/vtiger/default',
-      required: true,
-    }),
-    username: Property.ShortText({
-      displayName: 'Username',
-      description: 'Enter your username/email',
-      required: true,
-    }),
-    password: PieceAuth.SecretText({
-      displayName: 'Access Key',
-      description: 'Enter your access Key',
-      required: true,
-    }),
-  },
-  validate: async ({ auth }) => {
-    const { instance_url, username, password } = auth;
-
-    try {
-      if (!isBaseUrl(instance_url)) {
-        return {
-          valid: false,
-          error:
-            'Please ensure that the website is valid and does not contain any paths, for example, https://<instance>.od2.vtiger.com  ',
-        };
-      }
-      if (instance_url.endsWith('/')) {
-        return {
-          valid: false,
-          error:
-            'Please enter the URL without a trailing slash. E.g. https://<instance>.od2.vtiger.com instead of https://<instance>.od2.vtiger.com/',
-        };
-      }
-      if (instance_url.includes('restapi/')) {
-        return {
-          valid: false,
-          error:
-            'Add the url without the endpoint. For example add https://<instance>.od2.vtiger.com instead of https://<instance>.od2.vtiger.com/restapi/v1/vtiger/default',
-        };
-      }
-
-      const instance = await instanceLogin(instance_url, username, password);
-      if (!instance) {
-        return {
-          valid: false,
-          error: 'Invalid credentials, check and try again.',
-        };
-      }
-
-      return {
-        valid: true,
-      };
-    } catch (err) {
-      return {
-        valid: false,
-        error: 'Unexpected error. Please check your credentials and try again.',
-      };
-    }
-  },
-  required: true,
-});
 
 export const vtiger = createPiece({
   displayName: 'Vtiger',
   description: 'CRM software for sales, marketing, and support teams',
   auth: vtigerAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/vtiger.png',
   categories: [PieceCategory.SALES_AND_CRM],
-  authors: ["kanarelo","kishanprmr","abuaboud", "privatestefans"],
+  authors: ['kanarelo', 'kishanprmr', 'abuaboud', 'privatestefans'],
   actions: [
     createRecord,
     getRecord,
@@ -115,19 +50,39 @@ export const vtiger = createPiece({
     deleteRecord,
     queryRecords,
     searchRecords,
-    makeAPICall, // deprecated
+    makeAPICall,
+    getCurrentUserAction,
+    listModulesAction,
+    describeModuleAction,
+    createModuleRecordAction,
+    getRecordByIdAction,
+    updateRecordFieldsAction,
+    listChangedRecordsAction,
+    deleteRecordByIdAction,
+    listRelationTypesAction,
+    reopenRecordAction,
+    unlinkRecordsAction,
+    addTagsToRecordAction,
+    getRecordTagsAction,
+    removeTagsFromRecordAction,
+    getAccountHierarchyAction,
+    findRecordsByEmailOrPhoneAction,
+    getPicklistDependencyAction,
+    convertLeadAction,
+    linkRecordsAction,
+    listRelatedRecordsAction,
+    queryRelatedRecordsAction,
+    downloadAttachmentAction,
+    searchModuleRecordsAction,
+    findOrCreateRecordAction,
     createCustomApiCallAction({
       auth: vtigerAuth,
-      baseUrl: (auth: any) => `${auth.instance_url}/restapi/v1/vtiger/default`,
-      authMapping: async (auth: any) => {
-        const { username, password } = auth;
-        return {
-          Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString(
-            'base64'
-          )}`,
-        };
-      },
+      baseUrl: (auth) => (auth ? restBaseUrl(auth.props) : ''),
+      authMapping: async (auth, propsValue) =>
+        customApiCallAuthHeaders({ creds: auth.props, url: isRecord(propsValue['url']) ? propsValue['url']['url'] : undefined }),
     }),
   ],
   triggers: [newOrUpdatedRecord],
 });
+
+export { vtigerAuth };

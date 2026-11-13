@@ -1,44 +1,54 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../auth';
-import { ISSUE_FIELDS, dropdownError, flattenIssue, youtrackApiCall } from '../common';
+import { ISSUE_FIELDS, dropdownError, flattenIssue, resolveProject } from '../common';
+import { youtrackClient, YoutrackCapError } from '../common/client';
 import { searchIssuesActionOutputSchema } from '../output-schemas';
 
 export const searchIssuesAction = createAction({
   auth: youtrackAuth,
   name: 'search_issues',
+  classification: 'SEARCH',
   outputSchema: searchIssuesActionOutputSchema,
   displayName: 'Search Issues',
   description: 'Searches for issues using YouTrack query syntax. Returns flat rows for spreadsheets.',
   audience: 'both',
-  aiMetadata: { description: 'Search issues using YouTrack query syntax (e.g. #unresolved, assignee: me, Priority: Critical), optionally scoped to one project. Leave both the project and query empty to list all accessible issues, or supply filters to narrow results. Use to find issues matching criteria before acting on them. Read-only and idempotent.', idempotent: true },
+  aiMetadata: {
+    description:
+      'Search issues using YouTrack query syntax (e.g. "#unresolved", "assignee: me", "Priority: Critical"), optionally scoped to one project given by short name (like "APT") or project ID (like "0-5"). Leave both the project and query empty to list all accessible issues. Limit (default 100) caps the rows; use Skip to read further. Use to find issues before acting on them. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     project: Property.Dropdown({
       auth: youtrackAuth,
       displayName: 'Project',
-      description: 'Optional: filter by project. Leave empty to search across all projects.',
+      description: 'Optional: filter by project. Leave empty to search across all projects. You can also map a project short name or ID from List Projects.',
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
-        const { baseUrl, apiToken } = auth.props;
         try {
-          const response = await youtrackApiCall<Array<{ id: string; name: string; shortName: string }>>({
-            baseUrl,
-            token: apiToken,
-            method: HttpMethod.GET,
+          const projects = await youtrackClient.listAll({
+            auth,
             path: '/admin/projects',
-            queryParams: { fields: 'id,name,shortName' },
+            query: { fields: 'id,name,shortName' },
+            maxItems: 2000,
+            operation: 'list projects',
           });
           return {
             disabled: false,
             options: [
               { label: '[All projects]', value: '' },
-              ...response.body.map((p) => ({ label: p.name + ' (' + p.shortName + ')', value: p.shortName })),
+              ...projects.map((p) => ({
+                label: `${String(p['name'] ?? '')} (${String(p['shortName'] ?? '')})`,
+                value: String(p['shortName'] ?? ''),
+              })),
             ],
           };
         } catch (error) {
-          return dropdownError('Failed to load projects', error);
+          if (error instanceof YoutrackCapError) {
+            return { disabled: false, options: [{ label: '[All projects]', value: '' }], placeholder: 'Too many projects to list: map the project short name instead.' };
+          }
+          return dropdownError({ prefix: 'Failed to load projects', error });
         }
       },
     }),
@@ -58,25 +68,31 @@ export const searchIssuesAction = createAction({
       required: false,
       defaultValue: 100,
     }),
+    skip: Property.Number({
+      displayName: 'Skip',
+      description: 'Number of matching issues to skip, for reading the next page. Default 0.',
+      required: false,
+    }),
   },
   async run(context) {
-    const { baseUrl, apiToken } = context.auth.props;
-    const limit = context.propsValue.limit ?? 100;
-
+    const auth = context.auth;
     const queryParts: string[] = [];
-    if (context.propsValue.project) queryParts.push('project: {' + context.propsValue.project + '}');
-    if (context.propsValue.query) queryParts.push(context.propsValue.query);
-
-    const queryParams: Record<string, string> = { fields: ISSUE_FIELDS, '$top': String(limit) };
-    if (queryParts.length > 0) queryParams['query'] = queryParts.join(' ');
-
-    const response = await youtrackApiCall<Array<Record<string, unknown>>>({
-      baseUrl,
-      token: apiToken,
-      method: HttpMethod.GET,
+    const project = youtrackClient.optionalText(context.propsValue.project);
+    if (project !== undefined) {
+      const shortName = youtrackClient.isDatabaseId(project) ? (await resolveProject({ auth, value: project })).shortName : project;
+      queryParts.push('project: {' + shortName + '}');
+    }
+    const query = youtrackClient.optionalText(context.propsValue.query);
+    if (query !== undefined) queryParts.push(query);
+    const items = await youtrackClient.listUpTo({
+      auth,
       path: '/issues',
-      queryParams,
+      query: { fields: ISSUE_FIELDS, query: queryParts.length > 0 ? queryParts.join(' ') : undefined },
+      limit: context.propsValue.limit,
+      fallback: 100,
+      skip: context.propsValue.skip,
+      operation: 'search issues',
     });
-    return (response.body || []).map((item) => flattenIssue(item));
+    return items.map((item) => flattenIssue(item));
   },
 });

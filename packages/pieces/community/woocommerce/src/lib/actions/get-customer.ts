@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { wooPathId } from '../common/path-id';
 import { getCustomerOutputSchema } from '../output-schemas';
 
 export const wooGetCustomer = createAction({
@@ -25,13 +26,15 @@ export const wooGetCustomer = createAction({
   props: {
     id: Property.ShortText({
       displayName: 'Customer ID',
-      description: 'Enter the customer ID',
+      description:
+        'Find it in WooCommerce under Customers, or from Find Customer.',
+      placeholder: '123',
       required: true,
     }),
   },
   async run(configValue) {
     const trimmedBaseUrl = configValue.auth.props.baseUrl.replace(/\/$/, '');
-    const customerId = configValue.propsValue['id'];
+    const customerId = wooPathId.encode({ id: configValue.propsValue['id'], label: 'Customer ID' });
 
     const request: HttpRequest = {
       method: HttpMethod.GET,

@@ -1,4 +1,8 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  OutputSchema,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { streakAuth } from './auth';
 import { pipelineDropdown, teamDropdown } from './props';
 import {
@@ -16,6 +20,7 @@ export function createPipelineWebhookTrigger({
   aiMetadata,
   event,
   sampleData,
+  outputSchema,
 }: {
   name: string;
   displayName: string;
@@ -23,10 +28,12 @@ export function createPipelineWebhookTrigger({
   aiMetadata?: { description: string };
   event: string;
   sampleData: Record<string, unknown>;
+  outputSchema: OutputSchema;
 }) {
   return createTrigger({
     auth: streakAuth,
     name,
+    classification: 'READ',
     displayName,
     description,
     aiMetadata,
@@ -35,10 +42,11 @@ export function createPipelineWebhookTrigger({
       pipelineKey: pipelineDropdown,
     },
     sampleData,
+    outputSchema,
     async onEnable(context) {
       const webhook = await createPipelineWebhook({
         apiKey: context.auth.secret_text,
-        pipelineKey: context.propsValue.pipelineKey as string,
+        pipelineKey: context.propsValue.pipelineKey,
         event,
         targetUrl: context.webhookUrl,
       });
@@ -54,8 +62,7 @@ export function createPipelineWebhookTrigger({
       }
     },
     async run(context) {
-      const body = context.payload.body as any
-      return [body];
+      return payloadToItems(context.payload.body);
     },
   });
 }
@@ -67,6 +74,7 @@ export function createTeamWebhookTrigger({
   aiMetadata,
   event,
   sampleData,
+  outputSchema,
 }: {
   name: string;
   displayName: string;
@@ -74,10 +82,12 @@ export function createTeamWebhookTrigger({
   aiMetadata?: { description: string };
   event: string;
   sampleData: Record<string, unknown>;
+  outputSchema: OutputSchema;
 }) {
   return createTrigger({
     auth: streakAuth,
     name,
+    classification: 'READ',
     displayName,
     description,
     aiMetadata,
@@ -86,10 +96,11 @@ export function createTeamWebhookTrigger({
       teamKey: teamDropdown,
     },
     sampleData,
+    outputSchema,
     async onEnable(context) {
       const webhook = await createTeamWebhook({
         apiKey: context.auth.secret_text,
-        teamKey: context.propsValue.teamKey as string,
+        teamKey: context.propsValue.teamKey,
         event,
         targetUrl: context.webhookUrl,
       });
@@ -105,10 +116,32 @@ export function createTeamWebhookTrigger({
       }
     },
     async run(context) {
-      const body = context.payload.body as any;
-      return [body];
+      return payloadToItems(context.payload.body);
     },
   });
+}
+
+function payloadToItems(body: unknown): Record<string, unknown>[] {
+  const parsed = typeof body === 'string' ? parseJson(body) : body;
+  if (isRecord(parsed)) {
+    return [parsed];
+  }
+  if (Array.isArray(parsed)) {
+    return parsed.filter(isRecord);
+  }
+  return [];
+}
+
+function parseJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 const STORE_KEY = 'streak_webhook';

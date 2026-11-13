@@ -5,6 +5,7 @@ import { wedofCommon } from '../../common/wedof';
 export const certificationPartnerRevoked = createTrigger({
   auth: wedofAuth,
   name: 'certificationPartnerRevoked',
+  classification: 'READ',
   displayName: 'Partenariat révoqué',
   description: "Se déclenche Lorsqu'un partenariat est révoqué",
   aiMetadata: {

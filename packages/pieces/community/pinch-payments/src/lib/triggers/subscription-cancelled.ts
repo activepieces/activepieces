@@ -5,6 +5,7 @@ import { createWebhook, deleteWebhook, WebhookResponse } from '../common/client'
 export const subscriptionCancelledTrigger = createTrigger({
   auth: pinchPaymentsAuth,
   name: 'subscription_cancelled',
+  classification: 'READ',
   displayName: 'Subscription Cancelled',
   description: 'Triggers when a subscription is cancelled',
   aiMetadata: {

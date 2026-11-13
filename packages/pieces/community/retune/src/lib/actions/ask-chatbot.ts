@@ -5,6 +5,7 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 export const askChatbot = createAction({
   auth: retuneAuth,
   name: 'ask_chatbot',
+  classification: 'WRITE',
   displayName: 'Ask Chatbot',
   description: 'Sends a message to an existing thread with a chatbot.',
   audience: 'both',

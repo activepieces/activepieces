@@ -19,8 +19,9 @@ export const getCardAttachments = createAction({
   aiMetadata: { description: 'Lists all attachments on a Trello card identified by card_id. Use to enumerate the files and links attached to a card, e.g. to find an attachment id before fetching or deleting it. Read-only and idempotent.', idempotent: true },
   props: {
     card_id: Property.ShortText({
-      description: 'The ID of the card to get attachments from',
+      description: "From an earlier step, or the code after /c/ in the card's URL.",
       displayName: 'Card ID',
+      placeholder: 'aBcD1234',
       required: true,
     })
   },

@@ -65,6 +65,8 @@ function createMockJob(id: string, data?: Record<string, unknown>, deferredFailu
         name: `job-name-${id}`,
         data: { ...validExecuteFlowJobData, ...data },
         attemptsMade: 0,
+        timestamp: 1_000,
+        processedOn: 1_050,
         opts: { attempts: 2 },
         deferredFailure,
         moveToDelayed: vi.fn().mockResolvedValue(undefined),
@@ -241,5 +243,50 @@ describe('tryDequeue', () => {
 
         expect(result).toBeNull()
         expect(mockWorker.getNextJob).toHaveBeenCalledTimes(1)
+    })
+
+    it('should log pickupWaitMs as the time from creation to pickup for an immediate job', async () => {
+        const job = createMockJob('job-immediate')
+        vi.mocked(mockWorker.getNextJob).mockResolvedValueOnce(job)
+        mockPreDispatch.mockResolvedValueOnce({ verdict: InterceptorVerdict.ALLOW })
+
+        await tryDequeue(mockWorker, 'test-queue', mockLog)
+
+        expect(mockLog.info).toHaveBeenCalledWith(
+            expect.objectContaining({ job: { id: 'job-immediate', pickupWaitMs: 50 } }),
+            '[jobBroker#tryDequeue] Dequeued job',
+        )
+    })
+
+    it('should exclude the scheduled delay from pickupWaitMs', async () => {
+        const job = createMockJob('job-delayed')
+        job.opts.delay = 3_600_000
+        job.processedOn = 3_601_050
+        vi.mocked(mockWorker.getNextJob).mockResolvedValueOnce(job)
+        mockPreDispatch.mockResolvedValueOnce({ verdict: InterceptorVerdict.ALLOW })
+
+        await tryDequeue(mockWorker, 'test-queue', mockLog)
+
+        expect(mockLog.info).toHaveBeenCalledWith(
+            expect.objectContaining({ job: { id: 'job-delayed', pickupWaitMs: 50 } }),
+            '[jobBroker#tryDequeue] Dequeued job',
+        )
+    })
+
+    it('should fall back to the current time when processedOn is missing', async () => {
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(1_200)
+        const job = createMockJob('job-no-processed-on')
+        job.processedOn = undefined
+        vi.mocked(mockWorker.getNextJob).mockResolvedValueOnce(job)
+        mockPreDispatch.mockResolvedValueOnce({ verdict: InterceptorVerdict.ALLOW })
+
+        await tryDequeue(mockWorker, 'test-queue', mockLog)
+        vi.useRealTimers()
+
+        expect(mockLog.info).toHaveBeenCalledWith(
+            expect.objectContaining({ job: { id: 'job-no-processed-on', pickupWaitMs: 200 } }),
+            '[jobBroker#tryDequeue] Dequeued job',
+        )
     })
 })

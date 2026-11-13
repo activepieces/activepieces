@@ -2,14 +2,16 @@ import { Property, createAction, OAuth2PropertyValue } from '@activepieces/piece
 import { getTaskListsDropdown, createTodoClient } from '../common';
 import { microsoftToDoAuth } from '../auth';
 import { Importance, TaskStatus, TodoTask } from '@microsoft/microsoft-graph-types';
+import { createTaskOutputSchema } from '../output-schemas';
 
 export const createTask = createAction({
 	auth: microsoftToDoAuth,
 	name: 'create_task',
+	outputSchema: createTaskOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Task',
 	description: 'Creates a new task.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Create a new to-do task inside a specific Microsoft To Do task list, optionally setting title, body/notes, importance, status, due/reminder/start dates, and categories. Use to add an item to a user\'s list; requires a target task list id (resolve via the list-tasks/find actions if you only have a name). Not idempotent — each call appends a new task even with identical input.', idempotent: false },
 	props: {
 		task_list_id: Property.Dropdown({

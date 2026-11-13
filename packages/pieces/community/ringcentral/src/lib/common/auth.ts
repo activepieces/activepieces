@@ -3,6 +3,8 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { ringcentralCommon } from './client';
 
 export const ringcentralAuth = PieceAuth.OAuth2({
   description:
@@ -32,4 +34,22 @@ export const ringcentralAuth = PieceAuth.OAuth2({
   scope: [],
   // The platform's default prompt=consent sends RingCentral's login to SSO-only (API_ERROR_208).
   prompt: 'omit',
+  getConnectionIdentifier: async ({ auth }) => {
+    try {
+      const response = await httpClient.sendRequest<RingCentralExtension>({
+        method: HttpMethod.GET,
+        url: `${ringcentralCommon.getServerUrl(auth)}/restapi/v1.0/account/~/extension/~`,
+        headers: { Authorization: `Bearer ${auth.access_token}` },
+        timeout: 5000,
+      });
+      return response.body.contact?.email || response.body.name || undefined;
+    } catch {
+      return undefined;
+    }
+  },
 });
+
+type RingCentralExtension = {
+  name?: string;
+  contact?: { email?: string };
+};

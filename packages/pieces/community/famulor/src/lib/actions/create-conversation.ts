@@ -16,6 +16,7 @@ function filterEmptyVariables(
 export const createConversation = createAction({
   auth: famulorAuth,
   name: 'createConversation',
+  classification: 'WRITE',
   displayName: 'Create Conversation',
   description: 'Start a new chat conversation with an AI assistant.',
   audience: 'both',

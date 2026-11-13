@@ -54,4 +54,35 @@ describe('FlowExecutorContext.logSizeBytes', () => {
         expect(ctx.logSizeBytes).toBe(sizeofUtils.recursiveSizeof(ctx.steps))
         expect(ctx.logSizeBytes).toBeGreaterThan(4_096)
     })
+
+    it('stays exact when a growing loop is upserted the way the loop executor does it', async () => {
+        let ctx = await FlowExecutorContext.empty().upsertStep('loop', LoopStepOutput.init({ input: { items: [] } }))
+
+        for (let iteration = 0; iteration < 200; iteration++) {
+            const current = ctx.getLoopStepOutput({ stepName: 'loop' }) ?? LoopStepOutput.init({ input: { items: [] } })
+            const next = current.setItemAndIndex({ item: { id: iteration }, index: iteration + 1 }).addIteration()
+            ctx = (await ctx.upsertStep('loop', next))
+                .setCurrentPath(ctx.currentPath.loopIteration({ loopName: 'loop', iteration }))
+            ctx = await ctx.upsertStep('router', pieceStep({ branch: iteration % 2 === 0 ? 'a' : 'fallback' }))
+            ctx = ctx.setCurrentPath(ctx.currentPath.removeLast())
+        }
+
+        expect(ctx.logSizeBytes).toBe(sizeofUtils.recursiveSizeof(ctx.steps))
+    })
+
+    it('stays exact when a step flips between a slice ref and an inline output', async () => {
+        const sliced = new GenericStepOutput({
+            type: FlowActionType.CODE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            outputType: StepOutputType.SLICE,
+            output: { fileId: 'file-1', size: 8_192, url: 'http://example.com/file-1' },
+        })
+
+        let ctx = await FlowExecutorContext.empty().upsertStep('echo_step', sliced)
+        ctx = await ctx.upsertStep('echo_step', pieceStep({ small: 'inline' }))
+        ctx = await ctx.upsertStep('echo_step', sliced)
+
+        expect(ctx.logSizeBytes).toBe(sizeofUtils.recursiveSizeof(ctx.steps))
+    })
 })

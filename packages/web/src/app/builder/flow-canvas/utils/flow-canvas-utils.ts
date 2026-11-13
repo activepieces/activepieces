@@ -9,9 +9,9 @@ import {
   FlowVersion,
   LoopOnItemsAction,
   BranchedAction,
+  ProcessInBatchesAction,
   StepLocationRelativeToParent,
   FlowTrigger,
-  FlowTriggerType,
   Note,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -19,6 +19,8 @@ import { t } from 'i18next';
 import { flowRunUtils } from '@/features/flow-runs';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
 
+import { batchRegionUtils } from './batch-region';
+import { canvasElementIds } from './canvas-element-ids';
 import { flowCanvasLayoutConsts } from './layout-consts';
 import {
   ApBigAddButtonNode,
@@ -28,6 +30,7 @@ import {
   ApGraph,
   ApGraphEndNode,
   ApLoopReturnNode,
+  ApNode,
   ApNodeType,
   ApStepNode,
   ApStraightLineEdge,
@@ -54,7 +57,10 @@ const createBigAddButtonGraph: (params: {
 }) => ApGraph = ({ parentStep, nodeData, orientation }) => {
   const layout = getLayout(orientation);
   const bigAddButtonNode: ApBigAddButtonNode = {
-    id: `${parentStep.name}-big-add-button-${nodeData.edgeId}`,
+    id: canvasElementIds.bigAddButtonId({
+      parentStepName: parentStep.name,
+      edgeId: nodeData.edgeId,
+    }),
     type: ApNodeType.BIG_ADD_BUTTON,
     position: { x: 0, y: 0 },
     data: nodeData,
@@ -76,7 +82,7 @@ const createBigAddButtonGraph: (params: {
 
   const straightLineEdge: ApStraightLineEdge = {
     id: `big-button-straight-line-for${nodeData.edgeId}`,
-    source: `${parentStep.name}-big-add-button-${nodeData.edgeId}`,
+    source: bigAddButtonNode.id,
     target: `${parentStep.name}-subgraph-end-${nodeData.edgeId}`,
     type: ApEdgeType.STRAIGHT_LINE as const,
     data: {
@@ -135,9 +141,9 @@ const createStepGraph: (params: {
   return {
     nodes: [stepNode, graphEndNode],
     edges:
-      step.type !== FlowActionType.LOOP_ON_ITEMS &&
+      !sharedFlowCanvasUtils.isLoopOrBatchStep(step) &&
       !flowStructureUtil.isBranchedAction(step) &&
-      !sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
+      !flowStructureUtil.hasContinueOnFailureBranches(step)
         ? [straightLineEdge]
         : [],
   };
@@ -160,11 +166,13 @@ const buildFlowGraph: (params: {
     orientation,
   });
   const childGraph =
-    step.type === FlowActionType.LOOP_ON_ITEMS
+    step.type === FlowActionType.PROCESS_IN_BATCHES
+      ? buildBatchChildGraph({ step, orientation })
+      : sharedFlowCanvasUtils.isLoopOrBatchStep(step)
       ? buildLoopChildGraph({ step, orientation })
       : flowStructureUtil.isBranchedAction(step)
       ? buildRouterChildGraph({ step, orientation })
-      : sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
+      : flowStructureUtil.hasContinueOnFailureBranches(step)
       ? buildContinueOnFailureBranchesGraph({ step, orientation })
       : null;
 
@@ -205,14 +213,21 @@ function offsetGraph(
 
 function transposeGraphPositions(graph: ApGraph): ApGraph {
   return {
-    nodes: graph.nodes.map((node) => ({
-      ...node,
-      position: {
-        x: node.position.y,
-        y: node.position.x,
-      },
-    })),
+    nodes: graph.nodes.map(transposeNode),
     edges: graph.edges,
+  };
+}
+
+function transposeNode(node: ApNode): ApNode {
+  const position = { x: node.position.y, y: node.position.x };
+  if (node.type !== ApNodeType.BATCH_REGION) {
+    return { ...node, position };
+  }
+  const { width, height } = node.data.size;
+  return {
+    ...node,
+    position,
+    data: { ...node.data, size: { width: height, height: width } },
   };
 }
 
@@ -269,11 +284,83 @@ const calculateGraphBoundingBox = ({
   };
 };
 
+const buildBatchChildGraph: (params: {
+  step: ProcessInBatchesAction;
+  orientation: CanvasOrientation;
+}) => ApGraph = ({ step, orientation }) => {
+  const layout = getLayout(orientation);
+  const isBatchEmpty = isNil(step.firstLoopAction);
+  const childGraph = step.firstLoopAction
+    ? buildFlowGraph({ step: step.firstLoopAction, orientation })
+    : createBigAddButtonGraph({
+        parentStep: step,
+        nodeData: {
+          parentStepName: step.name,
+          stepLocationRelativeToParent:
+            StepLocationRelativeToParent.INSIDE_BATCH,
+          edgeId: canvasElementIds.batchStartEdgeId(step.name),
+        },
+        orientation,
+      });
+
+  const childGraphOffsetY =
+    layout.stepAlongSize + layout.spaceAlongBetweenSteps;
+  const childGraphAfterOffset = offsetGraph(childGraph, {
+    x: 0,
+    y: childGraphOffsetY,
+  });
+
+  const subgraphEndSubNode: ApGraphEndNode = {
+    id: canvasElementIds.batchSubgraphEndId(step.name),
+    type: ApNodeType.GRAPH_END_WIDGET,
+    position: {
+      x: layout.stepCrossSize / 2,
+      y:
+        childGraphOffsetY +
+        calculateGraphBoundingBox({ graph: childGraph, orientation }).height +
+        layout.spaceAlongBetweenSteps,
+    },
+    data: {},
+    selectable: false,
+  };
+
+  const edges: ApEdge[] = [
+    {
+      id: canvasElementIds.batchStartEdgeId(step.name),
+      source: step.name,
+      target: `${step.name}-subgraph-end`,
+      type: ApEdgeType.STRAIGHT_LINE as const,
+      data: {
+        drawArrowHead: !isBatchEmpty,
+        hideAddButton: isBatchEmpty,
+        parentStepName: step.name,
+        stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BATCH,
+      },
+    },
+    {
+      id: `${step.name}-batch-end-edge`,
+      source: childGraphAfterOffset.nodes.at(-1)!.id,
+      target: subgraphEndSubNode.id,
+      type: ApEdgeType.STRAIGHT_LINE as const,
+      data: {
+        drawArrowHead: !isNil(step.nextAction),
+        parentStepName: step.name,
+      },
+    },
+  ];
+
+  return {
+    nodes: [...childGraphAfterOffset.nodes, subgraphEndSubNode],
+    edges: [...edges, ...childGraphAfterOffset.edges],
+  };
+};
+
 const buildLoopChildGraph: (params: {
   step: LoopOnItemsAction;
   orientation: CanvasOrientation;
 }) => ApGraph = ({ step, orientation }) => {
   const layout = getLayout(orientation);
+  const stepLocationRelativeToParent = StepLocationRelativeToParent.INSIDE_LOOP;
   const childGraph = step.firstLoopAction
     ? buildFlowGraph({
         step: step.firstLoopAction,
@@ -283,8 +370,7 @@ const buildLoopChildGraph: (params: {
         parentStep: step,
         nodeData: {
           parentStepName: step.name,
-          stepLocationRelativeToParent:
-            StepLocationRelativeToParent.INSIDE_LOOP,
+          stepLocationRelativeToParent,
           edgeId: `${step.name}-loop-start-edge`,
         },
         orientation,
@@ -334,6 +420,7 @@ const buildLoopChildGraph: (params: {
       type: ApEdgeType.LOOP_START_EDGE as const,
       data: {
         isLoopEmpty: isNil(step.firstLoopAction),
+        stepLocationRelativeToParent,
       },
     },
     {
@@ -636,31 +723,6 @@ const createAddOperationFromAddButtonData = (data: ApButtonData) => {
   } as const;
 };
 
-const isSkipped = (stepName: string, trigger: FlowTrigger) => {
-  const step = flowStructureUtil.getStep(stepName, trigger);
-  if (
-    isNil(step) ||
-    step.type === FlowTriggerType.EMPTY ||
-    step.type === FlowTriggerType.PIECE
-  ) {
-    return false;
-  }
-  const skippedParents = flowStructureUtil
-    .findPathToStep(trigger, stepName)
-    .filter(
-      (stepInPath) =>
-        stepInPath.type === FlowActionType.LOOP_ON_ITEMS ||
-        flowStructureUtil.isBranchedAction(stepInPath) ||
-        sharedFlowCanvasUtils.hasContinueOnFailureBranches(stepInPath),
-    )
-    .filter((parentInPath) =>
-      flowStructureUtil.isChildOf(parentInPath, stepName),
-    )
-    .filter((parent) => parent.skip);
-
-  return skippedParents.length > 0 || !!step.skip;
-};
-
 const getStepStatus = (
   stepName: string | undefined,
   run: FlowRun | null,
@@ -740,16 +802,24 @@ export const flowCanvasUtils = {
     } else {
       console.warn('Flow end widget not found');
     }
+    const batchRegionsGraph: ApGraph = {
+      nodes: batchRegionUtils.buildBatchRegionNodes({
+        graph: stepsGraph,
+        version,
+        orientation,
+      }),
+      edges: [],
+    };
+    const layoutGraph = mergeGraph(stepsGraph, batchRegionsGraph);
     const orientedGraph =
       orientation === 'horizontal'
-        ? transposeGraphPositions(stepsGraph)
-        : stepsGraph;
+        ? transposeGraphPositions(layoutGraph)
+        : layoutGraph;
     return mergeGraph(orientedGraph, notesGraph);
   },
   createFocusStepInGraphParams,
   calculateGraphBoundingBox,
   createAddOperationFromAddButtonData,
-  isSkipped,
   getStepStatus,
   determineInitiallySelectedStep,
   doesSelectionRectangleExist,

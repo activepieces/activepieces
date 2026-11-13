@@ -6,6 +6,7 @@ import { DocuMergeClient } from '../common/client';
 export const splitPdf = createAction({
   auth: documergeAuth,
   name: 'split_pdf',
+  classification: 'READ',
   displayName: 'Split PDF',
   description: 'Extract or remove specific pages from a PDF file',
   audience: 'both',

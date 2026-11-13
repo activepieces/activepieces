@@ -1,26 +1,27 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { snowflakeAuth } from '../auth';
 import {
-  configureConnection,
-  connect,
-  destroy,
-  execute,
   getTableColumnOptions,
   snowflakeCommonProps,
-  SnowflakeAuthValue,
+  toAuthValue,
+  withSnowflake,
 } from '../common';
+import { getRowByIdOutputSchema } from '../common/output-schemas';
+import { identifier, qualifiedName } from '../common/sql';
 
 export const getRowByIdAction = createAction({
   name: 'get_row_by_id',
+  classification: 'READ',
   displayName: 'Get Row by ID',
   description:
     'Retrieve a single row from a Snowflake table by matching a column value.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Looks up and returns a single row from a Snowflake table where the chosen ID column equals a given value (the first match, LIMIT 1). Use for a targeted point lookup by primary key or unique identifier; for multi-row or condition-based queries use Search Rows. Read-only and idempotent.',
+      'Returns the first row of a table whose chosen column equals a value; the row columns are spread next to found=true, or only found=false when nothing matches. For free-text table names use Get Row by Key. Read-only and safe to retry.',
     idempotent: true,
   },
+  outputSchema: getRowByIdOutputSchema,
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,
@@ -48,10 +49,10 @@ export const getRowByIdAction = createAction({
             placeholder: 'Please select a table first',
           };
         }
-        return getTableColumnOptions(
-          auth as SnowflakeAuthValue,
-          table as string
-        );
+        return getTableColumnOptions({
+          auth: toAuthValue(auth),
+          table: String(table),
+        });
       },
     }),
     id_value: Property.ShortText({
@@ -62,20 +63,21 @@ export const getRowByIdAction = createAction({
   },
   async run(context) {
     const { table, id_column, id_value } = context.propsValue;
-
-    const sql = `SELECT * FROM ${table} WHERE ${id_column} = ? LIMIT 1`;
-
-    const connection = configureConnection(context.auth as SnowflakeAuthValue);
-    await connect(connection);
-    try {
-      const result = await execute(connection, sql, [id_value]);
-      if (!result || result.length === 0) {
-        return { found: false };
-      }
-      const row = result[0] as Record<string, unknown>;
-      return { found: true, ...row };
-    } finally {
-      await destroy(connection);
+    const sql = `SELECT * FROM ${qualifiedName({
+      value: table,
+      label: 'Table',
+    })} WHERE ${identifier({
+      name: id_column,
+      label: 'ID column',
+    })} = ? LIMIT 1`;
+    const result = await withSnowflake({
+      auth: toAuthValue(context.auth),
+      fn: (session) => session.query({ sql, binds: [id_value], maxRows: 1 }),
+    });
+    const row = result.rows[0];
+    if (!row) {
+      return { found: false };
     }
+    return { found: true, ...row };
   },
 });

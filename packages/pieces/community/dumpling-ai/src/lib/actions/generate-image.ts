@@ -4,6 +4,7 @@ import { dumplingAuth } from '../auth';
 
 export const generateImage = createAction({
 	name: 'generate_image',
+	classification: 'READ',
 	auth: dumplingAuth,
 	displayName: 'Generate Image',
 	description: 'Generate images based on a text prompt using AI.',

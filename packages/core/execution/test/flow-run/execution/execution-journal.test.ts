@@ -93,6 +93,16 @@ describe('executionJournal.getPathToStep', () => {
         const step5_1 = executionJournal.getPathToStep(steps, 'step5', { 'step2': 1, 'step4': 0 })
         expect(step5_1).toEqual([['step2', 1], ['step4', 0]])
     })
+
+    it('should clamp a pinned loop index to the iterations that exist', () => {
+        const steps: Record<string, StepOutput> = {
+            loop: createLoopWithIterations([{ inner: createCodeStep() }, { inner: createCodeStep() }]),
+        }
+
+        expect(executionJournal.getPathToStep(steps, 'inner', { loop: 13 })).toEqual([['loop', 1]])
+        expect(executionJournal.getPathToStep(steps, 'inner', {})).toEqual([['loop', 0]])
+        expect(executionJournal.getPathToStep(steps, 'inner', { loop: -1 })).toEqual([['loop', 0]])
+    })
 })
 
 describe('executionJournal.getStateAtPath', () => {

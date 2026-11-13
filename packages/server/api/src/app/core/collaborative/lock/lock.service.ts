@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../../database/redis-connections'
 
@@ -5,11 +6,11 @@ const LOCK_TTL_SECONDS = 60
 const KEY_PREFIX = 'lock:'
 
 export const lockService = (log: FastifyBaseLogger) => ({
-    async acquire({ resourceId, projectId, userId, userDisplayName, force }: AcquireParams): Promise<AcquireResult> {
+    async acquire({ resourceId, projectId, userId, userDisplayName, editorSessionId, force }: AcquireParams): Promise<AcquireResult> {
         log.debug({ resourceId, user: { id: userId }, force }, '[Lock] Attempting to acquire lock')
         const redis = await redisConnections.useExisting()
         const key = buildKey({ resourceId, projectId })
-        const value = JSON.stringify({ userId, userDisplayName })
+        const value = JSON.stringify({ userId, userDisplayName, editorSessionId: editorSessionId ?? null })
 
         if (force) {
             await redis.set(key, value, 'EX', LOCK_TTL_SECONDS)
@@ -26,29 +27,29 @@ export const lockService = (log: FastifyBaseLogger) => ({
         const existing = await redis.get(key)
         const lock: LockValue | null = existing ? JSON.parse(existing) : null
 
-        if (lock && lock.userId === userId) {
+        if (lock && isSameOwner({ lock, userId, editorSessionId })) {
             await redis.set(key, value, 'EX', LOCK_TTL_SECONDS)
-            log.debug({ resourceId, user: { id: userId } }, '[Lock] Lock renewed (same user)')
+            log.debug({ resourceId, user: { id: userId } }, '[Lock] Lock renewed (same editor session)')
             return { acquired: true, lock: null }
         }
 
-        log.debug({ resourceId, user: { id: userId }, lockedByUserId: lock?.userId }, '[Lock] Lock already held by another user')
-        return { acquired: false, lock }
+        log.debug({ resourceId, user: { id: userId }, lockedByUserId: lock?.userId }, '[Lock] Lock already held by another editor session')
+        return { acquired: false, lock: isNil(lock) ? null : { userId: lock.userId, userDisplayName: lock.userDisplayName } }
     },
 
-    async release({ resourceId, projectId, userId }: ReleaseParams): Promise<boolean> {
+    async release({ resourceId, projectId, userId, editorSessionId }: ReleaseParams): Promise<boolean> {
         log.debug({ resourceId, user: { id: userId } }, '[Lock] Attempting to release lock')
         const redis = await redisConnections.useExisting()
         const key = buildKey({ resourceId, projectId })
         const existing = await redis.get(key)
         if (existing) {
             const lock: LockValue = JSON.parse(existing)
-            if (lock.userId === userId) {
+            if (isSameOwner({ lock, userId, editorSessionId })) {
                 await redis.del(key)
                 log.debug({ resourceId, user: { id: userId } }, '[Lock] Lock released')
                 return true
             }
-            log.debug({ resourceId, user: { id: userId }, lockedByUserId: lock.userId }, '[Lock] Cannot release lock held by another user')
+            log.debug({ resourceId, user: { id: userId }, lockedByUserId: lock.userId }, '[Lock] Cannot release lock held by another editor session')
         }
         else {
             log.debug({ resourceId, user: { id: userId } }, '[Lock] No lock found to release')
@@ -69,9 +70,28 @@ function buildKey({ resourceId, projectId }: KeyParams): string {
     return `${KEY_PREFIX}${projectId}:${resourceId}`
 }
 
+function isSameOwner({ lock, userId, editorSessionId }: SameOwnerParams): boolean {
+    if (lock.userId !== userId) {
+        return false
+    }
+    return isNil(lock.editorSessionId) || isNil(editorSessionId) || lock.editorSessionId === editorSessionId
+}
+
 type LockValue = {
     userId: string
     userDisplayName: string
+    editorSessionId?: string | null
+}
+
+type LockHolder = {
+    userId: string
+    userDisplayName: string
+}
+
+type SameOwnerParams = {
+    lock: LockValue
+    userId: string
+    editorSessionId?: string | null
 }
 
 type KeyParams = {
@@ -84,18 +104,20 @@ type AcquireParams = {
     projectId: string
     userId: string
     userDisplayName: string
+    editorSessionId?: string | null
     force?: boolean
 }
 
 type AcquireResult = {
     acquired: boolean
-    lock: LockValue | null
+    lock: LockHolder | null
 }
 
 type ReleaseParams = {
     resourceId: string
     projectId: string
     userId: string
+    editorSessionId?: string | null
 }
 
 type GetLockParams = {

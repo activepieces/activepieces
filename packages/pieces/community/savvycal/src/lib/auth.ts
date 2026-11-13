@@ -10,6 +10,7 @@ export const savvyCalAuth = [
     tokenUrl: 'https://savvycal.com/oauth/token',
     required: true,
     scope: [],
+    getConnectionIdentifier: async ({ auth }) => fetchUserLabel(auth.access_token),
   }),
   PieceAuth.CustomAuth({
     displayName: 'Personal Access Token',
@@ -44,6 +45,7 @@ export const savvyCalAuth = [
         return { valid: false, error: 'Invalid token. Please check your Personal Access Token and try again.' };
       }
     },
+    getConnectionIdentifier: async ({ auth }) => fetchUserLabel(auth.token),
   }),
 ];
 
@@ -55,3 +57,26 @@ export function getToken(auth: SavvyCalAuthValue): string {
   }
   return auth.access_token;
 }
+
+async function fetchUserLabel(token: string): Promise<string | undefined> {
+  try {
+    const response = await httpClient.sendRequest<SavvyCalUser>({
+      method: HttpMethod.GET,
+      url: `${SAVVYCAL_BASE_URL}/me`,
+      headers: { Authorization: `Bearer ${token}` },
+      timeout: 5000,
+    });
+    const user = response.body;
+    const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+    return user.email || user.display_name || fullName || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+type SavvyCalUser = {
+  email?: string;
+  display_name?: string;
+  first_name?: string;
+  last_name?: string;
+};

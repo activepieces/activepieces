@@ -18,6 +18,22 @@ export const createPage = createAction({
       'Creates a new standalone page nested under an existing parent page, with a title and optional body content. Use when an agent must add free-form document pages (notes, docs) rather than database rows; requires the parent page id. Not idempotent: each call creates a new page even with identical title.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'parent',
+      display: 'section',
+      label: 'Parent page',
+      icon: 'file',
+      props: ['pageId'],
+    },
+    {
+      key: 'new_page',
+      display: 'section',
+      label: 'New page',
+      icon: 'text',
+      props: ['title', 'content'],
+    },
+  ],
   props: {
     pageId: {
       ...notionCommon.page,

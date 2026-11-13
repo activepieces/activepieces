@@ -14,6 +14,7 @@ const PROPERTY_ITERATIONS = [
 
 export const addOrUpdateContact = createAction({
     name: 'add_or_update_contact',
+    classification: 'WRITE',
     displayName: 'Add/Update contact',
     description: 'Add or update a single contact',
     audience: 'both',

@@ -24,7 +24,7 @@ import { createDraft } from './lib/actions/create-draft';
 
 export const imapPiece = createPiece({
   displayName: 'IMAP',
-  description: 'Receive new email trigger',
+  description: 'Watch for new emails and copy, move, mark or delete them over IMAP.',
   minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/imap.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],

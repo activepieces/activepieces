@@ -6,6 +6,7 @@ import { createApiClient } from '../common';
 
 export const getEnvelope = createAction({
   name: 'getEnvelope',
+  classification: 'READ',
   displayName: 'Get Signing Request Details',
   description:
     'Look up the full details of a signing request — status, recipients, and dates — using its ID.',

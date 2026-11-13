@@ -8,6 +8,7 @@ import { DynamicsCRMCommon, makeClient } from '../common';
 export const deleteRecordAction = createAction({
   auth: dynamicsCRMAuth,
   name: 'dynamics_crm_delete_record',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Record',
   description: 'Deletes an existing record.',
   audience: 'both',

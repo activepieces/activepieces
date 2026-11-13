@@ -6,6 +6,7 @@ import { wedofCommon } from '../../common/wedof';
 export const deletePartnership = createAction({
   auth: wedofAuth,
   name: 'deletePartnership',
+  classification: 'DESTRUCTIVE',
   displayName: "Supprimer un partenariat",
   description: "Supprime un partenariat à l'état Demande à compléter",
   audience: 'both',

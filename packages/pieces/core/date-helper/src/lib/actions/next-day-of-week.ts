@@ -24,6 +24,22 @@ export const nextDayofWeek = createAction({
   displayName: 'Next Day of Week',
   description: 'Get the date and time of the next day of the week',
   aiMetadata: { description: 'Returns the next occurrence of a given weekday in a chosen time zone, stamped with a fixed 24h time or the current time; when today is that weekday but the target time has already passed, it rolls forward a full week. Use Next Day of Year for a month-and-day anniversary and Add/Subtract Time to offset a date you already hold. The weekday is required and the time must be HH:mm; not idempotent, since the result derives from the current clock and identical inputs return different dates over time.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'when',
+      display: 'section',
+      label: 'When',
+      icon: 'calendar',
+      props: ['weekday', 'time'],
+    },
+    {
+      key: 'output',
+      display: 'section',
+      label: 'Output',
+      icon: 'type',
+      props: ['timeFormat', 'timeZone'],
+    },
+  ],
   props: {
     weekday: Property.StaticDropdown({
       displayName: 'Weekday',

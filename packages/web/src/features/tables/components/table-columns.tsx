@@ -144,7 +144,7 @@ type AddRecordButtonProps = {
 function AddRecordButton({ handleClick, icon }: AddRecordButtonProps) {
   return (
     <div
-      className="w-full h-full border-t border-border  flex items-center justify-start cursor-pointer pl-4"
+      className="w-full h-full border-t border-gray-6  flex items-center justify-start cursor-pointer pl-4"
       onClick={handleClick}
     >
       {icon}
@@ -155,7 +155,7 @@ function AddRecordButton({ handleClick, icon }: AddRecordButtonProps) {
 function AddFieldButton() {
   return (
     <NewFieldPopup>
-      <div className="w-full h-full flex items-center justify-center cursor-pointer new-field">
+      <div className="w-full h-full flex items-center justify-center cursor-pointer">
         <Plus className="h-4 w-4" />
       </div>
     </NewFieldPopup>

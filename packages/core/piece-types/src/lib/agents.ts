@@ -325,6 +325,8 @@ export type AgentProviderModel = {
     provider: AIProviderName
     model: string
     configId?: string
+} | {
+    modelTierId: string
 }
 
 export type AgentResult = {

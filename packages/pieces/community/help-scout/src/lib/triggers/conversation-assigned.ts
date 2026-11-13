@@ -1,106 +1,73 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { helpScoutAuth } from '../common/auth';
-import { helpScoutApiRequest, verifyWebhookSignature } from '../common/api';
 import { HttpMethod } from '@activepieces/pieces-common';
-import crypto from 'crypto';
+import { helpScoutApi, StoredWebhook } from '../common/api';
+import { helpScoutAuth } from '../common/auth';
 import { mailboxIdDropdown, userIdDropdown } from '../common/props';
-
-const WEBHOOK_KEY = 'helpscout_conversation-assigned';
+import { helpScoutOutputSchemas, helpScoutSampleConversation } from '../common/output-schemas';
 
 export const conversationAssigned = createTrigger({
   auth: helpScoutAuth,
   name: 'conversation_assigned',
+  classification: 'READ',
   displayName: 'Conversation Assigned',
   description: 'Triggers when a conversation is assigned to a user.',
   aiMetadata: {
     description:
-      'Fires when a conversation in the selected Help Scout mailbox is assigned to a user (convo.assigned webhook event), representing a routing/ownership change. Can optionally be narrowed to a specific assigned user.',
+      "Fires when a conversation in the selected Help Scout mailbox is assigned to a user (convo.assigned webhook event), representing a routing/ownership change. Can optionally be narrowed to a specific assigned user.",
   },
   type: TriggerStrategy.WEBHOOK,
   props: {
     mailboxId: mailboxIdDropdown(true),
     assignedTo: userIdDropdown('Assigned User'),
   },
-  sampleData: {},
+  outputSchema: helpScoutOutputSchemas['conversationWebhook'],
+  sampleData: helpScoutSampleConversation,
   async onEnable(context) {
-    const secret = crypto.randomBytes(20).toString('hex');
-
-    const response = await helpScoutApiRequest({
+    const stored = await helpScoutApi.createWebhook({
       auth: context.auth,
-      method: HttpMethod.POST,
-      url: '/webhooks',
-      body: {
-        url: context.webhookUrl,
-        events: ['convo.assigned'],
-        secret,
-        mailboxIds: [context.propsValue.mailboxId],
-      },
+      url: context.webhookUrl,
+      events: ['convo.assigned'],
+      mailboxId: context.propsValue.mailboxId,
     });
-
-    const webhookId = response.headers?.['resource-id'] as string;
-
-    await context.store.put<{ webhookId: string; WebhookSecret: string }>(
-      WEBHOOK_KEY,
-      { webhookId: webhookId, WebhookSecret: secret }
-    );
+    await context.store.put<StoredWebhook>(WEBHOOK_KEY, stored);
   },
   async onDisable(context) {
-    const webhookData = await context.store.get<{
-      webhookId: string;
-      WebhookSecret: string;
-    }>(WEBHOOK_KEY);
-    if (webhookData?.webhookId) {
-      await helpScoutApiRequest({
-        method: HttpMethod.DELETE,
-        url: `/webhooks/${webhookData.webhookId}`,
-        auth: context.auth,
-      });
+    const stored = await context.store.get<StoredWebhook>(WEBHOOK_KEY);
+    if (stored?.webhookId) {
+      await helpScoutApi.deleteWebhook({ auth: context.auth, webhookId: stored.webhookId });
     }
+    await context.store.delete(WEBHOOK_KEY);
   },
   async run(context) {
-    const { assignedTo } = context.propsValue;
-    const webhookData = await context.store.get<{
-      webhookId: string;
-      WebhookSecret: string;
-    }>(WEBHOOK_KEY);
-
-    const webhookSecret = webhookData?.WebhookSecret;
-    const webhookSignatureHeader =
-      context.payload.headers['x-helpscout-signature'];
-    const rawBody = context.payload.rawBody;
-
-    if (
-      !verifyWebhookSignature(webhookSecret, webhookSignatureHeader, rawBody)
-    ) {
+    const stored = await context.store.get<StoredWebhook>(WEBHOOK_KEY);
+    const body = helpScoutApi.verifiedWebhookBody({
+      stored,
+      headers: context.payload.headers,
+      rawBody: context.payload.rawBody,
+      body: context.payload.body,
+    });
+    if (!body) {
       return [];
     }
-
-    const payload = context.payload.body as { assignee: { id: number } };
-
-    if (assignedTo && payload.assignee.id.toString() !== assignedTo) return [];
-
-    return [context.payload.body];
+    if (!helpScoutApi.matchesAssignee({ body, assignedTo: context.propsValue.assignedTo })) {
+      return [];
+    }
+    return [body];
   },
   async test(context) {
-    const { mailboxId, assignedTo } = context.propsValue;
-
-    const queryParams: Record<string, any> = {embed:'threads'};
-    if (mailboxId) queryParams['mailbox'] = mailboxId;
-    if (assignedTo) queryParams['assigned_to'] = assignedTo;
-
-    const response = await helpScoutApiRequest({
+    const queryParams: Record<string, string> = { embed: 'threads', status: 'all', sortField: 'modifiedAt', sortOrder: 'desc' };
+    if (context.propsValue.mailboxId) queryParams['mailbox'] = String(context.propsValue.mailboxId);
+    if (context.propsValue.assignedTo) queryParams['assigned_to'] = String(context.propsValue.assignedTo);
+    const response = await helpScoutApi.request({
       method: HttpMethod.GET,
-      url: '/conversations',
+      path: '/conversations',
       auth: context.auth,
       queryParams,
     });
-
-    const { _embedded } = response.body as {
-      _embedded: {
-        conversations: { id: number; subject: string }[];
-      };
-    };
-
-    return _embedded.conversations;
+    return helpScoutApi
+      .getEmbeddedList({ body: response.body, key: 'conversations' })
+      .slice(0, 5);
   },
 });
+
+const WEBHOOK_KEY = 'helpscout_conversation-assigned';

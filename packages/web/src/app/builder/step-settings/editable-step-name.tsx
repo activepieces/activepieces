@@ -111,15 +111,15 @@ const EditableStepName: React.FC<EditableStepNameProps> = ({
                 className={cn(
                   'flex items-center gap-1.5 min-w-0',
                   !readonly &&
-                    'cursor-text rounded-sm hover:text-foreground/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+                    'cursor-text rounded-md hover:text-gray-12/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-8',
                 )}
               >
-                <span className="truncate text-foreground">
+                <span className="truncate text-gray-12">
                   {typeof stepIndex === 'number' && `${stepIndex}. `}
                   {displayName}
                 </span>
                 {!readonly && (
-                  <Pencil className="size-3.5 shrink-0 text-muted-foreground" />
+                  <Pencil className="size-3.5 shrink-0 text-gray-11" />
                 )}
               </div>
             </TooltipTrigger>
@@ -132,19 +132,19 @@ const EditableStepName: React.FC<EditableStepNameProps> = ({
                         {tooltipTitle}
                       </span>
                       {pieceVersion && (
-                        <span className="text-[11px] font-mono text-background/90">
+                        <span className="text-xs font-mono text-gray-1/90">
                           (v{pieceVersion})
                         </span>
                       )}
                     </div>
                   )}
                   {!tooltipTitle && pieceVersion && (
-                    <span className="text-[11px] font-mono text-background/90">
+                    <span className="text-xs font-mono text-gray-1/90">
                       (v{pieceVersion})
                     </span>
                   )}
                   {tooltipDescription && (
-                    <div className="text-xs text-background/90">
+                    <div className="text-xs text-gray-1/90">
                       {tooltipDescription}
                     </div>
                   )}
@@ -160,8 +160,8 @@ const EditableStepName: React.FC<EditableStepNameProps> = ({
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                size="icon"
-                className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
+                size="icon-xs"
+                className="text-gray-11 hover:text-gray-12"
                 onClick={handleStartEditing}
                 aria-label={t('Edit Branch Name')}
               >

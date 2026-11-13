@@ -67,13 +67,12 @@ const UpdatePieceVersionDialog: React.FC<UpdatePieceVersionDialogProps> = ({
           <Button
             type="button"
             variant="ghost"
-            size="icon"
-            className="size-6"
+            size="icon-xs"
             onClick={handleOpen}
             loading={isLoading}
           >
             {hasNewerVersion ? (
-              <ArrowUp className="size-3.5 text-green-500" />
+              <ArrowUp className="size-3.5 text-success-11" />
             ) : (
               <ArrowUpDown className="size-3.5" />
             )}
@@ -278,7 +277,7 @@ const AdvancedForm: React.FC<AdvancedFormProps> = ({
         {isPatchDowngrade && <PatchDowngradeInfoAlert />}
 
         {form.formState.errors.root?.serverError && (
-          <p className="text-sm font-medium text-destructive">
+          <p className="text-sm font-medium text-danger-11">
             {form.formState.errors.root.serverError.message}
           </p>
         )}

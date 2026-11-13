@@ -6,6 +6,7 @@ import { famulorCommon } from '../common';
 export const campaignControl = createAction({
   auth: famulorAuth,
   name: 'campaignControl',
+  classification: 'WRITE',
   displayName: 'Start/Stop Campaign',
   description: 'Start or stop an outbound calling campaign.',
   audience: 'both',

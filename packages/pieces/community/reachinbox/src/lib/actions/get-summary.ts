@@ -29,6 +29,7 @@ interface SummaryAnalyticsResponse {
 export const getSummary = createAction({
   auth: ReachinboxAuth,
   name: 'getSummary',
+  classification: 'READ',
   displayName: 'Get Summary',
   description: 'Get a summary of campaign analytics within a date range.',
   audience: 'both',

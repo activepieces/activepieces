@@ -5,6 +5,7 @@ import { OracleDbClient } from '../common/client';
 export const runCustomSqlAction = createAction({
   auth: oracleDbAuth,
   name: 'run_custom_sql',
+  classification: 'WRITE',
   displayName: 'Run Custom SQL',
   description: 'Execute custom SQL or PL/SQL in Oracle',
   audience: 'both',

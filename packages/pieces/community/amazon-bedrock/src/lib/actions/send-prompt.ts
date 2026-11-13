@@ -19,11 +19,13 @@ import {
   formatBedrockError,
   extractConverseTextResponse,
 } from '../common';
+import { sendPromptOutputSchema } from '../output-schemas';
 
 export const sendPrompt = createAction({
   audience: 'both',
   auth: awsBedrockCombinedAuth,
   name: 'send_prompt',
+  outputSchema: sendPromptOutputSchema,
   classification: 'READ',
   displayName: 'Ask Bedrock',
   description: 'Send a text prompt to an Amazon Bedrock model.',

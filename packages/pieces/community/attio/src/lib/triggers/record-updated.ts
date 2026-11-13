@@ -5,11 +5,13 @@ import { attioAuth } from '../auth';
 import { objectAttributeDropdown, objectTypeIdDropdown } from '../common/props';
 import { AttributeResponse, ObjectWebhookPayload, WebhookResponse } from '../common/types';
 import { isNil } from '@activepieces/pieces-framework';
+import { createRecordOutputSchema } from '../output-schemas';
 
 const TRIGGER_KEY = 'updated-record-trigger';
 
 export const recordUpdatedTrigger = createTrigger({
 	name: 'record_updated',
+	outputSchema: createRecordOutputSchema,
 	classification: 'READ',
 	displayName: 'Record Updated',
 	description:

@@ -15,18 +15,29 @@ export const setUserStatusAction = createAction({
   audience: 'human',
   aiMetadata: { description: "Set the authenticated user's custom status text and optional emoji, optionally with a Unix-timestamp expiration; requires a user token, not a bot token. This overwrites any existing status, so re-running with the same input is idempotent. Status text is capped at 100 characters.", idempotent: true },
   outputSchema: updateProfileActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'status',
+      display: 'section',
+      label: 'Status',
+      icon: 'user',
+      props: ['text', 'emoji', 'expiration'],
+    },
+  ],
   props: {
     text: Property.ShortText({
       displayName: 'Status Text',
       description: 'Up to 100 characters.',
       placeholder: 'In a meeting',
       required: true,
+      width: 'half',
     }),
     emoji: Property.ShortText({
       displayName: 'Emoji',
       required: false,
       description: 'Emoji name with colons.',
       placeholder: ':calendar:',
+      width: 'half',
     }),
     expiration: Property.Number({
       displayName: 'Expires At',

@@ -12,6 +12,7 @@ interface BulkItem {
 export const setNextPasswordBulk = createAction({
   auth: cyberarkAuth,
   name: 'set_next_password_bulk',
+  classification: 'WRITE',
   displayName: 'Set Next Password in Bulk',
   description:
     'Sets multiple accounts\' credentials to use for the next CPM change',

@@ -2,10 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { JinaAICommon } from '../common';
 import { jinaAiAuth } from '../auth';
+import { webSearchSummarizationOutputSchema } from '../output-schemas';
 
 export const webSearchSummarizationAction = createAction({
   auth:jinaAiAuth,
   name: 'web_search_summarization',
+  outputSchema: webSearchSummarizationOutputSchema,
   classification: 'SEARCH',
   displayName: 'Web Search Summarization',
   description:

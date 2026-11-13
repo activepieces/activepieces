@@ -5,6 +5,7 @@ import { xquikCommon } from '../common';
 export const getTweet = createAction({
   auth: xquikAuth,
   name: 'get_tweet',
+  classification: 'READ',
   displayName: 'Get Tweet',
   description: 'Look up a public X/Twitter post by ID',
   audience: 'both',

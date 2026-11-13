@@ -5,6 +5,7 @@ import { createWebhook, deleteWebhook, WebhookResponse } from '../common/client'
 export const payerUpdatedTrigger = createTrigger({
   auth: pinchPaymentsAuth,
   name: 'payer_updated',
+  classification: 'READ',
   displayName: 'Payer Updated',
   description: 'Triggers when a payer record is updated',
   aiMetadata: {

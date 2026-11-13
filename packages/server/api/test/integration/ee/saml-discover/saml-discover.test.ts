@@ -1,7 +1,8 @@
+import { SsoDomainVerificationRecordType, SsoDomainVerificationStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { createMockPlatform, createMockPlatformPlan, createMockUser, createMockUserIdentity } from '../../../helpers/mocks'
+import { createMockPlatform, createMockPlatformPlan, createMockUser, createMockUserIdentity, mockAndSaveBasicSetup } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -116,6 +117,36 @@ describe('SAML Discover API', () => {
                 method: 'POST',
                 url: '/api/v1/authn/saml/discover',
                 body: { domain: 'no-saml.example.com' },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().platformId).toBeNull()
+        })
+
+        it.each([
+            { reason: 'the domain is pending', domain: 'pending-saml.example.com', lookup: 'pending-saml.example.com', status: SsoDomainVerificationStatus.PENDING_VERIFICATION, ssoEnabled: true },
+            { reason: 'the plan has no SSO', domain: 'no-sso-saml.example.com', lookup: 'no-sso-saml.example.com', status: SsoDomainVerificationStatus.VERIFIED, ssoEnabled: false },
+            { reason: 'the domain is blank', domain: 'blank-saml.example.com', lookup: '   ', status: SsoDomainVerificationStatus.VERIFIED, ssoEnabled: true },
+        ])('should return null platformId when $reason, even with SAML configured', async ({ domain, lookup, status, ssoEnabled }) => {
+            await mockAndSaveBasicSetup({
+                platform: {
+                    ssoDomain: domain,
+                    ssoDomainVerification: {
+                        status,
+                        record: { type: SsoDomainVerificationRecordType.TXT, name: `_activepieces-verify.${domain}`, value: 'activepieces-verify=test-token' },
+                        createdAt: new Date().toISOString(),
+                    },
+                    federatedAuthProviders: {
+                        saml: { idpMetadata: '<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"></md:EntityDescriptor>', idpCertificate: 'test-cert' },
+                    },
+                },
+                plan: { ssoEnabled },
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authn/saml/discover',
+                body: { domain: lookup },
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)

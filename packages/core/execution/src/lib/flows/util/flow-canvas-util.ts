@@ -1,4 +1,4 @@
-import { CodeAction, FlowAction, FlowActionType, PieceAction } from '../actions/action'
+import { CodeAction, FlowAction, FlowActionType, LoopOnItemsAction, PieceAction, ProcessInBatchesAction } from '../actions/action'
 import { FlowTrigger } from '../triggers/trigger'
 import { flowStructureUtil } from './flow-structure-util'
 
@@ -25,7 +25,7 @@ function getFlowBoundingBox(step: Step | FlowAction | null | undefined, forBranc
     let withChildMaxX = FLOW_CANVAS_STEP_WIDTH
     let withChildHeight = FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_VSPACE
 
-    if (step.type === FlowActionType.LOOP_ON_ITEMS) {
+    if (isLoopOrBatchStep(step)) {
         const childBoundingBox = getFlowBoundingBox(step.firstLoopAction, true)
         const childWidth = childBoundingBox.maxX - childBoundingBox.minX
         const childLeft = -childBoundingBox.minX + FLOW_CANVAS_STEP_WIDTH / 2
@@ -47,7 +47,7 @@ function getFlowBoundingBox(step: Step | FlowAction | null | undefined, forBranc
             withChildHeight = merged.height
         }
     }
-    else if (hasContinueOnFailureBranches(step)) {
+    else if (flowStructureUtil.hasContinueOnFailureBranches(step)) {
         const branches = getContinueOnFailureBranchPair(step)
         const childBoundingBoxes = branches.map(b => getFlowBoundingBox(b, true))
         const merged = mergeBranchedChildBoundingBoxes(childBoundingBoxes)
@@ -74,7 +74,7 @@ function buildPositions({ step, offsetX, offsetY, positions }: {
 
     positions.set(step.name, { x: offsetX + FLOW_CANVAS_STEP_WIDTH / 2, y: offsetY })
 
-    if (step.type === FlowActionType.LOOP_ON_ITEMS) {
+    if (isLoopOrBatchStep(step)) {
         const childBoundingBox = getFlowBoundingBox(step.firstLoopAction, true)
         const childLeft = -childBoundingBox.minX + FLOW_CANVAS_STEP_WIDTH / 2
         const childRight = childBoundingBox.maxX - FLOW_CANVAS_STEP_WIDTH / 2
@@ -92,7 +92,7 @@ function buildPositions({ step, offsetX, offsetY, positions }: {
         const subgraphEndY = positionBranchedChildren({ children: step.children, offsetX, offsetY, positions })
         buildPositions({ step: step.nextAction, offsetX, offsetY: offsetY + subgraphEndY, positions })
     }
-    else if (hasContinueOnFailureBranches(step)) {
+    else if (flowStructureUtil.hasContinueOnFailureBranches(step)) {
         const subgraphEndY = positionBranchedChildren({ children: getContinueOnFailureBranchPair(step), offsetX, offsetY, positions })
         buildPositions({ step: step.nextAction, offsetX, offsetY: offsetY + subgraphEndY, positions })
     }
@@ -169,11 +169,8 @@ function positionBranchedChildren({ children, offsetX, offsetY, positions }: {
     return FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_ROUTER_VOFFSET + maxChildHeight + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
 }
 
-function hasContinueOnFailureBranches(step: Step | FlowAction): step is CodeAction | PieceAction {
-    if (step.type !== FlowActionType.CODE && step.type !== FlowActionType.PIECE) {
-        return false
-    }
-    return step.settings.errorHandlingOptions?.continueOnFailure?.value ?? false
+function isLoopOrBatchStep(step: Step | FlowAction): step is LoopOnItemsAction | ProcessInBatchesAction {
+    return step.type === FlowActionType.LOOP_ON_ITEMS || step.type === FlowActionType.PROCESS_IN_BATCHES
 }
 
 function getContinueOnFailureBranchPair(step: CodeAction | PieceAction): (FlowAction | undefined)[] {
@@ -182,7 +179,7 @@ function getContinueOnFailureBranchPair(step: CodeAction | PieceAction): (FlowAc
 }
 
 function getStepBranchRelativeTo(ancestor: Step | FlowAction, targetStepName: string): 'on-success' | 'on-failure' | null {
-    if (!hasContinueOnFailureBranches(ancestor)) {
+    if (!flowStructureUtil.hasContinueOnFailureBranches(ancestor)) {
         return null
     }
     const [onSuccess, onFailure] = getContinueOnFailureBranchPair(ancestor)
@@ -205,7 +202,7 @@ export const flowCanvasUtils = {
         buildPositions({ step: trigger, offsetX: 0, offsetY: 0, positions })
         return positions
     },
-    hasContinueOnFailureBranches,
+    isLoopOrBatchStep,
     getContinueOnFailureBranchPair,
     getStepBranchRelativeTo,
     computeRouterChildOffsets,

@@ -6,6 +6,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 export const publishEvent = createAction({
   auth: sessionAuth,
   name: 'publish_event',
+  classification: 'WRITE',
   displayName: 'Publish Event',
   description: 'Quickly publish an event.',
   audience: 'both',

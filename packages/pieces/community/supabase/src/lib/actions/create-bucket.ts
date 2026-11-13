@@ -17,6 +17,8 @@ export const createBucket = createAction({
     props: {
         name: Property.ShortText({
             displayName: 'Bucket Name',
+            description: 'Must be unique in the project.',
+            placeholder: 'avatars',
             required: true,
         }),
         public: Property.Checkbox({
@@ -26,8 +28,10 @@ export const createBucket = createAction({
             defaultValue: false,
         }),
         fileSizeLimit: Property.Number({
-            displayName: 'File Size Limit (bytes)',
+            displayName: 'Max File Size',
+            description: "In bytes. Empty uses the project's upload limit.",
             required: false,
+            advanced: true,
         }),
     },
     outputSchema: createBucketActionOutputSchema,

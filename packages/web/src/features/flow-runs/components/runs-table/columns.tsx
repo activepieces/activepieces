@@ -220,9 +220,7 @@ export const runsTableColumns = ({
 
       return (
         <div className="flex items-center gap-2 text-left">
-          {!isNil(archivedAt) && (
-            <Archive className="size-4 text-muted-foreground" />
-          )}
+          {!isNil(archivedAt) && <Archive className="size-4 text-gray-11" />}
           <TruncatedColumnTextValue value={displayName} />
         </div>
       );
@@ -300,7 +298,7 @@ export const runsTableColumns = ({
         <div className="text-left flex items-center gap-2">
           {row.original.finishTime && (
             <>
-              <Hourglass className="h-4 w-4 text-muted-foreground" />
+              <Hourglass className="h-4 w-4 text-gray-11" />
               {formatUtils.formatDuration(duration)}
             </>
           )}

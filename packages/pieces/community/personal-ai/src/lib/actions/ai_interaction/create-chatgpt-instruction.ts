@@ -6,6 +6,7 @@ import { BASE_URL } from '../../../index';
 export const createChatGPTInstruction = createAction({
   auth:personalAiAuth,
   name: 'create_chatgpt_instruction',
+  classification: 'READ',
   displayName: 'Send ChatGPT Instruction',
   description: 'Send an instruction to AI assistant using ChatGPT integration.',
   audience: 'both',

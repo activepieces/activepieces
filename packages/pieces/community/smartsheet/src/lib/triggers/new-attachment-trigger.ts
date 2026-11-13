@@ -14,6 +14,7 @@ const TRIGGER_KEY = 'smartsheet_new_attachment_trigger';
 export const newAttachmentTrigger = createTrigger({
 	auth: smartsheetAuth,
 	name: 'new_attachment_',
+	classification: 'READ',
 	displayName: 'New Attachment Added',
 	description: 'Triggers when a new attachment is added to a row or sheet.',
 	aiMetadata: {

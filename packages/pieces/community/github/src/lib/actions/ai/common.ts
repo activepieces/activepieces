@@ -19,6 +19,34 @@ export const repoProp = Property.ShortText({
   required: true,
 });
 
+export function triStateProp({
+  displayName,
+  description,
+}: {
+  displayName: string;
+  description: string;
+}) {
+  return Property.StaticDropdown<string, false>({
+    displayName,
+    description: `${description} Leave empty or pick Leave unchanged to keep the current setting.`,
+    required: false,
+    options: {
+      disabled: false,
+      options: [
+        { label: 'Yes', value: 'yes' },
+        { label: 'No', value: 'no' },
+        { label: 'Leave unchanged', value: 'unchanged' },
+      ],
+    },
+  });
+}
+
+export function triStateValue(value: unknown): boolean | undefined {
+  if (value === true || value === 'yes') return true;
+  if (value === false || value === 'no') return false;
+  return undefined;
+}
+
 /**
  * Maps a github httpClient error to a friendly message. Returns the thrown Error.
  * `resource` is a human label for the 404 (e.g. "Repository owner/repo").

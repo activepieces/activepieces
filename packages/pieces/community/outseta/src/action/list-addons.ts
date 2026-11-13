@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const listAddOnsAction = createAction({
   name: 'list_addons',
+  classification: 'SEARCH',
   auth: outsetaAuth,
   displayName: 'List Add-Ons',
   description:

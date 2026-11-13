@@ -74,4 +74,12 @@ describe('search customer', () => {
     reply(result);
     expect(await runAction({ email: 'sally@rocketrides.io' })).toEqual(result);
   });
+
+  test('a quote or backslash in the email is escaped for the search syntax', async () => {
+    reply({ object: 'search_result', data: [] });
+    await runAction({ email: "o'brien\\x@example.com" });
+    expect(lastRequest().queryParams).toEqual({
+      query: "email:'o\\'brien\\\\x@example.com'",
+    });
+  });
 });

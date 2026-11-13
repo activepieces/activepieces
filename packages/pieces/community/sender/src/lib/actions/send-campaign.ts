@@ -1,10 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
-import {
-  campaignDropdown,
-  makeSenderRequest,
-  senderAuth,
-} from '../common/common';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { senderAuth } from '../auth';
+import { senderApi } from '../common/api';
+import { senderProps } from '../common/props';
 
 export const sendCampaignAction = createAction({
   auth: senderAuth,
@@ -15,17 +12,12 @@ export const sendCampaignAction = createAction({
   audience: 'both',
   aiMetadata: { description: 'Sends an existing draft campaign in a Sender account to its configured recipient groups, identified by campaign ID. Use only after a campaign draft is created and ready to deliver. Not idempotent: this dispatches email to recipients, so re-running may re-send or error; call once.', idempotent: false },
   props: {
-    campaignId: campaignDropdown,
+    campaignId: senderProps.campaignId({ required: true }),
   },
   async run(context) {
-    const campaignId = context.propsValue.campaignId;
-    
-    const response = await makeSenderRequest(
-      context.auth.secret_text,
-      `/campaigns/${campaignId}/send`,
-      HttpMethod.POST,
-    );
-
-    return response.body;
+    return await senderApi.sendCampaign({
+      auth: context.auth,
+      campaignId: context.propsValue.campaignId,
+    });
   },
 });

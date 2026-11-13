@@ -1,4 +1,5 @@
 import { StepRunResponse, UpdateStepProgressRequest } from '@activepieces/core-execution'
+import { ApId } from '@activepieces/core-utils'
 import { z } from 'zod'
 
 export enum WebsocketClientEvent {
@@ -14,6 +15,7 @@ export enum WebsocketClientEvent {
     PRESENCE_UPDATED = 'PRESENCE_UPDATED',
     CHAT_MESSAGE_CHUNK = 'CHAT_MESSAGE_CHUNK',
     CHAT_PERSONALIZATION_PROGRESS = 'CHAT_PERSONALIZATION_PROGRESS',
+    FLOW_DRAFT_UPDATED = 'FLOW_DRAFT_UPDATED',
 }
 
 export enum WebsocketServerEvent {
@@ -35,6 +37,7 @@ export enum WebsocketServerEvent {
 export const LockResourceRequest = z.object({
     resourceId: z.string(),
     force: z.boolean().optional(),
+    editorSessionId: z.optional(ApId),
 })
 
 export const LockResourceResponse = z.object({
@@ -71,6 +74,13 @@ export const PresenceUpdatedEvent = z.object({
     users: z.array(PresenceUser),
 })
 
+export const FlowDraftUpdatedEvent = z.object({
+    flowId: z.string(),
+    editorSessionId: z.string().nullable(),
+})
+
+export const EDITOR_SESSION_ID_HEADER = 'x-ap-editor-session-id'
+
 export type LockResourceRequest = z.infer<typeof LockResourceRequest>
 export type LockResourceResponse = z.infer<typeof LockResourceResponse>
 export type ResourceLockedEvent = z.infer<typeof ResourceLockedEvent>
@@ -80,3 +90,4 @@ export type TestStepProgressEvent = UpdateStepProgressRequest | EmitTestStepProg
 export type PresenceRequest = z.infer<typeof PresenceRequest>
 export type PresenceUser = z.infer<typeof PresenceUser>
 export type PresenceUpdatedEvent = z.infer<typeof PresenceUpdatedEvent>
+export type FlowDraftUpdatedEvent = z.infer<typeof FlowDraftUpdatedEvent>

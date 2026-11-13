@@ -12,6 +12,7 @@ const TRIGGER_KEY = 'dimo-charge-level-trigger';
 export const chargeLevelTrigger = createTrigger({
 	auth: dimoAuth,
 	name: 'charge-level-trigger',
+	classification: 'READ',
 	displayName: 'Charge Level Trigger',
 	description: 'Triggers when vehicle battery charge level meets the specified condition.',
 	aiMetadata: {

@@ -1,15 +1,11 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { convertkitAuth } from '../..';
+import { convertkitAuth } from '../auth';
 import { tag } from '../common/tags';
 import { formId } from '../common/forms';
 import { sequenceIdDropdown } from '../common/sequences';
 import { productId } from '../common/purchases';
 import { initiatorValue } from '../common/webhooks';
-import { createWebhook, removeWebhook } from '../common/service';
-
-interface WebhookInformation {
-  ruleId: number;
-}
+import { kitWebhookLifecycle } from '../common/service';
 
 const sampleData = {
   rule: {
@@ -26,6 +22,7 @@ const sampleData = {
 export const addTag = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_tag_add',
+  classification: 'READ',
   displayName: 'Tag added to subscriber',
   description: 'Trigger when a tag is added to a subscriber',
   aiMetadata: {
@@ -48,23 +45,19 @@ export const addTag = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth.secret_text, payload);
-    const ruleId = response.id;
-
-    await context.store?.put<WebhookInformation>(
-      `_webhook_subscriber_tag_add`,
-      {
-        ruleId,
-      }
-    );
+    await kitWebhookLifecycle.enable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_subscriber_tag_add',
+      payload,
+    });
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_subscriber_tag_add'
-    );
-    if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth.secret_text, response.ruleId);
-    }
+    await kitWebhookLifecycle.disable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_subscriber_tag_add',
+    });
   },
   async run(context) {
     const body = context.payload.body as { subscriber: unknown };
@@ -76,6 +69,7 @@ export const addTag = createTrigger({
 export const removeTag = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_tag_remove',
+  classification: 'READ',
   displayName: 'Tag removed from subscriber',
   description: 'Trigger when a tag is removed from a subscriber',
   aiMetadata: {
@@ -98,23 +92,19 @@ export const removeTag = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth.secret_text, payload);
-    const ruleId = response.id;
-
-    await context.store?.put<WebhookInformation>(
-      `_webhook_subscriber_tag_remove`,
-      {
-        ruleId,
-      }
-    );
+    await kitWebhookLifecycle.enable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_subscriber_tag_remove',
+      payload,
+    });
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_subscriber_tag_remove'
-    );
-    if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth.secret_text, response.ruleId);
-    }
+    await kitWebhookLifecycle.disable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_subscriber_tag_remove',
+    });
   },
   async run(context) {
     const body = context.payload.body as { subscriber: unknown };
@@ -126,6 +116,7 @@ export const removeTag = createTrigger({
 export const subscriberActivated = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_activated',
+  classification: 'READ',
   displayName: 'Subscriber activated',
   description:
     'Trigger when a subscriber is activated. This happens when a subscriber confirms their subscription.',
@@ -144,23 +135,19 @@ export const subscriberActivated = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth.secret_text, payload);
-    const ruleId = response.id;
-
-    await context.store?.put<WebhookInformation>(
-      `_webhook_subscriber_activated`,
-      {
-        ruleId,
-      }
-    );
+    await kitWebhookLifecycle.enable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_subscriber_activated',
+      payload,
+    });
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_subscriber_activated'
-    );
-    if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth.secret_text, response.ruleId);
-    }
+    await kitWebhookLifecycle.disable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_subscriber_activated',
+    });
   },
   async run(context) {
     const body = context.payload.body as { subscriber: unknown };
@@ -172,6 +159,7 @@ export const subscriberActivated = createTrigger({
 export const subscriberUnsubscribed = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_unsubscribed',
+  classification: 'READ',
   displayName: 'Subscriber unsubscribed',
   description: 'Trigger when a subscriber is unsubscribed',
   aiMetadata: {
@@ -189,23 +177,19 @@ export const subscriberUnsubscribed = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth.secret_text, payload);
-    const ruleId = response.id;
-
-    await context.store?.put<WebhookInformation>(
-      `_webhook_subscriber_unsubscribed`,
-      {
-        ruleId,
-      }
-    );
+    await kitWebhookLifecycle.enable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_subscriber_unsubscribed',
+      payload,
+    });
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_subscriber_unsubscribed'
-    );
-    if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth.secret_text, response.ruleId);
-    }
+    await kitWebhookLifecycle.disable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_subscriber_unsubscribed',
+    });
   },
   async run(context) {
     const body = context.payload.body as { subscriber: unknown };
@@ -217,6 +201,7 @@ export const subscriberUnsubscribed = createTrigger({
 export const subscriberBounced = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_bounced',
+  classification: 'READ',
   displayName: 'Subscriber bounced',
   description:
     'Trigger when a subscriber bounced. This happens when an email is sent to a subscriber and the email bounces.',
@@ -235,23 +220,19 @@ export const subscriberBounced = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth.secret_text, payload);
-    const ruleId = response.id;
-
-    await context.store?.put<WebhookInformation>(
-      `_webhook_subscriber_bounced`,
-      {
-        ruleId,
-      }
-    );
+    await kitWebhookLifecycle.enable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_subscriber_bounced',
+      payload,
+    });
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_subscriber_bounced'
-    );
-    if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth.secret_text, response.ruleId);
-    }
+    await kitWebhookLifecycle.disable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_subscriber_bounced',
+    });
   },
   async run(context) {
     const body = context.payload.body as { subscriber: unknown };
@@ -266,6 +247,7 @@ export const subscriberBounced = createTrigger({
 export const subscriberComplained = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_complained',
+  classification: 'READ',
   displayName: 'Subscriber complained',
   description:
     'Trigger when a subscriber complained. This happens when a subscriber marks an email as spam.',
@@ -284,23 +266,19 @@ export const subscriberComplained = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth.secret_text, payload);
-    const ruleId = response.id;
-
-    await context.store?.put<WebhookInformation>(
-      `_webhook_subscriber_complained`,
-      {
-        ruleId,
-      }
-    );
+    await kitWebhookLifecycle.enable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_subscriber_complained',
+      payload,
+    });
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_subscriber_complained'
-    );
-    if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth.secret_text, response.ruleId);
-    }
+    await kitWebhookLifecycle.disable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_subscriber_complained',
+    });
   },
   async run(context) {
     const body = context.payload.body as { subscriber: unknown };
@@ -312,6 +290,7 @@ export const subscriberComplained = createTrigger({
 export const formSubscribed = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_form_subscribed',
+  classification: 'READ',
   displayName: 'Form subscribed',
   description: 'Trigger when a form is subscribed',
   aiMetadata: {
@@ -334,20 +313,19 @@ export const formSubscribed = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth.secret_text, payload);
-    const ruleId = response.id;
-
-    await context.store?.put<WebhookInformation>(`_webhook_form_subscribed`, {
-      ruleId,
+    await kitWebhookLifecycle.enable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_form_subscribed',
+      payload,
     });
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_form_subscribed'
-    );
-    if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth.secret_text, response.ruleId);
-    }
+    await kitWebhookLifecycle.disable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_form_subscribed',
+    });
   },
   async run(context) {
     const body = context.payload.body as { subscriber: unknown };
@@ -359,6 +337,7 @@ export const formSubscribed = createTrigger({
 export const sequenceSubscribed = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_sequence_subscribed',
+  classification: 'READ',
   displayName: 'Sequence subscribed',
   description: 'Trigger when a sequence is subscribed',
   aiMetadata: {
@@ -381,23 +360,19 @@ export const sequenceSubscribed = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth.secret_text, payload);
-    const ruleId = response.id;
-
-    await context.store?.put<WebhookInformation>(
-      `_webhook_sequence_subscribed`,
-      {
-        ruleId,
-      }
-    );
+    await kitWebhookLifecycle.enable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_sequence_subscribed',
+      payload,
+    });
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_sequence_subscribed'
-    );
-    if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth.secret_text, response.ruleId);
-    }
+    await kitWebhookLifecycle.disable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_sequence_subscribed',
+    });
   },
   async run(context) {
     const body = context.payload.body as { subscriber: unknown };
@@ -409,6 +384,7 @@ export const sequenceSubscribed = createTrigger({
 export const sequenceCompleted = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_sequence_completed',
+  classification: 'READ',
   displayName: 'Sequence completed',
   description: 'Trigger when a sequence is completed',
   aiMetadata: {
@@ -431,23 +407,19 @@ export const sequenceCompleted = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth.secret_text, payload);
-    const ruleId = response.id;
-
-    await context.store?.put<WebhookInformation>(
-      `_webhook_sequence_completed`,
-      {
-        ruleId,
-      }
-    );
+    await kitWebhookLifecycle.enable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_sequence_completed',
+      payload,
+    });
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_sequence_completed'
-    );
-    if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth.secret_text, response.ruleId);
-    }
+    await kitWebhookLifecycle.disable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_sequence_completed',
+    });
   },
   async run(context) {
     const body = context.payload.body as { subscriber: unknown };
@@ -459,6 +431,7 @@ export const sequenceCompleted = createTrigger({
 export const linkClicked = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_link_clicked',
+  classification: 'READ',
   displayName: 'Link clicked',
   description: 'Trigger when a link is clicked',
   aiMetadata: {
@@ -481,20 +454,19 @@ export const linkClicked = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth.secret_text, payload);
-    const ruleId = response.id;
-
-    await context.store?.put<WebhookInformation>(`_webhook_link_clicked`, {
-      ruleId,
+    await kitWebhookLifecycle.enable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_link_clicked',
+      payload,
     });
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_link_clicked'
-    );
-    if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth.secret_text, response.ruleId);
-    }
+    await kitWebhookLifecycle.disable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_link_clicked',
+    });
   },
   async run(context) {
     const { initiatorValue } = context.propsValue;
@@ -508,6 +480,7 @@ export const linkClicked = createTrigger({
 export const productPurchased = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_product_purchased',
+  classification: 'READ',
   displayName: 'Product purchased',
   description: 'Trigger when a product is purchased',
   aiMetadata: {
@@ -529,20 +502,19 @@ export const productPurchased = createTrigger({
       },
       target_url: context.webhookUrl,
     };
-    const response = await createWebhook(context.auth.secret_text, payload);
-    const ruleId = response.id;
-
-    await context.store?.put<WebhookInformation>(`_webhook_product_purchased`, {
-      ruleId,
+    await kitWebhookLifecycle.enable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_product_purchased',
+      payload,
     });
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_product_purchased'
-    );
-    if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth.secret_text, response.ruleId);
-    }
+    await kitWebhookLifecycle.disable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_product_purchased',
+    });
   },
   async run(context) {
     const { productId } = context.propsValue;
@@ -555,6 +527,7 @@ export const productPurchased = createTrigger({
 export const purchaseCreated = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_purchase_created',
+  classification: 'READ',
   displayName: 'Purchase created',
   description: 'Trigger when a purchase is created',
   aiMetadata: {
@@ -572,20 +545,19 @@ export const purchaseCreated = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth.secret_text, payload);
-    const ruleId = response.id;
-
-    await context.store?.put<WebhookInformation>(`_webhook_purchase_created`, {
-      ruleId,
+    await kitWebhookLifecycle.enable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_purchase_created',
+      payload,
     });
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_purchase_created'
-    );
-    if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth.secret_text, response.ruleId);
-    }
+    await kitWebhookLifecycle.disable({
+      apiSecret: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_webhook_purchase_created',
+    });
   },
   async run(context) {
     const body = context.payload.body as {

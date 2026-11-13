@@ -53,7 +53,18 @@ function isEmptyObject(value: Record<string, unknown> | undefined): boolean {
 	return isNil(value) || Object.keys(value).length === 0;
 }
 
-export const brevoCommon = { apiCall, isEmptyObject };
+function optionalBooleanValue(value: unknown): boolean | undefined {
+	const normalized = typeof value === 'string' ? value.trim().toLowerCase() : value;
+	if (normalized === true || normalized === 'yes' || normalized === 'true') {
+		return true;
+	}
+	if (normalized === false || normalized === 'no' || normalized === 'false') {
+		return false;
+	}
+	return undefined;
+}
+
+export const brevoCommon = { apiCall, isEmptyObject, optionalBooleanValue };
 
 export const BREVO_API_URL = 'https://api.brevo.com/v3';
 

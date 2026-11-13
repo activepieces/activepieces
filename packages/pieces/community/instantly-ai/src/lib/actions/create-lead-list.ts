@@ -6,6 +6,7 @@ import { instantlyAiAuth } from '../auth';
 export const createLeadListAction = createAction({
   auth: instantlyAiAuth,
   name: 'create_lead_list',
+  classification: 'WRITE',
   displayName: 'Create Lead List',
   description: 'Creates a new lead list.',
   audience: 'both',

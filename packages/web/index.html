@@ -12,6 +12,18 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/logo-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/logo-180.png">
   <link rel="icon" type="image/x-icon" href="<%= apFavicon %>">
+  <script>
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID !== 'function' && typeof crypto.getRandomValues === 'function') {
+      crypto.randomUUID = function randomUUID() {
+        var bytes = new Uint8Array(16);
+        crypto.getRandomValues(bytes);
+        bytes[6] = (bytes[6] & 0x0f) | 0x40;
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+        var hex = Array.prototype.map.call(bytes, function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+        return hex.slice(0, 8) + '-' + hex.slice(8, 12) + '-' + hex.slice(12, 16) + '-' + hex.slice(16, 20) + '-' + hex.slice(20);
+      };
+    }
+  </script>
   <link rel="stylesheet" href="/src/styles.css" />
 </head>
 

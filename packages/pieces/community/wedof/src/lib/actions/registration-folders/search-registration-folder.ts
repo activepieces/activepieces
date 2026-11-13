@@ -15,6 +15,7 @@ import dayjs from 'dayjs';
 export const searchRegistrationFolder = createAction({
   auth: wedofAuth,
   name: 'listRegistrationFolders',
+  classification: 'SEARCH',
   displayName: 'Rechercher un ou plusieurs dossiers de formation',
   description:
     'Liste les dossiers de formation en fonction des critères sélectionnés',

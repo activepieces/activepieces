@@ -80,7 +80,7 @@ export const newLineItemTrigger = createTrigger({
 	name: 'new-line-item',
 	classification: 'READ',
 	displayName: 'New Line Item',
-	description: 'Triggers when new line item is available.',
+	description: 'Triggers when a new line item is created.',
 	aiMetadata: {
 		description:
 			'Fires when a new line item is created in HubSpot. Each event represents one line item with properties such as name, price, quantity, amount, discount, tax, SKU, and linked product. Polls for line items by creation date; does not fire on updates to existing line items.',
@@ -88,15 +88,13 @@ export const newLineItemTrigger = createTrigger({
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                                    
-                    name, description, price, quantity, amount, discount, tax, createdate, hs_object_id, hs_product_id, hs_images, hs_lastmodifieddate, hs_line_item_currency_code, hs_sku, hs_url, hs_cost_of_goods_sold, hs_discount_percentage, hs_term_in_months           
-                        
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: name, description, price, quantity, amount, discount, tax, createdate, hs_object_id, hs_product_id, hs_images, hs_lastmodifieddate, hs_line_item_currency_code, hs_sku, hs_url, hs_cost_of_goods_sold, hs_discount_percentage, hs_term_in_months.
+
+Pick more below.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.LINE_ITEM,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
 		}),
 	},

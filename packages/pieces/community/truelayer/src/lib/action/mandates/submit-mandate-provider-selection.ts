@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const submitMandateProviderSelection = createAction({
   auth: trueLayerCommon.auth,
   name: 'submit-mandate-provider-selection',
+  classification: 'WRITE',
   displayName: 'Submit provider selection',
   description: 'Submit the provider details selected by the PSU. This API can be called using either the mandate_token associated with the mandate or a backend bearer token.',
   audience: 'both',

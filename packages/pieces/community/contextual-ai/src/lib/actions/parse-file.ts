@@ -5,6 +5,7 @@ import { ContextualAI } from 'contextual-client';
 export const parseFileAction = createAction({
   auth: contextualAiAuth,
   name: 'parse_file',
+  classification: 'READ',
   displayName: 'Parse File',
   description: 'Parse a document file into structured Markdown and/or JSON format',
   audience: 'both',

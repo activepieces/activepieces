@@ -74,45 +74,27 @@ export const newMessage = createTrigger({
   },
   sampleData: {},
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: {
+    await pollingHelper.onEnable(polling, { ...context, propsValue: {
         channel: context.propsValue.channel,
         limit: context.propsValue.limit ?? 50,
-      },
-    });
+      } });
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: {
+    await pollingHelper.onDisable(polling, { ...context, propsValue: {
         channel: context.propsValue.channel,
         limit: context.propsValue.limit ?? 50,
-      },
-    });
+      } });
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: {
+    return await pollingHelper.poll(polling, { ...context, propsValue: {
         channel: context.propsValue.channel,
         limit: context.propsValue.limit ?? 50,
-      },
-      files: context.files,
-    });
+      } });
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: {
+    return await pollingHelper.test(polling, { ...context, propsValue: {
         channel: context.propsValue.channel,
         limit: context.propsValue.limit ?? 50,
-      },
-      files: context.files,
-    });
+      } });
   },
 });

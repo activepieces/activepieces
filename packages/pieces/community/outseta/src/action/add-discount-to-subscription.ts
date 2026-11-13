@@ -5,6 +5,7 @@ import { discountDropdown } from '../common/dropdowns';
 
 export const addDiscountToSubscriptionAction = createAction({
   name: 'add_discount_to_subscription',
+  classification: 'WRITE',
   auth: outsetaAuth,
   displayName: 'Apply Discount to Account',
   description:

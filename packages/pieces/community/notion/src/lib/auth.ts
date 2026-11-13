@@ -17,6 +17,8 @@ export const notionOAuth2Auth = PieceAuth.OAuth2({
   },
   authorizationMethod: OAuth2AuthorizationMethod.HEADER,
   required: true,
+  getConnectionIdentifier: async ({ auth }) =>
+    labelOf(auth.data) || fetchBotLabel(auth.access_token),
 });
 
 const notionCustomAuth = PieceAuth.CustomAuth({
@@ -49,6 +51,38 @@ const notionCustomAuth = PieceAuth.CustomAuth({
       return { valid: false, error: (e as Error).message };
     }
   },
+  getConnectionIdentifier: async ({ auth }) => fetchBotLabel(auth.accessToken),
 });
 
 export const notionAuth = [notionOAuth2Auth, notionCustomAuth];
+
+function labelOf(grant: NotionGrant | undefined): string | undefined {
+  return (
+    grant?.owner?.user?.person?.email ||
+    grant?.workspace_name ||
+    grant?.owner?.user?.name ||
+    undefined
+  );
+}
+
+async function fetchBotLabel(token: string): Promise<string | undefined> {
+  try {
+    const response = await httpClient.sendRequest<{ bot?: NotionGrant }>({
+      method: HttpMethod.GET,
+      url: 'https://api.notion.com/v1/users/me',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Notion-Version': '2022-02-22',
+      },
+      timeout: 5000,
+    });
+    return labelOf(response.body.bot);
+  } catch {
+    return undefined;
+  }
+}
+
+type NotionGrant = {
+  workspace_name?: string | null;
+  owner?: { user?: { name?: string | null; person?: { email?: string } } };
+};

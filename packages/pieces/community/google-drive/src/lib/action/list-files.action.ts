@@ -2,7 +2,7 @@ import { extension, extensions } from 'mime-types';
 import { googleDriveAuth } from '../auth';
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { common } from '../common';
-import { listDriveFilesRecursive } from '../common/list-drive-files';
+import { DriveTreeItem, listDriveFilesRecursive } from '../common/list-drive-files';
 import { downloadFileFromDrive } from '../common/get-file-content';
 import { listFilesActionOutputSchema } from '../output-schemas';
 
@@ -33,7 +33,11 @@ export const googleDriveListFiles = createAction({
       displayName: 'Folder Depth',
       description: '1 lists only this folder; 2 adds its subfolders, and so on.',
       required: false,
-      defaultValue: 1
+      defaultValue: 1,
+      display: 'stepper',
+      min: 1,
+      max: 100,
+      step: 1,
     }),
 
     downloadFiles: Property.Checkbox({
@@ -64,17 +68,19 @@ export const googleDriveListFiles = createAction({
     const depthLevel = context.propsValue.depthLevel || 1;
     
     // Get files level-by-level, batching all folders at a level into as few queries as possible
-    const files = await listDriveFilesRecursive({
+    const listing = await listDriveFilesRecursive({
       auth: context.auth,
       rootFolderId: context.propsValue.folderId,
       maxLevel: depthLevel,
       includeTrashed: context.propsValue.includeTrashed ?? false,
       includeTeamDrives: context.propsValue.include_team_drives ?? false,
     });
+    const files = listing.files;
+    result.incompleteSearch = listing.incompleteSearch;
 
     // If downloadFiles is enabled, download each file and return a new file object carrying the URL
     if (context.propsValue.downloadFiles) {
-      const processedFiles: any[] = [];
+      const processedFiles: (DriveTreeItem & { downloadedFile?: string })[] = [];
 
       for (const file of files) {
         // Skip folders when downloading
@@ -83,23 +89,17 @@ export const googleDriveListFiles = createAction({
           continue;
         }
 
-        let safeName = file.name;
-        const correctExtension = extension(file.mimeType);
-        const knownExtensions = extensions[file.mimeType] ?? (correctExtension ? [correctExtension] : []);
-        const hasKnownExtension = knownExtensions.some((knownExtension) =>
-            safeName.toLowerCase().endsWith(`.${knownExtension}`)
-        );
-        if (correctExtension && !hasKnownExtension) {
-            safeName = `${safeName}.${correctExtension}`;
-        }
+        const safeName = isGoogleNativeFile(file.mimeType)
+          ? file.name
+          : nameWithExtension({ name: file.name, mimeType: file.mimeType });
 
         try {
-          const downloadedFile = await downloadFileFromDrive(
-            context.auth,
-            context.files,
-            file.id,
-            safeName
-          );
+          const downloadedFile = await downloadFileFromDrive({
+            auth: context.auth,
+            files: context.files,
+            fileId: file.id,
+            fileName: safeName,
+          });
           processedFiles.push({ ...file, downloadedFile });
         } catch (error) {
           console.warn(`Failed to download file ${file.name}: ${error instanceof Error ? error.message : 'Download failed'}`);
@@ -119,3 +119,25 @@ export const googleDriveListFiles = createAction({
     return result;
   }
 });
+
+function isGoogleNativeFile(mimeType: string): boolean {
+  return mimeType.startsWith('application/vnd.google-apps.');
+}
+
+function nameWithExtension({
+  name,
+  mimeType,
+}: {
+  name: string;
+  mimeType: string;
+}): string {
+  const correctExtension = extension(mimeType);
+  const knownExtensions =
+    extensions[mimeType] ?? (correctExtension ? [correctExtension] : []);
+  const hasKnownExtension = knownExtensions.some((knownExtension) =>
+    name.toLowerCase().endsWith(`.${knownExtension}`)
+  );
+  return correctExtension && !hasKnownExtension
+    ? `${name}.${correctExtension}`
+    : name;
+}

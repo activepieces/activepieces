@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const createApiTokenAction = createAction({
   name: 'create_api_token',
+  classification: 'WRITE',
   displayName: 'Create API Token',
   description: 'Create a new API token for your user account',
   audience: 'both',

@@ -1,6 +1,6 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration, createLogger, wideEvent } from '@activepieces/server-utils'
-import { Job, JobsOptions, JobState, Queue, Worker } from 'bullmq'
+import { DelayedError, Job, JobsOptions, JobState, Queue, Worker } from 'bullmq'
 import { Dayjs } from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
@@ -8,10 +8,14 @@ import { jobFailureLogger } from '../../workers/job-queue/job-failure-logger'
 import { exceptionHandler } from '../exception-handler'
 import { SystemJobData, SystemJobName, SystemJobSchedule, UpsertJobResult } from './common'
 import { systemJobHandlers } from './job-handlers'
+import { systemJobFailurePager } from './system-job-failure-pager'
 
 const FIFTEEN_MINUTES = apDayjsDuration(15, 'minute').asMilliseconds()
 const ONE_MONTH = apDayjsDuration(1, 'month').asSeconds()
 const SYSTEM_JOB_QUEUE = 'system-job-queue'
+const RE_QUEUE_DELAY_MS = apDayjsDuration(1, 'minute').asMilliseconds()
+const RE_QUEUE_MAX_AGE_MS = apDayjsDuration(15, 'minute').asMilliseconds()
+const INSTANT_BURST_THEN_EXPONENTIAL = 'instantBurstThenExponential'
 
 export let systemJobsQueue: Queue<SystemJobData, unknown, SystemJobName>
 let systemJobWorker: Worker<SystemJobData, unknown, SystemJobName>
@@ -45,7 +49,17 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
     async startWorker(): Promise<void> {
         systemJobWorker = new Worker(
             SYSTEM_JOB_QUEUE,
-            async (job) => {
+            async (job, token) => {
+                if (!systemJobHandlers.hasHandler(job.name)) {
+                    const createdAt = Number.isFinite(job.timestamp) ? job.timestamp : Date.now()
+                    const ageMs = Date.now() - createdAt
+                    if (ageMs > RE_QUEUE_MAX_AGE_MS) {
+                        throw new Error(`No handler for system job "${job.name}" after ${Math.round(ageMs / 1000)}s; likely a retired job name`)
+                    }
+                    log.info({ job: { id: job.id, type: job.name } }, '[systemJob#worker] No handler on this pod; re-queueing (rolling deploy with mixed versions)')
+                    await job.moveToDelayed(Date.now() + RE_QUEUE_DELAY_MS, token)
+                    throw new DelayedError()
+                }
                 log.debug({ jobName: job.name }, '[systemJob#worker] Executing job')
                 const jobLogger = createLogger({
                     event: 'system-job.execute',
@@ -66,13 +80,15 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
             {
                 connection: await redisConnections.create(),
                 concurrency: 5,
+                settings: {
+                    backoffStrategy: instantBurstThenExponentialBackoff,
+                },
             },
         )
 
         systemJobWorker.on('failed', (job, err) => {
             const attemptsUsed = job?.attemptsMade ?? 0
-            const maxAttempts = job?.opts?.attempts ?? 1
-            if (attemptsUsed >= maxAttempts) {
+            if (systemJobFailurePager.gaveUp({ attemptsMade: attemptsUsed, attempts: job?.opts?.attempts, error: err })) {
                 jobFailureLogger.logJobFailed({
                     queueName: SYSTEM_JOB_QUEUE,
                     jobId: job?.id,
@@ -81,6 +97,13 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
                     log,
                 })
                 exceptionHandler.handle(err, log)
+                systemJobFailurePager.pageOnFinalFailure({
+                    jobName: job?.name ?? 'unknown',
+                    jobId: job?.id,
+                    attemptsMade: attemptsUsed,
+                    error: err,
+                    log,
+                })
             }
         })
 
@@ -153,6 +176,18 @@ async function processSystemJob(job: Job<SystemJobData, unknown, SystemJobName>)
     await jobHandler(job.data)
 }
 
+function instantBurstThenExponentialBackoff(attemptsMade: number, type?: string): number {
+    if (type !== INSTANT_BURST_THEN_EXPONENTIAL) {
+        throw new Error(`Unknown system-job backoff type "${type ?? '<unset>'}"; register the strategy or use a built-in type`)
+    }
+    const INSTANT_BURST_SIZE = 5
+    const EXPONENTIAL_BASE_MS = apDayjsDuration(1, 'minute').asMilliseconds()
+    const EXPONENTIAL_CAP_MS = apDayjsDuration(1, 'hour').asMilliseconds()
+    if (attemptsMade <= INSTANT_BURST_SIZE) return 0
+    const exponentialStep = attemptsMade - INSTANT_BURST_SIZE
+    return Math.min(EXPONENTIAL_BASE_MS * 2 ** (exponentialStep - 1), EXPONENTIAL_CAP_MS)
+}
+
 async function removeDeprecatedJobs(log: FastifyBaseLogger): Promise<void> {
     const deprecatedJobs = [
         'trigger-data-cleaner',
@@ -214,3 +249,7 @@ const getJobByNameAndJobId = async (name: string, jobId: string): Promise<Job | 
     }
     return undefined
 }
+
+export const SystemJobBackoff = {
+    instantBurstThenExponential: INSTANT_BURST_THEN_EXPONENTIAL,
+} as const

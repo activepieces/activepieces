@@ -39,6 +39,7 @@ export const microsoft365CopilotAuth = PieceAuth.OAuth2({
     'openid',
     'email',
     'profile',
+    'offline_access',
   ],
   prompt: 'omit',
 });

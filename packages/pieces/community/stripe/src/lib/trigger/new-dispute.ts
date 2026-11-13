@@ -28,17 +28,26 @@ export const stripeNewDispute = createTrigger({
     description:
       'Fires when a customer disputes a charge in Stripe (the charge.dispute.created event), emitting the dispute including its reason and evidence due date. Optional filters narrow firing to a specific charge ID or payment intent ID. Use to react to chargebacks, such as alerting a team or gathering evidence.',
   },
+  propertyGroups: [
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['charge', 'payment_intent'],
+    },
+  ],
   props: {
     charge: Property.ShortText({
       displayName: 'Charge ID',
-      description:
-        'Only trigger for disputes related to this Charge ID (e.g., `ch_...`).',
+      description: 'Only disputes for this charge. Empty: all.',
+      placeholder: 'ch_...',
       required: false,
     }),
     payment_intent: Property.ShortText({
       displayName: 'Payment Intent ID',
-      description:
-        'Only trigger for disputes related to this Payment Intent ID (e.g., `pi_...`).',
+      description: 'Only disputes for this payment. Empty: all.',
+      placeholder: 'pi_...',
       required: false,
     }),
   },
@@ -92,13 +101,12 @@ export const stripeNewDispute = createTrigger({
   async test(context) {
     const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
       method: HttpMethod.GET,
-      url: 'https://api.stripe.com/v1/issuing/disputes',
+      url: 'https://api.stripe.com/v1/disputes',
       headers: {
         Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {
-        status: 'submitted',
         limit: '5',
       },
     });

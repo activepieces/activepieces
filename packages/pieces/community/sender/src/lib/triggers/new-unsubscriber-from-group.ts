@@ -1,11 +1,15 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { makeSenderRequest, senderAuth } from '../common/common';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { senderAuth } from '../auth';
+import { senderApi } from '../common/api';
+import { senderSubscriberTriggerOutputSchema } from '../output-schemas';
 
+const TOPIC = 'groups/unsubscribed';
+const STORE_KEY = 'webhookId';
 
 export const newUnsubscriberFromGroupTrigger = createTrigger({
   auth: senderAuth,
   name: 'new_unsubscriber_from_group',
+  outputSchema: senderSubscriberTriggerOutputSchema,
   classification: 'READ',
   displayName: 'New Unsubscriber From Group',
   description: 'Fires when a subscriber is removed/unsubscribed from a specific group',
@@ -21,41 +25,25 @@ export const newUnsubscriberFromGroupTrigger = createTrigger({
     }),
   },
   async onEnable(context) {
-    const webhookUrl = context.webhookUrl;
-    const groupId = context.propsValue.groupId;
-    
-    const webhookData = {
-      url: webhookUrl,
-      topic: 'groups/unsubscribed',
-      relation_id : groupId,
-    };
-
-    const response = await makeSenderRequest(
-      context.auth.secret_text,
-      '/account/webhooks',
-      HttpMethod.POST,
-      webhookData
-    );
-
-    await context.store.put('webhookId', response.body.data.id);
+    const webhook = await senderApi.createWebhook({
+      auth: context.auth,
+      url: context.webhookUrl,
+      topic: TOPIC,
+      relationId: context.propsValue.groupId,
+    });
+    await context.store.put(STORE_KEY, webhook.id);
   },
   async onDisable(context) {
-    const webhookId = await context.store.get<string>('webhookId');
-    
+    const webhookId = await context.store.get<string>(STORE_KEY);
     if (webhookId) {
-      await makeSenderRequest(
-        context.auth.secret_text,
-        `/account/webhooks/${webhookId}`,
-        HttpMethod.DELETE
-      );
+      await senderApi.deleteWebhook({ auth: context.auth, webhookId });
     }
-    
-    await context.store.delete('webhookId');
+    await context.store.delete(STORE_KEY);
   },
   async run(context) {
     return [context.payload.body];
   },
-  async test(context) {
+  async test() {
     return [];
   },
   sampleData: {},

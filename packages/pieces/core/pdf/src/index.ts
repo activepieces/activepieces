@@ -9,6 +9,8 @@ import { extractPdfPages } from './lib/actions/extract-pdf-pages';
 import { mergePdfs } from './lib/actions/merge-pdfs';
 import { addTextToPdf } from './lib/actions/add-text-to-pdf';
 import { addImageToPdf } from './lib/actions/add-image-to-pdf';
+import { fillPdfForm } from './lib/actions/fill-pdf-form';
+import { inspectPdfForm } from './lib/actions/inspect-pdf-form';
 
 export const PDF = createPiece({
   displayName: 'PDF',
@@ -33,7 +35,9 @@ export const PDF = createPiece({
     extractPdfPages,
     mergePdfs,
     addTextToPdf,
-    addImageToPdf
+    addImageToPdf,
+    inspectPdfForm,
+    fillPdfForm,
   ],
   triggers: [],
 });

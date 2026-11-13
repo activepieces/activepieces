@@ -5,6 +5,7 @@ import { dappierCommon } from '../common';
 
 export const stockMarketDataSearch = createAction({
   name: 'stock_market_data_search',
+  classification: 'READ',
   auth: dappierAuth,
   displayName: 'Stock Market Data',
   description:

@@ -1,12 +1,13 @@
 import { aiProviderCredentials, AIProviderName } from '@activepieces/core-utils'
 import { AIProviderConfig, AIProviderModelType, VertexProviderConfig } from '@activepieces/core-piece-types'
 import { describe, expect, it } from 'vitest'
-import { buildOpenAICompatibleHeaders, createLanguageModel } from './create-language-model'
+import { buildOpenAICompatibleHeaders, createLanguageModel, withAutoToolChoice } from './create-language-model'
 
 type ModelIdentity = { provider: string, modelId: string, settings?: { plugins?: unknown[] } }
 
 type VertexModelIdentity = { config: { baseURL: string | (() => string) } }
 type CustomModelIdentity = { config: { headers: () => Record<string, string>, fetch?: typeof globalThis.fetch } }
+type SentRequest = { url: string, headers: Headers, body: Record<string, unknown> }
 
 function identify(model: unknown): ModelIdentity {
     return model as ModelIdentity
@@ -20,11 +21,11 @@ function identifyCustom(model: unknown): CustomModelIdentity {
     return model as CustomModelIdentity
 }
 
-async function captureSentHeaders(send: () => Promise<unknown>): Promise<Headers> {
+async function captureSentRequest(send: () => Promise<unknown>): Promise<SentRequest> {
     const original = globalThis.fetch
-    let seen = new Headers()
-    globalThis.fetch = (_input, init) => {
-        seen = new Headers(init?.headers)
+    let seen: SentRequest = { url: '', headers: new Headers(), body: {} }
+    globalThis.fetch = (input, init) => {
+        seen = { url: String(input), headers: new Headers(init?.headers), body: typeof init?.body === 'string' ? JSON.parse(init.body) : {} }
         return Promise.resolve(new Response('{}'))
     }
     try {
@@ -34,6 +35,14 @@ async function captureSentHeaders(send: () => Promise<unknown>): Promise<Headers
         globalThis.fetch = original
     }
     return seen
+}
+
+async function captureSentHeaders(send: () => Promise<unknown>): Promise<Headers> {
+    return (await captureSentRequest(send)).headers
+}
+
+function generateHi(model: ReturnType<typeof createLanguageModel>): Promise<SentRequest> {
+    return captureSentRequest(() => model.doGenerate({ prompt: [{ role: 'user', content: [{ type: 'text', text: 'hi' }] }] }))
 }
 
 function captureHeaders({ patchedFetch, headers }: {
@@ -76,6 +85,61 @@ const buildFor = (provider: AIProviderName, options?: Record<string, unknown>) =
 
 const supportedProviders = Object.values(AIProviderName).filter((p) => p !== AIProviderName.CLOUDFLARE_GATEWAY)
 
+const forcedCall = {
+    tools: [{ type: 'function' as const, name: 'extractData', inputSchema: { type: 'object' as const, properties: {} } }],
+    toolChoice: { type: 'tool' as const, toolName: 'extractData' },
+    prompt: [{ role: 'user' as const, content: [{ type: 'text' as const, text: 'hi' }] }],
+}
+
+async function replyingWith<T>({ replies, send }: {
+    replies: Record<string, unknown>[]
+    send: (model: ReturnType<typeof createLanguageModel>) => Promise<T>
+}): Promise<{ bodies: Record<string, unknown>[], result: T }> {
+    const original = globalThis.fetch
+    const bodies: Record<string, unknown>[] = []
+    globalThis.fetch = (_input, init) => {
+        bodies.push(typeof init?.body === 'string' ? JSON.parse(init.body) : {})
+        const reply = replies[Math.min(bodies.length - 1, replies.length - 1)]
+        return Promise.resolve(new Response(JSON.stringify(reply), { headers: { 'content-type': 'application/json' } }))
+    }
+    try {
+        const result = await send(withAutoToolChoice(buildFor(AIProviderName.META)))
+        return { bodies, result }
+    }
+    finally {
+        globalThis.fetch = original
+    }
+}
+
+async function readStream(stream: ReadableStream<{ type: string }>): Promise<{ type: string }[]> {
+    const parts: { type: string }[] = []
+    const reader = stream.getReader()
+    for (let next = await reader.read(); !next.done; next = await reader.read()) {
+        parts.push(next.value)
+    }
+    return parts
+}
+
+const RESPONSE_BASE = {
+    id: 'resp_1',
+    object: 'response',
+    created_at: 1,
+    model: 'muse-spark-1.3',
+    status: 'completed',
+    incomplete_details: null,
+    usage: { input_tokens: 1, output_tokens: 1, input_tokens_details: { cached_tokens: 0 }, output_tokens_details: { reasoning_tokens: 0 } },
+}
+
+const TEXT_REPLY = {
+    ...RESPONSE_BASE,
+    output: [{ type: 'message', id: 'msg_1', role: 'assistant', status: 'completed', content: [{ type: 'output_text', text: 'Here is the data.', annotations: [] }] }],
+}
+
+const TOOL_REPLY = {
+    ...RESPONSE_BASE,
+    output: [{ type: 'function_call', id: 'fc_1', call_id: 'call_1', name: 'extractData', arguments: '{}', status: 'completed' }],
+}
+
 describe('AIProviderConfig union', () => {
     it('keeps every Vertex field instead of losing them to a looser member', () => {
         const config = {
@@ -104,9 +168,9 @@ describe('createLanguageModel', () => {
     })
 
     it('picks the right SDK client per provider', () => {
-        expect(identify(buildFor(AIProviderName.OPENAI)).provider).toBe('openai.chat')
+        expect(identify(buildFor(AIProviderName.OPENAI)).provider).toBe('openai.responses')
         expect(identify(buildFor(AIProviderName.ANTHROPIC)).provider).toBe('anthropic.messages')
-        expect(identify(buildFor(AIProviderName.AZURE)).provider).toBe('azure.chat')
+        expect(identify(buildFor(AIProviderName.AZURE)).provider).toBe('azure.responses')
         expect(identify(buildFor(AIProviderName.BEDROCK)).provider).toBe('amazon-bedrock')
         expect(identify(buildFor(AIProviderName.CUSTOM)).provider).toBe('openai-compatible.chat')
         expect(identify(buildFor(AIProviderName.OPENROUTER)).provider).toBe('openrouter')
@@ -125,9 +189,203 @@ describe('createLanguageModel', () => {
         expect(headers.has('x-amz-security-token')).toBe(false)
     })
 
-    it('uses the OpenAI Chat API by default and the Responses API when asked', () => {
-        expect(identify(buildFor(AIProviderName.OPENAI)).provider).toBe('openai.chat')
-        expect(identify(buildFor(AIProviderName.OPENAI, { openaiResponsesModel: true })).provider).toBe('openai.responses')
+    it.each([AIProviderName.OPENAI, AIProviderName.AZURE, AIProviderName.META])('sends %s to the Responses API without storing the conversation', async (provider) => {
+        const request = await generateHi(buildFor(provider))
+
+        expect(new URL(request.url).pathname).toMatch(/\/responses$/)
+        expect(request.body.store).toBe(false)
+    })
+
+    it('sends Meta to the Meta Model API and NVIDIA to the NVIDIA chat completions endpoint', async () => {
+        const meta = await generateHi(buildFor(AIProviderName.META))
+        const nvidia = await generateHi(buildFor(AIProviderName.NVIDIA))
+
+        expect(meta.url).toBe('https://api.meta.ai/v1/responses')
+        expect(meta.headers.get('authorization')).toBe('Bearer test-key')
+        expect(nvidia.url).toBe('https://integrate.api.nvidia.com/v1/chat/completions')
+    })
+
+    describe('Cohere, on its native v2 chat API', () => {
+        const sendToCohere = (toolChoice: Parameters<ReturnType<typeof createLanguageModel>['doGenerate']>[0]['toolChoice']) => {
+            const model = buildFor(AIProviderName.COHERE)
+            return captureSentRequest(() => model.doGenerate({ ...forcedCall, tools: [...forcedCall.tools, { type: 'function', name: 'search', inputSchema: { type: 'object', properties: {} } }], toolChoice }))
+        }
+        const toolNames = (body: Record<string, unknown>) => (Array.isArray(body.tools) ? body.tools.map((tool: { function: { name: string } }) => tool.function.name) : [])
+
+        it('sends the key to the Cohere chat endpoint', async () => {
+            const request = await generateHi(buildFor(AIProviderName.COHERE))
+
+            expect(request.url).toBe('https://api.cohere.com/v2/chat')
+            expect(request.headers.get('authorization')).toBe('Bearer test-key')
+        })
+
+        it('forces a named tool as REQUIRED with only that tool offered', async () => {
+            const { body } = await sendToCohere({ type: 'tool', toolName: 'extractData' })
+
+            expect(body.tool_choice).toBe('REQUIRED')
+            expect(toolNames(body)).toEqual(['extractData'])
+        })
+
+        it('forces any tool as REQUIRED', async () => {
+            const { body } = await sendToCohere({ type: 'required' })
+
+            expect(body.tool_choice).toBe('REQUIRED')
+            expect(toolNames(body)).toEqual(['extractData', 'search'])
+        })
+    })
+
+    describe('withAutoToolChoice, on Meta which only accepts tool_choice auto', () => {
+        const tools = [
+            { type: 'function' as const, name: 'extractData', inputSchema: { type: 'object' as const, properties: {} } },
+            { type: 'function' as const, name: 'search', inputSchema: { type: 'object' as const, properties: {} } },
+        ]
+        const sendToMeta = (toolChoice: Parameters<ReturnType<typeof createLanguageModel>['doGenerate']>[0]['toolChoice']) => {
+            const model = withAutoToolChoice(buildFor(AIProviderName.META))
+            return captureSentRequest(() => model.doGenerate({ tools, toolChoice, prompt: [{ role: 'user', content: [{ type: 'text', text: 'hi' }] }] }))
+        }
+        const toolNames = (body: Record<string, unknown>) => (Array.isArray(body.tools) ? body.tools.map((tool: { name: string }) => tool.name) : [])
+
+        it('turns required into auto and keeps every tool', async () => {
+            const { body } = await sendToMeta({ type: 'required' })
+
+            expect(body.tool_choice).toBe('auto')
+            expect(toolNames(body)).toEqual(['extractData', 'search'])
+        })
+
+        it('turns a forced tool into auto with only that tool offered', async () => {
+            const { body } = await sendToMeta({ type: 'tool', toolName: 'extractData' })
+
+            expect(body.tool_choice).toBe('auto')
+            expect(toolNames(body)).toEqual(['extractData'])
+        })
+
+        it('turns none into a request with no tools', async () => {
+            const { body } = await sendToMeta({ type: 'none' })
+
+            expect(body.tools).toBeUndefined()
+            expect(body.tool_choice).toBeUndefined()
+        })
+
+        it('leaves auto alone', async () => {
+            const { body } = await sendToMeta({ type: 'auto' })
+
+            expect(body.tool_choice).toBe('auto')
+            expect(toolNames(body)).toEqual(['extractData', 'search'])
+        })
+
+        it('tells the model to call the forced tool', async () => {
+            const { body } = await sendToMeta({ type: 'tool', toolName: 'extractData' })
+
+            expect(JSON.stringify(body.input)).toContain('Reply only by calling the extractData tool')
+        })
+
+        it('asks once more when the model answers a forced call in text', async () => {
+            const { bodies, result } = await replyingWith({ replies: [TEXT_REPLY, TOOL_REPLY], send: (model) => model.doGenerate(forcedCall) })
+
+            expect(bodies).toHaveLength(2)
+            expect(JSON.stringify(bodies[1].input)).toContain('Your previous reply did not call a tool')
+            expect(result.content).toContainEqual(expect.objectContaining({ type: 'tool-call', toolName: 'extractData' }))
+        })
+
+        it('fails instead of completing when the model answers in text twice', async () => {
+            const { bodies, result } = await replyingWith({
+                replies: [TEXT_REPLY, TEXT_REPLY],
+                send: (model) => model.doGenerate(forcedCall).then(() => 'completed', (error: Error) => error.message),
+            })
+
+            expect(bodies).toHaveLength(2)
+            expect(result).toBe('The model answered in text twice instead of calling the extractData tool')
+        })
+
+        it('fails a forced streamed call when the model answers in text twice', async () => {
+            const { result } = await replyingWith({
+                replies: [TEXT_REPLY, TEXT_REPLY],
+                send: (model) => model.doStream(forcedCall).then(() => 'completed', (error: Error) => error.name),
+            })
+
+            expect(result).toBe('ForcedToolNotCalledError')
+        })
+
+        it('counts the tokens of both attempts when it asks again', async () => {
+            const { result } = await replyingWith({ replies: [TEXT_REPLY, TOOL_REPLY], send: (model) => model.doGenerate(forcedCall) })
+
+            expect(result.usage.inputTokens.total).toBe(2)
+            expect(result.usage.outputTokens.total).toBe(2)
+        })
+
+        it('does not ask again once the model calls the tool', async () => {
+            const { bodies, result } = await replyingWith({ replies: [TOOL_REPLY], send: (model) => model.doGenerate(forcedCall) })
+
+            expect(bodies).toHaveLength(1)
+            expect(result.content).toContainEqual(expect.objectContaining({ type: 'tool-call', toolName: 'extractData' }))
+        })
+
+        it('serves a forced streamed call from the retried generate call', async () => {
+            const { bodies, result } = await replyingWith({
+                replies: [TEXT_REPLY, TOOL_REPLY],
+                send: async (model) => {
+                    const { stream } = await model.doStream(forcedCall)
+                    return readStream(stream)
+                },
+            })
+
+            expect(bodies).toHaveLength(2)
+            expect(bodies.every((body) => body.stream !== true)).toBe(true)
+            expect(result).toContainEqual(expect.objectContaining({ type: 'tool-call', toolName: 'extractData' }))
+        })
+    })
+
+    it.each(supportedProviders.filter((provider) => provider !== AIProviderName.VERTEX))('never sends a forced tool_choice to %s', async (provider) => {
+        const model = withAutoToolChoice(buildFor(provider))
+        const { body } = await captureSentRequest(() => model.doGenerate(forcedCall))
+
+        expect(JSON.stringify(body)).toContain('Reply only by calling the extractData tool')
+    })
+
+    it.each([
+        { type: 'required' as const },
+        { type: 'tool' as const, toolName: 'extractData' },
+    ])('hands the provider tool_choice auto when the caller forces $type', async (toolChoice) => {
+        const seen: unknown[] = []
+        const provider = buildFor(AIProviderName.ANTHROPIC)
+        if (typeof provider === 'string') {
+            throw new Error('expected a model object')
+        }
+        const model = withAutoToolChoice({
+            ...provider,
+            doGenerate: async (params) => {
+                seen.push(params.toolChoice)
+                return { content: [{ type: 'tool-call', toolCallId: 'call_1', toolName: 'extractData', input: '{}' }], finishReason: { unified: 'tool-calls', raw: undefined }, usage: { inputTokens: { total: 1, noCache: 1, cacheRead: undefined, cacheWrite: undefined }, outputTokens: { total: 1, text: 1, reasoning: undefined } }, warnings: [] }
+            },
+        })
+        if (typeof model === 'string') {
+            throw new Error('expected a model object')
+        }
+
+        await model.doGenerate({ ...forcedCall, toolChoice })
+
+        expect(seen).toEqual([{ type: 'auto' }])
+    })
+
+    it.each([
+        { provider: AIProviderName.OPENAI, optionsKey: 'openai' },
+        { provider: AIProviderName.AZURE, optionsKey: 'azure' },
+    ])('replays a saved $provider tool turn in full instead of as a stored item reference', async ({ provider, optionsKey }) => {
+        const model = buildFor(provider)
+        const request = await captureSentRequest(() => model.doGenerate({
+            tools: [{ type: 'function', name: 'getWeather', inputSchema: { type: 'object', properties: {} } }],
+            prompt: [
+                { role: 'user', content: [{ type: 'text', text: 'weather in Paris?' }] },
+                { role: 'assistant', content: [{ type: 'text', text: 'Checking the weather.', providerOptions: { [optionsKey]: { itemId: 'msg_saved' } } }, { type: 'tool-call', toolCallId: 'call_1', toolName: 'getWeather', input: { city: 'Paris' }, providerOptions: { [optionsKey]: { itemId: 'fc_saved' } } }] },
+                { role: 'tool', content: [{ type: 'tool-result', toolCallId: 'call_1', toolName: 'getWeather', output: { type: 'json', value: { celsius: 20 } } }] },
+            ],
+        }))
+        const items = Array.isArray(request.body.input) ? request.body.input : []
+
+        expect(items).toContainEqual(expect.objectContaining({ role: 'assistant' }))
+        expect(items).toContainEqual(expect.objectContaining({ type: 'function_call', call_id: 'call_1', name: 'getWeather' }))
+        expect(items).toContainEqual(expect.objectContaining({ type: 'function_call_output', call_id: 'call_1' }))
+        expect(items).not.toContainEqual(expect.objectContaining({ type: 'item_reference' }))
     })
 
     it('routes Vertex straight at the configured GCP project and region', () => {
@@ -277,18 +535,17 @@ describe('resolved endpoint, credentials and headers', () => {
     const headersOf = (cfg: ResolvedConfig): Record<string, string> => (typeof cfg.headers === 'function' ? cfg.headers() : cfg.headers)
     const urlOf = (cfg: ResolvedConfig): string => cfg.url({ path: '/chat/completions', modelId: 'm' })
 
-    it('sends OpenAI to the OpenAI endpoint with a bearer credential', () => {
-        const cfg = configOf(createLanguageModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENAI, auth: { apiKey: 'SECRET' }, config: {} }), modelId: 'm' }))
-        expect(urlOf(cfg)).toContain('https://api.openai.com')
-        expect(headersOf(cfg)['authorization']).toBe('Bearer SECRET')
+    it('sends OpenAI to the OpenAI endpoint with a bearer credential', async () => {
+        const request = await generateHi(createLanguageModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENAI, auth: { apiKey: 'SECRET' }, config: {} }), modelId: 'm' }))
+        expect(request.url).toContain('https://api.openai.com')
+        expect(request.headers.get('authorization')).toBe('Bearer SECRET')
     })
 
-    it('encodes the Azure resource name and api version into the URL', () => {
-        const cfg = configOf(createLanguageModel({ credentials: aiProviderCredentials({ provider: AIProviderName.AZURE, auth: { apiKey: 'SECRET' }, config: { resourceName: 'myres', apiVersion: '2024-08-01' } }), modelId: 'm' }))
-        const url = urlOf(cfg)
-        expect(url).toContain('myres')
-        expect(url).toContain('api-version=2024-08-01')
-        expect(headersOf(cfg)['api-key']).toBe('SECRET')
+    it('encodes the Azure resource name and api version into the URL', async () => {
+        const request = await generateHi(createLanguageModel({ credentials: aiProviderCredentials({ provider: AIProviderName.AZURE, auth: { apiKey: 'SECRET' }, config: { resourceName: 'myres', apiVersion: '2024-08-01' } }), modelId: 'm' }))
+        expect(request.url).toContain('myres')
+        expect(request.url).toContain('api-version=2024-08-01')
+        expect(request.headers.get('api-key')).toBe('SECRET')
     })
 
     it('attaches the caller metadata headers to managed OpenRouter traffic', () => {

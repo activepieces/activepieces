@@ -1,13 +1,16 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { HttpError, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { AlaiApiError, alaiClient } from './client';
 
 const markdownDescription = `
-Follow these steps to get your Alai API Key:
+To get your Alai API key:
 
-1. Go to [**https://getalai.com/api**](https://getalai.com/api) and sign up or log in.
-2. Navigate to the **API Keys** section.
-3. Click **Create API Key** and give it a name (e.g., "Activepieces").
-4. Copy the key and paste it below.
+1. Sign in at [app.getalai.com](https://app.getalai.com).
+2. Open the account menu and choose **API**.
+3. Click **Add new API key**, name it (for example "Activepieces") and copy the key.
+4. Paste it below.
+
+API calls use the same AI credits as the Alai app.
 `;
 
 export const alaiAuth = PieceAuth.CustomAuth({
@@ -16,28 +19,19 @@ export const alaiAuth = PieceAuth.CustomAuth({
   props: {
     apiKey: PieceAuth.SecretText({
       displayName: 'API Key',
-      description: 'Paste your API key here.',
+      description: 'Your Alai API key.',
       required: true,
     }),
   },
-  async validate(auth) {
-    const apiKey = auth.auth.apiKey;
+  async validate({ auth }) {
     try {
-      await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: 'https://slides-api.getalai.com/api/v1/ping',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-        },
-      });
+      await alaiClient.request({ apiKey: auth.apiKey, method: HttpMethod.GET, path: '/ping' });
       return { valid: true };
-    } catch (e) {
-      if (e instanceof HttpError) {
-        if (e.response.status === 401) {
-          return { valid: false, error: 'Invalid API Key' };
-        }
+    } catch (error) {
+      if (error instanceof AlaiApiError && (error.status === 401 || error.status === 403)) {
+        return { valid: false, error: 'Invalid Alai API key.' };
       }
-      return { valid: false, error: 'Failed to connect to Alai API' };
+      return { valid: false, error: 'Could not reach the Alai API to check the key. Try again later.' };
     }
   },
 });

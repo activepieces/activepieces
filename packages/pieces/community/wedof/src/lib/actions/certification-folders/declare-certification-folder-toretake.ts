@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 export const declareCertificationFolderToRetake = createAction({
   auth: wedofAuth,
   name: 'declareCertificationFolderToRetake',
+  classification: 'WRITE',
   displayName: 'Passer un dossier de certification à l’état : à repasser',
   description: "Change l'état d'un dossier de certification vers : à repasser",
   audience: 'both',

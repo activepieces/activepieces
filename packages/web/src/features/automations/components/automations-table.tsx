@@ -51,8 +51,11 @@ type AutomationsTableProps = {
   onCreateInFolder?: (folderId: string, kind: CreateInFolderKind) => void;
   userHasPermissionToWriteFlow?: boolean;
   userHasPermissionToWriteTable?: boolean;
+  userHasPermissionToWriteAgent: boolean;
+  agentsVisible: boolean;
   isCreatingFlow?: boolean;
   isCreatingTable?: boolean;
+  isCreatingAgent?: boolean;
   isMoving: boolean;
   isDuplicating: boolean;
   onLoadMoreInFolder: (folderId: string) => void;
@@ -62,7 +65,7 @@ type AutomationsTableProps = {
 };
 
 const rowClassName =
-  'group flex items-center min-h-[48px] py-2 text-sm cursor-pointer hover:bg-muted/50';
+  'group flex items-center min-h-[48px] py-2 text-sm cursor-pointer hover:bg-gray-3/50';
 
 function AutomationsSkeletonRow({
   indent = 0,
@@ -122,8 +125,11 @@ export const AutomationsTable = ({
   onCreateInFolder,
   userHasPermissionToWriteFlow,
   userHasPermissionToWriteTable,
+  userHasPermissionToWriteAgent,
+  agentsVisible,
   isCreatingFlow,
   isCreatingTable,
+  isCreatingAgent,
   isMoving,
   isDuplicating,
   onLoadMoreInFolder,
@@ -137,8 +143,10 @@ export const AutomationsTable = ({
 
   return (
     <div className="overflow-x-auto">
-      <div className="min-w-[1000px]">
-        <div className="flex items-center h-8 text-xs border-b font-medium text-foreground bg-muted/50">
+      <div
+        className={embedState.isEmbedded ? 'min-w-[950px]' : 'min-w-[1200px]'}
+      >
+        <div className="flex items-center h-8 text-xs border-b font-medium text-gray-12 bg-gray-3/50">
           <div className="w-10 shrink-0 pl-4 pr-1">
             <Checkbox
               checked={
@@ -153,14 +161,14 @@ export const AutomationsTable = ({
               type="button"
               aria-label={sortActionLabel(sort)}
               onClick={() => onSortChange(nextSort(sort))}
-              className="flex items-center gap-1.5 rounded-sm hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="flex items-center gap-1.5 rounded-md hover:text-accent-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-8"
             >
               <Type className="h-3.5 w-3.5" />
               {t('Name')}
               <SortIcon
                 className={cn(
                   'h-3.5 w-3.5',
-                  sort === 'default' && 'text-muted-foreground',
+                  sort === 'default' && 'text-gray-11',
                 )}
               />
             </button>
@@ -189,7 +197,7 @@ export const AutomationsTable = ({
         </div>
 
         {isLoading ? (
-          <div>
+          <div data-testid="automations-loading">
             {Array.from({ length: 10 }).map((_, i) => (
               <AutomationsSkeletonRow
                 key={i}
@@ -243,8 +251,13 @@ export const AutomationsTable = ({
                         userHasPermissionToWriteTable={
                           userHasPermissionToWriteTable
                         }
+                        userHasPermissionToWriteAgent={
+                          userHasPermissionToWriteAgent
+                        }
+                        agentsVisible={agentsVisible}
                         isCreatingFlow={isCreatingFlow}
                         isCreatingTable={isCreatingTable}
+                        isCreatingAgent={isCreatingAgent}
                         isMoving={isMoving}
                         isDuplicating={isDuplicating}
                         onLoadMore={undefined}
@@ -277,6 +290,9 @@ export const AutomationsTable = ({
                             onMoveTo={onMoveItem}
                             onExportFlow={onExportFlow}
                             onExportTable={onExportTable}
+                            userHasPermissionToWriteAgent={
+                              userHasPermissionToWriteAgent
+                            }
                             isMoving={isMoving}
                             isDuplicating={isDuplicating}
                             onLoadMore={
@@ -316,6 +332,9 @@ export const AutomationsTable = ({
                     onMoveTo={onMoveItem}
                     onExportFlow={onExportFlow}
                     onExportTable={onExportTable}
+                    userHasPermissionToWriteAgent={
+                      userHasPermissionToWriteAgent
+                    }
                     isMoving={isMoving}
                     isDuplicating={isDuplicating}
                     onLoadMore={undefined}

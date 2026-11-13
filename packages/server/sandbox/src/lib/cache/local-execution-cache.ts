@@ -2,8 +2,8 @@ import { unique } from '@activepieces/core-utils'
 import { type ApLogger, fileSystemUtils, wideEvent } from '@activepieces/server-utils'
 import { PiecePackage } from '@activepieces/shared'
 import { CodeArtifact, SandboxSettings } from '../types'
-import { actionRunCache } from './action-run-cache'
 import { cacheUtils } from './cache-paths'
+import { actionRunCache, codeCacheEviction } from './code-cache-eviction'
 import { engineInstaller } from './engine/engine-installer'
 import { codeBuilder } from './flow/code/code-builder'
 import { codeCache } from './flow/code/code-cache'
@@ -13,7 +13,7 @@ export const localExecutionCache = (log: ApLogger, basePath: string, getSettings
     async provision({
         pieces,
         codeSteps,
-        publicApiUrl,
+        internalApiUrl,
         engineToken,
         bestEffort,
     }: ProvisionParams): Promise<void> {
@@ -32,7 +32,7 @@ export const localExecutionCache = (log: ApLogger, basePath: string, getSettings
                     fn: async () => {
                         await fileSystemUtils.threadSafeMkdir(codeCachePath)
                         for (const artifact of codeSteps) {
-                            await installCodeStep({ artifact, codeCachePath, log, getSettings })
+                            await installCodeStep({ artifact, codeCachePath, basePath, log, getSettings })
                         }
                         log.info({ path: codeCachePath }, 'Installed code in sandbox')
                     },
@@ -56,7 +56,7 @@ export const localExecutionCache = (log: ApLogger, basePath: string, getSettings
                             await pieceInstaller(log, basePath, getSettings).install({
                                 pieces: uniquePieces,
                                 includeFilters: true,
-                                publicApiUrl,
+                                internalApiUrl,
                                 engineToken,
                                 bestEffort,
                             })
@@ -73,40 +73,29 @@ export const localExecutionCache = (log: ApLogger, basePath: string, getSettings
     },
 })
 
-async function installCodeStep({ artifact, codeCachePath, log, getSettings }: InstallCodeStepParams): Promise<void> {
-    const build = async (): Promise<void> => {
-        await codeBuilder(log, getSettings).processCodeStep({
-            artifact,
-            codesFolderPath: codeCachePath,
-        })
-    }
-    if (!actionRunCache.isActionRunNamespace(artifact.flowVersionId)) {
-        await build()
-        return
-    }
-    const dirPath = codeCache(codeCachePath).flowVersionDir(artifact.flowVersionId)
-    do {
-        await build()
-        await actionRunCache.touch(dirPath)
-    } while (await sweptWhileProvisioning({ dirPath, log }))
-}
-
-async function sweptWhileProvisioning({ dirPath, log }: SweptWhileProvisioningParams): Promise<boolean> {
-    const swept = await actionRunCache.settlePendingRemoval(dirPath)
-    if (swept) {
-        log.warn({ cache: { path: dirPath } }, 'Action-run code cache was swept while provisioning, rebuilding')
-    }
-    return swept
-}
-
-type SweptWhileProvisioningParams = {
-    dirPath: string
-    log: ApLogger
+async function installCodeStep({ artifact, codeCachePath, basePath, log, getSettings }: InstallCodeStepParams): Promise<void> {
+    const codes = codeCache(codeCachePath)
+    const isActionRun = actionRunCache.isActionRunNamespace(artifact.flowVersionId)
+    const dirPath = isActionRun
+        ? codes.flowVersionDir(artifact.flowVersionId)
+        : codes.stepDir({ flowVersionId: artifact.flowVersionId, stepName: artifact.name })
+    await codeCacheEviction.withDirLock({
+        basePath,
+        dirPath,
+        fn: async () => {
+            await codeBuilder(log, getSettings).processCodeStep({
+                artifact,
+                codesFolderPath: codeCachePath,
+            })
+            await codeCacheEviction.markUsed(dirPath)
+        },
+    })
 }
 
 type InstallCodeStepParams = {
     artifact: CodeArtifact
     codeCachePath: string
+    basePath: string
     log: ApLogger
     getSettings: () => SandboxSettings
 }
@@ -114,7 +103,7 @@ type InstallCodeStepParams = {
 type ProvisionParams = {
     pieces: PiecePackage[]
     codeSteps: CodeArtifact[]
-    publicApiUrl: string
+    internalApiUrl: string
     engineToken: string
     bestEffort?: boolean
 }

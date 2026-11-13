@@ -7,6 +7,7 @@ import { murfCommon } from "../common/dropdown";
 export const listVoices = createAction({
   auth: murfAuth,
   name: "list-voices",
+  classification: 'SEARCH',
   displayName: "List Voices",
   description: "Get the list of available voices for text-to-speech",
   audience: 'both',

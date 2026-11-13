@@ -1,6 +1,6 @@
 /// <reference types="vitest/globals" />
 
-import { AppConnectionType } from '@activepieces/pieces-framework';
+import { driveTestContext } from './drive-test-context';
 
 const { sendRequest } = vi.hoisted(() => ({
   sendRequest: vi.fn(),
@@ -16,7 +16,7 @@ vi.mock('@activepieces/pieces-common', async (importOriginal) => {
 
 const { listDriveFiles, listDriveFilesRecursive } = await import('../src/lib/common/list-drive-files');
 
-const auth = { type: AppConnectionType.OAUTH2, access_token: 'test-token' } as any;
+const auth = driveTestContext.connection;
 
 function lastRequest() {
   return sendRequest.mock.calls[sendRequest.mock.calls.length - 1][0];
@@ -26,7 +26,7 @@ function decodedQuery(request: { url: string }) {
   return decodeURIComponent(request.url.split('q=')[1].split('&')[0]);
 }
 
-function driveFile(overrides: Record<string, any>) {
+function driveFile(overrides: Record<string, unknown>) {
   return {
     id: 'id',
     kind: 'drive#file',
@@ -54,7 +54,7 @@ describe('listDriveFiles pagination', () => {
 
     const result = await listDriveFiles({ auth, params: { q: "'root' in parents" } });
 
-    expect(result.map((f: any) => f.id)).toEqual(['a', 'b']);
+    expect(result.map((f) => f.id)).toEqual(['a', 'b']);
     expect(sendRequest).toHaveBeenCalledTimes(2);
     expect(sendRequest.mock.calls[1][0].url).toContain('pageToken=page2');
   });
@@ -139,8 +139,8 @@ describe('listDriveFilesRecursive batching across >50 sibling folders', () => {
     expect(chunk2Query).not.toContain(`'${folderIds[49]}'`);
 
     // 60 folders from level 0 + 1 file from each of the 2 level-1 chunks
-    expect(result).toHaveLength(62);
-    const ids = result.map((f: any) => f.id);
+    expect(result.files).toHaveLength(62);
+    const ids = result.files.map((f) => f.id);
     expect(ids).toEqual(expect.arrayContaining(['chunk1-file', 'chunk2-file']));
   });
 
@@ -159,7 +159,7 @@ describe('listDriveFilesRecursive batching across >50 sibling folders', () => {
 
     expect(sendRequest).toHaveBeenCalledTimes(2);
     expect(sendRequest.mock.calls[1][0].url).toContain('pageToken=tok');
-    expect(result.map((f: any) => f.id)).toEqual(['p1', 'p2']);
+    expect(result.files.map((f) => f.id)).toEqual(['p1', 'p2']);
   });
 });
 
@@ -178,7 +178,7 @@ describe('listDriveFilesRecursive depth limits', () => {
     });
 
     expect(sendRequest).toHaveBeenCalledTimes(1);
-    expect(result.map((f: any) => f.id)).toEqual(['child-folder']);
+    expect(result.files.map((f) => f.id)).toEqual(['child-folder']);
   });
 
   test('depth 2 also fetches the next level down', async () => {
@@ -195,7 +195,7 @@ describe('listDriveFilesRecursive depth limits', () => {
     });
 
     expect(sendRequest).toHaveBeenCalledTimes(2);
-    expect(result.map((f: any) => f.id)).toEqual(['child-folder', 'grandchild-file']);
+    expect(result.files.map((f) => f.id)).toEqual(['child-folder', 'grandchild-file']);
   });
 
   test('traversal stops early once a level has no subfolders left, even before maxLevel is reached', async () => {
@@ -210,6 +210,6 @@ describe('listDriveFilesRecursive depth limits', () => {
     });
 
     expect(sendRequest).toHaveBeenCalledTimes(1);
-    expect(result.map((f: any) => f.id)).toEqual(['leaf-file']);
+    expect(result.files.map((f) => f.id)).toEqual(['leaf-file']);
   });
 });

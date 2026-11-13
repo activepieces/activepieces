@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { MoreHorizontal, Pencil, Trash, X } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
+import { adminLayout } from '@/app/components/admin';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import EditableText from '@/components/custom/editable-text';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LockedGem, useLockedFeature } from '@/features/billing';
 import { roleCopy } from '@/features/members/lib/role-copy';
 import {
   ROLE_BASES,
@@ -31,6 +33,8 @@ import {
   rolePermissionModel,
 } from '@/features/members/lib/role-permissions';
 import { projectRoleMutations } from '@/features/platform-admin';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -61,7 +65,10 @@ export const ProjectRoleDialog = ({
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent
         showCloseButton={false}
-        className="@container flex h-[min(39rem,88dvh)] w-[calc(100vw-2rem)] max-w-4xl flex-col gap-0 overflow-hidden p-0"
+        className={cn(
+          adminLayout.dialog.lg,
+          '@container flex h-[min(39rem,88dvh)] w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0',
+        )}
       >
         <RoleDialogBody
           key={isOpen ? `${projectRole?.id ?? 'new'}-open` : 'closed'}
@@ -100,7 +107,12 @@ function RoleDialogBody({
   const [tab, setTab] = useState<RoleDialogTab>(initialTab);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const { mutate: upsertRole, isPending: isSaving } =
+  const { platform } = platformHooks.useCurrentPlatform();
+  const lockedFeature = useLockedFeature({
+    unlocked: platform.plan.customRolesEnabled,
+    featureKey: 'CUSTOM_ROLES',
+  });
+  const { mutateAsync: upsertRole, isPending: isSaving } =
     projectRoleMutations.useUpsertProjectRole({
       onSave: onSaved,
       onError: (error) =>
@@ -150,17 +162,23 @@ function RoleDialogBody({
 
   const submit = () => {
     setSaveError(null);
-    upsertRole({
-      mode,
-      roleId: projectRole?.id,
-      name: name.trim(),
-      permissions,
-      type: RoleType.CUSTOM,
-    });
+    if (lockedFeature.locked && !isCreate) {
+      lockedFeature.showLockedDialog();
+      return;
+    }
+    lockedFeature.runOrShowLockedDialog(() =>
+      upsertRole({
+        mode,
+        roleId: projectRole?.id,
+        name: name.trim(),
+        permissions,
+        type: RoleType.CUSTOM,
+      }),
+    );
   };
 
   const counter = (
-    <span className="hidden shrink-0 text-sm tabular-nums text-muted-foreground @min-[24rem]:inline">
+    <span className="hidden shrink-0 text-sm tabular-nums text-gray-11 @min-[24rem]:inline">
       {t('grantedCount', { granted, total })}
     </span>
   );
@@ -176,9 +194,7 @@ function RoleDialogBody({
         )}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {isCreate && (
-            <p className="text-xss font-medium uppercase tracking-wider text-muted-foreground">
-              {t('New role')}
-            </p>
+            <p className="text-xs font-medium text-gray-11">{t('New role')}</p>
           )}
           {isCreate ? (
             <>
@@ -191,7 +207,7 @@ function RoleDialogBody({
                   setSaveError(null);
                 }}
                 placeholder={t('Role name')}
-                className="h-9 max-w-xs"
+                className="max-w-xs"
               />
             </>
           ) : (
@@ -208,25 +224,22 @@ function RoleDialogBody({
                   }}
                   tooltipContent={isBuiltIn ? '' : t('Rename role')}
                   className={cn(
-                    'min-w-0 rounded-sm px-1 py-0.5',
+                    'min-w-0 rounded-md px-1 py-0.5',
                     !isBuiltIn &&
                       !isRenaming &&
-                      'cursor-text hover:bg-muted hover:text-foreground/80',
+                      'cursor-text hover:bg-gray-3 hover:text-gray-11',
                     isRenaming &&
-                      'border border-ring bg-background ring-[1px] ring-ring/50',
+                      'border border-gray-8 bg-transparent ring-[1px] ring-gray-8/50',
                   )}
                 />
                 {!isBuiltIn && !isRenaming && (
                   <Pencil
                     aria-hidden
-                    className="size-3.5 shrink-0 text-muted-foreground"
+                    className="size-3.5 shrink-0 text-gray-11"
                   />
                 )}
               </span>
-              <Badge
-                variant={isBuiltIn ? 'accent' : 'inverted'}
-                className="shrink-0 text-xss uppercase tracking-wider"
-              >
+              <Badge variant={isBuiltIn ? 'secondary' : 'info'} className="">
                 {isBuiltIn ? t('Built in') : t('Custom')}
               </Badge>
             </DialogTitle>
@@ -241,11 +254,7 @@ function RoleDialogBody({
           {!isCreate && !isBuiltIn && projectRole && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="size-8 shrink-0 p-0"
-                >
+                <Button variant="ghost" size="icon-sm">
                   <MoreHorizontal className="size-4" />
                   <span className="sr-only">{t('More')}</span>
                 </Button>
@@ -257,6 +266,7 @@ function RoleDialogBody({
                     setTab('permissions');
                   }}
                   disabled={isEditingPermissions}
+                  {...adminControl(AdminControl.ROLES_EDIT_OPEN)}
                 >
                   <Pencil className="size-4" />
                   {t('Edit permissions')}
@@ -264,19 +274,20 @@ function RoleDialogBody({
                 <ConfirmationDeleteDialog
                   isDanger={true}
                   title={t('Delete role')}
-                  message={t(
-                    'Deleting this role will remove {count} project member(s) and all associated invitations.',
-                    { count: projectRole.userCount },
-                  )}
+                  message={t('deleteProjectRoleMessage', {
+                    count: projectRole.userCount,
+                  })}
                   entityName={`${t('Project Role')} ${projectRole.name}`}
                   buttonText={t('Delete role')}
                   mutationFn={async () => {
                     await deleteRole(projectRole.name);
                   }}
+                  controlId={AdminControl.ROLES_DELETE_CONFIRM}
                 >
                   <DropdownMenuItem
                     variant="destructive"
                     onSelect={(event) => event.preventDefault()}
+                    {...adminControl(AdminControl.ROLES_DELETE_OPEN)}
                   >
                     <Trash className="size-4" />
                     {t('Delete role')}
@@ -286,7 +297,7 @@ function RoleDialogBody({
             </DropdownMenu>
           )}
           <DialogClose asChild>
-            <Button variant="ghost" size="sm" className="size-8 shrink-0 p-0">
+            <Button variant="ghost" size="icon-sm">
               <X className="size-4" />
               <span className="sr-only">{t('Close')}</span>
             </Button>
@@ -298,22 +309,21 @@ function RoleDialogBody({
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 px-6 pt-4 pb-3">
             <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">
-                {t('Based on')}
-              </span>
-              <div className="inline-flex items-center rounded-md bg-muted p-1">
+              <span className="text-sm text-gray-11">{t('Based on')}</span>
+              <div className="inline-flex items-center rounded-lg bg-gray-3 p-1">
                 {ROLE_BASES.map((roleBase) => (
                   <Button
                     key={roleBase}
                     type="button"
-                    size="sm"
+                    size="xs"
                     variant="ghost"
                     className={cn(
-                      'h-7 rounded-sm px-3 text-muted-foreground',
+                      'rounded-sm text-gray-11',
                       base === roleBase &&
-                        'bg-background text-foreground shadow-xs hover:bg-background',
+                        'bg-panel text-gray-12 shadow-xs hover:bg-panel',
                     )}
                     onClick={() => changeBase(roleBase)}
+                    {...adminControl(AdminControl.ROLES_BASE_SELECT)}
                   >
                     {t(roleBase)}
                   </Button>
@@ -359,7 +369,7 @@ function RoleDialogBody({
                 className="gap-2 px-0 py-3"
               >
                 {t('People')}
-                <span className="tabular-nums text-muted-foreground">
+                <span className="tabular-nums text-gray-11">
                   {projectRole?.userCount ?? 0}
                 </span>
               </TabsTrigger>
@@ -392,9 +402,7 @@ function RoleDialogBody({
             role={saveError ? 'alert' : undefined}
             className={cn(
               'min-w-0 basis-full text-xs sm:flex-1 sm:basis-auto',
-              saveError
-                ? 'font-medium text-destructive'
-                : 'text-muted-foreground',
+              saveError ? 'font-medium text-danger-11' : 'text-gray-11',
             )}
           >
             {footerNote}
@@ -411,7 +419,17 @@ function RoleDialogBody({
             >
               {t('Cancel')}
             </Button>
-            <Button type="button" disabled={!canSubmit} onClick={submit}>
+            <Button
+              type="button"
+              disabled={!canSubmit}
+              onClick={submit}
+              {...adminControl(
+                isCreate
+                  ? AdminControl.ROLES_NEW_SUBMIT
+                  : AdminControl.ROLES_EDIT_SUBMIT,
+              )}
+            >
+              {lockedFeature.locked && <LockedGem />}
               {isCreate ? t('Create role') : t('Save changes')}
             </Button>
           </div>

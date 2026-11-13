@@ -3,13 +3,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { attioAuth } from '../auth';
 import { attioApiCall } from '../common/client';
 import { objectTypeIdDropdown } from '../common/props';
+import { attioCreateNoteOutputSchema } from '../output-schemas';
 
 export const createNoteAction = createAction({
 	name: 'create_note',
+	outputSchema: attioCreateNoteOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Note',
 	description: 'Creates a new note on a record.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Creates a note attached to a specific record, with a title and body content interpreted as either plaintext or markdown. Requires the parent object type, the parent record ID, and the note text. Not idempotent — each call appends another note to the record.', idempotent: false },
 	auth: attioAuth,
 	props: {

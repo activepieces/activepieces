@@ -46,7 +46,7 @@ import { dropboxDeleteEntry } from './lib/actions/delete-entry';
 import { dropboxNewFolder } from './lib/triggers/new-folder';
 
 export const dropbox = createPiece({
-  minimumSupportedRelease: '0.86.4',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/dropbox.png',
   actions: [
     dropboxSearch,
@@ -94,6 +94,13 @@ export const dropbox = createPiece({
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.access_token}`,
       }),
+      props: {
+        url: {
+          description:
+            'Full URL, or a path relative to https://api.dropboxapi.com/2. Dropbox endpoints use POST.',
+          placeholder: '/files/list_folder',
+        },
+      },
     }),
   ],
   displayName: 'Dropbox',

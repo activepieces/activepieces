@@ -11,9 +11,9 @@ import {
   Variable,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 import { VariableDialog } from '@/app/variables/variable-dialog';
+import { clipboardUtils } from '@/components/custom/clipboard/use-copy-to-clipboard';
 import {
   BulkAction,
   DataTable,
@@ -41,14 +41,10 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { ownerColumnHooks } from '@/hooks/owner-column-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
-const copyReferenceToClipboard = async (name: string) => {
-  try {
-    await navigator.clipboard.writeText(`{{variables['${name}']}}`);
-    toast.success(t('Reference copied to clipboard'));
-  } catch {
-    toast.error(t('Could not copy reference'));
-  }
-};
+const copyReferenceToClipboard = (name: string) =>
+  clipboardUtils.copy({
+    value: `{{variables['${name}']}}`,
+  });
 
 function VariablesPage() {
   const projectId = authenticationSession.getProjectId()!;
@@ -139,7 +135,7 @@ function VariablesPage() {
         ),
         cell: ({ row }) => (
           <div className="flex items-center gap-2 min-w-0">
-            <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 text-primary">
+            <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-accent-3 text-accent-11">
               <Variable className="w-4 h-4" />
             </div>
             <span className="font-mono text-sm truncate">
@@ -186,10 +182,7 @@ function VariablesPage() {
                   {t('Edit')}
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    void copyReferenceToClipboard(row.original.name);
-                  }}
+                  onSelect={() => copyReferenceToClipboard(row.original.name)}
                 >
                   <Link2 className="h-4 w-4 mr-2" />
                   {t('Copy reference')}
@@ -197,7 +190,7 @@ function VariablesPage() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   disabled={!canWrite}
-                  className="text-destructive focus:text-destructive"
+                  className="text-danger-11 focus:text-danger-11"
                   onSelect={(e) => {
                     e.preventDefault();
                     setDeleting(row.original);
@@ -241,7 +234,7 @@ function VariablesPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-destructive hover:text-destructive"
+                  className="text-danger-11 hover:text-danger-11"
                   disabled={!canWrite}
                   onClick={() => setShowBulkDeleteDialog(true)}
                 >

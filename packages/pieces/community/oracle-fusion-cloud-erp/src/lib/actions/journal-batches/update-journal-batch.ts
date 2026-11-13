@@ -5,6 +5,7 @@ import { makeClient } from '../../common/client';
 export const updateJournalBatch = createAction({
     auth: oracleFusionCloudErpAuth,
     name: 'update_journal_batch',
+    classification: 'WRITE',
     displayName: 'Update Journal Batch',
     description: 'Updates batch completion status and reversal attributes. Note: Only status and reversal attributes can be updated.',
     audience: 'both',

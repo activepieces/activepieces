@@ -2,16 +2,21 @@ import { ActivepiecesAiCall, ActivepiecesAiConsumerSource, ActivepiecesAiCostEve
 import { AiUsageCharge, ReportAiUsageRequest } from '@activepieces/shared'
 
 export function aiUsageReportOf({ event, idempotencyKey }: AiUsageReportParams): ReportAiUsageRequest {
-    const { billing, provider, modelId, call } = event
+    const { billing, provider, providerConfigId, modelId, call } = event
     const baseProps: ReportAiUsageRequest = {
         billing,
         provider,
+        providerConfigId,
         modelId,
         idempotencyKey,
         usage: chargeOf(call),
         generationId: call.generationId,
         inputTokens: call.inputTokens,
         outputTokens: call.outputTokens,
+        cacheReadTokens: call.cacheReadTokens,
+        cacheWriteTokens: call.cacheWriteTokens,
+        reasoningTokens: call.reasoningTokens,
+        observedCostUsd: call.observedCostUsd,
     }
     switch (billing.source) {
         case ActivepiecesAiConsumerSource.AI_STEP_IN_FLOW:
@@ -24,6 +29,9 @@ export function aiUsageReportOf({ event, idempotencyKey }: AiUsageReportParams):
 function chargeOf(call: ActivepiecesAiCall): AiUsageCharge {
     if (call.charge === AiChargeBasis.FIXED_CREDITS) {
         return { type: AiChargeBasis.FIXED_CREDITS, credits: call.credits }
+    }
+    if (call.charge === AiChargeBasis.USAGE_ONLY) {
+        return { type: AiChargeBasis.USAGE_ONLY }
     }
     return { type: AiChargeBasis.PROVIDER_REPORTED_COST, costUsd: call.costUsd }
 }

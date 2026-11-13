@@ -1,9 +1,11 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { DEDUPE_KEY_PROPERTY, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { smartsuiteAuth } from '../auth';
 import { smartsuiteCommon, transformRecordFields } from '../common/props';
-import { SMARTSUITE_WEBHOOKS_API_URL, API_ENDPOINTS, WEBHOOK_EVENTS } from '../common/constants';
-import { smartSuiteApiCall, TableStucture } from '../common';
+import { WEBHOOK_EVENTS } from '../common/constants';
+import { smartSuiteApi } from '../common';
+import { smartSuiteClient } from '../common/client';
+import { smartSuiteWebhooks } from '../common/webhook';
+import { outputSchemas } from '../output-schemas';
 
 export const newRecord = createTrigger({
 	name: 'new_record',
@@ -11,7 +13,7 @@ export const newRecord = createTrigger({
 	displayName: 'New Record',
 	description: 'Triggers when a new record is created in the specified table',
 	aiMetadata: {
-		description: 'Fires when a new record is created in the specified SmartSuite solution and table, delivering the created record. Use to start a flow whenever a row is added to that table.',
+		description: 'Fires when a new record is created in the specified SmartSuite solution and table, delivering the created record keyed by field label. Use to start a flow whenever a row is added to that table.',
 	},
 	type: TriggerStrategy.WEBHOOK,
 	auth: smartsuiteAuth,
@@ -19,141 +21,61 @@ export const newRecord = createTrigger({
 		solutionId: smartsuiteCommon.solutionId,
 		tableId: smartsuiteCommon.tableId,
 	},
+	outputSchema: outputSchemas['labelledRecord'],
 
 	async onEnable(context) {
-		const { solutionId, tableId } = context.propsValue;
-
-		const response = await httpClient.sendRequest({
-			method: HttpMethod.POST,
-			url: `${SMARTSUITE_WEBHOOKS_API_URL}${API_ENDPOINTS.CREATE_WEBHOOK}`,
-			body: {
-				webhook: {
-					filter: {
-						applications: {
-							application_ids: [tableId],
-						},
-					},
-					kinds: [WEBHOOK_EVENTS.RECORD_CREATED],
-					locator: {
-						account_id: context.auth.props.accountId, // This will be filled by SmartSuite based on the API key
-						solution_id: solutionId,
-					},
-					notification_status: {
-						enabled: {
-							url: context.webhookUrl,
-						},
-					},
-				},
-			},
-			headers: {
-				Authorization: `Token ${context.auth.props.apiKey}`,
-				'ACCOUNT-ID': context.auth.props.accountId,
-			},
+		await smartSuiteWebhooks.enable({
+			credentials: smartSuiteClient.credentialsOf(context.auth),
+			store: context.store,
+			storeKey: 'new_record',
+			solutionId: String(context.propsValue.solutionId),
+			tableId: String(context.propsValue.tableId),
+			kind: WEBHOOK_EVENTS.RECORD_CREATED,
+			webhookUrl: context.webhookUrl,
 		});
-		await context.store.put('new_record', response.body.webhook.webhook_id);
 	},
 
 	async onDisable(context) {
-		const webhookId = await context.store.get('new_record');
-
-		if (webhookId) {
-			await httpClient.sendRequest({
-				method: HttpMethod.POST,
-				url: `${SMARTSUITE_WEBHOOKS_API_URL}${API_ENDPOINTS.DELETE_WEBHOOK}`,
-				body: {
-					webhook_id: webhookId,
-				},
-				headers: {
-					Authorization: `Token ${context.auth.props.apiKey}`,
-					'ACCOUNT-ID': context.auth.props.accountId,
-				},
-			});
-		}
+		await smartSuiteWebhooks.disable({
+			credentials: smartSuiteClient.credentialsOf(context.auth),
+			store: context.store,
+			storeKey: 'new_record',
+		});
 	},
 
 	async test(context) {
-		const { tableId } = context.propsValue;
-		const response = await smartSuiteApiCall<{ items: Record<string, any>[] }>({
-			accountId: context.auth.props.accountId,
-			apiKey: context.auth.props.apiKey,
-			method: HttpMethod.POST,
-			resourceUri: `/applications/${tableId}/records/list/`,
-			query: { limit: '5', offset: '0' },
+		const credentials = smartSuiteClient.credentialsOf(context.auth);
+		const table = await smartSuiteApi.getTable({ credentials, tableId: context.propsValue.tableId });
+		const page = await smartSuiteApi.listRecordsPage({
+			credentials,
+			tableId: context.propsValue.tableId,
+			sort: [{ field: 'first_created', direction: 'desc' }],
+			limit: smartSuiteWebhooks.RECENT_RECORDS_LIMIT,
+			offset: 0,
 		});
-		const items = response.items || [];
-
-		const tableResponse = await smartSuiteApiCall<{
-			structure: TableStucture[];
-		}>({
-			apiKey: context.auth.props.apiKey,
-			accountId: context.auth.props.accountId,
-			method: HttpMethod.GET,
-			resourceUri: `/applications/${context.propsValue.tableId}`,
-		});
-		const tableSchema = tableResponse.structure;
-
-		return items.map((item) => transformRecordFields(tableSchema, item));
+		return page.items.map((item) => transformRecordFields({ tableSchema: table.structure, tableValues: item }));
 	},
 
 	async run(context) {
-		const webhookPayload = context.payload.body as {
-			webhookId: string;
-			locator: {
-				accountId: string;
-				solutionId: string;
-			};
-		};
-
-		let pageToken = (await context.store.get('pageToken')) ?? '';
-
-		if (!webhookPayload || !webhookPayload.webhookId || !webhookPayload.locator) {
+		const credentials = smartSuiteClient.credentialsOf(context.auth);
+		if ((await smartSuiteWebhooks.ownNotificationWebhookId({ store: context.store, storeKey: 'new_record', payload: context.payload.body })) === undefined) {
 			return [];
 		}
-
-		const events = [];
-
-		let hasMore = true;
-
-		do {
-			const response = await httpClient.sendRequest<{
-				events: { record_event_data: { data: Record<string, any> } }[];
-				next_page_token: string;
-			}>({
-				method: HttpMethod.POST,
-				url: `${SMARTSUITE_WEBHOOKS_API_URL}${API_ENDPOINTS.LIST_EVENTS}`,
-				body: {
-					webhook_id: webhookPayload.webhookId,
-					page_size: '50',
-					page_token: pageToken,
-				},
-				headers: {
-					Authorization: `Token ${context.auth.props.apiKey}`,
-					'ACCOUNT-ID': context.auth.props.accountId,
-				},
-			});
-
-			pageToken = response.body.next_page_token;
-
-			const items = response.body.events ?? [];
-
-			events.push(...items);
-
-			hasMore = items.length > 0;
-		} while (hasMore);
-
-		await context.store.put('pageToken', pageToken);
-
-		const tableResponse = await smartSuiteApiCall<{
-			structure: TableStucture[];
-		}>({
-			apiKey: context.auth.props.apiKey,
-			accountId: context.auth.props.accountId,
-			method: HttpMethod.GET,
-			resourceUri: `/applications/${context.propsValue.tableId}`,
+		const table = await smartSuiteApi.getTable({ credentials, tableId: context.propsValue.tableId });
+		const events = await smartSuiteWebhooks.pullNewEvents({
+			credentials,
+			store: context.store,
+			storeKey: 'new_record',
+			payload: context.payload.body,
+			webhookUrl: context.webhookUrl,
 		});
-		const tableSchema = tableResponse.structure;
-
-		return events.map((event) => transformRecordFields(tableSchema, event.record_event_data.data));
+		if (events.length === 0) {
+			return [];
+		}
+		return events.map((event) => ({
+			...transformRecordFields({ tableSchema: table.structure, tableValues: smartSuiteWebhooks.recordOf(event) }),
+			[DEDUPE_KEY_PROPERTY]: smartSuiteWebhooks.dedupeKeyOf(event),
+		}));
 	},
 
 	sampleData: {

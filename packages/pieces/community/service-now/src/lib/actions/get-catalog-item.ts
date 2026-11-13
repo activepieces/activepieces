@@ -10,6 +10,7 @@ import {
 export const getCatalogItemAction = createAction({
   auth: servicenowAuth,
   name: 'get_catalog_item',
+  classification: 'READ',
   displayName: 'Get Catalog Item',
   description:
     'Retrieve full details of a catalog item including its variable definitions. Use this before "Submit Catalog Request" to discover the variables expected by the item.',

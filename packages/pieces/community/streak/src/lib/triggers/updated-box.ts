@@ -1,3 +1,4 @@
+import { boxWebhookOutputSchema } from '../common/output-schemas';
 import { createPipelineWebhookTrigger } from '../common/trigger-factory';
 
 export const updatedBoxTrigger = createPipelineWebhookTrigger({
@@ -9,6 +10,7 @@ export const updatedBoxTrigger = createPipelineWebhookTrigger({
       'Fires when any field on an existing box in the selected pipeline is edited, representing a change to a CRM record. Note this fires on general edits, while separate triggers cover stage changes and pipeline moves.',
   },
   event: 'BOX_EDIT',
+  outputSchema: boxWebhookOutputSchema,
   sampleData: {
     boxKey: 'agxzfm1haWxmb29nYWVyMQsSDE9yZ2FuaXphdGlvbiIHc3RyZWFrMAwLEgNCb3gYgICAwI_oogow',
     name: 'Acme Inc',

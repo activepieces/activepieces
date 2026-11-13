@@ -7,6 +7,7 @@ import { socialSetDropdown } from '../common/props';
 export const deleteDraftAction = createAction({
 	auth: typefullyAuth,
 	name: 'typefully_delete_draft',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Draft',
 	description: 'Delete an existing draft.',
 	audience: 'both',

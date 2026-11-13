@@ -1,5 +1,11 @@
 {
   "Text to QR Code": "Tekst naar QR-Code",
   "Convert text to QR code": "Tekst converteren naar QR-code",
-  "Content": "Inhoud"
+  "Content": "Inhoud",
+  "Make QR code images from text or links.": "Maak QR-codeafbeeldingen van tekst of links.",
+  "Generate QR Code": "QR-code genereren",
+  "Turn text or a link into a PNG QR code image.": "Zet tekst of een link om in een PNG-afbeelding van een QR-code.",
+  "Text or Link": "Tekst of link",
+  "Encoded into a PNG image file. About 2,300 characters at most.": "Wordt gecodeerd in een PNG-afbeeldingsbestand. Maximaal ongeveer 2.300 tekens.",
+  "QR Code": "QR-code"
 }

@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const submitConsent = createAction({
   auth: trueLayerCommon.auth,
   name: 'submit-consent',
+  classification: 'WRITE',
   displayName: 'Submit Consent',
   description: 'Submit the consent given by the user. This API can be called using the `resource_token` associated with the payment or a backend bearer token.',
   audience: 'both',

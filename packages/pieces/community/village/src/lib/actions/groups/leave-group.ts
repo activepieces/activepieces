@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const leaveGroup = createAction({
   auth: villageAuth,
   name: 'leave_group',
+  classification: 'DESTRUCTIVE',
   displayName: 'Leave Group',
   description:
     'Leave a group you are a member of. If you are the last member, the group is deleted. Admins must remove all other members before leaving.',

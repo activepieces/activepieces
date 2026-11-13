@@ -1,7 +1,10 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { shortIoApiCall } from '../common/client';
 import { shortIoAuth } from '../common/auth';
+import { shortIoClient } from '../common/client';
+import { shortIoLinkBody } from '../common/link-body';
+import { shortIoLinks } from '../common/links';
+import { shortIoSchemas } from '../common/output-schemas';
 import { domainIdDropdown, folderIdDropdown } from '../common/props';
 
 export const createShortLinkAction = createAction({
@@ -11,8 +14,9 @@ export const createShortLinkAction = createAction({
   displayName: 'Create Short Link',
   description:
     'Create a new short link with optional parameters (title, UTM tags, expiration, cloaking, etc.)',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new short link on a Short.io domain pointing to a target URL, with optional path/slug, title, UTM tags, expiration, click limit, cloaking, A/B split, and analytics integrations. Use to generate a shortened URL. Requires an original URL and a domain; not idempotent — each call creates a new link (set Allow Duplicates to avoid 409 conflicts on a repeated path).', idempotent: false },
+  outputSchema: shortIoSchemas.legacyLink,
   props: {
     originalURL: Property.ShortText({
       displayName: 'Original URL',
@@ -85,7 +89,7 @@ export const createShortLinkAction = createAction({
     ttl: Property.Number({
       displayName: 'Time to Live (in seconds)',
       description:
-        '⚠️ CAUTION: Link will be PERMANENTLY DELETED after this many seconds. This action cannot be undone. Use with extreme caution.',
+        'Permanently deletes the link this many seconds from now (minimum 604800 = 7 days). Short.io may delete it up to 2 hours later. This cannot be undone.',
       required: false,
     }),
     androidURL: Property.ShortText({
@@ -154,137 +158,27 @@ export const createShortLinkAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const {
-      originalURL,
-      domain: domainString,
-      path,
-      title,
-      cloaking,
-      password,
-      redirectType,
-      expiresAt,
-      expiredURL,
-      tags,
-      utmSource,
-      utmMedium,
-      utmCampaign,
-      utmTerm,
-      utmContent,
-      ttl,
-      androidURL,
-      iphoneURL,
-      createdAt,
-      clicksLimit,
-      passwordContact,
-      skipQS,
-      archived,
-      splitURL,
-      splitPercent,
-      integrationAdroll,
-      integrationFB,
-      integrationGA,
-      integrationGTM,
-      allowDuplicates,
-      folderId,
-    } = propsValue;
-
-    // Input validation
-    if (clicksLimit && clicksLimit < 1) {
-      throw new Error('Clicks limit must be at least 1');
-    }
-    
-    if (splitPercent && (splitPercent < 1 || splitPercent > 100)) {
-      throw new Error('Split percent must be between 1 and 100');
-    }
-
-    if (redirectType && !['301', '302', '303', '307', '308'].includes(redirectType)) {
-      throw new Error('Invalid redirect type. Must be one of: 301, 302, 303, 307, 308');
-    }
-
-    const domainObject = JSON.parse(domainString as string);
-
-    const body: Record<string, unknown> = {
-      originalURL,
-      domain: domainObject.hostname,
+    const domain = shortIoLinks.parseDomainProp(propsValue.domain);
+    const body = {
+      ...shortIoLinkBody.legacyLinkBody({ values: { ...propsValue }, now: Date.now() }),
+      originalURL: propsValue.originalURL,
+      domain: domain.hostname,
     };
-
-    const optionalParams = {
-      path,
-      title,
-      cloaking,
-      password,
-      redirectType,
-      expiresAt,
-      expiredURL,
-      tags,
-      utmSource,
-      utmMedium,
-      utmCampaign,
-      utmTerm,
-      utmContent,
-      ttl: ttl ? ttl * 1000 : undefined,
-      androidURL,
-      iphoneURL,
-      createdAt,
-      clicksLimit,
-      passwordContact,
-      skipQS,
-      archived,
-      splitURL,
-      splitPercent,
-      integrationAdroll,
-      integrationFB,
-      integrationGA,
-      integrationGTM,
-      allowDuplicates,
-      folderId,
-    };
-
-    for (const [key, value] of Object.entries(optionalParams)) {
-      if (value !== null && value !== undefined && value !== '') {
-        body[key] = value;
-      }
-    }
-
     try {
-      const response = await shortIoApiCall({
-        method: HttpMethod.POST,
-        auth,
-        resourceUri: '/links',
-        body,
-      });
-
+      const response = await shortIoClient.request({ method: HttpMethod.POST, auth, path: '/links', body });
       return {
         success: true,
         message: 'Short link created successfully',
-        data: response,
+        data: shortIoLinks.scrubLink(response),
       };
-    } catch (error: any) {
-      if (error.message.includes('409')) {
-        throw new Error(
-          'A short link with this path already exists but points to a different original URL.'
-        );
-      }
-      
-      if (error.message.includes('400')) {
-        throw new Error(
-          'Invalid request parameters. Please check your input values and try again.'
-        );
-      }
-      
-      if (error.message.includes('401') || error.message.includes('403')) {
-        throw new Error(
-          'Authentication failed. Please check your API key and permissions.'
-        );
-      }
-      
-      if (error.message.includes('429')) {
-        throw new Error(
-          'Rate limit exceeded. Please wait a moment before trying again.'
-        );
-      }
-
-      throw new Error(`Failed to create short link: ${error.message}`);
+    } catch (error) {
+      return shortIoClient.rethrowWithHint({
+        error,
+        hints: {
+          409: 'A short link with this path already exists but points to a different original URL.',
+          400: 'Short.io rejected the link settings.',
+        },
+      });
     }
   },
 });

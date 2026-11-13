@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const lookupJob = createAction({
   auth: pubrioAuth,
   name: 'lookup_job',
+  classification: 'READ',
   displayName: 'Lookup Job',
   description: 'Look up detailed job information by job search ID',
   audience: 'both',

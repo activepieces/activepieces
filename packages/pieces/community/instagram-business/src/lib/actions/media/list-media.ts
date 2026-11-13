@@ -17,12 +17,29 @@ export const listMedia = createAction({
       'Lists the media (posts, reels and albums) published by the connected Instagram professional account, newest first, with caption, permalink, media type and engagement counts. Use it to find a recent post or its id before reading or commenting on it. Stories are not included — use List Stories for those. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'account',
+      display: 'section',
+      label: 'Account',
+      icon: 'user',
+      props: ['page'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['limit'],
+    },
+  ],
   props: {
     page: instagramCommon.page,
     limit: Property.Number({
-      displayName: 'Limit',
-      description: 'Maximum number of posts to return (default 25).',
+      displayName: 'Max Results',
+      description: 'Posts to return per run, up to 100.',
       required: false,
+      defaultValue: 25,
     }),
     cursor: instagramCommon.cursor,
   },

@@ -30,6 +30,7 @@ async function getFields(auth: JiraDataCenterAuth, issueId: string): Promise<Iss
 
 export const updateIssueAction = createAction({
 	name: 'update_issue',
+	classification: 'WRITE',
 	displayName: 'Update Issue',
 	description: 'Updates an existing issue.',
 	audience: 'both',

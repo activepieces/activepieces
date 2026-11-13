@@ -1376,6 +1376,32 @@ describe('Project API', () => {
             expect(projectIds).toContain(projectTwo.id)
         })
 
+        it('marks only the platforms the caller owns', async () => {
+            const { mockOwner, mockPlatform: ownPlatform, mockUserIdentity } = await mockAndSaveBasicSetup()
+            const { mockPlatform: otherPlatform } = await mockAndSaveBasicSetup()
+            const memberOnOther = createMockUser({
+                identityId: mockUserIdentity.id,
+                platformId: otherPlatform.id,
+                platformRole: PlatformRole.MEMBER,
+            })
+            await db.save('user', memberOnOther)
+            const token = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: ownPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/platforms',
+                headers: { authorization: `Bearer ${token}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const ownershipByPlatform = Object.fromEntries((response?.json() as Array<{ platformId: string, isOwner: boolean }>).map((entry) => [entry.platformId, entry.isOwner]))
+            expect(ownershipByPlatform).toStrictEqual({ [ownPlatform.id]: true, [otherPlatform.id]: false })
+        })
+
         it('rejects API key (USER-only endpoint)', async () => {
             const { mockPlatform } = await mockAndSaveBasicSetup()
             const apiKey = createMockApiKey({ platformId: mockPlatform.id })

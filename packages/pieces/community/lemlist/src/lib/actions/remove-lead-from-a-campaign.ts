@@ -1,16 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { lemlistAuth } from '../common/constants';
 import { campaignsDropdown } from '../common/props';
-import { lemlistApiService } from '../common/requests';
+import { lemlistLeads } from '../common/requests';
+import { lemlistSchemas } from '../common/schemas';
 
 export const removeLeadFromACampaign = createAction({
   auth: lemlistAuth,
   name: 'removeLeadFromACampaign',
-  classification: 'WRITE',
+  classification: 'DESTRUCTIVE',
   displayName: 'Remove Lead from A Campaign',
-  description: 'removes a lead from a specific campaign.',
-  audience: 'both',
-  aiMetadata: { description: 'Removes a lead, identified by email, from one specific Lemlist campaign, stopping their sequence in it. Requires both the campaign and the lead email. Idempotent: re-running on an already-removed lead leaves them absent from the campaign.', idempotent: true },
+  description: 'Removes a lead from a specific campaign.',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Deletes a lead, identified by email, from one Lemlist campaign (its sequence progress is lost). A second run fails with not found.',
+    idempotent: false,
+  },
   props: {
     campaignId: campaignsDropdown({ refreshers: ['auth'] }),
     email: Property.ShortText({
@@ -19,10 +24,13 @@ export const removeLeadFromACampaign = createAction({
       required: true,
     }),
   },
-  async run({ auth, propsValue: { campaignId, email } }) {
-    return await lemlistApiService.removeLeadFromACampaign(auth, {
-      campaignId: campaignId as string,
-      leadEmail: email as string,
+  outputSchema: lemlistSchemas.lead,
+  async run({ auth, propsValue }) {
+    return lemlistLeads.deleteLeadFromCampaign({
+      apiKey: auth.secret_text,
+      campaignId: propsValue.campaignId,
+      lead: propsValue.email,
+      remove: true,
     });
   },
 });

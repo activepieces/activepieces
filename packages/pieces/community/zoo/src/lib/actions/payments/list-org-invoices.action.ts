@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const listOrgInvoicesAction = createAction({
   name: 'list_org_invoices',
+  classification: 'SEARCH',
   displayName: 'List Organization Invoices',
   description: 'List all invoices for your organization',
   audience: 'both',

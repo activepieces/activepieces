@@ -252,6 +252,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New File": "New File",
   "Trigger when a new file is uploaded.": "Trigger when a new file is uploaded."
 }

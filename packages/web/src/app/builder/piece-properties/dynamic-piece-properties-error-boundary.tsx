@@ -17,7 +17,7 @@ const DynamicPropertiesErrorBoundary = ({
       key={key}
       fallback={
         !triedRerenderingRef.current ? (
-          <div className="text-sm text-destructive italic flex justify-between items-center">
+          <div className="text-sm text-danger-11 italic flex justify-between items-center">
             {t('Unexpected error, please retry')}
             <Button
               size="icon"
@@ -27,11 +27,11 @@ const DynamicPropertiesErrorBoundary = ({
                 triedRerenderingRef.current = true;
               }}
             >
-              {<RefreshCcw className="w-4 h-4 text-foreground!"></RefreshCcw>}{' '}
+              {<RefreshCcw className="w-4 h-4 text-gray-12!"></RefreshCcw>}{' '}
             </Button>
           </div>
         ) : (
-          <div className="text-sm text-destructive italic flex justify-between items-center">
+          <div className="text-sm text-danger-11 italic flex justify-between items-center">
             {t('Unexpected error, please refresh the page or contact support')}
             <Button
               size="icon"
@@ -40,7 +40,7 @@ const DynamicPropertiesErrorBoundary = ({
                 window.location.reload();
               }}
             >
-              {<RefreshCcw className="w-4 h-4 text-foreground!"></RefreshCcw>}{' '}
+              {<RefreshCcw className="w-4 h-4 text-gray-12!"></RefreshCcw>}{' '}
             </Button>
           </div>
         )

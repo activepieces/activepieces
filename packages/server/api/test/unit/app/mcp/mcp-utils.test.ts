@@ -1,5 +1,5 @@
 import { PropertyType } from '@activepieces/pieces-framework'
-import { AiRouterAction, BranchExecutionType, EmptyTrigger, FlowActionType, FlowTriggerType } from '@activepieces/shared'
+import { AiRouterAction, BranchExecutionType, EmptyTrigger, FlowActionType, FlowTriggerType, PropertyExecutionType } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
 
@@ -288,7 +288,7 @@ describe('mcpUtils.buildRequiredInputs / buildExampleInput — prepare-to-execut
     ]
 
     it('splits required inputs into provideNow vs needsResolution (dropdowns/dynamic)', () => {
-        const { provideNow, needsResolution } = mcpUtils.buildRequiredInputs(props)
+        const { provideNow, needsResolution } = mcpUtils.buildRequiredInputs({ props })
         expect(provideNow).toContain('url')
         expect(provideNow).toContain('headers')
         expect(provideNow).toContain('method')
@@ -296,7 +296,7 @@ describe('mcpUtils.buildRequiredInputs / buildExampleInput — prepare-to-execut
     })
 
     it('builds an example with empty containers, a first dropdown option, and a resolution sentinel for unresolved dropdowns', () => {
-        const example = mcpUtils.buildExampleInput(props)
+        const example = mcpUtils.buildExampleInput({ props })
         expect(example.headers).toEqual({})
         expect(example.queryParams).toEqual({})
         expect(example.method).toBe('GET')
@@ -305,10 +305,71 @@ describe('mcpUtils.buildRequiredInputs / buildExampleInput — prepare-to-execut
     })
 
     it('uses a resolved dropdown option value when options are present', () => {
-        const example = mcpUtils.buildExampleInput([
+        const example = mcpUtils.buildExampleInput({ props: [
             { name: 'objectTypeId', type: PropertyType.DROPDOWN, displayName: 'Object Type', required: true, options: [{ label: 'Deals', value: 'deal-uuid' }] },
-        ])
+        ] })
         expect(example.objectTypeId).toBe('deal-uuid')
+    })
+})
+
+describe('mcpUtils.buildRequiredInputs / buildExampleInput — keep what the caller already passed', () => {
+    const sheetProps = [
+        { name: 'spreadsheetId', type: PropertyType.DROPDOWN, displayName: 'Spreadsheet', required: true },
+        { name: 'sheetId', type: PropertyType.DROPDOWN, displayName: 'Sheet', required: true },
+        { name: 'first_row_headers', type: PropertyType.CHECKBOX, displayName: 'First row headers', required: false },
+        { name: 'values', type: PropertyType.DYNAMIC, displayName: 'Values', required: true },
+    ]
+    const providedInput = { spreadsheetId: 'sheet-123', sheetId: 7, first_row_headers: true }
+
+    it('lists only the required keys the caller has not given under Resolve first', () => {
+        const { provideNow, needsResolution } = mcpUtils.buildRequiredInputs({ props: sheetProps, providedInput })
+        expect(needsResolution).toEqual(['values'])
+        expect(provideNow).toEqual([])
+    })
+
+    it('keeps the caller\'s values, including optional ones, in the example', () => {
+        const example = mcpUtils.buildExampleInput({ props: sheetProps, providedInput })
+        expect(example).toMatchObject({ spreadsheetId: 'sheet-123', sheetId: 7, first_row_headers: true })
+        expect(example.values).toContain('resolve with ap_resolve_property_options')
+    })
+
+    it('treats an empty string or null as not given, but keeps false and 0', () => {
+        const props = [
+            { name: 'url', type: PropertyType.SHORT_TEXT, displayName: 'URL', required: true },
+            { name: 'body', type: PropertyType.SHORT_TEXT, displayName: 'Body', required: true },
+            { name: 'enabled', type: PropertyType.CHECKBOX, displayName: 'Enabled', required: true },
+            { name: 'limit', type: PropertyType.NUMBER, displayName: 'Limit', required: true },
+        ]
+        const providedInput = { url: '', body: null, enabled: false, limit: 0 }
+
+        expect(mcpUtils.buildRequiredInputs({ props, providedInput }).provideNow).toEqual(['url', 'body'])
+        expect(mcpUtils.buildExampleInput({ props, providedInput })).toMatchObject({ url: '<URL>', enabled: false, limit: 0 })
+    })
+
+    it('fills the missing required children of a dynamic object the caller passed', () => {
+        const props = [
+            { name: 'markdown', type: PropertyType.CHECKBOX, displayName: 'Markdown', required: false },
+            {
+                name: 'dynamic',
+                type: PropertyType.DYNAMIC,
+                displayName: 'Options',
+                required: true,
+                dynamicFields: [
+                    { name: 'depth', type: PropertyType.NUMBER, displayName: 'Depth', required: true, defaultValue: 1 },
+                    { name: 'filter', type: PropertyType.SHORT_TEXT, displayName: 'Filter', required: false },
+                ],
+            },
+        ]
+        const providedInput = { markdown: false, dynamic: { filter: 'todo' } }
+
+        expect(mcpUtils.buildExampleInput({ props, providedInput })).toEqual({ markdown: false, dynamic: { filter: 'todo', depth: 1 } })
+        expect(mcpUtils.buildRequiredInputs({ props, providedInput }).needsResolution).toEqual(['dynamic'])
+        expect(mcpUtils.buildRequiredInputs({ props, providedInput: { dynamic: { depth: 2 } } }).needsResolution).toEqual([])
+    })
+
+    it('builds the same output as before when the caller passes nothing', () => {
+        expect(mcpUtils.buildRequiredInputs({ props: sheetProps })).toEqual({ provideNow: [], needsResolution: ['spreadsheetId', 'sheetId', 'values'] })
+        expect(Object.keys(mcpUtils.buildExampleInput({ props: sheetProps }))).toEqual(['spreadsheetId', 'sheetId', 'values'])
     })
 })
 
@@ -401,6 +462,72 @@ describe('mcpUtils.rankActionsByIntent — cardinality bias', () => {
     })
 })
 
+describe('mcpUtils.rankActionsByIntent — AI actions and their human twins', () => {
+    function action({ name, displayName, description, aiDescription, audience }: { name: string, displayName: string, description: string, aiDescription?: string, audience?: string }) {
+        return { name, displayName, description, cardinality: mcpUtils.classifyActionCardinality(name), aiDescription, audience }
+    }
+
+    it('ranks an AI action above its human twin when both match the intent equally', () => {
+        const actions = [
+            action({ name: 'searchMessages', displayName: 'Search Messages', description: 'Search messages in the workspace' }),
+            action({ name: 'slack_search_messages', displayName: 'Search Messages', description: 'Search messages in the workspace', audience: 'ai' }),
+        ]
+        const ranked = mcpUtils.rankActionsByIntent({ actions, forIntent: 'search messages for a keyword' })
+        expect(ranked).toEqual(['slack_search_messages', 'searchMessages'])
+    })
+
+    it('keeps a matching AI action in the top 5 when its human twin and other ties come first in the piece', () => {
+        const actions = [
+            action({ name: 'searchFiles', displayName: 'Search', description: 'Search files' }),
+            ...['one', 'two', 'three', 'four'].map((n) => action({ name: `file_${n}`, displayName: `File ${n}`, description: 'Search files' })),
+            action({ name: 'drive_search_files', displayName: 'Search', description: 'Search files', audience: 'ai' }),
+        ]
+        const ranked = mcpUtils.rankActionsByIntent({ actions, forIntent: 'search files' })
+        expect(ranked).toHaveLength(5)
+        expect(ranked[0]).toBe('drive_search_files')
+        expect(ranked[1]).toBe('searchFiles')
+    })
+
+    it('does not count an intent word that only appears inside another action\'s name', () => {
+        const actions = [
+            action({ name: 'drive_get_file', displayName: 'Get File', description: 'Get a file by ID', aiDescription: 'Resolve the ID via `drive_search_files` first.', audience: 'ai' }),
+            action({ name: 'drive_create_folder', displayName: 'Create Folder', description: 'Create a folder for files', aiDescription: 'Resolve the parent ID via `drive_search_files`.', audience: 'ai' }),
+            action({ name: 'drive_search_files', displayName: 'Search Files and Folders', description: 'Search a folder for files by name', audience: 'ai' }),
+        ]
+        const ranked = mcpUtils.rankActionsByIntent({ actions, forIntent: 'search files by name prefix' })
+        expect(ranked).toEqual(['drive_search_files', 'drive_create_folder'])
+    })
+
+    it('does not count an intent word that only appears in another action\'s display name', () => {
+        const actions = [
+            action({ name: 'searchMessages', displayName: 'Search Messages', description: 'Search messages in the workspace' }),
+            action({ name: 'slack_update_message', displayName: 'Update Message', description: 'Edit a message', aiDescription: 'Take the ts from Search Messages or Get Channel History.', audience: 'ai' }),
+            action({ name: 'slack_search_messages', displayName: 'Search Messages', description: 'Search the workspace for messages', audience: 'ai' }),
+        ]
+        const ranked = mcpUtils.rankActionsByIntent({ actions, forIntent: 'search messages for a keyword' })
+        expect(ranked).toEqual(['slack_search_messages', 'searchMessages'])
+    })
+
+    it('still counts the words in an action\'s own display name when it contains another action\'s display name', () => {
+        const actions = [
+            action({ name: 'send_message', displayName: 'Send Message', description: 'Send a message' }),
+            action({ name: 'send_message_to_user', displayName: 'Send Message To User', description: 'Direct message a user' }),
+        ]
+        const ranked = mcpUtils.rankActionsByIntent({ actions, forIntent: 'send message to a user' })
+        expect(ranked).toEqual(['send_message_to_user', 'send_message'])
+    })
+
+    it('keeps the piece order for equal scores when the piece has no AI actions', () => {
+        const actions = [
+            action({ name: 'create_row', displayName: 'Create Row', description: 'Add a row to a sheet' }),
+            action({ name: 'update_row', displayName: 'Update Row', description: 'Change a row in a sheet' }),
+            action({ name: 'delete_row', displayName: 'Delete Row', description: 'Remove a row from a sheet' }),
+        ]
+        const ranked = mcpUtils.rankActionsByIntent({ actions, forIntent: 'row in a sheet' })
+        expect(ranked).toEqual(['create_row', 'update_row', 'delete_row'])
+    })
+})
+
 describe('mcpUtils.resolveTransitively — collapse the discovery chain', () => {
     it('resolves a dependent chain (base → table → fields) in one pass and seeds parent values', async () => {
         const props = [
@@ -460,7 +587,7 @@ describe('mcpUtils.buildExampleInput — runnable, sentinel-free once resolved',
                 { name: 'name', type: PropertyType.SHORT_TEXT, displayName: 'Name', required: true },
             ] },
         ]
-        const example = mcpUtils.buildExampleInput(props)
+        const example = mcpUtils.buildExampleInput({ props })
         const serialized = JSON.stringify(example)
         expect(serialized).not.toContain('resolve with')
         expect(example.channel).toBe('C123')
@@ -506,5 +633,163 @@ describe('mcpUtils.resolveRouterStep', () => {
         expect(text).toMatchObject({ type: 'text' })
         expect(text && 'text' in text ? text.text : '').toContain('ROUTER or AI_ROUTER')
         expect(text && 'text' in text ? text.text : '').toContain('ai_router')
+    })
+})
+
+describe('mcpUtils.syncContainerExecutionTypes', () => {
+    const props = {
+        assetIds: arrayProp({ displayName: 'Asset Ids', required: true }),
+        headers: objectProp({ displayName: 'Headers', required: false }),
+        body: { type: PropertyType.JSON, displayName: 'Body', required: false },
+        rows: { type: PropertyType.ARRAY, displayName: 'Rows', required: false, properties: { name: shortText('Name') } },
+        note: shortText('Note'),
+    }
+
+    it('marks a list, object or JSON field holding one whole reference as dynamic', () => {
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props,
+            input: { assetIds: '{{step_3.output.assetIds}}', headers: ' {{trigger.headers}} ', body: '{{ step_1.body }}', note: '{{trigger.note}}' },
+            propertySettings: {},
+        })
+        expect(settings).toEqual({
+            assetIds: { type: PropertyExecutionType.DYNAMIC },
+            headers: { type: PropertyExecutionType.DYNAMIC },
+            body: { type: PropertyExecutionType.DYNAMIC },
+        })
+    })
+
+    it('leaves a value that mixes a reference with other text, or holds two references, as it was', () => {
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props,
+            input: { assetIds: '[{{step_1.a}}]', headers: '{{step_1.a}}{{step_1.b}}' },
+            propertySettings: {},
+        })
+        expect(settings).toEqual({})
+    })
+
+    it('puts a real array or object back to manual and keeps the stored schema', () => {
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props,
+            input: { assetIds: ['a', 'b'], headers: { a: '1' } },
+            propertySettings: {
+                assetIds: { type: PropertyExecutionType.DYNAMIC, schema: { kept: true } },
+                headers: { type: PropertyExecutionType.DYNAMIC },
+            },
+        })
+        expect(settings).toEqual({
+            assetIds: { type: PropertyExecutionType.MANUAL, schema: { kept: true } },
+            headers: { type: PropertyExecutionType.MANUAL },
+        })
+    })
+
+    it('leaves a list of fields alone, including one with an empty field list, where dynamic means inline item mode', () => {
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: { ...props, emptyRows: { type: PropertyType.ARRAY, displayName: 'Empty Rows', required: false, properties: {} } },
+            input: { rows: '{{step_1.rows}}', emptyRows: '{{step_1.rows}}' },
+            propertySettings: {},
+        })
+        expect(settings).toEqual({})
+    })
+
+    it('marks a list field inside a dynamic field, keyed by its own name as the builder reads it', () => {
+        const rowDataSchema = {
+            tags: { type: PropertyType.ARRAY, displayName: 'Tags', required: false },
+            meta: { type: PropertyType.JSON, displayName: 'Meta', required: false },
+            name: { type: PropertyType.SHORT_TEXT, displayName: 'Name', required: false },
+        }
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: { row_data: { type: PropertyType.DYNAMIC, displayName: 'Row Data', required: true, refreshers: [], props: async () => ({}) } },
+            input: { row_data: { tags: '{{trigger.body.tags}}', meta: { a: 1 }, name: '{{trigger.body.name}}' } },
+            propertySettings: { row_data: { type: PropertyExecutionType.MANUAL, schema: rowDataSchema }, meta: { type: PropertyExecutionType.DYNAMIC } },
+        })
+        expect(settings).toEqual({
+            row_data: { type: PropertyExecutionType.MANUAL, schema: rowDataSchema },
+            tags: { type: PropertyExecutionType.DYNAMIC },
+            meta: { type: PropertyExecutionType.MANUAL },
+        })
+    })
+
+    it('never lets a field inside a dynamic field overwrite the setting of a top-level field with the same name', () => {
+        const updateDataSchema = { filter_values: { type: PropertyType.ARRAY, displayName: 'Filter Values', required: false } }
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: {
+                filter_values: arrayProp({ displayName: 'Filter Values', required: false }),
+                update_data: { type: PropertyType.DYNAMIC, displayName: 'Update Data', required: true, refreshers: [], props: async () => ({}) },
+            },
+            input: { filter_values: '{{trigger.body.ids}}', update_data: { filter_values: ['a'] } },
+            propertySettings: { filter_values: { type: PropertyExecutionType.DYNAMIC }, update_data: { type: PropertyExecutionType.MANUAL, schema: updateDataSchema } },
+        })
+        expect(settings.filter_values).toEqual({ type: PropertyExecutionType.DYNAMIC })
+    })
+
+    it('lets a field inside a dynamic field set the shared setting when the top-level field with the same name does not need one', () => {
+        const updateDataSchema = { filter_value: { type: PropertyType.ARRAY, displayName: 'Filter Value', required: false } }
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: {
+                filter_value: shortText('Filter Value'),
+                update_data: { type: PropertyType.DYNAMIC, displayName: 'Update Data', required: true, refreshers: [], props: async () => ({}) },
+            },
+            input: { filter_value: 'abc', update_data: { filter_value: '{{trigger.body.tags}}' } },
+            propertySettings: { update_data: { type: PropertyExecutionType.MANUAL, schema: updateDataSchema } },
+        })
+        expect(settings.filter_value).toEqual({ type: PropertyExecutionType.DYNAMIC })
+    })
+
+    it('syncs a field inside a dynamic field named like an inherited object key', () => {
+        const rowDataSchema = { constructor: { type: PropertyType.ARRAY, displayName: 'Constructor', required: false } }
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: { row_data: { type: PropertyType.DYNAMIC, displayName: 'Row Data', required: true, refreshers: [], props: async () => ({}) } },
+            input: { row_data: { constructor: '{{trigger.body.tags}}' } },
+            propertySettings: { row_data: { type: PropertyExecutionType.MANUAL, schema: rowDataSchema } },
+        })
+        expect(settings.constructor).toEqual({ type: PropertyExecutionType.DYNAMIC })
+    })
+
+    it('skips a dynamic field whose schema has not been resolved', () => {
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: { row_data: { type: PropertyType.DYNAMIC, displayName: 'Row Data', required: true, refreshers: [], props: async () => ({}) } },
+            input: { row_data: { tags: '{{trigger.body.tags}}' } },
+            propertySettings: {},
+        })
+        expect(settings).toEqual({})
+    })
+})
+
+describe('mcpUtils.normalizeFormulaText — double braces around a formula', () => {
+    it('turns ap-formula-v1::{{fn(...)}}::ap-formula-v1 into single braces and keeps the references inside', () => {
+        const fixed = mcpUtils.normalizeFormulaText('ap-formula-v1::{{formatDate(addDays(now(); -7); "YYYY-MM-DD")}}::ap-formula-v1')
+
+        expect(fixed).toBe('ap-formula-v1::{formatDate(addDays(now(); -7); "YYYY-MM-DD")}::ap-formula-v1')
+    })
+
+    it('fixes double braces in router conditions too', () => {
+        const trigger: EmptyTrigger = { name: 'trigger', displayName: 'Trigger', type: FlowTriggerType.EMPTY, valid: false, lastUpdatedDate: '2026-10-11T00:00:00.000Z', settings: {} }
+        const conditions = [[{ firstValue: 'ap-formula-v1::{{count(1; 2)}}::ap-formula-v1' }]]
+
+        const rewritten = mcpUtils.rewriteAllReferences({ conditions, trigger })
+
+        expect(rewritten.conditions).toEqual([[{ firstValue: 'ap-formula-v1::{count(1; 2)}::ap-formula-v1' }]])
+    })
+
+    it('leaves a correct formula and a plain reference untouched', () => {
+        const correct = 'ap-formula-v1::{count({{step_1[\'output\'].rows}})}::ap-formula-v1 and {{step_1[\'output\'].id}}'
+
+        expect(mcpUtils.normalizeFormulaText(correct)).toBe(correct)
+    })
+})
+
+describe('mcpUtils.normalizeAuth', () => {
+    it('unwraps the connection template the research tools hand out', () => {
+        expect(mcpUtils.normalizeAuth('{{connections[\'conn_test_id\']}}')).toBe('conn_test_id')
+    })
+
+    it('leaves a plain externalId and undefined alone', () => {
+        expect(mcpUtils.normalizeAuth('conn_test_id')).toBe('conn_test_id')
+        expect(mcpUtils.normalizeAuth(undefined)).toBeUndefined()
+    })
+
+    it('still lets validateAuth reject anything that is not a clean id', () => {
+        const garbage = mcpUtils.normalizeAuth('{{trigger[\'output\'].auth}}')
+        expect(mcpUtils.validateAuth(garbage)).not.toBeNull()
     })
 })

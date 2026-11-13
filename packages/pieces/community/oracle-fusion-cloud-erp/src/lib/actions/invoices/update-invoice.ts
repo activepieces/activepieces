@@ -5,6 +5,7 @@ import { makeClient } from '../../common/client';
 export const updateInvoice = createAction({
     auth: oracleFusionCloudErpAuth,
     name: 'update_invoice',
+    classification: 'WRITE',
     displayName: 'Update Invoice',
     description: 'Updates an existing payables invoice. Note: Only certain attributes can be updated and cascade defaulting does not apply.',
     audience: 'both',

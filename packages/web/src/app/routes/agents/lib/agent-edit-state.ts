@@ -1,3 +1,6 @@
+import { AIProviderName, isNil } from '@activepieces/core-utils';
+import { ModelChoice } from '@activepieces/shared';
+
 function sameConfig({
   left,
   right,
@@ -20,8 +23,50 @@ function modelPickChanged({
   return !(
     same(picked.provider, current.provider) &&
     same(picked.modelName, current.modelName) &&
-    same(picked.providerConfigId, current.providerConfigId)
+    same(picked.providerConfigId, current.providerConfigId) &&
+    same(picked.modelTierId, current.modelTierId)
   );
+}
+
+function hasModel({ config }: { config: ModelPick }): boolean {
+  return (
+    !isNil(config.modelTierId) ||
+    (!isNil(config.provider) && !isNil(config.modelName))
+  );
+}
+
+function modelChoiceOf({ config }: { config: ModelPick }): ModelChoice | null {
+  if (!isNil(config.modelTierId)) {
+    return { type: 'tier', tierId: config.modelTierId };
+  }
+  const provider = Object.values(AIProviderName).find(
+    (name) => name === config.provider,
+  );
+  if (isNil(provider) || isNil(config.modelName)) {
+    return null;
+  }
+  return {
+    type: 'model',
+    provider,
+    providerConfigId: config.providerConfigId ?? '',
+    modelId: config.modelName,
+  };
+}
+
+function modelPickOf({ choice }: { choice: ModelChoice }): ModelPick {
+  return choice.type === 'tier'
+    ? {
+        provider: null,
+        modelName: null,
+        providerConfigId: null,
+        modelTierId: choice.tierId,
+      }
+    : {
+        provider: choice.provider,
+        modelName: choice.modelId,
+        providerConfigId: choice.providerConfigId,
+        modelTierId: null,
+      };
 }
 
 function serverMovedWhileTyping({
@@ -71,6 +116,9 @@ export const agentEditState = {
   sameConfig,
   serverMovedWhileTyping,
   modelPickChanged,
+  hasModel,
+  modelChoiceOf,
+  modelPickOf,
   leaveGuard,
   createWriteLock,
 };
@@ -79,6 +127,7 @@ export type ModelPick = {
   provider?: string | null;
   modelName?: string | null;
   providerConfigId?: string | null;
+  modelTierId?: string | null;
 };
 export type LeaveGuard = {
   open: boolean;

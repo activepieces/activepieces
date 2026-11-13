@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const bookingCompleted = createTrigger({
   auth: oncehubAuth,
   name: 'bookingCompleted',
+  classification: 'READ',
   displayName: 'Booking Completed',
   description: 'Triggered when booking end time has passed.',
   aiMetadata: {

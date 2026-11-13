@@ -1,11 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  httpClient,
-  QueryParams,
-} from '@activepieces/pieces-common';
-import { togglTrackAuth } from '../..';
+import { QueryParams } from '@activepieces/pieces-common';
+import { togglTrackAuth } from '../auth';
 import { togglCommon } from '../common';
+import { togglApi } from '../common/client';
+import { togglModels, TwoTag } from '../common/models';
+import { togglOutputSchemas } from '../output-schemas';
 
 export const findTag = createAction({
   auth: togglTrackAuth,
@@ -14,7 +13,11 @@ export const findTag = createAction({
   displayName: 'Find Tag',
   description: 'Find a tag by name in a workspace.',
   audience: 'both',
-  aiMetadata: { description: 'Lists tags in a Toggl Track workspace, optionally filtered by a name search with pagination; omitting the search returns all tags. Use to resolve a tag before attaching it to a time entry, or to check whether a tag already exists. Read-only and idempotent.', idempotent: true },
+  aiMetadata: {
+    description:
+      'Lists tags in a workspace, optionally filtered by name. Returns an array of tags. Read-only.',
+    idempotent: true,
+  },
   props: {
     workspace_id: togglCommon.workspace_id,
     search: Property.ShortText({
@@ -29,31 +32,40 @@ export const findTag = createAction({
     }),
     per_page: Property.Number({
       displayName: 'Items Per Page',
-      description: 'Number of items per page.',
+      description: 'Number of items per page (Toggl 2.0: max 100).',
       required: false,
     }),
   },
+  outputSchema: togglOutputSchemas.tagList,
   async run(context) {
-    const { workspace_id, search, page, per_page } = context.propsValue;
-    const apiToken = context.auth;
+    const { search, page, per_page } = context.propsValue;
+    const auth = context.auth;
+    const workspaceId = togglApi.requireId({
+      value: context.propsValue.workspace_id,
+      label: 'Workspace',
+    });
+
+    if (togglApi.isTwo(auth)) {
+      const tags = await togglApi.listTwoPageOrAll<TwoTag>({
+        auth,
+        path: `/workspaces/${workspaceId}/tags`,
+        queryParams: search ? { name: search } : {},
+        page: page ?? undefined,
+        perPage: per_page ?? undefined,
+      });
+      return tags.map(togglModels.tag);
+    }
 
     const queryParams: QueryParams = {};
     if (search) queryParams['search'] = search;
     if (page) queryParams['page'] = page.toString();
     if (per_page) queryParams['per_page'] = per_page.toString();
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `https://api.track.toggl.com/api/v9/workspaces/${workspace_id}/tags`,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Basic ${Buffer.from(`${apiToken}:api_token`).toString(
-          'base64'
-        )}`,
-      },
-      queryParams: queryParams,
+    const tags = await togglApi.request<Record<string, unknown>[] | null>({
+      auth,
+      method: togglApi.HttpMethod.GET,
+      path: `/workspaces/${workspaceId}/tags`,
+      queryParams,
     });
-
-    return response.body;
+    return tags ?? [];
   },
 });

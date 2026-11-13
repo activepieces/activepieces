@@ -7,6 +7,7 @@ import { getAuthToken, CyberArkAuth } from '../common/auth-helper';
 export const activateUser = createAction({
   auth: cyberarkAuth,
   name: 'activate_user',
+  classification: 'WRITE',
   displayName: 'Activate User',
   description: 'Activates an existing user who was suspended after entering incorrect credentials multiple times',
   audience: 'both',

@@ -1,19 +1,23 @@
 import { intercomAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { intercomClient, TriggerPayload } from '../common';
+import { ticketTriggerOutputSchema } from '../output-schemas';
+import { toWebhookTicketShape } from '../common/ticket-attributes';
 
 export const newTicketTrigger = createTrigger({
 	auth: intercomAuth,
 	name: 'new-ticket',
+	classification: 'READ',
 	displayName: 'New Ticket',
 	description: 'Triggers when a new ticket is created.',
 	aiMetadata: {
 		description: 'Fires when a new ticket is created in Intercom. Tickets track structured work items such as support requests or tasks. Outputs the newly created ticket object, including its type, state, and custom attributes.',
 	},
 	props: {},
+	outputSchema: ticketTriggerOutputSchema,
 	type: TriggerStrategy.APP_WEBHOOK,
 	async onEnable(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 		const response = await client.admins.identify();
 
 		if (!response.app?.id_code) {
@@ -25,11 +29,11 @@ export const newTicketTrigger = createTrigger({
 			identifierValue: response['app']['id_code'],
 		});
 	},
-	async onDisable(context) {
-		// implement webhook deletion logic
+	async onDisable() {
+		return;
 	},
 	async test(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const response = await client.tickets.search({
 			query: {
@@ -40,7 +44,7 @@ export const newTicketTrigger = createTrigger({
 			pagination: { per_page: 5 },
 		});
 
-		return response.data;
+		return response.data.map(toWebhookTicketShape);
 	},
 	async run(context) {
 		const payload = context.payload.body as TriggerPayload;
@@ -60,7 +64,13 @@ export const newTicketTrigger = createTrigger({
 			'date time': null,
 			files: [],
 		},
-		ticket_state: 'in_progress',
+		ticket_state: {
+			type: 'ticket_state',
+			id: '9744094',
+			category: 'in_progress',
+			internal_label: 'In progress',
+			external_label: 'In progress',
+		},
 		ticket_type: {
 			type: 'ticket_type',
 			id: '1',

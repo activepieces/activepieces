@@ -3,6 +3,7 @@ import { sheets as googleSheets } from '@googleapis/sheets';
 import { isNil } from '@activepieces/pieces-framework';
 import { areSheetIdsValid, createGoogleClient, googleSheetsAuth } from '../common/common';
 import { sheetsUpdateSheetPropertiesActionOutputSchema } from '../output-schemas';
+import { hiddenStateProp, hiddenStateValue } from '../common/props';
 
 export const sheetsUpdateSheetProperties = createAction({
 	auth: googleSheetsAuth,
@@ -45,15 +46,12 @@ export const sheetsUpdateSheetProperties = createAction({
 			description: 'HEX color code for the tab, e.g. #FF0000.',
 			required: false,
 		}),
-		hidden: Property.Checkbox({
-			displayName: 'Hidden',
-			description: 'Whether the worksheet tab is hidden.',
-			required: false,
-		}),
+		hidden: hiddenStateProp('Whether the worksheet tab is hidden.'),
 	},
 	async run(context) {
-		const { spreadsheet_id, sheet_id, frozen_row_count, frozen_column_count, tab_color, hidden } =
+		const { spreadsheet_id, sheet_id, frozen_row_count, frozen_column_count, tab_color } =
 			context.propsValue;
+		const hidden = hiddenStateValue(context.propsValue.hidden);
 
 		if (!areSheetIdsValid(spreadsheet_id, sheet_id)) {
 			throw new Error('Please provide a spreadsheet id and worksheet id.');

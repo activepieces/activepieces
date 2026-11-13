@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertAreaAction = createAction({
   name: 'convert_area',
+  classification: 'READ',
   displayName: 'Convert Area',
   description: 'Convert area measurements between different units',
   audience: 'both',

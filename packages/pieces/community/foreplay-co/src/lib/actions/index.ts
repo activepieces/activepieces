@@ -1,5 +1,7 @@
-export { getAdById } from './get-ad-by-id';
-export { getAdsByPage } from './get-ads-by-page';
-export { findBrands } from './find-brands';
-export { findAds } from './find-ads';
-export { findBoards } from './find-boards';
+import { findAds } from './find-ads';
+import { findBoards } from './find-boards';
+import { findBrands } from './find-brands';
+import { getAdById } from './get-ad-by-id';
+import { getAdsByPage } from './get-ads-by-page';
+
+export { getAdById, getAdsByPage, findBrands, findAds, findBoards };

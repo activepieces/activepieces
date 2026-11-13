@@ -5,6 +5,7 @@ import { makeClient } from '../../common/client';
 export const updateReceivablesInvoice = createAction({
     auth: oracleFusionCloudErpAuth,
     name: 'update_receivables_invoice',
+    classification: 'WRITE',
     displayName: 'Update Receivables Invoice',
     description: 'Updates an existing receivables invoice. Note: Only InvoiceStatus, PaymentTerms, and TransactionDate can be updated.',
     audience: 'both',

@@ -7,6 +7,7 @@ import { clayWebhook } from '../common/webhook';
 
 export const rowReceivedTrigger = createTrigger({
     name: 'row_received',
+    classification: 'READ',
     displayName: 'Row Received from Clay',
     description: 'Triggers when Clay sends a row to this flow.',
     aiMetadata: {

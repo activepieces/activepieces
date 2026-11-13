@@ -1,10 +1,8 @@
-import {
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { TeableCommon, makeClient } from '../common';
-import { TeableAuth, TeableAuthValue } from '../auth';
-import { prepareQuery } from '../common/client';
+import { Property, createAction } from '@activepieces/pieces-framework';
+import { TeableCommon } from '../common';
+import { teableClient } from '../common/client';
+import { TeableAuth } from '../auth';
+import { teableOutputSchemas } from '../output-schemas';
 
 export const findRecordAction = createAction({
   auth: TeableAuth,
@@ -14,7 +12,8 @@ export const findRecordAction = createAction({
   description: 'Retrieves a single record from a table by its ID.',
   audience: 'both',
   aiMetadata: {
-    description: 'Fetches one record from a Teable table by its exact record ID. Use when the agent already knows the record ID and needs its current field values; for lookups by field value use List Records with a filter instead. Read-only and idempotent.',
+    description:
+      'Fetches one record by its exact record ID and returns its current field values. For lookups by value use Search Records (Agent). Read-only and safe to retry.',
     idempotent: true,
   },
   props: {
@@ -34,9 +33,14 @@ export const findRecordAction = createAction({
       },
     }),
   },
+  outputSchema: teableOutputSchemas.record,
   async run(context) {
     const { table_id, record_id, cellFormat } = context.propsValue;
-    const client = makeClient(context.auth as TeableAuthValue);
-    return await client.getRecord(table_id, record_id, prepareQuery({ cellFormat }));
+    return teableClient.getRecord({
+      auth: context.auth,
+      tableId: table_id,
+      recordId: record_id,
+      query: { cellFormat },
+    });
   },
 });

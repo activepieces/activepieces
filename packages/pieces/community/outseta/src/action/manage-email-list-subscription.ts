@@ -5,6 +5,7 @@ import { emailListUidDropdown } from '../common/dropdowns';
 
 export const manageEmailListSubscriptionAction = createAction({
   name: 'manage_email_list_subscription',
+  classification: 'DESTRUCTIVE',
   auth: outsetaAuth,
   displayName: 'Manage Email List Subscription',
   description: 'Subscribe a person to an email list, or unsubscribe them from it.',

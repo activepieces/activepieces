@@ -1,23 +1,21 @@
 import {
   AppConnectionValueForAuthProperty,
-  PiecePropValueSchema,
+  MarkdownVariant,
   Property,
-  StaticPropsValue,
+  tryCatch,
 } from '@activepieces/pieces-framework';
 import { Connection, createConnection } from 'promise-mysql';
 import { mysqlAuth } from '../..';
 import sqlstring from 'sqlstring';
 
 export const warningMarkdown = Property.MarkDown({
-  value: `
-  **DO NOT** use dynamic input directly in the query string or column names.
-  \n
-  Use **?** in the query and dynamic values in args/values for parameterized queries to prevent **SQL injection**.`
+  value: 'Never type dynamic values into the SQL. Write ? instead and put the values in Arguments to prevent SQL injection.',
+  variant: MarkdownVariant.WARNING,
 });
 
 export async function mysqlConnect(
   auth: AppConnectionValueForAuthProperty<typeof mysqlAuth>,
-  propsValue: StaticPropsValue<any>
+  propsValue: MysqlConnectOptions
 ): Promise<Connection> {
   const conn = await createConnection({
     host: auth.props.host,
@@ -35,11 +33,27 @@ export async function mysqlGetTableNames(conn: Connection): Promise<string[]> {
   return result.map((row: Record<string, string>) => row[Object.keys(row)[0]]);
 }
 
+export async function mysqlGetColumns({ conn, table }: { conn: Connection; table: string }): Promise<MysqlColumn[]> {
+  const rows: Record<string, unknown>[] = await conn.query(
+    'SELECT column_name AS column_name, data_type AS data_type, is_nullable AS is_nullable, column_default AS column_default, extra AS extra FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? ORDER BY ordinal_position',
+    [table]
+  );
+  return rows.map((row) => ({
+    column_name: String(row['column_name']),
+    data_type: String(row['data_type']),
+    is_nullable: String(row['is_nullable']),
+    column_default: row['column_default'] === null ? null : String(row['column_default']),
+    extra: String(row['extra']),
+  }));
+}
+
 export const mysqlCommon = {
   timezone: Property.ShortText({
     displayName: 'Timezone',
-    description: 'Timezone for the MySQL server to use',
+    description: 'Timezone of dates on the server: Z for UTC, or an offset like +02:00.',
+    placeholder: '+02:00',
     required: false,
+    advanced: true,
   }),
   table: (required = true) =>
     Property.Dropdown({
@@ -55,12 +69,21 @@ export const mysqlCommon = {
             options: [],
           };
         }
-        const conn = await mysqlConnect(
-          auth,
-          { auth }
-        );
-        const tables = await mysqlGetTableNames(conn);
-        await conn.end();
+        const { data: tables, error } = await tryCatch(() => listTableNames({ auth }));
+        if (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Could not load tables. Check the connection and its Database.',
+          };
+        }
+        if (tables.length === 0) {
+          return {
+            disabled: false,
+            options: [],
+            placeholder: 'No tables found in this database.',
+          };
+        }
         return {
           disabled: false,
           options: tables.map((table) => {
@@ -81,3 +104,24 @@ export function sanitizeColumnName(name: string | undefined): string {
   }
   return sqlstring.escapeId(name);
 }
+
+async function listTableNames({ auth }: { auth: AppConnectionValueForAuthProperty<typeof mysqlAuth> }): Promise<string[]> {
+  const conn = await mysqlConnect(auth, {});
+  try {
+    return await mysqlGetTableNames(conn);
+  } finally {
+    await conn.end();
+  }
+}
+
+export type MysqlConnectOptions = {
+  timezone?: string;
+};
+
+export type MysqlColumn = {
+  column_name: string;
+  data_type: string;
+  is_nullable: string;
+  column_default: string | null;
+  extra: string;
+};

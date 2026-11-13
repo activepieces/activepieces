@@ -1,6 +1,6 @@
 import { inspect } from 'node:util'
 import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { onCallService } from '@activepieces/server-utils'
+import { onCallService, wideEvent } from '@activepieces/server-utils'
 import { BeginExecuteFlowOperation, EngineOperationType, EngineResponseStatus, ExecuteFlowJobData, ExecutionType, FailedStep, FlowActionType, FlowRunStatus, flowStructureUtil, FlowVersion, ResumeExecuteFlowOperation, RunInternalError, RunInternalErrorSource, WorkerJobType } from '@activepieces/shared'
 import { system, WorkerSystemProp } from '../../config/configs'
 import { workerSettings } from '../../config/worker-settings'
@@ -13,7 +13,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
         const timeoutInSeconds = workerSettings.getSettings().FLOW_TIMEOUT_SECONDS
 
         const { data: resolved, error: provisionError } = await tryCatch(() =>
-            ctx.resolver.resolve({ platformId: data.platformId, publicApiUrl: ctx.publicApiUrl, engineToken: ctx.engineToken, flow: { id: data.flowId, versionId: data.flowVersionId, projectId: data.projectId } }),
+            ctx.resolver.resolve({ platformId: data.platformId, internalApiUrl: ctx.internalApiUrl, engineToken: ctx.engineToken, flow: { id: data.flowId, versionId: data.flowVersionId, projectId: data.projectId } }),
         )
         if (provisionError) {
             await reportFlowStatus({ ctx, data, status: FlowRunStatus.INTERNAL_ERROR, internalError: toInternalError(RunInternalErrorSource.WORKER, provisionError) })
@@ -161,6 +161,7 @@ function buildFlowOperation(
         executionType: ExecutionType.BEGIN,
         triggerPayload: data.payload,
         executeTrigger: data.executeTrigger ?? false,
+        entryStepName: data.entryStepName,
         sampleData: data.sampleData,
     }
 }
@@ -189,6 +190,7 @@ function toInternalError(source: RunInternalErrorSource, error: unknown): RunInt
 
 async function reportFlowStatus({ ctx, data, status, internalError, failedStep }: ReportFlowStatusParams): Promise<void> {
     const willRetry = status === FlowRunStatus.INTERNAL_ERROR && !ctx.lastAttempt
+    recordRunOutcomeOnWideEvent({ status, internalError, willRetry, environment: data.environment, failedStepName: failedStep?.name })
     // A status report has no log file of its own; carry logsFileId only for an internalError the server may
     // persist into one (see uploadRunLog). Sending it on a plain status report would dangle flow_run.logsFileId.
     await ctx.apiClient.uploadRunLog({
@@ -214,6 +216,20 @@ async function reportFlowStatus({ ctx, data, status, internalError, failedStep }
     }
 }
 
+function recordRunOutcomeOnWideEvent({ status, internalError, willRetry, environment, failedStepName }: RecordRunOutcomeParams): void {
+    wideEvent.set({ flowRun: { status, willRetry, environment } })
+    if (!isNil(failedStepName)) {
+        wideEvent.set({ step: { name: failedStepName } })
+    }
+    if (isNil(internalError)) {
+        return
+    }
+    wideEvent.set({ flowRun: { internalErrorSource: internalError.source, ...spreadIfDefined('internalErrorCode', internalError.code) } })
+    const error = new Error(internalError.message)
+    error.stack = internalError.message
+    wideEvent.error(error)
+}
+
 function isDedicatedWorker(): boolean {
     return !isNil(system.get(WorkerSystemProp.WORKER_GROUP_ID))
 }
@@ -224,6 +240,14 @@ type ReportFlowStatusParams = {
     status: FlowRunStatus
     internalError?: RunInternalError
     failedStep?: FailedStep
+}
+
+type RecordRunOutcomeParams = {
+    status: FlowRunStatus
+    internalError?: RunInternalError
+    willRetry: boolean
+    environment: ExecuteFlowJobData['environment']
+    failedStepName?: string
 }
 
 type FindStepOwningPieceParams = {

@@ -150,10 +150,29 @@ silently. Worker groups is the last page on the old full-page teaser.
 
 ## Gotchas
 
+- **One purple button per admin page: the header action.** An empty state's own button repeats that action, so it is `variant="outline"` (AI Center Providers "Add key", Tiers "New tier"), and cards below it carry no buttons of their own. Four primaries on one empty Providers page was the complaint that set this. A page locked by plan but still holding data (a downgraded AI Center keeps its keys so they can be deleted) says so in the header, not in a banner: a grey `Read-only` lock pill as the `badge`, the reason as the description, and `Upgrade to …` as the header's primary.
+- **`AdminEmpty`'s `icon` is boxed in a 40px tile; anything wider goes in `media`.** `icon` renders inside `EmptyMedia variant="icon"`, which clips a logo row or illustration to one square. `media` renders unboxed (the AI Center providers empty state passes an `AvatarGroup` of provider logos there).
+- **A `SettingsPanel` header centres its title against its action only when it has no description.** With a description the title block is two lines, so it stays top-aligned; without one, top alignment left a one-line title floating above a taller button (the AI Center provider cards). Pass no `description` rather than an empty one, or the panel keeps the top alignment.
 - **Adding an admin page is three edits**: the sidebar (`components/sidebar/platform`), the route
   (`platform-routes.tsx`), and global search (`components/global-search/static-pages.ts`). Nothing
   checks the three agree. A page whose locked state is the sample overlay also needs a
   `PlanFeatureSample` entry, or it opens unlocked.
+- **Behind the sample overlay, do not hide the page's buttons by plan.** The preview is `inert`, so
+  hiding them (AI Center's old `allowWrite`) only makes the teaser look empty. The overlay is UI only:
+  a server gate is a separate `platformMustHaveFeatureEnabled`, and AI Center's write routes have none.
+  A feature sold on a tier not in `FeatureTier` (AI Center is on Plus) needs that tier added there first.
+- **`platform.admin.page.viewed` fires from the route's `SuspenseWrapper`**, which no redirect renders, so a
+  page route without one (Billing's Stripe return pages) is never counted. `page` is the route pattern, not
+  the URL, and `locked` is true only under the sample overlay, not on a crowned page that locks another way.
+  Renaming a route therefore starts a new series in PostHog; the old one stops, it does not move.
+- **A new admin action control reports its click by carrying `adminControl(AdminControl.AREA_THING_ACTION)`** (decision
+  `000046`). Spread it on the element that receives the click and add the member to the `AdminControl` enum in
+  `src/lib/admin-control.ts`, with the id `area.thing.action` as its value; a test pins the id naming, the
+  member spelling and that every member is used. One document click listener, mounted by `SuspenseWrapper`, reports the nearest tagged element,
+  dialogs and menus included. A shared component needs an optional prop to tag a button it renders itself
+  (`controlId` on `ConfirmationDeleteDialog` and `CopyToClipboardInput`). Do not tag Cancel or Close, the paywall
+  buttons that already report `platform.admin.*` events, the Configurations consent controls, or a Radix
+  Select value choice, which a click listener cannot see reliably.
 - **Moving or renaming a route needs a `LEGACY_PATHS` row**, or every bookmark, doc link and in-flight
   Stripe checkout to the old URL lands on a 404.
 - **Source folders still follow the old grouping** (`routes/platform/security/embed`,

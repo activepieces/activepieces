@@ -5,6 +5,7 @@ import { TALKABLE_API_URL } from '../../common/constants';
 
 export const updateReferralStatus = createAction({
   name: 'update-referral-status', // Must be a unique across the piece, this shouldn't be changed.
+  classification: 'DESTRUCTIVE',
   auth: talkableAuth,
   displayName: 'Update referral status',
   description: 'You can void or approve referral',

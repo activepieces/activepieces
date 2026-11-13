@@ -7,6 +7,7 @@ import { getIssueIdDropdown, getProjectIdDropdown, getUsersDropdown } from '../c
 export const assignIssueAction = createAction({
 	auth: jiraCloudAuth,
 	name: 'assign_issue',
+	classification: 'WRITE',
 	displayName: 'Assign Issue',
 	description: 'Assigns an issue to a user.',
 	audience: 'human',
@@ -15,11 +16,28 @@ export const assignIssueAction = createAction({
 			'Set the assignee of an existing Jira issue to a chosen user, replacing any current assignee. Use to route ownership of an issue; it changes only the assignee field, nothing else. Idempotent: assigning the same user again leaves the issue unchanged.',
 		idempotent: true,
 	},
+	propertyGroups: [
+		{
+			key: 'issue',
+			display: 'section',
+			label: 'Issue',
+			icon: 'inbox',
+			props: ['projectId', 'issueId'],
+		},
+		{
+			key: 'assignment',
+			display: 'section',
+			label: 'Assignment',
+			icon: 'user',
+			props: ['assignee'],
+		},
+	],
 	props: {
 		projectId: getProjectIdDropdown(),
 		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),
 		assignee: getUsersDropdown({
 			displayName: 'Assignee',
+			description: 'The person who will own the issue.',
 			refreshers: ['projectId'],
 			required: true,
 		}),

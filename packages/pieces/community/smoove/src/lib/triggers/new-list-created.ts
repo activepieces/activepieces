@@ -72,6 +72,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof smooveAuth>, {
 export const newListCreated = createTrigger({
     auth: smooveAuth,
     name: 'newListCreated',
+    classification: 'READ',
     displayName: 'New List Created',
     description: 'Fires when a new mailing list is created in your Smoove account',
     aiMetadata: {
@@ -130,13 +131,11 @@ export const newListCreated = createTrigger({
     },
     
     async onEnable(context) {
-        const { store, auth, propsValue } = context;
-        await pollingHelper.onEnable(polling, { store, auth, propsValue });
+        await pollingHelper.onEnable(polling, context);
     },
     
     async onDisable(context) {
-        const { store, auth, propsValue } = context;
-        await pollingHelper.onDisable(polling, { store, auth, propsValue });
+        await pollingHelper.onDisable(polling, context);
     },
     
     async run(context) {

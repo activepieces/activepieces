@@ -84,7 +84,7 @@ export function formatFieldValues(
         }
         break;
       default:
-        if (value === null || value === undefined) {
+        if (value === null || value === undefined || value === '') {
           result[key] = options.skipEmpty ? undefined : null;
         } else {
           result[key] = value;
@@ -150,11 +150,31 @@ function collectRequestedSelectValues(value: unknown): string[] {
   return [];
 }
 
+function buildRowLabel({
+  row,
+  primaryFieldName,
+}: {
+  row: { id: number } & Record<string, unknown>;
+  primaryFieldName: string | undefined;
+}): string {
+  const primaryValue =
+    primaryFieldName === undefined ? undefined : row[primaryFieldName];
+  const primaryText =
+    typeof primaryValue === 'string' && primaryValue !== ''
+      ? primaryValue
+      : typeof primaryValue === 'number'
+      ? String(primaryValue)
+      : undefined;
+  return primaryText === undefined
+    ? `Row #${row.id}`
+    : `${primaryText} (#${row.id})`;
+}
+
 export const baserowCommon = {
   tableId: (required = true) =>
     Property.Dropdown({
       displayName: 'Table',
-      description: 'Select the table.',
+      description: 'Only tables this connection can access are listed.',
       required,
       auth: baserowAuth,
       refreshers: ['auth'],
@@ -177,11 +197,15 @@ export const baserowCommon = {
   rowId: (required = true) =>
     Property.Dropdown({
       displayName: 'Row',
-      description: 'Select the row.',
+      description: 'Type to search the rows by any cell value.',
       required,
       auth: baserowAuth,
       refreshers: ['auth', 'table_id'],
-      options: async ({ auth, table_id }): Promise<DropdownState<number>> => {
+      refreshOnSearch: true,
+      options: async (
+        { auth, table_id },
+        { searchValue }
+      ): Promise<DropdownState<number>> => {
         if (!auth || typeof table_id !== 'number') {
           return {
             disabled: true,
@@ -190,17 +214,17 @@ export const baserowCommon = {
           };
         }
         const client = await makeClient(auth);
-        const response = await client.listRows(table_id, undefined, 200);
+        const [response, fields] = await Promise.all([
+          client.listRows(table_id, undefined, 200, searchValue || undefined),
+          client.listTableFields(table_id),
+        ]);
+        const primaryFieldName = fields.find((field) => field.primary)?.name;
         return {
           disabled: false,
-          options: response.results.map((row) => {
-            const primaryValue = Object.entries(row)
-              .filter(([k]) => k !== 'id' && k !== 'order')
-              .map(([, v]) => (typeof v === 'string' && v ? v : null))
-              .find(Boolean);
-            const label = primaryValue ? `#${row.id} ${primaryValue}` : `Row #${row.id}`;
-            return { label, value: row.id };
-          }),
+          options: response.results.map((row) => ({
+            label: buildRowLabel({ row, primaryFieldName }),
+            value: row.id,
+          })),
         };
       },
     }),
@@ -233,18 +257,16 @@ export const baserowCommon = {
                   fields[field.name] = Property.Number({
                     displayName: field.name,
                     required: false,
-                    description: `Enter valid value between 1 and ${field.max_value}.`,
+                    description: `A number from 1 to ${field.max_value}.`,
                   });
                   break;
                 case BaserowFieldType.DATE:
                   fields[field.name] = Property.DateTime({
                     displayName: field.name,
                     required: false,
-                    description: `Enter date in ${field.date_format} format ${
-                      field.date_include_time
-                        ? 'and time in ' + field.date_time_format + ' hour format'
-                        : ''
-                    }.`,
+                    placeholder: field.date_include_time
+                      ? '2026-01-31T14:30:00Z'
+                      : '2026-01-31',
                   });
                   break;
                 case BaserowFieldType.DURATION:
@@ -257,7 +279,7 @@ export const baserowCommon = {
                   fields[field.name] = Property.Array({
                     displayName: field.name,
                     required: false,
-                    description: `Enter row ids from table(ID: ${field.link_row_table_id}) that you want to link to.`,
+                    description: 'IDs of rows in the linked table.',
                   });
                   break;
                 case BaserowFieldType.LONG_TEXT:
@@ -270,7 +292,7 @@ export const baserowCommon = {
                   fields[field.name] = Property.Array({
                     displayName: field.name,
                     required: false,
-                    description: 'Enter user ids that you want to link to.',
+                    description: 'User IDs of workspace members.',
                   });
                   break;
                 case BaserowFieldType.SINGLE_SELECT:

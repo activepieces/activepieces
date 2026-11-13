@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertVolumeAction = createAction({
   name: 'convert_volume',
+  classification: 'READ',
   displayName: 'Convert Volume',
   description: 'Convert volume measurements between different units',
   audience: 'both',

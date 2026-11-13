@@ -18,6 +18,7 @@ interface NewCancelledCaseTriggerPayload {
 
 export const newCancelledCase = createTrigger({
     name: 'new_cancelled_case',
+    classification: 'READ',
     displayName: 'New Cancelled Case',
     description: "Triggers when a collection process for a given sequence (case) was cancelled.",
     aiMetadata: {

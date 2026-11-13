@@ -2,6 +2,7 @@ import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, ProjectId, SeekPage 
 import { CreateFolderRequest, Folder, FolderDto, FolderId, UpdateFolderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
+import { distributedLock } from '../../database/redis-connections'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { tableService } from '../../tables/table/table.service'
@@ -39,30 +40,36 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
     },
     async upsert(params: UpsertParams): Promise<FolderDto> {
         const { projectId, request } = params
-        const folderWithDisplayName = await this.getOneByDisplayNameCaseInsensitive({
-            projectId,
-            displayName: request.displayName,
+        const existingFolder = await this.getOneByDisplayNameCaseInsensitive({ projectId, displayName: request.displayName })
+        if (!isNil(existingFolder)) {
+            return this.getOneOrThrow({ projectId, folderId: existingFolder.id })
+        }
+        return distributedLock(log).runExclusive({
+            key: folderUpsertLockKey({ projectId, displayName: request.displayName }),
+            timeoutInSeconds: FOLDER_UPSERT_LOCK_TIMEOUT_SECONDS,
+            fn: async () => {
+                const folderWithDisplayName = await this.getOneByDisplayNameCaseInsensitive({
+                    projectId,
+                    displayName: request.displayName,
+                })
+                if (!isNil(folderWithDisplayName)) {
+                    return this.getOneOrThrow({ projectId, folderId: folderWithDisplayName.id })
+                }
+                const folderId = apId()
+                await folderRepo().upsert({
+                    id: folderId,
+                    projectId,
+                    displayName: request.displayName,
+                    externalId: folderId,
+                }, ['projectId', 'displayName'])
+                const folder = await folderRepo().findOneByOrFail({ projectId, id: folderId })
+                return {
+                    ...folder,
+                    numberOfFlows: 0,
+                    numberOfTables: 0,
+                }
+            },
         })
-        if (!isNil(folderWithDisplayName)) {
-            return this.update({
-                projectId,
-                folderId: folderWithDisplayName.id,
-                request,
-            })
-        }
-        const folderId = apId()
-        await folderRepo().upsert({
-            id: folderId,
-            projectId,
-            displayName: request.displayName,
-            externalId: folderId,
-        }, ['projectId', 'displayName'])
-        const folder = await folderRepo().findOneByOrFail({ projectId, id: folderId })
-        return {
-            ...folder,
-            numberOfFlows: 0,
-            numberOfTables: 0,
-        }
     },
     async listAllByProject(params: ListAllParams): Promise<Folder[]> {
         const { projectId } = params
@@ -153,6 +160,12 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
         }
     },
 })
+
+function folderUpsertLockKey({ projectId, displayName }: { projectId: ProjectId, displayName: string }): string {
+    return `folder-upsert-${projectId}-${displayName.trim().toLowerCase()}`
+}
+
+const FOLDER_UPSERT_LOCK_TIMEOUT_SECONDS = 30
 
 type DeleteParams = {
     projectId: ProjectId

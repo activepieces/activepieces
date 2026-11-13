@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { typeformAuth } from '../auth';
 import { typeformCommon, TypeformRecord } from '../common';
@@ -9,7 +9,7 @@ export const updateChoiceOptionsAction = createAction({
   name: 'update_choice_options',
   classification: 'WRITE',
   displayName: 'Update Choice Options',
-  description: 'Replaces the options of a dropdown, multiple choice or ranking question.',
+  description: 'Replaces the options of a choice question in a form.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -17,18 +17,26 @@ export const updateChoiceOptionsAction = createAction({
     idempotent: true,
   },
   outputSchema: formOutputSchema,
+  propertyGroups: [
+    { key: 'question', display: 'section', label: 'Target', icon: 'type', props: ['form_id', 'field'] },
+    { key: 'changes', display: 'section', label: 'Changes', icon: 'tag', props: ['changes_info', 'choices'] },
+  ],
   props: {
     form_id: typeformCommon.form,
     field: typeformCommon.choiceField,
+    changes_info: Property.MarkDown({
+      value: 'This list replaces every current option. Options whose label stays the same keep their past answers.',
+      variant: MarkdownVariant.INFO,
+    }),
     choices: Property.Array({
       displayName: 'Options',
-      description: 'The full new list of option labels, in order.',
+      description: 'One label per option, in the order they should appear.',
       required: true,
     }),
   },
   async run({ auth, propsValue }) {
     const { form_id, field, choices } = propsValue;
-    const labels = typeformCommon.toStringList({ values: choices });
+    const labels = [...new Set(typeformCommon.toStringList({ values: choices }))];
     if (labels.length === 0) {
       throw new Error('Options must contain at least one label.');
     }

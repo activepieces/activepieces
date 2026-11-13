@@ -32,6 +32,7 @@ const polling: Polling<
 export const chatClosed = createTrigger({
   auth: timelinesAiAuth,
   name: 'chatClosed',
+  classification: 'READ',
   displayName: 'Chat Closed',
   description: 'Fires when a chat is closed.',
   aiMetadata: {
@@ -44,13 +45,11 @@ export const chatClosed = createTrigger({
     return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {

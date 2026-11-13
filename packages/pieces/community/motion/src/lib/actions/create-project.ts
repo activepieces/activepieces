@@ -6,6 +6,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const createProject = createAction({
   auth: motionAuth,
   name: 'create-project',
+  classification: 'WRITE',
   displayName: 'Create Project',
   description: 'Create a new project in Motion',
   audience: 'both',

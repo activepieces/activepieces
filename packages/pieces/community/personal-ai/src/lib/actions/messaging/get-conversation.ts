@@ -6,6 +6,7 @@ import { BASE_URL } from '../../../index';
 export const getConversation = createAction({
   auth:personalAiAuth,
   name: 'get_conversation',
+  classification: 'SEARCH',
   displayName: 'Get Conversation History',
   description: 'Retrieve conversation history from AI assistant.',
   audience: 'both',

@@ -229,6 +229,17 @@ function toTypeformError({ error }: { error: unknown }): unknown {
   return new Error(`${code} (${status}): ${description}${details}`.trim());
 }
 
+function workspaceDropdown({ description }: { description: string }) {
+  return Property.Dropdown<string, false, typeof typeformAuth>({
+    auth: typeformAuth,
+    displayName: 'Workspace',
+    description,
+    required: false,
+    refreshers: [],
+    options: async ({ auth }) => workspaceOptions({ token: auth?.access_token }),
+  });
+}
+
 async function workspaceOptions({ token }: { token: string | undefined }): Promise<DropdownState<string>> {
   if (!token) {
     return { disabled: true, placeholder: 'Connect your Typeform account', options: [] };
@@ -284,7 +295,6 @@ const CHOICE_FIELD_TYPES = ['dropdown', 'multiple_choice', 'ranking', 'picture_c
 export const formsDropdown = Property.Dropdown<string, true, typeof typeformAuth>({
   auth: typeformAuth,
   displayName: 'Form',
-  description: 'Form Name',
   required: true,
   refreshers: [],
   async options({ auth: authentication }) {
@@ -293,7 +303,7 @@ export const formsDropdown = Property.Dropdown<string, true, typeof typeformAuth
     if (!auth) {
       return {
         disabled: true,
-        placeholder: 'Connect typeform account',
+        placeholder: 'Connect your Typeform account',
         options: [],
       };
     }
@@ -331,9 +341,17 @@ export const formsDropdown = Property.Dropdown<string, true, typeof typeformAuth
       page++;
     } while (hasMore);
 
+    if (options.length === 0) {
+      return {
+        disabled: false,
+        options: [],
+        placeholder: 'No forms found. Create one in Typeform first.',
+      };
+    }
+
     return {
       disabled: false,
-      placeholder: 'Select form',
+      placeholder: 'Select a form',
       options,
     };
   },
@@ -385,18 +403,12 @@ export const typeformCommon = {
     return await httpClient.sendRequest(request);
   },
   form: formsDropdown,
-  workspace: Property.Dropdown<string, false, typeof typeformAuth>({
-    auth: typeformAuth,
-    displayName: 'Workspace',
-    description: 'Workspace ID, from List Workspaces.',
-    required: false,
-    refreshers: [],
-    options: async ({ auth }) => workspaceOptions({ token: auth?.access_token }),
-  }),
+  workspace: workspaceDropdown({ description: 'Leave empty for your default workspace.' }),
+  copyWorkspace: workspaceDropdown({ description: "Leave empty to keep the original form's workspace." }),
   theme: Property.Dropdown<string, false, typeof typeformAuth>({
     auth: typeformAuth,
     displayName: 'Theme',
-    description: 'Theme ID, from List Themes.',
+    description: "Leave empty for Typeform's default theme.",
     required: false,
     refreshers: [],
     options: async ({ auth }) => themeOptions({ token: auth?.access_token }),
@@ -404,19 +416,26 @@ export const typeformCommon = {
   choiceField: Property.Dropdown<string, true, typeof typeformAuth>({
     auth: typeformAuth,
     displayName: 'Question',
-    description: 'Dropdown, multiple choice, ranking or picture choice question. Field ID or ref, from Get Form.',
+    description: 'Dropdown, multiple choice, ranking and picture choice questions.',
     required: true,
     refreshers: ['form_id'],
     async options({ auth, form_id }) {
-      if (!auth || typeof form_id !== 'string' || form_id.length === 0) {
+      if (!auth) {
+        return { disabled: true, placeholder: 'Connect your Typeform account', options: [] };
+      }
+      if (typeof form_id !== 'string' || form_id.length === 0) {
         return { disabled: true, placeholder: 'Select a form first', options: [] };
       }
       const form = await getForm({ token: auth.access_token, formId: form_id });
+      const options = flattenFields({ fields: form['fields'] })
+        .filter((field) => CHOICE_FIELD_TYPES.includes(String(field['type'])))
+        .map((field) => ({ label: String(field['title'] ?? field['id']), value: String(field['id']) }));
+      if (options.length === 0) {
+        return { disabled: false, options: [], placeholder: 'This form has no choice questions.' };
+      }
       return {
         disabled: false,
-        options: flattenFields({ fields: form['fields'] })
-          .filter((field) => CHOICE_FIELD_TYPES.includes(String(field['type'])))
-          .map((field) => ({ label: String(field['title'] ?? field['id']), value: String(field['id']) })),
+        options,
       };
     },
   }),

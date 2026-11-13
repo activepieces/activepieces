@@ -1,24 +1,98 @@
-import {
-  AuthenticationType,
-  DedupeStrategy,
-  httpClient,
-  HttpMethod,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import {
-  AppConnectionValueForAuthProperty,
-  createTrigger,
-  OAuth2PropertyValue,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
+import { Property, Store, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { zohoCrmAuth } from '../auth';
+import { errorText } from '../common/client';
+import { listFields } from '../common/metadata';
+import { CURSOR_KEY, PollCursor, initCursor, zohoNow } from '../common/polling';
+import { pollModule, sampleModule } from '../common/record-trigger';
+
+const MAX_EXTRA_FIELDS = 4;
+
+const CONTACT_FIELDS = [
+  'Owner',
+  'Email',
+  '$currency_symbol',
+  '$field_states',
+  'Other_Phone',
+  'Mailing_State',
+  'Other_State',
+  '$sharing_permission',
+  'Other_Country',
+  'Last_Activity_Time',
+  'Department',
+  '$state',
+  'Unsubscribed_Mode',
+  '$process_flow',
+  'Assistant',
+  'Mailing_Country',
+  'id',
+  'Reporting_To',
+  '$approval',
+  'Enrich_Status__s',
+  'Other_City',
+  'Created_Time',
+  '$wizard_connection_path',
+  '$editable',
+  'Home_Phone',
+  'Created_By',
+  '$zia_owner_assignment',
+  'Secondary_Email',
+  'Description',
+  'Vendor_Name',
+  'Mailing_Zip',
+  '$review_process',
+  'Twitter',
+  'Other_Zip',
+  'Mailing_Street',
+  '$canvas_id',
+  'Salutation',
+  'First_Name',
+  'Full_Name',
+  'Asst_Phone',
+  'Record_Image',
+  'Modified_By',
+  '$review',
+  'Skype_ID',
+  'Phone',
+  'Account_Name',
+];
+
+export function contactFieldsParam(extra: unknown): string {
+  const picked = Array.isArray(extra) ? extra.map(String).filter((f) => f && !CONTACT_FIELDS.includes(f)) : [];
+  const unique = [...new Set(picked)].slice(0, MAX_EXTRA_FIELDS);
+  return [...CONTACT_FIELDS, ...unique].join(',');
+}
+
+const newContactProps = {
+  additional_fields: Property.MultiSelectDropdown({
+    auth: zohoCrmAuth,
+    displayName: 'Additional Fields',
+    description: `Optional. Up to ${MAX_EXTRA_FIELDS} extra Contacts fields (for example custom fields) to include. Zoho returns at most 50 fields per record and this trigger already requests 46 standard ones.`,
+    required: false,
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return { disabled: true, options: [], placeholder: 'Connect your Zoho CRM account first' };
+      }
+      try {
+        const fields = await listFields({ auth, module: 'Contacts' });
+        return {
+          disabled: false,
+          options: fields
+            .filter((f) => f.visible !== false && !CONTACT_FIELDS.includes(f.api_name))
+            .map((f) => ({ label: f.display_label ?? f.field_label ?? f.api_name, value: f.api_name })),
+        };
+      } catch (error) {
+        return { disabled: true, options: [], placeholder: `Could not load fields: ${errorText(error)}` };
+      }
+    },
+  }),
+};
 
 export const newContact = createTrigger({
   auth: zohoCrmAuth,
 
   name: 'new_contact',
+  classification: 'READ',
   displayName: 'New Contact',
   description: 'Triggers when a new contact is created',
   aiMetadata: {
@@ -93,108 +167,48 @@ export const newContact = createTrigger({
     Secondary_Email: null,
   },
   type: TriggerStrategy.POLLING,
-  props: {},
+  props: newContactProps,
+  async onEnable(context): Promise<void> {
+    if (context.isRepublish) {
+      await adoptLegacyCursor(context.store);
+    }
+    await initCursor({ store: context.store, isRepublish: context.isRepublish, now: () => zohoNow({ auth: context.auth, module: 'Contacts' }) });
+  },
+  async onDisable(): Promise<void> {
+    return;
+  },
   async run(context) {
-    return await pollingHelper.poll(polling, {
+    await adoptLegacyCursor(context.store);
+    return pollModule({
       auth: context.auth,
       store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
+      module: 'Contacts',
+      fields: contactFieldsParam(context.propsValue.additional_fields).split(','),
+      sortBy: 'Created_Time',
+      apiVersion: LEGACY_API_VERSION,
     });
   },
-  async test({ auth, propsValue, store, files }): Promise<unknown[]> {
-    return await pollingHelper.test(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
-      files: files,
-    });
-  },
-  async onEnable({ auth, propsValue, store }): Promise<void> {
-    await pollingHelper.onEnable(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
-    });
-  },
-  async onDisable({ auth, propsValue, store }): Promise<void> {
-    await pollingHelper.onDisable(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
+  async test(context): Promise<unknown[]> {
+    return sampleModule({
+      auth: context.auth,
+      module: 'Contacts',
+      fields: contactFieldsParam(context.propsValue.additional_fields).split(','),
+      sortBy: 'Created_Time',
+      apiVersion: LEGACY_API_VERSION,
     });
   },
 });
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof zohoCrmAuth>, unknown> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth }) => {
-    const response = await httpClient.sendRequest<{
-      data: { Created_Time: string }[];
-    }>({
-      url: `${auth.data.api_domain}/crm/v4/Contacts`,
-      method: HttpMethod.GET,
-      queryParams: {
-        perPage: '200',
-        sort_order: 'desc',
-        sort_by: 'Created_Time',
-        fields: [
-          'Owner',
-          'Email',
-          '$currency_symbol',
-          '$field_states',
-          'Other_Phone',
-          'Mailing_State',
-          'Other_State',
-          '$sharing_permission',
-          'Other_Country',
-          'Last_Activity_Time',
-          'Department',
-          '$state',
-          'Unsubscribed_Mode',
-          '$process_flow',
-          'Assistant',
-          'Mailing_Country',
-          'id',
-          'Reporting_To',
-          '$approval',
-          'Enrich_Status__s',
-          'Other_City',
-          'Created_Time',
-          '$wizard_connection_path',
-          '$editable',
-          'Home_Phone',
-          'Created_By',
-          '$zia_owner_assignment',
-          'Secondary_Email',
-          'Description',
-          'Vendor_Name',
-          'Mailing_Zip',
-          '$review_process',
-          'Twitter',
-          'Other_Zip',
-          'Mailing_Street',
-          '$canvas_id',
-          'Salutation',
-          'First_Name',
-          'Full_Name',
-          'Asst_Phone',
-          'Record_Image',
-          'Modified_By',
-          '$review',
-          'Skype_ID',
-          'Phone',
-          'Account_Name',
-        ].join(','),
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.access_token,
-      },
-    });
-    return response.body.data.map((record) => ({
-      epochMilliSeconds: dayjs(record.Created_Time).valueOf(),
-      data: record,
-    }));
-  },
-};
+async function adoptLegacyCursor(store: Store): Promise<void> {
+  if (await store.get<PollCursor>(CURSOR_KEY)) {
+    return;
+  }
+  const lastPoll = await store.get<unknown>(LEGACY_LAST_POLL_KEY);
+  if (typeof lastPoll === 'number' && Number.isFinite(lastPoll)) {
+    await store.put<PollCursor>(CURSOR_KEY, { time: lastPoll + 1, ids: [] });
+    await store.delete(LEGACY_LAST_POLL_KEY);
+  }
+}
+
+const LEGACY_LAST_POLL_KEY = 'lastPoll';
+const LEGACY_API_VERSION = 'v4';

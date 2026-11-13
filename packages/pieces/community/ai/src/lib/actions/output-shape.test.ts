@@ -18,6 +18,7 @@ vi.mock('@activepieces/pieces-common', async (importOriginal) => {
 const sendRequest = vi.mocked(httpClient.sendRequest);
 
 const provider = { provider: 'openai', configId: 'config-1' };
+const aiProviderModel = { provider: 'openai', model: 'gpt-test', configId: 'config-1' };
 
 function answered(answer: unknown, conversation?: unknown) {
   return { body: { output: { answer, conversation } } };
@@ -35,7 +36,7 @@ beforeEach(() => {
 describe('the shape every AI action returns once the worker answers', () => {
   it('Ask AI returns the answer as a bare string', async () => {
     const output = await askAI.run(createMockActionContext({
-      propsValue: { provider, model: 'gpt-test', prompt: 'weather?', webSearch: false, maxOutputTokens: 2000 },
+      propsValue: { aiProviderModel, prompt: 'weather?', webSearch: false, maxOutputTokens: 2000 },
       resumePayload: answered('sunny'),
     }));
 
@@ -45,8 +46,7 @@ describe('the shape every AI action returns once the worker answers', () => {
   it('Ask AI returns text and sources together when web search asks for sources', async () => {
     const output = await askAI.run(createMockActionContext({
       propsValue: {
-        provider,
-        model: 'gpt-test',
+        aiProviderModel,
         prompt: 'weather?',
         webSearch: true,
         webSearchOptions: { includeSources: true },
@@ -60,7 +60,7 @@ describe('the shape every AI action returns once the worker answers', () => {
 
   it('Summarize Text returns the summary as a bare string', async () => {
     const output = await summarizeText.run(createMockActionContext({
-      propsValue: { provider, model: 'gpt-test', text: 'a long article', prompt: 'Summarize', maxOutputTokens: 2000 },
+      propsValue: { aiProviderModel, text: 'a long article', prompt: 'Summarize', maxOutputTokens: 2000 },
       resumePayload: answered('the short version'),
     }));
 
@@ -69,7 +69,7 @@ describe('the shape every AI action returns once the worker answers', () => {
 
   it('Classify Text returns the chosen label as a bare string', async () => {
     const output = await classifyText.run(createMockActionContext({
-      propsValue: { provider, model: 'gpt-test', text: 'it is warm today', categories: ['sunny', 'rainy'] },
+      propsValue: { aiProviderModel, text: 'it is warm today', categories: ['sunny', 'rainy'] },
       resumePayload: answered('sunny'),
     }));
 
@@ -79,8 +79,7 @@ describe('the shape every AI action returns once the worker answers', () => {
   it('Extract Structured Data returns the extracted object itself', async () => {
     const output = await extractStructuredData.run(createMockActionContext({
       propsValue: {
-        provider,
-        model: 'gpt-test',
+        aiProviderModel,
         text: 'an invoice totalling 42',
         mode: 'simple',
         schema: { fields: [{ name: 'total', type: 'number', isRequired: true }] },
@@ -107,7 +106,7 @@ describe('handing the step to the worker', () => {
     const waitedOn: string[] = [];
 
     const output = await askAI.run(createMockActionContext({
-      propsValue: { provider, model: 'gpt-test', prompt: 'weather?', webSearch: false, maxOutputTokens: 2000 },
+      propsValue: { aiProviderModel, prompt: 'weather?', webSearch: false, maxOutputTokens: 2000 },
       onWaitForWaitpoint: (waitpointId) => waitedOn.push(waitpointId),
     }));
 
@@ -120,7 +119,7 @@ describe('handing the step to the worker', () => {
     const created: { resumeDateTime?: string }[] = [];
 
     await askAI.run(createMockActionContext({
-      propsValue: { provider, model: 'gpt-test', prompt: 'weather?', webSearch: false, maxOutputTokens: 2000 },
+      propsValue: { aiProviderModel, prompt: 'weather?', webSearch: false, maxOutputTokens: 2000 },
       onCreateWaitpoint: (waitpoint) => created.push(waitpoint),
     }));
 
@@ -132,7 +131,7 @@ describe('handing the step to the worker', () => {
     sendRequest.mockResolvedValue(answered('sunny') as never);
 
     const output = await askAI.run(createMockActionContext({
-      propsValue: { provider, model: 'gpt-test', prompt: 'weather?', webSearch: false, maxOutputTokens: 2000 },
+      propsValue: { aiProviderModel, prompt: 'weather?', webSearch: false, maxOutputTokens: 2000 },
       canPause: false,
     }));
 
@@ -142,14 +141,14 @@ describe('handing the step to the worker', () => {
 
   it('raises the failure the worker reported', async () => {
     await expect(askAI.run(createMockActionContext({
-      propsValue: { provider, model: 'gpt-test', prompt: 'weather?', webSearch: false, maxOutputTokens: 2000 },
+      propsValue: { aiProviderModel, prompt: 'weather?', webSearch: false, maxOutputTokens: 2000 },
       resumePayload: { body: { failure: 'the model refused' } },
     }))).rejects.toThrow('the model refused');
   });
 
   it('raises a clear error when the backstop fires with nothing to report', async () => {
     await expect(askAI.run(createMockActionContext({
-      propsValue: { provider, model: 'gpt-test', prompt: 'weather?', webSearch: false, maxOutputTokens: 2000 },
+      propsValue: { aiProviderModel, prompt: 'weather?', webSearch: false, maxOutputTokens: 2000 },
       resumePayload: { body: undefined },
     }))).rejects.toThrow('did not report a result');
   });
@@ -158,7 +157,7 @@ describe('handing the step to the worker', () => {
 describe('what a saved flow sends over the wire', () => {
   it('turns categories saved as numbers into strings', async () => {
     await classifyText.run(createMockActionContext({
-      propsValue: { provider, model: 'gpt-test', text: 'two', categories: [1, 2] },
+      propsValue: { aiProviderModel, text: 'two', categories: [1, 2] },
     }));
 
     expect(requestBody()['categories']).toEqual(['1', '2']);
@@ -167,8 +166,7 @@ describe('what a saved flow sends over the wire', () => {
   it('skips an empty file row instead of sending it', async () => {
     await extractStructuredData.run(createMockActionContext({
       propsValue: {
-        provider,
-        model: 'gpt-test',
+        aiProviderModel,
         text: 'an invoice',
         files: [{ file: undefined }],
         mode: 'simple',
@@ -181,7 +179,7 @@ describe('what a saved flow sends over the wire', () => {
 
   it('reads an Ask AI history stored in the legacy messages wrapper', async () => {
     const context = createMockActionContext({
-      propsValue: { provider, model: 'gpt-test', prompt: 'and then?', conversationKey: 'thread-1', webSearch: false },
+      propsValue: { aiProviderModel, prompt: 'and then?', conversationKey: 'thread-1', webSearch: false },
     });
     context.store.get = (async () => ({ messages: [{ role: 'user', content: 'hello' }] })) as typeof context.store.get;
 
@@ -207,8 +205,7 @@ describe('what a saved flow sends over the wire', () => {
   it('turns a web search limit saved as text into the number the schema accepts', async () => {
     await askAI.run(createMockActionContext({
       propsValue: {
-        provider,
-        model: 'gpt-test',
+        aiProviderModel,
         prompt: 'weather?',
         webSearch: true,
         webSearchOptions: { maxUses: '7', allowedDomains: ['example.com'] },
@@ -223,8 +220,7 @@ describe('what a saved flow sends over the wire', () => {
   it('drops a stale Include Sources left behind by a provider that has no native search', async () => {
     await askAI.run(createMockActionContext({
       propsValue: {
-        provider: { provider: 'openrouter', configId: 'config-1' },
-        model: 'some/model',
+        aiProviderModel: { provider: 'openrouter', model: 'some/model', configId: 'config-1' },
         prompt: 'weather?',
         webSearch: true,
         webSearchOptions: { includeSources: true },
@@ -235,11 +231,27 @@ describe('what a saved flow sends over the wire', () => {
     expect(webSearch.options).not.toHaveProperty('includeSources');
   });
 
+  it('sends only the tier id and drops Include Sources when the step runs on a platform tier', async () => {
+    await askAI.run(createMockActionContext({
+      propsValue: {
+        aiProviderModel: { modelTierId: 'tier_1' },
+        prompt: 'weather?',
+        webSearch: true,
+        webSearchOptions: { includeSources: true, maxUses: 3 },
+      },
+    }));
+
+    const body = requestBody();
+    expect(body['modelTierId']).toBe('tier_1');
+    expect(body).not.toHaveProperty('provider');
+    expect(body).not.toHaveProperty('modelId');
+    expect((body['webSearch'] as { options: Record<string, unknown> }).options).toEqual({ maxUses: 3 });
+  });
+
   it('still runs an Extract whose only file row is empty, as it did before', async () => {
     await extractStructuredData.run(createMockActionContext({
       propsValue: {
-        provider,
-        model: 'gpt-test',
+        aiProviderModel,
         files: [{ file: undefined }],
         mode: 'simple',
         schema: { fields: [] },
@@ -251,7 +263,7 @@ describe('what a saved flow sends over the wire', () => {
 
   it('sends the creativity as a temperature the model understands', async () => {
     await askAI.run(createMockActionContext({
-      propsValue: { provider, model: 'gpt-test', prompt: 'weather?', creativity: 50, webSearch: false },
+      propsValue: { aiProviderModel, prompt: 'weather?', creativity: 50, webSearch: false },
     }));
 
     expect(requestBody()['temperature']).toBe(0.5);
@@ -275,8 +287,7 @@ describe('what a resumed step does before it reads its answer', () => {
   it('Extract Structured Data does not upload its attachments a second time', async () => {
     const { context, uploads } = countingUploads(createMockActionContext({
       propsValue: {
-        provider,
-        model: 'gpt-test',
+        aiProviderModel,
         text: 'an invoice totalling 42',
         files: [fileProp()],
         mode: 'simple',
@@ -309,8 +320,7 @@ describe('what a resumed step does before it reads its answer', () => {
   it('still uploads on the first run, so the worker has something to read', async () => {
     const { context, uploads } = countingUploads(createMockActionContext({
       propsValue: {
-        provider,
-        model: 'gpt-test',
+        aiProviderModel,
         text: 'an invoice totalling 42',
         files: [fileProp()],
         mode: 'simple',

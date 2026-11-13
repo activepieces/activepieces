@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import {
-  flowCanvasUtils as sharedFlowCanvasUtils,
   FlowActionType,
+  flowCanvasUtils as sharedFlowCanvasUtils,
   flowStructureUtil,
   FlowTriggerType,
   FlowVersion,
@@ -17,7 +17,6 @@ import {
   PanOnScrollMode,
   useKeyPress,
   BackgroundVariant,
-  getNodesBounds,
   CoordinateExtent,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -160,9 +159,9 @@ export const FlowCanvas = React.memo(
         .filter((step) => !isNil(step));
       selectedSteps.forEach((step) => {
         if (
-          step.type === FlowActionType.LOOP_ON_ITEMS ||
+          sharedFlowCanvasUtils.isLoopOrBatchStep(step) ||
           flowStructureUtil.isBranchedAction(step) ||
-          sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
+          flowStructureUtil.hasContinueOnFailureBranches(step)
         ) {
           const childrenNotSelected = flowStructureUtil
             .getAllChildSteps(step)
@@ -185,19 +184,12 @@ export const FlowCanvas = React.memo(
     const translateExtent = useMemo(() => {
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight + 100;
-      const nodes = graph.nodes;
-      const graphRectangle = getNodesBounds(nodes);
-      const start = {
-        x: graphRectangle.x - windowWidth,
-        y: graphRectangle.y - windowHeight,
-      };
-      const end = {
-        x: graphRectangle.x + graphRectangle.width + windowWidth,
-        y: graphRectangle.y + graphRectangle.height + windowHeight,
-      };
+      const positions = graph.nodes.map((node) => node.position);
+      const xs = positions.map((position) => position.x);
+      const ys = positions.map((position) => position.y);
       const extent: CoordinateExtent = [
-        [start.x, start.y],
-        [end.x, end.y],
+        [Math.min(...xs) - windowWidth, Math.min(...ys) - windowHeight],
+        [Math.max(...xs) + windowWidth, Math.max(...ys) + windowHeight],
       ];
       return extent;
     }, [graphKey]);
@@ -205,7 +197,7 @@ export const FlowCanvas = React.memo(
     return (
       <div
         ref={containerRef}
-        className="size-full relative overflow-hidden z-30 bg-builder-background"
+        className="size-full relative overflow-hidden z-30 bg-gray-2"
         onMouseMove={(event) => {
           const cursorPosition = { x: event.clientX, y: event.clientY };
           setCursorPosition(cursorPosition);
@@ -215,7 +207,7 @@ export const FlowCanvas = React.memo(
           <CanvasContextMenu contextMenuType={contextMenuType}>
             <ReactFlow
               key={`canvas-${canvasOrientation}`}
-              className="bg-builder-background"
+              className="bg-gray-2"
               onContextMenu={onContextMenu}
               onPaneClick={() => {
                 reactFlowStore.getState().unselectNodesAndEdges();
@@ -252,8 +244,8 @@ export const FlowCanvas = React.memo(
                 gap={10}
                 size={1}
                 variant={BackgroundVariant.Dots}
-                bgColor={`var(--builder-background)`}
-                color={`var(--builder-background-pattern)`}
+                bgColor={`var(--gray-2)`}
+                color={`var(--gray-8)`}
               />
               <Minimap key={graphKey} />
             </ReactFlow>
@@ -268,6 +260,7 @@ FlowCanvas.displayName = 'FlowCanvas';
 const getChildrenKey = (step: Step) => {
   switch (step.type) {
     case FlowActionType.LOOP_ON_ITEMS:
+    case FlowActionType.PROCESS_IN_BATCHES:
       return step.firstLoopAction ? step.firstLoopAction.name : '';
     case FlowActionType.ROUTER:
     case FlowActionType.AI_ROUTER:
@@ -284,8 +277,7 @@ const getChildrenKey = (step: Step) => {
       }, '');
     case FlowActionType.CODE:
     case FlowActionType.PIECE: {
-      const cofEnabled =
-        sharedFlowCanvasUtils.hasContinueOnFailureBranches(step);
+      const cofEnabled = flowStructureUtil.hasContinueOnFailureBranches(step);
       const branches = step.continueOnFailureBranches;
       const onSuccessKey = branches?.onSuccess
         ? flowStructureUtil

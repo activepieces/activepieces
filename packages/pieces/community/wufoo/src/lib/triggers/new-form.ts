@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property, isNil } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { wufooAuth } from '../auth';
 import { wufooApiCall } from '../common/client';
@@ -62,6 +62,7 @@ export const newFormTrigger = createTrigger({
 
   async onEnable(context) {
     const { responseFormat } = context.propsValue;
+    const keepExistingState = context.isRepublish === true && !isNil(await context.store.get(LAST_FORM_IDS_KEY));
 
     try {
       const response = await wufooApiCall<{ Forms: WufooForm[] }>({
@@ -69,6 +70,10 @@ export const newFormTrigger = createTrigger({
         method: HttpMethod.GET,
         resourceUri: `/forms.${responseFormat || 'json'}`,
       });
+
+      if (keepExistingState) {
+        return;
+      }
 
       const hashes = response.Forms.map((form) => form.Hash);
       await context.store.put<string[]>(LAST_FORM_IDS_KEY, hashes);

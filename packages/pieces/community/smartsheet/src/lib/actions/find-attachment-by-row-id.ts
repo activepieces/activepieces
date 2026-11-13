@@ -6,6 +6,7 @@ import { smartsheetCommon } from '../common';
 export const findAttachmentByRowId = createAction({
   auth: smartsheetAuth,
   name: 'find_attachment_by_row_id',
+  classification: 'SEARCH',
   displayName: 'List Row Attachments',
   description: 'Get all attachments for a specific row in a Smartsheet, including row and discussion-level attachments with comprehensive pagination and filtering options',
   audience: 'both',

@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 import { todoistRestClient } from './client/rest-client';
 import { todoistAuth } from '../..';
 
@@ -20,15 +20,15 @@ export const todoistProjectIdDropdown = (description: string) =>
 		options: async ({ auth }) => {
 			if (!auth) {
 				return buildEmptyList({
-					placeholder: 'Please select an authentication',
+					placeholder: 'Connect your Todoist account first',
 				});
 			}
 
-			const token = (auth as OAuth2PropertyValue).access_token;
+			const token = auth.access_token;
 			const projects = await todoistRestClient.projects.list({ token });
 			if (projects.length === 0) {
 				return buildEmptyList({
-					placeholder: 'No projects found! Please create a project.',
+					placeholder: 'No projects found. Create one in Todoist first.',
 				});
 			}
 
@@ -47,22 +47,23 @@ export const todoistProjectIdDropdown = (description: string) =>
 export const todoistSectionIdDropdown = Property.Dropdown({
 	auth: todoistAuth,
 	displayName: 'Section',
+	description: 'Leave empty to add the task outside any section.',
 	refreshers: ['project_id'],
 	required: false,
 	options: async ({ auth, project_id }) => {
 		if (!auth) {
 			return buildEmptyList({
-				placeholder: 'Please select an authentication',
+				placeholder: 'Connect your Todoist account first',
 			});
 		}
 
-		const token = (auth as OAuth2PropertyValue).access_token;
+		const token = auth.access_token;
 		const projectId = project_id as string | undefined;
 		const sections = await todoistRestClient.sections.list({ token, project_id: projectId });
 
 		if (sections.length === 0) {
 			return buildEmptyList({
-				placeholder: 'No sections found! Please create a section.',
+				placeholder: 'No sections found. Create one in Todoist first.',
 			});
 		}
 

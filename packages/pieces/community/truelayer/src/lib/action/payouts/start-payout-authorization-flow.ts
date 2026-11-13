@@ -6,6 +6,7 @@ import { trueLayerCommon } from '../../common';
 export const startPayoutAuthorizationFlow = createAction({
   auth: trueLayerCommon.auth,
   name: 'start-payout-authorization-flow',
+  classification: 'WRITE',
   displayName: 'Start authorization flow',
   description: 'Start the authorization flow for a payout. This API can be called using the `resource_token` associated with the payout you are trying to fetch.',
   audience: 'both',

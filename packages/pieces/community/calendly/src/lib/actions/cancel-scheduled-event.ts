@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { calendlyAuth } from '../auth';
 import { calendlyCommon, CalendlyRecord } from '../common';
@@ -17,8 +17,28 @@ export const cancelScheduledEventAction = createAction({
     idempotent: false,
   },
   outputSchema: cancellationOutputSchema,
+  propertyGroups: [
+    {
+      key: 'event',
+      display: 'section',
+      label: 'Event to Cancel',
+      icon: 'calendar',
+      props: ['cancelInfo', 'scheduledEvent'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message to Invitees',
+      icon: 'send',
+      props: ['reason'],
+    },
+  ],
   props: {
-    scheduledEvent: calendlyCommon.scheduledEvent,
+    cancelInfo: Property.MarkDown({
+      value: 'Calendly emails the invitees. A canceled event cannot be restored.',
+      variant: MarkdownVariant.INFO,
+    }),
+    scheduledEvent: calendlyCommon.bookedEvent,
     reason: Property.LongText({
       displayName: 'Reason',
       description: 'Shown to the invitees. Up to 10,000 characters.',

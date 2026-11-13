@@ -79,7 +79,7 @@ export function FeedbackDialog({
                 variant={selected ? 'secondary' : 'outline'}
                 aria-pressed={selected}
                 onClick={() => toggleReason(reason)}
-                className={cn('rounded-full', selected && 'border-foreground')}
+                className={cn('rounded-full', selected && 'border-gray-12')}
               >
                 {t(REASON_LABELS[reason])}
               </Button>
@@ -95,7 +95,7 @@ export function FeedbackDialog({
         />
         <DialogFooter className="items-center gap-2 sm:justify-between">
           {mutation.isError ? (
-            <span className="text-sm text-destructive">
+            <span className="text-sm text-danger-11">
               {t("Couldn't submit feedback. Please try again.")}
             </span>
           ) : (

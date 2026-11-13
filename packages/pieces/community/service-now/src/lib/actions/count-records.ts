@@ -8,6 +8,7 @@ import {
 export const countRecordsAction = createAction({
   auth: servicenowAuth,
   name: 'count_records',
+  classification: 'SEARCH',
   displayName: 'Count Records',
   description:
     'Return the number of records in a table that match an optional encoded query (uses the Aggregate API)',

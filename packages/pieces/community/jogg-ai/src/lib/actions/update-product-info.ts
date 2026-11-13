@@ -9,6 +9,7 @@ import { joggAiAuth } from '../..';
 
 export const updateProductInfo = createAction({
   name: 'updateProductInfo',
+  classification: 'WRITE',
   displayName: 'Update Product Info',
   description: 'Updates existing product information using product ID',
   audience: 'both',

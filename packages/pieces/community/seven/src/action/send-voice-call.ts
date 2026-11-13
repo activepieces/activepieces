@@ -6,6 +6,7 @@ import { callSevenApi } from '../common';
 export const sendVoiceCallAction = createAction({
   auth: sevenAuth,
   name: 'send-voice-call',
+  classification: 'WRITE',
   displayName: 'Send Voice Call',
   description: 'Creates a new Text-To-Speech call to a number.',
   audience: 'both',

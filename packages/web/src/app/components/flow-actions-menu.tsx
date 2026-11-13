@@ -62,8 +62,16 @@ type FlowActionMenuProps = {
   onDelete: () => void;
   onOwnerChange?: () => void;
 } & (
-  | { insideBuilder: true; onVersionsListClick: () => void }
-  | { insideBuilder: false; onVersionsListClick: null }
+  | {
+      insideBuilder: true;
+      onVersionsListClick: () => void;
+      savePendingEdits: () => Promise<void>;
+    }
+  | {
+      insideBuilder: false;
+      onVersionsListClick: null;
+      savePendingEdits: null;
+    }
 );
 
 const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
@@ -78,6 +86,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   onOwnerChange,
   onVersionsListClick,
   insideBuilder,
+  savePendingEdits,
 }) => {
   const isRunsPage = useLocation().pathname.includes('/runs');
   const { platform } = platformHooks.useCurrentPlatform();
@@ -315,7 +324,11 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
               <PermissionNeededTooltip
                 hasPermission={userHasPermissionToUpdateFlow}
               >
-                <ImportFlowDialog insideBuilder={true} flowId={flow.id}>
+                <ImportFlowDialog
+                  insideBuilder={true}
+                  flowId={flow.id}
+                  savePendingEdits={savePendingEdits}
+                >
                   <DropdownMenuItem
                     disabled={!userHasPermissionToUpdateFlow}
                     onSelect={(e) => e.preventDefault()}
@@ -371,7 +384,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                         )}
                       </div>
                       {isDevelopmentBranch && (
-                        <div className="font-bold mt-2">
+                        <div className="font-semibold mt-2">
                           {t(
                             'You are on a development branch, this will also delete the flow from the remote repository.',
                           )}
@@ -392,8 +405,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                      <span className="text-destructive">{t('Delete')}</span>
+                      <Trash2 className="h-4 w-4 text-danger-11" />
+                      <span className="text-danger-11">{t('Delete')}</span>
                     </div>
                   </DropdownMenuItem>
                 </ConfirmationDeleteDialog>

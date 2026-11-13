@@ -1,14 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { redditAuth } from '../auth';
+import { redditApi } from '../common/client';
+import { createRedditPostOutputSchema } from '../output-schemas';
 
 export const createRedditPost = createAction({
   auth: redditAuth,
   name: 'createRedditPost',
+  outputSchema: createRedditPostOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Post',
   description: 'Submit a new self (text) post to a subreddit.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Submits a new self (text) post to a subreddit on behalf of the authenticated account. Use it to publish original text content; it cannot post links, images, or media. Requires the target subreddit, a title, and the text body. Not idempotent — each call creates a separate post.', idempotent: false },
   props: {
     subreddit: Property.ShortText({
@@ -29,35 +32,12 @@ export const createRedditPost = createAction({
   },
   async run(context) {
     const { subreddit, title, content } = context.propsValue;
-
-    const url = 'https://oauth.reddit.com/api/submit';
-
-    const payload = new URLSearchParams({
-      api_type: 'json',
-      sr: subreddit,
-      title,
-      text: content,
-      kind: 'self',
-    });
-
-    const response = await httpClient.sendRequest({
+    return redditApi.request<unknown>({
+      auth: context.auth,
       method: HttpMethod.POST,
-      url,
-      headers: {
-        'Authorization': `Bearer ${context.auth.access_token}`,
-        'User-Agent': 'ActivePieces Reddit Client',
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: payload.toString(),
+      allowJsonErrors: true,
+      path: '/api/submit',
+      form: { api_type: 'json', sr: subreddit, title, text: content, kind: 'self' },
     });
-
-    if (response.status !== 200) {
-      return {
-        error: `Failed to create post: ${response.status}`,
-        details: response.body,
-      };
-    }
-
-    return response.body;
   },
 });

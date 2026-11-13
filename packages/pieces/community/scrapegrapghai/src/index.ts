@@ -1,33 +1,27 @@
-import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
-import { smartScraper } from './lib/actions/smart-scraper';
-import { localScraper } from './lib/actions/local-scraper';
-import { markdownify } from './lib/actions/markdownify';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { scrapegraphaiAuth } from './lib/auth';
-
-const markdownDescription = `
-Follow these steps to obtain your ScrapeGraphAI API Key:
-
-1. Visit [ScrapeGraphAI](https://scrapegraphai.com) and create an account.
-2. Log in and navigate to your dashboard.
-3. Locate and copy your API key from the dashboard.
-`;
+import { scrapegraphaiClient } from './lib/common/client';
+import { smartScraperAction } from './lib/actions/smart-scraper';
+import { localScraperAction } from './lib/actions/local-scraper';
+import { markdownifyAction } from './lib/actions/convert-to-markdown';
+import { scrapegraphaiAiActions } from './lib/actions/ai';
 
 export const scrapegraphai = createPiece({
   displayName: 'ScrapeGraphAI',
   description: 'AI-powered web scraping and content extraction.',
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/scrapegraphai.jpg',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["OsamaHaikal"],
   auth: scrapegraphaiAuth,
   actions: [
-    smartScraper,
-    localScraper,
-    markdownify,
+    smartScraperAction,
+    localScraperAction,
+    markdownifyAction,
+    ...scrapegraphaiAiActions,
     createCustomApiCallAction({
-      baseUrl: () => 'https://api.scrapegraphai.com/v1',
+      baseUrl: () => scrapegraphaiClient.baseUrl(),
       auth: scrapegraphaiAuth,
       authMapping: async (auth) => ({
         'SGAI-APIKEY': `${auth.secret_text}`,
@@ -36,4 +30,3 @@ export const scrapegraphai = createPiece({
   ],
   triggers: [],
 });
-    

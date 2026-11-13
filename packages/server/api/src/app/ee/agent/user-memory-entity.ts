@@ -28,6 +28,10 @@ export const UserMemoryEntity = new EntitySchema<UserMemoryWithRelations>({
             nullable: false,
             default: '[]',
         },
+        importNudgeShownAt: {
+            type: 'timestamp with time zone',
+            nullable: true,
+        },
     },
     indices: [
         {

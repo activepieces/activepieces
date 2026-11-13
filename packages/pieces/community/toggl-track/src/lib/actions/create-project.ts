@@ -1,7 +1,13 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { togglTrackAuth } from '../..';
+import {
+  createAction,
+  isNil,
+  Property,
+} from '@activepieces/pieces-framework';
+import { togglTrackAuth } from '../auth';
 import { togglCommon } from '../common';
+import { togglApi } from '../common/client';
+import { togglModels, TwoProject } from '../common/models';
+import { togglOutputSchemas } from '../output-schemas';
 
 export const createProject = createAction({
   auth: togglTrackAuth,
@@ -10,7 +16,11 @@ export const createProject = createAction({
   displayName: 'Create Project',
   description: 'Create a new project in a workspace.',
   audience: 'both',
-  aiMetadata: { description: 'Creates a new project in a Toggl Track workspace, given a workspace ID and project name; optionally links a client and sets billing, rate, color, and timeframe (several rate/estimate options require a premium plan). Use when an agent needs to set up a project to track time against. Not idempotent: each call creates a new project regardless of name.', idempotent: false },
+  aiMetadata: {
+    description:
+      'Creates a project in a workspace. Needs the workspace and a name; client, privacy, billable, color, estimate, fee, and dates are optional (hourly rate and external reference are Classic only). Returns the new project. A retry creates a duplicate.',
+    idempotent: false,
+  },
   props: {
     workspace_id: togglCommon.workspace_id,
     name: Property.ShortText({
@@ -40,7 +50,7 @@ export const createProject = createAction({
     external_reference: Property.ShortText({
       displayName: 'External Reference',
       description:
-        'External reference to link this project with external systems.',
+        'External system reference. Toggl Track (Classic) only.',
       required: false,
     }),
     color: Property.ShortText({
@@ -50,7 +60,7 @@ export const createProject = createAction({
     }),
     active: Property.Checkbox({
       displayName: 'Active',
-      description: 'Whether the project is active.',
+      description: 'Whether the project is active. Toggl Track (Classic) only.',
       required: false,
       defaultValue: true,
     }),
@@ -68,12 +78,14 @@ export const createProject = createAction({
     }),
     rate: Property.Number({
       displayName: 'Hourly Rate',
-      description: 'Hourly rate for the project. (Premium feature)',
+      description:
+        'Hourly rate. Premium feature, Toggl Track (Classic) only.',
       required: false,
     }),
     fixed_fee: Property.Number({
       displayName: 'Fixed Fee',
-      description: 'Project fixed fee. (Premium feature)',
+      description:
+        'Project fixed fee, in the workspace currency. (Premium feature)',
       required: false,
     }),
     start_date: Property.ShortText({
@@ -87,11 +99,10 @@ export const createProject = createAction({
       required: false,
     }),
   },
+  outputSchema: togglOutputSchemas.project,
   async run(context) {
     const {
-      workspace_id,
       name,
-      client_id,
       is_private,
       billable,
       template,
@@ -105,37 +116,75 @@ export const createProject = createAction({
       start_date,
       end_date,
     } = context.propsValue;
-    const apiToken = context.auth;
-
-    const body = {
-      name,
-      is_private,
-      billable,
-      template,
-      active,
-      auto_estimates,
-      ...(client_id && { client_id }),
-      ...(external_reference && { external_reference }),
-      ...(color && { color }),
-      ...(estimated_hours && { estimated_hours }),
-      ...(rate && { rate }),
-      ...(fixed_fee && { fixed_fee }),
-      ...(start_date && { start_date }),
-      ...(end_date && { end_date }),
-    };
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://api.track.toggl.com/api/v9/workspaces/${workspace_id}/projects`,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Basic ${Buffer.from(`${apiToken}:api_token`).toString(
-          'base64'
-        )}`,
-      },
-      body,
+    const auth = context.auth;
+    const workspaceId = togglApi.requireId({
+      value: context.propsValue.workspace_id,
+      label: 'Workspace',
+    });
+    const clientId = togglApi.optionalId({
+      value: context.propsValue.client_id,
+      label: 'Client',
     });
 
-    return response.body;
+    if (togglApi.isTwo(auth)) {
+      const currency = isNil(fixed_fee)
+        ? undefined
+        : (
+            await togglApi.request<{ currency: string }>({
+              auth,
+              method: togglApi.HttpMethod.GET,
+              path: `/workspaces/${workspaceId}/currency`,
+            })
+          ).currency;
+      const created = await togglApi.request<TwoProject>({
+        auth,
+        method: togglApi.HttpMethod.POST,
+        path: togglApi.twoWorkspacePath({
+          auth,
+          workspaceId,
+          path: '/projects',
+        }),
+        body: {
+          name,
+          private: is_private,
+          billable,
+          is_template: template,
+          auto_compute_estimates: auto_estimates,
+          ...(isNil(clientId) ? {} : { client_id: clientId }),
+          ...(color ? { color } : {}),
+          ...(isNil(estimated_hours)
+            ? {}
+            : { estimated_mins: Math.round(estimated_hours * 60) }),
+          ...(isNil(fixed_fee) || isNil(currency)
+            ? {}
+            : { fixed_fee: { amount: fixed_fee, currency } }),
+          ...(start_date ? { start_date } : {}),
+          ...(end_date ? { end_date } : {}),
+        },
+      });
+      return togglModels.project(created);
+    }
+
+    return togglApi.request<Record<string, unknown>>({
+      auth,
+      method: togglApi.HttpMethod.POST,
+      path: `/workspaces/${workspaceId}/projects`,
+      body: {
+        name,
+        is_private,
+        billable,
+        template,
+        active,
+        auto_estimates,
+        ...(isNil(clientId) ? {} : { client_id: clientId }),
+        ...(external_reference ? { external_reference } : {}),
+        ...(color ? { color } : {}),
+        ...(isNil(estimated_hours) ? {} : { estimated_hours }),
+        ...(isNil(rate) ? {} : { rate }),
+        ...(isNil(fixed_fee) ? {} : { fixed_fee }),
+        ...(start_date ? { start_date } : {}),
+        ...(end_date ? { end_date } : {}),
+      },
+    });
   },
 });

@@ -6,6 +6,7 @@ import { wedofCommon } from '../../common/wedof';
 export const refuseRegistrationFolder = createAction({
   auth: wedofAuth,
   name: 'refuseRegistrationFolder',
+  classification: 'DESTRUCTIVE',
   displayName: 'Refuser le dossier de formation',
   description: 'Refuser le dossier de formation',
   audience: 'both',

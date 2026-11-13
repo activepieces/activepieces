@@ -1,25 +1,28 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import snowflake, { RowStatement, SnowflakeError } from 'snowflake-sdk';
 import { snowflakeAuth } from '../auth';
-import { configureConnection, SnowflakeAuthValue } from '../common';
+import {
+  DEFAULT_APPLICATION_NAME,
+  toAuthValue,
+  withSnowflake,
+} from '../common';
+import { multipleQueriesOutputSchema } from '../common/output-schemas';
+import { toBind } from '../common/sql';
 
-type QueryResult = unknown[] | undefined;
-type QueryResults = { query: string; result: QueryResult }[];
-
-const DEFAULT_APPLICATION_NAME = 'ActivePieces';
 const DEFAULT_QUERY_TIMEOUT = 30000;
 
 export const runMultipleQueries = createAction({
   name: 'runMultipleQueries',
+  classification: 'WRITE',
   displayName: 'Run Multiple Queries',
   description:
     'Execute multiple SQL statements in sequence against your Snowflake database. Optionally wrap them in a transaction so all changes are rolled back if any statement fails.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Runs an ordered list of SQL statements against Snowflake in a single connection, with an option to wrap the whole batch in one transaction so a failure rolls back all preceding changes. Use this for multi-statement scripts or when several statements must succeed or fail together; for a single statement use Run Query. Bind shared dynamic values via numbered `:1`/`:2` placeholders (avoid `?` here). Not idempotent when the batch contains DML/DDL, since those mutate state on each call.',
+      'Runs an ordered list of SQL statements in one session, optionally inside one transaction that rolls back on failure. Human-only; agents chain the atomic actions instead. Re-running repeats every change.',
     idempotent: false,
   },
+  outputSchema: multipleQueriesOutputSchema,
   auth: snowflakeAuth,
   props: {
     sqlTexts: Property.Array({
@@ -44,7 +47,7 @@ export const runMultipleQueries = createAction({
     timeout: Property.Number({
       displayName: 'Query Timeout (ms)',
       description:
-        'Maximum time in milliseconds to wait for each query to complete before cancelling it. Defaults to 30 000 ms (30 seconds).',
+        'Maximum time in milliseconds each query may run before Snowflake cancels it (applied as STATEMENT_TIMEOUT_IN_SECONDS, capped at 540 seconds). Defaults to 30 000 ms (30 seconds).',
       required: false,
       defaultValue: DEFAULT_QUERY_TIMEOUT,
     }),
@@ -56,107 +59,35 @@ export const runMultipleQueries = createAction({
       defaultValue: DEFAULT_APPLICATION_NAME,
     }),
   },
-
   async run(context) {
-    const connection = configureConnection(
-      context.auth as SnowflakeAuthValue,
-      context.propsValue.application,
-      context.propsValue.timeout
-    );
-
-    return new Promise<QueryResults>((resolve, reject) => {
-      connection.connect(async function (err: SnowflakeError | undefined) {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        const { sqlTexts, binds, useTransaction } = context.propsValue;
-        const queryResults: QueryResults = [];
-
-        function handleError(err: SnowflakeError) {
+    const { sqlTexts, binds, useTransaction, timeout, application } =
+      context.propsValue;
+    const bindValues = (binds ?? []).map(toBind);
+    return withSnowflake({
+      auth: toAuthValue(context.auth),
+      application: application || DEFAULT_APPLICATION_NAME,
+      statementTimeoutSeconds: (timeout ?? DEFAULT_QUERY_TIMEOUT) / 1000,
+      fn: async (session) => {
+        const results: { query: string; result: unknown[] }[] = [];
+        if (useTransaction) await session.query({ sql: 'BEGIN' });
+        try {
+          for (const sqlText of sqlTexts) {
+            const query = String(sqlText);
+            const result = await session.query({
+              sql: query,
+              binds: bindValues,
+            });
+            results.push({ query, result: result.rows });
+          }
+          if (useTransaction) await session.query({ sql: 'COMMIT' });
+        } catch (error) {
           if (useTransaction) {
-            connection.execute({
-              sqlText: 'ROLLBACK',
-              complete: () => {
-                connection.destroy(() => {
-                  reject(err);
-                });
-              },
-            });
-          } else {
-            connection.destroy(() => {
-              reject(err);
-            });
+            await session.query({ sql: 'ROLLBACK' }).catch(() => undefined);
           }
+          throw error;
         }
-
-        async function executeQueriesSequentially() {
-          try {
-            if (useTransaction) {
-              await new Promise<void>((resolveBegin, rejectBegin) => {
-                connection.execute({
-                  sqlText: 'BEGIN',
-                  complete: (err: SnowflakeError | undefined) => {
-                    if (err) rejectBegin(err);
-                    else resolveBegin();
-                  },
-                });
-              });
-            }
-            for (const sqlText of sqlTexts) {
-              const result = await new Promise<QueryResult>(
-                (resolveQuery, rejectQuery) => {
-                  connection.execute({
-                    sqlText: sqlText as string,
-                    binds: binds as snowflake.Binds,
-                    complete: (
-                      err: SnowflakeError | undefined,
-                      stmt: RowStatement,
-                      rows: QueryResult
-                    ) => {
-                      if (err) {
-                        rejectQuery(err);
-                        return;
-                      }
-                      resolveQuery(rows);
-                    },
-                  });
-                }
-              );
-
-              queryResults.push({
-                query: sqlText as string,
-                result,
-              });
-            }
-
-            if (useTransaction) {
-              await new Promise<void>((resolveCommit, rejectCommit) => {
-                connection.execute({
-                  sqlText: 'COMMIT',
-                  complete: (err: SnowflakeError | undefined) => {
-                    if (err) rejectCommit(err);
-                    else resolveCommit();
-                  },
-                });
-              });
-            }
-
-            connection.destroy((err: SnowflakeError | undefined) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              resolve(queryResults);
-            });
-          } catch (err) {
-            handleError(err as SnowflakeError); // Reject with the original error!
-          }
-        }
-
-        executeQueriesSequentially();
-      });
+        return results;
+      },
     });
   },
 });

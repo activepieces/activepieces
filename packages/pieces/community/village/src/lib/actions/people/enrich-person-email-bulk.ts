@@ -14,6 +14,7 @@ type IdentifierRow = {
 export const enrichPersonEmailBulk = createAction({
   auth: villageAuth,
   name: 'enrich_person_email_bulk',
+  classification: 'READ',
   displayName: 'Enrich Person Email (Bulk)',
   description:
     'Find email addresses for up to 10 people in a single request. Returns email addresses where found, with error messages for failed lookups.',

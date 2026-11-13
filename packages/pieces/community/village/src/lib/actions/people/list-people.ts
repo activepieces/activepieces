@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const listPeople = createAction({
   auth: villageAuth,
   name: 'list_people',
+  classification: 'SEARCH',
   displayName: 'List People',
   description:
     'Get your network contacts ranked by connection strength. Returns a paginated list with enrichment data, supporting cursor-based pagination and optional connection-degree filtering.',

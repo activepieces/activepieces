@@ -5,6 +5,7 @@ import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -24,6 +25,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 export const DeletePlatformDialog = ({
   platformName,
@@ -31,7 +33,7 @@ export const DeletePlatformDialog = ({
   onOpenChange,
 }: DeletePlatformDialogProps) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent>
+    <DialogContent className={adminLayout.dialog.sm}>
       <DeletePlatformForm
         key={open ? 'open' : 'closed'}
         platformName={platformName}
@@ -72,11 +74,16 @@ const DeletePlatformForm = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(() => deletePlatform())}>
+      <form
+        onSubmit={(event) => {
+          event.stopPropagation();
+          form.handleSubmit(() => deletePlatform())(event);
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{t('Delete platform')}</DialogTitle>
           <DialogDescription className="flex flex-col gap-3">
-            <span className="text-foreground font-medium">
+            <span className="text-gray-12 font-medium">
               {t(
                 '{name} will be deleted for everyone. This cannot be undone.',
                 {
@@ -117,6 +124,7 @@ const DeletePlatformForm = ({
             {t('Cancel')}
           </Button>
           <Button
+            {...adminControl(AdminControl.GENERAL_PLATFORM_DELETE_CONFIRM)}
             variant="destructive"
             type="submit"
             disabled={!form.formState.isValid}

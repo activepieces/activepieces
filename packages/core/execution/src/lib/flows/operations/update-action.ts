@@ -4,6 +4,7 @@ import { FlowAction, FlowActionType, SingleActionSchema } from '../actions/actio
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { UpdateActionRequest } from './index'
+import { updateStepUtil } from './update-step-util'
 
 function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): FlowVersion {
     const next = flowStructureUtil.transferFlow(flowVersion, (stepToUpdate) => {
@@ -15,7 +16,7 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
             displayName: request.displayName,
             name: request.name,
             valid: false,
-            skip: request.skip,
+            skip: request.skip ?? ('skip' in stepToUpdate ? stepToUpdate.skip : undefined),
             lastUpdatedDate: dayjs().toISOString(),
             settings: {
                 ...stepToUpdate.settings,
@@ -23,6 +24,7 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
             },
         }
 
+        const firstLoopAction = stepToUpdate.type === FlowActionType.LOOP_ON_ITEMS || stepToUpdate.type === FlowActionType.PROCESS_IN_BATCHES ? stepToUpdate.firstLoopAction : undefined
 
         let updatedAction: FlowAction
         switch (request.type) {
@@ -52,11 +54,22 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
             }
             case FlowActionType.LOOP_ON_ITEMS: {
                 const existingSampleData = stepToUpdate.type === FlowActionType.LOOP_ON_ITEMS ? stepToUpdate.settings.sampleData : undefined
-                const firstLoopAction = stepToUpdate.type === FlowActionType.LOOP_ON_ITEMS ? stepToUpdate.firstLoopAction : undefined
                 updatedAction = {
                     ...baseProps,
                     settings: { ...request.settings, sampleData: existingSampleData },
                     type: FlowActionType.LOOP_ON_ITEMS,
+                    firstLoopAction,
+                    nextAction: stepToUpdate.nextAction,
+                }
+                break
+            }
+
+            case FlowActionType.PROCESS_IN_BATCHES: {
+                const existingSampleData = stepToUpdate.type === FlowActionType.PROCESS_IN_BATCHES ? stepToUpdate.settings.sampleData : undefined
+                updatedAction = {
+                    ...baseProps,
+                    settings: { ...request.settings, sampleData: existingSampleData },
+                    type: FlowActionType.PROCESS_IN_BATCHES,
                     firstLoopAction,
                     nextAction: stepToUpdate.nextAction,
                 }
@@ -92,7 +105,7 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
         const parseResult = SingleActionSchema.safeParse(updatedAction)
         const valid = (isNil(request.valid) ? true : request.valid) && parseResult.success
         return {
-            ...updatedAction,
+            ...updateStepUtil.preserveLastUpdatedDate({ existingStep: stepToUpdate, updatedStep: updatedAction }),
             valid,
         }
     })

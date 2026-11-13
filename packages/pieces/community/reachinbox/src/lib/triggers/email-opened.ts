@@ -21,6 +21,7 @@ const emailOpenedMessage = `
 
 export const emailOpened = createTrigger({
   name: 'emailOpened',
+  classification: 'READ',
   displayName: 'Email Opened',
   description: 'Triggers when an email is opened.',
   aiMetadata: {

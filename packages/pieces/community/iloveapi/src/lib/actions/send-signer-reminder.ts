@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { iloveapiAuth } from '../common/auth';
 import { iLoveApi } from '../common/client';
+import { iloveSchemas } from '../common/schemas';
 
 export const sendSignerReminderAction = createAction({
   auth: iloveapiAuth,
@@ -10,6 +11,7 @@ export const sendSignerReminderAction = createAction({
   description:
     'Email a reminder to signers who have not yet completed the signature. Limited to 2 calls per day.',
   audience: 'both',
+  outputSchema: iloveSchemas.signatureAck,
   aiMetadata: {
     description:
       'Send a manual nudge email to outstanding signers of an existing signature request, identified by its requester token. Each call sends a fresh reminder (not idempotent) and the provider caps this at 2 calls per day per request; for scheduled automatic reminders configure them on the request itself at creation time instead.',
@@ -23,17 +25,19 @@ export const sendSignerReminderAction = createAction({
     }),
   },
   async run(context) {
-    const { token_requester } = context.propsValue;
-    if (!token_requester) {
+    const tokenRequester = (context.propsValue.token_requester ?? '').trim();
+    if (!tokenRequester) {
       throw new Error('Requester Token is required.');
     }
 
     const token = await iLoveApi.authenticate({
       publicKey: context.auth.secret_text,
     });
-    return await iLoveApi.sendSignerReminder({
-      token,
-      tokenRequester: token_requester,
-    });
+    const response = await iLoveApi.sendSignerReminder({ token, tokenRequester });
+    return {
+      ...response,
+      success: true,
+      token_requester: tokenRequester,
+    };
   },
 });

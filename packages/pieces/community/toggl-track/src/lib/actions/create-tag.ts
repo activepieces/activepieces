@@ -1,7 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { togglTrackAuth } from '../..';
+import { togglTrackAuth } from '../auth';
 import { togglCommon } from '../common';
+import { togglApi } from '../common/client';
+import { togglModels, TwoTag } from '../common/models';
+import { togglOutputSchemas } from '../output-schemas';
 
 export const createTag = createAction({
   auth: togglTrackAuth,
@@ -10,7 +12,11 @@ export const createTag = createAction({
   displayName: 'Create Tag',
   description: 'Create a new tag in the workspace.',
   audience: 'both',
-  aiMetadata: { description: 'Creates a new tag in a Toggl Track workspace, given a workspace ID and tag name. Use when an agent needs a label to later attach to time entries. Not idempotent: each call creates a new tag even if the name already exists.', idempotent: false },
+  aiMetadata: {
+    description:
+      'Creates a tag in a workspace. Needs the workspace and a name. Returns the new tag. A retry creates a duplicate.',
+    idempotent: false,
+  },
   props: {
     workspace_id: togglCommon.workspace_id,
     name: Property.ShortText({
@@ -19,24 +25,33 @@ export const createTag = createAction({
       required: true,
     }),
   },
+  outputSchema: togglOutputSchemas.tag,
   async run(context) {
-    const { workspace_id, name } = context.propsValue;
-    const apiToken = context.auth;
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://api.track.toggl.com/api/v9/workspaces/${workspace_id}/tags`,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Basic ${Buffer.from(`${apiToken}:api_token`).toString(
-          'base64'
-        )}`,
-      },
-      body: {
-        name,
-      },
+    const { name } = context.propsValue;
+    const auth = context.auth;
+    const workspaceId = togglApi.requireId({
+      value: context.propsValue.workspace_id,
+      label: 'Workspace',
     });
 
-    return response.body;
+    if (togglApi.isTwo(auth)) {
+      const created = await togglApi.request<TwoTag>({
+        auth,
+        method: togglApi.HttpMethod.POST,
+        path: `/workspaces/${workspaceId}/tags`,
+        body: { name },
+      });
+      return togglModels.tag(created);
+    }
+
+    const created = await togglApi.request<
+      Record<string, unknown> | Record<string, unknown>[]
+    >({
+      auth,
+      method: togglApi.HttpMethod.POST,
+      path: `/workspaces/${workspaceId}/tags`,
+      body: { name },
+    });
+    return Array.isArray(created) ? created[0] ?? null : created;
   },
 });

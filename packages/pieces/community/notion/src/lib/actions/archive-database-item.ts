@@ -16,6 +16,15 @@ export const archiveDatabaseItem = createAction({
       'Soft-deletes a Notion database item by setting its archived flag, keeping it recoverable via Restore. Use when an agent must remove a record from active views without permanent deletion; requires the database_id and item id. Idempotent: archiving an already-archived item leaves it archived.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'item',
+      display: 'section',
+      label: 'Database item',
+      icon: 'inbox',
+      props: ['database_id', 'database_item_id'],
+    },
+  ],
   props: {
     database_id: notionCommon.database_id,
     database_item_id: notionCommon.database_item_id,

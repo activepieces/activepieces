@@ -1,8 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mysqlCommon, mysqlConnect, sanitizeColumnName, warningMarkdown } from '../common';
+import { mysqlCommon, mysqlConnect, sanitizeColumnName } from '../common';
 import { mysqlAuth } from '../..';
 import { insertRowOutputSchema } from '../output-schemas';
-import sqlstring from 'sqlstring';
 
 export default createAction({
   auth: mysqlAuth,
@@ -17,9 +16,19 @@ export default createAction({
     table: mysqlCommon.table(),
     values: Property.Object({
       displayName: 'Values',
+      description: 'Column names and the values to store in them.',
       required: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'row',
+      display: 'section',
+      label: 'Row to insert',
+      icon: 'inbox',
+      props: ['table', 'values'],
+    },
+  ],
   async run(context) {
     const fields = Object.keys(context.propsValue.values);
     const qsFields = fields.map((f) => sanitizeColumnName(f)).join(',');

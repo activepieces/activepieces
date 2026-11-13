@@ -21,13 +21,35 @@ export const createRowAction = createAction({
     idempotent: false,
   },
   auth: baserowAuth,
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Location',
+      icon: 'location',
+      props: ['table_id'],
+    },
+    {
+      key: 'values',
+      display: 'section',
+      label: 'Row Values',
+      icon: 'text',
+      props: ['table_fields'],
+    },
+    {
+      key: 'options',
+      display: 'section',
+      label: 'Options',
+      icon: 'sliders',
+      props: ['create_missing_select_options'],
+    },
+  ],
   props: {
     table_id: baserowCommon.tableId(),
     table_fields: baserowCommon.tableFields(true),
     create_missing_select_options: Property.Checkbox({
-      displayName: 'Create missing select options',
-      description:
-        'When enabled, single/multi-select values that do not yet exist in the field will be added before creating the row. Existing options are preserved.',
+      displayName: 'Create Missing Select Options',
+      description: 'Adds any select option the column does not have yet.',
       required: false,
       defaultValue: false,
     }),

@@ -1,0 +1,531 @@
+import { isNil, isObject, omit, parseToJsonIfPossible, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { AGENT_SURFACE_TOOLS, AgentPhase, BeginAgentTaskResponse, chatBilling, FinishAgentTaskRequest, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, SkillSurface, SubagentActivity, SubagentLink, subagentProgressId, SubagentTaskArtifact, SubagentTimelineEntry, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
+import { hasToolCall, isLoopFinished, ModelMessage, tool, ToolSet } from 'ai'
+import pLimit from 'p-limit'
+import { z } from 'zod'
+import { AgentTurnResult, runAgentTurn, RunAgentTurnParams } from '../run-agent-turn'
+import { taskContext } from './task-context'
+import { AgentEventEmitter, extractResultText } from './tool-primitives'
+
+export function createTaskSubagentTools({ tools, taskPrompt, ...rest }: Omit<TaskDeps, 'workerTools' | 'taskPrompt'> & {
+    tools: ToolSet
+    taskPrompt: string | undefined
+}): ToolSet {
+    if (isNil(taskPrompt)) {
+        return {}
+    }
+    const deps: TaskDeps = {
+        ...rest,
+        taskPrompt,
+        workerTools: Object.fromEntries(Object.entries(tools).filter(([name]) => !NOT_FOR_TASKS.includes(name))),
+    }
+    const searchAvailable = Object.hasOwn(tools, WEB_SEARCH_TOOL)
+    return {
+        [TASK_TOOL_NAME]: tool({
+            description: 'Hand one self-contained goal to a focused sub-agent with its own fresh context and the same tools you have (read, search, build, update, execute; risky actions still ask the user for approval). Use it when it buys something: independent goals that can run in parallel (several calls in one step run at once), or noisy preparation with a short answer (going through many records or runs, investigating a failure). Build flows yourself, even several at once, and make small edits yourself. It cannot ask the user anything: when it needs something only the user can give it finishes as blocked and says what; ask the user for it in your own words, then pass their answer back. Pass taskId to continue a task you started earlier in this conversation (after a block, or for a follow-up on what it built).',
+            inputSchema: taskInput,
+            toModelOutput: ({ output }) => ({ type: 'text', value: JSON.stringify(omit(output, ['activity', 'billedToolCalls', 'tokens'])) }),
+            execute: async ({ title, brief, taskId }, { toolCallId }) => runTask({ deps, title, brief, taskId, progressId: toolCallId }),
+        }),
+        ...(searchAvailable ? {
+            [RESEARCH_TOOL_NAME]: tool({
+                description: 'Research one or more subjects in depth on the live web. One sub-agent per subject runs in parallel: it searches, reads the actual pages and returns a short sourced brief, and the user watches the research live. Use it whenever the answer needs facts from real pages, such as comparing tools or vendors, pricing and plans, reviews and complaints, competitors, or API docs. Prefer it over several ap_web_search calls. Use ap_web_search only for one quick fact. Compare the briefs and do the final step yourself (the recommendation, the image, the build).',
+                inputSchema: researchInput,
+                toModelOutput: ({ output }) => ({ type: 'text', value: JSON.stringify({ tasks: output.tasks.map((task: TaskRunOutput) => omit(task, ['activity', 'billedToolCalls', 'tokens'])) }) }),
+                execute: async ({ question, subjects, context }, { toolCallId }) => {
+                    const researchSlot = pLimit(RESEARCHERS_AT_ONCE)
+                    const tasks = await Promise.all(subjects.map((subject, index) => researchSlot(() => runTask({
+                        deps,
+                        title: subject,
+                        brief: [question, `Subject: ${subject}`, ...(isNil(context) ? [] : [context])].join('\n\n'),
+                        progressId: subagentProgressId.forSubject({ toolCallId, index }),
+                        kind: 'research',
+                    }))))
+                    return { tasks, billedToolCalls: tasks.flatMap((task) => task.billedToolCalls ?? []), tokens: sumTokens(tasks.map((task) => task.tokens ?? NO_TOKENS)) }
+                },
+            }),
+        } : {}),
+    }
+}
+
+export function taskTokensOf({ parts }: { parts: PersistedAgentPart[] }): TaskTokens {
+    return sumTokens(parts.flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL && SUB_AGENT_TOOL_NAMES.includes(part.toolName) && isObject(part.output) && isTaskTokens(part.output['tokens'])
+        ? [part.output['tokens']]
+        : []))
+}
+
+async function runTask({ deps, title, brief, taskId, progressId, kind = 'task' }: {
+    deps: TaskDeps
+    title: string
+    brief: string
+    taskId?: string
+    progressId: string
+    kind?: TaskKind
+}): Promise<TaskRunOutput> {
+    const { tier, taskPrompt, creditsLeftFor, beginTask, finishTask, eventEmitter, abortSignal, log } = deps
+    if (abortSignal.aborted) {
+        return { status: 'failed', summary: 'Stopped before it started.' }
+    }
+    const { data: begun, error } = await tryCatch(() => beginTask({ title, ...(isNil(taskId) ? {} : { taskId }) }))
+    if (error || isNil(begun)) {
+        return { status: 'failed', summary: `Could not start this task: ${error instanceof Error ? error.message : 'unknown error'}` }
+    }
+    const startedAt = new Date()
+    const report = (activity: SubagentActivity) => eventEmitter.emitSubagentProgress({ toolCallId: progressId, data: { ...activity, taskId: begun.taskId } })
+    report({ title, status: 'running', stepCount: 0, startedAt: startedAt.toISOString() })
+    const finish: { result?: TaskResult } = {}
+    const priorMessages = begun.messages.filter(isModelMessage)
+    const messages: ModelMessage[] = [...priorMessages, { role: 'user', content: brief }]
+    const phaseState: { phase: AgentPhase } = { phase: 'build' }
+    const profile = TASK_PROFILES[kind](deps)
+    const taskTools = {
+        ...profile.tools,
+        ...finishTool(finish),
+    }
+    const turnParams: RunAgentTurnParams = {
+        models: profile.models,
+        systemPrompt: taskPrompt,
+        messages,
+        tools: taskTools,
+        allToolNames: Object.keys(taskTools),
+        tier,
+        phaseState,
+        abortSignal,
+        log,
+        creditsLeft: creditsLeftFor(progressId),
+        stopWhen: [isLoopFinished(), hasToolCall(TASK_COMPLETION_TOOL_NAME)],
+        ...spreadIfDefined('skills', profile.skills),
+        sinks: {
+            drainStream: async (result) => {
+                await result.consumeStream()
+                return undefined
+            },
+            onProgress: ({ uiParts }) => report(runningActivity({ title, uiParts, startedAt })),
+        },
+    }
+    const workTurn = await workUntilSettled({ title, turnParams, finished: () => !isNil(finish.result) })
+    const turn = isNil(finish.result) && endedCleanly({ turn: workTurn, abortSignal })
+        ? await continueTurn({ title, turnParams, previous: workTurn, request: REPORT_REQUEST, overrides: { stepCeiling: REPORT_STEPS } })
+        : workTurn
+    const reported = finish.result ?? fallbackResult(turn)
+    const result = abortSignal.aborted ? stoppedResult(reported) : reported
+    const activity = finalActivity({ title, turn, result, startedAt })
+    await saveTaskResult({
+        finishTask,
+        log,
+        request: {
+            taskId: begun.taskId,
+            claimId: begun.claimId,
+            status: STATUS_BY_RESULT[result.status],
+            messages: [...messages, ...turn.accumulatedResponseMessages],
+            summary: result.summary,
+            artifacts: result.artifacts,
+        },
+    })
+    report(activity)
+    return {
+        taskId: begun.taskId,
+        status: result.status,
+        summary: result.summary,
+        artifacts: result.artifacts,
+        ...(isNil(result.needs) ? {} : { needs: result.needs }),
+        activity,
+        billedToolCalls: billedToolCalls(turn.uiParts),
+        tokens: { input: turn.totalInputTokens, output: turn.totalOutputTokens },
+    }
+}
+
+async function saveTaskResult({ finishTask, log, request }: {
+    finishTask: TaskDeps['finishTask']
+    log: TaskDeps['log']
+    request: Omit<FinishAgentTaskRequest, 'platformId' | 'conversationId'>
+}): Promise<void> {
+    const { error } = await tryCatch(() => finishTask(request))
+    if (isNil(error)) {
+        return
+    }
+    const { error: retryError } = await tryCatch(() => finishTask(request))
+    if (!isNil(retryError)) {
+        log.error({ error: retryError, task: { id: request.taskId } }, '[taskSubagent] Could not save the task result, so it cannot be resumed')
+    }
+}
+
+async function workUntilSettled({ title, turnParams, finished }: {
+    title: string
+    turnParams: RunAgentTurnParams
+    finished: () => boolean
+}): Promise<AgentTurnResult> {
+    const first = await taskContext.run({ title, fn: () => runAgentTurn(turnParams) })
+    return continueAfterInterruptions({ title, turnParams, finished, turn: first, continuationsLeft: MAX_CONTINUATIONS })
+}
+
+async function continueAfterInterruptions({ title, turnParams, finished, turn, continuationsLeft }: {
+    title: string
+    turnParams: RunAgentTurnParams
+    finished: () => boolean
+    turn: AgentTurnResult
+    continuationsLeft: number
+}): Promise<AgentTurnResult> {
+    const shouldContinue = !finished() && continuationsLeft > 0 && interruptedTransiently({ turn, abortSignal: turnParams.abortSignal })
+    if (!shouldContinue) {
+        return turn
+    }
+    const continued = await continueTurn({ title, turnParams, previous: turn, request: CONTINUE_REQUEST, overrides: {} })
+    return continueAfterInterruptions({ title, turnParams, finished, turn: continued, continuationsLeft: continuationsLeft - 1 })
+}
+
+async function continueTurn({ title, turnParams, previous, request, overrides }: {
+    title: string
+    turnParams: RunAgentTurnParams
+    previous: AgentTurnResult
+    request: string
+    overrides: Partial<RunAgentTurnParams>
+}): Promise<AgentTurnResult> {
+    const requestMessage: ModelMessage = { role: 'user', content: request }
+    const next = await taskContext.run({
+        title,
+        fn: () => runAgentTurn({
+            ...turnParams,
+            ...overrides,
+            messages: [...turnParams.messages, ...previous.accumulatedResponseMessages, requestMessage],
+            priorToolCalls: [...(turnParams.priorToolCalls ?? []), ...billedToolCalls(previous.uiParts)],
+            sinks: withEarlierParts({ sinks: turnParams.sinks, earlierParts: previous.uiParts }),
+        }),
+    })
+    return {
+        ...next,
+        uiParts: [...previous.uiParts, ...next.uiParts],
+        totalInputTokens: previous.totalInputTokens + next.totalInputTokens,
+        totalOutputTokens: previous.totalOutputTokens + next.totalOutputTokens,
+        accumulatedResponseMessages: [...previous.accumulatedResponseMessages, requestMessage, ...next.accumulatedResponseMessages],
+    }
+}
+
+function withEarlierParts({ sinks, earlierParts }: { sinks: RunAgentTurnParams['sinks'], earlierParts: PersistedAgentPart[] }): RunAgentTurnParams['sinks'] {
+    if (isNil(sinks)) {
+        return sinks
+    }
+    const onProgress = sinks.onProgress
+    return {
+        ...sinks,
+        ...(isNil(onProgress) ? {} : { onProgress: (progress: Parameters<typeof onProgress>[0]) => onProgress({ ...progress, uiParts: [...earlierParts, ...progress.uiParts] }) }),
+    }
+}
+
+function interruptedTransiently({ turn, abortSignal }: { turn: AgentTurnResult, abortSignal: AbortSignal }): boolean {
+    return !abortSignal.aborted && !outOfBudget(turn) && (turn.streamError !== null || turn.truncatedAfterRetries)
+}
+
+function endedCleanly({ turn, abortSignal }: { turn: AgentTurnResult, abortSignal: AbortSignal }): boolean {
+    return !abortSignal.aborted && turn.streamError === null && !outOfBudget(turn)
+}
+
+function outOfBudget(turn: AgentTurnResult): boolean {
+    return turn.creditsExhausted || turn.budgetExceeded
+}
+
+function finishTool(finish: { result?: TaskResult }): ToolSet {
+    return {
+        [TASK_COMPLETION_TOOL_NAME]: tool({
+            description: 'Call this exactly once, as your last action, to hand your result back. status: done when the goal is achieved, blocked when only the user can unblock you (say what in needs), failed when you tried and could not. summary: a few plain sentences the main assistant can relay. artifacts: only what you created or changed (flows, tables, records, agents) with ids and names, empty when you only read.',
+            inputSchema: taskResult,
+            execute: async (result) => {
+                finish.result = result
+                return { content: [{ type: 'text', text: 'Result recorded.' }] }
+            },
+        }),
+    }
+}
+
+function stoppedResult(reported: TaskResult): TaskResult {
+    return { ...reported, status: 'failed', summary: `Stopped by the user before it finished. ${reported.summary}` }
+}
+
+function fallbackResult(turn: AgentTurnResult): TaskResult {
+    const lastMessage = lastText(turn.uiParts)
+    return {
+        status: 'failed',
+        summary: lastMessage.length > 0 ? lastMessage : 'The task stopped without reporting a result. Check its work before relying on it.',
+        artifacts: [],
+    }
+}
+
+function runningActivity({ title, uiParts, startedAt }: { title: string, uiParts: PersistedAgentPart[], startedAt: Date }): SubagentActivity {
+    const timeline = timelineFrom(uiParts)
+    const latest = timeline.at(-1)
+    return {
+        title,
+        status: 'running',
+        statusLine: isNil(latest) ? undefined : timelineLine(latest),
+        timeline,
+        stepCount: uiParts.filter((part) => part.type === PersistedAgentPartType.TOOL_CALL).length,
+        pieces: piecesFrom(uiParts),
+        startedAt: startedAt.toISOString(),
+    }
+}
+
+function finalActivity({ title, turn, result, startedAt }: { title: string, turn: AgentTurnResult, result: TaskResult, startedAt: Date }): SubagentActivity {
+    return {
+        ...runningActivity({ title, uiParts: turn.uiParts, startedAt }),
+        status: result.status,
+        artifacts: result.artifacts,
+        summary: result.summary,
+        ...(isNil(result.needs) ? {} : { needs: result.needs }),
+        durationMs: Date.now() - startedAt.getTime(),
+    }
+}
+
+function researchTools(workerTools: ToolSet): ToolSet {
+    return Object.fromEntries(Object.entries(workerTools)
+        .filter(([name]) => RESEARCH_TOOLS.includes(name))
+        .map(([name, researchTool]) => [name, PAGE_READ_TOOLS.includes(name) ? withPageBudget(researchTool) : researchTool]))
+}
+
+function withPageBudget(pageTool: ToolSet[string]): ToolSet[string] {
+    const execute = pageTool.execute
+    if (isNil(execute)) {
+        return pageTool
+    }
+    return { ...pageTool, execute: async (input, options) => capPageText(await execute(input, options)) }
+}
+
+function capPageText(result: unknown): unknown {
+    if (!isObject(result)) {
+        return result
+    }
+    return Object.fromEntries(Object.entries(result).map(([key, value]) => {
+        const isLongPageText = PAGE_TEXT_KEYS.includes(key) && typeof value === 'string' && value.length > RESEARCH_PAGE_CHARS
+        return isLongPageText ? [key, `${value.slice(0, RESEARCH_PAGE_CHARS)}\n…[page cut at ${RESEARCH_PAGE_CHARS} characters]`] : [key, value]
+    }))
+}
+
+function isTitledToolCall(part: PersistedAgentPart): part is Extract<PersistedAgentPart, { type: PersistedAgentPartType.TOOL_CALL }> & { title: string } {
+    return part.type === PersistedAgentPartType.TOOL_CALL && !isNil(part.title) && part.title.trim().length > 0
+}
+
+function timelineLine(entry: SubagentTimelineEntry): string {
+    switch (entry.kind) {
+        case 'status':
+            return entry.text
+        case 'search':
+            return entry.query
+        case 'read':
+            return entry.title ?? entry.url
+    }
+}
+
+function timelineFrom(parts: PersistedAgentPart[]): SubagentTimelineEntry[] {
+    const entries = parts.flatMap((part): SubagentTimelineEntry[] => {
+        if (part.type === PersistedAgentPartType.THINKING_STATUS) {
+            const text = part.text.trim()
+            return text.length > 0 ? [{ kind: 'status', text }] : []
+        }
+        if (part.type !== PersistedAgentPartType.TOOL_CALL || !isObject(part.input)) {
+            return []
+        }
+        const query = part.input['query']
+        if (part.toolName === WEB_SEARCH_TOOL && typeof query === 'string') {
+            return [{ kind: 'search', query, results: searchResults(part.output) }]
+        }
+        const url = part.input['url']
+        const pageWasRead = PAGE_READ_TOOLS.includes(part.toolName) && typeof url === 'string' && part.status === PersistedToolCallStatus.COMPLETED && returnedPage(part.output)
+        if (pageWasRead) {
+            return [{ kind: 'read', url }]
+        }
+        return isTitledToolCall(part) ? [{ kind: 'status', text: part.title.trim(), failed: part.status === PersistedToolCallStatus.ERROR }] : []
+    })
+    const titles = new Map(entries.flatMap((entry) => entry.kind === 'search' ? entry.results : []).map((link) => [link.url, link.title]))
+    return entries.map((entry) => {
+        const title = entry.kind === 'read' ? titles.get(entry.url) : undefined
+        return isNil(title) ? entry : { ...entry, title }
+    })
+}
+
+function unwrapLargeResponse(value: unknown): unknown {
+    if (isNil(value)) {
+        return value
+    }
+    const text = extractResultText(value)
+    if (!text.startsWith(LARGE_RESPONSE_MARKER)) {
+        return value
+    }
+    return parseToJsonIfPossible(text.slice(text.indexOf('\n\n') + 2))
+}
+
+function returnedPage(output: unknown): boolean {
+    if (isNil(output)) {
+        return false
+    }
+    const parsed = parseToJsonIfPossible(output)
+    const hasPageText = isObject(parsed) && (typeof parsed['content'] === 'string' || typeof parsed['markdown'] === 'string')
+    return hasPageText || extractResultText(parsed).startsWith(LARGE_RESPONSE_MARKER)
+}
+
+function searchResults(output: unknown): SubagentLink[] {
+    const parsed = unwrapLargeResponse(parseToJsonIfPossible(output))
+    if (!isObject(parsed) || !Array.isArray(parsed['results'])) {
+        return []
+    }
+    return parsed['results'].flatMap((result): SubagentLink[] => {
+        if (!isObject(result) || typeof result['url'] !== 'string' || result['url'].length === 0) {
+            return []
+        }
+        const title = typeof result['title'] === 'string' && result['title'].length > 0 ? result['title'] : undefined
+        return [{ url: result['url'], ...(isNil(title) ? {} : { title }) }]
+    })
+}
+
+function sumTokens(tokens: TaskTokens[]): TaskTokens {
+    return tokens.reduce((total, next) => ({ input: total.input + next.input, output: total.output + next.output }), NO_TOKENS)
+}
+
+function isTaskTokens(value: unknown): value is TaskTokens {
+    return isObject(value) && typeof value['input'] === 'number' && typeof value['output'] === 'number'
+}
+
+function billedToolCalls(parts: PersistedAgentPart[]): { toolName: string, output: unknown }[] {
+    return parts.flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL && part.status === PersistedToolCallStatus.COMPLETED && chatBilling.isFlatBilledToolCall({ toolName: part.toolName, output: part.output })
+        ? [{ toolName: part.toolName, output: billingOutput(part.output) }]
+        : [])
+}
+
+function billingOutput(output: unknown): Record<string, unknown> {
+    return isObject(output) && output['billedAtCost'] === true ? { billedAtCost: true } : {}
+}
+
+function piecesFrom(parts: PersistedAgentPart[]): string[] {
+    const names = parts.flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL ? pieceNamesIn(part.input) : [])
+    return [...new Set(names)]
+}
+
+function pieceNamesIn(input: unknown): string[] {
+    if (!isObject(input)) {
+        return []
+    }
+    const own = typeof input['pieceName'] === 'string' ? [input['pieceName']] : []
+    const trigger = pieceNamesIn(input['trigger'])
+    const steps = Array.isArray(input['steps']) ? input['steps'].flatMap(pieceNamesIn) : []
+    return [...trigger, ...own, ...steps]
+}
+
+function lastText(parts: PersistedAgentPart[]): string {
+    const texts = parts.flatMap((part) => part.type === PersistedAgentPartType.TEXT && part.text.trim().length > 0 ? [part.text.trim()] : [])
+    return texts[texts.length - 1] ?? ''
+}
+
+function isModelMessage(value: unknown): value is ModelMessage {
+    return isObject(value) && typeof value['role'] === 'string' && 'content' in value
+}
+
+const taskInput = z.object({
+    title: z.string().min(1).describe('A short plain name for the task the user will see, e.g. "Build Save order" or "Research Twilio WhatsApp"'),
+    brief: z.string().min(1).describe('Everything the sub-agent needs, self-contained: the goal and when it is done, what it owns (and must not change), ids and decisions already made, connections to use. For a resumed task, the new instruction or the user\'s answer.'),
+    taskId: z.string().optional().describe('Continue a task from earlier in this conversation instead of starting a new one'),
+})
+
+const researchInput = z.object({
+    question: z.string().min(1).describe('What to find out, with the details that matter (team size, budget, region, what to compare)'),
+    subjects: z.array(z.string().min(1)).min(1).describe('One entry per thing to research, e.g. ["Asana", "ClickUp", "Monday.com"]. Each gets its own sub-agent.'),
+    context: z.string().optional().describe('Anything else the researchers should know'),
+})
+
+const taskResult = z.object({
+    status: z.enum(['done', 'blocked', 'failed']),
+    summary: z.string().describe('A few plain sentences: what you did and what the main assistant should tell the user'),
+    artifacts: z.array(SubagentTaskArtifact).describe('Only what you created or changed. Empty when you only read.'),
+    needs: z.string().optional().describe('When blocked: exactly what you need from the user'),
+})
+
+const STATUS_BY_RESULT: Record<TaskResult['status'], FinishAgentTaskRequest['status']> = {
+    done: 'DONE',
+    blocked: 'BLOCKED',
+    failed: 'FAILED',
+}
+
+const TASK_TOOL_NAME = 'ap_run_task'
+const RESEARCH_TOOL_NAME = 'ap_deep_research'
+const SUB_AGENT_TOOL_NAMES = [TASK_TOOL_NAME, RESEARCH_TOOL_NAME]
+const NO_TOKENS: TaskTokens = { input: 0, output: 0 }
+const RESEARCHERS_AT_ONCE = 4
+const TASK_SKILL_SURFACE: SkillSurface = 'CHAT'
+const REPORT_REQUEST = `You stopped without reporting. Call ${TASK_COMPLETION_TOOL_NAME} now with your result.`
+const CONTINUE_REQUEST = 'You were cut off. Continue from where you stopped.'
+const MAX_CONTINUATIONS = 2
+const REPORT_STEPS = 2
+const WEB_SEARCH_TOOL = 'ap_web_search'
+const PAGE_READ_TOOLS = ['ap_fetch_url', 'ap_scrape_url']
+const RESEARCH_TOOLS = [WEB_SEARCH_TOOL, ...PAGE_READ_TOOLS]
+const RESEARCH_PAGE_CHARS = 32_000
+const PAGE_TEXT_KEYS = ['content', 'markdown']
+const LARGE_RESPONSE_MARKER = '[LARGE RESPONSE'
+
+const TASK_PROFILES: Record<TaskKind, (deps: TaskDeps) => TaskProfile> = {
+    task: ({ workerTools, models, guides }) => ({ tools: workerTools, models, skills: { surface: TASK_SKILL_SURFACE, guides } }),
+    research: ({ workerTools, researchModels }) => ({ tools: researchTools(workerTools), models: researchModels }),
+}
+
+const NOT_FOR_TASKS = [
+    TASK_TOOL_NAME,
+    'ap_retry_run',
+    RESEARCH_TOOL_NAME,
+    ...AGENT_SURFACE_TOOLS,
+    'ap_update_thinking_status',
+    'ap_send_email',
+    'ap_show_questions',
+    'ap_show_quick_replies',
+    'ap_show_connection_picker',
+    'ap_show_connection_required',
+    'ap_show_project_picker',
+    'ap_show_mcp_reconnect',
+    'ap_show_showcase',
+    'ap_set_build_plan',
+    'ap_select_project',
+    'ap_deselect_project',
+    'ap_remember',
+    'ap_generate_image',
+    'ap_test_flow',
+    'ap_test_step',
+    'ap_lock_and_publish',
+    'ap_change_flow_status',
+]
+
+type TaskResult = z.infer<typeof taskResult>
+
+type TaskDeps = {
+    workerTools: ToolSet
+    guides: Record<string, string>
+    models: RunAgentTurnParams['models']
+    researchModels: RunAgentTurnParams['models']
+    tier: RunAgentTurnParams['tier']
+    taskPrompt: string
+    creditsLeftFor: (runKey: string) => RunAgentTurnParams['creditsLeft']
+    beginTask: (input: { title: string, taskId?: string }) => Promise<BeginAgentTaskResponse>
+    finishTask: (input: Omit<FinishAgentTaskRequest, 'platformId' | 'conversationId'>) => Promise<void>
+    eventEmitter: AgentEventEmitter
+    abortSignal: AbortSignal
+    log: RunAgentTurnParams['log']
+}
+
+type TaskKind = 'task' | 'research'
+
+type TaskProfile = {
+    tools: ToolSet
+    models: RunAgentTurnParams['models']
+    skills?: RunAgentTurnParams['skills']
+}
+
+type TaskRunOutput = {
+    taskId?: string
+    status: TaskResult['status']
+    summary: string
+    artifacts?: TaskResult['artifacts']
+    needs?: string
+    activity?: SubagentActivity
+    billedToolCalls?: { toolName: string, output: unknown }[]
+    tokens?: TaskTokens
+}
+
+export type TaskTokens = {
+    input: number
+    output: number
+}

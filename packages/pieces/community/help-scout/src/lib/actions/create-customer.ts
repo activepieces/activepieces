@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { helpScoutApiRequest } from '../common/api';
+import { helpScoutApi } from '../common/api';
+import { helpScoutOutputSchemas } from '../common/output-schemas';
 import { helpScoutAuth } from '../common/auth';
 import { propsValidation } from '@activepieces/pieces-common';
 import * as z from 'zod/mini'
@@ -8,6 +9,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createCustomer = createAction({
   auth: helpScoutAuth,
   name: 'create_customer',
+  classification: 'WRITE',
   displayName: 'Create Customer',
   description: 'Adds a new customer to Help Scout.',
   audience: 'both',
@@ -16,6 +18,7 @@ export const createCustomer = createAction({
       'Creates a new customer record in Help Scout from an email plus optional profile details (name, phone, organization, social profiles, etc.). Use to register a contact before associating conversations. Email is required and must be valid; not idempotent — each call creates a new customer even if one already exists for that email, so look the customer up first if duplicates matter.',
     idempotent: false,
   },
+  outputSchema: helpScoutOutputSchemas['createdId'],
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -90,38 +93,29 @@ export const createCustomer = createAction({
       organization: z.optional(z.string()),
       socialProfiles: z.optional(z.array(z.string().check(z.url('Each social profile must be a valid URL.')))),
     });
-    const payload: Record<string, any> = {
+    const body: Record<string, unknown> = {
       emails: [{ value: propsValue.email, type: 'work' }],
-      firstName: propsValue.firstName,
-      lastName: propsValue.lastName,
-      phones: propsValue.phone ? [{ value: propsValue.phone, type: 'work' }] : undefined,
-      photoUrl: propsValue.photoUrl,
-      jobTitle: propsValue.jobTitle,
-      location: propsValue.location,
-      background: propsValue.background,
-      age: propsValue.age,
-      gender: propsValue.gender,
-      organization: propsValue.organization,
-      socialProfiles: Array.isArray(propsValue.socialProfiles)
-        ? propsValue.socialProfiles.filter((url): url is string => typeof url === 'string').map((url) => ({ value: url, type: 'other' }))
-        : undefined,
     };
-    Object.keys(payload).forEach((key) => {
-      if (payload[key] === undefined || payload[key] === null) {
-        delete payload[key];
-      }
-    });
-    const response =  await helpScoutApiRequest({
-      method: HttpMethod.POST,
-      url: '/customers',
-      auth,
-      body: payload,
-    });
-
-    const customerId = response.headers?.['resource-id'];
-
-    return {
-      id:customerId
+    if (propsValue.firstName) body['firstName'] = propsValue.firstName;
+    if (propsValue.lastName) body['lastName'] = propsValue.lastName;
+    if (propsValue.phone) body['phones'] = [{ value: propsValue.phone, type: 'work' }];
+    if (propsValue.photoUrl) body['photoUrl'] = propsValue.photoUrl;
+    if (propsValue.jobTitle) body['jobTitle'] = propsValue.jobTitle;
+    if (propsValue.location) body['location'] = propsValue.location;
+    if (propsValue.background) body['background'] = propsValue.background;
+    if (propsValue.age) body['age'] = propsValue.age;
+    if (propsValue.gender) body['gender'] = propsValue.gender;
+    if (propsValue.organization) body['organization'] = propsValue.organization;
+    const socialProfiles = helpScoutApi.toStringList(propsValue.socialProfiles);
+    if (socialProfiles.length > 0) {
+      body['socialProfiles'] = socialProfiles.map((url) => ({ value: url, type: 'other' }));
     }
+    const response = await helpScoutApi.request({
+      method: HttpMethod.POST,
+      path: '/customers',
+      auth,
+      body,
+    });
+    return { id: helpScoutApi.getResourceId(response.headers) };
   },
-}); 
+});

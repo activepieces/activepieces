@@ -19,7 +19,23 @@ export const googleSheetsCommon = {
 	deleteRow,
 	clearSheet,
 	getHeaderRow,
+	quoteSheetTitle,
+	sheetRange,
 };
+
+function quoteSheetTitle(title: string): string {
+	const plainName = /^[A-Za-z_][A-Za-z0-9_]*$/.test(title);
+	const looksLikeCell = /^[A-Za-z]{1,3}[0-9]+$/.test(title) || /^R[0-9]*C[0-9]*$/i.test(title);
+	if (plainName && !looksLikeCell) {
+		return title;
+	}
+	return `'${title.replace(/'/g, "''")}'`;
+}
+
+function sheetRange({ sheetName, range }: { sheetName: string; range?: string }): string {
+	const quoted = quoteSheetTitle(sheetName);
+	return isNil(range) || range === '' ? quoted : `${quoted}!${range}`;
+}
 
 export async function findSheetName(
 	auth: GoogleSheetsAuthValue,
@@ -71,16 +87,16 @@ async function getGoogleSheetRows({
 		return [];
 	}
 
-	let range = '';
+	let range: string | undefined = undefined;
 	if (rowIndex_s !== undefined) {
-		range = `!A${rowIndex_s}:ZZZ`;
+		range = `A${rowIndex_s}:ZZZ`;
 	}
 	if (rowIndex_s !== undefined && rowIndex_e !== undefined) {
-		range = `!A${rowIndex_s}:ZZZ${rowIndex_e}`;
+		range = `A${rowIndex_s}:ZZZ${rowIndex_e}`;
 	}
 	const rowsResponse = await httpClient.sendRequest<{ values: [string[]][] }>({
 		method: HttpMethod.GET,
-		url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${encodeURIComponent(`${sheetName}${range}`)}`,
+		url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${encodeURIComponent(sheetRange({ sheetName, range }))}`,
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
 			token: await getAccessToken(auth),
@@ -90,7 +106,7 @@ async function getGoogleSheetRows({
 
 	const headerResponse = await httpClient.sendRequest<{ values: [string[]][] }>({
 		method: HttpMethod.GET,
-		url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${encodeURIComponent(`${sheetName}!A${headerRow}:ZZZ${headerRow}`)}`,
+		url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${encodeURIComponent(sheetRange({ sheetName, range: `A${headerRow}:ZZZ${headerRow}` }))}`,
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
 			token: await getAccessToken(auth),
@@ -311,7 +327,7 @@ export async function createGoogleClient(auth: GoogleSheetsAuthValue): Promise<O
 		});
 	}
 	const authClient = new OAuth2Client();
-    authClient.setCredentials(auth);
+    authClient.setCredentials({ access_token: auth.access_token });
 	return authClient;
 }
 

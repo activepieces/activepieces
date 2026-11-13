@@ -37,6 +37,15 @@ export const deleteEventAction = createAction({
   description: 'Deletes an event from Google Calendar.',
   audience: 'human',
   aiMetadata: { description: 'Permanently removes an event from a Google Calendar, identified by calendar and event ID. Use to cancel or delete an existing event. Requires the event ID and cannot be undone. Idempotent: once the event is deleted, repeating the call leaves it absent (a second call may report it as already gone).', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'event',
+      display: 'section',
+      label: 'Event',
+      icon: 'calendar',
+      props: ['calendar_id', 'eventId'],
+    },
+  ],
   props: deleteEventProps,
   run: runDeleteEvent,
 });

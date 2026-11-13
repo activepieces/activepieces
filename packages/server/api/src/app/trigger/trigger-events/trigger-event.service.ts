@@ -7,6 +7,8 @@ import { flowService } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { TriggerEventEntity } from './trigger-event.entity'
@@ -71,7 +73,9 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
                     throw new ActivepiecesError({
                         code: ErrorCode.TEST_TRIGGER_FAILED,
                         params: {
-                            message: engineResponse.error ?? 'The worker skipped the trigger test hook',
+                            message: engineResponse.error ?? (engineResponse.status === EngineResponseStatus.TIMEOUT
+                                ? `The trigger timed out after ${system.getNumberOrThrow(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS)} seconds without responding`
+                                : 'The worker skipped the trigger test hook'),
                         },
                     })
                 }
@@ -80,7 +84,7 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
                     flowId: flow.id,
                 })
 
-                for (const output of engineResponse.response.output) {
+                for (const output of [...engineResponse.response.output].reverse()) {
                     await this.saveEvent({
                         projectId,
                         flowId: flow.id,

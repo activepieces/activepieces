@@ -16,18 +16,29 @@ export const listGroupsAction = createAction({
 		idempotent: true,
 	},
 	outputSchema: listGroupsOutputSchema,
+	propertyGroups: [
+		{
+			key: 'paging',
+			display: 'section',
+			label: 'Paging',
+			icon: 'sliders',
+			props: ['limit', 'page'],
+		},
+	],
 	props: {
 		limit: Property.Number({
 			displayName: 'Limit',
-			description: 'Groups to return per page (1-1000, default 100).',
+			description: 'How many groups to return per page, up to 1000.',
 			required: false,
 			defaultValue: 100,
+			width: 'half',
 		}),
 		page: Property.Number({
 			displayName: 'Page',
-			description: 'Page number to return, starting at 1. Use `meta.last_page` from a previous response to know when to stop.',
+			description: 'Page number, starting at 1; meta.last_page in the response is last.',
 			required: false,
 			defaultValue: 1,
+			width: 'half',
 		}),
 	},
 	async run(context) {

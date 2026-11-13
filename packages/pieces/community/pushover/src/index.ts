@@ -22,28 +22,22 @@ import { listNotificationSounds } from './lib/actions/list-notification-sounds';
 import { migrateUserToSubscription } from './lib/actions/migrate-user-to-subscription';
 
 export const pushoverAuth = PieceAuth.CustomAuth({
-  description: `
-    To obtain the api token:
+  description: `To connect Pushover:
 
-    1. Log in to Pushover.
-    2. Click on your Application or on Create an Application/API Token
-    3. Copy the API Token/Key.
+1. Log in at [pushover.net](https://pushover.net).
+2. Copy **Your User Key** from the top of the page.
+3. Under **Your Applications**, open your app or click **Create an Application/API Token**, then copy its **API Token/Key**.
 
-    To obtain the user key:
-    1. Log in to Pushover
-    2. Copy your Your User Key
-
-    Note if you want to send the message to your group, you should specify a group key instead of the user key
-    `,
+To notify a group instead, paste its group key as the User Key.`,
   props: {
     api_token: PieceAuth.SecretText({
-      displayName: 'Api Token',
-      description: 'Pushover Api Token',
+      displayName: 'API Token',
+      description: 'The API Token/Key of your Pushover application.',
       required: true,
     }),
     user_key: PieceAuth.SecretText({
       displayName: 'User Key',
-      description: 'Pushover User Key',
+      description: 'Your user key, or a group key to notify a group.',
       required: true,
     }),
   },
@@ -56,7 +50,7 @@ export const pushover = createPiece({
 
   logoUrl: 'https://cdn.activepieces.com/pieces/pushover.png',
   categories: [PieceCategory.COMMUNICATION],
-  minimumSupportedRelease: '0.87.0',
+  minimumSupportedRelease: '0.88.2',
   authors: ["MyWay","Vitalini","kishanprmr","khaledmashaly","abuaboud"],
   auth: pushoverAuth,
   actions: [

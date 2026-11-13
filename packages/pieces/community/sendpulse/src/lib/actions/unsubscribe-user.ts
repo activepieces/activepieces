@@ -7,6 +7,7 @@ import { mailingListDropdown } from '../common/props';
 export const unsubscribeUserAction = createAction({
   auth: sendpulseAuth,
   name: 'unsubscribe-user',
+  classification: 'DESTRUCTIVE',
   displayName: 'Unsubscribe User',
   description: 'Remove subscribers from mailing list',
   audience: 'both',

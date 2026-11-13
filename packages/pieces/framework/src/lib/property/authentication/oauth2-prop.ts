@@ -35,6 +35,20 @@ export type OAuth2Props = {
 type OAuthPropsValue<T extends OAuth2Props> = StaticPropsValue<T>;
 
 
+export const OAuth2Discovery = z.object({
+  serverUrlProp: z.string(),
+  authUrlProp: z.string(),
+  tokenUrlProp: z.string(),
+  scopesProp: z.optional(z.string()),
+})
+
+export type OAuth2Discovery = {
+  serverUrlProp: string
+  authUrlProp: string
+  tokenUrlProp: string
+  scopesProp?: string
+}
+
 const OAuth2ExtraProps = z.object({
   props: z.optional(z.record(z.string(), OAuthProp)),
   authUrl: z.string(),
@@ -46,6 +60,7 @@ const OAuth2ExtraProps = z.object({
   authorizationMethod: z.optional(z.enum(OAuth2AuthorizationMethod)),
   grantType: z.optional(z.union([z.enum(OAuth2GrantType), z.literal(BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE)])),
   extra: z.optional(z.record(z.string(), z.string())),
+  discovery: z.optional(OAuth2Discovery),
 })
 
 type OAuth2ExtraProps = {
@@ -59,6 +74,7 @@ type OAuth2ExtraProps = {
   authorizationMethod?: OAuth2AuthorizationMethod
   grantType?: OAuth2GrantType | typeof BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE
   extra?: Record<string, string>,
+  discovery?: OAuth2Discovery
 }
 
 export const OAuth2PropertyValue = z.object({

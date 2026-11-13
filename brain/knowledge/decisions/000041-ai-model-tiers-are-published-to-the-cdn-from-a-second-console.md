@@ -53,8 +53,11 @@ the bucket; a key scoped to `ai/pricing*` is the follow-up.
   in ap-analytics, `packages/server/utils/src/model-tier-catalog.ts` here. Change one without the
   other and Activepieces rejects the file and silently keeps serving the old tiers. The reader
   ignores keys it does not declare, which is what kept the console publishable while it still sent
-  the credit fields; ap-analytics dropped those on 2026-09-20 and added `nativeModelId`, so the two
-  schemas name the same five tier fields again.
+  the credit fields; ap-analytics dropped those on 2026-09-20. Since 2026-09-27 the two schemas
+  name the same nine top-level keys (`version`, `publishedAt`, `publishedBy`, `tiers`,
+  `defaultTierId`, `fastTierId`, `chatTiers`, `chatDefaultTierId`, `chatFastTierId`). Per tier they
+  differ by one field: the console dropped `nativeModelId` again on 2026-09-27, while Activepieces
+  keeps it optional and falls back to the bundled tier's value.
 - A tier change is no longer visible in `git log` of this repo. The audit trail is the CDN history
   prefix.
 - The reader **fails closed**: bad schema, no tiers, or a missing default tier all fall back to the
@@ -82,4 +85,4 @@ the bucket; a key scoped to `ai/pricing*` is the follow-up.
   `CLAUDE.md` and the package names all say config-console. It was created as `config-console` and
   renamed on 2026-09-02. A clone made before the rename pushes into a 404; fix it with
   `git remote set-url origin git@github.com:activepieces/ap-analytics.git`.
-- **Internal tools run on DigitalOcean, but not all the same way.** `activepieces/discover` uses a **droplet** driven by Actions over SSH (`.github/workflows/deploy.yml` — build, rsync, `pm2 reload`), with nginx and certbot in front. `ap-analytics` uses **App Platform** instead: DO builds the Dockerfile, redeploys on push by itself, and issues TLS, so there is no server to log into and the repo carries no deploy workflow at all. Neither repo says which it is, so check the DO dashboard before assuming. Runbook: `DEPLOYMENT.md` in ap-analytics.
+- **Internal tools run on DigitalOcean, but not all the same way.** `activepieces/discover` uses a **droplet** driven by Actions over SSH (`.github/workflows/deploy.yml` — build, rsync, `pm2 reload`), with nginx and certbot in front. `ap-analytics` uses **App Platform** instead: DO builds the Dockerfile, redeploys on push by itself, and issues TLS, so there is no server to log into and the repo carries no deploy workflow at all. That repo takes no pull requests: commits go straight to `main`, and the push is the deploy. Neither repo says which it is, so check the DO dashboard before assuming. Runbook: `DEPLOYMENT.md` in ap-analytics.

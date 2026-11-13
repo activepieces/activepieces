@@ -11,7 +11,10 @@ import {
   PieceSelectorTabType,
   usePieceSelectorTabs,
   PieceSelectorOperation,
+  pieceSelectorUtils,
 } from '@/features/pieces';
+
+import { useBuilderStateContext } from '../builder-hooks';
 
 import { PieceActionsOrTriggersList } from './piece-actions-or-triggers-list';
 
@@ -22,6 +25,7 @@ const ExploreTabContent = ({
 }) => {
   const { selectedTab, selectedPieceInExplore, setSelectedPieceInExplore } =
     usePieceSelectorTabs();
+  const flowVersion = useBuilderStateContext((state) => state.flowVersion);
   const { data: categories, isLoading: isLoadingPieces } =
     piecesHooks.usePiecesSearch({
       shouldCaptureEvent: false,
@@ -30,6 +34,10 @@ const ExploreTabContent = ({
         operation.type === FlowOperationType.UPDATE_TRIGGER
           ? 'trigger'
           : 'action',
+      hiddenStepTypes: pieceSelectorUtils.getHiddenStepTypes({
+        operation,
+        flowVersion,
+      }),
     });
   if (selectedTab !== PieceSelectorTabType.EXPLORE) {
     return null;
@@ -59,13 +67,11 @@ const ExploreTabContent = ({
       <div className="flex  p-2  ">
         {categories.map((category) => (
           <div key={category.title} className="flex w-[50%] flex-col gap-0.5 ">
-            <div className="text-sm text-muted-foreground mb-1.5">
-              {category.title}
-            </div>
+            <div className="text-sm text-gray-11 mb-1.5">{category.title}</div>
 
             {category.metadata.map((pieceMetadata) => (
               <CardListItem
-                className="rounded-sm py-3"
+                className="rounded-md py-3"
                 key={pieceMetadata.displayName}
                 onClick={() => setSelectedPieceInExplore(pieceMetadata)}
               >
@@ -76,7 +82,7 @@ const ExploreTabContent = ({
                     showTooltip={false}
                     size={'sm'}
                   />
-                  <div className="grow h-full flex items-center justify-left text-sm">
+                  <div className="grow h-full flex items-center text-sm">
                     {pieceMetadata.displayName}
                   </div>
                 </div>{' '}

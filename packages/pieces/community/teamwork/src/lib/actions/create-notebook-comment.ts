@@ -5,6 +5,7 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 export const createNotebookComment = createAction({
 	name: 'create_notebook_comment',
+	classification: 'WRITE',
 	displayName: 'Create Notebook Comment',
 	description: 'Add a comment on a notebook (collaborative document) with optional attachments.',
 	audience: 'both',

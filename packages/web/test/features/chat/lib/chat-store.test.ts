@@ -21,17 +21,26 @@ function event(override: Partial<BuildPlanEvent>): BuildPlanEvent {
 
 describe('chatBuildUtils.mergeBuildPlan', () => {
   it('inserts a new build', () => {
-    const merged = chatBuildUtils.mergeBuildPlan({ builds: {}, event: event({}) });
+    const merged = chatBuildUtils.mergeBuildPlan({
+      builds: {},
+      event: event({}),
+    });
     expect(merged['build_1'].phase).toBe('building');
   });
 
   it('ignores stale events with an older updatedAt', () => {
     const builds: Record<string, BuildState> = {
-      build_1: { ...event({ phase: 'done' }), updatedAt: '2026-01-01T00:05:00.000Z' },
+      build_1: {
+        ...event({ phase: 'done' }),
+        updatedAt: '2026-01-01T00:05:00.000Z',
+      },
     };
     const merged = chatBuildUtils.mergeBuildPlan({
       builds,
-      event: event({ phase: 'building', updatedAt: '2026-01-01T00:01:00.000Z' }),
+      event: event({
+        phase: 'building',
+        updatedAt: '2026-01-01T00:01:00.000Z',
+      }),
     });
     expect(merged).toBe(builds);
     expect(merged['build_1'].phase).toBe('done');
@@ -43,7 +52,11 @@ describe('chatBuildUtils.mergeBuildPlan', () => {
     };
     const merged = chatBuildUtils.mergeBuildPlan({
       builds,
-      event: event({ phase: 'done', flowId: 'flow_42', updatedAt: '2026-01-01T00:05:00.000Z' }),
+      event: event({
+        phase: 'done',
+        flowId: 'flow_42',
+        updatedAt: '2026-01-01T00:05:00.000Z',
+      }),
     });
     expect(merged['build_1'].phase).toBe('done');
     expect(merged['build_1'].flowId).toBe('flow_42');
@@ -63,5 +76,28 @@ describe('chat store build state', () => {
     store.setState({ builds: { build_1: event({}) } });
     store.getState().resetBuilds();
     expect(store.getState().builds).toEqual({});
+  });
+});
+
+describe('task panel auto-open', () => {
+  it('stays off for the rest of the conversation once the user closes the panel', () => {
+    const store = createChatStore();
+    store.getState().setConversationId('conv_1');
+    store.getState().closeTaskPanel();
+
+    store.getState().resetInteractions();
+    store.getState().setConversationId('conv_1');
+
+    expect(store.getState().taskPanelAutoOpen).toBe(false);
+  });
+
+  it('comes back for a different conversation', () => {
+    const store = createChatStore();
+    store.getState().setConversationId('conv_1');
+    store.getState().closeTaskPanel();
+
+    store.getState().setConversationId('conv_2');
+
+    expect(store.getState().taskPanelAutoOpen).toBe(true);
   });
 });

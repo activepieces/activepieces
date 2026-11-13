@@ -28,8 +28,8 @@ function DynamicValueToggleButton({
         >
           <SquareFunction
             className={cn('size-5', {
-              'text-foreground': pressed,
-              'text-muted-foreground': !pressed,
+              'text-gray-12': pressed,
+              'text-gray-11': !pressed,
             })}
           />
         </Toggle>

@@ -1,16 +1,19 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { imageRouterAuth } from '../common/auth';
-import { imageRouterApiCall } from '../common/client';
-import { modelDropdown } from '../common/props';
 import { randomBytes } from 'node:crypto';
+
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { kebabCase } from '@activepieces/pieces-framework';
 
-export const createImage = createAction({
-  audience: 'both',
+import { imageRouterAuth } from '../auth';
+import { imageRouterApi } from '../common/api';
+import { imageRouterProps } from '../common/props';
+import { createImageOutputSchema } from '../output-schemas';
+
+export const createImageAction = createAction({
+  audience: 'human',
   auth: imageRouterAuth,
   name: 'createImage',
-  classification: 'READ',
+  outputSchema: createImageOutputSchema,
+  classification: 'WRITE',
   displayName: 'Create Image',
   description: 'Generate an image from a text prompt using any available model',
   aiMetadata: { description: 'Generates brand-new images from a text prompt alone, routing the request through ImageRouter to whichever hosted image model is named in the required Model input, then downloading each result and saving it as a flow file. Pick this when there is no source picture to work from; use Image to Image instead to edit, mask, or transform images you already have. Quality and size are advisory and are ignored by models that do not support them. Not idempotent: each call runs a fresh generation and returns different images.', idempotent: false },
@@ -20,7 +23,7 @@ export const createImage = createAction({
       description: 'Text prompt describing the image you want to generate',
       required: true,
     }),
-    model: modelDropdown,
+    model: imageRouterProps.model({ required: true }),
     quality: Property.StaticDropdown({
       displayName: 'Quality',
       description: 'Image quality (not all models support this)',
@@ -58,34 +61,13 @@ export const createImage = createAction({
   async run(context) {
     const { prompt, model, quality, size, responseFormat } = context.propsValue;
 
-    const body: any = {
+    const response = await imageRouterApi.generateImage({
+      auth: context.auth,
       prompt,
       model,
-    };
-
-    if (quality && quality !== 'auto') {
-      body.quality = quality;
-    }
-
-    if (size && size !== 'auto') {
-      body.size = size;
-    }
-
-    if (responseFormat && responseFormat !== 'url') {
-      body.response_format = responseFormat;
-    }
-
-    const response = await imageRouterApiCall<{
-      data?: Array<{
-        url?: string;
-        b64_json?: string;
-        revised_prompt?: string;
-      }>;
-    }>({
-      apiKey: context.auth.secret_text,
-      method: HttpMethod.POST,
-      resourceUri: '/v1/openai/images/generations',
-      body,
+      quality,
+      size,
+      responseFormat,
     });
 
     const images = response.data || [];
@@ -103,12 +85,7 @@ export const createImage = createAction({
           imageBuffer = Buffer.from(img.b64_json, 'base64');
           fileName = `${randomBytes(8).toString('hex')}-${kebabCase(prompt).slice(0, 40)}-${index + 1}.png`;
         } else if (img.url) {
-          const downloadResponse = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: img.url,
-            responseType: 'arraybuffer',
-          });
-          imageBuffer = Buffer.from(downloadResponse.body);
+          imageBuffer = await imageRouterApi.downloadFile({ url: img.url });
           const urlExtension = img.url.split('.').pop()?.split('?')[0] || 'png';
           fileName = `${randomBytes(8).toString('hex')}-${kebabCase(prompt).slice(0, 40)}-${index + 1}.${urlExtension}`;
         } else {

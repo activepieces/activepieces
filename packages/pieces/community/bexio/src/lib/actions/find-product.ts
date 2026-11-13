@@ -1,6 +1,7 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 export const findProductAction = createAction({
   auth: bexioAuth,
@@ -8,7 +9,8 @@ export const findProductAction = createAction({
   classification: 'SEARCH',
   displayName: 'Find Product',
   description: 'Search for products by name or code',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: bexioOutputSchemas.itemArrayOutputSchema,
   aiMetadata: { description: 'Searches Bexio products/articles by internal name or internal code with operators such as contains or equals, with ordering and paging. Use to resolve a product to its id before referencing it on an invoice/order position or before Update Product. Read-only and idempotent.', idempotent: true },
   props: {
     search_criteria: Property.Array({

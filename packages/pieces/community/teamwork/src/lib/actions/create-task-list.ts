@@ -5,6 +5,7 @@ import { teamworkRequest } from '../common/client';
 
 export const createTaskList = createAction({
 	name: 'create_task_list',
+	classification: 'WRITE',
 	displayName: 'Create Task List',
 	description: 'Add a new task list under a project.',
 	audience: 'both',

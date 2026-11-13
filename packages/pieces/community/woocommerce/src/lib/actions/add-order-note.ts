@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { wooPathId } from '../common/path-id';
 import { addOrderNoteOutputSchema } from '../output-schemas';
 
 export const wooAddOrderNote = createAction({
@@ -22,20 +23,38 @@ export const wooAddOrderNote = createAction({
   },
   auth: wooAuth,
   outputSchema: addOrderNoteOutputSchema,
+  propertyGroups: [
+    {
+      key: 'order',
+      display: 'section',
+      label: 'Order',
+      icon: 'inbox',
+      props: ['id'],
+    },
+    {
+      key: 'note',
+      display: 'section',
+      label: 'Note to Add',
+      icon: 'text',
+      props: ['note', 'customer_note'],
+    },
+  ],
   props: {
     id: Property.ShortText({
       displayName: 'Order ID',
-      description: 'Enter the order ID',
+      description: 'The number after # in WooCommerce > Orders.',
+      placeholder: '123',
       required: true,
     }),
     note: Property.LongText({
       displayName: 'Note',
-      description: 'Content of the note',
+      description: "Shown in the order's notes in WooCommerce.",
       required: true,
     }),
     customer_note: Property.Checkbox({
-      displayName: 'Visible To Customer',
-      description: 'Email the note to the customer and show it on the order page',
+      displayName: 'Visible to Customer',
+      description:
+        'Email the note to the customer and show it on the order page',
       required: false,
       defaultValue: false,
     }),
@@ -46,7 +65,7 @@ export const wooAddOrderNote = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${trimmedBaseUrl}/wp-json/wc/v3/orders/${id}/notes`,
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/orders/${wooPathId.encode({ id, label: 'Order ID' })}/notes`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: configValue.auth.props.consumerKey,

@@ -1,5 +1,6 @@
 import { AgentOutputField, AgentTool } from '@activepieces/core-execution'
-import { AIProviderName, ApId, BaseModelSchema, Nullable } from '@activepieces/core-utils'
+import { AgentToolType } from '@activepieces/core-piece-types'
+import { AIProviderName, ApId, BaseModelSchema, Nullable, OptionalArrayFromQuery } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
 import { ColorName } from '../../management/project/project'
@@ -43,6 +44,7 @@ const AgentConfig = z.object({
     provider: Nullable(z.enum(AIProviderName)),
     providerConfigId: Nullable(ApId),
     modelName: Nullable(z.string().max(MAX_AGENT_NAME_LENGTH)),
+    modelTierId: Nullable(ApId),
     maxSteps: z.number().int().positive().max(MAX_AGENT_STEP_BUDGET).default(DEFAULT_AGENT_MAX_STEPS),
     tools: z.array(AgentTool).max(MAX_AGENT_TOOLS).default([]),
     structuredOutput: z.array(AgentOutputField).max(MAX_AGENT_OUTPUT_FIELDS).default([]),
@@ -57,6 +59,7 @@ const Agent = z.object({
     projectId: ApId,
     ownerId: ApId,
     externalId: z.string(),
+    folderId: Nullable(ApId),
     displayName: z.string(),
     description: Nullable(z.string()),
     icon: z.enum(AgentIcon),
@@ -70,6 +73,7 @@ const Agent = z.object({
 const AgentUsage = z.object({
     total: z.number().int().nonnegative(),
     names: z.array(z.string()),
+    flows: z.array(z.object({ id: z.string(), displayName: z.string() })),
 })
 
 const AgentWithUsage = Agent.extend({
@@ -80,6 +84,7 @@ const AgentSummary = Agent.omit({ draft: true, published: true }).extend({
     isPublished: z.boolean(),
     toolCount: z.number(),
     toolPieceNames: z.array(z.string()),
+    toolTypes: z.array(z.enum(AgentToolType)),
     projectDisplayName: z.string(),
     projectIsPrivate: z.boolean(),
 })
@@ -92,6 +97,7 @@ const CreateAgentRequest = z.object({
     color: z.enum(ColorName),
     visibility: z.enum(AgentVisibility).optional(),
     sharedWithUserIds: z.array(ApId).max(MAX_AGENT_SHARED_MEMBERS).optional(),
+    folderId: Nullable(ApId),
     draft: AgentConfig,
 })
 
@@ -137,6 +143,7 @@ const ListAgentsRequest = z.object({
     sort: z.optional(z.enum(AgentListSort)),
     cursor: z.string().optional(),
     limit: z.coerce.number().int().min(1).max(MAX_AGENT_PAGE_SIZE).optional(),
+    connectionExternalIds: OptionalArrayFromQuery(z.string()),
 })
 
 const ListAgentRunsRequest = z.object({

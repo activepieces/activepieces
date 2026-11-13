@@ -137,7 +137,7 @@ export const jotformCommon = {
       )}/form/${formId}/webhooks`,
       headers: {
         APIKEY: authentication.props.apiKey,
-        'Content-Type': 'multipart/form-data',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: {
         webhookURL: webhookUrl,

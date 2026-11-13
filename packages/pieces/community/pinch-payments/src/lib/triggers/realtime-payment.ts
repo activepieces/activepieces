@@ -5,6 +5,7 @@ import { createWebhook, deleteWebhook, WebhookResponse } from '../common/client'
 export const realtimePaymentTrigger = createTrigger({
   auth: pinchPaymentsAuth,
   name: 'realtime_payment',
+  classification: 'READ',
   displayName: 'Realtime Payment',
   description: 'Triggers when a realtime payment is executed',
   aiMetadata: {

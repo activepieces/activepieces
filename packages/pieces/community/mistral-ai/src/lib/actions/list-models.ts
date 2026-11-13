@@ -16,8 +16,8 @@ export const listModels = createAction({
 	outputSchema: listModelsOutputSchema,
 	props: {},
 	async run({ auth }) {
+		const { baseUrl, headers } = mistralRequest.getConfig(auth);
 		try {
-			const { baseUrl, headers } = mistralRequest.getConfig(auth);
 			const response = await httpClient.sendRequest({
 				method: HttpMethod.GET,
 				url: `${baseUrl}/models`,
@@ -26,7 +26,7 @@ export const listModels = createAction({
 
 			return response.body;
 		} catch (e: any) {
-			throw new Error(parseMistralError(e));
+			throw new Error(parseMistralError({ error: e, baseUrl }));
 		}
 	},
 });

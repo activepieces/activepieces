@@ -45,6 +45,7 @@ export function registerSubmissionTrigger({
   return createTrigger({
     auth: formioAuth,
     name,
+    classification: 'READ',
     displayName,
     description,
     aiMetadata: { description: aiDescription },
@@ -107,12 +108,7 @@ export function registerSubmissionTrigger({
     },
 
     async test(context) {
-      return await pollingHelper.test(sample, {
-        auth: context.auth,
-        propsValue: context.propsValue,
-        store: context.store,
-        files: context.files,
-      });
+      return await pollingHelper.test(sample, context);
     },
   });
 }

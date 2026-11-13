@@ -7,6 +7,7 @@ import { socialSetDropdown } from '../common/props';
 export const uploadMediaAction = createAction({
 	auth: typefullyAuth,
 	name: 'typefully_upload_media',
+	classification: 'WRITE',
 	displayName: 'Upload Media',
 	description:
 		'Uploads a media file (image, video, GIF, or PDF) to Typefully. Returns a media ID that can be used when creating drafts.',

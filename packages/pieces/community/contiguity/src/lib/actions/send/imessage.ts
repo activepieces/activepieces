@@ -14,6 +14,7 @@ import { _fetch } from '../../common/request';
 export const send_iMessage = createAction({
     auth: contiguityAuth,
     name: 'send_imessage',
+    classification: 'WRITE',
     displayName: 'Send iMessage',
     description: 'Send an iMessage',
     audience: 'both',

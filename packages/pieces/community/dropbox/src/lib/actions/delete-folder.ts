@@ -11,15 +11,17 @@ export const dropboxDeleteFolder = createAction({
   auth: dropboxAuth,
   name: 'delete_dropbox_folder',
   classification: 'DESTRUCTIVE',
-  description: 'Delete a folder',
+  description: 'Delete a folder and everything in it',
   audience: 'human',
-  aiMetadata: { description: 'Permanently deletes the folder at the given Dropbox path along with all of its contents. Use to remove an entire directory. Effectively idempotent on the end state once the path is gone, but a repeat call fails because the path no longer exists; treat as a destructive, non-recoverable mutation.', idempotent: false },
-  displayName: 'Delete folder',
+  aiMetadata: { description: 'Deletes the folder at the given Dropbox path along with all of its contents, moving them to deleted files where they can still be restored. Use to remove an entire directory. Effectively idempotent on the end state once the path is gone, but a repeat call fails because the path no longer exists; treat as a destructive mutation.', idempotent: false },
+  displayName: 'Delete Folder',
   outputSchema: folderMetadataOutputSchema,
   props: {
     path: Property.ShortText({
       displayName: 'Path',
-      description: 'The path of the folder to be deleted (e.g. /folder1)',
+      description:
+        'Folder to delete. Dropbox keeps it in deleted files for restore.',
+      placeholder: '/Reports/old',
       required: true,
     }),
   },

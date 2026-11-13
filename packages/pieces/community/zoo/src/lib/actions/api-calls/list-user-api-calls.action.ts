@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const listUserApiCallsAction = createAction({
   name: 'list_user_api_calls',
+  classification: 'SEARCH',
   displayName: 'List User API Calls',
   description: 'List API calls made by your user account',
   audience: 'both',

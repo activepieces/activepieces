@@ -3,6 +3,7 @@ import {
   AgentConversation,
   AgentMessageSource,
   ChatPersonalizationStatus,
+  ModelOptions,
   PlatformRole,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
@@ -17,7 +18,11 @@ import {
   ChatContainerScrollAnchor,
 } from '@/components/prompt-kit/chat-container';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ModelPicker, modelPickerUtils } from '@/features/agents';
+import { aiModelHooks } from '@/features/agents/ai-model/hooks';
 import { ChatCreditsAlert } from '@/features/billing';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import {
@@ -25,13 +30,14 @@ import {
   useChatStoreContext,
 } from '@/features/chat/lib/chat-store-context';
 import { ChatUIMessage, chatPartUtils } from '@/features/chat/lib/chat-types';
+import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { onboardingPrefillUtils } from '@/features/chat/lib/onboarding-prefill';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
-import { aiProviderQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { AssistantMessage } from './components/assistant-message';
@@ -41,6 +47,7 @@ import {
   MessageSkeletons,
   SetupRequiredState,
 } from './components/chat-empty-state';
+import { MemoryImportNudgeCard } from './components/memory-import-nudge-card';
 import { OnboardingQuestionCard } from './components/onboarding-question-card';
 import { OnboardingWelcome } from './components/onboarding-welcome';
 import {
@@ -48,6 +55,7 @@ import {
   PersonalizationChipState,
 } from './components/personalization-chip';
 import { QuickReplies } from './components/quick-replies';
+import { TaskPanelLayout } from './components/task-panel';
 import { UserMessage } from './components/user-message';
 import { getTextFromParts } from './lib/message-parsers';
 
@@ -64,28 +72,40 @@ export function AIChatBox({
   onTitleUpdate,
   onConversationCreated,
 }: AIChatBoxProps) {
-  const { data: chatProvider, isLoading: isLoadingProviders } =
-    aiProviderQueries.useChatProvider();
+  const projectId = authenticationSession.getProjectId();
+  const gated =
+    agentId === undefined && isNil(conversationId) && !isNil(projectId);
+  const { data: options, isLoading } = aiModelHooks.useModelOptions({
+    projectId: projectId ?? '',
+    surface: 'chat',
+    enabled: gated,
+  });
 
-  if (!isLoadingProviders && !chatProvider) {
+  if (gated && isLoading) {
+    return <MessageSkeletons />;
+  }
+
+  if (gated && !isNil(options) && !hasAnyModel({ options })) {
     return <SetupRequiredState />;
   }
 
   return (
     <ChatStoreProvider>
-      <ChatBoxContent
-        incognito={incognito}
-        initialPrompt={isLoadingProviders ? undefined : initialPrompt}
-        agentId={agentId}
-        builder={builder}
-        onTurnEnd={onTurnEnd}
-        emptyState={emptyState}
-        footerNote={footerNote}
-        placeholder={placeholder}
-        conversationId={conversationId}
-        onTitleUpdate={onTitleUpdate}
-        onConversationCreated={onConversationCreated}
-      />
+      <TaskPanelLayout>
+        <ChatBoxContent
+          incognito={incognito}
+          initialPrompt={initialPrompt}
+          agentId={agentId}
+          builder={builder}
+          onTurnEnd={onTurnEnd}
+          emptyState={emptyState}
+          footerNote={footerNote}
+          placeholder={placeholder}
+          conversationId={conversationId}
+          onTitleUpdate={onTitleUpdate}
+          onConversationCreated={onConversationCreated}
+        />
+      </TaskPanelLayout>
     </ChatStoreProvider>
   );
 }
@@ -105,10 +125,12 @@ function ChatBoxContent({
 }: AIChatBoxProps) {
   const queryClient = useQueryClient();
   const credits = useCreditsState();
+  const sessionProjectId = authenticationSession.getProjectId();
 
   const {
     conversationId,
-    modelName,
+    conversationProjectId,
+    modelPick,
     messages,
     isStreaming,
     isResumedStream,
@@ -116,13 +138,16 @@ function ChatBoxContent({
     wasCancelled,
     isLoadingHistory,
     error,
+    failed,
     sendMessage,
+    retryLastMessage,
     cancelStream,
     setConversationId,
-    setModelName,
+    setModelPick,
   } = useAgentChat({
     ...(agentId === undefined ? {} : { agentId }),
     ...(builder === undefined ? {} : { builder }),
+    projectId: sessionProjectId,
     onTitleUpdate,
     onConversationCreated,
     onTurnEnd,
@@ -169,6 +194,29 @@ function ChatBoxContent({
     return () => window.removeEventListener('keydown', handler);
   }, [isStreaming, cancelStream]);
 
+  const chatProjectId = conversationProjectId ?? sessionProjectId;
+  const showsPicker = agentId === undefined && !isNil(chatProjectId);
+  const { data: modelOptions } = aiModelHooks.useModelOptions({
+    projectId: chatProjectId ?? '',
+    surface: 'chat',
+    tierId: modelPick?.modelTierId ?? undefined,
+    enabled: showsPicker,
+  });
+  const shownChoice = isNil(modelOptions)
+    ? null
+    : chatUtils.choiceOf({ pick: modelPick, options: modelOptions }) ??
+      modelOptions.defaultChoice ??
+      null;
+  const awaitingSavedPick =
+    !isNil(initialConversationId) && (isNil(modelPick) || isLoadingHistory);
+  const pickUnavailable =
+    showsPicker &&
+    !isNil(modelOptions) &&
+    modelPickerUtils.isUnavailable({
+      options: modelOptions,
+      value: shownChoice,
+    });
+
   const [hasSentMessage, setHasSentMessage] = useState(false);
 
   const handleSend = useCallback(
@@ -178,10 +226,21 @@ function ChatBoxContent({
       options?: { messageSource?: AgentMessageSource },
     ) => {
       if (!text.trim() && (!files || files.length === 0)) return;
+      if (pickUnavailable) return;
+      if (isNil(conversationId) && isNil(modelPick) && !isNil(shownChoice)) {
+        await setModelPick(chatUtils.pickOf({ choice: shownChoice }));
+      }
       setHasSentMessage(true);
       await sendMessage(text.trim(), files, options);
     },
-    [sendMessage],
+    [
+      sendMessage,
+      pickUnavailable,
+      conversationId,
+      modelPick,
+      shownChoice,
+      setModelPick,
+    ],
   );
 
   const sentInitialPrompt = useRef(false);
@@ -199,8 +258,9 @@ function ChatBoxContent({
 
   const handleRetry = useCallback(() => {
     const lastUser = messages.findLast((m) => m.role === 'user');
-    if (lastUser) void sendMessage(getTextFromParts(lastUser.parts));
-  }, [messages, sendMessage]);
+    if (lastUser && !pickUnavailable)
+      retryLastMessage(getTextFromParts(lastUser.parts)).catch(() => undefined);
+  }, [messages, retryLastMessage, pickUnavailable]);
 
   const lastMessage = messages[messages.length - 1];
   const lastAssistantMessage = useMemo(
@@ -212,6 +272,18 @@ function ChatBoxContent({
     () => computeClaimedBuildIds(messages),
     [messages],
   );
+
+  const { embedState } = useEmbedding();
+  const onFirstReplyOfMainChat =
+    !incognito &&
+    !embedState.isEmbedded &&
+    isNil(agentId) &&
+    !builder &&
+    !isNil(conversationId) &&
+    !isAwaitingResponse &&
+    !wasCancelled &&
+    !failed &&
+    messages.filter((m) => m.role === 'assistant').length === 1;
 
   const hasBlockingCard = useChatStoreContext((s) =>
     chatStoreSelectors.hasBlockingCard({ state: s, lastAssistantMessage }),
@@ -389,26 +461,38 @@ function ChatBoxContent({
                     </div>
                   )}
 
+                {onFirstReplyOfMainChat && (
+                  <MemoryImportNudgeCard conversationId={conversationId} />
+                )}
+
                 {wasCancelled && (
-                  <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 py-2 text-xs text-gray-11 animate-in fade-in duration-200">
                     <Square className="h-3 w-3 fill-current" />
                     <span>{t('Response stopped')}</span>
                   </div>
                 )}
 
-                {error && (
+                {failed && (
                   <motion.div
-                    className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-destructive text-sm"
+                    className={cn(
+                      'flex items-center gap-2 text-danger-11 text-sm',
+                      error &&
+                        'rounded-xl border border-danger-6 bg-danger-3 px-3 py-2',
+                    )}
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <AlertTriangle className="h-4 w-4 shrink-0" />
-                    <span className="flex-1">{error}</span>
+                    {error && (
+                      <>
+                        <AlertTriangle className="h-4 w-4 shrink-0" />
+                        <span className="flex-1">{error}</span>
+                      </>
+                    )}
                     <Button
                       variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive gap-1.5 shrink-0 h-7 px-2"
+                      size="xs"
+                      className="text-danger-11 hover:text-danger-11 gap-1.5"
                       onClick={handleRetry}
                     >
                       <RefreshCw className="h-3 w-3" />
@@ -461,11 +545,26 @@ function ChatBoxContent({
             onStop={cancelStream}
             onInputChange={setHasInput}
             recede={showOnboardingCard}
-            selectedModel={modelName}
-            onModelChange={setModelName}
+            modelPicker={
+              showsPicker && awaitingSavedPick ? (
+                <Skeleton className="h-8 w-24 rounded-full" />
+              ) : showsPicker && !isNil(chatProjectId) ? (
+                <ModelPicker
+                  variant="pill"
+                  surface="chat"
+                  projectId={chatProjectId}
+                  value={shownChoice}
+                  onChange={(choice) =>
+                    void setModelPick(chatUtils.pickOf({ choice }))
+                  }
+                />
+              ) : null
+            }
+            sendBlockedReason={
+              pickUnavailable ? t('Pick another model to continue') : undefined
+            }
             lastAssistantMessage={lastAssistantMessage}
             lastMessageId={lastMessage?.id}
-            hideModelSelector={agentId !== undefined}
             placeholder={
               placeholder ??
               (showOnboardingCard
@@ -485,13 +584,21 @@ function ChatBoxContent({
             }
           />
           {footerNote !== undefined && (
-            <p className="pt-[9px] text-center text-[11.5px] leading-[14px] text-muted-foreground">
+            <p className="pt-[9px] text-center text-xs leading-3.5 text-gray-11">
               {footerNote}
             </p>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+function hasAnyModel({ options }: { options: ModelOptions }): boolean {
+  return (
+    options.tiers.length > 0 ||
+    !isNil(options.credits) ||
+    options.keys.length > 0
   );
 }
 

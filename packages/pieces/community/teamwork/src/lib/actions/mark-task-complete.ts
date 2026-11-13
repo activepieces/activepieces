@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const markTaskComplete = createAction({
 	name: 'mark_task_complete',
+	classification: 'WRITE',
 	displayName: 'Mark Task Complete',
 	description: 'Set a task’s status to complete.',
 	audience: 'both',

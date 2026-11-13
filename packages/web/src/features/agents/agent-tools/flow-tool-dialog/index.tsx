@@ -36,16 +36,29 @@ export function AgentFlowToolDialog({
   onToolsUpdate,
   tools,
 }: AgentFlowToolDialogProps) {
+  const { showAddFlowDialog, setShowAddFlowDialog } = useFlowToolDialogStore();
+
+  return (
+    <Dialog open={showAddFlowDialog} onOpenChange={setShowAddFlowDialog}>
+      <FlowToolDialogContent
+        key={`flow-dialog-${showAddFlowDialog}`}
+        tools={tools}
+        onToolsUpdate={onToolsUpdate}
+      />
+    </Dialog>
+  );
+}
+
+function FlowToolDialogContent({
+  onToolsUpdate,
+  tools,
+}: AgentFlowToolDialogProps) {
   const [selectedFlows, setSelectedFlows] = useState<AgentFlowTool[]>(
     tools.filter((tools) => tools.type === AgentToolType.FLOW),
   );
 
-  const {
-    showAddFlowDialog,
-    setShowAddFlowDialog,
-    searchQuery,
-    setSearchQuery,
-  } = useFlowToolDialogStore();
+  const { setShowAddFlowDialog, searchQuery, setSearchQuery } =
+    useFlowToolDialogStore();
 
   const { data } = agentQueries.useFlowsForAgent();
 
@@ -69,45 +82,43 @@ export function AgentFlowToolDialog({
   };
 
   return (
-    <Dialog open={showAddFlowDialog} onOpenChange={setShowAddFlowDialog}>
-      <DialogContent className="w-[90vw] max-w-[750px] h-[80vh] max-h-[800px] flex flex-col overflow-hidden p-0">
-        <DialogHeader className="min-h-16 flex px-4 items-start justify-center mb-0 border-b">
-          <DialogTitle>{t('Add Flow Tools')}</DialogTitle>
-        </DialogHeader>
+    <DialogContent className="w-[90vw] max-w-[750px] h-[80vh] max-h-[800px] flex flex-col overflow-hidden p-0">
+      <DialogHeader className="min-h-16 flex px-4 items-start justify-center mb-0 border-b">
+        <DialogTitle>{t('Add Flow Tools')}</DialogTitle>
+      </DialogHeader>
 
-        <div className="px-4 py-3 border-b">
-          <div className="relative border rounded-sm">
-            <Search className="absolute left-2 top-2.5 size-4 text-muted-foreground" />
-            <Input
-              placeholder={t('Search')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 shadow-none border-none"
-            />
-          </div>
-        </div>
-
-        <ScrollArea className="grow overflow-y-auto">
-          <FlowDialogContent
-            flows={flows || []}
-            searchQuery={searchQuery}
-            selectedFlows={selectedFlows}
-            setSelectedFlows={setSelectedFlows}
+      <div className="px-4 py-3 border-b">
+        <div className="relative border rounded-md">
+          <Search className="absolute left-2 top-2.5 size-4 text-gray-11" />
+          <Input
+            placeholder={t('Search')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 shadow-none border-none"
           />
-        </ScrollArea>
+        </div>
+      </div>
 
-        <DialogFooter className="border-t p-4 mt-auto">
-          <CreateMcpFlowButton />
-          <DialogClose asChild>
-            <Button type="button" variant="ghost">
-              {t('Close')}
-            </Button>
-          </DialogClose>
-          <Button type="button" onClick={handleSave}>
-            {t('Save')}
+      <ScrollArea className="grow overflow-y-auto">
+        <FlowDialogContent
+          flows={flows || []}
+          searchQuery={searchQuery}
+          selectedFlows={selectedFlows}
+          setSelectedFlows={setSelectedFlows}
+        />
+      </ScrollArea>
+
+      <DialogFooter className="border-t p-4 mt-auto">
+        <CreateMcpFlowButton />
+        <DialogClose asChild>
+          <Button type="button" variant="ghost">
+            {t('Close')}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </DialogClose>
+        <Button type="button" onClick={handleSave}>
+          {t('Save')}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
   );
 }

@@ -1,3 +1,5 @@
+import { assertWriteSucceeded } from '../common/request';
+import { biginOutputSchemas } from '../common/output-schemas';
 import { biginAuth } from '../auth';
 import { createAction, InputPropertyMap, Property } from '@activepieces/pieces-framework';
 import { tagsDropdown, usersDropdown } from '../common/props';
@@ -15,7 +17,8 @@ export const updateEvent = createAction({
   classification: 'WRITE',
   displayName: 'Update Event',
   description: 'Updates an existing event in Bigin',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: biginOutputSchemas.legacyAckRaw,
   aiMetadata: { description: 'Updates an existing calendar event in Bigin CRM, identified by selecting the event; its current fields are prepopulated and any you set are overwritten (title, start/end time, all-day, venue, participants, owner, tags), with optional recurrence and reminder settings. Use to modify an event that already exists. Idempotent: re-sending the same field values leaves the record in the same state.', idempotent: true },
   props: {
     eventId: Property.Dropdown({
@@ -358,7 +361,8 @@ export const updateEvent = createAction({
           return handleDropdownError('Please connect your account first');
         if (!relatedModule) return { options: [] };
 
-        const { access_token, api_domain } = auth as any;
+        const { access_token, data } = auth;
+        const api_domain = data['api_domain'];
 
         const fetchMap: Record<string, () => Promise<any>> = {
           Contacts: () =>
@@ -387,7 +391,8 @@ export const updateEvent = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const { access_token, api_domain } = auth as any;
+    const { access_token, data } = auth;
+        const api_domain = data['api_domain'];
 
     const eventId = JSON.parse(propsValue.eventId as string).id;
 
@@ -510,20 +515,14 @@ export const updateEvent = createAction({
 
     const payload = { data: [eventData] };
 
-    try {
+    
       const response = await biginApiService.updateEvent(
         access_token,
         api_domain,
         payload
       );
+      assertWriteSucceeded(response.data?.[0]);
       return response.data[0];
-    } catch (error) {
-      console.error('Error updating event:', error);
-      throw new Error(
-        error instanceof Error
-          ? `Failed to update event: ${error.message}`
-          : 'Failed to update event due to an unknown error'
-      );
-    }
+    
   },
 });

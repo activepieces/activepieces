@@ -9,6 +9,7 @@ import { assertLimit } from '../../common/validation';
 export const listHighlights = createAction({
   auth: hedyAuth,
   name: 'list-highlights',
+  classification: 'SEARCH',
   displayName: 'List Highlights',
   description: 'Retrieve highlights with optional topic filtering and pagination.',
   audience: 'both',

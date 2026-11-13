@@ -42,7 +42,7 @@ function PromptSuggestion({
         size={size || 'sm'}
         className={cn(
           'w-full cursor-pointer justify-start rounded-xl py-2',
-          'hover:bg-accent',
+          'hover:bg-gray-4',
           className,
         )}
         {...props}
@@ -63,7 +63,7 @@ function PromptSuggestion({
       size={size || 'sm'}
       className={cn(
         'w-full cursor-pointer justify-start gap-0 rounded-xl py-2',
-        'hover:bg-accent',
+        'hover:bg-gray-4',
         className,
       )}
       {...props}
@@ -73,7 +73,7 @@ function PromptSuggestion({
           const index = contentLower.indexOf(highlightLower);
           if (index === -1)
             return (
-              <span className="text-muted-foreground whitespace-pre-wrap">
+              <span className="text-gray-11 whitespace-pre-wrap">
                 {content}
               </span>
             );
@@ -89,15 +89,15 @@ function PromptSuggestion({
           return (
             <>
               {before && (
-                <span className="text-muted-foreground whitespace-pre-wrap">
+                <span className="text-gray-11 whitespace-pre-wrap">
                   {before}
                 </span>
               )}
-              <span className="text-primary font-medium whitespace-pre-wrap">
+              <span className="text-accent-11 font-medium whitespace-pre-wrap">
                 {actualHighlightedText}
               </span>
               {after && (
-                <span className="text-muted-foreground whitespace-pre-wrap">
+                <span className="text-gray-11 whitespace-pre-wrap">
                   {after}
                 </span>
               )}
@@ -105,9 +105,7 @@ function PromptSuggestion({
           );
         })()
       ) : (
-        <span className="text-muted-foreground whitespace-pre-wrap">
-          {content}
-        </span>
+        <span className="text-gray-11 whitespace-pre-wrap">{content}</span>
       )}
     </Button>
   );

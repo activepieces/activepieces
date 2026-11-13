@@ -1,6 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
 import { PlatformBillingInformation } from '@activepieces/shared';
-import dayjs from 'dayjs';
 import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
@@ -13,8 +12,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { billingMutations, billingQueries } from '../hooks/billing-hooks';
+import { billingUtils } from '../utils/billing-utils';
 
 import { DetailRow } from './detail-row';
 import { planSelectorUtils } from './plan-selector-utils';
@@ -64,13 +65,13 @@ export function KeepPlanDialog({
               'Your scheduled switch to the {plan} plan on {date} will be canceled and your subscription will continue unchanged.',
               {
                 plan: info.scheduledPlanName ?? t('Free'),
-                date: dayjs(info.cancelAt).format('MMM D, YYYY'),
+                date: billingUtils.formatDate(info.cancelAt),
               },
             )}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-2 rounded-lg border p-4 text-sm">
+        <div className="flex flex-col gap-2 rounded-xl border p-4 text-sm">
           {!isNil(priceLabel) && (
             <DetailRow label={t('Price')} value={priceLabel} />
           )}
@@ -83,7 +84,7 @@ export function KeepPlanDialog({
           {!isNil(info.nextBillingDate) && (
             <DetailRow
               label={t('Renews on')}
-              value={dayjs(info.nextBillingDate).format('MMM D, YYYY')}
+              value={billingUtils.formatDate(info.nextBillingDate)}
             />
           )}
         </div>
@@ -98,6 +99,7 @@ export function KeepPlanDialog({
             {t('Cancel')}
           </Button>
           <Button
+            {...adminControl(AdminControl.BILLING_KEEP_PLAN_SUBMIT)}
             type="button"
             loading={isPending}
             onClick={() => reactivate()}

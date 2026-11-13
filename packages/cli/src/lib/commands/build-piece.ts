@@ -1,10 +1,11 @@
 import { Command } from "commander";
-import { buildPiece, findPiece } from '../utils/piece-utils';
+import { assertPieceExists, buildPiece, findPiece } from '../utils/piece-utils';
 import chalk from "chalk";
 import inquirer from "inquirer";
 
 async function buildPieces(pieceName: string) {
     const pieceFolder = await findPiece(pieceName);
+    assertPieceExists(pieceFolder);
     const { outputFolder } = await buildPiece(pieceFolder);
     console.info(chalk.green(`Piece '${pieceName}' built and packed successfully at ${outputFolder}.`));
 }

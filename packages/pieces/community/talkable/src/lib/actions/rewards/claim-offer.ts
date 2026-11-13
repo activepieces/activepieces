@@ -5,6 +5,7 @@ import { TALKABLE_API_URL } from '../../common/constants';
 
 export const claimOffer = createAction({
   name: 'claim-offer', // Must be a unique across the piece, this shouldn't be changed.
+  classification: 'WRITE',
   auth: talkableAuth,
   displayName: 'Share and claim offer',
   description: "Using this action, you can share and get a friend's reward",

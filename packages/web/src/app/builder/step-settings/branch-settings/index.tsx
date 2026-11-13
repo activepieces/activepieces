@@ -50,7 +50,7 @@ const BranchSettings = React.memo(
 
     return (
       <div className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
-        <div className="text-md ">{t('Execute If')}</div>
+        <div>{t('Execute If')}</div>
         {fields.map((fieldGroup, groupIndex) => (
           <BranchConditionGroup
             key={fieldGroup.id}

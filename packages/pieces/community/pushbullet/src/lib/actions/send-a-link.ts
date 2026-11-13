@@ -1,48 +1,45 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { bushbulletAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { bushbulletAuth } from '../common/auth';
+import { PushbulletPush, pushbulletApi } from '../common/client';
+import { pushbulletProps } from '../common/props';
+import { pushbulletOutputSchemas } from '../common/output-schemas';
 
 export const sendALink = createAction({
   auth: bushbulletAuth,
   name: 'sendALink',
   classification: 'WRITE',
   displayName: 'Send a Link',
-  description: 'Send a link notification',
-  audience: 'both',
-  aiMetadata: { description: 'Pushes a clickable link notification to the authenticated Pushbullet account (and its connected devices). Use this when the agent needs to deliver a URL the recipient should open, optionally with a title and body line. Requires a URL; sends a new push on every call, so it is not idempotent.', idempotent: false },
+  description: 'Sends a clickable link notification to your devices, one device or an email address.',
+  audience: 'human',
+  outputSchema: pushbulletOutputSchemas.push,
   props: {
     url: Property.ShortText({
       displayName: 'URL to send',
-      description: '',
+      description: 'The link that opens when the notification is clicked, e.g. https://example.com.',
       required: true,
     }),
     title: Property.ShortText({
       displayName: 'Title',
-      description: '',
+      description: 'The headline of the notification.',
       required: false,
     }),
-    body: Property.ShortText({
+    body: Property.LongText({
       displayName: 'Body',
-      description: '',
+      description: 'Optional text shown under the title.',
       required: false,
     }),
+    device: pushbulletProps.device,
+    email: pushbulletProps.email,
   },
   async run(context) {
-    const { url, title, body } = context.propsValue;
-
-    const response = await makeRequest(
-      context.auth.secret_text,
-      HttpMethod.POST,
-      '/pushes',
-      {
-        type: 'link',
-        url,
-        title,
-        body,
-      }
-    );
-
-    return response;
+    const { url, title, body, device, email } = context.propsValue;
+    const target = pushbulletApi.buildTarget({ deviceIden: device ?? undefined, email: email ?? undefined });
+    return await pushbulletApi.request<PushbulletPush>({
+      token: context.auth.secret_text,
+      method: HttpMethod.POST,
+      path: '/pushes',
+      body: { type: 'link', url, title, body, ...target },
+    });
   },
 });

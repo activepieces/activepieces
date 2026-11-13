@@ -23,7 +23,7 @@ You can find your shop name in the URL. For example, if the URL is \`https://exa
 1. Log in to your Shopify admin.
 2. Go to **Settings** -> **Apps and sales channels** -> **Develop apps**.
 3. Open your existing custom app.
-4. Under **Configuration**, check that the Admin API scopes include: \`read_orders\`, \`write_orders\`, \`read_customers\`, \`write_customers\`, \`read_products\`, \`write_products\`, \`read_draft_orders\`, \`write_draft_orders\`, \`read_locations\`, \`read_inventory\`, \`write_inventory\`, \`read_themes\`, \`write_fulfillments\`.
+4. Under **Configuration**, check that the Admin API scopes include: \`read_orders\`, \`write_orders\`, \`read_customers\`, \`write_customers\`, \`read_products\`, \`write_products\`, \`read_draft_orders\`, \`write_draft_orders\`, \`read_locations\`, \`read_inventory\`, \`write_inventory\`, \`read_themes\`, \`write_fulfillments\`, \`read_publications\`, \`write_publications\`, \`write_files\`, \`read_merchant_managed_fulfillment_orders\`, \`write_merchant_managed_fulfillment_orders\`, \`read_fulfillments\`, \`read_shipping\`, \`read_discounts\`, \`write_discounts\`, \`read_gift_cards\`, \`write_gift_cards\`, \`write_themes\`, \`read_content\`, \`write_content\`, \`read_online_store_navigation\`, \`write_online_store_navigation\`, \`read_metaobjects\`, \`write_metaobjects\`, \`read_metaobject_definitions\`, \`write_metaobject_definitions\`, \`read_marketing_events\`, \`write_marketing_events\`, \`read_script_tags\`, \`write_script_tags\`, \`read_legal_policies\`, \`read_privacy_settings\`, \`read_markets\`, \`write_markets\`, \`read_payment_terms\`, \`read_shopify_payments_disputes\`, \`read_reports\`, \`write_reports\`, \`write_analytics_annotations\`.
 5. Under **API credentials**, copy the **Admin API access token**.
 `;
 
@@ -33,7 +33,7 @@ Use this option for apps created in the Shopify **Dev Dashboard** (all new apps 
 **Important:** the app and the store must belong to the **same Shopify organization**, otherwise Shopify rejects the connection.
 
 1. Go to the [Shopify Dev Dashboard](https://dev.shopify.com/dashboard) and click **Create app**. Give it a name.
-2. Create a version of the app and, under **Access** -> **Scopes**, select these Admin API scopes: \`read_orders\`, \`write_orders\`, \`read_customers\`, \`write_customers\`, \`read_products\`, \`write_products\`, \`read_draft_orders\`, \`write_draft_orders\`, \`read_locations\`, \`read_inventory\`, \`write_inventory\`, \`read_themes\`, \`write_fulfillments\`.
+2. Create a version of the app and, under **Access** -> **Scopes**, select these Admin API scopes: \`read_orders\`, \`write_orders\`, \`read_customers\`, \`write_customers\`, \`read_products\`, \`write_products\`, \`read_draft_orders\`, \`write_draft_orders\`, \`read_locations\`, \`read_inventory\`, \`write_inventory\`, \`read_themes\`, \`write_fulfillments\`, \`read_publications\`, \`write_publications\`, \`write_files\`, \`read_merchant_managed_fulfillment_orders\`, \`write_merchant_managed_fulfillment_orders\`, \`read_fulfillments\`, \`read_shipping\`, \`read_discounts\`, \`write_discounts\`, \`read_gift_cards\`, \`write_gift_cards\`, \`write_themes\`, \`read_content\`, \`write_content\`, \`read_online_store_navigation\`, \`write_online_store_navigation\`, \`read_metaobjects\`, \`write_metaobjects\`, \`read_metaobject_definitions\`, \`write_metaobject_definitions\`, \`read_marketing_events\`, \`write_marketing_events\`, \`read_script_tags\`, \`write_script_tags\`, \`read_legal_policies\`, \`read_privacy_settings\`, \`read_markets\`, \`write_markets\`, \`read_payment_terms\`, \`read_shopify_payments_disputes\`, \`read_reports\`, \`write_reports\`, \`write_analytics_annotations\`.
 3. Release a version with these scopes and install/approve it on the store: from the app's **Home** page, click **Install app** and install it on your store (reinstall it if it was installed before the scopes were added). The store must be in the same organization as the app.
 4. Open the app's **Settings** page and copy the **Client ID** and **Client secret**.
 5. Enter your shop name below (for \`https://example.myshopify.com\`, enter **example**), then paste the client ID and client secret.
@@ -44,6 +44,8 @@ Use this option for apps created in the Shopify **Dev Dashboard** (all new apps 
 const NO_APPROVED_SCOPES_ERROR =
   'Your Shopify app has no approved Admin API scopes on this store. In the Dev Dashboard, release an app version that includes the scopes, then install/approve it on the store (reinstall if needed), and try again.';
 
+export const SHOPIFY_API_VERSION = '2026-10';
+
 const SHOP_NAME_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9-]*$/;
 
 const INVALID_SHOP_NAME_ERROR =
@@ -53,7 +55,7 @@ export function getBaseUrl(shopName: string) {
   if (!isValidShopName(shopName)) {
     throw new Error(INVALID_SHOP_NAME_ERROR);
   }
-  return `https://${shopName}.myshopify.com/admin/api/2023-10`;
+  return `https://${shopName}.myshopify.com/admin/api/${SHOPIFY_API_VERSION}`;
 }
 
 export const shopifyAdminTokenAuth = PieceAuth.CustomAuth({

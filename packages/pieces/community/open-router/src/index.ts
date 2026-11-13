@@ -36,6 +36,12 @@ export const openRouter = createPiece({
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.secret_text}`,
       }),
+      props: {
+        url: {
+          description: 'Full URL, or a path relative to https://openrouter.ai/api/v1',
+          placeholder: '/models',
+        },
+      },
     }),
   ],
   triggers: [],

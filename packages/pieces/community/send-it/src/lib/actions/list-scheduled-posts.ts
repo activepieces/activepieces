@@ -1,7 +1,9 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sendItAuth } from '../auth';
-import { platformFilterProperty, sendItRequest } from '../common';
+import { sendItAuth } from '../common/auth';
+import { apiKeyOf } from '../common/client';
+import { sendItOutputSchemas } from '../common/output-schemas';
+import { platformFilterProperty } from '../common/props';
+import { sendItRequests } from '../common/requests';
 
 export const listScheduledPosts = createAction({
   auth: sendItAuth,
@@ -12,22 +14,14 @@ export const listScheduledPosts = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Lists pending scheduled posts, optionally filtered to a single platform; leaving the platform filter empty returns scheduled posts across all platforms. Use this to find the schedule ID of a post you want to cancel or trigger early, or to review the publishing queue. Idempotent: it is a read-only list.',
+      'Lists pending scheduled posts, optionally filtered to one platform; leave the filter empty for all platforms. Each post has its schedule id, platforms, content and scheduledTime. Use it to find the schedule ID to cancel or publish early. count is the number returned in this response. Read-only and idempotent.',
     idempotent: true,
   },
   props: {
     platformFilter: platformFilterProperty,
   },
+  outputSchema: sendItOutputSchemas.scheduledList,
   async run(context) {
-    const { platformFilter } = context.propsValue;
-    const params = platformFilter ? { platform: platformFilter } : undefined;
-
-    return await sendItRequest(
-      context.auth.secret_text,
-      HttpMethod.GET,
-      '/scheduled',
-      undefined,
-      params
-    );
+    return sendItRequests.listScheduled({ apiKey: apiKeyOf(context.auth), platform: context.propsValue.platformFilter ?? undefined });
   },
 });

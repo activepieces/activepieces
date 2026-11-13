@@ -2,10 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { JinaAICommon } from '../common';
 import { jinaAiAuth } from '../auth';
+import { extractWebpageContentOutputSchema } from '../output-schemas';
 
 export const extractWebpageContentAction = createAction({
   auth:jinaAiAuth,
   name: 'extract_webpage_content',
+  outputSchema: extractWebpageContentOutputSchema,
   classification: 'READ',
   displayName: 'Extract Webpage Content',
   description:

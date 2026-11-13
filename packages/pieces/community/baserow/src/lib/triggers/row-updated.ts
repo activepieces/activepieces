@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import { baserowCommon, makeClient } from '../common';
-import { createWebhookTriggerHooks, dynamicWebhookInstructions } from '../common/webhook-trigger';
+import { createWebhookTriggerHooks, dynamicWebhookInstructions, webhookUrlInfo } from '../common/webhook-trigger';
 import { rowUpdatedTriggerOutputSchema } from '../output-schemas';
 
 const triggerHooks = createWebhookTriggerHooks({
@@ -21,8 +21,25 @@ export const rowUpdatedTrigger = createTrigger({
       'Fires when an existing row in the selected Baserow table changes, emitting one event per updated row with both its new and previous field values. Use to react to individual edits; for the batch form use Updated Rows (Batch).',
   },
   type: TriggerStrategy.WEBHOOK,
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Table to Watch',
+      icon: 'file',
+      props: ['table_id'],
+    },
+    {
+      key: 'setup',
+      display: 'section',
+      label: 'Webhook',
+      icon: 'send',
+      props: ['webhook_url', 'instructions'],
+    },
+  ],
   props: {
     table_id: baserowCommon.tableId(),
+    webhook_url: webhookUrlInfo(),
     instructions: dynamicWebhookInstructions('Rows updated'),
   },
   sampleData: {

@@ -3,6 +3,7 @@ import { esignaturesAuth } from '../common/auth';
 export const signerDeclined = createTrigger({
   auth: esignaturesAuth,
   name: 'signerDeclined',
+  classification: 'READ',
   displayName: 'Signer declined',
   description: 'Trigger when a signer has declined to sign the contract',
   props: {},

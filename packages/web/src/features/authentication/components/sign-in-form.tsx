@@ -121,6 +121,12 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
             });
             break;
           }
+          case ErrorCode.SIGN_IN_METHOD_NOT_ALLOWED: {
+            form.setError('root.serverError', {
+              message: t("Your organization doesn't allow this sign-in method"),
+            });
+            break;
+          }
           case ErrorCode.USER_NOT_FOUND_ON_PLATFORM: {
             form.setError('root.serverError', {
               message: t(
@@ -168,7 +174,6 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
                   id="email"
                   type="text"
                   placeholder={'email@example.com'}
-                  className="rounded-sm"
                   tabIndex={1}
                   data-testid="sign-in-email"
                   onChange={(e) => {
@@ -194,14 +199,14 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
                       <button
                         type="button"
                         onClick={onForgotPassword}
-                        className="text-muted-foreground text-xs hover:text-primary transition-all duration-200"
+                        className="text-gray-11 text-xs hover:text-accent-11 transition-all duration-200"
                       >
                         {t('Forgot your password?')}
                       </button>
                     ) : (
                       <Link
                         to="/forget-password"
-                        className="text-muted-foreground text-xs hover:text-primary transition-all duration-200"
+                        className="text-gray-11 text-xs hover:text-accent-11 transition-all duration-200"
                       >
                         {t('Forgot your password?')}
                       </Link>
@@ -214,17 +219,17 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder={'********'}
-                    className="rounded-sm pr-10"
+                    className="pr-10"
                     tabIndex={2}
                     data-testid="sign-in-password"
                   />
                   <Button
                     type="button"
                     variant="ghost"
-                    size="icon"
+                    size="icon-xs"
                     tabIndex={-1}
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-11 hover:text-gray-12"
                   >
                     {showPassword ? (
                       <EyeOff className="w-4 h-4" />

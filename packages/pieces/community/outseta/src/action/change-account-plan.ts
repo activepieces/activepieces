@@ -5,6 +5,7 @@ import { planUidDropdown } from '../common/dropdowns';
 
 export const changeAccountPlanAction = createAction({
   name: 'change_account_plan',
+  classification: 'WRITE',
   auth: outsetaAuth,
   displayName: 'Change Account Plan',
   description:

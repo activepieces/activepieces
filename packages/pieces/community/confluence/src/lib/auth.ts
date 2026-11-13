@@ -1,4 +1,6 @@
-import { AppConnectionValueForAuthProperty, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { AppConnectionType, PieceAuth, Property, tryCatch } from '@activepieces/pieces-framework';
+
+import { confluenceApi } from './common/api';
 
 export const confluenceAuth = PieceAuth.CustomAuth({
   description: 'Please refer to this guide to get your api credentials: https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account',
@@ -20,6 +22,16 @@ export const confluenceAuth = PieceAuth.CustomAuth({
       description: 'Example value - https://your-domain.atlassian.net (without trailing slash)',
     }),
   },
+  validate: async ({ auth }) => {
+    const { data, error } = await tryCatch(() =>
+      confluenceApi.getCurrentUser({ auth: { type: AppConnectionType.CUSTOM_AUTH, props: auth } }),
+    );
+    if (error || data?.type !== 'known') {
+      return {
+        valid: false,
+        error: 'Could not connect to Confluence. Check the account email, API token and Confluence domain (e.g. https://your-domain.atlassian.net).',
+      };
+    }
+    return { valid: true };
+  },
 });
-
-export type confluenceAuthValue = AppConnectionValueForAuthProperty<typeof confluenceAuth>;

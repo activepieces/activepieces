@@ -5,6 +5,7 @@ import { makeClient } from '../../common/client';
 export const updatePayment = createAction({
     auth: oracleFusionCloudErpAuth,
     name: 'update_payment',
+    classification: 'WRITE',
     displayName: 'Update Payment',
     description: 'Updates descriptive and global flexfields for a payment.',
     audience: 'both',

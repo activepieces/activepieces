@@ -1,11 +1,13 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { parseurAuth, parseurCommon } from '../common';
-import { parserDropdown } from '../common/properties';
-import { WebhookInformation } from '../common/types';
+import { parseurAuth } from '../auth';
+import { parseurApi } from '../common/api';
+import { parseurProps } from '../common/props';
+import type { ParseurWebhookInformation } from '../common/types';
 
-export const newTableFieldProcessed = createTrigger({
+export const newTableFieldProcessedTrigger = createTrigger({
   auth: parseurAuth,
   name: 'newTableFieldProcessed',
+  classification: 'READ',
   displayName: 'New Table Field Processed',
   description:
     'Fires when a document with table fields is processed, and triggers for each row (table field) separately.',
@@ -14,35 +16,34 @@ export const newTableFieldProcessed = createTrigger({
       'Fires once per table row when a document containing table fields is parsed in the selected Parseur mailbox, emitting each extracted row individually. Use to process line-item or tabular data row by row rather than as a whole document.',
   },
   props: {
-    mailboxId: parserDropdown({ required: true }),
+    mailboxId: parseurProps.parserId({ required: true }),
   },
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const response = await parseurCommon.createWebhook({
-      apiKey: context.auth.secret_text,
+    const webhook = await parseurApi.createWebhook({
+      auth: context.auth,
       event: 'table.processed',
       target: context.webhookUrl,
-      category: 'CUSTOM',
     });
-    await parseurCommon.enableWebhook({
-      apiKey: context.auth.secret_text,
-      webhookId: response.id,
-      mailboxId: context.propsValue.mailboxId as number,
+    await parseurApi.enableWebhook({
+      auth: context.auth,
+      webhookId: webhook.id,
+      mailboxId: context.propsValue.mailboxId,
     });
-    await context.store.put<WebhookInformation>('_newTableFieldProcessed', {
-      webhookId: response.id,
+    await context.store.put<ParseurWebhookInformation>('_newTableFieldProcessed', {
+      webhookId: webhook.id,
     });
   },
   async onDisable(context) {
-    const webhookInfo = await context.store.get<WebhookInformation>(
+    const webhookInfo = await context.store.get<ParseurWebhookInformation>(
       '_newTableFieldProcessed'
     );
     if (!webhookInfo) {
       return;
     }
-    await parseurCommon.deleteWebhook({
-      apiKey: context.auth.secret_text,
+    await parseurApi.deleteWebhook({
+      auth: context.auth,
       webhookId: webhookInfo.webhookId,
     });
     await context.store.delete('_newTableFieldProcessed');

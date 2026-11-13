@@ -10,6 +10,8 @@ import {
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
+import { clipboardUtils } from '@/components/custom/clipboard/use-copy-to-clipboard';
+
 import { BuilderState } from '../../builder-hooks';
 
 type CopyActionsRequest = {
@@ -29,7 +31,7 @@ export function copySelectedNodes({
     type: 'COPY_ACTIONS',
     actions: actionsToCopy,
   };
-  navigator.clipboard.writeText(JSON.stringify(request));
+  clipboardUtils.copy({ value: request }).catch(() => undefined);
 }
 
 export function deleteSelectedNodes({

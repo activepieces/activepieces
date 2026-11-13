@@ -6,6 +6,7 @@ import { BASE_URL, subscriberId, tagIdDropdown } from '../common/props';
 export const addTagToUserAction = createAction({
 	auth: manychatAuth,
 	name: 'addTagToUser',
+	classification: 'WRITE',
 	displayName: 'Add Tag to User',
 	description: 'Adds a tag to a user.',
 	audience: 'both',

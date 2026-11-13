@@ -6,6 +6,7 @@ import { getAuthToken } from '../common/auth-helper';
 export const changeCredentialsBulk = createAction({
   auth: cyberarkAuth,
   name: 'change_credentials_bulk',
+  classification: 'WRITE',
   displayName: 'Change Credentials Immediately in Bulk',
   description:
     'Marks multiple accounts for an immediate credentials change by the CPM to a new random value',

@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils';
+import { isNil, tryCatch } from '@activepieces/core-utils';
 import {
   PopulatedFlow,
   TelemetryEventName,
@@ -56,6 +56,7 @@ export type ImportFlowDialogProps =
   | {
       insideBuilder: true;
       flowId: string;
+      savePendingEdits: () => Promise<void>;
     };
 
 const readTemplateJson = async (
@@ -175,6 +176,12 @@ const ImportFlowDialog = (
       );
     } else {
       setErrorMessage('');
+      if (props.insideBuilder) {
+        const { error: saveError } = await tryCatch(props.savePendingEdits);
+        if (!isNil(saveError)) {
+          return;
+        }
+      }
       importFlows(templates);
     }
   };
@@ -251,7 +258,7 @@ const ImportFlowDialog = (
             </Alert>
           )}
           <div className="w-full flex flex-col gap-2 justify-between items-start">
-            <span className="w-16 text-sm font-medium text-gray-700">
+            <span className="w-16 text-sm font-medium text-gray-11">
               {t('Flow')}
             </span>
             <Input
@@ -264,7 +271,7 @@ const ImportFlowDialog = (
           </div>
           {!props.insideBuilder && !embedState.hideFolders && (
             <div className="w-full flex flex-col gap-2 justify-between items-start">
-              <span className="w-16 text-sm font-medium text-gray-700">
+              <span className="w-16 text-sm font-medium text-gray-11">
                 {t('Folder')}
               </span>
               {isLoading ? (

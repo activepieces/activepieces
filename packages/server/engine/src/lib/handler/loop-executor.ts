@@ -1,3 +1,4 @@
+import { setImmediate } from 'timers/promises'
 import { isNil } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { FlowRunStatus, LoopOnItemsAction, LoopStepOutput } from '@activepieces/shared'
@@ -54,6 +55,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
 
 
         for (let i = 0; i < resolvedInput.items.length; ++i) {
+            await setImmediate()
             const newCurrentPath = newExecutionContext.currentPath.loopIteration({ loopName: action.name, iteration: i })
 
             const testSingleStepMode = !isNil(constants.stepNameToTest)

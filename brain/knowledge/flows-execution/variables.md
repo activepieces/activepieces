@@ -19,6 +19,7 @@ Project-scoped, encrypted secret values (API keys, tokens) users create once and
 ### Gotchas
 - The create/rotate dialog value field is deliberately **NOT** `type="password"` (Chrome's leaked-password breach check + password-manager prompt, GIT-1619). It's `type="text"` masked with CSS `-webkit-text-security: disc`, `autoComplete="off"`, `spellCheck={false}`. Firefox < 118 renders unmasked (acceptable — only holds text being typed).
 - Every reveal fires `VARIABLE_VALUE_REVEALED` (audit event `variable.value.revealed`) — use it for "who pulled variable X and when". Also `VARIABLE_UPSERTED`, `VARIABLE_DELETED`.
+- The engine ignores anything after the key in a `variables` token: `{{ variables['X'] || 'fallback' }}` goes to `parseVariableName`, never the script evaluator, so the fallback never runs and a missing variable still fails the step. Step tokens do evaluate `||`. The builder chip shows such tokens as the raw expression so the dropped part stays visible (GIT-1768).
 
 ### Key files
 Entry point: `variableModule`, registered in `packages/server/api/src/app/app.ts`.

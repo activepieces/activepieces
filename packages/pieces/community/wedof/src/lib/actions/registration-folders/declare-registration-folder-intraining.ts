@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 export const declareRegistrationFolderIntraining = createAction({
   auth: wedofAuth,
   name: 'declareRegistrationFolderIntraining',
+  classification: 'WRITE',
   displayName: "Passer un dossier de formation à l'état : En formation",
   description: "Change l'état d'un dossier de formation vers : En formation",
   audience: 'both',

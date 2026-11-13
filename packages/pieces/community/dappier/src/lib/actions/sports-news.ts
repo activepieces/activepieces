@@ -5,6 +5,7 @@ import { dappierCommon } from '../common';
 
 export const sportsNewsSearch = createAction({
   name: 'sports_news_search', 
+  classification: 'SEARCH',
   auth: dappierAuth,
   displayName: 'Sports News',
   description:

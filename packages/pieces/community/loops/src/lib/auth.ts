@@ -1,7 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-
-export const LOOPS_BASE_URL = 'https://app.loops.so/api/v1';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { LoopsApiError, loopsClient, LOOPS_BASE_URL } from './common/client';
 
 export const loopsAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -10,26 +9,31 @@ export const loopsAuth = PieceAuth.SecretText({
   required: true,
   validate: async ({ auth }) => {
     try {
-      const response = await httpClient.sendRequest<{ success: boolean }>({
+      const body = await loopsClient.request<unknown>({
+        apiKey: auth,
         method: HttpMethod.GET,
-        url: `${LOOPS_BASE_URL}/api-key`,
-        headers: {
-          Authorization: `Bearer ${auth}`,
-          Accept: 'application/json',
-        },
+        path: '/api-key',
       });
-
-      if (!response.body.success) {
-        return { valid: false, error: 'API key validation failed.' };
+      if (loopsClient.isRecord(body) && body['success'] === true) {
+        return { valid: true };
       }
-
-      return { valid: true };
-    } catch (e: unknown) {
-      const err = e as { response?: { status?: number } };
-      if (err?.response?.status === 401) {
-        return { valid: false, error: 'Invalid API key. Please check your Loops API key.' };
+      return {
+        valid: false,
+        error: `Loops did not confirm the API key: ${JSON.stringify(body)}`,
+      };
+    } catch (e) {
+      if (e instanceof LoopsApiError) {
+        if (e.status === 401) {
+          return { valid: false, error: 'Invalid API key. Please check your Loops API key.' };
+        }
+        return { valid: false, error: e.message };
       }
-      return { valid: false, error: 'Could not reach Loops API. Check your network.' };
+      return {
+        valid: false,
+        error: `Could not reach Loops: ${e instanceof Error ? e.message : String(e)}`,
+      };
     }
   },
 });
+
+export { LOOPS_BASE_URL };

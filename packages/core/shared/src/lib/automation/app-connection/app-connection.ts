@@ -52,6 +52,7 @@ export type BaseOAuth2ConnectionValue = {
     data: Record<string, any>
     props?: Record<string, unknown>
     grant_type?: OAuth2GrantType
+    resource?: string
 }
 
 export type CustomAuthConnectionValue<T extends Record<string, unknown> = Record<string, unknown>> = {
@@ -149,4 +150,19 @@ export const resolveValueFromProps = (props: Record<string, unknown> | undefined
         resolvedScope = resolvedScope.replaceAll(`{${key}}`, () => String(value))
     })
     return resolvedScope
+}
+
+export function pickDefaultConnectionExternalId({ healthy, updatedByExternalId }: {
+    healthy: { externalId: string }[]
+    updatedByExternalId: Record<string, string | undefined>
+}): string | null {
+    const [newest] = [...healthy].sort((a, b) => {
+        const aUpdated = updatedByExternalId[a.externalId]
+        const bUpdated = updatedByExternalId[b.externalId]
+        if (aUpdated && bUpdated) return bUpdated.localeCompare(aUpdated)
+        if (aUpdated) return -1
+        if (bUpdated) return 1
+        return 0
+    })
+    return newest?.externalId ?? null
 }

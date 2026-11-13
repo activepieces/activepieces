@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const deleteMonitor = createAction({
   auth: pubrioAuth,
   name: 'delete_monitor',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Monitor',
   description: 'Delete a monitor by ID',
   audience: 'both',

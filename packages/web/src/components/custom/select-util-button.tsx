@@ -21,8 +21,8 @@ const SelectUtilButton = ({
       <TooltipTrigger asChild>
         <Button
           variant="ghost"
-          className="opacity-50 shrink-0 h-6 w-6 rounded-xs"
-          size={'icon'}
+          className="opacity-50 size-6"
+          size="icon-xs"
           type="button"
           onClick={onClick}
         >

@@ -4,6 +4,7 @@ import { humeAiAuth } from '../common/auth';
 
 export const deleteVoice = createAction({
   name: 'delete_voice',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Voice',
   description: 'Delete a custom voice from your account',
   audience: 'both',

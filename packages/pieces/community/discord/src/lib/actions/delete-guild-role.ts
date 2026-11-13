@@ -17,6 +17,22 @@ export const discordDeleteGuildRole = createAction({
   audience: 'human',
   aiMetadata: { description: 'Permanently deletes a role from a guild, identified by guild ID and role ID, with an optional audit-log reason; the role is removed from all members. Use to remove an unwanted role. Requires the bot to have Manage Roles permission; idempotent in end state, since deleting an already-removed role leaves it gone.', idempotent: true },
   outputSchema: discordSuccessWithAlreadyAbsentActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'server',
+      display: 'section',
+      label: 'Server',
+      icon: 'users',
+      props: ['guild_id'],
+    },
+    {
+      key: 'role',
+      display: 'section',
+      label: 'Role',
+      icon: 'tag',
+      props: ['role_id'],
+    },
+  ],
   props: {
     guild_id: discordCommon.guilds,
     role_id: discordCommon.roles,

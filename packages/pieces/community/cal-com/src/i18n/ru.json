@@ -7,5 +7,12 @@
   "Booking Rescheduled": "Бронирование перепланировано",
   "Create a webhook to monitor when Booking Cancelled": "Создать вебхук для мониторинга при отмене бронирования",
   "Create a webhook to monitor when Booking Created": "Создать вебхук для мониторинга при создании бронирования",
-  "Create a webhook to monitor when Booking Rescheduled": "Создать вебхук для мониторинга при переходе бронирования"
+  "Create a webhook to monitor when Booking Rescheduled": "Создать вебхук для мониторинга при переходе бронирования",
+  "To get your API key:\n1. Open [Settings → Developer → API Keys](https://app.cal.com/settings/developer/api-keys) in Cal.com.\n2. Create a new key and choose when it expires.\n3. Copy the key (it starts with `cal_`) and paste it here.": "Как получить ключ API:\n1. Откройте [Settings → Developer → API Keys](https://app.cal.com/settings/developer/api-keys) в Cal.com.\n2. Создайте новый ключ и выберите срок его действия.\n3. Скопируйте ключ (он начинается с `cal_`) и вставьте его сюда.",
+  "Add cal-api-version (2026-05-01 for /bookings). Auth is added for you.": "Добавьте cal-api-version (2026-05-01 для /bookings). Авторизация добавляется автоматически.",
+  "New Booking": "Новое бронирование",
+  "Triggers when a Cal.com booking is cancelled.": "Срабатывает, когда бронирование в Cal.com отменено.",
+  "Triggers when someone books a meeting with you on Cal.com.": "Срабатывает, когда кто-то бронирует с вами встречу в Cal.com.",
+  "Triggers when a Cal.com booking is moved to a new time.": "Срабатывает, когда бронирование в Cal.com переносится на другое время.",
+  "This webhook is added to your Cal.com account when you publish the flow and removed when you turn it off. It fires for bookings on the account that owns the API key.": "Этот вебхук добавляется в ваш аккаунт Cal.com при публикации потока и удаляется при его отключении. Он срабатывает для бронирований аккаунта, которому принадлежит ключ API."
 }

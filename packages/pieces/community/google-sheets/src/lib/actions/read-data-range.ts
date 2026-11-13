@@ -5,6 +5,7 @@ import {
 	createGoogleClient,
 	Dimension,
 	googleSheetsAuth,
+	googleSheetsCommon,
 } from '../common/common';
 import { commonProps } from '../common/props';
 import { getWorkSheetName } from '../triggers/helpers';
@@ -23,6 +24,22 @@ export const readDataRangeAction = createAction({
 			'Reads raw cell values from a worksheet using an A1-notation range, where leaving the range empty reads the entire worksheet, with switchable orientation (one array per row or per column) and rendering (formatted text, unformatted values, or the underlying formulas). Use when an agent needs a specific block of cells or the formulas behind them; prefer Get All Rows or Find Rows when header-keyed row objects are wanted instead of positional arrays. Read-only and idempotent.',
 		idempotent: true,
 	},
+	propertyGroups: [
+		{
+			key: 'spreadsheet',
+			display: 'section',
+			label: 'Spreadsheet',
+			icon: 'file',
+			props: ['spreadsheetId', 'sheetId'],
+		},
+		{
+			key: 'cells',
+			display: 'section',
+			label: 'Cells',
+			icon: 'markdown',
+			props: ['range', 'majorDimension', 'valueRenderOption'],
+		},
+	],
 	props: {
 		...commonProps,
 		range: Property.ShortText({
@@ -37,11 +54,12 @@ export const readDataRangeAction = createAction({
 			description: 'Group the results one array per row, or one array per column.',
 			required: true,
 			defaultValue: Dimension.ROWS,
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
-					{ label: 'Rows', value: Dimension.ROWS },
-					{ label: 'Columns', value: Dimension.COLUMNS },
+					{ label: 'Rows', value: Dimension.ROWS, description: 'List per row', icon: 'text' },
+					{ label: 'Columns', value: Dimension.COLUMNS, description: 'List per column', icon: 'markdown' },
 				],
 			},
 		}),
@@ -50,12 +68,13 @@ export const readDataRangeAction = createAction({
 			description: 'Return values as displayed, as raw values, or as formulas.',
 			required: true,
 			defaultValue: 'FORMATTED_VALUE',
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
-					{ label: 'As displayed', value: 'FORMATTED_VALUE' },
-					{ label: 'Raw values', value: 'UNFORMATTED_VALUE' },
-					{ label: 'Formulas', value: 'FORMULA' },
+					{ label: 'As displayed', value: 'FORMATTED_VALUE', description: 'Formatted text', icon: 'type' },
+					{ label: 'Raw values', value: 'UNFORMATTED_VALUE', description: 'Unformatted', icon: 'text' },
+					{ label: 'Formulas', value: 'FORMULA', description: 'Cell formulas', icon: 'code' },
 				],
 			},
 		}),
@@ -72,7 +91,7 @@ export const readDataRangeAction = createAction({
 		const authClient = await createGoogleClient(auth);
 		const sheets = googleSheets({ version: 'v4', auth: authClient });
 
-		const a1Range = range && range.trim().length > 0 ? `${sheetName}!${range}` : sheetName;
+		const a1Range = googleSheetsCommon.sheetRange({ sheetName, range: range?.trim() });
 
 		const response = await sheets.spreadsheets.values.get({
 			spreadsheetId: spreadsheetId as string,

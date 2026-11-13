@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createPerson = createAction({
 	name: 'create_person',
+	classification: 'WRITE',
 	displayName: 'Create Person',
 	description: 'Create a new user/contact (name, email, invite options).',
 	audience: 'both',

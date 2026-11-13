@@ -22,34 +22,25 @@ export function internalErrorToast() {
   });
 }
 
-export const UNSAVED_CHANGES_TOAST = {
-  id: 'unsaved-changes',
-  title: 'Unsaved Changes',
-  description:
-    'Something went wrong and there are unsaved changes, please refresh and contact support if the problem persists.',
-  variant: 'destructive',
-  duration: Infinity,
-};
-
 function Toaster({ ...props }: ToasterProps) {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   return (
     <Sonner
-      theme={theme as ToasterProps['theme']}
-      className="toaster group"
+      theme={resolvedTheme}
+      className="group"
       expand={true}
       toastOptions={{
         classNames: {
           toast: `
-            data-[type=error]:text-destructive-700!
-            data-[type=warning]:text-warning-700!
-            data-[type=success]:text-success-700!
+            data-[type=error]:text-danger-11!
+            data-[type=warning]:text-warning-11!
+            data-[type=success]:text-success-11!
           `,
           description: `
-            data-[type=error]:text-destructive-700!
-            data-[type=warning]:text-warning-700!
-            data-[type=success]:text-success-700!
+            data-[type=error]:text-danger-11!
+            data-[type=warning]:text-warning-11!
+            data-[type=success]:text-success-11!
           `,
         },
         descriptionClassName: 'text-inherit!',
@@ -63,10 +54,10 @@ function Toaster({ ...props }: ToasterProps) {
       }}
       style={
         {
-          '--normal-text': 'var(--foreground)',
-          '--normal-bg': 'var(--background)',
-          '--normal-border': 'var(--border)',
-          '--border-radius': 'var(--radius)',
+          '--normal-text': 'var(--gray-12)',
+          '--normal-bg': 'var(--panel)',
+          '--normal-border': 'var(--gray-6)',
+          '--border-radius': 'var(--radius-xl)',
         } as React.CSSProperties
       }
       {...props}

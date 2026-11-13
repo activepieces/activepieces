@@ -8,6 +8,7 @@ import FormData from "form-data";
 export const voiceChange = createAction({
   auth: murfAuth,
   name: "voice-changer-convert",
+  classification: 'READ',
   displayName: "Voice Changer",
   description: "Convert an input audio file to a different voice using Murf Voice Changer.",
   audience: 'both',
@@ -97,8 +98,7 @@ export const voiceChange = createAction({
       if (file) {
         try {
           const fileBuffer = Buffer.from(file.base64, "base64");
-          const blob = new Blob([fileBuffer]);
-          formData.append("file", blob, file.filename);
+          formData.append("file", fileBuffer, { filename: file.filename });
         } catch (e) {
           throw new Error("Failed to process uploaded file. Ensure it's a valid audio file.");
         }

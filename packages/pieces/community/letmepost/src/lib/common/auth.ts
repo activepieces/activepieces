@@ -1,5 +1,39 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { LetmepostApiError, letmepostClient } from './client';
+
+async function validateConnection({ baseUrlInput, apiKeyInput }: { baseUrlInput: unknown; apiKeyInput: unknown }): Promise<{ valid: true } | { valid: false; error: string }> {
+  const checked = letmepostClient.checkBaseUrl(baseUrlInput);
+  if (!checked.ok) {
+    return { valid: false, error: checked.error };
+  }
+  const apiKey = letmepostClient.optionalText(apiKeyInput);
+  if (apiKey === undefined) {
+    return { valid: false, error: 'Enter your letmepost API key.' };
+  }
+  try {
+    await letmepostClient.send<unknown>({
+      baseUrl: checked.baseUrl,
+      apiKey,
+      method: HttpMethod.GET,
+      path: '/v1/accounts',
+      operation: 'list accounts to check the connection',
+    });
+    return { valid: true };
+  } catch (error) {
+    if (error instanceof LetmepostApiError) {
+      if (error.status === 401) {
+        return {
+          valid: false,
+          error: `letmepost rejected the API key (unauthenticated). Check that you copied the whole key (lmp_live_… or lmp_test_…) and that it was not revoked in the dashboard under API keys. ${error.message}`,
+        };
+      }
+      return { valid: false, error: error.message };
+    }
+    const reason = error instanceof Error ? error.message : String(error);
+    return { valid: false, error: reason };
+  }
+}
 
 export const letmepostAuth = PieceAuth.CustomAuth({
   displayName: 'letmepost Connection',
@@ -19,28 +53,13 @@ export const letmepostAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
-    try {
-      const baseUrl = auth.base_url?.trim().replace(/\/+$/, '');
-      await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `${baseUrl}/v1/accounts`,
-        headers: {
-          Authorization: `Bearer ${auth.api_key}`,
-        },
-      });
-      return { valid: true };
-    } catch {
-      return {
-        valid: false,
-        error: 'Invalid API key or base URL. Please check your credentials.',
-      };
-    }
+    return validateConnection({ baseUrlInput: auth.base_url, apiKeyInput: auth.api_key });
   },
 });
 
 export type LetmepostAuth = {
   props: {
-    base_url: string;
+    base_url?: string;
     api_key: string;
   };
 };

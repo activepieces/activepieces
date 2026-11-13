@@ -9,6 +9,7 @@ import { getApiKey, getBaseUrl, sendgridAuth } from '../common';
 export const addToGlobalSuppression = createAction({
   auth: sendgridAuth,
   name: 'add_to_global_suppression',
+  classification: 'DESTRUCTIVE',
   displayName: 'Add to Global Unsubscribe List',
   description:
     'Add one or more email addresses to the global suppression list, stopping all future emails to them',

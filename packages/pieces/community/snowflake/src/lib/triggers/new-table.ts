@@ -9,14 +9,10 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { snowflakeAuth } from '../auth';
-import {
-  configureConnection,
-  connect,
-  destroy,
-  execute,
-  snowflakeCommonProps,
-  SnowflakeAuthValue,
-} from '../common';
+import { snowflakeCommonProps, toAuthValue, withSnowflake } from '../common';
+import { newTableOutputSchema } from '../common/output-schemas';
+import { qualifiedName } from '../common/sql';
+import { mapTable } from '../common/mappers';
 
 type NewTableProps = {
   database: string;
@@ -43,33 +39,25 @@ const polling: Polling<
     const { database, schema } = propsValue;
     if (!database || !schema) return [];
 
-    const connection = configureConnection(auth as SnowflakeAuthValue);
-    await connect(connection);
-    try {
-      const result = await execute(
-        connection,
-        `SHOW TABLES IN SCHEMA ${database}.${schema}`,
-        []
-      );
+    {
+      const result = (
+        await withSnowflake({
+          auth: toAuthValue(auth),
+          fn: (session) =>
+            session.query({
+              sql: `SHOW TABLES IN SCHEMA ${qualifiedName({
+                value: `${database}.${schema}`,
+                maxParts: 2,
+                label: 'Schema',
+              })}`,
+            }),
+        })
+      ).rows;
 
-      if (!result) return [];
-
-      return (result as Record<string, unknown>[]).map((table) => ({
+      return result.map((table) => ({
         epochMilliSeconds: toEpochMs(table['created_on']),
-        data: {
-          table_name: table['name'],
-          database_name: table['database_name'],
-          schema_name: table['schema_name'],
-          kind: table['kind'],
-          rows: table['rows'],
-          bytes: table['bytes'],
-          owner: table['owner'],
-          comment: table['comment'],
-          created_on: table['created_on'],
-        },
+        data: mapTable(table),
       }));
-    } finally {
-      await destroy(connection);
     }
   },
 };
@@ -80,6 +68,8 @@ export const newTableTrigger = createTrigger({
   displayName: 'New Table',
   description:
     'Triggers when a new table is created in the selected schema. Checked by polling every few minutes.',
+  classification: 'READ',
+  outputSchema: newTableOutputSchema,
   aiMetadata: {
     description:
       "Fires when a new table is created in the selected Snowflake database and schema, detected by polling and comparing each table's creation time against the last-seen watermark. Each newly created table produces one event with its name, kind, owner, and metadata.",

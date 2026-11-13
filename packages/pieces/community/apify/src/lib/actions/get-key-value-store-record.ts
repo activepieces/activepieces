@@ -3,6 +3,7 @@ import { apifyAuth } from '../..';
 import {
   createApifyClient,
   createDropdownOptions,
+  getErrorMessage,
   getFileExtension,
   isBinaryContentType,
   listRecords,
@@ -15,7 +16,7 @@ export const getKeyValueStoreRecord = createAction({
   classification: 'READ',
   auth: apifyAuth,
   displayName: 'Get Key-Value Store Record',
-  description: 'Retrieves a value stored in the key-value store under a specific key',
+  description: 'Gets a record from a key-value store by its key.',
   audience: 'human',
   outputSchema: getKeyValueStoreRecordActionOutputSchema,
   aiMetadata: { description: 'Fetches a single record from an Apify key-value store by store ID and record key, returning JSON/text values inline or binary values as a file reference. Use this to read named outputs an actor saved (e.g. screenshots, structured results, or status keys) rather than dataset rows. Read-only and idempotent; errors if the key does not exist.', idempotent: true },
@@ -24,8 +25,8 @@ export const getKeyValueStoreRecord = createAction({
       auth: apifyAuth,
       required: true,
       refreshers: ['auth'],
-      displayName: 'Key-Value Store ID',
-      description: 'The ID of the Key-Value Store.',
+      displayName: 'Key-Value Store',
+      description: 'The store that holds the record.',
       options: async (props) => {
         return createDropdownOptions(props['auth'], listStores);
       }
@@ -34,21 +35,26 @@ export const getKeyValueStoreRecord = createAction({
       auth: apifyAuth,
       required: true,
       refreshers: ['auth', 'store'],
-      displayName: 'Key-Value Store Record Key',
-      description: 'The key of the record to be retrieved.',
+      displayName: 'Record Key',
+      description: 'The key the record is saved under.',
       options: async (props) => {
-        if (!props['auth'] || !props['store']) {
+        const store = props['store'];
+        const storeId = typeof store === 'string' ? store : '';
+        if (props['auth'] && !storeId) {
           return {
             disabled: true,
             options: [],
+            placeholder: 'Select a store first.',
           };
         }
 
-        const storeId = props['store'] as string;
         return createDropdownOptions(props['auth'], (apiKey) => listRecords(apiKey, storeId));
       }
     }),
   },
+  propertyGroups: [
+    { key: 'record', display: 'section', label: 'Which Record', icon: 'file', props: ['store', 'recordKey'] },
+  ],
   async run(context) {
     const apifyToken = context.auth.props.apikey;
     const { store, recordKey } = context.propsValue;
@@ -62,7 +68,7 @@ export const getKeyValueStoreRecord = createAction({
     }
 
     try {
-      const isBinary = isBinaryContentType(record.contentType!);
+      const isBinary = isBinaryContentType(record.contentType ?? '');
       const isJson = record.contentType?.includes('application/json');
 
       if (isJson) {
@@ -75,7 +81,7 @@ export const getKeyValueStoreRecord = createAction({
       }
 
       if (isBinary && Buffer.isBuffer(record.value)) {
-        const fileExtension = getFileExtension(record.contentType!);
+        const fileExtension = getFileExtension(record.contentType ?? '');
         const fileName = recordKey + fileExtension;
 
         const fileReference = await context.files.write({
@@ -99,8 +105,8 @@ export const getKeyValueStoreRecord = createAction({
         contentType: record.contentType,
         dataType: 'text'
       };
-    } catch (error: any) {
-      throw new Error(`Failed to process key-value store record: ${error.message}`);
+    } catch (error) {
+      throw new Error(`Failed to process key-value store record: ${getErrorMessage(error)}`);
     }
   }
 });

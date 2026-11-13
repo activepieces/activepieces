@@ -18,11 +18,27 @@ export const listGroupSubscribersAction = createAction({
 		idempotent: true,
 	},
 	outputSchema: listGroupSubscribersOutputSchema,
+	propertyGroups: [
+		{
+			key: 'subscribers',
+			display: 'section',
+			label: 'Subscribers to List',
+			icon: 'users',
+			props: ['subscriberGroupId', 'status'],
+		},
+		{
+			key: 'paging',
+			display: 'section',
+			label: 'Paging',
+			icon: 'sliders',
+			props: ['limit', 'cursor'],
+		},
+	],
 	props: {
 		subscriberGroupId: mailerLiteCommon.subscriberGroupId(true),
 		status: Property.StaticDropdown({
 			displayName: 'Status',
-			description: 'Only return subscribers with this status. MailerLite defaults to active.',
+			description: 'Only return subscribers with this status. Empty: active only.',
 			required: false,
 			options: {
 				options: [
@@ -36,14 +52,16 @@ export const listGroupSubscribersAction = createAction({
 		}),
 		limit: Property.Number({
 			displayName: 'Limit',
-			description: 'Subscribers to return (1-1000, default 25).',
+			description: 'How many subscribers to return per page, up to 1000.',
 			required: false,
 			defaultValue: 25,
+			width: 'half',
 		}),
 		cursor: Property.ShortText({
 			displayName: 'Cursor',
-			description: 'The meta.next_cursor value from the previous page. Leave empty for the first page.',
+			description: 'meta.next_cursor from the previous run. Empty: first page.',
 			required: false,
+			width: 'half',
 		}),
 	},
 	async run(context) {

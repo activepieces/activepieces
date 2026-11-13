@@ -1,7 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { togglTrackAuth } from '../..';
+import { QueryParams } from '@activepieces/pieces-common';
+import { togglTrackAuth } from '../auth';
 import { togglCommon } from '../common';
+import { togglApi } from '../common/client';
+import { togglModels, TwoProject } from '../common/models';
+import { togglOutputSchemas } from '../output-schemas';
 
 export const findProject = createAction({
   auth: togglTrackAuth,
@@ -10,7 +13,11 @@ export const findProject = createAction({
   displayName: 'Find Project',
   description: 'Find a project in a workspace by its name.',
   audience: 'both',
-  aiMetadata: { description: 'Lists projects in a Toggl Track workspace, optionally filtered by name, active/inactive/both status, billable, ownership, or template flag; omitting the name returns all matching projects. Use to resolve a project ID before creating tasks or time entries against it. Read-only and idempotent.', idempotent: true },
+  aiMetadata: {
+    description:
+      'Lists projects in a workspace, optionally filtered by name, status, billable, ownership, or template flag. On Toggl 2.0 "inactive" means archived. Returns an array of projects. Read-only.',
+    idempotent: true,
+  },
   props: {
     workspace_id: togglCommon.workspace_id,
     name: Property.ShortText({
@@ -56,26 +63,46 @@ export const findProject = createAction({
     }),
     per_page: Property.Number({
       displayName: 'Items Per Page',
-      description: 'Number of items per page (max 200).',
+      description: 'Number of items per page (max 200; Toggl 2.0: max 100).',
       required: false,
     }),
   },
+  outputSchema: togglOutputSchemas.projectList,
   async run(context) {
-    const {
-      workspace_id,
-      name,
-      active,
-      billable,
-      only_me,
-      only_templates,
-      page,
-      per_page,
-    } = context.propsValue;
-    const apiToken = context.auth;
+    const { name, active, billable, only_me, only_templates, page, per_page } =
+      context.propsValue;
+    const auth = context.auth;
+    const workspaceId = togglApi.requireId({
+      value: context.propsValue.workspace_id,
+      label: 'Workspace',
+    });
 
-    const queryParams: Record<string, string> = {};
+    if (togglApi.isTwo(auth)) {
+      const queryParams: QueryParams = {};
+      if (name) queryParams['name'] = name;
+      if (active === 'true') queryParams['archived'] = 'false';
+      if (active === 'false') queryParams['archived'] = 'true';
+      if (only_me) queryParams['only_me'] = 'true';
+      const projects = await togglApi.listTwoPageOrAll<TwoProject>({
+        auth,
+        path: togglApi.twoWorkspacePath({
+          auth,
+          workspaceId,
+          path: '/projects',
+        }),
+        queryParams,
+        page: page ?? undefined,
+        perPage: per_page ?? undefined,
+      });
+      return projects
+        .filter((project) => (billable ? project.billable : true))
+        .filter((project) => (only_templates ? project.is_template : true))
+        .map(togglModels.project);
+    }
+
+    const queryParams: QueryParams = {};
     if (name) queryParams['name'] = name;
-    if (active !== undefined) queryParams['active'] = active;
+    if (active !== undefined && active !== null) queryParams['active'] = active;
     if (billable !== undefined) queryParams['billable'] = billable.toString();
     if (only_me !== undefined) queryParams['only_me'] = only_me.toString();
     if (only_templates !== undefined)
@@ -83,18 +110,12 @@ export const findProject = createAction({
     if (page) queryParams['page'] = page.toString();
     if (per_page) queryParams['per_page'] = per_page.toString();
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `https://api.track.toggl.com/api/v9/workspaces/${workspace_id}/projects`,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Basic ${Buffer.from(`${apiToken}:api_token`).toString(
-          'base64'
-        )}`,
-      },
+    const projects = await togglApi.request<Record<string, unknown>[] | null>({
+      auth,
+      method: togglApi.HttpMethod.GET,
+      path: `/workspaces/${workspaceId}/projects`,
       queryParams,
     });
-
-    return response.body;
+    return projects ?? [];
   },
 });

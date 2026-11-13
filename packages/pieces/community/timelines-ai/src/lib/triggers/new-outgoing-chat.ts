@@ -5,6 +5,7 @@ import { WebhookInformation } from '../common/types';
 export const newOutgoingChat = createTrigger({
   auth: timelinesAiAuth,
   name: 'newOutgoingChat',
+  classification: 'READ',
   displayName: 'New Outgoing Chat',
   description: 'Fires when a new outgoing chat is initiated.',
   aiMetadata: {

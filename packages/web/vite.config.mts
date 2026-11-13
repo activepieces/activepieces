@@ -1,7 +1,5 @@
-/// <reference types='vitest' />
 import path from 'path';
 
-import tsconfigPaths from 'vite-tsconfig-paths';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
@@ -16,14 +14,11 @@ export default defineConfig(({ command, mode }) => {
   const AP_FAVICON = 'https://activepieces.com/favicon.ico';
 
   return {
-    root: __dirname,
-    cacheDir: '../../node_modules/.vite/packages/web',
     server: {
       // allowedHosts: ['wozcsvaint.loclx.io'],
       proxy: {
         '/api': {
           target: 'http://127.0.0.1:3000',
-          secure: false,
           changeOrigin: true,
           headers: {
             Host: '127.0.0.1:4200',
@@ -32,21 +27,17 @@ export default defineConfig(({ command, mode }) => {
         },
         '/ingest': {
           target: 'http://127.0.0.1:3000',
-          secure: false,
           changeOrigin: true,
         },
         '^/mcp(/|$)': {
           target: 'http://127.0.0.1:3000',
-          secure: false,
           changeOrigin: true,
           headers: {
             'X-Forwarded-Host': 'localhost:4200',
           },
-          rewrite: (p: string) => p,
         },
         '/.well-known': {
           target: 'http://127.0.0.1:3000',
-          secure: false,
           changeOrigin: true,
           headers: {
             'X-Forwarded-Host': 'localhost:4200',
@@ -54,7 +45,6 @@ export default defineConfig(({ command, mode }) => {
         },
         '/register': {
           target: 'http://127.0.0.1:3000',
-          secure: false,
           changeOrigin: true,
           headers: {
             'X-Forwarded-Host': 'localhost:4200',
@@ -62,7 +52,6 @@ export default defineConfig(({ command, mode }) => {
         },
         '/authorize': {
           target: 'http://127.0.0.1:3000',
-          secure: false,
           changeOrigin: true,
           headers: {
             'X-Forwarded-Host': 'localhost:4200',
@@ -70,7 +59,6 @@ export default defineConfig(({ command, mode }) => {
         },
         '/token': {
           target: 'http://127.0.0.1:3000',
-          secure: false,
           changeOrigin: true,
           headers: {
             'X-Forwarded-Host': 'localhost:4200',
@@ -78,7 +66,6 @@ export default defineConfig(({ command, mode }) => {
         },
         '/revoke': {
           target: 'http://127.0.0.1:3000',
-          secure: false,
           changeOrigin: true,
           headers: {
             'X-Forwarded-Host': 'localhost:4200',
@@ -86,7 +73,6 @@ export default defineConfig(({ command, mode }) => {
         },
         '/userinfo': {
           target: 'http://127.0.0.1:3000',
-          secure: false,
           changeOrigin: true,
           headers: {
             'X-Forwarded-Host': 'localhost:4200',
@@ -95,6 +81,9 @@ export default defineConfig(({ command, mode }) => {
       },
       port: 4200,
       host: '0.0.0.0',
+      warmup: {
+        clientFiles: ['./src/main.tsx'],
+      },
     },
 
     preview: {
@@ -143,7 +132,6 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       react(),
       tailwindcss(),
-      tsconfigPaths(),
       customHtmlPlugin({
         title: AP_TITLE,
         icon: AP_FAVICON,
@@ -153,8 +141,6 @@ export default defineConfig(({ command, mode }) => {
             checker({
               typescript: {
                 buildMode: true,
-                tsconfigPath: './tsconfig.json',
-                root: __dirname,
               },
             }),
           ]
@@ -164,22 +150,8 @@ export default defineConfig(({ command, mode }) => {
     build: {
       outDir: '../../dist/packages/web',
       emptyOutDir: true,
-      reportCompressedSize: true,
+      reportCompressedSize: false,
       sourcemap: emitSourcemap ? 'hidden' : false,
-      commonjsOptions: {
-        transformMixedEsModules: true,
-      },
-      rollupOptions: {
-        onLog(level, log, handler) {
-          if (
-            log.cause &&
-            log.message.includes(`Can't resolve original location of error.`)
-          ) {
-            return;
-          }
-          handler(level, log);
-        },
-      },
     },
   };
 });

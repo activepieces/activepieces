@@ -10,6 +10,7 @@ import { sendyAuth, SendyAuthType } from '../auth';
 
 export const deleteAction = createAction({
   name: 'delete_subscriber',
+  classification: 'DESTRUCTIVE',
   auth: sendyAuth,
   displayName: 'Delete Subscriber',
   description: 'Delete a subscriber from a list',

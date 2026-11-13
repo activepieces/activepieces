@@ -12,6 +12,23 @@ export const githubOAuth2Auth = PieceAuth.OAuth2({
   authUrl: 'https://github.com/login/oauth/authorize',
   tokenUrl: 'https://github.com/login/oauth/access_token',
   scope: ['admin:repo_hook', 'admin:org', 'repo', 'gist'],
+  getConnectionIdentifier: async ({ auth }) => {
+    try {
+      const response = await httpClient.sendRequest<GithubUser>({
+        method: HttpMethod.GET,
+        url: 'https://api.github.com/user',
+        headers: {
+          Authorization: `Bearer ${auth.access_token}`,
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
+        timeout: 5000,
+      });
+      return response.body?.email || response.body?.login || undefined;
+    } catch {
+      return undefined;
+    }
+  },
 });
 
 export const githubAppAuth = PieceAuth.CustomAuth({
@@ -122,3 +139,5 @@ async function tryExchangeJwt({
     };
   }
 }
+
+type GithubUser = { email?: string | null; login?: string };

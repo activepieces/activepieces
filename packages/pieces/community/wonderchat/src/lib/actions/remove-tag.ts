@@ -4,6 +4,7 @@ import { wonderchatAuth } from '../..';
 
 export const removeTag = createAction({
   name: 'removeTag',
+  classification: 'WRITE',
   displayName: 'Remove Tag',
   description: 'Remove specific tags from a chatlog.',
   audience: 'both',

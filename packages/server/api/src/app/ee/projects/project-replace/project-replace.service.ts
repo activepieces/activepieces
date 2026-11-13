@@ -15,7 +15,7 @@ import { connectionDiffService } from '../project-release/project-state/diff/con
 import { flowDiffService } from '../project-release/project-state/diff/flow-diff.service'
 import { folderDiffService } from '../project-release/project-state/diff/folder-diff.service'
 import { tableDiffService } from '../project-release/project-state/diff/table-diff.service'
-import { projectStateHelper } from '../project-release/project-state/project-state-helper'
+import { projectStateHelper, RepublishFlowParams } from '../project-release/project-state/project-state-helper'
 import { projectStateService } from '../project-release/project-state/project-state.service'
 
 export const projectReplaceService = {
@@ -516,11 +516,7 @@ async function runFlowOp({ op, projectId, log, applied, failed }: RunFlowOpParam
         switch (op.type) {
             case FlowProjectOperationType.CREATE_FLOW: {
                 const created = await projectStateHelper(log).createFlowInProject(op.flowState, projectId)
-                await projectStateHelper(log).republishFlow({
-                    flow: created,
-                    projectId,
-                    status: op.flowState.status,
-                })
+                await republishOrThrow({ flow: created, projectId, status: op.flowState.status, log })
                 applied.flowsCreated++
                 break
             }
@@ -528,11 +524,7 @@ async function runFlowOp({ op, projectId, log, applied, failed }: RunFlowOpParam
                 const updated = await projectStateHelper(log).updateFlowInProject(op.flowState, op.newFlowState, projectId)
                 // Mirror the source's published/disabled state — replace semantics are
                 // "dest equals source", unlike project-releases which keeps dest's prior status.
-                await projectStateHelper(log).republishFlow({
-                    flow: updated,
-                    projectId,
-                    status: op.newFlowState.status,
-                })
+                await republishOrThrow({ flow: updated, projectId, status: op.newFlowState.status, log })
                 applied.flowsUpdated++
                 break
             }
@@ -550,6 +542,13 @@ async function runFlowOp({ op, projectId, log, applied, failed }: RunFlowOpParam
             op: flowOpToOp(op.type),
             error: errorMessage(e),
         })
+    }
+}
+
+async function republishOrThrow({ flow, projectId, status, log }: RepublishOrThrowParams): Promise<void> {
+    const syncError = await projectStateHelper(log).republishFlow({ flow, projectId, status })
+    if (!isNil(syncError)) {
+        throw new Error(syncError.message)
     }
 }
 
@@ -599,6 +598,10 @@ function errorMessage(e: unknown): string {
         return e.message
     }
     return String(e)
+}
+
+type RepublishOrThrowParams = RepublishFlowParams & {
+    log: FastifyBaseLogger
 }
 
 type ReplaceOutcome =

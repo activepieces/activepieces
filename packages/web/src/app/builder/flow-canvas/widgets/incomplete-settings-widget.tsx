@@ -1,8 +1,6 @@
 import {
-  FlowAction,
   FlowTriggerType,
   FlowVersion,
-  Step,
   flowStructureUtil,
 } from '@activepieces/shared';
 import { useReactFlow } from '@xyflow/react';
@@ -25,18 +23,13 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
   selectStepByName,
   setOpenedPieceSelectorStepNameOrAddButtonId,
 }) => {
-  const invalidSteps = useMemo(
-    () =>
-      flowStructureUtil
-        .getAllSteps(flowVersion.trigger)
-        .filter(filterValidOrSkippedSteps).length,
+  const invalidStepCount = useMemo(
+    () => getInvalidSteps(flowVersion).length,
     [flowVersion],
   );
   const { fitView } = useReactFlow();
   function onClick() {
-    const invalidSteps = flowStructureUtil
-      .getAllSteps(flowVersion.trigger)
-      .filter(filterValidOrSkippedSteps);
+    const invalidSteps = getInvalidSteps(flowVersion);
     if (invalidSteps.length > 0) {
       const stepToFocus = invalidSteps[0];
       selectStepByName(stepToFocus.name);
@@ -50,7 +43,7 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
     !flowVersion.valid && (
       <Button
         variant="ghost"
-        className="h-[28px] hover:bg-amber-50 p-2 dark:hover:bg-amber-950 dark:bg-amber-950 bg-amber-50 border border-solid border-amber-500 hover:border-amber-700 dark:hover:border-amber-600  dark:border-amber-900 dark:text-amber-600 text-amber-700 hover:text-amber-700 dark:hover:text-amber-600   animate-fade"
+        className="h-[28px] p-2 bg-warning-3 border border-solid border-warning-7 hover:bg-warning-4 hover:border-warning-8 text-warning-11 hover:text-warning-11 animate-fade"
         key={'complete-flow-button'}
         onClick={(e) => {
           onClick();
@@ -58,7 +51,7 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
           e.preventDefault();
         }}
       >
-        {t('incompleteSteps', { invalidSteps: invalidSteps })}
+        {t('incompleteSteps', { invalidSteps: invalidStepCount })}
       </Button>
     )
   );
@@ -66,7 +59,11 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
 
 IncompleteSettingsButton.displayName = 'IncompleteSettingsButton';
 export default IncompleteSettingsButton;
-function filterValidOrSkippedSteps(step: Step) {
-  if ((step as FlowAction).skip) return false;
-  return !step.valid;
+function getInvalidSteps(flowVersion: FlowVersion) {
+  const skippedStepNames = flowStructureUtil.getSkippedStepNames({
+    trigger: flowVersion.trigger,
+  });
+  return flowStructureUtil
+    .getAllSteps(flowVersion.trigger)
+    .filter((step) => !step.valid && !skippedStepNames.has(step.name));
 }

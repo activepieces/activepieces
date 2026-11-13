@@ -81,7 +81,7 @@ const PieceCardListItem = ({
             showTooltip={false}
             size={'sm'}
           />
-          <div className="grow h-full flex items-center justify-left text-sm">
+          <div className="grow h-full flex items-center text-sm">
             {pieceMetadata.displayName}
           </div>
         </div>

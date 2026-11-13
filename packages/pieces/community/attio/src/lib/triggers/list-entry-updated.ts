@@ -5,11 +5,13 @@ import { attioAuth } from '../auth';
 import { listIdDropdown } from '../common/props';
 import { ListWebhookPayload, WebhookResponse } from '../common/types';
 import { isNil } from '@activepieces/pieces-framework';
+import { createEntryOutputSchema } from '../output-schemas';
 
 const TRIGGER_KEY = 'updated-list-entry-trigger';
 
 export const listEntryUpdatedTrigger = createTrigger({
 	name: 'list_entry_updated',
+	outputSchema: createEntryOutputSchema,
 	classification: 'READ',
 	displayName: 'List Entry Updated',
 	description: 'Triggers when an existing entry is updated.',

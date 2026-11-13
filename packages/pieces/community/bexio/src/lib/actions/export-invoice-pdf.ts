@@ -1,6 +1,8 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
+import { bexioAi } from '../common/ai-helpers';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 export const exportInvoicePdfAction = createAction({
   auth: bexioAuth,
@@ -8,7 +10,8 @@ export const exportInvoicePdfAction = createAction({
   classification: 'READ',
   displayName: 'Export Invoice to PDF',
   description: 'Export an existing sales invoice as a PDF document',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: bexioOutputSchemas.legacyPdfOutputSchema,
   aiMetadata: { description: 'Renders an existing Bexio sales invoice as a PDF and returns the downloadable file, keyed by the invoice id. Use when an agent needs the document itself (to attach or store); pick Send Sales Invoice to email it to a recipient instead. Optionally toggle the letterhead. Read-only and idempotent: it generates the file without changing the invoice.', idempotent: true },
   props: {
     invoice_id: Property.Dropdown({
@@ -27,19 +30,19 @@ export const exportInvoicePdfAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth);
-          const invoices = await client.get<Array<{
+          const invoices = await bexioAi.listAll<Array<{
             id: number;
             document_nr: string;
             title?: string | null;
             contact_id?: number | null;
             total?: string;
             kb_item_status_id?: number;
-          }>>('/2.0/kb_invoice');
+          }>[number]>({ auth, path: '/2.0/kb_invoice' });
 
           return {
             disabled: false,
-            options: invoices.map((invoice) => {
+            placeholder: invoices.truncated ? bexioAi.truncatedPlaceholder({ count: invoices.items.length }) : undefined,
+            options: invoices.items.map((invoice) => {
               const label = invoice.title
                 ? `${invoice.document_nr} - ${invoice.title}`
                 : invoice.document_nr;

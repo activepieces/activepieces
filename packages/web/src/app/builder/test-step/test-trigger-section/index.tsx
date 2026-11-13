@@ -182,14 +182,14 @@ const TestTriggerSection = React.memo(
                 <StepDataPanelViewToggle />
               </div>
               <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
-                <div className="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary">
+                <div className="flex items-center justify-center size-12 rounded-full bg-accent-3 text-accent-11">
                   <Zap className="size-6" />
                 </div>
                 <div className="flex flex-col gap-1.5 max-w-[280px]">
-                  <span className="text-sm font-medium text-foreground">
+                  <span className="text-sm font-medium text-gray-12">
                     {t('No sample data yet')}
                   </span>
-                  <span className="text-xs text-muted-foreground leading-relaxed">
+                  <span className="text-xs text-gray-11 leading-relaxed">
                     {t(
                       'Test the trigger to capture sample data. You can then use the result in the following steps.',
                     )}

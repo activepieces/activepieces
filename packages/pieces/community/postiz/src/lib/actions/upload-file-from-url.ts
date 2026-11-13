@@ -6,6 +6,7 @@ import { postizApiCall } from '../common';
 export const uploadFileFromUrl = createAction({
   auth: postizAuth,
   name: 'upload_file_from_url',
+  classification: 'WRITE',
   displayName: 'Upload File from URL',
   description:
     'Upload a media file from a URL to Postiz. Returns the file path to use when creating posts.',

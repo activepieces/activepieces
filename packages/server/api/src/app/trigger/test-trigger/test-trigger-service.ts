@@ -26,22 +26,12 @@ export const testTriggerService = (log: FastifyBaseLogger) => {
 
                     switch (testStrategy) {
                         case TriggerTestStrategy.SIMULATION: {
-                            const exists = await triggerSourceService(log).existsByFlowId({
+                            await triggerSourceService(log).disable({
                                 flowId: executeParams.flowId,
+                                projectId: executeParams.projectId,
                                 simulate: true,
+                                ignoreError: true,
                             })
-                            log.info({
-                                exists,
-                            }, '[testTriggerService#test] Trigger source exists')
-                            if (exists) {
-                                await triggerSourceService(log).disable({
-                                    flowId: executeParams.flowId,
-                                    projectId: executeParams.projectId,
-                                    simulate: true,
-                                    ignoreError: true,
-                                })
-                                return
-                            }
                             await triggerSourceService(log).enable({
                                 flowVersion: populatedFlow.version,
                                 projectId: executeParams.projectId,

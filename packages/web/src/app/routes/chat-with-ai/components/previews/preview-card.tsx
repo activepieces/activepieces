@@ -21,10 +21,12 @@ export function PreviewIconButton({
   icon: Icon,
   label,
   onClick,
+  className,
 }: {
   icon: LucideIcon;
   label: string;
   onClick: () => void;
+  className?: string;
 }) {
   return (
     <Tooltip>
@@ -35,6 +37,7 @@ export function PreviewIconButton({
           type="button"
           onClick={onClick}
           aria-label={label}
+          className={className}
         >
           <Icon className="size-4" />
         </Button>
@@ -59,17 +62,17 @@ export function PreviewCard({
   return (
     <motion.div
       className={cn(
-        'my-3 w-full overflow-hidden rounded-xl border bg-card',
+        'my-3 w-full overflow-hidden rounded-xl border bg-panel',
         className,
       )}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+      <div className="flex items-center justify-between gap-2 border-b border-gray-6 px-3 py-2">
         <div className="flex min-w-0 items-center gap-2">
-          <Icon className="size-4 shrink-0 text-muted-foreground" />
-          <span className="truncate text-xs font-medium text-muted-foreground">
+          <Icon className="size-4 shrink-0 text-gray-11" />
+          <span className="truncate text-xs font-medium text-gray-11">
             {label}
           </span>
         </div>
@@ -92,7 +95,7 @@ export function PreviewCard({
           <DialogContent className="flex h-[85vh] w-[90vw] max-w-5xl flex-col gap-3">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Icon className="size-4 text-muted-foreground" />
+                <Icon className="size-4 text-gray-11" />
                 {label}
               </DialogTitle>
             </DialogHeader>

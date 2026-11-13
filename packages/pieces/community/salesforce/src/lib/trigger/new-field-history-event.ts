@@ -10,6 +10,7 @@ import {
     createTrigger,
 } from '@activepieces/pieces-framework';
 import { querySalesforceApi, salesforcesCommon } from '../common';
+import { salesforceUtils } from '../common/utils';
 
 import dayjs from 'dayjs';
 import { salesforceAuth } from '../..';
@@ -18,6 +19,7 @@ import { newFieldHistoryEventTriggerOutputSchema } from '../output-schemas';
 export const newFieldHistoryEvent = createTrigger({
     auth: salesforceAuth,
     name: 'new_field_history_event',
+    classification: 'READ',
     displayName: 'New Field History Event',
     description: 'Fires when a tracked field is updated on a specified object.',
     aiMetadata: {
@@ -25,7 +27,10 @@ export const newFieldHistoryEvent = createTrigger({
     },
     outputSchema: newFieldHistoryEventTriggerOutputSchema,
     props: {
-        object: salesforcesCommon.object,
+        object: {
+            ...salesforcesCommon.object,
+            description: 'Only objects with field history tracking turned on.',
+        },
     },
     sampleData: {
         "Id": "0177Q00000s912jQAA",
@@ -65,9 +70,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof salesforceAuth>,
 
         const isoDate = dayjs(lastFetchEpochMS).toISOString();
 
-        const historyObject = object.endsWith('__c')
-            ? object.replace('__c', '__History')
-            : `${object}History`;
+        const historyObject = salesforceUtils.getHistoryObjectName(object);
 
         const query = `
             SELECT FIELDS(ALL)

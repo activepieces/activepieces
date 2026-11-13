@@ -4,6 +4,7 @@ import { kallabotAuth } from '../..';
 
 export const deleteCampaignAction = createAction({
     name: 'delete-campaign',
+    classification: 'DESTRUCTIVE',
     displayName: 'Delete Campaign',
     description: 'Delete a campaign with optional contact list deletion.',
     audience: 'both',

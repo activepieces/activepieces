@@ -1,5 +1,11 @@
-import { AgentConversation } from '@activepieces/shared';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { AgentConversation, SeekPage } from '@activepieces/shared';
+import {
+  InfiniteData,
+  QueryKey,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ArrowUpRight,
@@ -50,15 +56,31 @@ export function ConversationList({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const { data: conversationsPage, isLoading: isLoadingConversations } =
-    useQuery({
-      queryKey: ['chat-conversations', agentId ?? 'chat'],
-      queryFn: () =>
-        chatApi.listConversations({
-          limit: 100,
-          ...(agentId === undefined ? {} : { agentId }),
-        }),
-    });
+  const {
+    data: conversationPages,
+    isLoading: isLoadingConversations,
+    isSuccess: conversationsLoaded,
+    hasNextPage,
+    isFetching,
+    isFetchNextPageError,
+    fetchNextPage,
+  } = useInfiniteQuery<
+    SeekPage<AgentConversation>,
+    Error,
+    InfiniteData<SeekPage<AgentConversation>>,
+    QueryKey,
+    string | undefined
+  >({
+    queryKey: ['chat-conversations', agentId ?? 'chat'],
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => lastPage.next ?? undefined,
+    queryFn: ({ pageParam }) =>
+      chatApi.listConversations({
+        limit: 100,
+        cursor: pageParam,
+        ...(agentId === undefined ? {} : { agentId }),
+      }),
+  });
 
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
@@ -75,11 +97,16 @@ export function ConversationList({
     },
   });
 
-  const allConversations = conversationsPage?.data ?? [];
+  const allConversations = useMemo(
+    () => conversationPages?.pages.flatMap((page) => page.data) ?? [],
+    [conversationPages],
+  );
 
   const { getIndicator, markRead } = useConversationIndicators({
     conversations: allConversations,
     activeId: selectedId ?? null,
+    scope: agentId ?? 'chat',
+    loaded: conversationsLoaded,
   });
 
   const conversations = useMemo(() => {
@@ -97,9 +124,43 @@ export function ConversationList({
     setShowBottomFade(el.scrollTop + el.clientHeight < el.scrollHeight - 5);
   }, []);
 
+  const skippedLoadMoreRef = useRef(false);
+
+  const loadMoreIfNearEnd = useCallback(() => {
+    const el = listRef.current;
+    const nearListEnd =
+      !!el &&
+      el.scrollTop + el.clientHeight >= el.scrollHeight - LOAD_MORE_OFFSET_PX;
+    const wantsMore = nearListEnd && hasNextPage;
+    skippedLoadMoreRef.current = wantsMore && isFetching;
+    if (wantsMore && !isFetching) {
+      fetchNextPage().catch(() => undefined);
+    }
+  }, [hasNextPage, isFetching, fetchNextPage]);
+
+  const fillsShortSearchResults =
+    searchQuery.trim().length > 0 && !isFetchNextPageError;
+
   useEffect(() => {
     checkFades();
-  }, [collapsed, conversations, checkFades]);
+    const retriesSkippedScroll =
+      skippedLoadMoreRef.current && !isFetchNextPageError;
+    if (fillsShortSearchResults || retriesSkippedScroll) {
+      loadMoreIfNearEnd();
+    }
+  }, [
+    collapsed,
+    conversations,
+    checkFades,
+    loadMoreIfNearEnd,
+    fillsShortSearchResults,
+    isFetchNextPageError,
+  ]);
+
+  const handleListScroll = useCallback(() => {
+    checkFades();
+    loadMoreIfNearEnd();
+  }, [checkFades, loadMoreIfNearEnd]);
 
   const { today, yesterday, older } = useMemo(() => {
     const todayStr = new Date().toDateString();
@@ -146,7 +207,7 @@ export function ConversationList({
       <div className="mb-2 flex flex-col gap-px">
         <button
           type="button"
-          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-[11px] font-semibold px-2 py-1 uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-xs font-semibold px-2 py-1 text-gray-11 transition-colors hover:text-gray-12"
           onClick={() => toggleGroup(label)}
         >
           {label}
@@ -166,10 +227,10 @@ export function ConversationList({
                 type="button"
                 key={conv.id}
                 className={cn(
-                  'group flex items-center w-full px-2 py-1.5 rounded-md bg-transparent border-none cursor-pointer text-left text-xs transition-colors hover:bg-muted relative',
+                  'group flex items-center w-full px-2 py-1.5 rounded-md bg-transparent border-none cursor-pointer text-left text-xs transition-colors hover:bg-gray-3 relative',
                   mobile && 'px-3 py-2.5 text-sm',
                   selectedId === conv.id &&
-                    'bg-muted font-semibold border-l-2 border-l-primary',
+                    'bg-gray-3 font-semibold border-l-2 border-l-accent-9',
                 )}
                 onClick={() => handleClick(conv)}
               >
@@ -189,7 +250,7 @@ export function ConversationList({
                       role="button"
                       tabIndex={0}
                       className={cn(
-                        'absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all',
+                        'absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded-md text-gray-11 hover:text-danger-11 hover:bg-danger-3 transition-all',
                         mobile && 'opacity-100 p-1.5',
                       )}
                       onClick={(e) => handleDelete(e, conv.id)}
@@ -225,7 +286,7 @@ export function ConversationList({
           <button
             type="button"
             className={cn(
-              'flex grow items-center justify-between gap-1.5 px-2 py-1.5 rounded-md border border-border bg-transparent cursor-pointer text-xs text-foreground transition-colors hover:bg-accent',
+              'flex grow items-center justify-between gap-1.5 px-2 py-1.5 rounded-md border border-gray-6 bg-transparent cursor-pointer text-xs text-gray-12 transition-colors hover:bg-gray-4',
               mobile && 'px-3 py-2.5 text-sm',
             )}
             onClick={() => {
@@ -236,7 +297,7 @@ export function ConversationList({
               <Plus size={mobile ? 16 : 14} />
               {t('New chat')}
             </span>
-            {!mobile && <span className="text-[11px] opacity-50">⇧⌘O</span>}
+            {!mobile && <span className="text-xs opacity-50">⇧⌘O</span>}
           </button>
           {onCollapse !== undefined && (
             <ConversationsToggle open onClick={onCollapse} />
@@ -244,27 +305,24 @@ export function ConversationList({
         </div>
         {allConversations.length > 5 && (
           <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-11" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('Search...')}
-              className={cn(
-                'h-7 pl-7 text-xs rounded-md',
-                mobile && 'h-9 pl-8 text-base',
-              )}
+              className={cn('h-7 pl-7 text-xs', mobile && 'h-9 pl-8 text-base')}
             />
           </div>
         )}
       </div>
       <div className="flex-1 relative min-h-0">
         {showTopFade && (
-          <div className="absolute top-0 left-0 right-0 h-5 pointer-events-none z-[1] bg-gradient-to-b from-background to-transparent" />
+          <div className="absolute top-0 left-0 right-0 h-5 pointer-events-none z-[1] bg-gradient-to-b from-gray-1 to-transparent" />
         )}
         <div
           ref={listRef}
-          onScroll={checkFades}
-          className="h-full overflow-y-auto px-2 pb-3 scrollbar-thin"
+          onScroll={handleListScroll}
+          className="h-full overflow-y-auto px-2 pb-3"
         >
           {isLoadingConversations ? (
             <div className="space-y-2 px-2 pt-2">
@@ -274,8 +332,8 @@ export function ConversationList({
             </div>
           ) : conversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
-              <MessageSquare className="h-8 w-8 text-muted-foreground/30 mb-2" />
-              <p className="text-xs text-muted-foreground">
+              <MessageSquare className="h-8 w-8 text-gray-9 mb-2" />
+              <p className="text-xs text-gray-11">
                 {searchQuery.trim()
                   ? t('No chats found')
                   : t('Start your first chat')}
@@ -290,7 +348,7 @@ export function ConversationList({
           )}
         </div>
         {showBottomFade && (
-          <div className="absolute bottom-0 left-0 right-0 h-[70px] pointer-events-none z-[1] bg-gradient-to-t from-background to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-[70px] pointer-events-none z-[1] bg-gradient-to-t from-gray-1 to-transparent" />
         )}
       </div>
       {agentId === undefined && (
@@ -298,7 +356,7 @@ export function ConversationList({
           <button
             type="button"
             className={cn(
-              'flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md bg-transparent cursor-pointer text-xs text-foreground transition-colors hover:bg-accent',
+              'flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md bg-transparent cursor-pointer text-xs text-gray-12 transition-colors hover:bg-gray-4',
               mobile && 'px-3 py-2.5 text-sm',
             )}
             onClick={() => setSettingsOpen(true)}
@@ -310,7 +368,7 @@ export function ConversationList({
       )}
       {mobile && (
         <div className="shrink-0 border-t px-4 py-3">
-          <p className="flex items-start gap-1.5 text-xs leading-snug text-muted-foreground">
+          <p className="flex items-start gap-1.5 text-xs leading-snug text-gray-11">
             <ArrowUpRight size={14} className="mt-px shrink-0" />
             {t('Open on desktop for the full Activepieces experience.')}
           </p>
@@ -320,3 +378,5 @@ export function ConversationList({
     </div>
   );
 }
+
+const LOAD_MORE_OFFSET_PX = 200;

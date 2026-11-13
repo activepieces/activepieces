@@ -1,0 +1,11 @@
+---
+title: 'Variable Schema'
+openapi-schema: variable
+icon: cube
+---
+
+A variable is an encrypted secret, credential, or other value stored once in a project. Any step in any flow of that project can reference it as `{{variables['NAME']}}`. See [Project Variables](/flows/project-variables) for how flows use them.
+
+<Note>
+Values are write-only for API keys. No response from these endpoints contains the value, and an API key cannot read it back. Revealing a value requires the session of a signed-in project member with write access (Editor or Admin).
+</Note>

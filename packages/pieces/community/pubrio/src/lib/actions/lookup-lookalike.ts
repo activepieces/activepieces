@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const lookupLookalike = createAction({
   auth: pubrioAuth,
   name: 'lookup_lookalike',
+  classification: 'READ',
   displayName: 'Lookup Lookalike Company',
   description:
     'Look up a similar company result by domain, LinkedIn URL, or domain search ID',

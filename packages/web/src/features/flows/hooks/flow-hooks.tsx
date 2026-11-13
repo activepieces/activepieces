@@ -2,6 +2,7 @@ import {
   ApErrorParams,
   isNil,
   ErrorCode,
+  RequiredActionsMissingErrorParams,
   SeekPage,
 } from '@activepieces/core-utils';
 import {
@@ -10,6 +11,7 @@ import {
   FlowStatus,
   FlowVersion,
   FlowVersionMetadata,
+  FlowVersionState,
   FlowVersionTemplate,
   ListFlowsRequest,
   PopulatedFlow,
@@ -48,7 +50,10 @@ import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
 import { flowsApi } from '../api/flows-api';
 import { flowsUtils } from '../utils/flows-utils';
 
+import { sampleDataHooks } from './sample-data-hooks';
+
 const createFlowsQueryKey = (projectId: string) => ['flows', projectId];
+const createFlowQueryKeyPrefix = (flowId: string) => ['flow', flowId];
 export const flowHooks = {
   invalidateFlowsQuery: (queryClient: QueryClient) => {
     queryClient.invalidateQueries({
@@ -72,6 +77,7 @@ export const flowHooks = {
     change,
     onSuccess,
     setIsPublishing,
+    onRequiredActionsMissing,
   }: UseChangeFlowStatusParams) => {
     const { data: enableFlowOnPublish } = flagsHooks.useFlag<boolean>(
       ApFlagId.ENABLE_FLOW_ON_PUBLISH,
@@ -150,11 +156,11 @@ export const flowHooks = {
                   )}
                 </p>
                 {reportedError && (
-                  <div className="flex flex-col gap-1 rounded-md bg-muted p-3">
-                    <span className="text-xs font-medium text-muted-foreground">
+                  <div className="flex flex-col gap-1 rounded-md bg-gray-3 p-3">
+                    <span className="text-xs font-medium text-gray-11">
                       {t('The connected app reported')}
                     </span>
-                    <span className="line-clamp-4 text-sm text-foreground">
+                    <span className="line-clamp-4 text-sm text-gray-12">
                       {reportedError}
                     </span>
                   </div>
@@ -168,6 +174,15 @@ export const flowHooks = {
               standardOutput: params.standardOutput || '',
             },
             technicalDetailsDefaultOpen: isNil(reportedError),
+          });
+        } else if (apError.code === ErrorCode.REQUIRED_ACTIONS_MISSING) {
+          if (onRequiredActionsMissing) {
+            onRequiredActionsMissing(apError.params);
+            return;
+          }
+          toast.error(t('Publish failed'), {
+            description: apError.params.message,
+            duration: 5000,
           });
         } else if (apError.code === ErrorCode.QUOTA_EXCEEDED) {
           toast.error(t('Active flows limit reached'), {
@@ -581,18 +596,96 @@ export const flowHooks = {
       onError,
     });
   },
+  useListFlowsUsingConnection: ({
+    projectId,
+    onSuccess,
+  }: {
+    projectId: string;
+    onSuccess: () => void;
+  }) => {
+    return useMutation({
+      mutationFn: async (externalId: string) => {
+        const request = {
+          projectId,
+          connectionExternalIds: [externalId],
+          cursor: undefined,
+          limit: FLOWS_PAGE_SIZE,
+        };
+        const [draftFlows, publishedFlows] = await Promise.all([
+          listAllFlows(request),
+          listAllFlows({ ...request, versionState: FlowVersionState.LOCKED }),
+        ]);
+        const draftFlowIds = new Set(draftFlows.map((flow) => flow.id));
+        return {
+          draftFlows,
+          publishedOnlyFlows: publishedFlows.filter(
+            (flow) => !draftFlowIds.has(flow.id),
+          ),
+          draftFlowIds,
+          publishedFlowIds: new Set(publishedFlows.map((flow) => flow.id)),
+        };
+      },
+      onSuccess,
+      onError: () => {
+        toast.error(t('Error'), {
+          description: t('Failed to get affected flows'),
+        });
+      },
+    });
+  },
   createFlowQueryKeys: ({
     flowId,
     versionId,
   }: {
     flowId: string;
     versionId: string | undefined;
-  }) => ['flow', flowId, versionId],
+  }) => [...createFlowQueryKeyPrefix(flowId), versionId],
+  removeFlowFromCache: ({
+    flowId,
+    queryClient,
+  }: {
+    flowId: string;
+    queryClient: QueryClient;
+  }) => {
+    const flowQueryKeyPrefix = createFlowQueryKeyPrefix(flowId);
+    queryClient
+      .getQueriesData<PopulatedFlow | null>({ queryKey: flowQueryKeyPrefix })
+      .forEach(([, flow]) => {
+        if (!isNil(flow)) {
+          sampleDataHooks.removeSampleData({
+            flowVersionId: flow.version.id,
+            queryClient,
+          });
+        }
+      });
+    queryClient.removeQueries({ queryKey: flowQueryKeyPrefix });
+  },
 };
+
+async function listAllFlows(
+  request: ListFlowsRequest,
+): Promise<PopulatedFlow[]> {
+  const flows: PopulatedFlow[] = [];
+  let cursor: string | undefined = undefined;
+  do {
+    const page: SeekPage<PopulatedFlow> = await flowsApi.list({
+      ...request,
+      cursor,
+    });
+    flows.push(...page.data);
+    cursor = page.next ?? undefined;
+  } while (cursor);
+  return flows;
+}
 
 type UseChangeFlowStatusParams = {
   flowId: string;
   change: 'publish' | FlowStatus;
   onSuccess: (flow: PopulatedFlow) => void;
   setIsPublishing?: (isPublishing: boolean) => void;
+  onRequiredActionsMissing?: (
+    params: RequiredActionsMissingErrorParams['params'],
+  ) => void;
 };
+
+const FLOWS_PAGE_SIZE = 1000;

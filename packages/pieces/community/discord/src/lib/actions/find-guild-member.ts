@@ -17,6 +17,22 @@ export const discordFindGuildMemberByUsername = createAction({
   aiMetadata: { description: 'Lists members of a guild, returning their user IDs and usernames for the given guild ID. Use to look up a member ID before role, kick, or ban actions, or to enumerate who is in a server. Read-only and idempotent; requires the Server Members privileged intent to be enabled for the bot.', idempotent: true },
   displayName: 'List Members',
   outputSchema: discordListGuildMembersActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'server',
+      display: 'section',
+      label: 'Server',
+      icon: 'users',
+      props: ['guild_id'],
+    },
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['shortText'],
+    },
+  ],
   props: {
     guild_id: discordCommon.guilds,
     shortText: Property.ShortText({

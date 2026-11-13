@@ -7,6 +7,7 @@ import { googleChatAPIService } from '../common/requests';
 export const addASpaceMember = createAction({
   auth: googleChatApiAuth,
   name: 'addASpaceMember',
+  classification: 'WRITE',
   displayName: 'Add a Space Member',
   description: 'Add a user to a Google Chat space.',
   audience: 'both',

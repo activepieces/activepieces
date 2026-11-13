@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const listUserPaymentMethodsAction = createAction({
   name: 'list_user_payment_methods',
+  classification: 'SEARCH',
   displayName: 'List User Payment Methods',
   description: 'List all payment methods for your user account',
   audience: 'both',

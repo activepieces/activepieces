@@ -83,7 +83,9 @@ async function main(): Promise<void> {
     await dataSource.destroy()
 }
 
-main().catch((e) => {
-    console.error('Rollback failed:', e)
-    process.exit(1)
-})
+main()
+    .then(() => process.exit(0))
+    .catch((e) => {
+        console.error('Rollback failed:', e)
+        process.exit(1)
+    })

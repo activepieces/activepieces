@@ -5,6 +5,7 @@ import { TALKABLE_API_URL } from '../../common/constants';
 
 export const findCoupon = createAction({
   name: 'find_coupon', // Must be a unique across the piece, this shouldn't be changed.
+  classification: 'READ',
   auth: talkableAuth,
   displayName: 'Find coupon',
   description: 'Find coupon code',

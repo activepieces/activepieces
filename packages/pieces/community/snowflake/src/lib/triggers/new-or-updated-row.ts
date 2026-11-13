@@ -2,30 +2,20 @@ import {
   createTrigger,
   TriggerStrategy,
   Property,
-  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
 import { snowflakeAuth } from '../auth';
 import {
-  configureConnection,
-  connect,
-  destroy,
-  execute,
   getTableColumnOptions,
   snowflakeCommonProps,
-  SnowflakeAuthValue,
+  toAuthValue,
 } from '../common';
-
-type NewOrUpdatedRowProps = {
-  database: string;
-  schema: string;
-  table: string;
-  updated_at_column: string;
-};
+import { rowTriggerOutputSchema } from '../common/output-schemas';
+import {
+  fetchBaseline,
+  fetchLatestRows,
+  fetchNewRows,
+  ROW_CURSOR_STORE_KEY,
+} from '../common/row-poll';
 
 const props = {
   database: snowflakeCommonProps.database,
@@ -35,9 +25,7 @@ const props = {
     auth: snowflakeAuth,
     displayName: 'Updated At Column',
     description:
-      'Select the column that stores when each row was last modified (e.g. `UPDATED_AT`, `LAST_MODIFIED_TIME`). ' +
-      'Both new rows and rows updated after the last check will fire the trigger. ' +
-      'The column must be updated by your application or a DEFAULT clause every time a row changes.',
+      'Select the column that stores when each row was last modified (e.g. `UPDATED_AT`, `LAST_MODIFIED_TIME`). Both new rows and rows updated after the last check will fire the trigger. The column must be updated by your application or a DEFAULT clause every time a row changes.',
     refreshers: ['table'],
     required: true,
     options: async ({ auth, table }) => {
@@ -55,60 +43,28 @@ const props = {
           placeholder: 'Please select a table first',
         };
       }
-      return getTableColumnOptions(auth as SnowflakeAuthValue, table as string);
+      return getTableColumnOptions({
+        auth: toAuthValue(auth),
+        table: String(table),
+      });
     },
   }),
-};
-
-function toEpochMs(value: unknown): number {
-  if (value instanceof Date) return value.getTime();
-  if (typeof value === 'string') return new Date(value).getTime();
-  return 0;
-}
-
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof snowflakeAuth>,
-  NewOrUpdatedRowProps
-> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue }) => {
-    const { table, updated_at_column } = propsValue;
-    if (!table || !updated_at_column) return [];
-
-    const connection = configureConnection(auth as SnowflakeAuthValue);
-    await connect(connection);
-    try {
-      // Fetch the 100 most-recently modified rows. pollingHelper keeps only
-      // rows whose timestamp exceeds the last stored watermark.
-      const result = await execute(
-        connection,
-        `SELECT * FROM ${table} ORDER BY ${updated_at_column} DESC LIMIT 100`,
-        []
-      );
-
-      if (!result) return [];
-
-      return (result as Record<string, unknown>[]).map((row) => ({
-        epochMilliSeconds: toEpochMs(row[updated_at_column]),
-        data: row,
-      }));
-    } finally {
-      await destroy(connection);
-    }
-  },
 };
 
 export const newOrUpdatedRowTrigger = createTrigger({
   auth: snowflakeAuth,
   name: 'new_or_updated_row',
+  classification: 'READ',
   displayName: 'New or Updated Row',
   description:
     'Triggers when a row is inserted or updated in the selected table. Uses an "updated at" timestamp column you choose — any row whose timestamp is newer than the last check will fire the trigger.',
   aiMetadata: {
     description:
-      'Fires for each row that is inserted or modified in the selected Snowflake table, detected by polling a chosen "updated at" timestamp column against the last-seen watermark. Relies on that column being refreshed on every change (by the application or a DEFAULT clause); a row whose timestamp does not advance on update will not fire.',
+      'Fires once per row whose chosen "updated at" timestamp moved past the newest one already seen (inserts and updates alike), oldest first, up to 1000 rows per poll (all rows sharing one exact timestamp are sent together, up to 10,000). The column must be refreshed on every change; a row updated without advancing it does not fire.',
   },
+  outputSchema: rowTriggerOutputSchema,
   props,
+
   sampleData: {
     ID: 1001,
     NAME: 'Jane Doe',
@@ -117,15 +73,56 @@ export const newOrUpdatedRowTrigger = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async test(context) {
-    return await pollingHelper.test(polling, context);
+    const { table, updated_at_column } = context.propsValue;
+    return fetchLatestRows({
+      auth: toAuthValue(context.auth),
+      table,
+      column: updated_at_column,
+      limit: 5,
+    });
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    if (
+      context.isRepublish &&
+      (await context.store.get(ROW_CURSOR_STORE_KEY))
+    ) {
+      return;
+    }
+    const { table, updated_at_column } = context.propsValue;
+    const cursor = await fetchBaseline({
+      auth: toAuthValue(context.auth),
+      table,
+      column: updated_at_column,
+    });
+    await context.store.put(ROW_CURSOR_STORE_KEY, { cursor });
   },
-  async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+  async onDisable() {
+    return;
   },
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    const { table, updated_at_column } = context.propsValue;
+    const auth = toAuthValue(context.auth);
+    const stored = await context.store.get<{ cursor: string | null }>(
+      ROW_CURSOR_STORE_KEY
+    );
+    if (!stored) {
+      const cursor = await fetchBaseline({
+        auth,
+        table,
+        column: updated_at_column,
+      });
+      await context.store.put(ROW_CURSOR_STORE_KEY, { cursor });
+      return [];
+    }
+    const page = await fetchNewRows({
+      auth,
+      table,
+      column: updated_at_column,
+      after: stored.cursor,
+    });
+    if (page.rows.length > 0) {
+      await context.store.put(ROW_CURSOR_STORE_KEY, { cursor: page.cursor });
+    }
+    return page.rows;
   },
 });

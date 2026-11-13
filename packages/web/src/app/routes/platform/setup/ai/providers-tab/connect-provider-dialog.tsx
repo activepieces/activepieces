@@ -12,8 +12,10 @@ import { useState } from 'react';
 import { ControllerRenderProps, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { adminLayout } from '@/app/components/admin';
 import { DictionaryInput } from '@/components/custom/dictionary-input';
 import { ApMarkdown } from '@/components/custom/markdown';
+import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
   Collapsible,
@@ -49,6 +51,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import { aiProviderMutations } from '@/features/platform-admin';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { CredentialField, providerCredentials } from './provider-credentials';
@@ -70,7 +73,7 @@ export function ConnectProviderDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className={adminLayout.dialog.md}>
         <ConnectProviderForm
           key={open ? editing?.id ?? defaultProvider ?? 'new' : 'closed'}
           editing={editing}
@@ -164,42 +167,35 @@ function ConnectProviderForm({
               render={({ field }) => (
                 <FormItem className="flex flex-col gap-1.5">
                   <FormLabel showRequiredIndicator>{t('Provider')}</FormLabel>
-                  <Select
-                    value={field.value}
-                    onValueChange={(selected) => {
-                      const next = selected as AIProviderName;
-                      field.onChange(next);
-                      form.setValue('credentials', emptyCredentialsOf(next));
-                      form.setValue('headers', {});
-                      form.setValue('name', defaultNameOf(next));
-                    }}
-                    disabled={editing !== undefined}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('Select provider')} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {SUPPORTED_AI_PROVIDERS.map((candidate) => (
-                        <SelectItem
-                          key={candidate.provider}
-                          value={candidate.provider}
-                        >
-                          <div className="flex items-center gap-2">
-                            <ProviderLogo info={candidate} size="sm" />
-                            <span>{candidate.name}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <SearchableSelect
+                      value={field.value}
+                      options={SUPPORTED_AI_PROVIDERS.map((candidate) => ({
+                        value: candidate.provider,
+                        label: candidate.name,
+                      }))}
+                      placeholder={t('Search providers')}
+                      disabled={editing !== undefined}
+                      valuesRendering={(value) => (
+                        <ProviderOption provider={value} />
+                      )}
+                      onChange={(next) => {
+                        if (next === null || next === field.value) {
+                          return;
+                        }
+                        field.onChange(next);
+                        form.setValue('credentials', emptyCredentialsOf(next));
+                        form.setValue('headers', {});
+                        form.setValue('name', defaultNameOf(next));
+                      }}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {info?.markdown && <SetupInstructions info={info} />}
+            {info && <SetupInstructions info={info} />}
 
             <FormField
               control={form.control}
@@ -235,7 +231,16 @@ function ConnectProviderForm({
           <Button type="button" variant="outline" onClick={onCancel}>
             {t('Cancel')}
           </Button>
-          <Button type="submit" loading={connecting} disabled={connecting}>
+          <Button
+            type="submit"
+            loading={connecting}
+            disabled={connecting}
+            {...adminControl(
+              editing
+                ? AdminControl.AI_PROVIDER_KEY_CREDENTIALS_SUBMIT
+                : AdminControl.AI_PROVIDER_KEY_SUBMIT,
+            )}
+          >
             {editing ? t('Save credentials') : t('Connect')}
           </Button>
         </DialogFooter>
@@ -344,14 +349,29 @@ function SecretInput({
       <Button
         type="button"
         variant="ghost"
-        size="icon"
+        size="icon-xs"
         tabIndex={-1}
         onClick={() => setVisible(!visible)}
-        className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-muted-foreground hover:text-foreground"
+        className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-11 hover:text-gray-12"
       >
         {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
       </Button>
     </div>
+  );
+}
+
+function ProviderOption({ provider }: { provider: unknown }) {
+  const info = SUPPORTED_AI_PROVIDERS.find(
+    (candidate) => candidate.provider === provider,
+  );
+  if (!info) {
+    return null;
+  }
+  return (
+    <span className="flex min-w-0 items-center gap-2">
+      <ProviderLogo info={info} size="sm" />
+      <span className="truncate">{info.name}</span>
+    </span>
   );
 }
 
@@ -362,7 +382,7 @@ function SetupInstructions({ info }: { info: AiProviderInfo }) {
       <CollapsibleTrigger asChild>
         <button
           type="button"
-          className="flex w-full items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="flex w-full items-center gap-1.5 text-sm text-gray-11 transition-colors hover:text-gray-12"
         >
           <ChevronDown
             className={cn('size-4 transition-transform', open && 'rotate-180')}
@@ -371,7 +391,7 @@ function SetupInstructions({ info }: { info: AiProviderInfo }) {
         </button>
       </CollapsibleTrigger>
       <CollapsibleContent className="pt-2">
-        <ApMarkdown markdown={info.markdown} variant={MarkdownVariant.INFO} />
+        <ApMarkdown markdown={info.markdown()} variant={MarkdownVariant.INFO} />
       </CollapsibleContent>
     </Collapsible>
   );

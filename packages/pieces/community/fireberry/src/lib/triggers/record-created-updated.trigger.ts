@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property, isNil } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { fireberryAuth } from '../auth';
 import { objectTypeDropdown } from '../common/props';
@@ -6,6 +6,7 @@ import { FireberryClient } from '../common/client';
 
 export const recordCreatedOrUpdatedTrigger = createTrigger({
   name: 'record_created_or_updated',
+  classification: 'READ',
   displayName: 'Record Created or Updated',
   description: 'Fires when a record is created or updated in Fireberry.',
   aiMetadata: {
@@ -128,10 +129,16 @@ export const recordCreatedOrUpdatedTrigger = createTrigger({
       }];
     }
   },
-  async onEnable({ store }) {
+  async onEnable({ store, isRepublish }) {
+    if (isRepublish && !isNil(await store.get('lastPollTime'))) {
+      return;
+    }
     await store.put('lastPollTime', new Date().toISOString());
   },
-  async onDisable({ store }) {
+  async onDisable({ store, isRepublish }) {
+    if (isRepublish) {
+      return;
+    }
     await store.delete('lastPollTime');
   },
   async run({ auth, propsValue, store }) {

@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { callClickUpApi } from '../../common';
+import { callClickUpApi, clickupCommon } from '../../common';
 import { clickupAuth } from '../../auth';
 
 export const clickupUpdateComment = createAction({
@@ -32,15 +32,17 @@ export const clickupUpdateComment = createAction({
       displayName: 'Assignee',
       required: false,
     }),
-    resolved: Property.Checkbox({
-      description: 'Whether the comment is resolved',
+    resolved: clickupCommon.optionalBoolean({
       displayName: 'Resolved',
-      required: false,
+      description:
+        'Whether the comment is resolved. Leave empty or pick Leave unchanged to keep the current setting.',
     }),
   },
   async run(configValue) {
-    const { comment_id, comment_text, assignee, resolved } =
-      configValue.propsValue;
+    const { comment_id, comment_text, assignee } = configValue.propsValue;
+    const resolved = clickupCommon.optionalBooleanValue(
+      configValue.propsValue.resolved
+    );
 
     const body: Record<string, unknown> = {
       comment_text,
@@ -48,7 +50,7 @@ export const clickupUpdateComment = createAction({
     if (assignee !== undefined && assignee !== null) {
       body['assignee'] = assignee;
     }
-    if (resolved !== undefined && resolved !== null) {
+    if (resolved !== undefined) {
       body['resolved'] = resolved;
     }
 

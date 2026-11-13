@@ -6,6 +6,7 @@ import { pinchPaymentsClient } from '../common/client';
 export const findPayerAction = createAction({
   auth: pinchPaymentsAuth,
   name: 'find_payer',
+  classification: 'READ',
   displayName: 'Find Payer',
   description: 'Find a payer by their Payer ID',
   audience: 'both',

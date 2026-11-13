@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertFrequencyAction = createAction({
   name: 'convert_frequency',
+  classification: 'READ',
   displayName: 'Convert Frequency',
   description: 'Convert frequency measurements between different units',
   audience: 'both',

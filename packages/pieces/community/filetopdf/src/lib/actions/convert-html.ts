@@ -1,21 +1,18 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { filetopdfAuth } from '../common/auth';
-import { filetopdfApiCall } from '../common/client';
-import { CHROMIUM_OPTION_PROPS } from '../common/props';
-import {
-  stringifyOptions,
-  buildConversionOutput,
-  PdfJsonEnvelope,
-} from '../common/conversion';
+import { filetopdfAuth } from '../auth';
+import { filetopdfApi } from '../common/api';
+import { filetopdfProps } from '../common/props';
+import { filetopdfUtils } from '../common/utils';
+import { conversionOutputSchema } from '../output-schemas';
 
-export const convertHtml = createAction({
+export const convertHtmlAction = createAction({
   auth: filetopdfAuth,
   name: 'convert_html',
+  outputSchema: conversionOutputSchema,
   classification: 'READ',
   displayName: 'Convert HTML',
   description: 'Render a raw HTML string (with optional CSS) to PDF using Chromium.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Renders a raw HTML string (with optional injected CSS) to PDF via Chromium. Choose this when the agent holds HTML markup it generated or assembled in memory, rather than a file or URL. Requires the HTML content as input. Not idempotent: each call performs a fresh remote render on the FileToPDF service that produces a new file and consumes account credits.',
@@ -32,21 +29,12 @@ export const convertHtml = createAction({
       description: 'Optional CSS, injected into the document head.',
       required: false,
     }),
-    ...CHROMIUM_OPTION_PROPS,
+    ...filetopdfProps.chromiumOptions,
   },
   async run(context) {
     const { html, css, ...rawOptions } = context.propsValue;
-    const options = stringifyOptions(rawOptions);
-    const body: Record<string, unknown> = { html, ...options };
-    if (css) body['css'] = css;
-
-    const envelope = await filetopdfApiCall<PdfJsonEnvelope>({
-      apiKey: context.auth.secret_text,
-      method: HttpMethod.POST,
-      resourceUri: '/html',
-      body,
-    });
-
-    return buildConversionOutput(context.files, envelope);
+    const options = filetopdfUtils.stringifyOptions(rawOptions);
+    const envelope = await filetopdfApi.convertHtml({ auth: context.auth, html, css, options });
+    return await filetopdfUtils.buildConversionOutput({ files: context.files, envelope });
   },
 });

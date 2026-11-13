@@ -2,27 +2,26 @@ import { isNil } from '@activepieces/core-utils';
 import { flowStructureUtil, Step } from '@activepieces/shared';
 import { MiniMap, MiniMapNodeProps } from '@xyflow/react';
 
-import { useTheme } from '@/components/providers/theme-provider';
 import { stepsHooks, StepMetadata } from '@/features/pieces';
 import { colorsUtils } from '@/lib/color-utils';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
+const NODE_COLOR_STRENGTH = 72;
+
 const Minimap = () => {
   const [showMinimap] = useBuilderStateContext((state) => [state.showMinimap]);
-  const { theme } = useTheme();
-  const maskTransparency = theme === 'dark' ? 0.8 : 0.055;
   return (
     <>
       {showMinimap && (
         <MiniMap
           position="bottom-left"
-          className="!rounded-md border border-border !left-0 !ml-2 overflow-hidden !bottom-[45px] animate-in fade-in duration-300"
+          className="!rounded-md border border-gray-6 !left-0 !ml-2 overflow-hidden !bottom-[45px] animate-in fade-in duration-300"
           zoomable
           pannable
           zoomStep={0.3}
-          bgColor="var(--background)"
-          maskColor={`rgba(0, 0, 0, ${maskTransparency})`}
+          bgColor="var(--gray-2)"
+          maskColor="color-mix(in oklab, var(--gray-12) 8%, transparent)"
           nodeComponent={(node) => <MinimapNode node={node} />}
         />
       )}
@@ -39,9 +38,8 @@ const MinimapNodeContent = ({
 }) => {
   const nodeColor = colorsUtils.useAverageColorInImage({
     imgUrl: stepMetadata.logoUrl ?? '',
-    transparency: 50,
+    strength: NODE_COLOR_STRENGTH,
   });
-  const defaultColor = 'oklch(92.8% 0.006 264.531)';
 
   return (
     <rect
@@ -50,7 +48,7 @@ const MinimapNodeContent = ({
       height={node.height}
       x={node.x}
       y={node.y}
-      fill={nodeColor ?? defaultColor}
+      fill={nodeColor ?? 'var(--gray-11)'}
     ></rect>
   );
 };

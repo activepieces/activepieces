@@ -78,6 +78,16 @@ export const flowluProps = {
     }),
     workflow_id: flowluCommon.workflow_id(false),
     workflow_stage_id: flowluCommon.workflow_stage_id(false),
+    project_id: flowluCommon.project_id(
+      false,
+      'Project',
+      'Links the task to this project.'
+    ),
+    crm_account_id: flowluCommon.account_id(
+      false,
+      'CRM Account',
+      'Links the task to this CRM contact or organization.'
+    ),
   },
   account: {
     owner_id: flowluCommon.user_id(false, 'Assignee ID'),
@@ -117,6 +127,8 @@ export const flowluProps = {
     }),
     link_google: Property.ShortText({
       displayName: 'Link to Google+',
+      description:
+        'Google+ no longer exists and Flowlu has no field for it, so this value is not saved.',
       required: false,
     }),
     link_facebook: Property.ShortText({
@@ -223,3 +235,28 @@ export const flowluProps = {
     pipeline_stage_id: flowluCommon.pipeline_stage_id(false),
   },
 };
+
+export const flowluWire = {
+  fieldsOnly: (props: Record<string, unknown>): Record<string, unknown> =>
+    Object.fromEntries(
+      Object.entries(props).filter(([key]) => !NON_FIELD_KEYS.includes(key))
+    ),
+  account: (props: Record<string, unknown>): Record<string, unknown> =>
+    Object.fromEntries(
+      Object.entries(props)
+        .filter(([key]) => !DROPPED_ACCOUNT_FIELDS.includes(key))
+        .map(([key, value]) => [LEGACY_ACCOUNT_FIELDS[key] ?? key, value])
+    ),
+};
+
+const LEGACY_ACCOUNT_FIELDS: Record<string, string> = {
+  vat: 'VAT',
+  skype: 'social_network_link_1',
+  link_facebook: 'social_network_link_3',
+  link_linkedin: 'social_network_link_5',
+  link_instagram: 'social_network_link_6',
+};
+
+const NON_FIELD_KEYS = ['auth'];
+
+const DROPPED_ACCOUNT_FIELDS = ['id', 'link_google', ...NON_FIELD_KEYS];

@@ -11,38 +11,50 @@ export const dropboxCopyFile = createAction({
   auth: dropboxAuth,
   name: 'copy_dropbox_file',
   classification: 'WRITE',
-  description: 'Copy a file',
+  description: 'Copy a file to a new path in Dropbox',
   audience: 'human',
   aiMetadata: { description: 'Copies the file at the source path to a new destination path within Dropbox, leaving the original in place; optionally autorenames on conflict. Use to duplicate a single file. Not idempotent: each call creates a copy, so repeating it errors on conflict or, with autorename, produces additional duplicates.', idempotent: false },
-  displayName: 'Copy file',
+  displayName: 'Copy File',
   outputSchema: fileMetadataOutputSchema,
   props: {
     from_path: Property.ShortText({
       displayName: 'From Path',
-      description: 'The source path of the file (e.g. /folder1/sourcefile.txt)',
+      description: 'Path of the file to copy.',
+      placeholder: '/Reports/q1.pdf',
       required: true,
     }),
     to_path: Property.ShortText({
       displayName: 'To Path',
-      description:
-        'The destination path for the copied (e.g. /folder2/destinationfile.txt)',
+      description: 'New path, including the file name.',
+      placeholder: '/Archive/q1.pdf',
       required: true,
     }),
     autorename: Property.Checkbox({
       displayName: 'Auto Rename',
       description:
-        "If there's a conflict, have the Dropbox server try to autorename the file to avoid conflict.",
+        'If the name is taken, save under a new name instead of failing.',
       defaultValue: false,
       required: false,
+      advanced: true,
     }),
     allow_ownership_transfer: Property.Checkbox({
       displayName: 'Allow Ownership Transfer',
       description:
-        'Allows copy by owner even if it would result in an ownership transfer.',
+        'Has no effect on copies; Dropbox applies it to moves only.',
       defaultValue: false,
       required: false,
+      advanced: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'paths',
+      display: 'section',
+      label: 'From and To',
+      icon: 'file',
+      props: ['from_path', 'to_path'],
+    },
+  ],
   async run(context) {
     const params = {
       from_path: context.propsValue.from_path,

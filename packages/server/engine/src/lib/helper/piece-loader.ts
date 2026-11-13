@@ -1,10 +1,11 @@
 import fs from 'fs/promises'
 import { createRequire } from 'node:module'
 import path from 'path'
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, tryCatchSync } from '@activepieces/core-utils'
 import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
-import { EngineGenericError, extractPieceFromModule, getPackageAliasForPiece, getPieceNameFromAlias, trimVersionFromAlias } from '@activepieces/shared'
+import { EngineGenericError, extractPieceFromModule, getPackageAliasForPiece, getPieceNameFromAlias, RequireError, trimVersionFromAlias } from '@activepieces/shared'
 import { utils } from '../utils'
+import { workerSocket } from '../worker-socket'
 
 export const pieceLoader = {
     loadPieceOrThrow: async (
@@ -17,7 +18,7 @@ export const pieceLoader = {
                 devPieces,
             })
             const piecePath = await pieceLoader.getPiecePath({ packageName, devPieces })
-            const module = createRequire(__filename)(piecePath)
+            const module = await requireWithReinstallRetry({ piecePath, pieceName, pieceVersion })
 
             const piece = extractPieceFromModule<Piece>({
                 module,
@@ -129,6 +130,31 @@ export const pieceLoader = {
         }
         return piecePath
     },
+}
+
+const MODULE_RESOLUTION_ERROR_CODES = ['MODULE_NOT_FOUND', 'ERR_MODULE_NOT_FOUND']
+
+function isModuleResolutionError(error: unknown): boolean {
+    return error instanceof Error && 'code' in error && typeof error.code === 'string' && MODULE_RESOLUTION_ERROR_CODES.includes(error.code)
+}
+
+async function requireWithReinstallRetry({ piecePath, pieceName, pieceVersion }: RequireWithReinstallRetryParams): Promise<Record<string, unknown>> {
+    const { data: module, error: requireError } = tryCatchSync<Record<string, unknown>>(() => createRequire(__filename)(piecePath))
+    if (!requireError) {
+        return module
+    }
+    if (!isModuleResolutionError(requireError)) {
+        throw requireError
+    }
+    const reinstalled = await workerSocket.requestPieceReinstall({ pieceName, pieceVersion })
+    if (!reinstalled) {
+        throw new RequireError(piecePath, requireError)
+    }
+    const { data: retriedModule, error: retryError } = tryCatchSync<Record<string, unknown>>(() => createRequire(__filename)(piecePath))
+    if (retryError) {
+        throw new RequireError(piecePath, retryError)
+    }
+    return retriedModule
 }
 
 async function findInDistFolder(packageName: string): Promise<string | null> {
@@ -245,6 +271,12 @@ async function resolveEntryFromPackageDir(packageDir: string): Promise<string> {
 type GetPiecePathParams = {
     packageName: string
     devPieces: string[]
+}
+
+type RequireWithReinstallRetryParams = {
+    piecePath: string
+    pieceName: string
+    pieceVersion: string
 }
 
 type LoadPieceParams = {

@@ -6,6 +6,7 @@ import { parallelClient } from '../common/client';
 export const getTaskRunAction = createAction({
   auth: parallelAuth,
   name: 'get_task_run',
+  classification: 'READ',
   displayName: 'Get Task Run Status',
   description: 'Retrieve the current status of a task run by its ID.',
   audience: 'both',

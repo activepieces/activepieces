@@ -94,7 +94,7 @@ else
 fi
 
 echo "=== Setting up flow ==="
-FLOW_ID=$(BASE_URL="$BASE_URL" FLOW_ENABLE_TIMEOUT=60 "$ROOT/benchmark/setup.sh")
+FLOW_ID=$(BASE_URL="$BASE_URL" FLOW_ENABLE_TIMEOUT=60 bun run "$ROOT/benchmark/setup.ts")
 echo "Flow ID: $FLOW_ID"
 # Load is generated INSIDE the cluster, against the app Service — not from the operator's laptop over the
 # public LoadBalancer. Driving 120+ concurrent sync webhooks from a workstation exhausts its ephemeral

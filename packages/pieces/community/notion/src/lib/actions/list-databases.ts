@@ -19,6 +19,15 @@ export const listDatabases = createAction({
       'Lists Notion databases the connected account can access, sorted by last edited time. Use when an agent needs to discover available databases before querying or writing items; supports pagination via cursor. Idempotent read-only lookup.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['limit'],
+    },
+  ],
   props: {
     limit: Property.Number({
       displayName: 'Limit',

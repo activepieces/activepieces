@@ -1,6 +1,9 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import {
+	InputPropertyMap,
+	MarkdownVariant,
 	OutputSchema,
+	Property,
 	TriggerStrategy,
 	createTrigger,
 	isNil,
@@ -17,6 +20,7 @@ export const brevoRegisterTrigger = ({
 	events,
 	sampleData,
 	outputSchema,
+	note,
 }: BrevoTriggerParams) =>
 	createTrigger({
 		auth: sendinblueAuth,
@@ -26,7 +30,7 @@ export const brevoRegisterTrigger = ({
 		classification: 'READ',
 		aiMetadata: { description: aiDescription },
 		type: TriggerStrategy.WEBHOOK,
-		props: {},
+		props: triggerProps(note),
 		sampleData,
 		outputSchema,
 		async onEnable(context) {
@@ -68,6 +72,16 @@ export const brevoRegisterTrigger = ({
 		},
 	});
 
+function triggerProps(note: string | undefined): InputPropertyMap {
+	if (isNil(note)) {
+		return {};
+	}
+
+	return {
+		note: Property.MarkDown({ value: note, variant: MarkdownVariant.INFO }),
+	};
+}
+
 function storeKey(name: string): string {
 	return `brevo_webhook_${name}`;
 }
@@ -83,6 +97,7 @@ export type BrevoTriggerParams = {
 	events: string[];
 	sampleData: unknown;
 	outputSchema: OutputSchema;
+	note?: string;
 };
 
 export type BrevoWebhookResponse = {
