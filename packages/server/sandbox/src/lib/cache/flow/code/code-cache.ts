@@ -6,7 +6,6 @@ const STEP_ENTRY_FILENAME = 'index.ts'
 const COMPILED_CODE_FILENAME = 'index.js'
 // sucrase output for deno (useDeno=true) steps: CJS with imports rewritten to require(), resolved from node_modules at runtime.
 const TRANSPILED_CODE_FILENAME = 'index.cjs'
-const DENO_CACHE_DIR_NAME = '.deno-cache'
 
 export const codeCache = (codesFolderPath: string) => ({
     flowVersionDir(flowVersionId: string): string {
@@ -18,10 +17,6 @@ export const codeCache = (codesFolderPath: string) => ({
         assertSafeCodeNamespace(flowVersionId)
         assertSafePathSegment(stepName, 'stepName')
         return path.join(codesFolderPath, flowVersionId, stepName)
-    },
-
-    denoCacheDir(flowVersionId: string): string {
-        return path.join(this.flowVersionDir(flowVersionId), DENO_CACHE_DIR_NAME)
     },
 
     stepEntryPath(ref: StepRef): string {

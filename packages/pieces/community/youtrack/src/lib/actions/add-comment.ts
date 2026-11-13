@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../auth';
-import { dropdownError, issueDropdown, youtrackApiCall } from '../common';
+import { groupDropdown, issueDropdown } from '../common';
+import { youtrackClient } from '../common/client';
 import { addCommentActionOutputSchema } from '../output-schemas';
 
 export const addCommentAction = createAction({
@@ -12,7 +13,11 @@ export const addCommentAction = createAction({
   displayName: 'Add Comment',
   description: 'Adds a comment to an issue. Supports Markdown formatting.',
   audience: 'both',
-  aiMetadata: { description: 'Post a comment on an issue, given the issue ID and Markdown text; optionally restrict visibility to a specific group. Use to add a note or reply on an issue. Not idempotent: each call appends a new comment.', idempotent: false },
+  aiMetadata: {
+    description:
+      'Post a comment on an issue, given the issue ID and Markdown text; optionally restrict visibility to one group (group ID from List Groups). Use to add a note or reply on an issue. Not idempotent: each call appends a new comment.',
+    idempotent: false,
+  },
   props: {
     issue: issueDropdown,
     text: Property.LongText({
@@ -20,46 +25,29 @@ export const addCommentAction = createAction({
       description: 'The comment text. Use Markdown for formatting. Mention users with @username.',
       required: true,
     }),
-    visibleToGroup: Property.Dropdown({
-      auth: youtrackAuth,
-      displayName: 'Visible to Group',
-      description: 'Restrict comment visibility to a group. Leave empty for everyone.',
-      required: false,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) return { disabled: true, options: [], placeholder: 'Connect your account first' };
-        const { baseUrl, apiToken } = auth.props;
-        try {
-          const response = await youtrackApiCall<Array<{ id: string; name: string }>>({
-            baseUrl, token: apiToken, method: HttpMethod.GET,
-            path: '/groups', queryParams: { fields: 'id,name' },
-          });
-          return { disabled: false, options: [{ label: '[Visible to everyone]', value: '' }, ...response.body.map((g) => ({ label: g.name, value: g.id }))] };
-        } catch (error) {
-          return dropdownError('Failed to load groups', error);
-        }
-      },
-    }),
+    visibleToGroup: groupDropdown,
   },
   async run(context) {
-    const {baseUrl,apiToken} = context.auth.props
     const body: Record<string, unknown> = { text: context.propsValue.text };
-    if (context.propsValue.visibleToGroup) {
-      body['visibility'] = { '$type': 'LimitedVisibility', permittedGroups: [{ id: context.propsValue.visibleToGroup }] };
+    const group = youtrackClient.optionalText(context.propsValue.visibleToGroup);
+    if (group !== undefined) {
+      body['visibility'] = { $type: 'LimitedVisibility', permittedGroups: [{ id: group }] };
     }
-    const response = await youtrackApiCall<Record<string, unknown>>({
-      baseUrl: baseUrl,
-      token: apiToken,
+    const response = youtrackClient.recordOf(await youtrackClient.request<unknown>({
+      auth: context.auth,
       method: HttpMethod.POST,
-      path: '/issues/' + context.propsValue.issue + '/comments',
-      queryParams: { fields: 'id,text,author(name,login),created' },
+      path: `/issues/${youtrackClient.segment({ value: context.propsValue.issue, label: 'Issue' })}/comments`,
+      query: { fields: 'id,text,author(name,login),created' },
       body,
-    });
+      operation: 'add the comment',
+    }));
+    const author = youtrackClient.recordOf(response['author']);
     return {
-      id: response.body['id'], text: response.body['text'],
-      author_name: (response.body['author'] as Record<string, unknown>)?.['name'] ?? null,
-      author_login: (response.body['author'] as Record<string, unknown>)?.['login'] ?? null,
-      created: response.body['created'],
+      id: response['id'],
+      text: response['text'],
+      author_name: author['name'] ?? null,
+      author_login: author['login'] ?? null,
+      created: response['created'],
     };
   },
 });

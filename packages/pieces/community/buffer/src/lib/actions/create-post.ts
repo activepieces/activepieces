@@ -1,43 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { bufferAuth } from '../common/auth';
 import { bufferClient } from '../common/client';
-import { bufferProps } from '../common/props';
-
-type CreatePostResponse = {
-  createPost: {
-    __typename?: string;
-    message?: string;
-    post?: {
-      id: string;
-      text?: string;
-      status?: string;
-      dueAt?: string;
-      sentAt?: string;
-      channelId?: string;
-    };
-  };
-};
-
-const CREATE_POST_MUTATION = `
-  mutation CreatePost($input: CreatePostInput!) {
-    createPost(input: $input) {
-      __typename
-      ... on PostActionSuccess {
-        post {
-          id
-          text
-          status
-          dueAt
-          sentAt
-          channelId
-        }
-      }
-      ... on MutationError {
-        message
-      }
-    }
-  }
-`;
+import { bufferProps, bufferFetch } from '../common/props';
+import { bufferQueries } from '../common/queries';
+import { bufferAiProps, YOUTUBE_CATEGORIES } from '../common/ai-props';
+import { createPostOutputSchema } from '../common/output-schemas';
 
 export const createPost = createAction({
   auth: bufferAuth,
@@ -45,11 +12,11 @@ export const createPost = createAction({
   classification: 'WRITE',
   displayName: 'Create Post',
   description:
-    'Create a post in Buffer and add it to the queue, share it next, share it now, or schedule it for a custom time.',
-  audience: 'both',
+    'Create a post in Buffer and add it to the queue, share it next, share it now, or schedule it for a custom time. Each run also loads your channel list (one extra Buffer API request, counted against your plan limit; Free: 600 a day).',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Creates a social media post in Buffer for one or more channels, where the share mode controls timing: add to the channel queue, share next (skip the queue), share now, or schedule for a custom time. Choose it to draft or publish content to connected social accounts. A custom-scheduled post requires the scheduled time; posting to multiple channels creates a separate post per channel. Not idempotent — each call creates new posts.',
+      'Creates one Buffer post per selected channel, with a share mode that controls timing. Each call creates new posts.',
     idempotent: false,
   },
   props: {
@@ -109,12 +76,29 @@ export const createPost = createAction({
     }),
     linkUrl: Property.ShortText({
       displayName: 'Link URL',
-      description: 'A link to attach to the post (used as a link preview).',
+      description:
+        'A link to share. On Facebook, LinkedIn, Threads, Bluesky and Substack it becomes a link preview card when no images are attached; otherwise it is added to the end of the text.',
       required: false,
     }),
+    youtubeTitle: Property.ShortText({
+      displayName: 'YouTube Title',
+      description: 'The video title. Required when a YouTube channel is selected; ignored for other channels.',
+      required: false,
+    }),
+    youtubeCategoryId: Property.StaticDropdown({
+      displayName: 'YouTube Category',
+      description: 'The video category. Required when a YouTube channel is selected; ignored for other channels.',
+      required: false,
+      options: {
+        disabled: false,
+        options: YOUTUBE_CATEGORIES,
+      },
+    }),
   },
+  outputSchema: createPostOutputSchema,
   async run(context) {
     const {
+      organizationId,
       channelIds,
       text,
       mode,
@@ -123,6 +107,8 @@ export const createPost = createAction({
       saveToDraft,
       imageUrls,
       linkUrl,
+      youtubeTitle,
+      youtubeCategoryId,
     } = context.propsValue;
 
     if (mode === 'customScheduled' && !dueAt) {
@@ -130,24 +116,39 @@ export const createPost = createAction({
         'Scheduled Time is required when Share Mode is "Schedule for Custom Time".',
       );
     }
-
-    const assets: Array<Record<string, unknown>> = [];
-    for (const url of imageUrls ?? []) {
-      assets.push({ image: { url: url as string } });
+    const images = bufferAiProps.cleanList(imageUrls);
+    const link = bufferAiProps.textOf(linkUrl);
+    const accessToken = context.auth.secret_text;
+    const channels = await bufferFetch.fetchChannels({ accessToken, organizationId });
+    const serviceById = new Map(channels.map((channel) => [channel.id, channel.service]));
+    const youtube = youtubeMetadata({ title: youtubeTitle, categoryId: youtubeCategoryId });
+    const youtubeChannelIds = (channelIds ?? []).filter((channelId) => serviceById.get(channelId) === 'youtube');
+    if (youtubeChannelIds.length > 0 && youtube === undefined) {
+      throw new Error(
+        `YouTube Title and YouTube Category are required when a YouTube channel is selected (${youtubeChannelIds.join(', ')}). Nothing was created.`,
+      );
     }
-    if (linkUrl) {
-      assets.push({ link: { url: linkUrl } });
-    }
 
-    const results: CreatePostResponse['createPost'][] = [];
+    const created: CreatePostResult[] = [];
     for (const channelId of channelIds ?? []) {
+      const service = serviceById.get(channelId);
+      const content = bufferAiProps.postContentFor({
+        service,
+        text,
+        images,
+        link,
+        metadata: service === 'youtube' ? youtube : undefined,
+      });
       const input: Record<string, unknown> = {
         channelId,
-        text,
+        text: content.text,
         mode,
         schedulingType,
-        assets,
+        assets: content.assets,
       };
+      if (content.metadata !== undefined) {
+        input['metadata'] = content.metadata;
+      }
       if (mode === 'customScheduled' && dueAt) {
         input['dueAt'] = dueAt;
       }
@@ -155,20 +156,66 @@ export const createPost = createAction({
         input['saveToDraft'] = true;
       }
 
-      const data = await bufferClient.graphql<CreatePostResponse>({
-        accessToken: context.auth.secret_text,
-        query: CREATE_POST_MUTATION,
-        variables: { input },
-      });
-
-      if (data.createPost.message) {
+      let result: CreatePostResult;
+      try {
+        const data = await bufferClient.graphql<{ createPost: CreatePostResult }>({
+          accessToken,
+          query: bufferQueries.CREATE_POST_LEGACY,
+          variables: { input },
+          operation: `create the post for channel ${channelId}`,
+        });
+        result = data.createPost;
+      } catch (error) {
+        throw new Error(partialFailure({ created, reason: error instanceof Error ? error.message : String(error) }));
+      }
+      if (result.message || !result.post) {
         throw new Error(
-          `Buffer rejected the post for channel ${channelId}: ${data.createPost.message}`,
+          partialFailure({
+            created,
+            reason: `Buffer rejected the post for channel ${channelId}: ${result.message ?? `unexpected result ${result.__typename ?? ''}`}`,
+          }),
         );
       }
-      results.push(data.createPost);
+      created.push(result);
     }
 
-    return { posts: results };
+    return { posts: created };
   },
 });
+
+function youtubeMetadata({ title, categoryId }: { title: unknown; categoryId: unknown }): Record<string, unknown> | undefined {
+  const cleanTitle = bufferAiProps.textOf(title);
+  const cleanCategoryId = bufferAiProps.textOf(categoryId);
+  if (cleanTitle === undefined || cleanCategoryId === undefined) {
+    return undefined;
+  }
+  return { youtube: { title: cleanTitle, categoryId: cleanCategoryId } };
+}
+
+function partialFailure({ created, reason }: { created: CreatePostResult[]; reason: string }): string {
+  if (created.length === 0) {
+    return reason;
+  }
+  const ids = created
+    .map((result) => `${result.post?.id ?? '?'} (channel ${result.post?.channelId ?? '?'})`)
+    .join(', ');
+  return `${withFullStop(reason)} These posts were already created before the failure, so running the step again would post them twice: ${ids}.`;
+}
+
+function withFullStop(reason: string): string {
+  const trimmed = reason.trimEnd();
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
+type CreatePostResult = {
+  __typename?: string;
+  message?: string;
+  post?: {
+    id: string;
+    text?: string;
+    status?: string;
+    dueAt?: string;
+    sentAt?: string;
+    channelId?: string;
+  };
+};

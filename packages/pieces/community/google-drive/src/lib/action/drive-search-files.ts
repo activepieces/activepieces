@@ -1,7 +1,26 @@
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { drive as googleDrive } from '@googleapis/drive';
+import { common } from '../common';
+import {
+  buildDriveSearchQuery,
+  DRIVE_SEARCH_FIELD_CHOICES,
+  DRIVE_SEARCH_OPERATOR_CHOICES,
+  DriveSearchFieldChoice,
+  DriveSearchOperatorChoice,
+} from '../common/search-query';
 import { driveSearchFilesOutputSchema } from '../output-schemas';
+
+const FIELD_LABELS: Record<DriveSearchFieldChoice, string> = {
+  name: 'File name',
+  fullText: 'Full text search',
+  mimeType: 'Content type',
+};
+
+const OPERATOR_LABELS: Record<DriveSearchOperatorChoice, string> = {
+  contains: 'Contains',
+  '=': 'Equals',
+};
 
 export const driveSearchFiles = createAction({
   auth: googleDriveAuth,
@@ -22,11 +41,10 @@ export const driveSearchFiles = createAction({
       description: 'The Query term or field of file/folder to search upon.',
       defaultValue: 'name',
       options: {
-        options: [
-          { label: 'File name', value: 'name' },
-          { label: 'Full text search', value: 'fullText' },
-          { label: 'Content type', value: 'mimeType' },
-        ],
+        options: DRIVE_SEARCH_FIELD_CHOICES.map((value): DropdownChoice => ({
+          label: FIELD_LABELS[value],
+          value,
+        })),
       },
       required: true,
     }),
@@ -35,10 +53,10 @@ export const driveSearchFiles = createAction({
       description: 'The operator to create criteria.',
       required: true,
       options: {
-        options: [
-          { label: 'Contains', value: 'contains' },
-          { label: 'Equals', value: '=' },
-        ],
+        options: DRIVE_SEARCH_OPERATOR_CHOICES.map((value): DropdownChoice => ({
+          label: OPERATOR_LABELS[value],
+          value,
+        })),
       },
       defaultValue: 'contains',
     }),
@@ -78,51 +96,31 @@ export const driveSearchFiles = createAction({
     const authClient = await createGoogleClient(context.auth);
 
     const drive = googleDrive({ version: 'v3', auth: authClient });
-    const operator = context.propsValue.operator ?? 'contains';
-    const queryTerm = context.propsValue.query_term ?? 'name';
-    let finalQuery = `${queryTerm} ${operator} '${context.propsValue.value}'`;
-    if (context.propsValue.parent_folder_id) {
-      finalQuery = `${finalQuery} and '${context.propsValue.parent_folder_id}' in parents`;
-    }
+    const finalQuery = buildDriveSearchQuery({
+      queryTerm: context.propsValue.query_term ?? 'name',
+      operator: context.propsValue.operator ?? 'contains',
+      query: context.propsValue.value,
+      parentFolder: context.propsValue.parent_folder_id,
+      type: context.propsValue.type ?? 'all',
+    });
 
-    const type = context.propsValue.type ?? 'all';
-    switch (type) {
-      case 'file':
-        finalQuery = `${finalQuery} and mimeType!='application/vnd.google-apps.folder'`;
-        break;
-      case 'folder':
-        finalQuery = `${finalQuery} and mimeType='application/vnd.google-apps.folder'`;
-        break;
-      default:
-        break;
-    }
-
-    const allFiles: any[] = [];
-    let pageToken: string | undefined = undefined;
-    do {
-      const listParams: Record<string, any> = {
+    const listing = await common.listFilesAcrossCorpora({
+      drive,
+      params: {
         q: finalQuery,
         fields:
-          'nextPageToken, files(id, name, mimeType, createdTime, modifiedTime)',
-        includeItemsFromAllDrives: context.propsValue.include_team_drives,
+          'nextPageToken, incompleteSearch, files(id, name, mimeType, createdTime, modifiedTime)',
+        includeItemsFromAllDrives: context.propsValue.include_team_drives ?? false,
         supportsAllDrives: true,
         corpora: context.propsValue.include_team_drives ? 'allDrives' : 'user',
         pageSize: 1000,
-      };
-      if (pageToken) listParams.pageToken = pageToken;
-      const response = await drive.files.list(listParams);
-      if (response.status !== 200) {
-        console.error(response);
-        throw new Error('Error searching for the file/folder');
-      }
-      allFiles.push(...(response.data.files ?? []));
-      pageToken = response.data.nextPageToken ?? undefined;
-    } while (pageToken);
-
-    if (allFiles.length > 0) {
-      return allFiles;
-    } else {
-      return [];
-    }
+      },
+      maxPages: undefined,
+      deadline: Date.now() + common.actionListingBudgetMs,
+      wording: 'action',
+    });
+    return listing.files;
   },
 });
+
+type DropdownChoice = { label: string; value: string };

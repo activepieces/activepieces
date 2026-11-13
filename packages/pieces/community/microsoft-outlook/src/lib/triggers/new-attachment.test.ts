@@ -266,7 +266,7 @@ describe('newAttachmentTrigger', () => {
 			buildContext({ sender: 'alex@alvys.com' }) as never,
 		)) as Record<string, unknown>[];
 
-		expect(result.map((item) => item['messageId'])).toEqual(['old1', 'old2', 'new2', 'new1']);
+		expect(result.map((item) => item['messageId'])).toEqual(['new1', 'new2', 'old2', 'old1']);
 		expect(state.requests.some((url) => url.startsWith('next:'))).toBe(false);
 	});
 

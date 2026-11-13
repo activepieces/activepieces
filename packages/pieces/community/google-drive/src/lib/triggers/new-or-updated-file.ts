@@ -1,11 +1,9 @@
 import {
   AppConnectionValueForAuthProperty,
-  FilesService,
   MarkdownVariant,
   Property,
   TriggerStrategy,
   createTrigger,
-  tryCatch,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -13,43 +11,11 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-import { GoogleDriveAuthValue, googleDriveAuth } from '../auth';
+import { googleDriveAuth } from '../auth';
 import { common } from '../common';
-import { downloadFileFromDrive } from '../common/get-file-content';
+import { drivePoll, PollEntry } from '../common/drive-poll';
+import { DriveFile, driveFileContent } from '../common/file-content';
 import { newOrUpdatedFileTriggerOutputSchema } from '../output-schemas';
-
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof googleDriveAuth>,
-  NewOrUpdatedFileProps
-> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const isTestMode = lastFetchEpochMS === 0;
-    const listed: unknown[] =
-      (await common.getFiles(
-        auth,
-        {
-          parent: propsValue.parentFolder,
-          changedSince: isTestMode ? undefined : lastFetchEpochMS,
-          mimeTypes: propsValue.file_types,
-          excludeShortcuts: true,
-          includeTeamDrive: propsValue.include_team_drives,
-          maxPages: isTestMode ? 1 : undefined,
-        },
-        'modifiedTime desc'
-      )) ?? [];
-
-    const now = Date.now();
-
-    return listed
-      .filter(isDriveFile)
-      .filter((file) => isDeliverable({ file, now }))
-      .map((file) => ({
-        epochMilliSeconds: changedAtEpoch(file),
-        data: { ...file, changeType: resolveChangeType({ file, lastFetchEpochMS }) },
-      }));
-  },
-};
 
 export const newOrUpdatedFile = createTrigger({
   auth: googleDriveAuth,
@@ -70,8 +36,7 @@ export const newOrUpdatedFile = createTrigger({
     }),
     parentFolder: common.parentFolderDropdown({
       displayName: 'Folder',
-      description:
-        'Leave empty to watch all of My Drive. Type to search by folder name.',
+      description: common.watchFolderHint,
     }),
     include_team_drives: common.properties.include_team_drives,
     file_types: Property.StaticMultiSelectDropdown({
@@ -117,28 +82,81 @@ export const newOrUpdatedFile = createTrigger({
   outputSchema: newOrUpdatedFileTriggerOutputSchema,
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, context);
+    await pollingHelper.onEnable(
+      buildPolling({ listingDeadline: Date.now() + common.listingBudgetMs }),
+      context
+    );
+    await drivePoll.onEnable({
+      store: context.store,
+      isRepublish: context.isRepublish,
+    });
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, context);
+    await pollingHelper.onDisable(
+      buildPolling({ listingDeadline: Date.now() + common.listingBudgetMs }),
+      context
+    );
   },
   run: async (context) => {
-    const deadline = Date.now() + CONTENT_BUDGET_MS;
-    const items = await pollingHelper.poll(polling, context);
+    const startedAt = Date.now();
+    const deadline = startedAt + driveFileContent.budgetMs;
+    const includeFileContent = context.propsValue.include_file_content;
+    const items = await drivePoll.poll({
+      store: context.store,
+      maxItems: drivePoll.maxItemsPerPoll({ includeFileContent }),
+      list: async ({ from, maxFiles, positions }) => {
+        const scope = {
+          parent: context.propsValue.parentFolder,
+          mimeTypes: context.propsValue.file_types,
+          excludeShortcuts: true,
+          includeTeamDrive: context.propsValue.include_team_drives,
+          deadline: startedAt + common.listingBudgetMs,
+          stopAt: { maxFiles },
+        };
+        return Promise.all([
+          common.getFiles(
+            context.auth,
+            {
+              ...scope,
+              createdTime: from,
+              createdTimeOp: '>=',
+              resume: positions[0],
+            },
+            'createdTime'
+          ),
+          common.getFiles(
+            context.auth,
+            {
+              ...scope,
+              modifiedTime: from,
+              modifiedTimeOp: '>=',
+              resume: positions[1],
+            },
+            'modifiedTime'
+          ),
+        ]);
+      },
+      describe: ({ file, from, firedIds }) =>
+        changeEntry({ file, from, firedIds }),
+    });
 
-    return await withFileContent({
+    return await driveFileContent.withFileContent({
       auth: context.auth,
       files: context.files,
       items,
-      includeFileContent: context.propsValue.include_file_content,
+      includeFileContent,
       deadline,
     });
   },
   test: async (context) => {
-    const deadline = Date.now() + CONTENT_BUDGET_MS;
-    const items = await pollingHelper.test(polling, context);
+    const startedAt = Date.now();
+    const deadline = startedAt + driveFileContent.budgetMs;
+    const items = await pollingHelper.test(
+      buildPolling({ listingDeadline: startedAt + common.listingBudgetMs }),
+      context
+    );
 
-    return await withFileContent({
+    return await driveFileContent.withFileContent({
       auth: context.auth,
       files: context.files,
       items,
@@ -160,6 +178,65 @@ export const newOrUpdatedFile = createTrigger({
   },
 });
 
+function buildPolling({
+  listingDeadline,
+}: {
+  listingDeadline: number;
+}): Polling<AppConnectionValueForAuthProperty<typeof googleDriveAuth>, NewOrUpdatedFileProps> {
+  return {
+    strategy: DedupeStrategy.TIMEBASED,
+    items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+      const isTestMode = lastFetchEpochMS === 0;
+      const listing = await common.getFiles(
+        auth,
+        {
+          parent: propsValue.parentFolder,
+          changedSince: isTestMode ? undefined : lastFetchEpochMS,
+          mimeTypes: propsValue.file_types,
+          excludeShortcuts: true,
+          includeTeamDrive: propsValue.include_team_drives,
+          maxPages: isTestMode ? common.testSampleMaxPages : undefined,
+          accept: isTestMode ? isSampleCandidate : undefined,
+          deadline: listingDeadline,
+        },
+        'modifiedTime desc'
+      );
+
+      const now = Date.now();
+
+      return listing.files
+        .filter(driveFileContent.isDriveFile)
+        .filter((file) => isDeliverable({ file, now }))
+        .map((file) => ({
+          epochMilliSeconds: changedAtEpoch(file),
+          data: { ...file, changeType: resolveChangeType({ file, lastFetchEpochMS }) },
+        }));
+    },
+  };
+}
+
+function changeEntry({
+  file,
+  from,
+  firedIds,
+}: {
+  file: unknown;
+  from: number;
+  firedIds: Set<string>;
+}): PollEntry | undefined {
+  if (!driveFileContent.isDriveFile(file)) {
+    return undefined;
+  }
+  const createdAt = epochOf(file.createdTime);
+  const changeType: DriveFileChangeType =
+    createdAt >= from && !firedIds.has(file.id) ? 'created' : 'updated';
+  return {
+    id: file.id,
+    epoch: changedAtEpoch(file),
+    data: { ...file, changeType },
+  };
+}
+
 function epochOf(timestamp: string | undefined): number {
   return typeof timestamp === 'string' && dayjs(timestamp).isValid()
     ? dayjs(timestamp).valueOf()
@@ -173,6 +250,13 @@ function changedAtEpoch(file: DriveFile): number {
 function isDeliverable({ file, now }: { file: DriveFile; now: number }): boolean {
   const changedAt = changedAtEpoch(file);
   return changedAt > 0 && changedAt <= now;
+}
+
+function isSampleCandidate(file: unknown): boolean {
+  return (
+    driveFileContent.isDriveFile(file) &&
+    isDeliverable({ file, now: Date.now() })
+  );
 }
 
 function resolveChangeType({
@@ -190,118 +274,7 @@ function resolveChangeType({
     : 'created';
 }
 
-function isDriveFile(value: unknown): value is DriveFile {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'id' in value &&
-    typeof value.id === 'string' &&
-    'name' in value &&
-    typeof value.name === 'string'
-  );
-}
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function jitterMs(): number {
-  return Math.floor(Math.random() * CONTENT_RETRY_JITTER_MS);
-}
-
-async function downloadContent({
-  auth,
-  files,
-  file,
-  deadline,
-}: {
-  auth: GoogleDriveAuthValue;
-  files: FilesService;
-  file: DriveFile;
-  deadline: number;
-}): Promise<DriveFileContent> {
-  let lastError = CONTENT_BUDGET_EXCEEDED;
-  for (let attempt = 1; attempt <= CONTENT_DOWNLOAD_ATTEMPTS; attempt++) {
-    if (Date.now() >= deadline) {
-      return { error: lastError };
-    }
-    const { data, error } = await tryCatch(() =>
-      downloadFileFromDrive(auth, files, file.id, file.name)
-    );
-    if (error === null && data !== null) {
-      return { content: data };
-    }
-    lastError = error === null ? 'Download returned no content' : error.message;
-    const backoff = attempt * CONTENT_RETRY_DELAY_MS + jitterMs();
-    if (attempt < CONTENT_DOWNLOAD_ATTEMPTS && Date.now() + backoff < deadline) {
-      await delay(backoff);
-    }
-  }
-  return { error: lastError };
-}
-
-async function withFileContent({
-  auth,
-  files,
-  items,
-  includeFileContent,
-  deadline,
-}: {
-  auth: GoogleDriveAuthValue;
-  files: FilesService;
-  items: unknown[];
-  includeFileContent: boolean | undefined;
-  deadline: number;
-}): Promise<unknown[]> {
-  if (!includeFileContent) {
-    return items;
-  }
-
-  const enriched: unknown[] = [];
-  for (let index = 0; index < items.length; index += FILE_CONTENT_CONCURRENCY) {
-    const batch = items.slice(index, index + FILE_CONTENT_CONCURRENCY);
-    const withContent = await Promise.all(
-      batch.map(async (item) => {
-        if (!isDriveFile(item)) {
-          return item;
-        }
-        const result = await downloadContent({
-          auth,
-          files,
-          file: item,
-          deadline,
-        });
-        return 'content' in result
-          ? { ...item, content: result.content }
-          : { ...item, contentError: result.error };
-      })
-    );
-    enriched.push(...withContent);
-  }
-  return enriched;
-}
-
-const FILE_CONTENT_CONCURRENCY = 5;
-const CONTENT_DOWNLOAD_ATTEMPTS = 3;
-const CONTENT_RETRY_DELAY_MS = 500;
-const CONTENT_RETRY_JITTER_MS = 250;
-const CONTENT_BUDGET_MS = 40_000;
-const CONTENT_BUDGET_EXCEEDED =
-  'Timed out before the file content could be downloaded';
-
 type DriveFileChangeType = 'created' | 'updated';
-
-type DriveFileContent = { content: string } | { error: string };
-
-type DriveFile = {
-  id: string;
-  name: string;
-  mimeType?: string;
-  webViewLink?: string;
-  kind?: string;
-  createdTime?: string;
-  modifiedTime?: string;
-};
 
 type NewOrUpdatedFileProps = {
   parentFolder?: string;

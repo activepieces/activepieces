@@ -1,0 +1,141 @@
+import { ErrorCode } from '@activepieces/core-utils'
+import { DefaultProjectRole, PlanName, SelfServeTrialInfo, SelfServeTrialState } from '@activepieces/shared'
+import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { distributedStore } from '../../../../src/app/database/redis-connections'
+import { autumnConsole, autumnUtils, SelfServeTrialStartOutcome, SelfServeTrialStartResult } from '../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils'
+import { platformPlanRepo } from '../../../../src/app/ee/platform/platform-plan/platform-plan.service'
+import { createMemberContext, createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+
+const STARTED = { startedAt: '2026-10-14T09:00:00.000Z', endsAt: '2099-10-21T09:00:00.000Z' }
+const ELIGIBLE: SelfServeTrialInfo = { state: SelfServeTrialState.ELIGIBLE, startedAt: null, endsAt: null, seatGraceEndsAt: null }
+const INELIGIBLE: SelfServeTrialInfo = { state: SelfServeTrialState.INELIGIBLE, startedAt: null, endsAt: null, seatGraceEndsAt: null }
+const ACTIVE: SelfServeTrialInfo = { state: SelfServeTrialState.ACTIVE, ...STARTED, seatGraceEndsAt: null }
+
+let app: FastifyInstance | null = null
+
+beforeAll(async () => {
+    app = await setupTestEnvironment()
+})
+
+afterAll(async () => {
+    await teardownTestEnvironment()
+})
+
+afterEach(() => {
+    vi.restoreAllMocks()
+})
+
+async function onPlan({ platformId, plan }: { platformId: string, plan: string }) {
+    await platformPlanRepo().update({ platformId }, { plan })
+    await distributedStore.put(`platform_plan:self-serve-trial:${platformId}`, { dates: null }, 60)
+}
+
+function stubBilling({ outcome }: { outcome: SelfServeTrialStartOutcome }) {
+    vi.spyOn(autumnUtils, 'ensureEnrolled').mockResolvedValue(undefined)
+    vi.spyOn(autumnConsole, 'getCreds').mockResolvedValue({ autumnCustomerId: 'cus_trial', autumnApiKey: 'am_sk_trial' })
+    vi.spyOn(autumnUtils, 'refreshEntitlements').mockResolvedValue(undefined)
+    const startTrial = vi.spyOn(autumnConsole, 'startSelfServeTrial').mockResolvedValue(outcome)
+    return { startTrial }
+}
+
+describe('Self-serve trial API', () => {
+    it('refuses platform members on both routes', async () => {
+        const ctx = await createTestContext(app!)
+        const member = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.EDITOR })
+        const { startTrial } = stubBilling({ outcome: { result: SelfServeTrialStartResult.STARTED, ...STARTED } })
+
+        const status = await member.get('/v1/platform-billing/info')
+        const start = await member.post('/v1/platform-billing/self-serve-trial')
+
+        expect(status.statusCode).toBe(StatusCodes.FORBIDDEN)
+        expect(start.statusCode).toBe(StatusCodes.FORBIDDEN)
+        expect(startTrial).not.toHaveBeenCalled()
+    })
+
+    it('reads a Free platform that never had a trial as eligible, without asking the console', async () => {
+        const ctx = await createTestContext(app!)
+        await onPlan({ platformId: ctx.platform.id, plan: PlanName.FREE })
+        const { startTrial } = stubBilling({ outcome: { result: SelfServeTrialStartResult.STARTED, ...STARTED } })
+
+        const response = await ctx.get('/v1/platform-billing/info')
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json().selfServeTrial).toEqual(ELIGIBLE)
+        expect(startTrial).not.toHaveBeenCalled()
+    })
+
+    it.each([PlanName.APPSUMO, PlanName.ENTERPRISE, PlanName.PLUS_CHAT])('offers no trial to a %s platform and never asks the console', async (plan) => {
+        const ctx = await createTestContext(app!)
+        await onPlan({ platformId: ctx.platform.id, plan })
+        const { startTrial } = stubBilling({ outcome: { result: SelfServeTrialStartResult.STARTED, ...STARTED } })
+
+        const status = await ctx.get('/v1/platform-billing/info')
+        const start = await ctx.post('/v1/platform-billing/self-serve-trial')
+
+        expect(status.json().selfServeTrial).toEqual(INELIGIBLE)
+        expect(start.json()).toEqual(INELIGIBLE)
+        expect(startTrial).not.toHaveBeenCalled()
+    })
+
+    it('starts the trial once, and a second start returns the running trial', async () => {
+        const ctx = await createTestContext(app!)
+        await onPlan({ platformId: ctx.platform.id, plan: PlanName.FREE })
+        const { startTrial } = stubBilling({ outcome: { result: SelfServeTrialStartResult.STARTED, ...STARTED } })
+
+        const first = await ctx.post('/v1/platform-billing/self-serve-trial')
+        const second = await ctx.post('/v1/platform-billing/self-serve-trial')
+        const status = await ctx.get('/v1/platform-billing/info')
+
+        expect(first.json()).toEqual(ACTIVE)
+        expect(second.json()).toEqual(ACTIVE)
+        expect(status.json().selfServeTrial).toEqual(ACTIVE)
+        expect(startTrial).toHaveBeenCalledTimes(1)
+        expect(startTrial).toHaveBeenCalledWith({ autumnCustomerId: 'cus_trial', autumnApiKey: 'am_sk_trial' })
+    })
+
+    it('keeps a started trial when the refresh after it fails', async () => {
+        const ctx = await createTestContext(app!)
+        await onPlan({ platformId: ctx.platform.id, plan: PlanName.TEAM })
+        const { startTrial } = stubBilling({ outcome: { result: SelfServeTrialStartResult.STARTED, ...STARTED } })
+        vi.spyOn(autumnUtils, 'refreshEntitlements').mockRejectedValue(new Error('autumn timeout'))
+
+        const start = await ctx.post('/v1/platform-billing/self-serve-trial')
+        const again = await ctx.post('/v1/platform-billing/self-serve-trial')
+
+        expect(start.json()).toEqual(ACTIVE)
+        expect(again.json()).toEqual(ACTIVE)
+        expect(startTrial).toHaveBeenCalledTimes(1)
+    })
+
+    it('refuses a start the console reports as used with 409, and asks the console again on the next start', async () => {
+        const ctx = await createTestContext(app!)
+        await onPlan({ platformId: ctx.platform.id, plan: PlanName.FREE })
+        const { startTrial } = stubBilling({ outcome: { result: SelfServeTrialStartResult.USED } })
+
+        const first = await ctx.post('/v1/platform-billing/self-serve-trial')
+        const status = await ctx.get('/v1/platform-billing/info')
+        const second = await ctx.post('/v1/platform-billing/self-serve-trial')
+
+        expect(first.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(first.json().code).toBe(ErrorCode.SELF_SERVE_TRIAL_ALREADY_USED)
+        expect(status.json().selfServeTrial).toEqual(ELIGIBLE)
+        expect(second.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(startTrial).toHaveBeenCalledTimes(2)
+    })
+
+    it('shows the running trial to every member on the platform, and nothing before it starts', async () => {
+        const ctx = await createTestContext(app!)
+        const member = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.EDITOR })
+        await onPlan({ platformId: ctx.platform.id, plan: PlanName.FREE })
+        stubBilling({ outcome: { result: SelfServeTrialStartResult.STARTED, ...STARTED } })
+
+        const before = await member.get(`/v1/platforms/${ctx.platform.id}`)
+        await ctx.post('/v1/platform-billing/self-serve-trial')
+        const after = await member.get(`/v1/platforms/${ctx.platform.id}`)
+
+        expect(before.json().selfServeTrial).toBeUndefined()
+        expect(after.json().selfServeTrial).toEqual(ACTIVE)
+    })
+})

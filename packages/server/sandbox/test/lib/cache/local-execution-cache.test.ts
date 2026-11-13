@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { mkdir, readdir, rm, stat, utimes } from 'node:fs/promises'
+import { readdir, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { ApLogger } from '@activepieces/server-utils'
@@ -21,8 +21,6 @@ vi.mock('../../../src/lib/cache/engine/engine-installer', () => ({
 
 // eslint-disable-next-line import/first
 import { cacheUtils } from '../../../src/lib/cache/cache-paths'
-// eslint-disable-next-line import/first
-import { codeCache } from '../../../src/lib/cache/flow/code/code-cache'
 // eslint-disable-next-line import/first
 import { localExecutionCache } from '../../../src/lib/cache/local-execution-cache'
 // eslint-disable-next-line import/first
@@ -110,25 +108,5 @@ describe('localExecutionCache.provision', () => {
         expect(lockFilesDuringBuild!.filter((name) => name.endsWith('.lock'))).toHaveLength(1)
         const lockFilesAfter = await readdir(locksPath)
         expect(lockFilesAfter.filter((name) => name.endsWith('.lock'))).toHaveLength(0)
-    })
-
-    it('refreshes the use time of the flow version deno cache along with the step dir', async () => {
-        const basePath = uniqueBasePath()
-        const artifact = buildArtifact()
-        const denoCacheDir = codeCache(cacheUtils(basePath).getGlobalCodeCachePath()).denoCacheDir(artifact.flowVersionId)
-        await mkdir(denoCacheDir, { recursive: true })
-        const stale = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
-        await utimes(denoCacheDir, stale, stale)
-        processCodeStepMock.mockResolvedValue('success')
-
-        await localExecutionCache(noopLog, basePath, getSettings).provision({
-            pieces: [],
-            codeSteps: [artifact],
-            internalApiUrl: 'http://127.0.0.1:3000',
-            engineToken: 'engine-token',
-        })
-
-        const { mtimeMs } = await stat(denoCacheDir)
-        expect(mtimeMs).toBeGreaterThan(Date.now() - 60_000)
     })
 })

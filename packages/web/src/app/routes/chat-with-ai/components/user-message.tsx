@@ -3,6 +3,7 @@ import { Paperclip } from 'lucide-react';
 import { motion } from 'motion/react';
 import { memo } from 'react';
 
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import {
   Message,
   MessageAction,
@@ -13,8 +14,6 @@ import { ChatUIMessage } from '@/features/chat/lib/chat-types';
 import { cn } from '@/lib/utils';
 
 import { getTextFromParts } from '../lib/message-parsers';
-
-import { CopyIconButton } from './copy-icon-button';
 
 export const UserMessage = memo(function UserMessage({
   message,
@@ -77,7 +76,13 @@ export const UserMessage = memo(function UserMessage({
           )}
         >
           <MessageAction tooltip={t('Copy')}>
-            <CopyIconButton textToCopy={content} className="h-6 w-6" />
+            <CopyButton
+              value={content}
+              variant="ghost"
+              size="icon-xs"
+              withoutTooltip
+              className="h-6 w-6"
+            />
           </MessageAction>
         </MessageActions>
       </div>

@@ -212,7 +212,7 @@ async function setupBaseApp(): Promise<FastifyInstance> {
     app.addContentTypeParser(
         'application/vnd.surveymonkey.response.v1+json',
         { parseAs: 'string' },
-        app.getDefaultJsonParser('ignore', 'ignore'),
+        app.getDefaultJsonParser('error', 'ignore'),
     )
 
     // Forward the generated request id (req_<apId>) into the header the evlog plugin reads.

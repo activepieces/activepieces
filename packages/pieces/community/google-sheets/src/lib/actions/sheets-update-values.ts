@@ -5,6 +5,7 @@ import {
 	Dimension,
 	googleSheetsAuth,
 	ValueInputOption,
+	googleSheetsCommon,
 } from '../common/common';
 import { sheetsUpdateValuesActionOutputSchema } from '../output-schemas';
 
@@ -82,7 +83,7 @@ export const sheetsUpdateValues = createAction({
 		const authClient = await createGoogleClient(auth);
 		const sheets = googleSheets({ version: 'v4', auth: authClient });
 
-		const a1Range = `${quoteSheetTitle(worksheet_title)}!${range}`;
+		const a1Range = googleSheetsCommon.sheetRange({ sheetName: worksheet_title, range });
 
 		const response = await sheets.spreadsheets.values.update({
 			spreadsheetId: spreadsheet_id,
@@ -102,7 +103,3 @@ export const sheetsUpdateValues = createAction({
 		};
 	},
 });
-
-function quoteSheetTitle(title: string): string {
-	return `'${title.replace(/'/g, "''")}'`;
-}

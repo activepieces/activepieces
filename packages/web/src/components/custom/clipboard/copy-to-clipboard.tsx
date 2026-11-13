@@ -40,7 +40,7 @@ const CopyToClipboardInput = ({
         })}
       >
         <CopyButton
-          textToCopy={textToCopy}
+          value={textToCopy}
           variant="ghost"
           {...adminControl(controlId)}
         />

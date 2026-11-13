@@ -1,17 +1,23 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { customFields, publicationId, subscriptionId } from '../common/props';
 import { beehiivAuth } from '../common/auth';
-import { beehiivApiCall } from '../common/client';
+import { apiKeyOf, beehiivClient, pathFor } from '../common/client';
+import { aiInput } from '../common/ai-props';
+import { beehiivOutputSchemas } from '../common/output-schemas';
 
 export const updateSubscriptionAction = createAction({
 	auth: beehiivAuth,
 	name: 'update_subscription',
 	classification: 'WRITE',
 	displayName: 'Update Subscription',
-	description: 'Update an existing subscription.',
-	audience: 'both',
-	aiMetadata: { description: 'Updates an existing beehiiv subscription identified by publication ID and subscription ID — change its tier, Stripe customer ID, custom fields, or unsubscribe it from the publication. Use to modify or unsubscribe a known subscriber. Idempotent: repeating with the same fields yields the same end state.', idempotent: true },
+	description: 'Update an existing subscription. Fields you leave empty are not changed.',
+	audience: 'human',
+	aiMetadata: {
+		description:
+			'Updates an existing beehiiv subscription by publication and subscription ID: tier, Stripe customer ID, custom fields, or unsubscribe. Fields left empty are not changed. Repeating the same update leaves the same end state.',
+		idempotent: true,
+	},
+	outputSchema: beehiivOutputSchemas.humanCreateOrUpdateSubscription,
 	props: {
 		publicationId: publicationId,
 		subscriptionId: subscriptionId(true),
@@ -33,53 +39,45 @@ export const updateSubscriptionAction = createAction({
 		}),
 		unsubscribe: Property.Checkbox({
 			displayName: 'Unsubscribe',
-			description: 'Whether to unsubscribe this subscription from the publication.',
+			description: 'Check to unsubscribe this subscription from the publication. Leaving it unchecked changes nothing.',
 			required: false,
 		}),
 		custom_fields: customFields,
 	},
 	async run(context) {
-		const { publicationId, subscriptionId, tier, stripe_customer_id, unsubscribe } =
-			context.propsValue;
+		const { publicationId, subscriptionId, tier, stripe_customer_id, unsubscribe } = context.propsValue;
 
-		const custom_fields = context.propsValue.custom_fields ?? {};
-
-		const body: Record<string, unknown> = {};
-
-		if (tier !== undefined) {
-			body['tier'] = tier;
-		}
-		if (stripe_customer_id !== undefined) {
-			body['stripe_customer_id'] = stripe_customer_id;
-		}
-		if (unsubscribe !== undefined) {
-			body['unsubscribe'] = unsubscribe;
-		}
-
-		const transformedCustomFields = Object.entries(custom_fields)
-			.filter(([_, value]) => {
+		const transformedCustomFields = Object.entries(context.propsValue.custom_fields ?? {})
+			.filter(([, value]) => {
 				if (Array.isArray(value)) {
 					return value.length > 0;
 				}
 				return value !== undefined && value !== null && value !== '';
 			})
-			.map(([key, value]) => ({
-				name: key,
-				value: value,
-			}));
+			.map(([name, value]) => ({ name, value }));
 
+		const body: Record<string, unknown> = {};
+		if (tier !== undefined && tier !== null && tier !== '') {
+			body['tier'] = tier;
+		}
+		if (stripe_customer_id !== undefined && stripe_customer_id !== null && stripe_customer_id !== '') {
+			body['stripe_customer_id'] = stripe_customer_id;
+		}
+		if (unsubscribe === true) {
+			body['unsubscribe'] = true;
+		}
 		if (transformedCustomFields.length > 0) {
 			body['custom_fields'] = transformedCustomFields;
 		}
 
-		console.log(JSON.stringify(body));
-		const response = await beehiivApiCall({
-			apiKey: context.auth.secret_text,
-			method: HttpMethod.PUT,
-			resourceUri: `/publications/${publicationId}/subscriptions/${subscriptionId}`,
+		const response = await beehiivClient.request({
+			apiKey: apiKeyOf(context.auth),
+			method: 'PUT',
+			path: pathFor(['publications', publicationId, 'subscriptions', aiInput.requireText({ value: subscriptionId, label: 'Subscription ID' })]),
+			operation: 'update subscription',
 			body,
 		});
 
-		return response;
+		return response.body;
 	},
 });

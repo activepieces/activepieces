@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
-import { createGoogleClient, Dimension, googleSheetsAuth } from '../common/common';
+import { createGoogleClient, Dimension, googleSheetsAuth, googleSheetsCommon } from '../common/common';
 import { sheetsGetValuesActionOutputSchema } from '../output-schemas';
 
 export const sheetsGetValues = createAction({
@@ -72,7 +72,7 @@ export const sheetsGetValues = createAction({
 		const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 		const a1Range =
-			range && range.trim().length > 0 ? `${worksheet_title}!${range}` : worksheet_title;
+			googleSheetsCommon.sheetRange({ sheetName: worksheet_title, range: range?.trim() });
 
 		const response = await sheets.spreadsheets.values.get({
 			spreadsheetId: spreadsheet_id,

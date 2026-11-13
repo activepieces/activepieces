@@ -1,124 +1,19 @@
 import {
-  AppConnectionValueForAuthProperty,
   createTrigger,
+  isNil,
   Property,
+  TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { googleCalendarCommon, googleCalendarAuth, getAccessToken } from '../common';
-import { GoogleCalendarEvent } from '../common/types';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { specificEvent } from '../common/specific-event';
+import { googleCalendarCommon, googleCalendarAuth } from '../common';
+import { rangeEvents } from '../common/range-events';
+import { rangeReminders } from '../common/range-reminders';
 import { eventOutputSchema } from '../output-schemas';
 
-interface GoogleCalendarEventList {
-  items: GoogleCalendarEvent[];
-}
-
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof googleCalendarAuth>,
-  {
-    calendar_id: string | undefined;
-    specific_event: boolean | undefined;
-    event_id: string | undefined;
-  }
-> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    if (lastFetchEpochMS === 0) {
-      return [];
-    }
-
-    const { calendar_id: calendarId, specific_event, event_id } = propsValue;
-
-    if (!calendarId) {
-      return [];
-    }
-
-    if (specific_event && !event_id) {
-      return [];
-    }
-
-    let events: GoogleCalendarEvent[] = [];
-
-    if (specific_event && event_id) {
-      const eventRequest: HttpRequest = {
-        method: HttpMethod.GET,
-        url: `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events/${event_id}`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: await getAccessToken(auth),
-        },
-      };
-
-      try {
-        const eventResponse = await httpClient.sendRequest<GoogleCalendarEvent>(
-          eventRequest
-        );
-        const event = eventResponse.body;
-
-        const endTimeString = event.end?.dateTime ?? event.end?.date;
-        if (endTimeString) {
-          const endTime = new Date(endTimeString).getTime();
-          if (endTime > lastFetchEpochMS) {
-            events = [event];
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching specific event:', error);
-        return [];
-      }
-    } else {
-      const request: HttpRequest = {
-        method: HttpMethod.GET,
-        url: `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: await getAccessToken(auth),
-        },
-        queryParams: {
-          singleEvents: 'true',
-          orderBy: 'startTime',
-          timeMin: new Date(lastFetchEpochMS).toISOString(),
-        },
-      };
-
-      const response = await httpClient.sendRequest<GoogleCalendarEventList>(
-        request
-      );
-      events = response.body.items;
-    }
-    const endedEvents: {
-      epochMilliSeconds: number;
-      data: GoogleCalendarEvent;
-    }[] = [];
-    const now = Date.now();
-
-    for (const event of events) {
-      const endTimeString = event.end?.dateTime ?? event.end?.date;
-      if (!endTimeString) continue;
-
-      const endTime = new Date(endTimeString).getTime();
-
-      if (endTime > lastFetchEpochMS && endTime <= now) {
-        endedEvents.push({
-          epochMilliSeconds: endTime,
-          data: event,
-        });
-      }
-    }
-
-    return endedEvents;
-  },
-};
+const STORE_KEY = 'event_ends_checkpoint';
+const LOG_PREFIX = '[google-calendar] event_ends';
+const SAMPLE_SIZE = 5;
+const SAMPLE_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000;
 
 export const eventEnds = createTrigger({
   auth: googleCalendarAuth,
@@ -127,7 +22,7 @@ export const eventEnds = createTrigger({
   displayName: 'Event Ends',
   description: 'Fires when an event ends.',
   aiMetadata: {
-    description: 'Fires once an event in the selected calendar reaches its end time, detected by polling. Each fired item is the event that just ended. Can watch all events in the calendar or be scoped to a single specific event.',
+    description: 'Fires once per event when an event in the selected calendar reaches its end time, detected by polling. Each fired item is the event that just ended. An end time missed by a late or failed check still fires at the next check (up to 7 days late), never before the event ends. All-day events end at midnight in the calendar\'s time zone. Cancelled events never fire. Can watch all events in the calendar or be scoped to a single specific event.',
   },
   propertyGroups: [
     {
@@ -139,7 +34,7 @@ export const eventEnds = createTrigger({
     },
   ],
   props: {
-    calendar_id: googleCalendarCommon.calendarDropdown('writer'),
+    calendar_id: googleCalendarCommon.calendarDropdown(),
     specific_event: Property.Checkbox({
       displayName: 'Target Specific Event',
       description: 'Watch one event instead of the whole calendar.',
@@ -180,18 +75,80 @@ export const eventEnds = createTrigger({
   },
 
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    if (context.propsValue.specific_event) {
+      specificEvent.require({ eventId: context.propsValue.event_id });
+    }
+    await rangeReminders.enable({
+      store: context.store,
+      storeKey: STORE_KEY,
+      watchKey: buildWatchKey({ propsValue: context.propsValue }),
+      isRepublish: context.isRepublish === true,
+      legacyResume: 'after-last-poll',
+    });
   },
 
-  async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+  async onDisable() {
+    return;
   },
 
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    const { calendar_id, specific_event, event_id } = context.propsValue;
+    if (specific_event) {
+      specificEvent.require({ eventId: event_id });
+    }
+    if (!calendar_id) {
+      return [];
+    }
+    return rangeReminders.poll({
+      auth: context.auth,
+      store: context.store,
+      storeKey: STORE_KEY,
+      watchKey: buildWatchKey({ propsValue: context.propsValue }),
+      calendarId: calendar_id,
+      eventId: specific_event && event_id ? event_id : undefined,
+      leadMs: 0,
+      anchor: 'end',
+      legacyResume: 'after-last-poll',
+      logPrefix: LOG_PREFIX,
+    });
   },
 
   async test(context) {
-    return await pollingHelper.test(polling, context);
+    const { calendar_id, specific_event, event_id } = context.propsValue;
+    if (!calendar_id) {
+      return [];
+    }
+    if (specific_event && event_id) {
+      const event = await rangeEvents.getEventOrNull({
+        auth: context.auth,
+        calendarId: calendar_id,
+        eventId: event_id,
+      });
+      return isNil(event) || event.status === 'cancelled' ? [] : [event];
+    }
+    const { recent } = await rangeEvents.listUpcomingOrRecent({
+      auth: context.auth,
+      calendarId: calendar_id,
+      nowMs: Date.now(),
+      lookbackMs: SAMPLE_LOOKBACK_MS,
+      limit: SAMPLE_SIZE,
+      anchor: 'end',
+    });
+    return recent;
   },
 });
+
+function buildWatchKey({
+  propsValue,
+}: {
+  propsValue: {
+    calendar_id?: string;
+    specific_event?: boolean;
+    event_id?: string;
+  };
+}): string {
+  return JSON.stringify([
+    propsValue.calendar_id ?? '',
+    propsValue.specific_event === true ? propsValue.event_id ?? '' : '',
+  ]);
+}

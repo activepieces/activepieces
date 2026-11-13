@@ -42,7 +42,7 @@ export function EmailPreview({
 
   const actions = (
     <>
-      <CopyButton textToCopy={content} variant="ghost" size="icon-sm" />
+      <CopyButton value={content} variant="ghost" size="icon-sm" />
       <DownloadButton
         fileName={fileName}
         textToDownload={content}
