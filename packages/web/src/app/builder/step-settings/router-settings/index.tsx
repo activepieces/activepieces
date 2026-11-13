@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  BranchExecutionType,
   FlowActionType,
   FlowOperationRequest,
   FlowOperationType,
@@ -180,6 +181,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
             errors={(formState.errors.settings?.branches as unknown[]) ?? []}
             readonly={readonly}
             step={step}
+            showFallbackBranch={true}
             branchNameChanged={(index, name) => {
               setValue(`settings.branches.${index}.branchName` as const, name, {
                 shouldValidate: true,
@@ -207,7 +209,12 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
               setSelectedBranchIndex(index + 1);
             }}
             setSelectedBranchIndex={(index) => {
-              setSelectedBranchIndex(index);
+              if (
+                step.settings.branches[index]?.branchType !==
+                BranchExecutionType.FALLBACK
+              ) {
+                setSelectedBranchIndex(index);
+              }
               if (step.children[index]) {
                 fitView(
                   flowCanvasUtils.createFocusStepInGraphParams(
