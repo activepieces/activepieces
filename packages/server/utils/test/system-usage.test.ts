@@ -150,7 +150,7 @@ describe('getContainerMemoryUsage', () => {
             '/sys/fs/cgroup/memory/memory.usage_in_bytes': '100000',
         })
 
-        mockMem.mockResolvedValue({ total: 8_000_000_000, used: 4_000_000_000 } as never)
+        mockMem.mockResolvedValue({ total: 8_000_000_000, available: 4_000_000_000 } as never)
 
         const result = await systemUsage.getContainerMemoryUsage()
         expect(result.totalRamInBytes).toBe(8_000_000_000)
@@ -163,7 +163,7 @@ describe('getContainerMemoryUsage', () => {
             '/sys/fs/cgroup/memory.current': '100000',
         })
 
-        mockMem.mockResolvedValue({ total: 16_000_000_000, used: 8_000_000_000 } as never)
+        mockMem.mockResolvedValue({ total: 16_000_000_000, available: 8_000_000_000 } as never)
 
         const result = await systemUsage.getContainerMemoryUsage()
         expect(result.totalRamInBytes).toBe(16_000_000_000)
@@ -193,7 +193,7 @@ describe('getContainerMemoryUsage', () => {
             availableMemory: () => 0,
         })
 
-        mockMem.mockResolvedValue({ total: 32_000_000_000, used: 16_000_000_000 } as never)
+        mockMem.mockResolvedValue({ total: 32_000_000_000, available: 16_000_000_000 } as never)
 
         const result = await systemUsage.getContainerMemoryUsage()
         expect(result.totalRamInBytes).toBe(32_000_000_000)
@@ -208,11 +208,27 @@ describe('getContainerMemoryUsage', () => {
             constrainedMemory: undefined,
         })
 
-        mockMem.mockResolvedValue({ total: 4_000_000_000, used: 1_000_000_000 } as never)
+        mockMem.mockResolvedValue({ total: 4_000_000_000, available: 3_000_000_000 } as never)
 
         const result = await systemUsage.getContainerMemoryUsage()
         expect(result.totalRamInBytes).toBe(4_000_000_000)
         expect(result.ramUsage).toBeCloseTo(25)
+
+        vi.unstubAllGlobals()
+    })
+
+    it('should exclude reclaimable page cache in the si.mem() fallback', async () => {
+        vi.stubGlobal('process', {
+            ...process,
+            constrainedMemory: undefined,
+        })
+
+        const GiB = 1024 ** 3
+        mockMem.mockResolvedValue({ total: 126 * GiB, used: 122 * GiB, available: 85 * GiB } as never)
+
+        const result = await systemUsage.getContainerMemoryUsage()
+        expect(result.totalRamInBytes).toBe(126 * GiB)
+        expect(result.ramUsage).toBeCloseTo((41 / 126) * 100)
 
         vi.unstubAllGlobals()
     })

@@ -141,7 +141,7 @@ export const systemUsage = {
         const mem = await si.mem()
         return {
             totalRamInBytes: mem.total,
-            ramUsage: (mem.used / mem.total) * 100,
+            ramUsage: ((mem.total - mem.available) / mem.total) * 100,
         }
     },
 
