@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { niftyAuth } from '../auth';
 import { niftyProps } from '../common';
 import { NIFTY_ACCESS_TYPE_OPTIONS, NIFTY_ARCHIVE_OPTIONS, NIFTY_TASK_VIEW_OPTIONS, niftyOps } from '../common/operations';
@@ -16,13 +16,19 @@ export const updateProject = createAction({
       'Updates a Nifty project picked from a dropdown (agents: use nifty_project_update): name, description, access level, default view, or archive/unarchive. Only filled fields change. Idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'project', display: 'section', label: 'Project to Update', icon: 'inbox', props: ['portfolio', 'project'] },
+    { key: 'changes', display: 'section', label: 'Changes', icon: 'text', props: ['changes_info', 'name', 'description'] },
+    { key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['access_type', 'default_tasks_view', 'archive'] },
+  ],
   props: {
     portfolio: niftyProps.portfolio({ required: false }),
     project: niftyProps.project({ required: true, includeArchived: true }),
+    changes_info: Property.MarkDown({ value: 'Fields left empty keep their current value.', variant: MarkdownVariant.INFO }),
     name: Property.ShortText({ displayName: 'New Name', required: false }),
     description: Property.LongText({
       displayName: 'New Description',
-      description: 'Nifty does not allow blanking a project description through the API.',
+      description: 'Nifty cannot clear a project description.',
       required: false,
     }),
     access_type: Property.StaticDropdown({
