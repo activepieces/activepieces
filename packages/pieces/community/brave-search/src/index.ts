@@ -8,7 +8,7 @@ export const braveSearch = createPiece({
   displayName: 'Brave Search',
   description: 'Privacy-preserving search engine',
   auth: braveSearchAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/brave-search.png',
   authors: ['ErisMorn', 'sanket-a11y'],
   actions: [

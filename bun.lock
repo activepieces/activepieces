@@ -1418,7 +1418,7 @@
     },
     "packages/pieces/community/brave-search": {
       "name": "@activepieces/piece-brave-search",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
