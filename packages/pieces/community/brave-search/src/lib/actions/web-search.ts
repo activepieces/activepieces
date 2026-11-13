@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { braveSearchAuth } from '../auth';
+import { braveSearchCommon } from '../common';
 
 export const braveWebSearchAction = createAction({
   auth: braveSearchAuth,
@@ -34,19 +35,20 @@ export const braveWebSearchAction = createAction({
     }),
   },
   async run(context) {
-    const query = context.propsValue.query;
-    const count = context.propsValue.count;
+    const { query, count } = context.propsValue;
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: 'https://api.search.brave.com/res/v1/web/search',
+      url: `${braveSearchCommon.baseUrl}/web/search`,
       headers: {
         'X-Subscription-Token': context.auth.secret_text,
         Accept: 'application/json',
       },
       queryParams: {
         q: query,
-        count: count as unknown as string,
+        ...(typeof count === 'number' && Number.isFinite(count)
+          ? { count: String(Math.min(20, Math.max(1, Math.round(count)))) }
+          : {}),
       },
     });
 
