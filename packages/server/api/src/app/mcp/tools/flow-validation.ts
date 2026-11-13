@@ -132,7 +132,7 @@ function extractReferencedStepNames({ value }: { value: string }): string[] {
     while ((match = regex.exec(value)) !== null) {
         const name = match[1]
         const isFunctionCall = match[2] !== undefined
-        if (name !== 'connections' && !isFunctionCall) {
+        if (!PROJECT_SCOPED_ROOTS.has(name) && !isFunctionCall) {
             names.add(name)
         }
     }
@@ -149,6 +149,7 @@ function comparableFunctionName(name: string): string {
     return name.toLowerCase().replace(/_/g, '')
 }
 
+const PROJECT_SCOPED_ROOTS = new Set(['connections', 'variables'])
 const WRAPPED_FORMULA = /ap-formula-v(\d+)::\{[\s\S]*?\}::ap-formula-v\1/g
 const BARE_FUNCTION_CALL = /\{\{\s*([A-Za-z_]\w*)\s*\(/g
 const FORMULA_FUNCTION_NAMES = new Set(AP_FUNCTIONS.map((fn) => comparableFunctionName(fn.name)))

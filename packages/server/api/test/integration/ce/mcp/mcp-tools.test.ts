@@ -614,6 +614,38 @@ describe('MCP Tools integration', () => {
         expect(text(result)).not.toContain('issue')
     })
 
+    it('19b. ap_validate_flow — a project variable reference in step input is not a missing step', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Variable Reference Flow')
+
+        await apUpdateTriggerTool({ mcp }, mockLog).execute({
+            flowId,
+            pieceName: '@activepieces/piece-test-email',
+            triggerName: 'new_email',
+        })
+
+        await apAddStepTool({ mcp }, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.CODE,
+            displayName: 'My Code',
+        })
+
+        await apUpdateStepTool({ mcp }, mockLog).execute({
+            flowId,
+            stepName: 'step_1',
+            sourceCode: 'export const code = async (inputs) => { return { ok: !!inputs.token }; };',
+            input: { token: '{{variables[\'API_TOKEN\']}}' },
+        })
+
+        const result = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
+
+        expect(text(result)).toContain('ready to publish')
+        expect(text(result)).not.toContain('does not exist')
+    })
+
     it('20. ap_validate_flow — flow with invalid step lists it', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
