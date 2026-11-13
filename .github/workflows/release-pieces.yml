@@ -78,6 +78,7 @@ jobs:
         run: npx turbo run build ${{ steps.changed.outputs.turbo_filter }} --force
 
       - name: publish pieces packages
+        id: publish
         if: steps.changed.outputs.has_changes == 'true'
         run: npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/pieces/publish-pieces-to-npm.ts
         env:
@@ -88,6 +89,7 @@ jobs:
         run: free -h
 
       - name: update pieces metadata
+        id: metadata
         if: steps.changed.outputs.has_changes == 'true'
         run: npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/pieces/update-pieces-metadata.ts packages/pieces/framework
         env:
@@ -97,8 +99,10 @@ jobs:
 
       - name: Notify Discord on failure
         if: failure()
+        env:
+          FAILED_STEP: ${{ steps.metadata.outcome == 'failure' && 'update pieces metadata. npm publish already succeeded, so Cloud is missing some of these versions until this run is re-run or the next Release Pieces run picks them up.' || steps.publish.outcome == 'failure' && 'publish pieces packages. Cloud metadata was not pushed for any piece in this run.' || 'setup, find changed pieces or build. Nothing was published.' }}
         run: |
           curl -H "Content-Type: application/json" \
             -X POST \
-            -d "{\"content\": \"🚨 **Release Pieces Workflow Failed** 🚨\\n\\n**Repository:** ${{ github.repository }}\\n**Branch:** ${{ github.ref_name }}\\n**Commit:** ${{ github.sha }}\\n**Action URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\\n\\nThe release pieces workflow has failed. Please check the logs for more details.\"}" \
+            -d "{\"content\": \"🚨 **Release Pieces Workflow Failed** 🚨\\n\\n**Repository:** ${{ github.repository }}\\n**Branch:** ${{ github.ref_name }}\\n**Commit:** ${{ github.sha }}\\n**Action URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\\n**Failed step:** ${FAILED_STEP}\"}" \
             ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}

@@ -1,5 +1,6 @@
 import { readPackageJson } from '../utils/files'
 import { findAllPiecesDirectoryInSource, NON_PIECES_PACKAGES, AP_CLOUD_API_BASE } from '../utils/piece-script-utils'
+import { cloudApiFetch } from '../utils/cloud-api-fetch'
 
 const main = async () => {
   const release = (await readPackageJson('.')).version
@@ -45,7 +46,7 @@ const main = async () => {
 async function fetchRegistry(release: string): Promise<Set<string>> {
   const url = `${AP_CLOUD_API_BASE}/pieces/registry?release=${release}&edition=ee`
   console.info(`[fetchRegistry] fetching ${url}`)
-  const response = await fetch(url)
+  const response = await cloudApiFetch.fetchWithRetry({ url })
   if (!response.ok) {
     throw new Error(`Failed to fetch registry: ${response.status} ${response.statusText}`)
   }
