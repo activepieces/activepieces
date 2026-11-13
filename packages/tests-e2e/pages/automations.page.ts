@@ -143,11 +143,11 @@ export class AutomationsPage extends BasePage {
     await expect(dialog).toBeHidden();
   }
 
-  private rowContainer(name: string) {
+  rowContainer(name: string) {
     return this.page.getByTestId('automations-row').filter({ has: this.row(name) });
   }
 
-  private async openRowMenu(name: string): Promise<void> {
+  protected async openRowMenu(name: string): Promise<void> {
     await this.rowContainer(name).getByRole('button', { name: 'Actions' }).click();
   }
 
