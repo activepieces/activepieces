@@ -124,6 +124,13 @@ describe('field values', () => {
   });
 });
 
+describe('field values that arrive as a JSON string', () => {
+  it('reads the list from the string, as the dynamic-value toggle sends it', () => {
+    const fields = fillOperation.fieldsFromList('[{"name":"Full Name","value":"Jane"},{"name":"Agree","value":true}]');
+    expect(fillOperation.toFieldData(fields)).toEqual({ 'Full Name': { value: 'Jane' }, Agree: { value: 'true' } });
+  });
+});
+
 describe('checks before sending', () => {
   it('stops when there are no field values', () => {
     expect(() => fillOperation.toFieldData(fillOperation.fieldsFromList([]))).toThrow(/at least one field value/);

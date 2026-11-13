@@ -306,6 +306,30 @@ describe('Segment Document (human)', () => {
     expect(output).toMatchObject({ completed: true, status: 'complete', request_id: 'req_seg', segment_count: 2, missing_sections: ['Letter'], unassigned_pages: [1, 2, 4] });
   });
 
+  for (const sections of ['["Invoice","Letter"]', '[{"name":"Invoice"},{"name":"Letter"}]']) {
+    it(`reads sections given as the JSON string ${sections} as named sections`, async () => {
+      const spy = mockJob(customResult);
+      const context = createMockActionContext<typeof segmentDocumentAction.props>({
+        propsValue: {
+          source: 'url',
+          file: undefined,
+          file_url: 'https://example.com/batch.pdf',
+          split_method: 'sections',
+          sections: [],
+          instructions: undefined,
+          detail_level: undefined,
+          mode: undefined,
+          page_range: undefined,
+          max_pages: undefined,
+          skip_cache: false,
+        },
+      });
+      Reflect.set(context.propsValue, 'sections', sections);
+      await segmentDocumentAction.run({ ...context, auth: authFor('key_1') });
+      expect(sentForm(spy).get('segmentation_schema')).toBe('{"segmentation_strategy":"custom","segments":[{"name":"Invoice"},{"name":"Letter"}]}');
+    });
+  }
+
   it('throws with the request ID when Datalab is still working after the wait', async () => {
     vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce(submitted).mockResolvedValue(processing);
     await expect(segmentOperation.run(runParams({ audience: 'human' }))).rejects.toThrow(
@@ -366,6 +390,27 @@ describe('Segment Document (AI)', () => {
     expect(form.get('mode')).toBe('accurate');
   });
 
+  for (const sections of ['["Invoice","Letter"]', '[{"name":"Invoice"},{"name":"Letter"}]']) {
+    it(`reads sections given as the JSON string ${sections} as named sections`, async () => {
+      const spy = mockJob(customResult);
+      const context = createMockActionContext<typeof aiSegmentDocumentAction.props>({
+        propsValue: {
+          file_url: 'https://example.com/batch.pdf',
+          sections: [],
+          instructions: undefined,
+          detail_level: undefined,
+          mode: undefined,
+          page_range: undefined,
+          max_pages: undefined,
+          skip_cache: false,
+        },
+      });
+      Reflect.set(context.propsValue, 'sections', sections);
+      await aiSegmentDocumentAction.run({ ...context, auth: authFor('key_2') });
+      expect(sentForm(spy).get('segmentation_schema')).toBe('{"segmentation_strategy":"custom","segments":[{"name":"Invoice"},{"name":"Letter"}]}');
+    });
+  }
+
   it('returns completed false with the request ID when Datalab is still working', async () => {
     vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce(submitted).mockResolvedValue(processing);
     const output = await segmentOperation.run(runParams({ audience: 'ai' }));
@@ -388,17 +433,19 @@ describe('shape', () => {
       method: 'document_boundary',
       missing_sections: [],
       unassigned_pages: [],
+      markdown: null,
     });
   });
 
-  it('shapes the named-sections result with missing sections and unassigned pages, dropping the parsed document', () => {
+  it('shapes the named-sections result with missing sections, unassigned pages and the Markdown, dropping the JSON and the echoed schema', () => {
     const output = segmentOperation.shape({ result: customResult });
     expect(output.segments.map((segment) => segment.name)).toEqual(['Invoice', 'Contract']);
     expect(output.missing_sections).toEqual(['Letter']);
     expect(output.unassigned_pages).toEqual([1, 2, 4]);
     expect(output.total_pages).toBe(5);
     expect(output.method).toBe('find');
-    expect(output).not.toHaveProperty('markdown');
+    expect(output.markdown).toBe('# Invoice\n\nINV-2026-0042 ...');
+    expect(output).not.toHaveProperty('json');
     expect(output).not.toHaveProperty('segmentation_schema');
     expect(output).not.toHaveProperty('completed');
     expect(output).not.toHaveProperty('request_id');
@@ -420,6 +467,7 @@ describe('shape', () => {
     });
     expect(output.segments[1]).toMatchObject({ segment_type: 'business_letter', start_block_page: 2, end_block_index: 5 });
     expect(output.method).toBe('block_boundary');
+    expect(output.markdown).toBe('# Invoice ...');
   });
 
   it('gives every segment the same keys in every result shape', () => {
@@ -438,6 +486,7 @@ describe('shape', () => {
       method: null,
       missing_sections: [],
       unassigned_pages: [],
+      markdown: null,
     });
   });
 });
@@ -454,7 +503,7 @@ describe('outputSchema', () => {
   it('starts with the envelope and describes every segment key', () => {
     const keys = segmentOperation.outputSchema.fields.map((field) => field.key);
     expect(keys.slice(0, 4)).toEqual(['completed', 'status', 'request_id', 'message']);
-    expect(keys.slice(4)).toEqual(['segments', 'segment_count', 'total_pages', 'method', 'missing_sections', 'unassigned_pages']);
+    expect(keys.slice(4)).toEqual(['segments', 'segment_count', 'total_pages', 'method', 'missing_sections', 'unassigned_pages', 'markdown']);
     const segments = segmentOperation.outputSchema.fields.find((field) => field.key === 'segments');
     expect(segments?.listItems?.map((field) => field.key).sort()).toEqual(SEGMENT_KEYS);
   });

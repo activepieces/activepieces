@@ -122,6 +122,13 @@ describe('guards', () => {
     expect(datalabGuards.parseJsonText({ a: 1 })).toEqual({ a: 1 });
   });
 
+  it('reads a list that arrives as a JSON string, as an Array prop does under the dynamic-value toggle', () => {
+    expect(datalabGuards.list('[{"name":"Invoice"},"Letter"]')).toEqual([{ name: 'Invoice' }, 'Letter']);
+    expect(datalabGuards.list('{"name":"Invoice"}')).toEqual([]);
+    expect(datalabGuards.list('not json')).toEqual([]);
+    expect(datalabGuards.list(undefined)).toEqual([]);
+  });
+
   it('treats blank strings as missing and arrays as not records', () => {
     expect(datalabGuards.text('  ')).toBeUndefined();
     expect(datalabGuards.text('x')).toBe('x');

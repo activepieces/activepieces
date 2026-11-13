@@ -36,7 +36,7 @@ const outputSchema: OutputSchema = {
       label: 'Field Checks',
       dynamicKey: true,
       description:
-        'Per-field checks, keyed by the same field paths. Balanced and Accurate give extraction_status, reasoning and verification for each field. score (1 to 5) is present only when Datalab had already scored the field.',
+        'Per-field checks, keyed by the same field paths. Balanced and Accurate give extraction_status, reasoning and verification for each field. score (1 to 5) and score_reasoning are present only when Datalab had already scored the field.',
       children: [
         { key: 'extraction_status', label: 'Extraction Status', description: 'EXTRACTED, or NOT_RESOLVABLE when the document does not hold a value.' },
         { key: 'reasoning', label: 'Reasoning' },
@@ -49,6 +49,7 @@ const outputSchema: OutputSchema = {
           ],
         },
         { key: 'score', label: 'Score', format: 'number' },
+        { key: 'score_reasoning', label: 'Score Reasoning' },
       ],
     },
     {
@@ -355,7 +356,7 @@ function formFields(input: ExtractInput): Record<string, DatalabFormValue> {
 async function run({ apiKey, audience, input, timing }: ExtractRunParams): Promise<DatalabActionOutput<ExtractOutput>> {
   const body = datalabSource.newForm({ source: input.source, fields: formFields(input) });
   const outcome = await datalabClient.runJob({ apiKey, operation: 'extract', body, timing });
-  return datalabClient.finish({ outcome, operation: 'extract', audience, shape: (result) => shape({ result }) });
+  return datalabClient.finish({ outcome, operation: 'extract', audience, shape: (result) => shape({ result, options: { schema: input.schema } }) });
 }
 
 function hasOutput(result: Record<string, unknown>): boolean {
@@ -363,14 +364,16 @@ function hasOutput(result: Record<string, unknown>): boolean {
   return datalabGuards.isRecord(extracted) || datalabGuards.text(extracted) !== undefined;
 }
 
-async function shape({ result }: ExtractShapeParams): Promise<ExtractOutput> {
-  const { data, citations, details } = split(readExtraction(result['extraction_schema_json']));
+async function shape({ result, options }: ExtractShapeParams): Promise<ExtractOutput> {
+  const extracted = readExtraction(result['extraction_schema_json']);
+  const extractionMode = datalabGuards.text(result['extraction_mode']) ?? null;
+  const { data, citations, details } = extractionMode === 'turbo' ? { data: extracted, citations: {}, details: {} } : split({ extracted, schema: options?.schema });
   return {
     data,
     citations,
     details,
     score_average: datalabGuards.finiteNumber(result['extraction_score_average']) ?? null,
-    extraction_mode: datalabGuards.text(result['extraction_mode']) ?? null,
+    extraction_mode: extractionMode,
     page_count: datalabGuards.finiteNumber(result['page_count']) ?? null,
   };
 }
@@ -389,26 +392,28 @@ function readExtraction(value: unknown): unknown {
   }
 }
 
-function split(extracted: unknown): ExtractSplit {
+function split({ extracted, schema }: { extracted: unknown; schema?: Record<string, unknown> }): ExtractSplit {
   const citations = new Map<string, unknown>();
   const details = new Map<string, Record<string, unknown>>();
-  const data = walk({ value: extracted, path: '', citations, details });
+  const data = walk({ value: extracted, schema, path: '', citations, details });
   return { data, citations: Object.fromEntries(citations), details: Object.fromEntries(details) };
 }
 
-function walk({ value, path, citations, details }: WalkParams): unknown {
+function walk({ value, schema, path, citations, details }: WalkParams): unknown {
   if (Array.isArray(value)) {
-    return value.map((item, index) => walk({ value: item, path: `${path}[${index}]`, citations, details }));
+    const itemSchema = datalabGuards.record(schema?.['items']);
+    return value.map((item, index) => walk({ value: item, schema: itemSchema, path: `${path}[${index}]`, citations, details }));
   }
   if (!datalabGuards.isRecord(value)) {
     return value;
   }
-  const names = new Set(Object.keys(value));
+  const declared = datalabGuards.record(schema?.['properties']);
   const kept: Array<[string, unknown]> = [];
   for (const [key, child] of Object.entries(value)) {
-    const helper = helperOf({ key, names });
+    const helper = helperOf({ key, siblings: value, declared });
     if (helper === undefined) {
-      kept.push([key, walk({ value: child, path: joinPath({ path, key }), citations, details })]);
+      const childSchema = declared !== undefined && Object.hasOwn(declared, key) ? datalabGuards.record(declared[key]) : undefined;
+      kept.push([key, walk({ value: child, schema: childSchema, path: joinPath({ path, key }), citations, details })]);
       continue;
     }
     const fieldPath = joinPath({ path, key: helper.base });
@@ -428,19 +433,47 @@ function detailOf({ kind, value }: { kind: HelperKind; value: unknown }): Record
   if (kind === 'meta') {
     return datalabGuards.record(value);
   }
+  const scored = datalabGuards.record(value);
+  if (scored !== undefined) {
+    return { score: scored['score'] ?? null, score_reasoning: scored['reasoning'] ?? null };
+  }
   return value === null || value === undefined ? undefined : { score: value };
 }
 
-function helperOf({ key, names }: { key: string; names: Set<string> }): { base: string; kind: HelperKind } | undefined {
+function helperOf({ key, siblings, declared }: { key: string; siblings: Record<string, unknown>; declared: Record<string, unknown> | undefined }): { base: string; kind: HelperKind } | undefined {
+  if (declared !== undefined && Object.hasOwn(declared, key)) {
+    return undefined;
+  }
+  if (hasOwnHelpers({ key, siblings })) {
+    return undefined;
+  }
   for (const { suffix, kind } of HELPER_SUFFIXES) {
     if (key.length > suffix.length && key.endsWith(suffix)) {
       const base = key.slice(0, -suffix.length);
-      if (names.has(base)) {
+      if (Object.hasOwn(siblings, base) && fitsHelper({ kind, value: siblings[key] })) {
         return { base, kind };
       }
     }
   }
   return undefined;
+}
+
+function hasOwnHelpers({ key, siblings }: { key: string; siblings: Record<string, unknown> }): boolean {
+  return Array.isArray(siblings[`${key}_citations`]) || datalabGuards.isRecord(siblings[`${key}_meta`]);
+}
+
+function fitsHelper({ kind, value }: { kind: HelperKind; value: unknown }): boolean {
+  if (kind === 'citations') {
+    return Array.isArray(value);
+  }
+  if (kind === 'meta') {
+    return datalabGuards.isRecord(value);
+  }
+  if (value === null || datalabGuards.finiteNumber(value) !== undefined) {
+    return true;
+  }
+  const scored = datalabGuards.record(value);
+  return scored !== undefined && datalabGuards.finiteNumber(scored['score']) !== undefined;
 }
 
 function joinPath({ path, key }: { path: string; key: string }): string {
@@ -500,6 +533,11 @@ export type ExtractOutput = ExtractSplit & {
 export type ExtractShapeParams = {
   result: Record<string, unknown>;
   files?: FilesService;
+  options?: ExtractShapeOptions;
+};
+
+export type ExtractShapeOptions = {
+  schema?: Record<string, unknown>;
 };
 
 export type ExtractRunParams = {
@@ -535,6 +573,7 @@ type HelperKind = 'citations' | 'meta' | 'score';
 
 type WalkParams = {
   value: unknown;
+  schema: Record<string, unknown> | undefined;
   path: string;
   citations: Map<string, unknown>;
   details: Map<string, Record<string, unknown>>;

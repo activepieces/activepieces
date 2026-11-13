@@ -29,7 +29,7 @@ const EXTRA_LABELS: Record<ConvertExtra, string> = {
   extract_bookmarks: 'Extract Bookmarks',
 };
 
-const SIZE_NOTE = 'JSON and Chunks get large on long documents (about 6 KB a page for JSON, and a step output is limited to 5 MB), so turn on Also Save as File or set a Page Range there.';
+const SIZE_NOTE = 'JSON and Chunks get large on long documents (about 6 KB a page for JSON, and a step output is limited to 5 MB), so set a Page Range for long documents. A result over 4 MB is saved as a file instead of being returned.';
 const FILE_LIMIT_NOTE = 'A saved file is limited to 10 MB on Activepieces Cloud.';
 
 function humanProps() {
@@ -113,7 +113,7 @@ function humanProps() {
     skip_cache: datalabProps.skipCache(),
     save_as_file: Property.Checkbox({
       displayName: 'Also Save as File',
-      description: `Turn on to also save the result as a file (.md, .html or .json) that later steps can use. Use it for long documents. When the result is over 4 MB it is returned only as the file. ${FILE_LIMIT_NOTE}`,
+      description: `Turn on to also save the result as a file (.md, .html or .json) that later steps can use. A result over 4 MB is always saved as a file and returned only as the file, even when this is off. ${FILE_LIMIT_NOTE}`,
       required: false,
       defaultValue: false,
       advanced: true,
@@ -191,7 +191,7 @@ function aiProps() {
     }),
     save_as_file: Property.Checkbox({
       displayName: 'Also Save as File',
-      description: 'true also saves the result as a .md, .html or .json file and returns its link in file. Default false. Use it for long documents; a result over 4 MB is returned only as the file. A saved file is limited to 10 MB on Activepieces Cloud.',
+      description: 'true also saves the result as a .md, .html or .json file and returns its link in file. Default false. A result over 4 MB is always saved as a file and returned only in file, even when this is false. A saved file is limited to 10 MB on Activepieces Cloud.',
       required: false,
     }),
   };
@@ -262,18 +262,22 @@ async function shape({ result, files, options }: { result: Record<string, unknow
     file_name: null,
     size: null,
   };
-  if (options?.saveAsFile !== true || content === null) {
+  if (content === null) {
     return output;
   }
   const text = typeof content === 'string' ? content : JSON.stringify(content);
+  const tooLargeToReturn = Buffer.byteLength(text, 'utf8') > INLINE_CONTENT_LIMIT_BYTES;
+  if (options?.saveAsFile !== true && !tooLargeToReturn) {
+    return output;
+  }
   const file = await datalabFiles.saveText({
     files,
     text,
-    fileName: datalabFiles.withExtension({ fileName: options.fileName, extension: FILE_EXTENSIONS[outputFormat], fallback: FALLBACK_FILE_NAME }),
+    fileName: datalabFiles.withExtension({ fileName: options?.fileName, extension: FILE_EXTENSIONS[outputFormat], fallback: FALLBACK_FILE_NAME }),
   });
   return {
     ...output,
-    content: Buffer.byteLength(text, 'utf8') > INLINE_CONTENT_LIMIT_BYTES ? null : content,
+    content: tooLargeToReturn ? null : content,
     ...file,
   };
 }
@@ -412,7 +416,7 @@ const outputSchema: OutputSchema = {
     {
       key: 'content',
       label: 'Content',
-      description: 'The converted document: text for Markdown and HTML, an object for JSON and Chunks. Empty when Also Save as File is on and the result is over 4 MB; use File then.',
+      description: 'The converted document: text for Markdown and HTML, an object for JSON and Chunks. Empty when the result is over 4 MB: it is then saved as a file, so use File.',
     },
     { key: 'page_count', label: 'Page Count', format: 'number' },
     { key: 'parse_quality_score', label: 'Parse Quality Score', format: 'number', description: 'Datalab quality score from 0 to 5. Often empty in Fast mode.' },
@@ -425,7 +429,7 @@ const outputSchema: OutputSchema = {
       description: 'Pictures saved from the document when Include Images is on. The Markdown and HTML refer to them by file name.',
       listItems: savedFileFields,
     },
-    { key: 'file', label: 'File', format: 'url', description: 'The result saved as a file, only when Also Save as File is on.' },
+    { key: 'file', label: 'File', format: 'url', description: 'The result saved as a file, when Also Save as File is on or the result is over 4 MB.' },
     { key: 'file_name', label: 'File Name' },
     { key: 'size', label: 'File Size', format: 'filesize' },
   ],

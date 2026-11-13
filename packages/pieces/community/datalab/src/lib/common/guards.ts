@@ -11,7 +11,14 @@ function finiteNumber(value: unknown): number | undefined {
 }
 
 function list(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
+  if (Array.isArray(value)) {
+    return value;
+  }
+  if (typeof value !== 'string') {
+    return [];
+  }
+  const parsed = parseJsonText(value);
+  return Array.isArray(parsed) ? parsed : [];
 }
 
 function record(value: unknown): Record<string, unknown> | undefined {

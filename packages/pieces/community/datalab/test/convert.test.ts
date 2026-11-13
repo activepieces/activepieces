@@ -372,6 +372,25 @@ describe('shape', () => {
     expect(output.size).toBe(4_000_001);
   });
 
+  it('saves a result over 4 MB as a file even when Also Save as File is off, as Get Result calls it', async () => {
+    const files = fakeFiles();
+    const big = 'a'.repeat(4_000_001);
+    const output = await convertOperation.shape({ result: { ...markdownResult, markdown: big }, files });
+    expect(output.content).toBeNull();
+    expect(output.file).toBeTruthy();
+    expect(output.file_name).toBe('converted-document.md');
+    expect(output.size).toBe(4_000_001);
+    expect(files.written.length).toBe(1);
+  });
+
+  it('returns a result under 4 MB inline and saves no file when Also Save as File is off', async () => {
+    const files = fakeFiles();
+    const output = await convertOperation.shape({ result: markdownResult, files, options: { outputFormat: 'markdown', saveAsFile: false } });
+    expect(output.content).toBe(markdownResult.markdown);
+    expect(output.file).toBeNull();
+    expect(files.written.length).toBe(0);
+  });
+
   it('names the saved file after the URL when the link has a file name', async () => {
     const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce(submitted).mockResolvedValueOnce(ok(markdownResult));
     const context = humanContext({ file_url: 'https://example.com/files/q3-report.pdf?sig=abc', save_as_file: true });

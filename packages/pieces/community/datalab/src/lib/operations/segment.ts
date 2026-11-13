@@ -46,6 +46,7 @@ const outputSchema: OutputSchema = {
     { key: 'method', label: 'Method', description: 'How Datalab split the document, for example document_boundary, find or block_boundary.' },
     { key: 'missing_sections', label: 'Missing Sections', description: 'Named sections that Datalab could not find in the document. Empty with automatic detection.' },
     { key: 'unassigned_pages', label: 'Unassigned Pages', description: 'Pages, counted from 0, that belong to none of the named sections.' },
+    { key: 'markdown', label: 'Markdown', description: 'The whole document as Markdown. Only set when Detail Level is Pages with content or Block level.' },
   ],
 };
 
@@ -83,7 +84,7 @@ function humanProps() {
     detail_level: Property.StaticDropdown<SegmentDetailLevel, false>({
       displayName: 'Detail Level',
       description:
-        'Pages only returns the pages of each part and is the cheapest level; it works with Detect Documents only. Pages with content and Block level also convert the document, so they cost more. Block level can split in the middle of a page and returns where each part starts and ends. Leave empty for Pages only with Detect Documents and Pages with content with Named Sections. Pages are counted from 0.',
+        'Pages only returns the page numbers of each part and is the cheapest level; it works with Detect Documents only. Pages with content and Block level also return the whole document as Markdown, and cost more because Datalab converts the document. Block level can also split in the middle of a page and returns where each part starts and ends. Leave empty for Pages only with Detect Documents and Pages with content with Named Sections. Pages are counted from 0.',
       required: false,
       advanced: true,
       options: { options: DETAIL_LEVEL_OPTIONS },
@@ -123,7 +124,7 @@ function aiProps() {
     detail_level: Property.StaticDropdown<SegmentDetailLevel, false>({
       displayName: 'Detail Level',
       description:
-        'pages returns only the pages of each part and is the cheapest; it works only when sections is empty. pages_with_content and blocks also convert the document and cost more; blocks can split mid-page and returns start and end block positions. Omit for pages when sections is empty and pages_with_content when it has entries. Pages are counted from 0.',
+        'pages returns only the page numbers of each part and is the cheapest; it works only when sections is empty. pages_with_content and blocks also return the whole document as markdown, and cost more because Datalab converts the document; blocks can also split mid-page and returns start and end block positions. Omit for pages when sections is empty and pages_with_content when it has entries. Pages are counted from 0.',
       required: false,
       options: { options: DETAIL_LEVEL_OPTIONS },
     }),
@@ -267,6 +268,7 @@ function shape({ result }: { result: Record<string, unknown>; files?: FilesServi
       .map((entry) => (typeof entry === 'string' ? datalabGuards.text(entry) : datalabGuards.text(datalabGuards.record(entry)?.['name'])))
       .filter((entry): entry is string => entry !== undefined),
     unassigned_pages: datalabGuards.numberList(metadata?.['unassigned_pages']),
+    markdown: datalabGuards.text(result['markdown']) ?? null,
   };
 }
 
@@ -341,6 +343,7 @@ export type SegmentOutput = {
   method: string | null;
   missing_sections: string[];
   unassigned_pages: number[];
+  markdown: string | null;
 };
 
 export type SegmentRunParams = {

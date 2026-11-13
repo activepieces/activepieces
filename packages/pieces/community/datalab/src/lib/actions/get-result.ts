@@ -19,13 +19,13 @@ export const getResultAction = createAction({
   props: {
     operation: Property.StaticDropdown<DatalabOperation, true>({
       displayName: 'Operation',
-      description: 'Pick the action that created the request. The result is read from that action, so it must match.',
+      description: 'The Datalab action that created the request.',
       required: true,
       options: { options: getResultOperation.operationOptions() },
     }),
     request_id: Property.ShortText({
       displayName: 'Request ID',
-      description: 'The Request ID returned by that action, or named in its "still processing" error. Results are kept for about one day.',
+      description: 'The Request ID from that action or its "still processing" error.',
       required: true,
     }),
   },

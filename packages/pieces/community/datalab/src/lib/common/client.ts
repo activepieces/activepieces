@@ -13,6 +13,7 @@ const MAX_POLL_MS = 5_000;
 const POLL_GROWTH = 1.5;
 const MAX_FAILED_POLLS_IN_A_ROW = 5;
 const PAGE_LIMIT_PATTERN = /page rate limit exceeded/i;
+const MAX_DETAIL_LENGTH = 300;
 
 const OPERATION_LABELS: Record<DatalabOperation, string> = {
   convert: 'Convert Document',
@@ -39,13 +40,13 @@ async function checkKey({ apiKey }: { apiKey: string }): Promise<DatalabKeyCheck
     return 'valid';
   } catch (error) {
     const status = statusOf(error);
-    if (status === 401 || status === 403) {
+    if (status === 401) {
       return 'rejected';
     }
     if (status === 402) {
       return 'no_allowance';
     }
-    throw error;
+    throw toError({ error });
   }
 }
 
@@ -65,8 +66,9 @@ async function submit({ apiKey, operation, body, timing = realTiming }: SubmitPa
     } catch (error) {
       const status = statusOf(error);
       const wait = SUBMIT_RETRY_WAITS_MS[attempt];
-      if ((status !== 429 && status !== 503) || wait === undefined) {
-        throw toError({ error });
+      const mapped = toError({ error });
+      if ((status !== 429 && status !== 503) || !mapped.retryable || wait === undefined) {
+        throw mapped;
       }
       await timing.sleep(wait);
     }
@@ -96,7 +98,8 @@ async function fetchOutcome({ apiKey, operation, requestId }: FetchParams): Prom
     throw new Error(`Datalab sent an unexpected answer for request ${id}. Try again in a moment.`);
   }
   const status = datalabGuards.text(poll['status']) ?? 'processing';
-  if (status !== 'complete' && status !== 'failed') {
+  const stoppedWithoutSuccess = poll['success'] === false && status !== 'processing';
+  if (status !== 'complete' && status !== 'failed' && !stoppedWithoutSuccess) {
     return { completed: false, requestId: id, status };
   }
   const result = await mergeOffloadedResult({ poll, requestId: id });
@@ -187,9 +190,12 @@ async function mergeOffloadedResult({ poll, requestId }: { poll: Record<string, 
       retryable: false,
     });
   }
-  const offloaded = datalabGuards.record(body);
+  const offloaded = datalabGuards.record(datalabGuards.parseJsonText(body));
   if (offloaded === undefined) {
-    return poll;
+    throw new DatalabError({
+      message: `Datalab finished request ${requestId} but its result file was not readable. Run Get Result to try again.`,
+      retryable: false,
+    });
   }
   const merged: Record<string, unknown> = { ...offloaded };
   for (const [key, value] of Object.entries(poll)) {
@@ -201,7 +207,7 @@ async function mergeOffloadedResult({ poll, requestId }: { poll: Record<string, 
 }
 
 function assertSucceeded({ result, status, requestId }: { result: Record<string, unknown>; status: string; requestId: string }): void {
-  if (result['success'] !== false && status !== 'failed') {
+  if (result['success'] !== false && status === 'complete') {
     return;
   }
   const reason = datalabGuards.text(result['error']) ?? 'Datalab gave no reason';
@@ -275,14 +281,22 @@ function pageLimitMessage(reason: string): string {
 function readDetail(body: unknown): string | undefined {
   const parsed = datalabGuards.record(datalabGuards.parseJsonText(body));
   if (parsed === undefined) {
-    return datalabGuards.text(body);
+    return shorten(datalabGuards.text(body));
   }
   const detail = parsed['detail'];
   if (Array.isArray(detail)) {
     const parts = detail.map(describeValidationIssue).filter((part): part is string => part !== undefined);
-    return parts.length > 0 ? parts.join('; ') : undefined;
+    return parts.length > 0 ? shorten(parts.join('; ')) : undefined;
   }
-  return datalabGuards.text(detail) ?? datalabGuards.text(parsed['error']);
+  return shorten(datalabGuards.text(detail) ?? datalabGuards.text(parsed['error']));
+}
+
+function shorten(detail: string | undefined): string | undefined {
+  if (detail === undefined) {
+    return undefined;
+  }
+  const flat = detail.replace(/\s+/g, ' ').trim();
+  return flat.length > MAX_DETAIL_LENGTH ? `${flat.slice(0, MAX_DETAIL_LENGTH)}...` : flat;
 }
 
 function describeValidationIssue(issue: unknown): string | undefined {

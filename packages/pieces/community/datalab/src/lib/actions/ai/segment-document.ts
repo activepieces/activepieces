@@ -12,7 +12,7 @@ export const aiSegmentDocumentAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Splits the document at a public URL into parts and returns each part\'s name and page numbers (counted from 0). Give sections to find named parts such as Invoice or Contract, or leave sections empty to detect where each separate document starts in a combined file. Use Convert Document for the text and Extract Structured Data for field values. Each call spends Datalab credits and is safe to retry. If Datalab is still working after about 4 minutes it returns completed=false with request_id; pass that request_id to Get Result with the Segment Document operation.',
+      'Splits the document at a public URL into parts and returns each part\'s name and page numbers (counted from 0). Give sections to find named parts such as Invoice or Contract, or leave sections empty to detect where each separate document starts in a combined file. Use Convert Document for the text and Extract Structured Data for field values. Each call spends Datalab credits and a repeat call is billed again. If Datalab is still working after about 4 minutes it returns completed=false with request_id; then call Get Result with the Segment Document operation and that request_id instead of running this action again.',
     idempotent: true,
   },
   outputSchema: segmentOperation.outputSchema,

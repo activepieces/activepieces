@@ -25,6 +25,9 @@ export const datalabAuth = PieceAuth.SecretText({
       if (isPieceServerContextError(error)) {
         throw error;
       }
+      if (error instanceof datalabClient.DatalabError) {
+        return { valid: false, error: `Could not check this key. ${error.message}` };
+      }
       return { valid: false, error: `Could not reach Datalab to check this key: ${datalabClient.describeFailure(error)}` };
     }
   },

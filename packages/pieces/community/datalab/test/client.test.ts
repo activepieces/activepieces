@@ -74,6 +74,14 @@ describe('submit', () => {
     expect(timing.sleeps).toEqual([5000, 10000, 20000]);
   });
 
+  it('does not wait and retry when the 429 is the page limit', async () => {
+    const timing = fakeTiming();
+    const spy = mockResponses([httpError({ status: 429, body: { detail: 'Page rate limit exceeded. Your team has 16000 pages in flight (limit: 15000).' } })]);
+    await expect(datalabClient.submit({ apiKey: 'k', operation: 'convert', body: new FormData(), timing })).rejects.toThrow(/too many pages in progress/);
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(timing.sleeps).toEqual([]);
+  });
+
   it('never retries a submit that failed for another reason', async () => {
     const timing = fakeTiming();
     const spy = mockResponses([new Error('fetch failed')]);
@@ -115,6 +123,14 @@ describe('error messages', () => {
       await expect(datalabClient.submit({ apiKey: 'k', operation: 'extract', body: new FormData(), timing: fakeTiming() })).rejects.toThrow(entry.expected);
     });
   }
+
+  it('shortens a long error body that is not JSON, such as a gateway error page', async () => {
+    mockResponses([httpError({ status: 400, body: `<html>${'x'.repeat(5000)}</html>` })]);
+    const failure = await datalabClient.submit({ apiKey: 'k', operation: 'convert', body: new FormData(), timing: fakeTiming() }).catch((error: unknown) => error);
+    expect(failure).toBeInstanceOf(Error);
+    expect(String(failure).length).toBeLessThan(450);
+    expect(String(failure)).toMatch(/\.\.\.$/);
+  });
 
   it('never puts the API key in an error message', async () => {
     mockResponses([httpError({ status: 401, body: { detail: 'Invalid API key or access token.' } })]);
@@ -167,6 +183,23 @@ describe('fetchOutcome', () => {
   it('maps a 402 on a poll, since a capped key cannot read results either', async () => {
     mockResponses([httpError({ status: 402, body: { detail: 'API key is at or over the configured 30-day billing limit.' } })]);
     await expect(datalabClient.fetchOutcome({ apiKey: 'k', operation: 'convert', requestId: 'req_1' })).rejects.toThrow(/spend limit is used up/);
+  });
+
+  it('stops on a job that reports no success under a status other than processing', async () => {
+    mockResponses([ok({ status: 'error', success: false, error: 'Page rate limit exceeded. Your team has 6000 pages in flight (limit: 5000).' })]);
+    await expect(datalabClient.fetchOutcome({ apiKey: 'k', operation: 'convert', requestId: 'req_1' })).rejects.toThrow(/too many pages in progress/);
+    mockResponses([ok({ status: 'cancelled', success: false, error: null })]);
+    await expect(datalabClient.fetchOutcome({ apiKey: 'k', operation: 'convert', requestId: 'req_1' })).rejects.toThrow('(request req_1): Datalab gave no reason');
+  });
+
+  it('keeps waiting on a job that is still processing, whatever its success flag says', async () => {
+    mockResponses([ok({ status: 'processing', success: false, error: null })]);
+    expect(await datalabClient.fetchOutcome({ apiKey: 'k', operation: 'convert', requestId: 'req_1' })).toEqual({ completed: false, requestId: 'req_1', status: 'processing' });
+  });
+
+  it('fails when the offloaded result is not a readable object', async () => {
+    mockResponses([ok({ status: 'complete', success: true, result_url: 'https://storage.example.com/result.json' }), ok('<html>gateway error</html>')]);
+    await expect(datalabClient.fetchOutcome({ apiKey: 'k', operation: 'convert', requestId: 'req_1' })).rejects.toThrow('its result file was not readable');
   });
 
   it('rejects an empty request id before calling Datalab', async () => {
@@ -294,6 +327,11 @@ describe('checkKey', () => {
     expect(await datalabClient.checkKey({ apiKey: 'k' })).toBe('valid');
     expect(await datalabClient.checkKey({ apiKey: 'k' })).toBe('rejected');
     expect(await datalabClient.checkKey({ apiKey: 'k' })).toBe('no_allowance');
+  });
+
+  it('passes on what Datalab says when it denies a real key, instead of calling the key wrong', async () => {
+    mockResponses([httpError({ status: 403, body: { detail: 'You need an active, paid subscription to use this API.' } })]);
+    await expect(datalabClient.checkKey({ apiKey: 'k' })).rejects.toThrow('Datalab denied the request: You need an active, paid subscription to use this API.');
   });
 
   it('lets a network failure through so the connection form can say Datalab was unreachable', async () => {

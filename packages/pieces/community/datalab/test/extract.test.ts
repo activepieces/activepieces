@@ -306,7 +306,7 @@ describe('shape', () => {
   });
 
   it('merges a score into the meta of the same field', () => {
-    const split = extractOperation.split({ total: 5, total_score: 3, total_meta: { extraction_status: 'EXTRACTED' } });
+    const split = extractOperation.split({ extracted: { total: 5, total_score: 3, total_meta: { extraction_status: 'EXTRACTED' } } });
     expect(split.details).toEqual({ total: { score: 3, extraction_status: 'EXTRACTED' } });
   });
 
@@ -326,10 +326,12 @@ describe('shape', () => {
 
   it('keeps a user field named like a helper when its base field is not beside it', () => {
     const split = extractOperation.split({
-      order_meta: 'from the user',
-      order_meta_citations: ['/page/0/Text/2'],
-      shipping_score: 7,
-      nested: { review_citations: 'kept', items: [{ x_meta: 1 }] },
+      extracted: {
+        order_meta: 'from the user',
+        order_meta_citations: ['/page/0/Text/2'],
+        shipping_score: 7,
+        nested: { review_citations: 'kept', items: [{ x_meta: 1 }] },
+      },
     });
     expect(split.data).toEqual({ order_meta: 'from the user', shipping_score: 7, nested: { review_citations: 'kept', items: [{ x_meta: 1 }] } });
     expect(split.citations).toEqual({ order_meta: ['/page/0/Text/2'] });
@@ -344,6 +346,76 @@ describe('shape', () => {
   it('throws a clear error when the extracted data is not valid JSON or missing', async () => {
     await expect(extractOperation.shape({ result: { extraction_schema_json: '{"a": ' } })).rejects.toThrow('not valid JSON');
     await expect(extractOperation.shape({ result: { extraction_schema_json: null } })).rejects.toThrow('sent no extracted data');
+  });
+});
+
+describe('user fields that look like helper keys', () => {
+  const riskSchema = { type: 'object', properties: { risk: { type: 'string' }, risk_score: { type: 'number' } } };
+  const fastRisk = { risk: 'high', risk_citations: ['/page/0/Text/1'], risk_score: 8, risk_score_citations: ['/page/0/Text/2'] };
+
+  it('keeps risk and risk_score in fast-mode output, with and without the schema', async () => {
+    const result = { extraction_schema_json: JSON.stringify(fastRisk), extraction_mode: 'fast' };
+    for (const options of [undefined, { schema: riskSchema }]) {
+      const output = await extractOperation.shape({ result, options });
+      expect(output.data).toEqual({ risk: 'high', risk_score: 8 });
+      expect(output.citations).toEqual({ risk: ['/page/0/Text/1'], risk_score: ['/page/0/Text/2'] });
+      expect(output.details).toEqual({});
+    }
+  });
+
+  it('keeps a declared field even when Datalab sent no helpers for it, on the normal run path', async () => {
+    const extracted = { risk: 'high', risk_citations: ['/page/0/Text/1'], risk_score: 8 };
+    expect(extractOperation.split({ extracted, schema: riskSchema }).data).toEqual({ risk: 'high', risk_score: 8 });
+    vi.spyOn(httpClient, 'sendRequest')
+      .mockResolvedValueOnce(submitted)
+      .mockResolvedValueOnce(ok({ status: 'complete', success: true, extraction_schema_json: JSON.stringify(extracted), extraction_mode: 'fast', page_count: 1 }));
+    const input = extractOperation.readAi({ file_url: 'https://example.com/a.pdf', json_schema: riskSchema, extraction_mode: 'fast' });
+    const output = await extractOperation.run({ apiKey: 'k', audience: 'ai', input, timing: fakeTiming() });
+    expect(output).toMatchObject({ completed: true, data: { risk: 'high', risk_score: 8 } });
+  });
+
+  it('never splits a turbo result', async () => {
+    const output = await extractOperation.shape({ result: { extraction_schema_json: JSON.stringify({ risk: 'high', risk_score: 8, paper: 'A4', paper_citations: [1] }), extraction_mode: 'turbo' } });
+    expect(output.data).toEqual({ risk: 'high', risk_score: 8, paper: 'A4', paper_citations: [1] });
+    expect(output.citations).toEqual({});
+    expect(output.details).toEqual({});
+  });
+
+  it('keeps a key whose value does not have the helper shape', () => {
+    const split = extractOperation.split({ extracted: { paper: 'A4', paper_citations: 3, size: 'L', size_meta: 'cotton', grade: 'B', grade_score: 'high' } });
+    expect(split.data).toEqual({ paper: 'A4', paper_citations: 3, size: 'L', size_meta: 'cotton', grade: 'B', grade_score: 'high' });
+    expect(split.citations).toEqual({});
+    expect(split.details).toEqual({});
+  });
+
+  it('handles the same collision inside a nested object and an array item, with and without the schema', () => {
+    const extracted = {
+      vendor: { credit: 'good', credit_citations: ['/page/0/Text/3'], credit_score: 720, credit_score_citations: ['/page/0/Text/4'] },
+      items: [{ risk: 'low', risk_citations: [], risk_score: 2, risk_score_citations: ['/page/1/Text/1'] }],
+    };
+    const schema = {
+      type: 'object',
+      properties: {
+        vendor: { type: 'object', properties: { credit: { type: 'string' }, credit_score: { type: 'number' } } },
+        items: { type: 'array', items: { type: 'object', properties: { risk: { type: 'string' }, risk_score: { type: 'number' } } } },
+      },
+    };
+    for (const split of [extractOperation.split({ extracted }), extractOperation.split({ extracted, schema })]) {
+      expect(split.data).toEqual({ vendor: { credit: 'good', credit_score: 720 }, items: [{ risk: 'low', risk_score: 2 }] });
+      expect(split.citations).toEqual({
+        'vendor.credit': ['/page/0/Text/3'],
+        'vendor.credit_score': ['/page/0/Text/4'],
+        'items[0].risk': [],
+        'items[0].risk_score': ['/page/1/Text/1'],
+      });
+      expect(split.details).toEqual({});
+    }
+  });
+
+  it('still moves a genuine _score helper into details', () => {
+    const split = extractOperation.split({ extracted: { total: 586.67, total_citations: ['/page/0/Text/11'], total_score: 5, po: null, po_citations: [], po_score: null } });
+    expect(split.data).toEqual({ total: 586.67, po: null });
+    expect(split.details).toEqual({ total: { score: 5 } });
   });
 });
 
@@ -382,4 +454,45 @@ describe('outputSchema', () => {
     const data = extractOperation.outputSchema.fields.find((field) => field.key === 'data');
     expect(data?.children).toBeUndefined();
   });
+});
+
+describe('fast-mode scores as Datalab really sends them (live run 2026-11-13)', () => {
+  const live = {
+    total_due: 586.67,
+    total_due_citations: ['/page/0/Text/11'],
+    total_due_score: 3,
+    total_due_score_citations: ['/page/0/Text/11'],
+    vendor: {
+      name: 'Northwind Paper Supplies Ltd',
+      name_citations: ['/page/0/Text/5'],
+      name_score: { score: 5, reasoning: 'Vendor name is correctly extracted.' },
+      name_meta: 'GB123456789',
+      name_meta_citations: ['/page/0/Text/5'],
+      name_meta_score: { score: 4, reasoning: 'VAT ID is correctly extracted.' },
+    },
+  };
+  const schema = {
+    type: 'object',
+    properties: {
+      total_due: { type: 'number' },
+      total_due_score: { type: 'number' },
+      vendor: { type: 'object', properties: { name: { type: 'string' }, name_meta: { type: 'string' } } },
+    },
+  };
+
+  const variants: Array<{ label: string; given: Record<string, unknown> | undefined }> = [
+    { label: 'with the schema', given: schema },
+    { label: 'without the schema, as Get Result runs', given: undefined },
+  ];
+  for (const { label, given } of variants) {
+    it(`moves score objects to details and keeps the user fields named like helpers, ${label}`, () => {
+      const { data, citations, details } = extractOperation.split({ extracted: live, schema: given });
+      expect(data).toEqual({ total_due: 586.67, total_due_score: 3, vendor: { name: 'Northwind Paper Supplies Ltd', name_meta: 'GB123456789' } });
+      expect(Object.keys(citations).sort()).toEqual(['total_due', 'total_due_score', 'vendor.name', 'vendor.name_meta']);
+      expect(details).toEqual({
+        'vendor.name': { score: 5, score_reasoning: 'Vendor name is correctly extracted.' },
+        'vendor.name_meta': { score: 4, score_reasoning: 'VAT ID is correctly extracted.' },
+      });
+    });
+  }
 });
