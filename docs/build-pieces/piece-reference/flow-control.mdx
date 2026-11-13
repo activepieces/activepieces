@@ -128,7 +128,7 @@ async run(ctx) {
 
 ### Delay until a timestamp
 
-Create a `DELAY` waitpoint with the UTC timestamp you want to resume at. The server schedules a one-time job that fires at `resumeDateTime` and resumes the run automatically.
+Create a `DELAY` waitpoint with the ISO 8601 timestamp you want to resume at. Use `toISOString()`: `toUTCString()` drops the milliseconds, so the run resumes up to a second early. The server schedules a one-time job that fires at `resumeDateTime` and resumes the run automatically.
 
 ```typescript
 async run(ctx) {
@@ -140,7 +140,7 @@ async run(ctx) {
 
   const waitpoint = await ctx.run.createWaitpoint({
     type: 'DELAY',
-    resumeDateTime: futureTime.toUTCString(),
+    resumeDateTime: futureTime.toISOString(),
   });
   ctx.run.waitForWaitpoint(waitpoint.id);
   return {};

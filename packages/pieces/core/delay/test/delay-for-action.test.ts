@@ -63,6 +63,32 @@ describe('delayFor rejects a unit outside the enum', () => {
   });
 });
 
+describe('delayFor schedules the resume at the exact requested time', () => {
+  const now = new Date('2026-03-04T05:06:07.890Z');
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('keeps the milliseconds of the resume time', async () => {
+    const createWaitpoint = vi.fn().mockResolvedValue({ id: 'waitpoint-id' });
+
+    await delayForAction.run({
+      propsValue: { delayFor: 12, unit: 'seconds' },
+      executionType: ExecutionType.BEGIN,
+      run: { createWaitpoint, waitForWaitpoint: vi.fn() },
+    } as never);
+
+    const { resumeDateTime } = createWaitpoint.mock.calls[0][0];
+    expect(new Date(resumeDateTime).getTime()).toBe(now.getTime() + 12 * SECOND);
+  });
+});
+
 describe('delayFor amount validation', () => {
   it.each([[-1], [-0.5]])('rejects a negative amount of %s', async (delayFor) => {
     await expect(
