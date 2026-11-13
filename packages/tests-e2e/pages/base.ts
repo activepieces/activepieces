@@ -26,4 +26,12 @@ export abstract class BasePage implements IPageObject {
   async visit(): Promise<void> {
     await this.page.goto(this.url);
   }
+
+  errorState(): Locator {
+    return this.page.getByTestId('data-fetch-error-state');
+  }
+
+  async retryAfterError(): Promise<void> {
+    await this.page.getByTestId('data-fetch-error-retry').click();
+  }
 } 

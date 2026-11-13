@@ -85,6 +85,12 @@ For the role gate and project isolation, an EE spec imports `test` from `fixture
 - Keep `if` out of specs. A spec runs the same steps on every run, so a green run always proves the same thing.
 - A page object may branch only when the app can correctly be in either of two states and the spec cannot choose which, such as an empty project or one with flows (see `AutomationsPage.createFlow`). Never branch to work around a bug or a flaky step: that hides the failure the spec exists to catch.
 - Name a page object method that asserts `expect…`, so lint counts it as an assertion.
+- To test the empty state or the error state of a list, import `test` from `fixtures/list-response.ts` and answer the list request in the browser with `listResponse.empty({ resource })` (an empty page) or `listResponse.fail({ resource })` (a 500). `resource` is the API path, as in `cleanup.track`.
+  - Set the fake before the page opens. A fake that no GET request reaches fails the test, so a typo in `resource` cannot pass by accident.
+  - A fake answers every GET to that path on the page, not one query. `fail({ resource: 'flows' })` also fails global search and folder contents.
+  - Each call returns a function that removes the fake, so the next request reaches the server. Call it before "Try again" to check the retry.
+  - By default the app tries a failed request three more times before it shows the error state, so give that assertion `{ timeout: listResponse.ERROR_STATE_TIMEOUT_MS }`. `errorState()` and `retryAfterError()` on every page object find the shared error box.
+  - A `DataTable` page shows its error state after its own request fails: one `fail` call is enough. The Automations page shows it only when no folder, table or agent loaded (ENG-1486), so `scenarios/project/automations-flows.spec.ts` filters to flows and empties `folders` too.
 
 ### Proving the spec
 

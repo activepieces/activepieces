@@ -26,6 +26,7 @@ export function DataFetchErrorState({
 
   return (
     <div
+      data-testid="data-fetch-error-state"
       className={cn(
         'flex w-full flex-col items-center justify-center gap-2 px-4 py-10 text-center',
         className,
@@ -42,6 +43,7 @@ export function DataFetchErrorState({
       </p>
       {onRetry && (
         <Button
+          data-testid="data-fetch-error-retry"
           variant="outline"
           size="sm"
           className="mt-2"

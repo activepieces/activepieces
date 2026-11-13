@@ -197,7 +197,7 @@ export const AutomationsTableRow = ({
             <RowItemIcon item={item} />
           </span>
           <TextWithTooltip tooltipMessage={item.name}>
-            <span>{item.name}</span>
+            <span data-testid="automations-row-name">{item.name}</span>
           </TextWithTooltip>
         </div>
       </div>

@@ -24,6 +24,14 @@ export class AutomationsPage extends BasePage {
     }
     return flowId;
   }
+
+  async searchFlows(term: string): Promise<void> {
+    await this.page.goto(`${this.url}?type=flow&search=${encodeURIComponent(term)}`);
+  }
+
+  row(name: string) {
+    return this.page.getByTestId('automations-row-name').filter({ hasText: name });
+  }
 }
 
 const FLOW_URL = /\/flows\/([^/?#]+)/;
