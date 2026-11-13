@@ -6,7 +6,7 @@ export const createVoice = createAction({
   name: 'create_voice',
   classification: 'WRITE',
   displayName: 'Create Voice',
-  description: 'Save a custom voice to your account using a TTS generation ID',
+  description: 'Save the voice from an earlier speech generation for reuse.',
   audience: 'both',
   aiMetadata: {
     description: 'Save a reusable custom voice in your Hume AI account from a prior TTS generation ID, under a chosen name. Use after generating speech you want to persist and reuse in later synthesis calls. Requires a valid generation ID from an earlier Generate Text to Speech result; creates a new voice resource on each call (not idempotent).',
@@ -16,12 +16,14 @@ export const createVoice = createAction({
   props: {
     generationId: Property.ShortText({
       displayName: 'Generation ID',
-      description: 'The unique ID from a previous TTS generation to save as a custom voice',
+      description: 'Shown by Generate Text to Speech when it makes 2 or more versions.',
+      placeholder: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
       required: true,
     }),
     voiceName: Property.ShortText({
       displayName: 'Voice Name',
-      description: 'A descriptive name for your custom voice',
+      description: 'Name to save the voice under.',
+      placeholder: 'Support line narrator',
       required: true,
     }),
   },

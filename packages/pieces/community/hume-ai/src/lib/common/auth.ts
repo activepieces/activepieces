@@ -3,7 +3,7 @@ import { HumeClient } from 'hume';
 
 export const humeAiAuth = PieceAuth.SecretText({
   displayName: 'API Key',
-  description: 'Enter your Hume AI API key from the Hume Portal (https://platform.hume.ai/settings/keys)',
+  description: 'Copy your API key from [Settings → API Keys](https://platform.hume.ai/settings/keys) in the Hume portal.',
   required: true,
   validate: async ({ auth }) => {
     try {

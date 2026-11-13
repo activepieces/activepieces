@@ -6,7 +6,7 @@ export const getEmotionResults = createAction({
   name: 'get_emotion_results',
   classification: 'READ',
   displayName: 'Get Emotion Results',
-  description: 'Retrieve emotion analysis predictions from a completed batch job',
+  description: 'Get the emotion predictions and status of an analysis job.',
   audience: 'both',
   aiMetadata: {
     description: 'Fetch the predictions and current state of a Hume AI Expression Measurement batch job by its job ID. Use after starting a job with Analyze Emotions from URL to poll for and collect results; the job may still be processing if not yet complete. This is a read-only lookup and is idempotent.',
@@ -16,7 +16,8 @@ export const getEmotionResults = createAction({
   props: {
     jobId: Property.ShortText({
       displayName: 'Job ID',
-      description: 'The ID of the emotion analysis job to retrieve results for',
+      description: 'The Job ID returned by Analyze Emotions from URL.',
+      placeholder: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
       required: true,
     }),
   },
