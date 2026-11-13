@@ -2,6 +2,7 @@ import { resolveTxt } from 'dns/promises'
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil, PlatformId, spreadIfDefined, tryCatch, UserId } from '@activepieces/core-utils'
 import { ApEdition, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { EntityManager, Not } from 'typeorm'
 import { z } from 'zod'
 import { AuthenticationResult } from '../../../authentication/authentication-utils'
 import { authenticationService } from '../../../authentication/authentication.service'
@@ -11,6 +12,7 @@ import { platformSideEffects } from '../../../platform/platform-side-effects'
 import { platformRepo, platformService } from '../../../platform/platform.service'
 import { platformUtils } from '../../../platform/platform.utils'
 import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
+import { emailDomainRepo } from '../email-domain/email-domain.service'
 import { createSamlClient, IdpLoginResponse } from './saml-client'
 
 export const authnSsoSamlService = (log: FastifyBaseLogger) => {
@@ -66,16 +68,16 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
             return { platformId: samlConfigured ? platformId : null }
         },
         async findPlatformIdByDomain({ domain }: FindPlatformIdByDomainParams): Promise<PlatformId | null> {
-            const ssoDomain = domain.trim().toLowerCase()
-            if (ssoDomain.length === 0) {
+            const normalizedDomain = domain.trim().toLowerCase()
+            if (normalizedDomain.length === 0) {
                 return null
             }
-            const platform = await platformRepo().findOneBy({ ssoDomain })
-            if (isNil(platform) || platform.ssoDomainVerification?.status !== SsoDomainVerificationStatus.VERIFIED) {
+            const verifiedDomain = await emailDomainRepo().findOneBy({ domain: normalizedDomain, verificationStatus: SsoDomainVerificationStatus.VERIFIED })
+            if (isNil(verifiedDomain)) {
                 return null
             }
-            const plan = await platformPlanService(log).getOrCreateForPlatform(platform.id)
-            return plan.ssoEnabled ? platform.id : null
+            const plan = await platformPlanService(log).getOrCreateForPlatform(verifiedDomain.platformId)
+            return plan.ssoEnabled ? verifiedDomain.platformId : null
         },
         async updateSsoDomain({ platformId, ssoDomain, userId, ip }: UpdateSsoDomainParams): Promise<SsoDomainState> {
             const normalized = ssoDomain?.trim().toLowerCase() ?? null
@@ -89,8 +91,8 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                         },
                     })
                 }
-                const existing = await platformRepo().findOneBy({ ssoDomain: value })
-                if (!isNil(existing) && existing.id !== platformId) {
+                const claimedByAnotherPlatform = await emailDomainRepo().existsBy({ domain: value, platformId: Not(platformId) })
+                if (claimedByAnotherPlatform) {
                     throw new ActivepiecesError({
                         code: ErrorCode.VALIDATION,
                         params: {
@@ -112,6 +114,7 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                 ...spreadIfDefined('federatedAuthProviders', removesSaml ? { saml: null } : undefined),
                 userId,
                 ip,
+                saveInSameTransaction: (entityManager) => replacePlatformEmailDomain({ entityManager, platformId, domain: value, verification }),
             })
             return { ssoDomain: value, ssoDomainVerification: verification }
         },
@@ -138,7 +141,14 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                 ...platform.ssoDomainVerification,
                 status: SsoDomainVerificationStatus.VERIFIED,
             }
-            const updated = await platformService(log).update({ id: platformId, ssoDomainVerification: verified, userId, ip })
+            const domain = platform.ssoDomain
+            const updated = await platformService(log).update({
+                id: platformId,
+                ssoDomainVerification: verified,
+                userId,
+                ip,
+                saveInSameTransaction: (entityManager) => replacePlatformEmailDomain({ entityManager, platformId, domain, verification: verified }),
+            })
             return { ssoDomain: updated.ssoDomain ?? null, ssoDomainVerification: updated.ssoDomainVerification ?? null }
         },
         async expirePendingSsoDomains(): Promise<void> {
@@ -155,6 +165,10 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                     FROM expired
                     WHERE p.id = expired.id
                     RETURNING p.id AS "platformId", expired."ssoDomain" AS "domain"
+                ), removed AS (
+                    DELETE FROM "email_domain" e
+                    USING cleared
+                    WHERE e."platformId" = cleared."platformId"
                 )
                 SELECT "platformId", "domain" FROM cleared
             `, [SsoDomainVerificationStatus.PENDING_VERIFICATION, PENDING_DOMAIN_TTL_DAYS])
@@ -192,6 +206,21 @@ function computeNextVerification({ nextDomain, currentDomain, currentVerificatio
         },
         createdAt: new Date().toISOString(),
     }
+}
+
+async function replacePlatformEmailDomain({ entityManager, platformId, domain, verification }: ReplacePlatformEmailDomainParams): Promise<void> {
+    await emailDomainRepo(entityManager).delete({ platformId })
+    if (isNil(domain) || isNil(verification)) {
+        return
+    }
+    await emailDomainRepo(entityManager).insert({
+        id: apId(),
+        created: verification.createdAt,
+        platformId,
+        domain: domain.toLowerCase(),
+        verificationStatus: verification.status,
+        verificationRecordValue: verification.record.value,
+    })
 }
 
 async function txtRecordMatches({ name, expected, log }: { name: string, expected: string, log: FastifyBaseLogger }): Promise<boolean> {
@@ -234,6 +263,13 @@ type VerifySsoDomainParams = {
     platformId: PlatformId
     userId: UserId
     ip: string
+}
+
+type ReplacePlatformEmailDomainParams = {
+    entityManager: EntityManager
+    platformId: PlatformId
+    domain: string | null
+    verification: SsoDomainVerification | null
 }
 
 type SsoDomainState = {

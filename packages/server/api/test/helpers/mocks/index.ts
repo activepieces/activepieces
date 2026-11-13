@@ -1,4 +1,4 @@
-import { AIProviderName, apId, assertNotNullOrUndefined, ProjectRole, RoleType } from '@activepieces/core-utils'
+import { AIProviderName, apId, assertNotNullOrUndefined, isNil, ProjectRole, RoleType } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
 import { AIProvider, ApiKey, AppConnection, AppConnectionScope, AppConnectionStatus, AppConnectionType, ApplicationEvent, ApplicationEventName, Cell, ColorName, EventDestinationFormat, EventDestinationScope, Field, FieldType, File, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowRun, FlowRunStatus, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, Folder, GitBranchType, GitRepo, InvitationStatus, InvitationType, KeyAlgorithm, LATEST_FLOW_SCHEMA_VERSION, OAuthApp, OtpModel, OtpState, OtpType, PackageType, PiecesFilterType, PieceType, Platform, PlatformPlan, PlatformRole, Project, ProjectIcon, ProjectMember, ProjectPlan, ProjectRelease, ProjectReleaseType, ProjectType, Record, RunEnvironment, SigningKey, Table, Template, TemplateStatus, TemplateType, User, UserIdentity, UserIdentityProvider, UserInvitation, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
@@ -602,6 +602,7 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
     })
 
     await databaseConnection().getRepository('platform').save(mockPlatform)
+    await saveEmailDomainOfMockPlatform(mockPlatform)
     const hasPlanTable = databaseConnection().hasMetadata(PlatformPlanEntity)
     if (hasPlanTable) {
         const mockPlatformPlan = createMockPlatformPlan({
@@ -632,6 +633,20 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
         mockPlatform,
         mockProject,
     }
+}
+
+export const saveEmailDomainOfMockPlatform = async (platform: Platform): Promise<void> => {
+    if (isNil(platform.ssoDomain) || isNil(platform.ssoDomainVerification)) {
+        return
+    }
+    await databaseConnection().getRepository('email_domain').save({
+        id: apId(),
+        created: platform.ssoDomainVerification.createdAt,
+        platformId: platform.id,
+        domain: platform.ssoDomain.toLowerCase(),
+        verificationStatus: platform.ssoDomainVerification.status,
+        verificationRecordValue: platform.ssoDomainVerification.record.value,
+    })
 }
 
 type MockBasicSetupWithApiKey = MockBasicSetup & { mockApiKey: ApiKey & { value: string } }
