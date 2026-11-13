@@ -24,21 +24,29 @@ export const listFiles = createAction({
   outputSchema: listFilesOutputSchema,
   classification: 'SEARCH',
   displayName: 'List Files',
-  description: 'List all files from an S3 bucket folder/prefix.',
+  description: 'List the files in your bucket or in one of its folders.',
   audience: 'human',
   aiMetadata: {
     description: 'Lists objects in the configured S3 bucket, optionally filtered to a folder prefix (empty prefix lists the whole bucket), capped at a maximum count (1-1000, default 1000) and sorted newest-first. Use to discover files or look up an object key before reading, moving, or deleting it. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'filter', display: 'section', label: 'Filter', icon: 'filter', props: ['prefix', 'maxKeys'] },
+  ],
   props: {
     prefix: Property.ShortText({
-      displayName: 'Folder Path (Optional)',
-      description: 'Filter results to a specific folder. Enter the folder path including the trailing slash (e.g. "invoices/" or "reports/2024/"). Leave empty to list all files in the bucket.',
+      displayName: 'Folder Path',
+      description: 'Only list files in this folder. Empty: the whole bucket.',
+      placeholder: 'invoices/',
       required: false,
     }),
     maxKeys: Property.Number({
       displayName: 'Maximum Files',
-      description: 'Maximum number of files to return (1–1000). Defaults to 1000. Use a lower number if you only need the most recent files.',
+      description: 'How many files to return, up to 1,000.',
+      display: 'stepper',
+      min: 1,
+      max: 1000,
+      step: 1,
       required: false,
       defaultValue: 1000,
     }),
