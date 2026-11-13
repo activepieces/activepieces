@@ -10467,7 +10467,7 @@
     },
     "packages/pieces/community/zerobounce": {
       "name": "@activepieces/piece-zerobounce",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
