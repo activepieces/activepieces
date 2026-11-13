@@ -29,8 +29,8 @@ async function getItem({ itemId }: { itemId: number }): Promise<HackernewsItem |
 async function listTopStories({ limit }: { limit: number }): Promise<(HackernewsItem | null)[]> {
 	const topStoryIds = await listStoryIds({ storyList: 'top' });
 	const stories: (HackernewsItem | null)[] = [];
-	for (let i = 0; i < Math.min(limit, topStoryIds.length); i++) {
-		stories.push(await getItem({ itemId: topStoryIds[i] }));
+	for (const batch of chunk(topStoryIds.slice(0, Math.max(0, Math.ceil(limit))), ITEM_BATCH_SIZE)) {
+		stories.push(...(await Promise.all(batch.map(async (itemId) => await getItem({ itemId })))));
 	}
 	return stories;
 }

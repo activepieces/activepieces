@@ -19,6 +19,15 @@ export const hackernews = createPiece({
 		...hackernewsAiActions,
 		createCustomApiCallAction({
 			baseUrl: () => hackernewsClient.baseUrl(),
+			props: {
+				url: {
+					description: `Full URL, or a path relative to\n${hackernewsClient.baseUrl()}`,
+					placeholder: '/topstories.json',
+				},
+				headers: {
+					description: 'The Hacker News API needs no authentication.',
+				},
+			},
 		}),
 	],
 	triggers: [],
