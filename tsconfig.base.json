@@ -733,6 +733,9 @@
       "@activepieces/piece-jira-data-center": [
         "packages/pieces/community/jira-data-center/src/index.ts"
       ],
+      "@activepieces/piece-jira-service-management": [
+        "packages/pieces/community/jira-service-management/src/index.ts"
+      ],
       "@activepieces/piece-jotform": [
         "packages/pieces/community/jotform/src/index.ts"
       ],
