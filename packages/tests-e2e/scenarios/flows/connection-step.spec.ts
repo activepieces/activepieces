@@ -6,7 +6,7 @@ import { BuilderPage } from '../../pages/builder.page';
 import { RunsPage } from '../../pages/runs.page';
 
 test.describe('Connection step', () => {
-  test('a piece step sends the API key of its connection', async ({ page, cleanup }) => {
+  test('a piece step sends the API key of its connection', async ({ page, cleanup, seed }) => {
     const automationsPage = new AutomationsPage(page);
     const builderPage = new BuilderPage(page);
     const runsPage = new RunsPage(page);
@@ -14,7 +14,7 @@ test.describe('Connection step', () => {
     const apiKey = `e2e-${randomUUID()}`;
 
     const echo = await test.step('Publish a webhook flow for the step to call', () =>
-      e2eFlows.publishWebhookEchoFlow({ page, cleanup }),
+      e2eFlows.publishWebhookEchoFlow({ seed }),
     );
 
     await test.step('Add an Activepieces Platform step to a new flow', async () => {
@@ -30,6 +30,7 @@ test.describe('Connection step', () => {
         fields: { 'Base URL': echo.webhookUrl, 'API Key': apiKey },
       });
       cleanup.track({ resource: 'app-connections', id: connectionId });
+      await builderPage.expectStepPanelText(`relative to ${echo.webhookUrl.replace(/[^/]+$/, '')}`);
       await builderPage.setTextInput({ name: 'URL', value: '/' });
       await builderPage.testStep();
     });

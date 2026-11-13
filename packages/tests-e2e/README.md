@@ -44,7 +44,7 @@ Many people and agents write specs at the same time, so a feature adds new files
   });
   ```
 
-  `createVariable` stands for the feature's own seed call, in the same file. A spec that needs the fixtures of two features joins them with `mergeTests(variablesTest, connectionsTest)` from `@playwright/test`.
+  `createVariable` stands for the feature's own seed call, in the same file. Make the call with `e2eApi.callApi({ request, session, method, path, data })`, which sends the session token and fails on any status that is not 2xx; do not write a fetch helper of your own. A spec that needs the fixtures of two features joins them with `mergeTests(variablesTest, connectionsTest)` from `@playwright/test`.
 - A feature PR never edits `fixtures/index.ts`, `fixtures/api.ts` or another feature's page object. There is one exception: when a second feature needs a helper that the first feature wrote, a separate PR moves the helper into `fixtures/api.ts` first, and the second feature PR builds on it.
 
 Tag every test of the feature with `@feature:<slug>`, so a query can list which features have a passing spec: `test.describe('Variables', { tag: '@feature:variables' }, () => { … })`.
@@ -54,6 +54,8 @@ Project roles, a second project and the mail catcher exist only in EE. A test th
 ### Data
 
 - Create what the spec needs, and name each flow and connection with `e2eFlows.uniqueName()` (prefix `E2E `).
+- Create a flow that the spec does not test through the builder with the `seed` fixture: `await seed.flow({ template, publish: true })`. The template is the JSON that "Export" in the flow menu downloads, saved under `fixtures/templates/`. The seed call names the flow, uses the piece versions installed on the instance, tracks it for cleanup, and returns `{ flowId, flowName, webhookUrl }`. Pass `session` to seed the flow into a different project, such as `secondProject.session`. Build a flow in the builder only when the builder is what the spec tests.
+- Create a secret-text connection with `await seed.secretTextConnection({ pieceName, secret })`. It is tracked for cleanup too.
 - Pass the id of each record you create to `cleanup.track({ resource, id })`, where `resource` is the API path, such as `flows`, `app-connections` or `users`. The fixture deletes the records after the test, last one first, also when the test fails. A record that is already gone counts as deleted. A typo in `resource` fails the test, because the API answers `Route not found`. When one delete fails, the fixture still deletes the other records and then fails with every error.
 - Delete only by the ids your test created. Never delete by a query, a name, or a prefix.
 - Find your data by its id or unique name, never by its position in a list.
