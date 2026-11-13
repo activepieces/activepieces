@@ -10,8 +10,8 @@ packages/tests-e2e/
 │   ├── ce/         # Community Edition only
 │   ├── ee/         # Enterprise Edition only (skipped when AP_EDITION=ce)
 │   └── cloud/      # Cloud only (runs only when AP_EDITION=cloud)
-├── pages/          # Page objects (automations, builder, runs, authentication, platform switcher)
-├── fixtures/       # Test fixtures, the session file and API cleanup helpers
+├── pages/          # One page object for each page or feature
+├── fixtures/       # The shared fixtures (session, cleanup, mailbox), the API helpers, and one fixture file for each feature that needs one
 ├── global-setup.ts # Signs in once and saves the session to .auth/user.json
 └── playwright.config.ts
 ```
@@ -24,10 +24,37 @@ Staging runs the CE specs in a shared, long-lived account after each deploy, and
 
 Start from `scenarios/flows/flow-journey.spec.ts` and `pages/builder.page.ts`. Locators and actions live in a page object under `pages/`; the spec holds the steps and the expected outcomes.
 
+### The files of a feature
+
+Many people and agents write specs at the same time, so a feature adds new files and never edits a shared one.
+
+- The spec: `scenarios/<area>/<feature>.spec.ts`, or `scenarios/ee/<area>/<feature>.spec.ts` for an EE-only test.
+- The page object: `pages/<feature>.page.ts`. The spec imports it from its own file and creates it in the test: `const variablesPage = new VariablesPage(page)`. There is no barrel and no page-object fixture to register.
+- The fixtures, when the feature needs its own: `fixtures/<feature>.ts`. It extends the shared `test` and exports its own:
+
+  ```ts
+  import { test as base } from './index';
+
+  export const test = base.extend<{ variable: { id: string; name: string } }>({
+    variable: async ({ request, session, cleanup }, use) => {
+      const variable = await createVariable({ request, session });
+      cleanup.track({ resource: 'variables', id: variable.id });
+      await use(variable);
+    },
+  });
+  ```
+
+  `createVariable` stands for the feature's own seed call, in the same file. A spec that needs the fixtures of two features joins them with `mergeTests(variablesTest, connectionsTest)` from `@playwright/test`.
+- A feature PR never edits `fixtures/index.ts`, `fixtures/api.ts` or another feature's page object. There is one exception: when a second feature needs a helper that the first feature wrote, a separate PR moves the helper into `fixtures/api.ts` first, and the second feature PR builds on it.
+
+Tag every test of the feature with `@feature:<slug>`, so a query can list which features have a passing spec: `test.describe('Variables', { tag: '@feature:variables' }, () => { … })`.
+
+Project roles, a second project and the mail catcher exist only in EE. A test that needs one of them lives under `scenarios/ee/`. The CE spec of the same feature does not branch on the edition; its ticket marks that check `no-e2e: EE only`.
+
 ### Data
 
 - Create what the spec needs, and name each flow and connection with `e2eFlows.uniqueName()` (prefix `E2E `).
-- Pass each flow id to `flowCleanup.track()` and each connection id to `connectionCleanup.track()`. The fixtures delete them after the test, also when the test fails.
+- Pass the id of each record you create to `cleanup.track({ resource, id })`, where `resource` is the API path, such as `flows`, `app-connections` or `users`. The fixture deletes the records after the test, last one first, also when the test fails. A record that is already gone counts as deleted. A typo in `resource` fails the test, because the API answers `Route not found`. When one delete fails, the fixture still deletes the other records and then fails with every error.
 - Delete only by the ids your test created. Never delete by a query, a name, or a prefix.
 - Find your data by its id or unique name, never by its position in a list.
 - The tests start signed in. Use `test.use({ storageState: { cookies: [], origins: [] } })` to start signed out.
@@ -54,8 +81,17 @@ Start from `scenarios/flows/flow-journey.spec.ts` and `pages/builder.page.ts`. L
 
 - Run the spec. Show it fail without your change (or against the bug), then pass with it. Put both results in the PR.
 - When a spec fails, find the cause first: the app, the spec, or the environment. Never loosen a locator, remove an assertion, or change an expected value to match what the screen shows now.
+- A spec is done when `npx playwright test <spec> --repeat-each=3` passes locally, and the PR shows one red run against the broken feature.
 - Never skip a spec with `test.skip` or `test.fixme` to get a green run. A flaky spec follows [Flaky specs](#flaky-specs).
 - `npx turbo run lint --filter=tests-e2e` checks specs, page objects and fixtures with `eslint-plugin-playwright`.
+
+### The ticket of a feature
+
+A ticket of the E2E sweep uses the Feature template (see `brain/knowledge/engineering/linear-tickets.md`) and adds:
+
+- **Problem:** the main job of the feature in one sentence, and the route.
+- **Acceptance criteria:** one bullet for each item of "What to test", each ending with ``E2E: `<test title>` `` or `no-e2e: <reason>`.
+- **Decisions:** the spec file, the page object file, the `@feature:<slug>` tag, and the brain and docs pages the ticket corrects.
 
 ## Flaky specs
 

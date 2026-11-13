@@ -1,6 +1,7 @@
 import { randomInt } from 'node:crypto';
 import { test } from '../../../fixtures';
 import { e2eFlows } from '../../../fixtures/flows';
+import { BuilderPage } from '../../../pages/builder.page';
 
 /**
  * Warmup resilience smoke test.
@@ -11,7 +12,7 @@ import { e2eFlows } from '../../../fixtures/flows';
  * flows from executing.
  */
 test.describe('Piece isolation — CE', () => {
-  test('worker stays healthy after piece sync and can execute a webhook flow', async ({ automationsPage, builderPage, request, session, flowCleanup }) => {
+  test('worker stays healthy after piece sync and can execute a webhook flow', async ({ page, request, session, cleanup }) => {
     test.setTimeout(120000);
 
     // Trigger a piece sync — this exercises the warmup path
@@ -19,9 +20,9 @@ test.describe('Piece isolation — CE', () => {
       headers: { Authorization: `Bearer ${session.token}` },
     });
 
-    const { webhookUrl } = await e2eFlows.publishWebhookEchoFlow({ automationsPage, builderPage, flowCleanup });
+    const { webhookUrl } = await e2eFlows.publishWebhookEchoFlow({ page, cleanup });
     const value = randomInt(1, 1000000);
-    await builderPage.expectSyncWebhookResponse({
+    await new BuilderPage(page).expectSyncWebhookResponse({
       url: `${webhookUrl}/sync?value=${value}`,
       expected: { value: String(value) },
     });

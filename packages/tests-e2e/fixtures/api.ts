@@ -70,10 +70,6 @@ async function signIn({ request, email, password }: { request: APIRequestContext
   return request.post('/api/v1/authentication/sign-in', { data: { email, password } });
 }
 
-async function deleteUser({ request, session, userId }: { request: APIRequestContext; session: E2eSession; userId: string }) {
-  await deleteById({ request, session, resource: 'users', id: userId });
-}
-
 async function deleteStaleData({ request, session }: { request: APIRequestContext; session: E2eSession }) {
   const staleFlows = await listStale({ request, session, resource: 'flows', nameOf: (flow: FlowSummary) => flow.version.displayName, cursor: undefined });
   for (const flow of staleFlows) {
@@ -143,19 +139,24 @@ function redact({ session, text }: { session: E2eSession; text: string }) {
   return text.replaceAll(session.token, '***');
 }
 
-async function deleteById({ request, session, resource, id }: { request: APIRequestContext; session: E2eSession; resource: Resource; id: string }) {
+async function deleteById({ request, session, resource, id }: { request: APIRequestContext; session: E2eSession; resource: E2eResource; id: string }) {
   const response = await request.delete(`/api/v1/${resource}/${id}`, {
     headers: { Authorization: `Bearer ${session.token}` },
   });
-  if (!response.ok() && response.status() !== 404) {
-    throw new Error(`Deleting ${resource} ${id} failed with ${response.status()}: ${await response.text()}`);
+  if (response.ok()) {
+    return;
   }
+  const body = await response.text();
+  if (response.status() === 404 && !body.includes(UNKNOWN_ROUTE_MESSAGE)) {
+    return;
+  }
+  throw new Error(`Deleting ${resource} ${id} failed with ${response.status()}: ${body}`);
 }
 
 async function listStale<T extends { id: string; created: string }>({ request, session, resource, nameOf, cursor }: {
   request: APIRequestContext;
   session: E2eSession;
-  resource: Resource;
+  resource: E2eResource;
   nameOf: (item: T) => string;
   cursor: string | undefined;
 }): Promise<T[]> {
@@ -174,6 +175,7 @@ async function listStale<T extends { id: string; created: string }>({ request, s
 }
 
 const STALE_AFTER_MS = 60 * 60 * 1000;
+const UNKNOWN_ROUTE_MESSAGE = 'Route not found';
 
 export const STORAGE_STATE = path.join(__dirname, '..', '.auth', 'user.json');
 export const E2E_PREFIX = 'E2E ';
@@ -187,15 +189,14 @@ export const e2eApi = {
   deleteInvitation,
   signUp,
   signIn,
-  deleteUser,
+  deleteById,
   deleteStaleData,
   describeFlow,
   describeRun,
 };
 
 export type E2eSession = { token: string; projectId: string };
-
-type Resource = 'flows' | 'app-connections' | 'users' | 'user-invitations';
+export type E2eResource = string;
 type FlowSummary = { id: string; created: string; version: { displayName: string } };
 type ConnectionSummary = { id: string; created: string; displayName: string };
 type FlowState = {
