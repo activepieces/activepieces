@@ -10,6 +10,8 @@ import { platformRepo } from '../../../platform/platform.service'
 import { userRepo } from '../../../user/user-service'
 import { openRouterApi } from '../platform-plan/openrouter/openrouter-api'
 
+const RETRY_RUNS_BATCH_SIZE = 1000
+
 export const adminPlatformService = (log: FastifyBaseLogger) => ({
 
     retryRuns: async ({
@@ -19,34 +21,37 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
     }: AdminRetryRunsRequestBody): Promise<void> => {
         const strategy = FlowRetryStrategy.FROM_FAILED_STEP
 
-        let query = flowRunRepo().createQueryBuilder('flow_run').where({
-            id: In(runIds ?? []),
-        })
-        if (!createdBefore) {
-            query = query.andWhere('flow_run.created <= :createdBefore', {
-                createdBefore,
-            })
-        }
-        if (!createdAfter) {
-            query = query.andWhere('flow_run.created >= :createdAfter', {
-                createdAfter,
-            })
-        }
+        let lastId: string | undefined
+        let flowRuns: FlowRun[]
+        do {
+            const query = flowRunRepo().createQueryBuilder('flow_run')
+                .select(['flow_run.id', 'flow_run.projectId'])
+                .where('flow_run.created >= :createdAfter', { createdAfter })
+                .andWhere('flow_run.created <= :createdBefore', { createdBefore })
+                .orderBy('flow_run.id', 'ASC')
+                .limit(RETRY_RUNS_BATCH_SIZE)
+            if (!isNil(runIds)) {
+                query.andWhere({ id: In(runIds) })
+            }
+            if (!isNil(lastId)) {
+                query.andWhere('flow_run.id > :lastId', { lastId })
+            }
 
-        const flowRuns = await query.getMany()
-        const flowRunsByProject = flowRuns.reduce((acc, flowRun) => {
-            acc[flowRun.projectId] = acc[flowRun.projectId] || []
-            acc[flowRun.projectId].push(flowRun)
-            return acc
-        }, {} as Record<ProjectId, FlowRun[]>)
-        for (const projectId in flowRunsByProject) {
-            const flowRuns = flowRunsByProject[projectId]
-            await flowRunService(log).bulkRetry({
-                projectId,
-                flowRunIds: flowRuns.map((flowRun) => flowRun.id),
-                strategy,
-            })
-        }
+            flowRuns = await query.getMany()
+            const flowRunsByProject = flowRuns.reduce((acc, flowRun) => {
+                acc[flowRun.projectId] = acc[flowRun.projectId] || []
+                acc[flowRun.projectId].push(flowRun)
+                return acc
+            }, {} as Record<ProjectId, FlowRun[]>)
+            for (const projectId in flowRunsByProject) {
+                await flowRunService(log).bulkRetry({
+                    projectId,
+                    flowRunIds: flowRunsByProject[projectId].map((flowRun) => flowRun.id),
+                    strategy,
+                })
+            }
+            lastId = flowRuns.at(-1)?.id
+        } while (flowRuns.length === RETRY_RUNS_BATCH_SIZE)
     },
 
     async applyLicenseKeyByEmail({ email, licenseKey }: ApplyLicenseKeyByEmailRequestBody): Promise<void> {
