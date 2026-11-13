@@ -33,9 +33,113 @@ On `SIGTERM` the worker stops polling, finishes its in-flight flow, and exits (f
 
 ## When to autoscale — and when not to
 
-- **Async and scheduled workloads: autoscale freely.** Scale-up lag just shifts the backlog curve; scale on queue depth or worker CPU. Add the HPA's own reaction time (typically 15–60 s) in front of both paths above.
+- **Async and scheduled workloads: autoscale freely.** Scale-up lag just shifts the backlog curve; scale on [queue depth](#scale-workers-on-queue-depth-with-keda) or worker CPU. Add the HPA's own reaction time (typically 15–60 s) in front of both paths above.
 - **Synchronous webhooks: size statically for peak.** A burst that needs a *new node* (~90 s) blows the 30 s sync budget before capacity arrives — hence [Production Setup](/install/configure-operate/production-setup#sizing)'s pre-sized fleet. Keep **min replicas ≥ your sync peak** and let the autoscaler own the burst headroom above it.
 - **Scale-down is free.** Drain is sub-second and lossless, so aggressive scale-down policies don't risk runs.
+
+## Scale workers on queue depth with KEDA
+
+The app reports the backlog of every job queue at [`GET /api/v1/worker-machines/queue-metrics`](/endpoints/worker-machines/queue-metrics). [KEDA](https://keda.sh)'s `metrics-api` scaler polls it and sizes the worker fleet to the backlog.
+
+```json
+{
+  "queues": [
+    { "name": "workerJobs", "waiting": 12, "active": 4 }
+  ]
+}
+```
+
+- `waiting` counts waiting and prioritized jobs. Running jobs are in `active` and are not part of the scaling signal.
+- `workerJobs` is the shared queue and is always in the response. Each [worker group](/install/configure-operate/worker-groups) has its own queue, named after its `AP_WORKER_GROUP_ID` and scope: `project-<group-name>-jobs`, `flow-<group-name>-jobs` or `platform-<group-name>-jobs`.
+- The endpoint is platform admin only. Authenticate with `Authorization: Bearer <platform API key>`, an `sk-...` key created under **Platform Admin → Developers → API Keys** (requires API keys on your plan).
+
+The manifests below assume [separate workers](/install/configure-operate/separate-workers): the app runs behind a Service named `activepieces` on port 80, and the workers (`AP_CONTAINER_TYPE=WORKER`) run in a Deployment named `activepieces-worker`, both in the `activepieces` namespace.
+
+### 1. Store the API key
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ap-keda-auth
+  namespace: activepieces
+type: Opaque
+stringData:
+  apiKey: "sk-xxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+A platform API key acts on the whole platform, so limit who can read this Secret.
+
+### 2. Let KEDA use it
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: ap-queue-metrics-auth
+  namespace: activepieces
+spec:
+  secretTargetRef:
+    - parameter: token
+      name: ap-keda-auth
+      key: apiKey
+```
+
+`parameter: token` together with `authMode: "bearer"` in the trigger makes KEDA send `Authorization: Bearer sk-...` on every poll.
+
+### 3. Scale the worker Deployment
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: activepieces-worker
+  namespace: activepieces
+spec:
+  scaleTargetRef:
+    name: activepieces-worker             # worker Deployment
+  pollingInterval: 15                     # seconds between KEDA polls
+  minReplicaCount: 2
+  maxReplicaCount: 30
+  fallback:
+    failureThreshold: 3
+    replicas: 5                           # if the endpoint fails 3x, hold at 5
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 0   # scale up immediately
+          policies:
+            - type: Percent
+              value: 100                  # double pods...
+              periodSeconds: 30
+            - type: Pods
+              value: 4                    # ...or +4 pods, whichever is larger
+              periodSeconds: 30
+          selectPolicy: Max
+        scaleDown:
+          stabilizationWindowSeconds: 300 # 5 min smoothing
+          policies:
+            - type: Percent
+              value: 25
+              periodSeconds: 60
+  triggers:
+    - type: metrics-api
+      metadata:
+        targetValue: "50"                 # waiting jobs per worker pod
+        url: "http://activepieces.activepieces.svc.cluster.local/api/v1/worker-machines/queue-metrics"
+        valueLocation: 'queues.#(name=="workerJobs").waiting'
+        authMode: "bearer"
+      authenticationRef:
+        name: ap-queue-metrics-auth
+```
+
+### Tuning
+
+- **`targetValue`** is waiting jobs per worker pod: KEDA asks for `waiting / targetValue` pods (rounded up), within the min and max. Each pod runs `AP_WORKER_CONCURRENCY` flows at a time, so a lower value drains a backlog faster at the cost of more pods.
+- **`minReplicaCount`** carries steady load. `waiting` drops to 0 as soon as the backlog drains, even while every worker is busy, so the HPA scales back toward the minimum at the pace of the `scaleDown` policy. Size it for your normal throughput and your synchronous webhook peak; the pods it removes [drain without losing runs](#scaling-down-is-safe).
+- **Worker groups:** add one ScaledObject per group, targeting that group's worker Deployment, with `valueLocation: 'queues.#(name=="project-<group-name>-jobs").waiting'`. A group queue is listed only after the app instance that answers the poll has queued a job to it since it started. Until then KEDA can't find the value and holds `fallback.replicas`, so keep `fallback` on these ScaledObjects.
+- **Helm chart:** the chart runs the app and an embedded worker in one StatefulSet (or an Argo `Rollout`) and ships its own CPU-based HPA. KEDA creates its own HPA for the target, so keep the chart's `autoscaling.enabled: false`. To scale the chart's workload, point `scaleTargetRef` at it: `name` is the chart's full name (the same name as its Service, shown by `kubectl get statefulset -n <namespace>`), with `kind: StatefulSet` (or `apiVersion: argoproj.io/v1alpha1` and `kind: Rollout`). This scales the app together with its workers.
 
 ## How this was measured
 
