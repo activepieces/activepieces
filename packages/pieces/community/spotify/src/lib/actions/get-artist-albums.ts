@@ -35,7 +35,7 @@ export default createAction({
     id: spotifyCommon.catalogId({ kind: 'artist', displayName: 'Artist ID', required: true }),
     include_groups: Property.StaticMultiSelectDropdown({
       displayName: 'Album Types',
-      description: 'Leave empty for all types.',
+      description: 'Empty returns every type.',
       required: false,
       options: {
         options: [
@@ -49,8 +49,13 @@ export default createAction({
     offset: spotifyCommon.offset(),
     limit: spotifyCommon.limit({ max: MAX_LIMIT, defaultHint: 5 }),
     all: spotifyCommon.all({ maxItems: MAX_LIMIT * ALL_MAX_PAGES }),
+    paging_note: spotifyCommon.pagingNote(),
     market: spotifyCommon.market(),
   },
+  propertyGroups: [
+    { key: 'artist', display: 'section', label: 'Artist', icon: 'user', props: ['id', 'include_groups'] },
+    { key: 'results', display: 'section', label: 'Results', icon: 'sliders', props: ['limit', 'all', 'paging_note'] },
+  ],
   async run({ auth, propsValue }) {
     const id = spotifyIds.parse({ kind: 'artist', value: propsValue.id, label: 'Artist ID' });
     const groups = includeGroups(propsValue.include_groups);

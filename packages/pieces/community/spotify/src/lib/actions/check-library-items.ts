@@ -8,7 +8,7 @@ export default createAction({
   classification: 'READ',
   auth: spotifyCommon.authentication,
   displayName: 'Check Library Items',
-  description: 'Checks whether tracks, albums, episodes, shows, artists, users or playlists are saved or followed',
+  description: 'Checks whether items are saved or followed.',
   audience: 'both',
   aiMetadata: {
     description: 'Checks, for each Spotify URI or open.spotify.com link, whether it is saved in (or followed by) the connected library; returns one {uri, saved} result per input. Use it before adding or removing to avoid unnecessary writes. Read-only and repeatable.',
@@ -18,7 +18,7 @@ export default createAction({
   props: {
     items: Property.Array({
       displayName: 'Items',
-      description: 'Spotify URIs or open.spotify.com links to check',
+      description: 'Spotify URIs or open.spotify.com links, one per item.',
       required: true,
     }),
   },

@@ -16,14 +16,14 @@ export default createAction({
   outputSchema: spotifyOutputSchemas['seek'],
   props: {
     position_ms: Property.Number({
-      displayName: 'Position (ms)',
-      description: 'Position in milliseconds, for example 90000 for 1:30.',
+      displayName: 'Position',
+      description: 'Milliseconds into the item, e.g. 90000 for 1:30.',
       required: true,
     }),
     device_id: spotifyCommon.device_id(false),
   },
   async run({ auth, propsValue }) {
-    const positionMs = spotifyValidate.requiredInteger({ value: propsValue.position_ms, field: 'Position (ms)', min: 0 });
+    const positionMs = spotifyValidate.requiredInteger({ value: propsValue.position_ms, field: 'Position', min: 0 });
     const deviceId = spotifyValidate.deviceId(propsValue.device_id);
     const client = makeClient({ auth });
     await client.seek({ position_ms: positionMs, device_id: deviceId });

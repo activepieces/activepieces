@@ -18,6 +18,7 @@ export default createAction({
     offset: spotifyCommon.offset(),
     limit: spotifyCommon.limit({ max: 50, defaultHint: 20 }),
     all: spotifyCommon.all(),
+    paging_note: spotifyCommon.pagingNote(),
     market: spotifyCommon.market(),
   },
   async run({ auth, propsValue }) {

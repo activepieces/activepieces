@@ -7,7 +7,7 @@ export default createAction({
   name: 'add_playlist_items',
   classification: 'WRITE',
   auth: spotifyCommon.authentication,
-  displayName: 'Add items to playlist',
+  displayName: 'Add Items to Playlist',
   description: 'Adds tracks or episodes to the playlist',
   audience: 'both',
   aiMetadata: {
@@ -19,13 +19,14 @@ export default createAction({
     playlist_id: spotifyCommon.playlist_id(true),
     items: Property.Array({
       displayName: 'Items',
-      description: 'Track or episode URIs (spotify:track:…) or open.spotify.com links',
+      description: 'Track or episode URIs or links.',
       required: true,
     }),
     position: Property.Number({
       displayName: 'Position',
-      description: '0-based position to insert at. Leave empty to append to the end.',
+      description: 'Where to insert, counting from 0; empty adds to the end.',
       required: false,
+      advanced: true,
     }),
   },
   async run({ auth, propsValue }) {
