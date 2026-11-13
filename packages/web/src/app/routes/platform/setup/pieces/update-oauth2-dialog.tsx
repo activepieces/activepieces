@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { adminLayout } from '@/app/components/admin';
+import { MaskedInput } from '@/components/custom/masked-input';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -140,12 +141,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
                   <Label htmlFor="clientSecret" showRequiredIndicator>
                     {t('Client Secret')}
                   </Label>
-                  <Input
-                    {...field}
-                    required
-                    id="clientSecret"
-                    type="password"
-                  />
+                  <MaskedInput {...field} required id="clientSecret" />
                   <FormMessage />
                 </FormItem>
               )}
