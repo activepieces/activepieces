@@ -42,8 +42,8 @@ export const answerApprovalAction = createAction({
 			display: 'cards',
 			options: {
 				options: [
-					{ label: 'Approve', value: 'approve', description: 'The request moves forward', icon: 'send' },
-					{ label: 'Decline', value: 'decline', description: 'The request is rejected', icon: 'trash' },
+					{ label: 'Approve', value: 'approve', description: 'Moves forward', icon: 'send' },
+					{ label: 'Decline', value: 'decline', description: 'Rejects it', icon: 'trash' },
 				],
 			},
 		}),

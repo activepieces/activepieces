@@ -42,9 +42,9 @@ export const findRequestsAction = createAction({
 			display: 'cards',
 			options: {
 				options: [
-					{ label: 'All', value: 'all', description: 'Open and closed', icon: 'filter' },
-					{ label: 'Open', value: 'open', description: 'Still being worked on', icon: 'inbox' },
-					{ label: 'Closed', value: 'closed', description: 'Resolved or done', icon: 'tag' },
+					{ label: 'All', value: 'all', description: 'Any status', icon: 'filter' },
+					{ label: 'Open', value: 'open', description: 'Not done yet', icon: 'inbox' },
+					{ label: 'Closed', value: 'closed', description: 'Resolved', icon: 'tag' },
 				],
 			},
 		}),

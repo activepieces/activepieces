@@ -18,7 +18,7 @@ Connect an account that is an agent or admin of the service desk.
 	props: {
 		deployment: Property.StaticDropdown({
 			displayName: 'Jira Type',
-			description: 'Cloud sites end with atlassian.net. Data Center is hosted by your company.',
+			description: 'Cloud sites end with atlassian.net.',
 			required: true,
 			defaultValue: JSM_DEPLOYMENT.CLOUD,
 			options: {
@@ -30,17 +30,17 @@ Connect an account that is an agent or admin of the service desk.
 		}),
 		instanceUrl: Property.ShortText({
 			displayName: 'Instance URL',
-			description: 'The link of your Jira site, for example https://example.atlassian.net or https://jira.yourcompany.com',
+			description: 'For example https://example.atlassian.net',
 			required: true,
 		}),
 		email: Property.ShortText({
 			displayName: 'Email',
-			description: 'Jira Cloud only: the email you use to log in to Jira. Leave empty for Data Center.',
+			description: 'Jira Cloud only. Leave empty for Data Center.',
 			required: false,
 		}),
 		apiToken: PieceAuth.SecretText({
 			displayName: 'API Token',
-			description: 'Jira Cloud: your API token. Data Center: your personal access token.',
+			description: 'Cloud: API token. Data Center: personal access token.',
 			required: true,
 		}),
 	},

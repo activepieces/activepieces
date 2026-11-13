@@ -56,7 +56,7 @@ export const createRequestAction = createAction({
 		}),
 		raiseOnBehalfOf: Property.ShortText({
 			displayName: 'Raise on Behalf Of',
-			description: 'The customer the request is for. Empty: the connected account is the reporter.',
+			description: 'The customer the request is for. Empty: you are the reporter.',
 			placeholder: 'customer@example.com',
 			required: false,
 			advanced: true,

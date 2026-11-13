@@ -23,7 +23,7 @@ export const addRequestParticipantsAction = createAction({
 		requestKey: jsmProps.request(),
 		participants: Property.Array({
 			displayName: 'Participants',
-			description: 'Emails of the people to add. Data Center: usernames, which are usually the emails.',
+			description: 'Emails of the people to add. Data Center: their usernames.',
 			required: true,
 		}),
 	},

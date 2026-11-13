@@ -167,7 +167,7 @@ function resolution() {
 	return Property.Dropdown({
 		auth: jsmAuth,
 		displayName: 'Resolution',
-		description: 'Why the request is closed. Only for transitions that resolve or cancel it.',
+		description: 'Needed when the transition closes the request.',
 		required: false,
 		refreshers: ['requestKey', 'transitionId'],
 		options: async ({ auth, requestKey, transitionId }) => {

@@ -43,8 +43,8 @@ export const addCommentAction = createAction({
 			display: 'cards',
 			options: {
 				options: [
-					{ label: 'Reply to customer', value: 'public', description: 'The customer sees it', icon: 'reply' },
-					{ label: 'Internal note', value: 'internal', description: 'Only your team sees it', icon: 'users' },
+					{ label: 'Public reply', value: 'public', description: 'To customer', icon: 'reply' },
+					{ label: 'Internal note', value: 'internal', description: 'Team only', icon: 'users' },
 				],
 			},
 		}),
