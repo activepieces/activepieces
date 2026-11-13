@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { useEffect, useRef, useState } from 'react';
 
@@ -26,31 +27,44 @@ function DateEditor() {
   const [inputValue, setInputValue] = useState(getFormattedDate(value));
   const handleSelect = (newDate: Date | undefined) => {
     setDate(newDate);
-    if (newDate) {
-      setInputValue(formatUtils.formatDateOnly(newDate));
-      handleCellChange(newDate.toISOString());
-      setIsEditing(false);
+    if (isNil(newDate)) {
+      setInputValue('');
+      return;
     }
+    setInputValue(formatUtils.formatDateOnly(newDate));
+    handleCellChange(newDate.toISOString());
+  };
+
+  const handleClose = () => {
+    const isCleared = inputValue.trim() === '';
+    if (
+      inputValue === getFormattedDate(value) ||
+      (!isCleared && !isValidDate(inputValue))
+    ) {
+      setIsEditing(false);
+      return;
+    }
+    handleCellChange(isCleared ? '' : new Date(inputValue).toISOString());
   };
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    setInputValue(getFormattedDate(value));
+    setDate(isValidDate(value) ? new Date(value) : undefined);
+    setMonth(isValidDate(value) ? new Date(value) : undefined);
     if (isEditing) {
       requestAnimationFrame(() => {
         inputRef.current?.focus();
       });
-    } else {
-      setInputValue(getFormattedDate(value));
     }
   }, [isEditing]);
   return (
-    <div className="h-full w-full" ref={containerRef}>
+    <div className="h-full w-full">
       <Popover
         open={isEditing}
         onOpenChange={(open) => {
           if (!open) {
-            setIsEditing(false);
+            handleClose();
           }
         }}
       >
@@ -66,26 +80,18 @@ function DateEditor() {
               }}
               onChange={(e) => {
                 setInputValue(e.target.value);
-                if (isValidDate(e.target.value)) {
-                  setDate(new Date(e.target.value));
-                  setMonth(new Date(e.target.value));
-                } else {
-                  setDate(undefined);
-                }
-              }}
-              onBlur={(e) => {
-                if (!containerRef.current?.contains(e.target as Node)) {
-                  handleCellChange(date?.toISOString() ?? '');
+                const typedDate = isValidDate(e.target.value)
+                  ? new Date(e.target.value)
+                  : undefined;
+                setDate(typedDate);
+                if (typedDate) {
+                  setMonth(typedDate);
                 }
               }}
               onKeyDown={(e) => {
                 e.stopPropagation();
                 if (e.key === 'Enter') {
-                  handleCellChange(date?.toISOString() ?? '');
-                  e.preventDefault();
-                }
-                if (e.key === 'Escape') {
-                  setIsEditing(false);
+                  handleClose();
                   e.preventDefault();
                 }
               }}
@@ -107,7 +113,14 @@ function DateEditor() {
             </div>
           )}
         </CellEditorTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent
+          className="w-auto p-0"
+          align="start"
+          onEscapeKeyDown={(e) => {
+            e.preventDefault();
+            setIsEditing(false);
+          }}
+        >
           <Calendar
             mode="single"
             selected={date}
