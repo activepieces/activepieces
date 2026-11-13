@@ -51,6 +51,13 @@ Tag every test of the feature with `@feature:<slug>`, so a query can list which 
 
 Project roles, a second project and the mail catcher exist only in EE. A test that needs one of them lives under `scenarios/ee/`. The CE spec of the same feature does not branch on the edition; its ticket marks that check `no-e2e: EE only`.
 
+For the role gate and project isolation, an EE spec imports `test` from `fixtures/access.ts`. `secondProject` is a new team project, and its `session` is the admin token scoped to that project. `viewer` is a new user with the Viewer role in `secondProject` only, not in the default project, invited and accepted through the mail catcher, with its own session. Seed what the viewer needs into its project with `seed.flow({ template, publish, session: secondProject.session })`. Everything is deleted after the test.
+
+- Role gate: first check that the viewer can read the record, so a 403 on the write means the role and not a missing membership. Then assert the server's answer to the write.
+- Isolation: seed the record into the default project, and assert that the viewer, who is not a member there, gets a 403 when it reads or lists it. Do not use the admin for this check: the admin is a member of every project.
+
+`scenarios/ee/access/access-fixtures.spec.ts` shows both checks.
+
 ### Data
 
 - Create what the spec needs, and name each flow and connection with `e2eFlows.uniqueName()` (prefix `E2E `).
@@ -118,6 +125,7 @@ Required environment variables:
 - `E2E_INSTANCE_URL` — target Activepieces URL (defaults to `http://localhost:4200` and starts the dev server when unset). Global setup deletes `E2E `-prefixed flows and connections older than one hour, which crashed runs leave behind. It does not touch other flows or connections.
 - `E2E_EMAIL` — test user email
 - `E2E_PASSWORD` — test user password
+- `E2E_LICENSE_KEY` — an EE license key. Global setup activates it on the platform, so EE specs get the plan of the key (project roles, team projects) instead of the free plan a new platform starts on. The EE configs of `e2e-matrix.yml` set it from the secret of the same name. The app itself reads no license key from its environment. Without the key, `fixtures/access.ts` fails with a 402 and says to set it. A PR from a fork gets no repository secrets, so its EE access specs fail that way too.
 - `E2E_MAIL_URL` — the web port of a [Mailpit](https://mailpit.axllent.org) catcher, such as `http://localhost:8025`. The specs that read mail need it. For a local run, start `docker run -d -p 1025:1025 -p 8025:8025 -e MP_SMTP_AUTH_ACCEPT_ANY=true -e MP_SMTP_AUTH_ALLOW_INSECURE=true axllent/mailpit`, and start the app with `AP_SMTP_HOST=localhost`, `AP_SMTP_PORT=1025`, `AP_SMTP_SENDER_EMAIL`, and any `AP_SMTP_USERNAME` and `AP_SMTP_PASSWORD`.
 
 ## CI
