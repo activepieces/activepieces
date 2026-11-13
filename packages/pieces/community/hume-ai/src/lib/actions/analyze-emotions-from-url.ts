@@ -86,19 +86,30 @@ function isPlainObject(value: unknown): value is Record<string, never> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function toModelConfig({ value }: { value: unknown }): Record<string, never> {
+function toModelConfig({ model, value }: { model: string; value: unknown }): Record<string, never> {
+  const invalidSettingsError = new Error(
+    `Settings for model "${model}" must be a JSON object, e.g. {}. Leave the value empty to use the defaults.`,
+  );
   if (isPlainObject(value)) {
     return value;
   }
+  if (value === undefined || value === null) {
+    return {};
+  }
   if (typeof value === 'string') {
-    try {
-      const parsed: unknown = JSON.parse(value);
-      return isPlainObject(parsed) ? parsed : {};
-    } catch {
+    if (value.trim() === '') {
       return {};
     }
+    try {
+      const parsed: unknown = JSON.parse(value);
+      if (isPlainObject(parsed)) {
+        return parsed;
+      }
+    } catch {
+      throw invalidSettingsError;
+    }
   }
-  return {};
+  throw invalidSettingsError;
 }
 
 function toModels({ models }: { models: unknown }): Hume.expressionMeasurement.batch.Models | undefined {
@@ -108,7 +119,7 @@ function toModels({ models }: { models: unknown }): Hume.expressionMeasurement.b
   const supportedKeys = ['face', 'burst', 'prosody', 'language', 'ner', 'facemesh'];
   const entries = supportedKeys
     .filter((key) => Object.prototype.hasOwnProperty.call(models, key))
-    .map((key) => [key, toModelConfig({ value: models[key] })]);
+    .map((key) => [key, toModelConfig({ model: key, value: models[key] })]);
   if (entries.length === 0) {
     return undefined;
   }
