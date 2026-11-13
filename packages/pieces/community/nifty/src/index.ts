@@ -60,6 +60,12 @@ export const nifty = createPiece({
     createCustomApiCallAction({
       baseUrl: () => niftyClient.BASE_URL,
       auth: niftyAuth,
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${niftyClient.BASE_URL}`,
+          placeholder: '/tasks',
+        },
+      },
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.access_token}`,
       }),
