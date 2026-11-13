@@ -437,15 +437,15 @@ async function changeProductStatus({
   }
   const wasHidden = before?.['status'] === 'hidden' || channelsBefore === undefined || channelsBefore.length === 0;
   const saved = store && target !== 'hidden' ? await readHiddenChannels({ store, key }) : undefined;
-  if (store && saved && wasHidden && !saved.restoring) {
-    await store.put<HiddenChannels>(key, { channels: saved.channels, at: saved.at, restoring: true }, StoreScope.PROJECT);
+  const wanted = wasHidden || saved?.restoring ? saved?.channels : channelsBefore;
+  if (store && target !== 'hidden' && wanted !== undefined && wanted.length > 0 && !saved?.restoring) {
+    await store.put<HiddenChannels>(key, { channels: wanted, at: saved?.at ?? Date.now(), restoring: true }, StoreScope.PROJECT);
   }
   const message = await postProductStatus({ auth, productId: id, status: target });
   const result: ProductStatusResult = { product_id: Number(id), status: target, message };
   if (!store || target === 'hidden') {
     return result;
   }
-  const wanted = wasHidden || saved?.restoring ? saved?.channels : channelsBefore;
   if (wanted === undefined || wanted.length === 0) {
     return result;
   }

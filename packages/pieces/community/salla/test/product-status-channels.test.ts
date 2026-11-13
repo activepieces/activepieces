@@ -218,6 +218,24 @@ describe('Change Product Status keeps the sales channels', () => {
     await sallaProducts.changeProductStatus({ auth, productId: 9, status: 'out', store });
     expect(salla.product).toEqual({ status: 'out', channels: ['web'] });
   });
+
+  it('puts web and app back on a retry after a failed restore when a visible product is set on sale again', async () => {
+    const store = memoryStore();
+    const salla = fakeSalla({ status: 'sale', channels: ['web', 'app'] });
+    const send = vi.mocked(httpClient.sendRequest);
+    const fake = send.getMockImplementation();
+    let failChannels = true;
+    send.mockImplementation(async (request: HttpRequest) => {
+      if (failChannels && pathOf(request) === '/products/actions') {
+        throw new Error('channels down');
+      }
+      return fake ? fake(request) : { status: 200, headers: {}, body: {} };
+    });
+    await expect(sallaProducts.changeProductStatus({ auth, productId: 9, status: 'sale', store })).rejects.toThrow('channels down');
+    failChannels = false;
+    await sallaProducts.changeProductStatus({ auth, productId: 9, status: 'sale', store });
+    expect(salla.product).toEqual({ status: 'sale', channels: ['web', 'app'] });
+  });
 });
 
 describe('Update Product status keeps the product as asked', () => {
