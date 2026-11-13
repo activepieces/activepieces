@@ -1,7 +1,8 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { braveWebSearchAction } from './lib/actions/web-search';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { braveSearchAuth } from './lib/auth';
+import { braveSearchCommon } from './lib/common';
 
 export const braveSearch = createPiece({
   displayName: 'Brave Search',
@@ -14,11 +15,17 @@ export const braveSearch = createPiece({
     braveWebSearchAction,
     createCustomApiCallAction({
       auth: braveSearchAuth,
-      baseUrl: () => 'https://api.search.brave.com/res/v1',
+      baseUrl: () => braveSearchCommon.baseUrl,
       authMapping: async (auth) => {
         return {
           'X-Subscription-Token': auth.secret_text,
         };
+      },
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${braveSearchCommon.baseUrl}`,
+          placeholder: '/web/search?q=activepieces',
+        },
       },
     }),
   ],
