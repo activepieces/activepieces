@@ -353,6 +353,7 @@
   "Confidence floor": "Confidence floor",
   "No floor": "No floor",
   "Below this, the flow takes the Otherwise route.": "Below this, the flow takes the Otherwise route.",
+  "The decision model that picks the route.": "The decision model that picks the route.",
   "If a batch fails": "If a batch fails",
   "Stop the step": "Stop the step",
   "Continue & report": "Continue & report",
