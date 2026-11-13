@@ -1,6 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { base44Auth } from '../..';
-import { createClient, Base44Error, type Base44Client } from '@base44/sdk';
+import { base44Auth, base44Common } from '../common/client';
 
 export const findEntity = createAction({
   auth: base44Auth,
@@ -9,7 +8,14 @@ export const findEntity = createAction({
   displayName: 'Find Entity Record',
   description: 'Find a matching entity record in your Base44 app',
   audience: 'both',
-  aiMetadata: { description: 'Searches a Base44 app for records of a given entity type that match a JSON filter query, returning all matches. Use when you need to look up existing records by field values (e.g. find a User by email) without modifying anything. Requires the exact entity-type name; this is a read-only lookup and is idempotent.', idempotent: true },
+  outputSchema: {
+    fields: [
+      { key: 'found', label: 'Found', format: 'boolean' },
+      { key: 'count', label: 'Count', format: 'number' },
+      { key: 'results', label: 'Results', labelKey: 'id', listItems: base44Common.recordFields },
+    ],
+  },
+  aiMetadata: { description: 'Searches a Base44 app for records of a given entity type that match a JSON filter query (exact field values, or operators such as $in, $gt, $regex), returning up to "limit" matches (default 50, max 500). Use when you need to look up existing records by field values (e.g. find a User by email) without modifying anything. Requires the exact entity-type name. Read-only and idempotent. Returned records include the built-in fields plus every app-defined field of the entity (e.g. name, status) as top-level keys.', idempotent: true },
   props: {
     entityType: Property.ShortText({
       displayName: 'Entity Type',
@@ -22,49 +28,37 @@ export const findEntity = createAction({
       required: true,
       defaultValue: {},
     }),
+    sort: Property.ShortText({
+      displayName: 'Sort',
+      description: 'Field to sort by. Prefix with "-" for descending (e.g. "-created_date").',
+      required: false,
+    }),
+    limit: Property.Number({
+      displayName: 'Limit',
+      description: 'Maximum number of records to return (1-500). Defaults to 50.',
+      required: false,
+      defaultValue: 50,
+    }),
   },
   async run({ auth, propsValue }) {
-    const appId = auth.props.appId;
-    const token = auth.props.token;
-    const { entityType, searchQuery } = propsValue;
-
-    if (!appId) {
-      throw new Error('App ID is required.');
-    }
-
-    const base44: Base44Client = createClient({
-      appId,
-      token,
-      serviceToken: token,
-    });
-
+    const { entityType, searchQuery, sort, limit } = propsValue;
+    const query = base44Common.requireJsonObject({ value: searchQuery, label: 'Search Query' });
+    const handler = await base44Common.getEntityHandler({ auth: auth.props, entityType });
     try {
-      const entitiesModule = token
-        ? base44.asServiceRole.entities as Record<string, {
-            filter: (query: Record<string, unknown>) => Promise<unknown[]>;
-          }>
-        : base44.entities as Record<string, {
-            filter: (query: Record<string, unknown>) => Promise<unknown[]>;
-          }>;
-
-      const results = await entitiesModule[entityType].filter(searchQuery as Record<string, unknown>);
-
+      const results = base44Common.toRecordList(
+        await handler.filter(
+          query,
+          base44Common.toSortField(sort),
+          base44Common.clampLimit({ limit, fallback: base44Common.DEFAULT_LIMIT }),
+        ),
+      );
       return {
-        found: Array.isArray(results) && results.length > 0,
-        count: Array.isArray(results) ? results.length : 0,
-        results: results,
+        found: results.length > 0,
+        count: results.length,
+        results,
       };
     } catch (error: unknown) {
-      if (error instanceof Base44Error) {
-        if (error.status === 404) {
-          throw new Error(`Entity type "${entityType}" not found. Please check the name.`);
-        }
-        if (error.status === 401 || error.status === 403) {
-          throw new Error('Authentication failed. Please check your credentials.');
-        }
-        throw new Error(`Failed to find entity: ${error.message}`);
-      }
-      throw new Error(`Failed to find entity: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw base44Common.toBase44Error({ error, entityType, operation: 'search records' });
     }
   },
 });

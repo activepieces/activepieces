@@ -63,6 +63,18 @@ export const adminPageResources = {
       path: 'admin-guide/guides/ai-capabilities',
     }),
   ],
+  aiTiers: [
+    docs({
+      label: () => t('AI tiers guide'),
+      path: 'admin-guide/guides/ai-tiers',
+    }),
+  ],
+  aiUsage: [
+    docs({
+      label: () => t('AI usage guide'),
+      path: 'admin-guide/guides/ai-usage',
+    }),
+  ],
   pieces: [
     docs({
       label: () => t('Pieces guide'),

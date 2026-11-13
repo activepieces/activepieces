@@ -10,6 +10,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { convertRequest, extractHeaderFromRequest } from './webhook-request-converter'
+import { webhookResponse } from './webhook-response'
 import { WebhookFlowVersionToRun, webhookService } from './webhook.service'
 
 export const webhookController: FastifyPluginAsyncZod = async (app) => {
@@ -40,10 +41,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
                 ...extractHeaderFromRequest(request),
             })
             wideEvent.set({ webhook: { responseStatus: response.status } })
-            await reply
-                .status(response.status)
-                .headers(response.headers)
-                .send(response.body)
+            await webhookResponse.send({ reply, response })
         },
     )
 
@@ -73,10 +71,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
                 ...extractHeaderFromRequest(request),
             })
             wideEvent.set({ webhook: { responseStatus: response.status } })
-            await reply
-                .status(response.status)
-                .headers(response.headers)
-                .send(response.body)
+            await webhookResponse.send({ reply, response })
         },
     )
 
@@ -94,10 +89,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
             },
             ...extractHeaderFromRequest(request),
         })
-        await reply
-            .status(response.status)
-            .headers(response.headers)
-            .send(response.body)
+        await webhookResponse.send({ reply, response })
     })
 
     app.all('/:flowId/draft', WEBHOOK_PARAMS, async (request, reply) => {
@@ -111,10 +103,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
             execute: true,
             ...extractHeaderFromRequest(request),
         })
-        await reply
-            .status(response.status)
-            .headers(response.headers)
-            .send(response.body)
+        await webhookResponse.send({ reply, response })
     })
 
     app.all('/:flowId/test', WEBHOOK_PARAMS, async (request, reply) => {
@@ -128,14 +117,10 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
             execute: false,
             ...extractHeaderFromRequest(request),
         })
-        await reply
-            .status(response.status)
-            .headers(response.headers)
-            .send(response.body)
+        await webhookResponse.send({ reply, response })
     })
 
 }
-
 
 const WEBHOOK_PARAMS = {
     config: {

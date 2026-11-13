@@ -55,11 +55,11 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
         return true
     },
 
-    async delete(keys: string | string[]): Promise<void> {
+    async delete(keys: string | string[]): Promise<number> {
         const keysArray = Array.isArray(keys) ? keys : [keys]
-        if (keysArray.length === 0) return
+        if (keysArray.length === 0) return 0
         const redisClient = await getRedisClient()
-        await redisClient.del(...keysArray)
+        return redisClient.del(...keysArray)
     },
 
     async putBoolean(key: string, value: boolean): Promise<void> {

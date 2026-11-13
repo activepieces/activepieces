@@ -4,21 +4,24 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { domainHelper } from '../helper/domain-helper'
-import { projectService } from '../project/project-service'
+import { networkUtils } from '../helper/network-utils'
 import { barrierService, CreateBarrierResult } from './barrier-service'
+import { resumePageHooks } from './resume-page-hooks'
 import { waitpointService } from './waitpoint-service'
 import { WaitpointSignal } from './waitpoint-types'
 
 export const waitpointController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', CreateWaitpointParams, async (request, reply) => {
         const { flowRunId, projectId, stepName, type, version, resumeDateTime, responseToSend, workerHandlerId, httpRequestId, barrier } = request.body
+        const platformId = request.principal.platform.id
+        const publicApiUrl = await resumePageHooks.get(request.log).getPublicApiBaseUrl({ platformId })
 
         if (type === PauseType.BARRIER) {
             assertBarrierCarriesNoDeadline({ resumeDateTime })
             const created = await barrierService(request.log).create({
                 flowRunId,
                 projectId,
-                platformId: await projectService(request.log).getPlatformId(projectId),
+                platformId,
                 stepName,
                 version,
                 responseToSend: responseToSend ?? undefined,
@@ -27,11 +30,12 @@ export const waitpointController: FastifyPluginAsyncZod = async (app) => {
                 policy: barrier?.policy,
                 signalLabels: barrier?.signals?.map((signal) => signal.label ?? null),
                 fanOut: barrier?.fanOut,
+                timeoutSeconds: barrier?.timeoutSeconds,
             })
             return reply.status(StatusCodes.CREATED).send({
                 id: created.barrier.id,
-                resumeUrl: await buildResumeUrl({ flowRunId, waitpointId: created.barrier.id }),
-                barrier: await buildBarrierState({ flowRunId, created }),
+                ...await buildResumeUrls({ flowRunId, waitpointId: created.barrier.id, publicApiUrl }),
+                barrier: buildBarrierState({ flowRunId, created, publicApiUrl }),
             })
         }
 
@@ -48,30 +52,35 @@ export const waitpointController: FastifyPluginAsyncZod = async (app) => {
         })
         return reply.status(StatusCodes.CREATED).send({
             id: waitpoint.id,
-            resumeUrl: await buildResumeUrl({ flowRunId, waitpointId: waitpoint.id }),
+            ...await buildResumeUrls({ flowRunId, waitpointId: waitpoint.id, publicApiUrl }),
         })
     })
 }
 
-async function buildResumeUrl({ flowRunId, waitpointId }: { flowRunId: string, waitpointId: string }): Promise<string> {
-    return domainHelper.getPublicApiUrl({ path: `v1/flow-runs/${flowRunId}/waitpoints/${waitpointId}` })
+async function buildResumeUrls({ flowRunId, waitpointId, publicApiUrl }: BuildResumeUrlsParams): Promise<Pick<CreateWaitpointResponse, 'resumeUrl' | 'publicResumeUrl'>> {
+    const path = `v1/flow-runs/${flowRunId}/waitpoints/${waitpointId}`
+    return {
+        resumeUrl: await domainHelper.getPublicApiUrl({ path }),
+        publicResumeUrl: networkUtils.combineUrl(publicApiUrl, path),
+    }
 }
 
-async function buildBarrierState({ flowRunId, created }: BuildBarrierStateParams): Promise<BarrierCreatedState> {
+function buildBarrierState({ flowRunId, created, publicApiUrl }: BuildBarrierStateParams): BarrierCreatedState {
     const inlineable = created.signals.length > 0 && created.signals.length <= MAX_INLINE_BARRIER_SIGNALS && created.signals.every((signal) => isNil(signal.sequence))
     const truncatedForSize = created.signals.length > MAX_INLINE_BARRIER_SIGNALS
     return {
         signalCount: created.signalCount,
         batchSize: created.batchSize,
+        ...(isNil(created.totalItems) ? {} : { totalItems: created.totalItems }),
         ...(truncatedForSize ? { signalsTruncated: true } : {}),
-        ...(inlineable ? { signals: await Promise.all(created.signals.map((signal) => toSignalLink({ flowRunId, signal }))) } : {}),
+        ...(inlineable ? { signals: created.signals.map((signal) => toSignalLink({ flowRunId, signal, publicApiUrl })) } : {}),
     }
 }
 
-async function toSignalLink({ flowRunId, signal }: { flowRunId: string, signal: WaitpointSignal }): Promise<{ label: string | null, confirmUrl: string }> {
+function toSignalLink({ flowRunId, signal, publicApiUrl }: { flowRunId: string, signal: WaitpointSignal, publicApiUrl: string }): { label: string | null, confirmUrl: string } {
     return {
         label: signal.label,
-        confirmUrl: await domainHelper.getPublicApiUrl({ path: `v1/flow-runs/${flowRunId}/signals/${signal.id}/confirm` }),
+        confirmUrl: networkUtils.combineUrl(publicApiUrl, `v1/flow-runs/${flowRunId}/signals/${signal.id}/confirm`),
     }
 }
 
@@ -100,4 +109,11 @@ const CreateWaitpointParams = {
 type BuildBarrierStateParams = {
     flowRunId: string
     created: CreateBarrierResult
+    publicApiUrl: string
+}
+
+type BuildResumeUrlsParams = {
+    flowRunId: string
+    waitpointId: string
+    publicApiUrl: string
 }

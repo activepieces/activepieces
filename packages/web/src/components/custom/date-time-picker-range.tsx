@@ -226,7 +226,7 @@ export function DateTimePickerWithRange({
   };
 
   return (
-    <div className={cn('grid gap-2', className)}>
+    <div className={cn('grid shrink-0 gap-2', className)}>
       <Popover>
         <PopoverTrigger asChild>
           <Button

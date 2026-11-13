@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, ErrorCode, isFallbackWorthy, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesError, AIProviderName, ErrorCode, isFallbackWorthy, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils, aiProviderSignal, aiUtils, modelCatalog } from '@activepieces/server-utils'
 import { AgentConfigResponse, AgentConversation, AgentRunSource, aiProviderUtils, GetAgentConfigRequest, GetEnabledAiToolsResponse, GetProviderConfigResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
 import { LanguageModel, ModelMessage, UserContent } from 'ai'
@@ -192,7 +192,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                 ? tryCatch(() => appConnectionService(log).list({
                     projectId: selectedProjectId,
                     platformId,
-                    pieceName: undefined,
+                    pieceNames: undefined,
                     displayName: undefined,
                     status: undefined,
                     cursorRequest: null,
@@ -238,10 +238,12 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             ? { ...agentPrompt.guides, ...promptOverride.guides }
             : agentPrompt.guides
 
-        const previousMessages = conversation.messages as ModelMessage[]
+        const resumedHistory = lock === 'handed-off' ? await agentHelpers.conversationRepo().findOneByOrFail({ id: conversationId, platformId }) : null
+        const history = resumedHistory ?? conversation
+        const previousMessages = history.messages as ModelMessage[]
         const onboardingNote = agentSurfaceNotes.onboardingNote({ source: conversation.source, ...spreadIfDefined('messageSource', input.messageSource) })
         const newUserMessage: ModelMessage = { role: 'user' as const, content: isNil(onboardingNote) ? userContent : withLeadingNote({ content: userContent, note: onboardingNote }) }
-        const allMessages = [...previousMessages, newUserMessage]
+        const allMessages = isNil(resumedHistory) ? [...previousMessages, newUserMessage] : previousMessages
         const fastModelSeesMessages = conversation.source !== AgentRunSource.CHAT
         const modelsSeeingMessages = isNil(tierRun)
             ? [resolvedModelId, ...(fastModelSeesMessages ? [fastModelId] : [])].map((modelId) => ({ provider: providerConfig.provider, modelId }))
@@ -252,11 +254,10 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             models: modelsSeeingMessages.map((model) => catalog.lookup(model)),
         })
 
-        const previousUiMessages = (conversation.uiMessages ?? []) as PersistedAgentMessage[]
-        const uiMessagesWithUser: PersistedAgentMessage[] = [
-            ...previousUiMessages,
-            { role: PersistedAgentRole.USER, parts: [{ type: PersistedAgentPartType.TEXT, text: userMessage }] },
-        ]
+        const previousUiMessages = (history.uiMessages ?? []) as PersistedAgentMessage[]
+        const uiMessagesWithUser: PersistedAgentMessage[] = isNil(resumedHistory)
+            ? [...previousUiMessages, { role: PersistedAgentRole.USER, parts: [{ type: PersistedAgentPartType.TEXT, text: userMessage }] }]
+            : previousUiMessages
         await agentHelpers.conversationRepo().update(conversationId, {
             messages: allMessages,
             uiMessages: JSON.parse(JSON.stringify(uiMessagesWithUser)),
@@ -280,8 +281,16 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         log.debug({ estimatedTokens, willCompact, messageCount: llmHistory.length, systemPromptLength: systemPromptText.length }, '[agentRpc#getAgentConfig] Compaction decision')
         if (willCompact) {
             const previous = compactionState
+            const compactionBilling: ActivepiecesAiBilling = {
+                source: ActivepiecesAiConsumerSource.CHAT,
+                platformId: conversation.platformId,
+                projectId: runProjectId,
+                conversationId: conversation.id,
+                context: await agentHelpers.usageContextOf({ source: conversation.source, projectId: runProjectId, agentId: conversation.agentId, flowRunId: conversation.flowRunId, userId: conversation.userId }),
+            }
             compactionState = await onFirstModelThatAnswers({
                 models: compactionModels,
+                billing: compactionBilling,
                 log,
                 run: (model) => agentCompaction.compactMessages({
                     messages: llmHistory,
@@ -291,6 +300,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                     reservedTokens: payloadReservedTokens,
                     model,
                     log,
+                    billing: compactionBilling,
                 }),
             })
             await agentHelpers.conversationRepo().update(conversationId, {
@@ -327,8 +337,12 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             fastModelId,
             ...spreadIfDefined('imageModelId', imageModelId),
             ...spreadIfDefined('searchCredentials', chosen.search?.credentials),
+            ...spreadIfDefined('searchProviderConfigId', chosen.search?.credentials.configId),
             ...spreadIfDefined('searchModelId', chosen.search?.modelId),
             ...spreadIfDefined('imageCredentials', chosen.image?.credentials),
+            ...spreadIfDefined('imageProviderConfigId', chosen.image?.credentials.configId),
+            ...spreadIfDefined('agentId', conversation.agentId ?? undefined),
+            ...spreadIfDefined('projectId', runProjectId ?? undefined),
             systemPrompt: systemPromptText,
             messages: messagesForLlm,
             allMessages,
@@ -367,9 +381,9 @@ function smallestContextProvider({ configs }: { configs: GetProviderConfigRespon
     return configs.reduce((smallest, config) => aiProviderUtils.getMaxContextTokens({ provider: config.provider }) < aiProviderUtils.getMaxContextTokens({ provider: smallest.provider }) ? config : smallest).provider
 }
 
-async function onFirstModelThatAnswers<T>({ models, run, log }: { models: { config: GetProviderConfigResponse, modelId: string }[], run: (model: LanguageModel) => Promise<T>, log: FastifyBaseLogger }): Promise<T> {
+async function onFirstModelThatAnswers<T>({ models, billing, run, log }: { models: { config: GetProviderConfigResponse, modelId: string }[], billing: ActivepiecesAiBilling, run: (model: LanguageModel) => Promise<T>, log: FastifyBaseLogger }): Promise<T> {
     for (const [index, candidate] of models.entries()) {
-        const attempt = await tryCatch(() => run(aiUtils.createModel({ credentials: candidate.config, modelId: candidate.modelId })))
+        const attempt = await tryCatch(() => run(aiUtils.createModel({ credentials: candidate.config, modelId: candidate.modelId, providerConfigId: candidate.config.configId, billing, usageOnly: true })))
         if (attempt.error === null) {
             return attempt.data
         }

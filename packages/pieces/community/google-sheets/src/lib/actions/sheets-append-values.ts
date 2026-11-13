@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
-import { createGoogleClient, googleSheetsAuth, ValueInputOption } from '../common/common';
+import { createGoogleClient, googleSheetsAuth, ValueInputOption, googleSheetsCommon } from '../common/common';
 import { sheetsAppendValuesActionOutputSchema } from '../output-schemas';
 
 export const sheetsAppendValues = createAction({
@@ -62,7 +62,7 @@ export const sheetsAppendValues = createAction({
 		const authClient = await createGoogleClient(auth);
 		const sheets = googleSheets({ version: 'v4', auth: authClient });
 
-		const a1Range = `${quoteSheetTitle(worksheet_title)}!${range}`;
+		const a1Range = googleSheetsCommon.sheetRange({ sheetName: worksheet_title, range });
 
 		const response = await sheets.spreadsheets.values.append({
 			spreadsheetId: spreadsheet_id,
@@ -83,7 +83,3 @@ export const sheetsAppendValues = createAction({
 		};
 	},
 });
-
-function quoteSheetTitle(title: string): string {
-	return `'${title.replace(/'/g, "''")}'`;
-}

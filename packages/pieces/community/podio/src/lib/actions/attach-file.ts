@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
+import { podioClient } from '../common/client';
+import { podioProps } from '../common/props';
 import { podioAuth } from '../auth';
-import { podioApiCall, getAccessToken, silentProperty, dynamicRefTypeProperty, dynamicRefIdProperty, dynamicAppProperty, dynamicSpaceProperty, dynamicOrgProperty, dynamicFileProperty } from '../common';
 
 export const attachFileAction = createAction({
   auth: podioAuth,
@@ -9,14 +10,14 @@ export const attachFileAction = createAction({
   classification: 'WRITE',
   displayName: 'Attach File',
   description: 'Upload and attach a file to an item/task/comment.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Attaches an already-uploaded Podio file to a target object — an item, task, status update, comment, or space — selected via the reference type and id. Use when linking an existing file to a Podio object; requires the file id, a space, and the target type/id. Not idempotent — each call adds another attachment.', idempotent: false },
   props: {
-    orgId: dynamicOrgProperty,
-    spaceId: dynamicSpaceProperty,
-    appId: dynamicAppProperty,
+    orgId: podioProps.orgId({ required: true }),
+    spaceId: podioProps.spaceId({ required: true }),
+    appId: podioProps.appId({ required: true }),
 
-    fileId: dynamicFileProperty,
+    fileId: podioProps.fileId({ required: true }),
     
     refType: Property.Dropdown({
       auth: podioAuth,
@@ -36,12 +37,11 @@ export const attachFileAction = createAction({
         };
       },
     }),
-    refId: dynamicRefIdProperty,
+    refId: podioProps.refId({ required: false }),
 
-    silent: silentProperty,
+    silent: podioProps.silent({ required: false }),
   },
   async run(context) {
-    const accessToken = getAccessToken(context.auth);
     const { fileId, orgId, spaceId, appId, refType, refId, silent } = context.propsValue;
 
     if (!spaceId) {
@@ -73,21 +73,19 @@ export const attachFileAction = createAction({
       ref_id: refId,
     };
 
-    const queryParams: any = {};
+    const queryParams: QueryParams = {};
     if (typeof silent === 'boolean') {
-      queryParams.silent = silent.toString();
+      queryParams['silent'] = silent.toString();
     }
 
-    const response = await podioApiCall<{
+    return await podioClient.request<{
       file_id: number;
     }>({
       method: HttpMethod.POST,
-      accessToken,
-      resourceUri: `/file/${fileId}/attach`,
+      auth: context.auth,
+      path: `/file/${fileId}/attach`,
       body,
-      queryParams,
+      query: queryParams,
     });
-
-    return response;
   },
-}); 
+});

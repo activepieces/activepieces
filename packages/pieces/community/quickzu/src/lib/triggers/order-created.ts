@@ -4,6 +4,7 @@ import {
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { quickzuAuth } from '../auth';
+import { quickzuOutputSchemas } from '../common/output-schemas';
 import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 const markdown = `
 - Go to the **Settings->API and Webhooks** section.
@@ -221,6 +222,7 @@ const sampleData = {
 export const orderCreatedTrigger = createTrigger({
   auth: quickzuAuth,
   name: 'quickzu_order_created_trigger',
+  outputSchema: quickzuOutputSchemas.orderWebhook,
   classification: 'READ',
   displayName: 'Order Created/Updated',
   description:
@@ -236,20 +238,20 @@ export const orderCreatedTrigger = createTrigger({
       value: markdown,
     }),
   },
-  async onEnable(context) {
-    // Empty
+  async onEnable() {
+    return;
   },
-  async onDisable(context) {
-    // Empty
+  async onDisable() {
+    return;
   },
   async run(context) {
-    return [context.payload];
+    return [context.payload.body];
   },
   handshakeConfiguration: {
     strategy: WebhookHandshakeStrategy.BODY_PARAM_PRESENT,
     paramName: 'test',
   },
-  async onHandshake(context) {
+  async onHandshake() {
     return {
       status: 200,
       body: {},

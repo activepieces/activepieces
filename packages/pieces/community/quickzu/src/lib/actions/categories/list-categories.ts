@@ -1,10 +1,12 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { quickzuAuth } from '../../auth';
+import { quickzuOutputSchemas } from '../../common/output-schemas';
 import { makeClient } from '../../common';
 
 export const listCategoriesAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_list_categories',
+  outputSchema: quickzuOutputSchemas.categoryList,
   classification: 'SEARCH',
   displayName: 'List Categories',
   description: 'Retrieves all categories from store.',
@@ -25,6 +27,6 @@ export const listCategoriesAction = createAction({
     const { term } = context.propsValue;
 
     const client = makeClient(context.auth);
-    return client.listCategories(term);
+    return await client.listCategories(term);
   },
 });

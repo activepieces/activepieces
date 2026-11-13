@@ -278,7 +278,8 @@ export function ChatWithAIPage() {
               onChange={(e) => setRenameValue(e.target.value)}
               onBlur={() => void handleRename()}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') void handleRename();
+                if (e.key === 'Enter' && !e.nativeEvent.isComposing)
+                  void handleRename();
                 if (e.key === 'Escape') {
                   renameCancelledRef.current = true;
                   setIsRenaming(false);

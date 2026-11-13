@@ -13,7 +13,7 @@ function createJudge({ provider, modelId, auth }: {
     if (modelId.startsWith(JEV_MODEL_PREFIX)) {
         return createJevJudge({ modelId, auth })
     }
-    const { model, costUsd } = costCapture.track({ model: aiUtils.createModel({ credentials: aiProviderCredentials({ provider, auth, config: {} }), modelId }) })
+    const { model, costUsd } = costCapture.track({ model: aiUtils.createModel({ credentials: aiProviderCredentials({ provider, auth, config: {} }), modelId, billing: null }) })
 
     const judge = async ({ dimension, rubric, transcript }: { dimension: string, rubric: string, transcript: string }): Promise<JudgeVerdict> => {
         const { text } = await generateText({

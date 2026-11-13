@@ -54,7 +54,7 @@ export const BrandImageField = ({
       <div
         data-dragging={dragging || undefined}
         className={cn(
-          'grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4 rounded-lg border border-dashed border-gray-7 p-4 transition-colors sm:grid-cols-[auto_minmax(0,1fr)_auto]',
+          'flex flex-wrap items-center gap-4 rounded-lg border border-dashed border-gray-7 p-4 transition-colors',
           'data-dragging:border-accent-8 data-dragging:bg-accent-2',
           disabled && 'opacity-50',
         )}
@@ -88,7 +88,10 @@ export const BrandImageField = ({
             <ImageUp className="size-5 text-gray-9" />
           )}
         </div>
-        <div id={hintId} className="flex min-w-0 flex-col gap-1">
+        <div
+          id={hintId}
+          className="flex min-w-0 flex-1 basis-48 flex-col gap-1"
+        >
           <span className="text-sm text-gray-11">{hint}</span>
           <span className="text-xs text-gray-11">
             {t(
@@ -99,7 +102,7 @@ export const BrandImageField = ({
             )}
           </span>
         </div>
-        <div className="col-span-2 flex shrink-0 items-center gap-2 sm:col-span-1">
+        <div className="flex shrink-0 items-center gap-2">
           {file && (
             <Button
               type="button"

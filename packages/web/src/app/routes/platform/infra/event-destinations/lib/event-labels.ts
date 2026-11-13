@@ -69,6 +69,9 @@ export const buildEventLabels = (): EventLabelsMap => {
     [ApplicationEventName.PROJECT_ROLE_CREATED]: t('Project role created'),
     [ApplicationEventName.PROJECT_ROLE_UPDATED]: t('Project role updated'),
     [ApplicationEventName.PROJECT_ROLE_DELETED]: t('Project role deleted'),
+    [ApplicationEventName.USER_INVITATION_SENT]: t('Invitation sent'),
+    [ApplicationEventName.USER_INVITATION_ACCEPTED]: t('Invitation accepted'),
+    [ApplicationEventName.USER_INVITATION_DELETED]: t('Invitation deleted'),
     [ApplicationEventName.PROJECT_RELEASE_CREATED]: t(
       'Project release created',
     ),

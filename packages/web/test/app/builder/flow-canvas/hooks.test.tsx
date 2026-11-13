@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+/* eslint-disable testing-library/no-unnecessary-act */
 import {
   EmptyTrigger,
   FlowOperationRequest,
@@ -18,7 +19,7 @@ import {
   WebsocketClientEvent,
 } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act } from 'react';
+import { act, useCallback, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { io } from 'socket.io-client';
 import { Toaster, toast } from 'sonner';
@@ -31,6 +32,7 @@ import {
 } from '@/app/builder/builder-hooks';
 import { flowCanvasHooks } from '@/app/builder/flow-canvas/hooks';
 import { useFlowLock } from '@/app/builder/flow-canvas/widgets/use-flow-lock';
+import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 import { editorSession } from '@/lib/editor-session';
 
 declare global {
@@ -627,6 +629,60 @@ describe('useRefreshDraftOnReconnectAndReturn', () => {
   }
 });
 
+let listMapperContainer: HTMLDivElement | null = null;
+let listMapperRoot: Root | null = null;
+let latestFlag = false;
+
+describe('useIsFocusInsideListMapperModeInput', () => {
+  afterEach(() => {
+    act(() => listMapperRoot?.unmount());
+    listMapperContainer?.remove();
+    listMapperContainer = null;
+    listMapperRoot = null;
+    latestFlag = false;
+  });
+
+  it('turns list-mapper mode on inside an inline-items input and off in another field', () => {
+    renderHarness({ inlineItems: ['inline item'] });
+
+    focusField('inline item');
+    expect(latestFlag).toBe(true);
+
+    focusField('other field');
+    expect(latestFlag).toBe(false);
+  });
+
+  it('turns list-mapper mode off when the focused inline-items input unmounts without a focus change', () => {
+    renderHarness({ inlineItems: ['inline item'] });
+    focusField('inline item');
+    expect(latestFlag).toBe(true);
+
+    renderHarness({ inlineItems: [] });
+
+    expect(latestFlag).toBe(false);
+  });
+
+  it('turns list-mapper mode on for whichever of two inline-items inputs is focused', () => {
+    renderHarness({ inlineItems: ['first array', 'second array'] });
+
+    focusField('first array');
+    expect(latestFlag).toBe(true);
+
+    focusField('second array');
+    expect(latestFlag).toBe(true);
+  });
+
+  it('keeps list-mapper mode on when another inline-items input unmounts while one is focused', () => {
+    renderHarness({ inlineItems: ['first array', 'second array'] });
+    focusField('second array');
+    expect(latestFlag).toBe(true);
+
+    renderHarness({ inlineItems: ['second array'] });
+
+    expect(latestFlag).toBe(true);
+  });
+});
+
 function shownToasts() {
   return document.querySelectorAll('[data-sonner-toast]');
 }
@@ -807,6 +863,64 @@ function flowWithDraftVersion({
       notes,
     },
   };
+}
+
+function InlineItemsInput({
+  label,
+  isFocusInsideListMapperModeInput,
+  setIsFocusInsideListMapperModeInput,
+}: {
+  label: string;
+  isFocusInsideListMapperModeInput: boolean;
+  setIsFocusInsideListMapperModeInput: (value: boolean) => void;
+}) {
+  flowCanvasHooks.useIsFocusInsideListMapperModeInput({
+    setIsFocusInsideListMapperModeInput,
+    isFocusInsideListMapperModeInput,
+  });
+  return (
+    <div className={textMentionUtils.listMapperModeInputCssClassSelector}>
+      <input aria-label={label} />
+    </div>
+  );
+}
+
+function Harness({ inlineItems }: { inlineItems: string[] }) {
+  const [flag, setFlag] = useState(false);
+  const recordFlag = useCallback((value: boolean) => {
+    latestFlag = value;
+    setFlag(value);
+  }, []);
+  return (
+    <div>
+      {inlineItems.map((label) => (
+        <InlineItemsInput
+          key={label}
+          label={label}
+          isFocusInsideListMapperModeInput={flag}
+          setIsFocusInsideListMapperModeInput={recordFlag}
+        />
+      ))}
+      <input aria-label="other field" />
+    </div>
+  );
+}
+
+function renderHarness({ inlineItems }: { inlineItems: string[] }) {
+  if (!listMapperContainer) {
+    listMapperContainer = document.createElement('div');
+    document.body.appendChild(listMapperContainer);
+    listMapperRoot = createRoot(listMapperContainer);
+  }
+  act(() => listMapperRoot?.render(<Harness inlineItems={inlineItems} />));
+}
+
+function focusField(label: string) {
+  act(() => {
+    listMapperContainer
+      ?.querySelector<HTMLInputElement>(`[aria-label="${label}"]`)
+      ?.focus();
+  });
 }
 
 type LockHolder = { userId: string; userDisplayName: string };

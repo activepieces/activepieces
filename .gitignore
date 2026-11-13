@@ -111,3 +111,6 @@ deploy/terraform/**/.terraform.lock.hcl
 deploy/terraform/**/terraform.tfvars
 deploy/terraform/**/terraform-*.tfvars
 .devtools
+
+packages/**/bun.lock
+packages/**/package-lock.json

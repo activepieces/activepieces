@@ -1,22 +1,24 @@
 import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { PageCollection } from '@microsoft/microsoft-graph-client';
-import { microsoftTeamsCommon } from '../common';
-import { createGraphClient } from '../common/graph';
+import { microsoftTeamsProps } from '../common/props';
+import { microsoftTeamsClient } from '../common/client';
+import type { ConversationMember, MicrosoftTeamsPage } from '../common/types';
+import { microsoftTeamsFindTeamMemberOutputSchema } from '../output-schemas';
 
 export const findTeamMemberAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_find_team_member',
+	outputSchema: microsoftTeamsFindTeamMemberOutputSchema,
 	classification: 'SEARCH',
 	displayName: 'Find Team Member',
 	description: 'Finds a team member by email or display name.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Searches the members of a Microsoft Teams team (by team ID) for those matching a given email or display name, depending on the selected search mode. Use to resolve a person to their member record/ID before mentioning or messaging them. Idempotent read-only lookup; match is exact on the chosen field.',
 		idempotent: true,
 	},
 	props: {
-		teamId: microsoftTeamsCommon.teamId,
+		teamId: microsoftTeamsProps.teamId({ required: true }),
 		searchBy: Property.StaticDropdown({
 			displayName: 'Search By',
 			required: true,
@@ -38,12 +40,11 @@ export const findTeamMemberAction = createAction({
 	async run(context) {
 		const { teamId, searchBy, searchValue } = context.propsValue 
 
-		const cloud = context.auth.props?.['cloud'] as string | undefined;
-		const client = createGraphClient(context.auth.access_token, cloud);
+		const client = microsoftTeamsClient.create({ auth: context.auth });
 
 		const filter = searchBy == 'email' ?`microsoft.graph.aadUserConversationMember/email eq '${searchValue}'`:`microsoft.graph.aadUserConversationMember/displayName eq  '${searchValue}'`;
 
-		const response: PageCollection = await client
+		const response: MicrosoftTeamsPage<ConversationMember> = await client
 			.api(`/teams/${teamId}/members`)
 			.filter(filter)
 			.get();

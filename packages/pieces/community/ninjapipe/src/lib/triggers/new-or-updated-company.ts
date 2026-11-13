@@ -1,7 +1,10 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { pollingHelper } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { buildPolling } from './common';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeSchemas } from '../output-schemas';
+import { ninjapipePolling } from './common';
+
+const polling = ninjapipePolling.buildPolling({ path: '/companies', field: 'updated_at' });
 
 export const newOrUpdatedCompany = createTrigger({
   auth: ninjapipeAuth,
@@ -10,21 +13,38 @@ export const newOrUpdatedCompany = createTrigger({
   displayName: 'New or Updated Company',
   description: 'Triggers when a company is created or updated.',
   aiMetadata: {
-    description: 'Fires whenever a company in NinjaPipe is created or has any field changed, detected by polling on the company last-updated timestamp. The event payload is the current state of the affected company, including its id, name, and updated_at. A given company can fire this multiple times as it is edited; the payload does not distinguish a first creation from a later update.',
+    description:
+      'Fires whenever a NinjaPipe company is created or changed, found by polling companies sorted by updated_at. The payload is the current company record. One company can fire many times.',
   },
   type: TriggerStrategy.POLLING,
-  sampleData: { id: '1', name: 'Acme Inc', updated_at: '2024-01-01T00:00:00Z' },
+  outputSchema: ninjapipeSchemas.company,
+  sampleData: {
+    id: '43e794a1-fbc0-4167-b881-c2c568d30a51',
+    name: 'Acme GmbH',
+    domain: 'acme.example',
+    email: 'info@acme.example',
+    phone: '+4930123456',
+    website: 'https://acme.example',
+    industry: 'Software',
+    status: 'Active',
+    owner_id: '01a55c1c-96af-4a4f-879b-e317def0769a',
+    is_archived: false,
+    slug: 'acme-gmbh',
+    fields: {},
+    created_at: '2026-10-25T15:33:57.944899+00:00',
+    updated_at: '2026-10-25T15:33:57.944899+00:00',
+  },
   props: {},
   async test(context) {
-    return await pollingHelper.test(buildPolling('/companies', 'updated_at'), context);
+    return pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(buildPolling('/companies', 'updated_at'), context);
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(buildPolling('/companies', 'updated_at'), context);
+    await pollingHelper.onDisable(polling, context);
   },
   async run(context) {
-    return await pollingHelper.poll(buildPolling('/companies', 'updated_at'), context);
+    return pollingHelper.poll(polling, context);
   },
 });

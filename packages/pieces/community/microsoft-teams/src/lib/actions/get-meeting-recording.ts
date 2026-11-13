@@ -1,7 +1,9 @@
 import { microsoftTeamsAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
-import { microsoftTeamsCommon } from '../common';
-import { createGraphClient, resolveMeetingId, withGraphRetry } from '../common/graph';
+import { microsoftTeamsProps } from '../common/props';
+import { microsoftTeamsClient } from '../common/client';
+import { microsoftTeamsApi } from '../common/api';
+import { microsoftTeamsGetMeetingRecordingOutputSchema } from '../output-schemas';
 
 export const getMeetingRecordingAction = createAction({
 	auth: microsoftTeamsAuth,
@@ -10,34 +12,32 @@ export const getMeetingRecordingAction = createAction({
 	displayName: 'Get Meeting Recording',
 	description:
 		'Retrieves recordings for a Teams meeting. Provide a Recording to fetch its metadata; omit it to list all available recordings.',
-	audience: 'both',
+	audience: 'human',
+	outputSchema: microsoftTeamsGetMeetingRecordingOutputSchema,
 	aiMetadata: {
 		description: 'Retrieves recordings for a Microsoft Teams online meeting belonging to the authenticated user, resolved from a meeting identifier (join URL or ID). Operates in two modes: with a recording ID it fetches that recording\'s metadata; without one it lists all available recordings for the meeting. Idempotent read-only operation.',
 		idempotent: true,
 	},
 	props: {
-		meetingIdentifierType: microsoftTeamsCommon.meetingIdentifierType,
-		meetingIdentifierValue: microsoftTeamsCommon.meetingIdentifierValue,
-		recordingId: microsoftTeamsCommon.recordingId,
+		meetingIdentifierType: microsoftTeamsProps.meetingIdentifierType({ required: true }),
+		meetingIdentifierValue: microsoftTeamsProps.meetingIdentifierValue({ required: true }),
+		recordingId: microsoftTeamsProps.recordingId({ required: false }),
 	},
 	async run(context) {
 		const { meetingIdentifierType, meetingIdentifierValue, recordingId } = context.propsValue;
-		const cloud = context.auth.props?.['cloud'] as string | undefined;
-		const client = createGraphClient(context.auth.access_token, cloud);
+		const client = microsoftTeamsClient.create({ auth: context.auth });
 
-		const meetingId = await withGraphRetry(() =>
-			resolveMeetingId({ client, identifierType: meetingIdentifierType, identifierValue: meetingIdentifierValue }),
+		const meetingId = await microsoftTeamsClient.withRetry(() =>
+			microsoftTeamsApi.resolveMeetingId({ client, identifierType: meetingIdentifierType, identifierValue: meetingIdentifierValue }),
 		);
 
 		if (recordingId) {
-			// https://learn.microsoft.com/graph/api/callrecording-get?view=graph-rest-1.0
-			return await withGraphRetry(() =>
+			return await microsoftTeamsClient.withRetry(() =>
 				client.api(`/me/onlineMeetings/${meetingId}/recordings/${recordingId}`).get(),
 			);
 		}
 
-		// https://learn.microsoft.com/graph/api/onlinemeeting-list-recordings?view=graph-rest-1.0
-		return await withGraphRetry(() =>
+		return await microsoftTeamsClient.withRetry(() =>
 			client.api(`/me/onlineMeetings/${meetingId}/recordings`).get(),
 		);
 	},

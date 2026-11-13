@@ -178,15 +178,7 @@ type WithDoubleValueParams = {
     value: unknown
 }
 
-type OtlpAttribute = {
-    key: string
-    value: {
-        stringValue?: string
-        intValue?: string
-        boolValue?: boolean
-        doubleValue?: number
-    }
-}
+type OtlpAttribute = OTLPLogRecord['attributes'][number]
 
 export type OtlpLogRecord = Omit<OTLPLogRecord, 'attributes'> & {
     attributes: OtlpAttribute[]

@@ -39,7 +39,9 @@ The per-project endpoint that exposes Activepieces tools to an external AI assis
 - **Model Picker** — the builder's tier / credits / key picker and its options endpoint
 - **MCP Server** — the per-project endpoint, tool exposure, visibility rules
 - **AI & MCP** — how the AI and MCP surfaces fit together
+- **AI Usage Page** — the `/platform/ai/usage` spend dashboard, hidden until launch, Cloud and EE only
 - **Shipping Behind a Flag** — merging unfinished AI work, turned on for a test group only
+- **AI Quality Loop**: real chats → blind labels → private tests → a paired PR score → proof in production
 
 ## Related
 

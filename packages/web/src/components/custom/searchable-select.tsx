@@ -56,6 +56,9 @@ type SearchableSelectProps<T> = {
     label: string;
   }[];
   onOptionDelete?: (value: T) => void;
+  id?: string;
+  'aria-describedby'?: string;
+  'aria-invalid'?: boolean;
 };
 
 const useOpenState = (openStateInitializer?: {
@@ -90,6 +93,9 @@ export const SearchableSelect = <T,>({
   refreshOnSearch,
   cachedOptions = [],
   onOptionDelete,
+  id,
+  'aria-describedby': ariaDescribedBy,
+  'aria-invalid': ariaInvalid,
 }: SearchableSelectProps<T>) => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -159,6 +165,9 @@ export const SearchableSelect = <T,>({
         <div className="relative">
           <Button
             ref={triggerRef}
+            id={id}
+            aria-describedby={ariaDescribedBy}
+            aria-invalid={ariaInvalid}
             variant={variant}
             disabled={disabled}
             role="combobox"

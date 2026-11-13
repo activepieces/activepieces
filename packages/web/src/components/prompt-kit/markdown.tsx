@@ -10,14 +10,8 @@ import { CodeBlock, CodeBlockCode, CodeBlockGroup } from './code-block';
 import { Source } from './source';
 
 function normalizeMarkdownSpacing(markdown: string): string {
-  let text = markdown;
-
-  // Ensure headings have a blank line before them (fixes "text\n## Heading" streaming artifact).
-  // Uses multiline flag so ^ matches after every \n; only touches lines that start with #.
-  text = text.replace(/^(#{1,6}\s)/gm, '\n$1');
-
   // Ensure blank lines between non-empty content lines (except inside tables/code/lists)
-  const lines = text.split('\n');
+  const lines = markdown.split('\n');
   const result: string[] = [];
   let inCodeBlock = false;
 
@@ -53,7 +47,14 @@ function normalizeMarkdownSpacing(markdown: string): string {
       /^\s*[-*+]\s/.test(prevLine) ||
       /^\s*\d+[.)]\s/.test(prevLine);
 
-    if (i > 0 && prevLine !== '' && trimmed !== '' && !prevIsTableOrList) {
+    const isHeading = /^#{1,6}\s/.test(line);
+
+    if (
+      i > 0 &&
+      prevLine !== '' &&
+      trimmed !== '' &&
+      (!prevIsTableOrList || isHeading)
+    ) {
       result.push('');
     }
 
@@ -323,7 +324,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
             {language !== 'plaintext' ? language : ''}
           </span>
           <CopyButton
-            textToCopy={code}
+            value={code}
             withoutTooltip
             variant="ghost"
             className="h-6 w-6 p-0"

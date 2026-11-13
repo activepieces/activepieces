@@ -1,320 +1,40 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
+import { podioApi } from '../common/api';
+import { podioClient } from '../common/client';
+import { podioProps } from '../common/props';
+import { podioUtils } from '../common/utils';
 import { podioAuth } from '../auth';
-import { 
-  podioApiCall, 
-  getAccessToken, 
-  dynamicAppProperty,
-  silentProperty, 
-  hookProperty, 
-  formatFieldValues
-} from '../common';
+import { createItemOutputSchema } from '../output-schemas';
 
 export const createItemAction = createAction({
   auth: podioAuth,
   name: 'create_item',
+  outputSchema: createItemOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Item',
   description: 'Create a new record in a Podio app with specified field values.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new item (record) in a specified Podio app, populating its fields. Field values can be supplied via the structured app-field inputs or, for complex cases, a raw legacy-fields JSON map keyed by field id. Use when adding a record to a Podio app; requires an app id and at least one field value. Not idempotent — each call creates a separate item.', idempotent: false },
   props: {
-    orgId: Property.Dropdown({
-      auth: podioAuth,
+    orgId: podioProps.orgId({
+      required: false,
       displayName: 'Organization (Optional)',
       description: 'Select an organization to filter apps by workspace. Leave empty to see all apps.',
-      required: false,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Connect your Podio account first',
-            options: [],
-          };
-        }
-
-        try {
-          const accessToken = getAccessToken(auth as any);
-          
-          const orgs = await podioApiCall<any[]>({
-            method: HttpMethod.GET,
-            accessToken,
-            resourceUri: '/org/',
-          });
-
-          if (!orgs || orgs.length === 0) {
-            return {
-              options: [],
-              placeholder: 'No organizations found',
-            };
-          }
-
-          return {
-            options: orgs.map((org: any) => ({
-              label: org.name,
-              value: org.org_id,
-            })),
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Failed to load organizations. Check your connection.',
-          };
-        }
-      },
     }),
-    spaceId: Property.Dropdown({
-      auth: podioAuth,
+    spaceId: podioProps.spaceId({
+      required: false,
       displayName: 'Space (Optional)',
       description: 'Select a workspace to filter apps. Leave empty to see all apps in the organization.',
-      required: false,
-      refreshers: ['orgId'],
-      options: async ({ auth, orgId }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Connect your Podio account first',
-            options: [],
-          };
-        }
-
-        if (!orgId) {
-          return {
-            disabled: true,
-            placeholder: 'Select an organization first',
-            options: [],
-          };
-        }
-
-        try {
-          const accessToken = getAccessToken(auth as any);
-          
-          const resourceUri = `/org/${orgId}/space/`;
-
-          const spaces = await podioApiCall<any[]>({
-            method: HttpMethod.GET,
-            accessToken,
-            resourceUri,
-          });
-
-          if (!spaces || spaces.length === 0) {
-            return {
-              options: [],
-              placeholder: 'No spaces found in this organization',
-            };
-          }
-
-          return {
-            options: spaces.map((space: any) => ({
-              label: `${space.name}${space.org ? ` (${space.org.name})` : ''}`,
-              value: space.space_id,
-            })),
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Failed to load spaces. Check your connection.',
-          };
-        }
-      },
     }),
-    appId: dynamicAppProperty,
+    appId: podioProps.appId({ required: true }),
     externalId: Property.ShortText({
       displayName: 'External ID',
       description: 'The external id of the item. This can be used to hold a reference to the item in an external system.',
       required: false,
     }),
     
-    appFields: Property.DynamicProperties({
-      auth: podioAuth,
-      displayName: 'App Fields',
-      description: 'Configure values for the fields in the selected app',
-      required: true,
-      refreshers: ['appId'],
-      props: async ({ auth, appId }) => {
-        if (!auth || !appId) {
-          return {};
-        }
-
-        try {
-          const accessToken = getAccessToken(auth as any);
-          
-          const app = await podioApiCall<any>({
-            method: HttpMethod.GET,
-            accessToken,
-            resourceUri: `/app/${appId}`,
-            queryParams: { view: 'full' }
-          });
-
-          
-          
-          const fields = app.fields || [];
-          
-          
-          if (!fields || fields.length === 0) {
-            return {};
-          }
-
-          const fieldProperties: Record<string, any> = {};
-
-          for (const field of fields) {
-            try {
-              const fieldKey = `field_${field.field_id}`;
-              const fieldConfig = field.config;
-              const fieldType = field.type;
-              const isRequired = fieldConfig.required || false;
-              
-              
-              const baseProps = {
-                displayName: fieldConfig.label,
-                description: fieldConfig.description || `Enter value for ${fieldConfig.label}`,
-                required: isRequired,
-              };
-
-              
-              switch (fieldType) {
-                case 'text':
-                  fieldProperties[fieldKey] = Property.LongText({
-                    ...baseProps,
-                    description: `${baseProps.description}. Supports plain text, markdown, or HTML.`,
-                  });
-                  break;
-
-                case 'number':
-                  fieldProperties[fieldKey] = Property.Number({
-                    ...baseProps,
-                    description: `${baseProps.description}. Enter a numeric value.`,
-                  });
-                  break;
-
-                case 'money':
-                  fieldProperties[fieldKey] = Property.Object({
-                    ...baseProps,
-                    description: `${baseProps.description}. Format: {"value": "amount", "currency": "USD"}`,
-                  });
-                  break;
-
-                case 'date':
-                  fieldProperties[fieldKey] = Property.Object({
-                    ...baseProps,
-                    description: `${baseProps.description}. Format: {"start_date": "YYYY-MM-DD", "start_time": "HH:MM:SS", "end_date": "YYYY-MM-DD", "end_time": "HH:MM:SS"}`,
-                  });
-                  break;
-
-                case 'contact':
-                  fieldProperties[fieldKey] = Property.Number({
-                    ...baseProps,
-                    description: `${baseProps.description}. Enter the Podio profile ID of the contact.`,
-                  });
-                  break;
-
-                case 'member':
-                  fieldProperties[fieldKey] = Property.Number({
-                    ...baseProps,
-                    description: `${baseProps.description}. Enter the Podio user ID of the member.`,
-                  });
-                  break;
-
-                case 'app':
-                  fieldProperties[fieldKey] = Property.Number({
-                    ...baseProps,
-                    description: `${baseProps.description}. Enter the ID of the item from the linked app.`,
-                  });
-                  break;
-
-                case 'category':
-                case 'status': {
-                  
-                  
-                  let staticOptions: Array<{label: string, value: any}> = [];
-                  
-                  if (fieldConfig.settings?.options && Array.isArray(fieldConfig.settings.options)) {
-                    staticOptions = fieldConfig.settings.options.map((option: any) => ({
-                      label: option.text || option.name || option.value || `Option ${option.id}`,
-                      value: option.id || option.value,
-                    }));
-                  }
-                  
-                  if (staticOptions.length > 0) {
-                    fieldProperties[fieldKey] = Property.StaticDropdown({
-                      ...baseProps,
-                      options: {
-                        options: staticOptions,
-                      },
-                    });
-                  } else {
-                    
-                    fieldProperties[fieldKey] = Property.Number({
-                      ...baseProps,
-                      description: `${baseProps.description}. Enter the ${fieldType} option ID manually.`,
-                    });
-                  }
-                  break;
-                }
-
-                case 'email':
-                  fieldProperties[fieldKey] = Property.Object({
-                    ...baseProps,
-                    description: `${baseProps.description}. Format: {"value": "email@example.com", "type": "work|home|other"}`,
-                  });
-                  break;
-
-                case 'phone':
-                  fieldProperties[fieldKey] = Property.Object({
-                    ...baseProps,
-                    description: `${baseProps.description}. Format: {"value": "phone_number", "type": "mobile|work|home|main|work_fax|private_fax|other"}`,
-                  });
-                  break;
-
-                case 'location':
-                  fieldProperties[fieldKey] = Property.ShortText({
-                    ...baseProps,
-                    description: `${baseProps.description}. Enter a location (address, coordinates, etc.)`,
-                  });
-                  break;
-
-                case 'image':
-                case 'file':
-                  fieldProperties[fieldKey] = Property.Number({
-                    ...baseProps,
-                    description: `${baseProps.description}. Enter the file ID of the uploaded ${fieldType}.`,
-                  });
-                  break;
-
-                case 'progress':
-                  fieldProperties[fieldKey] = Property.Number({
-                    ...baseProps,
-                    description: `${baseProps.description}. Enter a value between 0 and 100.`,
-                  });
-                  break;
-
-                default:
-                  fieldProperties[fieldKey] = Property.ShortText({
-                    ...baseProps,
-                    description: `${baseProps.description}. Field type: ${fieldType}`,
-                  });
-              }
-            } catch (fieldError) {
-              
-              const fieldKey = `field_${field.field_id}`;
-              fieldProperties[fieldKey] = Property.ShortText({
-                displayName: `${field.config?.label || 'Unknown Field'} (Fallback)`,
-                description: `Field type "${field.type}" - Manual entry required. Original error: ${fieldError instanceof Error ? fieldError.message : 'Unknown error'}`,
-                required: field.config?.required || false,
-              });
-            }
-          }
-
-          
-          return fieldProperties;
-        } catch (error) {
-          return {};
-        }
-      },
-    }),
+    appFields: podioProps.itemFields({ required: true }),
     legacyFields: Property.Object({
       displayName: 'Advanced: Custom Fields JSON',
       description: 'Advanced: Use this for complex field configurations. Format: {"field_id": {"value": "content"}}. Only use if the dynamic fields above don\'t meet your needs.',
@@ -350,12 +70,10 @@ export const createItemAction = createAction({
       description: 'The reference for the new item, if any. Format: {"type": "item", "id": reference_id}',
       required: false,
     }),
-    hook: hookProperty,
-    silent: silentProperty,
+    hook: podioProps.hook({ required: false }),
+    silent: podioProps.silent({ required: false }),
   },
   async run(context) {
-    
-    const accessToken = getAccessToken(context.auth);
     const { 
       orgId,
       spaceId,
@@ -378,21 +96,15 @@ export const createItemAction = createAction({
       throw new Error('App selection is required. Please select a Podio app from the dropdown.');
     }
 
-    let formattedFields: Record<string, any> = {};
+    let formattedFields: Record<string, unknown> = {};
     
     if (appFields && Object.keys(appFields).length > 0) {
       try {
-        const accessToken = getAccessToken(context.auth);
-        const app = await podioApiCall<any>({
-          method: HttpMethod.GET,
-          accessToken,
-          resourceUri: `/app/${appId}`,
-          queryParams: { view: 'full' }
-        });
+        const app = await podioApi.getApp({ auth: context.auth, appId });
         
         const fieldDefinitions = app.fields || [];
         
-        formattedFields = formatFieldValues(fieldDefinitions, appFields);
+        formattedFields = podioUtils.formatFieldValues({ appFields: fieldDefinitions, formData: appFields });
       } catch (error) {
         throw new Error(`Failed to process app fields: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
@@ -414,7 +126,7 @@ export const createItemAction = createAction({
       throw new Error('Tags must be provided as an array of strings.');
     }
 
-    const body: any = {
+    const body: CreateItemBody = {
       fields: formattedFields,
     };
 
@@ -452,25 +164,34 @@ export const createItemAction = createAction({
       }
     }
 
-    const queryParams: any = {};
+    const queryParams: QueryParams = {};
     if (typeof hook === 'boolean') {
-      queryParams.hook = hook.toString();
+      queryParams['hook'] = hook.toString();
     }
     if (typeof silent === 'boolean') {
-      queryParams.silent = silent.toString();
+      queryParams['silent'] = silent.toString();
     }
 
-    const response = await podioApiCall<{
+    return await podioClient.request<{
       item_id: number;
       title: string;
     }>({
       method: HttpMethod.POST,
-      accessToken,
-      resourceUri: `/item/app/${appId}/`,
+      auth: context.auth,
+      path: `/item/app/${appId}/`,
       body,
-      queryParams,
+      query: queryParams,
     });
-
-    return response;
   },
-}); 
+});
+
+type CreateItemBody = {
+  fields: Record<string, unknown>;
+  external_id?: string;
+  file_ids?: unknown[];
+  tags?: unknown[];
+  reminder?: Record<string, unknown>;
+  recurrence?: Record<string, unknown>;
+  linked_account_id?: number;
+  ref?: Record<string, unknown>;
+};

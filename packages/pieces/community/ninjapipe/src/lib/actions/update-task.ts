@@ -1,64 +1,31 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon, toDateOnly } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeFields } from '../common/fields';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeTasks } from '../common/task-props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const updateTask = createAction({
   auth: ninjapipeAuth,
   name: 'update_task',
   classification: 'WRITE',
   displayName: 'Update Task',
-  description: 'Updates a task within a project.',
-  audience: 'both',
-  aiMetadata: { description: 'Update fields on an existing task, identified by its project ID and task ID. Only provided fields are changed; use this to set status, priority, assignee, due date, or to re-parent a subtask within the same project. Repeating the same update is idempotent.', idempotent: true },
+  description: 'Updates a task. Fields left blank keep their value; use Clear Fields to empty them.',
+  audience: 'human',
+  aiMetadata: { description: 'Update a task in a NinjaPipe project. Only filled fields change. Re-running with the same input gives the same result.', idempotent: true },
+  outputSchema: ninjapipeSchemas.task,
   props: {
-    projectId: ninjapipeCommon.projectDropdownRequired,
-    taskId: ninjapipeCommon.taskDropdown,
-    title: Property.ShortText({ displayName: 'Title', required: false }),
-    description: Property.LongText({ displayName: 'Description', required: false }),
-    status: ninjapipeCommon.taskStatusDropdown,
-    priority: ninjapipeCommon.priorityDropdown,
-    assigneeId: Property.ShortText({
-      displayName: 'Assignee ID',
-      description: 'Account ID of the user to assign this task to.',
-      required: false,
-    }),
-    dueDate: Property.DateTime({
-      displayName: 'Due Date',
-      required: false,
-    }),
-    parentId: Property.ShortText({
-      displayName: 'Parent Task ID',
-      description: 'Move under another task in the same project.',
-      required: false,
-    }),
-    tags: Property.Array({ displayName: 'Tags', required: false }),
-    settingsJson: Property.Object({ displayName: 'Extra Settings', required: false }),
+    projectId: ninjapipeProps.projectRequired(),
+    taskId: ninjapipeProps.task(),
+    ...ninjapipeTasks.taskProps({ titleRequired: false }),
+    clearFields: ninjapipeProps.clearFields({ fields: ninjapipeTasks.TASK_CLEARABLE }),
   },
   async run(context) {
-    const auth = getAuth(context);
     const p = context.propsValue;
-    const body: Record<string, unknown> = {};
-    if (p.title) body['title'] = p.title;
-    if (p.description !== undefined) body['description'] = p.description;
-    if (p.status) body['status'] = p.status;
-    if (p.priority) body['priority'] = p.priority;
-    if (p.assigneeId) body['assignee_id'] = p.assigneeId;
-    {
-      const v = toDateOnly(p.dueDate);
-      if (v) body['due_date'] = v;
-    }
-    if (p.parentId) body['parent_id'] = p.parentId;
-    if (p.tags && Array.isArray(p.tags) && p.tags.length > 0) body['tags'] = p.tags;
-    if (p.settingsJson && typeof p.settingsJson === 'object' && Object.keys(p.settingsJson).length > 0) {
-      body['settings_json'] = p.settingsJson;
-    }
-    const response = await ninjapipeApiCall<Record<string, unknown>>({
-      auth,
-      method: HttpMethod.PUT,
-      path: `/projects/${encodeURIComponent(String(p.projectId))}/tasks/${encodeURIComponent(String(p.taskId))}`,
-      body,
-    });
-    return flattenCustomFields(response.body);
+    const path = `/projects/${ninjapipeClient.pathId({ value: p.projectId, field: 'Project' })}/tasks/${ninjapipeClient.pathId({ value: p.taskId, field: 'Task' })}`;
+    const body = ninjapipeFields.requireChanges({ body: ninjapipeFields.withClears({ body: ninjapipeTasks.taskBody(p), clear: p.clearFields }), what: 'task' });
+    return ninjapipeClient.sendRecord({ auth: ninjapipeClient.readAuth(context.auth), method: HttpMethod.PUT, path, body, operation: 'update task' });
   },
 });

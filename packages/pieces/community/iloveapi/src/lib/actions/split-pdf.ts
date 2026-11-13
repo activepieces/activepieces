@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { iloveapiAuth } from '../common/auth';
-import { fileToUploadInput, sharedProps } from '../common/props';
+import { iloveSchemas } from '../common/schemas';
+import { fileToUploadInput, regionOf, sharedProps, webhookOf } from '../common/props';
 import { runAndStoreResult } from '../common/runner';
 
 export const splitPdfAction = createAction({
@@ -11,6 +12,7 @@ export const splitPdfAction = createAction({
   description:
     'Split a PDF by page ranges, fixed page batches, removed pages, or target file size.',
   audience: 'both',
+  outputSchema: iloveSchemas.toolResult,
   aiMetadata: {
     description:
       'Split one PDF into multiple PDFs via the iLoveAPI service. Pick this to break a document apart by explicit page ranges, fixed batches of N pages, by removing specific pages, or by a maximum output file size (MB) — the split mode determines which range/size input is required. Optionally merge the pieces back into a single PDF. Each call produces new output files, so repeated runs are not idempotent.',
@@ -89,12 +91,18 @@ export const splitPdfAction = createAction({
       if (!ranges) {
         throw new Error('"Ranges" is required when split mode is "Page Ranges".');
       }
-      options['ranges'] = ranges;
+      if (!PAGE_LIST.test(ranges.replace(/\s/g, ''))) {
+        throw new Error('"Ranges" must look like "1-5,7,10-13".');
+      }
+      options['ranges'] = ranges.replace(/\s/g, '');
     } else if (split_mode === 'fixed_range') {
       if (fixed_range === undefined || fixed_range === null) {
         throw new Error(
           '"Fixed Range Size" is required when split mode is "Fixed Range".'
         );
+      }
+      if (!Number.isInteger(fixed_range) || fixed_range < 1) {
+        throw new Error('"Fixed Range Size" must be a whole number of pages, 1 or more.');
       }
       options['fixed_range'] = fixed_range;
     } else if (split_mode === 'remove_pages') {
@@ -103,24 +111,34 @@ export const splitPdfAction = createAction({
           '"Remove Pages" is required when split mode is "Remove Pages".'
         );
       }
-      options['remove_pages'] = remove_pages;
+      if (!PAGE_LIST.test(remove_pages.replace(/\s/g, ''))) {
+        throw new Error('"Remove Pages" must look like "2,4-6".');
+      }
+      options['remove_pages'] = remove_pages.replace(/\s/g, '');
     } else if (split_mode === 'filesize') {
       if (filesize === undefined || filesize === null) {
         throw new Error(
           '"File Size (MB)" is required when split mode is "By File Size".'
         );
       }
-      options['filesize'] = filesize;
+      if (!(filesize > 0)) {
+        throw new Error('"File Size (MB)" must be greater than 0.');
+      }
+      options['filesize'] = Math.round(filesize * 1024 * 1024);
     }
 
     return await runAndStoreResult({
       auth: context.auth.secret_text,
+      region: regionOf(context.propsValue.region),
+      webhook: webhookOf(context.propsValue.webhook_url),
       files: context.files,
       tool: 'split',
-      uploads: [fileToUploadInput(file)],
+      uploads: [fileToUploadInput({ file: file })],
       options,
       output_filename,
       packaged_filename,
     });
   },
 });
+
+const PAGE_LIST = /^\d+(-\d+)?(,\d+(-\d+)?)*$/;

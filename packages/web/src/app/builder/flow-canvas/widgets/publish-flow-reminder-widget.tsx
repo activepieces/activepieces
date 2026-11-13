@@ -47,6 +47,7 @@ const PublishFlowReminderWidget = () => {
     run,
     savePendingEdits,
     refreshDraftAfterFailedSave,
+    exitStepSettings,
   ] = useBuilderStateContext((state) => [
     state.saving,
     state.isPublishing,
@@ -60,6 +61,7 @@ const PublishFlowReminderWidget = () => {
     state.run,
     state.savePendingEdits,
     state.refreshDraftAfterFailedSave,
+    state.exitStepSettings,
   ]);
   const store = useBuilderStore();
   const showShouldPublishButton = useShouldShowPublishButton({
@@ -87,7 +89,10 @@ const PublishFlowReminderWidget = () => {
           overWriteDraftWithVersion,
           fetchFlow: flowsApi.get,
           setFlow,
-          setVersion,
+          setVersion: (version) => {
+            setVersion(version);
+            exitStepSettings();
+          },
         }),
     },
   );

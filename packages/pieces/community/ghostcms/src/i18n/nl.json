@@ -394,6 +394,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Member Added": "Lid toegevoegd",
   "Member Edited": "Lid bewerkt",
   "Member Deleted": "Lid verwijderd",

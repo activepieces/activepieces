@@ -1,5 +1,5 @@
 import { AIProviderName, apId, Permission, RoleType } from '@activepieces/core-utils'
-import { AgentIcon, AgentPieceProps, AgentRunSource, AgentToolType, AgentVisibility, AI_PIECE_NAME, ColorName, DefaultProjectRole, FlowActionType, FlowStatus, FlowTriggerType, FlowVersionState, KnowledgeBaseSourceType } from '@activepieces/shared'
+import { Agent, AgentIcon, AgentPieceProps, AgentRunSource, AgentToolType, AgentVisibility, AI_PIECE_NAME, ColorName, DefaultProjectRole, FlowActionType, FlowStatus, FlowTriggerType, FlowVersionState, KnowledgeBaseSourceType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { SelectQueryBuilder } from 'typeorm'
@@ -77,6 +77,21 @@ describe('agent crud', () => {
         try {
             const ctx = await context()
             await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.ACTIVEPIECES, enabledForChat: true })
+
+            const agent = await createAgent(ctx)
+
+            expect(agent.draft.modelName).toBe('smart')
+            expect(agent.draft.provider).toBe(AIProviderName.ACTIVEPIECES)
+        }
+        finally {
+            delete process.env.AP_OPENROUTER_PROVISION_KEY
+        }
+    })
+
+    it('fills in the default tier on a fresh platform whose Activepieces credits row was never listed', async () => {
+        process.env.AP_OPENROUTER_PROVISION_KEY = 'test-provision-key'
+        try {
+            const ctx = await context()
 
             const agent = await createAgent(ctx)
 
@@ -739,6 +754,27 @@ describe('agent list across projects', () => {
         expect(noMatch).toStrictEqual([])
     })
 
+    it('lists the agents whose draft or published tools use one of the given connections', async () => {
+        const ctx = await context()
+        const pieceTool = (auth: string) => ({
+            type: 'PIECE',
+            toolName: 'create_issue',
+            pieceMetadata: {
+                pieceName: '@activepieces/piece-github',
+                pieceVersion: '0.1.0',
+                actionName: 'create_issue',
+                predefinedInput: { auth, fields: {} },
+            },
+        })
+        const usesInDraft = await createAgent(ctx, { displayName: 'Draft user', draft: { ...agentBody(ctx.project.id).draft, tools: [pieceTool('{{connections[\'conn-a\']}}')] } })
+        const usesInPublished = await createAgent(ctx, { displayName: 'Published user' })
+        await db.update('agent', usesInPublished.id, { published: { ...agentBody(ctx.project.id).draft, tools: [pieceTool('conn-b')] } })
+        await createAgent(ctx, { displayName: 'Other connection', draft: { ...agentBody(ctx.project.id).draft, tools: [pieceTool('conn-c')] } })
+
+        const listed = (await ctx.get('/v1/agents', { connectionExternalIds: ['conn-a', 'conn-b'] })).json().data
+        expect(listed.map((row: { id: string }) => row.id).sort()).toStrictEqual([usesInDraft.id, usesInPublished.id].sort())
+    })
+
     it('sorts by name when asked, rather than by when it was touched', async () => {
         const ctx = await context()
         const apple = await createAgent(ctx, { displayName: 'Apple duty' })
@@ -1138,3 +1174,65 @@ function triggerRunningAgent(agentExternalId: string) {
         },
     } as const
 }
+
+describe('updating an agent while someone else changes it', () => {
+    it.each([
+        ['unpublishes it', { published: null }, (agent: Agent) => expect(agent.published).toBeNull()],
+        ['edits its draft', { draft: { ...agentBody('').draft, instructions: 'Newer draft.' } }, (agent: Agent) => expect(agent.draft.instructions).toBe('Newer draft.')],
+        ['revokes a share', { sharedWithUserIds: [] }, (agent: Agent) => expect(agent.sharedWithUserIds).toStrictEqual([])],
+    ])('keeps the change when another writer %s just before a rename takes the row lock', async (_label, change, expectKept) => {
+        const ctx = await context()
+        const member = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.EDITOR })
+        const agent = await createAgent(ctx, { visibility: AgentVisibility.RESTRICTED, sharedWithUserIds: [member.user.id] })
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+        expect(agent.sharedWithUserIds).toStrictEqual([member.user.id])
+        const getOne = SelectQueryBuilder.prototype.getOne
+        const concurrentWrite = vi.spyOn(SelectQueryBuilder.prototype, 'getOne').mockImplementation(async function (this: SelectQueryBuilder<Agent>) {
+            if (this.expressionMap.lockMode === 'pessimistic_write') {
+                concurrentWrite.mockRestore()
+                await db.update('agent', agent.id, change)
+            }
+            return getOne.call(this)
+        })
+
+        const rename = await ctx.post(`/v1/agents/${agent.id}`, { displayName: 'Renamed', goLive: false })
+        concurrentWrite.mockRestore()
+
+        expect(rename.statusCode).toBe(StatusCodes.OK)
+        const stored = await db.findOneByOrFail<Agent>('agent', { id: agent.id })
+        expect(stored.displayName).toBe('Renamed')
+        expectKept(stored)
+    })
+})
+
+describe('forgetting memories from a list that is out of date', () => {
+    async function memoryContext(memories: string[]): Promise<TestContext> {
+        const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
+        expect((await ctx.post('/v1/agents/memory', { memories: { next: memories, base: [] } })).statusCode).toBe(StatusCodes.OK)
+        return ctx
+    }
+
+    it('applies both of two quick forgets made from the same list', async () => {
+        const ctx = await memoryContext(['A', 'B', 'C'])
+
+        await ctx.post('/v1/agents/memory', { memories: { next: ['A', 'C'], base: ['A', 'B', 'C'] } })
+        await ctx.post('/v1/agents/memory', { memories: { next: ['A', 'B'], base: ['A', 'B', 'C'] } })
+
+        expect((await ctx.get('/v1/agents/memory')).json().memories).toEqual(['A'])
+    })
+
+    it('keeps a fact the assistant remembered while the list was open', async () => {
+        const ctx = await memoryContext(['A', 'B'])
+        await ctx.post('/v1/agents/memory', { memories: { next: ['A', 'B', 'D'], base: ['A', 'B'] } })
+
+        await ctx.post('/v1/agents/memory', { memories: { next: ['A'], base: ['A', 'B'] } })
+
+        expect((await ctx.get('/v1/agents/memory')).json().memories).toEqual(['A', 'D'])
+    })
+    it('refuses a bare list, so no client can overwrite memories it never saw', async () => {
+        const ctx = await memoryContext(['A', 'B'])
+
+        expect((await ctx.post('/v1/agents/memory', { memories: ['A'] })).statusCode).toBe(StatusCodes.BAD_REQUEST)
+        expect((await ctx.get('/v1/agents/memory')).json().memories).toEqual(['A', 'B'])
+    })
+})

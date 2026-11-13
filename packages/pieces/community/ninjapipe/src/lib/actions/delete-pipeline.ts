@@ -1,22 +1,31 @@
-﻿import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, getAuth, ninjapipeCommon } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const deletePipeline = createAction({
   auth: ninjapipeAuth,
   name: 'delete_pipeline',
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Pipeline',
-  description: 'Deletes a pipeline by ID.',
+  description: 'Permanently deletes a pipeline. Its items are removed with it.',
   audience: 'both',
-  aiMetadata: { description: 'Permanently delete a NinjaPipe pipeline by its ID. Pick this only when the pipeline should be removed entirely; deletion is irreversible and cascades to the pipeline\'s stages. Safe to retry — deleting an already-deleted pipeline settles to the same removed state.', idempotent: true },
+  aiMetadata: {
+    description: 'Permanently delete one NinjaPipe pipeline by ID (pipelineId; get it from a list or search step). Cannot be undone. A second call fails with 404 because the pipeline is gone.',
+    idempotent: false,
+  },
+  outputSchema: ninjapipeSchemas.deleted,
   props: {
-    pipelineId: ninjapipeCommon.pipelineDropdownRequired,
+    pipelineId: ninjapipeProps.pipelineRequired(),
   },
   async run(context) {
-    const auth = getAuth(context);
-    await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.DELETE, path: `/pipelines/${encodeURIComponent(String(context.propsValue.pipelineId))}` });
-    return { success: true, deleted_id: context.propsValue.pipelineId };
+    const id = ninjapipeClient.pathId({ value: context.propsValue.pipelineId, field: 'Pipeline' });
+    return ninjapipeClient.deleteRecord({
+      auth: ninjapipeClient.readAuth(context.auth),
+      path: `/pipelines/${id}`,
+      id: decodeURIComponent(id),
+      operation: 'delete pipeline',
+    });
   },
 });

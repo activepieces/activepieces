@@ -1,11 +1,11 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { BASE_URL } from './common/client';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { smartleadRequest, SmartleadApiError } from './common/client';
 
 const markdownDescription = `
 To obtain your API key:
 1. Log in to your SmartLead account
-2. Go to **Profile -> Settings → API Key **
+2. Go to **Settings → API Key**
 3. Copy your API key
 
 The API key is passed as a query parameter to all API requests.
@@ -17,23 +17,26 @@ export const smartleadAuth = PieceAuth.SecretText({
   required: true,
   validate: async ({ auth }) => {
     try {
-      await httpClient.sendRequest({
+      await smartleadRequest({
+        endpoint: 'campaigns',
         method: HttpMethod.GET,
-        url: `${BASE_URL}/campaigns`,
-        queryParams: {
-          api_key: auth,
-        },
+        apiKey: auth,
       });
       return { valid: true };
     } catch (error: unknown) {
-      const status = (error as { response?: { status?: number } })?.response?.status;
-      if (status === 401 || status === 403) {
+      if (
+        error instanceof SmartleadApiError &&
+        (error.statusCode === 401 || error.statusCode === 403)
+      ) {
         return {
           valid: false,
-          error: 'Invalid API key. Please check your Smartlead API credentials.',
+          error: 'Invalid API key. Please check your SmartLead API credentials.',
         };
       }
-      throw error;
+      return {
+        valid: false,
+        error: 'Could not reach SmartLead to validate the API key. Please try again.',
+      };
     }
   },
 });

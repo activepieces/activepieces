@@ -1,5 +1,5 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { biginApiService } from './common/request';
+import { biginApiService, getBiginConnection } from './common/request';
 import { DATA_CENTER_REGIONS } from './common/constants';
 import { getZohoBiginAccountAuthorizationUrl } from './common/helpers';
 
@@ -31,26 +31,21 @@ export const biginAuth = PieceAuth.OAuth2({
     }),
   },
   validate: async ({ auth }) => {
-    const { domain } = auth.props as any;
+    const domain = auth.props?.['domain'];
     if (!domain) {
       return {
         valid: false,
         error: 'Please select your data center region.',
       };
     }
-
+    const { accessToken, apiDomain } = getBiginConnection(auth);
     try {
-      const region = DATA_CENTER_REGIONS.find(
-        (r) => r.ACCOUNTS_DOMAIN === domain || getZohoBiginAccountAuthorizationUrl(r.REGION) === domain
-      );
-      const apiDomain = region?.API_DOMAIN ?? 'https://www.zohoapis.com';
-      await biginApiService.fetchModules(auth.access_token, apiDomain);
+      await biginApiService.fetchModules(accessToken, apiDomain);
       return { valid: true };
-    } catch {
+    } catch (error) {
       return {
         valid: false,
-        error:
-          'Could not validate OAuth credentials. please check your Client ID, Secret, and Region.',
+        error: `Could not validate the Bigin connection against ${apiDomain}. ${error instanceof Error ? error.message : ''}`.trim(),
       };
     }
   },

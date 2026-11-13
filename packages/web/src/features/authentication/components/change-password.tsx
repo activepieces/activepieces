@@ -97,6 +97,7 @@ const ChangePasswordForm = () => {
                         ref={inputRef}
                         onBlur={() => setPasswordFocused(false)}
                         onChange={(e) => field.onChange(e)}
+                        data-testid="reset-password-new-password"
                       />
                     </PopoverTrigger>
                     <PopoverContent className="absolute border-2 bg-gray-1 p-2 rounded-md right-60 -bottom-16 flex flex-col">
@@ -114,6 +115,7 @@ const ChangePasswordForm = () => {
             <Button
               className="w-full mt-2"
               loading={isPending}
+              data-testid="reset-password-confirm"
               onClick={(e) => form.handleSubmit(onSubmit)(e)}
             >
               {t('Confirm')}

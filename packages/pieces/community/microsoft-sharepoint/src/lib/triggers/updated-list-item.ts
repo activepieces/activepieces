@@ -7,12 +7,14 @@ import {
 import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { updatedListItemOutputSchema } from '../output-schemas';
 
 const clientState = 'activepieces_sharepoint_updated_list_item_trigger';
 
 export const updatedListItemTrigger = createTrigger({
   auth: microsoftSharePointAuth,
   name: 'updated_list_item',
+  outputSchema: updatedListItemOutputSchema,
   classification: 'READ',
   displayName: 'Updated List Item',
   description: 'Fires when an existing item in a SharePoint list is updated.',

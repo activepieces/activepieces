@@ -36,6 +36,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
             sort: request.query.sort,
             cursor: request.query.cursor,
             limit: request.query.limit,
+            connectionExternalIds: request.query.connectionExternalIds,
         })
     })
 

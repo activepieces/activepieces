@@ -28,9 +28,21 @@ describe('mcpOAuthClientIdentity.detectClientKey', () => {
     it('separates the CLIs by their loopback callback path', () => {
         expect(detectClientKey(['http://localhost:1455/callback/abc123'])).toBe('codex')
         expect(detectClientKey(['http://localhost:54545/callback'])).toBe('claude-code')
-        expect(detectClientKey(['http://127.0.0.1:9999/callback'])).toBe('claude-code')
         expect(detectClientKey(['http://localhost:41337/oauth/callback'])).toBe('gemini-cli')
         expect(detectClientKey(['http://127.0.0.1:19876/mcp/oauth/callback'])).toBe('opencode')
+        expect(detectClientKey(['http://127.0.0.1:1456/mcp/oauth/callback'])).toBe('cline')
+        expect(detectClientKey(['http://127.0.0.1:50123/oauth_callback'])).toBe('goose')
+        expect(detectClientKey(['http://localhost:8765/callback'])).toBe('windsurf')
+        expect(detectClientKey(['http://127.0.0.1:50123/', 'http://127.0.0.1:50123/callback'])).toBe('copilot-cli')
+    })
+
+    it('identifies hosted callbacks by host', () => {
+        expect(detectClientKey(['https://antigravity.google/oauth-callback'])).toBe('antigravity')
+    })
+
+    it('leaves a 127.0.0.1 /callback unnamed, since Zed and newer opencode both use it', () => {
+        expect(detectClientKey(['http://127.0.0.1:9999/callback'])).toBe('unknown')
+        expect(detectClientKey(['http://127.0.0.1:50123/'])).toBe('unknown')
     })
 
     it('never hides an unmatched grant, and never trusts clientName as a signal', () => {

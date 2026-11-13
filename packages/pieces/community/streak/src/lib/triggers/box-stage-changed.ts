@@ -1,3 +1,4 @@
+import { boxStageChangedWebhookOutputSchema } from '../common/output-schemas';
 import { createPipelineWebhookTrigger } from '../common/trigger-factory';
 
 export const boxStageChangedTrigger = createPipelineWebhookTrigger({
@@ -9,6 +10,7 @@ export const boxStageChangedTrigger = createPipelineWebhookTrigger({
       'Fires when a box in the selected pipeline moves from one stage to another, representing progression through the pipeline; the event includes both the new and previous stage keys.',
   },
   event: 'BOX_CHANGE_STAGE',
+  outputSchema: boxStageChangedWebhookOutputSchema,
   sampleData: {
     boxKey: 'agxzfm1haWxmb29nYWVyMQsSA0JveBiAgIDAj-iiCgw',
     name: 'Acme Inc',

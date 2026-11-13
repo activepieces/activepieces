@@ -381,6 +381,8 @@
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Trigger when a tag is added to a subscriber": "Auslösen wenn ein Tag einem Abonnenten hinzugefügt wird",
   "Trigger when a tag is removed from a subscriber": "Auslösen wenn ein Tag von einem Abonnenten entfernt wird",
   "Trigger when a subscriber is activated. This happens when a subscriber confirms their subscription.": "Wird ausgelöst, wenn ein Abonnent aktiviert ist. Dies passiert, wenn ein Abonnent sein Abonnement bestätigt.",

@@ -23,7 +23,7 @@ export function CodeFilePreview({
         </span>
         <div className="flex items-center gap-0.5">
           <CopyButton
-            textToCopy={code}
+            value={code}
             withoutTooltip
             variant="ghost"
             size="icon-xs"

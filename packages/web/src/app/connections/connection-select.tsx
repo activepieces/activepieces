@@ -78,10 +78,11 @@ export function ConnectionSelect({
   const {
     data: connections,
     isLoading: isLoadingConnections,
+    isError: isConnectionsError,
     refetch,
   } = appConnectionsQueries.useAppConnections({
     request: {
-      pieceName: piece.name,
+      pieceName: [piece.name],
       projectId: authenticationSession.getProjectId()!,
       limit: 1000,
     },
@@ -114,17 +115,22 @@ export function ConnectionSelect({
     setConnectionDialogOpen(true);
   };
 
-  if (isLoadingConnections || !pieceWithCorrectVersion) {
+  if (isLoadingConnections || isConnectionsError || !pieceWithCorrectVersion) {
     return (
       <SearchableSelect
         options={[]}
         disabled={true}
         loading={isLoadingConnections}
-        placeholder={t('Select a connection')}
+        placeholder={
+          isConnectionsError
+            ? t("Couldn't load your connections.")
+            : t('Select a connection')
+        }
         value={value}
         onChange={() => {}}
         showDeselect={false}
-        showRefresh={false}
+        showRefresh={isConnectionsError}
+        onRefresh={() => refetch()}
       />
     );
   }
@@ -137,13 +143,13 @@ export function ConnectionSelect({
         piece={pieceWithCorrectVersion}
         key={`CreateOrEditConnectionDialog-open-${connectionDialogOpen}`}
         open={connectionDialogOpen}
-        setOpen={(open, connection) => {
+        setOpen={async (open, connection) => {
           setConnectionDialogOpen(open);
           const createdValue = connectionTemplate.wrapExternalId(
             connection?.externalId,
           );
           if (!isNil(createdValue)) {
-            refetch();
+            await refetch();
             onChange(createdValue);
           }
         }}
@@ -152,7 +158,7 @@ export function ConnectionSelect({
         key={value ?? ''}
         open={selectConnectionOpen}
         onOpenChange={setSelectConnectionOpen}
-        defaultValue={value}
+        value={value ?? ''}
         onValueChange={onChange}
         disabled={disabled}
       >

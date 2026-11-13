@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { updateBusinessTimeAction } from './lib/actions/business-settings/update-business-time';
 import { createCategoryAction } from './lib/actions/categories/create-category';
 import { deleteCategoryAction } from './lib/actions/categories/delete-category';
@@ -6,6 +6,8 @@ import { listCategoriesAction } from './lib/actions/categories/list-categories';
 import { updateCategoryAction } from './lib/actions/categories/update-category';
 import { createProductDiscountAction } from './lib/actions/discounts/create-product-discount';
 import { createPromoCodeAction } from './lib/actions/discounts/create-promo-code';
+import { aiCreateProductDiscountAction } from './lib/actions/discounts/ai-create-product-discount';
+import { aiCreatePromoCodeAction } from './lib/actions/discounts/ai-create-promo-code';
 import { getOrderDetailsAction } from './lib/actions/orders/get-order-details';
 import { listLiveOrdersAction } from './lib/actions/orders/list-live-orders';
 import { listOrdersAction } from './lib/actions/orders/list-orders';
@@ -17,19 +19,14 @@ import { updateProductAction } from './lib/actions/products/update-product';
 import { orderCreatedTrigger } from './lib/triggers/order-created';
 import { quickzuAuth } from './lib/auth';
 
-const authHelpDescription = `
-1. Login to your Quickzu Dashboard.
-2. Go to **https://app.quickzu.com/dash/settings/api-webhooks**.
-3. Copy **API Token** to the clipboard and paste it.`;
-
 export const quickzu = createPiece({
   displayName: 'Quickzu',
   description: 'Streamline ordering from whatsapp',
 
   auth: quickzuAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/quickzu.png',
-  authors: ["kishanprmr","abuaboud"],
+  authors: ["kishanprmr","abuaboud","OdaiAhmed99"],
   actions: [
     addProductAction,
     updateProductAction,
@@ -45,6 +42,8 @@ export const quickzu = createPiece({
     updateOrderStatusAction,
     createProductDiscountAction,
     createPromoCodeAction,
+    aiCreateProductDiscountAction,
+    aiCreatePromoCodeAction,
     updateBusinessTimeAction,
   ],
   triggers: [orderCreatedTrigger],

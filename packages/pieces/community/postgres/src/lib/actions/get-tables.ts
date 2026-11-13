@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { postgresAuth } from '../..';
+import { postgresAuth } from '../auth';
 import { pgClient, postgresUtils } from '../common';
 import { getTablesOutputSchema } from '../output-schemas';
 

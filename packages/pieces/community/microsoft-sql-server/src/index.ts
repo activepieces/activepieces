@@ -8,12 +8,13 @@ import { deleteRowsAction } from './lib/actions/delete-rows';
 import { getTablesAction } from './lib/actions/get-tables';
 import { runQueryAction } from './lib/actions/run-query';
 import { newOrUpdatedRowTrigger } from './lib/triggers/new-or-updated-row';
+import { microsoftSqlServerAiActions } from './lib/actions/ai';
 
 export const mssql = createPiece({
   displayName: 'Microsoft SQL Server',
   description:
     "Microsoft's relational database engine, on-premise or as Azure SQL",
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-sql-server.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ['OdaiAhmed99'],
@@ -26,6 +27,7 @@ export const mssql = createPiece({
     deleteRowsAction,
     getTablesAction,
     runQueryAction,
+    ...microsoftSqlServerAiActions,
   ],
   triggers: [newOrUpdatedRowTrigger],
 });

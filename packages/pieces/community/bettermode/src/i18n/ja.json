@@ -260,6 +260,8 @@
   "PUT": "PUT",
   "DELETE": "削除",
   "HEAD": "頭",
+  "Request": "リクエスト",
+  "Data to send": "送信するデータ",
   "New Post": "新規投稿",
   "New Member": "新規メンバー",
   "New Reply": "New Reply",

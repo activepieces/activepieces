@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { helpScoutApiRequest } from '../common/api';
-import { helpScoutAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { helpScoutApi } from '../common/api';
+import { helpScoutAuth } from '../common/auth';
 import { conversationIdDropdown, userIdDropdown } from '../common/props';
+import { helpScoutOutputSchemas } from '../common/output-schemas';
 
 export const addNote = createAction({
   auth: helpScoutAuth,
@@ -10,43 +11,26 @@ export const addNote = createAction({
   classification: 'WRITE',
   displayName: 'Add Note',
   description: 'Adds a note to a conversation.',
-  audience: 'both',
-  aiMetadata: {
-    description:
-      'Adds an internal note (not visible to the customer) to an existing Help Scout conversation identified by conversation ID. Use for agent-only annotations rather than a customer-facing reply. Not idempotent — each call appends a new note.',
-    idempotent: false,
-  },
+  audience: 'human',
+  outputSchema: helpScoutOutputSchemas['createdId'],
   props: {
     conversationId: conversationIdDropdown,
-    text: Property.LongText({
-      displayName: 'Note Text',
-      required: true,
-    }),
+    text: Property.LongText({ displayName: 'Note Text', required: true }),
     userId: userIdDropdown('User'),
   },
   async run({ auth, propsValue }) {
-    const payload: Record<string, any> = {
-      text: propsValue.text,
-    };
-    if(propsValue.userId) {
-      payload['user'] = Number(propsValue.userId);
+    if (!propsValue.conversationId) {
+      throw new Error('Select the conversation to add the note to.');
     }
-    Object.keys(payload).forEach((key) => {
-      if (payload[key] === undefined || payload[key] === null) {
-        delete payload[key];
-      }
-    });
-    const response = await helpScoutApiRequest({
+    const body: Record<string, unknown> = { text: propsValue.text };
+    const user = helpScoutApi.optionalNumber(propsValue.userId);
+    if (user !== undefined) body['user'] = user;
+    const response = await helpScoutApi.request({
       method: HttpMethod.POST,
-      url: `/conversations/${propsValue.conversationId}/notes`,
+      path: `/conversations/${helpScoutApi.encodeId(propsValue.conversationId)}/notes`,
       auth,
-      body: payload,
+      body,
     });
-
-    const noteId = response.headers?.['resource-id'];
-
-    return {
-      id: noteId,
-    };
+    return { id: helpScoutApi.getResourceId(response.headers) };
   },
 });

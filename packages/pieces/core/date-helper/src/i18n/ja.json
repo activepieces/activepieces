@@ -508,5 +508,12 @@
   "September": "9月",
   "October": "10月",
   "November": "11月",
-  "December": "12月"
+  "December": "12月",
+  "Input": "Input",
+  "Output": "Output",
+  "Start": "Start",
+  "End": "終了",
+  "Shift": "Shift",
+  "When": "When",
+  "Date Helper": "日付ヘルパー"
 }

@@ -54,7 +54,7 @@ export const barrierService = (log: FastifyBaseLogger) => ({
                 type: PauseType.BARRIER,
                 version: params.version,
                 status: WaitpointStatus.PENDING,
-                resumeDateTime: defaultBarrierDeadline({ flowRunCreated: flowRun.created }),
+                resumeDateTime: resolveDeadline({ flowRunCreated: flowRun.created, timeoutSeconds: params.timeoutSeconds }),
                 responseToSend: params.responseToSend ?? null,
                 workerHandlerId: params.workerHandlerId ?? null,
                 httpRequestId: params.httpRequestId ?? null,
@@ -71,14 +71,15 @@ export const barrierService = (log: FastifyBaseLogger) => ({
             return { inserted: true, barrier, signals }
         })
 
-        if (!isNil(params.fanOut) && creation.barrier.status === WaitpointStatus.PENDING) {
-            await startFanOut({
+        const keptSource = !isNil(params.fanOut) && creation.barrier.status === WaitpointStatus.PENDING
+            ? await startFanOut({
                 barrierId: creation.barrier.id,
                 projectId: params.projectId,
-                source: { entryStepName: params.fanOut.entryStepName, batchStepName: params.fanOut.batchStepName, seedSteps: params.fanOut.seedSteps, batches },
+                source: { entryStepName: params.fanOut.entryStepName, batchStepName: params.fanOut.batchStepName, seedSteps: params.fanOut.seedSteps, batchSize, batches },
+                reusedSignalCount: creation.inserted ? null : creation.signals.length,
                 log,
             })
-        }
+            : null
         if (creation.inserted) {
             if (!isNil(creation.barrier.resumeDateTime)) {
                 await waitpointTimeoutJob.schedule({
@@ -92,7 +93,13 @@ export const barrierService = (log: FastifyBaseLogger) => ({
             await barrierQueue(log).enqueueEvaluation({ barrierId: creation.barrier.id, projectId: params.projectId })
         }
 
-        return { barrier: creation.barrier, signals: creation.signals, signalCount: creation.signals.length, batchSize }
+        return {
+            barrier: creation.barrier,
+            signals: creation.signals,
+            signalCount: creation.signals.length,
+            batchSize: keptSource?.batchSize ?? batchSize,
+            ...spreadIfDefined('totalItems', isNil(keptSource) ? params.fanOut?.items.length : countItems(keptSource.batches)),
+        }
     },
 
     async findById({ barrierId, projectId }: FindByIdParams): Promise<Waitpoint | null> {
@@ -270,9 +277,18 @@ async function lockOpenBarrier({ barrierId, projectId, entityManager }: LockForD
         .getOne()
 }
 
-async function startFanOut({ barrierId, projectId, source, log }: StartFanOutParams): Promise<void> {
-    await distributedStore.put(barrierSourceKey(barrierId), source, SOURCE_TTL_SECONDS)
+async function startFanOut({ barrierId, projectId, source, reusedSignalCount, log }: StartFanOutParams): Promise<BarrierFanOutPayload> {
+    if (!isNil(reusedSignalCount)) {
+        assertSameBatchCount({ existingSignalCount: reusedSignalCount, requestedSignalCount: source.batches.length })
+    }
+    const written = await distributedStore.putIfAbsent(barrierSourceKey(barrierId), source, SOURCE_TTL_SECONDS)
+    const kept = written ? source : await distributedStore.get<BarrierFanOutPayload>(barrierSourceKey(barrierId))
     await barrierQueue(log).addFanOutDispatch({ barrierId, projectId })
+    return kept ?? source
+}
+
+function countItems(batches: unknown[][]): number {
+    return batches.reduce((count, batch) => count + batch.length, 0)
 }
 
 async function closeBarrier({ barrier, timedOut }: CloseBarrierParams): Promise<BarrierSummary | null> {
@@ -375,9 +391,23 @@ function assertSignalCountWithinLimit({ signalCount, maxSignals }: AssertSignalC
     }
 }
 
-function defaultBarrierDeadline({ flowRunCreated }: DefaultBarrierDeadlineParams): string {
+function assertSameBatchCount({ existingSignalCount, requestedSignalCount }: AssertSameBatchCountParams): void {
+    if (existingSignalCount !== requestedSignalCount) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `This step already started ${existingSignalCount} batches, but its items now split into ${requestedSignalCount}. The items changed between attempts, so the batches cannot continue safely.` },
+        })
+    }
+}
+
+function resolveDeadline({ flowRunCreated, timeoutSeconds }: ResolveDeadlineParams): string {
     const maxDurationInDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
-    return dayjs(flowRunCreated).add(maxDurationInDays, 'day').toISOString()
+    const cap = dayjs(flowRunCreated).add(maxDurationInDays, 'day')
+    if (isNil(timeoutSeconds)) {
+        return cap.toISOString()
+    }
+    const requested = dayjs().add(timeoutSeconds, 'second')
+    return (requested.isBefore(cap) ? requested : cap).toISOString()
 }
 
 const SIGNAL_INSERT_BATCH_SIZE = 500
@@ -410,6 +440,7 @@ export type CreateBarrierParams = {
         items: unknown[]
         seedSteps: Record<string, unknown>
     }
+    timeoutSeconds?: number
 }
 
 export type CreateBarrierResult = {
@@ -417,6 +448,7 @@ export type CreateBarrierResult = {
     signals: WaitpointSignal[]
     signalCount: number
     batchSize: number
+    totalItems?: number
 }
 
 export type ReceiveSignalParams = {
@@ -492,6 +524,7 @@ type StartFanOutParams = {
     barrierId: string
     projectId: string
     source: BarrierFanOutPayload
+    reusedSignalCount: number | null
     log: FastifyBaseLogger
 }
 
@@ -555,6 +588,12 @@ type AssertSignalCountWithinLimitParams = {
     maxSignals: number
 }
 
-type DefaultBarrierDeadlineParams = {
+type AssertSameBatchCountParams = {
+    existingSignalCount: number
+    requestedSignalCount: number
+}
+
+type ResolveDeadlineParams = {
     flowRunCreated: string
+    timeoutSeconds?: number
 }

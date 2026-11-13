@@ -4,12 +4,13 @@ import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { tableSideEffects } from '../table/table-side-effects'
 import { FieldEntity } from './field.entity'
 
 const fieldRepo = repoFactory<Field>(FieldEntity)
 
 export const fieldService = {
-    async create({ request, projectId }: CreateParams): Promise<Field> {
+    async create({ request, projectId, editorSessionId }: CreateParams): Promise<Field> {
         await this.validateCount({ projectId, tableId: request.tableId })
         const maxPosition = await fieldRepo().maximum('position', { projectId, tableId: request.tableId })
         const field = await fieldRepo().save({
@@ -19,6 +20,7 @@ export const fieldService = {
             id: apId(),
             externalId: request.externalId ?? apId(),
         })
+        await tableSideEffects.onTableChanged({ projectId, tableId: field.tableId, editorSessionId })
         return field
     },
 
@@ -110,14 +112,18 @@ export const fieldService = {
         return field
     },
 
-    async delete({ id, projectId }: DeleteParams): Promise<void> {
+    async delete({ id, projectId, editorSessionId }: DeleteParams): Promise<void> {
+        const field = await fieldRepo().findOneBy({ id, projectId })
         await fieldRepo().delete({
             id,
             projectId,
         })
+        if (!isNil(field)) {
+            await tableSideEffects.onTableChanged({ projectId, tableId: field.tableId, editorSessionId })
+        }
     },
 
-    async update({ id, projectId, request }: UpdateParams): Promise<Field> {
+    async update({ id, projectId, request, editorSessionId }: UpdateParams): Promise<Field> {
         if (!isNil(request.name)) {
             await fieldRepo().update({
                 id,
@@ -126,10 +132,12 @@ export const fieldService = {
                 name: request.name,
             })
         }
-        return this.getById({ id, projectId })
+        const field = await this.getById({ id, projectId })
+        await tableSideEffects.onTableChanged({ projectId, tableId: field.tableId, editorSessionId })
+        return field
     },
 
-    async reorder({ projectId, tableId, fieldIds }: ReorderParams): Promise<Field[]> {
+    async reorder({ projectId, tableId, fieldIds, editorSessionId }: ReorderParams): Promise<Field[]> {
         await fieldRepo().query(
             `
             UPDATE "field" AS f
@@ -142,6 +150,7 @@ export const fieldService = {
             `,
             [fieldIds, projectId, tableId],
         )
+        await tableSideEffects.onTableChanged({ projectId, tableId, editorSessionId })
         return this.getAll({ projectId, tableId })
     },
 
@@ -165,6 +174,7 @@ export const fieldService = {
 type CreateParams = {
     projectId: string
     request: CreateFieldRequest
+    editorSessionId?: string | null
 }
 
 type CreateFromStateParams = {
@@ -192,18 +202,21 @@ type GetByIdParams = {
 type DeleteParams = {
     id: string
     projectId: string
+    editorSessionId?: string | null
 }
 
 type UpdateParams = {
     id: string
     projectId: string
     request: UpdateFieldRequest
+    editorSessionId?: string | null
 }
 
 type ReorderParams = {
     projectId: string
     tableId: string
     fieldIds: string[]
+    editorSessionId?: string | null
 }
 
 type CountParams = {

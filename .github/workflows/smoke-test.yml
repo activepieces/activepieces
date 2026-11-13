@@ -83,10 +83,9 @@ jobs:
       # can't exercise isolation here (it returns no data and the gate fails spuriously). Run it
       # locally with `benchmark/probe-fs.js` + `smoke-test/verify-isolation.sh` (both kept in repo).
 
-      # Memory-limit detection gate (same SANDBOX_CODE_ONLY stack): the OOM code step blows
-      # the ENGINE heap via the isolate->engine result copy, and AP_WORKER_CONCURRENCY=1 (job env)
-      # gives that single sandbox the full 1G worker container. Every run must end
-      # MEMORY_LIMIT_EXCEEDED — this pins the detection path for production code-only engine OOMs.
+      # Memory-limit gate (same SANDBOX_CODE_ONLY stack): the OOM code step fills the 128MB heap
+      # of its Deno process. Every run must end FAILED with an out-of-memory error on the code
+      # step, which pins that a code step cannot take the engine down with it.
       - name: Setup OOM flow
         if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
         id: setup-oom

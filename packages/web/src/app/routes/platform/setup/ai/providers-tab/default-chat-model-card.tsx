@@ -70,8 +70,8 @@ export function DefaultChatModelCard({
         title={t('Default chat model')}
         description={t('New chats start on this model.')}
       >
-        <div className="flex items-center gap-2">
-          <div className="flex min-w-7 shrink-0 items-center justify-end">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="flex min-w-7 shrink-0 items-center justify-end max-sm:empty:hidden">
             {!isNil(status) && status.unavailable && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -79,6 +79,7 @@ export function DefaultChatModelCard({
                     variant="ghost"
                     size="xs"
                     className="text-warning-11"
+                    disabled={isPending}
                     onClick={() => save(null)}
                   >
                     {t('Use default')}
@@ -102,7 +103,7 @@ export function DefaultChatModelCard({
               )}
           </div>
           <div
-            className="w-64"
+            className="w-64 min-w-0"
             {...adminControl(AdminControl.AI_DEFAULT_CHAT_MODEL_SELECT)}
           >
             {isNil(configuration) ? (

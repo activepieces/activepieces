@@ -66,3 +66,23 @@ export const API_ENDPOINTS = {
   PRODUCTS: `/Products`,
   FIELDS: `/settings/fields`,
 };
+
+export const BIGIN_RECORD_MODULES = [
+  { label: 'Contacts', value: 'Contacts' },
+  { label: 'Companies (Accounts)', value: 'Accounts' },
+  { label: 'Pipelines (Deals)', value: 'Pipelines' },
+  { label: 'Products', value: 'Products' },
+  { label: 'Tasks', value: 'Tasks' },
+  { label: 'Events', value: 'Events' },
+  { label: 'Calls', value: 'Calls' },
+];
+
+export const BIGIN_DEFAULT_LIST_FIELDS: Record<string, string> = {
+  Contacts: 'First_Name,Last_Name,Email,Mobile,Phone,Title,Account_Name,Owner,Created_Time,Modified_Time',
+  Accounts: 'Account_Name,Phone,Website,Billing_City,Billing_Country,Owner,Created_Time,Modified_Time',
+  Pipelines: 'Deal_Name,Stage,Sub_Pipeline,Pipeline,Amount,Closing_Date,Account_Name,Contact_Name,Owner,Created_Time,Modified_Time',
+  Products: 'Product_Name,Product_Code,Unit_Price,Product_Active,Owner,Created_Time,Modified_Time',
+  Tasks: 'Subject,Status,Priority,Due_Date,Related_To,Owner,Created_Time,Modified_Time',
+  Events: 'Event_Title,Start_DateTime,End_DateTime,All_day,Venue,Related_To,Owner,Created_Time,Modified_Time',
+  Calls: 'Subject,Call_Type,Call_Start_Time,Call_Duration,Related_To,Owner,Created_Time,Modified_Time',
+};

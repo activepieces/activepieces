@@ -1,6 +1,24 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { createAction, OutputSchema } from '@activepieces/pieces-framework';
 import { genderApiAuth } from '../common/auth';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { genderApiCommon } from '../common/client';
+
+function statisticsOutputSchema(): OutputSchema {
+  return {
+    fields: [
+      { key: 'remaining_credits', label: 'Remaining Credits', format: 'number' },
+      { key: 'is_limit_reached', label: 'Limit Reached', format: 'boolean' },
+      {
+        key: 'usage_last_month',
+        label: 'Usage Last Month',
+        children: [
+          { key: 'date', label: 'Month', description: 'Year and month of the usage period (YYYY-MM)' },
+          { key: 'credits_used', label: 'Credits Used', format: 'number' },
+        ],
+      },
+    ],
+  };
+}
 
 export const getStatistics = createAction({
   auth: genderApiAuth,
@@ -12,20 +30,27 @@ export const getStatistics = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Retrieves the Gender API account statistics, including remaining credits and usage information. Use to check quota before running batches of name lookups. Takes no input; read-only and safe to repeat.',
+      'Retrieves the Gender API account statistics, including remaining credits, whether the limit is reached and last month usage. Use to check quota before running batches of name lookups. Takes no input, costs no credits; read-only and safe to repeat.',
     idempotent: true,
   },
   props: {},
-  async run(context) {
-    const response = await httpClient.sendRequest({
+  outputSchema: statisticsOutputSchema(),
+  async run({ auth }) {
+    const response = await genderApiCommon.request<unknown>({
+      apiKey: auth.secret_text,
       method: HttpMethod.GET,
-      url: 'https://gender-api.com/v2/statistic',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${context.auth.secret_text}`,
-      },
+      path: '/statistic',
     });
-
-    return response.body;
+    const data = genderApiCommon.toRecord(response);
+    const usage = genderApiCommon.toRecord(data['usage_last_month']);
+    return {
+      remaining_credits: genderApiCommon.toNumber(data['remaining_credits']),
+      is_limit_reached: data['is_limit_reached'] === true,
+      usage_last_month: {
+        date: genderApiCommon.toText(usage['date']),
+        credits_used: genderApiCommon.toNumber(usage['credits_used']),
+      },
+      ...data,
+    };
   },
 });

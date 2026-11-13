@@ -43,7 +43,7 @@ export const googleSlide = createPiece({
   auth: googleSlidesAuth,
   minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-slides.png',
-  authors: ['Kevinyu-alan'],
+  authors: ['Kevinyu-alan', 'OdaiAhmed99'],
   actions: [
     getPresentation,
     refreshSheetsCharts,

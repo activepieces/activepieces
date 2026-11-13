@@ -1,22 +1,23 @@
-﻿import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const getCompany = createAction({
   auth: ninjapipeAuth,
   name: 'get_company',
   classification: 'READ',
   displayName: 'Get Company',
-  description: 'Retrieves a company by ID.',
-  audience: 'both',
-  aiMetadata: { description: 'Fetch a single company record by its ID. Read-only lookup for inspecting one company; to enumerate or search companies use a list action instead.', idempotent: true },
+  description: 'Gets one company by ID.',
+  audience: 'human',
+  aiMetadata: { description: 'Fetch a single NinjaPipe company by ID. Read-only.', idempotent: true },
+  outputSchema: ninjapipeSchemas.company,
   props: {
-    companyId: ninjapipeCommon.companyDropdownRequired,
+    companyId: ninjapipeProps.companyRequired(),
   },
   async run(context) {
-    const auth = getAuth(context);
-    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.GET, path: `/companies/${encodeURIComponent(String(context.propsValue.companyId))}` });
-    return flattenCustomFields(response.body);
+    const id = ninjapipeClient.pathId({ value: context.propsValue.companyId, field: 'Company' });
+    return ninjapipeClient.getRecord({ auth: ninjapipeClient.readAuth(context.auth), path: `/companies/${id}`, operation: 'get company' });
   },
 });

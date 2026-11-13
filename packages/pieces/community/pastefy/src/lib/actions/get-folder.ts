@@ -1,23 +1,26 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { makeClient, pastefyCommon } from '../common';
-import { pastefyAuth } from '../..';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { pastefyAuth } from '../common/auth';
+import { pastefyOutputSchemas } from '../common/output-schemas';
+import { pastefyProps } from '../common/props';
+import { pastefyRequests } from '../common/requests';
 
 export default createAction({
   auth: pastefyAuth,
   name: 'get_folder',
   classification: 'READ',
   displayName: 'Get Folder',
-  description: 'Retrieves information about a folder',
-  audience: 'both',
-  aiMetadata: { description: 'Fetches metadata for a single folder by its ID from a Pastefy instance. Use to read details of a known folder. Read-only and idempotent.', idempotent: true },
-  props: {
-    folder_id: pastefyCommon.folder_id(true),
+  description: 'Retrieves a folder with its subfolders and pastes.',
+  audience: 'human',
+  aiMetadata: {
+    description: 'Gets one folder picked from a dropdown, with its pastes and subfolders (each with their own pastes and subfolders) unless Include Contents is off; then only the direct subfolders (ID, name) are listed and pastes is empty. Read-only and idempotent. Needs an API key in the Pastefy connection.',
+    idempotent: true,
   },
-  async run(context) {
-    const client = makeClient(context.auth, context.propsValue);
-    const folder = await client.getFolder(
-      context.propsValue.folder_id as string
-    );
-    return folder;
+  props: {
+    folder_id: pastefyProps.folderDropdown({ required: true, displayName: 'Folder', description: 'The folder to get.' }),
+    include_contents: Property.Checkbox({ displayName: 'Include Contents', description: 'Add pastes and subfolder contents.', required: false, defaultValue: true }),
+  },
+  outputSchema: pastefyOutputSchemas.folder,
+  async run({ auth, propsValue }) {
+    return pastefyRequests.getFolder({ auth, folderId: propsValue.folder_id, includeContents: propsValue.include_contents !== false });
   },
 });

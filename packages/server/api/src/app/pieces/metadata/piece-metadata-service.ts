@@ -70,16 +70,16 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             if (isNil(piece)) {
                 return undefined
             }
-            const [translatedPiece] = await translatePieces({ pieces: [piece], locale: locale ?? LocalesEnum.ENGLISH })
+            const resolvedPiece = await resolveTranslations({ piece, locale: locale ?? LocalesEnum.ENGLISH })
 
             const policy = await resolveVisibility({ platformId, projectId, log })
             if (isNil(policy)) {
-                return translatedPiece
+                return resolvedPiece
             }
-            if (!policy.isPieceVisible(translatedPiece.name)) {
+            if (!policy.isPieceVisible(resolvedPiece.name)) {
                 return undefined
             }
-            return policy.filterPieceComponents(translatedPiece)
+            return policy.filterPieceComponents(resolvedPiece)
         },
         async checkActionsExist({ actions, platformId }: CheckActionsExistParams): Promise<ActionExistence> {
             const latestVersions = await Promise.all(Object.keys(actions).map((name) => findExactVersion(log, { name, version: undefined, platformId })))
@@ -522,6 +522,15 @@ function pickLatestVersionIds(pieces: PieceKey[]): string[] {
     return Array.from(latest.values()).map((p) => p.id)
 }
 
+async function resolveTranslations({ piece, locale }: ResolveTranslationsParams): Promise<PieceMetadataSchema> {
+    if (locale === 'all') {
+        const i18n = await pieceTranslationService.getAllLocales({ pieceMetadataId: piece.id })
+        return { ...piece, i18n: i18n ?? piece.i18n }
+    }
+    const [translatedPiece] = await translatePieces({ pieces: [piece], locale })
+    return translatedPiece
+}
+
 async function translatePieces({ pieces, locale }: TranslatePiecesParams): Promise<PieceMetadataSchema[]> {
     if (locale === LocalesEnum.ENGLISH) {
         return pieces.map((piece) => ({ ...piece, i18n: undefined }))
@@ -593,7 +602,7 @@ type GetOrThrowParams = {
     entityManager?: EntityManager
     projectId?: string
     platformId?: string
-    locale?: LocalesEnum
+    locale?: LocalesEnum | 'all'
 }
 
 type DeleteParams = {
@@ -660,6 +669,11 @@ type LatestPieces = {
 type UntranslatedNamesOfParams = {
     originalPieces: PieceMetadataSchema[]
     translatedPieces: PieceMetadataSchema[]
+}
+
+type ResolveTranslationsParams = {
+    piece: PieceMetadataSchema
+    locale: LocalesEnum | 'all'
 }
 
 type TranslatePiecesParams = {

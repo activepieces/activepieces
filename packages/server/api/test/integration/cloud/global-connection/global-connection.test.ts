@@ -1,4 +1,4 @@
-import { apId } from '@activepieces/core-utils'
+import { apId, ErrorCode } from '@activepieces/core-utils'
 import { AppConnectionScope, AppConnectionType, PackageType, PlatformRole, PrincipalType, UpdateGlobalConnectionValueRequestBody, UpsertGlobalConnectionRequestBody } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -9,6 +9,7 @@ import {
     mockAndSaveBasicSetup,
     mockBasicUser,
 } from '../../../helpers/mocks'
+import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -583,5 +584,64 @@ describe('GlobalConnection API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
+
+        it('Fails with 404 if connection does not exist', async () => {
+            const ctx = await createTestContext(app!, { plan: { globalConnectionsEnabled: true } })
+
+            const response = await ctx.post(`/v1/global-connections/${apId()}`, {
+                displayName: 'updated-global-connection',
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response.json().code).toBe(ErrorCode.ENTITY_NOT_FOUND)
+        })
+
+        it('Fails with 404 if connection belongs to another platform', async () => {
+            const ownerCtx = await createTestContext(app!, { plan: { globalConnectionsEnabled: true } })
+            const otherCtx = await createTestContext(app!, { plan: { globalConnectionsEnabled: true } })
+            const connectionId = await createGlobalConnection(ownerCtx)
+
+            const response = await otherCtx.post(`/v1/global-connections/${connectionId}`, {
+                displayName: 'updated-global-connection',
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response.json().code).toBe(ErrorCode.ENTITY_NOT_FOUND)
+        })
+
+        it('Fails with 404 if updated through the project connections endpoint', async () => {
+            const ctx = await createTestContext(app!, { plan: { globalConnectionsEnabled: true } })
+            const connectionId = await createGlobalConnection(ctx)
+
+            const response = await ctx.post(`/v1/app-connections/${connectionId}`, {
+                displayName: 'updated-global-connection',
+                metadata: { foo: 'bar' },
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response.json().code).toBe(ErrorCode.ENTITY_NOT_FOUND)
+        })
     })
 })
+
+async function createGlobalConnection(ctx: TestContext): Promise<string> {
+    const mockPieceMetadata = createMockPieceMetadata({
+        platformId: ctx.platform.id,
+        packageType: PackageType.REGISTRY,
+    })
+    await db.save('piece_metadata', [mockPieceMetadata])
+    const response = await ctx.post('/v1/global-connections', {
+        pieceVersion: mockPieceMetadata.version,
+        displayName: 'test global connection',
+        pieceName: mockPieceMetadata.name,
+        scope: AppConnectionScope.PLATFORM,
+        type: AppConnectionType.SECRET_TEXT,
+        projectIds: [ctx.project.id],
+        value: {
+            type: AppConnectionType.SECRET_TEXT,
+            secret_text: 'test-secret-text',
+        },
+    })
+    expect(response.statusCode).toBe(StatusCodes.CREATED)
+    return response.json().id
+}

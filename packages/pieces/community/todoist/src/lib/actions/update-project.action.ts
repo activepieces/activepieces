@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistProjectsSectionsClient } from '../common/client/projects-sections-client';
 import { todoistAuth } from '../..';
+import { favoriteTriStateProp, parseTriState } from '../common/tri-state';
 import { updateProjectActionOutputSchema } from '../output-schemas';
 
 export const todoistUpdateProjectAction = createAction({
@@ -50,11 +51,7 @@ export const todoistUpdateProjectAction = createAction({
       description: 'New description for the project.',
       required: false,
     }),
-    is_favorite: Property.Checkbox({
-      displayName: 'Is Favorite',
-      description: 'Whether the project is marked as a favorite.',
-      required: false,
-    }),
+    is_favorite: favoriteTriStateProp('project'),
   },
   async run(context) {
     const token = context.auth.access_token;
@@ -69,7 +66,7 @@ export const todoistUpdateProjectAction = createAction({
       color,
       view_style,
       description,
-      is_favorite,
+      is_favorite: parseTriState(is_favorite),
     });
   },
 });

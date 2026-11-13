@@ -1,6 +1,7 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { genderApiAuth } from '../common/auth';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { genderApiCommon } from '../common/client';
 
 export const getGenderByFullName = createAction({
   auth: genderApiAuth,
@@ -11,7 +12,7 @@ export const getGenderByFullName = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Predicts the likely gender of a person from a full name (first and last) via the Gender API, which extracts the first name internally. Use when you have the complete name rather than only a given name; optionally pass a country code and/or locale to improve accuracy for region-specific names. Read-only lookup that is safe to repeat.',
+      'Predicts the likely gender of a person from a full name (first and last) via the Gender API, which splits out the first and last name itself. Use when you have the complete name rather than only a given name; optionally pass an ISO 3166-1 alpha-2 country code and/or locale to improve accuracy. Costs 1 credit. Read-only lookup that is safe to repeat.',
     idempotent: true,
   },
   props: {
@@ -31,29 +32,20 @@ export const getGenderByFullName = createAction({
       required: false,
     }),
   },
-  async run(context) {
-    const payload: any = {
-      full_name: context.propsValue.full_name,
-    };
-
-    if (context.propsValue.country_code) {
-      payload.country_code = context.propsValue.country_code;
-    }
-
-    if (context.propsValue.locale) {
-      payload.locale = context.propsValue.locale;
-    }
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: 'https://gender-api.com/v2/gender',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${context.auth.secret_text}`,
-      },
-      body: payload,
+  outputSchema: genderApiCommon.genderResultWithRawOutputSchema,
+  async run({ auth, propsValue }) {
+    const body = genderApiCommon.buildLookupBody({
+      key: 'full_name',
+      value: propsValue.full_name,
+      countryCode: propsValue.country_code,
+      locale: propsValue.locale,
     });
-
-    return response.body;
+    const response = await genderApiCommon.request<unknown>({
+      apiKey: auth.secret_text,
+      method: HttpMethod.POST,
+      path: '/gender',
+      body,
+    });
+    return genderApiCommon.normalizeGenderResultKeepingRaw(response);
   },
 });

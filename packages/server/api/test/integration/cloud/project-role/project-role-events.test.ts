@@ -1,3 +1,4 @@
+import { RoleType } from '@activepieces/core-utils'
 import { ApplicationEventName } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
@@ -71,7 +72,7 @@ describe('Project role application events', () => {
 
     it('emits PROJECT_ROLE_DELETED on DELETE /v1/project-roles/:name', async () => {
         const ctx = await createTestContext(app)
-        const projectRole = createMockProjectRole({ platformId: ctx.platform.id })
+        const projectRole = createMockProjectRole({ platformId: ctx.platform.id, type: RoleType.CUSTOM })
         await db.save('project_role', projectRole)
 
         const response = await ctx.delete(`/v1/project-roles/${projectRole.name}`)

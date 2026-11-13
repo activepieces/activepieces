@@ -1,15 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { rabbitmqAuth } from '../auth';
-import { rabbitmqConnect } from '../common';
+import { publishOutputSchema, rabbitmqCommon } from '../common';
 
 export const sendMessageToExchange = createAction({
   auth: rabbitmqAuth,
   name: 'sendMessageToExchange',
   classification: 'WRITE',
-  displayName: 'sendMessageToExchange',
+  displayName: 'Send Message to Exchange',
   description: 'Send a message on a RabbitMQ exchange',
-  audience: 'both',
-  aiMetadata: { description: 'Publishes a JSON message to a named RabbitMQ exchange, optionally with a routing key that the exchange uses to route the message to bound queues. Choose this to emit an event into a pub/sub or topic-style topology where one exchange fans out to multiple consumers; use the send-to-queue action instead to push directly onto a specific queue. The target exchange must already exist (the call verifies it first). Not idempotent: each call publishes a new message.', idempotent: false },
+  audience: 'human',
+  outputSchema: publishOutputSchema,
   props: {
     exchange: Property.ShortText({
       displayName: 'Exchange',
@@ -27,39 +27,20 @@ export const sendMessageToExchange = createAction({
       description: 'The data to send',
       required: true,
       defaultValue: {
-        "key": "value",
-        "nested": { "key": "value" },
-        "array": ["value1", "value2"]
+        key: 'value',
+        nested: { key: 'value' },
+        array: ['value1', 'value2'],
       },
     }),
+    ...rabbitmqCommon.publishOptionProps,
   },
   async run(context) {
-    let connection;
-    let channel;
-    try {
-      const exchange = context.propsValue.exchange;
-      const routingKey = context.propsValue.routingKey || '';
-
-      connection = await rabbitmqConnect(context.auth.props);
-      channel = await connection.createChannel();
-
-      await channel.checkExchange(exchange);
-
-      const result = channel.publish(
-        exchange,
-        routingKey,
-        Buffer.from(JSON.stringify(context.propsValue.data))
-      );
-
-      if (!result) {
-        throw new Error('Failed to send message to exchange');
-      }
-      return result;
-    } finally {
-      if (channel)
-        await channel.close();
-      if (connection)
-        await connection.close();
-    }
-  }
+    const { exchange, routingKey, data, persistent, contentType, headers } = context.propsValue;
+    return rabbitmqCommon.publish({
+      auth: context.auth.props,
+      target: { type: 'exchange', exchange, routingKey: routingKey || '' },
+      data,
+      options: { persistent, contentType, headers },
+    });
+  },
 });

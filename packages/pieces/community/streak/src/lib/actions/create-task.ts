@@ -1,20 +1,11 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { streakAuth } from '../common/auth';
+import { taskOutputSchema } from '../common/output-schemas';
 import { streakApiCall } from '../common/client';
+import { flattenStreakTask, toEmailList } from '../common/flatten';
+import { StreakTask } from '../common/types';
 import { boxDropdown, pipelineDropdown } from '../common/props';
-
-type StreakTask = {
-  key: string;
-  text: string;
-  boxKey?: string;
-  dueDate?: number;
-  status?: string;
-  creatorKey?: string;
-  creationDate?: number;
-  lastUpdatedDate?: number;
-  assignedToSharingEntries?: Array<{ email?: string }>;
-};
 
 export const createTaskAction = createAction({
   auth: streakAuth,
@@ -28,6 +19,7 @@ export const createTaskAction = createAction({
       'Create a new task (a to-do item) attached to a specific box, with task text and an optional due date and assignee emails. Use when an agent needs to add a follow-up or action item to a Streak record; requires the box key and task text. Not idempotent: each call creates another task on the box.',
     idempotent: false,
   },
+  outputSchema: taskOutputSchema,
   props: {
     pipelineKey: pipelineDropdown,
     boxKey: boxDropdown,
@@ -56,7 +48,7 @@ export const createTaskAction = createAction({
       body['dueDate'] = new Date(dueDate).getTime();
     }
     if (assignedToEmails && assignedToEmails.length > 0) {
-      body['assignedToSharingEntries'] = (assignedToEmails as string[]).map(
+      body['assignedToSharingEntries'] = toEmailList(assignedToEmails).map(
         (email) => ({ email }),
       );
     }
@@ -69,22 +61,6 @@ export const createTaskAction = createAction({
       body,
     });
 
-    const task = response.body;
-    return {
-      task_key: task.key,
-      box_key: task.boxKey ?? (boxKey as string),
-      text: task.text,
-      status: task.status ?? null,
-      due_date_epoch_ms: task.dueDate ?? null,
-      creator_key: task.creatorKey ?? null,
-      creation_date_epoch_ms: task.creationDate ?? null,
-      last_updated_date_epoch_ms: task.lastUpdatedDate ?? null,
-      assigned_to_emails: Array.isArray(task.assignedToSharingEntries)
-        ? task.assignedToSharingEntries
-            .map((a) => a.email)
-            .filter((e): e is string => Boolean(e))
-            .join(', ')
-        : null,
-    };
+    return flattenStreakTask({ task: response.body, fallbackBoxKey: boxKey });
   },
 });

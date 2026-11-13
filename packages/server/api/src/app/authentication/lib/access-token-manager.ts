@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, PlatformId, ProjectId } from '@activepieces/core-utils'
-import { ALL_PRINCIPAL_TYPES, EnginePrincipal, Principal, PrincipalType, UserStatus, WorkerPrincipal } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, EnginePrincipal, Principal, PrincipalType, WorkerPrincipal } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { jwtUtils } from '../../helper/jwt-utils'
@@ -107,7 +107,7 @@ async function assertUserSession(log: FastifyBaseLogger, decoded: Principal | Pr
     const user = await userService(log).getOneOrFail({ id: decoded.id })
     const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
     const isExpired = (identity.tokenVersion ?? null) !== (decoded.tokenVersion ?? null)
-    if (isExpired || user.status === UserStatus.INACTIVE || !identity.verified) {
+    if (isExpired || !userService(log).isActive({ user, identity })) {
         throw new ActivepiecesError({
             code: ErrorCode.SESSION_EXPIRED,
             params: {

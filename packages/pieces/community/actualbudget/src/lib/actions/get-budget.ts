@@ -1,39 +1,41 @@
-import { actualBudgetAuth } from '../..';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import * as api from '@actual-app/api';
-import { getMonths, getYears, initializeAndDownloadBudget } from '../common/common';
-
+import { actualBudgetAuth } from '../common/auth';
+import { withBudget } from '../common/client';
+import { requireMonth } from '../common/helpers';
+import { actualOutputSchemas } from '../common/output-schemas';
+import { monthOptions, yearDropdown } from '../common/props';
 
 export const getBudget = createAction({
   auth: actualBudgetAuth,
   name: 'get_budget',
   classification: 'READ',
   displayName: 'Get Budget',
-  description: 'Get your monthly budget',
-  audience: 'both',
-  aiMetadata: { description: 'Retrieves the budget for a single month from an Actual Budget server, including each category group and category for that month. Use it to read budgeted, spent, and balance figures for a specific period; the month and year must be supplied as separate inputs. Read-only and idempotent.', idempotent: true },
+  description:
+    'Gets the budget for one month: totals plus budgeted, spent and balance per category (amounts in cents).',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Builder version of Get Budget Month with month and year dropdowns. Returns the month totals and every category group with budgeted, spent and balance in integer cents. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     month: Property.StaticDropdown({
       displayName: 'Month',
       description: 'The month of the budget you want to get',
       required: true,
-      options: {
-        options: getMonths()
-        }
+      options: { options: monthOptions() },
     }),
-    year: Property.StaticDropdown({
-      displayName: 'Year',
-      description: 'The year of the budget you want to get',
-      required: true,
-      options: {
-        options: getYears()
-      }
-    })
+    year: yearDropdown,
   },
+  outputSchema: actualOutputSchemas.budgetMonth,
   async run(context) {
-    await initializeAndDownloadBudget(api, context.auth.props)
-    const budget = await api.getBudgetMonth(`${context.propsValue.year}-${context.propsValue.month}`);
-    await api.shutdown();
-    return budget;
+    const month = requireMonth({
+      value: `${context.propsValue.year}-${context.propsValue.month}`,
+      field: 'Month',
+    });
+    return withBudget({
+      auth: context.auth.props,
+      fn: (api) => api.getBudgetMonth(month),
+    });
   },
 });

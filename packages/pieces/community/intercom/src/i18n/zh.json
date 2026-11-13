@@ -356,6 +356,8 @@
   "PUT": "弹出",
   "DELETE": "删除",
   "HEAD": "黑色",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Contact Replied": "Contact Replied",
   "Lead Added Email": "Lead Added Email",
   "Lead Converted To User": "Lead Converted To User",

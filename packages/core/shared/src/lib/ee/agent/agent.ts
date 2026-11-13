@@ -1,6 +1,6 @@
 import { AgentOutputField, AgentTool } from '@activepieces/core-execution'
 import { AgentToolType } from '@activepieces/core-piece-types'
-import { AIProviderName, ApId, BaseModelSchema, Nullable } from '@activepieces/core-utils'
+import { AIProviderName, ApId, BaseModelSchema, Nullable, OptionalArrayFromQuery } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
 import { ColorName } from '../../management/project/project'
@@ -143,6 +143,7 @@ const ListAgentsRequest = z.object({
     sort: z.optional(z.enum(AgentListSort)),
     cursor: z.string().optional(),
     limit: z.coerce.number().int().min(1).max(MAX_AGENT_PAGE_SIZE).optional(),
+    connectionExternalIds: OptionalArrayFromQuery(z.string()),
 })
 
 const ListAgentRunsRequest = z.object({

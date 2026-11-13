@@ -2,6 +2,7 @@ import { createTrigger, isNil, TriggerStrategy } from '@activepieces/pieces-fram
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { campaignMonitorAuth } from '../auth';
+import { clientOutputSchema } from '../output-schemas';
 
 export const newClientTrigger = createTrigger({
   auth: campaignMonitorAuth,
@@ -15,22 +16,27 @@ export const newClientTrigger = createTrigger({
   },
   props: {},
   type: TriggerStrategy.POLLING,
+  outputSchema: clientOutputSchema,
   sampleData: {
     ClientID: 'xyz',
     Name: 'New Client',
   },
   async onEnable(context) {
-    if (context.isRepublish && !isNil(await context.store.get('existing_clients'))) {
+    if (
+      context.isRepublish &&
+      !isNil(await context.store.get('existing_clients'))
+    ) {
       return;
     }
-    // Store the list of existing clients
-    const response = await makeRequest(
-      { apiKey: context.auth.secret_text },
-      HttpMethod.GET,
-      '/clients.json'
-    );
+    const response = await makeRequest<
+      Array<{ ClientID: string; Name: string }>
+    >({
+      auth: { apiKey: context.auth.secret_text },
+      method: HttpMethod.GET,
+      path: '/clients.json',
+    });
 
-    const clients = response.body as Array<{ ClientID: string; Name: string }>;
+    const clients = response.body;
 
     await context.store.put('existing_clients', {
       clients: clients.map((c) => c.ClientID),
@@ -40,51 +46,45 @@ export const newClientTrigger = createTrigger({
     if (context.isRepublish) {
       return;
     }
-    // No cleanup needed for polling trigger
     await context.store.delete('existing_clients');
   },
   async test(context) {
-    const response = await makeRequest(
-      { apiKey: context.auth.secret_text },
-      HttpMethod.GET,
-      '/clients.json'
-    );
+    const response = await makeRequest<
+      Array<{ ClientID: string; Name: string }>
+    >({
+      auth: { apiKey: context.auth.secret_text },
+      method: HttpMethod.GET,
+      path: '/clients.json',
+    });
 
     return response.body;
   },
   async run(context) {
-    // Get stored list of clients
     const storedClients = await context.store.get<{ clients: string[] }>(
       'existing_clients'
     );
     const existingClientIds = storedClients?.clients || [];
+    const response = await makeRequest<
+      Array<{
+        ClientID: string;
+        Name: string;
+      }>
+    >({
+      auth: { apiKey: context.auth.secret_text },
+      method: HttpMethod.GET,
+      path: '/clients.json',
+    });
 
-    // Get all clients
-    const response = await makeRequest(
-      { apiKey: context.auth.secret_text },
-      HttpMethod.GET,
-      '/clients.json'
-    );
-
-    const allClients = response.body as Array<{
-      ClientID: string;
-      Name: string;
-    }>;
-
-    // Find new clients
+    const allClients = response.body;
     const newClients = allClients.filter(
       (client) => !existingClientIds.includes(client.ClientID)
     );
-
-    // Update stored client list
     const updatedClientIds = Array.from(
       new Set([...existingClientIds, ...allClients.map((c) => c.ClientID)])
     );
     await context.store.put('existing_clients', {
       clients: updatedClientIds,
     });
-
-    // Return new clients
     return newClients;
   },
 });

@@ -188,5 +188,14 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE"
+  "HEAD": "TÊTE",
+  "Page": "Page",
+  "Output": "Sortie",
+  "Pages": "Pages",
+  "What to extract": "Quoi extraire",
+  "Site": "Site",
+  "Limits": "Limites",
+  "Webhook": "Webhook",
+  "Request": "Requête",
+  "Data to send": "Données à envoyer"
 }

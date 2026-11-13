@@ -19,19 +19,30 @@ Use both together to guarantee capacity for busy projects and cap the rest.
 
 ## How it works
 
-A worker joins a group by setting its group ID at startup. `AP_PROJECT_WORKER` selects the group's scope:
+A worker joins a group by setting its group ID at startup. `AP_WORKER_GROUP_SCOPE` selects the group's scope:
 
-- **Project** group — leave `AP_PROJECT_WORKER=true` (the default). Assign individual projects to it from **Platform Admin → Operations → Workers → Worker groups**.
-- **Platform** group — set `AP_PROJECT_WORKER=false`. Serves the whole platform's runs; used for dedicated/canary fleets.
+- **Project** group — `AP_WORKER_GROUP_SCOPE=project` (the default). Assign individual projects to it from **Platform Admin → Operations → Workers → Worker groups**.
+- **Flow** group — `AP_WORKER_GROUP_SCOPE=flow`. Pins individual flows to it, regardless of which group (if any) their project is in. See [Assigning flows to a group](#assigning-flows-to-a-group).
+- **Platform** group — `AP_WORKER_GROUP_SCOPE=platform` (or the legacy `AP_PROJECT_WORKER=false`). Serves the whole platform's runs; used for dedicated/canary fleets.
+
+A group's scope is fixed by whichever scope its workers connect with — a label can't take both project and flow assignments at once, so give project and flow pools distinct `AP_WORKER_GROUP_ID` values.
 
 ```bash
-# Project group, e.g. 1cpu_machine (AP_PROJECT_WORKER defaults to true)
+# Project group, e.g. 1cpu_machine (AP_WORKER_GROUP_SCOPE defaults to project)
 AP_WORKER_GROUP_ID=1cpu_machine
+
+# Flow group, e.g. gpu_flows
+AP_WORKER_GROUP_ID=gpu_flows
+AP_WORKER_GROUP_SCOPE=flow
 
 # Platform group
 AP_WORKER_GROUP_ID=canary
-AP_PROJECT_WORKER=false
+AP_WORKER_GROUP_SCOPE=platform
 ```
+
+<Note>
+`AP_PROJECT_WORKER` (`true`/`false`) still works as the legacy project-vs-platform toggle, but `AP_WORKER_GROUP_SCOPE` is the current setting and the only way to request the flow scope.
+</Note>
 
 Grouped workers must set:
 
@@ -43,7 +54,9 @@ AP_REUSE_SANDBOX=true               # or false, must be set explicitly
 Routing runs to worker group queues is done by the project rate limiter, so the app server must run with `AP_PROJECT_RATE_LIMITER_ENABLED=true`. Without it, assigned projects keep using the shared queue and grouped workers stay idle.
 </Warning>
 
-Once a project is assigned to a group, its flow and webhook runs are routed to that group's dedicated queue (`project-<group-name>-jobs`) and picked up only by workers carrying the matching `AP_WORKER_GROUP_ID` with `AP_PROJECT_WORKER=true`. If no worker in the group is online, runs wait in the group queue until one connects — they are never executed by shared workers. Changing a project's assignment — to a group, between groups, or back to shared — also moves its waiting runs to the new queue. Projects without a group keep drawing from the shared queue.
+Once a project is assigned to a group, its flow and webhook runs are routed to that group's dedicated queue (`project-<group-name>-jobs`) and picked up only by workers carrying the matching `AP_WORKER_GROUP_ID` with scope `project`. If no worker in the group is online, runs wait in the group queue until one connects — they are never executed by shared workers. Changing a project's assignment — to a group, between groups, or back to shared — also moves its waiting runs to the new queue. Projects without a group keep drawing from the shared queue.
+
+A flow pinned to a group works the same way, but on its own queue (`flow-<group-name>-jobs`), picked up only by workers with scope `flow`. **A flow's own pin always wins over its project's group** — pin a flow to send just that flow's runs elsewhere without moving the rest of the project.
 
 ## Assigning projects to a group
 
@@ -63,4 +76,20 @@ curl -X POST 'https://your-instance.com/api/v1/projects/<PROJECT_ID>' \
   -H 'Content-Type: application/json' \
   -d '{ "workerGroupId": "1cpu_machine", "maxConcurrentJobs": 2 }'
 ```
+
+## Assigning flows to a group
+
+Pin individual flows to a **flow** group when only a few flows — not their whole project — need dedicated capacity (more memory, a GPU, a specific region). A pinned flow's runs route to that group even if its project is on the shared queue or assigned elsewhere; unpin it and the flow falls back to its project's group, or the shared queue.
+
+- **UI** — go to **Platform admin → Operations → Workers → Worker groups** (`/platform/workers/groups`), open a flow group, and add flows to it by searching across projects.
+- **API** — `POST /v1/worker-groups/assignments/flows` with a platform API key:
+
+```bash
+curl -X POST 'https://your-instance.com/api/v1/worker-groups/assignments/flows' \
+  -H 'Authorization: Bearer <PLATFORM_API_KEY>' \
+  -H 'Content-Type: application/json' \
+  -d '{ "flows": ["<FLOW_ID>"], "workerGroupId": "gpu_flows" }'
+```
+
+Pass `workerGroupId: null` to unpin flows and return them to their project's group. If workers are currently online under that group label with the `project` scope, assigning a flow to it is rejected — a label serves one scope at a time.
 

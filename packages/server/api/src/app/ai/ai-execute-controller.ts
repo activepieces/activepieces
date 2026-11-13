@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, ApId, apId, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { ActivepiecesError, AiCallContext, AIProviderName, ApId, apId, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { AiStepAction, AiStepFile, AiStepSchema, AiStepWebSearch, ExecuteAiJobData, LATEST_JOB_DATA_SCHEMA_VERSION, maxSocketHttpBufferSizeBytes, PrincipalType, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -12,6 +12,7 @@ import { aiExecution } from './ai-execution'
 import { aiModelCandidates } from './ai-model-candidates'
 import { aiModelResolution } from './ai-model-resolution'
 import { aiProviderService } from './ai-provider-service'
+import { aiCallContext } from './usage/ai-call-context'
 
 export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
     const bodyLimit = maxSocketHttpBufferSizeBytes(system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB))
@@ -31,6 +32,7 @@ export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
         const log = request.log.child({ flowRun: { id: body.flowRunId }, requestId })
         const execution = aiExecution(log)
         const model = await pickModel({ body, platformId: platform.id, projectId, log })
+        const callContext = await aiCallContext.forFlowRun({ flowRunId: body.flowRunId, projectId })
         const answerInThisRequest = isNil(body.waitpointId)
         const timeoutMs = system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS) * 1000
         const answer = answerInThisRequest ? execution.waitForAnswer({ requestId, timeoutMs }) : undefined
@@ -42,6 +44,7 @@ export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
             projectId,
             platformId: platform.id,
             webserverId: answerInThisRequest ? execution.serverId() : undefined,
+            callContext,
         }))
         log.info({
             project: { id: projectId },
@@ -87,13 +90,14 @@ async function pickModel({ body, platformId, projectId, log }: {
     return { provider: body.provider, providerConfigId: body.providerConfigId, modelId }
 }
 
-function aiJobFor({ body, model, requestId, projectId, platformId, webserverId }: {
+function aiJobFor({ body, model, requestId, projectId, platformId, webserverId, callContext }: {
     body: z.infer<typeof ExecuteAiRequest>
     model: PickedModel
     requestId: string
     projectId: string
     platformId: string
     webserverId?: string
+    callContext: AiCallContext
 }): ExecuteAiJobData {
     const shared = {
         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
@@ -113,6 +117,7 @@ function aiJobFor({ body, model, requestId, projectId, platformId, webserverId }
         maxOutputTokens: body.maxOutputTokens,
         temperature: body.temperature,
         webSearch: body.webSearch,
+        callContext,
     } as const
 
     switch (body.action) {

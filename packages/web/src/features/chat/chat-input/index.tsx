@@ -70,7 +70,7 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
+      if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
         e.preventDefault();
         if (!disabled && (input || files.length > 0)) {
           handleSubmit(e as unknown as React.FormEvent);

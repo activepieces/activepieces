@@ -1,62 +1,47 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { formatDate, makeClient, pastefyCommon } from '../common';
-import { pastefyAuth } from '../..';
-import CryptoJS from 'crypto-js';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { pastefyAiProps } from '../common/ai-props';
+import { pastefyAuth } from '../common/auth';
+import { pastefyOutputSchemas } from '../common/output-schemas';
+import { pastefyProps } from '../common/props';
+import { pastefyRequests } from '../common/requests';
 
 export default createAction({
   auth: pastefyAuth,
   name: 'edit_paste',
   classification: 'WRITE',
   displayName: 'Edit Paste',
-  description: 'Edits an existing private paste',
-  audience: 'both',
-  aiMetadata: { description: 'Updates an existing private paste identified by its ID, replacing fields such as content, title, folder, visibility, and expiry. Use to modify a paste you already know the ID of. If an encryption password is supplied, the provided content/title are AES-encrypted client-side. Idempotent: re-applying the same field values to the same paste yields the same result.', idempotent: true },
-  props: {
-    paste_id: Property.ShortText({
-      displayName: 'Paste ID',
-      required: true,
-    }),
-    content: Property.LongText({
-      displayName: 'Content',
-      required: false,
-    }),
-    title: Property.ShortText({
-      displayName: 'Title',
-      required: false,
-    }),
-    password: Property.ShortText({
-      displayName: 'Encryption Password',
-      description: 'Encrypts the paste with this password',
-      required: false,
-    }),
-    folder_id: pastefyCommon.folder_id(false),
-    visibility: pastefyCommon.visibility(false),
-    expiry: Property.DateTime({
-      displayName: 'Expiry Date',
-      required: false,
-    }),
+  description: 'Changes a paste you own. Empty fields stay unchanged.',
+  audience: 'human',
+  aiMetadata: {
+    description: 'Updates a paste you own by ID, changing only the given fields (content, title, folder picked from a dropdown, visibility, expiry, tags) and returns the updated paste. An encrypted paste stays encrypted; changing its content or title needs its password. Re-applying the same values gives the same result, so it is idempotent. Needs an API key in the Pastefy connection.',
+    idempotent: true,
   },
-  async run(context) {
-    const client = makeClient(context.auth, context.propsValue);
-    const password = context.propsValue.password;
-    let content = context.propsValue.content;
-    let title = context.propsValue.title;
-    if (password) {
-      if (content) {
-        content = CryptoJS.AES.encrypt(content, password).toString();
-      }
-      if (title) {
-        title = CryptoJS.AES.encrypt(title, password).toString();
-      }
-    }
-    const res = await client.editPaste(context.propsValue.paste_id, {
-      title,
-      content,
-      encrypted: !!password,
-      folder: context.propsValue.folder_id,
-      visibility: context.propsValue.visibility,
-      expire_at: formatDate(context.propsValue.expiry),
+  props: {
+    paste_id: pastefyAiProps.pasteId(),
+    content: Property.LongText({ displayName: 'Content', required: false }),
+    title: Property.ShortText({ displayName: 'Title', required: false }),
+    password: Property.ShortText({ displayName: 'Encryption Password', description: 'Needed to edit an encrypted paste; on a plain paste it encrypts it.', required: false }),
+    folder_id: pastefyProps.folderDropdown({ required: false, displayName: 'Folder', description: 'Move the paste to this folder.' }),
+    visibility: pastefyProps.visibility({ required: false, description: 'New visibility.' }),
+    expiry: Property.DateTime({ displayName: 'Expiry Date', required: false }),
+    tags: pastefyProps.tags({ description: 'Replaces all tags of the paste.' }),
+    clear_tags: Property.Checkbox({ displayName: 'Clear Tags', description: 'Remove all tags (ignored when Tags is filled).', required: false, defaultValue: false }),
+  },
+  outputSchema: pastefyOutputSchemas.paste,
+  async run({ auth, propsValue }) {
+    return pastefyRequests.editPaste({
+      auth,
+      pasteId: propsValue.paste_id,
+      input: {
+        content: propsValue.content,
+        title: propsValue.title,
+        password: propsValue.password,
+        folderId: propsValue.folder_id,
+        visibility: propsValue.visibility,
+        expiry: propsValue.expiry,
+        tags: propsValue.tags,
+        clearTags: propsValue.clear_tags,
+      },
     });
-    return res;
   },
 });

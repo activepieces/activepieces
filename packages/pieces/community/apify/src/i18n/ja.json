@@ -220,6 +220,17 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Where to Read": "読み取り先",
+  "How Many Items": "アイテム数",
+  "What to Run": "実行する対象",
+  "What to Send": "送信する内容",
+  "Results": "結果",
+  "Input Changes": "入力の変更",
+  "Which Record": "どのレコード",
+  "Page to Scrape": "スクレイピングするページ",
+  "How to Load It": "読み込み方法",
+  "Request": "リクエスト",
+  "Data to send": "送信するデータ",
   "Watch Actor Runs": "アクターの実行を見る",
   "Watch Task Runs": "タスクの実行を見る",
   "Fires when a run of the Actor ends with a chosen status.": "Fires when a run of the Actor ends with a chosen status.",
@@ -227,5 +238,7 @@
   "Markdown": "Markdown",
   "Statuses": "Statuses",
   "Turning this flow on creates a webhook in your Apify account. Turning it off removes it.": "Turning this flow on creates a webhook in your Apify account. Turning it off removes it.",
-  "Run outcomes that start the flow.": "Run outcomes that start the flow."
+  "Run outcomes that start the flow.": "Run outcomes that start the flow.",
+  "What to Watch": "監視する対象",
+  "When to Fire": "いつ発火するか"
 }

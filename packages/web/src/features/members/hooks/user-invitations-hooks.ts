@@ -1,4 +1,9 @@
-import { InvitationType, UserInvitation } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import {
+  InvitationType,
+  UserInvitation,
+  UserInvitationPreview,
+} from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { userInvitationApi } from '../api/user-invitation';
@@ -6,6 +11,14 @@ import { userInvitationApi } from '../api/user-invitation';
 const userInvitationsQueryKey = 'user-invitations';
 
 export const userInvitationsHooks = {
+  useInvitationPreview: (token: string) => {
+    return useQuery<UserInvitationPreview>({
+      queryKey: [userInvitationsQueryKey, 'preview', token],
+      queryFn: () => userInvitationApi.preview(token),
+      enabled: token.length > 0,
+      retry: false,
+    });
+  },
   useInvitations: () => {
     const query = useQuery<UserInvitation[]>({
       queryFn: () => {
@@ -26,6 +39,24 @@ export const userInvitationsHooks = {
       isError: query.isError,
       refetch: query.refetch,
     };
+  },
+  useProjectPlatformInvitations: ({
+    projectId,
+  }: {
+    projectId: string | null;
+  }) => {
+    return useQuery<UserInvitation[]>({
+      queryFn: () => {
+        return userInvitationApi.listAll({
+          type: InvitationType.PLATFORM,
+          projectId,
+          limit: 100,
+        });
+      },
+      queryKey: [userInvitationsQueryKey, 'platform', projectId],
+      enabled: !isNil(projectId),
+      staleTime: 0,
+    });
   },
 };
 

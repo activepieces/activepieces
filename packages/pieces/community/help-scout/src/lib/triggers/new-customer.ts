@@ -1,10 +1,8 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { helpScoutAuth } from '../common/auth';
-import crypto from 'crypto';
-import { helpScoutApiRequest, verifyWebhookSignature } from '../common/api';
 import { HttpMethod } from '@activepieces/pieces-common';
-
-const WEBHOOK_KEY = 'helpscout_new_customer';
+import { helpScoutApi, StoredWebhook } from '../common/api';
+import { helpScoutAuth } from '../common/auth';
+import { helpScoutOutputSchemas } from '../common/output-schemas';
 
 export const newCustomer = createTrigger({
   auth: helpScoutAuth,
@@ -18,73 +16,63 @@ export const newCustomer = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   props: {},
-  sampleData: {},
+  outputSchema: helpScoutOutputSchemas['customerWebhook'],
+  sampleData: {
+    id: 333333,
+    firstName: 'Jane',
+    lastName: 'Doe',
+    gender: 'unknown',
+    jobTitle: 'Office Manager',
+    location: 'Austin, TX',
+    organization: 'Acme Inc',
+    photoUrl: '',
+    photoType: 'unknown',
+    background: '',
+    age: '',
+    createdAt: '2026-11-02T10:00:00Z',
+    updatedAt: '2026-11-02T10:00:00Z',
+    _embedded: {
+      emails: [{ id: 1, value: 'jane@example.com', type: 'work' }],
+      phones: [],
+      social_profiles: [],
+    },
+  },
   async onEnable(context) {
-    const secret = crypto.randomBytes(20).toString('hex');
-
-    const response = await helpScoutApiRequest({
+    const stored = await helpScoutApi.createWebhook({
       auth: context.auth,
-      method: HttpMethod.POST,
-      url: '/webhooks',
-      body: {
-        url: context.webhookUrl,
-        events: ['customer.created'],
-        secret,
-      },
+      url: context.webhookUrl,
+      events: ['customer.created'],
     });
-
-    const webhookId = response.headers?.['resource-id'] as string;
-
-    await context.store.put<{ webhookId: string; WebhookSecret: string }>(
-      WEBHOOK_KEY,
-      { webhookId: webhookId, WebhookSecret: secret }
-    );
+    await context.store.put<StoredWebhook>(WEBHOOK_KEY, stored);
   },
   async onDisable(context) {
-    const webhookData = await context.store.get<{
-      webhookId: string;
-      WebhookSecret: string;
-    }>(WEBHOOK_KEY);
-    if (webhookData?.webhookId) {
-      await helpScoutApiRequest({
-        method: HttpMethod.DELETE,
-        url: `/webhooks/${webhookData.webhookId}`,
-        auth: context.auth,
-      });
+    const stored = await context.store.get<StoredWebhook>(WEBHOOK_KEY);
+    if (stored?.webhookId) {
+      await helpScoutApi.deleteWebhook({ auth: context.auth, webhookId: stored.webhookId });
     }
+    await context.store.delete(WEBHOOK_KEY);
   },
   async run(context) {
-    const webhookData = await context.store.get<{
-      webhookId: string;
-      WebhookSecret: string;
-    }>(WEBHOOK_KEY);
-
-    const webhookSecret = webhookData?.WebhookSecret;
-    const webhookSignatureHeader =
-      context.payload.headers['x-helpscout-signature'];
-    const rawBody = context.payload.rawBody;
-
-    if (
-      !verifyWebhookSignature(webhookSecret, webhookSignatureHeader, rawBody)
-    ) {
-      return [];
-    }
-
-    return [context.payload.body];
+    const stored = await context.store.get<StoredWebhook>(WEBHOOK_KEY);
+    const body = helpScoutApi.verifiedWebhookBody({
+      stored,
+      headers: context.payload.headers,
+      rawBody: context.payload.rawBody,
+      body: context.payload.body,
+    });
+    return body ? [body] : [];
   },
   async test(context) {
-    const response = await helpScoutApiRequest({
+    const response = await helpScoutApi.request({
       method: HttpMethod.GET,
-      url: '/customers ',
+      path: '/customers',
       auth: context.auth,
+      queryParams: { sortField: 'createdAt', sortOrder: 'desc' },
     });
-
-    const { _embedded } = response.body as {
-      _embedded: {
-        customers: { id: number }[];
-      };
-    };
-
-    return _embedded.customers;
+    return helpScoutApi
+      .getEmbeddedList({ body: response.body, key: 'customers' })
+      .slice(0, 5);
   },
 });
+
+const WEBHOOK_KEY = 'helpscout_new_customer';

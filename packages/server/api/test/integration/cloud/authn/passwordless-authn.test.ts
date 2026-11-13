@@ -1,6 +1,6 @@
-import { apId } from '@activepieces/core-utils'
+import { apId, RoleType } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { ApFlagId, OtpState, OtpType, PlatformRole, UserIdentityProvider } from '@activepieces/shared'
+import { ApFlagId, InvitationStatus, InvitationType, OtpState, OtpType, PlatformRole, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { passwordHasher } from '../../../../src/app/authentication/lib/password-hasher'
@@ -9,6 +9,8 @@ import { otpService } from '../../../../src/app/authentication/otp/otp-service'
 import { userIdentityService } from '../../../../src/app/authentication/user-identity/user-identity-service'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { distributedStore } from '../../../../src/app/database/redis-connections'
+import { db } from '../../../helpers/db'
+import { createMockProjectRole, createMockUserInvitation, mockAndSaveBasicSetup } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 process.env.AP_TURNSTILE_SITE_KEY = 'test-site-key'
@@ -36,6 +38,15 @@ async function verifyCode({ email, code }: { email: string, code: string }) {
         method: 'POST',
         url: '/api/v1/authentication/otp/verify',
         body: { email, code },
+    })
+}
+
+async function completeSignUp({ token, fullName }: { token: string, fullName: string }) {
+    return app?.inject({
+        method: 'POST',
+        url: '/api/v1/authentication/complete-sign-up',
+        headers: { authorization: `Bearer ${token}` },
+        body: { fullName },
     })
 }
 
@@ -92,6 +103,8 @@ afterAll(async () => {
 beforeEach(async () => {
     await databaseConnection().getRepository('flag').createQueryBuilder().delete().execute()
     await databaseConnection().getRepository('otp').createQueryBuilder().delete().execute()
+    await databaseConnection().getRepository('user_invitation').createQueryBuilder().delete().execute()
+    await databaseConnection().getRepository('project_member').createQueryBuilder().delete().execute()
     await databaseConnection().getRepository('project').createQueryBuilder().delete().execute()
     await databaseConnection().getRepository('platform').createQueryBuilder().delete().execute()
     await databaseConnection().getRepository('user').createQueryBuilder().delete().execute()
@@ -482,6 +495,70 @@ describe('Passwordless Authentication API', () => {
             const response = await verifyCode({ email: 'nobody@example.com', code: '123456' })
 
             expect(response?.statusCode).toBe(StatusCodes.GONE)
+        })
+
+        it('puts a platform-invited person on the inviting platform instead of a platform of their own', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup({
+                platform: { emailAuthEnabled: true },
+            })
+            await db.save('user_invitation', createMockUserInvitation({
+                email: EMAIL,
+                platformId: mockPlatform.id,
+                type: InvitationType.PLATFORM,
+                platformRole: PlatformRole.MEMBER,
+                status: InvitationStatus.ACCEPTED,
+            }))
+
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            const verified = await verifyCode({ email: EMAIL, code: otp!.value })
+            expect(verified?.json()?.platformId).toBeNull()
+
+            const response = await completeSignUp({ token: verified?.json()?.token, fullName: 'Ahmad Bin Tash' })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body?.platformId).toBe(mockPlatform.id)
+            expect(body?.projectId).not.toBeNull()
+            expect(await databaseConnection().getRepository('platform').count()).toBe(1)
+            expect(await db.findOneBy('user_invitation', { email: EMAIL })).toBeNull()
+            const identity = await storedIdentity(EMAIL)
+            expect(identity?.firstName).toBe('Ahmad')
+            expect(identity?.lastName).toBe('Bin Tash')
+            const member = await db.findOneByOrFail<{ platformRole: string }>('user', { identityId: identity!.id, platformId: mockPlatform.id })
+            expect(member.platformRole).toBe(PlatformRole.MEMBER)
+        })
+
+        it('puts a project-invited person on the inviting platform and adds the project membership', async () => {
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup({
+                platform: { emailAuthEnabled: true },
+                plan: { projectRolesEnabled: true },
+            })
+            const projectRole = createMockProjectRole({ platformId: mockPlatform.id, type: RoleType.DEFAULT })
+            await db.save('project_role', projectRole)
+            await db.save('user_invitation', {
+                ...createMockUserInvitation({
+                    email: EMAIL,
+                    platformId: mockPlatform.id,
+                    type: InvitationType.PROJECT,
+                    projectId: mockProject.id,
+                    status: InvitationStatus.ACCEPTED,
+                }),
+                projectRoleId: projectRole.id,
+            })
+
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            const verified = await verifyCode({ email: EMAIL, code: otp!.value })
+            const response = await completeSignUp({ token: verified?.json()?.token, fullName: 'Ahmad Bin Tash' })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json()?.platformId).toBe(mockPlatform.id)
+            expect(await databaseConnection().getRepository('platform').count()).toBe(1)
+            expect(await db.findOneBy('user_invitation', { email: EMAIL })).toBeNull()
+            const identity = await storedIdentity(EMAIL)
+            const member = await db.findOneByOrFail<{ id: string }>('user', { identityId: identity!.id, platformId: mockPlatform.id })
+            expect(await db.findOneBy('project_member', { userId: member.id, projectId: mockProject.id })).not.toBeNull()
         })
     })
 })

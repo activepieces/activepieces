@@ -50,12 +50,17 @@ export const aiProviderQueries = {
 export const aiProviderMutations = {
   useRecheckAiProvider: ({
     onSuccess,
+    onError,
   }: {
     onSuccess: (result: { status: AiProviderKeyStatus }) => void;
+    onError: (
+      error: AxiosError<{ message?: string; params?: { message: string } }>,
+    ) => void;
   }) => {
     return useMutation({
       mutationFn: (providerId: string) => aiProviderApi.recheck(providerId),
       onSuccess,
+      onError,
     });
   },
   useDeleteAiProvider: ({

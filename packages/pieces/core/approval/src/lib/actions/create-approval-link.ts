@@ -30,7 +30,7 @@ export const createApprovalLink = createAction({
     const waitpoint = await ctx.run.createWaitpoint({
       type: 'WEBHOOK',
     });
-    const confirmationLink = `${waitpoint.resumeUrl}/confirm`;
+    const confirmationLink = `${waitpoint.publicResumeUrl ?? waitpoint.resumeUrl}/confirm`;
     return {
       approvalLink: confirmationLink,
       disapprovalLink: confirmationLink,

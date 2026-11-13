@@ -1,19 +1,23 @@
-import { McpOAuthGrant } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronRight } from 'lucide-react';
 
-import { formatUtils } from '@/lib/format-utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 import { ClientIcon } from '../client-icon';
+import { grantUtils } from '../grants/grant-utils';
 import { CatalogClient } from '../mcp-client-catalog';
+
+import { ClientStatus } from './use-connect-home';
 
 export function ClientTile({
   client,
-  grants,
+  status,
+  isStatusLoading,
   onOpen,
 }: {
   client: CatalogClient;
-  grants: McpOAuthGrant[] | undefined;
+  status: ClientStatus | undefined;
+  isStatusLoading: boolean;
   onOpen: () => void;
 }) {
   return (
@@ -27,29 +31,26 @@ export function ClientTile({
         <span className="truncate text-base/5 font-semibold text-gray-12">
           {client.name}
         </span>
-        <span className="flex min-w-0 items-center gap-1.5 text-sm/4.5 text-gray-11">
-          {grants && (
-            <span className="size-1.5 shrink-0 rounded-full bg-success-10" />
+        <span className="flex h-4.5 min-w-0 items-center gap-1.5 text-sm/4.5 text-gray-11">
+          {isStatusLoading ? (
+            <Skeleton className="h-3 w-24" />
+          ) : (
+            <>
+              {status && (
+                <span className="size-1.5 shrink-0 rounded-full bg-success-10" />
+              )}
+              <span className="truncate">
+                {status
+                  ? grantUtils.connectedLabel(status.lastUsedAt)
+                  : setupLabel(client)}
+              </span>
+            </>
           )}
-          <span className="truncate">
-            {grants ? statusLabel(grants) : setupLabel(client)}
-          </span>
         </span>
       </span>
       <ChevronRight className="size-4 shrink-0 text-gray-9 transition-[color,translate] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0.5 group-hover:text-gray-12" />
     </button>
   );
-}
-
-function statusLabel(grants: McpOAuthGrant[]): string {
-  const lastUsed = grants
-    .map((grant) => grant.lastUsedAt)
-    .filter((value): value is string => value !== null)
-    .sort()
-    .at(-1);
-  return lastUsed
-    ? t('Used {ago}', { ago: formatUtils.formatDateToAgo(new Date(lastUsed)) })
-    : t('Connected');
 }
 
 function setupLabel(client: CatalogClient): string {

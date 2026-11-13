@@ -1,3 +1,5 @@
+import { escapeCriteriaValue } from '../common/helpers';
+import { biginOutputSchemas } from '../common/output-schemas';
 import { biginAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { biginApiService } from '../common/request';
@@ -8,7 +10,8 @@ export const searchContactRecord = createAction({
   classification: 'SEARCH',
   displayName: 'Search Contact Record',
   description: 'Searches contacts by criteria, email, phone, or word',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: biginOutputSchemas.legacyContactSearch,
   aiMetadata: { description: 'Searches contact (person) records in Bigin CRM and returns matches. The search mode selects what the term is matched against: Criteria (name/email/mobile with equals or starts-with), a dedicated Email lookup, a dedicated Phone lookup, or a free-text Word search. Use to find a person by name, email, or phone before referencing or updating them. Idempotent: read-only, repeating the search returns the same matches.', idempotent: true },
   props: {
     mode: Property.StaticDropdown({
@@ -51,14 +54,14 @@ export const searchContactRecord = createAction({
     } else {
       queryValue = ['First_Name', 'Last_Name', 'Email', 'Mobile']
         .flatMap((key) => [
-          `${key}:equals:${searchTerm}`,
-          `${key}:starts_with:${searchTerm}`,
+          `${key}:equals:${escapeCriteriaValue(searchTerm)}`,
+          `${key}:starts_with:${escapeCriteriaValue(searchTerm)}`,
         ])
         .map((condition) => `(${condition})`)
         .join('OR');
     }
 
-    try {
+    
       const response = await biginApiService.searchRecords(
         access_token,
         api_domain,
@@ -71,10 +74,8 @@ export const searchContactRecord = createAction({
 
       return {
         message: 'Contact record search completed successfully',
-        data: response.data,
+        data: response.data ?? [],
       };
-    } catch (error: any) {
-      throw new Error(`Error searching contact record: ${error.message}`);
-    }
+    
   },
 });

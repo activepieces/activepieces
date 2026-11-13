@@ -128,5 +128,7 @@
   "PATCH": "COMPRAR",
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
-  "HEAD": "CABEÇA"
+  "HEAD": "CABEÇA",
+  "Request": "Request",
+  "Data to send": "Data to send"
 }

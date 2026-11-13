@@ -200,6 +200,13 @@ function text(result: { content: Array<{ type: 'text', text: string }> }): strin
     return result.content.map(c => c.text).join('\n')
 }
 
+const ResearchedPieces = z.object({
+    pieces: z.array(z.object({
+        actions: z.array(z.object({ name: z.string(), audience: z.string().optional() }).passthrough()),
+        recommendedActions: z.array(z.string()).optional(),
+    })),
+})
+
 function structured<T extends z.ZodType>({ result, schema }: { result: { structuredContent?: unknown }, schema: T }): z.infer<T> {
     return schema.parse(result.structuredContent)
 }
@@ -2694,6 +2701,32 @@ describe('MCP Tools integration', () => {
         expect(unmatched).not.toContain('AI hint')
         expect(noIntent).toContain('AI hint for archiving')
         expect(noIntent).toContain('AI hint for labels')
+    })
+
+    it('94. ap_research_pieces — marks AI actions, even ones the intent cut to name and display name', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const action = ({ name, displayName, description, audience }: { name: string, displayName: string, description: string, audience?: 'ai' | 'human' }) => ({ name, displayName, description, requireAuth: false, props: {}, ...(audience ? { audience } : {}) })
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-audience-drive',
+            displayName: 'Audience Drive',
+            version: '0.1.0',
+            pieceType: PieceType.CUSTOM,
+            packageType: PackageType.REGISTRY,
+            platformId: ctx.platform.id,
+            actions: {
+                search_folder: action({ name: 'search_folder', displayName: 'Search Folder', description: 'Search files by name prefix in a folder', audience: 'human' }),
+                drive_browse_entries: action({ name: 'drive_browse_entries', displayName: 'Browse Entries', description: 'Walk through every entry the drive holds', audience: 'ai' }),
+            },
+            triggers: {},
+        }))
+
+        const result = await apResearchPiecesTool(mcp, mockLog).execute({ pieceNames: ['@activepieces/piece-audience-drive'], forIntent: 'search files by name prefix' })
+        const [found] = structured({ result, schema: ResearchedPieces }).pieces
+
+        expect(found.recommendedActions).not.toContain('drive_browse_entries')
+        expect(found.actions.find((entry) => entry.name === 'drive_browse_entries')).toEqual({ name: 'drive_browse_entries', displayName: 'Browse Entries', audience: 'ai' })
+        expect(found.actions.find((entry) => entry.name === 'search_folder')).not.toHaveProperty('audience')
     })
 
     // ── Flow attribution (createdBy / ownerId) ───────────────────────

@@ -1,7 +1,8 @@
-import { UserIdentityProvider } from '@activepieces/shared'
+import { ApplicationEvent, ApplicationEventName, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { auditLogRepo } from '../../../../src/app/ee/audit-logs/audit-event-service'
 import { system } from '../../../../src/app/helper/system/system'
 import { AppSystemProp } from '../../../../src/app/helper/system/system-props'
 import { createMockPlatform, createMockPlatformPlan, createMockUser, createMockUserIdentity } from '../../../helpers/mocks'
@@ -116,4 +117,25 @@ describe('SAML ACS redirect', () => {
         expect(location.origin).toBe('https://sso.customer.example.com')
         expect(location.pathname).toBe('/authenticate')
     })
+
+    it('records a returning SAML sign-in as signed in, not signed up', async () => {
+        const before = await settledEvents({ atLeast: 0 })
+
+        await acs({ host: 'apps.customer.example.com' })
+        const after = await settledEvents({ atLeast: before.length + 1 })
+        const added = after.filter((event) => !before.some((earlier) => earlier.id === event.id))
+
+        expect(added).toEqual([expect.objectContaining({
+            action: ApplicationEventName.USER_SIGNED_IN,
+            userEmail: SSO_EMAIL,
+            data: expect.objectContaining({ method: UserIdentityProvider.SAML }),
+        })])
+    })
 })
+
+async function settledEvents({ atLeast }: { atLeast: number }): Promise<ApplicationEvent[]> {
+    const find = async (): Promise<ApplicationEvent[]> => auditLogRepo().find({ where: { platformId }, order: { created: 'ASC' } })
+    await vi.waitUntil(async () => (await find()).length >= atLeast, { timeout: 5000, interval: 50 })
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    return find()
+}

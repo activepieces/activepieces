@@ -1,22 +1,23 @@
-﻿import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const getPipeline = createAction({
   auth: ninjapipeAuth,
   name: 'get_pipeline',
   classification: 'READ',
   displayName: 'Get Pipeline',
-  description: 'Retrieves a pipeline by ID.',
+  description: 'Gets one pipeline by ID.',
   audience: 'both',
-  aiMetadata: { description: 'Fetch a single NinjaPipe sales pipeline by its ID. Read-only lookup for inspecting one pipeline; to enumerate available pipelines use a list action instead.', idempotent: true },
+  aiMetadata: { description: 'Fetch a single NinjaPipe pipeline by ID including its stages (stage IDs are used by pipeline items). Read-only.', idempotent: true },
+  outputSchema: ninjapipeSchemas.pipeline,
   props: {
-    pipelineId: ninjapipeCommon.pipelineDropdownRequired,
+    pipelineId: ninjapipeProps.pipelineRequired(),
   },
   async run(context) {
-    const auth = getAuth(context);
-    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.GET, path: `/pipelines/${encodeURIComponent(String(context.propsValue.pipelineId))}` });
-    return flattenCustomFields(response.body);
+    const id = ninjapipeClient.pathId({ value: context.propsValue.pipelineId, field: 'Pipeline' });
+    return ninjapipeClient.getRecord({ auth: ninjapipeClient.readAuth(context.auth), path: `/pipelines/${id}`, operation: 'get pipeline' });
   },
 });

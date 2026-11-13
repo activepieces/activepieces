@@ -1,5 +1,5 @@
 import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
-import { postgresAuth } from '../..';
+import { postgresAuth } from '../auth';
 import { pgClient } from '../common';
 
 export const runQuery = createAction({

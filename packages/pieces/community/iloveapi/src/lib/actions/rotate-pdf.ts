@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { iloveapiAuth } from '../common/auth';
-import { fileToUploadInput, sharedProps } from '../common/props';
+import { iloveSchemas } from '../common/schemas';
+import { fileToUploadInput, regionOf, sharedProps, webhookOf } from '../common/props';
 import { runAndStoreResult } from '../common/runner';
 
 export const rotatePdfAction = createAction({
@@ -10,6 +11,7 @@ export const rotatePdfAction = createAction({
   displayName: 'Rotate PDF',
   description: 'Rotate every page of a PDF by 90, 180, or 270 degrees.',
   audience: 'both',
+  outputSchema: iloveSchemas.toolResult,
   aiMetadata: {
     description:
       'Rotate all pages of a PDF by a fixed 90, 180, or 270 degrees. The rotation is relative to the current orientation, so it is not idempotent: applying it repeatedly keeps turning the pages rather than settling on an absolute angle.',
@@ -43,9 +45,11 @@ export const rotatePdfAction = createAction({
 
     return await runAndStoreResult({
       auth: context.auth.secret_text,
+      region: regionOf(context.propsValue.region),
+      webhook: webhookOf(context.propsValue.webhook_url),
       files: context.files,
       tool: 'rotate',
-      uploads: [fileToUploadInput(file)],
+      uploads: [fileToUploadInput({ file: file })],
       perFileOverrides: [{ rotate: rotateValue }],
       output_filename,
       packaged_filename,

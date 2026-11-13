@@ -1,6 +1,8 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { chargekeepAuth } from '../auth';
-import { chargekeepCommon } from '../common/common';
+import { createChargekeepWebhookHooks, deliveryKeys } from './helpers';
+
+const hooks = createChargekeepWebhookHooks({ eventName: 'Payment.Created', storeKey: '_new_payment_trigger', deliveryKey: deliveryKeys.byTransactionId });
 
 export const newPayment = createTrigger({
   auth: chargekeepAuth,
@@ -55,36 +57,12 @@ export const newPayment = createTrigger({
     eventType: 'Payment.Created',
   },
   async onEnable(context) {
-    const webhookId = await chargekeepCommon.subscribeWebhook(
-      'Payment.Created',
-      context.auth.props.base_url,
-      context.auth.props.api_key,
-      context.webhookUrl
-    );
-
-    await context.store?.put<WebhookInformation>('_new_payment_trigger', {
-      webhookId: webhookId,
-    });
+    await hooks.onEnable({ auth: context.auth, webhookUrl: context.webhookUrl, store: context.store });
   },
-
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_new_payment_trigger'
-    );
-
-    if (response !== null && response !== undefined) {
-      await chargekeepCommon.unsubscribeWebhook(
-        context.auth.props.base_url,
-        context.auth.props.api_key,
-        response.webhookId
-      );
-    }
+    await hooks.onDisable({ auth: context.auth, store: context.store });
   },
   async run(context) {
-    return [context.payload.body];
+    return hooks.run(context);
   },
 });
-
-interface WebhookInformation {
-  webhookId: number;
-}

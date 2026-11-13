@@ -6,13 +6,16 @@ icon: 🎭
 
 One Playwright suite in `packages/tests-e2e` feeds three consumers that fail independently: CI on a fresh throwaway instance, Checkly monitors against **production Cloud**, and a single BetterStack monitor. A change that only breaks one of them looks green everywhere else, so it is worth knowing which reads what.
 
+How to write a spec lives in one place: "Writing a spec" in `packages/tests-e2e/README.md`. This page holds the gotchas only.
+
 **Local / CI suite** — `playwright.config.ts` runs every `scenarios/**/*.spec.ts`; `AP_EDITION=ce` skips `scenarios/ee`. Boots the whole stack itself via the `webServer` block unless `E2E_INSTANCE_URL` is set. Global setup signs in once and saves the session to `.auth/user.json`, so specs start signed in.
-**Checkly monitors** — `checkly.config.ts` picks up the *same* `**/scenarios/**/*.spec.ts` files and runs them every 10 minutes with `baseURL: https://cloud.activepieces.com`, signing in with `E2E_EMAIL` / `E2E_PASSWORD`.
+**Checkly monitors** — `checkly.config.ts` picks up the *same* `**/scenarios/**/*.spec.ts` files and runs them every 10 minutes with `baseURL: https://cloud.activepieces.com`, signing in with `E2E_EMAIL` / `E2E_PASSWORD`. It runs the specs from its last deploy, not the specs on `main`.
 **BetterStack monitor** — one standalone file, `scenarios/betterstack/*.flat.spec.js`.
 
 ## Gotchas
 
 - **Checkly runs the shared specs against production Cloud**, so anything the page objects assume about the login screen has to hold on Cloud too — not just on the SMTP-less instance CI boots. This is the usual reason a UI change breaks the monitors but not CI. See the auth-card gotchas on [CE Authentication](../connections-auth/ce-authentication.md).
+- **Checkly deploys only by hand.** The `Deploy-Checkly` job in `emergency-cloud-deploy.yml` is the only path; nothing has called `e2e-tests-checkly.yml` since September 2025, and the `test-checkly` / `deploy-checkly` scripts are gone. A spec merged to `main` is not monitored until someone runs that workflow.
 - **BetterStack does not read the repo — the repo pushes to it.** `.github/workflows/sync-betterstack-playwright.yml` fires on push to `main` and `PATCH`es the file's contents into the hardcoded monitor `4211060` as `playwright_script`. One-way and `main`-only: the monitor updates at *merge*, never on the PR, and any edit made in the BetterStack UI is silently overwritten by the next push.
 - **The BetterStack file is deliberately flat and duplicated.** BetterStack executes one self-contained script, so it cannot `require` the `pages/` objects — its sign-in is a copy. Fix the page object and you have *not* fixed the monitor; both files need the change.
 - **The `.flat.spec.js` runs nowhere else.** Playwright matches `*.spec.ts` and Checkly matches `**/scenarios/**/*.spec.ts`, so a broken flat file is invisible locally and in CI until it fails in BetterStack.
@@ -32,10 +35,13 @@ One Playwright suite in `packages/tests-e2e` feeds three consumers that fail ind
 - **A `FormLabel` names its input only through `FormControl`.** `FormControl` puts the label's id on its child, so an input outside it, or a wrapper that drops `id`, leaves `getByLabel` with nothing. Fix the markup rather than locate the field by nearby text.
 - **A step must not call a `/sync` webhook on the same instance.** The step test holds a worker slot while the called flow waits for one, so with one slot the call times out (408). The matrix split configs run one slot: `benchmark/docker-compose.yml` passes `AP_WORKER_CONCURRENCY` as an empty string, which the worker reads as invalid and replaces with 1, not the default 5. Call the async webhook and check the called flow's run instead.
 - **Custom API Call leaves its URL empty in the builder**, although the action's default is the connection's base URL. "Test Step" stays disabled until the spec fills the URL.
+- **Only the EE configs send mail.** `benchmark/docker-compose.mail.yml` adds Mailpit to the EE configs of `e2e-matrix.yml`. With SMTP set, the server mails the invitation link and leaves `link` out of the invite response, so the dialog shows no link to copy. The CE configs keep no SMTP and test that path. A spec that reads mail uses the `mailbox` fixture and lives under `scenarios/ee/`.
+- **Never default an `AP_SMTP_*` variable to empty in a compose file.** The env reader keeps an empty string and `isSmtpConfigured()` checks only for nil, so `AP_SMTP_HOST: ${AP_SMTP_HOST:-}` makes the app treat SMTP as set, and every send fails. The variables live in the mail overlay only.
+- **Mail links arrive HTML-escaped.** The templates write `{{setupLink}}`, so Mustache turns `/`, `=` and `&` into entities. `fixtures/mail.ts` decodes them; code that reads the `HTML` of a Mailpit message itself must too.
 - **`@quarantine` specs are skipped only in CI.** The config's `grepInvert` applies when `CI` is set, and a CLI `--grep-invert` replaces it, so `e2e-matrix.yml` repeats `@quarantine` in its own pattern.
 
 ## Key files
-- `packages/tests-e2e` — `playwright.config.ts` (local/CI), `checkly.config.ts` (Cloud monitors), `global-setup.ts` (signs in or signs up, saves the session, sweeps stale `E2E ` flows and connections), `fixtures/` (`flowCleanup`, `connectionCleanup`, `e2eFlows`), `pages/` (shared page objects), `scenarios/betterstack/` (the standalone monitor script)
+- `packages/tests-e2e` — `playwright.config.ts` (local/CI), `checkly.config.ts` (Cloud monitors), `global-setup.ts` (signs in or signs up, saves the session, sweeps stale `E2E ` flows and connections), `fixtures/` (`flowCleanup`, `connectionCleanup`, `userCleanup`, `mailbox`, `e2eFlows`), `pages/` (shared page objects), `scenarios/betterstack/` (the standalone monitor script)
 - `.github/workflows/e2e-matrix.yml` — the only E2E suite that gates a release: the built image in four CE/EE configurations
 - `.github/workflows/e2e.yml` — the `ready-for-e2e` label trigger for that matrix
 - `.github/workflows/sync-betterstack-playwright.yml` — the push-to-`main` upload

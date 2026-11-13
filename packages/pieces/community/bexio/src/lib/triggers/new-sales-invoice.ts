@@ -1,9 +1,9 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof bexioAuth>,
@@ -83,6 +83,7 @@ export const newSalesInvoiceTrigger = createTrigger({
   aiMetadata: {
     description: 'Fires when a sales invoice is created or its updated timestamp changes in Bexio, optionally filtered to a chosen invoice status. Emits each matching invoice with its document number, contact, totals (gross, net, taxes), validity dates, and status. Use to react to new or modified customer invoices.',
   },
+  outputSchema: bexioOutputSchemas.invoiceSummaryOutputSchema,
   type: TriggerStrategy.POLLING,
   props: {
     status_id: Property.Dropdown({

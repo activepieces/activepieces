@@ -84,7 +84,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         if (error) {
             log.warn({ error }, 'Credit check failed mid-turn, letting the turn continue')
         }
-        creditsExhausted = !isNil(left) && left < 0
+        creditsExhausted = !isNil(left) && left <= 0
         paidToolsAffordable = isNil(left) || left >= CHAT_CREDITS_PER_TOOL_CALL
         return creditsExhausted
     }
@@ -148,7 +148,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         messages: agentAiUtils.stripThinkingBlocks(attemptMessages, current().provider),
         tools: guardedTools,
         stopWhen: loopStopCondition,
-        telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-turn' }),
+        ...agentAiUtils.buildTelemetry({ functionId: 'agent-turn' }),
         // providerOptions/model are supplied per-step by prepareStep (authoritative). A
         // call-level providerOptions would deep-merge into every step and leak the enabled
         // thinking budget back into the disabled first step.
@@ -216,7 +216,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 const { text } = await generateText({
                     model: current().model,
                     abortSignal,
-                    telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-tool-repair' }),
+                    ...agentAiUtils.buildTelemetry({ functionId: 'agent-tool-repair' }),
                     prompt: `Fix this invalid input for the tool "${toolCall.toolName}". The error was: ${error.message}\n\nOriginal input:\n${toolCall.input}\n\nThe input must match this JSON schema:\n${JSON.stringify(schema)}\n\nReturn ONLY the corrected JSON input, nothing else.`,
                 })
                 return jsonInputFrom(text)

@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { iloveapiAuth } from '../common/auth';
-import { fileToUploadInput, sharedProps } from '../common/props';
+import { iloveSchemas } from '../common/schemas';
+import { fileToUploadInput, regionOf, sharedProps, webhookOf } from '../common/props';
 import { runAndStoreResult } from '../common/runner';
 
 export const pageNumbersPdfAction = createAction({
@@ -10,6 +11,7 @@ export const pageNumbersPdfAction = createAction({
   displayName: 'Add Page Numbers to PDF',
   description: 'Stamp page numbers onto a PDF, with control over position and styling.',
   audience: 'both',
+  outputSchema: iloveSchemas.toolResult,
   aiMetadata: {
     description:
       'Print page numbers onto a PDF, with control over which pages, the starting number, the {n}/{p} number format, facing-page (book) layout, cover-skip, and font styling. Each run produces a new numbered file, so re-running re-stamps rather than reusing an earlier output.',
@@ -136,10 +138,12 @@ export const pageNumbersPdfAction = createAction({
     };
 
     return await runAndStoreResult({
-      auth:context.auth.secret_text,
+      auth: context.auth.secret_text,
+      region: regionOf(context.propsValue.region),
+      webhook: webhookOf(context.propsValue.webhook_url),
       files: context.files,
       tool: 'pagenumber',
-      uploads: [fileToUploadInput(file)],
+      uploads: [fileToUploadInput({ file: file })],
       options,
       output_filename,
       packaged_filename,

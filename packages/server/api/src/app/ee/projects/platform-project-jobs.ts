@@ -12,6 +12,7 @@ import { flowRepo } from '../../flows/flow/flow.repo'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { ProjectEntity } from '../../project/project-entity'
+import { userInvitationsService } from '../../user-invitations/user-invitation.service'
 import { deleteProjectLinkedEntities } from '../platform/platform-teardown-jobs'
 
 const projectRepo = repoFactory(ProjectEntity)
@@ -56,6 +57,7 @@ export const platformProjectBackgroundJobs = (log: FastifyBaseLogger) => ({
                 scope: AppConnectionScope.PROJECT,
                 projectIds: ArrayContains([projectId]),
             })
+            await userInvitationsService(log).detachProjectFromPlatformInvites({ projectId, entityManager })
             await projectRepo(entityManager).delete({
                 id: projectId,
                 platformId,

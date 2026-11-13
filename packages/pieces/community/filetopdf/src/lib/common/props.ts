@@ -1,9 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 
-/**
- * PDF/A archival conformance levels. Empty selection = no PDF/A (the default).
- */
-const PDFA_DROPDOWN = Property.StaticDropdown({
+const pdfa = Property.StaticDropdown({
   displayName: 'PDF/A Archival Format',
   description: 'Produce an ISO-standardised archival PDF.',
   required: false,
@@ -16,13 +13,7 @@ const PDFA_DROPDOWN = Property.StaticDropdown({
   },
 });
 
-/**
- * Layout/Chromium option properties shared by Convert HTML and Convert Markdown.
- * Labels and help mirror the Make app, n8n node, and Zapier app verbatim so every
- * FileToPDF integration reads the same. These conversion parameters require Pro,
- * Scale, or the free trial — on Starter/Basic the API returns 402 upgrade_required.
- */
-export const CHROMIUM_OPTION_PROPS = {
+const chromiumOptions = {
   landscape: Property.Checkbox({ displayName: 'Landscape Orientation', required: false }),
   paperWidth: Property.Number({
     displayName: 'Paper Width (Inches)',
@@ -50,7 +41,7 @@ export const CHROMIUM_OPTION_PROPS = {
     description: 'Limit output to specific pages, e.g. "1-3" or "2,5-7".',
     required: false,
   }),
-  pdfa: PDFA_DROPDOWN,
+  pdfa,
   pdfua: Property.Checkbox({ displayName: 'PDF/UA (Accessibility)', required: false }),
   userPassword: Property.ShortText({
     displayName: 'Output Open Password',
@@ -64,19 +55,14 @@ export const CHROMIUM_OPTION_PROPS = {
   }),
 };
 
-/**
- * Advanced option properties for Convert a File (LibreOffice/passthrough variant).
- * No paper size / margins / scale — those are Chromium-only and ignored by the
- * document/image converters. Matches the n8n node and Zapier app's file option list.
- */
-export const FILE_OPTION_PROPS = {
+const fileOptions = {
   landscape: Property.Checkbox({ displayName: 'Landscape Orientation', required: false }),
   nativePageRanges: Property.ShortText({
     displayName: 'Page Ranges',
     description: 'Limit output to specific pages, e.g. "1-3" or "2,5-7".',
     required: false,
   }),
-  pdfa: PDFA_DROPDOWN,
+  pdfa,
   pdfua: Property.Checkbox({ displayName: 'PDF/UA (Accessibility)', required: false }),
   password: Property.ShortText({
     displayName: 'Source Document Password',
@@ -94,3 +80,5 @@ export const FILE_OPTION_PROPS = {
     required: false,
   }),
 };
+
+export const filetopdfProps = { chromiumOptions, fileOptions };

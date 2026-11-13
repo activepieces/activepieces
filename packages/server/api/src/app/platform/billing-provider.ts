@@ -1,7 +1,8 @@
 import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { ApEdition, AppSumoCreditsBillableFeature, CancellationReason, ConsumableFeatureId, ConsumableProductAutoTopupParams, CreditsBillableFeature, FlowRun, PurchasablePlan, RunEnvironment, SeatsBillableFeature, UnconsumableFeatureId } from '@activepieces/shared'
+import { ApEdition, AppSumoCreditsBillableFeature, CancellationReason, ConsumableFeatureId, ConsumableProductAutoTopupParams, CreditsBillableFeature, FlowRun, notStartedSelfServeTrial, PurchasablePlan, RunEnvironment, SeatsBillableFeature, SelfServeTrialInfo, SelfServeTrialState, UnconsumableFeatureId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { AiUsageBlock } from '../ai/usage/ai-usage-block'
 import { hooksFactory } from '../helper/hooks-factory'
 import { system } from '../helper/system/system'
 
@@ -69,6 +70,15 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     getCreditUsage: async () => {
         return { total: 0, byProject: [] }
     },
+    listUsageEvents: async () => {
+        return { events: [], nextCursor: null }
+    },
+    getSelfServeTrialInfo: async () => {
+        return notStartedSelfServeTrial(SelfServeTrialState.INELIGIBLE)
+    },
+    startSelfServeTrial: async () => {
+        return notStartedSelfServeTrial(SelfServeTrialState.INELIGIBLE)
+    },
 }))
 
 export async function assertCreditsAndAppSumoNotExceeded({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
@@ -112,18 +122,18 @@ export async function hasCreditsLeft({ platformId, log }: { platformId: string, 
     return isNil(left) || left > 0
 }
 
-export async function shouldBlockRunOnCredits({ platformId, environment, log }: RunCreditsGateParams): Promise<boolean> {
+export async function shouldBlockRunOnCredits({ platformId, environment, creditCheckSpeed, log }: RunCreditsGateParams): Promise<boolean> {
     if (system.getEdition() === ApEdition.ENTERPRISE) {
         return false
     }
     if (environment !== RunEnvironment.PRODUCTION) {
         return false
     }
-    return billingProvider.get(log).shouldBlockOnCredits(platformId)
+    return billingProvider.get(log).shouldBlockOnCredits({ platformId, creditCheckSpeed })
 }
 
-export async function assertRunCreditsNotExceeded({ platformId, environment, log }: RunCreditsGateParams): Promise<void> {
-    const blocked = await shouldBlockRunOnCredits({ platformId, environment, log })
+export async function assertRunCreditsNotExceeded({ platformId, environment, creditCheckSpeed, log }: RunCreditsGateParams): Promise<void> {
+    const blocked = await shouldBlockRunOnCredits({ platformId, environment, creditCheckSpeed, log })
     if (!blocked) {
         return
     }
@@ -153,7 +163,7 @@ export function emptyBillingOverview({ startDate, endDate, unavailable = false }
         planInterval: null,
         planName: null,
         scheduledPlanName: null,
-        billingPortalAvailable: false,
+        hasPaymentMethod: false,
         creditsResetInterval: null,
         creditsFeature: null,
         appSumoCreditsFeature: null,
@@ -170,6 +180,7 @@ export enum CreditUsageSource {
     CHAT = 'chat',
     AGENT_DRAFT = 'agent_draft',
     MCP = 'mcp',
+    AI_USAGE = 'ai_usage',
 }
 
 type ToFlowRunCreditPropertiesParams = {
@@ -186,7 +197,13 @@ type EmptyBillingOverviewParams = {
 type RunCreditsGateParams = {
     platformId: string
     environment: RunEnvironment
+    creditCheckSpeed: CreditCheckSpeed
     log: FastifyBaseLogger
+}
+
+export type ShouldBlockOnCreditsParams = {
+    platformId: string
+    creditCheckSpeed: CreditCheckSpeed
 }
 
 export type CreditEventBreakdownEntry = {
@@ -219,6 +236,7 @@ export type AiCreditConsumptionProperties = FlowRunCreditConsumptionProperties &
     creditUsdValue?: number
     inputTokens?: number
     outputTokens?: number
+    usage?: AiUsageBlock
 }
 
 export type McpCallCreditConsumptionProperties = {
@@ -241,6 +259,11 @@ export type ChatCreditConsumptionProperties = CreditConsumptionPropertiesBase & 
     creditUsdValue?: number
     inputTokens?: number
     outputTokens?: number
+    usage?: AiUsageBlock
+}
+
+export type AiUsageOnlyProperties = {
+    usage: AiUsageBlock
 }
 
 export type ChatAppSumoConsumptionProperties = CreditConsumptionPropertiesBase & {
@@ -261,6 +284,7 @@ export type TrackCreditsParams =
     | (TrackUsageParamsBase & { source: CreditUsageSource.CHAT, properties: ChatCreditConsumptionProperties })
     | (TrackUsageParamsBase & { source: CreditUsageSource.AGENT_DRAFT, properties: AgentDraftCreditConsumptionProperties })
     | (TrackUsageParamsBase & { source: CreditUsageSource.MCP, properties: McpCallCreditConsumptionProperties })
+    | (TrackUsageParamsBase & { source: CreditUsageSource.AI_USAGE, properties: AiUsageOnlyProperties })
 
 export type TrackAppSumoAiUsageParams = TrackUsageParamsBase & (
     { source: CreditUsageSource.AGENT_DRAFT, properties: AgentDraftCreditConsumptionProperties } |
@@ -339,7 +363,7 @@ export type BillingInfo = {
     trialEndsAt: string | null
     planName: string | null
     scheduledPlanName: string | null
-    billingPortalAvailable: boolean
+    hasPaymentMethod: boolean
     creditsResetInterval: string | null
     planInterval: string | null
 }
@@ -415,8 +439,40 @@ export type BillingProvider = {
     applyAppSumoPlan(params: ApplyAppSumoPlanParams): Promise<void>
     activateLicense(params: ActivateLicenseParams): Promise<void>
     isBillingEnforced(platformId: string): Promise<boolean>
-    shouldBlockOnCredits(platformId: string): Promise<boolean>
+    shouldBlockOnCredits(params: ShouldBlockOnCreditsParams): Promise<boolean>
     getCreditsAndAppSumoState(platformId: string): Promise<CreditsAndAppSumoState>
     getConsumablesUsage(platformId: string): Promise<ConsumablesUsage>
     getCreditUsage(params: CreditUsageByProjectParams): Promise<CreditUsage>
+    listUsageEvents(params: ListUsageEventsParams): Promise<UsageEventsPage>
+    getSelfServeTrialInfo(params: GetSelfServeTrialInfoParams): Promise<SelfServeTrialInfo>
+    startSelfServeTrial(platformId: string): Promise<SelfServeTrialInfo>
+}
+
+export type GetSelfServeTrialInfoParams = {
+    platformId: string
+    bypassCacheAndFetchFromProvider?: boolean
+}
+
+export type ListUsageEventsParams = {
+    platformId: string
+    startMs: number
+    endMs: number
+    cursor: string | null
+}
+
+export type UsageEventsPage = {
+    events: UsageEvent[]
+    nextCursor: string | null
+}
+
+export type UsageEvent = {
+    id: string
+    timestamp: number
+    properties: Record<string, unknown>
+}
+
+export enum CreditCheckSpeed {
+    FAST = 'FAST',
+    NORMAL = 'NORMAL',
+    BACKGROUND = 'BACKGROUND',
 }

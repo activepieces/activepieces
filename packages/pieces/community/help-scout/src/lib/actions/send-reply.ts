@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { helpScoutApiRequest } from '../common/api';
-import { helpScoutAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { helpScoutApi } from '../common/api';
+import { helpScoutAuth } from '../common/auth';
 import { conversationIdDropdown, userIdDropdown } from '../common/props';
+import { helpScoutOutputSchemas } from '../common/output-schemas';
 
 export const sendReply = createAction({
   auth: helpScoutAuth,
@@ -10,26 +11,13 @@ export const sendReply = createAction({
   classification: 'WRITE',
   displayName: 'Send Reply',
   description: 'Sends a reply in an existing conversation.',
-  audience: 'both',
-  aiMetadata: {
-    description:
-      'Adds a customer-facing reply thread to an existing Help Scout conversation identified by conversation ID. Use after locating the target conversation to respond to a customer; can optionally be saved as a draft instead of sent. Not idempotent — each call appends a new reply.',
-    idempotent: false,
-  },
+  audience: 'human',
+  outputSchema: helpScoutOutputSchemas['createdId'],
   props: {
     conversationId: conversationIdDropdown,
-    text: Property.LongText({
-      displayName: 'Reply Text',
-      required: true,
-    }),
-    customerEmail: Property.ShortText({
-      displayName: 'Customer Email',
-      required: true,
-    }),
-    draft: Property.Checkbox({
-      displayName: 'Draft',
-      required: false,
-    }),
+    text: Property.LongText({ displayName: 'Reply Text', required: true }),
+    customerEmail: Property.ShortText({ displayName: 'Customer Email', required: true }),
+    draft: Property.Checkbox({ displayName: 'Draft', required: false }),
     status: Property.StaticDropdown({
       displayName: 'Conversation Status',
       required: false,
@@ -43,41 +31,28 @@ export const sendReply = createAction({
       },
     }),
     userId: userIdDropdown('User (who adds the reply)'),
-    cc: Property.Array({
-      displayName: 'CC (emails)',
-      required: false,
-    }),
-    bcc: Property.Array({
-      displayName: 'BCC (emails)',
-      required: false,
-    }),
+    cc: Property.Array({ displayName: 'CC (emails)', required: false }),
+    bcc: Property.Array({ displayName: 'BCC (emails)', required: false }),
   },
   async run({ auth, propsValue }) {
-    const payload: Record<string, any> = {
-      text: propsValue.text,
-      customer: { email: propsValue.customerEmail },
-      draft: propsValue.draft,
-      status: propsValue.status,
-      user: propsValue.userId,
-      cc: propsValue.cc,
-      bcc: propsValue.bcc,
-    };
-    Object.keys(payload).forEach((key) => {
-      if (payload[key] === undefined || payload[key] === null) {
-        delete payload[key];
-      }
-    });
-    const response = await helpScoutApiRequest({
-      method: HttpMethod.POST,
-      url: `/conversations/${propsValue.conversationId}/reply`,
-      auth,
-      body: payload,
-    });
-
-    const replyId = response.headers?.['resource-id'];
-
-    return {
-      id:replyId
+    if (!propsValue.conversationId) {
+      throw new Error('Select the conversation to reply to.');
     }
+    const body = helpScoutApi.buildReplyBody({
+      text: propsValue.text,
+      customerEmail: propsValue.customerEmail,
+      draft: propsValue.draft ? true : undefined,
+      status: propsValue.status ?? undefined,
+      userId: helpScoutApi.optionalNumber(propsValue.userId),
+      cc: helpScoutApi.toStringList(propsValue.cc),
+      bcc: helpScoutApi.toStringList(propsValue.bcc),
+    });
+    const response = await helpScoutApi.request({
+      method: HttpMethod.POST,
+      path: `/conversations/${helpScoutApi.encodeId(propsValue.conversationId)}/reply`,
+      auth,
+      body,
+    });
+    return { id: helpScoutApi.getResourceId(response.headers) };
   },
-}); 
+});

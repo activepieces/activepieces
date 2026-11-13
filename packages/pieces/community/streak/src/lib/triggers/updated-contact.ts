@@ -1,3 +1,4 @@
+import { contactWebhookOutputSchema } from '../common/output-schemas';
 import { createTeamWebhookTrigger } from '../common/trigger-factory';
 
 export const updatedContactTrigger = createTeamWebhookTrigger({
@@ -9,6 +10,7 @@ export const updatedContactTrigger = createTeamWebhookTrigger({
       'Fires when an existing person contact in the selected team is updated, representing a change to that individual\'s details in the team\'s shared CRM.',
   },
   event: 'CONTACT_UPDATE',
+  outputSchema: contactWebhookOutputSchema,
   sampleData: {
     key: 'agxzfm1haWxmb29nYWVyMQsSB0NvbnRhY3QYgICAwI_oogow',
     emailAddresses: ['jane@acme.com'],

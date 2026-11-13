@@ -1,5 +1,6 @@
 import { evaluateRaw } from './function-implementations'
 import { AP_FUNCTIONS } from './function-registry'
+import { ownValue } from './own-value'
 
 const CURRENT_FORMULA_VERSION = 1
 const FORMULA_PREFIX = `ap-formula-v${CURRENT_FORMULA_VERSION}::{`
@@ -323,8 +324,8 @@ function friendlyError(e: unknown): string {
     if (/parse error|Expected EOF|unexpected token|value expected|unexpected \)/i.test(msg)) {
         return 'Invalid formula — check for empty values or mismatched parentheses'
     }
-    if (/is not defined/i.test(msg)) {
-        const m = msg.match(/(\w+) is not defined/)
+    if (/is not defined|undefined variable/i.test(msg)) {
+        const m = msg.match(/(\w+) is not defined/) ?? msg.match(/undefined variable: (\w+)/)
         return m
             ? `"${m[1]}" is not a known function or variable — check for typos`
             : 'Unknown function or variable — check for typos'
@@ -350,7 +351,7 @@ function resolveVariable(path: string, sampleData: Record<string, unknown>): unk
     let value: unknown = sampleData
     for (const part of parts) {
         if (value == null || typeof value !== 'object') return undefined
-        value = (value as Record<string, unknown>)[part]
+        value = ownValue.read({ source: value, key: part })
     }
     return value
 }

@@ -218,7 +218,7 @@ async function runTurn({ fixture, model, systemPrompt, guides, auth, onStep }: {
     const replay = replayExecutor.create({ recordedToolCalls: fixture.recordedToolCalls })
     const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
     const tools = buildEvalToolSet({ replay })
-    const tracked = costCapture.track({ model: aiUtils.createModel({ credentials: aiProviderCredentials({ provider: model.provider, auth, config: {} }), modelId: model.modelId }) })
+    const tracked = costCapture.track({ model: aiUtils.createModel({ credentials: aiProviderCredentials({ provider: model.provider, auth, config: {} }), modelId: model.modelId, billing: null }) })
     const messages: ModelMessage[] = [
         ...fixture.initialMessages,
         ...fixture.userTurns.map((content) => ({ role: 'user' as const, content })),

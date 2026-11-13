@@ -36,6 +36,7 @@ const disallowedRoutes = [
   '/v1/human-input',
   '/v1/authn/local/reset-password',
   '/v1/user-invitations/accept',
+  '/v1/user-invitations/preview',
   '/v1/webhooks',
 ];
 //This is important to avoid redirecting to sign-in page when the user is deleted for embedding scenarios

@@ -5,15 +5,15 @@ async function fireHttpRequest({
   method,
   path,
   body,
-  access_token
+  access_token,
 }: {
   method: HttpMethod;
   path: string;
   access_token: string;
   body?: unknown;
 }) {
-  return await httpClient
-    .sendRequest({
+  try {
+    const res = await httpClient.sendRequest({
       method,
       url: path,
       headers: {
@@ -22,19 +22,115 @@ async function fireHttpRequest({
         'Content-Type': 'application/json',
       },
       body,
-    })
-    .then((res) => res.body)
-    .catch((err) => {
-      throw new Error(
-        `Error in request to ${path}: ${err.message || JSON.stringify(err)}`
-      );
     });
+    if (res.status === 204 || res.body === '' || res.body === undefined || res.body === null) {
+      return {};
+    }
+    return res.body;
+  } catch (err) {
+    throw toBiginApiError(err);
+  }
+}
+
+async function biginRequest({
+  connection,
+  method,
+  path,
+  query,
+  body,
+}: {
+  connection: BiginConnection;
+  method: HttpMethod;
+  path: string;
+  query?: Record<string, string | number | undefined>;
+  body?: unknown;
+}): Promise<Record<string, unknown>> {
+  const qs = new URLSearchParams();
+  for (const [key, value] of Object.entries(query ?? {})) {
+    if (value !== undefined && value !== '') qs.set(key, String(value));
+  }
+  const queryString = qs.toString();
+  const result = await fireHttpRequest({
+    method,
+    path: `${connection.apiDomain}/bigin/v2${path}${queryString ? `?${queryString}` : ''}`,
+    access_token: connection.accessToken,
+    body,
+  });
+  return isObject(result) ? result : {};
+}
+
+function getBiginConnection(auth: { access_token: string; data: Record<string, unknown> }): BiginConnection {
+  const apiDomain = auth.data['api_domain'];
+  return {
+    accessToken: auth.access_token,
+    apiDomain: typeof apiDomain === 'string' && apiDomain !== '' ? apiDomain : 'https://www.zohoapis.com',
+  };
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function readZohoErrorDetail(body: unknown): { code?: string; message?: string } {
+  if (!isObject(body)) {
+    return typeof body === 'string' && body !== '' ? { message: body } : {};
+  }
+  const first = Array.isArray(body['data']) ? body['data'][0] : undefined;
+  const source = isObject(first) ? first : body;
+  const code = source['code'];
+  const message = source['message'];
+  return {
+    code: typeof code === 'string' ? code : undefined,
+    message: typeof message === 'string' ? message : undefined,
+  };
+}
+
+function toBiginApiError(err: unknown): Error {
+  if (err instanceof BiginApiError) return err;
+  const response = isObject(err) && isObject(err['response']) ? err['response'] : undefined;
+  if (!response || typeof response['status'] !== 'number') {
+    return err instanceof Error ? err : new Error(String(err));
+  }
+  const status = response['status'];
+  const responseBody = response['body'];
+  const { code, message } = readZohoErrorDetail(responseBody);
+  return new BiginApiError({ status, code, detail: message ?? 'Request failed', responseBody });
+}
+
+class BiginApiError extends Error {
+  readonly status: number;
+  readonly code?: string;
+  readonly responseBody: unknown;
+  constructor({
+    status,
+    code,
+    detail,
+    responseBody,
+  }: {
+    status: number;
+    code?: string;
+    detail: string;
+    responseBody: unknown;
+  }) {
+    super(`Bigin API error (HTTP ${status}${code ? `, ${code}` : ''}): ${detail}`);
+    this.name = 'BiginApiError';
+    this.status = status;
+    this.code = code;
+    this.responseBody = responseBody;
+  }
+}
+
+function assertWriteSucceeded(item: unknown): void {
+  if (isObject(item) && item['status'] === 'error') {
+    const { code, message } = readZohoErrorDetail(item);
+    throw new BiginApiError({ status: 400, code, detail: message ?? 'Write failed', responseBody: item });
+  }
 }
 
 export const biginApiService = {
   createWebhook: async (
     access_token: string,
-    payload: any,
+    payload: unknown,
     api_domain: string
   ) => {
     const res = await fireHttpRequest({
@@ -45,6 +141,18 @@ export const biginApiService = {
     });
 
     return res;
+  },
+  updateWebhook: async (
+    access_token: string,
+    payload: unknown,
+    api_domain: string
+  ) => {
+    return fireHttpRequest({
+      method: HttpMethod.PATCH,
+      path: `${api_domain}/bigin/v2${API_ENDPOINTS.WEBHOOKS}`,
+      body: payload,
+      access_token,
+    });
   },
   deleteWebhook: async (
     access_token: string,
@@ -76,7 +184,7 @@ export const biginApiService = {
   createCompany: async (
     access_token: string,
     api_domain: string,
-    body: any
+    body: unknown
   ) => {
     return fireHttpRequest({
       method: HttpMethod.POST,
@@ -88,7 +196,7 @@ export const biginApiService = {
   updateCompany: async (
     access_token: string,
     api_domain: string,
-    body: any
+    body: unknown
   ) => {
     return fireHttpRequest({
       method: HttpMethod.PUT,
@@ -107,7 +215,7 @@ export const biginApiService = {
   createContact: async (
     access_token: string,
     api_domain: string,
-    body: any
+    body: unknown
   ) => {
     return fireHttpRequest({
       method: HttpMethod.POST,
@@ -119,7 +227,7 @@ export const biginApiService = {
   updateContact: async (
     access_token: string,
     api_domain: string,
-    body: any
+    body: unknown
   ) => {
     return fireHttpRequest({
       method: HttpMethod.PUT,
@@ -156,7 +264,7 @@ export const biginApiService = {
   createPipelineRecord: async (
     access_token: string,
     api_domain: string,
-    body: any
+    body: unknown
   ) => {
     return fireHttpRequest({
       method: HttpMethod.POST,
@@ -168,7 +276,7 @@ export const biginApiService = {
   updatePipelineRecord: async (
     access_token: string,
     api_domain: string,
-    body: any
+    body: unknown
   ) => {
     return fireHttpRequest({
       method: HttpMethod.PUT,
@@ -191,7 +299,7 @@ export const biginApiService = {
       access_token,
     });
   },
-  createCall: async (access_token: string, api_domain: string, body: any) => {
+  createCall: async (access_token: string, api_domain: string, body: unknown) => {
     return fireHttpRequest({
       method: HttpMethod.POST,
       path: `${api_domain}/bigin/v2${API_ENDPOINTS.CALLS}`,
@@ -199,7 +307,7 @@ export const biginApiService = {
       body,
     });
   },
-  createEvent: async (access_token: string, api_domain: string, body: any) => {
+  createEvent: async (access_token: string, api_domain: string, body: unknown) => {
     return fireHttpRequest({
       method: HttpMethod.POST,
       path: `${api_domain}/bigin/v2${API_ENDPOINTS.EVENTS}`,
@@ -214,7 +322,7 @@ export const biginApiService = {
       access_token,
     });
   },
-  updateEvent: async (access_token: string, api_domain: string, body: any) => {
+  updateEvent: async (access_token: string, api_domain: string, body: unknown) => {
     return fireHttpRequest({
       method: HttpMethod.PUT,
       path: `${api_domain}/bigin/v2${API_ENDPOINTS.EVENTS}`,
@@ -222,7 +330,7 @@ export const biginApiService = {
       body,
     });
   },
-  createTask: async (access_token: string, api_domain: string, body: any) => {
+  createTask: async (access_token: string, api_domain: string, body: unknown) => {
     return fireHttpRequest({
       method: HttpMethod.POST,
       path: `${api_domain}/bigin/v2${API_ENDPOINTS.TASKS}`,
@@ -230,7 +338,7 @@ export const biginApiService = {
       body,
     });
   },
-  updateTask: async (access_token: string, api_domain: string, body: any) => {
+  updateTask: async (access_token: string, api_domain: string, body: unknown) => {
     return fireHttpRequest({
       method: HttpMethod.PUT,
       path: `${api_domain}/bigin/v2${API_ENDPOINTS.TASKS}`,
@@ -283,3 +391,19 @@ export const biginApiService = {
     });
   }
 };
+
+
+type BiginConnection = {
+  accessToken: string;
+  apiDomain: string;
+};
+
+export {
+  BiginApiError,
+  biginRequest,
+  getBiginConnection,
+  isObject,
+  assertWriteSucceeded,
+  readZohoErrorDetail,
+};
+export type { BiginConnection };

@@ -95,7 +95,7 @@ const GetStartedCard = ({
       <CardContent className="p-0">
         <div className="flex items-center gap-3 px-4 py-4">
           <div
-            className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBgClass}`}
+            className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center ${iconBgClass}`}
           >
             {icon}
           </div>
@@ -259,14 +259,14 @@ export const AutomationsEmptyState = ({
   const branding = flagsHooks.useWebsiteBranding();
 
   return (
-    <div className="flex flex-col gap-8 py-8 px-4 max-w-5xl mx-auto">
+    <div className="@container flex flex-col gap-8 py-8 px-4 w-full max-w-5xl mx-auto">
       <div>
         <h2 className="text-sm font-medium text-gray-11 mb-4">
           {t('Get started with {brandName}', {
             brandName: branding.websiteName ?? platform.name,
           })}
         </h2>
-        <div className="flex gap-4">
+        <div className="flex flex-col @2xl:flex-row gap-4">
           <GetStartedCard
             icon={<Workflow className="h-5 w-5 text-accent-11" />}
             iconBgClass="bg-accent-3"
@@ -373,7 +373,7 @@ export const AutomationsEmptyState = ({
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 @3xl:grid-cols-3 gap-4">
             {isLoadingTemplates ? (
               <>
                 <TemplateCardSkeleton />

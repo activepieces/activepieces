@@ -1,6 +1,6 @@
 
 import { z } from 'zod'
-import { AIProviderName, AiStepAction, isNil } from '@activepieces/core-utils'
+import { AiCallContext, AIProviderName, AiStepAction, AiUsageEnvironment, AiUsageOrigin, isNil } from '@activepieces/core-utils'
 import { ResumeReason, StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
@@ -295,6 +295,13 @@ export enum AgentRunSource {
     AGENT_BUILDER = 'AGENT_BUILDER',
 }
 
+export const AGENT_RUN_USAGE_ORIGIN: Record<AgentRunSource, AiUsageOrigin> = {
+    [AgentRunSource.CHAT]: AiUsageOrigin.CHAT,
+    [AgentRunSource.FLOW_STEP]: AiUsageOrigin.FLOW_AGENT_STEP,
+    [AgentRunSource.AGENT]: AiUsageOrigin.AGENT,
+    [AgentRunSource.AGENT_BUILDER]: AiUsageOrigin.AGENT_BUILDER,
+}
+
 export const AgentPromptOverride = z.object({
     system: z.string().optional(),
     projectSelected: z.string().optional(),
@@ -325,7 +332,9 @@ export const ExecuteAgentRunJobData = z.object({
     source: z.enum(AgentRunSource).optional(),
     messageSource: z.enum(['onboarding']).optional(),
     agentId: z.string().optional(),
+    flowId: z.string().optional(),
     flowRunId: z.string().optional(),
+    environment: z.enum(AiUsageEnvironment).optional(),
     waitpointId: z.string().optional(),
     tools: z.array(AgentTool).optional(),
     flowTools: z.array(ResolvedAgentFlowTool).optional(),
@@ -429,6 +438,7 @@ const AiStepJobBase = z.object({
     maxOutputTokens: z.number().optional(),
     temperature: z.number().optional(),
     webSearch: AiStepWebSearch.optional(),
+    callContext: AiCallContext.optional(),
 })
 
 export const AskAiJobData = AiStepJobBase.extend({

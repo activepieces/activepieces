@@ -127,5 +127,11 @@
   "FreeARC Archive": "FreeARC archief",
   "CD Audio": "CD audio",
   "MPEG Transport Stream": "MPEG Transport Stream",
-  "Opus Audio in Ogg Container": "Opus Audio in Ogg Container"
+  "Opus Audio in Ogg Container": "Opus Audio in Ogg Container",
+  "Output": "Uitvoer",
+  "Source": "Bron",
+  "Match": "Match",
+  "Archive": "Archive",
+  "Password": "Wachtwoord",
+  "Files Helper": "Bestanden Helper"
 }

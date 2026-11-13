@@ -11,9 +11,9 @@ import {
   Variable,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 import { VariableDialog } from '@/app/variables/variable-dialog';
+import { clipboardUtils } from '@/components/custom/clipboard/use-copy-to-clipboard';
 import {
   BulkAction,
   DataTable,
@@ -41,14 +41,10 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { ownerColumnHooks } from '@/hooks/owner-column-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
-const copyReferenceToClipboard = async (name: string) => {
-  try {
-    await navigator.clipboard.writeText(`{{variables['${name}']}}`);
-    toast.success(t('Reference copied to clipboard'));
-  } catch {
-    toast.error(t('Could not copy reference'));
-  }
-};
+const copyReferenceToClipboard = (name: string) =>
+  clipboardUtils.copy({
+    value: `{{variables['${name}']}}`,
+  });
 
 function VariablesPage() {
   const projectId = authenticationSession.getProjectId()!;
@@ -186,10 +182,7 @@ function VariablesPage() {
                   {t('Edit')}
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    void copyReferenceToClipboard(row.original.name);
-                  }}
+                  onSelect={() => copyReferenceToClipboard(row.original.name)}
                 >
                   <Link2 className="h-4 w-4 mr-2" />
                   {t('Copy reference')}

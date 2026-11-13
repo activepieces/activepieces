@@ -39,7 +39,7 @@ export function ClientInstructions({
   return (
     <div className="@container w-full">
       <PageBand className="flex flex-col gap-8 py-10">
-        <BackLink label={t('All clients')} onClick={nav.showLanding} />
+        <BackLink label={t('Back')} onClick={nav.showPrevious} />
         <div className="grid grid-cols-[300px_minmax(0,1fr)] gap-x-8 gap-y-10 @max-[760px]:grid-cols-1">
           <aside className="flex flex-col gap-10 self-start">
             <Header client={client} />
@@ -205,7 +205,7 @@ function Steps({
       >
         {check.prompt && (
           <CopyButton
-            textToCopy={check.prompt}
+            value={check.prompt}
             variant="outline"
             size="sm"
             className={cn('h-9 self-start font-normal', FOCUS_RING)}
@@ -252,10 +252,12 @@ function Step({
         </span>
       </span>
       <div className="flex min-w-0 flex-col gap-1">
-        <h2 className="flex min-h-8 items-center text-base font-semibold">
+        <h2 className="flex min-h-8 items-center text-base font-semibold text-pretty">
           {title}
         </h2>
-        {body && <p className="text-sm leading-5 text-gray-11">{body}</p>}
+        {body && (
+          <p className="text-sm leading-5 text-balance text-gray-11">{body}</p>
+        )}
       </div>
       {children && (
         <div className="col-start-2 flex min-w-0 flex-col @max-[640px]:col-span-2 @max-[640px]:col-start-1">
@@ -275,7 +277,7 @@ function PublicAddressNotice({ clientName }: { clientName: string }) {
           {t('{client} needs a public address.', { client: clientName })}
         </span>{' '}
         {t(
-          'This server is only reachable inside your network. Put it behind a public HTTPS address, then come back to add the connector.',
+          'This server is only reachable inside your network. Put it behind a public HTTPS address first.',
         )}
       </p>
     </div>
@@ -405,7 +407,7 @@ function FrameHeader({ label, text }: { label: string; text: string }) {
         {label}
       </span>
       <CopyButton
-        textToCopy={text}
+        value={text}
         variant="ghost"
         size="sm"
         className={cn(
@@ -432,29 +434,32 @@ function codeTokens(text: string): ReactNode[] {
       ? [...acc.slice(0, -1), `${acc[acc.length - 1]} ${word}`]
       : [...acc, word];
   }, []);
-  return groups.map((group, index) => (
-    <span key={index}>
-      {index > 0 && ' '}
-      <span
-        className={cn(
-          group.includes(' ') && 'whitespace-nowrap',
-          group.includes('://') && 'inline-block max-w-full indent-0',
-        )}
-      >
-        {group.split('/').map((part, partIndex, parts) => (
-          <span key={partIndex}>
-            {partIndex > 0 && part !== '' && parts[partIndex - 1] !== '' && (
-              <wbr />
-            )}
-            <span className="whitespace-nowrap">
-              {partIndex > 0 && '/'}
-              {part}
+  return groups.map((group, index) => {
+    const isUrl = group.includes('://');
+    return (
+      <span key={index}>
+        {index > 0 && ' '}
+        <span
+          className={cn(
+            group.includes(' ') && 'whitespace-nowrap',
+            isUrl && 'inline-block max-w-full indent-0 wrap-anywhere',
+          )}
+        >
+          {group.split('/').map((part, partIndex, parts) => (
+            <span key={partIndex}>
+              {partIndex > 0 && part !== '' && parts[partIndex - 1] !== '' && (
+                <wbr />
+              )}
+              <span className={cn(!isUrl && 'whitespace-nowrap')}>
+                {partIndex > 0 && '/'}
+                {part}
+              </span>
             </span>
-          </span>
-        ))}
+          ))}
+        </span>
       </span>
-    </span>
-  ));
+    );
+  });
 }
 
 function methodIcon(key: string): LucideIcon {

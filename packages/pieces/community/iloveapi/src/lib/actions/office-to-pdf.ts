@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { iloveapiAuth } from '../common/auth';
-import { fileToUploadInput, sharedProps } from '../common/props';
+import { iloveSchemas } from '../common/schemas';
+import { fileToUploadInput, regionOf, sharedProps, webhookOf } from '../common/props';
 import { runAndStoreResult } from '../common/runner';
 
 export const officeToPdfAction = createAction({
@@ -11,6 +12,7 @@ export const officeToPdfAction = createAction({
   description:
     'Convert Office documents (DOCX, XLSX, PPTX, ODT, etc.) to PDF.',
   audience: 'both',
+  outputSchema: iloveSchemas.toolResult,
   aiMetadata: {
     description:
       'Convert a single Office document (DOCX, XLSX, PPTX, ODT, ODS, ODP, RTF, or TXT) into a PDF. Use this when the source is an Office/text file; for images use JPG to PDF and for web pages use HTML to PDF. Each run produces a new converted file.',
@@ -29,9 +31,11 @@ export const officeToPdfAction = createAction({
 
     return await runAndStoreResult({
       auth: context.auth.secret_text,
+      region: regionOf(context.propsValue.region),
+      webhook: webhookOf(context.propsValue.webhook_url),
       files: context.files,
       tool: 'officepdf',
-      uploads: [fileToUploadInput(file)],
+      uploads: [fileToUploadInput({ file: file })],
       output_filename,
       packaged_filename,
     });

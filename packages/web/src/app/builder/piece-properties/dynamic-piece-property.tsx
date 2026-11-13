@@ -119,7 +119,7 @@ const DynamicPropertiesImplementation = React.memo(
         prefix: propertyPrefix,
       });
       const currentValue = form.getValues(propertyPath);
-      if (!isNil(currentValue)) {
+      if (!isNil(currentValue) && Object.keys(currentValue).length > 0) {
         lastKnownValue.current = { ...currentValue };
       }
       if (!deepEqual(previousRefresherValues.current, refresherValues)) {

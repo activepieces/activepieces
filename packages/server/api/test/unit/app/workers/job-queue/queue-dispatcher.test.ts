@@ -122,7 +122,7 @@ describe('QueueDispatcher', () => {
         await vi.advanceTimersByTimeAsync(0)
 
         expect(await deadPoll).toBeNull()
-        expect(onOrphanedJobMock).toHaveBeenCalledWith('requeued', 'job-token', 'test-queue', mockLog)
+        expect(onOrphanedJobMock).toHaveBeenCalledWith({ jobId: 'requeued', token: 'job-token', queueName: 'test-queue', log: mockLog })
     })
 
     it('should only have one active getNextJob call at a time', async () => {
@@ -279,7 +279,7 @@ describe('QueueDispatcher', () => {
         pendingDequeues[0].resolve(orphanedJob)
         await vi.advanceTimersByTimeAsync(0)
 
-        expect(onOrphanedJobMock).toHaveBeenCalledWith('orphaned-job', 'job-token', 'test-queue', mockLog)
+        expect(onOrphanedJobMock).toHaveBeenCalledWith({ jobId: 'orphaned-job', token: 'job-token', queueName: 'test-queue', log: mockLog })
     })
 
     it('should not spawn a second concurrent loop after close() while dequeue is in-flight', async () => {

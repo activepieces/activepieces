@@ -3,12 +3,15 @@ import { Track } from './track';
 import { Album } from './album';
 import { Playlist } from './playlist';
 import { Pagination } from './common';
+import { Episode, Show } from './catalog';
 
 export interface SearchResult {
-  tracks?: Pagination<Track>;
-  artists?: Pagination<Artist>;
-  playlists?: Pagination<Playlist>;
-  albums?: Pagination<Album>;
+  tracks?: Pagination<Track | null>;
+  artists?: Pagination<Artist | null>;
+  playlists?: Pagination<Playlist | null>;
+  albums?: Pagination<Album | null>;
+  shows?: Pagination<Show | null>;
+  episodes?: Pagination<Episode | null>;
 }
 
 export interface SearchRequest {

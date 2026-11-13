@@ -229,6 +229,7 @@
   "nextCursor from the previous page.": "nextCursor from the previous page.",
   "Words to find, e.g. company name or email.": "Words to find, e.g. company name or email.",
   "emailacct_... from Get Current User.": "emailacct_... from Get Current User.",
+  "Pass an empty string to clear it.": "Pass an empty string to clear it.",
   "Replaces all emails on the contact.": "Replaces all emails on the contact.",
   "Replaces all phones on the contact.": "Replaces all phones on the contact.",
   "Replaces all URLs on the contact.": "Replaces all URLs on the contact.",
@@ -276,11 +277,12 @@
   "PUT": "PUT",
   "DELETE": "削除",
   "HEAD": "頭",
+  "Request": "リクエスト",
+  "Data to send": "送信するデータ",
   "New Lead Created": "新しいリードが作成されました",
   "New Contact Added": "新しい連絡先が追加されました",
   "New Opportunity Added": "新しい商談が追加されました",
   "Triggers when a new lead is created.": "新しいリードが作成されたときにトリガーします。",
   "Triggers when a new contact is created.": "新しい連絡先が作成されたときにトリガーします.",
-  "Triggers when a new opportunity is created.": "新しい商談が作成されたときにトリガーします。",
-  "Pass an empty string to clear it.": "Pass an empty string to clear it."
+  "Triggers when a new opportunity is created.": "新しい商談が作成されたときにトリガーします。"
 }

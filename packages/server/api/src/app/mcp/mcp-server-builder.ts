@@ -6,7 +6,7 @@ import { flowService } from '../flows/flow/flow.service'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
-import { telemetry } from '../helper/telemetry.utils'
+import { instrumentMcpServer, telemetry } from '../helper/telemetry.utils'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
 import { McpActivityContext, withActivityRecording } from './activity/mcp-activity-recorder'
 import { mcpAccess } from './mcp-access'
@@ -70,7 +70,12 @@ export async function buildMcpServer({ mcp, userId, platformId, platformDisabled
         ],
     }, {
         instructions: MCP_SERVER_INSTRUCTIONS,
+        maxToolInputElements: MCP_MAX_TOOL_INPUT_ELEMENTS,
     })
+
+    if (!isInAppChat) {
+        instrumentMcpServer({ server, userId, platformId })
+    }
 
     const billing = await mcpUsageTracker(log).resolveCallBilling({ mcp, clientId })
 
@@ -344,6 +349,7 @@ function buildToolConfig(tool: McpToolDefinition): Record<string, unknown> {
 export const FLOW_TOOL_ANNOTATIONS = { readOnlyHint: false, destructiveHint: true, openWorldHint: true }
 export const LOCKED_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: true, destructiveHint: false, openWorldHint: true }
 export const CONTROLLABLE_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: false, destructiveHint: true, openWorldHint: true }
+export const MCP_MAX_TOOL_INPUT_ELEMENTS = 50_000
 
 type RegisterToolsParams = {
     server: McpServer

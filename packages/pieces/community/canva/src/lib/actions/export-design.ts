@@ -1,286 +1,238 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
 import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { canvaAuth } from '../../index';
-import { 
-  canvaCommon, 
-  ExportResponse,
-  ExportRequest,
-  ExportFormat,
+  canvaAuth,
+  canvaCommon,
+  canvaProps,
   EXPORT_FORMATS,
-  PDF_SIZES,
-  MP4_QUALITIES,
-  MIN_EXPORT_DIMENSION,
+  ExportFormat,
+  ExportJob,
   MAX_EXPORT_DIMENSION,
-  fetchUserDesigns
+  MIN_EXPORT_DIMENSION,
+  MP4_QUALITIES,
+  PDF_SIZES,
 } from '../common';
+import { canvaClient } from '../common/client';
+import { canvaOutputSchemas } from '../common/output-schemas';
 
 export const exportDesign = createAction({
   auth: canvaAuth,
   name: 'export_design',
   classification: 'READ',
   displayName: 'Export Design',
-  description: 'Export a Canva design to various formats (PDF, JPG, PNG, GIF, PPTX, MP4). This creates an asynchronous job with download URLs valid for 24 hours.',
-  audience: 'both',
+  description: 'Export a design as PDF, JPG, PNG, GIF, PPTX or MP4 and wait for the download links (valid for 24 hours).',
+  audience: 'human',
   aiMetadata: {
-    description:
-      'Starts an asynchronous export job that renders an existing Canva design as PDF, JPG, PNG, GIF, PPTX, or MP4, with format-specific options (quality, page selection, custom image dimensions, PDF paper size). Pick this when you need downloadable output files from a design; download URLs expire after 24 hours and the job may need to be polled for completion. Not idempotent: each call queues a new export job.',
+    description: 'Exports a Canva design to files. Human step; agents use canva_export_design. Not idempotent: each run starts a new export job.',
     idempotent: false,
   },
+  outputSchema: canvaOutputSchemas.exportDesign,
   props: {
-    designId: Property.Dropdown({
-      displayName: 'Design',
-      description: 'Select the design to export',
-      required: true,
-      auth:canvaAuth,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please authenticate with Canva first',
-            options: [],
-          };
-        }
-        
-        try {
-          const designs = await fetchUserDesigns(auth);
-          return {
-            disabled: false,
-            options: designs,
-          };
-        } catch (error) {
-          console.error('Error fetching designs:', error);
-          return {
-            disabled: true,
-            placeholder: 'Error loading designs',
-            options: [],
-          };
-        }
-      },
-    }),
+    designId: canvaProps.designDropdown({ displayName: 'Design', description: 'The design to export. Type to search.' }),
     exportFormat: Property.StaticDropdown({
       displayName: 'Export Format',
-      description: 'The format to export the design to',
+      description: 'The file format to export to.',
       required: true,
-      options: {
-        options: EXPORT_FORMATS,
-      },
+      options: { options: EXPORT_FORMATS },
     }),
     exportQuality: Property.StaticDropdown({
       displayName: 'Export Quality',
-      description: 'Export quality level (Pro quality may require premium elements license)',
+      description: 'Pro quality can fail if the design has premium elements you have not licensed.',
       required: false,
       defaultValue: 'regular',
       options: {
         options: [
-          { label: 'Regular Quality', value: 'regular' },
-          { label: 'Pro Quality (Premium)', value: 'pro' },
+          { label: 'Regular', value: 'regular' },
+          { label: 'Pro', value: 'pro' },
         ],
       },
     }),
     pages: Property.Array({
       displayName: 'Specific Pages',
-      description: 'Page numbers to export (leave empty to export all pages). First page is 1.',
+      description: 'Page numbers to export (first page is 1). Leave empty for all pages.',
       required: false,
     }),
     jpegQuality: Property.Number({
-      displayName: '📸 JPEG Quality',
-      description: '🎯 JPEG ONLY: Compression quality (1-100, higher = better quality, larger file)',
+      displayName: 'JPEG Quality',
+      description: 'JPG only: compression quality from 1 to 100 (default 80).',
       required: false,
       defaultValue: 80,
     }),
     pdfSize: Property.StaticDropdown({
-      displayName: '📄 PDF Paper Size',
-      description: '🎯 PDF ONLY: Paper size for PDF export (only for Canva Docs)',
+      displayName: 'PDF Paper Size',
+      description: 'PDF only, Canva Docs only.',
       required: false,
       defaultValue: 'a4',
-      options: {
-        options: PDF_SIZES,
-      },
+      options: { options: PDF_SIZES },
     }),
     mp4Quality: Property.StaticDropdown({
-      displayName: '🎬 MP4 Quality',
-      description: '🎯 MP4 ONLY: Video orientation and resolution for MP4 export',
+      displayName: 'MP4 Quality',
+      description: 'MP4 only: orientation and resolution.',
       required: false,
       defaultValue: 'horizontal_1080p',
-      options: {
-        options: MP4_QUALITIES,
-      },
+      options: { options: MP4_QUALITIES },
     }),
     customWidth: Property.Number({
-      displayName: '📐 Custom Width (pixels)',
-      description: `🎯 IMAGES ONLY (JPG/PNG/GIF): Custom width (${MIN_EXPORT_DIMENSION}-${MAX_EXPORT_DIMENSION}px). Leave empty for original size.`,
+      displayName: 'Custom Width (pixels)',
+      description: `JPG, PNG and GIF only (${MIN_EXPORT_DIMENSION}-${MAX_EXPORT_DIMENSION}). Leave empty for the design size.`,
       required: false,
     }),
     customHeight: Property.Number({
-      displayName: '📐 Custom Height (pixels)',
-      description: `🎯 IMAGES ONLY (JPG/PNG/GIF): Custom height (${MIN_EXPORT_DIMENSION}-${MAX_EXPORT_DIMENSION}px). Leave empty for original size.`,
+      displayName: 'Custom Height (pixels)',
+      description: `JPG, PNG and GIF only (${MIN_EXPORT_DIMENSION}-${MAX_EXPORT_DIMENSION}). Leave empty for the design size.`,
       required: false,
     }),
     pngLossless: Property.Checkbox({
-      displayName: '🔧 PNG Lossless Compression',
-      description: '🎯 PNG ONLY: Export PNG without compression (default: true). Lossy compression requires Pro plan.',
+      displayName: 'PNG Lossless',
+      description: 'PNG only: export without compression. Lossy PNG needs a Canva Pro plan.',
       required: false,
       defaultValue: true,
     }),
     pngTransparentBackground: Property.Checkbox({
-      displayName: '🫥 PNG Transparent Background',
-      description: '🎯 PNG ONLY: Export PNG with transparent background (Pro feature)',
+      displayName: 'PNG Transparent Background',
+      description: 'PNG only: transparent background (Canva Pro feature).',
       required: false,
       defaultValue: false,
     }),
     pngSingleImage: Property.Checkbox({
-      displayName: '📑 PNG Merge Multi-page',
-      description: '🎯 PNG ONLY: Merge multi-page designs into a single image (default: separate images per page)',
+      displayName: 'PNG Merge Pages',
+      description: 'PNG only: merge a multi-page design into one image.',
       required: false,
       defaultValue: false,
     }),
+    ...canvaProps.waitProps(),
   },
   async run(context) {
-    const { 
-      designId, 
-      exportFormat, 
-      exportQuality, 
-      pages,
-      jpegQuality,
-      pdfSize,
-      mp4Quality,
-      customWidth,
-      customHeight,
-      pngLossless,
-      pngTransparentBackground,
-      pngSingleImage
-    } = context.propsValue;
-    
-    if (!designId || designId.trim().length === 0) {
-      throw new Error('Design ID is required');
+    const p = context.propsValue;
+    const designId = p.designId.trim();
+    if (!designId) {
+      throw new Error('Design is required.');
     }
-    
-    if (customWidth && (customWidth < MIN_EXPORT_DIMENSION || customWidth > MAX_EXPORT_DIMENSION)) {
-      throw new Error(`Custom width must be between ${MIN_EXPORT_DIMENSION} and ${MAX_EXPORT_DIMENSION} pixels`);
-    }
-    
-    if (customHeight && (customHeight < MIN_EXPORT_DIMENSION || customHeight > MAX_EXPORT_DIMENSION)) {
-      throw new Error(`Custom height must be between ${MIN_EXPORT_DIMENSION} and ${MAX_EXPORT_DIMENSION} pixels`);
-    }
-    
-    if (exportFormat === 'jpg' && (!jpegQuality || jpegQuality < 1 || jpegQuality > 100)) {
-      throw new Error('JPEG quality must be between 1 and 100');
-    }
-    
-    if (exportFormat === 'mp4' && !mp4Quality) {
-      throw new Error('MP4 quality is required when exporting as MP4');
-    }
-    
-    const format: ExportFormat = {
-      type: exportFormat as 'pdf' | 'jpg' | 'png' | 'gif' | 'pptx' | 'mp4',
+    const format = buildExportFormat({
+      type: p.exportFormat,
+      exportQuality: p.exportQuality ?? undefined,
+      pages: canvaCommon.parsePageNumbers(p.pages ?? undefined),
+      jpegQuality: p.jpegQuality ?? undefined,
+      pdfSize: p.pdfSize ?? undefined,
+      mp4Quality: p.mp4Quality ?? undefined,
+      width: p.customWidth ?? undefined,
+      height: p.customHeight ?? undefined,
+      pngLossless: p.pngLossless ?? undefined,
+      pngTransparentBackground: p.pngTransparentBackground ?? undefined,
+      pngSingleImage: p.pngSingleImage ?? undefined,
+    });
+    const token = context.auth.access_token;
+    const started = await canvaClient.request<{ job: ExportJob }>({
+      token,
+      method: HttpMethod.POST,
+      path: '/exports',
+      body: { design_id: designId, format },
+    });
+    const job = p.waitForCompletion === false
+      ? started.job
+      : await canvaCommon.settleJob<ExportJob>({
+          token,
+          kind: 'export',
+          initial: started.job,
+          timeoutSeconds: canvaCommon.clampWaitSeconds(p.maxWaitSeconds ?? undefined),
+          failOnTimeout: true,
+        });
+    const urls = job.urls ?? [];
+    return {
+      success: job.status !== 'failed',
+      job,
+      download_urls: urls,
+      export_info: {
+        design_id: designId,
+        format: format.type.toUpperCase(),
+        quality: format.export_quality ?? 'regular',
+        pages: format.pages ? `Pages: ${format.pages.join(', ')}` : 'All pages',
+        dimensions: format.width || format.height ? `${format.width ?? 'auto'}x${format.height ?? 'auto'} pixels` : 'Original size',
+      },
+      message: job.status === 'success'
+        ? `Export finished: ${urls.length} file(s) ready (links valid for 24 hours).`
+        : `Export job ${job.id} is ${job.status}. Check it later with Get Job Status.`,
     };
-    
-    if (exportQuality) {
-      format.export_quality = exportQuality as 'regular' | 'pro';
-    }
-    
-    if (pages && Array.isArray(pages) && pages.length > 0) {
-      format.pages = pages.map(p => Number(p)).filter(p => p > 0);
-    }
-    
-    switch (exportFormat) {
-      case 'jpg':
-        if (jpegQuality) format.quality = jpegQuality;
-        if (customWidth) format.width = customWidth;
-        if (customHeight) format.height = customHeight;
-        break;
-        
-      case 'png':
-        if (customWidth) format.width = customWidth;
-        if (customHeight) format.height = customHeight;
-        if (typeof pngLossless === 'boolean') format.lossless = pngLossless;
-        if (typeof pngTransparentBackground === 'boolean') format.transparent_background = pngTransparentBackground;
-        if (typeof pngSingleImage === 'boolean') format.as_single_image = pngSingleImage;
-        break;
-        
-      case 'gif':
-        if (customWidth) format.width = customWidth;
-        if (customHeight) format.height = customHeight;
-        break;
-        
-      case 'pdf':
-        if (pdfSize) format.size = pdfSize as 'a4' | 'a3' | 'letter' | 'legal';
-        break;
-        
-      case 'mp4':
-        if (mp4Quality) format.quality = mp4Quality;
-        break;
-        
-      case 'pptx':
-        break;
-    }
-    
-    const requestBody: ExportRequest = {
-      design_id: designId.trim(),
-      format,
-    };
-
-    try {
-      const response = await httpClient.sendRequest<ExportResponse>({
-        method: HttpMethod.POST,
-        url: `${canvaCommon.baseUrl}/exports`,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth.access_token,
-        },
-        body: requestBody,
-      });
-
-      return {
-        success: true,
-        job: response.body.job,
-        export_info: {
-          design_id: designId.trim(),
-          format: exportFormat.toUpperCase(),
-          quality: exportQuality || 'regular',
-          pages: format.pages ? `Pages: ${format.pages.join(', ')}` : 'All pages',
-          dimensions: customWidth || customHeight 
-            ? `${customWidth || 'auto'}x${customHeight || 'auto'} pixels`
-            : 'Original size',
-        },
-        message: `Export job created successfully. Job ID: ${response.body.job.id}. Status: ${response.body.job.status}`,
-        next_steps: response.body.job.status === 'in_progress' 
-          ? 'Use the "Get Design Export Job" action to check the status and get download URLs (valid for 24 hours).'
-          : response.body.job.status === 'success' && response.body.job.urls
-          ? `Export completed! ${response.body.job.urls.length} file(s) ready for download.`
-          : undefined,
-        download_urls: response.body.job.urls || undefined,
-      };
-    } catch (error: any) {
-      if (error.response?.status === 429) {
-        throw new Error('Rate limit exceeded. Please wait before making another request (20 requests per minute limit).');
-      }
-      
-      if (error.response?.status === 401) {
-        throw new Error('Authentication failed. Please check your Canva connection.');
-      }
-      
-      if (error.response?.status === 403) {
-        throw new Error('Access forbidden. Make sure your integration has the required scope: design:content:read');
-      }
-      
-      if (error.response?.status === 404) {
-        throw new Error(`Design with ID "${designId}" was not found or you don't have access to it.`);
-      }
-      
-      if (error.response?.data?.message) {
-        throw new Error(`Canva API error: ${error.response.data.message}`);
-      }
-      
-      throw new Error(`Failed to export design: ${error.message || 'Unknown error'}`);
-    }
   },
-}); 
+});
+
+function checkDimension({ label, value }: { label: string; value: number | undefined }): number | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!Number.isInteger(value) || value < MIN_EXPORT_DIMENSION || value > MAX_EXPORT_DIMENSION) {
+    throw new Error(`Custom ${label} must be a whole number between ${MIN_EXPORT_DIMENSION} and ${MAX_EXPORT_DIMENSION} pixels.`);
+  }
+  return value;
+}
+
+function buildExportFormat({
+  type,
+  exportQuality,
+  pages,
+  jpegQuality,
+  pdfSize,
+  mp4Quality,
+  width,
+  height,
+  pngLossless,
+  pngTransparentBackground,
+  pngSingleImage,
+}: {
+  type: string;
+  exportQuality?: string;
+  pages?: number[];
+  jpegQuality?: number;
+  pdfSize?: string;
+  mp4Quality?: string;
+  width?: number;
+  height?: number;
+  pngLossless?: boolean;
+  pngTransparentBackground?: boolean;
+  pngSingleImage?: boolean;
+}): ExportFormat {
+  if (!EXPORT_FORMATS.some((f) => f.value === type)) {
+    throw new Error(`Unsupported export format "${type}". Use one of: ${EXPORT_FORMATS.map((f) => f.value).join(', ')}.`);
+  }
+  if (exportQuality !== undefined && exportQuality !== 'regular' && exportQuality !== 'pro') {
+    throw new Error('Export quality must be "regular" or "pro".');
+  }
+  const format: ExportFormat = { type };
+  if (exportQuality) format.export_quality = exportQuality;
+  if (pages && pages.length > 0) format.pages = pages;
+  const isImage = type === 'jpg' || type === 'png' || type === 'gif';
+  if (isImage) {
+    const w = checkDimension({ label: 'width', value: width });
+    const h = checkDimension({ label: 'height', value: height });
+    if (w !== undefined) format.width = w;
+    if (h !== undefined) format.height = h;
+  }
+  if (type === 'jpg') {
+    const quality = jpegQuality ?? 80;
+    if (!Number.isInteger(quality) || quality < 1 || quality > 100) {
+      throw new Error('JPEG quality must be a whole number between 1 and 100.');
+    }
+    format.quality = quality;
+  }
+  if (type === 'png') {
+    if (pngLossless !== undefined) format.lossless = pngLossless;
+    if (pngTransparentBackground !== undefined) format.transparent_background = pngTransparentBackground;
+    if (pngSingleImage !== undefined) format.as_single_image = pngSingleImage;
+  }
+  if (type === 'pdf' && pdfSize) {
+    if (!PDF_SIZES.some((s) => s.value === pdfSize)) {
+      throw new Error(`PDF size must be one of: ${PDF_SIZES.map((s) => s.value).join(', ')}.`);
+    }
+    format.size = pdfSize;
+  }
+  if (type === 'mp4') {
+    const quality = mp4Quality ?? 'horizontal_1080p';
+    if (!MP4_QUALITIES.some((q) => q.value === quality)) {
+      throw new Error(`MP4 quality must be one of: ${MP4_QUALITIES.map((q) => q.value).join(', ')}.`);
+    }
+    format.quality = quality;
+  }
+  return format;
+}
+
+export const exportFormatBuilder = buildExportFormat;

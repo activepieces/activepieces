@@ -1,6 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { folkAuth } from '../common/auth';
+import { folkOutputSchemas } from '../output-schemas';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { folkClient } from '../common/client';
+import { folkLegacy } from '../common/legacy';
 import { folkProps } from '../common/props';
 
 export const createPerson = createAction({
@@ -10,7 +13,8 @@ export const createPerson = createAction({
   displayName: 'Create Person',
   description:
     'Create a new person in your Folk workspace. You can link them to a company, add contact details, and assign to a group.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: folkOutputSchemas.legacyPersonCreate,
   aiMetadata: {
     description: 'Creates a new person (contact) record in the Folk CRM, optionally linking them to companies by ID or name, setting a job title and birthday, and adding emails, phones, addresses, URLs, and a group. Use to add a new contact when none exists; provide a name via first/last or full name. Not idempotent: each call creates a separate person, so check for existing contacts first to avoid duplicates.',
     idempotent: false,
@@ -108,67 +112,12 @@ export const createPerson = createAction({
     groupId: folkProps.group_id(false, 'Group ID'),
   },
   async run(context) {
-    const {
-      firstName,
-      lastName,
-      fullName,
-      description,
-      birthday,
-      jobTitle,
-      companyNames,
-      companyIds,
-      addresses,
-      emails,
-      phones,
-      urls,
-      groupId,
-    } = context.propsValue;
-
-    const personData: any = {};
-
-    if (firstName) personData.firstName = firstName;
-    if (lastName) personData.lastName = lastName;
-    if (fullName) personData.fullName = fullName;
-    if (description) personData.description = description;
-    if (birthday) personData.birthday = birthday;
-    if (jobTitle) personData.jobTitle = jobTitle;
-
-    const companies: any[] = [];
-    if (companyIds) {
-      for (const companyId of companyIds) {
-        companies.push({ id: companyId });
-      }
-    }
-    if (companyNames && Array.isArray(companyNames)) {
-      companies.push(...companyNames.map((c: any) => ({ name: c.value || c })));
-    }
-    if (companies.length > 0) personData.companies = companies;
-
-    if (addresses && Array.isArray(addresses) && addresses.length > 0) {
-      personData.addresses = addresses.map((addr: any) => addr.value || addr);
-    }
-
-    if (emails && Array.isArray(emails) && emails.length > 0) {
-      personData.emails = emails.map((e: any) => e.value || e);
-    }
-
-    if (phones && Array.isArray(phones) && phones.length > 0) {
-      personData.phones = phones.map((p: any) => p.value || p);
-    }
-
-    if (urls && Array.isArray(urls) && urls.length > 0) {
-      personData.urls = urls.map((u: any) => u.value || u);
-    }
-
-    if (groupId) {
-      personData.groups = [{ id: groupId }];
-    }
-
-    const response = await folkClient.createPerson({
-      apiKey: context.auth,
-      data: personData,
+    const body = folkLegacy.personBody({ props: context.propsValue });
+    return folkClient.sendData<Record<string, unknown>>({
+      auth: context.auth,
+      method: HttpMethod.POST,
+      path: '/v1/people',
+      body,
     });
-
-    return response.data;
   },
 });

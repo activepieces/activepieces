@@ -7,8 +7,8 @@ const { sftpClient, ftpClient } = vi.hoisted(() => ({
   ftpClient: { access: vi.fn(), list: vi.fn(), close: vi.fn() },
 }));
 
-vi.mock('ssh2-sftp-client', () => ({ default: vi.fn(() => sftpClient) }));
-vi.mock('basic-ftp', () => ({ Client: vi.fn(() => ftpClient) }));
+vi.mock('ssh2-sftp-client', () => ({ default: vi.fn(function () { return sftpClient }) }));
+vi.mock('basic-ftp', () => ({ Client: vi.fn(function () { return ftpClient }) }));
 
 const LOGIN_REFUSED = 'All configured authentication methods failed';
 

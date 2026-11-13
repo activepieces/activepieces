@@ -10,10 +10,12 @@ import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { DriveItem } from '@microsoft/microsoft-graph-types';
+import { microsoftSharepointGetFolderContentsOutputSchema } from '../output-schemas';
 
 export const getFolderContentsAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_get_folder_contents',
+  outputSchema: microsoftSharepointGetFolderContentsOutputSchema,
   classification: 'SEARCH',
   displayName: 'Get Folder Contents',
   description: 'List all files and subfolders in a specified folder, optionally with detailed metadata.',

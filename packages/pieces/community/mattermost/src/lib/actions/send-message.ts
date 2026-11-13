@@ -1,20 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpError,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { mattermostAuth } from '../..';
+import { HttpError, HttpMethod } from '@activepieces/pieces-common';
+import { mattermostAuth } from '../auth';
+import { mattermostClient } from '../common/client';
+import { mattermostSendMessageOutputSchema } from '../output-schemas';
 
-export const sendMessage = createAction({
+export const sendMessageAction = createAction({
   auth: mattermostAuth,
   name: 'send_message',
+  outputSchema: mattermostSendMessageOutputSchema,
   classification: 'WRITE',
   displayName: 'Send Message',
   description: 'Send a message to a Mattermost channel',
-  audience: 'both',
-  aiMetadata: { description: 'Post a new text message to a Mattermost channel, identified by its channel ID (not name). Use when an agent needs to notify or post into a specific channel. Not idempotent: each call creates a separate post, so repeating it sends duplicate messages.', idempotent: false },
+  audience: 'human',
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',
@@ -29,30 +26,21 @@ export const sendMessage = createAction({
     }),
   },
   async run(context) {
-    // Remove trailing slash from workspace URL
-    const baseUrl = context.auth.props.workspace_url.replace(/\/$/, '');
     try {
-      return await httpClient.sendRequest({
-        url: `${baseUrl}/api/v4/posts`,
+      return await mattermostClient.send<unknown>({
+        auth: context.auth,
         method: HttpMethod.POST,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth.props.token,
-        },
+        path: '/posts',
         body: {
           channel_id: context.propsValue.channel_id,
           message: context.propsValue.text,
         },
       });
-    } catch (e: HttpError | unknown) {
-      if (e instanceof HttpError) {
-        const httpError = e as HttpError;
-        console.log(httpError);
-        if (httpError?.response.status === 403) {
-          throw new Error(
-            'Please make sure you have the correct bot token and channel ID.'
-          );
-        }
+    } catch (e) {
+      if (e instanceof HttpError && e.response.status === 403) {
+        throw new Error(
+          'Please make sure you have the correct bot token and channel ID.'
+        );
       }
       throw e;
     }

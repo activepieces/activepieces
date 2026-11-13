@@ -1,3 +1,5 @@
+import { assertWriteSucceeded } from '../common/request';
+import { biginOutputSchemas } from '../common/output-schemas';
 import { biginAuth } from '../auth';
 import { createAction, InputPropertyMap, Property } from '@activepieces/pieces-framework';
 import { tagsDropdown, usersDropdown } from '../common/props';
@@ -11,7 +13,8 @@ export const updateTask = createAction({
   classification: 'WRITE',
   displayName: 'Update Task',
   description: 'updates a Task',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: biginOutputSchemas.legacyAckRaw,
   aiMetadata: { description: 'Updates an existing task in Bigin CRM, identified by selecting the task; its current fields are prepopulated and any you set are overwritten (subject, owner, due date, priority, status, description, tags), with optional recurrence and reminder settings and a related Contact/Pipeline/Company link. Use to modify a task that already exists. Idempotent: re-sending the same field values leaves the record in the same state.', idempotent: true },
   props: {
     taskId: Property.Dropdown({
@@ -484,17 +487,15 @@ export const updateTask = createAction({
 
     const payload = { data: [taskData] };
 
-    try {
+    
       const response = await biginApiService.updateTask(
         access_token,
         api_domain,
         payload
       );
 
+      assertWriteSucceeded(response.data?.[0]);
       return response.data[0];
-    } catch (error: any) {
-      console.error('Error updating task:', error);
-      throw new Error(error);
-    }
+    
   },
 });

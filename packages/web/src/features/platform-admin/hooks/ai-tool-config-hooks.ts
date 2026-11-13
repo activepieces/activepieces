@@ -46,10 +46,11 @@ export const aiToolConfigMutations = {
       onSuccess,
       onError,
     }),
-  useDeleteAiToolConfig: ({ onSuccess }: { onSuccess: () => void }) =>
+  useDeleteAiToolConfig: ({ onSuccess, onError }: MutationOptions) =>
     useMutation({
       mutationFn: (id: string) => aiToolConfigApi.delete(id),
       onSuccess,
+      onError,
     }),
 };
 

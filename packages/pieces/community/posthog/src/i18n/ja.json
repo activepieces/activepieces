@@ -212,6 +212,8 @@
   "PUT": "PUT",
   "DELETE": "削除",
   "HEAD": "頭",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Event": "新しいイベント",
   "Triggers when a new event is captured in PostHog": "PostHog で新しいイベントがキャプチャされたときにトリガーします",
   "Event Name Filter": "イベント名フィルタ",

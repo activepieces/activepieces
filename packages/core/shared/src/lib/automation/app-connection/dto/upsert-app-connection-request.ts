@@ -204,8 +204,8 @@ export const ReplaceAppConnectionsRequestBody = z.object({
     sourceAppConnectionId: z.string(),
     targetAppConnectionId: z.string(),
     projectId: z.string(),
-    deleteSourceConnection: z.boolean().optional().default(false),
     applyToPublishedVersions: z.boolean().optional().default(false),
+    flowIds: z.array(z.string()).min(1),
 })
 export type ReplaceAppConnectionsRequestBody = z.infer<typeof ReplaceAppConnectionsRequestBody>
 

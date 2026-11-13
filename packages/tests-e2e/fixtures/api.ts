@@ -21,6 +21,59 @@ async function deleteConnection({ request, session, connectionId }: { request: A
   await deleteById({ request, session, resource: 'app-connections', id: connectionId });
 }
 
+async function invitePlatformMember({ request, session, email }: { request: APIRequestContext; session: E2eSession; email: string }): Promise<{ id: string }> {
+  const response = await request.post('/api/v1/user-invitations', {
+    headers: { Authorization: `Bearer ${session.token}` },
+    data: { type: 'PLATFORM', email, platformRole: 'MEMBER' },
+  });
+  if (!response.ok()) {
+    throw new Error(`Inviting ${email} failed with ${response.status()}: ${await response.text()}`);
+  }
+  const invitation: { id: string } = await response.json();
+  return { id: invitation.id };
+}
+
+async function acceptInvitation({ request, link }: { request: APIRequestContext; link: URL }) {
+  const response = await request.post('/api/v1/user-invitations/accept', {
+    data: { invitationToken: link.searchParams.get('token') },
+  });
+  if (!response.ok()) {
+    throw new Error(`Accepting the invitation failed with ${response.status()}: ${await response.text()}`);
+  }
+}
+
+async function readInvitationStatus({ request, link }: { request: APIRequestContext; link: URL }): Promise<string> {
+  const response = await request.get('/api/v1/user-invitations/preview', { params: { token: link.searchParams.get('token') ?? '' } });
+  if (!response.ok()) {
+    throw new Error(`Reading the invitation failed with ${response.status()}: ${await response.text()}`);
+  }
+  const preview: { status: string } = await response.json();
+  return preview.status;
+}
+
+async function deleteInvitation({ request, session, invitationId }: { request: APIRequestContext; session: E2eSession; invitationId: string }) {
+  await deleteById({ request, session, resource: 'user-invitations', id: invitationId });
+}
+
+async function signUp({ request, email, password }: { request: APIRequestContext; email: string; password: string }): Promise<{ userId: string }> {
+  const response = await request.post('/api/v1/authentication/sign-up', {
+    data: { email, password, firstName: 'E2E', lastName: 'Member', trackEvents: false, newsLetter: false },
+  });
+  if (!response.ok()) {
+    throw new Error(`Signing up ${email} failed with ${response.status()}: ${await response.text()}`);
+  }
+  const user: { id: string } = await response.json();
+  return { userId: user.id };
+}
+
+async function signIn({ request, email, password }: { request: APIRequestContext; email: string; password: string }) {
+  return request.post('/api/v1/authentication/sign-in', { data: { email, password } });
+}
+
+async function deleteUser({ request, session, userId }: { request: APIRequestContext; session: E2eSession; userId: string }) {
+  await deleteById({ request, session, resource: 'users', id: userId });
+}
+
 async function deleteStaleData({ request, session }: { request: APIRequestContext; session: E2eSession }) {
   const staleFlows = await listStale({ request, session, resource: 'flows', nameOf: (flow: FlowSummary) => flow.version.displayName, cursor: undefined });
   for (const flow of staleFlows) {
@@ -124,11 +177,25 @@ const STALE_AFTER_MS = 60 * 60 * 1000;
 
 export const STORAGE_STATE = path.join(__dirname, '..', '.auth', 'user.json');
 export const E2E_PREFIX = 'E2E ';
-export const e2eApi = { readSession, deleteFlow, deleteConnection, deleteStaleData, describeFlow, describeRun };
+export const e2eApi = {
+  readSession,
+  deleteFlow,
+  deleteConnection,
+  invitePlatformMember,
+  acceptInvitation,
+  readInvitationStatus,
+  deleteInvitation,
+  signUp,
+  signIn,
+  deleteUser,
+  deleteStaleData,
+  describeFlow,
+  describeRun,
+};
 
 export type E2eSession = { token: string; projectId: string };
 
-type Resource = 'flows' | 'app-connections';
+type Resource = 'flows' | 'app-connections' | 'users' | 'user-invitations';
 type FlowSummary = { id: string; created: string; version: { displayName: string } };
 type ConnectionSummary = { id: string; created: string; displayName: string };
 type FlowState = {

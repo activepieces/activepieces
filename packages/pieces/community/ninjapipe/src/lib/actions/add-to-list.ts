@@ -1,43 +1,40 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const addToList = createAction({
   auth: ninjapipeAuth,
   name: 'add_to_list',
   classification: 'WRITE',
   displayName: 'Add to List',
-  description: 'Adds a contact OR a company to a CRM list. The list type must match (Contact lists accept contacts, Company lists accept companies). Idempotent — returns already_in_list:true if already present.',
+  description: 'Adds a contact or a company to a CRM list. Contact lists take contacts, company lists take companies.',
   audience: 'both',
-  aiMetadata: { description: 'Add a single member to a CRM list by list ID — provide exactly one of a contact ID or a company ID (not both, not neither), and the member type must match the list type. Idempotent — adding a member already on the list is a no-op rather than an error.', idempotent: true },
+  aiMetadata: {
+    description: 'Add one member to a NinjaPipe CRM list by list ID: give exactly one of contactId or companyId, matching the list type. Safe to retry: adding a member already on the list returns already_in_list: true.',
+    idempotent: true,
+  },
+  outputSchema: ninjapipeSchemas.listMember,
   props: {
-    listId: Property.ShortText({
-      displayName: 'List ID',
-      description: 'The list UUID (must belong to your workspace).',
-      required: true,
-    }),
-    contactId: ninjapipeCommon.contactDropdown,
-    companyId: ninjapipeCommon.companyDropdown,
+    listId: Property.ShortText({ displayName: 'List ID', description: 'The list UUID (open the list in NinjaPipe and copy it from the URL).', required: true }),
+    contactId: ninjapipeProps.contactOptional(),
+    companyId: ninjapipeProps.companyOptional(),
   },
   async run(context) {
-    const auth = getAuth(context);
-    const { listId, contactId, companyId } = context.propsValue;
-    if (!contactId && !companyId) {
-      throw new Error('Provide either Contact or Company.');
+    const p = context.propsValue;
+    const contactId = typeof p.contactId === 'string' ? p.contactId.trim() : '';
+    const companyId = typeof p.companyId === 'string' ? p.companyId.trim() : '';
+    if ((contactId === '') === (companyId === '')) {
+      throw new Error('Choose exactly one of Contact or Company.');
     }
-    if (contactId && companyId) {
-      throw new Error('Provide only one: Contact or Company. Lists are typed.');
-    }
-    const body: Record<string, unknown> = {};
-    if (contactId) body['contact_id'] = contactId;
-    if (companyId) body['company_id'] = companyId;
-    const response = await ninjapipeApiCall<Record<string, unknown>>({
-      auth,
+    return ninjapipeClient.sendRecord({
+      auth: ninjapipeClient.readAuth(context.auth),
       method: HttpMethod.POST,
-      path: `/lists/${encodeURIComponent(String(listId))}/members`,
-      body,
+      path: `/lists/${ninjapipeClient.pathId({ value: p.listId, field: 'List ID' })}/members`,
+      body: contactId !== '' ? { contact_id: contactId } : { company_id: companyId },
+      operation: 'add to list',
     });
-    return flattenCustomFields(response.body);
   },
 });

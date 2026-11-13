@@ -1,38 +1,40 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { bushbulletAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { bushbulletAuth } from '../common/auth';
+import { PushbulletPush, pushbulletApi } from '../common/client';
+import { pushbulletProps } from '../common/props';
+import { pushbulletOutputSchemas } from '../common/output-schemas';
 
 export const sendANote = createAction({
   auth: bushbulletAuth,
   name: 'sendANote',
   classification: 'WRITE',
   displayName: 'Send a Note',
-  description: 'Send me a text notification',
-  audience: 'both',
-  aiMetadata: { description: 'Pushes a plain-text note notification (title plus body) to the authenticated Pushbullet account and its connected devices. Use this for a simple text alert or message rather than a link or file. Both title and body are required; sends a new push on every call, so it is not idempotent.', idempotent: false },
+  description: 'Sends a text notification to your devices, one device or an email address.',
+  audience: 'human',
+  outputSchema: pushbulletOutputSchemas.push,
   props: {
     title: Property.ShortText({
       displayName: 'Note Title',
-      description: '',
+      description: 'The headline of the notification.',
       required: true,
     }),
-    body: Property.ShortText({
+    body: Property.LongText({
       displayName: 'Note Body',
-      description: '',
+      description: 'The text shown under the title.',
       required: true,
     }),
+    device: pushbulletProps.device,
+    email: pushbulletProps.email,
   },
   async run(context) {
-    return await makeRequest(
-      context.auth.secret_text,
-      HttpMethod.POST,
-      '/pushes',
-      {
-        type: 'note',
-        title: context.propsValue.title,
-        body: context.propsValue.body,
-      }
-    );
+    const { title, body, device, email } = context.propsValue;
+    const target = pushbulletApi.buildTarget({ deviceIden: device ?? undefined, email: email ?? undefined });
+    return await pushbulletApi.request<PushbulletPush>({
+      token: context.auth.secret_text,
+      method: HttpMethod.POST,
+      path: '/pushes',
+      body: { type: 'note', title, body, ...target },
+    });
   },
 });

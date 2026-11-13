@@ -1,3 +1,5 @@
+import { assertWriteSucceeded } from '../common/request';
+import { biginOutputSchemas } from '../common/output-schemas';
 import { biginAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { companyDropdown, tagsDropdown, usersDropdown } from '../common/props';
@@ -10,7 +12,8 @@ export const createContact = createAction({
   classification: 'WRITE',
   displayName: 'Create Contact',
   description: 'Creates a Contact Record',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: biginOutputSchemas.legacyAckWithMessage,
   aiMetadata: { description: 'Creates a new contact (person) record in Bigin CRM. Last name is required; optionally set email, mobile, title, owner, associated company, tags, mailing address, and description. Use to add a person to the CRM. Not idempotent: each call creates a new contact even with identical details, so search first to avoid duplicates.', idempotent: false },
   props: {
     firstName: Property.ShortText({
@@ -79,7 +82,7 @@ export const createContact = createAction({
     }),
   },
   async run(context) {
-    try {
+    
       const {
         firstName,
         lastName,
@@ -136,17 +139,11 @@ export const createContact = createAction({
         payload
       );
 
+      assertWriteSucceeded(response.data?.[0]);
       return {
         message: 'Contact created successfully',
         data: response.data[0],
       };
-    } catch (error: any) {
-      console.error('Error creating contact:', error);
-      throw new Error(
-        error instanceof Error
-          ? `Failed to create contact: ${error.message}`
-          : 'Failed to create contact due to an unknown error'
-      );
-    }
+    
   },
 });

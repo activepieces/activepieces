@@ -43,7 +43,8 @@
     "@fastify/reply-from": "12.6.2",
     "@fastify/static": "10.1.2",
     "@fastify/swagger": "9.5.1",
-    "@modelcontextprotocol/sdk": "1.27.1",
+    "@modelcontextprotocol/sdk": "1.32.0",
+    "@posthog/mcp": "0.23.0",
     "@openrouter/ai-sdk-provider": "3.0.0",
     "@openrouter/sdk": "0.2.9",
     "@sentry/node": "7.120.0",
@@ -54,7 +55,7 @@
     "ai": "7.0.44",
     "ai-gateway-provider": "4.0.0",
     "async-mutex": "0.4.0",
-    "autumn-js": "1.2.43",
+    "autumn-js": "1.5.18",
     "axios": "1.20.0",
     "bcrypt": "6.0.0",
     "bullmq": "5.61.0",
@@ -109,15 +110,15 @@
     "typeorm": "0.3.31",
     "typeorm-pglite": "0.3.2",
     "unpdf": "1.4.0",
-    "zod": "4.3.6"
-  },
-  "devDependencies": {
-    "deno": "2.9.3",
+    "zod": "4.3.6",
     "@activepieces/piece-facebook-leads": "workspace:*",
     "@activepieces/piece-intercom": "workspace:*",
     "@activepieces/piece-microsoft-teams-bot": "workspace:*",
     "@activepieces/piece-slack": "workspace:*",
-    "@activepieces/piece-square": "workspace:*",
+    "@activepieces/piece-square": "workspace:*"
+  },
+  "devDependencies": {
+    "deno": "2.9.3",
     "@faker-js/faker": "10.5.0",
     "@types/bcrypt": "5.0.0",
     "@types/content-disposition": "0.5.9",
@@ -136,7 +137,7 @@
     "form-data": "4.0.6",
     "sandbox-agent": "0.4.2",
     "tsconfig-paths": "4.2.0",
-    "vitest": "3.2.6",
+    "vitest": "5.0.5",
     "webpack-ignore-dynamic-require": "1.0.0"
   },
   "scripts": {

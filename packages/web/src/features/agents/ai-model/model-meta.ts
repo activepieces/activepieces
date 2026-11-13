@@ -28,7 +28,7 @@ function providerInfoOf({
     SUPPORTED_AI_PROVIDERS.find((info) => info.provider === provider) ?? {
       provider,
       name: provider,
-      markdown: '',
+      markdown: () => '',
       logoUrl: '',
     }
   );

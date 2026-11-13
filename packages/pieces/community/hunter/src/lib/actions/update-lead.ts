@@ -1,88 +1,48 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { hunterApiCall } from '../common';
 import { hunterAuth } from '../auth';
-import {
-    leadSelectDropdownProp,
-    emailProp,
-    firstNameProp,
-    lastNameProp,
-    positionProp,
-    companyLeadProp,
-    companyIndustryProp,
-    companySizeProp,
-    confidenceScoreProp,
-    websiteProp,
-    countryCodeProp,
-    linkedinUrlProp,
-    phoneNumberProp,
-    twitterProp,
-    notesProp,
-    sourceProp,
-    leadsListDropdownProp,
-    leadsListIdsProp,
-    customAttributesProp,
-} from '../common/props';
+import { apiKeyOf } from '../common/client';
+import { leadProps } from '../common/lead-props';
+import { hunterOutputSchemas } from '../common/output-schemas';
+import { clearFieldsProp, leadSelectDropdownProp, leadsListDropdownProp } from '../common/props';
+import { hunterRequests } from '../common/requests';
 
 export const updateLeadAction = createAction({
-    auth: hunterAuth,
-    name: 'update-lead',
-    classification: 'WRITE',
-    displayName: 'Update Lead',
-    description: 'Modify existing lead data.',
-    audience: 'both',
-    aiMetadata: { description: 'Updates fields on an existing lead identified by its lead ID, overwriting only the provided contact, company, list, or custom-attribute values. Use to correct or enrich a known lead. Requires the lead ID and at least one field to change; idempotent since re-sending the same values yields the same final state.', idempotent: true },
-    props: {
-        lead_id: leadSelectDropdownProp,
-        email: emailProp,
-        first_name: firstNameProp,
-        last_name: lastNameProp,
-        position: positionProp,
-        company: companyLeadProp,
-        company_industry: companyIndustryProp,
-        company_size: companySizeProp,
-        confidence_score: confidenceScoreProp,
-        website: websiteProp,
-        country_code: countryCodeProp,
-        linkedin_url: linkedinUrlProp,
-        phone_number: phoneNumberProp,
-        twitter: twitterProp,
-        notes: notesProp,
-        source: sourceProp,
-        leads_list_id: leadsListDropdownProp,
-        leads_list_ids: leadsListIdsProp,
-        custom_attributes: customAttributesProp,
-    },
-    async run(context) {
-        const props = context.propsValue;
-        const leadId = props.lead_id;
-
-        const body: Record<string, unknown> = {};
-        for (const [key, value] of Object.entries(props)) {
-            if (key === 'lead_id') continue;
-            if (
-                value !== undefined &&
-                value !== null &&
-                !(
-                    (Array.isArray(value) && value.length === 0) ||
-                    (typeof value === 'string' && value === '')
-                )
-            ) {
-                body[key] = value;
-            }
-        }
-
-        if (Object.keys(body).length === 0) {
-            throw new Error('You must specify at least one field to update.');
-        }
-
-        await hunterApiCall({
-            apiKey: context.auth,
-            endpoint: `/leads/${leadId}`,
-            method: HttpMethod.PUT,
-            body,
-        });
-
-        return { success: true };
-    },
+  auth: hunterAuth,
+  name: 'update-lead',
+  classification: 'WRITE',
+  displayName: 'Update Lead',
+  description: 'Modify existing lead data. Empty fields are left unchanged; use Clear Fields to blank them.',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Updates the fields you set on one lead picked from a dropdown, blanks the fields listed in Clear Fields, leaves the rest unchanged, and returns the updated lead. Re-sending the same values gives the same result.',
+    idempotent: true,
+  },
+  props: {
+    lead_id: leadSelectDropdownProp,
+    email: leadProps.optionalEmailFields.email,
+    first_name: leadProps.optionalEmailFields.first_name,
+    last_name: leadProps.optionalEmailFields.last_name,
+    position: leadProps.optionalEmailFields.position,
+    company: leadProps.optionalEmailFields.company,
+    company_industry: leadProps.optionalEmailFields.company_industry,
+    company_size: leadProps.optionalEmailFields.company_size,
+    confidence_score: leadProps.optionalEmailFields.confidence_score,
+    website: leadProps.optionalEmailFields.website,
+    country_code: leadProps.optionalEmailFields.country_code,
+    linkedin_url: leadProps.optionalEmailFields.linkedin_url,
+    phone_number: leadProps.optionalEmailFields.phone_number,
+    twitter: leadProps.optionalEmailFields.twitter,
+    notes: leadProps.optionalEmailFields.notes,
+    source: leadProps.optionalEmailFields.source,
+    leads_list_id: leadsListDropdownProp,
+    leads_list_ids: leadProps.leadsListIds({ mode: 'update' }),
+    custom_attributes: leadProps.customAttributes(),
+    clear_fields: clearFieldsProp,
+  },
+  outputSchema: hunterOutputSchemas.leadUpdated,
+  async run(context) {
+    const body = hunterRequests.buildLeadBody({ props: context.propsValue, clearFields: context.propsValue.clear_fields, requireEmail: false });
+    return hunterRequests.updateLead({ apiKey: apiKeyOf(context.auth), leadId: context.propsValue.lead_id, body });
+  },
 });

@@ -1,58 +1,27 @@
-import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
-import { getNotebooksDropdown, getSectionsByNotebookDropdown } from '../common';
-import { oneNoteAuth } from '../auth';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { Property, createAction } from '@activepieces/pieces-framework';
+import { microsoftOneNoteAuth } from '../auth';
+import { microsoftOneNoteClient } from '../common/client';
+import { microsoftOneNoteProps } from '../common/props';
+import type { OnenotePage } from '../common/types';
+import { createNoteInSectionOutputSchema } from '../output-schemas';
 
-export const createPage = createAction({
-	auth: oneNoteAuth,
+export const createPageAction = createAction({
+	auth: microsoftOneNoteAuth,
 	name: 'create_page',
+	outputSchema: createNoteInSectionOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Page',
 	description: 'Creates a page in section.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Creates a new OneNote page in a chosen notebook section with a title and optional HTML body content. Functionally similar to Create Note in Section; pick either to add a text page. Content accepts basic HTML tags. Not idempotent: each call creates a new page.', idempotent: false },
 	props: {
-		notebook_id: Property.Dropdown({
-			auth: oneNoteAuth,
-			displayName: 'Notebook',
+		notebook_id: microsoftOneNoteProps.notebookId({
+			required: true,
 			description: 'The notebook to create the page in.',
-			required: true,
-			refreshers: [],	
-			options: async ({ auth }) => {
-				if (!(auth as OAuth2PropertyValue)?.access_token) {
-					return {
-						disabled: true,
-						placeholder: 'Connect your account first',
-						options: [],
-					};
-				}
-				return await getNotebooksDropdown(auth as OAuth2PropertyValue);
-			},
 		}),
-		section_id: Property.Dropdown({
-			auth: oneNoteAuth,
-			displayName: 'Section',
-			description: 'The section to create the page in.',
+		section_id: microsoftOneNoteProps.sectionId({
 			required: true,
-			refreshers: ['notebook_id'],
-			options: async ({ auth, notebook_id }) => {
-				if (!(auth as OAuth2PropertyValue)?.access_token) {
-					return {
-						disabled: true,
-						placeholder: 'Connect your account first',
-						options: [],
-					};
-				}
-				if (!notebook_id) {
-					return {
-						disabled: true,
-						placeholder: 'Select a notebook first',
-						options: [],
-					};
-				}
-				return await getSectionsByNotebookDropdown(auth as OAuth2PropertyValue, notebook_id as string);
-			},
+			description: 'The section to create the page in.',
 		}),
 		title: Property.ShortText({
 			displayName: 'Page Title',
@@ -70,14 +39,7 @@ export const createPage = createAction({
 		const { auth, propsValue } = context;
 		const { section_id, title, content } = propsValue;
 
-		const authValue = auth as OAuth2PropertyValue;
-		const cloud = authValue.props?.['cloud'] as string | undefined;
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(authValue.access_token),
-			},
-			baseUrl: getGraphBaseUrl(cloud),
-		});
+		const client = microsoftOneNoteClient.create({ auth });
 
 		const htmlContent = `<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -91,7 +53,7 @@ export const createPage = createAction({
 </html>`;
 
 		try {
-			const response = await client
+			const response: OnenotePage = await client
 				.api(`/me/onenote/sections/${section_id}/pages`)
 				.header('Content-Type', 'application/xhtml+xml')
 				.post(htmlContent);
@@ -108,8 +70,8 @@ export const createPage = createAction({
 				links: response.links,
 				self: response.self,
 			};
-		} catch (error: any) {
-			throw new Error(`Failed to create page: ${error.message || 'Unknown error'}`);
+		} catch (error) {
+			throw new Error(`Failed to create page: ${(error instanceof Error && error.message) || 'Unknown error'}`);
 		}
 	},
 });

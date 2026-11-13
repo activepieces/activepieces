@@ -550,6 +550,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Page": "Nova Página",
   "Updated Page": "Página atualizada",
   "New Comment on Page": "Novo Comentário na Página",

@@ -1,9 +1,14 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest, transformCustomFields } from '../common/client';
+import {
+  CampaignMonitorWebhookEvent,
+  fetchSubscriberOrEventData,
+  makeRequest,
+} from '../common/client';
 import { isNil } from '@activepieces/pieces-framework';
 import { campaignMonitorAuth } from '../auth';
 import { clientId, listId } from '../common/props';
+import { subscriberOutputSchema } from '../output-schemas';
 
 export const newSubscriberAddedTrigger = createTrigger({
   auth: campaignMonitorAuth,
@@ -20,32 +25,36 @@ export const newSubscriberAddedTrigger = createTrigger({
     listId: listId,
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: subscriberOutputSchema,
   sampleData: {
     EmailAddress: 'subscriber@example.com',
     Name: 'New Subscriber',
-    Date: '2023-07-15T15:30:00Z',
-    ListID: 'xyz',
+    Date: '2023-07-15 15:30:00',
+    ListJoinedDate: '2023-07-15 15:30:00',
+    State: 'Active',
     CustomFields: {
       website: 'https://example.com',
     },
-    State: 'Active',
+    ReadsEmailWith: '',
     ConsentToTrack: 'Yes',
+    ConsentToSendSms: 'Unchanged',
+    MobileNumber: '',
   },
   async onEnable(context) {
     const { listId } = context.propsValue;
 
-    const response = await makeRequest(
-        { apiKey: context.auth.secret_text },
-      HttpMethod.POST,
-      `/lists/${listId}/webhooks.json`,
-      {
+    const response = await makeRequest<string>({
+      auth: { apiKey: context.auth.secret_text },
+      method: HttpMethod.POST,
+      path: `/lists/${listId}/webhooks.json`,
+      body: {
         Events: ['Subscribe'],
         Url: context.webhookUrl,
         PayloadFormat: 'json',
-      }
-    );
+      },
+    });
 
-    const webhook = response.body as string;
+    const webhook = response.body;
 
     await context.store.put('new_subscriber_added_webhook', webhook);
   },
@@ -55,19 +64,18 @@ export const newSubscriberAddedTrigger = createTrigger({
       'new_subscriber_added_webhook'
     );
 
-
     if (!isNil(storedData)) {
-      await makeRequest(
-        { apiKey: context.auth.secret_text },
-        HttpMethod.DELETE,
-        `/lists/${listId}/webhooks/${storedData}.json`
-      );
+      await makeRequest({
+        auth: { apiKey: context.auth.secret_text },
+        method: HttpMethod.DELETE,
+        path: `/lists/${listId}/webhooks/${storedData}.json`,
+      });
     }
   },
   async run(context) {
     const payload = context.payload.body as {
       ListID: string;
-      Events: { Type: string; EmailAddress: string }[];
+      Events: CampaignMonitorWebhookEvent[];
     };
 
     if (payload.ListID !== context.propsValue.listId) {
@@ -78,18 +86,13 @@ export const newSubscriberAddedTrigger = createTrigger({
 
     for (const event of payload.Events) {
       if (event.Type === 'Subscribe') {
-        const response = await makeRequest(
-          { apiKey: context.auth.secret_text },
-          HttpMethod.GET,
-          `/subscribers/${context.propsValue.listId}.json?email=${encodeURIComponent(
-            event.EmailAddress
-          )}`,
-          payload
+        result.push(
+          await fetchSubscriberOrEventData({
+            apiKey: context.auth.secret_text,
+            listId: context.propsValue.listId,
+            event,
+          })
         );
-        result.push({
-          ...response.body,
-          CustomFields: transformCustomFields(response.body['CustomFields']),
-        });
       }
     }
 

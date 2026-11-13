@@ -10,6 +10,8 @@ import {
   GetAgentMemoryResponse,
   ImportAgentMemoryRequest,
   InstructAgentMemoryRequest,
+  MemoryImportNudgeClaimResponse,
+  MemoryImportNudgeResponse,
   UpdateAgentConversationRequest,
   UpdateAgentMemoryRequest,
 } from '@activepieces/shared';
@@ -140,6 +142,16 @@ async function getMemory(): Promise<GetAgentMemoryResponse> {
   return api.get<GetAgentMemoryResponse>('/v1/agents/memory');
 }
 
+async function getMemoryImportNudge(): Promise<MemoryImportNudgeResponse> {
+  return api.get<MemoryImportNudgeResponse>('/v1/agents/memory/import-nudge');
+}
+
+async function claimMemoryImportNudge(): Promise<MemoryImportNudgeClaimResponse> {
+  return api.post<MemoryImportNudgeClaimResponse>(
+    '/v1/agents/memory/import-nudge/claim',
+  );
+}
+
 async function saveMemory(
   request: UpdateAgentMemoryRequest,
 ): Promise<GetAgentMemoryResponse> {
@@ -175,6 +187,8 @@ export const chatApi = {
   getPickerConnections,
   getPendingGate,
   getMemory,
+  getMemoryImportNudge,
+  claimMemoryImportNudge,
   saveMemory,
   importMemory,
   instructMemory,

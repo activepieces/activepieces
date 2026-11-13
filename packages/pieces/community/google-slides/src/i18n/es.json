@@ -360,5 +360,7 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "BORRAR",
-  "HEAD": "LIMPIO"
+  "HEAD": "LIMPIO",
+  "Request": "Request",
+  "Data to send": "Data to send"
 }

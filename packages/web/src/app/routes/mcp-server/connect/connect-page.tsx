@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { RotateCw } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { ReactNode, useEffect, useState } from 'react';
 
@@ -11,6 +11,7 @@ import { useMcpNav } from '../mcp-nav';
 import { PageBand } from '../page-band';
 
 import { ClientTile } from './client-tile';
+import { GrantsLoadError } from './grants-load-error';
 import { LogoStack } from './logo-stack';
 import { Prompt, PromptCard } from './prompt-card';
 import { useConnectHome } from './use-connect-home';
@@ -52,19 +53,20 @@ export function ConnectPage({ clients }: { clients: CatalogClient[] }) {
         >
           <div className="flex min-h-5 flex-wrap items-center justify-between gap-x-4 gap-y-1">
             <SectionTitle>{t('Pick your AI')}</SectionTitle>
-            {home.isGrantsError && (
-              <span className="flex items-center gap-1 text-sm text-gray-11">
-                {t("Couldn't load your connections.")}
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="h-auto px-1"
-                  onClick={() => home.refetchGrants()}
-                >
-                  <RotateCw />
-                  {t('Retry')}
-                </Button>
-              </span>
+            <Button
+              variant="link"
+              size="sm"
+              className="h-auto px-0"
+              onClick={nav.showBrowse}
+            >
+              {t('All {count} clients', { count: home.namedCount })}
+              <ChevronRight />
+            </Button>
+            {home.isStatusError && (
+              <GrantsLoadError
+                className="order-last basis-full"
+                onRetry={() => home.refetchStatus()}
+              />
             )}
           </div>
           <div className="grid gap-2.5 @min-[440px]:grid-cols-2">
@@ -72,7 +74,8 @@ export function ConnectPage({ clients }: { clients: CatalogClient[] }) {
               <ClientTile
                 key={client.key}
                 client={client}
-                grants={home.grantsByClient.get(client.key)}
+                status={home.statusByClient.get(client.key)}
+                isStatusLoading={home.isStatusLoading}
                 onOpen={() => nav.showClient(client.key)}
               />
             ))}
@@ -114,7 +117,7 @@ function Hero({
     <Enter isReady={isReady} animates={animates} delay={0}>
       <h1 className="text-balance text-2xl/10 font-medium tracking-tight @min-[800px]:text-pretty @min-[1000px]:text-3xl/11">
         <span>
-          {t('Give your AI secure access to {apps}', { apps })}
+          {t('Give your AI access to {apps}', { apps })}
           <span className="ml-2 inline-flex translate-y-[-2px] align-middle">
             <LogoStack
               logos={HEADER_LOGOS}
@@ -210,11 +213,8 @@ function SectionTitle({ children }: { children: ReactNode }) {
 }
 
 function appsLabel(total: number): string {
-  if (total === 0) {
+  if (total < COUNT_SHOWN_FROM) {
     return t('your apps');
-  }
-  if (total < EXACT_COUNT_LIMIT) {
-    return t('{count, plural, =1 {# app} other {# apps}}', { count: total });
   }
   const step = total < 200 ? 10 : 50;
   return t('{apps}+ apps', {
@@ -278,5 +278,5 @@ const LOGO_DELAY = 0.08;
 const LEFT_DELAY = 0.12;
 const RIGHT_DELAY = 0.18;
 const READY_TIMEOUT_MS = 1200;
-const EXACT_COUNT_LIMIT = 20;
+const COUNT_SHOWN_FROM = 20;
 const HEADER_LOGOS = ['slack', 'salesforce', 'google-drive', 'notion'];

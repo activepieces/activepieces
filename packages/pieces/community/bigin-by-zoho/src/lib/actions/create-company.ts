@@ -1,3 +1,5 @@
+import { assertWriteSucceeded } from '../common/request';
+import { biginOutputSchemas } from '../common/output-schemas';
 import { biginAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { tagsDropdown, usersDropdown } from '../common/props';
@@ -9,7 +11,8 @@ export const createCompany = createAction({
   classification: 'WRITE',
   displayName: 'Create Company',
   description: 'Creates a Company Record',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: biginOutputSchemas.legacyAckWithMessage,
   aiMetadata: { description: 'Creates a new company (account) record in Bigin CRM with a name plus optional phone, website, billing address, owner, tags, and description. Use to add an organization the business deals with. Not idempotent: each call creates a new company even if one with the same name already exists, so search first if you need to avoid duplicates.', idempotent: false },
   props: {
     accountName: Property.ShortText({
@@ -62,7 +65,7 @@ export const createCompany = createAction({
     }),
   },
   async run(context) {
-    try {
+    
       const {
         accountName,
         owner,
@@ -105,21 +108,15 @@ export const createCompany = createAction({
 
       const response = await biginApiService.createCompany(
         context.auth.access_token,
-        (context.auth as any).api_domain,
+        context.auth.data['api_domain'],
         { data: [record] }
       );
 
+      assertWriteSucceeded(response.data?.[0]);
       return {
         message: 'Company created successfully',
         data: response.data[0],
       };
-    } catch (error: any) {
-      console.error('Error creating company:', error);
-      throw new Error(
-        error instanceof Error
-          ? `Failed to create company: ${error.message}`
-          : 'Failed to create company due to an unknown error'
-      );
-    }
+    
   },
 });

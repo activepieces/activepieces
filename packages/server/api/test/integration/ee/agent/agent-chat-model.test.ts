@@ -1,4 +1,4 @@
-import { AIProviderName, assertNotNullOrUndefined, ErrorCode } from '@activepieces/core-utils'
+import { ActivepiecesAiConsumerSource, AIProviderName, assertNotNullOrUndefined, ErrorCode } from '@activepieces/core-utils'
 import { aiUtils, modelCatalog, modelTierCatalog } from '@activepieces/server-utils'
 import { AgentConversation, AIProviderModelType, aiProviderUtils, AiToolCapability, AiToolProvider, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
@@ -315,7 +315,11 @@ describe('platform-wide AI work', () => {
         expect((await ctx.post(`/v1/platform-model-tiers/${fast.id}`, { isFast: true })).statusCode).toBe(StatusCodes.OK)
         const createModel = vi.spyOn(aiUtils, 'createModel')
 
-        await agentHelpers.resolvePlatformFastModel({ platformId: ctx.platform.id, log: app.log })
+        await agentHelpers.resolvePlatformFastModel({
+            platformId: ctx.platform.id,
+            billing: { source: ActivepiecesAiConsumerSource.CHAT, platformId: ctx.platform.id, projectId: null, conversationId: 'conversation-1' },
+            log: app.log,
+        })
 
         expect(createModel).toHaveBeenCalledWith(expect.objectContaining({ providerConfigId: key.id, modelId: 'small-model' }))
     })

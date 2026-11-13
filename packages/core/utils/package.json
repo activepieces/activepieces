@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/core-utils",
-  "version": "0.10.5",
+  "version": "0.13.3",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "scripts": {
@@ -18,7 +18,7 @@
   "devDependencies": {
     "@types/node": "24.11.0",
     "typescript": "5.5.4",
-    "vitest": "3.2.6"
+    "vitest": "5.0.5"
   },
   "typings": "./dist/src/index.d.ts"
 }

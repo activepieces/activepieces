@@ -127,6 +127,8 @@
                      "flows/publishing-flows",
                      "flows/flow-approvals",
                      "flows/debugging-runs",
+                     "flows/managing-memory",
+                     "flows/managing-queues",
                     "flows/versioning",
                     "flows/template-library",
                     "flows/canvas-controls"
@@ -376,8 +378,15 @@
                     "group": "Setup",
                     "pages": [
                       "admin-guide/guides/general",
-                      "admin-guide/guides/setup-ai-providers",
-                      "admin-guide/guides/ai-capabilities",
+                      {
+                        "group": "AI Center",
+                        "icon": "sparkles",
+                        "pages": [
+                          "admin-guide/guides/setup-ai-providers",
+                          "admin-guide/guides/ai-tiers",
+                          "admin-guide/guides/ai-capabilities"
+                        ]
+                      },
                       "admin-guide/guides/global-connections",
                       "admin-guide/guides/manage-pieces",
                       "admin-guide/guides/templates",
@@ -429,8 +438,27 @@
                           "admin-guide/security/audit-logs/user-signed-up",
                           "admin-guide/security/audit-logs/user-email-verified",
                           "admin-guide/security/audit-logs/user-password-reset",
+                          "admin-guide/security/audit-logs/user-invitation-sent",
+                          "admin-guide/security/audit-logs/user-invitation-accepted",
+                          "admin-guide/security/audit-logs/user-invitation-deleted",
                           "admin-guide/security/audit-logs/signing-key-created",
-                          "admin-guide/security/audit-logs/audit-log-retention-updated"
+                          "admin-guide/security/audit-logs/audit-log-retention-updated",
+                          "admin-guide/security/audit-logs/authentication-email-enabled",
+                          "admin-guide/security/audit-logs/authentication-email-disabled",
+                          "admin-guide/security/audit-logs/authentication-google-enabled",
+                          "admin-guide/security/audit-logs/authentication-google-disabled",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-added",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-removed",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-enforcement-enabled",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-enforcement-disabled",
+                          "admin-guide/security/audit-logs/sso-domain-added",
+                          "admin-guide/security/audit-logs/sso-domain-verified",
+                          "admin-guide/security/audit-logs/sso-domain-verification-cancelled",
+                          "admin-guide/security/audit-logs/sso-domain-removed",
+                          "admin-guide/security/audit-logs/sso-domain-expired",
+                          "admin-guide/security/audit-logs/sso-saml-connected",
+                          "admin-guide/security/audit-logs/sso-saml-replaced",
+                          "admin-guide/security/audit-logs/sso-saml-disabled"
                         ]
                       }
                     ]
@@ -461,8 +489,27 @@
                           "admin-guide/security/audit-logs/user-signed-up",
                           "admin-guide/security/audit-logs/user-email-verified",
                           "admin-guide/security/audit-logs/user-password-reset",
+                          "admin-guide/security/audit-logs/user-invitation-sent",
+                          "admin-guide/security/audit-logs/user-invitation-accepted",
+                          "admin-guide/security/audit-logs/user-invitation-deleted",
                           "admin-guide/security/audit-logs/signing-key-created",
-                          "admin-guide/security/audit-logs/audit-log-retention-updated"
+                          "admin-guide/security/audit-logs/audit-log-retention-updated",
+                          "admin-guide/security/audit-logs/authentication-email-enabled",
+                          "admin-guide/security/audit-logs/authentication-email-disabled",
+                          "admin-guide/security/audit-logs/authentication-google-enabled",
+                          "admin-guide/security/audit-logs/authentication-google-disabled",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-added",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-removed",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-enforcement-enabled",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-enforcement-disabled",
+                          "admin-guide/security/audit-logs/sso-domain-added",
+                          "admin-guide/security/audit-logs/sso-domain-verified",
+                          "admin-guide/security/audit-logs/sso-domain-verification-cancelled",
+                          "admin-guide/security/audit-logs/sso-domain-removed",
+                          "admin-guide/security/audit-logs/sso-domain-expired",
+                          "admin-guide/security/audit-logs/sso-saml-connected",
+                          "admin-guide/security/audit-logs/sso-saml-replaced",
+                          "admin-guide/security/audit-logs/sso-saml-disabled"
                         ]
                       },
                       "admin-guide/guides/event-streaming"
@@ -664,6 +711,50 @@
                            "endpoints/variables/list",
                            "endpoints/variables/update",
                            "endpoints/variables/delete"
+                        ]
+                     },
+                     {
+                        "group": "AI Center",
+                        "icon": "sparkles",
+                        "pages": [
+                           {
+                              "group": "Providers",
+                              "pages": [
+                                 "endpoints/ai-providers/list-keys",
+                                 "endpoints/ai-providers/list-key-models",
+                                 "endpoints/ai-providers/list-suggested-models",
+                                 "endpoints/ai-providers/list-model-options",
+                                 "endpoints/ai-providers/create-key",
+                                 "endpoints/ai-providers/recheck-key",
+                                 "endpoints/ai-providers/update-key",
+                                 "endpoints/ai-providers/delete-key"
+                              ]
+                           },
+                           {
+                              "group": "Model Tiers",
+                              "pages": [
+                                 "endpoints/ai-model-tiers/list",
+                                 "endpoints/ai-model-tiers/create",
+                                 "endpoints/ai-model-tiers/reorder",
+                                 "endpoints/ai-model-tiers/update",
+                                 "endpoints/ai-model-tiers/delete"
+                              ]
+                           },
+                           {
+                              "group": "Capabilities",
+                              "pages": [
+                                 "endpoints/ai-capabilities/list",
+                                 "endpoints/ai-capabilities/set-up",
+                                 "endpoints/ai-capabilities/update",
+                                 "endpoints/ai-capabilities/reset"
+                              ]
+                           },
+                           {
+                              "group": "Platform Configuration",
+                              "pages": [
+                                 "endpoints/platform-configuration/update"
+                              ]
+                           }
                         ]
                      },
                      {

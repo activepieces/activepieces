@@ -6,6 +6,8 @@ export type StreakPipeline = {
   creatorKey?: string;
   creationTimestamp?: number;
   lastUpdatedTimestamp?: number;
+  stageOrder?: string[];
+  fields?: StreakField[];
 };
 
 export type StreakStage = {
@@ -90,3 +92,26 @@ export type StreakUser = {
   lastSeenTimestamp?: number;
   isOauthComplete?: boolean;
 };
+
+export type StreakField = {
+  key: string;
+  name: string;
+  type?: string;
+  dropdownSettings?: {
+    items?: Array<{ key: string; name: string }>;
+  };
+};
+
+export type StreakTask = {
+  key: string;
+  text: string;
+  boxKey?: string;
+  dueDate?: number;
+  status?: string;
+  creatorKey?: string;
+  creationDate?: number;
+  lastUpdatedDate?: number;
+  assignedToSharingEntries?: Array<{ email?: string }>;
+};
+
+export type StreakTasksResponse = StreakTask[] | { results?: StreakTask[] };

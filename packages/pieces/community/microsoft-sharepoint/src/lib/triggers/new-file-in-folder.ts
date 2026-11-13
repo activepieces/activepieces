@@ -11,12 +11,14 @@ import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { DriveItem } from '@microsoft/microsoft-graph-types';
+import { newFileInFolderOutputSchema } from '../output-schemas';
 
 const clientState = 'activepieces_sharepoint_trigger';
 
 export const newFileInFolderTrigger = createTrigger({
   auth: microsoftSharePointAuth,
   name: 'new_file_in_folder',
+  outputSchema: newFileInFolderOutputSchema,
   classification: 'READ',
   displayName: 'New File in Folder',
   description: 'Fires when a new file is created or added in a specific folder.',

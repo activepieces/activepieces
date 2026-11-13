@@ -1,4 +1,4 @@
-import { isNil, LocalesEnum } from '@activepieces/core-utils'
+import { isNil, LocalesEnum, spreadIfDefined } from '@activepieces/core-utils'
 import { largeResultUtils, MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
 import { McpToolDefinition, PieceAudienceFilter, PieceCategory, ProjectScopedMcpServer, SuggestionType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -64,7 +64,7 @@ export const apResearchPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBa
     }
 }
 
-function summarizeComponent(c: { name: string, displayName: string, description: string, requireAuth: boolean, aiMetadata?: { description?: string, idempotent?: boolean } }): ComponentSummary {
+function summarizeComponent(c: { name: string, displayName: string, description: string, requireAuth: boolean, audience?: string, aiMetadata?: { description?: string, idempotent?: boolean } }): ComponentSummary {
     return {
         name: c.name,
         displayName: c.displayName,
@@ -74,11 +74,12 @@ function summarizeComponent(c: { name: string, displayName: string, description:
         // signal it lacks today (it grabs find_record when it meant to enumerate, then thrashes).
         cardinality: mcpUtils.classifyActionCardinality(c.name),
         ...(c.aiMetadata?.description && { aiDescription: c.aiMetadata.description }),
+        ...(c.audience === AI_AUDIENCE && { audience: AI_AUDIENCE }),
     }
 }
 
 function detailOnlyFor({ components, recommended, trim }: { components: ComponentSummary[], recommended: string[] | undefined, trim: ComponentTrim }): Partial<ComponentSummary>[] {
-    return components.map((component) => isNil(recommended) || recommended.includes(component.name) ? trim(component) : { name: component.name, displayName: component.displayName })
+    return components.map((component) => isNil(recommended) || recommended.includes(component.name) ? trim(component) : nameOnly(component))
 }
 
 async function bulkLookup({ pieceNames, forIntent, projectId, platformId, log }: {
@@ -235,7 +236,7 @@ async function searchPieces({ params, projectId, platformId, log }: {
 const DETAIL_LADDER: ComponentTrim[] = [
     (component) => component,
     ({ aiDescription: _aiDescription, ...rest }) => rest,
-    ({ name, displayName }) => ({ name, displayName }),
+    nameOnly,
 ]
 
 export function fitEnrichedResponse({ pieces, overflowHint, totalCount }: {
@@ -299,9 +300,16 @@ type ComponentSummary = {
     requiresAuth: boolean
     cardinality: ActionCardinality
     aiDescription?: string
+    audience?: typeof AI_AUDIENCE
 }
 
 type ComponentTrim = (component: ComponentSummary) => Partial<ComponentSummary>
+
+function nameOnly({ name, displayName, audience }: ComponentSummary): Partial<ComponentSummary> {
+    return { name, displayName, ...spreadIfDefined('audience', audience) }
+}
+
+const AI_AUDIENCE = 'ai'
 
 export type FoundPiece = {
     name: string

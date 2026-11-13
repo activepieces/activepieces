@@ -17,6 +17,8 @@
 
 Fixes ENG-
 
+<!-- In a co-owned project, add a "### Project" section under "Linear ticket": the approach note link, the AC IDs this PR covers, and the file to start reading at. -->
+
 ### Breaking change?  (required — CI fails if this is left unedited)
 
 <!-- Tick exactly one box. If either "yes", apply the "⛓️‍💥 breaking-change" label AND add an entry at the top of docs/install/reference/breaking-changes-unreleased.mdx (what changed + the action self-hosters must take). The release moves it onto the public Breaking Changes page; never write a version heading by hand. -->

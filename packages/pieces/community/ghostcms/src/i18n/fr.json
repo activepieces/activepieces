@@ -394,6 +394,8 @@
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
   "HEAD": "TÊTE",
+  "Request": "Requête",
+  "Data to send": "Données à envoyer",
   "Member Added": "Membre ajouté",
   "Member Edited": "Membre modifié",
   "Member Deleted": "Membre supprimé",

@@ -70,6 +70,8 @@
   "PUT": "PUT",
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Lead": "Nuevo plomo",
   "Triggers when someone fills in one of your lead ad forms.": "Triggers when someone fills in one of your lead ad forms.",
   "Page": "Pgina",

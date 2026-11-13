@@ -149,5 +149,16 @@
   "PATCH": "COMPRAR",
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
-  "HEAD": "CABEÇA"
+  "HEAD": "CABEÇA",
+  "Message": "mensagem",
+  "Settings": "Configurações",
+  "Search in": "Search in",
+  "History": "History",
+  "Script": "Script",
+  "Speaker": "Speaker",
+  "Video": "Vídeo",
+  "Output": "Saída",
+  "Content": "Conteúdo",
+  "Request": "Request",
+  "Data to send": "Data to send"
 }

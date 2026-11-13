@@ -1,22 +1,31 @@
-﻿import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, getAuth, ninjapipeCommon } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const deleteCompany = createAction({
   auth: ninjapipeAuth,
   name: 'delete_company',
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Company',
-  description: 'Deletes a company by ID.',
+  description: 'Permanently deletes a company.',
   audience: 'both',
-  aiMetadata: { description: 'Permanently delete a company identified by its ID. Destructive and not reversible; re-running after the company is gone will fail since the ID no longer exists.', idempotent: false },
+  aiMetadata: {
+    description: 'Permanently delete one NinjaPipe company by ID (companyId; get it from a list or search step). Cannot be undone. A second call fails with 404 because the company is gone.',
+    idempotent: false,
+  },
+  outputSchema: ninjapipeSchemas.deleted,
   props: {
-    companyId: ninjapipeCommon.companyDropdownRequired,
+    companyId: ninjapipeProps.companyRequired(),
   },
   async run(context) {
-    const auth = getAuth(context);
-    await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.DELETE, path: `/companies/${encodeURIComponent(String(context.propsValue.companyId))}` });
-    return { success: true, deleted_id: context.propsValue.companyId };
+    const id = ninjapipeClient.pathId({ value: context.propsValue.companyId, field: 'Company' });
+    return ninjapipeClient.deleteRecord({
+      auth: ninjapipeClient.readAuth(context.auth),
+      path: `/companies/${id}`,
+      id: decodeURIComponent(id),
+      operation: 'delete company',
+    });
   },
 });

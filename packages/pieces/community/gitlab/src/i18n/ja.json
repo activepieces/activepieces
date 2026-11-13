@@ -587,6 +587,8 @@
   "PUT": "PUT",
   "DELETE": "削除",
   "HEAD": "頭",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Project Issue Event": "新しいプロジェクト課題イベント",
   "Triggers on project issue events (including confidential issues) when an issue is created or when an existing issue is updated, closed, or reopened.": "Triggers on project issue events (including confidential issues) when an issue is created or when an existing issue is updated, closed, or reopened.",
   "Issue Event": "課題イベント",

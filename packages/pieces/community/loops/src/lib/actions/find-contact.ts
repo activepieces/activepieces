@@ -1,18 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { loopsAuth, LOOPS_BASE_URL } from '../auth';
+import { loopsAuth } from '../auth';
+import { loopsClient } from '../common/client';
+import { loopsSchemas } from '../common/schemas';
 
 export const findContact = createAction({
   name: 'find_contact',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'Find Contact',
   description: 'Finds a contact in Loops by their email address or user ID.',
-  audience: 'both',
-  aiMetadata: {
-    description:
-      'Looks up a contact in Loops by a single search field, chosen via a Search By selector that switches between matching on email or on internal user ID (the API allows only one search parameter). Use to check whether a contact exists or to retrieve their details before acting. Read-only and idempotent.',
-    idempotent: true,
-  },
+  audience: 'human',
+  outputSchema: loopsSchemas.contactList,
   auth: loopsAuth,
   props: {
     searchBy: Property.StaticDropdown({
@@ -35,24 +32,10 @@ export const findContact = createAction({
   },
   async run(context) {
     const { searchBy, searchValue } = context.propsValue;
-
-    const params = new URLSearchParams();
-    params.set(searchBy, searchValue);
-
-    const response = await httpClient.sendRequest<unknown[]>({
-      method: HttpMethod.GET,
-      url: `${LOOPS_BASE_URL}/contacts/find?${params.toString()}`,
-      headers: {
-        Authorization: `Bearer ${context.auth.secret_text}`,
-        Accept: 'application/json',
-      },
+    const contacts = await loopsClient.findContacts({
+      apiKey: context.auth.secret_text,
+      queryParams: loopsClient.requireOneIdentifier({ identifyBy: searchBy, value: searchValue }),
     });
-
-    const data = response.body;
-
-    return {
-      contacts: data,
-      count: Array.isArray(data) ? data.length : 0,
-    };
+    return { contacts, count: contacts.length };
   },
 });

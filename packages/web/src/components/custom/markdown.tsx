@@ -1,17 +1,14 @@
 import { MarkdownVariant } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { Check, Copy, Info, AlertTriangle, Lightbulb } from 'lucide-react';
-import React, { useState } from 'react';
+import { Info, AlertTriangle, Lightbulb } from 'lucide-react';
+import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import breaks from 'remark-breaks';
 import gfm from 'remark-gfm';
-import { toast } from 'sonner';
 
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { cn } from '@/lib/utils';
 
 import { Alert, AlertDescription } from '../ui/alert';
-import { Button } from '../ui/button';
 
 function applyVariables(markdown: string, variables: Record<string, string>) {
   if (typeof markdown !== 'string') {
@@ -72,22 +69,6 @@ const Container = ({
 
 const ApMarkdown = React.memo(
   ({ markdown, variables, variant, className, loading }: MarkdownProps) => {
-    const [copiedText, setCopiedText] = useState<string | null>(null);
-
-    const { mutate: copyToClipboard } = useMutation({
-      mutationFn: async (text: string) => {
-        await navigator.clipboard.writeText(text);
-        setCopiedText(text);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        setCopiedText(null);
-      },
-      onError: () => {
-        toast.error(t('Failed to copy to clipboard'), {
-          duration: 3000,
-        });
-      },
-    });
-
     if (loading && loading.length > 0) {
       return (
         <Container variant={variant}>
@@ -114,7 +95,6 @@ const ApMarkdown = React.memo(
                 return <code {...props} className="text-wrap" />;
               }
               const codeContent = String(props.children).trim();
-              const isCopying = codeContent === copiedText;
               return (
                 <div className="relative flex w-full max-w-full items-center gap-1 rounded-md border border-solid bg-gray-1 p-1.5 text-sm">
                   <code
@@ -123,18 +103,12 @@ const ApMarkdown = React.memo(
                   >
                     {codeContent}
                   </code>
-                  <Button
+                  <CopyButton
+                    value={codeContent}
                     variant="ghost"
                     size="icon-sm"
                     className="bg-gray-1"
-                    onClick={() => copyToClipboard(codeContent)}
-                  >
-                    {isCopying ? (
-                      <Check className="w-3 h-3" />
-                    ) : (
-                      <Copy className="w-3 h-3" />
-                    )}
-                  </Button>
+                  />
                 </div>
               );
             },

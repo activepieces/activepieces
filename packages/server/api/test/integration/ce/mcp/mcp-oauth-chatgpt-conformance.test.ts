@@ -40,7 +40,6 @@ async function consentThenApprove({ state }: { state: string }): Promise<URL> {
 
     const approved = await ctx.post('/v1/mcp-oauth/approve', {
         authRequestId: authRequestIdFrom(String(consent.headers.location)),
-        projectId: ctx.project.id,
     })
     expect(approved.statusCode).toBe(200)
 

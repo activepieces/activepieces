@@ -1,6 +1,6 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { folkClient } from './client';
-import { AppConnectionType } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { AppConnectionType, PieceAuth } from '@activepieces/pieces-framework';
+import { FolkApiError, folkClient } from './client';
 
 export const folkAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -9,29 +9,20 @@ export const folkAuth = PieceAuth.SecretText({
   required: true,
   validate: async ({ auth }) => {
     try {
-      await folkClient.testConnection({
-        secret_text: auth,
-        type: AppConnectionType.SECRET_TEXT,
+      await folkClient.request<unknown>({
+        auth: { secret_text: auth, type: AppConnectionType.SECRET_TEXT },
+        method: HttpMethod.GET,
+        path: '/v1/users/me',
       });
-
-      return {
-        valid: true,
-        message: 'API key validated successfully. Connected to Folk.',
-      };
-    } catch (error: any) {
-      if (error.message?.includes('401') || error.message?.includes('403')) {
-        return {
-          valid: false,
-          error: 'Invalid API key. Please check your API key and try again.',
-        };
+      return { valid: true };
+    } catch (error) {
+      if (error instanceof FolkApiError && (error.status === 401 || error.status === 403)) {
+        return { valid: false, error: 'Invalid API key. Check the key in folk → Settings → API and try again.' };
       }
-
       return {
         valid: false,
-        error: `Authentication failed: ${error.message}. Please verify your API key is correct.`,
+        error: 'Could not reach Folk to check the API key. Try again in a moment.',
       };
     }
   },
 });
-
-export type FolkAuthType = string;

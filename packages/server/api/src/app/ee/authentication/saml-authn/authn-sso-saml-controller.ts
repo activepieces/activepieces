@@ -1,13 +1,11 @@
 import { assertNotNullOrUndefined } from '@activepieces/core-utils'
-import { ApplicationEventName, PrincipalType, TelemetryEventName } from '@activepieces/shared'
+import { PrincipalType, TelemetryEventName, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
+import { authenticationSideEffects } from '../../../authentication/authentication-side-effects'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
-import { applicationEvents } from '../../../helper/application-events'
 import { networkUtils } from '../../../helper/network-utils'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
-import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-props'
 import { telemetry } from '../../../helper/telemetry.utils'
 import { platformUtils } from '../../../platform/platform.utils'
 import { platformMustHaveFeatureEnabled } from '../ee-authorization'
@@ -28,22 +26,17 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
             ?? await platformUtils.getPlatformIdForRequest(req)
         assertNotNullOrUndefined(platformId, 'Platform Id should not be null')
         const { saml } = await authnSsoSamlService(req.log).getSamlConfigOrThrow(platformId)
-        const response = await authnSsoSamlService(req.log).acs(platformId, saml, {
+        const { response, signedUp } = await authnSsoSamlService(req.log).acs(platformId, saml, {
             body: req.body,
             query: req.query,
         })
         const url = new URL('/authenticate', networkUtils.getRequestBaseUrl(req))
         url.searchParams.append('response', JSON.stringify(response))
-        applicationEvents(req.log).sendUserEvent({
-            platformId,
-            userId: response.id,
-            projectId: response.projectId ?? undefined,
-            ip: networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-        }, {
-            action: ApplicationEventName.USER_SIGNED_UP,
-            data: {
-                source: 'sso',
-            },
+        authenticationSideEffects(req.log).onSignIn({
+            response,
+            signedUp,
+            method: UserIdentityProvider.SAML,
+            ip: networkUtils.clientIp(req),
         })
         rejectedPromiseHandler(telemetry(req.log).trackUser({
             userId: response.id,

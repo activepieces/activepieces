@@ -2,6 +2,7 @@ import { ActionPreviewEvent, ActionReceiptEvent, AgentToolType, KnowledgeBaseSou
 import { asSchema } from 'ai'
 import { describe, expect, it, vi } from 'vitest'
 import { AgentEventEmitter, agentWorkerTools } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
+import { displayToolUtils } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/display-tools'
 
 function makeMockEventEmitter(): { eventEmitter: AgentEventEmitter, progressEvents: ToolProgressEvent[] } {
     const progressEvents: ToolProgressEvent[] = []
@@ -804,5 +805,121 @@ describe('an agent does not offer to connect an account its author already chose
         const result = await asSchema(tools[toolName].inputSchema).validate?.({ piece: '', displayName: 'Gmail' })
 
         expect(result?.success).toBe(false)
+    })
+})
+
+describe('the connection card does the auth check itself', () => {
+    function pickerChecking({ needsNoConnection }: { needsNoConnection: boolean | Error }) {
+        const gatesOpened: string[] = []
+        const checkedPieces: string[] = []
+        const tools = agentWorkerTools.createDisplayTools({
+            waitForApproval: async () => ({ outcome: 'approved' as const, payload: { connectionExternalId: 'conn-1', label: 'Sales Inbox', projectId: 'proj-1' } }),
+            displayToolTimeoutMs: 1000,
+            onGateOpened: async ({ toolName }) => { gatesOpened.push(toolName) },
+            pieceNeedsNoConnection: async (pieceName) => {
+                checkedPieces.push(pieceName)
+                if (needsNoConnection instanceof Error) {
+                    throw needsNoConnection
+                }
+                return needsNoConnection
+            },
+        })
+        return { tools, gatesOpened, checkedPieces }
+    }
+
+    it('answers that a piece without auth needs no connection, without showing a card', async () => {
+        const { tools, gatesOpened, checkedPieces } = pickerChecking({ needsNoConnection: true })
+
+        const result = await tools['ap_show_connection_picker'].execute({ piece: 'webhook', displayName: 'Webhook' }, { toolCallId: 'call-1' })
+
+        expect(result).toMatchObject({ notShown: true })
+        expect(JSON.stringify(result)).toContain('needs no connection')
+        expect(gatesOpened).toEqual([])
+        expect(checkedPieces).toEqual(['@activepieces/piece-webhook'])
+    })
+
+    it('asks the agent to try again when the auth check fails, instead of waiting on a card', async () => {
+        const { tools, gatesOpened } = pickerChecking({ needsNoConnection: new Error('discovery timed out') })
+
+        const result = await tools['ap_show_connection_picker'].execute({ piece: 'webhook', displayName: 'Webhook' }, { toolCallId: 'call-1' })
+
+        expect(result).toMatchObject({ notShown: true })
+        expect(JSON.stringify(result)).toContain('Could not check whether Webhook needs a connection')
+        expect(gatesOpened).toEqual([])
+    })
+
+    it('shows the card for a piece that needs a connection', async () => {
+        const { tools, gatesOpened } = pickerChecking({ needsNoConnection: false })
+
+        const result = await tools['ap_show_connection_picker'].execute({ piece: 'gmail', displayName: 'Gmail' }, { toolCallId: 'call-1' })
+
+        expect(gatesOpened).toEqual(['ap_show_connection_picker'])
+        expect(result).toMatchObject({ selected: true, connectionExternalId: 'conn-1' })
+    })
+})
+
+describe('a discovery-only run approves the connection card with the account it would pre-select', () => {
+    function autoApprovingPicker({ autoPicked }: { autoPicked: { externalId: string, label: string, projectId: string } | null }) {
+        const selected: { pieceName: string, connectionExternalId: string, label: string, projectId: string }[] = []
+        const tools = agentWorkerTools.createDisplayTools({
+            waitForApproval: async () => ({ outcome: 'approved' as const }),
+            displayToolTimeoutMs: 1000,
+            onConnectionSelected: async (connection) => { selected.push(connection) },
+            autoPickedConnectionFor: async () => autoPicked,
+        })
+        return { tools, selected }
+    }
+
+    it.each(['ap_show_connection_picker', 'ap_show_connection_required'])('%s stores the pre-selected account so the next read has a connection', async (toolName) => {
+        const { tools, selected } = autoApprovingPicker({ autoPicked: { externalId: 'conn-1', label: 'Sales Inbox', projectId: 'proj-1' } })
+
+        await tools[toolName].execute({ piece: 'google-calendar', displayName: 'Google Calendar' }, { toolCallId: 'call-1' })
+
+        expect(selected).toEqual([{ pieceName: '@activepieces/piece-google-calendar', connectionExternalId: 'conn-1', label: 'Sales Inbox', projectId: 'proj-1' }])
+    })
+
+    it('returns the pre-selected account to the agent', async () => {
+        const { tools } = autoApprovingPicker({ autoPicked: { externalId: 'conn-1', label: 'Sales Inbox', projectId: 'proj-1' } })
+
+        const result = await tools['ap_show_connection_picker'].execute({ piece: 'google-calendar', displayName: 'Google Calendar' }, { toolCallId: 'call-1' })
+
+        expect(result).toMatchObject({ selected: true, connectionExternalId: 'conn-1', label: 'Sales Inbox' })
+    })
+
+    it('stores nothing when there is no healthy account to pre-select', async () => {
+        const { tools, selected } = autoApprovingPicker({ autoPicked: null })
+
+        await tools['ap_show_connection_picker'].execute({ piece: 'google-calendar', displayName: 'Google Calendar' }, { toolCallId: 'call-1' })
+
+        expect(selected).toEqual([])
+    })
+})
+
+describe('picking the account a connection card would pre-select', () => {
+    it('takes the first active connection and skips broken ones', () => {
+        const picked = displayToolUtils.preselectedConnection({
+            stored: [
+                { externalId: 'broken', label: 'Old', projectId: 'p', project: 'P', status: 'ERROR', grantedScopes: [] },
+                { externalId: 'conn-1', label: 'Sales Inbox', projectId: 'p', project: 'P', status: 'ACTIVE', grantedScopes: [] },
+            ],
+        })
+
+        expect(picked).toEqual({ externalId: 'conn-1', label: 'Sales Inbox', projectId: 'p' })
+    })
+
+    it('takes the most recently updated active connection, as the card does', () => {
+        const picked = displayToolUtils.preselectedConnection({
+            stored: [
+                { externalId: 'older', label: 'Old Inbox', projectId: 'p', status: 'ACTIVE', updated: '2026-10-01T00:00:00.000Z' },
+                { externalId: 'newer', label: 'New Inbox', projectId: 'p', status: 'ACTIVE', updated: '2026-11-01T00:00:00.000Z' },
+            ],
+        })
+
+        expect(picked).toEqual({ externalId: 'newer', label: 'New Inbox', projectId: 'p' })
+    })
+
+    it('picks nothing from an empty or missing list', () => {
+        expect(displayToolUtils.preselectedConnection({ stored: [] })).toBeNull()
+        expect(displayToolUtils.preselectedConnection({ stored: undefined })).toBeNull()
     })
 })

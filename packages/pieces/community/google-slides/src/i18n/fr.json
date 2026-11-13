@@ -360,5 +360,7 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "Request": "Demande",
+  "Data to send": "Données à envoyer"
 }

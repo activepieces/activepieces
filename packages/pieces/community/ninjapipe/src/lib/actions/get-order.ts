@@ -1,22 +1,23 @@
-﻿import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const getOrder = createAction({
   auth: ninjapipeAuth,
   name: 'get_order',
   classification: 'READ',
   displayName: 'Get Order',
-  description: 'Retrieves an order by ID.',
+  description: 'Gets one order by ID.',
   audience: 'both',
-  aiMetadata: { description: 'Fetches a single order by its ID, returning its full record. Pick this when you already have an order ID and need its details rather than searching a list. Read-only and safe to repeat.', idempotent: true },
+  aiMetadata: { description: 'Fetch a single NinjaPipe order by ID. Read-only.', idempotent: true },
+  outputSchema: ninjapipeSchemas.order,
   props: {
-    orderId: ninjapipeCommon.orderDropdownRequired,
+    orderId: ninjapipeProps.orderRequired(),
   },
   async run(context) {
-    const auth = getAuth(context);
-    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.GET, path: `/orders/${encodeURIComponent(String(context.propsValue.orderId))}` });
-    return flattenCustomFields(response.body);
+    const id = ninjapipeClient.pathId({ value: context.propsValue.orderId, field: 'Order' });
+    return ninjapipeClient.getRecord({ auth: ninjapipeClient.readAuth(context.auth), path: `/orders/${id}`, operation: 'get order' });
   },
 });

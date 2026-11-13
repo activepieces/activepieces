@@ -1,7 +1,8 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { goodmemAuth } from '../../index';
-import { getBaseUrl, getCommonHeaders, extractAuthFromContext } from '../common';
+import { extractAuthFromContext, goodmemOutputSchemas } from '../common';
+import { goodmemApi, goodmemBuilders } from '../common/client';
 
 export const deleteMemory = createAction({
   auth: goodmemAuth,
@@ -10,7 +11,8 @@ export const deleteMemory = createAction({
   displayName: 'Delete Memory',
   description: 'Permanently delete a memory and its associated chunks and vector embeddings.',
   audience: 'both',
-  aiMetadata: { description: 'Permanently deletes a GoodMem memory and its associated chunks and vector embeddings, identified by memory ID. Use it to remove stored content from a space. This is destructive but idempotent: once the memory is gone, repeating the call with the same ID leaves the end state unchanged.', idempotent: true },
+  aiMetadata: { description: 'Permanently deletes a GoodMem memory and its associated chunks and vector embeddings, identified by memory ID. Use it to remove stored content from a space. Not idempotent: deleting a memory that no longer exists fails with a not-found error.', idempotent: false },
+  outputSchema: goodmemOutputSchemas.deleteMemory,
   props: {
     memoryId: Property.ShortText({
       displayName: 'Memory ID',
@@ -19,28 +21,14 @@ export const deleteMemory = createAction({
     }),
   },
   async run(context) {
-    const { memoryId } = context.propsValue;
-    const { baseUrl: rawBaseUrl, apiKey } = extractAuthFromContext(context.auth);
-    const baseUrl = getBaseUrl(rawBaseUrl);
-
-    try {
-      await httpClient.sendRequest({
-        method: HttpMethod.DELETE,
-        url: `${baseUrl}/v1/memories/${memoryId}`,
-        headers: getCommonHeaders(apiKey),
-      });
-
-      return {
-        success: true,
-        memoryId,
-        message: 'Memory deleted successfully',
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message || 'Failed to delete memory',
-        details: error.response?.body || error,
-      };
-    }
+    const auth = extractAuthFromContext(context.auth);
+    const memoryId = goodmemBuilders.requireText({ value: context.propsValue.memoryId, label: 'Memory ID' });
+    await goodmemApi.request({
+      auth,
+      method: HttpMethod.DELETE,
+      path: goodmemApi.memoryPath(memoryId),
+      action: 'delete memory',
+    });
+    return { success: true, memoryId, message: 'Memory deleted successfully' };
   },
 });

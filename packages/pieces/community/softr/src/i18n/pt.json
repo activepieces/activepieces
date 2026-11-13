@@ -177,6 +177,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Database Record": "Novo banco de dados",
   "Triggers when a new record is added.": "Dispara quando um novo registro for adicionado."
 }

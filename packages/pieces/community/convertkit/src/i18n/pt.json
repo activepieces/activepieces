@@ -381,6 +381,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Trigger when a tag is added to a subscriber": "Ativar quando uma tag é adicionada a um assinante",
   "Trigger when a tag is removed from a subscriber": "Ativar quando uma tag é removida de um assinante",
   "Trigger when a subscriber is activated. This happens when a subscriber confirms their subscription.": "Aciona quando um assinante é ativado. Isso acontece quando um assinante confirma sua assinatura.",

@@ -5,6 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { userService } from '../../user/user-service'
+import { userInvitationsService } from '../../user-invitations/user-invitation.service'
 import { emailService } from '../helper/email/email-service'
 
 export const scimUserService = (log: FastifyBaseLogger) => ({
@@ -19,7 +20,6 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
         const externalId = request.externalId
         const active = request.active !== false
         const generatedPassword = await cryptoUtils.generateRandomPassword()
-        const platformRole = request[SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA]?.platformRole ?? PlatformRole.MEMBER
 
         if (!isNil(externalId)) {
             const existingUser = await userService(log).getByPlatformAndExternalId({
@@ -59,9 +59,16 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             )
         }
 
+        const roleFromDirectory = request[SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA]?.platformRole
+        const roleFromInvite = isNil(roleFromDirectory)
+            ? await userInvitationsService(log).getAcceptedAdminOrOperatorInviteRole({ email, platformId })
+            : null
+        const platformRole = roleFromDirectory ?? roleFromInvite ?? PlatformRole.MEMBER
+
         const { user } = await userService(log).getOrCreateWithProject({
             identity,
             platformId,
+            platformRole,
         })
 
         await userService(log).update({
@@ -71,6 +78,10 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             platformRole,
             externalId,
         })
+
+        if (!isNil(roleFromInvite)) {
+            await userInvitationsService(log).deleteAcceptedPlatformInvites({ email, platformId })
+        }
 
         await emailService(log).sendScimUserWelcome({
             email,

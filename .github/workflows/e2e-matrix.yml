@@ -9,6 +9,10 @@ on:
         description: 'Image to test, e.g. ghcr.io/activepieces/activepieces-cloud:<tag>. Empty builds the checked-out commit.'
         type: string
         default: ''
+      ref:
+        description: 'Commit to take the specs and pieces from. Empty uses the commit that triggered the run.'
+        type: string
+        default: ''
   workflow_dispatch:
     inputs:
       image:
@@ -20,6 +24,7 @@ on:
       - .github/workflows/e2e-matrix.yml
       - benchmark/docker-compose.yml
       - benchmark/docker-compose.minio.yml
+      - benchmark/docker-compose.mail.yml
       - packages/tests-e2e/**
 
 permissions:
@@ -32,6 +37,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Build the image from this commit
         if: ${{ !inputs.image }}
@@ -109,7 +116,8 @@ jobs:
             fileStorage: DB
             executionMode: UNSANDBOXED
     env:
-      COMPOSE_FILE: ${{ matrix.fileStorage == 'S3' && 'benchmark/docker-compose.yml:benchmark/docker-compose.minio.yml' || 'benchmark/docker-compose.yml' }}
+      # The EE configs add the mail catcher. The CE configs keep no SMTP, so the invite dialog still shows the link.
+      COMPOSE_FILE: benchmark/docker-compose.yml${{ matrix.fileStorage == 'S3' && ':benchmark/docker-compose.minio.yml' || '' }}${{ matrix.edition == 'ee' && ':benchmark/docker-compose.mail.yml' || '' }}
       AP_EDITION: ${{ matrix.edition }}
       AP_LICENSE_KEY: ${{ matrix.edition == 'ee' && secrets.EE_LICENSE_KEY || '' }}
       AP_CONTAINER_TYPE: ${{ matrix.containerType }}
@@ -132,9 +140,12 @@ jobs:
       # The stack's nginx static IP, which is also AP_FRONTEND_URL, so webhook URLs shown in the UI work from the runner.
       E2E_INSTANCE_URL: http://172.30.0.10
       E2E_PIECES_MANIFEST: ${{ github.workspace }}/e2e-pieces/pieces.json
+      E2E_MAIL_URL: ${{ matrix.edition == 'ee' && 'http://mailpit:8025' || '' }}
       PLAYWRIGHT_JSON_OUTPUT_FILE: ${{ github.workspace }}/packages/tests-e2e/test-results/results.json
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
 
       # The Playwright image ships Chromium and its system libraries, so no apt mirror is involved.
       # Its pull runs in the background while the app image loads and the stack boots.
@@ -204,7 +215,7 @@ jobs:
           docker pull -q "$PLAYWRIGHT_IMAGE"
           docker run --rm --ipc=host --network benchmark_bench \
             -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE/packages/tests-e2e" \
-            -e CI -e AP_EDITION -e E2E_INSTANCE_URL -e E2E_PIECES_MANIFEST -e PLAYWRIGHT_JSON_OUTPUT_FILE \
+            -e CI -e AP_EDITION -e E2E_INSTANCE_URL -e E2E_PIECES_MANIFEST -e E2E_MAIL_URL -e PLAYWRIGHT_JSON_OUTPUT_FILE \
             "$PLAYWRIGHT_IMAGE" \
             npx playwright test --config=playwright.config.ts --reporter=github,json --grep-invert "Piece isolation|@quarantine"
 

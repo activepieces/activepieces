@@ -381,6 +381,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Trigger when a tag is added to a subscriber": "購読者にタグが追加されたときにトリガーする",
   "Trigger when a tag is removed from a subscriber": "登録者からタグが削除されたときにトリガーします",
   "Trigger when a subscriber is activated. This happens when a subscriber confirms their subscription.": "購読者が有効になったときにトリガーします。購読者が購読を確認したときに発生します。",

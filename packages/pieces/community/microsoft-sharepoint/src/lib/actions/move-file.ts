@@ -10,10 +10,12 @@ import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { DriveItem } from '@microsoft/microsoft-graph-types';
+import { microsoftSharepointMoveFileOutputSchema } from '../output-schemas';
 
 export const moveFileAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_move_file',
+  outputSchema: microsoftSharepointMoveFileOutputSchema,
   classification: 'WRITE',
   displayName: 'Move File',
   description: 'Move a file from one folder to another within the same drive.',

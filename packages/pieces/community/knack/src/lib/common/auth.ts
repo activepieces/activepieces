@@ -1,7 +1,7 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { knackApiCall } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { AppConnectionType } from '@activepieces/pieces-framework';
+import { knackApiCall } from './client';
 
 export const knackAuth = PieceAuth.CustomAuth({
   props: {
@@ -30,7 +30,7 @@ export const knackAuth = PieceAuth.CustomAuth({
     } catch (e) {
       return {
         valid: false,
-        error: 'Invalid API Key or Application ID',
+        error: e instanceof Error ? e.message : 'Could not connect to Knack.',
       };
     }
   },

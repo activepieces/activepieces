@@ -176,6 +176,12 @@ const SignUpForm = ({
             });
             break;
           }
+          case ErrorCode.SIGN_IN_METHOD_NOT_ALLOWED: {
+            form.setError('root.serverError', {
+              message: t("Your organization doesn't allow this sign-in method"),
+            });
+            break;
+          }
           default: {
             form.setError('root.serverError', {
               message: t('Something went wrong, please try again later'),

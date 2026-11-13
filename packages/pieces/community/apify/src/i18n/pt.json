@@ -220,6 +220,17 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Where to Read": "Onde Ler",
+  "How Many Items": "Quantos Itens",
+  "What to Run": "O que Executar",
+  "What to Send": "O que Enviar",
+  "Results": "Resultados",
+  "Input Changes": "Alterações de entrada",
+  "Which Record": "Qual Registro",
+  "Page to Scrape": "Página para Extrair",
+  "How to Load It": "Como Carregá-lo",
+  "Request": "Solicitação",
+  "Data to send": "Dados para enviar",
   "Watch Actor Runs": "Assista o ator roda",
   "Watch Task Runs": "Assistir à Tarefa Executa",
   "Fires when a run of the Actor ends with a chosen status.": "Fires when a run of the Actor ends with a chosen status.",
@@ -227,5 +238,7 @@
   "Markdown": "Markdown",
   "Statuses": "Statuses",
   "Turning this flow on creates a webhook in your Apify account. Turning it off removes it.": "Turning this flow on creates a webhook in your Apify account. Turning it off removes it.",
-  "Run outcomes that start the flow.": "Run outcomes that start the flow."
+  "Run outcomes that start the flow.": "Run outcomes that start the flow.",
+  "What to Watch": "O que Observar",
+  "When to Fire": "Quando Disparar"
 }

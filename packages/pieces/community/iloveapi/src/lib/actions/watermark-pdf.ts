@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { iloveapiAuth } from '../common/auth';
-import { fileToUploadInput, sharedProps } from '../common/props';
+import { iloveSchemas } from '../common/schemas';
+import { fileToUploadInput, regionOf, sharedProps, webhookOf } from '../common/props';
 import { runAndStoreResult } from '../common/runner';
 import { UploadInput } from '../common/client';
 
@@ -11,6 +12,7 @@ export const watermarkPdfAction = createAction({
   displayName: 'Watermark PDF',
   description: 'Stamp a text or image watermark across pages of a PDF.',
   audience: 'both',
+  outputSchema: iloveSchemas.toolResult,
   aiMetadata: {
     description:
       'Overlay a watermark onto chosen pages of a PDF. Pick "text" mode to stamp a string (with font, color, rotation, transparency, mosaic, and layer controls) or "image" mode to stamp a supplied JPG/PNG; the matching text or image input is required for the selected mode. Each run writes a new watermarked file rather than reusing a previous result.',
@@ -176,10 +178,16 @@ export const watermarkPdfAction = createAction({
     if (mode === 'text' && !text) {
       throw new Error('"Text" is required when watermark mode is "Text".');
     }
-    if (mode === 'image' && !image?.base64) {
+    if (mode === 'image' && !image) {
       throw new Error(
         'A watermark image is required when watermark mode is "Image".'
       );
+    }
+    if (rotation !== undefined && rotation !== null && (rotation < 0 || rotation > 360)) {
+      throw new Error('Rotation must be between 0 and 360 degrees.');
+    }
+    if (transparency !== undefined && transparency !== null && (transparency < 0 || transparency > 100)) {
+      throw new Error('Transparency must be between 0 and 100.');
     }
 
     const baseOptions: Record<string, unknown> = {
@@ -202,20 +210,15 @@ export const watermarkPdfAction = createAction({
     }
 
     const extraUploads: UploadInput[] | undefined =
-      mode === 'image' && image?.base64
-        ? [
-            {
-              kind: 'file',
-              file: { base64: image.base64, filename: image.filename },
-            },
-          ]
-        : undefined;
+      mode === 'image' ? [fileToUploadInput({ file: image, label: 'Watermark Image' })] : undefined;
 
     return await runAndStoreResult({
       auth: context.auth.secret_text,
+      region: regionOf(context.propsValue.region),
+      webhook: webhookOf(context.propsValue.webhook_url),
       files: context.files,
       tool: 'watermark',
-      uploads: [fileToUploadInput(file)],
+      uploads: [fileToUploadInput({ file: file })],
       extraUploads,
       options: (extras) => {
         if (mode === 'image') {
