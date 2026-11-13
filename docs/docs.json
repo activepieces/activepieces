@@ -84,6 +84,10 @@
       {
          "source": "/install/guides/rollback",
          "destination": "/install/configure-operate/rollback"
+      },
+      {
+         "source": "/install/options/upgrade",
+         "destination": "/install/options/docker#upgrade"
       }
    ],
    "background": {
