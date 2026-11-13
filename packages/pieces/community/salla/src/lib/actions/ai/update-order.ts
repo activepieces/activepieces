@@ -13,7 +13,7 @@ export const aiUpdateOrderAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Changes the details of an existing Salla order: customer, receiver, delivery and shipping address, payment, coupon or assigned employees. Only the fields you fill are sent; empty fields stay as they are. Use Update Order Status to change the status and Add Order Note to log a comment; Salla rejects receiver, shipping and coupon changes on completed orders and payment changes unless the order is pending.',
+      'Changes the details of an existing Salla order: customer, receiver, delivery and shipping address, payment, coupon or assigned employees. Only the fields you fill are sent; empty fields stay as they are. Use Update Order Status to change the status, Add Order Note to log a comment, and Update Customer to change a customer\'s name, mobile or email (this action only moves the order to another existing customer); Salla rejects receiver, shipping and coupon changes on completed orders and payment changes unless the order is pending.',
     idempotent: true,
   },
   outputSchema: sallaOutputSchemas.order,
@@ -26,22 +26,22 @@ export const aiUpdateOrderAction = createAction({
     }),
     customer_id: Property.Number({
       displayName: 'Customer ID',
-      description: 'Numeric ID of the Salla customer to attach, for example 1209983424. Salla allows it only when the order has no customer or a guest customer.',
+      description: 'Numeric ID of an existing Salla customer to move the order to, for example 1209983424. Find it with List Customers. Leave empty to keep the current customer.',
       required: false,
     }),
     customer_name: Property.ShortText({
       displayName: 'Customer Name',
-      description: 'New customer full name, for example Sara Al-Qahtani.',
+      description: 'Not supported, leave empty: Salla cannot change a customer\'s name from an order. Use Update Customer.',
       required: false,
     }),
     customer_mobile: Property.ShortText({
       displayName: 'Customer Mobile',
-      description: 'New customer mobile in international format, for example +966500000000.',
+      description: 'Not supported, leave empty: Salla cannot change a customer\'s mobile from an order. Use Update Customer.',
       required: false,
     }),
     customer_email: Property.ShortText({
       displayName: 'Customer Email',
-      description: 'New customer email, for example sara@example.com.',
+      description: 'Not supported, leave empty: Salla cannot change a customer\'s email from an order. Use Update Customer.',
       required: false,
     }),
     receiver_name: Property.ShortText({
@@ -210,18 +210,14 @@ export const aiUpdateOrderAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
+    sallaOrders.refuseCustomerDetails({ name: propsValue.customer_name, mobile: propsValue.customer_mobile, email: propsValue.customer_email });
     const acceptedMethods = sallaUtils.toStringList(propsValue.accepted_methods);
     const employeeIds = sallaUtils.toStringList(propsValue.employee_ids);
     return sallaOrders.updateOrder({
       auth,
       orderId: propsValue.order_id,
       input: {
-        customer: {
-          id: propsValue.customer_id ?? undefined,
-          name: propsValue.customer_name,
-          mobile: propsValue.customer_mobile,
-          email: propsValue.customer_email,
-        },
+        customerId: propsValue.customer_id ?? undefined,
         receiver: {
           name: propsValue.receiver_name,
           phone: propsValue.receiver_phone,

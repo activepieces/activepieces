@@ -13,7 +13,7 @@ export const aiCreateCustomerAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates a new Salla customer from a first name, last name and mobile number with its country code, plus optional email, gender, birthday and customer groups. Use List Customers first to check the customer does not already exist, and Update Customer to change one; the email and mobile must be unique in the store. Not safe to retry: after a success, a second call fails because the mobile is already taken.',
+      'Creates a new Salla customer from a first name, last name and mobile number with its country code, plus optional email, gender, birthday and customer groups. Use List Customers first to check the customer does not already exist, and Update Customer to change one. Fails, and sends nothing, when another customer already has the mobile or the email, so a retry after a success fails too.',
     idempotent: false,
   },
   outputSchema: sallaOutputSchemas.savedCustomer,
