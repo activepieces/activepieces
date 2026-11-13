@@ -16,6 +16,36 @@ export const createTask = createAction({
       'Creates a new task in Nifty in a chosen project and status column, optionally in a milestone or list, as a subtask, with dates and assignees, picked from dropdowns (agents: use nifty_task_create, which takes IDs). Requires a task name and a status. Not idempotent: each call creates a separate task even with identical input.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'location',
+      display: 'section',
+      label: 'Location',
+      icon: 'inbox',
+      props: ['portfolio', 'project', 'status', 'milestone', 'parent_task'],
+    },
+    {
+      key: 'task',
+      display: 'section',
+      label: 'Task',
+      icon: 'text',
+      props: ['task_name', 'task_description'],
+    },
+    {
+      key: 'schedule',
+      display: 'section',
+      label: 'Schedule',
+      icon: 'calendar',
+      props: ['start_date', 'due_date'],
+    },
+    {
+      key: 'people',
+      display: 'section',
+      label: 'People',
+      icon: 'users',
+      props: ['assignees'],
+    },
+  ],
   props: {
     portfolio: niftyProps.portfolio({ required: false }),
     project: niftyProps.project({ required: true }),
@@ -40,15 +70,16 @@ export const createTask = createAction({
     start_date: Property.DateTime({
       displayName: 'Start Date',
       required: false,
+      width: 'half',
     }),
     due_date: Property.DateTime({
       displayName: 'Due Date',
       required: false,
+      width: 'half',
     }),
     assignees: niftyProps.members({
       required: false,
       displayName: 'Assignees',
-      description: 'Optional. Members to assign to the task.',
     }),
   },
   outputSchema: createTaskArrayOutputSchema,

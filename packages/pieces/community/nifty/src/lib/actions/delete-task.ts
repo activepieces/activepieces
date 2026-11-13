@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { niftyAuth } from '../auth';
 import { niftyProps } from '../common';
 import { niftyOps } from '../common/operations';
@@ -16,9 +16,19 @@ export const deleteTask = createAction({
       'Permanently deletes a Nifty task picked from project and task dropdowns; it cannot be undone. Prefer Complete or Reopen Task when the work should stay on record. Idempotent in end state: a repeat call fails with not found because the task is already gone.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'task',
+      display: 'section',
+      label: 'Task to Delete',
+      icon: 'trash',
+      props: ['warning', 'portfolio', 'project', 'task'],
+    },
+  ],
   props: {
     warning: Property.MarkDown({
       value: 'Deleting a task is permanent and cannot be undone in Nifty.',
+      variant: MarkdownVariant.WARNING,
     }),
     portfolio: niftyProps.portfolio({ required: false }),
     project: niftyProps.project({ required: true }),
