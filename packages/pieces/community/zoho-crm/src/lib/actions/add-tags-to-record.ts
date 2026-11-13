@@ -23,7 +23,7 @@ export const addTagsToRecordAction = createAction({
     tags: tagsDropdown(),
     new_tags: Property.Array({
       displayName: 'New Tag Names',
-      description: 'Tag names to create (if missing) and add.',
+      description: 'Names to add; any that do not exist yet are created.',
       required: false,
     }),
   },

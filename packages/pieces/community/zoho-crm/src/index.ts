@@ -40,6 +40,12 @@ export const zohoCrm = createPiece({
     uploadAttachmentAction,
     ...zohoAiActions,
     createCustomApiCallAction({
+      props: {
+        url: {
+          description: 'Full URL, or a path relative to your Zoho CRM API (.../crm/v3).',
+          placeholder: '/Leads',
+        },
+      },
       baseUrl: (auth) => {
         if (!auth) {
           return '';

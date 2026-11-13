@@ -6,8 +6,8 @@ export const readFile = createAction({
   auth: zohoCrmAuth,
   name: 'read-file',
   classification: 'READ',
-  displayName: 'Read file',
-  description: 'Download a file content from Zoho CRM. e.g.: a Backup File',
+  displayName: 'Read File',
+  description: 'Downloads a file from Zoho CRM, such as a data backup.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -18,6 +18,7 @@ export const readFile = createAction({
     url: Property.ShortText({
       displayName: 'URL',
       description: 'Full https URL on your Zoho API host (/crm/...) or download host.',
+      placeholder: 'https://www.zohoapis.com/crm/bulk/...',
       required: true,
       defaultValue: '',
     }),
