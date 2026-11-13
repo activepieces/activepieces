@@ -78,6 +78,19 @@ describe('Google Sheets row triggers on republish', () => {
 		expect(await fired({ value: newOrUpdated.run(ctx({ store })) })).toEqual([2, 3]);
 	});
 
+	it.each([
+		{ name: 'New Row Added', trigger: rowAdded },
+		{ name: 'New or Updated Row', trigger: newOrUpdated },
+	])('$name still fails the republish when the worksheet was deleted', async ({ trigger }) => {
+		const { store } = memoryStore();
+		await trigger.onEnable(ctx({ store }));
+
+		fakeGoogle.tabs.splice(0, 1);
+		await trigger.onDisable(ctx({ store }));
+
+		await expect(trigger.onEnable(ctx({ store, isRepublish: true }))).rejects.toThrow();
+	});
+
 	it('New or Updated Row starts from the current rows when the flow is turned off and on', async () => {
 		const { store } = memoryStore();
 		await newOrUpdated.onEnable(ctx({ store }));

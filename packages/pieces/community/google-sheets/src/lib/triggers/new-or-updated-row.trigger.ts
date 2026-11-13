@@ -223,11 +223,11 @@ export const newOrUpdatedRowTrigger = createTrigger({
 		const { spreadsheetId, sheetId } = sheetIdentity(context.propsValue);
 		const triggerColumn = context.propsValue.trigger_column ?? ALL_COLUMNS;
 		const identity = { spreadsheetId, sheetId, triggerColumn };
+		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
 		const keepSnapshot =
 			context.isRepublish === true &&
 			!isNil(await rowSnapshot.loadSnapshot({ store: context.store, key: SNAPSHOT_STORE_KEY, identity }));
 		if (!keepSnapshot) {
-			const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
 			const rawValues = await getWorkSheetValues({
 				auth: context.auth,
 				spreadsheetId,

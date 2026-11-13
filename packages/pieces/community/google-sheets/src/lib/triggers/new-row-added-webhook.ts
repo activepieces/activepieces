@@ -124,11 +124,11 @@ export const newRowAddedTrigger = createTrigger({
 	async onEnable(context) {
 		const { spreadsheetId, sheetId } = sheetIdentity(context.propsValue);
 		const identity = { spreadsheetId, sheetId, triggerColumn: NO_TRIGGER_COLUMN };
+		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
 		const keepSnapshot =
 			context.isRepublish === true &&
 			!isNil(await rowSnapshot.loadSnapshot({ store: context.store, key: SNAPSHOT_STORE_KEY, identity }));
 		if (!keepSnapshot) {
-			const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
 			const rawValues = await getWorkSheetValues({
 				auth: context.auth,
 				spreadsheetId,
