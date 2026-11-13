@@ -1,4 +1,4 @@
-import { Property, ServerContext, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, ServerContext, createAction } from '@activepieces/pieces-framework';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { amazonS3CombinedAuth, AccessKeyAuthProps, OidcAuthProps, S3AuthProps } from '../auth';
@@ -10,24 +10,37 @@ export const generateSignedUrl = createAction({
   name: 'generate-signed-url',
   outputSchema: generateSignedUrlOutputSchema,
   classification: 'READ',
-  displayName: 'Generate signed URL',
-  description: 'Generate a signed URL for a file in a s3 bucket',
+  displayName: 'Generate Signed URL',
+  description: 'Create a temporary link anyone can use to download a file.',
   audience: 'both',
   aiMetadata: {
     description: 'Generates a time-limited pre-signed download (GET) URL for an existing object in the configured S3 bucket, letting anyone with the link fetch the file without AWS credentials until it expires. Use when you need to share read access to a stored file. Read-only and idempotent (no object is modified), though each call returns a freshly signed URL.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'file', display: 'section', label: 'File', icon: 'file', props: ['key'] },
+    { key: 'link', display: 'section', label: 'Link', icon: 'sliders', props: ['linkInfo', 'expiresIn'] },
+  ],
   props: {
     key: Property.ShortText({
       displayName: 'File Path',
-      description: 'The full path to the file within your S3 bucket (e.g. "documents/report.csv" or "myfile.txt"). This is also called the S3 "key".',
+      description: 'Path of the file in the bucket, also called its key.',
+      placeholder: 'documents/report.csv',
       required: true,
     }),
+    linkInfo: Property.MarkDown({
+      variant: MarkdownVariant.INFO,
+      value: 'Links last at most 7 days, or 12 hours with an IAM Role / OIDC connection.',
+    }),
     expiresIn: Property.Number({
-      displayName: 'Expires In (minutes)',
-      description: 'How long the URL should remain valid (in minutes).',
+      displayName: 'Expires In',
+      description: 'Minutes until the link stops working.',
       required: true,
       defaultValue: 10,
+      display: 'stepper',
+      min: 1,
+      max: 10080,
+      step: 1,
     }),
   },
   async run(context) {
