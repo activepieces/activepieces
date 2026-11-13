@@ -17,14 +17,20 @@ export const braveWebSearchAction = createAction({
   props: {
     query: Property.ShortText({
       displayName: 'Query',
-      description: 'The search query',
+      description: 'What to search for, up to 400 characters.',
+      placeholder: 'best open source workflow automation tools',
       required: true,
     }),
     count: Property.Number({
-      displayName: 'Count',
-      description: 'Number of results (1-20)',
+      displayName: 'Number of Results',
+      description:
+        'How many results to return, up to 20. Brave may return fewer.',
       required: false,
       defaultValue: 10,
+      display: 'stepper',
+      min: 1,
+      max: 20,
+      step: 1,
     }),
   },
   async run(context) {
