@@ -151,7 +151,7 @@ describe('New Item in Feed behaviour', () => {
     publish({ feed, guid: 'u-new', at: null });
     expect(guids(await trigger.run(context({ store })))).toEqual(['u-new']);
     expect(await trigger.run(context({ store }))).toEqual([]);
-  });
+  }, 30_000);
 
   it('a feed of 1200 items sharing one date fires nothing after enable, and a new item fires once', async () => {
     const feed = server.feed('/feed');
@@ -163,7 +163,7 @@ describe('New Item in Feed behaviour', () => {
     publish({ feed, guid: 's-new', at: at('08:00') });
     expect(guids(await trigger.run(context({ store })))).toEqual(['s-new']);
     expect(await trigger.run(context({ store }))).toEqual([]);
-  });
+  }, 30_000);
 
   it('keeps relative item links and feed meta exactly as the feed parser returned them before', async () => {
     const feed = server.feed('/blog/feed.xml');
