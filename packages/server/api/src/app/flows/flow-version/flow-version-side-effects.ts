@@ -1,5 +1,5 @@
 import { isNil, ProjectId } from '@activepieces/core-utils'
-import { FileType, FlowOperationRequest, FlowOperationType, flowStructureUtil, FlowVersion } from '@activepieces/shared'
+import { FileType, FlowOperationRequest, flowOperations, FlowOperationType, flowStructureUtil, FlowVersion } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager } from 'typeorm'
 import { exceptionHandler } from '../../helper/exception-handler'
@@ -75,7 +75,8 @@ async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowV
             break
         }
         case FlowOperationType.DELETE_ACTION: {
-            const stepsToDelete = operation.request.names.map(name => flowStructureUtil.getStepOrThrow(name, flowVersion.trigger))
+            const remainingStepNames = new Set(flowStructureUtil.getAllSteps(flowOperations.apply(flowVersion, operation).trigger).map(step => step.name))
+            const stepsToDelete = flowStructureUtil.getAllSteps(flowVersion.trigger).filter(step => !remainingStepNames.has(step.name))
             for (const step of stepsToDelete) {
                 const sampleDataExists = !isNil(step.settings.sampleData?.sampleDataFileId)
                 if (sampleDataExists) {
