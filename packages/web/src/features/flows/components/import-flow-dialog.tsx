@@ -69,6 +69,7 @@ const readTemplateJson = async (
       const template = templateUtils.parseTemplate(reader.result as string);
       resolve(template);
     };
+    reader.onerror = () => resolve(null);
     reader.readAsText(templateFile);
   });
 };
@@ -84,6 +85,7 @@ const ImportFlowDialog = (
   const [errorMessage, setErrorMessage] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [failedFiles, setFailedFiles] = useState<string[]>([]);
+  const [isReadingFile, setIsReadingFile] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
     props.insideBuilder ? undefined : props.folderId,
   );
@@ -189,6 +191,13 @@ const ImportFlowDialog = (
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
+    setIsReadingFile(true);
+    await readSelectedFile(event).finally(() => setIsReadingFile(false));
+  };
+
+  const readSelectedFile = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const files = event.target.files;
     if (!files?.[0]) return;
 
@@ -263,6 +272,8 @@ const ImportFlowDialog = (
             </span>
             <Input
               id="file-input"
+              data-testid="import-flow-file-input"
+              aria-label={t('Flow')}
               type="file"
               accept={props.insideBuilder ? '.json' : '.json,.zip'}
               ref={fileInputRef}
@@ -308,7 +319,11 @@ const ImportFlowDialog = (
           )}
         </div>
         {errorMessage && (
-          <FormError formMessageId="import-flow-error-message" className="mt-4">
+          <FormError
+            formMessageId="import-flow-error-message"
+            data-testid="import-flow-error"
+            className="mt-4"
+          >
             {errorMessage}
           </FormError>
         )}
@@ -320,7 +335,11 @@ const ImportFlowDialog = (
           >
             {t('Cancel')}
           </Button>
-          <Button onClick={handleSubmit} loading={isPending}>
+          <Button
+            onClick={handleSubmit}
+            loading={isPending}
+            disabled={isReadingFile}
+          >
             {t('Import')}
           </Button>
         </DialogFooter>
