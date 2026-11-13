@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
+  buildAttendeeNames,
   buildEventQuery,
   flattenEvent,
   flattenEventWebhook,
@@ -140,6 +141,34 @@ describe('New Event webhook payloads', () => {
   test('a payload that is not an event is ignored', () => {
     expect(unwrapEventWebhook({ type: 'event.changed', payload: { previous_attributes: {} } })).toBeNull();
     expect(readWebhookBody('not json')).toBeNull();
+  });
+});
+
+describe('buildAttendeeNames', () => {
+  test('splits a full name the way SavvyCal does when first and last names are not given', () => {
+    expect(buildAttendeeNames({ fullName: '  Jane  van der Berg ' })).toEqual({
+      display_name: 'Jane  van der Berg',
+      first_name: 'Jane',
+      last_name: 'van der Berg',
+    });
+  });
+
+  test('keeps the first and last names given, and builds the full name from them', () => {
+    expect(buildAttendeeNames({ firstName: 'Jane', lastName: 'Doe' })).toEqual({
+      display_name: 'Jane Doe',
+      first_name: 'Jane',
+      last_name: 'Doe',
+    });
+    expect(buildAttendeeNames({ fullName: 'Doe Jane', firstName: 'Jane', lastName: 'Doe' })).toEqual({
+      display_name: 'Doe Jane',
+      first_name: 'Jane',
+      last_name: 'Doe',
+    });
+  });
+
+  test('sends no last name for a one-word name, and nothing when every name is empty', () => {
+    expect(buildAttendeeNames({ fullName: 'Jane' })).toEqual({ display_name: 'Jane', first_name: 'Jane' });
+    expect(buildAttendeeNames({ fullName: ' ', firstName: '', lastName: null })).toBeNull();
   });
 });
 

@@ -8,6 +8,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import {
   savvyCalApiCall,
   flattenEvent,
+  buildAttendeeNames,
   buildTeamOptions,
   buildLinkOptions,
   SavvyCalEvent,
@@ -23,7 +24,7 @@ export const createEventAction = createAction({
   displayName: 'Create Event',
   description: 'Books a meeting on a scheduling link at a specific time slot.',
   audience: 'both',
-  aiMetadata: { description: 'Books a new SavvyCal meeting on a given scheduling link for an attendee at a specific start/end time. Use to schedule a booking on the attendee\'s behalf; the chosen time must match an available slot on the link (call Get Available Slots first if unsure). Requires the link id, attendee name/email, and time zone in Olson format. Not idempotent — each call creates a separate booking.', idempotent: false },
+  aiMetadata: { description: 'Books a new SavvyCal meeting on a given scheduling link for an attendee at a specific start/end time. Use to schedule a booking on the attendee\'s behalf; the chosen time must match an available slot on the link (call Get Available Slots first if unsure). Requires the link id, the attendee email, the attendee name (a full name, or first and last name, which links that ask for them separately require), and the time zone in Olson format. When only the full name is given, its first word is sent as the first name and the rest as the last name. Not idempotent — each call creates a separate booking.', idempotent: false },
   props: {
     team_id: Property.Dropdown({
       auth: savvyCalAuth,
@@ -79,8 +80,18 @@ export const createEventAction = createAction({
     }),
     attendee_name: Property.ShortText({
       displayName: 'Attendee Name',
-      description: 'Full name of the person booking the meeting.',
-      required: true,
+      description: 'Full name of the person booking the meeting. Leave empty if you fill in Attendee First Name and Attendee Last Name.',
+      required: false,
+    }),
+    attendee_first_name: Property.ShortText({
+      displayName: 'Attendee First Name',
+      description: 'Needed when the scheduling link asks for first and last name separately. Leave empty to use the first word of Attendee Name.',
+      required: false,
+    }),
+    attendee_last_name: Property.ShortText({
+      displayName: 'Attendee Last Name',
+      description: 'Needed when the scheduling link asks for first and last name separately. Leave empty to use the rest of Attendee Name.',
+      required: false,
     }),
     attendee_email: Property.ShortText({
       displayName: 'Attendee Email',
@@ -130,12 +141,23 @@ export const createEventAction = createAction({
       start_at,
       end_at,
       attendee_name,
+      attendee_first_name,
+      attendee_last_name,
       attendee_email,
       time_zone,
       phone_number,
       custom_fields,
       metadata,
     } = context.propsValue;
+
+    const names = buildAttendeeNames({
+      fullName: attendee_name,
+      firstName: attendee_first_name,
+      lastName: attendee_last_name,
+    });
+    if (!names) {
+      throw new Error('Fill in Attendee Name, or Attendee First Name and Attendee Last Name.');
+    }
 
     const linkFields = await fetchLinkFields(token, link_id);
     const submittedFields = serializeCustomFields({
@@ -146,7 +168,7 @@ export const createEventAction = createAction({
     const body: Record<string, unknown> = {
       start_at,
       end_at,
-      display_name: attendee_name,
+      ...names,
       email: attendee_email,
       time_zone,
     };

@@ -305,6 +305,28 @@ export function flattenEventWebhook({ type, unwrapped }: { type: string; unwrapp
   };
 }
 
+export function buildAttendeeNames({
+  fullName,
+  firstName,
+  lastName,
+}: {
+  fullName?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+}): AttendeeNames | null {
+  const trimmedFullName = fullName?.trim() ?? '';
+  const [firstWord = '', ...otherWords] = trimmedFullName.split(/\s+/).filter((word) => word.length > 0);
+  const first = firstName?.trim() || firstWord;
+  const last = lastName?.trim() || otherWords.join(' ');
+  const displayName = trimmedFullName || [first, last].filter((part) => part.length > 0).join(' ');
+  if (displayName.length === 0) return null;
+  return {
+    display_name: displayName,
+    ...(first ? { first_name: first } : {}),
+    ...(last ? { last_name: last } : {}),
+  };
+}
+
 async function fetchLinkScopes(token: string): Promise<SavvyCalScope[]> {
   const links = await savvyCalPaginatedCall<SavvyCalSchedulingLink>({ token, path: '/links' });
   return links
@@ -356,6 +378,12 @@ export const LINK_USAGE_OPTIONS = [
   { label: 'Multi-use', value: 'recurring' },
   { label: 'Single-use', value: 'single' },
 ];
+
+export type AttendeeNames = {
+  display_name: string;
+  first_name?: string;
+  last_name?: string;
+};
 
 export type EventQuery = {
   queryParams: Record<string, string>;
