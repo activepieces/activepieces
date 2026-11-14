@@ -168,6 +168,27 @@ describe('Transition Issue', () => {
 	});
 });
 
+describe('resolution picker', () => {
+	it('lists the resolutions the chosen transition allows', () => {
+		expect(jiraTransitions.resolutionChoices({ transitions: TRANSITIONS.transitions, transitionIdOrName: '21' })).toEqual({
+			disabled: false,
+			options: [{ label: 'Done', value: '1' }, { label: "Won't Do", value: '2' }],
+		});
+	});
+
+	it('says so when the transition takes no resolution', () => {
+		expect(jiraTransitions.resolutionChoices({ transitions: TRANSITIONS.transitions, transitionIdOrName: '11' }).placeholder).toBe('This transition takes no resolution');
+	});
+
+	it('says the transition is gone when the issue has already moved', () => {
+		expect(jiraTransitions.resolutionChoices({ transitions: TRANSITIONS.transitions, transitionIdOrName: '61' })).toEqual({
+			disabled: true,
+			options: [],
+			placeholder: 'This transition is not available for the issue now',
+		});
+	});
+});
+
 describe('jiraTransitions.resolve', () => {
 	it('lists what is available when the transition cannot run from the current status', () => {
 		expect(() =>

@@ -59,24 +59,10 @@ export const transitionIssueAction = createAction({
 						placeholder: waitingPlaceholder({ auth, waitingFor: 'Select a transition first' }),
 					};
 				}
-				const transitions = await jiraTransitions.list({ auth, issueId: issue });
-				const resolutions = jiraTransitions.resolutionsOf(
-					jiraTransitions.find({ transitions, idOrName: wanted }),
-				);
-				if (resolutions.length === 0) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'This transition takes no resolution',
-					};
-				}
-				return {
-					disabled: false,
-					options: resolutions.map((resolution) => ({
-						label: resolution.name ?? resolution.id,
-						value: resolution.id,
-					})),
-				};
+				return jiraTransitions.resolutionChoices({
+					transitions: await jiraTransitions.list({ auth, issueId: issue }),
+					transitionIdOrName: wanted,
+				});
 			},
 		}),
 		comment: Property.LongText({

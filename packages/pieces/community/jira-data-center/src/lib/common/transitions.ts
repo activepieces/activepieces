@@ -3,7 +3,7 @@ import { isNil } from '@activepieces/pieces-framework';
 import { JiraDataCenterAuth } from '../../auth';
 import { jiraApiCall } from './index';
 
-export const jiraTransitions = { list, find, resolutionsOf, resolve };
+export const jiraTransitions = { list, find, resolutionsOf, resolutionChoices, resolve };
 
 async function list({ auth, issueId }: { auth: JiraDataCenterAuth; issueId: string }): Promise<JiraTransition[]> {
 	const response = await jiraApiCall<{ transitions?: JiraTransition[] }>({
@@ -42,6 +42,27 @@ function needsResolution(transition: JiraTransition): boolean {
 
 function takesResolution(transition: JiraTransition): boolean {
 	return !isNil(transition.fields?.resolution);
+}
+
+function resolutionChoices({
+	transitions,
+	transitionIdOrName,
+}: {
+	transitions: JiraTransition[];
+	transitionIdOrName: string;
+}): { disabled: boolean; options: Array<{ label: string; value: string }>; placeholder?: string } {
+	const transition = find({ transitions, idOrName: transitionIdOrName });
+	if (isNil(transition)) {
+		return { disabled: true, options: [], placeholder: 'This transition is not available for the issue now' };
+	}
+	const resolutions = resolutionsOf(transition);
+	if (resolutions.length === 0) {
+		return { disabled: true, options: [], placeholder: 'This transition takes no resolution' };
+	}
+	return {
+		disabled: false,
+		options: resolutions.map((resolution) => ({ label: resolution.name ?? resolution.id, value: resolution.id })),
+	};
 }
 
 function names(items: Array<{ id: string; name?: string }>): string {
