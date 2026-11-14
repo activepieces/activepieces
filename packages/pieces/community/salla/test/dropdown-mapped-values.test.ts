@@ -6,6 +6,7 @@ import { findOrdersAction } from '../src/lib/actions/find-orders';
 import { updateProductAction } from '../src/lib/actions/update-product';
 import { updateVariantAction } from '../src/lib/actions/update-variant';
 import { sallaAuth } from '../src/lib/auth';
+import { sallaApi } from '../src/lib/common/client';
 import { CreateCustomerInput, sallaCustomers } from '../src/lib/common/customers';
 import { sallaUtils } from '../src/lib/common/helpers';
 import { CreateCouponInput, sallaMarketing } from '../src/lib/common/marketing';
@@ -27,6 +28,10 @@ const AUTH: AppConnectionValueForAuthProperty<typeof sallaAuth> = {
   props: {},
 };
 
+function asMapped<T>(value: unknown): T {
+  return JSON.parse(JSON.stringify(value));
+}
+
 function recordRequests(): HttpRequest[] {
   const requests: HttpRequest[] = [];
   vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request: HttpRequest) => {
@@ -38,29 +43,31 @@ function recordRequests(): HttpRequest[] {
 }
 
 function runAdjustStock(propsValue: Record<string, unknown>): Promise<unknown> {
-  const props = propsValue as unknown as StaticPropsValue<typeof adjustStockAction.props>;
+  const props: StaticPropsValue<typeof adjustStockAction.props> = asMapped(propsValue);
   return adjustStockAction.run({ ...createMockActionContext<typeof adjustStockAction.props>({ propsValue: props }), auth: AUTH });
 }
 
 function runFindOrders(propsValue: Record<string, unknown>): Promise<unknown> {
-  const props = propsValue as unknown as StaticPropsValue<typeof findOrdersAction.props>;
+  const props: StaticPropsValue<typeof findOrdersAction.props> = asMapped(propsValue);
   return findOrdersAction.run({ ...createMockActionContext<typeof findOrdersAction.props>({ propsValue: props }), auth: AUTH });
 }
 
 function runUpdateVariant(propsValue: Record<string, unknown>): Promise<unknown> {
-  const props = propsValue as unknown as StaticPropsValue<typeof updateVariantAction.props>;
+  const props: StaticPropsValue<typeof updateVariantAction.props> = asMapped(propsValue);
   return updateVariantAction.run({ ...createMockActionContext<typeof updateVariantAction.props>({ propsValue: props }), auth: AUTH });
 }
 
 function runUpdateProduct(propsValue: Record<string, unknown>): Promise<unknown> {
-  const props = propsValue as unknown as StaticPropsValue<typeof updateProductAction.props>;
+  const props: StaticPropsValue<typeof updateProductAction.props> = asMapped(propsValue);
   return updateProductAction.run({ ...createMockActionContext<typeof updateProductAction.props>({ propsValue: props }), auth: AUTH });
 }
 
 function stockLine(requests: HttpRequest[]): unknown {
-  const post = requests.find((request) => request.method === HttpMethod.POST);
-  const body = post?.body as { products: unknown[] } | undefined;
-  return body?.products[0];
+  const body: unknown = requests.find((request) => request.method === HttpMethod.POST)?.body;
+  if (!sallaApi.isRecord(body) || !Array.isArray(body['products'])) {
+    return undefined;
+  }
+  return body['products'][0];
 }
 
 afterEach(() => {
@@ -69,28 +76,28 @@ afterEach(() => {
 
 describe('dropdownText', () => {
   it('turns a mapped number into its digits', () => {
-    expect(sallaUtils.dropdownText(1672932878, 'Product')).toBe('1672932878');
-    expect(sallaUtils.dropdownText(0, 'Product')).toBe('0');
+    expect(sallaUtils.dropdownText({ value: 1672932878, label: 'Product' })).toBe('1672932878');
+    expect(sallaUtils.dropdownText({ value: 0, label: 'Product' })).toBe('0');
   });
 
   it('trims a string and keeps ids above 2^53 exactly', () => {
-    expect(sallaUtils.dropdownText(' 1672932878 ', 'Product')).toBe('1672932878');
-    expect(sallaUtils.dropdownText('1234567890123456789', 'Product')).toBe('1234567890123456789');
-    expect(sallaUtils.dropdownText(BigInt('1234567890123456789'), 'Product')).toBe('1234567890123456789');
+    expect(sallaUtils.dropdownText({ value: ' 1672932878 ', label: 'Product' })).toBe('1672932878');
+    expect(sallaUtils.dropdownText({ value: '1234567890123456789', label: 'Product' })).toBe('1234567890123456789');
+    expect(sallaUtils.dropdownText({ value: BigInt('1234567890123456789'), label: 'Product' })).toBe('1234567890123456789');
   });
 
   it('treats only undefined, null and blank text as empty', () => {
     for (const value of [undefined, null, '', '   ']) {
-      expect(sallaUtils.dropdownText(value, 'Customer'), String(value)).toBeUndefined();
+      expect(sallaUtils.dropdownText({ value, label: 'Customer' }), String(value)).toBeUndefined();
     }
   });
 
   it('fails loudly, naming the field, on a mapped object, list, boolean or non-finite number', () => {
-    expect(() => sallaUtils.dropdownText({ id: 1227534533 }, 'Customer')).toThrow(
+    expect(() => sallaUtils.dropdownText({ value: { id: 1227534533 }, label: 'Customer' })).toThrow(
       'Customer must be text or a number, such as an ID, but got {"id":1227534533}.',
     );
     for (const value of [[1, 2], true, {}, Number.NaN, Number.POSITIVE_INFINITY]) {
-      expect(() => sallaUtils.dropdownText(value, 'Branch'), String(value)).toThrow('Branch must be text or a number');
+      expect(() => sallaUtils.dropdownText({ value, label: 'Branch' }), String(value)).toThrow('Branch must be text or a number');
     }
   });
 });
@@ -260,15 +267,16 @@ describe('Update Product with a mapped numeric product', () => {
 });
 
 describe('static dropdowns that get a mapped number', () => {
-  const customer = (gender: unknown): CreateCustomerInput => ({ firstName: 'Ali', lastName: 'Saleh', mobile: '+966501234567', gender: gender as CreateCustomerInput['gender'] });
-  const coupon = (overrides: Record<string, unknown>): CreateCouponInput => ({
-    code: 'SUMMER10',
-    type: 'percentage',
-    amount: '10',
-    expiryDate: '2026-12-31',
-    maximumAmount: 50,
-    ...overrides,
-  } as CreateCouponInput);
+  const customer = (gender: unknown): CreateCustomerInput => asMapped({ firstName: 'Ali', lastName: 'Saleh', mobile: '+966501234567', gender });
+  const coupon = (overrides: Record<string, unknown>): CreateCouponInput =>
+    asMapped({
+      code: 'SUMMER10',
+      type: 'percentage',
+      amount: '10',
+      expiryDate: '2026-12-31',
+      maximumAmount: 50,
+      ...overrides,
+    });
 
   it('fail with the value named instead of silently dropping it', () => {
     expect(() => sallaCustomers.buildCreateCustomerBody(customer(1))).toThrow('"1" is not a gender Salla accepts.');
@@ -277,20 +285,19 @@ describe('static dropdowns that get a mapped number', () => {
     expect(() => sallaMarketing.buildCreateCouponBody(coupon({ type: 3 }))).toThrow('"3" is not a coupon type.');
     expect(() => sallaMarketing.buildCreateCouponBody(coupon({ status: { value: 'active' } }))).toThrow('Coupon status must be text or a number');
     expect(() => sallaCustomers.buildCreateCustomerBody(customer({ value: 'male' }))).toThrow('Gender must be text or a number');
-    expect(() => sallaProducts.buildProductListQuery({ maxResults: 10, status: 4 } as unknown as Parameters<typeof sallaProducts.buildProductListQuery>[0])).toThrow(
-      '"4" is not a product status.',
-    );
+    const filters: Parameters<typeof sallaProducts.buildProductListQuery>[0] = asMapped({ maxResults: 10, status: 4 });
+    expect(() => sallaProducts.buildProductListQuery(filters)).toThrow('"4" is not a product status.');
   });
 });
 
 describe('Find Orders payment methods from a mapped list', () => {
   it('keeps numbers as text and skips blank and null entries', () => {
-    const paymentMethods = [' mada ', '', null, 7] as unknown as OrderFilters['paymentMethods'];
+    const paymentMethods: OrderFilters['paymentMethods'] = asMapped([' mada ', '', null, 7]);
     expect(sallaOrders.buildOrderListQuery({ maxResults: 10, paymentMethods })['payment_method']).toEqual(['mada', '7']);
   });
 
   it('fails on a mapped object entry instead of dropping it', () => {
-    const paymentMethods = ['mada', { slug: 'cod' }] as unknown as OrderFilters['paymentMethods'];
+    const paymentMethods: OrderFilters['paymentMethods'] = asMapped(['mada', { slug: 'cod' }]);
     expect(() => sallaOrders.buildOrderListQuery({ maxResults: 10, paymentMethods })).toThrow('Payment method must be text or a number');
   });
 });

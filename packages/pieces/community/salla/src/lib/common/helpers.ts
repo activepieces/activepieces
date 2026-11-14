@@ -237,7 +237,7 @@ function requireId({ value, label }: { value: unknown; label: string }): string 
   return text;
 }
 
-function dropdownText(value: unknown, label: string): string | undefined {
+function dropdownText({ value, label }: { value: unknown; label: string }): string | undefined {
   if (value === undefined || value === null) {
     return undefined;
   }

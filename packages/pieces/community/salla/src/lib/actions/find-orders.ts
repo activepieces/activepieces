@@ -134,8 +134,8 @@ export const findOrdersAction = createAction({
     const filters: OrderFilters = {
       maxResults: clampMaxResults(propsValue.max_results),
       keyword: propsValue.keyword ?? undefined,
-      referenceId: sallaUtils.dropdownText(propsValue.reference_number, 'Reference Number'),
-      customerId: sallaUtils.dropdownText(propsValue.customer, 'Customer'),
+      referenceId: sallaUtils.dropdownText({ value: propsValue.reference_number, label: 'Reference Number' }),
+      customerId: sallaUtils.dropdownText({ value: propsValue.customer, label: 'Customer' }),
       fromDate: after,
       toDate: before,
       statusIds: propsValue.statuses ?? [],

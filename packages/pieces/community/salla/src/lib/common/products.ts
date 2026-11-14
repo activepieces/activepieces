@@ -1049,7 +1049,7 @@ function messageOf(data: unknown): string | undefined {
 }
 
 function requireProductStatus(value: unknown): ProductStatus {
-  const text = (sallaUtils.dropdownText(value, 'Product status') ?? '').toLowerCase();
+  const text = (sallaUtils.dropdownText({ value, label: 'Product status' }) ?? '').toLowerCase();
   const match = PRODUCT_STATUSES.find((status) => status === text);
   if (!match) {
     throw new Error(`"${String(value ?? '')}" is not a product status. Use sale (on sale), out (out of stock) or hidden.`);

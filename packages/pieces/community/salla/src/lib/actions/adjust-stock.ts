@@ -129,7 +129,7 @@ function identifierFor({
 }
 
 function requireText({ value, label, message }: { value: unknown; label: string; message: string }): string {
-  const text = sallaUtils.dropdownText(value, label);
+  const text = sallaUtils.dropdownText({ value, label });
   if (text === undefined) {
     throw new Error(message);
   }

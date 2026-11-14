@@ -30,7 +30,7 @@ function buildOrderListQuery(filters: OrderFilters): SallaQuery {
     query['status'] = statusIds;
   }
   const paymentMethods = (filters.paymentMethods ?? [])
-    .map((value) => sallaUtils.dropdownText(value, 'Payment method'))
+    .map((value) => sallaUtils.dropdownText({ value, label: 'Payment method' }))
     .filter((value): value is string => value !== undefined);
   if (paymentMethods.length > 0) {
     query['payment_method'] = paymentMethods;
