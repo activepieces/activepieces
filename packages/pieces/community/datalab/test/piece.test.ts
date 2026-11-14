@@ -77,9 +77,12 @@ describe('datalab piece', () => {
     expect(clashes).toEqual([]);
   });
 
-  it('gives the human document actions a source choice and the ai twins a single required file URL', () => {
+  it('gives the human document actions a source choice with one field that follows it, and the ai twins a single required file URL', () => {
     for (const action of handWritten.filter((entry) => entry.audience === 'human')) {
-      expect(Object.keys(action.props), action.name).toEqual(expect.arrayContaining(['source', 'file', 'file_url']));
+      expect(Object.keys(action.props), action.name).toEqual(expect.arrayContaining(['source', 'document']));
+      expect(Object.keys(action.props), action.name).not.toContain('file');
+      expect(Object.keys(action.props), action.name).not.toContain('file_url');
+      expect(action.props['document'], action.name).toMatchObject({ type: 'DYNAMIC', required: true, refreshers: ['source'] });
     }
     for (const action of handWritten.filter((entry) => entry.audience === 'ai')) {
       expect(Object.keys(action.props), action.name).toContain('file_url');

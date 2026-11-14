@@ -98,7 +98,7 @@ describe('run', () => {
     const output = await formFieldsOperation.run({
       apiKey: 'key_1',
       audience: 'human',
-      source: datalabSource.fromHuman({ source: 'file', file: { filename: 'form', extension: 'pdf', data: Buffer.from('%PDF-1.7 form') }, fileUrl: undefined, noun: 'form' }),
+      source: datalabSource.fromHuman({ source: 'file', input: { file: { filename: 'form', extension: 'pdf', data: Buffer.from('%PDF-1.7 form') } }, noun: 'form' }),
       includeText: true,
       pageRange: '0-1',
       maxPages: 2,

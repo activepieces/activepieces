@@ -22,7 +22,7 @@ export const fillFormAction = createAction({
     return fillOperation.run({
       apiKey: auth.secret_text,
       audience: 'human',
-      source: datalabSource.fromHuman({ source: propsValue.source, file: propsValue.file, fileUrl: propsValue.file_url, noun: 'form' }),
+      source: datalabSource.fromHuman({ source: propsValue.source, input: propsValue.document, noun: 'form' }),
       fields: fillOperation.fieldsFromList(propsValue.field_values),
       context: propsValue.form_context,
       confidenceThreshold: propsValue.confidence_threshold,

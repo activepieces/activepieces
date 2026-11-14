@@ -18,7 +18,7 @@ export const convertDocumentAction = createAction({
   outputSchema: convertOperation.outputSchema,
   props: convertOperation.humanProps(),
   async run({ auth, propsValue, files }) {
-    const source = datalabSource.fromHuman({ source: propsValue.source, file: propsValue.file, fileUrl: propsValue.file_url, noun: 'document' });
+    const source = datalabSource.fromHuman({ source: propsValue.source, input: propsValue.document, noun: 'document' });
     return convertOperation.run({ apiKey: auth.secret_text, source, values: propsValue, audience: 'human', files });
   },
 });

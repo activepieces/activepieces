@@ -185,8 +185,7 @@ describe('run', () => {
     const files = fakeFiles();
     const source = datalabSource.fromHuman({
       source: 'file',
-      file: { filename: 'employee-form.pdf', extension: 'pdf', data: Buffer.from('%PDF-1.7 blank form') },
-      fileUrl: undefined,
+      input: { file: { filename: 'employee-form.pdf', extension: 'pdf', data: Buffer.from('%PDF-1.7 blank form') } },
       noun: 'form',
     });
     const output = await fillOperation.run({

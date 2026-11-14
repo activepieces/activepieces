@@ -238,7 +238,7 @@ function citationProp({ audience }: { audience: DatalabAudience }) {
 }
 
 function readHuman(values: HumanValues): ExtractInput {
-  const source = datalabSource.fromHuman({ source: values.source, file: values.file, fileUrl: values.file_url, noun: NOUN });
+  const source = datalabSource.fromHuman({ source: values.source, input: values.document, noun: NOUN });
   const schemaValues = datalabGuards.record(values.schema) ?? {};
   const schema = values.schema_type === 'advanced' ? checkSchema(schemaValues['json_schema']) : fieldsToSchema(schemaValues['fields']);
   return { source, schema, parseMode: readParseMode(values.parse_mode), ...readOptions(values) };
@@ -559,8 +559,7 @@ type CommonValues = {
 
 type HumanValues = CommonValues & {
   source?: unknown;
-  file?: unknown;
-  file_url?: unknown;
+  document?: unknown;
   schema_type?: unknown;
   schema?: unknown;
   parse_mode?: unknown;

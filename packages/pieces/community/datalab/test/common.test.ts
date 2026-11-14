@@ -6,28 +6,46 @@ import { datalabSource } from '../src/lib/common/source';
 
 describe('document source', () => {
   it('reads a file from a previous step and keeps its name and bytes', () => {
-    const source = datalabSource.fromHuman({ source: 'file', file: { filename: 'invoice.pdf', data: Buffer.from('%PDF'), extension: 'pdf' }, fileUrl: undefined, noun: 'document' });
+    const source = datalabSource.fromHuman({ source: 'file', input: { file: { filename: 'invoice.pdf', data: Buffer.from('%PDF'), extension: 'pdf' } }, noun: 'document' });
     expect(source).toEqual({ type: 'file', filename: 'invoice.pdf', data: Buffer.from('%PDF') });
   });
 
   it('adds the extension when the file name has none', () => {
-    const source = datalabSource.fromHuman({ source: 'file', file: { filename: 'scan', data: Buffer.from('x'), extension: 'png' }, fileUrl: undefined, noun: 'form' });
+    const source = datalabSource.fromHuman({ source: 'file', input: { file: { filename: 'scan', data: Buffer.from('x'), extension: 'png' } }, noun: 'form' });
     expect(source).toMatchObject({ filename: 'scan.png' });
   });
 
   it('says what to do when File is chosen but no file arrived', () => {
     for (const file of [undefined, null, 'https://example.com/a.pdf', { filename: 'a.pdf', data: Buffer.alloc(0) }]) {
-      expect(() => datalabSource.fromHuman({ source: 'file', file, fileUrl: 'https://example.com/a.pdf', noun: 'document' })).toThrow('Pick the document file to process, or switch Document Source to URL');
+      expect(() => datalabSource.fromHuman({ source: 'file', input: { file, file_url: 'https://example.com/a.pdf' }, noun: 'document' })).toThrow('Pick the document file to process, or switch Document Source to URL');
     }
   });
 
   it('reads a URL source and trims it', () => {
-    expect(datalabSource.fromHuman({ source: 'url', file: undefined, fileUrl: '  https://example.com/a.pdf ', noun: 'document' })).toEqual({ type: 'url', url: 'https://example.com/a.pdf' });
+    expect(datalabSource.fromHuman({ source: 'url', input: { file_url: '  https://example.com/a.pdf ' }, noun: 'document' })).toEqual({ type: 'url', url: 'https://example.com/a.pdf' });
     expect(datalabSource.fromAi({ fileUrl: 'http://example.com/a.pdf', noun: 'document' })).toEqual({ type: 'url', url: 'http://example.com/a.pdf' });
   });
 
+  it('shows only the field that matches the chosen source, under its own key, and requires it', () => {
+    const fileProps = datalabSource.fileInputProps({ noun: 'form', fileTypes: 'PDF or image' });
+    const urlProps = datalabSource.urlInputProps({ noun: 'form' });
+    expect(Object.keys(fileProps)).toEqual(['file']);
+    expect(fileProps.file).toMatchObject({ type: 'FILE', required: true });
+    expect(Object.keys(urlProps)).toEqual(['file_url']);
+    expect(urlProps.file_url).toMatchObject({ type: 'SHORT_TEXT', required: true });
+    const props = datalabSource.humanProps({ noun: 'form' });
+    expect(Object.keys(props)).toEqual(['source', 'document']);
+    expect(props.document).toMatchObject({ type: 'DYNAMIC', required: true, refreshers: ['source'] });
+  });
+
+  it('asks for the missing value when the group is empty or was never loaded', () => {
+    expect(() => datalabSource.fromHuman({ source: 'file', input: undefined, noun: 'form' })).toThrow('Pick the form file to process');
+    expect(() => datalabSource.fromHuman({ source: 'url', input: {}, noun: 'form' })).toThrow('Give the File URL');
+    expect(() => datalabSource.fromHuman({ source: 'url', input: 'https://example.com/a.pdf', noun: 'form' })).toThrow('Give the File URL');
+  });
+
   it('rejects an empty URL and a URL that is not http or https', () => {
-    expect(() => datalabSource.fromHuman({ source: 'url', file: undefined, fileUrl: ' ', noun: 'form' })).toThrow('Give the File URL, a public link to the form, or switch Form Source to File');
+    expect(() => datalabSource.fromHuman({ source: 'url', input: { file_url: ' ' }, noun: 'form' })).toThrow('Give the File URL, a public link to the form, or switch Form Source to File');
     expect(() => datalabSource.fromAi({ fileUrl: undefined, noun: 'document' })).toThrow('Give file_url');
     expect(() => datalabSource.fromAi({ fileUrl: 'ftp://example.com/a.pdf', noun: 'document' })).toThrow('must start with http:// or https://');
     expect(() => datalabSource.fromAi({ fileUrl: 'data:application/pdf;base64,AAAA', noun: 'document' })).toThrow('must start with http:// or https://');

@@ -274,8 +274,7 @@ describe('Segment Document (human)', () => {
       ...createMockActionContext<typeof segmentDocumentAction.props>({
         propsValue: {
         source: 'file',
-        file: { filename: 'batch.pdf', extension: 'pdf', data: Buffer.from('%PDF-1.4'), base64: '' },
-        file_url: undefined,
+        document: { file: { filename: 'batch.pdf', extension: 'pdf', data: Buffer.from('%PDF-1.4'), base64: '' } },
         split_method: 'sections',
         sections: [{ name: 'Invoice', description: 'The invoice and its payment terms' }, { name: 'Letter' }, { name: 'Contract' }],
         instructions: 'Not sent with named sections.',
@@ -312,8 +311,7 @@ describe('Segment Document (human)', () => {
       const context = createMockActionContext<typeof segmentDocumentAction.props>({
         propsValue: {
           source: 'url',
-          file: undefined,
-          file_url: 'https://example.com/batch.pdf',
+          document: { file_url: 'https://example.com/batch.pdf' },
           split_method: 'sections',
           sections: [],
           instructions: undefined,

@@ -153,7 +153,7 @@ describe('convert request', () => {
   it('sends the file part, mode and output format for a typical human run', async () => {
     const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce(submitted).mockResolvedValueOnce(ok(markdownResult));
     const files = fakeFiles();
-    const values = { source: 'file', file: pdfFile, output_format: 'markdown', mode: 'balanced' };
+    const values = { source: 'file', document: { file: pdfFile }, output_format: 'markdown', mode: 'balanced' };
     const output = await convertOperation.run({
       apiKey: 'key_1',
       source: { type: 'file', filename: 'invoice.pdf', data: pdfFile.data },
@@ -240,7 +240,7 @@ describe('convert request', () => {
 
   it('runs the human action end to end from its props', async () => {
     const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce(submitted).mockResolvedValueOnce(ok(markdownResult));
-    const output = await convertDocumentAction.run(humanContext({ source: 'url', file_url: 'https://example.com/a.pdf', output_format: 'markdown', mode: 'fast' }));
+    const output = await convertDocumentAction.run(humanContext({ source: 'url', document: { file_url: 'https://example.com/a.pdf' }, output_format: 'markdown', mode: 'fast' }));
     expect(requestForm(spy).get('mode')).toBe('fast');
     expect(spy.mock.calls[0][0].headers).toEqual({ 'X-API-Key': 'key_1' });
     expect(output).toMatchObject({ completed: true, content: markdownResult.markdown });
@@ -259,14 +259,14 @@ describe('lite mode check', () => {
   it('stops a human run with exact transcription and names the option in the form words', async () => {
     const spy = vi.spyOn(httpClient, 'sendRequest');
     await expect(
-      convertDocumentAction.run(humanContext({ source: 'url', file_url: 'https://example.com/a.pdf', mode: 'lite', exact_transcription: true })),
+      convertDocumentAction.run(humanContext({ source: 'url', document: { file_url: 'https://example.com/a.pdf' }, mode: 'lite', exact_transcription: true })),
     ).rejects.toThrow('Lite mode does not support Exact Transcription. Either turn off Exact Transcription, or pick Fast, Balanced or Accurate as the Mode.');
     expect(spy).not.toHaveBeenCalled();
   });
 
   it('names both options when exact transcription and extras are on', async () => {
     await expect(
-      convertDocumentAction.run(humanContext({ source: 'url', file_url: 'https://example.com/a.pdf', mode: 'lite', exact_transcription: true, extras: ['extract_links'] })),
+      convertDocumentAction.run(humanContext({ source: 'url', document: { file_url: 'https://example.com/a.pdf' }, mode: 'lite', exact_transcription: true, extras: ['extract_links'] })),
     ).rejects.toThrow('Lite mode does not support Exact Transcription and Extras. Either turn off Exact Transcription and clear Extras');
   });
 

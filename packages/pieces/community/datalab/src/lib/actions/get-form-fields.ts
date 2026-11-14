@@ -22,7 +22,7 @@ export const getFormFieldsAction = createAction({
     return formFieldsOperation.run({
       apiKey: auth.secret_text,
       audience: 'human',
-      source: datalabSource.fromHuman({ source: propsValue.source, file: propsValue.file, fileUrl: propsValue.file_url, noun: 'form' }),
+      source: datalabSource.fromHuman({ source: propsValue.source, input: propsValue.document, noun: 'form' }),
       includeText: propsValue.include_text,
       pageRange: propsValue.page_range,
       maxPages: propsValue.max_pages,

@@ -1,4 +1,5 @@
 import { ApFile, Property } from '@activepieces/pieces-framework';
+import { datalabAuth } from '../auth';
 import { datalabClient } from './client';
 import { datalabGuards } from './guards';
 
@@ -34,7 +35,7 @@ function humanProps({ noun, fileTypes = SUPPORTED_TYPES }: { noun: string; fileT
   return {
     source: Property.StaticDropdown<DatalabSourceType, true>({
       displayName: `${capitalize(noun)} Source`,
-      description: `Upload a file (for example the output of a previous step) or give a public link to the ${noun}.`,
+      description: `Choose File to use a file from a previous step, or URL to give a public link to the ${noun}.`,
       display: 'cards',
       required: true,
       defaultValue: 'file',
@@ -45,16 +46,33 @@ function humanProps({ noun, fileTypes = SUPPORTED_TYPES }: { noun: string; fileT
         ],
       },
     }),
+    document: Property.DynamicProperties({
+      auth: datalabAuth,
+      displayName: capitalize(noun),
+      required: true,
+      refreshers: ['source'],
+      props: async (propsValue) => (propsValue['source'] === 'url' ? urlInputProps({ noun }) : fileInputProps({ noun, fileTypes })),
+    }),
+  };
+}
+
+function fileInputProps({ noun, fileTypes }: { noun: string; fileTypes: string }) {
+  return {
     file: Property.File({
       displayName: 'File',
-      description: `The ${noun} to process: ${fileTypes}. Needed when ${capitalize(noun)} Source is File.`,
-      required: false,
+      description: `The ${noun} to process: ${fileTypes}. Pick the file output of a previous step.`,
+      required: true,
     }),
+  };
+}
+
+function urlInputProps({ noun }: { noun: string }) {
+  return {
     file_url: Property.ShortText({
       displayName: 'File URL',
-      description: `A public link to the ${noun} that starts with http:// or https://, for example https://example.com/files/invoice.pdf. Datalab downloads it directly, so it must open without a login. Needed when ${capitalize(noun)} Source is URL.`,
+      description: `A public link to the ${noun} that starts with http:// or https://, for example https://example.com/files/invoice.pdf. Datalab downloads it directly, so it must open without a login.`,
       placeholder: 'https://example.com/files/invoice.pdf',
-      required: false,
+      required: true,
     }),
   };
 }
@@ -69,10 +87,12 @@ function aiProps({ noun, fileTypes = SUPPORTED_TYPES }: { noun: string; fileType
   };
 }
 
-function fromHuman({ source, file, fileUrl, noun }: { source: unknown; file: unknown; fileUrl: unknown; noun: string }): DatalabSource {
+function fromHuman({ source, input, noun }: { source: unknown; input: unknown; noun: string }): DatalabSource {
+  const values = datalabGuards.record(input) ?? {};
   if (source === 'url') {
-    return fromUrl({ fileUrl, emptyMessage: `Give the File URL, a public link to the ${noun}, or switch ${capitalize(noun)} Source to File.` });
+    return fromUrl({ fileUrl: values['file_url'], emptyMessage: `Give the File URL, a public link to the ${noun}, or switch ${capitalize(noun)} Source to File.` });
   }
+  const file = values['file'];
   if (!isFile(file)) {
     throw new Error(`Pick the ${noun} file to process, or switch ${capitalize(noun)} Source to URL. If the file comes from a previous step, check that the step returned a file.`);
   }
@@ -131,7 +151,7 @@ function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-export const datalabSource = { SUPPORTED_TYPES, humanProps, aiProps, fromHuman, fromAi, appendTo, newForm, mimeType };
+export const datalabSource = { SUPPORTED_TYPES, humanProps, aiProps, fileInputProps, urlInputProps, fromHuman, fromAi, appendTo, newForm, mimeType };
 
 export type DatalabSourceType = 'file' | 'url';
 

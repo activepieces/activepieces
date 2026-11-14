@@ -179,8 +179,7 @@ describe('form fields sent to Datalab', () => {
     const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce(submitted).mockResolvedValueOnce(ok(balancedResult));
     const input = extractOperation.readHuman({
       source: 'file',
-      file: { filename: 'invoice.pdf', extension: 'pdf', data: Buffer.from('%PDF-1.4 test') },
-      file_url: undefined,
+      document: { file: { filename: 'invoice.pdf', extension: 'pdf', data: Buffer.from('%PDF-1.4 test') } },
       schema_type: 'simple',
       schema: { fields: [{ name: 'invoice_number', type: 'string', required: true }] },
       extraction_mode: 'accurate',
@@ -212,7 +211,7 @@ describe('form fields sent to Datalab', () => {
     const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce(submitted).mockResolvedValueOnce(ok(balancedResult));
     const input = extractOperation.readHuman({
       source: 'url',
-      file_url: 'https://example.com/invoice.pdf',
+      document: { file_url: 'https://example.com/invoice.pdf' },
       schema_type: 'advanced',
       schema: { json_schema: JSON.stringify(invoiceSchema) },
       extraction_mode: null,
@@ -259,21 +258,21 @@ describe('form fields sent to Datalab', () => {
 
   it('reads only the chosen variant when the builder still holds the value of the other one', () => {
     const leftovers = { fields: [{ name: 'invoice_number', type: 'string' }], json_schema: invoiceSchema };
-    const simple = extractOperation.readHuman({ source: 'url', file_url: 'https://example.com/a.pdf', schema_type: 'simple', schema: leftovers });
+    const simple = extractOperation.readHuman({ source: 'url', document: { file_url: 'https://example.com/a.pdf' }, schema_type: 'simple', schema: leftovers });
     expect(simple.schema).toEqual({ type: 'object', properties: { invoice_number: { type: 'string' } } });
-    const advanced = extractOperation.readHuman({ source: 'url', file_url: 'https://example.com/a.pdf', schema_type: 'advanced', schema: leftovers });
+    const advanced = extractOperation.readHuman({ source: 'url', document: { file_url: 'https://example.com/a.pdf' }, schema_type: 'advanced', schema: leftovers });
     expect(advanced.schema).toEqual(invoiceSchema);
   });
 
   it('asks for a JSON Schema when Advanced is chosen and only a Simple list is left in the form', () => {
-    expect(() => extractOperation.readHuman({ source: 'url', file_url: 'https://example.com/a.pdf', schema_type: 'advanced', schema: { fields: [{ name: 'invoice_number', type: 'string' }] } })).toThrow('Give the JSON Schema of the fields to extract');
+    expect(() => extractOperation.readHuman({ source: 'url', document: { file_url: 'https://example.com/a.pdf' }, schema_type: 'advanced', schema: { fields: [{ name: 'invoice_number', type: 'string' }] } })).toThrow('Give the JSON Schema of the fields to extract');
   });
 
   it('checks the schema and mode before calling Datalab', () => {
     const spy = vi.spyOn(httpClient, 'sendRequest');
     expect(() => extractOperation.readAi({ file_url: 'https://example.com/a.pdf', json_schema: { type: 'object' } })).toThrow('needs a "properties" object');
     expect(() => extractOperation.readAi({ file_url: 'https://example.com/a.pdf', json_schema: invoiceSchema, extraction_mode: 'quick' })).toThrow('Extraction Mode "quick" is not known');
-    expect(() => extractOperation.readHuman({ source: 'url', file_url: 'https://example.com/a.pdf', schema_type: 'simple', schema: {} })).toThrow('Add at least one field');
+    expect(() => extractOperation.readHuman({ source: 'url', document: { file_url: 'https://example.com/a.pdf' }, schema_type: 'simple', schema: {} })).toThrow('Add at least one field');
     expect(() => extractOperation.readAi({ file_url: '', json_schema: invoiceSchema })).toThrow('Give file_url');
     expect(spy).not.toHaveBeenCalled();
   });

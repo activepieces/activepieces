@@ -20,7 +20,7 @@ export const segmentDocumentAction = createAction({
   async run({ auth, propsValue }) {
     return segmentOperation.run({
       apiKey: auth.secret_text,
-      source: datalabSource.fromHuman({ source: propsValue.source, file: propsValue.file, fileUrl: propsValue.file_url, noun: 'document' }),
+      source: datalabSource.fromHuman({ source: propsValue.source, input: propsValue.document, noun: 'document' }),
       method: propsValue.split_method,
       sections: propsValue.sections,
       instructions: propsValue.instructions,
