@@ -35,16 +35,28 @@ export const useBatchStepRun = (batchStepName: string | null) => {
   const total = isNil(output) ? 0 : batchUtils.batchCount(output);
   const current = Math.min(batchIndex, Math.max(total - 1, 0));
 
-  const { data: selectedPage, isLoading: isSelectedChildLoading } =
-    flowRunQueries.useBatchChild({
-      barrierId,
-      dispatchIndex: current,
-      enabled: total > 0,
-    });
+  const {
+    data: selectedPage,
+    isLoading: isSelectedChildLoading,
+    isError: isSelectedChildError,
+    refetch: refetchSelectedChild,
+  } = flowRunQueries.useBatchChild({
+    barrierId,
+    dispatchIndex: current,
+    enabled: total > 0,
+  });
 
   const selectedChild = toBatchChildren(selectedPage?.data)[0] ?? null;
 
-  return { output, total, current, selectedChild, isSelectedChildLoading };
+  return {
+    output,
+    total,
+    current,
+    selectedChild,
+    isSelectedChildLoading,
+    selectedChildFailed: isSelectedChildError && isNil(selectedPage),
+    refetchSelectedChild,
+  };
 };
 
 export const useBatchLogs = (stepName: string | undefined): BatchLogs => {
@@ -54,13 +66,35 @@ export const useBatchLogs = (stepName: string | undefined): BatchLogs => {
       isNil(stepName) ? null : enclosingBatchStepName({ stepName, trigger }),
     [trigger, stepName],
   );
-  const { output, current, selectedChild, isSelectedChildLoading } =
-    useBatchStepRun(batchStepName);
-  const { data: childRun, isLoading: isChildRunLoading } =
-    flowRunQueries.useBatchChildRun({ childRunId: selectedChild?.id ?? null });
+  const {
+    output,
+    current,
+    selectedChild,
+    isSelectedChildLoading,
+    selectedChildFailed,
+    refetchSelectedChild,
+  } = useBatchStepRun(batchStepName);
+  const {
+    data: childRun,
+    isLoading: isChildRunLoading,
+    isError: isChildRunError,
+    refetch: refetchChildRun,
+  } = flowRunQueries.useBatchChildRun({
+    childRunId: selectedChild?.id ?? null,
+  });
 
   if (isNil(batchStepName) || isNil(output)) {
     return NOT_IN_A_BATCH;
+  }
+  if (selectedChildFailed) {
+    return { kind: 'error', childRunId: null, retry: refetchSelectedChild };
+  }
+  if (!isNil(selectedChild) && isChildRunError && isNil(childRun)) {
+    return {
+      kind: 'error',
+      childRunId: selectedChild.id,
+      retry: refetchChildRun,
+    };
   }
   if (isSelectedChildLoading || (!isNil(selectedChild) && isChildRunLoading)) {
     return { kind: 'loading', childRunId: selectedChild?.id ?? null };
@@ -127,6 +161,7 @@ const NOT_IN_A_BATCH = { kind: 'notInABatch', childRunId: null } as const;
 export type BatchLogs =
   | { kind: 'notInABatch'; childRunId: null }
   | { kind: 'loading'; childRunId: string | null }
+  | { kind: 'error'; childRunId: string | null; retry: () => unknown }
   | {
       kind: 'steps';
       steps: Record<string, StepOutput>;
