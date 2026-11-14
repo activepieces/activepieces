@@ -8,6 +8,30 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Outseta 1.0.0: List actions return curated fields, and lookups no longer fail when nothing matches
+
+**List Accounts**, **List Persons**, **List Deals**, **List Plans**, **List Add-ons**, **List Discounts**, **List Tickets** and **List Account Transactions** now return each item with the same snake_case fields as the matching Retrieve action, instead of Outseta's raw payload (PascalCase keys such as `Uid` or `Name`). They page with **Page**, starting at 0, instead of **Offset**, and the response carries `total`, `page` and `has_more` instead of `metadata`.
+
+**Retrieve Account**, **Retrieve Person**, **Retrieve Deal** and **Retrieve Subscription** now return `found: false` with every field set to `null` when nothing matches, instead of failing the step. Their **Lookup by** dropdown is replaced by tabs or cards: fill the field of the tab you want.
+
+Removed outputs:
+
+- `subscription_status` from Retrieve Account and Retrieve Subscription. Outseta's subscription has no status, so it was always empty.
+- `validity_date` from Retrieve Account and Retrieve Subscription. It returned the renewal or end date, never the expiration date; use `renewal_date`, `end_date` or `expiration_date`.
+- `plan_family_name`, `billing_renewal_term`, `start_date`, `end_date`, `renewal_date` and `add_ons` from Retrieve Account. It keeps `current_subscription_uid`, `plan_uid` and `plan_name`; the rest comes from Retrieve Subscription, which accepts an account UID.
+
+The **Account Stage** options of Create Account and Update Account were mislabelled from Delinquent onwards: Delinquent set Cancelling, Cancelling set Expired, Expired set Trial Expired, and Demo set Past Due. The options now carry their real names, and Lead, which Outseta does not have, is gone.
+
+#### What you need to do
+
+- Flows that read a List action's output: map the new field names, and replace Offset with Page.
+- Flows that relied on a Retrieve action failing when nothing was found: branch on `found` instead.
+- Flows that read `validity_date`: use `renewal_date`, `end_date` or `expiration_date` from Retrieve Subscription.
+- Flows that read the subscription details of Retrieve Account: add a Retrieve Subscription step with the account UID.
+- Create Account and Update Account steps that set Account Stage: check the stage after you upgrade the step. A step keeps writing the stage it always wrote, which may not be the one its old label named.
+
+Steps keep running on the version they were built with until you upgrade them.
+
 #### ManyChat 0.2.0: Set Custom Field is no longer an agent tool
 
 From ManyChat 0.2.0, **Set Custom Field** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs. Agents use the new **Set Subscriber Custom Fields** tool instead, which sets 1 to 20 fields in one call by field ID or name. Set Custom Field steps upgraded to 0.2.0 send date values as `YYYY-MM-DD` and date-time values with an explicit time zone offset, as ManyChat documents. The piece needs Activepieces 0.86.4 or later.

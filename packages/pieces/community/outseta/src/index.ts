@@ -80,7 +80,7 @@ export const outseta = createPiece({
   displayName: 'Outseta',
   description: 'Triggers and actions for Outseta CRM and Billing',
   auth: outsetaAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/outseta.png',
   authors: ['bst1n', 'sanket-a11y'],
   categories: [PieceCategory.SALES_AND_CRM],
