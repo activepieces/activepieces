@@ -109,7 +109,7 @@ describe('fetch_crypto_pair_price (existing action)', () => {
 
   it('fails before any request when a coin is blank', async () => {
     const error = await errorOf(runAction({ action: fetchCryptoPairPrice, props: { first_coin: ' ', second_coin: 'USDT' } }));
-    expect(error.message).toBe('First Coin Symbol is required, for example BTCUSDT.');
+    expect(error.message).toBe('Base Asset is required, for example BTCUSDT.');
     expect(sendRequest).not.toHaveBeenCalled();
   });
 

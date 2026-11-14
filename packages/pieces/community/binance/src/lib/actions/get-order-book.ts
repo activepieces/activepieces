@@ -21,12 +21,15 @@ export const getOrderBook = createAction({
     symbol: symbolProp,
     limit: Property.Number({
       displayName: 'Depth',
-      description:
-        'Price levels to return on each side, 1 to 5000. Defaults to 20. Binance rate-limit weight: 5 up to 100 levels, 25 up to 500, 50 up to 1000, 250 above that.',
+      description: 'Price levels on each side, up to 5000. Over 100 uses more rate limit.',
       required: false,
       defaultValue: DEFAULT_DEPTH,
     }),
   },
+  propertyGroups: [
+    { key: 'pair', display: 'section', label: 'Trading Pair', icon: 'tag', props: ['symbol'] },
+    { key: 'results', display: 'section', label: 'Results', icon: 'sliders', props: ['limit'] },
+  ],
   outputSchema: getOrderBookOutputSchema,
   async run(context) {
     const symbol = binanceInput.symbol({ value: context.propsValue.symbol });

@@ -15,11 +15,27 @@ export const get24hTicker = createAction({
       'Gets rolling 24-hour statistics for one Binance spot pair such as BTCUSDT. The Full detail level (default) returns price change and percent, weighted average, previous close, best bid/ask, open/high/low/last price, volumes and trade count; Mini returns only open/high/low/last price, volumes and trade count. Use for a daily market summary; use Get Price Change (Rolling Window) for any other window from 1 minute to 7 days. Prices and volumes are exact decimal strings. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'pair',
+      display: 'section',
+      label: 'Trading Pair',
+      icon: 'tag',
+      props: ['symbol'],
+    },
+    {
+      key: 'output',
+      display: 'section',
+      label: 'Output',
+      icon: 'sliders',
+      props: ['type'],
+    },
+  ],
   props: {
     symbol: symbolProp,
     type: Property.StaticDropdown({
       displayName: 'Detail Level',
-      description: 'Full (default) adds price change and percent, weighted average price, previous close, last quantity and best bid/ask. Mini returns only open, high, low and last price, volumes and trade count.',
+      description: 'Full adds price change, average, previous close and best bid/ask.',
       required: false,
       defaultValue: 'FULL',
       options: {
