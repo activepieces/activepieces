@@ -17,20 +17,22 @@ export default createAction({
   props: {
     name: Property.ShortText({
       displayName: 'Name',
+      placeholder: 'Road Trip Mix',
       required: true,
     }),
     description: Property.ShortText({
       displayName: 'Description',
+      description: 'Shown under the playlist name.',
       required: false,
     }),
     public: Property.Checkbox({
       displayName: 'Public',
-      description: "Show the playlist on your profile. Leave unset for Spotify's default.",
+      description: 'On shows it on your profile, off keeps it private.',
       required: false,
     }),
     collaborative: Property.Checkbox({
       displayName: 'Collaborative',
-      description: 'Let others edit the playlist. Only works when Public is off.',
+      description: 'Lets others edit it; needs Public off.',
       required: false,
     }),
   },

@@ -18,10 +18,12 @@ export default createAction({
     state: Property.StaticDropdown<string>({
       displayName: 'Shuffle',
       required: true,
+      display: 'cards',
+      defaultValue: 'on',
       options: {
         options: [
-          { label: 'On', value: 'on' },
-          { label: 'Off', value: 'off' },
+          { label: 'On', value: 'on', description: 'Play in random order' },
+          { label: 'Off', value: 'off', description: 'Play in order' },
         ],
       },
     }),

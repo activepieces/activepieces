@@ -1,5 +1,7 @@
 import {
   createTrigger,
+  MarkdownVariant,
+  Property,
   StoreScope,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
@@ -59,7 +61,7 @@ export default createTrigger({
   name: 'playlist_items_changed',
   classification: 'READ',
   displayName: 'Playlist Items Changed',
-  description: 'Triggers when the items of a playlist change. Watches playlists of up to 10,000 items (Spotify\'s maximum). Development-mode Spotify apps can only watch playlists you own or collaborate on.',
+  description: 'Triggers when items are added to, removed from or moved in a playlist.',
   aiMetadata: {
     description: 'Fires once when the list of items in the watched playlist changes between polls (items added, removed, or reordered), emitting the full current item list. Works on playlists of up to 10,000 items and fails loudly on larger ones. Development-mode Spotify apps can only watch playlists the user owns or collaborates on.',
   },
@@ -68,6 +70,10 @@ export default createTrigger({
   outputSchema: spotifyOutputSchemas['playlistItemsChangedTrigger'],
   props: {
     playlist_id: spotifyCommon.playlist_id(true),
+    note: Property.MarkDown({
+      value: 'Watches playlists of up to 10,000 items. Development-mode Spotify apps can only watch playlists you own or collaborate on.',
+      variant: MarkdownVariant.INFO,
+    }),
   },
   sampleData: {
     total: 1,

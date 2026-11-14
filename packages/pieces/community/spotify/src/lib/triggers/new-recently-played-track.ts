@@ -42,7 +42,7 @@ export default createTrigger({
   name: 'new_recently_played_track',
   classification: 'READ',
   displayName: 'New Recently Played Track',
-  description: 'Triggers when you finish playing a track (podcast episodes are not reported by Spotify)',
+  description: 'Triggers when you finish playing a track; podcast episodes are not reported.',
   aiMetadata: {
     description: 'Fires once for each track play Spotify records in the user\'s recently played history since the last poll, emitting {played_at, track, context}. Spotify records a play after the track has played for a while, and does not report podcast episodes. Plays from before the trigger was turned on do not fire. Reads every page since the last poll (up to 500 plays); beyond that the poll fails without saving progress, and turning the trigger off and on starts again from now.',
   },

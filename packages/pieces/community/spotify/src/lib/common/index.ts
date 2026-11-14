@@ -1,10 +1,13 @@
 import { getAccessTokenOrThrow, HttpMethod } from '@activepieces/pieces-common';
 import {
   OAuth2PropertyValue,
+  MarkdownVariant,
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
 import { SpotifyWebApi } from './client';
+import { Device } from './models/playback';
+import { Playlist } from './models/playlist';
 import { User } from './models/user';
 
 const markdownDescription = `
@@ -134,6 +137,18 @@ function isYes(value: unknown): boolean {
   return value === true || value === 'true' || value === 'yes';
 }
 
+function deviceLabel(device: Device): string {
+  return `${device.name} (${device.type}${device.is_active ? ', active' : ''})`;
+}
+
+function playlistLabel(playlist: Playlist): string {
+  const total = playlist.items?.total ?? playlist.tracks?.total;
+  if (typeof total !== 'number') {
+    return playlist.name;
+  }
+  return `${playlist.name} (${total} ${total === 1 ? 'item' : 'items'})`;
+}
+
 function epochOf(value: unknown): number | undefined {
   if (typeof value !== 'string' || value === '') {
     return undefined;
@@ -233,15 +248,16 @@ export const spotifyCommon = {
     Property.Dropdown({
       auth: spotifyCommon.authentication,
       displayName: 'Device',
-      description:
-        'Device to control. Empty uses the active device. Open Spotify on it first.',
+      description: required
+        ? 'Device to move playback to, with Spotify open on it.'
+        : 'Empty uses the active device, which needs Spotify open.',
       required,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'setup authentication first',
+            placeholder: 'Connect your Spotify account first.',
             options: [],
           };
         }
@@ -249,7 +265,7 @@ export const spotifyCommon = {
           const client = makeClient({ auth });
           const res = await client.getDevices();
           const options = res.devices.flatMap((device) =>
-            device.id === null ? [] : [{ label: device.name, value: device.id }]
+            device.id === null ? [] : [{ label: deviceLabel(device), value: device.id }]
           );
           return {
             disabled: false,
@@ -280,7 +296,7 @@ export const spotifyCommon = {
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'setup authentication first',
+            placeholder: 'Connect your Spotify account first.',
             options: [],
           };
         }
@@ -291,8 +307,12 @@ export const spotifyCommon = {
           });
           return {
             disabled: false,
+            placeholder:
+              playlists.items.length === 0
+                ? 'No playlists found. Create one in Spotify first.'
+                : undefined,
             options: playlists.items.map((playlist) => ({
-              label: playlist.name,
+              label: playlistLabel(playlist),
               value: playlist.id,
             })),
           };
@@ -318,31 +338,45 @@ export const spotifyCommon = {
       displayName,
       description: `The ${kind} ID, spotify:${kind}: URI or open.spotify.com link.`,
       required,
+      placeholder: `https://open.spotify.com/${kind}/…`,
     }),
-  market: () =>
+  market: (params?: { advanced?: boolean }) =>
     Property.ShortText({
       displayName: 'Market',
-      description:
-        'Two-letter country code, e.g. US. Empty uses the account country.',
+      description: 'Two-letter country code; empty uses your account country.',
+      placeholder: 'US',
       required: false,
+      advanced: params?.advanced ?? true,
     }),
   limit: ({ max, defaultHint }: { max: number; defaultHint: number }) =>
     Property.Number({
       displayName: 'Limit',
-      description: `How many to return (1 to ${max}, Spotify's default is ${defaultHint}).`,
+      description: `How many to return, from 1 to ${max}.`,
       required: false,
+      display: 'stepper',
+      min: 1,
+      max,
+      step: 1,
+      defaultValue: defaultHint,
     }),
   offset: () =>
     Property.Number({
       displayName: 'Offset',
       description: 'How many items to skip, starting from 0.',
       required: false,
+      advanced: true,
     }),
   all: (params?: { maxItems?: number }) =>
     Property.Checkbox({
-      displayName: 'All',
-      description: `Fetches every page (up to ${(params?.maxItems ?? 5000).toLocaleString('en-US')} items) in a single request`,
+      displayName: 'Fetch All Pages',
+      description: `Gets every page, up to ${(params?.maxItems ?? 5000).toLocaleString('en-US')} items.`,
       required: false,
+      defaultValue: false,
+    }),
+  pagingNote: (params?: { fields?: string }) =>
+    Property.MarkDown({
+      value: `When Fetch All Pages is on, ${params?.fields ?? 'Limit and Offset'} are ignored.`,
+      variant: MarkdownVariant.INFO,
     }),
 };
 

@@ -87,8 +87,8 @@ afterEach(() => {
 });
 
 describe('piece metadata', () => {
-  test('minimumSupportedRelease is 0.86.4', () => {
-    expect(spotify.minimumSupportedRelease).toBe('0.86.4');
+  test('minimumSupportedRelease is 0.88.2', () => {
+    expect(spotify.minimumSupportedRelease).toBe('0.88.2');
   });
 
   test('update_playlist is human, its twin is ai, all other actions are both', () => {
@@ -396,7 +396,7 @@ describe('chunking', () => {
 
   test('replace: clearing needs the explicit checkbox', async () => {
     const seen = stubFetch(() => ({ status: 200, body: { snapshot_id: 's' } }));
-    await expect(run({ action: replacePlaylistItems, propsValue: { playlist_id: PL, items: [] } })).rejects.toThrow(/Empty The Playlist/);
+    await expect(run({ action: replacePlaylistItems, propsValue: { playlist_id: PL, items: [] } })).rejects.toThrow(/Empty Playlist/);
     expect(seen).toHaveLength(0);
     await run({ action: replacePlaylistItems, propsValue: { playlist_id: PL, items: [], clear_all: true } });
     expect(seen[0]).toMatchObject({ method: 'PUT', body: { uris: [] } });
@@ -464,7 +464,7 @@ describe('player', () => {
 
   test('play rejects a context together with tracks', async () => {
     const seen = stubFetch(() => ({ status: 204 }));
-    await expect(run({ action: play, propsValue: { context_uri: `spotify:album:${TR}`, tracks: [`spotify:track:${TR}`] } })).rejects.toThrow(/either a Context URI or Tracks/);
+    await expect(run({ action: play, propsValue: { context_uri: `spotify:album:${TR}`, tracks: [`spotify:track:${TR}`] } })).rejects.toThrow(/either Play From or Tracks/);
     expect(seen).toHaveLength(0);
   });
 
@@ -510,20 +510,24 @@ describe('update playlist', () => {
     expect(seen).toHaveLength(0);
   });
 
-  test('human action keeps checkbox booleans and rejects an empty update', async () => {
+  test('human action sends sharing only with Change Sharing and rejects an empty update', async () => {
     const seen = stubFetch(() => ({ status: 200, body: undefined }));
     await expect(run({ action: updatePlaylist, propsValue: { playlist_id: PL } })).rejects.toThrow(/Nothing to update/);
-    const out = await run({ action: updatePlaylist, propsValue: { playlist_id: PL, description: 'd', public: false } });
-    expect(seen[0].body).toEqual({ description: 'd', public: false });
-    expect(out).toEqual({ playlist_id: PL, updated: ['description', 'public'] });
+    await expect(run({ action: updatePlaylist, propsValue: { playlist_id: PL, public: false, collaborative: false } })).rejects.toThrow(/Nothing to update/);
+    const out = await run({ action: updatePlaylist, propsValue: { playlist_id: PL, description: 'd', public: false, collaborative: false } });
+    expect(seen[0].body).toEqual({ description: 'd' });
+    expect(out).toEqual({ playlist_id: PL, updated: ['description'] });
+    const shared = await run({ action: updatePlaylist, propsValue: { playlist_id: PL, change_sharing: true, public: false } });
+    expect(seen[1].body).toEqual({ public: false, collaborative: false });
+    expect(shared).toEqual({ playlist_id: PL, updated: ['public', 'collaborative'] });
   });
 
-  test('an empty description clears it on both actions, an absent one is left out', async () => {
+  test('an empty description is kept on the human action and cleared on the ai twin', async () => {
     const seen = stubFetch(() => ({ status: 200, body: undefined }));
-    await run({ action: updatePlaylist, propsValue: { playlist_id: PL, description: '' } });
+    await run({ action: updatePlaylist, propsValue: { playlist_id: PL, name: 'N', description: '' } });
     await run({ action: updatePlaylistDetails, propsValue: { playlist_id: PL, description: '  ' } });
     await run({ action: updatePlaylistDetails, propsValue: { playlist_id: PL, name: 'N' } });
-    expect(seen.map((r) => r.body)).toEqual([{ description: '' }, { description: '' }, { name: 'N' }]);
+    expect(seen.map((r) => r.body)).toEqual([{ name: 'N' }, { description: '' }, { name: 'N' }]);
   });
 
   test('seek is not marked idempotent', () => {
@@ -637,7 +641,7 @@ describe('get_artist_albums (Spotify max limit 10)', () => {
 
   test('the Limit hint shows max 10 and default 5', () => {
     expect(getArtistAlbums.props.limit.description).toContain('1 to 10');
-    expect(getArtistAlbums.props.limit.description).toContain('default is 5');
+    expect(getArtistAlbums.props.limit.defaultValue).toBe(5);
   });
 });
 

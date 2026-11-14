@@ -6,7 +6,7 @@ import { spotifyOutputSchemas } from '../output-schemas';
 export default createAction({
   name: 'reorder_playlist',
   classification: 'WRITE',
-  displayName: 'Reorder playlist',
+  displayName: 'Reorder Playlist',
   description: 'Reorders items in the playlist',
   audience: 'both',
   aiMetadata: {
@@ -18,31 +18,38 @@ export default createAction({
   props: {
     playlist_id: spotifyCommon.playlist_id(true),
     from_position: Property.Number({
-      displayName: 'From Position',
-      description: '0-based position of the first item to move.',
+      displayName: 'Move From',
+      description: 'Position of the first item, from 0.',
       required: true,
+      width: 'half',
     }),
     to_position: Property.Number({
-      displayName: 'To Position',
-      description: '0-based position to insert before. Use the item count for the end.',
+      displayName: 'Move To',
+      description: 'Insert before this position; use the item count for the end.',
       required: true,
+      width: 'half',
     }),
     amount: Property.Number({
-      displayName: 'Amount of Items',
-      description: 'How many items to move, starting at From Position. Defaults to 1.',
+      displayName: 'Number of Items',
+      description: 'How many items to move; empty moves 1.',
       required: false,
     }),
     snapshot_id: Property.ShortText({
       displayName: 'Snapshot ID',
-      description: 'Optional snapshot ID to apply the change to that playlist version.',
+      description: 'Playlist version from an earlier step; empty uses the latest.',
       required: false,
+      advanced: true,
     }),
   },
+  propertyGroups: [
+    { key: 'playlist', display: 'section', label: 'Playlist', icon: 'inbox', props: ['playlist_id'] },
+    { key: 'move', display: 'section', label: 'Move', icon: 'sliders', props: ['from_position', 'to_position', 'amount'] },
+  ],
   async run({ auth, propsValue }) {
     const playlistId = spotifyIds.parse({ kind: 'playlist', value: propsValue.playlist_id, label: 'Playlist' });
-    const rangeStart = spotifyValidate.requiredInteger({ value: propsValue.from_position, field: 'From Position', min: 0 });
-    const insertBefore = spotifyValidate.requiredInteger({ value: propsValue.to_position, field: 'To Position', min: 0 });
-    const rangeLength = spotifyValidate.optionalInteger({ value: propsValue.amount, field: 'Amount of Items', min: 1 });
+    const rangeStart = spotifyValidate.requiredInteger({ value: propsValue.from_position, field: 'Move From', min: 0 });
+    const insertBefore = spotifyValidate.requiredInteger({ value: propsValue.to_position, field: 'Move To', min: 0 });
+    const rangeLength = spotifyValidate.optionalInteger({ value: propsValue.amount, field: 'Number of Items', min: 1 });
     const snapshotId = spotifyValidate.optionalText(propsValue.snapshot_id);
     const client = makeClient({ auth });
     const res = await client.reorderPlaylist({

@@ -20,11 +20,13 @@ export default createAction({
   props: {
     limit: spotifyCommon.limit({ max: 50, defaultHint: 20 }),
     after: Property.ShortText({
-      displayName: 'After',
-      description: 'Cursor from a previous call (next_after) to get the next page.',
+      displayName: 'Next Page Cursor',
+      description: 'The next_after value from an earlier run; empty starts at the top.',
       required: false,
+      advanced: true,
     }),
     all: spotifyCommon.all(),
+    paging_note: spotifyCommon.pagingNote({ fields: 'Limit and Next Page Cursor' }),
   },
   async run({ auth, propsValue }) {
     const client = makeClient({ auth });

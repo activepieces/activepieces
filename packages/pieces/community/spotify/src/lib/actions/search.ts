@@ -17,7 +17,7 @@ function searchTypes(value: unknown): string[] {
   });
   const unique = Array.from(new Set(mapped));
   if (unique.length === 0) {
-    throw new Error('Choose at least one object type to search for.');
+    throw new Error('Choose at least one result type.');
   }
   return unique;
 }
@@ -50,35 +50,47 @@ export default createAction({
   props: {
     search_text: Property.ShortText({
       displayName: 'Search Text',
-      description: 'The word or phrase you are searching for',
+      description: 'Words to look for, such as an artist or song name.',
+      placeholder: 'Daft Punk',
       required: true,
     }),
     types: Property.StaticMultiSelectDropdown({
-      displayName: 'Object Types',
+      displayName: 'Result Types',
+      description: 'Kinds of items to return.',
       required: true,
       options: {
         options: [
-          { label: 'Albums', value: '' },
+          { label: 'Albums', value: 'album' },
           { label: 'Artists', value: 'artist' },
           { label: 'Playlists', value: 'playlist' },
           { label: 'Tracks', value: 'track' },
-          { label: 'Shows (podcasts)', value: 'show' },
+          { label: 'Podcasts', value: 'show' },
           { label: 'Episodes', value: 'episode' },
         ],
       },
     }),
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'Results per type, 1 to 50 (default 5). Dev-mode apps fail above 10.',
+      description: 'Results per type; development-mode apps allow up to 10.',
       required: false,
+      display: 'stepper',
+      min: 1,
+      max: 50,
+      step: 1,
+      defaultValue: 5,
     }),
     offset: Property.Number({
       displayName: 'Offset',
-      description: 'How many results to skip, starting from 0.',
+      description: 'How many results to skip, up to 1,000.',
       required: false,
+      advanced: true,
     }),
     market: spotifyCommon.market(),
   },
+  propertyGroups: [
+    { key: 'query', display: 'section', label: 'Search For', icon: 'filter', props: ['search_text', 'types'] },
+    { key: 'results', display: 'section', label: 'Results', icon: 'sliders', props: ['limit'] },
+  ],
   async run({ auth, propsValue }) {
     const types = searchTypes(propsValue.types);
     const limit = searchLimit(propsValue.limit);
