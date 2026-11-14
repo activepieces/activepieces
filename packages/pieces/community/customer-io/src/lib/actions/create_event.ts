@@ -8,30 +8,48 @@ export const createEvent = createAction({
   name: 'create_event',
   classification: 'WRITE',
   displayName: 'Create Event',
-  description: 'Create an event in Customer.io',
+  description: 'Record an event for a person in Customer.io',
   audience: 'both',
   aiMetadata: { description: 'Sends a behavioral/tracking event for a specific person to Customer.io via the Track API, identified by id, email, or cio_id per the workspace setting. Use to record that a customer did something so it can drive campaigns or segments. Provide the event payload either as key-value pairs or a raw JSON object (body_type). Not idempotent: each call appends a new event, even with identical input.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'person',
+      display: 'section',
+      label: 'Person',
+      icon: 'user',
+      props: ['customer_identifier'],
+    },
+    {
+      key: 'event',
+      display: 'section',
+      label: 'Event',
+      icon: 'tag',
+      props: ['event_name', 'body_type', 'body'],
+    },
+  ],
   props: {
     customer_identifier: Property.ShortText({
-      displayName: 'Customer identifier',
-      description: 'The unique value representing a person. You may identify a person by id, email address, or the cio_id (when updating people), depending on your workspace settings',
+      displayName: 'Customer Identifier',
+      description: "The person's ID, email or cio_id, depending on your workspace.",
+      placeholder: 'jane@example.com',
       required: true,
     }),
     event_name: Property.ShortText({
       displayName: 'Event Name',
-      description: 'The name of the event. This is how you\'ll reference the event in campaigns or segments',
+      description: 'The name you use for this event in campaigns and segments.',
+      placeholder: 'purchased',
       required: true,
     }),
     body_type: Property.StaticDropdown({
-      displayName: 'parameters',
+      displayName: 'Data Format',
       required: false,
-      description: 'Event information to be sent to Customer.io',
+      description: "How you want to enter the event's data.",
       defaultValue: 'key_value',
       options: {
         disabled: false,
         options: [
           {
-            label: 'Key Value',
+            label: 'Key-Value Pairs',
             value: 'key_value',
           },
           {
@@ -43,7 +61,7 @@ export const createEvent = createAction({
     }),
     body: Property.DynamicProperties({
       auth: customerIOAuth,
-      displayName: 'Body',
+      displayName: 'Event Data',
       refreshers: ['body_type'],
       required: false,
       props: async ({ body_type }) => {
@@ -56,13 +74,15 @@ export const createEvent = createAction({
         switch (bodyTypeInput) {
           case 'json':
             fields['data'] = Property.Json({
-              displayName: 'JSON Body',
+              displayName: 'Event Data',
+              description: 'A JSON object of attributes saved with the event.',
               required: true,
             });
             break;
           case 'key_value':
             fields['data'] = Property.Object({
-              displayName: 'Key Value',
+              displayName: 'Event Data',
+              description: 'Attributes saved with the event, for messages and segments.',
               required: true,
             });
             break;

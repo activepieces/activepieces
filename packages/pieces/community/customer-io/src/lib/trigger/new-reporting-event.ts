@@ -1,5 +1,6 @@
 import { HttpError, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import {
+  MarkdownVariant,
   Property,
   TriggerStrategy,
   createTrigger,
@@ -13,7 +14,7 @@ const CUSTOMER_IO_EVENTS: { label: string; value: string }[] = [
   { label: 'Customer — Subscribed', value: 'customer_subscribed' },
   { label: 'Customer — Unsubscribed', value: 'customer_unsubscribed' },
   {
-    label: 'Customer — Subscription Preferences Changed',
+    label: 'Customer — Preferences Changed',
     value: 'customer_subscription_preferences_changed',
   },
   { label: 'Email — Drafted', value: 'email_drafted' },
@@ -91,13 +92,34 @@ export const newReportingEvent = createTrigger({
   classification: 'READ',
   displayName: 'New Reporting Event',
   description:
-    'Fires on a Customer.io reporting-webhook event (delivered, bounced, clicked, …). Subscribe to only the event types you need, and optionally match a single campaign, action, or recipient domain so unrelated events never start a run.',
+    'Starts a flow when Customer.io reports a message or subscription event.',
   aiMetadata: {
     description:
       'Fires on each Customer.io reporting-webhook event of the subscribed types (e.g. email_delivered, email_bounced, sms_clicked). Requires the event types to subscribe to, and optionally filters by campaign ID, action ID, or recipient email domain so only matching events start a run. Returns the raw Customer.io event envelope (event_id, object_type, metric, timestamp, data).',
   },
   type: TriggerStrategy.WEBHOOK,
+  propertyGroups: [
+    {
+      key: 'events',
+      display: 'section',
+      label: 'Webhook',
+      icon: 'inbox',
+      props: ['webhook_info', 'events'],
+    },
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['campaign_id', 'action_id', 'recipient_domain'],
+    },
+  ],
   props: {
+    webhook_info: Property.MarkDown({
+      value:
+        'Activepieces creates the reporting webhook in Customer.io for you, and deletes it when the flow is turned off.',
+      variant: MarkdownVariant.INFO,
+    }),
     events: Property.StaticMultiSelectDropdown({
       displayName: 'Event Types',
       description: 'Which reporting events Customer.io should send.',
@@ -108,20 +130,22 @@ export const newReportingEvent = createTrigger({
     }),
     campaign_id: Property.Number({
       displayName: 'Campaign ID',
-      description: 'Optional. Only start a run for events of this campaign.',
+      description:
+        "Only events from this campaign. The ID is in the campaign's URL.",
+      width: 'half',
       required: false,
     }),
     action_id: Property.Number({
       displayName: 'Action ID',
-      description:
-        'Optional. When set, only events for this action/message start a run.',
+      description: 'Only events from this one campaign message (action).',
+      width: 'half',
       required: false,
     }),
     recipient_domain: Property.ShortText({
       displayName: 'Recipient Domain',
       description:
-        'Optional. Only start a run when the recipient email is at this domain.',
-      placeholder: 'odoo.com',
+        "Only start a run when the recipient's email is at this domain.",
+      placeholder: 'example.com',
       required: false,
     }),
   },
