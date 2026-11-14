@@ -1,8 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createAction, isNil, Property } from '@activepieces/pieces-framework';
 import { manychatAuth } from '../auth';
-import { BASE_URL } from '../common/props';
-import { isNil } from '@activepieces/pieces-framework';
+import { manychatClient, manychatUtils } from '../common/client';
+import { manychatOutputSchemas } from '../common/output-schemas';
 
 export const createSubscriberAction = createAction({
 	auth: manychatAuth,
@@ -11,7 +10,12 @@ export const createSubscriberAction = createAction({
 	displayName: 'Create Subscriber',
 	description: 'Creates a Unified or a Whatsapp subscriber.',
 	audience: 'both',
-	aiMetadata: { description: 'Creates a new Manychat subscriber from contact details such as name, email, phone, or WhatsApp phone. Use when onboarding a new contact into Manychat. At least one of phone, email, or WhatsApp phone must be provided. Not idempotent: each call creates another subscriber.', idempotent: false },
+	aiMetadata: {
+		description:
+			'Creates a new Manychat subscriber from contact details such as name, email, phone, or WhatsApp phone. Use when onboarding a new contact into Manychat. At least one of phone, email, or WhatsApp phone must be provided. ManyChat decides the opt-in and consent rules; its error is shown as is. Not idempotent: each call creates another subscriber.',
+		idempotent: false,
+	},
+	outputSchema: manychatOutputSchemas.createSubscriber,
 	props: {
 		first_name: Property.ShortText({
 			displayName: 'First Name',
@@ -67,17 +71,13 @@ export const createSubscriberAction = createAction({
 			consent_phrase,
 		} = propsValue;
 		if (isNil(phone) && isNil(whatsapp_phone) && isNil(email)) {
-			throw Error(
-				'To create a subscriber you must fill in at least one field: phone or email or whatsapp_phone.',
-			);
+			throw new Error('To create a subscriber you must fill in at least one field: phone or email or whatsapp_phone.');
 		}
-		const response = await httpClient.sendRequest<{ status: string; data: Record<string, any> }>({
-			method: HttpMethod.POST,
-			url: `${BASE_URL}/subscriber/createSubscriber`,
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: auth.secret_text,
-			},
+		const body = await manychatClient.request({
+			apiKey: manychatUtils.apiKeyOf(auth),
+			method: 'POST',
+			path: '/subscriber/createSubscriber',
+			operation: 'create subscriber',
 			body: {
 				first_name,
 				last_name,
@@ -90,7 +90,6 @@ export const createSubscriberAction = createAction({
 				consent_phrase,
 			},
 		});
-
-		return response.body;
+		return manychatUtils.recordOf(body);
 	},
 });
