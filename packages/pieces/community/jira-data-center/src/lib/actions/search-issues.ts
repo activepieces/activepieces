@@ -8,7 +8,7 @@ export const searchIssuesAction = createAction({
 	name: 'search_issues',
 	classification: 'SEARCH',
 	displayName: 'Search Issues',
-	description: 'Search for issues with JQL',
+	description: 'Finds issues that match a JQL query.',
 	audience: 'both',
 	aiMetadata: {
 		description:
@@ -16,15 +16,36 @@ export const searchIssuesAction = createAction({
 		idempotent: true,
 	},
 	auth: jiraDataCenterAuth,
+	propertyGroups: [
+		{
+			key: 'query',
+			display: 'section',
+			label: 'Query',
+			icon: 'filter',
+			props: ['jql'],
+		},
+		{
+			key: 'results',
+			display: 'section',
+			label: 'Results',
+			icon: 'sliders',
+			props: ['maxResults'],
+		},
+	],
 	props: {
 		jql: Property.LongText({
 			displayName: 'JQL',
-			description: 'The JQL query to use in the search',
+			description: 'Put text and dates in single quotes.',
 			defaultValue: `type = story and created > '2023-12-13 14:00'`,
 			required: true,
 		}),
 		maxResults: Property.Number({
 			displayName: 'Max Results',
+			description: 'Most issues to return, up to 100.',
+			display: 'stepper',
+			min: 1,
+			max: 100,
+			step: 1,
 			defaultValue: 50,
 			required: true,
 		}),
