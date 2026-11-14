@@ -7,7 +7,7 @@ import {
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { googleGeminiAuth } from '../auth';
 
-export const defaultLLM = 'gemini-1.5-flash';
+export const defaultLLM = 'gemini-2.5-flash';
 
 export const allowedLLMs = [
   'gemini-1.5-flash',
@@ -20,8 +20,40 @@ export const allowedLLMs = [
   'gemini-3-pro'
 ];
 
-const isAllowedLLM = (model: GeminiModel): boolean =>
-  allowedLLMs.some((allowed) => model.name.startsWith(`models/${allowed}`));
+const EXCLUDED_TEXT_MODEL_KEYWORDS = [
+  'live',
+  'transcribe',
+  'robotics',
+  'omni',
+  'gemma',
+];
+
+export const isAllowedLLM = (model: GeminiModel): boolean => {
+  const supportsGenerateContent =
+    model.supportedGenerationMethods?.includes('generateContent') ??
+    allowedLLMs.some((allowed) => model.name.startsWith(`models/${allowed}`));
+
+  if (!supportsGenerateContent) {
+    return false;
+  }
+
+  if (
+    isTtsModel(model) ||
+    isImageModel(model) ||
+    isVeoModel(model) ||
+    isEmbeddingModel(model)
+  ) {
+    return false;
+  }
+
+  const modelName = model.name.toLowerCase();
+  const displayName = model.displayName?.toLowerCase() ?? '';
+
+  return !EXCLUDED_TEXT_MODEL_KEYWORDS.some(
+    (keyword) =>
+      modelName.includes(keyword) || displayName.includes(keyword),
+  );
+};
 
 const isTtsModel = (model: GeminiModel): boolean =>
   model.name.toLowerCase().includes('tts') ||
