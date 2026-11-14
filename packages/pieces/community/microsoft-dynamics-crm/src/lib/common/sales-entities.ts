@@ -349,7 +349,8 @@ function summarizeQualify({ leadId, created }: { leadId: string; created: Record
 }
 
 async function qualifyLead({ client, leadId, createAccount, createContact, createOpportunity, existingAccountId }: QualifyParams): Promise<QualifySummary> {
-  const accountId = existingAccountId === undefined ? undefined : odata.requireGuid({ value: existingAccountId, label: 'Existing account ID' });
+  const accountId =
+    !createOpportunity || existingAccountId === undefined ? undefined : odata.requireGuid({ value: existingAccountId, label: 'Existing account ID' });
   const created = await client.qualifyLead({ leadId, createAccount, createContact, createOpportunity, existingAccountId: accountId });
   const summary = summarizeQualify({ leadId, created });
   if (accountId === undefined) {
@@ -369,7 +370,7 @@ async function qualifyLead({ client, leadId, createAccount, createContact, creat
       );
     }
   }
-  return { ...summary, accountId: summary.accountId ?? accountId };
+  return { ...summary, accountId: summary.opportunityId !== null ? accountId : summary.accountId ?? accountId };
 }
 
 function statusReason({ value, fallback }: { value: unknown; fallback: number }): number {

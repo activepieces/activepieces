@@ -500,7 +500,7 @@ class DynamicsCRMClient {
       CreateOpportunity: createOpportunity,
       Status: 3,
     };
-    if (existingAccountId !== undefined) {
+    if (createOpportunity && existingAccountId !== undefined) {
       body['OpportunityCustomerId'] = {
         '@odata.type': 'Microsoft.Dynamics.CRM.account',
         accountid: odata.requireGuid({ value: existingAccountId, label: 'Existing account ID' }),

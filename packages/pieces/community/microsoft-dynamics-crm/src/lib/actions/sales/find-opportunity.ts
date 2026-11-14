@@ -10,11 +10,11 @@ export const findOpportunityAction = createAction({
   name: 'find_opportunity',
   classification: 'SEARCH',
   displayName: 'Find Opportunity',
-  description: 'Finds opportunitys by topic. Returns the most recently modified match first.',
+  description: 'Finds opportunities by topic. Returns the most recently modified match first.',
   audience: 'human',
   aiMetadata: {
     description:
-      'Looks up Dynamics 365 opportunitys by topic (exact or contains). Read-only and safe to retry.',
+      'Looks up Dynamics 365 opportunities by topic (exact or contains). Read-only and safe to retry.',
     idempotent: true,
   },
   props: salesEntities.findProps(salesEntities.OPPORTUNITY),

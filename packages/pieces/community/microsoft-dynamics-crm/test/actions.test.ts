@@ -1,7 +1,16 @@
 import { HttpRequest, httpClient } from '@activepieces/pieces-common';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fetchXmlRunner } from '../src/lib/actions/run-fetchxml';
 import { createTaskAction, createTaskInternals } from '../src/lib/actions/create-task';
 import { PropertyType } from '@activepieces/pieces-framework';
+import { aiAssociateRecordsAction } from '../src/lib/actions/ai/ai-associate-records';
+import { aiCloseOpportunityAction } from '../src/lib/actions/ai/ai-close-opportunity';
+import { aiCreateTaskAction } from '../src/lib/actions/ai/ai-create-task';
+import { aiListEntitiesAction } from '../src/lib/actions/ai/ai-list-entities';
+import { aiSearchRecordsAction } from '../src/lib/actions/ai/ai-search-records';
+import { aiWhoAmIAction } from '../src/lib/actions/ai/ai-who-am-i';
+import { aiUpdateRecordAction } from '../src/lib/actions/ai/ai-update-record';
+import { associateRecordsAction } from '../src/lib/actions/associate-records';
 import { createContactAction } from '../src/lib/actions/sales/create-contact';
 import { updateContactAction } from '../src/lib/actions/sales/update-contact';
 import { createLeadAction } from '../src/lib/actions/sales/create-lead';
@@ -190,6 +199,33 @@ describe('qualify lead with an existing account', () => {
     await expect(
       salesEntities.qualifyLead({ client: client(), leadId: ID, createAccount: false, createContact: true, createOpportunity: true, existingAccountId: ACCOUNT })
     ).rejects.toThrow(/lead was qualified.*Do not qualify again/);
+  });
+  it('ignores a stale existing account entirely when Create Opportunity is off', async () => {
+    const requests = capture({ failPatch: false });
+    const result = await salesEntities.qualifyLead({ client: client(), leadId: ID, createAccount: false, createContact: true, createOpportunity: false, existingAccountId: 'not-a-guid' });
+    expect(requests).toHaveLength(1);
+    expect(requests[0].body).not.toHaveProperty('OpportunityCustomerId');
+    expect(result.accountId).toBeNull();
+  });
+
+  it('client sends OpportunityCustomerId only when an opportunity is created', async () => {
+    const requests = capture({ failPatch: false });
+    await client().qualifyLead({ leadId: ID, createAccount: false, createContact: true, createOpportunity: false, existingAccountId: ACCOUNT });
+    expect(requests[0].body).not.toHaveProperty('OpportunityCustomerId');
+    await client().qualifyLead({ leadId: ID, createAccount: false, createContact: true, createOpportunity: true, existingAccountId: ACCOUNT });
+    expect(requests[1].body).toMatchObject({ OpportunityCustomerId: { accountid: ACCOUNT } });
+  });
+
+  it('returns the existing account even when Create Account also made one', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request: HttpRequest) => ({
+      status: 200,
+      headers: {},
+      body: request.url.endsWith('QualifyLead')
+        ? { value: [{ '@odata.type': '#Microsoft.Dynamics.CRM.account', accountid: 'new' }, { '@odata.type': '#Microsoft.Dynamics.CRM.opportunity', opportunityid: OPP }] }
+        : { opportunityid: OPP },
+    }));
+    const result = await salesEntities.qualifyLead({ client: client(), leadId: ID, createAccount: true, createContact: false, createOpportunity: true, existingAccountId: ACCOUNT });
+    expect(result.accountId).toBe(ACCOUNT);
   });
 });
 
@@ -468,5 +504,123 @@ describe('final check fixes', () => {
   it('renders Account Name in the first section on Create Account', () => {
     expect(createAccountAction.propertyGroups?.[0].props).toEqual(['name', 'accountnumber']);
     expect(createAccountAction.props['name'].required).toBe(true);
+  });
+});
+
+describe('pre-flight action glue', () => {
+  const BASE = 'https://orgx.crm.dynamics.com/api/data/v9.2';
+  const AUTH = { access_token: 't', props: { hostUrl: 'https://orgx.crm.dynamics.com' } };
+  const OTHER = '11111111-2222-3333-4444-555555555555';
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  function mockHttp(respond: (request: HttpRequest) => unknown) {
+    const requests: HttpRequest[] = [];
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request: HttpRequest) => {
+      requests.push(request);
+      return { status: 200, headers: {}, body: respond(request) };
+    });
+    return requests;
+  }
+
+  it('ai_associate_records associates with POST $ref and disassociates with DELETE', async () => {
+    const requests = mockHttp(() => ({}));
+    const props = { entitySet: 'accounts', recordId: ID, navigationProperty: 'contact_customer_accounts', relatedEntitySet: 'contacts', relatedRecordId: OTHER };
+    await aiAssociateRecordsAction.run({ auth: AUTH, propsValue: { ...props, operation: 'associate' } });
+    expect(requests[0].method).toBe('POST');
+    expect(requests[0].url).toBe(`${BASE}/accounts(${ID})/contact_customer_accounts/$ref`);
+    expect(requests[0].body).toEqual({ '@odata.id': `${BASE}/contacts(${OTHER})` });
+    await aiAssociateRecordsAction.run({ auth: AUTH, propsValue: { ...props, operation: 'disassociate' } });
+    expect(requests[1].method).toBe('DELETE');
+    expect(requests[1].url).toBe(`${BASE}/accounts(${ID})/contact_customer_accounts(${OTHER})/$ref`);
+  });
+
+  it('ai_close_opportunity calls Win/Lose with status fallback 3 and 4', async () => {
+    const requests = mockHttp(() => ({}));
+    const won = await aiCloseOpportunityAction.run({ auth: AUTH, propsValue: { opportunityId: ID, outcome: 'won', subject: 'Won' } });
+    expect(requests[0].method).toBe('POST');
+    expect(requests[0].url).toBe(`${BASE}/WinOpportunity`);
+    expect(requests[0].body).toMatchObject({ Status: 3, OpportunityClose: { subject: 'Won', 'opportunityid@odata.bind': `/opportunities(${ID})` } });
+    expect(won).toMatchObject({ outcome: 'won', statusReason: 3 });
+    await aiCloseOpportunityAction.run({ auth: AUTH, propsValue: { opportunityId: ID, outcome: 'lost', subject: 'Lost' } });
+    expect(requests[1].url).toBe(`${BASE}/LoseOpportunity`);
+    expect(requests[1].body).toMatchObject({ Status: 4 });
+    await aiCloseOpportunityAction.run({ auth: AUTH, propsValue: { opportunityId: ID, outcome: 'lost', subject: 'Lost', statusReason: '5' } });
+    expect(requests[2].body).toMatchObject({ Status: 5 });
+  });
+
+  it('ai_create_task maps priority names to codes', async () => {
+    const requests = mockHttp(() => ({ activityid: OTHER }));
+    for (const [priority, code] of [['low', 0], ['normal', 1], ['high', 2]] as const) {
+      await aiCreateTaskAction.run({ auth: AUTH, propsValue: { subject: 'Call', priority } });
+      const last = requests[requests.length - 1];
+      expect(last.method).toBe('POST');
+      expect(last.url).toBe(`${BASE}/tasks`);
+      expect(last.body).toMatchObject({ subject: 'Call', prioritycode: code });
+    }
+    await expect(aiCreateTaskAction.run({ auth: AUTH, propsValue: { subject: 'Call', priority: 'urgent' } })).rejects.toThrow(/low, normal or high/);
+  });
+
+  it('ai_list_entities filters by customizable and nameContains', async () => {
+    const requests = mockHttp(() => ({
+      value: [
+        { LogicalName: 'account', EntitySetName: 'accounts', IsCustomizable: { Value: true } },
+        { LogicalName: 'accountleads', EntitySetName: 'accountleadsset', IsCustomizable: { Value: false } },
+        { LogicalName: 'contact', EntitySetName: 'contacts', IsCustomizable: { Value: true } },
+      ],
+    }));
+    const customizable = await aiListEntitiesAction.run({ auth: AUTH, propsValue: { nameContains: 'ACCOUNT', customizableOnly: 'yes' } });
+    expect(requests[0].method).toBe('GET');
+    expect(requests[0].url).toContain(`${BASE}/EntityDefinitions`);
+    expect(customizable.entities.map((entity) => entity.logicalName)).toEqual(['account']);
+    const all = await aiListEntitiesAction.run({ auth: AUTH, propsValue: { nameContains: 'account', customizableOnly: 'no' } });
+    expect(all.entities.map((entity) => entity.logicalName)).toEqual(['account', 'accountleads']);
+  });
+
+  it('ai_search_records defaults page size to 25', async () => {
+    const requests = mockHttp(() => ({ value: [] }));
+    await aiSearchRecordsAction.run({ auth: AUTH, propsValue: { entitySet: 'accounts' } });
+    expect(requests[0].method).toBe('GET');
+    expect(requests[0].url).toContain(`${BASE}/accounts`);
+    expect(String(requests[0].headers?.['Prefer'])).toContain('odata.maxpagesize=25');
+  });
+
+  it('ai_who_am_i maps WhoAmI and the user record', async () => {
+    const requests = mockHttp((request) =>
+      request.url.endsWith('/WhoAmI()')
+        ? { UserId: ID, BusinessUnitId: 'bu', OrganizationId: 'org' }
+        : { fullname: 'Jane Doe', internalemailaddress: 'jane@contoso.com' }
+    );
+    const me = await aiWhoAmIAction.run({ auth: AUTH, propsValue: {} });
+    expect(requests[1].url).toContain(`${BASE}/systemusers(${ID})`);
+    expect(me).toEqual({ userId: ID, businessUnitId: 'bu', organizationId: 'org', fullName: 'Jane Doe', email: 'jane@contoso.com' });
+  });
+
+  it('ai_update_record refuses an empty body without sending a PATCH', async () => {
+    const requests = mockHttp(() => ({ value: [{ LogicalName: 'account', EntitySetName: 'accounts', PrimaryIdAttribute: 'accountid' }] }));
+    await expect(aiUpdateRecordAction.run({ auth: AUTH, propsValue: { entitySet: 'accounts', recordId: ID, fields: {} } })).rejects.toThrow(/at least one column/);
+    expect(requests.filter((request) => request.method === 'PATCH')).toHaveLength(0);
+  });
+
+  it('Run FetchXML computes nextPage from moreRecords and page', async () => {
+    let more = true;
+    mockHttp(() => ({ value: [], '@Microsoft.Dynamics.CRM.morerecords': more }));
+    const fetchXml = '<fetch><entity name="account"/></fetch>';
+    expect((await fetchXmlRunner.runFetchXml({ auth: AUTH, entitySet: 'accounts', fetchXml, page: undefined })).nextPage).toBe(2);
+    expect((await fetchXmlRunner.runFetchXml({ auth: AUTH, entitySet: 'accounts', fetchXml, page: 2 })).nextPage).toBe(3);
+    more = false;
+    expect((await fetchXmlRunner.runFetchXml({ auth: AUTH, entitySet: 'accounts', fetchXml, page: 2 })).nextPage).toBeNull();
+  });
+
+  it('parses the relationship value and rejects bad formats and GUIDs', async () => {
+    expect(dynamicsProps.parseRelationship('contact_customer_accounts|contacts')).toEqual({ navigationProperty: 'contact_customer_accounts', targetEntitySet: 'contacts' });
+    expect(() => dynamicsProps.parseRelationship('contact_customer_accounts')).toThrow(/picked from the list/);
+    expect(() => dynamicsProps.parseRelationship('')).toThrow(/picked from the list/);
+    mockHttp(() => ({}));
+    await expect(
+      associateRecordsAction.run({ auth: AUTH, propsValue: { entityType: 'accounts', recordId: ID, relationship: 'contact_customer_accounts|contacts', relatedRecordId: 'not-a-guid' } })
+    ).rejects.toThrow(/GUID/);
   });
 });
