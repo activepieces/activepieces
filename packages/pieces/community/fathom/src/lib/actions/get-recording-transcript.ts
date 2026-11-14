@@ -10,7 +10,7 @@ export const getRecordingTranscript = createAction({
   name: 'getRecordingTranscript',
   classification: 'READ',
   displayName: 'Get Recording Transcript',
-  description: 'Get the transcript of a meeting recording. Works with both OAuth and API key connections.',
+  description: 'Get the transcript of a meeting recording.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -19,11 +19,13 @@ export const getRecordingTranscript = createAction({
   },
   auth: fathomAuth,
   props: {
-    recording_id: fathomProps.recordingDropdown({ description: 'Select the meeting recording to get the transcript for' }),
+    recording_id: fathomProps.recordingDropdown({ description: 'Pick from your recent meetings, or map a recording ID.' }),
     destination_url: Property.ShortText({
       displayName: 'Destination URL',
-      description: 'Optional: URL where Fathom will POST the transcript. Leave empty to get data directly in response.',
+      description: 'Fathom POSTs the transcript here instead of returning it.',
+      placeholder: 'https://example.com/webhook',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: fathomOutputSchemas.legacyTranscript,

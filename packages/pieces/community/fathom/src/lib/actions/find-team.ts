@@ -19,7 +19,7 @@ export const findTeam = createAction({
   props: {
     cursor: Property.ShortText({
       displayName: 'Cursor',
-      description: 'Cursor for pagination (from previous response)',
+      description: "The next page's cursor from the previous run. Empty: first page.",
       required: false,
     }),
   },

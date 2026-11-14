@@ -18,7 +18,7 @@ export const listMeetingTypes = createAction({
   props: {
     status: Property.StaticDropdown({
       displayName: 'Status',
-      description: 'Active types can be assigned to new meetings; inactive ones only appear on older meetings.',
+      description: 'Inactive types only appear on older meetings.',
       required: false,
       defaultValue: 'all',
       options: {

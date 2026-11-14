@@ -9,7 +9,7 @@ export const getRecordingDownload = createAction({
   name: 'get_recording_download',
   classification: 'READ',
   displayName: 'Get Recording Download',
-  description: 'Check a download started with Request Recording Download and get the file link once it is ready.',
+  description: "Get a requested file's status, and its link once it is ready.",
   audience: 'both',
   aiMetadata: {
     description:
@@ -18,8 +18,8 @@ export const getRecordingDownload = createAction({
   },
   auth: fathomAuth,
   props: {
-    recording_id: fathomProps.recordingIdText({ description: 'The numeric recording_id the download was requested for.' }),
-    download_id: Property.ShortText({ displayName: 'Download ID', description: 'The download_id returned by Request Recording Download.', required: true }),
+    recording_id: fathomProps.recordingIdText({ description: 'The recording ID the download was requested for.' }),
+    download_id: Property.ShortText({ displayName: 'Download ID', description: 'The download_id from Request Recording Download.', required: true }),
   },
   outputSchema: fathomOutputSchemas.download,
   async run({ auth, propsValue }) {
