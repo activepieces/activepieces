@@ -74,7 +74,7 @@ export const createPin = createAction({
             icon: 'file',
           },
           {
-            label: 'Base64 Image',
+            label: 'Base64',
             value: 'image_base64',
             description: 'Encoded data',
             icon: 'code',

@@ -12,9 +12,9 @@
   "Search for boards by name using Pinterest's search API.": "Search for boards by name using Pinterest's search API.",
   "Search for Pins using title, description, or keywords.": "Search for Pins using title, description, or keywords.",
   "Update a board's name, description, or privacy settings.": "Update a board's name, description, or privacy settings.",
-  "Ad Account": "Ad account Id",
-  "Board": "Board",
-  "Board Section": "Board Section Id",
+  "Ad Account": "广告账户",
+  "Board": "画板",
+  "Board Section": "画板分区",
   "Title": "标题",
   "Description": "描述",
   "Media Type": "Media Type",
@@ -80,5 +80,10 @@
   "Video Pins": "Video Pins",
   "Shopping Pins": "Shopping Pins",
   "Carousel Pins": "Carousel Pins",
-  "Idea Pins": "Idea Pins"
+  "Idea Pins": "Idea Pins",
+  "Base64": "Base64",
+  "Visibility": "可见范围",
+  "Search": "搜索",
+  "Changes": "更改",
+  "Empty fields keep their current value.": "留空的字段保留当前值。"
 }
