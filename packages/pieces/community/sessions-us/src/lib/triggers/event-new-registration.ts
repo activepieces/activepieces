@@ -5,8 +5,8 @@ import {
 
 export const eventNewRegistration = createSessionsUsWebhookTrigger({
   name: 'event_new_registration',
-  displayName: 'Event New Registration',
-  description: 'Triggered when a new registration for an event occurs.',
+  displayName: 'New Event Registration',
+  description: 'Triggered when someone registers for an event.',
   aiMetadata: {
     description: 'Fires when a person registers for a published event. The payload includes the event and session ids plus the registered participant (name, email, and their submitted registration form answers).',
   },

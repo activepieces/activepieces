@@ -12,31 +12,46 @@ export const createSession = createAction({
   name: 'create_session',
   classification: 'WRITE',
   displayName: 'Create Session',
-  description: 'Quickly create a session.',
+  description: 'Schedules a private video session and returns its join link.',
   audience: 'both',
   aiMetadata: { description: 'Create a new session (a private video meeting) on Sessions.us with a name, start/end time, and timezone, returning the session id and join link. Use when an agent needs to schedule a meeting rather than a public registration-based event. Creates a new session each call, so it is not idempotent — repeating it produces duplicate sessions.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'details',
+      display: 'section',
+      label: 'Details',
+      icon: 'text',
+      props: ['name'],
+    },
+    {
+      key: 'schedule',
+      display: 'section',
+      label: 'Schedule',
+      icon: 'calendar',
+      props: ['startAt', 'plannedEnd', 'timezone'],
+    },
+  ],
   props: {
     name: Property.ShortText({
       displayName: 'Session Name',
-      description: 'The name of the session',
       required: true,
+      placeholder: 'Weekly team sync',
     }),
     startAt: Property.DateTime({
       displayName: 'Starts At',
-      description: 'Select a date and time',
       required: true,
+      width: 'half',
       defaultValue: new Date().toISOString(),
     }),
     plannedEnd: Property.DateTime({
       displayName: 'Ends At',
-      description: 'Select a date and time',
       required: true,
+      width: 'half',
       defaultValue: new Date().toISOString(),
     }),
     timezone: Property.Dropdown({
       auth: sessionAuth,
       displayName: 'Timezone',
-      description: 'The timezone which the session will take place.',
       required: true,
       refreshers: [],
       options: async () => {
