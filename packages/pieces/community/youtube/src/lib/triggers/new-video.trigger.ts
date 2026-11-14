@@ -1,12 +1,5 @@
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import {
-  AppConnectionValueForAuthProperty,
   createTrigger,
   DEDUPE_KEY_PROPERTY,
   PieceAuth,
@@ -232,96 +225,147 @@ export const youtubeNewVideoTrigger = createTrigger({
       },
     },
   },
-  async test(context): Promise<unknown[]> {
-    return pollingHelper.test(polling, context);
+  async test({ propsValue }): Promise<unknown[]> {
+    const channelId = await getChannelId(propsValue.channel_identifier);
+    const items = await getRssItems(channelId);
+    return sortNewestFirst(items).slice(0, 5).reverse();
   },
   async onEnable({ propsValue, store, isRepublish }): Promise<void> {
-    if (isRepublish && !isNil(await store.get('_seenVideoIds'))) {
+    const seenIds = await store.get<string[]>(SEEN_IDS_KEY);
+    const channel = await resolveChannel({
+      store,
+      identifier: propsValue.channel_identifier,
+    });
+    if (isRepublish && !isNil(seenIds) && !channel.changed) {
+      await saveChannel({ store, channel });
       return;
     }
-    let channelId = await store.get<string>('channelId');
-    if (isNil(channelId)) {
-      channelId = await getChannelId(propsValue.channel_identifier);
-      await store.put('channelId', channelId);
-    }
-    const items = await getRssItems(channelId);
-    await store.put('_seenVideoIds', items.map((item) => getId(item)));
+    const items = await getRssItems(channel.channelId);
+    await store.put(SEEN_IDS_KEY, toSeenIds({ items, previous: [] }));
+    await saveChannel({ store, channel });
   },
   async onDisable({ store, isRepublish }): Promise<void> {
     if (isRepublish) {
       return;
     }
-    await store.delete('_seenVideoIds');
-    await store.delete('channelId');
+    await store.delete(SEEN_IDS_KEY);
+    await store.delete(CHANNEL_KEY);
+    await store.delete(LEGACY_CHANNEL_ID_KEY);
   },
   async run({ propsValue, store }): Promise<unknown[]> {
-    let channelId = await store.get<string>('channelId');
-    if (isNil(channelId)) {
-      channelId = await getChannelId(propsValue.channel_identifier);
-      await store.put('channelId', channelId);
-    }
-    const rawItems = await getRssItems(channelId);
+    const channel = await resolveChannel({
+      store,
+      identifier: propsValue.channel_identifier,
+    });
+    const rawItems = await getRssItems(channel.channelId);
+    const previousIds = await store.get<string[]>(SEEN_IDS_KEY);
 
-    const seenIds = new Set<string>(await store.get<string[]>('_seenVideoIds') ?? []);
+    if (channel.changed || isNil(previousIds)) {
+      await store.put(SEEN_IDS_KEY, toSeenIds({ items: rawItems, previous: [] }));
+      await saveChannel({ store, channel });
+      return [];
+    }
+    await saveChannel({ store, channel });
+
+    const seenIds = new Set<string>(previousIds);
     const newItems = rawItems.filter((item) => !seenIds.has(getId(item)));
 
-    // Advance the seen-IDs set to the current feed so that if the anchor item
-    // (e.g. a live stream) is later deleted and pollingHelper would otherwise
-    // return all items, the previously-seen IDs are still excluded.
-    // Skip the update on an empty feed response to avoid wiping the set and
-    // causing false positives on the next successful poll.
     if (rawItems.length > 0) {
-      await store.put('_seenVideoIds', rawItems.map((item) => getId(item)));
+      await store.put(
+        SEEN_IDS_KEY,
+        toSeenIds({ items: rawItems, previous: previousIds }),
+      );
     }
 
-    return newItems
-      .sort((a, b) => {
-        const aDate =
-          (a as { pubdate?: string; pubDate?: string }).pubdate ??
-          (a as { pubdate?: string; pubDate?: string }).pubDate;
-        const bDate =
-          (b as { pubdate?: string; pubDate?: string }).pubdate ??
-          (b as { pubdate?: string; pubDate?: string }).pubDate;
-
-        if (aDate && bDate) {
-          const aUnix = dayjs(aDate).unix();
-          const bUnix = dayjs(bDate).unix();
-          if (aUnix === bUnix) {
-            return newItems.indexOf(a) - newItems.indexOf(b);
-          }
-          return bUnix - aUnix;
-        }
-
-        return newItems.indexOf(a) - newItems.indexOf(b);
-      })
-      .map((item) => withDedupeKey(item as Record<string, unknown>));
+    return sortNewestFirst(newItems).map((item) => withDedupeKey(item));
   },
 });
 
-const polling: Polling<
-  AppConnectionValueForAuthProperty<undefined>,
-  { channel_identifier: string }
-> = {
-  strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({
-    propsValue,
-    store,
-  }: {
-    store: Store;
-    propsValue: { channel_identifier: string };
-  }) => {
-    let channelId = await store.get<string>('channelId');
-    if (isNil(channelId)) {
-      channelId = await getChannelId(propsValue.channel_identifier);
-      await store.put('channelId', channelId);
-    }
-    const items = await getRssItems(channelId);
-    return items.map((item) => ({
-      id: getId(item),
-      data: item,
-    }));
-  },
-};
+const SEEN_IDS_KEY = '_seenVideoIds';
+const CHANNEL_KEY = '_channel';
+const LEGACY_CHANNEL_ID_KEY = 'channelId';
+const MAX_SEEN_IDS = 300;
+const REQUEST_TIMEOUT_MS = 20_000;
+
+async function resolveChannel({
+  store,
+  identifier,
+}: {
+  store: Store;
+  identifier: string;
+}): Promise<ResolvedChannel> {
+  const trimmed = identifier.trim();
+  const stored = await store.get<StoredChannel>(CHANNEL_KEY);
+  if (!isNil(stored) && stored.identifier === trimmed) {
+    return { identifier: trimmed, channelId: stored.channelId, changed: false };
+  }
+  const previousChannelId =
+    stored?.channelId ?? (await store.get<string>(LEGACY_CHANNEL_ID_KEY));
+  const channelId = await getChannelId(trimmed);
+  return {
+    identifier: trimmed,
+    channelId,
+    changed: isNil(previousChannelId) || previousChannelId !== channelId,
+  };
+}
+
+async function saveChannel({
+  store,
+  channel,
+}: {
+  store: Store;
+  channel: ResolvedChannel;
+}): Promise<void> {
+  const stored = await store.get<StoredChannel>(CHANNEL_KEY);
+  if (
+    stored?.identifier !== channel.identifier ||
+    stored?.channelId !== channel.channelId
+  ) {
+    await store.put<StoredChannel>(CHANNEL_KEY, {
+      identifier: channel.identifier,
+      channelId: channel.channelId,
+    });
+  }
+  if (!isNil(await store.get<string>(LEGACY_CHANNEL_ID_KEY))) {
+    await store.delete(LEGACY_CHANNEL_ID_KEY);
+  }
+}
+
+function toSeenIds({
+  items,
+  previous,
+}: {
+  items: FeedEntry[];
+  previous: string[];
+}): string[] {
+  const currentIds = sortNewestFirst(items).map((item) => getId(item));
+  const current = new Set(currentIds);
+  return [...currentIds, ...previous.filter((id) => !current.has(id))].slice(
+    0,
+    MAX_SEEN_IDS,
+  );
+}
+
+function sortNewestFirst<T extends FeedEntry>(items: T[]): T[] {
+  return items
+    .map((item, index) => ({ item, index, unix: publishedUnix(item) }))
+    .sort((a, b) => {
+      if (!isNil(a.unix) && !isNil(b.unix) && a.unix !== b.unix) {
+        return b.unix - a.unix;
+      }
+      return a.index - b.index;
+    })
+    .map(({ item }) => item);
+}
+
+function publishedUnix(item: FeedEntry): number | null {
+  const value = item.pubdate ?? item.pubDate;
+  if (isNil(value)) {
+    return null;
+  }
+  const parsed = dayjs(value);
+  return parsed.isValid() ? parsed.valueOf() : null;
+}
 
 function withDedupeKey(item: Record<string, unknown>) {
   const dedupeKey = typeof item.guid === 'string' ? item.guid : JSON.stringify(item);
@@ -347,9 +391,14 @@ async function getChannelId(urlOrId: string) {
   if (isNil(pageUrl)) {
     return trimmed;
   }
+  const idInPath = new URL(pageUrl).pathname.match(/^\/channel\/([\w-]+)/);
+  if (idInPath) {
+    return idInPath[1];
+  }
   const response = await httpClient.sendRequest<string>({
     method: HttpMethod.GET,
     url: pageUrl,
+    timeout: REQUEST_TIMEOUT_MS,
   });
   const $ = cheerioLoad(response.body);
 
@@ -389,6 +438,7 @@ async function getRssItems(channelId: string): Promise<any[]> {
     method: HttpMethod.GET,
     url,
     responseType: 'arraybuffer',
+    timeout: REQUEST_TIMEOUT_MS,
   });
 
   return new Promise((resolve, reject) => {
@@ -417,3 +467,19 @@ async function getRssItems(channelId: string): Promise<any[]> {
     feedparser.end();
   });
 }
+
+type FeedEntry = {
+  id?: string;
+  guid?: string;
+  pubdate?: string | Date | null;
+  pubDate?: string | Date | null;
+};
+
+type StoredChannel = {
+  identifier: string;
+  channelId: string;
+};
+
+type ResolvedChannel = StoredChannel & {
+  changed: boolean;
+};

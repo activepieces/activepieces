@@ -1,5 +1,5 @@
 import { AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils'
-import { AgentPhase, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
+import { AgentPhase, PersistedAgentPartType } from '@activepieces/shared'
 import { tool } from 'ai'
 import { convertArrayToReadableStream, MockLanguageModelV3 } from 'ai/test'
 import { describe, expect, it, vi } from 'vitest'
@@ -25,19 +25,15 @@ describe('a turn that runs out of credits', () => {
         expect(creditsLeft.mock.calls).toEqual([[2], [3]])
     })
 
-    it('lets the agent answer on an exact balance, but without the paid tools', async () => {
+    it('stops on an exact balance, since the balance never goes below zero', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
         const model = alwaysSearchingModel()
 
-        const turn = await runTurn({ search: async () => SEARCH_RESULT, creditsLeft: async () => 0, stepCeiling: 2, model })
+        const turn = await runTurn({ search, creditsLeft: async () => 0, model })
 
-        const [firstStep, ...laterSteps] = model.doStreamCalls.map((call) => call.tools?.map((t) => t.name))
-        expect(firstStep).toEqual(['ap_web_search', 'ap_fetch_url'])
-        expect(laterSteps.length).toBeGreaterThan(0)
-        expect(laterSteps.every((names) => names?.join() === 'ap_fetch_url')).toBe(true)
-        expect(turn.creditsExhausted).toBe(false)
-        const searchStatuses = turn.uiParts.flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL ? [part.status] : [])
-        expect(searchStatuses[0]).toBe(PersistedToolCallStatus.COMPLETED)
-        expect(searchStatuses.slice(1).every((status) => status === PersistedToolCallStatus.ERROR)).toBe(true)
+        expect(model.doStreamCalls).toHaveLength(1)
+        expect(search).toHaveBeenCalledTimes(1)
+        expect(turn.creditsExhausted).toBe(true)
     })
 
     it('keeps going when the credit check itself fails', async () => {

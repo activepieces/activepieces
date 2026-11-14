@@ -84,7 +84,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         if (error) {
             log.warn({ error }, 'Credit check failed mid-turn, letting the turn continue')
         }
-        creditsExhausted = !isNil(left) && left < 0
+        creditsExhausted = !isNil(left) && left <= 0
         paidToolsAffordable = isNil(left) || left >= CHAT_CREDITS_PER_TOOL_CALL
         return creditsExhausted
     }

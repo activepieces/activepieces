@@ -47,6 +47,22 @@ export const createIssueAction = createAction({
 		idempotent: false,
 	},
 	auth: jiraDataCenterAuth,
+	propertyGroups: [
+		{
+			key: 'destination',
+			display: 'section',
+			label: 'Where',
+			icon: 'inbox',
+			props: ['projectId', 'issueTypeId'],
+		},
+		{
+			key: 'fields',
+			display: 'section',
+			label: 'Issue Fields',
+			icon: 'text',
+			props: ['issueFields'],
+		},
+	],
 	props: {
 		projectId: getProjectIdDropdown(),
 		issueTypeId: issueTypeIdProp('Issue Type'),
