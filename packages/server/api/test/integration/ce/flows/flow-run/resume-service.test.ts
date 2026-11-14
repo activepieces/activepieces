@@ -1,12 +1,15 @@
-import { apId } from '@activepieces/core-utils'
-import { FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
+import { apId, spreadIfDefined } from '@activepieces/core-utils'
+import { FlowRetryStrategy, FlowRunStatus, FlowTriggerType, FlowVersionState, PauseType, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
+import { Job } from 'bullmq'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { distributedStore } from '../../../../../src/app/database/redis-connections'
+import { flowRunService } from '../../../../../src/app/flows/flow-run/flow-run-service'
 import { resumeService } from '../../../../../src/app/waitpoints/resume-service'
 import { waitpointService } from '../../../../../src/app/waitpoints/waitpoint-service'
 import { WaitpointStatus } from '../../../../../src/app/waitpoints/waitpoint-types'
 import { redisMetadataKey } from '../../../../../src/app/workers/job'
+import { jobQueue } from '../../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
@@ -27,10 +30,39 @@ beforeEach(async () => {
     ctx = await createTestContext(app)
 })
 
+function pieceTrigger({ pieceName, triggerName }: { pieceName: string, triggerName: string }) {
+    return {
+        type: FlowTriggerType.PIECE,
+        name: 'trigger',
+        displayName: 'Trigger',
+        valid: true,
+        lastUpdatedDate: new Date().toISOString(),
+        settings: {
+            pieceName,
+            pieceVersion: '0.0.1',
+            triggerName,
+            input: {},
+            propertySettings: {},
+        },
+    }
+}
+
+async function findQueuedJobsForRun(runId: string): Promise<Job[]> {
+    const queues = jobQueue(app.log).getAllQueues()
+    const jobsPerQueue = await Promise.all(queues.map((queue) => queue.getJobs(['waiting', 'prioritized', 'delayed', 'active', 'completed', 'failed'])))
+    return jobsPerQueue.flat().filter((job) => {
+        const data: unknown = job.data
+        return typeof data === 'object' && data !== null && 'runId' in data && data.runId === runId
+    })
+}
+
 async function createFlowRunAndWaitpoint(params: {
     projectId: string
     flowRunStatus?: FlowRunStatus
     waitpointStatus?: WaitpointStatus
+    environment?: RunEnvironment
+    trigger?: ReturnType<typeof pieceTrigger>
+    triggeredBy?: string
 }) {
     const flow = createMockFlow({ projectId: params.projectId })
     await db.save('flow', flow)
@@ -38,6 +70,7 @@ async function createFlowRunAndWaitpoint(params: {
     const flowVersion = createMockFlowVersion({
         flowId: flow.id,
         state: FlowVersionState.LOCKED,
+        ...spreadIfDefined('trigger', params.trigger),
     })
     await db.save('flow_version', flowVersion)
 
@@ -46,9 +79,9 @@ async function createFlowRunAndWaitpoint(params: {
         flowId: flow.id,
         flowVersionId: flowVersion.id,
         status: params.flowRunStatus ?? FlowRunStatus.PAUSED,
-        environment: RunEnvironment.PRODUCTION,
+        environment: params.environment ?? RunEnvironment.PRODUCTION,
     })
-    await db.save('flow_run', flowRun)
+    await db.save('flow_run', { ...flowRun, ...spreadIfDefined('triggeredBy', params.triggeredBy) })
 
     const waitpointId = apId()
     await db.save('waitpoint', {
@@ -176,6 +209,78 @@ describe('resumeService resumeTrustedWithoutLock', () => {
 
         const waitpoint = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
         expect(waitpoint).not.toBeNull()
+    })
+})
+
+describe('resumeService streamStepProgress inheritance', () => {
+    it('streams a resumed PRODUCTION run when its trigger is manual, so the builder keeps following it past the pause', async () => {
+        const { flowRun, waitpointId } = await createFlowRunAndWaitpoint({
+            projectId: ctx.project.id,
+            environment: RunEnvironment.PRODUCTION,
+            trigger: pieceTrigger({ pieceName: '@activepieces/piece-manual-trigger', triggerName: 'manual_trigger' }),
+            triggeredBy: ctx.user.id,
+        })
+
+        await resumeService(app.log).resumeTrustedWithoutLock({
+            flowRunId: flowRun.id,
+            waitpointId,
+            resumePayload: { body: { status: 'approved' } },
+        })
+
+        const [job] = await findQueuedJobsForRun(flowRun.id)
+        expect(job.data).toMatchObject({ streamStepProgress: StreamStepProgress.WEBSOCKET })
+    })
+
+    it('does not stream a resumed PRODUCTION run triggered by a webhook', async () => {
+        const { flowRun, waitpointId } = await createFlowRunAndWaitpoint({
+            projectId: ctx.project.id,
+            environment: RunEnvironment.PRODUCTION,
+            trigger: pieceTrigger({ pieceName: '@activepieces/piece-webhook', triggerName: 'catch_webhook' }),
+        })
+
+        await resumeService(app.log).resumeTrustedWithoutLock({
+            flowRunId: flowRun.id,
+            waitpointId,
+            resumePayload: { body: { status: 'approved' } },
+        })
+
+        const [job] = await findQueuedJobsForRun(flowRun.id)
+        expect(job.data).toMatchObject({ streamStepProgress: StreamStepProgress.NONE })
+    })
+
+    it('streams a resumed TESTING run without reading its flow version', async () => {
+        const { flowRun, waitpointId } = await createFlowRunAndWaitpoint({
+            projectId: ctx.project.id,
+            environment: RunEnvironment.TESTING,
+            trigger: pieceTrigger({ pieceName: '@activepieces/piece-webhook', triggerName: 'catch_webhook' }),
+        })
+
+        await resumeService(app.log).resumeTrustedWithoutLock({
+            flowRunId: flowRun.id,
+            waitpointId,
+            resumePayload: { body: { status: 'approved' } },
+        })
+
+        const [job] = await findQueuedJobsForRun(flowRun.id)
+        expect(job.data).toMatchObject({ streamStepProgress: StreamStepProgress.WEBSOCKET })
+    })
+
+    it.each([
+        FlowRetryStrategy.FROM_FAILED_STEP,
+        FlowRetryStrategy.ON_LATEST_VERSION,
+    ])('does not stream a %s retry of a manually triggered PRODUCTION run, since no builder follows a retry', async (strategy) => {
+        const { flowRun } = await createFlowRunAndWaitpoint({
+            projectId: ctx.project.id,
+            flowRunStatus: FlowRunStatus.FAILED,
+            environment: RunEnvironment.PRODUCTION,
+            trigger: pieceTrigger({ pieceName: '@activepieces/piece-manual-trigger', triggerName: 'manual_trigger' }),
+            triggeredBy: ctx.user.id,
+        })
+
+        const retriedRun = await flowRunService(app.log).retry({ flowRunId: flowRun.id, strategy, projectId: ctx.project.id })
+
+        const [job] = await findQueuedJobsForRun(retriedRun.id)
+        expect(job.data).toMatchObject({ streamStepProgress: StreamStepProgress.NONE })
     })
 })
 

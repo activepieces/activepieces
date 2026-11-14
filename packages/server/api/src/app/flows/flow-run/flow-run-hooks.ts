@@ -1,5 +1,5 @@
-import { isManualPieceTrigger, isNil, tryCatch } from '@activepieces/core-utils'
-import { ApEdition, ConsumableFeatureId, FlowActionType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, FlowVersion, isFailedState, isFlowRunStateTerminal, RunEnvironment, WebsocketClientEvent } from '@activepieces/shared'
+import { isNil, tryCatch } from '@activepieces/core-utils'
+import { ApEdition, ConsumableFeatureId, FlowActionType, FlowRun, FlowRunStatus, flowStructureUtil, FlowVersion, isFailedState, isFlowRunStateTerminal, RunEnvironment, WebsocketClientEvent } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
@@ -8,6 +8,7 @@ import { system } from '../../helper/system/system'
 import { billingProvider, CreditUsageSource, toFlowRunCreditProperties } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
+import { streamStepProgressUtils } from './stream-step-progress'
 
 const paidEditions = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
 export const flowRunHooks = (log: FastifyBaseLogger) => ({
@@ -19,9 +20,7 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
             return
         }
         const flowVersion = await flowVersionService(log).getOne(flowRun.flowVersionId)
-        const isPieceTrigger = !isNil(flowVersion) && flowVersion.trigger.type === FlowTriggerType.PIECE && !isNil(flowVersion.trigger.settings.triggerName) 
-        const isManualTrigger = isPieceTrigger && isManualPieceTrigger({ pieceName: flowVersion.trigger.settings.pieceName, triggerName: flowVersion.trigger.settings.triggerName })
-        if (flowRun.environment === RunEnvironment.TESTING || isManualTrigger) {
+        if (streamStepProgressUtils.isStreamedToBuilder({ flowRun, flowVersion })) {
             websocketService.to(flowRun.projectId).emit(WebsocketClientEvent.UPDATE_RUN_PROGRESS, {
                 flowRun,
             })
