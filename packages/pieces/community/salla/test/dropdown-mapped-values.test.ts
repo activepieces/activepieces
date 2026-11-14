@@ -241,7 +241,7 @@ describe('static dropdowns that get a mapped number', () => {
     expect(() => sallaMarketing.buildCreateCouponBody(coupon({ status: 1 }))).toThrow('"1" is not a coupon status.');
     expect(() => sallaMarketing.buildCreateCouponBody(coupon({ appliedIn: 2 }))).toThrow('"2" is not a valid channel.');
     expect(() => sallaMarketing.buildCreateCouponBody(coupon({ type: 3 }))).toThrow('"3" is not a coupon type.');
-    expect(() => sallaProducts.buildProductListQuery({ status: 4 } as Parameters<typeof sallaProducts.buildProductListQuery>[0])).toThrow(
+    expect(() => sallaProducts.buildProductListQuery({ maxResults: 10, status: 4 } as unknown as Parameters<typeof sallaProducts.buildProductListQuery>[0])).toThrow(
       '"4" is not a product status.',
     );
   });
