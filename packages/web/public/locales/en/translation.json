@@ -3954,6 +3954,7 @@
   "Reading Batch {number} of {total}": "Reading Batch {number} of {total}",
   "Browse batches": "Browse batches",
   "Batch {number} not found": "Batch {number} not found",
+  "this batch": "this batch",
   "took {duration}": "took {duration}",
   "Split {items} items, {size} each": "Split {items} items, {size} each",
   "Cancel runs": "Cancel runs",
@@ -3962,6 +3963,6 @@
   "Are you sure you want to retry from the failed step?": "Are you sure you want to retry from the failed step?",
   "This flow processes items in batches. Batches that already succeeded run again — anything they write to external systems happens twice.": "This flow processes items in batches. Batches that already succeeded run again — anything they write to external systems happens twice.",
   "batchRetryRunCount": "{count, plural, =1 {1 run will be retried.} other {# runs will be retried.}}",
-  "If any of these runs processes items in batches, cancelling also cancels the batches it dispatched — queued batches never start, and any batch waiting on an approval or a delay is dropped. Batches already executing run to completion.": "If any of these runs processes items in batches, cancelling also cancels the batches it dispatched — queued batches never start, and any batch waiting on an approval or a delay is dropped. Batches already executing run to completion.",
-  "If any of these runs processes items in batches, the batches that already succeeded run again — anything they wrote to external systems happens twice.": "If any of these runs processes items in batches, the batches that already succeeded run again — anything they wrote to external systems happens twice."
+  "Some of these runs may process items in batches. Cancelling stops batches that are queued or waiting. Batches that are already running finish.": "Some of these runs may process items in batches. Cancelling stops batches that are queued or waiting. Batches that are already running finish.",
+  "Some of these runs may process items in batches. Retrying can run batches that already succeeded again, and anything they sent to other apps can be sent twice.": "Some of these runs may process items in batches. Retrying can run batches that already succeeded again, and anything they sent to other apps can be sent twice."
 }

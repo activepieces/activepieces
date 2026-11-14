@@ -278,6 +278,43 @@ describe('batchUtils.isDispatchComplete', () => {
   });
 });
 
+describe('batchUtils.areAllBatchesSettled', () => {
+  const summary = {
+    ...pausedOutput,
+    total: 10,
+    succeeded: 8,
+    failed: 0,
+    rejected: 0,
+    canceled: 0,
+    notDispatched: 0,
+  };
+
+  it('is false while the barrier is still pending', () => {
+    expect(batchUtils.areAllBatchesSettled(pausedOutput)).toBe(false);
+    expect(batchUtils.areAllBatchesSettled(null)).toBe(false);
+  });
+
+  it('is false when a timed-out barrier released with batches still running', () => {
+    expect(
+      batchUtils.areAllBatchesSettled({
+        ...summary,
+        stillRunning: 2,
+        timedOut: true,
+      }),
+    ).toBe(false);
+  });
+
+  it('is true once the summary has no batch still running', () => {
+    expect(
+      batchUtils.areAllBatchesSettled({
+        ...summary,
+        failed: 2,
+        stillRunning: 0,
+      }),
+    ).toBe(true);
+  });
+});
+
 describe('batchUtils.headerState', () => {
   it('has no tiles while the barrier is still pending', () => {
     expect(batchUtils.headerState(pausedOutput)).toEqual({

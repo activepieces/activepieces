@@ -13,6 +13,7 @@ import {
   FlowRetryStrategy,
   FlowRun,
   FlowRunWithRetryError,
+  FlowVersionState,
   isFlowRunStateTerminal,
   PopulatedFlow,
 } from '@activepieces/shared';
@@ -24,7 +25,7 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 
 import { getDefaultRange } from '@/components/custom/date-time-picker-range';
@@ -116,35 +117,41 @@ export const flowRunQueries = {
     limit,
     statuses,
     enabled,
-    isDispatchComplete,
+    allBatchesSettled,
   }: {
     barrierId: string | null;
     limit: number;
     statuses: FlowRunStatus[] | undefined;
     enabled: boolean;
-    isDispatchComplete: boolean;
-  }) =>
-    useInfiniteQuery<SeekPage<FlowRun>, Error, InfiniteData<SeekPage<FlowRun>>>(
-      {
-        queryKey: flowRunKeys.batchChildren(barrierId ?? '', statuses),
-        getNextPageParam: (lastPage) => lastPage.next,
-        initialPageParam: undefined,
-        queryFn: ({ pageParam }) =>
-          flowRunsApi.list({
-            projectId: authenticationSession.getProjectId()!,
-            parentWaitpointId: barrierId!,
-            includeArchived: true,
-            limit,
-            status: statuses,
-            cursor: pageParam as string | undefined,
-          }),
-        enabled: enabled && !isNil(barrierId),
-        refetchInterval: (query) =>
-          isDispatchComplete && !hasPendingChild(query.state.data)
-            ? false
-            : 7000,
+    allBatchesSettled: boolean;
+  }) => {
+    const refreshedAfterSettling = useRef(false);
+    return useInfiniteQuery<
+      SeekPage<FlowRun>,
+      Error,
+      InfiniteData<SeekPage<FlowRun>>
+    >({
+      queryKey: flowRunKeys.batchChildren(barrierId ?? '', statuses),
+      getNextPageParam: (lastPage) => lastPage.next,
+      initialPageParam: undefined,
+      queryFn: ({ pageParam }) => {
+        if (isNil(pageParam)) {
+          refreshedAfterSettling.current = allBatchesSettled;
+        }
+        return flowRunsApi.list({
+          projectId: authenticationSession.getProjectId()!,
+          parentWaitpointId: barrierId!,
+          includeArchived: true,
+          limit,
+          status: statuses,
+          cursor: pageParam as string | undefined,
+        });
       },
-    ),
+      enabled: enabled && !isNil(barrierId),
+      refetchInterval: () =>
+        allBatchesSettled && refreshedAfterSettling.current ? false : 7000,
+    });
+  },
   useBatchChild: ({
     barrierId,
     dispatchIndex,
@@ -215,11 +222,11 @@ export const flowRunQueries = {
   },
   useMayProcessInBatches: ({
     runs,
-    hasUnknownRuns,
+    includesUnlistedRuns,
     enabled,
   }: {
     runs: { flowId: string; flowVersionId: string }[];
-    hasUnknownRuns: boolean;
+    includesUnlistedRuns: boolean;
     enabled: boolean;
   }): boolean => {
     const distinctVersions = Array.from(
@@ -233,14 +240,18 @@ export const flowRunQueries = {
       queries: lookedUpVersions.map(({ flowId, flowVersionId }) => ({
         queryKey: flowRunKeys.flowVersionBatch(flowVersionId),
         queryFn: () => flowsApi.get(flowId, { versionId: flowVersionId }),
-        staleTime: Infinity,
+        staleTime: (query: { state: { data?: PopulatedFlow } }) =>
+          query.state.data?.version.state === FlowVersionState.LOCKED
+            ? Infinity
+            : 0,
         enabled,
       })),
     });
     return flowRunUtils.mayProcessInBatches({
       versions: versionQueries.map((query) => query.data?.version),
-      hasUnknownRuns:
-        hasUnknownRuns || distinctVersions.length > MAX_BATCH_VERSION_LOOKUPS,
+      includesUnlistedRuns:
+        includesUnlistedRuns ||
+        distinctVersions.length > MAX_BATCH_VERSION_LOOKUPS,
     });
   },
 };
@@ -249,14 +260,6 @@ export type RunStatusCategory = ReturnType<typeof groupByCategory>[number];
 
 function isRunSettled(status: FlowRunStatus): boolean {
   return isFlowRunStateTerminal({ status, ignoreInternalError: false });
-}
-
-function hasPendingChild(
-  data: InfiniteData<SeekPage<FlowRun>> | undefined,
-): boolean {
-  return (data?.pages ?? []).some((page) =>
-    page.data.some((child) => !isRunSettled(child.status)),
-  );
 }
 
 export const flowRunMutations = {

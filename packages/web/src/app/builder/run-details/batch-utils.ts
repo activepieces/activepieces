@@ -54,6 +54,11 @@ function isDispatchComplete(output: BatchStepRunOutput | null): boolean {
   return headerState(output).kind === 'finished';
 }
 
+function areAllBatchesSettled(output: BatchStepRunOutput | null): boolean {
+  const header = headerState(output);
+  return header.kind === 'finished' && header.stillRunning === 0;
+}
+
 function missingLogsReason({
   output,
   dispatchIndex,
@@ -331,6 +336,7 @@ export const batchUtils = {
   batchCount,
   isSkippedWithoutBatches,
   isDispatchComplete,
+  areAllBatchesSettled,
   missingLogsReason,
   headerState,
   itemRange,

@@ -252,12 +252,12 @@ export const flowRunUtils = {
   },
   mayProcessInBatches({
     versions,
-    hasUnknownRuns,
+    includesUnlistedRuns,
   }: {
     versions: (FlowVersion | undefined)[];
-    hasUnknownRuns: boolean;
+    includesUnlistedRuns: boolean;
   }): boolean {
-    if (hasUnknownRuns) {
+    if (includesUnlistedRuns) {
       return true;
     }
     return versions.some(

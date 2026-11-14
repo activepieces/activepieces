@@ -77,7 +77,7 @@ describe('flowRunUtils.mayProcessInBatches', () => {
     expect(
       flowRunUtils.mayProcessInBatches({
         versions: [batchVersion],
-        hasUnknownRuns: false,
+        includesUnlistedRuns: false,
       }),
     ).toBe(true);
   });
@@ -86,7 +86,7 @@ describe('flowRunUtils.mayProcessInBatches', () => {
     expect(
       flowRunUtils.mayProcessInBatches({
         versions: [plainVersion, plainVersion],
-        hasUnknownRuns: false,
+        includesUnlistedRuns: false,
       }),
     ).toBe(false);
   });
@@ -95,7 +95,7 @@ describe('flowRunUtils.mayProcessInBatches', () => {
     expect(
       flowRunUtils.mayProcessInBatches({
         versions: [plainVersion, batchVersion],
-        hasUnknownRuns: false,
+        includesUnlistedRuns: false,
       }),
     ).toBe(true);
   });
@@ -104,7 +104,7 @@ describe('flowRunUtils.mayProcessInBatches', () => {
     expect(
       flowRunUtils.mayProcessInBatches({
         versions: [plainVersion, undefined],
-        hasUnknownRuns: false,
+        includesUnlistedRuns: false,
       }),
     ).toBe(true);
   });
@@ -113,7 +113,7 @@ describe('flowRunUtils.mayProcessInBatches', () => {
     expect(
       flowRunUtils.mayProcessInBatches({
         versions: [plainVersion],
-        hasUnknownRuns: true,
+        includesUnlistedRuns: true,
       }),
     ).toBe(true);
   });
@@ -122,7 +122,7 @@ describe('flowRunUtils.mayProcessInBatches', () => {
     expect(
       flowRunUtils.mayProcessInBatches({
         versions: [],
-        hasUnknownRuns: false,
+        includesUnlistedRuns: false,
       }),
     ).toBe(false);
   });

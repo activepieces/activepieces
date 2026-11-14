@@ -60,7 +60,7 @@ const FlowRunCard = React.memo(
       useState<boolean>(false);
     const mayProcessInBatches = flowRunQueries.useMayProcessInBatches({
       runs: [{ flowId: run.flowId, flowVersionId: run.flowVersionId }],
-      hasUnknownRuns: false,
+      includesUnlistedRuns: false,
       enabled: isRetryDropdownOpen && isFailedState(run.status),
     });
     const { mutate: retryRun, isPending: isRetryingRun } =
