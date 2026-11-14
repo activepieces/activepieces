@@ -1,37 +1,37 @@
-import {
-  PiecePropValueSchema,
-  createAction,
-} from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { dynamicsCRMAuth } from '../auth';
-import { DynamicsCRMCommon, makeClient } from '../common';
+import { DynamicsCRMCommon, dynamicsCommonInternals, makeClient } from '../common';
+import { recordOutputSchema } from '../common/output-schemas';
 
 export const createRecordAction = createAction({
   auth: dynamicsCRMAuth,
   name: 'dynamics_crm_create_record',
   classification: 'WRITE',
   displayName: 'Create Record',
-  description: 'Creates a new record.',
-  audience: 'both',
+  description: 'Creates a new record in any table.',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Creates a new record of a chosen Dynamics 365 / Dataverse entity type (e.g. accounts, contacts, leads), passing the field values for that entity. Pick the entity from its discovered entity-set name or map a raw entity-set name. Not idempotent: each call inserts a new record, so repeated calls create duplicates.',
+      'Creates a new record of a chosen Dynamics 365 / Dataverse entity type from the picked field values. Not idempotent: each call inserts a new record.',
     idempotent: false,
   },
   props: {
     entityType: DynamicsCRMCommon.entityType(
-      'Select or map the entity for which you want to create the record.'
+      'The table to create the record in.'
     ),
     fields: DynamicsCRMCommon.entityFields(true),
+    additionalFields: DynamicsCRMCommon.additionalFields,
   },
+  outputSchema: recordOutputSchema,
   async run(context) {
-    const { entityType, fields } = context.propsValue;
-
-    const entityUrlPath = entityType as string;
-
-    const client = makeClient(
-      context.auth
-    );
-
-    return await client.createRecord(entityUrlPath, fields);
+    const { entityType, fields, additionalFields } = context.propsValue;
+    const client = makeClient(context.auth);
+    const body = await dynamicsCommonInternals.normalizeDateOnlyFields({
+      client,
+      entitySet: entityType,
+      body: dynamicsCommonInternals.buildRecordBody({ fields, additionalFields }),
+    });
+    const record = await client.createRecord({ entitySet: entityType, fields: body });
+    return dynamicsCommonInternals.shapeGenericRecord({ client, entitySet: entityType, record });
   },
 });
