@@ -17,15 +17,22 @@ export const performSearchAction = createAction({
   },
   auth: exaAuth,
   outputSchema: searchResultsOutputSchema,
+  propertyGroups: [
+    { key: 'search', display: 'section', label: 'Search', icon: 'text', props: ['query', 'type', 'category', 'numResults'] },
+    { key: 'filters', display: 'section', label: 'Filters', icon: 'filter', props: ['includeDomains', 'excludeDomains', 'startPublishedDate', 'endPublishedDate', 'userLocation', 'moderation', 'includeText', 'excludeText'] },
+    { key: 'content', display: 'section', label: 'Page Content', icon: 'file', props: ['textMaxCharacters', 'maxAgeHours', 'highlights'] },
+  ],
   props: {
     query: Property.ShortText({
       displayName: 'Query',
-      description: 'Search query to find related articles and data.',
+      description: 'What to search for, in plain words.',
+      placeholder: 'AI startups building developer tools',
       required: true,
     }),
     type: Property.StaticDropdown({
       displayName: 'Search Type',
-      description: 'Type of search to perform. Auto suits most searches; Instant and Fast trade depth for speed; Deep Lite, Deep and Deep Reasoning research more and cost more ($0.012 to $0.015 per search). Keyword and Neural are legacy options that Exa no longer documents.',
+      description: 'Auto suits most searches. Deep options research more and cost more.',
+      width: 'half',
       required: false,
       defaultValue: 'auto',
       options: {
@@ -43,7 +50,8 @@ export const performSearchAction = createAction({
     }),
     category: Property.StaticDropdown({
       displayName: 'Category',
-      description: 'Category of data to focus the search on. Company and People do not support published-date filters or Exclude Domains.',
+      description: 'Company and People do not support date filters or Exclude Domains.',
+      width: 'half',
       required: false,
       options: {
         options: [
@@ -63,53 +71,62 @@ export const performSearchAction = createAction({
     }),
     numResults: Property.Number({
       displayName: 'Number of Results',
-      description: 'Number of results to return (max 100).',
+      description: 'How many results to return, up to 100.',
       required: false,
       defaultValue: 10,
     }),
     includeDomains: Property.Array({
       displayName: 'Include Domains',
-      description: 'Limit results to only these domains.',
+      description: 'Only return results from these domains.',
+      width: 'half',
       required: false,
     }),
     excludeDomains: Property.Array({
       displayName: 'Exclude Domains',
-      description: 'Exclude results from these domains.',
+      description: 'Never return results from these domains.',
+      width: 'half',
       required: false,
     }),
     startCrawlDate: Property.DateTime({
       displayName: 'Start Crawl Date',
-      description: 'Deprecated: Exa now ignores this filter. Use the published date filters instead.',
+      description: 'Exa now ignores this filter. Use the published dates instead.',
+      advanced: true,
       required: false,
     }),
     endCrawlDate: Property.DateTime({
       displayName: 'End Crawl Date',
-      description: 'Deprecated: Exa now ignores this filter. Use the published date filters instead.',
+      description: 'Exa now ignores this filter. Use the published dates instead.',
+      advanced: true,
       required: false,
     }),
     startPublishedDate: Property.DateTime({
       displayName: 'Start Published Date',
-      description: 'Only include results published after this ISO date.',
+      description: 'Only results published after this date.',
+      width: 'half',
       required: false,
     }),
     endPublishedDate: Property.DateTime({
       displayName: 'End Published Date',
-      description: 'Only include results published before this ISO date.',
+      description: 'Only results published before this date.',
+      width: 'half',
       required: false,
     }),
     includeText: Property.Array({
       displayName: 'Include Text',
-      description: 'Deprecated by Exa. Strings that must be present in the text of results.',
+      description: 'Deprecated by Exa. Results must contain this phrase.',
+      width: 'half',
       required: false,
     }),
     excludeText: Property.Array({
       displayName: 'Exclude Text',
-      description: 'Deprecated by Exa. Strings that must not be present in the text of results.',
+      description: 'Deprecated by Exa. Results must not contain this phrase.',
+      width: 'half',
       required: false,
     }),
     textMaxCharacters: Property.Number({
       displayName: 'Max Text Characters',
-      description: 'Limit the page text returned per result to this many characters, e.g. 2000. Leave empty for full text.',
+      description: "Cut each page's text to this many characters. Empty: full text.",
+      width: 'half',
       required: false,
     }),
     highlights: Property.Checkbox({
@@ -119,13 +136,15 @@ export const performSearchAction = createAction({
       defaultValue: false,
     }),
     maxAgeHours: Property.Number({
-      displayName: 'Max Content Age (hours)',
-      description: 'Use cached page content only if it is newer than this many hours (0 always fetches fresh, -1 always uses cache, up to 720). Leave empty for Exa\'s default.',
+      displayName: 'Max Content Age',
+      description: 'Max cache age in hours, up to 720. 0: always fresh, -1: always cached.',
+      width: 'half',
       required: false,
     }),
     userLocation: Property.ShortText({
       displayName: 'User Country',
-      description: 'Two-letter country code to localize results, e.g. "US" or "DE".',
+      description: 'Two-letter country code to localize results.',
+      placeholder: 'US',
       required: false,
     }),
     moderation: Property.Checkbox({

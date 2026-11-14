@@ -3,7 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { exaApi } from './common/client';
 
 const markdownDescription = `
-Obtain your API key from [Dashboard Setting](https://dashboard.exa.ai/api-keys).
+Get your API key from the [Exa dashboard](https://dashboard.exa.ai/api-keys).
 `;
 
 export const exaAuth = PieceAuth.SecretText({

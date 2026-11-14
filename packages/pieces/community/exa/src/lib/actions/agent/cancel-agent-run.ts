@@ -22,8 +22,8 @@ export const cancelAgentRunAction = createAction({
   props: {
     runId: Property.ShortText({
       displayName: 'Run ID',
-      description:
-        'The ID returned by Start Agent Run (or List Agent Runs), e.g. "agent_run_01k4d9w6y3h7p2m8".',
+      description: 'The ID from Start Agent Run or List Agent Runs.',
+      placeholder: 'agent_run_01k4d9w6y3h7p2m8',
       required: true,
     }),
   },

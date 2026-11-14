@@ -21,50 +21,69 @@ export const newSearchMonitorResultsTrigger = createTrigger({
     description:
       'Fires once per completed Exa search-monitor run: Exa repeats the configured query on the chosen interval, removes results it already returned, and delivers the new results with their citations; summary describes exactly those results and is null when the run also held results delivered before (run_summary, run_result_count and run_citations then describe the whole run). Numbered markers such as [1] in the summaries come from Exa and do not reliably index the citation lists. Check status and fail_reason before using the results. Each run is billed by Exa (about $0.015 per run).',
   },
+  propertyGroups: [
+    {
+      key: 'monitor',
+      display: 'section',
+      label: 'Monitor',
+      icon: 'calendar',
+      props: ['info', 'query', 'period'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'filter',
+      props: ['numResults', 'includeDomains', 'excludeDomains', 'includeText', 'includeHighlights'],
+    },
+  ],
   props: {
     info: Property.MarkDown({
-      value: `Exa creates a **Monitor** that repeats this search on a schedule and sends only new results.
+      value: `Exa repeats this search on a schedule and sends only new results.
 
-- Each run costs about **$0.015** on your Exa account (plus $0.001 per result above 10). An hourly monitor is about 720 runs a month (≈ $11); daily is about 30 (≈ $0.45).
-- Exa only delivers to a public **HTTPS** address. On a self-hosted instance, the Activepieces webhook URL must be reachable from the internet.
-- Testing the trigger in the builder runs one search (about $0.007, plus content charges when page text or highlights are on) and shows its results; it does not create a monitor.
-- Results that were already delivered are not sent again, also after the flow is republished. A run whose results were all delivered before is skipped. When a run mixes old and new results, only the new ones are sent, with their citations; Summary is then empty, and Run Summary and Run Citations cover the whole run. Numbered markers such as [1] in Exa's summaries are Exa's own; Exa does not document what they point to, so use the citation lists for sources.
-- Turning the flow off deletes the monitor, retrying if Exa is briefly unavailable. If it still can't be deleted, remove it in the Exa dashboard: it is named after this flow unless you set Monitor Name.`,
+- Each run costs about **$0.015** on your Exa account.
+- Exa only delivers to a public **HTTPS** address, so a self-hosted instance must be reachable from the internet.
+- Testing runs one search (about $0.007) and does not create a monitor.
+- Turning the flow off deletes the monitor. If that fails, delete it in the Exa dashboard; it is named after this flow unless you set Monitor Name.`,
     }),
     query: Property.LongText({
-      displayName: 'Search Query',
+      displayName: 'Query',
       description:
-        'What to watch for, written as the ongoing signal rather than a date range. Example: "new battery recycling facilities announced in North America".',
+        'What to watch for, written as an ongoing topic, not a date range.',
+      placeholder: 'new battery recycling facilities announced in North America',
       required: true,
     }),
     period: Property.StaticDropdown({
       displayName: 'Check Every',
-      description: 'How often Exa runs the search. Each run may start up to 30 minutes late.',
+      description: 'Each run may start up to 30 minutes late.',
+      display: 'cards',
       required: true,
       defaultValue: '1d',
       options: {
         options: [
-          { label: 'Hour', value: '1h' },
-          { label: '6 hours', value: '6h' },
-          { label: 'Day', value: '1d' },
-          { label: 'Week', value: '7d' },
+          { label: '1 hour', value: '1h', icon: 'calendar', description: '$11/month' },
+          { label: '6 hours', value: '6h', icon: 'calendar', description: '$1.80/month' },
+          { label: '1 day', value: '1d', icon: 'calendar', description: '$0.45/month' },
+          { label: '1 week', value: '7d', icon: 'calendar', description: '$0.07/month' },
         ],
       },
     }),
     numResults: Property.Number({
       displayName: 'Max Results per Run',
-      description: 'Up to how many new results each run returns, 1 to 100. Defaults to 10; results above 10 cost extra.',
+      description: 'Up to 100 per run. Results above 10 cost $0.001 each.',
       required: false,
       defaultValue: 10,
     }),
     includeDomains: Property.Array({
       displayName: 'Include Domains',
-      description: 'Only return results from these domains, e.g. "techcrunch.com". Leave empty for the whole web.',
+      description: 'Only return results from these domains.',
+      width: 'half',
       required: false,
     }),
     excludeDomains: Property.Array({
       displayName: 'Exclude Domains',
       description: 'Never return results from these domains.',
+      width: 'half',
       required: false,
     }),
     includeText: Property.Checkbox({
@@ -75,13 +94,14 @@ export const newSearchMonitorResultsTrigger = createTrigger({
     }),
     includeHighlights: Property.Checkbox({
       displayName: 'Include Highlights',
-      description: 'Add the most relevant snippets from each page to each result.',
+      description: 'Also return the most relevant snippets from each page.',
       required: false,
       defaultValue: false,
     }),
     monitorName: Property.ShortText({
       displayName: 'Monitor Name',
-      description: 'Optional name shown for this monitor in the Exa dashboard.',
+      description: 'Name shown for this monitor in the Exa dashboard.',
+      advanced: true,
       required: false,
     }),
   },
@@ -452,8 +472,8 @@ function sampleRun(): Record<string, unknown> {
     monitor_id: '01k4d9w6y3h7p2m8n5q1r0s4tv',
     status: 'completed',
     fail_reason: null,
-    summary: 'Two new battery recycling facilities were announced in Ontario and Nevada this week. [1]',
-    run_summary: 'Two new battery recycling facilities were announced in Ontario and Nevada this week. [1]',
+    summary: 'A new battery recycling facility was announced in Ontario this week. [1]',
+    run_summary: 'A new battery recycling facility was announced in Ontario this week. [1]',
     result_count: 1,
     run_result_count: 1,
     results: [

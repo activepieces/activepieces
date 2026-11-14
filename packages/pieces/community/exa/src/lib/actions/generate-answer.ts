@@ -18,37 +18,43 @@ export const generateAnswerAction = createAction({
   props: {
     query: Property.ShortText({
       displayName: 'Query',
-      description: 'Ask a question to get summarized answers from the web.',
+      description: 'The question to answer from the web.',
+      placeholder: 'What are the main causes of inflation in 2026?',
       required: true,
-    }),
-    text: Property.Checkbox({
-      displayName: 'Include Text Content',
-      description: 'If true, includes full text content from the search results',
-      required: false,
-      defaultValue: false,
     }),
     model: Property.StaticDropdown({
       displayName: 'Model',
-      description: 'Choose the Exa model to use for the answer.',
+      description: 'Which Exa model writes the answer.',
       required: true,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Exa', value: 'exa' },
-          { label: 'Exa Pro', value: 'exa-pro' },
-          { label: 'Exa Fast', value: 'exa-fast' },
+          { label: 'Exa', value: 'exa', description: 'Balanced', icon: 'text' },
+          { label: 'Exa Pro', value: 'exa-pro', description: 'More thorough', icon: 'sliders' },
+          { label: 'Exa Fast', value: 'exa-fast', description: 'Fastest', icon: 'send' },
         ],
       },
       defaultValue: 'exa',
     }),
     systemPrompt: Property.LongText({
       displayName: 'Instructions',
-      description: 'Extra guidance for the answer, such as tone, length or preferred sources, e.g. "Answer in two sentences and prefer official sources."',
+      description: 'Extra guidance such as tone, length or preferred sources.',
+      placeholder: 'Answer in two sentences and prefer official sources.',
       required: false,
     }),
     userLocation: Property.ShortText({
       displayName: 'User Country',
-      description: 'Two-letter country code to localize the search behind the answer, e.g. "US".',
+      description: 'Two-letter country code to localize the search behind the answer.',
+      placeholder: 'US',
       required: false,
+      advanced: true,
+    }),
+    text: Property.Checkbox({
+      displayName: 'Include Full Text',
+      description: 'Also have Exa fetch the full text of the sources it used.',
+      required: false,
+      defaultValue: false,
+      advanced: true,
     }),
   },
   async run(context) {

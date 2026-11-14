@@ -6,6 +6,12 @@ import { BASE_URL, exaApi } from '../common/client';
 const baseAction = createCustomApiCallAction({
   auth: exaAuth,
   baseUrl: () => BASE_URL,
+  props: {
+    url: {
+      description: `Full URL, or a path relative to ${BASE_URL}`,
+      placeholder: '/search',
+    },
+  },
   authMapping: async (auth, propsValue) => {
     exaApi.assertExaUrl(propsValue['url']?.['url']);
     if (propsValue['followRedirects'] === true) {
@@ -21,6 +27,7 @@ export const exaCustomApiCallAction = createAction({
   displayName: 'Custom API Call',
   description: 'Make a custom API call to a specific endpoint',
   props: baseAction.props,
+  propertyGroups: baseAction.propertyGroups,
   requireAuth: baseAction.requireAuth,
   errorHandlingOptions: baseAction.errorHandlingOptions,
   audience: 'human',
