@@ -229,7 +229,7 @@ describe('fetchPaged', () => {
 });
 
 describe('fetchPaged on a cursor shape that ignores page', () => {
-  it('stops when a page repeats the previous first item instead of returning duplicates', async () => {
+  it('stops when a page repeats the previous first item and reports the list as truncated', async () => {
     const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue({
       status: 200,
       headers: {},
@@ -237,7 +237,17 @@ describe('fetchPaged on a cursor shape that ignores page', () => {
     });
     const result = await sallaApi.fetchPaged({ auth, path: '/payment/methods', maxItems: 100 });
     expect(result.items).toEqual(ids({ from: 1, count: 2 }));
-    expect(result.truncated).toBe(false);
+    expect(result.truncated).toBe(true);
     expect(spy).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports a full list when the only page says there is no next page', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockResolvedValue({
+      status: 200,
+      headers: {},
+      body: { status: 200, success: true, data: ids({ from: 1, count: 2 }), pagination: { count: 2, current: 1, next: null } },
+    });
+    const result = await sallaApi.fetchPaged({ auth, path: '/payment/methods', maxItems: 100 });
+    expect(result).toEqual({ items: ids({ from: 1, count: 2 }), truncated: false, pagesFetched: 1 });
   });
 });
