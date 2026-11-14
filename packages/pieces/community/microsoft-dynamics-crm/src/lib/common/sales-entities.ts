@@ -152,7 +152,7 @@ function fieldProps({ entity, mode }: { entity: SalesEntity; mode: 'create' | 'u
         });
         break;
       case 'date':
-        props[field.key] = Property.DateTime({ ...params, description: 'Only the date part is used.' });
+        props[field.key] = Property.DateTime({ ...params, description: 'Enter a plain date such as 2026-12-31. Times are read in UTC, so a time with an offset can shift the day.' });
         break;
       case 'choice':
         props[field.key] = choiceDropdown({ entity, field, mode });
