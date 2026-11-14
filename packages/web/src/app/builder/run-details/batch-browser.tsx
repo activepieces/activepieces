@@ -8,6 +8,7 @@ import {
   CardListEmpty,
   CardListItemSkeleton,
 } from '@/components/custom/card-list';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -285,7 +286,7 @@ const BatchList = ({
     limit: BATCH_PAGE_SIZE,
     statuses: failedOnly ? FAILED_BATCH_STATUSES : undefined,
     enabled: true,
-    isDispatchComplete: batchUtils.isDispatchComplete(output),
+    allBatchesSettled: batchUtils.areAllBatchesSettled(output),
   });
 
   const rows: BatchListItem[] = useMemo(() => {
@@ -381,7 +382,7 @@ const JumpedBatch = ({
   selectedIndex: number;
   onSelect: (dispatchIndex: number) => void;
 }) => {
-  const { data, isLoading } = flowRunQueries.useBatchChild({
+  const { data, isLoading, isError, refetch } = flowRunQueries.useBatchChild({
     barrierId: output.barrierId,
     dispatchIndex,
     enabled: true,
@@ -391,6 +392,9 @@ const JumpedBatch = ({
 
   if (isLoading) {
     return <CardListItemSkeleton numberOfCards={1} withCircle={false} />;
+  }
+  if (isError && isNil(data)) {
+    return <DataFetchErrorState entity={t('this batch')} onRetry={refetch} />;
   }
   if (isNil(run) && !isFinished) {
     return (
@@ -471,12 +475,18 @@ const BatchDetail = ({
   output: BatchStepRunOutput;
   dispatchIndex: number;
 }) => {
-  const { data } = flowRunQueries.useBatchChild({
+  const { data, isLoading, isError, refetch } = flowRunQueries.useBatchChild({
     barrierId: output.barrierId,
     dispatchIndex,
     enabled: true,
     isDispatchComplete: batchUtils.isDispatchComplete(output),
   });
+  if (isLoading) {
+    return <CardListItemSkeleton numberOfCards={1} withCircle={false} />;
+  }
+  if (isError && isNil(data)) {
+    return <DataFetchErrorState entity={t('this batch')} onRetry={refetch} />;
+  }
   const run = data?.data[0] ?? null;
   const state = batchUtils.missingLogsReason({
     output,
