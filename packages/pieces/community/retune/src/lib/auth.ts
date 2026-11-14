@@ -2,29 +2,25 @@ import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 const markdownDescription = `
-Follow these instructions to get your re:tune chat ID and API Key:
-
-1. Visit the chatbots page: https://retune.so/chats
-2. Once on the website, locate and click on the chatbot you want to use
-3. From the URL, copy the chat ID you want to use;
-e.g from this: https://retune.so/chat/acewocwe-123123-123123-123123/ your chat ID is "acewocwe-123123-123123-123123"
-4. To get the API key, go to https://retune.so/settings
-5. Scroll to the bottom to find "Re:tune API Keys" and copy your key below
+To connect re:tune:
+1. Open [your chatbots](https://retune.so/chats) and click the chatbot to use.
+2. Copy the **Chat ID** from the page address: in \`https://retune.so/chat/abc-123/\` it is \`abc-123\`.
+3. Go to [Settings](https://retune.so/settings), scroll to **re:tune API Keys** and copy your key.
 `;
 
 export const retuneAuth = PieceAuth.CustomAuth({
   description: markdownDescription,
   required: true,
   props: {
-    // There is no way to programmatically get the user's chatbots, so we have this
     chatId: Property.ShortText({
       displayName: 'Chat ID',
-      description: 'The ID of the chat you want to use.',
+      description: 'In the chatbot\'s address: retune.so/chat/<Chat ID>/',
+      placeholder: 'acewocwe-123123-123123-123123',
       required: true,
     }),
     apiKey: PieceAuth.SecretText({
       displayName: 'API Key',
-      description: 'Your re:tune API key.',
+      description: 'Under re:tune API Keys in your re:tune settings.',
       required: true,
     }),
   },
@@ -47,7 +43,7 @@ export const retuneAuth = PieceAuth.CustomAuth({
     } catch (e) {
       return {
         valid: false,
-        error: 'Invalid API key',
+        error: 'Invalid API key or Chat ID.',
       };
     }
   },
