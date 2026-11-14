@@ -79,7 +79,7 @@ How many batches actually run at once is `min(batch count, what your project can
 batch size ≈ list length ÷ how many runs your project can run at once
 ```
 
-Below the knee you leave capacity idle. Above it, wall clock is **flat** — halving the batch size doubles the number of batches but they queue behind the same capacity and finish at the same time — while the overhead of extra runs keeps rising. Ask your administrator what your project's concurrency limit is; on a single-worker self-hosted install it is one.
+Above the knee you leave capacity idle: there are fewer batches than runs your project can run at once. Below it, wall clock is **flat** — halving the batch size doubles the number of batches but they queue behind the same capacity and finish at the same time — while the overhead of extra runs keeps rising. Ask your administrator what your project's concurrency limit is; on a single-worker self-hosted install it is one.
   </Step>
   <Step title="One batch has to finish inside the flow timeout">
 Each batch is bounded by the same flow timeout as any other run. A batch big enough to exceed it will never complete, however many other batches succeed.
