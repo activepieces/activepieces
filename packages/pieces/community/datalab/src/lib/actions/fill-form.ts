@@ -8,8 +8,7 @@ export const fillFormAction = createAction({
   name: 'fill_form',
   classification: 'READ',
   displayName: 'Fill Form',
-  description:
-    'Fills a flat, scanned or image form that has no fillable fields, using AI to place each value, and saves the filled file. Slow action: one page usually takes 1 to 4 minutes (5 to 8 for a dense form with many fields), and the step waits up to 6 minutes before it stops with a timeout message that says how to get the result. For a normal fillable PDF, the Fill PDF Form action of the PDF piece is cheaper and instant. A saved file is limited to 10 MB on Activepieces Cloud.',
+  description: 'Fills a flat or scanned form with no fillable fields. Slow action: 1 to 4 minutes a page.',
   audience: 'human',
   aiMetadata: {
     description:

@@ -65,7 +65,7 @@ function aiProps() {
 function includeText() {
   return Property.Checkbox({
     displayName: 'Include Page Text',
-    description: 'Turn on to also return the text of each page, which helps tell similar fields apart. Off by default.',
+    description: 'Also return the text of each page, to tell similar fields apart.',
     required: false,
     defaultValue: false,
     advanced: true,

@@ -7,7 +7,7 @@ export const extractStructuredDataAction = createAction({
   name: 'extract_structured_data',
   classification: 'READ',
   displayName: 'Extract Structured Data',
-  description: 'Pulls the fields you list, such as invoice numbers, totals or line items, out of a document, with citations showing where each value was found.',
+  description: 'Pulls the fields you list, such as an invoice number or total, out of a document.',
   audience: 'human',
   aiMetadata: {
     description:

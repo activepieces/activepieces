@@ -126,13 +126,13 @@ describe('datalab piece', () => {
   it('warns people and agents up front that Fill Form is slow, with the wait each of them gets', () => {
     const human = handWritten.find((action) => action.name === 'fill_form');
     const ai = handWritten.find((action) => action.name === 'ai_fill_form');
+    expect(human?.description).toMatch(/Slow action: 1 to 4 minutes a page/);
+    expect(ai?.description).toMatch(/Slow action: one page usually takes 1 to 4 minutes \(5 to 8 for a dense form with many fields\)/);
     for (const action of [human, ai]) {
-      expect(action?.description, action?.name).toMatch(/Slow action: one page usually takes 1 to 4 minutes \(5 to 8 for a dense form with many fields\)/);
       expect(action?.aiMetadata?.description, action?.name).toMatch(/Slow action: one page usually takes 1 to 4 minutes, and a dense form with many fields can take 5 to 8, so a long wait is normal/);
     }
     expect(fillOperation.HUMAN_WAIT_MINUTES).toBe(fillOperation.HUMAN_MAX_WAIT_MS / 60_000);
     expect(fillOperation.AI_WAIT_MINUTES).toBe(datalabClient.MAX_WAIT_MS / 60_000);
-    expect(human?.description).toContain(`waits up to ${fillOperation.HUMAN_WAIT_MINUTES} minutes`);
     expect(human?.aiMetadata?.description).toContain(`waits up to ${fillOperation.HUMAN_WAIT_MINUTES} minutes`);
     expect(ai?.description).toContain(`the ${fillOperation.AI_WAIT_MINUTES} minute wait`);
     expect(ai?.aiMetadata?.description).toContain(`waits up to ${fillOperation.AI_WAIT_MINUTES} minutes`);

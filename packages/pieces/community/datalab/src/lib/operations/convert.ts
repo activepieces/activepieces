@@ -29,38 +29,36 @@ const EXTRA_LABELS: Record<ConvertExtra, string> = {
   extract_bookmarks: 'Extract Bookmarks',
 };
 
-const SIZE_NOTE = 'JSON and Chunks get large on long documents (about 6 KB a page for JSON, and a step output is limited to 5 MB), so set a Page Range for long documents. A result over 4 MB is saved as a file instead of being returned.';
-const FILE_LIMIT_NOTE = 'A saved file is limited to 10 MB on Activepieces Cloud.';
 
 function humanProps() {
   return {
     ...datalabSource.humanProps({ noun: NOUN }),
     output_format: Property.StaticDropdown<ConvertOutputFormat, true>({
       displayName: 'Output Format',
-      description: `Markdown is plain text with headings and tables, the best input for AI steps. HTML keeps more of the layout. JSON gives every block with its type and position on the page. Chunks gives a flat list of blocks, ready for a search index. ${SIZE_NOTE}`,
+      description: 'JSON and Chunks get large: set a Page Range for long documents.',
       required: true,
       defaultValue: DEFAULT_OUTPUT_FORMAT,
       options: {
         options: [
-          { label: 'Markdown', value: 'markdown' },
-          { label: 'HTML', value: 'html' },
-          { label: 'JSON', value: 'json' },
-          { label: 'Chunks', value: 'chunks' },
+          { label: 'Markdown', value: 'markdown', description: 'Plain text with headings and tables. Best for AI steps.' },
+          { label: 'HTML', value: 'html', description: 'Keeps more of the layout.' },
+          { label: 'JSON', value: 'json', description: 'Every block with its type and position on the page.' },
+          { label: 'Chunks', value: 'chunks', description: 'A flat list of blocks, ready for a search index.' },
         ],
       },
     }),
     mode: Property.StaticDropdown<ConvertMode, true>({
       displayName: 'Mode',
-      description: 'How hard Datalab works on the document. Faster modes cost fewer credits; Accurate is the slowest and costs the most.',
+      description: 'Faster modes cost fewer credits. Accurate costs the most.',
       display: 'cards',
       required: true,
       defaultValue: DEFAULT_MODE,
       options: {
         options: [
-          { label: 'Lite', value: 'lite', description: 'Cheapest and fastest. No Exact Transcription or Extras.' },
-          { label: 'Fast', value: 'fast', description: 'Quick and low cost, good for clean digital files.' },
-          { label: 'Balanced', value: 'balanced', description: 'The default mix of speed, cost and accuracy.' },
-          { label: 'Accurate', value: 'accurate', description: 'Most accurate, slowest and costs the most.' },
+          { label: 'Lite', value: 'lite', description: 'Cheapest and fastest' },
+          { label: 'Fast', value: 'fast', description: 'Quick and low cost' },
+          { label: 'Balanced', value: 'balanced', description: 'The default balance' },
+          { label: 'Accurate', value: 'accurate', description: 'Slowest, most accurate' },
         ],
       },
     }),
@@ -68,42 +66,42 @@ function humanProps() {
     max_pages: datalabProps.maxPages(),
     paginate: Property.Checkbox({
       displayName: 'Page Separators',
-      description: 'Turn on to put a line with the page number between pages, counted from 0.',
+      description: 'Put a line with the page number between pages, counted from 0.',
       required: false,
       defaultValue: false,
       advanced: true,
     }),
     include_images: Property.Checkbox({
       displayName: 'Include Images',
-      description: `Turn on to save the pictures found in the document as files, listed in Images. The Markdown and HTML point to them by file name. Off by default because Datalab sends every image inside the result, which makes it much larger. ${FILE_LIMIT_NOTE}`,
+      description: 'Save the pictures in the document as files. Makes the result larger.',
       required: false,
       defaultValue: false,
       advanced: true,
     }),
     keep_headers_footers: Property.Checkbox({
       displayName: 'Keep Headers and Footers',
-      description: 'Turn on to keep page headers and footers in Markdown and HTML. They are always kept in JSON and Chunks.',
+      description: 'Keep page headers and footers in Markdown and HTML.',
       required: false,
       defaultValue: false,
       advanced: true,
     }),
     exact_transcription: Property.Checkbox({
       displayName: 'Exact Transcription',
-      description: 'Turn on to keep the text exactly as printed, typos and odd formatting included. Not available in Lite mode.',
+      description: 'Keep the text exactly as printed, typos included. Not in Lite mode.',
       required: false,
       defaultValue: false,
       advanced: true,
     }),
     token_efficient_markdown: Property.Checkbox({
       displayName: 'Token-Efficient Markdown',
-      description: 'Turn on for shorter Markdown that uses fewer AI tokens, for example when the next step is an AI model.',
+      description: 'Shorter Markdown that uses fewer AI tokens.',
       required: false,
       defaultValue: false,
       advanced: true,
     }),
     extras: Property.StaticMultiSelectDropdown<ConvertExtra, false>({
       displayName: 'Extras',
-      description: 'Extra processing: Chart Understanding reads the data out of charts, Extract Links keeps the links in the document, Extract Bookmarks lists the PDF bookmarks. Not available in Lite mode.',
+      description: 'Extra processing for charts, links and bookmarks. Not in Lite mode.',
       required: false,
       advanced: true,
       options: {
@@ -113,7 +111,7 @@ function humanProps() {
     skip_cache: datalabProps.skipCache(),
     save_as_file: Property.Checkbox({
       displayName: 'Also Save as File',
-      description: `Turn on to also save the result as a file (.md, .html or .json) that later steps can use. A result over 4 MB is always saved as a file and returned only as the file, even when this is off. ${FILE_LIMIT_NOTE}`,
+      description: 'Also save the result as a .md, .html or .json file for later steps.',
       required: false,
       defaultValue: false,
       advanced: true,

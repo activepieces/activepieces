@@ -8,7 +8,7 @@ export const segmentDocumentAction = createAction({
   name: 'segment_document',
   classification: 'READ',
   displayName: 'Segment Document',
-  description: 'Splits a combined file into its separate documents, or finds named sections, and returns the pages of each part.',
+  description: 'Splits a combined file into its separate documents, or finds the sections you name.',
   audience: 'human',
   aiMetadata: {
     description:

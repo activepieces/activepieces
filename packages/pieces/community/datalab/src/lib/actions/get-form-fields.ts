@@ -8,8 +8,7 @@ export const getFormFieldsAction = createAction({
   name: 'get_form_fields',
   classification: 'READ',
   displayName: 'Get Form Fields',
-  description:
-    'Lists the fields on a form, with their labels, types and positions. Run it before Fill Form to learn which field labels the form has. It finds blank lines, boxes and tick boxes on flat and scanned forms too. Pages are counted from 0.',
+  description: 'Lists the fields on a form. Run it before Fill Form to learn the field labels.',
   audience: 'human',
   aiMetadata: {
     description:

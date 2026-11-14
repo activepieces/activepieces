@@ -68,7 +68,7 @@ function humanProps() {
     ...datalabSource.humanProps({ noun: NOUN }),
     schema_type: Property.StaticDropdown<SchemaType, true>({
       displayName: 'Describe the Fields',
-      description: 'List the fields one by one, or paste a JSON Schema when you need nested objects or lists such as line items.',
+      description: 'Use JSON Schema for nested objects or lists such as line items.',
       display: 'cards',
       required: true,
       defaultValue: 'simple',
@@ -92,8 +92,7 @@ function humanProps() {
     citation_granularity: citationProp({ audience: 'human' }),
     parse_mode: Property.StaticDropdown<ParseMode, false>({
       displayName: 'Parse Mode',
-      description:
-        'How carefully Datalab reads the document before extracting. Leave empty to let Datalab choose: it reads carefully for Balanced and Accurate, and quickly for Fast. Ignored in Turbo mode, which skips this step.',
+      description: 'How carefully Datalab reads the file first. Empty lets Datalab choose.',
       required: false,
       advanced: true,
       options: {
@@ -159,7 +158,7 @@ function simpleSchemaProps() {
         }),
         required: Property.Checkbox({
           displayName: 'Required',
-          description: 'Tells Datalab this field should always be filled. The step does not fail when the value is not found; it returns null.',
+          description: 'Marks the field as expected. A missing value is null, not an error.',
           required: false,
           defaultValue: false,
         }),
@@ -172,7 +171,7 @@ function advancedSchemaProps() {
   return {
     json_schema: Property.Json({
       displayName: 'JSON Schema',
-      description: 'A JSON Schema whose top level is an object with a "properties" key listing the fields. Nested objects and arrays are supported. See json-schema.org to learn more.',
+      description: 'An object schema with a "properties" key. Nesting is supported.',
       required: true,
       defaultValue: {
         type: 'object',
@@ -200,7 +199,7 @@ function extractionModeProp({ audience }: { audience: DatalabAudience }) {
   const description =
     audience === 'ai'
       ? 'turbo, fast, balanced or accurate. Default balanced. turbo is cheapest and fastest but has no citations or checks. fast adds citations; its scores arrive later and are not waited for. balanced and accurate check each field against the document and take longer (about half a minute for two pages).'
-      : 'Turbo is the cheapest and fastest: values only, with no citations and no checks. Fast adds citations; its field scores arrive after the result and are not waited for. Balanced (the default) and Accurate also check each field against the document, so they take longer (about half a minute for two pages in our test). Accurate is the most thorough and costs the most.';
+      : 'Faster modes cost less. Slower modes check each value.';
   return Property.StaticDropdown<ExtractionMode, false>({
     displayName: 'Extraction Mode',
     description,
@@ -208,10 +207,10 @@ function extractionModeProp({ audience }: { audience: DatalabAudience }) {
     defaultValue: 'balanced',
     options: {
       options: [
-        { label: 'Turbo', value: 'turbo' },
-        { label: 'Fast', value: 'fast' },
-        { label: 'Balanced', value: 'balanced' },
-        { label: 'Accurate', value: 'accurate' },
+        { label: 'Turbo', value: 'turbo', description: 'Cheapest and fastest. Values only, no citations or checks.' },
+        { label: 'Fast', value: 'fast', description: 'Adds citations. Field scores arrive later.' },
+        { label: 'Balanced', value: 'balanced', description: 'Also checks each field against the document. The default.' },
+        { label: 'Accurate', value: 'accurate', description: 'Most thorough, slowest and costs the most.' },
       ],
     },
   });
@@ -221,7 +220,7 @@ function citationProp({ audience }: { audience: DatalabAudience }) {
   const description =
     audience === 'ai'
       ? 'block (default) returns block IDs such as /page/0/Text/3; phrase returns the matched text with its page and position. Ignored in turbo mode.'
-      : 'Block (the default) gives the ID of the text block each value came from, such as /page/0/Text/3. Phrase gives the exact matched text with its page and position. Ignored in Turbo mode, which has no citations.';
+      : 'How precise the source of each value is. Not used in Turbo mode.';
   return Property.StaticDropdown<CitationGranularity, false>({
     displayName: 'Citation Detail',
     description,
@@ -230,8 +229,8 @@ function citationProp({ audience }: { audience: DatalabAudience }) {
     advanced: true,
     options: {
       options: [
-        { label: 'Block', value: 'block' },
-        { label: 'Phrase', value: 'phrase' },
+        { label: 'Block', value: 'block', description: 'The ID of the text block the value came from. The default.' },
+        { label: 'Phrase', value: 'phrase', description: 'The exact matched text, with its page and position.' },
       ],
     },
   });
