@@ -60,4 +60,12 @@ describe('parse_url output schema', () => {
     expect(field?.children).toBeUndefined();
     expect(field?.listItems).toBeUndefined();
   });
+
+  test('handles URLs with leading and trailing whitespace', async () => {
+    const output = (await run('   https://example.com:8080/api/v1?token=xyz   ')) as Record<string, unknown>;
+    expect(output['base_url']).toBe('https://example.com:8080');
+    expect(output['domain']).toBe('example.com');
+    expect(output['path']).toBe('/api/v1');
+    expect(output['query_parameters']).toEqual({ token: ['xyz'] });
+  });
 });

@@ -310,7 +310,7 @@ export const httpSendRequestAction = createAction({
 
     const request: HttpRequest = {
       method,
-      url,
+      url: url.trim(),
       headers: headers as HttpHeaders,
       queryParams: queryParams as QueryParams,
       timeout: timeout ? timeout * 1000 : 0,

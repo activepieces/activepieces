@@ -26,7 +26,8 @@ export const parseUrl = createAction({
     const { url, returnArrays } = context.propsValue;
 
     try {
-      const parsedUrl = new URL(url);
+      const trimmedUrl = (url ?? '').trim();
+      const parsedUrl = new URL(trimmedUrl);
       const queryParams: Record<string, any> = {};
 
       const keys = new Set(parsedUrl.searchParams.keys());
