@@ -161,6 +161,17 @@ describe('createCustomer refuses a mobile or email another customer already has'
     expect(spy.mock.calls.every(([request]) => request.method === HttpMethod.GET)).toBe(true);
   });
 
+  it('says how many customers it checked when a cursor search stops after one page', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async () =>
+      ok({ data: [{ ...existing, id: 1, mobile: 1, email: 'x@example.com' }], pagination: { count: 1, current: 1, next: 'opaque-cursor' } }),
+    );
+    const failure = await sallaCustomers
+      .createCustomer({ auth, input: { firstName: 'Dup', lastName: 'Probe', mobile: '+966551119876' } })
+      .catch((error: unknown) => (error instanceof Error ? error.message : String(error)));
+    expect(failure).toContain('it checked 1');
+    expect(failure).not.toContain('more than 300');
+  });
+
   it('searches by the national number without the country code', async () => {
     const spy = mockSearch(() => []);
     await sallaCustomers.createCustomer({ auth, input: { firstName: 'Ali', lastName: 'Saleh', mobile: '0501234567', countryCode: 'SA' } });
