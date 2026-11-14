@@ -42,6 +42,7 @@ import { isRunAgent } from '../test-step/agent-test-step';
 import { AiRouterRoutes } from './ai-router-routes';
 import { BatchBreadcrumb, BatchBrowser } from './batch-browser';
 import { BatchLogsPanel, EmptyStatePanel } from './batch-logs-panel';
+import { batchUtils } from './batch-utils';
 import { truncatedInputUtils } from './truncated-input-utils';
 import { useStepOutputInRun } from './use-batch-logs';
 
@@ -64,10 +65,15 @@ export const FlowStepInputOutput = () => {
     stepName: string;
     tab: RunActiveTab;
   } | null>(null);
-  const isBatchStep = selectedStep?.type === FlowActionType.PROCESS_IN_BATCHES;
+  const { stepOutput: selectedStepOutput, batchLogs } = useStepOutputInRun(
+    selectedStep?.name,
+  );
+  const hasBatchSummary =
+    selectedStep?.type === FlowActionType.PROCESS_IN_BATCHES &&
+    !isNil(batchUtils.parseStepOutput(selectedStepOutput?.output));
   const defaultTab: RunActiveTab = isAgent
     ? 'timeline'
-    : isBatchStep
+    : hasBatchSummary
     ? 'batches'
     : 'output';
   const requestedTab =
@@ -77,12 +83,9 @@ export const FlowStepInputOutput = () => {
   const activeTab: RunActiveTab =
     (requestedTab === 'timeline' && !isAgent) ||
     (requestedTab === 'input' && isTrigger) ||
-    (requestedTab === 'batches' && !isBatchStep)
+    (requestedTab === 'batches' && !hasBatchSummary)
       ? 'output'
       : requestedTab;
-  const { stepOutput: selectedStepOutput, batchLogs } = useStepOutputInRun(
-    selectedStep?.name,
-  );
   const isStepRunning = selectedStepOutput?.status === StepOutputStatus.RUNNING;
   const isSlicedOutput =
     selectedStepOutput?.outputType === StepOutputType.SLICE;
@@ -247,7 +250,7 @@ export const FlowStepInputOutput = () => {
                 <TabsTrigger value="timeline">{t('Timeline')}</TabsTrigger>
               )}
               <TabsTrigger value="output">{t('Output')}</TabsTrigger>
-              {isBatchStep && (
+              {hasBatchSummary && (
                 <TabsTrigger value="batches">{t('Batches')}</TabsTrigger>
               )}
             </TabsList>
@@ -276,7 +279,7 @@ export const FlowStepInputOutput = () => {
               />
             </TabsContent>
           )}
-          {isBatchStep && (
+          {hasBatchSummary && (
             <TabsContent value="batches">
               <BatchBrowser stepName={selectedStep.name} />
             </TabsContent>
