@@ -46,6 +46,7 @@ import { inviteUserToChannelAction } from './lib/actions/invite-user-to-channel'
 import { listUsers } from './lib/actions/list-users';
 import { deleteMessageAction } from './lib/actions/delete-message';
 import { newModalInteractionTrigger } from './lib/triggers/new-modal-interaction';
+import { newButtonClickTrigger } from './lib/triggers/new-button-click';
 import { slackAuth } from './lib/auth';
 import { getBotToken, getUserToken } from './lib/common/auth-helpers';
 import type { SlackAuthValue } from './lib/common/auth-helpers';
@@ -128,6 +129,13 @@ export const slack = createPiece({
                 .catch((error: unknown) => {
                   console.error('[Slack#parseAndReply] failed to forward button click to resume url', error);
                 });
+            } else if (interactionPayloadBody.team?.id) {
+              // Any other block action (e.g. a button posted by a flow) is routed as an app event,
+              // so it reaches the "New Button Click" trigger after the engine verifies the Slack signature.
+              return {
+                event: interactionPayloadBody.type,
+                identifierValue: interactionPayloadBody.team.id,
+              };
             }
           } else if (
             interactionPayloadBody.type === 'view_submission' ||
@@ -309,6 +317,7 @@ export const slack = createPiece({
     newSavedMessageTrigger,
     newTeamCustomEmojiTrigger,
     newModalInteractionTrigger,
+    newButtonClickTrigger,
   ],
 });
 
@@ -323,6 +332,9 @@ type EventPayloadBody = {
 type InteractionPayloadBody = {
   // Interaction payload
   type?: string;
+  team?: {
+    id?: string;
+  };
   actions?: {
     type: string;
     value: string;
