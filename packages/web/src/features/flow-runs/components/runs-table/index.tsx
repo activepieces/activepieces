@@ -277,7 +277,7 @@ export const RunsTable = () => {
 
   const selectionMayProcessInBatches = flowRunQueries.useMayProcessInBatches({
     runs: selectedRows,
-    hasUnknownRuns: selectedAll,
+    includesUnlistedRuns: selectedAll,
     enabled: selectedRows.length > 0,
   });
 

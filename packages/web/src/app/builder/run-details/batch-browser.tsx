@@ -285,7 +285,7 @@ const BatchList = ({
     limit: BATCH_PAGE_SIZE,
     statuses: failedOnly ? FAILED_BATCH_STATUSES : undefined,
     enabled: true,
-    isDispatchComplete: batchUtils.isDispatchComplete(output),
+    allBatchesSettled: batchUtils.areAllBatchesSettled(output),
   });
 
   const rows: BatchListItem[] = useMemo(() => {
