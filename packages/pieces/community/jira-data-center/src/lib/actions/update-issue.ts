@@ -1,4 +1,4 @@
-import { DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework';
+import { DynamicPropsValue, MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { JiraDataCenterAuth, jiraDataCenterAuth } from '../../auth';
 import {
 	createPropertyDefinition,
@@ -32,7 +32,7 @@ export const updateIssueAction = createAction({
 	name: 'update_issue',
 	classification: 'WRITE',
 	displayName: 'Update Issue',
-	description: 'Updates an existing issue.',
+	description: "Changes an issue's fields and, optionally, moves it to a new status.",
 	audience: 'both',
 	aiMetadata: {
 		description:
@@ -40,9 +40,32 @@ export const updateIssueAction = createAction({
 		idempotent: true,
 	},
 	auth: jiraDataCenterAuth,
+	propertyGroups: [
+		{
+			key: 'issue',
+			display: 'section',
+			label: 'Issue',
+			icon: 'inbox',
+			props: ['issueId', 'statusId'],
+		},
+		{
+			key: 'changes',
+			display: 'section',
+			label: 'Changes',
+			icon: 'sliders',
+			props: ['changesInfo', 'issueFields'],
+		},
+	],
 	props: {
-		issueId: issueIdOrKeyProp('Issue ID or Key', true),
-		statusId: issueStatusIdProp('Status', false),
+		issueId: issueIdOrKeyProp('Issue', true),
+		statusId: {
+			...issueStatusIdProp('Transition', false),
+			description: 'Moves the issue to the chosen status. Empty: no change.',
+		},
+		changesInfo: Property.MarkDown({
+			value: 'Empty fields keep their current value.',
+			variant: MarkdownVariant.INFO,
+		}),
 		issueFields: Property.DynamicProperties({
 			auth: jiraDataCenterAuth,
 			displayName: 'Fields',
