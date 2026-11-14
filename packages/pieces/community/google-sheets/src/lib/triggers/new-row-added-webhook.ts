@@ -123,20 +123,26 @@ export const newRowAddedTrigger = createTrigger({
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {
 		const { spreadsheetId, sheetId } = sheetIdentity(context.propsValue);
+		const identity = { spreadsheetId, sheetId, triggerColumn: NO_TRIGGER_COLUMN };
 		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
-		const rawValues = await getWorkSheetValues({
-			auth: context.auth,
-			spreadsheetId,
-			sheetName,
-			valueRenderOption: 'UNFORMATTED_VALUE',
-		});
+		const keepSnapshot =
+			context.isRepublish === true &&
+			!isNil(await rowSnapshot.loadSnapshot({ store: context.store, key: SNAPSHOT_STORE_KEY, identity }));
+		if (!keepSnapshot) {
+			const rawValues = await getWorkSheetValues({
+				auth: context.auth,
+				spreadsheetId,
+				sheetName,
+				valueRenderOption: 'UNFORMATTED_VALUE',
+			});
 
-		await rowSnapshot.saveSnapshot({
-			store: context.store,
-			key: SNAPSHOT_STORE_KEY,
-			identity: { spreadsheetId, sheetId, triggerColumn: NO_TRIGGER_COLUMN },
-			rows: rowSnapshot.fingerprintRowsByFirstCell({ rows: rawValues }),
-		});
+			await rowSnapshot.saveSnapshot({
+				store: context.store,
+				key: SNAPSHOT_STORE_KEY,
+				identity,
+				rows: rowSnapshot.fingerprintRowsByFirstCell({ rows: rawValues }),
+			});
+		}
 		await context.store.delete(legacyStoreKey(sheetId));
 
 		await sheetChannel.openChannel({
