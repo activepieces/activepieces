@@ -58,6 +58,7 @@ export const aiRouterExecuter: BaseExecutor<AiRouterAction> = {
             question: asPlainText(resolvedInput.question),
             options,
             matchMode,
+            model: resolvedInput.model,
             flowId: constants.flowId,
             flowRunId: constants.flowRunId,
         }

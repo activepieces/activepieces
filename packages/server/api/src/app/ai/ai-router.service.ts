@@ -1,5 +1,5 @@
 import { ActivepiecesError, AiCallContext, AIProviderName, apId, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
-import { AiStepAction, ChooseAiRouteRequest, ChooseAiRouteResponse, ExecuteAiJobData, LATEST_JOB_DATA_SCHEMA_VERSION, StartAiRouteResponse, WorkerJobType } from '@activepieces/shared'
+import { aiRouterModels, AiStepAction, ChooseAiRouteRequest, ChooseAiRouteResponse, ExecuteAiJobData, LATEST_JOB_DATA_SCHEMA_VERSION, StartAiRouteResponse, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { assertCreditsAndAppSumoNotExceeded } from '../platform/billing-provider'
 import { aiExecution } from './ai-execution'
@@ -53,7 +53,7 @@ function routeJob({ request, requestId, platformId, projectId, provider, waitpoi
         flowId: request.flowId,
         flowRunId: request.flowRunId,
         provider,
-        modelId: AI_ROUTER_MODEL_ID,
+        modelId: aiRouterModels.resolve(request.model),
         state: request.state,
         question: request.question,
         options: request.options,
@@ -91,7 +91,6 @@ async function assertHasCredits({ platformId, log }: { platformId: string, log: 
 }
 
 const ROUTER_PROVIDERS = [AIProviderName.ACTIVEPIECES, AIProviderName.OPENROUTER] as const
-const AI_ROUTER_MODEL_ID = 'typesafe/jev-1.13'
 const WAIT_MS = 25_000
 const OUT_OF_CREDITS_MESSAGE = 'The AI Router did not run because the platform is out of AI credits. Add credits or upgrade the plan, then retry the run.'
 

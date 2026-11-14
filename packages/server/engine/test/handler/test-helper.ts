@@ -114,7 +114,7 @@ export function buildRouterWithOneCondition({ children, conditions, executionTyp
     }
 }
 
-export function buildAiRouter({ children, routes, fallback, minConfidence, matchMode, text }: { children: (FlowAction | null)[], routes: { branchName: string, description?: string }[], fallback?: { branchName: string, description?: string }, minConfidence?: number, matchMode?: AiRouterMatchMode, text?: string }): AiRouterAction {
+export function buildAiRouter({ children, routes, fallback, minConfidence, matchMode, text, model }: { children: (FlowAction | null)[], routes: { branchName: string, description?: string }[], fallback?: { branchName: string, description?: string }, minConfidence?: number, matchMode?: AiRouterMatchMode, text?: string, model?: string }): AiRouterAction {
     const fallbackBranches = fallback === undefined ? [] : [{
         branchType: BranchExecutionType.FALLBACK as const,
         branchName: fallback.branchName,
@@ -138,6 +138,7 @@ export function buildAiRouter({ children, routes, fallback, minConfidence, match
                 ...fallbackBranches,
             ],
             minConfidence,
+            model,
         },
         children,
         valid: true,
