@@ -114,6 +114,7 @@ function headerState(output: BatchStepRunOutput | null): BatchHeaderState {
     total,
     succeeded,
     unsuccessful: failed + rejected + canceled + notDispatched,
+    notDispatched,
     stillRunning,
     timedOut,
   };
@@ -367,6 +368,7 @@ export type BatchHeaderState =
       total: number;
       succeeded: number;
       unsuccessful: number;
+      notDispatched: number;
       stillRunning: number;
       timedOut: boolean;
     };
