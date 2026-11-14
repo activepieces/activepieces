@@ -1,5 +1,5 @@
 import { DropdownOption, Property, isNil } from '@activepieces/pieces-framework';
-import { jsmAuth } from '../auth';
+import { jsmAuth, jsmConnection } from '../auth';
 import { JiraIssue, JsmApiError, JsmAuthProps, JsmDate, jsmClient } from './client';
 import { jsmRequests } from './requests';
 import { jsmTransitions } from './transitions';
@@ -24,7 +24,7 @@ function serviceDesk() {
 		displayName: 'Service Desk',
 		required: true,
 		refreshers: [],
-		options: async ({ auth }) => (auth ? serviceDeskOptions(auth.props) : disabled(CONNECT_FIRST)),
+		options: async ({ auth }) => (auth ? serviceDeskOptions(jsmConnection.toProps(auth)) : disabled(CONNECT_FIRST)),
 	});
 }
 
@@ -36,7 +36,7 @@ function optionalServiceDesk({ description, advanced }: { description: string; a
 		required: false,
 		advanced,
 		refreshers: [],
-		options: async ({ auth }) => (auth ? serviceDeskOptions(auth.props) : disabled(CONNECT_FIRST)),
+		options: async ({ auth }) => (auth ? serviceDeskOptions(jsmConnection.toProps(auth)) : disabled(CONNECT_FIRST)),
 	});
 }
 
@@ -56,7 +56,7 @@ function requestType() {
 			}
 			return loadOptions(async () => {
 				const types = await jsmClient.paginate<NamedItem>({
-					auth: auth.props,
+					auth: jsmConnection.toProps(auth),
 					path: `/servicedesk/${encodeURIComponent(deskId)}/requesttype`,
 					limit: MAX_OPTIONS,
 				});
@@ -79,7 +79,7 @@ function request() {
 				return disabled(CONNECT_FIRST);
 			}
 			return loadOptions(async () => {
-				const issues = await searchRequestIssues({ auth: auth.props, searchValue });
+				const issues = await searchRequestIssues({ auth: jsmConnection.toProps(auth), searchValue });
 				return issues.map((issue) => ({
 					label: `[${issue.key}] ${issue.fields?.summary ?? ''}`.trim(),
 					value: issue.key,
@@ -105,7 +105,7 @@ function queue() {
 			}
 			return loadOptions(async () => {
 				const queues = await jsmClient.paginate<NamedItem>({
-					auth: auth.props,
+					auth: jsmConnection.toProps(auth),
 					path: `/servicedesk/${encodeURIComponent(deskId)}/queue`,
 					limit: MAX_OPTIONS,
 				});
@@ -127,7 +127,7 @@ function organization() {
 			}
 			return loadOptions(async () => {
 				const organizations = await jsmClient.paginate<NamedItem>({
-					auth: auth.props,
+					auth: jsmConnection.toProps(auth),
 					path: '/organization',
 					limit: MAX_OPTIONS,
 				});
@@ -153,7 +153,7 @@ function transition() {
 				return disabled('Select a request first');
 			}
 			return loadOptions(async () => {
-				const transitions = await jsmTransitions.list({ auth: auth.props, requestKey: key });
+				const transitions = await jsmTransitions.list({ auth: jsmConnection.toProps(auth), requestKey: key });
 				return transitions.map((item) => ({
 					label: isNil(item.to?.name) ? `${item.name ?? item.id}` : `${item.name ?? item.id} → ${item.to.name}`,
 					value: item.id,
@@ -180,7 +180,7 @@ function resolution() {
 				return disabled('Select a request and a transition first');
 			}
 			return loadOptions(async () => {
-				const transitions = await jsmTransitions.list({ auth: auth.props, requestKey: key });
+				const transitions = await jsmTransitions.list({ auth: jsmConnection.toProps(auth), requestKey: key });
 				const resolutions = jsmTransitions.resolutionsOf(jsmTransitions.find({ transitions, idOrName: chosen }));
 				return resolutions.map((item) => ({ label: item.name ?? item.id, value: item.id }));
 			}).then((state) =>
@@ -208,7 +208,7 @@ function approval() {
 			}
 			return loadOptions(async () => {
 				const approvals = await jsmClient.paginate<ApprovalItem>({
-					auth: auth.props,
+					auth: jsmConnection.toProps(auth),
 					path: `/request/${encodeURIComponent(key)}/approval`,
 					limit: MAX_OPTIONS,
 				});

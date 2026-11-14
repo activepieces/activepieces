@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { jsmAuth } from '../auth';
+import { jsmAuth, jsmConnection } from '../auth';
 import { jsmClient } from '../common/client';
 import { jsmProps } from '../common/props';
 import { jsmUsers } from '../common/users';
@@ -28,7 +28,7 @@ export const addCustomersToServiceDeskAction = createAction({
 		}),
 	},
 	async run(context) {
-		const auth = context.auth.props;
+		const auth = jsmConnection.toProps(context.auth);
 		const { serviceDeskId } = context.propsValue;
 		const customers = await jsmUsers.resolveMany({ auth, values: jsmUsers.toList(context.propsValue.customers) });
 		if (customers.length === 0) {

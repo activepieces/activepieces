@@ -12,7 +12,7 @@ import { findRequestsAction } from './lib/actions/find-requests';
 import { getRequestAction } from './lib/actions/get-request';
 import { listQueueRequestsAction } from './lib/actions/list-queue-requests';
 import { transitionRequestAction } from './lib/actions/transition-request';
-import { jsmAuth } from './lib/auth';
+import { jsmAuth, jsmConnection } from './lib/auth';
 import { jsmClient } from './lib/common/client';
 import { newRequestTrigger } from './lib/triggers/new-request';
 
@@ -40,8 +40,8 @@ export const jiraServiceManagement = createPiece({
 		listQueueRequestsAction,
 		createCustomApiCallAction({
 			auth: jsmAuth,
-			baseUrl: (auth) => (auth ? `${jsmClient.instanceUrl(auth.props)}/rest/servicedeskapi` : ''),
-			authMapping: async (auth) => jsmClient.authHeaders(auth.props),
+			baseUrl: (auth) => (auth ? `${jsmClient.instanceUrl(jsmConnection.toProps(auth))}/rest/servicedeskapi` : ''),
+			authMapping: async (auth) => jsmClient.authHeaders(jsmConnection.toProps(auth)),
 			props: {
 				url: {
 					description: "Full URL, or a path relative to your site's /rest/servicedeskapi.",

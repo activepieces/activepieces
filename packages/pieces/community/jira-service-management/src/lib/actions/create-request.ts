@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, createAction, isNil } from '@activepieces/pieces-framework';
-import { jsmAuth } from '../auth';
+import { jsmAuth, jsmConnection } from '../auth';
 import { jsmClient } from '../common/client';
 import { jsmProps } from '../common/props';
 import { jsmRequestFields } from '../common/request-fields';
@@ -51,7 +51,7 @@ export const createRequestAction = createAction({
 				if (!auth || isNil(deskId) || isNil(typeId)) {
 					return {};
 				}
-				return jsmRequestFields.buildProps({ auth: auth.props, serviceDeskId: deskId, requestTypeId: typeId });
+				return jsmRequestFields.buildProps({ auth: jsmConnection.toProps(auth), serviceDeskId: deskId, requestTypeId: typeId });
 			},
 		}),
 		raiseOnBehalfOf: Property.ShortText({
@@ -69,7 +69,7 @@ export const createRequestAction = createAction({
 		}),
 	},
 	async run(context) {
-		const auth = context.auth.props;
+		const auth = jsmConnection.toProps(context.auth);
 		const { serviceDeskId, requestTypeId, raiseOnBehalfOf } = context.propsValue;
 		const input = jsmClient.isRecord(context.propsValue.requestFields) ? context.propsValue.requestFields : {};
 		const fields = await jsmRequestFields.list({ auth, serviceDeskId, requestTypeId });

@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { jsmAuth } from '../auth';
+import { jsmAuth, jsmConnection } from '../auth';
 import { JiraIssue, jsmClient } from '../common/client';
 import { jsmProps } from '../common/props';
 import { jsmRequests } from '../common/requests';
@@ -33,7 +33,7 @@ export const listQueueRequestsAction = createAction({
 		maxResults: jsmProps.maxResults(),
 	},
 	async run(context) {
-		const auth = context.auth.props;
+		const auth = jsmConnection.toProps(context.auth);
 		const { serviceDeskId, queueId, maxResults } = context.propsValue;
 		const issues = await jsmClient.paginate<JiraIssue>({
 			auth,

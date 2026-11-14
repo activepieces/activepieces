@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
-import { jsmAuth } from '../auth';
+import { jsmAuth, jsmConnection } from '../auth';
 import { jsmClient } from '../common/client';
 import { jsmProps } from '../common/props';
 import { organizationAddedOutputSchema } from '../output-schemas';
@@ -25,7 +25,7 @@ export const addOrganizationToServiceDeskAction = createAction({
 	async run(context) {
 		const { serviceDeskId, organizationId } = context.propsValue;
 		await jsmClient.request<unknown>({
-			auth: context.auth.props,
+			auth: jsmConnection.toProps(context.auth),
 			api: 'servicedesk',
 			method: HttpMethod.POST,
 			path: `/servicedesk/${encodeURIComponent(serviceDeskId)}/organization`,

@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { jsmAuth } from '../auth';
+import { jsmAuth, jsmConnection } from '../auth';
 import { JsmUser, jsmClient } from '../common/client';
 import { jsmUsers } from '../common/users';
 import { customerOutputSchema } from '../output-schemas';
@@ -31,7 +31,7 @@ export const createCustomerAction = createAction({
 		}),
 	},
 	async run(context) {
-		const auth = context.auth.props;
+		const auth = jsmConnection.toProps(context.auth);
 		const email = context.propsValue.email.trim();
 		const fullName = context.propsValue.fullName.trim();
 		const customer = await jsmClient.request<JsmUser>({

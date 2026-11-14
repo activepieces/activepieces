@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { jsmAuth } from '../auth';
+import { jsmAuth, jsmConnection } from '../auth';
 import { jsmProps } from '../common/props';
 import { jsmRequests } from '../common/requests';
 import { requestDetailsOutputSchema } from '../output-schemas';
@@ -57,6 +57,6 @@ export const getRequestAction = createAction({
 			...(includeSlas ? ['sla'] : []),
 			...(includeParticipants ? ['participant'] : []),
 		];
-		return jsmRequests.get({ auth: context.auth.props, idOrKey: requestKey, expand });
+		return jsmRequests.get({ auth: jsmConnection.toProps(context.auth), idOrKey: requestKey, expand });
 	},
 });

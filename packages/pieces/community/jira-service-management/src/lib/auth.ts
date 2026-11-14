@@ -1,33 +1,19 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { PieceAuth, Property, isNil } from '@activepieces/pieces-framework';
+import { AppConnectionType, AppConnectionValueForAuthProperty, PieceAuth, Property, isNil } from '@activepieces/pieces-framework';
 import { JSM_DEPLOYMENT, JsmApiError, JsmAuthProps, JsmUser, jsmClient } from './common/client';
 
-export const jsmAuth = PieceAuth.CustomAuth({
+export const jsmCloudAuth = PieceAuth.CustomAuth({
+	displayName: 'Jira Cloud',
 	description: `
-**Jira Cloud** (your site ends with \`atlassian.net\`):
+Use this when your Jira site ends with \`atlassian.net\`.
+
 1. Open ***https://id.atlassian.com/manage-profile/security/api-tokens*** and click **Create API token**.
 2. Fill in your site URL, the email you log in with, and the token.
-
-**Jira Data Center** (Jira hosted by your company):
-1. In Jira, click your **profile picture** (top right) → **Profile** → **Personal Access Tokens** → **Create token**.
-2. Fill in your Jira URL and the token. Leave **Email** empty.
 
 Connect an account that is an agent or admin of the service desk.
 `,
 	required: true,
 	props: {
-		deployment: Property.StaticDropdown({
-			displayName: 'Jira Type',
-			description: 'Cloud sites end with atlassian.net.',
-			required: true,
-			defaultValue: JSM_DEPLOYMENT.CLOUD,
-			options: {
-				options: [
-					{ label: 'Jira Cloud', value: JSM_DEPLOYMENT.CLOUD },
-					{ label: 'Jira Data Center', value: JSM_DEPLOYMENT.DATA_CENTER },
-				],
-			},
-		}),
 		instanceUrl: Property.ShortText({
 			displayName: 'Instance URL',
 			description: 'For example https://example.atlassian.net',
@@ -35,60 +21,93 @@ Connect an account that is an agent or admin of the service desk.
 		}),
 		email: Property.ShortText({
 			displayName: 'Email',
-			description: 'Jira Cloud only. Leave empty for Data Center.',
-			required: false,
+			description: 'The email you use to log in to Jira.',
+			required: true,
 		}),
 		apiToken: PieceAuth.SecretText({
 			displayName: 'API Token',
-			description: 'Cloud: API token. Data Center: personal access token.',
+			description: 'Your Jira API token.',
 			required: true,
 		}),
 	},
-	validate: async ({ auth }) => {
-		const problem = findInputProblem(auth);
-		if (!isNil(problem)) {
-			return { valid: false, error: problem };
-		}
-		try {
-			await jsmClient.request<JsmUser>({ auth, api: 'jira', method: HttpMethod.GET, path: '/myself' });
-		} catch (error) {
-			return { valid: false, error: error instanceof Error ? error.message : 'Invalid credentials' };
-		}
-		try {
-			await jsmClient.request<unknown>({ auth, api: 'servicedesk', method: HttpMethod.GET, path: '/info' });
-			return { valid: true };
-		} catch (error) {
-			return {
-				valid: false,
-				error:
-					error instanceof JsmApiError && error.status === 404
-						? 'The login works, but Jira Service Management was not found on this site.'
-						: error instanceof Error
-							? error.message
-							: 'Could not reach Jira Service Management on this site.',
-			};
-		}
-	},
-	getConnectionIdentifier: async ({ auth }) => {
-		try {
-			const user = await jsmClient.request<JsmUser>({ auth, api: 'jira', method: HttpMethod.GET, path: '/myself' });
-			const who = user.emailAddress ?? user.displayName ?? user.name;
-			const host = new URL(jsmClient.instanceUrl(auth)).host;
-			return isNil(who) ? host : `${who} (${host})`;
-		} catch {
-			return undefined;
-		}
-	},
+	validate: async ({ auth }) => checkConnection(cloudProps(auth)),
+	getConnectionIdentifier: async ({ auth }) => describeConnection(cloudProps(auth)),
 });
 
-function findInputProblem(auth: JsmAuthProps): string | undefined {
+export const jsmDataCenterAuth = PieceAuth.BasicAuth({
+	displayName: 'Jira Data Center',
+	description: `
+Use this when Jira is hosted by your company.
+
+1. In Jira, click your **profile picture** (top right) → **Profile** → **Personal Access Tokens** → **Create token**.
+2. Fill in your Jira URL and the token.
+
+Connect an account that is an agent or admin of the service desk.
+`,
+	required: true,
+	username: {
+		displayName: 'Instance URL',
+		description: 'For example https://jira.yourcompany.com',
+	},
+	password: {
+		displayName: 'Personal Access Token',
+		description: 'Your Jira personal access token.',
+	},
+	validate: async ({ auth }) => checkConnection(dataCenterProps(auth)),
+	getConnectionIdentifier: async ({ auth }) => describeConnection(dataCenterProps(auth)),
+});
+
+export const jsmAuth = [jsmCloudAuth, jsmDataCenterAuth];
+
+export const jsmConnection = {
+	toProps,
+};
+
+function toProps(auth: JsmAuthValue): JsmAuthProps {
+	return auth.type === AppConnectionType.BASIC_AUTH ? dataCenterProps(auth) : cloudProps(auth.props);
+}
+
+function cloudProps({ instanceUrl, email, apiToken }: { instanceUrl: string; email: string; apiToken: string }): JsmAuthProps {
+	return { deployment: JSM_DEPLOYMENT.CLOUD, instanceUrl, email, apiToken };
+}
+
+function dataCenterProps({ username, password }: { username: string; password: string }): JsmAuthProps {
+	return { deployment: JSM_DEPLOYMENT.DATA_CENTER, instanceUrl: username, apiToken: password };
+}
+
+async function checkConnection(auth: JsmAuthProps): Promise<{ valid: true } | { valid: false; error: string }> {
 	if (!isValidUrl(auth.instanceUrl)) {
-		return 'Instance URL must be a full link, for example https://example.atlassian.net';
+		return { valid: false, error: 'Instance URL must be a full link, for example https://example.atlassian.net' };
 	}
-	if (jsmClient.isCloud(auth) && (isNil(auth.email) || auth.email.trim().length === 0)) {
-		return 'Email is required for Jira Cloud.';
+	try {
+		await jsmClient.request<JsmUser>({ auth, api: 'jira', method: HttpMethod.GET, path: '/myself' });
+	} catch (error) {
+		return { valid: false, error: error instanceof Error ? error.message : 'Invalid credentials' };
 	}
-	return undefined;
+	try {
+		await jsmClient.request<unknown>({ auth, api: 'servicedesk', method: HttpMethod.GET, path: '/info' });
+		return { valid: true };
+	} catch (error) {
+		return { valid: false, error: describeServiceDeskFailure(error) };
+	}
+}
+
+async function describeConnection(auth: JsmAuthProps): Promise<string | undefined> {
+	try {
+		const user = await jsmClient.request<JsmUser>({ auth, api: 'jira', method: HttpMethod.GET, path: '/myself' });
+		const who = user.emailAddress ?? user.displayName ?? user.name;
+		const host = new URL(jsmClient.instanceUrl(auth)).host;
+		return isNil(who) ? host : `${who} (${host})`;
+	} catch {
+		return undefined;
+	}
+}
+
+function describeServiceDeskFailure(error: unknown): string {
+	if (error instanceof JsmApiError && error.status === 404) {
+		return 'The login works, but Jira Service Management was not found on this site.';
+	}
+	return error instanceof Error ? error.message : 'Could not reach Jira Service Management on this site.';
 }
 
 function isValidUrl(value: string): boolean {
@@ -99,3 +118,5 @@ function isValidUrl(value: string): boolean {
 		return false;
 	}
 }
+
+export type JsmAuthValue = AppConnectionValueForAuthProperty<typeof jsmAuth>;

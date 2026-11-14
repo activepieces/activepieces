@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, createAction, isNil } from '@activepieces/pieces-framework';
-import { jsmAuth } from '../auth';
+import { jsmAuth, jsmConnection } from '../auth';
 import { jsmClient } from '../common/client';
 import { jsmProps } from '../common/props';
 import { organizationOutputSchema } from '../output-schemas';
@@ -30,7 +30,7 @@ export const createOrganizationAction = createAction({
 		}),
 	},
 	async run(context) {
-		const auth = context.auth.props;
+		const auth = jsmConnection.toProps(context.auth);
 		const serviceDeskId = jsmClient.asString(context.propsValue.serviceDeskId);
 		const organization = await jsmClient.request<{ id?: string; name?: string }>({
 			auth,

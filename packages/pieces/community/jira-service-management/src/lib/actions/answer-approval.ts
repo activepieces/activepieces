@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, createAction, isNil } from '@activepieces/pieces-framework';
-import { jsmAuth } from '../auth';
+import { jsmAuth, jsmConnection } from '../auth';
 import { JsmAuthProps, JsmDate, JsmUser, jsmClient } from '../common/client';
 import { jsmProps } from '../common/props';
 import { approvalOutputSchema } from '../output-schemas';
@@ -50,7 +50,7 @@ export const answerApprovalAction = createAction({
 		approvalId: jsmProps.approval(),
 	},
 	async run(context) {
-		const auth = context.auth.props;
+		const auth = jsmConnection.toProps(context.auth);
 		const { requestKey, decision } = context.propsValue;
 		const key = requestKey.trim();
 		const approvalId =

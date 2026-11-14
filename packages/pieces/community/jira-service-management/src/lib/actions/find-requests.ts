@@ -1,5 +1,5 @@
 import { Property, createAction, isNil } from '@activepieces/pieces-framework';
-import { jsmAuth } from '../auth';
+import { jsmAuth, jsmConnection } from '../auth';
 import { JsmAuthProps, jsmClient } from '../common/client';
 import { jsmProps } from '../common/props';
 import { jsmRequests } from '../common/requests';
@@ -51,7 +51,7 @@ export const findRequestsAction = createAction({
 		maxResults: jsmProps.maxResults(),
 	},
 	async run(context) {
-		const auth = context.auth.props;
+		const auth = jsmConnection.toProps(context.auth);
 		const { serviceDeskId, searchTerm, requestStatus, maxResults } = context.propsValue;
 		const scope = await projectScope({ auth, serviceDeskId });
 		if (isNil(scope)) {

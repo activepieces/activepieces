@@ -1,5 +1,5 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { jsmAuth } from '../auth';
+import { jsmAuth, jsmConnection } from '../auth';
 import { newRequestPolling } from '../common/polling';
 import { jsmProps } from '../common/props';
 import { requestOutputSchema } from '../output-schemas';
@@ -50,14 +50,14 @@ export const newRequestTrigger = createTrigger({
 	},
 	async run(context) {
 		return newRequestPolling.poll({
-			auth: context.auth.props,
+			auth: jsmConnection.toProps(context.auth),
 			store: context.store,
 			serviceDeskId: context.propsValue.serviceDeskId,
 		});
 	},
 	async test(context) {
 		return newRequestPolling.test({
-			auth: context.auth.props,
+			auth: jsmConnection.toProps(context.auth),
 			serviceDeskId: context.propsValue.serviceDeskId,
 		});
 	},

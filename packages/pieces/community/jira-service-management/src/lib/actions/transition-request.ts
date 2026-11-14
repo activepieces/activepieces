@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, createAction, isNil } from '@activepieces/pieces-framework';
-import { jsmAuth } from '../auth';
+import { jsmAuth, jsmConnection } from '../auth';
 import { jsmClient } from '../common/client';
 import { jsmProps } from '../common/props';
 import { jsmRequests } from '../common/requests';
@@ -48,7 +48,7 @@ export const transitionRequestAction = createAction({
 		}),
 	},
 	async run(context) {
-		const auth = context.auth.props;
+		const auth = jsmConnection.toProps(context.auth);
 		const key = context.propsValue.requestKey.trim();
 		const transitions = await jsmTransitions.list({ auth, requestKey: key });
 		const transition = jsmTransitions.find({ transitions, idOrName: String(context.propsValue.transitionId) });

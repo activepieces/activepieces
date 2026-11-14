@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { jsmAuth } from '../auth';
+import { jsmAuth, jsmConnection } from '../auth';
 import { JsmUser, jsmClient } from '../common/client';
 import { jsmProps } from '../common/props';
 import { jsmUsers } from '../common/users';
@@ -28,7 +28,7 @@ export const addRequestParticipantsAction = createAction({
 		}),
 	},
 	async run(context) {
-		const auth = context.auth.props;
+		const auth = jsmConnection.toProps(context.auth);
 		const key = context.propsValue.requestKey.trim();
 		const ids = await jsmUsers.resolveMany({ auth, values: jsmUsers.toList(context.propsValue.participants) });
 		if (ids.length === 0) {

@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { jsmAuth } from '../auth';
+import { jsmAuth, jsmConnection } from '../auth';
 import { JsmDate, JsmUser, jsmClient } from '../common/client';
 import { jsmProps } from '../common/props';
 import { commentOutputSchema } from '../output-schemas';
@@ -58,7 +58,7 @@ export const addCommentAction = createAction({
 		const { requestKey, visibility, body } = context.propsValue;
 		const key = requestKey.trim();
 		const comment = await jsmClient.request<JsmComment>({
-			auth: context.auth.props,
+			auth: jsmConnection.toProps(context.auth),
 			api: 'servicedesk',
 			method: HttpMethod.POST,
 			path: `/request/${encodeURIComponent(key)}/comment`,
