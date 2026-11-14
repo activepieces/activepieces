@@ -18,7 +18,10 @@ export const publishMessage = createAction({
     idempotent: false,
   },
   props: {
-    topic: ntfyProps.topic(),
+    topic: ntfyProps.topic({
+      description:
+        'The topic name, e.g. backups_home. 1-64 characters: letters, digits, "-" and "_". Anyone who knows a public topic name can read it, so pick a hard-to-guess name.',
+    }),
     message: ntfyProps.optionalMessage(
       'Notification body, up to 4,096 bytes, e.g. "Backup finished in 4m 12s". ntfy uses "triggered" when empty (or "You received a file: <name>" with an attachment).'
     ),

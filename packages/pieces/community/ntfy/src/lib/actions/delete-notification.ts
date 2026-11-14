@@ -2,7 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ntfyAuth } from '../auth';
 import { ntfyClient, NtfyMessage } from '../common/client';
-import { ntfyProps } from '../common/props';
+import { ntfyProps, TOPIC_DESCRIPTIONS } from '../common/props';
 import { sequenceEventOutputSchema } from '../output-schemas';
 
 export const deleteNotification = createAction({
@@ -10,8 +10,7 @@ export const deleteNotification = createAction({
   name: 'delete_notification',
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Notification',
-  description:
-    'Remove a notification from phones and the web app, or cancel a scheduled one before it is delivered. Requires ntfy server v2.16.0 or later.',
+  description: 'Remove a notification, or cancel a scheduled one. Needs ntfy v2.16+.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -19,10 +18,8 @@ export const deleteNotification = createAction({
     idempotent: true,
   },
   props: {
-    topic: ntfyProps.topic(),
-    sequence_id: ntfyProps.sequenceId(
-      'The notification to delete or cancel: the Message ID returned when it was sent, or the Sequence ID you gave it, e.g. reminder-42.'
-    ),
+    topic: ntfyProps.topic({ description: TOPIC_DESCRIPTIONS.existing }),
+    sequence_id: ntfyProps.sequenceId({ description: 'Message ID or your own Sequence ID.' }),
   },
   outputSchema: sequenceEventOutputSchema,
   async run({ auth, propsValue }) {

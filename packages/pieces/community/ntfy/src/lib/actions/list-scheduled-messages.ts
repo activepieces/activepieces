@@ -9,8 +9,7 @@ export const listScheduledMessages = createAction({
   name: 'list_scheduled_messages',
   classification: 'SEARCH',
   displayName: 'List Scheduled Messages',
-  description:
-    'List messages that are scheduled for later delivery and have not been delivered yet. A message scheduled a few seconds ago may not be listed yet.',
+  description: 'List messages scheduled for later that are not delivered yet.',
   audience: 'both',
   aiMetadata: {
     description:

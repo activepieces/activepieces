@@ -1,8 +1,8 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ntfyAuth } from '../auth';
 import { ntfyClient, NtfyMessage } from '../common/client';
-import { ntfyProps } from '../common/props';
+import { ntfyProps, TOPIC_DESCRIPTIONS } from '../common/props';
 import { publishedMessageOutputSchema } from '../output-schemas';
 
 export const updateNotification = createAction({
@@ -10,8 +10,7 @@ export const updateNotification = createAction({
   name: 'update_notification',
   classification: 'WRITE',
   displayName: 'Update Notification',
-  description:
-    'Replace a notification already sent (or still scheduled) with new content, e.g. a progress update. Fields left empty are not copied from the original. Requires ntfy server v2.16.0 or later.',
+  description: 'Replace a sent or scheduled notification with new content. Needs ntfy v2.16+.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -19,22 +18,31 @@ export const updateNotification = createAction({
     idempotent: false,
   },
   props: {
-    topic: ntfyProps.topic(),
-    sequence_id: ntfyProps.sequenceId(
-      'The notification to replace: the Message ID returned when it was sent, or the Sequence ID you gave it, e.g. backup-job-42.'
-    ),
-    message: ntfyProps.requiredMessage('The new notification body, up to 4,096 bytes, e.g. "Download 50% done".'),
+    topic: ntfyProps.topic({ description: TOPIC_DESCRIPTIONS.existing, width: 'half' }),
+    sequence_id: ntfyProps.sequenceId({ description: 'Message ID or your own Sequence ID.', width: 'half' }),
+    replace_notice: Property.MarkDown({
+      value: 'The new message replaces the old one completely. Fields you leave empty are not copied from it.',
+      variant: MarkdownVariant.WARNING,
+    }),
+    message: ntfyProps.requiredMessage('The new notification body.'),
     title: ntfyProps.title(),
+    markdown: ntfyProps.markdown(),
     priority: ntfyProps.priority(),
+    icon: ntfyProps.icon(),
     tags: ntfyProps.tags(),
     click: ntfyProps.click(),
-    icon: ntfyProps.icon(),
+    actions: ntfyProps.actions(),
     attach: ntfyProps.attach(),
     filename: ntfyProps.filename(),
-    markdown: ntfyProps.markdown(),
-    actions: ntfyProps.actions(),
     delay: ntfyProps.delay(),
   },
+  propertyGroups: [
+    { key: 'target', display: 'section', label: 'Notification to replace', icon: 'inbox', props: ['topic', 'sequence_id'] },
+    { key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['replace_notice', 'message', 'title', 'markdown'] },
+    { key: 'appearance', display: 'section', label: 'Appearance', icon: 'sliders', props: ['priority', 'icon', 'tags', 'click', 'actions'] },
+    { key: 'attachment', display: 'section', label: 'Attachment', icon: 'paperclip', props: ['attach', 'filename'] },
+    { key: 'delivery', display: 'section', label: 'Delivery', icon: 'calendar', props: ['delay'] },
+  ],
   outputSchema: publishedMessageOutputSchema,
   async run({ auth, propsValue }) {
     const body = ntfyClient.buildJsonPublishBody({

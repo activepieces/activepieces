@@ -21,7 +21,7 @@ export { ntfyAuth };
 
 export const ntfy = createPiece({
   displayName: 'ntfy',
-  description: 'Notification management made easy',
+  description: 'Send and manage push notifications on ntfy.',
 
   logoUrl: 'https://cdn.activepieces.com/pieces/ntfy.png',
   minimumSupportedRelease: '0.88.2',
@@ -44,6 +44,12 @@ export const ntfy = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) => (auth ? ntfyClient.baseUrl(auth) : ''),
       auth: ntfyAuth,
+      props: {
+        url: {
+          description: "Full URL, or a path relative to your ntfy server's address.",
+          placeholder: '/backups_home/json?poll=1',
+        },
+      },
       authMapping: async (auth) => ntfyClient.authHeaders(auth),
     }),
   ],
