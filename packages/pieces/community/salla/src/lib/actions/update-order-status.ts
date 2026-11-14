@@ -14,7 +14,7 @@ export const updateOrderStatusAction = createAction({
   audience: 'human',
   aiMetadata: {
     description:
-      'Sets the status of one Salla order, by its internal order ID (2116149737), to a built-in or custom status, with an optional note in the order history. It does not cancel orders: use Cancel Order for that. Use Add Order Note to leave a note without a status change. Each call can text the customer and log the note again, so do not retry blindly.',
+      'Sets the status of one Salla order, by its internal order ID (2116149737), to a built-in or custom status, with an optional note in the order history. It does not cancel orders: use Cancel Order for that. Use Add Order Note to leave a note without a status change. A status change can text the customer. Salla ignores a call for the status the order is already in and does not save the note again, but if the order has moved on since, the same call moves it back and can text the customer again, so do not retry blindly.',
     idempotent: false,
   },
   outputSchema: sallaOutputSchemas.orderStatusUpdate,
