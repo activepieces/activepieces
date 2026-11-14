@@ -8,6 +8,7 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { FieldEntity } from '../field/field.entity'
 import { fieldService } from '../field/field.service'
+import { tableSideEffects } from '../table/table-side-effects'
 import { tableService } from '../table/table.service'
 import { CellEntity } from './cell.entity'
 import { RecordEntity, RecordSchema } from './record.entity'
@@ -22,6 +23,7 @@ export const recordService = {
         request,
         projectId,
         fields,
+        editorSessionId,
     }: CreateParams): Promise<PopulatedRecord[]> {
         await this.validateCount({ projectId, tableId: request.tableId }, request.records.length)
         const existingFields = fields ?? await fieldService.getAll({
@@ -62,6 +64,7 @@ export const recordService = {
                 created: 'ASC',
             },
         })
+        await tableSideEffects.onTableChanged({ projectId, tableId: request.tableId, editorSessionId })
         return formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId, fields: existingFields })
     },
 
@@ -154,9 +157,10 @@ export const recordService = {
         id,
         projectId,
         request,
+        editorSessionId,
     }: UpdateParams): Promise<UpdateRecordResult> {
         const { tableId } = request
-        return transaction(async (entityManager: EntityManager) => {
+        const result = await transaction(async (entityManager: EntityManager) => {
             const record = await entityManager.getRepository(RecordEntity).findOne({
                 where: { projectId, tableId, id },
                 lock: { mode: 'pessimistic_write' },
@@ -211,12 +215,17 @@ export const recordService = {
             const [updatedRecord] = formatRecords([{ ...updatedRecordEntity, cells }], fields)
             return { record: updatedRecord, changed }
         })
+        if (result.changed) {
+            await tableSideEffects.onTableChanged({ projectId, tableId, editorSessionId })
+        }
+        return result
     },
 
     async delete({
         ids,
         projectId,
         tableId,
+        editorSessionId,
     }: DeleteParams): Promise<DeleteRecordsResult> {
         const uniqueIds = [...new Set(ids)]
         if (uniqueIds.length === 0) {
@@ -242,6 +251,7 @@ export const recordService = {
                 params: { entityType: 'Record', entityId: uniqueIds[0] },
             })
         }
+        await tableSideEffects.onTableChanged({ projectId, tableId, editorSessionId })
         return {
             deletedCount: deletedIds.length,
             records,
@@ -253,6 +263,7 @@ export const recordService = {
         projectId,
     }: DeleteAllParams): Promise<PopulatedRecord[]> {
         const { records } = await deleteRecordsAndReturnWebhookPayloads({ projectId, tableId })
+        await tableSideEffects.onTableChanged({ projectId, tableId })
         return records
     },
 
@@ -487,6 +498,7 @@ type CreateParams = {
     projectId: string
     logger: FastifyBaseLogger
     fields?: Field[]
+    editorSessionId?: string | null
 }
 
 type ListParams = {
@@ -507,6 +519,7 @@ type UpdateParams = {
     id: string
     projectId: string
     request: UpdateRecordRequest
+    editorSessionId?: string | null
 }
 
 type UpdateRecordResult = {
@@ -518,6 +531,7 @@ type DeleteParams = {
     ids: string[]
     projectId: string
     tableId: string
+    editorSessionId?: string | null
 }
 
 type DeleteRecordsResult = {

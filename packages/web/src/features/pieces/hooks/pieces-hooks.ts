@@ -497,7 +497,7 @@ export const piecesHooks = {
       queryFn: async () => {
         const appConnection = (
           await appConnectionsApi.list({
-            pieceName,
+            pieceName: [pieceName],
             limit: 1,
             projectId: authenticationSession.getProjectId()!,
           })

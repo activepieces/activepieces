@@ -1,17 +1,14 @@
 import { getHubspotAccessToken, hubspotAuth } from '../auth';
+import { hubspotPolling } from '../common/polling';
 import {
 	createTrigger,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { standardObjectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
+import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
+import { OBJECT_TYPE } from '../common/constants';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/pieces-framework';
-import { chunk } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
-import dayjs from 'dayjs';
-import { FilterOperatorEnum } from '../common/types';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
@@ -19,109 +16,24 @@ type Props = {
 };
 
 import { crmObjectOutputSchema } from '../output-schemas';
-const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
+const polling = {
 	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, propsValue, lastFetchEpochMS }) {
+	async items({ auth, propsValue, lastFetchEpochMS, store }) {
 		const client = new Client({ accessToken: getHubspotAccessToken(auth), numberOfApiCallRetries: 3 });
-
 		const propertyToCheck = propsValue.propertyName as string;
+		const propertiesToRetrieve = [...getDefaultPropertiesForObject(OBJECT_TYPE.TICKET), propertyToCheck];
 
-		const propertiesToRetrieve = [propertyToCheck];
-
-		const items = [];
-		// For test, we only fetch 10 tickets
-		if (lastFetchEpochMS === 0) {
-			const response = await client.crm.tickets.searchApi.doSearch({
-				limit: 10,
-				properties: propertiesToRetrieve,
-				sorts: ['-hs_lastmodifieddate'],
-			});
-			items.push(...response.results);
-			return items.map((item) => ({
-				epochMilliSeconds: dayjs(item.properties['hs_lastmodifieddate']).valueOf(),
-				data: item,
-			}));
-		}
-		//fetch updated tickets
-		const updatedTickets = [];
-		let after: string | undefined;
-		do {
-			const response = await client.crm.tickets.searchApi.doSearch({
-				limit: MAX_SEARCH_PAGE_SIZE,
-				sorts: ['-hs_lastmodifieddate'],
-				after,
-				filterGroups: [
-					{
-						filters: [
-							{
-								propertyName: propertyToCheck,
-								operator: FilterOperatorEnum.HasProperty,
-							},
-							{
-								propertyName: 'hs_lastmodifieddate',
-								operator: FilterOperatorEnum.Gt,
-								value: lastFetchEpochMS.toString(),
-							},
-						],
-					},
-				],
-			});
-			after = response.paging?.next?.after;
-			updatedTickets.push(...response.results);
-
-			// Stop fetching if it exceeds max search results or will encounter 400 status
-			if (
-				!isNil(after) &&
-				parseInt(after) + MAX_SEARCH_PAGE_SIZE > MAX_SEARCH_TOTAL_RESULTS
-			) {
-				break;
-			}
-		} while (after);
-
-		if (updatedTickets.length === 0) {
-			return [];
-		}
-
-    // Avoid VALIDATION_ERROR: The maximum number of inputs supported in a batch request for property histories is 50
-    const batchApiChunks = chunk(updatedTickets, 50);
-
-    // Fetch tickets with property history
-    const batchApiResps = await Promise.all(
-      batchApiChunks.map((batch) => {
-        return client.crm.tickets.batchApi.read({
-          propertiesWithHistory: [propertyToCheck],
-          properties: propertiesToRetrieve,
-          inputs: batch.map((ticket) => {
-            return {
-              id: ticket.id,
-            };
-          }),
-        });
-      })
-    );
-
-    const updatedTicketsWithPropertyHistory = batchApiResps.flatMap(
-      (resp) => resp.results
-    );
-
-		for (const ticket of updatedTicketsWithPropertyHistory) {
-			const history = ticket.propertiesWithHistory?.[propertyToCheck];
-			if (!history || history.length === 0) {
-				continue;
-			}
-			const propertyLastModifiedDateTimeStamp = dayjs(history[0].timestamp).valueOf();
-			if (propertyLastModifiedDateTimeStamp > lastFetchEpochMS) {
-				const { propertiesWithHistory, ...item } = ticket;
-				items.push(item);
-			}
-		}
-
-		return items.map((item) => ({
-			epochMilliSeconds: dayjs(item.properties['hs_lastmodifieddate']).valueOf(),
-			data: item,
-		}));
+		return hubspotPolling.pollPropertyChanges({
+			search: (request) => client.crm.tickets.searchApi.doSearch(request),
+			readWithHistory: (request) => client.crm.tickets.batchApi.read(request),
+			store,
+			timestampProperty: 'hs_lastmodifieddate',
+			watchedProperty: propertyToCheck,
+			properties: propertiesToRetrieve,
+			lastFetchEpochMS,
+		});
 	},
-};
+} satisfies Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props>;
 
 export const newTicketPropertyChangeTrigger = createTrigger({
 	auth: hubspotAuth,
@@ -131,7 +43,7 @@ export const newTicketPropertyChangeTrigger = createTrigger({
 	description: 'Triggers when a specified property is updated on a ticket.',
 	aiMetadata: {
 		description:
-			'Fires when the chosen property changes on any HubSpot support ticket. Each event represents one ticket whose selected property was modified since the last poll, returning the ticket record (subject, pipeline, stage, priority, owner, etc.). Use to react to specific field updates rather than every ticket change.',
+			'Fires when the chosen property changes on any HubSpot support ticket. Each event represents one ticket whose selected property was modified since the last poll, returning the ticket with its default properties (subject, pipeline, stage, priority, owner, etc.) and the watched property. Clearing the watched property also fires. Use to react to specific field updates rather than every ticket change.',
 	},
 	props: {
 		propertyName: standardObjectPropertiesDropdown(
@@ -153,10 +65,10 @@ export const newTicketPropertyChangeTrigger = createTrigger({
 		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
-		return await pollingHelper.test(polling, context);
+		return hubspotPolling.sampleOldestToNewest({ items: await pollingHelper.test(polling, context) });
 	},
 	async run(context) {
-		return await pollingHelper.poll(polling, context);
+		return await hubspotPolling.poll({ polling, context });
 	},
 	sampleData: {
 		createdAt: '2024-12-21T14:23:38.368Z',

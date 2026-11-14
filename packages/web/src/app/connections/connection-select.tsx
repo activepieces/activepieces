@@ -82,7 +82,7 @@ export function ConnectionSelect({
     refetch,
   } = appConnectionsQueries.useAppConnections({
     request: {
-      pieceName: piece.name,
+      pieceName: [piece.name],
       projectId: authenticationSession.getProjectId()!,
       limit: 1000,
     },
