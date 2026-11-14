@@ -8,7 +8,7 @@ export const newSms = createTrigger({
     name: 'newSms',
     classification: 'READ',
     displayName: 'New SMS',
-    description: 'Triggers when a new SMS message is received or sent',
+    description: 'Triggers when a text is received or sent.',
     aiMetadata: {
         description: 'Fires when a new SMS/MMS message is sent or received (configurable via Direction) for the selected ConnectUC domain, user, and recipient numbers. Represents a text with its content, sender, recipients, direction, and any media attachments.'
     },
@@ -18,13 +18,14 @@ export const newSms = createTrigger({
         recipients: smsRecipientsProp(),
         direction: Property.StaticDropdown({
             displayName: 'Direction',
-            description: 'Filter by message direction',
+            description: 'Which texts start the flow.',
             required: true,
+            display: 'cards',
             options: {
                 options: [
-                    { label: 'Incoming', value: 'incoming' },
-                    { label: 'Outgoing', value: 'outgoing' },
-                    { label: 'Both', value: '*' },
+                    { label: 'Incoming', value: 'incoming', description: 'Texts you receive', icon: 'inbox' },
+                    { label: 'Outgoing', value: 'outgoing', description: 'Texts you send', icon: 'send' },
+                    { label: 'Both', value: '*', description: 'Sent and received', icon: 'reply-all' },
                 ],
             },
             defaultValue: 'incoming',

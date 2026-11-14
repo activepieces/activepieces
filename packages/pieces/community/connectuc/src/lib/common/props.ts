@@ -10,7 +10,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const domainProp = () =>
     Property.Dropdown({
         displayName: 'Domain',
-        description: 'Select domain to which this trigger applies',
+        description: 'Pick a domain to list its users.',
         required: false,
         auth: connectucAuth,
         refreshers: [],
@@ -51,7 +51,7 @@ export const domainProp = () =>
                 console.error('Error fetching domains:', error);
                 return {
                     disabled: true,
-                    placeholder: 'Error loading domains',
+                    placeholder: 'Failed to load domains. Check your connection.',
                     options: [],
                 };
             }
@@ -63,10 +63,10 @@ export const domainProp = () =>
  * Fetches subscribers from /activepieces/subscribers endpoint filtered by domain
  * Uses subscriber UUID as value
  */
-export const subscriberUuidProp = () =>
+export const subscriberUuidProp = (params?: { description?: string }) =>
     Property.Dropdown({
         displayName: 'User',
-        description: 'Select the user who owns this contact',
+        description: params?.description ?? 'The user this step acts for.',
         required: true,
         auth: connectucAuth,
         refreshers: ['domain'],
@@ -117,7 +117,7 @@ export const subscriberUuidProp = () =>
                 console.error('Error fetching subscribers:', error);
                 return {
                     disabled: true,
-                    placeholder: 'Error loading subscribers',
+                    placeholder: 'Failed to load subscribers. Check your connection.',
                     options: [],
                 };
             }
@@ -132,7 +132,7 @@ export const subscriberUuidProp = () =>
 export const deviceProp = () =>
     Property.Dropdown({
         displayName: 'Device',
-        description: 'Select the device to use for the call',
+        description: "The user's phone or app that places the call.",
         required: true,
         auth: connectucAuth,
         refreshers: ['user'],
@@ -176,7 +176,7 @@ export const deviceProp = () =>
                 console.error('Error fetching registrations:', error);
                 return {
                     disabled: true,
-                    placeholder: 'Error loading devices',
+                    placeholder: 'Failed to load devices. Check your connection.',
                     options: [],
                 };
             }
@@ -190,8 +190,8 @@ export const deviceProp = () =>
  */
 export const smsNumberProp = () =>
     Property.Dropdown({
-        displayName: 'SMS Sender',
-        description: 'Select the SMS sender number',
+        displayName: 'From Number',
+        description: 'Your ConnectUC number the text is sent from.',
         required: true,
         auth: connectucAuth,
         refreshers: [],
@@ -227,7 +227,7 @@ export const smsNumberProp = () =>
                 console.error('Error fetching SMS numbers:', error);
                 return {
                     disabled: true,
-                    placeholder: 'Error loading SMS numbers',
+                    placeholder: 'Failed to load SMS numbers. Check your connection.',
                     options: [],
                 };
             }
@@ -241,8 +241,8 @@ export const smsNumberProp = () =>
  */
 export const smsRecipientsProp = () =>
     Property.MultiSelectDropdown({
-        displayName: 'SMS Numbers',
-        description: 'Select the SMS recipient numbers to which this trigger applies',
+        displayName: 'Numbers',
+        description: 'Your ConnectUC numbers to watch for texts.',
         required: false,
         auth: connectucAuth,
         refreshers: ['domain', 'users'],
@@ -298,7 +298,7 @@ export const smsRecipientsProp = () =>
                 console.error('Error fetching SMS numbers:', error);
                 return {
                     disabled: true,
-                    placeholder: 'Error loading SMS numbers',
+                    placeholder: 'Failed to load SMS numbers. Check your connection.',
                     options: [],
                 };
             }
@@ -313,7 +313,7 @@ export const smsRecipientsProp = () =>
 export const usersProp = () =>
     Property.MultiSelectDropdown({
         displayName: 'Users',
-        description: 'Select users to which this trigger applies',
+        description: 'Users whose events start the flow.',
         required: false,
         auth: connectucAuth,
         refreshers: ['domain'],
@@ -359,7 +359,7 @@ export const usersProp = () =>
                 });
 
                 const options = subscribers.length > 1
-                    ? [{ label: 'All Always', value: '*' }, ...subscriberOptions]
+                    ? [{ label: 'All Users', value: '*' }, ...subscriberOptions]
                     : subscriberOptions;
 
                 return {
@@ -370,7 +370,7 @@ export const usersProp = () =>
                 console.error('Error fetching subscribers:', error);
                 return {
                     disabled: true,
-                    placeholder: 'Error loading subscribers',
+                    placeholder: 'Failed to load subscribers. Check your connection.',
                     options: [],
                 };
             }
@@ -385,7 +385,7 @@ export const usersProp = () =>
 export const userProp = () =>
     Property.Dropdown({
         displayName: 'User',
-        description: 'Select the user to which this trigger applies',
+        description: 'The user whose texts start the flow.',
         required: true,
         auth: connectucAuth,
         refreshers: ['domain'],
@@ -435,7 +435,7 @@ export const userProp = () =>
                 console.error('Error fetching subscribers:', error);
                 return {
                     disabled: true,
-                    placeholder: 'Error loading subscribers',
+                    placeholder: 'Failed to load subscribers. Check your connection.',
                     options: [],
                 };
             }
