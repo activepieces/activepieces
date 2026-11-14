@@ -8,10 +8,10 @@ const MAX_INSTRUCTIONS_LENGTH = 4_000;
 const DETAIL_LEVELS: readonly SegmentDetailLevel[] = ['pages', 'pages_with_content', 'blocks'];
 const MODES: readonly SegmentMode[] = ['fast', 'balanced', 'accurate'];
 
-const DETAIL_LEVEL_OPTIONS: Array<{ label: string; value: SegmentDetailLevel }> = [
-  { label: 'Pages only', value: 'pages' },
-  { label: 'Pages with content', value: 'pages_with_content' },
-  { label: 'Block level', value: 'blocks' },
+const DETAIL_LEVEL_OPTIONS: Array<{ label: string; value: SegmentDetailLevel; description: string }> = [
+  { label: 'Pages only', value: 'pages', description: 'Page numbers of each part. Cheapest. Not for Named Sections.' },
+  { label: 'Pages with content', value: 'pages_with_content', description: 'Also returns the whole document as Markdown. Costs more.' },
+  { label: 'Block level', value: 'blocks', description: 'Can split mid-page. Returns where each part starts and ends.' },
 ];
 
 const MODE_OPTIONS: Array<{ label: string; value: SegmentMode }> = [
@@ -55,7 +55,6 @@ function humanProps() {
     ...datalabSource.humanProps({ noun: 'document' }),
     split_method: Property.StaticDropdown<SegmentMethod, true>({
       displayName: 'How to Split',
-      description: 'Detect Documents finds where each separate document starts in a combined file. Named Sections finds the sections you list in Sections.',
       display: 'cards',
       required: true,
       defaultValue: 'automatic',
@@ -68,30 +67,29 @@ function humanProps() {
     }),
     sections: Property.Array({
       displayName: 'Sections',
-      description: 'The sections to find, each with a name and an optional description that helps Datalab recognise it, for example Invoice: the invoice and its payment terms. Needed when How to Split is Named Sections. Sections that Datalab cannot find come back in Missing Sections.',
+      description: 'The sections to find. Used when How to Split is Named Sections.',
       required: false,
       properties: {
         name: Property.ShortText({ displayName: 'Name', description: 'A unique name for the section, for example Invoice.', required: true }),
-        description: Property.ShortText({ displayName: 'Description', description: 'What the section contains, for example The invoice and its payment terms.', required: false }),
+        description: Property.ShortText({ displayName: 'Description', description: 'What the section contains. Helps Datalab find it.', required: false }),
       },
     }),
     instructions: Property.LongText({
       displayName: 'Instructions',
-      description: 'Hints for Detect Documents, up to 4,000 characters, for example Split wherever a new invoice starts. Not used with Named Sections: describe each section in Sections instead.',
+      description: 'Hints for Detect Documents, for example Split at each new invoice.',
       required: false,
       advanced: true,
     }),
     detail_level: Property.StaticDropdown<SegmentDetailLevel, false>({
       displayName: 'Detail Level',
-      description:
-        'Pages only returns the page numbers of each part and is the cheapest level; it works with Detect Documents only. Pages with content and Block level also return the whole document as Markdown, and cost more because Datalab converts the document. Block level can also split in the middle of a page and returns where each part starts and ends. Leave empty for Pages only with Detect Documents and Pages with content with Named Sections. Pages are counted from 0.',
+      description: 'How much to return per part. Leave empty for the cheapest that works.',
       required: false,
       advanced: true,
       options: { options: DETAIL_LEVEL_OPTIONS },
     }),
     mode: Property.StaticDropdown<SegmentMode, false>({
       displayName: 'Mode',
-      description: 'How carefully Datalab reads the document. Fast is quickest. Balanced and Accurate are slower and spend more credits. Default Fast.',
+      description: 'Fast is quickest. Balanced and Accurate cost more credits.',
       required: false,
       defaultValue: 'fast',
       advanced: true,

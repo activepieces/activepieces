@@ -3,7 +3,7 @@ import { OutputSchemaField, Property } from '@activepieces/pieces-framework';
 function pageRange() {
   return Property.ShortText({
     displayName: 'Page Range',
-    description: 'Pages to process, counted from 0. Use commas and ranges, for example 0,5-10,20 for the first page, pages 6 to 11 and page 21. Leave empty for the whole document.',
+    description: 'Pages counted from 0, for example 0,5-10,20. Empty means all pages.',
     placeholder: '0,5-10,20',
     required: false,
     advanced: true,
@@ -13,7 +13,7 @@ function pageRange() {
 function maxPages() {
   return Property.Number({
     displayName: 'Max Pages',
-    description: 'Stop after this many pages, counted from the start. Leave empty for no limit. Ignored when Page Range is set.',
+    description: 'Stop after this many pages. Ignored when Page Range is set.',
     required: false,
     advanced: true,
   });
@@ -22,7 +22,7 @@ function maxPages() {
 function skipCache() {
   return Property.Checkbox({
     displayName: 'Skip Cache',
-    description: 'Turn on to process the document again even if Datalab already has a result for the same file and options. A fresh run is billed again.',
+    description: 'Process again even if Datalab has a saved result. Billed again.',
     required: false,
     defaultValue: false,
     advanced: true,

@@ -4,6 +4,7 @@ import { datalabClient } from './client';
 import { datalabGuards } from './guards';
 
 const SUPPORTED_TYPES = 'PDF, Word, PowerPoint, spreadsheet, HTML, EPUB or image (PNG, JPG, WEBP, GIF, TIFF)';
+const SUPPORTED_TYPES_SHORT = 'PDF, Word, PowerPoint, spreadsheet, HTML, EPUB or image';
 
 const MIME_TYPES: Record<string, string> = {
   pdf: 'application/pdf',
@@ -31,11 +32,10 @@ const MIME_TYPES: Record<string, string> = {
   epub: 'application/epub+zip',
 };
 
-function humanProps({ noun, fileTypes = SUPPORTED_TYPES }: { noun: string; fileTypes?: string }) {
+function humanProps({ noun, fileTypes = SUPPORTED_TYPES_SHORT }: { noun: string; fileTypes?: string }) {
   return {
     source: Property.StaticDropdown<DatalabSourceType, true>({
       displayName: `${capitalize(noun)} Source`,
-      description: `Choose File to use a file from a previous step, or URL to give a public link to the ${noun}.`,
       display: 'cards',
       required: true,
       defaultValue: 'file',
@@ -51,16 +51,16 @@ function humanProps({ noun, fileTypes = SUPPORTED_TYPES }: { noun: string; fileT
       displayName: capitalize(noun),
       required: true,
       refreshers: ['source'],
-      props: async (propsValue) => (propsValue['source'] === 'url' ? urlInputProps({ noun }) : fileInputProps({ noun, fileTypes })),
+      props: async (propsValue) => (propsValue['source'] === 'url' ? urlInputProps({ noun }) : fileInputProps({ fileTypes })),
     }),
   };
 }
 
-function fileInputProps({ noun, fileTypes }: { noun: string; fileTypes: string }) {
+function fileInputProps({ fileTypes }: { fileTypes: string }) {
   return {
     file: Property.File({
       displayName: 'File',
-      description: `The ${noun} to process: ${fileTypes}. Pick the file output of a previous step.`,
+      description: `Supported: ${fileTypes}.`,
       required: true,
     }),
   };
@@ -70,7 +70,7 @@ function urlInputProps({ noun }: { noun: string }) {
   return {
     file_url: Property.ShortText({
       displayName: 'File URL',
-      description: `A public link to the ${noun} that starts with http:// or https://, for example https://example.com/files/invoice.pdf. Datalab downloads it directly, so it must open without a login.`,
+      description: `A public link to the ${noun}. It must open without a login.`,
       placeholder: 'https://example.com/files/invoice.pdf',
       required: true,
     }),

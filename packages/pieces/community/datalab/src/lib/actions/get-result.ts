@@ -8,8 +8,7 @@ export const getResultAction = createAction({
   name: 'get_result',
   classification: 'READ',
   displayName: 'Get Result',
-  description:
-    'Fetches the result of an earlier Datalab request by its Request ID, for example when a step ran out of time while Datalab was still working. Checks once and does not wait: if Datalab is still working, Completed is false, so run Get Result again later. Results are kept for about one day.',
+  description: 'Fetches the result of an earlier Datalab request that was still running when its step stopped.',
   audience: 'both',
   aiMetadata: {
     description:

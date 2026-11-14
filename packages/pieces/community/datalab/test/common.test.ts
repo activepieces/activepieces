@@ -27,7 +27,7 @@ describe('document source', () => {
   });
 
   it('shows only the field that matches the chosen source, under its own key, and requires it', () => {
-    const fileProps = datalabSource.fileInputProps({ noun: 'form', fileTypes: 'PDF or image' });
+    const fileProps = datalabSource.fileInputProps({ fileTypes: 'PDF or image' });
     const urlProps = datalabSource.urlInputProps({ noun: 'form' });
     expect(Object.keys(fileProps)).toEqual(['file']);
     expect(fileProps.file).toMatchObject({ type: 'FILE', required: true });

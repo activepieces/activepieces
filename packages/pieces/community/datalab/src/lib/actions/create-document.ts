@@ -7,8 +7,7 @@ export const createDocumentAction = createAction({
   name: 'create_document',
   classification: 'READ',
   displayName: 'Create Document',
-  description:
-    'Turns Markdown text into a Word (.docx) file, with optional tracked changes and comments. The file is stored in Activepieces and can be used by any step that takes a file. A saved file is limited to 10 MB on Activepieces Cloud.',
+  description: 'Turns Markdown text into a Word (.docx) file, with optional tracked changes and comments.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -18,19 +17,15 @@ export const createDocumentAction = createAction({
   props: {
     markdown: Property.LongText({
       displayName: 'Markdown',
-      description: `The document content in Markdown. Headings, lists, tables, bold, italics and links become Word formatting.
-
-To add tracked changes and comments, wrap text in these tags:
-- Insertion: \`<ins data-revision-author="Jane" data-revision-datetime="2026-01-15T10:00:00Z">added text</ins>\`. Both attributes are required; the date is ISO 8601.
-- Deletion: \`<del data-revision-author="Jane" data-revision-datetime="2026-01-15T10:00:00Z">removed text</del>\`, with the same two required attributes.
-- Comment: \`<comment data-comment-author="Jane" text="Please check this">commented text</comment>\`. \`data-comment-author\` and \`text\` are required; \`data-comment-datetime\` and \`data-comment-initial\` are optional.
-
-See [Datalab's Create Document guide](${createDocumentOperation.DOCS_URL}).`,
+      description: `The document content in Markdown. Headings, lists and tables are kept.
+Tracked changes: <ins data-revision-author="Jane" data-revision-datetime="2026-01-15T10:00:00Z">added text</ins>, or <del> with the same two attributes (both required, date in ISO 8601).
+Comments: <comment data-comment-author="Jane" text="Please check this">commented text</comment> (both attributes required).
+Guide: ${createDocumentOperation.DOCS_URL}`,
       required: true,
     }),
     file_name: Property.ShortText({
       displayName: 'File Name',
-      description: `Name of the Word file to save. .docx is added when missing. Leave empty for ${createDocumentOperation.DEFAULT_FILE_NAME}.docx.`,
+      description: `Name of the Word file. Leave empty for ${createDocumentOperation.DEFAULT_FILE_NAME}.docx.`,
       placeholder: 'contract.docx',
       required: false,
     }),

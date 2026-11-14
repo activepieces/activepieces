@@ -132,7 +132,6 @@ describe('datalab piece', () => {
     }
     expect(fillOperation.HUMAN_WAIT_MINUTES).toBe(fillOperation.HUMAN_MAX_WAIT_MS / 60_000);
     expect(fillOperation.AI_WAIT_MINUTES).toBe(datalabClient.MAX_WAIT_MS / 60_000);
-    expect(human?.description).toContain(`waits up to ${fillOperation.HUMAN_WAIT_MINUTES} minutes`);
     expect(human?.aiMetadata?.description).toContain(`waits up to ${fillOperation.HUMAN_WAIT_MINUTES} minutes`);
     expect(ai?.description).toContain(`the ${fillOperation.AI_WAIT_MINUTES} minute wait`);
     expect(ai?.aiMetadata?.description).toContain(`waits up to ${fillOperation.AI_WAIT_MINUTES} minutes`);

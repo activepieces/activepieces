@@ -39,13 +39,13 @@ const outputSchema: OutputSchema = {
 function humanProps() {
   return {
     slow_notice: Property.MarkDown({
-      value: `**This action is slow.** Filling one page usually takes ${USUAL_TIME}, much longer than the other Datalab actions. A dense form with many fields, such as a tax return page, can take ${DENSE_TIME}. The step waits up to ${HUMAN_WAIT_MINUTES} minutes. If Datalab needs longer, the step stops with a "Timed out" error that says how to get the result.`,
+      value: `**This action is slow.** One page usually takes ${USUAL_TIME}, and a dense form with many fields can take ${DENSE_TIME}. The step waits up to ${HUMAN_WAIT_MINUTES} minutes.`,
       variant: MarkdownVariant.INFO,
     }),
     ...datalabSource.humanProps({ noun: 'form', fileTypes: FILE_TYPES }),
     field_values: Property.Array({
       displayName: 'Field Values',
-      description: `The values to write on the form, one row per field. Use the field's label as printed on the form, for example "Full Name"; run Get Form Fields first to see the form's labels. ${NOT_FOUND_HINT} ${CHECKBOX_HINT}`,
+      description: 'One row per field. Use the label printed on the form.',
       required: true,
       properties: {
         name: Property.ShortText({
@@ -55,12 +55,12 @@ function humanProps() {
         }),
         value: Property.ShortText({
           displayName: 'Value',
-          description: 'What to write in the field, for example Jane Doe. For a checkbox, yes ticks it.',
+          description: 'What to write, for example Jane Doe. For a checkbox, yes ticks it.',
           required: true,
         }),
         description: Property.ShortText({
           displayName: 'Description',
-          description: 'Optional hint that helps Datalab find the right field, for example "the employee\'s legal name in block capitals".',
+          description: 'Optional hint that helps Datalab find the right field.',
           required: false,
         }),
       },
@@ -92,7 +92,7 @@ function aiProps() {
 function formContext() {
   return Property.LongText({
     displayName: 'Form Context',
-    description: 'Optional short note on what the form is and who it is for, for example "W-4 for a new hire". It helps Datalab match values to the right fields.',
+    description: 'What the form is and who it is for, for example W-4 for a new hire.',
     required: false,
   });
 }
@@ -100,7 +100,7 @@ function formContext() {
 function confidenceThreshold() {
   return Property.Number({
     displayName: 'Confidence Threshold',
-    description: "How sure Datalab must be that a value belongs in a field before it writes it, from 0 to 1, for example 0.7. Fields matched below it are left empty. Leave empty for Datalab's default, 0.5.",
+    description: 'How sure Datalab must be to write a value, 0 to 1. Default 0.5.',
     required: false,
     advanced: true,
   });
@@ -109,7 +109,7 @@ function confidenceThreshold() {
 function outputFileName() {
   return Property.ShortText({
     displayName: 'Output File Name',
-    description: `Name for the filled file. The extension is set to match the form: .pdf for a PDF, .png for an image. Leave empty for ${DEFAULT_FILE_NAME}.`,
+    description: 'Name for the filled file. The extension is added for you.',
     placeholder: 'w4-jane-doe',
     required: false,
     advanced: true,

@@ -17,7 +17,7 @@ import { datalabClient } from './lib/common/client';
 
 export const datalab = createPiece({
   displayName: 'Datalab',
-  description: 'Convert documents to Markdown, HTML or JSON, extract structured data, split documents, fill forms and create Word files.',
+  description: 'Convert documents to Markdown, extract structured data, split files and fill forms.',
   auth: datalabAuth,
   minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/datalab.png',
