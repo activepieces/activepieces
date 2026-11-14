@@ -6,6 +6,7 @@ export const salesQuoteLinesEntityProps: EntityProp[] = [
   {
     name: 'salesQuoteId',
     displayName: 'Sales Quote ID',
+    description: 'The sales quote this line belongs to. Required.',
     type: 'dynamic_select',
     isRequired: false,
     options: {
