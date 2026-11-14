@@ -3330,6 +3330,7 @@ describe('MCP Tools integration', () => {
         expect(output).toContain('batchSize: 25')
         expect(output).toContain(`stepLocationRelativeToParent="${StepLocationRelativeToParent.INSIDE_BATCH}"`)
         expect(output).toContain('Step types: trigger = EMPTY | PIECE_TRIGGER; action = CODE | PIECE | LOOP_ON_ITEMS | PROCESS_IN_BATCHES | ROUTER')
+        expect(output).toContain('{{<batchStepName>[\'output\'].items}}')
     })
 
     it('ap_flow_structure — an invalid batch step reports a reason', async () => {
@@ -3606,6 +3607,80 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain(FlowActionType.LOOP_ON_ITEMS)
         const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
         expect(flow.version.trigger.nextAction).toBeUndefined()
+    })
+
+    it('ap_add_step — ignores a false error-handling flag on LOOP and ROUTER steps but refuses true on a ROUTER', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'False Error Handling Add Test')
+
+        const loop = await apAddStepTool({ mcp }, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.LOOP_ON_ITEMS,
+            displayName: 'My Loop',
+            loopItems: '{{trigger.items}}',
+            continueOnFailure: false,
+            retryOnFailure: false,
+        })
+        expect(text(loop)).toContain('✅')
+
+        const router = await apAddStepTool({ mcp }, mockLog).execute({
+            flowId,
+            parentStepName: 'step_1',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.ROUTER,
+            displayName: 'My Router',
+            continueOnFailure: false,
+        })
+        expect(text(router)).toContain('✅')
+
+        const rejected = await apAddStepTool({ mcp }, mockLog).execute({
+            flowId,
+            parentStepName: 'step_2',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.ROUTER,
+            displayName: 'Other Router',
+            continueOnFailure: true,
+        })
+        expect(rejected.isError).toBe(true)
+        expect(text(rejected)).toContain(FlowActionType.ROUTER)
+    })
+
+    it('ap_build_flow — ignores a false error-handling flag on a loop step', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Loop False Flag Flow',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [{ type: FlowActionType.LOOP_ON_ITEMS, displayName: 'My Loop', loopItems: '{{trigger.items}}', continueOnFailure: false, retryOnFailure: false }],
+        })
+
+        expect(text(result)).not.toContain('❌')
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: result.structuredContent.flowId, projectId: ctx.project.id })
+        expect(flow.version.trigger.nextAction.type).toBe(FlowActionType.LOOP_ON_ITEMS)
+    })
+
+    it('ap_add_step — a batch inside another batch reports the reason', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Nested Batch Test')
+
+        await addBatchStep({ mcp, platformId: ctx.platform.id, flowId, items: '{{trigger.items}}' })
+
+        const result = await apAddStepTool({ mcp }, mockLog).execute({
+            flowId,
+            parentStepName: 'step_1',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BATCH,
+            stepType: FlowActionType.PROCESS_IN_BATCHES,
+            displayName: 'Inner Batch',
+            loopItems: '{{trigger.items}}',
+        })
+
+        expect(result.isError).toBe(true)
+        expect(text(result)).toContain('cannot be placed inside another Process in Batches step')
     })
 
     it('ap_update_step — a batch step takes continueOnFailure but refuses retryOnFailure', async () => {

@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { ExactVersionType, FlowActionType, FlowOperationRequest, FlowOperationType, flowPieceUtil, flowStructureUtil, McpToolContext, McpToolDefinition, PieceActionSettings, UpdateActionRequest } from '@activepieces/shared'
+import { ExactVersionType, FlowActionType, flowCanvasUtils, FlowOperationRequest, FlowOperationType, flowPieceUtil, flowStructureUtil, McpToolContext, McpToolDefinition, PieceActionSettings, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -118,7 +118,7 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
             }
             const pieceVersionChanged = updatedSettings.pieceVersion !== currentSettings.pieceVersion
             if (rewritten.loopItems !== undefined) {
-                if (step.type === FlowActionType.LOOP_ON_ITEMS || step.type === FlowActionType.PROCESS_IN_BATCHES) {
+                if (flowCanvasUtils.isLoopOrBatchStep(step)) {
                     updatedSettings.items = rewritten.loopItems
                 }
                 else {
@@ -147,7 +147,7 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
             }
 
             if (continueOnFailure !== undefined || retryOnFailure !== undefined) {
-                const errorHandlingError = mcpUtils.validateErrorHandlingSupport({ stepType: step.type, stepLabel: `"${stepName}"`, continueOnFailure, retryOnFailure })
+                const errorHandlingError = mcpUtils.validateErrorHandlingSupport({ stepType: step.type, stepLabel: `"${stepName}"`, continueOnFailure, retryOnFailure, rejectFalseOnUnsupported: true })
                 if (errorHandlingError) {
                     return errorHandlingError
                 }
