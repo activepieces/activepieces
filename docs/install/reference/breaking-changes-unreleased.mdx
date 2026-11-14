@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Senja 0.3.0: Create Testimonial picks its form and images in new fields
+
+In **Create Testimonial**, **Form** is now a dropdown of the project's forms instead of a text field for the form ID, and **Media (Images)** takes one entry per image, with an **Image URL** and an optional **Alt Text**, instead of a JSON object typed on each line. Steps keep running the old code until you upgrade them to 0.3.0.
+
+#### What you need to do
+
+Upgrading a Senja step to 0.3.0 in the builder resets its settings, as with any minor version change: fill them in again. In Create Testimonial, pick the form from the dropdown and enter each image in the new fields.
+
 #### ManyChat 0.2.0: Set Custom Field is no longer an agent tool
 
 From ManyChat 0.2.0, **Set Custom Field** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs. Agents use the new **Set Subscriber Custom Fields** tool instead, which sets 1 to 20 fields in one call by field ID or name. Set Custom Field steps upgraded to 0.2.0 send date values as `YYYY-MM-DD` and date-time values with an explicit time zone offset, as ManyChat documents. The piece needs Activepieces 0.86.4 or later.

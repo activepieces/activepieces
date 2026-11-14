@@ -7,6 +7,7 @@ import { deleteTestimonialActionOutputSchema } from '../output-schemas';
 export const deleteTestimonialAction = createAction({
   auth: senjaAuth,
   name: 'delete_testimonial',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Testimonial',
   description: 'Permanently delete a testimonial from your Senja project. This action cannot be undone.',
   audience: 'human',

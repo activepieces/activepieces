@@ -17,6 +17,8 @@ import { fetchTestimonialAction } from './lib/actions/fetch-testimonial';
 import { addTestimonialAction } from './lib/actions/add-testimonial';
 import { modifyTestimonialAction } from './lib/actions/modify-testimonial';
 import { removeTestimonialAction } from './lib/actions/remove-testimonial';
+import { sendFormInviteAction } from './lib/actions/send-form-invite';
+import { listLinksAction } from './lib/actions/list-links';
 import { testimonialEventTrigger } from './lib/triggers/testimonial-event';
 import { SENJA_BASE_URL } from './lib/common';
 
@@ -64,11 +66,13 @@ export const senja = createPiece({
     addTestimonialAction,
     modifyTestimonialAction,
     removeTestimonialAction,
+    sendFormInviteAction,
+    listLinksAction,
     createCustomApiCallAction({
       baseUrl: () => SENJA_BASE_URL,
       auth: senjaAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],
