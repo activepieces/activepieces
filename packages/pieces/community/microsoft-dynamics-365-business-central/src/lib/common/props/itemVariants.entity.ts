@@ -4,6 +4,7 @@ export const itemVariantsEntityProps: EntityProp[] = [
   {
     name: 'itemId',
     displayName: 'Item ID',
+    description: 'The item this variant belongs to. Required.',
     isRequired: false,
     type: 'dynamic_select',
     options: {

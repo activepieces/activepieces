@@ -12,7 +12,7 @@ export const shipmentMethodsEntityProps: EntityProp[] = [
   {
     name: 'code',
     displayName: 'Code',
-    description: 'TThe code of the shipment method.',
+    description: 'The code of the shipment method.',
     type: 'text',
     isRequired: false,
   },

@@ -6,6 +6,7 @@ export const salesOrdersLinesEntityProps: EntityProp[] = [
   {
     name: 'salesOrderId',
     displayName: 'Sales Order ID',
+    description: 'The sales order this line belongs to. Required.',
     type: 'dynamic_select',
     isRequired: false,
     options: {

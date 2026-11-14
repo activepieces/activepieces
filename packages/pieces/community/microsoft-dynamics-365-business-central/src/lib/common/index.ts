@@ -79,6 +79,8 @@ export const commonProps = {
   }),
   record_id: Property.ShortText({
     displayName: 'Record ID',
+    description:
+      'ID of the record. Use the id from Search Records or the trigger.',
     required: true,
   }),
   record_type: Property.StaticDropdown({
