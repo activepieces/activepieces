@@ -13,8 +13,8 @@ export const aiUpdateOrderStatusAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Moves one Salla order to a new status, either a built-in slug such as shipped or completed, or a status ID from List Order Statuses for the merchant\'s custom sub-statuses. It refuses the canceled status and custom statuses under it: use Cancel Order to cancel an order. Use Add Order Note instead to only log a comment, and Update Order to change customer, address or payment details. Setting the same status again leaves the same state, but Salla may notify the customer again on each call.',
-    idempotent: true,
+      'Moves one Salla order to a new status, either a built-in slug such as shipped or completed, or a status ID from List Order Statuses for the merchant\'s custom sub-statuses. It refuses the canceled status and custom statuses under it: use Cancel Order to cancel an order. Use Add Order Note instead to only log a comment, and Update Order to change customer, address or payment details. Setting the same status again leaves the same state, but Salla may notify the customer and log the note again on each call, so do not retry blindly.',
+    idempotent: false,
   },
   outputSchema: sallaOutputSchemas.orderStatusUpdate,
   props: {
