@@ -5,7 +5,7 @@ import { JSM_DEPLOYMENT, JsmApiError, JsmAuthProps, JsmUser, jsmClient } from '.
 export const jsmCloudAuth = PieceAuth.CustomAuth({
 	displayName: 'Jira Cloud',
 	description: `
-Use this when your Jira site ends with \`atlassian.net\`.
+Use this when your Jira site ends with \`atlassian.net\`. For Jira hosted by your company, click **Try another method** below and pick Jira Data Center.
 
 1. Open ***https://id.atlassian.com/manage-profile/security/api-tokens*** and click **Create API token**.
 2. Fill in your site URL, the email you log in with, and the token.
@@ -37,7 +37,7 @@ Connect an account that is an agent or admin of the service desk.
 export const jsmDataCenterAuth = PieceAuth.BasicAuth({
 	displayName: 'Jira Data Center',
 	description: `
-Use this when Jira is hosted by your company.
+Use this when Jira is hosted by your company. For a site ending with \`atlassian.net\`, click **Try another method** below and pick Jira Cloud.
 
 1. In Jira, click your **profile picture** (top right) → **Profile** → **Personal Access Tokens** → **Create token**.
 2. Fill in your Jira URL and the token.
