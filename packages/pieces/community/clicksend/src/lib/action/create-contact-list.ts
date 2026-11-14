@@ -18,6 +18,7 @@ export const clicksendCreateContactListAction = createAction({
   props: {
     list_name: Property.ShortText({
       displayName: 'List Name',
+      placeholder: 'Newsletter subscribers',
       required: true,
     }),
   },
