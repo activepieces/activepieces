@@ -1,8 +1,8 @@
-import { PiecePropertyMap } from ".";
+import { PieceProperty, PiecePropertyMap } from ".";
 import { PieceAuthProperty } from "./authentication";
 import { PropertyType } from "./input/property-type";
 import * as z from "zod/mini";
-import { isEmpty, isNil } from "@activepieces/core-utils";
+import { isEmpty, isNil, parseToJsonIfPossible } from "@activepieces/core-utils";
 import { AUTHENTICATION_PROPERTY_NAME } from "@activepieces/core-piece-types";
 
 function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAuthProperty[] | undefined, requireAuth: boolean | undefined = true) {
@@ -118,6 +118,36 @@ function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAut
     return z.object(propsSchema);
   }
 
+function coerceInput({ props, input }: { props: PiecePropertyMap, input: Record<string, unknown> }): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(input).map(([name, value]) => [name, isNil(props[name]) ? value : coerceValue({ property: props[name], value })]));
+}
+
+function coerceValue({ property, value }: { property: PieceProperty, value: unknown }): unknown {
+  switch (property.type) {
+    case PropertyType.CHECKBOX: {
+      const parsed = parseToJsonIfPossible(value);
+      return typeof parsed === 'boolean' ? parsed : value;
+    }
+    case PropertyType.STATIC_DROPDOWN:
+      return matchOption({ options: property.options.options, value });
+    case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
+      return Array.isArray(value) ? value.map((item) => matchOption({ options: property.options.options, value: item })) : value;
+    default:
+      return value;
+  }
+}
+
+function matchOption({ options, value }: { options: { value: unknown }[], value: unknown }): unknown {
+  const match = options.find((option) => option.value === value) ?? options.find((option) => isScalar(option.value) && String(option.value) === value);
+  return isNil(match) ? value : match.value;
+}
+
+function isScalar(value: unknown): value is number | boolean {
+  return typeof value === 'number' || typeof value === 'boolean';
+}
+
   export const piecePropertiesUtils = {
-    buildSchema
+    buildSchema,
+    coerceInput,
+    coerceValue,
   }

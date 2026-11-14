@@ -909,6 +909,47 @@ describe('MCP Tools integration', () => {
         expect(text(stillValid)).toContain('✅')
     })
 
+    it('ap_update_trigger, ap_add_step and ap_update_step save a checkbox or option sent as text as the type the field declares', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const scheduleProps = {
+            hour_of_the_day: { type: 'STATIC_DROPDOWN', displayName: 'Hour', required: true, options: { options: [{ label: '9 am', value: 9 }, { label: '11 am', value: 11 }] } },
+            run_on_weekends: { type: 'CHECKBOX', displayName: 'Run on weekends', required: true },
+        }
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-test-typed',
+            displayName: 'Test Typed',
+            version: '0.1.0',
+            pieceType: PieceType.CUSTOM,
+            packageType: PackageType.REGISTRY,
+            platformId: ctx.platform.id,
+            actions: { remind: { name: 'remind', displayName: 'Remind', description: 'Remind', requireAuth: false, props: scheduleProps } },
+            triggers: { every_day: { name: 'every_day', displayName: 'Every Day', description: 'Every day', requireAuth: false, props: scheduleProps } },
+        }))
+        const flowId = await createFlowAndGetId(mcp, 'Typed inputs')
+        const textInput = { hour_of_the_day: '11', run_on_weekends: 'false' }
+        const typedInput = { hour_of_the_day: 11, run_on_weekends: false }
+
+        await apUpdateTriggerTool({ mcp }, mockLog).execute({ flowId, pieceName: '@activepieces/piece-test-typed', triggerName: 'every_day', input: textInput })
+        await apAddStepTool({ mcp }, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.PIECE,
+            displayName: 'Remind',
+            pieceName: '@activepieces/piece-test-typed',
+            actionName: 'remind',
+            input: textInput,
+        })
+        const afterAdd = (await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })).version.trigger
+        await apUpdateStepTool({ mcp }, mockLog).execute({ flowId, stepName: 'step_1', input: { run_on_weekends: 'true' } })
+        const afterUpdate = (await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })).version.trigger
+
+        expect(afterAdd.settings.input).toMatchObject(typedInput)
+        expect(flowStructureUtil.getStep('step_1', afterAdd)?.settings.input).toMatchObject(typedInput)
+        expect(flowStructureUtil.getStep('step_1', afterUpdate)?.settings.input).toMatchObject({ hour_of_the_day: 11, run_on_weekends: true })
+    })
+
     // ── Fix 3: Dynamic property resolution ────────────────────────────
 
     it('34. ap_get_piece_props — DYNAMIC properties show note when refreshers not provided', async () => {
