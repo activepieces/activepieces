@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { zohoCrmAuth } from '../auth';
 import { WORKFLOW_TRIGGERS, parseTriggers, requireApiName } from '../common/client';
 import { buildRecordPayload } from '../common/fields';
@@ -20,21 +20,31 @@ export const createRecordAction = createAction({
   },
   props: {
     module: moduleDropdown({ filter: 'creatable' }),
+    fields_info: Property.MarkDown({
+      value: 'Read-only, formula, subform and file fields are not listed.',
+      variant: MarkdownVariant.INFO,
+    }),
     fields: recordFieldsProp({ mode: 'create' }),
     additional_fields: additionalFieldsProp(),
     triggers: Property.StaticMultiSelectDropdown({
       displayName: 'Automation to Run',
       description: 'Empty runs Zoho\'s default workflows; pick some to run only those.',
       required: false,
-      options: { options: WORKFLOW_TRIGGERS.map((t) => ({ label: t, value: t })) },
+      advanced: true,
+      options: { options: WORKFLOW_TRIGGERS.map((t) => ({ label: t.charAt(0).toUpperCase() + t.slice(1), value: t })) },
     }),
     skip_automation: Property.Checkbox({
       displayName: 'Skip All Automation',
       description: 'Run no workflow, approval or blueprint for this record.',
       required: false,
+      advanced: true,
       defaultValue: false,
     }),
   },
+  propertyGroups: [
+    { key: 'record', display: 'section', label: 'Record', icon: 'file', props: ['module'] },
+    { key: 'values', display: 'section', label: 'Fields', icon: 'text', props: ['fields_info', 'fields'] },
+  ],
   outputSchema: recordWriteOutputSchema,
   async run({ auth, propsValue }) {
     const module = requireApiName({ value: propsValue.module, name: 'Module' });

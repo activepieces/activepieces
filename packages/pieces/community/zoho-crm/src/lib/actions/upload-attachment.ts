@@ -21,7 +21,7 @@ export const uploadAttachmentAction = createAction({
     module: moduleDropdown(),
     record_id: recordDropdown(),
     file: Property.File({ displayName: 'File', required: true }),
-    file_name: Property.ShortText({ displayName: 'File Name', description: 'Optional. Overrides the file name.', required: false }),
+    file_name: Property.ShortText({ displayName: 'File Name', description: 'Empty keeps the file\'s own name.', advanced: true, required: false }),
   },
   outputSchema: childWriteOutputSchema,
   async run({ auth, propsValue }) {

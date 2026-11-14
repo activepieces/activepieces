@@ -20,7 +20,7 @@ export const addNoteAction = createAction({
   props: {
     module: moduleDropdown(),
     record_id: recordDropdown(),
-    title: Property.ShortText({ displayName: 'Title', required: false }),
+    title: Property.ShortText({ displayName: 'Title', placeholder: 'Call summary', required: false }),
     content: Property.LongText({ displayName: 'Content', required: true }),
   },
   outputSchema: childWriteOutputSchema,

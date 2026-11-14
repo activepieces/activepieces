@@ -7,7 +7,7 @@ import { listFields, listModules, nameFieldOf } from './metadata';
 
 export function moduleDropdown({
   displayName = 'Module',
-  description = 'The Zoho CRM module (for example Leads, Contacts, Deals or a custom module).',
+  description = 'Leads, Contacts, Deals or any custom module.',
   filter = 'any',
   required = true,
 }: {
@@ -44,7 +44,7 @@ export function moduleDropdown({
 
 export function recordDropdown({
   displayName = 'Record',
-  description = 'Pick one of the 200 most recently modified records, or map a record id from an earlier step.',
+  description = 'Shows the 200 most recently modified records; map an id for others.',
   moduleProp = 'module',
   fixedModule,
   required = true,
@@ -136,8 +136,7 @@ export function uniqueFieldsDropdown(moduleProp = 'module') {
   return Property.MultiSelectDropdown({
     auth: zohoCrmAuth,
     displayName: 'Duplicate Check Fields',
-    description:
-      'Fields used to find an existing record. Leave empty to use Zoho\'s default (Email for Leads/Contacts, Account_Name for Accounts, Deal_Name for Deals, Name for custom modules).',
+    description: "Empty uses Zoho's default, such as Email for Leads and Contacts.",
     required: false,
     refreshers: [moduleProp],
     options: async (props) => {
@@ -263,10 +262,10 @@ type UserOption = { id: string; name: string; email?: string };
 
 export function additionalFieldsProp() {
   return Property.Json({
-    displayName: 'Additional Fields (JSON)',
-    description:
-      'Optional raw fields by API name, for fields the form does not list (e.g. subform rows). Values set in the form above win over the same key here.',
+    displayName: 'Other Fields',
+    description: 'JSON of fields the form does not list, by API name. Form values win.',
     required: false,
+    advanced: true,
   });
 }
 

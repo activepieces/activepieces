@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { zohoCrmAuth } from '../auth';
 import { ZohoCrmError, optionalId, parseJsonObject, requireId } from '../common/client';
 import { convertFieldValue } from '../common/fields';
@@ -20,6 +20,10 @@ export const convertLeadAction = createAction({
   },
   props: {
     lead_id: recordDropdown({ displayName: 'Lead', fixedModule: 'Leads' }),
+    link_info: Property.MarkDown({
+      value: 'Leave both empty to create a new contact and account.',
+      variant: MarkdownVariant.INFO,
+    }),
     account_id: recordDropdown({
       displayName: 'Existing Account',
       description: 'Link to this account; the lead\'s Company must match its name.',
@@ -32,21 +36,33 @@ export const convertLeadAction = createAction({
       fixedModule: 'Contacts',
       required: false,
     }),
-    overwrite: Property.Checkbox({ displayName: 'Overwrite Contact\'s Account', description: 'Move the existing contact to the given account.', required: false, defaultValue: false }),
+    overwrite: Property.Checkbox({ displayName: 'Move Contact to Account', description: 'Reassign the existing contact to the account above.', required: false, defaultValue: false }),
     assign_to: userDropdown({
       displayName: 'Owner',
       description: 'Active user who owns the new records; empty keeps the lead owner.',
     }),
-    notify_lead_owner: Property.Checkbox({ displayName: 'Notify Lead Owner', required: false, defaultValue: false }),
-    notify_new_entity_owner: Property.Checkbox({ displayName: 'Notify New Owner', required: false, defaultValue: false }),
-    create_deal: Property.Checkbox({ displayName: 'Create a Deal', required: false, defaultValue: false }),
-    deal_name: Property.ShortText({ displayName: 'Deal Name', required: false }),
-    deal_stage: Property.ShortText({ displayName: 'Deal Stage', description: 'A Stage picklist value of your org, e.g. "Qualification".', required: false }),
-    deal_closing_date: Property.ShortText({ displayName: 'Deal Closing Date', description: 'Date as yyyy-MM-dd, e.g. 2026-12-31.', required: false }),
+    notify_lead_owner: Property.Checkbox({ displayName: 'Notify Lead Owner', description: 'Email the lead\'s owner about the conversion.', required: false, defaultValue: false }),
+    notify_new_entity_owner: Property.Checkbox({ displayName: 'Notify New Owner', description: 'Email the owner of the new records.', required: false, defaultValue: false }),
+    create_deal: Property.Checkbox({
+      displayName: 'Create a Deal',
+      description: 'Also create a deal from the lead.',
+      reveals: ['deal_name', 'deal_stage', 'deal_closing_date', 'deal_amount', 'deal_pipeline', 'deal_extra'],
+      required: false,
+      defaultValue: false,
+    }),
+    deal_name: Property.ShortText({ displayName: 'Deal Name', description: 'Required to create a deal.', required: false }),
+    deal_stage: Property.ShortText({ displayName: 'Deal Stage', description: 'Required. A Stage value from your org.', placeholder: 'Qualification', required: false }),
+    deal_closing_date: Property.ShortText({ displayName: 'Deal Closing Date', description: 'Required. Date as yyyy-MM-dd.', placeholder: '2026-12-31', required: false }),
     deal_amount: Property.Number({ displayName: 'Deal Amount', required: false }),
-    deal_pipeline: Property.ShortText({ displayName: 'Deal Pipeline', description: 'Required when your org uses pipelines, e.g. "Standard (Standard)".', required: false }),
-    deal_extra: Property.Json({ displayName: 'Other Deal Fields (JSON)', required: false }),
+    deal_pipeline: Property.ShortText({ displayName: 'Deal Pipeline', description: 'Required when your org uses pipelines.', placeholder: 'Standard (Standard)', required: false }),
+    deal_extra: Property.Json({ displayName: 'Other Deal Fields', description: 'JSON of more deal fields, by API name.', required: false }),
   },
+  propertyGroups: [
+    { key: 'lead', display: 'section', label: 'Lead', icon: 'user', props: ['lead_id'] },
+    { key: 'existing', display: 'section', label: 'Link to Existing', icon: 'users', props: ['link_info', 'account_id', 'contact_id', 'overwrite'] },
+    { key: 'owner', display: 'section', label: 'Owner and Notifications', icon: 'user', props: ['assign_to', 'notify_lead_owner', 'notify_new_entity_owner'] },
+    { key: 'deal', display: 'section', label: 'Deal', icon: 'tag', props: ['create_deal'] },
+  ],
   outputSchema: convertLeadOutputSchema,
   async run({ auth, propsValue }) {
     const deal: Record<string, unknown> = {};

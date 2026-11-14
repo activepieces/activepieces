@@ -11,8 +11,7 @@ export const recordTriggerProps = {
   fields: Property.MultiSelectDropdown({
     auth: zohoCrmAuth,
     displayName: 'Fields to Include',
-    description:
-      'Optional, up to 47. Leave empty for id, then custom, then standard fields (50 in total).',
+    description: 'Up to 47, plus id and timestamps. Empty picks up to 50, custom first.',
     required: false,
     refreshers: ['module'],
     options: async ({ auth, module }) => {
