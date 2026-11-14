@@ -305,6 +305,7 @@ function formatFlowStructure(
     lines.push('')
     lines.push('Step types: trigger = EMPTY | PIECE_TRIGGER; action = CODE | PIECE | LOOP_ON_ITEMS | PROCESS_IN_BATCHES | ROUTER')
     lines.push('PROCESS_IN_BATCHES ("Process in Batches") splits its items into batches and runs its nestable body once per batch.')
+    lines.push(mcpUtils.BATCH_ITEMS_HINT)
     lines.push('')
     lines.push('## Referencing step outputs')
     lines.push(mcpUtils.STEP_REFERENCE_HINT)
