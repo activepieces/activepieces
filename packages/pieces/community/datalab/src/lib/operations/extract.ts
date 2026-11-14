@@ -170,7 +170,7 @@ function simpleSchemaProps() {
 
 function advancedSchemaProps() {
   return {
-    fields: Property.Json({
+    json_schema: Property.Json({
       displayName: 'JSON Schema',
       description: 'A JSON Schema whose top level is an object with a "properties" key listing the fields. Nested objects and arrays are supported. See json-schema.org to learn more.',
       required: true,
@@ -240,7 +240,7 @@ function citationProp({ audience }: { audience: DatalabAudience }) {
 function readHuman(values: HumanValues): ExtractInput {
   const source = datalabSource.fromHuman({ source: values.source, file: values.file, fileUrl: values.file_url, noun: NOUN });
   const schemaValues = datalabGuards.record(values.schema) ?? {};
-  const schema = values.schema_type === 'advanced' ? checkSchema(schemaValues['fields']) : fieldsToSchema(schemaValues['fields']);
+  const schema = values.schema_type === 'advanced' ? checkSchema(schemaValues['json_schema']) : fieldsToSchema(schemaValues['fields']);
   return { source, schema, parseMode: readParseMode(values.parse_mode), ...readOptions(values) };
 }
 
@@ -484,6 +484,8 @@ export const extractOperation = {
   outputSchema,
   humanProps,
   aiProps,
+  simpleSchemaProps,
+  advancedSchemaProps,
   readHuman,
   readAi,
   fieldsToSchema,

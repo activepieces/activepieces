@@ -214,7 +214,7 @@ describe('form fields sent to Datalab', () => {
       source: 'url',
       file_url: 'https://example.com/invoice.pdf',
       schema_type: 'advanced',
-      schema: { fields: JSON.stringify(invoiceSchema) },
+      schema: { json_schema: JSON.stringify(invoiceSchema) },
       extraction_mode: null,
       citation_granularity: undefined,
       parse_mode: null,
@@ -250,6 +250,23 @@ describe('form fields sent to Datalab', () => {
   it('accepts an AI schema given as an object and treats omitted agent values as defaults', () => {
     const input = extractOperation.readAi({ file_url: 'https://example.com/a.pdf', json_schema: invoiceSchema, extraction_mode: undefined, citation_granularity: undefined, page_range: '', max_pages: null, skip_cache: false });
     expect(extractOperation.formFields(input)).toMatchObject({ page_schema: JSON.stringify(invoiceSchema), extraction_mode: 'balanced', citation_granularity: 'block', mode: undefined, page_range: undefined, max_pages: undefined, skip_cache: false });
+  });
+
+  it('keeps the Simple list and the Advanced schema under different keys, so a value left by one never reaches the other form', () => {
+    expect(Object.keys(extractOperation.simpleSchemaProps())).toEqual(['fields']);
+    expect(Object.keys(extractOperation.advancedSchemaProps())).toEqual(['json_schema']);
+  });
+
+  it('reads only the chosen variant when the builder still holds the value of the other one', () => {
+    const leftovers = { fields: [{ name: 'invoice_number', type: 'string' }], json_schema: invoiceSchema };
+    const simple = extractOperation.readHuman({ source: 'url', file_url: 'https://example.com/a.pdf', schema_type: 'simple', schema: leftovers });
+    expect(simple.schema).toEqual({ type: 'object', properties: { invoice_number: { type: 'string' } } });
+    const advanced = extractOperation.readHuman({ source: 'url', file_url: 'https://example.com/a.pdf', schema_type: 'advanced', schema: leftovers });
+    expect(advanced.schema).toEqual(invoiceSchema);
+  });
+
+  it('asks for a JSON Schema when Advanced is chosen and only a Simple list is left in the form', () => {
+    expect(() => extractOperation.readHuman({ source: 'url', file_url: 'https://example.com/a.pdf', schema_type: 'advanced', schema: { fields: [{ name: 'invoice_number', type: 'string' }] } })).toThrow('Give the JSON Schema of the fields to extract');
   });
 
   it('checks the schema and mode before calling Datalab', () => {
