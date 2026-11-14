@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { datalab } from '../src/index';
+import { datalabClient } from '../src/lib/common/client';
+import { fillOperation } from '../src/lib/operations/fill';
 
 function isOptionalCheckbox(prop: unknown): boolean {
   if (typeof prop !== 'object' || prop === null || !('type' in prop) || prop.type !== 'CHECKBOX') {
@@ -116,6 +118,31 @@ describe('datalab piece', () => {
       expect(keys.slice(0, 3), action.name).toEqual(['completed', 'status', 'request_id']);
       expect(keys.join(' '), action.name).not.toMatch(/base64|api_key|authorization|header/i);
     }
+  });
+
+  it('warns people and agents up front that Fill Form is slow, with the wait each of them gets', () => {
+    const human = handWritten.find((action) => action.name === 'fill_form');
+    const ai = handWritten.find((action) => action.name === 'ai_fill_form');
+    for (const action of [human, ai]) {
+      expect(action?.description, action?.name).toMatch(/Slow action: one page usually takes 1 to 4 minutes/);
+      expect(action?.aiMetadata?.description, action?.name).toMatch(/Slow action: one page usually takes 1 to 4 minutes, so a long wait is normal/);
+    }
+    expect(fillOperation.HUMAN_WAIT_MINUTES).toBe(fillOperation.HUMAN_MAX_WAIT_MS / 60_000);
+    expect(fillOperation.AI_WAIT_MINUTES).toBe(datalabClient.MAX_WAIT_MS / 60_000);
+    expect(human?.description).toContain(`waits up to ${fillOperation.HUMAN_WAIT_MINUTES} minutes`);
+    expect(human?.aiMetadata?.description).toContain(`waits up to ${fillOperation.HUMAN_WAIT_MINUTES} minutes`);
+    expect(ai?.description).toContain(`the ${fillOperation.AI_WAIT_MINUTES} minute wait`);
+    expect(ai?.aiMetadata?.description).toContain(`waits up to ${fillOperation.AI_WAIT_MINUTES} minutes`);
+    expect(fillOperation.USUAL_TIME).toBe('1 to 4 minutes');
+  });
+
+  it('opens the human Fill Form form with a notice that the action is slow, and gives the agent no notice prop', () => {
+    const human = handWritten.find((action) => action.name === 'fill_form');
+    const ai = handWritten.find((action) => action.name === 'ai_fill_form');
+    expect(Object.keys(human?.props ?? {})[0]).toBe('slow_notice');
+    expect(human?.props['slow_notice']).toMatchObject({ type: 'MARKDOWN', variant: 'INFO' });
+    expect(JSON.stringify(human?.props['slow_notice'])).toMatch(/This action is slow.*usually takes 1 to 4 minutes.*waits up to 6 minutes/);
+    expect(Object.keys(ai?.props ?? {})).not.toContain('slow_notice');
   });
 
   it('keeps the custom API call for humans only', () => {

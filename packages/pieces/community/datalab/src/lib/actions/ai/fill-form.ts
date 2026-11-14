@@ -9,11 +9,11 @@ export const aiFillFormAction = createAction({
   classification: 'READ',
   displayName: 'Fill Form',
   description:
-    'Fills a flat, scanned or image form from a public link with AI and saves the filled file. For a normal fillable PDF, the Fill PDF Form action of the PDF piece is cheaper and instant. A fill can take a few minutes; Get Result collects it when the wait runs out.',
+    'Fills a flat, scanned or image form from a public link with AI and saves the filled file. Slow action: one page usually takes 1 to 4 minutes; Get Result collects it when the 4 minute wait runs out. For a normal fillable PDF, the Fill PDF Form action of the PDF piece is cheaper and instant.',
   audience: 'ai',
   aiMetadata: {
     description:
-      'Fill a flat, scanned or image form (PDF, PNG or JPG at a public URL) with given values by matching each field label to the form, and save the filled file in Activepieces. Pick it only for forms with no fillable fields; for a normal fillable PDF the PDF piece\'s Fill PDF Form is cheaper and instant, and call Get Form Fields first to learn the labels. Waits up to 4 minutes (a page often takes 1 to 4); if Datalab is still working it returns completed=false and a request_id: that is a timeout, not a failure, so pass the request_id to Get Result with operation Fill Form instead of calling Fill Form again. Each run spends Datalab credits.',
+      'Fill a flat, scanned or image form (PDF, PNG or JPG at a public URL) with given values by matching each field label to the form, and save the filled file in Activepieces. Pick it only for forms with no fillable fields; for a normal fillable PDF the PDF piece\'s Fill PDF Form is cheaper and instant, and call Get Form Fields first to learn the labels. Slow action: one page usually takes 1 to 4 minutes, so a long wait is normal and does not mean it is stuck. It waits up to 4 minutes; if Datalab is still working it returns completed=false and a request_id: that is a timeout, not a failure, so pass the request_id to Get Result with operation Fill Form instead of calling Fill Form again. Each run spends Datalab credits.',
     idempotent: true,
   },
   props: fillOperation.aiProps(),

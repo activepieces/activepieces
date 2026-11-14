@@ -1,4 +1,4 @@
-import { FilesService, OutputSchema, Property } from '@activepieces/pieces-framework';
+import { FilesService, MarkdownVariant, OutputSchema, Property } from '@activepieces/pieces-framework';
 import { datalabClient, DatalabActionOutput, DatalabAudience, DatalabOperation, DatalabTiming } from '../common/client';
 import { datalabFiles } from '../common/files';
 import { datalabGuards } from '../common/guards';
@@ -8,6 +8,9 @@ import { DatalabSource, datalabSource } from '../common/source';
 const OPERATION: DatalabOperation = 'fill';
 const DEFAULT_FILE_NAME = 'filled-form';
 const HUMAN_MAX_WAIT_MS = 360_000;
+const HUMAN_WAIT_MINUTES = Math.round(HUMAN_MAX_WAIT_MS / 60_000);
+const AI_WAIT_MINUTES = Math.round(datalabClient.MAX_WAIT_MS / 60_000);
+const USUAL_TIME = '1 to 4 minutes';
 const DEFAULT_OUTPUT_FORMAT = 'pdf';
 const FILE_TYPES = 'PDF (fillable, flat or scanned) or image (PNG, JPG)';
 const CHECKBOX_HINT = 'To tick a checkbox, give "yes", "true", "1", "checked" or "x".';
@@ -34,6 +37,10 @@ const outputSchema: OutputSchema = {
 
 function humanProps() {
   return {
+    slow_notice: Property.MarkDown({
+      value: `**This action is slow.** Filling one page usually takes ${USUAL_TIME}, much longer than the other Datalab actions. The step waits up to ${HUMAN_WAIT_MINUTES} minutes. If Datalab needs longer, the step stops with a "Timed out" error that says how to get the result.`,
+      variant: MarkdownVariant.INFO,
+    }),
     ...datalabSource.humanProps({ noun: 'form', fileTypes: FILE_TYPES }),
     field_values: Property.Array({
       displayName: 'Field Values',
@@ -233,6 +240,9 @@ async function run({ apiKey, audience, source, fields, context, confidenceThresh
 export const fillOperation = {
   DEFAULT_FILE_NAME,
   HUMAN_MAX_WAIT_MS,
+  HUMAN_WAIT_MINUTES,
+  AI_WAIT_MINUTES,
+  USUAL_TIME,
   outputSchema,
   humanProps,
   aiProps,
