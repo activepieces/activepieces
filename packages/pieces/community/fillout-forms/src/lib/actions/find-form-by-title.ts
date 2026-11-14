@@ -9,7 +9,7 @@ export const findFormByTitle = createAction({
   name: 'findFormByTitle',
   classification: 'SEARCH',
   displayName: 'Find Form by Title',
-  description: 'Finds an existing forms by title.',
+  description: 'Finds forms whose title contains the given text.',
   audience: 'both',
   aiMetadata: { description: 'Searches the account\'s Fillout forms for those whose title contains the given text (case-insensitive partial match) and returns the matches. Use to resolve a form name to its form ID before calling response-fetching actions. Read-only and idempotent.', idempotent: true },
   outputSchema: findFormByTitleActionOutputSchema,
@@ -17,14 +17,18 @@ export const findFormByTitle = createAction({
     title: Property.ShortText({
       displayName: 'Form Title',
       required: true,
-      description: 'The (partial or full) title of the form to search for.'
+      description: 'Part of the title is enough. Case does not matter.',
+      placeholder: 'e.g. Contact'
     })
   },
   async run(context) {
     const apiKey = context.auth.secret_text;
-    const response = await makeRequest(apiKey, HttpMethod.GET, `/forms`, undefined);
-   
-    const forms = response as Array<{ name: string; formId: string }>;
+    const forms = await makeRequest<Array<{ name: string; formId: string }>>(
+      apiKey,
+      HttpMethod.GET,
+      `/forms`,
+      undefined
+    );
     const searchTitle = context.propsValue['title'].toLowerCase();
     const matches = forms.filter((f) =>
       f.name.toLowerCase().includes(searchTitle)
