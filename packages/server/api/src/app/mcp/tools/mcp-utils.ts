@@ -1,6 +1,6 @@
-import { applyFunctionToValuesSync, connectionTemplate, extractMustacheTokens, isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, applyFunctionToValuesSync, connectionTemplate, ErrorCode, extractMustacheTokens, isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { BranchOperator, EngineResponse, EngineResponseStatus, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, PropertyExecutionType, PropertySettings, singleValueConditions, WorkerJobType } from '@activepieces/shared'
+import { BranchOperator, EngineResponse, EngineResponseStatus, FlowActionType, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, PropertyExecutionType, PropertySettings, singleValueConditions, WorkerJobType } from '@activepieces/shared'
 import type { BranchedAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -28,10 +28,15 @@ const RESOLVABLE_PROP_TYPES = new Set<PropertyType>([
 
 const STEP_REFERENCE_HINT = 'Reference a prior step\'s output with {{stepName[\'output\'].field}} (output is nested under [\'output\'], e.g. {{trigger[\'output\'].body.email}}, {{send_email[\'output\'].id}}). For a continue-on-failure step\'s error, use {{stepName[\'error\'].message}}.'
 
+const BATCH_ITEMS_HINT = 'A step inside a PROCESS_IN_BATCHES body reads its batch as {{<batchStepName>[\'output\'].items}}, a list: loop over it to handle one item at a time.'
+
 function mcpToolError(prefix: string, err: unknown): McpToolResult {
     const entityDetail = extractEntityNotFoundDetail(err)
     if (entityDetail) {
         return { content: [{ type: 'text', text: `❌ ${prefix}: ${entityDetail} not found. Check the ID or name and try again.` }], isError: true }
+    }
+    if (err instanceof ActivepiecesError && err.error.code === ErrorCode.FLOW_OPERATION_INVALID) {
+        return { content: [{ type: 'text', text: `❌ ${prefix}: ${err.error.params.message}` }], isError: true }
     }
     const raw = err instanceof Error ? err.message : String(err)
     const message = sanitizeErrorMessage(raw)
@@ -626,6 +631,27 @@ async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }
     }
 }
 
+const ERROR_HANDLING_ACTION_TYPES = [FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.PROCESS_IN_BATCHES]
+
+function validateErrorHandlingSupport({ stepType, stepLabel, continueOnFailure, retryOnFailure, rejectFalseOnUnsupported = false }: {
+    stepType: FlowActionType
+    stepLabel: string
+    continueOnFailure?: boolean
+    retryOnFailure?: boolean
+    rejectFalseOnUnsupported?: boolean
+}): McpToolResult | null {
+    const setsFlag = rejectFalseOnUnsupported
+        ? continueOnFailure !== undefined || retryOnFailure !== undefined
+        : continueOnFailure === true || retryOnFailure === true
+    if (setsFlag && !ERROR_HANDLING_ACTION_TYPES.includes(stepType)) {
+        return { content: [{ type: 'text', text: `❌ continueOnFailure/retryOnFailure can only be set on ${ERROR_HANDLING_ACTION_TYPES.join(', ')} steps, but ${stepLabel} is type ${stepType}.` }], isError: true }
+    }
+    if (retryOnFailure === true && stepType === FlowActionType.PROCESS_IN_BATCHES) {
+        return { content: [{ type: 'text', text: `❌ retryOnFailure is not supported on ${FlowActionType.PROCESS_IN_BATCHES} steps — a retry re-dispatches every batch. Set continueOnFailure instead and branch on the batch summary.` }], isError: true }
+    }
+    return null
+}
+
 function buildErrorHandlingOptions({ continueOnFailure, retryOnFailure }: {
     continueOnFailure?: boolean
     retryOnFailure?: boolean
@@ -999,6 +1025,7 @@ export const mcpUtils = {
     folderSuffix,
     resolveFolder,
     fillDefaultsForMissingOptionalProps,
+    validateErrorHandlingSupport,
     buildErrorHandlingOptions,
     resolveLatestPieceVersion,
     resolvePlatformId,
@@ -1011,6 +1038,7 @@ export const mcpUtils = {
     syncContainerExecutionTypes,
     RESOLVE_TIMEOUT_MS,
     STEP_REFERENCE_HINT,
+    BATCH_ITEMS_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
     FOLDER_NAME_SCHEMA,
 }
