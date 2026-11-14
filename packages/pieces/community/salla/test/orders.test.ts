@@ -243,10 +243,10 @@ describe('buildCreateOrderBody', () => {
       sallaOrders.buildCreateOrderBody(baseCreateInput({ shipTo: { ...fullAddress, postalCode: ' ', shortAddress: undefined } })),
     ).toThrow('The shipping address is incomplete. Salla needs the full National Address; missing: postal_code, short_address.');
     expect(() => sallaOrders.buildCreateOrderBody(baseCreateInput({ shipTo: { ...fullAddress, latitude: undefined, longitude: undefined } }))).toThrow(
-      'missing: geo_coordinates.',
+      'missing: latitude and longitude.',
     );
     expect(() => sallaOrders.buildCreateOrderBody(baseCreateInput({ shipTo: { cityId: 5 } }))).toThrow(
-      'missing: country, district, block, street_number, address_line, postal_code, short_address, geo_coordinates.',
+      'missing: country, district, block, street_number, address_line, postal_code, short_address, latitude and longitude.',
     );
   });
 

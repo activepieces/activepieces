@@ -153,12 +153,12 @@ export const aiUpdateOrderAction = createAction({
     }),
     latitude: Property.Number({
       displayName: 'Ship To Latitude',
-      description: 'Latitude of the delivery point in decimal degrees, for example 24.6888248. Sent only together with longitude.',
+      description: 'Latitude of the delivery point in decimal degrees, for example 24.6888248. Required when changing the address, together with longitude and every ship_to_* field.',
       required: false,
     }),
     longitude: Property.Number({
       displayName: 'Ship To Longitude',
-      description: 'Longitude of the delivery point in decimal degrees, for example 46.686327. Sent only together with latitude.',
+      description: 'Longitude of the delivery point in decimal degrees, for example 46.686327. Required when changing the address, together with latitude and every ship_to_* field.',
       required: false,
     }),
     payment_status: Property.StaticDropdown({
