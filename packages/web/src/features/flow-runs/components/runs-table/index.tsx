@@ -201,7 +201,7 @@ export const RunsTable = () => {
                 flowRunUtils.getStatusLabelOverride(status) ??
                 formatUtils.convertEnumToHumanReadable(status),
               value: status,
-              icon: flowRunUtils.getStatusIcon(status).Icon,
+              icon: flowRunUtils.getStatusIcon(status),
             };
           }),
           icon: CheckIcon,

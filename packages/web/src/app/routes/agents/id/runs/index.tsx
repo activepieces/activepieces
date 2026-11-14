@@ -21,6 +21,7 @@ import {
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { agentRunUtils } from '@/features/agents/lib/agent-run-utils';
 import { projectCollectionUtils } from '@/features/projects';
+import { statusColors } from '@/lib/status-colors';
 import { cn } from '@/lib/utils';
 
 import { RunDetailPanel } from './run-detail-panel';
@@ -65,7 +66,7 @@ export const AgentRuns = ({ agentId, onClose }: AgentRunsProps) => {
       {showList && (
         <div className="min-h-0 grow overflow-y-auto">
           {items.map((run) => {
-            const { Icon, variant } = agentRunUtils.getStatusIcon(run.status);
+            const Icon = agentRunUtils.getStatusIcon(run.status);
             return (
               <CardListItem
                 key={run.id}
@@ -79,10 +80,10 @@ export const AgentRuns = ({ agentId, onClose }: AgentRunsProps) => {
                 >
                   <Icon
                     aria-label={agentRunUtils.getStatusLabel(run.status)}
-                    className={cn('size-5 shrink-0', {
-                      'text-success-11': variant === 'success',
-                      'text-danger-11': variant === 'error',
-                    })}
+                    className={cn(
+                      'size-5 shrink-0',
+                      statusColors.of(run.status).text,
+                    )}
                   />
                   <div className="flex min-w-0 flex-col gap-1">
                     <span className="truncate text-sm font-medium">

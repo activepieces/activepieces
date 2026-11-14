@@ -1,3 +1,4 @@
+import { CreditsSeverity } from '@/lib/statuses';
 /**
  * @vitest-environment jsdom
  */
@@ -98,7 +99,7 @@ function renderSidebar() {
   return render(
     <MemoryRouter>
       <SidebarUsageLimits />
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
@@ -115,7 +116,7 @@ function unlimitedCredits({
     creditsRemaining: null,
     isUnlimited: true,
     percentUsed: 0,
-    severity: 'default',
+    severity: CreditsSeverity.DEFAULT,
   };
 }
 
@@ -156,8 +157,8 @@ describe('sidebar usage card during the seat grace', () => {
     expect(screen.getByText('· 3 days left')).toBeTruthy();
     expect(
       screen.getByText(
-        "Your Enterprise trial has ended. Users added during it beyond the plan's 5 seats lose access on Oct 26 unless an admin upgrades.",
-      ),
+        "Your Enterprise trial has ended. Users added during it beyond the plan's 5 seats lose access on Oct 26 unless an admin upgrades."
+      )
     ).toBeTruthy();
     expect(screen.queryByRole('button')).toBeNull();
   });
@@ -171,21 +172,21 @@ describe('sidebar usage card during the seat grace', () => {
 
     expect(
       screen.getByText(
-        "Users and invitations added during the trial beyond the plan's 5 seats will be removed on Oct 26. Manage seats, or upgrade to keep them.",
-      ),
+        "Users and invitations added during the trial beyond the plan's 5 seats will be removed on Oct 26. Manage seats, or upgrade to keep them."
+      )
     ).toBeTruthy();
     const line = screen.getByRole('button', {
       name: /Enterprise trial ended/,
     });
     expect(line.getAttribute('data-ap-control')).toBe('trial.seats.open');
     expect(billingDialogHooks.useTrialSeatDialogStore.getState().isOpen).toBe(
-      false,
+      false
     );
 
     fireEvent.click(line);
 
     expect(billingDialogHooks.useTrialSeatDialogStore.getState().isOpen).toBe(
-      true,
+      true
     );
   });
 
@@ -242,13 +243,13 @@ describe('sidebar usage card before the trial', () => {
     expect(view.container.innerHTML).toMatch(/^<button/);
     expect(line.getAttribute('data-ap-control')).toBe('trial.start.open');
     expect(
-      screen.getByText('Try the Enterprise plan free for 7 days'),
+      screen.getByText('Try the Enterprise plan free for 7 days')
     ).toBeTruthy();
 
     fireEvent.click(line);
 
     expect(
-      billingDialogHooks.useSelfServeTrialDialogStore.getState().payload,
+      billingDialogHooks.useSelfServeTrialDialogStore.getState().payload
     ).toEqual({});
   });
 
@@ -292,7 +293,7 @@ type CreditsState = {
   creditsRemaining: number | null;
   isUnlimited: boolean;
   percentUsed: number;
-  severity: 'default' | 'warning' | 'error';
+  severity: CreditsSeverity;
 };
 
 type TestState = {

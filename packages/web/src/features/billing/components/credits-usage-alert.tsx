@@ -10,6 +10,7 @@ import { useEmbedding } from '@/components/providers/embed-provider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { CreditsSeverity } from '@/lib/statuses';
 import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
 import { billingQueries } from '../hooks/billing-hooks';
@@ -62,7 +63,7 @@ export const CreditsUsageAlert = React.memo(() => {
     creditsResetInterval: info?.creditsResetInterval,
     nextBillingDate: info?.nextBillingDate,
   });
-  const isDanger = severity === 'error';
+  const isDanger = severity === CreditsSeverity.ERROR;
   const Icon = isDanger ? CircleAlert : TriangleAlert;
 
   const message = [

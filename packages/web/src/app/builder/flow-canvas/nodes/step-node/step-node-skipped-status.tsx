@@ -8,6 +8,7 @@ import { t } from 'i18next';
 import { RouteOff } from 'lucide-react';
 
 import { flowRunUtils } from '@/features/flow-runs';
+import { StepNodeBadgeStatus } from '@/lib/statuses';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
 
@@ -38,7 +39,7 @@ const ApStepNodeSkippedStatus = ({ stepName }: { stepName: string }) => {
     <StepNodeBadgeContainer>
       <div
         className={flowRunUtils.getStatusContainerClassName({
-          variant: 'default',
+          status: StepNodeBadgeStatus.SKIPPED,
           withPaddingAndAnimation: true,
         })}
       >

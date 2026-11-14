@@ -1,4 +1,3 @@
-import { t } from 'i18next';
 import { useMemo } from 'react';
 
 import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
@@ -19,14 +18,12 @@ const ApStepNodeStatusInRun = ({ stepName }: { stepName: string }) => {
   if (!stepStatusInRun) {
     return null;
   }
-  const { variant, text } = stepStatusInRun
-    ? flowRunUtils.getStatusIconForStep(stepStatusInRun)
-    : ({ variant: 'default', text: t('Testing...') } as const);
+  const { text } = flowRunUtils.getStatusIconForStep(stepStatusInRun);
   return (
     <StepNodeBadgeContainer>
       <div
         className={flowRunUtils.getStatusContainerClassName({
-          variant,
+          status: stepStatusInRun,
           withPaddingAndAnimation: true,
         })}
       >

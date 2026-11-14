@@ -19,7 +19,7 @@ import {
   Timer,
 } from 'lucide-react';
 
-import { StatusVariant } from '@/components/custom/status-icon-with-text';
+import { Status, statusColors } from '@/lib/status-colors';
 import { cn } from '@/lib/utils';
 
 export const flowRunUtils = {
@@ -139,107 +139,59 @@ export const flowRunUtils = {
   },
 
   getStatusIconForStep(stepOutput: StepOutputStatus): {
-    variant: StatusVariant;
     Icon: LucideIcon;
     text: string;
-    extraClassName?: string;
   } {
     switch (stepOutput) {
       case StepOutputStatus.RUNNING:
-        return {
-          variant: 'default',
-          Icon: Timer,
-          text: t('Running'),
-          extraClassName: 'text-gray-12 stroke-gray-12',
-        };
+        return { Icon: Timer, text: t('Running') };
       case StepOutputStatus.PAUSED:
-        return {
-          variant: 'warning',
-          Icon: PauseIcon,
-          text: t('Paused'),
-          extraClassName: 'text-warning-11',
-        };
+        return { Icon: PauseIcon, text: t('Paused') };
       case StepOutputStatus.STOPPED:
       case StepOutputStatus.SUCCEEDED:
-        return {
-          variant: 'success',
-          Icon: CircleCheck,
-          text: t('Succeeded'),
-          extraClassName: 'text-success-11',
-        };
+        return { Icon: CircleCheck, text: t('Succeeded') };
       case StepOutputStatus.FAILED:
-        return {
-          variant: 'error',
-          Icon: CircleAlert,
-          text: t('Failed'),
-          extraClassName: 'text-danger-11',
-        };
+        return { Icon: CircleAlert, text: t('Failed') };
     }
   },
 
   getStatusContainerClassName({
-    variant,
+    status,
     withPaddingAndAnimation = false,
   }: {
-    variant: StatusVariant;
+    status: Status;
     withPaddingAndAnimation?: boolean;
   }) {
-    return cn('text-xs border rounded-md leading-tight', {
-      'text-success-11 bg-success-3 border-success-7': variant === 'success',
-      'text-danger-11 bg-danger-3 border-danger-7': variant === 'error',
-      'text-warning-11 bg-warning-3 border-warning-7': variant === 'warning',
-      'text-accent-11 bg-accent-3 border-accent-7': variant === 'primary',
-      'text-gray-11 bg-gray-3 border-gray-7': variant === 'neutral',
-      'bg-gray-1 border-gray-6 text-gray-12': variant === 'default',
-      'flex gap-1 animate-in fade-in slide-in-from-bottom-2 duration-500 items-center  justify-center px-2 py-0.5':
-        withPaddingAndAnimation,
-    });
+    const colors = statusColors.of(status);
+    return cn(
+      'text-xs border rounded-md leading-tight',
+      colors.text,
+      colors.background,
+      colors.border,
+      withPaddingAndAnimation &&
+        'flex gap-1 animate-in fade-in slide-in-from-bottom-2 duration-500 items-center  justify-center px-2 py-0.5',
+    );
   },
 
-  getStatusIcon(status: FlowRunStatus): {
-    variant: StatusVariant;
-    Icon: LucideIcon;
-  } {
+  getStatusIcon(status: FlowRunStatus): LucideIcon {
     switch (status) {
       case FlowRunStatus.QUEUED:
-        return {
-          variant: 'neutral',
-          Icon: Timer,
-        };
+        return Timer;
       case FlowRunStatus.RUNNING:
-        return {
-          variant: 'default',
-          Icon: Play,
-        };
-      case FlowRunStatus.FAILED:
-        return {
-          variant: 'error',
-          Icon: CircleAlert,
-        };
+        return Play;
       case FlowRunStatus.PAUSED:
-        return {
-          variant: 'warning',
-          Icon: PauseIcon,
-        };
+        return PauseIcon;
       case FlowRunStatus.CANCELED:
-        return {
-          variant: 'neutral',
-          Icon: CircleX,
-        };
+        return CircleX;
       case FlowRunStatus.SUCCEEDED:
-        return {
-          variant: 'success',
-          Icon: CircleCheck,
-        };
+        return CircleCheck;
+      case FlowRunStatus.FAILED:
       case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
       case FlowRunStatus.LOG_SIZE_EXCEEDED:
       case FlowRunStatus.QUOTA_EXCEEDED:
       case FlowRunStatus.INTERNAL_ERROR:
       case FlowRunStatus.TIMEOUT:
-        return {
-          variant: 'error',
-          Icon: CircleAlert,
-        };
+        return CircleAlert;
     }
   },
   getStatusLabelOverride(status: FlowRunStatus): string | null {

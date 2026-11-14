@@ -28,6 +28,7 @@ import { Input } from '@/components/ui/input';
 import { samlSsoApi, ssoMutations } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
+import { DomainVerificationStatus } from '@/lib/statuses';
 
 export const DomainVerification = ({
   platform,
@@ -204,7 +205,10 @@ const VerifiedDomain = ({
         media={<DomainStatusIcon status="verified" />}
         title={domain}
       >
-        <StatusDot tone="success" className="text-xs text-gray-11">
+        <StatusDot
+          status={DomainVerificationStatus.VERIFIED}
+          className="text-xs text-gray-11"
+        >
           {t('Verified')}
         </StatusDot>
       </SettingsRow>

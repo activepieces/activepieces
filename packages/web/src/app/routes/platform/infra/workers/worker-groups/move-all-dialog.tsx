@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { WorkerHealth } from '@/lib/statuses';
 import { cn } from '@/lib/utils';
 
 import { groupUtils, useMover } from './hooks';
@@ -163,7 +164,11 @@ function MoveAllForm({
             </span>
             {option.health && (
               <StatusDot
-                tone={option.health.online > 0 ? 'success' : 'danger'}
+                status={
+                  option.health.online > 0
+                    ? WorkerHealth.ONLINE
+                    : WorkerHealth.OFFLINE
+                }
                 className={cn(
                   'w-36 shrink-0 text-xs',
                   option.health.online > 0 ? 'text-gray-10' : 'text-danger-11',

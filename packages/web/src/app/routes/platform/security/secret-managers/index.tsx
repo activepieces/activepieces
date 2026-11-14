@@ -37,6 +37,7 @@ import { PieceIcon } from '@/features/pieces';
 import { secretManagersHooks } from '@/features/secret-managers';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { SecretManagerStatus } from '@/lib/statuses';
 
 import { sampleData } from '../../sample-data';
 
@@ -124,12 +125,24 @@ const SecretManagersPage = () => {
       cell: ({ row }) => {
         const { configured, connected } = row.original.connection;
         if (!configured) {
-          return <StatusDot tone="neutral">{t('Not configured')}</StatusDot>;
+          return (
+            <StatusDot status={SecretManagerStatus.NOT_CONFIGURED}>
+              {t('Not configured')}
+            </StatusDot>
+          );
         }
         if (connected) {
-          return <StatusDot tone="success">{t('Connected')}</StatusDot>;
+          return (
+            <StatusDot status={SecretManagerStatus.CONNECTED}>
+              {t('Connected')}
+            </StatusDot>
+          );
         }
-        return <StatusDot tone="danger">{t('Disconnected')}</StatusDot>;
+        return (
+          <StatusDot status={SecretManagerStatus.DISCONNECTED}>
+            {t('Disconnected')}
+          </StatusDot>
+        );
       },
     },
     {

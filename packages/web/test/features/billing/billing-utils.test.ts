@@ -1,6 +1,17 @@
-import { ApEdition, ConsumableFeatureId, CreditsBillableFeature, InvitationStatus, UserStatus } from '@activepieces/shared';
+import { CreditsSeverity } from '@/lib/statuses';
+import {
+  ApEdition,
+  ConsumableFeatureId,
+  CreditsBillableFeature,
+  InvitationStatus,
+  UserStatus,
+} from '@activepieces/shared';
 import { describe, expect, it } from 'vitest';
-import { billingUtils, ShouldShowCreditsAlertParams, seatUtils } from '@/features/billing/utils/billing-utils';
+import {
+  billingUtils,
+  ShouldShowCreditsAlertParams,
+  seatUtils,
+} from '@/features/billing/utils/billing-utils';
 import { formatUtils } from '@/lib/format-utils';
 import dayjs from 'dayjs';
 
@@ -18,54 +29,54 @@ const enforcedAtWarning: ShouldShowCreditsAlertParams = {
   isProjectRoute: true,
   isUnlimited: false,
   isBillingEnforced: true,
-  severity: 'warning',
+  severity: CreditsSeverity.WARNING,
   isDismissalActive: false,
 };
 
 describe('billingUtils.creditsSeverity', () => {
   it('stays silent below the warning threshold', () => {
-    expect(billingUtils.creditsSeverity(0)).toBe('default');
-    expect(billingUtils.creditsSeverity(69)).toBe('default');
+    expect(billingUtils.creditsSeverity(0)).toBe(CreditsSeverity.DEFAULT);
+    expect(billingUtils.creditsSeverity(69)).toBe(CreditsSeverity.DEFAULT);
   });
 
   it('warns from 70% up to the error threshold', () => {
-    expect(billingUtils.creditsSeverity(70)).toBe('warning');
-    expect(billingUtils.creditsSeverity(89)).toBe('warning');
+    expect(billingUtils.creditsSeverity(70)).toBe(CreditsSeverity.WARNING);
+    expect(billingUtils.creditsSeverity(89)).toBe(CreditsSeverity.WARNING);
   });
 
   it('escalates to error from 90%', () => {
-    expect(billingUtils.creditsSeverity(90)).toBe('error');
-    expect(billingUtils.creditsSeverity(100)).toBe('error');
+    expect(billingUtils.creditsSeverity(90)).toBe(CreditsSeverity.ERROR);
+    expect(billingUtils.creditsSeverity(100)).toBe(CreditsSeverity.ERROR);
   });
 });
 
 describe('billingUtils.formatCredits', () => {
   it('spells out credit counts below one million', () => {
     expect(billingUtils.formatCredits(999_999)).toBe(
-      formatUtils.formatNumber(999_999),
+      formatUtils.formatNumber(999_999)
     );
     expect(billingUtils.formatCredits(0)).toBe(formatUtils.formatNumber(0));
   });
 
   it('switches to compact notation from one million', () => {
     expect(billingUtils.formatCredits(1_000_000)).toBe(
-      formatUtils.formatNumberCompact(1_000_000),
+      formatUtils.formatNumberCompact(1_000_000)
     );
     expect(billingUtils.formatCredits(2_500_000)).toBe(
-      formatUtils.formatNumberCompact(2_500_000),
+      formatUtils.formatNumberCompact(2_500_000)
     );
   });
 
   it('rounds a fractional credit count down to a whole credit', () => {
     expect(billingUtils.formatCredits(838.822)).toBe(
-      formatUtils.formatNumber(838),
+      formatUtils.formatNumber(838)
     );
     expect(billingUtils.formatCredits(0.9)).toBe(formatUtils.formatNumber(0));
   });
 
   it('rounds down before choosing compact notation', () => {
     expect(billingUtils.formatCredits(999_999.6)).toBe(
-      formatUtils.formatNumber(999_999),
+      formatUtils.formatNumber(999_999)
     );
   });
 });
@@ -80,7 +91,7 @@ describe('billingUtils.shouldShowCreditsAlert', () => {
       billingUtils.shouldShowCreditsAlert({
         ...enforcedAtWarning,
         isBillingEnforced: false,
-      }),
+      })
     ).toBe(false);
   });
 
@@ -89,8 +100,8 @@ describe('billingUtils.shouldShowCreditsAlert', () => {
       billingUtils.shouldShowCreditsAlert({
         ...enforcedAtWarning,
         isBillingEnforced: false,
-        severity: 'error',
-      }),
+        severity: CreditsSeverity.ERROR,
+      })
     ).toBe(false);
   });
 
@@ -98,9 +109,9 @@ describe('billingUtils.shouldShowCreditsAlert', () => {
     expect(
       billingUtils.shouldShowCreditsAlert({
         ...enforcedAtWarning,
-        severity: 'error',
+        severity: CreditsSeverity.ERROR,
         isDismissalActive: true,
-      }),
+      })
     ).toBe(true);
   });
 
@@ -109,7 +120,7 @@ describe('billingUtils.shouldShowCreditsAlert', () => {
       billingUtils.shouldShowCreditsAlert({
         ...enforcedAtWarning,
         isDismissalActive: true,
-      }),
+      })
     ).toBe(false);
   });
 
@@ -117,8 +128,8 @@ describe('billingUtils.shouldShowCreditsAlert', () => {
     expect(
       billingUtils.shouldShowCreditsAlert({
         ...enforcedAtWarning,
-        severity: 'default',
-      }),
+        severity: CreditsSeverity.DEFAULT,
+      })
     ).toBe(false);
   });
 
@@ -127,7 +138,7 @@ describe('billingUtils.shouldShowCreditsAlert', () => {
       billingUtils.shouldShowCreditsAlert({
         ...enforcedAtWarning,
         isUnlimited: true,
-      }),
+      })
     ).toBe(false);
   });
 
@@ -136,19 +147,19 @@ describe('billingUtils.shouldShowCreditsAlert', () => {
       billingUtils.shouldShowCreditsAlert({
         ...enforcedAtWarning,
         isEmbedded: true,
-      }),
+      })
     ).toBe(false);
     expect(
       billingUtils.shouldShowCreditsAlert({
         ...enforcedAtWarning,
         isProjectRoute: false,
-      }),
+      })
     ).toBe(false);
     expect(
       billingUtils.shouldShowCreditsAlert({
         ...enforcedAtWarning,
         edition: ApEdition.COMMUNITY,
-      }),
+      })
     ).toBe(false);
   });
 
@@ -157,7 +168,7 @@ describe('billingUtils.shouldShowCreditsAlert', () => {
       billingUtils.shouldShowCreditsAlert({
         ...enforcedAtWarning,
         edition: null,
-      }),
+      })
     ).toBe(true);
   });
 });
@@ -165,7 +176,7 @@ describe('billingUtils.shouldShowCreditsAlert', () => {
 describe('billingUtils.resolveCreditsAction', () => {
   it('offers an upgrade on a free plan, without waiting for subscription data', () => {
     expect(
-      billingUtils.resolveCreditsAction({ isPaid: false, info: undefined }),
+      billingUtils.resolveCreditsAction({ isPaid: false, info: undefined })
     ).toEqual({ kind: 'upgrade' });
   });
 
@@ -174,7 +185,7 @@ describe('billingUtils.resolveCreditsAction', () => {
       billingUtils.resolveCreditsAction({
         isPaid: true,
         info: { trialEndsAt: '2026-09-01T00:00:00.000Z', creditsFeature },
-      }),
+      })
     ).toEqual({ kind: 'upgrade' });
   });
 
@@ -183,13 +194,13 @@ describe('billingUtils.resolveCreditsAction', () => {
       billingUtils.resolveCreditsAction({
         isPaid: true,
         info: { trialEndsAt: null, creditsFeature },
-      }),
+      })
     ).toEqual({ kind: 'auto-recharge', feature: creditsFeature });
   });
 
   it('stays unknown while the paid plan subscription is still loading', () => {
     expect(
-      billingUtils.resolveCreditsAction({ isPaid: true, info: undefined }),
+      billingUtils.resolveCreditsAction({ isPaid: true, info: undefined })
     ).toEqual({ kind: 'unknown' });
   });
 
@@ -198,7 +209,7 @@ describe('billingUtils.resolveCreditsAction', () => {
       billingUtils.resolveCreditsAction({
         isPaid: true,
         info: { trialEndsAt: null, creditsFeature: null },
-      }),
+      })
     ).toEqual({ kind: 'unknown' });
   });
 });
@@ -239,7 +250,7 @@ describe('reserved seats', () => {
     },
   ])('$name', ({ users, invitations, expected }) => {
     expect(seatUtils.reservedSeats({ users, invitations, now: NOW })).toBe(
-      expected,
+      expected
     );
   });
 });

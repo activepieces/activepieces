@@ -32,6 +32,7 @@ import { flowRunMutations } from '@/features/flow-runs/hooks/flow-run-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
+import { statusColors } from '@/lib/status-colors';
 import { cn } from '@/lib/utils';
 
 type FlowRunCardProps = {
@@ -43,7 +44,8 @@ type FlowRunCardProps = {
 export const FLOW_CARD_HEIGHT = 70;
 const FlowRunCard = React.memo(
   ({ run, viewedRunId, refetchRuns }: FlowRunCardProps) => {
-    const { Icon, variant } = flowRunUtils.getStatusIcon(run.status);
+    const Icon = flowRunUtils.getStatusIcon(run.status);
+    const iconClassName = cn('w-5 h-5', statusColors.of(run.status).text);
     const userHasPermissionToRetryRun = useAuthorization().checkAccess(
       Permission.WRITE_RUN,
     );
@@ -75,26 +77,12 @@ const FlowRunCard = React.memo(
             {run.status === FlowRunStatus.CANCELED ? (
               <Tooltip>
                 <TooltipTrigger>
-                  <Icon
-                    className={cn('w-5 h-5', {
-                      'text-success-11': variant === 'success',
-                      'text-danger-11': variant === 'error',
-                      'text-warning-11': variant === 'warning',
-                      'text-accent-11': variant === 'primary',
-                    })}
-                  />
+                  <Icon className={iconClassName} />
                 </TooltipTrigger>
                 <TooltipContent>{t('Canceled')}</TooltipContent>
               </Tooltip>
             ) : (
-              <Icon
-                className={cn('w-5 h-5', {
-                  'text-success-11': variant === 'success',
-                  'text-danger-11': variant === 'error',
-                  'text-warning-11': variant === 'warning',
-                  'text-accent-11': variant === 'primary',
-                })}
-              />
+              <Icon className={iconClassName} />
             )}
           </span>
         </div>

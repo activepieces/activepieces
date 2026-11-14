@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 import { StatusDot, adminSurface } from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
+import { WorkerHealth } from '@/lib/statuses';
 import { cn } from '@/lib/utils';
 
 import { groupUtils, useMover, workerGroupsQueries } from './hooks';
@@ -316,7 +317,7 @@ function ResultRow({
         {sentence}
         {down && (
           <StatusDot
-            tone="danger"
+            status={WorkerHealth.OFFLINE}
             className="ml-2 inline-flex text-xs text-danger-11"
           >
             {t('No workers online')}

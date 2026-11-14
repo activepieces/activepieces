@@ -22,6 +22,7 @@ import { flowHooks } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
+import { HandlerFlowStatus } from '@/lib/statuses';
 
 import { destinationErrors } from '../lib/destination-errors';
 import {
@@ -234,7 +235,11 @@ const HandlerFlowCard = ({ flowId }: { flowId: string }) => {
       </div>
       {!isNil(flow) && (
         <StatusDot
-          tone={isNil(flow.publishedVersionId) ? 'warning' : 'success'}
+          status={
+            isNil(flow.publishedVersionId)
+              ? HandlerFlowStatus.DRAFT
+              : HandlerFlowStatus.PUBLISHED
+          }
         >
           {isNil(flow.publishedVersionId) ? t('Draft') : t('Published')}
         </StatusDot>

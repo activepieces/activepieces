@@ -9,6 +9,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
+import { statusColors } from '@/lib/status-colors';
 import { cn } from '@/lib/utils';
 
 type StepStatusIconProps = {
@@ -27,14 +28,14 @@ const statusText = {
 
 const StepStatusIcon = React.memo(
   ({ status, size, hideTooltip = false }: StepStatusIconProps) => {
-    const { Icon, extraClassName } = flowRunUtils.getStatusIconForStep(status);
+    const { Icon } = flowRunUtils.getStatusIconForStep(status);
     const sizeClassName = {
       'size-3': size === '3',
       'size-4.5': size === '4.5',
       'size-4': size === '4',
       'size-5': size === '5',
     };
-    const className = cn(extraClassName, sizeClassName);
+    const className = cn(statusColors.of(status).text, sizeClassName);
     if (status === StepOutputStatus.RUNNING) {
       return <LoadingSpinner className={className}></LoadingSpinner>;
     }

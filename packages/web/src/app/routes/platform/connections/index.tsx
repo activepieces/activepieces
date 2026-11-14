@@ -24,7 +24,6 @@ import {
   AdminPage,
   AdminPageHeader,
   StatusDot,
-  StatusTone,
   adminPageResources,
 } from '@/app/components/admin';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
@@ -154,7 +153,7 @@ export default function PlatformConnectionsPage() {
         />
       ),
       cell: ({ row }) => (
-        <StatusDot tone={CONNECTION_STATUS_TONE[row.original.status]}>
+        <StatusDot status={row.original.status}>
           {formatUtils.convertEnumToHumanReadable(row.original.status)}
         </StatusDot>
       ),
@@ -311,10 +310,4 @@ const ProjectsCell = ({
       </TooltipContent>
     </Tooltip>
   );
-};
-
-const CONNECTION_STATUS_TONE: Record<AppConnectionStatus, StatusTone> = {
-  [AppConnectionStatus.ACTIVE]: 'success',
-  [AppConnectionStatus.ERROR]: 'danger',
-  [AppConnectionStatus.MISSING]: 'neutral',
 };

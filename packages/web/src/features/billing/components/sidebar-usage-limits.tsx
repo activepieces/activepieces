@@ -19,6 +19,7 @@ import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { CreditsSeverity } from '@/lib/statuses';
 import { cn } from '@/lib/utils';
 
 import { billingQueries } from '../hooks/billing-hooks';
@@ -51,7 +52,7 @@ export const SidebarUsageLimits = React.memo(() => {
   const noticeLine = resolveNoticeLine(platform.selfServeTrial);
   const offerTrial = isNil(noticeLine) && shouldOfferTrial;
 
-  const inWarning = !isUnlimited && severity !== 'default';
+  const inWarning = !isUnlimited && severity !== CreditsSeverity.DEFAULT;
   const canManage = isPlatformAdmin && inWarning;
   const needsSubscription = canManage && isPaid;
 
@@ -109,9 +110,10 @@ export const SidebarUsageLimits = React.memo(() => {
           <span className="text-xs text-gray-11">{t('credits')}</span>
         </div>
         <Badge
+          variant={null}
           className={cn(
             'shrink-0',
-            flowRunUtils.getStatusContainerClassName({ variant: severity }),
+            flowRunUtils.getStatusContainerClassName({ status: severity }),
           )}
         >
           {t('{percent}% used', { percent: percentUsed })}

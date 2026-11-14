@@ -32,7 +32,7 @@ const STATUS_CATEGORIES = [
   {
     label: 'Succeeded',
     statuses: [FlowRunStatus.SUCCEEDED],
-    color: 'var(--success-9)',
+    className: 'text-success-9',
   },
   {
     label: 'Failed',
@@ -44,27 +44,27 @@ const STATUS_CATEGORIES = [
       FlowRunStatus.QUOTA_EXCEEDED,
       FlowRunStatus.LOG_SIZE_EXCEEDED,
     ],
-    color: 'var(--danger-9)',
+    className: 'text-danger-9',
   },
   {
     label: 'Running',
     statuses: [FlowRunStatus.RUNNING],
-    color: 'var(--accent-9)',
+    className: 'text-accent-9',
   },
   {
     label: 'Queued',
     statuses: [FlowRunStatus.QUEUED],
-    color: 'var(--gray-9)',
+    className: 'text-gray-9',
   },
   {
     label: 'Paused',
     statuses: [FlowRunStatus.PAUSED],
-    color: 'var(--warning-9)',
+    className: 'text-warning-9',
   },
   {
     label: 'Canceled',
     statuses: [FlowRunStatus.CANCELED],
-    color: 'var(--gray-9)',
+    className: 'text-gray-9',
   },
 ] as const;
 
@@ -72,7 +72,7 @@ function groupByCategory(data: FlowRunCountByStatus[]) {
   const statusToCount = new Map(data.map((d) => [d.status, d.count]));
   return STATUS_CATEGORIES.map((cat) => ({
     label: cat.label,
-    color: cat.color,
+    className: cat.className,
     count: cat.statuses.reduce(
       (sum, s) => sum + (statusToCount.get(s) ?? 0),
       0,

@@ -17,17 +17,11 @@ import {
 } from '@/components/ui/tooltip';
 import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
 import { pieceSelectorUtils } from '@/features/pieces';
+import { StepNodeBadgeStatus } from '@/lib/statuses';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
 
 import { StepNodeBadgeContainer } from './step-node-badge-container';
-type DraftStepStatus =
-  | 'invalid'
-  | 'testing'
-  | 'failed'
-  | 'needs-test'
-  | 'tested'
-  | 'untested';
 
 const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
   const [
@@ -69,18 +63,15 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
   const draftStatusConfig: Record<
     DraftStepStatus,
     {
-      variant: 'default' | 'success' | 'error' | 'warning';
       text: string;
       icon: React.ReactNode;
     }
   > = {
-    invalid: {
-      variant: 'warning',
+    [StepNodeBadgeStatus.INVALID]: {
       text: t('Incomplete'),
       icon: <InvalidStepIcon className="size-3" />,
     },
-    testing: {
-      variant: 'default',
+    [StepNodeBadgeStatus.TESTING]: {
       text: t('Testing...'),
       icon: (
         <StepStatusIcon
@@ -90,8 +81,7 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
         />
       ),
     },
-    failed: {
-      variant: 'error',
+    [StepNodeBadgeStatus.FAILED]: {
       text: t('Failed'),
       icon: (
         <StepStatusIcon
@@ -101,18 +91,15 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
         />
       ),
     },
-    'needs-test': {
-      variant: 'default',
+    [StepNodeBadgeStatus.NEEDS_TEST]: {
       text: t('Test me'),
       icon: <TriangleAlert className="size-3" />,
     },
-    untested: {
-      variant: 'default',
+    [StepNodeBadgeStatus.UNTESTED]: {
       text: t('Test me'),
       icon: <TriangleAlert className="size-3" />,
     },
-    tested: {
-      variant: 'success',
+    [StepNodeBadgeStatus.TESTED]: {
       text: t('Tested'),
       icon: (
         <StepStatusIcon
@@ -124,18 +111,18 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
     },
   };
   const status: DraftStepStatus = useMemo(() => {
-    if (!isStepValid) return 'invalid';
-    if (isBeingTested) return 'testing';
+    if (!isStepValid) return StepNodeBadgeStatus.INVALID;
+    if (isBeingTested) return StepNodeBadgeStatus.TESTING;
 
     if (isNil(lastTestDate)) {
-      return 'untested';
+      return StepNodeBadgeStatus.UNTESTED;
     }
     if (lastUpdatedDate > lastTestDate) {
-      return 'needs-test';
+      return StepNodeBadgeStatus.NEEDS_TEST;
     }
-    if (hasError) return 'failed';
+    if (hasError) return StepNodeBadgeStatus.FAILED;
 
-    return 'tested';
+    return StepNodeBadgeStatus.TESTED;
   }, [isStepValid, isBeingTested, hasError, lastTestDate, lastUpdatedDate]);
 
   const hasRun = !isNil(run);
@@ -152,7 +139,10 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
 
   const config = draftStatusConfig[status];
   const badgeClassName = flowRunUtils.getStatusContainerClassName({
-    variant: config.variant,
+    status:
+      status === StepNodeBadgeStatus.TESTING
+        ? StepOutputStatus.RUNNING
+        : status,
     withPaddingAndAnimation: true,
   });
 
@@ -165,12 +155,12 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
             <div>{config.text}</div>
           </div>
         </TooltipTrigger>
-        {status === 'untested' && (
+        {status === StepNodeBadgeStatus.UNTESTED && (
           <TooltipContent>
             {t('This step has not been tested yet')}
           </TooltipContent>
         )}
-        {status === 'needs-test' && (
+        {status === StepNodeBadgeStatus.NEEDS_TEST && (
           <TooltipContent>
             {t('This step has been updated since the last test')}
           </TooltipContent>
@@ -182,3 +172,8 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
 
 ApStepNodeStatusInDraft.displayName = 'ApStepNodeStatusInDraft';
 export { ApStepNodeStatusInDraft };
+
+type DraftStepStatus = Exclude<
+  StepNodeBadgeStatus,
+  StepNodeBadgeStatus.SKIPPED
+>;

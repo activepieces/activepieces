@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { WorkerHealth } from '@/lib/statuses';
 import { cn } from '@/lib/utils';
 
 import { MoveItem, groupUtils, useMover, workerGroupsQueries } from './hooks';
@@ -661,7 +662,7 @@ function PinnedFlowsLine({
         );
   const line = (
     <span className="flex min-w-0 items-center gap-1.5 text-xs text-gray-11">
-      {stuck && <StatusDot tone="danger" />}
+      {stuck && <StatusDot status={WorkerHealth.STUCK} />}
       <span className="truncate">{text}</span>
     </span>
   );
