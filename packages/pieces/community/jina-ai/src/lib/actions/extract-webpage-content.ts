@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { JinaAICommon } from '../common';
 import { jinaAiAuth } from '../auth';
@@ -18,16 +22,45 @@ export const extractWebpageContentAction = createAction({
       'Fetch a single webpage by URL via the Jina Reader API and return its content cleaned for LLM consumption, with optional markdown/HTML/text/screenshot output, CSS-selector targeting or exclusion, and link/image summaries. Pick this when you already have the target URL; to find pages by keyword first, use Web Search Summarization. Read-only fetch, so repeat calls are idempotent (results may be served from cache unless do-not-track is set).',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'page',
+      display: 'section',
+      label: 'Page',
+      icon: 'file',
+      props: ['url', 'format'],
+    },
+    {
+      key: 'links_images',
+      display: 'section',
+      label: 'Links and Images',
+      icon: 'paperclip',
+      props: ['links_summary', 'images_summary', 'remove_all_images'],
+    },
+    {
+      key: 'page_elements',
+      display: 'section',
+      label: 'Page Elements',
+      icon: 'filter',
+      props: [
+        'selectors_info',
+        'css_selector',
+        'wait_for_selector',
+        'exclude_selector',
+      ],
+    },
+  ],
   props: {
     url: Property.ShortText({
       displayName: 'URL',
-      description: 'The URL of the webpage to extract content from.',
+      description: 'The webpage to read.',
+      placeholder: 'https://example.com/blog/post',
       required: true,
     }),
     format: Property.StaticDropdown({
       displayName: 'Output Format',
       description:
-        'Format of the extracted content - how the webpage should be returned.',
+        'Screenshot and Pageshot return an image URL instead of text.',
       required: true,
       defaultValue: 'default',
       options: {
@@ -41,105 +74,109 @@ export const extractWebpageContentAction = createAction({
         ],
       },
     }),
-    remove_all_images: Property.Checkbox({
-      displayName: 'Remove All Images',
-      description: 'Remove all images from the response.',
-      required: false,
-      defaultValue: false,
-    }),
     links_summary: Property.StaticDropdown({
       displayName: 'Gather Links',
-      description:
-        'Create a "Buttons & Links" section at the end to help downstream LLMs or web agents navigate the page.',
       required: false,
+      width: 'half',
       defaultValue: 'none',
       options: {
         options: [
-          { label: 'None - Keep links inline', value: 'none' },
-          { label: 'Dedup - List unique links at the end', value: 'true' },
-          { label: 'All - List all links at the end', value: 'all' },
+          { label: 'Keep inline', value: 'none' },
+          { label: 'Unique, at the end', value: 'true' },
+          { label: 'All, at the end', value: 'all' },
         ],
       },
     }),
     images_summary: Property.StaticDropdown({
       displayName: 'Gather Images',
-      description:
-        'Create an "Images" section at the end, giving downstream LLMs an overview of all visuals on the page.',
       required: false,
+      width: 'half',
       defaultValue: 'none',
       options: {
         options: [
-          { label: 'None - Keep images inline', value: 'none' },
-          { label: 'Dedup - List unique images at the end', value: 'true' },
-          { label: 'All - List all images at the end', value: 'all' },
+          { label: 'Keep inline', value: 'none' },
+          { label: 'Unique, at the end', value: 'true' },
+          { label: 'All, at the end', value: 'all' },
         ],
       },
     }),
-    do_not_track: Property.Checkbox({
-      displayName: 'Do Not Cache & Track!',
-      description:
-        "When enabled, the requested URL won't be cached and tracked on our server.",
+    remove_all_images: Property.Checkbox({
+      displayName: 'Remove All Images',
+      description: 'Strip every image from the result.',
       required: false,
+      defaultValue: false,
+    }),
+    selectors_info: Property.MarkDown({
+      value:
+        'Use CSS selectors, separated by commas. Leave all three empty to read the whole page.',
+      variant: MarkdownVariant.INFO,
+    }),
+    css_selector: Property.LongText({
+      displayName: 'Only Include',
+      description: 'Keep only these elements.',
+      placeholder: 'article, .main-content',
+      required: false,
+    }),
+    wait_for_selector: Property.LongText({
+      displayName: 'Wait For',
+      description: 'Wait until these elements load before reading.',
+      placeholder: '#dynamic-content',
+      required: false,
+    }),
+    exclude_selector: Property.LongText({
+      displayName: 'Remove',
+      description: 'Drop these elements from the result.',
+      placeholder: 'header, footer, .ads',
+      required: false,
+    }),
+    json_response: Property.Checkbox({
+      displayName: 'JSON Response',
+      description: 'Return the result as JSON instead of plain text.',
+      required: false,
+      advanced: true,
+      defaultValue: false,
+    }),
+    timeout_seconds: Property.Number({
+      displayName: 'Timeout',
+      description: "Seconds to wait for the page to load. 0: Jina's default.",
+      required: false,
+      advanced: true,
+      defaultValue: 0,
+    }),
+    follow_redirect: Property.Checkbox({
+      displayName: 'Follow Redirects',
+      description: 'Use the final URL after following all redirects.',
+      required: false,
+      advanced: true,
       defaultValue: false,
     }),
     iframe_extraction: Property.Checkbox({
-      displayName: 'iframe Extraction',
-      description:
-        'Processes content from all embedded iframes in the DOM tree.',
+      displayName: 'Include Iframe Content',
+      description: 'Also read content inside embedded iframes.',
       required: false,
+      advanced: true,
       defaultValue: false,
     }),
     shadow_dom_extraction: Property.Checkbox({
-      displayName: 'Shadow DOM Extraction',
-      description: 'Extracts content from all Shadow DOM roots in the document.',
+      displayName: 'Include Shadow DOM Content',
+      description: 'Also read content inside Shadow DOM elements.',
       required: false,
+      advanced: true,
       defaultValue: false,
     }),
-    follow_redirect: Property.Checkbox({
-      displayName: 'Follow Redirect',
-      description:
-        'Choose whether to resolve to the final destination URL after following all redirects. Enable to follow the full redirect chain.',
+    do_not_track: Property.Checkbox({
+      displayName: 'Do Not Cache or Track',
+      description: "Jina won't cache or log the requested URL.",
       required: false,
+      advanced: true,
       defaultValue: false,
     }),
     eu_compliance: Property.Checkbox({
       displayName: 'EU Compliance',
-      description:
-        'All infrastructure and data processing operations reside entirely within EU jurisdiction.',
+      description: 'Process the request only on EU infrastructure.',
       required: false,
+      advanced: true,
       defaultValue: false,
-    }),
-    json_response: Property.Checkbox({
-      displayName: 'JSON Response',
-      description:
-        'Return response in JSON format containing URL, title, content, and timestamp (if available).',
-      required: false,
-      defaultValue: false,
-    }),
-    timeout_seconds: Property.Number({
-      displayName: 'Timeout Seconds',
-      description:
-        'Maximum page load wait time in seconds (0 means use default timeout, set a value if the default browser engine is too slow on simple webpages).',
-      required: false,
-      defaultValue: 0,
-    }),
-    css_selector: Property.LongText({
-      displayName: 'CSS Selector: Only',
-      description:
-        'List of CSS selectors to target specific page elements (e.g., "body, .main-content, #article").',
-      required: false,
-    }),
-    wait_for_selector: Property.LongText({
-      displayName: 'CSS Selector: Wait-For',
-      description:
-        'CSS selectors to wait for before returning results (e.g., "#dynamic-content, .lazy-loaded").',
-      required: false,
-    }),
-    exclude_selector: Property.LongText({
-      displayName: 'CSS Selector: Excluding',
-      description:
-        'CSS selectors for elements to remove from the results (e.g., "header, footer, .ads, #sidebar").',
-      required: false,
     }),
   },
   async run(context) {

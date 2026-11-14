@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import {
   extractWebpageContentAction,
@@ -17,10 +17,6 @@ import {
 import { jinaAiAuth } from './lib/auth';
 import { JinaAICommon } from './lib/common';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-
-const markdownDescription = `
-You can get your API key from [Jina AI](https://jina.ai).
-`;
 
 export const jinaAi = createPiece({
   displayName: 'Jina AI',
@@ -46,6 +42,12 @@ export const jinaAi = createPiece({
     createCustomApiCallAction({
       auth: jinaAiAuth,
       baseUrl: () => JinaAICommon.baseUrl,
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${JinaAICommon.baseUrl}`,
+          placeholder: '/models',
+        },
+      },
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.secret_text}`,
       }),
