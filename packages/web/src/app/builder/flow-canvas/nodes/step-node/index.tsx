@@ -157,7 +157,7 @@ const ApStepCanvasNode = React.memo(
         {step.type === FlowActionType.LOOP_ON_ITEMS && (
           <LoopIterationInput stepName={step.name} />
         )}
-        <ApStepNodeStatusInRun stepName={step.name} />
+        <ApStepNodeStatusInRun stepName={step.name} stepType={step.type} />
         <ApStepNodeSkippedStatus stepName={step.name} />
         <ApStepNodeStatusInDraft stepName={step.name} />
         <div

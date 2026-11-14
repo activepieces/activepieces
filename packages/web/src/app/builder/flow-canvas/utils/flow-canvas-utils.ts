@@ -3,7 +3,6 @@ import {
   FlowAction,
   FlowActionType,
   FlowOperationType,
-  FlowRun,
   flowCanvasUtils as sharedFlowCanvasUtils,
   flowStructureUtil,
   FlowVersion,
@@ -16,7 +15,6 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
-import { flowRunUtils } from '@/features/flow-runs';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
 
 import { batchRegionUtils } from './batch-region';
@@ -723,21 +721,6 @@ const createAddOperationFromAddButtonData = (data: ApButtonData) => {
   } as const;
 };
 
-const getStepStatus = (
-  stepName: string | undefined,
-  run: FlowRun | null,
-  loopIndexes: Record<string, number>,
-) => {
-  if (isNil(run) || isNil(stepName) || isNil(run.steps)) {
-    return undefined;
-  }
-  const stepOutput = flowRunUtils.extractStepOutput(
-    stepName,
-    loopIndexes,
-    run.steps,
-  );
-  return stepOutput?.status;
-};
 function buildNotesGraph(notes: Note[]): ApGraph {
   return {
     nodes: notes.map((note) => ({
@@ -820,7 +803,6 @@ export const flowCanvasUtils = {
   createFocusStepInGraphParams,
   calculateGraphBoundingBox,
   createAddOperationFromAddButtonData,
-  getStepStatus,
   determineInitiallySelectedStep,
   doesSelectionRectangleExist,
 };

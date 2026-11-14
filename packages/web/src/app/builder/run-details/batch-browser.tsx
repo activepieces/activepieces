@@ -286,6 +286,7 @@ const BatchList = ({
     limit: BATCH_PAGE_SIZE,
     statuses: failedOnly ? FAILED_BATCH_STATUSES : undefined,
     enabled: true,
+    allBatchesSettled: batchUtils.areAllBatchesSettled(output),
   });
 
   const rows: BatchListItem[] = useMemo(() => {
@@ -385,6 +386,7 @@ const JumpedBatch = ({
     barrierId: output.barrierId,
     dispatchIndex,
     enabled: true,
+    isDispatchComplete: batchUtils.isDispatchComplete(output),
   });
   const run = data?.data[0] ?? null;
 
@@ -477,6 +479,7 @@ const BatchDetail = ({
     barrierId: output.barrierId,
     dispatchIndex,
     enabled: true,
+    isDispatchComplete: batchUtils.isDispatchComplete(output),
   });
   if (isLoading) {
     return <CardListItemSkeleton numberOfCards={1} withCircle={false} />;

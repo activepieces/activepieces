@@ -1,23 +1,36 @@
+import { isNil } from '@activepieces/core-utils';
+import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
 import { t } from 'i18next';
-import { useMemo } from 'react';
 
+import { batchUtils } from '@/app/builder/run-details/batch-utils';
+import { useStepOutputInRun } from '@/app/builder/run-details/use-batch-logs';
 import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
-import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 
 import { StepNodeBadgeContainer } from './step-node-badge-container';
+import { SkippedBadge } from './step-node-skipped-status';
 
-const ApStepNodeStatusInRun = ({ stepName }: { stepName: string }) => {
-  const [run, loopIndexes] = useBuilderStateContext((state) => [
-    state.run,
-    state.loopsIndexes,
-  ]);
-  const stepStatusInRun = useMemo(() => {
-    return flowCanvasUtils.getStepStatus(stepName, run, loopIndexes);
-  }, [stepName, run, loopIndexes]);
+const ApStepNodeStatusInRun = ({
+  stepName,
+  stepType,
+}: {
+  stepName: string;
+  stepType: FlowActionType | FlowTriggerType;
+}) => {
+  const run = useBuilderStateContext((state) => state.run);
+  const { stepOutput } = useStepOutputInRun(stepName);
+  const stepStatusInRun = isNil(run) ? undefined : stepOutput?.status;
   if (!stepStatusInRun) {
     return null;
+  }
+  if (
+    batchUtils.isSkippedWithoutBatches({
+      stepType,
+      stepOutput: stepOutput?.output,
+    })
+  ) {
+    return <SkippedBadge />;
   }
   const { variant, text } = stepStatusInRun
     ? flowRunUtils.getStatusIconForStep(stepStatusInRun)

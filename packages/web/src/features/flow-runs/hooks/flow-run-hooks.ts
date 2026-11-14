@@ -13,6 +13,7 @@ import {
   FlowRetryStrategy,
   FlowRun,
   FlowRunWithRetryError,
+  FlowVersionState,
   isFlowRunStateTerminal,
   PopulatedFlow,
 } from '@activepieces/shared';
@@ -20,10 +21,11 @@ import {
   InfiniteData,
   useInfiniteQuery,
   useMutation,
+  useQueries,
   useQuery,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 
 import { getDefaultRange } from '@/components/custom/date-time-picker-range';
@@ -34,6 +36,10 @@ import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { flowRunsApi } from '../api/flow-runs-api';
+import {
+  flowRunUtils,
+  MAX_BATCH_VERSION_LOOKUPS,
+} from '../utils/flow-run-utils';
 
 export const flowRunKeys = {
   detail: (runId: string) => ['flow-run', runId] as const,
@@ -41,6 +47,8 @@ export const flowRunKeys = {
     ['batch-children', barrierId, statuses ?? null] as const,
   batchChild: (barrierId: string, dispatchIndex: number) =>
     ['batch-child', barrierId, dispatchIndex] as const,
+  flowVersionBatch: (flowVersionId: string) =>
+    ['flow-version-batch', flowVersionId] as const,
 };
 
 const STATUS_CATEGORIES = [
@@ -109,38 +117,51 @@ export const flowRunQueries = {
     limit,
     statuses,
     enabled,
+    allBatchesSettled,
   }: {
     barrierId: string | null;
     limit: number;
     statuses: FlowRunStatus[] | undefined;
     enabled: boolean;
-  }) =>
-    useInfiniteQuery<SeekPage<FlowRun>, Error, InfiniteData<SeekPage<FlowRun>>>(
-      {
-        queryKey: flowRunKeys.batchChildren(barrierId ?? '', statuses),
-        getNextPageParam: (lastPage) => lastPage.next,
-        initialPageParam: undefined,
-        queryFn: ({ pageParam }) =>
-          flowRunsApi.list({
-            projectId: authenticationSession.getProjectId()!,
-            parentWaitpointId: barrierId!,
-            includeArchived: true,
-            limit,
-            status: statuses,
-            cursor: pageParam as string | undefined,
-          }),
-        enabled: enabled && !isNil(barrierId),
-        refetchInterval: 7000,
+    allBatchesSettled: boolean;
+  }) => {
+    const refreshedAfterSettling = useRef(false);
+    return useInfiniteQuery<
+      SeekPage<FlowRun>,
+      Error,
+      InfiniteData<SeekPage<FlowRun>>
+    >({
+      queryKey: flowRunKeys.batchChildren(barrierId ?? '', statuses),
+      getNextPageParam: (lastPage) => lastPage.next,
+      initialPageParam: undefined,
+      queryFn: ({ pageParam }) => {
+        if (isNil(pageParam)) {
+          refreshedAfterSettling.current = allBatchesSettled;
+        }
+        return flowRunsApi.list({
+          projectId: authenticationSession.getProjectId()!,
+          parentWaitpointId: barrierId!,
+          includeArchived: true,
+          limit,
+          status: statuses,
+          cursor: pageParam as string | undefined,
+        });
       },
-    ),
+      enabled: enabled && !isNil(barrierId),
+      refetchInterval: () =>
+        allBatchesSettled && refreshedAfterSettling.current ? false : 7000,
+    });
+  },
   useBatchChild: ({
     barrierId,
     dispatchIndex,
     enabled,
+    isDispatchComplete,
   }: {
     barrierId: string | null;
     dispatchIndex: number;
     enabled: boolean;
+    isDispatchComplete: boolean;
   }) =>
     useQuery({
       queryKey: flowRunKeys.batchChild(barrierId ?? '', dispatchIndex),
@@ -153,7 +174,13 @@ export const flowRunQueries = {
           limit: 1,
         }),
       enabled: enabled && !isNil(barrierId),
-      refetchInterval: 7000,
+      refetchInterval: (query) => {
+        if (!isDispatchComplete) {
+          return 7000;
+        }
+        const child = query.state.data?.data[0];
+        return isNil(child) || isRunSettled(child.status) ? false : 7000;
+      },
     }),
   useBatchChildRun: ({ childRunId }: { childRunId: string | null }) =>
     useQuery({
@@ -193,9 +220,47 @@ export const flowRunQueries = {
 
     return { categories, total, isLoading, dataUpdatedAt, refetch };
   },
+  useMayProcessInBatches: ({
+    runs,
+    includesUnlistedRuns,
+    enabled,
+  }: {
+    runs: { flowId: string; flowVersionId: string }[];
+    includesUnlistedRuns: boolean;
+    enabled: boolean;
+  }): boolean => {
+    const distinctVersions = Array.from(
+      new Map(runs.map((run) => [run.flowVersionId, run])).values(),
+    );
+    const lookedUpVersions = distinctVersions.slice(
+      0,
+      MAX_BATCH_VERSION_LOOKUPS,
+    );
+    const versionQueries = useQueries({
+      queries: lookedUpVersions.map(({ flowId, flowVersionId }) => ({
+        queryKey: flowRunKeys.flowVersionBatch(flowVersionId),
+        queryFn: () => flowsApi.get(flowId, { versionId: flowVersionId }),
+        staleTime: (query: { state: { data?: PopulatedFlow } }) =>
+          query.state.data?.version.state === FlowVersionState.LOCKED
+            ? Infinity
+            : 0,
+        enabled,
+      })),
+    });
+    return flowRunUtils.mayProcessInBatches({
+      versions: versionQueries.map((query) => query.data?.version),
+      includesUnlistedRuns:
+        includesUnlistedRuns ||
+        distinctVersions.length > MAX_BATCH_VERSION_LOOKUPS,
+    });
+  },
 };
 
 export type RunStatusCategory = ReturnType<typeof groupByCategory>[number];
+
+function isRunSettled(status: FlowRunStatus): boolean {
+  return isFlowRunStateTerminal({ status, ignoreInternalError: false });
+}
 
 export const flowRunMutations = {
   useRetryRun: ({
