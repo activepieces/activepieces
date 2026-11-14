@@ -10,67 +10,114 @@ export const createPaymentlink = createAction({
   classification: 'WRITE',
   auth: razorpayAuth,
   displayName: 'Create Payment Link',
-  description: 'Create a payment link',
+  description: 'Create a payment link and optionally send it to the customer.',
   audience: 'both',
   aiMetadata: { description: 'Creates a new Razorpay payment link for a given amount and currency, optionally notifying the customer by SMS and/or email. Use to collect a one-off payment from a customer; amount is specified in major currency units (e.g. rupees) and is converted to the smallest unit internally. Not idempotent — each call generates a new payment link.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'payment',
+      display: 'section',
+      label: 'Payment',
+      icon: 'tag',
+      props: ['amount', 'currency', 'description'],
+    },
+    {
+      key: 'customer',
+      display: 'section',
+      label: 'Customer',
+      icon: 'user',
+      props: ['customer_name', 'customer_contact', 'customer_email'],
+    },
+    {
+      key: 'notifications',
+      display: 'section',
+      label: 'Notifications',
+      icon: 'send',
+      props: ['notify_sms', 'notify_email'],
+    },
+  ],
   props: {
     amount: Property.Number({
       displayName: 'Amount',
+      description: 'In the main currency unit, such as rupees, not paise.',
       required: true,
+      width: 'half',
     }),
     currency: Property.ShortText({
       displayName: 'Currency',
+      description: 'Three-letter currency code.',
+      placeholder: 'INR',
       required: true,
       defaultValue: 'INR',
-    }),
-    reference_id: Property.ShortText({
-      displayName: 'Reference ID',
-      required: false,
+      width: 'half',
     }),
     description: Property.LongText({
       displayName: 'Description',
+      description: 'What the payment is for, shown to the customer.',
+      placeholder: 'Order #1042',
       required: false,
     }),
     customer_name: Property.ShortText({
       displayName: 'Customer Name',
+      placeholder: 'Gaurav Kumar',
       required: false,
     }),
     customer_contact: Property.ShortText({
-      displayName: 'Customer Contact',
+      displayName: 'Customer Phone',
+      description: 'Phone with country code, used for SMS notifications.',
+      placeholder: '+919000090000',
       required: true,
       defaultValue: '+91',
-    }),
-    notify_sms: Property.Checkbox({
-      displayName: 'Notify via SMS',
-      description: 'Send notification via SMS',
-      required: false,
-      defaultValue: true,
+      width: 'half',
     }),
     customer_email: Property.ShortText({
       displayName: 'Customer Email',
+      description: 'Email notifications go here.',
+      placeholder: 'you@example.com',
       required: false,
+      width: 'half',
     }),
-    notify_email: Property.Checkbox({
-      displayName: 'Notify via Email',
-      description: 'Send notification via Email',
+    notify_sms: Property.Checkbox({
+      displayName: 'Notify via SMS',
+      description: "Text the link to the customer's phone.",
       required: false,
       defaultValue: true,
     }),
-    metafield_notes: Property.ShortText({
-      displayName: 'Notes',
+    notify_email: Property.Checkbox({
+      displayName: 'Notify via Email',
+      description: 'Email the link to the customer.',
       required: false,
+      defaultValue: true,
+    }),
+    reference_id: Property.ShortText({
+      displayName: 'Reference ID',
+      description: 'Your own unique ID for this link, such as an order number.',
+      placeholder: 'ORD-1042',
+      required: false,
+      advanced: true,
+    }),
+    metafield_notes: Property.ShortText({
+      displayName: 'Note',
+      description: 'Saved on the link for your records.',
+      required: false,
+      advanced: true,
     }),
     callback_url: Property.ShortText({
       displayName: 'Callback URL',
+      description: 'Page to send the customer to after they pay.',
+      placeholder: 'https://example.com/thank-you',
       required: false,
+      advanced: true,
     }),
     callback_method: Property.ShortText({
       displayName: 'Callback Method',
+      description: 'Only get is accepted, and it is set for you with a callback URL.',
+      placeholder: 'get',
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {
-    // Convert amount from rupee format to the format expected by Razorpay
     const amountWithoutDecimal = Math.round(context.propsValue.amount * 100);
 
     const paymentLinkData = {
@@ -91,7 +138,7 @@ export const createPaymentlink = createAction({
         policy_name: context.propsValue.metafield_notes,
       },
       callback_url: context.propsValue.callback_url,
-      callback_method: context.propsValue.callback_method,
+      callback_method: context.propsValue.callback_method || (context.propsValue.callback_url ? 'get' : undefined),
     };
 
     const authHeader = await generateRazorpayAuthHeader(context.auth.props);
