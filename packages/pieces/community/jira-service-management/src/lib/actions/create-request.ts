@@ -56,14 +56,14 @@ export const createRequestAction = createAction({
 		}),
 		raiseOnBehalfOf: Property.ShortText({
 			displayName: 'Raise on Behalf Of',
-			description: 'The customer the request is for. Empty: you are the reporter.',
+			description: 'Email of the customer the request is for. Empty: you are the reporter.',
 			placeholder: 'customer@example.com',
 			required: false,
 			advanced: true,
 		}),
 		requestParticipants: Property.Array({
 			displayName: 'Participants',
-			description: 'People who can also see and comment on the request.',
+			description: 'Emails or account IDs of people who can also see the request.',
 			required: false,
 			advanced: true,
 		}),
@@ -88,7 +88,7 @@ export const createRequestAction = createAction({
 				serviceDeskId,
 				requestTypeId,
 				requestFieldValues,
-				...(isNil(onBehalfOf) ? {} : { raiseOnBehalfOf: await jsmUsers.resolveOne({ auth, value: onBehalfOf }) }),
+				...(isNil(onBehalfOf) ? {} : { raiseOnBehalfOf: onBehalfOf }),
 				...(participants.length === 0 ? {} : { requestParticipants: participants }),
 			},
 		});

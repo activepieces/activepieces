@@ -199,7 +199,7 @@ function vendorMessage(body: unknown): string | undefined {
 	}
 	const single = asString(body['errorMessage']) ?? asString(body['message']);
 	if (!isNil(single)) {
-		return single;
+		return MESSAGE_KEY.test(single) ? undefined : single;
 	}
 	const listed = Array.isArray(body['errorMessages'])
 		? body['errorMessages'].filter((item): item is string => typeof item === 'string')
@@ -226,6 +226,7 @@ function asString(value: unknown): string | undefined {
 }
 
 const PAGE_SIZE = 50;
+const MESSAGE_KEY = /^[a-z0-9_-]+(\.[a-z0-9_-]+)+$/i;
 const MAX_PAGES = 20;
 const MAX_SEARCH_PAGES = 100;
 const STATUS_HINTS: Record<number, string> = {

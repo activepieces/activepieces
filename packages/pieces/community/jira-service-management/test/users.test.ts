@@ -52,9 +52,26 @@ describe('jsmUsers.resolveOne', () => {
 		expect(await jsmUsers.resolveOne({ auth: cloud, value: 'jane@x.test' })).toBe('wanted');
 	});
 
+	it('never guesses: a lone result with another or a hidden email is not used', async () => {
+		vi.spyOn(httpClient, 'sendRequest').mockResolvedValue({ status: 200, headers: {}, body: [{ accountId: 'app-account', displayName: 'Some App' }] });
+		await expect(jsmUsers.resolveOne({ auth: cloud, value: 'jane@x.test', lookup: { attempts: 1, delayMs: 0 } })).rejects.toThrow('No Jira user was found');
+	});
+
+	it('keeps looking for a customer that was just created', async () => {
+		const spy = vi
+			.spyOn(httpClient, 'sendRequest')
+			.mockResolvedValueOnce({ status: 200, headers: {}, body: [] })
+			.mockResolvedValueOnce({ status: 200, headers: {}, body: [] })
+			.mockResolvedValueOnce({ status: 200, headers: {}, body: [{ accountId: 'qm:new', emailAddress: 'new@x.test' }] });
+		expect(await jsmUsers.resolveOne({ auth: cloud, value: 'new@x.test', lookup: { attempts: 5, delayMs: 0 } })).toBe('qm:new');
+		expect(spy).toHaveBeenCalledTimes(3);
+	});
+
 	it('explains what to do when no user has that email', async () => {
 		vi.spyOn(httpClient, 'sendRequest').mockResolvedValue({ status: 200, headers: {}, body: [] });
-		await expect(jsmUsers.resolveOne({ auth: cloud, value: 'nobody@x.test' })).rejects.toThrow('Create the customer first');
+		await expect(jsmUsers.resolveOne({ auth: cloud, value: 'nobody@x.test', lookup: { attempts: 2, delayMs: 0 } })).rejects.toThrow(
+			'use the Account ID from the Create Customer step',
+		);
 	});
 });
 

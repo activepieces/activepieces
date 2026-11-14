@@ -23,7 +23,7 @@ export const addCustomersToServiceDeskAction = createAction({
 		serviceDeskId: jsmProps.serviceDesk(),
 		customers: Property.Array({
 			displayName: 'Customers',
-			description: 'Customer emails. Data Center: their usernames.',
+			description: 'Customer emails or account IDs. Data Center: usernames.',
 			required: true,
 		}),
 	},

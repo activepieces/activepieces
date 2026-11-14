@@ -50,39 +50,53 @@ function toList(value: unknown): string[] {
 	return splitList(text);
 }
 
-async function resolveOne({ auth, value }: { auth: JsmAuthProps; value: string }): Promise<string> {
+async function resolveOne({ auth, value, lookup }: { auth: JsmAuthProps; value: string; lookup?: LookupOptions }): Promise<string> {
 	const identifier = value.trim();
 	if (!jsmClient.isCloud(auth) || !identifier.includes('@')) {
 		return identifier;
 	}
-	const matches = await jsmClient.request<JsmUser[]>({
-		auth,
-		api: 'jira',
-		method: HttpMethod.GET,
-		path: '/user/search',
-		query: { query: identifier, maxResults: '20' },
-	});
-	const users = Array.isArray(matches) ? matches : [];
-	const exact = users.find((user) => user.emailAddress?.toLowerCase() === identifier.toLowerCase());
-	const chosen = exact ?? (users.length === 1 ? users[0] : undefined);
-	if (isNil(chosen?.accountId)) {
-		throw new Error(
-			`No Jira user was found for "${identifier}". Create the customer first with the Create Customer action, or use their account ID instead of the email.`,
-		);
+	const attempts = lookup?.attempts ?? LOOKUP_ATTEMPTS;
+	const delayMs = lookup?.delayMs ?? LOOKUP_DELAY_MS;
+	for (let attempt = 0; attempt < attempts; attempt++) {
+		const accountId = await findAccountIdByEmail({ auth, email: identifier });
+		if (!isNil(accountId)) {
+			return accountId;
+		}
+		if (attempt < attempts - 1) {
+			await wait(delayMs);
+		}
 	}
-	return chosen.accountId;
+	throw new Error(
+		`No Jira user was found for "${identifier}". A customer created less than a minute ago may not be searchable yet: use the Account ID from the Create Customer step instead of the email.`,
+	);
 }
 
-async function resolveMany({ auth, values }: { auth: JsmAuthProps; values: string[] }): Promise<string[]> {
+async function resolveMany({ auth, values, lookup }: { auth: JsmAuthProps; values: string[]; lookup?: LookupOptions }): Promise<string[]> {
 	const resolved: string[] = [];
 	for (const value of values) {
-		resolved.push(await resolveOne({ auth, value }));
+		resolved.push(await resolveOne({ auth, value, lookup }));
 	}
 	return Array.from(new Set(resolved));
 }
 
 function peopleBody({ auth, ids }: { auth: JsmAuthProps; ids: string[] }): Record<string, string[]> {
 	return jsmClient.isCloud(auth) ? { accountIds: ids } : { usernames: ids };
+}
+
+async function findAccountIdByEmail({ auth, email }: { auth: JsmAuthProps; email: string }): Promise<string | undefined> {
+	const matches = await jsmClient.request<JsmUser[]>({
+		auth,
+		api: 'jira',
+		method: HttpMethod.GET,
+		path: '/user/search',
+		query: { query: email, maxResults: '50' },
+	});
+	const users = Array.isArray(matches) ? matches : [];
+	return users.find((user) => user.emailAddress?.toLowerCase() === email.toLowerCase())?.accountId;
+}
+
+async function wait(ms: number): Promise<void> {
+	await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function splitList(text: string): string[] {
@@ -92,6 +106,9 @@ function splitList(text: string): string[] {
 		.filter((item) => item.length > 0);
 }
 
+const LOOKUP_ATTEMPTS = 13;
+const LOOKUP_DELAY_MS = 5000;
+
 export type FlatUser = {
 	account_id: string | null;
 	username: string | null;
@@ -99,4 +116,9 @@ export type FlatUser = {
 	email: string | null;
 	active: boolean | null;
 	time_zone: string | null;
+};
+
+export type LookupOptions = {
+	attempts: number;
+	delayMs: number;
 };

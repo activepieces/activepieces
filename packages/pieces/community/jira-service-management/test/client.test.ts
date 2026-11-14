@@ -71,6 +71,13 @@ describe('jsmClient.request', () => {
 		expect(failure.message).toContain('Cannot find issue');
 	});
 
+	it('hides a raw message key and keeps the hint when Cloud sends no readable text', async () => {
+		vi.spyOn(httpClient, 'sendRequest').mockRejectedValue(new HttpError({}, { status: 404, responseBody: { errorMessage: 'sd.portal.error.issue.not.found' } }));
+		const failure = await jsmClient.request({ auth: cloud, api: 'servicedesk', method: HttpMethod.GET, path: '/request/AT-9' }).catch((error) => error);
+		expect(failure.message).not.toContain('sd.portal');
+		expect(failure.message).toContain('Check that the request, service desk or other item exists');
+	});
+
 	it('joins Jira REST errorMessages and per-field errors', async () => {
 		vi.spyOn(httpClient, 'sendRequest').mockRejectedValue(
 			new HttpError({}, { status: 400, responseBody: { errorMessages: ['Bad JQL.'], errors: { resolution: 'Resolution is required.' } } }),
