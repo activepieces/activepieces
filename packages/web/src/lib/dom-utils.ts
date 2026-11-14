@@ -79,7 +79,8 @@ export const isEditableTarget = (target: EventTarget | null): boolean => {
     (target.isContentEditable ||
       target.tagName === 'INPUT' ||
       target.tagName === 'TEXTAREA' ||
-      target.tagName === 'SELECT')
+      target.tagName === 'SELECT' ||
+      target.closest('.nokey') !== null)
   );
 };
 
