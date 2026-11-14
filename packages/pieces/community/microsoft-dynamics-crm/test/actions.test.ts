@@ -226,18 +226,18 @@ describe('date-only columns', () => {
 
 describe('table dropdown order', () => {
   it('pins sales tables, sorts the rest A-Z and puts both deprecated styles last', () => {
-    const option = (label: string, value: string) => ({ label, value });
+    const option = ({ label, value }: { label: string; value: string }) => ({ label, value });
     const sorted = dynamicsCommonInternals.sortTableOptions([
-      option('[DEPRECATED] Playbook category (playbookcategories)', 'playbookcategories'),
-      option('Task (tasks)', 'tasks'),
-      option('Opportunity (opportunities)', 'opportunities'),
-      option('(Deprecated) Contact Note (contactnotes)', 'contactnotes'),
-      option('[Deprecated] Dynamics Customer Service A (dcsa)', 'dcsa'),
-      option('Account (accounts)', 'accounts'),
-      option('appointment (appointments)', 'appointments'),
-      option('Contact (contacts)', 'contacts'),
-      option('Application Type (Deprecated) (applicationtypes)', 'applicationtypes'),
-      option('Chat Widget Language(deprecated) (msdyn_chatlanguages)', 'msdyn_chatlanguages'),
+      option({ label: '[DEPRECATED] Playbook category (playbookcategories)', value: 'playbookcategories' }),
+      option({ label: 'Task (tasks)', value: 'tasks' }),
+      option({ label: 'Opportunity (opportunities)', value: 'opportunities' }),
+      option({ label: '(Deprecated) Contact Note (contactnotes)', value: 'contactnotes' }),
+      option({ label: '[Deprecated] Dynamics Customer Service A (dcsa)', value: 'dcsa' }),
+      option({ label: 'Account (accounts)', value: 'accounts' }),
+      option({ label: 'appointment (appointments)', value: 'appointments' }),
+      option({ label: 'Contact (contacts)', value: 'contacts' }),
+      option({ label: 'Application Type (Deprecated) (applicationtypes)', value: 'applicationtypes' }),
+      option({ label: 'Chat Widget Language(deprecated) (msdyn_chatlanguages)', value: 'msdyn_chatlanguages' }),
     ]);
     expect(sorted.map((o) => o.value)).toEqual([
       'accounts',
@@ -269,7 +269,7 @@ describe('column dropdown order', () => {
 
 describe('round 4 dropdown and field order', () => {
   const label = (text: string) => ({ UserLocalizedLabel: { Label: text } });
-  const entity = (logical: string, set: string | null, display: string | undefined, flags: { HasNotes?: boolean; HasActivities?: boolean } = {}) => ({
+  const entity = ({ logical, set, display, flags = {} }: { logical: string; set: string | null; display?: string; flags?: { HasNotes?: boolean; HasActivities?: boolean } }) => ({
     LogicalName: logical,
     EntitySetName: set,
     PrimaryIdAttribute: `${logical}id`,
@@ -280,7 +280,7 @@ describe('round 4 dropdown and field order', () => {
 
   it('labels relationships by related table, sorts them A-Z and keeps the value', () => {
     const options = dynamicsProps.relationshipLabelOptions({
-      entities: [entity('contact', 'contacts', 'Contact'), entity('task', 'tasks', 'Task'), entity('playbook', 'playbooks', '(Deprecated) Playbook'), entity('nameless', 'namelesses', undefined), entity('noset', null, 'No Set')],
+      entities: [entity({ logical: 'contact', set: 'contacts', display: 'Contact' }), entity({ logical: 'task', set: 'tasks', display: 'Task' }), entity({ logical: 'playbook', set: 'playbooks', display: '(Deprecated) Playbook' }), entity({ logical: 'nameless', set: 'namelesses' }), entity({ logical: 'noset', set: null, display: 'No Set' })],
       relationships: [
         { navigationProperty: 'Account_Tasks', targetEntity: 'task', schemaName: 'Account_Tasks', kind: 'one_to_many' },
         { navigationProperty: 'account_playbooks', targetEntity: 'playbook', schemaName: 'p', kind: 'many_to_many' },
@@ -299,29 +299,29 @@ describe('round 4 dropdown and field order', () => {
 
   it('filters tables by HasNotes and HasActivities', () => {
     const entities = [
-      entity('account', 'accounts', 'Account', { HasNotes: true, HasActivities: true }),
-      entity('task', 'tasks', 'Task', { HasNotes: true }),
-      entity('role', 'roles', 'Role'),
+      entity({ logical: 'account', set: 'accounts', display: 'Account', flags: { HasNotes: true, HasActivities: true } }),
+      entity({ logical: 'task', set: 'tasks', display: 'Task', flags: { HasNotes: true } }),
+      entity({ logical: 'role', set: 'roles', display: 'Role' }),
     ];
     expect(dynamicsCommonInternals.tableOptions({ entities, include: (e) => e.HasNotes === true }).map((o) => o.value)).toEqual(['accounts', 'tasks']);
     expect(dynamicsCommonInternals.tableOptions({ entities, include: (e) => e.HasActivities === true }).map((o) => o.value)).toEqual(['accounts']);
   });
 
   it('orders fields: primary name, required, then the rest A-Z with deprecated last', () => {
-    const attribute = (logical: string, display: string, extra: { IsPrimaryName?: boolean; RequiredLevel?: { Value?: string } } = {}) => ({
+    const attribute = ({ logical, display, extra = {} }: { logical: string; display: string; extra?: { IsPrimaryName?: boolean; RequiredLevel?: { Value?: string } } }) => ({
       AttributeType: EntityAttributeType.STRING,
       LogicalName: logical,
       DisplayName: label(display),
       ...extra,
     });
     const ordered = dynamicsCommonInternals.orderFieldAttributes([
-      attribute('zeta', 'Zeta'),
-      attribute('old', '(Deprecated) Alpha'),
-      attribute('owner', 'Owner', { RequiredLevel: { Value: 'SystemRequired' } }),
-      attribute('beta', 'beta'),
-      attribute('name', 'Account Name', { IsPrimaryName: true, RequiredLevel: { Value: 'ApplicationRequired' } }),
-      attribute('lastname', 'Last Name', { RequiredLevel: { Value: 'ApplicationRequired' } }),
-      attribute('rec', 'Recommended', { RequiredLevel: { Value: 'Recommended' } }),
+      attribute({ logical: 'zeta', display: 'Zeta' }),
+      attribute({ logical: 'old', display: '(Deprecated) Alpha' }),
+      attribute({ logical: 'owner', display: 'Owner', extra: { RequiredLevel: { Value: 'SystemRequired' } } }),
+      attribute({ logical: 'beta', display: 'beta' }),
+      attribute({ logical: 'name', display: 'Account Name', extra: { IsPrimaryName: true, RequiredLevel: { Value: 'ApplicationRequired' } } }),
+      attribute({ logical: 'lastname', display: 'Last Name', extra: { RequiredLevel: { Value: 'ApplicationRequired' } } }),
+      attribute({ logical: 'rec', display: 'Recommended', extra: { RequiredLevel: { Value: 'Recommended' } } }),
     ]);
     expect(ordered.map((a) => a.LogicalName)).toEqual(['name', 'lastname', 'owner', 'beta', 'rec', 'zeta', 'old']);
   });
