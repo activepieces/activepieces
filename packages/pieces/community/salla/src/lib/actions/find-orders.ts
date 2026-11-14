@@ -2,6 +2,7 @@ import { createAction, dateRangeUtils, Property } from '@activepieces/pieces-fra
 import { sallaAuth } from '../auth';
 import { OrderFilters, sallaOrders } from '../common/orders';
 import { sallaOutputSchemas } from '../common/output-schemas';
+import { sallaUtils } from '../common/helpers';
 import { sallaProps } from '../common/props';
 
 export const findOrdersAction = createAction({
@@ -133,8 +134,8 @@ export const findOrdersAction = createAction({
     const filters: OrderFilters = {
       maxResults: clampMaxResults(propsValue.max_results),
       keyword: propsValue.keyword ?? undefined,
-      referenceId: blankToUndefined(propsValue.reference_number),
-      customerId: blankToUndefined(propsValue.customer),
+      referenceId: sallaUtils.dropdownText({ value: propsValue.reference_number, label: 'Reference Number' }),
+      customerId: sallaUtils.dropdownText({ value: propsValue.customer, label: 'Customer' }),
       fromDate: after,
       toDate: before,
       statusIds: propsValue.statuses ?? [],
@@ -151,14 +152,6 @@ function clampMaxResults(value: number | undefined | null): number {
     return DEFAULT_MAX_RESULTS;
   }
   return Math.min(Math.max(Math.floor(value), 1), MAX_RESULTS_LIMIT);
-}
-
-function blankToUndefined(value: string | undefined | null): string | undefined {
-  if (value === undefined || value === null) {
-    return undefined;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
 }
 
 const DEFAULT_MAX_RESULTS = 50;

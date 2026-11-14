@@ -161,7 +161,7 @@ function datePart(value: string): string {
 }
 
 function requireCouponType(value: unknown): CouponType {
-  const text = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  const text = (sallaUtils.dropdownText({ value, label: 'Coupon type' }) ?? '').toLowerCase();
   const match = COUPON_TYPE_ALIASES[text];
   if (!match) {
     throw new Error(`"${String(value ?? '')}" is not a coupon type. Use percentage or fixed.`);
@@ -170,7 +170,7 @@ function requireCouponType(value: unknown): CouponType {
 }
 
 function optionalAppliedIn(value: unknown): CouponAppliedIn | undefined {
-  const text = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  const text = (sallaUtils.dropdownText({ value, label: 'Applied In' }) ?? '').toLowerCase();
   if (text.length === 0) {
     return undefined;
   }
@@ -182,7 +182,7 @@ function optionalAppliedIn(value: unknown): CouponAppliedIn | undefined {
 }
 
 function optionalCouponStatus(value: unknown): CouponStatus | undefined {
-  const text = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  const text = (sallaUtils.dropdownText({ value, label: 'Coupon status' }) ?? '').toLowerCase();
   if (text.length === 0) {
     return undefined;
   }

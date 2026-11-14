@@ -101,7 +101,7 @@ async function findCustomer({
   const match = items.filter(sallaApi.isRecord).find(matches);
   if (match === undefined && truncated) {
     throw new Error(
-      `Searching Salla for customers matching ${keyword} found more than ${DUPLICATE_SEARCH_LIMIT} results, so Activepieces could not check them all for the same mobile or email. Nothing was sent. Check in Salla that no customer has it, then add the customer there.`,
+      `Salla has more customers matching ${keyword} than Activepieces could read (it checked ${items.length}), so it could not check them all for the same mobile or email. Nothing was sent. Check in Salla that no customer has it, then add the customer there.`,
     );
   }
   return match;
@@ -294,7 +294,7 @@ function optionalEmail(value: unknown): string | undefined {
 }
 
 function optionalGender(value: unknown): CustomerGender | undefined {
-  const text = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  const text = (sallaUtils.dropdownText({ value, label: 'Gender' }) ?? '').toLowerCase();
   if (text.length === 0) {
     return undefined;
   }

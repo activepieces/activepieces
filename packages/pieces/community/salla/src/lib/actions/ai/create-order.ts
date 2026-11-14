@@ -127,7 +127,7 @@ export const aiCreateOrderAction = createAction({
     }),
     delivery_method: Property.StaticDropdown({
       displayName: 'Delivery Method',
-      description: 'shipping (then set courier_id and every ship_to_* field) or pickup (then set branch_id). Required when any product needs shipping.',
+      description: 'shipping (then set courier_id, every ship_to_* field, and latitude and longitude) or pickup (then set branch_id). Required when any product needs shipping.',
       required: false,
       options: {
         disabled: false,
@@ -199,12 +199,12 @@ export const aiCreateOrderAction = createAction({
     }),
     latitude: Property.Number({
       displayName: 'Ship To Latitude',
-      description: 'Latitude of the delivery point in decimal degrees, for example 24.6888248. Sent only together with longitude.',
+      description: 'Latitude of the delivery point in decimal degrees, for example 24.6888248. Required for shipping, together with longitude: Salla rejects a shipping address without coordinates.',
       required: false,
     }),
     longitude: Property.Number({
       displayName: 'Ship To Longitude',
-      description: 'Longitude of the delivery point in decimal degrees, for example 46.686327. Sent only together with latitude.',
+      description: 'Longitude of the delivery point in decimal degrees, for example 46.686327. Required for shipping, together with latitude: Salla rejects a shipping address without coordinates.',
       required: false,
     }),
     receiver_name: Property.ShortText({

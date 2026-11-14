@@ -39,12 +39,17 @@ async function register({
   const webhookId = String(id);
   const echoedToken = readRegisteredHeader({ headers: sallaApi.isRecord(data) ? data['headers'] : undefined, name: WEBHOOK_TOKEN_HEADER });
   if (echoedToken !== undefined && echoedToken !== token) {
-    await sallaApi.request<unknown>({
-      auth,
-      method: HttpMethod.PUT,
-      path: `/webhooks/${encodeURIComponent(webhookId)}`,
-      body: { url, headers: [{ key: WEBHOOK_TOKEN_HEADER, value: token }] },
-    });
+    try {
+      await sallaApi.request<unknown>({
+        auth,
+        method: HttpMethod.PUT,
+        path: `/webhooks/${encodeURIComponent(webhookId)}`,
+        body: { url, headers: [{ key: WEBHOOK_TOKEN_HEADER, value: token }] },
+      });
+    } catch (error) {
+      await remove({ auth, webhookId }).catch(() => undefined);
+      throw error;
+    }
   }
   return { webhookId, token, event };
 }
