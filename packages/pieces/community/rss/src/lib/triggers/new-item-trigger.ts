@@ -1,22 +1,6 @@
-import {
-  DedupeStrategy,
-  httpClient,
-  HttpMethod,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import {
-  AppConnectionValueForAuthProperty,
-  PieceAuth,
-  Store,
-  TriggerStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
+import { PieceAuth, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { rssFeedUrl } from '../common/props';
-import FeedParser from 'feedparser';
-import { isNil } from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
-import { getId } from '../common/getId';
+import { rssFeedPoller } from '../common/feed-poller';
 import { sampleData } from '../common/sampleData';
 import { newItemTriggerOutputSchema } from '../output-schemas';
 
@@ -37,125 +21,18 @@ export const rssNewItemTrigger = createTrigger({
   },
   outputSchema: newItemTriggerOutputSchema,
   async test(context): Promise<unknown[]> {
-    return await pollingHelper.test(polling, context);
+    return rssFeedPoller.sample({ urls: [context.propsValue.rss_feed_url] });
   },
   async onEnable(context): Promise<void> {
-    await pollingHelper.onEnable(polling, context);
+    await rssFeedPoller.enable({
+      store: context.store,
+      urls: [context.propsValue.rss_feed_url],
+      isRepublish: context.isRepublish === true,
+    });
   },
-
-  async onDisable(context): Promise<void> {
-    if (context.isRepublish) {
-      return;
-    }
-    const { store } = context;
-    const lastFetchDate = await store.get<number>('_lastRssPublishDate');
-    if (!isNil(lastFetchDate)) {
-      await store.delete('_lastRssPublishDate');
-    }
-    await pollingHelper.onDisable(polling, context);
+  async onDisable(): Promise<void> {
   },
-
   async run(context): Promise<unknown[]> {
-    const { store } = context;
-    const lastFetchDate = await store.get<number>('_lastRssPublishDate');
-    const newItems = (
-      await pollingHelper.poll(polling, context)
-    ).filter((f) => {
-      if (isNil(lastFetchDate)) {
-        return true;
-      }
-      const newItem = f as { pubdate: string; pubDate: string };
-      const newDate = newItem.pubdate ?? newItem.pubDate;
-      if (isNil(newDate)) {
-        return true;
-      }
-      return dayjs(newDate).unix() > lastFetchDate;
-    });
-    let newFetchDateUnix = lastFetchDate;
-    for (const item of newItems) {
-      const newItem = item as { pubdate: string; pubDate: string };
-      const newDate = newItem.pubdate ?? newItem.pubDate;
-      if (!isNil(newDate)) {
-        const newDateUnix = dayjs(newDate).unix();
-        if (isNil(newFetchDateUnix) || newDateUnix > newFetchDateUnix) {
-          newFetchDateUnix = newDateUnix;
-        }
-      }
-    }
-    if (!isNil(newFetchDateUnix)) {
-      await store.put('_lastRssPublishDate', newFetchDateUnix);
-    }
-    return newItems.sort((a, b) => {
-      const aDate =
-        (a as { pubdate: string; pubDate: string }).pubdate ??
-        (a as { pubdate: string; pubDate: string }).pubDate;
-      const bDate =
-        (b as { pubdate: string; pubDate: string }).pubdate ??
-        (b as { pubdate: string; pubDate: string }).pubDate;
-      if (aDate && bDate) {
-        const aUnix = dayjs(aDate).unix();
-        const bUnix = dayjs(bDate).unix();
-        if (aUnix === bUnix) {
-          return newItems.indexOf(a) - newItems.indexOf(b);
-        } else {
-          return bUnix - aUnix;
-        }
-      } else {
-        return newItems.indexOf(a) - newItems.indexOf(b);
-      }
-    });
+    return rssFeedPoller.poll({ store: context.store, urls: [context.propsValue.rss_feed_url] });
   },
 });
-
-const polling: Polling<
-  AppConnectionValueForAuthProperty<undefined>,
-  { rss_feed_url: string }
-> = {
-  strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({
-    propsValue,
-  }: {
-    store: Store;
-    propsValue: { rss_feed_url: string };
-  }) => {
-    const items = await getRssItems(propsValue.rss_feed_url);
-    return items.map((item) => ({
-      id: getId(item),
-      data: item,
-    }));
-  },
-};
-
-async function getRssItems(url: string): Promise<any[]> {
-  const response = await httpClient.sendRequest<Buffer>({
-    method: HttpMethod.GET,
-    url,
-    responseType: 'arraybuffer',
-  });
-
-  return new Promise((resolve, reject) => {
-    const feedparser = new FeedParser({
-      addmeta: true,
-    });
-    const items: any[] = [];
-
-    feedparser.on('readable', () => {
-      let item = feedparser.read();
-      while (item) {
-        items.push(item);
-        item = feedparser.read();
-      }
-    });
-
-    feedparser.on('end', () => {
-      resolve(items);
-    });
-
-    feedparser.on('error', (error: any) => {
-      reject(error);
-    });
-
-    feedparser.write(response.body);
-    feedparser.end();
-  });
-}

@@ -31,6 +31,10 @@ const selectMock = vi.hoisted(() => ({
   onValueChange: undefined as undefined | ((value: string) => void),
 }));
 
+const leaveGuard = vi.hoisted(() => ({
+  hasChanges: undefined as undefined | boolean,
+}));
+
 vi.mock('i18next', () => ({
   t: (key: string) => key,
 }));
@@ -77,7 +81,10 @@ vi.mock('@/components/custom/delete-dialog', () => ({
 
 vi.mock('@/components/custom/leave-without-saving', () => ({
   LeaveWithoutSavingDialog: () => null,
-  useWarnBeforeLosingChanges: () => ({ state: 'unblocked' }),
+  useWarnBeforeLosingChanges: ({ hasChanges }: { hasChanges: boolean }) => {
+    leaveGuard.hasChanges = hasChanges;
+    return { state: 'unblocked' };
+  },
 }));
 
 vi.mock('@/app/routes/platform/setup/components/section-header', () => ({
@@ -138,15 +145,16 @@ const TEXT_MODEL = {
 
 const IMAGE_MODEL_ID = 'openai/gpt-image-2.5-flare';
 
+const gatewayKeyFields = {
+  accountId: '1c441b119970086c90b78ad3be4a478f',
+  gatewayId: 'my-gateway',
+};
+
 const gatewayConfig: AIProviderWithoutSensitiveData = {
   id: 'ai-provider-1',
   name: 'Cloudflare AI Gateway key',
   provider: AIProviderName.CLOUDFLARE_GATEWAY,
-  config: {
-    accountId: '1c441b119970086c90b78ad3be4a478f',
-    gatewayId: 'my-gateway',
-    models: [TEXT_MODEL],
-  },
+  config: { ...gatewayKeyFields, models: [TEXT_MODEL] },
   enabledForChat: false,
   modelScope: 'all',
   modelIds: [TEXT_MODEL.modelId],
@@ -283,6 +291,34 @@ describe('ConfigDetail save (manual models)', () => {
     document.body.appendChild(container);
     root = createRoot(container);
     selectMock.onValueChange = undefined;
+    leaveGuard.hasChanges = undefined;
+  });
+
+  it('is no longer dirty once the saved models come back from the server', async () => {
+    const emptyKey: AIProviderWithoutSensitiveData = {
+      ...gatewayConfig,
+      config: { ...gatewayKeyFields, models: [] },
+      modelIds: [],
+    };
+    render(emptyKey);
+    typeModelId(IMAGE_MODEL_ID);
+    clickButton('Add');
+    await act(async () => {
+      clickButton('Save');
+    });
+
+    const request = savedRequest();
+    render({
+      ...emptyKey,
+      config: request.config ?? emptyKey.config,
+      modelIds: request.modelIds ?? emptyKey.modelIds,
+    });
+
+    const saveBar = Array.from(container.querySelectorAll('span')).find(
+      (span) => span.textContent === 'You have unsaved changes',
+    );
+    expect(saveBar).toBeUndefined();
+    expect(leaveGuard.hasChanges).toBe(false);
   });
 
   it('sends an added image model as an image model, keeping the existing one intact', () => {

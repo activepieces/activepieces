@@ -1,5 +1,11 @@
 import { isNil } from '@activepieces/core-utils';
-import { Field, Table, PopulatedRecord } from '@activepieces/shared';
+import {
+  Field,
+  Table,
+  PopulatedRecord,
+  TableUpdatedEvent,
+  WebsocketClientEvent,
+} from '@activepieces/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { FileX } from 'lucide-react';
@@ -7,6 +13,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -15,6 +22,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useStore } from 'zustand';
 
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
+import { useSocket } from '@/components/providers/socket-provider';
 import { buttonVariants } from '@/components/ui/button';
 import {
   TableState,
@@ -22,6 +30,7 @@ import {
   createApTableStore,
 } from '@/features/tables/stores/store/ap-tables-client-state';
 import { useResourceLock } from '@/hooks/use-resource-lock';
+import { editorSession } from '@/lib/editor-session';
 import { cn } from '@/lib/utils';
 
 import { fieldsApi } from '../api/fields-api';
@@ -37,14 +46,19 @@ export const TableStateProviderWithTable = ({
   table,
   fields,
   records,
+  selectedCell,
 }: {
   children: React.ReactNode;
   table: Table;
   fields: Field[];
   records: PopulatedRecord[];
+  selectedCell?: TableState['selectedCell'];
 }) => {
   const tableStoreRef = useRef<ApTableStore>(
-    createApTableStore(table, fields, records),
+    withSelectedCell({
+      store: createApTableStore(table, fields, records),
+      selectedCell,
+    }),
   );
   return (
     <TableContext.Provider value={tableStoreRef.current}>
@@ -113,16 +127,28 @@ export function ApTableStateProvider({
   // rebuilds the table store from freshly fetched server state without
   // reloading the document (a full reload breaks the embed SDK handshake
   // inside an iframe)
-  const refreshTableState = useCallback(async () => {
+  const refetchTableState = useCallback(async () => {
     await Promise.all([
       queryClient.refetchQueries({ queryKey: ['table', tableId] }),
       queryClient.refetchQueries({ queryKey: ['fields', tableId] }),
       queryClient.refetchQueries({ queryKey: ['records', tableId] }),
     ]);
-    setRefreshKey((key) => key + 1);
   }, [queryClient, tableId]);
+  const remountTableState = useCallback(() => {
+    setRefreshKey((key) => key + 1);
+  }, []);
+  const refreshTableState = useCallback(async () => {
+    await refetchTableState();
+    remountTableState();
+  }, [refetchTableState, remountTableState]);
+  const isLoading = isTableLoading || isFieldsLoading || isRecordsLoading;
+  const viewBeforeRefresh = useRef<TableView | null>(null);
+  const missedUpdateWhileLoading = useMissedUpdateWhileLoading({
+    tableId,
+    isLoading,
+  });
 
-  if (isTableLoading || isFieldsLoading || isRecordsLoading) {
+  if (isLoading) {
     return <RouteLoadingBar />;
   }
 
@@ -167,7 +193,15 @@ export function ApTableStateProvider({
           table={table}
           fields={fields}
           records={records.data}
+          selectedCell={viewBeforeRefresh.current?.selectedCell}
         >
+          <RefreshOnTableUpdated
+            missedUpdateWhileLoading={missedUpdateWhileLoading}
+            viewBeforeRefresh={viewBeforeRefresh}
+            tableId={table.id}
+            refetch={refetchTableState}
+            remount={remountTableState}
+          />
           {children}
         </TableStateProviderWithTable>
       </TableLockProvider>
@@ -231,5 +265,158 @@ function TableLockProvider({
     </TableLockContext.Provider>
   );
 }
+
+function useMissedUpdateWhileLoading({
+  tableId,
+  isLoading,
+}: {
+  tableId: string | undefined;
+  isLoading: boolean;
+}) {
+  const socket = useSocket();
+  const missed = useRef(false);
+  const loading = useRef(isLoading);
+  loading.current = isLoading;
+  useEffect(() => {
+    const onTableUpdated = (event: TableUpdatedEvent) => {
+      if (loading.current && event.tableId === tableId) {
+        missed.current = true;
+      }
+    };
+    socket.on(WebsocketClientEvent.TABLE_UPDATED, onTableUpdated);
+    return () => {
+      socket.off(WebsocketClientEvent.TABLE_UPDATED, onTableUpdated);
+    };
+  }, [socket, tableId]);
+  return missed;
+}
+
+function RefreshOnTableUpdated({
+  missedUpdateWhileLoading,
+  viewBeforeRefresh,
+  tableId,
+  refetch,
+  remount,
+}: {
+  missedUpdateWhileLoading: React.MutableRefObject<boolean>;
+  viewBeforeRefresh: React.MutableRefObject<TableView | null>;
+  tableId: string;
+  refetch: () => Promise<void>;
+  remount: () => void;
+}) {
+  const socket = useSocket();
+  const store = useContext(TableContext);
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let requested = false;
+    let stale = false;
+    let disposed = false;
+    const isBusy = () =>
+      store?.getState().isSaving === true ||
+      (store?.getState().selectedRecords.size ?? 0) > 0 ||
+      !isNil(document.querySelector('[data-editing="true"]'));
+    const refreshWhenIdle = async () => {
+      if (disposed) {
+        return;
+      }
+      if (isBusy()) {
+        timer = setTimeout(runRefresh, BUSY_RETRY_MS);
+        return;
+      }
+      stale = false;
+      await refetch();
+      if (disposed) {
+        return;
+      }
+      if (stale || isBusy()) {
+        timer = setTimeout(runRefresh, BUSY_RETRY_MS);
+        return;
+      }
+      viewBeforeRefresh.current = {
+        scrollTop: gridElement()?.scrollTop ?? 0,
+        selectedCell: store?.getState().selectedCell ?? null,
+      };
+      remount();
+    };
+    const runRefresh = () => {
+      refreshWhenIdle().catch(() => {
+        requested = false;
+      });
+    };
+    const requestRefresh = () => {
+      stale = true;
+      if (requested) {
+        return;
+      }
+      requested = true;
+      runRefresh();
+    };
+    const onTableUpdated = (event: TableUpdatedEvent) => {
+      const isOtherEditorOnThisTable =
+        event.tableId === tableId &&
+        event.editorSessionId !== editorSession.getId();
+      if (isOtherEditorOnThisTable) {
+        requestRefresh();
+      }
+    };
+    socket.on(WebsocketClientEvent.TABLE_UPDATED, onTableUpdated);
+    socket.on('connect', requestRefresh);
+    const savedView = viewBeforeRefresh.current;
+    viewBeforeRefresh.current = null;
+    if (!isNil(savedView)) {
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          gridElement()?.scrollTo({
+            top: savedView.scrollTop,
+            behavior: 'instant',
+          });
+        }),
+      );
+    }
+    if (missedUpdateWhileLoading.current) {
+      missedUpdateWhileLoading.current = false;
+      requestRefresh();
+    }
+    return () => {
+      disposed = true;
+      socket.off(WebsocketClientEvent.TABLE_UPDATED, onTableUpdated);
+      socket.off('connect', requestRefresh);
+      clearTimeout(timer);
+    };
+  }, [
+    socket,
+    store,
+    tableId,
+    refetch,
+    remount,
+    missedUpdateWhileLoading,
+    viewBeforeRefresh,
+  ]);
+  return null;
+}
+
+function withSelectedCell({
+  store,
+  selectedCell,
+}: {
+  store: ApTableStore;
+  selectedCell: TableState['selectedCell'] | undefined;
+}): ApTableStore {
+  if (selectedCell !== undefined) {
+    store.setState({ selectedCell });
+  }
+  return store;
+}
+
+function gridElement(): HTMLElement | null {
+  return document.querySelector<HTMLElement>('.rdg');
+}
+
+const BUSY_RETRY_MS = 1000;
+
+type TableView = {
+  scrollTop: number;
+  selectedCell: TableState['selectedCell'];
+};
 
 type TableLockContextValue = ReturnType<typeof useResourceLock>;
