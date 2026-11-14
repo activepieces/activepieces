@@ -4886,6 +4886,20 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/jira-service-management": {
+      "name": "@activepieces/piece-jira-service-management",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "5.0.5",
+      },
+    },
     "packages/pieces/community/jogg-ai": {
       "name": "@activepieces/piece-jogg-ai",
       "version": "0.1.7",
@@ -12252,6 +12266,8 @@
     "@activepieces/piece-jira-cloud": ["@activepieces/piece-jira-cloud@workspace:packages/pieces/community/jira-cloud"],
 
     "@activepieces/piece-jira-data-center": ["@activepieces/piece-jira-data-center@workspace:packages/pieces/community/jira-data-center"],
+
+    "@activepieces/piece-jira-service-management": ["@activepieces/piece-jira-service-management@workspace:packages/pieces/community/jira-service-management"],
 
     "@activepieces/piece-jogg-ai": ["@activepieces/piece-jogg-ai@workspace:packages/pieces/community/jogg-ai"],
 
