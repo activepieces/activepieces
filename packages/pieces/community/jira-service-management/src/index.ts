@@ -19,7 +19,7 @@ import { newRequestTrigger } from './lib/triggers/new-request';
 export const jiraServiceManagement = createPiece({
 	displayName: 'Jira Service Management',
 	description:
-		'Service desk for IT and support teams: customer requests, comments, approvals, customers and queues. Works with Jira Cloud and Jira Data Center.',
+		'Service desk for IT and support teams: customer requests, comments, approvals, customers and queues. Works with Jira Cloud and Jira Data Center. For alerts and on-call, use Jira Service Management Operations.',
 	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/jira.png',
 	categories: [PieceCategory.CUSTOMER_SUPPORT],
