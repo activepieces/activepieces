@@ -1,20 +1,18 @@
-import {
-  PiecePropValueSchema,
-  createAction,
-} from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { dynamicsCRMAuth } from '../auth';
-import { DynamicsCRMCommon, makeClient } from '../common';
+import { DynamicsCRMCommon, dynamicsCommonInternals, makeClient } from '../common';
+import { recordOutputSchema } from '../common/output-schemas';
 
 export const updateRecordAction = createAction({
   auth: dynamicsCRMAuth,
   name: 'dynamics_crm_update_record',
   classification: 'WRITE',
   displayName: 'Update Record',
-  description: 'Updates an existing record.',
-  audience: 'both',
+  description: 'Updates an existing record. Fails if the record does not exist.',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Updates an existing record of a chosen Dynamics 365 / Dataverse entity type, identified by its record ID (the entity primary-key GUID), applying the supplied field values. Use to modify a specific known record rather than create one. Idempotent: re-sending the same field values to the same ID leaves the record in the same final state.',
+      'Updates an existing record of a chosen Dynamics 365 / Dataverse entity type by its record ID. Fails with 404 instead of creating a record when the ID does not exist. Idempotent for the same values.',
     idempotent: true,
   },
   props: {
@@ -23,16 +21,21 @@ export const updateRecordAction = createAction({
     ),
     recordId: DynamicsCRMCommon.recordId,
     fields: DynamicsCRMCommon.entityFields(false),
+    additionalFields: DynamicsCRMCommon.additionalFields,
   },
+  outputSchema: recordOutputSchema,
   async run(context) {
-    const { entityType, recordId, fields } = context.propsValue;
-
-    const entityUrlPath = entityType as string;
-
-    const client = makeClient(
-      context.auth
-    );
-
-    return await client.updatedRecord(entityUrlPath, recordId, fields);
+    const { entityType, recordId, fields, additionalFields } = context.propsValue;
+    const client = makeClient(context.auth);
+    const body = await dynamicsCommonInternals.normalizeDateOnlyFields({
+      client,
+      entitySet: entityType,
+      body: dynamicsCommonInternals.buildRecordBody({ fields, additionalFields }),
+    });
+    if (Object.keys(body).length === 0) {
+      throw new Error('Set at least one field to update.');
+    }
+    const record = await client.updateRecord({ entitySet: entityType, recordId, fields: body });
+    return dynamicsCommonInternals.shapeGenericRecord({ client, entitySet: entityType, record });
   },
 });

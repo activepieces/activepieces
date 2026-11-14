@@ -216,3 +216,16 @@ ActiveCampaign requests now always verify the server's TLS certificate, and an A
 - If an agent or MCP client used one of the 7 actions as a tool, switch it to the matching new tool listed above.
 - If your self-hosted instance reaches ActiveCampaign through a proxy that inspects TLS traffic, add the proxy's CA certificate to `NODE_EXTRA_CA_CERTS`, or ActiveCampaign steps fail with a certificate error.
 - Flow steps that use these actions keep working unchanged. Steps keep running on the version they were built with until you upgrade them.
+
+#### Microsoft Dynamics CRM 0.5.0: four actions are no longer AI agent tools
+
+Microsoft Dynamics CRM "Create Record", "Get Record", "Update Record" and "Delete Record" are now available in the flow builder only, not as agent/MCP tools. Agents should use the new AI tools instead: "List Entities", "Describe Entity", "Search Records", "Get Record", "Create Record", "Update Record" and "Delete Record" (AI versions), which look up the entity and its columns first.
+
+"Update Record" now fails with a "record not found" error when the record ID does not exist. Before, it silently created a new record.
+
+#### What you need to do
+
+- If an agent or MCP client used one of the 4 actions as a tool, switch it to the matching new AI tool listed above.
+- If a flow relied on "Update Record" creating a missing record, use "Create Record" for that case instead.
+- If your self-hosted instance reaches Dynamics 365 through a proxy that inspects TLS traffic, add the proxy's CA certificate to `NODE_EXTRA_CA_CERTS`, or Dynamics CRM steps fail with a certificate error.
+- Flow steps that use these actions keep working unchanged otherwise. Steps keep running on the version they were built with until you upgrade them.

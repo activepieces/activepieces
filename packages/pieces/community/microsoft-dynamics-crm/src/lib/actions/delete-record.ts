@@ -1,20 +1,18 @@
-import {
-  PiecePropValueSchema,
-  createAction,
-} from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { dynamicsCRMAuth } from '../auth';
 import { DynamicsCRMCommon, makeClient } from '../common';
+import { deleteRecordOutputSchema } from '../common/output-schemas';
 
 export const deleteRecordAction = createAction({
   auth: dynamicsCRMAuth,
   name: 'dynamics_crm_delete_record',
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Record',
-  description: 'Deletes an existing record.',
-  audience: 'both',
+  description: 'Permanently deletes an existing record.',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Permanently deletes a single record from a chosen Dynamics 365 / Dataverse entity type, identified by its record ID (the entity primary-key GUID). Use when an agent must remove a specific known record. Destructive and not idempotent: the first call removes the record and subsequent calls for the same ID fail since it no longer exists.',
+      'Permanently deletes a single record of a chosen Dynamics 365 / Dataverse entity type by its record ID. Not idempotent: a second call for the same ID fails because the record no longer exists.',
     idempotent: false,
   },
   props: {
@@ -23,15 +21,10 @@ export const deleteRecordAction = createAction({
     ),
     recordId: DynamicsCRMCommon.recordId,
   },
+  outputSchema: deleteRecordOutputSchema,
   async run(context) {
     const { entityType, recordId } = context.propsValue;
-
-    const entityUrlPath = entityType as string;
-
-    const client = makeClient(
-      context.auth
-    );
-
-    return await client.deleteRecord(entityUrlPath, recordId);
+    await makeClient(context.auth).deleteRecord({ entitySet: entityType, recordId });
+    return { success: true, entitySet: entityType, recordId };
   },
 });

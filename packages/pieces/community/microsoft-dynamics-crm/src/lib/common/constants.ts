@@ -1,5 +1,3 @@
-// docs: https://learn.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/mt608066(v=crm.8)
-
 export enum EntityAttributeType {
   PICKLIST = 'Picklist',
   VIRTUAL = 'Virtual',
@@ -10,6 +8,7 @@ export enum EntityAttributeType {
   DOUBLE = 'Double',
   INTEGER = 'Integer',
   LOOKUP = 'Lookup',
+  CUSTOMER = 'Customer',
   DATETIME = 'DateTime',
   BOOLEAN = 'Boolean',
   BIGINT = 'BigInt',
@@ -18,4 +17,16 @@ export enum EntityAttributeType {
   ENTITY_NAME = 'EntityName',
   STATE = 'State',
   STATUS = 'Status',
+  PARTY_LIST = 'PartyList',
 }
+
+export const LOOKUP_ATTRIBUTE_TYPES: string[] = [
+  EntityAttributeType.LOOKUP,
+  EntityAttributeType.CUSTOMER,
+  EntityAttributeType.OWNER,
+];
+
+export const REQUEST_TIMEOUT_MS = 60000;
+export const MAX_PAGE_SIZE = 5000;
+export const AI_MAX_PAGE_SIZE = 100;
+export const MAX_FETCHXML_URL_LENGTH = 32000;
