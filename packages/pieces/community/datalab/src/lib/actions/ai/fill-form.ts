@@ -13,7 +13,7 @@ export const aiFillFormAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Fill a flat, scanned or image form (PDF, PNG or JPG at a public URL) with given values by matching each field label to the form, and save the filled file in Activepieces. Pick it only for forms with no fillable fields; for a normal fillable PDF the PDF piece\'s Fill PDF Form is cheaper and instant, and call Get Form Fields first to learn the labels. Waits up to 4 minutes (a page often takes 1 to 3); if Datalab is still working it returns completed=false and a request_id to pass to Get Result with operation Fill Form. Each run spends Datalab credits.',
+      'Fill a flat, scanned or image form (PDF, PNG or JPG at a public URL) with given values by matching each field label to the form, and save the filled file in Activepieces. Pick it only for forms with no fillable fields; for a normal fillable PDF the PDF piece\'s Fill PDF Form is cheaper and instant, and call Get Form Fields first to learn the labels. Waits up to 4 minutes (a page often takes 1 to 4); if Datalab is still working it returns completed=false and a request_id: that is a timeout, not a failure, so pass the request_id to Get Result with operation Fill Form instead of calling Fill Form again. Each run spends Datalab credits.',
     idempotent: true,
   },
   props: fillOperation.aiProps(),

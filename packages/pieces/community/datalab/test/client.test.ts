@@ -244,7 +244,7 @@ describe('waitForResult', () => {
     const timing = fakeTiming();
     const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(processing);
     const outcome = await datalabClient.waitForResult({ apiKey: 'k', operation: 'fill', requestId: 'req_1', timing, maxWaitMs: 20_000 });
-    expect(outcome).toEqual({ completed: false, requestId: 'req_1', status: 'processing' });
+    expect(outcome).toEqual({ completed: false, requestId: 'req_1', status: 'processing', waitedMs: 20_000 });
     expect(spy.mock.calls.length).toBe(7);
     expect(timing.sleeps.reduce((sum, ms) => sum + ms, 0)).toBe(20_000);
   });
@@ -297,10 +297,30 @@ describe('finish', () => {
     expect(output).toEqual({ completed: true, status: 'complete', request_id: 'req_1', markdown: '# Hi' });
   });
 
-  it('throws for a human action that ran out of time, naming Get Result and the request id', async () => {
+  it('throws its own timeout error for a human action that ran out of time, with the minutes waited, the request id and both ways to get the result', async () => {
+    const attempt = datalabClient.finish({ outcome: { completed: false, requestId: 'req_7', status: 'processing', waitedMs: 360_000 }, operation: 'fill', audience: 'human', shape: () => ({}) });
+    await expect(attempt).rejects.toBeInstanceOf(datalabClient.DatalabWaitTimeoutError);
+    await expect(attempt).rejects.toMatchObject({ name: 'DatalabWaitTimeoutError', requestId: 'req_7', operation: 'fill', waitedMs: 360_000 });
+    await expect(attempt).rejects.toThrow(
+      'Timed out waiting for Datalab: it is still processing request req_7 after 6 minutes, so this step stopped waiting. The Fill Form request has not failed and keeps running at Datalab. To get the result, wait a minute or two and run this step again with the same inputs and Skip Cache off: once Datalab has finished, it usually returns the saved result in seconds. Or use the Get Result action with Operation "Fill Form" and this Request ID.',
+    );
+  });
+
+  it('says 4 minutes when the outcome does not carry its own wait', async () => {
     await expect(
-      datalabClient.finish({ outcome: { completed: false, requestId: 'req_7', status: 'processing' }, operation: 'fill', audience: 'human', shape: () => ({}) }),
-    ).rejects.toThrow('Datalab is still processing request req_7. Run the Get Result action with Operation "Fill Form"');
+      datalabClient.finish({ outcome: { completed: false, requestId: 'req_7', status: 'processing' }, operation: 'convert', audience: 'human', shape: () => ({}) }),
+    ).rejects.toThrow('still processing request req_7 after 4 minutes');
+  });
+
+  it('tells an agent that a timeout is not a failure and to use Get Result instead of calling the action again', async () => {
+    const output = await datalabClient.finish({ outcome: { completed: false, requestId: 'req_7', status: 'processing', waitedMs: 240_000 }, operation: 'fill', audience: 'ai', shape: () => ({}) });
+    expect(output).toEqual({
+      completed: false,
+      status: 'processing',
+      request_id: 'req_7',
+      message:
+        'Timed out, not failed: Datalab is still processing request req_7 after 4 minutes. Call Get Result with operation "Fill Form" and request_id "req_7" in about a minute, and repeat until completed is true. Do not call Fill Form again right away: that starts a second request and waits again. Results are kept for about one day.',
+    });
   });
 
   it('returns completed false for an AI action that ran out of time', async () => {

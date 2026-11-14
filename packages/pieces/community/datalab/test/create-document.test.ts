@@ -126,7 +126,7 @@ describe('createDocumentOperation.run', () => {
     const { files, write } = fakeFiles();
     const output = await createDocumentOperation.run({ apiKey: 'k', files, markdown: '# Hi', fileName: undefined, timing: fakeTiming() });
     expect(output).toMatchObject({ completed: false, status: 'processing', request_id: 'E3oAWw23yxUAVpU9AuQQMA' });
-    expect(output).toHaveProperty('message', expect.stringContaining('Operation "Create Document"'));
+    expect(output).toHaveProperty('message', expect.stringMatching(/^Timed out, not failed: .*after 4 minutes.*Get Result with operation "Create Document"/));
     expect(write).not.toHaveBeenCalled();
   });
 });

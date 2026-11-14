@@ -7,6 +7,7 @@ import { DatalabSource, datalabSource } from '../common/source';
 
 const OPERATION: DatalabOperation = 'fill';
 const DEFAULT_FILE_NAME = 'filled-form';
+const HUMAN_MAX_WAIT_MS = 360_000;
 const DEFAULT_OUTPUT_FORMAT = 'pdf';
 const FILE_TYPES = 'PDF (fillable, flat or scanned) or image (PNG, JPG)';
 const CHECKBOX_HINT = 'To tick a checkbox, give "yes", "true", "1", "checked" or "x".';
@@ -220,7 +221,7 @@ async function run({ apiKey, audience, source, fields, context, confidenceThresh
       skip_cache: skipCache === true,
     },
   });
-  const outcome = await datalabClient.runJob({ apiKey, operation: OPERATION, body, timing });
+  const outcome = await datalabClient.runJob({ apiKey, operation: OPERATION, body, timing, maxWaitMs: audience === 'human' ? HUMAN_MAX_WAIT_MS : undefined });
   return datalabClient.finish({
     outcome,
     operation: OPERATION,
@@ -231,6 +232,7 @@ async function run({ apiKey, audience, source, fields, context, confidenceThresh
 
 export const fillOperation = {
   DEFAULT_FILE_NAME,
+  HUMAN_MAX_WAIT_MS,
   outputSchema,
   humanProps,
   aiProps,

@@ -333,7 +333,7 @@ describe('Segment Document (human)', () => {
   it('throws with the request ID when Datalab is still working after the wait', async () => {
     vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce(submitted).mockResolvedValue(processing);
     await expect(segmentOperation.run(runParams({ audience: 'human' }))).rejects.toThrow(
-      'Datalab is still processing request req_seg. Run the Get Result action with Operation "Segment Document"',
+      /Timed out waiting for Datalab: it is still processing request req_seg after 4 minutes.*Get Result action with Operation "Segment Document"/,
     );
   });
 });

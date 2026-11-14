@@ -265,32 +265,10 @@ describe('run', () => {
     expect(output).toMatchObject({ completed: true, file_name: 'filled-form.png', output_format: 'png', fields_filled_count: 3, fields_not_found: [] });
   });
 
-  it('fails a human run that outlasts the wait, naming the request ID for Get Result', async () => {
-    vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce(submitted).mockResolvedValue(processing);
-    const files = fakeFiles();
-    await expect(
-      fillOperation.run({
-        apiKey: 'k',
-        audience: 'human',
-        source: datalabSource.fromAi({ fileUrl: 'https://example.com/form.pdf', noun: 'form' }),
-        fields: [{ name: 'full_name', value: 'Jane' }],
-        context: undefined,
-        confidenceThreshold: undefined,
-        pageRange: undefined,
-        outputFileName: undefined,
-        skipCache: false,
-        files,
-        timing: fakeTiming(),
-      }),
-    ).rejects.toThrow(/still processing request req_fill.*Get Result.*"Fill Form"/);
-    expect(files.write).not.toHaveBeenCalled();
-  });
-
-  it('returns completed=false to an agent when the wait runs out', async () => {
-    vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce(submitted).mockResolvedValue(processing);
-    const output = await fillOperation.run({
+  const slowRun = ({ audience, timing }: { audience: DatalabAudience; timing: DatalabTiming }) =>
+    fillOperation.run({
       apiKey: 'k',
-      audience: 'ai',
+      audience,
       source: datalabSource.fromAi({ fileUrl: 'https://example.com/form.pdf', noun: 'form' }),
       fields: [{ name: 'full_name', value: 'Jane' }],
       context: undefined,
@@ -299,10 +277,36 @@ describe('run', () => {
       outputFileName: undefined,
       skipCache: false,
       files: fakeFiles(),
-      timing: fakeTiming(),
+      timing,
     });
+
+  it('waits 6 minutes for a human run, then fails with the timeout error that says how to get the result', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce(submitted).mockResolvedValue(processing);
+    const timing = fakeTiming();
+    const attempt = slowRun({ audience: 'human', timing });
+    await expect(attempt).rejects.toMatchObject({ name: 'DatalabWaitTimeoutError', requestId: 'req_fill', operation: 'fill', waitedMs: 360_000 });
+    await expect(attempt).rejects.toThrow(/^Timed out waiting for Datalab: it is still processing request req_fill after 6 minutes.*has not failed.*run this step again with the same inputs and Skip Cache off.*Get Result action with Operation "Fill Form"/);
+    expect(timing.now()).toBe(360_000);
+    expect(fillOperation.HUMAN_MAX_WAIT_MS).toBe(360_000);
+  });
+
+  it('waits 4 minutes for an agent, then returns completed=false with a message that a timeout is not a failure', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce(submitted).mockResolvedValue(processing);
+    const timing = fakeTiming();
+    const output = await slowRun({ audience: 'ai', timing });
     expect(output).toMatchObject({ completed: false, status: 'processing', request_id: 'req_fill' });
-    expect(output).toHaveProperty('message', expect.stringMatching(/Get Result/));
+    expect(output).toHaveProperty('message', expect.stringMatching(/^Timed out, not failed: Datalab is still processing request req_fill after 4 minutes\. Call Get Result with operation "Fill Form".*Do not call Fill Form again right away/));
+    expect(timing.now()).toBe(240_000);
+  });
+
+  it('keeps every other failure apart from the timeout: a form Datalab could not fill is not reported as timed out', async () => {
+    vi.spyOn(httpClient, 'sendRequest')
+      .mockResolvedValueOnce(submitted)
+      .mockResolvedValue(ok({ status: 'complete', success: false, error: 'Could not read the form', progress_percent: 100, result_url: null }));
+    const attempt = slowRun({ audience: 'human', timing: fakeTiming() });
+    await expect(attempt).rejects.toThrow(/Could not read the form/);
+    await expect(attempt).rejects.not.toMatchObject({ name: 'DatalabWaitTimeoutError' });
+    await expect(attempt).rejects.not.toThrow(/Timed out/);
   });
 });
 

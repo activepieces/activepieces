@@ -452,7 +452,7 @@ describe('when the wait runs out', () => {
   it('fails the human action with the request ID and Get Result', async () => {
     vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce(submitted).mockResolvedValue(processing);
     await expect(extractOperation.run({ apiKey: 'k', audience: 'human', input: input(), timing: fakeTiming() })).rejects.toThrow(
-      'Datalab is still processing request req_x. Run the Get Result action with Operation "Extract Structured Data"',
+      /Timed out waiting for Datalab: it is still processing request req_x after 4 minutes.*Get Result action with Operation "Extract Structured Data"/,
     );
   });
 

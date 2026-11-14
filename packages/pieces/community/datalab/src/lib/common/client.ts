@@ -132,7 +132,7 @@ async function waitForResult({ apiKey, operation, requestId, timing = realTiming
       }
     }
   }
-  return { completed: false, requestId, status: lastStatus };
+  return { completed: false, requestId, status: lastStatus, waitedMs: maxWaitMs };
 }
 
 async function runJob({ apiKey, operation, body, timing = realTiming, maxWaitMs = MAX_WAIT_MS }: RunJobParams): Promise<DatalabJobOutcome> {
@@ -145,11 +145,11 @@ async function finish<T extends Record<string, unknown>>({ outcome, operation, a
     const shaped = await shape(outcome.result);
     return { completed: true, status: 'complete', request_id: outcome.requestId, ...shaped };
   }
-  const message = stillProcessingMessage({ requestId: outcome.requestId, operation });
+  const waitedMs = outcome.waitedMs ?? MAX_WAIT_MS;
   if (audience === 'human') {
-    throw new Error(message);
+    throw new DatalabWaitTimeoutError({ requestId: outcome.requestId, operation, waitedMs });
   }
-  return { completed: false, status: outcome.status, request_id: outcome.requestId, message };
+  return { completed: false, status: outcome.status, request_id: outcome.requestId, message: waitTimeoutMessage({ requestId: outcome.requestId, operation, waitedMs, audience }) };
 }
 
 function appendFields({ form, fields }: { form: FormData; fields: Record<string, DatalabFormValue> }): void {
@@ -171,8 +171,14 @@ function appendFields({ form, fields }: { form: FormData; fields: Record<string,
   }
 }
 
-function stillProcessingMessage({ requestId, operation }: { requestId: string; operation: DatalabOperation }): string {
-  return `Datalab is still processing request ${requestId}. Run the Get Result action with Operation "${OPERATION_LABELS[operation]}" and this Request ID to collect it. Results are kept for about one day.`;
+function waitTimeoutMessage({ requestId, operation, waitedMs, audience }: { requestId: string; operation: DatalabOperation; waitedMs: number; audience: DatalabAudience }): string {
+  const label = OPERATION_LABELS[operation];
+  const minutes = Math.round(waitedMs / 60_000);
+  const waited = minutes === 1 ? '1 minute' : `${minutes} minutes`;
+  if (audience === 'human') {
+    return `Timed out waiting for Datalab: it is still processing request ${requestId} after ${waited}, so this step stopped waiting. The ${label} request has not failed and keeps running at Datalab. To get the result, wait a minute or two and run this step again with the same inputs and Skip Cache off: once Datalab has finished, it usually returns the saved result in seconds. Or use the Get Result action with Operation "${label}" and this Request ID. Results are kept for about one day.`;
+  }
+  return `Timed out, not failed: Datalab is still processing request ${requestId} after ${waited}. Call Get Result with operation "${label}" and request_id "${requestId}" in about a minute, and repeat until completed is true. Do not call ${label} again right away: that starts a second request and waits again. Results are kept for about one day.`;
 }
 
 async function mergeOffloadedResult({ poll, requestId }: { poll: Record<string, unknown>; requestId: string }): Promise<Record<string, unknown>> {
@@ -334,6 +340,20 @@ class DatalabError extends Error {
   }
 }
 
+class DatalabWaitTimeoutError extends Error {
+  readonly requestId: string;
+  readonly operation: DatalabOperation;
+  readonly waitedMs: number;
+
+  constructor({ requestId, operation, waitedMs }: { requestId: string; operation: DatalabOperation; waitedMs: number }) {
+    super(waitTimeoutMessage({ requestId, operation, waitedMs, audience: 'human' }));
+    this.name = 'DatalabWaitTimeoutError';
+    this.requestId = requestId;
+    this.operation = operation;
+    this.waitedMs = waitedMs;
+  }
+}
+
 export const datalabClient = {
   BASE_URL,
   KEYS_URL,
@@ -349,6 +369,7 @@ export const datalabClient = {
   toError,
   describeFailure,
   DatalabError,
+  DatalabWaitTimeoutError,
 };
 
 export type DatalabOperation = 'convert' | 'extract' | 'segment' | 'fill' | 'form-fields' | 'create-document';
@@ -366,7 +387,7 @@ export type DatalabFormValue = string | number | boolean | Record<string, unknow
 
 export type DatalabJobOutcome =
   | { completed: true; requestId: string; result: Record<string, unknown> }
-  | { completed: false; requestId: string; status: string };
+  | { completed: false; requestId: string; status: string; waitedMs?: number };
 
 export type DatalabActionOutput<T extends Record<string, unknown>> =
   | ({ completed: true; status: 'complete'; request_id: string } & T)
