@@ -31,17 +31,22 @@ export const newFile = createTrigger({
   outputSchema: newFileOutputSchema,
   classification: 'READ',
   displayName: 'New or Updated File',
-  description: 'Triggers when you add or update a file in your bucket. The bucket/folder you choose must not contain more than 10,000 files.',
+  description: 'Triggers when a file is added or updated in your bucket.',
   aiMetadata: {
     description: 'Fires when an object is added or modified in the configured S3 bucket, optionally scoped to a folder prefix. Polls the bucket and emits each new or updated file based on its last-modified time. The watched bucket/folder must contain no more than 10,000 files.',
   },
+  propertyGroups: [
+    { key: 'watch', display: 'section', label: 'Folder', icon: 'inbox', props: ['markdown', 'folderPath'] },
+  ],
   props: {
     markdown: Property.MarkDown({
       variant: MarkdownVariant.INFO,
-      value: 'Triggers when you add or update a file in your bucket. The bucket/folder you choose must not contain more than 10,000 files.',
+      value: 'The watched folder, or the whole bucket, must hold 10,000 files or fewer.',
     }),
     folderPath: Property.ShortText({
       displayName: 'Folder Path',
+      description: 'Only watch files whose path starts with this. Empty: the whole bucket.',
+      placeholder: 'invoices',
       required: false,
     }),
   },

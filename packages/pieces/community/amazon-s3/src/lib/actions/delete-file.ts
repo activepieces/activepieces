@@ -9,7 +9,7 @@ export const deleteFile = createAction({
   outputSchema: deleteFileOutputSchema,
   classification: 'DESTRUCTIVE',
   displayName: 'Delete File',
-  description: 'Deletes an existing file.',
+  description: 'Delete a file from your bucket.',
   audience: 'both',
   aiMetadata: {
     description: 'Deletes a single object from the configured S3 bucket by its full key (path). Use to remove a known file. Idempotent: deleting an already-absent key succeeds without error, so repeating the call has no further effect.',
@@ -18,7 +18,8 @@ export const deleteFile = createAction({
   props: {
     key: Property.ShortText({
       displayName: 'File Path',
-      description: 'The full path to the file within your S3 bucket (e.g. "documents/report.csv" or "myfile.txt"). This is also called the S3 "key".',
+      description: 'Path of the file in the bucket, also called its key.',
+      placeholder: 'documents/report.csv',
       required: true,
     }),
   },

@@ -10,7 +10,7 @@ export const readFile = createAction({
   outputSchema: readFileOutputSchema,
   classification: 'READ',
   displayName: 'Read File',
-  description: 'Read a file from S3 to use it in other steps',
+  description: 'Read a file from your bucket to use in later steps.',
   audience: 'human',
   aiMetadata: {
     description: 'Downloads a single object from the configured S3 bucket by its full key (path) and makes its contents available as a file for later steps. Use to fetch a known file when you have its exact key. Reading the same key repeatedly returns the same content with no side effect (idempotent).',
@@ -19,7 +19,8 @@ export const readFile = createAction({
   props: {
     key: Property.ShortText({
       displayName: 'File Path',
-      description: 'The full path to the file within your S3 bucket (e.g. "documents/report.csv" or "myfile.txt"). This is also called the S3 "key".',
+      description: 'Path of the file in the bucket, also called its key.',
+      placeholder: 'documents/report.csv',
       required: true,
     }),
   },

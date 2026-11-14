@@ -1,4 +1,4 @@
-import { Property, ServerContext, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, ServerContext, createAction } from '@activepieces/pieces-framework';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { amazonS3CombinedAuth, AccessKeyAuthProps, OidcAuthProps, S3AuthProps } from '../auth';
@@ -11,25 +11,36 @@ export const generateSignedUploadUrl = createAction({
   outputSchema: generateSignedUploadUrlOutputSchema,
   classification: 'READ',
   displayName: 'Generate Signed Upload URL',
-  description:
-    'Generate a pre-signed URL that allows anyone with the link to upload a file directly to S3 without needing AWS credentials.',
+  description: 'Create a temporary link anyone can use to upload a file.',
   audience: 'both',
   aiMetadata: {
     description: 'Generates a time-limited pre-signed upload (PUT) URL for a target key in the configured S3 bucket, letting anyone with the link upload a file directly to S3 without AWS credentials until it expires. Use to delegate an upload to an external client. Generating the URL does not itself create or modify any object and is idempotent (each call returns a freshly signed URL).',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'destination', display: 'section', label: 'Destination', icon: 'file', props: ['key'] },
+    { key: 'link', display: 'section', label: 'Link', icon: 'sliders', props: ['linkInfo', 'expiresIn'] },
+  ],
   props: {
     key: Property.ShortText({
-      displayName: 'File Key',
-      description:
-        'The destination path and filename inside the bucket, e.g. "uploads/photo.jpg".',
+      displayName: 'File Path',
+      description: 'Where the uploaded file will be saved in the bucket.',
+      placeholder: 'uploads/photo.jpg',
       required: true,
     }),
+    linkInfo: Property.MarkDown({
+      variant: MarkdownVariant.INFO,
+      value: 'Links last at most 7 days, or 12 hours with an IAM Role / OIDC connection.',
+    }),
     expiresIn: Property.Number({
-      displayName: 'Expires In (minutes)',
-      description: 'How long the upload URL should remain valid (in minutes).',
+      displayName: 'Expires In',
+      description: 'Minutes until the link stops working.',
       required: true,
       defaultValue: 10,
+      display: 'stepper',
+      min: 1,
+      max: 10080,
+      step: 1,
     }),
   },
   async run(context) {
