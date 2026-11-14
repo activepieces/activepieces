@@ -36,7 +36,7 @@ export const updateIssueAction = createAction({
 	audience: 'both',
 	aiMetadata: {
 		description:
-			'Updates fields on an existing Jira Data Center/Server issue, identified by its ID or key. Can optionally transition the issue to a new status (workflow transition) in the same call when a status is supplied. Use to edit an already-created issue rather than create one. Repeating with the same field values converges on the same state, so it is effectively idempotent.',
+			'Updates fields on an existing Jira Data Center/Server issue, identified by its ID or key. Can optionally transition the issue to a new status (workflow transition) in the same call when a status is supplied. Use to edit an already-created issue rather than create one. It cannot send a resolution or a comment with the transition: for those, use Transition Issue. Repeating with the same field values converges on the same state, so it is effectively idempotent.',
 		idempotent: true,
 	},
 	auth: jiraDataCenterAuth,

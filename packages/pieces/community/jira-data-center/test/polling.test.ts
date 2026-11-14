@@ -197,6 +197,81 @@ describe('New Issue polling', () => {
 	});
 });
 
+describe('New Issue polling after a burst or an upgrade', () => {
+	const polling = createJiraPolling({ timeField: 'created' });
+
+	it('continues from an exact time after a poll that could not read everything, so a big burst cannot make it read the same issues forever', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(T0);
+		const store = memoryStore();
+		await polling.onEnable({ context: { auth, propsValue: {}, store } });
+		vi.setSystemTime(T0 + 3 * MINUTE);
+		const burst = Array.from({ length: 10 }, (_, n) => ({ issues: [issue({ id: String(n + 1), created: `2026-11-14T10:01:0${n}.000+0000` })], total: 50 }));
+		const rest = { issues: [issue({ id: '10', created: '2026-11-14T10:01:09.000+0000' }), issue({ id: '11', created: '2026-11-14T10:01:30.000+0000' })] };
+		const spy = mockSearch([...burst, rest]);
+
+		const first = await polling.poll({ context: { auth, propsValue: {}, store } });
+		const second = await polling.poll({ context: { auth, propsValue: {}, store } });
+
+		expect(idsOf(first)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']);
+		expect(idsOf(second)).toEqual(['11']);
+		expect(bodyOf({ spy, call: 0 })['jql']).toBe("created > '-5m' ORDER BY created ASC");
+		expect(bodyOf({ spy, call: 10 })['jql']).toBe(`created > ${Date.parse('2026-11-14T10:01:09.000+0000') - 1} ORDER BY created ASC`);
+	});
+
+	it('does not send again what it already sent when more than 2,000 issues land in one window', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(T0);
+		const store = memoryStore();
+		await polling.onEnable({ context: { auth, propsValue: {}, store } });
+		vi.setSystemTime(T0 + 2 * MINUTE);
+		const many = Array.from({ length: 2100 }, (_, n) => issue({ id: String(n + 1), created: new Date(T0 + 1000 + n * 10).toISOString() }));
+		mockSearch([{ issues: many }]);
+
+		const first = await polling.poll({ context: { auth, propsValue: {}, store } });
+		const second = await polling.poll({ context: { auth, propsValue: {}, store } });
+
+		expect(first).toHaveLength(2100);
+		expect(second).toEqual([]);
+	});
+
+	it('picks up from the old checkpoint when a live flow is republished on this version', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(T0);
+		const store = memoryStore();
+		await store.put('lastPoll', T0 - 4 * MINUTE);
+		await polling.onEnable({ context: { auth, propsValue: {}, store, isRepublish: true } });
+		mockSearch([{ issues: [issue({ id: '1', created: '2026-11-14T09:55:00.000+0000' }), issue({ id: '2', created: '2026-11-14T09:58:00.000+0000' })] }]);
+
+		const result = await polling.poll({ context: { auth, propsValue: {}, store } });
+
+		expect(idsOf(result)).toEqual(['2']);
+	});
+
+	it('goes back 15 minutes at most when the old checkpoint is stale', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(T0);
+		const store = memoryStore();
+		await store.put('lastPoll', T0 - 3 * 24 * 60 * MINUTE);
+		mockSearch([{ issues: [issue({ id: '1', created: '2026-11-14T09:40:00.000+0000' }), issue({ id: '2', created: '2026-11-14T09:50:00.000+0000' })] }]);
+
+		const result = await polling.poll({ context: { auth, propsValue: {}, store } });
+
+		expect(idsOf(result)).toEqual(['2']);
+	});
+
+	it('starts from now when a flow is enabled fresh, even if an old checkpoint is still stored', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(T0);
+		const store = memoryStore();
+		await store.put('lastPoll', T0 - 4 * MINUTE);
+		await polling.onEnable({ context: { auth, propsValue: {}, store } });
+		mockSearch([{ issues: [issue({ id: '1', created: '2026-11-14T09:58:00.000+0000' })] }]);
+
+		expect(await polling.poll({ context: { auth, propsValue: {}, store } })).toEqual([]);
+	});
+});
+
 describe('Updated Issue Status polling', () => {
 	const polling = createJiraStatusPolling();
 

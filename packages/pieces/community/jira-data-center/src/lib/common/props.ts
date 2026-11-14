@@ -59,13 +59,10 @@ export function getIssueIdDropdown(data?: DropdownParams) {
 				};
 			}
 
-			return {
-				disabled: false,
-				options: await fetchIssueOptions({
-					auth,
-					jql: `project = "${String(projectId).replace(/"/g, '\\"')}" ORDER BY updated DESC`,
-				}),
-			};
+			return await fetchIssueOptions({
+				auth,
+				jql: `project = "${String(projectId).replace(/"/g, '\\"')}" ORDER BY updated DESC`,
+			});
 		},
 	});
 }
@@ -76,7 +73,7 @@ async function fetchIssueOptions({
 }: {
 	auth: JiraDataCenterAuth;
 	jql: string;
-}): Promise<DropdownOption<string>[]> {
+}): Promise<{ disabled: false; options: DropdownOption<string>[]; placeholder?: string }> {
 	const options: DropdownOption<string>[] = [];
 	let total = 0;
 	do {
@@ -103,7 +100,11 @@ async function fetchIssueOptions({
 		total = issueList.total;
 	} while (options.length < total && options.length < ISSUE_OPTIONS_LIMIT);
 
-	return options;
+	return {
+		disabled: false,
+		options,
+		...(total > options.length ? { placeholder: `Showing the ${options.length.toLocaleString('en-US')} most recently updated issues` } : {}),
+	};
 }
 
 export function getIssueTypeIdDropdown(data?: DropdownParams) {
@@ -273,10 +274,7 @@ export const issueIdOrKeyProp = (displayName: string, required = true) =>
 					placeholder: MISSING_ACCOUNT_PLACEHOLDER,
 				};
 			}
-			return {
-				disabled: false,
-				options: await fetchIssueOptions({ auth, jql: 'ORDER BY updated DESC' }),
-			};
+			return await fetchIssueOptions({ auth, jql: 'ORDER BY updated DESC' });
 		},
 	});
 
@@ -632,6 +630,8 @@ export function transformCustomFields(
 
 	return result;
 }
+
+export const jiraPropsInternals = { fetchIssueOptions };
 
 const ISSUE_OPTIONS_PAGE_SIZE = 100;
 const ISSUE_OPTIONS_LIMIT = 1000;

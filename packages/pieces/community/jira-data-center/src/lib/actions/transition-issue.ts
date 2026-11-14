@@ -16,7 +16,7 @@ export const transitionIssueAction = createAction({
 	audience: 'both',
 	aiMetadata: {
 		description:
-			'Run a workflow transition on a Jira Data Center/Server issue (for example start progress, resolve or close) and return the issue with its new status. Pass the transition by ID or name; it must be available from the current status, so running it a second time fails. Transitions that close the issue usually need a resolution (ID or name). An optional comment is added to the issue after the move.',
+			'Run a workflow transition on a Jira Data Center/Server issue (for example start progress, resolve or close) and return the issue with its new status. Pass the transition by ID or name; it must be available from the current status, so running it a second time fails. Transitions that close the issue usually need a resolution (ID or name). An optional comment is added to the issue after the move. Prefer this over Update Issue whenever the move needs a resolution or a comment.',
 		idempotent: false,
 	},
 	outputSchema: issueOutputSchema,

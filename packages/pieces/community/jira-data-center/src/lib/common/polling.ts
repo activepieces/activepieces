@@ -10,6 +10,7 @@ const MAX_LEDGER_ENTRIES = 2000;
 const TEST_FETCH_LIMIT = 50;
 const TEST_ITEMS_LIMIT = 5;
 const STATE_STORE_KEY = 'pollingState';
+const LEGACY_STORE_KEY = 'lastPoll';
 const EXPANDED_KEYS = ['changelog'];
 
 function toRelativeJqlDate({ sinceEpochMS, now }: { sinceEpochMS: number; now: number }): string {
@@ -48,21 +49,24 @@ function stripTrailingOrderBy(jql: string): string {
 function composeJql({
 	userJql,
 	since,
+	exactSinceEpochMS,
 	direction,
 	timeField,
 	extraScope,
 }: {
 	userJql: string | undefined;
 	since: string | null;
+	exactSinceEpochMS?: number;
 	direction: 'ASC' | 'DESC';
 	timeField: JiraTimeField;
 	extraScope?: JiraPollingConfig['extraScope'];
 }): string {
 	const scope = isNil(userJql) ? '' : stripTrailingOrderBy(userJql);
+	const timeBound = isNil(exactSinceEpochMS) ? (isNil(since) ? null : `'${since}'`) : `${exactSinceEpochMS}`;
 	const conditions = [
 		scope.length === 0 ? null : `(${scope})`,
 		extraScope ? extraScope({ since }) : null,
-		isNil(since) ? null : `${timeField} > '${since}'`,
+		isNil(timeBound) ? null : `${timeField} > ${timeBound}`,
 	].filter((condition): condition is string => !isNil(condition));
 	const orderBy = `ORDER BY ${timeField} ${direction}`;
 	return conditions.length === 0 ? orderBy : `${conditions.join(' AND ')} ${orderBy}`;
@@ -147,10 +151,12 @@ function pruneState({
 	entries,
 	floor,
 	windowStart,
+	exact,
 }: {
 	entries: LedgerEntry[];
 	floor: number;
 	windowStart: number;
+	exact: boolean;
 }): PollingState {
 	const insideWindow = entries
 		.filter(([, epoch]) => epoch > windowStart)
@@ -165,12 +171,22 @@ function pruneState({
 		windowStart,
 		floor: dropped.reduce((highest, [, epoch]) => Math.max(highest, epoch), Math.max(floor, windowStart)),
 		entries: insideWindow.slice(overflow),
+		exact,
 	};
 }
 
 function initialState(now: number): PollingState {
 	const start = Math.floor(now / 1000) * 1000 - 1;
-	return { windowStart: start, floor: start, entries: [] };
+	return { windowStart: start, floor: start, entries: [], exact: false };
+}
+
+async function stateAfterUpgrade({ store, now }: { store: Store; now: number }): Promise<PollingState> {
+	const legacyLastPoll = await store.get<number>(LEGACY_STORE_KEY);
+	if (typeof legacyLastPoll !== 'number' || !Number.isFinite(legacyLastPoll) || legacyLastPoll > now) {
+		return initialState(now);
+	}
+	const start = Math.max(legacyLastPoll, now - LOOKBACK_MS);
+	return { windowStart: start, floor: start, entries: [], exact: false };
 }
 
 function latestStatusChangeEpoch(issue: JiraPolledIssue): number {
@@ -198,16 +214,19 @@ export function createJiraPolling(config: JiraPollingConfig = {}) {
 	return {
 		async onEnable({ context }: { context: JiraPollingContext }): Promise<void> {
 			const { store, isRepublish } = context;
-			if (isRepublish && !isNil(await store.get<PollingState>(STATE_STORE_KEY))) {
+			if (!isRepublish) {
+				await store.put(STATE_STORE_KEY, initialState(Date.now()));
 				return;
 			}
-			await store.put(STATE_STORE_KEY, initialState(Date.now()));
+			if (isNil(await store.get<PollingState>(STATE_STORE_KEY))) {
+				await store.put(STATE_STORE_KEY, await stateAfterUpgrade({ store, now: Date.now() }));
+			}
 		},
 
 		async poll({ context }: { context: JiraPollingContext }): Promise<unknown[]> {
 			const { auth, propsValue, store } = context;
 			const now = Date.now();
-			const state = (await store.get<PollingState>(STATE_STORE_KEY)) ?? initialState(now);
+			const state = (await store.get<PollingState>(STATE_STORE_KEY)) ?? (await stateAfterUpgrade({ store, now }));
 			const windowStart = Math.max(state.windowStart, state.floor);
 
 			const { issues, truncated } = await fetchIssues({
@@ -215,6 +234,7 @@ export function createJiraPolling(config: JiraPollingConfig = {}) {
 				jql: composeJql({
 					userJql: propsValue.jql,
 					since: toRelativeJqlDate({ sinceEpochMS: windowStart, now }),
+					exactSinceEpochMS: state.exact ? windowStart : undefined,
 					direction: 'ASC',
 					timeField,
 					extraScope: config.extraScope,
@@ -242,6 +262,7 @@ export function createJiraPolling(config: JiraPollingConfig = {}) {
 					],
 					floor: state.floor,
 					windowStart: nextWindowStart,
+					exact: truncated,
 				}),
 			);
 
@@ -336,4 +357,5 @@ type PollingState = {
 	windowStart: number;
 	floor: number;
 	entries: LedgerEntry[];
+	exact?: boolean;
 };

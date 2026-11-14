@@ -20,7 +20,7 @@ function commentId() {
 					placeholder: waitingPlaceholder({ auth, waitingFor: 'Select an issue first' }),
 				};
 			}
-			const response = await jiraApiCall<{ comments?: JiraComment[] }>({
+			const response = await jiraApiCall<{ comments?: JiraComment[]; total?: number }>({
 				auth,
 				method: HttpMethod.GET,
 				resourceUri: `/issue/${issueId}/comment`,
@@ -30,12 +30,16 @@ function commentId() {
 				},
 			});
 
+			const comments = response.comments ?? [];
 			return {
 				disabled: false,
-				options: (response.comments ?? []).map((comment) => ({
+				options: comments.map((comment) => ({
 					label: toOptionLabel({ comment }),
 					value: comment.id,
 				})),
+				...((response.total ?? 0) > comments.length
+					? { placeholder: `Showing the ${comments.length.toLocaleString('en-US')} newest comments` }
+					: {}),
 			};
 		},
 	});

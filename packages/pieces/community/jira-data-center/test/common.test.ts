@@ -6,6 +6,7 @@ import { getIssueAction } from '../src/lib/actions/get-issue';
 import { transitionIssueAction } from '../src/lib/actions/transition-issue';
 import { jiraBaseUrl, jiraToken } from '../src/lib/common';
 import { jiraCommentProps } from '../src/lib/common/comment-props';
+import { jiraPropsInternals } from '../src/lib/common/props';
 import { jiraTransitions } from '../src/lib/common/transitions';
 
 const auth: JiraDataCenterAuth = {
@@ -69,6 +70,31 @@ describe('comment picker label', () => {
 
 	it('falls back to the id when the comment has no text or author', () => {
 		expect(jiraCommentProps.toOptionLabel({ comment: { id: '10200' } })).toBe('10200');
+	});
+});
+
+describe('issue picker', () => {
+	it('lists issues as [KEY] summary and says so when it stops at 1,000', async () => {
+		const page = (start: number) => Array.from({ length: 100 }, (_, n) => ({ id: String(start + n), key: `SD-${start + n}`, fields: { summary: 'Printer is down' } }));
+		const spy = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request: HttpRequest) => {
+			const startAt = Number((request.body ?? {})['startAt'] ?? 0);
+			return { status: 200, headers: {}, body: { issues: page(startAt), total: 4321 } };
+		});
+
+		const result = await jiraPropsInternals.fetchIssueOptions({ auth, jql: 'ORDER BY updated DESC' });
+
+		expect(spy).toHaveBeenCalledTimes(10);
+		expect(result.options).toHaveLength(1000);
+		expect(result.options[0]).toEqual({ label: '[SD-0] Printer is down', value: '0' });
+		expect(result.placeholder).toBe('Showing the 1,000 most recently updated issues');
+	});
+
+	it('adds no note when every issue fits', async () => {
+		vi.spyOn(httpClient, 'sendRequest').mockResolvedValue({ status: 200, headers: {}, body: { issues: [{ id: '1', key: 'SD-1', fields: { summary: 'One' } }], total: 1 } });
+
+		const result = await jiraPropsInternals.fetchIssueOptions({ auth, jql: 'ORDER BY updated DESC' });
+
+		expect(result).toEqual({ disabled: false, options: [{ label: '[SD-1] One', value: '1' }] });
 	});
 });
 
