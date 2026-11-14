@@ -410,6 +410,9 @@
       "@activepieces/piece-dataforb2b": [
         "packages/pieces/community/dataforb2b/src/index.ts"
       ],
+      "@activepieces/piece-datalab": [
+        "packages/pieces/community/datalab/src/index.ts"
+      ],
       "@activepieces/piece-date-helper": [
         "packages/pieces/core/date-helper/src/index.ts"
       ],

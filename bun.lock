@@ -2568,6 +2568,20 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/datalab": {
+      "name": "@activepieces/piece-datalab",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "5.0.5",
+      },
+    },
     "packages/pieces/community/datocms": {
       "name": "@activepieces/piece-datocms",
       "version": "0.2.1",
@@ -11924,6 +11938,8 @@
     "@activepieces/piece-dataforb2b": ["@activepieces/piece-dataforb2b@workspace:packages/pieces/community/dataforb2b"],
 
     "@activepieces/piece-datafuel": ["@activepieces/piece-datafuel@workspace:packages/pieces/community/datafuel"],
+
+    "@activepieces/piece-datalab": ["@activepieces/piece-datalab@workspace:packages/pieces/community/datalab"],
 
     "@activepieces/piece-date-helper": ["@activepieces/piece-date-helper@workspace:packages/pieces/core/date-helper"],
 
