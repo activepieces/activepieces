@@ -1,11 +1,24 @@
-import { createAction, Property, ApFile, DynamicPropsValue } from '@activepieces/pieces-framework';
-import { GoogleGenAI, PersonGeneration } from '@google/genai';
+import { createAction, Property, DynamicPropsValue, MarkdownVariant } from '@activepieces/pieces-framework';
+import { GoogleGenAI, PersonGeneration, Part, GeneratedImage } from '@google/genai';
 import { vertexAiAuth, GoogleVertexAIAuthValue } from '../auth';
 import { getVertexAILocationOptions, getVertexAIImageModelOptions } from '../common';
 import mime from 'mime-types';
 
-interface FileItem {
-  image: ApFile;
+function readInputImages(value: unknown): InputImage[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.flatMap((item: unknown): InputImage[] => {
+    if (typeof item !== 'object' || item === null || !('image' in item)) {
+      return [];
+    }
+    const image = item.image;
+    if (typeof image !== 'object' || image === null || !('data' in image) || !Buffer.isBuffer(image.data)) {
+      return [];
+    }
+    const extension = 'extension' in image && typeof image.extension === 'string' ? image.extension : undefined;
+    return [{ data: image.data, extension }];
+  });
 }
 
 export const generateImage = createAction({
@@ -14,17 +27,21 @@ export const generateImage = createAction({
   classification: 'READ',
   displayName: 'Generate Image',
   description:
-    'Generate an image from a text prompt using Google Imagen models on Vertex AI.',
+    'Generate or edit images with Imagen or Gemini models on Vertex AI.',
   audience: 'both',
   aiMetadata: {
     description:
       'Generates one or more images from a text prompt on Google Vertex AI, returning them as files. The selected model determines the path: Gemini image models support image-to-image editing from a supplied input image and a configurable aspect ratio, while Imagen models support a negative prompt, person-generation safety controls, output format, seed, and prompt enhancement. Use to create or edit images from a description. Requires a Vertex AI service-account credential and a region/model selection. Not idempotent — each call produces fresh, varying output.',
     idempotent: false,
   },
+  propertyGroups: [
+    { key: 'image', display: 'section', label: 'Image', icon: 'text', props: ['prompt', 'location', 'model'] },
+    { key: 'output', display: 'section', label: 'Output', icon: 'sliders', props: ['modelOptionsInfo', 'modelOptions'] },
+  ],
   props: {
     location: Property.Dropdown({
       displayName: 'Location',
-      description: 'Google Cloud region where your Vertex AI resources are hosted.',
+      description: 'Google Cloud region that runs the model.',
       required: true,
       refreshers: [],
       defaultValue: 'us-central1',
@@ -34,7 +51,7 @@ export const generateImage = createAction({
     }),
     model: Property.Dropdown({
       displayName: 'Model',
-      description: 'Model to use for image generation.',
+      description: 'Imagen or Gemini image model that creates the picture.',
       required: true,
       refreshers: ['location'],
       auth: vertexAiAuth,
@@ -54,11 +71,16 @@ export const generateImage = createAction({
     }),
     prompt: Property.LongText({
       displayName: 'Prompt',
-      description: 'A text description of the image you want to generate.',
+      description: 'Describe the image you want to generate.',
+      placeholder: 'A watercolor fox reading a book under a tree',
       required: true,
     }),
+    modelOptionsInfo: Property.MarkDown({
+      value: 'These options change with the model: Gemini models can edit your images, Imagen models have more output settings.',
+      variant: MarkdownVariant.INFO,
+    }),
     modelOptions: Property.DynamicProperties({
-      displayName: 'Model Configurations',
+      displayName: 'Image Options',
       required: true,
       refreshers: ['model'],
       auth: vertexAiAuth,
@@ -67,22 +89,14 @@ export const generateImage = createAction({
         const selectedModel = String(propsValue['model'] || '');
         const isGeminiModel = selectedModel.includes('gemini-');
 
-        // Common Field: Number of Images
-        fields['numberOfImages'] = Property.Number({
-          displayName: 'Number of Images',
-          description: 'Number of images to generate (1–4).',
-          required: false,
-          defaultValue: 1,
-        });
-
         if (isGeminiModel) {
           fields['inputImage'] = Property.Array({
-            displayName: 'Input Image',
-            description: 'Optional images for image-to-image editing.',
+            displayName: 'Images to Edit',
+            description: 'Optional images Gemini edits or uses as a reference.',
             required: false,
             properties: {
               image: Property.File({
-                displayName: 'Image File',
+                displayName: 'Image',
                 required: true,
               }),
             },
@@ -90,7 +104,7 @@ export const generateImage = createAction({
 
           fields['aspectRatio'] = Property.StaticDropdown({
             displayName: 'Aspect Ratio',
-            description: 'Aspect ratio of the generated image.',
+            description: 'Shape of the generated image.',
             required: false,
             defaultValue: '1:1',
             options: {
@@ -109,15 +123,26 @@ export const generateImage = createAction({
             },
           });
         } else {
+          fields['numberOfImages'] = Property.Number({
+            displayName: 'Number of Images',
+            description: 'How many images to create, 1 to 4.',
+            required: false,
+            defaultValue: 1,
+            display: 'stepper',
+            min: 1,
+            max: 4,
+            step: 1,
+          });
+
           fields['negativePrompt'] = Property.LongText({
             displayName: 'Negative Prompt',
-            description: 'Describe what you do NOT want in the image.',
+            description: 'What to leave out of the image.',
             required: false,
           });
 
           fields['aspectRatio'] = Property.StaticDropdown({
             displayName: 'Aspect Ratio',
-            description: 'Aspect ratio of the generated image.',
+            description: 'Shape of the generated image.',
             required: false,
             defaultValue: '1:1',
             options: {
@@ -132,21 +157,21 @@ export const generateImage = createAction({
           });
 
           fields['personGeneration'] = Property.StaticDropdown({
-            displayName: 'Person Generation',
-            description: 'Safety controls for generating images of people.',
+            displayName: 'People in Image',
+            description: 'Whether people can appear in the image.',
             required: false,
             options: {
               options: [
-                { label: 'Block generation of all people', value: 'DONT_ALLOW' },
-                { label: 'Generate images of adults, but not children (Default)', value: 'ALLOW_ADULT' },
-                { label: 'Generate images that include adults and children', value: 'ALLOW_ALL' },
+                { label: 'No people', value: 'DONT_ALLOW' },
+                { label: 'Adults only (default)', value: 'ALLOW_ADULT' },
+                { label: 'Adults and children', value: 'ALLOW_ALL' },
               ],
             },
           });
 
           fields['outputMimeType'] = Property.StaticDropdown({
             displayName: 'Output Format',
-            description: 'Image format for the generated output.',
+            description: 'File type of the generated image.',
             required: false,
             defaultValue: 'image/png',
             options: {
@@ -159,20 +184,20 @@ export const generateImage = createAction({
 
           fields['seed'] = Property.Number({
             displayName: 'Seed',
-            description: 'Random seed for reproducible results. Requires "Add Watermark" to be disabled.',
+            description: 'Same seed and prompt give the same image. Needs Add Watermark off.',
             required: false,
           });
 
           fields['enhancePrompt'] = Property.Checkbox({
             displayName: 'Enhance Prompt',
-            description: 'When enabled, the model rewrites your prompt to improve output quality.',
+            description: 'Let the model rewrite your prompt for better results.',
             required: false,
             defaultValue: false,
           });
 
           fields['addWatermark'] = Property.Checkbox({
             displayName: 'Add Watermark',
-            description: 'When enabled, adds an invisible watermark to generated images.',
+            description: 'Adds an invisible watermark to the images.',
             required: false,
             defaultValue: false,
           });
@@ -192,8 +217,9 @@ export const generateImage = createAction({
       private_key: rawCredentials.private_key?.replace(/\\n/g, '\n'),
     };
 
-    const inputImage = modelOptions?.['inputImage'] as ApFile | undefined;
-    const numberOfImages = (modelOptions?.['numberOfImages'] as number) ?? 1; // Strictly defaults to 1
+    const inputImages = readInputImages(modelOptions?.['inputImage']);
+    const numberOfImagesValue = modelOptions?.['numberOfImages'];
+    const numberOfImages = typeof numberOfImagesValue === 'number' ? numberOfImagesValue : 1;
     const aspectRatio = modelOptions?.['aspectRatio'] as string | undefined;
     const negativePrompt = modelOptions?.['negativePrompt'] as string | undefined;
     const personGeneration = modelOptions?.['personGeneration'] as PersonGeneration | undefined;
@@ -214,25 +240,17 @@ export const generateImage = createAction({
       },
     });
 
-    const ext = (outputMimeType ?? 'image/png') === 'image/jpeg' ? 'jpg' : 'png';
+    const ext = outputMimeType === 'image/jpeg' ? 'jpg' : 'png';
 
     if (isGeminiModel) {
-      let promptContent;
-
-      if (inputImage && inputImage.data) {
-        const mimeType = mime.lookup(inputImage.extension || '') || 'image/png';
-
-        const imagePart = {
+      const imageParts: Part[] = inputImages
+        .map((file) => ({
           inlineData: {
-            mimeType,
-            data: Buffer.from(inputImage.data).toString('base64'),
+            mimeType: mime.lookup(file.extension || '') || 'image/png',
+            data: Buffer.from(file.data).toString('base64'),
           },
-        };
-        promptContent = [{ role: 'user', parts: [{ text: prompt }, imagePart] }];
-      } else {
-        // Fallback to text-only if no valid image was found
-        promptContent = [{ role: 'user', parts: [{ text: prompt }] }];
-      }
+        }));
+      const promptContent = [{ role: 'user', parts: [{ text: prompt }, ...imageParts] }];
 
       const response = await ai.models.generateContent({
         model,
@@ -245,20 +263,21 @@ export const generateImage = createAction({
         },
       });
 
-      const parts = response.candidates?.[0]?.content?.parts || [];
-      const generatedImagesBytes = parts
-        .filter((part: any) => part.inlineData && part.inlineData.data)
-        .map((part: any) => part.inlineData!.data as string);
+      const parts: Part[] = response.candidates?.[0]?.content?.parts || [];
+      const generatedParts = parts.filter(
+        (part: Part) => part.inlineData?.data && part.thought !== true
+      );
 
-      if (generatedImagesBytes.length === 0) {
+      if (generatedParts.length === 0) {
         throw new Error('No images were generated by the Gemini model. Adjust your prompt.');
       }
 
       const images = await Promise.all(
-        generatedImagesBytes.map(async (base64Data: string, index: number) => {
+        generatedParts.map(async (part: Part, index: number) => {
+          const partExt = mime.extension(part.inlineData?.mimeType || '') || 'png';
           const file = await context.files.write({
-            fileName: `generated-image-${index + 1}.${ext}`,
-            data: Buffer.from(base64Data, 'base64'),
+            fileName: `generated-image-${index + 1}.${partExt}`,
+            data: Buffer.from(part.inlineData?.data ?? '', 'base64'),
           });
           return { image: file };
         })
@@ -267,7 +286,6 @@ export const generateImage = createAction({
       return { images, model, prompt };
     }
 
-    // Imagen models
     const response = await ai.models.generateImages({
       model,
       prompt,
@@ -292,7 +310,7 @@ export const generateImage = createAction({
     }
 
     const images = await Promise.all(
-      generated.map(async (img : any, index: number) => {
+      generated.map(async (img: GeneratedImage, index: number) => {
         const imageBytes = img.image?.imageBytes;
         if (!imageBytes) {
           throw new Error(
@@ -317,3 +335,5 @@ export const generateImage = createAction({
     return { images, model, prompt };
   },
 });
+
+type InputImage = { data: Buffer; extension?: string };

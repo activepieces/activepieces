@@ -4160,7 +4160,7 @@
     },
     "packages/pieces/community/google-vertexai": {
       "name": "@activepieces/piece-google-vertexai",
-      "version": "0.1.9",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4172,6 +4172,7 @@
       },
       "devDependencies": {
         "@types/mime-types": "2.1.1",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/google-workspace": {
