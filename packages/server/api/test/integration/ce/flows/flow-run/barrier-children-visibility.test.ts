@@ -25,10 +25,11 @@ beforeEach(async () => {
     ctx = await createTestContext(app)
 })
 
-async function seedFanOut({ childStatuses, parentStatus = FlowRunStatus.PAUSED, created }: {
+async function seedFanOut({ childStatuses, parentStatus = FlowRunStatus.PAUSED, created, environment = RunEnvironment.PRODUCTION }: {
     childStatuses: FlowRunStatus[]
     parentStatus?: FlowRunStatus
     created?: string
+    environment?: RunEnvironment
 }) {
     const flow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.ENABLED })
     await db.save('flow', flow)
@@ -43,7 +44,7 @@ async function seedFanOut({ childStatuses, parentStatus = FlowRunStatus.PAUSED, 
         flowId: flow.id,
         flowVersionId: flowVersion.id,
         status: parentStatus,
-        environment: RunEnvironment.PRODUCTION,
+        environment,
         ...(created ? { created } : {}),
     })
     await db.save('flow_run', parent)
@@ -56,7 +57,7 @@ async function seedFanOut({ childStatuses, parentStatus = FlowRunStatus.PAUSED, 
             status,
             parentRunId: parent.id,
             parentWaitpointId: barrierId,
-            environment: RunEnvironment.PRODUCTION,
+            environment,
             ...(created ? { created } : {}),
         }),
         dispatchIndex: index,
@@ -224,6 +225,45 @@ describe('Reaching a barrier child on request', () => {
         expect(response.statusCode).toBe(200)
         expect(response.json().data.map((run: { id: string }) => run.id)).toEqual([children[3].id])
         expect(response.json().data[0].dispatchIndex).toBe(3)
+    })
+
+    it('returns a test run\'s children for its barrier while the runs list still hides test runs', async () => {
+        const { children, barrierId } = await seedFanOut({
+            childStatuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.FAILED],
+            environment: RunEnvironment.TESTING,
+        })
+
+        const listed = await ctx.get('/v1/flow-runs', {
+            projectId: ctx.project.id,
+            parentWaitpointId: barrierId,
+            limit: 100,
+        })
+        const jumped = await ctx.get('/v1/flow-runs', {
+            projectId: ctx.project.id,
+            parentWaitpointId: barrierId,
+            dispatchIndex: 1,
+            limit: 1,
+        })
+        const runsList = await ctx.get('/v1/flow-runs', { projectId: ctx.project.id, limit: 100 })
+
+        expect(listed.json().data.map((run: { id: string }) => run.id)).toEqual(children.map((child) => child.id))
+        expect(jumped.json().data.map((run: { id: string }) => run.id)).toEqual([children[1].id])
+        expect(runsList.statusCode).toBe(200)
+        expect(runsList.json().data).toEqual([])
+    })
+
+    it('returns nothing for a barrier that belongs to another project', async () => {
+        const { barrierId } = await seedFanOut({ childStatuses: [FlowRunStatus.SUCCEEDED] })
+        const otherCtx = await createTestContext(app)
+
+        const response = await otherCtx.get('/v1/flow-runs', {
+            projectId: otherCtx.project.id,
+            parentWaitpointId: barrierId,
+            limit: 100,
+        })
+
+        expect(response.statusCode).toBe(200)
+        expect(response.json().data).toEqual([])
     })
 
     it('never returns another barrier\'s children', async () => {
