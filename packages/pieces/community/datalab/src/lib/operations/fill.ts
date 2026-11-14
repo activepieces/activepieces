@@ -11,6 +11,7 @@ const HUMAN_MAX_WAIT_MS = 360_000;
 const HUMAN_WAIT_MINUTES = Math.round(HUMAN_MAX_WAIT_MS / 60_000);
 const AI_WAIT_MINUTES = Math.round(datalabClient.MAX_WAIT_MS / 60_000);
 const USUAL_TIME = '1 to 4 minutes';
+const DENSE_TIME = '5 to 8 minutes';
 const DEFAULT_OUTPUT_FORMAT = 'pdf';
 const FILE_TYPES = 'PDF (fillable, flat or scanned) or image (PNG, JPG)';
 const CHECKBOX_HINT = 'To tick a checkbox, give "yes", "true", "1", "checked" or "x".';
@@ -38,7 +39,7 @@ const outputSchema: OutputSchema = {
 function humanProps() {
   return {
     slow_notice: Property.MarkDown({
-      value: `**This action is slow.** Filling one page usually takes ${USUAL_TIME}, much longer than the other Datalab actions. The step waits up to ${HUMAN_WAIT_MINUTES} minutes. If Datalab needs longer, the step stops with a "Timed out" error that says how to get the result.`,
+      value: `**This action is slow.** Filling one page usually takes ${USUAL_TIME}, much longer than the other Datalab actions. A dense form with many fields, such as a tax return page, can take ${DENSE_TIME}. The step waits up to ${HUMAN_WAIT_MINUTES} minutes. If Datalab needs longer, the step stops with a "Timed out" error that says how to get the result.`,
       variant: MarkdownVariant.INFO,
     }),
     ...datalabSource.humanProps({ noun: 'form', fileTypes: FILE_TYPES }),
@@ -243,6 +244,7 @@ export const fillOperation = {
   HUMAN_WAIT_MINUTES,
   AI_WAIT_MINUTES,
   USUAL_TIME,
+  DENSE_TIME,
   outputSchema,
   humanProps,
   aiProps,

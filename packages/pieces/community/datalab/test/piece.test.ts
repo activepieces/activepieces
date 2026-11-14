@@ -127,8 +127,8 @@ describe('datalab piece', () => {
     const human = handWritten.find((action) => action.name === 'fill_form');
     const ai = handWritten.find((action) => action.name === 'ai_fill_form');
     for (const action of [human, ai]) {
-      expect(action?.description, action?.name).toMatch(/Slow action: one page usually takes 1 to 4 minutes/);
-      expect(action?.aiMetadata?.description, action?.name).toMatch(/Slow action: one page usually takes 1 to 4 minutes, so a long wait is normal/);
+      expect(action?.description, action?.name).toMatch(/Slow action: one page usually takes 1 to 4 minutes \(5 to 8 for a dense form with many fields\)/);
+      expect(action?.aiMetadata?.description, action?.name).toMatch(/Slow action: one page usually takes 1 to 4 minutes, and a dense form with many fields can take 5 to 8, so a long wait is normal/);
     }
     expect(fillOperation.HUMAN_WAIT_MINUTES).toBe(fillOperation.HUMAN_MAX_WAIT_MS / 60_000);
     expect(fillOperation.AI_WAIT_MINUTES).toBe(datalabClient.MAX_WAIT_MS / 60_000);
@@ -137,6 +137,7 @@ describe('datalab piece', () => {
     expect(ai?.description).toContain(`the ${fillOperation.AI_WAIT_MINUTES} minute wait`);
     expect(ai?.aiMetadata?.description).toContain(`waits up to ${fillOperation.AI_WAIT_MINUTES} minutes`);
     expect(fillOperation.USUAL_TIME).toBe('1 to 4 minutes');
+    expect(fillOperation.DENSE_TIME).toBe('5 to 8 minutes');
   });
 
   it('opens the human Fill Form form with a notice that the action is slow, and gives the agent no notice prop', () => {
@@ -144,7 +145,7 @@ describe('datalab piece', () => {
     const ai = handWritten.find((action) => action.name === 'ai_fill_form');
     expect(Object.keys(human?.props ?? {})[0]).toBe('slow_notice');
     expect(human?.props['slow_notice']).toMatchObject({ type: 'MARKDOWN', variant: 'INFO' });
-    expect(JSON.stringify(human?.props['slow_notice'])).toMatch(/This action is slow.*usually takes 1 to 4 minutes.*waits up to 6 minutes/);
+    expect(JSON.stringify(human?.props['slow_notice'])).toMatch(/This action is slow.*usually takes 1 to 4 minutes.*dense form with many fields.*can take 5 to 8 minutes.*waits up to 6 minutes/);
     expect(Object.keys(ai?.props ?? {})).not.toContain('slow_notice');
   });
 
