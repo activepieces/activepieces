@@ -39,7 +39,7 @@ export const mailChimpSubscribeTrigger = createTrigger({
   name: 'subscribe',
   classification: 'READ',
   displayName: 'Member Subscribed to Audience',
-  description: 'Fires when a new subscriber joins your Mailchimp audience. This trigger captures new subscriptions, opt-ins, and audience growth events with comprehensive subscriber information.',
+  description: 'Fires when a new subscriber joins the audience',
   aiMetadata: {
     description: 'Fires when a contact subscribes (opts in) to the selected Mailchimp audience (list), representing a new or re-activated subscriber. The event carries the subscriber email, merge fields, and signup metadata.',
   },

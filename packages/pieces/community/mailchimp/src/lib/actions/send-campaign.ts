@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { mailchimpCommon } from '../common';
 import { mailchimpAuth } from '../..';
@@ -10,10 +10,23 @@ export const sendCampaign = createAction({
   name: 'send_campaign',
   classification: 'WRITE',
   displayName: 'Send Campaign',
-  description: 'Send a draft campaign to the subscribers in its audience, segment, or tag',
+  description: 'Send a draft campaign to its recipients',
   audience: 'both',
   aiMetadata: { description: 'Sends an existing draft campaign to its configured recipients immediately (RSS campaigns follow their schedule instead). Use once the campaign is fully set up; there is no undo, so confirm the campaign content and audience beforehand. Not idempotent: calling again on an already-sent campaign fails.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'campaign',
+      display: 'section',
+      label: 'Campaign to Send',
+      icon: 'send',
+      props: ['send_info', 'campaign_id'],
+    },
+  ],
   props: {
+    send_info: Property.MarkDown({
+      value: 'Regular campaigns go out right away and RSS campaigns follow their schedule. Sending cannot be undone.',
+      variant: MarkdownVariant.INFO,
+    }),
     campaign_id: mailchimpCommon.mailChimpDraftCampaignIdDropdown,
   },
   async run(context) {
