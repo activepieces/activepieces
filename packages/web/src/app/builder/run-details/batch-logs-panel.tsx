@@ -4,6 +4,7 @@ import { Info } from 'lucide-react';
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { ClosePanelButton } from '../step-data/close-panel-button';
@@ -13,6 +14,18 @@ import { batchUtils } from './batch-utils';
 import { BatchLogs } from './use-batch-logs';
 
 const BatchLogsPanel = ({ batchLogs }: { batchLogs: BatchLogs }) => {
+  if (batchLogs.kind === 'error') {
+    return (
+      <div className="flex flex-col h-full w-full">
+        <PanelHeader />
+        <DataFetchErrorState
+          entity={t('this batch')}
+          onRetry={batchLogs.retry}
+          className="grow"
+        />
+      </div>
+    );
+  }
   const copy = batchUtils.missingLogsCopy(batchLogs.kind);
   if (isNil(copy)) {
     return <></>;
@@ -43,10 +56,7 @@ const EmptyStatePanel = ({
   children?: ReactNode;
 }) => (
   <div className="flex flex-col h-full w-full">
-    <div className="flex items-center justify-end gap-1 px-3 py-2 shrink-0">
-      <StepDataPanelViewToggle />
-      <ClosePanelButton />
-    </div>
+    <PanelHeader />
     <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
       <div className="flex items-center justify-center size-12 rounded-full bg-gray-3 text-gray-11">
         <Info className="size-6" />
@@ -59,6 +69,13 @@ const EmptyStatePanel = ({
       </div>
       {children}
     </div>
+  </div>
+);
+
+const PanelHeader = () => (
+  <div className="flex items-center justify-end gap-1 px-3 py-2 shrink-0">
+    <StepDataPanelViewToggle />
+    <ClosePanelButton />
   </div>
 );
 
