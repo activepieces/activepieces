@@ -7,7 +7,7 @@ export const createDocumentAction = createAction({
   name: 'create_document',
   classification: 'READ',
   displayName: 'Create Document',
-  description: 'Turns Markdown text into a Word (.docx) file, with optional tracked changes and comments.',
+  description: 'Turns Markdown text into a Word file, with optional tracked changes and comments.',
   audience: 'both',
   aiMetadata: {
     description:

@@ -60,8 +60,8 @@ function humanProps() {
       defaultValue: 'automatic',
       options: {
         options: [
-          { label: 'Detect Documents', value: 'automatic', description: 'Find where each document starts, for example in a scanned batch.', icon: 'file' },
-          { label: 'Named Sections', value: 'sections', description: 'Find the sections you list, such as Invoice or Contract.', icon: 'tag' },
+          { label: 'Detect Documents', value: 'automatic', description: 'Find where each document starts.', icon: 'file' },
+          { label: 'Named Sections', value: 'sections', description: 'Find the sections you list.', icon: 'tag' },
         ],
       },
     }),

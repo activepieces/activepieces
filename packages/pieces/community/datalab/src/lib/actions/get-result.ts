@@ -8,7 +8,7 @@ export const getResultAction = createAction({
   name: 'get_result',
   classification: 'READ',
   displayName: 'Get Result',
-  description: 'Fetches the result of an earlier Datalab request that was still running when its step stopped.',
+  description: 'Fetches the result of a request that was still running when its step stopped.',
   audience: 'both',
   aiMetadata: {
     description:

@@ -8,8 +8,7 @@ export const fillFormAction = createAction({
   name: 'fill_form',
   classification: 'READ',
   displayName: 'Fill Form',
-  description:
-    'Fills a flat or scanned form that has no fillable fields. Slow action: one page usually takes 1 to 4 minutes (5 to 8 for a dense form with many fields).',
+  description: 'Fills a flat or scanned form with no fillable fields. Slow action: 1 to 4 minutes a page.',
   audience: 'human',
   aiMetadata: {
     description:

@@ -55,10 +55,10 @@ function humanProps() {
       defaultValue: DEFAULT_MODE,
       options: {
         options: [
-          { label: 'Lite', value: 'lite', description: 'Cheapest and fastest. No Exact Transcription or Extras.' },
-          { label: 'Fast', value: 'fast', description: 'Quick and low cost, good for clean digital files.' },
-          { label: 'Balanced', value: 'balanced', description: 'The default mix of speed, cost and accuracy.' },
-          { label: 'Accurate', value: 'accurate', description: 'Most accurate, slowest and costs the most.' },
+          { label: 'Lite', value: 'lite', description: 'Cheapest and fastest' },
+          { label: 'Fast', value: 'fast', description: 'Quick and low cost' },
+          { label: 'Balanced', value: 'balanced', description: 'The default balance' },
+          { label: 'Accurate', value: 'accurate', description: 'Slowest, most accurate' },
         ],
       },
     }),
