@@ -28,6 +28,9 @@ async function forResume({ flowRun, log }: ForResumeParams): Promise<StreamStepP
     if (flowRun.environment === RunEnvironment.TESTING) {
         return StreamStepProgress.WEBSOCKET
     }
+    if (isNil(flowRun.triggeredBy)) {
+        return StreamStepProgress.NONE
+    }
     const flowVersion = await flowVersionService(log).getOne(flowRun.flowVersionId)
     return forRun({ flowRun, flowVersion })
 }
