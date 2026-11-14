@@ -109,7 +109,7 @@ Flows are the core automation primitive: a versioned directed graph of trigger +
   module-level and outlives the route, but each `BuilderStateProvider` mount owns its store via `useRef`, so
   the late `setRun` writes into an orphaned store nothing renders. Fixed by threading an `AbortSignal` from the
   hook's unmount effect through both helpers: `getInitialRun` `off`s its started-event listener on abort and
-  simply never resolves, the subscribe helper bails on `signal.aborted` before `onUpdate` and `off`s the
+  resolves `null` so the mutation settles instead of staying pending, the subscribe helper bails on `signal.aborted` before `onUpdate` and `off`s the
   progress listener on abort, and `mutationFn` aborts the previous controller first so a second Test Flow
   click closes the first subscription instead of leaving it to expire on its own `finishTime`. The hook's
   `removeAllListeners` is gone; the one in `useSwitchToDraft` (`flow-canvas/hooks.tsx`) stays because it has no

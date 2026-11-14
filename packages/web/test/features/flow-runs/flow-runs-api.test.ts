@@ -1,5 +1,5 @@
 import { WebsocketClientEvent } from '@activepieces/shared';
-import { Socket } from 'socket.io-client';
+import { io } from 'socket.io-client';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/api', () => ({
@@ -19,7 +19,7 @@ describe('flowRunsApi.subscribeToTestFlowOrManualRun', () => {
     const onUpdate = vi.fn();
     const controller = new AbortController();
 
-    void flowRunsApi.subscribeToTestFlowOrManualRun({
+    const subscription = flowRunsApi.subscribeToTestFlowOrManualRun({
       socket: socket.asSocket,
       request: { flowVersionId: FLOW_VERSION_ID },
       onUpdate,
@@ -32,11 +32,34 @@ describe('flowRunsApi.subscribeToTestFlowOrManualRun', () => {
       id: 'run-1',
       flowVersionId: FLOW_VERSION_ID,
     });
-    await Promise.resolve();
+    await subscription;
 
-    expect(socket.listenerCount(WebsocketClientEvent.TEST_FLOW_RUN_STARTED)).toBe(0);
-    expect(socket.listenerCount(WebsocketClientEvent.UPDATE_RUN_PROGRESS)).toBe(0);
+    expect(
+      socket.listenerCount(WebsocketClientEvent.TEST_FLOW_RUN_STARTED),
+    ).toBe(0);
+    expect(socket.listenerCount(WebsocketClientEvent.UPDATE_RUN_PROGRESS)).toBe(
+      0,
+    );
     expect(onUpdate).not.toHaveBeenCalled();
+  });
+
+  it('settles when aborted before a run that never starts, so the caller does not stay pending', async () => {
+    const socket = createFakeSocket();
+    const controller = new AbortController();
+
+    const subscription = flowRunsApi.subscribeToTestFlowOrManualRun({
+      socket: socket.asSocket,
+      request: { flowVersionId: FLOW_VERSION_ID },
+      onUpdate: vi.fn(),
+      isForManualTrigger: true,
+      signal: controller.signal,
+    });
+    controller.abort();
+
+    await expect(subscription).resolves.toBeUndefined();
+    expect(
+      socket.listenerCount(WebsocketClientEvent.MANUAL_TRIGGER_RUN_STARTED),
+    ).toBe(0);
   });
 
   it('stops streaming progress once aborted after the run started', async () => {
@@ -62,7 +85,9 @@ describe('flowRunsApi.subscribeToTestFlowOrManualRun', () => {
       flowRun: { id: 'run-1' },
     });
 
-    expect(socket.listenerCount(WebsocketClientEvent.UPDATE_RUN_PROGRESS)).toBe(0);
+    expect(socket.listenerCount(WebsocketClientEvent.UPDATE_RUN_PROGRESS)).toBe(
+      0,
+    );
     expect(onUpdate).toHaveBeenCalledTimes(1);
   });
 
@@ -94,32 +119,18 @@ describe('flowRunsApi.subscribeToTestFlowOrManualRun', () => {
     expect(onUpdate).toHaveBeenLastCalledWith({
       flowRun: { id: 'run-1', finishTime: '2026-08-19T00:00:00.000Z' },
     });
-    expect(socket.listenerCount(WebsocketClientEvent.UPDATE_RUN_PROGRESS)).toBe(0);
+    expect(socket.listenerCount(WebsocketClientEvent.UPDATE_RUN_PROGRESS)).toBe(
+      0,
+    );
   });
 });
 
 function createFakeSocket() {
-  const listeners = new Map<string, ((payload: unknown) => void)[]>();
-  const fakeSocket = {
-    emit: () => fakeSocket,
-    on: (event: string, handler: (payload: unknown) => void) => {
-      listeners.set(event, [...(listeners.get(event) ?? []), handler]);
-      return fakeSocket;
-    },
-    off: (event: string, handler: (payload: unknown) => void) => {
-      listeners.set(
-        event,
-        (listeners.get(event) ?? []).filter(
-          (registered) => registered !== handler,
-        ),
-      );
-      return fakeSocket;
-    },
-  };
+  const socket = io('http://localhost', { autoConnect: false });
   return {
-    asSocket: fakeSocket as unknown as Socket,
+    asSocket: socket,
     emitToClient: (event: string, payload: unknown) =>
-      [...(listeners.get(event) ?? [])].forEach((handler) => handler(payload)),
-    listenerCount: (event: string) => (listeners.get(event) ?? []).length,
+      socket.listeners(event).forEach((handler) => handler(payload)),
+    listenerCount: (event: string) => socket.listeners(event).length,
   };
 }
