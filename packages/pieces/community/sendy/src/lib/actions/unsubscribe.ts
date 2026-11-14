@@ -13,14 +13,14 @@ export const unsubscribeAction = createAction({
   classification: 'DESTRUCTIVE',
   auth: sendyAuth,
   displayName: 'Unsubscribe',
-  description: 'Unsubscribe a subscriber from a list',
+  description: 'Unsubscribe someone from a list. Their record is kept.',
   audience: 'both',
   aiMetadata: { description: 'Marks a subscriber, identified by email, as unsubscribed from a single Sendy list while keeping the record (unlike Delete Subscriber, which removes it). Use to opt a contact out of one list; for several lists use Unsubscribe Multiple Lists. Requires the list and a valid email; unsubscribing an already-unsubscribed contact has no further effect, so repeating the call is idempotent.', idempotent: true },
   props: {
     list: Property.Dropdown({
       auth: sendyAuth,
       displayName: 'List',
-      description: 'Select the list to unsubscribe from',
+      description: 'The list to unsubscribe them from.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) =>
@@ -28,7 +28,8 @@ export const unsubscribeAction = createAction({
     }),
     email: Property.ShortText({
       displayName: 'Email',
-      description: "The user's email",
+      description: "The subscriber's email address.",
+      placeholder: 'jane@example.com',
       required: true,
     }),
   },

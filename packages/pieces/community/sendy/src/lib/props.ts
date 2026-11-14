@@ -6,7 +6,7 @@ export async function buildBrandDropdown(auth: SendyAuthType) {
     return {
       options: [],
       disabled: true,
-      placeholder: 'Please authenticate first',
+      placeholder: 'Please connect your account first',
     };
   }
   const response = await getBrands(auth);
@@ -23,7 +23,7 @@ export async function buildListDropdown(auth: SendyAuthType) {
     return {
       options: [],
       disabled: true,
-      placeholder: 'Please authenticate first',
+      placeholder: 'Please connect your account first',
     };
   }
   const response = await getLists(auth);

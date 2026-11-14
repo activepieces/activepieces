@@ -13,14 +13,14 @@ export const deleteAction = createAction({
   classification: 'DESTRUCTIVE',
   auth: sendyAuth,
   displayName: 'Delete Subscriber',
-  description: 'Delete a subscriber from a list',
+  description: 'Remove a subscriber from a list for good.',
   audience: 'both',
   aiMetadata: { description: 'Permanently removes a subscriber, identified by email, from a specific Sendy list. Use to purge a contact rather than just unsubscribing them. Requires the list and a valid email; deleting an already-absent subscriber has no further effect, so repeating the call is effectively idempotent.', idempotent: true },
   props: {
     list: Property.Dropdown({
       auth: sendyAuth,
       displayName: 'List',
-      description: 'Select the list to delete from',
+      description: 'The list to delete them from.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) =>
@@ -28,7 +28,8 @@ export const deleteAction = createAction({
     }),
     email: Property.ShortText({
       displayName: 'Email',
-      description: "The user's email",
+      description: "The subscriber's email address.",
+      placeholder: 'jane@example.com',
       required: true,
     }),
   },

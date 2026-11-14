@@ -12,15 +12,15 @@ export const subscribeAction = createAction({
   name: 'subscribe',
   classification: 'WRITE',
   auth: sendyAuth,
-  displayName: 'Subscribe Updated',
-  description: 'Add a new subscriber to a list',
+  displayName: 'Subscribe',
+  description: 'Add a subscriber to a list.',
   audience: 'both',
   aiMetadata: { description: 'Adds a subscriber (by email, plus optional name, country, IP, referrer) to a single Sendy list. Use to opt a contact into one list; for several lists at once use Subscribe Multiple Lists instead. Honors the list\'s double opt-in unless the silent flag forces single opt-in. Effectively an upsert on the email, so re-running with the same email is safe.', idempotent: true },
   props: {
     list: Property.Dropdown({
       auth: sendyAuth,
       displayName: 'List',
-      description: 'Select the list to subscribe to',
+      description: 'The list to add the subscriber to.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) =>
@@ -28,48 +28,60 @@ export const subscribeAction = createAction({
     }),
     email: Property.ShortText({
       displayName: 'Email',
-      description: "The user's email",
+      description: "The subscriber's email address.",
+      placeholder: 'jane@example.com',
       required: true,
     }),
     name: Property.ShortText({
       displayName: 'Name',
-      description: "The user's name",
+      description: 'Fills the [Name] tag in your emails.',
+      placeholder: 'Jane Doe',
+      width: 'half',
       required: false,
     }),
     country: Property.ShortText({
       displayName: 'Country',
-      description: "The user's 2 letter country code",
+      description: 'Two-letter country code.',
+      placeholder: 'US',
+      width: 'half',
       required: false,
     }),
     ipaddress: Property.ShortText({
       displayName: 'IP Address',
-      description: "The user's IP address",
+      description: "The subscriber's IP address at signup.",
+      placeholder: '203.0.113.7',
+      width: 'half',
       required: false,
     }),
     referrer: Property.ShortText({
-      displayName: 'Referrer',
-      description: 'The URL where the user signed up from',
+      displayName: 'Signup Page',
+      description: 'URL of the page they signed up on.',
+      placeholder: 'https://example.com',
+      width: 'half',
       required: false,
     }),
     gdpr: Property.Checkbox({
-      displayName: 'GDPR compliant',
-      description:
-        "If you're signing up EU users in a GDPR compliant manner, set to true",
+      displayName: 'GDPR Consent',
+      description: 'Turn off unless the subscriber gave GDPR-compliant consent.',
       required: false,
       defaultValue: true,
     }),
     silent: Property.Checkbox({
-      displayName: 'Silent',
-      description:
-        "set to true if your list is 'Double opt-in' but you want to bypass that and signup the user to the list as 'Single Opt-in instead' ",
+      displayName: 'Skip Double Opt-In',
+      description: 'Add them right away, even if the list asks for confirmation.',
       required: false,
       defaultValue: false,
     }),
   },
+  propertyGroups: [
+    { key: 'subscriber', display: 'section', label: 'Subscriber', icon: 'user', props: ['list', 'email', 'name', 'country'] },
+    { key: 'source', display: 'section', label: 'Signup source', icon: 'location', props: ['ipaddress', 'referrer'] },
+    { key: 'consent', display: 'section', label: 'Consent', icon: 'tag', props: ['gdpr', 'silent'] },
+  ],
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
       email: z.string().check(z.email()),
-      referrer: z.string().check(z.url()),
+      referrer: z.optional(z.string().check(z.url())),
     });
 
     return await subscribe(context.auth, {
