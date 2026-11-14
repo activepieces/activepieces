@@ -44,11 +44,12 @@ function instanceUrl(auth: JsmAuthProps): string {
 }
 
 function authHeaders(auth: JsmAuthProps): Record<string, string> {
+	const token = auth.apiToken.trim();
 	if (isCloud(auth)) {
-		const credentials = Buffer.from(`${auth.email ?? ''}:${auth.apiToken}`).toString('base64');
+		const credentials = Buffer.from(`${(auth.email ?? '').trim()}:${token}`).toString('base64');
 		return { Authorization: `Basic ${credentials}` };
 	}
-	return { Authorization: `Bearer ${auth.apiToken}` };
+	return { Authorization: `Bearer ${token}` };
 }
 
 async function request<T>({ auth, api, method, path, query, body, experimental }: RequestParams): Promise<T> {

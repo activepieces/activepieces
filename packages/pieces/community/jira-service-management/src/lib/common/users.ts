@@ -67,7 +67,7 @@ async function resolveOne({ auth, value, lookup }: { auth: JsmAuthProps; value: 
 		}
 	}
 	throw new Error(
-		`No Jira user was found for "${identifier}". A customer created less than a minute ago may not be searchable yet: use the Account ID from the Create Customer step instead of the email.`,
+		`No Jira user was found for "${identifier}". Jira may hide this person's email from the connected account, and a customer created less than a minute ago may not be searchable yet: use the Account ID from the Create Customer step instead of the email.`,
 	);
 }
 

@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { newRequestPolling } from '../src/lib/common/polling';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { HttpError, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common';
+import { PollingState, newRequestPolling } from '../src/lib/common/polling';
 
 const MINUTE = 60_000;
 const T0 = Date.parse('2026-11-13T18:00:00.000+0000');
@@ -101,3 +102,104 @@ describe('newRequestPolling.relativeJqlDate', () => {
 		expect(newRequestPolling.relativeJqlDate({ sinceEpochMs: T0, now: T0 })).toBe('"-1m"');
 	});
 });
+
+describe('newRequestPolling.onEnable', () => {
+	it('starts a new window on a first enable', async () => {
+		const store = memoryStore();
+		await newRequestPolling.onEnable({ store, isRepublish: false });
+		expect(store.saved()).toMatchObject({ seen: {} });
+	});
+
+	it('keeps the saved window on a republish, so requests created since the last poll are not lost', async () => {
+		const saved: PollingState = { windowStart: T0, seen: { '7': T0 + 1000 } };
+		const store = memoryStore(saved);
+		await newRequestPolling.onEnable({ store, isRepublish: true });
+		expect(store.saved()).toEqual(saved);
+	});
+});
+
+describe('newRequestPolling.poll', () => {
+	const auth = { deployment: 'data_center', instanceUrl: 'https://jira.acme.test', apiToken: 'pat' };
+	const old = Array.from({ length: 500 }, (_, index) => issue({ id: String(index + 1), created: '2026-11-13T17:59:59.000+0000' }));
+	const fresh = Array.from({ length: 100 }, (_, index) => issue({ id: String(index + 501), created: '2026-11-13T18:01:00.000+0000' }));
+
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	it('looks deeper when the first 500 results hold nothing new, emits what it finds and saves the cursor', async () => {
+		vi.spyOn(Date, 'now').mockReturnValue(T0 + 5 * MINUTE);
+		const spy = mockJira({ issues: [...old, ...fresh] });
+		const store = memoryStore({ windowStart: T0, seen: {} });
+		const requests = await newRequestPolling.poll({ auth, store, serviceDeskId: '1' });
+		const searches = searchesOf(spy);
+		expect(searches[0].body).toMatchObject({ jql: 'project = 10000 AND created > "-6m" ORDER BY created ASC', startAt: 0 });
+		expect(searches.filter((request) => bodyOf(request)['startAt'] === 0)).toHaveLength(2);
+		expect(requests.map((request) => request.issue_key)).toEqual(fresh.map((item) => item.key));
+		expect(Object.keys(store.saved()?.seen ?? {})).toHaveLength(100);
+	});
+
+	it('does not move the cursor when loading a request fails, so the next poll tries again', async () => {
+		vi.spyOn(Date, 'now').mockReturnValue(T0 + 5 * MINUTE);
+		mockJira({ issues: fresh, failRequestId: '550' });
+		const before: PollingState = { windowStart: T0, seen: {} };
+		const store = memoryStore(before);
+		await expect(newRequestPolling.poll({ auth, store, serviceDeskId: '1' })).rejects.toThrow('(500)');
+		expect(store.saved()).toEqual(before);
+	});
+
+	it('shows the five newest requests in a test, without touching the cursor', async () => {
+		const spy = mockJira({ issues: fresh });
+		const requests = await newRequestPolling.test({ auth, serviceDeskId: '1' });
+		expect(searchesOf(spy)[0].body).toMatchObject({ jql: 'project = 10000 ORDER BY created DESC', maxResults: 5 });
+		expect(requests).toHaveLength(5);
+	});
+});
+
+function memoryStore(initial?: PollingState) {
+	const data = new Map<string, string>(initial ? [[STATE_KEY, JSON.stringify(initial)]] : []);
+	const read = (key: string) => {
+		const raw = data.get(key);
+		return raw === undefined ? null : JSON.parse(raw);
+	};
+	return {
+		saved: (): PollingState | null => read(STATE_KEY),
+		put: async <T>(key: string, value: T): Promise<T> => {
+			data.set(key, JSON.stringify(value));
+			return value;
+		},
+		get: async <T>(key: string): Promise<T | null> => read(key),
+		delete: async (key: string): Promise<void> => {
+			data.delete(key);
+		},
+	};
+}
+
+function mockJira({ issues, failRequestId }: { issues: ReturnType<typeof issue>[]; failRequestId?: string }) {
+	return vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request: HttpRequest) => {
+		if (request.method === HttpMethod.GET && request.url.endsWith('/rest/servicedeskapi/servicedesk/1')) {
+			return { status: 200, headers: {}, body: { id: '1', projectId: '10000' } };
+		}
+		if (request.method === HttpMethod.POST && request.url.endsWith('/rest/api/2/search')) {
+			const body = bodyOf(request);
+			const startAt = Number(body['startAt'] ?? 0);
+			const maxResults = Number(body['maxResults'] ?? 50);
+			return { status: 200, headers: {}, body: { issues: issues.slice(startAt, startAt + maxResults), total: issues.length } };
+		}
+		const id = request.url.split('/request/')[1];
+		if (request.method === HttpMethod.GET && id !== undefined && id !== failRequestId) {
+			return { status: 200, headers: {}, body: { issueId: id, issueKey: `SD-${id}`, requestFieldValues: [] } };
+		}
+		throw new HttpError({}, { status: 500, responseBody: { errorMessage: 'Jira is down' } });
+	});
+}
+
+function searchesOf(spy: ReturnType<typeof mockJira>): HttpRequest[] {
+	return spy.mock.calls.map(([request]) => request).filter((request) => request.url.endsWith('/rest/api/2/search'));
+}
+
+function bodyOf(request: HttpRequest): Record<string, unknown> {
+	return typeof request.body === 'object' && request.body !== null ? { ...request.body } : {};
+}
+
+const STATE_KEY = 'newRequestState';

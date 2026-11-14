@@ -23,6 +23,13 @@ describe('jsmClient.authHeaders', () => {
 	it('uses Bearer token on Data Center', () => {
 		expect(jsmClient.authHeaders(dataCenter)).toEqual({ Authorization: 'Bearer pat' });
 	});
+
+	it('ignores spaces pasted around the email and the token', () => {
+		expect(jsmClient.authHeaders({ ...cloud, email: ' agent@acme.test ', apiToken: ' tok\n' })).toEqual({
+			Authorization: `Basic ${Buffer.from('agent@acme.test:tok').toString('base64')}`,
+		});
+		expect(jsmClient.authHeaders({ ...dataCenter, apiToken: ' pat ' })).toEqual({ Authorization: 'Bearer pat' });
+	});
 });
 
 describe('jsmClient.instanceUrl', () => {
