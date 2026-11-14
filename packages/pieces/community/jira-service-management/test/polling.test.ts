@@ -8,6 +8,16 @@ function issue({ id, created }: { id: string; created: string }) {
 	return { id, key: `SD-${id}`, fields: { created } };
 }
 
+describe('newRequestPolling.initialState', () => {
+	it('starts just before the current second, so a request created right after enabling is not lost when Jira rounds to the second', () => {
+		const enabledAt = Date.parse('2026-11-13T18:00:12.800+0000');
+		const state = newRequestPolling.initialState(enabledAt);
+		const sameSecond = issue({ id: '1', created: '2026-11-13T18:00:12.000+0000' });
+		const secondBefore = issue({ id: '2', created: '2026-11-13T18:00:11.000+0000' });
+		expect(newRequestPolling.selectFresh({ issues: [secondBefore, sameSecond], state }).map((item) => item.id)).toEqual(['1']);
+	});
+});
+
 describe('newRequestPolling.selectFresh', () => {
 	it('keeps only issues created after the window start that were not emitted before', () => {
 		const state = { windowStart: T0, seen: { '2': T0 + 1000 } };
@@ -53,6 +63,35 @@ describe('newRequestPolling.advance', () => {
 		const next = newRequestPolling.advance({ state: { windowStart: T0, seen: {} }, issues, fresh: issues, truncated: true, now: T0 + 60 * MINUTE });
 		expect(next.windowStart).toBe(T0 + 2 * MINUTE - 1);
 		expect(next.seen).toEqual({ '2': T0 + 2 * MINUTE });
+	});
+});
+
+describe('newRequestPolling.planPoll', () => {
+	it('emits at most 200 requests per poll and continues from the last one emitted', () => {
+		const issues = Array.from({ length: 250 }, (_, index) =>
+			issue({ id: String(index + 1), created: new Date(T0 + (index + 1) * 1000).toISOString() }),
+		);
+		const first = newRequestPolling.planPoll({ state: { windowStart: T0, seen: {} }, issues, truncated: false, now: T0 + 10 * MINUTE });
+		expect(first.emit).toHaveLength(200);
+		expect(first.nextState.windowStart).toBe(T0 + 200 * 1000 - 1);
+		const second = newRequestPolling.planPoll({ state: first.nextState, issues, truncated: false, now: T0 + 11 * MINUTE });
+		expect(second.emit.map((item) => item.id)).toEqual(Array.from({ length: 50 }, (_, index) => String(index + 201)));
+	});
+
+	it('gets through more than 200 requests created in the same second', () => {
+		const issues = Array.from({ length: 250 }, (_, index) => issue({ id: String(index + 1), created: '2026-11-13T18:00:06.000+0000' }));
+		const first = newRequestPolling.planPoll({ state: { windowStart: T0, seen: {} }, issues, truncated: false, now: T0 + MINUTE });
+		const second = newRequestPolling.planPoll({ state: first.nextState, issues, truncated: false, now: T0 + 2 * MINUTE });
+		expect(first.emit).toHaveLength(200);
+		expect(second.emit).toHaveLength(50);
+		expect(new Set([...first.emit, ...second.emit].map((item) => item.id)).size).toBe(250);
+	});
+
+	it('moves the window forward when a cut-off search holds nothing new, so the trigger cannot stall', () => {
+		const old = [issue({ id: '1', created: '2026-11-13T17:59:00.000+0000' })];
+		const plan = newRequestPolling.planPoll({ state: { windowStart: T0, seen: {} }, issues: old, truncated: true, now: T0 + 10 * MINUTE });
+		expect(plan.emit).toEqual([]);
+		expect(plan.nextState.windowStart).toBe(T0 + MINUTE);
 	});
 });
 

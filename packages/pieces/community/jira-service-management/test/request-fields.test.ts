@@ -94,6 +94,12 @@ describe('jsmRequestFields.formatValues', () => {
 		});
 	});
 
+	it('refuses a value that is not a number instead of sending null', async () => {
+		await expect(jsmRequestFields.formatValues({ auth: cloud, fields: [count], input: { customfield_2: 'three' } })).rejects.toThrow(
+			'"Seats" must be a number',
+		);
+	});
+
 	it('references people by accountId on Cloud', async () => {
 		const formatted = await jsmRequestFields.formatValues({ auth: cloud, fields: [owner], input: { customfield_3: '5b10ac8d82e05b22cc7d4ef5' } });
 		expect(formatted).toEqual({ customfield_3: { accountId: '5b10ac8d82e05b22cc7d4ef5' } });

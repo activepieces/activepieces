@@ -3,6 +3,7 @@ import { Property, createAction, isNil } from '@activepieces/pieces-framework';
 import { jsmAuth, jsmConnection } from '../auth';
 import { JsmAuthProps, JsmDate, JsmUser, jsmClient } from '../common/client';
 import { jsmProps } from '../common/props';
+import { jsmUsers } from '../common/users';
 import { approvalOutputSchema } from '../output-schemas';
 
 export const answerApprovalAction = createAction({
@@ -74,7 +75,7 @@ export const answerApprovalAction = createAction({
 				name: entry.approver?.displayName ?? null,
 				email: entry.approver?.emailAddress ?? null,
 				account_id: entry.approver?.accountId ?? null,
-				username: entry.approver?.name ?? null,
+				username: jsmUsers.usernameOf(entry.approver),
 				decision: entry.approverDecision ?? null,
 			})),
 		};

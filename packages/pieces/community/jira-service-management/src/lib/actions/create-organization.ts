@@ -14,8 +14,8 @@ export const createOrganizationAction = createAction({
 	audience: 'both',
 	aiMetadata: {
 		description:
-			'Create a Jira Service Management organization (a named group of customers) and optionally add it to one service desk in the same step. Each call creates another organization, even with a name that already exists, so do not retry after a success.',
-		idempotent: false,
+			'Create a Jira Service Management organization (a named group of customers) and optionally add it to one service desk in the same step. When an organization with that name already exists, Jira returns the existing one instead of a duplicate, so it is safe to retry.',
+		idempotent: true,
 	},
 	outputSchema: organizationOutputSchema,
 	props: {

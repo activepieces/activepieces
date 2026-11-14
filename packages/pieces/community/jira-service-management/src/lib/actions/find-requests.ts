@@ -60,7 +60,7 @@ export const findRequestsAction = createAction({
 		const term = jsmClient.asString(searchTerm);
 		const conditions = [
 			scope,
-			isNil(term) ? null : `text ~ ${jsmRequests.quoteJql(term)}`,
+			isNil(term) ? null : jsmRequests.textClause(term),
 			STATUS_JQL[requestStatus ?? 'all'] ?? null,
 		].filter((condition): condition is string => !isNil(condition));
 		return jsmRequests.search({

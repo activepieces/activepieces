@@ -6,7 +6,9 @@ export const newRequestPolling = {
 	onEnable,
 	poll,
 	test,
+	initialState,
 	selectFresh,
+	planPoll,
 	advance,
 	relativeJqlDate,
 };
@@ -15,22 +17,22 @@ async function onEnable({ store, isRepublish }: { store: Store; isRepublish?: bo
 	if (isRepublish && !isNil(await store.get<PollingState>(STATE_KEY))) {
 		return;
 	}
-	await store.put<PollingState>(STATE_KEY, { windowStart: Date.now(), seen: {} });
+	await store.put<PollingState>(STATE_KEY, initialState(Date.now()));
 }
 
 async function poll({ auth, store, serviceDeskId }: PollParams): Promise<FlatRequest[]> {
 	const now = Date.now();
-	const state = (await store.get<PollingState>(STATE_KEY)) ?? { windowStart: now, seen: {} };
+	const state = (await store.get<PollingState>(STATE_KEY)) ?? initialState(now);
 	const projectId = await projectIdOf({ auth, serviceDeskId });
-	const { issues, truncated } = await jsmClient.searchIssues({
-		auth,
-		jql: `project = ${projectId} AND created > ${relativeJqlDate({ sinceEpochMs: state.windowStart, now })} ORDER BY created ASC`,
-		limit: MAX_PER_POLL,
-		fields: ISSUE_FIELDS,
-	});
-	const fresh = selectFresh({ issues, state });
-	const requests = await jsmRequests.fetchMany({ auth, issues: fresh });
-	await store.put<PollingState>(STATE_KEY, advance({ state, issues, fresh, truncated, now }));
+	const jql = `project = ${projectId} AND created > ${relativeJqlDate({ sinceEpochMs: state.windowStart, now })} ORDER BY created ASC`;
+	const first = await jsmClient.searchIssues({ auth, jql, limit: SEARCH_LIMIT, fields: ISSUE_FIELDS });
+	const nothingNewInFirstPage = first.truncated && selectFresh({ issues: first.issues, state }).length === 0;
+	const found = nothingNewInFirstPage
+		? await jsmClient.searchIssues({ auth, jql, limit: DEEP_SEARCH_LIMIT, fields: ISSUE_FIELDS })
+		: first;
+	const plan = planPoll({ state, issues: found.issues, truncated: found.truncated, now });
+	const requests = await jsmRequests.fetchMany({ auth, issues: plan.emit });
+	await store.put<PollingState>(STATE_KEY, plan.nextState);
 	return requests;
 }
 
@@ -43,11 +45,29 @@ async function test({ auth, serviceDeskId }: { auth: JsmAuthProps; serviceDeskId
 	});
 }
 
+function initialState(now: number): PollingState {
+	return { windowStart: Math.floor(now / 1000) * 1000 - 1, seen: {} };
+}
+
 function selectFresh({ issues, state }: { issues: JiraIssue[]; state: PollingState }): JiraIssue[] {
 	return issues.filter((issue) => {
 		const created = createdEpoch(issue);
 		return Number.isFinite(created) && created > state.windowStart && isNil(state.seen[issue.id]);
 	});
+}
+
+function planPoll({ state, issues, truncated, now }: PlanParams): PollPlan {
+	const candidates = selectFresh({ issues, state });
+	const emit = candidates.slice(0, MAX_EMIT_PER_POLL);
+	const limited = candidates.length > emit.length;
+	if (truncated && candidates.length === 0) {
+		const windowStart = Math.min(now, state.windowStart + STALL_STEP_MS);
+		return { emit, nextState: { windowStart, seen: keepSeen({ seen: state.seen, windowStart }) } };
+	}
+	return {
+		emit,
+		nextState: advance({ state, issues: limited ? emit : issues, fresh: emit, truncated: truncated || limited, now }),
+	};
 }
 
 function advance({ state, issues, fresh, truncated, now }: AdvanceParams): PollingState {
@@ -62,11 +82,14 @@ function advance({ state, issues, fresh, truncated, now }: AdvanceParams): Polli
 		(acc, issue) => ({ ...acc, [issue.id]: createdEpoch(issue) }),
 		state.seen,
 	);
-	const seen = Object.entries(emitted).reduce<Record<string, number>>(
+	return { windowStart, seen: keepSeen({ seen: emitted, windowStart }) };
+}
+
+function keepSeen({ seen, windowStart }: { seen: Record<string, number>; windowStart: number }): Record<string, number> {
+	return Object.entries(seen).reduce<Record<string, number>>(
 		(acc, [id, created]) => (created > windowStart ? { ...acc, [id]: created } : acc),
 		{},
 	);
-	return { windowStart, seen };
 }
 
 function relativeJqlDate({ sinceEpochMs, now }: { sinceEpochMs: number; now: number }): string {
@@ -88,7 +111,10 @@ function createdEpoch(issue: JiraIssue): number {
 
 const STATE_KEY = 'newRequestState';
 const LOOKBACK_MS = 15 * 60 * 1000;
-const MAX_PER_POLL = 500;
+const SEARCH_LIMIT = 500;
+const DEEP_SEARCH_LIMIT = 5000;
+const MAX_EMIT_PER_POLL = 200;
+const STALL_STEP_MS = 60 * 1000;
 const TEST_LIMIT = 5;
 const ISSUE_FIELDS = ['summary', 'created', 'status', 'reporter'];
 
@@ -101,6 +127,18 @@ type PollParams = {
 	auth: JsmAuthProps;
 	store: Store;
 	serviceDeskId: string;
+};
+
+type PlanParams = {
+	state: PollingState;
+	issues: JiraIssue[];
+	truncated: boolean;
+	now: number;
+};
+
+type PollPlan = {
+	emit: JiraIssue[];
+	nextState: PollingState;
 };
 
 type AdvanceParams = {

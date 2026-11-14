@@ -20,6 +20,13 @@ describe('jsmUsers.toList', () => {
 	});
 });
 
+describe('jsmUsers.flatten', () => {
+	it('shows the username on Data Center and hides the deprecated name on Cloud', () => {
+		expect(jsmUsers.flatten({ name: 'jdoe', displayName: 'Jane' }).username).toBe('jdoe');
+		expect(jsmUsers.flatten({ accountId: 'qm:abc', name: 'qm:abc', displayName: 'Jane' })).toMatchObject({ account_id: 'qm:abc', username: null });
+	});
+});
+
 describe('jsmUsers.resolveOne', () => {
 	it('passes usernames through on Data Center without a lookup', async () => {
 		const spy = vi.spyOn(httpClient, 'sendRequest');

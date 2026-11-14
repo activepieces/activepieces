@@ -132,6 +132,17 @@ describe('jsmRequests.fetchMany', () => {
 	});
 });
 
+describe('jsmRequests.textClause', () => {
+	it('removes the characters that break a Jira text search', () => {
+		expect(jsmRequests.textClause('(printer')).toBe('text ~ "printer"');
+		expect(jsmRequests.textClause('wi-fi [down] "now"')).toBe('text ~ "wi fi down now"');
+	});
+
+	it('returns nothing when only special characters were typed', () => {
+		expect(jsmRequests.textClause(' ([~]) ')).toBeNull();
+	});
+});
+
 describe('jsmRequests.quoteJql', () => {
 	it('escapes quotes and backslashes', () => {
 		expect(jsmRequests.quoteJql('say "hi" \\ bye')).toBe('"say \\"hi\\" \\\\ bye"');

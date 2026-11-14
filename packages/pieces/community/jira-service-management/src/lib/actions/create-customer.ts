@@ -10,11 +10,11 @@ export const createCustomerAction = createAction({
 	name: 'create_customer',
 	classification: 'WRITE',
 	displayName: 'Create Customer',
-	description: 'Creates a customer account that can raise requests.',
+	description: 'Creates a customer account that can raise requests. On Jira Cloud the connected account must be a Jira administrator.',
 	audience: 'both',
 	aiMetadata: {
 		description:
-			'Create a Jira Service Management customer from an email and a name. The customer is not in any service desk yet; follow with Add Customers to Service Desk. Fails when a user with that email already exists, so do not retry after a success.',
+			'Create a Jira Service Management customer from an email and a name. The customer is not in any service desk yet; follow with Add Customers to Service Desk. Fails when a user with that email already exists, so do not retry after a success. On Jira Cloud it needs a connection of a Jira administrator.',
 		idempotent: false,
 	},
 	outputSchema: customerOutputSchema,

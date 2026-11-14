@@ -25,6 +25,18 @@ describe('jsmClient.authHeaders', () => {
 	});
 });
 
+describe('jsmClient.instanceUrl', () => {
+	it('keeps only the site address when a Cloud user pastes a page link', () => {
+		expect(jsmClient.instanceUrl({ ...cloud, instanceUrl: 'https://acme.atlassian.net/jira/servicedesk/projects/SD/queues' })).toBe(
+			'https://acme.atlassian.net',
+		);
+	});
+
+	it('keeps a context path on Data Center', () => {
+		expect(jsmClient.instanceUrl({ ...dataCenter, instanceUrl: 'https://intranet.acme.test/jira/' })).toBe('https://intranet.acme.test/jira');
+	});
+});
+
 describe('jsmClient.request', () => {
 	it('targets servicedeskapi and trims the trailing slash of the instance URL', async () => {
 		const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(ok({ id: '1' }));

@@ -92,7 +92,7 @@ async function formatValue({ auth, field, value }: { auth: JsmAuthProps; field: 
 		case 'text':
 			return String(value);
 		case 'number':
-			return Number(value);
+			return toNumber({ field, value });
 		case 'date':
 			return String(value).slice(0, 10);
 		case 'datetime':
@@ -161,6 +161,14 @@ function personHint(auth: JsmAuthProps): string {
 
 function personReference({ auth, id }: { auth: JsmAuthProps; id: string }): Record<string, string> {
 	return jsmClient.isCloud(auth) ? { accountId: id } : { name: id };
+}
+
+function toNumber({ field, value }: { field: RequestTypeField; value: unknown }): number {
+	const parsed = Number(value);
+	if (!Number.isFinite(parsed)) {
+		throw new Error(`"${field.name}" must be a number, but got "${String(value)}".`);
+	}
+	return parsed;
 }
 
 function toJiraDateTime(value: string): string {

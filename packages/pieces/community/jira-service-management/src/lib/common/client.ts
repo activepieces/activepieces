@@ -32,7 +32,15 @@ function isCloud(auth: JsmAuthProps): boolean {
 }
 
 function instanceUrl(auth: JsmAuthProps): string {
-	return auth.instanceUrl.trim().replace(/\/+$/, '');
+	const trimmed = auth.instanceUrl.trim().replace(/\/+$/, '');
+	if (!isCloud(auth)) {
+		return trimmed;
+	}
+	try {
+		return new URL(trimmed).origin;
+	} catch {
+		return trimmed;
+	}
 }
 
 function authHeaders(auth: JsmAuthProps): Record<string, string> {
@@ -101,7 +109,7 @@ async function searchIssues({ auth, jql, limit, fields }: SearchParams): Promise
 async function searchCloud({ auth, jql, limit, fields }: SearchParams): Promise<SearchResult> {
 	const issues: JiraIssue[] = [];
 	let nextPageToken: string | undefined = undefined;
-	for (let page = 0; page < MAX_PAGES; page++) {
+	for (let page = 0; page < MAX_SEARCH_PAGES; page++) {
 		const response: CloudSearchResponse = await request<CloudSearchResponse>({
 			auth,
 			api: 'jira',
@@ -128,7 +136,7 @@ async function searchCloud({ auth, jql, limit, fields }: SearchParams): Promise<
 
 async function searchDataCenter({ auth, jql, limit, fields }: SearchParams): Promise<SearchResult> {
 	const issues: JiraIssue[] = [];
-	for (let page = 0; page < MAX_PAGES; page++) {
+	for (let page = 0; page < MAX_SEARCH_PAGES; page++) {
 		const response = await request<DataCenterSearchResponse>({
 			auth,
 			api: 'jira',
@@ -219,6 +227,7 @@ function asString(value: unknown): string | undefined {
 
 const PAGE_SIZE = 50;
 const MAX_PAGES = 20;
+const MAX_SEARCH_PAGES = 100;
 const STATUS_HINTS: Record<number, string> = {
 	401: 'Check the Instance URL, email and token in your connection',
 	403: 'The connected account is not allowed to do this. Check its permissions in Jira',

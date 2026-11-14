@@ -12,6 +12,7 @@ export const jsmRequests = {
 	listServiceDesks,
 	getServiceDesk,
 	quoteJql,
+	textClause,
 	simplifyValue,
 };
 
@@ -36,7 +37,7 @@ function flatten({ auth, request }: { auth: JsmAuthProps; request: JsmRequest })
 		service_desk_id: request.serviceDeskId ?? null,
 		created_at: request.createdDate?.iso8601 ?? null,
 		reporter_account_id: request.reporter?.accountId ?? null,
-		reporter_username: request.reporter?.name ?? null,
+		reporter_username: jsmUsers.usernameOf(request.reporter),
 		reporter_name: request.reporter?.displayName ?? null,
 		reporter_email: request.reporter?.emailAddress ?? null,
 		portal_url: request._links?.web ?? null,
@@ -73,7 +74,7 @@ function fromIssue({ auth, issue }: { auth: JsmAuthProps; issue: JiraIssue }): F
 		service_desk_id: null,
 		created_at: issue.fields?.created ?? null,
 		reporter_account_id: issue.fields?.reporter?.accountId ?? null,
-		reporter_username: issue.fields?.reporter?.name ?? null,
+		reporter_username: jsmUsers.usernameOf(issue.fields?.reporter),
 		reporter_name: issue.fields?.reporter?.displayName ?? null,
 		reporter_email: issue.fields?.reporter?.emailAddress ?? null,
 		portal_url: null,
@@ -123,6 +124,11 @@ async function getServiceDesk({ auth, serviceDeskId }: { auth: JsmAuthProps; ser
 
 function quoteJql(text: string): string {
 	return `"${text.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+}
+
+function textClause(term: string): string | null {
+	const cleaned = term.replace(JQL_TEXT_SPECIALS, ' ').replace(/\s+/g, ' ').trim();
+	return cleaned.length === 0 ? null : `text ~ ${quoteJql(cleaned)}`;
 }
 
 function simplifyValue(value: unknown): unknown {
@@ -181,6 +187,7 @@ function textOrNull(value: unknown): string | null {
 }
 
 const FETCH_CONCURRENCY = 5;
+const JQL_TEXT_SPECIALS = /[+\-&|!(){}[\]^~*?\\:"]/g;
 const MAX_SERVICE_DESKS = 200;
 const SEARCH_FIELDS = ['summary', 'created', 'status', 'reporter'];
 const LABEL_KEYS = ['name', 'value', 'displayName', 'filename', 'label', 'key', 'id'];

@@ -167,7 +167,7 @@ function resolution() {
 	return Property.Dropdown({
 		auth: jsmAuth,
 		displayName: 'Resolution',
-		description: 'Needed when the transition closes the request.',
+		description: 'Only used when the transition asks for one, such as Resolve.',
 		required: false,
 		refreshers: ['requestKey', 'transitionId'],
 		options: async ({ auth, requestKey, transitionId }) => {
@@ -260,7 +260,8 @@ async function searchRequestIssues({ auth, searchValue }: { auth: JsmAuthProps; 
 	}
 	const term = (searchValue ?? '').trim();
 	const scope = `project in (${projectIds.join(', ')})`;
-	const filter = term.length === 0 ? '' : ` AND ${searchClause(term)}`;
+	const clause = term.length === 0 ? null : searchClause(term);
+	const filter = isNil(clause) ? '' : ` AND ${clause}`;
 	try {
 		const { issues } = await jsmClient.searchIssues({
 			auth,
@@ -277,10 +278,8 @@ async function searchRequestIssues({ auth, searchValue }: { auth: JsmAuthProps; 
 	}
 }
 
-function searchClause(term: string): string {
-	return ISSUE_KEY.test(term)
-		? `issuekey = ${jsmRequests.quoteJql(term.toUpperCase())}`
-		: `text ~ ${jsmRequests.quoteJql(term)}`;
+function searchClause(term: string): string | null {
+	return ISSUE_KEY.test(term) ? `issuekey = ${jsmRequests.quoteJql(term.toUpperCase())}` : jsmRequests.textClause(term);
 }
 
 async function loadOptions(load: () => Promise<DropdownOption<string>[]>) {

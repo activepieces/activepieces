@@ -50,7 +50,7 @@ describe('connection validation', () => {
 		expect(result).toEqual({ valid: true });
 		expect(spy.mock.calls.map((call) => call[0].url)).toEqual([
 			'https://jira.acme.test/rest/api/2/myself',
-			'https://jira.acme.test/rest/servicedeskapi/info',
+			'https://jira.acme.test/rest/servicedeskapi/servicedesk',
 		]);
 		expect(spy.mock.calls[0][0].headers).toMatchObject({ Authorization: 'Bearer pat' });
 	});

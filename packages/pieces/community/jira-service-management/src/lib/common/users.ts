@@ -4,6 +4,7 @@ import { JsmAuthProps, JsmUser, jsmClient } from './client';
 
 export const jsmUsers = {
 	flatten,
+	usernameOf,
 	toList,
 	resolveOne,
 	resolveMany,
@@ -13,12 +14,16 @@ export const jsmUsers = {
 function flatten(user: JsmUser | null | undefined): FlatUser {
 	return {
 		account_id: user?.accountId ?? null,
-		username: user?.name ?? null,
+		username: usernameOf(user),
 		name: user?.displayName ?? null,
 		email: user?.emailAddress ?? null,
 		active: user?.active ?? null,
 		time_zone: user?.timeZone ?? null,
 	};
+}
+
+function usernameOf(user: JsmUser | null | undefined): string | null {
+	return isNil(user?.accountId) ? user?.name ?? null : null;
 }
 
 function toList(value: unknown): string[] {

@@ -3,6 +3,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { jsmAuth, jsmConnection } from '../auth';
 import { JsmDate, JsmUser, jsmClient } from '../common/client';
 import { jsmProps } from '../common/props';
+import { jsmUsers } from '../common/users';
 import { commentOutputSchema } from '../output-schemas';
 
 export const addCommentAction = createAction({
@@ -72,7 +73,7 @@ export const addCommentAction = createAction({
 			author_name: comment.author?.displayName ?? null,
 			author_email: comment.author?.emailAddress ?? null,
 			author_account_id: comment.author?.accountId ?? null,
-			author_username: comment.author?.name ?? null,
+			author_username: jsmUsers.usernameOf(comment.author),
 			created_at: comment.created?.iso8601 ?? null,
 		};
 	},

@@ -62,6 +62,12 @@ export const transitionRequestAction = createAction({
 		const resolution = isNil(wantedResolution)
 			? undefined
 			: jsmTransitions.findResolution({ transition, idOrName: wantedResolution });
+		if (!isNil(wantedResolution) && isNil(resolution) && jsmTransitions.takesResolution(transition)) {
+			const allowed = jsmTransitions.resolutionsOf(transition).map((item) => item.name ?? item.id).join(', ');
+			throw new Error(
+				`Resolution "${wantedResolution}" is not allowed for transition "${transition.name ?? transition.id}". Allowed: ${allowed}.`,
+			);
+		}
 		if (jsmTransitions.needsResolution(transition) && isNil(resolution)) {
 			const allowed = jsmTransitions.resolutionsOf(transition).map((item) => item.name ?? item.id).join(', ');
 			throw new Error(
