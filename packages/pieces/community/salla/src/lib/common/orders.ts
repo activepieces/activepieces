@@ -29,7 +29,9 @@ function buildOrderListQuery(filters: OrderFilters): SallaQuery {
   if (statusIds.length > 0) {
     query['status'] = statusIds;
   }
-  const paymentMethods = (filters.paymentMethods ?? []).map((value) => value.trim()).filter((value) => value.length > 0);
+  const paymentMethods = (filters.paymentMethods ?? [])
+    .map((value) => sallaUtils.dropdownText(value))
+    .filter((value): value is string => value !== undefined);
   if (paymentMethods.length > 0) {
     query['payment_method'] = paymentMethods;
   }

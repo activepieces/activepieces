@@ -299,9 +299,9 @@ export const updateProductAction = createAction({
   },
 });
 
-function requireText({ value, message }: { value: string | number | undefined | null; message: string }): string {
-  const text = typeof value === 'number' ? String(value) : typeof value === 'string' ? value.trim() : '';
-  if (text.length === 0) {
+function requireText({ value, message }: { value: unknown; message: string }): string {
+  const text = sallaUtils.dropdownText(value);
+  if (text === undefined) {
     throw new Error(message);
   }
   return text;

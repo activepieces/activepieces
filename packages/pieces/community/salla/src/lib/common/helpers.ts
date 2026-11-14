@@ -237,6 +237,20 @@ function requireId({ value, label }: { value: unknown; label: string }): string 
   return text;
 }
 
+function dropdownText(value: unknown): string | undefined {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? String(value) : undefined;
+  }
+  if (typeof value === 'bigint') {
+    return value.toString();
+  }
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  const text = value.trim();
+  return text.length > 0 ? text : undefined;
+}
+
 function compact(value: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   for (const [key, entry] of Object.entries(value)) {
@@ -443,6 +457,7 @@ export const sallaUtils = {
   triState,
   optionalNumber,
   requireId,
+  dropdownText,
   compact,
   toStringList,
   parseJsonArray,
