@@ -258,7 +258,7 @@ export const updateProductAction = createAction({
   },
   async run({ auth, propsValue, store }) {
     const by: ProductLookup = propsValue.find_by === 'sku' ? 'sku' : 'id';
-    const value = by === 'sku' ? requireText({ value: propsValue.lookup_sku, message: SKU_MISSING }) : requireText({ value: propsValue.product, message: PRODUCT_MISSING });
+    const value = by === 'sku' ? requireText({ value: propsValue.lookup_sku, label: 'SKU', message: SKU_MISSING }) : requireText({ value: propsValue.product, label: 'Product', message: PRODUCT_MISSING });
     return sallaProducts.updateProduct({
       auth,
       store,
@@ -299,8 +299,8 @@ export const updateProductAction = createAction({
   },
 });
 
-function requireText({ value, message }: { value: unknown; message: string }): string {
-  const text = sallaUtils.dropdownText(value);
+function requireText({ value, label, message }: { value: unknown; label: string; message: string }): string {
+  const text = sallaUtils.dropdownText(value, label);
   if (text === undefined) {
     throw new Error(message);
   }

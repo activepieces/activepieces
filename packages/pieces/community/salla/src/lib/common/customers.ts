@@ -294,7 +294,7 @@ function optionalEmail(value: unknown): string | undefined {
 }
 
 function optionalGender(value: unknown): CustomerGender | undefined {
-  const text = (sallaUtils.dropdownText(value) ?? '').toLowerCase();
+  const text = (sallaUtils.dropdownText(value, 'Gender') ?? '').toLowerCase();
   if (text.length === 0) {
     return undefined;
   }

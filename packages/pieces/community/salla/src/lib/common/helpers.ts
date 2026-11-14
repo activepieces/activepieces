@@ -237,18 +237,26 @@ function requireId({ value, label }: { value: unknown; label: string }): string 
   return text;
 }
 
-function dropdownText(value: unknown): string | undefined {
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? String(value) : undefined;
+function dropdownText(value: unknown, label: string): string | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  if (typeof value === 'string') {
+    const text = value.trim();
+    return text.length > 0 ? text : undefined;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
   }
   if (typeof value === 'bigint') {
     return value.toString();
   }
-  if (typeof value !== 'string') {
-    return undefined;
-  }
-  const text = value.trim();
-  return text.length > 0 ? text : undefined;
+  throw new Error(`${label} must be text or a number, such as an ID, but got ${describeValue(value)}.`);
+}
+
+function describeValue(value: unknown): string {
+  const text = typeof value === 'number' ? String(value) : JSON.stringify(value) ?? String(value);
+  return text.length > 80 ? `${text.slice(0, 80)}…` : text;
 }
 
 function compact(value: Record<string, unknown>): Record<string, unknown> {

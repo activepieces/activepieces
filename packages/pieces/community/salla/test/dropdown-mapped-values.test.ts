@@ -69,19 +69,28 @@ afterEach(() => {
 
 describe('dropdownText', () => {
   it('turns a mapped number into its digits', () => {
-    expect(sallaUtils.dropdownText(1672932878)).toBe('1672932878');
-    expect(sallaUtils.dropdownText(0)).toBe('0');
+    expect(sallaUtils.dropdownText(1672932878, 'Product')).toBe('1672932878');
+    expect(sallaUtils.dropdownText(0, 'Product')).toBe('0');
   });
 
   it('trims a string and keeps ids above 2^53 exactly', () => {
-    expect(sallaUtils.dropdownText(' 1672932878 ')).toBe('1672932878');
-    expect(sallaUtils.dropdownText('1234567890123456789')).toBe('1234567890123456789');
-    expect(sallaUtils.dropdownText(BigInt('1234567890123456789'))).toBe('1234567890123456789');
+    expect(sallaUtils.dropdownText(' 1672932878 ', 'Product')).toBe('1672932878');
+    expect(sallaUtils.dropdownText('1234567890123456789', 'Product')).toBe('1234567890123456789');
+    expect(sallaUtils.dropdownText(BigInt('1234567890123456789'), 'Product')).toBe('1234567890123456789');
   });
 
-  it('treats blank and non-scalar values as empty', () => {
-    for (const value of [undefined, null, '', '   ', Number.NaN, Number.POSITIVE_INFINITY, true, {}, []]) {
-      expect(sallaUtils.dropdownText(value), String(value)).toBeUndefined();
+  it('treats only undefined, null and blank text as empty', () => {
+    for (const value of [undefined, null, '', '   ']) {
+      expect(sallaUtils.dropdownText(value, 'Customer'), String(value)).toBeUndefined();
+    }
+  });
+
+  it('fails loudly, naming the field, on a mapped object, list, boolean or non-finite number', () => {
+    expect(() => sallaUtils.dropdownText({ id: 1227534533 }, 'Customer')).toThrow(
+      'Customer must be text or a number, such as an ID, but got {"id":1227534533}.',
+    );
+    for (const value of [[1, 2], true, {}, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(() => sallaUtils.dropdownText(value, 'Branch'), String(value)).toThrow('Branch must be text or a number');
     }
   });
 });
@@ -118,6 +127,12 @@ describe('Adjust Stock with mapped dropdown values', () => {
     expect(stockLine(requests)).toMatchObject({ identifer_type: 'sku', identifer: 'TSHIRT-RED-M' });
   });
 
+  it('fails on a mapped product object, naming the field', async () => {
+    const requests = recordRequests();
+    await expect(runAdjustStock({ ...base, product: { id: 1672932878 } })).rejects.toThrow('Product must be text or a number');
+    expect(requests).toEqual([]);
+  });
+
   it('rejects an empty product, variant or SKU before calling Salla', async () => {
     const requests = recordRequests();
     await expect(runAdjustStock({ ...base, product: '  ' })).rejects.toThrow('Pick the product whose stock changes.');
@@ -144,6 +159,14 @@ describe('Find Orders with a mapped customer', () => {
     const requests = recordRequests();
     await runFindOrders({ ...base, customer: 1227534533 });
     expect(new URL(requests[0].url).searchParams.get('customer_id')).toBe('1227534533');
+  });
+
+  it('fails on a mapped customer object instead of returning every order', async () => {
+    const requests = recordRequests();
+    await expect(runFindOrders({ ...base, customer: { id: 1227534533, name: 'Sara' } })).rejects.toThrow(
+      'Customer must be text or a number',
+    );
+    expect(requests).toEqual([]);
   });
 
   it('ignores a blank customer and still trims a reference number', async () => {
@@ -207,6 +230,17 @@ describe('Update Variant', () => {
     expect(requests).toEqual([]);
   });
 
+  it('fails on a mapped branch or reason object instead of updating the whole variant', async () => {
+    const requests = recordRequests();
+    await expect(runUpdateVariant({ ...base, variant: 1980012345, stock_quantity: 4, branch: { id: 1473353380 } })).rejects.toThrow(
+      'Branch must be text or a number',
+    );
+    await expect(
+      runUpdateVariant({ ...base, variant: 1980012345, stock_quantity: 4, branch: 1473353380, reason: { id: 42 } }),
+    ).rejects.toThrow('Reason must be text or a number');
+    expect(requests).toEqual([]);
+  });
+
   it('asks for Stock Quantity when a branch is picked without it', async () => {
     const requests = recordRequests();
     await expect(runUpdateVariant({ ...base, variant: '1980012345', price: 5, branch: 1473353380 })).rejects.toThrow(
@@ -241,6 +275,8 @@ describe('static dropdowns that get a mapped number', () => {
     expect(() => sallaMarketing.buildCreateCouponBody(coupon({ status: 1 }))).toThrow('"1" is not a coupon status.');
     expect(() => sallaMarketing.buildCreateCouponBody(coupon({ appliedIn: 2 }))).toThrow('"2" is not a valid channel.');
     expect(() => sallaMarketing.buildCreateCouponBody(coupon({ type: 3 }))).toThrow('"3" is not a coupon type.');
+    expect(() => sallaMarketing.buildCreateCouponBody(coupon({ status: { value: 'active' } }))).toThrow('Coupon status must be text or a number');
+    expect(() => sallaCustomers.buildCreateCustomerBody(customer({ value: 'male' }))).toThrow('Gender must be text or a number');
     expect(() => sallaProducts.buildProductListQuery({ maxResults: 10, status: 4 } as unknown as Parameters<typeof sallaProducts.buildProductListQuery>[0])).toThrow(
       '"4" is not a product status.',
     );
@@ -248,8 +284,13 @@ describe('static dropdowns that get a mapped number', () => {
 });
 
 describe('Find Orders payment methods from a mapped list', () => {
-  it('skips blank or non-text entries instead of throwing', () => {
+  it('keeps numbers as text and skips blank and null entries', () => {
     const paymentMethods = [' mada ', '', null, 7] as unknown as OrderFilters['paymentMethods'];
     expect(sallaOrders.buildOrderListQuery({ maxResults: 10, paymentMethods })['payment_method']).toEqual(['mada', '7']);
+  });
+
+  it('fails on a mapped object entry instead of dropping it', () => {
+    const paymentMethods = ['mada', { slug: 'cod' }] as unknown as OrderFilters['paymentMethods'];
+    expect(() => sallaOrders.buildOrderListQuery({ maxResults: 10, paymentMethods })).toThrow('Payment method must be text or a number');
   });
 });

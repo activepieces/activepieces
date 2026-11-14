@@ -173,8 +173,8 @@ function branchQuantities({
   reason: unknown;
   quantity: number | undefined | null;
 }): BranchQuantityInput[] | undefined {
-  const branchId = sallaUtils.dropdownText(branch);
-  const reasonId = sallaUtils.dropdownText(reason);
+  const branchId = sallaUtils.dropdownText(branch, 'Branch');
+  const reasonId = sallaUtils.dropdownText(reason, 'Reason');
   if (branchId === undefined) {
     if (reasonId !== undefined) {
       throw new Error('Reason is saved with a branch stock change. Pick a Branch and fill Stock Quantity, or clear Reason.');

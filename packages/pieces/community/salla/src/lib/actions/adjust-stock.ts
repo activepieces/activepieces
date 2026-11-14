@@ -120,16 +120,16 @@ function identifierFor({
   sku: unknown;
 }): string {
   if (identifierType === 'sku') {
-    return requireText({ value: sku, message: 'Give the SKU of the product or variant, for example TSHIRT-RED-M.' });
+    return requireText({ value: sku, label: 'SKU', message: 'Give the SKU of the product or variant, for example TSHIRT-RED-M.' });
   }
   if (identifierType === 'variant_id') {
-    return requireText({ value: variant, message: 'Pick the product and then the variant whose stock changes.' });
+    return requireText({ value: variant, label: 'Variant', message: 'Pick the product and then the variant whose stock changes.' });
   }
-  return requireText({ value: product, message: 'Pick the product whose stock changes.' });
+  return requireText({ value: product, label: 'Product', message: 'Pick the product whose stock changes.' });
 }
 
-function requireText({ value, message }: { value: unknown; message: string }): string {
-  const text = sallaUtils.dropdownText(value);
+function requireText({ value, label, message }: { value: unknown; label: string; message: string }): string {
+  const text = sallaUtils.dropdownText(value, label);
   if (text === undefined) {
     throw new Error(message);
   }
