@@ -27,6 +27,7 @@ export const updateContactAction = createAction({
     }),
     ...salesEntities.fieldProps({ entity: salesEntities.CONTACT, mode: 'update' }),
   },
+  propertyGroups: salesEntities.fieldGroups(salesEntities.CONTACT),
   outputSchema: contactOutputSchema,
   async run(context) {
     const recordId = odata.requireGuid({ value: context.propsValue.recordId, label: 'Contact' });

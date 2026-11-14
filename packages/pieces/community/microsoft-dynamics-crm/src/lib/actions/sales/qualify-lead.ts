@@ -28,7 +28,7 @@ export const qualifyLeadAction = createAction({
     }),
     createAccount: Property.Checkbox({
       displayName: 'Create Account',
-      description: 'Create an account from the lead company name. If the lead already has a parent account, Dynamics links that account and creates none, so Account ID can be empty.',
+      description: "Create an account from the lead's company. If the lead already has a parent account, Dynamics links it instead.",
       required: false,
       defaultValue: true,
     }),
@@ -43,14 +43,19 @@ export const qualifyLeadAction = createAction({
       description: 'Create an opportunity from the lead.',
       required: false,
       defaultValue: true,
+      reveals: ['existingAccountId'],
     }),
     existingAccountId: dynamicsProps.fixedRecordDropdown({
       entitySet: 'accounts',
-      displayName: 'Opportunity Customer (Existing Account)',
-      description: 'Optional. Use this existing account as the customer of the new opportunity instead of a new one. It is also set on the opportunity after qualifying, because Dynamics otherwise uses the new contact.',
+      displayName: 'Existing Account for Opportunity',
+      description: "Optional. Use this account as the opportunity's customer instead of creating one.",
       required: false,
     }),
   },
+  propertyGroups: [
+    { key: 'lead', display: 'section', label: 'Lead', icon: 'user', props: ['leadId'] },
+    { key: 'create', display: 'section', label: 'Create from the lead', icon: 'users', props: ['createAccount', 'createContact', 'createOpportunity'] },
+  ],
   outputSchema: qualifyLeadOutputSchema,
   async run(context) {
     const { leadId, createAccount, createContact, createOpportunity, existingAccountId } = context.propsValue;

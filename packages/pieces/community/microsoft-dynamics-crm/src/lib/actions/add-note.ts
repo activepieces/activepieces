@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { dynamicsCRMAuth } from '../auth';
-import { DynamicsCRMCommon, makeClient } from '../common';
+import { DynamicsCRMCommon, dynamicsCommonInternals, makeClient } from '../common';
 import { odata } from '../common/odata';
 import { noteOutputSchema } from '../common/output-schemas';
 
@@ -16,11 +16,16 @@ export const addNoteAction = createAction({
     idempotent: false,
   },
   props: {
-    entityType: DynamicsCRMCommon.entityType('The table of the record the note belongs to. The table must have notes enabled.'),
+    entityType: dynamicsCommonInternals.tableDropdown({
+      displayName: 'Table',
+      description: 'The table of the record the note belongs to.',
+      required: true,
+      include: (entity) => entity.HasNotes === true,
+    }),
     recordId: DynamicsCRMCommon.recordId,
-    subject: Property.ShortText({ displayName: 'Title', required: false }),
-    text: Property.LongText({ displayName: 'Text', required: false }),
-    file: Property.File({ displayName: 'Attachment', required: false }),
+    subject: Property.ShortText({ displayName: 'Title', description: 'Set at least one of Title, Text or Attachment.', required: false }),
+    text: Property.LongText({ displayName: 'Text', description: 'Set at least one of Title, Text or Attachment.', required: false }),
+    file: Property.File({ displayName: 'Attachment', description: 'Set at least one of Title, Text or Attachment.', required: false }),
   },
   outputSchema: noteOutputSchema,
   async run(context) {

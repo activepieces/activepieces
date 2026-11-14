@@ -18,6 +18,7 @@ export const createAccountAction = createAction({
     idempotent: false,
   },
   props: salesEntities.fieldProps({ entity: salesEntities.ACCOUNT, mode: 'create' }),
+  propertyGroups: salesEntities.fieldGroups(salesEntities.ACCOUNT),
   outputSchema: accountOutputSchema,
   async run(context) {
     const body = salesEntities.buildBody({ entity: salesEntities.ACCOUNT, values: context.propsValue });

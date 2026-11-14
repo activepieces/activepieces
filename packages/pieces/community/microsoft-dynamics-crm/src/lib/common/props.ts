@@ -1,9 +1,9 @@
 import { DropdownState, Property } from '@activepieces/pieces-framework';
 import { dynamicsCRMAuth } from '../auth';
-import { makeClient } from './client';
+import { dynamicsClientInternals, makeClient } from './client';
 import { LOOKUP_ATTRIBUTE_TYPES } from './constants';
 import { dynamicsCommonInternals } from './index';
-import { DynamicsAuthValue } from './types';
+import { CollectionRelationship, DynamicsAuthValue, EntityDefinition } from './types';
 
 const RELATIONSHIP_SEPARATOR = '|';
 
@@ -22,7 +22,7 @@ function recordDropdown({ displayName, description, required, entitySetProp }: R
     options: async (propsValue, { searchValue }) => {
       const entitySet = readString(propsValue[entitySetProp]);
       if (!propsValue.auth || !entitySet) {
-        return { disabled: true, options: [], placeholder: 'Please select the entity type first.' };
+        return { disabled: true, options: [], placeholder: 'Select a table first.' };
       }
       return dynamicsCommonInternals.recordOptions({ client: makeClient(propsValue.auth), entitySet, searchValue });
     },
@@ -39,7 +39,7 @@ function fixedRecordDropdown<R extends boolean>({ entitySet, displayName, descri
     refreshOnSearch: true,
     options: async ({ auth }, { searchValue }) => {
       if (!auth) {
-        return { disabled: true, options: [], placeholder: 'Please connect your account first.' };
+        return { disabled: true, options: [], placeholder: 'Connect your account first.' };
       }
       return dynamicsCommonInternals.recordOptions({ client: makeClient(auth), entitySet, searchValue });
     },
@@ -55,7 +55,7 @@ function entitySetDropdown({ displayName, description }: { displayName: string; 
     refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
-        return { disabled: true, options: [], placeholder: 'Please connect your account first.' };
+        return { disabled: true, options: [], placeholder: 'Connect your account first.' };
       }
       return dynamicsCommonInternals.entitySetOptions(auth);
     },
@@ -74,9 +74,8 @@ async function columnOptions({ auth, entitySet }: { auth: DynamicsAuthValue; ent
         const value = isLookup ? `_${attribute.LogicalName}_value` : attribute.LogicalName;
         const label = attribute.DisplayName?.UserLocalizedLabel?.Label;
         return { label: label ? `${label} (${value})` : value, value };
-      })
-      .sort((a, b) => a.label.localeCompare(b.label));
-    return { disabled: false, options };
+      });
+    return { disabled: false, options: dynamicsCommonInternals.sortDeprecatedLast(options) };
   } catch (error) {
     return dynamicsCommonInternals.failedDropdown(error);
   }
@@ -92,7 +91,7 @@ function columnsDropdown({ entitySetProp }: { entitySetProp: string }) {
     options: async (propsValue) => {
       const entitySet = readString(propsValue[entitySetProp]);
       if (!propsValue.auth || !entitySet) {
-        return { disabled: true, options: [], placeholder: 'Please select the entity type first.' };
+        return { disabled: true, options: [], placeholder: 'Select a table first.' };
       }
       return columnOptions({ auth: propsValue.auth, entitySet });
     },
@@ -105,23 +104,28 @@ async function relationshipOptions({ auth, entitySet }: { auth: DynamicsAuthValu
     const entity = await client.getEntityBySetName(entitySet);
     const relationships = await client.listCollectionRelationships(entity.LogicalName);
     const entities = await client.listEntities();
-    const setByLogical = new Map(entities.map((item) => [item.LogicalName, item.EntitySetName]));
-    const options = relationships
-      .map((rel) => {
-        const targetSet = setByLogical.get(rel.targetEntity);
-        if (!targetSet) {
-          return undefined;
-        }
-        return {
-          label: `${rel.navigationProperty} (${rel.targetEntity}, ${rel.kind === 'many_to_many' ? 'many-to-many' : 'one-to-many'})`,
-          value: `${rel.navigationProperty}${RELATIONSHIP_SEPARATOR}${targetSet}`,
-        };
-      })
-      .filter((option): option is { label: string; value: string } => option !== undefined);
-    return { disabled: false, options };
+    return { disabled: false, options: relationshipLabelOptions({ relationships, entities }) };
   } catch (error) {
     return dynamicsCommonInternals.failedDropdown(error);
   }
+}
+
+function relationshipLabelOptions({ relationships, entities }: RelationshipLabelParams): { label: string; value: string }[] {
+  const byLogical = new Map(entities.map((item) => [item.LogicalName, item]));
+  const options = relationships
+    .map((rel) => {
+      const target = byLogical.get(rel.targetEntity);
+      if (!target?.EntitySetName) {
+        return undefined;
+      }
+      const display = dynamicsClientInternals.labelText(target.DisplayName) ?? rel.targetEntity;
+      return {
+        label: `${display} · ${rel.navigationProperty} (${rel.kind === 'many_to_many' ? 'many-to-many' : 'one-to-many'})`,
+        value: `${rel.navigationProperty}${RELATIONSHIP_SEPARATOR}${target.EntitySetName}`,
+      };
+    })
+    .filter((option): option is { label: string; value: string } => option !== undefined);
+  return dynamicsCommonInternals.sortDeprecatedLast(options);
 }
 
 function parseRelationship(value: unknown): { navigationProperty: string; targetEntitySet: string } {
@@ -142,7 +146,7 @@ const relationshipDropdown = Property.Dropdown({
   options: async ({ auth, entityType }) => {
     const entitySet = readString(entityType);
     if (!auth || !entitySet) {
-      return { disabled: true, options: [], placeholder: 'Please select the entity type first.' };
+      return { disabled: true, options: [], placeholder: 'Select a table first.' };
     }
     return relationshipOptions({ auth, entitySet });
   },
@@ -157,7 +161,7 @@ const relatedRecordDropdown = Property.Dropdown({
   refreshOnSearch: true,
   options: async ({ auth, relationship }, { searchValue }) => {
     if (!auth || !readString(relationship)) {
-      return { disabled: true, options: [], placeholder: 'Please select the relationship first.' };
+      return { disabled: true, options: [], placeholder: 'Select a relationship first.' };
     }
     try {
       const { targetEntitySet } = parseRelationship(relationship);
@@ -167,6 +171,11 @@ const relatedRecordDropdown = Property.Dropdown({
     }
   },
 });
+
+type RelationshipLabelParams = {
+  relationships: CollectionRelationship[];
+  entities: EntityDefinition[];
+};
 
 type RecordDropdownParams = {
   displayName: string;
@@ -190,5 +199,6 @@ export const dynamicsProps = {
   relationshipDropdown,
   relatedRecordDropdown,
   parseRelationship,
+  relationshipLabelOptions,
   readString,
 };

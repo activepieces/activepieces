@@ -43,6 +43,7 @@ export const winOpportunityAction = createAction({
     }),
     actualRevenue: Property.Number({
       displayName: 'Actual Revenue',
+      description: 'Optional. The final deal value.',
       required: false,
     }),
     closeDate: Property.DateTime({
@@ -53,6 +54,7 @@ export const winOpportunityAction = createAction({
     description: Property.LongText({
       displayName: 'Description',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: closeOpportunityOutputSchema,

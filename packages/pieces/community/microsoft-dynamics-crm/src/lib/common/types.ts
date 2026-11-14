@@ -23,6 +23,8 @@ export type EntityDefinition = {
   PrimaryNameAttribute: string | null;
   DisplayName?: LocalizedLabel;
   IsCustomizable?: { Value?: boolean } | null;
+  HasNotes?: boolean;
+  HasActivities?: boolean;
 };
 
 export type EntityTypeResponse = {

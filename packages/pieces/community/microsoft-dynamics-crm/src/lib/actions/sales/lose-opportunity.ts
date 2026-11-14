@@ -46,6 +46,7 @@ export const loseOpportunityAction = createAction({
     }),
     actualRevenue: Property.Number({
       displayName: 'Actual Revenue',
+      description: 'Optional. Usually empty for a lost deal.',
       required: false,
     }),
     closeDate: Property.DateTime({
@@ -56,6 +57,7 @@ export const loseOpportunityAction = createAction({
     description: Property.LongText({
       displayName: 'Description',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: closeOpportunityOutputSchema,

@@ -41,6 +41,8 @@ const ENTITY_SELECT = [
   'PrimaryNameAttribute',
   'DisplayName',
   'IsCustomizable',
+  'HasNotes',
+  'HasActivities',
 ].join(',');
 const FORMATTED_PREFER = 'odata.include-annotations="OData.Community.Display.V1.FormattedValue,Microsoft.Dynamics.CRM.lookuplogicalname"';
 

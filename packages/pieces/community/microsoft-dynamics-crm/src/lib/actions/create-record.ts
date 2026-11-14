@@ -17,7 +17,7 @@ export const createRecordAction = createAction({
   },
   props: {
     entityType: DynamicsCRMCommon.entityType(
-      'Select or map the entity for which you want to create the record.'
+      'The table to create the record in.'
     ),
     fields: DynamicsCRMCommon.entityFields(true),
     additionalFields: DynamicsCRMCommon.additionalFields,

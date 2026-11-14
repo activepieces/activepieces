@@ -17,12 +17,13 @@ export const createTaskAction = createAction({
   },
   props: {
     subject: Property.ShortText({ displayName: 'Subject', required: true }),
-    description: Property.LongText({ displayName: 'Description', required: false }),
+    description: Property.LongText({ displayName: 'Description', required: false, advanced: true }),
     dueDate: Property.DateTime({ displayName: 'Due Date', required: false }),
     priority: Property.StaticDropdown<string>({
       displayName: 'Priority',
       required: false,
       defaultValue: '1',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
@@ -32,18 +33,11 @@ export const createTaskAction = createAction({
         ],
       },
     }),
-    regardingEntity: Property.Dropdown({
-      auth: dynamicsCRMAuth,
+    regardingEntity: dynamicsCommonInternals.tableDropdown({
       displayName: 'Regarding Table',
       description: 'Optional. The table of the record this task is about.',
       required: false,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return { disabled: true, options: [], placeholder: 'Please connect your account first.' };
-        }
-        return dynamicsCommonInternals.entitySetOptions(auth);
-      },
+      include: (entity) => entity.HasActivities === true,
     }),
     regardingRecordId: dynamicsProps.recordDropdown({
       displayName: 'Regarding Record',

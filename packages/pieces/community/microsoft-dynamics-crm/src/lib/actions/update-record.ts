@@ -17,7 +17,7 @@ export const updateRecordAction = createAction({
   },
   props: {
     entityType: DynamicsCRMCommon.entityType(
-      'Select or map the entity for which you want to update the record.'
+      'The table of the record to update.'
     ),
     recordId: DynamicsCRMCommon.recordId,
     fields: DynamicsCRMCommon.entityFields(false),

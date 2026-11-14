@@ -18,6 +18,7 @@ export const createLeadAction = createAction({
     idempotent: false,
   },
   props: salesEntities.fieldProps({ entity: salesEntities.LEAD, mode: 'create' }),
+  propertyGroups: salesEntities.fieldGroups(salesEntities.LEAD),
   outputSchema: leadOutputSchema,
   async run(context) {
     const body = salesEntities.buildBody({ entity: salesEntities.LEAD, values: context.propsValue });

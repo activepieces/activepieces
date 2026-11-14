@@ -21,18 +21,20 @@ export const runFetchXmlAction = createAction({
     fetchXml: Property.LongText({
       displayName: 'FetchXML',
       description:
-        'The query, for example `<fetch top="50"><entity name="account"><attribute name="name"/></entity></fetch>`. Build one in Advanced Find and use Download FetchXML.',
+        'The query, for example: <fetch top="50"><entity name="account"><attribute name="name"/></entity></fetch>. Build one in Advanced Find and use Download FetchXML.',
       required: true,
     }),
     page: Property.Number({
       displayName: 'Page',
-      description: 'Optional page number. Use with a `count` attribute on <fetch> and the Paging Cookie from the previous page.',
+      description: 'Optional page number. Use with a count attribute on <fetch> and the Paging Cookie from the previous page.',
       required: false,
+      advanced: true,
     }),
     pagingCookie: Property.LongText({
       displayName: 'Paging Cookie',
       description: 'Optional. Map the Paging Cookie from the previous page.',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: fetchXmlOutputSchema,

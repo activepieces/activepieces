@@ -27,6 +27,7 @@ export const updateLeadAction = createAction({
     }),
     ...salesEntities.fieldProps({ entity: salesEntities.LEAD, mode: 'update' }),
   },
+  propertyGroups: salesEntities.fieldGroups(salesEntities.LEAD),
   outputSchema: leadOutputSchema,
   async run(context) {
     const recordId = odata.requireGuid({ value: context.propsValue.recordId, label: 'Lead' });

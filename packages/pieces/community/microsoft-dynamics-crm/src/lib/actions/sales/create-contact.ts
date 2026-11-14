@@ -18,6 +18,7 @@ export const createContactAction = createAction({
     idempotent: false,
   },
   props: salesEntities.fieldProps({ entity: salesEntities.CONTACT, mode: 'create' }),
+  propertyGroups: salesEntities.fieldGroups(salesEntities.CONTACT),
   outputSchema: contactOutputSchema,
   async run(context) {
     const body = salesEntities.buildBody({ entity: salesEntities.CONTACT, values: context.propsValue });

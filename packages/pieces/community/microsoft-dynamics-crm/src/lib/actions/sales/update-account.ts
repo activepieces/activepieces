@@ -27,6 +27,7 @@ export const updateAccountAction = createAction({
     }),
     ...salesEntities.fieldProps({ entity: salesEntities.ACCOUNT, mode: 'update' }),
   },
+  propertyGroups: salesEntities.fieldGroups(salesEntities.ACCOUNT),
   outputSchema: accountOutputSchema,
   async run(context) {
     const recordId = odata.requireGuid({ value: context.propsValue.recordId, label: 'Account' });

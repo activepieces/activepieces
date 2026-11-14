@@ -17,7 +17,7 @@ export const deleteRecordAction = createAction({
   },
   props: {
     entityType: DynamicsCRMCommon.entityType(
-      'Select or map the entity name whose records you want to delete.'
+      'The table of the record to delete.'
     ),
     recordId: DynamicsCRMCommon.recordId,
   },

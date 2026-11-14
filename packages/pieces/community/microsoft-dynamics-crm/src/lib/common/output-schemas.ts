@@ -38,6 +38,7 @@ const accountFields: OutputSchema['fields'] = [
   { key: 'emailaddress1', label: 'Email', format: 'email' },
   { key: 'telephone1', label: 'Main Phone' },
   { key: 'websiteurl', label: 'Website', format: 'url' },
+  { key: 'industrycode', label: 'Industry Code', format: 'number' },
   { key: '_parentaccountid_value', label: 'Parent Account ID' },
   { key: '_primarycontactid_value', label: 'Primary Contact ID' },
   ...addressFields,
@@ -57,6 +58,9 @@ const leadFields: OutputSchema['fields'] = [
   { key: 'mobilephone', label: 'Mobile Phone' },
   { key: 'jobtitle', label: 'Job Title' },
   { key: 'websiteurl', label: 'Website', format: 'url' },
+  { key: 'leadsourcecode', label: 'Lead Source Code', format: 'number' },
+  { key: 'leadqualitycode', label: 'Rating Code', format: 'number' },
+  { key: 'industrycode', label: 'Industry Code', format: 'number' },
   { key: '_parentaccountid_value', label: 'Existing Account ID' },
   ...addressFields,
   { key: 'description', label: 'Description' },
@@ -69,6 +73,7 @@ const opportunityFields: OutputSchema['fields'] = [
   { key: 'estimatedvalue', label: 'Est. Revenue', format: 'number' },
   { key: 'estimatedclosedate', label: 'Est. Close Date', format: 'date' },
   { key: 'closeprobability', label: 'Probability (%)', format: 'number' },
+  { key: 'opportunityratingcode', label: 'Rating Code', format: 'number' },
   { key: 'actualvalue', label: 'Actual Revenue', format: 'number' },
   { key: '_customerid_value', label: 'Customer ID' },
   { key: '_transactioncurrencyid_value', label: 'Currency ID' },
@@ -78,7 +83,7 @@ const opportunityFields: OutputSchema['fields'] = [
 
 const genericRecordFields: OutputSchema['fields'] = [
   { key: 'id', label: 'Record ID' },
-  { key: 'entitySet', label: 'Entity Set' },
+  { key: 'entitySet', label: 'Table' },
   { key: 'etag', label: 'ETag' },
   { key: 'createdon', label: 'Created On', format: 'datetime' },
   { key: 'modifiedon', label: 'Modified On', format: 'datetime' },
@@ -138,7 +143,7 @@ export const findOpportunityOutputSchema = findSchema(opportunityFields);
 export const deleteRecordOutputSchema: OutputSchema = {
   fields: [
     { key: 'success', label: 'Deleted', format: 'boolean' },
-    { key: 'entitySet', label: 'Entity Set' },
+    { key: 'entitySet', label: 'Table' },
     { key: 'recordId', label: 'Record ID' },
   ],
 };
@@ -187,10 +192,10 @@ export const associateOutputSchema: OutputSchema = {
   fields: [
     { key: 'success', label: 'Success', format: 'boolean' },
     { key: 'operation', label: 'Operation' },
-    { key: 'entitySet', label: 'Entity Set' },
+    { key: 'entitySet', label: 'Table' },
     { key: 'recordId', label: 'Record ID' },
     { key: 'navigationProperty', label: 'Relationship' },
-    { key: 'relatedEntitySet', label: 'Related Entity Set' },
+    { key: 'relatedEntitySet', label: 'Related Table' },
     { key: 'relatedRecordId', label: 'Related Record ID' },
   ],
 };
@@ -222,7 +227,7 @@ export const listEntitiesOutputSchema: OutputSchema = {
     { key: 'count', label: 'Count', format: 'number' },
     { key: 'entities', label: 'Entities', labelKey: 'displayName', listItems: [
       { key: 'logicalName', label: 'Logical Name' },
-      { key: 'entitySet', label: 'Entity Set' },
+      { key: 'entitySet', label: 'Table' },
       { key: 'displayName', label: 'Display Name' },
       { key: 'primaryIdAttribute', label: 'Primary ID Column' },
       { key: 'primaryNameAttribute', label: 'Primary Name Column' },
@@ -233,7 +238,7 @@ export const listEntitiesOutputSchema: OutputSchema = {
 export const describeEntityOutputSchema: OutputSchema = {
   fields: [
     { key: 'logicalName', label: 'Logical Name' },
-    { key: 'entitySet', label: 'Entity Set' },
+    { key: 'entitySet', label: 'Table' },
     { key: 'displayName', label: 'Display Name' },
     { key: 'primaryIdAttribute', label: 'Primary ID Column' },
     { key: 'primaryNameAttribute', label: 'Primary Name Column' },
@@ -242,13 +247,13 @@ export const describeEntityOutputSchema: OutputSchema = {
       { key: 'attribute', label: 'Lookup Column' },
       { key: 'navigationProperty', label: 'Navigation Property' },
       { key: 'targetEntity', label: 'Target Table' },
-      { key: 'targetEntitySet', label: 'Target Entity Set' },
+      { key: 'targetEntitySet', label: 'Target Table' },
       { key: 'bindKey', label: 'Bind Key' },
     ] },
     { key: 'collectionRelationships', label: 'Collection Relationships', labelKey: 'navigationProperty', listItems: [
       { key: 'navigationProperty', label: 'Navigation Property' },
       { key: 'targetEntity', label: 'Target Table' },
-      { key: 'targetEntitySet', label: 'Target Entity Set' },
+      { key: 'targetEntitySet', label: 'Target Table' },
       { key: 'kind', label: 'Kind' },
       { key: 'schemaName', label: 'Schema Name' },
     ] },

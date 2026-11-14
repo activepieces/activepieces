@@ -8,7 +8,7 @@ import { DynamicsCRMClient, dynamicsClientInternals, makeClient } from './client
 import { EntityAttributeType } from './constants';
 import { odata } from './odata';
 import { outputKeys } from './output-schemas';
-import { DynamicsAuthValue } from './types';
+import { DynamicsAuthValue, EntityAttribute, EntityDefinition } from './types';
 
 const DROPDOWN_PAGE_SIZE = 100;
 const DATE_TIME_PATTERN = /^\d{4}-\d{2}-\d{2}T/;
@@ -32,23 +32,79 @@ function failedDropdown<T>(error: unknown): DropdownState<T> {
 }
 
 async function entitySetOptions(auth: DynamicsAuthValue): Promise<DropdownState<string>> {
+  return filteredEntitySetOptions({ auth, include: () => true });
+}
+
+async function filteredEntitySetOptions({ auth, include }: FilteredEntitySetParams): Promise<DropdownState<string>> {
   try {
     const entities = await makeClient(auth).listEntities();
-    return {
-      disabled: false,
-      options: entities.map((entity) => {
-        const set = entity.EntitySetName ?? entity.LogicalName;
-        const display = dynamicsClientInternals.labelText(entity.DisplayName);
-        return {
-          label: display ? `${display} (${set})` : set,
-          value: set,
-        };
-      }),
-    };
+    return { disabled: false, options: tableOptions({ entities, include }) };
   } catch (error) {
     return failedDropdown(error);
   }
 }
+
+function tableOptions({ entities, include }: TableOptionsParams): TableOption[] {
+  const options = entities.filter(include).map((entity) => {
+    const set = entity.EntitySetName ?? entity.LogicalName;
+    const display = dynamicsClientInternals.labelText(entity.DisplayName);
+    return {
+      label: display ? `${display} (${set})` : set,
+      value: set,
+    };
+  });
+  return sortTableOptions(options);
+}
+
+function tableDropdown<R extends boolean>({ displayName, description, required, include }: TableDropdownParams<R>) {
+  return Property.Dropdown<string, R, typeof dynamicsCRMAuth>({
+    auth: dynamicsCRMAuth,
+    displayName,
+    description,
+    required,
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return { disabled: true, options: [], placeholder: 'Connect your account first.' };
+      }
+      return filteredEntitySetOptions({ auth, include });
+    },
+  });
+}
+
+function orderFieldAttributes(attributes: EntityAttribute[]): EntityAttribute[] {
+  const labelled = attributes.map((attribute) => ({
+    attribute,
+    label: dynamicsClientInternals.labelText(attribute.DisplayName) ?? attribute.LogicalName,
+    value: attribute.LogicalName,
+  }));
+  const primary = labelled.filter((item) => item.attribute.IsPrimaryName);
+  const required = labelled.filter((item) => !item.attribute.IsPrimaryName && isRequiredLevel(item.attribute));
+  const rest = labelled.filter((item) => !item.attribute.IsPrimaryName && !isRequiredLevel(item.attribute));
+  return [...primary, ...sortDeprecatedLast(required), ...sortDeprecatedLast(rest)].map((item) => item.attribute);
+}
+
+function isRequiredLevel(attribute: EntityAttribute): boolean {
+  const level = attribute.RequiredLevel?.Value;
+  return level === 'ApplicationRequired' || level === 'SystemRequired';
+}
+
+function sortTableOptions(options: TableOption[]): TableOption[] {
+  const pinned = PINNED_TABLES.flatMap((value) => options.filter((option) => option.value === value));
+  const rest = options.filter((option) => !PINNED_TABLES.includes(option.value));
+  return [...pinned, ...sortDeprecatedLast(rest)];
+}
+
+function sortDeprecatedLast<T extends TableOption>(options: T[]): T[] {
+  const rank = (option: T): number => (DEPRECATED_LABEL.test(option.label) ? 1 : 0);
+  const sortName = (option: T): string => option.label.replace(DEPRECATED_LABEL, ' ').replace(/\s+/g, ' ').trim();
+  return [...options].sort(
+    (a, b) => rank(a) - rank(b) || sortName(a).localeCompare(sortName(b), undefined, { sensitivity: 'base' }),
+  );
+}
+
+const PINNED_TABLES = ['accounts', 'contacts', 'leads', 'opportunities'];
+const DEPRECATED_LABEL = /\s*[([]deprecated[)\]]\s*/i;
 
 async function recordOptions({ client, entitySet, searchValue }: RecordOptionsParams): Promise<DropdownState<string>> {
   try {
@@ -75,11 +131,16 @@ async function recordOptions({ client, entitySet, searchValue }: RecordOptionsPa
     return {
       disabled: false,
       options,
-      placeholder: page.hasMore ? 'Showing the first 100 records. Type to search by name.' : undefined,
+      placeholder: recordPlaceholder({ hasMore: page.hasMore, isEmpty: options.length === 0 && search === '' }),
     };
   } catch (error) {
     return failedDropdown(error);
   }
+}
+
+function recordPlaceholder({ hasMore, isEmpty }: { hasMore: boolean; isEmpty: boolean }): string | undefined {
+  if (isEmpty) return 'No records yet. Map an ID instead.';
+  return hasMore ? 'Showing the first 100 records. Type to search by name.' : undefined;
 }
 
 async function buildEntityFields({ auth, entitySet, isCreate }: EntityFieldsParams): Promise<DynamicPropsValue> {
@@ -87,7 +148,7 @@ async function buildEntityFields({ auth, entitySet, isCreate }: EntityFieldsPara
   const client = makeClient(auth);
   const entity = await client.getEntityBySetName(entitySet);
   const attributes = await client.listAttributes(entity.LogicalName);
-  for (const field of attributes) {
+  for (const field of orderFieldAttributes(attributes)) {
     const valid = isCreate ? field.IsValidForCreate : field.IsValidForUpdate;
     if (!valid || field.AttributeOf || FIELD_TYPES_EXCLUDED.includes(field.AttributeType)) {
       continue;
@@ -169,6 +230,28 @@ type ShapeGenericParams = {
   record: Record<string, unknown>;
 };
 
+type FilteredEntitySetParams = {
+  auth: DynamicsAuthValue;
+  include: (entity: EntityDefinition) => boolean;
+};
+
+type TableOptionsParams = {
+  entities: EntityDefinition[];
+  include: (entity: EntityDefinition) => boolean;
+};
+
+type TableDropdownParams<R extends boolean> = {
+  displayName: string;
+  description: string;
+  required: R;
+  include: (entity: EntityDefinition) => boolean;
+};
+
+type TableOption = {
+  label: string;
+  value: string;
+};
+
 type RecordOptionsParams = {
   client: DynamicsCRMClient;
   entitySet: string;
@@ -185,13 +268,13 @@ export const DynamicsCRMCommon = {
   entityType: (description: string) =>
     Property.Dropdown({
       auth: dynamicsCRMAuth,
-      displayName: 'Entity Type',
+      displayName: 'Table',
       refreshers: [],
       description,
       required: true,
       options: async ({ auth }) => {
         if (!auth) {
-          return { disabled: true, options: [], placeholder: 'Please connect your account first.' };
+          return { disabled: true, options: [], placeholder: 'Connect your account first.' };
         }
         return entitySetOptions(auth);
       },
@@ -205,7 +288,7 @@ export const DynamicsCRMCommon = {
     required: true,
     options: async ({ auth, entityType }, { searchValue }) => {
       if (!auth || typeof entityType !== 'string' || entityType === '') {
-        return { disabled: true, options: [], placeholder: 'Please select entity type first.' };
+        return { disabled: true, options: [], placeholder: 'Select a table first.' };
       }
       return recordOptions({ client: makeClient(auth), entitySet: entityType, searchValue });
     },
@@ -213,7 +296,7 @@ export const DynamicsCRMCommon = {
   entityFields: (isCreate = true) =>
     Property.DynamicProperties({
       auth: dynamicsCRMAuth,
-      displayName: 'Entity Fields',
+      displayName: 'Fields',
       refreshers: ['auth', 'entityType'],
       required: true,
       props: async ({ auth, entityType }) => {
@@ -226,13 +309,19 @@ export const DynamicsCRMCommon = {
   additionalFields: Property.Json({
     displayName: 'Additional Fields',
     description:
-      'Optional raw Web API fields, for example lookups such as {"parentcustomerid_account@odata.bind": "/accounts(<id>)"}. Fields picked above win over the same key here.',
+      'Optional raw Web API fields as JSON, for example lookups: {"parentcustomerid_account@odata.bind": "/accounts(<id>)"}. Fields above win.',
     required: false,
   }),
 };
 
 export const dynamicsCommonInternals = {
   entitySetOptions,
+  tableOptions,
+  tableDropdown,
+  orderFieldAttributes,
+  sortTableOptions,
+  recordPlaceholder,
+  sortDeprecatedLast,
   recordOptions,
   buildRecordBody,
   failedDropdown,

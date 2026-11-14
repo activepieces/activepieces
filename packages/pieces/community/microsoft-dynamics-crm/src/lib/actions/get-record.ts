@@ -17,15 +17,16 @@ export const getRecordAction = createAction({
   },
   props: {
     entityType: DynamicsCRMCommon.entityType(
-      'Select or map the entity name whose records you want to retrieve.'
+      'The table of the record to retrieve.'
     ),
     recordId: DynamicsCRMCommon.recordId,
     includeFormattedValues: Property.Checkbox({
       displayName: 'Include Readable Values',
       description:
-        'Also return the display text of option sets, lookups, dates and money as <column>_formatted fields (for example statuscode_formatted = "Active").',
+        'Also return display text as <column>_formatted fields, for example statuscode_formatted = "Active".',
       required: false,
       defaultValue: false,
+      advanced: true,
     }),
   },
   outputSchema: recordOutputSchema,
