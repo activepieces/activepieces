@@ -1,0 +1,26 @@
+{
+  "extends": ["../../../../.eslintrc.json"],
+  "ignorePatterns": ["!**/*", "package.json"],
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "error",
+        "@typescript-eslint/no-unused-vars": "error",
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              "lodash",
+              "lodash/*",
+              "@activepieces/core-*",
+              "@activepieces/server*",
+              "@activepieces/engine",
+              "@activepieces/shared"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
