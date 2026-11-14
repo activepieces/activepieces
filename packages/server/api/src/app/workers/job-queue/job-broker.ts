@@ -17,6 +17,7 @@ import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
 import { callerWaitingForResponse } from './job-queue'
 import { jobReclaimCount } from './job-reclaim-count'
 import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
+import { holdForConnection, stoppingConnections } from './stopping-connections'
 
 const DRAIN_DELAY_SECONDS = 15
 const LOCK_DURATION_MS = 120_000
@@ -271,13 +272,33 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
     },
 
     async poll(queueName: string = QueueName.WORKER_JOBS, socket?: Pick<Socket, 'id' | 'connected'>): Promise<ConsumeJobRequest | null> {
+        if (stoppingConnections.isStopping(socket?.id)) {
+            return null
+        }
         const worker = await ensureBullMQWorker(queueName, log)
         const dispatcher = ensureDispatcher(queueName, worker, log)
         const job = await dispatcher.poll(socket)
-        if (!isNil(job) && !isNil(socket)) {
-            jobAssignmentTracker.record({ connectionId: socket.id, jobId: job.jobId, token: job.token, queueName: job.queueName })
-        }
-        return job
+        return holdForConnection({
+            connectionId: socket?.id,
+            job,
+            release: (held) => returnJobToQueue({
+                jobId: held.jobId,
+                token: held.token,
+                queueName: held.queueName,
+                log,
+                isDisconnectReclaim: false,
+            }),
+            record: (held) => jobAssignmentTracker.record({
+                connectionId: socket!.id,
+                jobId: held.jobId,
+                token: held.token,
+                queueName: held.queueName,
+            }),
+        })
+    },
+
+    markConnectionStopping(connectionId: string): void {
+        stoppingConnections.mark(connectionId)
     },
 
     async releaseConnectionJobs(connectionId: string): Promise<void> {

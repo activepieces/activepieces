@@ -50,6 +50,7 @@ export enum WorkerSystemProp {
     IS_CANARY_WORKER = 'AP_IS_CANARY_WORKER',
     PROJECT_WORKER = 'AP_PROJECT_WORKER',
     WORKER_CONCURRENCY = 'AP_WORKER_CONCURRENCY',
+    WORKER_SHUTDOWN_TIMEOUT_SECONDS = 'AP_WORKER_SHUTDOWN_TIMEOUT_SECONDS',
     EXECUTION_MODE = 'AP_EXECUTION_MODE',
     SANDBOX_MEMORY_LIMIT = 'AP_SANDBOX_MEMORY_LIMIT',
     REUSE_SANDBOX = 'AP_REUSE_SANDBOX',
@@ -66,6 +67,7 @@ const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
     // Transitional default (ADR 0004): N boxes per worker preserves main's historical behavior.
     // The destination is concurrency 1 + horizontal replicas (ADR 0003).
     [WorkerSystemProp.WORKER_CONCURRENCY]: '5',
+    [WorkerSystemProp.WORKER_SHUTDOWN_TIMEOUT_SECONDS]: '30',
     [WorkerSystemProp.CACHE_BASE_PATH]: 'cache',
     // Off by default: prewarm resolves and compiles every enabled flow on the platform, so its
     // startup memory/CPU cost grows with flow count and can OOM small workers on large instances.
@@ -91,6 +93,16 @@ export const system = {
         const value = env(prop) ?? defaultValues[prop]
         return value ? value.split(',').map(s => s.trim()).filter(Boolean) : []
     },
+}
+
+const DEFAULT_SHUTDOWN_TIMEOUT_MS = 30_000
+
+export function shutdownTimeoutMs(): number {
+    const raw = Number(system.get(WorkerSystemProp.WORKER_SHUTDOWN_TIMEOUT_SECONDS))
+    if (!Number.isFinite(raw) || raw <= 0) {
+        return DEFAULT_SHUTDOWN_TIMEOUT_MS
+    }
+    return Math.round(raw * 1000)
 }
 
 export { getApiUrl, getSocketUrl }

@@ -29,7 +29,7 @@ A new worker's first flow pays the one-time [cold start](/install/architecture/l
 
 <img src="/resources/diagrams/autoscaling-drain.png" alt="Drain timeline: a worker pod deleted under load finishes its in-flight run in 0.42 s, exits at 0.49 s, and is gone in 1.7 s — 747/747 requests returned 200 and zero runs failed" />
 
-On `SIGTERM` the worker stops polling, finishes its in-flight flow, and exits (forced exit only after 30 s, matching Kubernetes' default grace period). Deleting a busy pod mid-load lost nothing: every request returned 200 and the flow-runs API showed zero failures. Runs that would have landed on the draining worker stay queued in Redis and drain to the remaining fleet.
+On `SIGTERM` the worker stops polling, tells the app not to send it another job, finishes its in-flight flow, and exits. The force-exit wait defaults to 30 s (`AP_WORKER_SHUTDOWN_TIMEOUT_SECONDS`), matching Kubernetes' default grace period. A longer wait only takes effect when the pod's `terminationGracePeriodSeconds` is longer than that wait. Deleting a busy pod mid-load lost nothing: every request returned 200 and the flow-runs API showed zero failures. Runs that would have landed on the draining worker stay queued in Redis and drain to the remaining fleet.
 
 ## When to autoscale — and when not to
 

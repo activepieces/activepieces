@@ -7,7 +7,7 @@ import { ApEdition, ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, 
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
 import { createApiToWorkerHandlers } from './api-notify-service'
-import { getApiUrl, system, WorkerSystemProp } from './config/configs'
+import { getApiUrl, shutdownTimeoutMs, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
 import { getHandler } from './execute/job-registry'
@@ -17,6 +17,7 @@ import { VERSION_MISMATCH_POLL_PAUSE_MS, versionChecker } from './utils/version-
 
 
 let socket: Socket | null = null
+let rpcClient: WorkerToApiContract | null = null
 let polling = false
 let connectionGeneration = 0
 
@@ -34,8 +35,6 @@ let runtime: Runtime | null = null
 // down, so a deploy doesn't orphan them in the app's BullMQ `active` list. Abrupt death (OOM/SIGKILL)
 // still falls to the stalled-scan.
 let inFlightJobs = 0
-
-const DRAIN_TIMEOUT_MS = 25_000
 
 // Sandbox memory/state is UI-only telemetry (the workers page). Computing it needs a full
 // process-table scan (si.processes()), so it must NOT run on the poll hot path — sampling it on
@@ -74,6 +73,7 @@ export const worker = {
         })
 
         const apiClient = createRpcClient<WorkerToApiContract>(socket, rpcTimeoutMsFor)
+        rpcClient = apiClient
         aiCostReporter.install({
             log: logger,
             report: (request) => apiClient.reportAiUsage(request),
@@ -141,6 +141,12 @@ export const worker = {
         stopPollWatchdog()
         stopSandboxInfoSampling()
         stopCacheSweeper()
+        if (rpcClient) {
+            const { error } = await tryCatch(() => rpcClient!.beginShutdown())
+            if (error) {
+                logger.warn({ error }, 'Failed to tell the app this worker is stopping')
+            }
+        }
         await drainInFlightJobs()
         if (runtime) {
             await runtime.shutdown(logger)
@@ -302,7 +308,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
 }
 
 async function drainInFlightJobs(): Promise<void> {
-    const deadline = Date.now() + DRAIN_TIMEOUT_MS
+    const deadline = Date.now() + shutdownTimeoutMs()
     while (inFlightJobs > 0 && Date.now() < deadline) {
         await sleep(100)
     }
