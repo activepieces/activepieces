@@ -12,10 +12,11 @@ import { savvyCalAuth, getToken } from '../auth';
 export const toggleSchedulingLinkAction = createAction({
   auth: savvyCalAuth,
   name: 'toggle_scheduling_link',
+  classification: 'WRITE',
   displayName: 'Toggle Scheduling Link',
-  description: 'Switches a scheduling link between active and disabled states.',
+  description: 'Disables an active scheduling link, or enables a disabled or archived one.',
   audience: 'both',
-  aiMetadata: { description: 'Flips a scheduling link between active and disabled, identified by its link id. Use to enable or pause a link; note it toggles relative to the link\'s current state, so repeating the call alternates the state rather than converging — not idempotent.', idempotent: false },
+  aiMetadata: { description: 'Disables an active or pending scheduling link, or enables a disabled or archived one, identified by its link id. Use to enable or pause a link; note it toggles relative to the link\'s current state, so repeating the call alternates the state rather than converging — not idempotent.', idempotent: false },
   props: {
     team_id: Property.Dropdown({
       auth: savvyCalAuth,
@@ -42,7 +43,7 @@ export const toggleSchedulingLinkAction = createAction({
       options: async ({ auth, team_id }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
         try {
-          const options = await buildLinkOptions(getToken(auth), team_id as string | null);
+          const options = await buildLinkOptions(getToken(auth), team_id);
           return { disabled: false, options };
         } catch {
           return { disabled: true, options: [], placeholder: 'Failed to load scheduling links.' };

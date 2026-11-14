@@ -1,16 +1,39 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { savvyCalApiCall, savvyCalPaginatedCall, flattenEvent, buildTeamOptions, buildLinkOptions, SavvyCalEvent } from '../common';
+import { savvyCalCollect, buildEventQuery, flattenEvent, buildTeamOptions, buildLinkOptions, SavvyCalEvent } from '../common';
 import { savvyCalAuth, getToken } from '../auth';
 
 export const listEventsAction = createAction({
   auth: savvyCalAuth,
   name: 'list_events',
+  classification: 'SEARCH',
   displayName: 'List Events',
   description: 'Returns a list of scheduled meetings from your SavvyCal account.',
   audience: 'both',
-  aiMetadata: { description: 'Lists SavvyCal events across the account, optionally filtered by state(s), start date window, team, or specific scheduling links. Use to browse or find bookings when you do not have an event id; leave all filters empty to return every event. Read-only and idempotent.', idempotent: true },
+  aiMetadata: { description: 'Lists SavvyCal events: upcoming by default, or past, all, or a start-date window, optionally filtered by state(s), search text (title, link, attendee name or email), or specific scheduling links. Use to browse or find bookings when you do not have an event id. Each event includes the attendee answers to the booking questions. Read-only and idempotent.', idempotent: true },
   props: {
+    period: Property.StaticDropdown({
+      displayName: 'When',
+      description: 'Which meetings to return. Ignored when Start After or Start Before is set.',
+      required: false,
+      defaultValue: 'upcoming',
+      options: {
+        options: [
+          { label: 'Upcoming', value: 'upcoming' },
+          { label: 'Past', value: 'past' },
+          { label: 'All (past and upcoming)', value: 'all' },
+        ],
+      },
+    }),
+    start_after: Property.DateTime({
+      displayName: 'Start After',
+      description: 'Only return events that start at or after this date and time.',
+      required: false,
+    }),
+    start_before: Property.DateTime({
+      displayName: 'Start Before',
+      description: 'Only return events that start at or before this date and time.',
+      required: false,
+    }),
     states: Property.StaticMultiSelectDropdown({
       displayName: 'State',
       description: 'Filter events by their current status. Leave empty to return all statuses.',
@@ -28,15 +51,16 @@ export const listEventsAction = createAction({
         ],
       },
     }),
-    start_after: Property.DateTime({
-      displayName: 'Start After',
-      description: 'Only return events that start after this date and time.',
+    search: Property.ShortText({
+      displayName: 'Search',
+      description: 'Only return events whose title, description, scheduling link, or attendee name or email contains this text.',
       required: false,
     }),
-    start_before: Property.DateTime({
-      displayName: 'Start Before',
-      description: 'Only return events that start before this date and time.',
+    include_events_not_attending: Property.Checkbox({
+      displayName: 'Include Events You Do Not Attend',
+      description: 'Also return events of your teams that you do not attend yourself.',
       required: false,
+      defaultValue: false,
     }),
     team_id: Property.Dropdown({
       auth: savvyCalAuth,
@@ -63,12 +87,18 @@ export const listEventsAction = createAction({
       options: async ({ auth, team_id }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
         try {
-          const options = await buildLinkOptions(getToken(auth), team_id as string | null);
+          const options = await buildLinkOptions(getToken(auth), team_id);
           return { disabled: false, options };
         } catch {
           return { disabled: true, options: [], placeholder: 'Failed to load scheduling links.' };
         }
       },
+    }),
+    newest_first: Property.Checkbox({
+      displayName: 'Newest First',
+      description: 'Sort events from the latest start time to the earliest.',
+      required: false,
+      defaultValue: false,
     }),
     limit: Property.Number({
       displayName: 'Maximum Results',
@@ -77,64 +107,36 @@ export const listEventsAction = createAction({
     }),
   },
   async run(context) {
-    const token = getToken(context.auth);
-    const { states, start_after, start_before, link_ids, limit } = context.propsValue;
+    const {
+      period,
+      start_after,
+      start_before,
+      states,
+      search,
+      include_events_not_attending,
+      link_ids,
+      newest_first,
+      limit,
+    } = context.propsValue;
 
-    const selectedStates = states as string[] | undefined;
-    const selectedLinkIds = link_ids as string[] | undefined;
-    const hasLinkFilter = selectedLinkIds && selectedLinkIds.length > 0;
-    const needsClientFilter = (hasLinkFilter && selectedLinkIds.length > 1) || (selectedStates && selectedStates.length > 1);
+    const { queryParams, keep } = buildEventQuery({
+      period,
+      startAfter: start_after,
+      startBefore: start_before,
+      states,
+      linkIds: link_ids,
+      search,
+      includeEventsNotAttending: include_events_not_attending,
+      newestFirst: newest_first,
+    });
 
-    const queryParams: Record<string, string> = {};
-    if (start_after) queryParams['start_after'] = start_after;
-    if (start_before) queryParams['start_before'] = start_before;
-
-    if (selectedStates && selectedStates.length === 1) {
-      queryParams['state'] = selectedStates[0];
-    }
-    if (hasLinkFilter && selectedLinkIds.length === 1) {
-      queryParams['link_id'] = selectedLinkIds[0];
-    }
-
-    if (limit && needsClientFilter) {
-      // Paginate page by page and stop as soon as we have enough post-filter results,
-      // so we never fetch unbounded pages when a limit is set alongside a client-side filter.
-      let after: string | null = null;
-      const collected: SavvyCalEvent[] = [];
-      do {
-        const params: Record<string, string> = { limit: '100', ...queryParams };
-        if (after) params['after'] = after;
-        const response = await savvyCalApiCall<{ entries: SavvyCalEvent[]; metadata: { after: string | null } }>({
-          token,
-          method: HttpMethod.GET,
-          path: '/events',
-          queryParams: params,
-        });
-        for (const event of response.body.entries) {
-          const matchesState = !selectedStates || selectedStates.length === 0 || selectedStates.includes(event.state);
-          const matchesLink = !hasLinkFilter || selectedLinkIds.includes(event.link?.id ?? '');
-          if (matchesState && matchesLink) collected.push(event);
-        }
-        after = collected.length >= limit ? null : response.body.metadata.after;
-      } while (after);
-      return collected.slice(0, limit).map(flattenEvent);
-    }
-
-    if (limit) {
-      queryParams['limit'] = String(limit);
-      const response = await savvyCalApiCall<{ entries: SavvyCalEvent[] }>({
-        token,
-        method: HttpMethod.GET,
-        path: '/events',
-        queryParams,
-      });
-      return response.body.entries.map(flattenEvent);
-    }
-
-    const events = await savvyCalPaginatedCall<SavvyCalEvent>({ token, path: '/events', queryParams });
-    return events
-      .filter((e) => !selectedStates || selectedStates.length === 0 || selectedStates.includes(e.state))
-      .filter((e) => !hasLinkFilter || selectedLinkIds.includes(e.link?.id ?? ''))
-      .map(flattenEvent);
+    const events = await savvyCalCollect<SavvyCalEvent>({
+      token: getToken(context.auth),
+      path: '/events',
+      queryParams,
+      keep,
+      limit: limit && limit > 0 ? limit : undefined,
+    });
+    return events.map(flattenEvent);
   },
 });

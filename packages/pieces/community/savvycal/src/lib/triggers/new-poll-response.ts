@@ -17,6 +17,7 @@ const SAMPLE_DATA = {
 export const newPollResponseTrigger = createTrigger({
   auth: savvyCalAuth,
   name: 'new_poll_response',
+  classification: 'READ',
   displayName: 'New Poll Response',
   description: 'Triggers when a poll response is created or updated in SavvyCal.',
   aiMetadata: {

@@ -12,6 +12,7 @@ import { savvyCalAuth, getToken } from '../auth';
 export const duplicateSchedulingLinkAction = createAction({
   auth: savvyCalAuth,
   name: 'duplicate_scheduling_link',
+  classification: 'WRITE',
   displayName: 'Duplicate Scheduling Link',
   description: 'Creates a copy of an existing scheduling link.',
   audience: 'both',
@@ -42,7 +43,7 @@ export const duplicateSchedulingLinkAction = createAction({
       options: async ({ auth, team_id }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
         try {
-          const options = await buildLinkOptions(getToken(auth), team_id as string | null);
+          const options = await buildLinkOptions(getToken(auth), team_id);
           return { disabled: false, options };
         } catch {
           return { disabled: true, options: [], placeholder: 'Failed to load scheduling links.' };
