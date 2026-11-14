@@ -1,4 +1,4 @@
-import { FlowRunStatus, StreamStepProgress } from '@activepieces/shared'
+import { FlowRunStatus, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -62,7 +62,7 @@ function pieceThatWaits({ maxTestWaitMs }: { maxTestWaitMs?: number }) {
     }
 }
 
-async function runWaitingStep({ maxTestWaitMs, streamStepProgress }: { maxTestWaitMs?: number, streamStepProgress: StreamStepProgress }): Promise<{ resumeDateTime?: string }> {
+async function runWaitingStep({ maxTestWaitMs, streamStepProgress, runEnvironment }: { maxTestWaitMs?: number, streamStepProgress: StreamStepProgress, runEnvironment: RunEnvironment }): Promise<{ resumeDateTime?: string }> {
     mockGetPieceAndAction.mockResolvedValue(pieceThatWaits({ maxTestWaitMs }))
     const action = buildPieceAction({
         name: 'waiter',
@@ -73,7 +73,7 @@ async function runWaitingStep({ maxTestWaitMs, streamStepProgress }: { maxTestWa
     const result = await flowExecutor.execute({
         action,
         executionState: FlowExecutorContext.empty(),
-        constants: generateMockEngineConstants({ streamStepProgress, internalApiUrl: UNREACHABLE_API_URL }),
+        constants: generateMockEngineConstants({ streamStepProgress, runEnvironment, internalApiUrl: UNREACHABLE_API_URL }),
     })
     expect(result.verdict, JSON.stringify(result.steps?.waiter?.errorMessage ?? null)).not.toBe(FlowRunStatus.FAILED)
     expect(mockCreate).toHaveBeenCalledTimes(1)
@@ -86,26 +86,32 @@ describe('a step that asks to wait longer than a person will sit through', () =>
         mockCreate.mockResolvedValue({ id: 'waitpoint-id', resumeUrl: 'http://localhost/resume' })
     })
 
-    it('gets the shorter deadline it asked for when someone is watching the builder', async () => {
-        const sent = await runWaitingStep({ maxTestWaitMs: FIFTEEN_MINUTES_MS, streamStepProgress: StreamStepProgress.WEBSOCKET })
+    it('gets the shorter deadline it asked for in a test run', async () => {
+        const sent = await runWaitingStep({ maxTestWaitMs: FIFTEEN_MINUTES_MS, streamStepProgress: StreamStepProgress.WEBSOCKET, runEnvironment: RunEnvironment.TESTING })
 
         expect(dayjs(sent.resumeDateTime).diff(dayjs(), 'minute')).toBeLessThanOrEqual(15)
     })
 
     it('reports run progress through the mocked api, so the suite needs nothing listening on port 3000', async () => {
-        await runWaitingStep({ maxTestWaitMs: FIFTEEN_MINUTES_MS, streamStepProgress: StreamStepProgress.WEBSOCKET })
+        await runWaitingStep({ maxTestWaitMs: FIFTEEN_MINUTES_MS, streamStepProgress: StreamStepProgress.WEBSOCKET, runEnvironment: RunEnvironment.TESTING })
 
         expect(mockRunProgress).toHaveBeenCalled()
     })
 
     it('keeps the full deadline when the flow runs unattended', async () => {
-        const sent = await runWaitingStep({ maxTestWaitMs: FIFTEEN_MINUTES_MS, streamStepProgress: StreamStepProgress.NONE })
+        const sent = await runWaitingStep({ maxTestWaitMs: FIFTEEN_MINUTES_MS, streamStepProgress: StreamStepProgress.NONE, runEnvironment: RunEnvironment.PRODUCTION })
+
+        expect(dayjs(sent.resumeDateTime).diff(dayjs(), 'minute')).toBeGreaterThan(150)
+    })
+
+    it('keeps the full deadline in a production run that streams its progress to the builder', async () => {
+        const sent = await runWaitingStep({ maxTestWaitMs: FIFTEEN_MINUTES_MS, streamStepProgress: StreamStepProgress.WEBSOCKET, runEnvironment: RunEnvironment.PRODUCTION })
 
         expect(dayjs(sent.resumeDateTime).diff(dayjs(), 'minute')).toBeGreaterThan(150)
     })
 
     it('leaves a step that never asked for a shorter test wait exactly as it was', async () => {
-        const sent = await runWaitingStep({ streamStepProgress: StreamStepProgress.WEBSOCKET })
+        const sent = await runWaitingStep({ streamStepProgress: StreamStepProgress.WEBSOCKET, runEnvironment: RunEnvironment.TESTING })
 
         expect(dayjs(sent.resumeDateTime).diff(dayjs(), 'minute')).toBeGreaterThan(150)
     })
