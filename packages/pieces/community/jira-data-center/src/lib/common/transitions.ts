@@ -3,6 +3,8 @@ import { isNil } from '@activepieces/pieces-framework';
 import { JiraDataCenterAuth } from '../../auth';
 import { jiraApiCall } from './index';
 
+export const jiraTransitions = { list, find, resolutionsOf, resolve };
+
 async function list({ auth, issueId }: { auth: JiraDataCenterAuth; issueId: string }): Promise<JiraTransition[]> {
 	const response = await jiraApiCall<{ transitions?: JiraTransition[] }>({
 		auth,
@@ -84,8 +86,6 @@ function resolve({
 	}
 	return { transition, resolution };
 }
-
-export const jiraTransitions = { list, find, resolutionsOf, resolve };
 
 export type JiraTransition = {
 	id: string;

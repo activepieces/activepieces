@@ -12,14 +12,17 @@ const auth: JiraDataCenterAuth = {
 };
 
 function memoryStore(): Store {
-	const data = new Map<string, unknown>();
+	const data = new Map<string, string>();
 	return {
-		put: async <T>(key: string, value: T) => {
-			data.set(key, value);
+		put: async <T>(key: string, value: T): Promise<T> => {
+			data.set(key, JSON.stringify(value));
 			return value;
 		},
-		get: async <T>(key: string) => (data.has(key) ? (data.get(key) as T) : null),
-		delete: async (key: string) => {
+		get: async <T>(key: string): Promise<T | null> => {
+			const raw = data.get(key);
+			return raw === undefined ? null : JSON.parse(raw);
+		},
+		delete: async (key: string): Promise<void> => {
 			data.delete(key);
 		},
 	};
@@ -34,8 +37,21 @@ function mockSearch(pages: Array<{ issues: unknown[]; total?: number }>) {
 	});
 }
 
-function jqlOf(spy: ReturnType<typeof mockSearch>, call = 0): string {
-	return (spy.mock.calls[call][0].body as { jql: string }).jql;
+function bodyOf({ spy, call }: { spy: ReturnType<typeof mockSearch>; call: number }): Record<string, unknown> {
+	const body: unknown = spy.mock.calls[call][0].body;
+	return isRecord(body) ? body : {};
+}
+
+function jqlOf(spy: ReturnType<typeof mockSearch>): unknown {
+	return bodyOf({ spy, call: 0 })['jql'];
+}
+
+function idsOf(items: unknown[]): unknown[] {
+	return items.map((item) => (isRecord(item) ? item['id'] : undefined));
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function issue({ id, created, updated }: { id: string; created?: string; updated?: string }) {
@@ -104,7 +120,7 @@ describe('New Issue polling', () => {
 		const first = await polling.poll({ context: { auth, propsValue: { jql: 'project = SD' }, store } });
 		const second = await polling.poll({ context: { auth, propsValue: { jql: 'project = SD' }, store } });
 
-		expect(first.map((item) => (item as { id: string }).id)).toEqual(['1']);
+		expect(idsOf(first)).toEqual(['1']);
 		expect(second).toEqual([]);
 		expect(jqlOf(spy)).toBe("(project = SD) AND created > '-7m' ORDER BY created ASC");
 		expect(jqlOf(spy)).not.toMatch(/\d{4}-\d{2}-\d{2}/);
@@ -119,7 +135,7 @@ describe('New Issue polling', () => {
 
 		const result = await polling.poll({ context: { auth, propsValue: {}, store } });
 
-		expect(result.map((item) => (item as { id: string }).id)).toEqual(['1']);
+		expect(idsOf(result)).toEqual(['1']);
 	});
 
 	it('emits two issues created in the same second when they show up in different polls', async () => {
@@ -135,8 +151,8 @@ describe('New Issue polling', () => {
 		const first = await polling.poll({ context: { auth, propsValue: {}, store } });
 		const second = await polling.poll({ context: { auth, propsValue: {}, store } });
 
-		expect(first.map((item) => (item as { id: string }).id)).toEqual(['10']);
-		expect(second.map((item) => (item as { id: string }).id)).toEqual(['11']);
+		expect(idsOf(first)).toEqual(['10']);
+		expect(idsOf(second)).toEqual(['11']);
 	});
 
 	it('reads the next page when Jira returns fewer issues than the total', async () => {
@@ -152,8 +168,8 @@ describe('New Issue polling', () => {
 
 		const result = await polling.poll({ context: { auth, propsValue: {}, store } });
 
-		expect(result.map((item) => (item as { id: string }).id)).toEqual(['1', '2']);
-		expect(spy.mock.calls.map(([request]) => (request.body as { startAt: number }).startAt)).toEqual([0, 1]);
+		expect(idsOf(result)).toEqual(['1', '2']);
+		expect([0, 1].map((call) => bodyOf({ spy, call })['startAt'])).toEqual([0, 1]);
 	});
 
 	it('keeps its place when a flow is republished', async () => {
@@ -167,7 +183,7 @@ describe('New Issue polling', () => {
 
 		const result = await polling.poll({ context: { auth, propsValue: {}, store } });
 
-		expect(result.map((item) => (item as { id: string }).id)).toEqual(['1']);
+		expect(idsOf(result)).toEqual(['1']);
 	});
 
 	it('returns the five newest issues, newest first, when testing', async () => {
@@ -176,7 +192,7 @@ describe('New Issue polling', () => {
 
 		const result = await polling.test({ context: { auth, propsValue: {}, store: memoryStore() } });
 
-		expect(result.map((item) => (item as { id: string }).id)).toEqual(['6', '5', '4', '3', '2']);
+		expect(idsOf(result)).toEqual(['6', '5', '4', '3', '2']);
 		expect(jqlOf(spy)).toBe('ORDER BY created DESC');
 	});
 });
@@ -203,7 +219,7 @@ describe('Updated Issue Status polling', () => {
 		expect(result[0]).toMatchObject({ id: '1', key: 'SD-1' });
 		expect(result[0]).not.toHaveProperty('changelog');
 		expect(jqlOf(spy)).toBe("status CHANGED AFTER '-4m' AND updated > '-4m' ORDER BY updated ASC");
-		expect((spy.mock.calls[0][0].body as { expand: string[] }).expand).toEqual(['changelog']);
+		expect(bodyOf({ spy, call: 0 })['expand']).toEqual(['changelog']);
 	});
 
 	it('does not fire for a new issue, an edit of another field, or a custom field named status', async () => {

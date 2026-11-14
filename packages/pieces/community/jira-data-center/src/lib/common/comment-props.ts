@@ -4,6 +4,8 @@ import { jiraDataCenterAuth } from '../../auth';
 import { jiraApiCall } from '.';
 import { waitingPlaceholder } from './placeholders';
 
+export const jiraCommentProps = { commentId, toOptionLabel };
+
 function commentId() {
 	return Property.Dropdown({
 		auth: jiraDataCenterAuth,
@@ -60,5 +62,3 @@ type JiraComment = {
 		displayName?: string;
 	};
 };
-
-export const jiraCommentProps = { commentId, toOptionLabel };

@@ -2,7 +2,7 @@ import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { jiraDataCenterAuth } from '../../auth';
 import { createJiraStatusPolling } from '../common/polling';
 import { jiraSampleData } from '../common/sample-data';
-import { jiraTriggerFilter } from '../common/trigger-props';
+import { jiraTriggerProps } from '../common/trigger-props';
 
 const polling = createJiraStatusPolling();
 
@@ -17,8 +17,19 @@ export const updatedIssueStatus = createTrigger({
 	},
 	auth: jiraDataCenterAuth,
 	type: TriggerStrategy.POLLING,
-	props: jiraTriggerFilter.props,
-	propertyGroups: jiraTriggerFilter.propertyGroups,
+	props: {
+		filterHelp: jiraTriggerProps.filterHelp(),
+		jql: jiraTriggerProps.issueFilter(),
+	},
+	propertyGroups: [
+		{
+			key: 'filter',
+			display: 'section',
+			label: 'Filter',
+			icon: 'filter',
+			props: ['filterHelp', 'jql'],
+		},
+	],
 	sampleData: jiraSampleData.updatedIssueStatus,
 	async onEnable(context) {
 		await polling.onEnable({ context });

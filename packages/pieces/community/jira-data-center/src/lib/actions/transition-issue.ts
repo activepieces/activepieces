@@ -7,13 +7,6 @@ import { getIssueIdDropdown, getProjectIdDropdown, issueStatusIdProp } from '../
 import { jiraTransitions } from '../common/transitions';
 import { issueOutputSchema } from '../output-schemas';
 
-function asText(value: unknown): string | undefined {
-	if (typeof value === 'number') {
-		return String(value);
-	}
-	return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
-}
-
 export const transitionIssueAction = createAction({
 	auth: jiraDataCenterAuth,
 	name: 'transition_issue',
@@ -134,3 +127,10 @@ export const transitionIssueAction = createAction({
 		});
 	},
 });
+
+function asText(value: unknown): string | undefined {
+	if (typeof value === 'number') {
+		return String(value);
+	}
+	return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+}
