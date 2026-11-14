@@ -43,6 +43,11 @@ export const sendLocation = createAction({
 		}),
 		reply_to_message_id: whatsappProps.replyToMessageId,
 	},
+	propertyGroups: [
+		{ key: 'route', display: 'section', label: 'From & To', icon: 'send', props: ['phone_number_id', 'to'] },
+		{ key: 'location', display: 'section', label: 'Location', icon: 'location', props: ['latitude', 'longitude', 'name', 'address'] },
+		{ key: 'reply', display: 'section', label: 'Reply To', icon: 'reply', props: ['reply_to_message_id'] },
+	],
 	async run(context) {
 		const { phone_number_id, to, latitude, longitude, name, address, reply_to_message_id } = context.propsValue;
 		return whatsappClient.sendMessage({

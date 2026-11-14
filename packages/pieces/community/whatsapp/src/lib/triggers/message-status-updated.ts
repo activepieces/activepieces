@@ -35,6 +35,11 @@ export const messageStatusUpdated = createTrigger({
 			},
 		}),
 	},
+	propertyGroups: [
+		{ key: 'webhook', display: 'section', label: 'Webhook', icon: 'send', props: ['instructions', 'verify_token'] },
+		{ key: 'watch', display: 'section', label: 'Where to Watch', icon: 'inbox', props: ['phone_number_id'] },
+		{ key: 'fire', display: 'section', label: 'When to Fire', icon: 'filter', props: ['status'] },
+	],
 	sampleData: {
 		message_id: 'wamid.HBgMOTYyNzgyNTUwMjEzFQIAERgSRTAwNUQyMjA1MTA2QUIxODREAA==',
 		status: 'delivered',
