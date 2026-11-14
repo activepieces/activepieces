@@ -1,7 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
 import { t } from 'i18next';
-import { RouteOff } from 'lucide-react';
 
 import { batchUtils } from '@/app/builder/run-details/batch-utils';
 import { useStepOutputInRun } from '@/app/builder/run-details/use-batch-logs';
@@ -10,6 +9,7 @@ import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
 import { useBuilderStateContext } from '../../../builder-hooks';
 
 import { StepNodeBadgeContainer } from './step-node-badge-container';
+import { SkippedBadge } from './step-node-skipped-status';
 
 const ApStepNodeStatusInRun = ({
   stepName,
@@ -30,19 +30,7 @@ const ApStepNodeStatusInRun = ({
       stepOutput: stepOutput?.output,
     })
   ) {
-    return (
-      <StepNodeBadgeContainer>
-        <div
-          className={flowRunUtils.getStatusContainerClassName({
-            variant: 'default',
-            withPaddingAndAnimation: true,
-          })}
-        >
-          <RouteOff className="size-3" />
-          <div>{t('Skipped')}</div>
-        </div>
-      </StepNodeBadgeContainer>
-    );
+    return <SkippedBadge />;
   }
   const { variant, text } = stepStatusInRun
     ? flowRunUtils.getStatusIconForStep(stepStatusInRun)
