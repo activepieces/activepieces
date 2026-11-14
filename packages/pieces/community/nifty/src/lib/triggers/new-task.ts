@@ -1,4 +1,4 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, MarkdownVariant, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { niftyAuth } from '../auth';
 import { niftyProps } from '../common';
 import { NiftyAuth, niftyClient, NiftyRecord } from '../common/client';
@@ -16,15 +16,19 @@ export const newTask = createTrigger({
     description:
       'Fires once per newly created Nifty task, either in one chosen project or across every project the connection can see; subtasks are only seen when a project is chosen. Polls the task list and remembers the newest creation time, so tasks created while the flow was off are not replayed.',
   },
+  propertyGroups: [
+    { key: 'watch', display: 'section', label: 'What to Watch', icon: 'inbox', props: ['portfolio', 'project', 'subtasks_info', 'include_subtasks'] },
+  ],
   props: {
     portfolio: niftyProps.portfolio({ required: false }),
     project: niftyProps.project({
       required: false,
-      description: 'Optional. Leave empty to watch every project (subtasks are then not included).',
+      description: 'Leave empty to watch every project.',
     }),
+    subtasks_info: Property.MarkDown({ value: 'Subtasks are only included when a project is picked.', variant: MarkdownVariant.INFO }),
     include_subtasks: Property.Checkbox({
       displayName: 'Include Subtasks',
-      description: 'Also trigger for new subtasks. Only works when a project is selected.',
+      description: 'Also trigger for new subtasks.',
       required: false,
       defaultValue: true,
     }),

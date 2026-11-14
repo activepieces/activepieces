@@ -16,7 +16,7 @@ export const getProject = createAction({
     idempotent: true,
   },
   props: {
-    project_id: Property.ShortText({ displayName: 'Project ID', required: true }),
+    project_id: Property.ShortText({ displayName: 'Project ID', description: 'From Find Projects or a project trigger.', required: true }),
   },
   outputSchema: projectOutputSchema,
   async run(context) {

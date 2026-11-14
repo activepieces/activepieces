@@ -16,8 +16,11 @@ export const listMilestones = createAction({
       'Lists the dated milestones and plain task lists of a Nifty project, or only one kind. Use to get the milestone_id for creating or moving tasks. Requires project_id. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'project', display: 'section', label: 'Project', icon: 'inbox', props: ['project_id', 'kind'] },
+  ],
   props: {
-    project_id: Property.ShortText({ displayName: 'Project ID', required: true }),
+    project_id: Property.ShortText({ displayName: 'Project ID', description: 'From Find Projects or a project trigger.', required: true }),
     kind: Property.StaticDropdown({
       displayName: 'Kind',
       required: false,

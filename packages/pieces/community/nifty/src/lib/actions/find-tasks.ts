@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { niftyAuth } from '../auth';
 import { niftyClient } from '../common/client';
 import { findTasksOutputSchema } from '../output-schemas';
@@ -7,7 +7,7 @@ export const findTasks = createAction({
   auth: niftyAuth,
   name: 'find_tasks',
   displayName: 'Find Tasks',
-  description: 'List tasks filtered by project, status, milestone, assignee, completion or due date, one page at a time.',
+  description: 'Find tasks by project, status, assignee, completion or due date.',
   audience: 'both',
   classification: 'SEARCH',
   aiMetadata: {
@@ -15,11 +15,42 @@ export const findTasks = createAction({
       'Lists Nifty tasks filtered by project, status, milestone/list, assignee, completion and a due-date window, one page at a time (pass next_offset to continue while has_more is true). Subtasks are only included when a project_id is given. Use to locate a task_id before updating, completing or deleting. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['project_id', 'status_id', 'milestone_id', 'assignee_id', 'completion', 'include_subtasks', 'include_archived'],
+    },
+    {
+      key: 'due',
+      display: 'section',
+      label: 'Due Date',
+      icon: 'calendar',
+      props: ['due_info', 'due_from', 'due_to'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['limit', 'offset'],
+    },
+  ],
   props: {
-    project_id: Property.ShortText({ displayName: 'Project ID', required: false }),
-    status_id: Property.ShortText({ displayName: 'Status ID', required: false }),
-    milestone_id: Property.ShortText({ displayName: 'Milestone or List ID', required: false }),
-    assignee_id: Property.ShortText({ displayName: 'Assignee Member ID', required: false }),
+    project_id: Property.ShortText({
+      displayName: 'Project ID',
+      description: 'From Find Projects or a project trigger.',
+      required: false,
+    }),
+    status_id: Property.ShortText({ displayName: 'Status ID', description: 'From List Statuses.', required: false }),
+    milestone_id: Property.ShortText({
+      displayName: 'Milestone or List ID',
+      description: 'From List Milestones and Lists.',
+      required: false,
+    }),
+    assignee_id: Property.ShortText({ displayName: 'Assignee Member ID', description: 'From List Members.', required: false }),
     completion: Property.StaticDropdown({
       displayName: 'Completion',
       required: false,
@@ -39,9 +70,22 @@ export const findTasks = createAction({
       defaultValue: false,
     }),
     include_archived: Property.Checkbox({ displayName: 'Include Archived', required: false, defaultValue: false }),
-    due_from: Property.DateTime({ displayName: 'Due From', description: 'Set together with Due To.', required: false }),
-    due_to: Property.DateTime({ displayName: 'Due To', description: 'Set together with Due From.', required: false }),
-    limit: Property.Number({ displayName: 'Limit', description: '1 to 1000. Default 100.', required: false, defaultValue: 100 }),
+    due_info: Property.MarkDown({
+      value: 'Set both dates, or neither.',
+      variant: MarkdownVariant.INFO,
+    }),
+    due_from: Property.DateTime({ displayName: 'Due From', required: false, width: 'half' }),
+    due_to: Property.DateTime({ displayName: 'Due To', required: false, width: 'half' }),
+    limit: Property.Number({
+      displayName: 'Limit',
+      description: 'Up to 1000 per page. Default 100.',
+      required: false,
+      defaultValue: 100,
+      display: 'stepper',
+      min: 1,
+      max: 1000,
+      step: 1,
+    }),
     offset: Property.Number({ displayName: 'Offset', description: 'Use next_offset from the previous page.', required: false, defaultValue: 0 }),
   },
   outputSchema: findTasksOutputSchema,

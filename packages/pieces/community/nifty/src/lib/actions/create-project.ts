@@ -16,6 +16,10 @@ export const createProject = createAction({
       'Creates a Nifty project, optionally in a portfolio picked from a dropdown (agents: use nifty_project_create). Not idempotent: each call creates another project.',
     idempotent: false,
   },
+  propertyGroups: [
+    { key: 'project', display: 'section', label: 'Project', icon: 'text', props: ['portfolio', 'name', 'description'] },
+    { key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['access_type', 'default_tasks_view'] },
+  ],
   props: {
     portfolio: niftyProps.portfolio({
       required: false,

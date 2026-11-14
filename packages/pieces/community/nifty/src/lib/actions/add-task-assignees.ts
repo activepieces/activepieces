@@ -15,8 +15,21 @@ export const addTaskAssignees = createAction({
       "Adds one or more members to a Nifty task's assignees without touching the others. Use after List Members to get member IDs; requires task_id and at least one member ID. Idempotent: adding someone already assigned changes nothing.",
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'assignees',
+      display: 'section',
+      label: 'Assignees',
+      icon: 'users',
+      props: ['task_id', 'member_ids'],
+    },
+  ],
   props: {
-    task_id: Property.ShortText({ displayName: 'Task ID', required: true }),
+    task_id: Property.ShortText({
+      displayName: 'Task ID',
+      description: 'From a trigger or Find Tasks, not the short key like ANP-1.',
+      required: true,
+    }),
     member_ids: Property.Array({
       displayName: 'Member IDs',
       description: 'Member IDs from List Members.',

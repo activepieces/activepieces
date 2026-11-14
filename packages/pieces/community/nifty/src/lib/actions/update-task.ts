@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { niftyAuth } from '../auth';
 import { niftyProps } from '../common';
 import { niftyOps } from '../common/operations';
@@ -16,18 +16,45 @@ export const updateTask = createAction({
       'Updates fields on a Nifty task picked from cascading project and task dropdowns (agents: use nifty_task_update, which takes IDs). Only the fields you fill change; clear options blank the description or a date. Idempotent: repeating the same update leaves the task in the same state.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'task',
+      display: 'section',
+      label: 'Task to Update',
+      icon: 'inbox',
+      props: ['portfolio', 'project', 'task'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'text',
+      props: ['changes_info', 'name', 'description', 'clear_description', 'status', 'milestone', 'story_points'],
+    },
+    {
+      key: 'schedule',
+      display: 'section',
+      label: 'Schedule',
+      icon: 'calendar',
+      props: ['start_date', 'due_date', 'clear_start_date', 'clear_due_date'],
+    },
+  ],
   props: {
     portfolio: niftyProps.portfolio({ required: false }),
     project: niftyProps.project({ required: true }),
     task: niftyProps.task({ required: true }),
+    changes_info: Property.MarkDown({
+      value: 'Fields left empty keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
     name: Property.ShortText({ displayName: 'New Name', required: false }),
     description: Property.LongText({ displayName: 'New Description', required: false }),
     clear_description: Property.Checkbox({ displayName: 'Clear Description', required: false, defaultValue: false }),
     status: niftyProps.status({ required: false, description: 'Move the task to this status column.' }),
     milestone: niftyProps.milestone({ required: false, description: 'Move the task to this milestone or list.' }),
-    start_date: Property.DateTime({ displayName: 'Start Date', required: false }),
+    start_date: Property.DateTime({ displayName: 'Start Date', required: false, width: 'half' }),
     clear_start_date: Property.Checkbox({ displayName: 'Clear Start Date', required: false, defaultValue: false }),
-    due_date: Property.DateTime({ displayName: 'Due Date', required: false }),
+    due_date: Property.DateTime({ displayName: 'Due Date', required: false, width: 'half' }),
     clear_due_date: Property.Checkbox({ displayName: 'Clear Due Date', required: false, defaultValue: false }),
     story_points: Property.Number({ displayName: 'Story Points', required: false }),
   },
