@@ -153,8 +153,7 @@ export const generateText = createAction({
 
     const response = await generateWithRetry(apiKey, request);
 
-    const generatedText =
-      response.message?.content?.[0]?.text ?? '';
+    const generatedText = (response.message?.content ?? []).flatMap((block) => block.type === 'text' ? [block.text] : []).join('');
 
     return {
       text: generatedText,
