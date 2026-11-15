@@ -6,7 +6,7 @@ import { alttextifySchemas } from '../common/schemas';
 
 const STATE_KEY = 'alttextify_new_alt_text_state';
 const PAGE_SIZE = 100;
-const MAX_SCAN_PAGES = 10;
+const MAX_SCAN_PAGES = 100;
 const MAX_ITEMS_PER_POLL = 100;
 
 async function fetchPage({ apiKey, page, limit }: { apiKey: string; page: number; limit: number }): Promise<AlttextifyImage[]> {
@@ -29,6 +29,7 @@ function createdMs(image: AlttextifyImage): number | undefined {
 async function collectNewImages({ apiKey, state }: { apiKey: string; state: PollState }): Promise<PollResult> {
   const seen = new Set(state.seenIds);
   const candidates = new Map<string, { ms: number; image: AlttextifyImage }>();
+  let finished = false;
   for (let page = 1; page <= MAX_SCAN_PAGES; page++) {
     const items = await fetchPage({ apiKey, page, limit: PAGE_SIZE });
     let reachedCursor = false;
@@ -44,7 +45,15 @@ async function collectNewImages({ apiKey, state }: { apiKey: string; state: Poll
       }
       candidates.set(item.asset_id, { ms, image: item });
     }
-    if (reachedCursor || items.length < PAGE_SIZE) break;
+    if (reachedCursor || items.length < PAGE_SIZE) {
+      finished = true;
+      break;
+    }
+  }
+  if (!finished) {
+    throw new Error(
+      `More than ${(MAX_SCAN_PAGES * PAGE_SIZE).toLocaleString('en-US')} new AltTextify images since the last check; the trigger stopped without skipping any. Disable and re-enable the trigger to start from the newest image.`,
+    );
   }
 
   const ordered = [...candidates.values()].sort((a, b) => a.ms - b.ms).slice(0, MAX_ITEMS_PER_POLL);
@@ -58,6 +67,28 @@ async function collectNewImages({ apiKey, state }: { apiKey: string; state: Poll
     items: ordered.map((entry) => normalizeImage(entry.image)),
     state: { cursorMs: newCursor, seenIds },
   };
+}
+
+async function seedState({ apiKey }: { apiKey: string }): Promise<PollState> {
+  let newestMs: number | undefined;
+  const seenIds: string[] = [];
+  for (let page = 1; page <= MAX_SCAN_PAGES; page++) {
+    const items = await fetchPage({ apiKey, page, limit: PAGE_SIZE });
+    let passedNewest = false;
+    for (const item of items) {
+      const ms = createdMs(item);
+      if (ms === undefined || !item.asset_id) continue;
+      if (newestMs === undefined) newestMs = ms;
+      if (ms === newestMs) {
+        seenIds.push(item.asset_id);
+      } else if (ms < newestMs) {
+        passedNewest = true;
+        break;
+      }
+    }
+    if (passedNewest || items.length < PAGE_SIZE) break;
+  }
+  return newestMs === undefined ? { cursorMs: Date.now(), seenIds: [] } : { cursorMs: newestMs, seenIds };
 }
 
 export const newAltTextGeneratedTrigger = createTrigger({
@@ -83,11 +114,11 @@ export const newAltTextGeneratedTrigger = createTrigger({
     status: null,
   },
   async onEnable(context) {
-    const latest = await fetchPage({ apiKey: context.auth.secret_text, page: 1, limit: 1 });
-    const newest = latest[0];
-    const ms = newest ? createdMs(newest) : undefined;
-    const state: PollState =
-      newest && ms !== undefined ? { cursorMs: ms, seenIds: [newest.asset_id] } : { cursorMs: Date.now(), seenIds: [] };
+    if (context.isRepublish) {
+      const existing = await context.store.get<PollState>(STATE_KEY);
+      if (existing) return;
+    }
+    const state = await seedState({ apiKey: context.auth.secret_text });
     await context.store.put<PollState>(STATE_KEY, state);
   },
   async onDisable(context) {

@@ -17,6 +17,11 @@ function makeStore({ initial }: { initial: Record<string, unknown> }) {
   };
 }
 
+function callTrigger({ method, store, isRepublish }: { method: 'onEnable'; store: ReturnType<typeof makeStore>; isRepublish: boolean }) {
+  const context = { auth: { secret_text: 'key' }, store, propsValue: {}, isRepublish };
+  return Reflect.apply(newAltTextGeneratedTrigger[method], undefined, [context]);
+}
+
 function runTrigger({ store }: { store: ReturnType<typeof makeStore> }) {
   const context = { auth: { secret_text: 'key' }, store, propsValue: {} };
   return Reflect.apply(newAltTextGeneratedTrigger.run, undefined, [context]);
@@ -110,5 +115,75 @@ describe('new-alt-text-generated', () => {
     expect(second).toHaveLength(50);
     expect(new Set(ids).size).toBe(150);
     expect(third).toHaveLength(0);
+  });
+
+  it('throws without writing state when the scan cap is hit before the cursor', async () => {
+    const store = makeStore({ initial: { [KEY]: { cursorMs: 0, seenIds: [] } } });
+    let call = 0;
+    const send = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async () => {
+      const offset = call++ * 100;
+      return {
+        status: 200,
+        headers: {},
+        body: Array.from({ length: 100 }, (_, index) => ({
+          asset_id: `id-${offset + index}`,
+          alt_text: ['x'],
+          created_at: new Date(Date.parse(T2) - (offset + index) * 1000).toISOString(),
+        })),
+      };
+    });
+    await expect(runTrigger({ store })).rejects.toThrow('More than 10,000 new AltTextify images');
+    expect(send).toHaveBeenCalledTimes(100);
+    expect(store.put).not.toHaveBeenCalled();
+  });
+
+  it('scans past 10 pages until it reaches the cursor', async () => {
+    const store = makeStore({ initial: { [KEY]: { cursorMs: Date.parse(T1), seenIds: [] } } });
+    let call = 0;
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async () => {
+      const offset = call++ * 100;
+      const body =
+        call <= 12
+          ? Array.from({ length: 100 }, (_, index) => ({
+              asset_id: `id-${offset + index}`,
+              alt_text: ['x'],
+              created_at: new Date(Date.parse(T2) + 10_000_000 - (offset + index) * 1000).toISOString(),
+            }))
+          : [{ asset_id: 'old', alt_text: ['x'], created_at: '2025-03-21T08:00:00.000Z' }];
+      return { status: 200, headers: {}, body };
+    });
+    const items = await runTrigger({ store });
+    expect(call).toBe(13);
+    expect(items).toHaveLength(100);
+    expect(items[0].asset_id).toBe('id-1199');
+  });
+
+  it('keeps existing state on republish', async () => {
+    const existing = { cursorMs: 123, seenIds: ['a'] };
+    const store = makeStore({ initial: { [KEY]: existing } });
+    const send = vi.spyOn(httpClient, 'sendRequest');
+    await callTrigger({ method: 'onEnable', store, isRepublish: true });
+    expect(send).not.toHaveBeenCalled();
+    expect(store.data[KEY]).toEqual(existing);
+  });
+
+  it('seeds every id sharing the newest timestamp, across pages', async () => {
+    const store = makeStore({ initial: {} });
+    const fullPage = Array.from({ length: 100 }, (_, index) => ({ asset_id: `n-${index}`, alt_text: ['x'], created_at: T2 }));
+    vi.spyOn(httpClient, 'sendRequest')
+      .mockResolvedValueOnce({ status: 200, headers: {}, body: fullPage })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: {},
+        body: [
+          { asset_id: 'n-100', alt_text: ['x'], created_at: T2 },
+          { asset_id: 'older', alt_text: ['x'], created_at: T1 },
+        ],
+      });
+    await callTrigger({ method: 'onEnable', store, isRepublish: false });
+    const state = store.data[KEY];
+    expect(state).toMatchObject({ cursorMs: Date.parse(T2) });
+    expect(state.seenIds).toHaveLength(101);
+    expect(state.seenIds).not.toContain('older');
   });
 });

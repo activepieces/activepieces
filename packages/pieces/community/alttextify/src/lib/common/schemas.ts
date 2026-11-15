@@ -7,7 +7,7 @@ const imageFields: OutputSchemaField[] = [
     key: 'alt_texts',
     label: 'Alt Texts',
     description: 'All alt text values stored for the image.',
-    listItems: [{ key: 'value', label: 'Alt Text' }],
+    listItems: [{ key: 'value', label: 'Alt Text', value: '' }],
   },
   { key: 'image_source', label: 'Image Source', description: 'Stored file name of the image.' },
   { key: 'tag', label: 'Tag' },
