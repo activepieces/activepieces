@@ -367,8 +367,8 @@ export function DataTable<
         <DataTableToolbar
           className={toolbarClassName ?? (bordered ? 'px-0' : undefined)}
         >
-          <div className="w-full flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+          <div className="w-full flex flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               {filters &&
                 filters.map((filter) => (
                   <DataTableFilter
@@ -383,7 +383,7 @@ export function DataTable<
                 ))}
             </div>
             {toolbarButtons && toolbarButtons.length > 0 && (
-              <div className="flex items-center gap-2">
+              <div className="ml-auto flex shrink-0 items-center gap-2">
                 {toolbarButtons.map((button, idx) => (
                   <React.Fragment key={idx}>{button}</React.Fragment>
                 ))}

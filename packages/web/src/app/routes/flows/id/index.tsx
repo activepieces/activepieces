@@ -8,11 +8,29 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 
 import { BuilderPage } from '@/app/builder';
 import { BuilderStateProvider } from '@/app/builder/state/builder-state-provider';
-import { LoadingSpinner } from '@/components/custom/spinner';
 import { buttonVariants } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { flowHooks, flowsApi, sampleDataHooks } from '@/features/flows';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
+
+function BuilderSkeleton() {
+  return (
+    <div aria-busy className="flex h-full w-full flex-col bg-gray-1">
+      <div className="flex h-[60px] shrink-0 items-center gap-3 border-b px-4">
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="ml-auto h-8 w-24" />
+      </div>
+      <div className="flex flex-1 flex-col items-center gap-8 pt-16">
+        {STEP_SKELETONS.map((step) => (
+          <Skeleton key={step} className="h-16 w-64 rounded-lg" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const STEP_SKELETONS = ['trigger', 'first-step', 'second-step'];
 
 const FlowBuilderPage = () => {
   const { flowId } = useParams();
@@ -40,11 +58,7 @@ const FlowBuilderPage = () => {
   const { data: sampleDataInput, isLoading: isSampleDataInputLoading } =
     sampleDataHooks.useSampleDataInputForFlow(flow?.version, flow?.projectId);
   if (isLoading || isSampleDataLoading || isSampleDataInputLoading) {
-    return (
-      <div className="bg-gray-1 flex h-full w-full items-center justify-center ">
-        <LoadingSpinner isLarge={true}></LoadingSpinner>
-      </div>
-    );
+    return <BuilderSkeleton />;
   }
 
   if (isNil(flow) || isError) {
