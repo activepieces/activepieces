@@ -1,9 +1,7 @@
-import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, OutputSchema, Property } from '@activepieces/pieces-framework';
 import { sprinklrAuth } from '../auth';
-import { sprinklrClient } from '../common/client';
-import { sprinklrEndpoints } from '../common/endpoints';
 import { sprinklrErrors } from '../common/errors';
+import { sprinklrReports } from '../common/reports';
 import { sprinklrTime } from '../common/time';
 
 const PAGE_SIZE_CAP = 1000;
@@ -166,12 +164,7 @@ export const runReportAction = createAction({
       page: p.page,
       pageSize: p.page_size,
     });
-    const data = await sprinklrClient.request({
-      auth: context.auth,
-      method: HttpMethod.POST,
-      path: sprinklrEndpoints.REPORTS_QUERY,
-      body,
-    });
+    const data = await sprinklrReports.query({ auth: context.auth, body });
     const { rows, hasMore } = readRows(data);
     return { rowCount: rows.length, hasMore, rows };
   },

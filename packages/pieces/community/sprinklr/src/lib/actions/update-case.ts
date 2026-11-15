@@ -27,8 +27,8 @@ function buildWorkflow(props: UpdateCaseInput): Record<string, unknown> | undefi
   const assigneeId = sprinklrCaseWrite.cleanText(props.assignee_id);
   const result = sprinklrCaseWrite.compact({
     assignment: assigneeId === undefined ? undefined : { assigneeId, assigneeType: ASSIGNEE_TYPE },
-    addedQueues: sprinklrCaseWrite.parseIdList({ value: props.add_queue_ids, field: 'Add Queue IDs' }),
-    removedQueues: sprinklrCaseWrite.parseIdList({ value: props.remove_queue_ids, field: 'Remove Queue IDs' }),
+    addedQueues: props.add_queue_ids?.length ? sprinklrCaseWrite.parseIdList({ value: props.add_queue_ids, field: 'Add Queue IDs' }) : undefined,
+    removedQueues: props.remove_queue_ids?.length ? sprinklrCaseWrite.parseIdList({ value: props.remove_queue_ids, field: 'Remove Queue IDs' }) : undefined,
     syncedSelectedCustomProperties: sprinklrCaseWrite.customFieldsAsLists(props.custom_fields),
   });
   return Object.keys(result).length > 0 ? result : undefined;
@@ -163,7 +163,7 @@ type UpdateCaseInput = {
   due_date?: unknown;
   summary?: unknown;
   assignee_id?: unknown;
-  add_queue_ids?: unknown;
-  remove_queue_ids?: unknown;
+  add_queue_ids?: unknown[] | string | null;
+  remove_queue_ids?: unknown[] | string | null;
   custom_fields?: unknown;
 };
