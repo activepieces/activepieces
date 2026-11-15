@@ -14,6 +14,7 @@ import { memo, useState } from 'react';
 import { flushSync } from 'react-dom';
 
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
+import { ChatAppLinks } from '@/app/routes/chat-with-ai/components/chat-app-links';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -263,31 +264,33 @@ const ChatBody = memo(function ChatBody({
     if (full) chatPanelUtils.showOnFullPage(id);
   };
   return (
-    <AIChatBox
-      key={newChatToken}
-      incognito={false}
-      compact={!full}
-      autoFocusComposer={newChatToken > 0}
-      conversationId={conversationId}
-      initialPrompt={prompt}
-      onConversationCreated={(id) => {
-        useChatPanel.getState().conversationCreated(id);
-        showOnPage(id);
-        invalidate();
-      }}
-      onConversationMissing={() => {
-        useChatPanel.getState().conversationMissing();
-        showOnPage(null);
-      }}
-      onTitleUpdate={(next) => {
-        const id = useChatPanel.getState().conversationId;
-        if (id) {
-          chatConversations.setTitle({ queryClient, id, title: next });
-          onTitleTyped(id);
-        }
-        invalidate();
-      }}
-    />
+    <ChatAppLinks>
+      <AIChatBox
+        key={newChatToken}
+        incognito={false}
+        compact={!full}
+        autoFocusComposer={newChatToken > 0}
+        conversationId={conversationId}
+        initialPrompt={prompt}
+        onConversationCreated={(id) => {
+          useChatPanel.getState().conversationCreated(id);
+          showOnPage(id);
+          invalidate();
+        }}
+        onConversationMissing={() => {
+          useChatPanel.getState().conversationMissing();
+          showOnPage(null);
+        }}
+        onTitleUpdate={(next) => {
+          const id = useChatPanel.getState().conversationId;
+          if (id) {
+            chatConversations.setTitle({ queryClient, id, title: next });
+            onTitleTyped(id);
+          }
+          invalidate();
+        }}
+      />
+    </ChatAppLinks>
   );
 });
 

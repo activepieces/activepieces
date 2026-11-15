@@ -6,7 +6,9 @@ import remarkGfm from 'remark-gfm';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { cn } from '@/lib/utils';
 
+import { AppLink } from './app-link';
 import { CodeBlock, CodeBlockCode, CodeBlockGroup } from './code-block';
+import { markdownTextUtils } from './markdown-text-utils';
 import { Source } from './source';
 
 function normalizeMarkdownSpacing(markdown: string): string {
@@ -269,27 +271,35 @@ const INITIAL_COMPONENTS: Partial<Components> = {
   },
   a: function LinkComponent({ href, children }) {
     if (!href) return <>{children}</>;
-    const isWebUrl = href.startsWith('http://') || href.startsWith('https://');
-    const isSafeProtocol =
-      isWebUrl || href.startsWith('mailto:') || href.startsWith('tel:');
-    if (!isSafeProtocol) {
+    const link = markdownTextUtils.classifyLink({
+      href,
+      origin: window.location.origin,
+    });
+    if (link.kind === 'unsafe') {
       return <span>{children}</span>;
     }
-
-    const text = typeof children === 'string' ? children : '';
-    const isBareUrl =
-      isWebUrl && (text === '' || text === href || text.startsWith('http'));
+    const bare = isBareLink({ children, href });
+    if (link.kind === 'app') {
+      return (
+        <AppLink route={link.route} bare={bare}>
+          {children}
+        </AppLink>
+      );
+    }
+    const isWebUrl = link.kind === 'external';
+    const target = isWebUrl ? link.href : href;
+    const isBareUrl = isWebUrl && bare;
 
     if (isBareUrl) {
-      return <Source href={href} />;
+      return <Source href={target} />;
     }
 
     return (
       <a
-        href={href}
+        href={target}
         target={isWebUrl ? '_blank' : undefined}
         rel={isWebUrl ? 'noopener noreferrer' : undefined}
-        className="text-accent-11 underline underline-offset-2 hover:text-accent-11/80 transition-colors"
+        className="text-accent-11 underline underline-offset-2 hover:text-accent-11/80 transition-colors duration-(--dur-micro) ease-[ease]"
       >
         {children}
       </a>
@@ -351,6 +361,18 @@ const INITIAL_COMPONENTS: Partial<Components> = {
     return <>{children}</>;
   },
 };
+
+function isBareLink({
+  children,
+  href,
+}: {
+  children: React.ReactNode;
+  href: string;
+}): boolean {
+  if (children === null || children === undefined) return true;
+  if (typeof children !== 'string') return false;
+  return children === '' || children === href || children.startsWith('http');
+}
 
 type HeadingTag = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 
