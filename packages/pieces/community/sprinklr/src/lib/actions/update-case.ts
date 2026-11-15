@@ -27,8 +27,8 @@ function buildWorkflow(props: UpdateCaseInput): Record<string, unknown> | undefi
   const assigneeId = sprinklrCaseWrite.cleanText(props.assignee_id);
   const result = sprinklrCaseWrite.compact({
     assignment: assigneeId === undefined ? undefined : { assigneeId, assigneeType: ASSIGNEE_TYPE },
-    addedQueues: props.add_queue_ids?.length ? sprinklrCaseWrite.parseIdList({ value: props.add_queue_ids, field: 'Add Queue IDs' }) : undefined,
-    removedQueues: props.remove_queue_ids?.length ? sprinklrCaseWrite.parseIdList({ value: props.remove_queue_ids, field: 'Remove Queue IDs' }) : undefined,
+    addedQueues: sprinklrCaseWrite.parseIdList({ value: props.add_queue_ids, field: 'Add Queue IDs' }),
+    removedQueues: sprinklrCaseWrite.parseIdList({ value: props.remove_queue_ids, field: 'Remove Queue IDs' }),
     syncedSelectedCustomProperties: sprinklrCaseWrite.customFieldsAsLists(props.custom_fields),
   });
   return Object.keys(result).length > 0 ? result : undefined;
@@ -142,7 +142,21 @@ export const updateCaseAction = createAction({
   },
   async run(context) {
     const caseNumber = sprinklrCaseWrite.parseCaseNumber(context.propsValue.case_number);
-    const body = buildBody(context.propsValue);
+    const { subject, description, status, priority, case_type, due_date, summary, assignee_id, custom_fields, add_queue_ids, remove_queue_ids } =
+      context.propsValue;
+    const body = buildBody({
+      subject,
+      description,
+      status,
+      priority,
+      case_type,
+      due_date,
+      summary,
+      assignee_id,
+      custom_fields,
+      add_queue_ids: add_queue_ids?.length ? add_queue_ids : undefined,
+      remove_queue_ids: remove_queue_ids?.length ? remove_queue_ids : undefined,
+    });
     await sprinklrClient.request({
       auth: context.auth,
       method: HttpMethod.PATCH,
