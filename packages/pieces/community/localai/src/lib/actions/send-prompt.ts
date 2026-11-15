@@ -109,6 +109,9 @@ function parseRoles(value: unknown): ChatMessage[] {
   if (value === undefined || value === null || value === '') {
     return [];
   }
+  if (isEmptyObject(value)) {
+    return [];
+  }
   if (!Array.isArray(value)) {
     throw new Error(
       'Roles must be an array of { "role": "system" | "user" | "assistant", "content": "..." }.'
@@ -195,6 +198,15 @@ function isImagePart(part: unknown): part is ImagePart {
     image.detail === 'auto' ||
     image.detail === 'low' ||
     image.detail === 'high'
+  );
+}
+
+function isEmptyObject(value: unknown): boolean {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.keys(value).length === 0
   );
 }
 
