@@ -23,8 +23,6 @@ import {
   WorkerHealth,
 } from './statuses';
 
-export const statusColors = { of: colorsOf };
-
 function colorsOf(status: Status): StatusColors {
   switch (status) {
     case FlowRunStatus.SUCCEEDED:
@@ -156,6 +154,8 @@ const RUNNING: StatusColors = {
   dot: 'bg-accent-10',
   solid: 'text-accent-9',
 };
+
+export const statusColors = { of: colorsOf };
 
 export type Status =
   | FlowRunStatus
