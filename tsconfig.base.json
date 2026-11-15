@@ -410,6 +410,9 @@
       "@activepieces/piece-dataforb2b": [
         "packages/pieces/community/dataforb2b/src/index.ts"
       ],
+      "@activepieces/piece-datalab": [
+        "packages/pieces/community/datalab/src/index.ts"
+      ],
       "@activepieces/piece-date-helper": [
         "packages/pieces/core/date-helper/src/index.ts"
       ],
@@ -732,6 +735,9 @@
       ],
       "@activepieces/piece-jira-data-center": [
         "packages/pieces/community/jira-data-center/src/index.ts"
+      ],
+      "@activepieces/piece-jira-service-management": [
+        "packages/pieces/community/jira-service-management/src/index.ts"
       ],
       "@activepieces/piece-jotform": [
         "packages/pieces/community/jotform/src/index.ts"
@@ -1205,6 +1211,9 @@
       ],
       "@activepieces/piece-salesloft": [
         "packages/pieces/community/salesloft/src/index.ts"
+      ],
+      "@activepieces/piece-salla": [
+        "packages/pieces/community/salla/src/index.ts"
       ],
       "@activepieces/piece-savvycal": [
         "packages/pieces/community/savvycal/src/index.ts"
