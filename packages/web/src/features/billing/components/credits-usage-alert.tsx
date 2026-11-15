@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId, InviteRewardSurface } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { CircleAlert, TriangleAlert, X } from 'lucide-react';
@@ -9,7 +9,10 @@ import { useLocation } from 'react-router-dom';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { InviteRewardButton } from '@/features/members/components/invite-reward/invite-reward';
+import {
+  InviteRewardButton,
+  useInviteOffer,
+} from '@/features/members/components/invite-reward/invite-reward';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
@@ -35,6 +38,7 @@ export const CreditsUsageAlert = React.memo(() => {
   } = useCreditsUsage();
   const location = useLocation();
   const { embedState } = useEmbedding();
+  const inviteOffer = useInviteOffer(InviteRewardSurface.CREDITS_ALERT);
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const [dismissedAt, setDismissedAt] = useState(() =>
     creditsAlertDismissal.read({ platformId }),
@@ -55,7 +59,12 @@ export const CreditsUsageAlert = React.memo(() => {
   );
 
   if (!visible || isNil(creditsRemaining)) {
-    return null;
+    return (
+      <>
+        {null}
+        {inviteOffer.dialog}
+      </>
+    );
   }
 
   const resetLine = billingUtils.resolveCreditsReset({
@@ -86,35 +95,38 @@ export const CreditsUsageAlert = React.memo(() => {
   };
 
   return (
-    <div className={cn(DASHBOARD_CONTENT_PADDING_X, 'w-full pt-3')}>
-      <Alert
-        variant={isDanger ? 'destructive' : 'warning'}
-        className={cn(
-          'flex items-center gap-2 py-2 *:[svg]:translate-y-0',
-          isDanger ? 'border-danger-7 bg-danger-3' : 'bg-warning-3',
-        )}
-      >
-        <Icon className="size-4 shrink-0" />
-        <AlertDescription className="min-w-0 text-current">
-          {message}
-        </AlertDescription>
-        <div className="ms-auto flex shrink-0 items-center gap-1">
-          <InviteRewardButton />
-          <CreditsActionButton />
-          {!isDanger && (
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              aria-label={t('Dismiss')}
-              className="text-current"
-              onClick={dismissAlert}
-            >
-              <X className="size-3.5" />
-            </Button>
+    <>
+      <div className={cn(DASHBOARD_CONTENT_PADDING_X, 'w-full pt-3')}>
+        <Alert
+          variant={isDanger ? 'destructive' : 'warning'}
+          className={cn(
+            'flex items-center gap-2 py-2 *:[svg]:translate-y-0',
+            isDanger ? 'border-danger-7 bg-danger-3' : 'bg-warning-3',
           )}
-        </div>
-      </Alert>
-    </div>
+        >
+          <Icon className="size-4 shrink-0" />
+          <AlertDescription className="min-w-0 text-current">
+            {message}
+          </AlertDescription>
+          <div className="ms-auto flex shrink-0 items-center gap-1">
+            <InviteRewardButton offer={inviteOffer} />
+            <CreditsActionButton />
+            {!isDanger && (
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                aria-label={t('Dismiss')}
+                className="text-current"
+                onClick={dismissAlert}
+              >
+                <X className="size-3.5" />
+              </Button>
+            )}
+          </div>
+        </Alert>
+      </div>
+      {inviteOffer.dialog}
+    </>
   );
 });
 

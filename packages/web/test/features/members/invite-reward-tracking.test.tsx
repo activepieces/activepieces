@@ -34,7 +34,18 @@ vi.mock('@/features/members/components/invite-user/invite-user-dialog', () => ({
 import {
   InviteRewardButton,
   InviteRewardCard,
+  useInviteOffer,
 } from '@/features/members/components/invite-reward/invite-reward';
+
+function CreditsAlertOffer({ alertShown = true }: { alertShown?: boolean }) {
+  const offer = useInviteOffer(InviteRewardSurface.CREDITS_ALERT);
+  return (
+    <>
+      {alertShown && <InviteRewardButton offer={offer} />}
+      {offer.dialog}
+    </>
+  );
+}
 
 describe('invite reward offer tracking', () => {
   beforeEach(() => {
@@ -69,7 +80,7 @@ describe('invite reward offer tracking', () => {
   it('renders nothing when there is no offer and no open dialog', () => {
     offer.visible = false;
 
-    const { container } = render(<InviteRewardButton />);
+    const { container } = render(<CreditsAlertOffer />);
 
     expect(container.innerHTML).toBe('');
   });
@@ -96,8 +107,18 @@ describe('invite reward offer tracking', () => {
     expect(screen.queryAllByRole('button', { name: 'Invite' })).toEqual([]);
   });
 
+  it('keeps an invite dialog opened from the low-credits alert open when the alert hides', () => {
+    const { rerender } = render(<CreditsAlertOffer />);
+    fireEvent.click(screen.getByRole('button'));
+
+    rerender(<CreditsAlertOffer alertShown={false} />);
+
+    expect(screen.queryAllByRole('button')).toEqual([]);
+    screen.getByText('invite dialog');
+  });
+
   it('records a low-credits alert click', () => {
-    render(<InviteRewardButton />);
+    render(<CreditsAlertOffer />);
 
     fireEvent.click(screen.getByRole('button'));
 

@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Gift, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useTelemetry } from '@/components/providers/telemetry-provider';
@@ -14,7 +14,10 @@ import { refreshBillingCaches } from '@/features/billing/hooks/billing-hooks';
 import { billingUtils } from '@/features/billing/utils/billing-utils';
 import { timedDismissal } from '@/lib/timed-dismissal';
 
-import { useInviteRewards } from '../../hooks/use-invite-rewards';
+import {
+  InviteRewardsState,
+  useInviteRewards,
+} from '../../hooks/use-invite-rewards';
 import { InviteUserDialog } from '../invite-user/invite-user-dialog';
 
 export function InviteRewardCard() {
@@ -81,23 +84,17 @@ export function InviteRewardCard() {
   );
 }
 
-export function InviteRewardButton() {
-  const { rewards, openInvite, dialog } = useInviteOffer(
-    InviteRewardSurface.CREDITS_ALERT,
-  );
-
+export function InviteRewardButton({ offer }: { offer: InviteOffer }) {
+  if (!offer.rewards.visible) {
+    return null;
+  }
   return (
-    <>
-      {rewards.visible && (
-        <Button size="sm" variant="basic" onClick={openInvite}>
-          <Gift className="size-4" />
-          {t('Invite a teammate for +{credits}', {
-            credits: billingUtils.formatCredits(rewards.creditsPerInvite),
-          })}
-        </Button>
-      )}
-      {dialog}
-    </>
+    <Button size="sm" variant="basic" onClick={offer.openInvite}>
+      <Gift className="size-4" />
+      {t('Invite a teammate for +{credits}', {
+        credits: billingUtils.formatCredits(offer.rewards.creditsPerInvite),
+      })}
+    </Button>
   );
 }
 
@@ -158,7 +155,7 @@ export function InviteRewardNotifier() {
   return null;
 }
 
-function useInviteOffer(surface: InviteRewardSurface) {
+export function useInviteOffer(surface: InviteRewardSurface): InviteOffer {
   const rewards = useInviteRewards();
   const { capture } = useTelemetry();
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -210,3 +207,9 @@ const cardDismissal = timedDismissal.create({
   storageKeyPrefix: 'ap-invite-reward-card-dismissed',
   durationHours: CARD_DISMISSAL_DAYS * 24,
 });
+
+export type InviteOffer = {
+  rewards: InviteRewardsState;
+  openInvite: () => void;
+  dialog: ReactNode;
+};
