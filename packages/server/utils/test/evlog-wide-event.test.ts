@@ -235,12 +235,12 @@ describe('wideEvent.runJob', () => {
 
     it('records the error, sets outcome failed, keeps fields set by fn, and rethrows', async () => {
         const captured = captureDrainedEvents()
-        const run = wideEvent.runJob({
+        const job = wideEvent.runJob({
             fields: { event: 'job.test', flowRun: { id: 'child' } },
             fn: () => Promise.reject(new Error('boom'))
                 .finally(() => wideEvent.set({ flowRun: { id: 'child' } })),
         })
-        await expect(run).rejects.toThrow('boom')
+        await expect(job).rejects.toThrow('boom')
         await new Promise(resolve => setImmediate(resolve))
         expect(captured).toHaveLength(1)
         expect(captured[0]).toMatchObject({ outcome: 'failed', level: 'error', flowRun: { id: 'child' }, error: { message: 'boom' } })

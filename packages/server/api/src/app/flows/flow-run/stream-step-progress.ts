@@ -11,14 +11,14 @@ function hasManualTrigger({ flowVersion }: HasManualTriggerParams): boolean {
     return isManualPieceTrigger({ pieceName: trigger.settings.pieceName, triggerName: trigger.settings.triggerName })
 }
 
-function isStreamedToBuilder({ flowRun, flowVersion }: IsStreamedToBuilderParams): boolean {
+function isStreamedToBuilder({ flowRun, flowVersion }: RunWithVersionParams): boolean {
     if (flowRun.environment === RunEnvironment.TESTING) {
         return true
     }
     return hasManualTrigger({ flowVersion })
 }
 
-function forRun({ flowRun, flowVersion }: IsStreamedToBuilderParams): StreamStepProgress {
+function forRun({ flowRun, flowVersion }: RunWithVersionParams): StreamStepProgress {
     return isStreamedToBuilder({ flowRun, flowVersion })
         ? StreamStepProgress.WEBSOCKET
         : StreamStepProgress.NONE
@@ -46,7 +46,7 @@ type HasManualTriggerParams = {
     flowVersion: FlowVersion | null
 }
 
-type IsStreamedToBuilderParams = {
+type RunWithVersionParams = {
     flowRun: FlowRun
     flowVersion: FlowVersion | null
 }
