@@ -14,6 +14,12 @@ export const cohere = createPiece({
   actions: [generateText,
     createCustomApiCallAction({
       auth: cohereAuth,
+      props: {
+        url: {
+          description: 'Full URL, or a path relative to https://api.cohere.com/v2',
+          placeholder: '/chat',
+        },
+      },
       baseUrl: () => 'https://api.cohere.com/v2',
       authMapping: async (auth) => {
         return {
