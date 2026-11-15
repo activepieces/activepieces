@@ -324,7 +324,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
             {language !== 'plaintext' ? language : ''}
           </span>
           <CopyButton
-            textToCopy={code}
+            value={code}
             withoutTooltip
             variant="ghost"
             className="h-6 w-6 p-0"

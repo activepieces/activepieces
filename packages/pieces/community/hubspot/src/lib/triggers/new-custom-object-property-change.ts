@@ -1,4 +1,5 @@
 import { getHubspotAccessToken, hubspotAuth } from '../auth';
+import { hubspotPolling } from '../common/polling';
 import {
 	createTrigger,
 	DynamicPropsValue,
@@ -9,13 +10,8 @@ import {
 	customObjectPropertiesDropdown,
 } from '../common/props';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/pieces-framework';
-import { chunk } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
-import dayjs from 'dayjs';
-import { FilterOperatorEnum } from '../common/types';
-import { MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
 import { crmObjectOutputSchema } from '../output-schemas';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
@@ -24,110 +20,25 @@ type Props = {
 	propertyName?: DynamicPropsValue;
 };
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
+const polling = {
 	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, propsValue, lastFetchEpochMS }) {
+	async items({ auth, propsValue, lastFetchEpochMS, store }) {
 		const client = new Client({ accessToken: getHubspotAccessToken(auth), numberOfApiCallRetries: 3 });
-
 		const customObjectType = propsValue.customObjectType as string;
 		const propertyToCheck = propsValue.propertyName?.['values'] as string;
-
 		const propertiesToRetrieve = [propertyToCheck];
 
-		const items = [];
-		// For test, we only fetch 10 custom objects
-		if (lastFetchEpochMS === 0) {
-			const response = await client.crm.objects.searchApi.doSearch(customObjectType, {
-				limit: 10,
-				properties: propertiesToRetrieve,
-				sorts: ['-hs_lastmodifieddate'],
-			});
-			items.push(...response.results);
-			return items.map((item) => ({
-				epochMilliSeconds: dayjs(item.properties['hs_lastmodifieddate']).valueOf(),
-				data: item,
-			}));
-		}
-		//fetch updated custom objects
-		const updatedCustomObjects = [];
-		let after: string | undefined;
-		do {
-			const response = await client.crm.objects.searchApi.doSearch(customObjectType, {
-				limit: MAX_SEARCH_PAGE_SIZE,
-				after,
-				sorts: ['-hs_lastmodifieddate'],
-				filterGroups: [
-					{
-						filters: [
-							{
-								propertyName: propertyToCheck,
-								operator: FilterOperatorEnum.HasProperty,
-							},
-							{
-								propertyName: 'hs_lastmodifieddate',
-								operator: FilterOperatorEnum.Gt,
-								value: lastFetchEpochMS.toString(),
-							},
-						],
-					},
-				],
-			});
-			after = response.paging?.next?.after;
-			updatedCustomObjects.push(...response.results);
-
-			// Stop fetching if it exceeds max search results or will encounter 400 status
-			if (
-				!isNil(after) &&
-				parseInt(after) + MAX_SEARCH_PAGE_SIZE > MAX_SEARCH_TOTAL_RESULTS
-			) {
-				break;
-			}
-		} while (after);
-
-		if (updatedCustomObjects.length === 0) {
-			return [];
-		}
-
-    // Avoid VALIDATION_ERROR: The maximum number of inputs supported in a batch request for property histories is 50
-    const batchApiChunks = chunk(updatedCustomObjects, 50);
-
-    // Fetch custom objects with property history
-    const batchApiResps = await Promise.all(
-      batchApiChunks.map((batch) => {
-        return client.crm.objects.batchApi.read(customObjectType, {
-          propertiesWithHistory: [propertyToCheck],
-          properties: propertiesToRetrieve,
-          inputs: batch.map((customObject) => {
-            return {
-              id: customObject.id,
-            };
-          }),
-        });
-      })
-    );
-
-    const updatedCustomObjectsWithPropertyHistory = batchApiResps.flatMap(
-      (resp) => resp.results
-    );
-
-		for (const customObject of updatedCustomObjectsWithPropertyHistory) {
-			const history = customObject.propertiesWithHistory?.[propertyToCheck];
-			if (!history || history.length === 0) {
-				continue;
-			}
-			const propertyLastModifiedDateTimeStamp = dayjs(history[0].timestamp).valueOf();
-			if (propertyLastModifiedDateTimeStamp > lastFetchEpochMS) {
-				const { propertiesWithHistory, ...item } = customObject;
-				items.push(item);
-			}
-		}
-
-		return items.map((item) => ({
-			epochMilliSeconds: dayjs(item.properties['hs_lastmodifieddate']).valueOf(),
-			data: item,
-		}));
+		return hubspotPolling.pollPropertyChanges({
+			search: (request) => client.crm.objects.searchApi.doSearch(customObjectType, request),
+			readWithHistory: (request) => client.crm.objects.batchApi.read(customObjectType, request),
+			store,
+			timestampProperty: 'hs_lastmodifieddate',
+			watchedProperty: propertyToCheck,
+			properties: propertiesToRetrieve,
+			lastFetchEpochMS,
+		});
 	},
-};
+} satisfies Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props>;
 
 export const newCustomObjectPropertyChangeTrigger = createTrigger({
 	auth: hubspotAuth,
@@ -137,7 +48,7 @@ export const newCustomObjectPropertyChangeTrigger = createTrigger({
 	description: 'Triggers when a specified property is updated on a custom object.',
 	aiMetadata: {
 		description:
-			'Fires when the chosen property changes on a record of the selected HubSpot custom object type. Each event represents one custom-object record whose selected property was modified since the last poll, returning the record. Use to react to specific field updates on a custom object rather than every change.',
+			'Fires when the chosen property changes on a record of the selected HubSpot custom object type. Each event represents one custom-object record whose selected property was modified since the last poll, returning the record with the watched property. Clearing the watched property also fires. Use to react to specific field updates on a custom object rather than every change.',
 	},
 	propertyGroups: [
 		{
@@ -165,10 +76,10 @@ export const newCustomObjectPropertyChangeTrigger = createTrigger({
 		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
-		return await pollingHelper.test(polling, context);
+		return hubspotPolling.sampleOldestToNewest({ items: await pollingHelper.test(polling, context) });
 	},
 	async run(context) {
-		return await pollingHelper.poll(polling, context);
+		return await hubspotPolling.poll({ polling, context });
 	},
 	sampleData: {
 		createdAt: '2024-12-22T15:20:16.121Z',

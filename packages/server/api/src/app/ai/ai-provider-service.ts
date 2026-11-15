@@ -12,6 +12,8 @@ import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openroute
 import { flagService } from '../flags/flag.service'
 import { EncryptedObject, encryptUtils } from '../helper/encryption'
 import { sleep } from '../helper/sleep'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { billingProvider } from '../platform/billing-provider'
 import { platformConfigurationService } from '../platform/platform-configuration.service'
 import { platformService } from '../platform/platform.service'
@@ -33,6 +35,8 @@ const MANAGED_OPENROUTER_KEY_LOCK_TIMEOUT_SECONDS = 60
 const MANAGED_OPENROUTER_KEY_LIVE_WAIT_MS = 30_000
 const MANAGED_OPENROUTER_KEY_LIVE_POLL_MS = 1_000
 const MANAGED_OPENROUTER_KEY_LIVE_PASSES_IN_A_ROW = 3
+const MANAGEMENT_KEY_VISIBLE_PREFIX_LENGTH = 12
+const MANAGEMENT_KEY_VISIBLE_SUFFIX_LENGTH = 3
 
 // A passing check must not lock out the next real failure, so the claim is a floor between
 // checks rather than a window that swallows them. A confirmed failure needs no floor: the row
@@ -725,6 +729,10 @@ async function isActivepiecesAiProviderHidden({ platformId, log }: { platformId:
 }
 
 async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { providerId: string, platformId: PlatformId, log: FastifyBaseLogger }): Promise<AIProviderAuthConfig> {
+    if (isNil(platformId)) {
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'platformId is required' } })
+    }
+    await platformService(log).getOneOrThrow(platformId)
     return distributedLock(log).runExclusive({
         key: getManagedAiProviderKeyLockKey(platformId),
         timeoutInSeconds: MANAGED_OPENROUTER_KEY_LOCK_TIMEOUT_SECONDS,
@@ -736,6 +744,7 @@ async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { provide
             }
             const { key, data } = await openRouterApi.createKey({
                 name: `Platform ${platformId}`,
+                external: { user: maskedManagementKey() },
                 limit: MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD,
                 limit_reset: MANAGED_OPENROUTER_KEY_LIMIT_RESET,
             })
@@ -751,9 +760,15 @@ async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { provide
             if (!hasManagedKey(stored)) {
                 throw new Error(`[aiProviderService#enrichWithKeysIfNeeded] Managed AI provider ${providerId} has no stored key`)
             }
+            log.info({ platform: { id: platformId }, aiProvider: { id: providerId } }, '[aiProviderService#enrichWithKeysIfNeeded] Minted a managed OpenRouter key')
             return stored
         },
     })
+}
+
+function maskedManagementKey(): string {
+    const managementKey = system.get(AppSystemProp.OPENROUTER_PROVISION_KEY) ?? ''
+    return `${managementKey.slice(0, MANAGEMENT_KEY_VISIBLE_PREFIX_LENGTH)}...${managementKey.slice(-MANAGEMENT_KEY_VISIBLE_SUFFIX_LENGTH)}`
 }
 
 async function waitUntilKeyIsLive({ minted, platformId, log }: { minted: ActivePiecesProviderAuthConfig, platformId: PlatformId, log: FastifyBaseLogger }): Promise<void> {

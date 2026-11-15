@@ -13,14 +13,15 @@ import { newSubscriberCreatedTrigger } from './lib/triggers/new-subscriber-creat
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { beehiivAuth } from './lib/common/auth';
-import { BEEHIIV_API_URL } from './lib/common/client';
+import { apiKeyOf, BEEHIIV_API_URL } from './lib/common/client';
+import { beehiivAiActions } from './lib/actions/ai';
 
 export const beehiiv = createPiece({
 	displayName: 'Beehiiv',
 	auth: beehiivAuth,
-	minimumSupportedRelease: '0.36.1',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/beehiiv.png',
-	authors: ['onyedikachi-david', 'kishanprmr', 'tosh2308'],
+	authors: ['onyedikachi-david', 'kishanprmr', 'tosh2308', 'OdaiAhmed99'],
 	categories: [PieceCategory.MARKETING],
 	actions: [
 		createSubscriptionAction,
@@ -30,12 +31,13 @@ export const beehiiv = createPiece({
 		addSubscriptionToAutomationAction,
 		listAutomationsAction,
 		listPostsAction,
+		...beehiivAiActions,
 		createCustomApiCallAction({
 			auth: beehiivAuth,
 			baseUrl: () => BEEHIIV_API_URL,
 			authMapping: async (auth) => {
 				return {
-					Authorization: `Bearer ${auth.secret_text}`,
+					Authorization: `Bearer ${apiKeyOf(auth)}`,
 				};
 			},
 		}),

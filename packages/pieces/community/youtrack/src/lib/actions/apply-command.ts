@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../auth';
-import { issueDropdown, youtrackApiCall } from '../common';
+import { issueDropdown, resolveIssue } from '../common';
+import { youtrackClient } from '../common/client';
 import { applyCommandActionOutputSchema } from '../output-schemas';
 
 export const applyCommandAction = createAction({
@@ -12,7 +13,11 @@ export const applyCommandAction = createAction({
   displayName: 'Apply Command',
   description: 'Applies a YouTrack command to an issue (e.g. change state, assign, set sprint).',
   audience: 'both',
-  aiMetadata: { description: 'Apply a free-text YouTrack command to an issue (e.g. "State Fixed", "assignee jane.doe", "Priority Critical") to change its state, assignment, fields, or sprint in one step, optionally with a comment and silent (no-notification) mode. Use for workflow transitions expressed as commands. Mutating; idempotency depends on the command — setting a state or field is idempotent, while appending a comment is not.', idempotent: false },
+  aiMetadata: {
+    description:
+      'Apply a free-text YouTrack command to an issue (e.g. "State Fixed", "assignee jane.doe", "Priority Critical") to change its state, assignment, fields, or sprint in one step, optionally with a comment and silent (no-notification) mode. Use for workflow transitions expressed as commands; for structured field values prefer Update Issue. Mutating; idempotency depends on the command — setting a state or field is idempotent, while appending a comment is not.',
+    idempotent: false,
+  },
   props: {
     issue: issueDropdown,
     command: Property.ShortText({
@@ -24,16 +29,25 @@ export const applyCommandAction = createAction({
     silent: Property.Checkbox({ displayName: 'Apply silently?', description: 'No notifications if enabled.', required: false, defaultValue: false }),
   },
   async run(context) {
-    const { baseUrl, apiToken } = context.auth.props;
-    const body: Record<string, unknown> = { query: context.propsValue.command, issues: [{ id: context.propsValue.issue }] };
+    const issueValue = youtrackClient.optionalText(context.propsValue.issue);
+    if (issueValue === undefined) {
+      throw new Error('Issue is required.');
+    }
+    const issueId = youtrackClient.isDatabaseId(issueValue)
+      ? issueValue
+      : (await resolveIssue({ auth: context.auth, value: issueValue })).id;
+    const body: Record<string, unknown> = {
+      query: context.propsValue.command,
+      issues: [{ id: issueId }],
+    };
     if (context.propsValue.comment) body['comment'] = context.propsValue.comment;
     if (context.propsValue.silent) body['silent'] = true;
-    await youtrackApiCall({
-      baseUrl,
-      token: apiToken,
+    await youtrackClient.request<unknown>({
+      auth: context.auth,
       method: HttpMethod.POST,
       path: '/commands',
       body,
+      operation: 'apply the command',
     });
     return { success: true, command: context.propsValue.command };
   },
