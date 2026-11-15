@@ -102,6 +102,58 @@ describe('original actions keep their request and return shape', () => {
   });
 });
 
+describe('update actions skip empty values', () => {
+  const customFields = { a: '', b: null, c: undefined, d: [], e: 0, f: false, g: 'x' };
+
+  test('update contact drops empty top-level fields and keeps phone', async () => {
+    const seen = route({ 'PUT /api/3/contacts/9': { status: 200, body: { contact: { id: '9' } } } });
+    await updateContactAction.run(ctx({ contactId: '9', email: '', firstName: null, lastName: undefined, phone: '1', contactCustomFields: {} }));
+    expect(seen[0].body).toEqual({ contact: { phone: '1', fieldValues: [] } });
+  });
+
+  test('update contact sends only filled custom fields, keeping 0 and false', async () => {
+    const seen = route({ 'PUT /api/3/contacts/9': { status: 200, body: { contact: { id: '9' } } } });
+    await updateContactAction.run(ctx({ contactId: '9', contactCustomFields: customFields }));
+    expect(seen[0].body).toEqual({
+      contact: { fieldValues: [{ field: 'e', value: 0 }, { field: 'f', value: false }, { field: 'g', value: 'x' }] },
+    });
+  });
+
+  test('update account drops empty top-level fields', async () => {
+    const seen = route({ 'PUT /api/3/accounts/2': { status: 200, body: { account: { id: '2' } } } });
+    await updateAccountAction.run(ctx({ accountId: '2', name: '', accountUrl: null, accountCustomFields: {} }));
+    expect(seen[0].body).toEqual({ account: { fields: [] } });
+    await updateAccountAction.run(ctx({ accountId: '2', name: 'Acme', accountUrl: undefined, accountCustomFields: {} }));
+    expect(seen[1].body).toEqual({ account: { name: 'Acme', fields: [] } });
+  });
+
+  test('update account sends only filled custom fields, keeping 0 and false', async () => {
+    const seen = route({ 'PUT /api/3/accounts/2': { status: 200, body: { account: { id: '2' } } } });
+    await updateAccountAction.run(ctx({ accountId: '2', accountCustomFields: { '1': '', '2': null, '3': undefined, '4': [], '5': 0, '6': false, '7': 'x' } }));
+    expect(seen[0].body).toEqual({
+      account: { fields: [{ customFieldId: 5, fieldValue: 0 }, { customFieldId: 6, fieldValue: false }, { customFieldId: 7, fieldValue: 'x' }] },
+    });
+  });
+
+  test('create and update actions do not throw when the custom fields prop is undefined', async () => {
+    const seen = route({
+      'POST /api/3/contacts': { status: 201, body: { contact: { id: '9' } } },
+      'PUT /api/3/contacts/9': { status: 200, body: { contact: { id: '9' } } },
+      'POST /api/3/accounts': { status: 201, body: { account: { id: '2' } } },
+      'PUT /api/3/accounts/2': { status: 200, body: { account: { id: '2' } } },
+    });
+    await createContactAction.run(ctx({ email: 'a@b.co', contactCustomFields: undefined }));
+    await updateContactAction.run(ctx({ contactId: '9', phone: '1', contactCustomFields: undefined }));
+    await createAccountAction.run(ctx({ name: 'Acme', accountCustomFields: undefined }));
+    await updateAccountAction.run(ctx({ accountId: '2', name: 'Acme', accountCustomFields: undefined }));
+    expect(seen.map((request) => request.key)).toEqual(['POST /api/3/contacts', 'PUT /api/3/contacts/9', 'POST /api/3/accounts', 'PUT /api/3/accounts/2']);
+    expect(seen[0].body).toEqual({ contact: { email: 'a@b.co', fieldValues: [] } });
+    expect(seen[1].body).toEqual({ contact: { phone: '1', fieldValues: [] } });
+    expect(seen[2].body).toEqual({ account: { name: 'Acme', fields: [] } });
+    expect(seen[3].body).toEqual({ account: { name: 'Acme', fields: [] } });
+  });
+});
+
 describe('human outputSchemas against the live raw bodies', () => {
   const inputDependent: Record<string, string[]> = { create_account: ['account.accountUrl'], create_task_human: ['dealTask.note'], update_deal_human: ['dealGroups'] };
 
