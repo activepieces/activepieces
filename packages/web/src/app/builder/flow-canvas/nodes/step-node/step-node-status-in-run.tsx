@@ -3,7 +3,7 @@ import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { batchUtils } from '@/app/builder/run-details/batch-utils';
-import { useStepOutputInRun } from '@/app/builder/run-details/use-batch-logs';
+import { useStepOutputInRun } from '@/app/builder/run-details/use-step-output-in-run';
 import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
 
 import { useBuilderStateContext } from '../../../builder-hooks';

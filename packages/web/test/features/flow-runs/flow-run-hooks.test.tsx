@@ -32,7 +32,7 @@ vi.mock('@/features/flows/api/flows-api', () => ({
 
 import { flowRunQueries } from '@/features/flow-runs/hooks/flow-run-hooks';
 
-describe('flowRunQueries.useBatchChildrenPage polling', () => {
+describe('flowRunQueries.useBatchChildren polling', () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -84,7 +84,7 @@ describe('flowRunQueries.useBatchChildrenPage polling', () => {
   function renderBatchList(initialProps: { allBatchesSettled: boolean }) {
     return renderHook(
       ({ allBatchesSettled }: { allBatchesSettled: boolean }) =>
-        flowRunQueries.useBatchChildrenPage({
+        flowRunQueries.useBatchChildren({
           barrierId: 'barrier_id',
           limit: 50,
           statuses: undefined,

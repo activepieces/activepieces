@@ -11,7 +11,7 @@ import { ClosePanelButton } from '../step-data/close-panel-button';
 import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 
 import { batchUtils } from './batch-utils';
-import { BatchLogs } from './use-batch-logs';
+import { BatchLogs } from './use-step-output-in-run';
 
 const BatchLogsPanel = ({ batchLogs }: { batchLogs: BatchLogs }) => {
   if (batchLogs.kind === 'error') {

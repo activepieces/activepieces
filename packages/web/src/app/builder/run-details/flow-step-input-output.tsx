@@ -44,7 +44,7 @@ import { BatchBreadcrumb, BatchBrowser } from './batch-browser';
 import { BatchLogsPanel, EmptyStatePanel } from './batch-logs-panel';
 import { batchUtils } from './batch-utils';
 import { truncatedInputUtils } from './truncated-input-utils';
-import { useStepOutputInRun } from './use-batch-logs';
+import { useStepOutputInRun } from './use-step-output-in-run';
 
 type RunActiveTab = 'input' | 'output' | 'timeline' | 'batches';
 

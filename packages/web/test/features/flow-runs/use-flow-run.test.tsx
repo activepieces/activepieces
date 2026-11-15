@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  *
- * useBatchChildRun backs the batch browser: selecting a batch swaps its child
+ * useFlowRun backs the batch browser: selecting a batch swaps its child
  * run id and the run detail panel gates on isLoading. placeholderData /
  * keepPreviousData would keep the previous child's run in `data` with
  * status 'success' on the new key, so the panel would render the previous
@@ -45,12 +45,12 @@ async function flush() {
 }
 
 function Probe({ childRunId }: { childRunId: string | null }) {
-  const { data, isLoading } = flowRunQueries.useBatchChildRun({ childRunId });
+  const { data, isLoading } = flowRunQueries.useFlowRun(childRunId);
   observed.push({ data, isLoading });
   return null;
 }
 
-describe('useBatchChildRun', () => {
+describe('useFlowRun', () => {
   let container: HTMLDivElement;
   let root: Root;
   let queryClient: QueryClient;

@@ -1,7 +1,7 @@
 import { Timer } from 'lucide-react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { useStepOutputInRun } from '@/app/builder/run-details/use-batch-logs';
+import { useStepOutputInRun } from '@/app/builder/run-details/use-step-output-in-run';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';

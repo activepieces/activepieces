@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
-import { useStepOutputInRun } from './use-batch-logs';
+import { useStepOutputInRun } from './use-step-output-in-run';
 
 const LoopIterationInput = ({ stepName }: { stepName: string }) => {
   const [setLoopIndex, currentIndex] = useBuilderStateContext((state) => [

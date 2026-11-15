@@ -10,7 +10,7 @@ import {
 } from '@activepieces/shared';
 import { describe, expect, it } from 'vitest';
 
-import { enclosingBatchStepName } from '@/app/builder/run-details/use-batch-logs';
+import { enclosingBatchStep } from '@/app/builder/run-details/use-step-output-in-run';
 
 const createCodeAction = (name: string, nextAction?: FlowAction): CodeAction => ({
   name,
@@ -97,13 +97,13 @@ const trigger = createTrigger(
   }),
 );
 
-describe('enclosingBatchStepName', () => {
+describe('enclosingBatchStep', () => {
   it.each([
     ['code_in_batch', 'batches'],
     ['loop_in_batch', 'batches'],
     ['code_in_batch_loop', 'batches'],
   ])('resolves %s to its enclosing batch', (stepName, expected) => {
-    expect(enclosingBatchStepName({ stepName, trigger })).toBe(expected);
+    expect(enclosingBatchStep({ stepName, trigger })?.name).toBe(expected);
   });
 
   it.each([
@@ -113,6 +113,6 @@ describe('enclosingBatchStepName', () => {
     ['code_in_loop_outside'],
     ['trigger'],
   ])('resolves %s to no batch', (stepName) => {
-    expect(enclosingBatchStepName({ stepName, trigger })).toBeNull();
+    expect(enclosingBatchStep({ stepName, trigger })).toBeNull();
   });
 });
