@@ -413,6 +413,27 @@ describe('templateFill.plan', () => {
     ).toThrow('Image "banner" was not found in the document');
   });
 
+  it('lists a per-image input whose image is gone and still replaces the others', () => {
+    const plan = templateFill.plan({
+      scan: scanWithImages,
+      format: '{{KEY}}',
+      imageFields: { 'kix.gone': 'https://example.com/gone.png', 'kix.a': 'https://example.com/a.png' },
+    });
+
+    expect(plan.requests).toEqual([{ replaceImage: { imageObjectId: 'kix.a', uri: 'https://example.com/a.png' } }]);
+    expect(plan.imagesNotFound).toEqual(['kix.gone']);
+  });
+
+  it('still rejects an Image Replacements row that matches nothing', () => {
+    expect(() =>
+      templateFill.plan({
+        scan: scanWithImages,
+        format: '{{KEY}}',
+        images: [{ imageObjectId: 'kix.gone', url: 'https://example.com/gone.png' }],
+      }),
+    ).toThrow('Image "kix.gone" was not found in the document');
+  });
+
   it('takes the per-image inputs and skips the empty ones', () => {
     const plan = templateFill.plan({
       scan: scanWithImages,
@@ -467,6 +488,7 @@ describe('templateFill.summarize', () => {
       placeholdersNotFound: ['{{ghost}}'],
       unfilledPlaceholders: ['{{date}}'],
       imagesReplaced: 1,
+      imagesNotFound: [],
     });
   });
 });

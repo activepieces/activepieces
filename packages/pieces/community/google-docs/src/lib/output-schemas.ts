@@ -215,6 +215,10 @@ export const editTemplateActionOutputSchema: OutputSchema = {
       format: 'number',
     },
     {
+      key: 'imagesNotFound',
+      label: 'Images Not Found',
+    },
+    {
       key: 'requiredRevisionId',
       label: 'Revision ID',
       value: 'data.writeControl.requiredRevisionId',

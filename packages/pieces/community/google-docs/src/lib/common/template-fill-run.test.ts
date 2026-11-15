@@ -36,6 +36,7 @@ describe('runTemplateFill', () => {
       placeholdersNotFound: [],
       unfilledPlaceholders: ['{{date}}'],
       imagesReplaced: 0,
+      imagesNotFound: [],
       data: { documentId: 'template-id', replies: [{ replaceAllText: { occurrencesChanged: 1 } }] },
     });
   });
@@ -137,6 +138,21 @@ describe('runTemplateFill', () => {
     ).rejects.toThrow('These placeholders were not found in the template: {{ghost}}. Nothing was changed.');
     expect(clients.copyFile).not.toHaveBeenCalled();
     expect(clients.batchUpdate).not.toHaveBeenCalled();
+  });
+
+  it('reports a per-image input whose image is gone instead of failing the run', async () => {
+    const clients = stubClients();
+
+    const output = await runTemplateFill({
+      clients,
+      input: { ...baseInput, values: { name: 'Ada' }, imageFields: { 'kix.removed': 'https://example.com/logo.png' } },
+    });
+
+    expect(clients.batchUpdate).toHaveBeenCalledWith({
+      documentId: 'template-id',
+      requests: [{ replaceAllText: { containsText: { text: '{{name}}', matchCase: true }, replaceText: 'Ada' } }],
+    });
+    expect(output).toMatchObject({ imagesReplaced: 0, imagesNotFound: ['kix.removed'] });
   });
 
   it('fails before copying or writing when Variables is not an object', async () => {

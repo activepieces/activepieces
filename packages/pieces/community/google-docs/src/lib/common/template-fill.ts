@@ -116,16 +116,23 @@ function plan({
     })
     .map((key) => canonicalToken({ key, format }));
 
+  const imageFieldRows = Object.entries(withoutEmptyValues(toRecord(imageFields))).map(([imageObjectId, url]) => ({
+    imageObjectId,
+    url: toText(url),
+    targets: findImages({ identifier: imageObjectId, format, scan: templateScan }),
+  }));
+
   const imageRows = [
-    ...Object.entries(withoutEmptyValues(toRecord(imageFields))).map(([imageObjectId, url]) => ({
+    ...imageFieldRows,
+    ...(images ?? []).map(({ imageObjectId, url }) => ({
       imageObjectId,
-      url: toText(url),
+      url,
+      targets: resolveImages({ identifier: imageObjectId, format, scan: templateScan }),
     })),
-    ...(images ?? []),
   ];
 
-  const imageRequests = imageRows.flatMap(({ imageObjectId, url }) =>
-    resolveImages({ identifier: imageObjectId, format, scan: templateScan }).map((image) => ({
+  const imageRequests = imageRows.flatMap(({ url, targets }) =>
+    targets.map((image) => ({
       replaceImage: {
         imageObjectId: image.objectId,
         uri: url,
@@ -143,6 +150,7 @@ function plan({
     ],
     textTargets: textTargets.map(({ key, token }) => ({ key, token })),
     imageRequestCount: imageRequests.length,
+    imagesNotFound: imageFieldRows.filter(({ targets }) => targets.length === 0).map(({ imageObjectId }) => imageObjectId),
     missing,
     format,
   };
@@ -179,6 +187,7 @@ function summarize({
       .filter(({ key }) => !filledKeys.has(key))
       .map(({ tokens }) => tokens[0]),
     imagesReplaced: fillPlan.imageRequestCount,
+    imagesNotFound: fillPlan.imagesNotFound,
   };
 }
 
@@ -270,6 +279,24 @@ function resolveImages({
   format: PlaceholderFormat;
   scan: TemplateScan;
 }): TemplateObject[] {
+  const found = findImages({ identifier, format, scan: templateScan });
+  if (found.length > 0) {
+    return found;
+  }
+  throw new Error(
+    `Image "${identifier}" was not found in the document. Use the image's alt text (in Google Docs: right-click the image, then Alt text) or its object ID.`,
+  );
+}
+
+function findImages({
+  identifier,
+  format,
+  scan: templateScan,
+}: {
+  identifier: string;
+  format: PlaceholderFormat;
+  scan: TemplateScan;
+}): TemplateObject[] {
   const byObjectId = templateScan.images.filter((image) => image.objectId === identifier);
   if (byObjectId.length > 0) {
     return byObjectId;
@@ -281,13 +308,7 @@ function resolveImages({
   if (byAltText.length > 0) {
     return byAltText;
   }
-  const byOtherObjectId = templateScan.otherObjects.filter((object) => object.objectId === identifier);
-  if (byOtherObjectId.length > 0) {
-    return byOtherObjectId;
-  }
-  throw new Error(
-    `Image "${identifier}" was not found in the document. Use the image's alt text (in Google Docs: right-click the image, then Alt text) or its object ID.`,
-  );
+  return templateScan.otherObjects.filter((object) => object.objectId === identifier);
 }
 
 function normalizeAltText({ text, format }: { text: string; format: PlaceholderFormat }): string {
@@ -405,6 +426,7 @@ export type FillPlan = {
   requests: docs_v1.Schema$Request[];
   textTargets: { key: string; token: string }[];
   imageRequestCount: number;
+  imagesNotFound: string[];
   missing: string[];
   format: PlaceholderFormat;
 };
@@ -415,4 +437,5 @@ export type FillSummary = {
   placeholdersNotFound: string[];
   unfilledPlaceholders: string[];
   imagesReplaced: number;
+  imagesNotFound: string[];
 };
