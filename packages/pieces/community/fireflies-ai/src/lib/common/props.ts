@@ -48,13 +48,28 @@ function textList({ value, label, max }: { value: unknown; label: string; max: n
   if (value === undefined || value === null || value === '') {
     return [];
   }
-  const raw: unknown[] = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : [value];
+  const raw: unknown[] = Array.isArray(value) ? value : typeof value === 'string' ? splitText(value) : [value];
   const items = raw.map((item) => optionalText(item)).filter((item): item is string => item !== undefined);
   const unique = [...new Set(items)];
   if (unique.length > max) {
     throw new Error(`${label} accepts at most ${max} values (got ${unique.length}).`);
   }
   return unique;
+}
+
+function splitText(value: string): unknown[] {
+  const trimmed = value.trim();
+  if (trimmed.startsWith('[')) {
+    try {
+      const parsed: unknown = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch {
+      return value.split(',');
+    }
+  }
+  return value.split(',');
 }
 
 function emailList({ value, label, max }: { value: unknown; label: string; max: number }): string[] {
