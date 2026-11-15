@@ -141,7 +141,10 @@ export const newBitlinkCreatedTrigger = createTrigger({
       const allLinks = response.links || [];
       const currentLinkIds = allLinks.map((l) => l.id);
 
-      await context.store.put<string[]>(LAST_BITLINK_IDS_KEY, currentLinkIds);
+      await context.store.put<string[]>(
+        LAST_BITLINK_IDS_KEY,
+        [...new Set([...currentLinkIds, ...previousLinkIds])].slice(0, 500),
+      );
 
       let newLinks = allLinks.filter((link) => !previousLinkIds.includes(link.id));
 
