@@ -102,7 +102,7 @@ export { slackAuth, slackOAuth2Auth } from './lib/auth';
 export const slack = createPiece({
   displayName: 'Slack',
   description: 'Channel-based messaging platform',
-  minimumSupportedRelease: '0.88.2',
+  minimumSupportedRelease: '0.94.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
   categories: [PieceCategory.COMMUNICATION],
   auth: slackAuth,
@@ -129,13 +129,14 @@ export const slack = createPiece({
                 .catch((error: unknown) => {
                   console.error('[Slack#parseAndReply] failed to forward button click to resume url', error);
                 });
-            } else if (interactionPayloadBody.team?.id) {
-              // Any other block action (e.g. a button posted by a flow) is routed as an app event,
-              // so it reaches the "New Button Click" trigger after the engine verifies the Slack signature.
-              return {
-                event: interactionPayloadBody.type,
-                identifierValue: interactionPayloadBody.team.id,
-              };
+            } else {
+              const teamId = interactionPayloadBody.team?.id ?? interactionPayloadBody.user?.team_id;
+              if (teamId) {
+                return {
+                  event: interactionPayloadBody.type,
+                  identifierValue: teamId,
+                };
+              }
             }
           } else if (
             interactionPayloadBody.type === 'view_submission' ||
@@ -334,6 +335,9 @@ type InteractionPayloadBody = {
   type?: string;
   team?: {
     id?: string;
+  };
+  user?: {
+    team_id?: string;
   };
   actions?: {
     type: string;

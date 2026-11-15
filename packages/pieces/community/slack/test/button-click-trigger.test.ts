@@ -62,7 +62,14 @@ describe('slack parseAndReply block_actions routing', () => {
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
-  it('acks without an event when the payload has no team', () => {
+  it('falls back to the user team id when the payload has no team', () => {
+    expect(parse(buttonClick({ team: undefined, user: { id: 'U123', team_id: 'T456' } }))).toEqual({
+      event: 'block_actions',
+      identifierValue: 'T456',
+    });
+  });
+
+  it('acks without an event when no team id is present', () => {
     expect(parse(buttonClick({ team: undefined }))).toEqual({ reply: { headers: {}, body: {} } });
   });
 
@@ -115,5 +122,12 @@ describe('new button click trigger run', () => {
     expect(
       await newButtonClickTrigger.run({ propsValue: {}, payload: { body: 'nope' } } as never),
     ).toEqual([]);
+    expect(
+      await newButtonClickTrigger.run({ propsValue: {}, payload: { body: { payload: '{not json' } } } as never),
+    ).toEqual([]);
+  });
+
+  it('ignores a payload whose actions do not match the expected shape', async () => {
+    expect(await run(buttonClick({ actions: [{ type: 'button' }] }))).toEqual([]);
   });
 });

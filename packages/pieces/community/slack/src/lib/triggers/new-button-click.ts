@@ -1,4 +1,5 @@
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { z } from 'zod';
 import { slackAuth } from '../auth';
 import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
 import { BlockAction, BlockActionsPayload } from '../common/types';
@@ -89,9 +90,7 @@ export const newButtonClickTrigger = createTrigger({
             identifierValue: teamId,
         });
     },
-    onDisable: async () => {
-        // Ignored
-    },
+    onDisable: async () => undefined,
 
     run: async (context) => {
         const payload = parseInteractionPayload(context.payload.body);
@@ -104,18 +103,16 @@ export const newButtonClickTrigger = createTrigger({
             return [];
         }
 
-        const actionIds = ((context.propsValue.actionIds as string[] | undefined) ?? []).filter(
-            (id) => typeof id === 'string' && id.length > 0,
-        );
+        const actionIds = stringList.parse(context.propsValue.actionIds).filter((id) => id.length > 0);
         const actionIdPrefix = context.propsValue.actionIdPrefix ?? '';
         const matchesFilters = (action: BlockAction) =>
             (actionIds.length === 0 || actionIds.includes(action.action_id)) &&
-            (actionIdPrefix === '' || (action.action_id ?? '').startsWith(actionIdPrefix));
+            (actionIdPrefix === '' || action.action_id.startsWith(actionIdPrefix));
         if (!buttonActions.some(matchesFilters)) {
             return [];
         }
 
-        const channels = (context.propsValue.channels as string[] | undefined) ?? [];
+        const channels = stringList.parse(context.propsValue.channels);
         if (channels.length > 0 && !channels.includes(payload.channel?.id ?? '')) {
             return [];
         }
@@ -123,6 +120,16 @@ export const newButtonClickTrigger = createTrigger({
         const { token: _token, ...safePayload } = payload;
         return [safePayload];
     },
+});
+
+const stringList = z.array(z.string()).catch([]);
+
+const blockActionsPayloadSchema = z.looseObject({
+    type: z.string(),
+    team: z.looseObject({ id: z.string() }).optional(),
+    user: z.looseObject({ id: z.string() }).optional(),
+    channel: z.looseObject({ id: z.string() }).optional(),
+    actions: z.array(z.looseObject({ type: z.string(), action_id: z.string() })).optional(),
 });
 
 function parseInteractionPayload(body: unknown): BlockActionsPayload | null {
@@ -133,9 +140,12 @@ function parseInteractionPayload(body: unknown): BlockActionsPayload | null {
     if (typeof raw !== 'string') {
         return null;
     }
+    let parsed: unknown;
     try {
-        return JSON.parse(raw) as BlockActionsPayload;
+        parsed = JSON.parse(raw);
     } catch {
         return null;
     }
+    const result = blockActionsPayloadSchema.safeParse(parsed);
+    return result.success ? result.data : null;
 }
