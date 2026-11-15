@@ -1,5 +1,5 @@
 import { AiProviderKeyStatus, AIProviderName, ErrorCode, formatPieceError, isFallbackWorthy, isNil, isObject, isProviderBillingError, isTransientProviderError, ProviderOutcomeSignal, spreadIfDefined, toError, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
-import { agentAiUtils, aiProviderSignal, ContentPartLike } from '@activepieces/server-utils'
+import { agentAiUtils, aiObservability, aiProviderSignal, AiTurnTrace, ContentPartLike } from '@activepieces/server-utils'
 import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, agentToolSkills, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, LAZY_TOOL_NAME, PersistedAgentPart, SkillSurface, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
 import { buildSkillSurface } from './tools/skill-tools'
@@ -68,7 +68,7 @@ export function drainOf({ state }: { state: StepContentState }): StreamDrain {
     return { lastStepSentContent: state.sentWhenFailed ?? state.sentInStep }
 }
 
-export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, priorToolCalls, onModelOutcome, onStepModel, skills }: RunAgentTurnParams): Promise<AgentTurnResult> {
+export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, priorToolCalls, onModelOutcome, onStepModel, skills, trace }: RunAgentTurnParams): Promise<AgentTurnResult> {
     const drainStream = sinks?.drainStream ?? ((result: ReturnType<typeof streamText>) => result.consumeStream())
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
@@ -113,6 +113,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
     })
     const turnSystemPrompt = systemPrompt + (skillSurface?.catalogNote ?? '')
     const guardedTools = wrapToolsWithFailureGuard({ tools: skillSurface?.tools ?? tools, log })
+    const turnTrace = await turnTraceOf({ trace, tools: guardedTools, guides: skills?.guides ?? {}, tier })
     const runsATier = models.some((candidate) => !isNil(candidate.key))
     const peers = [...models, ...(isNil(fastModel) ? [] : [fastModel])]
     const ranked = await Promise.all(models.map((turnModel) => withOutputBudget({ turnModel, peers })))
@@ -148,7 +149,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         messages: agentAiUtils.stripThinkingBlocks(attemptMessages, current().provider),
         tools: guardedTools,
         stopWhen: loopStopCondition,
-        ...agentAiUtils.buildTelemetry({ functionId: 'agent-turn' }),
+        ...agentAiUtils.buildTelemetry({ functionId: 'agent-turn', turn: turnTrace }),
         // providerOptions/model are supplied per-step by prepareStep (authoritative). A
         // call-level providerOptions would deep-merge into every step and leak the enabled
         // thinking budget back into the disabled first step.
@@ -216,7 +217,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 const { text } = await generateText({
                     model: current().model,
                     abortSignal,
-                    ...agentAiUtils.buildTelemetry({ functionId: 'agent-tool-repair' }),
+                    ...agentAiUtils.buildTelemetry({ functionId: 'agent-tool-repair', turn: turnTrace }),
                     prompt: `Fix this invalid input for the tool "${toolCall.toolName}". The error was: ${error.message}\n\nOriginal input:\n${toolCall.input}\n\nThe input must match this JSON schema:\n${JSON.stringify(schema)}\n\nReturn ONLY the corrected JSON input, nothing else.`,
                 })
                 return jsonInputFrom(text)
@@ -559,6 +560,19 @@ function runawayTokenCeiling(provider: AIProviderName): number {
     return aiProviderUtils.getMaxContextTokens({ provider }) * RUNAWAY_TURN_CONTEXT_MULTIPLE
 }
 
+async function turnTraceOf({ trace, tools, guides, tier }: {
+    trace: RunAgentTurnParams['trace']
+    tools: ToolSet
+    guides: Record<string, string>
+    tier: RunAgentTurnParams['tier']
+}): Promise<AiTurnTrace | undefined> {
+    if (isNil(trace) || isNil(aiObservability.integration())) {
+        return undefined
+    }
+    const { data: fingerprint } = await tryCatch(() => aiObservability.turnFingerprintOf({ promptFingerprint: trace.promptFingerprint, tools, guides }))
+    return { runSource: trace.runSource, tierId: tier.id, tierModel: tier.modelId, ...spreadIfDefined('fingerprint', fingerprint ?? undefined) }
+}
+
 /**
  * Within a single streamText call the SDK appends every tool result and re-sends
  * the full history each step, with no built-in size cap — a turn with many or
@@ -670,6 +684,7 @@ export type RunAgentTurnParams = {
     onModelOutcome?: (outcome: { turnModel: TurnModel, signal: ProviderOutcomeSignal }) => void
     onStepModel?: (turnModel: TurnModel) => void
     skills?: { surface: SkillSurface, guides: Record<string, string> }
+    trace?: { runSource: AgentRunSource, promptFingerprint?: string }
 }
 
 export type AgentTurnResult = {

@@ -1,7 +1,7 @@
 import { ActivepiecesAiBilling, AIProviderName, isNil, spreadIfDefined, toError } from '@activepieces/core-utils';
 import { agentPersistenceUtils, agentToolClassification, agentToolSkills, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared';
 import { agentProviderOptions } from './agent-provider-options'
-import { AI_TRACE_RUNTIME_CONTEXT, AiTraceContext, aiObservability } from './ai-observability'
+import { AI_TRACE_RUNTIME_CONTEXT, AiTraceContext, aiObservability, AiTurnTrace } from './ai-observability'
 import { ModelMessage, TelemetryOptions } from 'ai'
 import { createEvlogIntegration } from 'evlog/ai'
 import { modelCatalog } from './model-catalog'
@@ -146,7 +146,7 @@ function effectiveToolNamesByCallId(messages: ModelMessage[]): Map<string, strin
     }))
 }
 
-function buildTelemetry({ functionId, billing }: { functionId: string, billing?: ActivepiecesAiBilling }): AgentTelemetry {
+function buildTelemetry({ functionId, billing, turn }: { functionId: string, billing?: ActivepiecesAiBilling, turn?: AiTurnTrace }): AgentTelemetry {
     const logger = wideEvent.current()
     const posthog = aiObservability.integration()
     if (isNil(logger) && isNil(posthog)) {
@@ -162,7 +162,7 @@ function buildTelemetry({ functionId, billing }: { functionId: string, billing?:
     }
     return {
         telemetry: { functionId, integrations, includeRuntimeContext: AI_TRACE_RUNTIME_CONTEXT },
-        runtimeContext: aiObservability.runtimeContextOf({ billing }),
+        runtimeContext: aiObservability.runtimeContextOf({ billing, turn }),
     }
 }
 
