@@ -37,8 +37,9 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
             async (job) => {
                 const jobLogger = createLogger({
                     event: 'runs-metadata.save',
-                    job: { id: job.id, type: queueName },
+                    job: { id: job.id, type: job.name },
                     flowRun: { id: job.data.runId },
+                    project: { id: job.data.projectId },
                 })
                 return wideEvent.run({
                     logger: jobLogger,
@@ -47,7 +48,10 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             wideEvent.error(error)
                             throw error
                         })
-                        .finally(() => jobLogger.emit()),
+                        .finally(() => {
+                            jobLogger.set({ flowRun: { id: job.data.runId } })
+                            jobLogger.emit()
+                        }),
                 })
             },
             {
@@ -98,10 +102,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
 })
 
 async function processRunsMetadataJob({ job, log }: ProcessRunsMetadataJobParams): Promise<void> {
-    log.info({
-        job: { id: job.id },
-        flowRun: { id: job.data.runId },
-    }, '[runsMetadataQueue#worker] Saving runs metadata')
+    log.info('[runsMetadataQueue#worker] Saving runs metadata')
     assertNotNullOrUndefined(job.data.projectId, 'projectId')
     const key = redisMetadataKey({ projectId: job.data.projectId, runId: job.data.runId })
     await distributedLock(log).runExclusive({
@@ -113,10 +114,7 @@ async function processRunsMetadataJob({ job, log }: ProcessRunsMetadataJobParams
                 const rawRunMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
                     ?? await claimMetadataWrittenBeforeTheKeyWasScoped(job.data)
                 if (isNil(rawRunMetadata) || Object.keys(rawRunMetadata).length === 0) {
-                    log.info({
-                        job: { id: job.id },
-                        flowRun: { id: job.data.runId },
-                    }, '[runsMetadataQueue#worker] Runs metadata not found, skipping job')
+                    log.info('[runsMetadataQueue#worker] Runs metadata not found, skipping job')
                     return
                 }
                 const runMetadata = sanitizeObjectForPostgresql(rawRunMetadata)
@@ -146,10 +144,7 @@ async function processRunsMetadataJob({ job, log }: ProcessRunsMetadataJobParams
                     })
                     const updatedFlowRun = await flowRunRepo().findOneBy(flowRunScope)
                     if (isNil(updatedFlowRun)) {
-                        log.info({
-                            job: { id: job.id },
-                            flowRun: { id: job.data.runId },
-                        }, '[runsMetadataQueue#worker] Flow run was deleted during update, skipping job')
+                        log.info('[runsMetadataQueue#worker] Flow run was deleted during update, skipping job')
                         return
                     }
                     savedFlowRun = updatedFlowRun
@@ -157,21 +152,14 @@ async function processRunsMetadataJob({ job, log }: ProcessRunsMetadataJobParams
                 else {
                     const idBelongsToAnotherProject = await flowRunRepo().countBy({ id: job.data.runId }) > 0
                     if (idBelongsToAnotherProject) {
-                        log.warn({
-                            job: { id: job.id },
-                            flowRun: { id: job.data.runId },
-                            project: { id: job.data.projectId },
-                        }, '[runsMetadataQueue#worker] Run metadata reported for a run owned by another project, skipping job')
+                        log.warn('[runsMetadataQueue#worker] Run metadata reported for a run owned by another project, skipping job')
                         await discardMetadata({ key, requestId: runMetadata.requestId })
                         return
                     }
                     const flowId = runMetadata.flowId
                     const flowExists = !isNil(flowId) && await flowService(log).exists({ id: flowId, projectId: job.data.projectId })
                     if (!flowExists) {
-                        log.info({
-                            job: { id: job.id },
-                            flowRun: { id: job.data.runId },
-                        }, '[runsMetadataQueue#worker] Flow does not exist (deleted), skipping job')
+                        log.info('[runsMetadataQueue#worker] Flow does not exist (deleted), skipping job')
                         await discardMetadata({ key, requestId: runMetadata.requestId })
                         return
                     }
@@ -182,7 +170,7 @@ async function processRunsMetadataJob({ job, log }: ProcessRunsMetadataJobParams
                     project: { id: savedFlowRun.projectId },
                     flow: { id: savedFlowRun.flowId },
                     flowRun: { id: savedFlowRun.id, status: savedFlowRun.status },
-                    ...spreadIfDefined('fanIn', isNil(savedFlowRun.parentWaitpointId) ? undefined : { barrierId: savedFlowRun.parentWaitpointId }),
+                    ...spreadIfDefined('waitpoint', isNil(savedFlowRun.parentWaitpointId) ? undefined : { id: savedFlowRun.parentWaitpointId }),
                 })
 
                 const parentRunId = savedFlowRun.parentRunId
@@ -230,11 +218,7 @@ async function processRunsMetadataJob({ job, log }: ProcessRunsMetadataJobParams
                 }
             }
             catch (error) {
-                log.error({
-                    error,
-                    data: job.data,
-                }, '[runsMetadataQueue#worker] Error saving runs metadata')
-                exceptionHandler.handle(error, log)
+                exceptionHandler.captureException(error)
                 throw error
             }
         },
