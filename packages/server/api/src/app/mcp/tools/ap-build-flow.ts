@@ -18,7 +18,7 @@ const stepSpec = z.object({
     sourceCode: z.string().optional(),
     packageJson: z.string().optional(),
     loopItems: z.string().optional(),
-    batchSize: z.coerce.number().int().min(1).optional(),
+    batchSize: z.number().int().min(1).optional(),
     continueOnFailure: z.boolean().optional(),
     retryOnFailure: z.boolean().optional(),
     parentStepName: z.string().optional().describe('Name of the parent step to nest this step inside (e.g. the loop step name). If omitted, step is added after the previous step.'),

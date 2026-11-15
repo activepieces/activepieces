@@ -11,7 +11,7 @@ type StepInfo = {
     type: string
     displayName: string
     parentName: string | null
-    relationship: 'trigger' | 'next' | 'first_loop_action' | 'inside_batch' | 'branch' | 'on_success_branch' | 'on_failure_branch'
+    relationship: 'trigger' | 'next' | 'first_loop_action' | 'first_batch_action' | 'branch' | 'on_success_branch' | 'on_failure_branch'
     branchIndex?: number
     branchName?: string
     valid: boolean
@@ -35,7 +35,7 @@ function getConfigStatus({ step, skippedStepNames }: { step: Step, skippedStepNa
         case FlowActionType.LOOP_ON_ITEMS:
             return 'invalid (loopItems expression missing or invalid)'
         case FlowActionType.PROCESS_IN_BATCHES:
-            return 'invalid (items expression missing or batchSize below 1)'
+            return 'invalid (loopItems expression missing or batchSize below 1)'
         case FlowActionType.ROUTER:
             return 'invalid (check branch conditions)'
         case FlowActionType.AI_ROUTER:
@@ -84,7 +84,7 @@ function formatStepSettings(step: Step): string[] {
     }
     else if (step.type === FlowActionType.PROCESS_IN_BATCHES) {
         if (step.settings.items) {
-            lines.push(`  items: ${step.settings.items}`)
+            lines.push(`  loopItems: ${step.settings.items}`)
         }
         lines.push(`  batchSize: ${step.settings.batchSize}`)
     }
@@ -99,7 +99,7 @@ function formatRelationshipLabel(step: StepInfo): string {
             return 'after parent'
         case 'first_loop_action':
             return 'inside_loop'
-        case 'inside_batch':
+        case 'first_batch_action':
             return 'inside_batch'
         case 'on_success_branch':
             return 'on_success_branch'
@@ -153,7 +153,7 @@ function buildFlowStructure(trigger: FlowTrigger): { structure: StepInfo[], step
             }
             if (flowCanvasUtils.isLoopOrBatchStep(parent) && parent.firstLoopAction?.name === step.name) {
                 parentName = parent.name
-                relationship = parent.type === FlowActionType.PROCESS_IN_BATCHES ? 'inside_batch' : 'first_loop_action'
+                relationship = parent.type === FlowActionType.PROCESS_IN_BATCHES ? 'first_batch_action' : 'first_loop_action'
                 break
             }
             if (flowStructureUtil.isBranchedAction(parent)) {

@@ -3,6 +3,7 @@ import {
     DEFAULT_BATCH_SIZE,
     McpToolDefinition,
     McpToolResult,
+    ProcessInBatchesActionSettingsWithValidation,
     ProjectScopedMcpServer,
     RouterActionSettingsWithValidation,
     RouterExecutionType,
@@ -38,7 +39,7 @@ export const apValidateStepConfigTool = (mcp: ProjectScopedMcpServer, log: Fasti
                     case 'LOOP_ON_ITEMS':
                         return validateWithSchema({ schema: loopValidator, data: { items: params.loopItems ?? '' }, label: 'LOOP_ON_ITEMS' })
                     case 'PROCESS_IN_BATCHES':
-                        return validateWithSchema({ schema: batchValidator, data: { items: params.loopItems ?? '', batchSize: params.batchSize ?? DEFAULT_BATCH_SIZE }, label: 'PROCESS_IN_BATCHES' })
+                        return validateWithSchema({ schema: ProcessInBatchesActionSettingsWithValidation, data: { items: params.loopItems ?? '', batchSize: params.batchSize ?? DEFAULT_BATCH_SIZE }, label: 'PROCESS_IN_BATCHES' })
                     case 'ROUTER':
                         return validateRouter(params.settings)
                 }
@@ -69,7 +70,7 @@ const validateStepConfigInput = z.object({
         .describe('For CODE: package.json content as JSON string.'),
     loopItems: z.string().optional()
         .describe('For LOOP_ON_ITEMS and PROCESS_IN_BATCHES: expression for the list.'),
-    batchSize: z.coerce.number().optional()
+    batchSize: z.number().optional()
         .describe(`For PROCESS_IN_BATCHES: how many items each batch carries. Defaults to ${DEFAULT_BATCH_SIZE}.`),
     settings: z.record(z.string(), z.unknown()).optional()
         .describe('For ROUTER: raw router settings including branches and executionType.'),
@@ -132,11 +133,6 @@ const codeValidator = z.object({
 
 const loopValidator = z.object({
     items: z.string().min(1),
-})
-
-const batchValidator = z.object({
-    items: z.string().min(1),
-    batchSize: z.number().int().min(1),
 })
 
 function routerEnumHint(): string {

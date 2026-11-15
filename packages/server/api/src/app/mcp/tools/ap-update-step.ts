@@ -16,7 +16,7 @@ const updateStepInput = z.object({
     actionName: z.string().optional(),
     pieceVersion: z.union([z.literal('latest'), ExactVersionType]).optional(),
     loopItems: z.string().optional(),
-    batchSize: z.coerce.number().int().min(1).optional(),
+    batchSize: z.number().int().min(1).optional(),
     skip: z.boolean().optional(),
     sourceCode: z.string().optional(),
     packageJson: z.string().optional(),
@@ -38,7 +38,7 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
             actionName: z.string().optional().describe('For PIECE steps: the action to perform. Use ap_research_pieces to get valid values.'),
             pieceVersion: z.union([z.literal('latest'), ExactVersionType]).optional().describe('For PIECE steps: move the step to another version of its piece. Pass "latest" or an exact version like "1.2.3". Inputs the new version no longer has are dropped, so pass the adjusted input in the same call.'),
             loopItems: z.string().optional().describe('For LOOP_ON_ITEMS and PROCESS_IN_BATCHES steps: expression for the list'),
-            batchSize: z.coerce.number().int().min(1).optional().describe('For PROCESS_IN_BATCHES steps: how many items each batch carries'),
+            batchSize: z.number().int().min(1).optional().describe('For PROCESS_IN_BATCHES steps: how many items each batch carries'),
             skip: z.boolean().optional().describe('Whether to skip this step during execution'),
             sourceCode: z.string().optional().describe('For CODE steps only: the JavaScript/TypeScript source code. Must export a `code` function: `export const code = async (inputs) => { ... }`.'),
             packageJson: z.string().optional().describe('For CODE steps only: package.json content as a JSON string for npm dependencies. Defaults to "{}".'),
@@ -122,12 +122,12 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                     updatedSettings.items = rewritten.loopItems
                 }
                 else {
-                    return { content: [{ type: 'text', text: `❌ loopItems can only be set on LOOP_ON_ITEMS or PROCESS_IN_BATCHES steps, but "${stepName}" is type ${step.type}.` }] }
+                    return { content: [{ type: 'text', text: `❌ loopItems can only be set on LOOP_ON_ITEMS or PROCESS_IN_BATCHES steps, but "${stepName}" is type ${step.type}.` }], isError: true }
                 }
             }
             if (batchSize !== undefined) {
                 if (step.type !== FlowActionType.PROCESS_IN_BATCHES) {
-                    return { content: [{ type: 'text', text: `❌ batchSize can only be set on PROCESS_IN_BATCHES steps, but "${stepName}" is type ${step.type}.` }] }
+                    return { content: [{ type: 'text', text: `❌ batchSize can only be set on PROCESS_IN_BATCHES steps, but "${stepName}" is type ${step.type}.` }], isError: true }
                 }
                 updatedSettings.batchSize = batchSize
             }

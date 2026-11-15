@@ -20,7 +20,7 @@ const addStepInput = z.object({
     sourceCode: z.string().optional(),
     packageJson: z.string().optional(),
     loopItems: z.string().optional(),
-    batchSize: z.coerce.number().int().min(1).optional(),
+    batchSize: z.number().int().min(1).optional(),
     continueOnFailure: z.boolean().optional(),
     retryOnFailure: z.boolean().optional(),
 })
@@ -44,7 +44,7 @@ export const apAddStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseL
             sourceCode: z.string().optional().describe('For CODE steps: JavaScript/TypeScript source. Must export a `code` function.'),
             packageJson: z.string().optional().describe('For CODE steps: package.json as JSON string. Defaults to "{}".'),
             loopItems: z.string().optional().describe('For LOOP_ON_ITEMS and PROCESS_IN_BATCHES steps: expression for the list (e.g. "{{step_1[\'output\'].items}}").'),
-            batchSize: z.coerce.number().int().min(1).optional().describe('For PROCESS_IN_BATCHES steps: how many items each batch carries. Defaults to 10.'),
+            batchSize: z.number().int().min(1).optional().describe(`For PROCESS_IN_BATCHES steps: how many items each batch carries. Defaults to ${DEFAULT_BATCH_SIZE}.`),
             continueOnFailure: z.boolean().optional().describe('For CODE/PIECE/PROCESS_IN_BATCHES steps: set true on the step that can fail (the one whose failure you want to react to), NOT on the recovery step. Defaults to false. On CODE/PIECE steps the flow keeps running on failure and the step gains On success / On failure branches — add handler steps into them with stepLocationRelativeToParent INSIDE_ON_SUCCESS_BRANCH / INSIDE_ON_FAILURE_BRANCH and parentStepName = this step. A PROCESS_IN_BATCHES step grows no branches: the flow simply carries on with the batch summary.'),
             retryOnFailure: z.boolean().optional().describe('For CODE/PIECE steps: whether to retry this step on failure. Defaults to false. Not supported on PROCESS_IN_BATCHES — a retry re-dispatches every batch.'),
         },

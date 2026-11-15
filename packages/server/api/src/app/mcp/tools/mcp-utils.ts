@@ -28,7 +28,7 @@ const RESOLVABLE_PROP_TYPES = new Set<PropertyType>([
 
 const STEP_REFERENCE_HINT = 'Reference a prior step\'s output with {{stepName[\'output\'].field}} (output is nested under [\'output\'], e.g. {{trigger[\'output\'].body.email}}, {{send_email[\'output\'].id}}). For a continue-on-failure step\'s error, use {{stepName[\'error\'].message}}.'
 
-const BATCH_ITEMS_HINT = 'A step inside a PROCESS_IN_BATCHES body reads its batch as {{<batchStepName>[\'output\'].items}}, a list: loop over it to handle one item at a time.'
+const BATCH_ITEMS_HINT = 'A step inside a PROCESS_IN_BATCHES body reads its batch as {{<batchStepName>[\'output\'].items}}, a list: loop over it to handle one item at a time. After the batch step, {{<batchStepName>[\'output\']}} is its summary (total, succeeded, failed, timedOut, ...).'
 
 function mcpToolError(prefix: string, err: unknown): McpToolResult {
     const entityDetail = extractEntityNotFoundDetail(err)
@@ -631,7 +631,7 @@ async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }
     }
 }
 
-const ERROR_HANDLING_ACTION_TYPES = [FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.PROCESS_IN_BATCHES]
+const ERROR_HANDLING_ACTION_TYPES = new Set<FlowActionType>([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.PROCESS_IN_BATCHES])
 
 function validateErrorHandlingSupport({ stepType, stepLabel, continueOnFailure, retryOnFailure, rejectFalseOnUnsupported = false }: {
     stepType: FlowActionType
@@ -643,11 +643,11 @@ function validateErrorHandlingSupport({ stepType, stepLabel, continueOnFailure, 
     const setsFlag = rejectFalseOnUnsupported
         ? continueOnFailure !== undefined || retryOnFailure !== undefined
         : continueOnFailure === true || retryOnFailure === true
-    if (setsFlag && !ERROR_HANDLING_ACTION_TYPES.includes(stepType)) {
-        return { content: [{ type: 'text', text: `❌ continueOnFailure/retryOnFailure can only be set on ${ERROR_HANDLING_ACTION_TYPES.join(', ')} steps, but ${stepLabel} is type ${stepType}.` }], isError: true }
+    if (setsFlag && !ERROR_HANDLING_ACTION_TYPES.has(stepType)) {
+        return { content: [{ type: 'text', text: `❌ continueOnFailure/retryOnFailure can only be set on ${[...ERROR_HANDLING_ACTION_TYPES].join(', ')} steps, but ${stepLabel} is type ${stepType}.` }], isError: true }
     }
     if (retryOnFailure === true && stepType === FlowActionType.PROCESS_IN_BATCHES) {
-        return { content: [{ type: 'text', text: `❌ retryOnFailure is not supported on ${FlowActionType.PROCESS_IN_BATCHES} steps — a retry re-dispatches every batch. Set continueOnFailure instead and branch on the batch summary.` }], isError: true }
+        return { content: [{ type: 'text', text: `❌ retryOnFailure is not supported on ${FlowActionType.PROCESS_IN_BATCHES} steps — a retry re-dispatches every batch. Set continueOnFailure instead: the flow then carries on, and the step output is the batch summary.` }], isError: true }
     }
     return null
 }
