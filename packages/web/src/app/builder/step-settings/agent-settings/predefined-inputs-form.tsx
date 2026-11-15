@@ -27,6 +27,8 @@ import { authenticationSession } from '@/lib/authentication-session';
 
 import { selectGenericFormComponentForProperty } from '../../piece-properties/properties-utils';
 
+import { predefinedInputsUtils } from './predefined-inputs-utils';
+
 const createPredefinedInputsFormSchema = (requireAuth: boolean) =>
   requireAuth
     ? z
@@ -109,19 +111,13 @@ export const PredefinedInputsForm = () => {
       const currentPredefined =
         usePieceToolsDialogStore.getState().predefinedInputs;
 
-      const currentFields = currentPredefined?.fields ?? {};
-      const newFields = { ...currentFields };
-
-      if (newFields[name]?.mode === FieldControlMode.CHOOSE_YOURSELF) {
-        newFields[name] = {
-          ...newFields[name],
-          value: values[name],
-        };
-      }
-
       setPredefinedInputs({
         ...currentPredefined,
-        fields: newFields,
+        fields: predefinedInputsUtils.withEditedField({
+          fields: currentPredefined?.fields ?? {},
+          changedPath: name,
+          values,
+        }),
       });
     });
 
