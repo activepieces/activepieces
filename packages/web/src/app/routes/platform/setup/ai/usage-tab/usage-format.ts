@@ -188,7 +188,7 @@ function metricLabel({ metric }: { metric: UsageMetric }): string {
 function scopeLabel({ scope }: { scope: AiUsageScope }): string {
   switch (scope) {
     case 'production':
-      return t('Production');
+      return t('Published');
     case 'testing':
       return t('Testing');
     case 'all':

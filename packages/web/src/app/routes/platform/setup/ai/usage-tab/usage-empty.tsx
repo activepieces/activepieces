@@ -97,7 +97,7 @@ function EmptyActions({
         >
           {view.scope === 'production'
             ? t('Include testing')
-            : t('Include production')}
+            : t('Include published')}
         </Button>
       )}
       {extraAction}
