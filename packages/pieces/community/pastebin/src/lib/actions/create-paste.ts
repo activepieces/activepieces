@@ -1,11 +1,11 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { pastebinAuth } from '../auth';
 import { pastebinApi } from '../common/api';
 import { createPasteOutputSchema } from '../output-schemas';
 
 const FORMAT_OPTIONS = [
-      { label: '4CS4cs', value: '4cs' },
-      { label: '6502 ACME Cross Asse...', value: '6502acme' },
+      { label: '4CS', value: '4cs' },
+      { label: '6502 ACME Cross Assembler', value: '6502acme' },
       { label: '6502 Kick Assembler', value: '6502kickass' },
       { label: '6502 TASM/64TASS', value: '6502tasm' },
       { label: 'ABAP', value: 'abap' },
@@ -43,7 +43,7 @@ const FORMAT_OPTIONS = [
       { label: 'C (WinAPI)', value: 'c_winapi' },
       { label: 'C++', value: 'cpp' },
       { label: 'C++ (WinAPI)', value: 'cpp-winapi' },
-      { label: 'C++ (with Qt extensi...', value: 'cpp-qt' },
+      { label: 'C++ (with Qt extensions)', value: 'cpp-qt' },
       { label: 'C: Loadrunner', value: 'c_loadrunner' },
       { label: 'CAD DCL', value: 'caddcl' },
       { label: 'CAD Lisp', value: 'cadlisp' },
@@ -52,7 +52,7 @@ const FORMAT_OPTIONS = [
       { label: 'C for Macs', value: 'c_mac' },
       { label: 'ChaiScript', value: 'chaiscript' },
       { label: 'Chapel', value: 'chapel' },
-      { label: 'C Intermediate Langu...', value: 'cil' },
+      { label: 'C Intermediate Language', value: 'cil' },
       { label: 'Clojure', value: 'clojure' },
       { label: 'Clone C', value: 'klonec' },
       { label: 'Clone C++', value: 'klonecpp' },
@@ -68,7 +68,7 @@ const FORMAT_OPTIONS = [
       { label: 'DCPU-16', value: 'dcpu16' },
       { label: 'DCS', value: 'dcs' },
       { label: 'Delphi', value: 'delphi' },
-      { label: 'Delphi Prism (Oxygen...', value: 'oxygene' },
+      { label: 'Delphi Prism (Oxygene)', value: 'oxygene' },
       { label: 'Diff', value: 'diff' },
       { label: 'DIV', value: 'div' },
       { label: 'DOT', value: 'dot' },
@@ -111,7 +111,7 @@ const FORMAT_OPTIONS = [
       { label: 'Inno Script', value: 'inno' },
       { label: 'INTERCAL', value: 'intercal' },
       { label: 'IO', value: 'io' },
-      { label: 'ISPF Panel Definition...', value: 'ispfpanel' },
+      { label: 'ISPF Panel Definition', value: 'ispfpanel' },
       { label: 'J', value: 'j' },
       { label: 'Java', value: 'java' },
       { label: 'Java 5', value: 'java5' },
@@ -149,7 +149,7 @@ const FORMAT_OPTIONS = [
       { label: 'MK-61/52', value: 'mk-61' },
       { label: 'Modula 2', value: 'modula2' },
       { label: 'Modula 3', value: 'modula3' },
-      { label: 'Motorola 68000 HiSof...', value: '68000devpac' },
+      { label: 'Motorola 68000 HiSoft Dev', value: '68000devpac' },
       { label: 'MPASM', value: 'mpasm' },
       { label: 'MXML', value: 'mxml' },
       { label: 'MySQL', value: 'mysql' },
@@ -160,12 +160,12 @@ const FORMAT_OPTIONS = [
       { label: 'Nim', value: 'nim' },
       { label: 'NullSoft Installer', value: 'nsis' },
       { label: 'Oberon 2', value: 'oberon2' },
-      { label: 'Objeck Programming L...', value: 'objeck' },
+      { label: 'Objeck Programming Language', value: 'objeck' },
       { label: 'Objective C', value: 'objc' },
       { label: 'OCaml', value: 'ocaml' },
       { label: 'OCaml Brief', value: 'ocaml-brief' },
       { label: 'Octave', value: 'octave' },
-      { label: 'OpenBSD PACKET FILTE...', value: 'pf' },
+      { label: 'OpenBSD Packet Filter', value: 'pf' },
       { label: 'OpenGL Shading', value: 'glsl' },
       { label: 'Open Object Rexx', value: 'oorexx' },
       { label: 'Openoffice BASIC', value: 'oobas' },
@@ -278,28 +278,53 @@ export const createPasteAction = createAction({
   outputSchema: createPasteOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Paste',
-  description: 'Creates a new paste',
+  description: 'Share text or code as a new Pastebin paste.',
   audience: 'both',
   aiMetadata: { description: 'Creates a new Pastebin paste from the given text content, returning its id and URL. Use to publish or share a snippet; optionally set a syntax format, name, expiry, privacy (public/unlisted/private), and folder. Not idempotent — each call creates a separate paste even with identical content.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'paste',
+      display: 'section',
+      label: 'Paste',
+      icon: 'code',
+      props: ['name', 'content', 'format'],
+    },
+    {
+      key: 'sharing',
+      display: 'section',
+      label: 'Sharing',
+      icon: 'users',
+      props: ['account_note', 'privacy', 'expiry'],
+    },
+  ],
   props: {
+    name: Property.ShortText({
+      displayName: 'Title',
+      placeholder: 'e.g. Build log 2026-11-15',
+      required: false,
+    }),
     content: Property.LongText({
       displayName: 'Content',
+      placeholder: 'Text or code to share',
       required: true,
     }),
     format: Property.StaticDropdown({
-      displayName: 'Format',
+      displayName: 'Syntax Highlighting',
+      description: 'Language used to highlight the paste.',
       required: false,
       options: {
         options: FORMAT_OPTIONS,
       },
     }),
-    name: Property.ShortText({
-      displayName: 'Name',
-      required: false,
+    account_note: Property.MarkDown({
+      value:
+        'Private pastes and folders need your Pastebin username and password on the connection.',
+      variant: MarkdownVariant.INFO,
     }),
     privacy: Property.StaticDropdown({
-      displayName: 'Privacy',
+      displayName: 'Visibility',
       required: false,
+      width: 'half',
       options: {
         options: [
           { label: 'Public', value: '0' },
@@ -309,8 +334,9 @@ export const createPasteAction = createAction({
       },
     }),
     expiry: Property.StaticDropdown({
-      displayName: 'Expiry',
+      displayName: 'Expires After',
       required: false,
+      width: 'half',
       options: {
         options: [
           { label: 'Never', value: 'N' },
@@ -327,7 +353,10 @@ export const createPasteAction = createAction({
     }),
     folder: Property.ShortText({
       displayName: 'Folder',
+      description: 'Key of one of your folders, from its link on pastebin.com.',
+      placeholder: 'e.g. a1b2c3d4',
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {
