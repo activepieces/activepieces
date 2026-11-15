@@ -253,11 +253,19 @@ async function fetchInChunks({
 	const collected: Completion[][] = [];
 	let chunkMs = clampChunk(state.chunkMs);
 	let completeThrough = sinceMs;
-	let resume = state.resume !== null && state.resume.since === sinceMs && state.resume.until <= untilMs ? state.resume : null;
+	let resume =
+		state.resume !== null && state.resume.since >= sinceMs && state.resume.since < untilMs && state.resume.until <= untilMs
+			? state.resume
+			: null;
+	const readThrough = state.cursor < untilMs ? Math.max(sinceMs, state.cursor) : sinceMs;
+	if (readThrough > sinceMs) {
+		collected.push(await fetchOverlapPage({ token, projectId, sinceMs, untilMs: readThrough, deadline }));
+		completeThrough = readThrough;
+	}
 	while (completeThrough < untilMs) {
 		const chunkStart = completeThrough;
-		const chunkEnd = resume !== null ? resume.until : Math.min(chunkStart + chunkMs, untilMs);
-		const attempt = await fetchChunkAttempt({ token, projectId, chunkStart, chunkEnd, resume, deadline });
+		const chunkEnd = resume !== null && resume.since === chunkStart ? resume.until : Math.min(chunkStart + chunkMs, untilMs, resume !== null && resume.since > chunkStart ? resume.since : untilMs);
+		const attempt = await fetchChunkAttempt({ token, projectId, chunkStart, chunkEnd, resume: resume !== null && resume.since === chunkStart ? resume : null, deadline });
 		const inChunk = attempt.completions.filter(({ epochMs }) => epochMs >= chunkStart && epochMs < chunkEnd);
 		if (attempt.complete) {
 			collected.push(inChunk);
@@ -287,6 +295,33 @@ async function fetchInChunks({
 		break;
 	}
 	return { completions: collected.flat(), completeThrough, chunkMs, resume };
+}
+
+async function fetchOverlapPage({
+	token,
+	projectId,
+	sinceMs,
+	untilMs,
+	deadline,
+}: {
+	token: string;
+	projectId: string | null;
+	sinceMs: number;
+	untilMs: number;
+	deadline: number;
+}): Promise<Completion[]> {
+	if (Date.now() + REQUEST_TIMEOUT_MS > deadline) {
+		return [];
+	}
+	const page = await todoistRestClient.tasks.listCompletedByCompletionDatePage({
+		token,
+		since: toUtcParam(sinceMs),
+		until: toUtcParam(untilMs),
+		project_id: projectId ?? undefined,
+		cursor: null,
+		timeoutMs: REQUEST_TIMEOUT_MS,
+	});
+	return toCompletions(page.items).filter(({ epochMs }) => epochMs >= sinceMs && epochMs < untilMs);
 }
 
 async function fetchChunkAttempt({
@@ -403,7 +438,7 @@ function nextState({
 }): CursorState {
 	const finished = fetched.completeThrough >= untilMs;
 	const newestEpoch = fetched.completions.reduce((acc, { epochMs }) => Math.max(acc, epochMs), state.cursor);
-	const cursor = finished ? Math.max(newestEpoch, now - OVERLAP_MS) : fetched.completeThrough + OVERLAP_MS;
+	const cursor = finished ? Math.max(newestEpoch, now - OVERLAP_MS) : Math.max(state.cursor, fetched.completeThrough);
 	const threshold = floorToSecond(cursor - OVERLAP_MS);
 	const keys = new Set([...state.seen, ...fetched.completions.map(({ task }) => completionKey(task))]);
 	return capStateSize({

@@ -44,9 +44,9 @@ describe('Todoist Task Completed behaviour', () => {
       expect(request.since.endsWith('Z')).toBe(true);
       expect(request.until.endsWith('Z')).toBe(true);
     }
-    const last = vendor.requests[vendor.requests.length - 1];
-    expect(Date.parse(last.until)).toBeGreaterThan(now());
-    expect(Date.parse(last.until) - now()).toBeLessThanOrEqual(1000);
+    const latestUntil = vendor.requests.reduce((acc, request) => Math.max(acc, Date.parse(request.until)), 0);
+    expect(latestUntil).toBeGreaterThan(now());
+    expect(latestUntil - now()).toBeLessThanOrEqual(1000);
   });
 
   it('fires both completions that share the same timestamp, even when the second shows up a poll later', async () => {
@@ -371,7 +371,7 @@ describe('Todoist Task Completed behaviour', () => {
     vendor.requestCostMs = 13_000;
     await trigger.run(ctx({ store }));
     expect(vendor.requests).toHaveLength(2);
-    expect(todoistFake.stateField({ store, key: 'chunkMs' })).toBe(4 * DAY);
+    expect(todoistFake.stateField({ store, key: 'chunkMs' })).toBe(2 * DAY);
   });
 
   it('replays a saved page cursor with the same since and until it was issued for', async () => {
