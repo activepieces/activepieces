@@ -356,6 +356,7 @@
   "Confidence floor": "Confidence floor",
   "No floor": "No floor",
   "Below this, the flow takes the Otherwise route.": "Below this, the flow takes the Otherwise route.",
+  "The decision model that picks the route.": "The decision model that picks the route.",
   "OR": "OR",
   "And If": "And If",
   "+ And": "+ And",

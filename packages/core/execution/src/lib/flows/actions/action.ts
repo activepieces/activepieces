@@ -313,6 +313,7 @@ export const AiRouterActionSettings = z.object({
     branches: AiRouterBranchesSchema(false),
     matchMode: z.enum(AiRouterMatchMode).optional(),
     minConfidence: z.number().min(0).max(1).optional(),
+    model: z.string().optional(),
 })
 
 export const AiRouterActionSettingsWithValidation = z.object({
@@ -321,6 +322,7 @@ export const AiRouterActionSettingsWithValidation = z.object({
     branches: AiRouterBranchesSchema(true),
     matchMode: z.enum(AiRouterMatchMode).optional(),
     minConfidence: z.number().min(0).max(1).optional(),
+    model: z.string().optional(),
 }).superRefine((settings, ctx) => {
     const seen = new Set<string>()
     settings.branches.forEach((branch, index) => {
