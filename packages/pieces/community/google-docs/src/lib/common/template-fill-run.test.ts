@@ -10,6 +10,7 @@ import {
   runTemplateFill,
   TemplateClients,
   TemplateFillInput,
+  withCopyError,
   withPlainError,
 } from './template-fill-run';
 
@@ -184,6 +185,38 @@ describe('withPlainError', () => {
 
   it('returns the result of a call that succeeds', async () => {
     await expect(withPlainError(async () => 'ok')).resolves.toBe('ok');
+  });
+});
+
+describe('withCopyError', () => {
+  it('explains the Shared Drive or User Email remedy when Google refuses for lack of storage', async () => {
+    const refusal = Object.assign(new Error('The user\'s Drive storage quota has been exceeded.'), {
+      code: 403,
+      errors: [{ reason: 'storageQuotaExceeded', message: 'The user\'s Drive storage quota has been exceeded.' }],
+    });
+
+    const thrown = await caught(withCopyError(() => Promise.reject(refusal)));
+
+    expect(thrown.message).toBe(
+      "The new document could not be created: The user's Drive storage quota has been exceeded. A service account has no Drive storage of its own, so pick a Folder in a Shared Drive the service account is a member of, or fill in User Email on the connection.",
+    );
+    expect(thrown.cause).toBeUndefined();
+  });
+
+  it('finds the reason in the response body too', async () => {
+    const refusal = Object.assign(new Error('Forbidden'), {
+      response: { data: { error: { errors: [{ reason: 'storageQuotaExceeded' }] } } },
+    });
+
+    const thrown = await caught(withCopyError(() => Promise.reject(refusal)));
+
+    expect(thrown.message).toContain('pick a Folder in a Shared Drive');
+  });
+
+  it('passes any other failure through by its message', async () => {
+    const thrown = await caught(withCopyError(() => Promise.reject(new Error('File not found: template-id.'))));
+
+    expect(thrown.message).toBe('File not found: template-id.');
   });
 });
 

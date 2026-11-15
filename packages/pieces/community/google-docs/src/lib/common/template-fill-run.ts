@@ -112,6 +112,19 @@ export async function withPlainError<T>(call: () => Promise<T>): Promise<T> {
   }
 }
 
+export async function withCopyError<T>(call: () => Promise<T>): Promise<T> {
+  try {
+    return await call();
+  } catch (error) {
+    if (!isStorageQuotaError(error)) {
+      throw new Error(errorMessage(error));
+    }
+    throw new Error(
+      `The new document could not be created: ${errorMessage(error)} A service account has no Drive storage of its own, so pick a Folder in a Shared Drive the service account is a member of, or fill in User Email on the connection.`,
+    );
+  }
+}
+
 export function templateNote(message: string): InputPropertyMap {
   return {
     [NOTE_KEY]: Property.MarkDown({ value: message, variant: MarkdownVariant.INFO }),
@@ -151,6 +164,26 @@ async function applyRequests({
   }
 }
 
+function isStorageQuotaError(error: unknown): boolean {
+  const reasons = [
+    ...listOf(readPath({ value: error, path: ['errors'] })),
+    ...listOf(readPath({ value: error, path: ['response', 'data', 'error', 'errors'] })),
+  ].map((entry) => readPath({ value: entry, path: ['reason'] }));
+  return reasons.includes(STORAGE_QUOTA_REASON) || /storage quota/i.test(errorMessage(error));
+}
+
+function listOf(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function readPath({ value, path }: { value: unknown; path: string[] }): unknown {
+  return path.reduce<unknown>(
+    (current, key) =>
+      typeof current === 'object' && current !== null && key in current ? Reflect.get(current, key) : undefined,
+    value,
+  );
+}
+
 function copyNameOf(template: docs_v1.Schema$Document): string | undefined {
   return template.title ? `Copy of ${template.title}` : undefined;
 }
@@ -160,6 +193,8 @@ function errorMessage(error: unknown): string {
 }
 
 const MAX_INPUTS = 100;
+
+const STORAGE_QUOTA_REASON = 'storageQuotaExceeded';
 
 const NOTE_KEY = 'template_note';
 

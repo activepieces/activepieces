@@ -12,6 +12,7 @@ import {
   listTemplateInputs,
   runTemplateFill,
   TemplateClients,
+  withCopyError,
   withPlainError,
 } from '../common/template-fill-run';
 
@@ -77,7 +78,8 @@ export const createDocumentBasedOnTemplate = createAction({
       required: false,
     }),
     folder: folderIdPropWith({
-      description: 'Leave empty to save next to the template.',
+      description:
+        'Leave empty to save next to the template. A service account has no Drive storage of its own, so pick a folder in a Shared Drive it is a member of, or fill in User Email on the connection.',
     }),
     placeholder_format: Property.StaticDropdown({
       displayName: 'Placeholder Format',
@@ -223,7 +225,7 @@ async function createTemplateClients(auth: GoogleDocsAuthValue): Promise<Templat
       return response.data;
     },
     copyFile: async ({ fileId, name, folderId }) => {
-      const response = await withPlainError(() =>
+      const response = await withCopyError(() =>
         drive.files.copy({
           fileId,
           supportsAllDrives: true,
