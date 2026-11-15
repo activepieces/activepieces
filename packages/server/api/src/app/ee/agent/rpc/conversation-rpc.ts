@@ -73,7 +73,7 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
         const persistContent = isSuccessfulCompletion && !wouldShrinkHistory
 
         if (persistContent) {
-            updates.messages = input.messages
+            updates.messages = sanitizeObjectForPostgresql(input.messages)
             updates.uiMessages = sanitizeObjectForPostgresql(input.uiMessages)
             if (input.title) updates.title = input.title
             if (input.modelName && isNil(stored?.modelTierId) && isNil(stored?.providerConfigId)) updates.modelName = input.modelName
@@ -126,10 +126,10 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
 
     async updateAgentProgress(input: UpdateAgentProgressRequest): Promise<void> {
         const updates: Record<string, unknown> = {
-            uiMessages: JSON.parse(JSON.stringify(input.uiMessages)),
+            uiMessages: sanitizeObjectForPostgresql(JSON.parse(JSON.stringify(input.uiMessages))),
         }
         if (!isNil(input.messages)) {
-            updates.messages = input.messages
+            updates.messages = sanitizeObjectForPostgresql(input.messages)
         }
         await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates, onlyWhileStreaming: true })
         log.debug({ conversation: { id: input.conversationId }, uiMessageCount: input.uiMessages.length, messageCount: input.messages?.length }, '[agentRpc#updateAgentProgress] Progress persisted')
