@@ -1,9 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpError, HttpMethod } from '@activepieces/pieces-common';
 import {
   CohereChatRequest,
   CohereChatResponse,
-  CohereErrorResponse,
   CohereModelsResponse,
 } from '../common/types';
 import { cohereAuth } from '../auth';
@@ -12,6 +11,18 @@ const COHERE_CHAT_URL = 'https://api.cohere.com/v2/chat';
 const COHERE_MODELS_URL = 'https://api.cohere.com/v1/models';
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 1000;
+
+function readErrorMessage(body: unknown): string | undefined {
+  if (
+    typeof body === 'object' &&
+    body !== null &&
+    'message' in body &&
+    typeof body.message === 'string'
+  ) {
+    return body.message;
+  }
+  return undefined;
+}
 
 async function generateWithRetry(
   apiKey: string,
@@ -35,17 +46,18 @@ async function generateWithRetry(
     } catch (error: unknown) {
       lastError = error instanceof Error ? error : new Error(String(error));
 
-      const errorAny = error as { response?: { status: number; body: unknown } };
-      const statusCode = errorAny.response?.status;
+      const statusCode =
+        error instanceof HttpError ? error.response.status : undefined;
+      const errorBody =
+        error instanceof HttpError ? error.response.body : undefined;
       const isRetryable =
         statusCode === 429 ||
         (statusCode !== undefined && statusCode >= 500);
 
       if (!isRetryable || attempt === MAX_RETRIES - 1) {
-        if (errorAny.response?.body) {
-          const errorBody = errorAny.response.body as CohereErrorResponse;
+        if (errorBody) {
           throw new Error(
-            `Cohere API error (${statusCode}): ${errorBody.message ?? lastError.message}`,
+            `Cohere API error (${statusCode}): ${readErrorMessage(errorBody) ?? lastError.message}`,
           );
         }
         throw lastError;

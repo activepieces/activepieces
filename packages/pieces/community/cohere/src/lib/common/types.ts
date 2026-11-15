@@ -56,7 +56,3 @@ export interface CohereModelsResponse {
     context_length: number;
   }[];
 }
-
-export interface CohereErrorResponse {
-  message: string;
-}
