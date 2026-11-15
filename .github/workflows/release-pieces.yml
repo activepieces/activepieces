@@ -91,6 +91,7 @@ jobs:
       - name: update pieces metadata
         id: metadata
         if: steps.changed.outputs.has_changes == 'true'
+        timeout-minutes: 60
         run: npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/pieces/update-pieces-metadata.ts packages/pieces/framework
         env:
           AP_CLOUD_API_KEY: ${{ secrets.AP_CLOUD_API_KEY }}
@@ -100,7 +101,7 @@ jobs:
       - name: Notify Discord on failure
         if: failure()
         env:
-          FAILED_STEP: ${{ steps.metadata.outcome == 'failure' && 'update pieces metadata. npm publish already succeeded, so Cloud is missing some of these versions until this run is re-run or the next Release Pieces run picks them up.' || steps.publish.outcome == 'failure' && 'publish pieces packages. Cloud metadata was not pushed for any piece in this run.' || 'setup, find changed pieces or build. Nothing was published.' }}
+          FAILED_STEP: ${{ steps.metadata.outcome == 'failure' && 'update pieces metadata. Re-run the failed job now. npm publish already succeeded, so Cloud is missing some of these versions. A later Release Pieces run only picks them up while the version is still the one on main.' || steps.publish.outcome == 'failure' && 'publish pieces packages. Cloud metadata was not pushed for any piece in this run.' || 'setup, find changed pieces or build. Nothing was published.' }}
         run: |
           curl -H "Content-Type: application/json" \
             -X POST \

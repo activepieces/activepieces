@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import { cloudApiFetch } from './cloud-api-fetch'
 
 const REGISTRY_URL = 'https://cloud.example.test/api/v1/pieces/registry'
+const ADMIN_PIECES_URL = 'https://cloud.example.test/api/v1/admin/pieces'
 
 function stubFetch(steps: Step[]): ReturnType<typeof spyOn> {
     let call = 0
@@ -65,6 +66,24 @@ describe('fetchWithRetry', () => {
         const fetchSpy = stubFetch(['hang', { status: 200 }])
         const response = await cloudApiFetch.fetchWithRetry({ url: REGISTRY_URL, baseDelayMs: 1, timeoutMs: 20 })
         expect(response.status).toBe(200)
+        expect(fetchSpy).toHaveBeenCalledTimes(2)
+    })
+
+    it('does not retry a POST that hangs past the timeout', async () => {
+        const fetchSpy = stubFetch(['hang', { status: 200 }])
+        await expect(cloudApiFetch.fetchWithRetry({ url: ADMIN_PIECES_URL, init: { method: 'POST', body: '{}' }, baseDelayMs: 1, timeoutMs: 20 })).rejects.toThrow(`[cloudApiFetch] POST ${ADMIN_PIECES_URL} failed on attempt 1/5 and was not retried because Cloud may still be handling it: TimeoutError`)
+        expect(fetchSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not retry a POST that gets a 504', async () => {
+        const fetchSpy = stubFetch([{ status: 504 }, { status: 200 }])
+        await expect(cloudApiFetch.fetchWithRetry({ url: ADMIN_PIECES_URL, init: { method: 'POST', body: '{}' }, baseDelayMs: 1 })).rejects.toThrow(`[cloudApiFetch] POST ${ADMIN_PIECES_URL} failed on attempt 1/5 and was not retried because Cloud may still be handling it: status=504`)
+        expect(fetchSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('stops a POST at a timeout that follows a retried 502', async () => {
+        const fetchSpy = stubFetch([{ status: 502 }, 'hang', { status: 200 }])
+        await expect(cloudApiFetch.fetchWithRetry({ url: ADMIN_PIECES_URL, init: { method: 'POST', body: '{}' }, baseDelayMs: 1, timeoutMs: 20 })).rejects.toThrow('failed on attempt 2/5 and was not retried')
         expect(fetchSpy).toHaveBeenCalledTimes(2)
     })
 

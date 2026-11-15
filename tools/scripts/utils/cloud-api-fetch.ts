@@ -12,6 +12,9 @@ async function fetchWithRetry({ url, init = {}, maxAttempts = MAX_ATTEMPTS, base
         }
         lastFailure = outcome.response !== null ? `status=${outcome.response.status}` : describeError(outcome.error)
         console.warn(`[cloudApiFetch] ${method} ${url} attempt=${attempt}/${maxAttempts} failed: ${lastFailure}`)
+        if (cloudMayStillBeHandling({ method, outcome })) {
+            throw new Error(`[cloudApiFetch] ${method} ${url} failed on attempt ${attempt}/${maxAttempts} and was not retried because Cloud may still be handling it: ${lastFailure}`)
+        }
         if (attempt < maxAttempts) {
             await sleep(retryDelayMs({ attempt, baseDelayMs }))
         }
@@ -41,6 +44,13 @@ function isRetryableStatus(status: number): boolean {
     return status === 408 || status === 429 || status >= 500
 }
 
+function cloudMayStillBeHandling({ method, outcome }: { method: string, outcome: AttemptOutcome }): boolean {
+    if (method.toUpperCase() === 'GET') {
+        return false
+    }
+    return outcome.error?.name === 'TimeoutError' || outcome.response?.status === GATEWAY_TIMEOUT_STATUS
+}
+
 function retryDelayMs({ attempt, baseDelayMs }: { attempt: number, baseDelayMs: number }): number {
     const jitterMs = Math.floor(Math.random() * baseDelayMs / 2)
     return Math.min(baseDelayMs * 2 ** (attempt - 1), MAX_DELAY_MS) + jitterMs
@@ -55,6 +65,7 @@ const MAX_ATTEMPTS = 5
 const BASE_DELAY_MS = 2000
 const MAX_DELAY_MS = 30000
 const REQUEST_TIMEOUT_MS = 60000
+const GATEWAY_TIMEOUT_STATUS = 504
 
 type FetchWithRetryParams = {
     url: string
