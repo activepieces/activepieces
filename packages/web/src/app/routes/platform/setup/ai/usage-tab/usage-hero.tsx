@@ -72,11 +72,11 @@ export function UsageHero({
             {current === 0 && previous === 0 ? null : comparable ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="flex cursor-default">
+                  <button type="button" className={TOOLTIP_TRIGGER_CLASS}>
                     <DeltaChip
                       value={usageFormat.change({ current, previous })}
                     />
-                  </span>
+                  </button>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={6}>
                   {usageFormat.previousLabel({ period })}
@@ -306,12 +306,13 @@ function NoComparison() {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span
-          className="flex cursor-default text-gray-11"
+        <button
+          type="button"
+          className={cn(TOOLTIP_TRIGGER_CLASS, 'text-gray-11')}
           aria-label={t('No full previous period to compare yet')}
         >
           <Info className="size-3.5" />
-        </span>
+        </button>
       </TooltipTrigger>
       <TooltipContent side="top" sideOffset={6}>
         {t('No full previous period to compare yet')}
@@ -408,6 +409,8 @@ function TooltipRow({ label, value }: { label: string; value: string }) {
 }
 
 const Y_AXIS_WIDTH = 56;
+const TOOLTIP_TRIGGER_CLASS =
+  'flex cursor-default rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-gray-8/50';
 
 type AxisTickProps = {
   y?: number;
