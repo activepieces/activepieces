@@ -18,6 +18,7 @@ import {
   PopulatedFlow,
 } from '@activepieces/shared';
 import {
+  hashKey,
   InfiniteData,
   QueryKey,
   useInfiniteQuery,
@@ -105,6 +106,36 @@ function groupByCategory(data: FlowRunCountByStatus[]) {
   })).filter((cat) => cat.count > 0);
 }
 
+function useDataUpdateCountWhen({
+  condition,
+  queryKey,
+}: {
+  condition: boolean;
+  queryKey: QueryKey;
+}) {
+  const queryClient = useQueryClient();
+  const queryHash = hashKey(queryKey);
+  const countRef = useRef<number | null>(null);
+  useEffect(() => {
+    countRef.current = condition
+      ? queryClient.getQueryCache().get(queryHash)?.state.dataUpdateCount ?? 0
+      : null;
+  }, [condition, queryClient, queryHash]);
+  return countRef;
+}
+
+function hasFetchedSince({
+  query,
+  countRef,
+}: {
+  query: { state: { dataUpdateCount: number } };
+  countRef: { current: number | null };
+}): boolean {
+  return (
+    !isNil(countRef.current) && query.state.dataUpdateCount > countRef.current
+  );
+}
+
 export const DEFAULT_DATE_PRESET = '7days' as const;
 
 export const flowRunQueries = {
@@ -135,15 +166,11 @@ export const flowRunQueries = {
     enabled: boolean;
     allBatchesTerminal: boolean;
   }) => {
-    const queryClient = useQueryClient();
-    const dataUpdateCountWhenTerminal = useRef<number | null>(null);
-    useEffect(() => {
-      dataUpdateCountWhenTerminal.current = allBatchesTerminal
-        ? queryClient.getQueryState(
-            flowRunKeys.batchChildren(barrierId ?? '', statuses),
-          )?.dataUpdateCount ?? 0
-        : null;
-    }, [allBatchesTerminal, queryClient, barrierId, statuses]);
+    const queryKey = flowRunKeys.batchChildren(barrierId ?? '', statuses);
+    const countWhenAllTerminal = useDataUpdateCountWhen({
+      condition: allBatchesTerminal,
+      queryKey,
+    });
     return useInfiniteQuery<
       SeekPage<FlowRun>,
       Error,
@@ -151,7 +178,7 @@ export const flowRunQueries = {
       QueryKey,
       string | undefined
     >({
-      queryKey: flowRunKeys.batchChildren(barrierId ?? '', statuses),
+      queryKey,
       getNextPageParam: (lastPage) => lastPage.next,
       initialPageParam: undefined,
       queryFn: ({ pageParam }) =>
@@ -164,13 +191,10 @@ export const flowRunQueries = {
           cursor: pageParam,
         }),
       enabled: enabled && !isNil(barrierId),
-      refetchInterval: (query) => {
-        const countWhenTerminal = dataUpdateCountWhenTerminal.current;
-        return !isNil(countWhenTerminal) &&
-          query.state.dataUpdateCount > countWhenTerminal
+      refetchInterval: (query) =>
+        hasFetchedSince({ query, countRef: countWhenAllTerminal })
           ? false
-          : RUN_POLL_INTERVAL_MS;
-      },
+          : RUN_POLL_INTERVAL_MS,
     });
   },
   useBatchChildByIndex: ({
@@ -183,9 +207,14 @@ export const flowRunQueries = {
     dispatchIndex: number;
     enabled: boolean;
     hasBatchSummary: boolean;
-  }) =>
-    useQuery({
-      queryKey: flowRunKeys.batchChild(barrierId ?? '', dispatchIndex),
+  }) => {
+    const queryKey = flowRunKeys.batchChild(barrierId ?? '', dispatchIndex);
+    const countWhenSummaryArrived = useDataUpdateCountWhen({
+      condition: hasBatchSummary,
+      queryKey,
+    });
+    return useQuery({
+      queryKey,
       queryFn: () =>
         flowRunsApi.list({
           projectId: authenticationSession.getProjectId()!,
@@ -196,7 +225,7 @@ export const flowRunQueries = {
         }),
       enabled: enabled && !isNil(barrierId),
       refetchInterval: (query) => {
-        if (!hasBatchSummary) {
+        if (!hasFetchedSince({ query, countRef: countWhenSummaryArrived })) {
           return RUN_POLL_INTERVAL_MS;
         }
         const child = query.state.data?.data[0];
@@ -208,7 +237,8 @@ export const flowRunQueries = {
           ? false
           : RUN_POLL_INTERVAL_MS;
       },
-    }),
+    });
+  },
   useRunStats: () => {
     const projectId = authenticationSession.getProjectId()!;
 

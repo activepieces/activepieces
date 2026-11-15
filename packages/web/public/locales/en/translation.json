@@ -3983,6 +3983,6 @@
   "Are you sure you want to retry from the failed step?": "Are you sure you want to retry from the failed step?",
   "If a batch step failed, retrying can run its batches again, including the ones that already succeeded. Anything they sent to other apps can be sent twice.": "If a batch step failed, retrying can run its batches again, including the ones that already succeeded. Anything they sent to other apps can be sent twice.",
   "batchRetryRunCount": "{count, plural, =1 {1 run will be retried.} other {# runs will be retried.}}",
-  "Some of these runs may process items in batches. Cancelling stops the batches that are queued or paused. A paused batch loses its pending approval or delay, and it cannot resume. Batches that are already running finish.": "Some of these runs may process items in batches. Cancelling stops the batches that are queued or paused. A paused batch loses its pending approval or delay, and it cannot resume. Batches that are already running finish.",
+  "Some of these runs may process items in batches. Cancelling stops batches that are queued or paused, and a paused batch loses its approval or delay. Batches that are already running finish.": "Some of these runs may process items in batches. Cancelling stops batches that are queued or paused, and a paused batch loses its approval or delay. Batches that are already running finish.",
   "Keep running": "Keep running"
 }

@@ -2,6 +2,7 @@
 import {
   EmptyTrigger,
   FlowActionType,
+  FlowRunStatus,
   FlowTriggerType,
   FlowVersion,
   FlowVersionState,
@@ -119,6 +120,68 @@ describe('flowRunQueries.useBatchChildren polling', () => {
           statuses: undefined,
           enabled: true,
           allBatchesTerminal,
+        }),
+      { initialProps, wrapper: wrapperFor(queryClient) },
+    );
+  }
+});
+
+describe('flowRunQueries.useBatchChildByIndex polling', () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    listRuns.mockReset();
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+  });
+
+  afterEach(() => {
+    queryClient.clear();
+    vi.useRealTimers();
+  });
+
+  it('fetches once more after the summary arrives, so a child created after the last poll still shows', async () => {
+    listRuns.mockResolvedValueOnce({ data: [], next: null, previous: null });
+    listRuns.mockResolvedValue({
+      data: [{ id: 'child_id', status: FlowRunStatus.SUCCEEDED }],
+      next: null,
+      previous: null,
+    });
+    const { result, rerender } = renderBatchChild({ hasBatchSummary: false });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(listRuns).toHaveBeenCalledTimes(1);
+
+    rerender({ hasBatchSummary: true });
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+
+    expect(listRuns).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS * 2);
+    expect(listRuns).toHaveBeenCalledTimes(2);
+    await vi.waitFor(() =>
+      expect(result.current.data?.data[0]?.id).toBe('child_id'),
+    );
+  });
+
+  it('stops after one fetch when the summary is already there and the batch has no child', async () => {
+    listRuns.mockResolvedValue({ data: [], next: null, previous: null });
+    renderBatchChild({ hasBatchSummary: true });
+    await vi.advanceTimersByTimeAsync(0);
+
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS * 2);
+
+    expect(listRuns).toHaveBeenCalledTimes(1);
+  });
+
+  function renderBatchChild(initialProps: { hasBatchSummary: boolean }) {
+    return renderHook(
+      ({ hasBatchSummary }: { hasBatchSummary: boolean }) =>
+        flowRunQueries.useBatchChildByIndex({
+          barrierId: 'barrier_id',
+          dispatchIndex: 3,
+          enabled: true,
+          hasBatchSummary,
         }),
       { initialProps, wrapper: wrapperFor(queryClient) },
     );

@@ -664,7 +664,7 @@ export const RunsTable = () => {
         warning={
           isBatchCancel ? (
             t(
-              'Some of these runs may process items in batches. Cancelling stops the batches that are queued or paused. A paused batch loses its pending approval or delay, and it cannot resume. Batches that are already running finish.',
+              'Some of these runs may process items in batches. Cancelling stops batches that are queued or paused, and a paused batch loses its approval or delay. Batches that are already running finish.',
             )
           ) : (
             <>
