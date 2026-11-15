@@ -28,7 +28,11 @@ export async function runTemplateFill({
   }
 
   const target = input.createCopy
-    ? await clients.copyFile({ fileId: input.templateId, name: input.newDocumentName, folderId: input.folderId })
+    ? await clients.copyFile({
+        fileId: input.templateId,
+        name: input.newDocumentName ?? copyNameOf(template),
+        folderId: input.folderId,
+      })
     : { id: input.templateId, name: template.title ?? '' };
 
   const data = await applyRequests({ clients, documentId: target.id, requests: plan.requests, isCopy: input.createCopy });
@@ -138,6 +142,10 @@ async function applyRequests({
       { cause: error },
     );
   }
+}
+
+function copyNameOf(template: docs_v1.Schema$Document): string | undefined {
+  return template.title ? `Copy of ${template.title}` : undefined;
 }
 
 function errorMessage(error: unknown): string {

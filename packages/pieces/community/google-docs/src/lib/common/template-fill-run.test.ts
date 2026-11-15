@@ -66,6 +66,19 @@ describe('runTemplateFill', () => {
     });
   });
 
+  it("names the copy 'Copy of' plus the template's title when no name is given", async () => {
+    const clients = stubClients();
+
+    const output = await runTemplateFill({ clients, input: { ...baseInput, createCopy: true, values: { name: 'Ada' } } });
+
+    expect(clients.copyFile).toHaveBeenCalledWith({
+      fileId: 'template-id',
+      name: 'Copy of Offer letter',
+      folderId: undefined,
+    });
+    expect(output.documentName).toBe('Copy of Offer letter');
+  });
+
   it('moves the copy to the trash when filling it fails', async () => {
     const clients = stubClients();
     clients.batchUpdate.mockRejectedValue(new Error('There was a problem retrieving the image.'));
