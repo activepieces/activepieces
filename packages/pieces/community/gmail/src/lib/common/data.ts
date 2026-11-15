@@ -231,6 +231,32 @@ export async function parseStream(stream: any) {
   });
 }
 
+interface WellFormedString {
+  toWellFormed?(): string;
+}
+
+const NON_ASCII_PATTERN = /[^\x20-\x7E]/;
+
+export function toSafeUploadFileName(fileName: string): string {
+  if (!NON_ASCII_PATTERN.test(fileName)) {
+    return fileName;
+  }
+  try {
+    const candidate = fileName as unknown as WellFormedString;
+    const wellFormed =
+      typeof candidate.toWellFormed === 'function'
+        ? candidate.toWellFormed()
+        : fileName.replace(
+            /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g,
+            '\uFFFD'
+          );
+    return encodeURIComponent(wellFormed);
+  } catch {
+    const ext = fileName.includes('.') ? `.${fileName.split('.').pop()}` : '';
+    return `attachment-${Date.now()}${ext}`;
+  }
+}
+
 export async function convertAttachment(
   attachments: Attachment[],
   files: FilesService
@@ -238,14 +264,27 @@ export async function convertAttachment(
   const promises = attachments.map(async (attachment) => {
     try {
       const fileName = attachment.filename ?? `attachment-${Date.now()}`;
+      const uploadFileName = toSafeUploadFileName(fileName);
+      let dataUrl: string;
+      try {
+        dataUrl = await files.write({
+          fileName: uploadFileName,
+          data: attachment.content,
+        });
+      } catch {
+        const ext = fileName.includes('.')
+          ? `.${fileName.split('.').pop()}`
+          : '';
+        dataUrl = await files.write({
+          fileName: `attachment-${Date.now()}${ext}`,
+          data: attachment.content,
+        });
+      }
       return {
         fileName,
         mimeType: attachment.contentType,
         size: attachment.size,
-        data: await files.write({
-          fileName: fileName,
-          data: attachment.content,
-        }),
+        data: dataUrl,
       };
     } catch (error) {
       console.error(
