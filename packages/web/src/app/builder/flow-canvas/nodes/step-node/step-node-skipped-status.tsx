@@ -34,20 +34,22 @@ const ApStepNodeSkippedStatus = ({ stepName }: { stepName: string }) => {
     return null;
   }
 
-  return (
-    <StepNodeBadgeContainer>
-      <div
-        className={flowRunUtils.getStatusContainerClassName({
-          variant: 'default',
-          withPaddingAndAnimation: true,
-        })}
-      >
-        <RouteOff className="size-3" />
-        <div>{t('Skipped')}</div>
-      </div>
-    </StepNodeBadgeContainer>
-  );
+  return <SkippedBadge />;
 };
 
+const SkippedBadge = () => (
+  <StepNodeBadgeContainer>
+    <div
+      className={flowRunUtils.getStatusContainerClassName({
+        variant: 'default',
+        withPaddingAndAnimation: true,
+      })}
+    >
+      <RouteOff className="size-3" />
+      <div>{t('Skipped')}</div>
+    </div>
+  </StepNodeBadgeContainer>
+);
+
 ApStepNodeSkippedStatus.displayName = 'ApStepNodeSkippedStatus';
-export { ApStepNodeSkippedStatus };
+export { ApStepNodeSkippedStatus, SkippedBadge };

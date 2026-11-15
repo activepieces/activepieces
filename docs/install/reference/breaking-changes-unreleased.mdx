@@ -18,6 +18,23 @@ The new piece provides a separate native action for each of the 425 public API o
 
 Flows remain on the piece version they were built with until you upgrade. Before upgrading, reconnect with a workspace key carrying the required scopes, replace numeric IDs with workspace UUIDs, reconfigure step inputs and remap downstream fields from the current response. Check polling intervals and use test data before testing billable actions. Existing assistant/channel webhook destinations remain unchanged.
 
+#### Fireflies.ai 0.2.0: three find actions are no longer AI agent tools, and Upload Audio returns a smaller output
+
+**Find Meeting by ID**, **Find Recent Meeting** and **Find Meeting by Call Details** are now shown only in the flow builder. AI agents and MCP clients get **Get Meeting**, **Get Meeting Summary** and **Find Meetings** instead.
+
+After you upgrade:
+
+- **Upload Audio** returns `{ success, title, message }` instead of the raw `{ data: { uploadAudio: { ... } } }` response, and it fails the step when Fireflies rejects the upload (for example `paid_required` on the Free plan) instead of showing it as a successful step.
+- **Find Meeting by Call Details** reads at most 1,000 meetings (20 pages of 50). If more meetings match, the step fails and asks you to narrow the filters, instead of paging through the whole account. Its **Date** filter now covers the 24 hours starting at the date and time you give, instead of the UTC calendar day, so meetings no longer go missing when your time zone is ahead of UTC.
+- **Find Meeting by Call Details** now fails before calling Fireflies when Host Email and Participant Email are both set. Fireflies already rejected that combination, so these steps were failing before; fill in only one of the two.
+- Every action fails the step when Fireflies returns a GraphQL error, instead of returning an empty or null result.
+
+#### What you need to do
+
+- Agents that used the three find actions as tools: switch to Get Meeting, Get Meeting Summary or Find Meetings.
+- Steps that read `data.uploadAudio.success`, `data.uploadAudio.title` or `data.uploadAudio.message` from Upload Audio: read `success`, `title` and `message` instead.
+- Find Meeting by Call Details steps on large accounts: add a date range or another filter.
+
 #### Fireberry 0.2.0: record actions are no longer AI agent tools, and their output changes
 
 **Create Record**, **Update Record**, **Delete Records** and **Find Records** are now shown only in the flow builder. AI agents and MCP clients get a separate set of agent actions instead: List Object Types, List Object Fields, List Picklist Values, Search Records, Get Record, Create Record, Update Record and Delete Record.

@@ -59,6 +59,8 @@ export type RunState = {
   getConsoleLogs: (stepName: string) => string | null;
   consoleLogs: Record<string, string | null>;
   removeAllStepTestsListeners: () => void;
+  startTestRunSubscription: () => AbortSignal;
+  abortTestRunSubscription: () => void;
   isStepBeingTested: (stepName: string) => boolean;
   /**Used to revert the sample data locally when the test is cancelled */
   revertSampleDataLocallyCallbacks: Record<string, (() => void) | undefined>;
@@ -79,6 +81,7 @@ export const createRunState = (
   get: StoreApi<BuilderState>['getState'],
   set: StoreApi<BuilderState>['setState'],
 ): RunState => {
+  let testRunAbortController: AbortController | null = null;
   return {
     revertSampleDataLocallyCallbacks: {},
     run: initialState.run,
@@ -407,6 +410,15 @@ export const createRunState = (
       Object.keys(stepTestListeners).forEach((stepName) => {
         get().removeStepTestListener(stepName);
       });
+    },
+    startTestRunSubscription: () => {
+      testRunAbortController?.abort();
+      testRunAbortController = new AbortController();
+      return testRunAbortController.signal;
+    },
+    abortTestRunSubscription: () => {
+      testRunAbortController?.abort();
+      testRunAbortController = null;
     },
     isStepBeingTested: (stepName: string) => {
       return !isNil(get().stepTestListeners[stepName]);
