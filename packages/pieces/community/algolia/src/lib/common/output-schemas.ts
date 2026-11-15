@@ -23,7 +23,7 @@ const browseRecordsSchema: OutputSchema = {
       key: 'records',
       label: 'Records',
       value: '',
-      listItems: [{ key: 'objectID', label: 'Object ID' }],
+      listItems: [{ key: 'objectID', label: 'Object ID' }, { key: 'record', value: '', label: 'All Fields', dynamicKey: true, description: 'Every attribute of the record.' }],
     },
   ],
   itemLabel: '{objectID}',
@@ -54,7 +54,7 @@ const searchRecordsSchema: OutputSchema = {
       key: 'hits',
       label: 'Hits',
       labelKey: 'objectID',
-      listItems: [{ key: 'objectID', label: 'Object ID' }],
+      listItems: [{ key: 'objectID', label: 'Object ID' }, { key: 'record', value: '', label: 'All Fields', dynamicKey: true, description: 'Every attribute of the record.' }],
     },
     { key: 'nbHits', label: 'Total Hits', format: 'number' },
     { key: 'page', label: 'Page', format: 'number' },
@@ -69,7 +69,8 @@ const getRecordSchema: OutputSchema = {
     {
       key: 'record',
       label: 'Record',
-      children: [{ key: 'objectID', label: 'Object ID' }],
+      dynamicKey: true,
+      description: 'Every attribute of the record.',
     },
   ],
 };
