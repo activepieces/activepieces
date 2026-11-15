@@ -11,7 +11,7 @@ export const newBitlinkCreatedTrigger = createTrigger({
   name: 'new_bitlink_created',
   classification: 'READ',
   displayName: 'New Bitlink Created',
-  description: 'Fires when a new Bitlink is created.',
+  description: 'Fires when a new Bitlink is created in the selected group.',
   aiMetadata: {
     description: 'Fires when a new Bitlink appears in the selected group, detected by polling. Represents a newly created short link, optionally narrowed to those whose title or tags match a filter and optionally including archived links.',
   },
@@ -19,7 +19,8 @@ export const newBitlinkCreatedTrigger = createTrigger({
   props: {
     pollingInterval: Property.StaticDropdown({
       displayName: 'Polling Interval',
-      description: 'How frequently to check for new Bitlinks.',
+      description: 'Not used. Activepieces sets how often Bitly is checked.',
+      advanced: true,
       required: false,
       defaultValue: '5',
       options: {
@@ -37,24 +38,42 @@ export const newBitlinkCreatedTrigger = createTrigger({
     group_guid: groupGuid,
     
     titleFilter: Property.ShortText({
-      displayName: 'Title Filter (Optional)',
-      description: 'Only trigger for Bitlinks containing this text in their title.',
+      displayName: 'Title Contains',
+      description: 'Match text in the title.',
       required: false,
+      width: 'half',
     }),
     
     tagFilter: Property.ShortText({
-      displayName: 'Tag Filter (Optional)',
-      description: 'Only trigger for Bitlinks containing this tag.',
+      displayName: 'Tag Contains',
+      description: 'Match text in a tag.',
       required: false,
+      width: 'half',
     }),
     
     includeArchived: Property.Checkbox({
       displayName: 'Include Archived Bitlinks',
-      description: 'Include archived Bitlinks in monitoring.',
+      description: 'Also watch Bitlinks that are archived.',
       required: false,
       defaultValue: false,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'source',
+      display: 'section',
+      label: 'Source',
+      icon: 'send',
+      props: ['group_guid'],
+    },
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['titleFilter', 'tagFilter', 'includeArchived'],
+    },
+  ],
 
   async onEnable(context) {
     const { group_guid } = context.propsValue;
