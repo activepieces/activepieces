@@ -344,7 +344,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('agentId', conversation.agentId ?? undefined),
             ...spreadIfDefined('projectId', runProjectId ?? undefined),
             systemPrompt: systemPromptText,
-            promptFingerprint: isNil(promptOverride) ? BASE_PROMPT_FINGERPRINT : aiObservability.promptFingerprintOf({ templates: { ...agentPrompt.sources, ...promptOverride } }),
+            promptFingerprint: isNil(promptOverride) ? BASE_PROMPT_FINGERPRINT : aiObservability.promptFingerprintOf({ templates: { ...agentPrompt.sources, ...promptOverride, guides } }),
             messages: messagesForLlm,
             allMessages,
             previousUiMessages: uiMessagesWithUser,

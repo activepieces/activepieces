@@ -140,7 +140,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             wideEvent.set({
                 ...spreadIfDefined('user', isNil(userId) ? undefined : { id: userId }),
                 ...spreadIfDefined('project', isNil(billing.projectId) ? undefined : { id: billing.projectId }),
-                agentRun: { source, tierId: config.tier.id, tierModel: config.tier.modelId },
+                agentRun: { source, tierId: config.platformTier?.id ?? config.tier.id, tierModel: config.modelId },
             })
             const model = aiUtils.createModel({
                 credentials, modelId: config.modelId,

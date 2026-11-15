@@ -117,7 +117,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
     const runsATier = models.some((candidate) => !isNil(candidate.key))
     const peers = [...models, ...(isNil(fastModel) ? [] : [fastModel])]
     const [fingerprint, ranked] = await Promise.all([
-        fingerprintOf({ tools, promptFingerprint }),
+        fingerprintOf({ cacheKey: tools, tools: guardedTools, promptFingerprint }),
         Promise.all(models.map((turnModel) => withOutputBudget({ turnModel, peers }))),
     ])
     let fast = isNil(fastModel) ? undefined : await withOutputBudget({ turnModel: fastModel, peers })
@@ -563,16 +563,16 @@ function runawayTokenCeiling(provider: AIProviderName): number {
     return aiProviderUtils.getMaxContextTokens({ provider }) * RUNAWAY_TURN_CONTEXT_MULTIPLE
 }
 
-function fingerprintOf({ tools, promptFingerprint }: { tools: ToolSet, promptFingerprint: string | undefined }): Promise<string | undefined> {
+function fingerprintOf({ cacheKey, tools, promptFingerprint }: { cacheKey: ToolSet, tools: ToolSet, promptFingerprint: string | undefined }): Promise<string | undefined> {
     if (isNil(aiObservability.integration())) {
         return Promise.resolve(undefined)
     }
-    const cached = TURN_FINGERPRINTS.get(tools)
+    const cached = TURN_FINGERPRINTS.get(cacheKey)
     if (!isNil(cached)) {
         return cached
     }
     const computed = tryCatch(() => aiObservability.turnFingerprintOf({ promptFingerprint, tools })).then(({ data }) => data ?? undefined)
-    TURN_FINGERPRINTS.set(tools, computed)
+    TURN_FINGERPRINTS.set(cacheKey, computed)
     return computed
 }
 
