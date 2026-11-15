@@ -10,8 +10,7 @@ export const campaignLinkClickedTrigger = createTrigger({
 	name: 'activecampaign_campaign_link_clicked',
 	classification: 'READ',
 	displayName: 'New Campaign Link Click',
-	description:
-		'Triggers when a contact clicks a link in a campaign message (will only run once for each unique link).',
+	description: 'Triggers once per contact and link when a campaign link is clicked.',
 	aiMetadata: {
 		description: 'Fires when a contact clicks a tracked link inside a sent campaign email, firing only once per unique link per contact. Represents the click event with the contact and the campaign that contained the link.',
 	},

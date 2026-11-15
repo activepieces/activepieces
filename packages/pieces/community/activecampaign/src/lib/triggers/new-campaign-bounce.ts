@@ -10,7 +10,7 @@ export const newCampaignBounceTrigger = createTrigger({
 	name: 'activecampaign_new_campaign_bounce',
 	classification: 'READ',
 	displayName: 'New Campaign Bounce',
-	description: 'Triggers when a contact email address bounces from a sent campaign.',
+	description: 'Triggers when a campaign email to a contact bounces.',
 	aiMetadata: {
 		description: 'Fires when a contact email address bounces from a sent campaign. Represents the bounce event with the affected contact and the campaign that triggered it.',
 	},
