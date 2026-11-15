@@ -142,12 +142,16 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                 status: SsoDomainVerificationStatus.VERIFIED,
             }
             const domain = platform.ssoDomain
+            const recordValue = platform.ssoDomainVerification.record.value
             const updated = await platformService(log).update({
                 id: platformId,
                 ssoDomainVerification: verified,
                 userId,
                 ip,
-                saveInSameTransaction: (entityManager) => replacePlatformEmailDomain({ entityManager, platformId, domain, verification: verified }),
+                saveInSameTransaction: async (entityManager) => {
+                    await assertDomainUnchangedSinceLookup({ entityManager, platformId, domain, recordValue })
+                    await replacePlatformEmailDomain({ entityManager, platformId, domain, verification: verified })
+                },
             })
             return { ssoDomain: updated.ssoDomain ?? null, ssoDomainVerification: updated.ssoDomainVerification ?? null }
         },
@@ -223,6 +227,18 @@ async function replacePlatformEmailDomain({ entityManager, platformId, domain, v
     })
 }
 
+async function assertDomainUnchangedSinceLookup({ entityManager, platformId, domain, recordValue }: AssertDomainUnchangedSinceLookupParams): Promise<void> {
+    const unchanged = await emailDomainRepo(entityManager).existsBy({ platformId, domain: domain.toLowerCase(), verificationRecordValue: recordValue })
+    if (!unchanged) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'The SSO domain changed while it was being verified. Reload and try again.',
+            },
+        })
+    }
+}
+
 async function txtRecordMatches({ name, expected, log }: { name: string, expected: string, log: FastifyBaseLogger }): Promise<boolean> {
     const lookup = await tryCatch(() => resolveTxt(name))
     if (lookup.error) {
@@ -270,6 +286,13 @@ type ReplacePlatformEmailDomainParams = {
     platformId: PlatformId
     domain: string | null
     verification: SsoDomainVerification | null
+}
+
+type AssertDomainUnchangedSinceLookupParams = {
+    entityManager: EntityManager
+    platformId: PlatformId
+    domain: string
+    recordValue: string
 }
 
 type SsoDomainState = {
