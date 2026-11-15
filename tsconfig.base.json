@@ -778,6 +778,9 @@
       "@activepieces/piece-kustomer": [
         "packages/pieces/community/kustomer/src/index.ts"
       ],
+      "@activepieces/piece-kwtsms": [
+        "packages/pieces/community/kwtsms/src/index.ts"
+      ],
       "@activepieces/piece-kommo": [
         "packages/pieces/community/kommo/src/index.ts"
       ],
