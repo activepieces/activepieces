@@ -49,10 +49,9 @@ describe('buildGenerateBody', () => {
     ).toThrow('not both');
   });
 
-  it('rejects non-image files', () => {
-    expect(() => buildGenerateBody({ image: { base64: 'QQ', filename: 'a.pdf', extension: 'pdf' } })).toThrow(
-      'does not look like an image',
-    );
+  it('sends files with unknown extensions and lets AltText.ai validate them', () => {
+    const body = buildGenerateBody({ image: { base64: 'QQ', filename: 'unknown.bin', extension: 'bin' } });
+    expect(body['image']).toEqual({ raw: 'QQ' });
   });
 });
 

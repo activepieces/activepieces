@@ -10,7 +10,7 @@ const PLACEHOLDER_PATTERN = /\[alttext\]/i;
 const PLACEHOLDER_PATTERN_GLOBAL = /\[alttext\]/gi;
 const EXISTING_IMAGE_NOTE =
   'An image with this URL already existed, so AltText.ai returned its stored alt text (no credit spent; your asset ID, keywords and prompt were not applied). Set Overwrite Existing to Yes to regenerate.';
-const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'avif', 'tif', 'tiff', 'heic'];
+const REUSED_IMAGE_AGE_MS = 60_000;
 
 export const generateAltTextAction = createAction({
   name: 'generate-alt-text',
@@ -93,6 +93,7 @@ export const generateAltTextAction = createAction({
   },
   async run(context) {
     const body = buildGenerateBody(context.propsValue);
+    const requestStartedAt = Date.now();
     const response = await altTextAiRequest({
       apiKey: context.auth.secret_text,
       method: HttpMethod.POST,
@@ -102,8 +103,10 @@ export const generateAltTextAction = createAction({
     });
     const image = normalizeImage(response);
     const requestedAssetId = context.propsValue.assetId?.trim();
-    const note =
-      requestedAssetId && image.asset_id !== null && image.asset_id !== requestedAssetId ? EXISTING_IMAGE_NOTE : null;
+    const idDiffers = Boolean(requestedAssetId) && image.asset_id !== null && image.asset_id !== requestedAssetId;
+    const createdBeforeRequest =
+      image.created_at !== null && image.created_at * 1000 < requestStartedAt - REUSED_IMAGE_AGE_MS;
+    const note = idDiffers || createdBeforeRequest ? EXISTING_IMAGE_NOTE : null;
     return { ...image, note };
   },
 });
@@ -125,10 +128,6 @@ function buildGenerateBody(props: GenerateProps): Record<string, unknown> {
   if (imageUrl) {
     imageBody['url'] = imageUrl;
   } else if (isFileLike(file)) {
-    const extension = (file.extension ?? (file.filename.includes('.') ? file.filename.split('.').pop() : '') ?? '').toLowerCase();
-    if (extension && !IMAGE_EXTENSIONS.includes(extension)) {
-      throw new Error(`The file "${file.filename}" does not look like an image (.${extension}).`);
-    }
     imageBody['raw'] = stripDataUriPrefix(file.base64);
   }
   body['image'] = imageBody;
