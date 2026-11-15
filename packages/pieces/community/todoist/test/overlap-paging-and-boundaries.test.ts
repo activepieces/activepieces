@@ -65,6 +65,45 @@ describe('Todoist Task Completed overlap paging', () => {
   });
 });
 
+describe('Todoist Task Completed overlap after a finished poll', () => {
+  it('re-reads the overlap in a quiet period so a completion listed late fires exactly once', async () => {
+    const store = memoryStore({ taskCompletedState: { cursor: now() - 30 * MINUTE, seen: [], floor: 0, projectId: null, chunkMs: 60_000 } });
+    const firstAt = now() - MINUTE;
+    complete({ id: 'first', at: firstAt, visibleFrom: 0 });
+    expect(ids(await trigger.run(ctx({ store })))).toEqual(['first']);
+    const cursorAfterFirst = savedCursor(store);
+    advance(1);
+    expect(ids(await trigger.run(ctx({ store })))).toEqual([]);
+    expect(savedCursor(store)).toBe(cursorAfterFirst);
+    complete({ id: 'late', at: firstAt - 30_000 });
+    advance(1);
+    vendor.requests.length = 0;
+    expect(ids(await trigger.run(ctx({ store })))).toEqual(['late']);
+    expect(vendor.requests.some((request) => request['since'] === utcParam(cursorAfterFirst - 15 * MINUTE))).toBe(true);
+    advance(1);
+    expect(ids(await trigger.run(ctx({ store })))).toEqual([]);
+    expect(requestMethods().every((method) => method === 'GET')).toBe(true);
+  });
+});
+
+describe('Todoist Task Completed overlap marker', () => {
+  it('lets a finished-overlap marker skip at most one poll', async () => {
+    const cursor = Math.floor((now() - 20 * MINUTE) / 1000) * 1000;
+    const since = cursor - 15 * MINUTE;
+    const store = memoryStore({
+      taskCompletedState: { cursor, seen: [], floor: 0, projectId: null, chunkMs: 60_000, resume: null, overlap: { since, until: cursor, cursor: null, restarts: 0 } },
+    });
+    complete({ id: 'late', at: cursor - 5 * MINUTE, visibleFrom: 0 });
+    const fired: string[] = [];
+    for (let poll = 0; poll < 2; poll++) {
+      fired.push(...ids(await trigger.run(ctx({ store }))));
+      advance(1);
+    }
+    expect(fired).toEqual(['late']);
+    expect(todoistFake.stateField({ store, key: 'overlap' })).toBeNull();
+  });
+});
+
 describe('Todoist Task Completed second boundaries', () => {
   it('fires a completion in the same second as a cursor with milliseconds exactly once', async () => {
     const second = Math.floor((now() - 5 * MINUTE) / 1000) * 1000;

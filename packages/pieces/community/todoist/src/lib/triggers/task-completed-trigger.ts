@@ -283,7 +283,6 @@ async function fetchInChunks({
 	const saved = state.overlap !== null && state.overlap.since === sinceMs && state.overlap.until === readThrough ? state.overlap : null;
 	if (saved !== null && saved.cursor === null) {
 		completeThrough = readThrough;
-		overlap = saved;
 	} else if (readThrough > sinceMs) {
 		const attempt = await fetchChunkAttempt({ token, projectId, chunkStart: sinceMs, chunkEnd: readThrough, resume: saved, deadline });
 		collected.push(attempt.completions.filter(({ epochMs }) => epochMs >= sinceMs && epochMs < readThrough));
@@ -459,7 +458,7 @@ function nextState({
 		projectId,
 		chunkMs: fetched.chunkMs,
 		resume: fetched.resume,
-		overlap: fetched.overlap,
+		overlap: finished ? null : fetched.overlap,
 	});
 }
 
