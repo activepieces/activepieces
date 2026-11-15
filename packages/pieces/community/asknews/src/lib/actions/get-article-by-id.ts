@@ -8,8 +8,7 @@ export const getArticleById = createAction({
   name: 'getArticleById',
   classification: 'READ',
   displayName: 'Get Article by ID',
-  description:
-    'Retrieve a single article or multiple articles by their UUID(s)',
+  description: 'Get one or more articles by their IDs.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -18,9 +17,9 @@ export const getArticleById = createAction({
   },
   props: {
     articleIds: Property.Array({
-      displayName: 'Article ID(s)',
+      displayName: 'Article IDs',
       description:
-        'One or more article UUIDs to fetch.',
+        'UUIDs from a Search News step set to Structured Data.',
       required: true,
     }),
   },

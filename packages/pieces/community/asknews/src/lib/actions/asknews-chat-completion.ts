@@ -9,22 +9,51 @@ export const asknewsChatCompletion = createAction({
   classification: 'READ',
   displayName: 'Chat Completion',
   description:
-    'Get chat completions from a news-infused AI assistant powered by OpenAI API',
+    'Get an AI answer grounded in the latest news.',
   audience: 'both',
   aiMetadata: {
     description:
       'Sends a user message (with an optional system prompt) to AskNews’ chat-completion endpoint, returning an LLM answer grounded in real-time news with optional inline citations and references. Choose this for natural-language Q&A about current events rather than retrieving raw articles. Generative and non-deterministic, so repeated calls may return different text.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'prompt',
+      display: 'section',
+      label: 'Prompt',
+      icon: 'text',
+      props: ['userMessage', 'systemPrompt', 'model'],
+    },
+    {
+      key: 'answer',
+      display: 'section',
+      label: 'Answer Style',
+      icon: 'markdown',
+      props: [
+        'inlineCitations',
+        'journalistMode',
+        'appendReferences',
+        'asknewsWatermark',
+      ],
+    },
+  ],
   props: {
     userMessage: Property.LongText({
-      displayName: 'User Message',
-      description: 'The user message to send to the chat model',
+      displayName: 'Message',
+      description: 'Your question or request.',
+      placeholder: 'What happened in the markets today?',
       required: true,
+    }),
+    systemPrompt: Property.LongText({
+      displayName: 'System Prompt',
+      description: 'Instructions that shape how the AI answers.',
+      required: false,
+      defaultValue:
+        'You are a helpful AI assistant with access to real-time news and current information.',
     }),
     model: Property.StaticDropdown({
       displayName: 'Model',
-      description: 'The model to use for chat completion',
+      description: 'AI model that writes the answer.',
       defaultValue: 'gpt-4o-mini',
       required: false,
       options: {
@@ -36,28 +65,9 @@ export const asknewsChatCompletion = createAction({
         ],
       },
     }),
-    temperature: Property.Number({
-      displayName: 'Temperature',
-      description: 'Sampling temperature (0-2, higher = more creative)',
-      defaultValue: 0.9,
-      required: false,
-    }),
-    maxTokens: Property.Number({
-      displayName: 'Max Tokens',
-      description: 'Maximum number of tokens in response',
-      defaultValue: 9999,
-      required: false,
-    }),
-    journalistMode: Property.Checkbox({
-      displayName: 'Journalist Mode',
-      description:
-        'Activate AP styling, citations, and fair reporting prompting',
-      defaultValue: true,
-      required: false,
-    }),
     inlineCitations: Property.StaticDropdown({
-      displayName: 'Inline Citations',
-      description: 'How to format citations in results',
+      displayName: 'Citation Style',
+      description: 'How sources are marked inside the answer.',
       defaultValue: 'markdown_link',
       required: false,
       options: {
@@ -68,30 +78,45 @@ export const asknewsChatCompletion = createAction({
         ],
       },
     }),
+    journalistMode: Property.Checkbox({
+      displayName: 'Journalist Mode',
+      description:
+        'Write in AP news style with citations and balanced reporting.',
+      defaultValue: true,
+      required: false,
+    }),
     appendReferences: Property.Checkbox({
-      displayName: 'Append References',
-      description: 'Append full references at the end',
+      displayName: 'Add Reference List',
+      description: 'List the full sources at the end of the answer.',
       defaultValue: true,
       required: false,
     }),
     asknewsWatermark: Property.Checkbox({
-      displayName: 'Include AskNews Watermark',
-      description: 'Include AskNews branding in response',
+      displayName: 'AskNews Watermark',
+      description: 'Add AskNews branding to the answer.',
       defaultValue: true,
       required: false,
+    }),
+    temperature: Property.Number({
+      displayName: 'Temperature',
+      description: 'From 0 to 2. Higher values give more varied answers.',
+      defaultValue: 0.9,
+      required: false,
+      advanced: true,
+    }),
+    maxTokens: Property.Number({
+      displayName: 'Max Tokens',
+      description: 'Longest answer allowed, in tokens.',
+      defaultValue: 9999,
+      required: false,
+      advanced: true,
     }),
     conversationalAwareness: Property.Checkbox({
       displayName: 'Conversational Awareness',
-      description: 'Enable context awareness for conversational flow',
+      description: 'Let the AI keep track of conversation context.',
       defaultValue: true,
       required: false,
-    }),
-    systemPrompt: Property.LongText({
-      displayName: 'System Prompt',
-      description: 'Optional custom system prompt for the model',
-      required: false,
-      defaultValue:
-        'You are a helpful AI assistant with access to real-time news and current information.',
+      advanced: true,
     }),
   },
   async run(context) {
