@@ -1,14 +1,16 @@
 // @vitest-environment jsdom
 import { ApResourceKind } from '@activepieces/core-utils';
 import { ResourceChangeOp } from '@activepieces/shared';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { aiHighlightKey } from '@/features/chat/lib/follow/ai-highlight-key';
 import {
   followAlong,
   RunContext,
   useFollowAlong,
 } from '@/features/chat/lib/follow/follow-along';
 import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
+import { authenticationSession } from '@/lib/authentication-session';
 
 const run: RunContext = {
   runId: 'run-1',
@@ -113,4 +115,164 @@ describe('followAlong', () => {
 
     expect(followAlong.claimHistoryPush('run-1')).toBe(false);
   });
+
+  it('remembers a step the chat changed on a flow the user is not on', () => {
+    vi.spyOn(authenticationSession, 'getProjectId').mockReturnValue('p1');
+
+    runTool({ callId: 'call-1', stepName: 'step_1', wrote: true });
+
+    const resource = { kind: ApResourceKind.FLOW, id: 'flow-a' };
+    const key = aiHighlightKey.step('step_1');
+    expect(followAlong.takeUnseen({ resource, key })).toBe(true);
+    expect(followAlong.takeUnseen({ resource, key })).toBe(false);
+  });
+
+  it('does not mark a step when the tool changed nothing', () => {
+    vi.spyOn(authenticationSession, 'getProjectId').mockReturnValue('p1');
+
+    runTool({ callId: 'call-1', stepName: 'step_1', wrote: false });
+
+    const resource = { kind: ApResourceKind.FLOW, id: 'flow-a' };
+    expect(
+      followAlong.takeUnseen({ resource, key: aiHighlightKey.step('step_1') }),
+    ).toBe(false);
+  });
+
+  it('sheens the steps of a followed flow the user is already on', () => {
+    vi.spyOn(authenticationSession, 'getProjectId').mockReturnValue('p1');
+    change({ id: 'flow-a', op: ResourceChangeOp.UPDATE, runId: 'run-1' });
+    window.history.pushState({}, '', '/projects/p1/flows/flow-a');
+
+    runTool({ callId: 'call-2', stepName: 'step_2', wrote: true });
+    window.history.pushState({}, '', '/');
+
+    expect(Object.keys(useFollowAlong.getState().flashes)).toEqual([
+      aiHighlightKey.step('step_2'),
+    ]);
+  });
+
+  it('marks a step when the push arrives before the tool input', () => {
+    vi.spyOn(authenticationSession, 'getProjectId').mockReturnValue('p1');
+
+    followAlong.noteWrite({ kind: ApResourceKind.FLOW, id: 'flow-a' });
+    runTool({ callId: 'call-3', stepName: 'step_4', wrote: false });
+
+    expect(
+      followAlong.takeUnseen({
+        resource: { kind: ApResourceKind.FLOW, id: 'flow-a' },
+        key: aiHighlightKey.step('step_4'),
+      }),
+    ).toBe(true);
+  });
+
+  it('marks both steps when two pushes arrive before their results', () => {
+    vi.spyOn(authenticationSession, 'getProjectId').mockReturnValue('p1');
+    const flow = { kind: ApResourceKind.FLOW, id: 'flow-a' };
+    followAlong.noteWrite(flow);
+    followAlong.noteWrite(flow);
+
+    runTool({ callId: 'call-5', stepName: 'step_5', wrote: false });
+    runTool({ callId: 'call-6', stepName: 'step_6', wrote: false });
+
+    expect(
+      followAlong.takeUnseen({
+        resource: flow,
+        key: aiHighlightKey.step('step_5'),
+      }),
+    ).toBe(true);
+    expect(
+      followAlong.takeUnseen({
+        resource: flow,
+        key: aiHighlightKey.step('step_6'),
+      }),
+    ).toBe(true);
+  });
+
+  it('lets a read-only tool leave the pending write to the edit', () => {
+    vi.spyOn(authenticationSession, 'getProjectId').mockReturnValue('p1');
+    const flow = { kind: ApResourceKind.FLOW, id: 'flow-a' };
+    followAlong.onChunks([
+      {
+        type: 'tool-input-available',
+        toolCallId: 'call-read',
+        toolName: 'ap_read_step_settings',
+        input: { flowId: 'flow-a', stepName: 'step_8' },
+      },
+      {
+        type: 'tool-input-available',
+        toolCallId: 'call-edit',
+        toolName: 'ap_update_step',
+        input: { flowId: 'flow-a', stepName: 'step_8' },
+      },
+    ]);
+    followAlong.noteWrite(flow);
+    followAlong.onChunks([
+      { type: 'tool-output-available', toolCallId: 'call-read', output: {} },
+      { type: 'tool-output-available', toolCallId: 'call-edit', output: {} },
+    ]);
+
+    expect(
+      followAlong.takeUnseen({
+        resource: flow,
+        key: aiHighlightKey.step('step_8'),
+      }),
+    ).toBe(true);
+  });
+
+  it('marks the router a branch tool changed', () => {
+    vi.spyOn(authenticationSession, 'getProjectId').mockReturnValue('p1');
+    const flow = { kind: ApResourceKind.FLOW, id: 'flow-a' };
+    followAlong.onChunks([
+      {
+        type: 'tool-input-available',
+        toolCallId: 'call-7',
+        toolName: 'ap_add_branch',
+        input: { flowId: 'flow-a', routerStepName: 'router_1' },
+      },
+    ]);
+    followAlong.noteWrite(flow);
+    followAlong.onChunks([
+      { type: 'tool-output-available', toolCallId: 'call-7', output: {} },
+    ]);
+
+    expect(
+      followAlong.takeUnseen({
+        resource: flow,
+        key: aiHighlightKey.step('router_1'),
+      }),
+    ).toBe(true);
+  });
+
+  it('plays one sheen when the same step is flashed twice in a row', () => {
+    const key = aiHighlightKey.step('step_3');
+
+    followAlong.flash([key]);
+    const first = useFollowAlong.getState().flashes[key];
+    followAlong.flash([key]);
+
+    expect(useFollowAlong.getState().flashes[key]).toBe(first);
+  });
 });
+
+function runTool({
+  callId,
+  stepName,
+  wrote,
+}: {
+  callId: string;
+  stepName: string;
+  wrote: boolean;
+}) {
+  followAlong.onChunks([
+    {
+      type: 'tool-input-available',
+      toolCallId: callId,
+      toolName: 'ap_update_step',
+      input: { flowId: 'flow-a', stepName },
+    },
+  ]);
+  if (wrote) followAlong.noteWrite({ kind: ApResourceKind.FLOW, id: 'flow-a' });
+  followAlong.onChunks([
+    { type: 'tool-output-available', toolCallId: callId, output: {} },
+  ]);
+}

@@ -1,14 +1,23 @@
-import { isNil } from '@activepieces/core-utils';
+import {
+  ApResourceKind,
+  isNil,
+  isObject,
+  tryCatchSync,
+} from '@activepieces/core-utils';
 import { ResourceChangeOp } from '@activepieces/shared';
 import { t } from 'i18next';
 import { create } from 'zustand';
 
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import {
   chatPanelUtils,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { ResourceRef, resourceRegistry } from '../resources/registry';
+
+import { aiHighlightKey } from './ai-highlight-key';
 
 function startRun(ctx: RunContext): void {
   const { liveRuns } = useFollowAlong.getState();
@@ -43,6 +52,72 @@ function onServerChange({
   onChange({ resource, op, runId: run.runId, navigable: mayNavigate(run) });
 }
 
+function onChunks(chunks: readonly unknown[]): void {
+  for (const chunk of chunks) {
+    if (!isObject(chunk) || typeof chunk.toolCallId !== 'string') continue;
+    if (
+      chunk.type === 'tool-input-available' &&
+      typeof chunk.toolName === 'string'
+    ) {
+      const { toolCalls } = useFollowMemory.getState();
+      useFollowMemory.setState({
+        toolCalls: {
+          ...toolCalls,
+          [chunk.toolCallId]: {
+            toolName: chunk.toolName,
+            input: chunk.input,
+            flow: flowOfInput(chunk.input),
+          },
+        },
+      });
+      continue;
+    }
+    const finished =
+      chunk.type === 'tool-output-available' ||
+      chunk.type === 'tool-output-error';
+    if (!finished) continue;
+    const call = takeToolCall(chunk.toolCallId);
+    if (!call?.flow || chunk.type !== 'tool-output-available') continue;
+    const keys = highlightKeys({
+      ...call,
+      output: chunk.output,
+      ref: call.flow,
+    });
+    if (keys.length === 0 || !takeNewWrite(call.flow)) continue;
+    rememberUnseen({ resource: call.flow, keys });
+  }
+}
+
+function noteWrite(resource: Pick<ResourceRef, 'kind' | 'id'>): void {
+  const key = resourceRegistry.keyOf(resource);
+  const { writes } = useFollowMemory.getState();
+  useFollowMemory.setState({
+    writes: { ...writes, [key]: (writes[key] ?? 0) + 1 },
+  });
+}
+
+function takeNewWrite(flow: ResourceRef): boolean {
+  const key = resourceRegistry.keyOf(flow);
+  const { writes, seenWrites } = useFollowMemory.getState();
+  const seen = seenWrites[key] ?? 0;
+  if ((writes[key] ?? 0) <= seen) return false;
+  useFollowMemory.setState({ seenWrites: { ...seenWrites, [key]: seen + 1 } });
+  return true;
+}
+
+function flowOfInput(input: unknown): ResourceRef | null {
+  const projectId = authenticationSession.getProjectId();
+  const flowId = isObject(input) ? input.flowId : undefined;
+  if (typeof flowId !== 'string' || isNil(projectId)) return null;
+  return { kind: ApResourceKind.FLOW, id: flowId, projectId, name: '' };
+}
+
+function takeToolCall(toolCallId: string): ToolCall | undefined {
+  const { [toolCallId]: call, ...rest } = useFollowMemory.getState().toolCalls;
+  if (call) useFollowMemory.setState({ toolCalls: rest });
+  return call;
+}
+
 function onChange(change: FollowChange): void {
   const began = change.navigable && begin();
   if (change.op === ResourceChangeOp.DELETE) {
@@ -74,6 +149,8 @@ function begin(): boolean {
     phase: 'editing',
     following: true,
     target: null,
+    flashes: {},
+    scrollTaken: false,
   });
   return true;
 }
@@ -86,7 +163,37 @@ function setTarget(resource: ResourceRef): boolean {
   if (!sameKey || current.name !== resource.name) {
     useFollowAlong.setState({ target: resource });
   }
+  flashPending(resource);
   return !sameKey;
+}
+
+function flashWhenFollowed({
+  resource,
+  keys,
+}: {
+  resource: Pick<ResourceRef, 'kind' | 'id'>;
+  keys: string[];
+}): void {
+  const justEnded = Date.now() - lastRunEndedAt <= PENDING_FLASH_MS;
+  if (isFollowing(resource) || (justEnded && isTarget(resource))) {
+    flash(keys);
+    return;
+  }
+  if (keys.length === 0) return;
+  pendingFlashes.set(resourceRegistry.keyOf(resource), {
+    keys,
+    at: Date.now(),
+  });
+}
+
+function flashPending(resource: Pick<ResourceRef, 'kind' | 'id'>): void {
+  const key = resourceRegistry.keyOf(resource);
+  const pending = pendingFlashes.get(key);
+  if (!pending) return;
+  pendingFlashes.delete(key);
+  if (Date.now() - pending.at <= PENDING_FLASH_MS && isFollowing(resource)) {
+    flash(pending.keys);
+  }
 }
 
 function forget(resource: ResourceRef): void {
@@ -122,6 +229,7 @@ function endRun({
   useFollowAlong.setState({ liveRuns: rest });
   const navigableLive = Object.values(rest).some(mayNavigate);
   if (!navigableLive && useFollowAlong.getState().phase === 'editing') {
+    lastRunEndedAt = Date.now();
     useFollowAlong.setState({ phase: 'idle' });
   }
 }
@@ -167,10 +275,120 @@ function acceptOffer(): void {
   });
 }
 
+function flash(keys: string[]): void {
+  const now = Date.now();
+  const { flashCount: previousCount, litAt } = useFollowMemory.getState();
+  const fresh = keys.filter((key) => now - (litAt[key] ?? 0) >= RELIGHT_MS);
+  if (fresh.length === 0) return;
+  const flashCount = previousCount + 1;
+  useFollowMemory.setState({
+    flashCount,
+    litAt: { ...litAt, ...Object.fromEntries(fresh.map((key) => [key, now])) },
+  });
+  const lit = Object.fromEntries(fresh.map((key) => [key, flashCount]));
+  useFollowAlong.setState({
+    flashes: { ...useFollowAlong.getState().flashes, ...lit },
+  });
+}
+
+function rememberUnseen({
+  resource,
+  keys,
+}: {
+  resource: ResourceRef;
+  keys: string[];
+}): void {
+  if (keys.length === 0) return;
+  const pathname = window.location.pathname;
+  if (resourceRegistry.isOn({ pathname, ref: resource })) {
+    flashWhenFollowed({ resource, keys });
+    return;
+  }
+  const scope = resourceRegistry.keyOf(resource);
+  const added = Object.fromEntries(
+    keys.map((key): [string, true] => [`${scope}|${key}`, true]),
+  );
+  const { unseen } = useFollowMemory.getState();
+  useFollowMemory.setState({ unseen: { ...unseen, ...added } });
+}
+
+function takeUnseen({
+  resource,
+  key,
+}: {
+  resource: Pick<ResourceRef, 'kind' | 'id'>;
+  key: string;
+}): boolean {
+  const unseenKey = `${resourceRegistry.keyOf(resource)}|${key}`;
+  const { [unseenKey]: seen, ...rest } = useFollowMemory.getState().unseen;
+  if (!seen) return false;
+  useFollowMemory.setState({ unseen: rest });
+  return true;
+}
+
+function highlightKeys({
+  toolName,
+  input,
+  output,
+  ref,
+}: {
+  toolName: string;
+  input: unknown;
+  output: unknown;
+  ref: ResourceRef;
+}): string[] {
+  const tool = toolName.slice(toolName.lastIndexOf('ap_'));
+  const args = isObject(input) ? input : {};
+  switch (tool) {
+    case 'ap_add_step': {
+      const stepName = structuredField({ output, field: 'stepName' });
+      return stepName ? [aiHighlightKey.step(stepName)] : [];
+    }
+    case 'ap_update_step':
+      return typeof args.stepName === 'string'
+        ? [aiHighlightKey.step(args.stepName)]
+        : [];
+    case 'ap_update_trigger':
+      return [aiHighlightKey.step('trigger')];
+    case 'ap_add_branch':
+    case 'ap_update_branch':
+    case 'ap_delete_branch':
+      return typeof args.routerStepName === 'string'
+        ? [aiHighlightKey.step(args.routerStepName)]
+        : [];
+    case 'ap_rename_flow':
+      return [aiHighlightKey.flowName(ref.id)];
+    case 'ap_lock_and_publish':
+    case 'ap_change_flow_status':
+      return [aiHighlightKey.flowStatus(ref.id)];
+    default:
+      return [];
+  }
+}
+
+function structuredField({
+  output,
+  field,
+}: {
+  output: unknown;
+  field: string;
+}): string | null {
+  const parsed =
+    typeof output === 'string'
+      ? tryCatchSync<unknown>(() => JSON.parse(output)).data
+      : output;
+  if (!isObject(parsed) || !isObject(parsed.structuredContent)) return null;
+  const value = parsed.structuredContent[field];
+  return typeof value === 'string' ? value : null;
+}
+
 function isFollowing(resource: Pick<ResourceRef, 'kind' | 'id'>): boolean {
-  const { target, phase } = useFollowAlong.getState();
+  return useFollowAlong.getState().phase === 'editing' && isTarget(resource);
+}
+
+function isTarget(resource: Pick<ResourceRef, 'kind' | 'id'>): boolean {
+  const { target } = useFollowAlong.getState();
   return (
-    phase === 'editing' &&
     target !== null &&
     resourceRegistry.keyOf(target) === resourceRegistry.keyOf(resource)
   );
@@ -194,6 +412,8 @@ function initialFollowState(): FollowState {
     target: null,
     phase: 'idle',
     following: true,
+    flashes: {},
+    scrollTaken: false,
     liveRuns: {},
     offer: null,
   };
@@ -201,7 +421,13 @@ function initialFollowState(): FollowState {
 
 function initialMemory(): FollowMemory {
   return {
+    toolCalls: {},
+    writes: {},
+    seenWrites: {},
+    litAt: {},
+    unseen: {},
     pushedRuns: {},
+    flashCount: 0,
   };
 }
 
@@ -214,6 +440,13 @@ const changeListeners = new Set<(change: FollowChange) => void>();
 
 const useFollowMemory = create<FollowMemory>(initialMemory);
 
+const pendingFlashes = new Map<string, { keys: string[]; at: number }>();
+const RELIGHT_MS = MOTION.highlightMax * 1000;
+
+const PENDING_FLASH_MS = 5000;
+
+let lastRunEndedAt = 0;
+
 export const useFollowAlong = create<FollowState>(initialFollowState);
 
 export const followAlong = {
@@ -221,14 +454,19 @@ export const followAlong = {
   runOf,
   knownName,
   onServerChange,
+  onChunks,
+  flashWhenFollowed,
   endRun,
   stopFollowing,
   offer,
   dismissOffer,
   acceptOffer,
+  flash,
+  noteWrite,
   isFollowing,
   claimHistoryPush,
   onToolDone,
+  takeUnseen,
   reset,
 };
 
@@ -251,14 +489,28 @@ type FollowOffer = {
   runId: string | null;
 };
 
+type ToolCall = {
+  toolName: string;
+  input: unknown;
+  flow: ResourceRef | null;
+};
+
 type FollowMemory = {
+  toolCalls: Record<string, ToolCall>;
+  unseen: Record<string, true>;
   pushedRuns: Record<string, true>;
+  flashCount: number;
+  writes: Record<string, number>;
+  seenWrites: Record<string, number>;
+  litAt: Record<string, number>;
 };
 
 type FollowState = {
   target: ResourceRef | null;
   phase: 'idle' | 'editing';
   following: boolean;
+  flashes: Record<string, number>;
+  scrollTaken: boolean;
   liveRuns: Record<string, RunContext>;
   offer: FollowOffer | null;
 };
