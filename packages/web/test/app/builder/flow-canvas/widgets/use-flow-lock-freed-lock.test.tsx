@@ -10,6 +10,7 @@ import {
   FlowVersion,
   FlowVersionState,
   PopulatedFlow,
+  ResourceChangeOp,
   RunEnvironment,
   WebsocketClientEvent,
   WebsocketServerEvent,
@@ -153,7 +154,11 @@ describe('useFlowLock when the holder frees the Resource Lock', () => {
     );
     await sendFromServer({
       event: WebsocketClientEvent.FLOW_DRAFT_UPDATED,
-      payload: { flowId: 'flow-1', editorSessionId: 'holder-session' },
+      payload: {
+        flowId: 'flow-1',
+        editorSessionId: 'holder-session',
+        op: ResourceChangeOp.UPDATE,
+      },
     });
     expect(store.getState()).toMatchObject({
       readonly: true,

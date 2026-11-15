@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { ApplicationEventName, Flow, FlowStatus, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState } from '@activepieces/shared'
+import { ApplicationEventName, Flow, FlowStatus, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState, ResourceChangeOp } from '@activepieces/shared'
 import dayjs, { Dayjs } from 'dayjs'
 import { FastifyInstance, LightMyRequestResponse } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -43,7 +43,7 @@ describe('POST /v1/admin/flows/upgrade-pieces', () => {
         expect(response.json()[0].upgradedSteps).toHaveLength(1)
         expect(pushes).toEqual([{
             room: ctx.project.id,
-            payload: { flowId: flow.id, editorSessionId: null },
+            payload: { flowId: flow.id, editorSessionId: null, op: ResourceChangeOp.UPDATE },
         }])
     })
 
@@ -58,7 +58,7 @@ describe('POST /v1/admin/flows/upgrade-pieces', () => {
         expect(response.statusCode).toBe(StatusCodes.OK)
         expect(pushes).toEqual([{
             room: ctx.project.id,
-            payload: { flowId: upgradedFlow.id, editorSessionId: null },
+            payload: { flowId: upgradedFlow.id, editorSessionId: null, op: ResourceChangeOp.UPDATE },
         }])
     })
 
@@ -72,7 +72,7 @@ describe('POST /v1/admin/flows/upgrade-pieces', () => {
         expect(response.statusCode).toBe(StatusCodes.OK)
         expect(pushes).toEqual([{
             room: ctx.project.id,
-            payload: { flowId: flow.id, editorSessionId: null },
+            payload: { flowId: flow.id, editorSessionId: null, op: ResourceChangeOp.UPDATE },
         }])
     })
 
@@ -114,7 +114,7 @@ describe('POST /v1/admin/flows/upgrade-pieces', () => {
         expect(response.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
         expect(pushes).toEqual([{
             room: ctx.project.id,
-            payload: { flowId: flow.id, editorSessionId: null },
+            payload: { flowId: flow.id, editorSessionId: null, op: ResourceChangeOp.UPDATE },
         }])
     })
 })
@@ -132,7 +132,7 @@ describe('POST /v1/admin/flows/revert-upgrade', () => {
         expect(response.json()[0].upgradedSteps).toHaveLength(1)
         expect(pushes).toEqual([{
             room: ctx.project.id,
-            payload: { flowId: flow.id, editorSessionId: null },
+            payload: { flowId: flow.id, editorSessionId: null, op: ResourceChangeOp.UPDATE },
         }])
     })
 

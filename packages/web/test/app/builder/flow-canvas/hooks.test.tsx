@@ -2,8 +2,8 @@
 /* eslint-disable testing-library/no-unnecessary-act */
 import {
   EmptyTrigger,
-  FlowOperationRequest,
   FlowDraftUpdatedEvent,
+  FlowOperationRequest,
   FlowOperationStatus,
   FlowOperationType,
   FlowRun,
@@ -15,6 +15,7 @@ import {
   Note,
   NoteColorVariant,
   PopulatedFlow,
+  ResourceChangeOp,
   RunEnvironment,
   WebsocketClientEvent,
 } from '@activepieces/shared';
@@ -243,6 +244,20 @@ describe('useRefreshDraftOnPush', () => {
     mount(store);
 
     sendDraftPush({ flowId: 'flow-2', editorSessionId: 'other-session' });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+  });
+
+  it('ignores a delete push for the open flow', async () => {
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    mount(store);
+
+    sendDraftPush({
+      flowId: 'flow-1',
+      editorSessionId: 'other-session',
+      op: ResourceChangeOp.DELETE,
+    });
     await vi.advanceTimersByTimeAsync(0);
 
     expect(flowsApiMock.get).not.toHaveBeenCalled();
@@ -698,11 +713,14 @@ function DraftPushWatcherWithFlowLock() {
   return null;
 }
 
-function sendDraftPush(event: FlowDraftUpdatedEvent) {
+function sendDraftPush({
+  op = ResourceChangeOp.UPDATE,
+  ...event
+}: Omit<FlowDraftUpdatedEvent, 'op'> & { op?: FlowDraftUpdatedEvent['op'] }) {
   act(() => {
     socketHarness.sendFromServer({
       event: WebsocketClientEvent.FLOW_DRAFT_UPDATED,
-      payload: event,
+      payload: { ...event, op },
     });
   });
 }

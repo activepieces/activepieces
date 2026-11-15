@@ -1,12 +1,13 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { TableUpdatedEvent, WebsocketClientEvent } from '@activepieces/shared'
+import { ResourceChangeOp, TableUpdatedEvent, WebsocketClientEvent } from '@activepieces/shared'
+import { editorSession } from '../../flows/flow/editor-session'
 import { system } from '../../helper/system/system'
 
 export const tableSideEffects = {
-    async onTableChanged({ projectId, tableId, editorSessionId }: OnTableChangedParams): Promise<void> {
+    async onTableChanged({ projectId, tableId, editorSessionId, op = ResourceChangeOp.UPDATE }: OnTableChangedParams): Promise<void> {
         const { error } = await tryCatch(async () => {
             const { websocketService } = await import('../../core/websockets.service')
-            const event: TableUpdatedEvent = { tableId, editorSessionId: editorSessionId ?? null }
+            const event: TableUpdatedEvent = { tableId, editorSessionId: editorSessionId ?? editorSession.current(), op }
             websocketService.to(projectId).emit(WebsocketClientEvent.TABLE_UPDATED, event)
         })
         if (!isNil(error)) {
@@ -19,4 +20,5 @@ type OnTableChangedParams = {
     projectId: string
     tableId: string
     editorSessionId?: string | null
+    op?: ResourceChangeOp
 }
