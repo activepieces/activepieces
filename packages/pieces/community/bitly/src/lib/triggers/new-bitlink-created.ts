@@ -148,12 +148,16 @@ export const newBitlinkCreatedTrigger = createTrigger({
         LAST_BITLINK_IDS_KEY,
         [...new Set([...currentLinkIds, ...previousLinkIds])].slice(0, 500),
       );
-      await context.store.put<number>(LAST_CREATED_AT_KEY, Math.max(lastCreatedAt ?? 0, newestCreatedAt({ links: allLinks })));
+      const createdAtBoundary =
+        lastCreatedAt ??
+        newestCreatedAt({ links: allLinks.filter((link) => previousLinkIds.includes(link.id)) });
+
+      await context.store.put<number>(LAST_CREATED_AT_KEY, Math.max(createdAtBoundary, newestCreatedAt({ links: allLinks })));
 
       let newLinks = allLinks.filter(
         (link) =>
           !previousLinkIds.includes(link.id) &&
-          (isNil(lastCreatedAt) || createdAtMs({ link }) >= lastCreatedAt),
+          createdAtMs({ link }) >= createdAtBoundary,
       );
 
       if (titleFilter && titleFilter.trim()) {
