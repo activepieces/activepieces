@@ -13,4 +13,3 @@ export type { SaveBarLock } from './save-bar';
 export { StatusDot } from './status-dot';
 export type { StatusTone } from './status-dot';
 export { StatCard, StatGrid } from './stat-card';
-export { LockedCallout } from './locked-callout';

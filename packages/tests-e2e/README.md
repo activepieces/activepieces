@@ -8,8 +8,9 @@ This package holds the monorepo's full-stack end-to-end tests. Under the canonic
 packages/tests-e2e/
 ├── scenarios/      # Specs (*.spec.ts) for every edition
 │   ├── ce/         # Community Edition only
-│   └── ee/         # Enterprise Edition only (skipped when AP_EDITION=ce)
-├── pages/          # Page objects (automations, builder, runs, authentication)
+│   ├── ee/         # Enterprise Edition only (skipped when AP_EDITION=ce)
+│   └── cloud/      # Cloud only (runs only when AP_EDITION=cloud)
+├── pages/          # Page objects (automations, builder, runs, authentication, platform switcher)
 ├── fixtures/       # Test fixtures, the session file and API cleanup helpers
 ├── global-setup.ts # Signs in once and saves the session to .auth/user.json
 └── playwright.config.ts
@@ -32,6 +33,7 @@ Start from `scenarios/flows/flow-journey.spec.ts` and `pages/builder.page.ts`. L
 - The tests start signed in. Use `test.use({ storageState: { cookies: [], origins: [] } })` to start signed out.
 - Use only pieces that need no outside service. A spec that needs a server calls a flow of its own, as `connection-step.spec.ts` does.
 - A new piece must also go into the `PIECES` list of `e2e-matrix.yml`, because the matrix stack installs only those.
+- A spec that reads the mail the app sends uses the `mailbox` fixture and lives under `scenarios/ee/`, because only the EE configs of `e2e-matrix.yml` run the mail catcher. Give each user its own address: other specs read the same catcher.
 
 ### Selecting elements
 
@@ -78,6 +80,7 @@ Required environment variables:
 - `E2E_INSTANCE_URL` — target Activepieces URL (defaults to `http://localhost:4200` and starts the dev server when unset). Global setup deletes `E2E `-prefixed flows and connections older than one hour, which crashed runs leave behind. It does not touch other flows or connections.
 - `E2E_EMAIL` — test user email
 - `E2E_PASSWORD` — test user password
+- `E2E_MAIL_URL` — the web port of a [Mailpit](https://mailpit.axllent.org) catcher, such as `http://localhost:8025`. The specs that read mail need it. For a local run, start `docker run -d -p 1025:1025 -p 8025:8025 -e MP_SMTP_AUTH_ACCEPT_ANY=true -e MP_SMTP_AUTH_ALLOW_INSECURE=true axllent/mailpit`, and start the app with `AP_SMTP_HOST=localhost`, `AP_SMTP_PORT=1025`, `AP_SMTP_SENDER_EMAIL`, and any `AP_SMTP_USERNAME` and `AP_SMTP_PASSWORD`.
 
 ## CI
 

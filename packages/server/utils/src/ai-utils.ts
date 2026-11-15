@@ -1,5 +1,5 @@
 import { ActivepiecesAiBilling, aiChargeFor, ActivepiecesError, AIProviderName, ErrorCode, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
-import { CloudflareGatewayMetadata, createCloudflareGatewayModel, createImageModel, createLanguageModel } from '@activepieces/ai-providers';
+import { CloudflareGatewayMetadata, createCloudflareGatewayModel, createImageModel, createLanguageModel, withAutoToolChoice } from '@activepieces/ai-providers';
 import { ACTIVEPIECES_IMAGE_TIERS, AI_PROVIDER_CAPABILITIES, AiProviderCredentials, aiProviderUtils, getEffectiveProviderAndModel } from '@activepieces/shared';
 import { anthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
@@ -179,14 +179,14 @@ function createModel({ credentials, modelId, metadata, flowStep, billing, turnAl
 }): LanguageModel {
     assertManagedModelAllowed({ provider: credentials.provider, modelId, image: imageGeneration, ...spreadIfDefined('adminChosenModelId', adminChosenImageModelId) })
     const model = buildModel({ credentials, modelId, metadata, flowStep, webSearchEnabled, webSearchOptions, onOutcome: keyHealthReporterFor({ platformId, providerConfigId }) })
-    return billedLanguageModel({
+    return withAutoToolChoice(billedLanguageModel({
         model,
         provider: credentials.provider,
         providerConfigId,
         modelId,
         billing,
         charge: aiChargeFor({ credentials, turnAlreadyCharged, usageOnly }),
-    })
+    }))
 }
 
 function buildModel({ credentials, modelId, metadata, flowStep, webSearchEnabled, webSearchOptions, onOutcome }: {

@@ -12,6 +12,7 @@ import { agentWorkerTools, GateDecision, TaintState } from './agent-worker-tools
 import { creditLedger } from './credit-ledger'
 import { declinedActions } from './declined-actions'
 import { classifyAgentRunError, delayWithJitter, drainOf, firstStepUsesFastModel, isTransientFailureText, NO_STEP_CONTENT, runAgentTurn, StreamDrain, trackStepContent, TurnModel } from './run-agent-turn'
+import { displayToolUtils } from './tools/display-tools'
 import { taskContext } from './tools/task-context'
 import { createTaskSubagentTools, taskTokensOf } from './tools/task-subagent-tools'
 
@@ -796,6 +797,15 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
         pieceNeedsNoConnection: async (pieceName) => {
             const discovered = await executeCrossProjectTool('ap_discover_action_auth', { pieceName })
             return isObject(discovered) && discovered['noAuthRequired'] === true
+        },
+        autoPickedConnectionFor: !discoveryOnly ? undefined : async (pieceName) => {
+            await tryCatch(() => executeCrossProjectTool('ap_discover_action_auth', { pieceName }))
+            const { data: available } = await tryCatch(() => ctx.apiClient.executeAgentTool({
+                toolName: '__get_available_connections',
+                toolInput: { pieceName },
+                platformId, userId, source, conversationId,
+            }))
+            return displayToolUtils.preselectedConnection({ stored: available?.result })
         },
         onConnectionSelected: async ({ pieceName, connectionExternalId, label, projectId: connProjectId }) => {
             selectedConnectionByPiece.set(pieceName, connectionExternalId)

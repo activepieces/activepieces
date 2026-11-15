@@ -2,6 +2,7 @@ import { ActionPreviewEvent, ActionReceiptEvent, AgentToolType, KnowledgeBaseSou
 import { asSchema } from 'ai'
 import { describe, expect, it, vi } from 'vitest'
 import { AgentEventEmitter, agentWorkerTools } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
+import { displayToolUtils } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/display-tools'
 
 function makeMockEventEmitter(): { eventEmitter: AgentEventEmitter, progressEvents: ToolProgressEvent[] } {
     const progressEvents: ToolProgressEvent[] = []
@@ -854,5 +855,71 @@ describe('the connection card does the auth check itself', () => {
 
         expect(gatesOpened).toEqual(['ap_show_connection_picker'])
         expect(result).toMatchObject({ selected: true, connectionExternalId: 'conn-1' })
+    })
+})
+
+describe('a discovery-only run approves the connection card with the account it would pre-select', () => {
+    function autoApprovingPicker({ autoPicked }: { autoPicked: { externalId: string, label: string, projectId: string } | null }) {
+        const selected: { pieceName: string, connectionExternalId: string, label: string, projectId: string }[] = []
+        const tools = agentWorkerTools.createDisplayTools({
+            waitForApproval: async () => ({ outcome: 'approved' as const }),
+            displayToolTimeoutMs: 1000,
+            onConnectionSelected: async (connection) => { selected.push(connection) },
+            autoPickedConnectionFor: async () => autoPicked,
+        })
+        return { tools, selected }
+    }
+
+    it.each(['ap_show_connection_picker', 'ap_show_connection_required'])('%s stores the pre-selected account so the next read has a connection', async (toolName) => {
+        const { tools, selected } = autoApprovingPicker({ autoPicked: { externalId: 'conn-1', label: 'Sales Inbox', projectId: 'proj-1' } })
+
+        await tools[toolName].execute({ piece: 'google-calendar', displayName: 'Google Calendar' }, { toolCallId: 'call-1' })
+
+        expect(selected).toEqual([{ pieceName: '@activepieces/piece-google-calendar', connectionExternalId: 'conn-1', label: 'Sales Inbox', projectId: 'proj-1' }])
+    })
+
+    it('returns the pre-selected account to the agent', async () => {
+        const { tools } = autoApprovingPicker({ autoPicked: { externalId: 'conn-1', label: 'Sales Inbox', projectId: 'proj-1' } })
+
+        const result = await tools['ap_show_connection_picker'].execute({ piece: 'google-calendar', displayName: 'Google Calendar' }, { toolCallId: 'call-1' })
+
+        expect(result).toMatchObject({ selected: true, connectionExternalId: 'conn-1', label: 'Sales Inbox' })
+    })
+
+    it('stores nothing when there is no healthy account to pre-select', async () => {
+        const { tools, selected } = autoApprovingPicker({ autoPicked: null })
+
+        await tools['ap_show_connection_picker'].execute({ piece: 'google-calendar', displayName: 'Google Calendar' }, { toolCallId: 'call-1' })
+
+        expect(selected).toEqual([])
+    })
+})
+
+describe('picking the account a connection card would pre-select', () => {
+    it('takes the first active connection and skips broken ones', () => {
+        const picked = displayToolUtils.preselectedConnection({
+            stored: [
+                { externalId: 'broken', label: 'Old', projectId: 'p', project: 'P', status: 'ERROR', grantedScopes: [] },
+                { externalId: 'conn-1', label: 'Sales Inbox', projectId: 'p', project: 'P', status: 'ACTIVE', grantedScopes: [] },
+            ],
+        })
+
+        expect(picked).toEqual({ externalId: 'conn-1', label: 'Sales Inbox', projectId: 'p' })
+    })
+
+    it('takes the most recently updated active connection, as the card does', () => {
+        const picked = displayToolUtils.preselectedConnection({
+            stored: [
+                { externalId: 'older', label: 'Old Inbox', projectId: 'p', status: 'ACTIVE', updated: '2026-10-01T00:00:00.000Z' },
+                { externalId: 'newer', label: 'New Inbox', projectId: 'p', status: 'ACTIVE', updated: '2026-11-01T00:00:00.000Z' },
+            ],
+        })
+
+        expect(picked).toEqual({ externalId: 'newer', label: 'New Inbox', projectId: 'p' })
+    })
+
+    it('picks nothing from an empty or missing list', () => {
+        expect(displayToolUtils.preselectedConnection({ stored: [] })).toBeNull()
+        expect(displayToolUtils.preselectedConnection({ stored: undefined })).toBeNull()
     })
 })

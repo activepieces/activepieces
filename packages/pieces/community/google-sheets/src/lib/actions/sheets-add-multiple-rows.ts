@@ -196,7 +196,7 @@ async function handleOverwrite(
 		requestBody: {
 			data: [
 				{
-					range: `${sheetName}!A2:ZZZ${inputRowCount + 1}`,
+					range: googleSheetsCommon.sheetRange({ sheetName, range: `A2:ZZZ${inputRowCount + 1}` }),
 					majorDimension: Dimension.ROWS,
 					values: formattedValues.map((row) => objectToArray(row)),
 				},
@@ -214,7 +214,7 @@ async function handleOverwrite(
 		const clearRowsResponse = await sheets.spreadsheets.values.batchClear({
 			spreadsheetId: spreadSheetId,
 			requestBody: {
-				ranges: [`${sheetName}!A${clearStartRow}:ZZZ${boundedClearEndRow}`],
+				ranges: [googleSheetsCommon.sheetRange({ sheetName, range: `A${clearStartRow}:ZZZ${boundedClearEndRow}` })],
 			},
 		});
 
@@ -250,7 +250,7 @@ async function handleDuplicates(
 	);
 
 	const response = await sheets.spreadsheets.values.append({
-		range: sheetName + '!A:A',
+		range: googleSheetsCommon.sheetRange({ sheetName, range: 'A:A' }),
 		spreadsheetId: spreadSheetId,
 		valueInputOption,
 		requestBody: {
@@ -270,7 +270,7 @@ async function normalInsert(
 	valueInputOption: ValueInputOption,
 ) {
 	const response = await sheets.spreadsheets.values.append({
-		range: sheetName + '!A:A',
+		range: googleSheetsCommon.sheetRange({ sheetName, range: 'A:A' }),
 		spreadsheetId: spreadSheetId,
 		valueInputOption,
 		requestBody: {
@@ -357,7 +357,7 @@ async function convertJsonToRawValues(
 	// update sheets with new headers
 	if (additionalHeaders.length > 0) {
 		await sheets.spreadsheets.values.update({
-			range: `${sheetName}!A1:ZZZ1`,
+			range: googleSheetsCommon.sheetRange({ sheetName, range: `A1:ZZZ1` }),
 			spreadsheetId: spreadSheetId,
 			valueInputOption: ValueInputOption.USER_ENTERED,
 			requestBody: {

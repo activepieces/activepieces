@@ -604,7 +604,7 @@ export const TiptapEditor = ({
                   variant="ghost"
                   size="icon-xs"
                   withoutTooltip
-                  textToCopy={[...typeErrors, previewErrorMsg ?? '']
+                  value={[...typeErrors, previewErrorMsg ?? '']
                     .filter(Boolean)
                     .join('\n')}
                 />
@@ -628,7 +628,7 @@ export const TiptapEditor = ({
                 variant="ghost"
                 size="icon-xs"
                 withoutTooltip
-                textToCopy={previewResult}
+                value={previewResult}
               />
             </div>
 

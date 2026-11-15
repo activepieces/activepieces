@@ -97,10 +97,7 @@ export function createLanguageModel({ credentials, modelId, options = {} }: Crea
         case AIProviderName.META: {
             const { apiKey } = credentials.auth
             const responses = createOpenAI({ baseURL: OPENAI_COMPATIBLE_VENDOR_BASE_URLS[AIProviderName.META], apiKey, ...observed }).responses(modelId)
-            return withoutServerStorage({
-                model: wrapLanguageModel({ model: responses, middleware: autoToolChoiceOnly }),
-                providerOptionsName: 'openai',
-            })
+            return withoutServerStorage({ model: responses, providerOptionsName: 'openai' })
         }
         case AIProviderName.COHERE: {
             const { apiKey } = credentials.auth
@@ -203,6 +200,10 @@ export function withoutServerStorage({ model, providerOptionsName }: {
     })
 }
 
+export function withAutoToolChoice(model: LanguageModel): LanguageModel {
+    return typeof model === 'string' ? model : wrapLanguageModel({ model, middleware: autoToolChoiceOnly })
+}
+
 const autoToolChoiceOnly: LanguageModelMiddleware = {
     wrapGenerate: async ({ params, model }) => generateWithAutoToolChoice({ params, model }),
     wrapStream: async ({ params, model, doStream }) => {
@@ -286,7 +287,7 @@ function withToolInstruction({ params, toolName, retry }: {
     const reminder = retry ? 'Your previous reply did not call a tool. ' : ''
     return {
         ...params,
-        prompt: [...params.prompt, { role: 'system', content: `${reminder}Reply only by calling ${target}. Do not reply with text.` }],
+        prompt: [...params.prompt, { role: 'user', content: [{ type: 'text', text: `${reminder}Reply only by calling ${target}. Do not reply with text.` }] }],
     }
 }
 

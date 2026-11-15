@@ -119,11 +119,15 @@ export const slack = createPiece({
               action.type === 'button' &&
               action.value?.startsWith(server.publicUrl)
             ) {
-              httpClient.sendRequest({
-                url: action.value,
-                method: HttpMethod.POST,
-                body: interactionPayloadBody,
-              });
+              httpClient
+                .sendRequest({
+                  url: action.value,
+                  method: HttpMethod.POST,
+                  body: interactionPayloadBody,
+                })
+                .catch((error: unknown) => {
+                  console.error('[Slack#parseAndReply] failed to forward button click to resume url', error);
+                });
             }
           } else if (
             interactionPayloadBody.type === 'view_submission' ||

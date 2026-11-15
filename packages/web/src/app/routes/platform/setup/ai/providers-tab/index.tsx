@@ -1,7 +1,6 @@
 import { AIProviderName, tryCatch } from '@activepieces/core-utils';
 import {
   AIProviderWithoutSensitiveData,
-  PlatformAdminSurface,
   PlatformModelTier,
   Project,
 } from '@activepieces/shared';
@@ -43,11 +42,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
-import {
-  PLATFORM_FEATURES,
-  TIER_LABELS,
-  useUpgradeClick,
-} from '@/features/billing';
+import { LockedFeatureRow } from '@/features/billing';
 import {
   aiProviderKeys,
   aiProviderMutations,
@@ -263,9 +258,7 @@ export function ProvidersTab() {
         }
         resources={adminPageResources.aiProviders}
       >
-        {locked ? (
-          configs.length > 0 && <UpgradeButton />
-        ) : (
+        {!locked && (
           <Button
             onClick={() => openConnect()}
             {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
@@ -289,6 +282,13 @@ export function ProvidersTab() {
         <EmptyProviders onConnect={openConnect} />
       ) : (
         <>
+          {locked && (
+            <LockedFeatureRow
+              unlocked={false}
+              featureKey="UNIVERSAL_AI"
+              line={t('Adding or changing AI keys is locked.')}
+            />
+          )}
           {connectedProviders.map((provider) => (
             <ProviderGroup
               key={provider}
@@ -331,24 +331,6 @@ export function ProvidersTab() {
     );
   }
   return page;
-}
-
-function UpgradeButton() {
-  const upgradeClick = useUpgradeClick();
-  const { featureKey, tier } = PLATFORM_FEATURES.aiProviders;
-  return (
-    <Button
-      onClick={() =>
-        upgradeClick({
-          feature: featureKey,
-          tier,
-          surface: PlatformAdminSurface.SAMPLE,
-        })
-      }
-    >
-      {t('Upgrade to {tier}', { tier: TIER_LABELS[tier] })}
-    </Button>
-  );
 }
 
 function ProviderGroup({
