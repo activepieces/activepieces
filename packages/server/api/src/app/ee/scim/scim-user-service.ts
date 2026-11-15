@@ -4,6 +4,7 @@ import { CreateScimUserRequest, parseScimFilter, PlatformRole, ReplaceScimUserRe
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
+import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 import { userInvitationsService } from '../../user-invitations/user-invitation.service'
 import { emailService } from '../helper/email/email-service'
@@ -190,13 +191,14 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
 
         const active = request.active !== false
         const status = active ? UserStatus.ACTIVE : UserStatus.INACTIVE
+        const targetsOwner = await isPlatformOwner({ platformId, userId, log })
 
         await userService(log).update({
             id: userId,
             platformId,
-            status,
+            status: targetsOwner ? undefined : status,
             externalId: request.externalId,
-            platformRole: request[SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA]?.platformRole,
+            platformRole: targetsOwner ? undefined : request[SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA]?.platformRole,
         })
 
         await userIdentityService(log).update(user.identityId, {
@@ -224,6 +226,8 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             )
         }
 
+        const targetsOwner = await isPlatformOwner({ platformId, userId, log })
+
         let addOperationFields: {
             platformRole?: PlatformRole
             firstName?: string
@@ -242,13 +246,13 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
                     await userService(log).update({
                         id: userId,
                         platformId,
-                        status: isNil(value.active) ? undefined : value.active ? UserStatus.ACTIVE : UserStatus.INACTIVE,
+                        status: targetsOwner || isNil(value.active) ? undefined : value.active ? UserStatus.ACTIVE : UserStatus.INACTIVE,
                         externalId: value.externalId as string,
                     })
                 }
 
                 // Handle path-based replace (e.g., "active" as path)
-                if (operation.path === 'active') {
+                if (operation.path === 'active' && !targetsOwner) {
                     const active = operation.value as boolean
                     await userService(log).update({
                         id: userId,
@@ -287,7 +291,13 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
         let updatedUser: User | undefined
         if (!isNil(addOperationFields)) {
             const { platformRole, firstName, lastName, externalId, active } = addOperationFields
-            await userService(log).update({ platformId, id: userId, platformRole, externalId, status: isNil(active) ? undefined : active ? UserStatus.ACTIVE : UserStatus.INACTIVE })
+            await userService(log).update({
+                platformId,
+                id: userId,
+                platformRole: targetsOwner ? undefined : platformRole,
+                externalId,
+                status: targetsOwner || isNil(active) ? undefined : active ? UserStatus.ACTIVE : UserStatus.INACTIVE,
+            })
             updatedUser = await userService(log).getOrThrow({ id: userId })
             await userIdentityService(log).update(updatedUser.identityId, { firstName, lastName })
         }
@@ -311,13 +321,26 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             )
         }
 
+        if (await isPlatformOwner({ platformId, userId, log })) {
+            throw new ScimError(
+                StatusCodes.FORBIDDEN,
+                'The platform owner cannot be deactivated',
+            )
+        }
+
         await userService(log).update({
             id: userId,
             platformId,
             status: UserStatus.INACTIVE,
         })
     },
+
 })
+
+async function isPlatformOwner({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<boolean> {
+    const platform = await platformService(log).getOneOrThrow(platformId)
+    return platform.ownerId === userId
+}
 
 function toScimUserResource(
     user: Pick<User, 'id' | 'externalId' | 'created' | 'updated' | 'status' | 'platformRole'>,
