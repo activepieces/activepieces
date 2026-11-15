@@ -227,21 +227,35 @@ describe('templateFill.plan', () => {
     expect(plan.missing).toEqual([]);
   });
 
-  it('skips an empty per-placeholder input and lets Variables win', () => {
+  it('blanks a placeholder whose input is empty, skips an unset one, and lets Variables win', () => {
     const plan = templateFill.plan({
       scan: templateFill.scan({
-        document: singleTab([paragraph('{{a}} {{b}} {{c}}')]),
+        document: singleTab([paragraph('{{a}} {{b}} {{c}} {{d}}')]),
         format: '{{KEY}}',
       }),
       format: '{{KEY}}',
-      fields: { a: 'from field', b: '', c: 'from field' },
+      fields: { a: 'from field', b: '', c: 'from field', d: null },
       values: { c: 'from variables' },
     });
 
-    expect(plan.requests.map((request) => request.replaceAllText?.replaceText)).toEqual([
-      'from field',
-      'from variables',
+    expect(
+      plan.requests.map((request) => [request.replaceAllText?.containsText?.text, request.replaceAllText?.replaceText]),
+    ).toEqual([
+      ['{{a}}', 'from field'],
+      ['{{b}}', ''],
+      ['{{c}}', 'from variables'],
     ]);
+  });
+
+  it('lets an empty Variables value blank the placeholder over a typed input', () => {
+    const plan = templateFill.plan({
+      scan: templateFill.scan({ document: singleTab([paragraph('{{a}}')]), format: '{{KEY}}' }),
+      format: '{{KEY}}',
+      fields: { a: 'typed' },
+      values: { a: '' },
+    });
+
+    expect(plan.requests.map((request) => request.replaceAllText?.replaceText)).toEqual(['']);
   });
 
   it('writes an empty Variables value as an empty string', () => {

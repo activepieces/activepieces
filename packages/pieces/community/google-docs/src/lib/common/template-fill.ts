@@ -99,7 +99,7 @@ function plan({
   imageFields?: unknown;
 }): FillPlan {
   const merged: Record<string, string> = {
-    ...mapValues({ record: withoutEmptyValues(toRecord(fields)), convert: toText }),
+    ...mapValues({ record: withoutUnsetValues(toRecord(fields)), convert: toText }),
     ...mapValues({ record: variablesRecord(values), convert: String }),
   };
 
@@ -313,6 +313,10 @@ function parseJson(text: string): unknown {
   } catch {
     return undefined;
   }
+}
+
+function withoutUnsetValues(record: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(record).filter(([, value]) => value !== null && value !== undefined));
 }
 
 function withoutEmptyValues(record: Record<string, unknown>): Record<string, unknown> {
