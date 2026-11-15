@@ -2,7 +2,7 @@ import { EmailDomain, SsoDomainVerification, SsoDomainVerificationRecordType, Ss
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { authnSsoSamlService } from '../../../../src/app/ee/authentication/saml-authn/authn-sso-saml-service'
+import { emailDomainService } from '../../../../src/app/ee/authentication/email-domain/email-domain.service'
 import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -142,7 +142,7 @@ describe('SSO domain API', () => {
         })
     })
 
-    describe('expirePendingSsoDomains', () => {
+    describe('expirePending', () => {
         it('keeps a pending domain for 7 days, then drops it', async () => {
             const sixDays = await createTestContext(app!, {
                 plan: { ssoEnabled: true },
@@ -166,7 +166,7 @@ describe('SSO domain API', () => {
                 },
             })
 
-            await authnSsoSamlService(app!.log).expirePendingSsoDomains()
+            await emailDomainService(app!.log).expirePending()
 
             expect((await findPlatform(sixDays.platform.id)).ssoDomain).toBe('six-days.example.com')
             expect((await findPlatform(eightDays.platform.id)).ssoDomain).toBeNull()

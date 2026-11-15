@@ -1,9 +1,10 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, partition, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, UserId } from '@activepieces/core-utils'
-import { ApEdition, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformResponse, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, omit, partition, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, UserId } from '@activepieces/core-utils'
+import { ApEdition, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformResponse, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { EntityManager, IsNull } from 'typeorm'
 import { authenticationUtils } from '../authentication/authentication-utils'
+import { emailDomainHooks } from '../authentication/email-domain-hooks'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
@@ -159,6 +160,9 @@ export const platformService = (log: FastifyBaseLogger) => ({
         })
     },
     async update(params: UpdateParams): Promise<PlatformWithoutFederatedAuth> {
+        const verifiedDomains = await emailDomainHooks.get(log).listVerifiedDomains({ platformId: params.id })
+        const hasVerifiedDomain = verifiedDomains.length > 0
+        const keepsVerifiedDomain = verifiedDomains.some((domain) => domain !== params.removedEmailDomain)
         if (params.federatedAuthProviders?.saml !== undefined) {
             const plan = await platformPlanService(log).getOrCreateForPlatform(params.id)
             if (!plan.ssoEnabled) {
@@ -169,16 +173,13 @@ export const platformService = (log: FastifyBaseLogger) => ({
                     },
                 })
             }
-            if (!isNil(params.federatedAuthProviders.saml)) {
-                const platform = await this.getOneOrThrow(params.id)
-                if (platform.ssoDomainVerification?.status !== SsoDomainVerificationStatus.VERIFIED) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.VALIDATION,
-                        params: {
-                            message: 'SSO domain must be verified before configuring SAML',
-                        },
-                    })
-                }
+            if (!isNil(params.federatedAuthProviders.saml) && !hasVerifiedDomain) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: 'SSO domain must be verified before configuring SAML',
+                    },
+                })
             }
         }
         const platform = params.federatedAuthProviders !== undefined
@@ -195,7 +196,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             }
             : undefined
         const updatedPlatform = {
-            ...platform,
+            ...omit(platform, ['ssoDomain', 'ssoDomainVerification']),
             ...spreadIfDefined('federatedAuthProviders', federatedAuthProviders),
             ...spreadIfDefined('name', params.name),
             ...spreadIfDefined('primaryColor', params.primaryColor),
@@ -213,8 +214,6 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
             ...spreadIfDefined('allowedEmbedOrigins', params.allowedEmbedOrigins),
-            ...spreadIfNotUndefined('ssoDomain', params.ssoDomain),
-            ...spreadIfNotUndefined('ssoDomainVerification', params.ssoDomainVerification),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
             ...spreadIfNotUndefined('pieceSelectorConfig', params.pieceSelectorConfig),
         }
@@ -231,7 +230,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
         const { saved, locked } = await transaction(async (entityManager) => {
             const lockedPlatform = await lockPlatformForUpdate({ entityManager, platformId: params.id, includeFederatedAuth: true })
             const signInSettingsToSave = buildSignInSettingsToSave({ lockedPlatform, params })
-            assertLeavesAWorkingSignInMethod({ log, before: lockedPlatform, after: signInSettingsToSave })
+            assertLeavesAWorkingSignInMethod({ log, before: lockedPlatform, after: signInSettingsToSave, hasVerifiedDomain, keepsVerifiedDomain })
             const savedPlatform = await platformRepo(entityManager).save({
                 ...updatedPlatform,
                 ...signInSettingsToSave,
@@ -379,8 +378,6 @@ async function lockPlatformForUpdate({ entityManager, platformId, includeFederat
             googleAuthEnabled: true,
             allowedAuthDomains: true,
             enforceAllowedAuthDomains: true,
-            ssoDomain: true,
-            ssoDomainVerification: true,
             federatedAuthProviders: includeFederatedAuth,
         },
         lock: { mode: 'pessimistic_write' },
@@ -541,14 +538,13 @@ function buildSignInSettingsToSave({ lockedPlatform, params }: BuildSignInSettin
     return {
         emailAuthEnabled: params.emailAuthEnabled ?? lockedPlatform.emailAuthEnabled,
         googleAuthEnabled: params.googleAuthEnabled ?? lockedPlatform.googleAuthEnabled,
-        ssoDomainVerification: params.ssoDomainVerification === undefined ? lockedPlatform.ssoDomainVerification : params.ssoDomainVerification,
         federatedAuthProviders: { ...lockedPlatform.federatedAuthProviders, ...params.federatedAuthProviders },
     }
 }
 
-function assertLeavesAWorkingSignInMethod({ log, before, after }: AssertLeavesAWorkingSignInMethodParams): void {
-    const methodsBefore = authenticationUtils(log).getSignInMethods({ platform: before })
-    const methodsAfter = authenticationUtils(log).getSignInMethods({ platform: after })
+function assertLeavesAWorkingSignInMethod({ log, before, after, hasVerifiedDomain, keepsVerifiedDomain }: AssertLeavesAWorkingSignInMethodParams): void {
+    const methodsBefore = authenticationUtils(log).getSignInMethods({ platform: before, hasVerifiedDomain })
+    const methodsAfter = authenticationUtils(log).getSignInMethods({ platform: after, hasVerifiedDomain: keepsVerifiedDomain })
     const hadWorkingMethod = methodsBefore.email || methodsBefore.google || methodsBefore.sso
     const hasWorkingMethod = methodsAfter.email || methodsAfter.google || methodsAfter.sso
     if (hadWorkingMethod && !hasWorkingMethod) {
@@ -609,7 +605,7 @@ type AssertAuditLogRetentionDaysAllowedParams = {
     auditLogRetentionDays: number | null | undefined
 }
 
-type SignInSettings = Pick<Platform, 'emailAuthEnabled' | 'googleAuthEnabled' | 'ssoDomainVerification' | 'federatedAuthProviders'>
+type SignInSettings = Pick<Platform, 'emailAuthEnabled' | 'googleAuthEnabled' | 'federatedAuthProviders'>
 
 type BuildSignInSettingsToSaveParams = {
     lockedPlatform: Platform
@@ -620,6 +616,8 @@ type AssertLeavesAWorkingSignInMethodParams = {
     log: FastifyBaseLogger
     before: SignInSettings
     after: SignInSettings
+    hasVerifiedDomain: boolean
+    keepsVerifiedDomain: boolean
 }
 
 type LockPlatformForUpdateParams = {
@@ -665,10 +663,9 @@ type UpdateParams = UpdatePlatformRequestBody & {
     logoIconUrl?: string
     fullLogoUrl?: string
     favIconUrl?: string
-    ssoDomain?: string | null
-    ssoDomainVerification?: SsoDomainVerification | null
     userId?: UserId
     ip?: string
+    removedEmailDomain?: string
     saveInSameTransaction?: (entityManager: EntityManager) => Promise<void>
 }
 

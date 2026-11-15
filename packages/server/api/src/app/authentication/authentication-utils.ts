@@ -1,5 +1,5 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, AuthenticationResponse, EndpointScope, pickTelemetryPii, Platform, PlatformRole, PlatformWithoutSensitiveData, PrincipalType, Project, ProjectType, SsoDomainVerificationStatus, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AuthenticationResponse, EndpointScope, pickTelemetryPii, Platform, PlatformRole, PlatformWithoutSensitiveData, PrincipalType, Project, ProjectType, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -8,6 +8,7 @@ import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
+import { emailDomainHooks } from './email-domain-hooks'
 import { accessTokenManager } from './lib/access-token-manager'
 import { signupNames } from './lib/signup-names'
 import { userIdentityService } from './user-identity/user-identity-service'
@@ -167,11 +168,12 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         if (!platform.plan.ssoEnabled) {
             return
         }
-        if (isNil(platform.ssoDomain) || platform.ssoDomainVerification?.status !== SsoDomainVerificationStatus.VERIFIED) {
+        const verifiedDomains = await emailDomainHooks.get(log).listVerifiedDomains({ platformId })
+        if (verifiedDomains.length === 0) {
             return
         }
         const emailDomain = email.split('@')[1]?.toLowerCase() ?? ''
-        if (emailDomain !== platform.ssoDomain) {
+        if (!verifiedDomains.includes(emailDomain)) {
             throw new ActivepiecesError({
                 code: ErrorCode.DOMAIN_NOT_ALLOWED,
                 params: {
@@ -267,7 +269,7 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         const project = await projectService(log).getOneOrThrow(projectId)
         return project.ownerId
     },
-    getSignInMethods({ platform }: GetSignInMethodsParams): SignInMethods {
+    getSignInMethods({ platform, hasVerifiedDomain }: GetSignInMethodsParams): SignInMethods {
         const edition = system.getEdition()
         if (edition === ApEdition.COMMUNITY) {
             return { email: true, google: false, sso: false }
@@ -275,7 +277,7 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         return {
             email: platform.emailAuthEnabled,
             google: isGoogleConfigured() && platform.googleAuthEnabled,
-            sso: !isNil(platform.federatedAuthProviders?.saml) && (edition !== ApEdition.CLOUD || platform.ssoDomainVerification?.status === SsoDomainVerificationStatus.VERIFIED),
+            sso: !isNil(platform.federatedAuthProviders?.saml) && (edition !== ApEdition.CLOUD || hasVerifiedDomain),
         }
     },
 })
@@ -330,7 +332,8 @@ export type SignInMethods = {
 }
 
 type GetSignInMethodsParams = {
-    platform: Pick<Platform | PlatformWithoutSensitiveData, 'emailAuthEnabled' | 'googleAuthEnabled' | 'federatedAuthProviders' | 'ssoDomainVerification'>
+    platform: Pick<Platform | PlatformWithoutSensitiveData, 'emailAuthEnabled' | 'googleAuthEnabled' | 'federatedAuthProviders'>
+    hasVerifiedDomain: boolean
 }
 
 type GetOnboardingResponseParams = {

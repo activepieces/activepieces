@@ -2,7 +2,7 @@ import { ApplicationEvent, ApplicationEventName, SsoDomainVerification, SsoDomai
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { auditLogRepo } from '../../../../src/app/ee/audit-logs/audit-event-service'
-import { authnSsoSamlService } from '../../../../src/app/ee/authentication/saml-authn/authn-sso-saml-service'
+import { emailDomainService } from '../../../../src/app/ee/authentication/email-domain/email-domain.service'
 import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -193,7 +193,7 @@ describe('Authentication audit events', () => {
             },
         })
 
-        await authnSsoSamlService(app!.log).expirePendingSsoDomains()
+        await emailDomainService(app!.log).expirePending()
         const events = await savedEvents({ platformId: ctx.platform.id, expectedCount: 1 })
 
         expect(events).toEqual([domainEvent({ action: ApplicationEventName.SSO_DOMAIN_EXPIRED, domain: 'expired.example.com', userId: null })])

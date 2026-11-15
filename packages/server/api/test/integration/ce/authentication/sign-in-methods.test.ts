@@ -23,7 +23,8 @@ describe('Sign-in methods of a platform', () => {
         process.env.AP_GOOGLE_CLIENT_ID = 'test-google-client-id'
         process.env.AP_GOOGLE_CLIENT_SECRET = 'test-google-client-secret'
         const methods = authenticationUtils(mockLog).getSignInMethods({
-            platform: { emailAuthEnabled: false, googleAuthEnabled: true, federatedAuthProviders: { saml: {} }, ssoDomainVerification: null },
+            platform: { emailAuthEnabled: false, googleAuthEnabled: true, federatedAuthProviders: { saml: {} } },
+            hasVerifiedDomain: false,
         })
         expect(methods).toEqual({ email: true, google: false, sso: false })
     })
