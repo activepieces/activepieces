@@ -7,7 +7,7 @@ export const cohere = createPiece({
   displayName: 'Cohere',
   description: 'Generate text using Cohere AI language models',
   auth: cohereAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl:
     'https://cdn.activepieces.com/pieces/cohere.png',
   authors: ['AhmadTash'],
