@@ -104,6 +104,12 @@ describe('a step that asks to wait longer than a person will sit through', () =>
         expect(dayjs(sent.resumeDateTime).diff(dayjs(), 'minute')).toBeGreaterThan(150)
     })
 
+    it('gets the shorter deadline in a test run that streams to nobody, such as a draft webhook run or a batch child of a test run', async () => {
+        const sent = await runWaitingStep({ maxTestWaitMs: FIFTEEN_MINUTES_MS, streamStepProgress: StreamStepProgress.NONE, runEnvironment: RunEnvironment.TESTING })
+
+        expect(dayjs(sent.resumeDateTime).diff(dayjs(), 'minute')).toBeLessThanOrEqual(15)
+    })
+
     it('keeps the full deadline in a production run that streams its progress to the builder', async () => {
         const sent = await runWaitingStep({ maxTestWaitMs: FIFTEEN_MINUTES_MS, streamStepProgress: StreamStepProgress.WEBSOCKET, runEnvironment: RunEnvironment.PRODUCTION })
 
