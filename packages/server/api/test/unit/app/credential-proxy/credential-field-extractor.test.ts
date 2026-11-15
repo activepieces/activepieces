@@ -90,6 +90,51 @@ describe('credentialFieldExtractor', () => {
         expect(placeholdered.access_token).toBe(credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 4 }))
     })
 
+    it('keeps declared non-text props and secret-looking identifiers real', () => {
+        const pieceAuth = PieceAuth.CustomAuth({
+            required: true,
+            props: {
+                keyType: Property.StaticDropdown({ displayName: 'Key type', required: true, options: { options: [{ label: 'Account', value: 'account' }] } }),
+                apiKeyHeader: Property.ShortText({ displayName: 'Header', required: true }),
+                accessKeyId: Property.ShortText({ displayName: 'Access key id', required: true }),
+                personalAccessTokenName: Property.ShortText({ displayName: 'Token name', required: true }),
+                publicKey: Property.ShortText({ displayName: 'Public key', required: true }),
+                apiKey: Property.ShortText({ displayName: 'API key', required: true }),
+            },
+        })
+        const fields = credentialFieldExtractor.extract({
+            value: {
+                type: AppConnectionType.CUSTOM_AUTH,
+                props: { keyType: 'account', apiKeyHeader: 'X-API-Key', accessKeyId: 'AKIA1', personalAccessTokenName: 'ci', publicKey: 'pk_1', apiKey: 'sk_1' },
+            },
+            pieceAuth,
+        })
+
+        expect(fields).toEqual([{ index: 0, path: ['props', 'apiKey'] }])
+    })
+
+    it('finds access tokens inside arrays under data', () => {
+        const base = {
+            type: AppConnectionType.CLOUD_OAUTH2,
+            client_id: 'id',
+            token_type: 'Bearer',
+            access_token: 'at',
+            refresh_token: 'rt',
+            claimed_at: 1,
+            scope: '',
+            token_url: 'https://auth.example.com/token',
+        } as const
+        const withArray = { ...base, data: { accounts: [{ id: 'a', access_token: 'array-at', refresh_token: 'array-rt' }] } }
+        const fields = credentialFieldExtractor.extract({ value: withArray, pieceAuth: undefined })
+
+        expect(fields).toEqual([{ index: 0, path: ['access_token'] }, { index: 1, path: ['data', 'accounts', '0', 'access_token'] }])
+        const placeholdered = credentialFieldExtractor.applyPlaceholders({ value: credentialFieldExtractor.redactUnresolvable(withArray), grantId: GRANT_ID, fields })
+        expect(credentialFieldExtractor.readAtPath({ value: placeholdered, path: ['data', 'accounts', '0', 'access_token'] })).toBe(credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 1 }))
+        expect(credentialFieldExtractor.readAtPath({ value: placeholdered, path: ['data', 'accounts', '0', 'refresh_token'] })).toBe('(REDACTED)')
+        expect(credentialFieldExtractor.readAtPath({ value: placeholdered, path: ['data', 'accounts', '0', 'id'] })).toBe('a')
+        expect(credentialFieldExtractor.readAtPath({ value: withArray, path: ['data', 'accounts', '0', 'access_token'] })).toBe('array-at')
+    })
+
     it('falls back to the name heuristic for every prop when the piece definition is unknown', () => {
         const fields = credentialFieldExtractor.extract({
             value: { type: AppConnectionType.CUSTOM_AUTH, props: { api_key: 'k', base_url: 'https://x.example.com', region: 'eu' } },

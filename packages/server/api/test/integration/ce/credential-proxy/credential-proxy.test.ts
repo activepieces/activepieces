@@ -202,6 +202,39 @@ describe('Credential proxy', () => {
             expect(afterRefresh.json().fields).toEqual([{ index: 0, value: 'refreshed-token' }, { index: 1, value: 'live-user-token' }])
         })
 
+        it('serves an OAuth2 connection whose value has no data object', async () => {
+            const ctx = await createTestContext(app)
+            const connection = createMockConnection({ platformId: ctx.platform.id, projectIds: [ctx.project.id] }, ctx.user.id)
+            await saveOAuth2({ connection, accessToken: 'no-data-token', data: null })
+
+            const response = await fetchAsEngine({ ctx, externalId: connection.externalId })
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(credentialPlaceholder.containsAny(response.json().value.access_token)).toBe(true)
+            expect(response.json().value.data).toBeNull()
+        })
+
+        it('keeps resolving the fields that are still secret when a refresh drops or reorders nested tokens', async () => {
+            const ctx = await createTestContext(app)
+            const connection = createMockConnection({ platformId: ctx.platform.id, projectIds: [ctx.project.id] }, ctx.user.id)
+            await saveOAuth2({ connection, accessToken: 'first', data: { a: { access_token: 'a-1' }, b: { access_token: 'b-1' }, user: { access_token: 'user-1' } } })
+            const value = (await fetchAsEngine({ ctx, externalId: connection.externalId })).json().value
+            const [main] = credentialPlaceholder.parse(value.access_token)
+            const [a] = credentialPlaceholder.parse(value.data.a.access_token)
+            const [b] = credentialPlaceholder.parse(value.data.b.access_token)
+
+            await saveOAuth2({ connection, accessToken: 'second', data: { b: { access_token: 'b-2' }, a: { access_token: 'a-2' } } })
+            const resolved = await resolveAsProxy({ grantId: main.grantId })
+
+            expect(resolved.statusCode).toBe(StatusCodes.OK)
+            expect(resolved.json().fields).toEqual(expect.arrayContaining([
+                { index: main.fieldIndex, value: 'second' },
+                { index: a.fieldIndex, value: 'a-2' },
+                { index: b.fieldIndex, value: 'b-2' },
+            ]))
+            expect(resolved.json().fields).toHaveLength(3)
+        })
+
         it('follows the live connection when it is reconnected under the same external id', async () => {
             const ctx = await createTestContext(app)
             const piece = createMockPieceMetadata({
@@ -357,5 +390,24 @@ async function resolveAsProxy({ grantId }: { grantId: string }): Promise<Awaited
         url: '/api/v1/credential-proxy/grants/resolve',
         headers: { authorization: `Bearer apcp_${PROXY_SECRET}` },
         body: { grantId },
+    })
+}
+
+async function saveOAuth2({ connection, accessToken, data }: { connection: ReturnType<typeof createMockConnection>, accessToken: string, data: Record<string, unknown> | null }): Promise<void> {
+    await db.save('app_connection', {
+        ...connection,
+        type: AppConnectionType.CLOUD_OAUTH2,
+        value: await encryptUtils.encryptObject({
+            type: AppConnectionType.CLOUD_OAUTH2,
+            client_id: 'client',
+            token_type: 'Bearer',
+            access_token: accessToken,
+            refresh_token: 'refresh',
+            claimed_at: Math.round(Date.now() / 1000),
+            expires_in: 3600,
+            scope: '',
+            token_url: 'https://auth.example.com/token',
+            data,
+        }),
     })
 }

@@ -7,7 +7,7 @@ describe('credentialPlaceholder', () => {
     it('builds a header-safe token that parses back to the grant and field', () => {
         const placeholder = credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 3 })
 
-        expect(placeholder).toBe(`apcred1_${GRANT_ID}_3`)
+        expect(placeholder).toBe(`apcred1_${GRANT_ID}_003`)
         expect(placeholder).toMatch(/^[A-Za-z0-9_]+$/)
         expect(credentialPlaceholder.parse(`Bearer ${placeholder}`)).toEqual([
             { placeholder, grantId: GRANT_ID, fieldIndex: 3 },
@@ -25,12 +25,20 @@ describe('credentialPlaceholder', () => {
         expect(credentialPlaceholder.containsAny(`x${first}`)).toBe(true)
     })
 
-    it('does not read a placeholder out of a longer run of digits', () => {
+    it('reads the right field when digits follow the placeholder', () => {
         const placeholder = credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 1 })
+        const expected = [{ placeholder, grantId: GRANT_ID, fieldIndex: 1 }]
 
-        expect(credentialPlaceholder.parse(`${placeholder}7777`)).toEqual([])
-        expect(credentialPlaceholder.parse(`${placeholder}-7`)).toEqual([{ placeholder, grantId: GRANT_ID, fieldIndex: 1 }])
+        expect(credentialPlaceholder.parse(`${placeholder}7`)).toEqual(expected)
+        expect(credentialPlaceholder.parse(`${placeholder}77`)).toEqual(expected)
+        expect(credentialPlaceholder.parse(`${placeholder}7777`)).toEqual(expected)
+        expect(credentialPlaceholder.parse(`${placeholder}-7`)).toEqual(expected)
         expect(credentialPlaceholder.parse(credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 120 }))[0].fieldIndex).toBe(120)
+    })
+
+    it('refuses a field index that does not fit the fixed width', () => {
+        expect(() => credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 1000 })).toThrow()
+        expect(() => credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: -1 })).toThrow()
     })
 
     it('exposes a reusable global pattern that does not keep state between calls', () => {

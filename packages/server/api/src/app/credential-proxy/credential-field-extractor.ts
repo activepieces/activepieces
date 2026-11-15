@@ -24,11 +24,11 @@ export const credentialFieldExtractor = {
         if (isNil(head)) {
             return null
         }
-        const child = value[head]
+        const child = childAt({ container: value, key: head })
         if (rest.length === 0) {
             return typeof child === 'string' ? child : null
         }
-        return isRecord(child) ? credentialFieldExtractor.readAtPath({ value: child, path: rest }) : null
+        return isContainer(child) ? credentialFieldExtractor.readAtPath({ value: child, path: rest }) : null
     },
 }
 
@@ -81,10 +81,13 @@ function duplicatePathsOf({ value, path }: { value: Record<string, unknown>, pat
     return isNil(copy) ? [] : [OAUTH2_ACCESS_TOKEN_COPY]
 }
 
-function nestedKeyPaths({ value, key, prefix }: { value: Record<string, unknown>, key: string, prefix: string[] }): string[][] {
+function nestedKeyPaths({ value, key, prefix }: { value: unknown, key: string, prefix: string[] }): string[][] {
+    if (!isContainer(value)) {
+        return []
+    }
     return Object.entries(value).flatMap(([childKey, child]) => {
         const path = [...prefix, childKey]
-        if (isRecord(child)) {
+        if (isContainer(child)) {
             return nestedKeyPaths({ value: child, key, prefix: path })
         }
         return childKey === key && typeof child === 'string' && child.length > 0 ? [path] : []
@@ -105,7 +108,11 @@ function isSecretProp({ key, propValue, declaredType }: { key: string, propValue
     if (declaredType === PropertyType.SECRET_TEXT) {
         return true
     }
-    return SECRET_NAME_PATTERN.test(key) && allowedHostsResolver.hostnameOf(propValue) === null
+    const mayHoldFreeText = isNil(declaredType) || FREE_TEXT_TYPES.includes(declaredType)
+    return mayHoldFreeText
+        && SECRET_NAME_PATTERN.test(key)
+        && !NON_SECRET_NAME_PATTERN.test(key)
+        && allowedHostsResolver.hostnameOf(propValue) === null
 }
 
 function declaredPropTypes(pieceAuth: PieceMetadataModel['auth']): Map<string, PropertyType> {
@@ -135,17 +142,44 @@ function replaceAtPath<T extends Record<string, unknown>>({ target, path, replac
         return { ...target, [head]: replacement }
     }
     const child = target[head]
-    if (!isRecord(child)) {
+    if (!isContainer(child)) {
         return target
     }
-    return { ...target, [head]: replaceAtPath({ target: child, path: rest, replacement }) }
+    return { ...target, [head]: replaceInContainer({ container: child, path: rest, replacement }) }
+}
+
+function replaceInContainer({ container, path, replacement }: { container: Container, path: string[], replacement: string }): Container {
+    if (!Array.isArray(container)) {
+        return replaceAtPath({ target: container, path, replacement })
+    }
+    const [head, ...rest] = path
+    const position = Number(head)
+    return container.map((item, index) => {
+        if (index !== position) {
+            return item
+        }
+        if (rest.length === 0) {
+            return replacement
+        }
+        return isContainer(item) ? replaceInContainer({ container: item, path: rest, replacement }) : item
+    })
+}
+
+function childAt({ container, key }: { container: Container, key: string }): unknown {
+    return Array.isArray(container) ? container[Number(key)] : container[key]
+}
+
+function isContainer(value: unknown): value is Container {
+    return typeof value === 'object' && value !== null
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === 'object' && value !== null && !Array.isArray(value)
+    return isContainer(value) && !Array.isArray(value)
 }
 
 const SECRET_NAME_PATTERN = /(key|secret|token|password|passwd|pwd)/i
+const NON_SECRET_NAME_PATTERN = /(^public|(header|type|name|id|url|uri)$)/i
+const FREE_TEXT_TYPES: PropertyType[] = [PropertyType.SHORT_TEXT, PropertyType.LONG_TEXT]
 const REDACTED = '(REDACTED)'
 const OAUTH2_ACCESS_TOKEN_COPY = ['data', 'access_token']
 const OAUTH2_TYPES: string[] = [AppConnectionType.OAUTH2, AppConnectionType.CLOUD_OAUTH2, AppConnectionType.PLATFORM_OAUTH2]
@@ -161,7 +195,9 @@ type ApplyPlaceholdersParams<T extends Record<string, unknown>> = {
     fields: CredentialGrantField[]
 }
 
+type Container = Record<string, unknown> | unknown[]
+
 type ReadAtPathParams = {
-    value: Record<string, unknown>
+    value: Container
     path: string[]
 }

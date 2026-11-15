@@ -51,10 +51,12 @@ export const credentialProxyGrantService = (log: FastifyBaseLogger) => ({
             throw grantNotFound(grantId)
         }
         const live = await currentStateOf({ grant, log })
-        if (JSON.stringify(live.fields) !== JSON.stringify(grant.fields)) {
+        const liveSecretPaths = new Set(live.fields.map((field) => pathKey(field.path)))
+        const stillSecret = grant.fields.filter((field) => liveSecretPaths.has(pathKey(field.path)))
+        if (stillSecret.length === 0) {
             throw grantNotFound(grantId)
         }
-        const fields = grant.fields.flatMap((field) => {
+        const fields = stillSecret.flatMap((field) => {
             const value = credentialFieldExtractor.readAtPath({ value: live.value, path: field.path })
             return isNil(value) ? [] : [{ index: field.index, value }]
         })
@@ -68,6 +70,10 @@ export const credentialProxyGrantService = (log: FastifyBaseLogger) => ({
         }
     },
 })
+
+function pathKey(path: string[]): string {
+    return JSON.stringify(path)
+}
 
 function grantNotFound(grantId: string): ActivepiecesError {
     return new ActivepiecesError({
