@@ -129,7 +129,7 @@ export async function flushLicenseKeyPostHogEvents(): Promise<void> {
 }
 
 export function instrumentMcpServer({ server, userId, platformId }: InstrumentMcpServerParams): void {
-    if (system.getEdition() !== ApEdition.CLOUD) {
+    if (system.getEdition() !== ApEdition.CLOUD || system.get(AppSystemProp.ENVIRONMENT) === ApEnvironment.TESTING) {
         return
     }
     mcpPosthogInstance ??= new PostHog(POSTHOG_PROJECT_TOKEN, { host: POSTHOG_HOST })
