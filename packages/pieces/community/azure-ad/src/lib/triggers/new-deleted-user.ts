@@ -100,14 +100,21 @@ export const newDeletedUserTrigger = createTrigger({
 
 async function loadState({ store }: { store: Store }): Promise<DeletedUserState | null> {
     const state = await store.get<DeletedUserState>(STATE_KEY);
-    if (state !== null) return state;
+    if (state !== null) return { ...state, seen: state.seen.map((s) => ({ ...s, key: migrateSeenKey(s.key) })) };
     const legacy = await store.get<string>(LEGACY_STORE_KEY);
     if (typeof legacy !== 'string' || legacy === '') return null;
     return { deltaLink: legacy, seen: [] };
 }
 
 function dedupeKey(event: DeletedUser): string {
-    return `${event.id}|${event.deletedDateTime ?? event.removedReason ?? ''}`;
+    return `${event.id}|${event.removedReason === 'deleted' ? 'deleted' : 'changed'}`;
+}
+
+function migrateSeenKey(key: string): string {
+    const cut = key.lastIndexOf('|');
+    if (cut < 0) return key;
+    const suffix = key.slice(cut + 1);
+    return suffix === 'deleted' || suffix === 'changed' ? key : `${key.slice(0, cut)}|changed`;
 }
 
 async function lookupDeletedUser({ accessToken, id }: { accessToken: string; id: string }): Promise<Record<string, unknown> | null> {

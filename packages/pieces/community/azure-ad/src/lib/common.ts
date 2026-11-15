@@ -294,13 +294,36 @@ export async function listGroupMembersForDropdown({
     groupId: string;
     search?: string;
 }): Promise<{ items: DropdownMember[]; truncated: boolean }> {
-    const result = await fetchDropdownPages<DropdownMember>({
-        accessToken,
-        url: `/groups/${encodeURIComponent(groupId)}/members`,
-        query: { $top: '999', $select: 'id,displayName,userPrincipalName,mail' },
-    });
-    const term = (search ?? '').trim().toLowerCase();
-    if (term === '') return result;
+    const url = `/groups/${encodeURIComponent(groupId)}/members`;
+    const select = 'id,displayName,userPrincipalName,mail';
+    const searchTerm = (search ?? '').trim().replace(/["\\]/g, '');
+    if (searchTerm !== '') {
+        try {
+            return await fetchDropdownPages<DropdownMember>({
+                accessToken,
+                url,
+                query: { $top: '999', $select: select, $search: `"displayName:${searchTerm}" OR "mail:${searchTerm}"`, $count: 'true' },
+                headers: { ConsistencyLevel: 'eventual' },
+            });
+        } catch {
+            return searchMembersLocally({ accessToken, url, select, term: searchTerm.toLowerCase() });
+        }
+    }
+    return fetchDropdownPages<DropdownMember>({ accessToken, url, query: { $top: '999', $select: select } });
+}
+
+async function searchMembersLocally({
+    accessToken,
+    url,
+    select,
+    term,
+}: {
+    accessToken: string;
+    url: string;
+    select: string;
+    term: string;
+}): Promise<{ items: DropdownMember[]; truncated: boolean }> {
+    const result = await fetchDropdownPages<DropdownMember>({ accessToken, url, query: { $top: '999', $select: select } });
     return {
         truncated: result.truncated,
         items: result.items.filter((m) =>
@@ -555,7 +578,7 @@ export async function enableNewObjectTrigger({
     config: NewObjectTriggerConfig;
     isRepublish: boolean;
 }): Promise<void> {
-    if (isRepublish && (await store.get<NewObjectTriggerState>(config.stateKey)) !== null) {
+    if (isRepublish && (await loadNewObjectState({ store, config })) !== null) {
         return;
     }
     const deltaLink = await seedDeltaLink({ accessToken, deltaPath: config.deltaPath, select: config.select });
@@ -589,23 +612,28 @@ export async function pollNewObjects({
     const live = uniqueById(items.filter((item) => item['@removed'] === undefined && typeof item.id === 'string'));
     const withCreated = await fillCreatedDateTime({ accessToken, config, items: live });
     const floor = Math.max(state.enabledAtMs, state.lastPollMs - NEW_OBJECT_LAG_MS);
+    const prunedThrough = state.prunedThrough ?? Number.NEGATIVE_INFINITY;
     const seenIds = new Set(state.seen.map((s) => s.id));
     const emitted = withCreated.filter((item) => {
         const created = parseCreated(item);
-        return created !== undefined && created >= floor && !seenIds.has(item.id);
+        return created !== undefined && created >= floor && created > prunedThrough && !seenIds.has(item.id);
     });
     const nextFloor = Math.max(state.enabledAtMs, startedAt - NEW_OBJECT_LAG_MS);
-    const seen = [
+    const kept = [
         ...state.seen,
         ...emitted.map((item) => ({ id: item.id, createdMs: parseCreated(item) ?? startedAt })),
     ]
         .filter((s) => s.createdMs >= nextFloor)
-        .slice(-NEW_OBJECT_SEEN_CAP);
+        .sort((a, b) => a.createdMs - b.createdMs);
+    const overflow = kept.slice(0, Math.max(0, kept.length - NEW_OBJECT_SEEN_CAP));
+    const seen = kept.slice(overflow.length);
+    const nextPrunedThrough = overflow.reduce((max, s) => Math.max(max, s.createdMs), prunedThrough);
     await store.put<NewObjectTriggerState>(config.stateKey, {
         deltaLink,
         enabledAtMs: state.enabledAtMs,
         lastPollMs: startedAt,
         seen,
+        ...(Number.isFinite(nextPrunedThrough) ? { prunedThrough: nextPrunedThrough } : {}),
     });
     return emitted.map((item) => normalizeTriggerObject({ item, config }));
 }
@@ -717,6 +745,7 @@ export const flattenedUserFields: OutputSchema['fields'] = [
     { key: 'businessPhones', label: 'Business Phones', description: 'Comma-separated list.' },
     { key: 'officeLocation', label: 'Office Location' },
     { key: 'preferredLanguage', label: 'Preferred Language' },
+    { key: 'accountEnabled', label: 'Account Enabled', format: 'boolean' },
 ];
 
 export const flattenedGroupFields: OutputSchema['fields'] = [
@@ -806,4 +835,5 @@ export type NewObjectTriggerState = {
     enabledAtMs: number;
     lastPollMs: number;
     seen: { id: string; createdMs: number }[];
+    prunedThrough?: number;
 };

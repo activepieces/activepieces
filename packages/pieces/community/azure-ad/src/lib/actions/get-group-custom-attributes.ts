@@ -12,7 +12,7 @@ export const getGroupCustomAttributesAction = createAction({
     audience: 'both',
     aiMetadata: {
         description:
-            'Reads the directory extension attributes (extension_<appId>_<name>) of one Microsoft Entra ID group, plus its ID and display name. Discovers every extension property registered for groups in the tenant and requests them explicitly, because Graph omits them by default; attributes with no value come back as null. Read-only and idempotent. Use Get Group by ID for the standard group profile.',
+            'Reads the directory extension attributes (extension_<appId>_<name>) of one Microsoft Entra ID group, plus its ID and display name. Values are returned under attributes (name to value) and also as top-level keys. Discovers every extension property registered for groups in the tenant and requests them explicitly, because Graph omits them by default; attributes with no value come back as null. Read-only and idempotent. Use Get Group by ID for the standard group profile.',
         idempotent: true,
     },
     outputSchema: {
@@ -20,6 +20,7 @@ export const getGroupCustomAttributesAction = createAction({
             { key: 'group_id', label: 'Group ID' },
             { key: 'group_displayName', label: 'Group Display Name' },
             { key: 'extension_attribute_names', label: 'Extension Attribute Names', description: 'Comma-separated names of every extension attribute registered for groups; each one is also a top-level key holding its value.' },
+            { key: 'attributes', label: 'Attributes', dynamicKey: true, description: 'Every extension attribute name mapped to its value (null when unset).' },
         ],
     },
     props: {
@@ -39,9 +40,7 @@ export const getGroupCustomAttributesAction = createAction({
             group_displayName: group['displayName'],
             extension_attribute_names: names.join(', '),
         };
-        for (const name of names) {
-            out[name] = group[name] ?? null;
-        }
-        return out;
+        const attributes = Object.fromEntries(names.map((name) => [name, group[name] ?? null]));
+        return { ...out, ...attributes, attributes };
     },
 });

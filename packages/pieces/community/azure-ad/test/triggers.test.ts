@@ -43,10 +43,10 @@ function hook({ trigger, store, isRepublish = false }: { trigger: { run: unknown
     return { ...createMockActionContext({ propsValue: {} }), auth: AUTH, store, isRepublish, setSchedule: () => undefined, trigger };
 }
 
-function invoke({ trigger, method, store }: { trigger: Record<string, unknown>; method: 'onEnable' | 'onDisable' | 'run' | 'test'; store: Store }): Promise<unknown> {
+function invoke({ trigger, method, store, isRepublish = false }: { trigger: Record<string, unknown>; method: 'onEnable' | 'onDisable' | 'run' | 'test'; store: Store; isRepublish?: boolean }): Promise<unknown> {
     const fn = trigger[method];
     if (typeof fn !== 'function') throw new Error(`no ${method}`);
-    return Reflect.apply(fn, trigger, [hook({ trigger, store })]);
+    return Reflect.apply(fn, trigger, [hook({ trigger, store, isRepublish })]);
 }
 
 function url({ index }: { index: number }): string {
@@ -168,6 +168,49 @@ describe('new_user', () => {
     });
 });
 
+describe('upgrade and dedupe bounds', () => {
+    it.each([
+        ['new_user', newUserTrigger, '_delta_link_new_user', '_new_user_state', 'users'],
+        ['new_group', newGroupTrigger, '_delta_link_new_group', '_new_group_state', 'groups'],
+    ])('%s: republish with only legacy state keeps the old cursor and emits pending items', async (_name, trigger, legacyKey, stateKey, path) => {
+        const { store, data } = memoryStore();
+        data.set(legacyKey, `${G}/${path}/delta?$deltatoken=legacy`);
+        data.set('lastPoll', T0 - HOUR);
+        await invoke({ trigger, method: 'onEnable', store, isRepublish: true });
+        expect(sendRequest).not.toHaveBeenCalled();
+        expect(data.has(stateKey)).toBe(false);
+        respond({ body: { value: [user({ id: 'pending', created: T0 - 1000 })], '@odata.deltaLink': `${G}/${path}/delta?$deltatoken=d1` } });
+        const out = await invoke({ trigger, method: 'run', store });
+        expect(url({ index: 0 })).toBe(`${G}/${path}/delta?$deltatoken=legacy`);
+        expect(out).toEqual([expect.objectContaining({ id: 'pending' })]);
+    });
+
+    it('republish with no state at all seeds a fresh cursor', async () => {
+        const { store, data } = memoryStore();
+        respond({ body: { value: [], '@odata.deltaLink': `${G}/users/delta?$deltatoken=d0` } });
+        await invoke({ trigger: newUserTrigger, method: 'onEnable', store, isRepublish: true });
+        expect(data.get('_new_user_state')).toMatchObject({ deltaLink: `${G}/users/delta?$deltatoken=d0` });
+    });
+
+    it('an id pruned by the seen-id cap never re-fires when it is updated later', async () => {
+        const { store, data } = memoryStore();
+        const base = T0 - 30 * 60000;
+        const seen = Array.from({ length: 5000 }, (_, i) => ({ id: `s${i}`, createdMs: base + i }));
+        data.set('_new_user_state', { deltaLink: `${G}/users/delta?$deltatoken=d0`, enabledAtMs: T0 - HOUR, lastPollMs: T0 - 60000, seen });
+        respond({ body: { value: [user({ id: 'fresh', created: T0 - 1000 })], '@odata.deltaLink': `${G}/users/delta?$deltatoken=d1` } });
+        expect(await invoke({ trigger: newUserTrigger, method: 'run', store })).toEqual([expect.objectContaining({ id: 'fresh' })]);
+        const state = data.get('_new_user_state');
+        expect(state).toMatchObject({ prunedThrough: base });
+        const kept = typeof state === 'object' && state !== null && 'seen' in state && Array.isArray(state.seen) ? state.seen : [];
+        expect(kept).toHaveLength(5000);
+        expect(kept.some((s: { id: string }) => s.id === 's0')).toBe(false);
+
+        vi.setSystemTime(T0 + 60000);
+        respond({ body: { value: [{ ...user({ id: 's0', created: base }), displayName: 'renamed' }, user({ id: 'newer', created: T0 + 1000 })], '@odata.deltaLink': `${G}/users/delta?$deltatoken=d2` } });
+        expect(await invoke({ trigger: newUserTrigger, method: 'run', store })).toEqual([expect.objectContaining({ id: 'newer' })]);
+    });
+});
+
 describe('payload shape', () => {
     it('live, test and sample payloads have the same keys, with nulls filled and @odata keys removed', async () => {
         const { store } = memoryStore();
@@ -268,12 +311,44 @@ describe('new_deleted_user', () => {
         respond({ body: { value: [{ id: 'dup', '@removed': { reason: 'deleted' } }], '@odata.deltaLink': `${G}/users/delta?$deltatoken=d3` } });
         sendRequest.mockRejectedValueOnce(new HttpError(undefined, { status: 404, responseBody: {} }));
         expect(await invoke({ trigger: newDeletedUserTrigger, method: 'run', store })).toEqual([expect.objectContaining({ id: 'dup', removedReason: 'deleted' })]);
-        expect(data.get('_new_deleted_user_state')).toMatchObject({ deltaLink: `${G}/users/delta?$deltatoken=d3`, seen: [{ key: 'dup|2026-11-15T07:12:03Z' }, { key: 'dup|deleted' }] });
+        expect(data.get('_new_deleted_user_state')).toMatchObject({ deltaLink: `${G}/users/delta?$deltatoken=d3`, seen: [{ key: 'dup|changed' }, { key: 'dup|deleted' }] });
 
         vi.setSystemTime(T0 + 25 * HOUR);
         respond({ body: { value: [], '@odata.deltaLink': `${G}/users/delta?$deltatoken=d4` } });
         await invoke({ trigger: newDeletedUserTrigger, method: 'run', store });
         expect(data.get('_new_deleted_user_state')).toMatchObject({ seen: [] });
+    });
+
+    it('one soft delete fires once whether or not its profile was found, and a later permanent delete fires again', async () => {
+        const { store, data } = memoryStore();
+        data.set('_new_deleted_user_state', { deltaLink: `${G}/users/delta?$deltatoken=d0`, seen: [{ key: 'old|2026-11-15T07:12:03Z', at: T0 }] });
+        respond({ body: { value: [{ id: 'old', '@removed': { reason: 'changed' } }, { id: 'u', '@removed': { reason: 'changed' } }], '@odata.deltaLink': `${G}/users/delta?$deltatoken=d1` } });
+        respond({ body: { id: 'old', deletedDateTime: '2026-11-15T07:12:03Z' } });
+        sendRequest.mockRejectedValueOnce(new HttpError(undefined, { status: 404, responseBody: {} }));
+        expect(await invoke({ trigger: newDeletedUserTrigger, method: 'run', store })).toEqual([expect.objectContaining({ id: 'u', removedReason: 'changed', profileLookedUp: true, deletedDateTime: null })]);
+
+        vi.setSystemTime(T0 + 60000);
+        respond({ body: { value: [{ id: 'u', '@removed': { reason: 'changed' } }], '@odata.deltaLink': `${G}/users/delta?$deltatoken=d2` } });
+        respond({ body: { id: 'u', displayName: 'U', deletedDateTime: '2026-11-15T07:12:03Z' } });
+        expect(await invoke({ trigger: newDeletedUserTrigger, method: 'run', store })).toEqual([]);
+
+        vi.setSystemTime(T0 + 120000);
+        respond({ body: { value: [{ id: 'u', '@removed': { reason: 'deleted' } }], '@odata.deltaLink': `${G}/users/delta?$deltatoken=d3` } });
+        sendRequest.mockRejectedValueOnce(new HttpError(undefined, { status: 404, responseBody: {} }));
+        expect(await invoke({ trigger: newDeletedUserTrigger, method: 'run', store })).toEqual([expect.objectContaining({ id: 'u', removedReason: 'deleted' })]);
+    });
+
+    it('dedupes a repeat past the lookup cap the same as one inside it', async () => {
+        const { store, data } = memoryStore();
+        data.set('_new_deleted_user_state', { deltaLink: `${G}/users/delta?$deltatoken=d0`, seen: [] });
+        const removed = Array.from({ length: 101 }, (_, i) => ({ id: `u${i + 1}`, '@removed': { reason: 'changed' } }));
+        respond({ body: { value: removed, '@odata.deltaLink': `${G}/users/delta?$deltatoken=d1` } });
+        for (let i = 0; i < 100; i++) respond({ body: { id: `u${i + 1}`, deletedDateTime: '2026-11-15T07:12:03Z' } });
+        expect(await invoke({ trigger: newDeletedUserTrigger, method: 'run', store })).toHaveLength(101);
+        vi.setSystemTime(T0 + 60000);
+        respond({ body: { value: [{ id: 'u101', '@removed': { reason: 'changed' } }], '@odata.deltaLink': `${G}/users/delta?$deltatoken=d2` } });
+        respond({ body: { id: 'u101', deletedDateTime: '2026-11-15T07:12:03Z' } });
+        expect(await invoke({ trigger: newDeletedUserTrigger, method: 'run', store })).toEqual([]);
     });
 
     it('marks removals past the 100-lookup cap with profileLookedUp=false', async () => {

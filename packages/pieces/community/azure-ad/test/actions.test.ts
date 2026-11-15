@@ -193,7 +193,7 @@ describe('add_or_remove_user_license', () => {
         expect(addOrRemoveUserLicenseAction.aiMetadata?.idempotent).toBe(true);
         expect(call({ index: 0 })).toMatchObject({ method: 'POST', url: `${G}/users/u1/assignLicense`, body: { addLicenses: [{ skuId: 's1' }], removeLicenses: ['s2'] } });
         expect(out).not.toHaveProperty('@odata.context');
-        expect(out).toMatchObject({ id: 'u1', mail: null, officeLocation: null, preferredLanguage: null, jobTitle: null });
+        expect(out).toMatchObject({ id: 'u1', mail: null, officeLocation: null, preferredLanguage: null, jobTitle: null, accountEnabled: null });
     });
 
     it('retries a 409 Directory_ConcurrencyViolation with backoff', async () => {
@@ -379,7 +379,7 @@ describe('extension attributes', () => {
         const out = await run({ action: getGroupCustomAttributesAction, props: { groupId: 'g1' } });
         expect(call({ index: 0 })).toMatchObject({ method: 'POST', url: `${G}/directoryObjects/getAvailableExtensionProperties`, body: { isSyncedFromOnPremises: false } });
         expect(call({ index: 1 }).url).toBe(`${G}/groups/g1?$select=id,displayName,${EXT}`);
-        expect(out).toEqual({ group_id: 'g1', group_displayName: 'Fin', extension_attribute_names: EXT, [EXT]: 'CC-1' });
+        expect(out).toEqual({ group_id: 'g1', group_displayName: 'Fin', extension_attribute_names: EXT, [EXT]: 'CC-1', attributes: { [EXT]: 'CC-1' } });
     });
 
     it('reset_custom_attributes with names $selects them and PATCHes null', async () => {
