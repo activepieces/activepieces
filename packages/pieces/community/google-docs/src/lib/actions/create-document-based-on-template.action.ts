@@ -12,6 +12,7 @@ import {
   listTemplateInputs,
   runTemplateFill,
   TemplateClients,
+  withPlainError,
 } from '../common/template-fill-run';
 
 export const createDocumentBasedOnTemplate = createAction({
@@ -203,41 +204,49 @@ async function createTemplateClients(auth: GoogleDocsAuthValue): Promise<Templat
 
   return {
     getDocument: async (documentId) => {
-      const response = await docs.documents.get({
-        documentId,
-        includeTabsContent: true,
-        fields: TEMPLATE_FIELDS,
-      });
+      const response = await withPlainError(() =>
+        docs.documents.get({
+          documentId,
+          includeTabsContent: true,
+          fields: TEMPLATE_FIELDS,
+        }),
+      );
       return response.data;
     },
     batchUpdate: async ({ documentId, requests }) => {
-      const response = await docs.documents.batchUpdate({
-        documentId,
-        requestBody: { requests },
-      });
+      const response = await withPlainError(() =>
+        docs.documents.batchUpdate({
+          documentId,
+          requestBody: { requests },
+        }),
+      );
       return response.data;
     },
     copyFile: async ({ fileId, name, folderId }) => {
-      const response = await drive.files.copy({
-        fileId,
-        supportsAllDrives: true,
-        fields: 'id, name',
-        requestBody: {
-          ...(name ? { name } : {}),
-          ...(folderId ? { parents: [folderId] } : {}),
-        },
-      });
+      const response = await withPlainError(() =>
+        drive.files.copy({
+          fileId,
+          supportsAllDrives: true,
+          fields: 'id, name',
+          requestBody: {
+            ...(name ? { name } : {}),
+            ...(folderId ? { parents: [folderId] } : {}),
+          },
+        }),
+      );
       if (!response.data.id) {
         throw new Error('Google Drive did not return the ID of the new document.');
       }
       return { id: response.data.id, name: response.data.name ?? name ?? '' };
     },
     trashFile: async (fileId) => {
-      await drive.files.update({
-        fileId,
-        supportsAllDrives: true,
-        requestBody: { trashed: true },
-      });
+      await withPlainError(() =>
+        drive.files.update({
+          fileId,
+          supportsAllDrives: true,
+          requestBody: { trashed: true },
+        }),
+      );
     },
   };
 }

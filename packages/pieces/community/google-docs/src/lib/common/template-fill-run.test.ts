@@ -1,5 +1,6 @@
 import { PropertyType } from '@activepieces/pieces-framework';
 import { docs_v1 } from '@googleapis/docs';
+import { inspect } from 'node:util';
 import { describe, expect, it, vi } from 'vitest';
 import { templateFill } from './template-fill';
 import {
@@ -9,6 +10,7 @@ import {
   runTemplateFill,
   TemplateClients,
   TemplateFillInput,
+  withPlainError,
 } from './template-fill-run';
 
 describe('runTemplateFill', () => {
@@ -101,6 +103,18 @@ describe('runTemplateFill', () => {
     );
   });
 
+  it('does not attach the failed call to the error it reports', async () => {
+    const clients = stubClients();
+    clients.batchUpdate.mockRejectedValue(new Error('boom'));
+    clients.trashFile.mockRejectedValue(new Error('insufficientFilePermissions'));
+
+    const thrown = await caught(
+      runTemplateFill({ clients, input: { ...baseInput, createCopy: true, values: { name: 'Ada' } } }),
+    );
+
+    expect(thrown.cause).toBeUndefined();
+  });
+
   it('never trashes the template when an in-place fill fails', async () => {
     const clients = stubClients();
     clients.batchUpdate.mockRejectedValue(new Error('boom'));
@@ -150,6 +164,26 @@ describe('runTemplateFill', () => {
 
     expect(clients.batchUpdate).not.toHaveBeenCalled();
     expect(output).toMatchObject({ documentId: 'copy-id', totalReplacements: 0, data: { replies: [] } });
+  });
+});
+
+describe('withPlainError', () => {
+  it('keeps only the message of a failed Google call', async () => {
+    const googleError = Object.assign(new Error('Invalid requests[0].replaceImage: There was a problem retrieving the image.'), {
+      config: { data: { requests: [{ replaceAllText: { replaceText: 'sensitive-value' } }] } },
+      response: { config: { data: 'sensitive-value' }, status: 400 },
+    });
+
+    const thrown = await caught(withPlainError(() => Promise.reject(googleError)));
+
+    expect(thrown.message).toBe('Invalid requests[0].replaceImage: There was a problem retrieving the image.');
+    expect(Object.keys(thrown)).toEqual([]);
+    expect(thrown.cause).toBeUndefined();
+    expect(inspect(thrown)).not.toContain('sensitive-value');
+  });
+
+  it('returns the result of a call that succeeds', async () => {
+    await expect(withPlainError(async () => 'ok')).resolves.toBe('ok');
   });
 });
 
@@ -231,6 +265,17 @@ describe('buildImageInputs', () => {
     ]);
   });
 });
+
+async function caught(promise: Promise<unknown>): Promise<Error> {
+  const error = await promise.then(
+    () => undefined,
+    (reason: unknown) => reason,
+  );
+  if (!(error instanceof Error)) {
+    throw new Error('Expected the call to fail with an Error');
+  }
+  return error;
+}
 
 function scanOf(text: string) {
   return templateFill.scan({ document: documentOf(text), format: '{{KEY}}' });

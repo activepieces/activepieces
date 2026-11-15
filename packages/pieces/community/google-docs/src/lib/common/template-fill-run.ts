@@ -104,6 +104,14 @@ export function buildImageInputs({ scan }: { scan: TemplateScan }): InputPropert
   );
 }
 
+export async function withPlainError<T>(call: () => Promise<T>): Promise<T> {
+  try {
+    return await call();
+  } catch (error) {
+    throw new Error(errorMessage(error));
+  }
+}
+
 export function templateNote(message: string): InputPropertyMap {
   return {
     [NOTE_KEY]: Property.MarkDown({ value: message, variant: MarkdownVariant.INFO }),
@@ -139,7 +147,6 @@ async function applyRequests({
     }
     throw new Error(
       `${errorMessage(error)} The new document ${documentId} could not be moved to the trash (${errorMessage(cleanupError)}). Delete it by hand.`,
-      { cause: error },
     );
   }
 }
