@@ -1,5 +1,5 @@
 import { apId, assertNotNullOrUndefined, isNil, sanitizeObjectForPostgresql, spreadIfDefined } from '@activepieces/core-utils'
-import { createLogger, wideEvent } from '@activepieces/server-utils'
+import { wideEvent } from '@activepieces/server-utils'
 import { BarrierSignalStatus, FlowRun, FlowRunStatus, isFlowRunStateTerminal, RunTimeline } from '@activepieces/shared'
 import { Job, Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
@@ -35,23 +35,15 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
         runsMetadataWorker = new Worker<RunsMetadataJobData>(
             queueName,
             async (job) => {
-                const jobLogger = createLogger({
-                    event: 'runs-metadata.save',
-                    job: { id: job.id, type: job.name },
-                    flowRun: { id: job.data.runId },
-                    project: { id: job.data.projectId },
-                })
-                return wideEvent.run({
-                    logger: jobLogger,
+                return wideEvent.runJob({
+                    fields: {
+                        event: 'runs-metadata.save',
+                        job: { id: job.id, type: job.name },
+                        flowRun: { id: job.data.runId },
+                        project: { id: job.data.projectId },
+                    },
                     fn: () => processRunsMetadataJob({ job, log })
-                        .catch((error: unknown) => {
-                            wideEvent.error(error)
-                            throw error
-                        })
-                        .finally(() => {
-                            jobLogger.set({ flowRun: { id: job.data.runId } })
-                            jobLogger.emit()
-                        }),
+                        .finally(() => wideEvent.set({ flowRun: { id: job.data.runId } })),
                 })
             },
             {
