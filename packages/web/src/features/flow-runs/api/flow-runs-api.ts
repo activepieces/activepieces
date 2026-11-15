@@ -64,10 +64,10 @@ export const flowRunsApi = {
         : WebsocketServerEvent.TEST_FLOW_RUN,
       request,
     );
-    const initialRun = await getInitialRun({
+    const initialRun = await waitForStartedRun({
       socket,
       flowVersionId: request.flowVersionId,
-      forManualTrigger: isForManualTrigger,
+      isForManualTrigger,
       signal,
     });
     if (initialRun === null || signal.aborted) {
@@ -110,13 +110,13 @@ export const flowRunsApi = {
     return { runId: stepRun.id };
   },
 };
-function getInitialRun({
+function waitForStartedRun({
   socket,
   flowVersionId,
-  forManualTrigger,
+  isForManualTrigger,
   signal,
-}: GetInitialRunParams): Promise<FlowRun | null> {
-  const startedEvent = forManualTrigger
+}: WaitForStartedRunParams): Promise<FlowRun | null> {
+  const startedEvent = isForManualTrigger
     ? WebsocketClientEvent.MANUAL_TRIGGER_RUN_STARTED
     : WebsocketClientEvent.TEST_FLOW_RUN_STARTED;
   return new Promise<FlowRun | null>((resolve) => {
@@ -146,9 +146,9 @@ type SubscribeToTestFlowOrManualRunParams = {
   isForManualTrigger: boolean;
   signal: AbortSignal;
 };
-type GetInitialRunParams = {
+type WaitForStartedRunParams = {
   socket: Socket;
   flowVersionId: string;
-  forManualTrigger: boolean;
+  isForManualTrigger: boolean;
   signal: AbortSignal;
 };
