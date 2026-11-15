@@ -34,7 +34,7 @@ export const activecampaign = createPiece({
   description:
     'Email marketing, marketing automation, and CRM tools you need to create incredible customer experiences.',
   auth: activeCampaignAuth,
-  minimumSupportedRelease: '0.86.4',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/activecampaign.png',
   categories: [PieceCategory.MARKETING, PieceCategory.SALES_AND_CRM],
   authors: ["kishanprmr","abuaboud","OdaiAhmed99"],
