@@ -3,7 +3,10 @@ import { ResourceChangeOp } from '@activepieces/shared';
 import { t } from 'i18next';
 import { create } from 'zustand';
 
-import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
+import {
+  chatPanelUtils,
+  useChatPanel,
+} from '@/features/workspace/lib/chat-panel-open';
 
 import { ResourceRef, resourceRegistry } from '../resources/registry';
 
@@ -20,10 +23,11 @@ function runOf(conversationId: string | null): RunContext | null {
 }
 
 function knownName(resource: Pick<ResourceRef, 'kind' | 'id'>): string | null {
-  const { target } = useFollowAlong.getState();
-  return isSameResource({ a: target, b: resource })
-    ? target?.name ?? null
-    : null;
+  const { target, offer: current } = useFollowAlong.getState();
+  const known = [target, current?.resource].find(
+    (ref) => !isNil(ref) && isSameResource({ a: ref, b: resource }),
+  );
+  return known?.name ?? null;
 }
 
 function onServerChange({
@@ -86,10 +90,14 @@ function setTarget(resource: ResourceRef): boolean {
 }
 
 function forget(resource: ResourceRef): void {
-  const { target } = useFollowAlong.getState();
-  if (isSameResource({ a: target, b: resource })) {
-    useFollowAlong.setState({ target: null });
-  }
+  const { target, offer: current } = useFollowAlong.getState();
+  const targetGone = isSameResource({ a: target, b: resource });
+  const offerGone = isSameResource({ a: current?.resource, b: resource });
+  if (!targetGone && !offerGone) return;
+  useFollowAlong.setState({
+    target: targetGone ? null : target,
+    offer: offerGone ? null : current,
+  });
 }
 
 function isSameResource({
@@ -119,7 +127,44 @@ function endRun({
 }
 
 function stopFollowing(): void {
-  useFollowAlong.setState({ following: false });
+  useFollowAlong.setState({ following: false, offer: null });
+}
+
+function offer({
+  resource,
+  runId,
+}: {
+  resource: ResourceRef;
+  runId: string | null;
+}): void {
+  const conversationId = useChatPanel.getState().conversationId;
+  const current = useFollowAlong.getState().offer;
+  if (
+    current &&
+    current.conversationId === conversationId &&
+    resourceRegistry.keyOf(current.resource) ===
+      resourceRegistry.keyOf(resource) &&
+    current.resource.name === resource.name
+  ) {
+    return;
+  }
+  useFollowAlong.setState({ offer: { resource, conversationId, runId } });
+}
+
+function dismissOffer(): void {
+  if (useFollowAlong.getState().offer === null) return;
+  useFollowAlong.setState({ offer: null });
+}
+
+function acceptOffer(): void {
+  const { offer: current } = useFollowAlong.getState();
+  if (!current) return;
+  useFollowAlong.setState({ offer: null });
+  chatPanelUtils.openBeside({
+    route: resourceRegistry.route(current.resource),
+    push: claimHistoryPush(current.runId),
+    name: current.resource.name,
+  });
 }
 
 function isFollowing(resource: Pick<ResourceRef, 'kind' | 'id'>): boolean {
@@ -150,6 +195,7 @@ function initialFollowState(): FollowState {
     phase: 'idle',
     following: true,
     liveRuns: {},
+    offer: null,
   };
 }
 
@@ -177,6 +223,9 @@ export const followAlong = {
   onServerChange,
   endRun,
   stopFollowing,
+  offer,
+  dismissOffer,
+  acceptOffer,
   isFollowing,
   claimHistoryPush,
   onToolDone,
@@ -196,6 +245,12 @@ export type FollowChange = {
   navigable: boolean;
 };
 
+type FollowOffer = {
+  resource: ResourceRef;
+  conversationId: string | null;
+  runId: string | null;
+};
+
 type FollowMemory = {
   pushedRuns: Record<string, true>;
 };
@@ -205,4 +260,5 @@ type FollowState = {
   phase: 'idle' | 'editing';
   following: boolean;
   liveRuns: Record<string, RunContext>;
+  offer: FollowOffer | null;
 };

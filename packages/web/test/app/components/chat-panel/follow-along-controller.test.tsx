@@ -6,7 +6,7 @@ import {
   WebsocketClientEvent,
 } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, cleanup, render } from '@testing-library/react';
+import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -15,6 +15,7 @@ import {
   followAlong,
   useFollowAlong,
 } from '@/features/chat/lib/follow/follow-along';
+import { followHold } from '@/features/chat/lib/follow/follow-hold';
 import { resourceRegistry } from '@/features/chat/lib/resources/registry';
 import {
   chatPanelUtils,
@@ -145,7 +146,21 @@ describe('FollowAlongController', () => {
 
     await resolveName('flow-a', 'Flow A');
 
-    expect(useFollowAlong.getState().target).toBeNull();
+    expect(useFollowAlong.getState()).toMatchObject({
+      target: null,
+      offer: null,
+    });
+  });
+
+  it('keeps the page held until the click after a press has run', () => {
+    vi.useFakeTimers();
+    fireEvent.pointerDown(document.body);
+    fireEvent.pointerUp(document.body);
+
+    expect(followHold.pagePressed()).toBe(true);
+    act(() => vi.runAllTimers());
+    expect(followHold.pagePressed()).toBe(false);
+    vi.useRealTimers();
   });
 
   it('handles a delete at once, even while an earlier lookup is pending', () => {
@@ -237,5 +252,30 @@ describe('FollowAlongController', () => {
     await resolveName('flow-b', 'Flow B');
 
     expect(useFollowAlong.getState().target?.id).toBe('flow-b');
+  });
+
+  it('offers the page when the reply ends while the user still presses the page', async () => {
+    useChatPanel.setState({ autoFollow: true });
+    fireEvent.pointerDown(document.body);
+    push(ResourceChangeOp.UPDATE);
+    await resolveName('flow-a', 'Flow A');
+
+    act(() => followAlong.endRun({ conversationId: 'chat-1', runId: 'run-1' }));
+
+    expect(useFollowAlong.getState().offer?.resource.id).toBe('flow-a');
+  });
+
+  it('drops a pending follow when the user switches to another chat', async () => {
+    useChatPanel.setState({ autoFollow: true });
+    fireEvent.pointerDown(document.body);
+    push(ResourceChangeOp.UPDATE);
+    await resolveName('flow-a', 'Flow A');
+
+    act(() => {
+      useChatPanel.setState({ conversationId: 'chat-2' });
+      followAlong.endRun({ conversationId: 'chat-1', runId: 'run-1' });
+    });
+
+    expect(useFollowAlong.getState().offer).toBeNull();
   });
 });
