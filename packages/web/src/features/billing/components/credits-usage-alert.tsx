@@ -9,6 +9,7 @@ import { useLocation } from 'react-router-dom';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { InviteRewardButton } from '@/features/members/components/invite-reward/invite-reward';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
@@ -98,6 +99,7 @@ export const CreditsUsageAlert = React.memo(() => {
           {message}
         </AlertDescription>
         <div className="ms-auto flex shrink-0 items-center gap-1">
+          <InviteRewardButton />
           <CreditsActionButton />
           {!isDanger && (
             <Button

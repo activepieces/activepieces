@@ -33,7 +33,7 @@ import {
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useSeatLimitGuard } from '@/features/billing';
+import { useSeatLimitGuard } from '@/features/billing/hooks/use-seat-limit-guard';
 import { userInvitationApi } from '@/features/members/api/user-invitation';
 import { PlatformRoleSelect } from '@/features/members/components/platform-role-select';
 import { ProjectRoleSelect } from '@/features/members/components/project-role-select';
@@ -50,6 +50,7 @@ import { errorReporting } from '@/lib/error-reporting';
 import { formatUtils } from '@/lib/format-utils';
 
 import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
+import { InviteRewardHint } from '../invite-reward/invite-reward-hint';
 
 import { DefaultProjectsNote } from './default-projects-note';
 import { InvitedProjectSelect } from './invited-project-select';
@@ -128,7 +129,8 @@ const InviteUserDialogInternal = ({
     UserInvitationWithLink[]
   >([]);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
-  const { platform } = platformHooks.useCurrentPlatform();
+  const { platform, refetch: refetchPlatform } =
+    platformHooks.useCurrentPlatform();
   const { activeDefaultProjectIds, personalProjectsActive } =
     platformHooks.useNewMemberSettings();
   const { data: teamProjects } = projectCollectionUtils.useAllPlatformProjects({
@@ -213,6 +215,7 @@ const InviteUserDialogInternal = ({
         toast.success(toastMessage, { duration: 3000 });
       }
       refetch();
+      refetchPlatform().catch(() => undefined);
       onInviteSuccess?.();
     },
     onError: (error) => {
@@ -409,6 +412,7 @@ const InviteUserDialogInternal = ({
               <DialogTitle>{dialogTitle}</DialogTitle>
               <DialogDescription>{dialogDescription}</DialogDescription>
             </DialogHeader>
+            {!hasLinks && <InviteRewardHint />}
 
             {!hasLinks ? (
               <Form {...form}>
