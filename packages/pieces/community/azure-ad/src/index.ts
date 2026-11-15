@@ -1,5 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { azureAdAuth } from './lib/auth';
 import { addMemberToGroupAction } from './lib/actions/add-member-to-group';
@@ -18,14 +18,22 @@ import { listUsersAction } from './lib/actions/list-users';
 import { resetCustomAttributesAction } from './lib/actions/reset-custom-attributes';
 import { revokeSignInSessionAction } from './lib/actions/revoke-sign-in-session';
 import { updateUserAction } from './lib/actions/update-user';
+import { findUsersAction } from './lib/actions/find-users';
+import { listGroupsAction } from './lib/actions/list-groups';
+import { listUserGroupsAction } from './lib/actions/list-user-groups';
+import { removeMemberFromGroupAction } from './lib/actions/remove-member-from-group';
+import { updateGroupAction } from './lib/actions/update-group';
+import { setUserAccountEnabledAction } from './lib/actions/set-user-account-enabled';
+import { setUserManagerAction } from './lib/actions/set-user-manager';
+import { listSubscribedSkusAction } from './lib/actions/list-subscribed-skus';
 import { newDeletedUserTrigger } from './lib/triggers/new-deleted-user';
 import { newGroupTrigger } from './lib/triggers/new-group';
 import { newUserTrigger } from './lib/triggers/new-user';
 
 export const azureAd = createPiece({
     displayName: 'Azure Active Directory',
-    description: 'Manage users, groups, and licenses in Microsoft Entra ID (Azure AD) via Microsoft Graph.',
-    minimumSupportedRelease: '0.36.1',
+    description: 'Manage users, groups, and licenses in Microsoft Entra ID via Microsoft Graph.',
+    minimumSupportedRelease: '0.88.2',
     logoUrl: 'https://cdn.activepieces.com/pieces/azure-ad.png',
     categories: [PieceCategory.SALES_AND_CRM],
     authors: ['maurivan', 'sanket-a11y'],
@@ -47,11 +55,19 @@ export const azureAd = createPiece({
         resetCustomAttributesAction,
         revokeSignInSessionAction,
         updateUserAction,
+        findUsersAction,
+        listGroupsAction,
+        listUserGroupsAction,
+        removeMemberFromGroupAction,
+        updateGroupAction,
+        setUserAccountEnabledAction,
+        setUserManagerAction,
+        listSubscribedSkusAction,
         createCustomApiCallAction({
             auth: azureAdAuth,
             baseUrl: () => 'https://graph.microsoft.com/v1.0',
             authMapping: async (auth) => ({
-                Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+                Authorization: `Bearer ${auth.access_token}`,
             }),
         }),
     ],
