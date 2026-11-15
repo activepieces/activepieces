@@ -62,7 +62,7 @@ async function runTask({ deps, title, brief, taskId, progressId, kind = 'task' }
     progressId: string
     kind?: TaskKind
 }): Promise<TaskRunOutput> {
-    const { tier, taskPrompt, creditsLeftFor, beginTask, finishTask, eventEmitter, abortSignal, log, trace } = deps
+    const { tier, taskPrompt, creditsLeftFor, beginTask, finishTask, eventEmitter, abortSignal, log, promptFingerprint } = deps
     if (abortSignal.aborted) {
         return { status: 'failed', summary: 'Stopped before it started.' }
     }
@@ -95,7 +95,7 @@ async function runTask({ deps, title, brief, taskId, progressId, kind = 'task' }
         creditsLeft: creditsLeftFor(progressId),
         stopWhen: [isLoopFinished(), hasToolCall(TASK_COMPLETION_TOOL_NAME)],
         ...spreadIfDefined('skills', profile.skills),
-        ...spreadIfDefined('trace', trace),
+        ...spreadIfDefined('promptFingerprint', promptFingerprint),
         sinks: {
             drainStream: async (result) => {
                 await result.consumeStream()
@@ -505,7 +505,7 @@ type TaskDeps = {
     eventEmitter: AgentEventEmitter
     abortSignal: AbortSignal
     log: RunAgentTurnParams['log']
-    trace?: RunAgentTurnParams['trace']
+    promptFingerprint?: string
 }
 
 type TaskKind = 'task' | 'research'

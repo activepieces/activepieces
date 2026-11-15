@@ -5,7 +5,6 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { agentAiUtils } from '../src/agent-ai-utils'
 import { aiObservability } from '../src/ai-observability'
-import { apVersionUtil } from '../src/ap-version'
 import { wideEvent } from '../src/wide-event'
 
 describe('aiObservability', () => {
@@ -31,7 +30,6 @@ describe('aiObservability', () => {
             distinctId: 'user-1',
             sessionId: 'conversation-1',
             groups: JSON.stringify({ platform: 'platform-1', project: 'project-1' }),
-            version: apVersionUtil.getCurrentRelease(),
         })
     })
 
@@ -47,24 +45,21 @@ describe('aiObservability', () => {
             distinctId: 'user-1',
             sessionId: 'conversation-1',
             groups: JSON.stringify({ platform: 'platform-1' }),
-            version: apVersionUtil.getCurrentRelease(),
         })
     })
 
-    it('tags the turn with its run source, tier and fingerprint', () => {
+    it('tags the turn with its run source and tier from the wide event, and its fingerprint', () => {
         aiObservability.init({ enabled: true })
+        const logger = createLogger({ user: { id: 'user-1' }, agentRun: { source: 'CHAT', tierId: 'smart', tierModel: 'model-1' } })
 
-        const { runtimeContext } = agentAiUtils.buildTelemetry({
-            functionId: 'agent-turn',
-            turn: { runSource: 'CHAT', tierId: 'smart', tierModel: 'model-1', fingerprint: 'abc123' },
-        })
+        const { runtimeContext } = wideEvent.run({ logger, fn: () => agentAiUtils.buildTelemetry({ functionId: 'agent-turn', fingerprint: 'abc123' }) })
 
         expect(runtimeContext).toMatchObject({ runSource: 'CHAT', tierId: 'smart', tierModel: 'model-1', fingerprint: 'abc123' })
     })
 })
 
 describe('aiObservability.turnFingerprintOf', () => {
-    it('stays the same for the same prompt, tools and skills', async () => {
+    it('stays the same for the same prompt and tools', async () => {
         const first = await aiObservability.turnFingerprintOf(fingerprintInput({ description: 'Lists flows' }))
         const second = await aiObservability.turnFingerprintOf(fingerprintInput({ description: 'Lists flows' }))
 
@@ -88,21 +83,20 @@ describe('aiObservability.turnFingerprintOf', () => {
         expect(after).not.toBe(before)
     })
 
-    it('changes when the prompt or a skill changes', async () => {
+    it('changes when the prompt or a skill guide changes', async () => {
         const base = await aiObservability.turnFingerprintOf(fingerprintInput({ description: 'Lists flows' }))
-        const newPrompt = await aiObservability.turnFingerprintOf({ ...fingerprintInput({ description: 'Lists flows' }), promptFingerprint: 'prompt-2' })
-        const newSkill = await aiObservability.turnFingerprintOf({ ...fingerprintInput({ description: 'Lists flows' }), guides: { 'build-flow': 'Build it differently' } })
+        const newGuide = aiObservability.promptFingerprintOf({ templates: { system: 'You help', guides: { 'build-flow': 'Build it differently' } } })
+        const newPrompt = await aiObservability.turnFingerprintOf({ ...fingerprintInput({ description: 'Lists flows' }), promptFingerprint: newGuide })
 
         expect(newPrompt).not.toBe(base)
-        expect(newSkill).not.toBe(base)
     })
 
-    it('ignores the order tools and skills come in', async () => {
+    it('ignores the order tools come in', async () => {
         const listFlows = tool({ description: 'Lists flows', inputSchema: z.object({}) })
         const runFlow = tool({ description: 'Runs a flow', inputSchema: z.object({ flowId: z.string() }) })
 
-        const first = await aiObservability.turnFingerprintOf({ promptFingerprint: 'prompt-1', tools: { ap_list_flows: listFlows, ap_run_flow: runFlow }, guides: { a: '1', b: '2' } })
-        const second = await aiObservability.turnFingerprintOf({ promptFingerprint: 'prompt-1', tools: { ap_run_flow: runFlow, ap_list_flows: listFlows }, guides: { b: '2', a: '1' } })
+        const first = await aiObservability.turnFingerprintOf({ promptFingerprint: 'prompt-1', tools: { ap_list_flows: listFlows, ap_run_flow: runFlow } })
+        const second = await aiObservability.turnFingerprintOf({ promptFingerprint: 'prompt-1', tools: { ap_run_flow: runFlow, ap_list_flows: listFlows } })
 
         expect(first).toBe(second)
     })
@@ -110,8 +104,7 @@ describe('aiObservability.turnFingerprintOf', () => {
 
 function fingerprintInput({ description }: { description: string }): Parameters<typeof aiObservability.turnFingerprintOf>[0] {
     return {
-        promptFingerprint: 'prompt-1',
+        promptFingerprint: aiObservability.promptFingerprintOf({ templates: { system: 'You help', guides: { 'build-flow': 'Build it' } } }),
         tools: { ap_list_flows: tool({ description, inputSchema: z.object({}) }) },
-        guides: { 'build-flow': 'Build it' },
     }
 }

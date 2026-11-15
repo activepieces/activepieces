@@ -1,5 +1,5 @@
 import { AiProviderKeyStatus, AIProviderName, ErrorCode, formatPieceError, isFallbackWorthy, isNil, isObject, isProviderBillingError, isTransientProviderError, ProviderOutcomeSignal, spreadIfDefined, toError, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
-import { agentAiUtils, aiObservability, aiProviderSignal, AiTurnTrace, ContentPartLike } from '@activepieces/server-utils'
+import { agentAiUtils, aiObservability, aiProviderSignal, ContentPartLike } from '@activepieces/server-utils'
 import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, agentToolSkills, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, LAZY_TOOL_NAME, PersistedAgentPart, SkillSurface, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
 import { buildSkillSurface } from './tools/skill-tools'
@@ -14,6 +14,7 @@ const STREAM_RETRY_BASE_DELAY_MS = 1_000
 const SDK_RETRIES = 3
 const SDK_RETRIES_BEFORE_FALLBACK = 1
 const MIN_THINKING_BUDGET = 1_024
+const TURN_FINGERPRINTS = new WeakMap<ToolSet, Promise<string | undefined>>()
 const CONTENT_CHUNK_TYPES = new Set(['text-delta', 'reasoning-delta', 'tool-input-start', 'tool-input-available', 'source-url', 'source-document', 'file'])
 const USER_FAULT_STATUS_CODES = new Set([401, 403, 404])
 const MODEL_UNAVAILABLE_PATTERNS = [/\bis deprecated\b/i, /no longer (available|supported)/i, /\bmodel_not_found\b/i, /\bunknown model\b/i, /\bdecommissioned\b/i]
@@ -68,7 +69,7 @@ export function drainOf({ state }: { state: StepContentState }): StreamDrain {
     return { lastStepSentContent: state.sentWhenFailed ?? state.sentInStep }
 }
 
-export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, priorToolCalls, onModelOutcome, onStepModel, skills, trace }: RunAgentTurnParams): Promise<AgentTurnResult> {
+export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, priorToolCalls, onModelOutcome, onStepModel, skills, promptFingerprint }: RunAgentTurnParams): Promise<AgentTurnResult> {
     const drainStream = sinks?.drainStream ?? ((result: ReturnType<typeof streamText>) => result.consumeStream())
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
@@ -113,10 +114,12 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
     })
     const turnSystemPrompt = systemPrompt + (skillSurface?.catalogNote ?? '')
     const guardedTools = wrapToolsWithFailureGuard({ tools: skillSurface?.tools ?? tools, log })
-    const turnTrace = await turnTraceOf({ trace, tools: guardedTools, guides: skills?.guides ?? {}, tier })
     const runsATier = models.some((candidate) => !isNil(candidate.key))
     const peers = [...models, ...(isNil(fastModel) ? [] : [fastModel])]
-    const ranked = await Promise.all(models.map((turnModel) => withOutputBudget({ turnModel, peers })))
+    const [fingerprint, ranked] = await Promise.all([
+        fingerprintOf({ tools, promptFingerprint }),
+        Promise.all(models.map((turnModel) => withOutputBudget({ turnModel, peers }))),
+    ])
     let fast = isNil(fastModel) ? undefined : await withOutputBudget({ turnModel: fastModel, peers })
     let modelIndex = 0
     let lastStepUsedFast = false
@@ -149,7 +152,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         messages: agentAiUtils.stripThinkingBlocks(attemptMessages, current().provider),
         tools: guardedTools,
         stopWhen: loopStopCondition,
-        ...agentAiUtils.buildTelemetry({ functionId: 'agent-turn', turn: turnTrace }),
+        ...agentAiUtils.buildTelemetry({ functionId: 'agent-turn', fingerprint }),
         // providerOptions/model are supplied per-step by prepareStep (authoritative). A
         // call-level providerOptions would deep-merge into every step and leak the enabled
         // thinking budget back into the disabled first step.
@@ -217,7 +220,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 const { text } = await generateText({
                     model: current().model,
                     abortSignal,
-                    ...agentAiUtils.buildTelemetry({ functionId: 'agent-tool-repair', turn: turnTrace }),
+                    ...agentAiUtils.buildTelemetry({ functionId: 'agent-tool-repair', fingerprint }),
                     prompt: `Fix this invalid input for the tool "${toolCall.toolName}". The error was: ${error.message}\n\nOriginal input:\n${toolCall.input}\n\nThe input must match this JSON schema:\n${JSON.stringify(schema)}\n\nReturn ONLY the corrected JSON input, nothing else.`,
                 })
                 return jsonInputFrom(text)
@@ -560,18 +563,19 @@ function runawayTokenCeiling(provider: AIProviderName): number {
     return aiProviderUtils.getMaxContextTokens({ provider }) * RUNAWAY_TURN_CONTEXT_MULTIPLE
 }
 
-async function turnTraceOf({ trace, tools, guides, tier }: {
-    trace: RunAgentTurnParams['trace']
-    tools: ToolSet
-    guides: Record<string, string>
-    tier: RunAgentTurnParams['tier']
-}): Promise<AiTurnTrace | undefined> {
-    if (isNil(trace) || isNil(aiObservability.integration())) {
-        return undefined
+function fingerprintOf({ tools, promptFingerprint }: { tools: ToolSet, promptFingerprint: string | undefined }): Promise<string | undefined> {
+    if (isNil(aiObservability.integration())) {
+        return Promise.resolve(undefined)
     }
-    const { data: fingerprint } = await tryCatch(() => aiObservability.turnFingerprintOf({ promptFingerprint: trace.promptFingerprint, tools, guides }))
-    return { runSource: trace.runSource, tierId: tier.id, tierModel: tier.modelId, ...spreadIfDefined('fingerprint', fingerprint ?? undefined) }
+    const cached = TURN_FINGERPRINTS.get(tools)
+    if (!isNil(cached)) {
+        return cached
+    }
+    const computed = tryCatch(() => aiObservability.turnFingerprintOf({ promptFingerprint, tools })).then(({ data }) => data ?? undefined)
+    TURN_FINGERPRINTS.set(tools, computed)
+    return computed
 }
+
 
 /**
  * Within a single streamText call the SDK appends every tool result and re-sends
@@ -684,7 +688,7 @@ export type RunAgentTurnParams = {
     onModelOutcome?: (outcome: { turnModel: TurnModel, signal: ProviderOutcomeSignal }) => void
     onStepModel?: (turnModel: TurnModel) => void
     skills?: { surface: SkillSurface, guides: Record<string, string> }
-    trace?: { runSource: AgentRunSource, promptFingerprint?: string }
+    promptFingerprint?: string
 }
 
 export type AgentTurnResult = {
