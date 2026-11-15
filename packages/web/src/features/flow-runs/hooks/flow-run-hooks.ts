@@ -1,4 +1,9 @@
-import { ApErrorParams, ErrorCode } from '@activepieces/core-utils';
+import {
+  ApErrorParams,
+  ErrorCode,
+  isNil,
+  SeekPage,
+} from '@activepieces/core-utils';
 import {
   BulkActionOnRunsRequestBody,
   BulkArchiveActionOnRunsRequestBody,
@@ -8,9 +13,16 @@ import {
   FlowRetryStrategy,
   FlowRun,
   FlowRunWithRetryError,
+  isFlowRunStateTerminal,
   PopulatedFlow,
 } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  InfiniteData,
+  QueryKey,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo } from 'react';
 import { toast } from 'sonner';
@@ -26,6 +38,10 @@ import { flowRunsApi } from '../api/flow-runs-api';
 
 export const flowRunKeys = {
   detail: (runId: string) => ['flow-run', runId] as const,
+  batchChildren: (barrierId: string, statuses?: FlowRunStatus[]) =>
+    ['batch-children', barrierId, statuses ?? null] as const,
+  batchChild: (barrierId: string, dispatchIndex: number) =>
+    ['batch-child', barrierId, dispatchIndex] as const,
 };
 
 const STATUS_CATEGORIES = [
@@ -83,10 +99,73 @@ function groupByCategory(data: FlowRunCountByStatus[]) {
 export const DEFAULT_DATE_PRESET = '7days' as const;
 
 export const flowRunQueries = {
-  useFlowRun: (runId: string) =>
+  useFlowRun: (runId: string | null) =>
     useQuery({
-      queryKey: flowRunKeys.detail(runId),
-      queryFn: () => flowRunsApi.getPopulated(runId),
+      queryKey: flowRunKeys.detail(runId ?? ''),
+      queryFn: () => flowRunsApi.getPopulated(runId!),
+      enabled: !isNil(runId),
+      refetchInterval: (query) =>
+        isNil(query.state.data) ||
+        isFlowRunStateTerminal({
+          status: query.state.data.status,
+          ignoreInternalError: false,
+        })
+          ? false
+          : 7000,
+    }),
+  useBatchChildren: ({
+    barrierId,
+    limit,
+    statuses,
+    enabled,
+  }: {
+    barrierId: string | null;
+    limit: number;
+    statuses: FlowRunStatus[] | undefined;
+    enabled: boolean;
+  }) =>
+    useInfiniteQuery<
+      SeekPage<FlowRun>,
+      Error,
+      InfiniteData<SeekPage<FlowRun>>,
+      QueryKey,
+      string | undefined
+    >({
+      queryKey: flowRunKeys.batchChildren(barrierId ?? '', statuses),
+      getNextPageParam: (lastPage) => lastPage.next,
+      initialPageParam: undefined,
+      queryFn: ({ pageParam }) =>
+        flowRunsApi.list({
+          projectId: authenticationSession.getProjectId()!,
+          parentWaitpointId: barrierId!,
+          includeArchived: true,
+          limit,
+          status: statuses,
+          cursor: pageParam,
+        }),
+      enabled: enabled && !isNil(barrierId),
+      refetchInterval: 7000,
+    }),
+  useBatchChildByIndex: ({
+    barrierId,
+    dispatchIndex,
+    enabled,
+  }: {
+    barrierId: string | null;
+    dispatchIndex: number;
+    enabled: boolean;
+  }) =>
+    useQuery({
+      queryKey: flowRunKeys.batchChild(barrierId ?? '', dispatchIndex),
+      queryFn: () =>
+        flowRunsApi.list({
+          projectId: authenticationSession.getProjectId()!,
+          parentWaitpointId: barrierId!,
+          dispatchIndex,
+          includeArchived: true,
+          limit: 1,
+        }),
+      enabled: enabled && !isNil(barrierId),
       refetchInterval: 7000,
     }),
   useRunStats: () => {

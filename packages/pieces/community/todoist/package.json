@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-todoist",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -12,7 +12,6 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "dayjs": "1.11.9",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
