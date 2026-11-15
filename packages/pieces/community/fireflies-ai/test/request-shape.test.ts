@@ -197,8 +197,8 @@ function expectPost(seen: SeenRequest[]): void {
   }
 }
 
-function ctx(props: Record<string, unknown>): never {
-  return Object.assign(Object.create(null), { auth: { type: 'SECRET_TEXT', secret_text: 'key' }, propsValue: props }) as never;
+function ctx(props: Record<string, unknown>) {
+  return Object.assign(Object.create(null), { auth: { type: 'SECRET_TEXT', secret_text: 'key' }, propsValue: props });
 }
 
 function stubFetch({ replies }: { replies: unknown[] }): SeenRequest[] {
@@ -213,12 +213,16 @@ function stubFetch({ replies }: { replies: unknown[] }): SeenRequest[] {
         method: init?.method ?? 'GET',
         url: typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url,
         query: typeof query === 'string' ? query : '',
-        variables: (variables ?? {}) as Record<string, unknown>,
+        variables: toRecord(variables),
       });
       return new Response(JSON.stringify(replies[seen.length - 1] ?? {}), { status: 200 });
     }),
   );
   return seen;
+}
+
+function toRecord(value: unknown): Record<string, unknown> {
+  return value !== null && typeof value === 'object' ? Object.fromEntries(Object.entries(value)) : {};
 }
 
 type SeenRequest = { method: string; url: string; query: string; variables: Record<string, unknown> };
