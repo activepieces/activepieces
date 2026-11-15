@@ -20,18 +20,20 @@ export const createNoteAction = createAction({
 		recordType: Property.StaticDropdown<string>({
 			displayName: 'Add To',
 			required: true,
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
-					{ label: 'Contact', value: 'Subscriber' },
-					{ label: 'Deal', value: 'Deal' },
-					{ label: 'Account', value: 'CustomerAccount' },
+					{ label: 'Contact', value: 'Subscriber', description: 'A person' },
+					{ label: 'Deal', value: 'Deal', description: 'A sales opportunity' },
+					{ label: 'Account', value: 'CustomerAccount', description: 'A company' },
 				],
 			},
 		}),
 		recordId: Property.ShortText({
 			displayName: 'Record ID',
-			description: 'The ID of the contact, deal or account. Map it from the trigger or an earlier step, for example the contact ID from Find Contact.',
+			description: 'The contact, deal or account ID, from a trigger or an earlier step.',
+			placeholder: '42',
 			required: true,
 		}),
 		note: Property.LongText({ displayName: 'Note', required: true }),

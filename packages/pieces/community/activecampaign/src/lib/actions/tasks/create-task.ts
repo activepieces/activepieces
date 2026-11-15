@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { activeCampaignAuth } from '../../auth';
 import { activecampaignCommon, makeClient } from '../../common';
 import { aiInput } from '../../common/ai-props';
@@ -16,37 +16,50 @@ export const createTaskAction = createAction({
 		idempotent: false,
 	},
 	outputSchema: rawTaskOutputSchema,
+	propertyGroups: [
+		{ key: 'record', display: 'section', label: 'Record', icon: 'inbox', props: ['ownerType', 'recordId'] },
+		{ key: 'task', display: 'section', label: 'Task', icon: 'text', props: ['taskTypeId', 'title', 'note'] },
+		{ key: 'schedule', display: 'section', label: 'Schedule', icon: 'calendar', props: ['dateNote', 'dueDate', 'endDate', 'assigneeId'] },
+	],
 	props: {
 		ownerType: Property.StaticDropdown<string>({
 			displayName: 'Attach To',
 			required: true,
 			defaultValue: 'contact',
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
-					{ label: 'Contact', value: 'contact' },
-					{ label: 'Deal', value: 'deal' },
+					{ label: 'Contact', value: 'contact', description: 'A person' },
+					{ label: 'Deal', value: 'deal', description: 'A sales opportunity' },
 				],
 			},
 		}),
 		recordId: Property.ShortText({
 			displayName: 'Contact or Deal ID',
-			description: 'Map it from the trigger or an earlier step.',
+			description: 'The contact or deal ID, mapped from a trigger or earlier step.',
+			placeholder: '42',
 			required: true,
 		}),
 		taskTypeId: activecampaignCommon.taskTypeId,
 		title: Property.ShortText({ displayName: 'Title', required: false }),
 		note: Property.LongText({ displayName: 'Note', required: false }),
+		dateNote: Property.MarkDown({
+			value: 'Dates are ISO 8601, in UTC unless you add an offset. A date alone is sent as 12:00 UTC. End Date defaults to 15 minutes after Due Date.',
+			variant: MarkdownVariant.INFO,
+		}),
 		dueDate: Property.ShortText({
 			displayName: 'Due Date',
-			description:
-				'An ISO 8601 date or date-time, such as 2026-03-01 or 2026-03-01T09:00:00Z. Times are UTC unless you add an offset (2026-03-01T09:00:00-06:00). A date without a time is sent as 12:00 UTC, which keeps the task on that day for accounts between UTC-11 and UTC+11; for other time zones, give a time with an offset.',
+			placeholder: '2026-03-01',
 			required: true,
+			width: 'half',
 		}),
 		endDate: Property.ShortText({
 			displayName: 'End Date',
-			description: 'Optional, in the same format as Due Date and not before it. A date without a time means 12:00 UTC. Defaults to 15 minutes after the due date.',
+			description: 'Not before the due date.',
+			placeholder: '2026-03-02',
 			required: false,
+			width: 'half',
 		}),
 		assigneeId: activecampaignCommon.userId({ displayName: 'Assignee', required: false }),
 	},
