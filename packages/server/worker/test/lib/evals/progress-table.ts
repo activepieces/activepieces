@@ -10,7 +10,7 @@ function create({ cases, repeats, verdictOf }: { cases: EvalCase[], repeats: num
     const draw = (): void => {
         const lines = render({ cases, repeats, marks, verdictOf, costUsd, frame, elapsedMs: Date.now() - startedAt })
         process.stdout.write(`${drawnLines > 0 ? `\x1b[${drawnLines}A` : ''}\x1b[0J${lines.join('\n')}\n`)
-        drawnLines = lines.length
+        drawnLines = screenRows({ lines, columns: process.stdout.columns || DEFAULT_COLUMNS })
     }
     const mark = ({ caseId, trial, value }: { caseId: string, trial: number, value: Mark }): void => {
         const row = marks.get(caseId)
@@ -56,6 +56,10 @@ function render({ cases, repeats, marks, verdictOf, costUsd, frame, elapsedMs }:
     ]
 }
 
+function screenRows({ lines, columns }: { lines: string[], columns: number }): number {
+    return lines.reduce((total, line) => total + Math.max(1, Math.ceil(line.replace(ANSI_PATTERN, '').length / columns)), 0)
+}
+
 function status({ row, pass, fail, verdictOf }: { row: Mark[], pass: number, fail: number, verdictOf: (counts: { pass: number, fail: number }) => Verdict }): string {
     const remaining = row.length - pass - fail
     const best = verdictOf({ pass: pass + remaining, fail })
@@ -86,6 +90,8 @@ function formatElapsed(ms: number): string {
 }
 
 const FRAME_MS = 100
+const DEFAULT_COLUMNS = 100
+const ANSI_PATTERN = /\x1b\[[0-9;]*m/g
 const TITLE_WIDTH = 34
 const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
 const GREEN = '\x1b[32m'

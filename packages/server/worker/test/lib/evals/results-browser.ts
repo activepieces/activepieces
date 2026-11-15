@@ -28,7 +28,7 @@ async function open({ datasets }: { datasets: BrowsedDataset[] }): Promise<void>
     await new Promise<void>((resolve) => {
         const onKey = (data: Buffer): void => {
             for (const key of data.toString().match(KEY_PATTERN) ?? []) {
-                const next = handleKey({ key, view, rows, typed, height: process.stdout.rows || 30 })
+                const next = handleKey({ key, view, rows, typed, width: process.stdout.columns || 100, height: process.stdout.rows || 30 })
                 if (isNil(next)) {
                     process.stdin.off('data', onKey)
                     resolve()
@@ -48,7 +48,7 @@ async function open({ datasets }: { datasets: BrowsedDataset[] }): Promise<void>
     process.stdout.write(`${SHOW_CURSOR}${ALT_SCREEN_OFF}`)
 }
 
-function handleKey({ key, view, rows, typed, height }: { key: string, view: View, rows: Row[], typed: string, height: number }): { view: View, typed: string } | null {
+function handleKey({ key, view, rows, typed, width, height }: { key: string, view: View, rows: Row[], typed: string, width: number, height: number }): { view: View, typed: string } | null {
     if (key === 'q' || key === CTRL_C) {
         return null
     }
@@ -80,7 +80,8 @@ function handleKey({ key, view, rows, typed, height }: { key: string, view: View
             if (back) {
                 return { view: { screen: 'runs', caseIndex: view.caseIndex, index: view.runIndex }, typed: '' }
             }
-            return { view: { ...view, scroll: Math.max(0, view.scroll + scrollBy({ key, page })) }, typed: '' }
+            const lastPage = Math.max(0, transcriptBody({ run: rows[view.caseIndex].runs[view.runIndex], width }).length - (height - 2))
+            return { view: { ...view, scroll: Math.min(Math.max(0, view.scroll + scrollBy({ key, page })), lastPage) }, typed: '' }
         }
     }
 }
@@ -130,7 +131,7 @@ function render({ view, rows, datasets, typed, width, height }: { view: View, ro
                 '',
                 ...wrap({ text: `${DIM}user asked:${RESET} ${oneLine(row.candidate.userMessage)}`, width: width - 2 }).slice(0, USER_PREVIEW_LINES),
                 '',
-            ].map((line) => `  ${line}`)
+            ].map((line) => `  ${line}`).slice(0, Math.max(0, height - 3 - row.runs.length))
             const lines = row.runs.map((run, index) => {
                 const detail = run.verdict === 'pass' ? `${run.scores.stepsToDecision} step(s)` : firstFailure(run)
                 const text = fit(`run ${run.trial + 1}  ${VERDICT_TEXT[run.verdict]}  ${oneLine(detail)}`, width - 2)
@@ -146,12 +147,7 @@ function render({ view, rows, datasets, typed, width, height }: { view: View, ro
         case 'transcript': {
             const row = rows[view.caseIndex]
             const run = row.runs[view.runIndex]
-            const body = [
-                ...caseSummary.failures(run).flatMap((reason) => wrap({ text: `✗ ${reason}`, width })),
-                `${run.scores.stepsToDecision} step(s) · ${isNil(run.scores.costUsd) ? 'cost unknown' : `$${run.scores.costUsd.toFixed(4)}`}`,
-                '',
-                ...run.transcript.split('\n').flatMap((line) => wrap({ text: line, width })),
-            ]
+            const body = transcriptBody({ run, width })
             const size = height - 2
             const scroll = Math.min(view.scroll, Math.max(0, body.length - size))
             return [
@@ -161,6 +157,15 @@ function render({ view, rows, datasets, typed, width, height }: { view: View, ro
             ]
         }
     }
+}
+
+function transcriptBody({ run, width }: { run: UploadedRun, width: number }): string[] {
+    return [
+        ...caseSummary.failures(run).flatMap((reason) => wrap({ text: `✗ ${reason}`, width })),
+        `${run.scores.stepsToDecision} step(s) · ${isNil(run.scores.costUsd) ? 'cost unknown' : `$${run.scores.costUsd.toFixed(4)}`}`,
+        '',
+        ...run.transcript.split('\n').flatMap((line) => wrap({ text: line, width })),
+    ]
 }
 
 function firstFailure(run: UploadedRun): string {
