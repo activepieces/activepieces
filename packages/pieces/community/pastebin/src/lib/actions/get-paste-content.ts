@@ -9,12 +9,14 @@ export const getPasteContentAction = createAction({
   outputSchema: getPasteContentOutputSchema,
   classification: 'READ',
   displayName: 'Get Paste Content',
-  description: 'Retrieves the content of a paste',
+  description: 'Read the text of a paste by its ID.',
   audience: 'both',
   aiMetadata: { description: 'Fetches the raw text content of an existing Pastebin paste by its paste ID. Use to read back a snippet you have the ID for; private pastes require account credentials on the connection. Idempotent — a read-only lookup with no side effect.', idempotent: true },
   props: {
     paste_id: Property.ShortText({
       displayName: 'Paste ID',
+      description: "The code at the end of the paste's link on pastebin.com.",
+      placeholder: 'AbC123xY',
       required: true,
     }),
   },
