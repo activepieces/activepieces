@@ -71,12 +71,8 @@ export default createAction({
     }),
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'Results per type; development-mode apps allow up to 10.',
+      description: 'Results per type, from 1 to 50; development-mode apps allow up to 10.',
       required: false,
-      display: 'stepper',
-      min: 1,
-      max: 50,
-      step: 1,
       defaultValue: 5,
     }),
     offset: Property.Number({

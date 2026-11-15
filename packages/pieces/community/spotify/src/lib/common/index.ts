@@ -353,10 +353,6 @@ export const spotifyCommon = {
       displayName: 'Limit',
       description: `How many to return, from 1 to ${max}.`,
       required: false,
-      display: 'stepper',
-      min: 1,
-      max,
-      step: 1,
       defaultValue: defaultHint,
     }),
   offset: () =>
