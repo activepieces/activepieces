@@ -80,7 +80,7 @@ describe('trigger outputSchemas scored both ways against the live captures (samp
 
   test('every trigger that API calls can fire warns about loops; campaign triggers do not', () => {
     for (const [name, trigger] of Object.entries(activecampaign.triggers())) {
-      const warns = trigger.description.includes('can trigger itself again');
+      const warns = 'selfTriggerNote' in trigger.props;
       expect(warns).toBe(!['activecampaign_campaign_link_clicked', 'activecampaign_new_campaign_bounce'].includes(name));
     }
   });

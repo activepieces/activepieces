@@ -38,7 +38,7 @@ describe('piece registration', () => {
     }
     expect(Object.values(actions).filter((action) => action.audience === 'both')).toEqual([]);
     expect(Object.keys(actions)).toHaveLength(7 + 7 + 31);
-    expect(activecampaign.minimumSupportedRelease).toBe('0.86.4');
+    expect(activecampaign.minimumSupportedRelease).toBe('0.88.2');
   });
 
   test('13 triggers are registered, including the two formerly dead ones', () => {
