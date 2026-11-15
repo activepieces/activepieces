@@ -9,9 +9,9 @@ import { PlaceholderFormat, TemplateScan, templateFill } from '../common/templat
 import {
   buildImageInputs,
   buildPlaceholderInputs,
+  listTemplateInputs,
   runTemplateFill,
   TemplateClients,
-  templateNote,
 } from '../common/template-fill-run';
 
 export const createDocumentBasedOnTemplate = createAction({
@@ -104,8 +104,6 @@ export const createDocumentBasedOnTemplate = createAction({
           template,
           placeholderFormat: placeholder_format,
           build: buildPlaceholderInputs,
-          onUnreadable: () =>
-            templateNote('The placeholders of this document could not be listed. Add them under Variables instead.'),
         }),
     }),
     values: Property.Object({
@@ -125,7 +123,6 @@ export const createDocumentBasedOnTemplate = createAction({
           template,
           placeholderFormat: undefined,
           build: buildImageInputs,
-          onUnreadable: () => ({}),
         }),
     }),
     images: Property.Array({
@@ -182,25 +179,21 @@ async function templateInputs({
   template,
   placeholderFormat,
   build,
-  onUnreadable,
 }: {
   auth: GoogleDocsAuthValue | undefined;
   template: unknown;
   placeholderFormat: unknown;
   build: (params: { scan: TemplateScan; format: PlaceholderFormat }) => InputPropertyMap;
-  onUnreadable: () => InputPropertyMap;
 }): Promise<InputPropertyMap> {
   if (!auth || typeof template !== 'string' || template.length === 0) {
     return {};
   }
-  const format = templateFill.resolveFormat(placeholderFormat);
-  try {
-    const clients = await createTemplateClients(auth);
-    const document = await clients.getDocument(template);
-    return build({ scan: templateFill.scan({ document, format }), format });
-  } catch {
-    return onUnreadable();
-  }
+  return listTemplateInputs({
+    getDocument: (await createTemplateClients(auth)).getDocument,
+    templateId: template,
+    format: templateFill.resolveFormat(placeholderFormat),
+    build,
+  });
 }
 
 async function createTemplateClients(auth: GoogleDocsAuthValue): Promise<TemplateClients> {

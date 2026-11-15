@@ -44,6 +44,21 @@ export async function runTemplateFill({
   };
 }
 
+export async function listTemplateInputs({
+  getDocument,
+  templateId,
+  format,
+  build,
+}: {
+  getDocument: TemplateClients['getDocument'];
+  templateId: string;
+  format: PlaceholderFormat;
+  build: (params: { scan: TemplateScan; format: PlaceholderFormat }) => InputPropertyMap;
+}): Promise<InputPropertyMap> {
+  const document = await getDocument(templateId);
+  return build({ scan: templateFill.scan({ document, format }), format });
+}
+
 export function buildPlaceholderInputs({
   scan,
   format,

@@ -5,6 +5,7 @@ import { templateFill } from './template-fill';
 import {
   buildImageInputs,
   buildPlaceholderInputs,
+  listTemplateInputs,
   runTemplateFill,
   TemplateClients,
   TemplateFillInput,
@@ -126,6 +127,32 @@ describe('runTemplateFill', () => {
 
     expect(clients.batchUpdate).not.toHaveBeenCalled();
     expect(output).toMatchObject({ documentId: 'copy-id', totalReplacements: 0, data: { replies: [] } });
+  });
+});
+
+describe('listTemplateInputs', () => {
+  it('lists one input per placeholder when the template can be read', async () => {
+    const getDocument = vi.fn<TemplateClients['getDocument']>().mockResolvedValue(documentOf('{{name}}'));
+
+    const inputs = await listTemplateInputs({
+      getDocument,
+      templateId: 'template-id',
+      format: '{{KEY}}',
+      build: buildPlaceholderInputs,
+    });
+
+    expect(Object.keys(inputs)).toEqual(['name']);
+  });
+
+  it.each([
+    ['placeholder', buildPlaceholderInputs],
+    ['image', buildImageInputs],
+  ])('fails the %s inputs instead of replacing them when the template cannot be read', async (_, build) => {
+    const getDocument = vi.fn<TemplateClients['getDocument']>().mockRejectedValue(new Error('Request had insufficient authentication scopes.'));
+
+    await expect(
+      listTemplateInputs({ getDocument, templateId: 'template-id', format: '{{KEY}}', build }),
+    ).rejects.toThrow('Request had insufficient authentication scopes.');
   });
 });
 
