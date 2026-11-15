@@ -228,7 +228,7 @@ async function reportDataset({ name, cases, results, explained, live, browse, re
         const experimentId = await posthogExperiments.upload({ runs: results, suiteKey: name, runSource: isNil(process.env['CI']) ? 'local' : 'ci', applicationVersion: gitSha(), modelVersion: modelId, promptVersion: promptVersion(), toolFingerprints })
         console.log(`\nUploaded main baseline for ${name}: experiment ${experimentId}`)
     }
-    const regressed = printDiff({ baselineRead, suiteKey: name, modelVersion: modelId, cases, summaries })
+    const labels = printDiff({ baselineRead, suiteKey: name, modelVersion: modelId, cases, summaries })
     printUntested({ cases, changedTools })
     if (MUST_PASS_DATASETS.has(name) && clearlyFailing > 0) {
         return { status: 'broken', reason: `${clearlyFailing} ${name} case(s) clearly fail` }
@@ -237,7 +237,14 @@ async function reportDataset({ name, cases, results, explained, live, browse, re
         case 'error': return { status: 'broken', reason: `could not read the main baseline for ${name}: ${baselineRead.message}` }
         case 'missing': return { status: 'unchecked', reason: `no main baseline for ${name} on ${modelId}` }
         case 'skipped': return { status: 'ok', reason: '' }
-        case 'found': return regressed > 0 ? { status: 'broken', reason: `${regressed} ${name} case(s) regressed` } : { status: 'ok', reason: '' }
+        case 'found': {
+            const regressed = labels.filter((label) => label === 'REGRESSED').length
+            const edited = labels.filter((label) => label === 'edited').length
+            if (regressed > 0) {
+                return { status: 'broken', reason: `${regressed} ${name} case(s) regressed` }
+            }
+            return edited > 0 ? { status: 'unchecked', reason: `${edited} ${name} case(s) were edited after the main baseline ran` } : { status: 'ok', reason: '' }
+        }
     }
 }
 
@@ -305,31 +312,32 @@ function average(values: (number | null)[]): number | null {
     return known.length === 0 ? null : known.reduce((total, value) => total + value, 0) / known.length
 }
 
-function printDiff({ baselineRead, suiteKey, modelVersion, cases, summaries }: { baselineRead: BaselineRead, suiteKey: string, modelVersion: string, cases: EvalCase[], summaries: CaseSummary[] }): number {
+function printDiff({ baselineRead, suiteKey, modelVersion, cases, summaries }: { baselineRead: BaselineRead, suiteKey: string, modelVersion: string, cases: EvalCase[], summaries: CaseSummary[] }): DiffLabel[] {
     if (baselineRead.kind === 'skipped') {
-        return 0
+        return []
     }
     if (baselineRead.kind === 'error') {
         console.log(colors.red(`\nCould not read the main baseline from PostHog: ${baselineRead.message}`))
-        return 0
+        return []
     }
     if (baselineRead.kind === 'missing') {
         console.log(colors.yellow(`\nNo main baseline in PostHog yet for ${suiteKey} on ${modelVersion}, so there is nothing to compare against.`))
-        return 0
+        return []
     }
     const found = baselineRead.baseline
-    console.log(`\n${colors.bold(`Diff vs main baseline ${found.applicationVersion.slice(0, SHORT_SHA)}`)} ${colors.dim(`same model · a change counts only when at least ${Math.round(CLEAR_SHARE * 100)}% of at least ${MIN_JUDGED_RUNS} runs agree on both sides`)}`)
+    console.log(`\n${colors.bold(`Diff vs main baseline ${found.applicationVersion.slice(0, SHORT_SHA)}`)} ${colors.dim(`same model and case version · a change counts only when at least ${Math.round(CLEAR_SHARE * 100)}% of at least ${MIN_JUDGED_RUNS} runs agree on both sides`)}`)
     console.log(colors.dim(`  ${padEnd('case', 4)}  ${padEnd('title', DIFF_TITLE_WIDTH)}  ${padEnd('baseline', 8)}  ${padEnd('now', 8)}  change`))
     const labels = cases.map((candidate) => {
-        const before = found.counts.get(posthogExperiments.caseKey(candidate)) ?? { pass: 0, fail: 0 }
+        const key = posthogExperiments.caseKey(candidate)
+        const before = found.counts.get(key) ?? { pass: 0, fail: 0 }
         const now = summaries.find((summary) => summary.caseNumber === candidate.caseNumber) ?? { pass: 0, fail: 0 }
-        const label = diffLabel({ before: clearVerdict(before), now: clearVerdict(now) })
+        const label = found.caseVersionIds.get(key) === candidate.versionId ? diffLabel({ before: clearVerdict(before), now: clearVerdict(now) }) : 'edited'
         console.log(`  ${padEnd(String(candidate.caseNumber), 4)}  ${padEnd(candidate.title, DIFF_TITLE_WIDTH)}  ${describe(before)}  ${describe(now)}  ${DIFF_LABEL[label]}`)
         return label
     })
     const count = (label: DiffLabel): number => labels.filter((candidate) => candidate === label).length
-    console.log(`  ${colors.green(`${count('FIXED')} fixed`)} · ${count('REGRESSED') > 0 ? colors.red(`${count('REGRESSED')} regressed`) : '0 regressed'} · ${colors.yellow(`${count('unclear')} unclear`)} · ${colors.dim(`${count('same')} same`)}`)
-    return count('REGRESSED')
+    console.log(`  ${colors.green(`${count('FIXED')} fixed`)} · ${count('REGRESSED') > 0 ? colors.red(`${count('REGRESSED')} regressed`) : '0 regressed'} · ${colors.yellow(`${count('unclear')} unclear`)} · ${colors.yellow(`${count('edited')} edited`)} · ${colors.dim(`${count('same')} same`)}`)
+    return labels
 }
 
 function clearVerdict({ pass, fail }: VerdictCounts): Verdict | 'unclear' {
@@ -463,7 +471,7 @@ const PROMPT_HASH_CHARS = 12
 const VERDICT_MARK: Record<RunVerdict, string> = { pass: colors.green('✓'), fail: colors.red('✗'), unknown: colors.yellow('?') }
 const VERDICT_LABEL: Record<RunVerdict, string> = { pass: colors.green('pass'), fail: colors.red('FAIL'), unknown: colors.yellow('unclear') }
 const DIFF_TITLE_WIDTH = 34
-const DIFF_LABEL: Record<DiffLabel, string> = { same: colors.dim('= same'), unclear: colors.yellow('? unclear'), FIXED: colors.bold(colors.green('▲ fixed')), REGRESSED: colors.bold(colors.red('▼ regressed')) }
+const DIFF_LABEL: Record<DiffLabel, string> = { same: colors.dim('= same'), edited: colors.yellow('≠ case edited'), unclear: colors.yellow('? unclear'), FIXED: colors.bold(colors.green('▲ fixed')), REGRESSED: colors.bold(colors.red('▼ regressed')) }
 
 main().catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : String(error))
@@ -492,7 +500,7 @@ type BaselineRead =
     | { kind: 'error', message: string }
     | { kind: 'skipped' }
 
-type DiffLabel = 'same' | 'unclear' | 'FIXED' | 'REGRESSED'
+type DiffLabel = 'same' | 'unclear' | 'edited' | 'FIXED' | 'REGRESSED'
 
 type DatasetOutcome = {
     status: 'ok' | 'unchecked' | 'broken'

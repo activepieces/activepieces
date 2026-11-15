@@ -75,11 +75,12 @@ async function baseline({ suiteKey, modelVersion }: { suiteKey: string, modelVer
         return values.length === gates.length ? 'pass' : 'unknown'
     }
     const counts = new Map<string, VerdictCounts>()
+    const caseVersionIds = new Map(items.flatMap((item) => isNil(item.dataset_item_version_id) ? [] : [[item.case_key, item.dataset_item_version_id] as const]))
     for (const key of new Set(items.map((item) => item.case_key).filter((key) => key !== TOOL_DEFINITIONS_KEY))) {
         const verdicts = items.filter((item) => item.case_key === key).map((item) => verdictOf(item.id))
         counts.set(key, { pass: verdicts.filter((verdict) => verdict === 'pass').length, fail: verdicts.filter((verdict) => verdict === 'fail').length })
     }
-    return { applicationVersion: latest.application_version ?? 'unknown', counts, toolFingerprints: await readToolFingerprints({ experimentId: latest.id, items }) }
+    return { applicationVersion: latest.application_version ?? 'unknown', counts, caseVersionIds, toolFingerprints: await readToolFingerprints({ experimentId: latest.id, items }) }
 }
 
 async function readToolFingerprints({ experimentId, items }: { experimentId: string, items: ExperimentItem[] }): Promise<ToolFingerprints | null> {
@@ -107,6 +108,7 @@ function itemFor({ run, itemId }: { run: UploadedRun, itemId: string }): Record<
         case_key: caseKey(run.candidate),
         trial: String(run.trial),
         dataset_item_identifier: run.candidate.id,
+        dataset_item_version_id: run.candidate.versionId,
         payload: {
             input: { userMessage: run.candidate.userMessage, cutBeforeStep: run.candidate.cutBeforeStep ?? null, targetTool: run.candidate.targetTool ?? null },
             output: run.transcript.slice(0, TRANSCRIPT_MAX_CHARS),
@@ -209,7 +211,7 @@ const TRANSCRIPT_MAX_CHARS = 20_000
 const Scorer = z.object({ id: z.string(), name: z.string(), archived: z.boolean(), current_version_id: z.string() })
 const ScorerPage = z.object({ results: z.array(Scorer) })
 const ExperimentPage = z.object({ results: z.array(z.object({ id: z.string(), application_version: z.string().nullable() })) })
-const ExperimentItem = z.object({ id: z.string(), case_key: z.string() })
+const ExperimentItem = z.object({ id: z.string(), case_key: z.string(), dataset_item_version_id: z.string().nullish() })
 const ItemPage = z.object({ next_cursor: z.string().nullable(), results: z.array(ExperimentItem) })
 const ToolDefinitionsPayload = z.object({ data: z.object({ input: z.object({ tools: z.record(z.string(), z.string()) }) }).nullable() })
 const ResultCells = z.object({ results: z.array(z.object({ item_id: z.string(), status: z.string(), value: z.unknown() })) })
@@ -257,6 +259,7 @@ export type VerdictCounts = {
 export type Baseline = {
     applicationVersion: string
     counts: Map<string, VerdictCounts>
+    caseVersionIds: Map<string, string>
     toolFingerprints: ToolFingerprints | null
 }
 

@@ -17,6 +17,7 @@ function fromDatasetItem(item: DatasetItem): EvalCase {
     const userMessage = textOf(messages[userIndex])
     return {
         id: item.id,
+        versionId: item.version_id,
         caseNumber: item.metadata.case,
         title: item.metadata.title ?? item.expected_output.checks.join(' '),
         problemType: item.metadata.problem_type,
@@ -153,6 +154,7 @@ export const ToolFixture = z.object({
 
 export const DatasetItem = z.object({
     id: z.string(),
+    version_id: z.string(),
     input: z.unknown(),
     expected_output: z.object({
         checks: z.array(z.string()).min(1),
@@ -182,6 +184,7 @@ export type RecordedToolCall = z.infer<typeof ToolFixture>
 
 export type EvalCase = {
     id: string
+    versionId: string
     caseNumber: number
     title: string
     problemType: string

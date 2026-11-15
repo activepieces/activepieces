@@ -51,7 +51,7 @@ describe('evalChecks.grade', () => {
 
     it('scores a judge outage as unknown, not as a failure', async () => {
         vi.stubGlobal('fetch', vi.fn(async () => new Response('down', { status: 503 })))
-        const evalCase = { id: 'c1', caseNumber: 1, title: 't', problemType: 'core', checks: ['asks a question'], cutBeforeStep: undefined, targetTool: undefined, preloadedSkills: [], userMessage: 'hi', messages: [], steps: [], recordedToolCalls: [] }
+        const evalCase = { id: 'c1', versionId: 'v1', caseNumber: 1, title: 't', problemType: 'core', checks: ['asks a question'], cutBeforeStep: undefined, targetTool: undefined, preloadedSkills: [], userMessage: 'hi', messages: [], steps: [], recordedToolCalls: [] }
         const outcome = { transcript: 'ASSISTANT: hello', rejectedToolInputs: [], toolCalls: [], stops: [], newFixtures: [], costUsd: 0, steps: 1 }
 
         const scores = await evalChecks.grade({ evalCase, outcome, auth: { apiKey: 'k' } })

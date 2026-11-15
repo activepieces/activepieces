@@ -78,6 +78,18 @@ describe('posthogExperiments.baseline', () => {
         expect(found?.counts.get('case-1')).toEqual({ pass: 1, fail: 0 })
     })
 
+    it('reads which dataset item version each case ran on', async () => {
+        mockBaseline({
+            items: [{ id: 'i1', case_key: 'case-1', dataset_item_version_id: 'v2' }, { id: 'i2', case_key: 'case-2', dataset_item_version_id: null }],
+            cells: [],
+            payload: null,
+        })
+
+        const found = await posthogExperiments.baseline({ suiteKey: 'chat-core', modelVersion: 'm' })
+
+        expect(found?.caseVersionIds).toEqual(new Map([['case-1', 'v2']]))
+    })
+
     it('reads the tool definitions saved with the baseline and keeps them out of the case counts', async () => {
         mockBaseline({
             items: [{ id: 'i1', case_key: 'case-1' }, { id: 'tools', case_key: 'tool-definitions' }],
@@ -117,6 +129,20 @@ describe('posthogExperiments.upload', () => {
         const toolItem = bodies.flatMap((params) => UploadBody.safeParse(params.body).data?.items ?? []).find((item) => item.case_key === 'tool-definitions')
         expect(toolItem?.payload).toEqual(expect.objectContaining({ input: { tools: { ap_list_flows: 'abc123' } } }))
     })
+
+    it('pins each run to the dataset item version it ran', async () => {
+        request.mockReset()
+        request.mockImplementation(async ({ path, query }) => path === '/llm_analytics/score_definitions/'
+            ? { results: [{ id: 'def', name: query?.['search'], archived: false, current_version_id: `ver-${query?.['search']}` }] }
+            : {})
+        const candidate = { id: 'item-1', versionId: 'v3', caseNumber: 1, title: 't', problemType: 'core', checks: ['c'], cutBeforeStep: undefined, targetTool: undefined, preloadedSkills: [], userMessage: 'u', messages: [], steps: [], recordedToolCalls: [] }
+        const scores = { expected: 'pass' as const, honest: 'pass' as const, validToolCalls: 'pass' as const, rejectedToolCalls: 0, costUsd: 0, stepsToDecision: 1, problemTypes: [], reasons: { expected: '', honest: '', toolCalls: '' } }
+
+        await posthogExperiments.upload({ runs: [{ candidate, trial: 0, verdict: 'pass', scores, stops: [], transcript: '' }], suiteKey: 'chat-core', runSource: 'local', applicationVersion: 'sha', modelVersion: 'm', promptVersion: 'p', toolFingerprints: {} })
+
+        const items = request.mock.calls.flatMap(([params]) => UploadBody.safeParse(params.body).data?.items ?? [])
+        expect(items.find((item) => item.case_key === 'case-1')).toEqual(expect.objectContaining({ dataset_item_identifier: 'item-1', dataset_item_version_id: 'v3' }))
+    })
 })
 
-const UploadBody = z.object({ items: z.array(z.object({ case_key: z.string(), payload: z.unknown() })) })
+const UploadBody = z.object({ items: z.array(z.looseObject({ case_key: z.string(), payload: z.unknown() })) })

@@ -5,6 +5,7 @@ describe('evalCase.fromDatasetItem', () => {
     it('splits history, the graded user message and the recorded tool results', () => {
         const converted = evalCase.fromDatasetItem({
             id: 'item-1',
+            version_id: 'version-1',
             source_trace_id: 'trace-1',
             expected_output: { checks: ['No tool call is rejected'], problem_type: 'repeated_errors' },
             metadata: { case: 1, problem_type: 'repeated_errors', code_check: 'tool_input_rejected' },
