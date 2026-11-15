@@ -277,6 +277,7 @@ export function useStreamingReducer({
             };
             followAlong.startRun(followRunRef.current);
           }
+          followAlong.onChunks(chunks);
           for (const chunk of chunks) {
             chunkBufferRef.current.push(chunk as UIMessageChunk);
           }

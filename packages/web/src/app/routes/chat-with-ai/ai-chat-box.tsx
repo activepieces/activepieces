@@ -1,6 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import {
   AgentMessageSource,
+  AgentPageContext,
   ChatPersonalizationStatus,
   ModelOptions,
   PlatformRole,
@@ -225,7 +226,10 @@ function ChatBoxContent({
     async (
       text: string,
       files?: File[],
-      options?: { messageSource?: AgentMessageSource },
+      options?: {
+        messageSource?: AgentMessageSource;
+        pageContext?: AgentPageContext | null;
+      },
     ) => {
       if (!text.trim() && (!files || files.length === 0)) return;
       if (pickUnavailable || historyFailed || historyLoading) return;
