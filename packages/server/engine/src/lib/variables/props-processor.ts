@@ -49,7 +49,8 @@ export const propsProcessor = {
             if (property.type === PropertyType.DYNAMIC) {
                 const valueWithOriginalKeys = dynamicPropKeys.unescapeInputKeys(value)
                 processedInput[key] = valueWithOriginalKeys
-                if (!isNil(dynamaicPropertiesSchema?.[key])) {
+                const isUnsetOptionalGroup = !property.required && isNil(valueWithOriginalKeys)
+                if (!isNil(dynamaicPropertiesSchema?.[key]) && !isUnsetOptionalGroup) {
                     const { processedInput: itemProcessedInput, errors: itemErrors } = await propsProcessor.applyProcessorsAndValidators(
                         valueWithOriginalKeys,
                         dynamicPropKeys.unescapePropsKeys(dynamaicPropertiesSchema[key]),

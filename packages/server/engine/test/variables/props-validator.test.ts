@@ -1,4 +1,5 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework'
+import { PropertyExecutionType } from '@activepieces/shared'
 import { propsProcessor } from '../../src/lib/variables/props-processor'
 describe('Property Validation', () => {
     describe('required properties', () => {
@@ -651,6 +652,52 @@ describe('Property Validation', () => {
             expect(errors).toEqual({
                 checkbox: ['Expected boolean, received: '],
             })
+        })
+    })
+
+    describe('dynamic properties', () => {
+        const dynamicProps = (required: boolean) => ({
+            fields: Property.DynamicProperties({
+                auth: PieceAuth.None(),
+                displayName: 'Values',
+                required,
+                refreshers: [],
+                props: async () => ({}),
+            }),
+        })
+        const fieldsSettings = {
+            fields: {
+                type: PropertyExecutionType.MANUAL,
+                schema: {
+                    name: Property.ShortText({ displayName: 'name', required: false }),
+                },
+            },
+        }
+
+        it.each([null, undefined])('accepts an optional dynamic group whose value is %s', async (value) => {
+            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+                { fields: value },
+                dynamicProps(false),
+                PieceAuth.None(),
+                false,
+                fieldsSettings,
+            )
+
+            expect(errors).toEqual({})
+            expect(processedInput.fields).toBeUndefined()
+        })
+
+        it('still checks the inputs of a dynamic group that has a value', async () => {
+            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+                { fields: { name: 'Ada' } },
+                dynamicProps(false),
+                PieceAuth.None(),
+                false,
+                fieldsSettings,
+            )
+
+            expect(errors).toEqual({})
+            expect(processedInput.fields).toEqual({ name: 'Ada' })
         })
     })
 })
