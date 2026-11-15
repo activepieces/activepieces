@@ -228,20 +228,20 @@ const BatchStatTiles = ({ header }: { header: BatchHeaderState }) => {
     {
       label: t('Succeeded'),
       value: header.succeeded,
-      valueClassName: 'text-success-700 dark:text-success-300',
-      dotClassName: 'bg-success',
+      valueClassName: 'text-success-11',
+      dotClassName: 'bg-success-10',
     },
     {
       label: t('Failed'),
       value: header.unsuccessful,
       valueClassName: 'text-danger-11',
-      dotClassName: 'bg-destructive',
+      dotClassName: 'bg-danger-10',
     },
     {
       label: t('Running'),
       value: header.stillRunning,
       valueClassName: 'text-accent-11',
-      dotClassName: 'bg-primary',
+      dotClassName: 'bg-accent-10',
     },
   ];
   return (
