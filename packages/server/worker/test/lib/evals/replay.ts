@@ -155,7 +155,6 @@ const REPLAY_ENDED_MESSAGE = 'This tool is unavailable right now.'
 const STALE_REASON_CHARS = 200
 const LIVE_TOOLS = new Set([
     'ap_fetch_url',
-    'ap_get_piece_props',
     'ap_get_tool_schema',
     'ap_load_skill',
     'ap_research_pieces',
@@ -170,6 +169,7 @@ const READ_TOOLS = new Set([
     'ap_discover_action_auth',
     'ap_explore_data',
     'ap_find_records',
+    'ap_get_piece_props',
     'ap_flow_structure',
     'ap_get_run',
     'ap_list_across_projects',

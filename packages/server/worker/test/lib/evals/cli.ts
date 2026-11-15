@@ -68,11 +68,16 @@ async function main(): Promise<void> {
         return
     }
 
-    const [auth, mcp, baselineReads] = await Promise.all([
+    const setup = await tryCatch(() => Promise.all([
         evalAgentTurn.resolveAuth(),
         evalToolSet.connectMcp(),
         Promise.all(datasets.map((dataset) => readBaseline({ suiteKey: dataset.name, modelVersion: values.model, skip: values.upload || recordMode }))),
-    ])
+    ]))
+    if (setup.error) {
+        await evalAgentTurn.cleanupAuth()
+        throw setup.error
+    }
+    const [auth, mcp, baselineReads] = setup.data
     console.log(`Dev server MCP tools run in project "${mcp.projectName}"`)
     const schemaTools = evalToolSet.build({ mcp, caseReplay: replay.create({ recordedToolCalls: [] }), auth, recordMode: false })
     const toolFingerprints = await toolChanges.fingerprints({ tools: schemaTools })
@@ -233,6 +238,10 @@ async function reportDataset({ name, cases, results, explained, live, browse, re
     if (MUST_PASS_DATASETS.has(name) && clearlyFailing > 0) {
         return { status: 'broken', reason: `${clearlyFailing} ${name} case(s) clearly fail` }
     }
+    const crashed = results.filter((result) => result.crashed).length
+    if (crashed > 0) {
+        return { status: 'broken', reason: `${crashed} ${name} run(s) crashed before they could be graded` }
+    }
     switch (baselineRead.kind) {
         case 'error': return { status: 'broken', reason: `could not read the main baseline for ${name}: ${baselineRead.message}` }
         case 'missing': return { status: 'unchecked', reason: `no main baseline for ${name} on ${modelId}` }
@@ -277,9 +286,9 @@ async function evaluate({ candidate, trial, recordedToolCalls, mcp, modelId, aut
         return { scores, stops: outcome.stops.map((stop) => stop.reason), transcript: outcome.transcript, newFixtures: outcome.newFixtures }
     })
     if (error) {
-        return { candidate, trial, verdict: 'unknown', scores: crashedScores({ reason: error.message }), stops: [], transcript: '', newFixtures: [] }
+        return { candidate, trial, verdict: 'unknown', scores: crashedScores({ reason: error.message }), stops: [], transcript: '', newFixtures: [], crashed: true }
     }
-    return { candidate, trial, verdict: evalChecks.verdictOf({ scores: data.scores }), ...data }
+    return { candidate, trial, verdict: evalChecks.verdictOf({ scores: data.scores }), ...data, crashed: false }
 }
 
 function crashedScores({ reason }: { reason: string }): RunScores {
@@ -514,4 +523,5 @@ type PlannedRun = {
 
 type CaseResult = UploadedRun & {
     newFixtures: RecordedToolCall[]
+    crashed: boolean
 }

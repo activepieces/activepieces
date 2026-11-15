@@ -94,8 +94,9 @@ describe('replay live tools', () => {
     })
 
     it('treats every live tool as a read', () => {
-        expect(['ap_web_search', 'ap_fetch_url', 'ap_search_actions', 'ap_get_piece_props', 'ap_load_skill'].every((name) => replay.isLive(name) && replay.isRead(name))).toBe(true)
+        expect(['ap_web_search', 'ap_fetch_url', 'ap_search_actions', 'ap_load_skill'].every((name) => replay.isLive(name) && replay.isRead(name))).toBe(true)
         expect(replay.isLive('ap_list_flows')).toBe(false)
+        expect(replay.isLive('ap_get_piece_props')).toBe(false)
         expect(replay.isLive('ap_resolve_property_options')).toBe(false)
     })
 })

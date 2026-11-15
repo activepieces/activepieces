@@ -9,6 +9,9 @@ icon: 🧪
 ## Before you run
 
 - Start the dev server yourself. The CLI uses its MCP tools and the `/v1/agents/eval/*` routes. `mcp-credentials` and `execute-tool` answer 404 unless `AP_ENVIRONMENT` is `dev`, and `execute-tool` only runs tools for eval conversations.
+- `.env.dev` at the repo root, which the CLI loads on its own, needs:
+  - `AP_API_KEY`: the same value the dev server runs with.
+  - `OPENROUTER_API_KEY`, or `AP_OPENROUTER_PROVISION_KEY` to mint a temporary key per run.
   - `AP_POSTHOG_API_KEY`: reads the datasets and the baseline.
 
 ## Run
