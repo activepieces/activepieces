@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { AppConnection, AppConnectionType, AppConnectionValue, CredentialGrantField, CredentialGrantKind, CredentialGrantRecord, credentialPlaceholder, ResolveCredentialGrantResponse } from '@activepieces/shared'
+import { AppConnection, AppConnectionType, AppConnectionValue, CredentialGrantField, CredentialGrantRecord, ResolveCredentialGrantResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../app-connection/app-connection-service/app-connection-service'
 import { getCredentialGrantIndexKey, getCredentialGrantKey } from '../database/redis/keys'
@@ -10,7 +10,6 @@ import { EncryptedObject, encryptUtils } from '../helper/encryption'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { pieceMetadataService } from '../pieces/metadata/piece-metadata-service'
-import { variableService } from '../variable/variable.service'
 import { AllowedHosts, allowedHostsResolver } from './allowed-hosts-resolver'
 import { credentialFieldExtractor } from './credential-field-extractor'
 import { credentialProxyAuth } from './credential-proxy-auth'
@@ -28,7 +27,6 @@ export const credentialProxyGrantService = (log: FastifyBaseLogger) => ({
         const grant = await issueOrReuse({
             subject: `connection:${connection.externalId}`,
             record: {
-                kind: CredentialGrantKind.CONNECTION,
                 platformId: connection.platformId,
                 projectId,
                 jobId,
@@ -45,23 +43,6 @@ export const credentialProxyGrantService = (log: FastifyBaseLogger) => ({
             grantId: grant.grantId,
             fields: grant.fields,
         })
-    },
-
-    async issueForVariable({ name, projectId, platformId, jobId }: IssueForVariableParams): Promise<string> {
-        const grant = await issueOrReuse({
-            subject: `variable:${name}`,
-            record: {
-                kind: CredentialGrantKind.VARIABLE,
-                platformId,
-                projectId,
-                jobId,
-                variableName: name,
-                fields: [VARIABLE_FIELD],
-                allowedHosts: [],
-                allowAnyHost: true,
-            },
-        })
-        return credentialPlaceholder.build({ grantId: grant.grantId, fieldIndex: VARIABLE_FIELD.index })
     },
 
     async resolve({ grantId }: ResolveParams): Promise<ResolveCredentialGrantResponse> {
@@ -146,17 +127,7 @@ async function loadGrant(grantId: string): Promise<CredentialGrantRecord | null>
 }
 
 async function currentStateOf({ grant, log }: { grant: CredentialGrantRecord, log: FastifyBaseLogger }): Promise<LiveGrantState> {
-    if (grant.kind === CredentialGrantKind.VARIABLE) {
-        if (isNil(grant.variableName)) {
-            return { value: {}, fields: [], allowedHosts: [], allowAnyHost: true }
-        }
-        const value = await variableService(log).getDecryptedValueForWorker({
-            projectId: grant.projectId,
-            name: grant.variableName,
-        })
-        return { value: { value }, fields: [VARIABLE_FIELD], allowedHosts: [], allowAnyHost: true }
-    }
-    const connection = isNil(grant.connectionExternalId) ? null : await appConnectionService(log).getOne({
+    const connection = await appConnectionService(log).getOne({
         projectId: grant.projectId,
         platformId: grant.platformId,
         externalId: grant.connectionExternalId,
@@ -200,19 +171,11 @@ function grantTtlSeconds(): number {
     return longestJobTimeoutSeconds + system.getNumberOrThrow(AppSystemProp.CREDENTIAL_PROXY_GRANT_TTL_MARGIN_SECONDS)
 }
 
-const VARIABLE_FIELD: CredentialGrantField = { index: 0, path: ['value'] }
 const GRANT_REISSUE_WINDOW_MS = 5 * 60 * 1000
 
 type IssueForConnectionParams = {
     connection: AppConnection
     projectId: string
-    jobId: string
-}
-
-type IssueForVariableParams = {
-    name: string
-    projectId: string
-    platformId: string
     jobId: string
 }
 

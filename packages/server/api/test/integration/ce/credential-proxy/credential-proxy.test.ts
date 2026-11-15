@@ -4,6 +4,7 @@ import { AppConnectionType, credentialPlaceholder, PackageType, PieceType, Princ
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { encryptUtils } from '../../../../src/app/helper/encryption'
+import { pieceCache } from '../../../../src/app/pieces/metadata/piece-cache'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import { createMockConnection, createMockPieceMetadata } from '../../../helpers/mocks'
@@ -91,10 +92,9 @@ describe('Credential proxy', () => {
             expect(resolved.json().fields).toEqual([{ index: 0, value: 'hunter2' }])
         })
 
-        it('trusts the piece auth declaration for custom auth, applies the name heuristic to undeclared props, and derives allowed hosts from URL props', async () => {
+        it('placeholders custom-auth props declared secret or named like a secret, and derives allowed hosts from URL props', async () => {
             const ctx = await createTestContext(app)
             const piece = createMockPieceMetadata({
-                platformId: ctx.platform.id,
                 packageType: PackageType.REGISTRY,
                 pieceType: PieceType.OFFICIAL,
                 auth: PieceAuth.CustomAuth({
@@ -108,6 +108,7 @@ describe('Credential proxy', () => {
                 }),
             })
             await db.save('piece_metadata', piece)
+            await pieceCache(app.log).setup()
             const connection = createMockConnection({
                 platformId: ctx.platform.id,
                 projectIds: [ctx.project.id],
@@ -128,7 +129,7 @@ describe('Credential proxy', () => {
             const props = response.json().value.props
             expect(props.base_url).toBe('https://acme.example.com/api')
             expect(props.workspace).toBe('acme')
-            expect(props.api_key).toBe('k-1')
+            expect(credentialPlaceholder.containsAny(props.api_key)).toBe(true)
             expect(credentialPlaceholder.containsAny(props.signing_secret)).toBe(true)
             expect(credentialPlaceholder.containsAny(props.legacy_token)).toBe(true)
             const [ref] = credentialPlaceholder.parse(props.signing_secret)
@@ -140,7 +141,8 @@ describe('Credential proxy', () => {
             })
             expect(resolved.json().fields).toEqual(expect.arrayContaining([
                 { index: 0, value: 'shh' },
-                { index: 1, value: 'old' },
+                { index: 1, value: 'k-1' },
+                { index: 2, value: 'old' },
             ]))
         })
         it('placeholders every OAuth2 token copy and redacts the refresh token copies', async () => {
@@ -155,10 +157,11 @@ describe('Credential proxy', () => {
                     token_type: 'Bearer',
                     access_token: 'live-token',
                     refresh_token: 'live-refresh',
-                    claimed_at: 1,
+                    claimed_at: Math.round(Date.now() / 1000),
+                    expires_in: 3600,
                     scope: '',
                     token_url: 'https://auth.example.com/token',
-                    data: { access_token: 'live-token', refresh_token: 'live-refresh', id_token: 'header.claims.signature', instance_url: 'https://acme.example.com' },
+                    data: { access_token: 'live-token', refresh_token: 'live-refresh', id_token: 'header.claims.signature', instance_url: 'https://acme.example.com', authed_user: { id: 'U1', access_token: 'live-user-token' } },
                 }),
             })
 
@@ -168,13 +171,15 @@ describe('Credential proxy', () => {
             expect(credentialPlaceholder.containsAny(value.access_token)).toBe(true)
             expect(value.data.access_token).toBe(value.access_token)
             expect(value.data.id_token).toBe('header.claims.signature')
+            expect(credentialPlaceholder.containsAny(value.data.authed_user.access_token)).toBe(true)
+            expect(value.data.authed_user.id).toBe('U1')
             expect(value.refresh_token).toBe('(REDACTED)')
             expect(value.data.refresh_token).toBe('(REDACTED)')
             expect(value.data.instance_url).toBe('https://acme.example.com')
             expect(JSON.stringify(value)).not.toContain('live-')
             const [ref] = credentialPlaceholder.parse(value.access_token)
             const resolved = await resolveAsProxy({ grantId: ref.grantId })
-            expect(resolved.json().fields).toEqual([{ index: ref.fieldIndex, value: 'live-token' }])
+            expect(resolved.json().fields).toEqual([{ index: 0, value: 'live-token' }, { index: 1, value: 'live-user-token' }])
 
             await db.save('app_connection', {
                 ...connection,
@@ -185,20 +190,34 @@ describe('Credential proxy', () => {
                     token_type: 'Bearer',
                     access_token: 'refreshed-token',
                     refresh_token: 'live-refresh',
-                    claimed_at: 2,
+                    claimed_at: Math.round(Date.now() / 1000),
+                    expires_in: 3600,
                     scope: '',
                     token_url: 'https://auth.example.com/token',
-                    data: { instance_url: 'https://acme.example.com' },
+                    data: { instance_url: 'https://acme.example.com', authed_user: { id: 'U1', access_token: 'live-user-token' } },
                 }),
             })
             const afterRefresh = await resolveAsProxy({ grantId: ref.grantId })
             expect(afterRefresh.statusCode).toBe(StatusCodes.OK)
-            expect(afterRefresh.json().fields).toEqual([{ index: ref.fieldIndex, value: 'refreshed-token' }])
+            expect(afterRefresh.json().fields).toEqual([{ index: 0, value: 'refreshed-token' }, { index: 1, value: 'live-user-token' }])
         })
 
         it('follows the live connection when it is reconnected under the same external id', async () => {
             const ctx = await createTestContext(app)
-            const connection = createMockConnection({ platformId: ctx.platform.id, projectIds: [ctx.project.id] }, ctx.user.id)
+            const piece = createMockPieceMetadata({
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+                auth: PieceAuth.CustomAuth({
+                    required: true,
+                    props: {
+                        base_url: Property.ShortText({ displayName: 'Base URL', required: true }),
+                        api_key: PieceAuth.SecretText({ displayName: 'API key', required: true }),
+                    },
+                }),
+            })
+            await db.save('piece_metadata', piece)
+            await pieceCache(app.log).setup()
+            const connection = createMockConnection({ platformId: ctx.platform.id, projectIds: [ctx.project.id], pieceName: piece.name, pieceVersion: piece.version }, ctx.user.id)
             const saveCustomAuth = async (props: Record<string, string>) => db.save('app_connection', {
                 ...connection,
                 type: AppConnectionType.CUSTOM_AUTH,
@@ -242,23 +261,20 @@ describe('Credential proxy', () => {
     })
 
     describe('GET /v1/worker/variables/:name', () => {
-        it('replaces a secret variable with a placeholder the proxy resolves to the value', async () => {
+        it('returns the variable value unchanged while the proxy is on', async () => {
             const ctx = await createTestContext(app)
-            const created = await ctx.post('/v1/variables', { projectId: ctx.project.id, name: 'api_token', value: 'variable-secret' })
+            const created = await ctx.post('/v1/variables', { projectId: ctx.project.id, name: 'environment', value: 'prod' })
             expect(created.statusCode).toBe(StatusCodes.CREATED)
             const engineToken = await engineTokenFor({ ctx })
 
             const response = await app.inject({
                 method: 'GET',
-                url: '/api/v1/worker/variables/api_token',
+                url: '/api/v1/worker/variables/environment',
                 headers: { authorization: `Bearer ${engineToken}` },
             })
 
             expect(response.statusCode).toBe(StatusCodes.OK)
-            const [ref] = credentialPlaceholder.parse(response.json().value)
-            expect(ref).toBeDefined()
-            const resolved = await resolveAsProxy({ grantId: ref.grantId })
-            expect(resolved.json()).toMatchObject({ fields: [{ index: 0, value: 'variable-secret' }], allowAnyHost: true })
+            expect(response.json().value).toBe('prod')
         })
     })
 

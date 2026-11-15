@@ -25,6 +25,14 @@ describe('credentialPlaceholder', () => {
         expect(credentialPlaceholder.containsAny(`x${first}`)).toBe(true)
     })
 
+    it('does not read a placeholder out of a longer run of digits', () => {
+        const placeholder = credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 1 })
+
+        expect(credentialPlaceholder.parse(`${placeholder}7777`)).toEqual([])
+        expect(credentialPlaceholder.parse(`${placeholder}-7`)).toEqual([{ placeholder, grantId: GRANT_ID, fieldIndex: 1 }])
+        expect(credentialPlaceholder.parse(credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 120 }))[0].fieldIndex).toBe(120)
+    })
+
     it('exposes a reusable global pattern that does not keep state between calls', () => {
         const placeholder = credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 1 })
 

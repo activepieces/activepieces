@@ -15,7 +15,7 @@ export const credentialPlaceholder = {
 }
 
 const PREFIX = 'apcred1'
-const PLACEHOLDER_SOURCE = `${PREFIX}_([0-9A-Za-z]{21})_(\\d{1,2})`
+const PLACEHOLDER_SOURCE = `${PREFIX}_([0-9A-Za-z]{21})_(\\d{1,3})(?!\\d)`
 
 export const CREDENTIAL_PLACEHOLDER_PATTERN = new RegExp(PLACEHOLDER_SOURCE, 'g')
 

@@ -41,7 +41,10 @@ function secretPaths({ value, pieceAuth }: ExtractParams): string[][] {
         case AppConnectionType.OAUTH2:
         case AppConnectionType.CLOUD_OAUTH2:
         case AppConnectionType.PLATFORM_OAUTH2:
-            return [['access_token']]
+            return [
+                ['access_token'],
+                ...nestedKeyPaths({ value: value.data, key: 'access_token', prefix: ['data'] }).filter((path) => path.length > OAUTH2_ACCESS_TOKEN_COPY.length),
+            ]
         case AppConnectionType.CUSTOM_AUTH:
             return [
                 ...secretPropPaths({ props: value.props, pieceAuth }),
@@ -59,7 +62,7 @@ function unresolvablePaths(value: AppConnectionValue): string[][] {
         case AppConnectionType.OAUTH2:
         case AppConnectionType.CLOUD_OAUTH2:
         case AppConnectionType.PLATFORM_OAUTH2:
-            return [['refresh_token'], ['data', 'refresh_token']]
+            return [['refresh_token'], ...nestedKeyPaths({ value: value.data, key: 'refresh_token', prefix: ['data'] })]
         case AppConnectionType.SECRET_TEXT:
         case AppConnectionType.BASIC_AUTH:
         case AppConnectionType.CUSTOM_AUTH:
@@ -78,6 +81,16 @@ function duplicatePathsOf({ value, path }: { value: Record<string, unknown>, pat
     return isNil(copy) ? [] : [OAUTH2_ACCESS_TOKEN_COPY]
 }
 
+function nestedKeyPaths({ value, key, prefix }: { value: Record<string, unknown>, key: string, prefix: string[] }): string[][] {
+    return Object.entries(value).flatMap(([childKey, child]) => {
+        const path = [...prefix, childKey]
+        if (isRecord(child)) {
+            return nestedKeyPaths({ value: child, key, prefix: path })
+        }
+        return childKey === key && typeof child === 'string' && child.length > 0 ? [path] : []
+    })
+}
+
 function secretPropPaths({ props, pieceAuth }: { props: Record<string, unknown>, pieceAuth: PieceMetadataModel['auth'] }): string[][] {
     const declared = declaredPropTypes(pieceAuth)
     return Object.entries(props)
@@ -89,8 +102,8 @@ function isSecretProp({ key, propValue, declaredType }: { key: string, propValue
     if (typeof propValue !== 'string' || propValue.length === 0) {
         return false
     }
-    if (!isNil(declaredType)) {
-        return declaredType === PropertyType.SECRET_TEXT
+    if (declaredType === PropertyType.SECRET_TEXT) {
+        return true
     }
     return SECRET_NAME_PATTERN.test(key) && allowedHostsResolver.hostnameOf(propValue) === null
 }

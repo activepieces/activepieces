@@ -10,11 +10,6 @@ export enum CredentialDelivery {
     REAL = 'REAL',
 }
 
-export enum CredentialGrantKind {
-    CONNECTION = 'CONNECTION',
-    VARIABLE = 'VARIABLE',
-}
-
 export const CredentialGrantField = z.object({
     index: z.number().int().nonnegative(),
     path: z.array(z.string()),
@@ -23,14 +18,12 @@ export type CredentialGrantField = z.infer<typeof CredentialGrantField>
 
 export const CredentialGrantRecord = z.object({
     grantId: z.string(),
-    kind: z.enum(CredentialGrantKind),
     platformId: z.string(),
     projectId: z.string(),
     jobId: z.string(),
-    connectionExternalId: z.string().optional(),
-    variableName: z.string().optional(),
-    pieceName: z.string().optional(),
-    pieceVersion: z.string().optional(),
+    connectionExternalId: z.string(),
+    pieceName: z.string(),
+    pieceVersion: z.string(),
     fields: z.array(CredentialGrantField),
     allowedHosts: z.array(z.string()),
     allowAnyHost: z.boolean(),

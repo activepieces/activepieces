@@ -28,30 +28,34 @@ describe('credentialFieldExtractor', () => {
             claimed_at: 1,
             scope: '',
             token_url: 'https://auth.example.com/token',
-            data: { access_token: 'at', refresh_token: 'rt', id_token: 'idt', instance_url: 'https://acme.my.salesforce.com' },
+            data: { access_token: 'at', refresh_token: 'rt', id_token: 'idt', instance_url: 'https://acme.my.salesforce.com', authed_user: { id: 'U1', access_token: 'user-at', refresh_token: 'user-rt' } },
         } as const
         const fields = credentialFieldExtractor.extract({ value, pieceAuth: undefined })
 
-        expect(fields).toEqual([{ index: 0, path: ['access_token'] }])
+        expect(fields).toEqual([{ index: 0, path: ['access_token'] }, { index: 1, path: ['data', 'authed_user', 'access_token'] }])
         const redacted = credentialFieldExtractor.redactUnresolvable(value)
         expect(redacted).toMatchObject({
             refresh_token: '(REDACTED)',
-            data: { refresh_token: '(REDACTED)', id_token: 'idt', instance_url: 'https://acme.my.salesforce.com' },
+            data: { refresh_token: '(REDACTED)', id_token: 'idt', instance_url: 'https://acme.my.salesforce.com', authed_user: { id: 'U1', refresh_token: '(REDACTED)' } },
         })
         const placeholdered = credentialFieldExtractor.applyPlaceholders({ value: redacted, grantId: GRANT_ID, fields })
         expect(placeholdered).toMatchObject({
             access_token: credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 0 }),
-            data: { access_token: credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 0 }) },
+            data: {
+                access_token: credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 0 }),
+                authed_user: { access_token: credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 1 }) },
+            },
         })
     })
 
-    it('trusts the piece auth declaration for declared props and applies the name heuristic only to undeclared ones', () => {
+    it('placeholders props declared secret or named like a secret, and leaves identifiers and host-like values alone', () => {
         const pieceAuth = PieceAuth.CustomAuth({
             required: true,
             props: {
                 base_url: Property.ShortText({ displayName: 'Base URL', required: true }),
                 signing_secret: PieceAuth.SecretText({ displayName: 'Signing secret', required: true }),
-                accessKeyId: Property.ShortText({ displayName: 'Access key id', required: true }),
+                apiKey: Property.ShortText({ displayName: 'API key', required: true }),
+                webhook_id: PieceAuth.SecretText({ displayName: 'Webhook id', required: true }),
                 account: Property.ShortText({ displayName: 'Account', required: true }),
             },
         })
@@ -60,7 +64,8 @@ describe('credentialFieldExtractor', () => {
             props: {
                 base_url: 'https://acme.example.com',
                 signing_secret: 'abc123.xyzw',
-                accessKeyId: 'AKIA123',
+                apiKey: 'declared-as-short-text',
+                webhook_id: 'declared-secret-plain-name',
                 account: 'acme',
                 legacy_token: 'undeclared-but-secret-looking',
                 legacy_endpoint_token: 'api.vendor.com',
@@ -72,16 +77,17 @@ describe('credentialFieldExtractor', () => {
 
         expect(fields).toEqual([
             { index: 0, path: ['props', 'signing_secret'] },
-            { index: 1, path: ['props', 'legacy_token'] },
-            { index: 2, path: ['access_token'] },
+            { index: 1, path: ['props', 'apiKey'] },
+            { index: 2, path: ['props', 'webhook_id'] },
+            { index: 3, path: ['props', 'legacy_token'] },
+            { index: 4, path: ['access_token'] },
         ])
         const placeholdered = credentialFieldExtractor.applyPlaceholders({ value, grantId: GRANT_ID, fields })
         expect(placeholdered.props.base_url).toBe('https://acme.example.com')
-        expect(placeholdered.props.accessKeyId).toBe('AKIA123')
         expect(placeholdered.props.account).toBe('acme')
         expect(placeholdered.props.legacy_endpoint_token).toBe('api.vendor.com')
         expect(placeholdered.props.signing_secret).toBe(credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 0 }))
-        expect(placeholdered.access_token).toBe(credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 2 }))
+        expect(placeholdered.access_token).toBe(credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 4 }))
     })
 
     it('falls back to the name heuristic for every prop when the piece definition is unknown', () => {
