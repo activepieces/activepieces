@@ -130,7 +130,7 @@ describe('group member search', () => {
         respond({ body: { value: [{ id: 'm1', displayName: 'Ada' }] } });
         const res = await listGroupMembersForDropdown({ accessToken: 'tok', groupId: 'g/1', search: ' Ada"\\ ' });
         const req = sendRequest.mock.calls[0][0];
-        expect(decodeURIComponent(req.url)).toBe('https://graph.microsoft.com/v1.0/groups/g/1/members?$top=999&$select=id,displayName,userPrincipalName,mail&$search="displayName:Ada" OR "mail:Ada"&$count=true');
+        expect(decodeURIComponent(req.url)).toBe('https://graph.microsoft.com/v1.0/groups/g/1/members?$top=999&$select=id,displayName,userPrincipalName,mail&$search="displayName:Ada" OR "mail:Ada" OR "userPrincipalName:Ada"&$count=true');
         expect(req.url).toContain('/groups/g%2F1/members');
         expect(req.headers.ConsistencyLevel).toBe('eventual');
         expect(res).toEqual({ items: [{ id: 'm1', displayName: 'Ada' }], truncated: false });
@@ -142,6 +142,14 @@ describe('group member search', () => {
         const res = await listGroupMembersForDropdown({ accessToken: 'tok', groupId: 'g1', search: 'ad' });
         expect(decodeURIComponent(sendRequest.mock.calls[1][0].url)).toBe('https://graph.microsoft.com/v1.0/groups/g1/members?$top=999&$select=id,displayName,userPrincipalName,mail');
         expect(res.items).toEqual([{ id: 'm1', displayName: 'Ada' }]);
+    });
+
+    it('finds a member by sign-in name locally when Graph search returns nothing', async () => {
+        respond({ body: { value: [] } });
+        respond({ body: { value: [{ id: 'm1', displayName: 'Ada', userPrincipalName: 'a.lovelace@x.com' }, { id: 'm2', displayName: 'Bob', userPrincipalName: 'bob@x.com' }] } });
+        const res = await listGroupMembersForDropdown({ accessToken: 'tok', groupId: 'g1', search: 'a.lovelace@x.com' });
+        expect(sendRequest).toHaveBeenCalledTimes(2);
+        expect(res.items.map((m) => m.id)).toEqual(['m1']);
     });
 
     it('lists without $search when there is no term', async () => {

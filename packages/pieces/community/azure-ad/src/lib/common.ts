@@ -299,12 +299,16 @@ export async function listGroupMembersForDropdown({
     const searchTerm = (search ?? '').trim().replace(/["\\]/g, '');
     if (searchTerm !== '') {
         try {
-            return await fetchDropdownPages<DropdownMember>({
+            const found = await fetchDropdownPages<DropdownMember>({
                 accessToken,
                 url,
-                query: { $top: '999', $select: select, $search: `"displayName:${searchTerm}" OR "mail:${searchTerm}"`, $count: 'true' },
+                query: { $top: '999', $select: select, $search: `"displayName:${searchTerm}" OR "mail:${searchTerm}" OR "userPrincipalName:${searchTerm}"`, $count: 'true' },
                 headers: { ConsistencyLevel: 'eventual' },
             });
+            if (found.items.length > 0) {
+                return found;
+            }
+            return await searchMembersLocally({ accessToken, url, select, term: searchTerm.toLowerCase() });
         } catch {
             return searchMembersLocally({ accessToken, url, select, term: searchTerm.toLowerCase() });
         }
