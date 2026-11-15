@@ -103,8 +103,8 @@ const outputSchema: OutputSchema = {
         { key: 'name', label: 'Name' },
       ],
     },
-    { key: 'createdTime', label: 'Created Time', format: 'datetime' },
-    { key: 'modifiedTime', label: 'Modified Time', format: 'datetime' },
+    { key: 'createdTime', label: 'Created Time', format: 'number', description: 'Epoch milliseconds' },
+    { key: 'modifiedTime', label: 'Modified Time', format: 'number', description: 'Epoch milliseconds' },
   ],
 };
 

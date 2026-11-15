@@ -1,6 +1,7 @@
 import { createAction, OutputSchema, Property } from '@activepieces/pieces-framework';
 import { sprinklrAuth } from '../auth';
 import { sprinklrCase, SprinklrCaseOutput } from '../common/case';
+import { sprinklrCaseWrite } from '../common/case-write';
 import { sprinklrClient } from '../common/client';
 import { sprinklrEndpoints } from '../common/endpoints';
 import { sprinklrErrors } from '../common/errors';
@@ -30,9 +31,13 @@ function parseRawFilter(value: unknown): Record<string, unknown> | undefined {
   return Object.keys(parsed).length > 0 ? parsed : undefined;
 }
 
-function customFieldFilters(value: unknown): SearchFilter[] {
-  if (!sprinklrErrors.isRecord(value)) {
+function customFieldFilters(input: unknown): SearchFilter[] {
+  const value = sprinklrCaseWrite.parseStructured({ value: input, field: 'Custom Fields' });
+  if (value === undefined || value === null || value === '') {
     return [];
+  }
+  if (!sprinklrErrors.isRecord(value)) {
+    throw new Error('Custom Fields must be pairs of a custom field name and its value. Check the Custom Fields input.');
   }
   return Object.entries(value).flatMap(([key, raw]) => {
     const field = key.trim();

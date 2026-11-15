@@ -94,7 +94,7 @@ function readRows(data: unknown): { rows: Record<string, unknown>[]; hasMore: bo
     if (Array.isArray(row) && headings) {
       return [Object.fromEntries(headings.map((heading, i) => [heading, row[i]]))];
     }
-    return [];
+    return [{ values: Array.isArray(row) ? row : [row] }];
   });
   return { rows, hasMore };
 }
@@ -141,14 +141,19 @@ export const runReportAction = createAction({
       displayName: 'Page',
       description: 'Page to read, starting at 0. Replaces the payload page.',
       required: false,
+      display: 'stepper',
+      min: 0,
+      step: 1,
       advanced: true,
     }),
     page_size: Property.Number({
       displayName: 'Page Size',
       description: 'Rows per page, up to 1,000.',
       required: false,
+      display: 'stepper',
       min: 1,
       max: PAGE_SIZE_CAP,
+      step: 1,
       advanced: true,
     }),
   },

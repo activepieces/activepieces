@@ -40,11 +40,27 @@ function parseId({ value, field }: { value: unknown; field: string }): number {
   return Number(text);
 }
 
+function parseStructured({ value, field }: { value: unknown; field: string }): unknown {
+  if (typeof value !== 'string') {
+    return value;
+  }
+  const text = value.trim();
+  if (!text.startsWith('[') && !text.startsWith('{')) {
+    return value;
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`${field} is not valid JSON. Check the value mapped into ${field}.`);
+  }
+}
+
 function parseIdList({ value, field }: { value: unknown; field: string }): number[] | undefined {
-  if (value === undefined || value === null || value === '') {
+  const parsed = parseStructured({ value, field });
+  if (parsed === undefined || parsed === null || parsed === '') {
     return undefined;
   }
-  const items = Array.isArray(value) ? value : [value];
+  const items = Array.isArray(parsed) ? parsed : typeof parsed === 'string' ? parsed.split(',') : [parsed];
   const ids = items.filter((item) => cleanText(item) !== undefined).map((item) => parseId({ value: item, field }));
   return ids.length > 0 ? ids : undefined;
 }
@@ -65,7 +81,8 @@ function customFieldValue({ key, value }: { key: string; value: unknown }): stri
   });
 }
 
-function customFieldsAsLists(value: unknown): Record<string, string[]> | undefined {
+function customFieldsAsLists(input: unknown): Record<string, string[]> | undefined {
+  const value = parseStructured({ value: input, field: 'Custom Fields' });
   if (value === undefined || value === null || value === '') {
     return undefined;
   }
@@ -93,6 +110,7 @@ export const sprinklrCaseWrite = {
   cleanText,
   parseId,
   parseIdList,
+  parseStructured,
   customFieldsAsLists,
   compact,
 };

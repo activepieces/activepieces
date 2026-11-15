@@ -13,7 +13,7 @@ const outputSchema: OutputSchema = {
     { key: 'id', label: 'Comment ID' },
     { key: 'text', label: 'Text' },
     { key: 'commentingUser', label: 'Commenting User ID' },
-    { key: 'createdTime', label: 'Created Time', format: 'datetime' },
+    { key: 'createdTime', label: 'Created Time', format: 'number', description: 'Epoch milliseconds' },
     { key: 'entityType', label: 'Entity Type' },
     { key: 'entityId', label: 'Case Number' },
   ],
