@@ -1,5 +1,20 @@
 import { AlgoliaAuthValue, AlgoliaJsonValue, AlgoliaRecord } from './types';
 
+export function isValidApplicationId(value: string): boolean {
+  return /^[A-Za-z0-9]+$/.test(value.trim());
+}
+
+export function parseApplicationId(value: string): string {
+  const applicationId = value.trim();
+  if (!isValidApplicationId(applicationId)) {
+    throw new Error(
+      'Invalid Algolia Application ID: it must contain only letters and digits (find it under Settings > API Keys).',
+    );
+  }
+
+  return applicationId;
+}
+
 export function parseRequiredString(value: unknown, fieldName: string): string {
   if (typeof value !== 'string' || value.trim().length === 0) {
     throw new Error(`${fieldName} is required.`);
@@ -20,6 +35,76 @@ export function parseStringArray(value: unknown, fieldName: string): string[] {
 
     return entry.trim();
   });
+}
+
+export function parseOptionalString(value: unknown): string | undefined {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return undefined;
+  }
+
+  return value.trim();
+}
+
+export function parseOptionalStringArray({ value, fieldName }: { value: unknown; fieldName: string }): string[] | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  const entries = typeof value === 'string' ? value.split(',') : value;
+  if (!Array.isArray(entries)) {
+    throw new Error(`${fieldName} must be a list of attribute names.`);
+  }
+
+  const parsed = entries
+    .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+    .filter((entry) => entry.length > 0);
+
+  return parsed.length > 0 ? parsed : undefined;
+}
+
+export function parseIntegerInRange({
+  value,
+  fieldName,
+  min,
+  max,
+  defaultValue,
+}: {
+  value: unknown;
+  fieldName: string;
+  min: number;
+  max: number;
+  defaultValue: number;
+}): number {
+  if (value === undefined || value === null || value === '') {
+    return defaultValue;
+  }
+
+  const parsed = typeof value === 'number' ? value : Number(value);
+  if (!Number.isInteger(parsed) || parsed < min || parsed > max) {
+    throw new Error(
+      max === Number.MAX_SAFE_INTEGER
+        ? `${fieldName} must be a whole number of at least ${min}.`
+        : `${fieldName} must be a whole number between ${min} and ${max}.`,
+    );
+  }
+
+  return parsed;
+}
+
+export function parseAlgoliaRecord({ value, fieldName }: { value: unknown; fieldName: string }): AlgoliaRecord {
+  if (!isAlgoliaRecord(value) || Object.keys(value).length === 0) {
+    throw new Error(`${fieldName} must be a non-empty JSON object.`);
+  }
+
+  return value;
+}
+
+export function stripHighlights(record: AlgoliaRecord): AlgoliaRecord {
+  return Object.fromEntries(
+    Object.entries(record).filter(
+      ([key]) => key !== '_highlightResult' && key !== '_snippetResult',
+    ),
+  );
 }
 
 export function parseAlgoliaRecordArray(value: unknown): AlgoliaRecord[] {
