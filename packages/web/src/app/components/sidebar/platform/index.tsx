@@ -117,6 +117,7 @@ export function PlatformNav() {
                     to: '/platform/ai/capabilities',
                     label: t('Capabilities'),
                   },
+                  { to: '/platform/ai/usage', label: t('Usage') },
                 ],
         },
       ],
