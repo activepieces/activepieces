@@ -60,28 +60,43 @@ export const findMeetingByQueryAction = createAction({
       if (remaining <= 0) {
         throw deadlineError({ pages: page });
       }
-      const data = await firefliesClient
-        .graphql({
+      const data = await withinDeadline({
+        startedAt,
+        pages: page,
+        request: firefliesClient.graphql({
           apiKey: auth,
           query,
           variables: { ...variables.values, limit: PAGE_SIZE, skip: page * PAGE_SIZE },
           operation: `search meetings (page ${page + 1})`,
           timeoutMs: Math.min(REQUEST_TIMEOUT_MS, remaining),
-        })
-        .catch((error: unknown) => {
-          if (Date.now() - startedAt >= RUN_DEADLINE_MS) {
-            throw deadlineError({ pages: page });
-          }
-          throw error;
-        });
+        }),
+      });
       const transcripts = firefliesClient.recordList(data['transcripts']);
       meetings.push(...transcripts);
       if (transcripts.length < PAGE_SIZE) {
         return { found: meetings.length > 0, meetings };
       }
     }
+    const remaining = RUN_DEADLINE_MS - (Date.now() - startedAt);
+    if (remaining <= 0) {
+      throw deadlineError({ pages: MAX_PAGES });
+    }
+    const probe = await withinDeadline({
+      startedAt,
+      pages: MAX_PAGES,
+      request: firefliesClient.graphql({
+        apiKey: auth,
+        query,
+        variables: { ...variables.values, limit: 1, skip: MAX_PAGES * PAGE_SIZE },
+        operation: 'search meetings (overflow check)',
+        timeoutMs: Math.min(REQUEST_TIMEOUT_MS, remaining),
+      }),
+    });
+    if (firefliesClient.recordList(probe['transcripts']).length === 0) {
+      return { found: true, meetings };
+    }
     throw new Error(
-      `At least ${MAX_PAGES * PAGE_SIZE} meetings match these filters, which is more than this action returns. Narrow the search with a title, host, participant or date.`,
+      `More than ${MAX_PAGES * PAGE_SIZE} meetings match these filters, which is more than this action returns. Narrow the search with a title, host, participant or date.`,
     );
   },
 });
@@ -126,6 +141,26 @@ function dayWindow(value: unknown): { fromDate: string; toDate: string } | undef
     throw new Error(`Date must be a valid date (got "${text.slice(0, 50)}").`);
   }
   return { fromDate: new Date(start).toISOString(), toDate: new Date(start + DAY_MS - 1).toISOString() };
+}
+
+async function withinDeadline<T>({ startedAt, pages, request }: { startedAt: number; pages: number; request: Promise<T> }): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const expired = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(deadlineError({ pages })), Math.max(0, RUN_DEADLINE_MS - (Date.now() - startedAt)));
+  });
+  try {
+    return await Promise.race([
+      request.catch((error: unknown) => {
+        if (Date.now() - startedAt >= RUN_DEADLINE_MS) {
+          throw deadlineError({ pages });
+        }
+        throw error;
+      }),
+      expired,
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function deadlineError({ pages }: { pages: number }): Error {

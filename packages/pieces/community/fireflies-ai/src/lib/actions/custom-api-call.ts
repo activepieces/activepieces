@@ -54,7 +54,7 @@ export const firefliesCustomApiCall = createAction({
       return { status: response.status, headers: response.headers, body: data };
     } catch (error) {
       if (propsValue.failsafe) {
-        return toFailsafeOutput({ error, requestBody: request.body });
+        return toFailsafeOutput({ error, requestBody: REDACTED_BODY });
       }
       throw error;
     }
@@ -144,3 +144,5 @@ function bodyOf({ body, bodyType }: { body: unknown; bodyType: unknown }): FormD
 export const firefliesCustomApiCallInternals = { urlOf };
 
 const API_ORIGIN = 'https://api.fireflies.ai';
+
+const REDACTED_BODY = '[redacted]';

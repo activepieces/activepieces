@@ -46,6 +46,24 @@ describe('Custom API Call', () => {
     expect(firefliesCustomApiCallInternals.urlOf({ value: { url: 'https://api.fireflies.ai/graphql' } })).toBe('https://api.fireflies.ai/graphql');
   });
 
+  test('with failsafe on, a network failure does not copy the request body into the output', async () => {
+    const methods: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
+        methods.push(String(init?.method));
+        throw new TypeError('fetch failed');
+      }),
+    );
+    const output = await firefliesCustomApiCall.run(
+      fakeContext({
+        props: { method: 'POST', url: { url: '/graphql' }, headers: {}, queryParams: {}, body_type: 'json', body: { data: { secret: 'private meeting notes' } }, failsafe: true },
+      }),
+    );
+    expect(methods).toEqual(['POST']);
+    expect(JSON.stringify(output)).not.toContain('private meeting notes');
+  });
+
   test('is a human-only escape hatch', () => {
     expect(firefliesCustomApiCall.name).toBe('custom_api_call');
     expect(firefliesCustomApiCall.audience).toBe('human');

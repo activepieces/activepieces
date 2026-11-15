@@ -59,10 +59,40 @@ describe('find_meeting_by_query', () => {
     expect(output.meetings).toHaveLength(107);
   });
 
-  test('throws instead of truncating after 20 full pages', async () => {
+  test('throws instead of truncating when more than 1000 meetings match', async () => {
     const seen = stubFetch({ pageSizes: Array.from({ length: 30 }, () => 50) });
-    await expect(findMeetingByQueryAction.run(fakeContext({ props: {} }))).rejects.toThrow('At least 1000 meetings match');
-    expect(seen).toHaveLength(20);
+    await expect(findMeetingByQueryAction.run(fakeContext({ props: {} }))).rejects.toThrow('More than 1000 meetings match');
+    expect(seen).toHaveLength(21);
+    expect(seen[20].variables).toEqual({ limit: 1, skip: 1000 });
+  });
+
+  test('returns all meetings when exactly 1000 match', async () => {
+    const seen = stubFetch({ pageSizes: [...Array.from({ length: 20 }, () => 50), 0] });
+    const output = await findMeetingByQueryAction.run(fakeContext({ props: {} }));
+    expect(seen).toHaveLength(21);
+    expect(seen[20].variables).toEqual({ limit: 1, skip: 1000 });
+    expect(output.found).toBe(true);
+    expect(output.meetings).toHaveLength(1000);
+  });
+
+  test('fails at the deadline when the response body stalls after the headers', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(Date.parse('2026-03-15T00:00:00Z'));
+    const methods: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
+        methods.push(String(init?.method));
+        const stalled = new ReadableStream<Uint8Array>({ start: () => undefined });
+        return new Response(stalled, { status: 200, headers: { 'content-type': 'application/json' } });
+      }),
+    );
+    const outcome = findMeetingByQueryAction.run(fakeContext({ props: {} })).catch((error: unknown) => error);
+    await vi.advanceTimersByTimeAsync(239_000);
+    expect(methods).toEqual(['POST']);
+    await vi.advanceTimersByTimeAsync(2_000);
+    const error = await outcome;
+    expect(error instanceof Error ? error.message : '').toContain('Narrow your filters');
   });
 
   test('a local-midnight date (15 Mar in UTC+3) is not shifted to the previous UTC day', async () => {
