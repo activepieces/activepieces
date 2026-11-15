@@ -62,7 +62,7 @@ export const aiSearchRecordsAction = createAction({
   async run({ auth, propsValue }) {
     const client = new FireberryClient(auth.secret_text);
     const objectType = await client.resolveObjectTypeNumber(propsValue.objectSystemName);
-    const fields = (propsValue.fields ?? []).map((field) => String(field));
+    const fields = fireberryUtils.parseStringList(propsValue.fields);
     const body = fireberryUtils.buildQueryBody({
       objectType,
       fields,

@@ -12,8 +12,8 @@ export const aiDeleteRecordAction = createAction({
   classification: 'DESTRUCTIVE',
   outputSchema: fireberryOutputSchemas['deleteRecord'],
   aiMetadata: {
-    description: 'Permanently deletes one Fireberry record by object type and record id. This cannot be undone; confirm the id (e.g. with Get Record) before calling. Idempotent: deleting an id that is already gone also succeeds.',
-    idempotent: true,
+    description: 'Permanently deletes one Fireberry record by object type and record id. This cannot be undone; confirm the id (e.g. with Get Record) before calling. Not idempotent: an id that does not exist (or was already deleted) fails the step with the Fireberry error.',
+    idempotent: false,
   },
   props: {
     objectSystemName: Property.ShortText({

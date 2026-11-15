@@ -142,6 +142,32 @@ function parseFieldsObject(value: unknown): Record<string, unknown> {
   return parsed;
 }
 
+function parseStringList(value: unknown): string[] {
+  if (value === undefined || value === null) {
+    return [];
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter((item) => item.length > 0);
+  }
+  if (typeof value !== 'string') {
+    throw new Error('Fields must be a list of field system names, for example ["accountname", "telephone1"].');
+  }
+  const text = value.trim();
+  if (text.startsWith('[')) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      throw new Error('Fields must be valid JSON, for example ["accountname", "telephone1"].');
+    }
+    if (!Array.isArray(parsed)) {
+      throw new Error('Fields must be a list of field system names, for example ["accountname", "telephone1"].');
+    }
+    return parseStringList(parsed);
+  }
+  return text.split(',').map((item) => item.trim()).filter((item) => item.length > 0);
+}
+
 function parseJsonObject(value: string): unknown {
   try {
     return JSON.parse(value);
@@ -434,6 +460,7 @@ export const fireberryUtils = {
   extractVendorMessage,
   errorMessage,
   parseFieldsObject,
+  parseStringList,
   toRecordResult,
   buildQueryBody,
 };

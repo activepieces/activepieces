@@ -1,10 +1,12 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { httpClient } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fireberry } from '../src/index';
 import { aiListObjectFieldsAction } from '../src/lib/actions/ai/list-object-fields.action';
 import { aiCreateRecordAction } from '../src/lib/actions/ai/create-record.action';
 import { aiSearchRecordsAction } from '../src/lib/actions/ai/search-records.action';
+import { aiDeleteRecordAction } from '../src/lib/actions/ai/delete-record.action';
 import { aiUpdateRecordAction } from '../src/lib/actions/ai/update-record.action';
+import { deleteRecordAction } from '../src/lib/actions/delete-record.action';
 import { findRecordAction } from '../src/lib/actions/find-record.action';
 import { updateRecordAction } from '../src/lib/actions/update-record.action';
 
@@ -126,5 +128,70 @@ describe('builder actions keep 0.1.8 behaviour', () => {
     const result = await run(ctx({ objectType: 'Account', recordId: 'g1', fields: { accountname: '', telephone1: null } }));
     expect(result).toEqual({ id: 'g1', objectSystemName: 'Account', record: { accountid: 'g1', accountname: 'Acme' } });
     expect(spy.mock.calls.some(([request]) => request.method === 'PUT')).toBe(false);
+  });
+});
+
+describe('agent search fields and delete actions', () => {
+  const accountMeta = { status: 200, headers: {}, body: { success: true, data: [{ name: 'Account', systemName: 'Account', objectType: '1' }] } };
+  const emptyPage = { status: 200, headers: {}, body: { success: true, data: { PrimaryKey: 'accountid', PrimaryField: 'accountname', PageNum: 1, IsLastPage: true, Data: [] } } };
+
+  it.each([
+    { label: 'an array', fields: ['accountname', 'telephone1'] },
+    { label: 'a JSON array string', fields: '["accountname", "telephone1"]' },
+    { label: 'a comma-separated string', fields: 'accountname, telephone1' },
+  ])('search accepts fields as $label', async ({ fields }) => {
+    const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce(accountMeta).mockResolvedValueOnce(emptyPage);
+    const run = Reflect.get(aiSearchRecordsAction, 'run');
+    await run(ctx({ objectSystemName: 'Account', fields }));
+    expect(spy.mock.calls[1][0]).toMatchObject({ method: 'POST', body: { fields: 'accountname,telephone1' } });
+  });
+
+  it('search rejects fields that are not a list', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(accountMeta);
+    const run = Reflect.get(aiSearchRecordsAction, 'run');
+    await expect(run(ctx({ objectSystemName: 'Account', fields: '[1' }))).rejects.toThrow('valid JSON');
+  });
+
+  it('agent delete resolves the object and sends DELETE to the record path', async () => {
+    const spy = vi.spyOn(httpClient, 'sendRequest')
+      .mockResolvedValueOnce({ status: 200, headers: {}, body: { success: true, data: [{ name: 'Contact', systemName: 'Contact', objectType: 2 }] } })
+      .mockResolvedValue({ status: 200, headers: {}, body: { success: true } });
+    const run = Reflect.get(aiDeleteRecordAction, 'run');
+    const result = await run(ctx({ objectSystemName: '2', recordId: ' c1 ' }));
+    const deleteCall = spy.mock.calls.find(([request]) => request.method === HttpMethod.DELETE);
+    expect(deleteCall?.[0].url).toBe('https://api.fireberry.com/api/record/Contact/c1');
+    expect(result).toEqual({ id: 'c1', objectSystemName: 'Contact', deleted: true });
+  });
+
+  it('agent delete fails when the record is missing', async () => {
+    vi.spyOn(httpClient, 'sendRequest')
+      .mockResolvedValueOnce(accountMeta)
+      .mockResolvedValue({ status: 400, headers: {}, body: { success: false, Message: 'Record not found' } });
+    const run = Reflect.get(aiDeleteRecordAction, 'run');
+    await expect(run(ctx({ objectSystemName: 'Account', recordId: 'gone' }))).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('builder Delete Records refuses more than 20 records before calling Fireberry', async () => {
+    const spy = vi.spyOn(httpClient, 'sendRequest');
+    const run = Reflect.get(deleteRecordAction, 'run');
+    const recordIds = Array.from({ length: 21 }, (_, i) => `r${i}`);
+    await expect(run(ctx({ objectType: 'Account', recordIds, confirmDeletion: true }))).rejects.toThrow('Maximum 20 records');
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('builder Delete Records names the ids already deleted when one fails', async () => {
+    const spy = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+      if (request.method !== HttpMethod.DELETE) {
+        return accountMeta;
+      }
+      if (request.url.endsWith('/r3')) {
+        return { status: 400, headers: {}, body: { success: false, Message: 'Record not found' } };
+      }
+      return { status: 200, headers: {}, body: { success: true } };
+    });
+    const run = Reflect.get(deleteRecordAction, 'run');
+    await expect(run(ctx({ objectType: 'Account', recordIds: ['r1', 'r2', 'r3', 'r4'], confirmDeletion: true }))).rejects.toThrow(/Failed to delete record r3: .*Already deleted: r1, r2\./);
+    const deleteUrls = spy.mock.calls.filter(([request]) => request.method === HttpMethod.DELETE).map(([request]) => request.url);
+    expect(deleteUrls).toEqual(['https://api.fireberry.com/api/record/Account/r1', 'https://api.fireberry.com/api/record/Account/r2', 'https://api.fireberry.com/api/record/Account/r3']);
   });
 });
