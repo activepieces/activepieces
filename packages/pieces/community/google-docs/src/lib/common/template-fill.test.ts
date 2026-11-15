@@ -282,9 +282,19 @@ describe('templateFill.plan', () => {
     ]);
   });
 
-  it('ignores Variables that are not an object', () => {
-    expect(templateFill.plan({ scan: emptyScan, format: '{{KEY}}', values: 'not json' }).requests).toEqual([]);
-    expect(templateFill.plan({ scan: emptyScan, format: '{{KEY}}', values: ['a'] }).requests).toEqual([]);
+  it.each([['not json'], [['a']], [42], [true], ['"just a string"']])(
+    'rejects Variables that are not an object: %j',
+    (values) => {
+      expect(() => templateFill.plan({ scan: emptyScan, format: '{{KEY}}', values })).toThrow(
+        'Variables must be a set of placeholder names and values',
+      );
+    },
+  );
+
+  it('treats missing or empty Variables as no Variables', () => {
+    expect(templateFill.plan({ scan: emptyScan, format: '{{KEY}}', values: undefined }).requests).toEqual([]);
+    expect(templateFill.plan({ scan: emptyScan, format: '{{KEY}}', values: null }).requests).toEqual([]);
+    expect(templateFill.plan({ scan: emptyScan, format: '{{KEY}}', values: '' }).requests).toEqual([]);
   });
 
   it('builds the same image request as before for an object ID', () => {

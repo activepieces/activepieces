@@ -111,6 +111,16 @@ describe('runTemplateFill', () => {
     expect(clients.batchUpdate).not.toHaveBeenCalled();
   });
 
+  it('fails before copying or writing when Variables is not an object', async () => {
+    const clients = stubClients();
+
+    await expect(
+      runTemplateFill({ clients, input: { ...baseInput, createCopy: true, values: 'name=Ada' } }),
+    ).rejects.toThrow('Variables must be a set of placeholder names and values');
+    expect(clients.copyFile).not.toHaveBeenCalled();
+    expect(clients.batchUpdate).not.toHaveBeenCalled();
+  });
+
   it('reports a missing placeholder without failing when the check is off', async () => {
     const clients = stubClients();
     clients.batchUpdate.mockResolvedValue({ documentId: 'template-id', replies: [{ replaceAllText: {} }] });

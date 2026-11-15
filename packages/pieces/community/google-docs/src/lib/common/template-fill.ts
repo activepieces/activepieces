@@ -98,7 +98,7 @@ function plan({
   images?: ImageReplacement[];
   imageFields?: unknown;
 }): FillPlan {
-  const merged = { ...withoutEmptyValues(toRecord(fields)), ...toRecord(values) };
+  const merged = { ...withoutEmptyValues(toRecord(fields)), ...variablesRecord(values) };
 
   const textTargets = Object.entries(merged).flatMap(([key, value]) =>
     tokensFor({ key, format, scan: templateScan }).map((token) => ({ key, token, replaceText: toText(value) })),
@@ -289,6 +289,19 @@ function toRecord(value: unknown): Record<string, unknown> {
     return toRecord(parseJson(value));
   }
   return typeof value === 'object' && value !== null && !Array.isArray(value) ? { ...value } : {};
+}
+
+function variablesRecord(values: unknown): Record<string, unknown> {
+  if (values === null || values === undefined || values === '') {
+    return {};
+  }
+  const parsed = typeof values === 'string' ? parseJson(values) : values;
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw new Error(
+      'Variables must be a set of placeholder names and values, for example {"name": "Ada"}. Nothing was changed.',
+    );
+  }
+  return { ...parsed };
 }
 
 function parseJson(text: string): unknown {
