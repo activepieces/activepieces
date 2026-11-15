@@ -254,4 +254,5 @@ Azure Active Directory "List Users", "Get Enabled Users" and "List Enabled Users
 #### What you need to do
 
 - If an agent or MCP client used one of the 3 actions as a tool, switch it to "Find Users".
+- Update User's "Account Enabled" checkbox is now a "Sign-in" choice (Allow / Block). An unticked checkbox no longer blocks sign-in; steps that relied on it to block a user should pick "Block sign-in" or use "Enable or Disable User".
 - Flow steps that use these actions keep working unchanged. Steps keep running on the version they were built with until you upgrade them.

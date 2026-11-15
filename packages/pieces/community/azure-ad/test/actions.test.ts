@@ -20,6 +20,7 @@ import { addOrRemoveUserLicenseAction, buildAssignLicenseBody, skuLabel } from '
 import { createUserAction as createUserForUi } from '../src/lib/actions/create-user';
 import { createGroupAction } from '../src/lib/actions/create-group';
 import { getUserByIdAction } from '../src/lib/actions/get-user-by-id';
+import { updateUserAction } from '../src/lib/actions/update-user';
 
 const sendRequest = vi.fn();
 
@@ -417,5 +418,27 @@ describe('capped lists', () => {
         const all = await run({ action: listGroupMembersAction, props: { groupId: 'g1', allPages: true } });
         expect(all).toEqual([{ id: 'a', objectType: null }, { id: 'b', objectType: null }]);
         expect(call({ index: 2 }).url).toBe(`${G}/groups/g1/members?$skiptoken=n`);
+    });
+});
+
+describe('update user sign-in', () => {
+    it('leaves sign-in alone when the field is empty or false, and maps yes/no', async () => {
+        respond({ body: {} });
+        respond({ body: { id: 'u1' } });
+        await run({ action: updateUserAction, props: { userId: 'u1', jobTitle: 'Lead', accountEnabled: false } });
+        expect(call({ index: 0 }).body).toEqual({ jobTitle: 'Lead' });
+        expect(call({ index: 1 }).url).toContain('accountEnabled');
+        respond({ body: {} });
+        respond({ body: { id: 'u1' } });
+        await run({ action: updateUserAction, props: { userId: 'u1', accountEnabled: 'no' } });
+        expect(call({ index: 2 }).body).toEqual({ accountEnabled: false });
+        respond({ body: {} });
+        respond({ body: { id: 'u1' } });
+        await run({ action: updateUserAction, props: { userId: 'u1', accountEnabled: 'yes' } });
+        expect(call({ index: 4 }).body).toEqual({ accountEnabled: true });
+    });
+
+    it('refuses an update with no fields', async () => {
+        await expect(run({ action: updateUserAction, props: { userId: 'u1', accountEnabled: false } })).rejects.toThrow('at least one field');
     });
 });

@@ -35,7 +35,7 @@ export const addMemberToGroupAction = createAction({
             method: HttpMethod.POST,
             url: `https://graph.microsoft.com/v1.0/groups/${encodeURIComponent(String(groupId))}/members/$ref`,
             body: {
-                '@odata.id': `https://graph.microsoft.com/v1.0/directoryObjects/${memberId}`,
+                '@odata.id': `https://graph.microsoft.com/v1.0/directoryObjects/${encodeURIComponent(String(memberId).trim())}`,
             },
         });
         return { success: true, message: 'Member added to group.', group_id: groupId, member_id: memberId };

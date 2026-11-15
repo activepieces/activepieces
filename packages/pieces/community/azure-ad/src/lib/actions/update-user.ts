@@ -12,7 +12,7 @@ export const updateUserAction = createAction({
     audience: 'both',
     aiMetadata: {
         description:
-            'Updates profile fields (display name, given name/surname, job title, mail, mobile phone, accountEnabled) on an existing Microsoft Entra ID user; only the supplied fields change, and at least one is required. Idempotent — re-applying the same values leaves the same state. Prefer Enable or Disable User when the only change is blocking or allowing sign-in.',
+            'Updates profile fields (display name, given name/surname, job title, mail, mobile phone, sign-in) on an existing Microsoft Entra ID user; only the supplied fields change, and at least one is required. Idempotent — re-applying the same values leaves the same state. Prefer Enable or Disable User when the only change is blocking or allowing sign-in.',
         idempotent: true,
     },
     outputSchema: { fields: flattenedUserFields },
@@ -49,10 +49,17 @@ export const updateUserAction = createAction({
             required: false,
             placeholder: '+1 555 0100',
         }),
-        accountEnabled: Property.Checkbox({
-            displayName: 'Account Enabled',
+        accountEnabled: Property.StaticDropdown<string>({
+            displayName: 'Sign-in',
+            description: 'Leave empty to keep it as is.',
             required: false,
             advanced: true,
+            options: {
+                options: [
+                    { label: 'Allow sign-in', value: 'yes' },
+                    { label: 'Block sign-in', value: 'no' },
+                ],
+            },
         }),
     },
     async run(context) {
@@ -66,7 +73,8 @@ export const updateUserAction = createAction({
         if (props['jobTitle'] !== undefined && props['jobTitle'] !== '') body['jobTitle'] = props['jobTitle'];
         if (props['mail'] !== undefined && props['mail'] !== '') body['mail'] = props['mail'];
         if (props['mobilePhone'] !== undefined && props['mobilePhone'] !== '') body['mobilePhone'] = props['mobilePhone'];
-        if (props['accountEnabled'] !== undefined) body['accountEnabled'] = props['accountEnabled'];
+        const accountEnabled = readAccountEnabled(props['accountEnabled']);
+        if (accountEnabled !== undefined) body['accountEnabled'] = accountEnabled;
         if (Object.keys(body).length === 0) {
             throw new Error('Provide at least one field to update.');
         }
@@ -78,7 +86,14 @@ export const updateUserAction = createAction({
         const user = await callGraphApi<Record<string, unknown>>(token, {
             method: HttpMethod.GET,
             url: `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(String(userId))}`,
+            query: { $select: 'id,displayName,givenName,surname,userPrincipalName,mail,jobTitle,mobilePhone,officeLocation,preferredLanguage,businessPhones,accountEnabled' },
         });
         return flattenUser(user);
     },
 });
+
+function readAccountEnabled(value: unknown): boolean | undefined {
+    if (value === 'yes' || value === true) return true;
+    if (value === 'no') return false;
+    return undefined;
+}

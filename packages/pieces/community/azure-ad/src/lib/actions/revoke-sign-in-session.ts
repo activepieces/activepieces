@@ -26,7 +26,10 @@ export const revokeSignInSessionAction = createAction({
     },
     async run(context) {
         const token = context.auth.access_token;
-        const { userId } = context.propsValue;
+        const userId = typeof context.propsValue.userId === 'string' ? context.propsValue.userId.trim() : '';
+        if (userId === '') {
+            throw new Error('Select the user whose sign-in sessions to revoke.');
+        }
         const result = await callGraphApi<{ value?: boolean }>(token, {
             method: HttpMethod.POST,
             url: `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(String(userId))}/revokeSignInSessions`,

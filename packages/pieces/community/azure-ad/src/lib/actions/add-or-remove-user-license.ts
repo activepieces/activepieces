@@ -65,7 +65,7 @@ export function buildAssignLicenseBody({
     licensesToAdd: unknown;
     licensesToRemove: unknown;
 }): { addLicenses: LicenseAssignment[]; removeLicenses: string[] } {
-    const jsonAdd = (Array.isArray(addLicenses) ? addLicenses : []).map((entry, i) => toAssignment({ entry, index: i }));
+    const jsonAdd = jsonArray(addLicenses).map((entry, i) => toAssignment({ entry, index: i }));
     const pickedAdd = stringList(licensesToAdd).filter((skuId) => !jsonAdd.some((a) => a.skuId === skuId)).map((skuId) => ({ skuId }));
     const add = [...jsonAdd, ...pickedAdd];
     const remove = Array.from(new Set([...stringList(removeLicenses), ...stringList(licensesToRemove)]));
@@ -152,3 +152,13 @@ const SKU_FRIENDLY_NAMES: Record<string, string> = {
 type LicenseAssignment = { skuId: string; disabledPlans?: string[] };
 
 export type SkuOption = { skuId?: string; skuPartNumber?: string; consumedUnits?: number; prepaidUnits?: { enabled?: number } };
+
+function jsonArray(value: unknown): unknown[] {
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string' && value.trim() !== '') {
+        const parsed: unknown = JSON.parse(value);
+        if (Array.isArray(parsed)) return parsed;
+        throw new Error('Add Licenses (JSON) must be a JSON array.');
+    }
+    return [];
+}
