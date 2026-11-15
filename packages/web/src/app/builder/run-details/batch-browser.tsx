@@ -27,24 +27,25 @@ import {
   FAILED_BATCH_STATUSES,
   batchUtils,
 } from './batch-utils';
-import { enclosingBatchStepName, useBatchStepRun } from './use-batch-logs';
+import { enclosingBatchStep, useBatchStepRun } from './use-step-output-in-run';
 
 export const BatchBrowser = ({ stepName }: { stepName: string }) => {
   const setBatchIndex = useBuilderStateContext((state) => state.setBatchIndex);
-  const { output, total, current } = useBatchStepRun(stepName);
-  const [query, setQuery] = useState('');
+  const { output, batchCount, selectedDispatchIndex } =
+    useBatchStepRun(stepName);
+  const [jumpQuery, setJumpQuery] = useState('');
   const [failedOnly, setFailedOnly] = useState(false);
 
   const header = batchUtils.headerState(output);
   const jumpTarget = batchUtils.parseJumpTarget({
-    query,
-    total,
+    query: jumpQuery,
+    total: batchCount,
   });
 
   if (isNil(output)) {
     return <CardListItemSkeleton numberOfCards={5} withCircle={false} />;
   }
-  if (total === 0) {
+  if (batchCount === 0) {
     return (
       <CardListEmpty
         message={t(
@@ -54,7 +55,7 @@ export const BatchBrowser = ({ stepName }: { stepName: string }) => {
     );
   }
 
-  const select = (dispatchIndex: number) =>
+  const selectBatch = (dispatchIndex: number) =>
     setBatchIndex({ stepName, index: dispatchIndex });
 
   return (
@@ -64,11 +65,11 @@ export const BatchBrowser = ({ stepName }: { stepName: string }) => {
       <div className="flex items-center gap-2 rounded-md border px-3 py-2">
         <Search className="size-3.5 shrink-0 text-gray-11" />
         <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          value={jumpQuery}
+          onChange={(e) => setJumpQuery(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && jumpTarget.kind === 'index') {
-              select(jumpTarget.dispatchIndex);
+              selectBatch(jumpTarget.dispatchIndex);
             }
           }}
           placeholder={t('Find a batch by number…')}
@@ -108,22 +109,22 @@ export const BatchBrowser = ({ stepName }: { stepName: string }) => {
           </span>
         )}
       {jumpTarget.kind === 'index' ? (
-        <JumpedBatch
+        <JumpTargetRow
           output={output}
           dispatchIndex={jumpTarget.dispatchIndex}
           isFinished={header.kind === 'finished'}
-          selectedIndex={current}
-          onSelect={select}
+          selectedIndex={selectedDispatchIndex}
+          onSelect={selectBatch}
         />
       ) : (
         <BatchList
           output={output}
           failedOnly={failedOnly}
-          selectedIndex={current}
-          onSelect={select}
+          selectedIndex={selectedDispatchIndex}
+          onSelect={selectBatch}
         />
       )}
-      <BatchDetail output={output} dispatchIndex={current} />
+      <BatchDetail output={output} dispatchIndex={selectedDispatchIndex} />
     </div>
   );
 };
@@ -134,10 +135,11 @@ export const BatchBreadcrumb = ({ stepName }: { stepName: string }) => {
     state.selectStepByName,
   ]);
   const batchStepName = useMemo(
-    () => enclosingBatchStepName({ stepName, trigger }),
+    () => enclosingBatchStep({ stepName, trigger })?.name ?? null,
     [stepName, trigger],
   );
-  const { output, total, current } = useBatchStepRun(batchStepName);
+  const { output, batchCount, selectedDispatchIndex } =
+    useBatchStepRun(batchStepName);
 
   if (isNil(batchStepName) || isNil(output)) {
     return <></>;
@@ -147,12 +149,15 @@ export const BatchBreadcrumb = ({ stepName }: { stepName: string }) => {
       <CornerLeftUp className="size-3.5 shrink-0" />
       <span>
         {t('Reading Batch {number} of {total}', {
-          number: formatUtils.formatNumber(current + 1),
-          total: formatUtils.formatNumber(total),
+          number: formatUtils.formatNumber(selectedDispatchIndex + 1),
+          total: formatUtils.formatNumber(batchCount),
         })}
       </span>
       <span className="truncate font-mono">
-        {batchUtils.itemRangeLabel({ output, dispatchIndex: current })}
+        {batchUtils.itemRangeLabel({
+          output,
+          dispatchIndex: selectedDispatchIndex,
+        })}
       </span>
       <button
         type="button"
@@ -217,26 +222,26 @@ const BatchStatTiles = ({ header }: { header: BatchHeaderState }) => {
     {
       label: t('Expected'),
       value: header.total,
-      tone: 'text-gray-12',
-      dot: null,
+      valueClassName: 'text-gray-12',
+      dotClassName: null,
     },
     {
       label: t('Succeeded'),
       value: header.succeeded,
-      tone: 'text-success-700 dark:text-success-300',
-      dot: 'bg-success',
+      valueClassName: 'text-success-700 dark:text-success-300',
+      dotClassName: 'bg-success',
     },
     {
       label: t('Failed'),
       value: header.unsuccessful,
-      tone: 'text-danger-11',
-      dot: 'bg-destructive',
+      valueClassName: 'text-danger-11',
+      dotClassName: 'bg-destructive',
     },
     {
       label: t('Running'),
       value: header.stillRunning,
-      tone: 'text-accent-11',
-      dot: 'bg-primary',
+      valueClassName: 'text-accent-11',
+      dotClassName: 'bg-primary',
     },
   ];
   return (
@@ -246,12 +251,22 @@ const BatchStatTiles = ({ header }: { header: BatchHeaderState }) => {
           key={tile.label}
           className="flex flex-col gap-1 rounded-lg border bg-gray-1 p-2"
         >
-          <span className={cn('text-lg font-semibold leading-none', tile.tone)}>
+          <span
+            className={cn(
+              'text-lg font-semibold leading-none',
+              tile.valueClassName,
+            )}
+          >
             {formatUtils.formatNumber(tile.value)}
           </span>
           <span className="flex items-center gap-1.5 text-xs text-gray-11">
-            {!isNil(tile.dot) && (
-              <i className={cn('size-1.5 shrink-0 rounded-full', tile.dot)} />
+            {!isNil(tile.dotClassName) && (
+              <i
+                className={cn(
+                  'size-1.5 shrink-0 rounded-full',
+                  tile.dotClassName,
+                )}
+              />
             )}
             {tile.label}
           </span>
@@ -281,7 +296,7 @@ const BatchList = ({
     hasNextPage,
     isFetchingNextPage,
     isFetchNextPageError,
-  } = flowRunQueries.useBatchChildrenPage({
+  } = flowRunQueries.useBatchChildren({
     barrierId: output.barrierId,
     limit: BATCH_PAGE_SIZE,
     statuses: failedOnly ? FAILED_BATCH_STATUSES : undefined,
@@ -312,16 +327,7 @@ const BatchList = ({
     return <CardListItemSkeleton numberOfCards={5} withCircle={false} />;
   }
   if (isError) {
-    return (
-      <div className="flex flex-col items-start gap-2 rounded-lg border p-4">
-        <span className="text-xs text-gray-11">
-          {t('Error, please try again.')}
-        </span>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
-          {t('Retry')}
-        </Button>
-      </div>
-    );
+    return <DataFetchErrorState entity={t('batches')} onRetry={refetch} />;
   }
   if (rows.length === 0) {
     return (
@@ -368,7 +374,7 @@ const BatchList = ({
   );
 };
 
-const JumpedBatch = ({
+const JumpTargetRow = ({
   output,
   dispatchIndex,
   isFinished,
@@ -381,11 +387,12 @@ const JumpedBatch = ({
   selectedIndex: number;
   onSelect: (dispatchIndex: number) => void;
 }) => {
-  const { data, isLoading, isError, refetch } = flowRunQueries.useBatchChild({
-    barrierId: output.barrierId,
-    dispatchIndex,
-    enabled: true,
-  });
+  const { data, isLoading, isError, refetch } =
+    flowRunQueries.useBatchChildByIndex({
+      barrierId: output.barrierId,
+      dispatchIndex,
+      enabled: true,
+    });
   const run = data?.data[0] ?? null;
 
   if (isLoading) {
@@ -473,11 +480,12 @@ const BatchDetail = ({
   output: BatchStepRunOutput;
   dispatchIndex: number;
 }) => {
-  const { data, isLoading, isError, refetch } = flowRunQueries.useBatchChild({
-    barrierId: output.barrierId,
-    dispatchIndex,
-    enabled: true,
-  });
+  const { data, isLoading, isError, refetch } =
+    flowRunQueries.useBatchChildByIndex({
+      barrierId: output.barrierId,
+      dispatchIndex,
+      enabled: true,
+    });
   if (isLoading) {
     return <CardListItemSkeleton numberOfCards={1} withCircle={false} />;
   }
@@ -485,15 +493,19 @@ const BatchDetail = ({
     return <DataFetchErrorState entity={t('this batch')} onRetry={refetch} />;
   }
   const run = data?.data[0] ?? null;
-  const state = batchUtils.missingLogsReason({
+  const missingReason = batchUtils.missingLogsReason({
     output,
     dispatchIndex,
     child: null,
   });
-  const badge = batchUtils.batchStatusBadge(isNil(run) ? state : run.status);
-  const missingCopy = isNil(run) ? batchUtils.missingLogsCopy(state) : null;
+  const badge = batchUtils.batchStatusBadge(
+    isNil(run) ? missingReason : run.status,
+  );
+  const missingLogsCopy = isNil(run)
+    ? batchUtils.missingLogsCopy(missingReason)
+    : null;
   const duration = runDuration(run);
-  const failure = batchUtils.failureMessage(run?.failedStep?.message);
+  const failureMessage = batchUtils.failureMessage(run?.failedStep?.message);
 
   return (
     <div className="flex flex-col gap-2 rounded-lg border p-3">
@@ -513,11 +525,11 @@ const BatchDetail = ({
           </span>
         )}
       </div>
-      {!isNil(missingCopy) && (
+      {!isNil(missingLogsCopy) && (
         <div className="flex flex-col gap-0.5">
-          <span className="text-xs font-medium">{missingCopy.title}</span>
+          <span className="text-xs font-medium">{missingLogsCopy.title}</span>
           <span className="text-xs leading-relaxed text-gray-11">
-            {missingCopy.description}
+            {missingLogsCopy.description}
           </span>
         </div>
       )}
@@ -526,9 +538,9 @@ const BatchDetail = ({
           <span className="text-xs font-medium text-danger-11">
             {run.failedStep.displayName}
           </span>
-          {!isNil(failure) && (
+          {!isNil(failureMessage) && (
             <span className="whitespace-pre-wrap wrap-break-word text-xs leading-relaxed text-gray-11">
-              {failure}
+              {failureMessage}
             </span>
           )}
         </div>

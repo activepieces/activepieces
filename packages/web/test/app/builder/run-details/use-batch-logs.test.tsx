@@ -28,7 +28,7 @@ import {
 import {
   BatchLogs,
   useBatchLogs,
-} from '@/app/builder/run-details/use-batch-logs';
+} from '@/app/builder/run-details/use-step-output-in-run';
 
 declare global {
   // eslint-disable-next-line no-var

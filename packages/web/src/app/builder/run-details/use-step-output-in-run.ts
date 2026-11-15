@@ -3,6 +3,7 @@ import {
   FlowActionType,
   FlowRunStatus,
   FlowTrigger,
+  Step,
   StepOutput,
   flowStructureUtil,
 } from '@activepieces/shared';
@@ -32,29 +33,32 @@ export const useBatchStepRun = (batchStepName: string | null) => {
     return batchUtils.parseStepOutput(stepOutput?.output);
   }, [run, batchStepName, loopsIndexes]);
   const barrierId = output?.barrierId ?? null;
-  const total = isNil(output) ? 0 : batchUtils.batchCount(output);
-  const current = Math.min(batchIndex, Math.max(total - 1, 0));
+  const batchCount = isNil(output) ? 0 : batchUtils.batchCount(output);
+  const selectedDispatchIndex = Math.min(
+    batchIndex,
+    Math.max(batchCount - 1, 0),
+  );
 
   const {
     data: selectedPage,
     isLoading: isSelectedChildLoading,
     isError: isSelectedChildError,
     refetch: refetchSelectedChild,
-  } = flowRunQueries.useBatchChild({
+  } = flowRunQueries.useBatchChildByIndex({
     barrierId,
-    dispatchIndex: current,
-    enabled: total > 0,
+    dispatchIndex: selectedDispatchIndex,
+    enabled: batchCount > 0,
   });
 
   const selectedChild = toBatchChildren(selectedPage?.data)[0] ?? null;
 
   return {
     output,
-    total,
-    current,
+    batchCount,
+    selectedDispatchIndex,
     selectedChild,
     isSelectedChildLoading,
-    selectedChildFailed: isSelectedChildError && isNil(selectedPage),
+    selectedChildRequestFailed: isSelectedChildError && isNil(selectedPage),
     refetchSelectedChild,
   };
 };
@@ -63,15 +67,17 @@ export const useBatchLogs = (stepName: string | undefined): BatchLogs => {
   const trigger = useBuilderStateContext((state) => state.flowVersion.trigger);
   const batchStepName = useMemo(
     () =>
-      isNil(stepName) ? null : enclosingBatchStepName({ stepName, trigger }),
+      isNil(stepName)
+        ? null
+        : enclosingBatchStep({ stepName, trigger })?.name ?? null,
     [trigger, stepName],
   );
   const {
     output,
-    current,
+    selectedDispatchIndex,
     selectedChild,
     isSelectedChildLoading,
-    selectedChildFailed,
+    selectedChildRequestFailed,
     refetchSelectedChild,
   } = useBatchStepRun(batchStepName);
   const {
@@ -79,14 +85,12 @@ export const useBatchLogs = (stepName: string | undefined): BatchLogs => {
     isLoading: isChildRunLoading,
     isError: isChildRunError,
     refetch: refetchChildRun,
-  } = flowRunQueries.useBatchChildRun({
-    childRunId: selectedChild?.id ?? null,
-  });
+  } = flowRunQueries.useFlowRun(selectedChild?.id ?? null);
 
   if (isNil(batchStepName) || isNil(output)) {
     return NOT_IN_A_BATCH;
   }
-  if (selectedChildFailed) {
+  if (selectedChildRequestFailed) {
     return { kind: 'error', childRunId: null, retry: refetchSelectedChild };
   }
   if (!isNil(selectedChild) && isChildRunError && isNil(childRun)) {
@@ -106,7 +110,7 @@ export const useBatchLogs = (stepName: string | undefined): BatchLogs => {
   return {
     kind: batchUtils.missingLogsReason({
       output,
-      dispatchIndex: current,
+      dispatchIndex: selectedDispatchIndex,
       child: selectedChild,
     }),
     childRunId: selectedChild?.id ?? null,
@@ -129,18 +133,18 @@ export const useStepOutputInRun = (stepName: string | undefined) => {
   return { stepOutput, batchLogs, steps };
 };
 
-export function enclosingBatchStepName({
+export function enclosingBatchStep({
   stepName,
   trigger,
 }: {
   stepName: string;
   trigger: FlowTrigger;
-}): string | null {
+}): Step | null {
   return (
     flowStructureUtil
       .getAllSteps(trigger)
       .filter((step) => step.type === FlowActionType.PROCESS_IN_BATCHES)
-      .find((step) => flowStructureUtil.isChildOf(step, stepName))?.name ?? null
+      .find((step) => flowStructureUtil.isChildOf(step, stepName)) ?? null
   );
 }
 
