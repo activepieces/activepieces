@@ -37,10 +37,6 @@ export const generateSignedUrl = createAction({
       description: 'Minutes until the link stops working.',
       required: true,
       defaultValue: 10,
-      display: 'stepper',
-      min: 1,
-      max: 10080,
-      step: 1,
     }),
   },
   async run(context) {

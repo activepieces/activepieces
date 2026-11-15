@@ -43,10 +43,6 @@ export const listFiles = createAction({
     maxKeys: Property.Number({
       displayName: 'Maximum Files',
       description: 'How many files to return, up to 1,000.',
-      display: 'stepper',
-      min: 1,
-      max: 1000,
-      step: 1,
       required: false,
       defaultValue: 1000,
     }),
