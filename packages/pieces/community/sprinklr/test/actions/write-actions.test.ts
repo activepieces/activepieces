@@ -1,10 +1,10 @@
 import { httpClient, HttpError, HttpMethod } from '@activepieces/pieces-common';
-import { createMockActionContext } from '@activepieces/pieces-framework';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { addCaseCommentAction } from '../../src/lib/actions/add-case-comment';
 import { createCaseAction } from '../../src/lib/actions/create-case';
 import { updateCaseAction } from '../../src/lib/actions/update-case';
 import { sprinklrTiming } from '../../src/lib/common/client';
+import { pieceRunner, RunnableAction } from '../support/piece-runner';
 
 const AUTH = {
   access_token: 'token-1',
@@ -33,8 +33,6 @@ const CASE = {
   deleted: false,
 };
 
-type Reply = { status: number; body: unknown } | Error;
-
 function mockResponses(responses: Reply[]) {
   const spy = vi.spyOn(httpClient, 'sendRequest');
   for (const response of responses) {
@@ -51,15 +49,16 @@ function httpError({ status, body }: { status: number; body: unknown }) {
   return new HttpError(undefined, { status, responseBody: body });
 }
 
-function wrapped(data: unknown, status = 200) {
-  return { status, body: { data, errors: [] } };
+function wrapped(data: unknown) {
+  return { status: 200, body: { data, errors: [] } };
 }
 
-type Runnable = { run: (context: never) => Promise<unknown> };
+function created(data: unknown) {
+  return { status: 201, body: { data, errors: [] } };
+}
 
-function runAction(action: Runnable, propsValue: Record<string, unknown>): Promise<unknown> {
-  const context = { ...createMockActionContext({ propsValue }), auth: AUTH };
-  return action.run(context as never);
+function runAction({ action, propsValue }: { action: RunnableAction; propsValue: Record<string, unknown> }): Promise<unknown> {
+  return pieceRunner.runAction({ action, auth: AUTH, propsValue });
 }
 
 async function captureError(promise: Promise<unknown>): Promise<Error> {
@@ -74,7 +73,7 @@ async function captureError(promise: Promise<unknown>): Promise<Error> {
   throw new Error('expected the action to fail');
 }
 
-function sentBody(spy: ReturnType<typeof mockResponses>, index = 0): Record<string, unknown> {
+function sentBody({ spy, index = 0 }: { spy: ReturnType<typeof mockResponses>; index?: number }): Record<string, unknown> {
   const body = spy.mock.calls[index][0].body;
   if (typeof body !== 'object' || body === null || Array.isArray(body)) {
     throw new Error('expected a JSON object body');
@@ -92,8 +91,8 @@ afterEach(() => {
 
 describe('create_case', () => {
   it('sends an upper-case channel, the email contact, lists for custom fields and the advanced fields', async () => {
-    const spy = mockResponses([wrapped(CASE, 201)]);
-    const output = await runAction(createCaseAction, {
+    const spy = mockResponses([created(CASE)]);
+    const output = await runAction({ action: createCaseAction, propsValue: {
       subject: 'Order arrived damaged',
       description: 'Broken lid',
       channel: 'email',
@@ -104,13 +103,13 @@ describe('create_case', () => {
       queue_id: '103197',
       custom_fields: { spr_uc_type: 'Complaint', tags: ['vip', 'refund'], order_total: 42, blank: '', skipped: null },
       first_comment: 'Customer called twice.',
-    });
+    } });
     expect(spy).toHaveBeenCalledTimes(1);
     const request = spy.mock.calls[0][0];
     expect(request.method).toBe(HttpMethod.POST);
     expect(request.url).toBe(`${API}/case`);
     expect(request.headers).toMatchObject({ Authorization: 'Bearer token-1', Key: 'key-1' });
-    expect(sentBody(spy)).toEqual({
+    expect(sentBody({ spy })).toEqual({
       subject: 'Order arrived damaged',
       description: 'Broken lid',
       channelType: 'EMAIL',
@@ -133,8 +132,8 @@ describe('create_case', () => {
   });
 
   it('leaves empty fields out of the body', async () => {
-    const spy = mockResponses([wrapped(CASE, 201)]);
-    await runAction(createCaseAction, {
+    const spy = mockResponses([created(CASE)]);
+    await runAction({ action: createCaseAction, propsValue: {
       subject: 'Order arrived damaged',
       description: '',
       channel: 'EMAIL',
@@ -145,8 +144,8 @@ describe('create_case', () => {
       queue_id: '',
       custom_fields: {},
       first_comment: '',
-    });
-    expect(sentBody(spy)).toEqual({
+    } });
+    expect(sentBody({ spy })).toEqual({
       subject: 'Order arrived damaged',
       channelType: 'EMAIL',
       contactInfo: { email: 'jane@example.com' },
@@ -156,7 +155,7 @@ describe('create_case', () => {
   it('needs an email when the channel is Email', async () => {
     const spy = mockResponses([]);
     const error = await captureError(
-      runAction(createCaseAction, { subject: 'S', channel: 'EMAIL', contact: '+12025550123' })
+      runAction({ action: createCaseAction, propsValue: { subject: 'S', channel: 'EMAIL', contact: '+12025550123' } })
     );
     expect(error.message).toContain('is not an email address. With Channel Email');
     expect(spy).not.toHaveBeenCalled();
@@ -164,14 +163,14 @@ describe('create_case', () => {
 
   it('rejects an email without an @', async () => {
     const spy = mockResponses([]);
-    const error = await captureError(runAction(createCaseAction, { subject: 'S', channel: 'EMAIL', contact: 'jane' }));
+    const error = await captureError(runAction({ action: createCaseAction, propsValue: { subject: 'S', channel: 'EMAIL', contact: 'jane' } }));
     expect(error.message).toContain('is not an email address');
     expect(spy).not.toHaveBeenCalled();
   });
 
   it('needs a contact', async () => {
     const spy = mockResponses([]);
-    const error = await captureError(runAction(createCaseAction, { subject: 'S', channel: 'SMS', contact: '  ' }));
+    const error = await captureError(runAction({ action: createCaseAction, propsValue: { subject: 'S', channel: 'SMS', contact: '  ' } }));
     expect(error.message).toContain("Contact is required. With Channel SMS, enter the customer's phone number.");
     expect(spy).not.toHaveBeenCalled();
   });
@@ -179,16 +178,16 @@ describe('create_case', () => {
   it('needs a phone when the channel is SMS', async () => {
     const spy = mockResponses([]);
     const error = await captureError(
-      runAction(createCaseAction, { subject: 'S', channel: 'SMS', contact: 'jane@example.com' })
+      runAction({ action: createCaseAction, propsValue: { subject: 'S', channel: 'SMS', contact: 'jane@example.com' } })
     );
     expect(error.message).toContain('is not a phone number. With Channel SMS');
     expect(spy).not.toHaveBeenCalled();
   });
 
   it('sends phoneNo and SMS for the SMS channel', async () => {
-    const spy = mockResponses([wrapped({ ...CASE, contact: { channelType: 'SMS', channelId: '+12025550123' } }, 201)]);
-    await runAction(createCaseAction, { subject: 'S', channel: 'sms', contact: '+12025550123', contact_name: 'Jane' });
-    expect(sentBody(spy)).toEqual({
+    const spy = mockResponses([created({ ...CASE, contact: { channelType: 'SMS', channelId: '+12025550123' } })]);
+    await runAction({ action: createCaseAction, propsValue: { subject: 'S', channel: 'sms', contact: '+12025550123', contact_name: 'Jane' } });
+    expect(sentBody({ spy })).toEqual({
       subject: 'S',
       channelType: 'SMS',
       contactInfo: { phoneNo: '+12025550123', fullName: 'Jane' },
@@ -197,7 +196,7 @@ describe('create_case', () => {
 
   it('refuses a channel other than Email or SMS', async () => {
     const spy = mockResponses([]);
-    const error = await captureError(runAction(createCaseAction, { subject: 'S', channel: 'twitter', contact: 'a@b.c' }));
+    const error = await captureError(runAction({ action: createCaseAction, propsValue: { subject: 'S', channel: 'twitter', contact: 'a@b.c' } }));
     expect(error.message).toContain('Channel must be Email or SMS');
     expect(spy).not.toHaveBeenCalled();
   });
@@ -205,7 +204,7 @@ describe('create_case', () => {
   it('refuses a queue ID that is not digits', async () => {
     const spy = mockResponses([]);
     const error = await captureError(
-      runAction(createCaseAction, { subject: 'S', channel: 'EMAIL', contact: 'a@b.c', queue_id: 'support' })
+      runAction({ action: createCaseAction, propsValue: { subject: 'S', channel: 'EMAIL', contact: 'a@b.c', queue_id: 'support' } })
     );
     expect(error.message).toContain('Queue ID must be a Sprinklr ID');
     expect(spy).not.toHaveBeenCalled();
@@ -213,29 +212,29 @@ describe('create_case', () => {
 
   it('does not retry a 5xx and says the case may exist', async () => {
     const spy = mockResponses([httpError({ status: 500, body: MOCK_HTML_500 })]);
-    const error = await captureError(runAction(createCaseAction, { subject: 'S', channel: 'EMAIL', contact: 'a@b.c' }));
+    const error = await captureError(runAction({ action: createCaseAction, propsValue: { subject: 'S', channel: 'EMAIL', contact: 'a@b.c' } }));
     expect(spy).toHaveBeenCalledTimes(1);
     expect(error.message).toContain('may still have gone through');
   });
 
   it('does not retry a timeout', async () => {
     const spy = mockResponses([new Error('The operation was aborted due to timeout')]);
-    const error = await captureError(runAction(createCaseAction, { subject: 'S', channel: 'EMAIL', contact: 'a@b.c' }));
+    const error = await captureError(runAction({ action: createCaseAction, propsValue: { subject: 'S', channel: 'EMAIL', contact: 'a@b.c' } }));
     expect(spy).toHaveBeenCalledTimes(1);
     expect(error.message).toContain('Sprinklr did not answer');
     expect(error.message).toContain('may still have gone through');
   });
 
   it('still retries a rate limit, because the call was not processed', async () => {
-    const spy = mockResponses([httpError({ status: 429, body: {} }), wrapped(CASE, 201)]);
-    const output = await runAction(createCaseAction, { subject: 'S', channel: 'EMAIL', contact: 'a@b.c' });
+    const spy = mockResponses([httpError({ status: 429, body: {} }), created(CASE)]);
+    const output = await runAction({ action: createCaseAction, propsValue: { subject: 'S', channel: 'EMAIL', contact: 'a@b.c' } });
     expect(spy).toHaveBeenCalledTimes(2);
     expect(output).toMatchObject({ caseNumber: 120338341 });
   });
 
   it('reads the case back when the answer only carries the case number', async () => {
-    const spy = mockResponses([wrapped({ caseNumber: 120338341 }, 201), wrapped([CASE])]);
-    const output = await runAction(createCaseAction, { subject: 'S', channel: 'EMAIL', contact: 'a@b.c' });
+    const spy = mockResponses([created({ caseNumber: 120338341 }), wrapped([CASE])]);
+    const output = await runAction({ action: createCaseAction, propsValue: { subject: 'S', channel: 'EMAIL', contact: 'a@b.c' } });
     expect(spy).toHaveBeenCalledTimes(2);
     expect(spy.mock.calls[1][0].method).toBe(HttpMethod.GET);
     expect(spy.mock.calls[1][0].url).toBe(`${API}/case?caseNumber=120338341`);
@@ -243,22 +242,22 @@ describe('create_case', () => {
   });
 
   it('reads the case back by ID when the answer only carries the ID', async () => {
-    const spy = mockResponses([wrapped({ id: CASE.id }, 201), { status: 200, body: [CASE] }]);
-    const output = await runAction(createCaseAction, { subject: 'S', channel: 'EMAIL', contact: 'a@b.c' });
+    const spy = mockResponses([created({ id: CASE.id }), { status: 200, body: [CASE] }]);
+    const output = await runAction({ action: createCaseAction, propsValue: { subject: 'S', channel: 'EMAIL', contact: 'a@b.c' } });
     expect(spy.mock.calls[1][0].url).toBe(`${API}/case?id=${CASE.id}`);
     expect(output).toMatchObject({ caseNumber: 120338341 });
   });
 
   it('returns what it sent when the answer is empty, without a second call', async () => {
     const spy = mockResponses([{ status: 204, body: undefined }]);
-    const output = await runAction(createCaseAction, { subject: 'S', description: 'D', channel: 'EMAIL', contact: 'a@b.c' });
+    const output = await runAction({ action: createCaseAction, propsValue: { subject: 'S', description: 'D', channel: 'EMAIL', contact: 'a@b.c' } });
     expect(spy).toHaveBeenCalledTimes(1);
     expect(output).toMatchObject({ id: null, caseNumber: null, subject: 'S', description: 'D' });
   });
 
   it('returns the partial case when the read-back fails, so a retry does not duplicate it', async () => {
-    const spy = mockResponses([wrapped({ caseNumber: 120338341 }, 201), wrapped([])]);
-    const output = await runAction(createCaseAction, { subject: 'S', channel: 'EMAIL', contact: 'a@b.c' });
+    const spy = mockResponses([created({ caseNumber: 120338341 }), wrapped([])]);
+    const output = await runAction({ action: createCaseAction, propsValue: { subject: 'S', channel: 'EMAIL', contact: 'a@b.c' } });
     expect(spy).toHaveBeenCalledTimes(2);
     expect(output).toMatchObject({ caseNumber: 120338341, subject: 'S' });
   });
@@ -267,7 +266,7 @@ describe('create_case', () => {
 describe('update_case', () => {
   it('sends PATCH with only the filled fields, then reads the case again', async () => {
     const spy = mockResponses([{ status: 204, body: undefined }, wrapped([{ ...CASE, status: 'Closed' }])]);
-    const output = await runAction(updateCaseAction, {
+    const output = await runAction({ action: updateCaseAction, propsValue: {
       case_number: '#120338341',
       subject: '',
       description: undefined,
@@ -275,12 +274,12 @@ describe('update_case', () => {
       priority: '  ',
       add_queue_ids: [],
       custom_fields: {},
-    });
+    } });
     expect(spy).toHaveBeenCalledTimes(2);
     const patch = spy.mock.calls[0][0];
     expect(patch.method).toBe(HttpMethod.PATCH);
     expect(patch.url).toBe(`${API}/case?caseNumber=120338341`);
-    expect(sentBody(spy)).toEqual({ status: 'Closed' });
+    expect(sentBody({ spy })).toEqual({ status: 'Closed' });
     const read = spy.mock.calls[1][0];
     expect(read.method).toBe(HttpMethod.GET);
     expect(read.url).toBe(`${API}/case?caseNumber=120338341`);
@@ -289,13 +288,13 @@ describe('update_case', () => {
 
   it('never sends PUT', async () => {
     const spy = mockResponses([{ status: 204, body: undefined }, wrapped([CASE])]);
-    await runAction(updateCaseAction, { case_number: '120338341', subject: 'New subject' });
+    await runAction({ action: updateCaseAction, propsValue: { case_number: '120338341', subject: 'New subject' } });
     expect(spy.mock.calls.map((call) => call[0].method)).not.toContain(HttpMethod.PUT);
   });
 
   it('puts custom fields in syncedSelectedCustomProperties as lists, with assignee and queues', async () => {
     const spy = mockResponses([{ status: 204, body: undefined }, wrapped([CASE])]);
-    await runAction(updateCaseAction, {
+    await runAction({ action: updateCaseAction, propsValue: {
       case_number: 120338341,
       priority: 'High',
       case_type: 'Complaint',
@@ -305,8 +304,8 @@ describe('update_case', () => {
       add_queue_ids: ['103197', 5001],
       remove_queue_ids: ['42', ''],
       custom_fields: { spr_uc_type: 'Complaint', tags: ['vip'] },
-    });
-    expect(sentBody(spy)).toEqual({
+    } });
+    expect(sentBody({ spy })).toEqual({
       priority: 'High',
       caseType: 'Complaint',
       summary: 'Refund sent',
@@ -318,28 +317,28 @@ describe('update_case', () => {
         syncedSelectedCustomProperties: { spr_uc_type: ['Complaint'], tags: ['vip'] },
       },
     });
-    const workflow = sentBody(spy)['workflow'];
+    const workflow = sentBody({ spy })['workflow'];
     expect(workflow).not.toHaveProperty('syncedCustomProperties');
     expect(workflow).not.toHaveProperty('customProperties');
   });
 
   it('refuses an update with no fields, before any call', async () => {
     const spy = mockResponses([]);
-    const error = await captureError(runAction(updateCaseAction, { case_number: '120338341', subject: '', custom_fields: {}, add_queue_ids: [] }));
+    const error = await captureError(runAction({ action: updateCaseAction, propsValue: { case_number: '120338341', subject: '', custom_fields: {}, add_queue_ids: [] } }));
     expect(error.message).toContain('Update Case has nothing to change');
     expect(spy).not.toHaveBeenCalled();
   });
 
   it('refuses a case number that is not a number', async () => {
     const spy = mockResponses([]);
-    const error = await captureError(runAction(updateCaseAction, { case_number: 'abc', status: 'Closed' }));
+    const error = await captureError(runAction({ action: updateCaseAction, propsValue: { case_number: 'abc', status: 'Closed' } }));
     expect(error.message).toContain('Case Number must be the number of a Sprinklr case');
     expect(spy).not.toHaveBeenCalled();
   });
 
   it('refuses a due date it cannot read', async () => {
     const spy = mockResponses([]);
-    const error = await captureError(runAction(updateCaseAction, { case_number: '1', due_date: 'next tuesday' }));
+    const error = await captureError(runAction({ action: updateCaseAction, propsValue: { case_number: '1', due_date: 'next tuesday' } }));
     expect(error.message).toContain('is not a date');
     expect(spy).not.toHaveBeenCalled();
   });
@@ -359,11 +358,11 @@ describe('add_case_comment', () => {
         isPrivate: false,
       }),
     ]);
-    const output = await runAction(addCaseCommentAction, { case_number: 120338341, comment: 'Refund approved.' });
+    const output = await runAction({ action: addCaseCommentAction, propsValue: { case_number: 120338341, comment: 'Refund approved.' } });
     const request = spy.mock.calls[0][0];
     expect(request.method).toBe(HttpMethod.POST);
     expect(request.url).toBe(`${API}/comment`);
-    expect(sentBody(spy)).toEqual({ entityType: 'CASE', entityId: '120338341', text: 'Refund approved.', isPrivate: false });
+    expect(sentBody({ spy })).toEqual({ entityType: 'CASE', entityId: '120338341', text: 'Refund approved.', isPrivate: false });
     expect(output).toEqual({
       id: 'c0ffee',
       text: 'Refund approved.',
@@ -376,21 +375,23 @@ describe('add_case_comment', () => {
 
   it('sends isPrivate true when Private is on', async () => {
     const spy = mockResponses([{ status: 200, body: { id: 'x', text: 'n', entityType: 'CASE', entityId: '7' } }]);
-    await runAction(addCaseCommentAction, { case_number: ' #7 ', comment: 'n', is_private: true });
-    expect(sentBody(spy)).toEqual({ entityType: 'CASE', entityId: '7', text: 'n', isPrivate: true });
+    await runAction({ action: addCaseCommentAction, propsValue: { case_number: ' #7 ', comment: 'n', is_private: true } });
+    expect(sentBody({ spy })).toEqual({ entityType: 'CASE', entityId: '7', text: 'n', isPrivate: true });
   });
 
   it('does not retry a 5xx', async () => {
     const spy = mockResponses([httpError({ status: 502, body: MOCK_HTML_500 })]);
-    const error = await captureError(runAction(addCaseCommentAction, { case_number: '7', comment: 'n' }));
+    const error = await captureError(runAction({ action: addCaseCommentAction, propsValue: { case_number: '7', comment: 'n' } }));
     expect(spy).toHaveBeenCalledTimes(1);
     expect(error.message).toContain('may still have gone through');
   });
 
   it('refuses an empty comment', async () => {
     const spy = mockResponses([]);
-    const error = await captureError(runAction(addCaseCommentAction, { case_number: '7', comment: '   ' }));
+    const error = await captureError(runAction({ action: addCaseCommentAction, propsValue: { case_number: '7', comment: '   ' } }));
     expect(error.message).toContain('Comment is empty');
     expect(spy).not.toHaveBeenCalled();
   });
 });
+
+type Reply = { status: number; body: unknown } | Error;

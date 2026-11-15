@@ -1,5 +1,4 @@
 import { createServer, Server } from 'node:http';
-import { AddressInfo } from 'node:net';
 import { createHmac } from 'node:crypto';
 import { afterEach, describe, expect, it } from 'vitest';
 import { FAKE_SPRINKLR_CLIENT, FakeSprinklr, FakeSprinklrOptions, startFakeSprinklr } from './support/fake-sprinklr';
@@ -33,7 +32,7 @@ async function authorizeCode(f: FakeSprinklr): Promise<string> {
   return location.searchParams.get('code') ?? '';
 }
 
-async function tokenCall(f: FakeSprinklr, form: Record<string, string>, query = ''): Promise<Response> {
+async function tokenCall({ f, form, query = '' }: { f: FakeSprinklr; form: Record<string, string>; query?: string }): Promise<Response> {
   return fetch(`${f.baseUrl}/oauth/token${query}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -43,16 +42,22 @@ async function tokenCall(f: FakeSprinklr, form: Record<string, string>, query = 
 
 async function connect(f: FakeSprinklr): Promise<{ access_token: string; refresh_token: string; expires_in: number; token_type: string }> {
   const code = await authorizeCode(f);
-  const res = await tokenCall(f, { grant_type: 'authorization_code', code, redirect_uri: CALLBACK }, `?redirect_uri=${CALLBACK}`);
+  const res = await tokenCall({ f, form: { grant_type: 'authorization_code', code, redirect_uri: CALLBACK }, query: `?redirect_uri=${CALLBACK}` });
   expect(res.status).toBe(200);
   return res.json();
 }
 
-function api(f: FakeSprinklr, path: string, init: { method?: string; body?: unknown; token?: string; key?: string | null } = {}): Promise<Response> {
-  const token = init.token ?? f.state.tokens[FAKE_SPRINKLR_CLIENT.apiKey]?.accessToken ?? f.control.issueToken().accessToken;
+function api({ f, path, method, body, token: tokenOverride, key }: { f: FakeSprinklr; path: string; method?: string; body?: unknown; token?: string; key?: string | null }): Promise<Response> {
+  const token = tokenOverride ?? f.state.tokens[FAKE_SPRINKLR_CLIENT.apiKey]?.accessToken ?? f.control.issueToken().accessToken;
   const headers: Record<string, string> = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-  if (init.key !== null) headers['Key'] = init.key ?? FAKE_SPRINKLR_CLIENT.apiKey;
-  return fetch(`${f.baseUrl}/api/v3${path}`, { method: init.method ?? 'GET', headers, body: init.body === undefined ? undefined : JSON.stringify(init.body) });
+  if (key !== null) headers['Key'] = key ?? FAKE_SPRINKLR_CLIENT.apiKey;
+  return fetch(`${f.baseUrl}/api/v3${path}`, { method: method ?? 'GET', headers, body: body === undefined ? undefined : JSON.stringify(body) });
+}
+
+function portOf(server: Server): number {
+  const address = server.address();
+  if (address === null || typeof address === 'string') throw new Error('The receiver has no TCP address');
+  return address.port;
 }
 
 async function data(res: Response): Promise<ReturnType<typeof JSON.parse>> {
@@ -74,10 +79,10 @@ describe('fake sprinklr oauth', () => {
   it('redirects the authorize call and exchanges the code once', async () => {
     const f = await start();
     const code = await authorizeCode(f);
-    const first = await tokenCall(f, { grant_type: 'authorization_code', code, redirect_uri: CALLBACK });
+    const first = await tokenCall({ f, form: { grant_type: 'authorization_code', code, redirect_uri: CALLBACK } });
     const body = await first.json();
     expect(body).toMatchObject({ token_type: 'Bearer', expires_in: 2591999 });
-    const again = await tokenCall(f, { grant_type: 'authorization_code', code, redirect_uri: CALLBACK });
+    const again = await tokenCall({ f, form: { grant_type: 'authorization_code', code, redirect_uri: CALLBACK } });
     expect(again.status).toBe(400);
     expect(await again.json()).toMatchObject({ error: 'invalid_grant' });
     expect(f.state.counters.authorizationCode).toBe(2);
@@ -94,30 +99,30 @@ describe('fake sprinklr oauth', () => {
     const f = await start();
     const code = await authorizeCode(f);
     clock += 10 * 60 * 1000 + 1;
-    const res = await tokenCall(f, { grant_type: 'authorization_code', code, redirect_uri: CALLBACK });
+    const res = await tokenCall({ f, form: { grant_type: 'authorization_code', code, redirect_uri: CALLBACK } });
     expect(await res.json()).toMatchObject({ error: 'invalid_grant' });
   });
 
   it('rotates tokens on refresh and the old refresh token stops working', async () => {
     const f = await start();
     const first = await connect(f);
-    const refreshed = await tokenCall(f, { grant_type: 'refresh_token', refresh_token: first.refresh_token, redirect_uri: CALLBACK });
+    const refreshed = await tokenCall({ f, form: { grant_type: 'refresh_token', refresh_token: first.refresh_token, redirect_uri: CALLBACK } });
     expect(refreshed.status).toBe(200);
     const second = await refreshed.json();
     expect(second.access_token).not.toBe(first.access_token);
     expect(second.refresh_token).not.toBe(first.refresh_token);
-    const reused = await tokenCall(f, { grant_type: 'refresh_token', refresh_token: first.refresh_token, redirect_uri: CALLBACK });
+    const reused = await tokenCall({ f, form: { grant_type: 'refresh_token', refresh_token: first.refresh_token, redirect_uri: CALLBACK } });
     expect(reused.status).toBe(400);
     expect(await reused.json()).toMatchObject({ error: 'invalid_grant' });
-    expect((await api(f, '/me', { token: first.access_token })).status).toBe(401);
-    expect((await api(f, '/me', { token: second.access_token })).status).toBe(200);
+    expect((await api({ f, path: '/me', token: first.access_token })).status).toBe(401);
+    expect((await api({ f, path: '/me', token: second.access_token })).status).toBe(200);
     expect(f.state.counters.refreshToken).toBe(2);
   });
 
   it('fails a refresh without redirect_uri', async () => {
     const f = await start();
     const first = await connect(f);
-    const res = await tokenCall(f, { grant_type: 'refresh_token', refresh_token: first.refresh_token });
+    const res = await tokenCall({ f, form: { grant_type: 'refresh_token', refresh_token: first.refresh_token } });
     expect(res.status).toBe(400);
     expect(await res.json()).toMatchObject({ error: 'invalid_grant', error_description: 'redirect_uri is required' });
   });
@@ -125,7 +130,7 @@ describe('fake sprinklr oauth', () => {
   it('accepts a refresh with redirect_uri only in the query string', async () => {
     const f = await start();
     const first = await connect(f);
-    const res = await tokenCall(f, { grant_type: 'refresh_token', refresh_token: first.refresh_token }, `?redirect_uri=${CALLBACK}`);
+    const res = await tokenCall({ f, form: { grant_type: 'refresh_token', refresh_token: first.refresh_token }, query: `?redirect_uri=${CALLBACK}` });
     expect(res.status).toBe(200);
   });
 
@@ -133,10 +138,10 @@ describe('fake sprinklr oauth', () => {
     const f = await start();
     const first = await connect(f);
     const second = await connect(f);
-    expect((await api(f, '/me', { token: first.access_token })).status).toBe(401);
-    const refresh = await tokenCall(f, { grant_type: 'refresh_token', refresh_token: first.refresh_token, redirect_uri: CALLBACK });
+    expect((await api({ f, path: '/me', token: first.access_token })).status).toBe(401);
+    const refresh = await tokenCall({ f, form: { grant_type: 'refresh_token', refresh_token: first.refresh_token, redirect_uri: CALLBACK } });
     expect(refresh.status).toBe(400);
-    expect((await api(f, '/me', { token: second.access_token })).status).toBe(200);
+    expect((await api({ f, path: '/me', token: second.access_token })).status).toBe(200);
   });
 
   it('honours a short token TTL in expires_in and rejects the token after expiry', async () => {
@@ -144,9 +149,9 @@ describe('fake sprinklr oauth', () => {
     const t = await connect(f);
     expect(t.expires_in).toBe(600);
     clock += 599_000;
-    expect((await api(f, '/me', { token: t.access_token })).status).toBe(200);
+    expect((await api({ f, path: '/me', token: t.access_token })).status).toBe(200);
     clock += 1_000;
-    const res = await api(f, '/me', { token: t.access_token });
+    const res = await api({ f, path: '/me', token: t.access_token });
     expect(res.status).toBe(401);
     expect((await res.json()).errors[0]).toMatchObject({ code: 'UNAUTHORIZED', message: 'Access token expired' });
   });
@@ -155,7 +160,7 @@ describe('fake sprinklr oauth', () => {
     const f = await start();
     const t = await connect(f);
     f.control.expireAccessTokens();
-    expect((await api(f, '/me', { token: t.access_token })).status).toBe(401);
+    expect((await api({ f, path: '/me', token: t.access_token })).status).toBe(401);
   });
 });
 
@@ -163,37 +168,39 @@ describe('fake sprinklr api', () => {
   it('requires both the bearer token and the Key header', async () => {
     const f = await start();
     const t = f.control.issueToken();
-    const noKey = await api(f, '/me', { token: t.accessToken, key: null });
+    const noKey = await api({ f, path: '/me', token: t.accessToken, key: null });
     expect(noKey.status).toBe(401);
     expect((await noKey.json()).errors[0]).toMatchObject({ code: 'UNAUTHORIZED' });
     const noBearer = await fetch(`${f.baseUrl}/api/v3/me`, { headers: { Key: FAKE_SPRINKLR_CLIENT.apiKey } });
     expect(noBearer.status).toBe(401);
-    expect((await api(f, '/me', { token: t.accessToken })).status).toBe(200);
+    expect((await api({ f, path: '/me', token: t.accessToken })).status).toBe(200);
     const v2 = await fetch(`${f.baseUrl}/api/v2/me`, { headers: { Authorization: `Bearer ${t.accessToken}`, Key: FAKE_SPRINKLR_CLIENT.apiKey } });
     expect(await v2.json()).toMatchObject({ email: 'service.user@example.com' });
   });
 
   it('creates, gets and patches a case', async () => {
     const f = await start();
-    const created = await api(f, '/case', { method: 'POST', body: newCase });
+    const created = await api({ f, path: '/case', method: 'POST', body: newCase });
     expect(created.status).toBe(201);
     const c = await data(created);
     expect(c.subject).toBe(`#${c.caseNumber} Email Printer on fire`);
     expect(c.workflow.customProperties).toEqual({ spr_uc_type: ['Complaint'], region: ['EU'] });
     expect(c.createdTime).toBe(T0);
 
-    const got = await data(await api(f, `/case?caseNumber=${c.caseNumber}`));
+    const got = await data(await api({ f, path: `/case?caseNumber=${c.caseNumber}` }));
     expect(got).toHaveLength(1);
     expect(got[0].id).toBe(c.id);
-    expect(await data(await api(f, '/case?caseNumber=1'))).toEqual([]);
+    expect(await data(await api({ f, path: '/case?caseNumber=1' }))).toEqual([]);
 
     clock += 5000;
-    const patched = await api(f, `/case?caseNumber=${c.caseNumber}`, {
+    const patched = await api({
+      f,
+      path: `/case?caseNumber=${c.caseNumber}`,
       method: 'PATCH',
       body: { status: 'Closed', workflow: { syncedSelectedCustomProperties: { region: ['US'] }, addedQueues: [7], removedQueues: [103197], assignment: { assigneeId: '42', assigneeType: 'USER' } } },
     });
     expect(patched.status).toBe(204);
-    const after = (await data(await api(f, `/case?id=${c.id}`)))[0];
+    const after = (await data(await api({ f, path: `/case?id=${c.id}` })))[0];
     expect(after).toMatchObject({ status: 'Closed', subject: c.subject, version: 1, modifiedTime: T0 + 5000 });
     expect(after.workflow.customProperties).toEqual({ spr_uc_type: ['Complaint'], region: ['US'] });
     expect(after.workflow.queues.map((q: { queueId: number }) => q.queueId)).toEqual([7]);
@@ -202,17 +209,17 @@ describe('fake sprinklr api', () => {
 
   it('requires channelType and contactInfo on create', async () => {
     const f = await start();
-    expect((await api(f, '/case', { method: 'POST', body: { subject: 'x', contactInfo: { email: 'a@b.c' } } })).status).toBe(400);
-    expect((await api(f, '/case', { method: 'POST', body: { subject: 'x', channelType: 'EMAIL' } })).status).toBe(400);
-    expect((await api(f, '/case', { method: 'POST', body: { channelType: 'email', contactInfo: { email: 'a@b.c' } } })).status).toBe(400);
+    expect((await api({ f, path: '/case', method: 'POST', body: { subject: 'x', contactInfo: { email: 'a@b.c' } } })).status).toBe(400);
+    expect((await api({ f, path: '/case', method: 'POST', body: { subject: 'x', channelType: 'EMAIL' } })).status).toBe(400);
+    expect((await api({ f, path: '/case', method: 'POST', body: { channelType: 'email', contactInfo: { email: 'a@b.c' } } })).status).toBe(400);
   });
 
   it('clears fields not sent on PUT', async () => {
     const f = await start();
-    const c = await data(await api(f, '/case', { method: 'POST', body: newCase }));
-    const res = await api(f, `/case?id=${c.id}`, { method: 'PUT', body: { subject: 'Only subject' } });
+    const c = await data(await api({ f, path: '/case', method: 'POST', body: newCase }));
+    const res = await api({ f, path: `/case?id=${c.id}`, method: 'PUT', body: { subject: 'Only subject' } });
     expect(res.status).toBe(200);
-    const after = (await data(await api(f, `/case?id=${c.id}`)))[0];
+    const after = (await data(await api({ f, path: `/case?id=${c.id}` })))[0];
     expect(after.subject).toBe('Only subject');
     expect(after.description).toBeUndefined();
     expect(after.priority).toBeUndefined();
@@ -222,22 +229,22 @@ describe('fake sprinklr api', () => {
 
   it('adds comments by case number only', async () => {
     const f = await start();
-    const c = await data(await api(f, '/case', { method: 'POST', body: newCase }));
-    const res = await api(f, '/comment', { method: 'POST', body: { entityType: 'CASE', entityId: String(c.caseNumber), text: 'hi', isPrivate: true } });
+    const c = await data(await api({ f, path: '/case', method: 'POST', body: newCase }));
+    const res = await api({ f, path: '/comment', method: 'POST', body: { entityType: 'CASE', entityId: String(c.caseNumber), text: 'hi', isPrivate: true } });
     expect(res.status).toBe(200);
     expect(await data(res)).toMatchObject({ text: 'hi', entityType: 'CASE', entityId: String(c.caseNumber), commentingUser: 60000000, createdTime: T0, isPrivate: true });
-    expect((await api(f, '/comment', { method: 'POST', body: { entityType: 'CASE', entityId: c.id, text: 'hi' } })).status).toBe(404);
-    expect((await api(f, '/comment', { method: 'POST', body: { entityType: 'CASE', entityId: c.caseNumber, text: 'hi' } })).status).toBe(400);
+    expect((await api({ f, path: '/comment', method: 'POST', body: { entityType: 'CASE', entityId: c.id, text: 'hi' } })).status).toBe(404);
+    expect((await api({ f, path: '/comment', method: 'POST', body: { entityType: 'CASE', entityId: c.caseNumber, text: 'hi' } })).status).toBe(400);
     expect(f.state.comments).toHaveLength(2);
   });
 
   it('finds profiles by id, channel and email search', async () => {
     const f = await start();
-    await api(f, '/case', { method: 'POST', body: newCase });
-    const byChannel = await data(await api(f, `/profile?channelTypeChannelId=${encodeURIComponent('EMAIL~jane@example.com')}`));
+    await api({ f, path: '/case', method: 'POST', body: newCase });
+    const byChannel = await data(await api({ f, path: `/profile?channelTypeChannelId=${encodeURIComponent('EMAIL~jane@example.com')}` }));
     expect(byChannel).toHaveLength(1);
-    expect(await data(await api(f, `/profile?id=${byChannel[0].id}`))).toHaveLength(1);
-    const search = await data(await api(f, '/search/PROFILE', { method: 'POST', body: { filter: { type: 'IN', key: 'contact.email', values: ['jane@example.com'] }, page: { size: 5 } } }));
+    expect(await data(await api({ f, path: `/profile?id=${byChannel[0].id}` }))).toHaveLength(1);
+    const search = await data(await api({ f, path: '/search/PROFILE', method: 'POST', body: { filter: { type: 'IN', key: 'contact.email', values: ['jane@example.com'] }, page: { size: 5 } } }));
     expect(search.results[0].contact).toMatchObject({ fullName: 'Jane Doe', email: 'jane@example.com' });
   });
 
@@ -247,24 +254,24 @@ describe('fake sprinklr api', () => {
     const all = f.state.cases;
     expect(all.map((c) => c.createdTime)).toEqual([T0 - 240000, T0 - 180000, T0 - 120000, T0 - 60000, T0]);
     const body = { filter: { type: 'AND', filters: [{ type: 'GT', key: 'createdTime', values: [String(T0 - 200000)] }, { type: 'OR', filters: [{ type: 'IN', key: 'workflow.customProperties.tier', values: ['gold'] }, { type: 'EQUALS', key: 'workflow.queues.queueId', values: ['103'] }] }] }, sorts: [{ key: 'createdTime', order: 'DESC' }], page: { size: 2 } };
-    const page1 = await data(await api(f, '/search/case', { method: 'POST', body }));
+    const page1 = await data(await api({ f, path: '/search/case', method: 'POST', body }));
     expect(page1.count).toBe(3);
     expect(page1.results.map((c: { caseNumber: number }) => c.caseNumber)).toEqual([all[4].caseNumber, all[3].caseNumber]);
-    const page2 = await data(await api(f, `/search/CASE?id=${page1.cursor}`));
+    const page2 = await data(await api({ f, path: `/search/CASE?id=${page1.cursor}` }));
     expect(page2.results.map((c: { caseNumber: number }) => c.caseNumber)).toEqual([all[2].caseNumber]);
     expect(page2.cursor).toBeUndefined();
-    const lte = await data(await api(f, '/search/case', { method: 'POST', body: { filter: { type: 'LTE', key: 'modifiedTime', values: [String(T0 - 180000)] }, sorts: [{ key: 'createdTime', order: 'ASC' }], page: { size: 10 } } }));
+    const lte = await data(await api({ f, path: '/search/case', method: 'POST', body: { filter: { type: 'LTE', key: 'modifiedTime', values: [String(T0 - 180000)] }, sorts: [{ key: 'createdTime', order: 'ASC' }], page: { size: 10 } } }));
     expect(lte.count).toBe(2);
-    const lt = await data(await api(f, '/search/case', { method: 'POST', body: { filter: { type: 'AND', filters: [{ type: 'GTE', key: 'createdTime', values: [String(T0 - 60000)] }, { type: 'LT', key: 'createdTime', values: [String(T0)] }] }, page: { size: 10 } } }));
+    const lt = await data(await api({ f, path: '/search/case', method: 'POST', body: { filter: { type: 'AND', filters: [{ type: 'GTE', key: 'createdTime', values: [String(T0 - 60000)] }, { type: 'LT', key: 'createdTime', values: [String(T0)] }] }, page: { size: 10 } } }));
     expect(lt.count).toBe(1);
   });
 
   it('expires a cursor after five minutes', async () => {
     const f = await start();
     f.control.seedCases(3);
-    const page1 = await data(await api(f, '/search/case', { method: 'POST', body: { page: { size: 1 } } }));
+    const page1 = await data(await api({ f, path: '/search/case', method: 'POST', body: { page: { size: 1 } } }));
     clock += 5 * 60 * 1000;
-    const res = await api(f, `/search/case?id=${page1.cursor}`);
+    const res = await api({ f, path: `/search/case?id=${page1.cursor}` });
     expect(res.status).toBe(400);
     expect((await res.json()).errors[0].code).toBe('INVALID_CURSOR');
   });
@@ -272,20 +279,20 @@ describe('fake sprinklr api', () => {
   it('accepts the cursor parameter name it is configured for, with an id= prefix when asked', async () => {
     const f = await start({ cursorParam: 'cursor', cursorIdPrefix: true });
     f.control.seedCases(3);
-    const page1 = await data(await api(f, '/search/case', { method: 'POST', body: { page: { size: 1 } } }));
+    const page1 = await data(await api({ f, path: '/search/case', method: 'POST', body: { page: { size: 1 } } }));
     expect(page1.cursor).toMatch(/^id=/);
     const bare = page1.cursor.slice(3);
-    expect((await api(f, `/search/case?id=${bare}`)).status).toBe(400);
-    expect((await api(f, `/search/case?cursor=${bare}`)).status).toBe(200);
+    expect((await api({ f, path: `/search/case?id=${bare}` })).status).toBe(400);
+    expect((await api({ f, path: `/search/case?cursor=${bare}` })).status).toBe(200);
   });
 
   it('runs a report with jsonResponse and paging', async () => {
     const f = await start();
     f.state.reportRowCount = 3;
     const body = { groupBys: [{ heading: 'Channel' }], projections: [{ heading: 'Volume' }], page: 0, pageSize: 2, jsonResponse: true };
-    const res = await (await api(f, '/reports/query', { method: 'POST', body })).json();
+    const res = await (await api({ f, path: '/reports/query', method: 'POST', body })).json();
     expect(res).toMatchObject({ errors: [], metadata: {}, data: { hasMore: true, data: [{ Channel: 'Channel 1', Volume: 10 }, { Channel: 'Channel 2', Volume: 20 }] } });
-    const columnar = await data(await api(f, '/reports/query', { method: 'POST', body: { ...body, page: 1, jsonResponse: false } }));
+    const columnar = await data(await api({ f, path: '/reports/query', method: 'POST', body: { ...body, page: 1, jsonResponse: false } }));
     expect(columnar).toEqual({ headings: ['Channel', 'Volume'], rows: [['Channel 3', 30]], hasMore: false });
   });
 
@@ -296,24 +303,24 @@ describe('fake sprinklr api', () => {
     f.control.failNext(1, '403-account-qps');
     f.control.failNext(1, '403-account-rate');
     f.control.failNext(1, '500-html');
-    const r1 = await api(f, '/me');
+    const r1 = await api({ f, path: '/me' });
     expect(r1.status).toBe(429);
     expect(r1.headers.get('retry-after')).toBe('1');
-    expect(await (await api(f, '/me')).text()).toContain('Developer Over Rate');
-    expect(await (await api(f, '/me')).text()).toContain('Account Over Queries Per Second Limit');
-    const r4 = await api(f, '/me');
+    expect(await (await api({ f, path: '/me' })).text()).toContain('Developer Over Rate');
+    expect(await (await api({ f, path: '/me' })).text()).toContain('Account Over Queries Per Second Limit');
+    const r4 = await api({ f, path: '/me' });
     expect(r4.status).toBe(403);
     expect(await r4.text()).toContain('Account Over Rate Limit');
-    const r5 = await api(f, '/me');
+    const r5 = await api({ f, path: '/me' });
     expect(r5.status).toBe(500);
     expect(r5.headers.get('content-type')).toContain('text/html');
-    expect((await api(f, '/me')).status).toBe(200);
+    expect((await api({ f, path: '/me' })).status).toBe(200);
   });
 
   it('lives under the segment when one is set and 404s without it', async () => {
     const f = await start({ segment: 'prod2' });
     expect(f.baseUrl).toBe(`${f.origin}/prod2`);
-    expect((await api(f, '/me')).status).toBe(200);
+    expect((await api({ f, path: '/me' })).status).toBe(200);
     const t = f.state.tokens[FAKE_SPRINKLR_CLIENT.apiKey];
     const bare = await fetch(`${f.origin}/api/v3/me`, { headers: { Authorization: `Bearer ${t.accessToken}`, Key: FAKE_SPRINKLR_CLIENT.apiKey } });
     expect(bare.status).toBe(404);
@@ -323,16 +330,16 @@ describe('fake sprinklr api', () => {
 
   it('switches between wrapped and bare envelopes', async () => {
     const wrapped = await start();
-    const w = await (await api(wrapped, '/case?caseNumber=1')).json();
+    const w = await (await api({ f: wrapped, path: '/case?caseNumber=1' })).json();
     expect(w).toEqual({ data: [], errors: [] });
-    expect(await (await api(wrapped, '/me')).json()).toMatchObject({ data: [{ email: 'service.user@example.com' }] });
+    expect(await (await api({ f: wrapped, path: '/me' })).json()).toMatchObject({ data: [{ email: 'service.user@example.com' }] });
     await wrapped.close();
     fake = undefined;
     const bare = await start({ envelope: 'bare' });
     bare.control.seedCases(1);
-    expect(await (await api(bare, `/case?caseNumber=${bare.state.cases[0].caseNumber}`)).json()).toHaveLength(1);
-    expect(await (await api(bare, '/search/case', { method: 'POST', body: { page: { size: 5 } } })).json()).toMatchObject({ count: 1 });
-    expect(await (await api(bare, '/me')).json()).toMatchObject({ email: 'service.user@example.com' });
+    expect(await (await api({ f: bare, path: `/case?caseNumber=${bare.state.cases[0].caseNumber}` })).json()).toHaveLength(1);
+    expect(await (await api({ f: bare, path: '/search/case', method: 'POST', body: { page: { size: 5 } } })).json()).toMatchObject({ count: 1 });
+    expect(await (await api({ f: bare, path: '/me' })).json()).toMatchObject({ email: 'service.user@example.com' });
   });
 });
 
@@ -350,37 +357,37 @@ describe('fake sprinklr webhooks', () => {
     });
     servers.push(server);
     await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
-    return { url: `http://127.0.0.1:${(server.address() as AddressInfo).port}/hook`, calls };
+    return { url: `http://127.0.0.1:${portOf(server)}/hook`, calls };
   }
 
   it('verifies by calling back with {}, activates, emits signed events and deletes', async () => {
     const f = await start();
     const hook = await receiver(200);
-    const created = await api(f, '/webhook-subscriptions', { method: 'POST', body: { name: 'ap', url: hook.url, preSharedKey: 'psk', subscriptions: ['CASE_CREATED', 'CASE_UPDATED'] } });
+    const created = await api({ f, path: '/webhook-subscriptions', method: 'POST', body: { name: 'ap', url: hook.url, preSharedKey: 'psk', subscriptions: ['CASE_CREATED', 'CASE_UPDATED'] } });
     expect(created.status).toBe(201);
     const sub = await data(created);
     expect(sub).toMatchObject({ verified: false, active: false });
-    expect((await api(f, `/webhook-subscriptions/action?subscriptionId=${sub.id}&action=activate`, { method: 'POST' })).status).toBe(400);
-    expect(await data(await api(f, `/webhook-subscriptions/action?subscriptionId=${sub.id}&action=verify`, { method: 'POST' }))).toBe(true);
+    expect((await api({ f, path: `/webhook-subscriptions/action?subscriptionId=${sub.id}&action=activate`, method: 'POST' })).status).toBe(400);
+    expect(await data(await api({ f, path: `/webhook-subscriptions/action?subscriptionId=${sub.id}&action=verify`, method: 'POST' }))).toBe(true);
     expect(hook.calls[0]).toEqual({ body: '{}', signature: undefined });
-    expect(await data(await api(f, `/webhook-subscriptions/action?subscriptionId=${sub.id}&action=activate`, { method: 'POST' }))).toBe(true);
+    expect(await data(await api({ f, path: `/webhook-subscriptions/action?subscriptionId=${sub.id}&action=activate`, method: 'POST' }))).toBe(true);
 
     const [seeded] = f.control.seedCases(1);
-    expect(await f.control.emitCaseEvent('case.create', seeded.caseNumber)).toEqual([{ subscriptionId: sub.id, status: 200 }]);
+    expect(await f.control.emitCaseEvent({ type: 'case.create', target: seeded.caseNumber })).toEqual([{ subscriptionId: sub.id, status: 200 }]);
     const event = hook.calls[1];
     expect(event.signature).toBe(`sha256=${createHmac('sha256', 'psk').update(event.body).digest('hex')}`);
     expect(JSON.parse(event.body)).toMatchObject({ type: 'case.create', eventTime: T0, payload: { caseNumber: seeded.caseNumber }, subscriptionDetails: { subscriptionId: sub.id } });
-    expect(await f.control.emitCaseEvent('case.delete', seeded)).toEqual([]);
+    expect(await f.control.emitCaseEvent({ type: 'case.delete', target: seeded })).toEqual([]);
 
-    expect((await api(f, `/webhook-subscriptions?subscriptionId=${sub.id}`, { method: 'DELETE' })).status).toBe(200);
+    expect((await api({ f, path: `/webhook-subscriptions?subscriptionId=${sub.id}`, method: 'DELETE' })).status).toBe(200);
     expect(f.state.subscriptions).toHaveLength(0);
   });
 
   it('leaves the subscription unverified when the callback is not 2xx', async () => {
     const f = await start();
     const hook = await receiver(404);
-    const sub = await data(await api(f, '/webhook-subscriptions', { method: 'POST', body: { name: 'ap', url: hook.url, preSharedKey: 'psk', subscriptions: ['CASE_CREATED'] } }));
-    expect(await data(await api(f, `/webhook-subscriptions/action?subscriptionId=${sub.id}&action=verify`, { method: 'POST' }))).toBe(false);
+    const sub = await data(await api({ f, path: '/webhook-subscriptions', method: 'POST', body: { name: 'ap', url: hook.url, preSharedKey: 'psk', subscriptions: ['CASE_CREATED'] } }));
+    expect(await data(await api({ f, path: `/webhook-subscriptions/action?subscriptionId=${sub.id}&action=verify`, method: 'POST' }))).toBe(false);
     expect(f.state.deliveries[0]).toMatchObject({ kind: 'verify', status: 404 });
   });
 });

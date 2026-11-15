@@ -1,15 +1,15 @@
-import { createMockPollingTriggerContext, Store } from '@activepieces/pieces-framework';
+import { Store } from '@activepieces/pieces-framework';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { newCase } from '../../src/lib/triggers/new-case';
-import { updatedCase } from '../../src/lib/triggers/updated-case';
+import { newCase as newCaseTrigger } from '../../src/lib/triggers/new-case';
+import { updatedCase as updatedCaseTrigger } from '../../src/lib/triggers/updated-case';
 import { FAKE_SPRINKLR_CLIENT, FakeSprinklr, startFakeSprinklr } from '../support/fake-sprinklr';
+import { pieceRunner, RunnablePollingTrigger, shape } from '../support/piece-runner';
 
 const T0 = 1_780_000_000_000;
 const MINUTE = 60_000;
 
-type Trigger = typeof newCase | typeof updatedCase;
-type Auth = { access_token: string; client_id: string; props: Record<string, unknown> };
-
+const newCase = pieceRunner.pollingTrigger(newCaseTrigger);
+const updatedCase = pieceRunner.pollingTrigger(updatedCaseTrigger);
 let fake: FakeSprinklr | undefined;
 let clock = T0;
 
@@ -55,10 +55,10 @@ function memoryStore(): Store {
 }
 
 function contextFor({ auth, store, queueId }: { auth: Auth; store: Store; queueId?: string }) {
-  return { ...createMockPollingTriggerContext({ propsValue: { queueId } }), auth, store } as never;
+  return pieceRunner.pollingContext({ auth, store, propsValue: { queueId } });
 }
 
-async function enabled({ trigger, auth, queueId }: { trigger: Trigger; auth: Auth; queueId?: string }) {
+async function enabled({ trigger, auth, queueId }: { trigger: RunnablePollingTrigger; auth: Auth; queueId?: string }) {
   const store = memoryStore();
   const context = contextFor({ auth, store, queueId });
   await trigger.onEnable(context);
@@ -92,7 +92,7 @@ async function createCase({ f, auth, subject, queueId }: { f: FakeSprinklr; auth
 }
 
 function caseNumbers(items: unknown[]): unknown[] {
-  return items.map((item) => (typeof item === 'object' && item !== null ? (item as Record<string, unknown>)['caseNumber'] : undefined));
+  return items.map((item) => (shape.isRecord(item) ? item['caseNumber'] : undefined));
 }
 
 function searchRequests(f: FakeSprinklr): Array<{ method: string; path: string }> {
@@ -212,3 +212,5 @@ describe.each(['wrapped', 'bare'] as const)('case triggers against the fake Spri
     expect(caseNumbers(await trigger.poll())).toEqual([inQueue]);
   });
 });
+
+type Auth = { access_token: string; client_id: string; props: Record<string, unknown> };

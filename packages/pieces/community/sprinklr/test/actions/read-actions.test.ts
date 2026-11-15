@@ -1,5 +1,4 @@
 import { httpClient, HttpError, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
-import { createMockActionContext, InputPropertyMap } from '@activepieces/pieces-framework';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { findProfileAction } from '../../src/lib/actions/find-profile';
 import { getCaseAction } from '../../src/lib/actions/get-case';
@@ -7,6 +6,7 @@ import { runReportAction } from '../../src/lib/actions/run-report';
 import { searchCasesAction } from '../../src/lib/actions/search-cases';
 import { sprinklrCase } from '../../src/lib/common/case';
 import { sprinklrTiming } from '../../src/lib/common/client';
+import { pieceRunner, RunnableAction, shape } from '../support/piece-runner';
 
 const AUTH = {
   access_token: 'token-1',
@@ -15,11 +15,8 @@ const AUTH = {
 };
 const API = 'https://api3.sprinklr.com/prod2/api/v3';
 
-type RunnableAction = { run: (ctx: never) => Promise<unknown> };
-
-function run(action: RunnableAction, propsValue: Record<string, unknown>): Promise<unknown> {
-  const base = createMockActionContext<InputPropertyMap>({ propsValue });
-  return action.run({ ...base, auth: AUTH, propsValue } as never);
+function run({ action, propsValue }: { action: RunnableAction; propsValue: Record<string, unknown> }): Promise<unknown> {
+  return pieceRunner.runAction({ action, auth: AUTH, propsValue });
 }
 
 function mockResponses(responses: Array<{ status: number; body: unknown } | Error>) {
@@ -35,10 +32,10 @@ function mockResponses(responses: Array<{ status: number; body: unknown } | Erro
 }
 
 function requests(spy: ReturnType<typeof mockResponses>): HttpRequest[] {
-  return spy.mock.calls.map((call) => call[0] as HttpRequest);
+  return spy.mock.calls.map((call) => call[0]);
 }
 
-function httpError(status: number, body: unknown) {
+function httpError({ status, body }: { status: number; body: unknown }) {
   return new HttpError(undefined, { status, responseBody: body });
 }
 
@@ -126,8 +123,8 @@ describe('sprinklrCase.normalize', () => {
 describe('get_case', () => {
   it('gets by case number and returns the first item', async () => {
     const spy = mockResponses([{ status: 200, body: { data: [RAW_CASE], errors: [] } }]);
-    const out = (await run(getCaseAction, { find_by: 'case_number', value: ' #1234 ' })) as { caseNumber: number };
-    expect(out.caseNumber).toBe(1234);
+    const out = shape.record(await run({ action: getCaseAction, propsValue: { find_by: 'case_number', value: ' #1234 ' } }));
+    expect(out['caseNumber']).toBe(1234);
     const [req] = requests(spy);
     expect(req.method).toBe(HttpMethod.GET);
     expect(req.url).toBe(`${API}/case?caseNumber=1234`);
@@ -135,27 +132,27 @@ describe('get_case', () => {
 
   it('gets by case ID', async () => {
     const spy = mockResponses([{ status: 200, body: [RAW_CASE] }]);
-    await run(getCaseAction, { find_by: 'case_id', value: 'c-1' });
+    await run({ action: getCaseAction, propsValue: { find_by: 'case_id', value: 'c-1' } });
     expect(requests(spy)[0].url).toBe(`${API}/case?id=c-1`);
   });
 
   it('throws a clear error when the list is empty', async () => {
     mockResponses([{ status: 200, body: { data: [], errors: [] } }]);
-    await expect(run(getCaseAction, { find_by: 'case_number', value: '99' })).rejects.toThrow(
+    await expect(run({ action: getCaseAction, propsValue: { find_by: 'case_number', value: '99' } })).rejects.toThrow(
       'No Sprinklr case has number 99. Check the case number.',
     );
   });
 
   it('throws a clear error on a 404', async () => {
-    mockResponses([httpError(404, { errors: [{ code: 'NOT_FOUND', message: 'case.not.found' }] })]);
-    await expect(run(getCaseAction, { find_by: 'case_id', value: 'nope' })).rejects.toThrow(
+    mockResponses([httpError({ status: 404, body: { errors: [{ code: 'NOT_FOUND', message: 'case.not.found' }] } })]);
+    await expect(run({ action: getCaseAction, propsValue: { find_by: 'case_id', value: 'nope' } })).rejects.toThrow(
       'No Sprinklr case has ID nope. Check the case ID.',
     );
   });
 
   it('rejects a case number that is not digits before calling Sprinklr', async () => {
     const spy = mockResponses([]);
-    await expect(run(getCaseAction, { find_by: 'case_number', value: 'abc' })).rejects.toThrow('is not a case number');
+    await expect(run({ action: getCaseAction, propsValue: { find_by: 'case_number', value: 'abc' } })).rejects.toThrow('is not a case number');
     expect(spy).not.toHaveBeenCalled();
   });
 });
@@ -163,7 +160,7 @@ describe('get_case', () => {
 describe('search_cases', () => {
   it('builds the body from the simple filters', async () => {
     const spy = mockResponses([{ status: 200, body: { data: { results: [RAW_CASE], count: 1 }, errors: [] } }]);
-    const out = (await run(searchCasesAction, {
+    const out = shape.record(await run({ action: searchCasesAction, propsValue: {
       keyword: ' refund ',
       created_after: '2026-11-01T00:00:00.000Z',
       created_before: '2026-11-02T00:00:00.000Z',
@@ -171,7 +168,7 @@ describe('search_cases', () => {
       queue_id: '5001',
       custom_fields: { cf1: 'gold', cf2: ['a', 'b'], empty: '' },
       max_results: 10,
-    })) as { count: number; totalCount: number; cases: unknown[] };
+    } }));
     const [req] = requests(spy);
     expect(req.method).toBe(HttpMethod.POST);
     expect(req.url).toBe(`${API}/search/case`);
@@ -191,14 +188,14 @@ describe('search_cases', () => {
       sorts: [{ key: 'createdTime', order: 'DESC' }],
       page: { size: 10 },
     });
-    expect(out.count).toBe(1);
-    expect(out.totalCount).toBe(1);
-    expect(out.cases[0]).toEqual(sprinklrCase.normalize(RAW_CASE));
+    expect(out['count']).toBe(1);
+    expect(out['totalCount']).toBe(1);
+    expect(shape.list(out['cases'])[0]).toEqual(sprinklrCase.normalize(RAW_CASE));
   });
 
   it('sends no filter when none is set and uses the chosen sort', async () => {
     const spy = mockResponses([{ status: 200, body: { results: [] } }]);
-    const out = (await run(searchCasesAction, { sort_by: 'modifiedTime', sort_order: 'ASC' })) as { count: number; totalCount: unknown };
+    const out = await run({ action: searchCasesAction, propsValue: { sort_by: 'modifiedTime', sort_order: 'ASC' } });
     expect(requests(spy)[0].body).toEqual({ sorts: [{ key: 'modifiedTime', order: 'ASC' }], page: { size: 20 } });
     expect(out).toEqual({ count: 0, totalCount: null, cases: [] });
   });
@@ -206,37 +203,37 @@ describe('search_cases', () => {
   it('lets Raw Filter replace the simple filters', async () => {
     const spy = mockResponses([{ status: 200, body: { results: [] } }]);
     const raw = { type: 'IN', key: 'caseNumber', values: ['1', '2'] };
-    await run(searchCasesAction, { queue_id: '5001', created_after: '2026-11-01T00:00:00Z', raw_filter: JSON.stringify(raw) });
-    expect((requests(spy)[0].body as Record<string, unknown>)['filter']).toEqual(raw);
+    await run({ action: searchCasesAction, propsValue: { queue_id: '5001', created_after: '2026-11-01T00:00:00Z', raw_filter: JSON.stringify(raw) } });
+    expect(shape.record(requests(spy)[0].body)['filter']).toEqual(raw);
   });
 
   it('rejects a Raw Filter that is not JSON', async () => {
     const spy = mockResponses([]);
-    await expect(run(searchCasesAction, { raw_filter: '{nope' })).rejects.toThrow('Raw Filter is not valid JSON');
+    await expect(run({ action: searchCasesAction, propsValue: { raw_filter: '{nope' } })).rejects.toThrow('Raw Filter is not valid JSON');
     expect(spy).not.toHaveBeenCalled();
   });
 
   it('rejects a date it cannot read', async () => {
     mockResponses([]);
-    await expect(run(searchCasesAction, { created_after: 'yesterday-ish' })).rejects.toThrow('Created After is not a valid date');
+    await expect(run({ action: searchCasesAction, propsValue: { created_after: 'yesterday-ish' } })).rejects.toThrow('Created After is not a valid date');
   });
 
   it('pages with the cursor until Max Results and caps Max Results at 200', async () => {
-    const page = (from: number, n: number) => Array.from({ length: n }, (_, i) => ({ ...RAW_CASE, id: `c${from + i}`, caseNumber: from + i }));
+    const page = ({ from, n }: { from: number; n: number }) => Array.from({ length: n }, (_, i) => ({ ...RAW_CASE, id: `c${from + i}`, caseNumber: from + i }));
     const spy = mockResponses([
-      { status: 200, body: { data: { results: page(0, 100), cursor: 'id=cur-1', count: 500 }, errors: [] } },
-      { status: 200, body: { data: { results: page(100, 100), cursor: 'cur-2', count: 500 }, errors: [] } },
-      { status: 200, body: { data: { results: page(200, 100), cursor: 'cur-3', count: 500 }, errors: [] } },
+      { status: 200, body: { data: { results: page({ from: 0, n: 100 }), cursor: 'id=cur-1', count: 500 }, errors: [] } },
+      { status: 200, body: { data: { results: page({ from: 100, n: 100 }), cursor: 'cur-2', count: 500 }, errors: [] } },
+      { status: 200, body: { data: { results: page({ from: 200, n: 100 }), cursor: 'cur-3', count: 500 }, errors: [] } },
     ]);
-    const out = (await run(searchCasesAction, { max_results: 5000 })) as { count: number; totalCount: number; cases: { id: string }[] };
+    const out = shape.record(await run({ action: searchCasesAction, propsValue: { max_results: 5000 } }));
     const reqs = requests(spy);
     expect(reqs).toHaveLength(2);
-    expect((reqs[0].body as Record<string, unknown>)['page']).toEqual({ size: 100 });
+    expect(shape.record(reqs[0].body)['page']).toEqual({ size: 100 });
     expect(reqs[1].method).toBe(HttpMethod.GET);
     expect(reqs[1].url).toBe(`${API}/search/case?id=cur-1`);
-    expect(out.count).toBe(200);
-    expect(out.totalCount).toBe(500);
-    expect(out.cases[199].id).toBe('c199');
+    expect(out['count']).toBe(200);
+    expect(out['totalCount']).toBe(500);
+    expect(shape.record(shape.list(out['cases'])[199])['id']).toBe('c199');
   });
 });
 
@@ -260,7 +257,7 @@ describe('find_profile', () => {
 
   it('finds by profile ID with GET /profile?id=', async () => {
     const spy = mockResponses([{ status: 200, body: [PROFILE] }]);
-    expect(await run(findProfileAction, { find_by: 'profile_id', value: 'p-1' })).toEqual(FOUND);
+    expect(await run({ action: findProfileAction, propsValue: { find_by: 'profile_id', value: 'p-1' } })).toEqual(FOUND);
     const [req] = requests(spy);
     expect(req.method).toBe(HttpMethod.GET);
     expect(req.url).toBe(`${API}/profile?id=p-1`);
@@ -268,19 +265,19 @@ describe('find_profile', () => {
 
   it('finds by channel with an encoded TYPE~ID value', async () => {
     const spy = mockResponses([{ status: 200, body: { data: [PROFILE], errors: [] } }]);
-    expect(await run(findProfileAction, { find_by: 'channel_id', value: 'jane@example.com', channel_type: 'email' })).toEqual(FOUND);
+    expect(await run({ action: findProfileAction, propsValue: { find_by: 'channel_id', value: 'jane@example.com', channel_type: 'email' } })).toEqual(FOUND);
     expect(requests(spy)[0].url).toBe(`${API}/profile?channelTypeChannelId=EMAIL%7Ejane%40example.com`);
   });
 
   it('needs a channel type for the channel option', async () => {
     const spy = mockResponses([]);
-    await expect(run(findProfileAction, { find_by: 'channel_id', value: '42' })).rejects.toThrow('Enter the Channel Type');
+    await expect(run({ action: findProfileAction, propsValue: { find_by: 'channel_id', value: '42' } })).rejects.toThrow('Enter the Channel Type');
     expect(spy).not.toHaveBeenCalled();
   });
 
   it('finds by email through POST /search/profile with contact.email', async () => {
     const spy = mockResponses([{ status: 200, body: { data: { results: [PROFILE], cursor: 'more', count: 3 }, errors: [] } }]);
-    expect(await run(findProfileAction, { find_by: 'email', value: 'jane@example.com' })).toEqual(FOUND);
+    expect(await run({ action: findProfileAction, propsValue: { find_by: 'email', value: 'jane@example.com' } })).toEqual(FOUND);
     const reqs = requests(spy);
     expect(reqs).toHaveLength(1);
     expect(reqs[0].method).toBe(HttpMethod.POST);
@@ -291,10 +288,10 @@ describe('find_profile', () => {
   it.each([
     ['an empty list', 'profile_id', { status: 200, body: { data: [], errors: [] } }],
     ['an empty search', 'email', { status: 200, body: { results: [] } }],
-    ['a 404', 'channel_id', httpError(404, { errors: [{ code: 'NOT_FOUND', message: 'profile.not.found' }] })],
+    ['a 404', 'channel_id', httpError({ status: 404, body: { errors: [{ code: 'NOT_FOUND', message: 'profile.not.found' }] } })],
   ])('returns found: false on %s', async (_name, findBy, response) => {
     mockResponses([response]);
-    expect(await run(findProfileAction, { find_by: findBy, value: 'x', channel_type: 'SMS' })).toEqual({
+    expect(await run({ action: findProfileAction, propsValue: { find_by: findBy, value: 'x', channel_type: 'SMS' } })).toEqual({
       found: false,
       id: null,
       contact: null,
@@ -305,8 +302,8 @@ describe('find_profile', () => {
   });
 
   it('still throws other errors', async () => {
-    mockResponses([httpError(401, { errors: [{ code: 'UNAUTHORIZED', message: 'bad token' }] })]);
-    await expect(run(findProfileAction, { find_by: 'profile_id', value: 'x' })).rejects.toThrow('Sprinklr rejected the connection');
+    mockResponses([httpError({ status: 401, body: { errors: [{ code: 'UNAUTHORIZED', message: 'bad token' }] } })]);
+    await expect(run({ action: findProfileAction, propsValue: { find_by: 'profile_id', value: 'x' } })).rejects.toThrow('Sprinklr rejected the connection');
   });
 });
 
@@ -317,7 +314,7 @@ describe('run_report', () => {
     const spy = mockResponses([
       { status: 200, body: { data: { data: [{ Queue: 'A', Cases: 3 }], hasMore: true }, errors: [], metadata: {} } },
     ]);
-    const out = await run(runReportAction, { payload: PAYLOAD });
+    const out = await run({ action: runReportAction, propsValue: { payload: PAYLOAD } });
     const [req] = requests(spy);
     expect(req.method).toBe(HttpMethod.POST);
     expect(req.url).toBe(`${API}/reports/query`);
@@ -327,13 +324,13 @@ describe('run_report', () => {
 
   it('parses a JSON string payload and merges the overrides', async () => {
     const spy = mockResponses([{ status: 200, body: { data: { data: [], hasMore: false }, errors: [] } }]);
-    await run(runReportAction, {
+    await run({ action: runReportAction, propsValue: {
       payload: JSON.stringify(PAYLOAD),
       start_time: '2026-11-01T00:00:00.000Z',
       end_time: '2026-11-08T00:00:00.000Z',
       page: 2,
       page_size: 200,
-    });
+    } });
     expect(requests(spy)[0].body).toEqual({
       ...PAYLOAD,
       startTime: Date.parse('2026-11-01T00:00:00.000Z'),
@@ -349,11 +346,11 @@ describe('run_report', () => {
       { status: 200, body: { data: { data: [] }, errors: [] } },
       { status: 200, body: { data: { data: [] }, errors: [] } },
     ]);
-    await run(runReportAction, { payload: PAYLOAD, page_size: 5000 });
-    await run(runReportAction, { payload: { ...PAYLOAD, pageSize: 2500 } });
+    await run({ action: runReportAction, propsValue: { payload: PAYLOAD, page_size: 5000 } });
+    await run({ action: runReportAction, propsValue: { payload: { ...PAYLOAD, pageSize: 2500 } } });
     const [first, second] = requests(spy);
-    expect((first.body as Record<string, unknown>)['pageSize']).toBe(1000);
-    expect((second.body as Record<string, unknown>)['pageSize']).toBe(1000);
+    expect(shape.record(first.body)['pageSize']).toBe(1000);
+    expect(shape.record(second.body)['pageSize']).toBe(1000);
   });
 
   it.each([
@@ -362,13 +359,13 @@ describe('run_report', () => {
     ['an array', '[1, 2]', 'Report Payload must be a JSON object'],
   ])('gives a clear error when the payload is %s', async (_name, payload, message) => {
     const spy = mockResponses([]);
-    await expect(run(runReportAction, { payload })).rejects.toThrow(message);
+    await expect(run({ action: runReportAction, propsValue: { payload } })).rejects.toThrow(message);
     expect(spy).not.toHaveBeenCalled();
   });
 
   it('turns headings and row arrays into objects', async () => {
     mockResponses([{ status: 200, body: { data: { headings: ['Queue', 'Cases'], rows: [['A', 3], ['B', 4]], hasMore: false }, errors: [] } }]);
-    expect(await run(runReportAction, { payload: PAYLOAD })).toEqual({
+    expect(await run({ action: runReportAction, propsValue: { payload: PAYLOAD } })).toEqual({
       rowCount: 2,
       hasMore: false,
       rows: [
@@ -380,6 +377,6 @@ describe('run_report', () => {
 
   it('surfaces errors returned with a 200 and no data', async () => {
     mockResponses([{ status: 200, body: { data: {}, errors: [{ id: '1', code: 'BAD', message: 'report.not.found' }], metadata: {} } }]);
-    await expect(run(runReportAction, { payload: PAYLOAD })).rejects.toThrow('report.not.found');
+    await expect(run({ action: runReportAction, propsValue: { payload: PAYLOAD } })).rejects.toThrow('report.not.found');
   });
 });

@@ -16,7 +16,7 @@ async function main(): Promise<void> {
     envelope: value('envelope') === 'bare' ? 'bare' : 'wrapped',
     segment: value('segment'),
     tokenTtlSeconds: value('token-ttl') ? Number(value('token-ttl')) : undefined,
-    cursorParam: (value('cursor-param') as FakeSprinklrOptions['cursorParam']) ?? 'id',
+    cursorParam: parseCursorParam(value('cursor-param')),
     cursorIdPrefix: flag('cursor-id-prefix'),
     autoEmitEvents: flag('auto-emit'),
     clients: { [apiKey]: { secret, redirectUris: redirectUris.length > 0 ? redirectUris : FAKE_SPRINKLR_CLIENT.redirectUris } },
@@ -39,6 +39,13 @@ async function main(): Promise<void> {
   };
   process.on('SIGINT', stop);
   process.on('SIGTERM', stop);
+}
+
+function parseCursorParam(raw: string | undefined): FakeSprinklrOptions['cursorParam'] {
+  if (raw === undefined || raw === 'id' || raw === 'cursor' || raw === 'both') {
+    return raw ?? 'id';
+  }
+  throw new Error(`--cursor-param must be id, cursor or both, got ${raw}`);
 }
 
 void main();

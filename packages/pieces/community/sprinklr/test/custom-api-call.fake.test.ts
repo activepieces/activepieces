@@ -1,8 +1,8 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createMockActionContext } from '@activepieces/pieces-framework';
 import { afterEach, describe, expect, it } from 'vitest';
 import { sprinklr } from '../src/index';
 import { FAKE_SPRINKLR_CLIENT, FakeSprinklr, startFakeSprinklr } from './support/fake-sprinklr';
+import { pieceRunner, shape } from './support/piece-runner';
 
 let fake: FakeSprinklr | undefined;
 
@@ -15,11 +15,8 @@ async function runCustomApiCall({ f, url }: { f: FakeSprinklr; url: string }) {
   const action = sprinklr.actions()['custom_api_call'];
   const token = f.state.tokens[FAKE_SPRINKLR_CLIENT.apiKey] ?? f.control.issueToken();
   const propsValue = { url: { url }, method: HttpMethod.GET, headers: {}, queryParams: {}, body_type: 'none', body: {}, failsafe: false };
-  const context = {
-    ...createMockActionContext({ propsValue }),
-    auth: { access_token: token.accessToken, client_id: FAKE_SPRINKLR_CLIENT.apiKey, props: { base: f.baseUrl, callback: FAKE_SPRINKLR_CLIENT.redirectUris[0] } },
-  } as unknown as Parameters<typeof action.run>[0];
-  return { token, result: (await action.run(context)) as { status: number; body: unknown } };
+  const auth = { access_token: token.accessToken, client_id: FAKE_SPRINKLR_CLIENT.apiKey, props: { base: f.baseUrl, callback: FAKE_SPRINKLR_CLIENT.redirectUris[0] } };
+  return { token, result: shape.record(await pieceRunner.runAction({ action, auth, propsValue })) };
 }
 
 describe.each([
@@ -31,8 +28,8 @@ describe.each([
 
     const { token, result } = await runCustomApiCall({ f: fake, url: '/v3/me' });
 
-    expect(result.status).toBe(200);
-    expect(result.body).toMatchObject({ data: [{ email: 'service.user@example.com' }] });
+    expect(result['status']).toBe(200);
+    expect(result['body']).toMatchObject({ data: [{ email: 'service.user@example.com' }] });
     const request = fake.state.requests.find((r) => r.path.endsWith('/api/v3/me'));
     expect(request?.path).toBe(segment ? `/${segment}/api/v3/me` : '/api/v3/me');
     expect(request?.status).toBe(200);
@@ -45,7 +42,7 @@ describe.each([
 
     const { result } = await runCustomApiCall({ f: fake, url: `${fake.baseUrl}/api/v3/me` });
 
-    expect(result.status).toBe(200);
+    expect(result['status']).toBe(200);
     expect(fake.state.requests.at(-1)?.headers['key']).toBe(FAKE_SPRINKLR_CLIENT.apiKey);
   });
 });

@@ -13,8 +13,8 @@ const AUTH = {
 const MOCK_HTML_500 =
   '<!doctype html>\n<html lang="en">\n  <head>\n    <meta charset="UTF-8" />\n    <title>Service Unavailable</title>\n  </head><body>down</body></html>';
 
-function ok(body: unknown, status = 200) {
-  return { status, body };
+function ok(body: unknown) {
+  return { status: 200, body };
 }
 
 function httpError({ status, body }: { status: number; body: unknown }) {
@@ -145,7 +145,7 @@ describe('response envelope', () => {
   });
 
   it('exposes the status and the raw body through send', async () => {
-    mockResponses([ok({ data: { id: 'c1' }, errors: [] }, 201)]);
+    mockResponses([{ status: 201, body: { data: { id: 'c1' }, errors: [] } }]);
     const response = await sprinklrClient.send({ auth: AUTH, method: HttpMethod.POST, path: '/case', body: {} });
     expect(response).toEqual({ status: 201, data: { id: 'c1' }, raw: { data: { id: 'c1' }, errors: [] } });
   });

@@ -1,10 +1,11 @@
 import { HttpRequest, httpClient } from '@activepieces/pieces-common';
-import { createMockPollingTriggerContext, Store } from '@activepieces/pieces-framework';
+import { Store } from '@activepieces/pieces-framework';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { sprinklrCase } from '../../src/lib/common/case';
 import { sprinklrCaseTrigger } from '../../src/lib/triggers/common';
-import { newCase } from '../../src/lib/triggers/new-case';
-import { updatedCase } from '../../src/lib/triggers/updated-case';
+import { newCase as newCaseTrigger } from '../../src/lib/triggers/new-case';
+import { updatedCase as updatedCaseTrigger } from '../../src/lib/triggers/updated-case';
+import { pieceRunner, RunnablePollingTrigger, shape } from '../support/piece-runner';
 
 const T0 = 1_780_000_000_000;
 const MINUTE = 60_000;
@@ -14,8 +15,8 @@ const auth = {
   props: { base: 'https://api3.sprinklr.com/prod2', callback: 'https://cloud.activepieces.com/redirect' },
 };
 
-type Trigger = typeof newCase | typeof updatedCase;
-type Page = { results: unknown[]; cursor?: string };
+const newCase = pieceRunner.pollingTrigger(newCaseTrigger);
+const updatedCase = pieceRunner.pollingTrigger(updatedCaseTrigger);
 
 function memoryStore(): Store {
   const data = new Map<string, string>();
@@ -35,12 +36,7 @@ function memoryStore(): Store {
 }
 
 function contextFor({ store, queueId, isRepublish }: { store: Store; queueId?: string; isRepublish?: boolean }) {
-  return {
-    ...createMockPollingTriggerContext({ propsValue: { queueId } }),
-    auth,
-    store,
-    isRepublish,
-  } as never;
+  return pieceRunner.pollingContext({ auth, store, propsValue: { queueId }, isRepublish });
 }
 
 function stubSearch(pages: Page[]) {
@@ -57,14 +53,14 @@ function sprinklrCaseRaw({ id, created, modified }: { id: string; created: numbe
 }
 
 function idsOf(items: unknown[]): unknown[] {
-  return items.map((item) => (typeof item === 'object' && item !== null ? (item as Record<string, unknown>)['id'] : undefined));
+  return items.map((item) => (shape.isRecord(item) ? item['id'] : undefined));
 }
 
-function requestOf(spy: ReturnType<typeof stubSearch>, call: number): HttpRequest {
+function requestOf({ spy, call }: { spy: ReturnType<typeof stubSearch>; call: number }): HttpRequest {
   return spy.mock.calls[call][0];
 }
 
-async function enable({ trigger, queueId }: { trigger: Trigger; queueId?: string }): Promise<Store> {
+async function enable({ trigger, queueId }: { trigger: RunnablePollingTrigger; queueId?: string }): Promise<Store> {
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(T0);
   const store = memoryStore();
@@ -96,7 +92,7 @@ describe('New Case trigger', () => {
 
     expect(idsOf(items)).toEqual(['1', '2']);
     expect(spy).toHaveBeenCalledTimes(1);
-    const request = requestOf(spy, 0);
+    const request = requestOf({ spy, call: 0 });
     expect(request.method).toBe('POST');
     expect(request.url).toBe('https://api3.sprinklr.com/prod2/api/v3/search/case');
     expect(request.body).toEqual({
@@ -114,7 +110,7 @@ describe('New Case trigger', () => {
     const second = await newCase.run(contextFor({ store }));
 
     expect(second).toEqual([]);
-    expect(requestOf(spy, 1).body).toMatchObject({ filter: { type: 'GT', key: 'createdTime', values: [T0 + MINUTE + 123] } });
+    expect(requestOf({ spy, call: 1 }).body).toMatchObject({ filter: { type: 'GT', key: 'createdTime', values: [T0 + MINUTE + 123] } });
   });
 
   it('does not send a case twice when the API returns it again', async () => {
@@ -152,7 +148,7 @@ describe('New Case trigger', () => {
 
     await newCase.run(contextFor({ store, queueId: ' 5001 ' }));
 
-    expect(requestOf(spy, 0).body).toMatchObject({
+    expect(requestOf({ spy, call: 0 }).body).toMatchObject({
       filter: {
         type: 'AND',
         filters: [
@@ -171,8 +167,8 @@ describe('New Case trigger', () => {
     const items = await newCase.run(contextFor({ store }));
 
     expect(items).toHaveLength(101);
-    expect(requestOf(spy, 1).method).toBe('GET');
-    expect(requestOf(spy, 1).url).toBe('https://api3.sprinklr.com/prod2/api/v3/search/case?id=next-1');
+    expect(requestOf({ spy, call: 1 }).method).toBe('GET');
+    expect(requestOf({ spy, call: 1 }).url).toBe('https://api3.sprinklr.com/prod2/api/v3/search/case?id=next-1');
   });
 
   it('stops at the per-poll cap and holds back the last timestamp so a tie is not lost', async () => {
@@ -194,7 +190,7 @@ describe('New Case trigger', () => {
     expect(spy.mock.calls.filter(([request]) => request.method === 'POST').length).toBe(2);
     expect(first).toHaveLength(cap - 2);
     expect(idsOf(second)).toEqual([String(cap - 1), String(cap), String(cap + 1)]);
-    expect(requestOf(spy, cap / 100).body).toMatchObject({ filter: { values: [T0 + 1000 + cap - 3] } });
+    expect(requestOf({ spy, call: cap / 100 }).body).toMatchObject({ filter: { values: [T0 + 1000 + cap - 3] } });
   });
 
   it('keeps its place when the flow is republished', async () => {
@@ -205,7 +201,7 @@ describe('New Case trigger', () => {
 
     await newCase.run(contextFor({ store }));
 
-    expect(requestOf(spy, 0).body).toMatchObject({ filter: { values: [T0 + MINUTE] } });
+    expect(requestOf({ spy, call: 0 }).body).toMatchObject({ filter: { values: [T0 + MINUTE] } });
   });
 
   it('returns the five newest cases, newest first, when testing', async () => {
@@ -216,7 +212,7 @@ describe('New Case trigger', () => {
 
     expect(idsOf(items)).toEqual(['6', '5', '4', '3', '2']);
     expect(spy).toHaveBeenCalledTimes(1);
-    expect(requestOf(spy, 0).body).toEqual({
+    expect(requestOf({ spy, call: 0 }).body).toEqual({
       filter: { type: 'GT', key: 'createdTime', values: [0] },
       sorts: [{ key: 'createdTime', order: 'DESC' }],
       page: { size: 5 },
@@ -237,12 +233,12 @@ describe('Updated Case trigger', () => {
 
     expect(idsOf(first)).toEqual(['1']);
     expect(idsOf(second)).toEqual(['1']);
-    expect(requestOf(spy, 0).body).toEqual({
+    expect(requestOf({ spy, call: 0 }).body).toEqual({
       filter: { type: 'GT', key: 'modifiedTime', values: [T0] },
       sorts: [{ key: 'modifiedTime', order: 'ASC' }],
       page: { size: 100 },
     });
-    expect(requestOf(spy, 1).body).toMatchObject({ filter: { values: [T0 + MINUTE] } });
+    expect(requestOf({ spy, call: 1 }).body).toMatchObject({ filter: { values: [T0 + MINUTE] } });
   });
 
   it('sorts the test cases by modifiedTime', async () => {
@@ -250,14 +246,14 @@ describe('Updated Case trigger', () => {
 
     await updatedCase.test(contextFor({ store: memoryStore() }));
 
-    expect(requestOf(spy, 0).body).toMatchObject({ sorts: [{ key: 'modifiedTime', order: 'DESC' }], page: { size: 5 } });
+    expect(requestOf({ spy, call: 0 }).body).toMatchObject({ sorts: [{ key: 'modifiedTime', order: 'DESC' }], page: { size: 5 } });
   });
 });
 
 describe('trigger metadata', () => {
   it.each([
-    [newCase, 'new_case', 'New Case', 'Fires when a case is created.'],
-    [updatedCase, 'updated_case', 'Updated Case', 'Fires when a case is created or changed.'],
+    [newCaseTrigger, 'new_case', 'New Case', 'Fires when a case is created.'],
+    [updatedCaseTrigger, 'updated_case', 'Updated Case', 'Fires when a case is created or changed.'],
   ])('%#: names, polling type, READ, schema and sample data', (trigger, name, displayName, description) => {
     expect(trigger.name).toBe(name);
     expect(trigger.displayName).toBe(displayName);
@@ -270,3 +266,5 @@ describe('trigger metadata', () => {
     expect(String(trigger.props['queueId'].description).length).toBeLessThanOrEqual(70);
   });
 });
+
+type Page = { results: unknown[]; cursor?: string };
