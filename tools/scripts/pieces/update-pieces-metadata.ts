@@ -1,11 +1,11 @@
 import assert from 'node:assert';
+import * as semver from 'semver';
 import { PieceMetadata } from '../../../packages/pieces/framework/src';
 import { StatusCodes } from 'http-status-codes';
 import { HttpHeader } from '../../../packages/pieces/common/src';
 import { AP_CLOUD_API_BASE, findNewPieces, pieceMetadataExists } from '../utils/piece-script-utils';
 import { readPackageJson } from '../utils/files';
 import { cloudApiFetch } from '../utils/cloud-api-fetch';
-import { pieceReleaseCompat } from '../utils/piece-release-compat';
 import { chunk } from '@activepieces/core-utils';
 assert(process.env['AP_CLOUD_API_KEY'], 'API Key is not defined');
 
@@ -30,6 +30,24 @@ const insertPieceMetadata = async (
     const responseText = await cloudResponse.text();
     throw new Error(`[insertPieceMetadata] ${pieceMetadata.name}@${pieceMetadata.version} status=${cloudResponse.status} body=${responseText.slice(0, 500)}`);
   }
+};
+
+const findUnsupportedReason = ({ pieceMetadata, currentRelease }: { pieceMetadata: PieceMetadata, currentRelease: string }): string | null => {
+  const { minimumSupportedRelease, maximumSupportedRelease } = pieceMetadata
+
+  if (!semver.valid(currentRelease)) {
+    return null
+  }
+
+  if (maximumSupportedRelease && semver.valid(maximumSupportedRelease) && semver.gt(currentRelease, maximumSupportedRelease)) {
+    return `maximumSupportedRelease ${maximumSupportedRelease} is below it`
+  }
+
+  if (minimumSupportedRelease && semver.valid(minimumSupportedRelease) && semver.gt(minimumSupportedRelease, currentRelease)) {
+    return `minimumSupportedRelease ${minimumSupportedRelease} is above it`
+  }
+
+  return null
 };
 
 
@@ -82,7 +100,14 @@ const main = async () => {
   }
 
   const currentRelease = (await readPackageJson('.')).version
-  const { servable, unservable } = pieceReleaseCompat.partitionByServability({ piecesMetadata: pieces, currentRelease })
+  const evaluated = pieces.map((pieceMetadata) => ({
+    pieceMetadata,
+    unsupportedReason: findUnsupportedReason({ pieceMetadata, currentRelease }),
+  }))
+  const servable = evaluated.filter((entry) => entry.unsupportedReason === null).map((entry) => entry.pieceMetadata)
+  const unservable = evaluated
+    .filter((entry) => entry.unsupportedReason !== null)
+    .map((entry) => `${entry.pieceMetadata.name}@${entry.pieceMetadata.version}: ${entry.unsupportedReason}`)
 
   const insertFailures = await insertMetadata(servable)
 
