@@ -85,6 +85,36 @@ function getInputAfterVersionChange({
   return currentInput;
 }
 
+function withInputsSavedOnUpgrade({
+  pieceName,
+  actionOrTriggerName,
+  currentVersion,
+  targetVersion,
+  input,
+}: {
+  pieceName: string;
+  actionOrTriggerName: string;
+  currentVersion: string;
+  targetVersion: string;
+  input: Record<string, unknown>;
+}): Record<string, unknown> {
+  const from = semver.minVersion(currentVersion);
+  const to = semver.minVersion(targetVersion);
+  if (isNil(from) || isNil(to)) {
+    return input;
+  }
+  return INPUTS_SAVED_ON_UPGRADE.filter(
+    (rule) =>
+      rule.pieceName === pieceName &&
+      rule.actionOrTriggerName === actionOrTriggerName &&
+      semver.lt(from, rule.introducedIn) &&
+      semver.gte(to, rule.introducedIn),
+  ).reduce<Record<string, unknown>>(
+    (current, rule) => ({ ...current, ...rule.input }),
+    input,
+  );
+}
+
 function getLatestVersion({
   currentVersion,
   versions,
@@ -196,10 +226,16 @@ async function applyPieceVersionChange({
     );
   }
 
-  const input = getInputAfterVersionChange({
-    versionChangeType: changeType,
-    props: actionOrTriggerDef.props,
-    currentInput: step.settings.input,
+  const input = withInputsSavedOnUpgrade({
+    pieceName,
+    actionOrTriggerName,
+    currentVersion,
+    targetVersion,
+    input: getInputAfterVersionChange({
+      versionChangeType: changeType,
+      props: actionOrTriggerDef.props,
+      currentInput: step.settings.input,
+    }),
   });
 
   const valid = pieceSelectorUtils.isPieceStepInputValid({
@@ -253,10 +289,20 @@ async function applyPieceVersionChange({
 export const changeVersionUtils = {
   getVersionChangeType,
   getInputAfterVersionChange,
+  withInputsSavedOnUpgrade,
   getLatestMinorOrMajorUpgrade,
   getLatestVersion,
   applyPieceVersionChange,
 };
+
+const INPUTS_SAVED_ON_UPGRADE: InputsSavedOnUpgrade[] = [
+  {
+    pieceName: '@activepieces/piece-google-docs',
+    actionOrTriggerName: 'create_document_based_on_template',
+    introducedIn: '0.7.0',
+    input: { create_copy: false },
+  },
+];
 
 export enum VersionChangeType {
   MINOR_OR_MAJOR = 'MINOR_OR_MAJOR',
@@ -266,4 +312,11 @@ export enum VersionChangeType {
 
 type LatestVersionAvailableAlertProps = {
   isLatestMinorOrMajor: boolean;
+};
+
+type InputsSavedOnUpgrade = {
+  pieceName: string;
+  actionOrTriggerName: string;
+  introducedIn: string;
+  input: Record<string, unknown>;
 };
