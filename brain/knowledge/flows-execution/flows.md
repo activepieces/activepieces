@@ -95,6 +95,12 @@ Flows are the core automation primitive: a versioned directed graph of trigger +
   selector. Hide the option in the UI; the operation guard only protects the stored flow. The canvas drag layer
   has no such filter: a batch dropped into another batch's body hits the same throw, so the drop does nothing.
 
+- **A canvas widget must not own anything that has to outlive an orientation change.** `ReactFlow` is keyed by
+  `canvasOrientation`, so the orientation toggle remounts every widget on the canvas, `TestFlowWidget` included. The
+  test-run subscription's `AbortSignal` therefore comes from the builder store (`startTestRunSubscription`), and only
+  `BuilderPage`'s unmount and `useSwitchToDraft` abort it (`abortTestRunSubscription`). Still open: `chat-drawer.tsx`'s
+  `listenToTestRun` registers `TEST_FLOW_RUN_STARTED` after an `await` and has no cleanup at all.
+
 ### Editions
 CE has full authoring/publishing/folders/forms. EE/Cloud add owner transfer, piece filtering, template sharing, and active-flow quota enforcement on publish/enable.
 
