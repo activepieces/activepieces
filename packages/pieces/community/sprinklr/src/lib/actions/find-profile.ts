@@ -103,8 +103,8 @@ const outputSchema: OutputSchema = {
         { key: 'name', label: 'Name' },
       ],
     },
-    { key: 'createdTime', label: 'Created Time', format: 'number', description: 'Epoch milliseconds' },
-    { key: 'modifiedTime', label: 'Modified Time', format: 'number', description: 'Epoch milliseconds' },
+    { key: 'createdTime', label: 'Created Time', description: 'Epoch milliseconds' },
+    { key: 'modifiedTime', label: 'Modified Time', description: 'Epoch milliseconds' },
   ],
 };
 
@@ -129,9 +129,9 @@ export const findProfileAction = createAction({
       options: {
         disabled: false,
         options: [
-          { label: 'Email', value: 'email', description: 'The email on the profile.', icon: 'inbox' },
-          { label: 'Channel ID', value: 'channel_id', description: 'An ID on a channel, like a handle.', icon: 'user' },
-          { label: 'Profile ID', value: 'profile_id', description: 'The Sprinklr profile ID.', icon: 'code' },
+          { label: 'Email', value: 'email', description: 'Profile email', icon: 'inbox' },
+          { label: 'Channel ID', value: 'channel_id', description: 'Handle or ID', icon: 'user' },
+          { label: 'Profile ID', value: 'profile_id', description: 'Sprinklr ID', icon: 'code' },
         ],
       },
     }),

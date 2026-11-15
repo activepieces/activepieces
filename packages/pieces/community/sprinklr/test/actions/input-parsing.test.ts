@@ -72,11 +72,13 @@ describe('run_report rows without headings', () => {
 });
 
 describe('output schema times', () => {
-  it('describes epoch-millisecond times as numbers, not datetimes', () => {
-    const times = (sprinklrCase.outputSchema.fields ?? []).filter((field) => field.key.endsWith('Time') || field.key === 'dueDate');
-    expect(times.length).toBeGreaterThan(0);
-    for (const field of times) {
-      expect(field.format).toBe('number');
+  it('shows epoch-millisecond times and the case number as plain values', () => {
+    const fields = (sprinklrCase.outputSchema.fields ?? []).filter(
+      (field) => field.key.endsWith('Time') || field.key === 'dueDate' || field.key === 'caseNumber',
+    );
+    expect(fields.length).toBe(4);
+    for (const field of fields) {
+      expect(field.format).toBeUndefined();
     }
   });
 });

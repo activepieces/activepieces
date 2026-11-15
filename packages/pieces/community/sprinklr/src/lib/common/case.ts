@@ -160,7 +160,7 @@ async function getById({ auth, id }: { auth: SprinklrAuthValue; id: string }): P
 }
 
 const caseFields: OutputSchema['fields'] = [
-  { key: 'caseNumber', label: 'Case Number', format: 'number' },
+  { key: 'caseNumber', label: 'Case Number' },
   { key: 'id', label: 'Case ID' },
   { key: 'subject', label: 'Subject' },
   { key: 'description', label: 'Description' },
@@ -168,9 +168,9 @@ const caseFields: OutputSchema['fields'] = [
   { key: 'priority', label: 'Priority' },
   { key: 'caseType', label: 'Case Type' },
   { key: 'summary', label: 'Summary' },
-  { key: 'dueDate', label: 'Due Date', format: 'number', description: 'Epoch milliseconds' },
-  { key: 'createdTime', label: 'Created Time', format: 'number', description: 'Epoch milliseconds' },
-  { key: 'modifiedTime', label: 'Modified Time', format: 'number', description: 'Epoch milliseconds' },
+  { key: 'dueDate', label: 'Due Date', description: 'Epoch milliseconds' },
+  { key: 'createdTime', label: 'Created Time', description: 'Epoch milliseconds' },
+  { key: 'modifiedTime', label: 'Modified Time', description: 'Epoch milliseconds' },
   { key: 'version', label: 'Version', format: 'number' },
   {
     key: 'contact',
@@ -193,7 +193,7 @@ const caseFields: OutputSchema['fields'] = [
           { key: 'assigneeId', label: 'Assignee ID' },
           { key: 'assigneeType', label: 'Assignee Type' },
           { key: 'assignedById', label: 'Assigned By ID' },
-          { key: 'assignmentTime', label: 'Assignment Time', format: 'number', description: 'Epoch milliseconds' },
+          { key: 'assignmentTime', label: 'Assignment Time', description: 'Epoch milliseconds' },
         ],
       },
       { key: 'customProperties', label: 'Custom Fields', dynamicKey: true },
@@ -203,7 +203,7 @@ const caseFields: OutputSchema['fields'] = [
         labelKey: 'queueId',
         listItems: [
           { key: 'queueId', label: 'Queue ID' },
-          { key: 'assignmentTime', label: 'Assignment Time', format: 'number', description: 'Epoch milliseconds' },
+          { key: 'assignmentTime', label: 'Assignment Time', description: 'Epoch milliseconds' },
         ],
       },
     ],

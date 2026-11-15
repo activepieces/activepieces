@@ -134,8 +134,8 @@ export const createCaseAction = createAction({
       defaultValue: 'EMAIL',
       options: {
         options: [
-          { label: 'Email', value: 'EMAIL', description: "Uses the customer's email address.", icon: 'send' },
-          { label: 'SMS', value: 'SMS', description: "Uses the customer's phone number.", icon: 'reply' },
+          { label: 'Email', value: 'EMAIL', description: 'Email address', icon: 'send' },
+          { label: 'SMS', value: 'SMS', description: 'Phone number', icon: 'reply' },
         ],
       },
     }),

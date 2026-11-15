@@ -23,8 +23,8 @@ export const getCaseAction = createAction({
       options: {
         disabled: false,
         options: [
-          { label: 'Case Number', value: 'case_number', description: 'The number shown on the case, e.g. 1234.', icon: 'tag' },
-          { label: 'Case ID', value: 'case_id', description: 'The internal ID from the API.', icon: 'code' },
+          { label: 'Case Number', value: 'case_number', description: 'Shown as #1234', icon: 'tag' },
+          { label: 'Case ID', value: 'case_id', description: 'Internal API ID', icon: 'code' },
         ],
       },
     }),
