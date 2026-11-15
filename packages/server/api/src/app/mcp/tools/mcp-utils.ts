@@ -443,7 +443,7 @@ function normalizePieceName(pieceName: string | undefined): string | undefined {
     return `@activepieces/piece-${normalized}`
 }
 
-async function lookupPieceComponent({ pieceName, componentName, componentType, projectId, platformId, log }: LookupPieceComponentParams): Promise<LookupPieceComponentResult> {
+async function lookupPieceComponent({ pieceName, pieceVersion, componentName, componentType, projectId, platformId, log }: LookupPieceComponentParams): Promise<LookupPieceComponentResult> {
     const normalized = normalizePieceName(pieceName)
     if (isNil(normalized)) {
         return { error: mcpToolError('Validation failed', new Error('pieceName is required')) }
@@ -459,7 +459,7 @@ async function lookupPieceComponent({ pieceName, componentName, componentType, p
     else {
         return { error: mcpToolError('Validation failed', new Error('Either platformId or projectId is required to look up a piece')) }
     }
-    const piece = await pieceMetadataService(log).get({ name: normalized, projectId, platformId: resolvedPlatformId })
+    const piece = await pieceMetadataService(log).get({ name: normalized, projectId, platformId: resolvedPlatformId, ...spreadIfDefined('version', pieceVersion) })
     if (isNil(piece)) {
         return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_research_pieces to get valid piece names.` }], isError: true } }
     }
@@ -1099,6 +1099,7 @@ type PropSummary = {
 
 type LookupPieceComponentParams = {
     pieceName: string
+    pieceVersion?: string
     componentName: string
     componentType: 'action' | 'trigger'
     projectId: string | undefined

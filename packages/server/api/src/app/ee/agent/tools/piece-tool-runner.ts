@@ -41,6 +41,7 @@ async function runResolved({ piece, resolvedInput, projectId, connectionExternal
     const result = await executePieceActionRun({
         projectId,
         pieceName: piece.pieceName,
+        ...spreadIfDefined('pieceVersion', piece.pieceVersion),
         actionName: piece.actionName,
         input: resolvedInput,
         log,

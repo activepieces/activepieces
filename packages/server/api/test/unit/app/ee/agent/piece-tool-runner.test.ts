@@ -68,11 +68,21 @@ describe('pieceToolRunner: preparing then running a configured action', () => {
         }))
     })
 
-    it('does not pin a version on execution, because the adhoc path validates against the latest', async () => {
+    it('runs the latest version when the tool saved none', async () => {
         await run()
 
         const call = mockExecutePieceActionRun.mock.calls[0]?.[0] ?? {}
         expect(call).not.toHaveProperty('pieceVersion')
+    })
+
+    it('runs the piece version the tool was saved with, the same one its input was filled against', async () => {
+        await run({ piece: { pieceName: '@activepieces/piece-google-docs', actionName: 'send_message', pieceVersion: '0.6.5' } })
+
+        expect(mockGetOrThrow).toHaveBeenCalledWith(expect.objectContaining({ version: '0.6.5' }))
+        expect(mockExecutePieceActionRun).toHaveBeenCalledWith(expect.objectContaining({
+            pieceName: '@activepieces/piece-google-docs',
+            pieceVersion: '0.6.5',
+        }))
     })
 
     it('reads the latest metadata, the same version the adhoc path will validate against', async () => {

@@ -1,4 +1,4 @@
-import { FlowId, formatPieceError, isNil, isObject, omit, ProjectId, tryCatch, tryCatchSync, tryParseFriendlyPieceError, UserId } from '@activepieces/core-utils'
+import { FlowId, formatPieceError, isNil, isObject, omit, ProjectId, spreadIfDefined, tryCatch, tryCatchSync, tryParseFriendlyPieceError, UserId } from '@activepieces/core-utils'
 import { largeResultUtils, MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
 import { CodeAction, createKeyForFormInput, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, McpToolResult, PieceAction, RunEnvironment, SampleDataFileType, Step, StepOutputStatus, UpdateActionRequest } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -151,6 +151,7 @@ export async function executePieceActionRun({
 
     const lookup = await mcpUtils.lookupPieceComponent({
         pieceName: normalizedPieceName,
+        ...spreadIfDefined('pieceVersion', pieceVersion),
         componentName: actionName,
         componentType: 'action',
         projectId,
