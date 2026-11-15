@@ -1,6 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
 import {
-  FlowActionType,
   FlowRunStatus,
   FlowTrigger,
   Step,
@@ -48,7 +47,7 @@ export const useBatchStepRun = (batchStepName: string | null) => {
     barrierId,
     dispatchIndex: selectedDispatchIndex,
     enabled: batchCount > 0,
-    isDispatchComplete: batchUtils.isDispatchComplete(output),
+    hasBatchSummary: batchUtils.hasBatchSummary(output),
   });
 
   const selectedChild = toBatchChildren(selectedPage?.data)[0] ?? null;
@@ -143,8 +142,7 @@ export function enclosingBatchStep({
 }): Step | null {
   return (
     flowStructureUtil
-      .getAllSteps(trigger)
-      .filter((step) => step.type === FlowActionType.PROCESS_IN_BATCHES)
+      .getBatchSteps(trigger)
       .find((step) => flowStructureUtil.isChildOf(step, stepName)) ?? null
   );
 }

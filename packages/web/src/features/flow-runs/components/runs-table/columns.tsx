@@ -44,13 +44,6 @@ import {
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { formatUtils } from '@/lib/format-utils';
 
-type SelectedRow = {
-  id: string;
-  status: FlowRunStatus;
-  flowId: string;
-  flowVersionId: string;
-};
-
 type RunsTableColumnsProps = {
   data: SeekPage<FlowRun> | undefined;
   selectedRows: SelectedRow[];
@@ -90,12 +83,9 @@ export const runsTableColumns = ({
             table.toggleAllPageRowsSelected(isChecked);
 
             if (isChecked) {
-              const currentPageRows = table.getRowModel().rows.map((row) => ({
-                id: row.original.id,
-                status: row.original.status,
-                flowId: row.original.flowId,
-                flowVersionId: row.original.flowVersionId,
-              }));
+              const currentPageRows = table
+                .getRowModel()
+                .rows.map((row) => toSelectedRow(row.original));
 
               setSelectedRows((prev) => {
                 const uniqueRows = new Map<string, SelectedRow>([
@@ -128,12 +118,7 @@ export const runsTableColumns = ({
                   onClick={() => {
                     const currentPageRows = table
                       .getRowModel()
-                      .rows.map((row) => ({
-                        id: row.original.id,
-                        status: row.original.status,
-                        flowId: row.original.flowId,
-                        flowVersionId: row.original.flowVersionId,
-                      }));
+                      .rows.map((row) => toSelectedRow(row.original));
                     setSelectedRows(currentPageRows);
                     setSelectedAll(false);
                     setExcludedRows(new Set());
@@ -146,12 +131,7 @@ export const runsTableColumns = ({
                   className="cursor-pointer"
                   onClick={() => {
                     if (data?.data) {
-                      const allRows = data.data.map((row) => ({
-                        id: row.id,
-                        status: row.status,
-                        flowId: row.flowId,
-                        flowVersionId: row.flowVersionId,
-                      }));
+                      const allRows = data.data.map(toSelectedRow);
                       setSelectedRows(allRows);
                       setSelectedAll(true);
                       setExcludedRows(new Set());
@@ -193,12 +173,7 @@ export const runsTableColumns = ({
                 if (isChecked) {
                   setSelectedRows((prev) => [
                     ...prev,
-                    {
-                      id: row.original.id,
-                      status: row.original.status,
-                      flowId: row.original.flowId,
-                      flowVersionId: row.original.flowVersionId,
-                    },
+                    toSelectedRow(row.original),
                   ]);
                 } else {
                   setSelectedRows((prev) =>
@@ -407,3 +382,19 @@ export const runsTableColumns = ({
     },
   },
 ];
+
+function toSelectedRow(run: FlowRun): SelectedRow {
+  return {
+    id: run.id,
+    status: run.status,
+    flowId: run.flowId,
+    flowVersionId: run.flowVersionId,
+  };
+}
+
+export type SelectedRow = {
+  id: string;
+  status: FlowRunStatus;
+  flowId: string;
+  flowVersionId: string;
+};

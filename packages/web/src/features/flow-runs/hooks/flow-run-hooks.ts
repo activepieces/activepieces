@@ -24,23 +24,22 @@ import {
   useMutation,
   useQueries,
   useQuery,
+  useQueryClient,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 
 import { getDefaultRange } from '@/components/custom/date-time-picker-range';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { billingDialogHooks } from '@/features/billing';
 import { flowsApi } from '@/features/flows/api/flows-api';
+import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { flowRunsApi } from '../api/flow-runs-api';
-import {
-  flowRunUtils,
-  MAX_BATCH_VERSION_LOOKUPS,
-} from '../utils/flow-run-utils';
+import { flowRunUtils } from '../utils/flow-run-utils';
 
 export const flowRunKeys = {
   detail: (runId: string) => ['flow-run', runId] as const,
@@ -48,9 +47,11 @@ export const flowRunKeys = {
     ['batch-children', barrierId, statuses ?? null] as const,
   batchChild: (barrierId: string, dispatchIndex: number) =>
     ['batch-child', barrierId, dispatchIndex] as const,
-  flowVersionBatch: (flowVersionId: string) =>
-    ['flow-version-batch', flowVersionId] as const,
 };
+
+const RUN_POLL_INTERVAL_MS = 7000;
+
+const MAX_BATCH_VERSION_LOOKUPS = 10;
 
 const STATUS_CATEGORIES = [
   {
@@ -119,22 +120,30 @@ export const flowRunQueries = {
           ignoreInternalError: false,
         })
           ? false
-          : 7000,
+          : RUN_POLL_INTERVAL_MS,
     }),
   useBatchChildren: ({
     barrierId,
     limit,
     statuses,
     enabled,
-    allBatchesSettled,
+    allBatchesTerminal,
   }: {
     barrierId: string | null;
     limit: number;
     statuses: FlowRunStatus[] | undefined;
     enabled: boolean;
-    allBatchesSettled: boolean;
+    allBatchesTerminal: boolean;
   }) => {
-    const refreshedAfterSettling = useRef(false);
+    const queryClient = useQueryClient();
+    const dataUpdateCountWhenTerminal = useRef<number | null>(null);
+    useEffect(() => {
+      dataUpdateCountWhenTerminal.current = allBatchesTerminal
+        ? queryClient.getQueryState(
+            flowRunKeys.batchChildren(barrierId ?? '', statuses),
+          )?.dataUpdateCount ?? 0
+        : null;
+    }, [allBatchesTerminal, queryClient, barrierId, statuses]);
     return useInfiniteQuery<
       SeekPage<FlowRun>,
       Error,
@@ -145,34 +154,35 @@ export const flowRunQueries = {
       queryKey: flowRunKeys.batchChildren(barrierId ?? '', statuses),
       getNextPageParam: (lastPage) => lastPage.next,
       initialPageParam: undefined,
-      queryFn: ({ pageParam }) => {
-        if (isNil(pageParam)) {
-          refreshedAfterSettling.current = allBatchesSettled;
-        }
-        return flowRunsApi.list({
+      queryFn: ({ pageParam }) =>
+        flowRunsApi.list({
           projectId: authenticationSession.getProjectId()!,
           parentWaitpointId: barrierId!,
           includeArchived: true,
           limit,
           status: statuses,
           cursor: pageParam,
-        });
-      },
+        }),
       enabled: enabled && !isNil(barrierId),
-      refetchInterval: () =>
-        allBatchesSettled && refreshedAfterSettling.current ? false : 7000,
+      refetchInterval: (query) => {
+        const countWhenTerminal = dataUpdateCountWhenTerminal.current;
+        return !isNil(countWhenTerminal) &&
+          query.state.dataUpdateCount > countWhenTerminal
+          ? false
+          : RUN_POLL_INTERVAL_MS;
+      },
     });
   },
   useBatchChildByIndex: ({
     barrierId,
     dispatchIndex,
     enabled,
-    isDispatchComplete,
+    hasBatchSummary,
   }: {
     barrierId: string | null;
     dispatchIndex: number;
     enabled: boolean;
-    isDispatchComplete: boolean;
+    hasBatchSummary: boolean;
   }) =>
     useQuery({
       queryKey: flowRunKeys.batchChild(barrierId ?? '', dispatchIndex),
@@ -186,11 +196,17 @@ export const flowRunQueries = {
         }),
       enabled: enabled && !isNil(barrierId),
       refetchInterval: (query) => {
-        if (!isDispatchComplete) {
-          return 7000;
+        if (!hasBatchSummary) {
+          return RUN_POLL_INTERVAL_MS;
         }
         const child = query.state.data?.data[0];
-        return isNil(child) || isRunSettled(child.status) ? false : 7000;
+        return isNil(child) ||
+          isFlowRunStateTerminal({
+            status: child.status,
+            ignoreInternalError: false,
+          })
+          ? false
+          : RUN_POLL_INTERVAL_MS;
       },
     }),
   useRunStats: () => {
@@ -226,16 +242,19 @@ export const flowRunQueries = {
     includesUnlistedRuns: boolean;
     enabled: boolean;
   }): boolean => {
-    const distinctVersions = Array.from(
+    const oneRunPerVersion = Array.from(
       new Map(runs.map((run) => [run.flowVersionId, run])).values(),
     );
-    const lookedUpVersions = distinctVersions.slice(
+    const versionsToFetch = oneRunPerVersion.slice(
       0,
       MAX_BATCH_VERSION_LOOKUPS,
     );
     const versionQueries = useQueries({
-      queries: lookedUpVersions.map(({ flowId, flowVersionId }) => ({
-        queryKey: flowRunKeys.flowVersionBatch(flowVersionId),
+      queries: versionsToFetch.map(({ flowId, flowVersionId }) => ({
+        queryKey: flowHooks.createFlowQueryKeys({
+          flowId,
+          versionId: flowVersionId,
+        }),
         queryFn: () => flowsApi.get(flowId, { versionId: flowVersionId }),
         staleTime: (query: { state: { data?: PopulatedFlow } }) =>
           query.state.data?.version.state === FlowVersionState.LOCKED
@@ -248,16 +267,12 @@ export const flowRunQueries = {
       versions: versionQueries.map((query) => query.data?.version),
       includesUnlistedRuns:
         includesUnlistedRuns ||
-        distinctVersions.length > MAX_BATCH_VERSION_LOOKUPS,
+        oneRunPerVersion.length > MAX_BATCH_VERSION_LOOKUPS,
     });
   },
 };
 
 export type RunStatusCategory = ReturnType<typeof groupByCategory>[number];
-
-function isRunSettled(status: FlowRunStatus): boolean {
-  return isFlowRunStateTerminal({ status, ignoreInternalError: false });
-}
 
 export const flowRunMutations = {
   useRetryRun: ({

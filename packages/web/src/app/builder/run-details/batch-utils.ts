@@ -50,11 +50,11 @@ function isSkippedWithoutBatches({
   return !isNil(output) && isNil(output.barrierId) && batchCount(output) === 0;
 }
 
-function isDispatchComplete(output: BatchStepRunOutput | null): boolean {
+function hasBatchSummary(output: BatchStepRunOutput | null): boolean {
   return headerState(output).kind === 'finished';
 }
 
-function areAllBatchesSettled(output: BatchStepRunOutput | null): boolean {
+function areAllBatchesTerminal(output: BatchStepRunOutput | null): boolean {
   const header = headerState(output);
   return header.kind === 'finished' && header.stillRunning === 0;
 }
@@ -335,8 +335,8 @@ export const batchUtils = {
   parseStepOutput,
   batchCount,
   isSkippedWithoutBatches,
-  isDispatchComplete,
-  areAllBatchesSettled,
+  hasBatchSummary,
+  areAllBatchesTerminal,
   missingLogsReason,
   headerState,
   itemRange,

@@ -57,7 +57,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { useNewWindow } from '@/lib/navigation-utils';
 
-import { runsTableColumns } from './columns';
+import { runsTableColumns, SelectedRow } from './columns';
 import { FailedRetryRunsDialog } from './failed-retry-runs-dialog';
 import { FailedStepDialog } from './failed-step-dialog';
 import {
@@ -66,12 +66,6 @@ import {
 } from './retried-runs-snackbar';
 import { RunsStatusChart } from './runs-status-chart';
 
-type SelectedRow = {
-  id: string;
-  status: FlowRunStatus;
-  flowId: string;
-  flowVersionId: string;
-};
 export const RunsTable = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedRows, setSelectedRows] = useState<Array<SelectedRow>>([]);
@@ -320,12 +314,14 @@ export const RunsTable = () => {
         excludeFlowRunIds: selectedAll ? Array.from(excludedRows) : undefined,
         status:
           status.length > 0
-            ? (status.filter(
-                (s) => s === FlowRunStatus.PAUSED || s === FlowRunStatus.QUEUED,
-              ) as (
-                | typeof FlowRunStatus.PAUSED
-                | typeof FlowRunStatus.QUEUED
-              )[])
+            ? status.filter(
+                (
+                  s,
+                ): s is
+                  | typeof FlowRunStatus.PAUSED
+                  | typeof FlowRunStatus.QUEUED =>
+                  s === FlowRunStatus.PAUSED || s === FlowRunStatus.QUEUED,
+              )
             : undefined,
         flowId: searchParams.getAll('flowId'),
         createdAfter: searchParams.get('createdAfter') || undefined,
@@ -668,12 +664,12 @@ export const RunsTable = () => {
         warning={
           isBatchCancel ? (
             t(
-              'Some of these runs may process items in batches. Cancelling stops batches that are queued or waiting. Batches that are already running finish.',
+              'Some of these runs may process items in batches. Cancelling stops the batches that are queued or paused. A paused batch loses its pending approval or delay, and it cannot resume. Batches that are already running finish.',
             )
           ) : (
             <>
               {t(
-                'Some of these runs may process items in batches. Retrying can run batches that already succeeded again, and anything they sent to other apps can be sent twice.',
+                'If a batch step failed, retrying can run its batches again, including the ones that already succeeded. Anything they sent to other apps can be sent twice.',
               )}
               {!selectedAll &&
                 ` ${t('batchRetryRunCount', {
@@ -682,7 +678,9 @@ export const RunsTable = () => {
             </>
           )
         }
-        buttonText={isBatchCancel ? t('Confirm') : t('Retry')}
+        buttonText={isBatchCancel ? t('Cancel runs') : t('Retry')}
+        cancelButtonText={isBatchCancel ? t('Keep running') : undefined}
+        confirmVariant={isBatchCancel ? 'destructive' : 'default'}
         entityName={t('Runs')}
         mutationFn={async () => {
           if (isNil(pendingBatchAction)) {

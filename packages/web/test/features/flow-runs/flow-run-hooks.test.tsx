@@ -50,7 +50,7 @@ describe('flowRunQueries.useBatchChildren polling', () => {
   });
 
   it('keeps polling a released barrier while batches are still running', async () => {
-    renderBatchList({ allBatchesSettled: false });
+    renderBatchList({ allBatchesTerminal: false });
     await vi.advanceTimersByTimeAsync(0);
     expect(listRuns).toHaveBeenCalledTimes(1);
 
@@ -60,7 +60,7 @@ describe('flowRunQueries.useBatchChildren polling', () => {
   });
 
   it('stops polling once every batch has settled', async () => {
-    renderBatchList({ allBatchesSettled: true });
+    renderBatchList({ allBatchesTerminal: true });
     await vi.advanceTimersByTimeAsync(0);
 
     await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS * 2);
@@ -69,11 +69,11 @@ describe('flowRunQueries.useBatchChildren polling', () => {
   });
 
   it('refreshes once after the batches settle, then stops', async () => {
-    const { rerender } = renderBatchList({ allBatchesSettled: false });
+    const { rerender } = renderBatchList({ allBatchesTerminal: false });
     await vi.advanceTimersByTimeAsync(0);
     expect(listRuns).toHaveBeenCalledTimes(1);
 
-    rerender({ allBatchesSettled: true });
+    rerender({ allBatchesTerminal: true });
     await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
     expect(listRuns).toHaveBeenCalledTimes(2);
 
@@ -81,15 +81,44 @@ describe('flowRunQueries.useBatchChildren polling', () => {
     expect(listRuns).toHaveBeenCalledTimes(2);
   });
 
-  function renderBatchList(initialProps: { allBatchesSettled: boolean }) {
+  it('stops every observer of the same list, not only the one whose query function ran', async () => {
+    const { rerender } = renderHook(
+      ({ allBatchesTerminal }: { allBatchesTerminal: boolean }) => {
+        const options = {
+          barrierId: 'barrier_id',
+          limit: 50,
+          statuses: undefined,
+          enabled: true,
+          allBatchesTerminal,
+        };
+        flowRunQueries.useBatchChildren(options);
+        return flowRunQueries.useBatchChildren(options);
+      },
+      {
+        initialProps: { allBatchesTerminal: false },
+        wrapper: wrapperFor(queryClient),
+      },
+    );
+    await vi.advanceTimersByTimeAsync(0);
+    expect(listRuns).toHaveBeenCalledTimes(1);
+
+    rerender({ allBatchesTerminal: true });
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+    const callsAfterRefresh = listRuns.mock.calls.length;
+
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS * 3);
+    expect(listRuns).toHaveBeenCalledTimes(callsAfterRefresh);
+  });
+
+  function renderBatchList(initialProps: { allBatchesTerminal: boolean }) {
     return renderHook(
-      ({ allBatchesSettled }: { allBatchesSettled: boolean }) =>
+      ({ allBatchesTerminal }: { allBatchesTerminal: boolean }) =>
         flowRunQueries.useBatchChildren({
           barrierId: 'barrier_id',
           limit: 50,
           statuses: undefined,
           enabled: true,
-          allBatchesSettled,
+          allBatchesTerminal,
         }),
       { initialProps, wrapper: wrapperFor(queryClient) },
     );
@@ -112,14 +141,14 @@ describe('flowRunQueries.useMayProcessInBatches cache', () => {
 
   it('reads a draft version again, because a draft can gain a batch step under the same id', async () => {
     getFlow.mockResolvedValueOnce(
-      populatedFlow({ state: DRAFT, batch: false }),
+      flowWithVersion({ state: DRAFT, batch: false }),
     );
     const first = renderMayProcessInBatches();
     await vi.waitFor(() => expect(getFlow).toHaveBeenCalledTimes(1));
     await vi.waitFor(() => expect(first.result.current).toBe(false));
     first.unmount();
 
-    getFlow.mockResolvedValueOnce(populatedFlow({ state: DRAFT, batch: true }));
+    getFlow.mockResolvedValueOnce(flowWithVersion({ state: DRAFT, batch: true }));
     const second = renderMayProcessInBatches();
 
     await vi.waitFor(() => expect(second.result.current).toBe(true));
@@ -127,7 +156,7 @@ describe('flowRunQueries.useMayProcessInBatches cache', () => {
   });
 
   it('keeps a locked version cached, because it can never change', async () => {
-    getFlow.mockResolvedValue(populatedFlow({ state: LOCKED, batch: false }));
+    getFlow.mockResolvedValue(flowWithVersion({ state: LOCKED, batch: false }));
     const first = renderMayProcessInBatches();
     await vi.waitFor(() => expect(first.result.current).toBe(false));
     first.unmount();
@@ -139,24 +168,131 @@ describe('flowRunQueries.useMayProcessInBatches cache', () => {
   });
 
   function renderMayProcessInBatches() {
-    return renderHook(
-      () =>
-        flowRunQueries.useMayProcessInBatches({
-          runs: [{ flowId: 'flow_id', flowVersionId: 'version_id' }],
-          includesUnlistedRuns: false,
-          enabled: true,
-        }),
-      { wrapper: wrapperFor(queryClient) },
-    );
+    return renderGate({
+      queryClient,
+      runs: [{ flowId: 'flow_id', flowVersionId: 'version_id' }],
+      includesUnlistedRuns: false,
+      enabled: true,
+    });
   }
 });
+
+describe('flowRunQueries.useMayProcessInBatches gate', () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    getFlow.mockReset();
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+  });
+
+  afterEach(() => {
+    queryClient.clear();
+  });
+
+  it('warns for a select-all selection, because it holds runs the table never listed', () => {
+    getFlow.mockResolvedValue(flowWithVersion({ state: LOCKED, batch: false }));
+
+    const { result } = renderGate({
+      queryClient,
+      runs: [{ flowId: 'flow_id', flowVersionId: 'version_id' }],
+      includesUnlistedRuns: true,
+      enabled: true,
+    });
+
+    expect(result.current).toBe(true);
+  });
+
+  it('warns past ten versions and fetches only the first ten', async () => {
+    getFlow.mockResolvedValue(flowWithVersion({ state: LOCKED, batch: false }));
+    const runs = Array.from({ length: 11 }, (_, index) => ({
+      flowId: 'flow_id',
+      flowVersionId: `version_${index}`,
+    }));
+
+    const { result } = renderGate({
+      queryClient,
+      runs,
+      includesUnlistedRuns: false,
+      enabled: true,
+    });
+
+    await vi.waitFor(() => expect(getFlow).toHaveBeenCalledTimes(10));
+    expect(result.current).toBe(true);
+  });
+
+  it('warns while a version is still loading', () => {
+    getFlow.mockReturnValue(new Promise(() => undefined));
+
+    const { result } = renderGate({
+      queryClient,
+      runs: [{ flowId: 'flow_id', flowVersionId: 'version_id' }],
+      includesUnlistedRuns: false,
+      enabled: true,
+    });
+
+    expect(result.current).toBe(true);
+  });
+
+  it('warns when a version fails to load', async () => {
+    getFlow.mockRejectedValue(new Error('network'));
+
+    const { result } = renderGate({
+      queryClient,
+      runs: [{ flowId: 'flow_id', flowVersionId: 'version_id' }],
+      includesUnlistedRuns: false,
+      enabled: true,
+    });
+
+    await vi.waitFor(() =>
+      expect(
+        queryClient.getQueryCache().findAll({ type: 'all' })[0]?.state.status,
+      ).toBe('error'),
+    );
+    expect(result.current).toBe(true);
+  });
+
+  it('fetches no version while disabled', () => {
+    renderGate({
+      queryClient,
+      runs: [{ flowId: 'flow_id', flowVersionId: 'version_id' }],
+      includesUnlistedRuns: false,
+      enabled: false,
+    });
+
+    expect(getFlow).not.toHaveBeenCalled();
+  });
+});
+
+function renderGate({
+  queryClient,
+  runs,
+  includesUnlistedRuns,
+  enabled,
+}: {
+  queryClient: QueryClient;
+  runs: { flowId: string; flowVersionId: string }[];
+  includesUnlistedRuns: boolean;
+  enabled: boolean;
+}) {
+  return renderHook(
+    () =>
+      flowRunQueries.useMayProcessInBatches({
+        runs,
+        includesUnlistedRuns,
+        enabled,
+      }),
+    { wrapper: wrapperFor(queryClient) },
+  );
+}
 
 function wrapperFor(queryClient: QueryClient) {
   return ({ children }: { children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
 }
 
-function populatedFlow({
+function flowWithVersion({
   state,
   batch,
 }: {

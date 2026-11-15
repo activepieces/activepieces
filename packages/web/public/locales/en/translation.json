@@ -3981,8 +3981,8 @@
   "Are you sure you want to cancel the selected runs?": "Are you sure you want to cancel the selected runs?",
   "Retry from failed step": "Retry from failed step",
   "Are you sure you want to retry from the failed step?": "Are you sure you want to retry from the failed step?",
-  "This flow processes items in batches. Batches that already succeeded run again — anything they write to external systems happens twice.": "This flow processes items in batches. Batches that already succeeded run again — anything they write to external systems happens twice.",
+  "If a batch step failed, retrying can run its batches again, including the ones that already succeeded. Anything they sent to other apps can be sent twice.": "If a batch step failed, retrying can run its batches again, including the ones that already succeeded. Anything they sent to other apps can be sent twice.",
   "batchRetryRunCount": "{count, plural, =1 {1 run will be retried.} other {# runs will be retried.}}",
-  "Some of these runs may process items in batches. Cancelling stops batches that are queued or waiting. Batches that are already running finish.": "Some of these runs may process items in batches. Cancelling stops batches that are queued or waiting. Batches that are already running finish.",
-  "Some of these runs may process items in batches. Retrying can run batches that already succeeded again, and anything they sent to other apps can be sent twice.": "Some of these runs may process items in batches. Retrying can run batches that already succeeded again, and anything they sent to other apps can be sent twice."
+  "Some of these runs may process items in batches. Cancelling stops the batches that are queued or paused. A paused batch loses its pending approval or delay, and it cannot resume. Batches that are already running finish.": "Some of these runs may process items in batches. Cancelling stops the batches that are queued or paused. A paused batch loses its pending approval or delay, and it cannot resume. Batches that are already running finish.",
+  "Keep running": "Keep running"
 }

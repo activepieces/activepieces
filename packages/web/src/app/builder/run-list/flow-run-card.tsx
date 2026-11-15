@@ -236,9 +236,10 @@ const FlowRunCard = React.memo(
             title={t('Retry from failed step')}
             message={t('Are you sure you want to retry from the failed step?')}
             warning={t(
-              'This flow processes items in batches. Batches that already succeeded run again — anything they write to external systems happens twice.',
+              'If a batch step failed, retrying can run its batches again, including the ones that already succeeded. Anything they sent to other apps can be sent twice.',
             )}
             buttonText={t('Retry')}
+            confirmVariant="default"
             entityName={t('Run')}
             mutationFn={async () => retryFromFailedStep()}
           />
