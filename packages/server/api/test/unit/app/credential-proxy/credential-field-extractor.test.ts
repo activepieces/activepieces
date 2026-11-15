@@ -18,7 +18,7 @@ describe('credentialFieldExtractor', () => {
         })
     })
 
-    it('placeholders the access token and its copy in data, and redacts the refresh token copies of an OAuth2 connection', () => {
+    it('gives the OAuth2 access token and its copy in data one placeholder, redacts the refresh token copies and keeps the id token', () => {
         const value = {
             type: AppConnectionType.CLOUD_OAUTH2,
             client_id: 'id',
@@ -32,16 +32,16 @@ describe('credentialFieldExtractor', () => {
         } as const
         const fields = credentialFieldExtractor.extract({ value, pieceAuth: undefined })
 
-        expect(fields).toEqual([{ index: 0, path: ['access_token'] }, { index: 1, path: ['data', 'access_token'] }])
+        expect(fields).toEqual([{ index: 0, path: ['access_token'] }])
         const redacted = credentialFieldExtractor.redactUnresolvable(value)
         expect(redacted).toMatchObject({
             refresh_token: '(REDACTED)',
-            data: { refresh_token: '(REDACTED)', id_token: '(REDACTED)', instance_url: 'https://acme.my.salesforce.com' },
+            data: { refresh_token: '(REDACTED)', id_token: 'idt', instance_url: 'https://acme.my.salesforce.com' },
         })
         const placeholdered = credentialFieldExtractor.applyPlaceholders({ value: redacted, grantId: GRANT_ID, fields })
         expect(placeholdered).toMatchObject({
             access_token: credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 0 }),
-            data: { access_token: credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 1 }) },
+            data: { access_token: credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 0 }) },
         })
     })
 

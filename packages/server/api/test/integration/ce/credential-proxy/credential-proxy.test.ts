@@ -158,7 +158,7 @@ describe('Credential proxy', () => {
                     claimed_at: 1,
                     scope: '',
                     token_url: 'https://auth.example.com/token',
-                    data: { access_token: 'live-token', refresh_token: 'live-refresh', instance_url: 'https://acme.example.com' },
+                    data: { access_token: 'live-token', refresh_token: 'live-refresh', id_token: 'header.claims.signature', instance_url: 'https://acme.example.com' },
                 }),
             })
 
@@ -166,14 +166,34 @@ describe('Credential proxy', () => {
 
             const value = response.json().value
             expect(credentialPlaceholder.containsAny(value.access_token)).toBe(true)
-            expect(credentialPlaceholder.containsAny(value.data.access_token)).toBe(true)
+            expect(value.data.access_token).toBe(value.access_token)
+            expect(value.data.id_token).toBe('header.claims.signature')
             expect(value.refresh_token).toBe('(REDACTED)')
             expect(value.data.refresh_token).toBe('(REDACTED)')
             expect(value.data.instance_url).toBe('https://acme.example.com')
             expect(JSON.stringify(value)).not.toContain('live-')
             const [ref] = credentialPlaceholder.parse(value.access_token)
             const resolved = await resolveAsProxy({ grantId: ref.grantId })
-            expect(resolved.json().fields).toEqual(expect.arrayContaining([{ index: ref.fieldIndex, value: 'live-token' }]))
+            expect(resolved.json().fields).toEqual([{ index: ref.fieldIndex, value: 'live-token' }])
+
+            await db.save('app_connection', {
+                ...connection,
+                type: AppConnectionType.CLOUD_OAUTH2,
+                value: await encryptUtils.encryptObject({
+                    type: AppConnectionType.CLOUD_OAUTH2,
+                    client_id: 'client',
+                    token_type: 'Bearer',
+                    access_token: 'refreshed-token',
+                    refresh_token: 'live-refresh',
+                    claimed_at: 2,
+                    scope: '',
+                    token_url: 'https://auth.example.com/token',
+                    data: { instance_url: 'https://acme.example.com' },
+                }),
+            })
+            const afterRefresh = await resolveAsProxy({ grantId: ref.grantId })
+            expect(afterRefresh.statusCode).toBe(StatusCodes.OK)
+            expect(afterRefresh.json().fields).toEqual([{ index: ref.fieldIndex, value: 'refreshed-token' }])
         })
 
         it('follows the live connection when it is reconnected under the same external id', async () => {

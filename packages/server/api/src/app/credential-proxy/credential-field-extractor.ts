@@ -8,11 +8,11 @@ export const credentialFieldExtractor = {
         return secretPaths({ value, pieceAuth }).map((path, index) => ({ index, path }))
     },
     applyPlaceholders<T extends Record<string, unknown>>({ value, grantId, fields }: ApplyPlaceholdersParams<T>): T {
-        return fields.reduce((current, field) => replaceAtPath({
-            target: current,
-            path: field.path,
-            replacement: credentialPlaceholder.build({ grantId, fieldIndex: field.index }),
-        }), value)
+        return fields.reduce((current, field) => {
+            const replacement = credentialPlaceholder.build({ grantId, fieldIndex: field.index })
+            const copies = duplicatePathsOf({ value: current, path: field.path })
+            return [field.path, ...copies].reduce((target, path) => replaceAtPath({ target, path, replacement }), current)
+        }, value)
     },
     redactUnresolvable(value: AppConnectionValue): AppConnectionValue {
         return unresolvablePaths(value)
@@ -41,10 +41,7 @@ function secretPaths({ value, pieceAuth }: ExtractParams): string[][] {
         case AppConnectionType.OAUTH2:
         case AppConnectionType.CLOUD_OAUTH2:
         case AppConnectionType.PLATFORM_OAUTH2:
-            return [
-                ['access_token'],
-                ...(typeof value.data['access_token'] === 'string' ? [['data', 'access_token']] : []),
-            ]
+            return [['access_token']]
         case AppConnectionType.CUSTOM_AUTH:
             return [
                 ...secretPropPaths({ props: value.props, pieceAuth }),
@@ -62,7 +59,7 @@ function unresolvablePaths(value: AppConnectionValue): string[][] {
         case AppConnectionType.OAUTH2:
         case AppConnectionType.CLOUD_OAUTH2:
         case AppConnectionType.PLATFORM_OAUTH2:
-            return [['refresh_token'], ['data', 'refresh_token'], ['data', 'id_token']]
+            return [['refresh_token'], ['data', 'refresh_token']]
         case AppConnectionType.SECRET_TEXT:
         case AppConnectionType.BASIC_AUTH:
         case AppConnectionType.CUSTOM_AUTH:
@@ -70,6 +67,15 @@ function unresolvablePaths(value: AppConnectionValue): string[][] {
         case AppConnectionType.NO_AUTH:
             return []
     }
+}
+
+function duplicatePathsOf({ value, path }: { value: Record<string, unknown>, path: string[] }): string[][] {
+    const isOAuth2AccessToken = path.length === 1 && path[0] === 'access_token' && OAUTH2_TYPES.includes(String(value['type']))
+    if (!isOAuth2AccessToken) {
+        return []
+    }
+    const copy = credentialFieldExtractor.readAtPath({ value, path: OAUTH2_ACCESS_TOKEN_COPY })
+    return isNil(copy) ? [] : [OAUTH2_ACCESS_TOKEN_COPY]
 }
 
 function secretPropPaths({ props, pieceAuth }: { props: Record<string, unknown>, pieceAuth: PieceMetadataModel['auth'] }): string[][] {
@@ -128,6 +134,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 const SECRET_NAME_PATTERN = /(key|secret|token|password|passwd|pwd)/i
 const REDACTED = '(REDACTED)'
+const OAUTH2_ACCESS_TOKEN_COPY = ['data', 'access_token']
+const OAUTH2_TYPES: string[] = [AppConnectionType.OAUTH2, AppConnectionType.CLOUD_OAUTH2, AppConnectionType.PLATFORM_OAUTH2]
 
 type ExtractParams = {
     value: AppConnectionValue
