@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const enrichPerson = createAction({
   auth: villageAuth,
   name: 'enrich_person',
+  classification: 'READ',
   displayName: 'Enrich Person',
   description:
     'Get detailed profile information (name, headline, current company, location, photo, LinkedIn URL) for a person identified by LinkedIn URL or generic URL.',

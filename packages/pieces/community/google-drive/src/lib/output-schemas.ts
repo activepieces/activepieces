@@ -128,6 +128,12 @@ export const listFilesActionOutputSchema: OutputSchema = {
           label: 'Parent Folder ID',
           value: 'parents[0]',
         },
+        {
+          key: 'downloadedFile',
+          label: 'Downloaded File URL',
+          value: 'downloadedFile',
+          format: 'url',
+        },
       ],
     },
     {
@@ -453,6 +459,58 @@ export const trashGdriveFileActionOutputSchema: OutputSchema = {
 export const newFileTriggerOutputSchema: OutputSchema = {
   fields: [
     {
+      key: 'content',
+      label: 'File Content',
+    },
+    {
+      key: 'contentError',
+      label: 'File Content Error',
+    },
+    {
+      key: 'name',
+      label: 'File Name',
+    },
+    {
+      key: 'modifiedTime',
+      label: 'Modified Time',
+      format: 'datetime',
+    },
+    {
+      key: 'webViewLink',
+      label: 'View Link',
+      format: 'url',
+    },
+    {
+      key: 'mimeType',
+      label: 'MIME Type',
+    },
+    {
+      key: 'createdTime',
+      label: 'Created Time',
+      format: 'datetime',
+    },
+    {
+      key: 'id',
+      label: 'File ID',
+    },
+  ],
+};
+
+export const newOrUpdatedFileTriggerOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'changeType',
+      label: 'Change Type',
+    },
+    {
+      key: 'content',
+      label: 'File Content',
+    },
+    {
+      key: 'contentError',
+      label: 'File Content Error',
+    },
+    {
       key: 'name',
       label: 'File Name',
     },
@@ -468,6 +526,11 @@ export const newFileTriggerOutputSchema: OutputSchema = {
     {
       key: 'createdTime',
       label: 'Created Time',
+      format: 'datetime',
+    },
+    {
+      key: 'modifiedTime',
+      label: 'Modified Time',
       format: 'datetime',
     },
     {
@@ -675,6 +738,11 @@ export const driveListFilesOutputSchema: OutputSchema = {
           key: 'shared',
           label: 'Shared',
           format: 'boolean',
+        },
+        {
+          key: 'downloadedFile',
+          label: 'Downloaded File URL',
+          format: 'url',
         },
       ],
     },

@@ -77,7 +77,17 @@ function cleanAction(action: FlowAction): FlowAction {
                 ...commonProps, type: action.type, settings: action.settings, nextAction,
                 firstLoopAction: isNil(action.firstLoopAction) ? undefined : cleanAction(action.firstLoopAction),
             }
+        case FlowActionType.PROCESS_IN_BATCHES:
+            return {
+                ...commonProps, type: action.type, settings: action.settings, nextAction,
+                firstLoopAction: isNil(action.firstLoopAction) ? undefined : cleanAction(action.firstLoopAction),
+            }
         case FlowActionType.ROUTER:
+            return {
+                ...commonProps, type: action.type, settings: action.settings, nextAction,
+                children: action.children.map((child) => isNil(child) ? null : cleanAction(child)),
+            }
+        case FlowActionType.AI_ROUTER:
             return {
                 ...commonProps, type: action.type, settings: action.settings, nextAction,
                 children: action.children.map((child) => isNil(child) ? null : cleanAction(child)),

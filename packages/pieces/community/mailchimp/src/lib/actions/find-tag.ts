@@ -8,6 +8,7 @@ import { MailchimpClient } from '../common/types';
 export const findTag = createAction({
   auth: mailchimpAuth,
   name: 'find_tag',
+  classification: 'SEARCH',
   displayName: 'Find Tag',
   description: 'Search for tags on a list by name',
   audience: 'both',

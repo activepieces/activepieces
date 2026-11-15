@@ -15,10 +15,12 @@ import { useKnowledgeBaseToolDialogStore } from '../stores/knowledge-base-tools'
 
 type AddKnowledgeBaseDropdownProps = {
   disabled?: boolean;
+  children?: React.ReactNode;
 };
 
 export const AddKnowledgeBaseDropdown = ({
   disabled,
+  children,
 }: AddKnowledgeBaseDropdownProps) => {
   const [open, setOpen] = useState(false);
   const { setShowAddKbDialog } = useKnowledgeBaseToolDialogStore();
@@ -26,10 +28,12 @@ export const AddKnowledgeBaseDropdown = ({
   return (
     <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger disabled={disabled} asChild>
-        <Button variant="outline" size="sm">
-          <Plus className="size-4 mr-2" />
-          {t('Add')}
-        </Button>
+        {children ?? (
+          <Button variant="outline" size="sm">
+            <Plus className="size-4 mr-2" />
+            {t('Add')}
+          </Button>
+        )}
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="start">

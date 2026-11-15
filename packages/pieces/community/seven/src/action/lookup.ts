@@ -6,6 +6,7 @@ import { callSevenApi } from '../common';
 export const lookup = createAction({
   auth: sevenAuth,
   name: 'lookup',
+  classification: 'READ',
   displayName: 'Lookup Phone Numbers',
   description: 'Get information about CNAM, HLR, MNP, RCS capabilities and Number formats.',
   audience: 'both',

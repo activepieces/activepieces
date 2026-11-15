@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const searchPaymentProviders = createAction({
   auth: trueLayerCommon.auth,
   name: 'search-payment-providers',
+  classification: 'SEARCH',
   displayName: 'Search Payment Providers',
   description: 'Returns a list of payment providers.',
   audience: 'both',

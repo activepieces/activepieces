@@ -4,6 +4,7 @@ import { krispcallAuth } from '../auth';
 
 export const deleteContacts = createAction({
   name: 'deleteContacts',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Contacts',
   auth: krispcallAuth,
   description: 'Delete contacts from krispcall.',

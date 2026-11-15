@@ -13,6 +13,7 @@ const STORE_KEY = '_chargebee_subscription_changed_webhook_id';
 export const subscriptionChanged = createTrigger({
   auth: chargebeeAuth,
   name: 'subscription_changed',
+  classification: 'READ',
   displayName: 'Subscription Changed',
   description:
     'Triggers when a subscription is updated — plan change, quantity, or add-ons.',

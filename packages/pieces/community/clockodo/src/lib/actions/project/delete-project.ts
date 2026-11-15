@@ -5,6 +5,7 @@ import { createAction } from '@activepieces/pieces-framework';
 export default createAction({
   auth: clockodoAuth,
   name: 'delete_project',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Project',
   description: 'Deletes a project in clockodo',
   audience: 'both',

@@ -7,15 +7,16 @@ import { getChannelOutputSchema } from '../../output-schemas';
 export const getClickupChannel = createAction({
   auth: clickupAuth,
   name: 'get_channel',
-  description: 'Gets a channel in a ClickUp workspace',
+  classification: 'READ',
+  description: 'Get one ClickUp chat channel.',
   audience: 'both',
   aiMetadata: { description: 'Read-only: fetch the details of a single ClickUp Chat channel by its workspace and channel IDs. Use when you already know the channel ID; to discover channels first, use Get Channels. Safe to call repeatedly.', idempotent: true },
   displayName: 'Get Channel',
   props: {
     workspace_id: clickupCommon.workspace_id(),
-    channel_id: clickupCommon.channel_id(),
+    channel_id: clickupCommon.channel_id(true),
   },
-  
+
   outputSchema: getChannelOutputSchema,
   async run(configValue) {
     const { workspace_id, channel_id } = configValue.propsValue;

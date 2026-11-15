@@ -6,6 +6,7 @@ import { makeRequest } from '../common';
 export const listChatbotsAction = createAction({
 	auth: chatbaseAuth,
 	name: 'list_chatbots',
+	classification: 'SEARCH',
 	displayName: 'List All Chatbots',
 	description: 'Retrieves a list of all chatbots.',
 	audience: 'both',

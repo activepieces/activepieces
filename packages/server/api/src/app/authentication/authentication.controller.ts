@@ -1,9 +1,9 @@
 import { isNil } from '@activepieces/core-utils'
-import { ApplicationEventName, PrincipalType, SignInRequest, SignUpRequest, SwitchPlatformRequest, TelemetryEventName, UserIdentityProvider } from '@activepieces/shared'
-import { RateLimitOptions } from '@fastify/rate-limit'
+import { attributionUtils, CompleteSignUpRequest, PrincipalType, SignInRequest, SignUpMethod, SignUpRequest, SwitchPlatformRequest, TelemetryEventName, UserIdentityProvider } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
-import { applicationEvents } from '../helper/application-events'
+import { authnRateLimit } from '../core/security/rate-limit'
 import { networkUtils } from '../helper/network-utils'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
@@ -11,7 +11,10 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { telemetry } from '../helper/telemetry.utils'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
+import { authenticationSideEffects } from './authentication-side-effects'
 import { authenticationService } from './authentication.service'
+import { turnstile } from './lib/turnstile'
+import { passwordlessAuthService } from './passwordless-auth.service'
 
 export const authenticationController: FastifyPluginAsyncZod = async (
     app,
@@ -19,55 +22,107 @@ export const authenticationController: FastifyPluginAsyncZod = async (
     app.post('/sign-up', SignUpRequestOptions, async (request) => {
 
         const platformId = await platformUtils.getPlatformIdForRequest(request)
-        const signUpResponse = await authenticationService(request.log).signUp({
-            ...request.body,
+        await turnstile.assertSolved({
+            token: request.body.captchaToken,
+            remoteIp: clientIp(request),
+            log: request.log,
+        })
+        const { attribution, ...signUpRequest } = request.body
+        const { response, signedUp } = await authenticationService(request.log).signUp({
+            ...signUpRequest,
             provider: UserIdentityProvider.EMAIL,
             platformId: platformId ?? null,
         })
 
-        if (!isNil(signUpResponse.platformId)) {
-            applicationEvents(request.log).sendUserEvent({
-                platformId: signUpResponse.platformId,
-                userId: signUpResponse.id,
-                projectId: signUpResponse.projectId ?? undefined,
-                ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-            }, {
-                action: ApplicationEventName.USER_SIGNED_UP,
-                data: {
-                    source: 'credentials',
-                },
-            })
+        authenticationSideEffects(request.log).onSignIn({
+            response,
+            signedUp,
+            method: UserIdentityProvider.EMAIL,
+            ip: networkUtils.clientIp(request),
+        })
+        if (signedUp && !isNil(response.platformId)) {
+            rejectedPromiseHandler(telemetry(request.log).identifySignUp({
+                userId: response.id,
+                platformId: response.platformId,
+                method: SignUpMethod.PASSWORD,
+                attribution,
+            }), request.log)
         }
 
-        return signUpResponse
+        return response
     })
 
     app.post('/sign-in', SignInRequestOptions, async (request) => {
 
         const predefinedPlatformId = await platformUtils.getPlatformIdForRequest(request)
-        const response = await authenticationService(request.log).signInWithPassword({
+        const { response, signedUp } = await authenticationService(request.log).signInWithPassword({
             email: request.body.email,
             password: request.body.password,
             predefinedPlatformId,
         })
 
-        if (!isNil(response.platformId)) {
-            applicationEvents(request.log).sendUserEvent({
-                platformId: response.platformId,
+        if (signedUp && !isNil(response.platformId)) {
+            rejectedPromiseHandler(telemetry(request.log).identifySignUp({
                 userId: response.id,
-                projectId: response.projectId ?? undefined,
-                ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-            }, {
-                action: ApplicationEventName.USER_SIGNED_IN,
-                data: {},
-            })
-            rejectedPromiseHandler(telemetry(request.log).trackUser(response.id, {
-                name: TelemetryEventName.SIGNED_IN,
-                payload: {
-                    userId: response.id,
-                    platformId: response.platformId,
+                platformId: response.platformId,
+                method: SignUpMethod.PASSWORD,
+                attribution: request.body.attribution,
+            }), request.log)
+        }
+
+        authenticationSideEffects(request.log).onSignIn({
+            response,
+            signedUp,
+            method: UserIdentityProvider.EMAIL,
+            ip: networkUtils.clientIp(request),
+        })
+        if (!isNil(response.platformId)) {
+            rejectedPromiseHandler(telemetry(request.log).trackUser({
+                userId: response.id,
+                platformId: response.platformId,
+                event: {
+                    name: TelemetryEventName.SIGNED_IN,
+                    payload: {
+                        userId: response.id,
+                        platformId: response.platformId,
+                    },
                 },
-            }, { platform: response.platformId }), request.log)
+            }), request.log)
+        }
+
+        return response
+    })
+
+    app.post('/complete-sign-up', CompleteSignUpRequestOptions, async (request) => {
+        const { response, signedUp, provider } = await passwordlessAuthService(request.log).completeSignUp({
+            identityId: request.principal.id,
+            fullName: request.body.fullName,
+        })
+
+        authenticationSideEffects(request.log).onSignIn({
+            response,
+            signedUp,
+            method: provider,
+            ip: networkUtils.clientIp(request),
+        })
+        if (signedUp && !isNil(response.platformId)) {
+            rejectedPromiseHandler(telemetry(request.log).identifySignUp({
+                userId: response.id,
+                platformId: response.platformId,
+                method: attributionUtils.signUpMethodFromProvider({ provider }),
+                attribution: request.body.attribution,
+            }), request.log)
+            rejectedPromiseHandler(telemetry(request.log).trackUser({
+                userId: response.id,
+                platformId: response.platformId,
+                event: {
+                    name: TelemetryEventName.ONBOARDING_COMPLETED,
+                    payload: {
+                        userId: response.id,
+                        platformId: response.platformId,
+                    },
+                },
+            }), request.log)
         }
 
         return response
@@ -83,20 +138,12 @@ export const authenticationController: FastifyPluginAsyncZod = async (
 
 }
 
-const rateLimitOptions: RateLimitOptions = {
-    max: Number.parseInt(
-        system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_MAX),
-        10,
-    ),
-    timeWindow: system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW),
-}
-
 
 
 const SwitchPlatformRequestOptions = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
-        rateLimit: rateLimitOptions,
+        rateLimit: authnRateLimit,
     },
     schema: {
         body: SwitchPlatformRequest,
@@ -106,17 +153,31 @@ const SwitchPlatformRequestOptions = {
 const SignUpRequestOptions = {
     config: {
         security: securityAccess.public(),
-        rateLimit: rateLimitOptions,
+        rateLimit: authnRateLimit,
     },
     schema: {
         body: SignUpRequest,
     },
 }
 
+const CompleteSignUpRequestOptions = {
+    config: {
+        security: securityAccess.unscoped([PrincipalType.ONBOARDING]),
+        rateLimit: authnRateLimit,
+    },
+    schema: {
+        body: CompleteSignUpRequest,
+    },
+}
+
+function clientIp(request: FastifyRequest): string {
+    return networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER))
+}
+
 const SignInRequestOptions = {
     config: {
         security: securityAccess.public(),
-        rateLimit: rateLimitOptions,
+        rateLimit: authnRateLimit,
     },
     schema: {
         body: SignInRequest,

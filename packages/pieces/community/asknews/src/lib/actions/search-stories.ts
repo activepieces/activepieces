@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const searchStories = createAction({
   auth: asknewsAuth,
   name: 'searchStories',
+  classification: 'SEARCH',
   displayName: 'Search Stories (Narrative Clusters)',
   description: 'Filter and search for top news narratives and story clusters',
   audience: 'both',

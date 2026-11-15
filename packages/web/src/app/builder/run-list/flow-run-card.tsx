@@ -12,6 +12,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { CardListItem } from '@/components/custom/card-list';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/custom/spinner';
@@ -28,7 +29,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { flowRunUtils } from '@/features/flow-runs';
-import { flowRunMutations } from '@/features/flow-runs/hooks/flow-run-hooks';
+import {
+  flowRunMutations,
+  flowRunQueries,
+} from '@/features/flow-runs/hooks/flow-run-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
@@ -52,6 +56,13 @@ const FlowRunCard = React.memo(
 
     const [isRetryDropdownOpen, setIsRetryDropdownOpen] =
       useState<boolean>(false);
+    const [isBatchRetryDialogOpen, setIsBatchRetryDialogOpen] =
+      useState<boolean>(false);
+    const mayProcessInBatches = flowRunQueries.useMayProcessInBatches({
+      runs: [{ flowId: run.flowId, flowVersionId: run.flowVersionId }],
+      includesUnlistedRuns: false,
+      enabled: isRetryDropdownOpen && isFailedState(run.status),
+    });
     const { mutate: retryRun, isPending: isRetryingRun } =
       flowRunMutations.useRetryRun({
         onSuccess: ({ run }) => {
@@ -59,10 +70,17 @@ const FlowRunCard = React.memo(
           navigate(`/runs/${run.id}`);
         },
       });
+    const retryFromFailedStep = () =>
+      retryRun({
+        runId: run.id,
+        flowId: run.flowId,
+        projectId: projectId!,
+        retryStrategy: FlowRetryStrategy.FROM_FAILED_STEP,
+      });
     return (
       <CardListItem
         className={cn('px-3 group', {
-          'bg-accent text-accent-foreground': run.id === viewedRunId,
+          'bg-gray-5 text-gray-12': run.id === viewedRunId,
         })}
         style={{ height: `${FLOW_CARD_HEIGHT}px` }}
         onClick={() => {
@@ -77,8 +95,10 @@ const FlowRunCard = React.memo(
                 <TooltipTrigger>
                   <Icon
                     className={cn('w-5 h-5', {
-                      'text-success': variant === 'success',
-                      'text-destructive': variant === 'error',
+                      'text-success-11': variant === 'success',
+                      'text-danger-11': variant === 'error',
+                      'text-warning-11': variant === 'warning',
+                      'text-accent-11': variant === 'primary',
                     })}
                   />
                 </TooltipTrigger>
@@ -87,8 +107,10 @@ const FlowRunCard = React.memo(
             ) : (
               <Icon
                 className={cn('w-5 h-5', {
-                  'text-success': variant === 'success',
-                  'text-destructive': variant === 'error',
+                  'text-success-11': variant === 'success',
+                  'text-danger-11': variant === 'error',
+                  'text-warning-11': variant === 'warning',
+                  'text-accent-11': variant === 'primary',
                 })}
               />
             )}
@@ -107,7 +129,7 @@ const FlowRunCard = React.memo(
             status: run.status,
             ignoreInternalError: false,
           }) && (
-            <p className="flex gap-1 text-xs text-muted-foreground">
+            <p className="flex gap-1 text-xs text-gray-11">
               <Timer className="h-3.5 w-3.5" />
               {t('Took')}{' '}
               {formatUtils.formatDuration(
@@ -120,14 +142,10 @@ const FlowRunCard = React.memo(
             </p>
           )}
           {run.status === FlowRunStatus.RUNNING && (
-            <p className="flex gap-1 text-xs text-muted-foreground">
-              {t('Running')}...
-            </p>
+            <p className="flex gap-1 text-xs text-gray-11">{t('Running')}...</p>
           )}
           {run.status === FlowRunStatus.QUEUED && (
-            <p className="flex gap-1 text-xs text-muted-foreground">
-              {t('Queued')}...
-            </p>
+            <p className="flex gap-1 text-xs text-gray-11">{t('Queued')}...</p>
           )}
         </div>
         <div className="ml-auto font-medium">
@@ -151,7 +169,7 @@ const FlowRunCard = React.memo(
                         variant="ghost"
                         size={'icon'}
                         className={cn(
-                          'group-hover:opacity-100 opacity-0 rounded-full bg-accent drop-shadow-md',
+                          'group-hover:opacity-100 opacity-0 rounded-full bg-gray-4 drop-shadow-md',
                           {
                             'opacity-100': isRetryDropdownOpen,
                           },
@@ -192,14 +210,14 @@ const FlowRunCard = React.memo(
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        if (!isRetryingRun) {
-                          retryRun({
-                            runId: run.id,
-                            flowId: run.flowId,
-                            projectId: projectId!,
-                            retryStrategy: FlowRetryStrategy.FROM_FAILED_STEP,
-                          });
+                        if (isRetryingRun) {
+                          return;
                         }
+                        if (mayProcessInBatches) {
+                          setIsBatchRetryDialogOpen(true);
+                          return;
+                        }
+                        retryFromFailedStep();
                       }}
                       className="cursor-pointer"
                     >
@@ -212,6 +230,19 @@ const FlowRunCard = React.memo(
               </DropdownMenu>
             </PermissionNeededTooltip>
           )}
+          <ConfirmationDeleteDialog
+            open={isBatchRetryDialogOpen}
+            onOpenChange={setIsBatchRetryDialogOpen}
+            title={t('Retry from failed step')}
+            message={t('Are you sure you want to retry from the failed step?')}
+            warning={t(
+              'If a batch step failed, retrying can run its batches again, including the ones that already succeeded. Anything they sent to other apps can be sent twice.',
+            )}
+            buttonText={t('Retry')}
+            confirmVariant="default"
+            entityName={t('Run')}
+            mutationFn={async () => retryFromFailedStep()}
+          />
         </div>
       </CardListItem>
     );

@@ -6,6 +6,7 @@ import {
   BuildPlanEvent,
   FileProducedEvent,
   ImageGeneratedEvent,
+  SubagentActivity,
 } from '@activepieces/shared';
 import { StoreApi, create } from 'zustand';
 
@@ -49,24 +50,33 @@ export type ToolCallMeta = {
   actionReceipt?: ActionReceiptEvent;
   image?: ImageGeneratedEvent;
   files?: FileProducedEvent[];
+  subagent?: SubagentActivity;
 };
 
 export type BuildState = BuildPlanEvent;
 
 export type ChatStoreState = {
+  conversationId: string | null;
   quickReplies: string[];
   offerRecurringAutomation: boolean;
   toolCallMeta: Record<string, ToolCallMeta>;
   builds: Record<string, BuildState>;
   dismissedGateIds: Record<string, true>;
   lastDismissedFormId: string | null;
+  taskPanelToolCallId: string | null;
+  taskPanelAutoOpen: boolean;
+  chatAreaWidth: number;
 
+  setConversationId: (conversationId: string | null) => void;
   approveGate: (gateId: string, payload?: Record<string, unknown>) => void;
   rejectGate: (gateId: string) => void;
   dismissGate: (gateId: string) => void;
   dismissForm: (messageId: string) => void;
   resetInteractions: () => void;
   resetBuilds: () => void;
+  openTaskPanel: (toolCallId: string) => void;
+  setChatAreaWidth: (width: number) => void;
+  closeTaskPanel: () => void;
 };
 
 export type ChatStore = ReturnType<typeof createChatStore>;
@@ -83,12 +93,16 @@ function dismissAndCleanup(
 
 export const createChatStore = () =>
   create<ChatStoreState>((set) => ({
+    conversationId: null,
     quickReplies: [],
     offerRecurringAutomation: false,
     toolCallMeta: {},
     builds: {},
     dismissedGateIds: {},
     lastDismissedFormId: null,
+    taskPanelToolCallId: null,
+    taskPanelAutoOpen: true,
+    chatAreaWidth: 0,
 
     approveGate: (gateId: string, payload?: Record<string, unknown>) => {
       set((prev) => dismissAndCleanup(prev, gateId));
@@ -104,6 +118,13 @@ export const createChatStore = () =>
     dismissForm: (messageId: string) => {
       set({ lastDismissedFormId: messageId });
     },
+    setConversationId: (conversationId: string | null) => {
+      set((prev) =>
+        prev.conversationId === conversationId
+          ? { conversationId }
+          : { conversationId, taskPanelAutoOpen: true },
+      );
+    },
     resetInteractions: () => {
       set({
         quickReplies: [],
@@ -111,12 +132,26 @@ export const createChatStore = () =>
         toolCallMeta: {},
         dismissedGateIds: {},
         lastDismissedFormId: null,
+        taskPanelToolCallId: null,
       });
     },
     resetBuilds: () => {
       set({ builds: {} });
     },
+    openTaskPanel: (toolCallId: string) => {
+      set({ taskPanelToolCallId: toolCallId });
+    },
+    closeTaskPanel: () => {
+      set({ taskPanelToolCallId: null, taskPanelAutoOpen: false });
+    },
+    setChatAreaWidth: (width: number) => {
+      set({ chatAreaWidth: width });
+    },
   }));
+
+function selectTaskPanelDocks(state: ChatStoreState): boolean {
+  return state.chatAreaWidth >= TASK_PANEL_MIN_CHAT_AREA;
+}
 
 function selectActiveDisplayTool({
   state,
@@ -150,9 +185,22 @@ function selectPendingActionPreview({
       return !!id && !!state.toolCallMeta[id]?.actionPreview;
     },
   });
-  if (!isNotDismissed(part, state)) return null;
+  if (!isNotDismissed(part, state)) return taskActionPreview(state);
   const toolCallId = chatPartUtils.getToolCallId(part);
   return state.toolCallMeta[toolCallId]?.actionPreview ?? null;
+}
+
+function taskActionPreview(state: ChatStoreState): ActionPreviewEvent | null {
+  const metas = Object.values(state.toolCallMeta);
+  const taskRunning = metas.some((meta) => meta.subagent?.status === 'running');
+  if (!taskRunning) return null;
+  const waiting = metas.find(
+    (meta) =>
+      meta.actionPreview?.taskTitle !== undefined &&
+      meta.actionReceipt === undefined &&
+      !state.dismissedGateIds[meta.actionPreview.toolCallId],
+  );
+  return waiting?.actionPreview ?? null;
 }
 
 function selectActiveQuestions({
@@ -217,7 +265,7 @@ function selectHasBlockingCard({
       return !!state.toolCallMeta[id]?.actionPreview;
     },
   });
-  return part !== null;
+  return part !== null || taskActionPreview(state) !== null;
 }
 
 function selectBatchProgress({
@@ -265,11 +313,13 @@ export const chatStoreSelectors = {
   hasBlockingCard: selectHasBlockingCard,
   batchProgress: selectBatchProgress,
   buildById: selectBuildById,
+  taskPanelDocks: selectTaskPanelDocks,
 };
+
+const TASK_PANEL_MIN_CHAT_AREA = 1024;
 
 export const chatBuildUtils = {
   mergeBuildPlan,
 };
 
 export type SetChatStore = StoreApi<ChatStoreState>['setState'];
-export type GetChatStore = StoreApi<ChatStoreState>['getState'];

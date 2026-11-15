@@ -1,13 +1,13 @@
 import fs from 'fs'
 import { assertNotNullOrUndefined, isNil } from '@activepieces/core-utils'
 import Redis, { RedisOptions } from 'ioredis'
+import { baseRedisOptions } from './redis-options'
 import { RedisConnectionSettings } from './types'
 
 
 export async function createDefaultRedisConnection(settings: RedisConnectionSettings): Promise<Redis> {
     const config: Partial<RedisOptions> = {
-        maxRetriesPerRequest: null,
-        keepAlive: 5000,
+        ...baseRedisOptions,
     }
 
     const url = settings.REDIS_URL

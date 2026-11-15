@@ -1,5 +1,5 @@
 import { apId, FlowId, FlowVersionId, isNil, ProjectId, stringifyNullOrUndefined } from '@activepieces/core-utils'
-import { DATA_TYPE_KEY_IN_FILE_METADATA, FileCompression, FileType, FlowAction, flowStructureUtil, FlowTrigger, FlowVersion, SampleDataDataType, SampleDataFileType, SampleDataSettings, SaveSampleDataResponse, Step } from '@activepieces/shared'
+import { DATA_TYPE_KEY_IN_FILE_METADATA, FileCompression, FileType, FlowAction, FlowActionType, flowStructureUtil, FlowTrigger, FlowVersion, SampleDataDataType, SampleDataFileType, SampleDataSettings, SaveSampleDataResponse, Step } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { fileRepo, fileService } from '../../file/file.service'
@@ -55,19 +55,13 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
             type: params.fileType,
         }).andWhere('metadata->>\'flowId\' = :flowId', { flowId: params.flowId }).execute()
     },
-    async getSampleDataForFlow(projectId: ProjectId, flowVersion: FlowVersion, type: SampleDataFileType): Promise<Record<string, unknown>> {
-        const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
-        const sampleDataPromises = steps.map(async (step) => {
-            const data = await this.getOrReturnEmpty({
-                projectId,
-                flowVersion,
-                stepName: step.name,
-                type,
-            })
-            return { [step.name]: data }
-        })
-        const sampleDataArray = await Promise.all(sampleDataPromises)
-        return Object.assign({}, ...sampleDataArray)
+    async getSampleDataForFlow({ projectId, flowVersion, type, referencedBy }: GetSampleDataForFlowParams): Promise<Record<string, unknown>> {
+        const allSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
+        const steps = isNil(referencedBy) ? allSteps : selectReferencedSteps({ steps: allSteps, referencedBy })
+        return Object.fromEntries(await Promise.all(steps.map(async (step) => [
+            step.name,
+            await this.getOrReturnEmpty({ projectId, flowVersion, stepName: step.name, type }),
+        ])))
     },
 })
 
@@ -100,6 +94,21 @@ export async function saveSampleData({
     })
 }
 
+function selectReferencedSteps({ steps, referencedBy }: SelectReferencedStepsParams): Step[] {
+    const referenced: Step[] = []
+    let references = isNil(referencedBy) ? '' : JSON.stringify(referencedBy)
+    for (const step of [...steps].reverse()) {
+        if (!references.includes(step.name)) {
+            continue
+        }
+        referenced.push(step)
+        if (step.type === FlowActionType.LOOP_ON_ITEMS) {
+            references += JSON.stringify(step.settings)
+        }
+    }
+    return referenced.reverse()
+}
+
 async function useExistingOrCreateNewSampleId(projectId: ProjectId, flowVersion: FlowVersion, step: FlowAction | FlowTrigger, fileType: FileType, log: FastifyBaseLogger): Promise<string> {
     const sampleDataId = fileType === FileType.SAMPLE_DATA ? step.settings.sampleData?.sampleDataFileId : step.settings.sampleData?.sampleDataInputFileId
     if (isNil(sampleDataId)) {
@@ -117,6 +126,18 @@ async function useExistingOrCreateNewSampleId(projectId: ProjectId, flowVersion:
     return file.id
 }
 
+
+type SelectReferencedStepsParams = {
+    steps: Step[]
+    referencedBy: unknown
+}
+
+type GetSampleDataForFlowParams = {
+    projectId: ProjectId
+    flowVersion: FlowVersion
+    type: SampleDataFileType
+    referencedBy?: unknown
+}
 
 type DeleteSampleDataForStepParams = {
     projectId: ProjectId

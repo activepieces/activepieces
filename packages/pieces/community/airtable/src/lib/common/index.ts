@@ -2,6 +2,7 @@ import {
   AuthenticationType,
   HttpMethod,
   HttpRequest,
+  HttpResponse,
   httpClient,
 } from '@activepieces/pieces-common';
 import {
@@ -9,7 +10,7 @@ import {
   DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';
-import Airtable from 'airtable';
+import Airtable, { FieldSet, SelectOptions } from 'airtable';
 import {
   AirtableBase,
   AirtableComment,
@@ -19,12 +20,47 @@ import {
   AirtableEnterpriseFields,
   AirtableField,
   AirtableFieldMapping,
+  AirtableRawRecord,
   AirtableRecord,
   AirtableTable,
   AirtableView,
+  ResolvedField,
 } from './models';
 import { isNil } from '@activepieces/pieces-framework';
 import { airtableAuth } from '../auth';
+
+const MAX_FIND_RECORDS = 1000;
+const RATE_LIMIT_STATUS = 429;
+const RATE_LIMIT_PAUSE_MS = 30000;
+const RATE_LIMIT_RETRIES = 2;
+const DROPDOWN_RATE_LIMIT_RETRIES = 0;
+const FIELD_ID_PATTERN = /^fld[A-Za-z0-9]{14}$/;
+const TRIGGER_REQUEST_TIMEOUT_MS = 30000;
+
+function isRateLimited(error: unknown): boolean {
+  return (
+    (error as { response?: { status?: number } })?.response?.status ===
+    RATE_LIMIT_STATUS
+  );
+}
+
+async function sendPage<T>(
+  request: HttpRequest,
+  rateLimitRetries: number
+): Promise<HttpResponse<T>> {
+  for (let attempt = 0; ; attempt++) {
+    if (attempt > 0) {
+      await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_PAUSE_MS));
+    }
+    try {
+      return await httpClient.sendRequest<T>(request);
+    } catch (error) {
+      if (!isRateLimited(error) || attempt >= rateLimitRetries) {
+        throw error;
+      }
+    }
+  }
+}
 
 
 interface Params {
@@ -43,6 +79,7 @@ interface Params {
   workspaceId?: string; 
   name?: string; 
   tables?: AirtableTableConfig[];
+  typecast?: boolean;
 }
 
 async function fetchAllBases({
@@ -102,28 +139,42 @@ async function listRecords({
   token,
   baseId,
   tableId,
-  pageSize = 50, 
+  pageSize = 100,
+  maxRecords = 500,
 }: {
   token: string;
   baseId: string;
   tableId: string;
   pageSize?: number;
+  maxRecords?: number;
 }): Promise<AirtableRecord[]> {
-  const response = await httpClient.sendRequest<{ records: AirtableRecord[] }>({
-    method: HttpMethod.GET,
-    url: `https://api.airtable.com/v0/${baseId}/${tableId}`,
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token,
-    },
-    queryParams: {
-      pageSize: pageSize.toString(),
-    },
-  });
-  if (response.status === 200) {
-    return response.body.records;
-  }
-  return [];
+  const allRecords: AirtableRecord[] = [];
+  let offset: string | undefined = undefined;
+
+  do {
+    const request: HttpRequest = {
+      method: HttpMethod.GET,
+      url: `https://api.airtable.com/v0/${baseId}/${tableId}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token,
+      },
+      queryParams: {
+        pageSize: pageSize.toString(),
+        ...(offset ? { offset } : {}),
+      },
+      retries: 3,
+    };
+    const response = await sendPage<{
+      records: AirtableRecord[];
+      offset?: string;
+    }>(request, DROPDOWN_RATE_LIMIT_RETRIES);
+
+    allRecords.push(...response.body.records);
+    offset = response.body.offset;
+  } while (offset && allRecords.length < maxRecords);
+
+  return allRecords.slice(0, maxRecords);
 }
 
 async function fetchTableList({
@@ -140,6 +191,7 @@ async function fetchTableList({
       type: AuthenticationType.BEARER_TOKEN,
       token,
     },
+    timeout: TRIGGER_REQUEST_TIMEOUT_MS,
   });
 
   if (response.status === 200) {
@@ -178,6 +230,80 @@ async function fetchViews({
   return [];
 }
 
+
+function pollStartCursor(): number {
+  return Math.floor(Date.now() / 1000) * 1000 - 1;
+}
+
+async function selectRecords({
+  token,
+  baseId,
+  tableId,
+  params,
+}: {
+  token: string;
+  baseId: string;
+  tableId: string;
+  params: SelectOptions<FieldSet>;
+}): Promise<AirtableRawRecord[]> {
+  const airtable = new Airtable({
+    apiKey: token,
+    requestTimeout: TRIGGER_REQUEST_TIMEOUT_MS,
+  });
+  const records = await airtable.base(baseId).table(tableId).select(params).all();
+  return records.map((record) => ({
+    id: record.id,
+    createdTime: record._rawJson.createdTime,
+    fields: record.fields,
+  }));
+}
+
+async function resolveField({
+  token,
+  baseId,
+  tableId,
+  idOrName,
+  label,
+  rememberedFieldId,
+}: {
+  token: string;
+  baseId: string;
+  tableId: string;
+  idOrName: string;
+  label: string;
+  rememberedFieldId?: string;
+}): Promise<ResolvedField> {
+  let table: AirtableTable | undefined;
+  try {
+    table = await fetchTable({ token, baseId, tableId });
+  } catch (error) {
+    if (FIELD_ID_PATTERN.test(idOrName)) {
+      throw new Error(
+        `Could not read the table's fields to find ${label} "${idOrName}". Check that the token has the schema.bases:read scope.`
+      );
+    }
+    return { name: idOrName };
+  }
+  if (isNil(table)) {
+    if (FIELD_ID_PATTERN.test(idOrName)) {
+      throw new Error(
+        `Could not find the selected table to look up ${label} "${idOrName}". Open the step and pick the table again.`
+      );
+    }
+    return { name: idOrName };
+  }
+  const field = isNil(rememberedFieldId)
+    ? table.fields.find((candidate) => candidate.id === idOrName) ??
+      table.fields.find((candidate) => candidate.name === idOrName)
+    : table.fields.find((candidate) => candidate.id === rememberedFieldId);
+  if (isNil(field)) {
+    throw new Error(
+      `${label} "${idOrName}" no longer exists in table "${table.name}". It was deleted or renamed: open the step and pick ${label} again.`
+    );
+  }
+  return { id: field.id, name: field.name };
+}
+
 async function createRecord({
   personalToken: token,
   fields,
@@ -214,28 +340,56 @@ async function findRecord({
   baseId,
   limitToView,
 }: Params) {
-  const request: HttpRequest = {
-    method: HttpMethod.GET,
-    url: `https://api.airtable.com/v0/${baseId}/${tableId}`,
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token,
-    },
-    queryParams: {
-      filterByFormula: `FIND("${searchValue}",{${searchField}})`,
-      view: limitToView ?? '',
-    },
-  };
-
-  const response = await httpClient.sendRequest<{
-    records: AirtableRecord[];
-  }>(request);
-
-  if (response.status === 200) {
-    return response.body.records;
+  const escapedSearchValue = (searchValue ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"');
+  const savedSearchField = searchField ?? '';
+  const searchFieldName = FIELD_ID_PATTERN.test(savedSearchField)
+    ? (
+        await resolveField({
+          token,
+          baseId,
+          tableId,
+          idOrName: savedSearchField,
+          label: 'Search Field',
+        })
+      ).name
+    : savedSearchField;
+  if (/[{}]/.test(searchFieldName)) {
+    throw new Error(
+      'Search Field must not contain "{" or "}" because Airtable cannot escape braces inside a field reference.'
+    );
   }
+  const allRecords: AirtableRecord[] = [];
+  let offset: string | undefined = undefined;
 
-  return [];
+  do {
+    const request: HttpRequest = {
+      method: HttpMethod.GET,
+      url: `https://api.airtable.com/v0/${baseId}/${tableId}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token,
+      },
+      queryParams: {
+        filterByFormula: `FIND("${escapedSearchValue}",{${searchFieldName}})`,
+        pageSize: '100',
+        ...(limitToView ? { view: limitToView } : {}),
+        ...(offset ? { offset } : {}),
+      },
+      retries: 3,
+    };
+
+    const response = await sendPage<{
+      records: AirtableRecord[];
+      offset?: string;
+    }>(request, RATE_LIMIT_RETRIES);
+
+    allRecords.push(...response.body.records);
+    offset = response.body.offset;
+  } while (offset && allRecords.length < MAX_FIND_RECORDS);
+
+  return allRecords.slice(0, MAX_FIND_RECORDS);
 }
 async function updateRecord({
   personalToken: token,
@@ -243,6 +397,7 @@ async function updateRecord({
   recordId,
   tableId,
   baseId,
+  typecast,
 }: Params) {
   const request: HttpRequest = {
     method: HttpMethod.PATCH,
@@ -253,6 +408,7 @@ async function updateRecord({
     },
     body: {
       fields,
+      ...(typecast ? { typecast: true } : {}),
     },
   };
 
@@ -432,7 +588,7 @@ export const airtableCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account',
+          placeholder: 'Connect your Airtable account first',
         };
       }
 
@@ -451,7 +607,7 @@ export const airtableCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please check your permission scope',
+          placeholder: "Could not load. Check the token's scopes.",
         };
       }
     },
@@ -460,6 +616,8 @@ export const airtableCommon = {
   workspaceId: Property.Dropdown<string,true,typeof airtableAuth>({
     auth: airtableAuth,
     displayName: 'Workspace',
+    description:
+      'Listed by ID because Airtable has no workspace name API.',
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
@@ -467,35 +625,42 @@ export const airtableCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account',
+          placeholder: 'Connect your Airtable account first',
         };
       }
-      // Although there is no direct way to get a list of workspaces,
-      // we can get a list of bases and then fetch each base to get the workspace id.
-      const bases = await fetchAllBases({
-        token: auth.secret_text,
-      });
 
-      const workspacePromises = bases.map((base) =>
-        fetchBase({ token: auth.secret_text, baseId: base.id })
-      );
-      const basesWithWorkspaces = await Promise.all(workspacePromises);
+      try {
+        const bases = await fetchAllBases({
+          token: auth.secret_text,
+        });
 
-      const workspaces = basesWithWorkspaces.reduce((acc, base) => {
-        if (base.workspaceId) {
-          // Since we don't have the workspace name, we will use the ID as the name.
-          acc[base.workspaceId] = base.workspaceId;
-        }
-        return acc;
-      }, {} as Record<string, string>);
+        const workspacePromises = bases.map((base) =>
+          fetchBase({ token: auth.secret_text, baseId: base.id })
+        );
+        const basesWithWorkspaces = await Promise.all(workspacePromises);
 
-      return {
-        disabled: false,
-        options: Object.entries(workspaces).map(([id, name]) => ({
-          label: name,
-          value: id,
-        })),
-      };
+        const workspaces = basesWithWorkspaces.reduce((acc, base) => {
+          if (base.workspaceId) {
+            acc[base.workspaceId] = base.workspaceId;
+          }
+          return acc;
+        }, {} as Record<string, string>);
+
+        return {
+          disabled: false,
+          options: Object.entries(workspaces).map(([id, name]) => ({
+            label: name,
+            value: id,
+          })),
+        };
+      } catch (e) {
+        console.debug(e);
+        return {
+          disabled: true,
+          options: [],
+          placeholder: "Could not load. Check the token's scopes.",
+        };
+      }
     },
   }),
 
@@ -509,14 +674,14 @@ export const airtableCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account',
+          placeholder: 'Connect your Airtable account first',
         };
       }
       if (!base) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select a base first',
+          placeholder: 'Select a base first',
         };
       }
 
@@ -538,7 +703,7 @@ export const airtableCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please check your permission scope',
+          placeholder: "Could not load. Check the token's scopes.",
         };
       }
     },
@@ -547,6 +712,7 @@ export const airtableCommon = {
   views: Property.Dropdown<string,false,typeof airtableAuth>({
     auth: airtableAuth,
     displayName: 'View',
+    description: 'Only records in this view are used. Empty: the whole table.',
     required: false,
     refreshers: ['base', 'tableId'],
     options: async ({ auth, base, tableId }): Promise<DropdownState<string>> => {
@@ -554,49 +720,60 @@ export const airtableCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account',
+          placeholder: 'Connect your Airtable account first',
         };
       }
       if (!base) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select a base first',
+          placeholder: 'Select a base first',
         };
       }
       if (!tableId) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select a table first',
+          placeholder: 'Select a table first',
         };
       }
 
-      const views: AirtableView[] = await fetchViews({
-        token: auth.secret_text,
-        baseId: base as string,
-        tableId: tableId as string,
-      });
+      try {
+        const views: AirtableView[] = await fetchViews({
+          token: auth.secret_text,
+          baseId: base as string,
+          tableId: tableId as string,
+        });
 
-      return {
-        disabled: false,
-        options: views.map((view) => ({
-          value: view.id,
-          label: view.name,
-        })),
-      };
+        return {
+          disabled: false,
+          options: views.map((view) => ({
+            value: view.id,
+            label: view.name,
+          })),
+        };
+      } catch (e) {
+        console.debug(e);
+        return {
+          disabled: true,
+          options: [],
+          placeholder: "Could not load. Check the token's scopes.",
+        };
+      }
     },
   }),
 
   recordId: Property.ShortText({
     displayName: 'Record ID',
     required: true,
-    description: 'The ID of the record.',
+    description:
+      'Starts with rec. Copy it from the record URL or an earlier step.',
+    placeholder: 'recXXXXXXXXXXXXXX',
   }),
 
   fields: Property.DynamicProperties({
     auth: airtableAuth,
-    displayName: 'Table',
+    displayName: 'Fields',
     required: true,
     refreshers: ['base', 'tableId'],
 
@@ -614,12 +791,14 @@ export const airtableCommon = {
         if (!AirtableEnterpriseFields.includes(field.type)) {
           const params = {
             displayName: field.name,
-            description: ['date', 'dateTime'].includes(field.type)
-              ? `${
-                  field.description ? field.description : ''
-                }Expected format: mmmm d,yyyy`
-              : field.description,
+            description: field.description,
             required: false,
+            ...(field.type === 'date'
+              ? { placeholder: '2024-03-05' }
+              : {}),
+            ...(field.type === 'dateTime'
+              ? { placeholder: '2024-03-05T10:30:00Z' }
+              : {}),
           };
 
           if (isNil(AirtableFieldMapping[field.type])) {
@@ -658,51 +837,73 @@ export const airtableCommon = {
   recordIdDropdown: Property.Dropdown<string,true,typeof airtableAuth>({
       auth: airtableAuth,
       displayName: 'Record',
+      description:
+        'Lists the first 500 records by their primary field.',
       required: true,
       refreshers: ['base', 'tableId'],
       options: async ({ auth, base, tableId }) => {
-        if (!auth || !base || !tableId) {
+        if (!auth) {
           return {
             disabled: true,
             options: [],
-            placeholder: 'Please select a base and table first',
+            placeholder: 'Connect your Airtable account first',
+          };
+        }
+        if (!base) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Select a base first',
+          };
+        }
+        if (!tableId) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Select a table first',
           };
         }
 
+        try {
+          const table = await fetchTable({
+            token: auth.secret_text,
+            baseId: base as string,
+            tableId: tableId as string,
+          });
+          const primaryField = table.fields.find(
+            (f) => f.id === table.primaryFieldId
+          );
+          const primaryFieldName = primaryField?.name;
 
-        const table = await fetchTable({
-          token: auth.secret_text,
-          baseId: base as string,
-          tableId: tableId as string,
-        });
-        const primaryField = table.fields.find(
-          (f) => f.id === table.primaryFieldId
-        );
-        const primaryFieldName = primaryField?.name;
+          const records = await listRecords({
+            token: auth.secret_text,
+            baseId: base as string,
+            tableId: tableId as string,
+          });
 
+          const options = records.map((record) => {
+            let label = record.id;
+            if (primaryFieldName && record.fields[primaryFieldName]) {
+              label = record.fields[primaryFieldName] as string;
+            }
+            return {
+              label: label,
+              value: record.id,
+            };
+          });
 
-        const records = await listRecords({
-          token: auth.secret_text,
-          baseId: base as string,
-          tableId: tableId as string,
-        });
-
-
-        const options = records.map((record) => {
-          let label = record.id; 
-          if (primaryFieldName && record.fields[primaryFieldName]) {
-            label = record.fields[primaryFieldName] as string;
-          }
           return {
-            label: label,
-            value: record.id,
+            disabled: false,
+            options: options,
           };
-        });
-
-        return {
-          disabled: false,
-          options: options,
-        };
+        } catch (e) {
+          console.debug(e);
+          return {
+            disabled: true,
+            options: [],
+            placeholder: "Could not load. Check the token's scopes.",
+          };
+        }
       },
   }),
 
@@ -716,35 +917,45 @@ export const airtableCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account',
+          placeholder: 'Connect your Airtable account first',
         };
       }
       if (!base) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select a base first',
+          placeholder: 'Select a base first',
         };
       }
       if (!tableId) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select a table first',
+          placeholder: 'Select a table first',
         };
       }
-      const airtable: AirtableTable = await fetchTable({
-        token: auth.secret_text,
-        baseId: base as string,
-        tableId: tableId as string,
-      });
-      return {
-        disabled: false,
-        options: airtable.fields.map((field: AirtableField) => ({
-          label: field.name,
-          value: field.name,
-        })),
-      };
+
+      try {
+        const airtable: AirtableTable = await fetchTable({
+          token: auth.secret_text,
+          baseId: base as string,
+          tableId: tableId as string,
+        });
+        return {
+          disabled: false,
+          options: airtable.fields.map((field: AirtableField) => ({
+            label: field.name,
+            value: field.id,
+          })),
+        };
+      } catch (e) {
+        console.debug(e);
+        return {
+          disabled: true,
+          options: [],
+          placeholder: "Could not load. Check the token's scopes.",
+        };
+      }
     },
   }),
   
@@ -805,27 +1016,9 @@ export const airtableCommon = {
     return newFields;
   },
 
-  getTableSnapshot: async (params: Params) => {
-    Airtable.configure({
-      apiKey: params.personalToken,
-    });
-    const airtable = new Airtable();
-    const currentTableSnapshot = (
-      await airtable
-        .base(params.baseId)
-        .table(params.tableId)
-        .select(params.limitToView ? { view: params.limitToView } : {})
-        .all()
-    )
-      .map((r: any) => r._rawJson)
-      .sort(
-        (x: any, y: any) =>
-          new Date(x.createdTime).getTime() - new Date(y.createdTime).getTime()
-      );
-    return currentTableSnapshot;
-  },
-
-
+  selectRecords,
+  resolveField,
+  pollStartCursor,
   createRecord,
   findRecord,
   updateRecord,

@@ -5,6 +5,7 @@ import { createTaskActionOutputSchema } from '../output-schemas';
 
 export const apifyCreateTask = createAction({
   name: 'apify_create_task',
+  classification: 'WRITE',
   auth: apifyAuth,
   displayName: 'Create Task',
   description: 'Creates a new saved Actor task.',

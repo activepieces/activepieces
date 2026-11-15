@@ -10,6 +10,7 @@ import { lobstermailAuth } from '../..';
 export const deleteInbox = createAction({
   auth: lobstermailAuth,
   name: 'delete_inbox',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Inbox',
   description: 'Permanently delete an inbox and release its address. This action cannot be undone.',
   audience: 'both',

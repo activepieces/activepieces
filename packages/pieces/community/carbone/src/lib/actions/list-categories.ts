@@ -12,6 +12,7 @@ import { CARBONE_API_URL, CARBONE_VERSION } from '../common/constants';
 export const listCategoriesAction = createAction({
   auth: carboneAuth,
   name: 'carbone_list_categories',
+  classification: 'SEARCH',
   displayName: 'List Categories',
   description: 'List all categories used to organize your Carbone templates.',
   audience: 'both',

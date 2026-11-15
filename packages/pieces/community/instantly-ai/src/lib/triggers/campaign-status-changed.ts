@@ -4,6 +4,7 @@ import { instantlyAiAuth } from '../auth';
 export const campaignStatusChangedTrigger = createTrigger({
   auth: instantlyAiAuth,
   name: 'campaign_status_changed',
+  classification: 'READ',
   displayName: 'Campaign Status Changed',
   description: 'Triggers when a campaign status changes (completed, paused, etc.).',
   aiMetadata: {

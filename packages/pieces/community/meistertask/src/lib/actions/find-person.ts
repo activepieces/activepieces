@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const findPerson = createAction({
   auth: meistertaskAuth,
   name: 'find_person',
+  classification: 'READ',
   displayName: 'Find Person',
   description: 'Finds a person based on person_id',
   audience: 'both',

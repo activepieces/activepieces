@@ -6,6 +6,7 @@ import { BASE_URL } from '../../../index';
 export const getDocument = createAction({
   auth:personalAiAuth,
   name: 'get_document',
+  classification: 'READ',
   displayName: 'Get Document',
   description: 'Retrieve a document from AI assistant.',
   audience: 'both',

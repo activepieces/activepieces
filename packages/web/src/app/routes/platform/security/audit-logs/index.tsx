@@ -1,31 +1,46 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  AgentActionKind,
+  AgentActionOutcome,
+  AgentRunSource,
   ApplicationEvent,
   ApplicationEventName,
+  SignUpEvent,
   summarizeApplicationEvent,
+  UserIdentityProvider,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
+  Bot,
   CheckIcon,
+  CircleArrowUp,
   Eye,
   Folder,
   History,
   Key,
   Link2,
   Logs,
+  Undo2,
   Users,
   Wand,
   Workflow,
   FileText,
   User,
   Clock,
+  ShieldCheck,
 } from 'lucide-react';
 import { Fragment, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { DataTable, DataTableFilters } from '@/components/custom/data-table';
+import {
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+  adminLayout,
+} from '@/app/components/admin';
+import { buildEventLabels } from '@/app/routes/platform/infra/event-destinations/lib/event-labels';
+import { DataTableFilters } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
@@ -37,11 +52,19 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { auditLogQueries } from '@/features/platform-admin';
+import {
+  AuditLogRetentionButton,
+  auditLogQueries,
+  auditLogRetentionUtils,
+} from '@/features/platform-admin';
 import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
+
+import { sampleData } from '../../sample-data';
 
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -51,6 +74,7 @@ export default function AuditLogsPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const { data: projects } = projectCollectionUtils.useAll();
   const { data: users } = platformUserHooks.useUsers();
+  const eventLabels = buildEventLabels();
 
   const filters: DataTableFilters<keyof ApplicationEvent>[] = [
     {
@@ -59,7 +83,7 @@ export default function AuditLogsPage() {
       accessorKey: 'action',
       options: Object.values(ApplicationEventName).map((action) => {
         return {
-          label: formatUtils.convertEnumToHumanReadable(action),
+          label: eventLabels[action],
           value: action,
         };
       }),
@@ -99,242 +123,232 @@ export default function AuditLogsPage() {
     },
   ];
 
-  const { data: auditLogsData, isLoading } = auditLogQueries.useAuditLogs();
+  const {
+    data: auditLogsData,
+    isLoading,
+    isError,
+    refetch,
+  } = auditLogQueries.useAuditLogs();
+  const isSample = !platform.plan.auditLogEnabled;
+  const rows = isSample ? sampleData.auditEventsPage() : auditLogsData;
 
-  const isEnabled = platform.plan.auditLogEnabled;
   return (
-    <LockedFeatureGuard
-      featureKey="AUDIT_LOGS"
-      locked={!isEnabled}
-      lockTitle={t('Unlock Audit Logs')}
-      lockDescription={t(
-        'Comply with internal and external security policies by tracking activities done within your account',
-      )}
-    >
-      <div className="flex flex-col  w-full">
-        <DashboardPageHeader
-          description={t('Track activities done within your platform')}
-          title={t('Audit Logs')}
-        />
-        <DataTable
-          emptyStateTextTitle={t('No audit logs found')}
-          emptyStateTextDescription={t(
-            'Come back later when you have some activity to audit',
-          )}
-          emptyStateIcon={<History className="size-14" />}
-          filters={filters}
-          columns={[
-            {
-              accessorKey: 'action',
-              size: 180,
-              header: ({ column }) => (
-                <DataTableColumnHeader
-                  column={column}
-                  title={t('Action')}
-                  icon={Wand}
-                />
-              ),
-              cell: ({ row }) => {
-                const icon = convertToIcon(row.original);
-                return (
-                  <div className="text-left flex items-center gap-2">
-                    {!isNil(icon?.icon) && (
-                      <span className="text-muted-foreground shrink-0">
-                        {icon.icon}
-                      </span>
-                    )}
-                    {formatUtils.convertEnumToHumanReadable(
-                      row.original.action,
-                    )}
-                  </div>
-                );
-              },
-            },
-            {
-              accessorKey: 'details',
-              size: 320,
-              header: ({ column }) => (
-                <DataTableColumnHeader
-                  column={column}
-                  title={t('Details')}
-                  icon={FileText}
-                />
-              ),
-              cell: ({ row }) => {
-                return (
-                  <div className="text-left">
-                    {convertToDetails(row.original)}
-                  </div>
-                );
-              },
-            },
-            {
-              accessorKey: 'userId',
-              size: 200,
-              header: ({ column }) => (
-                <DataTableColumnHeader
-                  column={column}
-                  title={t('Performed By')}
-                  icon={User}
-                />
-              ),
-              cell: ({ row }) => {
-                return (
-                  <div className="text-left">{row.original.userEmail}</div>
-                );
-              },
-            },
-            {
-              accessorKey: 'projectId',
-              size: 130,
-              header: ({ column }) => (
-                <DataTableColumnHeader
-                  column={column}
-                  title={t('Project')}
-                  icon={Folder}
-                />
-              ),
-              cell: ({ row }) => {
-                return row.original.projectId &&
-                  'project' in row.original.data ? (
-                  <Link to={`/projects/${row.original.projectId}`}>
-                    <div className="text-left text-primary hover:underline">
-                      {row.original.data.project?.displayName}
-                    </div>
-                  </Link>
-                ) : (
-                  <div className="text-left">{t('N/A')}</div>
-                );
-              },
-            },
-            {
-              accessorKey: 'created',
-              size: 110,
-              header: ({ column }) => (
-                <DataTableColumnHeader
-                  column={column}
-                  title={t('Created')}
-                  icon={Clock}
-                />
-              ),
-              cell: ({ row }) => {
-                return (
-                  <div className="text-left">
-                    <FormattedDate date={new Date(row.original.created)} />
-                  </div>
-                );
-              },
-            },
-            {
-              id: 'view',
-              size: 50,
-              cell: ({ row }) => (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  onClick={() => {
-                    setSelectedEvent(row.original);
-                    setIsSheetOpen(true);
-                  }}
-                >
-                  <Eye className="size-4 text-muted-foreground" />
-                </Button>
-              ),
-            },
-          ]}
-          page={auditLogsData}
-          isLoading={isLoading}
-        />
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col p-0">
-            <SheetHeader className="px-6 py-4 border-b shrink-0">
-              <SheetTitle className="text-base">
-                {formatUtils.convertEnumToHumanReadable(
-                  selectedEvent?.action ?? '',
-                )}
-              </SheetTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                {selectedEvent && convertToDetails(selectedEvent)}
-              </p>
-            </SheetHeader>
-            <div className="flex-1 overflow-y-auto">
-              <div className="px-6 py-5 flex flex-col gap-4">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  {t('Who & When')}
-                </p>
-                <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
-                  {selectedEvent?.userEmail && (
-                    <>
-                      <span className="text-muted-foreground">
-                        {t('Performed By')}
-                      </span>
-                      <span className="font-medium">
-                        {selectedEvent.userEmail}
-                      </span>
-                    </>
+    <AdminPage>
+      <AdminPageHeader
+        title={t('Audit Logs')}
+        description={t('Track activities done within your platform')}
+        resources={adminPageResources.auditLogs}
+      >
+        {!isSample && <AuditLogRetentionButton />}
+      </AdminPageHeader>
+      <AdminDataTable
+        emptyStateTextTitle={t('No audit logs found')}
+        emptyStateTextDescription={t(
+          'Come back later when you have some activity to audit',
+        )}
+        emptyStateIcon={<History />}
+        filters={filters}
+        columns={[
+          {
+            accessorKey: 'action',
+            size: 180,
+            header: ({ column }) => (
+              <DataTableColumnHeader
+                column={column}
+                title={t('Action')}
+                icon={Wand}
+              />
+            ),
+            cell: ({ row }) => {
+              const icon = convertToIcon(row.original);
+              return (
+                <div className="text-left flex items-center gap-2">
+                  {!isNil(icon?.icon) && (
+                    <span className="text-gray-11 shrink-0">{icon.icon}</span>
                   )}
-                  {selectedEvent?.projectDisplayName && (
-                    <>
-                      <span className="text-muted-foreground">
-                        {t('Project')}
-                      </span>
-                      <span className="font-medium">
-                        {selectedEvent.projectDisplayName}
-                      </span>
-                    </>
-                  )}
-                  {selectedEvent?.ip && (
-                    <>
-                      <span className="text-muted-foreground">
-                        {t('IP Address')}
-                      </span>
-                      <span className="font-medium">{selectedEvent.ip}</span>
-                    </>
-                  )}
-                  <span className="text-muted-foreground">{t('Created')}</span>
-                  <span className="font-medium">
-                    {selectedEvent && (
-                      <FormattedDate date={new Date(selectedEvent.created)} />
-                    )}
-                  </span>
+                  {eventLabels[row.original.action]}
                 </div>
-              </div>
-              {selectedEvent &&
-                extractEventDetails(selectedEvent).length > 0 && (
+              );
+            },
+          },
+          {
+            accessorKey: 'details',
+            size: 320,
+            header: ({ column }) => (
+              <DataTableColumnHeader
+                column={column}
+                title={t('Details')}
+                icon={FileText}
+              />
+            ),
+            cell: ({ row }) => {
+              return (
+                <div className="text-left">
+                  {convertToDetails(row.original)}
+                </div>
+              );
+            },
+          },
+          {
+            accessorKey: 'userId',
+            size: 200,
+            header: ({ column }) => (
+              <DataTableColumnHeader
+                column={column}
+                title={t('Performed By')}
+                icon={User}
+              />
+            ),
+            cell: ({ row }) => {
+              return <div className="text-left">{row.original.userEmail}</div>;
+            },
+          },
+          {
+            accessorKey: 'projectId',
+            size: 130,
+            header: ({ column }) => (
+              <DataTableColumnHeader
+                column={column}
+                title={t('Project')}
+                icon={Folder}
+              />
+            ),
+            cell: ({ row }) => {
+              return row.original.projectId &&
+                'project' in row.original.data ? (
+                <Link to={`/projects/${row.original.projectId}`}>
+                  <div className="text-left text-accent-11 hover:underline">
+                    {row.original.data.project?.displayName}
+                  </div>
+                </Link>
+              ) : (
+                <div className="text-left">{t('N/A')}</div>
+              );
+            },
+          },
+          {
+            accessorKey: 'created',
+            size: 110,
+            header: ({ column }) => (
+              <DataTableColumnHeader
+                column={column}
+                title={t('Created')}
+                icon={Clock}
+              />
+            ),
+            cell: ({ row }) => {
+              return (
+                <div className="text-left">
+                  <FormattedDate date={new Date(row.original.created)} />
+                </div>
+              );
+            },
+          },
+          {
+            id: 'view',
+            size: 50,
+            cell: ({ row }) => (
+              <Button
+                {...adminControl(AdminControl.AUDIT_LOG_EVENT_OPEN)}
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => {
+                  setSelectedEvent(row.original);
+                  setIsSheetOpen(true);
+                }}
+              >
+                <Eye className="size-4 text-gray-11" />
+              </Button>
+            ),
+          },
+        ]}
+        page={rows}
+        isLoading={isSample ? false : isLoading}
+        isError={isSample ? false : isError}
+        errorStateEntity={t('audit logs')}
+        onRetry={refetch}
+      />
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent className={cn(adminLayout.sheet.md, 'flex flex-col p-0')}>
+          <SheetHeader className="px-6 py-4 border-b shrink-0">
+            <SheetTitle className="text-base">
+              {selectedEvent && eventLabels[selectedEvent.action]}
+            </SheetTitle>
+            <p className="text-sm text-gray-11 mt-1">
+              {selectedEvent && convertToDetails(selectedEvent)}
+            </p>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto">
+            <div className="px-6 py-5 flex flex-col gap-4">
+              <p className="text-xs font-semibold text-gray-11">
+                {t('Who & When')}
+              </p>
+              <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
+                {selectedEvent?.userEmail && (
                   <>
-                    <Separator />
-                    <div className="px-6 py-5 flex flex-col gap-4">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                        {t('Event Details')}
-                      </p>
-                      <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
-                        {extractEventDetails(selectedEvent).map(
-                          ({ label, value }) => (
-                            <Fragment key={label}>
-                              <span className="text-muted-foreground">
-                                {label}
-                              </span>
-                              <span className="font-medium">{value}</span>
-                            </Fragment>
-                          ),
-                        )}
-                      </div>
-                    </div>
+                    <span className="text-gray-11">{t('Performed By')}</span>
+                    <span className="font-medium">
+                      {selectedEvent.userEmail}
+                    </span>
                   </>
                 )}
-              <Separator />
-              <div className="px-6 py-5 flex flex-col gap-4">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  {t('Full Payload')}
-                </p>
-                <SimpleJsonViewer data={selectedEvent?.data ?? {}} />
+                {selectedEvent?.projectDisplayName && (
+                  <>
+                    <span className="text-gray-11">{t('Project')}</span>
+                    <span className="font-medium">
+                      {selectedEvent.projectDisplayName}
+                    </span>
+                  </>
+                )}
+                {selectedEvent?.ip && (
+                  <>
+                    <span className="text-gray-11">{t('IP Address')}</span>
+                    <span className="font-medium">{selectedEvent.ip}</span>
+                  </>
+                )}
+                <span className="text-gray-11">{t('Created')}</span>
+                <span className="font-medium">
+                  {selectedEvent && (
+                    <FormattedDate date={new Date(selectedEvent.created)} />
+                  )}
+                </span>
               </div>
             </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-    </LockedFeatureGuard>
+            {selectedEvent && extractEventDetails(selectedEvent).length > 0 && (
+              <>
+                <Separator />
+                <div className="px-6 py-5 flex flex-col gap-4">
+                  <p className="text-xs font-semibold text-gray-11">
+                    {t('Event Details')}
+                  </p>
+                  <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
+                    {extractEventDetails(selectedEvent).map(
+                      ({ label, value, muted }) => (
+                        <Fragment key={label}>
+                          <span className="text-gray-11">{label}</span>
+                          <span
+                            className={muted ? 'text-gray-11' : 'font-medium'}
+                          >
+                            {value}
+                          </span>
+                        </Fragment>
+                      ),
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+            <Separator />
+            <div className="px-6 py-5 flex flex-col gap-4">
+              <p className="text-xs font-semibold text-gray-11">
+                {t('Full Payload')}
+              </p>
+              <SimpleJsonViewer data={selectedEvent?.data ?? {}} />
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </AdminPage>
   );
 }
 
@@ -358,6 +372,16 @@ function convertToIcon(event: ApplicationEvent) {
         icon: <Workflow className="size-4" />,
         tooltip: t('Flow'),
       };
+    case ApplicationEventName.FLOW_PIECES_UPGRADED:
+      return {
+        icon: <CircleArrowUp className="size-4" />,
+        tooltip: t('Flow pieces upgraded'),
+      };
+    case ApplicationEventName.FLOW_PIECES_REVERTED:
+      return {
+        icon: <Undo2 className="size-4" />,
+        tooltip: t('Flow pieces reverted'),
+      };
     case ApplicationEventName.FOLDER_CREATED:
     case ApplicationEventName.FOLDER_DELETED:
     case ApplicationEventName.FOLDER_UPDATED:
@@ -378,6 +402,11 @@ function convertToIcon(event: ApplicationEvent) {
         icon: <Link2 className="size-4" />,
         tooltip: t('Variable'),
       };
+    case ApplicationEventName.AGENT_ACTION_EXECUTED:
+      return {
+        icon: <Bot className="size-4" />,
+        tooltip: t('Agent action'),
+      };
     case ApplicationEventName.USER_SIGNED_UP:
     case ApplicationEventName.USER_SIGNED_IN:
     case ApplicationEventName.USER_PASSWORD_RESET:
@@ -390,6 +419,31 @@ function convertToIcon(event: ApplicationEvent) {
       return {
         icon: <Key className="size-4" />,
         tooltip: t('Signing Key'),
+      };
+    case ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED:
+      return {
+        icon: <Clock className="size-4" />,
+        tooltip: t('Audit log retention'),
+      };
+    case ApplicationEventName.EMAIL_SIGN_IN_ENABLED:
+    case ApplicationEventName.EMAIL_SIGN_IN_DISABLED:
+    case ApplicationEventName.GOOGLE_SIGN_IN_ENABLED:
+    case ApplicationEventName.GOOGLE_SIGN_IN_DISABLED:
+    case ApplicationEventName.ALLOWED_DOMAIN_ADDED:
+    case ApplicationEventName.ALLOWED_DOMAIN_REMOVED:
+    case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED:
+    case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED:
+    case ApplicationEventName.SSO_DOMAIN_ADDED:
+    case ApplicationEventName.SSO_DOMAIN_VERIFIED:
+    case ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED:
+    case ApplicationEventName.SSO_DOMAIN_REMOVED:
+    case ApplicationEventName.SSO_DOMAIN_EXPIRED:
+    case ApplicationEventName.SAML_CONNECTED:
+    case ApplicationEventName.SAML_CONNECTION_REPLACED:
+    case ApplicationEventName.SSO_DISABLED:
+      return {
+        icon: <ShieldCheck className="size-4" />,
+        tooltip: t('Authentication'),
       };
     default:
       return undefined;
@@ -468,6 +522,30 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
     case ApplicationEventName.FLOW_ACTIVATED:
     case ApplicationEventName.FLOW_DEACTIVATED:
       return [{ label: t('Flow'), value: event.data.flowVersion.displayName }];
+    case ApplicationEventName.FLOW_PIECES_UPGRADED: {
+      const { flowId, steps } = event.data;
+      return [
+        { label: t('Flow'), value: flowId },
+        ...steps.map((step) => ({
+          label: step.stepName,
+          value: `${step.actionOrTriggerName}: ${
+            step.decision === 'UPGRADED'
+              ? `${step.prevVersion} → ${step.newVersion}`
+              : t('kept at {version}', { version: step.prevVersion })
+          }`,
+        })),
+      ];
+    }
+    case ApplicationEventName.FLOW_PIECES_REVERTED: {
+      const { flowId, steps } = event.data;
+      return [
+        { label: t('Flow'), value: flowId },
+        ...steps.map((step) => ({
+          label: step.stepName,
+          value: `${step.actionOrTriggerName}: ${step.prevVersion} → ${step.newVersion}`,
+        })),
+      ];
+    }
     case ApplicationEventName.CONNECTION_UPSERTED:
     case ApplicationEventName.CONNECTION_DELETED: {
       const { connection } = event.data;
@@ -490,25 +568,130 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       const { variable } = event.data;
       return [{ label: t('Variable'), value: variable.name }];
     }
+    case ApplicationEventName.AGENT_CREATED:
+    case ApplicationEventName.AGENT_UPDATED:
+    case ApplicationEventName.AGENT_DELETED:
+    case ApplicationEventName.AGENT_PUBLISHED:
+    case ApplicationEventName.AGENT_UNPUBLISHED: {
+      const { agent } = event.data;
+      return [
+        { label: t('Agent'), value: agent.displayName },
+        ...(agent.publishedDigest
+          ? [{ label: t('Published version'), value: agent.publishedDigest }]
+          : []),
+        ...(agent.publishedToolNames?.length
+          ? [{ label: t('Tools'), value: agent.publishedToolNames.join(', ') }]
+          : []),
+      ];
+    }
+    case ApplicationEventName.AGENT_ACTION_EXECUTED: {
+      const { agent, action, connection, source, flow, outcome } = event.data;
+      return [
+        ...(agent
+          ? [{ label: t('Agent'), value: agent.displayName ?? agent.id }]
+          : []),
+        ...(action.kind === AgentActionKind.FLOW
+          ? [{ label: t('Flow'), value: action.displayName }]
+          : [
+              { label: t('Action'), value: action.displayName },
+              { label: t('App'), value: action.pieceDisplayName },
+            ]),
+        ...(outcome === undefined
+          ? []
+          : [{ label: t('Result'), value: OUTCOME_LABEL[outcome]() }]),
+        { label: t('Ran from'), value: RAN_FROM_LABEL[source]() },
+        ...(flow ? [{ label: t('Flow run'), value: flow.runId }] : []),
+        ...(connection
+          ? [
+              {
+                label: t('Account'),
+                value: connection.label ?? connection.externalId,
+              },
+            ]
+          : []),
+      ];
+    }
     case ApplicationEventName.FOLDER_CREATED:
     case ApplicationEventName.FOLDER_UPDATED:
     case ApplicationEventName.FOLDER_DELETED:
       return [{ label: t('Folder'), value: event.data.folder.displayName }];
     case ApplicationEventName.USER_SIGNED_IN:
+      return [
+        methodRow({ label: t('Sign-in method'), method: event.data.method }),
+      ];
     case ApplicationEventName.USER_PASSWORD_RESET:
     case ApplicationEventName.USER_EMAIL_VERIFIED:
       return [];
     case ApplicationEventName.USER_SIGNED_UP:
       return [
-        {
-          label: t('Source'),
-          value: formatUtils.convertEnumToHumanReadable(event.data.source),
-        },
+        methodRow({ label: t('Sign-up method'), method: event.data.method }),
+        isNil(event.data.source)
+          ? notRecordedRow(t('Source'))
+          : { label: t('Source'), value: SOURCE_LABEL[event.data.source]() },
       ];
     case ApplicationEventName.SIGNING_KEY_CREATED:
       return [
         { label: t('Key Name'), value: event.data.signingKey.displayName },
       ];
+    case ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED: {
+      const { previousRetentionDays, retentionDays, instanceLimitDays } =
+        event.data;
+      return [
+        {
+          label: t('Before'),
+          value: auditLogRetentionUtils.formatChoice({
+            days: previousRetentionDays,
+            ceiling: instanceLimitDays,
+          }),
+        },
+        {
+          label: t('After'),
+          value: auditLogRetentionUtils.formatChoice({
+            days: retentionDays,
+            ceiling: instanceLimitDays,
+          }),
+        },
+      ];
+    }
+    case ApplicationEventName.ALLOWED_DOMAIN_ADDED:
+    case ApplicationEventName.ALLOWED_DOMAIN_REMOVED:
+    case ApplicationEventName.SSO_DOMAIN_ADDED:
+    case ApplicationEventName.SSO_DOMAIN_VERIFIED:
+    case ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED:
+    case ApplicationEventName.SSO_DOMAIN_REMOVED:
+    case ApplicationEventName.SSO_DOMAIN_EXPIRED:
+      return [{ label: t('Domain'), value: event.data.domain }];
+    case ApplicationEventName.EMAIL_SIGN_IN_ENABLED:
+    case ApplicationEventName.EMAIL_SIGN_IN_DISABLED:
+    case ApplicationEventName.GOOGLE_SIGN_IN_ENABLED:
+    case ApplicationEventName.GOOGLE_SIGN_IN_DISABLED:
+    case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED:
+    case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED:
+    case ApplicationEventName.SAML_CONNECTED:
+    case ApplicationEventName.SAML_CONNECTION_REPLACED:
+    case ApplicationEventName.SSO_DISABLED:
+      return [];
+    case ApplicationEventName.USER_INVITATION_SENT:
+    case ApplicationEventName.USER_INVITATION_ACCEPTED:
+    case ApplicationEventName.USER_INVITATION_DELETED: {
+      const { invitation, projectRole } = event.data;
+      return [
+        { label: t('Email'), value: invitation.email },
+        ...(invitation.platformRole
+          ? [
+              {
+                label: t('Role'),
+                value: formatUtils.convertEnumToHumanReadable(
+                  invitation.platformRole,
+                ),
+              },
+            ]
+          : []),
+        ...(projectRole
+          ? [{ label: t('Project Role'), value: projectRole.name }]
+          : []),
+      ];
+    }
     case ApplicationEventName.PROJECT_ROLE_CREATED:
     case ApplicationEventName.PROJECT_ROLE_UPDATED:
     case ApplicationEventName.PROJECT_ROLE_DELETED: {
@@ -560,10 +743,78 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
         { label: t('Failed'), value: String(failedCount) },
       ];
     }
+    case ApplicationEventName.FLOW_APPROVAL_REQUESTED:
+    case ApplicationEventName.FLOW_APPROVAL_GRANTED:
+    case ApplicationEventName.FLOW_APPROVAL_WITHDRAWN: {
+      const rows: EventDetailRow[] = [
+        {
+          label: t('Flow'),
+          value: event.data.flowDisplayName ?? event.data.flowId,
+        },
+      ];
+      return rows;
+    }
+    case ApplicationEventName.FLOW_APPROVAL_REJECTED: {
+      const rows: EventDetailRow[] = [
+        {
+          label: t('Flow'),
+          value: event.data.flowDisplayName ?? event.data.flowId,
+        },
+      ];
+      if (event.data.rejectionReason) {
+        rows.push({ label: t('Reason'), value: event.data.rejectionReason });
+      }
+      return rows;
+    }
   }
+}
+
+function methodRow({
+  label,
+  method,
+}: {
+  label: string;
+  method: UserIdentityProvider | undefined;
+}): EventDetailRow {
+  return isNil(method)
+    ? notRecordedRow(label)
+    : { label, value: METHOD_LABEL[method]() };
+}
+
+function notRecordedRow(label: string): EventDetailRow {
+  return { label, value: t('Not recorded'), muted: true };
 }
 
 type EventDetailRow = {
   label: string;
   value: string;
+  muted?: boolean;
+};
+
+const OUTCOME_LABEL: Record<AgentActionOutcome, () => string> = {
+  [AgentActionOutcome.SUCCEEDED]: () => t('Succeeded'),
+  [AgentActionOutcome.FAILED]: () => t('Failed'),
+};
+
+const RAN_FROM_LABEL: Record<AgentRunSource, () => string> = {
+  [AgentRunSource.FLOW_STEP]: () => t('A flow step'),
+  [AgentRunSource.AGENT]: () => t('The agent page'),
+  [AgentRunSource.CHAT]: () => t('Chat'),
+  [AgentRunSource.AGENT_BUILDER]: () => t('The agent builder'),
+};
+
+const METHOD_LABEL: Record<UserIdentityProvider, () => string> = {
+  [UserIdentityProvider.EMAIL]: () => t('Email'),
+  [UserIdentityProvider.GOOGLE]: () => t('Google'),
+  [UserIdentityProvider.SAML]: () => t('SAML'),
+  [UserIdentityProvider.JWT]: () => t('JWT'),
+};
+
+const SOURCE_LABEL: Record<
+  NonNullable<SignUpEvent['data']['source']>,
+  () => string
+> = {
+  credentials: () => t('Credentials'),
+  sso: () => t('SSO'),
+  managed: () => t('Managed'),
 };

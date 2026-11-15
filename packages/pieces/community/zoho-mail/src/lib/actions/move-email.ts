@@ -7,6 +7,7 @@ import { accountId, folderId, messageId } from '../common/props';
 export const moveEmailAction = createAction({
 	auth: zohoMailAuth,
 	name: 'move_email',
+	classification: 'WRITE',
 	displayName: 'Move Email to Folder',
 	description: 'Moves an email to a different folder.',
 	audience: 'both',

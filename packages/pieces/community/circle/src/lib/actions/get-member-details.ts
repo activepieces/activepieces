@@ -7,6 +7,7 @@ import { CommunityMemberDetails } from '../common/types';
 export const getMemberDetails = createAction({
 	auth: circleAuth,
 	name: 'get_member_details',
+	classification: 'READ',
 	displayName: 'Get Member Details',
 	description: 'Fetches the full profile details for a specific community member.',
 	audience: 'both',

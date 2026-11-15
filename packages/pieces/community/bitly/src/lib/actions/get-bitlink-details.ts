@@ -7,6 +7,7 @@ import { bitlinkDropdown, groupGuid } from '../common/props';
 export const getBitlinkDetailsAction = createAction({
     auth: bitlyAuth,
     name: 'get_bitlink_details',
+    classification: 'READ',
     displayName: 'Get Bitlink Details',
     description: 'Retrieve metadata for a Bitlink.',
     audience: 'both',

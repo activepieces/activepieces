@@ -4,6 +4,7 @@ import { cartloomAuth } from '../auth';
 
 export const getOrderEmailAction = createAction({
   name: 'get_orders_by_email',
+  classification: 'SEARCH',
   auth: cartloomAuth,
   displayName: 'Get Order by Email',
   description: 'Get a list of orders for an email within a date range',

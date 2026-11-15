@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getUserBalanceAction = createAction({
   name: 'get_user_balance',
+  classification: 'READ',
   displayName: 'Get User Balance',
   description: 'Retrieve the current balance for your user account',
   audience: 'both',

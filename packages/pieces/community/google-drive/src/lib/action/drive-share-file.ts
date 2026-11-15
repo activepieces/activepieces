@@ -6,6 +6,7 @@ import { driveShareFileOutputSchema } from '../output-schemas';
 export const driveShareFile = createAction({
   auth: googleDriveAuth,
   name: 'drive_share_file',
+  classification: 'WRITE',
   displayName: 'Share File with User',
   description: 'Grant a role on a Drive file or folder to a user by email.',
   audience: 'ai',

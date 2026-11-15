@@ -6,6 +6,9 @@ on:
 jobs:
   Release:
     runs-on: ubuntu-24.04
+    environment:
+      name: production
+      url: https://cloud.activepieces.com
     steps:
       - name: Check out repository code
         uses: actions/checkout@v5

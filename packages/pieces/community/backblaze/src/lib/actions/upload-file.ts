@@ -6,6 +6,7 @@ import { ObjectCannedACL } from '@aws-sdk/client-s3';
 export const backBlazes3UploadFileAction = createAction({
   auth: backBlazeS3Auth,
   name: 'upload-backblaze-file',
+  classification: 'WRITE',
   displayName: 'Upload File',
   description: 'Upload an File to bucket.',
   audience: 'both',

@@ -19,7 +19,7 @@ import { newTaskTrigger } from './lib/triggers/new-task';
 import { googleTasksAuth } from './lib/auth';
 
 export const googleTasks = createPiece({
-  minimumSupportedRelease: '0.86.4',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-tasks.png',
   categories: [PieceCategory.PRODUCTIVITY],
   actions: [
@@ -39,12 +39,18 @@ export const googleTasks = createPiece({
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${googleTasksCommon.baseUrl}`,
+          placeholder: '/tasks/v1/users/@me/lists',
+        },
+      },
     }),
   ],
   displayName: 'Google Tasks',
   description: 'Task list management application',
 
-  authors: ["Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ["Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud","OdaiAhmed99"],
   triggers: [newTaskTrigger],
   auth: googleTasksAuth,
 });

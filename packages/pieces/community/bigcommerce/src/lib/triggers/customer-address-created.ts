@@ -9,6 +9,7 @@ const TRIGGER_SCOPE = 'store/customer/address/created';
 export const customerAddressCreated = createTrigger({
   auth: bigcommerceAuth,
   name: 'customerAddressCreated',
+  classification: 'READ',
   displayName: 'Customer Address Created',
   description: 'Triggers when a new customer address is created',
   aiMetadata: {

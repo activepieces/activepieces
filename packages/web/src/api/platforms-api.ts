@@ -1,6 +1,6 @@
 import {
   AuthenticationResponse,
-  PlatformWithoutSensitiveData,
+  PlatformResponse,
   UpdatePlatformRequestBody,
 } from '@activepieces/shared';
 
@@ -11,7 +11,7 @@ export const platformApi = {
   createPlatform({ name }: { name: string }) {
     return api.post<AuthenticationResponse>('/v1/platforms', { name });
   },
-  deleteAccount() {
+  deletePlatform() {
     return api.delete<void>(
       `/v1/platforms/${authenticationSession.getPlatformId()}`,
     );
@@ -21,28 +21,20 @@ export const platformApi = {
     if (!platformId) {
       throw Error('No platform id found');
     }
-    return api.get<PlatformWithoutSensitiveData>(`/v1/platforms/${platformId}`);
+    return api.get<PlatformResponse>(`/v1/platforms/${platformId}`);
   },
 
-  verifyLicenseKey(licenseKey: string) {
-    const platformId = authenticationSession.getPlatformId();
-    if (!platformId) {
-      throw Error('No platform id found');
-    }
-    return api.post<void>(`/v1/license-keys/verify`, {
-      platformId,
+  activateLicenseKey(licenseKey: string) {
+    return api.post<void>(`/v1/platform-billing/activate`, {
       licenseKey,
     });
   },
 
   update(req: UpdatePlatformRequestBody, platformId: string) {
-    return api.post<PlatformWithoutSensitiveData>(
-      `/v1/platforms/${platformId}`,
-      req,
-    );
+    return api.post<PlatformResponse>(`/v1/platforms/${platformId}`, req);
   },
   updateWithFormData(formdata: FormData, platformId: string) {
-    return api.post<PlatformWithoutSensitiveData>(
+    return api.post<PlatformResponse>(
       `/v1/platforms/${platformId}`,
       formdata,
       {},

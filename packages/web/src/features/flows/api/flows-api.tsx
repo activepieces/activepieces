@@ -12,9 +12,8 @@ import {
   SharedTemplate,
   CountFlowsRequest,
 } from '@activepieces/shared';
-import { toast } from 'sonner';
 
-import { UNSAVED_CHANGES_TOAST } from '@/components/ui/sonner';
+import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { api } from '@/lib/api';
 
 export const flowsApi = {
@@ -22,24 +21,23 @@ export const flowsApi = {
     return api.get<SeekPage<PopulatedFlow>>('/v1/flows', request);
   },
   create(request: CreateFlowRequest) {
-    return api.post<PopulatedFlow>('/v1/flows', request);
+    return api.post<PopulatedFlow>('/v1/flows', request).then((flow) => {
+      projectCollectionUtils.markFlowActivity({
+        projectId: flow.projectId,
+        lastFlowUpdated: flow.updated,
+      });
+      return flow;
+    });
   },
-  update(
-    flowId: string,
-    request: FlowOperationRequest,
-    showErrorToast = false,
-  ) {
+  update(flowId: string, request: FlowOperationRequest) {
     return api
       .post<PopulatedFlow>(`/v1/flows/${flowId}`, request)
-      .catch((error) => {
-        if (showErrorToast) {
-          toast.error(UNSAVED_CHANGES_TOAST.title, {
-            description: UNSAVED_CHANGES_TOAST.description,
-            duration: UNSAVED_CHANGES_TOAST.duration,
-            id: UNSAVED_CHANGES_TOAST.id,
-          });
-        }
-        throw error;
+      .then((flow) => {
+        projectCollectionUtils.markFlowActivity({
+          projectId: flow.projectId,
+          lastFlowUpdated: flow.updated,
+        });
+        return flow;
       });
   },
   getTemplate(flowId: string, request: GetFlowTemplateRequestQuery) {
@@ -63,7 +61,9 @@ export const flowsApi = {
     );
   },
   delete(flowId: string) {
-    return api.delete<void>(`/v1/flows/${flowId}`);
+    return api.delete<void>(`/v1/flows/${flowId}`).then(() => {
+      return projectCollectionUtils.refetchProjects();
+    });
   },
   count(query: CountFlowsRequest) {
     return api.get<number>('/v1/flows/count', query);

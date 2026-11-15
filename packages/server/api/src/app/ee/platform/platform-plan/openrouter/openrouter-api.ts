@@ -1,95 +1,87 @@
+import { isNil, tryCatch } from '@activepieces/core-utils'
+import { safeHttp } from '@activepieces/server-utils'
+import { AxiosError, type Method } from 'axios'
 import { system } from '../../../../helper/system/system'
 import { AppSystemProp } from '../../../../helper/system/system-props'
 
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
+const REQUEST_TIMEOUT_MS = 15000
+const KEY_LIVENESS_TIMEOUT_MS = 10000
+const KEY_LIVENESS_MODEL = 'openai/gpt-4o-mini'
 
 export const openRouterApi = {
     async createKey(request: CreateKeyRequest): Promise<CreateKeyResponse> {
-        const apiKey = system.getOrThrow(AppSystemProp.OPENROUTER_PROVISION_KEY)
-
-        const res = await fetch(`${OPENROUTER_BASE_URL}/keys`, {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(request),
-        })
-
-        if (!res.ok) {
-            const text = await res.text()
-            throw new Error(`[OpenRouter] createKey error: ${res.status} ${text}`)
-        }
-
-        return res.json()
+        return openRouterRequest<CreateKeyResponse>({ method: 'POST', path: '/keys', body: request })
     },
 
-    async updateKey(request: UpdateKeyRequest): Promise<UpdateKeyResponse> {
-        const apiKey = system.getOrThrow(AppSystemProp.OPENROUTER_PROVISION_KEY)
-        const { hash, ...rest } = request
-
-        const res = await fetch(`${OPENROUTER_BASE_URL}/keys/${hash}`, {
-            method: 'PATCH',
-            headers: {
-                Authorization: `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(rest),
-        })
-
-        if (!res.ok) {
-            const text = await res.text()
-            throw new Error(`[OpenRouter] updateKey error: ${res.status} ${text}`)
-        }
-
-        return res.json()
+    async updateKey({ hash, ...rest }: UpdateKeyRequest): Promise<UpdateKeyResponse> {
+        return openRouterRequest<UpdateKeyResponse>({ method: 'PATCH', path: `/keys/${hash}`, body: rest })
     },
 
-    async getKey(request: GetKeyRequest): Promise<GetKeyResponse> {
-        const apiKey = system.getOrThrow(AppSystemProp.OPENROUTER_PROVISION_KEY)
+    async getKey({ hash }: GetKeyRequest): Promise<GetKeyResponse> {
+        return openRouterRequest<GetKeyResponse>({ method: 'GET', path: `/keys/${hash}` })
+    },
 
-        const res = await fetch(`${OPENROUTER_BASE_URL}/keys/${request.hash}`, {
+    async deleteKey({ hash }: DeleteKeyRequest): Promise<void> {
+        await openRouterRequest<unknown>({ method: 'DELETE', path: `/keys/${hash}` })
+    },
+
+    async isKeyLive({ key }: IsKeyLiveRequest): Promise<boolean> {
+        const { data: response } = await tryCatch(() => safeHttp.axios.post(`${OPENROUTER_BASE_URL}/chat/completions`, {
+            model: KEY_LIVENESS_MODEL,
+            max_tokens: 1,
+            messages: [{ role: 'user', content: 'hi' }],
+        }, {
+            timeout: KEY_LIVENESS_TIMEOUT_MS,
+            headers: { Authorization: `Bearer ${key}` },
+            validateStatus: () => true,
+        }))
+        return !isNil(response) && response.status !== 401
+    },
+
+    async listKeys({ offset, include_disabled }: ListKeysRequest): Promise<ListKeysResponse> {
+        return openRouterRequest<ListKeysResponse>({
             method: 'GET',
-            headers: {
-                Authorization: `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
+            path: '/keys',
+            query: {
+                ...(isNil(offset) ? {} : { offset: offset.toString() }),
+                ...(isNil(include_disabled) ? {} : { include_disabled: String(include_disabled) }),
             },
         })
-
-        if (!res.ok) {
-            const text = await res.text()
-            throw new Error(`[OpenRouter] getKey error: ${res.status} ${text}`)
-        }
-
-        return res.json()
     },
+}
 
-    async listKeys(request: ListKeysRequest): Promise<ListKeysResponse> {
-        const apiKey = system.getOrThrow(AppSystemProp.OPENROUTER_PROVISION_KEY)
+async function openRouterRequest<T>({ method, path, body, query }: OpenRouterRequestParams): Promise<T> {
+    const apiKey = system.getOrThrow(AppSystemProp.OPENROUTER_PROVISION_KEY)
+    const { data: response, error } = await tryCatch(() => safeHttp.axios.request<T>({
+        method,
+        url: `${OPENROUTER_BASE_URL}${path}`,
+        data: body,
+        params: query,
+        timeout: REQUEST_TIMEOUT_MS,
+        headers: { Authorization: `Bearer ${apiKey}` },
+    }))
+    if (!isNil(error) || isNil(response)) {
+        throw new Error(`[OpenRouter] ${method} ${path} error: ${describeFailure(error)}`)
+    }
+    return response.data
+}
 
-        const params = new URLSearchParams()
-        if (request.offset !== undefined) {
-            params.set('offset', request.offset.toString())
-        }
-        if (request.include_disabled !== undefined) {
-            params.set('include_disabled', String(request.include_disabled))
-        }
-        const url = `${OPENROUTER_BASE_URL}/keys?${params.toString()}`
+function describeFailure(error: unknown): string {
+    if (!(error instanceof AxiosError)) {
+        return error instanceof Error ? error.message : String(error)
+    }
+    if (isNil(error.response)) {
+        return error.message
+    }
+    return `${error.response.status} ${JSON.stringify(error.response.data)}`
+}
 
-        const res = await fetch(url, {
-            method: 'GET',
-            headers: {
-                Authorization: `Bearer ${apiKey}`,
-            },
-        })
-
-        if (!res.ok) {
-            const text = await res.text()
-            throw new Error(`[OpenRouter] listKeys error: ${res.status} ${text}`)
-        }
-
-        return res.json()
-    },
+type OpenRouterRequestParams = {
+    method: Method
+    path: string
+    body?: unknown
+    query?: Record<string, string>
 }
 
 type CreateKeyRequest = {
@@ -98,6 +90,7 @@ type CreateKeyRequest = {
     limit_reset?: LimitReset
     include_byok_in_limit?: boolean
     expires_at?: Date
+    external?: { user: string }
 }
 type CreateKeyResponse = {
     key: string
@@ -121,6 +114,14 @@ type GetKeyRequest = {
 }
 type GetKeyResponse = {
     data: OpenRouterApikey
+}
+
+type IsKeyLiveRequest = {
+    key: string
+}
+
+type DeleteKeyRequest = {
+    hash: string
 }
 
 type ListKeysRequest = {

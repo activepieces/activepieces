@@ -16,7 +16,6 @@ export function omit<T extends object, K extends keyof T>(obj: T, keysToOmit: K[
     ) as Omit<T, K>
 }
 
-
 export const spreadIfNotUndefined = <T>(key: string, value: T | undefined): Record<string, T> => {
     if (value === undefined) {
         return {}
@@ -47,18 +46,45 @@ export function deleteProps<T extends Record<string, unknown>, K extends keyof T
     return newObj
 }
 
-export function sanitizeObjectForPostgresql<T>(input: T): T {
-    return applyFunctionToValuesSync<T>(input, (str) => {
-        if (isString(str)) {
-            // Postgres text/jsonb cannot store NUL bytes or unpaired UTF-16 surrogates (e.g. a half-emoji
-            // left behind by code-unit truncation) — both raise "invalid input syntax for type json".
-            // eslint-disable-next-line no-control-regex
-            const nullByteRegex = /\u0000/g
-            const loneSurrogateRegex = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g
-            return str.replace(nullByteRegex, '').replace(loneSurrogateRegex, '')
+export function cloneResolvedValue(value: unknown): unknown {
+    switch (typeof value) {
+        case 'string':
+        case 'number':
+        case 'boolean':
+            return value
+        case 'object': {
+            if (value === null) {
+                return null
+            }
+            const serialized = JSON.stringify(value)
+            return isNil(serialized) ? undefined : JSON.parse(serialized)
         }
-        return str
-    })
+        default:
+            return undefined
+    }
+}
+
+export function sanitizeObjectForPostgresql<T>(input: T): T {
+    return applyFunctionToValuesSync<T>(sanitizeKeysForPostgresql(input), removeCharactersPostgresRejects)
+}
+
+function sanitizeKeysForPostgresql(value: unknown): unknown {
+    if (Array.isArray(value)) {
+        return value.map(sanitizeKeysForPostgresql)
+    }
+    if (isObject(value)) {
+        return Object.fromEntries(Object.entries(value).map(([key, nested]) => [removeCharactersPostgresRejects(key), sanitizeKeysForPostgresql(nested)]))
+    }
+    return value
+}
+
+function removeCharactersPostgresRejects(str: string): string {
+    // Postgres text/jsonb cannot store NUL bytes or unpaired UTF-16 surrogates (e.g. a half-emoji
+    // left behind by code-unit truncation) — both raise "invalid input syntax for type json".
+    // eslint-disable-next-line no-control-regex
+    const nullByteRegex = /\u0000/g
+    const loneSurrogateRegex = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g
+    return str.replace(nullByteRegex, '').replace(loneSurrogateRegex, '')
 }
 export function applyFunctionToValuesSync<T>(obj: unknown, apply: (str: string) => unknown): T {
     if (isNil(obj)) {
@@ -100,12 +126,47 @@ export async function applyFunctionToValues<T>(obj: unknown, apply: (str: string
     return obj as T
 }
 
-
 export const isObject = (obj: unknown): obj is Record<string, unknown> => {
     return typeof obj === 'object' && obj !== null && !Array.isArray(obj)
 }
 
-export type MakeKeyNonNullableAndRequired<T extends object, K extends keyof T> = T & { [P in K]-?: NonNullable<T[P]> }
+export function prune(value: unknown): unknown {
+    if (Array.isArray(value)) {
+        return value.map(prune)
+    }
+    if (typeof value === 'object' && value !== null) {
+        const prunedEntries = Object.entries(value)
+            .map(([key, entryValue]) => [key, prune(entryValue)] as const)
+            .filter(([, entryValue]) => entryValue !== undefined)
+        if (prunedEntries.length === 0) {
+            return undefined
+        }
+        return Object.fromEntries(prunedEntries)
+    }
+    return value
+}
+
+export function deepEquals({ a, b }: DeepEqualsParams): boolean {
+    if (a === b) {
+        return true
+    }
+    if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) {
+        return false
+    }
+    if (Array.isArray(a) || Array.isArray(b)) {
+        return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((item, index) => deepEquals({ a: item, b: b[index] }))
+    }
+    const aRecord: Record<string, unknown> = { ...a }
+    const bRecord: Record<string, unknown> = { ...b }
+    const aKeys = Object.keys(aRecord)
+    const bKeys = Object.keys(bRecord)
+    return aKeys.length === bKeys.length && aKeys.every((key) => deepEquals({ a: aRecord[key], b: bRecord[key] }))
+}
+
+type DeepEqualsParams = {
+    a: unknown
+    b: unknown
+}
 
 export function groupBy<T, K extends string | number | symbol>(
     items: T[],

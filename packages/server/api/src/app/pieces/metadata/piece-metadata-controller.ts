@@ -1,14 +1,17 @@
-import { ActivepiecesError, ErrorCode, isNil, LocalesEnum } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isEmpty, isNil, LocalesEnum } from '@activepieces/core-utils'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { ALL_PRINCIPAL_TYPES, EngineResponse, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceAudienceFilter, PieceCategory, PieceOptionRequest, Principal, PrincipalType, RegistryPiecesRequestQuery, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, ApEdition, EngineResponse, EngineResponseStatus, FlowVersion, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceAudienceFilter, PieceCategory, PieceOptionRequest, Principal, PrincipalType, RegistryPiecesRequestQuery, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { rbacService } from '../../ee/authentication/project-role/rbac-service'
 import { resolveVisibility } from '../../ee/pieces/filters/piece-filtering-utils'
 import { flowService } from '../../flows/flow/flow.service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
+import { system } from '../../helper/system/system'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { pieceSyncService } from '../piece-sync-service'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from './piece-metadata-service'
@@ -43,6 +46,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
         }
         const platformId = getPlatformId(req.principal)
         const projectId = req.query.projectId
+        await assertProjectAccess({ principal: req.principal, projectId, log: req.log })
         const pieceMetadataSummary = await pieceMetadataService(req.log).list({
             includeHidden: query.includeHidden ?? false,
             projectId,
@@ -71,14 +75,15 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             const decodeScope = decodeURIComponent(scope)
             const decodedName = decodeURIComponent(name)
             const platformId = getPlatformId(req.principal)
+            await assertProjectAccess({ principal: req.principal, projectId: req.query.projectId, log: req.log })
             const piece = await pieceMetadataService(req.log).getOrThrow({
                 platformId,
                 name: `${decodeScope}/${decodedName}`,
                 version,
-                locale: req.query.locale as LocalesEnum | undefined,
+                locale: (req.query.locale as LocalesEnum | undefined) ?? 'all',
             })
             const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
-            const visiblePiece = isNil(policy) ? piece : policy.filterPieceComponents(piece)
+            const visiblePiece = applyVisibilityPolicy({ policy, piece })
             return filterModelActionsByAudience(visiblePiece, req.query.audience)
         },
     )
@@ -91,14 +96,15 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             const { version } = req.query
             const decodedName = decodeURIComponent(name)
             const platformId = getPlatformId(req.principal)
+            await assertProjectAccess({ principal: req.principal, projectId: req.query.projectId, log: req.log })
             const piece = await pieceMetadataService(req.log).getOrThrow({
                 platformId,
                 name: decodedName,
                 version,
-                locale: req.query.locale as LocalesEnum | undefined,
+                locale: (req.query.locale as LocalesEnum | undefined) ?? 'all',
             })
             const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
-            const visiblePiece = isNil(policy) ? piece : policy.filterPieceComponents(piece)
+            const visiblePiece = applyVisibilityPolicy({ policy, piece })
             return filterModelActionsByAudience(visiblePiece, req.query.audience)
         },
     )
@@ -127,17 +133,18 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
         async (req) => {
             const projectId = req.projectId
             const platform = req.principal.platform
-            const flow = await flowService(req.log).getOnePopulatedOrThrow({
+            const flowVersion = await getFlowVersionForOptions({ projectId, flowId: req.body.flowId, flowVersionId: req.body.flowVersionId, log: req.log })
+            const sampleData = isNil(flowVersion) ? {} : await sampleDataService(req.log).getSampleDataForFlow({
                 projectId,
-                id: req.body.flowId,
-                versionId: req.body.flowVersionId,
+                flowVersion,
+                type: SampleDataFileType.OUTPUT,
+                referencedBy: req.body.input,
             })
-            const sampleData = await sampleDataService(req.log).getSampleDataForFlow(projectId, flow.version, SampleDataFileType.OUTPUT)
-            const { response } = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<unknown>>({
+            const engineResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<unknown>>({
                 jobType: WorkerJobType.EXECUTE_PROPERTY,
                 platformId: platform.id,
                 projectId,
-                flowVersion: flow.version,
+                flowVersion,
                 propertyName: req.body.propertyName,
                 actionOrTriggerName: req.body.actionOrTriggerName,
                 input: req.body.input,
@@ -145,10 +152,47 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 searchValue: req.body.searchValue,
                 piece: await getPiecePackageWithoutArchive(req.log, platform.id, req.body),
             }, req.log)
-            return response
+            if (engineResponse.status !== EngineResponseStatus.OK) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENGINE_OPERATION_FAILURE,
+                    params: {
+                        message: engineResponse.error ?? (engineResponse.status === EngineResponseStatus.TIMEOUT
+                            ? 'Engine timed out while resolving property options'
+                            : `Engine failed while resolving property options (${engineResponse.status})`),
+                        context: { status: engineResponse.status },
+                    },
+                })
+            }
+            return engineResponse.response
         },
     )
 
+}
+
+async function getFlowVersionForOptions({ projectId, flowId, flowVersionId, log }: GetFlowVersionForOptionsParams): Promise<FlowVersion | undefined> {
+    if (isNil(flowId)) {
+        return undefined
+    }
+    const flow = await flowService(log).getOnePopulatedOrThrow({
+        projectId,
+        id: flowId,
+        versionId: flowVersionId,
+    })
+    return flow.version
+}
+
+async function assertProjectAccess({ principal, projectId, log }: AssertProjectAccessParams): Promise<void> {
+    if (![ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(system.getEdition())) {
+        return
+    }
+    if (isNil(projectId) || isEmpty(projectId) || isNil(getPlatformId(principal))) {
+        return
+    }
+    await rbacService(log).assertPrinicpalAccessToProject({
+        principal,
+        permission: undefined,
+        projectId,
+    })
 }
 
 function getPlatformId(principal: Principal): string | undefined {
@@ -160,6 +204,19 @@ function filterModelActionsByAudience(piece: PieceMetadataModel, audience: Piece
         ...piece,
         actions: filterActionsByAudience(piece.actions, audience),
     }
+}
+
+function applyVisibilityPolicy({ policy, piece }: { policy: Awaited<ReturnType<typeof resolveVisibility>>, piece: PieceMetadataModel }): PieceMetadataModel {
+    if (isNil(policy)) {
+        return piece
+    }
+    if (!policy.isPieceVisible(piece.name)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { message: `piece_metadata_not_found pieceName=${piece.name}` },
+        })
+    }
+    return policy.filterPieceComponents(piece)
 }
 
 const RegistryPiecesRequest = {
@@ -237,4 +294,17 @@ const DeletePieceRequest = {
             id: z.string(),
         }),
     },
+}
+
+type GetFlowVersionForOptionsParams = {
+    projectId: string
+    flowId: string | undefined
+    flowVersionId: string | undefined
+    log: FastifyBaseLogger
+}
+
+type AssertProjectAccessParams = {
+    principal: Principal
+    projectId: string | undefined
+    log: FastifyBaseLogger
 }

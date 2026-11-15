@@ -6,6 +6,7 @@ import { baseApiUrl } from '../..';
 export const phoneCallEnded = createTrigger({
     auth:autocallsAuth,
     name: 'phoneCallEnded',
+    classification: 'READ',
     displayName: 'Phone Call Ended',
     description: 'Triggers when a phone call ends, with extracted variables.',
     aiMetadata: {

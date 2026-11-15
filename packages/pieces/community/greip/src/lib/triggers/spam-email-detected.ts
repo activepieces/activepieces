@@ -7,6 +7,7 @@ import { greipAuth } from '../common/auth';
 
 export const spamEmailDetectedTrigger = createTrigger({
   name: 'spam_email_detected',
+  classification: 'READ',
   displayName: 'Spam Email Detected',
   description: 'Triggers when a new email is marked as SPAM by Greip',
   aiMetadata: {

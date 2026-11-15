@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const addCaseAction = createAction({
   name: 'add_case',
+  classification: 'WRITE',
   auth: outsetaAuth,
   displayName: 'Create Ticket',
   description: 'Create a new support ticket (case) in Outseta.',

@@ -39,7 +39,11 @@ type SearchableSelectProps<T> = {
   onRefresh?: () => void;
   showRefresh?: boolean;
   onClose?: () => void;
+  variant?: 'field' | 'outline' | 'ghost';
+  /**Layout classes only; use variant for the surface */
   triggerClassName?: string;
+  /**Widens the popover past the trigger, for compact or inline triggers */
+  contentWidth?: string;
   valuesRendering?: (value: unknown) => React.ReactNode;
   openState?: {
     open: boolean;
@@ -52,6 +56,9 @@ type SearchableSelectProps<T> = {
     label: string;
   }[];
   onOptionDelete?: (value: T) => void;
+  id?: string;
+  'aria-describedby'?: string;
+  'aria-invalid'?: boolean;
 };
 
 const useOpenState = (openStateInitializer?: {
@@ -78,19 +85,24 @@ export const SearchableSelect = <T,>({
   onRefresh,
   showRefresh,
   onClose,
+  variant = 'field',
   triggerClassName,
+  contentWidth,
   valuesRendering,
   openState: openStateInitializer,
   refreshOnSearch,
   cachedOptions = [],
   onOptionDelete,
+  id,
+  'aria-describedby': ariaDescribedBy,
+  'aria-invalid': ariaInvalid,
 }: SearchableSelectProps<T>) => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const { open, setOpen } = useOpenState(openStateInitializer);
   const triggerWidth = `${triggerRef.current?.clientWidth ?? 0}px`;
   const selectedOption =
-    [...cachedOptions, ...options].find((option) =>
+    [...options, ...cachedOptions].find((option) =>
       deepEqual(option.value, value),
     ) ?? undefined;
   const filterOptionsIndices = options
@@ -141,7 +153,7 @@ export const SearchableSelect = <T,>({
       <PopoverTrigger
         asChild
         className={cn({
-          'cursor-not-allowed opacity-80 ': disabled,
+          'cursor-not-allowed': disabled,
         })}
         onClick={(e) => {
           if (disabled) {
@@ -153,7 +165,10 @@ export const SearchableSelect = <T,>({
         <div className="relative">
           <Button
             ref={triggerRef}
-            variant="outline"
+            id={id}
+            aria-describedby={ariaDescribedBy}
+            aria-invalid={ariaInvalid}
+            variant={variant}
             disabled={disabled}
             role="combobox"
             loading={loading}
@@ -209,8 +224,8 @@ export const SearchableSelect = <T,>({
           }
         }}
         style={{
-          maxWidth: triggerWidth,
-          minWidth: triggerWidth,
+          maxWidth: contentWidth ?? triggerWidth,
+          minWidth: contentWidth ?? triggerWidth,
         }}
         className="min-w-full w-full p-0"
       >
@@ -268,7 +283,7 @@ export const SearchableSelect = <T,>({
                               <button
                                 type="button"
                                 className={cn(
-                                  'absolute inset-0 flex items-center justify-center text-muted-foreground hover:text-destructive',
+                                  'absolute inset-0 flex items-center justify-center text-gray-11 hover:text-danger-11',
                                   'opacity-0 group-hover/option:opacity-100',
                                 )}
                                 onClick={(e) => {
@@ -295,7 +310,7 @@ export const SearchableSelect = <T,>({
                           </div>
                         </div>
                         {option.description && (
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-sm text-gray-11">
                             {option.description}
                           </div>
                         )}

@@ -9,13 +9,15 @@ export const ListFlowsRequest = z.object({
     folderIds: OptionalArrayFromQuery(z.string()),
     limit: z.coerce.number().optional(),
     cursor: z.string().optional(),
-    status: OptionalArrayFromQuery(z.nativeEnum(FlowStatus)),
+    status: OptionalArrayFromQuery(z.enum(FlowStatus)),
     projectId: z.string(),
     name: z.string().optional(),
     agentExternalIds: OptionalArrayFromQuery(z.string()),
-    versionState: z.nativeEnum(FlowVersionState).optional(),
+    versionState: z.enum(FlowVersionState).optional(),
     connectionExternalIds: OptionalArrayFromQuery(z.string()),
     externalIds: OptionalArrayFromQuery(z.string()),
+    sortBy: z.enum(['NAME']).optional(),
+    order: z.enum(['ASC', 'DESC']).optional(),
 })
 
 export type ListFlowsRequest = Omit<z.infer<typeof ListFlowsRequest>, 'cursor'> & { cursor: Cursor | undefined }

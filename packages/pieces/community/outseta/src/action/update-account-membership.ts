@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const updateAccountMembershipAction = createAction({
   name: 'update_account_membership',
+  classification: 'WRITE',
   auth: outsetaAuth,
   displayName: 'Update Account Membership',
   description:

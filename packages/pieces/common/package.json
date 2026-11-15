@@ -1,21 +1,23 @@
 {
   "name": "@activepieces/pieces-common",
-  "version": "0.12.6",
+  "version": "0.15.2",
   "type": "commonjs",
   "sideEffects": false,
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
-    "lint": "eslint 'src/**/*.ts'"
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
   },
   "dependencies": {
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/core-utils": "workspace:*",
     "form-data": "4.0.6",
-    "zod": "4.3.6"
+    "zod": "4.3.6",
+    "tslib": "2.6.2"
   },
   "devDependencies": {
-    "tslib": "2.6.2"
+    "vitest": "5.0.5"
   }
 }

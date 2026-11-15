@@ -6,7 +6,7 @@ import { t } from 'i18next';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { UseFormReturn, useWatch } from 'react-hook-form';
 
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { useOptionalBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { piecesHooks } from '@/features/pieces';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -18,16 +18,24 @@ import { DynamicPropertiesContext } from './dynamic-properties-context';
 
 const DynamicDropdownPiecePropertyImplementation = React.memo(
   (props: DynamicDropdownProps) => {
-    const [flowVersion, readonly] = useBuilderStateContext((state) => [
-      state.flowVersion,
-      state.readonly,
-    ]);
+    const flowVersion = useOptionalBuilderStateContext(
+      (state) => state.flowVersion,
+    );
+    const readonly =
+      useOptionalBuilderStateContext((state) => state.readonly) ?? false;
 
     const isFirstRender = useRef(true);
     const previousValues = useRef<undefined | unknown[]>(undefined);
     const firstDropdownState = useRef<DropdownState<unknown> | undefined>(
       undefined,
     );
+    const valueToRestore = useRef<unknown>(undefined);
+    const optionsRequestId = useRef(0);
+    const fullListRequestId = useRef(0);
+    const propertyPath =
+      props.placedInside === 'stepSettings'
+        ? `settings.input.${props.propertyName}`
+        : props.propertyName;
     const refreshersWithAuth = [
       ...props.refreshers,
       AUTHENTICATION_PROPERTY_NAME,
@@ -68,11 +76,44 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       control: props.form.control,
     });
 
+    const restoreValueIfStillInOptions = (options: DropdownState<unknown>) => {
+      const previousValue = valueToRestore.current;
+      if (isNil(previousValue) || options.options.length === 0) {
+        return;
+      }
+      valueToRestore.current = undefined;
+      if (!isNil(props.form.getValues(propertyPath))) {
+        return;
+      }
+      const findMatchingOption = (value: unknown) =>
+        options.options.find((option) => deepEqual(option.value, value));
+      if (props.multiple) {
+        if (!Array.isArray(previousValue)) {
+          return;
+        }
+        const stillPresent = previousValue.flatMap((value) => {
+          const option = findMatchingOption(value);
+          return isNil(option) ? [] : [option.value];
+        });
+        if (stillPresent.length > 0) {
+          props.onChange(stillPresent);
+        }
+        return;
+      }
+      const matchingOption = findMatchingOption(previousValue);
+      if (!isNil(matchingOption)) {
+        props.onChange(matchingOption.value);
+      }
+    };
+
     const refresh = (term?: string) => {
       const input: Record<string, unknown> = {};
       refreshersWithAuth.forEach((refresher, index) => {
         input[refresher] = refresherValues[index];
       });
+      const requestId = ++optionsRequestId.current;
+      const isFullList = isNil(term) || term === '';
+      const fullListId = isFullList ? ++fullListRequestId.current : null;
       mutate(
         {
           request: {
@@ -82,18 +123,29 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
             propertyName: props.propertyName,
             actionOrTriggerName: props.actionOrTriggerName,
             input,
-            flowVersionId: flowVersion.id,
-            flowId: flowVersion.flowId,
+            flowVersionId: flowVersion?.id,
+            flowId: flowVersion?.flowId,
             searchValue: term,
           },
           propertyType: PropertyType.DROPDOWN,
         },
         {
           onSuccess: (response) => {
-            if (!firstDropdownState.current) {
-              firstDropdownState.current = response.options;
+            if (requestId === optionsRequestId.current) {
+              if (
+                !firstDropdownState.current &&
+                response.options.options.length > 0
+              ) {
+                firstDropdownState.current = response.options;
+              }
+              setDropdownState(response.options);
             }
-            setDropdownState(response.options);
+            if (
+              !isNil(fullListId) &&
+              fullListId === fullListRequestId.current
+            ) {
+              restoreValueIfStillInOptions(response.options);
+            }
           },
         },
       );
@@ -104,6 +156,10 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
         !isFirstRender.current &&
         !deepEqual(previousValues.current, refresherValues)
       ) {
+        if (!isNil(props.value)) {
+          valueToRestore.current = props.value;
+        }
+        firstDropdownState.current = undefined;
         props.onChange(null);
       }
 
@@ -116,6 +172,11 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       label: option.label,
       value: option.value,
     }));
+    const singleSelectOptions = withSavedValueNotInList({
+      options: selectOptions,
+      value: props.value,
+      loadsOptionsOnSearch: props.shouldRefreshOnSearch === true,
+    });
     const isDisabled = dropdownState.disabled || props.disabled;
     return props.multiple ? (
       <MultiSelectPieceProperty
@@ -139,7 +200,7 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       />
     ) : (
       <SearchableSelect
-        options={selectOptions}
+        options={singleSelectOptions}
         disabled={dropdownState.disabled || props.disabled}
         loading={isPending}
         placeholder={dropdownState.placeholder ?? t('Select an option')}
@@ -170,6 +231,36 @@ DynamicDropdownPieceProperty.displayName = 'DynamicDropdownPieceProperty';
 DynamicDropdownPiecePropertyImplementation.displayName =
   'DynamicDropdownPiecePropertyImplementation';
 export { DynamicDropdownPieceProperty };
+
+function withSavedValueNotInList({
+  options,
+  value,
+  loadsOptionsOnSearch,
+}: {
+  options: SelectOption[];
+  value: unknown;
+  loadsOptionsOnSearch: boolean;
+}): SelectOption[] {
+  const isReadableValue =
+    (typeof value === 'string' && value !== '') || typeof value === 'number';
+  const isNotInList =
+    isReadableValue &&
+    !loadsOptionsOnSearch &&
+    options.length > 0 &&
+    !options.some((option) => deepEqual(option.value, value));
+  return isNotInList
+    ? [
+        {
+          label: t('{value} (not in the list)', { value: String(value) }),
+          value,
+        },
+        ...options,
+      ]
+    : options;
+}
+
+type SelectOption = { label: string; value: unknown };
+
 type DynamicDropdownProps = {
   refreshers: string[];
   propertyName: string;

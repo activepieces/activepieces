@@ -11,6 +11,7 @@ import { CARBONE_API_URL, CARBONE_VERSION } from '../common/constants';
 export const listTagsAction = createAction({
   auth: carboneAuth,
   name: 'carbone_list_tags',
+  classification: 'SEARCH',
   displayName: 'List Tags',
   description: 'List all tags used to organize your Carbone templates.',
   audience: 'both',

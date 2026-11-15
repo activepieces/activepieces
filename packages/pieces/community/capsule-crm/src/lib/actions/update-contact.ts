@@ -11,6 +11,7 @@ import { capsuleCrmProps } from '../common/props';
 export const updateContactAction = createAction({
   auth: capsuleCrmAuth,
   name: 'update_contact',
+  classification: 'WRITE',
   displayName: 'Update Contact',
   description: 'Update fields on an existing Person or Organisation.',
   audience: 'both',

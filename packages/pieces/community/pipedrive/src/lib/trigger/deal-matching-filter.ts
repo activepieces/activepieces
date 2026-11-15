@@ -11,10 +11,13 @@ import {
 import { GetField, LeadListResponse } from '../common/types';
 import { isNil } from '@activepieces/pieces-framework';
 import { DEAL_OPTIONAL_FIELDS } from '../common/constants';
+import { dealMatchingFilterTriggerOutputSchema } from '../output-schemas';
 
 export const dealMatchingFilterTrigger = createTrigger({
 	auth: pipedriveAuth,
 	name: 'deal-matching-filter',
+	outputSchema: dealMatchingFilterTriggerOutputSchema,
+	classification: 'READ',
 	displayName: 'Deal Matching Filter',
 	description: 'Trigges when a deal newly matches a Pipedrive filter for the first time.',
 	aiMetadata: {
@@ -56,6 +59,9 @@ export const dealMatchingFilterTrigger = createTrigger({
 		}),
 	},
 	async onEnable(context) {
+		if (context.isRepublish && !isNil(await context.store.get('deals'))) {
+			return;
+		}
 		const ids: number[] = [];
 
 		const response = await pipedrivePaginatedV2ApiCall<{ id: number }>({
@@ -78,6 +84,9 @@ export const dealMatchingFilterTrigger = createTrigger({
 		await context.store.put('deals', JSON.stringify(ids));
 	},
 	async onDisable(context) {
+		if (context.isRepublish) {
+			return;
+		}
 		await context.store.delete('deals');
 	},
 	async test(context) {

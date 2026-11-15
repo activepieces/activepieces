@@ -1,17 +1,20 @@
-import { Flow, FlowOperationRequest, FlowOperationType, FlowVersion, Folder } from '@activepieces/core-execution'
-import { BaseModelSchema, DateOrString, Nullable, OptionalArrayFromQuery, ProjectRole } from '@activepieces/core-utils'
+import { AgentRunSource, Flow, FlowOperationRequest, FlowOperationType, FlowVersion, Folder } from '@activepieces/core-execution'
+import { BaseModelSchema, DateOrString, isNil, Nullable, OptionalArrayFromQuery, ProjectRole } from '@activepieces/core-utils'
 import { z } from 'zod'
 import * as zMini from 'zod/mini'
+import { UserIdentityProvider } from '../../core/authentication/user-identity'
 import { UserWithMetaInformation } from '../../core/user/user'
+import { UserInvitation } from '../../management/invitations'
 import { SigningKey } from '../signing-key'
 export const ListAuditEventsRequest = z.object({
     limit: z.coerce.number().optional(),
     cursor: z.string().optional(),
     action: OptionalArrayFromQuery(z.string()),
     projectId: OptionalArrayFromQuery(z.string()),
-    userId: z.string().optional(),
+    userId: OptionalArrayFromQuery(z.string()),
     createdBefore: z.string().optional(),
     createdAfter: z.string().optional(),
+    order: z.enum(['ASC', 'DESC']).optional(),
 })
 
 export type ListAuditEventsRequest = z.infer<typeof ListAuditEventsRequest>
@@ -22,6 +25,8 @@ export enum ApplicationEventName {
     FLOW_CREATED = 'flow.created',
     FLOW_DELETED = 'flow.deleted',
     FLOW_UPDATED = 'flow.updated',
+    FLOW_PIECES_UPGRADED = 'flow.pieces.upgraded',
+    FLOW_PIECES_REVERTED = 'flow.pieces.reverted',
     FLOW_PUBLISHED = 'flow.published',
     FLOW_ACTIVATED = 'flow.activated',
     FLOW_DEACTIVATED = 'flow.deactivated',
@@ -34,6 +39,12 @@ export enum ApplicationEventName {
     FOLDER_DELETED = 'folder.deleted',
     CONNECTION_UPSERTED = 'connection.upserted',
     CONNECTION_DELETED = 'connection.deleted',
+    AGENT_CREATED = 'agent.created',
+    AGENT_UPDATED = 'agent.updated',
+    AGENT_DELETED = 'agent.deleted',
+    AGENT_PUBLISHED = 'agent.published',
+    AGENT_UNPUBLISHED = 'agent.unpublished',
+    AGENT_ACTION_EXECUTED = 'agent.action.executed',
     VARIABLE_UPSERTED = 'variable.upserted',
     VARIABLE_DELETED = 'variable.deleted',
     VARIABLE_VALUE_REVEALED = 'variable.value.revealed',
@@ -41,12 +52,36 @@ export enum ApplicationEventName {
     USER_SIGNED_IN = 'user.signed.in',
     USER_PASSWORD_RESET = 'user.password.reset',
     USER_EMAIL_VERIFIED = 'user.email.verified',
+    USER_INVITATION_SENT = 'user.invitation.sent',
+    USER_INVITATION_ACCEPTED = 'user.invitation.accepted',
+    USER_INVITATION_DELETED = 'user.invitation.deleted',
     SIGNING_KEY_CREATED = 'signing.key.created',
+    AUDIT_LOG_RETENTION_UPDATED = 'audit.log.retention.updated',
+    EMAIL_SIGN_IN_ENABLED = 'authentication.email.enabled',
+    EMAIL_SIGN_IN_DISABLED = 'authentication.email.disabled',
+    GOOGLE_SIGN_IN_ENABLED = 'authentication.google.enabled',
+    GOOGLE_SIGN_IN_DISABLED = 'authentication.google.disabled',
+    ALLOWED_DOMAIN_ADDED = 'authentication.allowed.domain.added',
+    ALLOWED_DOMAIN_REMOVED = 'authentication.allowed.domain.removed',
+    ALLOWED_DOMAIN_ENFORCEMENT_ENABLED = 'authentication.allowed.domain.enforcement.enabled',
+    ALLOWED_DOMAIN_ENFORCEMENT_DISABLED = 'authentication.allowed.domain.enforcement.disabled',
+    SSO_DOMAIN_ADDED = 'sso.domain.added',
+    SSO_DOMAIN_VERIFIED = 'sso.domain.verified',
+    SSO_DOMAIN_VERIFICATION_CANCELLED = 'sso.domain.verification.cancelled',
+    SSO_DOMAIN_REMOVED = 'sso.domain.removed',
+    SSO_DOMAIN_EXPIRED = 'sso.domain.expired',
+    SAML_CONNECTED = 'sso.saml.connected',
+    SAML_CONNECTION_REPLACED = 'sso.saml.replaced',
+    SSO_DISABLED = 'sso.saml.disabled',
     PROJECT_ROLE_CREATED = 'project.role.created',
     PROJECT_ROLE_DELETED = 'project.role.deleted',
     PROJECT_ROLE_UPDATED = 'project.role.updated',
     PROJECT_RELEASE_CREATED = 'project.release.created',
     PROJECT_REPLACED = 'project.replaced',
+    FLOW_APPROVAL_REQUESTED = 'flow.approval.requested',
+    FLOW_APPROVAL_GRANTED = 'flow.approval.granted',
+    FLOW_APPROVAL_REJECTED = 'flow.approval.rejected',
+    FLOW_APPROVAL_WITHDRAWN = 'flow.approval.withdrawn',
 }
 
 const BaseAuditEventProps = {
@@ -98,6 +133,80 @@ export const ConnectionDeletedEvent = z.object({
     data: ConnectionEventData,
 })
 export type ConnectionDeletedEvent = z.infer<typeof ConnectionDeletedEvent>
+
+const AgentEventData = z.object({
+    agent: z.object({
+        id: z.string(),
+        displayName: z.string(),
+        publishedDigest: z.string().optional(),
+        publishedToolNames: z.array(z.string()).optional(),
+    }),
+})
+
+export enum AgentActionKind {
+    PIECE = 'PIECE',
+    FLOW = 'FLOW',
+}
+
+export enum AgentActionOutcome {
+    SUCCEEDED = 'SUCCEEDED',
+    FAILED = 'FAILED',
+}
+
+const AgentActionEventData = z.object({
+    source: z.enum(AgentRunSource),
+    conversation: z.object({
+        id: z.string(),
+        source: z.enum(AgentRunSource),
+    }).optional(),
+    agent: z.object({
+        id: z.string(),
+        displayName: z.string().optional(),
+    }).optional(),
+    flow: z.object({
+        id: z.string(),
+        runId: z.string(),
+    }).optional(),
+    action: z.discriminatedUnion('kind', [
+        z.object({
+            kind: z.literal(AgentActionKind.PIECE),
+            pieceName: z.string(),
+            pieceDisplayName: z.string(),
+            actionName: z.string(),
+            displayName: z.string(),
+        }),
+        z.object({
+            kind: z.literal(AgentActionKind.FLOW),
+            flowId: z.string(),
+            displayName: z.string(),
+        }),
+    ]),
+    outcome: z.enum(AgentActionOutcome).optional(),
+    connection: z.object({
+        externalId: z.string(),
+        label: z.string().optional(),
+    }).optional(),
+})
+
+export const AgentActionExecutedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.AGENT_ACTION_EXECUTED),
+    data: AgentActionEventData,
+})
+export type AgentActionExecutedEvent = z.infer<typeof AgentActionExecutedEvent>
+
+export const AgentAuditEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.union([
+        z.literal(ApplicationEventName.AGENT_CREATED),
+        z.literal(ApplicationEventName.AGENT_UPDATED),
+        z.literal(ApplicationEventName.AGENT_DELETED),
+        z.literal(ApplicationEventName.AGENT_PUBLISHED),
+        z.literal(ApplicationEventName.AGENT_UNPUBLISHED),
+    ]),
+    data: AgentEventData,
+})
+export type AgentAuditEvent = z.infer<typeof AgentAuditEvent>
 
 const VariableEventData = z.object({
     variable: z.object({
@@ -283,6 +392,7 @@ export const FlowUpdatedEvent = z.object({
             updated: true,
         }),
         request: FlowOperationRequest,
+        reason: z.string().optional(),
         project: z.object({
             displayName: z.string(),
             externalId: Nullable(z.string()),
@@ -291,6 +401,41 @@ export const FlowUpdatedEvent = z.object({
 })
 
 export type FlowUpdatedEvent = z.infer<typeof FlowUpdatedEvent>
+
+export const FlowPiecesUpgradedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.FLOW_PIECES_UPGRADED),
+    data: z.object({
+        flowId: z.string(),
+        flowVersionId: z.string(),
+        steps: z.array(z.object({
+            stepName: z.string(),
+            actionOrTriggerName: z.string(),
+            decision: z.enum(['UPGRADED', 'KEPT']),
+            prevVersion: z.string(),
+            newVersion: Nullable(z.string()),
+        })),
+    }),
+})
+
+export type FlowPiecesUpgradedEvent = z.infer<typeof FlowPiecesUpgradedEvent>
+
+export const FlowPiecesRevertedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.FLOW_PIECES_REVERTED),
+    data: z.object({
+        flowId: z.string(),
+        flowVersionId: z.string(),
+        steps: z.array(z.object({
+            stepName: z.string(),
+            actionOrTriggerName: z.string(),
+            prevVersion: z.string(),
+            newVersion: z.string(),
+        })),
+    }),
+})
+
+export type FlowPiecesRevertedEvent = z.infer<typeof FlowPiecesRevertedEvent>
 
 const FlowLifecycleEventData = z.object({
     flow: Flow.pick({ id: true, externalId: true, created: true, updated: true }),
@@ -338,7 +483,6 @@ const AuthenticationEventData = z.object({
 export const AuthenticationEvent = z.object({
     ...BaseAuditEventProps,
     action: z.union([
-        z.literal(ApplicationEventName.USER_SIGNED_IN),
         z.literal(ApplicationEventName.USER_PASSWORD_RESET),
         z.literal(ApplicationEventName.USER_EMAIL_VERIFIED),
     ]),
@@ -350,7 +494,9 @@ export type AuthenticationEvent = z.infer<typeof AuthenticationEvent>
 export const UserSignedInEvent = z.object({
     ...BaseAuditEventProps,
     action: z.literal(ApplicationEventName.USER_SIGNED_IN),
-    data: AuthenticationEventData,
+    data: AuthenticationEventData.extend({
+        method: z.enum(UserIdentityProvider).optional(),
+    }),
 })
 export type UserSignedInEvent = z.infer<typeof UserSignedInEvent>
 
@@ -376,7 +522,8 @@ export const SignUpEvent = z.object({
             z.literal('credentials'),
             z.literal('sso'),
             z.literal('managed'),
-        ]),
+        ]).optional(),
+        method: z.enum(UserIdentityProvider).optional(),
         user: UserMeta.optional(),
     }),
 })
@@ -396,6 +543,54 @@ export const SigningKeyEvent = z.object({
 })
 
 export type SigningKeyEvent = z.infer<typeof SigningKeyEvent>
+
+export const AuditLogRetentionUpdatedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED),
+    data: z.object({
+        previousRetentionDays: z.number().nullable(),
+        retentionDays: z.number().nullable(),
+        instanceLimitDays: z.number().nullable(),
+    }),
+})
+
+export type AuditLogRetentionUpdatedEvent = z.infer<typeof AuditLogRetentionUpdatedEvent>
+
+export const AuthenticationSettingEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.union([
+        z.literal(ApplicationEventName.EMAIL_SIGN_IN_ENABLED),
+        z.literal(ApplicationEventName.EMAIL_SIGN_IN_DISABLED),
+        z.literal(ApplicationEventName.GOOGLE_SIGN_IN_ENABLED),
+        z.literal(ApplicationEventName.GOOGLE_SIGN_IN_DISABLED),
+        z.literal(ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED),
+        z.literal(ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED),
+        z.literal(ApplicationEventName.SAML_CONNECTED),
+        z.literal(ApplicationEventName.SAML_CONNECTION_REPLACED),
+        z.literal(ApplicationEventName.SSO_DISABLED),
+    ]),
+    data: z.object({}),
+})
+
+export type AuthenticationSettingEvent = z.infer<typeof AuthenticationSettingEvent>
+
+export const AuthenticationDomainEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.union([
+        z.literal(ApplicationEventName.ALLOWED_DOMAIN_ADDED),
+        z.literal(ApplicationEventName.ALLOWED_DOMAIN_REMOVED),
+        z.literal(ApplicationEventName.SSO_DOMAIN_ADDED),
+        z.literal(ApplicationEventName.SSO_DOMAIN_VERIFIED),
+        z.literal(ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED),
+        z.literal(ApplicationEventName.SSO_DOMAIN_REMOVED),
+        z.literal(ApplicationEventName.SSO_DOMAIN_EXPIRED),
+    ]),
+    data: z.object({
+        domain: z.string(),
+    }),
+})
+
+export type AuthenticationDomainEvent = z.infer<typeof AuthenticationDomainEvent>
 
 export const ProjectRoleEvent = z.object({
     ...BaseAuditEventProps,
@@ -417,6 +612,30 @@ export const ProjectRoleEvent = z.object({
 })
 
 export type ProjectRoleEvent = z.infer<typeof ProjectRoleEvent>
+
+export const UserInvitationEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.union([
+        z.literal(ApplicationEventName.USER_INVITATION_SENT),
+        z.literal(ApplicationEventName.USER_INVITATION_ACCEPTED),
+        z.literal(ApplicationEventName.USER_INVITATION_DELETED),
+    ]),
+    data: z.object({
+        invitation: zMini.pick(UserInvitation, {
+            id: true,
+            email: true,
+            type: true,
+            platformRole: true,
+            projectId: true,
+        }),
+        projectRole: Nullable(zMini.pick(ProjectRole, {
+            id: true,
+            name: true,
+        })),
+    }),
+})
+
+export type UserInvitationEvent = z.infer<typeof UserInvitationEvent>
 
 export const ProjectReleaseEvent = z.object({
     ...BaseAuditEventProps,
@@ -477,23 +696,51 @@ export const ProjectReplacedEvent = z.object({
 
 export type ProjectReplacedEvent = z.infer<typeof ProjectReplacedEvent>
 
+export const FlowApprovalEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.union([
+        z.literal(ApplicationEventName.FLOW_APPROVAL_REQUESTED),
+        z.literal(ApplicationEventName.FLOW_APPROVAL_GRANTED),
+        z.literal(ApplicationEventName.FLOW_APPROVAL_REJECTED),
+        z.literal(ApplicationEventName.FLOW_APPROVAL_WITHDRAWN),
+    ]),
+    data: z.object({
+        approvalRequestId: z.string(),
+        flowId: z.string(),
+        flowVersionId: z.string(),
+        flowDisplayName: z.optional(z.string()),
+        rejectionReason: z.optional(Nullable(z.string())),
+    }),
+})
+export type FlowApprovalEvent = z.infer<typeof FlowApprovalEvent>
+
 export const ApplicationEvent = z.union([
+    AgentAuditEvent,
+    AgentActionExecutedEvent,
     ConnectionEvent,
     VariableEvent,
     FlowCreatedEvent,
     FlowDeletedEvent,
     FlowUpdatedEvent,
+    FlowPiecesUpgradedEvent,
+    FlowPiecesRevertedEvent,
     FlowPublishedEvent,
     FlowActivatedEvent,
     FlowDeactivatedEvent,
     FlowRunEvent,
     AuthenticationEvent,
+    UserSignedInEvent,
     FolderEvent,
     SignUpEvent,
     SigningKeyEvent,
+    AuditLogRetentionUpdatedEvent,
+    AuthenticationSettingEvent,
+    AuthenticationDomainEvent,
     ProjectRoleEvent,
+    UserInvitationEvent,
     ProjectReleaseEvent,
     ProjectReplacedEvent,
+    FlowApprovalEvent,
 ])
 
 export type ApplicationEvent = z.infer<typeof ApplicationEvent>
@@ -501,7 +748,8 @@ export type ApplicationEvent = z.infer<typeof ApplicationEvent>
 export function summarizeApplicationEvent(event: ApplicationEvent) {
     switch (event.action) {
         case ApplicationEventName.FLOW_UPDATED: {
-            return convertUpdateActionToDetails(event)
+            const details = convertUpdateActionToDetails(event)
+            return `${details}${isNil(event.data.reason) ? '' : ` Reason: ${event.data.reason}`}`
         }
         case ApplicationEventName.FLOW_RUN_STARTED:
             return `Flow run ${event.data.flowRun.id} is started`
@@ -516,6 +764,13 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
         }
         case ApplicationEventName.FLOW_CREATED:
             return `Flow ${event.data.flow.id} is created`
+        case ApplicationEventName.FLOW_PIECES_UPGRADED: {
+            const upgradedCount = event.data.steps.filter((step) => step.decision === 'UPGRADED').length
+            const keptCount = event.data.steps.length - upgradedCount
+            return `Flow ${event.data.flowId} piece versions upgraded (${upgradedCount} upgraded, ${keptCount} kept)`
+        }
+        case ApplicationEventName.FLOW_PIECES_REVERTED:
+            return `Flow ${event.data.flowId} piece versions reverted (${event.data.steps.length} steps)`
         case ApplicationEventName.FLOW_DELETED:
             return `Flow ${event.data.flow.id} (${event.data.flowVersion.displayName}) is deleted`
         case ApplicationEventName.FLOW_PUBLISHED:
@@ -534,6 +789,24 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `${event.data.connection.displayName} (${event.data.connection.externalId}) is updated`
         case ApplicationEventName.CONNECTION_DELETED:
             return `${event.data.connection.displayName} (${event.data.connection.externalId}) is deleted`
+        case ApplicationEventName.AGENT_CREATED:
+            return `Agent ${event.data.agent.displayName} is created`
+        case ApplicationEventName.AGENT_UPDATED:
+            return `Agent ${event.data.agent.displayName} is updated`
+        case ApplicationEventName.AGENT_DELETED:
+            return `Agent ${event.data.agent.displayName} is deleted`
+        case ApplicationEventName.AGENT_PUBLISHED:
+            return `Agent ${event.data.agent.displayName} is published`
+        case ApplicationEventName.AGENT_UNPUBLISHED:
+            return `Agent ${event.data.agent.displayName} is taken offline`
+        case ApplicationEventName.AGENT_ACTION_EXECUTED: {
+            const who = event.data.agent?.displayName ?? 'An agent'
+            const what = event.data.action.kind === AgentActionKind.FLOW
+                ? `the flow ${event.data.action.displayName}`
+                : `${event.data.action.pieceDisplayName}: ${event.data.action.displayName}`
+            const verb = event.data.outcome === AgentActionOutcome.FAILED ? 'tried to run' : 'ran'
+            return `${who} ${verb} ${what}`
+        }
         case ApplicationEventName.VARIABLE_UPSERTED:
             return `Variable ${event.data.variable.name} is created or updated`
         case ApplicationEventName.VARIABLE_DELETED:
@@ -541,15 +814,59 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
         case ApplicationEventName.VARIABLE_VALUE_REVEALED:
             return `Variable ${event.data.variable.name} value was revealed`
         case ApplicationEventName.USER_SIGNED_IN:
-            return `User ${event.userEmail} signed in`
+            return `User ${event.userEmail} signed in${describeMethod(event.data.method)}`
         case ApplicationEventName.USER_PASSWORD_RESET:
             return `User ${event.userEmail} reset password`
         case ApplicationEventName.USER_EMAIL_VERIFIED:
             return `User ${event.userEmail} verified email`
         case ApplicationEventName.USER_SIGNED_UP:
-            return `User ${event.userEmail} signed up using email from ${event.data.source}`
+            return summarizeSignUp(event)
         case ApplicationEventName.SIGNING_KEY_CREATED:
             return `${event.data.signingKey.displayName} is created`
+        case ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED: {
+            const { previousRetentionDays, retentionDays, instanceLimitDays } = event.data
+            const previous = describeAuditLogRetention({ days: previousRetentionDays, instanceLimitDays })
+            const next = describeAuditLogRetention({ days: retentionDays, instanceLimitDays })
+            return `Audit log retention changed from ${previous} to ${next}`
+        }
+        case ApplicationEventName.EMAIL_SIGN_IN_ENABLED:
+            return 'Email and password sign-in turned on'
+        case ApplicationEventName.EMAIL_SIGN_IN_DISABLED:
+            return 'Email and password sign-in turned off'
+        case ApplicationEventName.GOOGLE_SIGN_IN_ENABLED:
+            return 'Google sign-in turned on'
+        case ApplicationEventName.GOOGLE_SIGN_IN_DISABLED:
+            return 'Google sign-in turned off'
+        case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED:
+            return 'Only allowed email domains can join or sign in with email and password'
+        case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED:
+            return 'Any email domain can join or sign in with email and password'
+        case ApplicationEventName.ALLOWED_DOMAIN_ADDED:
+            return `${event.data.domain} added to allowed email domains`
+        case ApplicationEventName.ALLOWED_DOMAIN_REMOVED:
+            return `${event.data.domain} removed from allowed email domains`
+        case ApplicationEventName.SSO_DOMAIN_ADDED:
+            return `${event.data.domain} added, waiting for DNS verification`
+        case ApplicationEventName.SSO_DOMAIN_VERIFIED:
+            return `${event.data.domain} verified`
+        case ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED:
+            return `Verification of ${event.data.domain} cancelled`
+        case ApplicationEventName.SSO_DOMAIN_REMOVED:
+            return `${event.data.domain} removed`
+        case ApplicationEventName.SSO_DOMAIN_EXPIRED:
+            return `${event.data.domain} removed because it was not verified in time`
+        case ApplicationEventName.SAML_CONNECTED:
+            return 'SAML identity provider connected'
+        case ApplicationEventName.SAML_CONNECTION_REPLACED:
+            return 'SAML identity provider connection replaced'
+        case ApplicationEventName.SSO_DISABLED:
+            return 'Single sign-on disabled'
+        case ApplicationEventName.USER_INVITATION_SENT:
+            return `Invited ${event.data.invitation.email}`
+        case ApplicationEventName.USER_INVITATION_ACCEPTED:
+            return `${event.data.invitation.email} accepted the invitation`
+        case ApplicationEventName.USER_INVITATION_DELETED:
+            return `Deleted the invitation for ${event.data.invitation.email}`
         case ApplicationEventName.PROJECT_ROLE_CREATED:
             return `${event.data.projectRole.name} is created`
         case ApplicationEventName.PROJECT_ROLE_UPDATED:
@@ -565,6 +882,14 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
                 + applied.foldersCreated + applied.foldersUpdated + applied.foldersDeleted
             return `Project replace ${outcome.toLowerCase()} in ${durationMs}ms (${totals} changes, ${failedCount} failed)`
         }
+        case ApplicationEventName.FLOW_APPROVAL_REQUESTED:
+            return `Approval requested for flow ${event.data.flowDisplayName ?? event.data.flowId}`
+        case ApplicationEventName.FLOW_APPROVAL_GRANTED:
+            return `Approval granted for flow ${event.data.flowDisplayName ?? event.data.flowId}`
+        case ApplicationEventName.FLOW_APPROVAL_REJECTED:
+            return `Approval rejected for flow ${event.data.flowDisplayName ?? event.data.flowId}${event.data['rejectionReason'] ? ` (${event.data['rejectionReason']})` : ''}`
+        case ApplicationEventName.FLOW_APPROVAL_WITHDRAWN:
+            return `Approval request withdrawn for flow ${event.data.flowDisplayName ?? event.data.flowId}`
     }
 }
 
@@ -653,5 +978,49 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
             return `Updated sample data info for step "${event.data.request.request.stepName}" in flow "${event.data.flowVersion.displayName}".`
     }
 }
+
+function describeAuditLogRetention({ days, instanceLimitDays }: { days: number | null, instanceLimitDays: number | null }): string {
+    if (!isNil(days)) {
+        return describeAuditLogRetentionPeriod(days)
+    }
+    return isNil(instanceLimitDays) ? 'forever' : `the instance limit (${describeAuditLogRetentionPeriod(instanceLimitDays)})`
+}
+
+function describeAuditLogRetentionPeriod(days: number): string {
+    if (days === 180) {
+        return '6 months'
+    }
+    if (days === 365) {
+        return '1 year'
+    }
+    return days === 1 ? '1 day' : `${days} days`
+}
+
+function summarizeSignUp(event: SignUpEvent): string {
+    if (!isNil(event.data.method)) {
+        return `User ${event.userEmail} signed up${describeMethod(event.data.method)}`
+    }
+    if (!isNil(event.data.source)) {
+        return `User ${event.userEmail} signed up using email from ${event.data.source}`
+    }
+    return `User ${event.userEmail} signed up`
+}
+
+function describeMethod(method: UserIdentityProvider | undefined): string {
+    return isNil(method) ? '' : ` with ${METHOD_PHRASE[method]}`
+}
+
+const METHOD_PHRASE: Record<UserIdentityProvider, string> = {
+    [UserIdentityProvider.EMAIL]: 'email',
+    [UserIdentityProvider.GOOGLE]: 'Google',
+    [UserIdentityProvider.SAML]: 'SAML',
+    [UserIdentityProvider.JWT]: 'JWT',
+}
+
+export const AUDIT_LOG_RETENTION_MIN_DAYS = 30
+export const AUDIT_LOG_RETENTION_MAX_DAYS = 3650
+export const AUDIT_LOG_RETENTION_BACKLOG_GRACE_DAYS = 2
+
+export type AgentActionRef = z.infer<typeof AgentActionEventData>['action']
 
 export * from './mock-event-builder'

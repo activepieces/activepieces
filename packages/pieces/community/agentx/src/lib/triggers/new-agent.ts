@@ -33,6 +33,7 @@ const polling: Polling<
 export const newAgent = createTrigger({
   auth: AgentXAuth,
   name: "new_agent",
+  classification: 'READ',
   displayName: "New Agent",
   description: "Triggers when a new AgentX agent is created.",
   aiMetadata: {
@@ -51,13 +52,11 @@ export const newAgent = createTrigger({
   },
 
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {

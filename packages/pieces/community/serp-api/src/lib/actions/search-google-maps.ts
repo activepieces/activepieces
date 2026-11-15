@@ -7,12 +7,13 @@ import { searchGoogleMapsOutputSchema } from '../output-schemas';
 export const searchGoogleMaps = createAction({
   auth: serpApiAuth,
   name: 'search_google_maps',
+  classification: 'SEARCH',
   displayName: 'Search Google Maps',
   description: 'Find local businesses and places on Google Maps for a query.',
   audience: 'ai',
   aiMetadata: {
     description:
-      'Searches Google Maps via SerpApi for local businesses and places matching a query, returning results in `local_results` (name, rating, reviews, address, phone, type, GPS coordinates, hours). Use to find businesses, restaurants, or services in an area. Pass `ll` to anchor the search to a map center; `ll` is effectively required once you paginate with `start`. Read-only and idempotent; requires the query and a SerpApi API key.',
+      'Search Google Maps for local businesses and places matching a query: names, ratings, reviews, addresses, phone numbers, opening hours, and GPS coordinates. Use to find businesses, restaurants, or services in an area. Pass `ll` to anchor the search to a map center; `ll` is effectively required once you paginate with `start`.',
     idempotent: true,
   },
   outputSchema: searchGoogleMapsOutputSchema,

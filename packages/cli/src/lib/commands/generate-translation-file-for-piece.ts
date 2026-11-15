@@ -1,23 +1,27 @@
 import { writeFile } from 'node:fs/promises';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { buildPackage, findPiece, findPieces } from '../utils/piece-utils';
+import { assertPieceExists, buildPackage, findPiece, findPieces, piecesPath } from '../utils/piece-utils';
 import { makeFolderRecursive, readPackageJson } from '../utils/files';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { exec } from '../utils/exec';
-import { pieceTranslation } from '@activepieces/pieces-framework';
+import { Piece, pieceTranslation } from '@activepieces/pieces-framework';
 import { MAX_KEY_LENGTH_FOR_CORWDIN } from '@activepieces/shared';
 
-const findPieceInModule= async (pieceOutputFile: string) => {
+const findPieceInModule= async (pieceOutputFile: string): Promise<Piece> => {
     const module = await import(pieceOutputFile);
     const exports = Object.values(module);
     for (const e of exports) {
-      if (e !== null && e !== undefined && e.constructor.name === 'Piece') {
+      if (isPiece(e)) {
           return e 
       }
       }
   
       throw new Error(`Piece not found in module, please check the piece output file ${pieceOutputFile}`);
+}
+
+function isPiece(value: unknown): value is Piece {
+  return value instanceof Object && value.constructor.name === 'Piece'
 }
 
 const installDependencies = async (pieceFolder: string) => {
@@ -39,9 +43,9 @@ function getPropertyValue(object: Record<string, unknown>, path: string): unknow
   return nextObject;
 }
 
-const generateTranslationFileFromPiece = (piece: Record<string, unknown>) => { const translation: Record<string, string> = {}
+const generateTranslationFileFromPiece = (piece: ReturnType<Piece['metadata']>) => { const translation: Record<string, string> = {}
   try {
-    pieceTranslation.pathsToValuesToTranslate.forEach(path => {
+    pieceTranslation.pathsToTranslate(piece.categories).forEach(path => {
       const value = getPropertyValue(piece, path)
       if (value) {
         if (typeof value === 'string') {
@@ -56,7 +60,7 @@ const generateTranslationFileFromPiece = (piece: Record<string, unknown>) => { c
     })
   }
   catch (err) {
-    console.error(`error generating translation file for piece ${piece.name}:`, err)
+    console.error(`error generating translation file for piece ${piece.displayName}:`, err)
   }
 
   return translation
@@ -66,12 +70,13 @@ const generateTranslationFileFromPiece = (piece: Record<string, unknown>) => { c
 
 const generateTranslationFile = async (pieceName: string) => {
   const pieceRoot = await findPiece(pieceName)
+  assertPieceExists(pieceRoot)
   const packageJson = await readPackageJson(pieceRoot)
   await buildPackage(packageJson.name)
   try{
     await installDependencies(pieceRoot)
     const pieceFromModule = await findPieceInModule(pieceRoot);
-    const i18n = generateTranslationFileFromPiece({actions: (pieceFromModule as any)._actions, triggers: (pieceFromModule as any)._triggers, description: (pieceFromModule as any).description, displayName: (pieceFromModule as any).displayName, auth: (pieceFromModule as any).auth});
+    const i18n = generateTranslationFileFromPiece(pieceFromModule.metadata());
     const i18nFolder = join(pieceRoot, 'src', 'i18n')
     await makeFolderRecursive(i18nFolder);
     await writeFile(join(i18nFolder, 'translation.json'), JSON.stringify(i18n, null, 2));
@@ -93,8 +98,8 @@ export const generateTranslationFileForPieceCommand = new Command('generate-tran
   .requiredOption('--shard-index <shardIndex>', 'Zero-based shard index to process', (value) => parseInt(value, 10))
   .requiredOption('--shard-total <shardTotal>', 'Total number of shards', (value) => parseInt(value, 10))
   .action(async ({shardIndex, shardTotal}: { shardIndex: number; shardTotal: number }) => {
-    const piecesDirectory = join(process.cwd(), 'packages', 'pieces', 'community')
-    const pieces = (await findPieces(piecesDirectory)).map(piece => piece.split('/').pop());
+    const piecesDirectories = ['community', 'core'].map(folder => join(piecesPath(), folder))
+    const pieces = (await Promise.all(piecesDirectories.map(directory => findPieces(directory)))).flat().map(piece => basename(piece));
     let totalTime = 0
     let indexAcrossAllPieces = 0
     for (const piece of pieces) {

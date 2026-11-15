@@ -48,6 +48,7 @@ const polling: Polling<
 
 export const newShippingLabel = createTrigger({
   name: 'new_shipping_label',
+  classification: 'READ',
   displayName: 'New Shipping Label',
   description: 'Trigger when a new shipping label is created',
   aiMetadata: {
@@ -93,33 +94,15 @@ export const newShippingLabel = createTrigger({
       'https://tools.usps.com/go/TrackConfirmAction_input?origTrackNum=9499907123456123456781',
   },
   async test(context) {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   async run(context) {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.poll(polling, context);
   },
 });

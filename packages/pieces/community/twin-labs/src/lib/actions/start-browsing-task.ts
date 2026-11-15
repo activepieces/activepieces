@@ -7,6 +7,7 @@ const API_BASE_URL = 'https://paris.prod.api.twin.so';
 
 export const startBrowsingTask = createAction({
   name: 'startBrowsingTask',
+  classification: 'WRITE',
   auth: twinLabsAuth,
   displayName: 'Browse',
   description:

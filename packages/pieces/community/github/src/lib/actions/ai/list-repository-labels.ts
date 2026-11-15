@@ -8,6 +8,7 @@ import { listLabelsOutputSchema } from '../../output-schemas';
 export const githubListRepositoryLabelsAction = createAction({
   auth: githubAuth,
   name: 'list_repository_labels',
+  classification: 'SEARCH',
   displayName: 'List Repository Labels (Agent)',
   description: "Lists a repository's label vocabulary.",
   audience: 'ai',

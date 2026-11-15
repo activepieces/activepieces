@@ -66,6 +66,7 @@ function normalizeSummarizeResponse(provider: string, response: any) {
 
 export const summarizeTextAction = createAction({
   name: 'summarize_text',
+  classification: 'READ',
   auth: edenAiAuth,
   displayName: 'Summarize Text',
   description: 'Extract key sentences and create summaries from long text passages using various AI providers.',

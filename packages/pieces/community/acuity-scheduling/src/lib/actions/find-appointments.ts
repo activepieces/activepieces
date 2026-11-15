@@ -7,6 +7,7 @@ import { appointmentTypeIdDropdown, calendarIdDropdown } from '../common/props';
 export const findAppointmentAction = createAction({
 	auth: acuitySchedulingAuth,
 	name: 'find_appointment',
+	classification: 'SEARCH',
 	displayName: 'Find Appointment(s)',
 	description: 'Find appointments based on various criteria, including client information.',
 	audience: 'both',

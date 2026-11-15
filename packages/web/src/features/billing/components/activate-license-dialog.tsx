@@ -18,6 +18,7 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 const LicenseKeySchema = z.object({
   tempLicenseKey: z.string({ message: t('License key is invalid') }),
@@ -28,11 +29,13 @@ type LicenseKeySchema = z.infer<typeof LicenseKeySchema>;
 interface ActivateLicenseDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  isTrialKey?: boolean;
 }
 
 export const ActivateLicenseDialog = ({
   isOpen,
   onOpenChange,
+  isTrialKey = false,
 }: ActivateLicenseDialogProps) => {
   const queryClinet = useQueryClient();
 
@@ -45,7 +48,7 @@ export const ActivateLicenseDialog = ({
   });
 
   const { mutate: activateLicenseKey, isPending } =
-    platformHooks.useUpdateLisenceKey(queryClinet);
+    platformHooks.useUpdateLisenceKey({ queryClient: queryClinet });
 
   const handleSubmit = (data: LicenseKeySchema) => {
     form.clearErrors();
@@ -64,9 +67,13 @@ export const ActivateLicenseDialog = ({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Activate License Key')}</DialogTitle>
+          <DialogTitle>
+            {isTrialKey ? t('Activate Trial Key') : t('Activate License Key')}
+          </DialogTitle>
           <DialogDescription>
-            {t('Enter your license key to unlock platform features.')}
+            {isTrialKey
+              ? t('Enter your trial key to unlock enterprise features.')
+              : t('Enter your license key to unlock platform features.')}
           </DialogDescription>
         </DialogHeader>
 
@@ -84,7 +91,11 @@ export const ActivateLicenseDialog = ({
                     {...field}
                     required
                     type="text"
-                    placeholder={t('Enter your license key')}
+                    placeholder={
+                      isTrialKey
+                        ? t('Enter your trial key')
+                        : t('Enter your license key')
+                    }
                     disabled={isPending}
                   />
                   <FormMessage />
@@ -110,6 +121,7 @@ export const ActivateLicenseDialog = ({
             </Button>
           </DialogClose>
           <Button
+            {...adminControl(AdminControl.BILLING_LICENSE_KEY_SUBMIT)}
             onClick={form.handleSubmit(handleSubmit)}
             disabled={isPending || !form.watch('tempLicenseKey')?.trim()}
             className="min-w-20"

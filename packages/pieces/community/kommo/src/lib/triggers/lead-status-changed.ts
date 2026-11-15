@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const leadStatusChangedTrigger = createTrigger({
   auth: kommoAuth,
   name: 'lead_status_changed',
+  classification: 'READ',
   displayName: 'Lead Status Changed',
   description: 'Triggers when a lead status is changed.',
   aiMetadata: {

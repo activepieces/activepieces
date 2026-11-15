@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { couponListOutputSchema } from '../output-schemas';
 export const stripeListCoupons = createAction({
   name: 'list_coupons',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'List Coupons (Agent)',
   description: 'List Stripe coupons.',

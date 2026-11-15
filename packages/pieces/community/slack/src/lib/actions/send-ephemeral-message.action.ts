@@ -8,6 +8,7 @@ import { ephemeralMessageActionOutputSchema } from '../output-schemas';
 export const slackSendEphemeralMessageAction = createAction({
   auth: slackAuth,
   name: 'slack_send_ephemeral_message',
+  classification: 'WRITE',
   displayName: 'Send Ephemeral Message',
   description:
     'Post a message visible only to one user within a channel.',

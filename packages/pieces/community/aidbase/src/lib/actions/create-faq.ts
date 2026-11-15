@@ -5,6 +5,7 @@ import { aidbaseClient } from '../common/client';
 export const createFaq = createAction({
   auth: aidbaseAuth,
   name: 'create_faq',
+  classification: 'WRITE',
   displayName: 'Create FAQ',
   description: 'Creates a new FAQ entry with title and description.',
   audience: 'both',

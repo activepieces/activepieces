@@ -11,6 +11,7 @@ interface FileObject {
 export const addCustomSources = createAction({
   auth: ChatAidAuth,
   name: 'addCustomSources',
+  classification: 'WRITE',
   displayName: 'Add Custom Sources',
   description: 'Upload one or more files as custom sources for training',
   audience: 'both',

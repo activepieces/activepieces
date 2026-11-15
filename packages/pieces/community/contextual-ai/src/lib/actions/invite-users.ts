@@ -5,6 +5,7 @@ import { ContextualAI } from 'contextual-client';
 export const inviteUsersAction = createAction({
   auth: contextualAiAuth,
   name: 'invite_users',
+  classification: 'WRITE',
   displayName: 'Invite Users',
   description: 'Invite new users to the Contextual AI workspace',
   audience: 'both',

@@ -3,6 +3,7 @@ import {
   TriggerStrategy,
   Property,
   FilesService,
+  isNil,
 } from '@activepieces/pieces-framework';
 import { GmailProps } from '../common/props';
 import { gmailAuth, createGoogleClient, GmailAuthValue } from '../auth';
@@ -27,46 +28,23 @@ type Props = {
 export const gmailNewAttachmentTrigger = createTrigger({
   auth: gmailAuth,
   name: 'new_attachment',
+  classification: 'READ',
   displayName: 'New Attachment',
-  description: 'Triggers when an email with an attachment arrives.',
+  description: 'Triggers for each attachment on a new email.',
   aiMetadata: {
     description:
       'Fires when a new email carrying one or more attachments arrives, optionally narrowed by sender, recipient, subject, label, category, or file extension. Each event represents a single attachment (a multi-attachment email emits one event per attachment) along with its source message.',
   },
   props: {
-    from: {
-      ...GmailProps.from,
-      description: 'Filter by sender email.',
-      displayName: 'From',
-      required: false,
-    },
-    to: {
-      ...GmailProps.to,
-      description: 'Filter by recipient email.',
-      displayName: 'To',
-      required: false,
-    },
-    subject: Property.ShortText({
-      displayName: 'Subject Contains',
-      description:
-        'Only trigger for emails containing this text in the subject.',
-      required: false,
-    }),
-    label: GmailProps.label({
-      description: 'Filter by Gmail label.',
-      displayName: 'Label',
-      required: false,
-    }),
-    category: {
-      ...GmailProps.category,
-      description: 'Filter by Gmail category.',
-      displayName: 'Category',
-      required: false,
-    },
+    from: GmailProps.from,
+    to: { ...GmailProps.to, advanced: true },
+    subject: GmailProps.subject,
+    label: GmailProps.label({ required: false }),
+    category: { ...GmailProps.category, advanced: true },
     filenameExtension: Property.ShortText({
       displayName: 'File Extension',
-      description:
-        'Only trigger for attachments with this file extension (e.g., pdf, jpg, docx).',
+      description: 'Only attachments with this extension.',
+      placeholder: 'pdf',
       required: false,
     }),
   },
@@ -74,6 +52,9 @@ export const gmailNewAttachmentTrigger = createTrigger({
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get('lastPoll'))) {
+      return;
+    }
     await context.store.put('lastPoll', Date.now());
   },
   async onDisable(context) {

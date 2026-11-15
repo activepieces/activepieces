@@ -12,6 +12,7 @@ import {
 export const deleteRowsAction = createAction({
   auth: bigQueryAuth,
   name: 'delete_rows',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Rows',
   description:
     'Deletes one or more rows from a BigQuery table using a SQL WHERE condition.',

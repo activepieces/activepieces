@@ -5,6 +5,7 @@ import { clockodoAuth } from '../../auth';
 export default createAction({
   auth: clockodoAuth,
   name: 'get_entry',
+  classification: 'READ',
   displayName: 'Get Entry',
   description: 'Retrieves a single entry from clockodo',
   audience: 'both',

@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, isNil, TriggerStrategy } from '@activepieces/pieces-framework';
 import { assembledCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { assembledAuth } from '../common/auth';
@@ -6,6 +6,7 @@ import { assembledAuth } from '../common/auth';
 export const newTimeOffRequest = createTrigger({
   auth: assembledAuth,
   name: 'new_OOO_request',
+  classification: 'READ',
   displayName: 'New OOO Request',
   description: 'Triggers when a new OOO request is created.',
   aiMetadata: {
@@ -24,6 +25,9 @@ export const newTimeOffRequest = createTrigger({
     activity_type_id: '<uuid>',
   },
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get('lastCheck'))) {
+      return;
+    }
     await context.store.put('lastCheck', Math.floor(Date.now() / 1000));
   },
   async onDisable() {

@@ -251,6 +251,7 @@ function normalizeOcrResponse(provider: string, response: any) {
 
 export const ocrImageAction = createAction({
   name: 'ocr_image',
+  classification: 'READ',
   auth: edenAiAuth,
   displayName: 'Extract Text in Image (OCR)',
   description: 'Extract text from images (OCR) using Eden AI. Supports multiple providers, languages, and bounding box coordinates.',

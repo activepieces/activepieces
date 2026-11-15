@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { TriggerStrategy } from '@activepieces/pieces-framework'
-import { ApEnvironment, EngineResponseStatus, TriggerSourceScheduleType } from '@activepieces/shared'
+import { ApEnvironment, EngineResponseStatus, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockSubmitAndWaitForResponse = vi.fn()
@@ -44,6 +44,7 @@ vi.mock('../../../../../src/app/trigger/app-event-routing/app-event-routing.serv
 }))
 
 import { system } from '../../../../../src/app/helper/system/system'
+import { AppSystemProp } from '../../../../../src/app/helper/system/system-props'
 import { flowTriggerSideEffect } from '../../../../../src/app/trigger/trigger-source/flow-trigger-side-effect'
 
 const mockLog = {
@@ -102,6 +103,14 @@ function failedEngineResponse() {
     }
 }
 
+function timedOutEngineResponse() {
+    return {
+        status: EngineResponseStatus.TIMEOUT,
+        response: undefined,
+        error: undefined,
+    }
+}
+
 describe('flowTriggerSideEffect', () => {
     beforeEach(() => {
         vi.clearAllMocks()
@@ -139,6 +148,51 @@ describe('flowTriggerSideEffect', () => {
             expect(result.scheduleOptions).toEqual({
                 type: TriggerSourceScheduleType.INTERVAL,
                 intervalMs: 45 * 60_000,
+            })
+        })
+
+        it('should throw when the worker skipped the enable hook (OK with undefined response)', async () => {
+            mockSubmitAndWaitForResponse.mockResolvedValue({ ...okEngineResponse(), response: undefined })
+
+            await expect(
+                flowTriggerSideEffect(mockLog).enable({
+                    ...BASE_PARAMS,
+                    pieceTrigger: makePollingTrigger(),
+                }),
+            ).rejects.toThrow(ActivepiecesError)
+
+            expect(mockAddJob).not.toHaveBeenCalled()
+        })
+
+        it('should report a timeout when the enable hook times out without an engine error', async () => {
+            mockSubmitAndWaitForResponse.mockResolvedValue(timedOutEngineResponse())
+
+            await expect(
+                flowTriggerSideEffect(mockLog).enable({
+                    ...BASE_PARAMS,
+                    pieceTrigger: makePollingTrigger(),
+                }),
+            ).rejects.toMatchObject({
+                error: {
+                    code: ErrorCode.TRIGGER_UPDATE_STATUS,
+                    params: { standardError: 'The trigger timed out after 5 seconds without responding' },
+                },
+            })
+            expect(system.getNumberOrThrow).toHaveBeenCalledWith(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS)
+
+            expect(mockAddJob).not.toHaveBeenCalled()
+        })
+
+        it('should keep the engine error when a timed out enable hook reports one', async () => {
+            mockSubmitAndWaitForResponse.mockResolvedValue({ ...timedOutEngineResponse(), error: 'Engine failed' })
+
+            await expect(
+                flowTriggerSideEffect(mockLog).enable({
+                    ...BASE_PARAMS,
+                    pieceTrigger: makePollingTrigger(),
+                }),
+            ).rejects.toMatchObject({
+                error: { params: { standardError: 'Engine failed' } },
             })
         })
 
@@ -188,6 +242,24 @@ describe('flowTriggerSideEffect', () => {
             ).rejects.toThrow(ActivepiecesError)
         })
 
+        it('should report a timeout when the disable hook times out and ignoreError is false', async () => {
+            mockSubmitAndWaitForResponse.mockResolvedValue(timedOutEngineResponse())
+
+            await expect(
+                flowTriggerSideEffect(mockLog).disable({
+                    ...BASE_PARAMS,
+                    pieceTrigger: makeManualTrigger(),
+                    ignoreError: false,
+                }),
+            ).rejects.toMatchObject({
+                error: {
+                    code: ErrorCode.TRIGGER_UPDATE_STATUS,
+                    params: { standardError: 'The trigger timed out after 5 seconds without responding' },
+                },
+            })
+            expect(system.getNumberOrThrow).toHaveBeenCalledWith(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS)
+        })
+
         it('should not throw when engine response is bad and ignoreError is true', async () => {
             mockSubmitAndWaitForResponse.mockResolvedValue(failedEngineResponse())
 
@@ -196,6 +268,46 @@ describe('flowTriggerSideEffect', () => {
                 pieceTrigger: makeManualTrigger(),
                 ignoreError: true,
             })
+
+            expect(mockLog.warn).toHaveBeenCalledWith(
+                expect.objectContaining({ flow: { id: 'flow-1' }, error: 'Engine failed' }),
+                expect.stringContaining('Ignored error'),
+            )
+        })
+
+        it('should log only the plain message when the ignored engine error carries http details', async () => {
+            const serializedPieceError = JSON.stringify({
+                __apErrorVersion: 1,
+                message: 'Authentication required, not authenticated - You need to authenticate to access this operation.',
+                errorName: '_',
+                status: 401,
+                responseHeaders: { 'set-cookie': 'session=super-secret-value' },
+                requestBody: { apiKey: 'lin_api_should_never_be_logged' },
+                raw: 'Error: Authentication required\n    at j (/usr/src/app/cache/v14/common/node_modules/...)',
+            })
+            mockSubmitAndWaitForResponse.mockResolvedValue({
+                status: EngineResponseStatus.ERROR,
+                response: undefined,
+                error: serializedPieceError,
+            })
+
+            await flowTriggerSideEffect(mockLog).disable({
+                ...BASE_PARAMS,
+                pieceTrigger: makeManualTrigger(),
+                ignoreError: true,
+            })
+
+            expect(mockLog.warn).toHaveBeenCalledWith(
+                {
+                    flow: { id: 'flow-1' },
+                    error: 'Authentication required, not authenticated - You need to authenticate to access this operation.',
+                },
+                expect.stringContaining('Ignored error'),
+            )
+            const logged = JSON.stringify(vi.mocked(mockLog.warn).mock.calls)
+            expect(logged).not.toContain('super-secret-value')
+            expect(logged).not.toContain('lin_api_should_never_be_logged')
+            expect(logged).not.toContain('set-cookie')
         })
 
         it('should throw when submitAndWaitForResponse throws and ignoreError is false', async () => {
@@ -248,23 +360,105 @@ describe('flowTriggerSideEffect', () => {
                 flowVersionId: 'fv-1',
             })
         })
+    })
 
-        it('should still delete app event listeners when engine call fails and ignoreError is true', async () => {
-            mockSubmitAndWaitForResponse.mockRejectedValue(new Error('timeout'))
+    describe('republish with an unchanged trigger', () => {
+        const previousSchedule = {
+            type: TriggerSourceScheduleType.CRON_EXPRESSION,
+            cronExpression: '*/15 * * * *',
+            timezone: 'UTC',
+        }
+
+        it('keeps a polling trigger running on the previous schedule without calling onEnable', async () => {
+            const result = await flowTriggerSideEffect(mockLog).enable({
+                ...BASE_PARAMS,
+                pieceTrigger: makePollingTrigger(),
+                isRepublish: true,
+                isTriggerUnchanged: true,
+                previousSchedule,
+            })
+
+            expect(mockSubmitAndWaitForResponse).not.toHaveBeenCalled()
+            expect(result.scheduleOptions).toEqual(previousSchedule)
+            expect(mockAddJob).toHaveBeenCalledWith(expect.objectContaining({
+                id: BASE_PARAMS.flowVersionId,
+                scheduleOptions: previousSchedule,
+            }))
+        })
+
+        it('skips onDisable for a polling trigger but still removes the old poll job', async () => {
+            await flowTriggerSideEffect(mockLog).disable({
+                ...BASE_PARAMS,
+                pieceTrigger: makePollingTrigger(),
+                ignoreError: true,
+                isRepublish: true,
+                isTriggerUnchanged: true,
+            })
+
+            expect(mockSubmitAndWaitForResponse).not.toHaveBeenCalled()
+            expect(mockRemoveRepeatingJob).toHaveBeenCalledWith({ flowVersionId: BASE_PARAMS.flowVersionId })
+        })
+
+        it('runs onEnable when there is no previous schedule to keep', async () => {
+            mockSubmitAndWaitForResponse.mockResolvedValue(okEngineResponse())
+
+            await flowTriggerSideEffect(mockLog).enable({
+                ...BASE_PARAMS,
+                pieceTrigger: makePollingTrigger(),
+                isRepublish: true,
+                isTriggerUnchanged: true,
+            })
+
+            expect(mockSubmitAndWaitForResponse).toHaveBeenCalledOnce()
+        })
+
+        it('skips the old onDisable but runs onEnable with isRepublish on a piece upgrade', async () => {
+            mockSubmitAndWaitForResponse.mockResolvedValue(okEngineResponse())
 
             await flowTriggerSideEffect(mockLog).disable({
                 ...BASE_PARAMS,
-                pieceTrigger: {
-                    ...makePollingTrigger(),
-                    type: TriggerStrategy.APP_WEBHOOK,
-                },
+                pieceTrigger: makePollingTrigger(),
+                ignoreError: true,
+                isRepublish: true,
+                isTriggerUnchanged: false,
+            })
+            await flowTriggerSideEffect(mockLog).enable({
+                ...BASE_PARAMS,
+                pieceTrigger: makePollingTrigger(),
+                isRepublish: true,
+                isTriggerUnchanged: false,
+                previousSchedule,
+            })
+
+            expect(mockRemoveRepeatingJob).toHaveBeenCalledWith({ flowVersionId: BASE_PARAMS.flowVersionId })
+            expect(mockSubmitAndWaitForResponse).toHaveBeenCalledOnce()
+            expect(mockSubmitAndWaitForResponse).toHaveBeenCalledWith(expect.objectContaining({ hookType: TriggerHookType.ON_ENABLE, isRepublish: true }), mockLog)
+        })
+
+        it('runs onDisable for a polling trigger when the flow is not republished', async () => {
+            mockSubmitAndWaitForResponse.mockResolvedValue(okEngineResponse())
+
+            await flowTriggerSideEffect(mockLog).disable({
+                ...BASE_PARAMS,
+                pieceTrigger: makePollingTrigger(),
                 ignoreError: true,
             })
 
-            expect(mockDeleteListeners).toHaveBeenCalledWith({
-                projectId: 'proj-1',
-                flowId: 'flow-1',
+            expect(mockSubmitAndWaitForResponse).toHaveBeenCalledWith(expect.objectContaining({ hookType: TriggerHookType.ON_DISABLE }), mockLog)
+        })
+
+        it('still runs the hooks for a trigger that is not polling', async () => {
+            mockSubmitAndWaitForResponse.mockResolvedValue(okEngineResponse())
+
+            await flowTriggerSideEffect(mockLog).disable({
+                ...BASE_PARAMS,
+                pieceTrigger: makeManualTrigger(),
+                ignoreError: true,
+                isRepublish: true,
+                isTriggerUnchanged: true,
             })
+
+            expect(mockSubmitAndWaitForResponse).toHaveBeenCalledOnce()
         })
     })
 })

@@ -4,6 +4,7 @@ import { DAY_HOURS, timezoneOptions, validateHours } from '../common';
 
 export const everyDayTrigger = createTrigger({
   name: 'every_day',
+  classification: 'READ',
   displayName: 'Every Day',
   description: 'Triggers the current flow every day',
   aiMetadata: {

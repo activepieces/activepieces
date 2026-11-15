@@ -5,6 +5,7 @@ import { chatDropdown } from '../common/properties';
 export const sendMessageToExistingChat = createAction({
   auth: timelinesAiAuth,
   name: 'sendMessageToExistingChat',
+  classification: 'WRITE',
   displayName: 'Send Message to Existing Chat',
   description: 'Sends a text message in a chat identified by chat_id',
   audience: 'both',

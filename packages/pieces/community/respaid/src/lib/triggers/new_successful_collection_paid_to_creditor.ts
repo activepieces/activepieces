@@ -17,6 +17,7 @@ interface NewPaidTriggerPayload {
 
 export const newSuccessfulCollectionPaidToCreditor = createTrigger({
     name: 'new_successful_collection_paid_to_creditor',
+    classification: 'READ',
     displayName: 'New Successful Collection Paid to Creditor',
     description: "Triggers when a debt is paid directly to the creditor.",
     aiMetadata: {

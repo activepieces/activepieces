@@ -131,6 +131,23 @@ describe('OIDC Token Endpoint', () => {
             expect(decoded.payload.sub).toContain(projectId)
         })
 
+        it('carries no identity claim, so it can never pass as a user id_token signed by the same key', async () => {
+            const response = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/worker/oidc-token',
+                headers: { authorization: `Bearer ${engineToken}` },
+                body: { audience: 'some-mcp-client-id' },
+            })
+
+            const { token } = response.json()
+            const decoded = jwtUtils.decode<Record<string, unknown>>({ jwt: token })
+
+            expect(decoded.payload.email).toBeUndefined()
+            expect(decoded.payload.email_verified).toBeUndefined()
+            expect(decoded.payload.nonce).toBeUndefined()
+            expect(Object.keys(decoded.payload).sort()).toEqual(['aud', 'exp', 'iat', 'iss', 'sub'])
+        })
+
         it('should use RS256 as the signing algorithm', async () => {
             const response = await app!.inject({
                 method: 'POST',

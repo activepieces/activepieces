@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const listOperatingAccounts = createAction({
   auth: trueLayerCommon.auth,
   name: 'list-operating-accounts',
+  classification: 'SEARCH',
   displayName: 'List Merchant Accounts',
   description: 'List all your TrueLayer merchant accounts. There might be more than one account per currency.',
   audience: 'both',

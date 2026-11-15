@@ -7,6 +7,7 @@ import { googleChatAPIService } from '../common/requests';
 export const getDirectMessageDetails = createAction({
   auth: googleChatApiAuth,
   name: 'getDirectMessageDetails',
+  classification: 'READ',
   displayName: 'Get Direct Message Details',
   description: 'Retrieve details of a specific direct message by ID.',
   audience: 'both',

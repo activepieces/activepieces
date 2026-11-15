@@ -6,6 +6,7 @@ import { driveDownloadFileOutputSchema } from '../output-schemas';
 export const driveDownloadFile = createAction({
   auth: googleDriveAuth,
   name: 'drive_download_file',
+  classification: 'READ',
   displayName: 'Download File Content',
   description: 'Read a selected file from google drive file',
   audience: 'ai',
@@ -28,11 +29,11 @@ export const driveDownloadFile = createAction({
     }),
   },
   run: async ({ auth, propsValue, files }) => {
-    return downloadFileFromDrive(
+    return downloadFileFromDrive({
       auth,
       files,
-      propsValue.file_id,
-      propsValue.destination_file_name
-    );
+      fileId: propsValue.file_id,
+      fileName: propsValue.destination_file_name,
+    });
   },
 });

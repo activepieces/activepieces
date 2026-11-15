@@ -8,6 +8,7 @@ import { compareCommitsOutputSchema } from '../../output-schemas';
 export const githubCompareCommitsAction = createAction({
   auth: githubAuth,
   name: 'compare_commits',
+  classification: 'READ',
   displayName: 'Compare Commits (Agent)',
   description: 'Compares two commits, branches, or tags.',
   audience: 'ai',

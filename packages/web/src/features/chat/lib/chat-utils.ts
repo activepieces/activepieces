@@ -1,14 +1,16 @@
-import { isObject } from '@activepieces/core-utils';
+import { AIProviderName, isNil, isObject } from '@activepieces/core-utils';
 import {
   ActionReceiptEvent,
   BuildPlanEvent,
   BuildPlanStep,
-  ChatHistoryMessage,
+  AgentHistoryMessage,
   FileProducedEvent,
   ImageGeneratedEvent,
-  PersistedChatMessage,
-  PersistedChatPart,
-  PersistedChatPartType,
+  ModelChoice,
+  ModelOptions,
+  PersistedAgentMessage,
+  PersistedAgentPart,
+  PersistedAgentPartType,
   PersistedToolCallStatus,
 } from '@activepieces/shared';
 
@@ -51,6 +53,8 @@ const TOOL_LABELS: Record<string, { active: string; done: string }> = {
     done: 'Searched integrations',
   },
   ap_build_flow: { active: 'Building automation', done: 'Built automation' },
+  ap_run_task: { active: 'Working on a task', done: 'Finished a task' },
+  ap_deep_research: { active: 'Researching', done: 'Researched' },
   ap_create_flow: { active: 'Creating automation', done: 'Created automation' },
   ap_validate_step_config: {
     active: 'Validating setup',
@@ -98,6 +102,22 @@ function cleanMcpToolName(raw: string): string {
   return formatUtils.convertEnumToHumanReadable(mcpMatch[1]);
 }
 
+function labelForRawToolName(raw: string, variant: 'active' | 'done'): string {
+  if (raw.startsWith('mcp__')) {
+    return cleanMcpToolName(raw);
+  }
+  const generated = /^(.+)_[a-z0-9]{6}_mcp$/.exec(raw);
+  if (generated) {
+    return formatUtils.convertEnumToHumanReadable(
+      generated[1].replace(/-/g, '_').replace(/^(.+)_\1(?=_|$)/, '$1'),
+    );
+  }
+  return (
+    TOOL_LABELS[raw]?.[variant] ??
+    formatUtils.convertEnumToHumanReadable(raw.replace(/^ap_/, ''))
+  );
+}
+
 function formatToolName({
   part,
   includeContext = true,
@@ -112,14 +132,7 @@ function formatToolName({
   }
 
   const raw = chatPartUtils.getToolPartName(part);
-
-  if (raw.startsWith('mcp__')) {
-    return cleanMcpToolName(raw);
-  }
-
-  const baseName =
-    TOOL_LABELS[raw]?.active ??
-    formatUtils.convertEnumToHumanReadable(raw.replace(/^ap_/, ''));
+  const baseName = labelForRawToolName(raw, 'active');
 
   if (!includeContext) return baseName;
   const context = extractToolContext({ input });
@@ -164,7 +177,7 @@ function extractToolContext({
   return parts.length > 0 ? parts.join(' ') : null;
 }
 
-function historyMsgToParts(msg: ChatHistoryMessage): ChatUIMessage['parts'] {
+function historyMsgToParts(msg: AgentHistoryMessage): ChatUIMessage['parts'] {
   const parts: ChatUIMessage['parts'] = [];
   if (msg.thoughts) {
     parts.push({ type: 'reasoning', text: msg.thoughts });
@@ -201,22 +214,22 @@ function historyMsgToParts(msg: ChatHistoryMessage): ChatUIMessage['parts'] {
   return parts;
 }
 
-function isPersistedFormat(data: unknown[]): data is PersistedChatMessage[] {
+function isPersistedFormat(data: unknown[]): data is PersistedAgentMessage[] {
   if (data.length === 0) return false;
   const first = data[0] as Record<string, unknown>;
   return Array.isArray(first.parts) && !('content' in first);
 }
 
 function persistedPartToUIPart(
-  part: PersistedChatPart,
+  part: PersistedAgentPart,
   idx: number,
 ): ChatUIMessage['parts'][number] {
   switch (part.type) {
-    case PersistedChatPartType.TEXT:
+    case PersistedAgentPartType.TEXT:
       return { type: 'text', text: part.text };
-    case PersistedChatPartType.REASONING:
+    case PersistedAgentPartType.REASONING:
       return { type: 'reasoning', text: part.text };
-    case PersistedChatPartType.THINKING_STATUS:
+    case PersistedAgentPartType.THINKING_STATUS:
       return {
         type: 'dynamic-tool',
         toolCallId: `thinking-status-${idx}`,
@@ -226,7 +239,7 @@ function persistedPartToUIPart(
         input: { status: part.text },
         output: JSON.stringify({ success: true }),
       };
-    case PersistedChatPartType.TOOL_CALL: {
+    case PersistedAgentPartType.TOOL_CALL: {
       const toolTitle = part.title ?? part.toolName;
       if (part.status === PersistedToolCallStatus.COMPLETED) {
         return {
@@ -252,14 +265,14 @@ function persistedPartToUIPart(
         errorText: part.errorText ?? 'Tool call failed',
       };
     }
-    case PersistedChatPartType.SOURCE_URL:
+    case PersistedAgentPartType.SOURCE_URL:
       return {
         type: 'source-url',
         sourceId: part.sourceId,
         url: part.url,
         title: part.title,
       };
-    case PersistedChatPartType.SOURCE_DOCUMENT:
+    case PersistedAgentPartType.SOURCE_DOCUMENT:
       return {
         type: 'source-document',
         sourceId: part.sourceId,
@@ -267,7 +280,7 @@ function persistedPartToUIPart(
         title: part.title,
         filename: part.filename,
       };
-    case PersistedChatPartType.BUILD_PLAN:
+    case PersistedAgentPartType.BUILD_PLAN:
       return {
         type: 'dynamic-tool',
         toolCallId: `build-plan-${part.buildId}-${idx}`,
@@ -280,10 +293,10 @@ function persistedPartToUIPart(
             : {},
         output: JSON.stringify({ ok: true, buildId: part.buildId }),
       };
-    case PersistedChatPartType.BATCH_PROGRESS:
-    case PersistedChatPartType.ACTION_RECEIPT:
-    case PersistedChatPartType.IMAGE:
-    case PersistedChatPartType.FILE:
+    case PersistedAgentPartType.BATCH_PROGRESS:
+    case PersistedAgentPartType.ACTION_RECEIPT:
+    case PersistedAgentPartType.IMAGE:
+    case PersistedAgentPartType.FILE:
       return { type: 'text', text: '' } as ChatUIMessage['parts'][number];
     default: {
       const _exhaustive: never = part;
@@ -295,7 +308,7 @@ function persistedPartToUIPart(
 }
 
 function mapPersistedToUIMessages(
-  data: PersistedChatMessage[],
+  data: PersistedAgentMessage[],
 ): ChatUIMessage[] {
   return data.map((msg, idx) => ({
     id: `hist-${idx}`,
@@ -309,14 +322,14 @@ function mapPersistedToUIMessages(
 }
 
 function mapHistoryToUIMessages(
-  data: PersistedChatMessage[] | ChatHistoryMessage[],
+  data: PersistedAgentMessage[] | AgentHistoryMessage[],
 ): ChatUIMessage[] {
   if (data.length === 0) return [];
   if (isPersistedFormat(data)) {
     return mapPersistedToUIMessages(data);
   }
 
-  const legacyData = data as ChatHistoryMessage[];
+  const legacyData = data as AgentHistoryMessage[];
   const result: ChatUIMessage[] = [];
   for (let i = 0; i < legacyData.length; i++) {
     const msg = legacyData[i];
@@ -357,13 +370,7 @@ function formatToolActiveTitle({ part }: { part: AnyToolPart }): string {
     return input.activeTitle;
   }
   const raw = chatPartUtils.getToolPartName(part);
-  if (raw.startsWith('mcp__')) {
-    return cleanMcpToolName(raw);
-  }
-  return (
-    TOOL_LABELS[raw]?.active ??
-    formatUtils.convertEnumToHumanReadable(raw.replace(/^ap_/, ''))
-  );
+  return labelForRawToolName(raw, 'active');
 }
 
 function formatToolDoneTitle({ part }: { part: AnyToolPart }): string {
@@ -372,23 +379,17 @@ function formatToolDoneTitle({ part }: { part: AnyToolPart }): string {
     return input.doneTitle;
   }
   const raw = chatPartUtils.getToolPartName(part);
-  if (raw.startsWith('mcp__')) {
-    return cleanMcpToolName(raw);
-  }
-  return (
-    TOOL_LABELS[raw]?.done ??
-    formatUtils.convertEnumToHumanReadable(raw.replace(/^ap_/, ''))
-  );
+  return labelForRawToolName(raw, 'done');
 }
 
 function extractReceiptsFromHistory(
-  data: PersistedChatMessage[] | ChatHistoryMessage[],
+  data: PersistedAgentMessage[] | AgentHistoryMessage[],
 ): Record<string, ActionReceiptEvent> {
   const receipts: Record<string, ActionReceiptEvent> = {};
   if (data.length === 0 || !isPersistedFormat(data)) return receipts;
   for (const msg of data) {
     for (const part of msg.parts) {
-      if (part.type === PersistedChatPartType.ACTION_RECEIPT) {
+      if (part.type === PersistedAgentPartType.ACTION_RECEIPT) {
         const { type: _, output, ...rest } = part;
         receipts[part.toolCallId] = { ...rest, output: output ?? null };
       }
@@ -398,13 +399,13 @@ function extractReceiptsFromHistory(
 }
 
 function extractImagesFromHistory(
-  data: PersistedChatMessage[] | ChatHistoryMessage[],
+  data: PersistedAgentMessage[] | AgentHistoryMessage[],
 ): Record<string, ImageGeneratedEvent> {
   const images: Record<string, ImageGeneratedEvent> = {};
   if (data.length === 0 || !isPersistedFormat(data)) return images;
   for (const msg of data) {
     for (const part of msg.parts) {
-      if (part.type === PersistedChatPartType.IMAGE) {
+      if (part.type === PersistedAgentPartType.IMAGE) {
         const { type: _type, ...rest } = part;
         images[part.toolCallId] = rest;
       }
@@ -414,13 +415,13 @@ function extractImagesFromHistory(
 }
 
 function extractFilesFromHistory(
-  data: PersistedChatMessage[] | ChatHistoryMessage[],
+  data: PersistedAgentMessage[] | AgentHistoryMessage[],
 ): Record<string, FileProducedEvent[]> {
   const files: Record<string, FileProducedEvent[]> = {};
   if (data.length === 0 || !isPersistedFormat(data)) return files;
   for (const msg of data) {
     for (const part of msg.parts) {
-      if (part.type === PersistedChatPartType.FILE) {
+      if (part.type === PersistedAgentPartType.FILE) {
         const { type: _type, ...rest } = part;
         const existing = files[part.toolCallId] ?? [];
         existing.push(rest);
@@ -432,7 +433,7 @@ function extractFilesFromHistory(
 }
 
 function extractBuildsFromHistory(
-  data: PersistedChatMessage[] | ChatHistoryMessage[],
+  data: PersistedAgentMessage[] | AgentHistoryMessage[],
 ): Record<string, BuildPlanEvent> {
   const builds: Record<string, BuildPlanEvent> = {};
   if (data.length === 0) return builds;
@@ -440,7 +441,7 @@ function extractBuildsFromHistory(
   if (isPersistedFormat(data)) {
     for (const msg of data) {
       for (const part of msg.parts) {
-        if (part.type !== PersistedChatPartType.BUILD_PLAN) continue;
+        if (part.type !== PersistedAgentPartType.BUILD_PLAN) continue;
         const event = toBuildPlanEvent({
           buildId: part.buildId,
           data: part.data,
@@ -570,8 +571,93 @@ function sanitizeTitle(title: string): string {
   return title.replace(/[*_`~#]/g, '').trim();
 }
 
+function reopensSameConversation({
+  current,
+  next,
+}: {
+  current: string | null;
+  next: string;
+}): boolean {
+  return current === next;
+}
+
+function choiceOf({
+  pick,
+  options,
+}: {
+  pick: ChatModelPick | null;
+  options: ModelOptions;
+}): ModelChoice | null {
+  if (isNil(pick)) {
+    return null;
+  }
+  if (!isNil(pick.modelTierId)) {
+    return { type: 'tier', tierId: pick.modelTierId };
+  }
+  if (isNil(pick.modelName)) {
+    return null;
+  }
+  if (isNil(pick.providerConfigId)) {
+    return legacyChoiceOf({ modelName: pick.modelName, options });
+  }
+  const provider =
+    pick.providerConfigId === options.credits?.providerConfigId
+      ? AIProviderName.ACTIVEPIECES
+      : options.keys.find(
+          (key) => key.providerConfigId === pick.providerConfigId,
+        )?.provider ?? AIProviderName.CUSTOM;
+  return {
+    type: 'model',
+    provider,
+    providerConfigId: pick.providerConfigId,
+    modelId: pick.modelName,
+  };
+}
+
+function legacyChoiceOf({
+  modelName,
+  options,
+}: {
+  modelName: string;
+  options: ModelOptions;
+}): ModelChoice | null {
+  const credits = options.credits;
+  if (!isNil(credits) && credits.tiers.some((tier) => tier.id === modelName)) {
+    return {
+      type: 'model',
+      provider: AIProviderName.ACTIVEPIECES,
+      providerConfigId: credits.providerConfigId,
+      modelId: modelName,
+    };
+  }
+  const key = options.keys.find((candidate) =>
+    candidate.models.some((model) => model.id === modelName),
+  );
+  return isNil(key)
+    ? null
+    : {
+        type: 'model',
+        provider: key.provider,
+        providerConfigId: key.providerConfigId,
+        modelId: modelName,
+      };
+}
+
+function pickOf({ choice }: { choice: ModelChoice }): ChatModelPick {
+  return choice.type === 'tier'
+    ? { modelTierId: choice.tierId, providerConfigId: null, modelName: null }
+    : {
+        modelTierId: null,
+        providerConfigId: choice.providerConfigId,
+        modelName: choice.modelId,
+      };
+}
+
 export const chatUtils = {
   newChatEvent: 'ap:new-chat',
+  choiceOf,
+  pickOf,
+  reopensSameConversation,
   sanitizeTitle,
   formatToolLabel: ({ part }: { part: AnyToolPart }) =>
     formatToolName({ part }),
@@ -583,4 +669,10 @@ export const chatUtils = {
   extractImagesFromHistory,
   extractFilesFromHistory,
   extractBuildsFromHistory,
+};
+
+export type ChatModelPick = {
+  modelTierId: string | null;
+  providerConfigId: string | null;
+  modelName: string | null;
 };

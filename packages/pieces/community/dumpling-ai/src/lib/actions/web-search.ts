@@ -4,6 +4,7 @@ import { dumplingAuth } from '../auth';
 
 export const webSearch = createAction({
 	name: 'web_search',
+	classification: 'SEARCH',
 	auth: dumplingAuth,
 	displayName: 'Web Search',
 	description: 'Search the web and optionally retrieve content from top results.',

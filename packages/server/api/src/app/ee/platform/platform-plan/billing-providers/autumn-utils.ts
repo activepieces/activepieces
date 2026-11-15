@@ -1,0 +1,864 @@
+import { assertNotNullOrUndefined, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
+import { apVersionUtil, safeHttp } from '@activepieces/server-utils'
+import { ApEdition, ConsumableFeatureId, FeatureFlagId, isFreeLegacyEligible, PlanName, PlatformPlanLimits, PurchasablePlan, SelfServeTrialDates, UnconsumableFeatureId } from '@activepieces/shared'
+import {
+    AggregateEventsRange,
+    type AggregateEventsResponse,
+    Autumn,
+    type Balance,
+    type CheckParams,
+    type EventsAggregateParams,
+    type EventsListParams,
+    type GetCustomerParams,
+    type GetCustomerResponse,
+    type ListPlansParams,
+    type ListSubscriptionsList,
+    type ListSubscriptionsParams,
+    ListSubscriptionsStatusRequestBody,
+    type TrackParams,
+} from 'autumn-js'
+import { type AxiosRequestConfig, isAxiosError } from 'axios'
+import { FastifyBaseLogger } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, BILLING_ENFORCED_TTL_SECONDS, getAppSumoAiCreditsBalanceKey, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewKey, getCreditsBalanceKey, getFreeLegacyCompAttemptKey } from '../../../../database/redis/keys'
+import { distributedLock, distributedStore } from '../../../../database/redis-connections'
+import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
+import { system } from '../../../../helper/system/system'
+import { AppSystemProp } from '../../../../helper/system/system-props'
+import { AppSumoAction, CancellationFeedback, CreditUsage, CreditUsageSource } from '../../../../platform/billing-provider'
+import { platformService } from '../../../../platform/platform.service'
+import { userService } from '../../../../user/user-service'
+import { platformPlanTelemetry } from '../platform-plan-telemetry'
+import { platformPlanRepo, platformPlanService } from '../platform-plan.service'
+import { selfServeTrialUtils } from '../self-serve-trial-utils'
+
+const AUTUMN_CONSOLE_URL = system.getOrThrow(AppSystemProp.AUTUMN_CONSOLE_URL).replace(/\/+$/, '')
+const edition = system.getEdition()
+const CONSOLE_REQUEST_TIMEOUT_MS = 30000
+const AUTUMN_GET_CUSTOMER_TIMEOUT_MS = 5000
+const AUTUMN_LIST_EVENTS_TIMEOUT_MS = 15000
+const CREDITS_CACHE_TTL_SECONDS = 60 * 60
+const FREE_LEGACY_COMP_ATTEMPT_TTL_SECONDS = 5 * 60
+
+const PROJECT_ID_PROPERTY = 'projectId'
+const CREDIT_USAGE_MAX_GROUPS = 250
+const AI_CREDIT_USAGE_SOURCES = [CreditUsageSource.AI, CreditUsageSource.CHAT]
+const BASELINE_PLAN_IDS: readonly string[] = [PlanName.FREE, PlanName.FREE_LEGACY, PlanName.APPSUMO]
+const SELF_SERVE_TRIAL_ENDED_REPORT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
+
+export const autumnUtils = {
+    client({ secretKey, customerId }: AutumnClientParams) {
+        const client = new Autumn({ secretKey, failOpen: true })
+        return {
+            check(params: WithoutCustomerId<CheckParams>) {
+                return client.check({ customerId, ...params })
+            },
+            track({ idempotencyKey, ...params }: TrackInput) {
+                return client.track(
+                    { customerId, ...params },
+                    idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined,
+                )
+            },
+            async getCustomer(params?: { expand?: GetCustomerParams['expand'] }) {
+                const customer = await client.customers.get(
+                    { customerId, expand: params?.expand },
+                    { timeoutMs: AUTUMN_GET_CUSTOMER_TIMEOUT_MS },
+                )
+                return autumnUtils.withoutExpiredSelfServeTrialAddOn(customer)
+            },
+            listPlans(params?: ListPlansParams) {
+                return client.plans.list(params)
+            },
+            listSubscriptions(params: WithoutCustomerId<Omit<ListSubscriptionsParams, 'startCursor'>>) {
+                return listAllSubscriptions({ client, params: { customerId, ...params }, startCursor: '' })
+            },
+            aggregateEvents(params: WithoutCustomerId<EventsAggregateParams>) {
+                return client.events.aggregate({ customerId, ...params })
+            },
+            listEvents(params: WithoutCustomerId<EventsListParams>) {
+                return client.events.list({ customerId, ...params }, { timeoutMs: AUTUMN_LIST_EVENTS_TIMEOUT_MS })
+            },
+        }
+    },
+    async loadAutumnCreds(log: FastifyBaseLogger, platformId: string): Promise<ConsoleCustomerCall | null> {
+        const credentials = await platformPlanService(log).getAutumnCredentials(platformId)
+        const { autumnCustomerId, autumnApiKey } = credentials
+        if (edition === ApEdition.CLOUD && isFreeLegacyEligible(credentials)) {
+            rejectedPromiseHandler(autumnUtils.ensureFreeLegacyComped(log, platformId), log)
+        }
+        if (isNil(autumnCustomerId) && isNil(autumnApiKey)) {
+            return null
+        }
+        if (isNil(autumnCustomerId) || isNil(autumnApiKey)) {
+            log.error({ platform: { id: platformId } }, 'Autumn credentials incomplete for an enrolled platform; billing and entitlement calls will silently no-op until repaired')
+            return null
+        }
+        return { autumnCustomerId, autumnApiKey }
+    },
+    async resolveClientForPlatform(log: FastifyBaseLogger, platformId: string) {
+        const creds = await autumnUtils.loadAutumnCreds(log, platformId)
+        if (isNil(creds)) {
+            return null
+        }
+        return autumnUtils.client({ secretKey: creds.autumnApiKey, customerId: creds.autumnCustomerId })
+    },
+    async getCreditUsage(log: FastifyBaseLogger, platformId: string, startDate?: string, endDate?: string): Promise<CreditUsage> {
+        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
+        if (isNil(client)) {
+            return { total: 0, byProject: [] }
+        }
+        const timeRange = !isNil(startDate) && !isNil(endDate)
+            ? { customRange: { start: new Date(startDate).getTime(), end: new Date(endDate).getTime() } }
+            : { range: AggregateEventsRange.Thirtyd }
+        const baseParams = {
+            featureId: ConsumableFeatureId.AP_CREDITS,
+            groupBy: `properties.${PROJECT_ID_PROPERTY}`,
+            maxGroups: CREDIT_USAGE_MAX_GROUPS,
+            ...timeRange,
+        }
+        const [total, ...aiResults] = await Promise.all([
+            client.aggregateEvents(baseParams),
+            ...AI_CREDIT_USAGE_SOURCES.map((source) => client.aggregateEvents({ ...baseParams, filterBy: { source } })),
+        ])
+        return toCreditUsage({ total, aiResults })
+    },
+    async ensureEnrolled(log: FastifyBaseLogger, platformId: string): Promise<void> {
+        const credentials = await platformPlanService(log).getAutumnCredentials(platformId)
+        if (isNil(credentials.autumnCustomerId)) {
+            await distributedLock(log).runExclusive({
+                key: getAutumnEnrollLockKey(platformId),
+                timeoutInSeconds: AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS,
+                fn: async () => {
+                    const { autumnCustomerId } = await platformPlanService(log).getAutumnCredentials(platformId)
+                    if (!isNil(autumnCustomerId)) {
+                        return
+                    }
+                    const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+                    const enrolled = isNil(platformPlan.licenseKey) || isEmpty(platformPlan.licenseKey)
+                        ? await autumnConsole.enrollFree({ email: await autumnUtils.getPlatformOwnerEmail(log, platformId) })
+                        : await autumnConsole.activate({ licenseKey: platformPlan.licenseKey })
+                    await platformPlanService(log).setAutumnCredentials({ platformId, ...enrolled })
+                    await autumnUtils.refreshEntitlements(log, platformId)
+                },
+            })
+        }
+        await autumnUtils.ensureFreeLegacyComped(log, platformId)
+    },
+    async ensureFreeLegacyComped(log: FastifyBaseLogger, platformId: string): Promise<void> {
+        if (edition !== ApEdition.CLOUD) {
+            return
+        }
+        if (!isFreeLegacyEligible(await platformPlanService(log).getAutumnCredentials(platformId))) {
+            return
+        }
+        await distributedStore.runOnceWithin(getFreeLegacyCompAttemptKey(platformId), FREE_LEGACY_COMP_ATTEMPT_TTL_SECONDS, () =>
+            distributedLock(log).runExclusive({
+                key: getAutumnEnrollLockKey(platformId),
+                timeoutInSeconds: AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS,
+                fn: async () => {
+                    const credentials = await platformPlanService(log).getAutumnCredentials(platformId)
+                    const autumnCustomerId = credentials.autumnCustomerId
+                    if (!isFreeLegacyEligible(credentials) || isNil(autumnCustomerId)) {
+                        return
+                    }
+                    const { error } = await tryCatch(() => autumnConsole.compFreeLegacy({ autumnCustomerId }))
+                    if (!isNil(error)) {
+                        log.warn({ error, platform: { id: platformId } }, 'Failed to comp the free legacy plan')
+                        return
+                    }
+                    await autumnUtils.refreshEntitlements(log, platformId)
+                },
+            }),
+        )
+    },
+    async readSelfServeTrialDates(log: FastifyBaseLogger, platformId: string): Promise<SelfServeTrialDates | null> {
+        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
+        if (isNil(client)) {
+            return null
+        }
+        return selfServeTrialUtils.latestTrialDates(await listSelfServeTrialSubscriptions(client))
+    },
+    async refreshEntitlements(log: FastifyBaseLogger, platformId: string): Promise<void> {
+        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
+        if (isNil(client)) {
+            return
+        }
+        const previousPlan = await platformPlanRepo().findOneBy({ platformId })
+        const customer = await client.getCustomer({ expand: ['subscriptions.plan', 'purchases.plan', 'trials_used'] })
+        const entitlements = toAutumnEntitlements(customer)
+        await platformPlanService(log).update({
+            platformId,
+            ...autumnUtils.mapAutumnFeaturesToPlatformPlan(entitlements),
+        })
+        const trialDates = await syncSelfServeTrialDates({ log, platformId, client, customer })
+        if (!isNil(trialDates) && shouldReportTrialEnded(trialDates.endsAt)) {
+            rejectedPromiseHandler(platformPlanTelemetry(log).onSelfServeTrialEnded({
+                platformId,
+                trialEndsAt: trialDates.endsAt,
+                endedAt: trialDates.endsAt,
+            }), log)
+        }
+        await autumnUtils.writeCustomerStateCaches({ platformId, customer, grantedFeatureIds: entitlements.grantedFeatureIds })
+        await autumnUtils.invalidateBillingOverview(platformId)
+        await autumnUtils.provisionLicenseKeyIfPaid(log, platformId, entitlements.planId)
+        const currentSubscription = autumnUtils.selectCurrentBaseSubscription(autumnUtils.toBaseSubscriptions(customer))
+        rejectedPromiseHandler(platformPlanTelemetry(log).onEntitlementsRefreshed({
+            platformId,
+            previousPlan: previousPlan?.plan ?? null,
+            plan: entitlements.planId,
+            trialEndsAt: isNil(currentSubscription?.trialEndsAt) ? null : new Date(currentSubscription.trialEndsAt).toISOString(),
+        }), log)
+    },
+    async provisionLicenseKeyIfPaid(log: FastifyBaseLogger, platformId: string, planId: string | null): Promise<void> {
+        if (isNil(planId) || planId === PlanName.FREE || planId === PlanName.APPSUMO || planId === PlanName.FREE_LEGACY) {
+            return
+        }
+        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        if (!isNil(platformPlan.licenseKey) && !isEmpty(platformPlan.licenseKey)) {
+            return
+        }
+        const creds = await autumnConsole.getCreds(log, platformId)
+        if (isNil(creds)) {
+            return
+        }
+        const { data, error } = await tryCatch(() => autumnConsole.provisionLicenseKey({ ...creds }))
+        if (error) {
+            log.warn({ error, platform: { id: platformId } }, 'Failed to provision license key for self-serve paid customer')
+            return
+        }
+        if (!isNil(data.licenseKey)) {
+            await platformPlanService(log).update({ platformId, licenseKey: data.licenseKey })
+        }
+    },
+    async invalidateBillingOverview(platformId: string): Promise<void> {
+        await distributedStore.delete(getBillingOverviewKey(platformId))
+    },
+    mapAutumnFeaturesToPlatformPlan(entitlements: AutumnEntitlements): PlatformPlanProjection {
+        const teamProjects = entitlements.balances[UnconsumableFeatureId.TEAM_PROJECTS_LIMIT]
+        const users = entitlements.balances[UnconsumableFeatureId.USERS_LIMIT]
+        const activeFlows = entitlements.balances[UnconsumableFeatureId.ACTIVE_FLOWS_LIMIT]
+        const credits = entitlements.balances[ConsumableFeatureId.AP_CREDITS]
+        return {
+            ...toPlatformPlanFlags(entitlements.grantedFeatureIds),
+            plan: entitlements.planId,
+            billedTeamProjectsLimit: toPlatformPlanLimit(teamProjects, 1),
+            usersLimit: toPlatformPlanLimit(users, null),
+            scheduledUsersLimit: isNil(entitlements.activeSelfServeTrialAddOn) ? entitlements.scheduledUsersLimit : null,
+            activeFlowsLimit: toPlatformPlanLimit(activeFlows, null),
+            includedCredits: credits?.granted ?? 0,
+        }
+    },
+    async readBalance({ platformId, featureId }: BalanceCacheRef): Promise<CreditsBalanceCache | null> {
+        return distributedStore.get<CreditsBalanceCache>(balanceCacheKey({ platformId, featureId }))
+    },
+    async writeBalance({ platformId, featureId, balance }: WriteBalanceParams): Promise<void> {
+        await distributedStore.put(balanceCacheKey({ platformId, featureId }), autumnUtils.toBalanceCache(balance), CREDITS_CACHE_TTL_SECONDS)
+    },
+    toGrantedFeatureIds(attachments: AutumnPlanAttachments): ReadonlySet<string> {
+        const plans = toEntitlementPlans(attachments)
+        if (plans.length > 0 && plans.every((plan) => !plan.expanded)) {
+            system.globalLogger().warn('Autumn customer was read without expanded plans, so no entitlement resolves')
+        }
+        return new Set(plans.flatMap((plan) => plan.featureIds))
+    },
+    billingEnforcedFromGrantedFeatureIds(grantedFeatureIds: ReadonlySet<string>): boolean {
+        return grantedFeatureIds.has(FeatureFlagId.BILLING_ENFORCED)
+    },
+    async writeCustomerStateCaches({ platformId, customer, grantedFeatureIds }: WriteCustomerStateCachesParams): Promise<BalanceCacheSnapshot> {
+        const creditsBalance = customer.balances[ConsumableFeatureId.AP_CREDITS]
+        const appSumoBalance = customer.balances[ConsumableFeatureId.APP_SUMO_AI_CREDITS]
+        await Promise.all([
+            distributedStore.put(getBillingEnforcedKey(platformId), autumnUtils.billingEnforcedFromGrantedFeatureIds(grantedFeatureIds), BILLING_ENFORCED_TTL_SECONDS),
+            isNil(creditsBalance) ? Promise.resolve() : autumnUtils.writeBalance({ platformId, featureId: ConsumableFeatureId.AP_CREDITS, balance: creditsBalance }),
+            isNil(appSumoBalance) ? Promise.resolve() : autumnUtils.writeBalance({ platformId, featureId: ConsumableFeatureId.APP_SUMO_AI_CREDITS, balance: appSumoBalance }),
+        ])
+        return {
+            credits: isNil(creditsBalance) ? null : autumnUtils.toBalanceCache(creditsBalance),
+            appSumo: isNil(appSumoBalance) ? null : autumnUtils.toBalanceCache(appSumoBalance),
+        }
+    },
+    toBalanceCache(balance: Balance): CreditsBalanceCache {
+        return {
+            granted: balance.granted,
+            usage: balance.usage,
+            remaining: balance.remaining,
+            unlimited: balance.unlimited,
+            nextResetAt: largestGrantResetAt(balance) ?? balance.nextResetAt,
+            syncedAt: Date.now(),
+        }
+    },
+    withoutExpiredSelfServeTrialAddOn(customer: GetCustomerResponse): GetCustomerResponse {
+        const now = Date.now()
+        if (!customer.subscriptions.some((subscription) => isExpiredSelfServeTrialAddOn({ subscription, now }))) {
+            return customer
+        }
+        return {
+            ...customer,
+            subscriptions: customer.subscriptions.filter((subscription) => !isExpiredSelfServeTrialAddOn({ subscription, now })),
+            balances: Object.entries(customer.balances).reduce<GetCustomerResponse['balances']>((balances, [featureId, balance]) => {
+                const balanceWithoutTrialGrants = removePlanGrantsFromBalance({ balance, planId: PlanName.SELF_SERVE_TRIAL })
+                return isNil(balanceWithoutTrialGrants) ? balances : { ...balances, [featureId]: balanceWithoutTrialGrants }
+            }, {}),
+        }
+    },
+    toBaseSubscriptions(customer: GetCustomerResponse): GetCustomerResponse['subscriptions'] {
+        return customer.subscriptions.filter((subscription) => !subscription.addOn)
+    },
+    selectCurrentBaseSubscription(baseSubscriptions: GetCustomerResponse['subscriptions']): GetCustomerResponse['subscriptions'][number] | undefined {
+        const activeBaseSubscriptions = baseSubscriptions.filter((subscription) => subscription.status === 'active')
+        return activeBaseSubscriptions.find((subscription) => subscription.planId !== PlanName.FREE)
+            ?? activeBaseSubscriptions[0]
+            ?? baseSubscriptions[0]
+    },
+    async getPlatformOwnerEmail(log: FastifyBaseLogger, platformId: string): Promise<string> {
+        const platform = await platformService(log).getOneOrThrow(platformId)
+        const owner = await userService(log).getMetaInformation({ id: platform.ownerId })
+        return owner.email
+    },
+}
+
+export const autumnConsole = {
+    async listPlans({ platformId }: { platformId: string }): Promise<PurchasablePlan[]> {
+        const { plans } = await consoleRequest<{ plans: ConsoleAutumnPlan[] }>({
+            method: 'get',
+            path: '/api/v1/billing/plans',
+            query: { version: apVersionUtil.getCurrentRelease(), platformId },
+        })
+        return plans.map(toPurchasablePlan)
+    },
+    async enrollFree({ email }: { email: string }): Promise<AutumnEnrollmentCredentials> {
+        return consoleRequest<AutumnEnrollmentCredentials>({ path: '/api/v1/billing/enroll', token: consoleSecretIfConfigured(), body: { email } })
+    },
+    async activate({ licenseKey }: { licenseKey: string }): Promise<AutumnEnrollmentCredentials> {
+        return consoleRequest<AutumnEnrollmentCredentials>({ path: '/api/v1/billing/activate', token: licenseKey })
+    },
+    async checkout({ autumnCustomerId, autumnApiKey, planId, successUrl }: ConsoleCustomerCall & { planId: string, successUrl?: string }): Promise<{ paymentUrl: string | null }> {
+        return consoleRequest<{ paymentUrl: string | null }>({
+            path: '/api/v1/billing/checkout',
+            token: autumnApiKey,
+            body: { autumnCustomerId, planId, successUrl },
+        })
+    },
+    async setUnconsumableQuantity({ autumnCustomerId, autumnApiKey, featureId, quantity }: ConsoleCustomerCall & { featureId: string, quantity: number }): Promise<{ paymentUrl: string | null }> {
+        return consoleRequest<{ paymentUrl: string | null }>({
+            path: '/api/v1/billing/unconsumable-feature-quantity',
+            token: autumnApiKey,
+            body: { autumnCustomerId, featureId, quantity },
+        })
+    },
+    async portal({ autumnCustomerId, autumnApiKey, returnUrl }: ConsoleCustomerCall & { returnUrl?: string }): Promise<{ url: string | null }> {
+        return consoleRequest<{ url: string | null }>({
+            path: '/api/v1/billing/portal',
+            token: autumnApiKey,
+            body: { autumnCustomerId, returnUrl },
+        })
+    },
+    async configureAutoTopUp(params: ConsoleCustomerCall & ConfigureAutoTopUpOnConsoleParams): Promise<void> {
+        const { autumnCustomerId, autumnApiKey, ...body } = params
+        await consoleRequest({ path: '/api/v1/billing/auto-topup', token: autumnApiKey, body: { autumnCustomerId, ...body } })
+    },
+    async setupPayment({ autumnCustomerId, autumnApiKey, redirectUrl }: ConsoleCustomerCall & { redirectUrl?: string }): Promise<{ url: string | null }> {
+        return consoleRequest<{ url: string | null }>({
+            path: '/api/v1/billing/setup-payment',
+            token: autumnApiKey,
+            body: { autumnCustomerId, redirectUrl },
+        })
+    },
+    async provisionLicenseKey({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<{ licenseKey: string | null }> {
+        return consoleRequest<{ licenseKey: string | null }>({
+            path: '/api/v1/billing/provision-license-key',
+            token: autumnApiKey,
+            body: { autumnCustomerId },
+        })
+    },
+    async cancel({ autumnCustomerId, autumnApiKey, feedback }: ConsoleCustomerCall & { feedback: CancellationFeedback }): Promise<void> {
+        await consoleRequest({
+            path: '/api/v1/billing/cancel',
+            token: autumnApiKey,
+            body: { autumnCustomerId, reasons: feedback.reasons, comment: feedback.comment, canceledByEmail: feedback.canceledByEmail },
+        })
+    },
+    async reactivate({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<void> {
+        await consoleRequest({ path: '/api/v1/billing/reactivate', token: autumnApiKey, body: { autumnCustomerId } })
+    },
+    async compAppSumo({ log, platformId, action }: { log: FastifyBaseLogger, platformId: string, action: AppSumoAction }): Promise<void> {
+        const creds = await autumnConsole.getCreds(log, platformId)
+        assertNotNullOrUndefined(creds, 'Autumn credentials must exist before applying an AppSumo plan')
+        await consoleRequest({
+            path: '/api/v1/billing/appsumo',
+            token: system.get(AppSystemProp.APPSUMO_TOKEN),
+            body: { autumnCustomerId: creds.autumnCustomerId, action },
+        })
+    },
+    async startSelfServeTrial({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<SelfServeTrialStartOutcome> {
+        const { data, error } = await tryCatch(() => consoleRequest<ConsoleSelfServeTrialStartResponse>({
+            path: '/api/v1/billing/self-serve-trial',
+            token: edition === ApEdition.CLOUD ? consoleSecretOrThrow() : autumnApiKey,
+            body: { autumnCustomerId },
+            expectedErrorStatuses: [StatusCodes.CONFLICT, StatusCodes.FORBIDDEN],
+        }))
+        if (isAxiosError(error) && error.response?.status === StatusCodes.CONFLICT) {
+            return { result: SelfServeTrialStartResult.USED }
+        }
+        if (isAxiosError(error) && error.response?.status === StatusCodes.FORBIDDEN) {
+            return { result: SelfServeTrialStartResult.INELIGIBLE }
+        }
+        if (!isNil(error)) {
+            throw error
+        }
+        assertNotNullOrUndefined(data, 'data')
+        return { result: SelfServeTrialStartResult.STARTED, startedAt: data.startedAt, endsAt: data.endsAt }
+    },
+    async compFreeLegacy({ autumnCustomerId }: { autumnCustomerId: string }): Promise<void> {
+        await consoleRequest({ path: '/api/v1/billing/free-legacy', token: consoleSecretOrThrow(), body: { autumnCustomerId } })
+    },
+    async getCreds(log: FastifyBaseLogger, platformId: string): Promise<ConsoleCustomerCall | null> {
+        return autumnUtils.loadAutumnCreds(log, platformId)
+    },
+}
+
+async function consoleRequest<T>({ path, method = 'post', token, body, query, expectedErrorStatuses = [] }: ConsoleRequestParams): Promise<T> {
+    const url = `${AUTUMN_CONSOLE_URL}${path}`
+    const config: AxiosRequestConfig = {
+        timeout: CONSOLE_REQUEST_TIMEOUT_MS,
+        params: query,
+        headers: isNil(token) ? undefined : { Authorization: `Bearer ${token}` },
+    }
+    const { data: response, error } = await tryCatch(() => method === 'get'
+        ? safeHttp.axios.get<ConsoleEnvelope<T>>(url, config)
+        : safeHttp.axios.post<ConsoleEnvelope<T>>(url, body ?? {}, config))
+    if (!isNil(error)) {
+        if (!isAxiosError(error) || isNil(error.response) || !expectedErrorStatuses.includes(error.response.status)) {
+            system.globalLogger().error({ error, url }, 'Autumn console request failed')
+        }
+        throw error
+    }
+    assertNotNullOrUndefined(response, 'response')
+    return response.data.data
+}
+
+function consoleSecretOrThrow(): string {
+    const secret = consoleSecretIfConfigured()
+    if (isNil(secret)) {
+        throw new Error('CONSOLE_API_SECRET_KEY is not configured')
+    }
+    return secret
+}
+
+function consoleSecretIfConfigured(): string | undefined {
+    const secret = system.get(AppSystemProp.CONSOLE_API_SECRET_KEY)
+    return isNil(secret) || isEmpty(secret) ? undefined : secret
+}
+
+function balanceCacheKey({ platformId, featureId }: BalanceCacheRef): string {
+    return featureId === ConsumableFeatureId.AP_CREDITS
+        ? getCreditsBalanceKey(platformId)
+        : getAppSumoAiCreditsBalanceKey(platformId)
+}
+
+function largestGrantResetAt(balance: Balance): number | null {
+    const resets = (balance.breakdown ?? []).filter((entry) => !isNil(entry.reset?.resetsAt))
+    if (resets.length < 2) {
+        return null
+    }
+    return resets.reduce((largest, entry) => entry.includedGrant > largest.includedGrant ? entry : largest).reset?.resetsAt ?? null
+}
+
+function toPurchasablePlan(plan: ConsoleAutumnPlan): PurchasablePlan {
+    const creditsItem = (plan.items ?? []).find((item) => item.featureId === ConsumableFeatureId.AP_CREDITS && isNil(item.price))
+    const creditTopUpPrice = (plan.items ?? []).find((item) => item.featureId === ConsumableFeatureId.AP_CREDITS && !isNil(item.price))?.price
+    return {
+        id: plan.id,
+        name: plan.name,
+        description: plan.description ?? null,
+        price: plan.price?.amount ?? null,
+        interval: plan.price?.interval ?? null,
+        priceDisplay: plan.price?.display?.primaryText ?? null,
+        baseVariantId: plan.variantDetails?.basePlanId ?? plan.baseVariantId ?? null,
+        includedSeats: (plan.items ?? []).find((item) => item.featureId === UnconsumableFeatureId.USERS_LIMIT)?.included ?? null,
+        includedCredits: creditsItem?.included ?? null,
+        creditsResetInterval: creditsItem?.reset?.interval ?? null,
+        creditTopUp: isNil(creditTopUpPrice?.amount) ? null : { price: creditTopUpPrice.amount, credits: creditTopUpPrice.billingUnits ?? 1 },
+    }
+}
+
+function sumCreditsByProject(response: AggregateEventsResponse): Map<string, number> {
+    const featureId = ConsumableFeatureId.AP_CREDITS
+    const byProjectMap = new Map<string, number>()
+    for (const bin of response.list ?? []) {
+        const grouped = bin.groupedValues?.[featureId] ?? {}
+        for (const [projectId, value] of Object.entries(grouped)) {
+            byProjectMap.set(projectId, (byProjectMap.get(projectId) ?? 0) + value)
+        }
+    }
+    return byProjectMap
+}
+
+function toCreditUsage({ total, aiResults }: { total: AggregateEventsResponse, aiResults: AggregateEventsResponse[] }): CreditUsage {
+    const creditsByProject = sumCreditsByProject(total)
+    const aiCreditsByProject = new Map<string, number>()
+    for (const result of aiResults) {
+        for (const [projectId, value] of sumCreditsByProject(result)) {
+            aiCreditsByProject.set(projectId, (aiCreditsByProject.get(projectId) ?? 0) + value)
+        }
+    }
+    return {
+        total: total.total?.[ConsumableFeatureId.AP_CREDITS]?.sum ?? 0,
+        byProject: [...creditsByProject].map(([projectId, creditsUsed]) => ({
+            projectId,
+            creditsUsed,
+            aiCreditsUsed: aiCreditsByProject.get(projectId) ?? 0,
+        })),
+    }
+}
+
+function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements {
+    const balances: Record<string, AutumnFeatureBalance> = {}
+    for (const [featureId, balance] of Object.entries(customer.balances)) {
+        balances[featureId] = {
+            granted: balance.granted,
+            usage: balance.usage,
+            remaining: balance.remaining,
+            unlimited: balance.unlimited,
+            nextResetAt: balance.nextResetAt,
+        }
+    }
+    // A lifetime plan (e.g. AppSumo) is a one-off `purchase`, not a subscription — the only base subscription.
+    // Resolve from the ACTIVE base subscription (mirroring toBillingInfo): a scheduled future plan (e.g. a
+    // pending end-of-cycle downgrade) also lives in `subscriptions`, and picking it here would mislabel the
+    // customer as already on the plan they only switch to later.
+    const baseSubscriptions = autumnUtils.toBaseSubscriptions(customer)
+    const baseSubscriptionPlanId = autumnUtils.selectCurrentBaseSubscription(baseSubscriptions)?.planId ?? null
+    const purchasedPlanId = (customer.purchases ?? [])
+        .find((purchase) => !isNil(purchase.planId) && purchase.planId !== PlanName.FREE)?.planId ?? null
+    const planId = baseSubscriptionPlanId != null && baseSubscriptionPlanId !== PlanName.FREE
+        ? baseSubscriptionPlanId
+        : purchasedPlanId ?? baseSubscriptionPlanId
+    return {
+        planId,
+        grantedFeatureIds: autumnUtils.toGrantedFeatureIds(customer),
+        balances,
+        scheduledUsersLimit: toScheduledUsersLimit(baseSubscriptions),
+        activeSelfServeTrialAddOn: findActiveSelfServeTrialAddOn(customer),
+    }
+}
+
+function findActiveSelfServeTrialAddOn(customer: GetCustomerResponse): ActiveSelfServeTrialAddOn | null {
+    const now = Date.now()
+    const subscription = customer.subscriptions.find((candidate) =>
+        candidate.planId === PlanName.SELF_SERVE_TRIAL
+        && candidate.status === 'active'
+        && !isNil(candidate.trialEndsAt)
+        && candidate.trialEndsAt > now)
+    if (isNil(subscription) || isNil(subscription.trialEndsAt)) {
+        return null
+    }
+    return { startedAt: subscription.startedAt, endsAt: subscription.trialEndsAt }
+}
+
+function listSelfServeTrialSubscriptions(client: AutumnCustomerClient): Promise<ListSubscriptionsList[]> {
+    return client.listSubscriptions({
+        planId: PlanName.SELF_SERVE_TRIAL,
+        statuses: [ListSubscriptionsStatusRequestBody.Active, ListSubscriptionsStatusRequestBody.Expired],
+    })
+}
+
+async function syncSelfServeTrialDates({ log, platformId, client, customer }: SyncSelfServeTrialDatesParams): Promise<SelfServeTrialDates | null> {
+    const cachedDates = (await selfServeTrialUtils.readCachedTrialDates(platformId))?.dates ?? null
+    if (isNil(cachedDates) && !selfServeTrialUtils.hasHadTrial(customer)) {
+        return null
+    }
+    const { data: subscriptions, error } = await tryCatch(() => listSelfServeTrialSubscriptions(client))
+    if (!isNil(error) || isNil(subscriptions)) {
+        log.warn({ error, platform: { id: platformId } }, 'Failed to list the self-serve trial subscriptions; keeping the cached trial dates')
+        return cachedDates
+    }
+    if (selfServeTrialUtils.wasLatestTrialCancelled(subscriptions)) {
+        await selfServeTrialUtils.deleteCachedTrial(platformId)
+        return null
+    }
+    const dates = selfServeTrialUtils.latestTrialDates(subscriptions)
+    if (isNil(dates)) {
+        return cachedDates
+    }
+    await selfServeTrialUtils.cacheTrialDates({ platformId, dates })
+    return dates
+}
+
+async function listAllSubscriptions({ client, params, startCursor }: ListAllSubscriptionsParams): Promise<ListSubscriptionsList[]> {
+    const page = await client.customers.listSubscriptions({ ...params, startCursor })
+    if (!page.hasMore || isNil(page.nextCursor)) {
+        return page.list
+    }
+    return [...page.list, ...await listAllSubscriptions({ client, params, startCursor: page.nextCursor })]
+}
+
+function shouldReportTrialEnded(endsAt: string): boolean {
+    const msSinceTrialEnded = Date.now() - Date.parse(endsAt)
+    return msSinceTrialEnded >= 0 && msSinceTrialEnded < SELF_SERVE_TRIAL_ENDED_REPORT_WINDOW_MS
+}
+
+function isExpiredSelfServeTrialAddOn({ subscription, now }: IsExpiredSelfServeTrialAddOnParams): boolean {
+    return subscription.planId === PlanName.SELF_SERVE_TRIAL && !isNil(subscription.trialEndsAt) && subscription.trialEndsAt <= now
+}
+
+function removePlanGrantsFromBalance({ balance, planId }: RemovePlanGrantsFromBalanceParams): Balance | null {
+    const breakdown = balance.breakdown ?? []
+    const grantsFromOtherPlans = breakdown.filter((entry) => entry.planId !== planId)
+    if (grantsFromOtherPlans.length === breakdown.length) {
+        return balance
+    }
+    if (grantsFromOtherPlans.length === 0) {
+        return null
+    }
+    return {
+        ...balance,
+        granted: grantsFromOtherPlans.reduce((sum, entry) => sum + entry.includedGrant + entry.prepaidGrant, 0),
+        remaining: grantsFromOtherPlans.reduce((sum, entry) => sum + entry.remaining, 0),
+        usage: grantsFromOtherPlans.reduce((sum, entry) => sum + entry.usage, 0),
+        unlimited: grantsFromOtherPlans.some((entry) => entry.unlimited),
+        breakdown: grantsFromOtherPlans,
+    }
+}
+
+function toEntitlementPlans(attachments: AutumnPlanAttachments): EntitlementPlan[] {
+    const now = Date.now()
+    const attached = [
+        ...attachments.subscriptions.filter((subscription) => subscription.status === 'active'),
+        ...attachments.purchases.filter((purchase) => isNil(purchase.expiresAt) || purchase.expiresAt > now),
+    ].map(toEntitlementPlan)
+    const hasNonBaselinePlan = attached.some((plan) => !plan.addOn && !BASELINE_PLAN_IDS.includes(plan.planId))
+    return attached.filter((plan) => !hasNonBaselinePlan || !BASELINE_PLAN_IDS.includes(plan.planId))
+}
+
+function toEntitlementPlan(attachment: AutumnPlanAttachment): EntitlementPlan {
+    return {
+        planId: attachment.planId,
+        addOn: attachment.plan?.addOn ?? false,
+        expanded: !isNil(attachment.plan),
+        featureIds: (attachment.plan?.items ?? []).map((item) => item.featureId),
+    }
+}
+
+function toPlatformPlanFlags(grantedFeatureIds: ReadonlySet<string>): PlatformPlanFlags {
+    return {
+        tablesEnabled: grantedFeatureIds.has(FeatureFlagId.TABLES_ENABLED),
+        eventStreamingEnabled: grantedFeatureIds.has(FeatureFlagId.EVENT_STREAMING_ENABLED),
+        environmentsEnabled: grantedFeatureIds.has(FeatureFlagId.ENVIRONMENTS_ENABLED),
+        analyticsEnabled: grantedFeatureIds.has(FeatureFlagId.ANALYTICS_ENABLED),
+        showPoweredBy: grantedFeatureIds.has(FeatureFlagId.SHOW_POWERED_BY),
+        auditLogEnabled: grantedFeatureIds.has(FeatureFlagId.AUDIT_LOG_ENABLED),
+        embeddingEnabled: grantedFeatureIds.has(FeatureFlagId.EMBEDDING_ENABLED),
+        aiProvidersEnabled: grantedFeatureIds.has(FeatureFlagId.AI_PROVIDERS_ENABLED),
+        chatEnabled: grantedFeatureIds.has(FeatureFlagId.CHAT_ENABLED),
+        agentsEnabled: grantedFeatureIds.has(FeatureFlagId.AGENTS_ENABLED),
+        workerGroupsEnabled: grantedFeatureIds.has(FeatureFlagId.WORKER_GROUPS_ENABLED),
+        managePiecesEnabled: grantedFeatureIds.has(FeatureFlagId.MANAGE_PIECES_ENABLED),
+        manageTemplatesEnabled: grantedFeatureIds.has(FeatureFlagId.MANAGE_TEMPLATES_ENABLED),
+        customAppearanceEnabled: grantedFeatureIds.has(FeatureFlagId.CUSTOM_APPEARANCE_ENABLED),
+        projectRolesEnabled: grantedFeatureIds.has(FeatureFlagId.PROJECT_ROLES_ENABLED),
+        globalConnectionsEnabled: grantedFeatureIds.has(FeatureFlagId.GLOBAL_CONNECTIONS_ENABLED),
+        customRolesEnabled: grantedFeatureIds.has(FeatureFlagId.CUSTOM_ROLES_ENABLED),
+        apiKeysEnabled: grantedFeatureIds.has(FeatureFlagId.API_KEYS_ENABLED),
+        ssoEnabled: grantedFeatureIds.has(FeatureFlagId.SSO_ENABLED),
+        secretManagersEnabled: grantedFeatureIds.has(FeatureFlagId.SECRET_MANAGERS_ENABLED),
+        scimEnabled: grantedFeatureIds.has(FeatureFlagId.SCIM_ENABLED),
+    }
+}
+
+function toScheduledUsersLimit(baseSubscriptions: GetCustomerResponse['subscriptions']): number | null {
+    const scheduledSubscription = baseSubscriptions.find((subscription) => subscription.status === 'scheduled')
+    const usersLimitItem = (scheduledSubscription?.plan?.items ?? [])
+        .find((item) => item.featureId === UnconsumableFeatureId.USERS_LIMIT)
+    if (isNil(usersLimitItem) || usersLimitItem.unlimited) {
+        return null
+    }
+    return usersLimitItem.included ?? null
+}
+
+function toPlatformPlanLimit(balance: AutumnFeatureBalance | undefined, whenAbsent: number | null): number | null {
+    if (isNil(balance)) {
+        return whenAbsent
+    }
+    if (balance.unlimited) {
+        return null
+    }
+    return balance.granted ?? whenAbsent
+}
+
+type WithoutCustomerId<T> = Omit<T, 'customerId'>
+
+type AutumnCustomerClient = ReturnType<typeof autumnUtils.client>
+
+type SyncSelfServeTrialDatesParams = {
+    log: FastifyBaseLogger
+    platformId: string
+    client: AutumnCustomerClient
+    customer: GetCustomerResponse
+}
+
+type ListAllSubscriptionsParams = {
+    client: Autumn
+    params: Omit<ListSubscriptionsParams, 'startCursor'>
+    startCursor: string
+}
+
+type AutumnClientParams = {
+    secretKey: string
+    customerId: string
+}
+
+type TrackInput = WithoutCustomerId<TrackParams> & {
+    idempotencyKey?: string
+}
+
+type AutumnFeatureBalance = {
+    granted: number | null
+    usage: number
+    remaining: number | null
+    unlimited: boolean
+    nextResetAt: number | null
+}
+
+type AutumnEntitlements = {
+    planId: string | null
+    grantedFeatureIds: ReadonlySet<string>
+    balances: Record<string, AutumnFeatureBalance>
+    scheduledUsersLimit: number | null
+    activeSelfServeTrialAddOn: ActiveSelfServeTrialAddOn | null
+}
+
+type ActiveSelfServeTrialAddOn = {
+    startedAt: number
+    endsAt: number
+}
+
+type IsExpiredSelfServeTrialAddOnParams = {
+    subscription: GetCustomerResponse['subscriptions'][number]
+    now: number
+}
+
+type RemovePlanGrantsFromBalanceParams = {
+    balance: Balance
+    planId: string
+}
+
+type AutumnPlanAttachment = {
+    planId: string
+    plan?: {
+        addOn: boolean
+        items: { featureId: string }[]
+    }
+}
+
+type AutumnPlanAttachments = {
+    subscriptions: (AutumnPlanAttachment & { status: string })[]
+    purchases: (AutumnPlanAttachment & { expiresAt: number | null })[]
+}
+
+type EntitlementPlan = {
+    planId: string
+    addOn: boolean
+    expanded: boolean
+    featureIds: string[]
+}
+
+type WriteCustomerStateCachesParams = {
+    platformId: string
+    customer: GetCustomerResponse
+    grantedFeatureIds: ReadonlySet<string>
+}
+
+type PlatformPlanFlagId = Extract<`${FeatureFlagId}`, keyof PlatformPlanLimits>
+
+type PlatformPlanFlags = Required<Pick<PlatformPlanLimits, PlatformPlanFlagId>>
+
+type NotProjectedFromAutumn =
+    | 'licenseKey'
+    | 'licenseExpiresAt'
+    | 'projectsLimit'
+    | 'dedicatedWorkers'
+    | 'canary'
+    | 'customDomainsEnabled'
+    | 'workerGroupId'
+
+type PlatformPlanProjection = Required<Pick<PlatformPlanLimits, Exclude<keyof PlatformPlanLimits, NotProjectedFromAutumn>>>
+
+type AutumnEnrollmentCredentials = {
+    autumnCustomerId: string
+    autumnApiKey: string
+}
+
+type ConsoleSelfServeTrialStartResponse = {
+    startedAt: string
+    endsAt: string
+}
+
+export enum SelfServeTrialStartResult {
+    STARTED = 'started',
+    USED = 'used',
+    INELIGIBLE = 'ineligible',
+}
+
+export type SelfServeTrialStartOutcome =
+    | { result: SelfServeTrialStartResult.STARTED, startedAt: string, endsAt: string }
+    | { result: SelfServeTrialStartResult.USED }
+    | { result: SelfServeTrialStartResult.INELIGIBLE }
+
+export type ConsoleCustomerCall = {
+    autumnCustomerId: string
+    autumnApiKey: string
+}
+
+type ConfigureAutoTopUpOnConsoleParams =
+    | {
+        featureId: string
+        enabled: true
+        threshold: number
+        quantity: number
+        maxMonthlyTopUps?: number | null
+    }
+    | {
+        featureId: string
+        enabled: false
+    }
+
+type ConsoleAutumnPlan = Awaited<ReturnType<Autumn['plans']['list']>>['list'][number]
+
+type ConsoleEnvelope<T> = {
+    success: boolean
+    data: T
+}
+
+type ConsoleRequestParams = {
+    path: string
+    method?: 'get' | 'post'
+    token?: string
+    body?: unknown
+    query?: Record<string, string>
+    expectedErrorStatuses?: number[]
+}
+
+export type BalanceCacheRef = {
+    platformId: string
+    featureId: ConsumableFeatureId
+}
+
+export type WriteBalanceParams = BalanceCacheRef & {
+    balance: Balance
+}
+
+export type CreditsBalanceCache = {
+    granted: number
+    usage: number
+    remaining: number
+    unlimited: boolean
+    nextResetAt: number | null
+    syncedAt: number
+}
+
+export type BalanceCacheSnapshot = {
+    credits: CreditsBalanceCache | null
+    appSumo: CreditsBalanceCache | null
+}
+

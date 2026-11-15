@@ -10,18 +10,23 @@ import {
   ApEdition,
   FlowActionType,
   flowPieceUtil,
+  PieceAudienceFilter,
   PieceOptionRequest,
   PlatformWithoutSensitiveData,
   FlowTriggerType,
   ApFlagId,
   ApEnvironment,
+  SuggestionType,
   TelemetryEventName,
 } from '@activepieces/shared';
 import {
   QueryClient,
+  QueryKey,
   useMutation,
+  usePrefetchQuery,
   useQueries,
   useQuery,
+  UseQueryResult,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo } from 'react';
@@ -69,16 +74,29 @@ type UsePieceProps = {
   name: string;
   version?: string;
   enabled?: boolean;
+  projectId?: string;
+  audience?: PieceAudienceFilter;
 };
 
-type UseMultiplePiecesProps = {
+type UsePieceNamesProps = {
   names: string[];
 };
 
+type UseMultiplePiecesProps = UsePieceNamesProps & {
+  audience?: PieceAudienceFilter;
+};
+
 type UsePiecesProps = {
+  projectId?: string;
   searchQuery?: string;
   includeHidden?: boolean;
   isTableQuery?: boolean;
+  skipProjectFilter?: boolean;
+  suggestionType?: SuggestionType;
+  enabled?: boolean;
+  keepPreviousResults?: boolean;
+};
+type UsePrefetchPiecesProps = {
   skipProjectFilter?: boolean;
 };
 type UsePiecesSearchProps = {
@@ -86,15 +104,48 @@ type UsePiecesSearchProps = {
   enabled?: boolean;
   type: 'action' | 'trigger';
   shouldCaptureEvent: boolean;
+  hiddenStepTypes?: FlowActionType[];
 };
 
+export const pieceQueryKey = ({
+  name,
+  version,
+  locale,
+  projectId,
+  audience,
+}: {
+  name: string;
+  version: string | undefined;
+  locale: string;
+  projectId?: string;
+  audience?: PieceAudienceFilter;
+}): QueryKey => ['piece', name, version, locale, projectId, audience];
+
 export const piecesHooks = {
-  usePiece: ({ name, version, enabled = true }: UsePieceProps) => {
+  usePiece: ({
+    name,
+    version,
+    enabled = true,
+    projectId,
+    audience,
+  }: UsePieceProps) => {
     const { i18n } = useTranslation();
     const query = useQuery<PieceMetadataModel, Error>({
-      queryKey: ['piece', name, version, i18n.language],
+      queryKey: pieceQueryKey({
+        name,
+        version,
+        locale: i18n.language,
+        projectId,
+        audience,
+      }),
       queryFn: () =>
-        piecesApi.get({ name, version, locale: i18n.language as LocalesEnum }),
+        piecesApi.get({
+          name,
+          version,
+          locale: i18n.language as LocalesEnum,
+          projectId,
+          audience,
+        }),
       staleTime: Infinity,
       enabled,
       retry: (failureCount, error) => {
@@ -125,6 +176,7 @@ export const piecesHooks = {
       name,
       version: exactVersion,
       enabled,
+      audience: PieceAudienceFilter.ALL,
     });
     return {
       pieceModel: pieceQuery.pieceModel,
@@ -134,22 +186,24 @@ export const piecesHooks = {
       refetch: pieceQuery.refetch,
     };
   },
-  useMultiplePieces: ({ names }: UseMultiplePiecesProps) => {
+  useMultiplePieces: ({ names, audience }: UseMultiplePiecesProps) => {
     const { i18n } = useTranslation();
     return useQueries({
-      queries: names.map((name) => ({
-        queryKey: ['piece', name, undefined, i18n.language],
-        queryFn: () =>
-          piecesApi.get({
-            name,
-            version: undefined,
-            locale: i18n.language as LocalesEnum,
-          }),
-        staleTime: Infinity,
-      })),
+      queries: names.map((name) =>
+        latestPieceQueryOptions({ name, language: i18n.language, audience }),
+      ),
     });
   },
-  usePieceSummariesByNames: ({ names }: UseMultiplePiecesProps) => {
+  usePiecesByName: ({ names, audience }: UseMultiplePiecesProps) => {
+    const { i18n } = useTranslation();
+    return useQueries({
+      queries: names.map((name) =>
+        latestPieceQueryOptions({ name, language: i18n.language, audience }),
+      ),
+      combine: piecesByNameFromResults,
+    });
+  },
+  usePieceSummariesByNames: ({ names }: UsePieceNamesProps) => {
     const { pieces, isLoading } = piecesHooks.usePieces({});
     const summaries = useMemo(() => {
       if (!pieces) return [];
@@ -169,41 +223,49 @@ export const piecesHooks = {
     return { summary, isLoading };
   },
   usePieces: ({
+    projectId,
     searchQuery,
     includeHidden = false,
     isTableQuery = false,
     skipProjectFilter = false,
+    suggestionType,
+    enabled = true,
+    keepPreviousResults = false,
   }: UsePiecesProps) => {
     const { i18n } = useTranslation();
-    const projectId = skipProjectFilter
-      ? undefined
-      : authenticationSession.getProjectId()!;
     const query = useQuery<PieceMetadataModelSummary[], Error>({
-      queryKey: [
-        isTableQuery ? 'pieces-table' : 'pieces',
+      ...piecesQueryOptions({
+        projectId,
         searchQuery,
         includeHidden,
+        isTableQuery,
         skipProjectFilter,
-        projectId,
-        i18n.language,
-      ],
-      queryFn: () =>
-        piecesApi.list({
-          projectId,
-          searchQuery,
-          includeHidden,
-          locale: i18n.language as LocalesEnum,
-        }),
-      staleTime: searchQuery ? 0 : Infinity,
-      meta: isTableQuery
-        ? { showErrorDialog: true, loadSubsetOptions: {} }
-        : undefined,
+        suggestionType,
+        locale: i18n.language as LocalesEnum,
+        keepPreviousResults,
+      }),
+      enabled,
     });
     return {
       pieces: query.data,
       isLoading: query.isLoading,
+      isError: query.isError,
+      error: query.error,
       refetch: query.refetch,
     };
+  },
+  usePrefetchPieces: ({
+    skipProjectFilter = false,
+  }: UsePrefetchPiecesProps) => {
+    const { i18n } = useTranslation();
+    usePrefetchQuery(
+      piecesQueryOptions({
+        includeHidden: false,
+        isTableQuery: false,
+        skipProjectFilter,
+        locale: i18n.language as LocalesEnum,
+      }),
+    );
   },
   usePiecesSearch: (
     props: UsePiecesSearchProps,
@@ -226,7 +288,12 @@ export const piecesHooks = {
       };
     }
     const piecesMetadataWithoutEmptySuggestions =
-      filterOutPiecesWithNoSuggestions(metadata);
+      filterOutPiecesWithNoSuggestions(metadata).filter(
+        (stepMetadata) =>
+          !(props.hiddenStepTypes ?? []).some(
+            (hiddenType) => hiddenType === stepMetadata.type,
+          ),
+      );
 
     const pinnedPieces = getPinnedPieces(
       piecesMetadataWithoutEmptySuggestions,
@@ -430,7 +497,7 @@ export const piecesHooks = {
       queryFn: async () => {
         const appConnection = (
           await appConnectionsApi.list({
-            pieceName,
+            pieceName: [pieceName],
             limit: 1,
             projectId: authenticationSession.getProjectId()!,
           })
@@ -532,6 +599,12 @@ const getExploreTabContent = (
   const loopPiece = queryResult.find(
     (piece) => piece.type === FlowActionType.LOOP_ON_ITEMS,
   );
+  const aiRouterPiece = queryResult.find(
+    (piece) => piece.type === FlowActionType.AI_ROUTER,
+  );
+  const processInBatchesPiece = queryResult.find(
+    (piece) => piece.type === FlowActionType.PROCESS_IN_BATCHES,
+  );
 
   if (highlightedPieces.length > 0) {
     hightlightedPiecesCategory.metadata.push(...highlightedPieces);
@@ -540,12 +613,22 @@ const getExploreTabContent = (
   if (branchPiece) {
     hightlightedPiecesCategory.metadata.splice(0, 0, branchPiece);
   }
+  if (aiRouterPiece) {
+    hightlightedPiecesCategory.metadata.splice(1, 0, aiRouterPiece);
+  }
 
   if (codePiece) {
     hightlightedPiecesCategory.metadata.splice(3, 0, codePiece);
   }
   if (loopPiece) {
     hightlightedPiecesCategory.metadata.splice(5, 0, loopPiece);
+  }
+  if (processInBatchesPiece) {
+    hightlightedPiecesCategory.metadata.splice(
+      loopPiece ? 6 : 5,
+      0,
+      processInBatchesPiece,
+    );
   }
   if (pinnedPieces.length > 0) {
     hightlightedPiecesCategory.metadata = [
@@ -556,6 +639,46 @@ const getExploreTabContent = (
 
   return [popularCategory, hightlightedPiecesCategory];
 };
+
+function latestPieceQueryOptions({
+  name,
+  language,
+  audience,
+}: {
+  name: string;
+  language: string;
+  audience?: PieceAudienceFilter;
+}) {
+  return {
+    queryKey: pieceQueryKey({
+      name,
+      version: undefined,
+      locale: language,
+      audience,
+    }),
+    queryFn: () =>
+      piecesApi.get({
+        name,
+        version: undefined,
+        locale: Object.values(LocalesEnum).find(
+          (locale) => locale === language,
+        ),
+        audience,
+      }),
+    staleTime: Infinity,
+  };
+}
+
+function piecesByNameFromResults(
+  results: UseQueryResult<PieceMetadataModel>[],
+): Map<string, PieceMetadataModel> {
+  return new Map(
+    results
+      .map((result) => result.data)
+      .filter((piece) => piece !== undefined)
+      .map((piece) => [piece.name, piece]),
+  );
+}
 
 function invalidatePieceCaches(queryClient: QueryClient): Promise<void[]> {
   const pieceDerivedQueryKeys = [
@@ -572,3 +695,63 @@ function invalidatePieceCaches(queryClient: QueryClient): Promise<void[]> {
 }
 
 export const pieceCacheUtils = { invalidatePieceCaches };
+
+function piecesQueryOptions({
+  projectId,
+  searchQuery,
+  includeHidden,
+  isTableQuery,
+  skipProjectFilter,
+  suggestionType,
+  locale,
+  keepPreviousResults = false,
+}: {
+  projectId?: string;
+  searchQuery?: string;
+  includeHidden: boolean;
+  isTableQuery: boolean;
+  skipProjectFilter: boolean;
+  suggestionType?: SuggestionType;
+  locale: LocalesEnum;
+  keepPreviousResults?: boolean;
+}) {
+  const queriedProjectId = skipProjectFilter
+    ? undefined
+    : projectId ?? authenticationSession.getProjectId() ?? undefined;
+  return {
+    queryKey: [
+      isTableQuery ? 'pieces-table' : 'pieces',
+      queriedProjectId,
+      searchQuery,
+      includeHidden,
+      skipProjectFilter,
+      suggestionType,
+      locale,
+    ],
+    queryFn: () =>
+      piecesApi.list({
+        projectId: queriedProjectId,
+        searchQuery,
+        includeHidden,
+        suggestionType,
+        locale,
+      }),
+    staleTime: searchQuery ? SEARCH_RESULTS_STALE_TIME_MS : Infinity,
+    ...(keepPreviousResults
+      ? {
+          placeholderData: (
+            previousPieces: PieceMetadataModelSummary[] | undefined,
+            previousQuery: { queryKey: QueryKey } | undefined,
+          ) =>
+            previousQuery?.queryKey[PROJECT_ID_KEY_INDEX] === queriedProjectId
+              ? previousPieces
+              : undefined,
+        }
+      : {}),
+  };
+}
+
+const SEARCH_RESULTS_STALE_TIME_MS = 5 * 60 * 1000;
+const PROJECT_ID_KEY_INDEX = 1;
+
+export const pieceQueryOptions = { latest: latestPieceQueryOptions };

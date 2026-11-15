@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property, isNil } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { bitlyAuth } from '../common/auth';
 import { bitlyApiCall } from '../common/client';
@@ -9,6 +9,7 @@ const LAST_BITLINK_IDS_KEY = 'bitly-last-bitlink-ids';
 export const newBitlinkCreatedTrigger = createTrigger({
   auth: bitlyAuth,
   name: 'new_bitlink_created',
+  classification: 'READ',
   displayName: 'New Bitlink Created',
   description: 'Fires when a new Bitlink is created.',
   aiMetadata: {
@@ -69,6 +70,10 @@ export const newBitlinkCreatedTrigger = createTrigger({
           archived: context.propsValue.includeArchived ? 'both' : 'off',
         },
       });
+
+      if (context.isRepublish && !isNil(await context.store.get(LAST_BITLINK_IDS_KEY))) {
+        return;
+      }
 
       const linkIds = response.links.map((link) => link.id);
       await context.store.put<string[]>(LAST_BITLINK_IDS_KEY, linkIds);

@@ -23,6 +23,7 @@ const webhookSetupMarkdown = `**Setup Instructions:**
 export const newMessage = createTrigger({
   auth: kapsoAuth,
   name: 'new_message_received',
+  classification: 'READ',
   displayName: 'New Message Received',
   description:
     'Triggers when a new WhatsApp message is received.',

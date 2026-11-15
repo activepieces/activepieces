@@ -70,6 +70,7 @@ async function signAwsRequest({
 export const customApiCall = createAction({
   audience: 'human',
   name: 'custom_api_call',
+  classification: 'WRITE',
   displayName: 'Custom API Call',
   description:
     'Make a custom API call to any AWS Bedrock endpoint. Requests are automatically signed with AWS Signature V4.',
@@ -147,7 +148,7 @@ export const customApiCall = createAction({
     if (isOidcAuth(authProps)) {
       creds = await getTemporaryCredentials({ auth: authProps, server: context.server });
     } else {
-      creds = { accessKeyId: authProps.accessKeyId, secretAccessKey: authProps.secretAccessKey };
+      creds = { accessKeyId: authProps.accessKeyId, secretAccessKey: authProps.secretAccessKey, sessionToken: authProps.sessionToken };
     }
 
     const baseUrl = `https://${service}.${region}.amazonaws.com`;

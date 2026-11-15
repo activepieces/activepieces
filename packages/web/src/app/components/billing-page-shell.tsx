@@ -1,0 +1,84 @@
+import { isNil } from '@activepieces/core-utils';
+import {
+  ApEdition,
+  ApFlagId,
+  PlatformBillingInformation,
+} from '@activepieces/shared';
+import { t } from 'i18next';
+import { ReactNode } from 'react';
+
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { LoadingSpinner } from '@/components/custom/spinner';
+import { billingQueries, enterpriseDocs } from '@/features/billing';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
+
+import { LockedFeatureGuard } from './locked-feature-guard';
+
+export function BillingPageShell({
+  lockTitle,
+  children,
+}: BillingPageShellProps) {
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+
+  return (
+    <LockedFeatureGuard
+      featureKey="BILLING"
+      locked={edition === ApEdition.COMMUNITY}
+      lockTitle={lockTitle}
+      lockDescription={t(
+        'Switch to the Enterprise edition to access billing and usage management.',
+      )}
+      guide={{
+        url: enterpriseDocs.switchToEnterpriseUrl,
+        label: t('How to switch to the Enterprise edition'),
+      }}
+      showContactSales={false}
+    >
+      <BillingPageContent>{children}</BillingPageContent>
+    </LockedFeatureGuard>
+  );
+}
+
+function BillingPageContent({ children }: BillingPageContentProps) {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const {
+    data: info,
+    isError,
+    refetch,
+  } = billingQueries.usePlatformSubscription(platform.id);
+
+  if (isNil(info)) {
+    return (
+      <div className="h-full flex items-center justify-center w-full">
+        {isError ? (
+          <DataFetchErrorState
+            entity={t('billing information')}
+            onRetry={refetch}
+          />
+        ) : (
+          <LoadingSpinner />
+        )}
+      </div>
+    );
+  }
+
+  return <>{children({ platform, info })}</>;
+}
+
+type CurrentPlatform = ReturnType<
+  typeof platformHooks.useCurrentPlatform
+>['platform'];
+
+type BillingPageShellRenderParams = {
+  platform: CurrentPlatform;
+  info: PlatformBillingInformation;
+};
+
+type BillingPageContentProps = {
+  children: (params: BillingPageShellRenderParams) => ReactNode;
+};
+
+type BillingPageShellProps = BillingPageContentProps & {
+  lockTitle: string;
+};

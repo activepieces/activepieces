@@ -1,21 +1,23 @@
 import { ProjectRole } from '@activepieces/core-utils'
-import { ApEdition, DefaultProjectRole, InvitationStatus, InvitationType, OtpType, PlatformRole, Principal, PrincipalType, ProjectType, UserStatus } from '@activepieces/shared'
+import { safeHttp } from '@activepieces/server-utils'
+import { ApEdition, DefaultProjectRole, InvitationStatus, InvitationType, OtpType, PlatformRole, PrincipalType, ProjectType, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { Mock } from 'vitest'
+import { signupNames } from '../../../../src/app/authentication/lib/signup-names'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
-import { jwtUtils } from '../../../../src/app/helper/jwt-utils'
 import { system } from '../../../../src/app/helper/system/system'
-import { decodeToken } from '../../../helpers/auth'
+import { decodeToken, generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import {
     CLOUD_PLATFORM_ID,
     createMockPlatform,
     createMockPlatformPlan,
     createMockProject,
+    createMockUser,
     createMockUserIdentity,
     createMockUserInvitation,
     mockAndSaveBasicSetup,
@@ -61,6 +63,38 @@ beforeEach(async () => {
 })
 describe('Authentication API', () => {
     describe('Sign up Endpoint', () => {
+        it('answers a zerobounce-refused address exactly like an unverified sign-up, and creates nothing', async () => {
+            await mockAndSaveBasicSetup({
+                platform: { id: CLOUD_PLATFORM_ID, emailAuthEnabled: true },
+                plan: { ssoEnabled: false },
+            })
+            const mockSignUpRequest = createMockSignUpRequest()
+            const email = mockSignUpRequest.email.toLocaleLowerCase().trim()
+            const answer = vi.spyOn(safeHttp.axios, 'get')
+                .mockResolvedValue({ data: { status: 'do_not_mail', sub_status: 'disposable' } })
+            process.env.AP_ZEROBOUNCE_API_KEY = 'test-api-key'
+
+            try {
+                const response = await app?.inject({
+                    method: 'POST',
+                    url: '/api/v1/authentication/sign-up',
+                    body: mockSignUpRequest,
+                })
+
+                expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+                expect(response?.json()).toEqual({
+                    code: 'EMAIL_IS_NOT_VERIFIED',
+                    params: { email },
+                })
+                const identity = await databaseConnection().getRepository('user_identity').findOneBy({ email })
+                expect(identity).toBeNull()
+            }
+            finally {
+                delete process.env.AP_ZEROBOUNCE_API_KEY
+                answer.mockRestore()
+            }
+        })
+
         it('Create new user for the cloud user and then ask to verify email if email is not verified', async () => {
             const edition = system.getEdition()
             await mockAndSaveBasicSetup({
@@ -469,7 +503,7 @@ describe('Authentication API', () => {
             expect(responseBody?.code).toBe('INVALID_CREDENTIALS')
         })
 
-        it('Onboarding response if user status is INACTIVE', async () => {
+        it('Refuses a deactivated member instead of starting them over', async () => {
             // arrange
             const mockEmail = faker.internet.email()
             const mockPassword = 'password'
@@ -523,13 +557,8 @@ describe('Authentication API', () => {
             const responseBody = response?.json()
 
             // assert
-            // In non-cloud editions, the sign-in fails with FORBIDDEN because the platform
-            // is not found via Host header resolution. In cloud edition, it returns onboarding response for the user so he can create new platform.
-            expect([StatusCodes.OK]).toContain(response?.statusCode)
-            expect(responseBody?.token).toBeDefined()
-            const decoded = jwtUtils.decode<Principal>({ jwt: responseBody?.token })
-            expect(decoded.payload.type).toBe(PrincipalType.ONBOARDING)
-
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(responseBody?.code).toBe('USER_IS_INACTIVE')
         })
 
         it('Fails If the email auth is not enabled', async () => {
@@ -627,14 +656,62 @@ describe('Authentication API', () => {
 
             expect(responseBody?.code).toBe('DOMAIN_NOT_ALLOWED')
         })
+
+        it('Signs in when the allowed domain differs only in case', async () => {
+            const mockPlatformId = faker.string.nanoid()
+            const mockPlatformDomain = faker.internet.domainName().toLowerCase()
+
+            await mockAndSaveBasicSetup({
+                platform: {
+                    id: mockPlatformId,
+                    allowedAuthDomains: [mockPlatformDomain.toUpperCase()],
+                    enforceAllowedAuthDomains: true,
+                    emailAuthEnabled: true,
+                },
+                plan: {
+                    ssoEnabled: true,
+                },
+            })
+            const rawPassword = faker.internet.password()
+            const { mockUserIdentity } = await mockBasicUser({
+                user: {
+                    status: UserStatus.ACTIVE,
+                    platformId: mockPlatformId,
+                    platformRole: PlatformRole.ADMIN,
+                },
+                userIdentity: {
+                    email: `${faker.internet.username().toLowerCase()}@${mockPlatformDomain}`,
+                    password: rawPassword,
+                    verified: true,
+                },
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/sign-in',
+                headers: {
+                    Host: mockPlatformDomain,
+                },
+                body: createMockSignInRequest({
+                    email: mockUserIdentity.email,
+                    password: rawPassword,
+                }),
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
     })
 
 
     async function getOnboardingToken(): Promise<string> {
         const password = faker.internet.password()
+        const email = faker.internet.email().toLowerCase()
         const mockUserIdentity = createMockUserIdentity({
+            email,
             password,
             verified: true,
+            firstName: signupNames.firstNameFromEmail(email),
+            lastName: '',
         })
         await db.save('user_identity', mockUserIdentity)
 
@@ -698,6 +775,79 @@ describe('Authentication API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('Rejects a user who already owns a platform', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const token = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+            const platformCountBefore = await databaseConnection().getRepository('platform').count()
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/platforms',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Second Platform' },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(await databaseConnection().getRepository('platform').count()).toBe(platformCountBefore)
+        })
+
+        it('Lets a member who owns no platform create one', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUserIdentity, mockUser } = await mockBasicUser({
+                user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER },
+            })
+            const token = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUser.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/platforms',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'My Own Platform' },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const created = await databaseConnection().getRepository('platform').findOneByOrFail({ id: response?.json().platformId })
+            const owner = await databaseConnection().getRepository('user').findOneByOrFail({ id: created.ownerId })
+            expect(owner.identityId).toBe(mockUserIdentity.id)
+        })
+
+        it('Lets a user retry after a creation that stopped before linking the owner', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUserIdentity, mockUser } = await mockBasicUser({
+                user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER },
+            })
+            const unlinkedOwner = createMockUser({
+                identityId: mockUserIdentity.id,
+                platformId: null,
+                platformRole: PlatformRole.ADMIN,
+                status: UserStatus.ACTIVE,
+            })
+            await databaseConnection().getRepository('user').save(unlinkedOwner)
+            await databaseConnection().getRepository('platform').save(createMockPlatform({ ownerId: unlinkedOwner.id }))
+            const token = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUser.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/platforms',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Retried Platform' },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
         })
     })
 })

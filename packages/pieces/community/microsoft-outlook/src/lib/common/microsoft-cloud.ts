@@ -3,7 +3,7 @@ import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 const COMMERCIAL_LOGIN_HOST = 'login.microsoftonline.com';
 const GOV_LOGIN_HOST = 'login.microsoftonline.us';
 
-const DELEGATED_SCOPE = 'Mail.ReadWrite Mail.Send Calendars.Read offline_access User.Read';
+const DELEGATED_SCOPE = 'Mail.ReadWrite Mail.Send Calendars.Read offline_access User.Read openid email profile';
 const APP_ONLY_COMMERCIAL_SCOPE = 'https://graph.microsoft.com/.default';
 const APP_ONLY_GOV_SCOPE = 'https://graph.microsoft.us/.default';
 

@@ -24,6 +24,7 @@ import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres
 import { AddMetadataFieldToFlowTemplates1744780800000 } from '../ee/database/migrations/postgres/1744780800000-AddMetadataFieldToFlowTemplates'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { BackgroundMigration } from './background-migration'
 import { commonProperties } from './database-connection'
 import { Migration } from './migration'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
@@ -406,7 +407,71 @@ import { AddActiveFlowsLimitToProjectPlan1814000000000 } from './migration/postg
 import { AddSampleDataFlowIdIndexToFile1815000000000 } from './migration/postgres/1815000000000-AddSampleDataFlowIdIndexToFile'
 import { AddTeamsBotInstallation1816000000000 } from './migration/postgres/1816000000000-AddTeamsBotInstallation'
 import { AddUserChatMemory1817000000000 } from './migration/postgres/1817000000000-AddUserChatMemory'
+import { AddAutumnBillingColumnsToPlatformPlan1818000000000 } from './migration/postgres/1818000000000-AddAutumnBillingColumnsToPlatformPlan'
+import { AddCellCascadeIndices1818000000000 } from './migration/postgres/1818000000000-AddCellCascadeIndices'
 import { AddFieldPosition1818000000000 } from './migration/postgres/1818000000000-AddFieldPosition'
+import { AddAgentConversationSource1819000000000 } from './migration/postgres/1819000000000-AddAgentConversationSource'
+import { DropPieceTags1819000000000 } from './migration/postgres/1819000000000-DropPieceTags'
+import { AddAuditEventPlatformIdCreatedIdIndex1820000000000 } from './migration/postgres/1820000000000-AddAuditEventPlatformIdCreatedIdIndex'
+import { AddAgentConversationFlowStepRetentionIndex1821000000000 } from './migration/postgres/1821000000000-AddAgentConversationFlowStepRetentionIndex'
+import { AddWaitpointSignals1821000000000 } from './migration/postgres/1821000000000-AddWaitpointSignals'
+import { RenameChatTablesToAgent1822000000000 } from './migration/postgres/1822000000000-RenameChatTablesToAgent'
+import { AddRenamedChatTableCompatViews1823000000000 } from './migration/postgres/1823000000000-AddRenamedChatTableCompatViews'
+import { AddAttemptsToOtp1824000000000 } from './migration/postgres/1824000000000-AddAttemptsToOtp'
+import { AddAgentTable1825000000000 } from './migration/postgres/1825000000000-AddAgentTable'
+import { AddAgentIdToAgentConversation1826000000000 } from './migration/postgres/1826000000000-AddAgentIdToAgentConversation'
+import { AddVersionToOtp1827000000000 } from './migration/postgres/1827000000000-AddVersionToOtp'
+import { DropChatbot1828000000000 } from './migration/postgres/1828000000000-DropChatbot'
+import { AddFilePlatformIdIndex1829000000000 } from './migration/postgres/1829000000000-AddFilePlatformIdIndex'
+import { AddAiProviderScopes1830000000000 } from './migration/postgres/1830000000000-AddAiProviderScopes'
+import { AddChatPersonalization1831000000000 } from './migration/postgres/1831000000000-AddChatPersonalization'
+import { BackfillChatPersonalizationForExistingUsers1832000000000 } from './migration/postgres/1832000000000-BackfillChatPersonalizationForExistingUsers'
+import { ClearRoleFromCompanyPersonalization1833000000000 } from './migration/postgres/1833000000000-ClearRoleFromCompanyPersonalization'
+import { AddAutoCreatePersonalProjectsToPlatform1834000000000 } from './migration/postgres/1834000000000-AddAutoCreatePersonalProjectsToPlatform'
+import { WidenMcpOAuthState1835000000000 } from './migration/postgres/1835000000000-WidenMcpOAuthState'
+import { DropTeamsBotInstallation1836000000000 } from './migration/postgres/1836000000000-DropTeamsBotInstallation'
+import { AddAiProviderStatus1837000000000 } from './migration/postgres/1837000000000-AddAiProviderStatus'
+import { AddMcpOAuthTokenLastUsedAndClientKey1838000000000 } from './migration/postgres/1838000000000-AddMcpOAuthTokenLastUsedAndClientKey'
+import { AddFlowProjectIdExternalIdUniqueIndex1839000000000 } from './migration/postgres/1839000000000-AddFlowProjectIdExternalIdUniqueIndex'
+import { AddFlowApprovalWorkflow1840000000000 } from './migration/postgres/1840000000000-AddFlowApprovalWorkflow'
+import { AddPlatformConfiguration1841000000000 } from './migration/postgres/1841000000000-AddPlatformConfiguration'
+import { AddAgentRunsIndex1842000000000 } from './migration/postgres/1842000000000-AddAgentRunsIndex'
+import { AddAgentConversationFlowRunId1843000000000 } from './migration/postgres/1843000000000-AddAgentConversationFlowRunId'
+import { AddMcpActivity1844000000000 } from './migration/postgres/1844000000000-AddMcpActivity'
+import { AddMaxBarrierSignalsToPlatformConfiguration1845000000000 } from './migration/postgres/1845000000000-AddMaxBarrierSignalsToPlatformConfiguration'
+import { NullOrphanFolderReferences1846000000000 } from './migration/postgres/1846000000000-NullOrphanFolderReferences'
+import { IndexWaitpointLookups1847000000000 } from './migration/postgres/1847000000000-IndexWaitpointLookups'
+import { AddAgentConversationAiCredits1850000000000 } from './migration/postgres/1850000000000-AddAgentConversationAiCredits'
+import { AddMcpOAuthCodeNonce1851000000000 } from './migration/postgres/1851000000000-AddMcpOAuthCodeNonce'
+import { UniqueProjectRoleNamePerPlatform1852000000000 } from './migration/postgres/1852000000000-UniqueProjectRoleNamePerPlatform'
+import { FlowExternalIdUniqueIgnoresDeleting1855000000000 } from './migration/postgres/1855000000000-FlowExternalIdUniqueIgnoresDeleting'
+import { AddFlowTombstoneIndex1856000000000 } from './migration/postgres/1856000000000-AddFlowTombstoneIndex'
+import { AddWaitpointDeadLetteredAt1857000000000 } from './migration/postgres/1857000000000-AddWaitpointDeadLetteredAt'
+import { AddAgentFolderId1858000000000 } from './migration/postgres/1858000000000-AddAgentFolderId'
+import { AddPlatformModelTier1859000000000 } from './migration/postgres/1859000000000-AddPlatformModelTier'
+import { AddPieceSetRequiredActions1860000000000 } from './migration/postgres/1860000000000-AddPieceSetRequiredActions'
+import { AddEventDestinationEnabledAndFormat1862000000000 } from './migration/postgres/1862000000000-AddEventDestinationEnabledAndFormat'
+import { AddEventDestinationHeaders1863000000000 } from './migration/postgres/1863000000000-AddEventDestinationHeaders'
+import { AddPlatformTierFastAndConversationTier1864000000000 } from './migration/postgres/1864000000000-AddPlatformTierFastAndConversationTier'
+import { AddWorkerGroupIdToFlow1864000000000 } from './migration/postgres/1864000000000-AddWorkerGroupIdToFlow'
+import { AddAuditLogRetentionDaysToPlatform1865000000000 } from './migration/postgres/1865000000000-AddAuditLogRetentionDaysToPlatform'
+import { AddAiSpecificModelsVisibleToPlatformConfiguration1866000000000 } from './migration/postgres/1866000000000-AddAiSpecificModelsVisibleToPlatformConfiguration'
+import { AddAgentTask1867000000000 } from './migration/postgres/1867000000000-AddAgentTask'
+import { AddProviderConfigIdToAgentConversation1868000000000 } from './migration/postgres/1868000000000-AddProviderConfigIdToAgentConversation'
+import { DropChatRolloutUserTable1870000000000 } from './migration/postgres/1870000000000-DropChatRolloutUserTable'
+import { AddBarrierChildAttribution1871000000000 } from './migration/postgres/1871000000000-AddBarrierChildAttribution'
+import { AddPieceTranslationTable1873000000000 } from './migration/postgres/1873000000000-AddPieceTranslationTable'
+import { AddDefaultChatModelToPlatformConfiguration1875000000000 } from './migration/postgres/1875000000000-AddDefaultChatModelToPlatformConfiguration'
+import { AddAgentConversationWaitpointId1876000000000 } from './migration/postgres/1876000000000-AddAgentConversationWaitpointId'
+import { AddIsDefaultToProject1877000000000 } from './migration/postgres/1877000000000-AddIsDefaultToProject'
+import { AddAiUsageTables1878000000000 } from './migration/postgres/1878000000000-AddAiUsageTables'
+import { AddReplaceAppConnectionPermission1879000000000 } from './migration/postgres/1879000000000-AddReplaceAppConnectionPermission'
+import { AddImportNudgeShownAtToUserMemory1880000000000 } from './migration/postgres/1880000000000-AddImportNudgeShownAtToUserMemory'
+import { ClearAiUsageCopiedFromSharedCustomers1881000000000 } from './migration/postgres/1881000000000-ClearAiUsageCopiedFromSharedCustomers'
+import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
+import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from './migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
+import { BackfillPieceTranslation1874000000000 } from './migration/postgres/background/1874000000000-BackfillPieceTranslation'
+import { RefetchMissingPieceTranslations1879000000000 } from './migration/postgres/background/1879000000000-RefetchMissingPieceTranslations'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -416,6 +481,15 @@ const getSslConfig = (): boolean | TlsOptions => {
         }
     }
     return false
+}
+
+export const getBackgroundMigrations = (): (new () => BackgroundMigration)[] => {
+    return [
+        AddAgentConversationProviderConfigIdIndex1869000000000,
+        BackfillPieceTranslation1874000000000,
+        RefetchMissingPieceTranslations1879000000000,
+        ReshapeFlowRunListIndexesForBarrierChildren1871000000000,
+    ]
 }
 
 export const getMigrations = (): (new () => Migration)[] => {
@@ -828,7 +902,67 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddSampleDataFlowIdIndexToFile1815000000000,
         AddTeamsBotInstallation1816000000000,
         AddUserChatMemory1817000000000,
+        AddCellCascadeIndices1818000000000,
+        AddAutumnBillingColumnsToPlatformPlan1818000000000,
         AddFieldPosition1818000000000,
+        DropPieceTags1819000000000,
+        AddAgentConversationSource1819000000000,
+        AddAuditEventPlatformIdCreatedIdIndex1820000000000,
+        AddAgentConversationFlowStepRetentionIndex1821000000000,
+        AddWaitpointSignals1821000000000,
+        RenameChatTablesToAgent1822000000000,
+        AddRenamedChatTableCompatViews1823000000000,
+        AddAttemptsToOtp1824000000000,
+        AddAgentTable1825000000000,
+        AddAgentIdToAgentConversation1826000000000,
+        AddVersionToOtp1827000000000,
+        DropChatbot1828000000000,
+        AddFilePlatformIdIndex1829000000000,
+        AddAiProviderScopes1830000000000,
+        AddChatPersonalization1831000000000,
+        BackfillChatPersonalizationForExistingUsers1832000000000,
+        ClearRoleFromCompanyPersonalization1833000000000,
+        AddAutoCreatePersonalProjectsToPlatform1834000000000,
+        WidenMcpOAuthState1835000000000,
+        DropTeamsBotInstallation1836000000000,
+        AddAiProviderStatus1837000000000,
+        AddMcpOAuthTokenLastUsedAndClientKey1838000000000,
+        AddFlowProjectIdExternalIdUniqueIndex1839000000000,
+        AddFlowApprovalWorkflow1840000000000,
+        AddPlatformConfiguration1841000000000,
+        AddAgentRunsIndex1842000000000,
+        AddAgentConversationFlowRunId1843000000000,
+        AddMcpActivity1844000000000,
+        AddMaxBarrierSignalsToPlatformConfiguration1845000000000,
+        NullOrphanFolderReferences1846000000000,
+        IndexWaitpointLookups1847000000000,
+        AddAgentConversationAiCredits1850000000000,
+        AddMcpOAuthCodeNonce1851000000000,
+        UniqueProjectRoleNamePerPlatform1852000000000,
+        FlowExternalIdUniqueIgnoresDeleting1855000000000,
+        AddFlowTombstoneIndex1856000000000,
+        AddWaitpointDeadLetteredAt1857000000000,
+        AddAgentFolderId1858000000000,
+        AddPlatformModelTier1859000000000,
+        AddPieceSetRequiredActions1860000000000,
+        AddEventDestinationEnabledAndFormat1862000000000,
+        AddEventDestinationHeaders1863000000000,
+        AddWorkerGroupIdToFlow1864000000000,
+        AddPlatformTierFastAndConversationTier1864000000000,
+        AddAuditLogRetentionDaysToPlatform1865000000000,
+        AddAiSpecificModelsVisibleToPlatformConfiguration1866000000000,
+        AddAgentTask1867000000000,
+        AddProviderConfigIdToAgentConversation1868000000000,
+        DropChatRolloutUserTable1870000000000,
+        AddBarrierChildAttribution1871000000000,
+        AddPieceTranslationTable1873000000000,
+        AddDefaultChatModelToPlatformConfiguration1875000000000,
+        AddAgentConversationWaitpointId1876000000000,
+        AddIsDefaultToProject1877000000000,
+        AddAiUsageTables1878000000000,
+        AddReplaceAppConnectionPermission1879000000000,
+        AddImportNudgeShownAtToUserMemory1880000000000,
+        ClearAiUsageCopiedFromSharedCustomers1881000000000,
     ]
     return migrations
 }
@@ -836,7 +970,7 @@ export const getMigrations = (): (new () => Migration)[] => {
 
 export const createPostgresDataSource = (): DataSource => {
     const migrationConfig: MigrationConfig = {
-        migrationsRun: true,
+        migrationsRun: false,
         migrationsTransactionMode: 'each',
         migrations: getMigrations(),
         synchronize: false,
@@ -877,6 +1011,20 @@ export const createPostgresDataSource = (): DataSource => {
         extra: {
             idleTimeoutMillis,
         },
+    })
+}
+
+export const createPostgresMigrationDataSource = (): DataSource | null => {
+    const url = system.get(AppSystemProp.POSTGRES_MIGRATION_URL)
+    if (isNil(url)) return null
+    return new DataSource({
+        type: 'postgres',
+        url,
+        ssl: getSslConfig(),
+        poolSize: 2,
+        migrationsRun: false,
+        synchronize: false,
+        ...commonProperties,
     })
 }
 

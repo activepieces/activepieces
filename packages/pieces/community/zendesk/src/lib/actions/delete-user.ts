@@ -3,19 +3,22 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { userIdDropdown } from '../common/props';
+import { deleteUserOutputSchema } from '../output-schemas';
 
 export const deleteUserAction = createAction({
   auth: zendeskAuth,
   name: 'delete-user',
+  outputSchema: deleteUserOutputSchema,
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete User',
   description: 'Remove a user and associated records from the account.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Soft-deletes a user identified by user ID from the Zendesk account; deleted users are not recoverable in the UI (use a permanent/GDPR erasure endpoint for full removal). Use to offboard or remove an account. Requires the confirmation checkbox to be set, and the account owner or restricted users cannot be deleted. Idempotent in effect: once removed the user stays removed, though a repeat call on an already-deleted user returns a not-found error.', idempotent: true },
   props: {
     user_id: userIdDropdown,
@@ -38,13 +41,9 @@ export const deleteUserAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/users/${user_id}.json`,
+        url: `${getZendeskBaseUrl(authentication)}/users/${user_id}.json`,
         method: HttpMethod.DELETE,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(authentication),
       });
 
       return {

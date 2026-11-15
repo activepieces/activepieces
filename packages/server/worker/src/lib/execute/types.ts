@@ -13,6 +13,7 @@ export type JobContext = {
     resolver: Resolver
     workerIndex: number
     jobId: string
+    lastAttempt: boolean
     engineToken: string
     internalApiUrl: string
     publicApiUrl: string

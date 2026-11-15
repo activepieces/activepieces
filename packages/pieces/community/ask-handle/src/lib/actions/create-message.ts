@@ -7,6 +7,7 @@ import { roomDropdown } from '../common/props';
 export const createMessage = createAction({
   auth: askHandleAuth,
   name: 'create_message',
+  classification: 'WRITE',
   displayName: 'Create Message',
   description: 'Send a message to a room',
   audience: 'both',

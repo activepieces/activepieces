@@ -5,10 +5,13 @@ import { filterIdProp } from '../common/props';
 import { pipedriveApiCall, pipedrivePaginatedV2ApiCall } from '../common';
 import { LeadListResponse } from '../common/types';
 import { isNil } from '@activepieces/pieces-framework';
+import { activityMatchingFilterTriggerOutputSchema } from '../output-schemas';
 
 export const activityMatchingFilterTrigger = createTrigger({
 	auth: pipedriveAuth,
 	name: 'activity-matching-filter',
+	outputSchema: activityMatchingFilterTriggerOutputSchema,
+	classification: 'READ',
 	displayName: 'Activity Matching Filter',
 	description: 'Trigges when an activity newly matches a Pipedrive filter for the first time.',
 	aiMetadata: {
@@ -20,6 +23,9 @@ export const activityMatchingFilterTrigger = createTrigger({
 		filterId: filterIdProp('activity', true),
 	},
 	async onEnable(context) {
+		if (context.isRepublish && !isNil(await context.store.get('activities'))) {
+			return;
+		}
 		const ids: number[] = [];
 
 		const response = await pipedrivePaginatedV2ApiCall<{ id: number }>({
@@ -39,6 +45,9 @@ export const activityMatchingFilterTrigger = createTrigger({
 		await context.store.put('activities', JSON.stringify(ids));
 	},
 	async onDisable(context) {
+		if (context.isRepublish) {
+			return;
+		}
 		await context.store.delete('activities');
 	},
 	async test(context) {

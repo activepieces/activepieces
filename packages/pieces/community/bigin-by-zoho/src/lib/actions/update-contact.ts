@@ -1,3 +1,5 @@
+import { assertWriteSucceeded } from '../common/request';
+import { biginOutputSchemas } from '../common/output-schemas';
 import { biginAuth } from '../auth';
 import {
   createAction,
@@ -12,9 +14,11 @@ import { handleDropdownError } from '../common/helpers';
 export const updateContact = createAction({
   auth: biginAuth,
   name: 'updateContact',
+  classification: 'WRITE',
   displayName: 'Update Contact',
   description: 'Select and update an existing Contact record.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: biginOutputSchemas.legacyAckWithMessage,
   aiMetadata: { description: 'Updates an existing contact (person) record in Bigin CRM, identified by selecting the contact; its current fields are prepopulated and any you set are overwritten (owner, associated company, tags, and module-defined fields). Use to modify a person who already exists. Idempotent: re-sending the same field values leaves the record in the same state.', idempotent: true },
 
   props: {
@@ -204,7 +208,7 @@ export const updateContact = createAction({
   },
 
   async run(context) {
-   try {
+   
      const { contactDetails, contactId, accountName, tag } = context.propsValue;
 
      const record: Record<string, any> = { id: JSON.parse(contactId).id };
@@ -245,17 +249,11 @@ export const updateContact = createAction({
        payload
      );
 
+     assertWriteSucceeded(resp.data?.[0]);
      return {
        message: 'Contact updated successfully',
        data: resp.data[0],
      };
-   } catch (error: any) {
-     console.error('Error updating contact:', error);
-     throw new Error(
-       error instanceof Error
-         ? `Failed to update contact: ${error.message}`
-         : 'Failed to update contact due to an unknown error'
-     );
-   }
+   
   },
 });

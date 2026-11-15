@@ -12,6 +12,7 @@ import { googleTasksGetTaskOutputSchema } from '../output-schemas';
 export const googleTasksGetTaskAction = createAction({
   auth: googleTasksAuth,
   name: 'get_task',
+  classification: 'READ',
   displayName: 'Get Task',
   description: 'Fetch a single task by its ID.',
   audience: 'ai',

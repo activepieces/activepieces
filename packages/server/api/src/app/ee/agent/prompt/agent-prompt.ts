@@ -1,0 +1,124 @@
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
+import { isNil } from '@activepieces/core-utils'
+import { Agent, AGENT_SKILLS, AgentConfig, AgentToolType, Project, ProjectType } from '@activepieces/shared'
+
+function loadPromptTemplate(filename: string): string {
+    return readFileSync(path.resolve(`packages/server/api/src/assets/prompts/${filename}`), 'utf8')
+}
+
+const GUIDE_TOPICS = AGENT_SKILLS.flatMap((skill) => skill.guideTopic ?? [])
+
+const PROMPT_TEMPLATES = {
+    system: loadPromptTemplate('chat-system-prompt.md'),
+    builder: loadPromptTemplate('agent-builder-prompt.md'),
+    projectSelected: loadPromptTemplate('chat-project-context-selected.md'),
+    noProject: loadPromptTemplate('chat-project-context-none.md'),
+}
+
+const GUIDES: Record<string, string> = Object.fromEntries(
+    GUIDE_TOPICS.map((topic) => [topic, loadPromptTemplate(`guides/${topic}.md`)]),
+)
+
+const TASK_TEMPLATE = loadPromptTemplate('task-subagent-prompt.md')
+
+const SUBAGENTS_NOTE = loadPromptTemplate('chat-subagents-note.md').trim()
+const RESEARCH_NOTE = loadPromptTemplate('chat-research-note.md').trim()
+
+function sanitizeProjectName(name: string): string {
+    return name.replace(/[^a-zA-Z0-9 \-_.]/g, '').slice(0, 64)
+}
+
+function projectDisplayName(project: Project): string {
+    return project.type === ProjectType.PERSONAL ? 'Personal Project' : project.displayName
+}
+
+function buildProjectListBlock({ projects }: { projects: Project[] }): string {
+    if (projects.length === 0) return 'No projects available.'
+    return projects.map((p) => `- **${sanitizeProjectName(projectDisplayName(p))}** (ID: ${p.id})`).join('\n')
+}
+
+function buildProjectContextBlockFromTemplates({ project, frontendUrl, selectedTemplate, noProjectTemplate }: {
+    project: Project | null
+    frontendUrl: string
+    selectedTemplate: string
+    noProjectTemplate: string
+}): string {
+    if (!project) {
+        return noProjectTemplate
+    }
+    return selectedTemplate
+        .replaceAll('{{PROJECT_NAME}}', sanitizeProjectName(projectDisplayName(project)))
+        .replaceAll('{{PROJECT_ID}}', project.id)
+        .replaceAll('{{FRONTEND_URL}}', frontendUrl)
+}
+
+function buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl, templates }: {
+    projects: Project[]
+    currentProjectId: string | null
+    frontendUrl: string
+    templates?: Partial<PromptTemplateSources>
+}): string {
+    const currentProject = currentProjectId
+        ? projects.find((p) => p.id === currentProjectId) ?? null
+        : null
+
+    const systemTemplate = templates?.system ?? PROMPT_TEMPLATES.system
+    const selectedTemplate = templates?.projectSelected ?? PROMPT_TEMPLATES.projectSelected
+    const noProjectTemplate = templates?.noProject ?? PROMPT_TEMPLATES.noProject
+
+    return systemTemplate
+        .replace('{{PROJECT_LIST}}', buildProjectListBlock({ projects }))
+        .replace('{{PROJECT_CONTEXT}}', buildProjectContextBlockFromTemplates({ project: currentProject, frontendUrl, selectedTemplate, noProjectTemplate }))
+        .replaceAll('{{FRONTEND_URL}}', frontendUrl)
+}
+
+function buildTaskSystemPrompt({ projects, currentProjectId, frontendUrl }: {
+    projects: Project[]
+    currentProjectId: string | null
+    frontendUrl: string
+}): string {
+    return buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl, templates: { system: TASK_TEMPLATE } })
+}
+
+function buildBuilderSystemPrompt({ agent }: { agent: Agent | null }): string {
+    const state = isNil(agent)
+        ? 'No agent yet. Create one as soon as you know what job it should do, then keep changing that one.'
+        : [
+            `Agent: ${agent.displayName} (id ${agent.id})`,
+            `Description: ${agent.description ?? 'none yet'}`,
+            `Instructions: ${agent.draft.instructions.length > 0 ? agent.draft.instructions : 'none yet'}`,
+            `Tools: ${describeTools(agent.draft.tools)}`,
+            'Your changes land as pending edits the person reviews. They go live when the person hits Save and go live, which is the only way anything is published, so say the change is ready for them to review rather than telling them to publish it.',
+        ].join('\n')
+    return PROMPT_TEMPLATES.builder.replace('{{AGENT_STATE}}', state)
+}
+
+function describeTools(tools: AgentConfig['tools']): string {
+    if (tools.length === 0) {
+        return 'none'
+    }
+    return tools.map((tool) => tool.type === AgentToolType.PIECE
+        ? `${tool.pieceMetadata.actionName} (${tool.pieceMetadata.pieceName})`
+        : tool.toolName).join(', ')
+}
+
+export const agentPrompt = {
+    buildSystemPrompt: buildAgentSystemPrompt,
+    buildBuilderSystemPrompt,
+    buildTaskSystemPrompt,
+    guides: GUIDES,
+    subagentsNote: SUBAGENTS_NOTE,
+    researchNote: RESEARCH_NOTE,
+    projectDisplayName,
+    sources: {
+        ...PROMPT_TEMPLATES,
+        guides: GUIDES,
+    },
+}
+
+export type PromptTemplateSources = {
+    system: string
+    projectSelected: string
+    noProject: string
+}

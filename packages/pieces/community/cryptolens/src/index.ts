@@ -3,6 +3,7 @@ import { cryptolensAuth } from './lib/common/auth';
 import { addCustomer } from './lib/actions/add-customer';
 import { blockKey } from './lib/actions/block-key';
 import { createKey } from './lib/actions/create-key';
+import { extendLicense } from './lib/actions/extend-license';
 import { newApiEvent } from './lib/triggers/new-api-event';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/pieces-framework';
@@ -20,6 +21,7 @@ export const cryptolens = createPiece({
     addCustomer,
     blockKey,
     createKey,
+    extendLicense,
     createCustomApiCallAction({
       auth: cryptolensAuth,
       baseUrl: () => 'https://api.cryptolens.io/api',

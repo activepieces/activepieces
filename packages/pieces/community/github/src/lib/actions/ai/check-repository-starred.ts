@@ -7,6 +7,7 @@ import { ownerProp, repoProp, githubError } from './common';
 export const githubCheckRepositoryStarredAction = createAction({
   auth: githubAuth,
   name: 'check_repository_starred',
+  classification: 'READ',
   displayName: 'Check Repository Starred (Agent)',
   description: 'Checks whether the connected user has starred a repository.',
   audience: 'ai',

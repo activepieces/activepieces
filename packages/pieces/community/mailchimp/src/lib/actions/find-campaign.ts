@@ -8,6 +8,7 @@ import { MailchimpClient, CampaignGetOptions } from '../common/types';
 export const findCampaign = createAction({
   auth: mailchimpAuth,
   name: 'find_campaign',
+  classification: 'SEARCH',
   displayName: 'Find Campaign',
   description: 'Search all campaigns for the specified query terms',
   audience: 'both',

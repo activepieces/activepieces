@@ -1,9 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { talkableAuth } from '../../..';
+import { TALKABLE_API_URL } from '../../common/constants';
 
 export const getLoyaltyRedeemActions = createAction({
   name: 'get_loyalty_redeem_actions', // Must be a unique across the piece, this shouldn't be changed.
+  classification: 'SEARCH',
   auth: talkableAuth,
   displayName: 'Get loyalty actions',
   description: 'Get array of loyalty actions',
@@ -17,7 +19,6 @@ export const getLoyaltyRedeemActions = createAction({
     }),
   },
   async run(context) {
-    const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
     const { site, api_key } = context.auth.props;
     const getLoyaltyRedeemActionsResponse = await httpClient
       .sendRequest<string[]>({
@@ -27,7 +28,7 @@ export const getLoyaltyRedeemActions = createAction({
           Authorization: `Bearer ${api_key}`,
           'Content-Type': 'application/json',
         },
-        body: {
+        queryParams: {
           site_slug: site,
         },
       });

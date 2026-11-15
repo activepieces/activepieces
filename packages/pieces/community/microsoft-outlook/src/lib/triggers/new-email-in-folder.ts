@@ -1,7 +1,6 @@
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import {
 	AppConnectionValueForAuthProperty,
-	PiecePropValueSchema,
 	TriggerStrategy,
 	createTrigger,
 } from '@activepieces/pieces-framework';
@@ -11,6 +10,7 @@ import dayjs from 'dayjs';
 import { microsoftOutlookAuth } from '../common/auth';
 import { outlookCommon } from '../common/client';
 import { mailFolderIdDropdown } from '../common/props';
+import { newEmailTriggerOutputSchema } from '../output-schemas';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftOutlookAuth>, { folderId?: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
@@ -58,33 +58,27 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftOutlook
 export const newEmailInFolderTrigger = createTrigger({
 	auth: microsoftOutlookAuth,
 	name: 'newEmailInFolder',
+	classification: 'READ',
 	displayName: 'New Email in Folder',
-	description: 'Triggers when a new email is delivered into the specified folder.',
+	description: 'Triggers when a new email lands in the folder you pick.',
 	aiMetadata: {
 		description: 'Fires when a new message appears in the chosen Outlook mail folder. Each fire represents one new email added to that folder.',
 	},
+	outputSchema: newEmailTriggerOutputSchema,
 	props: {
 		folderId: mailFolderIdDropdown({
 			displayName: 'Folder',
-			description: '',
+			description: 'New emails in this folder start the flow.',
 			required: true,
 		}),
 	},
 	sampleData: {},
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

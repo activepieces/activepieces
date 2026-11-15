@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { paymentMethodOutputSchema } from '../output-schemas';
 export const stripeAttachPaymentMethod = createAction({
   name: 'attach_payment_method',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Attach Payment Method (Agent)',
   description: 'Attach a PaymentMethod to a customer.',

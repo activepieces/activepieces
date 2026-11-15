@@ -12,6 +12,7 @@ const TRIGGER_KEY = 'dimo-battery-power-trigger';
 export const batteryPowerTrigger = createTrigger({
 	auth: dimoAuth,
 	name: 'battery-power-trigger',
+	classification: 'READ',
 	displayName: 'Battery Current Power Trigger',
 	description: 'Triggers when vehicle battery current power meets the specified condition.',
 	aiMetadata: {

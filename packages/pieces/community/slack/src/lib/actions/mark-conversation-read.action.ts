@@ -7,6 +7,7 @@ import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 export const slackMarkConversationReadAction = createAction({
   auth: slackAuth,
   name: 'slack_mark_conversation_read',
+  classification: 'WRITE',
   displayName: 'Mark Conversation Read',
   description: 'Move the read cursor in a channel up to a given message.',
   audience: 'ai',

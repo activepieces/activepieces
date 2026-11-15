@@ -26,6 +26,7 @@ interface SettingsListResponse {
 export const aiListSettings = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_list_settings',
+  classification: 'SEARCH',
   displayName: 'List Settings',
   description:
     'List the user\'s Google Calendar account settings (time zone, week start, date/time format, and more).',

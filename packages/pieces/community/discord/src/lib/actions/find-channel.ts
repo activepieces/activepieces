@@ -5,27 +5,48 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
-import { discordCommon } from '../common';
+import { channelNotFoundMessage, discordCommon } from '../common';
 import { Channel } from '../common/models';
+import { discordFindChannelHumanActionOutputSchema } from '../output-schemas';
 
 export const discordFindChannel = createAction({
   auth: discordAuth,
   name: 'find_channel',
-  description: 'find a channel by name',
-  audience: 'both',
-  aiMetadata: { description: 'Looks up a channel in a guild by its exact name and returns its channel ID, given the guild ID. Use to resolve a channel name into the ID required by message, rename, or delete actions. Read-only and idempotent; matching is exact and returns the first match.', idempotent: true },
-  displayName: 'Find channel',
+  classification: 'SEARCH',
+  description:
+    'Look up a channel in a server by its exact name. The bot needs the View Channel permission on the channel to find it.',
+  audience: 'human',
+  aiMetadata: { description: 'Looks up a channel in a guild by its exact name and returns its channel ID, given the guild ID. Use to resolve a channel name into the ID required by message, rename, or delete actions. Read-only and idempotent; matching is exact and returns the first match. Channels the bot lacks View Channel permission on are invisible and reported as not found.', idempotent: true },
+  displayName: 'Find Channel',
+  outputSchema: discordFindChannelHumanActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'server',
+      display: 'section',
+      label: 'Server',
+      icon: 'users',
+      props: ['guild_id'],
+    },
+    {
+      key: 'channel',
+      display: 'section',
+      label: 'Channel',
+      icon: 'markdown',
+      props: ['name'],
+    },
+  ],
   props: {
     guild_id: discordCommon.guilds,
     name: Property.ShortText({
       displayName: 'Name',
-      description: 'The name of the channel',
+      description: 'Exact name without the leading #, case-sensitive.',
+      placeholder: 'general',
       required: true,
     }),
   },
 
   async run(configValue) {
-    const request: HttpRequest<any> = {
+    const request: HttpRequest = {
       method: HttpMethod.GET,
       url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/channels`,
       headers: {
@@ -43,6 +64,7 @@ export const discordFindChannel = createAction({
     return {
       success: res.status === 200 && !!channel,
       channel_id: channel?.id,
+      message: channel ? null : channelNotFoundMessage(configValue.propsValue.name),
     };
   },
 });

@@ -45,6 +45,11 @@ export const McpOAuthAuthorizationCodeEntity = new EntitySchema<McpOAuthAuthoriz
         },
         state: {
             type: String,
+            length: 2048,
+            nullable: true,
+        },
+        nonce: {
+            type: String,
             length: 512,
             nullable: true,
         },

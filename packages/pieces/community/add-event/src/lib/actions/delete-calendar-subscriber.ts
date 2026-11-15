@@ -7,6 +7,7 @@ import { addEventProps } from '../common/props';
 export const addEventDeleteCalendarSubscriberAction = createAction({
   auth: addEventAuth,
   name: 'delete_calendar_subscriber',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Calendar Subscriber',
   description: 'Deletes a subscriber from your AddEvent calendar.',
   audience: 'both',

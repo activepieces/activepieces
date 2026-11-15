@@ -13,6 +13,7 @@ import { searchRecordsActionOutputSchema } from '../output-schemas';
 export const airtableSearchRecordsAction = createAction({
   auth: airtableAuth,
   name: 'search_records',
+  classification: 'SEARCH',
   displayName: 'Search Records (Agent)',
   description: 'Find records where a field matches a value.',
   audience: 'ai',

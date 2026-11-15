@@ -1,10 +1,10 @@
 import { isObject, parseToJsonIfPossible } from '@activepieces/core-utils';
 import {
   BatchProgressData,
-  ChatMessageFeedback,
-  ChatToolName,
-  ChatToolOutputs,
-  chatToolClassification,
+  AgentMessageFeedback,
+  AgentToolName,
+  AgentToolOutputs,
+  agentToolClassification,
 } from '@activepieces/shared';
 import {
   DynamicToolUIPart,
@@ -14,7 +14,7 @@ import {
   UIMessage,
 } from 'ai';
 
-export type ChatUIMessage = UIMessage & { feedback?: ChatMessageFeedback };
+export type ChatUIMessage = UIMessage & { feedback?: AgentMessageFeedback };
 
 export type AnyToolPart = ToolUIPart | DynamicToolUIPart;
 
@@ -42,6 +42,8 @@ const HIDDEN_TOOL_NAMES = new Set([
   'ap_deselect_project',
   'ap_load_guide',
   'ap_set_phase',
+  'ap_load_skill',
+  'ap_get_tool_schema',
 ]);
 
 const DISPLAY_TOOL_NAMES = new Set([
@@ -51,6 +53,7 @@ const DISPLAY_TOOL_NAMES = new Set([
   'ap_show_project_picker',
   'ap_show_questions',
   'ap_show_quick_replies',
+  'ap_show_showcase',
 ]);
 
 function isDisplayTool(name: string): boolean {
@@ -82,7 +85,7 @@ function isReadOnlyExecuteAction(part: AnyToolPart): boolean {
       : undefined;
   if (!actionName) return false;
   const actionInput = isObject(input?.input) ? input.input : undefined;
-  return chatToolClassification.isReadOnlyActionCall({
+  return agentToolClassification.isReadOnlyActionCall({
     actionName,
     input: actionInput,
   });
@@ -115,11 +118,11 @@ function parseToolOutput(part: AnyToolPart): ToolOutput {
   return { state: 'success', data: parsed };
 }
 
-function parseTypedToolOutput<T extends ChatToolName>(
+function parseTypedToolOutput<T extends AgentToolName>(
   part: AnyToolPart,
   _toolName: T,
-): TypedToolOutput<ChatToolOutputs[T]> {
-  return parseToolOutput(part) as TypedToolOutput<ChatToolOutputs[T]>;
+): TypedToolOutput<AgentToolOutputs[T]> {
+  return parseToolOutput(part) as TypedToolOutput<AgentToolOutputs[T]>;
 }
 
 function isThinkingStatusTool(name: string): boolean {
@@ -296,6 +299,7 @@ export type CardSkeletonPhase = 'pending' | 'failed';
 
 export type ThinkingStep =
   | { kind: 'thinking-status'; text: string }
+  | { kind: 'reasoning'; text: string }
   | { kind: 'tool'; part: AnyToolPart; description: string | null };
 
 export type ToolStatus = 'running' | 'completed' | 'failed' | 'stopped';
@@ -309,10 +313,6 @@ export type TypedToolOutput<T> =
   | { state: 'pending' }
   | { state: 'success'; data: T }
   | { state: 'error'; errorText: string };
-
-export type CreditsWarning = {
-  percentage: number;
-};
 
 export type QuickRepliesData = {
   replies: string[];

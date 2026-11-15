@@ -7,6 +7,7 @@ import { createHeaderActionOutputSchema } from '../output-schemas';
 export const createHeader = createAction({
   auth: googleDocsAuth,
   name: 'create_header',
+  classification: 'WRITE',
   displayName: 'Create Header',
   description: 'Create a header section in a Google Docs document',
   audience: 'ai',

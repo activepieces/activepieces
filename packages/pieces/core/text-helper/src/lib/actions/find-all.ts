@@ -10,14 +10,7 @@ export const findAll = createAction({
   },
   displayName: 'Find All',
   name: 'find_all',
-  errorHandlingOptions: {
-    continueOnFailure: {
-      hide: true,
-    },
-    retryOnFailure: {
-      hide: true,
-    },
-  },
+  classification: 'READ',
   props: {
     text: Property.ShortText({
       displayName: 'Text',

@@ -10,6 +10,7 @@ const TRIGGER_KEY = 'browse-ai-task_finished_with_error';
 export const taskFinishedWithErrorTrigger = createTrigger({
   auth: browseAiAuth,
   name: 'task_finished_with_error',
+  classification: 'READ',
   displayName: 'Task Finished with Error',
   description: 'Triggers when a robot task run fails with an error.',
   aiMetadata: {

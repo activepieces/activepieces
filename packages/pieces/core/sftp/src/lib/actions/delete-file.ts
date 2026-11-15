@@ -4,6 +4,7 @@ import { sftpAuth } from '../auth';
 import { Client as FTPClient, FTPError } from 'basic-ftp';
 import Client from 'ssh2-sftp-client';
 import { getSftpError } from './common';
+import { deleteFileActionOutputSchema } from '../output-schemas';
 
 async function deleteFileFromFTP(client: FTPClient, filePath: string) {
   await client.remove(filePath);
@@ -17,6 +18,7 @@ export const deleteFileAction = createAction({
   audience: 'both',
   auth: sftpAuth,
   name: 'deleteFile',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete file',
   description: 'Deletes a file at given path.',
   aiMetadata: { description: 'Permanently deletes a single file at a given remote path on the connected FTP, FTPS or SFTP server. Use this for one file; use Delete Folder to remove a directory, optionally with all of its contents. Requires the exact remote path (e.g. ./myfolder/test.mp3) and there is no recycle bin or undo; idempotent in that it converges on the file being absent, though a repeat call on an already-missing path reports an error.', idempotent: true },
@@ -27,6 +29,7 @@ export const deleteFileAction = createAction({
       description: 'The path of the file to delete e.g. `./myfolder/test.mp3`',
     }),
   },
+  outputSchema: deleteFileActionOutputSchema,
   async run(context) {
     const client = await getClient(context.auth.props);
     const filePath = context.propsValue.filePath;

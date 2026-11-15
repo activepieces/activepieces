@@ -22,7 +22,9 @@ const isFlowController = (stepMetadata: StepMetadata) => {
   }
   return (
     stepMetadata.type === FlowActionType.LOOP_ON_ITEMS ||
-    stepMetadata.type === FlowActionType.ROUTER
+    stepMetadata.type === FlowActionType.PROCESS_IN_BATCHES ||
+    stepMetadata.type === FlowActionType.ROUTER ||
+    stepMetadata.type === FlowActionType.AI_ROUTER
   );
 };
 
@@ -185,4 +187,5 @@ export const pieceSearchUtils = {
   getPinnedPieces,
   getPopularPieces,
   getHighlightedPieces,
+  POPULAR_PIECES_NAMES,
 };

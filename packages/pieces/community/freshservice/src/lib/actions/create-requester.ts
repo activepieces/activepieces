@@ -7,6 +7,7 @@ import { freshserviceCommon } from '../common/props';
 export const createRequester = createAction({
   auth: freshserviceAuth,
   name: 'create_requester',
+  classification: 'WRITE',
   displayName: 'Create Requester',
   description: 'Creates a new requester (end user) in Freshservice.',
   audience: 'both',

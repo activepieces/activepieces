@@ -3,6 +3,7 @@ import {
   TriggerStrategy,
   FilesService,
   Property,
+  isNil,
 } from '@activepieces/pieces-framework';
 import { GmailProps } from '../common/props';
 import { gmailAuth, createGoogleClient } from '../auth';
@@ -135,6 +136,7 @@ function extractParticipants(messages: any[]): {
 export const gmailNewConversationTrigger = createTrigger({
   auth: gmailAuth,
   name: 'new_conversation',
+  classification: 'READ',
   displayName: 'New Conversation',
   description: 'Triggers when a new email conversation (thread) begins',
   props: {
@@ -161,6 +163,12 @@ export const gmailNewConversationTrigger = createTrigger({
   sampleData: {},
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
+    if (
+      context.isRepublish &&
+      !isNil(await context.store.get('lastHistoryId'))
+    ) {
+      return;
+    }
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });
 
@@ -169,6 +177,9 @@ export const gmailNewConversationTrigger = createTrigger({
     await context.store.put('processedThreads', []);
   },
   onDisable: async (context) => {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete('lastHistoryId');
     await context.store.delete('processedThreads');
   },

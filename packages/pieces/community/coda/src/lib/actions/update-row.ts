@@ -3,13 +3,15 @@ import { codaAuth } from '../auth';
 import { codaClient } from '../common/types';
 import { docIdDropdown, tableIdDropdown, tableRowsDynamicProps } from '../common/props';
 import { isNil } from '@activepieces/pieces-framework';
+import { updateRowActionOutputSchema } from '../output-schemas';
 
 export const updateRowAction = createAction({
 	auth: codaAuth,
 	name: 'update-row',
+	classification: 'WRITE',
 	displayName: 'Update Row',
 	description: 'Updates an existing row in the selected table.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Overwrite cell values on an existing Coda table row, identified by its row ID or a unique row name. Use when you already know which row to change; use Upsert Row instead when the row may not yet exist. Idempotent — repeating with the same values leaves the row in the same state.', idempotent: true },
 	props: {
 		docId: docIdDropdown,
@@ -20,16 +22,21 @@ export const updateRowAction = createAction({
 		}),
 		rowData: tableRowsDynamicProps,
 	},
+	outputSchema: updateRowActionOutputSchema,
 	async run(context) {
 		const { docId, tableId, rowIdOrName, rowData } = context.propsValue;
 		const client = codaClient(context.auth);
 
-		const cells = Object.entries(rowData as Record<string, any>)
+		const cells = Object.entries(rowData ?? {})
 			.filter(([, value]) => value !== undefined && value !== null && value !== '')
 			.map(([columnId, value]) => ({
 				column: columnId,
 				value: value,
 			}));
+
+		if (cells.length === 0) {
+			throw new Error('Provide at least one column value to update the row.');
+		}
 
 		const payload = {
 			row: {
@@ -47,6 +54,6 @@ export const updateRowAction = createAction({
 			throw new Error(`Unexpected error occured : ${JSON.stringify(response)}`);
 		}
 
-		return { rowId };
+		return { rowId, requestId: response.requestId };
 	},
 });

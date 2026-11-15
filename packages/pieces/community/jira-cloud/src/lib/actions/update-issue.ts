@@ -1,4 +1,4 @@
-import { DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework';
+import { DynamicPropsValue, MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { JiraAuth, jiraCloudAuth } from '../../auth';
 import {
 	createPropertyDefinition,
@@ -13,6 +13,7 @@ import { IssueFieldMetaData, VALID_CUSTOM_FIELD_TYPES } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 
+import { issueOutputSchema } from '../output-schemas';
 async function getFields(auth: JiraAuth, issueId: string): Promise<IssueFieldMetaData[]> {
 	const response = await jiraApiCall<{ fields: { [x: string]: IssueFieldMetaData } }>({
 		auth: auth,
@@ -34,18 +35,43 @@ async function getFields(auth: JiraAuth, issueId: string): Promise<IssueFieldMet
 
 export const updateIssueAction = createAction({
 	name: 'update_issue',
+	classification: 'WRITE',
 	displayName: 'Update Issue',
-	description: 'Updates an existing issue.',
-	audience: 'both',
+	description: "Changes an issue's fields and, optionally, moves it to a new status.",
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Update fields on an existing Jira issue (by ID or key) using its edit screen — summary, description, custom fields, etc. — with optional ADF JSON for rich-text fields, and optionally trigger a status transition in the same run; returns the refreshed issue. Use to modify existing items rather than Create Issue. Field updates are idempotent (same values yield the same state), though a repeated status transition may fail once already applied.',
 		idempotent: true,
 	},
 	auth: jiraCloudAuth,
+	outputSchema: issueOutputSchema,
+	propertyGroups: [
+		{
+			key: 'issue',
+			display: 'section',
+			label: 'Issue',
+			icon: 'inbox',
+			props: ['issueId', 'statusId'],
+		},
+		{
+			key: 'changes',
+			display: 'section',
+			label: 'Changes',
+			icon: 'sliders',
+			props: ['changesInfo', 'issueFields'],
+		},
+	],
 	props: {
-		issueId: issueIdOrKeyProp('Issue ID or Key', true),
-		statusId: issueStatusIdProp('Status', false),
+		issueId: issueIdOrKeyProp('Issue', true),
+		statusId: {
+			...issueStatusIdProp('Transition', false),
+			description: 'Moves the issue to the chosen status. Empty: no change.',
+		},
+		changesInfo: Property.MarkDown({
+			value: 'Empty fields keep their current value.',
+			variant: MarkdownVariant.INFO,
+		}),
 		issueFields: Property.DynamicProperties({
 			auth: jiraCloudAuth,
 			displayName: 'Fields',
@@ -96,9 +122,10 @@ export const updateIssueAction = createAction({
 		}),
 		adfFields: Property.MultiSelectDropdown({
 			auth: jiraCloudAuth,
-			displayName: 'Fields in JSON Atlassian Document Format',
-			description: 'https://developer.atlassian.com/cloud/jira/platform/apis/document/structure',
+			displayName: 'Fields Given as ADF JSON',
+			description: 'Fields whose value is Atlassian Document Format JSON, not plain text.',
 			required: false,
+			advanced: true,
 			refreshers: ['issueId'],
 			options: async ({ auth, issueId }) => {
 				if (!auth || !issueId) {

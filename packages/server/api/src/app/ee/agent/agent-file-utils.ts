@@ -1,0 +1,130 @@
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
+import { AIProviderModelMetadata, CHAT_ALLOWED_MIME_TYPES, FileCompression, FileType } from '@activepieces/shared'
+import { ModelMessage, UserContent } from 'ai'
+import { FastifyBaseLogger } from 'fastify'
+import { fileService, GetDataResponse } from '../../file/file.service'
+
+const TEXT_MIME_TYPES = new Set<string>(
+    CHAT_ALLOWED_MIME_TYPES.filter((m) => m.startsWith('text/') || m === 'application/json'),
+)
+
+const MAX_EXTRACTED_TEXT_LENGTH = 50_000
+
+const UNREADABLE_IMAGE_NOTE = '[The user attached an image here, but the current model cannot read images, so it was not sent. Do not guess its contents. Tell the user to switch to a model that supports images if they need it read.]'
+
+async function extractPdfText(base64Data: string): Promise<string> {
+    const { extractText, getDocumentProxy } = await import('unpdf')
+    const buffer = Buffer.from(base64Data, 'base64')
+    const pdf = await getDocumentProxy(new Uint8Array(buffer))
+    const { text } = await extractText(pdf, { mergePages: true })
+    return text.length > MAX_EXTRACTED_TEXT_LENGTH
+        ? text.slice(0, MAX_EXTRACTED_TEXT_LENGTH) + '\n[Content truncated due to length]'
+        : text
+}
+
+function sanitizeFileName(name: string): string {
+    return name.replace(/[^a-zA-Z0-9 \-_.()]/g, '_').slice(0, 255)
+}
+
+async function persistAgentAttachments({ files, projectId, platformId, conversationId, log }: {
+    files: Array<{ name: string, mimeType: string, data: string }>
+    projectId: string
+    platformId: string
+    conversationId: string
+    log: FastifyBaseLogger
+}): Promise<Array<{ fileId: string, name: string, mimeType: string }>> {
+    return Promise.all(files.map(async (file) => {
+        const buffer = Buffer.from(file.data, 'base64')
+        const saved = await fileService(log).save({
+            projectId,
+            platformId,
+            data: buffer,
+            size: buffer.length,
+            type: FileType.FLOW_STEP_FILE,
+            fileName: sanitizeFileName(file.name),
+            compression: FileCompression.NONE,
+            metadata: { mimetype: file.mimeType, conversationId },
+        })
+        return { fileId: saved.id, name: sanitizeFileName(file.name), mimeType: file.mimeType }
+    }))
+}
+
+function buildAttachmentNote(refs: Array<{ fileId: string, name: string, mimeType: string }>): string {
+    if (refs.length === 0) {
+        return ''
+    }
+    const lines = refs.map((ref) => `- ${ref.name} → fileId \`${ref.fileId}\` (${ref.mimeType})`)
+    return `\n\n[Attachments saved and available to ap_run_code via inputFileIds:\n${lines.join('\n')}]`
+}
+
+async function buildUserContentWithFiles({ text, files, attachmentNote }: {
+    text: string
+    files?: Array<{ name: string, mimeType: string, data: string }>
+    attachmentNote?: string
+}): Promise<UserContent> {
+    if (!files || files.length === 0) {
+        return text
+    }
+
+    let userText = text
+
+    for (const file of files) {
+        const safeName = sanitizeFileName(file.name)
+        if (TEXT_MIME_TYPES.has(file.mimeType)) {
+            const decoded = Buffer.from(file.data, 'base64').toString('utf-8')
+            const content = decoded.length > MAX_EXTRACTED_TEXT_LENGTH
+                ? decoded.slice(0, MAX_EXTRACTED_TEXT_LENGTH) + '\n[Content truncated due to length]'
+                : decoded
+            userText += `\n--- File: ${safeName} ---\n${content}`
+        }
+        else if (file.mimeType === 'application/pdf') {
+            const pdfText = await extractPdfText(file.data)
+            userText += `\n--- File: ${safeName} ---\n${pdfText}`
+        }
+    }
+
+    if (attachmentNote) {
+        userText += attachmentNote
+    }
+
+    const imageFiles = files.filter((f) => f.mimeType.startsWith('image/'))
+    if (imageFiles.length === 0) {
+        return userText
+    }
+
+    return [
+        { type: 'text' as const, text: userText },
+        ...imageFiles.map((f) => ({ type: 'file' as const, mediaType: f.mimeType, data: f.data })),
+    ]
+}
+
+async function readConversationFile({ platformId, conversationId, accessibleProjectIds, fileId, log }: { platformId: string, conversationId: string, accessibleProjectIds: string[], fileId: string, log: FastifyBaseLogger }): Promise<GetDataResponse> {
+    const file = await fileService(log).getFileOrThrow({ fileId, type: FileType.FLOW_STEP_FILE })
+    const readableHere = file.platformId === platformId
+        && file.metadata?.['conversationId'] === conversationId
+        && !isNil(file.projectId)
+        && accessibleProjectIds.includes(file.projectId)
+    if (!readableHere) {
+        throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityType: 'file', entityId: fileId } })
+    }
+    return fileService(log).getDataOrThrow({ projectId: file.projectId ?? undefined, fileId, type: FileType.FLOW_STEP_FILE })
+}
+
+function dropImagesForTextOnlyModels({ messages, models }: {
+    messages: ModelMessage[]
+    models: Array<AIProviderModelMetadata | undefined>
+}): ModelMessage[] {
+    const someModelIsTextOnly = models.some((model) => model?.supportsVision === false)
+    if (!someModelIsTextOnly) {
+        return messages
+    }
+    return messages.map((message) => message.role === 'user' && Array.isArray(message.content)
+        ? { ...message, content: message.content.map((part) => isImagePart(part) ? { type: 'text' as const, text: UNREADABLE_IMAGE_NOTE } : part) }
+        : message)
+}
+
+function isImagePart(part: Exclude<UserContent, string>[number]): boolean {
+    return part.type === 'image' || (part.type === 'file' && part.mediaType.startsWith('image/'))
+}
+
+export { buildUserContentWithFiles, persistAgentAttachments, buildAttachmentNote, readConversationFile, dropImagesForTextOnlyModels }

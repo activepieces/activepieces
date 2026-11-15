@@ -10,8 +10,9 @@ const TRIGGER_KEY = 'labels';
 export const gmailNewLabelTrigger = createTrigger({
   auth: gmailAuth,
   name: 'new_label',
+  classification: 'READ',
   displayName: 'New Label',
-  description: 'Triggers when a new label is created.',
+  description: 'Triggers when a new label is created in Gmail.',
   aiMetadata: {
     description:
       'Fires when a new label is created in the connected Gmail account. Each event represents one newly added label not seen on a prior poll.',
@@ -21,6 +22,9 @@ export const gmailNewLabelTrigger = createTrigger({
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get(TRIGGER_KEY))) {
+      return;
+    }
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });
 
@@ -34,6 +38,9 @@ export const gmailNewLabelTrigger = createTrigger({
     await context.store.put(TRIGGER_KEY, JSON.stringify(existingLabelIds));
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete(TRIGGER_KEY);
   },
   async test(context) {

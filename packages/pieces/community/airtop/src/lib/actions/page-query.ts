@@ -8,6 +8,7 @@ import * as z from 'zod/mini'
 
 export const pageQueryAction = createAction({
 	name: 'page-query',
+	classification: 'READ',
 	auth: airtopAuth,
 	displayName: 'Page Query',
 	description: 'Query a page to extract data or ask a question given the data on the page.',

@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -25,6 +26,7 @@ import { Label } from '@/components/ui/label';
 import { templateUtils } from '@/features/flows';
 import { templatesApi } from '@/features/templates';
 import { userHooks } from '@/hooks/user-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
 import { Textarea } from '../../../../../components/ui/textarea';
@@ -122,7 +124,7 @@ export const CreateTemplateDialog = ({
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.md}>
         <DialogHeader>
           <DialogTitle>{t('Create New Template')}</DialogTitle>
         </DialogHeader>
@@ -140,7 +142,6 @@ export const CreateTemplateDialog = ({
                     required
                     id="name"
                     placeholder={t('Template Name')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>
@@ -155,7 +156,6 @@ export const CreateTemplateDialog = ({
                     {...field}
                     id="summary"
                     placeholder={t('Template Summary')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>
@@ -171,7 +171,6 @@ export const CreateTemplateDialog = ({
                     {...field}
                     required
                     id="description"
-                    className="rounded-sm"
                     placeholder={t('Template Description')}
                   />
 
@@ -189,7 +188,6 @@ export const CreateTemplateDialog = ({
                     required
                     id="blogUrl"
                     placeholder={t('Template Blog URL')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>
@@ -221,7 +219,6 @@ export const CreateTemplateDialog = ({
                     required
                     id="template"
                     placeholder={t('Template')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>
@@ -241,6 +238,7 @@ export const CreateTemplateDialog = ({
             {t('Cancel')}
           </Button>
           <Button
+            {...adminControl(AdminControl.TEMPLATES_NEW_SUBMIT)}
             disabled={isPending}
             loading={isPending}
             onClick={(e) => {

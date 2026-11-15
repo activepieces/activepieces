@@ -11,6 +11,7 @@ import {
 import { GetField } from '../common/types';
 import { isNil } from '@activepieces/pieces-framework';
 import { ORGANIZATION_OPTIONAL_FIELDS } from '../common/constants';
+import { organizationMatchingFilterTriggerOutputSchema } from '../output-schemas';
 
 interface PipedriveOrganizationV2 {
 	id: number;
@@ -75,6 +76,8 @@ interface OrganizationListResponseV2 {
 export const organizationMatchingFilterTrigger = createTrigger({
 	auth: pipedriveAuth,
 	name: 'organization-matching-filter',
+	outputSchema: organizationMatchingFilterTriggerOutputSchema,
+	classification: 'READ',
 	displayName: 'Organization Matching Filter',
 	description: 'Triggers when an organization newly matches a Pipedrive filter for the first time.',
 	aiMetadata: {
@@ -86,6 +89,9 @@ export const organizationMatchingFilterTrigger = createTrigger({
 		filterId: filterIdProp('org', true),
 	},
 	async onEnable(context) {
+		if (context.isRepublish && !isNil(await context.store.get('organizations'))) {
+			return;
+		}
 		const ids: number[] = [];
 		const response = await pipedrivePaginatedV2ApiCall<{ id: number }>({
 			accessToken: context.auth.access_token,
@@ -106,6 +112,9 @@ export const organizationMatchingFilterTrigger = createTrigger({
 		await context.store.put('organizations', JSON.stringify(ids));
 	},
 	async onDisable(context) {
+		if (context.isRepublish) {
+			return;
+		}
 		await context.store.delete('organizations');
 	},
 	async test(context) {

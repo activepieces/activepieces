@@ -13,6 +13,7 @@ import { googleTasksListTaskListsOutputSchema } from '../output-schemas';
 export const googleTasksListTaskListsAction = createAction({
   auth: googleTasksAuth,
   name: 'list_task_lists',
+  classification: 'SEARCH',
   displayName: 'List Task Lists',
   description: "List the authenticated user's task lists (id and title).",
   audience: 'ai',

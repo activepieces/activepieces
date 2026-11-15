@@ -6,6 +6,7 @@ import { parallelClient } from '../common/client';
 export const extractAction = createAction({
   auth: parallelAuth,
   name: 'extract',
+  classification: 'READ',
   displayName: 'Extract Web Content',
   description:
     'Extract clean, citation-aware content from specific web URLs. Up to 20 URLs per request.',

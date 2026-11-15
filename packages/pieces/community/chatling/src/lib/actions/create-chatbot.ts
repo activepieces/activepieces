@@ -7,6 +7,7 @@ import { templateIdDropdown } from '../common/props';
 export const createChatbot = createAction({
   auth: chatlingAuth,
   name: 'create_chatbot',
+  classification: 'WRITE',
   displayName: 'Create Chatbot',
   description: 'Create a new chatbot using a template or from scratch.',
   audience: 'both',

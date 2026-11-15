@@ -6,9 +6,10 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { customerSearchOutputSchema } from '../output-schemas';
 export const stripeSearchCustomer = createAction({
   name: 'search_customer',
+  classification: 'SEARCH',
   auth: stripeAuth,
-  displayName: 'Search Customer',
-  description: 'Search for a customer in stripe by email',
+  displayName: 'Find Customer by Email',
+  description: 'Find customers whose email matches exactly.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -18,25 +19,24 @@ export const stripeSearchCustomer = createAction({
   props: {
     email: Property.ShortText({
       displayName: 'Email',
-      description: undefined,
+      placeholder: 'jane@example.com',
       required: true,
     }),
   },
   outputSchema: customerSearchOutputSchema,
   async run(context) {
-    const customer = {
-      email: context.propsValue.email,
-    };
+    const email = context.propsValue.email
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'");
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${stripeCommon.baseUrl}/customers/search`,
       headers: {
         Authorization: 'Bearer ' + context.auth.secret_text,
-        'Content-Type': 'application/x-www-form-urlencoded',
         'Stripe-Version': '2026-02-25.clover',
       },
-      body: {
-        query: `email:'${customer.email}'`,
+      queryParams: {
+        query: `email:'${email}'`,
       },
     });
     return response.body;

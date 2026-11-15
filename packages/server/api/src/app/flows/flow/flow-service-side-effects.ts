@@ -1,6 +1,7 @@
-import { isNil } from '@activepieces/core-utils'
-import { FileType, Flow, FlowStatus, FlowVersion } from '@activepieces/shared'
+import { FlowId, isNil, PlatformId, ProjectId, tryCatch } from '@activepieces/core-utils'
+import { ApplicationEventName, FileType, Flow, FlowDraftUpdatedEvent, FlowOperationRequest, FlowOperationType, FlowStatus, FlowVersion, PopulatedFlow, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { applicationEvents, MetaInformation } from '../../helper/application-events'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { sampleDataService } from '../step-run/sample-data.service'
 
@@ -10,6 +11,8 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         flowToUpdate,
         publishedFlowVersion,
         templateId,
+        isRepublish,
+        isTriggerUnchanged,
     }: PreUpdateStatusParams): Promise<void> {
         switch (newStatus) {
             case FlowStatus.ENABLED: {
@@ -18,6 +21,8 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
                     projectId: flowToUpdate.projectId,
                     simulate: false,
                     templateId,
+                    isRepublish,
+                    isTriggerUnchanged,
                 })
                 break
             }
@@ -26,7 +31,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
                     flowId: publishedFlowVersion.flowId,
                     projectId: flowToUpdate.projectId,
                     simulate: false,
-                    ignoreError: false,
+                    ignoreError: true,
                     templateId,
                 })
                 break
@@ -35,10 +40,13 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
     },
 
     async preDelete({ flowToDelete }: PreDeleteParams): Promise<void> {
-        if (
-            flowToDelete.status === FlowStatus.DISABLED ||
-            isNil(flowToDelete.publishedVersionId)
-        ) {
+        await triggerSourceService(log).disable({
+            flowId: flowToDelete.id,
+            projectId: flowToDelete.projectId,
+            simulate: true,
+            ignoreError: true,
+        })
+        if (isNil(flowToDelete.publishedVersionId)) {
             return
         }
         await triggerSourceService(log).disable({
@@ -60,16 +68,124 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
             fileType: FileType.SAMPLE_DATA_INPUT,
         })
     },
+
+    onCreated({ flow, ...meta }: FlowEventParams): void {
+        applicationEvents(log).sendUserEvent(meta, {
+            action: ApplicationEventName.FLOW_CREATED,
+            data: {
+                flow,
+            },
+        })
+    },
+
+    onOperationApplied({ flow, previousVersion, previousStatus, operation, auditExplanation, ...meta }: OnOperationAppliedParams): void {
+        applicationEvents(log).sendUserEvent(meta, {
+            action: ApplicationEventName.FLOW_UPDATED,
+            data: {
+                flow: {
+                    id: flow.id,
+                    externalId: flow.externalId,
+                    created: flow.created,
+                    updated: flow.updated,
+                },
+                request: operation,
+                reason: auditExplanation,
+                flowVersion: previousVersion,
+            },
+        })
+        for (const action of lifecycleActions({ operation, previousStatus, newStatus: flow.status })) {
+            applicationEvents(log).sendUserEvent(meta, {
+                action,
+                data: {
+                    flow,
+                    flowVersion: flow.version,
+                },
+            })
+        }
+    },
+
+    onDeleted({ flow, ...meta }: FlowEventParams): void {
+        applicationEvents(log).sendUserEvent(meta, {
+            action: ApplicationEventName.FLOW_DELETED,
+            data: {
+                flow,
+                flowVersion: flow.version,
+            },
+        })
+    },
+
+    async onDraftWritten({ flowId, projectId, editorSessionId }: OnDraftWrittenParams): Promise<void> {
+        const { error } = await tryCatch(async () => {
+            const { websocketService } = await import('../../core/websockets.service')
+            const event: FlowDraftUpdatedEvent = { flowId, editorSessionId }
+            websocketService.to(projectId).emit(WebsocketClientEvent.FLOW_DRAFT_UPDATED, event)
+        })
+        if (!isNil(error)) {
+            log.error({ error, flow: { id: flowId }, project: { id: projectId } }, '[flowSideEffects#onDraftWritten] Could not send the Draft Push, the write is kept')
+        }
+    },
+
+    onDisabledByWorker({ flow, projectId, platformId }: OnDisabledByWorkerParams): void {
+        applicationEvents(log).sendWorkerEvent({
+            projectId,
+            platformId,
+            action: ApplicationEventName.FLOW_DEACTIVATED,
+            data: {
+                flow,
+                flowVersion: flow.version,
+            },
+        })
+    },
 })
+
+function lifecycleActions({ operation, previousStatus, newStatus }: LifecycleActionsParams): ApplicationEventName[] {
+    const published = operation.type === FlowOperationType.LOCK_AND_PUBLISH
+    const changedStatus = (published || operation.type === FlowOperationType.CHANGE_STATUS) && newStatus !== previousStatus
+    return [
+        ...(published ? [ApplicationEventName.FLOW_PUBLISHED] : []),
+        ...(changedStatus ? [newStatus === FlowStatus.ENABLED ? ApplicationEventName.FLOW_ACTIVATED : ApplicationEventName.FLOW_DEACTIVATED] : []),
+    ]
+}
 
 type PreUpdateStatusParams = {
     flowToUpdate: Flow
     publishedFlowVersion: FlowVersion
     newStatus: FlowStatus
-    templateId?: string 
+    templateId?: string
+    isRepublish?: boolean
+    isTriggerUnchanged?: boolean
 }
 
 
 type PreDeleteParams = {
     flowToDelete: Flow
+}
+
+type FlowEventParams = MetaInformation & {
+    flow: PopulatedFlow
+}
+
+type OnOperationAppliedParams = FlowEventParams & {
+    previousVersion: FlowVersion
+    previousStatus: FlowStatus
+    operation: FlowOperationRequest
+    auditExplanation?: string
+}
+
+type OnDraftWrittenParams = {
+    flowId: FlowId
+    projectId: ProjectId
+    editorSessionId: string | null
+}
+
+type OnDisabledByWorkerParams = {
+    flow: PopulatedFlow
+    projectId: ProjectId
+    platformId: PlatformId
+}
+
+type LifecycleActionsParams = {
+    operation: FlowOperationRequest
+    previousStatus: FlowStatus
+    newStatus: FlowStatus
 }

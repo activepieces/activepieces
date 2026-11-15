@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertPressureAction = createAction({
   name: 'convert_pressure',
+  classification: 'READ',
   displayName: 'Convert Pressure',
   description: 'Convert pressure measurements between different units',
   audience: 'both',

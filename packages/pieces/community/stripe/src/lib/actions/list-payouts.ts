@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { payoutListOutputSchema } from '../output-schemas';
 export const stripeListPayouts = createAction({
   name: 'list_payouts',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'List Payouts (Agent)',
   description: 'List payouts to the bank account.',

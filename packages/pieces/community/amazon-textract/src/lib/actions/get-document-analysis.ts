@@ -11,6 +11,7 @@ import {
 export const getDocumentAnalysis = createAction({
   auth: amazonTextractAuth,
   name: 'get-document-analysis',
+  classification: 'READ',
   displayName: 'Get Document Analysis Results',
   description:
     'Retrieve the results of an asynchronous document analysis job started with "Start Document Analysis". If the job is still running, the status will be IN_PROGRESS. For very large documents, results may be paginated — use the returned nextToken to fetch the next page.',
@@ -37,7 +38,7 @@ export const getDocumentAnalysis = createAction({
     const { jobId, nextToken, maxResults } = context.propsValue;
 
     try {
-      const client = createTextractClient(context.auth.props);
+      const client = await createTextractClient({ auth: context.auth.props, server: context.server });
 
       const response = await client.send(
         new GetDocumentAnalysisCommand({

@@ -18,6 +18,7 @@ type CreatePersonResponse = {
 export const createPersonAction = createAction({
   auth: beeboleAuth,
   name: 'create_person',
+  classification: 'WRITE',
   displayName: 'Create Person',
   description: 'Creates a new person in Beebole. An available license is required for the person to be active.',
   audience: 'both',

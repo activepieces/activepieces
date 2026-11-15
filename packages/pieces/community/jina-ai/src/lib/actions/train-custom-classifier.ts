@@ -6,6 +6,7 @@ import { jinaAiAuth } from '../auth';
 export const trainCustomClassifierAction = createAction({
   auth:jinaAiAuth,
   name: 'train_custom_classifier',
+  classification: 'WRITE',
   displayName: 'Train Custom Classifier',
   description:
     'Fine-tune a classifier with labeled examples for domain-specific tasks.',

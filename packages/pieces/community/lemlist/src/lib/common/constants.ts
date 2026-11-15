@@ -1,43 +1,27 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { lemlistApiService } from './requests';
-import { AppConnectionType } from '@activepieces/pieces-framework';
-
-export const BASE_URL = 'https://api.lemlist.com/api';
+import { isLemlistStatus, lemlistApiCall } from './client';
 
 export const lemlistAuth = PieceAuth.SecretText({
   displayName: 'Lemlist API Key',
-  description: `
-  
-  1.Click on your profile picture in the bottom left-hand corner and click on Settings.
-  2.Go to the Integrations tab.
-  3.Click on Generate a new API key.
-  4.Store it securely because you won’t be able to see it again`,
+  description: `To get your API key:
+
+1. In lemlist, click your profile picture (bottom left) and open **Settings**.
+2. Go to **Integrations**.
+3. Click **Generate** next to API key and copy it. You won't see it again.`,
   required: true,
   validate: async ({ auth }) => {
     try {
-      await lemlistApiService.fetchTeams({
-        secret_text: auth,
-        type: AppConnectionType.SECRET_TEXT
-      }).catch((err) => {
-        throw err;
-      });
-
-      return {
-        valid: true,
-      };
-    } catch (e: any) {
+      await lemlistApiCall({ apiKey: auth, method: HttpMethod.GET, resourceUri: '/team' });
+      return { valid: true };
+    } catch (error) {
+      if (isLemlistStatus({ error, status: 401 }) || isLemlistStatus({ error, status: 403 })) {
+        return { valid: false, error: 'Invalid API key.' };
+      }
       return {
         valid: false,
-        error: `Auth validation error: ${e.message}`,
+        error: 'Could not reach lemlist to check the API key. Try again in a moment.',
       };
     }
   },
 });
-
-export const API_ENDPOINTS = {
-  TEAM: '/team',
-  HOOKS: '/hooks',
-  CAMPAIGNS: '/campaigns',
-  LEADS: '/leads',
-  UNSUBSCRIBES: '/unsubscribes',
-};

@@ -8,6 +8,7 @@ import { listPullRequestReviewCommentsOutputSchema } from '../../output-schemas'
 export const githubListPullRequestReviewCommentsAction = createAction({
   auth: githubAuth,
   name: 'list_pull_request_review_comments',
+  classification: 'SEARCH',
   displayName: 'List Pull Request Review Comments (Agent)',
   description: 'Lists inline review comments on a pull request.',
   audience: 'ai',

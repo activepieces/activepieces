@@ -6,6 +6,7 @@ import { aipriseAuth } from '../common/auth';
 export const updateVerificationResultAction = createAction({
   auth: aipriseAuth,
   name: 'update_verification_result',
+  classification: 'DESTRUCTIVE',
   displayName: 'Override Identity Verification Decision',
   description:
     'Manually changes the outcome of an identity check — useful when a human reviewer needs to approve or decline a case that AiPrise flagged for manual review.',

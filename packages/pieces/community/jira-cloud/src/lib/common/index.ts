@@ -70,6 +70,29 @@ export async function getPriorities({ auth }: { auth: JiraAuth }) {
 	return response.body as any[];
 }
 
+export async function sanitizeJqlQuery({ auth, jql }: { auth: JiraAuth; jql: string }): Promise<string> {
+	const sanitizeResult = (
+		await sendJiraRequest({
+			auth: auth,
+			url: 'jql/sanitize',
+			method: HttpMethod.POST,
+			body: {
+				queries: [
+					{
+						query: jql,
+					},
+				],
+			},
+		})
+	).body as {
+		queries: {
+			initialQuery: string;
+			sanitizedQuery: string;
+		}[];
+	};
+	return sanitizeResult.queries[0].sanitizedQuery;
+}
+
 export async function executeJql({
 	auth,
 	jql,
@@ -87,29 +110,7 @@ export async function executeJql({
 	queryParams?: QueryParams;
 	body?: HttpMessageBody;
 }) {
-	let reqJql = jql;
-	if (sanitizeJql) {
-		const sanitizeResult = (
-			await sendJiraRequest({
-				auth: auth,
-				url: 'jql/sanitize',
-				method: HttpMethod.POST,
-				body: {
-					queries: [
-						{
-							query: jql,
-						},
-					],
-				},
-			})
-		).body as {
-			queries: {
-				initialQuery: string;
-				sanitizedQuery: string;
-			}[];
-		};
-		reqJql = sanitizeResult.queries[0].sanitizedQuery;
-	}
+	const reqJql = sanitizeJql ? await sanitizeJqlQuery({ auth, jql }) : jql;
 
 	const response = await sendJiraRequest({
 		auth,

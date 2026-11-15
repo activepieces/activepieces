@@ -168,7 +168,7 @@ describe('multiple independent functions', () => {
 // ---------------------------------------------------------------------------
 
 describe('zero-width space stripping', () => {
-    const ZWS = '​'
+    const ZWS = '\u200B'
 
     it('numeric arg surrounded by ZWS still classifies as number — last_n("hello"; 3)', () => {
         const d = doc([
@@ -192,5 +192,25 @@ describe('zero-width space stripping', () => {
             fnEnd('f1'),
         ])
         expect(typeCheckTiptapDoc(d).size).toBe(0)
+    })
+
+    it('0-arg function whose body is only the ZWS anchor is valid — now()', () => {
+        const d = doc([fnStart('now', 'f1'), text(ZWS), fnEnd('f1')])
+        expect(typeCheckTiptapDoc(d).size).toBe(0)
+    })
+
+    it('a real value next to the ZWS anchor still counts — now(5) is too many', () => {
+        const d = doc([fnStart('now', 'f1'), text(`${ZWS}5`), fnEnd('f1')])
+        expect(typeCheckTiptapDoc(d).get('f1')).toMatch(/at most/)
+    })
+
+    it('1-arg function whose body is only the ZWS anchor is not yet flagged — trim()', () => {
+        const d = doc([fnStart('trim', 'f1'), text(ZWS), fnEnd('f1')])
+        expect(typeCheckTiptapDoc(d).size).toBe(0)
+    })
+
+    it('a real value next to the ZWS anchor still counts — combine("a") is too few', () => {
+        const d = doc([fnStart('combine', 'f1'), text(`${ZWS}"a"${ZWS}`), fnEnd('f1')])
+        expect(typeCheckTiptapDoc(d).get('f1')).toMatch(/at least/)
     })
 })

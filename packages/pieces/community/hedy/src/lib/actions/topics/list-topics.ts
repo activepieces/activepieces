@@ -24,6 +24,7 @@ function toTopicArray(result: unknown): Topic[] {
 export const listTopics = createAction({
   auth: hedyAuth,
   name: 'list-topics',
+  classification: 'SEARCH',
   displayName: 'List Topics',
   description: 'Retrieve all topics from your Hedy workspace.',
   audience: 'both',

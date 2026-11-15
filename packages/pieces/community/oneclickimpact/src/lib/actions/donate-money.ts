@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const donateMoney = createAction({
   auth: oneclickimpactAuth,
   name: 'donateMoney',
+  classification: 'WRITE',
   displayName: 'Donate Money',
   description: ' Donate money to support environmental causes',
   audience: 'both',

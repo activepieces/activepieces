@@ -4,6 +4,7 @@ import { dumplingAuth } from '../auth';
 
 export const crawlWebsite = createAction({
 	name: 'crawl_website',
+	classification: 'SEARCH',
 	auth: dumplingAuth,
 	displayName: 'Crawl Website',
 	description: 'Crawl a website and return structured content from multiple pages.',

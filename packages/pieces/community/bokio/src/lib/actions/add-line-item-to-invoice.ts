@@ -7,6 +7,7 @@ import { invoiceIdDropdown, lineItemsProps, unitTypeDropdown } from '../common/p
 export const addLineItemToInvoice = createAction({
   auth: bokioAuth,
   name: 'addLineItemToInvoice',
+  classification: 'WRITE',
   displayName: 'Add line item to invoice',
   description: 'Adds a line item to an existing draft invoice',
   audience: 'both',

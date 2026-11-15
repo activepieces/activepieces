@@ -1,10 +1,10 @@
 import { ActivepiecesError, ErrorCode, isNil, UserId } from '@activepieces/core-utils'
 import { ApplicationEvent, ApplicationEventName, OtpType, ResetPasswordRequestBody, UserIdentity, VerifyEmailRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { otpService } from '../../../authentication/otp/otp-service'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { applicationEvents } from '../../../helper/application-events'
 import { userService } from '../../../user/user-service'
-import { otpService } from '../otp/otp-service'
 
 export const enterpriseLocalAuthnService = (log: FastifyBaseLogger) => ({
     async verifyEmail({ identityId, otp }: VerifyEmailRequestBody): Promise<UserIdentity> {

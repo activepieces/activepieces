@@ -2,7 +2,7 @@ import { AppConnectionValueForAuthProperty, PieceAuth, Property } from '@activep
 import { AppConnectionType } from '@activepieces/pieces-framework';
 import { JWT, OAuth2Client } from 'google-auth-library';
 
-export const googleDriveScopes = ['https://www.googleapis.com/auth/drive'];
+export const googleDriveScopes = ['https://www.googleapis.com/auth/drive', 'email'];
 
 export const googleDriveAuth = [PieceAuth.OAuth2({
   description: '',
@@ -61,7 +61,7 @@ export async function createGoogleClient(auth: GoogleDriveAuthValue): Promise<OA
     });
   }
   const authClient = new OAuth2Client();
-  authClient.setCredentials(auth);
+  authClient.setCredentials({ access_token: auth.access_token });
   return authClient;
 }
 

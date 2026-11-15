@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -25,6 +26,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { pieceSetMutations } from '@/features/piece-sets';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 const formSchema = CreatePieceSetRequestBody;
 
@@ -88,7 +91,11 @@ const CreatePieceSetForm = ({
           >
             {t('Cancel')}
           </Button>
-          <Button type="submit" loading={isPending}>
+          <Button
+            {...adminControl(AdminControl.PIECE_SETS_CREATE_SUBMIT)}
+            type="submit"
+            loading={isPending}
+          >
             {t('Create')}
           </Button>
         </DialogFooter>
@@ -100,16 +107,21 @@ const CreatePieceSetForm = ({
 export const CreatePieceSetDialog = ({
   onCreated,
 }: CreatePieceSetDialogProps) => {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const isEnabled = platform.plan.managePiecesEnabled;
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="size-4 mr-1" />
+        <Button
+          {...adminControl(AdminControl.PIECE_SETS_CREATE_OPEN)}
+          disabled={!isEnabled}
+        >
+          <Plus />
           {t('New Piece Set')}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.md}>
         <DialogHeader>
           <DialogTitle>{t('Create Piece Set')}</DialogTitle>
         </DialogHeader>

@@ -6,6 +6,7 @@ import { SampleDataSettings } from '../sample-data'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { UpdateTriggerRequest } from '.'
+import { updateStepUtil } from './update-step-util'
 
 
 function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: FlowAction | undefined, existingSampleData: SampleDataSettings | undefined): FlowTrigger {
@@ -45,9 +46,10 @@ function _updateTrigger(flowVersion: FlowVersion, request: UpdateTriggerRequest)
     const trigger = flowStructureUtil.getStepOrThrow(request.name, flowVersion.trigger)
     const existingSampleData = trigger.type === FlowTriggerType.PIECE ? trigger.settings.sampleData : undefined
     const updatedTrigger = createTrigger(request.name, request, trigger.nextAction, existingSampleData)
+    const finalTrigger = updateStepUtil.preserveLastUpdatedDate({ existingStep: trigger, updatedStep: updatedTrigger })
     const next = flowStructureUtil.transferFlow(flowVersion, (parentStep) => {
         if (parentStep.name === request.name) {
-            return updatedTrigger
+            return finalTrigger
         }
         return parentStep
     })

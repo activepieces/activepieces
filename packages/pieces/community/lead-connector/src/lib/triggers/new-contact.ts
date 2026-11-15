@@ -29,6 +29,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof leadConnectorAut
 export const newContact = createTrigger({
   auth: leadConnectorAuth,
   name: 'new_contact',
+  classification: 'READ',
   displayName: 'New Contact',
   description: 'Trigger when a new contact is added.',
   aiMetadata: {
@@ -39,18 +40,10 @@ export const newContact = createTrigger({
   sampleData: {},
 
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   run: async (context) => {
     return await pollingHelper.poll(polling, context);

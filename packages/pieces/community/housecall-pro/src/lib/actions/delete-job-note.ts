@@ -5,6 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const deleteJobNote = createAction({
   auth: housecallProAuth,
   name: "delete_job_note",
+  classification: 'DESTRUCTIVE',
   displayName: "Delete job note",
   description: "Delete a specific job note",
   audience: 'both',

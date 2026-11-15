@@ -8,6 +8,7 @@ import { MailchimpClient } from '../common/types';
 export const createCustomEvent = createAction({
   auth: mailchimpAuth,
   name: 'create_custom_event',
+  classification: 'WRITE',
   displayName: 'Create Custom Event',
   description: 'Log a custom event for an existing subscriber, for use in automations and segmentation',
   audience: 'both',

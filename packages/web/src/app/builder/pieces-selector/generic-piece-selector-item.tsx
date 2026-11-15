@@ -1,12 +1,14 @@
 import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
 
 import { CardListItem } from '@/components/custom/card-list';
+import { Badge } from '@/components/ui/badge';
 import {
   PieceIcon,
   PieceSelectorItem,
   StepMetadataWithSuggestions,
   PIECE_SELECTOR_ELEMENTS_HEIGHTS,
 } from '@/features/pieces';
+import { ACTION_CLASSIFICATION_BADGES } from '@/features/pieces/utils/action-classification';
 import { cn } from '@/lib/utils';
 type GenericActionOrTriggerItemProps = {
   item: PieceSelectorItem;
@@ -23,11 +25,13 @@ const getPieceSelectorItemInfo = (item: PieceSelectorItem) => {
     return {
       displayName: item.actionOrTrigger.displayName,
       description: item.actionOrTrigger.description,
+      classification: item.actionOrTrigger.classification,
     };
   }
   return {
     displayName: item.displayName,
     description: item.description,
+    classification: undefined,
   };
 };
 
@@ -48,7 +52,12 @@ const GenericActionOrTriggerItem = ({
       };
   const pieceSelectorItemInfo = getPieceSelectorItemInfo(item);
   return (
-    <CardListItem className="p-2 w-full" onClick={onClick} style={style}>
+    <CardListItem
+      className="p-2 w-full"
+      onClick={onClick}
+      style={style}
+      data-testid={`action-or-trigger-${pieceSelectorItemInfo.displayName}`}
+    >
       <div className="flex gap-3 items-center w-full min-w-0">
         <div
           className={cn({
@@ -63,15 +72,24 @@ const GenericActionOrTriggerItem = ({
           />
         </div>
         <div className="flex flex-col gap-0.5 min-w-0">
-          <div
-            className={cn('text-sm', {
-              truncate: hidePieceIconAndDescription,
-            })}
-          >
-            {pieceSelectorItemInfo.displayName}
+          <div className="flex items-center gap-1.5 min-w-0">
+            <div
+              className={cn('text-sm', {
+                truncate: hidePieceIconAndDescription,
+              })}
+            >
+              {pieceSelectorItemInfo.displayName}
+            </div>
+            {pieceSelectorItemInfo.classification && (
+              <Badge variant="secondary" className="font-normal">
+                {ACTION_CLASSIFICATION_BADGES[
+                  pieceSelectorItemInfo.classification
+                ].label()}
+              </Badge>
+            )}
           </div>
           <div
-            className={cn('text-xs text-muted-foreground', {
+            className={cn('text-xs text-gray-11', {
               truncate: hidePieceIconAndDescription,
             })}
           >

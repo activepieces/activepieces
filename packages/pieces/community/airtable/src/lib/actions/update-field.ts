@@ -12,6 +12,7 @@ import { updateFieldActionOutputSchema } from '../output-schemas';
 export const airtableUpdateFieldAction = createAction({
   auth: airtableAuth,
   name: 'update_field',
+  classification: 'WRITE',
   displayName: 'Update Field (Agent)',
   description: "Rename or re-describe a field (column).",
   audience: 'ai',

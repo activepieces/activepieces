@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const getQuestionPngPreview = createAction({
   name: 'getQuestionPngPreview',
+  classification: 'READ',
   auth: metabaseAuth,
   requireAuth: true,
   displayName: 'Get Question PNG Preview',

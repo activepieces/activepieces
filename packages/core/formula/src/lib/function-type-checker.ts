@@ -46,7 +46,9 @@ export function typeCheckTiptapDoc(doc: DocNode): Map<string, string> {
             continue
         }
 
-        if (argCount < fn.minArgs) {
+        const isUntouchedBody = argCount === 0 && between.length > 0
+
+        if (argCount < fn.minArgs && !isUntouchedBody) {
             errors.set(
                 id,
                 `${fnName}() needs at least ${fn.minArgs} value${fn.minArgs === 1 ? '' : 's'}, but got ${argCount}`,
@@ -137,8 +139,7 @@ function countArgs(nodes: DocNode[]): number {
             hasContent = true
         }
         else if (node.type === 'text' && depth === 0) {
-            const text = node.text ?? ''
-            const stripped = text.trim()
+            const stripped = stripCursorAnchors(node.text ?? '').trim()
             if (stripped) hasContent = true
         }
     }
@@ -205,13 +206,13 @@ function inferArgType(argNodes: DocNode[]): ApFunctionArgType | null {
         // Strip zero-width spaces — the editor inserts them as cursor anchors
         // between function brackets, but `String.trim()` does not remove them
         // (ZWS isn't ECMA whitespace), so a literal `3` in an arg slot reads
-        // as `​3` here and gets misclassified as a string.
-        const text = argNodes
-            .filter((n) => n.type === 'text')
-            .map((n) => n.text ?? '')
-            .join('')
-            .replaceAll('​', '')
-            .trim()
+        // as `\u200B3` here and gets misclassified as a string.
+        const text = stripCursorAnchors(
+            argNodes
+                .filter((n) => n.type === 'text')
+                .map((n) => n.text ?? '')
+                .join(''),
+        ).trim()
 
         if (!text) return null
         if (text === 'true' || text === 'false') return 'boolean'
@@ -225,6 +226,12 @@ function inferArgType(argNodes: DocNode[]): ApFunctionArgType | null {
 
     return null
 }
+
+function stripCursorAnchors(text: string): string {
+    return text.replaceAll(CURSOR_ANCHOR, '')
+}
+
+const CURSOR_ANCHOR = '\u200B'
 
 const EXPRESSION_OPERATOR_REGEX =
     /==|!=|<=|>=|&&|\|\||[<>]|\s(?:and|or|not)\s|[+\-*/%^]/

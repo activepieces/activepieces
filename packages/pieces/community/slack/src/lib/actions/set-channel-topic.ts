@@ -1,6 +1,6 @@
 import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { singleSelectChannelInfo, slackChannel } from '../common/props';
+import { singleSelectChannelInfo, slackChannel, onlyBotChannels } from '../common/props';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 import { channelResponseOutputSchema } from '../output-schemas';
@@ -8,16 +8,36 @@ import { channelResponseOutputSchema } from '../output-schemas';
 export const setChannelTopicAction = createAction({
 	auth: slackAuth,
 	name: 'set-channel-topic',
+	classification: 'WRITE',
 	displayName: 'Set Channel Topic',
 	description: 'Sets the topic on a selected channel.',
 	audience: 'human',
 	aiMetadata: { description: 'Set (overwrite) the topic of a selected channel. Idempotent: re-running with the same topic leaves the channel in the same state. The bot must be a member of the channel.', idempotent: true },
 	outputSchema: channelResponseOutputSchema,
+	propertyGroups: [
+		{
+			key: 'channel_picker',
+			display: 'section',
+			label: 'Channel',
+			icon: 'markdown',
+			props: ['info', 'onlyBotChannels', 'channel'],
+		},
+		{
+			key: 'topic_text',
+			display: 'section',
+			label: 'Topic',
+			icon: 'type',
+			props: ['topic'],
+		},
+	],
 	props: {
 		info: singleSelectChannelInfo,
+		onlyBotChannels,
 		channel: slackChannel(true),
 		topic: Property.LongText({
 			displayName: 'Topic',
+			description: 'Shown under the channel name.',
+			placeholder: 'Weekly release coordination',
 			required: true,
 		}),
 	},

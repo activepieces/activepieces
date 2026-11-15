@@ -3,10 +3,13 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import {  pipedrivePaginatedV1ApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
+import { findNotesActionOutputSchema } from '../output-schemas';
 
 export const findNotesAction = createAction({
     auth: pipedriveAuth,
     name: 'find-notes',
+    outputSchema: findNotesActionOutputSchema,
+    classification: 'SEARCH',
     displayName: 'Find Notes',
     description: 'Finds notes by Deal, Lead, Person, or Organization ID.',
     audience: 'both',

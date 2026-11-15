@@ -10,6 +10,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 
 export const statusAction = createAction({
   name: 'get_subscription_status',
+  classification: 'READ',
   auth: sendyAuth,
   displayName: 'Get Subscription Status',
   description: 'Get the subscription status of a user',

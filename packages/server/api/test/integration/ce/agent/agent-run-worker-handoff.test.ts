@@ -1,0 +1,146 @@
+import { AIProviderName, apId, ErrorCode } from '@activepieces/core-utils'
+import { AgentRunSource } from '@activepieces/shared'
+import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { accessTokenManager } from '../../../../src/app/authentication/lib/access-token-manager'
+import { agentHelpers } from '../../../../src/app/ee/agent/agent-helpers'
+import { agentRpcHandlers } from '../../../../src/app/ee/agent/agent-rpc-handlers'
+import { db } from '../../../helpers/db'
+import { mockAndSaveAIProvider } from '../../../helpers/mocks'
+import { createTestContext, TestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+
+const RUNS_URL = '/api/v1/agents/runs'
+
+let app: FastifyInstance
+
+beforeAll(async () => {
+    app = await setupTestEnvironment()
+})
+
+afterAll(async () => {
+    await teardownTestEnvironment()
+})
+
+async function startFlowStepRun(ctx: TestContext, jobId: string): Promise<string> {
+    const engineToken = await accessTokenManager(app.log).generateEngineToken({
+        jobId,
+        projectId: ctx.project.id,
+        platformId: ctx.platform.id,
+    })
+    const response = await app.inject({
+        method: 'POST',
+        url: RUNS_URL,
+        headers: { authorization: `Bearer ${engineToken}` },
+        body: {
+            instruction: 'summarise the thread',
+            flowRunId: apId(),
+            waitpointId: apId(),
+            provider: AIProviderName.OPENAI,
+            modelName: 'gpt-4o',
+        },
+    })
+    expect(response.statusCode).toBe(StatusCodes.OK)
+    return response.json().conversationId
+}
+
+describe('community edition: the worker picking up an agent step', () => {
+    it('is handed a provider and a model, so the run does not stall on its first call', async () => {
+        const ctx = await createTestContext(app)
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+        const conversationId = await startFlowStepRun(ctx, 'ce-handoff')
+
+        const config = await agentRpcHandlers(app.log).getAgentConfig({
+            conversationId,
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            projectId: ctx.project.id,
+            userMessage: 'summarise the thread',
+            modelName: 'gpt-4o',
+            provider: AIProviderName.OPENAI,
+            source: AgentRunSource.FLOW_STEP,
+        })
+
+        expect(config.credentials.provider).toBe(AIProviderName.OPENAI)
+        expect(config.modelId).toBe('gpt-4o')
+        expect(config.systemPrompt.length).toBeGreaterThan(0)
+        expect(config.projectId).toBe(ctx.project.id)
+    })
+
+    it('is told the saved-agent surface is unavailable, so the step cannot reach agent tools', async () => {
+        const ctx = await createTestContext(app)
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+        const conversationId = await startFlowStepRun(ctx, 'ce-handoff-surface')
+
+        const config = await agentRpcHandlers(app.log).getAgentConfig({
+            conversationId,
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            projectId: ctx.project.id,
+            userMessage: 'summarise the thread',
+            modelName: 'gpt-4o',
+            provider: AIProviderName.OPENAI,
+            source: AgentRunSource.FLOW_STEP,
+        })
+
+        expect(config.agentsAvailable).toBe(false)
+    })
+
+    it('drops a redelivered copy of a running step as superseded, so it is not failed as a concurrent run', async () => {
+        const ctx = await createTestContext(app)
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+        const conversationId = await startFlowStepRun(ctx, 'ce-handoff-redelivery')
+        const delivery = {
+            conversationId,
+            runId: apId(),
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            projectId: ctx.project.id,
+            userMessage: 'summarise the thread',
+            modelName: 'gpt-4o',
+            provider: AIProviderName.OPENAI,
+            source: AgentRunSource.FLOW_STEP,
+            waitpointId: apId(),
+        }
+
+        await agentRpcHandlers(app.log).getAgentConfig(delivery)
+        const conversation = await db.findOneByOrFail<{ activeRunId: string, waitpointId: string }>('agent_conversation', { id: conversationId })
+        expect(conversation).toMatchObject({ activeRunId: delivery.runId, waitpointId: delivery.waitpointId })
+
+        await expect(agentRpcHandlers(app.log).getAgentConfig(delivery)).rejects.toMatchObject({
+            error: { code: ErrorCode.AGENT_RUN_SUPERSEDED },
+        })
+    })
+
+    it('gives the copy that takes over a lost config the instruction once, not twice', async () => {
+        const ctx = await createTestContext(app)
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+        const conversationId = await startFlowStepRun(ctx, 'ce-handoff-resume')
+        const delivery = {
+            conversationId,
+            runId: apId(),
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            projectId: ctx.project.id,
+            userMessage: 'summarise the thread',
+            modelName: 'gpt-4o',
+            provider: AIProviderName.OPENAI,
+            source: AgentRunSource.FLOW_STEP,
+            waitpointId: apId(),
+        }
+        await agentRpcHandlers(app.log).getAgentConfig(delivery)
+        await agentHelpers.handLockToRedelivery({ conversationId, runId: delivery.runId })
+
+        const config = await agentRpcHandlers(app.log).getAgentConfig(delivery)
+
+        const stored = await db.findOneByOrFail<{ messages: { role: string }[], uiMessages: { role: string }[] }>('agent_conversation', { id: conversationId })
+        expect(userTurns({ messages: config.previousUiMessages })).toBe(1)
+        expect(userTurns({ messages: stored.messages })).toBe(1)
+        expect(userTurns({ messages: stored.uiMessages })).toBe(1)
+    })
+})
+
+function userTurns({ messages }: { messages: { role: string }[] }): number {
+    return messages.filter((message) => message.role === 'user').length
+}

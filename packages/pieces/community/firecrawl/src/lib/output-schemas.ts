@@ -1,6 +1,6 @@
 import { OutputSchema } from '@activepieces/pieces-framework';
 
-const scrapeResultFields: OutputSchema['fields'] = [
+const pageContentFields: OutputSchema['fields'] = [
   { key: 'markdown', label: 'Markdown' },
   { key: 'html', label: 'HTML', format: 'html' },
   { key: 'rawHtml', label: 'Raw HTML', format: 'html' },
@@ -14,25 +14,88 @@ const scrapeResultFields: OutputSchema['fields'] = [
       { key: 'fileUrl', label: 'File URL', format: 'url' },
     ],
   },
-  {
-    key: 'metadata',
-    label: 'Metadata',
-    children: [
-      { key: 'title', label: 'Title' },
-      { key: 'language', label: 'Language' },
-      { key: 'sourceURL', label: 'Source URL', format: 'url' },
-      { key: 'url', label: 'Final URL', format: 'url' },
-      { key: 'statusCode', label: 'Status Code', format: 'number' },
-      { key: 'favicon', label: 'Favicon', format: 'image' },
-      { key: 'creditsUsed', label: 'Credits Used', format: 'number' },
-    ],
-  },
 ];
+
+const pageMetadataField: OutputSchema['fields'][number] = {
+  key: 'metadata',
+  label: 'Metadata',
+  children: [
+    { key: 'title', label: 'Title' },
+    { key: 'language', label: 'Language' },
+    { key: 'sourceURL', label: 'Source URL', format: 'url' },
+    { key: 'url', label: 'Final URL', format: 'url' },
+    { key: 'statusCode', label: 'Status Code', format: 'number' },
+    { key: 'favicon', label: 'Favicon', format: 'image' },
+    { key: 'creditsUsed', label: 'Credits Used', format: 'number' },
+  ],
+};
+
+const scrapeActionsField: OutputSchema['fields'][number] = {
+  key: 'actions',
+  label: 'Actions',
+  children: [
+    {
+      key: 'pdfs',
+      label: 'PDF',
+      listItems: [
+        { key: 'fileName', label: 'File Name' },
+        { key: 'fileUrl', label: 'File URL', format: 'url' },
+      ],
+    },
+    {
+      key: 'screenshots',
+      label: 'Screenshots',
+      listItems: [
+        { key: 'fileName', label: 'File Name' },
+        { key: 'fileUrl', label: 'File URL', format: 'url' },
+      ],
+    },
+    {
+      key: 'javascriptReturns',
+      label: 'JavaScript Returns',
+      listItems: [
+        { key: 'type', label: 'Type' },
+        { key: 'value', label: 'Value' },
+      ],
+    },
+    {
+      key: 'scrapes',
+      label: 'Scrapes',
+      labelKey: 'url',
+      listItems: [
+        { key: 'url', label: 'URL', format: 'url' },
+        { key: 'html', label: 'HTML', format: 'html' },
+      ],
+    },
+  ],
+};
+
+const pageWarningField: OutputSchema['fields'][number] = { key: 'warning', label: 'Warning' };
+
+const pageResultFields: OutputSchema['fields'] = [
+  ...pageContentFields,
+  pageWarningField,
+  pageMetadataField,
+];
+
+const scrapeResultFields: OutputSchema['fields'] = [
+  ...pageContentFields,
+  scrapeActionsField,
+  pageWarningField,
+  pageMetadataField,
+];
+
+export const scrapeActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'data', label: 'Data', children: scrapeResultFields },
+  ],
+};
 
 export const scrapeUrlActionOutputSchema: OutputSchema = {
   fields: [
     { key: 'success', label: 'Success', format: 'boolean' },
-    { key: 'data', label: 'Data', children: scrapeResultFields },
+    { key: 'data', label: 'Data', children: pageResultFields },
   ],
 };
 
@@ -44,11 +107,22 @@ const jobResultFields: OutputSchema['fields'] = [
   { key: 'creditsUsed', label: 'Credits Used', format: 'number' },
   { key: 'expiresAt', label: 'Expires At', format: 'datetime' },
   { key: 'next', label: 'Next Page URL', format: 'url' },
-  { key: 'data', label: 'Pages', listItems: scrapeResultFields },
+  { key: 'data', label: 'Pages', listItems: pageResultFields },
 ];
 
 export const crawlWebsiteActionOutputSchema: OutputSchema = {
   fields: jobResultFields,
+};
+
+export const crawlActionOutputSchema: OutputSchema = {
+  fields: [
+    ...jobResultFields.filter((field) => field.key !== 'data'),
+    {
+      key: 'data',
+      label: 'Pages',
+      listItems: [...pageResultFields, { key: 'screenshotError', label: 'Screenshot Error' }],
+    },
+  ],
 };
 
 export const getCrawlResultsActionOutputSchema: OutputSchema = {
@@ -126,6 +200,67 @@ export const searchWebActionOutputSchema: OutputSchema = {
             { key: 'title', label: 'Title' },
             { key: 'description', label: 'Description' },
             { key: 'position', label: 'Position', format: 'number' },
+            { key: 'markdown', label: 'Markdown' },
+            {
+              key: 'metadata',
+              label: 'Metadata',
+              children: [
+                { key: 'title', label: 'Title' },
+                { key: 'sourceURL', label: 'Source URL', format: 'url' },
+                { key: 'url', label: 'Final URL', format: 'url' },
+                { key: 'statusCode', label: 'Status Code', format: 'number' },
+              ],
+            },
+          ],
+        },
+        {
+          key: 'news',
+          label: 'News Results',
+          labelKey: 'title',
+          listItems: [
+            { key: 'url', label: 'URL', format: 'url' },
+            { key: 'title', label: 'Title' },
+            { key: 'snippet', label: 'Snippet' },
+            { key: 'description', label: 'Description' },
+            { key: 'date', label: 'Date' },
+            { key: 'imageUrl', label: 'Image URL', format: 'image' },
+            { key: 'position', label: 'Position', format: 'number' },
+            { key: 'markdown', label: 'Markdown' },
+            {
+              key: 'metadata',
+              label: 'Metadata',
+              children: [
+                { key: 'title', label: 'Title' },
+                { key: 'sourceURL', label: 'Source URL', format: 'url' },
+                { key: 'url', label: 'Final URL', format: 'url' },
+                { key: 'statusCode', label: 'Status Code', format: 'number' },
+              ],
+            },
+          ],
+        },
+        {
+          key: 'images',
+          label: 'Image Results',
+          labelKey: 'title',
+          listItems: [
+            { key: 'title', label: 'Title' },
+            { key: 'imageUrl', label: 'Image URL', format: 'image' },
+            { key: 'imageWidth', label: 'Image Width', format: 'number' },
+            { key: 'imageHeight', label: 'Image Height', format: 'number' },
+            { key: 'url', label: 'Page URL', format: 'url' },
+            { key: 'description', label: 'Description' },
+            { key: 'position', label: 'Position', format: 'number' },
+            { key: 'markdown', label: 'Markdown' },
+            {
+              key: 'metadata',
+              label: 'Metadata',
+              children: [
+                { key: 'title', label: 'Title' },
+                { key: 'sourceURL', label: 'Source URL', format: 'url' },
+                { key: 'url', label: 'Final URL', format: 'url' },
+                { key: 'statusCode', label: 'Status Code', format: 'number' },
+              ],
+            },
           ],
         },
       ],

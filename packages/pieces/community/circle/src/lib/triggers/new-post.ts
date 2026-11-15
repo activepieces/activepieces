@@ -74,6 +74,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof circleAuth>, { s
 export const newPostCreated = createTrigger({
 	auth: circleAuth,
 	name: 'new_post_created',
+	classification: 'READ',
 	displayName: 'New Post Created',
 	description: 'Triggers when a new post is created in a specific space.',
 	aiMetadata: {
@@ -84,18 +85,10 @@ export const newPostCreated = createTrigger({
 	},
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

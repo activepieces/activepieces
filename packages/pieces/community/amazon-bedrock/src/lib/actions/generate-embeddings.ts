@@ -7,11 +7,14 @@ import {
   getBedrockModelOptions,
   formatBedrockError,
 } from '../common';
+import { generateEmbeddingsOutputSchema } from '../output-schemas';
 
 export const generateEmbeddings = createAction({
   audience: 'both',
   auth: awsBedrockCombinedAuth,
   name: 'generate_embeddings',
+  outputSchema: generateEmbeddingsOutputSchema,
+  classification: 'READ',
   displayName: 'Generate Embeddings',
   description:
     'Generate vector embeddings from text using Amazon Titan Embed, Cohere Embed, or Amazon Nova Multimodal Embeddings models.',

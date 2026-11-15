@@ -5,6 +5,7 @@ import { aidbaseClient } from '../common/client';
 export const addWebsite = createAction({
   auth: aidbaseAuth,
   name: 'add_website',
+  classification: 'WRITE',
   displayName: 'Add Website',
   description: 'Adds a website URL as a knowledge source for Aidbase.',
   audience: 'both',

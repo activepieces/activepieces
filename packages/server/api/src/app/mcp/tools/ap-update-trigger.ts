@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { FlowOperationRequest, FlowOperationType, FlowTriggerType, McpToolDefinition, PieceTrigger, ProjectScopedMcpServer } from '@activepieces/shared'
+import { FlowOperationRequest, FlowOperationType, FlowTriggerType, McpToolContext, McpToolDefinition, PieceTrigger } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -16,7 +16,7 @@ const updateTriggerInput = z.object({
     displayName: z.string().optional(),
 })
 
-export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apUpdateTriggerTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_update_trigger',
         permission: Permission.WRITE_FLOW,
@@ -26,12 +26,13 @@ export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
             pieceName: z.string().describe('The piece name for the trigger (e.g. "@activepieces/piece-gmail"). Use ap_research_pieces to get valid values.'),
             triggerName: z.string().describe('The trigger name within the piece (e.g. "new_email"). Use ap_research_pieces with includeTriggers=true to get valid values.'),
             input: z.record(z.string(), z.unknown()).optional().describe(`Input settings for the trigger (key-value pairs). ${mcpUtils.STEP_REFERENCE_HINT}`),
-            auth: z.string().optional().describe('Connection `externalId` from `ap_list_connections`. The tool wraps it automatically as `{{connections[\'externalId\']}}`.'),
+            auth: z.string().optional().describe('Connection `externalId` from `ap_list_connections`. Pass the plain id, not a template.'),
             displayName: z.string().optional().describe('Display name for the trigger step'),
         },
-        annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
-            const { flowId, pieceName, triggerName, input: rawInput, auth, displayName: rawDisplayName } = updateTriggerInput.parse(args)
+            const { flowId, pieceName, triggerName, input: rawInput, auth: rawAuth, displayName: rawDisplayName } = updateTriggerInput.parse(args)
+            const auth = mcpUtils.normalizeAuth(rawAuth)
 
             const authError = mcpUtils.validateAuth(auth)
             if (authError) {
@@ -64,13 +65,11 @@ export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
 
             const { auth: _rawAuth, ...rawInputWithoutAuth } = rawInput ?? {}
             const rewritten = mcpUtils.rewriteAllReferences({ input: rawInputWithoutAuth, trigger: flow.version.trigger })
-            const input = {
-                ...(existingPieceSettings?.input ?? {}),
+            const callerInput = {
                 ...(rewritten.input ?? {}),
                 ...(auth !== undefined && { auth: `{{connections['${auth}']}}` }),
             }
-
-            const unknownPropsError = await mcpUtils.rejectUnknownInputProps({ pieceName: resolvedPieceName, pieceVersion, componentName: triggerName, componentType: 'trigger', input, platformId: project.platformId, log })
+            const { input, error: unknownPropsError } = await mcpUtils.keepKnownInputProps({ pieceName: resolvedPieceName, pieceVersion, componentName: triggerName, componentType: 'trigger', input: { ...(existingPieceSettings?.input ?? {}), ...callerInput }, callerInput, platformId: project.platformId, log })
             if (unknownPropsError) {
                 return unknownPropsError
             }
@@ -86,7 +85,7 @@ export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     pieceVersion,
                     triggerName,
                     input,
-                    propertySettings: existingPieceSettings?.propertySettings ?? {},
+                    propertySettings: await mcpUtils.resolveDynamicPropertySettings({ pieceName: resolvedPieceName, pieceVersion, componentName: triggerName, componentType: 'trigger', input, propertySettings: existingPieceSettings?.propertySettings, changedKeys: existingPieceSettings?.pieceVersion === pieceVersion ? Object.keys(callerInput) : Object.keys(input), projectId: mcp.projectId, platformId: project.platformId, log }),
                 },
             }
 
@@ -107,7 +106,8 @@ export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 const updatedFlow = await flowService(log).update({
                     id: flow.id,
                     projectId: mcp.projectId,
-                    userId: null,
+                    userId,
+                    previousFlow: flow,
                     platformId: project.platformId,
                     operation,
                 })

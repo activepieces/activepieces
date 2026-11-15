@@ -6,6 +6,7 @@ import { greipApiCall } from '../common/client';
 export const asnLookup = createAction({
   auth: greipAuth,
   name: 'asn_lookup',
+  classification: 'READ',
   displayName: 'ASN Lookup',
   description: 'Look up details of an Autonomous System Number (ASN)',
   audience: 'both',

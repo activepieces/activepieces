@@ -13,6 +13,7 @@ import { listRecordCommentsActionOutputSchema } from '../output-schemas';
 export const airtableListRecordCommentsAction = createAction({
   auth: airtableAuth,
   name: 'list_record_comments',
+  classification: 'SEARCH',
   displayName: 'List Record Comments (Agent)',
   description: "Read a record's comment thread.",
   audience: 'ai',

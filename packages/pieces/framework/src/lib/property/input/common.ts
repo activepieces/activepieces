@@ -6,7 +6,11 @@ import { PropertyType } from "./property-type";
 
 export const BasePropertySchema = z.object({
     displayName: z.string(),
-    description: z.optional(z.string())
+    description: z.optional(z.string()),
+    advanced: z.optional(z.boolean()),
+    width: z.optional(z.enum(['half', 'full'])),
+    icon: z.optional(z.string()),
+    placeholder: z.optional(z.string()),
 })
 
 export type BasePropertySchema = z.infer<typeof BasePropertySchema>
@@ -34,6 +38,8 @@ export type TPropertyValue<
     ? boolean
     : U extends PropertyType.LONG_TEXT
     ? string
+    : U extends PropertyType.RICH_TEXT
+    ? string
     : U extends PropertyType.SHORT_TEXT
     ? string
     : U extends PropertyType.NUMBER
@@ -48,6 +54,8 @@ export type TPropertyValue<
     ? unknown
     : U extends PropertyType.DATE_TIME
     ? string
+    : U extends PropertyType.DATE_RANGE
+    ? object
     : U extends PropertyType.FILE
     ? ApFile
     : U extends PropertyType.COLOR

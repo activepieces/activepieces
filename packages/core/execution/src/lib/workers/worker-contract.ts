@@ -1,10 +1,13 @@
+import { ActivepiecesAiBilling, AiChargeBasis, AIProviderName, AiProviderCredentials, AiProviderKeyStatus, ProviderOutcomeSignal } from '@activepieces/core-utils'
+import { AgentPieceToolMetadata, PiecePackage } from '@activepieces/core-piece-types'
 import { StreamStepProgress } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, UploadRunLogsRequest } from '../engine/requests'
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
-import { FlowVersion } from '../flows/flow-version'
+import { SourceCode } from '../flows/actions/action'
+import { FlowVersion, FlowVersionState } from '../flows/flow-version'
 import { TriggerRunStatus } from '../flows/triggers/trigger-run'
-import { ChatAgentEvent } from './chat-agent-events'
-import { ChatPromptOverride } from './job-data'
+import { AgentEvent } from './agent-events'
+import { AgentPromptOverride, AgentRunSource, PersonalizationScope } from './job-data'
 import { ConsumeJobRequest, ConsumeJobResponse, WorkerMachineHealthcheckRequest } from './index'
 
 export type SubmitPayloadsRequest = {
@@ -75,6 +78,7 @@ export type WorkerToApiContract = {
     getFlowVersion(input: GetFlowVersionForWorkerRequest): Promise<FlowVersion | null>
     getPiece(input: GetPieceRequest): Promise<unknown>
     getPrewarmData(input: PrewarmDataRequest): Promise<PrewarmDataResponse>
+    getPrewarmScopeFile(input: GetPrewarmScopeFileRequest): Promise<GetPrewarmScopeFileResponse | null>
     getPieceArchive(input: { archiveId: string }): Promise<Buffer>
     getFlowBundle(input: GetFlowBundleRequest): Promise<GetFlowBundleResponse | null>
     prepareFlowBundleUpload(input: PrepareFlowBundleUploadRequest): Promise<PrepareFlowBundleUploadResponse>
@@ -82,34 +86,66 @@ export type WorkerToApiContract = {
     recordTriggerRun(input: RecordTriggerRunRequest): Promise<void>
     extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void>
     disableFlow(input: DisableFlowRequest): Promise<void>
-    sendChatEvent(input: SendChatEventRequest): Promise<void>
-    getChatConfig(input: GetChatConfigRequest): Promise<ChatConfigResponse>
-    saveChatMessages(input: SaveChatMessagesRequest): Promise<void>
-    saveChatFile(input: SaveChatFileRequest): Promise<SaveChatFileResponse>
-    updateChatProgress(input: UpdateChatProgressRequest): Promise<void>
-    heartbeatChatConversation(input: HeartbeatChatConversationRequest): Promise<void>
+    sendAgentEvent(input: SendAgentEventRequest): Promise<void>
+    getAgentConfig(input: GetAgentConfigRequest): Promise<AgentConfigResponse>
+    saveAgentMessages(input: SaveAgentMessagesRequest): Promise<void>
+    beginAgentTask(input: BeginAgentTaskRequest): Promise<BeginAgentTaskResponse>
+    finishAgentTask(input: FinishAgentTaskRequest): Promise<void>
+    saveAgentFile(input: SaveAgentFileRequest): Promise<SaveAgentFileResponse>
+    readAgentFile(input: ReadAgentFileRequest): Promise<ReadFlowStepFileResponse>
+    updateAgentProgress(input: UpdateAgentProgressRequest): Promise<void>
+    heartbeatAgentConversation(input: HeartbeatAgentConversationRequest): Promise<void>
+    agentCreditsLeft(input: AgentCreditsLeftRequest): Promise<number | null>
     updateProjectContext(input: UpdateProjectContextRequest): Promise<void>
-    executeChatTool(input: ExecuteChatToolRequest): Promise<ExecuteChatToolResponse>
-    sendChatEmail(input: SendChatEmailRequest): Promise<SendChatEmailResponse>
+    executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse>
+    resumeFlowStep(input: ResumeFlowStepRequest): Promise<void>
+    resolveAiProvider(input: ResolveAiProviderRequest): Promise<ResolveAiProviderResponse>
+    resolveAiModelCandidates(input: ResolveAiModelCandidatesRequest): Promise<ResolveAiModelCandidatesResponse>
+    reportAiKeyOutcome(input: ReportAiKeyOutcomeRequest): Promise<void>
+    resolveEventDestinationHeaders(input: ResolveEventDestinationHeadersRequest): Promise<ResolveEventDestinationHeadersResponse>
+    saveFlowStepFile(input: SaveFlowStepFileRequest): Promise<SaveFlowStepFileResponse>
+    readFlowStepFile(input: ReadFlowStepFileRequest): Promise<ReadFlowStepFileResponse>
+    reportAiUsage(input: ReportAiUsageRequest): Promise<void>
+    resumeAiStep(input: ResumeAiStepRequest): Promise<void>
+    updateFlowStepProgress(input: UpdateFlowStepProgressRequest): Promise<void>
+    executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse>
+    executeKnowledgeBaseTool(input: ExecuteKnowledgeBaseToolRequest): Promise<ExecuteKnowledgeBaseToolResponse>
+    executeFlowTool(input: ExecuteFlowToolRequest): Promise<ExecuteFlowToolResponse>
+    sendAgentEmail(input: SendAgentEmailRequest): Promise<SendAgentEmailResponse>
+    getPersonalizationConfig(input: GetPersonalizationConfigRequest): Promise<PersonalizationConfigResponse>
+    getPersonalizationPrefillConfig(input: GetPersonalizationPrefillConfigRequest): Promise<PersonalizationPrefillConfigResponse>
+    savePersonalizationResult(input: SavePersonalizationResultRequest): Promise<void>
+    savePersonalizationPrefill(input: SavePersonalizationPrefillRequest): Promise<void>
+    sendPersonalizationProgress(input: SendPersonalizationProgressRequest): Promise<void>
 }
 
-export type SendChatEventRequest = {
+export type SendAgentEventRequest = {
     userId: string
     conversationId: string
     runId?: string
-    event: ChatAgentEvent
+    event: AgentEvent
 }
 
-export type GetChatConfigRequest = {
+export type GetAgentConfigRequest = {
+    provider?: AIProviderName
+    providerConfigId?: string
     conversationId: string
     runId?: string
     platformId: string
     userId: string
+    source?: AgentRunSource
+    messageSource?: 'onboarding'
+    agentId?: string
+    flowRunId?: string
+    waitpointId?: string
+    projectId?: string | null
     userMessage: string
     modelName: string | null
+    modelTierId?: string
     files?: Array<{ name: string, mimeType: string, data: string }>
-    promptOverride?: ChatPromptOverride
+    promptOverride?: AgentPromptOverride
     dryRun?: boolean
+    discoveryOnly?: boolean
 }
 
 export type ResolvedAiToolConfig = {
@@ -118,18 +154,25 @@ export type ResolvedAiToolConfig = {
     config?: Record<string, unknown>
 }
 
-export type ChatAiToolsConfig = {
+export type AgentAiToolsConfig = {
     webSearch?: ResolvedAiToolConfig
     webScraping?: ResolvedAiToolConfig
     imageGeneration?: ResolvedAiToolConfig
 }
 
-export type ChatConfigResponse = {
-    provider: string
-    auth: Record<string, unknown>
-    providerConfig: Record<string, unknown>
+export type AgentConfigResponse = {
+    credentials: AiProviderCredentials
+    providerConfigId: string
     modelId: string
     fastModelId: string
+    imageModelId?: string
+    searchCredentials?: AiProviderCredentials
+    searchProviderConfigId?: string
+    searchModelId?: string
+    imageCredentials?: AiProviderCredentials
+    imageProviderConfigId?: string
+    agentId?: string
+    projectId?: string
     systemPrompt: string
     messages: unknown[]
     allMessages: unknown[]
@@ -138,21 +181,62 @@ export type ChatConfigResponse = {
     mcpCredentials: { mcpServerUrl: string, mcpToken: string } | null
     projects: Array<{ id: string, displayName: string, type: string }>
     guides: Record<string, string>
-    aiTools: ChatAiToolsConfig
+    taskSystemPrompt?: string
+    aiTools: AgentAiToolsConfig
     emailEnabled: boolean
+    agentsAvailable: boolean
     userEmail: string
+    source: AgentRunSource
+    platformTier?: { id: string, name: string }
+    candidates?: AgentModelCandidate[]
+    fastCandidate?: AgentModelCandidate
 }
 
-export type SaveChatMessagesRequest = {
+export type AgentModelCandidate = AiModelCandidate & {
+    thinkingBudget: number
+}
+
+export type SaveAgentMessagesRequest = {
     conversationId: string
     runId?: string
     messages: unknown[]
     uiMessages: unknown[]
     title?: string
     modelName?: string
+    answeredBy?: AgentTurnModel
+    failure?: { message: string, userMessage?: string }
 }
 
-export type SaveChatFileRequest = {
+export type BeginAgentTaskRequest = {
+    platformId: string
+    conversationId: string
+    title: string
+    taskId?: string
+}
+
+export type BeginAgentTaskResponse = {
+    taskId: string
+    claimId: string
+    messages: unknown[]
+}
+
+export type FinishAgentTaskRequest = {
+    platformId: string
+    conversationId: string
+    taskId: string
+    claimId: string
+    status: 'DONE' | 'BLOCKED' | 'FAILED'
+    messages: unknown[]
+    summary: string | null
+    artifacts: { type: string, id: string, name: string }[]
+}
+
+export type AgentTurnModel = {
+    provider: AIProviderName
+    modelId: string
+}
+
+export type SaveAgentFileRequest = {
     platformId: string
     projectId?: string
     conversationId: string
@@ -161,42 +245,121 @@ export type SaveChatFileRequest = {
     fileName?: string
 }
 
-export type SaveChatFileResponse = {
+export type ReadAgentFileRequest = {
+    platformId: string
+    projectId?: string
+    conversationId: string
+    fileId: string
+}
+
+export type SaveAgentFileResponse = {
     fileId: string
     url: string
 }
 
-export type UpdateChatProgressRequest = {
+export type UpdateAgentProgressRequest = {
     conversationId: string
     runId?: string
     uiMessages: unknown[]
     messages?: unknown[]
 }
 
-export type HeartbeatChatConversationRequest = {
+export type HeartbeatAgentConversationRequest = {
     conversationId: string
     runId?: string
+}
+
+export type AgentCreditsLeftRequest = {
+    platformId: string
+    conversationId: string
+    pendingCredits: number
 }
 
 export type UpdateProjectContextRequest = {
     conversationId: string
     runId?: string
     projectId: string | null
+    provider?: AIProviderName
+    providerConfigId?: string
 }
 
-export type ExecuteChatToolRequest = {
+export type ExecuteAgentToolRequest = {
+    runId?: string
     toolName: string
     toolInput: Record<string, unknown>
     platformId: string
     userId: string
+    source: AgentRunSource
     conversationId?: string
 }
 
-export type ExecuteChatToolResponse = {
+export type ExecutePieceToolRequest = {
+    conversationId: string
+    runId?: string
+    flowRunId?: string
+    toolName: string
+    instruction: string
+    provider?: AIProviderName
+    providerConfigId?: string
+    modelId: string
+    piece: AgentPieceToolMetadata
+}
+
+export type ExecutePieceToolResponse = {
+    result: unknown
+    resolvedInput: Record<string, unknown>
+    actionDisplayName: string
+    connectionLabel?: string
+}
+
+export type ExecuteKnowledgeBaseToolRequest = {
+    conversationId: string
+    runId?: string
+    toolName: string
+    provider?: AIProviderName
+    providerConfigId?: string
+    knowledgeBaseFileId: string
+    query: string
+}
+
+export type ExecuteKnowledgeBaseToolResponse = {
     result: unknown
 }
 
-export type SendChatEmailRequest = {
+export type ExecuteFlowToolRequest = {
+    conversationId: string
+    runId?: string
+    flowRunId?: string
+    toolName: string
+    flowId: string
+    flowVersionId?: string
+    toolInput: Record<string, unknown>
+    returnsResponse: boolean
+}
+
+export type ExecuteFlowToolResponse = {
+    result: unknown
+}
+
+export type UpdateFlowStepProgressRequest = {
+    conversationId: string
+    flowRunId: string
+    output: unknown
+    sequence: number
+}
+
+export type ResumeFlowStepRequest = {
+    conversationId: string
+    flowRunId: string
+    waitpointId: string
+    output: unknown
+}
+
+export type ExecuteAgentToolResponse = {
+    result: unknown
+}
+
+export type SendAgentEmailRequest = {
     conversationId: string
     runId?: string
     platformId: string
@@ -207,7 +370,7 @@ export type SendChatEmailRequest = {
     gateId?: string
 }
 
-export type SendChatEmailResponse = {
+export type SendAgentEmailResponse = {
     sent: boolean
     message: string
     blockedRecipients?: string[]
@@ -221,15 +384,218 @@ export type DisableFlowRequest = {
 export type PrewarmDataRequest = {
     workerGroupId: string | undefined
     projectWorker: boolean | undefined
+    workerVersion?: string
     flow?: { id: string, versionId: string, projectId: string }
 }
 
+export type PrewarmCodeStep = {
+    name: string
+    sourceCode: SourceCode
+    flowVersionId: string
+    flowVersionState: FlowVersionState
+    useDeno: boolean
+}
+
 export type PrewarmDataResponse = {
-    flows: { id: string, versionId: string, projectId: string }[]
+    flows?: { id: string, versionId: string, projectId: string }[]
+    scopeFileId?: string
+    pieces?: PiecePackage[]
+    codes?: PrewarmCodeStep[]
     platformId: string
     engineToken: string
 }
 
+export type PrewarmScopeFileContent = {
+    pieces: PiecePackage[]
+    codes: PrewarmCodeStep[]
+}
+
+export type GetPrewarmScopeFileRequest = {
+    fileId: string
+}
+
+export type GetPrewarmScopeFileResponse =
+    | { kind: 'inline', data: Buffer }
+    | { kind: 'url', url: string }
+
 export type ApiToWorkerContract = {
     flowPublished(input: { flowId: string, flowVersionId: string, projectId: string }): void
 }
+
+export type GetPersonalizationConfigRequest = {
+    platformId: string
+    userId: string
+    scope: PersonalizationScope
+    researchToken: string | null
+}
+
+export type PersonalizationConfigResponse =
+    | { claimed: false }
+    | {
+        claimed: true
+        credentials: AiProviderCredentials
+        modelId: string
+        fastModelId: string
+        user: { firstName: string, lastName: string, email: string }
+        platformName: string
+        website: string | null
+        companyText: string | null
+        role: string | null
+        companyProfile: Record<string, unknown> | null
+        webSearch: ResolvedAiToolConfig | null
+    }
+
+export type GetPersonalizationPrefillConfigRequest = {
+    platformId: string
+    userId: string
+}
+
+export type PersonalizationPrefillConfigResponse = {
+    email: string | null
+    apolloApiKey: string | null
+}
+
+export type SavePersonalizationResultRequest = {
+    platformId: string
+    userId: string
+    scope: PersonalizationScope
+    researchToken: string | null
+    status: 'READY' | 'FAILED'
+    profile: unknown
+    useCases: unknown
+}
+
+export type SavePersonalizationPrefillRequest = {
+    platformId: string
+    userId: string
+    role: string | null
+    confidence: 'low' | 'medium' | 'high' | null
+}
+
+export type SendPersonalizationProgressRequest = {
+    platformId: string
+    userId: string
+    scope: PersonalizationScope
+    researchToken: string | null
+    phase: string
+    message: string
+}
+
+export type ResolveAiProviderRequest = {
+    projectId: string
+    platformId: string
+    provider: AIProviderName
+    providerConfigId?: string
+    modelId?: string
+}
+
+export type ResolveAiProviderResponse = AiProviderCredentials & {
+    providerConfigId: string
+}
+
+export type ResolveAiModelCandidatesRequest = {
+    projectId: string
+    platformId: string
+    modelTierId: string
+}
+
+export type AiModelCandidate = ResolveAiProviderResponse & {
+    modelId: string
+    status: AiProviderKeyStatus
+}
+
+export type ResolveAiModelCandidatesResponse = {
+    tierName: string
+    candidates: AiModelCandidate[]
+}
+
+export type ReportAiKeyOutcomeRequest = {
+    platformId: string
+    providerConfigId: string
+    signal: ProviderOutcomeSignal
+}
+
+export type ResolveEventDestinationHeadersRequest = {
+    platformId: string
+    destinationId: string
+    destinationUrl: string
+}
+
+export type ResolveEventDestinationHeadersResponse = {
+    headers: Record<string, string>
+} | null
+
+export type SaveFlowStepFileRequest = {
+    projectId: string
+    platformId: string
+    flowRunId: string
+    data: Buffer
+    fileName: string
+}
+
+export type ReportAiUsageRequest = {
+    billing: ActivepiecesAiBilling
+    provider: AIProviderName
+    providerConfigId?: string
+    modelId: string
+    idempotencyKey: string
+    usage: AiUsageCharge
+    toolCalls?: number
+    generationId?: string
+    inputTokens?: number
+    outputTokens?: number
+    cacheReadTokens?: number
+    cacheWriteTokens?: number
+    reasoningTokens?: number
+    observedCostUsd?: number
+    requestId?: string
+    flowRun?: AiUsageFlowRunContext
+    chat?: AiUsageChatContext
+}
+
+export type AiUsageFlowRunContext = {
+    flowId: string
+    flowRunId: string
+}
+
+export type AiUsageChatContext = {
+    userId: string
+    turnIndex: number
+    tier: string
+}
+
+export type AiUsageCharge =
+    | { type: AiChargeBasis.PROVIDER_REPORTED_COST, costUsd: number }
+    | { type: AiChargeBasis.FIXED_CREDITS, credits: number }
+    | { type: AiChargeBasis.USAGE_ONLY }
+
+export type ReadFlowStepFileRequest = {
+    projectId: string
+    platformId: string
+    fileId: string
+}
+
+export type ReadFlowStepFileResponse = {
+    data: Buffer
+    mimeType?: string
+    fileName?: string
+}
+
+export type SaveFlowStepFileResponse = {
+    fileId: string
+    url: string
+}
+
+export type ResumeAiStepRequest = {
+    projectId: string
+    flowRunId: string
+    waitpointId: string
+    output: unknown
+}
+
+export const LONG_RUNNING_RPC_METHODS: readonly string[] = [
+    'executePieceTool',
+    'executeFlowTool',
+    'executeKnowledgeBaseTool',
+    'executeAgentTool',
+]

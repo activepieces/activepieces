@@ -25,7 +25,7 @@ export async function resolveEmbedder({ platformId, log }: ResolveEmbedderParams
         return selectEmbedder(envApiKey)
     }
     const { data: config } = await tryCatch(() =>
-        aiProviderService(log).getConfigOrThrow({ platformId, provider: AIProviderName.OPENAI }),
+        aiProviderService(log).getConfigOrThrow({ platformId, provider: AIProviderName.OPENAI, scope: { type: 'platform' } }),
     )
     if (isNil(config)) {
         return null

@@ -19,6 +19,7 @@ const GROUP_SELECT =
 export const newGroupTrigger = createTrigger({
   auth: azureAdAuth,
   name: 'new_group',
+  classification: 'READ',
   displayName: 'New Group',
   description: 'Triggers when a new group is created in Microsoft Entra ID.',
   aiMetadata: {
@@ -36,18 +37,13 @@ export const newGroupTrigger = createTrigger({
     id: '2ff8f722-0191-4c16-a378-a8fb4efec110',
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    if (context.isRepublish) {
+      return;
+    }
+    await pollingHelper.onDisable(polling, context);
     await context.store.delete(STORE_KEY);
   },
   async test(context) {

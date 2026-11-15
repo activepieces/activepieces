@@ -35,7 +35,8 @@ const polling: Polling<
         workbookId,
         worksheetId,
         auth.access_token,
-        drivePath
+        drivePath,
+        auth.props?.['cloud']
       )) ?? [];
 
     const currentValues = fetchedValues.map((row: any[], rowIndex: number) => {
@@ -67,6 +68,7 @@ const polling: Polling<
 export const readNewRows = createTrigger({
   auth: excelAuth,
   name: 'new_row',
+  classification: 'READ',
   displayName: 'New Row',
   description:
     'Trigger when a new row is added, and it can include existing rows as well.',
@@ -94,37 +96,18 @@ export const readNewRows = createTrigger({
     if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
       throw new Error('please select SharePoint site and document library.');
     }
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      maxItemsToPoll: Math.max(
+    return await pollingHelper.poll(polling, { ...context, maxItemsToPoll: Math.max(
         1,
         Math.min(10, context.propsValue.max_rows_to_poll ?? 10)
-      ),
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+      ) });
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.test(polling, context);
   },
 });

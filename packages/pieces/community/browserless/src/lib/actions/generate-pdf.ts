@@ -1,13 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { browserlessAuth } from '../common/auth';
-import { browserlessCommon, convertBinaryToBase64 } from '../common/client';
+import { browserlessApi } from '../common/client';
+import { browserlessBody } from '../common/props';
+import { browserlessOutputSchemas } from '../output-schemas';
 
 export const generatePdf = createAction({
     name: 'generate_pdf',
+    classification: 'READ',
     displayName: 'Generate PDF',
     description: 'Convert a web page to PDF',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: { description: 'Renders content in a headless browser and returns it as a PDF file. Source the content either from a page URL or from a raw HTML string (provide exactly one, not both). Use to produce a printable PDF of a page or supplied markup, with control over paper format, orientation, margins, and headers/footers. Not idempotent: each call runs a fresh headless-browser render, so repeating it produces a new PDF of the page or markup as it renders at that moment.', idempotent: false },
     auth: browserlessAuth,
     props: {
@@ -38,7 +41,7 @@ export const generatePdf = createAction({
                     { label: 'Letter', value: 'Letter' },
                     { label: 'Legal', value: 'Legal' },
                     { label: 'Ledger', value: 'Ledger' },
-                    { label: 'Tabloid', value: 'Tabloid' }
+                    { label: 'Tabloid', value: 'Tabloid' },
                 ]
             }
         }),
@@ -158,7 +161,7 @@ export const generatePdf = createAction({
         }),
         timeout: Property.Number({
             displayName: 'Timeout (ms)',
-            description: 'Maximum time to wait for the page to load',
+            description: 'Maximum time in milliseconds to wait for the page to load',
             required: false,
         }),
         waitForFunction: Property.LongText({
@@ -193,172 +196,110 @@ export const generatePdf = createAction({
             defaultValue: false,
         }),
     },
+    outputSchema: browserlessOutputSchemas.generatePdf,
     async run(context) {
-        if (!context.propsValue.url && !context.propsValue.html) {
+        const props = context.propsValue;
+        const hasUrl = browserlessBody.nonEmpty(props.url);
+        const hasHtml = browserlessBody.nonEmpty(props.html);
+        if (!hasUrl && !hasHtml) {
             throw new Error('Either URL or HTML content must be provided');
         }
-
-        if (context.propsValue.url && context.propsValue.html) {
+        if (hasUrl && hasHtml) {
             throw new Error('Cannot provide both URL and HTML content. Choose one.');
         }
+        const scale = browserlessBody.optionalNumber({ value: props.scale, label: 'Scale', min: 0.1, max: 2 });
+        const navigationTimeout = browserlessBody.optionalNumber({ value: props.timeout, label: 'Timeout', min: 0 });
+        const waitForTimeout = browserlessBody.optionalNumber({ value: props.waitForTimeout, label: 'Wait Timeout', min: 0 });
+        const selectorTimeout = browserlessBody.optionalNumber({ value: props.waitForSelectorTimeout, label: 'Wait for Selector Timeout', min: 0 });
+        const functionTimeout = browserlessBody.optionalNumber({ value: props.waitForFunctionTimeout, label: 'Wait for Function Timeout', min: 0 });
 
-        const requestBody: any = {
-            options: {
-                format: context.propsValue.format || 'A4',
-                landscape: context.propsValue.landscape || false,
-                printBackground: context.propsValue.printBackground !== false,
-                displayHeaderFooter: context.propsValue.displayHeaderFooter || false,
-            }
+        const margin = {
+            ...(browserlessBody.nonEmpty(props.marginTop) ? { top: props.marginTop } : {}),
+            ...(browserlessBody.nonEmpty(props.marginRight) ? { right: props.marginRight } : {}),
+            ...(browserlessBody.nonEmpty(props.marginBottom) ? { bottom: props.marginBottom } : {}),
+            ...(browserlessBody.nonEmpty(props.marginLeft) ? { left: props.marginLeft } : {}),
         };
 
-        if (context.propsValue.url) {
-            requestBody.url = context.propsValue.url;
-        } else if (context.propsValue.html) {
-            requestBody.html = context.propsValue.html;
-        }
+        const options = {
+            format: props.format || 'A4',
+            landscape: props.landscape === true,
+            printBackground: props.printBackground !== false,
+            displayHeaderFooter: props.displayHeaderFooter === true,
+            ...(Object.keys(margin).length > 0 ? { margin } : {}),
+            ...(browserlessBody.nonEmpty(props.headerTemplate) ? { headerTemplate: props.headerTemplate } : {}),
+            ...(browserlessBody.nonEmpty(props.footerTemplate) ? { footerTemplate: props.footerTemplate } : {}),
+            ...(scale !== undefined ? { scale } : {}),
+            ...(props.preferCSSPageSize === true ? { preferCSSPageSize: true } : {}),
+            ...(browserlessBody.nonEmpty(props.pageRanges) ? { pageRanges: props.pageRanges } : {}),
+            ...(browserlessBody.nonEmpty(props.width) ? { width: props.width } : {}),
+            ...(browserlessBody.nonEmpty(props.height) ? { height: props.height } : {}),
+            ...(props.omitBackground === true ? { omitBackground: true } : {}),
+            ...(props.tagged === true ? { tagged: true } : {}),
+            ...(props.outline === true ? { outline: true } : {}),
+        };
 
-        if (context.propsValue.userAgent) {
-            requestBody.userAgent = context.propsValue.userAgent;
-        }
+        const waitForSelector = browserlessBody.nonEmpty(props.waitForSelector)
+            ? {
+                  selector: props.waitForSelector.trim(),
+                  ...(selectorTimeout !== undefined ? { timeout: selectorTimeout } : {}),
+                  ...(props.waitForSelectorHidden === true ? { hidden: true } : props.waitForSelectorVisible === true ? { visible: true } : {}),
+              }
+            : undefined;
 
-        if (context.propsValue.waitForTimeout) {
-            requestBody.waitForTimeout = context.propsValue.waitForTimeout;
-        }
+        const waitForFunction = browserlessBody.nonEmpty(props.waitForFunction)
+            ? {
+                  fn: props.waitForFunction,
+                  ...(browserlessBody.nonEmpty(props.waitForFunctionPolling) ? { polling: pollingValue(props.waitForFunctionPolling) } : {}),
+                  ...(functionTimeout !== undefined ? { timeout: functionTimeout } : {}),
+              }
+            : undefined;
 
-        if (context.propsValue.bestAttempt) {
-            requestBody.bestAttempt = context.propsValue.bestAttempt;
-        }
+        const requestBody = {
+            ...(hasUrl ? { url: props.url } : { html: props.html }),
+            options,
+            ...(navigationTimeout !== undefined ? { gotoOptions: { timeout: navigationTimeout } } : {}),
+            ...(waitForSelector !== undefined ? { waitForSelector } : {}),
+            ...(waitForFunction !== undefined ? { waitForFunction } : {}),
+            ...(waitForTimeout !== undefined ? { waitForTimeout } : {}),
+            ...(browserlessBody.nonEmpty(props.userAgent) ? { userAgent: { userAgent: props.userAgent.trim() } } : {}),
+            ...(props.bestAttempt === true ? { bestAttempt: true } : {}),
+        };
 
-        const margin: any = {};
-        if (context.propsValue.marginTop) margin.top = context.propsValue.marginTop;
-        if (context.propsValue.marginRight) margin.right = context.propsValue.marginRight;
-        if (context.propsValue.marginBottom) margin.bottom = context.propsValue.marginBottom;
-        if (context.propsValue.marginLeft) margin.left = context.propsValue.marginLeft;
-        
-        if (Object.keys(margin).length > 0) {
-            requestBody.options.margin = margin;
-        }
-
-        if (context.propsValue.headerTemplate) {
-            requestBody.options.headerTemplate = context.propsValue.headerTemplate;
-        }
-
-        if (context.propsValue.footerTemplate) {
-            requestBody.options.footerTemplate = context.propsValue.footerTemplate;
-        }
-
-        if (context.propsValue.scale) {
-            requestBody.options.scale = Math.max(0.1, Math.min(2.0, context.propsValue.scale));
-        }
-
-        if (context.propsValue.waitForSelector) {
-            const waitForSelectorObj: any = {
-                selector: context.propsValue.waitForSelector,
-            };
-
-            if (context.propsValue.waitForSelectorTimeout !== undefined) {
-                waitForSelectorObj.timeout = context.propsValue.waitForSelectorTimeout;
-            }
-
-            if (context.propsValue.waitForSelectorVisible !== undefined) {
-                waitForSelectorObj.visible = context.propsValue.waitForSelectorVisible;
-            }
-
-            if (context.propsValue.waitForSelectorHidden !== undefined) {
-                waitForSelectorObj.hidden = context.propsValue.waitForSelectorHidden;
-            }
-
-            requestBody.options.waitForSelector = waitForSelectorObj;
-        }
-
-        if (context.propsValue.preferCSSPageSize) {
-            requestBody.options.preferCSSPageSize = context.propsValue.preferCSSPageSize;
-        }
-
-        if (context.propsValue.pageRanges) {
-            requestBody.options.pageRanges = context.propsValue.pageRanges;
-        }
-
-        if (context.propsValue.width) {
-            requestBody.options.width = context.propsValue.width;
-        }
-
-        if (context.propsValue.height) {
-            requestBody.options.height = context.propsValue.height;
-        }
-
-        if (context.propsValue.omitBackground) {
-            requestBody.options.omitBackground = context.propsValue.omitBackground;
-        }
-
-        if (context.propsValue.tagged) {
-            requestBody.options.tagged = context.propsValue.tagged;
-        }
-
-        if (context.propsValue.outline) {
-            requestBody.options.outline = context.propsValue.outline;
-        }
-
-        if (context.propsValue.timeout) {
-            requestBody.options.timeout = context.propsValue.timeout;
-        }
-
-        if (context.propsValue.waitForFunction) {
-            const waitForFunctionObj: any = {
-                fn: context.propsValue.waitForFunction,
-            };
-
-            if (context.propsValue.waitForFunctionPolling !== undefined) {
-                waitForFunctionObj.polling = context.propsValue.waitForFunctionPolling;
-            }
-
-            if (context.propsValue.waitForFunctionTimeout !== undefined) {
-                waitForFunctionObj.timeout = context.propsValue.waitForFunctionTimeout;
-            }
-
-            requestBody.options.waitForFunction = waitForFunctionObj;
-        }
-
-        const response = await browserlessCommon.apiCall({
+        const response = await browserlessApi.request({
             auth: context.auth.props,
             method: HttpMethod.POST,
-            resourceUri: '/pdf',
+            path: '/pdf',
             body: requestBody,
+            responseType: 'arraybuffer',
+            operation: 'Generate PDF',
         });
 
+        const fileData = browserlessApi.toBuffer(response.body);
         const fileName = 'document.pdf';
-        
-        let fileData: Buffer;
-        
-        if (response.body instanceof ArrayBuffer) {
-            fileData = Buffer.from(response.body);
-        } else if (Buffer.isBuffer(response.body)) {
-            fileData = response.body;
-        } else if (typeof response.body === 'string') {
-            fileData = Buffer.from(response.body, 'latin1');
-        } else {
-            fileData = Buffer.from(String(response.body), 'latin1');
-        }
-
-        const file = await context.files.write({
-            data: fileData,
-            fileName: fileName,
-        });
+        const file = await context.files.write({ data: fileData, fileName });
+        const site = browserlessApi.siteResponse(response.headers);
 
         return {
             success: true,
-            file: file,
-            pdfBase64: convertBinaryToBase64(fileData),
+            file,
+            pdfBase64: fileData.toString('base64'),
             metadata: {
-                source: context.propsValue.url ? 'url' : 'html',
-                url: context.propsValue.url || null,
-                hasHtml: !!context.propsValue.html,
-                format: context.propsValue.format || 'A4',
-                landscape: context.propsValue.landscape || false,
+                source: hasUrl ? 'url' : 'html',
+                url: hasUrl ? props.url : null,
+                hasHtml,
+                format: props.format || 'A4',
+                landscape: props.landscape === true,
                 timestamp: new Date().toISOString(),
-                fileName: fileName,
+                fileName,
                 contentType: 'application/pdf',
-            }
+                sizeBytes: fileData.length,
+                siteStatusCode: site.site_status_code,
+            },
         };
     },
 });
+
+function pollingValue(value: string): string | number {
+    const trimmed = value.trim();
+    return /^\d+$/.test(trimmed) ? Number(trimmed) : trimmed;
+}

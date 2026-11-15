@@ -29,12 +29,13 @@ const DropdownEditor = () => {
   return (
     <div
       className={cn('h-full w-full', {
-        'border-primary  border-2': isEditing,
+        'border-accent-9  border-2': isEditing,
       })}
       ref={containerRef}
     >
       <SearchableSelect
-        triggerClassName={cn('rounded-none px-2 border-none bg-transparent')}
+        variant="ghost"
+        triggerClassName="rounded-none px-2"
         onClose={() => {
           setIsEditing(false);
         }}

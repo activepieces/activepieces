@@ -8,6 +8,7 @@ import * as z from 'zod/mini'
 
 export const getPlayerProfile = createAction({
   name: 'get_player_profile',
+  classification: 'READ',
   displayName: 'Get Player Profile',
   description:
     "Retrieve a Chess.com player's public profile by username (avatar, country, join date, followers).",

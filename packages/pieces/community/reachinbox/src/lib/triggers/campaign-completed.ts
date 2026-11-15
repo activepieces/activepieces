@@ -21,6 +21,7 @@ const campaignCompletedMessage = `
 
 export const campaignCompleted = createTrigger({
   name: 'campaignCompleted',
+  classification: 'READ',
   displayName: 'Campaign Completed',
   description: 'Triggers when a campaign is completed.',
   aiMetadata: {

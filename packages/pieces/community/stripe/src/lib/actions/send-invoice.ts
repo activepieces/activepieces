@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { invoiceOutputSchema } from '../output-schemas';
 export const stripeSendInvoice = createAction({
   name: 'send_invoice',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Send Invoice (Agent)',
   description: 'Email a finalized invoice to the customer.',

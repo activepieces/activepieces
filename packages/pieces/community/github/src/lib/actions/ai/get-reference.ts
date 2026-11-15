@@ -8,6 +8,7 @@ import { gitRefBodyOutputSchema } from '../../output-schemas';
 export const githubGetReferenceAction = createAction({
   auth: githubAuth,
   name: 'get_reference',
+  classification: 'READ',
   displayName: 'Get Reference (Agent)',
   description: 'Resolves a git ref to its commit SHA.',
   audience: 'ai',

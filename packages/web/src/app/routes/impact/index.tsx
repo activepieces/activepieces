@@ -7,7 +7,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 import { toast } from 'sonner';
 
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { PageHeader } from '@/components/custom/page-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -50,10 +50,11 @@ export default function ImpactPage() {
   const activeTab = (searchParams.get('tab') as TabValue) || 'analytics';
 
   const { data: projects } = projectCollectionUtils.useAll();
-  const { data, isLoading } = platformAnalyticsHooks.useAnalyticsTimeBased(
-    selectedTimePeriod,
-    selectedProjectId,
-  );
+  const { data, isLoading, isError } =
+    platformAnalyticsHooks.useAnalyticsTimeBased(
+      selectedTimePeriod,
+      selectedProjectId,
+    );
 
   const { mutate: refreshAnalytics } =
     platformAnalyticsHooks.useRefreshAnalytics();
@@ -101,19 +102,19 @@ export default function ImpactPage() {
       featureKey="ANALYTICS"
       locked={!platform.plan.analyticsEnabled}
       lockTitle={t('Unlock Impact Analytics')}
+      pageTitle={<h1 className="text-sm font-medium">{t('Impact')}</h1>}
       lockDescription={t(
         'View impact analytics and metrics for the active flows across your platform',
       )}
     >
       <div className="flex flex-col gap-4 w-full">
         <PageHeader
-          showSidebarToggle={true}
           title={
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-medium">{t('Impact')}</span>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  <Info className="h-4 w-4 text-gray-11 cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent>
                   {t('View impact analytics and metrics for the active flows.')}
@@ -123,7 +124,7 @@ export default function ImpactPage() {
           }
           rightContent={
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md text-sm text-gray-11">
                 <span>
                   {t('Updated')}{' '}
                   {dayjs(data?.updated).format('MMM DD, hh:mm A')} —{' '}
@@ -133,8 +134,7 @@ export default function ImpactPage() {
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
+                      size="icon-xs"
                       onClick={() =>
                         refreshAnalytics(undefined, {
                           onSuccess: () =>
@@ -158,7 +158,7 @@ export default function ImpactPage() {
                 value={selectedTimePeriod}
                 onValueChange={handleTimePeriodChange}
               >
-                <SelectTrigger className="w-auto gap-2 h-8">
+                <SelectTrigger size="sm" className="w-auto">
                   <Calendar className="h-4 w-4" />
                   <SelectValue />
                 </SelectTrigger>
@@ -223,6 +223,7 @@ export default function ImpactPage() {
             <FlowsDetails
               report={report}
               isLoading={isLoading}
+              isError={isError}
               projects={projects}
             />
           </TabsContent>

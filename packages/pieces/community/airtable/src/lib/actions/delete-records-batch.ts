@@ -12,6 +12,7 @@ import { deleteRecordsBatchActionOutputSchema } from '../output-schemas';
 export const airtableDeleteRecordsBatchAction = createAction({
   auth: airtableAuth,
   name: 'delete_records_batch',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Records Batch (Agent)',
   description: 'Delete up to 10 records by ID in one call.',
   audience: 'ai',

@@ -5,6 +5,7 @@ import { pipedriveAuth } from '../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { LeadListResponse } from '../common/types';
 import { isNil } from '@activepieces/pieces-framework';
+import { newActivityTriggerOutputSchema } from '../output-schemas';
 
 interface PipedriveActivityV2 {
 	id: number;
@@ -66,6 +67,8 @@ interface ListActivitiesResponse {
 export const newActivity = createTrigger({
 	auth: pipedriveAuth,
 	name: 'new_activity',
+	outputSchema: newActivityTriggerOutputSchema,
+	classification: 'READ',
 	displayName: 'New Activity',
 	description: 'Triggers when a new activity is added',
 	aiMetadata: {

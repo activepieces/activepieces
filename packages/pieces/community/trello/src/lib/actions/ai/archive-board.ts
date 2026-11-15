@@ -12,6 +12,7 @@ import { archiveBoardActionOutputSchema } from '../../output-schemas';
 export const archiveBoard = createAction({
   auth: trelloAuth,
   name: 'archive_board',
+  classification: 'DESTRUCTIVE',
   displayName: 'Archive Board (Agent)',
   description: 'Close (archive) or reopen a Trello board.',
   audience: 'ai',

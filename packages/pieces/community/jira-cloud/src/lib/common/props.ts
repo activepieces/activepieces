@@ -16,14 +16,16 @@ import dayjs from 'dayjs';
 export function getProjectIdDropdown(data?: DropdownParams) {
 	return Property.Dropdown({
 		auth: jiraCloudAuth,
-		displayName: data?.displayName ?? 'Project ID or Key',
+		displayName: data?.displayName ?? 'Project',
 		description: data?.description,
 		required: data?.required ?? true,
 		refreshers: data?.refreshers ?? [],
 		options: async ({ auth }) => {
 			if (!auth) {
 				return {
+					disabled: true,
 					options: [],
+					placeholder: 'Please connect your account first',
 				};
 			}
 
@@ -43,7 +45,7 @@ export function getProjectIdDropdown(data?: DropdownParams) {
 export function getIssueIdDropdown(data?: DropdownParams) {
 	return Property.Dropdown({
 		auth: jiraCloudAuth,
-		displayName: data?.displayName ?? 'Issue ID or Key',
+		displayName: data?.displayName ?? 'Issue',
 		description: data?.description,
 		required: data?.required ?? true,
 		refreshers: data?.refreshers ?? [],
@@ -52,6 +54,7 @@ export function getIssueIdDropdown(data?: DropdownParams) {
 				return {
 					disabled: true,
 					options: [],
+					placeholder: auth ? 'Select a project first' : 'Please connect your account first',
 				};
 			}
 			let hasMore = true
@@ -131,7 +134,9 @@ export function getUsersDropdown(data?: DropdownParams) {
 		options: async ({ auth }) => {
 			if (!auth) {
 				return {
+					disabled: true,
 					options: [],
+					placeholder: 'Please connect your account first',
 				};
 			}
 
@@ -240,7 +245,7 @@ export const issueTypeIdProp = (displayName: string, required = true) =>
 				return {
 					disabled: true,
 					options: [],
-					placeholder: 'Please connect your account first',
+					placeholder: auth ? 'Select a project first' : 'Please connect your account first',
 				};
 			}
 
@@ -320,23 +325,29 @@ export const issueIdOrKeyProp = (displayName: string, required = true) =>
 					placeholder: 'Please connect your account first',
 				};
 			}
-			const authValue = auth as JiraAuth;
-			const response = await jiraPaginatedApiCall<{ id: string; key: string }, 'issues'>({
-				auth: authValue,
-				resourceUri: '/search',
-				propertyName: 'issues',
-				query: { fields: 'summary' },
-				method: HttpMethod.GET,
-			});
-
 			const options: DropdownOption<string>[] = [];
-
-			for (const issue of response) {
-				options.push({
-					value: issue.id,
-					label: issue.key,
+			let nextPageToken: string | undefined;
+			do {
+				const response = await sendJiraRequest({
+					method: HttpMethod.POST,
+					url: 'search/jql',
+					auth: auth as JiraAuth,
+					body: {
+						fields: ['summary'],
+						jql: 'created <= now() ORDER BY updated DESC',
+						nextPageToken,
+						maxResults: 100,
+					},
 				});
-			}
+				const issueList = response.body as SearchIssuesResponse;
+				options.push(
+					...issueList.issues.map((issue) => ({
+						value: issue.id,
+						label: `[${issue.key}] ${issue.fields.summary}`,
+					})),
+				);
+				nextPageToken = issueList.isLast ? undefined : issueList.nextPageToken;
+			} while (nextPageToken && options.length < ISSUE_OPTIONS_LIMIT);
 
 			return {
 				disabled: false,
@@ -356,7 +367,7 @@ export const issueStatusIdProp = (displayName: string, required = true) =>
 				return {
 					disabled: true,
 					options: [],
-					placeholder: 'Please connect your account first and select an issue.',
+					placeholder: auth ? 'Select an issue first' : 'Please connect your account first',
 				};
 			}
 
@@ -508,7 +519,7 @@ export async function createPropertyDefinition(
 		case 'date':
 			return Property.DateTime({
 				displayName: field.name,
-				description: 'Provide date in YYYY-MM-DD format.',
+				description: 'Only the date is sent; the time is ignored.',
 				required: isRequired,
 			});
 
@@ -528,14 +539,16 @@ export async function createPropertyDefinition(
 			return Property.ShortText({
 				displayName: field.name,
 				required: isRequired,
-				description: 'Provide project key.',
+				description: 'The project key, not its name.',
+				placeholder: 'PROJ',
 			});
 
 		case 'issuelink':
 			return Property.ShortText({
 				displayName: field.name,
 				required: isRequired,
-				description: 'Provide issue key.',
+				description: 'The issue key, not its ID.',
+				placeholder: 'PROJ-123',
 			});
 		default:
 			return null;
@@ -679,3 +692,5 @@ export function transformCustomFields(
 
 	return result;
 }
+
+const ISSUE_OPTIONS_LIMIT = 1000;

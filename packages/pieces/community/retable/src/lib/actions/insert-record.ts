@@ -7,6 +7,7 @@ import { retableCommon } from '../common';
 export const retableCreateRecordAction = createAction({
   auth: retableAuth,
   name: 'retable_create_record',
+  classification: 'WRITE',
   displayName: 'Create Retable Record',
   description: 'Adds a record into a retable',
   audience: 'both',

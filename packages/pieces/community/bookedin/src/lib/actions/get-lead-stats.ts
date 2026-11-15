@@ -5,6 +5,7 @@ import { BASE_URL, getBookedinHeaders, extractApiKey } from '../common/props';
 
 export const getLeadStats = createAction({
   name: 'getLeadStats',
+  classification: 'READ',
   displayName: 'Get Lead Stats',
   description: 'Get lead statistics (Hot, Warm, Cold, Objectives Met, Total).',
   audience: 'both',

@@ -6,6 +6,7 @@ import { wedofCommon } from '../../common/wedof';
 export const updateCompletionRate = createAction({
   auth: wedofAuth,
   name: 'updateCompletionRate',
+  classification: 'WRITE',
   displayName: "Mettre à jour l'assiduité d'un apprenant",
   description:
     "Mettre à jour le taux d'avancement en % d'assiduité d'un apprenant pour un Dossier de formation donné.",

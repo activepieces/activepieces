@@ -2,10 +2,12 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { readdir, stat } from 'node:fs/promises'
-import { resolve, join, relative } from 'node:path'
+import { resolve, join, relative, dirname } from 'node:path'
 import { cwd } from 'node:process'
 import * as semver from 'semver'
+import { tryCatch } from '@activepieces/core-utils'
 import { readPackageJson } from './files'
+import { cloudApiFetch } from './cloud-api-fetch'
 import { StatusCodes } from 'http-status-codes'
 import { pieceTranslation, PieceMetadata } from '@activepieces/pieces-framework'
 
@@ -51,12 +53,6 @@ const validateMetadata = (pieceMetadata: PieceMetadata): void => {
 }
 
 
-const byDisplayNameIgnoreCase = (a: PieceMetadata, b: PieceMetadata) => {
-    const aName = a.displayName.toUpperCase();
-    const bName = b.displayName.toUpperCase();
-    return aName.localeCompare(bName, 'en');
-};
-
 export function getCommunityPieceFolder(pieceName: string): string {
     return join(COMMUNITY_PIECE_FOLDER, pieceName)
 }
@@ -72,9 +68,9 @@ export const pieceMetadataExists = async (
     pieceName: string,
     pieceVersion: string
 ): Promise<boolean> => {
-    const cloudResponse = await fetch(
-        `${AP_CLOUD_API_BASE}/pieces/${pieceName}?version=${pieceVersion}`
-    );
+    const cloudResponse = await cloudApiFetch.fetchWithRetry({
+        url: `${AP_CLOUD_API_BASE}/pieces/${pieceName}?version=${pieceVersion}`,
+    });
 
     const pieceExist: Record<number, boolean> = {
         [StatusCodes.OK]: true,
@@ -85,45 +81,57 @@ export const pieceMetadataExists = async (
         pieceExist[cloudResponse.status] === null ||
         pieceExist[cloudResponse.status] === undefined
     ) {
-        throw new Error(await cloudResponse.text());
+        throw new Error(`[pieceMetadataExists] ${pieceName}@${pieceVersion} unexpected status=${cloudResponse.status}`);
     }
 
     return pieceExist[cloudResponse.status];
 };
 
-export async function findNewPieces(): Promise<PieceMetadata[]> {
+export async function findNewPieces(): Promise<FindNewPiecesResult> {
     const changedDistPaths = getChangedPiecesDistPaths()
     const paths = changedDistPaths ?? await findAllDistPaths()
 
     console.info(`[findNewPieces] scanning ${paths.length} dist paths${changedDistPaths ? ' (scoped to changed)' : ' (all)'}`)
 
-    const changedPieces: PieceMetadata[] = []
+    const pieces: PieceMetadata[] = []
+    const failures: PieceLoadFailure[] = []
 
     // Adding batches because of memory limit when we have a lot of pieces
     const batchSize = 75
     for (let i = 0; i < paths.length; i += batchSize) {
         const batch = paths.slice(i, i + batchSize)
         const batchResults = await Promise.all(batch.map(async (folderPath) => {
-            const packageJson = await readPackageJson(folderPath);
-            if (NON_PIECES_PACKAGES.includes(packageJson.name)) {
-                return null;
-            }
-            const exists = await pieceMetadataExists(packageJson.name, packageJson.version)
-            if (!exists) {
-                const pieceMetadata = await loadPieceFromFolder(folderPath);
-                if (pieceMetadata === null) {
-                    console.error(`[findNewPieces] failed to load ${packageJson.name}@${packageJson.version} from ${folderPath}, it will not be inserted`);
+            const { data, error } = await tryCatch(async () => {
+                const packageJson = await readPackageJson(folderPath);
+                if (NON_PIECES_PACKAGES.includes(packageJson.name)) {
+                    return null;
                 }
-                return pieceMetadata;
+                const exists = await pieceMetadataExists(packageJson.name, packageJson.version)
+                if (exists) {
+                    return null;
+                }
+                return loadPieceFromFolder(folderPath)
+            })
+            if (error !== null) {
+                return { path: folderPath, error: error.message } satisfies PieceLoadFailure
             }
-            return null;
+            return data
         }))
 
-        const validResults = batchResults.filter((piece): piece is PieceMetadata => piece !== null)
-        changedPieces.push(...validResults)
+        for (const result of batchResults) {
+            if (result === null) {
+                continue
+            }
+            if ('error' in result) {
+                failures.push(result)
+            }
+            else {
+                pieces.push(result)
+            }
+        }
     }
 
-    return changedPieces;
+    return { pieces, failures };
 }
 
 function getChangedPiecesDistPaths(): string[] | null {
@@ -131,22 +139,15 @@ function getChangedPiecesDistPaths(): string[] | null {
     if (!changedPieces || changedPieces.trim() === '') {
         return null
     }
-    const distPaths = changedPieces.split('\n').filter(Boolean).map(p => {
+    return changedPieces.split('\n').filter(Boolean).map(p => {
         return resolve(cwd(), p, 'dist')
+    }).filter(p => {
+        const exists = existsSync(join(p, 'package.json'))
+        if (!exists) {
+            console.info(`[getChangedPiecesDistPaths] skipping, no build output at ${p}`)
+        }
+        return exists
     })
-
-    const missingBuildOutput = distPaths.filter(p => !existsSync(join(p, 'package.json')))
-    if (missingBuildOutput.length > 0) {
-        throw new Error(`[getChangedPiecesDistPaths] ${missingBuildOutput.length} changed piece(s) have no build output, they would be silently skipped:\n${missingBuildOutput.join('\n')}`)
-    }
-
-    return distPaths
-}
-
-export async function findAllPieces(): Promise<PieceMetadata[]> {
-    const paths = await findAllDistPaths()
-    const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
-    return pieces.filter((p): p is PieceMetadata => p !== null).sort(byDisplayNameIgnoreCase)
 }
 
 async function findAllDistPaths(): Promise<string[]> {
@@ -184,29 +185,24 @@ async function traverseFolder(folderPath: string): Promise<string[]> {
     return paths
 }
 
-async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | null> {
-    try {
-        const packageJson = await readPackageJson(folderPath);
-        const payload = loadPieceViaChildProcess(folderPath);
-        const i18n = await pieceTranslation.initializeI18n(folderPath)
-        const metadata: PieceMetadata = {
-            ...payload.metadata,
-            name: packageJson.name,
-            version: packageJson.version,
-            i18n,
-            authors: payload.authors,
-            directoryPath: folderPath,
-            minimumSupportedRelease: payload.minimumSupportedRelease ?? '0.0.0',
-            maximumSupportedRelease: payload.maximumSupportedRelease ?? '99999.99999.9999',
-        };
+async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata> {
+    const packageJson = await readPackageJson(folderPath);
+    const payload = loadPieceViaChildProcess(folderPath);
+    const pieceSourcePath = dirname(folderPath)
+    const i18n = await pieceTranslation.initializeI18n(pieceSourcePath)
+    const metadata: PieceMetadata = {
+        ...payload.metadata,
+        name: packageJson.name,
+        version: packageJson.version,
+        i18n,
+        authors: payload.authors,
+        directoryPath: folderPath,
+        minimumSupportedRelease: payload.minimumSupportedRelease ?? '0.0.0',
+        maximumSupportedRelease: payload.maximumSupportedRelease ?? '99999.99999.9999',
+    };
 
-        validateMetadata(metadata);
-        return metadata;
-    }
-    catch (ex) {
-        console.error(ex)
-    }
-    return null
+    validateMetadata(metadata);
+    return metadata;
 }
 
 function loadPieceViaChildProcess(folderPath: string): LoadedPieceChildPayload {
@@ -216,5 +212,15 @@ function loadPieceViaChildProcess(folderPath: string): LoadedPieceChildPayload {
         maxBuffer: 64 * 1024 * 1024,
     })
     return JSON.parse(stdout) as LoadedPieceChildPayload
+}
+
+type PieceLoadFailure = {
+    path: string
+    error: string
+}
+
+type FindNewPiecesResult = {
+    pieces: PieceMetadata[]
+    failures: PieceLoadFailure[]
 }
 

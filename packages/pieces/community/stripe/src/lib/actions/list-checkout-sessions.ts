@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { checkoutSessionListOutputSchema } from '../output-schemas';
 export const stripeListCheckoutSessions = createAction({
   name: 'list_checkout_sessions',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'List Checkout Sessions (Agent)',
   description: 'List Stripe Checkout Sessions.',

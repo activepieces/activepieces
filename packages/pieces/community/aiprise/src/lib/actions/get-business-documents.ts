@@ -6,6 +6,7 @@ import { aipriseAuth } from '../common/auth';
 export const getBusinessDocumentsAction = createAction({
   auth: aipriseAuth,
   name: 'get_business_documents',
+  classification: 'SEARCH',
   displayName: 'Get Business Documents',
   description:
     'Lists all documents attached to a business profile — including file UUIDs, names, S3 URLs, timestamps, document sources, and associated verification sessions.',

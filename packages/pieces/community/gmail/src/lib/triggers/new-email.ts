@@ -2,6 +2,7 @@ import {
   createTrigger,
   TriggerStrategy,
   FilesService,
+  isNil,
 } from '@activepieces/pieces-framework';
 import { GmailLabel } from '../common/models';
 import { GmailProps } from '../common/props';
@@ -17,8 +18,9 @@ import { gmailNewEmailReceivedTriggerOutputSchema } from '../output-schemas';
 export const gmailNewEmailTrigger = createTrigger({
   auth: gmailAuth,
   name: 'gmail_new_email_received',
+  classification: 'READ',
   displayName: 'New Email',
-  description: 'Triggers when new mail is found in your Gmail inbox',
+  description: 'Triggers when a new email matching the filters arrives.',
   aiMetadata: {
     description:
       'Fires when a new email arrives in the connected Gmail account, optionally narrowed by sender, recipient, subject, label, or category filters. Each event represents one newly received message with its parsed contents and thread.',
@@ -26,14 +28,17 @@ export const gmailNewEmailTrigger = createTrigger({
   props: {
     subject: GmailProps.subject,
     from: GmailProps.from,
-    to: GmailProps.to,
+    to: { ...GmailProps.to, advanced: true },
     label: GmailProps.label({ required: false }),
-    category: GmailProps.category,
+    category: { ...GmailProps.category, advanced: true },
   },
   outputSchema: gmailNewEmailReceivedTriggerOutputSchema,
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get('lastPoll'))) {
+      return;
+    }
     await context.store.put('lastPoll', Date.now());
   },
   async onDisable(context) {
@@ -153,7 +158,7 @@ async function pollRecentMessages({
             ),
           },
           thread: {
-            ...threadResponse,
+            data: threadResponse.data,
           },
         },
       });

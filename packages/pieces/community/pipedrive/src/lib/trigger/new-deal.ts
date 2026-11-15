@@ -11,6 +11,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { GetField } from '../common/types';
 import { isNil } from '@activepieces/pieces-framework';
 import { DEAL_OPTIONAL_FIELDS } from '../common/constants';
+import { newDealTriggerOutputSchema } from '../output-schemas';
 
 interface PipedriveDealV2 {
 	id: number;
@@ -70,6 +71,8 @@ interface GetDealResponseV2 {
 export const newDeal = createTrigger({
 	auth: pipedriveAuth,
 	name: 'new_deal',
+	outputSchema: newDealTriggerOutputSchema,
+	classification: 'READ',
 	displayName: 'New Deal',
 	description: 'Triggers when a new deal is created.',
 	aiMetadata: {

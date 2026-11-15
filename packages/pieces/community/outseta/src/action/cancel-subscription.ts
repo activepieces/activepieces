@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const cancelSubscriptionAction = createAction({
   name: 'cancel_subscription',
+  classification: 'DESTRUCTIVE',
   auth: outsetaAuth,
   displayName: 'Cancel Subscription',
   description:

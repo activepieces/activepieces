@@ -23,6 +23,7 @@ function flattenBodyToPlainText(body: docs_v1.Schema$Body | undefined): string {
 export const getDocumentPlaintext = createAction({
 	auth: googleDocsAuth,
 	name: 'get_document_plaintext',
+	classification: 'READ',
 	displayName: 'Get Document Plain Text',
 	description: 'Get the plain text content of a Google Docs document.',
 	audience: 'ai',

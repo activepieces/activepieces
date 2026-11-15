@@ -1,12 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
-import { FIRECRAWL_API_BASE_URL } from '../common/common';
+import { FIRECRAWL_API_BASE_URL, FIRECRAWL_ORIGIN } from '../common/common';
 import { startAgentActionOutputSchema } from '../output-schemas';
 
 export const startAgent = createAction({
   auth: firecrawlAuth,
   name: 'start_agent',
+  classification: 'WRITE',
   displayName: 'Start Agent',
   description: 'Start an autonomous Firecrawl (FIRE-1) agent job from a natural-language prompt.',
   audience: 'ai',
@@ -47,6 +48,7 @@ export const startAgent = createAction({
   async run({ auth, propsValue }) {
     const body: Record<string, any> = {
       prompt: propsValue.prompt,
+      origin: FIRECRAWL_ORIGIN,
     };
     if (propsValue.urls && (propsValue.urls as unknown[]).length > 0) {
       body['urls'] = (propsValue.urls as unknown[]).map((u) => String(u));

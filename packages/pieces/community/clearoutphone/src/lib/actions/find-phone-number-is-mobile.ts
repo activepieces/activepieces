@@ -5,6 +5,7 @@ import { clearoutphoneAuth } from '../common/auth';
 export const findPhoneNumberIsMobile = createAction({
   auth: clearoutphoneAuth,
   name: 'findPhoneNumberIsMobile',
+  classification: 'READ',
   displayName: 'Find Phone Number Is Mobile',
   description:
     'Determine if a phone number is a mobile number using ClearoutPhone API',

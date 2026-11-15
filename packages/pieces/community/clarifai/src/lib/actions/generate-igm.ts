@@ -8,6 +8,7 @@ import {
 
 export const clarifaiGenerateIGM = createAction({
   name: 'generate-igm',
+  classification: 'READ',
   displayName: 'Ask IGM',
   description:
     'Generate an image using the Image generating models supported by clarifai.',

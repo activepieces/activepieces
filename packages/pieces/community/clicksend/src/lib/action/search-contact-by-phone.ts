@@ -10,6 +10,7 @@ function isValidPhone(phone: string) {
 export const clicksendFindContactByPhoneAction = createAction({
   auth: clicksendAuth,
   name: 'find_contact_by_phone',
+  classification: 'READ',
   description: 'Finds contact by phone number.',
   audience: 'both',
   aiMetadata: {

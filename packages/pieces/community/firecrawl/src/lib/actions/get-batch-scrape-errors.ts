@@ -7,6 +7,7 @@ import { getBatchScrapeErrorsActionOutputSchema } from '../output-schemas';
 export const getBatchScrapeErrors = createAction({
   auth: firecrawlAuth,
   name: 'get_batch_scrape_errors',
+  classification: 'READ',
   displayName: 'Get Batch Scrape Errors',
   description: 'List the URLs that failed in a batch scrape job.',
   audience: 'ai',

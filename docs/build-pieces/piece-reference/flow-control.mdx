@@ -4,7 +4,7 @@ icon: 'Joystick'
 description: 'Learn how to control flow execution from inside a piece'
 ---
 
-Flow Controls let an action change the shape of the run — stop it early, send an intermediate HTTP response, or **pause the flow and resume later** when an external signal arrives. All of these are exposed on the `ctx` parameter of the action's `run` method.
+Flow Controls let an action change the shape of the run: stop it early, send an intermediate HTTP response, or **pause the flow and resume later** when an external signal arrives. All of these are exposed on the `ctx` parameter of the action's `run` method.
 
 ## Stop Flow
 
@@ -30,9 +30,9 @@ context.run.stop();
 
 ## Pause with a waitpoint
 
-A **waitpoint** is a durable checkpoint: the run is marked `PAUSED`, its execution state is persisted, and the action will be invoked a second time once the waitpoint is resumed. Waitpoints survive worker restarts — see [Durable Execution](/install/architecture/durable-execution) for the full model.
+A **waitpoint** is a durable checkpoint: the run is marked `PAUSED`, its execution state is persisted, and the action will be invoked a second time once the waitpoint is resumed. Waitpoints survive worker restarts; see [Durable Execution](/install/architecture/durable-execution) for the full model.
 
-The same action runs twice — once to create the waitpoint, once to read the resume payload — so every pausing action branches on `ctx.executionType`:
+The same action runs twice (once to create the waitpoint, once to read the resume payload), so every pausing action branches on `ctx.executionType`:
 
 ```typescript
 import { ExecutionType } from '@activepieces/shared';
@@ -41,7 +41,7 @@ async run(ctx) {
   if (ctx.executionType === ExecutionType.BEGIN) {
     // First invocation: create the waitpoint and pause.
     // A real WEBHOOK waitpoint must surface waitpoint.buildResumeUrl(...) to
-    // the outside world — see the "Wait for a webhook callback" section below.
+    // the outside world, see the "Wait for a webhook callback" section below.
     const waitpoint = await ctx.run.createWaitpoint({ type: 'WEBHOOK' });
     ctx.run.waitForWaitpoint(waitpoint.id);
     return {};
@@ -58,14 +58,14 @@ async run(ctx) {
 
 Two hooks do the work:
 
-- `ctx.run.createWaitpoint({ type, ... })` — registers the waitpoint on the server and returns `{ id, resumeUrl, buildResumeUrl }`.
-- `ctx.run.waitForWaitpoint(waitpointId)` — tells the engine the step's verdict is `paused`; the run transitions to `PAUSED` after the action returns.
+- `ctx.run.createWaitpoint({ type, ... })`: registers the waitpoint on the server and returns `{ id, resumeUrl, buildResumeUrl }`.
+- `ctx.run.waitForWaitpoint(waitpointId)`: tells the engine the step's verdict is `paused`; the run transitions to `PAUSED` after the action returns.
 
 There are two waitpoint types.
 
 ### Wait for a webhook callback
 
-Create a `WEBHOOK` waitpoint and expose its resume URL — the flow will resume whenever that URL is called.
+Create a `WEBHOOK` waitpoint and expose its resume URL. The flow will resume whenever that URL is called.
 
 ```typescript
 async run(ctx) {
@@ -93,7 +93,7 @@ async run(ctx) {
 
 ### Respond immediately and wait for the next webhook
 
-Pause the flow **and** immediately reply to the webhook trigger — useful for "we got your submission, we'll call you back" patterns. Pass `responseToSend` and your HTTP response is sent right away; the flow then sits paused until the returned URL is called.
+Pause the flow **and** immediately reply to the webhook trigger, useful for "we got your submission, we'll call you back" patterns. Pass `responseToSend` and your HTTP response is sent right away; the flow then sits paused until the returned URL is called.
 
 ```typescript
 async run(ctx) {
@@ -159,7 +159,7 @@ ctx.resumePayload.headers     // HTTP headers from the webhook caller
 ctx.resumePayload.queryParams // parsed ?foo=bar query string
 ```
 
-For `DELAY` waitpoints there is no incoming HTTP request, so the payload is empty — use the `RESUME` branch simply to produce the step's final output.
+For `DELAY` waitpoints there is no incoming HTTP request, so the payload is empty. Use the `RESUME` branch simply to produce the step's final output.
 
 <Warning>
   **Deprecated:** older pieces use `ctx.run.pause({ pauseMetadata: { type: PauseType.WEBHOOK | PauseType.DELAY, ... } })` together with `ctx.generateResumeUrl(...)`. That V0 API is kept for backwards compatibility with in-flight paused runs and will be removed. New actions must use `ctx.run.createWaitpoint` + `ctx.run.waitForWaitpoint`.

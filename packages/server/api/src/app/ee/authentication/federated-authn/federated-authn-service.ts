@@ -1,9 +1,9 @@
 import {
-    AuthenticationResponse,
     FederatedAuthnLoginResponse,
     UserIdentityProvider,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { AuthenticationResult } from '../../../authentication/authentication-utils'
 import { authenticationService } from '../../../authentication/authentication.service'
 import { domainHelper } from '../../../helper/domain-helper'
 import { system } from '../../../helper/system/system'
@@ -28,7 +28,7 @@ export const federatedAuthnService = (log: FastifyBaseLogger) => ({
     async claim({
         platformId,
         code,
-    }: ClaimParams): Promise<AuthenticationResponse> {
+    }: ClaimParams): Promise<AuthenticationResult> {
         const { clientId, clientSecret } = getClientIdAndSecret()
         const idToken = await googleAuthnProvider(log).authenticate({
             clientId,

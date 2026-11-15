@@ -16,6 +16,7 @@ function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAut
         case PropertyType.DATE_TIME:
         case PropertyType.SHORT_TEXT:
         case PropertyType.LONG_TEXT:
+        case PropertyType.RICH_TEXT:
         case PropertyType.COLOR:
         case PropertyType.FILE:
           propsSchema[name] = property.required
@@ -69,6 +70,12 @@ function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAut
           propsSchema[name] = z.union([
             z.record(z.string(), z.any()),
             property.required ? z.string().check(z.minLength(1)) : z.string(),
+          ]);
+          break;
+        case PropertyType.DATE_RANGE:
+          propsSchema[name] = z.union([
+            z.record(z.string(), z.any()),
+            z.string(),
           ]);
           break;
         case PropertyType.JSON:

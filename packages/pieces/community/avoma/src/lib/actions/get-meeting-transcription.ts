@@ -5,6 +5,7 @@ import { avomaCommon } from '../common';
 export const getMeetingTranscription = createAction({
   auth: avomaCommon.avomaAuth,
   name: 'get_meeting_transcription',
+  classification: 'READ',
   displayName: 'Get Meeting Transcription',
   description: 'Returns transcription with speakers, timestamps, and VTT file URL',
   audience: 'both',

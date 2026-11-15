@@ -11,6 +11,7 @@ import { Data } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
 export const audioToTextModelPredictAction = createAction({
   auth: clarifaiAuth,
   name: 'audio_text_model',
+  classification: 'READ',
   description: 'Call a audio to text AI model',
   audience: 'both',
   aiMetadata: {

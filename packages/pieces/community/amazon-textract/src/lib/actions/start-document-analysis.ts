@@ -9,6 +9,7 @@ import { createTextractClient, formatTextractError } from '../common';
 export const startDocumentAnalysis = createAction({
   auth: amazonTextractAuth,
   name: 'start-document-analysis',
+  classification: 'READ',
   displayName: 'Start Document Analysis',
   description:
     'Start an asynchronous analysis job for a multi-page document stored in S3. Returns a job ID that you can pass to the "Get Document Analysis Results" action to retrieve the extracted data once the job completes.',
@@ -64,7 +65,7 @@ export const startDocumentAnalysis = createAction({
     } = context.propsValue;
 
     try {
-      const client = createTextractClient(context.auth.props);
+      const client = await createTextractClient({ auth: context.auth.props, server: context.server });
 
       const response = await client.send(
         new StartDocumentAnalysisCommand({

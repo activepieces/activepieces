@@ -6,19 +6,37 @@ import { eventOutputSchema } from '../output-schemas';
 export const addAttendeesToEventAction = createAction({
   auth: googleCalendarAuth,
   name: 'google-calendar-add-attendees',
+  classification: 'WRITE',
   displayName: 'Add Attendees to Event',
-  description: 'Add one or more person to existing event.',
+  description: 'Adds guests to an existing event.',
   audience: 'both',
   aiMetadata: { description: 'Adds one or more guests (by email) to an existing Google Calendar event, identified by calendar and event ID, preserving the current attendee list. Use to invite people to an event that already exists rather than recreating it. Not idempotent: re-running appends the same emails again, producing duplicate attendee entries.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'event',
+      display: 'section',
+      label: 'Event',
+      icon: 'calendar',
+      props: ['calendar_id', 'eventId'],
+    },
+    {
+      key: 'guests',
+      display: 'section',
+      label: 'Guests',
+      icon: 'users',
+      props: ['attendees'],
+    },
+  ],
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     eventId: Property.ShortText({
       displayName: 'Event ID',
+      description: 'Paste the ID from the event URL or a previous step.',
       required: true,
     }),
     attendees: Property.Array({
       displayName: 'Attendees',
-      description: 'Emails of the attendees (guests)',
+      description: 'One guest email per item.',
       required: true,
     }),
   },

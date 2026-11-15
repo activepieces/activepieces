@@ -5,12 +5,14 @@ import dayjs from 'dayjs'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { loggingUtils } from '../helper/logging-utils'
 import { triggerHelper } from '../helper/trigger-helper'
+import { aiRouterExecuter } from './ai-router-executor'
 import { BaseExecutor } from './base-executor'
 import { codeExecutor } from './code-executor'
 import { EngineConstants, ResolvedExecuteFlowOperation } from './context/engine-constants'
 import { FlowExecutorContext } from './context/flow-execution-context'
 import { loopExecutor } from './loop-executor'
 import { pieceExecutor } from './piece-executor'
+import { processInBatchesExecutor } from './process-in-batches-executor'
 import { routerExecuter } from './router-executor'
 
 let executors: Record<FlowActionType, BaseExecutor<FlowAction>> | null = null
@@ -22,7 +24,9 @@ function getExecutors(): Record<FlowActionType, BaseExecutor<FlowAction>> {
         [FlowActionType.CODE]: codeExecutor,
         [FlowActionType.LOOP_ON_ITEMS]: loopExecutor,
         [FlowActionType.PIECE]: pieceExecutor,
+        [FlowActionType.PROCESS_IN_BATCHES]: processInBatchesExecutor,
         [FlowActionType.ROUTER]: routerExecuter,
+        [FlowActionType.AI_ROUTER]: aiRouterExecuter,
     }
     return executors
 }
@@ -181,7 +185,7 @@ const applyLogSizeLimitIfExceeded = async (
         status: FlowRunStatus.LOG_SIZE_EXCEEDED,
         failedStep: {
             name: action.name,
-            displayName: action.displayName,
+            displayName: action.displayName ?? action.name,
             message: 'Flow run logs size exceeded',
         },
     })

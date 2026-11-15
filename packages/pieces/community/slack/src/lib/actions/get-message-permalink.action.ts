@@ -8,6 +8,7 @@ import { permalinkActionOutputSchema } from '../output-schemas';
 export const slackGetMessagePermalinkAction = createAction({
   auth: slackAuth,
   name: 'slack_get_message_permalink',
+  classification: 'READ',
   displayName: 'Get Message Permalink',
   description: 'Get a shareable permalink URL for a specific message.',
   audience: 'ai',

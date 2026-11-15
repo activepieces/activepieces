@@ -6,6 +6,7 @@ import { callGraphApi, userDropdown } from '../common';
 export const revokeSignInSessionAction = createAction({
     auth: azureAdAuth,
     name: 'revoke_sign_in_session',
+    classification: 'DESTRUCTIVE',
     displayName: 'Revoke Sign-in Session',
     description: 'Revokes all refresh tokens for the user, forcing them to sign in again.',
     audience: 'both',

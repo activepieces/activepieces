@@ -31,6 +31,7 @@ const polling: Polling<BillplzAuth, StaticPropsValue<Record<string, never>>> = {
 
 export const getCollectionsTrigger = createTrigger({
   name: 'get_collections',
+  classification: 'READ',
   displayName: 'Get Collections',
   description: 'Triggers when there are new collections',
   aiMetadata: {

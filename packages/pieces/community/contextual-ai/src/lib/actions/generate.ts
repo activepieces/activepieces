@@ -5,6 +5,7 @@ import { ContextualAI } from 'contextual-client';
 export const generateAction = createAction({
   auth: contextualAiAuth,
   name: 'generate',
+  classification: 'READ',
   displayName: 'Generate Text',
   description: 'Generate text using Contextual AI\'s Grounded Language Model',
   audience: 'both',

@@ -15,6 +15,7 @@ import {
 export const createEmailTemplate = createAction({
   auth: amazonSesAuth,
   name: 'create_email_template',
+  classification: 'WRITE',
   displayName: 'Create Email Template',
   description: 'Create a reusable HTML or text email template with variables',
   audience: 'both',

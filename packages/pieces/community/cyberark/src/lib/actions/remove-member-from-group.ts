@@ -8,6 +8,7 @@ import { getAuthToken, CyberArkAuth } from '../common/auth-helper';
 export const removeMemberFromGroup = createAction({
   auth: cyberarkAuth,
   name: 'remove_member_from_group',
+  classification: 'DESTRUCTIVE',
   displayName: 'Remove Member from Group',
   description: 'Removes a specific user from a user group in the Vault',
   audience: 'both',

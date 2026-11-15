@@ -1,74 +1,43 @@
 import { t } from 'i18next';
 
-import { CenteredPage } from '@/app/components/centered-page';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { PlusIcon } from '@/components/icons/plus';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+} from '@/app/components/admin';
 import { projectRoleQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 
-import { ProjectRoleDialog } from './project-role-dialog';
-import { ProjectRolesTable } from './project-roles-table';
+import { sampleData } from '../../sample-data';
+
+import { DefaultProjectsSection } from './default-projects-section';
+import { PersonalProjectsSection } from './personal-projects-section';
+import { RolesCard } from './roles-card';
 
 const ProjectRolePage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
 
-  const { data, isLoading, refetch } = projectRoleQueries.useProjectRoles(
-    platform.plan.projectRolesEnabled,
-  );
-
-  const newRoleButton = !platform.plan.customRolesEnabled ? (
-    <Tooltip>
-      <TooltipTrigger>
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm" disabled>
-          {t('New Role')}
-        </AnimatedIconButton>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">
-        {t('Contact sales to unlock custom roles')}
-      </TooltipContent>
-    </Tooltip>
-  ) : (
-    <ProjectRoleDialog
-      mode="create"
-      onSave={() => refetch()}
-      platformId={platform.id}
-    >
-      <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
-        {t('New Role')}
-      </AnimatedIconButton>
-    </ProjectRoleDialog>
-  );
+  const { data, isLoading, isError, refetch } =
+    projectRoleQueries.useProjectRoles(platform.plan.projectRolesEnabled);
+  const isSample = !platform.plan.projectRolesEnabled;
+  const roles = isSample ? sampleData.projectRolesPage() : data;
 
   return (
-    <LockedFeatureGuard
-      featureKey="TEAM"
-      locked={!platform.plan.projectRolesEnabled}
-      lockTitle={t('Project Role Management')}
-      lockDescription={t(
-        'Define custom roles and permissions to control what your team members can access and modify',
-      )}
-      lockVideoUrl="https://cdn.activepieces.com/videos/showcase/roles.mp4"
-    >
-      <CenteredPage
-        title={t('Project Role Management')}
-        description={t(
-          'Define custom roles and permissions that can be assigned to your team members',
-        )}
-        actions={newRoleButton}
-      >
-        <ProjectRolesTable
-          projectRoles={data}
-          isLoading={isLoading}
-          refetch={refetch}
-        />
-      </CenteredPage>
-    </LockedFeatureGuard>
+    <AdminPage width="content">
+      <AdminPageHeader
+        title={t('Roles & Access')}
+        description={t('Manage roles and where new members land')}
+        resources={adminPageResources.roles}
+      />
+      <RolesCard
+        projectRoles={roles}
+        isLoading={isSample ? false : isLoading}
+        isError={isSample ? false : isError}
+        refetch={refetch}
+      />
+      <PersonalProjectsSection />
+      <DefaultProjectsSection />
+    </AdminPage>
   );
 };
 

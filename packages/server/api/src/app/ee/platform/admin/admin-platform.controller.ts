@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
-import { AiMetadata, Audience, ErrorHandlingOptionsParam, type OutputSchema, PieceMetadata, PieceMetadataModel, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
-import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, ChatConversation, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
+import { ActionClassification, AiMetadata, Audience, ErrorHandlingOptionsParam, type OutputSchema, PieceMetadata, PieceMetadataModel, PropertyGroup, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
+import { AdminRetryRunsRequestBody, AgentConversation, AgentRunSource, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -13,9 +13,9 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { isToolSearchEnabled } from '../../../tool-search/tool-search-flag'
 import { toolSearchReindexJob } from '../../../tool-search/tool-search-reindex.job'
-import { ChatConversationEntity } from '../../chat/chat-conversation-entity'
-import { chatAnalyticsBulkSync } from '../../chat/chat-sync-job'
-import { CANARY_WORKER_GROUP_ID, workerGroupService } from '../platform-plan/worker-group.service'
+import { CANARY_WORKER_GROUP_ID, platformWorkerGroupService } from '../../../workers/worker-groups/platform-worker-group.service'
+import { AgentConversationEntity } from '../../agent/agent-conversation-entity'
+import { chatAnalyticsBulkSync } from '../../agent/chat-analytics-sync'
 import { adminPlatformService } from './admin-platform.service'
 
 const API_KEY_HEADER = 'api-key'
@@ -60,6 +60,7 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         return res.status(StatusCodes.OK).send()
     })
 
+
     app.post('/platforms/apply-license-key', ApplyLicenseKeyByEmailRequest, async (req, res) => {
         await adminPlatformService(req.log).applyLicenseKeyByEmail(req.body)
         return res.status(StatusCodes.OK).send()
@@ -72,22 +73,23 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
 
     app.post('/platforms/worker-group', UpdateWorkerGroupRequest, async (req, res) => {
         const { platformId, workerGroupId } = req.body
-        await workerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId })
-        await workerGroupService(req.log).updateWorkerGroup({ platformId, workerGroupId })
+        await platformWorkerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId })
+        await platformWorkerGroupService(req.log).updateWorkerGroup({ platformId, workerGroupId })
         return res.status(StatusCodes.OK).send()
     })
 
     app.post('/platforms/canary', UpdateCanaryRequest, async (req, res) => {
         const { platformId, canary } = req.body
-        await workerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId: canary ? CANARY_WORKER_GROUP_ID : null })
-        await workerGroupService(req.log).updateCanary({ platformId, canary })
+        await platformWorkerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId: canary ? CANARY_WORKER_GROUP_ID : null })
+        await platformWorkerGroupService(req.log).updateCanary({ platformId, canary })
         return res.status(StatusCodes.OK).send()
     })
 
     app.post('/chat/sync-all', SyncAllConversationsRequest, async (req, res) => {
         const PAGE_SIZE = 100
-        const conversationRepo = repoFactory(ChatConversationEntity)
-        const totalCount = await conversationRepo().count()
+        const conversationRepo = repoFactory(AgentConversationEntity)
+        const chatOnly = { source: AgentRunSource.CHAT }
+        const totalCount = await conversationRepo().countBy(chatOnly)
         const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
         req.log.info({ totalCount, totalPages }, 'Starting bulk chat analytics sync')
@@ -96,7 +98,8 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         let failed = 0
 
         for (let page = 0; page < totalPages; page++) {
-            const conversations: ChatConversation[] = await conversationRepo().find({
+            const conversations: AgentConversation[] = await conversationRepo().find({
+                where: chatOnly,
                 skip: page * PAGE_SIZE,
                 take: PAGE_SIZE,
                 order: { created: 'ASC' },
@@ -170,10 +173,12 @@ const Action = z.object({
     description: z.string(),
     requireAuth: z.boolean(),
     props: z.unknown(),
+    propertyGroups: z.optional(z.array(PropertyGroup)),
     errorHandlingOptions: z.optional(ErrorHandlingOptionsParam),
     outputSchema: z.optional(z.custom<OutputSchema>()),
     aiMetadata: z.optional(AiMetadata),
     audience: z.optional(Audience),
+    classification: z.optional(ActionClassification),
 })
 
 const Trigger = Action.omit({ audience: true }).extend({
@@ -197,6 +202,7 @@ const CreatePieceRequest = {
             categories: z.array(z.nativeEnum(PieceCategory)).optional(),
             minimumSupportedRelease: ExactVersionType,
             maximumSupportedRelease: ExactVersionType,
+            deprecated: z.boolean().optional(),
             actions: z.record(z.string(), Action),
             triggers: z.record(z.string(), Trigger),
             i18n: z.record(z.string(), z.record(z.string(), z.string())).optional(),

@@ -1,32 +1,31 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { baserowAuth, baserowAuthHelpers } from '../auth';
+import { baserowAuth } from '../auth';
 import { makeClient } from '../common';
+import { uploadFileOutputSchema } from '../output-schemas';
 
 export const uploadFileAction = createAction({
   name: 'baserow_upload_file',
+  classification: 'WRITE',
+  outputSchema: uploadFileOutputSchema,
   displayName: 'Upload File',
   description:
-    'Uploads a file to Baserow from a URL. Returns the uploaded file object that can be used in file fields. Requires Email & Password (JWT) authentication — Database Tokens do not have access to the user-files endpoint.',
+    'Uploads a file from a link, ready to put in a file column.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Downloads a file from a public URL and uploads it into Baserow user files, producing a file reference you can then assign to a file field via Create/Update Row. Use as the first step before attaching files to rows. Requires Email & Password (JWT) authentication — Database Token connections cannot reach the user-files endpoint. Not idempotent — each call uploads a new file copy.',
+      'Downloads a file from a public URL and uploads it into Baserow user files, producing a file reference you can then assign to a file field via Create/Update Row. Use as the first step before attaching files to rows. Not idempotent — each call uploads a new file copy.',
     idempotent: false,
   },
   auth: baserowAuth,
   props: {
     url: Property.ShortText({
       displayName: 'File URL',
-      description: 'The public URL of the file to upload to Baserow.',
+      description: 'A public link Baserow can download the file from.',
+      placeholder: 'https://example.com/invoice.pdf',
       required: true,
     }),
   },
   async run(context) {
-    if (!baserowAuthHelpers.isJwtAuth(context.auth)) {
-      throw new Error(
-        'Upload File requires Email & Password (JWT) authentication. Database Tokens are limited to row CRUD operations and cannot access the user-files endpoint. Please create a new Baserow connection using Email & Password.'
-      );
-    }
     const { url } = context.propsValue;
     const client = await makeClient(context.auth);
     return await client.uploadFileFromUrl({ url });

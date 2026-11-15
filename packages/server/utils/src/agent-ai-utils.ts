@@ -1,0 +1,445 @@
+import { ActivepiecesAiBilling, AIProviderName, isNil, spreadIfDefined, toError } from '@activepieces/core-utils';
+import { agentPersistenceUtils, agentToolClassification, agentToolSkills, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared';
+import { agentProviderOptions } from './agent-provider-options'
+import { AI_TRACE_RUNTIME_CONTEXT, AiTraceContext, aiObservability } from './ai-observability'
+import { ModelMessage, TelemetryOptions } from 'ai'
+import { createEvlogIntegration } from 'evlog/ai'
+import { modelCatalog } from './model-catalog'
+import { wideEvent } from './wide-event'
+
+
+const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
+const UNKNOWN_MODEL_OUTPUT_CEILING: Partial<Record<AIProviderName, number>> = {
+    [AIProviderName.COHERE]: 4_000,
+}
+const KEEP_RECENT_TOOL_RESULTS = 6
+const COLLAPSE_OUTPUT_OVER_CHARS = 600
+// Tool results that are the agent's working memory of an action's input schema — never collapsed,
+// so it doesn't re-discover or guess a schema it already fetched (A5 pin-discovered-schemas).
+const SCHEMA_TOOL_NAMES = new Set(['ap_get_piece_props', 'ap_prepare_action', 'ap_load_skill', 'ap_get_tool_schema'])
+const CHARS_PER_TOKEN_ESTIMATE = 4
+
+
+/**
+ * Strips for ALL providers (not just non-thinking ones) because Anthropic rejects
+ * a re-sent `thinking` block whose `signature` didn't survive our DB round-trip /
+ * compaction / truncation reshaping ("Invalid `signature` in `thinking` block"),
+ * and prior-turn reasoning adds nothing the text + tool results don't already carry.
+ * In-flight thinking within one streamText call keeps its intact signature and is
+ * untouched — this only touches the cross-turn history we assemble.
+ */
+function stripThinkingBlocks(messages: ModelMessage[], _provider: AIProviderName): ModelMessage[] {
+    const hasThinking = messages.some(
+        (msg) => msg.role === 'assistant' && Array.isArray(msg.content)
+            && (msg.content as Array<Record<string, unknown>>).some(
+                (part) => part['type'] === 'reasoning' || part['type'] === 'thinking',
+            ),
+    )
+    if (!hasThinking) return messages
+
+    const stripped = messages
+        .map((msg) => {
+            if (msg.role !== 'assistant' || !Array.isArray(msg.content)) return msg
+            const filtered = (msg.content as Array<Record<string, unknown>>).filter(
+                (part) => part['type'] !== 'reasoning' && part['type'] !== 'thinking',
+            )
+            if (filtered.length === msg.content.length) return msg
+            if (filtered.length === 0) return null
+            return { ...msg, content: filtered }
+        })
+        .filter((msg): msg is ModelMessage => msg !== null)
+    return keepAtLeastOne({ transformed: stripped })
+}
+
+const CONTINUATION_NUDGE: ModelMessage = { role: 'user', content: 'Continue.' }
+
+function keepAtLeastOne({ transformed }: { transformed: ModelMessage[] }): ModelMessage[] {
+    return transformed.length === 0 ? [CONTINUATION_NUDGE] : transformed
+}
+
+function sanitizeTruncatedAssistantTail(messages: ModelMessage[]): ModelMessage[] {
+    const last = messages[messages.length - 1]
+    if (!last || last.role !== 'assistant' || !Array.isArray(last.content)) {
+        return messages
+    }
+
+    const resolvedToolCallIds = new Set(
+        messages
+            .flatMap((msg) => (msg.role === 'tool' && Array.isArray(msg.content) ? msg.content : []))
+            .flatMap((part) => (part.type === 'tool-result' ? [part.toolCallId] : [])),
+    )
+
+    const sanitizedParts = last.content.filter((part) => {
+        if (part.type === 'reasoning') {
+            return false
+        }
+        if (part.type === 'tool-call') {
+            return resolvedToolCallIds.has(part.toolCallId)
+        }
+        return true
+    })
+
+    const head = messages.slice(0, -1)
+    if (sanitizedParts.length === 0) {
+        return keepAtLeastOne({ transformed: head })
+    }
+    if (sanitizedParts.length === last.content.length) {
+        return messages
+    }
+    return [...head, { ...last, content: sanitizedParts }]
+}
+
+function collectStepMessages(steps: Array<{ response: { messages: ModelMessage[] } }>): ModelMessage[] {
+    return steps.flatMap((step) => step.response.messages)
+}
+
+function estimateTokenCount({ messages, systemPromptLength }: { messages: ModelMessage[], systemPromptLength: number }): number {
+    return Math.ceil((JSON.stringify(messages).length + systemPromptLength) / CHARS_PER_TOKEN_ESTIMATE)
+}
+
+/**
+ * A tool result's full payload is only needed while the model is acting on it;
+ * older oversized results just dilute the context and can overflow the window.
+ * Keeps the most recent results intact and replaces older oversized ones with a
+ * short marker. Never removes a message (keeps tool_use/tool_result pairing
+ * valid) and never mutates the input. Pure.
+ */
+function collapseStaleToolOutputs({ messages }: { messages: ModelMessage[] }): ModelMessage[] {
+    const effectiveNames = effectiveToolNamesByCallId(messages)
+    const isPinned = (part: { toolCallId: string, toolName: string }): boolean => SCHEMA_TOOL_NAMES.has(effectiveNames.get(part.toolCallId) ?? part.toolName)
+    const totalToolResults = messages.reduce((count, message) => {
+        if (message.role !== 'tool' || !Array.isArray(message.content)) return count
+        return count + message.content.filter((part) => part.type === 'tool-result' && !isPinned(part)).length
+    }, 0)
+
+    const staleCount = totalToolResults - KEEP_RECENT_TOOL_RESULTS
+    if (staleCount <= 0) return messages
+
+    let seen = 0
+    return messages.map((message) => {
+        if (message.role !== 'tool' || !Array.isArray(message.content)) return message
+        const content = message.content.map((part) => {
+            if (part.type !== 'tool-result') return part
+            // Pin discovered schemas: never collapse a piece-props/prepare result. These are the
+            // agent's memory of an action's inputs — collapsing them makes it re-discover (or guess)
+            // a schema it already fetched. They don't consume a stale slot either.
+            if (isPinned(part)) return part
+            const isStale = seen++ < staleCount
+            if (!isStale) return part
+            const serialized = typeof part.output === 'string' ? part.output : JSON.stringify(part.output)
+            if (serialized.length <= COLLAPSE_OUTPUT_OVER_CHARS) return part
+            return {
+                ...part,
+                output: { type: 'text' as const, value: `[earlier ${part.toolName} result omitted to save context — it was used at the time]` },
+            }
+        })
+        return { ...message, content }
+    })
+}
+
+function effectiveToolNamesByCallId(messages: ModelMessage[]): Map<string, string> {
+    return new Map(messages.flatMap((message) => {
+        if (message.role !== 'assistant' || !Array.isArray(message.content)) return []
+        return message.content
+            .filter((part) => part.type === 'tool-call')
+            .map((part): [string, string] => [part.toolCallId, agentToolSkills.effectiveToolCall({ toolName: part.toolName, input: part.input }).toolName])
+    }))
+}
+
+function buildTelemetry({ functionId, billing }: { functionId: string, billing?: ActivepiecesAiBilling }): AgentTelemetry {
+    const logger = wideEvent.current()
+    const posthog = aiObservability.integration()
+    if (isNil(logger) && isNil(posthog)) {
+        return {}
+    }
+    const integrations = [
+        ...(isNil(logger) ? [] : [createEvlogIntegration(logger)]),
+        ...(isNil(posthog) ? [] : [posthog]),
+        ...(globalThis.AI_SDK_TELEMETRY_INTEGRATIONS ?? []),
+    ]
+    if (isNil(posthog)) {
+        return { telemetry: { functionId, integrations } }
+    }
+    return {
+        telemetry: { functionId, integrations, includeRuntimeContext: AI_TRACE_RUNTIME_CONTEXT },
+        runtimeContext: aiObservability.runtimeContextOf({ billing }),
+    }
+}
+
+function toRecord(value: unknown): Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : {}
+}
+
+type ContentPartLike = {
+    type: string
+    invalid?: boolean
+    error?: unknown
+    text?: string
+    toolCallId?: string
+    toolName?: string
+    input?: unknown
+    args?: unknown
+    output?: unknown
+    sourceType?: string
+    id?: string
+    url?: string
+    title?: string
+    mediaType?: string
+    filename?: string
+}
+
+function buildStepParts({ content }: {
+    content: ContentPartLike[]
+}): PersistedAgentPart[] {
+    const resultMap = new Map<string, ContentPartLike>()
+    for (const part of content) {
+        if ((part.type === 'tool-result' || part.type === 'tool-error') && part.toolCallId) {
+            resultMap.set(part.toolCallId, part)
+        }
+    }
+
+    const parts: PersistedAgentPart[] = []
+    for (const part of content) {
+        switch (part.type) {
+            case 'reasoning':
+                if (part.text) parts.push({ type: PersistedAgentPartType.REASONING, text: part.text })
+                break
+            case 'text':
+                if (part.text) parts.push({ type: PersistedAgentPartType.TEXT, text: part.text })
+                break
+            case 'source':
+                if (part.sourceType === 'url' && part.url) {
+                    parts.push({
+                        type: PersistedAgentPartType.SOURCE_URL,
+                        sourceId: part.id ?? '',
+                        url: part.url,
+                        ...spreadIfDefined('title', part.title),
+                    })
+                }
+                else if (part.sourceType === 'document') {
+                    parts.push({
+                        type: PersistedAgentPartType.SOURCE_DOCUMENT,
+                        sourceId: part.id ?? '',
+                        mediaType: part.mediaType ?? '',
+                        title: part.title ?? '',
+                        ...spreadIfDefined('filename', part.filename),
+                    })
+                }
+                break
+            case 'tool-call': {
+                const effectiveCall = agentToolSkills.effectiveToolCall({ toolName: part.toolName ?? '', input: part.args ?? part.input })
+                const toolName = effectiveCall.toolName
+                const input = toRecord(effectiveCall.input)
+                if (toolName === 'ap_update_thinking_status') {
+                    const statusText = typeof input['status'] === 'string' ? input['status'] : ''
+                    if (statusText) {
+                        parts.push({ type: PersistedAgentPartType.THINKING_STATUS, text: statusText })
+                    }
+                    break
+                }
+                const result = part.toolCallId ? resultMap.get(part.toolCallId) : undefined
+                const threw = result?.type === 'tool-error'
+                const rawOutput = result?.output ? agentPersistenceUtils.unwrapToolOutput(result.output) : undefined
+                const title = typeof input['title'] === 'string' ? input['title'] : undefined
+                const description = typeof input['description'] === 'string' ? input['description'] : undefined
+                parts.push({
+                    type: PersistedAgentPartType.TOOL_CALL,
+                    toolCallId: part.toolCallId ?? '',
+                    toolName,
+                    ...spreadIfDefined('title', title),
+                    ...spreadIfDefined('description', description),
+                    input,
+                    output: rawOutput,
+                    status: result && !threw && part.invalid !== true ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
+                    ...spreadIfDefined('errorText', threw && !isNil(result.error) ? toError(result.error).message : undefined),
+                })
+                if (toolName === 'ap_execute_action' && typeof rawOutput === 'object' && rawOutput !== null && 'batchProgress' in rawOutput) {
+                    parts.push({
+                        type: PersistedAgentPartType.BATCH_PROGRESS,
+                        data: (rawOutput as Record<string, unknown>)['batchProgress'] as Record<string, unknown>,
+                    })
+                }
+                if (toolName === 'ap_set_build_plan') {
+                    const buildId = typeof toRecord(rawOutput)['buildId'] === 'string' ? toRecord(rawOutput)['buildId'] : undefined
+                    if (typeof buildId === 'string') {
+                        parts.push({
+                            type: PersistedAgentPartType.BUILD_PLAN,
+                            buildId,
+                            data: { ...input, updatedAt: new Date().toISOString() },
+                        })
+                    }
+                }
+                if (toolName === 'ap_generate_image' && result) {
+                    const out = typeof rawOutput === 'object' && rawOutput !== null ? rawOutput as Record<string, unknown> : {}
+                    const imageUrl = typeof out['url'] === 'string' ? out['url'] : undefined
+                    const imageFileId = typeof out['fileId'] === 'string' ? out['fileId'] : undefined
+                    if (imageUrl && imageFileId) {
+                        parts.push({
+                            type: PersistedAgentPartType.IMAGE,
+                            toolCallId: part.toolCallId ?? '',
+                            fileId: imageFileId,
+                            url: imageUrl,
+                            mediaType: typeof out['mediaType'] === 'string' ? out['mediaType'] : 'image/png',
+                            ...spreadIfDefined('prompt', typeof out['prompt'] === 'string' ? out['prompt'] : undefined),
+                            ...spreadIfDefined('model', typeof out['model'] === 'string' ? out['model'] : undefined),
+                            ...spreadIfDefined('title', title),
+                            timestamp: new Date().toISOString(),
+                        })
+                    }
+                }
+                if (toolName === 'ap_run_code' && result) {
+                    const out = typeof rawOutput === 'object' && rawOutput !== null ? rawOutput as Record<string, unknown> : {}
+                    const producedFiles = Array.isArray(out['producedFiles']) ? out['producedFiles'] : []
+                    for (const file of producedFiles) {
+                        if (typeof file !== 'object' || file === null) continue
+                        const fileRecord = file as Record<string, unknown>
+                        const fileUrl = typeof fileRecord['url'] === 'string' ? fileRecord['url'] : undefined
+                        const fileId = typeof fileRecord['fileId'] === 'string' ? fileRecord['fileId'] : undefined
+                        if (!fileUrl || !fileId) continue
+                        parts.push({
+                            type: PersistedAgentPartType.FILE,
+                            toolCallId: part.toolCallId ?? '',
+                            fileId,
+                            url: fileUrl,
+                            mediaType: typeof fileRecord['mediaType'] === 'string' ? fileRecord['mediaType'] : 'application/octet-stream',
+                            fileName: typeof fileRecord['fileName'] === 'string' ? fileRecord['fileName'] : 'file',
+                            byteSize: typeof fileRecord['byteSize'] === 'number' ? fileRecord['byteSize'] : 0,
+                            ...spreadIfDefined('title', title),
+                            timestamp: new Date().toISOString(),
+                        })
+                    }
+                }
+                if (toolName === 'ap_execute_action' && result) {
+                    const outputRecord = typeof rawOutput === 'object' && rawOutput !== null ? rawOutput as Record<string, unknown> : {}
+                    const meta = typeof outputRecord['_meta'] === 'object' && outputRecord['_meta'] !== null ? outputRecord['_meta'] as Record<string, unknown> : undefined
+                    const connectionLabel = typeof meta?.['connectionLabel'] === 'string' ? meta['connectionLabel'] : undefined
+                    const firstContentText = Array.isArray(outputRecord['content']) && typeof outputRecord['content'][0]?.['text'] === 'string' ? outputRecord['content'][0]['text'] as string : ''
+                    const isAppSuccess = result.type === 'tool-result'
+                        && outputRecord['success'] !== false
+                        && outputRecord['isError'] !== true
+                        && !agentToolClassification.hasFailureTextPrefix(firstContentText)
+                        && !firstContentText.includes('cancelled by user')
+                    const errorText = !isAppSuccess && firstContentText
+                        ? firstContentText
+                        : (result.type === 'tool-error' && typeof result.output === 'string' ? result.output : undefined)
+                    parts.push({
+                        type: PersistedAgentPartType.ACTION_RECEIPT,
+                        toolCallId: part.toolCallId ?? '',
+                        actionDisplayName: title ?? toolName,
+                        pieceName: typeof input['pieceName'] === 'string' ? input['pieceName'] : '',
+                        ...spreadIfDefined('connectionLabel', connectionLabel),
+                        status: isAppSuccess ? 'success' : 'failed',
+                        output: rawOutput,
+                        ...spreadIfDefined('errorMessage', errorText),
+                        timestamp: new Date().toISOString(),
+                    })
+                }
+                break
+            }
+        }
+    }
+    return parts
+}
+
+const DATA_ARRAY_KEYS = ['data', 'results', 'records', 'items', 'value', 'rows', 'entries']
+const PREVIEW_RECORD_COUNT = 5
+
+function findDataArray(payload: unknown): { array: unknown[], path: string } | null {
+    if (Array.isArray(payload)) {
+        return { array: payload, path: 'root' }
+    }
+    if (!isPlainObject(payload)) {
+        return null
+    }
+    for (const key of DATA_ARRAY_KEYS) {
+        const value = payload[key]
+        if (Array.isArray(value)) {
+            return { array: value, path: key }
+        }
+    }
+    return null
+}
+
+// Depth-capped, value-clipped copy of a value — shows the SHAPE of a record (so the model can
+// see how to project it) without dragging the full payload (incl. deep history) into context.
+function shrinkForPreview(value: unknown, opts: { maxDepth: number, maxString: number, maxArray: number, depth?: number }): unknown {
+    const depth = opts.depth ?? 0
+    if (typeof value === 'string') {
+        return value.length <= opts.maxString ? value : `${value.slice(0, opts.maxString)}…`
+    }
+    if (Array.isArray(value)) {
+        if (depth >= opts.maxDepth) return `[${value.length} items]`
+        const kept = value.slice(0, opts.maxArray).map((item) => shrinkForPreview(item, { ...opts, depth: depth + 1 }))
+        return value.length > opts.maxArray ? [...kept, `…+${value.length - opts.maxArray} more`] : kept
+    }
+    if (isPlainObject(value)) {
+        if (depth >= opts.maxDepth) return '{…}'
+        return Object.fromEntries(Object.entries(value).map(([key, val]) => [key, shrinkForPreview(val, { ...opts, depth: depth + 1 })]))
+    }
+    return value
+}
+
+// Builds a compact, never-mangled preview of a large tool result: a depth-capped shape sample of
+// the first few records + a clear instruction to process the FULL data with ap_run_code via the
+// offloaded fileId (so the giant payload never enters the model context). When there is no fileId
+// (backstop path), it instead steers toward narrowing/paginating.
+function buildLargeResultPreview({ payload, byteSize, fileId, label = 'Result', statusNote = '' }: {
+    payload: unknown
+    byteSize: number
+    fileId?: string
+    label?: string
+    statusNote?: string
+}): string {
+    const kb = Math.round(byteSize / 1024)
+    const found = findDataArray(payload)
+    if (found) {
+        const previewCount = Math.min(found.array.length, PREVIEW_RECORD_COUNT)
+        const preview = found.array.slice(0, previewCount).map((record) => shrinkForPreview(record, { maxDepth: 4, maxString: 200, maxArray: 4 }))
+        const how = fileId !== undefined
+            ? `→ Full result (all ${found.array.length} records) saved as file ${fileId}. Process it with ap_run_code: pass inputFileIds:['${fileId}'] and read inputs.data (parsed JSON) — pull just the fields you need (e.g. name, stage, value, owner), then return a compact summary. Do NOT re-run this call or regex the preview.`
+            : `→ Narrow with a filter/limit or paginate (offset/cursor) to get the rest — or process it in ap_run_code.`
+        return `✅ ${label} completed${statusNote}. ${found.array.length} record(s) at "${found.path}", ~${kb}KB — too large to load inline.\nShape preview (first ${previewCount}, values clipped):\n${JSON.stringify(preview, null, 2)}\n\n${how}`
+    }
+    const preview = shrinkForPreview(payload, { maxDepth: 3, maxString: 300, maxArray: 5 })
+    const how = fileId !== undefined
+        ? `→ Full result saved as file ${fileId}. Inspect/process it with ap_run_code via inputFileIds:['${fileId}'] (read inputs.data).`
+        : '→ Process it in ap_run_code or request a narrower slice.'
+    return `✅ ${label} completed${statusNote}. Large result ~${kb}KB — too large to load inline.\nShape preview (clipped):\n${JSON.stringify(preview, null, 2)}\n\n${how}`
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+async function affordableOutputTokens({ provider, modelIds, thinkingBudget }: { provider: AIProviderName, modelIds: (string | undefined)[], thinkingBudget: number }): Promise<number> {
+    const catalog = await modelCatalog.load()
+    const ceilings = modelIds.map((modelId) => isNil(modelId) ? undefined : catalog.lookup({ provider, modelId })?.maxOutputTokens ?? UNKNOWN_MODEL_OUTPUT_CEILING[provider])
+    return clampOutputTokens({ thinkingBudget, ceilings })
+}
+
+function clampOutputTokens({ thinkingBudget, ceilings }: { thinkingBudget: number, ceilings: (number | undefined)[] }): number {
+    const known = ceilings.filter((ceiling) => !isNil(ceiling))
+    return Math.min(thinkingBudget + MAX_RESPONSE_OUTPUT_TOKENS, ...known)
+}
+
+export const agentAiUtils = {
+    affordableOutputTokens,
+    clampOutputTokens,
+    stripThinkingBlocks,
+    sanitizeTruncatedAssistantTail,
+    collectStepMessages,
+    estimateTokenCount,
+    collapseStaleToolOutputs,
+    ...agentProviderOptions,
+    buildTelemetry,
+    buildStepParts,
+    findDataArray,
+    buildLargeResultPreview,
+}
+
+export type { ContentPartLike }
+
+export type AgentTelemetry = {
+    telemetry?: TelemetryOptions<AiTraceContext>
+    runtimeContext?: AiTraceContext
+}

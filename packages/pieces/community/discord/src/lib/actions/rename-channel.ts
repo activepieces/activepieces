@@ -6,25 +6,45 @@ import {
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
+import { discordSuccessActionOutputSchema } from '../output-schemas';
 
 export const discordRenameChannel = createAction({
   auth: discordAuth,
   name: 'rename_channel',
-  description: 'rename a channel',
-  audience: 'both',
+  classification: 'WRITE',
+  description: 'Give a channel a new name.',
+  audience: 'human',
   aiMetadata: { description: 'Renames an existing channel, identified by channel ID, to a new name. Use to update a channel title. Requires the bot to have Manage Channels permission; idempotent, since setting the same name repeatedly yields the same result.', idempotent: true },
-  displayName: 'Rename channel',
+  displayName: 'Rename Channel',
+  outputSchema: discordSuccessActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'channel',
+      display: 'section',
+      label: 'Channel',
+      icon: 'markdown',
+      props: ['channel_id'],
+    },
+    {
+      key: 'newName',
+      display: 'section',
+      label: 'New Name',
+      icon: 'type',
+      props: ['name'],
+    },
+  ],
   props: {
     channel_id: discordCommon.channel,
     name: Property.ShortText({
       displayName: 'Name',
-      description: 'The new name of the channel',
+      description: 'Discord lowercases the name and turns spaces into dashes.',
+      placeholder: 'project-updates',
       required: true,
     }),
   },
 
   async run(configValue) {
-    const request: HttpRequest<any> = {
+    const request: HttpRequest = {
       method: HttpMethod.PATCH,
       url: `https://discord.com/api/v9/channels/${configValue.propsValue.channel_id}`,
       body: {
@@ -39,7 +59,7 @@ export const discordRenameChannel = createAction({
     const res = await httpClient.sendRequest<never>(request);
 
     return {
-      success: res.status === 204,
+      success: res.status >= 200 && res.status < 300,
     };
   },
 });

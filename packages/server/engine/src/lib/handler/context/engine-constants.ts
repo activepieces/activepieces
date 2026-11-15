@@ -1,6 +1,7 @@
 import { ensureTrailingSlash, isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowTrigger, FlowVersionState, Project, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
+import { BaseEngineOperation, BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowTrigger, FlowVersionState, Project, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
+import { retryFetch } from '../../api/retry-fetch'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -26,10 +27,12 @@ type EngineConstantsParams = {
     resumePayload?: ResumePayload
     runEnvironment?: RunEnvironment
     stepNameToTest?: string
+    entryStepName?: string
     logsFileId?: string
     timeoutInSeconds: number
     platformId: PlatformId
     stepNames: string[]
+    actionRunMode?: boolean
 }
 
 const DEFAULT_RETRY_CONSTANTS: RetryConstants = {
@@ -66,15 +69,17 @@ export class EngineConstants {
     public readonly resumePayload?: ResumePayload
     public readonly runEnvironment?: RunEnvironment
     public readonly stepNameToTest?: string
+    public readonly entryStepName?: string
     public readonly logsFileId?: string
     public readonly stepNames: string[] = []
+    public readonly actionRunMode: boolean
     private project: Project | null = null
 
     public get isRunningApTests(): boolean {
         return EngineConstants.TEST_MODE
     }
 
-    public get isTestFlow(): boolean {
+    public get isStreamingToBuilder(): boolean {
         return this.streamStepProgress === StreamStepProgress.WEBSOCKET
     }
 
@@ -110,12 +115,14 @@ export class EngineConstants {
         this.resumePayload = params.resumePayload
         this.runEnvironment = params.runEnvironment
         this.stepNameToTest = params.stepNameToTest
+        this.entryStepName = params.entryStepName
         this.logsFileId = params.logsFileId
         this.platformId = params.platformId
         this.timeoutInSeconds = params.timeoutInSeconds
         this.stepNames = params.stepNames
+        this.actionRunMode = params.actionRunMode ?? false
     }
-  
+
     public static fromExecuteFlowInput(input: ResolvedExecuteFlowOperation): EngineConstants {
         return new EngineConstants({
             ...sharedFields(input),
@@ -128,15 +135,18 @@ export class EngineConstants {
             resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
             runEnvironment: input.runEnvironment,
             stepNameToTest: input.stepNameToTest ?? undefined,
+            entryStepName: input.entryStepName,
             logsFileId: input.logsFileId,
         })
     }
 
-    public static fromExecuteActionInput(input: ExecuteToolOperation): EngineConstants {
+    public static fromExecuteActionInput(input: BaseEngineOperation & { flowVersionId?: string }): EngineConstants {
         return new EngineConstants({
             ...sharedFields(input),
             ...flowFields(undefined),
+            flowVersionId: input.flowVersionId ?? DEFAULT_MCP_DATA.flowVersionId,
             flowRunId: DEFAULT_MCP_DATA.flowRunId,
+            actionRunMode: true,
         })
     }
 
@@ -157,13 +167,14 @@ export class EngineConstants {
             flowRunId: DEFAULT_TRIGGER_EXECUTION,
         })
     }
-    public getPropsResolver(contextVersion: ContextVersion | undefined): PropsResolver {
+    public getPropsResolver({ contextVersion, pieceName }: GetPropsResolverParams): PropsResolver {
         return createPropsResolver({
             projectId: this.projectId,
             engineToken: this.engineToken,
             apiUrl: this.internalApiUrl,
             contextVersion,
             stepNames: this.stepNames,
+            pieceName,
         })
     }
     private async getProject(): Promise<Project> {
@@ -173,7 +184,7 @@ export class EngineConstants {
 
         const getWorkerProjectEndpoint = `${this.internalApiUrl}v1/worker/project`
 
-        const response = await fetch(getWorkerProjectEndpoint, {
+        const response = await retryFetch(getWorkerProjectEndpoint, {
             headers: {
                 Authorization: `Bearer ${this.engineToken}`,
             },
@@ -221,6 +232,11 @@ function flowFields(flowVersion: FlowFieldsSource | undefined) {
         triggerPieceName: flowVersion.trigger?.settings.pieceName,
         stepNames: isNil(flowVersion.trigger) ? [] : flowStructureUtil.getAllSteps(flowVersion.trigger).map((step) => step.name),
     }
+}
+
+type GetPropsResolverParams = {
+    contextVersion: ContextVersion | undefined
+    pieceName?: string
 }
 
 type SharedFieldsSource = {

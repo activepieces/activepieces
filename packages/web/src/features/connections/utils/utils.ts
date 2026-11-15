@@ -66,6 +66,14 @@ export const appConnectionUtils = {
         };
     }
   },
+  getConnectionAccountIdentifier(
+    connection: AppConnectionWithoutSensitiveData,
+  ): string | undefined {
+    const accountIdentifier = connection.metadata?.accountIdentifier;
+    return typeof accountIdentifier === 'string' && accountIdentifier.length > 0
+      ? accountIdentifier
+      : undefined;
+  },
 };
 
 export const newConnectionUtils = {

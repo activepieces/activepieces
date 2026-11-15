@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const createCustomerAction = createAction({
   name: 'create_customer',
+  classification: 'WRITE',
   auth: checkoutComAuth,
   displayName: 'Create Customer',
   description: 'Store a customer\'s details in a customer object to reuse in future payments. You can link payment instruments and set a default instrument.',

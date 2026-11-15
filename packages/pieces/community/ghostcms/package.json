@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-ghostcms",
-  "version": "0.1.8",
+  "version": "0.3.2",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -14,11 +14,12 @@
     "@activepieces/pieces-framework": "workspace:*",
     "jsonwebtoken": "9.0.1",
     "@activepieces/core-piece-types": "workspace:*",
-    "@activepieces/core-utils": "workspace:*"
+    "@activepieces/core-utils": "workspace:*",
+    "form-data": "4.0.6"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "9.0.10",
     "tslib": "2.6.2",
-    "vitest": "3.2.6"
+    "vitest": "5.0.5"
   }
 }

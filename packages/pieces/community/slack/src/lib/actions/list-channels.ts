@@ -7,6 +7,7 @@ import { listChannelsActionOutputSchema } from '../output-schemas';
 export const listChannelsAction = createAction({
   auth: slackAuth,
   name: 'slack_list_channels',
+  classification: 'SEARCH',
   displayName: 'List Channels',
   description: 'Lists channels in the workspace.',
   audience: 'ai',

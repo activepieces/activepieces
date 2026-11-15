@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import {
-  PlatformWithoutSensitiveData,
+  PlatformResponse,
   ProjectWithLimits,
   ProjectType,
 } from '@activepieces/shared';
@@ -20,10 +20,12 @@ import {
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
-
-type ProjectsTableColumnsProps = {
-  platform: PlatformWithoutSensitiveData;
-};
+import { Badge } from '@/components/ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export const projectsTableColumns = ({
   platform,
@@ -35,19 +37,25 @@ export const projectsTableColumns = ({
   >[] = [
     {
       accessorKey: 'displayName',
-      size: 270,
+      size: 220,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => {
         const locked = row.original.plan.locked;
         const isPersonal = row.original.type === ProjectType.PERSONAL;
+        const isDefault =
+          platform.plan.projectRolesEnabled &&
+          platform.defaultProjectIds.includes(row.original.id);
 
         return (
           <div className="text-left flex items-center justify-start ">
             {locked && <Lock className="size-3 mr-1.5" strokeWidth={2.5} />}
             {isPersonal && <User className="size-4 mr-1.5"></User>}
-            <span className="font-medium">{row.original.displayName}</span>
+            <span className="flex items-baseline gap-1.5">
+              <span className="font-medium">{row.original.displayName}</span>
+              {isDefault && <DefaultProjectBadge />}
+            </span>
           </div>
         );
       },
@@ -58,7 +66,7 @@ export const projectsTableColumns = ({
     },
     {
       accessorKey: 'users',
-      size: 120,
+      size: 110,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -73,7 +81,7 @@ export const projectsTableColumns = ({
             <span className="font-medium">
               {row.original.analytics.activeUsers}
             </span>
-            <span className="text-muted-foreground">
+            <span className="text-gray-11">
               {` / ${row.original.analytics.totalUsers}`}
             </span>
           </div>
@@ -82,7 +90,7 @@ export const projectsTableColumns = ({
     },
     {
       accessorKey: 'flows',
-      size: 120,
+      size: 110,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -97,7 +105,7 @@ export const projectsTableColumns = ({
             <span className="font-medium">
               {row.original.analytics.activeFlows}
             </span>
-            <span className="text-muted-foreground">
+            <span className="text-gray-11">
               {` / ${row.original.analytics.totalFlows}`}
             </span>
           </div>
@@ -109,7 +117,7 @@ export const projectsTableColumns = ({
   if (platform.plan.embeddingEnabled) {
     columns.push({
       accessorKey: 'externalId',
-      size: 150,
+      size: 130,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -130,7 +138,7 @@ export const projectsTableColumns = ({
   if (platform.plan.globalConnectionsEnabled) {
     columns.push({
       accessorKey: 'globalConnectionsCount',
-      size: 135,
+      size: 170,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -169,4 +177,21 @@ export const projectsTableColumns = ({
   });
 
   return columns;
+};
+
+function DefaultProjectBadge() {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge variant="secondary">{t('Default')}</Badge>
+      </TooltipTrigger>
+      <TooltipContent side="top">
+        {t('All new members join this project as Editors.')}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+type ProjectsTableColumnsProps = {
+  platform: PlatformResponse;
 };

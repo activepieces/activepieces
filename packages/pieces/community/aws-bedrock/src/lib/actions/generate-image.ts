@@ -12,6 +12,7 @@ export const generateImage = createAction({
   audience: 'human',
   auth: awsBedrockCombinedAuth,
   name: 'generate_image',
+  classification: 'READ',
   displayName: 'Generate Image',
   description:
     'Generate an image from a text prompt using Amazon Titan Image Generator or Stability AI models.',

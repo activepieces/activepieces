@@ -3,10 +3,13 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { dealIdProp, productIdProp } from '../common/props';
 import { pipedriveApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { addProductToDealActionOutputSchema } from '../output-schemas';
 
 export const addProductToDealAction = createAction({
     auth: pipedriveAuth,
     name: 'add-product-to-deal',
+    outputSchema: addProductToDealActionOutputSchema,
+    classification: 'WRITE',
     displayName: 'Add Product to Deal',
     description: 'Adds a product to a deal.',
     audience: 'both',

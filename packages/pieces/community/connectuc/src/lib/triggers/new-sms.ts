@@ -6,6 +6,7 @@ import { domainProp, userProp, smsRecipientsProp } from '../common/props';
 export const newSms = createTrigger({
     auth: connectucAuth,
     name: 'newSms',
+    classification: 'READ',
     displayName: 'New SMS',
     description: 'Triggers when a new SMS message is received or sent',
     aiMetadata: {

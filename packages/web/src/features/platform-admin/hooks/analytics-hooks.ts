@@ -29,7 +29,11 @@ export const platformAnalyticsHooks = {
   useAnalyticsTimeBased: (
     timePeriod: AnalyticsTimePeriod,
     projectId?: string,
-  ): { isLoading: boolean; data: PlatformAnalyticsReport | null } => {
+  ): {
+    isLoading: boolean;
+    isError: boolean;
+    data: PlatformAnalyticsReport | null;
+  } => {
     const selectFilteredByProject = useCallback(
       (report: PlatformAnalyticsReport) => {
         if (!projectId) {
@@ -51,7 +55,7 @@ export const platformAnalyticsHooks = {
     );
 
     const { platform } = platformHooks.useCurrentPlatform();
-    const { data, isLoading } = useQuery({
+    const { data, isLoading, isError } = useQuery({
       queryKey: [...analyticsQueryKey, timePeriod],
       queryFn: () => analyticsApi.get(timePeriod),
       select: selectFilteredByProject,
@@ -60,6 +64,7 @@ export const platformAnalyticsHooks = {
 
     return {
       isLoading,
+      isError,
       data: data ?? null,
     };
   },

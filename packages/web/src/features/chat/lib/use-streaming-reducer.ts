@@ -2,9 +2,10 @@ import {
   ActionPreviewEvent,
   ActionReceiptEvent,
   BuildPlanEvent,
-  ChatAgentEventType,
+  AgentEventType,
   FileProducedEvent,
   ImageGeneratedEvent,
+  SubagentProgressEvent,
   ToolProgressEvent,
   WebsocketClientEvent,
 } from '@activepieces/shared';
@@ -28,6 +29,7 @@ export function useStreamingReducer({
   onImageGenerated,
   onFileProduced,
   onBuildPlan,
+  onSubagentProgress,
   onStreamFinished,
   onStreamError,
   onStaleCheck,
@@ -39,6 +41,7 @@ export function useStreamingReducer({
   onImageGenerated: (event: ImageGeneratedEvent) => void;
   onFileProduced: (event: FileProducedEvent) => void;
   onBuildPlan: (event: BuildPlanEvent) => void;
+  onSubagentProgress: (event: SubagentProgressEvent) => void;
   onStreamFinished: (conversationId: string) => void;
   onStreamError: (params: {
     conversationId: string;
@@ -76,6 +79,8 @@ export function useStreamingReducer({
   onFileProducedRef.current = onFileProduced;
   const onBuildPlanRef = useRef(onBuildPlan);
   onBuildPlanRef.current = onBuildPlan;
+  const onSubagentProgressRef = useRef(onSubagentProgress);
+  onSubagentProgressRef.current = onSubagentProgress;
   const onStreamFinishedRef = useRef(onStreamFinished);
   onStreamFinishedRef.current = onStreamFinished;
   const onStreamErrorRef = useRef(onStreamError);
@@ -250,7 +255,7 @@ export function useStreamingReducer({
           'ws event received',
         );
 
-        if (event.type === ChatAgentEventType.CHUNK) {
+        if (event.type === AgentEventType.CHUNK) {
           updatePhase('streaming');
           lastChunkTimeRef.current = Date.now();
           const chunks = Array.isArray(event.data) ? event.data : [event.data];
@@ -258,37 +263,43 @@ export function useStreamingReducer({
             chunkBufferRef.current.push(chunk as UIMessageChunk);
           }
           scheduleFlush();
-        } else if (event.type === ChatAgentEventType.ERROR) {
+        } else if (event.type === AgentEventType.ERROR) {
           const errorData = event.data as { message?: string; code?: string };
           handleError({
             errorMessage: errorData?.message ?? 'An error occurred',
             errorCode: errorData?.code,
           });
-        } else if (event.type === ChatAgentEventType.FINISHED) {
+        } else if (event.type === AgentEventType.FINISHED) {
           handleFinish();
-        } else if (event.type === ChatAgentEventType.TITLE_UPDATE) {
+        } else if (event.type === AgentEventType.TITLE_UPDATE) {
           const titleData = event.data as { title?: string };
           if (titleData?.title) {
             onTitleUpdateRef.current(titleData.title);
           }
-        } else if (event.type === ChatAgentEventType.TOOL_PROGRESS) {
+        } else if (event.type === AgentEventType.TOOL_PROGRESS) {
           lastChunkTimeRef.current = Date.now();
           onToolProgressRef.current(event.data as ToolProgressEvent);
-        } else if (event.type === ChatAgentEventType.ACTION_PREVIEW) {
+        } else if (event.type === AgentEventType.ACTION_PREVIEW) {
           lastChunkTimeRef.current = Date.now();
           onActionPreviewRef.current(event.data as ActionPreviewEvent);
-        } else if (event.type === ChatAgentEventType.ACTION_RECEIPT) {
+        } else if (event.type === AgentEventType.ACTION_RECEIPT) {
           lastChunkTimeRef.current = Date.now();
           onActionReceiptRef.current(event.data as ActionReceiptEvent);
-        } else if (event.type === ChatAgentEventType.IMAGE) {
+        } else if (event.type === AgentEventType.IMAGE) {
           lastChunkTimeRef.current = Date.now();
           onImageGeneratedRef.current(event.data as ImageGeneratedEvent);
-        } else if (event.type === ChatAgentEventType.FILE) {
+        } else if (event.type === AgentEventType.FILE) {
           lastChunkTimeRef.current = Date.now();
           onFileProducedRef.current(event.data as FileProducedEvent);
-        } else if (event.type === ChatAgentEventType.BUILD_PLAN) {
+        } else if (event.type === AgentEventType.BUILD_PLAN) {
           lastChunkTimeRef.current = Date.now();
           onBuildPlanRef.current(event.data as BuildPlanEvent);
+        } else if (
+          event.type === AgentEventType.SUBAGENT_PROGRESS &&
+          isSubagentProgressEvent(event.data)
+        ) {
+          lastChunkTimeRef.current = Date.now();
+          onSubagentProgressRef.current(event.data);
         }
       };
 
@@ -366,3 +377,14 @@ type SocketEvent = {
 type StreamPhase = 'idle' | 'awaiting-stream' | 'streaming' | 'reconciling';
 
 export type { StreamPhase };
+
+function isSubagentProgressEvent(data: unknown): data is SubagentProgressEvent {
+  if (typeof data !== 'object' || data === null) return false;
+  return (
+    'toolCallId' in data &&
+    typeof data.toolCallId === 'string' &&
+    'data' in data &&
+    typeof data.data === 'object' &&
+    data.data !== null
+  );
+}

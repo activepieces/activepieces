@@ -5,25 +5,45 @@ import { isNil } from '@activepieces/pieces-framework';
 import { jiraApiCall } from '../common';
 import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 
+import { legacyAddWatcherOutputSchema } from '../output-schemas';
 export const addWatcherToIssueAction = createAction({
 	auth: jiraCloudAuth,
 	name: 'add-watcher-to-issue',
+	classification: 'WRITE',
 	displayName: 'Add Watcher to Issue',
 	description: 'Adds a new watcher to an issue.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Subscribe a specific user as a watcher on a Jira issue (by issue ID/key and user account) so they get notifications about its updates. Use to loop someone in without assigning or commenting. Effectively idempotent: adding a user who already watches the issue leaves it unchanged.',
 		idempotent: true,
 	},
+	outputSchema: legacyAddWatcherOutputSchema,
 	props: {
-		issueId: issueIdOrKeyProp('Issue ID or Key', true),
+		issueId: issueIdOrKeyProp('Issue', true),
 		userId: getUsersDropdown({
 			displayName: 'User',
+			description: 'Gets notified about changes to the issue.',
 			refreshers: [],
 			required: true,
 		}),
 	},
+	propertyGroups: [
+		{
+			key: 'issue',
+			display: 'section',
+			label: 'Issue',
+			icon: 'inbox',
+			props: ['issueId'],
+		},
+		{
+			key: 'watcher',
+			display: 'section',
+			label: 'Watcher',
+			icon: 'users',
+			props: ['userId'],
+		},
+	],
 	async run(context) {
 		const { issueId, userId } = context.propsValue;
 		if (isNil(issueId)) {

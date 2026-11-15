@@ -1,48 +1,40 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { helpScoutApiRequest } from '../common/api';
-import { helpScoutAuth } from '../common/auth';
-import { propsValidation } from '@activepieces/pieces-common';
-import * as z from 'zod/mini'
 import { HttpMethod } from '@activepieces/pieces-common';
+import { helpScoutApi } from '../common/api';
+import { helpScoutAuth } from '../common/auth';
+import { helpScoutOutputSchemas } from '../common/output-schemas';
 
 export const findCustomer = createAction({
   auth: helpScoutAuth,
   name: 'find_customer',
+  classification: 'SEARCH',
   displayName: 'Find Customer',
   description: 'Finds a customer by email.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Looks up a Help Scout customer by exact email and returns the first match (with a found flag). Use to resolve a customer ID or check existence before creating a customer or associating a conversation. Email is required; read-only and idempotent.',
+      'Looks up a Help Scout customer by exact email and returns the first match with a found flag (found=false and empty data when none). Use to resolve a customer ID before creating a customer, reading it with Get Customer, or creating a conversation. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: helpScoutOutputSchemas['findCustomer'],
   props: {
     email: Property.ShortText({
       displayName: 'Email',
+      description: 'The customer email address, for example jane@example.com.',
       required: true,
     }),
   },
   async run({ auth, propsValue }) {
-    await propsValidation.validateZod(propsValue, {
-      email: z.string().check(z.minLength(1, 'Please provide a email.')),
-    });
-    const response = await helpScoutApiRequest({
+    const email = propsValue.email.trim();
+    if (!email) {
+      throw new Error('Provide the customer email to search for.');
+    }
+    const response = await helpScoutApi.request({
       method: HttpMethod.GET,
-      url: `/customers`,
+      path: '/customers',
       auth,
-      queryParams: {
-        query: `(email:"${propsValue.email}")`,
-      },
+      queryParams: { query: `(email:"${helpScoutApi.escapeQueryValue(email)}")` },
     });
-    const { _embedded } = response.body as {
-      _embedded: {
-        customers: { id: number; firstName: string; lastName: string }[];
-      };
-    };
-
-    return {
-      found: _embedded.customers.length > 0,
-      data: _embedded.customers.length > 0 ? _embedded.customers[0] : {},
-    };
+    return helpScoutApi.findFirst({ body: response.body, key: 'customers' });
   },
 });

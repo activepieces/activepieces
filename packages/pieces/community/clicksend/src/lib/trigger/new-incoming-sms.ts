@@ -9,6 +9,7 @@ const TRIGGER_KEY = 'new_incoming_sms_trigger';
 export const clicksendNewIncomingSms = createTrigger({
   auth: clicksendAuth,
   name: 'new_incoming_sms',
+  classification: 'READ',
   displayName: 'New Incoming SMS',
   description: 'Triggers when a new SMS message is received.',
   aiMetadata: {

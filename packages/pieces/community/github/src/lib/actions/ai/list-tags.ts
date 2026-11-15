@@ -8,6 +8,7 @@ import { listTagsOutputSchema } from '../../output-schemas';
 export const githubListTagsAction = createAction({
   auth: githubAuth,
   name: 'list_tags',
+  classification: 'SEARCH',
   displayName: 'List Tags (Agent)',
   description: 'Lists the git tags in a repository.',
   audience: 'ai',

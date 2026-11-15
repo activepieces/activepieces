@@ -4,24 +4,42 @@ import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { mapFieldNames, sendJiraRequest } from '../common';
 import { getIssueIdDropdown, getProjectIdDropdown } from '../common/props';
 
+import { issueOutputSchema } from '../output-schemas';
 export const getIssueAction = createAction({
   auth: jiraCloudAuth,
   name: 'get_issue',
+  classification: 'READ',
   displayName: 'Get Issue',
-  description: 'Get issue data.',
-  audience: 'both',
+  description: "Gets an issue's fields and details.",
+  audience: 'human',
   aiMetadata: {
     description:
       'Fetch a single Jira issue by project and issue, optionally expanding extras like rendered fields, transitions, edit metadata, or changelog, and optionally remapping cryptic field/transition IDs to human-readable names. Use when you know which issue you want; to find issues by criteria use Search Issues instead. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: issueOutputSchema,
+  propertyGroups: [
+    {
+      key: 'issue',
+      display: 'section',
+      label: 'Issue',
+      icon: 'inbox',
+      props: ['projectId', 'issueId'],
+    },
+    {
+      key: 'output',
+      display: 'section',
+      label: 'Output',
+      icon: 'sliders',
+      props: ['expand', 'mapNames', 'mapTransitions'],
+    },
+  ],
   props: {
     projectId: getProjectIdDropdown(),
     issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),
     expand: Property.StaticMultiSelectDropdown({
-      displayName: 'Expand',
-      description:
-        'Include additional information about the issue in the response',
+      displayName: 'Extra Data',
+      description: 'More sections to include in the output.',
       required: false,
       options: {
         options: [
@@ -54,24 +72,14 @@ export const getIssueAction = createAction({
     }),
     mapNames: Property.Checkbox({
       displayName: 'Map Field Names',
-      description: `
-Map human readable names to Fields, Rendered Fields, Schema and Edit Meta.
-Notes:
-- This would implicitly add "names" to the expand field
-- If there are fields with the same name, they may be overridden
-				`.trim(),
-      required: true,
+      description: 'Key fields by their name instead of their ID.',
+      required: false,
       defaultValue: false,
     }),
     mapTransitions: Property.Checkbox({
       displayName: 'Map Transition Names',
-      description: `
-Map human readable names to Transitions.
-Notes:
-- If there are transitions with the same name, they may be overridden
-- This changes the original data structure from list to map
-				`.trim(),
-      required: true,
+      description: "Adds the issue's transitions, keyed by name.",
+      required: false,
       defaultValue: false,
     }),
   },
@@ -84,6 +92,10 @@ Notes:
     // implicitly expand names which is needed for mapping
     if (mapNames) {
       expandParams = [...new Set(expandParams).add('names')];
+    }
+
+    if (mapTransitions) {
+      expandParams = [...new Set(expandParams).add('transitions')];
     }
 
     if (expandParams) {

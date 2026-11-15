@@ -5,6 +5,7 @@ import { listPayers, listPlans, createSubscription } from '../common/client';
 export const addSubscriptionAction = createAction({
   auth: pinchPaymentsAuth,
   name: 'add_subscription',
+  classification: 'WRITE',
   displayName: 'Add Subscription',
   description: 'Create a subscription between a payer and a plan',
   audience: 'both',

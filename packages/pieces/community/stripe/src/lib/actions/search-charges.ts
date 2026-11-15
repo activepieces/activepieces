@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { chargeSearchOutputSchema } from '../output-schemas';
 export const stripeSearchCharges = createAction({
   name: 'search_charges',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'Search Charges (Agent)',
   description: 'Search charges with a Stripe search query.',

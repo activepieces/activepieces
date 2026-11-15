@@ -8,6 +8,7 @@ const TRIGGER_KEY = 'video_generation_failed_trigger';
 export const videoGenerationFailedTrigger = createTrigger({
 	auth: heygenAuth,
 	name: 'video_generation_failed',
+	classification: 'READ',
 	displayName: 'New Avatar Video Event (Fail)',
 	description: 'Triggers when a video generation process fails.',
 	aiMetadata: {

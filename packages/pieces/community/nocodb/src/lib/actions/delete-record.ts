@@ -1,10 +1,13 @@
 import { nocodbAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeClient, nocodbCommon } from '../common';
+import { nocodbCreateRecordOutputSchema } from '../output-schemas';
 
 export const deleteRecordAction = createAction({
 	auth: nocodbAuth,
 	name: 'nocodb-delete-record',
+	classification: 'DESTRUCTIVE',
+	outputSchema: nocodbCreateRecordOutputSchema,
 	displayName: 'Delete a Record',
 	description: 'Deletes a record with the given Record ID.',
 	audience: 'both',

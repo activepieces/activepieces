@@ -3,6 +3,7 @@ import {
   AssignProjectsRequestBody,
   CreatePieceSetRequestBody,
   DuplicatePieceSetRequestBody,
+  ListPieceSetsRequestQuery,
   PieceSet,
   UpdatePieceSetRequestBody,
 } from '@activepieces/shared';
@@ -10,11 +11,14 @@ import {
 import { api } from '@/lib/api';
 
 export const pieceSetsApi = {
-  list() {
-    return api.get<SeekPage<PieceSet>>('/v1/piece-sets');
+  list(request: Partial<ListPieceSetsRequestQuery> = {}) {
+    return api.get<SeekPage<PieceSet>>('/v1/piece-sets', request);
   },
   get(id: string) {
     return api.get<PieceSet>(`/v1/piece-sets/${id}`);
+  },
+  getForProject(projectId: string) {
+    return api.get<PieceSet>(`/v1/piece-sets/projects/${projectId}`);
   },
   create(request: CreatePieceSetRequestBody) {
     return api.post<PieceSet>('/v1/piece-sets', request);

@@ -179,3 +179,20 @@ export const STANDARD_OBJECT_TYPES = [
 	},
 ];
 
+
+export const HUBSPOT_DEFINED = 'HUBSPOT_DEFINED';
+
+export const ASSOCIATION_TYPE_IDS: Record<string, Record<string, number>> = {
+	NOTE_TO: {
+		contact: 202,
+		company: 190,
+		deal: 214,
+		ticket: 228,
+	},
+	TASK_TO: {
+		contact: 204,
+		company: 192,
+		deal: 216,
+		ticket: 230,
+	},
+};

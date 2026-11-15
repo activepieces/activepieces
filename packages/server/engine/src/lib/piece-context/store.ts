@@ -2,6 +2,7 @@ import { URL } from 'node:url'
 import { FlowId, isNil } from '@activepieces/core-utils'
 import { Store, StoreScope } from '@activepieces/pieces-framework'
 import { DeleteStoreEntryRequest, ExecutionError, FetchError, PutStoreEntryRequest, StorageError, StorageInvalidKeyError, StorageLimitError, STORE_KEY_MAX_LENGTH, STORE_VALUE_MAX_SIZE, StoreEntry } from '@activepieces/shared'
+import { retryFetch } from '../api/retry-fetch'
 import { utils } from '../utils'
 
 export function createContextStore({ apiUrl, prefix, flowId, engineToken }: { apiUrl: string, prefix: string, flowId: FlowId, engineToken: string }): Store {
@@ -40,7 +41,7 @@ function createStoreClient({ engineToken, apiUrl }: CreateStoreClientParams): St
             const url = buildUrl(apiUrl, key)
 
             const { data: storeEntry, error: storeEntryError } = await utils.tryCatchAndThrowOnEngineError((async () => {
-                const response = await fetch(url, {
+                const response = await retryFetch(url, {
                     headers: {
                         Authorization: `Bearer ${engineToken}`,
                     },
@@ -72,7 +73,7 @@ function createStoreClient({ engineToken, apiUrl }: CreateStoreClientParams): St
                 if (sizeOfValue > STORE_VALUE_MAX_SIZE) {
                     throw new StorageLimitError(request.key, STORE_VALUE_MAX_SIZE)
                 }
-                const response = await fetch(url, {
+                const response = await retryFetch(url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -107,7 +108,7 @@ function createStoreClient({ engineToken, apiUrl }: CreateStoreClientParams): St
             const url = buildUrl(apiUrl, request.key)
 
             const { data: storeEntry, error: storeEntryError } = await utils.tryCatchAndThrowOnEngineError((async () => {
-                const response = await fetch(url, {
+                const response = await retryFetch(url, {
                     method: 'DELETE',
                     headers: {
                         Authorization: `Bearer ${engineToken}`,

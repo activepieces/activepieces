@@ -40,13 +40,16 @@ function _getImportOperationsForSteps(step: FlowAction | FlowTrigger | undefined
             })
         }
         switch (step.type) {
-            case FlowActionType.LOOP_ON_ITEMS: {
+            case FlowActionType.LOOP_ON_ITEMS:
+            case FlowActionType.PROCESS_IN_BATCHES: {
                 if (step.firstLoopAction) {
                     steps.push({
                         type: FlowOperationType.ADD_ACTION,
                         request: {
                             parentStep: step.name,
-                            stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
+                            stepLocationRelativeToParent: step.type === FlowActionType.LOOP_ON_ITEMS
+                                ? StepLocationRelativeToParent.INSIDE_LOOP
+                                : StepLocationRelativeToParent.INSIDE_BATCH,
                             action: removeAnySubsequentAction(step.firstLoopAction),
                         },
                     })
@@ -54,7 +57,8 @@ function _getImportOperationsForSteps(step: FlowAction | FlowTrigger | undefined
                 }
                 break
             }
-            case FlowActionType.ROUTER: {
+            case FlowActionType.ROUTER:
+            case FlowActionType.AI_ROUTER: {
                 if (step.children) {
                     for (const [index, child] of step.children.entries()) {
                         if (!isNil(child)) {
@@ -133,7 +137,8 @@ function _getImportOperationsForNotes(flowVersion: FlowVersion, request: ImportF
 function removeAnySubsequentAction(action: FlowAction): FlowAction {
     const clonedAction: FlowAction = JSON.parse(JSON.stringify(action))
     switch (clonedAction.type) {
-        case FlowActionType.ROUTER: {
+        case FlowActionType.ROUTER:
+        case FlowActionType.AI_ROUTER: {
             clonedAction.children = clonedAction.children.map((child: FlowAction | null) => {
                 if (isNil(child)) {
                     return null
@@ -142,7 +147,8 @@ function removeAnySubsequentAction(action: FlowAction): FlowAction {
             })
             break
         }
-        case FlowActionType.LOOP_ON_ITEMS: {
+        case FlowActionType.LOOP_ON_ITEMS:
+        case FlowActionType.PROCESS_IN_BATCHES: {
             delete clonedAction.firstLoopAction
             break
         }

@@ -1,13 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { jiraDataCenterAuth } from '../../auth';
-import { jiraApiCall } from '../common';
+import { jiraApiCall, jiraToken } from '../common';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getIssueAttachmentAction = createAction({
 	auth: jiraDataCenterAuth,
 	name: 'get-issue-attachment',
+	classification: 'READ',
 	displayName: 'Get Issue Attachment',
-	description: 'Retrieves an attachment from an issue.',
+	description: "Gets an attachment's details and downloads its file.",
 	audience: 'both',
 	aiMetadata: {
 		description:
@@ -17,6 +18,8 @@ export const getIssueAttachmentAction = createAction({
 	props: {
 		attachmentId: Property.ShortText({
 			displayName: 'Attachment ID',
+			description: "Found in a Get Issue step's output, under fields → attachment.",
+			placeholder: '10001',
 			required: true,
 		}),
 	},
@@ -36,7 +39,7 @@ export const getIssueAttachmentAction = createAction({
 			method: HttpMethod.GET,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth.props.personalAccessToken,
+				token: jiraToken(context.auth),
 			},
 			responseType: 'arraybuffer',
 			followRedirects: true,

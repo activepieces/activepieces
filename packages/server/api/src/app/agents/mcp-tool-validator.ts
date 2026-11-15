@@ -1,17 +1,18 @@
-import { safeHttp } from '@activepieces/server-utils'
-import { AgentMcpTool, buildAuthHeaders, ValidateAgentMcpToolResponse } from '@activepieces/shared'
+import { mcpTransport } from '@activepieces/server-utils'
+import { AgentMcpTool, ValidateAgentMcpToolResponse } from '@activepieces/shared'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 
 export const mcpToolValidator = {
     async validateAgentMcpTool(tool: AgentMcpTool): Promise<ValidateAgentMcpToolResponse> {
-        if (!isValidUrl(tool.serverUrl)) {
+        if (!mcpTransport.isHttpUrl(tool.serverUrl)) {
             return { toolNames: undefined, error: GENERIC_ERROR }
         }
-        const headers = buildAuthHeaders(tool.auth)
-        const transport = new StreamableHTTPClientTransport(new URL(tool.serverUrl), {
-            requestInit: { headers },
-            fetch: createSafeFetch(headers),
+        const transport = mcpTransport.createTransport({
+            protocol: tool.protocol,
+            serverUrl: tool.serverUrl,
+            auth: tool.auth,
+            timeoutMs: VALIDATE_TIMEOUT_MS,
+            maxResponseBytes: MAX_RESPONSE_BYTES,
         })
         const client = new Client(MCP_CLIENT_INFO)
         try {
@@ -28,44 +29,6 @@ export const mcpToolValidator = {
     },
 }
 
-function createSafeFetch(extraHeaders: Record<string, string>): typeof fetch {
-    return async (input, init) => {
-        const url = input instanceof URL ? input.toString() : (typeof input === 'string' ? input : input.url)
-        const response = await safeHttp.axios.request<ArrayBuffer>({
-            method: init?.method ?? 'GET',
-            url,
-            headers: { ...extraHeaders, ...normalizeHeaders(init?.headers) },
-            data: init?.body,
-            responseType: 'arraybuffer',
-            validateStatus: () => true,
-            timeout: VALIDATE_TIMEOUT_MS,
-            maxContentLength: MAX_RESPONSE_BYTES,
-            maxBodyLength: MAX_RESPONSE_BYTES,
-        })
-        return new Response(Buffer.from(response.data), {
-            status: response.status,
-            headers: response.headers as Record<string, string>,
-        })
-    }
-}
-
-function normalizeHeaders(headers: HeadersInit | undefined): Record<string, string> {
-    if (!headers) {
-        return {}
-    }
-    if (headers instanceof Headers) {
-        const result: Record<string, string> = {}
-        headers.forEach((value, key) => {
-            result[key] = value
-        })
-        return result
-    }
-    if (Array.isArray(headers)) {
-        return Object.fromEntries(headers)
-    }
-    return headers
-}
-
 async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
     let timer: NodeJS.Timeout | undefined
     const timeout = new Promise<never>((_, reject) => {
@@ -76,16 +39,6 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
     }
     finally {
         if (timer) clearTimeout(timer)
-    }
-}
-
-function isValidUrl(value: string): boolean {
-    try {
-        const url = new URL(value)
-        return url.protocol === 'http:' || url.protocol === 'https:'
-    }
-    catch {
-        return false
     }
 }
 

@@ -15,7 +15,7 @@ OAuth caveat: some Google pieces construct a client that doesn't auto-refresh, s
 
 Ask the user for credentials, then create the connection:
 
-- **OAuth2 pieces** (Gmail, the Google pieces, most social/CRM apps): connect through the **builder UI sign-in** (Connections → New → authorize) — the browser MCP can drive it. Do **not** create these over the API: you won't have a valid access token. And do **not** capture against a cloud backend (`--mode=cloud`) — the OAuth redirect returns to `cloud.activepieces.com`, not your localhost; use a fully-local instance.
+- **OAuth2 pieces** (Gmail, the Google pieces, most social/CRM apps): connect through the **builder UI sign-in** (Connections → New → authorize) — the browser MCP can drive it. The API path yields no valid access token, so it must go through the UI. Run against a fully-local instance (never `--mode=cloud`) — OAuth redirects return to `cloud.activepieces.com`, not localhost.
 - **API-key / token / basic-auth pieces:** create via the UI or `POST /v1/app-connections` (body includes `externalId`, `pieceName`, `type`, `value`).
 
 Note the connection's **external id** — step input references it as `{{connections['<externalId>']}}`.
@@ -46,9 +46,9 @@ GET  /v1/sample-data?flowId=&flowVersionId=&stepName=&projectId=&type=OUTPUT
 
 Dev sign-in for a fresh local instance is typically `dev@ap.com` / `12345678`. The backend is proxied at `http://localhost:4200/api` in dev (not the API port directly).
 
-**Prerequisite:** a flow must already exist with the step configured (connection + props). The endpoint needs a `flowVersionId` + `stepName`; it does not create the step for you. Build the flow once in the UI (§2), then the API is handy for re-running after you tweak inputs or seed data. Constructing the flow purely over the API means driving the flow-update operations (`UPDATE_TRIGGER` / add-action) — heavier; only worth it when scripting many steps.
+**Prerequisite:** a flow with the step already configured (connection + props) — the endpoint needs a `flowVersionId` + `stepName` and does not create the step. Build the flow once in the UI (§2); the API is then handy for re-runs after input tweaks or seeded data. Constructing the flow purely over the API means driving the flow-update operations (`UPDATE_TRIGGER` / add-action) — heavier, only worth it when scripting many steps.
 
-Write throwaway driver scripts under `/tmp` (e.g. `/tmp/<piece>_capture.mjs`) — do not commit them.
+Driver scripts live under `/tmp` (e.g. `/tmp/<piece>_capture.mjs`) — throwaways, kept out of the repo.
 
 > Editing a **server** source file while a capture run is in flight hot-restarts the API and can wedge the worker (jobs stuck QUEUED). Only edit web/piece files mid-run, or restart the instance to recover.
 

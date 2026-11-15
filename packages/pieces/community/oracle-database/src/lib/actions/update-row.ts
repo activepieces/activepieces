@@ -6,6 +6,7 @@ import { oracleDbProps } from '../common/props';
 export const updateRowAction = createAction({
   auth: oracleDbAuth,
   name: 'update_row',
+  classification: 'WRITE',
   displayName: 'Update Row',
   description: 'Update rows in an Oracle table',
   audience: 'both',

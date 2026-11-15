@@ -7,6 +7,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const doNotDisturbAction = createAction({
     auth: connectucAuth,
     name: 'do-not-disturb',
+    classification: 'WRITE',
     displayName: 'Set Do Not Disturb',
     description: 'Enable or disable Do Not Disturb status for a user in ConnectUC',
     audience: 'both',

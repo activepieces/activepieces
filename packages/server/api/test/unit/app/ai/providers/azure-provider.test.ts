@@ -32,6 +32,35 @@ describe('azureProvider.listModels', () => {
         ])
     })
 
+    it('judges a deployment by the model it runs, not the name the customer gave it', async () => {
+        mockSendRequest.mockResolvedValue({
+            body: {
+                data: [
+                    { id: 'support-voice-agent', model: 'gpt-4o', status: 'succeeded', object: 'deployment' },
+                    { id: 'content-moderation-gpt4o', model: 'gpt-4.1', status: 'succeeded', object: 'deployment' },
+                    { id: 'prod-1', model: 'whisper', status: 'succeeded', object: 'deployment' },
+                    { id: 'prod-2', model: 'text-embedding-3-small', status: 'succeeded', object: 'deployment' },
+                    { id: 'prod-3', model: 'dall-e-3', status: 'succeeded', object: 'deployment' },
+                    { id: 'prod-4', model: 'sora', status: 'succeeded', object: 'deployment' },
+                ],
+            },
+        })
+
+        const models = await azureProvider.listModels({ apiKey: 'test-key' }, { resourceName: 'my-resource' })
+
+        expect(models.map((model) => model.id)).toEqual(['support-voice-agent', 'content-moderation-gpt4o'])
+    })
+
+    it('keeps a deployment that does not say which model it runs, so an unfamiliar response is not emptied', async () => {
+        mockSendRequest.mockResolvedValue({
+            body: { data: [{ id: 'prod-voice', status: 'succeeded', object: 'deployment' }] },
+        })
+
+        const models = await azureProvider.listModels({ apiKey: 'test-key' }, { resourceName: 'my-resource' })
+
+        expect(models.map((model) => model.id)).toEqual(['prod-voice'])
+    })
+
     it('lists deployments with the legacy api-version even when a newer one is configured', async () => {
         await azureProvider.listModels({ apiKey: 'test-key' }, { resourceName: 'my-resource', apiVersion: '2024-10-21' })
 

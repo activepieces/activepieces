@@ -2,6 +2,7 @@ import { isNil, parseToJsonIfPossible, tryCatch } from '@activepieces/core-utils
 import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, FlowVersion, PieceTrigger, StreamStepProgress, TriggerHookType, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
+import { summarizeEngineError } from '../utils/engine-error-summary'
 import { isSandboxTimeout } from '../utils/sandbox-helpers'
 import { recordTriggerRun } from '../utils/trigger-run-recorder'
 import { getAppWebhookUrl, getWebhookUrl } from '../utils/webhook-url'
@@ -27,7 +28,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
         const settings = workerSettings.getSettings()
         const timeoutInSeconds = settings.TRIGGER_TIMEOUT_SECONDS
 
-        const resolved = await ctx.resolver.resolve({ platformId: data.platformId, publicApiUrl: ctx.publicApiUrl, engineToken: ctx.engineToken, flow: { id: data.flowId, versionId: data.flowVersionIdToRun, projectId: data.projectId } })
+        const resolved = await ctx.resolver.resolve({ platformId: data.platformId, internalApiUrl: ctx.internalApiUrl, engineToken: ctx.engineToken, flow: { id: data.flowId, versionId: data.flowVersionIdToRun, projectId: data.projectId } })
 
         if (resolved.kind === 'flow-not-found') {
             ctx.log.info({ flowVersion: { id: data.flowVersionIdToRun } }, 'Flow version not found for webhook, skipping')
@@ -45,6 +46,13 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
         const flowVersion: FlowVersion = resolved.flowVersion
 
         const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(flowVersion, ctx.publicApiUrl, settings.APP_WEBHOOK_SECRETS)
+
+        const webhookLogFields = {
+            webhook: { requestId: data.requestId },
+            flow: { id: data.flowId },
+            flowVersion: { id: flowVersion.id },
+            project: { id: data.projectId },
+        }
 
         let realExecutionStarted = false
         const { data: execResult, error } = await tryCatch(async () => {
@@ -121,7 +129,12 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                 await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: EngineResponseStatus.INTERNAL_ERROR })
             }
             if (isSandboxTimeout(error)) {
-                ctx.log.warn({ flowVersion: { id: data.flowVersionIdToRun } }, 'Webhook execution timed out in sandbox')
+                if (data.execute) {
+                    ctx.log.error(webhookLogFields, 'Webhook execution timed out in sandbox, no flow run created')
+                }
+                else {
+                    ctx.log.warn(webhookLogFields, 'Webhook execution timed out in sandbox')
+                }
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
             }
             throw error
@@ -145,9 +158,21 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                     failParentOnFailure: data.failParentOnFailure,
                 })
             }
+            else {
+                ctx.log.info(webhookLogFields, 'Webhook trigger returned no payloads, skipping run creation')
+            }
+        }
+        else {
+            const failureFields = { ...webhookLogFields, engine: { status: execResult.status, error: summarizeEngineError({ error: execResult.error }) } }
+            if (execResult.status === EngineResponseStatus.USER_FAILURE) {
+                ctx.log.warn(failureFields, 'Webhook trigger hook failed, no flow run created')
+            }
+            else {
+                ctx.log.error(failureFields, 'Webhook trigger hook failed, no flow run created')
+            }
         }
 
-        await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: execResult.status })
+        await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: execResult.status, error: execResult.error })
 
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: execResult.logs }
     },

@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { AppConnectionScope, PiecesFilterType, PrincipalType, Project, ProjectType, ProjectWithLimits, TeamProjectsLimit, UpdateProjectPlatformRequest } from '@activepieces/shared'
+import { AppConnectionScope, PiecesFilterType, PrincipalType, Project, ProjectType, ProjectWithLimits, UpdateProjectPlatformRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, Equal, ILike, In, IsNull } from 'typeorm'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
@@ -12,6 +12,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
+import { mcpGrantRevocation } from '../../mcp/oauth/token/mcp-grant-revocation'
 import { platformService } from '../../platform/platform.service'
 import { ProjectEntity } from '../../project/project-entity'
 import { applyProjectsAccessFilters, projectService } from '../../project/project-service'
@@ -79,6 +80,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                 externalId: params.externalId,
                 metadata: params.metadata,
                 maxConcurrentJobs: params.maxConcurrentJobs,
+                sensitive: params.sensitive,
                 type: ProjectType.TEAM,
                 callPostCreateHooks: false,
                 entityManager,
@@ -127,7 +129,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     }: UpdateParams): Promise<ProjectWithLimits> {
         const project = await projectService(log).getOneOrThrow(projectId)
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
-        const { globalConnectionExternalIds, maxConcurrentJobs, workerGroupId, ...rest } = request
+        const { globalConnectionExternalIds, maxConcurrentJobs, ...rest } = request
         let resolvedPoolId: string | null | undefined
         await transaction(async (entityManager) => {
             resolvedPoolId = await resolvePoolId({ platformId: project.platformId, projectId, maxConcurrentJobs, log })
@@ -136,7 +138,6 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                 ...rest,
                 ...(resolvedPoolId !== undefined ? { poolId: resolvedPoolId } : {}),
                 ...(maxConcurrentJobs !== undefined ? { maxConcurrentJobs } : {}),
-                ...(platformPlan.workerGroupsEnabled && workerGroupId !== undefined ? { workerGroupId } : {}),
             }, entityManager)
             if (platformPlan.globalConnectionsEnabled && globalConnectionExternalIds) {
                 const projectGlobalConnections = await appConnectionsRepo(entityManager).find({
@@ -181,7 +182,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             }
             if (!isNil(request.plan) && request.plan.activeFlowsLimit !== undefined) {
                 const platform = await platformService(log).getOneWithPlanOrThrow(project.platformId)
-                if (platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE) {
+                if (platform.plan.billedTeamProjectsLimit !== 0) {
                     await projectLimitsService(log).updateActiveFlowsLimit({
                         projectId,
                         activeFlowsLimit: request.plan.activeFlowsLimit,
@@ -219,11 +220,28 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             await projectRepo(entityManager).softDelete({ id: personalProject.id, platformId })
         })
         await scheduleHardDeleteProjectJob({ id: personalProject.id, platformId, log })
+        await mcpGrantRevocation.revokeActiveGrants({ scope: { projectId: personalProject.id, platformId }, log })
     },
 
-    async markForDeletion({ id, platformId }: DeleteProjectParams): Promise<void> {
-        const result = await projectRepo().softDelete({ id, platformId })
-        if (result.affected === 0) {
+    async markForDeletion({ id, platformId, enforceDefaultGuard = false }: DeleteProjectParams): Promise<void> {
+        const query = projectRepo()
+            .createQueryBuilder()
+            .softDelete()
+            .where('"id" = :id AND "platformId" = :platformId', { id, platformId })
+        if (enforceDefaultGuard) {
+            query.andWhere('"isDefault" = false')
+        }
+        const result = await query.returning('id').execute()
+        const deletedRows: unknown[] = result.raw ?? []
+        if (deletedRows.length === 0) {
+            if (enforceDefaultGuard && await projectRepo().existsBy({ id, platformId, isDefault: true })) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: 'Remove this project from default projects before deleting it',
+                    },
+                })
+            }
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
@@ -233,6 +251,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             })
         }
         await scheduleHardDeleteProjectJob({ id, platformId, log })
+        await mcpGrantRevocation.revokeActiveGrants({ scope: { projectId: id, platformId }, log })
     },
 })
 
@@ -269,11 +288,12 @@ async function enrichProjects(
     
     const projectIds = projects.map(p => p.id)
     
-    const [totalUsersMap, activeUsersMap, totalFlowsMap, activeFlowsMap, plansMap] = await Promise.all([
+    const [totalUsersMap, activeUsersMap, totalFlowsMap, activeFlowsMap, lastFlowUpdatedMap, plansMap] = await Promise.all([
         projectMemberService(log).countTotalUsersByProjects(projectIds),
         projectMemberService(log).countActiveUsersByProjects(projectIds),
         flowService(log).countFlowsByProjects(projectIds),
         flowService(log).countActiveFlowsByProjects(projectIds),
+        flowService(log).getLastFlowUpdatedByProjects(projectIds),
         projectLimitsService(log).getOrCreateDefaultPlansForProjects(projectIds),
     ])
 
@@ -286,6 +306,7 @@ async function enrichProjects(
                 totalFlows: totalFlowsMap.get(project.id) ?? 0,
                 totalUsers: totalUsersMap.get(project.id) ?? 0,
                 activeUsers: activeUsersMap.get(project.id) ?? 0,
+                lastFlowUpdated: lastFlowUpdatedMap.get(project.id) ?? null,
             },
         }
     })
@@ -376,11 +397,13 @@ type CreateProjectParams = {
     maxConcurrentJobs?: number
     globalConnectionExternalIds?: string[]
     alertReceiverEmail?: string | null
+    sensitive?: boolean
 }
 
 type DeleteProjectParams = {
     id: ProjectId
     platformId: PlatformId
+    enforceDefaultGuard?: boolean
 }
 
 type ScheduleHardDeleteProjectJobParams = {

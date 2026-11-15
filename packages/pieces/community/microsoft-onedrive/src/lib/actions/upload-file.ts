@@ -1,22 +1,27 @@
+import { Readable } from 'node:stream';
+import { buffer as readableToBuffer } from 'node:stream/consumers';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   httpClient,
   HttpMethod,
   AuthenticationType,
+  streamUtils,
 } from '@activepieces/pieces-common';
 import { oneDriveAuth } from '../auth';
 import mime from 'mime-types';
 import { oneDriveCommon } from '../common/common';
-
-const CHUNK_SIZE = 10485760; // Use 10MiB per chunk
+import { getCloudProp } from '../common/microsoft-cloud';
+import { uploadFileOutputSchema } from '../output-schemas';
 
 export const uploadFile = createAction({
   auth: oneDriveAuth,
   name: 'upload_onedrive_file',
+  classification: 'WRITE',
   description: 'Upload a file to your Microsoft OneDrive with chunked upload if the file is larger than 4MiB',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Upload a file to a Microsoft OneDrive folder, given a target file name, the file content, and an optional parent folder (defaults to the drive root). Large files (over 4MiB) are uploaded in chunks automatically. Idempotent: uploading the same file name to the same folder overwrites the existing item rather than creating a duplicate.', idempotent: true },
   displayName: 'Upload file',
+  outputSchema: uploadFileOutputSchema,
   props: {
     fileName: Property.ShortText({
       displayName: 'File name',
@@ -27,6 +32,7 @@ export const uploadFile = createAction({
       displayName: 'File',
       description: 'The file URL or base64 to upload',
       required: true,
+      streaming: true,
     }),
     markdown:oneDriveCommon.parentFolderInfo,
     parentId: oneDriveCommon.parentFolder,
@@ -38,22 +44,27 @@ export const uploadFile = createAction({
     );
     const mimeType = mimeTypeLookup
       ? mimeTypeLookup
-      : 'application/octet-stream'; // Fallback to a default MIME type
+      : 'application/octet-stream';
     const encodedFilename = encodeURIComponent(context.propsValue.fileName);
     const parentId = context.propsValue.parentId ?? 'root';
-    const cloud = context.auth.props?.['cloud'] as string | undefined;
+    const cloud = getCloudProp(context.auth);
     const baseUrl = oneDriveCommon.getBaseUrl(cloud);
 
-    if (fileData.data.length <= 4 * 1024 * 1024) {
-      // If file is smaller than 4MiB, use simple upload
-      const base64Data = Buffer.from(fileData.base64, 'base64');
+    let { body, size: fileSize } = streamUtils.toStreamingBody(fileData);
+    if (fileSize == null) {
+      const buffered = await readableToBuffer(body);
+      fileSize = buffered.length;
+      body = Readable.from(buffered);
+    }
+
+    if (fileSize <= 4 * 1024 * 1024) {
       const result = await httpClient.sendRequest({
         method: HttpMethod.PUT,
         url: `${baseUrl}/items/${parentId}:/${encodedFilename}:/content`,
-        body: base64Data,
+        body,
         headers: {
           'Content-Type': mimeType,
-          'Content-length': base64Data.length.toString(),
+          'Content-length': fileSize.toString(),
         },
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
@@ -63,7 +74,6 @@ export const uploadFile = createAction({
 
       return result.body;
     } else {
-      // For files larger than 4MiB, use chunked upload
       const session = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: `${baseUrl}/items/${parentId}:/${encodedFilename}:/createUploadSession`,
@@ -84,15 +94,9 @@ export const uploadFile = createAction({
 
       const uploadUrl = session.body.uploadUrl;
       let start = 0;
-      let end = CHUNK_SIZE - 1;
-      const fileSize = fileData.data.length;
       let result;
-      while (start < fileSize) {
-        if (end >= fileSize) {
-          end = fileSize - 1;
-        }
-
-        const chunk = fileData.data.slice(start, end + 1);
+      for await (const chunk of streamUtils.readChunks({ readable: body, chunkSize: CHUNK_SIZE })) {
+        const end = start + chunk.length - 1;
 
         result = await httpClient.sendRequest({
           method: HttpMethod.PUT,
@@ -104,11 +108,12 @@ export const uploadFile = createAction({
           },
         });
 
-        start += CHUNK_SIZE;
-        end += CHUNK_SIZE;
+        start += chunk.length;
       }
 
       return result?.body;
     }
   },
 });
+
+const CHUNK_SIZE = 10485760;

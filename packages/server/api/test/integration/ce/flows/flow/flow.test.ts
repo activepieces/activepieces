@@ -1,7 +1,9 @@
+import { apId, ErrorCode } from '@activepieces/core-utils'
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import {
     FlowOperationType,
     FlowStatus,
+    FlowTrigger,
     FlowTriggerType,
     FlowVersionState,
     PackageType,
@@ -13,6 +15,7 @@ import {
     TriggerTestStrategy,
     WebhookHandshakeStrategy,
 } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../../helpers/auth'
@@ -49,7 +52,7 @@ describe('Flow API', () => {
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(15)
+            expect(Object.keys(responseBody)).toHaveLength(16)
             expect(responseBody?.id).toHaveLength(21)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
@@ -61,6 +64,7 @@ describe('Flow API', () => {
             expect(responseBody?.operationStatus).toBeDefined()
             expect(responseBody?.templateId).toBeNull()
             expect(responseBody?.createdBy).toBeNull()
+            expect(responseBody?.workerGroupId).toBeNull()
 
             expect(Object.keys(responseBody?.version)).toHaveLength(14)
             expect(responseBody?.version?.id).toHaveLength(21)
@@ -190,6 +194,35 @@ describe('Flow API', () => {
             expect(Object.keys(responseBody?.version)).toHaveLength(14)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
         })
+
+        it('Rejects enabling a never published Flow with a 400', async () => {
+            const ctx = await createTestContext(app!)
+
+            const createResponse = await ctx.post('/v1/flows', {
+                displayName: 'never published flow',
+                projectId: ctx.project.id,
+            }, { query: { projectId: ctx.project.id } })
+            expect(createResponse?.statusCode).toBe(StatusCodes.CREATED)
+            const flowId = createResponse?.json().id
+
+            const response = await ctx.post(`/v1/flows/${flowId}`, {
+                type: FlowOperationType.CHANGE_STATUS,
+                request: { status: 'ENABLED' },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.json()).toMatchObject({
+                code: ErrorCode.FLOW_OPERATION_INVALID,
+                params: { message: 'Publish the flow before turning it on' },
+            })
+
+            const disableResponse = await ctx.post(`/v1/flows/${flowId}`, {
+                type: FlowOperationType.CHANGE_STATUS,
+                request: { status: 'DISABLED' },
+            })
+            expect(disableResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(disableResponse?.json().status).toBe(FlowStatus.DISABLED)
+        })
     })
 
     describe('Update published version id endpoint', () => {
@@ -270,9 +303,159 @@ describe('Flow API', () => {
                 expect(responseBody.templateId).toBeNull()
             }
         })
+
+        it('Refuses to publish a draft whose trigger is empty and records nothing', async () => {
+            const ctx = await createTestContext(app!)
+
+            const mockFlow = createMockFlow({
+                projectId: ctx.project.id,
+                status: FlowStatus.DISABLED,
+            })
+            await db.save('flow', mockFlow)
+
+            const mockFlowVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                updatedBy: ctx.user.id,
+                state: FlowVersionState.DRAFT,
+                trigger: emptyTrigger(),
+            })
+            await db.save('flow_version', mockFlowVersion)
+
+            const response = await ctx.post(`/v1/flows/${mockFlow.id}`, {
+                type: FlowOperationType.LOCK_AND_PUBLISH,
+                request: {},
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.json().code).toBe(ErrorCode.FLOW_OPERATION_INVALID)
+            const flowRow = await db.findOneByOrFail<{ publishedVersionId: string | null }>('flow', { id: mockFlow.id })
+            expect(flowRow.publishedVersionId).toBeNull()
+            const versionRow = await db.findOneByOrFail<{ state: string }>('flow_version', { id: mockFlowVersion.id })
+            expect(versionRow.state).toBe(FlowVersionState.DRAFT)
+        })
+
+        it('Keeps a live flow on its published version when the new draft has an empty trigger', async () => {
+            const ctx = await createTestContext(app!)
+
+            const mockFlow = createMockFlow({
+                projectId: ctx.project.id,
+                status: FlowStatus.ENABLED,
+            })
+            await db.save('flow', mockFlow)
+
+            const publishedVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                updatedBy: ctx.user.id,
+                state: FlowVersionState.LOCKED,
+                created: dayjs().subtract(1, 'hour').toISOString(),
+            })
+            const draftVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                updatedBy: ctx.user.id,
+                state: FlowVersionState.DRAFT,
+                created: dayjs().toISOString(),
+                trigger: emptyTrigger(),
+            })
+            await db.save('flow_version', [publishedVersion, draftVersion])
+            await db.update('flow', mockFlow.id, { publishedVersionId: publishedVersion.id })
+            await db.save('trigger_source', {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                flowId: mockFlow.id,
+                flowVersionId: publishedVersion.id,
+                projectId: ctx.project.id,
+                pieceName: '@activepieces/piece-schedule',
+                pieceVersion: '0.1.5',
+                triggerName: 'every_hour',
+                type: TriggerStrategy.POLLING,
+                simulate: false,
+                schedule: null,
+                deleted: null,
+            })
+
+            const response = await ctx.post(`/v1/flows/${mockFlow.id}`, {
+                type: FlowOperationType.LOCK_AND_PUBLISH,
+                request: {},
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            const flowRow = await db.findOneByOrFail<{ status: string, publishedVersionId: string | null }>('flow', { id: mockFlow.id })
+            expect(flowRow.status).toBe(FlowStatus.ENABLED)
+            expect(flowRow.publishedVersionId).toBe(publishedVersion.id)
+            const draftRow = await db.findOneByOrFail<{ state: string }>('flow_version', { id: draftVersion.id })
+            expect(draftRow.state).toBe(FlowVersionState.DRAFT)
+            const triggerSourceRow = await db.findOneBy<{ id: string }>('trigger_source', { flowId: mockFlow.id })
+            expect(triggerSourceRow).not.toBeNull()
+        })
+
+        it('Refuses to enable a flow whose published version has an empty trigger', async () => {
+            const ctx = await createTestContext(app!)
+
+            const mockFlow = createMockFlow({
+                projectId: ctx.project.id,
+                status: FlowStatus.DISABLED,
+            })
+            await db.save('flow', mockFlow)
+
+            const publishedVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                updatedBy: ctx.user.id,
+                state: FlowVersionState.LOCKED,
+                trigger: emptyTrigger(),
+            })
+            await db.save('flow_version', publishedVersion)
+            await db.update('flow', mockFlow.id, { publishedVersionId: publishedVersion.id })
+
+            const response = await ctx.post(`/v1/flows/${mockFlow.id}`, {
+                type: FlowOperationType.CHANGE_STATUS,
+                request: { status: FlowStatus.ENABLED },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.json().code).toBe(ErrorCode.FLOW_OPERATION_INVALID)
+            const flowRow = await db.findOneByOrFail<{ status: string }>('flow', { id: mockFlow.id })
+            expect(flowRow.status).toBe(FlowStatus.DISABLED)
+        })
     })
 
     describe('List Flows endpoint', () => {
+        it('Filters connections on the published version when versionState is LOCKED', async () => {
+            const ctx = await createTestContext(app!)
+
+            const mockFlow = createMockFlow({ projectId: ctx.project.id })
+            await db.save('flow', mockFlow)
+            const publishedVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                state: FlowVersionState.LOCKED,
+                created: '2020-01-01T00:00:00.000Z',
+                connectionIds: ['published-only-connection'],
+            })
+            const newerDraftVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                state: FlowVersionState.DRAFT,
+                created: '2020-06-01T00:00:00.000Z',
+                connectionIds: [],
+            })
+            await db.save('flow_version', [publishedVersion, newerDraftVersion])
+            mockFlow.publishedVersionId = publishedVersion.id
+            await db.save('flow', mockFlow)
+
+            const draftMatches = await ctx.get('/v1/flows', {
+                projectId: ctx.project.id,
+                connectionExternalIds: 'published-only-connection',
+            })
+            const publishedMatches = await ctx.get('/v1/flows', {
+                projectId: ctx.project.id,
+                connectionExternalIds: 'published-only-connection',
+                versionState: FlowVersionState.LOCKED,
+            })
+
+            expect(draftMatches?.json().data).toHaveLength(0)
+            expect(publishedMatches?.statusCode).toBe(StatusCodes.OK)
+            expect(publishedMatches?.json().data.map((flow: { id: string }) => flow.id)).toEqual([mockFlow.id])
+        })
+
         it('Filters Flows by status', async () => {
             const ctx = await createTestContext(app!)
 
@@ -335,6 +518,170 @@ describe('Flow API', () => {
             expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
             expect(responseBody?.params?.entityType).toBe('FlowVersion')
             expect(responseBody?.params?.message).toBe(`flowId=${mockFlow.id}`)
+        })
+
+        it('Sorts Flows by name ascending, ignoring case', async () => {
+            const ctx = await createTestContext(app!)
+            await seedFlowsNamed({ projectId: ctx.project.id, displayNames: ['Zeta', 'alpha', 'mid'] })
+
+            const response = await ctx.get('/v1/flows', {
+                projectId: ctx.project.id,
+                sortBy: 'NAME',
+                order: 'ASC',
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(responseBody.data.map((flow: PopulatedFlow) => flow.version.displayName)).toEqual(['alpha', 'mid', 'Zeta'])
+        })
+
+        it('Sorts Flows by name descending', async () => {
+            const ctx = await createTestContext(app!)
+            await seedFlowsNamed({ projectId: ctx.project.id, displayNames: ['Zeta', 'alpha', 'mid'] })
+
+            const response = await ctx.get('/v1/flows', {
+                projectId: ctx.project.id,
+                sortBy: 'NAME',
+                order: 'DESC',
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(responseBody.data.map((flow: PopulatedFlow) => flow.version.displayName)).toEqual(['Zeta', 'mid', 'alpha'])
+        })
+
+        it('Sorts Flows by the published name when versionState is LOCKED', async () => {
+            const ctx = await createTestContext(app!)
+
+            const flowWithLateName = createMockFlow({ projectId: ctx.project.id })
+            const flowWithEarlyName = createMockFlow({ projectId: ctx.project.id })
+            await db.save('flow', [flowWithLateName, flowWithEarlyName])
+
+            const latePublishedVersion = createMockFlowVersion({
+                flowId: flowWithLateName.id,
+                displayName: 'Zpublished',
+                state: FlowVersionState.LOCKED,
+                created: dayjs().subtract(1, 'hour').toISOString(),
+            })
+            const earlyPublishedVersion = createMockFlowVersion({
+                flowId: flowWithEarlyName.id,
+                displayName: 'Apublished',
+                state: FlowVersionState.LOCKED,
+                created: dayjs().subtract(1, 'hour').toISOString(),
+            })
+            const lateDraftVersion = createMockFlowVersion({
+                flowId: flowWithLateName.id,
+                displayName: 'adraft',
+                state: FlowVersionState.DRAFT,
+                created: dayjs().toISOString(),
+            })
+            const earlyDraftVersion = createMockFlowVersion({
+                flowId: flowWithEarlyName.id,
+                displayName: 'zdraft',
+                state: FlowVersionState.DRAFT,
+                created: dayjs().toISOString(),
+            })
+            await db.save('flow_version', [latePublishedVersion, earlyPublishedVersion, lateDraftVersion, earlyDraftVersion])
+
+            await db.update('flow', flowWithLateName.id, { publishedVersionId: latePublishedVersion.id })
+            await db.update('flow', flowWithEarlyName.id, { publishedVersionId: earlyPublishedVersion.id })
+
+            const response = await ctx.get('/v1/flows', {
+                projectId: ctx.project.id,
+                versionState: 'LOCKED',
+                sortBy: 'NAME',
+                order: 'ASC',
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(responseBody.data.map((flow: PopulatedFlow) => flow.version.displayName)).toEqual(['Apublished', 'Zpublished'])
+        })
+
+        it('Mints no cursor for a name sorted page', async () => {
+            const ctx = await createTestContext(app!)
+            await seedFlowsNamed({ projectId: ctx.project.id, displayNames: ['Zeta', 'alpha', 'mid'] })
+
+            const response = await ctx.get('/v1/flows', {
+                projectId: ctx.project.id,
+                sortBy: 'NAME',
+                limit: '1',
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(responseBody.data).toHaveLength(1)
+            expect(responseBody.next).toBeNull()
+            expect(responseBody.previous).toBeNull()
+        })
+
+        it('Does not leak the internal name sort column', async () => {
+            const ctx = await createTestContext(app!)
+            await seedFlowsNamed({ projectId: ctx.project.id, displayNames: ['alpha'] })
+
+            const response = await ctx.get('/v1/flows', {
+                projectId: ctx.project.id,
+                sortBy: 'NAME',
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(responseBody.data[0]).not.toHaveProperty('ap_cursor_name')
+        })
+
+        it('Rejects a name sort combined with a cursor', async () => {
+            const ctx = await createTestContext(app!)
+            await seedFlowsNamed({ projectId: ctx.project.id, displayNames: ['alpha', 'beta'] })
+
+            const firstPage = await ctx.get('/v1/flows', { projectId: ctx.project.id, limit: '1' })
+            const cursor = firstPage?.json()?.next
+            expect(cursor).not.toBeNull()
+
+            const response = await ctx.get('/v1/flows', {
+                projectId: ctx.project.id,
+                sortBy: 'NAME',
+                cursor,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('Keeps the default order on status then updated when no sort is requested', async () => {
+            const ctx = await createTestContext(app!)
+
+            const enabledOlder = createMockFlow({
+                projectId: ctx.project.id,
+                status: FlowStatus.ENABLED,
+                updated: dayjs().subtract(3, 'hour').toISOString(),
+            })
+            const enabledNewer = createMockFlow({
+                projectId: ctx.project.id,
+                status: FlowStatus.ENABLED,
+                updated: dayjs().subtract(1, 'hour').toISOString(),
+            })
+            const disabledNewest = createMockFlow({
+                projectId: ctx.project.id,
+                status: FlowStatus.DISABLED,
+                updated: dayjs().toISOString(),
+            })
+            await db.save('flow', [enabledOlder, enabledNewer, disabledNewest])
+            await db.save('flow_version', [enabledOlder, enabledNewer, disabledNewest].map((flow) => createMockFlowVersion({ flowId: flow.id })))
+
+            const response = await ctx.get('/v1/flows', { projectId: ctx.project.id })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(responseBody.data.map((flow: PopulatedFlow) => flow.id)).toEqual([
+                enabledNewer.id,
+                enabledOlder.id,
+                disabledNewest.id,
+            ])
         })
     })
 
@@ -406,3 +753,23 @@ describe('Flow API', () => {
         })
     })
 })
+
+async function seedFlowsNamed({ projectId, displayNames }: { projectId: string, displayNames: string[] }): Promise<void> {
+    const flows = displayNames.map(() => createMockFlow({ projectId }))
+    await db.save('flow', flows)
+    await db.save('flow_version', flows.map((flow, index) => createMockFlowVersion({
+        flowId: flow.id,
+        displayName: displayNames[index],
+    })))
+}
+
+function emptyTrigger(): FlowTrigger {
+    return {
+        type: FlowTriggerType.EMPTY,
+        name: 'trigger',
+        settings: {},
+        valid: false,
+        displayName: 'Select Trigger',
+        lastUpdatedDate: dayjs().toISOString(),
+    }
+}

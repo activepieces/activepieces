@@ -6,6 +6,7 @@ import { listUsersActionOutputSchema } from '../output-schemas';
 export const slackListUsers = createAction({
   auth: slackAuth,
   name: 'list_users',
+  classification: 'SEARCH',
   displayName: 'List Users',
   description: 'List all users in the workspace.',
   audience: 'ai',

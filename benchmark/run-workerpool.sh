@@ -44,7 +44,7 @@ sleep 8
 $COMPOSE ps
 
 echo "=== Setting up flow ==="
-FLOW_ID=$(FLOW_ENABLE_TIMEOUT=30 "$ROOT/benchmark/setup.sh")
+FLOW_ID=$(FLOW_ENABLE_TIMEOUT=30 bun run "$ROOT/benchmark/setup.ts")
 echo "Flow ID: $FLOW_ID"
 WEBHOOK="http://localhost:8080/api/v1/webhooks/$FLOW_ID/sync"
 

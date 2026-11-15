@@ -23,7 +23,7 @@ echo "Base URL: $BASE_URL"
 echo "Requests: $NUM_REQUESTS"
 echo ""
 
-# Sign in with the existing benchmark user (created by benchmark/setup.sh).
+# Sign in with the existing benchmark user (created by benchmark/setup.ts).
 echo "--- Signing in ---"
 SIGNIN_RESPONSE=$(curl -s --fail-with-body "$API_URL/authentication/sign-in" \
   -H "Content-Type: application/json" \

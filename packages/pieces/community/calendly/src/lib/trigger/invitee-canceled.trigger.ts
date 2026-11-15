@@ -7,14 +7,16 @@ import {
 } from '@activepieces/pieces-common';
 import { calendlyCommon, CalendlyWebhookInformation } from '../common';
 import { calendlyAuth } from '../auth';
+import { inviteeTriggerOutputSchema } from '../output-schemas';
 
 const triggerNameInStore = 'calendly_invitee_canceled_trigger';
 
 export const calendlyInviteeCanceled = createTrigger({
   auth: calendlyAuth,
   name: 'invitee_canceled',
+  classification: 'READ',
   displayName: 'Event Canceled',
-  description: 'Triggers when a new Calendly event is canceled',
+  description: 'Triggers when a Calendly event is canceled.',
   aiMetadata: {
     description:
       'Fires when an invitee cancels a scheduled Calendly event. Emits the canceled event including the invitee details, the cancellation reason and who canceled it (host or invitee), and the event status set to "canceled".',
@@ -63,6 +65,7 @@ export const calendlyInviteeCanceled = createTrigger({
       uri: 'https://api.calendly.com/scheduled_events/AAAAAAAAAAAaA/invitees/AAAAAAAA',
     },
   },
+  outputSchema: inviteeTriggerOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const calendlyUser = await calendlyCommon.getUser(context.auth.secret_text);

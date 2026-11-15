@@ -17,16 +17,20 @@ import {
   PieceTrigger,
   FlowTrigger,
   BranchExecutionType,
+  DEFAULT_BATCH_SIZE,
   RouterExecutionType,
   flowStructureUtil,
   StepSettings,
   RouterActionSettingsWithValidation,
+  AiRouterActionSettingsWithValidation,
+  AiRouterMatchMode,
   FlowTriggerType,
   PropertyExecutionType,
   DEFAULT_SAMPLE_DATA_SETTINGS,
   FlowVersion,
   FlowOperationType,
   AUTHENTICATION_PROPERTY_NAME,
+  StepLocationRelativeToParent,
 } from '@activepieces/shared';
 import { useRef } from 'react';
 
@@ -77,6 +81,12 @@ const isPieceStepInputValid = ({
   return schema.safeParse(input).success && authValid;
 };
 
+const routerSettingsOverride = (settings: StepSettings | undefined) =>
+  !isNil(settings) && 'executionType' in settings ? settings : undefined;
+
+const aiRouterSettingsOverride = (settings: StepSettings | undefined) =>
+  !isNil(settings) && 'question' in settings ? settings : undefined;
+
 const isStepInitiallyValid = (
   pieceSelectorItem: PieceSelectorItem,
   overrideDefaultSettings?: StepSettings,
@@ -98,7 +108,8 @@ const isStepInitiallyValid = (
         requireAuth: pieceSelectorItem.actionOrTrigger.requireAuth,
       });
     }
-    case FlowActionType.LOOP_ON_ITEMS: {
+    case FlowActionType.LOOP_ON_ITEMS:
+    case FlowActionType.PROCESS_IN_BATCHES: {
       if (
         overrideDefaultSettings &&
         'input' in overrideDefaultSettings &&
@@ -114,6 +125,14 @@ const isStepInitiallyValid = (
     case FlowActionType.ROUTER: {
       if (overrideDefaultSettings) {
         return RouterActionSettingsWithValidation.safeParse(
+          overrideDefaultSettings,
+        ).success;
+      }
+      return false;
+    }
+    case FlowActionType.AI_ROUTER: {
+      if (overrideDefaultSettings) {
+        return AiRouterActionSettingsWithValidation.safeParse(
           overrideDefaultSettings,
         ).success;
       }
@@ -184,6 +203,7 @@ const getDefaultStepValues = ({
             },
             input,
             errorHandlingOptions,
+            useDeno: true,
           },
         },
         common,
@@ -198,11 +218,23 @@ const getDefaultStepValues = ({
         },
         common,
       );
+    case FlowActionType.PROCESS_IN_BATCHES:
+      return deepMergeAndCast<FlowAction>(
+        {
+          type: FlowActionType.PROCESS_IN_BATCHES,
+          settings: overrideDefaultSettings ?? {
+            items: '',
+            batchSize: DEFAULT_BATCH_SIZE,
+            errorHandlingOptions,
+          },
+        },
+        common,
+      );
     case FlowActionType.ROUTER:
       return deepMergeAndCast<FlowAction>(
         {
           type: FlowActionType.ROUTER,
-          settings: overrideDefaultSettings ?? {
+          settings: routerSettingsOverride(overrideDefaultSettings) ?? {
             executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
             branches: [
               {
@@ -222,6 +254,31 @@ const getDefaultStepValues = ({
               {
                 branchType: BranchExecutionType.FALLBACK,
                 branchName: 'Otherwise',
+              },
+            ],
+          },
+          children: [null, null],
+        },
+        common,
+      );
+    case FlowActionType.AI_ROUTER:
+      return deepMergeAndCast<FlowAction>(
+        {
+          type: FlowActionType.AI_ROUTER,
+          settings: aiRouterSettingsOverride(overrideDefaultSettings) ?? {
+            text: '',
+            question: '',
+            matchMode: AiRouterMatchMode.BEST_MATCH,
+            branches: [
+              {
+                branchType: BranchExecutionType.CONDITION,
+                branchName: 'Route 1',
+                description: '',
+              },
+              {
+                branchType: BranchExecutionType.FALLBACK,
+                branchName: 'Otherwise',
+                description: 'Anything that fits none of the routes above',
               },
             ],
           },
@@ -369,6 +426,56 @@ const getStepNameFromOperationType = (
       return 'trigger';
   }
 };
+const isStepInsideBatch = ({
+  flowVersion,
+  stepName,
+}: {
+  flowVersion: FlowVersion;
+  stepName: string;
+}): boolean =>
+  flowStructureUtil
+    .getAllSteps(flowVersion.trigger)
+    .some(
+      (step) =>
+        step.type === FlowActionType.PROCESS_IN_BATCHES &&
+        flowStructureUtil.isChildOf(step, stepName),
+    );
+
+const getHiddenStepTypes = ({
+  operation,
+  flowVersion,
+}: {
+  operation: PieceSelectorOperation;
+  flowVersion: FlowVersion;
+}): FlowActionType[] => {
+  switch (operation.type) {
+    case FlowOperationType.UPDATE_TRIGGER:
+      return [];
+    case FlowOperationType.UPDATE_ACTION: {
+      const stepType = flowStructureUtil.getStep(
+        operation.stepName,
+        flowVersion.trigger,
+      )?.type;
+      if (stepType === FlowActionType.PROCESS_IN_BATCHES) {
+        return [FlowActionType.LOOP_ON_ITEMS];
+      }
+      return stepType === FlowActionType.LOOP_ON_ITEMS ||
+        isStepInsideBatch({ flowVersion, stepName: operation.stepName })
+        ? [FlowActionType.PROCESS_IN_BATCHES]
+        : [];
+    }
+    case FlowOperationType.ADD_ACTION: {
+      const { parentStep, stepLocationRelativeToParent } =
+        operation.actionLocation;
+      return stepLocationRelativeToParent ===
+        StepLocationRelativeToParent.INSIDE_BATCH ||
+        isStepInsideBatch({ flowVersion, stepName: parentStep })
+        ? [FlowActionType.PROCESS_IN_BATCHES]
+        : [];
+    }
+  }
+};
+
 export const pieceSelectorUtils = {
   getDefaultStepValues,
   useAdjustPieceListHeightToAvailableSpace,
@@ -377,5 +484,8 @@ export const pieceSelectorUtils = {
   isChatTrigger,
   removeHiddenActions,
   getStepNameFromOperationType,
+  isStepInsideBatch,
+  getHiddenStepTypes,
   isManualTrigger: isManualPieceTrigger,
+  PIECE_SELECTOR_CLIPPING_THRESHOLD: 20 as const,
 };

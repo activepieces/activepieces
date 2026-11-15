@@ -1,7 +1,6 @@
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,
-  PiecePropValueSchema,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import {
@@ -93,6 +92,7 @@ const polling: Polling<
 export const twilioNewTranscription = createTrigger({
   auth: twilioAuth,
   name: 'new_transcription',
+  classification: 'READ',
   displayName: 'New Transcription',
   description: 'Triggers when a new call recording transcription is completed.',
   aiMetadata: {
@@ -110,7 +110,7 @@ export const twilioNewTranscription = createTrigger({
       "recording_sid": "REaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "sid": "TRaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "status": "completed",
-      "transcription_text": null,
+      "transcription_text": "Hi, this is Sam. Please call me back about my order.",
       "type": "fast",
       "uri": "/2010-04-01/Accounts/ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Transcriptions/TRaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.json"
     },
@@ -118,18 +118,10 @@ export const twilioNewTranscription = createTrigger({
 
 
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   async test(context) {
     return await pollingHelper.test(polling, context);

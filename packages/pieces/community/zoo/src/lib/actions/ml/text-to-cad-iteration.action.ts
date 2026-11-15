@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const textToCadIterationAction = createAction({
   name: 'text_to_cad_iteration',
+  classification: 'WRITE',
   displayName: 'Iterate CAD Model',
   description: 'Create a new iteration of an existing 3D model',
   audience: 'both',

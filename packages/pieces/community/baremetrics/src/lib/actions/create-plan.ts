@@ -8,6 +8,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createPlan = createAction({
   name: 'create_plan',
+  classification: 'WRITE',
   displayName: 'Create Plan',
   description: 'Creates a new plan for use when creating or updating subscriptions',
   audience: 'both',

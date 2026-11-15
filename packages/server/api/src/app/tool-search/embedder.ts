@@ -38,7 +38,7 @@ export function l2normalize(vector: number[]): number[] {
 
 /**
  * Search-LOCAL OpenAI embedder at 1024-d. Deliberately does NOT touch AP's shared
- * `createEmbeddingModel` (hardcoded 768-d, ai-sdk.ts:222) — it constructs its own provider
+ * `aiUtils.createEmbeddingModel` (hardcoded 768-d) — it constructs its own provider
  * and passes `dimensions: 1024` so the KB/agent path is unaffected (ENGINE_IMPLEMENTATION §3).
  */
 export function createOpenAiEmbedder(apiKey: string): ToolSearchEmbedder {

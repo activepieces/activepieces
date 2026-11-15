@@ -6,6 +6,7 @@ import { askHandleApiCall } from '../common/client';
 export const listLeads = createAction({
   auth: askHandleAuth,
   name: 'list_leads',
+  classification: 'SEARCH',
   displayName: 'List Leads',
   description: 'Get a list of all leads',
   audience: 'both',

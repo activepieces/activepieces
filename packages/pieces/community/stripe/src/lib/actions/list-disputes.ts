@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { disputeListOutputSchema } from '../output-schemas';
 export const stripeListDisputes = createAction({
   name: 'list_disputes',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'List Disputes (Agent)',
   description: 'List Stripe disputes (chargebacks).',

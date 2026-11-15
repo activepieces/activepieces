@@ -11,6 +11,7 @@ import { uploadAttachmentAiActionOutputSchema } from '../output-schemas';
 export const airtableUploadAttachmentAiAction = createAction({
   auth: airtableAuth,
   name: 'upload_attachment_ai',
+  classification: 'WRITE',
   displayName: 'Upload Attachment (Agent)',
   description: 'Upload a file into an attachment field on a record.',
   audience: 'ai',

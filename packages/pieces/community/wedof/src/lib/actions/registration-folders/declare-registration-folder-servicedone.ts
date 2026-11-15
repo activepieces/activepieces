@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 export const declareRegistrationFolderServicedone = createAction({
   auth: wedofAuth,
   name: 'declareRegistrationFolderServicedone',
+  classification: 'WRITE',
   displayName: "Passer un dossier de formation à l'état : Service fait déclaré",
   description:
     "Passe le dossier dans l'état 'service fait déclaré' s'il est dans l'état 'sortie de formation' ou dans l'état 'en formation'. Si depuis l'état 'en formation', le passage à l'état intermédiaire 'sortie de formation' se fera automatiquement.",

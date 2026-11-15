@@ -11,10 +11,21 @@ const EXCLUDE_PATTERNS: RegExp[] = [
     /(^|\/)dist\//,
 ]
 
+// Test code, wherever it lives. This bucket is listed first so a test file is charged here
+// instead of the product area it covers: a budget that counts tests taxes the PR for adding them.
+const TEST_PATTERNS: RegExp[] = [
+    /\.(test|spec)\.[cm]?[jt]sx?$/,
+    /(^|\/)(test|tests|__tests__|__mocks__|__snapshots__)\//,
+    /(^|\/)(vitest|jest|playwright|checkly)\.config\.[cm]?[jt]s$/,
+    /^packages\/tests-e2e\//,
+    /^smoke-test\//,
+]
+
 // First matching bucket wins; `budget: null` means the area is exempt (measured, never gated).
 // packages/pieces is exempt on purpose: line count can't tell a cohesive new piece from a
 // codemod or a schema dump, and pieces are @pieces-owned, self-contained, and low blast radius.
 const BUCKETS: SizeBucket[] = [
+    { name: 'tests', tests: TEST_PATTERNS, budget: null },
     {
         name: 'engine / worker / execution',
         tests: [/^packages\/server\/engine\//, /^packages\/server\/worker\//, /^packages\/core\/execution\//],
@@ -41,6 +52,16 @@ function resolveRenamePath({ raw }: { raw: string }): string {
     }
     const [, , to] = /^(.*) => (.*)$/.exec(raw) ?? []
     return to ?? raw
+}
+
+// On a `pull_request` run the checkout is the base←head merge commit, so its two
+// parents are the true base (HEAD^1) and the PR head (HEAD^2); diffing them isolates
+// the PR's own changes. This matters for stacked PRs: GitHub folds the ancestor PRs
+// into the merge's base parent, so `origin/<base>...HEAD` collapses the merge-base to
+// main and re-counts the whole stack. A non-merge checkout (local run) has no HEAD^2,
+// so it falls back to diffing against the base ref.
+function diffRange({ baseRef, parentCount }: { baseRef: string, parentCount: number }): string {
+    return parentCount >= 2 ? 'HEAD^1...HEAD^2' : `origin/${baseRef}...HEAD`
 }
 
 function isExcluded({ path }: { path: string }): boolean {
@@ -131,7 +152,9 @@ function main(): void {
     const labels: string[] = JSON.parse(process.env.PR_LABELS ?? '[]')
     const title = process.env.PR_TITLE ?? ''
 
-    const numstat = execSync(`git diff --numstat "origin/${baseRef}...HEAD"`, {
+    const parentCount = execSync('git rev-list --parents -n 1 HEAD', { encoding: 'utf-8' })
+        .trim().split(/\s+/).length - 1
+    const numstat = execSync(`git diff --numstat ${diffRange({ baseRef, parentCount })}`, {
         encoding: 'utf-8',
         maxBuffer: 256 * 1024 * 1024,
     })
@@ -173,7 +196,7 @@ type SizeReport = {
     excludedTotal: number
 }
 
-export const prSizeCheck = { collectSizes, renderSummary, bucketFor, resolveRenamePath, isBlocked }
+export const prSizeCheck = { collectSizes, renderSummary, bucketFor, resolveRenamePath, isBlocked, diffRange }
 
 if (import.meta.main) {
     main()

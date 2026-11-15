@@ -65,6 +65,7 @@ const polling: Polling<
 export const taskCreated = createTrigger({
   auth: motionAuth,
   name: 'task-created',
+  classification: 'READ',
   displayName: 'Task Created',
   description: 'Triggers when a new task is created.',
   aiMetadata: {
@@ -76,18 +77,10 @@ export const taskCreated = createTrigger({
   },
 
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   async test(context) {
     return await pollingHelper.test(polling, context);

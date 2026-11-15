@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getAddressBlocksValidated = createAction({
   name: 'get_address_blocks_validated',
+  classification: 'SEARCH',
   displayName: 'Get Address Blocks Validated',
   description: 'Get list of blocks validated by an address',
   audience: 'both',

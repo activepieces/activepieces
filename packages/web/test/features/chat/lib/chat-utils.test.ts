@@ -1,9 +1,10 @@
 import {
-  ChatHistoryMessage,
-  PersistedChatMessage,
-  PersistedChatPartType,
-  PersistedChatRole,
+  AgentHistoryMessage,
+  PersistedAgentMessage,
+  PersistedAgentPartType,
+  PersistedAgentRole,
 } from '@activepieces/shared';
+import { mcpToolNameUtils } from '@activepieces/shared';
 import { describe, expect, it } from 'vitest';
 
 import { AnyToolPart } from '@/features/chat/lib/chat-types';
@@ -12,17 +13,17 @@ import { chatUtils } from '@/features/chat/lib/chat-utils';
 function buildPlanMessage(
   data: Record<string, unknown>,
   buildId = 'build_1',
-): PersistedChatMessage {
+): PersistedAgentMessage {
   return {
-    role: PersistedChatRole.ASSISTANT,
-    parts: [{ type: PersistedChatPartType.BUILD_PLAN, buildId, data }],
+    role: PersistedAgentRole.ASSISTANT,
+    parts: [{ type: PersistedAgentPartType.BUILD_PLAN, buildId, data }],
   };
 }
 
 function legacyBuildPlanMessage(
   input: Record<string, unknown>,
   buildId = 'build_1',
-): ChatHistoryMessage {
+): AgentHistoryMessage {
   return {
     role: 'assistant',
     content: '',
@@ -40,12 +41,12 @@ function legacyBuildPlanMessage(
 
 describe('chatUtils.extractFilesFromHistory', () => {
   it('groups produced file parts by toolCallId', () => {
-    const data: PersistedChatMessage[] = [
+    const data: PersistedAgentMessage[] = [
       {
-        role: PersistedChatRole.ASSISTANT,
+        role: PersistedAgentRole.ASSISTANT,
         parts: [
           {
-            type: PersistedChatPartType.FILE,
+            type: PersistedAgentPartType.FILE,
             toolCallId: 'call_code',
             fileId: 'file_1',
             url: 'https://example.com/file_1',
@@ -55,7 +56,7 @@ describe('chatUtils.extractFilesFromHistory', () => {
             timestamp: '2026-01-01T00:00:00.000Z',
           },
           {
-            type: PersistedChatPartType.FILE,
+            type: PersistedAgentPartType.FILE,
             toolCallId: 'call_code',
             fileId: 'file_2',
             url: 'https://example.com/file_2',
@@ -83,8 +84,8 @@ describe('chatUtils.extractFilesFromHistory', () => {
     expect(
       chatUtils.extractFilesFromHistory([
         {
-          role: PersistedChatRole.ASSISTANT,
-          parts: [{ type: PersistedChatPartType.TEXT, text: 'hi' }],
+          role: PersistedAgentRole.ASSISTANT,
+          parts: [{ type: PersistedAgentPartType.TEXT, text: 'hi' }],
         },
       ]),
     ).toEqual({});
@@ -200,6 +201,46 @@ function toolPart(
 }
 
 describe('chatUtils — tool pill active/done labels', () => {
+  it('names a configured piece tool by its app and action, not its generated id', () => {
+    const part = toolPart(
+      mcpToolNameUtils.createPieceToolName(
+        '@activepieces/piece-google-calendar',
+        'google_calendar_get_events',
+      ),
+      { instruction: 'this week' },
+    );
+
+    expect(chatUtils.formatToolActionName({ part })).toBe(
+      'Google Calendar Get Events',
+    );
+    expect(chatUtils.formatToolDoneTitle({ part })).toBe(
+      'Google Calendar Get Events',
+    );
+  });
+
+  it('keeps an action that does not repeat its app', () => {
+    const part = toolPart(
+      mcpToolNameUtils.createPieceToolName(
+        '@activepieces/piece-slack',
+        'send_channel_message',
+      ),
+      {},
+    );
+
+    expect(chatUtils.formatToolActionName({ part })).toBe(
+      'Slack Send Channel Message',
+    );
+  });
+
+  it('leaves a name that was never generated alone', () => {
+    expect(
+      chatUtils.formatToolActionName({ part: toolPart('ap_web_search', {}) }),
+    ).toBe('Searching the web');
+    expect(
+      chatUtils.formatToolDoneTitle({ part: toolPart('some_helper', {}) }),
+    ).toBe('Some Helper');
+  });
+
   it('uses the model-authored activeTitle (-ing) and doneTitle (-ed) when provided', () => {
     const part = toolPart('ap_generate_image', {
       activeTitle: 'Designing your Instagram post',

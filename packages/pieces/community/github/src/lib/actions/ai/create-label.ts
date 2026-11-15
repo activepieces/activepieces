@@ -8,6 +8,7 @@ import { labelBodyOutputSchema } from '../../output-schemas';
 export const githubCreateLabelAction = createAction({
   auth: githubAuth,
   name: 'create_label',
+  classification: 'WRITE',
   displayName: 'Create Label (Agent)',
   description: 'Defines a new label in a repository.',
   audience: 'ai',

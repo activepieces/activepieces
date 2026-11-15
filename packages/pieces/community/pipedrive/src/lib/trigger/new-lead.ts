@@ -9,6 +9,7 @@ import {
 } from '../common';
 import { GetField } from '../common/types';
 import { isNil } from '@activepieces/pieces-framework';
+import { newLeadTriggerOutputSchema } from '../output-schemas';
 
 interface PipedriveLeadV2 {
 	id: string;
@@ -53,6 +54,8 @@ interface GetLeadResponseV2 {
 export const newLeadTrigger = createTrigger({
 	auth: pipedriveAuth,
 	name: 'new-lead',
+	outputSchema: newLeadTriggerOutputSchema,
+	classification: 'READ',
 	displayName: 'New Lead',
 	description: 'Triggers when a new lead is created.',
 	aiMetadata: {

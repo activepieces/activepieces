@@ -1,0 +1,1058 @@
+import { isNil, isObject, isString, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ActionClassification, isReadOnlyClassification } from '@activepieces/pieces-framework'
+import { agentAiUtils } from '@activepieces/server-utils'
+import { Agent, AgentActionOutcome, AgentIcon, AgentRunSource, AgentTool, agentToolClassification, AgentToolType, AppConnectionStatus, AppConnectionType, ApplicationEventName, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, mcpToolNameUtils, Project, RunEnvironment } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
+import { fileService } from '../../../file/file.service'
+import { filesService } from '../../../file/files-service'
+import { flowService } from '../../../flows/flow/flow.service'
+import { flowRunService } from '../../../flows/flow-run/flow-run-service'
+import { applicationEvents } from '../../../helper/application-events'
+import { domainHelper } from '../../../helper/domain-helper'
+import { resolvePermissionChecker } from '../../../mcp/mcp-permissions'
+import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
+import { runActionInput } from '../../../mcp/tools/ap-run-action'
+import { ActionRunOffload, executeCodeActionRun, executePieceActionRun, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
+import { mcpUtils } from '../../../mcp/tools/mcp-utils'
+import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
+import { tableService } from '../../../tables/table/table.service'
+import { agentApprovalGate } from '../agent-approval-gate'
+import { readConversationFile } from '../agent-file-utils'
+import { agentHelpers } from '../agent-helpers'
+import { agentMemoryAi } from '../agent-memory-ai'
+import { agentAudit, agentService } from '../agent-service'
+import { agentPrompt } from '../prompt/agent-prompt'
+import { agentSurfaceNotes } from '../prompt/agent-surface-notes'
+import { outcomeOfToolResult, recordAgentAction } from '../rpc/rpc-shared'
+
+const AGENT_LIST_LIMIT = 50
+const CROSS_PROJECT_CONNECTION_LIMIT = 100
+const ACCOUNT_CHOICE_LIMIT = 10
+const OAUTH_TYPES: ReadonlySet<AppConnectionType> = new Set([
+    AppConnectionType.OAUTH2,
+    AppConnectionType.CLOUD_OAUTH2,
+    AppConnectionType.PLATFORM_OAUTH2,
+])
+const CLOCK_SKEW_BUFFER_S = 5 * 60
+const CROSS_PROJECT_FLOW_LIMIT = 200
+const MAX_PRODUCED_FILES = 10
+const MAX_PRODUCED_FILE_BYTES = 25 * 1024 * 1024
+const MAX_RESULT_TEXT_CHARS = 20_000
+const LARGE_RESULT_OFFLOAD_BYTES = 64 * 1024
+const FLOW_STATUS_VALUES: ReadonlySet<string> = new Set(Object.values(FlowStatus))
+const FLOW_RUN_STATUS_VALUES: ReadonlySet<string> = new Set(Object.values(FlowRunStatus))
+
+function toFlowStatus(value?: string): FlowStatus | undefined {
+    return value && FLOW_STATUS_VALUES.has(value) ? value as FlowStatus : undefined
+}
+
+function toFlowRunStatus(value?: string): FlowRunStatus | undefined {
+    return value && FLOW_RUN_STATUS_VALUES.has(value) ? value as FlowRunStatus : undefined
+}
+
+function pieceShortName(fullName: string): string {
+    return fullName.replace('@activepieces/piece-', '')
+}
+
+function pieceDisplayLabel(shortName: string): string {
+    return shortName.charAt(0).toUpperCase() + shortName.slice(1)
+}
+
+async function findConnectionsForPiece({ pieceName, projects, platformId, log }: {
+    pieceName: string
+    projects: Project[]
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<FindConnectionsResult> {
+    const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
+
+    const projectId = projects[0]?.id
+    let requiredScopes: string[] = []
+    if (projectId) {
+        const project = projects[0]
+        const piece = await pieceMetadataService(log).get({
+            name: normalizedPiece,
+            projectId,
+            platformId: project.platformId,
+        })
+        if (piece && isNil(piece.auth)) {
+            return { noAuthRequired: true, piece: normalizedPiece }
+        }
+        if (piece?.auth && !Array.isArray(piece.auth)) {
+            const authScope = (piece.auth as Record<string, unknown>)['scope']
+            if (Array.isArray(authScope)) {
+                requiredScopes = authScope.filter((s): s is string => typeof s === 'string')
+            }
+        }
+    }
+
+    const allConnections = await Promise.all(
+        projects.map(async (project) => {
+            const result = await appConnectionService(log).list({
+                projectId: project.id,
+                platformId,
+                pieceNames: [normalizedPiece],
+                cursorRequest: null,
+                displayName: undefined,
+                status: undefined,
+                limit: CROSS_PROJECT_CONNECTION_LIMIT,
+                scope: undefined,
+                externalIds: undefined,
+            })
+            return result.data.map((c) => {
+                const info = resolveConnectionInfo({ status: c.status, type: c.type, value: c.value })
+                return {
+                    label: c.displayName,
+                    externalId: c.externalId,
+                    project: agentPrompt.projectDisplayName(project),
+                    projectId: project.id,
+                    status: info.status,
+                    grantedScopes: info.grantedScopes,
+                    updated: c.updated,
+                }
+            })
+        }),
+    )
+
+    const flat = allConnections.flat()
+    const shortName = pieceShortName(normalizedPiece)
+    const displayName = pieceDisplayLabel(shortName)
+
+    if (flat.length === 0) {
+        return { needsConnection: true, piece: shortName, displayName, requiredScopes }
+    }
+
+    return { pickConnection: true, piece: shortName, displayName, connections: flat, requiredScopes }
+}
+
+async function listFlowsAcrossProjects({ projects, status, log }: {
+    projects: Project[]
+    status?: string
+    log: FastifyBaseLogger
+}): Promise<{ content: { type: string, text: string }[] }> {
+    const validStatus = toFlowStatus(status)
+    const statusFilter = validStatus ? [validStatus] : undefined
+    const result = await flowService(log).list({
+        projectIds: projects.map((p) => p.id),
+        cursorRequest: null,
+        limit: CROSS_PROJECT_FLOW_LIMIT,
+        status: statusFilter,
+    })
+
+    const grouped = new Map<string, string[]>()
+    for (const flow of result.data) {
+        const lines = grouped.get(flow.projectId) ?? []
+        lines.push(formatFlowLine(flow))
+        grouped.set(flow.projectId, lines)
+    }
+
+    const sections = projects.map((project) => {
+        const label = agentPrompt.projectDisplayName(project)
+        const lines = grouped.get(project.id)
+        return lines
+            ? `**${label}** (${project.id}):\n${lines.join('\n')}`
+            : `**${label}** (${project.id}): No flows found.`
+    })
+
+    return { content: [{ type: 'text', text: sections.join('\n\n') }] }
+}
+
+async function listConnectionsAcrossProjects({ projects, platformId, log }: {
+    projects: Project[]
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<{ content: { type: string, text: string }[] }> {
+    const allConnections = await Promise.all(
+        projects.map(async (project) => {
+            const result = await appConnectionService(log).list({
+                projectId: project.id,
+                platformId,
+                pieceNames: undefined,
+                cursorRequest: null,
+                displayName: undefined,
+                status: undefined,
+                limit: CROSS_PROJECT_CONNECTION_LIMIT,
+                scope: undefined,
+                externalIds: undefined,
+            })
+            return result.data.map((c) => `- ${c.displayName} (${pieceShortName(c.pieceName)}, ${c.status}) — ${agentPrompt.projectDisplayName(project)}`)
+        }),
+    )
+
+    const flat = allConnections.flat()
+    if (flat.length === 0) {
+        return { content: [{ type: 'text', text: 'No connections found across any project.' }] }
+    }
+
+    return { content: [{ type: 'text', text: `Found ${flat.length} connection(s):\n${flat.join('\n')}` }] }
+}
+
+async function listResourceForProject({ resource, projectId, status, log }: {
+    resource: 'tables' | 'runs'
+    projectId: string
+    status?: string
+    log: FastifyBaseLogger
+}): Promise<string[]> {
+    switch (resource) {
+        case 'tables': {
+            const result = await tableService.list({
+                projectId,
+                cursor: undefined,
+                limit: 50,
+                name: undefined,
+                externalIds: undefined,
+                folderId: undefined,
+                includeRowCount: true,
+            })
+            return result.data.map((t) => `- ${t.name} (${t.id}) — ${t.rowCount ?? 0} records`)
+        }
+        case 'runs': {
+            const validStatus = toFlowRunStatus(status)
+            const result = await flowRunService(log).list({
+                projectId,
+                flowId: undefined,
+                status: validStatus ? [validStatus] : undefined,
+                environment: RunEnvironment.PRODUCTION,
+                cursor: null,
+                limit: 10,
+            })
+            return result.data.map((run) => formatRunSummary(run))
+        }
+    }
+}
+
+function nonEmpty(value: unknown): string | undefined {
+    return isString(value) && value.trim().length > 0 ? value.trim() : undefined
+}
+
+function briefOnly(value: unknown): string | undefined {
+    const text = nonEmpty(value)
+    return isNil(text) ? undefined : nonEmpty(agentSurfaceNotes.stripRunNotes(text))
+}
+
+async function createAgentFromChat({ toolInput, platformId, projectId, userId, log }: {
+    toolInput: Record<string, unknown>
+    platformId: string
+    projectId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const displayName = nonEmpty(toolInput.displayName)
+    const instructions = briefOnly(toolInput.instructions)
+    if (isNil(displayName) || isNil(instructions)) {
+        return { error: 'An agent needs a name and instructions.' }
+    }
+    const agent = await agentService(log).create({
+        platformId,
+        projectId,
+        ownerId: userId,
+        request: {
+            projectId,
+            displayName,
+            description: nonEmpty(toolInput.description) ?? null,
+            icon: AgentIcon.SPARKLES,
+            color: ColorName.PURPLE,
+            draft: { instructions, maxSteps: DEFAULT_AGENT_MAX_STEPS, tools: [], structuredOutput: [] },
+        },
+    })
+    return afterDraftChange({ agent, publish: false, editedItself: false, projectId, platformId, userId, log })
+}
+
+async function updateAgentFromChat({ toolInput, agent, editedItself, projectId, platformId, userId, log }: {
+    toolInput: Record<string, unknown>
+    agent: Agent
+    editedItself: boolean
+    projectId: string
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const displayName = nonEmpty(toolInput.displayName)
+    const description = nonEmpty(toolInput.description)
+    const instructions = briefOnly(toolInput.instructions)
+    const publish = toolInput.publish === true
+    if (isNil(displayName) && isNil(description) && isNil(instructions) && !publish) {
+        return { error: 'Nothing to change. Pass a new displayName, description or instructions, and none of them may be blank.' }
+    }
+    const updated = await agentService(log).update({
+        id: agent.id,
+        projectId,
+        platformId,
+        userId,
+        request: {
+            ...spreadIfDefined('displayName', displayName),
+            ...spreadIfDefined('description', description),
+            ...(isNil(instructions) ? {} : { draft: { ...agent.draft, instructions } }),
+        },
+    })
+    return afterDraftChange({ agent: updated, publish, editedItself, projectId, platformId, userId, log })
+}
+
+async function resolveConnectionToPin({ piece, pieceName, projectId, platformId, log }: {
+    piece: { displayName: string }
+    pieceName: string
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<{ externalId: string } | { error: string, accounts?: { label: string, externalId: string }[] }> {
+    const { data } = await appConnectionService(log).list({
+        projectId,
+        platformId,
+        pieceNames: [pieceName],
+        displayName: undefined,
+        status: undefined,
+        cursorRequest: null,
+        scope: undefined,
+        externalIds: undefined,
+        limit: ACCOUNT_CHOICE_LIMIT,
+    })
+    if (data.length === 0) {
+        return { error: `No ${piece.displayName} account is connected in this project. Call ap_show_connection_picker for ${piece.displayName} so they can connect one here, then call ap_add_agent_tool again with the connectionExternalId it gives you. Do not add the tool without an account: the agent would have to ask which account on every single run.` }
+    }
+    if (data.length === 1) {
+        return { externalId: data[0].externalId }
+    }
+    // The ids go in a field rather than the sentence, so the model does not read them out loud.
+    return {
+        error: `This project has ${data.length} ${piece.displayName} accounts. Call ap_show_connection_picker for ${piece.displayName} and let the person choose, then call ap_add_agent_tool again with connectionExternalId set to their pick. Do not choose for them.`,
+        accounts: data.map((connection) => ({ label: connection.displayName, externalId: connection.externalId })),
+    }
+}
+
+async function addAgentToolFromChat({ toolInput, agent, editedItself, projectId, platformId, userId, log }: {
+    toolInput: Record<string, unknown>
+    agent: Agent
+    editedItself: boolean
+    projectId: string
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const pieceName = nonEmpty(toolInput.pieceName)
+    const actionNames = toolNamesFrom(toolInput)
+    if (isNil(pieceName) || actionNames.length === 0) {
+        return { error: 'Adding tools needs the piece name and at least one action name.' }
+    }
+    const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
+    const piece = await pieceMetadataService(log).get({ name: normalizedPiece, projectId, platformId })
+    const missing = actionNames.filter((actionName) => isNil(piece?.actions[actionName]))
+    if (isNil(piece) || missing.length > 0) {
+        return { error: `${normalizedPiece} has no action called ${missing.join(' or ')}. Look it up with ap_research_pieces before adding it.` }
+    }
+    const requested = nonEmpty(toolInput.connectionExternalId)
+    if (!isNil(requested)) {
+        const connection = await appConnectionService(log).getOneWithoutValue({ projectId, platformId, externalId: requested })
+        if (isNil(connection)) {
+            return { error: 'No connection with that externalId in this project. Call ap_list_connections and pass one of those.' }
+        }
+        if (mcpUtils.normalizePieceName(connection.pieceName) !== normalizedPiece) {
+            return { error: `That connection is for ${connection.pieceName}, not ${normalizedPiece}. Pass a connection for the same app.` }
+        }
+    }
+    // The caller already holds the piece, so whether it needs an account is known here without
+    // asking the database again.
+    const resolved = !isNil(requested) || isNil(piece.auth)
+        ? { externalId: requested }
+        : await resolveConnectionToPin({ piece, pieceName: normalizedPiece, projectId, platformId, log })
+    if ('error' in resolved) {
+        return resolved
+    }
+    const connectionExternalId = resolved.externalId
+    const added: AgentTool[] = actionNames.map((actionName) => ({
+        type: AgentToolType.PIECE,
+        toolName: mcpToolNameUtils.createPieceToolName(normalizedPiece, actionName),
+        pieceMetadata: {
+            pieceName: normalizedPiece,
+            pieceVersion: piece.version,
+            actionName,
+            ...(isNil(connectionExternalId) ? {} : { predefinedInput: { auth: connectionExternalId, fields: {} } }),
+        },
+    }))
+    const updated = await agentService(log).editDraftTools({
+        id: agent.id,
+        projectId,
+        userId,
+        edit: (tools) => tools.some((tool) => {
+            const action = pieceActionOf(tool)
+            return action?.pieceName === normalizedPiece && actionNames.includes(action.actionName)
+        }) ? null : [...tools, ...added],
+    })
+    if (isNil(updated)) {
+        return { error: `${agent.displayName} already has one of those tools. List them with ap_list_agents before adding.` }
+    }
+    return afterDraftChange({ agent: updated, publish: toolInput.publish === true, editedItself, projectId, platformId, userId, log })
+}
+
+async function removeAgentToolFromChat({ toolInput, agent, editedItself, projectId, platformId, userId, log }: {
+    toolInput: Record<string, unknown>
+    agent: Agent
+    editedItself: boolean
+    projectId: string
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const actionNames = toolNamesFrom(toolInput)
+    if (actionNames.length === 0) {
+        return { error: 'Removing tools needs at least one action name.' }
+    }
+    const requestedPiece = nonEmpty(toolInput.pieceName)
+    const scopedPiece = isNil(requestedPiece) ? undefined : mcpUtils.normalizePieceName(requestedPiece) ?? requestedPiece
+    const targets = agent.draft.tools.flatMap((tool) => pieceActionOf(tool) ?? [])
+        .filter((action) => actionNames.includes(action.actionName))
+        .filter((action) => isNil(scopedPiece) || action.pieceName === scopedPiece)
+    const resolved = actionNames.map((actionName) => ({
+        actionName,
+        pieces: unique(targets.filter((target) => target.actionName === actionName).map((target) => target.pieceName)),
+    }))
+    const ambiguous = resolved.filter((entry) => entry.pieces.length > 1)
+    if (ambiguous.length > 0) {
+        return { error: `${ambiguous.map((entry) => entry.actionName).join(' and ')} is on more than one piece here: ${unique(ambiguous.flatMap((entry) => entry.pieces)).join(', ')}. Call this again with pieceName set to the one you mean.` }
+    }
+    const unmatched = resolved.filter((entry) => entry.pieces.length === 0).map((entry) => entry.actionName)
+    if (unmatched.length > 0) {
+        return { error: isNil(scopedPiece)
+            ? `${agent.displayName} has no tool for ${unmatched.join(' or ')}, so there is nothing to remove. List its tools with ap_list_agents.`
+            : `${unmatched.join(' and ')} is not on ${scopedPiece}, so there is nothing to remove. Take those away in their own call, without pieceName.` }
+    }
+    const removing = new Set(targets.map((target) => `${target.pieceName}:${target.actionName}`))
+    const updated = await agentService(log).editDraftTools({
+        id: agent.id,
+        projectId,
+        userId,
+        edit: (tools) => {
+            const kept = tools.filter((tool) => {
+                const action = pieceActionOf(tool)
+                return isNil(action) || !removing.has(`${action.pieceName}:${action.actionName}`)
+            })
+            return kept.length === tools.length ? null : kept
+        },
+    })
+    if (isNil(updated)) {
+        return { error: `${agent.displayName} has none of those tools, so there is nothing to remove.` }
+    }
+    return afterDraftChange({ agent: updated, publish: toolInput.publish === true, editedItself, projectId, platformId, userId, log })
+}
+
+function pieceActionOf(tool: AgentTool): { pieceName: string, actionName: string } | undefined {
+    return tool.type === AgentToolType.PIECE
+        ? { pieceName: tool.pieceMetadata.pieceName, actionName: tool.pieceMetadata.actionName }
+        : undefined
+}
+
+function toolNamesFrom(toolInput: Record<string, unknown>): string[] {
+    return Array.isArray(toolInput.actionNames) ? toolInput.actionNames.flatMap((name) => nonEmpty(name) ?? []) : []
+}
+
+async function afterDraftChange({ agent, publish, editedItself, projectId, platformId, userId, log }: {
+    agent: Agent
+    publish: boolean
+    editedItself: boolean
+    projectId: string
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const mayPublish = publish && !editedItself
+    const { data: published } = mayPublish
+        ? await tryCatch(() => agentService(log).publish({ id: agent.id, projectId, platformId, userId }))
+        : { data: undefined }
+    applicationEvents(log).sendUserEvent({ platformId, projectId, userId }, {
+        action: isNil(published) ? ApplicationEventName.AGENT_UPDATED : ApplicationEventName.AGENT_PUBLISHED,
+        data: { agent: { id: agent.id, displayName: agent.displayName, ...(isNil(published) ? {} : agentAudit.describePublished({ published: agent.draft })) } },
+    })
+    return {
+        agentId: agent.id,
+        displayName: agent.displayName,
+        published: !isNil(published),
+        url: await domainHelper.getPublicUrl({ path: `/projects/${projectId}/agents/${agent.id}` }),
+        note: !isNil(published)
+            ? `"${agent.displayName}" is live: new runs use this version.`
+            : editedItself
+                ? 'Saved. This is how you work from your next message on. Flows that run you keep the published version until someone publishes this from the Configure panel.'
+                : publish
+                    ? 'Publishing failed, so nothing is live yet — the draft may still need instructions. Send the user to the url above.'
+                    : isNil(agent.published)
+                        ? 'Saved to the draft. Nothing runs this agent until it is published.'
+                        : 'Saved to the draft, so do not tell the user the change is live. The published version keeps running until this is published.',
+    }
+}
+
+async function checkWriteRunPermission({ userId, projectId, toolName, log }: {
+    userId: string
+    projectId: string
+    toolName: string
+    log: FastifyBaseLogger
+}): Promise<string | null> {
+    const checker = await resolvePermissionChecker({ userId, projectId, log })
+    const denial = checker.check(Permission.WRITE_RUN, toolName)
+    return isNil(denial) ? null : denial.content.map((part) => part.text).join(' ')
+}
+
+async function executeCrossProjectTool({ toolName, toolInput, platformId, userId, conversationId, confinedToProjectId, editableAgentId, log }: {
+    toolName: string
+    toolInput: Record<string, unknown>
+    platformId: string
+    userId: string
+    conversationId?: string
+    confinedToProjectId?: string | null
+    editableAgentId?: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const allProjects = await agentHelpers.getUserProjects({ platformId, userId, log })
+    const projects = isNil(confinedToProjectId)
+        ? allProjects
+        : allProjects.filter((p) => p.id === confinedToProjectId)
+    const availableProjectIds = projects.map((p) => p.id)
+
+    switch (toolName) {
+        case 'ap_remember': {
+            const memory = isString(toolInput.memory) ? toolInput.memory.trim() : ''
+            if (!memory) {
+                return { success: false, error: 'Empty memory.' }
+            }
+            await agentMemoryAi.applyInstruction({ platformId, userId, instruction: memory, log })
+            return { remembered: true }
+        }
+        case 'ap_discover_action_auth': {
+            const { pieceName } = runActionInput.pick({ pieceName: true }).parse(toolInput)
+            const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
+            // Sticky connection: if the user already chose a connection for this piece this
+            // conversation, reuse it instead of popping another picker for the next action.
+            if (conversationId) {
+                const selected = await agentApprovalGate.getSelectedConnection({ conversationId, pieceName: normalizedPiece })
+                if (selected) {
+                    return {
+                        alreadyConnected: true,
+                        piece: normalizedPiece,
+                        auth: selected.externalId,
+                        connectionLabel: selected.label,
+                        note: 'A connection for this piece was already selected this conversation — pass this auth and do NOT show another connection picker.',
+                    }
+                }
+            }
+            const discoveryResult = await findConnectionsForPiece({ pieceName, projects, platformId, log })
+
+            if (conversationId && 'pickConnection' in discoveryResult && discoveryResult.pickConnection) {
+                await agentApprovalGate.storeAvailableConnections({
+                    conversationId,
+                    pieceName: normalizedPiece,
+                    connections: discoveryResult.connections,
+                })
+                return {
+                    pickConnection: true,
+                    piece: discoveryResult.piece,
+                    displayName: discoveryResult.displayName,
+                    connectionCount: discoveryResult.connections.length,
+                    requiredScopes: discoveryResult.requiredScopes,
+                }
+            }
+            return discoveryResult
+        }
+        case 'ap_revalidate_connection': {
+            const { connectionExternalId: externalId } = runActionInput.pick({ connectionExternalId: true }).required().parse(toolInput)
+            let projectId: string | undefined
+            if (conversationId) {
+                const conversation = await agentHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
+                if (conversation.projectId && projects.some((p) => p.id === conversation.projectId)) {
+                    projectId = conversation.projectId
+                }
+            }
+            if (isNil(projectId)) {
+                return { connectionExternalId: externalId, notFound: true, note: 'No project is selected for this conversation. Ask the user which project this connection is in.' }
+            }
+            const checker = await resolvePermissionChecker({ userId, projectId, log })
+            const denial = checker.check(Permission.WRITE_APP_CONNECTION, 'ap_revalidate_connection')
+            if (!isNil(denial)) {
+                return denial
+            }
+            const found = await appConnectionService(log).getOneWithoutValue({ projectId, platformId, externalId })
+            if (isNil(found)) {
+                return { connectionExternalId: externalId, notFound: true, note: 'No connection with that externalId in the active project.' }
+            }
+            const revalidated = await appConnectionService(log).revalidate({ id: found.id, projectId, platformId })
+            const working = revalidated.status === AppConnectionStatus.ACTIVE
+            return {
+                connectionExternalId: externalId,
+                status: revalidated.status,
+                working,
+                note: working
+                    ? 'This connection is valid — safe to build on.'
+                    : 'This connection is NOT working (its credentials failed). Do not build on it — show the connection picker so the user can reconnect, then retry.',
+            }
+        }
+        case 'ap_list_agents':
+        case 'ap_update_agent':
+        case 'ap_add_agent_tool':
+        case 'ap_remove_agent_tool':
+        case 'ap_create_agent': {
+            if (!await agentHelpers.agentsSurfaceAvailable({ platformId, log })) {
+                return { error: 'Agents are not available here, so there is nothing to list, create or change.' }
+            }
+            const conversation = isNil(conversationId) ? undefined : await agentHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
+            const projectId = projects.find((project) => project.id === conversation?.projectId)?.id
+            if (isNil(projectId)) {
+                return { error: 'No project is selected for this conversation. Ask the user which project the agent belongs to.' }
+            }
+            const checker = await resolvePermissionChecker({ userId, projectId, log })
+            const denial = checker.check(toolName === 'ap_list_agents' ? Permission.READ_AGENT : Permission.WRITE_AGENT, toolName)
+            if (!isNil(denial)) {
+                return denial
+            }
+            if (toolName === 'ap_list_agents') {
+                const { data } = await agentService(log).list({ platformId, userId, projectId, cursor: null, limit: AGENT_LIST_LIMIT })
+                return data.map(({ id, displayName, description, isPublished, toolCount }) => ({ agentId: id, displayName, description, published: isPublished, toolCount }))
+            }
+            if (toolName === 'ap_create_agent') {
+                return createAgentFromChat({ toolInput, platformId, projectId, userId, log })
+            }
+            const editedItself = !isNil(editableAgentId)
+            const agentId = editableAgentId ?? nonEmpty(toolInput.agentId)
+            if (isNil(agentId)) {
+                return { error: 'Which agent? Call ap_list_agents first and pass its agentId.' }
+            }
+            const { data: agent } = await tryCatch(() => agentService(log).getOneOrThrow({ id: agentId, projectId, userId }))
+            if (isNil(agent)) {
+                return { error: 'No agent with that id in this project. Call ap_list_agents to see what is there.' }
+            }
+            if (toolName === 'ap_update_agent') {
+                return updateAgentFromChat({ toolInput, agent, editedItself, projectId, platformId, userId, log })
+            }
+            if (toolName === 'ap_remove_agent_tool') {
+                return removeAgentToolFromChat({ toolInput, agent, editedItself, projectId, platformId, userId, log })
+            }
+            return addAgentToolFromChat({ toolInput, agent, editedItself, projectId, platformId, userId, log })
+        }
+        case 'ap_execute_action': {
+            return runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })
+        }
+        case 'ap_run_code': {
+            return runAgentCode({ toolInput, projects, platformId, userId, conversationId, log })
+        }
+        case '__action_read_only': {
+            const { pieceName, actionName } = runActionInput.pick({ pieceName: true, actionName: true }).parse(toolInput)
+            const target = await resolveActionTarget({ pieceName, actionName, projects, availableProjectIds, conversationId, platformId, log })
+            return 'error' in target ? null : target.declared.readOnly ?? null
+        }
+        case 'ap_explore_data': {
+            return runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, readOnlyOnly: true, log })
+        }
+        case 'ap_list_across_projects': {
+            const resource = toolInput.resource as string
+            const status = toolInput.status as string | undefined
+            if (resource === 'flows') {
+                return listFlowsAcrossProjects({ projects, status, log })
+            }
+            if (resource === 'connections') {
+                return listConnectionsAcrossProjects({ projects, platformId, log })
+            }
+            const results = await Promise.all(
+                projects.map(async (project) => {
+                    const lines = resource === 'tables'
+                        ? await listResourceForProject({ resource: 'tables', projectId: project.id, status, log })
+                        : await listResourceForProject({ resource: 'runs', projectId: project.id, status, log })
+                    return { project, lines }
+                }),
+            )
+            const sections = results.map(({ project, lines }) => {
+                const label = agentPrompt.projectDisplayName(project)
+                return lines.length > 0
+                    ? `**${label}** (${project.id}):\n${lines.join('\n')}`
+                    : `**${label}** (${project.id}): None found.`
+            })
+            return { content: [{ type: 'text', text: sections.join('\n\n') }] }
+        }
+        default:
+            return { error: `Unknown cross-project tool: ${toolName}` }
+    }
+}
+
+// A large successful read (e.g. a 1.4MB Attio query) is persisted as a .json file and replaced in
+// the model context with a compact shape preview + the fileId. The agent then processes the FULL
+// data in ap_run_code (inputFileIds → inputs.data) — the blob never floods the context.
+function buildActionRunOffload({ projectId, platformId, conversationId, pieceName, actionName, log }: {
+    projectId: string
+    platformId?: string
+    conversationId?: string
+    pieceName: string
+    actionName: string
+    log: FastifyBaseLogger
+}): ActionRunOffload | undefined {
+    if (isNil(platformId)) {
+        return undefined
+    }
+    return {
+        thresholdBytes: LARGE_RESULT_OFFLOAD_BYTES,
+        handle: async ({ payload, byteSize, label, statusNote }) => {
+            const json = JSON.stringify(payload, null, 2)
+            const fileName = `${pieceName.replace('@activepieces/piece-', '')}-${actionName}.json`
+            const { data: saved, error } = await tryCatch(() => fileService(log).save({
+                projectId,
+                platformId,
+                data: Buffer.from(json, 'utf8'),
+                size: Buffer.byteLength(json, 'utf8'),
+                type: FileType.FLOW_STEP_FILE,
+                fileName,
+                compression: FileCompression.NONE,
+                metadata: { mimetype: 'application/json', ...spreadIfDefined('conversationId', conversationId) },
+            }))
+            if (error || isNil(saved)) {
+                log.warn({ error, pieceName, actionName }, '[agent] large-result offload failed; falling back to inline truncation')
+                return null
+            }
+            return agentAiUtils.buildLargeResultPreview({ payload, byteSize, fileId: saved.id, label, statusNote })
+        },
+    }
+}
+
+async function runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission, readOnlyOnly, log }: {
+    toolInput: Record<string, unknown>
+    projects: Project[]
+    availableProjectIds: string[]
+    conversationId?: string
+    platformId?: string
+    userId: string
+    requireWritePermission?: boolean
+    readOnlyOnly?: boolean
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const { pieceName, actionName, input: parsedInput } = runActionInput.parse(toolInput)
+    const target = await resolveActionTarget({ pieceName, actionName, projects, availableProjectIds, conversationId, platformId, log })
+    if ('error' in target) {
+        return { success: false, error: target.error }
+    }
+    const { normalizedPiece, projectId: resolvedProjectId, connectionExternalId, connectionLabel, declared } = target
+    if (readOnlyOnly && !agentToolClassification.isReadOnlyActionCall({ actionName, input: parsedInput, declaredReadOnly: declared.readOnly })) {
+        return agentToolClassification.readOnlyRejection(actionName)
+    }
+    if (requireWritePermission) {
+        const denial = await checkWriteRunPermission({ userId, projectId: resolvedProjectId, toolName: 'ap_execute_action', log })
+        if (denial) {
+            return { success: false, error: denial }
+        }
+    }
+
+    const result = await executePieceActionRun({
+        projectId: resolvedProjectId,
+        pieceName,
+        actionName,
+        input: parsedInput,
+        connectionExternalId,
+        ...spreadIfDefined('offload', buildActionRunOffload({ projectId: resolvedProjectId, platformId, conversationId, pieceName: normalizedPiece, actionName, log })),
+        log,
+    })
+
+    const resultObj = isObject(result) ? result : undefined
+    const structured = !isNil(resultObj) && isObject(resultObj.structuredContent) ? resultObj.structuredContent : undefined
+    const errorSummary = typeof structured?.errorSummary === 'string' ? structured.errorSummary : undefined
+
+    recordChatAction({
+        piece: { pieceName: normalizedPiece, actionName },
+        declared,
+        input: parsedInput ?? {},
+        projectId: resolvedProjectId,
+        userId,
+        connection: { ...spreadIfDefined('externalId', connectionExternalId), ...spreadIfDefined('label', connectionLabel) },
+        outcome: outcomeOfToolResult(result),
+        log,
+        ...spreadIfDefined('platformId', platformId),
+        ...spreadIfDefined('conversationId', conversationId),
+    })
+
+    if (!isNil(resultObj)) {
+        if (isNil(connectionLabel) && isNil(errorSummary)) {
+            return result
+        }
+        return {
+            ...resultObj,
+            _meta: {
+                ...spreadIfDefined('connectionLabel', connectionLabel),
+                ...spreadIfDefined('errorSummary', errorSummary),
+                pieceName: normalizedPiece,
+            },
+        }
+    }
+    return result
+}
+
+async function runAgentCode({ toolInput, projects, platformId, userId, conversationId, log }: {
+    toolInput: Record<string, unknown>
+    projects: Project[]
+    platformId: string
+    userId: string
+    conversationId?: string
+    log: FastifyBaseLogger
+}): Promise<RunCodeToolResult> {
+    const code = typeof toolInput.code === 'string' ? toolInput.code : undefined
+    if (isNil(code) || code.trim().length === 0) {
+        return { text: '❌ `code` is required and must be a non-empty string.', producedFiles: [] }
+    }
+    const packageJson = typeof toolInput.packageJson === 'string' ? toolInput.packageJson : undefined
+
+    let projectId = projects[0]?.id
+    if (conversationId) {
+        const conversation = await agentHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
+        if (conversation.projectId && projects.some((p) => p.id === conversation.projectId)) {
+            projectId = conversation.projectId
+        }
+    }
+    if (isNil(projectId)) {
+        return { text: '❌ No projects available. Create a project first.', producedFiles: [] }
+    }
+    const denial = await checkWriteRunPermission({ userId, projectId, toolName: 'ap_run_code', log })
+    if (denial) {
+        return { text: `❌ ${denial}`, producedFiles: [] }
+    }
+
+    const baseInput = isObject(toolInput.input) ? toolInput.input as Record<string, unknown> : {}
+    const inputFileIds = Array.isArray(toolInput.inputFileIds)
+        ? toolInput.inputFileIds.filter((id): id is string => typeof id === 'string')
+        : []
+    const inputFiles: { name: string, mimeType: string, base64: string }[] = []
+    for (const fileId of inputFileIds) {
+        const { data: fileData } = await tryCatch(() => isNil(conversationId)
+            ? fileService(log).getDataOrThrow({ projectId, fileId, type: FileType.FLOW_STEP_FILE })
+            : readConversationFile({ platformId, conversationId, accessibleProjectIds: projects.map((project) => project.id), fileId, log }))
+        if (isNil(fileData)) {
+            return { text: `❌ Couldn't load attachment ${fileId}. If this is an image you generated, pass its URL into the code and fetch() it instead of using inputFileIds.`, producedFiles: [] }
+        }
+        const mimeType = isObject(fileData.metadata) && typeof fileData.metadata.mimetype === 'string' ? fileData.metadata.mimetype : 'application/octet-stream'
+        inputFiles.push({ name: fileData.fileName ?? fileId, mimeType, base64: fileData.data.toString('base64') })
+    }
+    const jsonValues = inputFiles
+        .filter((f) => f.mimeType.includes('json') || f.name.toLowerCase().endsWith('.json'))
+        .map((f) => parseToJsonIfPossible(Buffer.from(f.base64, 'base64').toString('utf8')))
+        .filter((v) => isObject(v) || Array.isArray(v))
+    const input: Record<string, unknown> = { ...baseInput }
+    if (inputFiles.length > 0) {
+        input.files = inputFiles
+    }
+    // JSON attachments (e.g. an offloaded large tool result) are parsed and handed over as
+    // `inputs.data` so the agent can process them in two lines instead of base64-decoding by hand.
+    if (jsonValues.length > 0 && baseInput.data === undefined) {
+        input.data = jsonValues.length === 1 ? jsonValues[0] : jsonValues
+    }
+
+    const result = await executeCodeActionRun({ projectId, code, packageJson, input, log })
+
+    if (result.status !== 'succeeded') {
+        const reason = result.errorMessage ?? (result.status === 'timeout' ? 'Code is still running after 120s.' : 'Code execution failed.')
+        return { text: `❌ ${reason}`, producedFiles: [] }
+    }
+
+    return persistProducedFiles({ output: result.output, projectId, platformId, conversationId, log })
+}
+
+function extractFilesFromOutput(output: unknown): { files: RawProducedFile[], rest: unknown } {
+    if (!isObject(output) || !Array.isArray(output.files)) {
+        return { files: [], rest: output }
+    }
+    const files = output.files.filter((f): f is RawProducedFile =>
+        isObject(f) && typeof f.name === 'string' && typeof f.mimeType === 'string' && typeof f.base64 === 'string')
+    const rest: Record<string, unknown> = { ...output }
+    delete rest.files
+    return { files, rest }
+}
+
+function decodeBase64(value: string): Buffer | undefined {
+    const stripped = value.replace(/^data:[^;]+;base64,/, '')
+    const buffer = Buffer.from(stripped, 'base64')
+    return buffer.length > 0 ? buffer : undefined
+}
+
+async function persistProducedFiles({ output, projectId, platformId, conversationId, log }: {
+    output: unknown
+    projectId: string
+    platformId: string
+    conversationId?: string
+    log: FastifyBaseLogger
+}): Promise<RunCodeToolResult> {
+    const { files, rest } = extractFilesFromOutput(output)
+    const producedFiles: ProducedFile[] = []
+    for (const file of files.slice(0, MAX_PRODUCED_FILES)) {
+        const buffer = decodeBase64(file.base64)
+        if (isNil(buffer) || buffer.length > MAX_PRODUCED_FILE_BYTES) {
+            continue
+        }
+        const saved = await fileService(log).save({
+            projectId,
+            platformId,
+            data: buffer,
+            size: buffer.length,
+            type: FileType.FLOW_STEP_FILE,
+            fileName: file.name,
+            compression: FileCompression.NONE,
+            metadata: { mimetype: file.mimeType, ...spreadIfDefined('conversationId', conversationId) },
+        })
+        const url = await filesService.constructReadUrl({ fileId: saved.id, fileType: saved.type, platformId })
+        producedFiles.push({ fileId: saved.id, url, mediaType: file.mimeType, fileName: file.name, byteSize: buffer.length })
+    }
+    return { text: buildCodeResultText({ rest, producedFiles }), producedFiles }
+}
+
+function buildCodeResultText({ rest, producedFiles }: { rest: unknown, producedFiles: ProducedFile[] }): string {
+    const fileNote = producedFiles.length > 0
+        ? `Returned ${producedFiles.length} file(s) to the user: ${producedFiles.map((f) => f.fileName).join(', ')}.`
+        : ''
+    const hasRest = !isNil(rest) && !(isObject(rest) && Object.keys(rest).length === 0)
+    if (!hasRest) {
+        return fileNote.length > 0 ? `✅ Code ran. ${fileNote}` : '✅ Code ran (no output returned).'
+    }
+    const outStr = typeof rest === 'string' ? rest : JSON.stringify(rest)
+    const truncated = outStr.length > MAX_RESULT_TEXT_CHARS ? `${outStr.slice(0, MAX_RESULT_TEXT_CHARS)}… (truncated)` : outStr
+    return ['✅ Code ran.', truncated, fileNote].filter((s) => s.length > 0).join('\n\n')
+}
+
+function resolveConnectionInfo({ status, type, value }: { status: AppConnectionStatus, type: AppConnectionType, value: unknown }): { status: AppConnectionStatus, grantedScopes: string[] } {
+    if (!OAUTH_TYPES.has(type) || !isObject(value)) {
+        return { status, grantedScopes: [] }
+    }
+    const grantedScopes = typeof value['scope'] === 'string' ? value['scope'].split(/\s+/).filter(Boolean) : []
+    if (status !== AppConnectionStatus.ACTIVE) {
+        return { status, grantedScopes }
+    }
+    const hasRefreshToken = typeof value['refresh_token'] === 'string' && value['refresh_token'].length > 0
+    if (hasRefreshToken) {
+        return { status, grantedScopes }
+    }
+    const parsedClaimedAt = Number(value['claimed_at'])
+    const parsedExpiresIn = Number(value['expires_in'])
+    const claimedAtS = Number.isFinite(parsedClaimedAt) && parsedClaimedAt > 0 ? parsedClaimedAt : 0
+    const expiresInS = Number.isFinite(parsedExpiresIn) && parsedExpiresIn > 0 ? parsedExpiresIn : 0
+    if (claimedAtS > 0 && expiresInS > 0) {
+        const expiryMs = (claimedAtS + expiresInS - CLOCK_SKEW_BUFFER_S) * 1000
+        if (Date.now() > expiryMs) {
+            return { status: AppConnectionStatus.ERROR, grantedScopes }
+        }
+    }
+    return { status, grantedScopes }
+}
+
+type ConnectionWithScopes = {
+    label: string
+    project: string
+    externalId: string
+    projectId: string
+    status: AppConnectionStatus
+    grantedScopes: string[]
+    updated: string
+}
+
+type FindConnectionsResult =
+    | { noAuthRequired: true, piece: string }
+    | { needsConnection: true, piece: string, displayName: string, requiredScopes: string[] }
+    | { pickConnection: true, piece: string, displayName: string, connections: ConnectionWithScopes[], requiredScopes: string[] }
+
+type RawProducedFile = {
+    name: string
+    mimeType: string
+    base64: string
+}
+
+type ProducedFile = {
+    fileId: string
+    url: string
+    mediaType: string
+    fileName: string
+    byteSize: number
+}
+
+type RunCodeToolResult = {
+    text: string
+    producedFiles: ProducedFile[]
+}
+
+export { executeCrossProjectTool, findConnectionsForPiece }
+
+function recordChatAction({ piece, declared, input, projectId, platformId, userId, conversationId, connection, outcome, log }: {
+    piece: { pieceName: string, actionName: string }
+    declared: DeclaredAction
+    input: Record<string, unknown>
+    projectId: string
+    platformId?: string
+    userId: string
+    conversationId?: string
+    connection: { externalId?: string, label?: string }
+    outcome: AgentActionOutcome
+    log: FastifyBaseLogger
+}): void {
+    if (isNil(platformId)) {
+        return
+    }
+    recordAgentAction({
+        run: { projectId, platformId, userId, source: AgentRunSource.CHAT },
+        piece,
+        resolvedInput: input,
+        names: { action: declared.actionDisplayName ?? piece.actionName, piece: declared.pieceDisplayName ?? piece.pieceName },
+        outcome,
+        connection,
+        log,
+        ...spreadIfDefined('conversationId', conversationId),
+        ...spreadIfDefined('classification', declared.classification),
+    })
+}
+
+async function resolveActionTarget({ pieceName, actionName, projects, availableProjectIds, conversationId, platformId, log }: {
+    pieceName: string
+    actionName: string
+    projects: Project[]
+    availableProjectIds: string[]
+    conversationId?: string
+    platformId?: string
+    log: FastifyBaseLogger
+}): Promise<ActionTarget | { error: string }> {
+    const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
+    const selected = isNil(conversationId) ? null : await agentApprovalGate.getSelectedConnection({ conversationId, pieceName: normalizedPiece })
+    const connectionProjectId = selected?.projectId
+    const projectId = connectionProjectId ?? projects[0]?.id
+    if (!projectId) {
+        return { error: 'No projects available. Create a project first.' }
+    }
+    if (connectionProjectId && !availableProjectIds.includes(connectionProjectId)) {
+        return { error: `Project ${connectionProjectId} is not accessible.` }
+    }
+    const declared = await declaredActionOf({ pieceName: normalizedPiece, actionName, projectId, platformId, log })
+    return {
+        normalizedPiece,
+        projectId,
+        ...spreadIfDefined('connectionExternalId', selected?.externalId),
+        ...spreadIfDefined('connectionLabel', selected?.label),
+        declared,
+    }
+}
+
+async function declaredActionOf({ pieceName, actionName, projectId, platformId, log }: {
+    pieceName: string
+    actionName: string
+    projectId?: string
+    platformId?: string
+    log: FastifyBaseLogger
+}): Promise<DeclaredAction> {
+    if (isNil(platformId)) {
+        return {}
+    }
+    const { data: metadata } = await tryCatch(() => pieceMetadataService(log).get({ name: pieceName, projectId, platformId }))
+    const action = metadata?.actions?.[actionName]
+    return {
+        ...spreadIfDefined('pieceDisplayName', metadata?.displayName),
+        ...spreadIfDefined('actionDisplayName', action?.displayName),
+        ...spreadIfDefined('classification', action?.classification),
+        ...spreadIfDefined('readOnly', isNil(action?.classification) ? undefined : isReadOnlyClassification(action.classification)),
+    }
+}
+
+type ActionTarget = {
+    normalizedPiece: string
+    projectId: string
+    connectionExternalId?: string
+    connectionLabel?: string
+    declared: DeclaredAction
+}
+
+type DeclaredAction = {
+    pieceDisplayName?: string
+    actionDisplayName?: string
+    classification?: ActionClassification
+    readOnly?: boolean
+}

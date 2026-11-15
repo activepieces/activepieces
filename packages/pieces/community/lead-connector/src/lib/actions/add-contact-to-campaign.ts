@@ -1,41 +1,20 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { addContactToCampaign, getCampaigns, getContacts } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { addContactToCampaign, getCampaigns } from '../common';
+import { leadConnectorProps } from '../common/props';
 import { leadConnectorAuth } from '../..';
 
 export const addContactToCampaignAction = createAction({
   auth: leadConnectorAuth,
   name: 'add_contact_to_campaign',
+  classification: 'WRITE',
   displayName: 'Add Contact to Campaign',
   description: 'Add an existing contact to a campaign.',
   audience: 'both',
   aiMetadata: { description: 'Enrolls an existing GoHighLevel/LeadConnector contact into a marketing campaign by contact ID and campaign ID. Use to start a campaign sequence for a known contact. Not idempotent — each call re-enrolls the contact.', idempotent: false },
   props: {
-    contact: Property.Dropdown({
-  auth: leadConnectorAuth,
-      displayName: 'Contact',
-      description: 'The contact to use.',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth)
-          return {
-            disabled: true,
-            options: [],
-          };
-
-        const contacts = await getContacts(auth as OAuth2PropertyValue);
-        return {
-          options: contacts.map((contact) => {
-            return {
-              label: contact.contactName,
-              value: contact.id,
-            };
-          }),
-        };
-      },
-    }),
+    contact: leadConnectorProps.contact({ required: true }),
     campaign: Property.Dropdown({
-  auth: leadConnectorAuth,
+      auth: leadConnectorAuth,
       displayName: 'Campaign',
       required: true,
       refreshers: [],
@@ -44,10 +23,11 @@ export const addContactToCampaignAction = createAction({
           return {
             disabled: true,
             options: [],
+            placeholder: 'Connect your account first',
           };
         }
 
-        const campaigns = await getCampaigns(auth as OAuth2PropertyValue);
+        const campaigns = await getCampaigns(auth);
         return {
           options: campaigns.map((campaign: any) => {
             return {

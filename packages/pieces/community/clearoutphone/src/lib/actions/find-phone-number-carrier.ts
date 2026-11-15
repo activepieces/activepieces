@@ -5,6 +5,7 @@ import { clearoutphoneAuth } from '../common/auth';
 export const findPhoneNumberCarrier = createAction({
   auth: clearoutphoneAuth,
   name: 'findPhoneNumberCarrier',
+  classification: 'READ',
   displayName: 'Find Phone Number Carrier',
   description: 'Find the carrier of a phone number using ClearoutPhone API',
   audience: 'both',

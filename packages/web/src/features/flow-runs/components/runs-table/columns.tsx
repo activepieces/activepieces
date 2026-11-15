@@ -44,11 +44,6 @@ import {
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { formatUtils } from '@/lib/format-utils';
 
-type SelectedRow = {
-  id: string;
-  status: FlowRunStatus;
-};
-
 type RunsTableColumnsProps = {
   data: SeekPage<FlowRun> | undefined;
   selectedRows: SelectedRow[];
@@ -88,10 +83,9 @@ export const runsTableColumns = ({
             table.toggleAllPageRowsSelected(isChecked);
 
             if (isChecked) {
-              const currentPageRows = table.getRowModel().rows.map((row) => ({
-                id: row.original.id,
-                status: row.original.status,
-              }));
+              const currentPageRows = table
+                .getRowModel()
+                .rows.map((row) => toSelectedRow(row.original));
 
               setSelectedRows((prev) => {
                 const uniqueRows = new Map<string, SelectedRow>([
@@ -124,10 +118,7 @@ export const runsTableColumns = ({
                   onClick={() => {
                     const currentPageRows = table
                       .getRowModel()
-                      .rows.map((row) => ({
-                        id: row.original.id,
-                        status: row.original.status,
-                      }));
+                      .rows.map((row) => toSelectedRow(row.original));
                     setSelectedRows(currentPageRows);
                     setSelectedAll(false);
                     setExcludedRows(new Set());
@@ -140,10 +131,7 @@ export const runsTableColumns = ({
                   className="cursor-pointer"
                   onClick={() => {
                     if (data?.data) {
-                      const allRows = data.data.map((row) => ({
-                        id: row.id,
-                        status: row.status,
-                      }));
+                      const allRows = data.data.map(toSelectedRow);
                       setSelectedRows(allRows);
                       setSelectedAll(true);
                       setExcludedRows(new Set());
@@ -185,10 +173,7 @@ export const runsTableColumns = ({
                 if (isChecked) {
                   setSelectedRows((prev) => [
                     ...prev,
-                    {
-                      id: row.original.id,
-                      status: row.original.status,
-                    },
+                    toSelectedRow(row.original),
                   ]);
                 } else {
                   setSelectedRows((prev) =>
@@ -220,9 +205,7 @@ export const runsTableColumns = ({
 
       return (
         <div className="flex items-center gap-2 text-left">
-          {!isNil(archivedAt) && (
-            <Archive className="size-4 text-muted-foreground" />
-          )}
+          {!isNil(archivedAt) && <Archive className="size-4 text-gray-11" />}
           <TruncatedColumnTextValue value={displayName} />
         </div>
       );
@@ -244,7 +227,10 @@ export const runsTableColumns = ({
         <div className="text-left">
           <StatusIconWithText
             icon={Icon}
-            text={formatUtils.convertEnumToReadable(status)}
+            text={
+              flowRunUtils.getStatusLabelOverride(status) ??
+              formatUtils.convertEnumToReadable(status)
+            }
             variant={variant}
           />
         </div>
@@ -297,7 +283,7 @@ export const runsTableColumns = ({
         <div className="text-left flex items-center gap-2">
           {row.original.finishTime && (
             <>
-              <Hourglass className="h-4 w-4 text-muted-foreground" />
+              <Hourglass className="h-4 w-4 text-gray-11" />
               {formatUtils.formatDuration(duration)}
             </>
           )}
@@ -396,3 +382,19 @@ export const runsTableColumns = ({
     },
   },
 ];
+
+function toSelectedRow(run: FlowRun): SelectedRow {
+  return {
+    id: run.id,
+    status: run.status,
+    flowId: run.flowId,
+    flowVersionId: run.flowVersionId,
+  };
+}
+
+export type SelectedRow = {
+  id: string;
+  status: FlowRunStatus;
+  flowId: string;
+  flowVersionId: string;
+};

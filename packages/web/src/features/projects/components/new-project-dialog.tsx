@@ -1,12 +1,13 @@
+import { ErrorCode } from '@activepieces/core-utils';
 import {
   AppConnectionWithoutSensitiveData,
   CreatePlatformProjectRequest,
+  PlatformRole,
   ProjectWithLimits,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -20,24 +21,35 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { Switch } from '@/components/ui/switch';
 import { globalConnectionsQueries } from '@/features/connections';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { userHooks } from '@/hooks/user-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
+import { api } from '@/lib/api';
 
 type NewProjectDialogProps = {
-  children: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onCreate?: (project: ProjectWithLimits) => void;
+  limitReached?: boolean;
+  onLimitReached: () => void;
 };
 
 export const NewProjectDialog = (props: NewProjectDialogProps) => {
-  const [open, setOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
   const globalConnectionsEnabled = platform.plan.globalConnectionsEnabled;
 
@@ -50,8 +62,11 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
   const globalConnections = globalConnectionsPage?.data ?? [];
 
   return (
-    <Dialog key={open ? 'open' : 'closed'} open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{props.children}</DialogTrigger>
+    <Dialog
+      key={props.open ? 'open' : 'closed'}
+      open={props.open}
+      onOpenChange={props.onOpenChange}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('Create Project')}</DialogTitle>
@@ -63,10 +78,12 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
         </DialogHeader>
         {(!isLoadingConnections || !globalConnectionsEnabled) && (
           <NewProjectForm
-            setOpen={setOpen}
+            setOpen={props.onOpenChange}
             globalConnections={globalConnections}
             globalConnectionsEnabled={globalConnectionsEnabled}
             onCreate={props.onCreate}
+            limitReached={props.limitReached}
+            onLimitReached={props.onLimitReached}
           />
         )}
         {isLoadingConnections && globalConnectionsEnabled && (
@@ -79,15 +96,21 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
 
 const NewProjectForm = ({
   onCreate,
+  limitReached,
+  onLimitReached,
   setOpen,
   globalConnections,
   globalConnectionsEnabled,
-}: Omit<NewProjectDialogProps, 'children'> & {
+}: Omit<NewProjectDialogProps, 'open' | 'onOpenChange'> & {
   setOpen: (open: boolean) => void;
   globalConnections: AppConnectionWithoutSensitiveData[];
   globalConnectionsEnabled: boolean;
 }) => {
   const queryClient = useQueryClient();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const platformRole = userHooks.getCurrentUserPlatformRole();
+  const canToggleSensitive =
+    platform.plan.environmentsEnabled && platformRole === PlatformRole.ADMIN;
   const preselectedConnectionExternalIds = globalConnections
     .filter((connection) => connection.preSelectForNewProjects)
     .map((connection) => connection.externalId);
@@ -106,8 +129,25 @@ const NewProjectForm = ({
     defaultValues: {
       globalConnectionExternalIds: preselectedConnectionExternalIds,
       alertReceiverEmail: '',
+      sensitive: false,
     },
   });
+
+  const showLimit = () => {
+    setOpen(false);
+    onLimitReached();
+  };
+
+  const submit = (event: React.BaseSyntheticEvent) => {
+    if (limitReached) {
+      event.preventDefault();
+      showLimit();
+      return;
+    }
+    form
+      .handleSubmit(handleCreate)(event)
+      .catch(() => undefined);
+  };
 
   const handleCreate = () => {
     const values = form.getValues();
@@ -130,6 +170,13 @@ const NewProjectForm = ({
       });
     },
     (error) => {
+      if (api.isApError(error, ErrorCode.QUOTA_EXCEEDED)) {
+        queryClient
+          .invalidateQueries({ queryKey: ['platform'] })
+          .catch(() => undefined);
+        showLimit();
+        return;
+      }
       console.error(error);
       internalErrorToast();
     },
@@ -138,10 +185,7 @@ const NewProjectForm = ({
   return (
     <>
       <Form {...form}>
-        <form
-          className="grid space-y-4"
-          onSubmit={(e) => form.handleSubmit(handleCreate)(e)}
-        >
+        <form className="grid space-y-4" onSubmit={submit}>
           <FormField
             name="displayName"
             render={({ field }) => (
@@ -153,7 +197,6 @@ const NewProjectForm = ({
                   {...field}
                   id="displayName"
                   placeholder={t('Project Name')}
-                  className="rounded-sm"
                 />
               </FormItem>
             )}
@@ -170,16 +213,39 @@ const NewProjectForm = ({
                   id="alertReceiverEmail"
                   type="email"
                   placeholder="alerts@example.com"
-                  className="rounded-sm"
                   value={field.value ?? ''}
                 />
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-gray-11">
                   {t('Receives flow failure emails for this project.')}
                 </span>
                 <FormMessage />
               </FormItem>
             )}
           />
+          {canToggleSensitive && (
+            <FormField
+              name="sensitive"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="sensitive">{t('Sensitive Project')}</Label>
+                    <FormDescription>
+                      {t(
+                        'When enabled, publishing flows in this project requires approval.',
+                      )}
+                    </FormDescription>
+                  </div>
+                  <Switch
+                    id="sensitive"
+                    checked={!!field.value}
+                    onCheckedChange={field.onChange}
+                    {...adminControl(AdminControl.PROJECTS_SENSITIVE_TOGGLE)}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
           {globalConnectionsEnabled && (
             <FormField
               name="globalConnectionExternalIds"
@@ -231,10 +297,11 @@ const NewProjectForm = ({
             <Button
               disabled={isPending}
               loading={isPending}
+              {...adminControl(AdminControl.PROJECTS_NEW_SUBMIT)}
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                form.handleSubmit(handleCreate)(e);
+                submit(e);
               }}
             >
               {t('Create Project')}

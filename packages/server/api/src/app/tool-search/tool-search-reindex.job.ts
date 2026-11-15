@@ -16,6 +16,8 @@ import { ReindexScope, toolSearchIndexCoverage, toolSearchReindexService, toolSe
 // comfortably larger than a single embed round-trip — a full re-embed (model swap) keeps extending.
 const REINDEX_LOCK_TIMEOUT_SECONDS = 300
 
+const REINDEX_CRON_PATTERN = '30 * * * *'
+
 /**
  * Stable BullMQ jobId per scope. The global reconcile always enqueues under one id so a burst of
  * catalog changes collapses to a single pending job (dedup); each platform gets its own id so a
@@ -54,9 +56,12 @@ export function shouldSkipReindexOnCloud(): boolean {
 }
 
 export const toolSearchReindexJob = (log: FastifyBaseLogger) => ({
-    /** Register the worker handler. Called once at boot; the job only ever runs via {@link enqueue}. */
     register(): void {
         systemJobHandlers.registerJobHandler(SystemJobName.TOOL_SEARCH_REINDEX, async (data) => {
+            if (!isToolSearchEnabled()) {
+                log.info('[toolSearchReindexJob] Tool-search is disabled — skipping the reconcile.')
+                return
+            }
             await distributedLock(log).runExclusive({
                 key: reindexLockKey(data.scope),
                 timeoutInSeconds: REINDEX_LOCK_TIMEOUT_SECONDS,
@@ -93,6 +98,23 @@ export const toolSearchReindexJob = (log: FastifyBaseLogger) => ({
             schedule: {
                 type: 'one-time',
                 date: apDayjs(),
+            },
+        })
+    },
+
+    async scheduleRecurringReconcile(): Promise<void> {
+        if (!isToolSearchEnabled()) {
+            return
+        }
+        await systemJobsSchedule(log).upsertJob({
+            job: {
+                name: SystemJobName.TOOL_SEARCH_REINDEX,
+                data: { scope: { type: 'all' } },
+                jobId: reindexJobId({ type: 'all' }),
+            },
+            schedule: {
+                type: 'repeated',
+                cron: REINDEX_CRON_PATTERN,
             },
         })
     },

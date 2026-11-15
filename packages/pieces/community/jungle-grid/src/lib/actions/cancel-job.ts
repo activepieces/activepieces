@@ -6,6 +6,7 @@ import { jungleGridCommon } from '../common';
 export const cancelJob = createAction({
   auth: jungleGridAuth,
   name: 'cancel_job',
+  classification: 'DESTRUCTIVE',
   displayName: 'Cancel Job',
   description: 'Cancel a non-terminal Jungle Grid job. This may stop active execution.',
   audience: 'both',

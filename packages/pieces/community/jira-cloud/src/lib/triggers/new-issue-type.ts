@@ -3,8 +3,10 @@ import { jiraCloudAuth } from '../../auth';
 import { getIssueTypes } from '../common';
 import { getProjectIdDropdown } from '../common/props';
 
+import { issueTypeTriggerOutputSchema } from '../output-schemas';
 export const newIssueType = createTrigger({
   name: 'new_issue_type',
+  classification: 'READ',
   displayName: 'New Issue Type',
   description: 'Triggers when a new issue type is created in a project',
   aiMetadata: {
@@ -13,10 +15,11 @@ export const newIssueType = createTrigger({
   },
   auth: jiraCloudAuth,
   type: TriggerStrategy.POLLING,
+  outputSchema: issueTypeTriggerOutputSchema,
   props: {
     projectId: getProjectIdDropdown({
       displayName: 'Project',
-      description: 'Select the project to watch for new issue types',
+      description: 'The project to watch for new issue types.',
       required: true,
     }),
   },
@@ -29,6 +32,9 @@ export const newIssueType = createTrigger({
     hierarchyLevel: 0,
   },
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get('issueTypeIds'))) {
+      return;
+    }
     const { projectId } = context.propsValue;
 
     const issueTypes = await getIssueTypes({
@@ -40,6 +46,9 @@ export const newIssueType = createTrigger({
     await context.store.put('issueTypeIds', JSON.stringify(ids));
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete('issueTypeIds');
   },
   async run(context) {

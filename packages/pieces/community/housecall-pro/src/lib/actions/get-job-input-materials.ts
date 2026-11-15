@@ -5,6 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const getJobInputMaterials = createAction({
   auth: housecallProAuth,
   name: "get_job_input_materials",
+  classification: 'SEARCH',
   displayName: "Lists all job input materials for a job",
   description: "Retrieve all job input materials for a specific job",
   audience: 'both',

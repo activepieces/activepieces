@@ -1,5 +1,10 @@
 import { isNil, tryParseFriendlyPieceError } from '@activepieces/core-utils';
-import { AgentResult, AgentTaskStatus, FlowAction } from '@activepieces/shared';
+import {
+  AgentResult,
+  AgentTaskStatus,
+  FlowAction,
+  FlowActionType,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Loader2, Play } from 'lucide-react';
 import React, { useState } from 'react';
@@ -12,11 +17,16 @@ import { cn } from '@/lib/utils';
 import { DataDisplayTabs } from '../data-display/data-display-tabs';
 import { ErrorExplanationContext } from '../data-display/explanation-prompt';
 import { FriendlyErrorView } from '../data-display/friendly-error-view';
+import { AiRouterRoutes } from '../run-details/ai-router-routes';
 import { ClosePanelButton } from '../step-data/close-panel-button';
 import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
 import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 
-import { AgentTestStep, isRunAgent } from './agent-test-step';
+import {
+  AgentTestStep,
+  defaultAgentOutput,
+  isRunAgent,
+} from './agent-test-step';
 import { JsonTreeSkeleton } from './json-tree-skeleton';
 import { TestButtonTooltip } from './test-step-tooltip';
 
@@ -120,7 +130,7 @@ export const TestSampleDataViewer = React.memo(
         <StepDataPanelHeader status={status} lastTestDate={lastTestDate} />
         <div className="flex-1 flex flex-col w-full text-start min-h-0">
           {errorMessage && !isTesting && (
-            <div className="px-3 pt-2 text-xs text-muted-foreground shrink-0">
+            <div className="px-3 pt-2 text-xs text-gray-11 shrink-0">
               {t('Errors are not saved on refresh')}
             </div>
           )}
@@ -139,7 +149,7 @@ export const TestSampleDataViewer = React.memo(
               <TestingPreviewContent data={activeData} />
             ) : showAgentView ? (
               <AgentTestStep
-                agentResult={getAgentResult(sampleData)}
+                agentResult={getAgentResult({ sampleData, isTesting })}
                 errorMessage={errorMessage}
               />
             ) : friendlyError ? (
@@ -149,11 +159,16 @@ export const TestSampleDataViewer = React.memo(
                 pieceDisplayName={pieceDisplayName}
               />
             ) : activeTab === 'Output' && !errorMessage ? (
-              <SmartOutputViewer
-                json={outputData}
-                title={t('Output')}
-                pieceSchema={pieceSchema ?? null}
-              />
+              <div className="flex flex-col gap-3">
+                {currentStep?.type === FlowActionType.AI_ROUTER && (
+                  <AiRouterRoutes output={outputData} input={sampleDataInput} />
+                )}
+                <SmartOutputViewer
+                  json={outputData}
+                  title={t('Output')}
+                  pieceSchema={pieceSchema ?? null}
+                />
+              </div>
             ) : (
               <DataDisplayTabs
                 data={activeData}
@@ -224,7 +239,7 @@ const SegmentedTabs = ({
 }: SegmentedTabsProps) => (
   <div
     className={cn(
-      'inline-flex items-center rounded-md bg-muted p-0.5 gap-0.5',
+      'inline-flex items-center rounded-lg bg-gray-3 p-0.5 gap-0.5',
       disabled && 'opacity-50',
     )}
   >
@@ -271,10 +286,10 @@ const SegmentedTabsButton = ({
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      'px-3 py-1 text-xs font-medium rounded-sm transition-colors disabled:cursor-not-allowed',
+      'px-3 py-1 text-xs font-medium rounded-md transition-colors disabled:cursor-not-allowed',
       active
-        ? 'bg-background text-foreground shadow-sm'
-        : 'text-muted-foreground hover:text-foreground',
+        ? 'bg-gray-1 text-gray-12 shadow-sm'
+        : 'text-gray-11 hover:text-gray-12',
     )}
   >
     {label}
@@ -296,11 +311,11 @@ const RetestActionBar = ({
 }: RetestActionBarProps) => (
   <div
     data-test-panel-trigger
-    className="relative px-3 py-3 bg-background z-10 shrink-0"
+    className="relative px-3 py-3 bg-gray-1 z-10 shrink-0"
   >
     <div
       aria-hidden
-      className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent"
+      className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-gray-1 to-transparent"
     />
     <TestButtonTooltip saving={isSaving} invalid={!isValid}>
       <Button
@@ -309,7 +324,7 @@ const RetestActionBar = ({
         disabled={disabled}
         keyboardShortcut="G"
         onKeyboardShortcut={onRetest}
-        className="w-full justify-center bg-primary/5 enabled:hover:bg-primary/15 enabled:hover:text-primary text-primary border-primary/20"
+        className="w-full justify-center bg-accent-3 enabled:hover:bg-accent-4 enabled:hover:text-accent-11 text-accent-11 border-accent-6"
         size="sm"
       >
         <Play className="size-4 fill-current" />
@@ -326,17 +341,17 @@ type CancelTestingBarProps = {
 const CancelTestingBar = ({ onCancel }: CancelTestingBarProps) => (
   <div
     data-test-panel-trigger
-    className="relative px-3 py-3 bg-background z-10 shrink-0"
+    className="relative px-3 py-3 bg-gray-1 z-10 shrink-0"
   >
     <div
       aria-hidden
-      className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent"
+      className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-gray-1 to-transparent"
     />
     <Button
       onClick={onCancel}
       disabled={!onCancel}
       variant="outline"
-      className="w-full justify-center bg-primary/5 hover:bg-primary/10 text-primary border-primary/20"
+      className="w-full justify-center bg-accent-3 enabled:hover:bg-accent-4 enabled:hover:text-accent-11 text-accent-11 border-accent-6"
       size="sm"
     >
       <Loader2 className="size-4 animate-spin" />
@@ -363,7 +378,21 @@ const TestingPreviewContent = ({ data }: TestingPreviewContentProps) => {
 TestSampleDataViewer.displayName = 'TestSampleDataViewer';
 
 //In case the user has mangled sample data
-function getAgentResult(sampleData: unknown) {
+function getAgentResult({
+  sampleData,
+  isTesting,
+}: {
+  sampleData: unknown;
+  isTesting: boolean;
+}): AgentResult | undefined {
+  const agentResult = parseAgentResult(sampleData);
+  if (isTesting && agentResult?.status !== AgentTaskStatus.IN_PROGRESS) {
+    return defaultAgentOutput;
+  }
+  return agentResult;
+}
+
+function parseAgentResult(sampleData: unknown) {
   if (isNil(sampleData)) return undefined;
   if (typeof sampleData !== 'object' || sampleData === null) return undefined;
   if (!('status' in sampleData)) return undefined;

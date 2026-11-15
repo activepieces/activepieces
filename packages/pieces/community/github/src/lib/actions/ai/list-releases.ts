@@ -8,6 +8,7 @@ import { listReleasesOutputSchema } from '../../output-schemas';
 export const githubListReleasesAction = createAction({
   auth: githubAuth,
   name: 'list_releases',
+  classification: 'SEARCH',
   displayName: 'List Releases (Agent)',
   description: 'Lists the releases in a repository.',
   audience: 'ai',

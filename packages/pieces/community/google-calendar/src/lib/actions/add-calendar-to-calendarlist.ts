@@ -6,6 +6,7 @@ import { calendarListEntryOutputSchema } from '../output-schemas';
 export const addCalendarToCalendarlist = createAction({
   auth: googleCalendarAuth,
   name: 'addCalendarToCalendarlist',
+  classification: 'WRITE',
   displayName: 'Add Calendar to calendarList',
   description: "Adds other people's calendars to your calendarList",
   props: {

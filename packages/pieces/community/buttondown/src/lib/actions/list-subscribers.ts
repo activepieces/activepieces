@@ -12,6 +12,7 @@ import { ButtondownSubscriber } from '../common/types';
 export const listSubscribers = createAction({
   auth: buttondownAuth,
   name: 'listSubscribers',
+  classification: 'SEARCH',
   displayName: 'List Subscribers',
   description: 'Retrieve subscribers from Buttondown.',
   audience: 'both',

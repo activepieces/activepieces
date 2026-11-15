@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { STEP_NAME_REGEX } from '@activepieces/core-utils'
+import { formErrors, STEP_NAME_REGEX } from '@activepieces/core-utils'
 import { VersionType } from '@activepieces/core-piece-types'
 import { PropertySettings } from '../properties'
 import { SampleDataSetting } from '../sample-data'
@@ -8,7 +8,9 @@ export enum FlowActionType {
     CODE = 'CODE',
     PIECE = 'PIECE',
     LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
+    PROCESS_IN_BATCHES = 'PROCESS_IN_BATCHES',
     ROUTER = 'ROUTER',
+    AI_ROUTER = 'AI_ROUTER',
 }
 
 export enum RouterExecutionType {
@@ -64,6 +66,7 @@ export const CodeActionSettings = z.object({
     sourceCode: SourceCode,
     input: z.record(z.string(), z.any()),
     errorHandlingOptions: ActionErrorHandlingOptions,
+    useDeno: z.boolean().optional(),
 })
 
 export type CodeActionSettings = z.infer<typeof CodeActionSettings>
@@ -108,6 +111,33 @@ export const LoopOnItemsActionSchema = z.object({
     ...commonActionProps,
     type: z.literal(FlowActionType.LOOP_ON_ITEMS),
     settings: LoopOnItemsActionSettings,
+})
+
+export const DEFAULT_BATCH_SIZE = 10
+
+export const MIN_BATCH_TIMEOUT_SECONDS = 3600
+
+export const ProcessInBatchesActionSettings = z.object({
+    ...commonActionSettings,
+    items: z.string(),
+    batchSize: z.number().default(DEFAULT_BATCH_SIZE),
+    timeoutSeconds: z.number().optional(),
+    errorHandlingOptions: ActionErrorHandlingOptions,
+})
+export type ProcessInBatchesActionSettings = z.infer<
+  typeof ProcessInBatchesActionSettings
+>
+
+export const ProcessInBatchesActionSettingsWithValidation = z.object({
+    items: z.string().min(1, formErrors.required),
+    batchSize: z.number().int(formErrors.batchSizeMustBeAWholeNumber).min(1, formErrors.batchSizeMustBeAtLeastOne).default(DEFAULT_BATCH_SIZE),
+    timeoutSeconds: z.number().int(formErrors.batchTimeoutMustBeAWholeNumber).min(MIN_BATCH_TIMEOUT_SECONDS, formErrors.batchTimeoutMustBeAtLeastOneHour).optional(),
+})
+
+export const ProcessInBatchesActionSchema = z.object({
+    ...commonActionProps,
+    type: z.literal(FlowActionType.PROCESS_IN_BATCHES),
+    settings: ProcessInBatchesActionSettings,
 })
 
 export enum BranchOperator {
@@ -283,6 +313,59 @@ export const RouterActionSettingsWithValidation = z.object({
 
 export type RouterActionSettings = z.infer<typeof RouterActionSettings>
 
+export enum AiRouterMatchMode {
+    BEST_MATCH = 'BEST_MATCH',
+    ALL_MATCHES = 'ALL_MATCHES',
+}
+
+export const AiRouterBranchesSchema = (addMinLength: boolean) =>
+    z.array(
+        z.union([
+            z.object({
+                branchType: z.literal(BranchExecutionType.CONDITION),
+                branchName: z.string(),
+                description: addMinLength ? z.string().min(1, formErrors.required) : z.string().optional(),
+            }),
+            z.object({
+                branchType: z.literal(BranchExecutionType.FALLBACK),
+                branchName: z.string(),
+                description: z.string().optional(),
+            }),
+        ]),
+    )
+
+export const AiRouterActionSettings = z.object({
+    ...commonActionSettings,
+    text: z.string(),
+    question: z.string(),
+    branches: AiRouterBranchesSchema(false),
+    matchMode: z.enum(AiRouterMatchMode).optional(),
+    minConfidence: z.number().min(0).max(1).optional(),
+})
+
+export const AiRouterActionSettingsWithValidation = z.object({
+    text: z.string().min(1, formErrors.required),
+    question: z.string().min(1, formErrors.required),
+    branches: AiRouterBranchesSchema(true),
+    matchMode: z.enum(AiRouterMatchMode).optional(),
+    minConfidence: z.number().min(0).max(1).optional(),
+}).superRefine((settings, ctx) => {
+    const seen = new Set<string>()
+    settings.branches.forEach((branch, index) => {
+        const name = branch.branchName.trim().toLowerCase()
+        if (seen.has(name)) {
+            ctx.addIssue({
+                code: 'custom',
+                message: formErrors.duplicateRouteName,
+                path: ['branches', index, 'branchName'],
+            })
+        }
+        seen.add(name)
+    })
+})
+
+export type AiRouterActionSettings = z.infer<typeof AiRouterActionSettings>
+
 
 
 // Union of all actions
@@ -301,10 +384,21 @@ export const FlowAction: z.ZodType<FlowAction> = z.lazy(() =>
             nextAction: FlowAction.optional(),
             firstLoopAction: FlowAction.optional(),
         }),
+        ProcessInBatchesActionSchema.extend({
+            nextAction: FlowAction.optional(),
+            firstLoopAction: FlowAction.optional(),
+        }),
         z.object({
             ...commonActionProps,
             type: z.literal(FlowActionType.ROUTER),
             settings: RouterActionSettings,
+            nextAction: FlowAction.optional(),
+            children: z.array(z.union([FlowAction, z.null()])),
+        }),
+        z.object({
+            ...commonActionProps,
+            type: z.literal(FlowActionType.AI_ROUTER),
+            settings: AiRouterActionSettings,
             nextAction: FlowAction.optional(),
             children: z.array(z.union([FlowAction, z.null()])),
         }),
@@ -322,11 +416,19 @@ export const RouterActionSchema = z.object({
     settings: RouterActionSettings,
 })
 
+export const AiRouterActionSchema = z.object({
+    ...commonActionProps,
+    type: z.literal(FlowActionType.AI_ROUTER),
+    settings: AiRouterActionSettings,
+})
+
 export const SingleActionSchema = z.discriminatedUnion('type', [
     CodeActionSchema,
     PieceActionSchema,
     LoopOnItemsActionSchema,
+    ProcessInBatchesActionSchema,
     RouterActionSchema,
+    AiRouterActionSchema,
 ])
 
 // Manually defined to avoid z.infer in recursive types (causes TypeScript OOM)
@@ -342,7 +444,9 @@ export type FlowAction =
     | (BaseActionProps & { type: FlowActionType.CODE, settings: CodeActionSettings, nextAction?: FlowAction, continueOnFailureBranches?: ContinueOnFailureBranches })
     | (BaseActionProps & { type: FlowActionType.PIECE, settings: PieceActionSettings, nextAction?: FlowAction, continueOnFailureBranches?: ContinueOnFailureBranches })
     | (BaseActionProps & { type: FlowActionType.LOOP_ON_ITEMS, settings: LoopOnItemsActionSettings, nextAction?: FlowAction, firstLoopAction?: FlowAction })
+    | (BaseActionProps & { type: FlowActionType.PROCESS_IN_BATCHES, settings: ProcessInBatchesActionSettings, nextAction?: FlowAction, firstLoopAction?: FlowAction })
     | (BaseActionProps & { type: FlowActionType.ROUTER, settings: RouterActionSettings, nextAction?: FlowAction, children: (FlowAction | null)[] })
+    | (BaseActionProps & { type: FlowActionType.AI_ROUTER, settings: AiRouterActionSettings, nextAction?: FlowAction, children: (FlowAction | null)[] })
 
 export type RouterAction = BaseActionProps & {
     type: FlowActionType.ROUTER
@@ -351,9 +455,25 @@ export type RouterAction = BaseActionProps & {
     children: (FlowAction | null)[]
 }
 
+export type AiRouterAction = BaseActionProps & {
+    type: FlowActionType.AI_ROUTER
+    settings: AiRouterActionSettings
+    nextAction?: FlowAction
+    children: (FlowAction | null)[]
+}
+
+export type BranchedAction = RouterAction | AiRouterAction
+
 export type LoopOnItemsAction = BaseActionProps & {
     type: FlowActionType.LOOP_ON_ITEMS
     settings: LoopOnItemsActionSettings
+    nextAction?: FlowAction
+    firstLoopAction?: FlowAction
+}
+
+export type ProcessInBatchesAction = BaseActionProps & {
+    type: FlowActionType.PROCESS_IN_BATCHES
+    settings: ProcessInBatchesActionSettings
     nextAction?: FlowAction
     firstLoopAction?: FlowAction
 }

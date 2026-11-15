@@ -1,7 +1,7 @@
 import * as z from "zod/mini";
 import { ActionContext } from '../context';
 import type { OutputSchema } from '../output-schema';
-import { ActionBase, Audience, AiMetadata } from '../piece-metadata';
+import { ActionBase, Audience, AiMetadata, ActionClassification, PropertyGroup } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../property/authentication';
 
@@ -32,6 +32,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[
   displayName: string
   description: string
   props: ActionProps
+  propertyGroups?: PropertyGroup[]
   run: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>
   test?: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>
   requireAuth?: boolean
@@ -39,6 +40,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[
   outputSchema?: OutputSchema
   audience?: Audience
   aiMetadata?: AiMetadata
+  classification?: ActionClassification
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -48,6 +50,7 @@ export class IAction<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |
     public readonly displayName: string,
     public readonly description: string,
     public readonly props: ActionProps,
+    public readonly propertyGroups: PropertyGroup[] | undefined,
     public readonly run: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>,
     public readonly test: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>,
     public readonly requireAuth: boolean,
@@ -55,6 +58,7 @@ export class IAction<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |
     public readonly outputSchema?: OutputSchema,
     public readonly audience?: Audience,
     public readonly aiMetadata?: AiMetadata,
+    public readonly classification?: ActionClassification,
   ) { }
 }
 
@@ -76,6 +80,7 @@ export const createAction = <
     params.displayName,
     params.description,
     params.props,
+    params.propertyGroups,
     params.run,
     params.test ?? params.run,
     params.requireAuth ?? true,
@@ -90,5 +95,6 @@ export const createAction = <
     params.outputSchema,
     params.audience,
     params.aiMetadata,
+    params.classification,
   )
 }

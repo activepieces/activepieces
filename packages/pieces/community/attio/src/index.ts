@@ -16,6 +16,7 @@ import { listTasksAction } from './lib/actions/list-tasks';
 import { getTaskAction } from './lib/actions/get-task';
 import { deleteTaskAction } from './lib/actions/delete-task';
 import { updateTaskAction } from './lib/actions/update-task';
+import { attioAiActions } from './lib/actions/ai';
 
 // Import triggers
 import { recordCreatedTrigger } from './lib/triggers/record-created';
@@ -31,7 +32,7 @@ export const attio = createPiece({
 	displayName: 'Attio',
 	description: 'Modern, collaborative CRM platform built to be fully customizable and real-time.',
 	auth: attioAuth,
-	minimumSupportedRelease: '0.36.1',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/attio.png',
 	categories: [PieceCategory.SALES_AND_CRM],
 	authors: ['AnkitSharmaOnGithub', 'kishanprmr', 'onyedikachi-david'],
@@ -50,6 +51,7 @@ export const attio = createPiece({
 		getTaskAction,
 		deleteTaskAction,
 		updateTaskAction,
+		...attioAiActions,
 		createCustomApiCallAction({
 			auth: attioAuth,
 			baseUrl: () => BASE_URL,

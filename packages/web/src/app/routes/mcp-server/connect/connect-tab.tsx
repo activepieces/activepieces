@@ -1,0 +1,45 @@
+import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { useMemo } from 'react';
+
+import { flagsHooks } from '@/hooks/flags-hooks';
+
+import { mcpClientCatalog } from '../mcp-client-catalog';
+import { useMcpNav } from '../mcp-nav';
+
+import { ClientInstructions } from './client-instructions';
+import { ClientPicker } from './client-picker';
+import { ConnectPage } from './connect-page';
+
+export function ConnectTab({
+  serverUrl,
+  isReachableFromInternet,
+}: {
+  serverUrl: string;
+  isReachableFromInternet: boolean;
+}) {
+  const { view, clientKey } = useMcpNav();
+  const { websiteName } = flagsHooks.useWebsiteBranding();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const isCloud = edition === ApEdition.CLOUD;
+  const clients = useMemo(
+    () => mcpClientCatalog.clients({ serverUrl, websiteName, isCloud }),
+    [serverUrl, websiteName, isCloud],
+  );
+
+  const selected = clients.find((client) => client.key === clientKey) ?? null;
+  if (view === 'client' && selected !== null) {
+    return (
+      <ClientInstructions
+        key={selected.key}
+        client={selected}
+        isReachableFromInternet={isReachableFromInternet}
+      />
+    );
+  }
+
+  if (view === 'browse') {
+    return <ClientPicker clients={clients} />;
+  }
+
+  return <ConnectPage clients={clients} />;
+}

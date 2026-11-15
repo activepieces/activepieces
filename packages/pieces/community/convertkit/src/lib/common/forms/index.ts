@@ -1,6 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 import { fetchForms } from '../../common/service';
-import { convertkitAuth } from '../../..';
+import { convertkitAuth } from '../../auth';
 
 export const formId = Property.Dropdown({
   displayName: 'Form',

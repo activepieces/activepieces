@@ -1,0 +1,696 @@
+import { AiProviderKeyStatus, AIProviderName, ErrorCode, formatPieceError, isFallbackWorthy, isNil, isObject, isProviderBillingError, isTransientProviderError, ProviderOutcomeSignal, spreadIfDefined, toError, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
+import { agentAiUtils, aiProviderSignal, ContentPartLike } from '@activepieces/server-utils'
+import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, agentToolSkills, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, LAZY_TOOL_NAME, PersistedAgentPart, SkillSurface, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
+import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
+import { buildSkillSurface } from './tools/skill-tools'
+
+const MAX_AUTO_CONTINUATIONS = 3
+const MAX_EMPTY_CONTINUATIONS = 2
+const MAX_STREAM_RETRIES = 1
+const MAX_IDENTICAL_TOOL_FAILURES = 2
+const IN_LOOP_COMPACTION_THRESHOLD = 0.6
+const RUNAWAY_TURN_CONTEXT_MULTIPLE = 90
+const STREAM_RETRY_BASE_DELAY_MS = 1_000
+const SDK_RETRIES = 3
+const SDK_RETRIES_BEFORE_FALLBACK = 1
+const MIN_THINKING_BUDGET = 1_024
+const CONTENT_CHUNK_TYPES = new Set(['text-delta', 'reasoning-delta', 'tool-input-start', 'tool-input-available', 'source-url', 'source-document', 'file'])
+const USER_FAULT_STATUS_CODES = new Set([401, 403, 404])
+const MODEL_UNAVAILABLE_PATTERNS = [/\bis deprecated\b/i, /no longer (available|supported)/i, /\bmodel_not_found\b/i, /\bunknown model\b/i, /\bdecommissioned\b/i]
+const USER_CONFIG_ENTITY_TYPES = new Set<string>(Object.values(AI_PROVIDER_ENTITY_TYPES))
+const USER_FACING_ERROR_CODES = new Set<string>([ErrorCode.VALIDATION, ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED])
+const CONTINUE_NUDGE = '[system note — not from the user] Your previous response was cut off by the output token limit before it finished. Continue exactly where you stopped. If a tool call was cut off, re-issue it in FULL. Do not repeat content you already produced.'
+const FINAL_STEP_NOTE = '[system note — not from the user] This is the last step of this run. Finish now with what you have: say what you finished and what is still left to do, and offer to carry on. Do not mention steps, tools or this note.'
+const EMPTY_OUTPUT_NUDGE = '[system note — not from the user] Your previous step produced no visible reply to the user. Continue the task now: either call the next tool, or write your reply to the user. Do not stop silently.'
+
+const FINAL_STEP_MESSAGE: ModelMessage = { role: 'user', content: FINAL_STEP_NOTE }
+
+export function decideLoopAction({ finishReason, endedWithReply, continuations, emptyContinuations }: {
+    finishReason: string
+    endedWithReply: boolean
+    continuations: number
+    emptyContinuations: number
+}): LoopDecision {
+    if (finishReason === 'length') {
+        return continuations >= MAX_AUTO_CONTINUATIONS ? 'finish' : 'continue_truncation'
+    }
+    if (!endedWithReply && emptyContinuations < MAX_EMPTY_CONTINUATIONS) {
+        return 'continue_empty'
+    }
+    return 'finish'
+}
+
+export function stepEndsWithReply({ text, toolCallCount }: { text: string, toolCallCount: number }): boolean {
+    return text.trim().length > 0 || toolCallCount > 0
+}
+
+export function shouldRetryStream({ producedVisibleOutput, streamRetries }: {
+    producedVisibleOutput: boolean
+    streamRetries: number
+}): boolean {
+    return !producedVisibleOutput && streamRetries < MAX_STREAM_RETRIES
+}
+
+export function trackStepContent({ state, chunkType }: { state: StepContentState, chunkType: string | undefined }): StepContentState {
+    if (!isNil(state.sentWhenFailed)) {
+        return state
+    }
+    if (chunkType === 'error') {
+        return { ...state, sentWhenFailed: state.sentInStep }
+    }
+    if (chunkType === 'start-step' || chunkType === 'finish-step') {
+        return { ...state, sentInStep: false }
+    }
+    return { ...state, sentInStep: state.sentInStep || (!isNil(chunkType) && CONTENT_CHUNK_TYPES.has(chunkType)) }
+}
+
+export function drainOf({ state }: { state: StepContentState }): StreamDrain {
+    return { lastStepSentContent: state.sentWhenFailed ?? state.sentInStep }
+}
+
+export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, priorToolCalls, onModelOutcome, onStepModel, skills }: RunAgentTurnParams): Promise<AgentTurnResult> {
+    const drainStream = sinks?.drainStream ?? ((result: ReturnType<typeof streamText>) => result.consumeStream())
+    const onProgress = sinks?.onProgress ?? (() => {})
+    const baseStopCondition = stopWhen ?? isLoopFinished()
+    let creditsExhausted = false
+    let paidToolsAffordable = true
+    let earlierAttemptToolCalls: ChatToolCall[] = priorToolCalls ?? []
+    const creditsRanOut: StopCondition<ToolSet> = async ({ steps }) => {
+        if (isNil(creditsLeft)) {
+            return false
+        }
+        const pendingCredits = chatBilling.creditsForTurn({ provider: current().provider, toolCalls: [...earlierAttemptToolCalls, ...completedToolCalls(steps)] }).total
+        const { data: left, error } = await tryCatch(() => creditsLeft(pendingCredits))
+        if (error) {
+            log.warn({ error }, 'Credit check failed mid-turn, letting the turn continue')
+        }
+        creditsExhausted = !isNil(left) && left <= 0
+        paidToolsAffordable = isNil(left) || left >= CHAT_CREDITS_PER_TOOL_CALL
+        return creditsExhausted
+    }
+    const maxTurnTokens = runawayTokenCeiling(models[0].provider)
+    let totalInputTokens = 0
+    let totalOutputTokens = 0
+    const tokenBudgetSpent = (): boolean => totalInputTokens + totalOutputTokens >= maxTurnTokens
+    const loopStopCondition = [
+        ...(Array.isArray(baseStopCondition) ? baseStopCondition : [baseStopCondition]),
+        ...(isNil(stepCeiling) ? [] : [isStepCount(stepCeiling)]),
+        creditsRanOut,
+        tokenBudgetSpent,
+    ]
+    const reroutedCallIds = new Set<string>()
+    const skillSurface = isNil(skills) ? null : buildSkillSurface({
+        tools,
+        surface: skills.surface,
+        guides: skills.guides,
+        onSkillLoaded: (skill) => {
+            if (skill.entersBuildPhase) {
+                phaseState.phase = 'build'
+            }
+        },
+        canAffordPaidTool: () => paidToolsAffordable,
+        wasRerouted: (toolCallId) => reroutedCallIds.has(toolCallId),
+    })
+    const turnSystemPrompt = systemPrompt + (skillSurface?.catalogNote ?? '')
+    const guardedTools = wrapToolsWithFailureGuard({ tools: skillSurface?.tools ?? tools, log })
+    const runsATier = models.some((candidate) => !isNil(candidate.key))
+    const peers = [...models, ...(isNil(fastModel) ? [] : [fastModel])]
+    const ranked = await Promise.all(models.map((turnModel) => withOutputBudget({ turnModel, peers })))
+    let fast = isNil(fastModel) ? undefined : await withOutputBudget({ turnModel: fastModel, peers })
+    let modelIndex = 0
+    let lastStepUsedFast = false
+    const failedModelIds = new Set<string>()
+    const current = (): BudgetedTurnModel => ranked[modelIndex]
+    const hasNextModel = (): boolean => modelIndex < ranked.length - 1
+
+    const uiParts: PersistedAgentPart[] = []
+    const toolCalls: AgentTurnToolCall[] = []
+    let toolCallOrder = 0
+    let currentAttemptMessages: ModelMessage[] = []
+    let streamError: Error | null = null
+
+    let llmMessages = messages
+    const accumulatedResponseMessages: ModelMessage[] = []
+    let continuations = 0
+    let emptyContinuations = 0
+    let streamRetries = 0
+    let truncatedAfterRetries = false
+    let usage: LanguageModelUsage | undefined
+    let lastFinishReason = ''
+    let budgetExceeded = false
+
+    const runStreamAttempt = (attemptMessages: ModelMessage[]): ReturnType<typeof streamText> => streamText({
+        model: current().model,
+        maxRetries: runsATier && hasNextModel() ? SDK_RETRIES_BEFORE_FALLBACK : SDK_RETRIES,
+        maxOutputTokens: current().budget.maxOutputTokens,
+        abortSignal,
+        instructions: agentAiUtils.buildSystemPromptWithCaching({ systemPrompt: turnSystemPrompt, provider: current().provider }),
+        messages: agentAiUtils.stripThinkingBlocks(attemptMessages, current().provider),
+        tools: guardedTools,
+        stopWhen: loopStopCondition,
+        ...agentAiUtils.buildTelemetry({ functionId: 'agent-turn' }),
+        // providerOptions/model are supplied per-step by prepareStep (authoritative). A
+        // call-level providerOptions would deep-merge into every step and leak the enabled
+        // thinking budget back into the disabled first step.
+        prepareStep: ({ steps, messages: currentMessages }) => {
+            const lastStep = steps[steps.length - 1]
+            const widened = lastStep?.toolCalls?.some((c) => agentToolPhases.isBuildOnlyTool(agentToolSkills.effectiveToolCall({ toolName: c.toolName, input: c.input }).toolName))
+            if (widened) {
+                phaseState.phase = 'build'
+            }
+            // Round one of the loop runs on the fast model with native thinking OFF, so the
+            // opener ("Lead with text") + first discovery stream out in ~400ms instead of
+            // waiting behind the smart model's slower first token and silent thinking budget.
+            // From round two we switch to the smart model with thinking ON for planning depth.
+            // It's one continuous turn (no second call), so there's no double-greeting.
+            const isFirstStep = steps.length === 0
+            // Thinking stays OFF for the whole discovery phase, not just round one: extended
+            // thinking makes the model deliberate and fire ONE tool per step, serializing the
+            // read-only lookups that should run as one parallel burst. Once a build-only tool
+            // flips the phase to 'build', thinking comes back on for planning depth.
+            const isLastAllowedStep = !isNil(stepCeiling) && steps.length >= stepCeiling - 1
+            const reportsStructuredOutput = allToolNames.includes(TASK_COMPLETION_TOOL_NAME)
+            const forcesCompletion = isLastAllowedStep && reportsStructuredOutput
+            const toolChoice: ToolChoice<ToolSet> | undefined = isLastAllowedStep
+                ? (forcesCompletion ? { type: 'tool', toolName: TASK_COMPLETION_TOOL_NAME } : 'none')
+                : undefined
+            const disableThinking = isFirstStep || phaseState.phase === 'discovery' || forcesCompletion
+            const stepModel = isFirstStep && !isNil(fast) ? fast : current()
+            const usesFastModel = stepModel !== current()
+            const stepBudget = stepModel.budget
+            const visibleTools = skillSurface?.attachedToolNames() ?? agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames })
+            const phaseTools = isNil(skillSurface) ? visibleTools.filter((name) => paidToolsAffordable || !chatBilling.isPaidTool(name)) : visibleTools
+            const activeTools = forcesCompletion ? [TASK_COMPLETION_TOOL_NAME] : phaseTools
+            const boundedContext = boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt: turnSystemPrompt, provider: stepModel.provider })
+            const stepContext = isLastAllowedStep
+                ? { messages: [...(boundedContext.messages ?? currentMessages), FINAL_STEP_MESSAGE] }
+                : boundedContext
+            lastStepUsedFast = usesFastModel
+            onStepModel?.(stepModel)
+            const thinkingOff = disableThinking || stepBudget.thinkingBudget === 0
+            return {
+                ...(usesFastModel ? { model: stepModel.model } : {}),
+                activeTools,
+                ...spreadIfDefined('toolChoice', toolChoice),
+                maxOutputTokens: thinkingOff ? stepBudget.maxOutputTokensWithoutThinking : stepBudget.maxOutputTokens,
+                providerOptions: agentAiUtils.buildProviderOptions({ provider: stepModel.provider, tier: { id: tier.id, thinkingBudget: stepBudget.thinkingBudget }, modelId: stepModel.modelId, disableThinking: thinkingOff }),
+                ...stepContext,
+            }
+        },
+        repairToolCall: async ({ toolCall, error, inputSchema }) => {
+            if (NoSuchToolError.isInstance(error)) {
+                if (!isNil(skillSurface) && toolCall.toolName in skillSurface.tools && isParsableJson(toolCall.input)) {
+                    log.info({ toolName: toolCall.toolName }, 'Rerouting a deferred tool called by name through ap_lazy_tool')
+                    reroutedCallIds.add(toolCall.toolCallId)
+                    return { ...toolCall, toolName: LAZY_TOOL_NAME, input: JSON.stringify({ tool: toolCall.toolName, input: JSON.parse(toolCall.input) }) }
+                }
+                log.warn({ toolName: toolCall.toolName }, 'Model called a tool that is not active in this phase')
+                return null
+            }
+            if (toolCall.toolName === LAZY_TOOL_NAME && isParsableJson(toolCall.input)) {
+                return null
+            }
+            log.warn({ toolName: toolCall.toolName, error }, 'Repairing malformed tool call')
+            const schema = await inputSchema({ toolName: toolCall.toolName })
+            const { data: repaired } = await tryCatch(async () => {
+                const { text } = await generateText({
+                    model: current().model,
+                    abortSignal,
+                    ...agentAiUtils.buildTelemetry({ functionId: 'agent-tool-repair' }),
+                    prompt: `Fix this invalid input for the tool "${toolCall.toolName}". The error was: ${error.message}\n\nOriginal input:\n${toolCall.input}\n\nThe input must match this JSON schema:\n${JSON.stringify(schema)}\n\nReturn ONLY the corrected JSON input, nothing else.`,
+                })
+                return jsonInputFrom(text)
+            })
+            if (isNil(repaired)) {
+                log.warn({ toolName: toolCall.toolName }, 'Could not repair the tool call into valid JSON')
+                return null
+            }
+            return { ...toolCall, input: repaired }
+        },
+        onToolExecutionEnd: ({ toolCall, toolOutput, toolExecutionMs }) => {
+            const effectiveCall = agentToolSkills.effectiveToolCall({ toolName: toolCall.toolName, input: toolCall.input })
+            toolCalls.push({
+                toolName: effectiveCall.toolName,
+                toolCallId: toolCall.toolCallId,
+                input: effectiveCall.input,
+                order: toolCallOrder++,
+                phase: phaseState.phase,
+            })
+            const success = toolOutput.type === 'tool-result'
+            log.debug({
+                tool: { name: toolCall.toolName, callId: toolCall.toolCallId, phase: phaseState.phase, durationMs: toolExecutionMs, input: toolCall.input },
+                success,
+            }, 'Tool call I/O')
+            if (success) {
+                log.info({ tool: { name: toolCall.toolName, durationMs: toolExecutionMs } }, 'Tool call completed')
+            }
+            else {
+                log.warn({ tool: { name: toolCall.toolName, durationMs: toolExecutionMs }, error: toolOutput.error }, 'Tool call failed')
+            }
+        },
+        onStepEnd: ({ content, response, usage: stepUsage }) => {
+            totalInputTokens += stepUsage.inputTokens ?? 0
+            totalOutputTokens += stepUsage.outputTokens ?? 0
+            uiParts.push(...agentAiUtils.buildStepParts({ content: content as ContentPartLike[] }))
+            currentAttemptMessages = [...currentAttemptMessages, ...agentAiUtils.collectStepMessages([{ response }])]
+            const responseMessages = [...accumulatedResponseMessages, ...currentAttemptMessages]
+            onProgress({ uiParts: [...uiParts], responseMessages })
+            log.debug({ partCount: uiParts.length, phase: phaseState.phase }, 'Chat step finished')
+        },
+        onError: ({ error }) => {
+            log.error({ error }, 'Chat streamText error')
+            streamError = toError(error)
+        },
+    })
+
+    for (;;) {
+        log.debug({ phase: phaseState.phase, continuations, emptyContinuations, streamRetries }, 'Chat turn loop iteration')
+        const uiPartsCountBefore = uiParts.length
+        currentAttemptMessages = []
+        const result = runStreamAttempt(llmMessages)
+        const drained = await drainStream(result)
+        const producedVisibleOutput = uiParts.length > uiPartsCountBefore
+        // On abort/error we leave the loop WITHOUT reaching the clean-exit pushes below, so fold
+        // this attempt's completed steps in here — otherwise the turn's work is lost from the
+        // saved LLM history even though it streamed to the UI.
+        if (abortSignal.aborted) {
+            accumulatedResponseMessages.push(...currentAttemptMessages)
+            break
+        }
+        if (streamError) {
+            const signal = aiProviderSignal.fromError(streamError)
+            const failedModel = lastStepUsedFast && !isNil(fast) ? fast : current()
+            reportOutcome({ turnModel: failedModel, signal, onModelOutcome })
+            const failedFast = failedModel === fast
+            if (!failedFast) {
+                failedModelIds.add(failedModel.modelId)
+            }
+            const sentNothing = runsATier && drained?.lastStepSentContent === false
+            const dropsFast = failedFast && sentNothing
+            const movesOn = !failedFast && sentNothing && isFallbackWorthy(signal) && hasNextModel()
+            if (dropsFast || movesOn) {
+                if (!failedFast) {
+                    modelIndex++
+                }
+                log.warn({ error: streamError, failedModel: { id: failedModel.modelId, fast: failedFast }, model: { id: current().modelId }, candidateIndex: modelIndex }, 'Chat model failed before sending anything — continuing the turn on the next model')
+                fast = undefined
+                accumulatedResponseMessages.push(...currentAttemptMessages)
+                llmMessages = [...llmMessages, ...currentAttemptMessages]
+                streamError = null
+                streamRetries = 0
+                continue
+            }
+            if (shouldRetryStream({ producedVisibleOutput: producedVisibleOutput || drained?.lastStepSentContent === true, streamRetries })) {
+                streamRetries++
+                log.warn({ streamRetries, error: streamError }, 'Chat stream failed before any visible output — retrying the turn')
+                streamError = null
+                await delayWithJitter(STREAM_RETRY_BASE_DELAY_MS)
+                continue
+            }
+            accumulatedResponseMessages.push(...currentAttemptMessages)
+            break
+        }
+
+        // Reset on success so each turn gets its own one-shot retry, not one per job.
+        streamRetries = 0
+
+        const [steps, attemptUsage, finishReason, finalStep] = await Promise.all([
+            result.steps,
+            result.usage,
+            result.finishReason,
+            result.finalStep,
+        ])
+        const stepMessages = agentAiUtils.collectStepMessages(steps)
+        earlierAttemptToolCalls = [...earlierAttemptToolCalls, ...completedToolCalls(steps)]
+        usage = attemptUsage
+        lastFinishReason = finishReason
+        logTurnPerformance({ performance: finalStep.performance, modelId: current().modelId, stepCount: steps.length, log })
+
+        if (creditsExhausted) {
+            accumulatedResponseMessages.push(...stepMessages)
+            log.warn({ totalInputTokens, totalOutputTokens }, 'Chat turn stopped because the platform ran out of credits')
+            break
+        }
+
+        if (tokenBudgetSpent()) {
+            accumulatedResponseMessages.push(...stepMessages)
+            budgetExceeded = true
+            log.error({ totalInputTokens, totalOutputTokens, maxTurnTokens }, 'Chat turn hit per-turn token budget — stopping to prevent runaway cost')
+            break
+        }
+
+        const endedWithReply = stepEndsWithReply({ text: finalStep.text, toolCallCount: finalStep.toolCalls.length })
+        const decision = decideLoopAction({ finishReason, endedWithReply, continuations, emptyContinuations })
+
+        if (decision === 'finish') {
+            accumulatedResponseMessages.push(...stepMessages)
+            if (finishReason === 'length') {
+                truncatedAfterRetries = true
+                log.error({ continuations }, 'Chat response still truncated after max auto-continuations')
+            }
+            break
+        }
+
+        const sanitizedTail = agentAiUtils.sanitizeTruncatedAssistantTail(stepMessages)
+        if (decision === 'continue_truncation') {
+            continuations++
+            log.warn({ continuations, outputTokens: attemptUsage.outputTokens }, 'Chat response truncated by output limit — auto-continuing')
+            accumulatedResponseMessages.push(...sanitizedTail)
+            llmMessages = [...llmMessages, ...sanitizedTail, { role: 'user', content: CONTINUE_NUDGE }]
+            continue
+        }
+
+        emptyContinuations++
+        log.warn({ emptyContinuations, finishReason }, 'Chat step produced no visible output — auto-continuing')
+        accumulatedResponseMessages.push(...sanitizedTail)
+        llmMessages = [...llmMessages, ...sanitizedTail, { role: 'user', content: EMPTY_OUTPUT_NUDGE }]
+    }
+
+    if (isNil(streamError) && !abortSignal.aborted && current().key?.status !== 'active') {
+        reportOutcome({ turnModel: current(), signal: { statusCode: 200 }, onModelOutcome })
+    }
+    if (modelIndex > 0) {
+        log.info({ candidateIndex: modelIndex, model: { id: current().modelId } }, 'A fallback model answered the chat turn')
+    }
+
+    return {
+        accumulatedResponseMessages,
+        uiParts,
+        usage,
+        finishReason: lastFinishReason,
+        truncatedAfterRetries,
+        budgetExceeded,
+        creditsExhausted,
+        streamError,
+        continuations,
+        totalInputTokens,
+        totalOutputTokens,
+        toolCalls,
+        answeredBy: lastStepUsedFast && !isNil(fast) ? fast : current(),
+        allModelsFailed: !isNil(streamError) && runsATier && failedModelIds.size === unique(ranked.map((candidate) => candidate.modelId)).length,
+    }
+}
+
+async function withOutputBudget({ turnModel, peers }: { turnModel: TurnModel, peers: TurnModel[] }): Promise<BudgetedTurnModel> {
+    const sameProviderIds = unique(peers.filter((peer) => peer.provider === turnModel.provider).map((peer) => peer.modelId))
+    const maxOutputTokens = await agentAiUtils.affordableOutputTokens({ provider: turnModel.provider, modelIds: sameProviderIds, thinkingBudget: turnModel.thinkingBudget })
+    const roomForThinking = Math.min(turnModel.thinkingBudget, maxOutputTokens - MIN_THINKING_BUDGET)
+    const thinkingBudget = isNil(turnModel.key) ? turnModel.thinkingBudget : roomForThinking < MIN_THINKING_BUDGET ? 0 : roomForThinking
+    return {
+        ...turnModel,
+        budget: {
+            maxOutputTokens,
+            maxOutputTokensWithoutThinking: agentAiUtils.clampOutputTokens({ thinkingBudget: 0, ceilings: [maxOutputTokens] }),
+            thinkingBudget,
+        },
+    }
+}
+
+function reportOutcome({ turnModel, signal, onModelOutcome }: { turnModel: TurnModel, signal: ProviderOutcomeSignal, onModelOutcome?: (outcome: { turnModel: TurnModel, signal: ProviderOutcomeSignal }) => void }): void {
+    const comesFromProvider = signal.fromProvider === true || signal.statusCode === 200
+    if (isNil(turnModel.key) || isNil(onModelOutcome) || !comesFromProvider) {
+        return
+    }
+    onModelOutcome({ turnModel, signal })
+}
+
+// timeToFirstOutputMs is the number the fast-model-first-step swap in prepareStep exists to buy;
+// without it that optimization was never measurable, only assumed.
+function logTurnPerformance({ performance, modelId, stepCount, log }: {
+    performance: StepResultPerformance
+    modelId: string
+    stepCount: number
+    log: AgentTurnLogger
+}): void {
+    log.info({
+        model: {
+            id: modelId,
+            stepCount,
+            stepTimeMs: performance.stepTimeMs,
+            responseTimeMs: performance.responseTimeMs,
+            ...spreadIfDefined('timeToFirstOutputMs', performance.timeToFirstOutputMs),
+            ...spreadIfDefined('outputTokensPerSecond', performance.outputTokensPerSecond),
+        },
+    }, 'Agent turn model performance')
+}
+
+export function delayWithJitter(baseMs: number): Promise<void> {
+    const jitter = Math.random() * 0.5 + 0.75
+    return new Promise((resolve) => setTimeout(resolve, baseMs * jitter))
+}
+
+// Centralized loop-breaker: an identical (tool + input) call that already failed
+// MAX_IDENTICAL_TOOL_FAILURES times is short-circuited with a directive to change
+// approach, instead of letting the model re-fire the same failing call indefinitely.
+function wrapToolsWithFailureGuard({ tools, log }: { tools: ToolSet, log: AgentTurnLogger }): ToolSet {
+    const failureCounts = new Map<string, number>()
+    const guarded: ToolSet = {}
+    for (const [name, toolDef] of Object.entries(tools)) {
+        const originalExecute = toolDef.execute
+        if (typeof originalExecute !== 'function') {
+            guarded[name] = toolDef
+            continue
+        }
+        guarded[name] = {
+            ...toolDef,
+            execute: async (input: unknown, options: ToolExecutionOptions<undefined>) => {
+                const key = `${name}::${fingerprintInput(input)}`
+                if ((failureCounts.get(key) ?? 0) >= MAX_IDENTICAL_TOOL_FAILURES) {
+                    log.warn({ tool: { name } }, 'Short-circuited repeated unproductive tool call')
+                    return { content: [{ type: 'text', text: `✋ This exact ${name} call already came back the same unproductive way ${MAX_IDENTICAL_TOOL_FAILURES} times (an error, or an empty result) and was NOT retried. Stop repeating it: change the parameters, switch the action (e.g. a list/search action instead of a find-one), or try a different approach. Do not re-send the identical call.` }] }
+                }
+                const result = await originalExecute(input, options)
+                const text = extractResultText(result)
+                const isFailure = text.length > 0 && agentToolClassification.hasFailureTextPrefix(text)
+                const isEmptyRead = text.length > 0 && !isFailure && looksEmptyResultText(text)
+                const isTransient = isFailure && isTransientFailureText(text)
+                // Brake on repeated UNPRODUCTIVE identical calls — permanent failures AND empty reads —
+                // so the agent stops re-running the same find that keeps returning nothing (the Attio
+                // thrash). Transient errors (429/5xx/timeout) are exempt: retrying those can succeed.
+                if ((isFailure && !isTransient) || isEmptyRead) {
+                    failureCounts.set(key, (failureCounts.get(key) ?? 0) + 1)
+                }
+                else {
+                    failureCounts.delete(key)
+                }
+                return result
+            },
+        }
+    }
+    return guarded
+}
+
+function fingerprintInput(input: unknown): string {
+    const { data } = tryCatchSync(() => JSON.stringify(input))
+    return data ?? ''
+}
+
+export function jsonInputFrom(text: string): string | undefined {
+    const start = text.indexOf('{')
+    if (start === -1) {
+        return undefined
+    }
+    for (let end = text.indexOf('}', start); end !== -1; end = text.indexOf('}', end + 1)) {
+        const candidate = text.slice(start, end + 1)
+        const { error } = tryCatchSync(() => JSON.parse(candidate))
+        if (isNil(error)) {
+            return candidate
+        }
+    }
+    return undefined
+}
+
+export function classifyAgentRunError({ error, provider }: { error: unknown, provider?: string }): AgentRunErrorClass {
+    const cause = RetryError.isInstance(error) ? error.lastError : error
+    const apiError = APICallError.isInstance(cause) ? cause : undefined
+    const apError = apErrorOf(cause)
+    const message = formatPieceError(cause).message
+    const serverSideFault = (apiError?.statusCode ?? 0) >= 500
+    const providerText = serverSideFault || !isNil(apError) ? '' : `${apiError?.responseBody ?? ''} ${message}`
+    const saysOutOfMoney = apError?.code === ErrorCode.QUOTA_EXCEEDED
+        || apiError?.statusCode === 402
+        || isProviderBillingError(providerText)
+    if (saysOutOfMoney) {
+        return 'credit'
+    }
+    if (isNil(apiError)) {
+        const missingUserConfig = apError?.code === ErrorCode.ENTITY_NOT_FOUND && USER_CONFIG_ENTITY_TYPES.has(apError.entityType ?? '')
+        const rejectedWithReason = USER_FACING_ERROR_CODES.has(apError?.code ?? '')
+        return missingUserConfig || rejectedWithReason ? 'user' : 'internal'
+    }
+    const rejectedByCustomGateway = apiError.statusCode === 400 && provider === AIProviderName.CUSTOM
+    if (rejectedByCustomGateway) {
+        return 'user'
+    }
+    if (apiError.statusCode === 400 && provider !== AIProviderName.ACTIVEPIECES && MODEL_UNAVAILABLE_PATTERNS.some((pattern) => pattern.test(message))) {
+        return 'user'
+    }
+    const ownsTheProvider = provider !== AIProviderName.ACTIVEPIECES
+    const providerUnavailable = ownsTheProvider && (serverSideFault || apiError.statusCode === 429)
+    if (providerUnavailable) {
+        return 'provider'
+    }
+    const blamesTheUser = USER_FAULT_STATUS_CODES.has(apiError.statusCode ?? 0) && ownsTheProvider
+    return blamesTheUser ? 'user' : 'internal'
+}
+
+// Transient = worth retrying (rate limit, 5xx, timeout, dropped socket); these are exempt from the
+// repeat-breaker so the agent isn't blocked from re-trying a call that can legitimately recover.
+export function isTransientFailureText(text: string): boolean {
+    return isTransientProviderError(text)
+}
+
+// A "successful" but empty read — the result the agent kept re-fetching in the Attio thrash. Matched
+// from the shapes our action results use (found:false, empty array) and the A3a empty-result note.
+export function looksEmptyResultText(text: string): boolean {
+    return /"found"\s*:\s*false|\bempty result\b|no results matched|"result"\s*:\s*\[\s*\]|"results"\s*:\s*\[\s*\]/i.test(text)
+}
+
+
+function isParsableJson(text: string): boolean {
+    return tryCatchSync((): unknown => JSON.parse(text)).error === null
+}
+
+function completedToolCalls(steps: ReadonlyArray<{ toolResults: ReadonlyArray<{ toolName: string, input: unknown, output: unknown }> }>): ChatToolCall[] {
+    return steps.flatMap((step) => step.toolResults.map((result) => ({ toolName: agentToolSkills.effectiveToolCall({ toolName: result.toolName, input: result.input }).toolName, output: result.output })))
+}
+
+function runawayTokenCeiling(provider: AIProviderName): number {
+    return aiProviderUtils.getMaxContextTokens({ provider }) * RUNAWAY_TURN_CONTEXT_MULTIPLE
+}
+
+/**
+ * Within a single streamText call the SDK appends every tool result and re-sends
+ * the full history each step, with no built-in size cap — a turn with many or
+ * large results can overflow the context window mid-loop. Above a soft threshold,
+ * override the step's messages with a collapsed copy (stale oversized tool outputs
+ * replaced by a marker, pairing preserved). Below threshold we emit no override so
+ * the SDK keeps its own history and Anthropic prompt caching stays warm.
+ */
+function boundContextForStep({ baseMessages, steps, systemPrompt, provider }: {
+    baseMessages: ModelMessage[]
+    steps: Array<{ response: { messages: ModelMessage[] } }>
+    systemPrompt: string
+    provider: AIProviderName
+}): { messages?: ModelMessage[] } {
+    const candidate = [...baseMessages, ...agentAiUtils.collectStepMessages(steps)]
+    const estimatedTokens = agentAiUtils.estimateTokenCount({ messages: candidate, systemPromptLength: systemPrompt.length })
+    const maxContext = aiProviderUtils.getMaxContextTokens({ provider })
+    if (estimatedTokens <= maxContext * IN_LOOP_COMPACTION_THRESHOLD) {
+        return {}
+    }
+    const collapsed = agentAiUtils.collapseStaleToolOutputs({ messages: candidate })
+    return { messages: agentAiUtils.stripThinkingBlocks(collapsed, provider) }
+}
+
+function extractResultText(result: unknown): string {
+    if (typeof result === 'string') {
+        return result
+    }
+    if (!isObject(result)) {
+        return ''
+    }
+    if (typeof result['text'] === 'string') {
+        return result['text']
+    }
+    if (Array.isArray(result['content'])) {
+        return result['content'].map((part) => isObject(part) && typeof part['text'] === 'string' ? part['text'] : '').join(' ')
+    }
+    if (isObject(result['value'])) {
+        return extractResultText(result['value'])
+    }
+    return ''
+}
+
+type LoopDecision = 'finish' | 'continue_truncation' | 'continue_empty'
+
+type AgentTurnLogger = {
+    debug: (obj: Record<string, unknown>, msg: string) => void
+    info: (obj: Record<string, unknown>, msg: string) => void
+    warn: (obj: Record<string, unknown>, msg: string) => void
+    error: (obj: Record<string, unknown>, msg: string) => void
+}
+
+export type AgentTurnToolCall = {
+    toolName: string
+    toolCallId: string
+    input: unknown
+    order: number
+    phase: AgentPhase
+}
+
+export type AgentTurnSinks = {
+    drainStream?: (result: ReturnType<typeof streamText>) => Promise<StreamDrain | undefined>
+    onProgress?: (progress: { uiParts: PersistedAgentPart[], responseMessages: ModelMessage[] }) => void
+}
+
+export type StreamDrain = {
+    lastStepSentContent: boolean
+}
+
+export type StepContentState = {
+    sentInStep: boolean
+    sentWhenFailed: boolean | null
+}
+
+export const NO_STEP_CONTENT: StepContentState = { sentInStep: false, sentWhenFailed: null }
+
+export type TurnModel = {
+    model: LanguageModel
+    provider: AIProviderName
+    modelId: string
+    thinkingBudget: number
+    key?: { providerConfigId: string, status: AiProviderKeyStatus }
+}
+
+type BudgetedTurnModel = TurnModel & {
+    budget: {
+        maxOutputTokens: number
+        maxOutputTokensWithoutThinking: number
+        thinkingBudget: number
+    }
+}
+
+export type RunAgentTurnParams = {
+    models: [TurnModel, ...TurnModel[]]
+    fastModel?: TurnModel
+    systemPrompt: string
+    messages: ModelMessage[]
+    tools: ToolSet
+    allToolNames: string[]
+    tier: { id: string, thinkingBudget: number, modelId: string }
+    phaseState: { phase: AgentPhase }
+    abortSignal: AbortSignal
+    log: AgentTurnLogger
+    sinks?: AgentTurnSinks
+    stopWhen?: StopCondition<ToolSet> | Array<StopCondition<ToolSet>>
+    stepCeiling?: number
+    creditsLeft?: (pendingCredits: number) => Promise<number | null>
+    priorToolCalls?: ChatToolCall[]
+    onModelOutcome?: (outcome: { turnModel: TurnModel, signal: ProviderOutcomeSignal }) => void
+    onStepModel?: (turnModel: TurnModel) => void
+    skills?: { surface: SkillSurface, guides: Record<string, string> }
+}
+
+export type AgentTurnResult = {
+    accumulatedResponseMessages: ModelMessage[]
+    uiParts: PersistedAgentPart[]
+    usage: LanguageModelUsage | undefined
+    finishReason: string
+    truncatedAfterRetries: boolean
+    budgetExceeded: boolean
+    creditsExhausted: boolean
+    streamError: Error | null
+    continuations: number
+    totalInputTokens: number
+    totalOutputTokens: number
+    toolCalls: AgentTurnToolCall[]
+    answeredBy: TurnModel
+    allModelsFailed: boolean
+}
+
+type AgentRunErrorClass = 'credit' | 'user' | 'provider' | 'internal'
+
+export function firstStepUsesFastModel({ source, dryRun, runsASavedAgent }: { source: AgentRunSource, dryRun?: boolean, runsASavedAgent: boolean }): boolean {
+    return dryRun !== true && source !== AgentRunSource.CHAT && !(source === AgentRunSource.FLOW_STEP && runsASavedAgent)
+}

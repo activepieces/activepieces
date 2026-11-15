@@ -11,6 +11,7 @@ import { BASE_URL } from '../common/constants';
 export const queryDatastoretAction = createAction({
   displayName: 'Query Datastore',
   name: 'query-datastore',
+  classification: 'SEARCH',
   auth: chaindeskAuth,
   description: 'Asks question to your Datastore.',
   audience: 'both',

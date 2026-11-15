@@ -15,6 +15,7 @@ const props = {
 export const aiDeleteEvent = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_delete_event',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Event',
   description: 'Permanently delete an event from a Google Calendar by its event ID.',
   audience: 'ai',

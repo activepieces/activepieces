@@ -1,3 +1,5 @@
+import { assertWriteSucceeded } from '../common/request';
+import { biginOutputSchemas } from '../common/output-schemas';
 import { biginAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { companyDropdown, contactsDropdown, layoutsDropdown, multiContactsDropdown, pipelineRecordsDropdown, productsDropdown, SubPipelineorStageDropdown, tagsDropdown, usersDropdown } from '../common/props';
@@ -7,9 +9,11 @@ import { formatDateOnly } from '../common/helpers';
 export const updatePipelineRecord = createAction({
   auth: biginAuth,
   name: 'updatePipeline',
+  classification: 'WRITE',
   displayName: 'Update Pipeline',
   description: 'updates a pipeline record in Bigin',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: biginOutputSchemas.legacyPipelineUpdate,
   aiMetadata: { description: 'Updates an existing pipeline record (deal) in Bigin CRM, identified by selecting the record; any fields you set are overwritten (deal name, sub-pipeline, stage, amount, closing date, owner, company, contact, secondary contacts, associated products, tags). Use to advance a deal stage or revise its details. Idempotent: re-sending the same field values leaves the record in the same state.', idempotent: true },
   props: {
     pipelineRecordId: pipelineRecordsDropdown,
@@ -26,7 +30,8 @@ export const updatePipelineRecord = createAction({
           throw new Error('Pipeline ID is required to update the record');
         }
 
-        const { access_token, api_domain } = auth as any;
+        const { access_token, data } = auth;
+        const api_domain = data['api_domain'];
         const fieldsResp = await biginApiService.fetchModuleFields(
           access_token,
           api_domain,
@@ -190,14 +195,16 @@ export const updatePipelineRecord = createAction({
       payload.Tag = propsValue.tag.map((t: any) => ({ name: t }));
     }
     
-    const {access_token, api_domain} = auth as any;
+    const { access_token, data } = auth;
+        const api_domain = data['api_domain'];
 
-   try {
+   
       const response = await biginApiService.updatePipelineRecord(
        access_token,
        api_domain,
        { data: [payload] }
      );
+      assertWriteSucceeded(response.data?.[0]);
 
       if (
         propsValue.secondaryContacts &&
@@ -208,7 +215,7 @@ export const updatePipelineRecord = createAction({
           .filter((id: string) => id !== propsValue.contactName);
 
         if (secondaries.length > 0) {
-          await biginApiService.updatePipelineRecord(
+          const contactsResponse = await biginApiService.updatePipelineRecord(
             access_token,
             api_domain,
             {
@@ -220,6 +227,7 @@ export const updatePipelineRecord = createAction({
               ],
             }
           );
+          assertWriteSucceeded(contactsResponse.data?.[0]);
         }
       }
 
@@ -227,9 +235,6 @@ export const updatePipelineRecord = createAction({
         message: 'Pipeline record updated successfully',
         pipelineRecord: response.data[0],
       };
-   } catch (error: any) {
-     console.error('Error updating pipeline record:', error);
-     throw new Error(error);
-   }
+   
   },
 });

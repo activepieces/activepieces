@@ -17,9 +17,9 @@ import { newCommentTriggerOutputSchema } from '../output-schemas';
 export const newComment = createTrigger({
   auth: notionAuth,
   name: 'new_comment',
+  classification: 'READ',
   displayName: 'New Comment',
-  description:
-    'Triggers whenever someone adds a new comment to a specific Notion page. Perfect for notifications, review workflows, or automated responses to team feedback.',
+  description: 'Triggers when a comment is added to a page.',
   aiMetadata: {
     description:
       'Fires when a new comment is posted on the selected Notion page, emitting the comment. Use to react to feedback or discussion activity on a specific page; requires read-comments capability on the integration.',
@@ -68,34 +68,16 @@ export const newComment = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async test(ctx) {
-    return await pollingHelper.test(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-      files: ctx.files,
-    });
+    return await pollingHelper.test(polling, ctx);
   },
   async onEnable(ctx) {
-    await pollingHelper.onEnable(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-    });
+    await pollingHelper.onEnable(polling, ctx);
   },
   async onDisable(ctx) {
-    await pollingHelper.onDisable(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-    });
+    await pollingHelper.onDisable(polling, ctx);
   },
   async run(ctx) {
-    return await pollingHelper.poll(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-      files: ctx.files,
-    });
+    return await pollingHelper.poll(polling, ctx);
   },
 });
 

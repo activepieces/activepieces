@@ -1,0 +1,616 @@
+import { setTimeout as delay } from 'node:timers/promises'
+import { ExecuteAgentRunJobData } from '@activepieces/core-execution'
+import { AGENT_STEP_TIMEOUT_MS, AgentResult, AgentTaskStatus } from '@activepieces/core-piece-types'
+import { ActivepiecesAiBilling, ActivepiecesError, AiCallContext, AIProviderName, AiUsageEnvironment, apId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
+import { aiUtils, modelTierCatalog, ModelTierSurface } from '@activepieces/server-utils'
+import { AGENT_RUN_USAGE_ORIGIN, AgentConfig, AgentConversation, AgentConversationStatus, AgentFlowTool, AgentRunSource, AgentTool, AgentToolType, AI_PROVIDER_CAPABILITIES, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, FlowVersionState, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedAgentFlowTool, UserMemory } from '@activepieces/shared'
+import { LanguageModel } from 'ai'
+import { FastifyBaseLogger } from 'fastify'
+import { IsNull, Repository } from 'typeorm'
+import { z } from 'zod'
+import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
+import { platformModelTierService, TierForRun } from '../../ai/platform-model-tier-service'
+import { aiCallContext } from '../../ai/usage/ai-call-context'
+import { repoFactory } from '../../core/db/repo-factory'
+import { transaction } from '../../core/db/transaction'
+import { distributedStore, redisConnections } from '../../database/redis-connections'
+import { flowService } from '../../flows/flow/flow.service'
+import { extractMcpTriggerInput } from '../../mcp/mcp-server-builder'
+import { mcpToolInput } from '../../mcp/mcp-tool-input'
+import { projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
+import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
+import { AgentConversationEntity, AgentConversationWithRelations } from './agent-conversation-entity'
+import { agentModelResolution } from './agent-model-resolution'
+import { agentModelTier } from './agent-model-tier'
+import { flowStepRpc } from './rpc/flow-step-rpc'
+import { UserMemoryEntity } from './user-memory-entity'
+
+const STREAMING_STALENESS_TIMEOUT_MS = 90 * 1_000
+const STARTED_RUN_MARKER_TTL_SECONDS = 24 * 60 * 60
+const HANDED_OFF_RUN_TTL_SECONDS = 60
+
+// Interactive-eval conversations carry this id prefix (within the 21-char id column) so both the
+// eval endpoints and the regular chat path can tell them apart from real user conversations.
+export const EVAL_CONVERSATION_ID_PREFIX = 'evalconv'
+
+export function isEvalConversationId(id: string): boolean {
+    return id.startsWith(EVAL_CONVERSATION_ID_PREFIX)
+}
+
+const conversationRepo: () => Repository<AgentConversationWithRelations> = repoFactory(AgentConversationEntity)
+const userMemoryRepo = repoFactory(UserMemoryEntity)
+
+const MAX_MEMORIES = 50
+const MAX_MEMORY_LENGTH = 280
+const MAX_INSTRUCTIONS_LENGTH = 4000
+const IMAGE_MODEL_LOOKUP_TIMEOUT_MS = 3_000
+
+async function getConversationOrThrow({ id, platformId, userId, log }: { id: string, platformId: string, userId: string, log?: FastifyBaseLogger }): Promise<AgentConversation> {
+    const conversation = await conversationRepo().findOneBy({ id, platformId, userId })
+    if (isNil(conversation)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: id, entityType: 'AgentConversation' },
+        })
+    }
+    if (conversation.status === AgentConversationStatus.STREAMING) {
+        const msSinceUpdate = Date.now() - new Date(conversation.updated).getTime()
+        if (msSinceUpdate > STREAMING_STALENESS_TIMEOUT_MS) {
+            await conversationRepo().update(id, { status: AgentConversationStatus.IDLE })
+            conversation.status = AgentConversationStatus.IDLE
+            log?.warn({ conversation: { id }, stuckForMs: msSinceUpdate }, '[agentHelpers] Recovered stale STREAMING conversation to IDLE')
+        }
+    }
+    return conversation
+}
+
+async function getUserProjects({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<Project[]> {
+    const users = userService(log)
+    const user = await users.getOneOrFail({ id: userId })
+    const allProjects = await projectService(log).getAllForUser({
+        platformId,
+        userId,
+        isPrivileged: users.isUserPrivileged(user),
+    })
+    return allProjects.filter((p) => p.type !== ProjectType.PERSONAL || p.ownerId === userId)
+}
+
+// A run always resolves its credential inside a project. Coercing a missing project to platform
+// scope would make every key on the platform eligible, ignoring the project restrictions their
+// owner set, so a run with nowhere to happen is refused instead.
+function runScopeOrThrow({ projectId }: { projectId: string | null }): Extract<ProviderScope, { type: 'project' }> {
+    if (isNil(projectId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: 'project', entityType: 'Project' },
+        }, 'this chat belongs to no project, so no AI provider key can be resolved for it')
+    }
+    return { type: 'project', projectId }
+}
+
+// The project a chat turn runs in: the conversation's own if the user still reaches it, else the
+// first they can see. Admission and the run both read it, so a message is accepted against the
+// same project whose credentials will serve it.
+function selectRunProject({ conversationProjectId, projects }: { conversationProjectId: string | null, projects: Project[] }): string | null {
+    const stillReachable = !isNil(conversationProjectId) && projects.some((project) => project.id === conversationProjectId)
+    return stillReachable ? conversationProjectId : projects[0]?.id ?? null
+}
+
+async function assertProjectSwitchKeepsKey({ platformId, provider, providerConfigId, fromProjectId, toProjectId, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, fromProjectId: string | null, toProjectId: string | null, log: FastifyBaseLogger }): Promise<void> {
+    if (isNil(fromProjectId) || fromProjectId === toProjectId) {
+        return
+    }
+    const serves = await aiProviderService(log).keyServesScope({
+        platformId,
+        ...spreadIfDefined('provider', provider),
+        ...spreadIfDefined('configId', providerConfigId),
+        resolvedFor: { type: 'project', projectId: fromProjectId },
+        target: isNil(toProjectId) ? { type: 'platform' } : { type: 'project', projectId: toProjectId },
+    })
+    if (serves) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.AUTHORIZATION,
+        params: { message: 'the AI provider key this run resolved is not available to the project it tried to switch to' },
+    })
+}
+
+async function resolveRunProvider({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
+    if (isNil(provider)) {
+        return resolveChatProvider({ platformId, scope, log })
+    }
+    return aiProviderService(log).getConfigOrThrow({ platformId, provider, scope, ...spreadIfDefined('configId', providerConfigId) })
+}
+
+async function resolveChatProvider({ platformId, scope, log }: { platformId: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
+    const chatProvider = await aiProviderService(log).getChatProvider({ platformId, scope })
+    if (isNil(chatProvider)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: platformId, entityType: AI_PROVIDER_ENTITY_TYPES.chatProvider },
+        }, 'no AI provider on this platform is enabled for chat')
+    }
+    return chatProvider
+}
+
+async function resolvePlatformWorkModel({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<PlatformWorkModel | null> {
+    const scope: ProviderScope = { type: 'platform' }
+    const defaultKey = await aiProviderService(log).getChatKey({ platformId, scope })
+    if (defaultKey?.enabledForChat === true) {
+        return { config: await aiProviderService(log).configForTierKey({ platformId, key: defaultKey }), modelId: null }
+    }
+    const mainEntry = allProjectsMainEntry({ forRun: await platformModelTierService.getDefaultForRun({ platformId, scope }) })
+    if (!isNil(mainEntry)) {
+        return { config: await aiProviderService(log).configForTierKey({ platformId, key: mainEntry.key }), modelId: mainEntry.modelId }
+    }
+    return isNil(defaultKey) ? null : { config: await aiProviderService(log).configForTierKey({ platformId, key: defaultKey }), modelId: null }
+}
+
+function allProjectsMainEntry({ forRun }: { forRun: TierForRun | null }): TierForRun['entries'][number] | undefined {
+    const main = forRun?.tier.entries[0]
+    return isNil(main) ? undefined : forRun?.entries.find((entry) => entry.key.id === main.configId && entry.modelId === main.modelId && entry.key.projectScope === 'all')
+}
+
+async function resolvePlatformWorkModelOrThrow({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<PlatformWorkModel> {
+    const work = await resolvePlatformWorkModel({ platformId, log })
+    if (isNil(work)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: platformId, entityType: AI_PROVIDER_ENTITY_TYPES.chatProvider },
+        }, 'no AI provider on this platform can run platform-wide work')
+    }
+    return work
+}
+
+async function resolvePlatformFastModel({ platformId, billing, log }: { platformId: string, billing: ActivepiecesAiBilling, log: FastifyBaseLogger }): Promise<LanguageModel> {
+    const scope: ProviderScope = { type: 'platform' }
+    const defaultKey = await aiProviderService(log).getChatKey({ platformId, scope })
+    const fastEntry = defaultKey?.enabledForChat === true ? undefined : allProjectsMainEntry({ forRun: await platformModelTierService.getFastForRun({ platformId, scope }) })
+    const { config, modelId } = !isNil(fastEntry)
+        ? { config: await aiProviderService(log).configForTierKey({ platformId, key: fastEntry.key }), modelId: fastEntry.modelId }
+        : !isNil(defaultKey)
+            ? { config: await aiProviderService(log).configForTierKey({ platformId, key: defaultKey }), modelId: null }
+            : await resolvePlatformWorkModelOrThrow({ platformId, log })
+    const fastModelId = modelId ?? await resolveFastModelId({ platformId, providerConfig: config, surface: 'chat', scope, log })
+    return aiUtils.createModel({ credentials: config, modelId: fastModelId, platformId, providerConfigId: config.configId, billing, usageOnly: true })
+}
+
+async function assertRunProviderConfigured({ platformId, provider, providerConfigId, modelTierId, scope, log }: { platformId: string, provider?: AIProviderName | null, providerConfigId?: string | null, modelTierId?: string | null, scope: ProviderScope, log: FastifyBaseLogger }): Promise<void> {
+    if (!isNil(modelTierId)) {
+        await agentModelTier(log).assertUsable({ platformId, tierId: modelTierId, scope })
+        return
+    }
+    if (isNil(provider)) {
+        const chatProvider = await aiProviderService(log).getChatProviderName({ platformId, scope })
+        if (isNil(chatProvider)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: platformId, entityType: AI_PROVIDER_ENTITY_TYPES.chatProvider },
+            }, 'no AI provider on this platform is enabled for chat')
+        }
+        return
+    }
+    const configured = await aiProviderService(log).exists({ platformId, provider, scope, ...spreadIfDefined('configId', providerConfigId ?? undefined) })
+    if (!configured) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: provider, entityType: AI_PROVIDER_ENTITY_TYPES.provider },
+        }, scope.type === 'platform'
+            ? `the ${provider} AI provider is not configured on this platform`
+            : `no ${provider} AI provider key is available to this project`)
+    }
+}
+
+async function resolveModelId({ platformId, providerConfig, selectedModel, surface, scope, fallbackModelId, log }: { platformId: string, providerConfig: GetProviderConfigResponse, selectedModel: string | null, surface: ModelTierSurface, scope: ProviderScope, fallbackModelId?: string, log: FastifyBaseLogger }): Promise<string> {
+    const { provider, config, modelScope, modelIds, configId } = providerConfig
+    const { data, error } = tryCatchSync(() => agentModelResolution.resolveModelIdForProvider({ provider, selectedModel, surface, config, modelScope, modelIds }))
+    if (!isNil(data)) {
+        return data
+    }
+    const keyServesNoKnownModel = error instanceof ActivepiecesError && error.error.code === ErrorCode.ENTITY_NOT_FOUND
+    if (!keyServesNoKnownModel) {
+        throw error
+    }
+    const fallbackStillAllowed = !isNil(fallbackModelId) && (modelScope !== 'selected' || modelIds.includes(fallbackModelId))
+    if (fallbackStillAllowed) {
+        return fallbackModelId
+    }
+    const offered = await aiProviderService(log).listModels({ platformId, provider, scope, configId })
+    const textModels = offered.filter((model) => model.type === AIProviderModelType.TEXT)
+    if (textModels.length === 0) {
+        throw error
+    }
+    const tier = agentModelResolution.resolveTier({ tierId: selectedModel, surface })
+    const nativeModelId = agentModelResolution.nativeModelIdFor({ tier })
+    const picked = textModels.find((model) => model.id === selectedModel)
+        ?? (isNil(nativeModelId) ? undefined : textModels.find((model) => model.id.includes(nativeModelId)))
+        ?? textModels[0]
+    return picked.id
+}
+
+async function resolveImageModelId({ platformId, providerConfig, scope, log }: { platformId: string, providerConfig: GetProviderConfigResponse, scope: ProviderScope, log: FastifyBaseLogger }): Promise<string | undefined> {
+    const { provider, configId } = providerConfig
+    const preferred = AI_PROVIDER_CAPABILITIES[provider].defaultImageModel
+    if (isNil(preferred) || provider === AIProviderName.ACTIVEPIECES) {
+        return preferred
+    }
+    const listed = await Promise.race([
+        tryCatch(() => aiProviderService(log).listModels({ platformId, provider, scope, configId })),
+        delay(IMAGE_MODEL_LOOKUP_TIMEOUT_MS, null),
+    ])
+    if (isNil(listed) || isNil(listed.data)) {
+        log.warn({ error: listed?.error, provider }, '[agentHelpers#resolveImageModelId] Could not list the key\'s models in time, leaving image generation off')
+        return undefined
+    }
+    const versionAt = preferred.search(/\d/)
+    const family = versionAt === -1 ? preferred : preferred.slice(0, versionAt)
+    const imageModelIds = listed.data.filter((model) => model.type === AIProviderModelType.IMAGE).map((model) => model.id)
+    if (imageModelIds.includes(preferred)) {
+        return preferred
+    }
+    const fallback = imageModelIds.find((id) => id.startsWith(family))
+    if (!isNil(fallback)) {
+        log.warn({ provider, preferred, fallback }, '[agentHelpers#resolveImageModelId] Default image model is not offered by this key, falling back')
+    }
+    return fallback
+}
+
+async function resolveFastModelId({ platformId, providerConfig, surface, scope, fallbackModelId, log }: { platformId: string, providerConfig: GetProviderConfigResponse, surface: ModelTierSurface, scope: ProviderScope, fallbackModelId?: string, log: FastifyBaseLogger }): Promise<string> {
+    return resolveModelId({ platformId, providerConfig, selectedModel: modelTierCatalog.current(surface).fastTierId, surface, scope, log, ...spreadIfDefined('fallbackModelId', fallbackModelId) })
+}
+
+async function usageContextOf({ source, projectId, agentId, flowRunId, userId }: UsageContextParams): Promise<AiCallContext> {
+    const origin = AGENT_RUN_USAGE_ORIGIN[source]
+    const ids = { ...spreadIfDefined('agentId', agentId ?? undefined), ...spreadIfDefined('userId', userId ?? undefined) }
+    if (source === AgentRunSource.AGENT_BUILDER) {
+        return { origin, environment: AiUsageEnvironment.TESTING, ...ids }
+    }
+    const runId = flowRunId ?? undefined
+    if (!aiCallContext.isRealRunId(runId) || isNil(projectId)) {
+        return { origin, environment: AiUsageEnvironment.PRODUCTION, ...ids }
+    }
+    const run = await aiCallContext.runOf({ flowRunId: runId, projectId })
+    return { origin, environment: run.environment, ...ids, flowRunId: runId, ...spreadIfDefined('flowId', run.flowId) }
+}
+
+async function resolveFastModel({ platformId, provider, providerConfigId, surface, scope, fallbackModelId, billing, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, surface: ModelTierSurface, scope: ProviderScope, fallbackModelId?: string, billing: ActivepiecesAiBilling, log: FastifyBaseLogger }): Promise<LanguageModel> {
+    const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
+    const modelId = await resolveFastModelId({ platformId, providerConfig, surface, scope, log, ...spreadIfDefined('fallbackModelId', fallbackModelId) })
+    return aiUtils.createModel({ credentials: providerConfig, modelId, platformId, providerConfigId: providerConfig.configId, billing, usageOnly: true })
+}
+
+
+// Analytics and billing label a turn with the provider that served it. A conversation with no
+// project has no key to name, and guessing platform-wide would report a credential the run was
+// never allowed to use, so the provider stays unknown.
+async function resolveChatProviderName({ platformId, projectId, log }: { platformId: string, projectId: string | null, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
+    if (isNil(projectId)) {
+        return null
+    }
+    return aiProviderService(log).getChatProviderName({ platformId, scope: runScopeOrThrow({ projectId }) })
+}
+
+async function resolveConversationProviderName({ platformId, projectId, providerConfigId, log }: { platformId: string, projectId: string | null, providerConfigId: string | null, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
+    const pinned = isNil(providerConfigId) ? null : await aiProviderService(log).findProviderName({ platformId, configId: providerConfigId })
+    return pinned ?? resolveChatProviderName({ platformId, projectId, log })
+}
+
+async function recoverAllStaleStreamingConversations({ log }: { log: FastifyBaseLogger }): Promise<{ recovered: number }> {
+    // Compare against the DB clock (NOW()) rather than a bound JS Date, so the sweep is immune
+    // to app/DB clock skew and driver timezone handling.
+    const result = await conversationRepo()
+        .createQueryBuilder()
+        .update()
+        .set({ status: AgentConversationStatus.IDLE })
+        .where('status = :streaming', { streaming: AgentConversationStatus.STREAMING })
+        .andWhere('updated < NOW() - make_interval(secs => :staleSecs)', { staleSecs: STREAMING_STALENESS_TIMEOUT_MS / 1_000 })
+        .andWhere('id NOT LIKE :evalPrefix', { evalPrefix: `${EVAL_CONVERSATION_ID_PREFIX}%` })
+        .returning(['id', 'source', 'flowRunId', 'waitpointId'])
+        .execute()
+    const swept = SweptConversation.array().parse(result.raw)
+    if (swept.length > 0) {
+        log.warn({ recovered: swept.length }, '[agentHelpers] Swept stale STREAMING conversations to IDLE')
+    }
+    await Promise.all(swept.map((conversation) => failAbandonedFlowStep({ conversation, log })))
+    return { recovered: swept.length }
+}
+
+async function failAbandonedFlowStep({ conversation, log }: { conversation: SweptConversation, log: FastifyBaseLogger }): Promise<void> {
+    const { id, source, flowRunId, waitpointId } = conversation
+    const holdsAPausedFlow = source === AgentRunSource.FLOW_STEP && !isNil(flowRunId) && !isNil(waitpointId)
+    if (!holdsAPausedFlow) {
+        return
+    }
+    const { error } = await tryCatch(() => flowStepRpc(log).resumeFlowStep({ conversationId: id, flowRunId, waitpointId, output: ABANDONED_FLOW_STEP_RESULT }))
+    if (!isNil(error)) {
+        log.error({ error, conversation: { id }, flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[agentHelpers] Could not release the flow step of an abandoned agent run, the next sweep retries it until the step times out')
+        await conversationRepo()
+            .createQueryBuilder()
+            .update()
+            .set({ status: AgentConversationStatus.STREAMING })
+            .where('id = :id', { id })
+            .andWhere('created > NOW() - make_interval(secs => :stepTimeoutSecs)', { stepTimeoutSecs: AGENT_STEP_TIMEOUT_MS / 1_000 })
+            .execute()
+    }
+}
+
+async function incrementAndCheckLimit({ key, limit, ttlSeconds }: { key: string, limit: number, ttlSeconds: number }): Promise<{ allowed: boolean, count: number }> {
+    const redis = await redisConnections.useExisting()
+    // INCR + EXPIRE in one atomic script: a crash between the two would otherwise leave a key with
+    // no TTL, permanently blocking the user. EXPIRE only on first increment keeps a fixed window.
+    const count = await redis.eval(
+        `local count = redis.call('INCR', KEYS[1])
+if count == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end
+return count`,
+        1,
+        key,
+        ttlSeconds.toString(),
+    ) as number
+    return { allowed: count <= limit, count }
+}
+
+async function getUserMemory({ platformId, userId }: { platformId: string, userId: string }): Promise<GetAgentMemoryResponse> {
+    const row = await userMemoryRepo().findOneBy({ platformId, userId })
+    return { instructions: row?.instructions ?? null, memories: row?.memories ?? [] }
+}
+
+async function memoryImportNudgeEligible({ platformId, userId }: { platformId: string, userId: string }): Promise<boolean> {
+    const [row, chats] = await Promise.all([
+        userMemoryRepo().findOneBy({ platformId, userId }),
+        conversationRepo().find({ select: { id: true }, where: { platformId, userId, source: AgentRunSource.CHAT }, take: 2 }),
+    ])
+    const memoryIsEmpty = isNil(row?.instructions) && (row?.memories.length ?? 0) === 0
+    const neverShown = isNil(row?.importNudgeShownAt)
+    const onFirstChat = chats.length === 1
+    return memoryIsEmpty && neverShown && onFirstChat
+}
+
+async function claimMemoryImportNudge({ platformId, userId }: { platformId: string, userId: string }): Promise<boolean> {
+    if (!await memoryImportNudgeEligible({ platformId, userId })) {
+        return false
+    }
+    const repo = userMemoryRepo()
+    await repo.createQueryBuilder()
+        .insert()
+        .values({ id: apId(), platformId, userId, memories: [] })
+        .orIgnore()
+        .execute()
+    const claimed = await repo.createQueryBuilder()
+        .update()
+        .set({ importNudgeShownAt: new Date().toISOString() })
+        .where({ platformId, userId, importNudgeShownAt: IsNull() })
+        .returning(['id'])
+        .execute()
+    return claimed.raw.length === 1
+}
+
+function capMemories({ instructions, memories }: { instructions: string | null, memories: string[] }): GetAgentMemoryResponse {
+    const trimmedInstructions = instructions?.trim()
+    return {
+        instructions: trimmedInstructions ? trimmedInstructions.slice(0, MAX_INSTRUCTIONS_LENGTH) : null,
+        memories: unique(memories
+            .map((memory) => memory.trim().slice(0, MAX_MEMORY_LENGTH))
+            .filter((memory) => memory.length > 0))
+            .slice(0, MAX_MEMORIES),
+    }
+}
+
+async function withLockedMemoryRow<T>({ platformId, userId }: { platformId: string, userId: string }, cb: (args: { repo: ReturnType<typeof userMemoryRepo>, row: UserMemory | null }) => Promise<T>): Promise<T> {
+    return transaction(async (entityManager) => {
+        const repo = entityManager.getRepository(UserMemoryEntity)
+        await repo.createQueryBuilder()
+            .insert()
+            .values({ id: apId(), platformId, userId, memories: [] })
+            .orIgnore()
+            .execute()
+        const row = await repo.findOne({ where: { platformId, userId }, lock: { mode: 'pessimistic_write' } })
+        return cb({ repo, row })
+    })
+}
+
+function mergeMemories({ base, incoming, current }: { base: string[], incoming: string[], current: string[] }): string[] {
+    return unique([
+        ...incoming.filter((memory) => !base.includes(memory) || current.includes(memory)),
+        ...current.filter((memory) => !base.includes(memory)),
+    ])
+}
+
+async function saveUserMemory({ platformId, userId, instructions, memories }: {
+    platformId: string
+    userId: string
+    instructions?: string | null
+    memories?: { next: string[], base: string[] }
+}): Promise<GetAgentMemoryResponse> {
+    return withLockedMemoryRow({ platformId, userId }, async ({ repo, row }) => {
+        const lockedMemories = row?.memories ?? []
+        const nextMemories = isNil(memories)
+            ? lockedMemories
+            : mergeMemories({ base: memories.base, incoming: memories.next, current: lockedMemories })
+        const capped = capMemories({
+            instructions: instructions === undefined ? row?.instructions ?? null : instructions,
+            memories: nextMemories,
+        })
+        await repo.update({ platformId, userId }, capped)
+        return capped
+    })
+}
+
+function jobFieldsFromConfig({ config }: { config: AgentConfig }): AgentJobConfigFields {
+    return {
+        tools: config.tools,
+        structuredOutput: config.structuredOutput,
+        maxSteps: config.maxSteps,
+        modelName: config.modelName ?? null,
+        ...spreadIfDefined('provider', config.provider ?? undefined),
+        ...spreadIfDefined('providerConfigId', config.providerConfigId ?? undefined),
+        ...spreadIfDefined('modelTierId', config.modelTierId ?? undefined),
+        promptOverride: { system: config.instructions },
+    }
+}
+
+async function claimConversationForRun({ conversationId, runId }: { conversationId: string, runId: string }): Promise<{ preemptedRunId: string | null, wasStreaming: boolean }> {
+    return transaction(async (entityManager) => {
+        const repo = entityManager.getRepository(AgentConversationEntity)
+        const current = await repo.findOne({ where: { id: conversationId }, lock: { mode: 'pessimistic_write' } })
+        const wasStreaming = current?.status === AgentConversationStatus.STREAMING
+        await repo.update(conversationId, { activeRunId: runId })
+        return { preemptedRunId: wasStreaming ? current?.activeRunId ?? null : null, wasStreaming }
+    })
+}
+
+async function acquireStreamingLock({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<StreamingLockResult> {
+    if (!isNil(runId)) {
+        const firstDelivery = await distributedStore.putIfAbsent(`agent-run-started:${conversationId}:${runId}`, true, STARTED_RUN_MARKER_TTL_SECONDS)
+        if (!firstDelivery) {
+            const handedToThisDelivery = await distributedStore.delete(handedOffRunKey({ conversationId, runId })) > 0
+            return handedToThisDelivery ? 'handed-off' : 'duplicate'
+        }
+    }
+    const builder = conversationRepo()
+        .createQueryBuilder()
+        .update()
+        .set({ status: AgentConversationStatus.STREAMING })
+        .where('id = :id AND status != :streaming', { id: conversationId, streaming: AgentConversationStatus.STREAMING })
+    if (!isNil(runId)) {
+        builder.andWhere('("activeRunId" IS NULL OR "activeRunId" = :runId)', { runId })
+    }
+    const result = await builder.returning('id').execute()
+    const lockedRows: unknown[] = result.raw ?? []
+    if (lockedRows.length > 0) {
+        return 'acquired'
+    }
+    const current = await conversationRepo().findOneBy({ id: conversationId })
+    const ownedByARun = !isNil(runId) && !isNil(current?.activeRunId)
+    if (!ownedByARun) {
+        return 'busy'
+    }
+    return current.activeRunId === runId ? 'duplicate' : 'superseded'
+}
+
+async function handLockToRedelivery({ conversationId, runId }: { conversationId: string, runId: string }): Promise<void> {
+    await distributedStore.put(handedOffRunKey({ conversationId, runId }), true, HANDED_OFF_RUN_TTL_SECONDS)
+}
+
+function handedOffRunKey({ conversationId, runId }: { conversationId: string, runId: string }): string {
+    return `agent-run-handed-off:${conversationId}:${runId}`
+}
+
+async function resolveFlowTools({ projectId, tools, log }: { projectId: string, tools: AgentTool[], log: FastifyBaseLogger }): Promise<ResolvedAgentFlowTool[]> {
+    const flowToolRequests = tools.filter((tool): tool is AgentFlowTool => tool.type === AgentToolType.FLOW)
+    if (flowToolRequests.length === 0) {
+        return []
+    }
+    const externalFlowIds = unique(flowToolRequests.map((tool) => tool.externalFlowId))
+    const listFlows = (versionState: FlowVersionState) => flowService(log).list({
+        projectIds: [projectId],
+        externalIds: externalFlowIds,
+        cursorRequest: null,
+        includeTriggerSource: false,
+        versionState,
+    })
+    const [published, drafts] = await Promise.all([listFlows(FlowVersionState.LOCKED), listFlows(FlowVersionState.DRAFT)])
+    const publishedByExternalId = new Map(published.data.map((flow) => [flow.externalId, flow]))
+    const runnableByExternalId = new Map(drafts.data.map((flow) => [flow.externalId, publishedByExternalId.get(flow.externalId) ?? flow]))
+    const missing = flowToolRequests.filter((tool) => !runnableByExternalId.has(tool.externalFlowId))
+    if (missing.length > 0) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `An agent cannot use flow tool(s) ${unique(missing.map((tool) => tool.toolName)).join(', ')}: the referenced flow was not found in this project` },
+        })
+    }
+    return flowToolRequests.map((toolRequest) => {
+        const flow = runnableByExternalId.get(toolRequest.externalFlowId)
+        assertNotNullOrUndefined(flow, `flow for tool ${toolRequest.toolName}`)
+        const { toolDescription, mcpInputs, returnsResponse } = extractMcpTriggerInput(flow)
+        const inputShape = mcpToolInput.modelInputShape({ properties: mcpInputs })
+        return {
+            toolName: toolRequest.toolName,
+            flowId: flow.id,
+            flowVersionId: flow.version.id,
+            description: toolDescription.length > 0 ? toolDescription : `Run the flow "${flow.version.displayName}"`,
+            inputSchema: z.toJSONSchema(z.object(inputShape)),
+            returnsResponse,
+        }
+    })
+}
+
+async function agentsSurfaceAvailable({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<boolean> {
+    const { data: plan, error } = await tryCatch(() => platformPlanService(log).getOrCreateForPlatform(platformId))
+    if (!isNil(error) || isNil(plan)) {
+        log.error({ error, platform: { id: platformId } }, '[agentHelpers#agentsSurfaceAvailable] Could not read the plan, treating agents as unavailable')
+        return false
+    }
+    return plan.agentsEnabled
+}
+
+async function assertAgentsSurfaceAvailable({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
+    const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+    if (!plan.agentsEnabled) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FEATURE_DISABLED,
+            params: { message: 'This step runs a saved agent, and agents are not available on this platform' },
+        })
+    }
+}
+
+export const agentHelpers = {
+    jobFieldsFromConfig,
+    claimConversationForRun,
+    acquireStreamingLock,
+    handLockToRedelivery,
+    resolveFlowTools,
+    agentsSurfaceAvailable,
+    assertAgentsSurfaceAvailable,
+    getConversationOrThrow,
+    getUserProjects,
+    resolveChatProvider,
+    resolvePlatformWorkModel,
+    resolvePlatformWorkModelOrThrow,
+    resolvePlatformFastModel,
+    assertRunProviderConfigured,
+    ...agentModelResolution,
+    resolveFastModel,
+    usageContextOf,
+    resolveFastModelId,
+    resolveImageModelId,
+    resolveModelId,
+    resolveRunProvider,
+    resolveChatProviderName,
+    resolveConversationProviderName,
+    runScopeOrThrow,
+    selectRunProject,
+    assertProjectSwitchKeepsKey,
+    recoverAllStaleStreamingConversations,
+    incrementAndCheckLimit,
+    conversationRepo,
+    getUserMemory,
+    memoryImportNudgeEligible,
+    claimMemoryImportNudge,
+    capMemories,
+    mergeMemories,
+    saveUserMemory,
+}
+
+const ABANDONED_FLOW_STEP_RESULT: AgentResult = { prompt: '', steps: [], status: AgentTaskStatus.FAILED, failure: 'The agent stopped responding before it finished. Run the flow again to retry this step.' }
+
+const SweptConversation = AgentConversation.pick({ id: true, source: true, flowRunId: true, waitpointId: true })
+type SweptConversation = z.infer<typeof SweptConversation>
+
+type AgentJobConfigFields = Pick<ExecuteAgentRunJobData, 'tools' | 'structuredOutput' | 'maxSteps' | 'modelName' | 'provider' | 'providerConfigId' | 'modelTierId' | 'promptOverride'>
+
+export type StreamingLockResult = 'acquired' | 'handed-off' | 'busy' | 'superseded' | 'duplicate'
+
+export type PlatformWorkModel = {
+    config: GetProviderConfigResponse
+    modelId: string | null
+}
+
+type UsageContextParams = {
+    source: AgentRunSource
+    projectId: string | null | undefined
+    agentId?: string | null
+    flowRunId?: string | null
+    userId?: string | null
+}

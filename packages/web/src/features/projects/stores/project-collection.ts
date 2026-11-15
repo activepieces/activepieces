@@ -1,4 +1,4 @@
-import { isNil, SeekPage } from '@activepieces/core-utils';
+import { isNil, omit, SeekPage } from '@activepieces/core-utils';
 import {
   CreatePlatformProjectRequest,
   ListProjectRequestForPlatformQueryParams,
@@ -16,7 +16,12 @@ import {
   or,
   useLiveSuspenseQuery,
 } from '@tanstack/react-db';
-import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
+import {
+  QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -44,45 +49,11 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
     getKey: (item) => item.id,
     onUpdate: async ({ transaction }) => {
       for (const { original, modified } of transaction.mutations) {
-        // Only send fields that actually changed, so e.g. a name/icon edit never
-        // re-writes maxConcurrentJobs/workerGroupId (which are edited elsewhere).
-        const request: UpdateProjectPlatformRequest = {};
-        if (modified.displayName !== original.displayName) {
-          request.displayName = modified.displayName;
-        }
-        if (modified.metadata !== original.metadata) {
-          request.metadata = modified.metadata ?? undefined;
-        }
-        if (modified.releasesEnabled !== original.releasesEnabled) {
-          request.releasesEnabled = modified.releasesEnabled;
-        }
-        if (
-          modified.notifyFlowOwnerOnFailure !==
-          original.notifyFlowOwnerOnFailure
-        ) {
-          request.notifyFlowOwnerOnFailure = modified.notifyFlowOwnerOnFailure;
-        }
-        if (modified.externalId !== original.externalId) {
-          request.externalId =
-            !isNil(modified.externalId) && modified.externalId.trim() !== ''
-              ? modified.externalId
-              : undefined;
-        }
-        if (modified.icon !== original.icon) {
-          request.icon = modified.icon;
-        }
-        if (modified.plan !== original.plan) {
-          request.plan = modified.plan;
-        }
-        if (modified.maxConcurrentJobs !== original.maxConcurrentJobs) {
-          request.maxConcurrentJobs = modified.maxConcurrentJobs;
-        }
-        if (modified.workerGroupId !== original.workerGroupId) {
-          request.workerGroupId = modified.workerGroupId;
-        }
-        if (Object.keys(request).length === 0) {
-          continue;
-        }
+        const request: UpdateProjectPlatformRequest = {
+          ...omit(modified, ['isDefault']),
+          metadata: modified.metadata ?? undefined,
+          externalId: modified.externalId?.trim() || undefined,
+        };
         await api.post<ProjectWithLimits>(
           `/v1/projects/${original.id}`,
           request,
@@ -102,7 +73,27 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
   }),
 );
 
+let authoritativeProjectsGeneration = 0;
+
 export const projectCollectionUtils = {
+  syncFromServer: (project: ProjectWithLimits) => {
+    if (projectCollection.isReady()) {
+      projectCollection.utils.writeUpdate(project);
+    }
+  },
+  setWorkerGroup: ({
+    projectIds,
+    workerGroupId,
+  }: {
+    projectIds: string[];
+    workerGroupId: string | null;
+  }) => {
+    if (!projectCollection.isReady()) return;
+    const rows = projectIds
+      .filter((id) => projectCollection.has(id))
+      .map((id) => ({ id, workerGroupId }));
+    if (rows.length > 0) projectCollection.utils.writeUpdate(rows);
+  },
   useCreateProject: (
     onSuccess: (project: ProjectWithLimits) => void,
     onError: (error: Error) => void,
@@ -110,7 +101,8 @@ export const projectCollectionUtils = {
     return useMutation({
       mutationFn: (request: CreatePlatformProjectRequest) =>
         api.post<ProjectWithLimits>('/v1/projects', request),
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
+        await projectCollection.preload();
         projectCollection.utils.writeInsert(data);
         onSuccess(data);
       },
@@ -131,11 +123,33 @@ export const projectCollectionUtils = {
         projectId: string;
         request: UpdateProjectPlatformRequest;
       }) => api.post<ProjectWithLimits>(`/v1/projects/${projectId}`, request),
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
+        await projectCollection.preload();
         projectCollection.utils.writeUpdate(data);
         onSuccess();
       },
       onError,
+    });
+  },
+  useSetDefaultProjects: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: async ({ add, remove }: SetDefaultProjectsRequest) => {
+        const results = await Promise.allSettled([
+          ...add.map((projectId) =>
+            api.post(`/v1/projects/${projectId}`, { isDefault: true }),
+          ),
+          ...remove.map((projectId) =>
+            api.post(`/v1/projects/${projectId}`, { isDefault: false }),
+          ),
+        ]);
+        await queryClient.invalidateQueries({ queryKey: ['platform'] });
+        const failure = results.find((result) => result.status === 'rejected');
+        if (failure?.status === 'rejected') {
+          throw failure.reason;
+        }
+      },
+      onError: () => undefined,
     });
   },
   update: (projectId: string, request: UpdateProjectPlatformRequest) => {
@@ -151,7 +165,43 @@ export const projectCollectionUtils = {
   delete: (projectIds: string[]) => {
     projectCollection.delete(projectIds);
   },
-  refetchProjects: () => projectCollection.utils.refetch(),
+  refetchProjects: () => {
+    authoritativeProjectsGeneration += 1;
+    return projectCollection.utils.refetch();
+  },
+  markFlowActivity: ({
+    projectId,
+    lastFlowUpdated,
+  }: {
+    projectId: string;
+    lastFlowUpdated: string;
+  }) => {
+    const generation = authoritativeProjectsGeneration;
+    const write = () => {
+      if (generation !== authoritativeProjectsGeneration) {
+        return;
+      }
+      const project = projectCollection.get(projectId);
+      if (isNil(project)) {
+        return;
+      }
+      const current = project.analytics.lastFlowUpdated;
+      const isNewer =
+        isNil(current) ||
+        new Date(lastFlowUpdated).getTime() > new Date(current).getTime();
+      if (!isNewer) {
+        return;
+      }
+      projectCollection.utils.writeUpdate({
+        ...project,
+        analytics: {
+          ...project.analytics,
+          lastFlowUpdated,
+        },
+      });
+    };
+    requestAnimationFrame(() => requestAnimationFrame(write));
+  },
   setCurrentProject: (projectId: string, pathName?: string) => {
     authenticationSession.switchToProject(projectId);
     if (pathName) {
@@ -175,6 +225,21 @@ export const projectCollectionUtils = {
     );
     return {
       project: data!,
+    };
+  },
+  useCurrentProjectOrNull: () => {
+    const projectId = authenticationSession.getProjectId();
+    const { data } = useLiveSuspenseQuery(
+      (q) =>
+        q
+          .from({ project: projectCollection })
+          .where(({ project }) => eq(project.id, projectId))
+          .select(({ project }) => ({ ...project }))
+          .findOne(),
+      [projectId],
+    );
+    return {
+      project: data ?? null,
     };
   },
   useAll: () => {
@@ -288,4 +353,9 @@ export const projectHooks = {
       };
     }, [projectId, embedState.isEmbedded, location.pathname]);
   },
+};
+
+type SetDefaultProjectsRequest = {
+  add: string[];
+  remove: string[];
 };

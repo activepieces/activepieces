@@ -9,22 +9,44 @@ import {
   issueStatusIdProp,
 } from '../common/props';
 
+import { legacyTransitionIssueOutputSchema } from '../output-schemas';
 export const transitionIssueAction = createAction({
   auth: jiraCloudAuth,
   name: 'transition_issue',
+  classification: 'WRITE',
   displayName: 'Transition Issue',
   description:
     'Moves an issue to a new status by executing a workflow transition.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Execute a workflow transition on a Jira issue to move it to a new status (e.g. In Progress to Done), returning the refreshed issue. The transition must be valid from the issue\'s current status under its workflow, so it is not idempotent: re-running after the move succeeds fails because the transition is no longer available.',
     idempotent: false,
   },
+  outputSchema: legacyTransitionIssueOutputSchema,
+  propertyGroups: [
+    {
+      key: 'issue',
+      display: 'section',
+      label: 'Issue',
+      icon: 'inbox',
+      props: ['projectId', 'issueId'],
+    },
+    {
+      key: 'workflow',
+      display: 'section',
+      label: 'Workflow',
+      icon: 'send',
+      props: ['transitionId'],
+    },
+  ],
   props: {
     projectId: getProjectIdDropdown(),
     issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),
-    transitionId: issueStatusIdProp('Transition', true),
+    transitionId: {
+      ...issueStatusIdProp('Transition', true),
+      description: 'Moves the issue to the chosen status.',
+    },
   },
   async run(context) {
     const { issueId, transitionId } = context.propsValue;

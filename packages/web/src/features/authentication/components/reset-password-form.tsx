@@ -24,7 +24,7 @@ import { HttpError } from '@/lib/api';
 
 const FormSchema = z.object({
   email: z.string().min(1, t('Please enter your email')),
-  type: z.nativeEnum(OtpType),
+  type: CreateOtpRequestBody.shape.type,
 });
 
 type FormSchema = z.infer<typeof FormSchema>;
@@ -52,7 +52,7 @@ const ResetPasswordForm = () => {
   };
 
   return (
-    <Card className="w-md rounded-sm drop-shadow-xl">
+    <Card className="w-md rounded-md drop-shadow-xl">
       <CardHeader>
         <CardTitle className="text-2xl">
           {isSent ? t('Check Your Inbox') : t('Reset Password')}
@@ -84,8 +84,10 @@ const ResetPasswordForm = () => {
                     <Label htmlFor="email">{t('Email')}</Label>
                     <Input
                       {...field}
+                      id="email"
                       type="text"
                       placeholder={'email@example.com'}
+                      data-testid="reset-password-email"
                     />
                     <FormMessage />
                   </FormItem>
@@ -94,6 +96,7 @@ const ResetPasswordForm = () => {
               <Button
                 className="w-full mt-4"
                 loading={isPending}
+                data-testid="reset-password-send"
                 onClick={(e) => form.handleSubmit(onSubmit)(e)}
               >
                 {t('Send Password Reset Link')}
@@ -102,7 +105,7 @@ const ResetPasswordForm = () => {
           </Form>
         )}
         <div className="mt-4 text-center text-sm">
-          <Link to="/sign-in" className="text-muted-foreground">
+          <Link to="/sign-in" className="text-gray-11">
             {t('Back to sign in')}
           </Link>
         </div>

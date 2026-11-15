@@ -39,7 +39,7 @@ import { newCalendar } from './lib/triggers/new-calendar';
 export { googleCalendarAuth, getAccessToken, GoogleCalendarAuthValue, createGoogleClient } from './lib/common';
 
 export const googleCalendar = createPiece({
-  minimumSupportedRelease: '0.86.4',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-calendar.png',
   categories: [PieceCategory.PRODUCTIVITY],
   displayName: 'Google Calendar',
@@ -57,7 +57,8 @@ export const googleCalendar = createPiece({
     'ikus060',
     'Cloudieunnie',
     'sanket-a11y',
-    'geekyme'
+    'geekyme',
+    'OdaiAhmed99',
   ],
   auth: googleCalendarAuth,
   actions: [
@@ -96,6 +97,12 @@ export const googleCalendar = createPiece({
         return {
           Authorization: `Bearer ${await getAccessToken(auth as GoogleCalendarAuthValue)}`,
         };
+      },
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${googleCalendarCommon.baseUrl}`,
+          placeholder: '/calendars/primary/events',
+        },
       },
     }),
   ],

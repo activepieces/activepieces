@@ -7,6 +7,7 @@ import { calendarIdDropdown } from '../common/props';
 export const addBlockedTimeAction = createAction({
 	auth: acuitySchedulingAuth,
 	name: 'add_blocked_time',
+	classification: 'WRITE',
 	displayName: 'Add Blocked Off Time',
 	description: 'Block off a specific time range on a calendar.',
 	audience: 'both',

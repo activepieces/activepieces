@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const updatePaymentInformationAction = createAction({
   name: 'update_payment_information',
+  classification: 'WRITE',
   auth: outsetaAuth,
   displayName: 'Update Payment Information',
   description:

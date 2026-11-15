@@ -6,31 +6,19 @@ import {
 } from '@activepieces/pieces-common';
 import { oneDriveAuth } from '../auth';
 import { oneDriveCommon } from '../common/common';
+import { getCloudProp } from '../common/microsoft-cloud';
+import { getFileOutputSchema } from '../output-schemas';
 
-type SearchItem = {
-  id: string;
-  name: string;
-  file?: { mimeType: string };
-};
-
-type DriveItem = {
-  id: string;
-  name: string;
-  size: number;
-  createdDateTime: string;
-  lastModifiedDateTime: string;
-  webUrl: string;
-  file?: { mimeType: string };
-  parentReference?: { path: string; driveId: string };
-};
 
 export const downloadFile = createAction({
   auth: oneDriveAuth,
   name: 'download_file',
+  classification: 'READ',
   description: 'Get and download a file using a File ID or filename.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Retrieve a single file from Microsoft OneDrive and download its content, looking it up either by its File ID or by its exact file name (a name lookup searches the drive and resolves to the matching file). Use when you need the file bytes plus its metadata; when only metadata is needed prefer a list action. Read-only and idempotent.', idempotent: true },
   displayName: 'Get File',
+  outputSchema: getFileOutputSchema,
   props: {
     lookupBy: Property.StaticDropdown({
       displayName: 'Look Up By',
@@ -52,7 +40,7 @@ export const downloadFile = createAction({
   },
   async run(context) {
     const { lookupBy, fileIdentifier } = context.propsValue;
-    const cloud = context.auth.props?.['cloud'] as string | undefined;
+    const cloud = getCloudProp(context.auth);
     const baseUrl = oneDriveCommon.getBaseUrl(cloud);
 
     let fileId: string;
@@ -100,7 +88,7 @@ export const downloadFile = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-      responseType: 'arraybuffer',
+      responseType: 'stream',
     });
 
     const { id, name, size, createdDateTime, lastModifiedDateTime, webUrl, file, parentReference } =
@@ -118,8 +106,25 @@ export const downloadFile = createAction({
       driveId: parentReference?.driveId,
       data: await context.files.write({
         fileName: name,
-        data: Buffer.from(result.body),
+        data: result.body,
       }),
     };
   },
 });
+
+type SearchItem = {
+  id: string;
+  name: string;
+  file?: { mimeType: string };
+};
+
+type DriveItem = {
+  id: string;
+  name: string;
+  size: number;
+  createdDateTime: string;
+  lastModifiedDateTime: string;
+  webUrl: string;
+  file?: { mimeType: string };
+  parentReference?: { path: string; driveId: string };
+};

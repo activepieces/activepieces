@@ -5,6 +5,7 @@ import { chatDataAuth } from '../common/types';
 export const deleteChatbot = createAction({
   auth: chatDataAuth,
   name: 'delete_chatbot',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Chatbot',
   description:
     'Delete a chatbot and all its associated data (training data, conversations, leads, etc.). This action is irreversible.',

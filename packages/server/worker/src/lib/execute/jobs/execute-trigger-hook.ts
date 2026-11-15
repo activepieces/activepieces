@@ -3,6 +3,7 @@ import { EngineOperationType, EngineResponseStatus, ExecuteTriggerHookJobData, F
 import { workerSettings } from '../../config/worker-settings'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 import { isSandboxTimeout } from '../utils/sandbox-helpers'
+import { buildSynchronousResult } from '../utils/synchronous-result'
 import { getWebhookUrl } from '../utils/webhook-url'
 
 export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, SynchronousJobResult> = {
@@ -10,7 +11,7 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, Synchr
     async execute(ctx: JobContext, data: ExecuteTriggerHookJobData): Promise<SynchronousJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().TRIGGER_HOOKS_TIMEOUT_SECONDS
 
-        const resolved = await ctx.resolver.resolve({ platformId: data.platformId, publicApiUrl: ctx.publicApiUrl, engineToken: ctx.engineToken, flow: { id: data.flowId, versionId: data.flowVersionId, projectId: data.projectId } })
+        const resolved = await ctx.resolver.resolve({ platformId: data.platformId, internalApiUrl: ctx.internalApiUrl, engineToken: ctx.engineToken, flow: { id: data.flowId, versionId: data.flowVersionId, projectId: data.projectId } })
 
         if (resolved.kind === 'flow-not-found') {
             ctx.log.info({ flowVersion: { id: data.flowVersionId } }, 'Flow version not found for trigger hook, skipping')
@@ -38,6 +39,7 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, Synchr
                     flowVersion,
                     webhookUrl: getWebhookUrl(ctx.publicApiUrl, data.flowId, data.test),
                     triggerPayload: isNil(data.triggerPayload) ? undefined : { type: 'inline', value: data.triggerPayload },
+                    isRepublish: data.isRepublish,
                     test: data.test,
                     projectId: data.projectId,
                     platformId: data.platformId,
@@ -58,12 +60,6 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, Synchr
             throw error
         }
 
-        return {
-            kind: JobResultKind.SYNCHRONOUS,
-            status: result.status,
-            response: result.response,
-            errorMessage: result.error,
-            logs: result.logs,
-        }
+        return buildSynchronousResult(result)
     },
 }

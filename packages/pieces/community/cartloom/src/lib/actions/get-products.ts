@@ -4,6 +4,7 @@ import { cartloomAuth } from '../auth';
 
 export const getProductsAction = createAction({
   name: 'get_products',
+  classification: 'SEARCH',
   auth: cartloomAuth,
   displayName: 'Get Products',
   description: 'Get a list of products from Cartloom',

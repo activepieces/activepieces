@@ -10,6 +10,7 @@ export const googleChatApiAuth = PieceAuth.OAuth2({
     'https://www.googleapis.com/auth/chat.memberships',
     'https://www.googleapis.com/auth/cloud-platform',
     'https://www.googleapis.com/auth/directory.readonly',
+    'email',
   ],
 });
 

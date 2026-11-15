@@ -7,6 +7,7 @@ import { driveExportWorkspaceFileOutputSchema } from '../output-schemas';
 export const driveExportWorkspaceFile = createAction({
   auth: googleDriveAuth,
   name: 'drive_export_workspace_file',
+  classification: 'READ',
   displayName: 'Export Google Doc/Sheet/Slides',
   description:
     'Export a native Google Workspace file (Doc/Sheet/Slides) to a chosen format.',

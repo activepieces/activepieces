@@ -1,167 +1,74 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
+import { hubspotPolling } from '../common/polling';
 import {
 	createTrigger,
 	AppConnectionValueForAuthProperty,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { standardObjectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
+import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
+import { OBJECT_TYPE } from '../common/constants';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/pieces-framework';
-import { chunk } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
-import dayjs from 'dayjs';
-import { FilterOperatorEnum } from '../common/types';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 type Props = {
 	propertyName?: string | string[];
 };
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
+const polling = {
 	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
-
+	async items({ auth, propsValue, lastFetchEpochMS, store }) {
+		const client = new Client({ accessToken: getHubspotAccessToken(auth), numberOfApiCallRetries: 3 });
 		const propertyToCheck = propsValue.propertyName as string;
+		const propertiesToRetrieve = [...getDefaultPropertiesForObject(OBJECT_TYPE.COMPANY), propertyToCheck];
 
-		const propertiesToRetrieve = [propertyToCheck];
-
-		const items = [];
-		// For test, we only fetch 10 comapnies
-		if (lastFetchEpochMS === 0) {
-			const response = await client.crm.companies.searchApi.doSearch({
-				limit: 10,
-				properties: propertiesToRetrieve,
-				sorts: ['-hs_lastmodifieddate'],
-			});
-			items.push(...response.results);
-			return items.map((item) => ({
-				epochMilliSeconds: dayjs(item.properties['hs_lastmodifieddate']).valueOf(),
-				data: item,
-			}));
-		}
-		//fetch updated companies
-		const updatedCompanies = [];
-		let after: string | undefined;
-		do {
-			const response = await client.crm.companies.searchApi.doSearch({
-				limit: MAX_SEARCH_PAGE_SIZE,
-				after,
-				sorts: ['-hs_lastmodifieddate'],
-				filterGroups: [
-					{
-						filters: [
-							{
-								propertyName: propertyToCheck,
-								operator: FilterOperatorEnum.HasProperty,
-							},
-							{
-								propertyName: 'hs_lastmodifieddate',
-								operator: FilterOperatorEnum.Gt,
-								value: lastFetchEpochMS.toString(),
-							},
-						],
-					},
-				],
-			});
-			after = response.paging?.next?.after;
-			updatedCompanies.push(...response.results);
-
-			// Stop fetching if it exceeds max search results or will encounter 400 status
-			if (
-				!isNil(after) &&
-				parseInt(after) + MAX_SEARCH_PAGE_SIZE > MAX_SEARCH_TOTAL_RESULTS
-			) {
-				break;
-			}
-		} while (after);
-
-		if (updatedCompanies.length === 0) {
-			return [];
-		}
-
-    // Avoid VALIDATION_ERROR: The maximum number of inputs supported in a batch request for property histories is 50
-    const batchApiChunks = chunk(updatedCompanies, 50);
-
-    // Fetch companies with property history
-    const batchApiResps = await Promise.all(
-      batchApiChunks.map((batch) => {
-        return client.crm.companies.batchApi.read({
-          propertiesWithHistory: [propertyToCheck],
-          properties: propertiesToRetrieve,
-          inputs: batch.map((company) => {
-            return {
-              id: company.id,
-            };
-          }),
-        });
-      })
-    );
-
-    const updatedCompaniesWithPropertyHistory = batchApiResps.flatMap(
-      (resp) => resp.results
-    );
-
-		for (const company of updatedCompaniesWithPropertyHistory) {
-			const history = company.propertiesWithHistory?.[propertyToCheck];
-			if (!history || history.length === 0) {
-				continue;
-			}
-			const propertyLastModifiedDateTimeStamp = dayjs(history[0].timestamp).valueOf();
-			if (propertyLastModifiedDateTimeStamp > lastFetchEpochMS) {
-				const { propertiesWithHistory, ...item } = company;
-				items.push(item);
-			}
-		}
-
-		return items.map((item) => ({
-			epochMilliSeconds: dayjs(item.properties['hs_lastmodifieddate']).valueOf(),
-			data: item,
-		}));
+		return hubspotPolling.pollPropertyChanges({
+			search: (request) => client.crm.companies.searchApi.doSearch(request),
+			readWithHistory: (request) => client.crm.companies.batchApi.read(request),
+			store,
+			timestampProperty: 'hs_lastmodifieddate',
+			watchedProperty: propertyToCheck,
+			properties: propertiesToRetrieve,
+			lastFetchEpochMS,
+		});
 	},
-};
+} satisfies Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props>;
 
 export const newCompanyPropertyChangeTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-company-property-change',
+	classification: 'READ',
 	displayName: 'New Company Property Change',
 	description: 'Triggers when a specified property is updated on a company.',
 	aiMetadata: {
 		description:
-			'Fires when the value of a chosen property changes on a HubSpot company. Polls the CRM companies API for companies modified since the last check, then inspects each company\'s property history to confirm the selected property was actually updated, emitting the company record only when that property\'s most recent change is newer than the last poll. Represents a tracked field (e.g. lifecycle stage, domain, name) being modified on an existing company.',
+			'Fires when the value of a chosen property changes on a HubSpot company. Polls the CRM companies API for companies modified since the last check, then inspects each company\'s property history to confirm the selected property was actually updated, emitting the company with its default properties and the watched property only when that property\'s most recent change is newer than the last poll. Clearing the watched property also fires. Represents a tracked field (e.g. lifecycle stage, domain, name) being modified on an existing company.',
 	},
 	props: {
 		propertyName: standardObjectPropertiesDropdown(
 			{
 				objectType: OBJECT_TYPE.COMPANY,
-				displayName: 'Property Name',
+				displayName: 'Property',
 				required: true,
 			},
 			true,
 			true,
 		),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
-		return await pollingHelper.test(polling, context);
+		return hubspotPolling.sampleOldestToNewest({ items: await pollingHelper.test(polling, context) });
 	},
 	async run(context) {
-		return await pollingHelper.poll(polling, context);
+		return await hubspotPolling.poll({ polling, context });
 	},
 	sampleData: {
 		id: '27656515180',

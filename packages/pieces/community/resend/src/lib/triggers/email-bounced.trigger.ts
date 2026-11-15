@@ -1,13 +1,9 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { createTrigger, MarkdownVariant, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 import crypto from 'crypto';
 import { resendAuth } from '../..';
+import { resendClient } from '../common/client';
 
-const BASE_URL = 'https://api.resend.com';
 const STORE_KEY = 'webhookData';
 const TIMESTAMP_TOLERANCE_SECONDS = 300;
 
@@ -74,17 +70,21 @@ function verifyResendWebhook({
 
 export const emailBounced = createTrigger({
   name: 'email_bounced',
+  classification: 'READ',
   auth: resendAuth,
-  displayName: 'Email Event',
-  description: 'Triggers when a selected email or contact event occurs in Resend',
+  displayName: 'New Event',
+  description: 'Triggers when a selected email, domain or contact event happens.',
   aiMetadata: {
     description: 'Fires when one of the subscribed Resend events occurs, such as an email being sent, delivered, bounced, opened, clicked, complained about, or failing, as well as domain and contact lifecycle events. The payload carries the event type and the affected email, domain, or contact. Subscribe to the specific event types you care about.',
   },
   type: TriggerStrategy.WEBHOOK,
   props: {
+    info: Property.MarkDown({
+      value: 'The Resend webhook is created for you when the flow is published.',
+      variant: MarkdownVariant.INFO,
+    }),
     events: Property.StaticMultiSelectDropdown({
       displayName: 'Events',
-      description: 'Select one or more event types to subscribe to',
       required: true,
       options: {
         options: EVENT_OPTIONS,
@@ -92,37 +92,37 @@ export const emailBounced = createTrigger({
     }),
   },
   async onEnable(context) {
-    const response = await httpClient.sendRequest<{
+    const response = await resendClient.sendRequest<{
       id: string;
       signing_secret: string;
     }>({
+      auth: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${BASE_URL}/webhooks`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.secret_text,
-      },
+      path: '/webhooks',
       body: {
         endpoint: context.webhookUrl,
         events: context.propsValue.events,
       },
     });
     await context.store.put(STORE_KEY, {
-      id: response.body.id,
-      signingSecret: response.body.signing_secret,
+      id: response.id,
+      signingSecret: response.signing_secret,
     });
   },
   async onDisable(context) {
     const data = await context.store.get<{ id: string; signingSecret: string }>(STORE_KEY);
     if (data?.id) {
-      await httpClient.sendRequest({
-        method: HttpMethod.DELETE,
-        url: `${BASE_URL}/webhooks/${data.id}`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth.secret_text,
-        },
-      });
+      try {
+        await resendClient.sendRequest({
+          auth: context.auth.secret_text,
+          method: HttpMethod.DELETE,
+          path: `/webhooks/${data.id}`,
+        });
+      } catch (error) {
+        if (!(error instanceof HttpError) || error.response.status !== 404) {
+          throw error;
+        }
+      }
     }
   },
   async run(context) {
@@ -149,6 +149,11 @@ export const emailBounced = createTrigger({
       from: 'onboarding@resend.dev',
       to: ['john@example.com'],
       subject: 'Re: Follow up',
+      bounce: {
+        message: "The recipient's mailbox does not exist.",
+        type: 'Permanent',
+        subType: 'General',
+      },
     },
   },
 });

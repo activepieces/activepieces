@@ -1,29 +1,14 @@
-import {
-  DedupeStrategy,
-  httpClient,
-  HttpMethod,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import {
-  AppConnectionValueForAuthProperty,
-  PieceAuth,
-  Store,
-  TriggerStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
+import { PieceAuth, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { rssFeedUrl } from '../common/props';
-import FeedParser from 'feedparser';
-import { isNil } from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
-import { getId } from '../common/getId';
+import { rssFeedPoller } from '../common/feed-poller';
 import { sampleData } from '../common/sampleData';
 import { newItemTriggerOutputSchema } from '../output-schemas';
 
 export const rssNewItemTrigger = createTrigger({
   name: 'new-item',
-  displayName: 'New Item In Feed',
-  description: 'Runs when a new item is added in the RSS feed',
+  classification: 'READ',
+  displayName: 'New Item in Feed',
+  description: 'Runs when a new item is published in an RSS feed.',
   aiMetadata: {
     description:
       'Fires when a new entry is published in a single monitored RSS/Atom feed. Polls the configured feed URL and emits each newly detected item (deduplicated by item id and publish date), representing a freshly published article, post, or update from that feed.',
@@ -35,139 +20,19 @@ export const rssNewItemTrigger = createTrigger({
     rss_feed_url: rssFeedUrl,
   },
   outputSchema: newItemTriggerOutputSchema,
-  async test({ auth, propsValue, store, files }): Promise<unknown[]> {
-    return await pollingHelper.test(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
-      files: files,
+  async test(context): Promise<unknown[]> {
+    return rssFeedPoller.sample({ urls: [context.propsValue.rss_feed_url] });
+  },
+  async onEnable(context): Promise<void> {
+    await rssFeedPoller.enable({
+      store: context.store,
+      urls: [context.propsValue.rss_feed_url],
+      isRepublish: context.isRepublish === true,
     });
   },
-  async onEnable({ auth, propsValue, store }): Promise<void> {
-    await pollingHelper.onEnable(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
-    });
+  async onDisable(): Promise<void> {
   },
-
-  async onDisable({ auth, propsValue, store }): Promise<void> {
-    const lastFetchDate = await store.get<number>('_lastRssPublishDate');
-    if (!isNil(lastFetchDate)) {
-      await store.delete('_lastRssPublishDate');
-    }
-    await pollingHelper.onDisable(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
-    });
-  },
-
-  async run({ auth, propsValue, store, files }): Promise<unknown[]> {
-    const lastFetchDate = await store.get<number>('_lastRssPublishDate');
-    const newItems = (
-      await pollingHelper.poll(polling, {
-        auth,
-        store: store,
-        propsValue: propsValue, 
-        files: files,
-      })
-    ).filter((f) => {
-      if (isNil(lastFetchDate)) {
-        return true;
-      }
-      const newItem = f as { pubdate: string; pubDate: string };
-      const newDate = newItem.pubdate ?? newItem.pubDate;
-      if (isNil(newDate)) {
-        return true;
-      }
-      return dayjs(newDate).unix() > lastFetchDate;
-    });
-    let newFetchDateUnix = lastFetchDate;
-    for (const item of newItems) {
-      const newItem = item as { pubdate: string; pubDate: string };
-      const newDate = newItem.pubdate ?? newItem.pubDate;
-      if (!isNil(newDate)) {
-        const newDateUnix = dayjs(newDate).unix();
-        if (isNil(newFetchDateUnix) || newDateUnix > newFetchDateUnix) {
-          newFetchDateUnix = newDateUnix;
-        }
-      }
-    }
-    if (!isNil(newFetchDateUnix)) {
-      await store.put('_lastRssPublishDate', newFetchDateUnix);
-    }
-    return newItems.sort((a, b) => {
-      const aDate =
-        (a as { pubdate: string; pubDate: string }).pubdate ??
-        (a as { pubdate: string; pubDate: string }).pubDate;
-      const bDate =
-        (b as { pubdate: string; pubDate: string }).pubdate ??
-        (b as { pubdate: string; pubDate: string }).pubDate;
-      if (aDate && bDate) {
-        const aUnix = dayjs(aDate).unix();
-        const bUnix = dayjs(bDate).unix();
-        if (aUnix === bUnix) {
-          return newItems.indexOf(a) - newItems.indexOf(b);
-        } else {
-          return bUnix - aUnix;
-        }
-      } else {
-        return newItems.indexOf(a) - newItems.indexOf(b);
-      }
-    });
+  async run(context): Promise<unknown[]> {
+    return rssFeedPoller.poll({ store: context.store, urls: [context.propsValue.rss_feed_url] });
   },
 });
-
-const polling: Polling<
-  AppConnectionValueForAuthProperty<undefined>,
-  { rss_feed_url: string }
-> = {
-  strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({
-    propsValue,
-  }: {
-    store: Store;
-    propsValue: { rss_feed_url: string };
-  }) => {
-    const items = await getRssItems(propsValue.rss_feed_url);
-    return items.map((item) => ({
-      id: getId(item),
-      data: item,
-    }));
-  },
-};
-
-async function getRssItems(url: string): Promise<any[]> {
-  const response = await httpClient.sendRequest<Buffer>({
-    method: HttpMethod.GET,
-    url,
-    responseType: 'arraybuffer',
-  });
-
-  return new Promise((resolve, reject) => {
-    const feedparser = new FeedParser({
-      addmeta: true,
-    });
-    const items: any[] = [];
-
-    feedparser.on('readable', () => {
-      let item = feedparser.read();
-      while (item) {
-        items.push(item);
-        item = feedparser.read();
-      }
-    });
-
-    feedparser.on('end', () => {
-      resolve(items);
-    });
-
-    feedparser.on('error', (error: any) => {
-      reject(error);
-    });
-
-    feedparser.write(response.body);
-    feedparser.end();
-  });
-}

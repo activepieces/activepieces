@@ -6,6 +6,7 @@ import { driveUpdateSharedDriveOutputSchema } from '../output-schemas';
 export const driveUpdateSharedDrive = createAction({
   auth: googleDriveAuth,
   name: 'drive_update_shared_drive',
+  classification: 'WRITE',
   displayName: 'Update Shared Drive',
   description: 'Rename or update a shared drive by ID.',
   audience: 'ai',

@@ -14,6 +14,7 @@ interface KlaviyoTag {
 export const findTagByName = createAction({
   auth: klaviyoAuth,
   name: 'findTagByName',
+  classification: 'SEARCH',
   displayName: 'Find Tag by Name',
   description: 'Find tags whose name contains the search query.',
   audience: 'both',

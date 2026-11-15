@@ -11,6 +11,7 @@ import { phoneNumberDropdown } from '../common/props';
 export const incomingMessageReceived = createTrigger({
   auth: openPhoneAuth,
   name: 'incoming_message_received',
+  classification: 'READ',
   displayName: 'Incoming Message Received',
   description: 'Fires when a new SMS/MMS message is received.',
   aiMetadata: {

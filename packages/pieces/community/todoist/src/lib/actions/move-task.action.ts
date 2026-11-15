@@ -7,6 +7,7 @@ import { moveTaskActionOutputSchema } from '../output-schemas';
 export const todoistMoveTaskAction = createAction({
   auth: todoistAuth,
   name: 'todoist_move_task',
+  classification: 'WRITE',
   displayName: 'Move Task',
   description: 'Move a task to a different project, section, or parent.',
   audience: 'ai',

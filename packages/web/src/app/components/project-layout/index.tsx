@@ -1,14 +1,21 @@
 import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { Unplug } from 'lucide-react';
 import React, { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Navigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
+import { BotIcon } from '@/components/icons/bot';
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
-import { PurchaseExtraFlowsDialog } from '@/features/billing';
+import {
+  CreditsUsageAlert,
+  SelfServeTrialDialog,
+  SelfServeTrialEndingAlert,
+  ManagePlanDialog,
+} from '@/features/billing';
 import { projectHooks } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
@@ -18,7 +25,7 @@ import {
   GlobalSearchProvider,
   useGlobalSearch,
 } from '../global-search/global-search-context';
-import { ProjectDashboardSidebar } from '../sidebar/dashboard';
+import { AppSidebar } from '../sidebar/app-sidebar';
 
 import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header';
 
@@ -29,6 +36,7 @@ export type ProjectDashboardLayoutHeaderTab = {
   hasPermission: boolean;
   show: boolean;
   beta?: boolean;
+  badgeCount?: number;
 };
 
 const ProjectChangedRedirector = ({
@@ -53,9 +61,7 @@ export function ProjectDashboardLayout({
   const location = useLocation();
   const isPlatformPage = location.pathname.includes('/platform/');
   const isEmbedded = useEmbedding().embedState.isEmbedded;
-  if (isNil(currentProjectId) || currentProjectId === '') {
-    return <Navigate to="/sign-in" replace />;
-  }
+  const hasNoProject = isNil(currentProjectId) || currentProjectId === '';
 
   const itemsWithoutHeader: ProjectDashboardLayoutHeaderTab[] = [
     {
@@ -79,24 +85,48 @@ export function ProjectDashboardLayout({
       icon: CompassIcon,
       hasPermission: true,
     },
+    {
+      to: '/agents',
+      label: t('Agents'),
+      show: !isEmbedded,
+      icon: BotIcon,
+      hasPermission: true,
+    },
+    {
+      to: '/mcp-server',
+      label: t('MCP'),
+      show: !isEmbedded,
+      icon: Unplug,
+      hasPermission: true,
+    },
   ];
 
   const hideHeader =
+    hasNoProject ||
     itemsWithoutHeader.some((item) => location.pathname.includes(item.to)) ||
     isPlatformPage;
 
+  const inner = (
+    <GlobalSearchProvider>
+      <ProjectDashboardLayoutInner
+        hideHeader={hideHeader}
+        isEmbedded={isEmbedded}
+        currentProjectId={currentProjectId ?? ''}
+      >
+        {children}
+      </ProjectDashboardLayoutInner>
+      {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
+      <SelfServeTrialDialog />
+    </GlobalSearchProvider>
+  );
+
+  if (hasNoProject) {
+    return inner;
+  }
+
   return (
-    <ProjectChangedRedirector currentProjectId={currentProjectId}>
-      <GlobalSearchProvider>
-        <ProjectDashboardLayoutInner
-          hideHeader={hideHeader}
-          isEmbedded={isEmbedded}
-          currentProjectId={currentProjectId}
-        >
-          {children}
-        </ProjectDashboardLayoutInner>
-        {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
-      </GlobalSearchProvider>
+    <ProjectChangedRedirector currentProjectId={currentProjectId!}>
+      {inner}
     </ProjectChangedRedirector>
   );
 }
@@ -115,30 +145,46 @@ function ProjectDashboardLayoutInner({
   const { open: searchOpen } = useGlobalSearch();
 
   return (
-    <SidebarProvider defaultOpen={false} hoverMode={!searchOpen}>
-      {!isEmbedded && <ProjectDashboardSidebar />}
-      <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
-        <div
-          className={cn(
-            'flex-1 flex flex-col overflow-hidden',
-            !isEmbedded && 'pr-2 pt-3 pb-3',
-          )}
-        >
+    <div
+      className={cn(
+        'flex h-full w-full overflow-hidden',
+        !isEmbedded && 'max-md:h-svh max-md:flex-col',
+      )}
+    >
+      {!isEmbedded && <AppSidebar mode="app" />}
+      <SidebarProvider
+        defaultOpen={false}
+        hoverMode={!searchOpen}
+        keyboardShortcut={isEmbedded}
+        className={cn(
+          'flex-1 min-w-0 w-auto will-change-transform',
+          !isEmbedded && 'max-md:h-auto max-md:min-h-0',
+        )}
+      >
+        <SidebarInset className="flex flex-col h-full overflow-hidden bg-gray-2">
           <div
-            id="dashboard-content-container"
             className={cn(
-              'relative flex flex-col h-full bg-background overflow-clip',
-              !isEmbedded &&
-                'rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border',
+              'flex-1 flex flex-col overflow-hidden',
+              !isEmbedded && 'pr-2 pt-3 pb-3 max-md:pl-2 max-md:pt-2',
             )}
           >
-            {!hideHeader && (
-              <ProjectDashboardLayoutHeader key={currentProjectId} />
-            )}
-            <div className="flex-1 overflow-auto">{children}</div>
+            <div
+              id="dashboard-content-container"
+              className={cn(
+                'relative flex flex-col h-full bg-gray-1 overflow-clip',
+                !isEmbedded && 'rounded-xl shadow-panel border',
+              )}
+            >
+              <SelfServeTrialEndingAlert />
+              {!hideHeader && (
+                <ProjectDashboardLayoutHeader key={currentProjectId} />
+              )}
+              <CreditsUsageAlert />
+              <div className="flex-1 overflow-auto">{children}</div>
+            </div>
           </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+        </SidebarInset>
+      </SidebarProvider>
+    </div>
   );
 }

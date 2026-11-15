@@ -10,9 +10,10 @@ import { stripeCommon } from '../common';
 import { invoiceOutputSchema } from '../output-schemas';
 export const stripeRetrieveInvoice = createAction({
   name: 'retrieve_invoice',
+  classification: 'READ',
   auth: stripeAuth,
-  displayName: 'Retrieve an Invoice',
-  description: 'Retrieves the details of an existing invoice by its ID.',
+  displayName: 'Retrieve Invoice',
+  description: 'Get the full details of an invoice.',
   audience: 'human',
   aiMetadata: {
     description:

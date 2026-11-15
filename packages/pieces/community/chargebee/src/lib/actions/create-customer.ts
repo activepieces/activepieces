@@ -6,6 +6,7 @@ import { chargebeeRequest, cleanObject } from '../common/client';
 
 export const createCustomer = createAction({
   name: 'create_customer',
+  classification: 'WRITE',
   auth: chargebeeAuth,
   displayName: 'Create Customer',
   description: 'Create a customer in Chargebee.',

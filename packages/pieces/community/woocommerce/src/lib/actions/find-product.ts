@@ -7,22 +7,28 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { wooPathId } from '../common/path-id';
+import { findProductOutputSchema } from '../output-schemas';
 
 export const wooFindProduct = createAction({
   name: 'Find Product',
+  classification: 'READ',
   displayName: 'Find Product',
-  description: 'Find a Product',
-  audience: 'both',
+  description: 'Get a product by its ID',
+  audience: 'human',
   aiMetadata: {
     description:
       'Retrieves a single product from a WooCommerce store by its numeric product ID. Use when an agent already has a product ID and needs the full product record (price, stock, status, etc.). Read-only and idempotent. Requires the exact product ID.',
     idempotent: true,
   },
   auth: wooAuth,
+  outputSchema: findProductOutputSchema,
   props: {
     id: Property.ShortText({
       displayName: 'Product ID',
-      description: 'Enter the product ID',
+      description:
+        'Find it in WooCommerce under Products, next to each product.',
+      placeholder: '123',
       required: true,
     }),
   },
@@ -32,7 +38,7 @@ export const wooFindProduct = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${trimmedBaseUrl}/wp-json/wc/v3/products/${productId}`,
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/products/${wooPathId.encode({ id: productId, label: 'Product ID' })}`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: configValue.auth.props.consumerKey,

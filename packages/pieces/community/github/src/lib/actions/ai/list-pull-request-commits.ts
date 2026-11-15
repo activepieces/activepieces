@@ -8,6 +8,7 @@ import { listCommitsOutputSchema } from '../../output-schemas';
 export const githubListPullRequestCommitsAction = createAction({
   auth: githubAuth,
   name: 'list_pull_request_commits',
+  classification: 'SEARCH',
   displayName: 'List Pull Request Commits (Agent)',
   description: 'Lists the commits in a pull request.',
   audience: 'ai',

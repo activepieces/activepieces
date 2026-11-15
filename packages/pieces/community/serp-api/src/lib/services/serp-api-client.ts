@@ -211,7 +211,7 @@ export class SerpApiClient {
       // Handle API-level errors in successful HTTP responses
       if (response.body?.error) {
         throw createErrorFromResponse(
-          response.status || 400,
+          400,
           response.body,
           response.body.error
         );
@@ -247,6 +247,10 @@ export class SerpApiClient {
 
   // Handles and transforms HTTP errors into SerpApi errors
   private handleHttpError(error: Error): Error {
+    if ('code' in error && typeof error.code === 'string' && error.code.startsWith('SERP_API_')) {
+      return error;
+    }
+
     // Handle timeout errors
     if (error.message.includes('timeout') || error.message.includes('ETIMEDOUT')) {
       return createTimeoutError(this.defaultTimeout);

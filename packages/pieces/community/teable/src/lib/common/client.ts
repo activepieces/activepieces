@@ -1,219 +1,502 @@
 import {
-  HttpMessageBody,
-  HttpMethod,
-  QueryParams,
   AuthenticationType,
+  HttpError,
+  HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { TEABLE_CLOUD_URL } from './constants';
+import FormData from 'form-data';
+import mime from 'mime-types';
+import { TeableAuthValue, teableAuthUtil } from '../auth';
+import { TEABLE_MAX_PAGE_SIZE } from './constants';
 
+function buildQueryString(query: TeableQuery | undefined): string {
+  if (query === undefined) {
+    return '';
+  }
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value === undefined || value === null || value === '') {
+      continue;
+    }
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        params.append(`${key}[]`, item);
+      }
+      continue;
+    }
+    params.append(key, String(value));
+  }
+  const text = params.toString();
+  return text.length > 0 ? `?${text}` : '';
+}
 
-function emptyValueFilter(
-  accessor: (key: string) => any
-): (key: string) => boolean {
-  return (key: string) => {
-    const val = accessor(key);
-    return (
-      val !== null &&
-      val !== undefined &&
-      (typeof val !== 'string' || val.length > 0) &&
-      (!Array.isArray(val) || val.length > 0)
-    );
+async function makeRequest<T>({
+  auth,
+  method,
+  path,
+  query,
+  body,
+  headers,
+}: MakeRequestParams): Promise<T> {
+  const response = await httpClient.sendRequest<T>({
+    method,
+    url: `${teableAuthUtil.getBaseUrl(auth)}/api${path}${buildQueryString(query)}`,
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token: teableAuthUtil.getToken(auth),
+    },
+    headers,
+    body,
+  });
+  return response.body;
+}
+
+function errorStatus(error: unknown): number | undefined {
+  return error instanceof HttpError ? error.response.status : undefined;
+}
+
+async function listBases({ auth }: { auth: TeableAuthValue }): Promise<TeableBase[]> {
+  return makeRequest<TeableBase[]>({
+    auth,
+    method: HttpMethod.GET,
+    path: '/base/access/all',
+  });
+}
+
+async function listTables({
+  auth,
+  baseId,
+}: {
+  auth: TeableAuthValue;
+  baseId: string;
+}): Promise<TeableTable[]> {
+  return makeRequest<TeableTable[]>({
+    auth,
+    method: HttpMethod.GET,
+    path: `/base/${encodeURIComponent(baseId)}/table`,
+  });
+}
+
+async function listFields({
+  auth,
+  tableId,
+}: {
+  auth: TeableAuthValue;
+  tableId: string;
+}): Promise<TeableField[]> {
+  return makeRequest<TeableField[]>({
+    auth,
+    method: HttpMethod.GET,
+    path: `/table/${encodeURIComponent(tableId)}/field`,
+  });
+}
+
+async function listViews({
+  auth,
+  tableId,
+}: {
+  auth: TeableAuthValue;
+  tableId: string;
+}): Promise<TeableView[]> {
+  return makeRequest<TeableView[]>({
+    auth,
+    method: HttpMethod.GET,
+    path: `/table/${encodeURIComponent(tableId)}/view`,
+  });
+}
+
+async function getRecord({
+  auth,
+  tableId,
+  recordId,
+  query,
+}: {
+  auth: TeableAuthValue;
+  tableId: string;
+  recordId: string;
+  query?: TeableQuery;
+}): Promise<TeableRecord> {
+  return makeRequest<TeableRecord>({
+    auth,
+    method: HttpMethod.GET,
+    path: `/table/${encodeURIComponent(tableId)}/record/${encodeURIComponent(recordId)}`,
+    query,
+  });
+}
+
+async function listRecords({
+  auth,
+  tableId,
+  query,
+}: {
+  auth: TeableAuthValue;
+  tableId: string;
+  query?: TeableQuery;
+}): Promise<TeableRecordListResponse> {
+  return makeRequest<TeableRecordListResponse>({
+    auth,
+    method: HttpMethod.GET,
+    path: `/table/${encodeURIComponent(tableId)}/record`,
+    query,
+  });
+}
+
+async function listRecordsPaged({
+  auth,
+  tableId,
+  query,
+  maxRecords,
+  skip,
+}: {
+  auth: TeableAuthValue;
+  tableId: string;
+  query?: TeableQuery;
+  maxRecords: number;
+  skip?: number;
+}): Promise<{ records: TeableRecord[]; hasMore: boolean }> {
+  const records: TeableRecord[] = [];
+  let offset = skip ?? 0;
+  let hasMore = false;
+  while (records.length < maxRecords) {
+    const take = Math.min(TEABLE_MAX_PAGE_SIZE, maxRecords - records.length);
+    const page = await listRecords({
+      auth,
+      tableId,
+      query: { ...query, take, skip: offset },
+    });
+    records.push(...page.records);
+    if (page.records.length < take) {
+      return { records, hasMore: false };
+    }
+    offset += page.records.length;
+    hasMore = true;
+  }
+  const lookahead = await listRecords({
+    auth,
+    tableId,
+    query: { ...query, take: 1, skip: offset },
+  });
+  return { records, hasMore: hasMore && lookahead.records.length > 0 };
+}
+
+async function createRecords({
+  auth,
+  tableId,
+  records,
+  fieldKeyType,
+  typecast,
+}: {
+  auth: TeableAuthValue;
+  tableId: string;
+  records: { fields: Record<string, unknown> }[];
+  fieldKeyType?: TeableFieldKeyType;
+  typecast?: boolean;
+}): Promise<{ records: TeableRecord[] }> {
+  return makeRequest<{ records: TeableRecord[] }>({
+    auth,
+    method: HttpMethod.POST,
+    path: `/table/${encodeURIComponent(tableId)}/record`,
+    body: {
+      records,
+      ...(fieldKeyType !== undefined ? { fieldKeyType } : {}),
+      ...(typecast !== undefined ? { typecast } : {}),
+    },
+  });
+}
+
+async function updateRecord({
+  auth,
+  tableId,
+  recordId,
+  fields,
+  fieldKeyType,
+  typecast,
+}: {
+  auth: TeableAuthValue;
+  tableId: string;
+  recordId: string;
+  fields: Record<string, unknown>;
+  fieldKeyType?: TeableFieldKeyType;
+  typecast?: boolean;
+}): Promise<TeableRecord> {
+  return makeRequest<TeableRecord>({
+    auth,
+    method: HttpMethod.PATCH,
+    path: `/table/${encodeURIComponent(tableId)}/record/${encodeURIComponent(recordId)}`,
+    body: {
+      record: { fields },
+      ...(fieldKeyType !== undefined ? { fieldKeyType } : {}),
+      ...(typecast !== undefined ? { typecast } : {}),
+    },
+  });
+}
+
+async function updateRecords({
+  auth,
+  tableId,
+  records,
+  fieldKeyType,
+  typecast,
+}: {
+  auth: TeableAuthValue;
+  tableId: string;
+  records: { id: string; fields: Record<string, unknown> }[];
+  fieldKeyType?: TeableFieldKeyType;
+  typecast?: boolean;
+}): Promise<TeableRecord[]> {
+  return makeRequest<TeableRecord[]>({
+    auth,
+    method: HttpMethod.PATCH,
+    path: `/table/${encodeURIComponent(tableId)}/record`,
+    body: {
+      records,
+      ...(fieldKeyType !== undefined ? { fieldKeyType } : {}),
+      ...(typecast !== undefined ? { typecast } : {}),
+    },
+  });
+}
+
+async function deleteRecord({
+  auth,
+  tableId,
+  recordId,
+}: {
+  auth: TeableAuthValue;
+  tableId: string;
+  recordId: string;
+}): Promise<void> {
+  try {
+    await makeRequest<unknown>({
+      auth,
+      method: HttpMethod.DELETE,
+      path: `/table/${encodeURIComponent(tableId)}/record/${encodeURIComponent(recordId)}`,
+    });
+  } catch (error) {
+    if (errorStatus(error) === 404) {
+      throw new Error(
+        `Record ${recordId} was not found in table ${tableId}. It may already be deleted.`
+      );
+    }
+    throw error;
+  }
+}
+
+async function deleteRecords({
+  auth,
+  tableId,
+  recordIds,
+}: {
+  auth: TeableAuthValue;
+  tableId: string;
+  recordIds: string[];
+}): Promise<void> {
+  await makeRequest<unknown>({
+    auth,
+    method: HttpMethod.DELETE,
+    path: `/table/${encodeURIComponent(tableId)}/record`,
+    query: { recordIds },
+  });
+}
+
+async function createTable({
+  auth,
+  baseId,
+  body,
+}: {
+  auth: TeableAuthValue;
+  baseId: string;
+  body: Record<string, unknown>;
+}): Promise<TeableTable & { fields?: TeableField[]; views?: TeableView[] }> {
+  return makeRequest({
+    auth,
+    method: HttpMethod.POST,
+    path: `/base/${encodeURIComponent(baseId)}/table/`,
+    body,
+  });
+}
+
+async function createField({
+  auth,
+  tableId,
+  body,
+}: {
+  auth: TeableAuthValue;
+  tableId: string;
+  body: Record<string, unknown>;
+}): Promise<TeableField> {
+  return makeRequest<TeableField>({
+    auth,
+    method: HttpMethod.POST,
+    path: `/table/${encodeURIComponent(tableId)}/field`,
+    body,
+  });
+}
+
+async function createComment({
+  auth,
+  tableId,
+  recordId,
+  content,
+}: {
+  auth: TeableAuthValue;
+  tableId: string;
+  recordId: string;
+  content: unknown[];
+}): Promise<unknown> {
+  return makeRequest<unknown>({
+    auth,
+    method: HttpMethod.POST,
+    path: `/comment/${encodeURIComponent(tableId)}/${encodeURIComponent(recordId)}/create`,
+    body: { content },
+  });
+}
+
+async function getRowCount({
+  auth,
+  tableId,
+}: {
+  auth: TeableAuthValue;
+  tableId: string;
+}): Promise<number> {
+  const response = await makeRequest<{ rowCount: number }>({
+    auth,
+    method: HttpMethod.GET,
+    path: `/table/${encodeURIComponent(tableId)}/aggregation/row-count`,
+  });
+  return response.rowCount;
+}
+
+async function uploadAttachment({
+  auth,
+  tableId,
+  recordId,
+  fieldId,
+  filename,
+  extension,
+  data,
+}: {
+  auth: TeableAuthValue;
+  tableId: string;
+  recordId: string;
+  fieldId: string;
+  filename: string;
+  extension?: string;
+  data: Buffer;
+}): Promise<TeableRecord> {
+  const lookedUp = extension !== undefined ? mime.lookup(extension) : false;
+  const contentType = lookedUp === false ? 'application/octet-stream' : lookedUp;
+  const form = new FormData();
+  form.append('file', data, { filename, contentType });
+  const path = `/table/${encodeURIComponent(tableId)}/record/${encodeURIComponent(
+    recordId
+  )}/${encodeURIComponent(fieldId)}/uploadAttachment`;
+  const response = await httpClient.sendRequest<TeableRecord>({
+    method: HttpMethod.POST,
+    url: `${teableAuthUtil.getBaseUrl(auth)}/api${path}`,
+    headers: form.getHeaders(),
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token: teableAuthUtil.getToken(auth),
+    },
+    body: form,
+  });
+  return response.body;
+}
+
+export const teableClient = {
+  buildQueryString,
+  makeRequest,
+  errorStatus,
+  listBases,
+  listTables,
+  listFields,
+  listViews,
+  getRecord,
+  listRecords,
+  listRecordsPaged,
+  createRecords,
+  updateRecord,
+  updateRecords,
+  deleteRecord,
+  deleteRecords,
+  createTable,
+  createField,
+  createComment,
+  getRowCount,
+  uploadAttachment,
+};
+
+export type TeableQuery = Record<
+  string,
+  string | number | boolean | string[] | undefined | null
+>;
+
+export type TeableFieldKeyType = 'id' | 'name' | 'dbFieldName';
+
+export type MakeRequestParams = {
+  auth: TeableAuthValue;
+  method: HttpMethod;
+  path: string;
+  query?: TeableQuery;
+  body?: unknown;
+  headers?: Record<string, string>;
+};
+
+export type TeableBase = {
+  id: string;
+  name: string;
+  spaceId: string;
+  icon: string | null;
+  role: string;
+};
+
+export type TeableTable = {
+  id: string;
+  name: string;
+  dbTableName?: string;
+  description?: string;
+  icon?: string;
+  order?: number;
+  defaultViewId?: string;
+};
+
+export type TeableField = {
+  id: string;
+  name: string;
+  type: string;
+  description?: string;
+  isComputed?: boolean;
+  isPrimary?: boolean;
+  notNull?: boolean;
+  unique?: boolean;
+  dbFieldName?: string;
+  options?: {
+    choices?: { id: string; name: string; color?: string }[];
+    [key: string]: unknown;
   };
-}
+};
 
-export function prepareQuery(request?: Record<string, any>): QueryParams {
-  const params: QueryParams = {};
-  if (!request) return params;
-  Object.keys(request)
-    .filter(emptyValueFilter((k) => request[k]))
-    .forEach((k: string) => {
-      const val = (request as Record<string, any>)[k];
-      params[k] = Array.isArray(val) ? val : val.toString();
-    });
-  return params;
-}
+export type TeableView = {
+  id: string;
+  name: string;
+  type: string;
+  order?: number;
+};
 
+export type TeableRecord = {
+  id: string;
+  fields: Record<string, unknown>;
+  name?: string;
+  autoNumber?: number;
+  createdTime?: string;
+  lastModifiedTime?: string;
+  createdBy?: string;
+  lastModifiedBy?: string;
+};
 
-
-export class TeableClient {
-  private readonly apiBase: string;
-
-  constructor(
-    private token: string,
-    teableUrl: string = TEABLE_CLOUD_URL
-  ) {
-    this.apiBase = `${teableUrl}/api`;
-  }
-
-  async makeRequest<T extends HttpMessageBody>(
-    method: HttpMethod,
-    resourceUri: string,
-    query?: QueryParams,
-    body: any | undefined = undefined
-  ): Promise<T> {
-    const res = await httpClient.sendRequest<T>({
-      method,
-      url: this.apiBase + resourceUri,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: this.token,
-      },
-      queryParams: query,
-      body: body,
-    });
-
-    return res.body;
-  }
-
-  /**
-   * GET /api/base/access/all
-   * Returns all bases the token has access to.
-   * @see https://help.teable.ai/en/api-reference/base/get-baseaccessall
-   */
-  async listBases() {
-    return await this.makeRequest<
-      {
-        id: string;
-        name: string;
-        spaceId: string;
-        icon: string | null;
-        role: string;
-      }[]
-    >(HttpMethod.GET, '/base/access/all');
-  }
-
-  /**
-   * GET /api/base/{baseId}/table
-   * Returns all tables in the given base.
-   * @see https://help.teable.ai/en/api-reference/table/list-tables
-   */
-  async listTables(baseId: string) {
-    return await this.makeRequest<
-      {
-        id: string;
-        name: string;
-        dbTableName: string;
-        description?: string;
-        icon?: string;
-        order: number;
-        defaultViewId?: string;
-      }[]
-    >(HttpMethod.GET, `/base/${baseId}/table`);
-  }
-
-  /**
-   * GET /api/table/{tableId}/field
-   * Returns all fields in the given table.
-   * @see https://help.teable.ai/en/api-reference/field/list-fields
-   */
-  async listFields(tableId: string) {
-    return await this.makeRequest<
-      {
-        id: string;
-        name: string;
-        type: string;
-        isComputed?: boolean;
-        isPrimary?: boolean;
-        options?: {
-          choices?: { id: string; name: string; color?: string }[];
-          [key: string]: unknown;
-        };
-      }[]
-    >(HttpMethod.GET, `/table/${tableId}/field`);
-  }
-
-  /**
-   * GET /api/table/{tableId}/record/{recordId}
-   * Retrieves a single record by its ID.
-   * @see https://help.teable.ai/en/api-reference/record/get-record
-   */
-  async getRecord(
-    tableId: string,
-    recordId: string,
-    query?: QueryParams
-  ) {
-    return await this.makeRequest<{
-      id: string;
-      fields: Record<string, unknown>;
-      name: string;
-      autoNumber: number;
-      createdTime: string;
-      lastModifiedTime: string;
-      createdBy: string;
-      lastModifiedBy: string;
-      permissions: Record<string, unknown>;
-    }>(HttpMethod.GET, `/table/${tableId}/record/${recordId}`, query);
-  }
-
-  /**
-   * GET /api/table/{tableId}/record
-   * Retrieves a list of records with support for filtering, sorting, and pagination.
-   * @see https://help.teable.ai/en/api-reference/record/list-records
-   */
-  async listRecords(
-    tableId: string,
-    query?: QueryParams
-  ) {
-    return await this.makeRequest<{
-      records: {
-        id: string;
-        fields: Record<string, unknown>;
-      }[];
-    }>(HttpMethod.GET, `/table/${tableId}/record`, query);
-  }
-
-  /**
-   * POST /api/table/{tableId}/record
-   * Creates one or more records.
-   */
-  async createRecord(tableId: string, request: object) {
-    return await this.makeRequest(
-      HttpMethod.POST,
-      `/table/${tableId}/record`,
-      undefined,
-      request
-    );
-  }
-
-  /**
-   * DELETE /api/table/{tableId}/record/{recordId}
-   * Deletes a single record.
-   */
-  async deleteRecord(tableId: string, recordId: string) {
-    return await this.makeRequest(
-      HttpMethod.DELETE,
-      `/table/${tableId}/record/${recordId}`
-    );
-  }
-
-  /**
-   * PATCH /api/table/{tableId}/record/{recordId}
-   * Updates a single record.
-   */
-  async updateRecord(tableId: string, recordId: string, request: object) {
-    return await this.makeRequest(
-      HttpMethod.PATCH,
-      `/table/${tableId}/record/${recordId}`,
-      undefined,
-      request
-    );
-  }
-
-  /**
-   * POST /api/table/{tableId}/record/{recordId}/{fieldId}/uploadAttachment
-   * Uploads a file as an attachment to a specific field in a record.
-   */
-  async uploadAttachment(tableId: string, recordId: string, fieldId: string, form: FormData) {
-    const res = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${this.apiBase}/table/${tableId}/record/${recordId}/${fieldId}/uploadAttachment`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: this.token,
-      },
-      body: form,
-    });
-    return res.body;
-  }
-}
+export type TeableRecordListResponse = {
+  records: TeableRecord[];
+  extra?: {
+    nextCursor?: string | null;
+  };
+};

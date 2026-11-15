@@ -9,6 +9,7 @@ import { runActorActionOutputSchema } from '../output-schemas';
 
 export const apifyRunActor = createAction({
   name: 'apify_run_actor',
+  classification: 'WRITE',
   auth: apifyAuth,
   displayName: 'Run Actor',
   description: 'Starts an Apify Actor by ID and optionally waits for it to finish.',

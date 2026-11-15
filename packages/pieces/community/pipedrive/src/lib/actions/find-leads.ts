@@ -3,10 +3,13 @@ import { isNil } from '@activepieces/pieces-framework';
 import { pipedriveApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { pipedriveAuth } from '../auth';
+import { findLeadActionOutputSchema } from '../output-schemas';
 
 export const findLeadAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-lead',
+	outputSchema: findLeadActionOutputSchema,
+	classification: 'SEARCH',
 	displayName: 'Find Lead',
 	description: 'Finds leads by title.',
 	audience: 'both',

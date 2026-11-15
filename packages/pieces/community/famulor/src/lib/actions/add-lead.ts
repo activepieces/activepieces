@@ -6,6 +6,7 @@ import { famulorCommon } from '../common';
 export const addLead = createAction({
   auth: famulorAuth,
   name: 'addLead',
+  classification: 'WRITE',
   displayName: 'Add Lead to Campaign',
   description: 'Add a lead to an outbound campaign to be called by an AI assistant.',
   audience: 'both',

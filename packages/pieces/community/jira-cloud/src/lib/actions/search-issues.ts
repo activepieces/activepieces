@@ -5,52 +5,72 @@ import { searchIssuesByJql, mapFieldNames } from '../common';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
+import { issueListOutputSchema } from '../output-schemas';
 export const searchIssues = createAction({
   name: 'search_issues',
+  classification: 'SEARCH',
   displayName: 'Search Issues',
-  description: 'Search for issues with JQL',
-  audience: 'both',
+  description: 'Finds issues that match a JQL query.',
+  audience: 'human',
   aiMetadata: {
     description:
       'Search Jira issues with an arbitrary JQL query, paginating automatically up to a max-results cap (1-5000) and optionally restricting which fields are returned or mapping field IDs to readable names. The go-to tool for finding issues by project, status, assignee, dates, or any JQL-expressible criteria; limit returned fields on large result sets to avoid memory issues. Read-only and idempotent.',
     idempotent: true,
   },
   auth: jiraCloudAuth,
+  outputSchema: issueListOutputSchema,
+  propertyGroups: [
+    {
+      key: 'query',
+      display: 'section',
+      label: 'Query',
+      icon: 'filter',
+      props: ['jql', 'memoryWarning', 'fields', 'sanitizeJql'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['maxResults', 'mapNames'],
+    },
+  ],
   props: {
     memoryWarning: Property.MarkDown({
-      value: `Fetching a large number of issues without specifying **Fields to Return** may exceed your flow's memory limits. Use field selection to reduce payload size.`,
+      value: "Returning every field of many issues can exceed your flow's memory. List only the fields you need.",
       variant: MarkdownVariant.WARNING,
     }),
     jql: Property.LongText({
       displayName: 'JQL',
-      description: "The JQL query to use in search (Tip: Use single quotes for strings/dates)",
+      description: 'Put text and dates in single quotes.',
       defaultValue: `type = story and created > '2023-12-13 14:00'`,
       required: true,
     }),
     fields: Property.Array({
       displayName: 'Fields to Return',
-      description: `List of exact Jira Field IDs to return (e.g., 'summary', 'customfield_10016').
-Special commands:
-- Use *all for every field.
-- Use *navigable for standard fields (default).
-- Prefix with a minus to exclude (e.g., -description).
-Example: *all and -comment returns everything except comments.`,
+      description: 'Field IDs, e.g. summary. Use *all for every field.',
       required: false,
     }),
     mapNames: Property.Checkbox({
       displayName: 'Map Field Names',
-      description: `Map human readable names to Fields in the output.\nNotes:\n- If there are fields with the same name, they may be overridden.`,
-      required: true,
+      description: 'Key fields by their name instead of their ID.',
+      required: false,
       defaultValue: false,
     }),
     maxResults: Property.Number({
       displayName: 'Max Results',
+      description: 'Most issues to return, up to 5,000.',
+      display: 'stepper',
+      min: 1,
+      max: 5000,
+      step: 1,
       defaultValue: 50,
       required: true,
     }),
     sanitizeJql: Property.Checkbox({
       displayName: 'Sanitize JQL',
-      required: true,
+      description: "Jira swaps names you can't view for IDs before the search runs.",
+      required: false,
       defaultValue: true,
     }),
   },
@@ -76,7 +96,7 @@ Example: *all and -comment returns everything except comments.`,
         auth,
         jql,
         maxResults: limit,
-        sanitizeJql,
+        sanitizeJql: sanitizeJql ?? true,
         nextPageToken,
         fields: fieldList,
         expand: expandParams,

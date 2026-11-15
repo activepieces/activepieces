@@ -1,23 +1,25 @@
-import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode } from '@activepieces/core-utils'
+import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { ApEdition, AuthenticationResponse, CreatePlatformRequest, FileType, PlatformWithoutSensitiveData, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdatePlatformRequestBody, UserStatus } from '@activepieces/shared'
+import { ApEdition, AuthenticationResponse, CreatePlatformRequest, FileType, hasActiveSubscription, PLATFORM_PURGE_DELAY_DAYS, PlatformResponse, PlatformWithoutSensitiveData, PrincipalType, SelfServeTrialState, SERVICE_KEY_SECURITY_OPENAPI, StartedSelfServeTrial, UpdatePlatformRequestBody } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { chatVisibilityHelper } from '../ee/agent/chat-visibility-helper'
 import { platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
-import { chatVisibilityHelper } from '../ee/chat/chat-visibility-helper'
+import { emailService } from '../ee/helper/email/email-service'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
-import { stripeHelper } from '../ee/platform/platform-plan/stripe-helper'
-import { platformProjectService } from '../ee/projects/platform-project-service'
+import { beginPlatformTeardown } from '../ee/platform/platform-teardown-jobs'
 import { fileService } from '../file/file.service'
 import { attachMultipartFieldsToBody } from '../helper/multipart-body'
+import { networkUtils } from '../helper/network-utils'
 import { system } from '../helper/system/system'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { userIdentityHelper } from '../helper/user-identity-helper'
-import { projectService } from '../project/project-service'
-import { userRepo, userService } from '../user/user-service'
+import { userService } from '../user/user-service'
+import { billingProvider } from './billing-provider'
 import { platformService } from './platform.service'
 
 const edition = system.getEdition()
@@ -36,11 +38,14 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
         const identityId = isOnboarding
             ? req.principal.id
             : (await userService(req.log).getOneOrFail({ id: req.principal.id })).identityId
-        return platformService(req.log).createPlatformWithProject({
+        const { response } = await platformService(req.log).createPlatformWithProject({
             identityId,
             name: req.body.name,
             invalidatePreviousTokens: isOnboarding,
+            isFirstPlatform: isOnboarding,
+            callerTokenVersion: req.principal.type === PrincipalType.ONBOARDING ? req.principal.tokenVersion : undefined,
         })
+        return response
     })
 
     app.post('/:id', UpdatePlatformRequest, async (req, _res) => {
@@ -75,14 +80,20 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             }),
         ])
 
-        await platformService(req.log).update({
-            id: platformId,
-            ...req.body,
-            logoIconUrl,
-            fullLogoUrl,
-            favIconUrl,
+        await platformService(req.log).runWithPlatformSettingsLock({
+            platformId,
+            fn: () => platformService(req.log).update({
+                id: platformId,
+                ...req.body,
+                logoIconUrl,
+                fullLogoUrl,
+                favIconUrl,
+                userId: req.principal.id,
+                ip: networkUtils.clientIp(req),
+            }),
         })
-        return platformService(req.log).getOneWithPlanAndUsageOrThrow(platformId)
+        const updated = await platformService(req.log).getOneWithPlanAndUsageOrThrow(platformId)
+        return addSelfServeTrialToPlatform({ platform: updated, log: req.log, includeSelfServeTrial: req.principal.type === PrincipalType.USER })
     })
 
     app.get('/:id', GetPlatformRequest, async (req) => {
@@ -97,15 +108,19 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
         const platform = await platformService(req.log).getOneWithPlanAndUsageOrThrow(req.principal.platform.id)
         if (req.principal.type === PrincipalType.USER) {
             const isEmbedded = await userIdentityHelper(req.log).isUserEmbedded(req.principal.id)
-            const chatEnabled = await chatVisibilityHelper.resolveChatEnabledForUser({ userId: req.principal.id, platform, isEmbedded })
-            return {
-                ...platform,
-                plan: {
-                    ...platform.plan,
-                    chatEnabled,
-                    ...(isEmbedded ? { licenseKey: null } : {}),
+            const chatEnabled = chatVisibilityHelper.resolveChatEnabledForUser({ platform, isEmbedded })
+            return addSelfServeTrialToPlatform({
+                log: req.log,
+                includeSelfServeTrial: !isEmbedded,
+                platform: {
+                    ...platform,
+                    plan: {
+                        ...platform.plan,
+                        chatEnabled,
+                        ...(isEmbedded ? { licenseKey: null } : {}),
+                    },
                 },
-            }
+            })
         }
         return platform
     })
@@ -131,54 +146,31 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
         app.delete('/:id', DeletePlatformRequest, async (req, res) => {
             await platformToEditMustBeOwnedByCurrentUser.call(app, req, res)
             assertNotNullOrUndefined(req.principal.platform.id, 'platformId')
-            const isCloudNonEnterprisePlan = await platformPlanService(req.log).isCloudNonEnterprisePlan(req.params.id)
-            if (!isCloudNonEnterprisePlan) {
+            const platformId = req.params.id
+            const platformPlan = await platformPlanService(req.log).getOrCreateForPlatform(platformId)
+            if (hasActiveSubscription(platformPlan.plan)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.DOES_NOT_MEET_BUSINESS_REQUIREMENTS,
                     params: {
-                        message: 'Platform is not eligible for deletion',
+                        message: 'Cancel your subscription before deleting this platform',
                     },
                 })
             }
-            const platformPlan = await platformPlanService(req.log).getOrCreateForPlatform(req.params.id)
-            if (platformPlan.stripeSubscriptionId) {
-                await stripeHelper(req.log).deleteCustomer(platformPlan.stripeSubscriptionId)
-            }
 
-            const platformId = req.params.id
-
-            const user = await userService(req.log).getOneOrFail({
+            const owner = await userService(req.log).getMetaInformation({
                 id: req.principal.id,
             })
-
-            await userRepo().update(
-                { id: user.id, platformId },
-                { status: UserStatus.INACTIVE },
-            )
-
-            const projectIds = await projectService(req.log).getProjectIdsByPlatform(platformId)
-            await Promise.all(
-                projectIds.map((projectId) =>
-                    platformProjectService(req.log).markForDeletion({
-                        id: projectId,
-                        platformId,
-                    }),
-                ),
-            )
+            const purgeDate = apDayjs().add(PLATFORM_PURGE_DELAY_DAYS, 'day')
 
             await systemJobsSchedule(req.log).upsertJob({
                 job: {
                     name: SystemJobName.HARD_DELETE_PLATFORM,
-                    data: {
-                        platformId,
-                        userId: user.id,
-                        identityId: user.identityId,
-                    },
+                    data: { platformId },
                     jobId: `hard-delete-platform-${platformId}`,
                 },
                 schedule: {
                     type: 'one-time',
-                    date: apDayjs(),
+                    date: purgeDate,
                 },
                 customConfig: {
                     attempts: 25,
@@ -189,8 +181,33 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
                 },
             })
 
+            await beginPlatformTeardown({ platformId, log: req.log })
+
+            const { error: emailError } = await tryCatch(() => emailService(req.log).sendPlatformDeleted({
+                platformId,
+                email: owner.email,
+                purgeDate: purgeDate.format('MMMM D, YYYY'),
+            }))
+            if (!isNil(emailError)) {
+                req.log.error({ error: emailError, platform: { id: platformId } }, 'Platform deleted but the confirmation email failed')
+            }
+
             return res.status(StatusCodes.NO_CONTENT).send()
         })
+    }
+}
+
+async function addSelfServeTrialToPlatform<T extends PlatformWithoutSensitiveData>({ platform, log, includeSelfServeTrial }: AddSelfServeTrialToPlatformParams<T>): Promise<T & { selfServeTrial?: StartedSelfServeTrial }> {
+    if (!includeSelfServeTrial) {
+        return platform
+    }
+    const selfServeTrial = await billingProvider.get(log).getSelfServeTrialInfo({ platformId: platform.id })
+    switch (selfServeTrial.state) {
+        case SelfServeTrialState.ACTIVE:
+        case SelfServeTrialState.ENDED:
+            return { ...platform, selfServeTrial }
+        default:
+            return platform
     }
 }
 
@@ -217,7 +234,7 @@ const UpdatePlatformRequest = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: PlatformWithoutSensitiveData,
+            [StatusCodes.OK]: PlatformResponse,
         },
     },
 }
@@ -235,7 +252,7 @@ const GetPlatformRequest = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: PlatformWithoutSensitiveData,
+            [StatusCodes.OK]: PlatformResponse,
         },
     },
 }
@@ -260,4 +277,10 @@ const GetAssetRequest = {
             id: z.string(),
         }),
     },
+}
+
+type AddSelfServeTrialToPlatformParams<T> = {
+    platform: T
+    log: FastifyBaseLogger
+    includeSelfServeTrial: boolean
 }

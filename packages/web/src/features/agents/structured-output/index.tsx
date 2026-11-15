@@ -1,7 +1,6 @@
 import { AgentOutputFieldType, AgentOutputField } from '@activepieces/shared';
 import { t } from 'i18next';
 import { X } from 'lucide-react';
-import { ControllerRenderProps } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,7 +12,10 @@ export const AgentStructuredOutput = ({
   structuredOutputField,
   disabled,
 }: {
-  structuredOutputField: ControllerRenderProps;
+  structuredOutputField: {
+    value: unknown;
+    onChange: (value: AgentOutputField[]) => void;
+  };
   disabled: boolean;
 }) => {
   const value = structuredOutputField.value;
@@ -60,7 +62,7 @@ export const AgentStructuredOutput = ({
                           {field.displayName}
                         </span>
                         {field.description && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-gray-11">
                             {field.description}
                           </span>
                         )}
@@ -82,7 +84,7 @@ export const AgentStructuredOutput = ({
             </CardContent>
           </Card>
         ) : (
-          <div className="text-muted-foreground text-sm">
+          <div className="text-gray-11 text-sm">
             {t('No structured output fields yet.')}
           </div>
         )}

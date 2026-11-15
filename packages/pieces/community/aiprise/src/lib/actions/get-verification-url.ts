@@ -6,6 +6,7 @@ import { aipriseAuth } from '../common/auth';
 export const getVerificationUrlAction = createAction({
   auth: aipriseAuth,
   name: 'get_verification_url',
+  classification: 'WRITE',
   displayName: 'Get Identity Verification Link',
   description:
     'Generates a secure link you can send to a person so they can complete their identity verification on an AiPrise-hosted page — no extra development needed.',

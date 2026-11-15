@@ -6,6 +6,7 @@ import { ContactStatusValues } from '../common/models';
 export const unsubscribeContactAction = createAction({
   auth: vboutAuth,
   name: 'vbout_unsubscribe_contact',
+  classification: 'DESTRUCTIVE',
   displayName: 'Unsubscribe Contact',
   description: 'Unsubscribes an existing contact in a given email list.',
   audience: 'both',

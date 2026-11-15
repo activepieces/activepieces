@@ -7,6 +7,7 @@ import { getBatchScrapeResultsActionOutputSchema } from '../output-schemas';
 export const getBatchScrapeResults = createAction({
   auth: firecrawlAuth,
   name: 'get_batch_scrape_results',
+  classification: 'READ',
   displayName: 'Get Batch Scrape Results',
   description: 'Get the status and accumulated page results of a batch scrape job by its ID.',
   audience: 'ai',

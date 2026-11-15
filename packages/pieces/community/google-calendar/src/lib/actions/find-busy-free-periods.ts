@@ -28,14 +28,14 @@ export const findFreeBusyProps = {
   calendar_ids: Property.MultiSelectDropdown({
     auth: googleCalendarAuth,
     displayName: 'Calendars',
-    description: 'Select the calendars to check for busy periods.',
+    description: 'Calendars to check.',
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
         return {
           disabled: true,
-          placeholder: 'Connect your account first',
+          placeholder: 'Connect your Google account first',
           options: [],
         };
       }
@@ -56,11 +56,13 @@ export const findFreeBusyProps = {
     displayName: 'Start Time',
     description: 'The start of the time range to check.',
     required: true,
+    width: 'half',
   }),
   end_date: Property.DateTime({
     displayName: 'End Time',
     description: 'The end of the time range to check.',
     required: true,
+    width: 'half',
   }),
 };
 
@@ -94,10 +96,27 @@ export async function runFindFreeBusy(
 export const findFreeBusy = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_find_busy_free_periods',
+  classification: 'SEARCH',
   displayName: 'Find Busy/Free Periods in Calendar',
-  description: 'Finds free/busy calendar details from Google Calendar.',
+  description: 'Finds busy periods across calendars in a time range.',
   audience: 'human',
   aiMetadata: { description: 'Queries one or more calendars for their busy time blocks within a given start/end window, without exposing event details. Use to check availability or find open slots before scheduling a meeting. Requires the calendars to check and a time range. Read-only and idempotent.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'calendars',
+      display: 'section',
+      label: 'Calendars',
+      icon: 'calendar',
+      props: ['calendar_ids'],
+    },
+    {
+      key: 'time_range',
+      display: 'section',
+      label: 'Time range',
+      icon: 'calendar',
+      props: ['start_date', 'end_date'],
+    },
+  ],
   props: findFreeBusyProps,
   outputSchema: freeBusyActionOutputSchema,
   run: runFindFreeBusy,

@@ -6,26 +6,54 @@ import {
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
+import { discordSuccessActionOutputSchema } from '../output-schemas';
 
 export const discordAddRoleToMember = createAction({
   auth: discordAuth,
   name: 'add_role_to_member',
-  description: 'Add Guild Member Role',
-  audience: 'both',
+  classification: 'WRITE',
+  description: 'Give a member of a server a role.',
+  audience: 'human',
   aiMetadata: { description: 'Assigns a role to a guild member, identified by guild ID, user ID, and role ID. Use to grant permissions or tag a user. Requires the bot to have Manage Roles and a higher role than the target; idempotent, since re-adding an already-assigned role leaves the member unchanged.', idempotent: true },
-  displayName: 'Add role to member',
+  displayName: 'Add Role to Member',
+  outputSchema: discordSuccessActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'server',
+      display: 'section',
+      label: 'Server',
+      icon: 'users',
+      props: ['guild_id'],
+    },
+    {
+      key: 'user',
+      display: 'section',
+      label: 'User',
+      icon: 'user',
+      props: ['user_id'],
+    },
+    {
+      key: 'role',
+      display: 'section',
+      label: 'Role',
+      icon: 'tag',
+      props: ['role_id'],
+    },
+  ],
   props: {
     guild_id: discordCommon.guilds,
     user_id: Property.ShortText({
       displayName: 'User ID',
-      description: 'The user id of the member',
+      description:
+        'Right-click the member and choose Copy User ID in Developer Mode.',
+      placeholder: '123456789012345678',
       required: true,
     }),
     role_id: discordCommon.roles,
   },
 
   async run(configValue) {
-    const request: HttpRequest<any> = {
+    const request: HttpRequest = {
       method: HttpMethod.PUT,
       url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/members/${configValue.propsValue.user_id}/roles/${configValue.propsValue.role_id}`,
       headers: {

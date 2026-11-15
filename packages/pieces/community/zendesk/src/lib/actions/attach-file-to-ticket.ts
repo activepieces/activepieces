@@ -1,15 +1,18 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { ticketIdDropdown } from '../common/props';
+import { attachFileToTicketOutputSchema } from '../output-schemas';
 
 export const attachFileToTicketAction = createAction({
   auth: zendeskAuth,
   name: 'attach-file-to-ticket',
+  outputSchema: attachFileToTicketOutputSchema,
+  classification: 'WRITE',
   displayName: 'Attach File to Ticket',
   description: 'Attach a file to a ticket.',
   audience: 'both',
@@ -35,16 +38,12 @@ export const attachFileToTicketAction = createAction({
       const uploadResponse = await httpClient.sendRequest<{
         upload: { token: string };
       }>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/uploads.json?filename=${encodeURIComponent(file.filename)}`,
+        url: `${getZendeskBaseUrl(authentication)}/uploads.json?filename=${encodeURIComponent(file.filename)}`,
         method: HttpMethod.POST,
         headers: {
           'Content-Type': 'application/octet-stream',
         },
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(authentication),
         body: file.data,
       });
 
@@ -52,16 +51,12 @@ export const attachFileToTicketAction = createAction({
 
       // Then attach the uploaded file to the ticket
       const attachResponse = await httpClient.sendRequest({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets/${ticket_id}.json`,
+        url: `${getZendeskBaseUrl(authentication)}/tickets/${ticket_id}.json`,
         method: HttpMethod.PUT,
         headers: {
           'Content-Type': 'application/json',
         },
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(authentication),
         body: {
           ticket: {
             comment: {

@@ -8,6 +8,7 @@ import { scheduleMessageActionOutputSchema } from '../output-schemas';
 export const slackScheduleMessageAction = createAction({
   auth: slackAuth,
   name: 'slack_schedule_message',
+  classification: 'WRITE',
   displayName: 'Schedule Message',
   description: 'Schedule a message to be sent to a channel at a future time.',
   audience: 'ai',

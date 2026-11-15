@@ -13,6 +13,7 @@ const API = 'https://api.todoist.com/api/v1';
 export const todoistGetCurrentUserAction = createAction({
   auth: todoistAuth,
   name: 'todoist_get_current_user',
+  classification: 'READ',
   displayName: 'Get Current User',
   description: 'Retrieves the authenticated Todoist user profile.',
   audience: 'ai',

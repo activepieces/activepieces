@@ -5,6 +5,7 @@ import { BASE_URL } from "../common/constants";
 
 export const generateAltTextAction = createAction({
     name: 'generate-alt-text',
+    classification: 'READ',
     auth: altTextAiAuth,
     displayName: 'Generate Alt Text',
     description: 'Generates a descriptive alt text for a given image.',

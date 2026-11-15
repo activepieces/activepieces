@@ -1,29 +1,34 @@
 import { isNil } from '@activepieces/core-utils';
-import { PopulatedFlow } from '@activepieces/shared';
+import { FlowVersionState, PopulatedFlow } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
 import { t } from 'i18next';
 import { FileX } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 
 import { BuilderPage } from '@/app/builder';
 import { BuilderStateProvider } from '@/app/builder/state/builder-state-provider';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { buttonVariants } from '@/components/ui/button';
-import { flowsApi, sampleDataHooks } from '@/features/flows';
+import { flowHooks, flowsApi, sampleDataHooks } from '@/features/flows';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 const FlowBuilderPage = () => {
   const { flowId } = useParams();
+  const [searchParams] = useSearchParams();
+  const versionId = searchParams.get('versionId') ?? undefined;
 
   const {
     data: flow,
     isLoading,
     isError,
   } = useQuery<PopulatedFlow, Error>({
-    queryKey: ['flow', flowId, authenticationSession.getProjectId()],
-    queryFn: () => flowsApi.get(flowId!),
+    queryKey: [
+      ...flowHooks.createFlowQueryKeys({ flowId: flowId!, versionId }),
+      authenticationSession.getProjectId(),
+    ],
+    queryFn: () => flowsApi.get(flowId!, versionId ? { versionId } : undefined),
     gcTime: 0,
     retry: false,
     refetchOnWindowFocus: false,
@@ -36,7 +41,7 @@ const FlowBuilderPage = () => {
     sampleDataHooks.useSampleDataInputForFlow(flow?.version, flow?.projectId);
   if (isLoading || isSampleDataLoading || isSampleDataInputLoading) {
     return (
-      <div className="bg-background flex h-full w-full items-center justify-center ">
+      <div className="bg-gray-1 flex h-full w-full items-center justify-center ">
         <LoadingSpinner isLarge={true}></LoadingSpinner>
       </div>
     );
@@ -45,13 +50,13 @@ const FlowBuilderPage = () => {
   if (isNil(flow) || isError) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-        <div className="rounded-full bg-muted p-4">
-          <FileX className="size-9 text-muted-foreground" />
+        <div className="rounded-full bg-gray-3 p-4">
+          <FileX className="size-9 text-gray-11" />
         </div>
 
         <div>
           <h2 className="text-lg font-semibold">{t('Flow not found')}</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-11">
             {t("The flow you are looking for doesn't exist or was removed.")}
           </p>
         </div>
@@ -71,7 +76,7 @@ const FlowBuilderPage = () => {
       <BuilderStateProvider
         flow={flow}
         flowVersion={flow!.version}
-        readonly={false}
+        readonly={flow!.version.state === FlowVersionState.LOCKED}
         hideTestWidget={false}
         run={null}
         outputSampleData={sampleData ?? {}}

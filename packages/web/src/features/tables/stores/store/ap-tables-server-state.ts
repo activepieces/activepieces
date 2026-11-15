@@ -1,3 +1,4 @@
+import { isNil, tryCatch } from '@activepieces/core-utils';
 import {
   CreateFieldRequest,
   Field,
@@ -6,6 +7,7 @@ import {
   UpdateTableRequest,
 } from '@activepieces/shared';
 
+import { errorReporting } from '@/lib/error-reporting';
 import { PromiseQueue } from '@/lib/promise-queue';
 
 import { fieldsApi } from '../../api/fields-api';
@@ -29,8 +31,12 @@ export const createServerState = (
   function addPromiseToQueue(promise: () => Promise<void>) {
     queue.add(async () => {
       updateSavingStatus(true);
-      await promise();
+      const { error } = await tryCatch(promise);
       updateSavingStatus(queue.size() === 1);
+      if (!isNil(error)) {
+        errorReporting.report({ error, source: 'table-save' });
+        throw error;
+      }
     });
   }
   return {

@@ -15,6 +15,7 @@ import {
 import dayjs from 'dayjs';
 import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
+import { discordMessageOutputSchema } from '../output-schemas';
 
 import { Message } from '../common/models';
 
@@ -49,62 +50,51 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof discordAuth>, { 
 export const newMessage = createTrigger({
   auth: discordAuth,
   name: 'new_message',
-  displayName: 'New message',
-  description: 'Triggers when a message is sent in a channel',
+  classification: 'READ',
+  displayName: 'New Message',
+  description: 'Fires when a message is posted in a channel.',
   aiMetadata: {
     description: 'Fires when a new message is posted in the selected Discord channel, emitting one event per message. Polls the channel periodically, so detection is near-real-time rather than instant.',
   },
   type: TriggerStrategy.POLLING,
+  outputSchema: discordMessageOutputSchema,
   props: {
+    channel: discordCommon.channel,
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'The number of messages to fetch',
+      description: 'Most recent messages checked each poll, up to 100.',
       required: false,
       defaultValue: 50,
+      display: 'stepper',
+      min: 1,
+      max: 100,
+      step: 1,
+      advanced: true,
     }),
-    channel: discordCommon.channel,
   },
   sampleData: {},
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: {
+    await pollingHelper.onEnable(polling, { ...context, propsValue: {
         channel: context.propsValue.channel,
         limit: context.propsValue.limit ?? 50,
-      },
-    });
+      } });
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: {
+    await pollingHelper.onDisable(polling, { ...context, propsValue: {
         channel: context.propsValue.channel,
         limit: context.propsValue.limit ?? 50,
-      },
-    });
+      } });
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: {
+    return await pollingHelper.poll(polling, { ...context, propsValue: {
         channel: context.propsValue.channel,
         limit: context.propsValue.limit ?? 50,
-      },
-      files: context.files,
-    });
+      } });
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: {
+    return await pollingHelper.test(polling, { ...context, propsValue: {
         channel: context.propsValue.channel,
         limit: context.propsValue.limit ?? 50,
-      },
-      files: context.files,
-    });
+      } });
   },
 });

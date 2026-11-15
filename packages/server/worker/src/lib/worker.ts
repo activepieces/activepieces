@@ -1,10 +1,9 @@
 import { createServer } from 'http'
 import os from 'os'
-import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
-import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
-import { createLogger } from 'evlog'
+import { ActivepiecesError, isNil, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, cacheUtils, CODE_CACHE_FIRST_SWEEP_DELAY_MS, CODE_CACHE_SWEEP_INTERVAL_MS, codeCacheEviction, createResolver, createSandboxRuntime, markDevPiecesRebuilt, Runtime } from '@activepieces/sandbox'
+import { aiCostReporter, aiObservability, modelCatalog, modelTierCatalog, systemUsage, wideEvent } from '@activepieces/server-utils'
+import { ApEdition, ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, LONG_RUNNING_RPC_METHODS, SandboxInformation, WebsocketClientEvent, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
 import { createApiToWorkerHandlers } from './api-notify-service'
@@ -14,41 +13,8 @@ import { workerSettings } from './config/worker-settings'
 import { getHandler } from './execute/job-registry'
 import { JobContext, JobResult, JobResultKind } from './execute/types'
 import { sandboxConfig } from './runtime/sandbox-config'
+import { VERSION_MISMATCH_POLL_PAUSE_MS, versionChecker } from './utils/version-checker'
 
-
-const AP_VERSION = apVersionUtil.getCurrentRelease()
-
-const VERSION_MISMATCH_POLL_PAUSE_MS = 10_000
-
-let pagedForUnreadableWorkerVersion = false
-
-function pageOnceForUnreadableWorkerVersion(workerLog: typeof logger): void {
-    if (pagedForUnreadableWorkerVersion) {
-        return
-    }
-    pagedForUnreadableWorkerVersion = true
-    onCallService(workerLog, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
-        code: 'WORKER_VERSION_READ_FAILED',
-        message: 'Worker could not read its release version from package.json (reported as 0.0.0); polling is paused and will NOT self-heal on reconnect until the deployment is fixed (check cwd/packaging)',
-        params: { workerVersion: AP_VERSION },
-    }).catch((pageError) => {
-        workerLog.error({ pageError }, 'Failed to send on-call page for unreadable worker version')
-    })
-}
-
-// Front-loads the release-read failure signal to worker boot so a mis-packaged worker that hasn't
-// polled yet doesn't silently look healthy in the logs. This only LOGS: the on-call page needs
-// PAGE_ONCALL_WEBHOOK, which arrives with worker settings on socket connect and is not available at
-// boot, so paging is left to the poll loop's version-compatibility check (which calls
-// pageOnceForUnreadableWorkerVersion, once-guarded, as soon as settings are loaded). A '0.0.0' read
-// pauses polling and will NOT self-heal on reconnect until the deployment is fixed.
-function assertReleaseReadable(): void {
-    if (AP_VERSION !== UNKNOWN_VERSION) {
-        logger.info({ release: { version: AP_VERSION } }, 'Release version detected from package.json')
-        return
-    }
-    logger.error({ release: { version: AP_VERSION } }, 'Worker could not read its release version from package.json (reported as 0.0.0); polling is paused and will NOT self-heal on reconnect until the deployment is fixed (check cwd/packaging)')
-}
 
 let socket: Socket | null = null
 let polling = false
@@ -59,6 +25,8 @@ const workerId = `worker-${nanoid()}`
 const workerHostname = os.hostname()
 
 let healthServerInstance: ReturnType<typeof createServer> | null = null
+
+let shouldStartHealthServer = false
 
 let runtime: Runtime | null = null
 
@@ -78,29 +46,43 @@ let sandboxInfoInterval: NodeJS.Timeout | null = null
 const SANDBOX_INFO_REFRESH_MS = 15_000
 const SERVER_PING_TIMEOUT_MS = 5_000
 const MACHINE_INFO_TIMEOUT_MS = 15_000
-const POLL_LIVENESS_TIMEOUT_MS = 180_000
+const POLL_LIVENESS_TIMEOUT_MS = 600_000
 const POLL_WATCHDOG_INTERVAL_MS = 30_000
+const RPC_TIMEOUT_MS = 60_000
+const LONG_RUNNING_RPC_MARGIN_MS = 120_000
+const FALLBACK_FLOW_TIMEOUT_SECONDS = 600
 
 let pollLoopLiveness: PollLoopLiveness[] = []
 let pollWatchdogInterval: NodeJS.Timeout | null = null
 
+let cacheSweepInterval: NodeJS.Timeout | null = null
+let cacheSweepFirstRunTimeout: NodeJS.Timeout | null = null
+
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
-        assertReleaseReadable()
+        versionChecker.assertReleaseReadable()
+        modelCatalog.load().catch(() => undefined)
+        await modelTierCatalog.warmUp()
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
         const projectWorker = system.getBoolean(WorkerSystemProp.PROJECT_WORKER) ?? true
+        const workerGroupScope = system.get(WorkerSystemProp.WORKER_GROUP_SCOPE)
         socket = io(socketUrl.url, {
-            auth: { token: workerToken, workerId, workerGroupId, projectWorker },
+            auth: { token: workerToken, workerId, workerGroupId, projectWorker, workerGroupScope },
             path: socketUrl.path,
             transports: ['websocket'],
             reconnection: true,
         })
 
-        const apiClient = createRpcClient<WorkerToApiContract>(socket, 60_000)
+        const apiClient = createRpcClient<WorkerToApiContract>(socket, rpcTimeoutMsFor)
+        aiCostReporter.install({
+            log: logger,
+            report: (request) => apiClient.reportAiUsage(request),
+            pageWebhookUrl: () => tryCatchSync(() => workerSettings.getSettings()).data?.PAGE_ONCALL_WEBHOOK,
+        })
 
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
-            resetPollLoopLiveness({ loopCount: 1 })
+            resetPollLoopLiveness({ loopCount: 0 })
             await fetchAndStoreSettings(socket!)
             void startPollingWorkers(apiClient).catch((err) => {
                 logger.error({ error: err }, 'Polling workers crashed unexpectedly')
@@ -115,8 +97,11 @@ export const worker = {
             // For any other reason the socket dropped while a job may still be running locally; the app
             // reclaims that job on disconnect, so kill the runtime now or the original keeps executing
             // to completion and double-runs the requeued copy. (The reconnect path recreates it.)
+            // Also close the health server so orchestrators stop routing/keeping traffic on a worker
+            // that can't consume jobs; the reconnect path brings it back up after prewarm completes.
             if (reason !== 'io client disconnect') {
                 abortInFlightRuntime()
+                stopHealthServer()
             }
             // Socket.IO does NOT auto-reconnect when the server initiates the disconnect
             // (reason 'io server disconnect' — e.g. the API process restarts/hot-reloads).
@@ -131,18 +116,22 @@ export const worker = {
             logger.error({ error: error.message }, 'Socket.IO connection error')
         })
 
+        socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
+            logger.info('Dev pieces rebuilt, sandboxes will be replaced before their next job')
+            markDevPiecesRebuilt()
+        })
+
         createNotifyServer<ApiToWorkerContract>(socket, createApiToWorkerHandlers({
             getRuntime: () => runtime,
             apiClient,
-            getPublicApiUrl: () => ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
+            getInternalApiUrl: getApiUrl,
             log: logger,
-        }))
+        }), logger)
 
-        if (withHealthServer) {
-            healthServerInstance = startHealthServer()
-        }
+        shouldStartHealthServer = withHealthServer
         startSandboxInfoSampling()
         startPollWatchdog()
+        startCacheSweeper()
         logger.info({ apiUrl, socketUrl }, 'Worker started, polling for jobs...')
     },
 
@@ -151,6 +140,7 @@ export const worker = {
         pollLoopLiveness = []
         stopPollWatchdog()
         stopSandboxInfoSampling()
+        stopCacheSweeper()
         await drainInFlightJobs()
         if (runtime) {
             await runtime.shutdown(logger)
@@ -158,9 +148,12 @@ export const worker = {
         }
         socket?.disconnect()
         socket = null
-        healthServerInstance?.close()
-        healthServerInstance = null
+        stopHealthServer()
         logger.info('Worker stopped')
+    },
+
+    stopPolling(): void {
+        polling = false
     },
 }
 
@@ -181,9 +174,6 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
         logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
     }
-    if (concurrency === 1) {
-        await sandboxConfig.primeFullContainerMemory()
-    }
     // Bring up a fresh runtime on every (re)connect — a prior connection's in-flight job is killed
     // along with its box (usually already done by the disconnect handler), so it fails fast and is
     // retried instead of lingering on a reused box. Reusing the box made the next generation's poll
@@ -192,25 +182,45 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     // a deploy disconnects every worker at once, so reuse turned that into mass stalls.
     abortInFlightRuntime()
 
-    runtime = createSandboxRuntime({
+    const createdRuntime = createSandboxRuntime({
         concurrency,
         basePath: sandboxConfig.getCacheBasePath(),
         getSettings: () => sandboxConfig.getSandboxSettings(),
     })
+    runtime = createdRuntime
 
-    // Fire-and-forget: warm the piece cache for this platform's flows without blocking the poll loop.
-    void runtime.prewarm({
-        log: logger, 
-        apiClient,
-        publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
-    })
+    // Opt-in via AP_PREWARM_CACHE_ON_STARTUP: the warm-up resolves and compiles every enabled flow,
+    // so its startup memory/CPU spike grows with flow count and can OOM small workers on large instances.
+    // When enabled it is awaited so the health server only comes up once the cache is warm and
+    // orchestrators don't route/keep traffic on a cold worker; when disabled it is skipped entirely.
+    if (system.getBoolean(WorkerSystemProp.PREWARM_CACHE_ON_STARTUP) ?? false) {
+        while (polling && connectionGeneration === generation && !versionChecker.connectedAppVersionIsCompatible(logger)) {
+            await sleep(VERSION_MISMATCH_POLL_PAUSE_MS)
+        }
+        if (polling && connectionGeneration === generation) {
+            const { error: prewarmError } = await tryCatch(() => createdRuntime.prewarm({
+                log: logger,
+                apiClient,
+                internalApiUrl: getApiUrl(),
+            }))
+            if (prewarmError) {
+                logger.error({ error: prewarmError }, 'Prewarm failed, continuing without a warm cache')
+            }
+        }
+    }
+
+    // The generation check keeps a disconnect that landed mid-prewarm from re-opening the health
+    // server for a connection that no longer exists — the reconnect's own run brings it back up.
+    const stillCurrentConnection = polling && connectionGeneration === generation
+    if (shouldStartHealthServer && stillCurrentConnection && isNil(healthServerInstance)) {
+        healthServerInstance = startHealthServer()
+    }
 
     logger.info({ concurrency }, 'Starting poll loops')
 
     resetPollLoopLiveness({ loopCount: concurrency })
-    const activeRuntime = runtime
     await Promise.all(Array.from({ length: concurrency }, (_, workerIndex) =>
-        pollAndExecute(apiClient, activeRuntime, workerIndex, generation),
+        pollAndExecute(apiClient, createdRuntime, workerIndex, generation),
     ))
 }
 
@@ -220,18 +230,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
 
     while (polling && connectionGeneration === generation) {
         markPollLoopIteration({ workerIndex, busy: false })
-        const appVersion = workerSettings.getSettings().APP_VERSION
-        if (!apVersionUtil.versionsAreCompatible({ versionA: appVersion, versionB: AP_VERSION })) {
-            const versionUnreadable = appVersion === UNKNOWN_VERSION || AP_VERSION === UNKNOWN_VERSION
-            if (versionUnreadable) {
-                workerLog.error({ appVersion, workerVersion: AP_VERSION }, 'Pausing polling — a release version could not be read from package.json (reported as 0.0.0); this will NOT self-heal on reconnect, check the worker/app deployment (cwd/packaging)')
-            }
-            else {
-                workerLog.warn({ appVersion, workerVersion: AP_VERSION }, 'Connected app version mismatch — pausing polling until reconnect to a compatible app')
-            }
-            if (AP_VERSION === UNKNOWN_VERSION) {
-                pageOnceForUnreadableWorkerVersion(workerLog)
-            }
+        if (!versionChecker.connectedAppVersionIsCompatible(workerLog)) {
             await sleep(VERSION_MISMATCH_POLL_PAUSE_MS)
             continue
         }
@@ -328,26 +327,43 @@ function abortInFlightRuntime(): void {
     })
 }
 
+function flowTimeoutMs(): number {
+    const { data: settings } = tryCatchSync(() => workerSettings.getSettings())
+    return (settings?.FLOW_TIMEOUT_SECONDS ?? FALLBACK_FLOW_TIMEOUT_SECONDS) * 1000
+}
+
+function rpcTimeoutMsFor(method: string): number {
+    if (!LONG_RUNNING_RPC_METHODS.includes(method)) {
+        return RPC_TIMEOUT_MS
+    }
+    const { data: settings } = tryCatchSync(() => workerSettings.getSettings())
+    if (isNil(settings)) {
+        logger.warn({ rpc: { method } }, 'Worker settings have not arrived, timing a long-running RPC by the default flow timeout')
+    }
+    return flowTimeoutMs() + LONG_RUNNING_RPC_MARGIN_MS
+}
+
 async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest, runtime: Runtime, workerIndex: number): Promise<JobResult> {
     const rawData = job.jobData
     const jobData = JobData.parse(rawData)
     // Chat jobs reuse `runId` as the per-message chat run id (NOT a flow run);
     // map it to the `run`/`conversation` groups so chat logs correlate correctly.
-    const isChatJob = jobData.jobType === WorkerJobType.EXECUTE_CHAT_AGENT
-    const jobLogger = createLogger({
+    const isAgentJob = jobData.jobType === WorkerJobType.EXECUTE_AGENT_RUN
+    const fields = {
         event: 'job.execute',
         job: { id: job.jobId, type: jobData.jobType },
         ...spreadIfDefined('requestId', 'requestId' in jobData ? jobData.requestId : 'httpRequestId' in jobData ? jobData.httpRequestId : undefined),
         ...spreadIfDefined('project', 'projectId' in jobData && jobData.projectId != null ? { id: jobData.projectId } : undefined),
         ...spreadIfDefined('platform', 'platformId' in jobData ? { id: jobData.platformId } : undefined),
         ...spreadIfDefined('flow', 'flowId' in jobData ? { id: jobData.flowId } : undefined),
-        ...spreadIfDefined('flowRun', !isChatJob && 'runId' in jobData ? { id: jobData.runId } : undefined),
-        ...spreadIfDefined('run', isChatJob && 'runId' in jobData ? { id: jobData.runId } : undefined),
+        ...spreadIfDefined('flowRun', !isAgentJob && 'runId' in jobData ? { id: jobData.runId } : undefined),
+        ...spreadIfDefined('run', isAgentJob && 'runId' in jobData ? { id: jobData.runId } : undefined),
         ...spreadIfDefined('conversation', 'conversationId' in jobData ? { id: jobData.conversationId } : undefined),
         ...spreadIfDefined('flowVersion', 'flowVersionId' in jobData ? { id: jobData.flowVersionId } : undefined),
-    })
-    return wideEvent.run({
-        logger: jobLogger,
+        ...spreadIfDefined('waitpoint', 'parentWaitpointId' in jobData && jobData.parentWaitpointId != null ? { id: jobData.parentWaitpointId } : undefined),
+    }
+    return wideEvent.runJob({
+        fields,
         fn: async () => {
             const log = logger.child({ job: { id: job.jobId, type: jobData.jobType } })
             const apiUrl = getApiUrl()
@@ -368,28 +384,17 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
                 }),
                 workerIndex,
                 jobId: job.jobId,
+                lastAttempt: job.lastAttempt ?? true,
                 engineToken: job.engineToken,
                 internalApiUrl,
                 publicApiUrl,
                 log,
             }
-            try {
-                const handler = await getHandler(jobData.jobType)
-                log.debug({ handlerType: handler.jobType }, 'Executing job with handler')
-                const { data: result, error } = await tryCatch(() => handler.execute(ctx, jobData))
-                if (error) {
-                    log.error({ error }, 'Job execution failed')
-                    wideEvent.error(error)
-                    wideEvent.set({ outcome: 'failed' })
-                    throw error
-                }
-                log.debug('Job completed')
-                wideEvent.set({ outcome: 'success' })
-                return result
-            }
-            finally {
-                jobLogger.emit()
-            }
+            const handler = await getHandler(jobData.jobType)
+            log.debug({ handlerType: handler.jobType }, 'Executing job with handler')
+            const result = await handler.execute(ctx, jobData)
+            log.debug('Job completed')
+            return result
         },
     })
 }
@@ -413,11 +418,20 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
             if (!isNil(localExecutionMode)) {
                 response.EXECUTION_MODE = localExecutionMode
             }
+            const localSandboxMemoryLimit = system.get(WorkerSystemProp.SANDBOX_MEMORY_LIMIT)
+            if (!isNil(localSandboxMemoryLimit) && localSandboxMemoryLimit !== '') {
+                if (!/^[1-9]\d*$/.test(localSandboxMemoryLimit)) {
+                    throw new Error(`AP_SANDBOX_MEMORY_LIMIT must be a positive integer in KB. Got: ${localSandboxMemoryLimit}`)
+                }
+                response.SANDBOX_MEMORY_LIMIT = localSandboxMemoryLimit
+            }
             const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
             if (!isNil(workerGroupId)) {
-                const processSandboxedModes = [ExecutionMode.SANDBOX_PROCESS, ExecutionMode.SANDBOX_CODE_AND_PROCESS]
-                if (!processSandboxedModes.includes(response.EXECUTION_MODE as ExecutionMode)) {
-                    throw new Error(`Worker group "${workerGroupId}" requires AP_EXECUTION_MODE to be one of: ${processSandboxedModes.join(', ')}. Got: ${response.EXECUTION_MODE}`)
+                if (response.EDITION === ApEdition.CLOUD) {
+                    const processSandboxedModes: string[] = [ExecutionMode.SANDBOX_PROCESS, ExecutionMode.SANDBOX_CODE_AND_PROCESS]
+                    if (!processSandboxedModes.includes(response.EXECUTION_MODE)) {
+                        throw new Error(`Worker group "${workerGroupId}" requires AP_EXECUTION_MODE to be one of: ${processSandboxedModes.join(', ')}. Got: ${response.EXECUTION_MODE}`)
+                    }
                 }
                 const reuseSandbox = system.get(WorkerSystemProp.REUSE_SANDBOX)
                 if (isNil(reuseSandbox)) {
@@ -425,7 +439,8 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
                 }
             }
             workerSettings.set(response)
-            logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE }, 'Worker settings loaded')
+            aiObservability.init({ enabled: response.EDITION === ApEdition.CLOUD })
+            logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE, sandboxMemoryLimitKb: response.SANDBOX_MEMORY_LIMIT }, 'Worker settings loaded')
             resolve()
         })
     })
@@ -439,7 +454,7 @@ function getWorkerProps(): WorkerProps {
             WORKER_CONCURRENCY: system.get(WorkerSystemProp.WORKER_CONCURRENCY)!,
             SANDBOX_MEMORY_LIMIT: settings.SANDBOX_MEMORY_LIMIT,
             REUSE_SANDBOX: system.get(WorkerSystemProp.REUSE_SANDBOX) ?? 'false',
-            version: AP_VERSION,
+            version: versionChecker.workerVersion,
         }
     }
     catch {
@@ -587,6 +602,49 @@ function findStalledPollLoop(): StalledPollLoop | undefined {
     return { workerIndex, stalledForMs: now - pollLoopLiveness[workerIndex].iteratedAt }
 }
 
+function startCacheSweeper(): void {
+    if (!isNil(cacheSweepInterval) || !isNil(cacheSweepFirstRunTimeout)) {
+        return
+    }
+    cacheSweepFirstRunTimeout = setTimeout(() => {
+        cacheSweepFirstRunTimeout = null
+        void sweepCodeCache()
+        cacheSweepInterval = setInterval(() => void sweepCodeCache(), CODE_CACHE_SWEEP_INTERVAL_MS)
+        cacheSweepInterval.unref()
+    }, CODE_CACHE_FIRST_SWEEP_DELAY_MS)
+    cacheSweepFirstRunTimeout.unref()
+}
+
+function stopCacheSweeper(): void {
+    if (!isNil(cacheSweepFirstRunTimeout)) {
+        clearTimeout(cacheSweepFirstRunTimeout)
+        cacheSweepFirstRunTimeout = null
+    }
+    if (!isNil(cacheSweepInterval)) {
+        clearInterval(cacheSweepInterval)
+        cacheSweepInterval = null
+    }
+}
+
+async function sweepCodeCache(): Promise<void> {
+    const { error } = await tryCatch(() => codeCacheEviction.sweep({
+        basePath: sandboxConfig.getCacheBasePath(),
+        log: logger,
+        activeWindowMs: Math.max(ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, flowTimeoutMs()),
+    }))
+    if (error) {
+        logger.warn({ error }, 'Code cache sweep failed')
+    }
+    // Reclaims the directories left by earlier LATEST_CACHE_VERSION values. It rides the periodic
+    // sweep rather than startup because it can only run once the rollout grace period has passed,
+    // which is long after a worker boots. Canary workers never reclaim: they run ahead of prod for
+    // days, and deleting the previous version's cache there would make a rollback start cold.
+    if (system.getBoolean(WorkerSystemProp.IS_CANARY_WORKER) ?? false) {
+        return
+    }
+    await cacheUtils(sandboxConfig.getCacheBasePath()).deleteStaleCache(logger)
+}
+
 function startPollWatchdog(): void {
     if (!isNil(pollWatchdogInterval)) {
         return
@@ -628,6 +686,18 @@ function startHealthServer(): ReturnType<typeof createServer> {
         logger.info({ port }, 'Health server listening')
     })
     return server
+}
+
+// closeAllConnections drops kubelet keep-alive sockets too, so the next probe is refused
+// immediately instead of riding an already-open connection until it happens to close.
+function stopHealthServer(): void {
+    if (isNil(healthServerInstance)) {
+        return
+    }
+    healthServerInstance.closeAllConnections()
+    healthServerInstance.close()
+    healthServerInstance = null
+    logger.info('Health server stopped, probes will fail until reconnect and prewarm complete')
 }
 
 type WorkerStartParams = {

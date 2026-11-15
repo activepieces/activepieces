@@ -7,129 +7,148 @@ import {
 	pollingHelper,
 	QueryParams,
 } from '@activepieces/pieces-common';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import {
 	createTrigger,
 
 	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
+import { hubspotPolling, PollDeadline } from '../common/polling';
+import { newBlogArticleTriggerOutputSchema } from '../output-schemas';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
 	articleState: string;
 };
 
 type ListBlogPostsResponse = {
-	results: Array<Record<string, any>>;
+	results: Array<Record<string, unknown>>;
 	paging?: {
 		next?: {
 			after: string;
 		};
 	};
 };
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const articleState = propsValue.articleState;
+		const states = propsValue.articleState === 'BOTH' ? ['PUBLISHED', 'DRAFT'] : [propsValue.articleState];
 		const isTestMode = lastFetchEpochMS === 0;
+		const token = getHubspotAccessToken(auth);
+		const deadline = hubspotPolling.createPollDeadline();
 
-		const qs: QueryParams = { limit: '100', sort: '-createdAt' };
-		if (articleState !== 'BOTH') {
-			qs.state = articleState;
-		}
-		if (!isTestMode) {
-			if(articleState === 'PUBLISHED') {
-                qs['publishDate__gt']=lastFetchEpochMS.toString();
-            }
-            else
-            {
-                qs['createdAt__gt']=lastFetchEpochMS.toString();
-            }
+		const posts = [];
+		for (const state of states) {
+			const found = await listPosts({ token, state, since: lastFetchEpochMS, isTestMode, deadline });
+			posts.push(...found.map((post) => ({ epochMilliSeconds: postEpoch({ post, state }), data: post })));
 		}
 
-		const items = [];
-
-		let after;
-
-		do {
-			const response = await httpClient.sendRequest<ListBlogPostsResponse>({
-				method: HttpMethod.GET,
-				url: 'https://api.hubapi.com/cms/v3/blogs/posts',
-				queryParams: qs,
-				authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.access_token },
-			});
-
-			after = response.body.paging?.next?.after;
-			if(response.body.paging?.next?.after){
-				qs.after = response.body.paging?.next?.after;
-			}
-			items.push(...response.body.results);
-			if (isTestMode) {
-				break;
-			}
-		} while (after);
-
-		return items.map((item) => {
-			return {
-				epochMilliSeconds: articleState === 'PUBLISHED' ? dayjs(item.publishDate).valueOf() : dayjs(item.createdAt).valueOf(),
-				data: item,
-			}
-		});
+		const unique = new Map(posts.map((post) => [String(post.data['id']), post]));
+		return [...unique.values()]
+			.filter((post) => Number.isFinite(post.epochMilliSeconds))
+			.sort((a, b) =>
+				isTestMode ? b.epochMilliSeconds - a.epochMilliSeconds : a.epochMilliSeconds - b.epochMilliSeconds,
+			);
 	},
 };
+
+function postEpoch({ post, state }: { post: Record<string, unknown>; state: string }): number {
+	return state === 'PUBLISHED'
+		? hubspotPolling.toEpoch(post['publishDate'])
+		: hubspotPolling.toEpoch(post['created'] ?? post['createdAt']);
+}
+
+async function listPosts({
+	token,
+	state,
+	since,
+	isTestMode,
+	deadline,
+}: {
+	token: string;
+	state: string;
+	since: number;
+	isTestMode: boolean;
+	deadline: PollDeadline;
+}): Promise<Record<string, unknown>[]> {
+	const qs: QueryParams = { limit: '100', sort: '-createdAt', state };
+	if (!isTestMode) {
+		qs[state === 'PUBLISHED' ? 'publishDate__gt' : 'createdAt__gt'] = since.toString();
+	}
+
+	const posts = [];
+	let after: string | undefined;
+	do {
+		const response = await httpClient.sendRequest<ListBlogPostsResponse>({
+			method: HttpMethod.GET,
+			url: 'https://api.hubapi.com/cms/v3/blogs/posts',
+			queryParams: after ? { ...qs, after } : qs,
+			authentication: { type: AuthenticationType.BEARER_TOKEN, token },
+		});
+		posts.push(...response.body.results);
+		after = response.body.paging?.next?.after;
+		if (isTestMode) {
+			break;
+		}
+		if (after && deadline.reached()) {
+			throw new Error('HubSpot blog posts could not be read before the poll deadline; the next poll retries');
+		}
+	} while (after);
+	return posts;
+}
 
 export const newBlogArticleTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-blog-article',
-	displayName: 'New COS Blog Article',
-	description: 'Triggers when a new article is added to your COS blog.',
+	classification: 'READ',
+	displayName: 'New Blog Post',
+	description: 'Triggers when a post is added to your HubSpot blog.',
 	aiMetadata: {
 		description:
 			'Fires when a blog post is added to your HubSpot COS (CMS) blog. The configured article state (Published only, Draft only, or Both) determines which posts qualify; published posts are tracked by publish date and drafts by creation date. Each event represents one blog post with its full CMS metadata.',
 	},
+	outputSchema: newBlogArticleTriggerOutputSchema,
 	type: TriggerStrategy.POLLING,
 	props: {
 		articleState: Property.StaticDropdown({
-			displayName: 'Article State',
+			displayName: 'Post Status',
 			required: true,
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
 					{
 						label: 'Published Only',
 						value: 'PUBLISHED',
+						description: 'Live posts only',
+						icon: 'send',
 					},
 					{
 						label: 'Draft Only',
 						value: 'DRAFT',
+						description: 'Unpublished only',
+						icon: 'file',
 					},
 					{
 						label: 'Both',
 						value: 'BOTH',
+						description: 'Drafts and live',
+						icon: 'inbox',
 					},
 				],
 			},
 		}),
 	},
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
-		return await pollingHelper.test(polling, context);
+		return hubspotPolling.sampleOldestToNewest({ items: await pollingHelper.test(polling, context) });
 	},
 	async run(context) {
 		return await pollingHelper.poll(polling, context);

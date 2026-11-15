@@ -16,6 +16,7 @@ import {
 export const updateEmailTemplate = createAction({
   auth: amazonSesAuth,
   name: 'update_email_template',
+  classification: 'WRITE',
   displayName: 'Update Email Template',
   description: 'Modify an existing email template with new content',
   audience: 'both',

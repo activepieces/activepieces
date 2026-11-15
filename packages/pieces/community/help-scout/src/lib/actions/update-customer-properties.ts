@@ -1,46 +1,36 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { helpScoutApiRequest } from '../common/api';
-import { helpScoutAuth } from '../common/auth';
+import { createAction, isNil } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { helpScoutApi } from '../common/api';
+import { helpScoutAuth } from '../common/auth';
 import { customerIdDropdown, customerProperties } from '../common/props';
-import { isNil } from '@activepieces/pieces-framework';
+import { helpScoutOutputSchemas } from '../common/output-schemas';
 
 export const updateCustomerProperties = createAction({
   auth: helpScoutAuth,
   name: 'update_customer_properties',
+  classification: 'WRITE',
   displayName: 'Update Customer Properties',
   description: `Updates customer's properties.`,
-  audience: 'both',
-  aiMetadata: {
-    description:
-      "Updates a Help Scout customer's editable property fields (the supplied fields are replaced) for the customer identified by customer ID. Use to modify an existing customer's attributes; only non-empty fields are applied. Repeating the call with the same values is safe and converges to the same state.",
-    idempotent: true,
-  },
+  audience: 'human',
+  outputSchema: helpScoutOutputSchemas['updateCustomerProperties'],
   props: {
     customerId: customerIdDropdown,
     fields: customerProperties,
   },
   async run({ auth, propsValue }) {
-    const { customerId } = propsValue;
     const fields = propsValue.fields ?? {};
-
-    const updates = [];
-
-    for (const [key, value] of Object.entries(fields)) {
-      if (isNil(value) || value === '') continue;
-
-      updates.push({ op: 'replace', value: value, path: `/${key}` });
+    const updates = Object.entries(fields)
+      .filter(([, value]) => !isNil(value) && value !== '')
+      .map(([slug, value]) => ({ op: 'replace', path: `/${slug}`, value }));
+    if (updates.length === 0) {
+      return { success: true, customerId: String(propsValue.customerId), updated: [] };
     }
-
-    const response = await helpScoutApiRequest({
+    await helpScoutApi.request({
       method: HttpMethod.PATCH,
-      url: `/customers/${customerId}/properties`,
+      path: `/customers/${helpScoutApi.encodeId(propsValue.customerId)}/properties`,
       auth,
       body: updates,
     });
-
-    return {
-      success: response.status === 204 ? true : false,
-    };
+    return { success: true, customerId: String(propsValue.customerId), updated: updates.map((u) => u.path.slice(1)) };
   },
 });

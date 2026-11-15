@@ -1,0 +1,66 @@
+# Overlay for OpenShift 4.x under the default `restricted-v2` SCC.
+#
+# Install:
+#   helm install activepieces deploy/activepieces-helm \
+#     -f deploy/activepieces-helm/values.yaml \
+#     -f deploy/activepieces-helm/values-openshift.yaml \
+#     -f my-values.yaml
+#
+# What this overlay changes vs. the base chart:
+# - Port moves above 1024 so a non-root pod can bind without NET_BIND_SERVICE.
+# - securityContext hardened: non-root, no capabilities, seccomp RuntimeDefault.
+#   No runAsUser / fsGroup: the SCC assigns both from the project's range, and a
+#   fixed ID outside that range is rejected at admission.
+# - storageClassName left empty so the cluster's default class is used.
+# - The bundled PostgreSQL and Redis subcharts hardcode user ID 1001, which
+#   restricted-v2 rejects; their security contexts are turned off so the SCC
+#   assigns the IDs instead.
+#
+# Set AP_EXECUTION_MODE to SANDBOX_CODE_ONLY (or UNSANDBOXED) in the
+# activepieces-config-secrets secret, not here: SANDBOX_PROCESS and
+# SANDBOX_CODE_AND_PROCESS need CAP_SYS_ADMIN, which restricted-v2 never grants.
+
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+container:
+  port: 8080
+
+persistence:
+  storageClassName: ""
+
+activepiecesConfig:
+  AP_PORT: "8080"
+
+postgresql:
+  primary:
+    podSecurityContext:
+      enabled: false
+    containerSecurityContext:
+      enabled: false
+  readReplicas:
+    podSecurityContext:
+      enabled: false
+    containerSecurityContext:
+      enabled: false
+
+redis:
+  master:
+    podSecurityContext:
+      enabled: false
+    containerSecurityContext:
+      enabled: false
+  replica:
+    podSecurityContext:
+      enabled: false
+    containerSecurityContext:
+      enabled: false

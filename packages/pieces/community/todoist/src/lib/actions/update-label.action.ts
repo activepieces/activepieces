@@ -2,11 +2,13 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistLabelsClient } from '../common/client/labels-client';
 import { todoistAuth } from '../..';
+import { favoriteTriStateProp, parseTriState } from '../common/tri-state';
 import { updateLabelActionOutputSchema } from '../output-schemas';
 
 export const todoistUpdateLabelAction = createAction({
   auth: todoistAuth,
   name: 'todoist_update_label',
+  classification: 'WRITE',
   displayName: 'Update Label',
   description: 'Updates an existing personal label in Todoist.',
   audience: 'ai',
@@ -38,11 +40,7 @@ export const todoistUpdateLabelAction = createAction({
       description: 'Number used to sort the label in the list view (lower comes first).',
       required: false,
     }),
-    is_favorite: Property.Checkbox({
-      displayName: 'Is Favorite',
-      description: 'Whether the label is marked as a favorite.',
-      required: false,
-    }),
+    is_favorite: favoriteTriStateProp('label'),
   },
   async run({ auth, propsValue }) {
     const token = auth.access_token;
@@ -56,7 +54,7 @@ export const todoistUpdateLabelAction = createAction({
       name,
       color,
       order,
-      is_favorite,
+      is_favorite: parseTriState(is_favorite),
     });
   },
 });

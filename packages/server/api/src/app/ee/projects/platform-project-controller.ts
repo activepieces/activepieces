@@ -1,5 +1,5 @@
-import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, Permission, SeekPage } from '@activepieces/core-utils'
-import { CreatePlatformProjectRequest, ListProjectRequestForPlatformQueryParams, PlatformRole, Principal, PrincipalType, ProjectType, ProjectWithLimits, SERVICE_KEY_SECURITY_OPENAPI, TeamProjectsLimit, UpdateProjectPlatformRequest } from '@activepieces/shared'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Permission, SeekPage } from '@activepieces/core-utils'
+import { CreatePlatformProjectRequest, ListProjectRequestForPlatformQueryParams, PlatformRole, Principal, PrincipalType, ProjectType, ProjectWithLimits, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectPlatformRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -9,7 +9,7 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
-import { machineService } from '../../workers/machine/machine-service'
+import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { platformProjectService } from './platform-project-service'
 
 const DEFAULT_LIMIT_SIZE = 50
@@ -33,21 +33,9 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
             maxConcurrentJobs: request.body.maxConcurrentJobs ?? undefined,
             globalConnectionExternalIds: request.body.globalConnectionExternalIds ?? undefined,
             alertReceiverEmail: request.body.alertReceiverEmail ?? undefined,
+            sensitive: request.body.sensitive ?? undefined,
         })
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)
-    })
-
-    app.get('/worker-groups', ListWorkerGroupsRequest, async (request) => {
-        const platform = await platformService(request.log).getOneWithPlanOrThrow(request.principal.platform.id)
-        if (!platform.plan.workerGroupsEnabled) {
-            throw new ActivepiecesError({
-                code: ErrorCode.FEATURE_DISABLED,
-                params: {
-                    message: 'Isolated workers are not enabled for this platform',
-                },
-            })
-        }
-        return machineService(request.log).listProjectWorkerGroups()
     })
 
     app.get('/', ListProjectRequestForPlatform, async (request, _reply) => {
@@ -81,6 +69,15 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
                 params: {},
             })
         }
+        const isDefault = ownThePlatform ? request.body.isDefault : undefined
+        if (isDefault === true && !await isProjectRolesEnabled({ platformId: project.platformId, log: request.log })) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FEATURE_DISABLED,
+                params: {
+                    message: 'Default projects are not enabled for this platform',
+                },
+            })
+        }
         return platformProjectService(request.log).update({
             platformId: request.principal.platform.id,
             projectId: request.params.id,
@@ -88,6 +85,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
                 ...request.body,
                 externalId: ownThePlatform ? request.body.externalId : undefined,
                 executionDataRetentionDays: ownThePlatform ? request.body.executionDataRetentionDays : undefined,
+                isDefault,
             },
         })
     })
@@ -97,6 +95,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
         await platformProjectService(req.log).markForDeletion({
             id: req.params.id,
             platformId: req.principal.platform.id,
+            enforceDefaultGuard: req.principal.type === PrincipalType.USER && await isProjectRolesEnabled({ platformId: req.principal.platform.id, log: req.log }),
         })
 
         return res.status(StatusCodes.NO_CONTENT).send()
@@ -142,43 +141,36 @@ async function assertProjectIsSafeToDelete(projectId: string, callerPlatformId: 
             },
         })
     }
-    if (project.type === ProjectType.PERSONAL) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: 'Personal projects cannot be deleted',
-            },
-        })
-    }
+}
+
+async function isProjectRolesEnabled({ platformId, log }: IsProjectRolesEnabledParams): Promise<boolean> {
+    const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+    return platformPlan.projectRolesEnabled
 }
 
 async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string, log: FastifyBaseLogger): Promise<void> {
     const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
+    const billedTeamProjectsLimit = platform.plan.billedTeamProjectsLimit
 
-    switch (platform.plan.teamProjectsLimit) {
-        case TeamProjectsLimit.NONE: {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Team projects are not available on your current plan',
-                },
-            })
-        }
-        case TeamProjectsLimit.ONE: {
-            const projectsCount = await projectService(log).countByPlatformIdAndType(platformId, ProjectType.TEAM)
-            if (projectsCount >= 1) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.FEATURE_DISABLED,
-                    params: {
-                        message: 'Maximum limit of 1 team project reached for this plan. Upgrade your plan to add more team projects.',
-                    },
-                })
-            }
-            break
-        }
-        case TeamProjectsLimit.UNLIMITED: {
-            break
-        }
+    if (isNil(billedTeamProjectsLimit)) {
+        return
+    }
+    if (billedTeamProjectsLimit <= 0) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'Team projects are not available on your current plan',
+            },
+        })
+    }
+    const projectsCount = await projectService(log).countByPlatformIdAndType(platformId, ProjectType.TEAM)
+    if (projectsCount >= billedTeamProjectsLimit) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FEATURE_DISABLED,
+            params: {
+                message: `Maximum limit of ${billedTeamProjectsLimit} team project(s) reached for this plan. Upgrade your plan to add more team projects.`,
+            },
+        })
     }
 }
 
@@ -210,25 +202,6 @@ const UpdateProjectRequest = {
             [StatusCodes.OK]: ProjectWithLimits,
         },
         body: UpdateProjectPlatformRequest,
-    },
-}
-
-const ListWorkerGroupsRequest = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
-    },
-    schema: {
-        tags: ['projects'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        response: {
-            [StatusCodes.OK]: z.object({
-                groups: z.array(z.object({
-                    label: z.string(),
-                    slots: z.number(),
-                })),
-                sharedSlots: z.number(),
-            }),
-        },
     },
 }
 
@@ -271,4 +244,9 @@ const DeleteProjectRequest = {
         tags: ['projects'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
+}
+
+type IsProjectRolesEnabledParams = {
+    platformId: string
+    log: FastifyBaseLogger
 }

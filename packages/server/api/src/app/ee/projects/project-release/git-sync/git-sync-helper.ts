@@ -76,7 +76,7 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
             scope: AppConnectionScope.PROJECT,
             cursorRequest: null,
             limit: 10000,
-            pieceName: undefined,
+            pieceNames: undefined,
             displayName: undefined,
             status: undefined,
         })
@@ -159,20 +159,6 @@ type DeleteFromProjectParams = {
     fileName: string
     folderPath: string
 }
-
-type DeleteFlowFromProjectOperation = {
-    type: 'delete_flow_from_project'
-    fileName: string
-}
-
-type UpsertFlowIntoProjectOperation = {
-    type: 'upsert_flow_into_project'
-    flow: PopulatedFlow
-}
-
-export type FlowSyncOperation =
-    | UpsertFlowIntoProjectOperation
-    | DeleteFlowFromProjectOperation
 
 type ClearUnusedConnectionsFromGitParams = {
     flowFolderPath: string

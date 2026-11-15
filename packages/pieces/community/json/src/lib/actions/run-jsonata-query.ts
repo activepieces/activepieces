@@ -3,6 +3,7 @@ import jsonata from 'jsonata';
 
 export const runJsonataQuery = createAction({
   name: 'run_jsonata_query',
+  classification: 'READ',
   displayName: 'Run JSONata Query',
   description: 'Use the JSONata language to filter, map, and transform complex JSON payloads natively in JavaScript.',
   audience: 'both',

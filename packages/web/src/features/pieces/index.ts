@@ -10,6 +10,8 @@ export {
   piecesHooks,
   piecesMutations,
   pieceCacheUtils,
+  pieceQueryKey,
+  pieceQueryOptions,
 } from './hooks/pieces-hooks';
 export { stepsHooks } from './hooks/steps-hooks';
 export { usePieceOutputSchema } from './hooks/use-piece-output-schema';
@@ -41,7 +43,6 @@ export {
   pieceSelectorUtils,
 } from './utils/piece-selector-utils';
 export {
-  CORE_ACTIONS_METADATA,
   extractPieceNamesAndCoreMetadata,
   stepUtils,
 } from './utils/step-utils';

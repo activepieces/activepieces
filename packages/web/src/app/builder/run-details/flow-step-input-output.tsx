@@ -12,10 +12,11 @@ import {
   LogSliceRef,
   StepOutputType,
   RunInternalError,
+  PieceAudienceFilter,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Download, Info, ShieldAlert } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
 import { SmartOutputViewer } from '@/components/custom/smart-output-viewer';
@@ -24,7 +25,6 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentTimeline } from '@/features/agents';
-import { flowRunUtils } from '@/features/flow-runs';
 import { piecesHooks } from '@/features/pieces';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/format-utils';
@@ -39,44 +39,53 @@ import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
 import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 import { isRunAgent } from '../test-step/agent-test-step';
 
+import { AiRouterRoutes } from './ai-router-routes';
+import { BatchBreadcrumb, BatchBrowser } from './batch-browser';
+import { BatchLogsPanel, EmptyStatePanel } from './batch-logs-panel';
+import { batchUtils } from './batch-utils';
 import { truncatedInputUtils } from './truncated-input-utils';
+import { useStepOutputInRun } from './use-step-output-in-run';
 
-type RunActiveTab = 'input' | 'output' | 'timeline';
+type RunActiveTab = 'input' | 'output' | 'timeline' | 'batches';
 
 export const FlowStepInputOutput = () => {
-  const [run, loopsIndexes, flowVersion, selectedStep] = useBuilderStateContext(
-    (state) => [
-      state.run,
-      state.loopsIndexes,
-      state.flowVersion,
-      state.selectedStep
-        ? flowStructureUtil.getStepOrThrow(
-            state.selectedStep,
-            state.flowVersion.trigger,
-          )
-        : null,
-    ],
-  );
+  const [run, selectedStep] = useBuilderStateContext((state) => [
+    state.run,
+    state.selectedStep
+      ? flowStructureUtil.getStepOrThrow(
+          state.selectedStep,
+          state.flowVersion.trigger,
+        )
+      : null,
+  ]);
   const isAgent = isRunAgent(selectedStep);
   const isTrigger =
     !isNil(selectedStep) && flowStructureUtil.isTrigger(selectedStep.type);
-  const [requestedTab, setActiveTab] = useState<RunActiveTab>(
-    isAgent ? 'timeline' : 'output',
+  const [tabChoice, setTabChoice] = useState<{
+    stepName: string;
+    tab: RunActiveTab;
+  } | null>(null);
+  const { stepOutput: selectedStepOutput, batchLogs } = useStepOutputInRun(
+    selectedStep?.name,
   );
+  const hasBatchSummary =
+    selectedStep?.type === FlowActionType.PROCESS_IN_BATCHES &&
+    !isNil(batchUtils.parseStepOutput(selectedStepOutput?.output));
+  const defaultTab: RunActiveTab = isAgent
+    ? 'timeline'
+    : hasBatchSummary
+    ? 'batches'
+    : 'output';
+  const requestedTab =
+    !isNil(tabChoice) && tabChoice.stepName === selectedStep?.name
+      ? tabChoice.tab
+      : defaultTab;
   const activeTab: RunActiveTab =
     (requestedTab === 'timeline' && !isAgent) ||
-    (requestedTab === 'input' && isTrigger)
+    (requestedTab === 'input' && isTrigger) ||
+    (requestedTab === 'batches' && !hasBatchSummary)
       ? 'output'
       : requestedTab;
-  const selectedStepOutput = useMemo(() => {
-    return run && selectedStep && run.steps
-      ? flowRunUtils.extractStepOutput(
-          selectedStep.name,
-          loopsIndexes,
-          run.steps,
-        )
-      : null;
-  }, [run, selectedStep?.name, loopsIndexes, flowVersion.trigger]);
   const isStepRunning = selectedStepOutput?.status === StepOutputStatus.RUNNING;
   const isSlicedOutput =
     selectedStepOutput?.outputType === StepOutputType.SLICE;
@@ -96,10 +105,14 @@ export const FlowStepInputOutput = () => {
     selectedStep?.type === FlowTriggerType.PIECE
       ? selectedStep.settings.pieceVersion
       : undefined;
+  const { data: rententionDays } = flagsHooks.useFlag<number>(
+    ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
+  );
   const { pieceModel } = piecesHooks.usePiece({
     name: stepPieceName ?? '',
     version: stepPieceVersion,
     enabled: !isNil(stepPieceName),
+    audience: PieceAudienceFilter.ALL,
   });
   const parsedOutput = isSlicedOutput
     ? undefined
@@ -110,13 +123,17 @@ export const FlowStepInputOutput = () => {
   if (!run) {
     return <></>;
   }
+
+  if (batchLogs.kind === 'loading') {
+    return <StepOutputSkeleton className="p-4" />;
+  }
+  if (batchLogs.kind !== 'notInABatch' && batchLogs.kind !== 'steps') {
+    return <BatchLogsPanel batchLogs={batchLogs} />;
+  }
   const isRunDone = isFlowRunStateTerminal({
     status: run.status,
     ignoreInternalError: true,
   });
-  const { data: rententionDays } = flagsHooks.useFlag<number>(
-    ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
-  );
 
   if (
     run.status === FlowRunStatus.INTERNAL_ERROR &&
@@ -144,37 +161,20 @@ export const FlowStepInputOutput = () => {
   if (message) {
     return (
       <div className="flex flex-col justify-center items-center gap-4 w-full pt-8 px-5">
-        <Info size={36} className="text-muted-foreground" />
-        <h4 className="px-6 text-sm text-center text-muted-foreground">
-          {message}
-        </h4>
+        <Info size={36} className="text-gray-11" />
+        <h4 className="px-6 text-sm text-center text-gray-11">{message}</h4>
       </div>
     );
   }
 
   if (!selectedStepOutput || !selectedStep) {
     return (
-      <div className="flex flex-col h-full w-full">
-        <div className="flex items-center justify-end gap-1 px-3 py-2 shrink-0">
-          <StepDataPanelViewToggle />
-          <ClosePanelButton />
-        </div>
-        <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
-          <div className="flex items-center justify-center size-12 rounded-full bg-muted text-muted-foreground">
-            <Info className="size-6" />
-          </div>
-          <div className="flex flex-col gap-1.5 max-w-[280px]">
-            <span className="text-sm font-medium text-foreground">
-              {t("This step didn't run")}
-            </span>
-            <span className="text-xs text-muted-foreground leading-relaxed">
-              {t(
-                'This step was skipped during this run, no input or output was captured.',
-              )}
-            </span>
-          </div>
-        </div>
-      </div>
+      <EmptyStatePanel
+        title={t("This step didn't run")}
+        description={t(
+          'This step was skipped during this run, no input or output was captured.',
+        )}
+      />
     );
   }
   const status: 'success' | 'failed' | 'testing' | 'idle' =
@@ -229,14 +229,20 @@ export const FlowStepInputOutput = () => {
         lastTestDate={run.created}
         viewMode="run"
       />
+      <BatchBreadcrumb stepName={selectedStep.name} />
       <ScrollArea className="flex-1 p-3">
         <Tabs
           value={activeTab}
-          onValueChange={(value) => setActiveTab(value as RunActiveTab)}
+          onValueChange={(value) =>
+            setTabChoice({
+              stepName: selectedStep.name,
+              tab: value as RunActiveTab,
+            })
+          }
           className="w-full"
         >
           <div className="flex items-center justify-between gap-2 shrink-0 mb-2">
-            <TabsList className="h-9">
+            <TabsList>
               {!isTrigger && (
                 <TabsTrigger value="input">{t('Input')}</TabsTrigger>
               )}
@@ -244,6 +250,9 @@ export const FlowStepInputOutput = () => {
                 <TabsTrigger value="timeline">{t('Timeline')}</TabsTrigger>
               )}
               <TabsTrigger value="output">{t('Output')}</TabsTrigger>
+              {hasBatchSummary && (
+                <TabsTrigger value="batches">{t('Batches')}</TabsTrigger>
+              )}
             </TabsList>
             <div className="flex items-center gap-1 shrink-0">
               <StepDataPanelViewToggle />
@@ -270,7 +279,19 @@ export const FlowStepInputOutput = () => {
               />
             </TabsContent>
           )}
-          <TabsContent value="output">
+          {hasBatchSummary && (
+            <TabsContent value="batches">
+              <BatchBrowser stepName={selectedStep.name} />
+            </TabsContent>
+          )}
+          <TabsContent value="output" className="flex flex-col gap-3">
+            {selectedStep.type === FlowActionType.AI_ROUTER &&
+              !isStepRunning && (
+                <AiRouterRoutes
+                  output={selectedStepOutput.output}
+                  input={selectedStepOutput.input}
+                />
+              )}
             {isStepRunning ? (
               <StepOutputSkeleton className="p-4" />
             ) : slicedOutputRef ? (
@@ -310,14 +331,14 @@ const InternalErrorPanel = ({
   <ScrollArea className="h-full">
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center gap-2 flex-wrap">
-        <ShieldAlert className="w-4 h-4 text-destructive shrink-0" />
+        <ShieldAlert className="w-4 h-4 text-danger-11 shrink-0" />
         <span className="text-sm font-medium">{t('Internal error')}</span>
         <Badge variant="outline" className="gap-1">
           <ShieldAlert className="w-3 h-3" />
           {t('Platform Admin Only')}
         </Badge>
       </div>
-      <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+      <div className="flex flex-col gap-1 text-xs text-gray-11">
         <span>
           {t('Source')}: {internalError.source}
         </span>
@@ -331,7 +352,7 @@ const InternalErrorPanel = ({
           {formatUtils.formatDate(new Date(internalError.occurredAt))}
         </span>
       </div>
-      <pre className="text-xs bg-muted rounded-md p-3 whitespace-pre-wrap break-words font-mono">
+      <pre className="text-xs bg-gray-3 rounded-md p-3 whitespace-pre-wrap break-words font-mono">
         {internalError.message}
       </pre>
     </div>
@@ -339,8 +360,8 @@ const InternalErrorPanel = ({
 );
 
 const TruncatedInputNotice = () => (
-  <div className="flex items-start gap-2 p-3 bg-muted rounded-md text-sm">
-    <Info className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+  <div className="flex items-start gap-2 p-3 bg-gray-3 rounded-md text-sm">
+    <Info className="w-4 h-4 mt-0.5 text-gray-11 shrink-0" />
     <span>
       {t(
         'Some input values were too large to keep in the run logs and are shown as truncated. The step ran with the full values.',
@@ -349,7 +370,7 @@ const TruncatedInputNotice = () => (
         href="https://www.activepieces.com/docs/install/troubleshooting/truncated-logs"
         target="_blank"
         rel="noreferrer"
-        className="text-primary underline"
+        className="text-accent-11 underline"
       >
         {t('Learn more')}
       </a>
@@ -362,9 +383,9 @@ const SlicedOutputDownload = ({
 }: {
   slicedOutputRef: LogSliceRef;
 }) => (
-  <div className="flex flex-col gap-3 p-4 bg-muted rounded-md">
+  <div className="flex flex-col gap-3 p-4 bg-gray-3 rounded-md">
     <div className="flex items-start gap-2 text-sm">
-      <Info className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+      <Info className="w-4 h-4 mt-0.5 text-gray-11 shrink-0" />
       <span>
         {t(
           'Output is too large to display inline ({size}). Download to inspect.',

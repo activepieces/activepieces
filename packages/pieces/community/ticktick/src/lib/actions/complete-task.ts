@@ -7,9 +7,10 @@ import { projectId, taskId } from '../common/props';
 export const completeTaskAction = createAction({
 	auth: ticktickAuth,
 	name: 'complete_task',
+	classification: 'WRITE',
 	displayName: 'Complete Task',
 	description: 'Marks an existing task as completed.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Marks a TickTick task as completed, identified by its list (project) ID and task ID. Use to close out a task. Idempotent: completing an already-completed task leaves it completed with no further effect.',

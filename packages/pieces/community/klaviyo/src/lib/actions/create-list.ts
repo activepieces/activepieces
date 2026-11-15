@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createList = createAction({
   auth: klaviyoAuth,
   name: 'createList',
+  classification: 'WRITE',
   displayName: 'Create List',
   description: 'Create a new subscriber list.',
   audience: 'both',

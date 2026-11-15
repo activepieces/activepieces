@@ -1,26 +1,42 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { jiraCloudAuth } from '../../auth';
 import { issueIdOrKeyProp, issueLinkTypeIdProp } from '../common/props';
 import { isNil } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { jiraApiCall } from '../common';
 
+import { legacyLinkIssuesOutputSchema } from '../output-schemas';
 export const linkIssuesAction = createAction({
   auth: jiraCloudAuth,
   name: 'link-issues',
+  classification: 'WRITE',
   displayName: 'Link Issues',
   description: 'Creates a link between two issues.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Create a directional link of a chosen type (e.g. blocks, relates to, duplicates) between two existing Jira issues, given both issue IDs/keys. Use to express dependencies or relationships; direction matters, with the first issue taking the outward role. Not idempotent: re-running can add a duplicate link.',
     idempotent: false,
   },
+  outputSchema: legacyLinkIssuesOutputSchema,
   props: {
+    linkInfo: Property.MarkDown({
+      value: 'Reads top to bottom: first issue, link type, second issue.',
+      variant: MarkdownVariant.INFO,
+    }),
     firstIssueId: issueIdOrKeyProp('First Issue', true),
     issueLinkTypeId: issueLinkTypeIdProp('Link Type', true),
     secondIssueId: issueIdOrKeyProp('Second Issue', true),
   },
+  propertyGroups: [
+    {
+      key: 'link',
+      display: 'section',
+      label: 'Issues to Link',
+      icon: 'tag',
+      props: ['linkInfo', 'firstIssueId', 'issueLinkTypeId', 'secondIssueId'],
+    },
+  ],
   async run(context) {
     const { firstIssueId, issueLinkTypeId, secondIssueId } = context.propsValue;
 

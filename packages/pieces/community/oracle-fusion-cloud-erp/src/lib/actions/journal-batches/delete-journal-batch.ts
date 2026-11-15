@@ -5,6 +5,7 @@ import { makeClient } from '../../common/client';
 export const deleteJournalBatch = createAction({
     auth: oracleFusionCloudErpAuth,
     name: 'delete_journal_batch',
+    classification: 'DESTRUCTIVE',
     displayName: 'Delete Journal Batch',
     description: 'Deletes a journal batch from Oracle Fusion Cloud ERP.',
     audience: 'both',

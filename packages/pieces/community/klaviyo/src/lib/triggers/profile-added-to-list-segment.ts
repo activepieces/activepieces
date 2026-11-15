@@ -209,6 +209,7 @@ const polling: Polling<KlaviyoAuthValue, StaticPropsValue<typeof props>> = {
 export const profileAddedToListOrSegmentTrigger = createTrigger({
   auth: klaviyoAuth,
   name: 'profile_added_to_list_or_segment',
+  classification: 'READ',
   displayName: 'Profile Added to List/Segment',
   description: 'Triggers when a profile is added to a specific list or segment.',
   aiMetadata: {
@@ -246,33 +247,15 @@ export const profileAddedToListOrSegmentTrigger = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async test(context) {
-    return await pollingHelper.test(polling, {
-      store: context.store,
-      auth: context.auth as KlaviyoAuthValue,
-      propsValue: context.propsValue as StaticPropsValue<typeof props>,
-      files: context.files,
-    });
+    return await pollingHelper.test(polling, { ...context, auth: context.auth as KlaviyoAuthValue, propsValue: context.propsValue as StaticPropsValue<typeof props> });
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      store: context.store,
-      auth: context.auth as KlaviyoAuthValue,
-      propsValue: context.propsValue as StaticPropsValue<typeof props>,
-    });
+    await pollingHelper.onEnable(polling, { ...context, auth: context.auth as KlaviyoAuthValue, propsValue: context.propsValue as StaticPropsValue<typeof props> });
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      store: context.store,
-      auth: context.auth as KlaviyoAuthValue,
-      propsValue: context.propsValue as StaticPropsValue<typeof props>,
-    });
+    await pollingHelper.onDisable(polling, { ...context, auth: context.auth as KlaviyoAuthValue, propsValue: context.propsValue as StaticPropsValue<typeof props> });
   },
   async run(context) {
-    return await pollingHelper.poll(polling, {
-      store: context.store,
-      auth: context.auth as KlaviyoAuthValue,
-      propsValue: context.propsValue as StaticPropsValue<typeof props>,
-      files: context.files,
-    });
+    return await pollingHelper.poll(polling, { ...context, auth: context.auth as KlaviyoAuthValue, propsValue: context.propsValue as StaticPropsValue<typeof props> });
   },
 });

@@ -12,6 +12,36 @@ import { gmailNewLabelTrigger } from './lib/triggers/new-label';
 import { gmailSearchMailAction } from './lib/actions/search-email-action';
 import { gmailGetEmailAction } from './lib/actions/get-mail-action';
 import { gmailAuth, getAccessToken, GmailAuthValue } from './lib/auth';
+import { gmailAiSendEmailAction } from './lib/actions/ai-send-email-action';
+import { gmailAiReplyToThreadAction } from './lib/actions/ai-reply-to-thread-action';
+import { gmailAiGetMessageAction } from './lib/actions/ai-get-message-action';
+import { gmailAiSearchEmailAction } from './lib/actions/ai-search-email-action';
+import { gmailGetThread } from './lib/actions/get-thread-action';
+import { gmailCreateDraftAction } from './lib/actions/create-draft-action';
+import { gmailUpdateDraftAction } from './lib/actions/update-draft-action';
+import { gmailSendDraftAction } from './lib/actions/send-draft-action';
+import { gmailGetDraftAction } from './lib/actions/get-draft-action';
+import { gmailListDraftsAction } from './lib/actions/list-drafts-action';
+import { gmailDeleteDraftAction } from './lib/actions/delete-draft-action';
+import { gmailListThreadsAction } from './lib/actions/list-threads-action';
+import { gmailGetAttachmentAction } from './lib/actions/get-attachment-action';
+import { gmailForwardMessageAction } from './lib/actions/forward-message-action';
+import { gmailListLabelsAction } from './lib/actions/list-labels-action';
+import { gmailGetLabelAction } from './lib/actions/get-label-action';
+import { gmailGetProfileAction } from './lib/actions/get-profile-action';
+import { gmailListHistoryAction } from './lib/actions/list-history-action';
+import { gmailStopWatchAction } from './lib/actions/stop-watch-action';
+import { gmailCreateLabelAction } from './lib/actions/create-label-action';
+import { gmailAddLabelToEmailAction } from './lib/actions/add-label-to-email-action';
+import { gmailRemoveLabelFromEmailAction } from './lib/actions/remove-label-from-email-action';
+import { gmailArchiveEmailAction } from './lib/actions/archive-email-action';
+import { gmailAiArchiveMessageAction } from './lib/actions/ai-archive-email-action';
+import { gmailGetOrCreateLabelAction } from './lib/actions/ai-create-label-action';
+import { gmailModifyLabelsAction } from './lib/actions/modify-labels-action';
+import { gmailTrashMessageAction } from './lib/actions/trash-message-action';
+import { gmailUntrashMessageAction } from './lib/actions/untrash-message-action';
+import { gmailUpdateLabelAction } from './lib/actions/update-label-action';
+import { gmailModifyThreadLabelsAction } from './lib/actions/modify-thread-labels-action';
 
 export {
   gmailAuth,
@@ -21,7 +51,7 @@ export {
 } from './lib/auth';
 
 export const gmail = createPiece({
-  minimumSupportedRelease: '0.87.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/gmail.png',
   categories: [
     PieceCategory.COMMUNICATION,
@@ -34,6 +64,36 @@ export const gmail = createPiece({
     gmailCreateDraftReplyAction,
     gmailGetEmailAction,
     gmailSearchMailAction,
+    gmailAiSendEmailAction,
+    gmailAiReplyToThreadAction,
+    gmailAiGetMessageAction,
+    gmailAiSearchEmailAction,
+    gmailGetThread,
+    gmailCreateDraftAction,
+    gmailUpdateDraftAction,
+    gmailSendDraftAction,
+    gmailGetDraftAction,
+    gmailListDraftsAction,
+    gmailDeleteDraftAction,
+    gmailListThreadsAction,
+    gmailGetAttachmentAction,
+    gmailForwardMessageAction,
+    gmailListLabelsAction,
+    gmailGetLabelAction,
+    gmailGetProfileAction,
+    gmailListHistoryAction,
+    gmailStopWatchAction,
+    gmailCreateLabelAction,
+    gmailAddLabelToEmailAction,
+    gmailRemoveLabelFromEmailAction,
+    gmailArchiveEmailAction,
+    gmailAiArchiveMessageAction,
+    gmailGetOrCreateLabelAction,
+    gmailModifyLabelsAction,
+    gmailTrashMessageAction,
+    gmailUntrashMessageAction,
+    gmailUpdateLabelAction,
+    gmailModifyThreadLabelsAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://gmail.googleapis.com/gmail/v1',
       auth: gmailAuth,
@@ -58,6 +118,7 @@ export const gmail = createPiece({
     'AdamSelene',
     'sanket-a11y',
     'onyedikachi-david',
+    'OdaiAhmed99',
   ],
   triggers: [
     gmailNewEmailTrigger,

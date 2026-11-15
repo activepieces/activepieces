@@ -15,6 +15,7 @@ const USER_SELECT =
 export const newUserTrigger = createTrigger({
     auth: azureAdAuth,
     name: 'new_user',
+    classification: 'READ',
     displayName: 'New User',
     description: 'Triggers when a new user is created in Microsoft Entra ID.',
     aiMetadata: {
@@ -35,18 +36,13 @@ export const newUserTrigger = createTrigger({
         createdDateTime: '2026-04-22T10:15:30Z',
     },
     async onEnable(context) {
-        await pollingHelper.onEnable(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-        });
+        await pollingHelper.onEnable(polling, context);
     },
     async onDisable(context) {
-        await pollingHelper.onDisable(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-        });
+        if (context.isRepublish) {
+            return;
+        }
+        await pollingHelper.onDisable(polling, context);
         await context.store.delete(STORE_KEY);
     },
     async test(context) {

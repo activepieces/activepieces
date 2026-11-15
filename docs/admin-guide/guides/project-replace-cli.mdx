@@ -4,10 +4,10 @@ description: 'Mirror a project across Activepieces deployments from CI/CD withou
 icon: 'arrow-right-arrow-left'
 ---
 
-The `ap project replace` CLI mirrors a project's flows, table schemas, and folders from one Activepieces deployment to another using direct API calls. Use it from CI/CD to promote work between independent staging and production instances when Git-based [Project Releases](/admin-guide/guides/project-releases) aren't a fit.
+The `@activepieces/cli` `project replace` command mirrors a project's flows, table schemas, and folders from one Activepieces deployment to another using direct API calls. Use it from CI/CD to promote work between independent staging and production instances when Git-based [Project Releases](/admin-guide/guides/project-releases) aren't a fit.
 
 <Tip>
-**Use case:** A nightly GitHub Action runs `ap project replace --source-url=staging --dest-url=prod`. Staging is treated as the source of truth; production becomes a byte-for-byte mirror. The job fails before any write if the destination is missing required pieces or referenced connections.
+**Use case:** A nightly GitHub Action runs `npx @activepieces/cli project replace --source-url=staging --dest-url=prod`. Staging is treated as the source of truth; production becomes a byte-for-byte mirror. The job fails before any write if the destination is missing required pieces or referenced connections.
 </Tip>
 
 ## Prerequisites
@@ -27,14 +27,6 @@ The `ap project replace` CLI mirrors a project's flows, table schemas, and folde
 | Connections | **Metadata auto-mirrored** (externalId, pieceName, displayName); secret values never cross the wire. New connections land on the destination as placeholders with `status: MISSING`. Operator authorizes each one in the destination UI before flows can run. |
 | MCP servers, agents, project metadata, custom domains, app credentials | **Out of scope.** Not touched. |
 
-## Installation
-
-```bash
-npm install -g activepieces
-```
-
-The `activepieces` CLI is shipped with each Activepieces release; pin the version that matches your destination instance to keep request shapes aligned.
-
 ## Command
 
 ```bash
@@ -42,7 +34,7 @@ The `activepieces` CLI is shipped with each Activepieces release; pin the versio
 export AP_SOURCE_API_KEY="$STAGING_API_KEY"
 export AP_DEST_API_KEY="$PROD_API_KEY"
 
-ap project replace \
+npx @activepieces/cli project replace \
   --source-url    https://staging.activepieces.com \
   --source-project "$STAGING_PROJECT_ID" \
   --dest-url      https://prod.activepieces.com \
@@ -198,9 +190,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install -g activepieces
       - run: |
-          ap project replace \
+          npx @activepieces/cli project replace \
             --source-url   "${{ vars.STAGING_URL }}" \
             --source-project "${{ vars.STAGING_PROJECT_ID }}" \
             --dest-url     "${{ vars.PROD_URL }}" \

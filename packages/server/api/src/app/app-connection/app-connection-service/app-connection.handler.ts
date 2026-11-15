@@ -1,17 +1,16 @@
-import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, PlatformId, ProjectId, tryCatch, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, FlowId, isNil, PlatformId, ProjectId, tryCatch, unique, UserId } from '@activepieces/core-utils'
 import { PropertyType } from '@activepieces/pieces-framework'
-import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, EngineResponse, EngineResponseStatus, ExecuteRefreshTokenAuthResponse, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, PopulatedFlow, WorkerJobType } from '@activepieces/shared'
+import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, EngineResponse, EngineResponseStatus, ExecuteRefreshTokenAuthResponse, PopulatedFlow, WorkerJobType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { lru, LRU } from 'tiny-lru'
 import { ArrayContains } from 'typeorm'
 import { distributedLock } from '../../database/redis-connections'
 import { flowService } from '../../flows/flow/flow.service'
-import { flowVersionRepo, flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { encryptUtils } from '../../helper/encryption'
 import { exceptionHandler } from '../../helper/exception-handler'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
-import { projectService } from '../../project/project-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { AppConnectionSchema } from '../app-connection.entity'
 import { appConnectionsRepo } from './app-connection-service'
@@ -19,46 +18,23 @@ import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
 
 export const appConnectionHandler = (log: FastifyBaseLogger) => ({
-    async updateFlowsWithAppConnection(flows: PopulatedFlow[], params: UpdateFlowsWithAppConnectionParams): Promise<void> {
-        const { appConnection, newAppConnection, userId, applyToPublishedVersions } = params
+    async replaceConnectionInFlows({ flows, appConnection, newAppConnection, userId, platformId, applyToPublishedVersions }: ReplaceConnectionInFlowsParams): Promise<void> {
+        const flowIdsToRepublish = applyToPublishedVersions
+            ? await findFlowIdsToRepublish({ flows, externalId: appConnection.externalId })
+            : new Set<FlowId>()
 
         await Promise.all(flows.map(async (flow) => {
-            const project = await projectService(log).getOneOrThrow(flow.projectId)
-            // Don't change the order: republish first (when opted in), then make sure the
-            // draft also points to the new connection.
-            if (applyToPublishedVersions) {
-                await handleLockedVersion(flow, userId, flow.projectId, project.platformId, appConnection, newAppConnection, log)
-            }
-            await handleDraftVersion(flow, userId, flow.projectId, project.platformId, appConnection, newAppConnection, log)
+            await flowService(log).replaceConnection({
+                id: flow.id,
+                projectId: flow.projectId,
+                platformId,
+                userId,
+                sourceExternalId: appConnection.externalId,
+                targetExternalId: newAppConnection.externalId,
+                applyToPublishedVersion: flowIdsToRepublish.has(flow.id),
+                auditExplanation: `replaced connection "${appConnection.displayName}" with "${newAppConnection.displayName}".`,
+            })
         }))
-    },
-
-    // Queries published versions directly rather than relying on the flows fetched
-    // for the replace, since flowService.list filters by the latest (draft) version's
-    // connectionIds. A flow whose published version still uses the connection but whose
-    // newer draft dropped it would be missing from that list, so deleting the source
-    // would silently orphan the published version.
-    // When applyToPublishedVersions is set, the replace republishes the published
-    // versions of the flows it can see (those whose latest version references the
-    // connection), so only published versions whose flow's latest version dropped the
-    // connection stay untouched and count as blocking.
-    async countPublishedFlowsReferencingConnection({ projectId, externalId, applyToPublishedVersions }: CountPublishedFlowsParams): Promise<number> {
-        const query = flowVersionRepo()
-            .createQueryBuilder('flow_version')
-            .innerJoin('flow', 'flow', 'flow.id = flow_version."flowId"')
-            .where('flow."projectId" = :projectId', { projectId })
-            .andWhere('flow_version.id = flow."publishedVersionId"')
-            .andWhere('flow_version."connectionIds" && :externalIds', { externalIds: [externalId] })
-        if (applyToPublishedVersions) {
-            const latestVersionConnectionIds = flowVersionRepo()
-                .createQueryBuilder('fv_latest')
-                .select('fv_latest."connectionIds"')
-                .where('fv_latest."flowId" = flow.id')
-                .orderBy('fv_latest.created', 'DESC')
-                .limit(1)
-            query.andWhere(`NOT ((${latestVersionConnectionIds.getQuery()}) && :externalIds)`)
-        }
-        return query.getCount()
     },
 
     async refresh(connection: AppConnection, projectId: ProjectId, log: FastifyBaseLogger): Promise<AppConnection> {
@@ -318,14 +294,17 @@ export function isCustomAuthTokenStale(value: { access_token?: string, token_ref
 // Returns the unix timestamp at which the token should be refreshed: 15 minutes
 // before expiry, but never earlier than half the token's lifetime — otherwise a
 // token whose TTL is shorter than the buffer would be considered stale the instant
-// it is minted, refreshing on every fetch and defeating the cache. `expiresIn <= 0`
-// means the token never expires, so it never needs refreshing.
-export function computeTokenRefreshAt(expiresIn: number): number | undefined {
-    if (expiresIn <= 0) {
+// it is minted, refreshing on every fetch and defeating the cache. `expiresIn` is
+// typed as unknown because it comes from a third-party token response; any
+// non-positive or non-finite result means the token never expires, so it never
+// needs refreshing.
+export function computeTokenRefreshAt(expiresIn: unknown): number | undefined {
+    const expiresInSeconds = Number(expiresIn)
+    if (!Number.isFinite(expiresInSeconds) || expiresInSeconds <= 0) {
         return undefined
     }
-    const buffer = Math.min(TOKEN_REFRESH_BUFFER_SECONDS, Math.floor(expiresIn / 2))
-    return dayjs().unix() + expiresIn - buffer
+    const buffer = Math.min(TOKEN_REFRESH_BUFFER_SECONDS, Math.floor(expiresInSeconds / 2))
+    return dayjs().unix() + expiresInSeconds - buffer
 }
 
 function pieceRefreshSupportCacheKey(connection: Pick<AppConnection, 'platformId' | 'pieceName' | 'pieceVersion'>): string {
@@ -339,96 +318,34 @@ class CustomAuthRefreshError extends Error {
     }
 }
 
-async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectId: ProjectId, platformId: PlatformId, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData, log: FastifyBaseLogger) {
-    if (isNil(flow.publishedVersionId)) {
-        return
+async function findFlowIdsToRepublish({ flows, externalId }: FindFlowIdsToRepublishParams): Promise<Set<FlowId>> {
+    const publishedFlows = flows.filter((flow) => !isNil(flow.publishedVersionId))
+    if (publishedFlows.length === 0) {
+        return new Set()
     }
 
-    const lastPublishedVersion = await flowVersionService(log).getLatestVersion(flow.id, FlowVersionState.LOCKED)
-    assertNotNullOrUndefined(lastPublishedVersion, `Last published version not found for flow ${flow.id}`)
-
-    await flowService(log).update({
-        id: flow.id,
-        projectId,
-        platformId,
-        userId,
-        operation: {
-            type: FlowOperationType.IMPORT_FLOW,
-            request: replaceConnectionInFlowVersion(lastPublishedVersion, appConnection, newAppConnection),
-        },
-    })
-
-    await flowService(log).update({
-        id: flow.id,
-        projectId,
-        platformId,
-        userId,
-        operation: {
-            type: FlowOperationType.LOCK_AND_PUBLISH,
-            request: {},
-        },
-    })
+    const rows = await flowVersionRepo()
+        .createQueryBuilder('flow_version')
+        .select('flow.id', 'flowId')
+        .innerJoin('flow', 'flow', 'flow."publishedVersionId" = flow_version.id')
+        .where('flow.id IN (:...flowIds)', { flowIds: publishedFlows.map((flow) => flow.id) })
+        .andWhere('flow."projectId" IN (:...projectIds)', { projectIds: unique(publishedFlows.map((flow) => flow.projectId)) })
+        .andWhere('flow_version."connectionIds" && :externalIds', { externalIds: [externalId] })
+        .getRawMany<{ flowId: FlowId }>()
+    return new Set(rows.map((row) => row.flowId))
 }
 
-async function handleDraftVersion(flow: Flow, userId: UserId, projectId: ProjectId, platformId: PlatformId, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData, log: FastifyBaseLogger) {
-    const latestVersion = await flowVersionService(log).getFlowVersionOrThrow({
-        flowId: flow.id,
-        versionId: undefined,
-    })
-
-    // Nothing to do if the latest version no longer references the old connection
-    // (e.g. it was just republished onto the new one). Otherwise IMPORT_FLOW will
-    // transparently create a draft from a published version and rewrite it, so the
-    // draft always ends up on the new connection even for never-edited published flows.
-    if (!latestVersion.connectionIds.includes(appConnection.externalId)) {
-        return
-    }
-
-    await flowService(log).update({
-        id: flow.id,
-        projectId,
-        platformId,
-        userId,
-        operation: {
-            type: FlowOperationType.IMPORT_FLOW,
-            request: replaceConnectionInFlowVersion(latestVersion, appConnection, newAppConnection),
-        },
-    })
-}
-function replaceConnectionInFlowVersion(flowVersion: FlowVersion, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData) {
-    return flowStructureUtil.transferFlow(flowVersion, (step) => {
-        if (step.settings?.input?.auth?.includes(appConnection.externalId)) {
-            return {
-                ...step,
-                settings: {
-                    ...step.settings,
-                    input: {
-                        ...step.settings?.input,
-                        auth: replaceConnectionIdInAuth(step.settings.input.auth, appConnection.externalId, newAppConnection.externalId),
-                    },
-                },
-            }
-        }
-        return step
-    })
-}
-
-function replaceConnectionIdInAuth(auth: string, oldConnectionId: string, newConnectionId: string): string {
-    return auth.replace(
-        new RegExp(`connections\\['${oldConnectionId}'\\]`, 'g'),
-        `connections['${newConnectionId}']`,
-    )
-}
-
-type UpdateFlowsWithAppConnectionParams = {
+type ReplaceConnectionInFlowsParams = {
+    flows: PopulatedFlow[]
     appConnection: AppConnectionWithoutSensitiveData
     newAppConnection: AppConnectionWithoutSensitiveData
     userId: UserId
+    platformId: PlatformId
     applyToPublishedVersions: boolean
 }
 
-type CountPublishedFlowsParams = {
-    projectId: ProjectId
+type FindFlowIdsToRepublishParams = {
+    flows: PopulatedFlow[]
     externalId: string
-    applyToPublishedVersions: boolean
 }
+

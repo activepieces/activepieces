@@ -6,6 +6,7 @@ import { updateProfileActionOutputSchema } from '../output-schemas';
 export const slackSetUserStatus = createAction({
   auth: slackAuth,
   name: 'set_user_status',
+  classification: 'WRITE',
   displayName: 'Set User Status',
   description: "Set the authenticated user's custom status text and emoji.",
   audience: 'ai',

@@ -6,8 +6,8 @@ import {
   fetchSubscribedTags,
   fetchTags,
 } from '../service';
-import { Tag, AuthEmail } from '../types';
-import { convertkitAuth } from '../../..';
+import { Tag } from '../types';
+import { convertkitAuth } from '../../auth';
 
 export const tagId = Property.ShortText({
   displayName: 'Tag Id',
@@ -106,7 +106,7 @@ export const subscriberState = Property.StaticDropdown({
   options: {
     options: [
       { label: 'Active', value: 'active' },
-      { label: 'canceled', value: 'canceled' },
+      { label: 'Cancelled', value: 'cancelled' },
     ],
   },
 });

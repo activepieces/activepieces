@@ -1,12 +1,5 @@
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import {
-  AppConnectionValueForAuthProperty,
   createTrigger,
   DEDUPE_KEY_PROPERTY,
   PieceAuth,
@@ -14,21 +7,25 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { channelIdentifier } from '../common/props';
-import { isNil } from '@activepieces/pieces-framework';
+import { newVideoTriggerOutputSchema } from '../output-schemas';
+import { isNil, tryCatch } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { load as cheerioLoad } from 'cheerio';
 import FeedParser from 'feedparser';
 
 export const youtubeNewVideoTrigger = createTrigger({
   name: 'new-video',
+  classification: 'READ',
   displayName: 'New Video In Channel',
-  description: 'Runs when a new video is added to a YouTube channel',
+  description: 'Runs when a new video is added to a YouTube channel.',
   aiMetadata: {
     description:
       'Fires when a new video is published on the specified YouTube channel. The event represents a single newly detected video from the channel RSS feed, including its title, link, video ID, publish date, author, and thumbnail.',
   },
   auth: PieceAuth.None(),
   requireAuth: false,
+  outputSchema: newVideoTriggerOutputSchema,
+
   type: TriggerStrategy.POLLING,
   props: {
     channel_identifier: channelIdentifier,
@@ -228,97 +225,147 @@ export const youtubeNewVideoTrigger = createTrigger({
       },
     },
   },
-  async test({ auth, propsValue, store, files }): Promise<unknown[]> {
-    return pollingHelper.test(polling, {
-      auth,
-      store,
-      propsValue,
-      files,
-    });
-  },
-  async onEnable({ propsValue, store }): Promise<void> {
-    let channelId = await store.get<string>('channelId');
-    if (isNil(channelId)) {
-      channelId = await getChannelId(propsValue.channel_identifier);
-      await store.put('channelId', channelId);
-    }
+  async test({ propsValue }): Promise<unknown[]> {
+    const channelId = await getChannelId(propsValue.channel_identifier);
     const items = await getRssItems(channelId);
-    if (items.length > 0) {
-      await store.put('_seenVideoIds', items.map((item) => getId(item)));
-    }
+    return sortNewestFirst(items).slice(0, 5).reverse();
   },
-  async onDisable({ store }): Promise<void> {
-    await store.delete('_seenVideoIds');
-    await store.delete('channelId');
+  async onEnable({ propsValue, store, isRepublish }): Promise<void> {
+    const seenIds = await store.get<string[]>(SEEN_IDS_KEY);
+    const channel = await resolveChannel({
+      store,
+      identifier: propsValue.channel_identifier,
+    });
+    if (isRepublish && !isNil(seenIds) && !channel.changed) {
+      await saveChannel({ store, channel });
+      return;
+    }
+    const items = await getRssItems(channel.channelId);
+    await store.put(SEEN_IDS_KEY, toSeenIds({ items, previous: [] }));
+    await saveChannel({ store, channel });
+  },
+  async onDisable({ store, isRepublish }): Promise<void> {
+    if (isRepublish) {
+      return;
+    }
+    await store.delete(SEEN_IDS_KEY);
+    await store.delete(CHANNEL_KEY);
+    await store.delete(LEGACY_CHANNEL_ID_KEY);
   },
   async run({ propsValue, store }): Promise<unknown[]> {
-    let channelId = await store.get<string>('channelId');
-    if (isNil(channelId)) {
-      channelId = await getChannelId(propsValue.channel_identifier);
-      await store.put('channelId', channelId);
-    }
-    const rawItems = await getRssItems(channelId);
+    const channel = await resolveChannel({
+      store,
+      identifier: propsValue.channel_identifier,
+    });
+    const rawItems = await getRssItems(channel.channelId);
+    const previousIds = await store.get<string[]>(SEEN_IDS_KEY);
 
-    const seenIds = new Set<string>(await store.get<string[]>('_seenVideoIds') ?? []);
+    if (channel.changed || isNil(previousIds)) {
+      await store.put(SEEN_IDS_KEY, toSeenIds({ items: rawItems, previous: [] }));
+      await saveChannel({ store, channel });
+      return [];
+    }
+    await saveChannel({ store, channel });
+
+    const seenIds = new Set<string>(previousIds);
     const newItems = rawItems.filter((item) => !seenIds.has(getId(item)));
 
-    // Advance the seen-IDs set to the current feed so that if the anchor item
-    // (e.g. a live stream) is later deleted and pollingHelper would otherwise
-    // return all items, the previously-seen IDs are still excluded.
-    // Skip the update on an empty feed response to avoid wiping the set and
-    // causing false positives on the next successful poll.
     if (rawItems.length > 0) {
-      await store.put('_seenVideoIds', rawItems.map((item) => getId(item)));
+      await store.put(
+        SEEN_IDS_KEY,
+        toSeenIds({ items: rawItems, previous: previousIds }),
+      );
     }
 
-    return newItems
-      .sort((a, b) => {
-        const aDate =
-          (a as { pubdate?: string; pubDate?: string }).pubdate ??
-          (a as { pubdate?: string; pubDate?: string }).pubDate;
-        const bDate =
-          (b as { pubdate?: string; pubDate?: string }).pubdate ??
-          (b as { pubdate?: string; pubDate?: string }).pubDate;
-
-        if (aDate && bDate) {
-          const aUnix = dayjs(aDate).unix();
-          const bUnix = dayjs(bDate).unix();
-          if (aUnix === bUnix) {
-            return newItems.indexOf(a) - newItems.indexOf(b);
-          }
-          return bUnix - aUnix;
-        }
-
-        return newItems.indexOf(a) - newItems.indexOf(b);
-      })
-      .map((item) => withDedupeKey(item as Record<string, unknown>));
+    return sortNewestFirst(newItems).map((item) => withDedupeKey(item));
   },
 });
 
-const polling: Polling<
-  AppConnectionValueForAuthProperty<undefined>,
-  { channel_identifier: string }
-> = {
-  strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({
-    propsValue,
-    store,
-  }: {
-    store: Store;
-    propsValue: { channel_identifier: string };
-  }) => {
-    let channelId = await store.get<string>('channelId');
-    if (isNil(channelId)) {
-      channelId = await getChannelId(propsValue.channel_identifier);
-      await store.put('channelId', channelId);
-    }
-    const items = await getRssItems(channelId);
-    return items.map((item) => ({
-      id: getId(item),
-      data: item,
-    }));
-  },
-};
+const SEEN_IDS_KEY = '_seenVideoIds';
+const CHANNEL_KEY = '_channel';
+const LEGACY_CHANNEL_ID_KEY = 'channelId';
+const MAX_SEEN_IDS = 300;
+const REQUEST_TIMEOUT_MS = 20_000;
+
+async function resolveChannel({
+  store,
+  identifier,
+}: {
+  store: Store;
+  identifier: string;
+}): Promise<ResolvedChannel> {
+  const trimmed = identifier.trim();
+  const stored = await store.get<StoredChannel>(CHANNEL_KEY);
+  if (!isNil(stored) && stored.identifier === trimmed) {
+    return { identifier: trimmed, channelId: stored.channelId, changed: false };
+  }
+  const previousChannelId =
+    stored?.channelId ?? (await store.get<string>(LEGACY_CHANNEL_ID_KEY));
+  const channelId = await getChannelId(trimmed);
+  return {
+    identifier: trimmed,
+    channelId,
+    changed: isNil(previousChannelId) || previousChannelId !== channelId,
+  };
+}
+
+async function saveChannel({
+  store,
+  channel,
+}: {
+  store: Store;
+  channel: ResolvedChannel;
+}): Promise<void> {
+  const stored = await store.get<StoredChannel>(CHANNEL_KEY);
+  if (
+    stored?.identifier !== channel.identifier ||
+    stored?.channelId !== channel.channelId
+  ) {
+    await store.put<StoredChannel>(CHANNEL_KEY, {
+      identifier: channel.identifier,
+      channelId: channel.channelId,
+    });
+  }
+  if (!isNil(await store.get<string>(LEGACY_CHANNEL_ID_KEY))) {
+    await store.delete(LEGACY_CHANNEL_ID_KEY);
+  }
+}
+
+function toSeenIds({
+  items,
+  previous,
+}: {
+  items: FeedEntry[];
+  previous: string[];
+}): string[] {
+  const currentIds = sortNewestFirst(items).map((item) => getId(item));
+  const current = new Set(currentIds);
+  return [...currentIds, ...previous.filter((id) => !current.has(id))].slice(
+    0,
+    MAX_SEEN_IDS,
+  );
+}
+
+function sortNewestFirst<T extends FeedEntry>(items: T[]): T[] {
+  return items
+    .map((item, index) => ({ item, index, unix: publishedUnix(item) }))
+    .sort((a, b) => {
+      if (!isNil(a.unix) && !isNil(b.unix) && a.unix !== b.unix) {
+        return b.unix - a.unix;
+      }
+      return a.index - b.index;
+    })
+    .map(({ item }) => item);
+}
+
+function publishedUnix(item: FeedEntry): number | null {
+  const value = item.pubdate ?? item.pubDate;
+  if (isNil(value)) {
+    return null;
+  }
+  const parsed = dayjs(value);
+  return parsed.isValid() ? parsed.valueOf() : null;
+}
 
 function withDedupeKey(item: Record<string, unknown>) {
   const dedupeKey = typeof item.guid === 'string' ? item.guid : JSON.stringify(item);
@@ -339,15 +386,19 @@ function getId(item: { id?: string; guid?: string }) {
 }
 
 async function getChannelId(urlOrId: string) {
-  if (urlOrId.trim().startsWith('@')) {
-    urlOrId = 'https://www.youtube.com/' + urlOrId;
+  const trimmed = urlOrId.trim();
+  const pageUrl = await toChannelPageUrl(trimmed);
+  if (isNil(pageUrl)) {
+    return trimmed;
   }
-  if (!urlOrId.includes('https')) {
-    return urlOrId;
+  const idInPath = new URL(pageUrl).pathname.match(/^\/channel\/([\w-]+)/);
+  if (idInPath) {
+    return idInPath[1];
   }
-  const response = await httpClient.sendRequest<any>({
+  const response = await httpClient.sendRequest<string>({
     method: HttpMethod.GET,
-    url: urlOrId,
+    url: pageUrl,
+    timeout: REQUEST_TIMEOUT_MS,
   });
   const $ = cheerioLoad(response.body);
 
@@ -360,12 +411,34 @@ async function getChannelId(urlOrId: string) {
   throw new Error('Invalid YouTube channel URL');
 }
 
+async function toChannelPageUrl(value: string): Promise<string | null> {
+  if (value.startsWith('@')) {
+    return `https://www.youtube.com/${value}`;
+  }
+  if (!value.includes('://') && !value.includes('youtube.com/')) {
+    return null;
+  }
+  const withScheme = value.includes('://') ? value : `https://${value}`;
+  const { data: parsed } = await tryCatch(async () => new URL(withScheme));
+  if (isNil(parsed) || !isYoutubeUrl(parsed)) {
+    throw new Error('Invalid YouTube channel URL');
+  }
+  return `https://www.youtube.com${parsed.pathname}`;
+}
+
+function isYoutubeUrl(url: URL): boolean {
+  const host = url.hostname.toLowerCase();
+  const isWeb = url.protocol === 'https:' || url.protocol === 'http:';
+  return isWeb && (host === 'youtube.com' || host.endsWith('.youtube.com'));
+}
+
 async function getRssItems(channelId: string): Promise<any[]> {
   const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
   const response = await httpClient.sendRequest<Buffer>({
     method: HttpMethod.GET,
     url,
     responseType: 'arraybuffer',
+    timeout: REQUEST_TIMEOUT_MS,
   });
 
   return new Promise((resolve, reject) => {
@@ -394,3 +467,19 @@ async function getRssItems(channelId: string): Promise<any[]> {
     feedparser.end();
   });
 }
+
+type FeedEntry = {
+  id?: string;
+  guid?: string;
+  pubdate?: string | Date | null;
+  pubDate?: string | Date | null;
+};
+
+type StoredChannel = {
+  identifier: string;
+  channelId: string;
+};
+
+type ResolvedChannel = StoredChannel & {
+  changed: boolean;
+};

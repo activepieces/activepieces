@@ -1,10 +1,12 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { lemonSqueezyAuth } from '../common/auth';
-import { subscribeWebhook, unsubscribeWebhook, createStoreDropdownProperty, generateWebhookSecret, createWebhookTriggerKey } from '../common/webhook';
+import { createStoreDropdownProperty, disableWebhook, enableWebhook, handleWebhook } from '../common/webhook';
+import { webhookSchemas } from '../common/output-schemas';
 
 export const subscriptionCancelledTrigger = createTrigger({
   auth: lemonSqueezyAuth,
   name: 'subscription_cancelled',
+  classification: 'READ',
   displayName: 'Subscription Cancelled',
   description: 'Triggers when a subscription is cancelled manually by the customer or store owner',
   aiMetadata: {
@@ -15,32 +17,21 @@ export const subscriptionCancelledTrigger = createTrigger({
     store_id: createStoreDropdownProperty()
   },
   async onEnable(context) {
-    const webhookSecret = generateWebhookSecret();
-
-    const webhookData = await subscribeWebhook(
-      context.auth.secret_text,
-      context.propsValue.store_id as unknown as string,
-      ['subscription_cancelled'],
-      context.webhookUrl,
-      webhookSecret
-    );
-
-    await context.store?.put(createWebhookTriggerKey('subscription_cancelled'), {
-      webhookId: webhookData.data.id,
-      secret: webhookSecret,
-      storeId: context.propsValue.store_id
+    await enableWebhook({
+      auth: context.auth,
+      store: context.store,
+      storeId: context.propsValue.store_id,
+      webhookUrl: context.webhookUrl,
+      eventName: 'subscription_cancelled',
     });
   },
   async onDisable(context) {
-    const response: { webhookId: string } | null = await context.store?.get(createWebhookTriggerKey('subscription_cancelled'));
-
-    if (response !== null && response !== undefined) {
-      await unsubscribeWebhook(context.auth.secret_text, response.webhookId);
-    }
+    await disableWebhook({ auth: context.auth, store: context.store, eventName: 'subscription_cancelled' });
   },
   async run(context) {
-    return [context.payload.body];
+    return handleWebhook({ payload: context.payload, store: context.store, eventName: 'subscription_cancelled' });
   },
+  outputSchema: webhookSchemas.subscription,
   sampleData: {
     meta: {
       event_name: 'subscription_cancelled',

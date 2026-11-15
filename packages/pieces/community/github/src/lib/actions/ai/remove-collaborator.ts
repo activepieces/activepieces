@@ -7,6 +7,7 @@ import { ownerProp, repoProp, githubError } from './common';
 export const githubRemoveCollaboratorAction = createAction({
   auth: githubAuth,
   name: 'remove_collaborator',
+  classification: 'DESTRUCTIVE',
   displayName: 'Remove Collaborator (Agent)',
   description: "Revokes a user's collaborator access to a repository.",
   audience: 'ai',

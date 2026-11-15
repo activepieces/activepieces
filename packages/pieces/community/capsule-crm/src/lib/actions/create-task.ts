@@ -10,6 +10,7 @@ import { CreateTaskParams } from '../common/types';
 export const createTaskAction = createAction({
   auth: capsuleCrmAuth,
   name: 'create_task',
+  classification: 'WRITE',
   displayName: 'Create Task',
   description: 'Create a new Task in Capsule CRM.',
   audience: 'both',

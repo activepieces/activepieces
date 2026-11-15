@@ -1,124 +1,42 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { saveGallery } from '../api';
+import { createAction } from '@activepieces/pieces-framework';
 import { cmsAuth } from '../auth';
-import * as z from 'zod/mini'
-import { propsValidation } from '@activepieces/pieces-common';
+import { totalcmsProps } from '../common/props';
+import { totalcmsShape } from '../common/shape';
+import { totalcmsUpload } from '../common/upload';
+import { totalcmsOutputSchemas } from '../output-schemas';
 
 export const saveGalleryAction = createAction({
   name: 'save_gallery',
+  classification: 'WRITE',
   auth: cmsAuth,
-  displayName: 'Save Gallery Image',
-  description: 'Save image to Total CMS gallery',
+  displayName: 'Add Image to Gallery',
+  description: 'Adds an image to a gallery object.',
   audience: 'both',
-  aiMetadata: { description: 'Uploads an image into a gallery-type CMS field in Total CMS, identified by the gallery CMS ID (slug), with alt text and thumbnail sizing/crop options. Use to add a photo to a standalone gallery. Not idempotent: each call appends another image to the gallery.', idempotent: false },
-  props: {
-    slug: Property.ShortText({
-      displayName: 'CMS ID',
-      description: 'The CMS ID of the gallery to save',
-      required: true,
-    }),
-    image: Property.File({
-      displayName: 'Image',
-      description: 'The image to save',
-      required: true,
-    }),
-    alt: Property.ShortText({
-      displayName: 'Alt Text',
-      description: 'The alt text for the image',
-      required: true,
-    }),
-    quality: Property.Number({
-      displayName: 'Thumbnail Quality',
-      description: 'The quality of the thumbnail',
-      required: true,
-      defaultValue: 85,
-    }),
-    scaleTh: Property.Number({
-      displayName: 'Thumbnail Scale',
-      description: 'The scale of the thumbnail',
-      required: true,
-      defaultValue: 400,
-    }),
-    scaleSq: Property.Number({
-      displayName: 'Thumbnail Square Scale',
-      description: 'The scale of the square thumbnail',
-      required: true,
-      defaultValue: 400,
-    }),
-    resize: Property.StaticDropdown({
-      displayName: 'Thumbnail Resize Method',
-      description: 'The method to use when resizing the thumbnail',
-      required: true,
-      defaultValue: 'auto',
-      options: {
-        options: [
-          { label: 'Auto', value: 'auto' },
-          { label: 'Landscape', value: 'landscape' },
-          { label: 'Portrait', value: 'portrait' },
-        ],
-      },
-    }),
-    lcrop: Property.StaticDropdown({
-      displayName: 'Thumbnail Landscape Crop',
-      description:
-        'The method to use when cropping the landscape thumbnail for the square thumbnail',
-      required: true,
-      defaultValue: 'center',
-      options: {
-        options: [
-          { label: 'Left', value: 'left' },
-          { label: 'Center', value: 'center' },
-          { label: 'Right', value: 'right' },
-        ],
-      },
-    }),
-    pcrop: Property.StaticDropdown({
-      displayName: 'Thumbnail Landscape Crop',
-      description:
-        'The method to use when cropping the landscape thumbnail for the square thumbnail',
-      required: true,
-      defaultValue: 'middle',
-      options: {
-        options: [
-          { label: 'Top', value: 'top' },
-          { label: 'Middle', value: 'middle' },
-          { label: 'Bottom', value: 'bottom' },
-        ],
-      },
-    }),
-    altMeta: Property.Checkbox({
-      displayName: 'Pull Alt Text from Meta Data',
-      description:
-        'Pull the alt text from the meta data of the image. If set, place placeholder text in the alt text field above.',
-      required: true,
-    }),
+  aiMetadata: {
+    description:
+      'Adds one image (file or public URL) to the end of a Total CMS gallery object, creating the object if the ID is new. Optional alt text is saved on the new image. Each call adds another image, so retries add duplicates.',
+    idempotent: false,
   },
+  props: {
+    collection: totalcmsProps.collectionForSchema({ schema: 'gallery', label: 'Gallery' }),
+    object_id: totalcmsProps.objectIdText({ description: 'The ID of the gallery object. A new ID creates the object.' }),
+    ...totalcmsUpload.fileProps({ fileLabel: 'Image' }),
+    alt: totalcmsUpload.altProp(),
+  },
+  outputSchema: totalcmsOutputSchemas.gallery,
   async run(context) {
-    await propsValidation.validateZod(context.propsValue, {
-      quality: z.number().check(z.minimum(1), z.maximum(100)),
-      scaleTh: z.number().check(z.minimum(1)),
-      scaleSq: z.number().check(z.minimum(1)),
+    const collection = totalcmsShape.requireId({ value: context.propsValue.collection, label: 'Collection ID' });
+    const id = totalcmsShape.requireId({ value: context.propsValue.object_id, label: 'Object ID' });
+    const result = await totalcmsUpload.save({
+      auth: context.auth,
+      collection,
+      id,
+      property: 'gallery',
+      file: context.propsValue.file,
+      fileUrl: context.propsValue.file_url,
+      alt: context.propsValue.alt ?? undefined,
+      multiple: true,
     });
-
-    const slug = context.propsValue.slug;
-    const image = {
-      filename: context.propsValue.image.filename,
-      base64: context.propsValue.image.base64,
-    };
-    return await saveGallery(context.auth, slug, image, {
-      thumbs: 1,
-      optimize: 1,
-      alttype: context.propsValue.altMeta ? 'meta' : 'user',
-      alt: context.propsValue.alt,
-      quality: context.propsValue.quality,
-      scale_th: context.propsValue.scaleTh,
-      scale_sq: context.propsValue.scaleSq,
-      resize: context.propsValue.resize,
-      lcrop: context.propsValue.lcrop,
-      pcrop: context.propsValue.pcrop,
-    });
+    return { ...totalcmsShape.typed({ collection, object: result.object }), preview_url: result.preview_url, warning: result.warning };
   },
 });

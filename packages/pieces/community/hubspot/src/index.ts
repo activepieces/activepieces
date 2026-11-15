@@ -1,5 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { hubSpotListsAddContactAction } from './lib/actions/add-contact-to-list-action';
 import { newCompanyTrigger } from './lib/triggers/new-company';
@@ -35,6 +35,15 @@ import { updateCustomObjectAction } from './lib/actions/update-custom-object';
 import { getCustomObjectAction } from './lib/actions/get-custom-object';
 import { findCustomObjectAction } from './lib/actions/find-custom-object';
 import { getOwnerByEmailAction } from './lib/actions/get-owner-by-email';
+import { listPipelinesAction } from './lib/actions/list-pipelines';
+import { listPipelineStagesAction } from './lib/actions/list-pipeline-stages';
+import { listStaticListsAction } from './lib/actions/list-static-lists';
+import { listAssociationTypesAction } from './lib/actions/list-association-types';
+import { listOwnersAction } from './lib/actions/list-owners';
+import { listObjectPropertiesAction } from './lib/actions/list-object-properties';
+import { createNoteAction } from './lib/actions/create-note';
+import { createTaskAction } from './lib/actions/create-task';
+import { searchObjectsAction } from './lib/actions/search-objects';
 import { getOwnerByIdAction } from './lib/actions/get-owner-by-id';
 import { findDealAction } from './lib/actions/find-deal';
 import { createLineItemAction } from './lib/actions/create-line-item';
@@ -69,14 +78,14 @@ import { createBlogPostAction } from './lib/actions/create-blog-post';
 import {  createPageAction } from './lib/actions/create-page';
 import { getPageAction } from './lib/actions/get-page';
 import { deletePageAction } from './lib/actions/delete-page';
-import { hubspotAuth } from './lib/auth';
+import { getHubspotAccessToken, hubspotAuth } from './lib/auth';
 
 export const hubspot = createPiece({
 	displayName: 'HubSpot',
 	description: 'Powerful CRM that offers tools for sales, customer service, and marketing automation.',
-	minimumSupportedRelease: '0.5.0',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/hubspot.png',
-	authors: ['Salem-Alaa', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
+	authors: ['Salem-Alaa', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud', 'OdaiAhmed99'],
 	categories: [PieceCategory.SALES_AND_CRM],
 	auth: hubspotAuth,
 	actions: [
@@ -122,14 +131,29 @@ export const hubspot = createPiece({
 		findProductAction,
 		findTicketAction,
 		getOwnerByEmailAction,
+		listPipelinesAction,
+		listPipelineStagesAction,
+		listStaticListsAction,
+		listAssociationTypesAction,
+		listOwnersAction,
+		listObjectPropertiesAction,
+		createNoteAction,
+		createTaskAction,
+		searchObjectsAction,
 		getOwnerByIdAction,
 		getPipelineStageDetailsAction,
 		createCustomApiCallAction({
 			baseUrl: () => 'https://api.hubapi.com',
 			auth: hubspotAuth,
 			authMapping: async (auth) => ({
-				Authorization: `Bearer ${(auth).access_token}`,
+				Authorization: `Bearer ${getHubspotAccessToken(auth)}`,
 			}),
+			props: {
+				url: {
+					description: 'Full URL, or a path relative to https://api.hubapi.com',
+					placeholder: '/crm/v3/objects/contacts',
+				},
+			},
 		}),
 	],
 	triggers: [

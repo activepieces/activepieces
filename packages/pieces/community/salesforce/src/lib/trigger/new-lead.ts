@@ -13,15 +13,18 @@ import { querySalesforceApi } from '../common';
 
 import dayjs from 'dayjs';
 import { salesforceAuth } from '../..';
+import { newLeadTriggerOutputSchema } from '../output-schemas';
 
 export const newLead = createTrigger({
     auth: salesforceAuth,
     name: 'new_lead',
+    classification: 'READ',
     displayName: 'New Lead',
     description: 'Fires when a new Lead record is created in Salesforce.',
     aiMetadata: {
         description: 'Fires once for each new Lead record created in Salesforce, emitting all fields of the created Lead. Detected by polling for records whose CreatedDate is later than the last poll. Does not fire on updates to existing Leads or when a Lead is converted.',
     },
+    outputSchema: newLeadTriggerOutputSchema,
     props: {},
     sampleData: {
         "Id": "00Q7Q000003x4aXUAQ",

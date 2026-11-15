@@ -1,258 +1,419 @@
-import { AppConnectionValueForAuthProperty } from "@activepieces/pieces-framework";
-import { canvaAuth } from "src";
+import { AppConnectionValueForAuthProperty, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { canvaClient } from './client';
+
+const MAX_DROPDOWN_PAGES = 5;
+const DROPDOWN_PAGE_SIZE = 100;
+
+const canvaAuthDescription = `
+To connect Canva, follow these steps:
+1. Go to https://www.canva.com/developers/integrations and sign in.
+2. Click **Create an integration** and fill in the app name and description.
+3. Under **Configure** → **Authentication**, set the redirect URL to the one shown above.
+4. Under **Configure** → **Scopes**, enable: \`design:content:read\`, \`design:content:write\`, \`design:meta:read\`, \`asset:read\`, \`asset:write\`, \`folder:read\`, \`folder:write\`, \`profile:read\`.
+5. Copy the **Client ID** and **Client secret** and paste them above.
+`;
+
+const canvaAuth = PieceAuth.OAuth2({
+  description: canvaAuthDescription,
+  authUrl: 'https://www.canva.com/api/oauth/authorize',
+  tokenUrl: 'https://api.canva.com/rest/v1/oauth/token',
+  required: true,
+  pkce: true,
+  pkceMethod: 'S256',
+  scope: [
+    'design:content:read',
+    'design:content:write',
+    'design:meta:read',
+    'asset:read',
+    'asset:write',
+    'folder:read',
+    'folder:write',
+    'profile:read',
+  ],
+  getConnectionIdentifier: async ({ auth }) => {
+    try {
+      const body = await canvaClient.request<{ profile?: { display_name?: string } }>({
+        token: auth.access_token,
+        method: HttpMethod.GET,
+        path: '/users/me/profile',
+        timeoutMs: 5000,
+      });
+      return body?.profile?.display_name || undefined;
+    } catch {
+      return undefined;
+    }
+  },
+  validate: async ({ auth }) => {
+    if (!auth.access_token) {
+      return { valid: false, error: 'No access token found' };
+    }
+    try {
+      await canvaClient.request<unknown>({ token: auth.access_token, method: HttpMethod.GET, path: '/users/me' });
+      return { valid: true };
+    } catch (error) {
+      const status: unknown = typeof error === 'object' && error !== null ? Reflect.get(error, 'status') : undefined;
+      if (status === 401 || status === 403) {
+        return { valid: false, error: 'Access token is invalid or expired' };
+      }
+      return { valid: false, error: 'Failed to validate authentication credentials' };
+    }
+  },
+});
+
+async function listFolderPage({
+  token,
+  folderId,
+  itemTypes,
+  continuation,
+  limit,
+  sortBy,
+}: {
+  token: string;
+  folderId: string;
+  itemTypes?: string;
+  continuation?: string;
+  limit?: number;
+  sortBy?: string;
+}): Promise<ListFolderItemsResponse> {
+  const queryParams: Record<string, string> = {};
+  if (itemTypes) queryParams['item_types'] = itemTypes;
+  if (continuation) queryParams['continuation'] = continuation;
+  if (limit !== undefined) queryParams['limit'] = String(limit);
+  if (sortBy) queryParams['sort_by'] = sortBy;
+  const body = await canvaClient.request<ListFolderItemsResponse>({
+    token,
+    method: HttpMethod.GET,
+    path: `/folders/${encodeURIComponent(folderId)}/items`,
+    queryParams,
+  });
+  return { items: body?.items ?? [], continuation: body?.continuation };
+}
+
+async function collectFolderItems({ token, folderId, itemTypes }: { token: string; folderId: string; itemTypes: string }): Promise<{ items: FolderItemSummary[]; truncated: boolean }> {
+  const collected: FolderItemSummary[] = [];
+  let continuation: string | undefined;
+  for (let page = 0; page < MAX_DROPDOWN_PAGES; page++) {
+    const result = await listFolderPage({ token, folderId, itemTypes, continuation, limit: DROPDOWN_PAGE_SIZE });
+    collected.push(...result.items);
+    continuation = result.continuation;
+    if (!continuation) {
+      return { items: collected, truncated: false };
+    }
+  }
+  return { items: collected, truncated: true };
+}
+
+async function fetchUserDesigns({ auth, query }: { auth: CanvaAuthValue; query?: string }): Promise<DropdownOptionList> {
+  const options: Array<{ label: string; value: string }> = [];
+  let continuation: string | undefined;
+  for (let page = 0; page < MAX_DROPDOWN_PAGES; page++) {
+    const queryParams: Record<string, string> = { limit: String(DROPDOWN_PAGE_SIZE) };
+    const term = query?.trim();
+    if (term) {
+      queryParams['query'] = term;
+    } else {
+      queryParams['sort_by'] = 'modified_descending';
+    }
+    if (continuation) queryParams['continuation'] = continuation;
+    const body = await canvaClient.request<ListDesignsResponse>({
+      token: auth.access_token,
+      method: HttpMethod.GET,
+      path: '/designs',
+      queryParams,
+    });
+    options.push(...(body?.items ?? []).map((design) => ({ label: design.title || `Design ${design.id}`, value: design.id })));
+    continuation = body?.continuation;
+    if (!continuation) {
+      return { options, truncated: false };
+    }
+  }
+  return { options, truncated: true };
+}
+
+async function fetchUserAssets({ auth }: { auth: CanvaAuthValue }): Promise<DropdownOptionList> {
+  const seen = new Set<string>();
+  const options: Array<{ label: string; value: string }> = [];
+  let truncated = false;
+  for (const folderId of ['root', 'uploads']) {
+    const result = await collectFolderItems({ token: auth.access_token, folderId, itemTypes: 'image' });
+    truncated = truncated || result.truncated;
+    for (const item of result.items) {
+      const id = item.image?.id;
+      if (id && !seen.has(id)) {
+        seen.add(id);
+        options.push({ label: item.image?.name || `Asset ${id}`, value: id });
+      }
+    }
+  }
+  return { options, truncated };
+}
+
+async function fetchUserFolders({ auth }: { auth: CanvaAuthValue }): Promise<DropdownOptionList> {
+  const options = [
+    { label: 'Projects (top level)', value: 'root' },
+    { label: 'Uploads', value: 'uploads' },
+  ];
+  let truncated = false;
+  for (const parent of ['root', 'uploads']) {
+    const result = await collectFolderItems({ token: auth.access_token, folderId: parent, itemTypes: 'folder' });
+    truncated = truncated || result.truncated;
+    for (const item of result.items) {
+      if (item.folder?.id) {
+        options.push({ label: item.folder.name || `Folder ${item.folder.id}`, value: item.folder.id });
+      }
+    }
+  }
+  return { options, truncated };
+}
+
+function dropdownState({ result }: { result: DropdownOptionList }) {
+  return {
+    disabled: false,
+    options: result.options,
+    placeholder: result.truncated ? 'Showing the first items only. Use a custom ID for others.' : undefined,
+  };
+}
+
+function dropdownError({ error, what }: { error: unknown; what: string }) {
+  const reason = error instanceof Error ? error.message : String(error);
+  return {
+    disabled: true,
+    placeholder: `Could not load ${what}: ${reason}`.slice(0, 200),
+    options: [],
+  };
+}
+
+function flattenFolderItem(item: FolderItemSummary): FlatFolderItem {
+  if (item.type === 'folder' && item.folder) {
+    return {
+      type: 'folder',
+      id: item.folder.id,
+      name: item.folder.name,
+      created_at: item.folder.created_at,
+      updated_at: item.folder.updated_at,
+      thumbnail_url: item.folder.thumbnail?.url ?? null,
+      edit_url: null,
+      view_url: null,
+      tags: [],
+    };
+  }
+  if (item.type === 'design' && item.design) {
+    return {
+      type: 'design',
+      id: item.design.id,
+      name: item.design.title ?? null,
+      created_at: item.design.created_at,
+      updated_at: item.design.updated_at,
+      thumbnail_url: item.design.thumbnail?.url ?? null,
+      edit_url: item.design.urls?.edit_url ?? null,
+      view_url: item.design.urls?.view_url ?? null,
+      tags: [],
+    };
+  }
+  if (item.type === 'image' && item.image) {
+    return {
+      type: 'image',
+      id: item.image.id,
+      name: item.image.name,
+      created_at: item.image.created_at,
+      updated_at: item.image.updated_at,
+      thumbnail_url: item.image.thumbnail?.url ?? null,
+      edit_url: null,
+      view_url: null,
+      tags: item.image.tags ?? [],
+    };
+  }
+  const other = item.brand_template;
+  return {
+    type: item.type,
+    id: other?.id ?? '',
+    name: other?.title ?? null,
+    created_at: other?.created_at ?? null,
+    updated_at: other?.updated_at ?? null,
+    thumbnail_url: other?.thumbnail?.url ?? null,
+    edit_url: null,
+    view_url: other?.view_url ?? null,
+    tags: [],
+  };
+}
+
+function parsePageNumbers(pages: unknown[] | undefined): number[] | undefined {
+  if (!pages || pages.length === 0) {
+    return undefined;
+  }
+  return pages.map((raw) => {
+    const value = typeof raw === 'number' ? raw : Number(String(raw).trim());
+    if (!Number.isInteger(value) || value < 1) {
+      throw new Error(`Page numbers must be whole numbers starting at 1. "${String(raw)}" is not valid.`);
+    }
+    return value;
+  });
+}
+
+function base64Utf8(value: string): string {
+  return Buffer.from(value, 'utf8').toString('base64');
+}
+
+async function fetchJob<J extends { id: string; status: string }>({ token, kind, jobId }: { token: string; kind: JobKind; jobId: string }): Promise<J> {
+  const body = await canvaClient.request<{ job: J }>({
+    token,
+    method: HttpMethod.GET,
+    path: `${JOB_PATHS[kind].path}/${encodeURIComponent(jobId)}`,
+  });
+  return body.job;
+}
+
+async function settleJob<J extends { id: string; status: string; error?: JobError }>({
+  token,
+  kind,
+  initial,
+  timeoutSeconds,
+  failOnTimeout,
+  statusAction,
+}: {
+  statusAction?: string;
+  token: string;
+  kind: JobKind;
+  initial: J;
+  timeoutSeconds: number;
+  failOnTimeout: boolean;
+}): Promise<J> {
+  const { job, timedOut } = await canvaClient.waitForJob<J>({
+    initial,
+    timeoutSeconds,
+    jobLabel: JOB_PATHS[kind].label,
+    statusAction,
+    fetchJob: (jobId) => fetchJob<J>({ token, kind, jobId }),
+  });
+  if (job.status === 'failed') {
+    throw canvaClient.jobFailureError({ jobLabel: JOB_PATHS[kind].label, jobId: job.id, error: job.error });
+  }
+  if (timedOut && failOnTimeout) {
+    throw canvaClient.jobTimeoutError({ jobLabel: JOB_PATHS[kind].label, jobId: job.id, timeoutSeconds });
+  }
+  return job;
+}
+
+function clampWaitSeconds(value: number | undefined): number {
+  if (value === undefined || value === null || Number.isNaN(value)) {
+    return DEFAULT_WAIT_SECONDS;
+  }
+  return Math.min(Math.max(Math.round(value), 5), MAX_WAIT_SECONDS);
+}
+
+function flattenJob({ kind, job }: { kind: JobKind; job: AnyJob }): FlatJob {
+  return {
+    job_type: kind,
+    job_id: job.id,
+    status: job.status,
+    urls: 'urls' in job && job.urls ? job.urls : [],
+    asset: 'asset' in job && job.asset ? job.asset : null,
+    designs: 'result' in job && job.result ? job.result.designs : [],
+    error_code: job.error?.code ?? null,
+    error_message: job.error?.message ?? null,
+  };
+}
+
+function designDropdown({ displayName, description }: { displayName: string; description: string }) {
+  return Property.Dropdown({
+    auth: canvaAuth,
+    displayName,
+    description,
+    required: true,
+    refreshers: [],
+    refreshOnSearch: true,
+    options: async ({ auth }, { searchValue }) => {
+      if (!auth) {
+        return { disabled: true, placeholder: 'Connect your Canva account first', options: [] };
+      }
+      try {
+        return dropdownState({ result: await fetchUserDesigns({ auth, query: searchValue }) });
+      } catch (error) {
+        return dropdownError({ error, what: 'designs' });
+      }
+    },
+  });
+}
+
+function assetDropdown({ displayName, description, required }: { displayName: string; description: string; required: boolean }) {
+  return Property.Dropdown({
+    auth: canvaAuth,
+    displayName,
+    description,
+    required,
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return { disabled: true, placeholder: 'Connect your Canva account first', options: [] };
+      }
+      try {
+        return dropdownState({ result: await fetchUserAssets({ auth }) });
+      } catch (error) {
+        return dropdownError({ error, what: 'assets' });
+      }
+    },
+  });
+}
+
+function folderDropdown({ displayName, description }: { displayName: string; description: string }) {
+  return Property.Dropdown({
+    auth: canvaAuth,
+    displayName,
+    description,
+    required: true,
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return { disabled: true, placeholder: 'Connect your Canva account first', options: [] };
+      }
+      try {
+        return dropdownState({ result: await fetchUserFolders({ auth }) });
+      } catch (error) {
+        return dropdownError({ error, what: 'folders' });
+      }
+    },
+  });
+}
+
+function waitProps() {
+  return {
+    waitForCompletion: Property.Checkbox({
+      displayName: 'Wait for Completion',
+      description: 'Wait until Canva finishes the job and return the result. Turn off to return the job ID right away and check it later with Get Job Status.',
+      required: false,
+      defaultValue: true,
+    }),
+    maxWaitSeconds: Property.Number({
+      displayName: 'Maximum Wait (seconds)',
+      description: `How long to wait for Canva before failing with the job ID (5-${MAX_WAIT_SECONDS}, default ${DEFAULT_WAIT_SECONDS}).`,
+      required: false,
+      defaultValue: DEFAULT_WAIT_SECONDS,
+    }),
+  };
+}
+
+export const canvaProps = { designDropdown, assetDropdown, folderDropdown, waitProps };
 
 export const canvaCommon = {
-  baseUrl: 'https://api.canva.com/rest/v1',
+  baseUrl: canvaClient.baseUrl,
+  fetchUserDesigns,
+  fetchUserAssets,
+  fetchUserFolders,
+  listFolderPage,
+  flattenFolderItem,
+  dropdownState,
+  dropdownError,
+  parsePageNumbers,
+  base64Utf8,
+  fetchJob,
+  settleJob,
+  clampWaitSeconds,
+  flattenJob,
 };
 
-export type canvaAuthType = AppConnectionValueForAuthProperty<typeof canvaAuth>
+export { canvaAuth };
 
-export interface DesignTypeInput {
-  type: 'preset' | 'custom';
-  name?: 'doc' | 'whiteboard' | 'presentation'; // Required if type is 'preset'
-  width?: number; // Required if type is 'custom', min: 40, max: 8000
-  height?: number; // Required if type is 'custom', min: 40, max: 8000
-}
-
-// Request body for create design API
-export interface CanvaDesignCreateRequest {
-  design_type?: DesignTypeInput;
-  asset_id?: string;
-  title?: string; // Min length: 1, Max length: 255
-}
-
-// Owner information
-export interface TeamUserSummary {
-  user_id: string;
-  team_id: string;
-}
-
-// Design URLs
-export interface DesignLinks {
-  edit_url: string;
-  view_url: string;
-}
-
-// Thumbnail information
-export interface Thumbnail {
-  width: number;
-  height: number;
-  url: string;
-}
-
-// Design response structure
-export interface Design {
-  id: string;
-  title?: string;
-  owner: TeamUserSummary;
-  urls: DesignLinks;
-  created_at: number; // Unix timestamp
-  updated_at: number; // Unix timestamp
-  thumbnail?: Thumbnail;
-  page_count?: number;
-}
-
-// API response wrapper
-export interface CanvaDesignResponse {
-  design: Design;
-}
-
-// Folder information
-export interface Folder {
-  id: string;
-  name: string;
-  created_at: number; // Unix timestamp
-  updated_at: number; // Unix timestamp
-  thumbnail?: Thumbnail;
-}
-
-// Folder response wrapper
-export interface FolderResponse {
-  folder: Folder;
-}
-
-// Asset summary for folder items
-export interface AssetSummary {
-  type: 'image' | 'video';
-  id: string;
-  name: string;
-  tags: string[];
-  created_at: number; // Unix timestamp
-  updated_at: number; // Unix timestamp
-  thumbnail?: Thumbnail;
-}
-
-// Folder item summary - polymorphic structure
-export interface FolderItemSummary {
-  type: 'folder' | 'design' | 'image';
-  folder?: Folder; // Present when type is 'folder'
-  design?: DesignSummary; // Present when type is 'design'
-  image?: AssetSummary; // Present when type is 'image'
-}
-
-// List folder items response
-export interface ListFolderItemsResponse {
-  items: FolderItemSummary[];
-  continuation?: string;
-}
-
-// Asset upload metadata for header
-export interface AssetUploadMetadata {
-  name_base64: string; // Asset name encoded in Base64, max 50 chars unencoded
-}
-
-// Asset upload error
-export interface AssetUploadError {
-  code: 'file_too_big' | 'import_failed' | 'fetch_failed';
-  message: string;
-}
-
-export interface ImportError {
-  code: 'file_too_big' | 'import_failed';
-  message: string;
-}
-
-export interface ImportStatus {
-  state: 'failed' | 'in_progress' | 'success';
-  error?: ImportError;
-}
-
-// Asset information
-export interface Asset {
-  type: 'image' | 'video';
-  id: string;
-  name: string;
-  tags: string[];
-  created_at: number; // Unix timestamp
-  updated_at: number; // Unix timestamp
-  thumbnail?: Thumbnail;
-  import_status?: ImportStatus; // deprecated
-}
-
-// Asset upload job
-export interface AssetUploadJob {
-  id: string;
-  status: 'failed' | 'in_progress' | 'success';
-  error?: AssetUploadError;
-  asset?: Asset;
-}
-
-// Asset upload response
-export interface AssetUploadResponse {
-  job: AssetUploadJob;
-}
-
-// Asset response wrapper
-export interface AssetResponse {
-  asset: Asset;
-}
-
-// Design import metadata for header
-export interface DesignImportMetadata {
-  title_base64: string; // Design title encoded in Base64, max 50 chars unencoded
-  mime_type?: string; // Optional MIME type
-}
-
-// Design summary for import results
-export interface DesignSummary {
-  id: string;
-  title?: string;
-  url?: string;
-  urls: DesignLinks;
-  created_at: number; // Unix timestamp
-  updated_at: number; // Unix timestamp
-  thumbnail?: Thumbnail;
-  page_count?: number;
-}
-
-// Design import job result
-export interface DesignImportJobResult {
-  designs: DesignSummary[]; // Usually contains one item, may be split for large files
-}
-
-// Design import error
-export interface DesignImportError {
-  code: 'design_creation_throttled' | 'design_import_throttled' | 'duplicate_import' | 'internal_error' | 'invalid_file' | 'fetch_failed';
-  message: string;
-}
-
-// Design import job
-export interface DesignImportJob {
-  id: string;
-  status: 'failed' | 'in_progress' | 'success';
-  result?: DesignImportJobResult;
-  error?: DesignImportError;
-}
-
-// Design import response
-export interface DesignImportResponse {
-  job: DesignImportJob;
-}
-
-// Export format structure
-export interface ExportFormat {
-  type: 'pdf' | 'jpg' | 'png' | 'gif' | 'pptx' | 'mp4';
-  quality?: number | string; // Required for jpg (1-100) and mp4 (e.g., 'horizontal_1080p')
-  pages?: number[]; // Specific pages to export
-  export_quality?: 'regular' | 'pro'; // Export quality level
-  size?: 'a4' | 'a3' | 'letter' | 'legal'; // PDF paper size (for Canva Docs)
-  height?: number; // For jpg, png, gif (40-25000)
-  width?: number; // For jpg, png, gif (40-25000)
-  lossless?: boolean; // PNG compression (default true)
-  transparent_background?: boolean; // PNG transparent background (Pro feature)
-  as_single_image?: boolean; // PNG multi-page merge (default false)
-}
-
-// Export error
-export interface ExportError {
-  code: 'license_required' | 'approval_required' | 'internal_failure';
-  message: string;
-}
-
-// Export job
-export interface ExportJob {
-  id: string;
-  status: 'failed' | 'in_progress' | 'success';
-  urls?: string[]; // Download URLs, expire after 24 hours
-  error?: ExportError;
-}
-
-// Export request
-export interface ExportRequest {
-  design_id: string;
-  format: ExportFormat;
-}
-
-// Export response
-export interface ExportResponse {
-  job: ExportJob;
-}
-
-// File format validation
-export const SUPPORTED_IMAGE_FORMATS = ['jpg', 'jpeg', 'png', 'heic', 'gif', 'tiff', 'webp'];
-export const SUPPORTED_VIDEO_FORMATS = ['m4v', 'mkv', 'mp4', 'mpeg', 'mov', 'webm'];
-
-// Supported import file formats with MIME types
-export const SUPPORTED_IMPORT_FORMATS = [
-  { ext: 'ai', mime: 'application/illustrator', name: 'Adobe Illustrator' },
-  { ext: 'psd', mime: 'image/vnd.adobe.photoshop', name: 'Adobe Photoshop' },
-  { ext: 'key', mime: 'application/vnd.apple.keynote', name: 'Apple Keynote' },
-  { ext: 'numbers', mime: 'application/vnd.apple.numbers', name: 'Apple Numbers' },
-  { ext: 'pages', mime: 'application/vnd.apple.pages', name: 'Apple Pages' },
-  { ext: 'xls', mime: 'application/vnd.ms-excel', name: 'Microsoft Excel (pre 2007)' },
-  { ext: 'xlsx', mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', name: 'Microsoft Excel' },
-  { ext: 'ppt', mime: 'application/vnd.ms-powerpoint', name: 'Microsoft PowerPoint (pre 2007)' },
-  { ext: 'pptx', mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', name: 'Microsoft PowerPoint' },
-  { ext: 'doc', mime: 'application/msword', name: 'Microsoft Word (pre 2007)' },
-  { ext: 'docx', mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', name: 'Microsoft Word' },
-  { ext: 'odg', mime: 'application/vnd.oasis.opendocument.graphics', name: 'OpenOffice Draw' },
-  { ext: 'odp', mime: 'application/vnd.oasis.opendocument.presentation', name: 'OpenOffice Presentation' },
-  { ext: 'ods', mime: 'application/vnd.oasis.opendocument.spreadsheet', name: 'OpenOffice Sheets' },
-  { ext: 'odt', mime: 'application/vnd.oasis.opendocument.text', name: 'OpenOffice Text' },
-  { ext: 'pdf', mime: 'application/pdf', name: 'PDF' },
-];
-
-// Export format constants
 export const EXPORT_FORMATS = [
   { value: 'pdf', label: 'PDF' },
   { value: 'jpg', label: 'JPEG' },
@@ -280,92 +441,148 @@ export const MP4_QUALITIES = [
   { value: 'vertical_4k', label: 'Vertical 4K' },
 ];
 
-// File size limits
+export const SUPPORTED_IMAGE_FORMATS = ['jpg', 'jpeg', 'png', 'heic', 'gif', 'tiff', 'webp'];
+export const SUPPORTED_VIDEO_FORMATS = ['m4v', 'mkv', 'mp4', 'mpeg', 'mov', 'webm'];
+
+export const SUPPORTED_IMPORT_FORMATS = [
+  { ext: 'ai', mime: 'application/illustrator', name: 'Adobe Illustrator' },
+  { ext: 'psd', mime: 'image/vnd.adobe.photoshop', name: 'Adobe Photoshop' },
+  { ext: 'key', mime: 'application/vnd.apple.keynote', name: 'Apple Keynote' },
+  { ext: 'numbers', mime: 'application/vnd.apple.numbers', name: 'Apple Numbers' },
+  { ext: 'pages', mime: 'application/vnd.apple.pages', name: 'Apple Pages' },
+  { ext: 'xls', mime: 'application/vnd.ms-excel', name: 'Microsoft Excel (pre 2007)' },
+  { ext: 'xlsx', mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', name: 'Microsoft Excel' },
+  { ext: 'ppt', mime: 'application/vnd.ms-powerpoint', name: 'Microsoft PowerPoint (pre 2007)' },
+  { ext: 'pptx', mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', name: 'Microsoft PowerPoint' },
+  { ext: 'doc', mime: 'application/msword', name: 'Microsoft Word (pre 2007)' },
+  { ext: 'docx', mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', name: 'Microsoft Word' },
+  { ext: 'odg', mime: 'application/vnd.oasis.opendocument.graphics', name: 'OpenOffice Draw' },
+  { ext: 'odp', mime: 'application/vnd.oasis.opendocument.presentation', name: 'OpenOffice Presentation' },
+  { ext: 'ods', mime: 'application/vnd.oasis.opendocument.spreadsheet', name: 'OpenOffice Sheets' },
+  { ext: 'odt', mime: 'application/vnd.oasis.opendocument.text', name: 'OpenOffice Text' },
+  { ext: 'pdf', mime: 'application/pdf', name: 'PDF' },
+];
+
+export const JOB_PATHS: Record<JobKind, { path: string; label: string }> = {
+  export: { path: '/exports', label: 'export' },
+  asset_upload: { path: '/asset-uploads', label: 'asset upload' },
+  url_asset_upload: { path: '/url-asset-uploads', label: 'asset upload from URL' },
+  import: { path: '/imports', label: 'design import' },
+  url_import: { path: '/url-imports', label: 'design import from URL' },
+};
+
 export const MAX_IMAGE_SIZE_MB = 50;
 export const MAX_VIDEO_SIZE_MB = 500;
 export const MAX_ASSET_NAME_LENGTH = 50;
 export const MAX_DESIGN_TITLE_LENGTH = 50;
-
-// Export dimension limits
 export const MIN_EXPORT_DIMENSION = 40;
 export const MAX_EXPORT_DIMENSION = 25000;
+export const DEFAULT_WAIT_SECONDS = 120;
+export const MAX_WAIT_SECONDS = 300;
+export const AI_WAIT_SECONDS = 25;
 
-// Dynamic field helpers
-export async function fetchUserDesigns(auth: canvaAuthType, query?: string): Promise<Array<{ label: string; value: string }>> {
-  try {
-    const params = new URLSearchParams();
-    if (query && query.trim()) {
-      params.append('query', query.trim());
-    }
-    params.append('sort_by', 'modified_descending');
+export type CanvaAuthValue = AppConnectionValueForAuthProperty<typeof canvaAuth>;
 
-    const response = await fetch(`${canvaCommon.baseUrl}/designs?${params.toString()}`, {
-      headers: {
-        'Authorization': `Bearer ${auth.access_token}`,
-      },
-    });
+export type DropdownOptionList = { options: Array<{ label: string; value: string }>; truncated: boolean };
 
-    if (!response.ok) return [];
+export type Thumbnail = { width: number; height: number; url: string };
 
-    const data = await response.json();
-    return (data.items || []).map((design: any) => ({
-      label: design.title || `Design ${design.id}`,
-      value: design.id,
-    }));
-  } catch (error) {
-    console.error('Failed to fetch designs:', error);
-    return [];
-  }
-}
+export type DesignLinks = { edit_url: string; view_url: string };
 
-export async function fetchUserAssets(auth: canvaAuthType, assetType?: 'image' | 'video'): Promise<Array<{ label: string; value: string }>> {
-  try {
-    const response = await fetch(`${canvaCommon.baseUrl}/folders/root/items?item_types=image`, {
-      headers: {
-        'Authorization': `Bearer ${auth.access_token}`,
-      },
-    });
+export type Design = {
+  id: string;
+  title?: string;
+  owner?: { user_id: string; team_id: string };
+  urls: DesignLinks;
+  created_at: number;
+  updated_at: number;
+  thumbnail?: Thumbnail;
+  page_count?: number;
+  design_types?: string[];
+};
 
-    if (!response.ok) return [];
+export type CanvaDesignResponse = { design: Design };
 
-    const data = await response.json();
-    return (data.items || [])
-      .filter((item: any) => item.type === 'image' && (!assetType || item.image?.type === assetType))
-      .map((item: any) => ({
-        label: item.image?.name || `Asset ${item.image?.id}`,
-        value: item.image?.id || '',
-      }))
-      .filter((item: any) => item.value);
-  } catch (error) {
-    console.error('Failed to fetch assets:', error);
-    return [];
-  }
-}
+export type ListDesignsResponse = { items: Design[]; continuation?: string };
 
-export async function fetchUserFolders(auth: canvaAuthType): Promise<Array<{ label: string; value: string }>> {
-  try {
-    const folders = [{ label: 'Root (Top Level)', value: 'root' }];
-    
-    const response = await fetch(`${canvaCommon.baseUrl}/folders/root/items?item_types=folder`, {
-      headers: {
-        'Authorization': `Bearer ${auth.access_token}`,
-      },
-    });
+export type Folder = { id: string; name: string; created_at: number; updated_at: number; thumbnail?: Thumbnail };
 
-    if (!response.ok) return folders;
+export type FolderResponse = { folder: Folder };
 
-    const data = await response.json();
-    const subfolders = (data.items || [])
-      .filter((item: any) => item.type === 'folder')
-      .map((item: any) => ({
-        label: item.folder?.name || `Folder ${item.folder?.id}`,
-        value: item.folder?.id || '',
-      }))
-      .filter((item: any) => item.value);
+export type AssetSummary = {
+  type: 'image' | 'video';
+  id: string;
+  name: string;
+  tags: string[];
+  created_at: number;
+  updated_at: number;
+  thumbnail?: Thumbnail;
+};
 
-    return [...folders, ...subfolders];
-  } catch (error) {
-    console.error('Failed to fetch folders:', error);
-    return [{ label: 'Root (Top Level)', value: 'root' }];
-  }
-} 
+export type FolderItemSummary = {
+  type: string;
+  folder?: Folder;
+  design?: Design;
+  image?: AssetSummary;
+  brand_template?: { id: string; title?: string; view_url?: string; created_at?: number; updated_at?: number; thumbnail?: Thumbnail };
+};
+
+export type ListFolderItemsResponse = { items: FolderItemSummary[]; continuation?: string };
+
+export type FlatFolderItem = {
+  type: string;
+  id: string;
+  name: string | null;
+  created_at: number | null;
+  updated_at: number | null;
+  thumbnail_url: string | null;
+  edit_url: string | null;
+  view_url: string | null;
+  tags: string[];
+};
+
+export type Asset = AssetSummary & {
+  owner?: { user_id: string; team_id: string };
+  metadata?: { type: string; width?: number; height?: number; duration?: number; smart_tags?: string[] };
+  import_status?: { state: 'failed' | 'in_progress' | 'success'; error?: { code: string; message: string } };
+};
+
+export type AssetResponse = { asset: Asset };
+
+export type JobError = { code: string; message: string };
+
+export type AssetUploadJob = { id: string; status: JobStatus; error?: JobError; asset?: Asset };
+
+export type DesignImportJob = { id: string; status: JobStatus; result?: { designs: Design[] }; error?: JobError };
+
+export type ExportJob = { id: string; status: JobStatus; urls?: string[]; error?: JobError };
+
+export type JobStatus = 'failed' | 'in_progress' | 'success';
+
+export type ExportFormat = {
+  type: string;
+  quality?: number | string;
+  pages?: number[];
+  export_quality?: string;
+  size?: string;
+  height?: number;
+  width?: number;
+  lossless?: boolean;
+  transparent_background?: boolean;
+  as_single_image?: boolean;
+};
+
+export type JobKind = 'export' | 'asset_upload' | 'url_asset_upload' | 'import' | 'url_import';
+
+export type AnyJob = ExportJob | AssetUploadJob | DesignImportJob;
+
+export type FlatJob = {
+  job_type: JobKind;
+  job_id: string;
+  status: string;
+  urls: string[];
+  asset: Asset | null;
+  designs: Design[];
+  error_code: string | null;
+  error_message: string | null;
+};

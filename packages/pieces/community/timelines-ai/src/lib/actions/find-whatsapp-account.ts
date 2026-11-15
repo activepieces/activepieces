@@ -4,6 +4,7 @@ import { timelinesAiAuth, timelinesAiCommon } from '../common';
 export const findWhatsappAccount = createAction({
   auth: timelinesAiAuth,
   name: 'findWhatsappAccount',
+  classification: 'SEARCH',
   displayName: 'Find WhatsApp Account',
   description: 'Search for a WhatsApp account (by phone or ID).',
   audience: 'both',

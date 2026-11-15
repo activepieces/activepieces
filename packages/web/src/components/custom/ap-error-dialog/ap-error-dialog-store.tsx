@@ -4,6 +4,7 @@ type ApErrorDialogParams = {
   title: string;
   description: React.ReactNode;
   error: unknown;
+  technicalDetailsDefaultOpen?: boolean;
 };
 interface ApErrorDialogStore {
   params: ApErrorDialogParams | null;

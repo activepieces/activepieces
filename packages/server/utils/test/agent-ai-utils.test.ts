@@ -1,0 +1,647 @@
+import { AIProviderName } from '@activepieces/core-utils'
+import { ACTIVEPIECES_CHAT_TIERS, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
+import { ModelMessage } from 'ai'
+import { describe, expect, it, vi } from 'vitest'
+import { agentAiUtils } from '../src/agent-ai-utils'
+import { modelCatalog } from '../src/model-catalog'
+
+const { sanitizeTruncatedAssistantTail } = agentAiUtils
+
+describe('sanitizeTruncatedAssistantTail', () => {
+    it('returns messages unchanged when the last message is not an assistant message', () => {
+        const messages: ModelMessage[] = [
+            { role: 'assistant', content: [{ type: 'tool-call', toolCallId: 'call_1', toolName: 'ap_research_pieces', input: {} }] },
+            { role: 'tool', content: [{ type: 'tool-result', toolCallId: 'call_1', toolName: 'ap_research_pieces', output: { type: 'json', value: { ok: true } } }] },
+        ]
+        expect(sanitizeTruncatedAssistantTail(messages)).toEqual(messages)
+    })
+
+    it('drops a dangling tool-call with no matching tool-result', () => {
+        const messages: ModelMessage[] = [
+            {
+                role: 'assistant',
+                content: [
+                    { type: 'text', text: 'Setting things up.' },
+                    { type: 'tool-call', toolCallId: 'call_truncated', toolName: 'ap_show_questions', input: {} },
+                ],
+            },
+        ]
+        const result = sanitizeTruncatedAssistantTail(messages)
+        expect(result).toHaveLength(1)
+        expect(result[0].content).toEqual([{ type: 'text', text: 'Setting things up.' }])
+    })
+
+    it('keeps a tool-call that has a matching tool-result', () => {
+        const messages: ModelMessage[] = [
+            {
+                role: 'assistant',
+                content: [
+                    { type: 'tool-call', toolCallId: 'call_done', toolName: 'ap_get_piece_props', input: {} },
+                ],
+            },
+            { role: 'tool', content: [{ type: 'tool-result', toolCallId: 'call_done', toolName: 'ap_get_piece_props', output: { type: 'json', value: {} } }] },
+        ]
+        expect(sanitizeTruncatedAssistantTail(messages)).toEqual(messages)
+    })
+
+    it('drops truncated reasoning parts from the final assistant message', () => {
+        const messages: ModelMessage[] = [
+            {
+                role: 'assistant',
+                content: [
+                    { type: 'reasoning', text: 'I was thinking about…' },
+                    { type: 'text', text: 'Partial answer' },
+                ],
+            },
+        ]
+        const result = sanitizeTruncatedAssistantTail(messages)
+        expect(result[0].content).toEqual([{ type: 'text', text: 'Partial answer' }])
+    })
+
+    it('drops the final assistant message entirely when nothing valid remains', () => {
+        const messages: ModelMessage[] = [
+            { role: 'user', content: 'hello' },
+            {
+                role: 'assistant',
+                content: [
+                    { type: 'reasoning', text: 'truncated thinking only' },
+                    { type: 'tool-call', toolCallId: 'call_x', toolName: 'ap_build_flow', input: {} },
+                ],
+            },
+        ]
+        const result = sanitizeTruncatedAssistantTail(messages)
+        expect(result).toEqual([{ role: 'user', content: 'hello' }])
+    })
+
+    it('leaves earlier completed messages untouched', () => {
+        const earlierAssistant: ModelMessage = {
+            role: 'assistant',
+            content: [
+                { type: 'reasoning', text: 'complete signed thinking' },
+                { type: 'tool-call', toolCallId: 'call_a', toolName: 'ap_research_pieces', input: {} },
+            ],
+        }
+        const toolResult: ModelMessage = {
+            role: 'tool',
+            content: [{ type: 'tool-result', toolCallId: 'call_a', toolName: 'ap_research_pieces', output: { type: 'json', value: {} } }],
+        }
+        const truncatedTail: ModelMessage = {
+            role: 'assistant',
+            content: [{ type: 'reasoning', text: 'cut off mid-thought' }],
+        }
+        const result = sanitizeTruncatedAssistantTail([earlierAssistant, toolResult, truncatedTail])
+        expect(result).toEqual([earlierAssistant, toolResult])
+    })
+
+    it('returns messages unchanged when the final assistant message has string content', () => {
+        const messages: ModelMessage[] = [
+            { role: 'assistant', content: 'plain text answer' },
+        ]
+        expect(sanitizeTruncatedAssistantTail(messages)).toEqual(messages)
+    })
+
+    it('does not mutate the input array or its messages', () => {
+        const messages: ModelMessage[] = [
+            {
+                role: 'assistant',
+                content: [
+                    { type: 'text', text: 'keep' },
+                    { type: 'reasoning', text: 'drop' },
+                ],
+            },
+        ]
+        const snapshot = JSON.parse(JSON.stringify(messages))
+        sanitizeTruncatedAssistantTail(messages)
+        expect(messages).toEqual(snapshot)
+    })
+})
+
+describe('collectStepMessages', () => {
+    const listCall: ModelMessage = {
+        role: 'assistant',
+        content: [{ type: 'tool-call', toolCallId: 'call_list', toolName: 'ap_list_tables', input: {} }],
+    }
+    const listResult: ModelMessage = {
+        role: 'tool',
+        content: [{ type: 'tool-result', toolCallId: 'call_list', toolName: 'ap_list_tables', output: { type: 'json', value: { tables: ['leads', 'orders'] } } }],
+    }
+    const finalText: ModelMessage = {
+        role: 'assistant',
+        content: [{ type: 'text', text: 'That table does not exist yet — want me to create it?' }],
+    }
+
+    it('joins every step, since each step holds only its own messages', () => {
+        const steps = [
+            { response: { messages: [listCall, listResult] } },
+            { response: { messages: [finalText] } },
+        ]
+
+        expect(agentAiUtils.collectStepMessages(steps)).toEqual([listCall, listResult, finalText])
+    })
+
+    it('returns an empty array when there are no steps', () => {
+        expect(agentAiUtils.collectStepMessages([])).toEqual([])
+    })
+})
+
+describe('buildStepParts — tool call status', () => {
+    it('saves a call that threw as an error with its message, and one the SDK refused to run as an error', () => {
+        const content = [
+            { type: 'tool-call', toolCallId: 'ran', toolName: 'ap_web_search', input: { query: 'a' } },
+            { type: 'tool-result', toolCallId: 'ran', toolName: 'ap_web_search', output: { type: 'json', value: { answer: 'ok' } } },
+            { type: 'tool-call', toolCallId: 'threw', toolName: 'mcp__crm__create_record', input: { name: 'b' } },
+            { type: 'tool-error', toolCallId: 'threw', toolName: 'mcp__crm__create_record', error: new Error('MCP tool timed out') },
+            { type: 'tool-call', toolCallId: 'refused', toolName: 'ap_web_search', input: { query: 'c' }, invalid: true },
+            { type: 'tool-error', toolCallId: 'refused', toolName: 'ap_web_search' },
+            { type: 'tool-call', toolCallId: 'unanswered', toolName: 'ap_web_search', input: { query: 'd' } },
+        ]
+
+        const statuses = agentAiUtils.buildStepParts({ content }).flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL ? [[part.toolCallId, part.status, part.errorText]] : [])
+
+        expect(statuses).toEqual([
+            ['ran', PersistedToolCallStatus.COMPLETED, undefined],
+            ['threw', PersistedToolCallStatus.ERROR, 'MCP tool timed out'],
+            ['refused', PersistedToolCallStatus.ERROR, undefined],
+            ['unanswered', PersistedToolCallStatus.ERROR, undefined],
+        ])
+    })
+})
+
+describe('buildStepParts — ap_lazy_tool', () => {
+    it('persists a wrapped call under the inner tool name and input', () => {
+        const content = [
+            { type: 'tool-call', toolCallId: 'w1', toolName: 'ap_lazy_tool', input: { tool: 'ap_add_step', input: { stepName: 'step_1' } } },
+            { type: 'tool-result', toolCallId: 'w1', toolName: 'ap_lazy_tool', output: { type: 'json', value: { ok: true } } },
+        ]
+
+        const [part] = agentAiUtils.buildStepParts({ content })
+
+        expect(part).toMatchObject({ type: PersistedAgentPartType.TOOL_CALL, toolName: 'ap_add_step', input: { stepName: 'step_1' } })
+    })
+
+    it('turns a thinking-status call into a status part, not a tool card', () => {
+        const content = [
+            { type: 'tool-call', toolCallId: 's1', toolName: 'ap_update_thinking_status', input: { status: 'I will wire up Slack' } },
+            { type: 'tool-result', toolCallId: 's1', toolName: 'ap_update_thinking_status', output: { type: 'json', value: { success: true } } },
+        ]
+
+        expect(agentAiUtils.buildStepParts({ content })).toEqual([{ type: PersistedAgentPartType.THINKING_STATUS, text: 'I will wire up Slack' }])
+    })
+})
+
+describe('buildStepParts — ap_set_build_plan', () => {
+    it('emits a build-plan part carrying the buildId from output and the plan from input', () => {
+        const content = [
+            {
+                type: 'tool-call',
+                toolCallId: 'call_plan',
+                toolName: 'ap_set_build_plan',
+                input: {
+                    phase: 'building',
+                    flowName: 'Lead triage',
+                    steps: [{ id: 'trigger', label: 'Gmail trigger', status: 'done' }],
+                },
+            },
+            {
+                type: 'tool-result',
+                toolCallId: 'call_plan',
+                toolName: 'ap_set_build_plan',
+                output: { type: 'json', value: { ok: true, buildId: 'build_1' } },
+            },
+        ]
+        const parts = agentAiUtils.buildStepParts({ content })
+        const buildPlanPart = parts.find((p) => p.type === 'build-plan')
+        expect(buildPlanPart).toBeDefined()
+        expect(buildPlanPart).toMatchObject({
+            type: 'build-plan',
+            buildId: 'build_1',
+            data: {
+                phase: 'building',
+                flowName: 'Lead triage',
+                steps: [{ id: 'trigger', label: 'Gmail trigger', status: 'done' }],
+            },
+        })
+    })
+
+    it('does not emit a build-plan part when the output has no buildId', () => {
+        const content = [
+            {
+                type: 'tool-call',
+                toolCallId: 'call_plan',
+                toolName: 'ap_set_build_plan',
+                input: { phase: 'detecting', flowName: 'X', steps: [{ id: 'a', label: 'A', status: 'pending' }] },
+            },
+            {
+                type: 'tool-result',
+                toolCallId: 'call_plan',
+                toolName: 'ap_set_build_plan',
+                output: { type: 'json', value: { ok: true } },
+            },
+        ]
+        const parts = agentAiUtils.buildStepParts({ content })
+        expect(parts.find((p) => p.type === 'build-plan')).toBeUndefined()
+    })
+})
+
+describe('buildStepParts — ap_run_code', () => {
+    it('emits a file part for each produced file in the tool output', () => {
+        const content = [
+            {
+                type: 'tool-call',
+                toolCallId: 'call_code',
+                toolName: 'ap_run_code',
+                input: { title: 'Resize image', code: 'export const code = async () => ({})' },
+            },
+            {
+                type: 'tool-result',
+                toolCallId: 'call_code',
+                toolName: 'ap_run_code',
+                output: {
+                    type: 'json',
+                    value: {
+                        text: '✅ Code ran. Returned 1 file(s) to the user: small.png.',
+                        producedFiles: [
+                            { fileId: 'file_1', url: 'https://api.example.com/v1/files/file_1?token=x', mediaType: 'image/png', fileName: 'small.png', byteSize: 1234 },
+                        ],
+                    },
+                },
+            },
+        ]
+        const parts = agentAiUtils.buildStepParts({ content })
+        const filePart = parts.find((p) => p.type === 'file')
+        expect(filePart).toMatchObject({
+            type: 'file',
+            toolCallId: 'call_code',
+            fileId: 'file_1',
+            url: 'https://api.example.com/v1/files/file_1?token=x',
+            mediaType: 'image/png',
+            fileName: 'small.png',
+            byteSize: 1234,
+            title: 'Resize image',
+        })
+    })
+
+    it('does not emit a file part when no files were produced', () => {
+        const content = [
+            {
+                type: 'tool-call',
+                toolCallId: 'call_code',
+                toolName: 'ap_run_code',
+                input: { code: 'export const code = async () => ({ result: 4 })' },
+            },
+            {
+                type: 'tool-result',
+                toolCallId: 'call_code',
+                toolName: 'ap_run_code',
+                output: { type: 'json', value: { text: '✅ Code ran.\n\n{"result":4}', producedFiles: [] } },
+            },
+        ]
+        const parts = agentAiUtils.buildStepParts({ content })
+        expect(parts.find((p) => p.type === 'file')).toBeUndefined()
+    })
+})
+
+function toolResultMessage({ id, outputText }: { id: string, outputText: string }): ModelMessage {
+    return {
+        role: 'tool',
+        content: [{ type: 'tool-result', toolCallId: id, toolName: 'ap_explore_data', output: { type: 'text', value: outputText } }],
+    }
+}
+
+describe('collapseStaleToolOutputs', () => {
+    it('returns input unchanged when at or below the keep-recent count', () => {
+        const messages: ModelMessage[] = Array.from({ length: 6 }, (_, i) => toolResultMessage({ id: `c${i}`, outputText: 'z'.repeat(2000) }))
+        expect(agentAiUtils.collapseStaleToolOutputs({ messages })).toBe(messages)
+    })
+
+    it('collapses only the stale oversized outputs, keeps the most recent 6 intact, never drops a message', () => {
+        const big = 'z'.repeat(2000)
+        const messages: ModelMessage[] = Array.from({ length: 10 }, (_, i) => toolResultMessage({ id: `c${i}`, outputText: big }))
+        const out = agentAiUtils.collapseStaleToolOutputs({ messages })
+
+        expect(out).toHaveLength(messages.length)
+        const outputAt = (idx: number): unknown => {
+            const part = Array.isArray(out[idx].content) ? out[idx].content[0] : undefined
+            return part && typeof part === 'object' && 'output' in part ? part.output : undefined
+        }
+        // 10 results, keep 6 → first 4 are stale and collapsed to a marker.
+        expect(JSON.stringify(outputAt(0))).toContain('omitted to save context')
+        expect(JSON.stringify(outputAt(3))).toContain('omitted to save context')
+        expect(JSON.stringify(outputAt(4))).toContain(big)
+        expect(JSON.stringify(outputAt(9))).toContain(big)
+    })
+
+    it('leaves stale outputs under the size threshold intact', () => {
+        const messages: ModelMessage[] = Array.from({ length: 10 }, (_, i) => toolResultMessage({ id: `c${i}`, outputText: 'short' }))
+        expect(agentAiUtils.collapseStaleToolOutputs({ messages })).toEqual(messages)
+    })
+
+    it('pins discovered schemas: a stale ap_get_piece_props result is never collapsed', () => {
+        const big = 'z'.repeat(2000)
+        const schemaMessage: ModelMessage = {
+            role: 'tool',
+            content: [{ type: 'tool-result', toolCallId: 'schema', toolName: 'ap_get_piece_props', output: { type: 'text', value: big } }],
+        }
+        // schema result first (oldest/stalest), then 9 ordinary big results.
+        const messages: ModelMessage[] = [schemaMessage, ...Array.from({ length: 9 }, (_, i) => toolResultMessage({ id: `c${i}`, outputText: big }))]
+        const out = agentAiUtils.collapseStaleToolOutputs({ messages })
+        const outputAt = (idx: number): string => JSON.stringify(Array.isArray(out[idx].content) ? out[idx].content[0] : undefined)
+
+        expect(outputAt(0)).toContain(big) // schema preserved despite being the stalest
+        expect(outputAt(0)).not.toContain('omitted to save context')
+        expect(outputAt(1)).toContain('omitted to save context') // ordinary stale result still collapses
+    })
+
+    it('pins skill loads and wrapped ap_get_piece_props results like direct schema calls', () => {
+        const big = 'z'.repeat(2000)
+        const skillAndWrappedSchema: ModelMessage[] = [
+            {
+                role: 'assistant',
+                content: [
+                    { type: 'tool-call', toolCallId: 'skill', toolName: 'ap_load_skill', input: { skill: 'flow_building' } },
+                    { type: 'tool-call', toolCallId: 'wrapped', toolName: 'ap_lazy_tool', input: { tool: 'ap_get_piece_props', input: {} } },
+                ],
+            },
+            {
+                role: 'tool',
+                content: [
+                    { type: 'tool-result', toolCallId: 'skill', toolName: 'ap_load_skill', output: { type: 'text', value: big } },
+                    { type: 'tool-result', toolCallId: 'wrapped', toolName: 'ap_lazy_tool', output: { type: 'text', value: big } },
+                ],
+            },
+        ]
+        const messages: ModelMessage[] = [...skillAndWrappedSchema, ...Array.from({ length: 9 }, (_, i) => toolResultMessage({ id: `c${i}`, outputText: big }))]
+        const out = agentAiUtils.collapseStaleToolOutputs({ messages })
+
+        expect(JSON.stringify(out[1])).not.toContain('omitted to save context')
+        expect(JSON.stringify(out[2])).toContain('omitted to save context')
+    })
+
+    it('pinned schema results do not consume a keep-recent slot', () => {
+        const big = 'z'.repeat(2000)
+        const schemaMessage: ModelMessage = {
+            role: 'tool',
+            content: [{ type: 'tool-result', toolCallId: 'schema', toolName: 'ap_get_piece_props', output: { type: 'text', value: big } }],
+        }
+        const messages: ModelMessage[] = [schemaMessage, ...Array.from({ length: 6 }, (_, i) => toolResultMessage({ id: `c${i}`, outputText: big }))]
+        const out = agentAiUtils.collapseStaleToolOutputs({ messages })
+        const outputAt = (idx: number): string => JSON.stringify(Array.isArray(out[idx].content) ? out[idx].content[0] : undefined)
+
+        for (let i = 0; i < messages.length; i++) {
+            expect(outputAt(i)).not.toContain('omitted to save context')
+        }
+    })
+})
+
+describe('estimateTokenCount', () => {
+    it('grows with message size and system prompt length', () => {
+        const small = agentAiUtils.estimateTokenCount({ messages: [{ role: 'user', content: 'hi' }], systemPromptLength: 0 })
+        const large = agentAiUtils.estimateTokenCount({ messages: [{ role: 'user', content: 'x'.repeat(4000) }], systemPromptLength: 4000 })
+        expect(large).toBeGreaterThan(small)
+    })
+})
+
+describe('findDataArray', () => {
+    it('detects a top-level array', () => {
+        expect(agentAiUtils.findDataArray([1, 2, 3])).toEqual({ array: [1, 2, 3], path: 'root' })
+    })
+
+    it('detects a nested data/results/records array (Attio-style { data: [...] })', () => {
+        expect(agentAiUtils.findDataArray({ data: [{ id: 1 }] })?.path).toBe('data')
+        expect(agentAiUtils.findDataArray({ results: [1] })?.path).toBe('results')
+        expect(agentAiUtils.findDataArray({ records: [1] })?.path).toBe('records')
+    })
+
+    it('returns null when there is no array payload', () => {
+        expect(agentAiUtils.findDataArray({ id: 1, name: 'x' })).toBeNull()
+        expect(agentAiUtils.findDataArray('plain string')).toBeNull()
+    })
+})
+
+describe('buildLargeResultPreview', () => {
+    it('previews a record array, reports the count, and points to the fileId for the rest', () => {
+        const payload = { data: Array.from({ length: 50 }, (_, i) => ({ id: i, name: `Deal ${i}`, history: 'x'.repeat(5000) })) }
+        const text = agentAiUtils.buildLargeResultPreview({ payload, byteSize: 1_400_000, fileId: 'file_abc', label: 'List deals' })
+        expect(text).toContain('50 record(s) at "data"')
+        expect(text).toContain('file_abc')
+        expect(text).toContain('ap_run_code')
+        expect(text).toContain('inputs.data')
+        // values are clipped, not the full 5000-char history
+        expect(text.length).toBeLessThan(4000)
+    })
+
+    it('clips deep/long values so the preview never reproduces the blob', () => {
+        const payload = [{ id: 1, blob: 'y'.repeat(10_000), nested: { deep: { deeper: { deepest: 'z'.repeat(10_000) } } } }]
+        const text = agentAiUtils.buildLargeResultPreview({ payload, byteSize: 200_000, fileId: 'f1' })
+        expect(text).not.toContain('y'.repeat(1000))
+        expect(text).not.toContain('z'.repeat(1000))
+    })
+
+    it('without a fileId, steers toward narrowing/paginating instead of a dead-end', () => {
+        const payload = { data: Array.from({ length: 10 }, (_, i) => ({ id: i })) }
+        const text = agentAiUtils.buildLargeResultPreview({ payload, byteSize: 200_000 })
+        expect(text.toLowerCase()).toMatch(/paginate|filter|narrow/)
+        expect(text).not.toContain('undefined')
+    })
+})
+
+describe('buildProviderOptions', () => {
+    const TIER = { id: 'fast', thinkingBudget: 5_000 }
+    const REASONING_OPTIONAL = 'anthropic/claude-haiku-4.5'
+    const REASONING_NATIVE = 'google/gemini-3.8-flash'
+
+    const reasoningFor = ({ provider, modelId, disableThinking }: { provider: AIProviderName, modelId: string, disableThinking: boolean }) =>
+        agentAiUtils.buildProviderOptions({ provider, tier: TIER, modelId, disableThinking }).openrouter?.reasoning
+
+    for (const provider of [AIProviderName.ACTIVEPIECES, AIProviderName.OPENROUTER]) {
+        it(`switches reasoning off on ${provider} for a model documented to allow it`, () => {
+            expect(reasoningFor({ provider, modelId: REASONING_OPTIONAL, disableThinking: true })).toEqual({ enabled: false })
+        })
+
+        it(`never asks ${provider} to switch reasoning off on a reasoning-native model`, () => {
+            const reasoning = reasoningFor({ provider, modelId: REASONING_NATIVE, disableThinking: true })
+            expect(reasoning).not.toHaveProperty('enabled')
+            expect(reasoning).not.toMatchObject({ effort: 'none' })
+            expect(reasoning).toEqual({ effort: 'minimal' })
+        })
+
+        it(`spends the tier's thinking budget on ${provider} when thinking is on`, () => {
+            expect(reasoningFor({ provider, modelId: REASONING_NATIVE, disableThinking: false })).toEqual({ max_tokens: TIER.thinkingBudget })
+        })
+    }
+
+    it('leaves every default tier model on the zero-reasoning path it runs on today', () => {
+        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
+            expect(reasoningFor({ provider: AIProviderName.ACTIVEPIECES, modelId: tier.modelId, disableThinking: true }), tier.modelId).toEqual({ enabled: false })
+        }
+    })
+
+    it('turns thinking off on Anthropic, where disabling it is legal', () => {
+        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.ANTHROPIC, tier: TIER, modelId: REASONING_OPTIONAL, disableThinking: true })
+        expect(options.anthropic?.thinking).toEqual({ type: 'disabled' })
+    })
+
+    it('turns thinking off on Bedrock, where disabling it is legal', () => {
+        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.BEDROCK, tier: TIER, modelId: REASONING_OPTIONAL, disableThinking: true })
+        expect(options.anthropic?.thinking).toEqual({ type: 'disabled' })
+    })
+
+    for (const provider of [AIProviderName.ANTHROPIC, AIProviderName.BEDROCK]) {
+        for (const modelId of ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-opus-4-8', 'claude-opus-4-7', 'claude-haiku-5-5', 'claude-mythos-5-1', 'anthropic.claude-opus-5-5', 'claude-fable-5-1']) {
+            it(`keeps ${modelId} on ${provider} thinking at low effort instead of sending disabled`, () => {
+                const options = agentAiUtils.buildProviderOptions({ provider, tier: TIER, modelId, disableThinking: true })
+                expect(options.anthropic).toEqual({ thinking: { type: 'adaptive' }, effort: 'low' })
+            })
+
+            it(`never sends a thinking budget to ${modelId} on ${provider}`, () => {
+                const options = agentAiUtils.buildProviderOptions({ provider, tier: TIER, modelId, disableThinking: false })
+                expect(options.anthropic).toEqual({ thinking: { type: 'adaptive' } })
+            })
+        }
+    }
+
+    it('still spends the tier budget on an Anthropic model that takes one', () => {
+        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.ANTHROPIC, tier: TIER, modelId: 'claude-sonnet-4-6', disableThinking: false })
+        expect(options.anthropic?.thinking).toEqual({ type: 'enabled', budgetTokens: TIER.thinkingBudget })
+    })
+
+    it('leaves the ephemeral prompt cache in place beside the reasoning directive', () => {
+        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.ACTIVEPIECES, tier: TIER, modelId: REASONING_OPTIONAL, disableThinking: true })
+        expect(options.openrouter?.cache_control).toEqual({ type: 'ephemeral' })
+    })
+
+    it('sends nothing for a provider that does not take a reasoning directive', () => {
+        expect(agentAiUtils.buildProviderOptions({ provider: AIProviderName.GOOGLE, tier: TIER, modelId: 'gemini-2.5-flash', disableThinking: true })).toEqual({})
+    })
+})
+
+describe('a message transform never hands the provider an empty history', () => {
+    const onlyThinking: ModelMessage[] = [
+        { role: 'assistant', content: [{ type: 'reasoning', text: 'weighing it up' }] } as unknown as ModelMessage,
+    ]
+
+    it('sends a plain nudge rather than nothing when stripping reasoning empties the turn', () => {
+        const stripped = agentAiUtils.stripThinkingBlocks(onlyThinking, AIProviderName.ANTHROPIC)
+
+        expect(stripped).toHaveLength(1)
+        expect(stripped[0].role).toBe('user')
+        expect(JSON.stringify(stripped)).not.toContain('reasoning')
+    })
+
+    it('does the same for a truncated tail, rather than replaying a message that cannot be replayed', () => {
+        const sanitized = sanitizeTruncatedAssistantTail(onlyThinking)
+
+        expect(sanitized).toHaveLength(1)
+        expect(sanitized[0].role).toBe('user')
+        expect(JSON.stringify(sanitized)).not.toContain('reasoning')
+    })
+
+    it('never replays an unresolved tool call as the last thing the model sees', () => {
+        const danglingCall: ModelMessage[] = [
+            { role: 'assistant', content: [{ type: 'tool-call', toolCallId: 'never-answered', toolName: 'ap_web_search', input: {} }] } as unknown as ModelMessage,
+        ]
+
+        const sanitized = sanitizeTruncatedAssistantTail(danglingCall)
+
+        expect(JSON.stringify(sanitized)).not.toContain('never-answered')
+    })
+
+    it('still drops a spent reasoning message when a real one survives beside it', () => {
+        const withRealContent: ModelMessage[] = [
+            { role: 'user', content: 'do the thing' },
+            { role: 'assistant', content: [{ type: 'reasoning', text: 'weighing it up' }] } as unknown as ModelMessage,
+        ]
+
+        const stripped = agentAiUtils.stripThinkingBlocks(withRealContent, AIProviderName.ANTHROPIC)
+
+        expect(stripped).toHaveLength(1)
+        expect(stripped[0].role).toBe('user')
+    })
+})
+
+const catalogOf = (byId: Record<string, number>) => ({
+    lookup: ({ modelId }: { modelId: string }) => {
+        const stripped = modelId.replace(/^(us|eu|apac|global)\./, '')
+        const maxOutputTokens = byId[stripped]
+        return maxOutputTokens === undefined ? undefined : { maxOutputTokens }
+    },
+})
+
+describe('agentAiUtils.affordableOutputTokens', () => {
+    const SMART_TIER_THINKING = 10_000
+
+    it('reads through a region-prefixed Bedrock id, which is how the picker spells them', async () => {
+        vi.spyOn(modelCatalog, 'load').mockResolvedValue(catalogOf({ 'amazon.nova-pro-v1:0': 10_000 }))
+
+        await expect(agentAiUtils.affordableOutputTokens({
+            provider: AIProviderName.BEDROCK,
+            modelIds: ['eu.amazon.nova-pro-v1:0'],
+            thinkingBudget: SMART_TIER_THINKING,
+        })).resolves.toBe(10_000)
+    })
+
+    it('keeps the turn inside the smaller ceiling when the fast round runs a different model', async () => {
+        vi.spyOn(modelCatalog, 'load').mockResolvedValue(catalogOf({ 'amazon.nova-pro-v1:0': 10_000, 'amazon.nova-micro-v1:0': 5_000 }))
+
+        await expect(agentAiUtils.affordableOutputTokens({
+            provider: AIProviderName.BEDROCK,
+            modelIds: ['eu.amazon.nova-pro-v1:0', 'eu.amazon.nova-micro-v1:0'],
+            thinkingBudget: SMART_TIER_THINKING,
+        })).resolves.toBe(5_000)
+    })
+
+    it('leaves the budget alone for a model the catalog has never heard of', async () => {
+        vi.spyOn(modelCatalog, 'load').mockResolvedValue(catalogOf({}))
+
+        await expect(agentAiUtils.affordableOutputTokens({
+            provider: AIProviderName.BEDROCK,
+            modelIds: ['eu.some.brand-new-model-v9:0'],
+            thinkingBudget: SMART_TIER_THINKING,
+        })).resolves.toBe(42_000)
+    })
+
+    it('caps a Cohere model the catalog has never heard of at the smallest Cohere output limit', async () => {
+        vi.spyOn(modelCatalog, 'load').mockResolvedValue(catalogOf({ 'command-a-03-2025': 8_000 }))
+
+        await expect(agentAiUtils.affordableOutputTokens({
+            provider: AIProviderName.COHERE,
+            modelIds: ['command-a-03-2025'],
+            thinkingBudget: SMART_TIER_THINKING,
+        })).resolves.toBe(8_000)
+        await expect(agentAiUtils.affordableOutputTokens({
+            provider: AIProviderName.COHERE,
+            modelIds: ['command-z-brand-new'],
+            thinkingBudget: SMART_TIER_THINKING,
+        })).resolves.toBe(4_000)
+    })
+
+    it('does not shrink a turn because the catalog was unreachable', async () => {
+        vi.spyOn(modelCatalog, 'load').mockResolvedValue({ lookup: () => undefined })
+
+        await expect(agentAiUtils.affordableOutputTokens({
+            provider: AIProviderName.BEDROCK,
+            modelIds: ['eu.amazon.nova-pro-v1:0', undefined],
+            thinkingBudget: SMART_TIER_THINKING,
+        })).resolves.toBe(42_000)
+    })
+})
+
+describe('agentAiUtils.clampOutputTokens', () => {
+    const SMART_TIER_THINKING = 10_000
+
+    it('asks for the full budget when no model declares a ceiling', () => {
+        expect(agentAiUtils.clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [undefined, undefined] })).toBe(42_000)
+    })
+
+    it('never asks a model for more than it accepts', () => {
+        expect(agentAiUtils.clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [10_000] })).toBe(10_000)
+    })
+
+    it('respects the smaller ceiling when the turn spans two models', () => {
+        expect(agentAiUtils.clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [64_000, 8_192] })).toBe(8_192)
+    })
+
+    it('leaves a generous ceiling alone rather than raising the ask to meet it', () => {
+        expect(agentAiUtils.clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [200_000] })).toBe(42_000)
+    })
+})

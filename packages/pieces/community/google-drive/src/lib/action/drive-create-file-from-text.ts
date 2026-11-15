@@ -11,6 +11,7 @@ import { driveCreateFileFromTextOutputSchema } from '../output-schemas';
 export const driveCreateFileFromText = createAction({
   auth: googleDriveAuth,
   name: 'drive_create_file_from_text',
+  classification: 'WRITE',
   displayName: 'Create File from Text',
   description: 'Create a new text file in your Google Drive from text',
   audience: 'ai',

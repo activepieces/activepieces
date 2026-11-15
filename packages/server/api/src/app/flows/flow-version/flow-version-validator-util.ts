@@ -1,10 +1,10 @@
-import { ActivepiecesError, ErrorCode, isNil, PlatformId, STEP_NAME_REGEX, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, PlatformId, STEP_NAME_REGEX, unique, UserId } from '@activepieces/core-utils'
 import {
     PieceAuthProperty,
     piecePropertiesUtils,
     PiecePropertyMap,
 } from '@activepieces/pieces-framework'
-import { CodeActionSettings, FlowActionType, FlowOperationRequest, FlowOperationType, flowPieceUtil, flowStructureUtil, FlowTrigger, FlowTriggerType, LoopOnItemsActionSettings, PieceActionSettings, PieceTriggerSettings, RouterActionSettingsWithValidation, SourceCode } from '@activepieces/shared'
+import { AiRouterActionSettingsWithValidation, CodeActionSettings, FlowActionType, FlowOperationRequest, FlowOperationType, flowPieceUtil, flowStructureUtil, FlowTrigger, FlowTriggerType, LoopOnItemsActionSettings, PieceActionSettings, PieceTriggerSettings, ProcessInBatchesActionSettingsWithValidation, RouterActionSettingsWithValidation, SourceCode, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
@@ -12,7 +12,9 @@ import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-servi
 const loopSettingsValidator = LoopOnItemsActionSettings.and(z.object({
     items: z.string().min(1),
 }))
+const processInBatchesSettingsValidator = ProcessInBatchesActionSettingsWithValidation
 const routerSettingsValidator = RouterActionSettingsWithValidation
+const aiRouterSettingsValidator = AiRouterActionSettingsWithValidation
 const codeSettingsValidator = CodeActionSettings.and(z.object({
     sourceCode: SourceCode.and(z.object({
         code: z.string().min(1),
@@ -23,6 +25,7 @@ const codeSettingsValidator = CodeActionSettings.and(z.object({
 type ValidationResult = {
     valid: boolean
     cleanInput?: Record<string, unknown>
+    invalidInputs?: string[]
 }
 
 export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
@@ -34,6 +37,11 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                 switch (clonedRequest.request.action.type) {
                     case FlowActionType.LOOP_ON_ITEMS:
                         clonedRequest.request.action.valid = loopSettingsValidator.safeParse(
+                            clonedRequest.request.action.settings,
+                        ).success
+                        break
+                    case FlowActionType.PROCESS_IN_BATCHES:
+                        clonedRequest.request.action.valid = processInBatchesSettingsValidator.safeParse(
                             clonedRequest.request.action.settings,
                         ).success
                         break
@@ -53,6 +61,11 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                             clonedRequest.request.action.settings,
                         ).success
                         break
+                    case FlowActionType.AI_ROUTER:
+                        clonedRequest.request.action.valid = aiRouterSettingsValidator.safeParse(
+                            clonedRequest.request.action.settings,
+                        ).success
+                        break
                     case FlowActionType.CODE:
                         clonedRequest.request.action.valid = codeSettingsValidator.safeParse(
                             clonedRequest.request.action.settings,
@@ -64,6 +77,11 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                 switch (clonedRequest.request.type) {
                     case FlowActionType.LOOP_ON_ITEMS:
                         clonedRequest.request.valid = loopSettingsValidator.safeParse(
+                            clonedRequest.request.settings,
+                        ).success
+                        break
+                    case FlowActionType.PROCESS_IN_BATCHES:
+                        clonedRequest.request.valid = processInBatchesSettingsValidator.safeParse(
                             clonedRequest.request.settings,
                         ).success
                         break
@@ -80,6 +98,11 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                     }
                     case FlowActionType.ROUTER:
                         clonedRequest.request.valid = routerSettingsValidator.safeParse(
+                            clonedRequest.request.settings,
+                        ).success
+                        break
+                    case FlowActionType.AI_ROUTER:
+                        clonedRequest.request.valid = aiRouterSettingsValidator.safeParse(
                             clonedRequest.request.settings,
                         ).success
                         break
@@ -123,6 +146,15 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                 break
         }
         return clonedRequest
+    },
+    async invalidPieceInputs({ platformId, step }: { platformId: PlatformId, step: Step }): Promise<string[]> {
+        if (step.type === FlowActionType.PIECE) {
+            return (await validateAction({ settings: step.settings, platformId, log })).invalidInputs ?? []
+        }
+        if (step.type === FlowTriggerType.PIECE) {
+            return (await validateTrigger({ settings: step.settings, platformId, log })).invalidInputs ?? []
+        }
+        return []
     },
 })
 
@@ -205,10 +237,22 @@ function validateProps(
     const cleanInput = !isNil(input) ? Object.fromEntries(
         schemaKeys.map(key => [key, input?.[key]]),
     ) : undefined
+    const parsed = propsSchema.safeParse(cleanInput)
     return {
-        valid: propsSchema.safeParse(cleanInput).success,
+        valid: parsed.success,
         cleanInput,
+        invalidInputs: parsed.success ? [] : describeInvalidInputs({ issues: parsed.error.issues, input: cleanInput }),
     }
+}
+
+function describeInvalidInputs({ issues, input }: { issues: z.ZodError['issues'], input: Record<string, unknown> | undefined }): string[] {
+    const keys = unique(issues.flatMap((issue) => typeof issue.path[0] === 'string' ? [issue.path[0]] : []))
+    return keys.map((key) => {
+        const label = key === 'auth' ? 'connection' : key
+        const value = input?.[key]
+        const missing = isNil(value) || value === ''
+        return missing ? `${label} is missing` : `${label} has an invalid value`
+    })
 }
 
 

@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getAddressByHash = createAction({
   name: 'get_address_by_hash',
+  classification: 'READ',
   displayName: 'Get Address by Hash',
   description: 'Get address info by its hash',
   audience: 'both',

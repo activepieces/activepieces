@@ -1,0 +1,7 @@
+name: Manual workflow
+on: workflow_dispatch
+jobs:
+  printGreeting:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Hello"

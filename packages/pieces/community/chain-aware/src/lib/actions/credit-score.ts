@@ -6,6 +6,7 @@ import { makeRequest } from '../common/client';
 export const creditScore = createAction({
   auth: chainAwareAuth,
   name: 'creditScore',
+  classification: 'READ',
   displayName: 'Credit Score',
   description: "Get a user's credit score",
   audience: 'both',

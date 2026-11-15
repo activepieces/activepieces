@@ -6,6 +6,7 @@ import { removeAttendeeActionOutputSchema } from '../output-schemas';
 export const aiRemoveAttendee = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_remove_attendee',
+  classification: 'WRITE',
   displayName: 'Remove Attendee',
   description:
     'Remove one attendee (by email) from an existing Google Calendar event, preserving the rest of the guest list.',

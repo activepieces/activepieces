@@ -10,6 +10,8 @@ import { buildRetrievalDoc, computeEmbeddingInputHash } from './retrieval-doc'
 
 const EMBED_BATCH_SIZE = 256
 
+const MAX_RECONCILE_PASSES = 3
+
 export const toolSearchReindexService = (log: FastifyBaseLogger) => ({
     /**
      * Reconcile `tool_search_index` against the live catalog — an idempotent, hash-gated incremental
@@ -35,48 +37,78 @@ export const toolSearchReindexService = (log: FastifyBaseLogger) => ({
             : await resolveEmbedder({ platformId: params.platformId, log }))
         if (isNil(embedder)) {
             log.info('[toolSearchReindexService#reindex] No embedder resolved — skipping reindex (keyword floor serves).')
-            return { status: 'no-embedder', objectsIndexed: 0, objectsEmbedded: 0, objectsDeleted: 0, objectsPending: 0 }
+            return { status: 'no-embedder', passes: 0, objectsIndexed: 0, objectsEmbedded: 0, objectsDeleted: 0, objectsPending: 0 }
         }
         // The migration no-ops when pgvector is absent, so the table can be missing even with the flag
         // on. Degrade gracefully (keyword floor) instead of throwing "relation does not exist" on every
         // catalog-change reconcile.
         if (!await toolSearchTableExists()) {
             log.warn('[toolSearchReindexService#reindex] tool_search_index is absent (pgvector not installed) — skipping reindex; keyword floor serves.')
-            return { status: 'no-table', objectsIndexed: 0, objectsEmbedded: 0, objectsDeleted: 0, objectsPending: 0 }
+            return { status: 'no-table', passes: 0, objectsIndexed: 0, objectsEmbedded: 0, objectsDeleted: 0, objectsPending: 0 }
         }
 
-        const currentRelease = apVersionUtil.getCurrentRelease()
-        const pieces = await fetchLatestCompatiblePiecesFromDB(currentRelease)
-        const desired = pieces
-            .flatMap((piece) => explodePiece(piece, embedder.modelVersion))
-            .filter((record) => scopeMatches(record, scope))
+        let objectsIndexed = 0
+        let objectsPending = 0
+        let objectsEmbedded = 0
+        let objectsDeleted = 0
+        let passes = 0
+        let fingerprint = await catalogFingerprint()
 
-        // Upsert the desired rows by unique key, batched into chunked multi-row statements rather than
-        // one round-trip per row (~6k on a cold-start backfill). A new row lands with embedding=NULL; an
-        // existing row keeps its embedding unless the retrieval text (→ hash) changed, in which case it
-        // is nulled to force a re-embed. Rows whose content is unchanged are not touched at all (idempotent).
-        await upsertDesired(desired, embedder.modelVersion)
+        while (passes < MAX_RECONCILE_PASSES) {
+            passes++
+            const pass = await reconcileOnce(embedder, scope, log)
+            objectsIndexed = pass.objectsIndexed
+            objectsPending = pass.objectsPending
+            objectsEmbedded += pass.objectsEmbedded
+            objectsDeleted += pass.objectsDeleted
 
-        // Remove rows whose object key is no longer in the desired catalog (deleted pieces, removed
-        // actions, superseded old versions). Done before embedding so a row that is both pending and
-        // gone is never wastefully embedded.
-        const objectsDeleted = await deleteRemovedRows(desired, embedder.modelVersion, scope)
-
-        // Embed only the rows still missing an embedding (the new + changed ones, plus any that failed
-        // a previous run). Embedding is batched and never blocks the upsert diff above.
-        const { embedded: objectsEmbedded, pending: objectsPending } = await embedPendingRows(embedder, scope, log)
+            const fingerprintAfterPass = await catalogFingerprint()
+            if (fingerprintAfterPass === fingerprint) {
+                break
+            }
+            fingerprint = fingerprintAfterPass
+            if (passes < MAX_RECONCILE_PASSES) {
+                log.info({ scope: scope.type, passes }, '[toolSearchReindexService#reindex] Catalog changed while the reconcile was running — running a trailing pass so the change is not dropped.')
+            }
+            else {
+                log.warn({ scope: scope.type, passes }, '[toolSearchReindexService#reindex] Catalog still changing after the trailing-pass cap — stopping; the next catalog change enqueues a fresh reconcile.')
+            }
+        }
 
         // Rows left unembedded after a reconcile mean the embedder failed or was rate-limited on those
         // batches: a NULL-embedding row is invisible to semantic ranking, so search silently under-serves
         // until they are re-embedded. Surface it loudly — both the boot backfill and the sync hook retry.
         if (objectsPending > 0) {
-            log.warn({ scope: scope.type, objectsIndexed: desired.length, objectsEmbedded, objectsPending, objectsDeleted }, '[toolSearchReindexService#reindex] Reindex left rows unembedded — embedding degraded; search partially served until the next boot or catalog sync retries.')
+            log.warn({ scope: scope.type, passes, objectsIndexed, objectsEmbedded, objectsPending, objectsDeleted }, '[toolSearchReindexService#reindex] Reindex left rows unembedded — embedding degraded; search partially served until the next boot or catalog sync retries.')
         }
 
-        log.info({ scope: scope.type, objectsIndexed: desired.length, objectsEmbedded, objectsPending, objectsDeleted }, '[toolSearchReindexService#reindex] Reindex complete.')
-        return { status: 'done', objectsIndexed: desired.length, objectsEmbedded, objectsDeleted, objectsPending }
+        log.info({ scope: scope.type, passes, objectsIndexed, objectsEmbedded, objectsPending, objectsDeleted }, '[toolSearchReindexService#reindex] Reindex complete.')
+        return { status: 'done', passes, objectsIndexed, objectsEmbedded, objectsDeleted, objectsPending }
     },
 })
+
+async function reconcileOnce(embedder: ToolSearchEmbedder, scope: ReindexScope, log: FastifyBaseLogger): Promise<ReconcilePassResult> {
+    const currentRelease = apVersionUtil.getCurrentRelease()
+    const pieces = await fetchLatestCompatiblePiecesFromDB(currentRelease)
+    const desired = pieces
+        .flatMap((piece) => explodePiece(piece, embedder.modelVersion))
+        .filter((record) => scopeMatches(record, scope))
+
+    await upsertDesired(desired, embedder.modelVersion)
+
+    const objectsDeleted = await deleteRemovedRows(desired, embedder.modelVersion, scope)
+
+    const { embedded: objectsEmbedded, pending: objectsPending } = await embedPendingRows(embedder, scope, log)
+
+    return { objectsIndexed: desired.length, objectsEmbedded, objectsDeleted, objectsPending }
+}
+
+async function catalogFingerprint(): Promise<string> {
+    const result = await databaseConnection().query(
+        'SELECT count(*)::int AS count, max(GREATEST("created", "updated"))::text AS "lastWrite" FROM "piece_metadata"',
+    )
+    return `${result?.[0]?.count ?? 0}@${result?.[0]?.lastWrite ?? ''}`
+}
 
 /** A platform-scoped reconcile only owns that tenant's custom pieces; `all` owns the whole index. */
 function scopeMatches(record: DesiredRecord, scope: ReindexScope): boolean {
@@ -365,15 +397,14 @@ type ReindexParams = {
 
 type ReindexResult = {
     status: 'done' | 'no-embedder' | 'no-table'
-    /** desired-state object count (latest version per piece, exploded into actions + triggers). */
+    passes: number
     objectsIndexed: number
-    /** rows that were (re)embedded this run — 0 when nothing changed. */
     objectsEmbedded: number
-    /** rows removed because their key is no longer in the desired catalog. */
     objectsDeleted: number
-    /** rows still lacking an embedding after this run — non-zero means embedding is degraded. */
     objectsPending: number
 }
+
+type ReconcilePassResult = Omit<ReindexResult, 'status' | 'passes'>
 
 type EmbedResult = {
     embedded: number

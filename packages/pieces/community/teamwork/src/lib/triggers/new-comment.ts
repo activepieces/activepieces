@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const newComment = createTrigger({
 	name: 'new_comment',
+	classification: 'READ',
 	displayName: 'New Comment',
 	description: 'Fires when a new comment is posted.',
 	aiMetadata: {

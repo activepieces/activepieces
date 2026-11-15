@@ -1,22 +1,40 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   UserInvitation,
   UserStatus,
   UserWithMetaInformation,
 } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { User } from 'lucide-react';
+import { Gem, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { DataTable } from '@/components/custom/data-table';
+import {
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+} from '@/app/components/admin';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
+import { internalErrorToast } from '@/components/ui/sonner';
+import {
+  billingKeys,
+  billingQueries,
+  billingUtils,
+  seatUtils,
+  ActionWhenLocked,
+  LockedFeatureUsage,
+  useLockedFeature,
+  useSeatLimitGuard,
+} from '@/features/billing';
 import { InviteUserDialog } from '@/features/members';
 import {
   platformUserHooks,
   platformUserMutations,
 } from '@/features/platform-admin/hooks/platform-user-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { UserActions } from './actions/user-actions';
 import { createUsersTableColumns } from './columns';
@@ -35,16 +53,20 @@ export type UserRowData =
 
 export default function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
+  const { isOutOfSeats, canBuySeats, handleSeatLimitError, seatLimitDialog } =
+    useSeatLimitGuard();
 
   const {
     data: usersData,
     isLoading: usersLoading,
+    isError: usersError,
     refetch: refetchUsers,
   } = platformUserHooks.useUsers();
 
   const {
     data: invitationsData,
     isLoading: invitationsLoading,
+    isError: invitationsError,
     refetch: refetchInvitations,
   } = platformUserHooks.usePlatformInvitations();
 
@@ -71,17 +93,56 @@ export default function UsersPage() {
     return [...users, ...pendingInvitations];
   }, [usersData, invitationsData]);
 
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { data: subscription } = billingQueries.usePlatformSubscription(
+    platform.id,
+    true,
+  );
+  const activeUsers =
+    subscription?.usage.users ??
+    seatUtils.reservedSeats({
+      users: usersData?.data ?? [],
+      invitations: invitationsData ?? [],
+    });
+  const usersLimit = isNil(subscription)
+    ? platform.plan.usersLimit
+    : billingUtils.resolveSeatCap(subscription).effectiveLimit;
+  const usersLockedFeature = useLockedFeature({
+    unlocked: isNil(usersLimit) || activeUsers < usersLimit,
+    featureKey: 'USERS',
+  });
+
   const isLoading = usersLoading || invitationsLoading;
+  const isError = usersError || invitationsError;
+
+  const queryClient = useQueryClient();
+  const refreshUsersAndSeats = () => {
+    refetch();
+    queryClient
+      .invalidateQueries({
+        queryKey: billingKeys.platformSubscription(platform.id),
+      })
+      .catch(() => undefined);
+  };
 
   const { mutate: deleteUser } = platformUserMutations.useDeleteUser({
-    onSuccess: refetch,
+    onSuccess: refreshUsersAndSeats,
   });
 
   const { mutate: deleteInvitation } =
-    platformUserMutations.useDeleteInvitation({ onSuccess: refetch });
+    platformUserMutations.useDeleteInvitation({
+      onSuccess: refreshUsersAndSeats,
+    });
 
   const { mutate: updateUserStatus, isPending: isUpdatingStatus } =
-    platformUserMutations.useUpdateUserStatus({ onSuccess: refetch });
+    platformUserMutations.useUpdateUserStatus({
+      onSuccess: refreshUsersAndSeats,
+      onError: (error) => {
+        if (!handleSeatLimitError(error)) {
+          internalErrorToast();
+        }
+      },
+    });
 
   const handleDelete = (id: string, isInvitation: boolean) => {
     if (isInvitation) {
@@ -104,60 +165,78 @@ export default function UsersPage() {
   const columns = createUsersTableColumns();
 
   return (
-    <LockedFeatureGuard
-      featureKey="USERS"
-      locked={false}
-      lockTitle={t('Unlock Users')}
-      lockDescription={t('Manage your users and their access to your projects')}
-    >
-      <div className="flex flex-col w-full">
-        <DashboardPageHeader
-          title={t('Users')}
-          description={t(
-            'Manage, delete, activate and deactivate users on platform',
-          )}
-        />
-        <DataTable
-          emptyStateTextTitle={t('No users found')}
-          emptyStateTextDescription={t('Start inviting users to your project')}
-          emptyStateIcon={<User className="size-14" />}
-          columns={columns}
-          page={{
-            data: combinedData,
-            next: usersData?.next || null,
-            previous: usersData?.previous || null,
-          }}
-          hidePagination={true}
-          isLoading={isLoading}
-          toolbarButtons={[
-            <Button
-              key="invite"
-              className="gap-2"
-              size="sm"
-              onClick={() => setInviteOpen(true)}
-            >
+    <AdminPage>
+      <AdminPageHeader
+        title={t('Users')}
+        description={t(
+          'Manage, delete, activate and deactivate users on platform',
+        )}
+        resources={adminPageResources.users}
+      >
+        <LockedFeatureUsage
+          featureKey="USERS"
+          unlocked={!usersLockedFeature.locked}
+          used={activeUsers}
+          limit={usersLimit}
+          label={t('users')}
+        >
+          <Button
+            {...adminControl(AdminControl.USERS_INVITE_OPEN)}
+            onClick={() => {
+              if (
+                usersLockedFeature.locked &&
+                usersLockedFeature.actionWhenLocked ===
+                  ActionWhenLocked.START_TRIAL &&
+                !canBuySeats
+              ) {
+                usersLockedFeature.showLockedDialog();
+                return;
+              }
+              setInviteOpen(true);
+            }}
+          >
+            {isOutOfSeats || usersLockedFeature.locked ? (
+              <Gem className="text-on-accent/90" />
+            ) : (
               <UserRoundPlusIcon size={16} />
-              <span className="text-sm font-medium">{t('Invite')}</span>
-            </Button>,
-          ]}
-          actions={[
-            (row) => (
-              <UserActions
-                row={row}
-                isUpdatingStatus={isUpdatingStatus}
-                onDelete={handleDelete}
-                onToggleStatus={handleToggleStatus}
-                onUpdate={refetch}
-              />
-            ),
-          ]}
-        />
-      </div>
+            )}
+            {t('Invite')}
+          </Button>
+        </LockedFeatureUsage>
+      </AdminPageHeader>
+      <AdminDataTable
+        emptyStateTextTitle={t('No users found')}
+        emptyStateTextDescription={t('Start inviting users to your project')}
+        emptyStateIcon={<User />}
+        columns={columns}
+        page={{
+          data: combinedData,
+          next: usersData?.next || null,
+          previous: usersData?.previous || null,
+        }}
+        hidePagination={true}
+        isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('users')}
+        onRetry={refetch}
+        actions={[
+          (row) => (
+            <UserActions
+              row={row}
+              isUpdatingStatus={isUpdatingStatus}
+              onDelete={handleDelete}
+              onToggleStatus={handleToggleStatus}
+              onUpdate={refetch}
+            />
+          ),
+        ]}
+      />
       <InviteUserDialog
         open={inviteOpen}
         setOpen={setInviteOpen}
-        onInviteSuccess={refetch}
+        onInviteSuccess={refreshUsersAndSeats}
       />
-    </LockedFeatureGuard>
+      {seatLimitDialog}
+    </AdminPage>
   );
 }

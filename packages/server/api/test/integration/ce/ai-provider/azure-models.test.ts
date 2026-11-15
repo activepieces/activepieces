@@ -2,6 +2,7 @@ import { AIProviderName } from '@activepieces/core-utils'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { vi } from 'vitest'
+import { db } from '../../../helpers/db'
 import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
@@ -44,7 +45,7 @@ describe('GET /v1/ai-providers/:provider/models (azure)', () => {
             config: { resourceName: 'my-resource', apiVersion: '2024-10-21' },
         })
 
-        const response = await ctx.get('/v1/ai-providers/azure/models')
+        const response = await ctx.get('/v1/ai-providers/azure/models', { projectId: ctx.project.id })
 
         expect(response?.statusCode).toBe(StatusCodes.OK)
         expect(mockSendRequest).toHaveBeenCalledTimes(1)
@@ -53,5 +54,40 @@ describe('GET /v1/ai-providers/:provider/models (azure)', () => {
         expect(response?.json()).toEqual([
             { id: 'my-gpt4o-deployment', name: 'my-gpt4o-deployment', type: 'text' },
         ])
+    })
+})
+
+describe('GET /v1/ai-providers/configs/:id/models (azure)', () => {
+    it('keeps two azure resources apart even when they share an api key', async () => {
+        mockSendRequest.mockImplementation((request: { url: string }) => {
+            const deployment = request.url.includes('resource-a')
+                ? 'deployment-a'
+                : 'deployment-b'
+            return Promise.resolve({
+                body: { data: [{ id: deployment, model: 'gpt-4o', status: 'succeeded' }] },
+            })
+        })
+
+        const first = await mockAndSaveAIProvider({
+            platformId: ctx.platform.id,
+            provider: AIProviderName.AZURE,
+            displayName: 'Azure A',
+            config: { resourceName: 'resource-a' },
+        })
+        const second = await mockAndSaveAIProvider({
+            platformId: ctx.platform.id,
+            provider: AIProviderName.AZURE,
+            displayName: 'Azure B',
+            config: { resourceName: 'resource-b' },
+        })
+        await db.update('ai_provider', second.id, { auth: first.auth })
+
+        const firstResponse = await ctx.get(`/v1/ai-providers/configs/${first.id}/models`)
+        const secondResponse = await ctx.get(`/v1/ai-providers/configs/${second.id}/models`)
+
+        expect(firstResponse?.statusCode).toBe(StatusCodes.OK)
+        expect(secondResponse?.statusCode).toBe(StatusCodes.OK)
+        expect(firstResponse?.json().map((m: { id: string }) => m.id)).toEqual(['deployment-a'])
+        expect(secondResponse?.json().map((m: { id: string }) => m.id)).toEqual(['deployment-b'])
     })
 })

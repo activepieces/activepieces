@@ -7,6 +7,7 @@ import { vercelProjectDropdown } from '../common/props';
 export const getDeploymentStatus = createAction({
   auth: vercelAuth,
   name: 'get_deployment_status',
+  classification: 'READ',
   displayName: 'Get Deployment Status',
   description: 'Retrieve a deployment and inspect its current status.',
   audience: 'both',

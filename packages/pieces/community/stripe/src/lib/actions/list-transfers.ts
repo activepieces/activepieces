@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { transferListOutputSchema } from '../output-schemas';
 export const stripeListTransfers = createAction({
   name: 'list_transfers',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'List Transfers (Agent)',
   description: 'List transfers to connected accounts (Stripe Connect).',

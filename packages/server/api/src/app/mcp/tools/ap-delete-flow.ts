@@ -1,11 +1,11 @@
 import { Permission } from '@activepieces/core-utils'
-import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
+import { McpToolContext, McpToolDefinition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { mcpUtils } from './mcp-utils'
 
-export const apDeleteFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apDeleteFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_delete_flow',
         permission: Permission.WRITE_FLOW,
@@ -22,6 +22,8 @@ export const apDeleteFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                 await flowService(log).delete({
                     id: flowId,
                     projectId: mcp.projectId,
+                    previousFlow: flow ?? undefined,
+                    userId,
                 })
                 return {
                     content: [{

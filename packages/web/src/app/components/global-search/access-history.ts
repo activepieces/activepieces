@@ -34,14 +34,6 @@ export function getAccessHistory(): AccessedItem[] {
   }
 }
 
-export function clearAccessHistory(): void {
-  try {
-    localStorage.removeItem(getKey());
-  } catch {
-    // ignore
-  }
-}
-
 export type AccessedItemType = 'flow' | 'table' | 'project' | 'page';
 
 export type AccessedItem = {

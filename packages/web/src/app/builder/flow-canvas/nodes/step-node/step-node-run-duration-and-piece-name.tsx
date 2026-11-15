@@ -1,15 +1,14 @@
 import { Timer } from 'lucide-react';
-import { useMemo } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { useStepOutputInRun } from '@/app/builder/run-details/use-step-output-in-run';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { flowRunUtils } from '@/features/flow-runs';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
 const StepNodeRunDuration = ({ duration }: { duration: number }) => {
   return (
-    <div className="text-xs text-muted-foreground shrink-0 flex items-center gap-1">
+    <div className="text-xs text-gray-11 shrink-0 flex items-center gap-1">
       <Timer className="size-3" />
       <span>{formatUtils.formatDuration(duration, true)}</span>
     </div>
@@ -23,19 +22,11 @@ const StepNodeRunDurationAndPieceName = ({
   stepName: string;
   pieceDisplayName: string;
 }) => {
-  const [run, loopIndexes, flowVersion, canvasOrientation] =
-    useBuilderStateContext((state) => [
-      state.run,
-      state.loopsIndexes,
-      state.flowVersion,
-      state.canvasOrientation,
-    ]);
+  const canvasOrientation = useBuilderStateContext(
+    (state) => state.canvasOrientation,
+  );
   const isHorizontal = canvasOrientation === 'horizontal';
-  const selectedStepOutput = useMemo(() => {
-    return run && run.steps
-      ? flowRunUtils.extractStepOutput(stepName, loopIndexes, run.steps)
-      : null;
-  }, [run, stepName, loopIndexes, flowVersion.trigger]);
+  const { stepOutput: selectedStepOutput } = useStepOutputInRun(stepName);
 
   return (
     <div
@@ -49,7 +40,7 @@ const StepNodeRunDurationAndPieceName = ({
         key={pieceDisplayName + selectedStepOutput?.duration}
       >
         <div
-          className={cn('text-xs text-muted-foreground truncate grow shrink', {
+          className={cn('text-xs text-gray-11 truncate grow shrink', {
             'w-full': !isHorizontal,
             'text-center': isHorizontal,
           })}

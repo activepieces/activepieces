@@ -5,6 +5,7 @@ import mime from 'mime-types';
 
 export const generateAltTextAction = createAction({
     name: 'generate-alt-text',
+    classification: 'READ',
     auth: alttextifyAuth,
     displayName: 'Generate Image Alt Text',
     description: 'Generates alt text for specified image.',

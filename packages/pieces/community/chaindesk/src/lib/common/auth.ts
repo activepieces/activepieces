@@ -9,7 +9,7 @@ import { BASE_URL } from './constants';
 export const chaindeskAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   required: true,
-  description: `You can obtain API key from [Account Settings](https://app.chaindesk.ai/account).`,
+  description: `You can obtain API key from [API Keys settings](https://app.askli.co/settings/api-keys).`,
   validate: async ({ auth }) => {
     try {
       await httpClient.sendRequest({

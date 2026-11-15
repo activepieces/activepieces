@@ -7,6 +7,7 @@ import { greipAuth } from '../common/auth';
 
 export const profanityTextDetectedTrigger = createTrigger({
   name: 'profanity_text_detected',
+  classification: 'READ',
   displayName: 'Profanity Text Detected',
   description: 'Triggers when Greip detects profanity in a specific text',
   aiMetadata: {

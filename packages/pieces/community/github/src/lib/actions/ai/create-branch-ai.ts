@@ -7,6 +7,7 @@ import { gitRefBodyOutputSchema } from '../../output-schemas';
 export const githubCreateBranchAiAction = createAction({
   auth: githubAuth,
   name: 'create_branch_ai',
+  classification: 'WRITE',
   displayName: 'Create Branch (Agent)',
   description: 'Creates a new branch from the tip of a source branch.',
   audience: 'ai',

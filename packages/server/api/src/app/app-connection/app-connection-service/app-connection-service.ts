@@ -1,13 +1,15 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, unique, UserId } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, AppConnection, AppConnectionId, AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, ConnectionState, EngineResponse, EngineResponseStatus, ExecuteValidateAuthResponse, MAX_PLATFORM_APP_CONNECTION_OWNERS, OAuth2GrantType, PlatformAppConnectionOwner, PlatformAppConnectionOwnersResponse, PlatformAppConnectionProjectInfo, PlatformAppConnectionsListItem, PlatformRole, UpsertAppConnectionRequestBody, User, UserIdentity, UserWithMetaInformation, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, tryCatch, tryCatchSync, unique, UserId } from '@activepieces/core-utils'
+import { PieceMetadata } from '@activepieces/pieces-framework'
+import { ApEdition, ApEnvironment, AppConnection, AppConnectionId, AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, ConnectionState, EngineResponse, EngineResponseStatus, ExecuteResolveConnectionIdentifierResponse, ExecuteValidateAuthResponse, MAX_PLATFORM_APP_CONNECTION_OWNERS, OAuth2GrantType, PlatformAppConnectionOwner, PlatformAppConnectionOwnersResponse, PlatformAppConnectionProjectInfo, PlatformAppConnectionsListItem, PlatformRole, UpsertAppConnectionRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
-import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
+import { ArrayContains, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectMemberService } from '../../ee/projects/project-members/project-member.service'
 import { containsSecretManagerReference, secretManagersService } from '../../ee/secret-managers/secret-managers.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { encryptUtils } from '../../helper/encryption'
+import { jwtUtils } from '../../helper/jwt-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
@@ -17,13 +19,14 @@ import {
     pieceMetadataService,
 } from '../../pieces/metadata/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
-import { userService } from '../../user/user-service'
+import { mapToUserWithMetaInformation, userService } from '../../user/user-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import {
     AppConnectionEntity,
     AppConnectionSchema,
 } from '../app-connection.entity'
 import { appConnectionHandler } from './app-connection.handler'
+import { mergeConnectionMetadata } from './connection-metadata'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
 export const appConnectionsRepo = repoFactory(AppConnectionEntity)
@@ -71,6 +74,20 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             ...(projectIds ? { projectIds: ArrayContains(projectIds) } : {}),
         })
 
+        const accountIdentifier = await resolveConnectionAccountIdentifier({
+            connectionType: type,
+            auth: validatedConnectionValue,
+            pieceName,
+            projectId: projectIds[0],
+            platformId,
+            log,
+        })
+        const connectionMetadata = mergeConnectionMetadata({
+            requestMetadata: metadata,
+            existingMetadata: existingConnection?.metadata,
+            accountIdentifier,
+        })
+
         const newId = existingConnection?.id ?? apId()
         const connection = {
             displayName,
@@ -84,7 +101,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             scope,
             projectIds,
             platformId,
-            ...spreadIfDefined('metadata', metadata),
+            ...spreadIfDefined('metadata', connectionMetadata),
             ...spreadIfDefined('preSelectForNewProjects', preSelectForNewProjects),
             pieceVersion,
         }
@@ -114,10 +131,23 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             ...(projectIds ? { projectIds: ArrayContains(projectIds) } : {}),
         }
 
+        const existingConnection = await appConnectionsRepo().findOneBy(filter)
+        if (isNil(existingConnection)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'AppConnection', entityId: id },
+            })
+        }
+        const storedAccountIdentifier = existingConnection.metadata?.['accountIdentifier']
+
         await appConnectionsRepo().update(filter, {
             displayName: request.displayName,
             ...spreadIfDefined('projectIds', request.projectIds),
-            ...spreadIfDefined('metadata', request.metadata),
+            ...(isNil(request.metadata) ? {} : spreadIfDefined('metadata', mergeConnectionMetadata({
+                requestMetadata: request.metadata,
+                existingMetadata: existingConnection.metadata,
+                accountIdentifier: typeof storedAccountIdentifier === 'string' ? storedAccountIdentifier : undefined,
+            }))),
             ...spreadIfDefined('preSelectForNewProjects', request.preSelectForNewProjects),
         })
 
@@ -210,6 +240,20 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         return this.removeSensitiveData(connection)
     },
 
+    async listConnectedPieces({ projectId, platformId, limit }: { projectId: ProjectId, platformId: PlatformId, limit: number }): Promise<{ pieceName: string, externalId: string }[]> {
+        return appConnectionsRepo().createQueryBuilder('connection')
+            .select('connection.pieceName', 'pieceName')
+            .addSelect('connection.externalId', 'externalId')
+            .distinctOn(['connection.pieceName'])
+            .where('connection.platformId = :platformId', { platformId })
+            .andWhere(':projectId = ANY(connection.projectIds)', { projectId })
+            .andWhere('connection.status = :status', { status: AppConnectionStatus.ACTIVE })
+            .orderBy('connection.pieceName', 'ASC')
+            .addOrderBy('connection.created', 'ASC')
+            .limit(limit)
+            .getRawMany()
+    },
+
     async getManyConnectionStates(params: GetManyParams): Promise<ConnectionState[]> {
         const connections = await appConnectionsRepo().find({
             where: {
@@ -224,7 +268,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     },
 
     async replace(params: ReplaceParams): Promise<void> {
-        const { sourceAppConnectionId, targetAppConnectionId, projectId, platformId, userId, deleteSourceConnection, applyToPublishedVersions } = params
+        const { sourceAppConnectionId, targetAppConnectionId, projectId, platformId, userId, applyToPublishedVersions, flowIds } = params
         if (sourceAppConnectionId === targetAppConnectionId) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -254,109 +298,31 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        // Mirrors the project-route DELETE guard: platform connections are managed
-        // from the platform admin page and must not be deletable through a
-        // project-scoped replace, no matter which projects still use them.
-        if (deleteSourceConnection && sourceAppConnection.scope === AppConnectionScope.PLATFORM) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {
-                    message: 'Platform connections must be deleted from the platform admin connections page',
-                },
-            })
-        }
-
-        // Reject up-front (before mutating any flow) when published versions this
-        // replace won't touch still use the source connection. When
-        // applyToPublishedVersions is set, that is only the published versions
-        // invisible to the replace (their flow's latest version no longer
-        // references the connection); updating those in place would overwrite
-        // the newer draft, so the user has to publish or repoint them first.
-        // Without it, a delete would orphan every published reference.
-        const publishedFlowsUsingConnection = deleteSourceConnection || applyToPublishedVersions
-            ? await appConnectionHandler(log).countPublishedFlowsReferencingConnection({ projectId, externalId: sourceAppConnection.externalId, applyToPublishedVersions })
-            : 0
-        if (publishedFlowsUsingConnection > 0) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: deleteSourceConnection
-                        ? 'Cannot delete the old connection because it is still used by published flows that were not updated'
-                        : 'Some published flows still use the old connection but have unpublished draft changes — publish those flows first',
-                },
-            })
-        }
-
-        // Repoint page by page: each repointed flow drops out of the connection
-        // filter, so re-fetching the first page walks the whole set without the
-        // cursor skew of paginating rows that are being mutated. The seen-set
-        // stops the loop if a flow fails to leave the filter (e.g. an auth
-        // string the rewrite does not understand) instead of spinning forever.
-        const repointedFlowIds = new Set<string>()
-        for (;;) {
-            const flowsPage = await flowService(log).list({
-                projectIds: [projectId],
-                cursorRequest: null,
-                limit: 1000,
-                folderId: undefined,
-                name: undefined,
-                status: undefined,
-                connectionExternalIds: [sourceAppConnection.externalId],
-            })
-            const flowsToRepoint = flowsPage.data.filter((flow) => !repointedFlowIds.has(flow.id))
-            if (flowsToRepoint.length === 0) {
-                if (flowsPage.data.length > 0) {
-                    log.warn({ oldConnectionId: sourceAppConnectionId, stuckFlowIds: flowsPage.data.map((flow) => flow.id) }, 'Replace could not rewrite some flow references; they keep the old connection')
-                }
-                break
-            }
-            await appConnectionHandler(log).updateFlowsWithAppConnection(flowsToRepoint, {
-                appConnection: sourceAppConnection,
-                newAppConnection: targetAppConnection,
-                userId,
-                applyToPublishedVersions,
-            })
-            flowsToRepoint.forEach((flow) => repointedFlowIds.add(flow.id))
-        }
-
-        log.info({ oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, affectedFlows: repointedFlowIds.size, deleteSourceConnection, applyToPublishedVersions }, 'App connection replaced')
-
-        if (!deleteSourceConnection) {
-            return
-        }
-
-        // Final integrity gate before the irreversible delete: a flow whose
-        // reference could not be rewritten or that was edited or published
-        // concurrently may still use the connection, and deleting it would
-        // orphan that flow. The list covers latest-version references; the
-        // count covers published versions the list cannot see.
-        const remainingFlows = await flowService(log).list({
+        const flows = await flowService(log).list({
             projectIds: [projectId],
             cursorRequest: null,
-            limit: 1,
             folderId: undefined,
             name: undefined,
             status: undefined,
-            connectionExternalIds: [sourceAppConnection.externalId],
+            flowIds,
         })
-        const remainingPublishedFlows = remainingFlows.data.length > 0
-            ? 0
-            : await appConnectionHandler(log).countPublishedFlowsReferencingConnection({ projectId, externalId: sourceAppConnection.externalId, applyToPublishedVersions: false })
-        if (remainingFlows.data.length > 0 || remainingPublishedFlows > 0) {
+        if (flows.data.length !== unique(flowIds).length) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
-                    message: 'Cannot delete the old connection because some flows still use it',
+                    message: `Flows not found in this project: ${unique(flowIds).filter((flowId) => !flows.data.some((flow) => flow.id === flowId)).join(', ')}`,
                 },
             })
         }
-
-        await this.delete({
-            id: sourceAppConnection.id,
+        await appConnectionHandler(log).replaceConnectionInFlows({
+            flows: flows.data,
+            appConnection: sourceAppConnection,
+            newAppConnection: targetAppConnection,
+            userId,
             platformId,
-            scope: sourceAppConnection.scope,
-            projectId,
+            applyToPublishedVersions,
         })
+        log.info({ oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, affectedFlows: flows.data.length, applyToPublishedVersions }, 'App connection replaced')
     },
 
     async delete(params: DeleteParams): Promise<void> {
@@ -373,7 +339,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         projectId,
         projectIds,
         ownerIds,
-        pieceName,
+        pieceNames,
         cursorRequest,
         displayName,
         status,
@@ -398,8 +364,8 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('scope', scope),
             platformId,
         }
-        if (!isNil(pieceName)) {
-            querySelector.pieceName = Equal(pieceName)
+        if (!isNil(pieceNames)) {
+            querySelector.pieceName = In(pieceNames)
         }
         if (!isNil(displayName)) {
             querySelector.displayName = ILike(`%${displayName}%`)
@@ -504,7 +470,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     async listForPlatform(params: ListForPlatformParams): Promise<SeekPage<PlatformAppConnectionsListItem>> {
         const service = appConnectionService(log)
         const page = await service.list({
-            pieceName: params.pieceName,
+            pieceNames: params.pieceNames,
             displayName: params.displayName,
             status: params.status,
             scope: params.scope,
@@ -578,6 +544,73 @@ async function assertProjectIds(projectIds: ProjectId[], platformId: string): Pr
         })
     }
 }
+// The generic path decodes the OIDC id_token / email claim from the token
+// response — this covers every provider that returns one (Google, Microsoft, …).
+// Anything provider-specific (Slack's workspace/user) lives in the piece's own
+// getConnectionIdentifier hook, resolved via the engine. Best-effort — never
+// throws, returns undefined on any miss.
+const resolveConnectionAccountIdentifier = async ({
+    connectionType,
+    auth,
+    pieceName,
+    projectId,
+    platformId,
+    log,
+}: {
+    connectionType: AppConnectionType
+    auth: AppConnectionValue
+    pieceName: string
+    projectId: ProjectId | undefined
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<string | undefined> => {
+    if (connectionType === AppConnectionType.NO_AUTH) {
+        return undefined
+    }
+    if (OAUTH_CONNECTION_TYPES.includes(connectionType)) {
+        const emailFromToken = emailFromTokenResponse('data' in auth ? auth.data : undefined)
+        if (!isNil(emailFromToken)) {
+            return emailFromToken
+        }
+    }
+    return engineResolveConnectionIdentifier({ pieceName, projectId, platformId, auth, connectionType }, log)
+}
+
+const OAUTH_CONNECTION_TYPES = [
+    AppConnectionType.OAUTH2,
+    AppConnectionType.CLOUD_OAUTH2,
+    AppConnectionType.PLATFORM_OAUTH2,
+]
+
+// OIDC providers expose the sign-in email under different claims: Google uses
+// `email`; Microsoft/Azure AD usually put it in `preferred_username` (the UPN)
+// or `upn`. Fall back to those, but only when they actually look like an email.
+const pickEmailClaim = (claims: Record<string, unknown> | undefined): string | undefined => {
+    if (isNil(claims)) {
+        return undefined
+    }
+    const directEmail = claims['email'] ?? claims['mail']
+    if (typeof directEmail === 'string' && directEmail.length > 0) {
+        return directEmail
+    }
+    return ['preferred_username', 'upn', 'unique_name']
+        .map((key) => claims[key])
+        .find((value): value is string => typeof value === 'string' && value.includes('@'))
+}
+
+const emailFromTokenResponse = (data: Record<string, unknown> | undefined): string | undefined => {
+    const emailFromData = pickEmailClaim(data)
+    if (!isNil(emailFromData)) {
+        return emailFromData
+    }
+    const idToken = data?.['id_token']
+    if (typeof idToken !== 'string') {
+        return undefined
+    }
+    const { data: decoded } = tryCatchSync(() => jwtUtils.decode<Record<string, unknown>>({ jwt: idToken }))
+    return pickEmailClaim(decoded?.payload)
+}
+
 const validateConnectionValue = async (
     params: ValidateConnectionValueParams,
     log: FastifyBaseLogger,
@@ -605,6 +638,7 @@ const validateConnectionValue = async (
                     authorizationMethod: value.authorization_method,
                     codeVerifier: value.code_challenge,
                     redirectUrl: value.redirect_url,
+                    resource: value.resource,
                 },
             })
         }
@@ -627,6 +661,7 @@ const validateConnectionValue = async (
                     clientId: value.client_id,
                     authorizationMethod: value.authorization_method,
                     codeVerifier: value.code_challenge,
+                    resource: value.resource,
                 },
             })
         }
@@ -653,6 +688,7 @@ const validateConnectionValue = async (
                     authorizationMethod: value.authorization_method,
                     codeVerifier: value.code_challenge,
                     scope: value.scope,
+                    resource: value.resource,
                 },
             })
             await engineValidateAuth({
@@ -733,6 +769,63 @@ const engineValidateAuth = async (
     }
 }
 
+// The hook is a function, so it cannot survive metadata serialization — without
+// the flag Piece.metadata() derives from it, every OAuth connect would pay a
+// sandbox round-trip to ask a piece that has nothing to answer with.
+const declaresConnectionIdentifier = (auth: PieceMetadata['auth']): boolean => {
+    if (isNil(auth)) {
+        return false
+    }
+    return (Array.isArray(auth) ? auth : [auth]).some((single) => single.hasConnectionIdentifier === true)
+}
+
+// Unlike engineValidateAuth this is best-effort: resolving a display label must
+// never fail — or delay — the connection upsert, so any error/failure collapses
+// to undefined and the engine round-trip is capped by RESOLVE_IDENTIFIER_TIMEOUT_MS
+// (the watcher's own safety timeout is 5 minutes, far too long to block a Save on).
+const RESOLVE_IDENTIFIER_TIMEOUT_MS = 15000
+
+const engineResolveConnectionIdentifier = async (
+    params: EngineResolveConnectionIdentifierParams,
+    log: FastifyBaseLogger,
+): Promise<string | undefined> => {
+    const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
+    if (environment === ApEnvironment.TESTING) {
+        return undefined
+    }
+    const { pieceName, auth, projectId, platformId, connectionType } = params
+    const { data: identifier } = await tryCatch(async () => {
+        const pieceMetadata = await pieceMetadataService(log).getOrThrow({
+            name: pieceName,
+            version: undefined,
+            platformId,
+        })
+        if (!declaresConnectionIdentifier(pieceMetadata.auth)) {
+            log.debug({ piece: { name: pieceName, version: pieceMetadata.version } }, 'Piece auth declares no getConnectionIdentifier, skipping engine round-trip')
+            return undefined
+        }
+        const enginePromise = userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteResolveConnectionIdentifierResponse>>({
+            piece: await getPiecePackageWithoutArchive(log, platformId, {
+                pieceName,
+                pieceVersion: pieceMetadata.version,
+            }),
+            projectId,
+            platformId,
+            connectionValue: auth,
+            connectionType,
+            jobType: WorkerJobType.EXECUTE_RESOLVE_CONNECTION_IDENTIFIER,
+        }, log)
+        const timeoutPromise = new Promise<undefined>((resolve) => {
+            setTimeout(() => resolve(undefined), RESOLVE_IDENTIFIER_TIMEOUT_MS).unref()
+        })
+        const engineResponse = await Promise.race([enginePromise, timeoutPromise])
+        return !isNil(engineResponse) && engineResponse.status === EngineResponseStatus.OK
+            ? engineResponse.response.identifier
+            : undefined
+    })
+    return identifier ?? undefined
+}
+
 async function fetchFlowIdsForConnections(
     log: FastifyBaseLogger,
     connections: Pick<AppConnectionSchema, 'externalId' | 'projectIds'>[],
@@ -770,29 +863,6 @@ async function fetchFlowIdsForConnections(
     })
 
     return flowIdsByExternalId
-}
-
-function mapToUserWithMetaInformation(owner: (User & { identity?: UserIdentity }) | null): UserWithMetaInformation | null {
-    if (isNil(owner)) {
-        return null
-    }
-    const identity = owner.identity
-    if (isNil(identity)) {
-        return null
-    }
-
-    return {
-        id: owner.id,
-        email: identity.email,
-        firstName: identity.firstName,
-        lastName: identity.lastName,
-        platformId: owner.platformId,
-        platformRole: owner.platformRole,
-        status: owner.status,
-        externalId: owner.externalId,
-        created: owner.created,
-        updated: owner.updated,
-    }
 }
 
 function validatePieceVersion(pieceVersion: string): void {
@@ -864,7 +934,7 @@ type ListParams = {
     projectIds?: ProjectId[]
     ownerIds?: string[]
     platformId: string
-    pieceName: string | undefined
+    pieceNames: string[] | undefined
     cursorRequest: Cursor | null
     scope: AppConnectionScope | undefined
     displayName: string | undefined
@@ -875,7 +945,7 @@ type ListParams = {
 
 type ListForPlatformParams = {
     platformId: string
-    pieceName: string | undefined
+    pieceNames: string[] | undefined
     displayName: string | undefined
     status: AppConnectionStatus[] | undefined
     scope: AppConnectionScope | undefined
@@ -905,13 +975,17 @@ type EngineValidateAuthParams = {
     auth: AppConnectionValue
 }
 
+type EngineResolveConnectionIdentifierParams = EngineValidateAuthParams & {
+    connectionType: AppConnectionType
+}
+
 type ReplaceParams = {
     sourceAppConnectionId: AppConnectionId
     targetAppConnectionId: AppConnectionId
     projectId: ProjectId
     platformId: string
     userId: UserId
-    deleteSourceConnection: boolean
     applyToPublishedVersions: boolean
+    flowIds: FlowId[]
 }
 

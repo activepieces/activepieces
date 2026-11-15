@@ -1,5 +1,5 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { AppConnectionStatus, AppConnectionType, ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, FetchError } from '@activepieces/shared'
+import { AppConnectionStatus, AppConnectionType, ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ConnectionPieceMismatchError, FetchError } from '@activepieces/shared'
 import { createConnectionResolver } from '../../src/lib/piece-context/connection-resolver'
 
 const RESOLVER_PARAMS = {
@@ -9,14 +9,16 @@ const RESOLVER_PARAMS = {
     contextVersion: ContextVersion.V1,
 }
 
-function makeConnection({ status = AppConnectionStatus.ACTIVE, type = AppConnectionType.SECRET_TEXT, value = { type: AppConnectionType.SECRET_TEXT, secret_text: 'my-secret' } }: {
+function makeConnection({ status = AppConnectionStatus.ACTIVE, type = AppConnectionType.SECRET_TEXT, value = { type: AppConnectionType.SECRET_TEXT, secret_text: 'my-secret' }, pieceName = '@activepieces/piece-slack' }: {
     status?: AppConnectionStatus
     type?: AppConnectionType
     value?: Record<string, unknown>
+    pieceName?: string
 } = {}) {
     return {
         id: 'conn-1',
         name: 'my-connection',
+        pieceName,
         status,
         value: { ...value, type },
     }
@@ -26,6 +28,11 @@ describe('connection-resolver service', () => {
 
     beforeEach(() => {
         vi.restoreAllMocks()
+        vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
     })
 
     it('V1 happy path returns connection.value', async () => {
@@ -108,17 +115,119 @@ describe('connection-resolver service', () => {
         await expect(resolver.obtain('my-connection')).rejects.toThrow(ConnectionExpiredError)
     })
 
-    it('throws ConnectionLoadingError on non-404 error', async () => {
-        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(null, { status: 500 }))
+    it('retries a transient network failure and resolves', async () => {
+        const connection = makeConnection()
+        const fetchSpy = vi.spyOn(global, 'fetch')
+            .mockRejectedValueOnce(new TypeError('fetch failed'))
+            .mockResolvedValue(new Response(
+                JSON.stringify(connection),
+                { status: 200, headers: { 'Content-Type': 'application/json' } },
+            ))
 
         const resolver = createConnectionResolver(RESOLVER_PARAMS)
-        await expect(resolver.obtain('my-connection')).rejects.toThrow(ConnectionLoadingError)
+        const result = await drainRetries(resolver.obtain('my-connection'))
+
+        expect(result).toEqual(connection.value)
+        expect(fetchSpy).toHaveBeenCalledTimes(2)
     })
 
-    it('throws FetchError on network failure', async () => {
-        vi.spyOn(global, 'fetch').mockRejectedValue(new TypeError('fetch failed'))
+    it('retries a transient 500 and resolves', async () => {
+        const connection = makeConnection()
+        const fetchSpy = vi.spyOn(global, 'fetch')
+            .mockResolvedValueOnce(new Response(null, { status: 500 }))
+            .mockResolvedValue(new Response(
+                JSON.stringify(connection),
+                { status: 200, headers: { 'Content-Type': 'application/json' } },
+            ))
 
         const resolver = createConnectionResolver(RESOLVER_PARAMS)
-        await expect(resolver.obtain('my-connection')).rejects.toThrow(FetchError)
+        const result = await drainRetries(resolver.obtain('my-connection'))
+
+        expect(result).toEqual(connection.value)
+        expect(fetchSpy).toHaveBeenCalledTimes(2)
+    })
+
+    it('throws ConnectionLoadingError when 500 outlives the retries', async () => {
+        const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(new Response(null, { status: 500 }))
+
+        const resolver = createConnectionResolver(RESOLVER_PARAMS)
+        await expect(drainRetries(resolver.obtain('my-connection'))).rejects.toThrow(ConnectionLoadingError)
+        expect(fetchSpy).toHaveBeenCalledTimes(4)
+    })
+
+    it('throws FetchError when the network failure outlives the retries', async () => {
+        const fetchSpy = vi.spyOn(global, 'fetch').mockRejectedValue(new TypeError('fetch failed'))
+
+        const resolver = createConnectionResolver(RESOLVER_PARAMS)
+        await expect(drainRetries(resolver.obtain('my-connection'))).rejects.toThrow(FetchError)
+        expect(fetchSpy).toHaveBeenCalledTimes(4)
+    })
+
+    describe('AP_ENFORCE_CONNECTION_PIECE_BINDING', () => {
+        const pieceName = '@activepieces/piece-slack'
+
+        afterEach(() => {
+            delete process.env.AP_ENFORCE_CONNECTION_PIECE_BINDING
+        })
+
+        const mockFetchReturning = (connectionPieceName: string) => {
+            vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
+                JSON.stringify(makeConnection({ pieceName: connectionPieceName })),
+                { status: 200, headers: { 'Content-Type': 'application/json' } },
+            ))
+        }
+
+        it('throws ConnectionPieceMismatchError for another piece when enabled', async () => {
+            process.env.AP_ENFORCE_CONNECTION_PIECE_BINDING = 'true'
+            mockFetchReturning('@activepieces/piece-google-sheets')
+
+            const resolver = createConnectionResolver({ ...RESOLVER_PARAMS, pieceName })
+            await expect(resolver.obtain('my-connection')).rejects.toThrow(ConnectionPieceMismatchError)
+        })
+
+        it('resolves a connection for the same piece when enabled', async () => {
+            process.env.AP_ENFORCE_CONNECTION_PIECE_BINDING = 'true'
+            mockFetchReturning(pieceName)
+
+            const resolver = createConnectionResolver({ ...RESOLVER_PARAMS, pieceName })
+            await expect(resolver.obtain('my-connection')).resolves.toEqual({
+                type: AppConnectionType.SECRET_TEXT,
+                secret_text: 'my-secret',
+            })
+        })
+
+        it('resolves a connection for another piece when disabled', async () => {
+            mockFetchReturning('@activepieces/piece-google-sheets')
+
+            const resolver = createConnectionResolver({ ...RESOLVER_PARAMS, pieceName })
+            await expect(resolver.obtain('my-connection')).resolves.toEqual({
+                type: AppConnectionType.SECRET_TEXT,
+                secret_text: 'my-secret',
+            })
+        })
+
+        it('throws ConnectionPieceMismatchError for a step with no piece of its own when enabled', async () => {
+            process.env.AP_ENFORCE_CONNECTION_PIECE_BINDING = 'true'
+            mockFetchReturning('@activepieces/piece-google-sheets')
+
+            const resolver = createConnectionResolver(RESOLVER_PARAMS)
+            await expect(resolver.obtain('my-connection')).rejects.toThrow(ConnectionPieceMismatchError)
+        })
+
+        it('resolves for a step with no piece of its own when disabled', async () => {
+            mockFetchReturning('@activepieces/piece-google-sheets')
+
+            const resolver = createConnectionResolver(RESOLVER_PARAMS)
+            await expect(resolver.obtain('my-connection')).resolves.toEqual({
+                type: AppConnectionType.SECRET_TEXT,
+                secret_text: 'my-secret',
+            })
+        })
     })
 })
+
+async function drainRetries<T>(pending: Promise<T>): Promise<T> {
+    pending.catch(() => undefined)
+    await vi.runAllTimersAsync()
+    return pending
+}

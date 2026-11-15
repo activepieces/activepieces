@@ -7,6 +7,7 @@ import { driveSetPublicAccessOutputSchema } from '../output-schemas';
 export const driveSetPublicAccess = createAction({
   auth: googleDriveAuth,
   name: 'drive_set_public_access',
+  classification: 'WRITE',
   displayName: 'Set Public Access',
   description: 'Make a Drive file or folder accessible to anyone with the link.',
   audience: 'ai',
@@ -64,12 +65,12 @@ export const driveSetPublicAccess = createAction({
       return { ...res.data, webViewLink: file.data.webViewLink, downloadUrl: null };
     }
 
-    const content = await downloadFileFromDrive(
-      context.auth,
-      context.files,
+    const content = await downloadFileFromDrive({
+      auth: context.auth,
+      files: context.files,
       fileId,
-      file.data.name!
-    );
+      fileName: file.data.name ?? undefined,
+    });
     return { ...res.data, downloadUrl: content };
   },
 });

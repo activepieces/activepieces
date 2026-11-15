@@ -1,13 +1,14 @@
 import {
+  acceptsRequestBody,
   AuthenticationType,
   httpClient,
-  HttpError,
   HttpHeaders,
   HttpMessageBody,
   HttpMethod,
   HttpRequest,
   HttpResponse,
   QueryParams,
+  toFailsafeOutput,
 } from '@activepieces/pieces-common';
 import { httpOauth2Auth } from '../..';
 import {
@@ -15,7 +16,7 @@ import {
   DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
+import { assertNotNullOrUndefined, isNil } from '@activepieces/pieces-framework';
 import FormData from 'form-data';
 import { ProxyAgent } from 'undici';
 
@@ -23,18 +24,22 @@ export const httpOauth2RequestAction = createAction({
   audience: 'both',
   auth: httpOauth2Auth,
   name: 'send-oauth2-request',
+  classification: 'WRITE',
   displayName: 'Send an OAuth2 Request',
-  description:
-    'Sends HTTP request to a specified URL that requires OAuth 2.0 authorization and returns the response.',
+  description: 'Call any URL with the OAuth2 token from your connection.',
   aiMetadata: { description: 'Calls any HTTP endpoint with an OAuth 2.0 bearer token injected from the connection, choosing the method (GET/POST/PUT/PATCH/DELETE) and body mode (none, JSON, raw, or form-data), optionally routing through an HTTP proxy or returning the error text instead of throwing when the failsafe option is on. Prefer it over the core HTTP piece Send HTTP Request action only when the target API needs a managed OAuth2 token that Activepieces refreshes; it requires an OAuth2 connection set up with the authorize URL, token URL, and scopes, plus a full request URL. Not idempotent in general: the effect depends on the chosen method, and non-GET calls can create or change data on each call.', idempotent: false },
   props: {
     url: Property.ShortText({
       displayName: 'URL',
+      description: 'The full URL to call, including https:// or http://',
+      placeholder: 'https://api.example.com/v1/users',
       required: true,
     }),
     method: Property.StaticDropdown({
       displayName: 'Method',
+      description: 'GET reads data, POST creates it.',
       required: true,
+      defaultValue: HttpMethod.GET,
       options: {
         options: [
           { value: HttpMethod.GET, label: 'GET' },
@@ -47,45 +52,47 @@ export const httpOauth2RequestAction = createAction({
     }),
     headers: Property.Object({
       displayName: 'Headers',
+      description: 'Authorization headers are injected automatically from your connection.',
       required: false,
     }),
     queryParams: Property.Object({
       displayName: 'Query Parameters',
+      description: 'Appended to the URL as ?key=value.',
       required: false,
     }),
-    body_type: Property.StaticDropdown({
+    body_type: Property.Dropdown({
       displayName: 'Body Type',
+      description: 'How to encode the request body.',
       required: false,
       defaultValue: 'none',
-      options: {
-        disabled: false,
-        options: [
-          {
-            label: 'None',
-            value: 'none',
-          },
-          {
-            label: 'Form Data',
-            value: 'form_data',
-          },
-          {
-            label: 'JSON',
-            value: 'json',
-          },
-          {
-            label: 'Raw',
-            value: 'raw',
-          },
-        ],
+      auth: httpOauth2Auth,
+      refreshers: ['method'],
+      options: async ({ method }) => {
+        if (!acceptsRequestBody(method as HttpMethod)) {
+          return {
+            disabled: true,
+            placeholder: 'Not available for GET requests',
+            options: [],
+          };
+        }
+        return {
+          disabled: false,
+          options: [
+            { label: 'None', value: 'none' },
+            { label: 'JSON', value: 'json' },
+            { label: 'Form Data', value: 'form_data' },
+            { label: 'Raw', value: 'raw' },
+          ],
+        };
       },
     }),
     body: Property.DynamicProperties({
       displayName: 'Body',
       auth: httpOauth2Auth,
-      refreshers: ['body_type'],
+      refreshers: ['body_type', 'method'],
       required: false,
-      props: async ({ body_type }) => {
-        if (!body_type) return {};
+      props: async ({ body_type, method }) => {
+        if (!body_type || !acceptsRequestBody(method as HttpMethod)) return {};
 
         const bodyTypeInput = body_type as unknown as string;
 
@@ -119,14 +126,16 @@ export const httpOauth2RequestAction = createAction({
     use_proxy: Property.Checkbox({
       displayName: 'Use Proxy',
       defaultValue: false,
-      description: 'Use a proxy for this request',
+      description: 'Route this request through an HTTP proxy.',
       required: false,
+      advanced: true,
     }),
     proxy_settings: Property.DynamicProperties({
       displayName: 'Proxy Settings',
       auth: httpOauth2Auth,
       refreshers: ['use_proxy'],
       required: false,
+      advanced: true,
       props: async ({ use_proxy }) => {
         if (!use_proxy) return {};
 
@@ -134,6 +143,7 @@ export const httpOauth2RequestAction = createAction({
 
         fields['proxy_host'] = Property.ShortText({
           displayName: 'Proxy Host',
+          placeholder: 'proxy.example.com',
           required: true,
         });
 
@@ -149,6 +159,7 @@ export const httpOauth2RequestAction = createAction({
 
         fields['proxy_password'] = Property.ShortText({
           displayName: 'Proxy Password',
+          description: 'Stored in the flow and visible in exports.',
           required: false,
         });
 
@@ -156,14 +167,34 @@ export const httpOauth2RequestAction = createAction({
       },
     }),
     failsafe: Property.Checkbox({
-      displayName: 'No Error on Failure',
+      displayName: 'Return Error as Output',
+      description: 'On a failed request, output the error instead of failing the step.',
       required: false,
+      advanced: true,
     }),
     timeout: Property.Number({
-      displayName: 'Timeout (in seconds)',
+      displayName: 'Timeout',
+      description: 'Seconds to wait for a response. Empty: up to the flow limit (10 min).',
       required: false,
+      advanced: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'request',
+      display: 'section',
+      label: 'Request',
+      icon: 'send',
+      props: ['method', 'url', 'headers', 'queryParams'],
+    },
+    {
+      key: 'payload',
+      display: 'section',
+      label: 'Data to send',
+      icon: 'code',
+      props: ['body_type', 'body'],
+    },
+  ],
   errorHandlingOptions: {
     continueOnFailure: { hide: true },
     retryOnFailure: { defaultValue: true },
@@ -247,7 +278,11 @@ export const httpOauth2RequestAction = createAction({
         }
 
         let proxyBody: BodyInit | undefined;
-        if (request.body !== undefined && request.body !== null) {
+        if (
+          request.method !== HttpMethod.GET &&
+          request.method !== HttpMethod.HEAD &&
+          !isNil(request.body)
+        ) {
           if (request.body instanceof FormData) {
             proxyBody = request.body.getBuffer();
           } else if (typeof request.body === 'string') {
@@ -265,6 +300,9 @@ export const httpOauth2RequestAction = createAction({
           headers: proxyHeaders,
           body: proxyBody,
           dispatcher: proxyAgent,
+          ...(request.timeout && request.timeout > 0
+            ? { signal: AbortSignal.timeout(request.timeout) }
+            : {}),
         } as RequestInit & { dispatcher: ProxyAgent });
 
         const proxyContentType = proxiedResponse.headers.get('content-type') ?? '';
@@ -277,7 +315,7 @@ export const httpOauth2RequestAction = createAction({
       return handleResponse(response);
     } catch (error) {
       if (failsafe) {
-        return (error as HttpError).errorMessage();
+        return toFailsafeOutput({ error, requestBody: request.body });
       }
 
       throw error;

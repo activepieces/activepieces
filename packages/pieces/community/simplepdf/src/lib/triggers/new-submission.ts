@@ -19,6 +19,7 @@ _[Read more about configuring webhooks](https://simplepdf.eu/help/how-to/configu
 
 export const simplePDFNewSubmission = createTrigger({
   name: 'new-submission',
+  classification: 'READ',
   displayName: 'New Submission',
   auth: PieceAuth.None(),
   description: 'Triggers when a form receives a new submission',

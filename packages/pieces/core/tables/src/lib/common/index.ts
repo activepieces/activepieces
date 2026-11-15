@@ -21,6 +21,8 @@ const getFieldTypeText = (fieldType: FieldType) => {
       return 'Single Select';
     case FieldType.DATE:
       return 'Date';
+    case FieldType.DATETIME:
+      return 'Date & Time';
     case FieldType.NUMBER:
       return 'Number';
     case FieldType.TEXT:
@@ -30,13 +32,12 @@ const getFieldTypeText = (fieldType: FieldType) => {
 export const tablesCommon = {
   table_id: Property.Dropdown({
     auth: PieceAuth.None(),
-    displayName: 'Table Name',
+    displayName: 'Table',
     required: true,
     refreshers: [],
-    refreshOnSearch: true,
     options: async (_propsValue, context) => {
       try {
-        const tables = await fetchAllTables(context);
+        const tables = await fetchAllTables({ context });
         if (!Array.isArray(tables) || tables.length === 0) {
           return {
             options: [],
@@ -60,7 +61,7 @@ export const tablesCommon = {
 
   record_id: Property.ShortText({
     displayName: 'Record ID',
-    description: 'The ID of the record to do the action on.',
+    description: 'Usually comes from a Find Records step or a table trigger.',
     required: true,
   }),
 
@@ -92,6 +93,7 @@ export const tablesCommon = {
           }))]));
           break;
         case FieldType.DATE:
+        case FieldType.DATETIME:
           fieldValidations[field.externalId] = z.optional(z.union([z.date(), z.pipe(z.string(), z.transform(val => {
             const date = new Date(val);
             if (isNaN(date.getTime())) throw new Error(`Invalid date for field "${field.name}"`);
@@ -112,7 +114,7 @@ export const tablesCommon = {
       const tableFields = await this.getTableFields({ tableId, context });
       if (!Array.isArray(tableFields) || tableFields.length === 0) {
         fields['markdown'] = Property.MarkDown({
-          value: `We couldn't find any fields in the selected table. Please add fields to the table first.`,
+          value: `This table has no fields yet. Add fields to the table first.`,
           variant: MarkdownVariant.INFO,
         });
         return fields;
@@ -130,6 +132,7 @@ export const tablesCommon = {
             });
             break;
           case FieldType.DATE:
+          case FieldType.DATETIME:
             fields[field.externalId] = Property.DateTime({
               displayName: field.name,
               description,
@@ -162,7 +165,7 @@ export const tablesCommon = {
     } catch (e) {
       console.error('Error fetching fields:', e);
       fields['markdown'] = Property.MarkDown({
-        value: `We couldn't find any fields in the selected table. Please add fields to the table first.`,
+        value: `Couldn't load the fields of this table. Try again.`,
         variant: MarkdownVariant.INFO,
       });
 
@@ -222,6 +225,21 @@ export const tablesCommon = {
     return response.body;
   },
 
+  async deleteWebhookFromTablesWithExternalId({
+    externalId,
+    webhookId,
+    context,
+  }: {
+    externalId: string;
+    webhookId: string;
+    context: TablesApiContext;
+  }) {
+    const tables = await fetchAllTables({ context, externalIds: [externalId] });
+    for (const table of tables) {
+      await this.deleteWebhook({ tableId: table.id, webhookId, server: context.server });
+    }
+  },
+
   async getRecentRecords({
     tableId,
     limit = 5,
@@ -267,7 +285,7 @@ export const tablesCommon = {
     }
   },
 
-  async convertTableExternalIdToId(tableId: string, context: { server: { apiUrl: string, token: string }, project: { id: string } }) {
+  async convertTableExternalIdToId(tableId: string, context: TablesApiContext) {
     const list: ListTablesRequest = {
       externalIds: [tableId],
       projectId: context.project.id,
@@ -287,40 +305,11 @@ export const tablesCommon = {
   }
 }
 
-export const csvUtils = {
-  buildCsv({ fields, rows, includeHeaders }: { fields: { name: string }[], rows: Record<string, string>[], includeHeaders: boolean }): string {
-    const columnNames = fields.map((f) => f.name);
-    const lines: string[] = [];
-
-    if (includeHeaders) {
-      lines.push(columnNames.map(this.escapeCsvCell).join(','));
-    }
-
-    for (const row of rows) {
-      lines.push(columnNames.map((name) => this.escapeCsvCell(trimCellEdges(row[name] ?? ''))).join(','));
-    }
-
-    return lines.join('\n');
-  },
-
-  escapeCsvCell(value: string): string {
-    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-      return `"${value.replace(/"/g, '""')}"`;
-    }
-    return value;
-  },
-}
-
-const CELL_EDGE_CHARS = /^[\s\u0000-\u001F\u007F-\u009F]+|[\s\u0000-\u001F\u007F-\u009F]+$/g;
-
-function trimCellEdges(value: string): string {
-  return value.replace(CELL_EDGE_CHARS, '');
-}
-
-const fetchAllTables = async (context: { server: { apiUrl: string, token: string }, project: { id: string } }): Promise<Table[]> => {
+const fetchAllTables = async ({ context, externalIds }: { context: TablesApiContext, externalIds?: string[] }): Promise<Table[]> => {
+  const query = { limit: 100, projectId: context.project.id, externalIds };
   const res = await httpClient.sendRequest({
     method: HttpMethod.GET,
-    url: `${context.server.apiUrl}v1/tables?limit=100&projectId=${context.project.id}`,
+    url: `${context.server.apiUrl}v1/tables?${qs.stringify(query)}`,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token: context.server.token,
@@ -335,7 +324,7 @@ const fetchAllTables = async (context: { server: { apiUrl: string, token: string
   while (next) {
     const nextPage = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `${context.server.apiUrl}v1/tables?cursor=${next}&limit=100&projectId=${context.project.id}`,
+      url: `${context.server.apiUrl}v1/tables?${qs.stringify({ ...query, cursor: next })}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,
@@ -347,3 +336,5 @@ const fetchAllTables = async (context: { server: { apiUrl: string, token: string
   }
   return tables;
 }
+
+type TablesApiContext = { server: { apiUrl: string, token: string }, project: { id: string } };

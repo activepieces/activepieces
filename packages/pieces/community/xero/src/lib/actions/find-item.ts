@@ -7,10 +7,13 @@ import {
 } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { props } from '../common/props';
+import { xeroInput } from '../common/client';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroFindItem = createAction({
   auth: xeroAuth,
   name: 'xero_find_item',
+  classification: 'READ',
   displayName: 'Find Item',
   description: 'Finds an item by name or code.',
   audience: 'both',
@@ -19,6 +22,7 @@ export const xeroFindItem = createAction({
       'Look up a Xero item by exact code or exact name, with optional ordering. Read-only and idempotent; use it to confirm an item exists or resolve its details before referencing it on a line item or creating a duplicate. Both search modes require an exact match.',
     idempotent: true,
   },
+  outputSchema: xeroOutputSchemas.itemEnvelope,
   props: {
     tenant_id: props.tenant_id,
     search_by: Property.StaticDropdown({
@@ -48,7 +52,7 @@ export const xeroFindItem = createAction({
 
     const baseUrl = 'https://api.xero.com/api.xro/2.0/Items';
     const whereField = search_by === 'CODE' ? 'Code' : 'Name';
-    const where = `${whereField}="${String(value).replace(/"/g, '\\"')}"`;
+    const where = `${whereField}=${xeroInput.whereString({ value: String(value) })}`;
 
     const params: string[] = [`where=${encodeURIComponent(where)}`];
     if (order) params.push(`order=${encodeURIComponent(order)}`);

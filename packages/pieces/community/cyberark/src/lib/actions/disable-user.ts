@@ -7,6 +7,7 @@ import { getAuthToken, CyberArkAuth } from '../common/auth-helper';
 export const disableUser = createAction({
   auth: cyberarkAuth,
   name: 'disable_user',
+  classification: 'DESTRUCTIVE',
   displayName: 'Disable User',
   description: 'Disables a specific user in the Vault',
   audience: 'both',

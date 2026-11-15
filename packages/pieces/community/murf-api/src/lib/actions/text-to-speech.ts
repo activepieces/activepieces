@@ -7,6 +7,7 @@ import { murfCommon } from "../common/dropdown";
 export const textToSpeech = createAction({
   auth: murfAuth,
   name: "text_to_speech",
+  classification: 'READ',
   displayName: "Text to Speech",
   description: "Converts input text into speech using Murf AI.",
   audience: 'both',

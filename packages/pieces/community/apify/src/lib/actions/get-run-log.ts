@@ -5,6 +5,7 @@ import { getRunLogActionOutputSchema } from '../output-schemas';
 
 export const apifyGetRunLog = createAction({
   name: 'apify_get_run_log',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Get Run Log',
   description: 'Retrieves the plain-text log of an Actor run or build by ID.',

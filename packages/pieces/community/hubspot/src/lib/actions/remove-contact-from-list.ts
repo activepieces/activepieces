@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { staticListsDropdown } from '../common/props';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -8,25 +8,43 @@ import { FilterOperatorEnum, HubSpotAddContactsToListResponse } from '../common/
 export const removeContactFromListAction = createAction({
 	auth: hubspotAuth,
 	name: 'remove-contact-from-list',
+	classification: 'WRITE',
 	displayName: 'Remove Contact from List',
-	description: 'Remove a contact from a specific list.',
+	description: 'Removes a contact from a static list by email.',
 	audience: 'both',
 	aiMetadata: {
 		description:
 			'Remove a contact, identified by email, from a specific static HubSpot list (this only works on static lists, not active/dynamic ones). Use to revoke list membership; it first resolves the email to a contact and errors if no such contact exists or if the contact was not a member of the list.',
 		idempotent: false,
 	},
+	propertyGroups: [
+		{
+			key: 'list',
+			display: 'section',
+			label: 'List',
+			icon: 'users',
+			props: ['listId'],
+		},
+		{
+			key: 'contact',
+			display: 'section',
+			label: 'Contact',
+			icon: 'user',
+			props: ['email'],
+		},
+	],
 	props: {
 		listId: staticListsDropdown,
 		email: Property.ShortText({
 			displayName: 'Contact Email',
+			placeholder: 'jane@example.com',
 			required: true,
 		}),
 	},
 	async run(context) {
 		const { listId, email } = context.propsValue;
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const contact = await client.crm.contacts.searchApi.doSearch({
 			limit: 1,

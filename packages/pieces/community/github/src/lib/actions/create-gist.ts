@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { githubAuth } from '../auth';
 import { githubApiCall } from '../common';
 import { GithubAuthValue, isAppAuth } from '../common/auth-helpers';
@@ -8,48 +12,71 @@ import { createGistActionOutputSchema } from '../output-schemas';
 export const githubCreateGistAction = createAction({
   auth: githubAuth,
   name: 'github_create_gist',
+  classification: 'WRITE',
   displayName: 'Create Gist',
-  description:
-    'Create a GitHub Gist. Requires an OAuth connection — Gists cannot be created with GitHub App authentication.',
+  description: 'Creates a gist with one file.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Creates a GitHub Gist (a standalone code/text snippet) containing a single named file with the given content, public or secret. Use to share a snippet outside any repository. Requires an OAuth connection — it throws an error under GitHub App authentication. Not idempotent: each call creates a new gist.',
+      'Creates a GitHub Gist (a standalone code/text snippet) containing a single named file with the given content, public or secret. Use to share a snippet outside any repository. Requires an OAuth or personal access token connection — it throws an error under GitHub App authentication. Not idempotent: each call creates a new gist.',
     idempotent: false,
   },
 
   props: {
+    appAuthNote: Property.MarkDown({
+      value:
+        'Gists need an OAuth or personal access token connection. GitHub App connections cannot create them.',
+      variant: MarkdownVariant.INFO,
+    }),
+
     description: Property.ShortText({
       displayName: 'Description',
-      description: 'Description of the gist',
+      description: 'Shown above the file on the gist page.',
       required: false,
     }),
 
     public: Property.Checkbox({
       displayName: 'Public',
-      description: 'Whether the gist should be public',
-      required: true,
+      description:
+        'Turn off for a secret gist. Anyone with the link can still open it.',
+      required: false,
       defaultValue: true,
     }),
 
     filename: Property.ShortText({
       displayName: 'Filename',
-      description: 'Name of the file in the gist',
+      description: 'Include the extension so GitHub highlights the code.',
+      placeholder: 'notes.md',
       required: true,
     }),
 
     content: Property.LongText({
       displayName: 'File Content',
-      description: 'Content of the file',
       required: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'file',
+      display: 'section',
+      label: 'File',
+      icon: 'file',
+      props: ['appAuthNote', 'filename', 'content'],
+    },
+    {
+      key: 'gist',
+      display: 'section',
+      label: 'Gist',
+      icon: 'sliders',
+      props: ['description', 'public'],
+    },
+  ],
 
   outputSchema: createGistActionOutputSchema,
   async run({ auth, propsValue }) {
     if (isAppAuth(auth as GithubAuthValue)) {
       throw new Error(
-        'Create Gist is not available with GitHub App authentication. The GitHub Gists API requires a user OAuth token — App installation tokens cannot create gists. Use an OAuth connection instead.'
+        'Create Gist is not available with GitHub App authentication. The GitHub Gists API requires a user token — App installation tokens cannot create gists. Use an OAuth or personal access token connection instead.'
       );
     }
 
@@ -57,7 +84,7 @@ export const githubCreateGistAction = createAction({
 
     const body = {
       description,
-      public: isPublic,
+      public: isPublic ?? true,
       files: {
         [filename]: {
           content,

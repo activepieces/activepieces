@@ -1,6 +1,8 @@
 import {
   Metadata,
+  extractMustacheTokens,
   isNil,
+  isObject,
   parseToJsonIfPossible,
 } from '@activepieces/core-utils';
 import {
@@ -14,10 +16,15 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import {
+  AiRouterActionSchema,
+  AiRouterActionSettingsWithValidation,
   AppConnectionScope,
   AppConnectionType,
   CodeActionSchema,
+  formErrors,
   LoopOnItemsActionSchema,
+  ProcessInBatchesActionSchema,
+  ProcessInBatchesActionSettingsWithValidation,
   PieceActionSchema,
   PieceActionSettings,
   PieceTrigger,
@@ -105,14 +112,38 @@ function parseDynamicValue({
 }: {
   property: PieceProperty;
   value: unknown;
-}): unknown[] | boolean | undefined {
+}): unknown {
   const parsed = parseToJsonIfPossible(value);
+  const isExpression =
+    typeof value === 'string' && extractMustacheTokens(value).length > 0;
   switch (property.type) {
     case PropertyType.MULTI_SELECT_DROPDOWN:
     case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-      return Array.isArray(parsed) ? parsed : undefined;
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+      return isExpression ? value : undefined;
     case PropertyType.CHECKBOX:
-      return typeof parsed === 'boolean' ? parsed : undefined;
+      if (typeof parsed === 'boolean') {
+        return parsed;
+      }
+      return isExpression ? value : undefined;
+    case PropertyType.DROPDOWN:
+    case PropertyType.STATIC_DROPDOWN: {
+      if (typeof value === 'number') {
+        return value;
+      }
+      if (typeof value !== 'string' || value === '') {
+        return undefined;
+      }
+      const restoredJsonStringifiedValue =
+        /^\s*[[{]/.test(value) && parsed !== value;
+      return restoredJsonStringifiedValue ? parsed : value;
+    }
+    case PropertyType.COLOR:
+      return typeof value === 'string' && value !== '' ? value : undefined;
+    case PropertyType.OBJECT:
+      return isObject(parsed) ? parsed : undefined;
     default:
       return undefined;
   }
@@ -142,8 +173,12 @@ function getDefaultPropertyValue({
       }
       return property.defaultValue ?? {};
     }
+    case PropertyType.DATE_RANGE: {
+      return property.defaultValue ?? { preset: 'any_time' };
+    }
     case PropertyType.SHORT_TEXT:
     case PropertyType.LONG_TEXT:
+    case PropertyType.RICH_TEXT:
     case PropertyType.MARKDOWN:
     case PropertyType.FILE:
     case PropertyType.DATE_TIME:
@@ -560,6 +595,21 @@ export const formUtils = {
             }),
           }).shape,
         );
+      case FlowActionType.PROCESS_IN_BATCHES:
+        return ProcessInBatchesActionSchema.omit({ settings: true }).extend(
+          z.object({
+            settings: z.object({
+              items: z.string().min(1, formErrors.required),
+              batchSize: z
+                .number({ error: formErrors.batchSizeMustBeAWholeNumber })
+                .int(formErrors.batchSizeMustBeAWholeNumber)
+                .min(1, formErrors.batchSizeMustBeAtLeastOne),
+              timeoutSeconds:
+                ProcessInBatchesActionSettingsWithValidation.shape
+                  .timeoutSeconds,
+            }),
+          }).shape,
+        );
       case FlowActionType.ROUTER:
         return RouterActionSchema.omit({ settings: true }).extend(
           z.object({
@@ -568,6 +618,10 @@ export const formUtils = {
               executionType: z.enum(RouterExecutionType),
             }),
           }).shape,
+        );
+      case FlowActionType.AI_ROUTER:
+        return AiRouterActionSchema.omit({ settings: true }).extend(
+          z.object({ settings: AiRouterActionSettingsWithValidation }).shape,
         );
       case FlowActionType.CODE:
         return CodeActionSchema;
@@ -618,9 +672,4 @@ export const formUtils = {
   buildConnectionSchema,
   getDefaultPropertyValue,
   parseDynamicValue,
-};
-
-export type BuildConnectionSchemaOptions = {
-  isGlobalConnection: boolean;
-  showConnectionNameField: boolean;
 };

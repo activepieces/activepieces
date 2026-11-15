@@ -9,13 +9,77 @@ The way webhook triggers usually work is as follows:
 Use `context.webhookUrl` to perform an HTTP request to register the webhook in a third-party app, and store the webhook Id in the `store`.
 
 **On Handshake:**
-Some services require a successful handshake request usually consisting of some challenge. It works similar to a normal run except that you return the correct challenge response. This is optional and in order to enable the handshake you need to configure one of the available handshake strategies in the `handshakeConfiguration` option.
+Some services require a successful handshake request usually consisting of some challenge. It works similar to a normal run except that you return the correct challenge response. This is optional and in order to enable the handshake you need to configure one of the available handshake strategies in the `handshakeConfiguration` option, and implement `onHandshake` to return the expected `WebhookResponse` (`{ status, body?, headers? }`).
+
+Available `WebhookHandshakeStrategy` values: `NONE` (default), `HEADER_PRESENT`, `QUERY_PRESENT`, `BODY_PARAM_PRESENT`, and `HEAD_REQUEST`. For the `*_PRESENT` strategies, also set `paramName` to the header/query/body key to check.
 
 **Run:**
 You can find the HTTP body inside `context.payload.body`. If needed, alter the body; otherwise, return an array with a single item `context.payload.body`.
 
 **Disable:**
 Using the `context.store`, fetch the webhook ID from the enable step and delete the webhook on the third-party app.
+
+**Full Example:**
+
+```ts
+import { createTrigger, TriggerStrategy, WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+
+export const newEvent = createTrigger({
+  auth: someAuth,
+  name: 'new_event',
+  displayName: 'New Event',
+  description: 'Fires when a new event is generated',
+  type: TriggerStrategy.WEBHOOK,
+  props: {},
+  sampleData: {
+    id: 'evt_123',
+    type: 'event.created',
+  },
+
+  // Called once when the flow is published; register the webhook with the third-party app.
+  async onEnable(context) {
+    const response = await httpClient.sendRequest<{ id: string }>({
+      method: HttpMethod.POST,
+      url: 'https://api.example.com/webhooks',
+      body: {
+        url: context.webhookUrl,
+      },
+    });
+    await context.store.put('webhookId', response.body.id);
+  },
+
+  // Called once when the flow is disabled; deregister the webhook.
+  async onDisable(context) {
+    const webhookId = await context.store.get('webhookId');
+    if (webhookId) {
+      await httpClient.sendRequest({
+        method: HttpMethod.DELETE,
+        url: `https://api.example.com/webhooks/${webhookId}`,
+      });
+    }
+  },
+
+  // Optional; only needed if the third-party app requires a verification challenge
+  // when the webhook URL is first registered.
+  handshakeConfiguration: {
+    strategy: WebhookHandshakeStrategy.HEADER_PRESENT,
+    paramName: 'x-verification-challenge',
+  },
+  async onHandshake(context) {
+    const challenge = context.payload.headers['x-verification-challenge'];
+    return {
+      status: 200,
+      body: { challenge },
+    };
+  },
+
+  // Called on every incoming webhook request once the trigger is live.
+  async run(context) {
+    return [context.payload.body];
+  },
+});
+```
 
 **Testing:**
 You cannot test it with Test Flow, as it uses static sample data provided in the piece.

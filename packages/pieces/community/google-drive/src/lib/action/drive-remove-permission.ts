@@ -6,6 +6,7 @@ import { driveRemovePermissionOutputSchema } from '../output-schemas';
 export const driveRemovePermission = createAction({
   auth: googleDriveAuth,
   name: 'drive_remove_permission',
+  classification: 'DESTRUCTIVE',
   displayName: 'Remove Permission',
   description: 'Revoke a role from a user on a Drive file or folder.',
   audience: 'ai',

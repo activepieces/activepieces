@@ -11,6 +11,7 @@ import {
 export const analyzeId = createAction({
   auth: amazonTextractAuth,
   name: 'analyze-id',
+  classification: 'READ',
   displayName: 'Analyze ID Document',
   description:
     'Extract structured data from identity documents such as driver\'s licenses and passports. Returns fields like name, date of birth, ID number, and expiry date.',
@@ -67,7 +68,7 @@ export const analyzeId = createAction({
     const s3Key = source === 's3' ? (document['s3Key'] as string) : undefined;
 
     try {
-      const client = createTextractClient(context.auth.props);
+      const client = await createTextractClient({ auth: context.auth.props, server: context.server });
       const documentInput = buildDocumentInput(file, s3Bucket, s3Key);
       const response = await client.send(new AnalyzeIDCommand({ DocumentPages: [documentInput] }));
       return parseIdentityDocuments(response.IdentityDocuments ?? []);

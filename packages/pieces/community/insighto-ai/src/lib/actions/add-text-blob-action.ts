@@ -5,6 +5,7 @@ import { insightoAuth } from '../..';
 
 export const addTextBlobAction = createAction({
   name: 'add_text_blob',
+  classification: 'WRITE',
   displayName: 'Add Text Blob Into Data Source',
   description: 'Inserts a large text blob into an existing data source',
   audience: 'both',

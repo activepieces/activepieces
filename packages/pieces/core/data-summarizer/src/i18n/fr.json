@@ -11,5 +11,6 @@
   "Values": "Valeurs",
   "Fields": "Champs",
   "If you'd like to use the values with a previous step, click the (X) first, and then select the step you want to use.": "Si vous souhaitez utiliser les valeurs avec une étape précédente, cliquez sur le (X) d'abord, puis sélectionnez l'étape que vous souhaitez utiliser.",
-  "If the data you're passing in is an object, you can specify certain fields to filter on. The object will be discarded if the fields don't exist. Otherwise, leave fields empty.": "Si les données que vous passez sont un objet, vous pouvez spécifier certains champs sur lesquels filtrer. L'objet sera supprimé si les champs n'existent pas. Sinon, laissez les champs vides."
+  "If the data you're passing in is an object, you can specify certain fields to filter on. The object will be discarded if the fields don't exist. Otherwise, leave fields empty.": "Si les données que vous passez sont un objet, vous pouvez spécifier certains champs sur lesquels filtrer. L'objet sera supprimé si les champs n'existent pas. Sinon, laissez les champs vides.",
+  "Data Summarizer": "Data Summarizer"
 }

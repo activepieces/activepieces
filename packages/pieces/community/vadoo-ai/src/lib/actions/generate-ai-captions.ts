@@ -11,6 +11,7 @@ import { isEmpty } from '@activepieces/pieces-framework';
 export const generateAiCaptions = createAction({
   auth: vadooAiAuth,
   name: 'generate_ai_captions',
+  classification: 'WRITE',
   displayName: 'Generate AI Captions',
   description: 'Generates AI captions for a video.',
   audience: 'both',

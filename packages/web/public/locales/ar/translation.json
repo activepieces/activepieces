@@ -309,8 +309,6 @@
   "Client Secret": "كلمة سر العميل",
   "Connect": "توصيل",
   "Disconnect": "قطع الاتصال",
-  "I would like to use my own App Credentials": "أرغب في استخدام بيانات اعتماد التطبيق الخاصة بي",
-  "I would like to use predefined App Credentials": "أرغب في استخدام بيانات اعتماد التطبيق المحددة مسبقًا",
   "Permission needed": "Permission needed",
   "Connections replaced successfully": "Connections replaced successfully",
   "Error": "خطأ",
@@ -1191,5 +1189,7 @@
   "Select a project role": "اختر دور المشروع",
   "Steps in this flow": "الخطوات في هذا التدفق",
   "Invalid Access": "Invalid Access",
-  "Either the project does not exist or you do not have access to it.": "Either the project does not exist or you do not have access to it."
+  "Either the project does not exist or you do not have access to it.": "Either the project does not exist or you do not have access to it.",
+  "Activepieces AI": "",
+  "what the call costs": ""
 }

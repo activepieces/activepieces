@@ -11,6 +11,7 @@ import { withAuthParams, rethrowTrelloError } from './ai-common';
 export const archiveAllCardsInList = createAction({
   auth: trelloAuth,
   name: 'archive_all_cards_in_list',
+  classification: 'DESTRUCTIVE',
   displayName: 'Archive All Cards In List (Agent)',
   description: 'Archive every card in a Trello list.',
   audience: 'ai',

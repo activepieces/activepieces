@@ -8,6 +8,7 @@ import { inboxIdDropdown } from '../common/props';
 export const uploadDocumentAction = createAction({
 	auth: airparserAuth,
 	name: 'upload_document',
+	classification: 'WRITE',
 	displayName: 'Upload Document',
 	description: 'Upload a document to an Airparser inbox for parsing.',
 	audience: 'both',

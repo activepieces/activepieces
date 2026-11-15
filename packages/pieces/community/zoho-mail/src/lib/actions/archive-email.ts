@@ -7,6 +7,7 @@ import { accountId, folderId, messageId } from '../common/props';
 export const archiveEmailAction = createAction({
 	auth: zohoMailAuth,
 	name: 'archive_email',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Archive Email',
 	description: 'Archives an email.',
 	audience: 'both',

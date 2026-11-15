@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const lookupCompany = createAction({
   auth: pubrioAuth,
   name: 'lookup_company',
+  classification: 'READ',
   displayName: 'Lookup Company',
   description: 'Look up detailed company information by domain or LinkedIn URL',
   audience: 'both',

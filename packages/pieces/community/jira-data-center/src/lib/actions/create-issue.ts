@@ -37,6 +37,7 @@ async function getFields(auth: JiraDataCenterAuth, projectId: string, issueTypeI
 
 export const createIssueAction = createAction({
 	name: 'create_issue',
+	classification: 'WRITE',
 	displayName: 'Create Issue',
 	description: 'Creates a new issue in a project.',
 	audience: 'both',
@@ -46,6 +47,22 @@ export const createIssueAction = createAction({
 		idempotent: false,
 	},
 	auth: jiraDataCenterAuth,
+	propertyGroups: [
+		{
+			key: 'destination',
+			display: 'section',
+			label: 'Where',
+			icon: 'inbox',
+			props: ['projectId', 'issueTypeId'],
+		},
+		{
+			key: 'fields',
+			display: 'section',
+			label: 'Issue Fields',
+			icon: 'text',
+			props: ['issueFields'],
+		},
+	],
 	props: {
 		projectId: getProjectIdDropdown(),
 		issueTypeId: issueTypeIdProp('Issue Type'),

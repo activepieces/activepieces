@@ -19,9 +19,10 @@ import {
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { DeleteConnectionsDialog } from '@/app/connections/delete-connections-dialog';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
-import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
+import { ReplaceConnectionForProjectDialog } from '@/app/connections/replace-connection-for-project-dialog';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import {
@@ -33,9 +34,7 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
-import { DeleteConnectionWarning } from '@/components/custom/global-connection-utils';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -51,6 +50,7 @@ import {
   EditGlobalConnectionDialog,
   RenameConnectionDialog,
   RevalidateConnectionButton,
+  appConnectionsHooks,
   appConnectionsMutations,
   appConnectionsQueries,
   appConnectionUtils,
@@ -85,12 +85,13 @@ function AppConnectionsPage() {
     ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
     : 10;
   const status = (searchParams.getAll('status') as AppConnectionStatus[]) ?? [];
-  const pieceName = searchParams.get('pieceName') ?? undefined;
+  const pieceNames = searchParams.getAll('pieceName');
   const displayName = searchParams.get('displayName') ?? undefined;
 
   const {
     data: connections,
     isLoading: connectionsLoading,
+    isError: connectionsError,
     refetch,
   } = appConnectionsQueries.useAppConnections({
     request: {
@@ -98,11 +99,10 @@ function AppConnectionsPage() {
       cursor,
       limit,
       status,
-      pieceName,
+      pieceName: pieceNames.length > 0 ? pieceNames : undefined,
       displayName,
     },
     extraKeys: [location.search, projectId],
-    showErrorDialog: true,
   });
 
   const { mutateAsync: deleteConnections } =
@@ -127,6 +127,10 @@ function AppConnectionsPage() {
   const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
   );
+  const {
+    showReplace,
+    hasPermissionToReplace: userHasPermissionToReplaceAppConnection,
+  } = appConnectionsHooks.useReplaceConnectionAccess();
   const { data: owners } = appConnectionsQueries.useConnectionsOwners();
   const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] =
     ownerColumnHooks.useOwnerColumnFilter<AppConnectionWithoutSensitiveData>(
@@ -178,6 +182,8 @@ function AppConnectionsPage() {
         ),
         cell: ({ row }) => {
           const isPlatformConnection = row.original.scope === 'PLATFORM';
+          const accountIdentifier =
+            appConnectionUtils.getConnectionAccountIdentifier(row.original);
           return (
             <div className="flex items-center gap-2 min-w-0">
               <CopyTextTooltip
@@ -192,9 +198,16 @@ function AppConnectionsPage() {
                   />
                 </span>
               </CopyTextTooltip>
-              <TextWithTooltip tooltipMessage={row.original.displayName}>
-                <span className="min-w-0">{row.original.displayName}</span>
-              </TextWithTooltip>
+              <div className="flex flex-col min-w-0">
+                <TextWithTooltip tooltipMessage={row.original.displayName}>
+                  <span className="min-w-0">{row.original.displayName}</span>
+                </TextWithTooltip>
+                {accountIdentifier && (
+                  <span className="truncate text-xs text-gray-11">
+                    {accountIdentifier}
+                  </span>
+                )}
+              </div>
               {isPlatformConnection && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -272,7 +285,9 @@ function AppConnectionsPage() {
               className="text-left underline cursor-pointer"
               onClick={() => {
                 navigate(
-                  `/flows?connectionExternalId=${row.original.externalId}`,
+                  `/automations?connection=${encodeURIComponent(
+                    row.original.externalId,
+                  )}`,
                 );
               }}
             >
@@ -343,34 +358,31 @@ function AppConnectionsPage() {
           return (
             <>
               {deletableRows.length > 0 && (
-                <ConfirmationDeleteDialog
+                <DeleteConnectionsDialog
+                  connections={deletableRows}
                   title={t('Delete Connections')}
                   message={t(
                     'The selected connections will be permanently deleted.',
                   )}
-                  warning={<DeleteConnectionWarning />}
                   mutationFn={async () => {
                     await deleteConnections(deletableRows.map((row) => row.id));
                     refetch();
                     resetSelection();
                     setSelectedRows([]);
                   }}
-                  entityName={t('connection')}
-                  buttonText={t('Delete')}
                   open={showDeleteDialog}
                   onOpenChange={setShowDeleteDialog}
-                  showToast
                 >
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-destructive hover:text-destructive"
+                    className="text-danger-11 hover:text-danger-11"
                     onClick={() => setShowDeleteDialog(true)}
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
                     {t('Delete')} ({deletableRows.length})
                   </Button>
-                </ConfirmationDeleteDialog>
+                </DeleteConnectionsDialog>
               )}
             </>
           );
@@ -382,27 +394,31 @@ function AppConnectionsPage() {
 
   const toolbarButtons = useMemo(
     () => [
-      <PermissionNeededTooltip
-        key="replace"
-        hasPermission={userHasPermissionToWriteAppConnection}
-      >
-        <ReplaceConnectionsDialog
-          projectId={projectId}
-          onConnectionMerged={() => {
-            setRefresh(refresh + 1);
-            refetch();
-          }}
-        >
-          <AnimatedIconButton
-            icon={ReplaceIcon}
-            iconSize={16}
-            variant="outline"
-            disabled={!userHasPermissionToWriteAppConnection}
-          >
-            {t('Replace')}
-          </AnimatedIconButton>
-        </ReplaceConnectionsDialog>
-      </PermissionNeededTooltip>,
+      ...(!showReplace
+        ? []
+        : [
+            <PermissionNeededTooltip
+              key="replace"
+              hasPermission={userHasPermissionToReplaceAppConnection}
+            >
+              <ReplaceConnectionForProjectDialog
+                projectId={projectId}
+                onConnectionMerged={() => {
+                  setRefresh(refresh + 1);
+                  refetch();
+                }}
+              >
+                <AnimatedIconButton
+                  icon={ReplaceIcon}
+                  iconSize={16}
+                  variant="outline"
+                  disabled={!userHasPermissionToReplaceAppConnection}
+                >
+                  {t('Replace')}
+                </AnimatedIconButton>
+              </ReplaceConnectionForProjectDialog>
+            </PermissionNeededTooltip>,
+          ]),
       <PermissionNeededTooltip
         key="new"
         hasPermission={userHasPermissionToWriteAppConnection}
@@ -425,7 +441,12 @@ function AppConnectionsPage() {
         </NewConnectionDialog>
       </PermissionNeededTooltip>,
     ],
-    [userHasPermissionToWriteAppConnection, refresh],
+    [
+      userHasPermissionToWriteAppConnection,
+      userHasPermissionToReplaceAppConnection,
+      showReplace,
+      refresh,
+    ],
   );
   return (
     <div className="flex-col w-full">
@@ -438,6 +459,9 @@ function AppConnectionsPage() {
         columns={columns}
         page={filteredData}
         isLoading={connectionsLoading}
+        isError={connectionsError}
+        errorStateEntity={t('connections')}
+        onRetry={refetch}
         filters={filters}
         selectColumn={true}
         onSelectedRowsChange={setSelectedRows}

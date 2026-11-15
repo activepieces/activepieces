@@ -4,6 +4,7 @@ import { kallabotAuth } from '../..';
 
 export const getCallDetailsAction = createAction({
     name: 'get-call-details',
+    classification: 'READ',
     displayName: 'Get Call Details',
     description: 'Retrieve details of a specific call by call SID.',
     audience: 'both',

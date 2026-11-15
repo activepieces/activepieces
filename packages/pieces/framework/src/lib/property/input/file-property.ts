@@ -30,4 +30,4 @@ export type ApStreamingFile = {
 
 export type FileProperty<R extends boolean, S extends boolean = false> = BasePropertySchema & {
     streaming?: S;
-} & TPropertyValue<S extends true ? ApStreamingFile : ApFile, PropertyType.FILE, R>;
+} & TPropertyValue<S extends true ? ApStreamingFile | ApFile : ApFile, PropertyType.FILE, R>;

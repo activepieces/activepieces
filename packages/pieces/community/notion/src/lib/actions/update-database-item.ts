@@ -1,6 +1,8 @@
 import {
   createAction,
   DynamicPropsValue,
+  MarkdownVariant,
+  Property,
 } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { NotionFieldMapping } from '../common/models';
@@ -11,18 +13,39 @@ import { updateDatabaseItemActionOutputSchema } from '../output-schemas';
 export const updateDatabaseItem = createAction({
   auth: notionAuth,
   name: 'update_database_item',
+  classification: 'WRITE',
   displayName: 'Update Database Item',
-  description:
-    'Update specific fields in a Notion database item. Perfect for maintaining data, tracking changes, or syncing information across systems.',
-  audience: 'both',
+  description: 'Change field values on an existing database item.',
+  audience: 'human',
   aiMetadata: {
     description:
       'Overwrites property fields on an existing Notion database item identified by its page id. Use when an agent must change values on a known record (status, assignee, dates) rather than create one; requires the database_id and the target item id. Idempotent: re-applying the same field values leaves the item in the same final state.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'item',
+      display: 'section',
+      label: 'Database item',
+      icon: 'inbox',
+      props: ['database_id', 'database_item_id'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'sliders',
+      props: ['changes_info', 'databaseFields'],
+    },
+  ],
   props: {
     database_id: notionCommon.database_id,
     database_item_id: notionCommon.database_item_id,
+    changes_info: Property.MarkDown({
+      value:
+        'Empty fields keep their current value. Checkboxes are always saved as shown.',
+      variant: MarkdownVariant.INFO,
+    }),
     databaseFields: notionCommon.databaseFields,
   },
   outputSchema: updateDatabaseItemActionOutputSchema,

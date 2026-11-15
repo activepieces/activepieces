@@ -6,6 +6,7 @@ import { heygenAuth } from '../common/auth';
 export const listAvatarsAction = createAction({
   auth: heygenAuth,
   name: 'list_avatars',
+  classification: 'SEARCH',
   displayName: 'List Avatars',
   description: 'Retrieve a list of all available avatars.',
   audience: 'both',

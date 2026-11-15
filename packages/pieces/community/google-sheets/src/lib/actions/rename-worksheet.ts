@@ -8,9 +8,10 @@ import { renameWorksheetActionOutputSchema } from '../output-schemas';
 export const renameWorksheetAction = createAction({
     auth: googleSheetsAuth,
     name: 'rename-worksheet',
+    classification: 'WRITE',
     displayName: 'Rename Worksheet',
-    description: 'Rename specific worksheet.',
-    audience: 'both',
+    description: 'Give an existing worksheet a new title.',
+    audience: 'human',
     aiMetadata: {
         description:
             'Changes the title of an existing worksheet, identified by its stable sheet id, within a spreadsheet. Use when an agent needs to relabel a tab. Idempotent — re-running with the same new name leaves the title unchanged.',
@@ -18,10 +19,10 @@ export const renameWorksheetAction = createAction({
     },
     props: {
         includeTeamDrives: includeTeamDrivesProp(),
-        spreadsheetId: spreadsheetIdProp('Spreadsheet', 'The ID of the spreadsheet to use.'),
-        sheetId: sheetIdProp('Worksheet', 'The ID of the worksheet to rename.'),
+        spreadsheetId: spreadsheetIdProp('Spreadsheet', 'The spreadsheet to work in.'),
+        sheetId: sheetIdProp('Worksheet', 'The tab to rename.'),
         newName:Property.ShortText({
-            displayName:'New Sheet Name',
+            displayName:'New Worksheet Name',
             required:true
         })
     },

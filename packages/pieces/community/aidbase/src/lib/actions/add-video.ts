@@ -5,6 +5,7 @@ import { aidbaseClient } from '../common/client';
 export const addVideo = createAction({
   auth: aidbaseAuth,
   name: 'add_video',
+  classification: 'WRITE',
   displayName: 'Add Video',
   description:
     'Adds a YouTube video URL as knowledge to the Aidbase knowledge base.',

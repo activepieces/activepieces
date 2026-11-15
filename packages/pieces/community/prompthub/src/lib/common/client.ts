@@ -30,6 +30,10 @@ export class PromptHubClient {
     }
   }
 
+  async getMe() {
+    return this.get('/me');
+  }
+
   async listProjects(teamId: number, query?: Record<string, string | number | boolean | undefined>) {
     return this.get(`/teams/${teamId}/projects`, query);
   }

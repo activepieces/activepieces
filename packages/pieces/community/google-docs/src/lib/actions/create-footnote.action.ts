@@ -7,6 +7,7 @@ import { createFootnoteActionOutputSchema } from '../output-schemas';
 export const createFootnote = createAction({
   auth: googleDocsAuth,
   name: 'create_footnote',
+  classification: 'WRITE',
   displayName: 'Create Footnote',
   description: 'Insert a footnote at a character index in a Google Docs document',
   audience: 'ai',

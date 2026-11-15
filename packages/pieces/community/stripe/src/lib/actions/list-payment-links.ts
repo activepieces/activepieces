@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { paymentLinkListOutputSchema } from '../output-schemas';
 export const stripeListPaymentLinks = createAction({
   name: 'list_payment_links',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'List Payment Links (Agent)',
   description: 'List Stripe payment links.',

@@ -9,6 +9,7 @@ import { fetchEntityTypesForReading } from '../common/drupal-entities';
 export const drupalDeleteEntityAction = createAction({
   auth: drupalAuth,
   name: 'drupal-delete-entity',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Entity',
   description: 'Delete an entity from Drupal',
   audience: 'both',

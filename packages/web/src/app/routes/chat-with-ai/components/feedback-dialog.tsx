@@ -1,4 +1,4 @@
-import { ChatFeedbackReason } from '@activepieces/shared';
+import { AgentFeedbackReason } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { cn } from '@/lib/utils';
 
-const REASON_LABELS: Record<ChatFeedbackReason, string> = {
+const REASON_LABELS: Record<AgentFeedbackReason, string> = {
   incorrect_or_incomplete: 'Incorrect or incomplete',
   not_what_i_asked_for: 'Not what I asked for',
   slow_or_buggy: 'Slow or buggy',
@@ -35,7 +35,7 @@ export function FeedbackDialog({
   conversationId: string;
   messageIndex: number;
 }) {
-  const [reasons, setReasons] = useState<Set<ChatFeedbackReason>>(new Set());
+  const [reasons, setReasons] = useState<Set<AgentFeedbackReason>>(new Set());
   const [comment, setComment] = useState('');
 
   const mutation = useMutation({
@@ -50,7 +50,7 @@ export function FeedbackDialog({
     onSuccess: () => onOpenChange(false),
   });
 
-  const toggleReason = (reason: ChatFeedbackReason) => {
+  const toggleReason = (reason: AgentFeedbackReason) => {
     setReasons((prev) => {
       const next = new Set(prev);
       if (next.has(reason)) {
@@ -69,7 +69,7 @@ export function FeedbackDialog({
           <DialogTitle>{t('Share feedback')}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-wrap gap-2">
-          {ChatFeedbackReason.options.map((reason) => {
+          {AgentFeedbackReason.options.map((reason) => {
             const selected = reasons.has(reason);
             return (
               <Button
@@ -79,7 +79,7 @@ export function FeedbackDialog({
                 variant={selected ? 'secondary' : 'outline'}
                 aria-pressed={selected}
                 onClick={() => toggleReason(reason)}
-                className={cn('rounded-full', selected && 'border-foreground')}
+                className={cn('rounded-full', selected && 'border-gray-12')}
               >
                 {t(REASON_LABELS[reason])}
               </Button>
@@ -95,7 +95,7 @@ export function FeedbackDialog({
         />
         <DialogFooter className="items-center gap-2 sm:justify-between">
           {mutation.isError ? (
-            <span className="text-sm text-destructive">
+            <span className="text-sm text-danger-11">
               {t("Couldn't submit feedback. Please try again.")}
             </span>
           ) : (

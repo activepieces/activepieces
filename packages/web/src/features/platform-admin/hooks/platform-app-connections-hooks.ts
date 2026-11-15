@@ -22,18 +22,18 @@ export const platformAppConnectionsQueries = {
       queryKey: platformAppConnectionsKeys.list(searchParams.toString()),
       staleTime: 0,
       gcTime: 0,
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
       queryFn: () => {
         const cursor = searchParams.get(CURSOR_QUERY_PARAM);
         const limit = searchParams.get(LIMIT_QUERY_PARAM);
         const status = searchParams.getAll('status') as AppConnectionStatus[];
         const projectIds = searchParams.getAll('projectIds');
         const ownerIds = searchParams.getAll('ownerIds');
+        const pieceNames = searchParams.getAll('pieceName');
         return platformAppConnectionsApi.list({
           cursor: cursor ?? undefined,
           limit: limit ? parseInt(limit) : undefined,
           displayName: searchParams.get('displayName') ?? undefined,
-          pieceName: searchParams.get('pieceName') ?? undefined,
+          pieceName: pieceNames.length > 0 ? pieceNames : undefined,
           status: status.length > 0 ? status : undefined,
           projectIds: projectIds.length > 0 ? projectIds : undefined,
           ownerIds: ownerIds.length > 0 ? ownerIds : undefined,

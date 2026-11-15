@@ -51,6 +51,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof vimeoAuth>, Prop
 
 export const newVideoByUser = createTrigger({
   name: 'new_video_by_user',
+  classification: 'READ',
   displayName: 'New Video by User',
   description: 'Triggers when another specified user adds a video',
   aiMetadata: {
@@ -66,18 +67,10 @@ export const newVideoByUser = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   async test(context) {
     return await pollingHelper.test(polling, context);

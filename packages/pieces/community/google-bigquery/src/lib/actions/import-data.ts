@@ -41,6 +41,7 @@ function parseInputData(data: unknown): Record<string, unknown>[] {
 export const importDataAction = createAction({
   auth: bigQueryAuth,
   name: 'import_data',
+  classification: 'WRITE',
   displayName: 'Import Data',
   description:
     'Imports a batch of rows into a BigQuery table. Accepts a JSON array or newline-delimited JSON (NDJSON). Large datasets are automatically split into chunks.',

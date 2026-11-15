@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const searchNews = createAction({
   auth: asknewsAuth,
   name: 'searchNews',
+  classification: 'SEARCH',
   displayName: 'Search News',
   description:
     'Search for enriched real-time news articles from the past 48 hours or historical archive',

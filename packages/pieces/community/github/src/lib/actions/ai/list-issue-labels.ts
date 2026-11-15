@@ -8,6 +8,7 @@ import { listLabelsOutputSchema } from '../../output-schemas';
 export const githubListIssueLabelsAction = createAction({
   auth: githubAuth,
   name: 'list_issue_labels',
+  classification: 'SEARCH',
   displayName: 'List Issue Labels (Agent)',
   description: 'Lists the labels currently on an issue or pull request.',
   audience: 'ai',

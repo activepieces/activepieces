@@ -5,6 +5,7 @@ import { stripeAuth } from '../..';
 import { invoiceOutputSchema } from '../output-schemas';
 export const stripeCreateInvoiceAi = createAction({
   name: 'create_invoice_ai',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Invoice (Agent)',
   description: 'Create a draft invoice in Stripe.',

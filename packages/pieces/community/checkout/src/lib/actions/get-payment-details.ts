@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getPaymentDetailsAction = createAction({
   name: 'get_payment_details',
+  classification: 'READ',
   auth: checkoutComAuth,
   displayName: 'Get Payment Details',
   description: 'Check transaction amount and status before refunding.',

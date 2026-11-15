@@ -25,8 +25,8 @@ import { newOpportunity } from './lib/triggers/new-opportunity';
 const markdownDescription = `
 1. Go to the [Marketplace](https://marketplace.gohighlevel.com/) and sign up for a developer account.
 2. Navigate to **My Apps** and click on **Create App**.
-3. Provide app name.Then select **Private** as App Type, **Sub-Account** as Distribution Type. Click **Create App** Button.
-4. Add following scopes.
+3. Enter an app name, then select **Private** as App Type and **Sub-Account** as Distribution Type. Click **Create App**.
+4. Add the following scopes:
    - campaigns.readonly
    - contacts.write
    - contacts.readonly
@@ -38,8 +38,8 @@ const markdownDescription = `
    - users.readonly
    - workflows.readonly
    - forms.readonly
-5. Add redirect URLs.
-6. Create new Client key with valid name.Copy Client ID and Client Secret.
+5. Add the **Redirect URL** shown in this dialog.
+6. Create a new client key, then copy the **Client ID** and **Client Secret** into this dialog.
 `;
 
 export const leadConnectorAuth = PieceAuth.OAuth2({
@@ -70,7 +70,7 @@ export const leadConnectorAuth = PieceAuth.OAuth2({
     } catch (e) {
       return {
         valid: false,
-        error: 'Invalid API key.',
+        error: 'Could not connect to LeadConnector. Reconnect and try again.',
       };
     }
   },
@@ -80,7 +80,7 @@ export const leadConnector = createPiece({
   displayName: 'LeadConnector',
   description: 'Lead Connector - Go High Level',
   auth: leadConnectorAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/lead-connector.png',
   categories: [PieceCategory.SALES_AND_CRM],
   authors: ['kishanprmr', 'MoShizzle', 'abuaboud'],

@@ -46,7 +46,6 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             log: request.log,
         })
         modifiedFlags[ApFlagId.SHOW_COMMUNITY] = platformWithPlan.plan.showPoweredBy
-        modifiedFlags[ApFlagId.SHOW_BILLING_PAGE] = flags[ApFlagId.SHOW_BILLING_PAGE]
         modifiedFlags[ApFlagId.CLOUD_AUTH_ENABLED] = platform.cloudAuthEnabled
         modifiedFlags[ApFlagId.SHOW_PROJECT_MEMBERS] = platformWithPlan.plan.projectRolesEnabled
         modifiedFlags[ApFlagId.PUBLIC_URL] = await domainHelper.getPublicUrl({
@@ -57,6 +56,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         const embedSubdomainUrl = await embedSubdomainService(request.log).getActiveSubdomainUrl({ platformId })
         if (embedSubdomainUrl) {
             modifiedFlags[ApFlagId.WEBHOOK_URL_PREFIX] = `${embedSubdomainUrl}/api/v1/webhooks`
+            modifiedFlags[ApFlagId.EMBED_SUBDOMAIN_URL] = `${embedSubdomainUrl}/`
         }
         else {
             modifiedFlags[

@@ -9,6 +9,7 @@ import { whatsappAccountDropdown } from '../common/properties';
 export const sendMessageToNewChat = createAction({
   auth: timelinesAiAuth,
   name: 'sendMessageToNewChat',
+  classification: 'WRITE',
   displayName: 'Send Message to New Chat',
   description:
     'Create a new chat (new conversation) by specifying the WhatsApp account, phone number, and message.',

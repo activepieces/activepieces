@@ -6,18 +6,21 @@ import {
   FlowTrigger,
   FlowTriggerType,
   flowStructureUtil,
+  PieceAudienceFilter,
 } from '@activepieces/shared';
 import { useQueries } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Database, SearchXIcon, Variable } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDebounce } from 'use-debounce';
 
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 import { SearchInput } from '@/components/custom/search-input';
 import { OutputSchema } from '@/components/custom/smart-output-viewer/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { piecesApi } from '@/features/pieces';
+import { VirtualizedList } from '@/components/ui/virtualized-list';
+import { pieceQueryKey, piecesApi } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
@@ -66,24 +69,43 @@ function buildAdvancedStructure(
   isFocusInsideListMapperModeInput: boolean,
   targetStepName: string,
 ): DataSelectorTreeNode[] {
-  return steps.map((step) => {
-    try {
-      return dataSelectorUtils.traverseStep(
-        step,
-        sampleData,
-        isFocusInsideListMapperModeInput,
-        targetStepName,
-      );
-    } catch {
-      return {
-        key: `error-${step.name}`,
-        data: {
-          type: 'chunk' as const,
-          displayName: `Error loading ${step.name}`,
-        },
-      };
-    }
-  });
+  return steps.map((step) =>
+    traverseStepOrErrorNode({
+      step,
+      sampleData,
+      zipArraysOfProperties: isFocusInsideListMapperModeInput,
+      targetStepName,
+    }),
+  );
+}
+
+function traverseStepOrErrorNode({
+  step,
+  sampleData,
+  zipArraysOfProperties,
+  targetStepName,
+}: {
+  step: StepInfo;
+  sampleData: Record<string, unknown>;
+  zipArraysOfProperties: boolean;
+  targetStepName: string;
+}): DataSelectorTreeNode {
+  try {
+    return dataSelectorUtils.traverseStep(
+      step,
+      sampleData,
+      zipArraysOfProperties,
+      targetStepName,
+    );
+  } catch {
+    return {
+      key: `error-${step.name}`,
+      data: {
+        type: 'chunk' as const,
+        displayName: `Error loading ${step.name}`,
+      },
+    };
+  }
 }
 
 type DataSelectorProps = {
@@ -166,12 +188,18 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
 
   const pieceQueries = useQueries({
     queries: piecePairs.map(({ pieceName, pieceVersion }) => ({
-      queryKey: ['piece', pieceName, pieceVersion],
+      queryKey: pieceQueryKey({
+        name: pieceName,
+        version: pieceVersion,
+        locale: i18n.language,
+        audience: PieceAudienceFilter.ALL,
+      }),
       queryFn: () =>
         piecesApi.get({
           name: pieceName,
           version: pieceVersion,
           locale: i18n.language as LocalesEnum,
+          audience: PieceAudienceFilter.ALL,
         }),
       staleTime: Infinity,
     })),
@@ -205,6 +233,20 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
       steps.map((step) => {
         const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
         const stepData = sampleData[step.name];
+
+        if (
+          dataSelectorUtils.shouldShowStepAsFlatList({
+            isFocusInsideListMapperModeInput,
+            stepOutput: stepData,
+          })
+        ) {
+          return traverseStepOrErrorNode({
+            step,
+            sampleData,
+            zipArraysOfProperties: true,
+            targetStepName: selectedStepName,
+          });
+        }
 
         if (
           typeof stepData === 'string' ||
@@ -274,22 +316,12 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
             sampleData: stepData,
           });
         }
-        try {
-          return dataSelectorUtils.traverseStep(
-            step,
-            sampleData,
-            isFocusInsideListMapperModeInput,
-            selectedStepName,
-          );
-        } catch {
-          return {
-            key: `error-${step.name}`,
-            data: {
-              type: 'chunk' as const,
-              displayName: `Error loading ${step.name}`,
-            },
-          };
-        }
+        return traverseStepOrErrorNode({
+          step,
+          sampleData,
+          zipArraysOfProperties: false,
+          targetStepName: selectedStepName,
+        });
       }),
     [
       steps,
@@ -302,9 +334,42 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
 
   const currentStructure =
     viewMode === 'friendly' ? friendlyStructure : advancedStructure;
+  const [debouncedSearchTerm] = useDebounce(searchTerm, 250);
   const filteredNodes = useMemo(
-    () => dataSelectorUtils.filterBy(currentStructure, searchTerm),
-    [currentStructure, searchTerm],
+    () => dataSelectorUtils.filterBy(currentStructure, debouncedSearchTerm),
+    [currentStructure, debouncedSearchTerm],
+  );
+
+  const expansionScope = `${viewMode}|${debouncedSearchTerm}`;
+  const [expansion, setExpansion] = useState<ExpansionState>({
+    scope: '',
+    overrides: EMPTY_OVERRIDES,
+  });
+  const overrides =
+    expansion.scope === expansionScope ? expansion.overrides : EMPTY_OVERRIDES;
+
+  const rows = useMemo(
+    () =>
+      dataSelectorUtils.flattenVisibleRows({
+        nodes: filteredNodes,
+        searchActive: debouncedSearchTerm.length > 0,
+        overrides,
+      }),
+    [filteredNodes, debouncedSearchTerm, overrides],
+  );
+
+  const setRowExpanded = useCallback(
+    (rowId: string, expanded: boolean) => {
+      setExpansion((current) => ({
+        scope: expansionScope,
+        overrides: new Map(
+          current.scope === expansionScope
+            ? current.overrides
+            : EMPTY_OVERRIDES,
+        ).set(rowId, expanded),
+      }));
+    },
+    [expansionScope],
   );
 
   const checkFocus = useCallback(() => {
@@ -329,7 +394,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
       ref={containerRef}
       tabIndex={0}
       className={cn(
-        'absolute bottom-0 mr-5 mb-5 right-0 z-50 transition-all  border border-solid border-outline overflow-x-hidden bg-background shadow-lg rounded-md',
+        'absolute bottom-0 mr-5 mb-5 right-0 z-50 transition-all  border border-solid overflow-x-hidden bg-gray-1 shadow-lg rounded-md',
         {
           'opacity-0 pointer-events-none': !showDataSelector,
         },
@@ -365,12 +430,12 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         >
           <TabsList
             variant="outline"
-            className="px-3 shrink-0 gap-1 border-b border-border w-full justify-start"
+            className="px-3 shrink-0 gap-1 border-b border-gray-6 w-full justify-start"
           >
             <TabsTrigger
               value="data"
               variant="outline"
-              className="gap-2 px-3 py-2 hover:text-foreground rounded-none"
+              className="gap-2 px-3 py-2 hover:text-gray-12 rounded-none"
             >
               <Database className="w-4 h-4" />
               {t('Data')}
@@ -378,7 +443,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
             <TabsTrigger
               value="variables"
               variant="outline"
-              className="gap-2 px-3 py-2 hover:text-foreground rounded-none"
+              className="gap-2 px-3 py-2 hover:text-gray-12 rounded-none"
             >
               <Variable className="w-4 h-4" />
               {t('Variables')}
@@ -398,29 +463,34 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
                 value={viewMode}
                 onValueChange={(v) => setViewMode(v as 'friendly' | 'advanced')}
               >
-                <TabsList className="h-9 shrink-0">
-                  <TabsTrigger value="friendly" className="text-xs px-2.5 h-7">
+                <TabsList size="sm" className="shrink-0">
+                  <TabsTrigger value="friendly" size="sm">
                     {t('Friendly View')}
                   </TabsTrigger>
-                  <TabsTrigger value="advanced" className="text-xs px-2.5 h-7">
+                  <TabsTrigger value="advanced" size="sm">
                     {t('Advanced')}
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
             <ScrollArea className="transition-all flex-1 w-full ">
-              {filteredNodes.map((node) => (
-                <DataSelectorNode
-                  depth={0}
-                  key={node.key}
-                  node={node}
-                  searchTerm={searchTerm}
-                ></DataSelectorNode>
-              ))}
+              <VirtualizedList
+                items={rows}
+                estimateSize={32}
+                getItemKey={(index) => rows[index].id}
+                renderItem={(row) => (
+                  <DataSelectorNode
+                    depth={row.depth}
+                    node={row.node}
+                    expanded={row.expanded}
+                    setExpanded={(expanded) => setRowExpanded(row.id, expanded)}
+                  ></DataSelectorNode>
+                )}
+              />
               {filteredNodes.length === 0 && (
                 <div className="flex items-center justify-center gap-2 mt-5  flex-col">
                   <SearchXIcon className="w-[35px] h-[35px]"></SearchXIcon>
-                  <div className="text-center font-semibold text-md">
+                  <div className="text-center font-semibold">
                     {t('No matching data')}
                   </div>
                   <div className="text-center ">
@@ -441,4 +511,12 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
 };
 
 DataSelector.displayName = 'DataSelector';
+
+const EMPTY_OVERRIDES: ReadonlyMap<string, boolean> = new Map();
+
+type ExpansionState = {
+  scope: string;
+  overrides: ReadonlyMap<string, boolean>;
+};
+
 export { DataSelector };

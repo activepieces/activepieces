@@ -1,0 +1,56 @@
+name: Setup
+description: Node, bun, workspace dependencies and the turbo remote cache. Shared by every CI job.
+
+inputs:
+  turbo-s3-bucket:
+    description: S3 bucket for the turbo remote cache
+    required: true
+  turbo-s3-endpoint:
+    description: S3 endpoint for the turbo remote cache
+    required: true
+  turbo-s3-access-key-id:
+    description: S3 access key id for the turbo remote cache
+    required: true
+  turbo-s3-secret-access-key:
+    description: S3 secret access key for the turbo remote cache
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 24
+
+    - uses: oven-sh/setup-bun@v2
+      with:
+        bun-version-file: package.json
+
+    - uses: actions/cache@v4
+      with:
+        path: ~/.bun/install/cache
+        key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+        restore-keys: ${{ runner.os }}-bun-
+
+    # redis-memory-server compiles Redis from source in its postinstall (about 3 minutes) unless
+    # the binary for the version pinned in the root package.json is already in this folder.
+    - uses: actions/cache@v4
+      with:
+        path: node_modules/.cache/redis-memory-server
+        key: ${{ runner.os }}-redis-memory-server-${{ hashFiles('package.json') }}
+        restore-keys: ${{ runner.os }}-redis-memory-server-
+
+    - run: bun install --frozen-lockfile
+      shell: bash
+
+    - name: Turbo Cache
+      uses: rharkor/caching-for-turbo@v2.4.2
+      with:
+        provider: s3
+        s3-bucket: ${{ inputs.turbo-s3-bucket }}
+        s3-region: auto
+        s3-endpoint: ${{ inputs.turbo-s3-endpoint }}
+        s3-access-key-id: ${{ inputs.turbo-s3-access-key-id }}
+        s3-secret-access-key: ${{ inputs.turbo-s3-secret-access-key }}
+        max-age: 3w
+        max-size: 20gb

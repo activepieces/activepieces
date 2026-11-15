@@ -1,23 +1,28 @@
-import { FlowActionType, RouterAction } from '../actions/action'
+import { FlowActionType } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { DeleteBranchRequest } from '.'
 
 function _deleteBranch(flowVersion: FlowVersion, request: DeleteBranchRequest): FlowVersion {
     return flowStructureUtil.transferFlow(flowVersion, (parentStep) => {
-        if (parentStep.name !== request.stepName || parentStep.type !== FlowActionType.ROUTER) {
+        if (parentStep.name !== request.stepName || !flowStructureUtil.isBranchedAction(parentStep)) {
             return parentStep
         }
-        const routerAction = parentStep as RouterAction
+        const keep = (_: unknown, index: number) => index !== request.branchIndex
+        const children = parentStep.children.filter(keep)
+        if (parentStep.type === FlowActionType.AI_ROUTER) {
+            return {
+                ...parentStep,
+                settings: { ...parentStep.settings, branches: parentStep.settings.branches.filter(keep) },
+                children,
+            }
+        }
         return {
-            ...routerAction,
-            settings: {
-                ...routerAction.settings,
-                branches: routerAction.settings.branches.filter((_, index) => index !== request.branchIndex),
-            },
-            children: routerAction.children.filter((_, index) => index !== request.branchIndex),
+            ...parentStep,
+            settings: { ...parentStep.settings, branches: parentStep.settings.branches.filter(keep) },
+            children,
         }
     })
 }
 
-export { _deleteBranch } 
+export { _deleteBranch }

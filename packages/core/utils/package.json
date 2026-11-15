@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/core-utils",
-  "version": "0.1.0",
+  "version": "0.13.3",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "scripts": {
@@ -9,16 +9,16 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "deepmerge-ts": "7.1.0",
+    "deepmerge-ts": "8.0.2",
     "ipaddr.js": "2.3.0",
-    "nanoid": "3.3.8",
+    "nanoid": "3.3.18",
     "tslib": "2.6.2",
     "zod": "4.3.6"
   },
   "devDependencies": {
     "@types/node": "24.11.0",
     "typescript": "5.5.4",
-    "vitest": "3.2.6"
+    "vitest": "5.0.5"
   },
   "typings": "./dist/src/index.d.ts"
 }

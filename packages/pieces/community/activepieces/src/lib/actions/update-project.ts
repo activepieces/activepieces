@@ -8,6 +8,7 @@ import { activePieceAuth } from '../auth';
 
 export const updateProject = createAction({
   name: 'update_project',
+  classification: 'WRITE',
   auth: activePieceAuth,
   displayName: 'Update Project',
   description: 'Update a project',

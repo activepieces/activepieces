@@ -1,12 +1,16 @@
-import { apId } from '@activepieces/core-utils'
-import { FieldType } from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/core-utils'
+import { FieldType, Table, TableWebhookEventType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { db } from '../../../helpers/db'
 import { describeWithAuth } from '../../../helpers/describe-with-auth'
 import {
     createMockCell,
     createMockField,
+    createMockFlow,
+    createMockFolder,
+    createMockProject,
     createMockRecord,
     createMockTable,
 } from '../../../helpers/mocks'
@@ -40,6 +44,23 @@ describe('Table API', () => {
             expect(body.projectId).toBe(ctx.project.id)
             expect(body.id).toBeDefined()
             expect(body.externalId).toBeDefined()
+        })
+
+        it('should reject creating a table in a folder from another project', async () => {
+            const ctx = await setup()
+
+            const otherProject = createMockProject({ platformId: ctx.platform.id, ownerId: ctx.user.id })
+            await db.save('project', otherProject)
+            const foreignFolder = createMockFolder({ projectId: otherProject.id })
+            await db.save('folder', foreignFolder)
+
+            const response = await ctx.post('/v1/tables', {
+                projectId: ctx.project.id,
+                name: 'My Table',
+                folderId: foreignFolder.id,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
 
         it('should create a table with initial fields', async () => {
@@ -179,6 +200,24 @@ describe('Table API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
+
+        it('should reject moving a table to a folder from another project', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+
+            const otherProject = createMockProject({ platformId: ctx.platform.id, ownerId: ctx.user.id })
+            await db.save('project', otherProject)
+            const foreignFolder = createMockFolder({ projectId: otherProject.id })
+            await db.save('folder', foreignFolder)
+
+            const response = await ctx.post(`/v1/tables/${table.id}`, {
+                folderId: foreignFolder.id,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            const tableAfter = await ctx.get(`/v1/tables/${table.id}`)
+            expect(tableAfter?.json().folderId).toBeNull()
+        })
     })
 
     describeWithAuth('GET /v1/tables (List)', () => app!, (setup) => {
@@ -228,6 +267,46 @@ describe('Table API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
             expect(body.data.length).toBe(2)
+        })
+
+        it('should sort by name ignoring case', async () => {
+            const ctx = await setup()
+            for (const name of ['Zeta', 'alpha', 'mid']) {
+                await db.save('table', { ...createMockTable({ projectId: ctx.project.id }), name })
+            }
+
+            const ascending = await ctx.get('/v1/tables', {
+                projectId: ctx.project.id,
+                sortBy: 'NAME',
+                order: 'ASC',
+            })
+            const descending = await ctx.get('/v1/tables', {
+                projectId: ctx.project.id,
+                sortBy: 'NAME',
+                order: 'DESC',
+            })
+
+            expect(ascending?.json().data.map((table: Table) => table.name)).toEqual(['alpha', 'mid', 'Zeta'])
+            expect(descending?.json().data.map((table: Table) => table.name)).toEqual(['Zeta', 'mid', 'alpha'])
+            expect(ascending?.json().next).toBeNull()
+        })
+
+        it('should reject a name sort combined with a cursor', async () => {
+            const ctx = await setup()
+            await createAndSaveTable(ctx)
+            await createAndSaveTable(ctx)
+
+            const firstPage = await ctx.get('/v1/tables', { projectId: ctx.project.id, limit: '1' })
+            const cursor = firstPage?.json()?.next
+            expect(cursor).not.toBeNull()
+
+            const response = await ctx.get('/v1/tables', {
+                projectId: ctx.project.id,
+                sortBy: 'NAME',
+                cursor,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
         })
     })
 
@@ -365,6 +444,85 @@ describe('Table API', () => {
         })
     })
 
+    describeWithAuth('GET /v1/tables/:id/export/csv (Export CSV)', () => app!, (setup) => {
+        const seedTextField = async (ctx: TestContext, tableId: string) => {
+            const field = createMockField({ tableId, projectId: ctx.project.id })
+            field.type = FieldType.TEXT
+            field.name = 'Name'
+            await db.save('field', field)
+            return field
+        }
+
+        const seedRecord = async (ctx: TestContext, tableId: string, fieldId: string, value: string, created: string) => {
+            const record = createMockRecord({ tableId, projectId: ctx.project.id })
+            record.created = created
+            await db.save('record', record)
+            const cell = createMockCell({ recordId: record.id, fieldId, projectId: ctx.project.id })
+            cell.value = value
+            await db.save('cell', cell)
+            return record
+        }
+
+        const downloadCsv = async (ctx: TestContext, tableId: string, query?: Record<string, string>) => {
+            const response = await ctx.get(`/v1/tables/${tableId}/export/csv`, query)
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            const fileUrl = new URL(body.url)
+            const fileResponse = await app!.inject({ method: 'GET', url: fileUrl.pathname + fileUrl.search })
+            return { body, csv: fileResponse.payload }
+        }
+
+        it('should stream rows, escape special chars and count rows', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+            const field = await seedTextField(ctx, table.id)
+            await seedRecord(ctx, table.id, field.id, 'Alice', '2024-01-01T00:00:00.000Z')
+            await seedRecord(ctx, table.id, field.id, 'a,b"c\nd', '2024-01-02T00:00:00.000Z')
+
+            const { body, csv } = await downloadCsv(ctx, table.id)
+
+            expect(body.name).toBe(`${table.name}.csv`)
+            expect(body.rowCount).toBe(2)
+            expect(csv.startsWith('Name\n')).toBe(true)
+            expect(csv).toContain('Alice')
+            expect(csv).toContain('"a,b""c\nd"')
+        })
+
+        it('should trim whitespace and control chars from cell edges', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+            const field = await seedTextField(ctx, table.id)
+            await seedRecord(ctx, table.id, field.id, '  padded \t', '2024-01-01T00:00:00.000Z')
+
+            const { csv } = await downloadCsv(ctx, table.id)
+
+            expect(csv).toBe('Name\npadded')
+        })
+
+        it('should omit the header row when includeHeaders is false', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+            const field = await seedTextField(ctx, table.id)
+            await seedRecord(ctx, table.id, field.id, 'Alice', '2024-01-01T00:00:00.000Z')
+
+            const { body, csv } = await downloadCsv(ctx, table.id, { includeHeaders: 'false' })
+
+            expect(body.rowCount).toBe(1)
+            expect(csv).toBe('Alice')
+        })
+
+        it('should export an empty table as header only', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+            await seedTextField(ctx, table.id)
+
+            const { body, csv } = await downloadCsv(ctx, table.id)
+
+            expect(body.rowCount).toBe(0)
+            expect(csv).toBe('Name')
+        })
+    })
+
     describeWithAuth('POST /v1/tables/:id/clear (Clear)', () => app!, (setup) => {
         it('should clear all records', async () => {
             const ctx = await setup()
@@ -401,10 +559,89 @@ describe('Table API', () => {
             expect(recordsResponse?.json().data.length).toBe(0)
         })
     })
+
+    describeWithAuth('Tables sharing an externalId', () => app!, (setup) => {
+        it('should list every table that shares an externalId, newest first', async () => {
+            const ctx = await setup()
+            const externalId = apId()
+            const older = await createAndSaveTable(ctx, { externalId, created: '2026-01-01T00:00:00.000Z' })
+            const newer = await createAndSaveTable(ctx, { externalId, created: '2026-02-01T00:00:00.000Z' })
+            await createAndSaveTable(ctx)
+
+            const response = await ctx.get('/v1/tables', { projectId: ctx.project.id, externalIds: [externalId] })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().data.map((table: Table) => table.id)).toEqual([newer.id, older.id])
+        })
+    })
+
+    describeWithAuth('POST and DELETE /v1/tables/:id/webhooks', () => app!, (setup) => {
+        it('should delete a webhook from the table it was created on', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+            const webhookId = await createWebhook({ ctx, tableId: table.id })
+
+            const response = await ctx.delete(`/v1/tables/${table.id}/webhooks/${webhookId}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(await db.findOneBy('table_webhook', { id: webhookId })).toBeNull()
+        })
+
+        it('should leave a webhook when deleting it through another table with the same externalId', async () => {
+            const ctx = await setup()
+            const externalId = apId()
+            const original = await createAndSaveTable(ctx, { externalId })
+            const copy = await createAndSaveTable(ctx, { externalId })
+            const webhookId = await createWebhook({ ctx, tableId: original.id })
+
+            const response = await ctx.delete(`/v1/tables/${copy.id}/webhooks/${webhookId}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(await db.findOneBy('table_webhook', { id: webhookId })).not.toBeNull()
+        })
+
+        it('should not delete a webhook on a table from another project', async () => {
+            const ctx = await setup()
+            const otherCtx = await createTestContext(app!)
+            const otherTable = await createAndSaveTable(otherCtx)
+            const webhookId = await createWebhook({ ctx: otherCtx, tableId: otherTable.id })
+
+            const response = await ctx.delete(`/v1/tables/${otherTable.id}/webhooks/${webhookId}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(await db.findOneBy('table_webhook', { id: webhookId })).not.toBeNull()
+        })
+
+        it('should remove a flow\'s webhooks when the flow is deleted', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+            const flow = createMockFlow({ projectId: ctx.project.id })
+            await db.save('flow', flow)
+            const webhookId = await createWebhook({ ctx, tableId: table.id, flowId: flow.id })
+
+            await databaseConnection().getRepository('flow').delete({ id: flow.id })
+
+            expect(await db.findOneBy('table_webhook', { id: webhookId })).toBeNull()
+        })
+    })
 })
 
-async function createAndSaveTable(ctx: TestContext) {
-    const table = createMockTable({ projectId: ctx.project.id })
-    await db.save('table', table)
-    return table
+async function createAndSaveTable(ctx: TestContext, table?: Partial<Table>) {
+    const mockTable = { ...createMockTable({ projectId: ctx.project.id }), ...table }
+    await db.save('table', mockTable)
+    return mockTable
+}
+
+async function createWebhook({ ctx, tableId, flowId }: { ctx: TestContext, tableId: string, flowId?: string }): Promise<string> {
+    const flow = createMockFlow({ projectId: ctx.project.id })
+    if (isNil(flowId)) {
+        await db.save('flow', flow)
+    }
+    const response = await ctx.post(`/v1/tables/${tableId}/webhooks`, {
+        events: [TableWebhookEventType.RECORD_CREATED],
+        webhookUrl: 'http://localhost:4200/api/v1/webhooks/flow',
+        flowId: flowId ?? flow.id,
+    })
+    expect(response?.statusCode).toBe(StatusCodes.OK)
+    return response?.json().id
 }

@@ -9,6 +9,7 @@ import { driveSaveFileAsPdfOutputSchema } from '../output-schemas';
 export const driveSaveFileAsPdf = createAction({
   auth: googleDriveAuth,
   name: 'drive_save_file_as_pdf',
+  classification: 'WRITE',
   displayName: 'Save File as PDF',
   description: 'Save a document as PDF in a Google Drive folder',
   audience: 'ai',

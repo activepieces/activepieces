@@ -100,7 +100,7 @@ export async function getUserId(auth: SlackAuthValue): Promise<string> {
     method: HttpMethod.GET,
     url: 'https://slack.com/api/auth.test',
     headers: {
-      Authorization: `Bearer ${a.props.botToken}`,
+      Authorization: `Bearer ${a.props.userToken || a.props.botToken}`,
     },
   });
   if (!response.body.ok) {

@@ -9,6 +9,7 @@ import { assertLimit } from '../../common/validation';
 export const listSessions = createAction({
   auth: hedyAuth,
   name: 'list-sessions',
+  classification: 'SEARCH',
   displayName: 'List Sessions',
   description: 'Retrieve multiple sessions with optional topic filtering and pagination.',
   audience: 'both',

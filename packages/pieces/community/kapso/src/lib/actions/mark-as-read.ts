@@ -6,6 +6,7 @@ import { businessAccountIdProp, phoneNumberIdDropdown } from '../common/props';
 export const markAsRead = createAction({
   auth: kapsoAuth,
   name: 'mark_as_read',
+  classification: 'WRITE',
   displayName: 'Mark Message as Read',
   description: 'Mark a WhatsApp message as read.',
   audience: 'both',

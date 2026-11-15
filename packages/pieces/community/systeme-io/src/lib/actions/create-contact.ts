@@ -3,6 +3,8 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { systemeIoAuth } from '../common/auth';
 import { systemeIoCommon } from '../common/client';
 import { systemeIoProps } from '../common/props';
+import { systemeIoAuthTagOptions } from '../common/dropdowns';
+import { createContactActionOutputSchema } from '../output-schemas';
 
 interface ContactField {
   field: string;
@@ -16,9 +18,10 @@ interface TagName {
 export const createContact = createAction({
   auth: systemeIoAuth,
   name: 'createContact',
+  classification: 'WRITE',
   displayName: 'Create Contact',
   description: 'Create a new contact with email and contact fields from your Systeme.io account, with optional tags',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new contact in Systeme.io from an email plus optional locale and contact/custom fields, and can optionally tag it. Tags are controlled by a tag-source mode: none, assign existing tags by id, or create-and-assign new tags by name. Use to add someone to the CRM; each call creates a new contact and is not idempotent (repeating may produce duplicates or re-create tags). Requires an email.', idempotent: false },
   props: {
     email: Property.ShortText({
@@ -129,7 +132,8 @@ export const createContact = createAction({
       description: 'Select existing tags to assign',
       required: false,
       refreshers: ['tagSource'],
-      options: async ({ auth, tagSource }) => {
+      refreshOnSearch: true,
+      options: async ({ auth, tagSource }, ctx) => {
         if (!auth || tagSource !== 'existing') {
           return {
             disabled: true,
@@ -140,44 +144,7 @@ export const createContact = createAction({
           };
         }
 
-        try {
-          const response = await systemeIoCommon.getTags({
-            auth: auth.secret_text,
-          });
-
-          let tags: any[] = [];
-          if (Array.isArray(response)) {
-            tags = response;
-          } else if (response && typeof response === 'object' && response !== null) {
-            const responseAny = response as any;
-            if (responseAny.items && Array.isArray(responseAny.items)) {
-              tags = responseAny.items;
-            }
-          }
-
-          if (tags.length > 0) {
-            return {
-              disabled: false,
-              options: tags.map((tag: any) => ({
-                label: tag.name || tag.id,
-                value: tag.id,
-              })),
-            };
-          }
-
-          return {
-            disabled: true,
-            placeholder: 'No tags found',
-            options: [],
-          };
-        } catch (error) {
-          console.error('Error fetching tags:', error);
-          return {
-            disabled: true,
-            placeholder: 'Error loading tags',
-            options: [],
-          };
-        }
+        return systemeIoAuthTagOptions({ apiKey: auth.secret_text, searchValue: ctx?.searchValue });
       },
     }),
     newTagNames: Property.Array({
@@ -193,6 +160,7 @@ export const createContact = createAction({
       },
     }),
   },
+  outputSchema: createContactActionOutputSchema,
   async run(context) {
     const { 
       email, 

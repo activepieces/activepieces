@@ -5,6 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const removeJobTag = createAction({
   auth: housecallProAuth,
   name: "remove_job_tag",
+  classification: 'WRITE',
   displayName: "Remove job tag",
   description: "Remove a tag from a job",
   audience: 'both',

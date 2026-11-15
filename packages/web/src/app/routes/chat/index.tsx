@@ -1,4 +1,3 @@
-import { isNil } from '@activepieces/core-utils';
 import { USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
 import { nanoid } from 'nanoid';
 import { useState, useEffect } from 'react';
@@ -6,9 +5,7 @@ import { useParams } from 'react-router-dom';
 import { useSearchParam } from 'react-use';
 
 import { ChatDrawerSource } from '@/app/builder/types';
-import { LoadingScreen } from '@/components/custom/loading-screen';
 import { Messages } from '@/features/chat';
-import { flowHooks } from '@/features/flows';
 
 import { ChatNotFound, FlowChat } from './flow-chat';
 
@@ -19,9 +16,6 @@ export function ChatPage() {
 
   const [messages, setMessages] = useState<Messages>([]);
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
-  const { data: flow, isLoading } = flowHooks.useGetFlow({
-    flowId: flowId ?? '',
-  });
   useEffect(() => {
     if (!chatSessionId) {
       setChatSessionId(nanoid());
@@ -35,16 +29,10 @@ export function ChatPage() {
   if (!flowId) {
     return <ChatNotFound />;
   }
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
-
-  const isDraft =
-    hasDraftSearchParam || (flow && isNil(flow.publishedVersionId));
   return (
     <FlowChat
       flowId={flowId}
-      mode={isDraft ? ChatDrawerSource.TEST_FLOW : null}
+      mode={hasDraftSearchParam ? ChatDrawerSource.TEST_FLOW : null}
       onSendingMessage={() => {}}
       onError={(error) => {
         console.error('Chat error:', error);

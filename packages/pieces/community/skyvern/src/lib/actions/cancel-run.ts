@@ -6,6 +6,7 @@ import { skyvernApiCall } from '../common/client';
 export const cancelRunAction = createAction({
 	auth: skyvernAuth,
 	name: 'cancel-run',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Cancel Run',
 	description: 'Cancels a workflow or or task run by ID.',
 	audience: 'both',

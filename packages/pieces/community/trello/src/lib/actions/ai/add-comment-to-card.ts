@@ -12,6 +12,7 @@ import { addCommentToCardActionOutputSchema } from '../../output-schemas';
 export const addCommentToCard = createAction({
   auth: trelloAuth,
   name: 'add_comment_to_card',
+  classification: 'WRITE',
   displayName: 'Add Comment To Card (Agent)',
   description: 'Add a comment to a Trello card.',
   audience: 'ai',

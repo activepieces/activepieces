@@ -7,6 +7,7 @@ import { newMessageTriggerOutputSchema } from '../output-schemas';
 export const newMessageTrigger = createTrigger({
 	auth: slackAuth,
 	name: 'new-message',
+	classification: 'READ',
 	displayName: 'New Public Message Posted Anywhere',
 	description: 'Triggers when a new message is posted to any channel.',
 	aiMetadata: {
@@ -16,8 +17,9 @@ export const newMessageTrigger = createTrigger({
 	props: {
 		info: appWebhookSetupInfo,
 		ignoreBots: Property.Checkbox({
-			displayName: 'Ignore Bot Messages ?',
-			required: true,
+			displayName: 'Ignore Bot Messages',
+			description: 'Skip messages posted by bots and apps.',
+			required: false,
 			defaultValue: false,
 		}),
 	},

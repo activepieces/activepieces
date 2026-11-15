@@ -4,6 +4,7 @@ import { ShippoClient } from '../../lib/client';
 
 export const createOrder = createAction({
   name: 'create_order',
+  classification: 'WRITE',
   displayName: 'Create Order',
   description: 'Create a new order in Shippo',
   audience: 'both',

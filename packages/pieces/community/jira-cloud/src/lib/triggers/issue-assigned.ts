@@ -1,34 +1,16 @@
 import {
+  MarkdownVariant,
   Property,
   TriggerStrategy,
   createTrigger,
+  isNil,
 } from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import dayjs from 'dayjs';
-import { JiraAuth, jiraCloudAuth } from '../../auth';
-import { searchIssuesByJql } from '../common';
+import { jiraCloudAuth } from '../../auth';
+import { JiraPollingItem, JiraPollingProps, createJiraPolling } from '../common/polling';
 import { getUsersDropdown } from '../common/props';
+import { ChangelogHistory } from '../common/types';
 
-type ChangelogItem = {
-  field: string;
-  fieldId?: string;
-  from: string | null;
-  fromString: string | null;
-  to: string | null;
-  toString: string | null;
-};
-
-type ChangelogHistory = {
-  id: string;
-  author?: { accountId: string; displayName: string; emailAddress?: string };
-  created: string;
-  items: ChangelogItem[];
-};
-
+import { issueAssignedTriggerOutputSchema } from '../output-schemas';
 type IssueWithChangelog = {
   id: string;
   key: string;
@@ -36,57 +18,46 @@ type IssueWithChangelog = {
   changelog?: { histories: ChangelogHistory[] };
 };
 
-const polling: Polling<
-  JiraAuth,
-  {
-    assignee?: string;
-    assignedToMe?: boolean;
-    jql?: string;
-    sanitizeJql?: boolean;
-  }
-> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, lastFetchEpochMS, propsValue }) => {
-    const { assignee, assignedToMe, jql, sanitizeJql } = propsValue;
+type IssueAssignedProps = JiraPollingProps & {
+  assignee?: string;
+  assignedToMe?: boolean;
+};
 
-    const targetClause = assignedToMe
+const polling = createJiraPolling<IssueAssignedProps>({
+  expand: ['changelog'],
+  extraScope: ({ propsValue, since }) => {
+    const target = propsValue.assignedToMe
       ? 'TO currentUser()'
-      : assignee
-      ? `TO "${assignee}"`
+      : propsValue.assignee
+      ? `TO "${propsValue.assignee}"`
       : '';
+    return ['assignee CHANGED', target, isNil(since) ? '' : `AFTER '${since}'`]
+      .filter((part) => part.length > 0)
+      .join(' ');
+  },
+  extractItems: ({
+    issue,
+    propsValue,
+  }: {
+    issue: IssueWithChangelog;
+    propsValue: IssueAssignedProps;
+  }): JiraPollingItem[] => {
+    const targetAccountId = propsValue.assignedToMe ? undefined : propsValue.assignee;
+    return (issue.changelog?.histories ?? []).flatMap((history) => {
+      const assigneeChange = history.items.find(
+        (item) => item.field === 'assignee' || item.fieldId === 'assignee'
+      );
+      if (isNil(assigneeChange)) {
+        return [];
+      }
+      if (targetAccountId && assigneeChange.to !== targetAccountId) {
+        return [];
+      }
 
-    const since = dayjs(lastFetchEpochMS).format('YYYY-MM-DD HH:mm');
-    const userScope = jql ? `(${jql}) AND ` : '';
-    const searchQuery =
-      `${userScope}assignee CHANGED ${targetClause} AFTER '${since}'`.trim();
-
-    const response = await searchIssuesByJql({
-      auth,
-      jql: searchQuery,
-      maxResults: 50,
-      sanitizeJql: sanitizeJql ?? false,
-      expand: ['changelog'],
-    });
-
-    const issues = response.issues as IssueWithChangelog[];
-    const targetAccountId = assignedToMe ? undefined : assignee;
-    const results: Array<{ epochMilliSeconds: number; data: unknown }> = [];
-
-    for (const issue of issues) {
-      const histories = issue.changelog?.histories ?? [];
-      for (const history of histories) {
-        const changedMS = Date.parse(history.created);
-        if (Number.isNaN(changedMS) || changedMS <= lastFetchEpochMS) continue;
-
-        const assigneeChange = history.items.find(
-          (item) => item.field === 'assignee' || item.fieldId === 'assignee'
-        );
-        if (!assigneeChange) continue;
-
-        if (targetAccountId && assigneeChange.to !== targetAccountId) continue;
-
-        results.push({
-          epochMilliSeconds: changedMS,
+      return [
+        {
+          id: history.id,
+          epochMilliSeconds: Date.parse(history.created),
           data: {
             issue: {
               id: issue.id,
@@ -106,61 +77,69 @@ const polling: Polling<
               at: history.created,
             },
           },
-        });
-      }
-    }
-
-    return results;
+        },
+      ];
+    });
   },
-};
+});
 
 export const issueAssigned = createTrigger({
   name: 'issue_assigned',
+  classification: 'READ',
   displayName: 'Issue Assigned',
-  description:
-    'Fires when a Jira issue is assigned to someone. Use it to ping people in Slack/Teams the moment work lands on them, auto-create a to-do when tickets hit your queue, or track hand-offs between teammates.',
+  description: 'Triggers when an issue is assigned to someone.',
   aiMetadata: {
     description:
       'Fires when the assignee of a Jira issue changes, optionally filtered to a specific assignee, the connected user, or a JQL scope. Each event represents one assignment change and includes the issue plus the previous/new assignee, who made the change, and when. Polling-based; events arrive on the next poll, not instantly.',
   },
   auth: jiraCloudAuth,
   type: TriggerStrategy.POLLING,
+  outputSchema: issueAssignedTriggerOutputSchema,
   props: {
     assignedToMe: Property.Checkbox({
-      displayName: 'Only when assigned to me',
-      description:
-        'Only trigger when the issue is assigned to the user who set up this connection. Overrides the Assignee field below.',
+      displayName: 'Only Assignments to Me',
+      description: 'Watches the connected account only. Overrides Assignee.',
       required: false,
       defaultValue: false,
     }),
     assignee: getUsersDropdown({
-      displayName: 'Assignee (optional)',
-      description:
-        'Pick a teammate to watch. Leave empty to trigger on assignments to anyone. Ignored if "Only when assigned to me" is checked.',
+      displayName: 'Assignee',
+      description: 'Empty: assignments to anyone.',
       required: false,
     }),
+    filterHelp: Property.MarkDown({
+      value: 'Build a filter in Jira under Filters → Advanced search, then copy its JQL here.',
+      variant: MarkdownVariant.INFO,
+    }),
     jql: Property.LongText({
-      displayName: 'Only watch these issues (optional)',
-      description: `Narrow down which issues to watch. Leave empty to watch every issue in your Jira.
-
-Ready-to-use examples:
-
-- \`project = "SUPPORT"\` — only the Support project
-- \`priority = High\` — only high-priority issues
-- \`labels = "vip"\` — only issues tagged \`vip\`
-- \`project = "SUPPORT" AND status != Done\` — combine with \`AND\`
-
-Not sure what to write? Open Jira → Filters → Advanced search, build a filter visually, then copy the query here.`,
+      displayName: 'Issue Filter',
+      description: 'JQL query. Empty: every issue is watched.',
+      placeholder: 'project = SUPPORT AND status != Done',
       required: false,
     }),
     sanitizeJql: Property.Checkbox({
-      displayName: 'Auto-fix the filter',
-      description:
-        "Keep this on. If your filter references something you can't access (a private project, a deleted field), Jira will automatically clean it up instead of erroring.",
+      displayName: 'Sanitize JQL',
+      description: "Jira swaps names you can't view for IDs before the search runs.",
       required: false,
       defaultValue: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'who',
+      display: 'section',
+      label: 'Whose Assignments',
+      icon: 'users',
+      props: ['assignedToMe', 'assignee'],
+    },
+    {
+      key: 'filter',
+      display: 'section',
+      label: 'Filter',
+      icon: 'filter',
+      props: ['filterHelp', 'jql', 'sanitizeJql'],
+    },
+  ],
   sampleData: {
     issue: {
       id: '10001',
@@ -342,15 +321,15 @@ Not sure what to write? Open Jira → Filters → Advanced search, build a filte
     },
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    await polling.onEnable({ context });
   },
-  async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+  async onDisable() {
+    return;
   },
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    return await polling.poll({ context });
   },
   async test(context) {
-    return await pollingHelper.test(polling, context);
+    return await polling.test({ context });
   },
 });

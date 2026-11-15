@@ -1,0 +1,308 @@
+import { ApId, assertNotNullOrUndefined, Permission, SeekPage, UserId } from '@activepieces/core-utils'
+import { Agent, AgentMovePreview, AgentSummary, AgentWithUsage, ApplicationEventName, CreateAgentRequest, GetAgentRequest, ListAgentsRequest, MoveAgentRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateAgentRequest } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
+import { ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { applicationEvents } from '../../helper/application-events'
+import { securityHelper } from '../../helper/security-helper'
+import { AgentEntity } from './agent-entity'
+import { AGENT_USAGE_LIST_LIMIT, agentAudit, agentRedaction, agentService } from './agent-service'
+
+export const agentController: FastifyPluginAsyncZod = async (app) => {
+    app.post('/', CreateAgentRoute, async (request, reply) => {
+        const ownerId = await resolveUserId(request)
+        const agent = await agentService(request.log).create({
+            platformId: request.principal.platform.id,
+            projectId: request.projectId,
+            ownerId,
+            request: request.body,
+        })
+        applicationEvents(request.log).sendUserEvent(request, {
+            action: ApplicationEventName.AGENT_CREATED,
+            data: { agent: { id: agent.id, displayName: agent.displayName } },
+        })
+        return reply.status(StatusCodes.CREATED).send(agentRedaction.withoutToolSecrets(agent))
+    })
+
+    app.get('/', ListAgentsRoute, async (request): Promise<SeekPage<AgentSummary>> => {
+        return agentService(request.log).list({
+            platformId: request.principal.platform.id,
+            userId: await resolveUserId(request),
+            projectId: request.query.projectId,
+            search: request.query.search,
+            sort: request.query.sort,
+            cursor: request.query.cursor,
+            limit: request.query.limit,
+            connectionExternalIds: request.query.connectionExternalIds,
+        })
+    })
+
+    app.get('/:id', GetAgentRoute, async (request): Promise<AgentWithUsage> => {
+        const userId = await resolveUserId(request)
+        const agent = await agentService(request.log).getOneOrThrow({
+            id: request.params.id,
+            projectId: request.projectId,
+            userId,
+        })
+        const redacted = agentRedaction.withoutToolSecrets(agent)
+        if (request.query.includeUsage !== true) {
+            return redacted
+        }
+        const publishedFlowsUsingAgent = await agentService(request.log).publishedFlowsUsing({ agent, projectId: request.projectId, userId, nameLimit: AGENT_USAGE_LIST_LIMIT })
+        return { ...redacted, publishedFlowsUsingAgent }
+    })
+
+    app.post('/:id', UpdateAgentRoute, async (request): Promise<Agent> => {
+        const agent = await agentService(request.log).update({
+            id: request.params.id,
+            projectId: request.projectId,
+            userId: await resolveUserId(request),
+            request: request.body,
+            platformId: request.principal.platform.id,
+            goLive: request.body.goLive ?? true,
+        })
+        applicationEvents(request.log).sendUserEvent(request, {
+            action: ApplicationEventName.AGENT_UPDATED,
+            data: { agent: { id: agent.id, displayName: agent.displayName } },
+        })
+        return agentRedaction.withoutToolSecrets(agent)
+    })
+
+    app.post('/:id/publish', PublishAgentRoute, async (request): Promise<Agent> => {
+        const agent = await agentService(request.log).publish({
+            id: request.params.id,
+            projectId: request.projectId,
+            platformId: request.principal.platform.id,
+            userId: await resolveUserId(request),
+        })
+        applicationEvents(request.log).sendUserEvent(request, {
+            action: ApplicationEventName.AGENT_PUBLISHED,
+            data: { agent: { id: agent.id, displayName: agent.displayName, ...agentAudit.describePublished({ published: agent.draft }) } },
+        })
+        return agentRedaction.withoutToolSecrets(agent)
+    })
+
+    app.post('/:id/unpublish', UnpublishAgentRoute, async (request): Promise<Agent> => {
+        const agent = await agentService(request.log).unpublish({
+            id: request.params.id,
+            projectId: request.projectId,
+            userId: await resolveUserId(request),
+        })
+        applicationEvents(request.log).sendUserEvent(request, {
+            action: ApplicationEventName.AGENT_UNPUBLISHED,
+            data: { agent: { id: agent.id, displayName: agent.displayName } },
+        })
+        return agentRedaction.withoutToolSecrets(agent)
+    })
+
+    app.get('/:id/move-preview', MovePreviewRoute, async (request): Promise<AgentMovePreview> => {
+        return agentService(request.log).movePreview({
+            id: request.params.id,
+            projectId: request.projectId,
+            userId: await resolveUserId(request),
+            targetProjectId: request.query.projectId,
+            platformId: request.principal.platform.id,
+        })
+    })
+
+    app.post('/:id/move', MoveAgentRoute, async (request): Promise<Agent> => {
+        const agent = await agentService(request.log).move({
+            id: request.params.id,
+            projectId: request.projectId,
+            userId: await resolveUserId(request),
+            targetProjectId: request.body.projectId,
+            platformId: request.principal.platform.id,
+        })
+        applicationEvents(request.log).sendUserEvent(request, {
+            action: ApplicationEventName.AGENT_UPDATED,
+            data: { agent: { id: agent.id, displayName: agent.displayName } },
+        })
+        return agentRedaction.withoutToolSecrets(agent)
+    })
+
+    app.delete('/:id', DeleteAgentRoute, async (request, reply): Promise<void> => {
+        const agent = await agentService(request.log).delete({
+            id: request.params.id,
+            projectId: request.projectId,
+            userId: await resolveUserId(request),
+        })
+        applicationEvents(request.log).sendUserEvent(request, {
+            action: ApplicationEventName.AGENT_DELETED,
+            data: { agent: { id: agent.id, displayName: agent.displayName } },
+        })
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+}
+
+async function resolveUserId(request: FastifyRequest): Promise<UserId> {
+    const userId = await securityHelper.getUserIdFromRequest(request)
+    assertNotNullOrUndefined(userId, 'userId')
+    return userId
+}
+
+const CreateAgentRoute = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_AGENT,
+            { type: ProjectResourceType.BODY },
+        ),
+    },
+    schema: {
+        tags: ['agents'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Create an agent in a project',
+        body: CreateAgentRequest,
+        response: {
+            [StatusCodes.CREATED]: Agent,
+        },
+    },
+}
+
+const ListAgentsRoute = {
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
+    schema: {
+        tags: ['agents'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'List agents across every project the caller can read',
+        querystring: ListAgentsRequest,
+        response: {
+            [StatusCodes.OK]: SeekPage(AgentSummary),
+        },
+    },
+}
+
+
+const GetAgentRoute = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.READ_AGENT,
+            { type: ProjectResourceType.TABLE, tableName: AgentEntity },
+        ),
+    },
+    schema: {
+        tags: ['agents'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Get an agent',
+        params: z.object({ id: ApId }),
+        querystring: GetAgentRequest,
+        response: {
+            [StatusCodes.OK]: AgentWithUsage,
+        },
+    },
+}
+
+const UpdateAgentRoute = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_AGENT,
+            { type: ProjectResourceType.TABLE, tableName: AgentEntity },
+        ),
+    },
+    schema: {
+        tags: ['agents'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Update an agent',
+        params: z.object({ id: ApId }),
+        body: UpdateAgentRequest,
+        response: {
+            [StatusCodes.OK]: Agent,
+        },
+    },
+}
+
+const PublishAgentRoute = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_AGENT,
+            { type: ProjectResourceType.TABLE, tableName: AgentEntity },
+        ),
+    },
+    schema: {
+        tags: ['agents'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Publish an agent, so flow steps run the current draft',
+        params: z.object({ id: ApId }),
+        response: {
+            [StatusCodes.OK]: Agent,
+        },
+    },
+}
+
+const UnpublishAgentRoute = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_AGENT,
+            { type: ProjectResourceType.TABLE, tableName: AgentEntity },
+        ),
+    },
+    schema: {
+        tags: ['agents'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Take an agent offline, so flow steps stop running it',
+        params: z.object({ id: ApId }),
+        response: {
+            [StatusCodes.OK]: Agent,
+        },
+    },
+}
+
+const moveSecurity = {
+    security: securityAccess.project(
+        [PrincipalType.USER, PrincipalType.SERVICE],
+        Permission.WRITE_AGENT,
+        { type: ProjectResourceType.TABLE, tableName: AgentEntity },
+    ),
+}
+
+const MovePreviewRoute = {
+    config: moveSecurity,
+    schema: {
+        tags: ['agents'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Report what moving an agent into another project would cost',
+        params: z.object({ id: ApId }),
+        querystring: MoveAgentRequest,
+        response: { [StatusCodes.OK]: AgentMovePreview },
+    },
+}
+
+const MoveAgentRoute = {
+    config: moveSecurity,
+    schema: {
+        tags: ['agents'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Move an agent to another project',
+        params: z.object({ id: ApId }),
+        body: MoveAgentRequest,
+        response: { [StatusCodes.OK]: Agent },
+    },
+}
+
+const DeleteAgentRoute = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_AGENT,
+            { type: ProjectResourceType.TABLE, tableName: AgentEntity },
+        ),
+    },
+    schema: {
+        tags: ['agents'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Delete an agent',
+        params: z.object({ id: ApId }),
+        response: {
+            [StatusCodes.NO_CONTENT]: z.never(),
+        },
+    },
+}

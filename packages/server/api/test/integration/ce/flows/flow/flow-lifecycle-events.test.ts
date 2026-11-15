@@ -2,6 +2,7 @@ import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import {
     ApplicationEventName,
     Flow,
+    FlowOperationRequest,
     FlowOperationType,
     FlowStatus,
     FlowTrigger,
@@ -17,6 +18,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { flowService } from '../../../../../src/app/flows/flow/flow.service'
 import * as applicationEventsModule from '../../../../../src/app/helper/application-events'
 import { actionsEmitted } from '../../../../helpers/application-events'
 import { db } from '../../../../helpers/db'
@@ -252,7 +254,45 @@ describe('Flow application events', () => {
             expect(actions).not.toContain(ApplicationEventName.FLOW_DEACTIVATED)
         })
     })
+
+    describe('Callers other than the HTTP route', () => {
+        it('emits FLOW_UPDATED when flowService is called directly, with no request and no controller', async () => {
+            const ctx = await createTestContext(app)
+            const { flow } = await seedPublishableFlow({ ctx, initialStatus: FlowStatus.DISABLED, publishCurrentVersion: false })
+
+            await flowService(app.log).update({
+                id: flow.id,
+                projectId: ctx.project.id,
+                platformId: ctx.platform.id,
+                userId: ctx.user.id,
+                operation: renameOperation,
+            })
+
+            expect(actionsEmitted(sendUserEventSpy)).toEqual([ApplicationEventName.FLOW_UPDATED])
+        })
+
+        it('emits nothing when the caller opts out with emitEvents: false', async () => {
+            const ctx = await createTestContext(app)
+            const { flow } = await seedPublishableFlow({ ctx, initialStatus: FlowStatus.DISABLED, publishCurrentVersion: false })
+
+            await flowService(app.log).update({
+                id: flow.id,
+                projectId: ctx.project.id,
+                platformId: ctx.platform.id,
+                userId: ctx.user.id,
+                operation: renameOperation,
+                emitEvents: false,
+            })
+
+            expect(actionsEmitted(sendUserEventSpy)).toEqual([])
+        })
+    })
 })
+
+const renameOperation: FlowOperationRequest = {
+    type: FlowOperationType.CHANGE_NAME,
+    request: { displayName: 'Renamed by the service' },
+}
 
 type SeedPublishableFlowParams = {
     ctx: TestContext

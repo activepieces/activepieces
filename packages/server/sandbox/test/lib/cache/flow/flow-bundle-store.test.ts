@@ -6,8 +6,6 @@ import { isNil } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
 import { FlowActionType, FlowTriggerType, FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, PackageType, PieceType, WorkerToApiContract } from '@activepieces/shared'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cacheUtils } from '../../../../src/lib/cache/cache-paths'
-import { codeCache } from '../../../../src/lib/cache/flow/code/code-cache'
 import { flowBundleStore } from '../../../../src/lib/cache/flow/flow-bundle-store'
 import { bundleHttp } from '../../../../src/lib/utils/bundle-http'
 
@@ -84,12 +82,10 @@ afterEach(async () => {
 })
 
 describe('flowBundleStore', () => {
-    it('publish then tryFetch round-trips flow + pieces and materializes compiled code on disk', async () => {
+    it('publish then tryFetch round-trips flow + pieces', async () => {
         const basePath = uniqueBasePath()
         const { apiClient } = inMemoryApiClient()
         const flowVersion = buildFlowVersion()
-        const codes = codeCache(cacheUtils(basePath).getGlobalCodeCachePath())
-        await codes.writeCompiledStep({ flowVersionId: flowVersion.id, stepName: 'step_1', compiledJs: 'exports.code = () => 1' })
 
         await flowBundleStore(fakeLog, apiClient, basePath).publish({ flowVersion, pieces: [piece], projectId: 'p1', platformId: 'plat1' })
 
@@ -98,16 +94,12 @@ describe('flowBundleStore', () => {
 
         expect(fetched?.flowVersion.id).toBe('fv1')
         expect(fetched?.pieces).toEqual([piece])
-        const fetchedCodes = codeCache(cacheUtils(fetchBasePath).getGlobalCodeCachePath())
-        expect(await fetchedCodes.readCompiledStep({ flowVersionId: flowVersion.id, stepName: 'step_1' })).toBe('exports.code = () => 1')
     })
 
     it('tryFetch is local-first: a second fetch is served from the local cache with no further RPC', async () => {
         const basePath = uniqueBasePath()
         const { apiClient, getFlowBundle } = inMemoryApiClient()
         const flowVersion = buildFlowVersion()
-        const codes = codeCache(cacheUtils(basePath).getGlobalCodeCachePath())
-        await codes.writeCompiledStep({ flowVersionId: flowVersion.id, stepName: 'step_1', compiledJs: 'exports.code = () => 1' })
         await flowBundleStore(fakeLog, apiClient, basePath).publish({ flowVersion, pieces: [piece], projectId: 'p1', platformId: 'plat1' })
 
         const first = await flowBundleStore(fakeLog, apiClient, basePath).tryFetch({ flowVersionId: flowVersion.id, projectId: 'p1' })
@@ -128,12 +120,20 @@ describe('flowBundleStore', () => {
         const basePath = uniqueBasePath()
         const { apiClient } = inMemoryApiClient()
         const staleFlowVersion = buildFlowVersion({ schemaVersion: '1' })
-        const codes = codeCache(cacheUtils(basePath).getGlobalCodeCachePath())
-        await codes.writeCompiledStep({ flowVersionId: staleFlowVersion.id, stepName: 'step_1', compiledJs: 'old' })
 
         await flowBundleStore(fakeLog, apiClient, basePath).publish({ flowVersion: staleFlowVersion, pieces: [piece], projectId: 'p1', platformId: 'plat1' })
 
         expect(await flowBundleStore(fakeLog, apiClient, basePath).tryFetch({ flowVersionId: staleFlowVersion.id, projectId: 'p1' })).toBeNull()
+    })
+
+    it('tryFetch ignores a v1 manifest (compiled `codes`, no formatVersion) so old bundles rebuild from source', async () => {
+        const basePath = uniqueBasePath()
+        const flowVersion = buildFlowVersion()
+        const v1Manifest = { flowVersion, pieces: [piece], codes: [{ stepName: 'step_1', compiledJs: 'exports.code = () => 1' }] }
+        const getFlowBundle = vi.fn(async () => ({ kind: 'inline', data: Buffer.from(JSON.stringify(v1Manifest), 'utf8') }))
+        const apiClient = { getFlowBundle } as unknown as WorkerToApiContract
+
+        expect(await flowBundleStore(fakeLog, apiClient, basePath).tryFetch({ flowVersionId: flowVersion.id, projectId: 'p1' })).toBeNull()
     })
 
     it('publish uploads via signed PUT (no inline RPC) when prepare returns a url', async () => {
@@ -144,8 +144,6 @@ describe('flowBundleStore', () => {
             async uploadFlowBundle() { throw new Error('inline upload must not be called') },
         } as unknown as WorkerToApiContract
         const flowVersion = buildFlowVersion()
-        const codes = codeCache(cacheUtils(basePath).getGlobalCodeCachePath())
-        await codes.writeCompiledStep({ flowVersionId: flowVersion.id, stepName: 'step_1', compiledJs: 'exports.code = () => 1' })
 
         await flowBundleStore(fakeLog, apiClient, basePath).publish({ flowVersion, pieces: [piece], projectId: 'p1', platformId: 'plat1' })
 
@@ -161,18 +159,16 @@ describe('flowBundleStore', () => {
             async uploadFlowBundle() { throw new Error('inline upload must not be called') },
         } as unknown as WorkerToApiContract
         const flowVersion = buildFlowVersion()
-        const codes = codeCache(cacheUtils(basePath).getGlobalCodeCachePath())
-        await codes.writeCompiledStep({ flowVersionId: flowVersion.id, stepName: 'step_1', compiledJs: 'exports.code = () => 1' })
 
         await flowBundleStore(fakeLog, apiClient, basePath).publish({ flowVersion, pieces: [piece], projectId: 'p1', platformId: 'plat1' })
 
         expect(put).not.toHaveBeenCalled()
     })
 
-    it('tryFetch downloads from a signed URL and materializes compiled code', async () => {
+    it('tryFetch downloads from a signed URL', async () => {
         const basePath = uniqueBasePath()
         const flowVersion = buildFlowVersion()
-        const manifest = { flowVersion, pieces: [piece], codes: [{ stepName: 'step_1', compiledJs: 'exports.code = () => 1' }] }
+        const manifest = { formatVersion: 2, flowVersion, pieces: [piece] }
         vi.mocked(bundleHttp.getBuffer).mockResolvedValue(Buffer.from(JSON.stringify(manifest), 'utf8'))
         const apiClient = {
             getFlowBundle: vi.fn(async () => ({ kind: 'url', url: 'https://s3/get' })),
@@ -182,8 +178,6 @@ describe('flowBundleStore', () => {
 
         expect(fetched?.flowVersion.id).toBe('fv1')
         expect(bundleHttp.getBuffer).toHaveBeenCalledWith('https://s3/get')
-        const fetchedCodes = codeCache(cacheUtils(basePath).getGlobalCodeCachePath())
-        expect(await fetchedCodes.readCompiledStep({ flowVersionId: flowVersion.id, stepName: 'step_1' })).toBe('exports.code = () => 1')
     })
 
     it('tryFetch returns null and does not cache when the signed-URL download fails (retries next run)', async () => {

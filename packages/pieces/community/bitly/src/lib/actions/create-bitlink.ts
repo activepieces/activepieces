@@ -7,6 +7,7 @@ import { groupGuid, domain } from '../common/props';
 export const createBitlinkAction = createAction({
   auth: bitlyAuth,
   name: 'create_bitlink',
+  classification: 'WRITE',
   displayName: 'Create Bitlink',
   description: 'Shorten a long URL with optional customization.',
   audience: 'both',

@@ -54,16 +54,16 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
         <div
           onClick={() => hasActions && setIsMenuOpen(true)}
           className={cn(
-            'group relative h-full w-full flex items-center justify-between gap-2 py-2.5 px-3 bg-muted/50  font-normal',
-            hasActions && 'hover:bg-muted cursor-pointer',
-            isMenuOpen && 'bg-muted',
+            'group relative h-full w-full flex items-center justify-between gap-2 py-2.5 px-3 bg-gray-3/50  font-normal',
+            hasActions && 'hover:bg-gray-3 cursor-pointer',
+            isMenuOpen && 'bg-gray-3',
           )}
         >
           <div className="flex items-center gap-2">
             {canEdit && (
               <GripVertical
                 onClick={(e) => e.stopPropagation()}
-                className="h-4 w-4 shrink-0 text-muted-foreground/60 opacity-0 cursor-grab active:cursor-grabbing transition-opacity group-hover:opacity-100"
+                className="h-4 w-4 shrink-0 text-gray-11 opacity-0 cursor-grab active:cursor-grabbing transition-opacity group-hover:opacity-100"
               />
             )}
             {tablesUtils.getColumnIcon(field.type)}
@@ -82,7 +82,7 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
             noAnimationOnOut={true}
             onCloseAutoFocus={(e) => e.preventDefault()}
             align="start"
-            className="w-56 rounded-sm"
+            className="w-56"
           >
             {actions.map((action, index) => (
               <div key={index}>
@@ -94,7 +94,7 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
       </DropdownMenu>
       <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
         <PopoverTrigger asChild>
-          <div className="w-full h-full -mt-[40px] pointer-events-none"></div>
+          <div className="absolute inset-0 pointer-events-none"></div>
         </PopoverTrigger>
         <PopoverContent align="start" className="p-3">
           {popoverContent}

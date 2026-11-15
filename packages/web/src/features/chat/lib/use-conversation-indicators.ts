@@ -1,7 +1,7 @@
 import {
-  ChatAgentEventType,
-  ChatConversation,
-  ChatConversationStatus,
+  AgentEventType,
+  AgentConversation,
+  AgentConversationStatus,
   WebsocketClientEvent,
 } from '@activepieces/shared';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
@@ -14,9 +14,13 @@ import { chatApi } from './chat-api';
 export function useConversationIndicators({
   conversations,
   activeId,
+  scope,
+  loaded,
 }: {
-  conversations: ChatConversation[];
+  conversations: AgentConversation[];
   activeId: string | null;
+  scope: string;
+  loaded: boolean;
 }) {
   const socket = useSocket();
   const queryClient = useQueryClient();
@@ -26,23 +30,21 @@ export function useConversationIndicators({
 
   const conversationsRef = useRef(conversations);
   conversationsRef.current = conversations;
+  const firstLoadBaselineRef = useRef(new Map<string, string>());
 
   useEffect(() => {
-    if (conversations.length === 0) return;
+    if (!loaded) return;
+    const baseline =
+      firstLoadBaselineRef.current.get(scope) ??
+      newestUpdated({ conversations });
+    firstLoadBaselineRef.current.set(scope, baseline);
     setLastSeen((prev) => {
-      let changed = false;
-      const next = { ...prev };
-      for (const conv of conversations) {
-        if (next[conv.id] === undefined) {
-          next[conv.id] = conv.updated;
-          changed = true;
-        }
-      }
-      if (!changed) return prev;
+      const next = seedLastSeen({ prev, conversations, baseline });
+      if (next === prev) return prev;
       writeLastSeen(next);
       return next;
     });
-  }, [conversations]);
+  }, [conversations, loaded, scope]);
 
   const markRead = useCallback((id: string) => {
     const conv = conversationsRef.current.find((c) => c.id === id);
@@ -73,20 +75,20 @@ export function useConversationIndicators({
       const convId = event.conversationId;
       if (!convId) return;
       switch (event.type) {
-        case ChatAgentEventType.FINISHED:
-        case ChatAgentEventType.ERROR:
+        case AgentEventType.FINISHED:
+        case AgentEventType.ERROR:
           knownStreaming.delete(convId);
           invalidateList();
           break;
-        case ChatAgentEventType.ACTION_PREVIEW:
-        case ChatAgentEventType.ACTION_RECEIPT:
+        case AgentEventType.ACTION_PREVIEW:
+        case AgentEventType.ACTION_RECEIPT:
           void queryClient.invalidateQueries({
             queryKey: ['chat-pending-gate', convId],
           });
           invalidateList();
           break;
-        case ChatAgentEventType.CHUNK:
-        case ChatAgentEventType.TITLE_UPDATE:
+        case AgentEventType.CHUNK:
+        case AgentEventType.TITLE_UPDATE:
           if (!knownStreaming.has(convId)) {
             knownStreaming.add(convId);
             invalidateList();
@@ -113,7 +115,7 @@ export function useConversationIndicators({
   const streamingIds = useMemo(
     () =>
       conversations
-        .filter((c) => c.status === ChatConversationStatus.STREAMING)
+        .filter((c) => c.status === AgentConversationStatus.STREAMING)
         .map((c) => c.id),
     [conversations],
   );
@@ -135,8 +137,8 @@ export function useConversationIndicators({
   }, [streamingIds, gateQueries]);
 
   const getIndicator = useCallback(
-    (conv: ChatConversation): ConversationIndicatorState | null => {
-      if (conv.status === ChatConversationStatus.STREAMING) {
+    (conv: AgentConversation): ConversationIndicatorState | null => {
+      if (conv.status === AgentConversationStatus.STREAMING) {
         return waitingSet.has(conv.id) ? 'waiting' : 'working';
       }
       if (conv.id !== activeId) {
@@ -149,6 +151,35 @@ export function useConversationIndicators({
   );
 
   return { getIndicator, markRead };
+}
+
+function seedLastSeen({
+  prev,
+  conversations,
+  baseline,
+}: {
+  prev: Record<string, string>;
+  conversations: Pick<AgentConversation, 'id' | 'updated'>[];
+  baseline: string;
+}): Record<string, string> {
+  const unseen = conversations.filter((conv) => prev[conv.id] === undefined);
+  if (unseen.length === 0) return prev;
+  const seeded = unseen.map((conv) => [
+    conv.id,
+    conv.updated > baseline ? NEVER_SEEN : conv.updated,
+  ]);
+  return { ...prev, ...Object.fromEntries(seeded) };
+}
+
+function newestUpdated({
+  conversations,
+}: {
+  conversations: Pick<AgentConversation, 'updated'>[];
+}): string {
+  return conversations.reduce(
+    (newest, conv) => (conv.updated > newest ? conv.updated : newest),
+    NEVER_SEEN,
+  );
 }
 
 function readLastSeen(): Record<string, string> {
@@ -176,6 +207,7 @@ function writeLastSeen(value: Record<string, string>): void {
 }
 
 const LAST_SEEN_STORAGE_KEY = 'chat-conversation-last-seen';
+const NEVER_SEEN = '';
 const GATE_REFETCH_INTERVAL_MS = 3000;
 
 type SocketEvent = {
@@ -186,3 +218,5 @@ type SocketEvent = {
 };
 
 export type ConversationIndicatorState = 'working' | 'waiting' | 'unread';
+
+export const conversationIndicatorUtils = { seedLastSeen };

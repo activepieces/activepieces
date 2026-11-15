@@ -31,6 +31,7 @@ type JobStatusResponse = {
 export const descriptGetJobStatusAction = createAction({
   auth: descriptAuth,
   name: 'get_job_status',
+  classification: 'READ',
   displayName: 'Get Job Status',
   description:
     'Retrieves the current status of a Descript background job (import, agent edit, or publish). Use the job_id returned by any job-creation action.',

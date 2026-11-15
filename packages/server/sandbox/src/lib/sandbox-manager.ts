@@ -5,21 +5,30 @@ import { createSandboxForJob } from './create-sandbox-for-job'
 import { Sandbox } from './sandbox/types'
 import { SandboxSettings } from './types'
 
+let devPiecesGeneration = 0
+
+export function markDevPiecesRebuilt(): void {
+    devPiecesGeneration++
+}
+
 export function createSandboxManager({ boxId, basePath, getSettings }: { boxId: number, basePath: string, getSettings: () => SandboxSettings }): SandboxManager {
     let currentSandbox: Sandbox | null = null
+    let currentSandboxDevPiecesGeneration = devPiecesGeneration
 
     return {
         acquire(params: { log: ApLogger }): Sandbox {
-            if (canReuseSandbox(getSettings) && currentSandbox && currentSandbox.isReady()) {
+            const builtBeforeDevPiecesRebuild = currentSandboxDevPiecesGeneration < devPiecesGeneration
+            if (canReuseSandbox(getSettings) && currentSandbox && currentSandbox.isReady() && !builtBeforeDevPiecesRebuild) {
                 return currentSandbox
             }
             if (currentSandbox) {
-                params.log.info('Sandbox not ready or not reusable, creating fresh one')
+                params.log.info(builtBeforeDevPiecesRebuild ? 'Dev pieces were rebuilt, replacing stale sandbox' : 'Sandbox not ready or not reusable, creating fresh one')
                 currentSandbox.shutdown().catch((err) =>
                     params.log.error({ error: err }, 'Error shutting down previous sandbox'),
                 )
             }
             currentSandbox = createSandboxForJob({ ...params, boxId, reusable: canReuseSandbox(getSettings), basePath, getSettings })
+            currentSandboxDevPiecesGeneration = devPiecesGeneration
             return currentSandbox
         },
         async invalidate(log: ApLogger): Promise<void> {

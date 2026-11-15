@@ -1,4 +1,5 @@
-import { ApFile } from '@activepieces/pieces-framework';
+import { ApFile, AuthValidationServerContext, ServerContext } from '@activepieces/pieces-framework';
+import { AssumeRoleWithWebIdentityCommand, STSClient } from '@aws-sdk/client-sts';
 import {
   TextractClient,
   Block,
@@ -8,12 +9,7 @@ import {
   ExpenseDocument,
   IdentityDocument,
 } from '@aws-sdk/client-textract';
-
-export interface TextractAuth {
-  accessKeyId: string;
-  secretAccessKey: string;
-  region: string;
-}
+import type { TextractAuth, TextractOidcAuth } from './auth';
 
 // ─── Output Types ────────────────────────────────────────────────────────────
 
@@ -111,7 +107,20 @@ export interface AnalyzeIDResult {
 
 // ─── Client Factory ───────────────────────────────────────────────────────────
 
-export function createTextractClient(auth: TextractAuth): TextractClient {
+export async function createTextractClient({
+  auth,
+  server,
+}: {
+  auth: TextractAuth;
+  server: ServerContext | AuthValidationServerContext;
+}): Promise<TextractClient> {
+  if ('roleArn' in auth) {
+    await getTemporaryCredentials({ auth, server });
+    return new TextractClient({
+      credentials: () => getTemporaryCredentials({ auth, server }),
+      region: auth.region,
+    });
+  }
   return new TextractClient({
     credentials: {
       accessKeyId: auth.accessKeyId,
@@ -119,6 +128,60 @@ export function createTextractClient(auth: TextractAuth): TextractClient {
     },
     region: auth.region,
   });
+}
+
+export async function getTemporaryCredentials({
+  auth,
+  server,
+}: {
+  auth: TextractOidcAuth;
+  server: ServerContext | AuthValidationServerContext;
+}): Promise<TemporaryCredentials> {
+  if (!auth.roleArn) {
+    throw new Error('Role ARN is required for IAM Role authentication');
+  }
+  if (!AWS_REGION_REGEX.test(auth.region ?? '')) {
+    throw new Error(`Invalid AWS region: ${auth.region}`);
+  }
+
+  const cacheKey = 'token' in server ? `${server.token}:${auth.roleArn}:${auth.region}` : undefined;
+  if (cacheKey) {
+    const cached = credentialsCache.get(cacheKey);
+    if (cached && cached.expiresAtMS - Date.now() > CREDENTIALS_EXPIRY_MARGIN_MS) {
+      return cached.credentials;
+    }
+  }
+
+  const token = await resolveOidcToken({ server });
+
+  const sts = new STSClient({
+    region: auth.region,
+    maxAttempts: 2,
+    requestHandler: { requestTimeout: STS_REQUEST_TIMEOUT_MS, connectionTimeout: STS_CONNECT_TIMEOUT_MS },
+  });
+  const { Credentials } = await sts.send(
+    new AssumeRoleWithWebIdentityCommand({
+      RoleArn: auth.roleArn,
+      RoleSessionName: 'activepieces-execution',
+      WebIdentityToken: token,
+      DurationSeconds: STS_DURATION_SECONDS,
+    }),
+  );
+  if (!Credentials?.AccessKeyId || !Credentials.SecretAccessKey) {
+    throw new Error('Failed to assume role: no credentials returned');
+  }
+  const expiresAtMS = Credentials.Expiration?.getTime() ?? Date.now() + STS_DURATION_SECONDS * 1000;
+  const credentials = {
+    accessKeyId: Credentials.AccessKeyId,
+    secretAccessKey: Credentials.SecretAccessKey,
+    sessionToken: Credentials.SessionToken,
+    expiration: new Date(expiresAtMS),
+  };
+  if (cacheKey) {
+    sweepExpiredCredentials();
+    credentialsCache.set(cacheKey, { credentials, expiresAtMS });
+  }
+  return credentials;
 }
 
 // ─── Document Input Builder ───────────────────────────────────────────────────
@@ -501,7 +564,7 @@ export function formatTextractError(error: unknown): string {
     case 'InvalidS3ObjectException':
       return 'The specified S3 object could not be read. Check the bucket name, key, and permissions.';
     case 'UnsupportedDocumentException':
-      return 'The document format or page count is not supported. Synchronous analysis supports JPEG, PNG, and single-page PDF or TIFF via S3. For multi-page PDFs, use the Start Document Analysis action.';
+      return 'The document format or page count is not supported. Synchronous analysis supports JPEG, PNG, and single-page PDF or TIFF. For multi-page PDFs, use the Analyze Document from S3 (Multi-Page) action.';
     case 'DocumentTooLargeException':
       return 'The document exceeds the maximum allowed size. Use S3 for large documents.';
     case 'BadDocumentException':
@@ -522,3 +585,60 @@ export function formatTextractError(error: unknown): string {
       return err.message ?? 'An unexpected error occurred.';
   }
 }
+
+async function resolveOidcToken({ server }: { server: ServerContext | AuthValidationServerContext }): Promise<string> {
+  if ('mintOidcToken' in server) {
+    return server.mintOidcToken({ audience: AWS_STS_AUDIENCE });
+  }
+  const response = await fetch(`${server.apiUrl}v1/worker/oidc-token`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${server.token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ audience: AWS_STS_AUDIENCE }),
+    signal: AbortSignal.timeout(OIDC_TOKEN_REQUEST_TIMEOUT_MS),
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to get OIDC token: ${response.status} ${response.statusText}`.trim());
+  }
+  const body: unknown = await response.json();
+  if (!isOidcTokenResponse(body)) {
+    throw new Error('Failed to get OIDC token: the response did not include a token');
+  }
+  return body.token;
+}
+
+function isOidcTokenResponse(body: unknown): body is { token: string } {
+  return typeof body === 'object' && body !== null && 'token' in body && typeof body.token === 'string' && body.token.length > 0;
+}
+
+function sweepExpiredCredentials() {
+  const now = Date.now();
+  for (const [key, value] of credentialsCache) {
+    if (value.expiresAtMS <= now) {
+      credentialsCache.delete(key);
+    }
+  }
+}
+
+const AWS_STS_AUDIENCE = 'sts.amazonaws.com';
+const AWS_REGION_REGEX = /^[a-z]{2}(-[a-z]+)+-\d$/;
+const STS_DURATION_SECONDS = 3600;
+const STS_REQUEST_TIMEOUT_MS = 10_000;
+const STS_CONNECT_TIMEOUT_MS = 5_000;
+const OIDC_TOKEN_REQUEST_TIMEOUT_MS = 10_000;
+const CREDENTIALS_EXPIRY_MARGIN_MS = 5 * 60 * 1000;
+const credentialsCache = new Map<string, CachedCredentials>();
+
+type TemporaryCredentials = {
+  accessKeyId: string;
+  secretAccessKey: string;
+  sessionToken: string | undefined;
+  expiration: Date;
+};
+
+type CachedCredentials = {
+  credentials: TemporaryCredentials;
+  expiresAtMS: number;
+};

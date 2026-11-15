@@ -255,4 +255,235 @@ export class BaserowClient {
       { url }
     );
   }
+  async queryRows({
+    tableId,
+    query,
+  }: {
+    tableId: number;
+    query: QueryParams;
+  }): Promise<BaserowRowPage> {
+    return await this.makeRequest<BaserowRowPage>(
+      HttpMethod.GET,
+      `/database/rows/table/${tableId}/`,
+      { ...query, user_field_names: 'true' }
+    );
+  }
+  async listAllViews({ tableId }: { tableId: number }): Promise<Record<string, unknown>[]> {
+    return await this.makeRequest<Record<string, unknown>[]>(
+      HttpMethod.GET,
+      `/database/views/table/${tableId}/`
+    );
+  }
+  async listApplications(): Promise<BaserowApplication[]> {
+    return await this.makeRequest<BaserowApplication[]>(HttpMethod.GET, `/applications/`);
+  }
+  async listWorkspaces(): Promise<Record<string, unknown>[]> {
+    return await this.makeRequest<Record<string, unknown>[]>(HttpMethod.GET, `/workspaces/`);
+  }
+  async createDatabase({
+    workspaceId,
+    name,
+  }: {
+    workspaceId: number;
+    name: string;
+  }): Promise<Record<string, unknown>> {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      `/applications/workspace/${workspaceId}/`,
+      undefined,
+      { type: 'database', name, init_with_data: false }
+    );
+  }
+  async getTable({ tableId }: { tableId: number }): Promise<Record<string, unknown>> {
+    return await this.makeRequest(HttpMethod.GET, `/database/tables/${tableId}/`);
+  }
+  async createTable({
+    databaseId,
+    name,
+    data,
+    firstRowHeader,
+  }: {
+    databaseId: number;
+    name: string;
+    data: unknown[][];
+    firstRowHeader: boolean;
+  }): Promise<Record<string, unknown>> {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      `/database/tables/database/${databaseId}/`,
+      undefined,
+      { name, data, first_row_header: firstRowHeader }
+    );
+  }
+  async updateTable({
+    tableId,
+    name,
+  }: {
+    tableId: number;
+    name: string;
+  }): Promise<Record<string, unknown>> {
+    return await this.makeRequest(
+      HttpMethod.PATCH,
+      `/database/tables/${tableId}/`,
+      undefined,
+      { name }
+    );
+  }
+  async deleteTable({ tableId }: { tableId: number }): Promise<void> {
+    await this.makeRequest(HttpMethod.DELETE, `/database/tables/${tableId}/`);
+  }
+  async createField({
+    tableId,
+    body,
+  }: {
+    tableId: number;
+    body: Record<string, unknown>;
+  }): Promise<Record<string, unknown>> {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      `/database/fields/table/${tableId}/`,
+      undefined,
+      body
+    );
+  }
+  async updateField({
+    fieldId,
+    body,
+  }: {
+    fieldId: number;
+    body: Record<string, unknown>;
+  }): Promise<Record<string, unknown>> {
+    return await this.makeRequest(
+      HttpMethod.PATCH,
+      `/database/fields/${fieldId}/`,
+      undefined,
+      body
+    );
+  }
+  async deleteField({ fieldId }: { fieldId: number }): Promise<Record<string, unknown>> {
+    return await this.makeRequest(HttpMethod.DELETE, `/database/fields/${fieldId}/`);
+  }
+  async getFieldUniqueValues({
+    fieldId,
+    limit,
+    splitCommaSeparated,
+  }: {
+    fieldId: number;
+    limit?: number;
+    splitCommaSeparated?: boolean;
+  }): Promise<{ values: string[] }> {
+    return await this.makeRequest<{ values: string[] }>(
+      HttpMethod.GET,
+      `/database/fields/${fieldId}/unique_row_values/`,
+      prepareQuery({ limit, split_comma_separated: splitCommaSeparated })
+    );
+  }
+  async listRowNames({
+    tableId,
+    rowIds,
+  }: {
+    tableId: number;
+    rowIds: number[];
+  }): Promise<Record<string, Record<string, string>>> {
+    return await this.makeRequest<Record<string, Record<string, string>>>(
+      HttpMethod.GET,
+      `/database/rows/names/`,
+      { [`table__${tableId}`]: rowIds.join(',') }
+    );
+  }
+  async getRowHistory({
+    tableId,
+    rowId,
+    limit,
+    offset,
+  }: {
+    tableId: number;
+    rowId: number;
+    limit?: number;
+    offset?: number;
+  }): Promise<Record<string, unknown>> {
+    return await this.makeRequest(
+      HttpMethod.GET,
+      `/database/rows/table/${tableId}/${rowId}/history/`,
+      prepareQuery({ limit, offset })
+    );
+  }
+  async listWorkspaceUsers({
+    workspaceId,
+    search,
+  }: {
+    workspaceId: number;
+    search?: string;
+  }): Promise<Record<string, unknown>[]> {
+    return await this.makeRequest<Record<string, unknown>[]>(
+      HttpMethod.GET,
+      `/workspaces/users/workspace/${workspaceId}/`,
+      prepareQuery({ search })
+    );
+  }
+  async searchWorkspace({
+    workspaceId,
+    query,
+    limit,
+    offset,
+  }: {
+    workspaceId: number;
+    query: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<Record<string, unknown>> {
+    return await this.makeRequest(
+      HttpMethod.GET,
+      `/search/workspace/${workspaceId}/`,
+      prepareQuery({ query, limit, offset })
+    );
+  }
+  async exportTable({
+    tableId,
+    body,
+  }: {
+    tableId: number;
+    body: Record<string, unknown>;
+  }): Promise<Record<string, unknown>> {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      `/database/export/table/${tableId}/`,
+      undefined,
+      body
+    );
+  }
+  async getExportJob({ jobId }: { jobId: number }): Promise<Record<string, unknown>> {
+    return await this.makeRequest(HttpMethod.GET, `/database/export/${jobId}/`);
+  }
+  async createView({
+    tableId,
+    name,
+    type,
+  }: {
+    tableId: number;
+    name: string;
+    type: string;
+  }): Promise<Record<string, unknown>> {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      `/database/views/table/${tableId}/`,
+      undefined,
+      { name, type }
+    );
+  }
 }
+
+type BaserowRowPage = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Array<{ id: number } & Record<string, unknown>>;
+};
+
+type BaserowApplication = {
+  id: number;
+  name: string;
+  type: string;
+  workspace?: { id: number; name: string };
+  tables?: BaserowTable[];
+};

@@ -1,18 +1,21 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
-import { apDayjs, wideEvent } from '@activepieces/server-utils'
-import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isEmpty, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
+import { apDayjs, apDayjsDuration, wideEvent } from '@activepieces/server-utils'
+import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FAILED_STATES, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, flowStructureUtil, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { distributedLock } from '../../database/redis-connections'
+import { fileCompressor } from '../../file/file-compressor'
 import { fileService, getEffectiveExecutionDataRetentionDays } from '../../file/file.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { assertRunCreditsNotExceeded, CreditCheckSpeed, shouldBlockRunOnCredits } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
+import { waitpointService } from '../../waitpoints/waitpoint-service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { payloadOffloader } from '../../workers/payload-offloader'
 import { flowService } from '../flow/flow.service'
@@ -21,9 +24,11 @@ import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
-import { waitpointService } from './waitpoint/waitpoint-service'
+import { streamStepProgressUtils } from './stream-step-progress'
 
 const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]
+const RETRYABLE_FROM_FAILED_STEP_STATUSES: FlowRunStatus[] = [...FAILED_STATES, FlowRunStatus.QUEUED, FlowRunStatus.RUNNING]
+const PARENT_BOUND_RETRY_BACKOFF_MS = apDayjsDuration(30, 'second').asMilliseconds()
 
 
 export const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
@@ -43,10 +48,15 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             entity: FlowRunEntity,
             query: {
                 limit: params.limit,
-                orderBy: [
-                    { field: 'created', order: Order.DESC },
-                    { field: 'id', order: Order.DESC },
-                ],
+                orderBy: isNil(params.parentWaitpointId)
+                    ? [
+                        { field: 'created', order: Order.DESC },
+                        { field: 'id', order: Order.DESC },
+                    ]
+                    : [
+                        { field: 'dispatchIndex', order: Order.ASC },
+                        { field: 'id', order: Order.ASC },
+                    ],
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
@@ -59,7 +69,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         if (!isNil(params.environment)) {
             whereClause.environment = params.environment
         }
-        let query = queryBuilderForFlowRun(flowRunRepo()).where(whereClause)
+        let query = queryBuilderForFlowRun(flowRunRepo())
+            .where(whereClause)
+            .andWhere({ parentWaitpointId: params.parentWaitpointId ?? IsNull() })
+
+        if (!isNil(params.parentWaitpointId)) {
+            query = query.andWhere({ dispatchIndex: params.dispatchIndex ?? Not(IsNull()) })
+        }
 
         if (!params.includeArchived) {
             query = query.andWhere({
@@ -117,6 +133,14 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
         log.info({ flowRun: { id: flowRunId }, flow: { id: oldFlowRun.flowId }, strategy }, 'Flow run retry initiated')
 
+        if (!isNil(oldFlowRun.dispatchIndex) || !isNil(oldFlowRun.parentWaitpointId)) {
+            const message = `The run ${flowRunId} started from a step inside its flow rather than from the trigger, so it cannot be retried. Retry the run that dispatched it instead.`
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message },
+            }, message)
+        }
+
         const project = await projectService(log).getOneOrThrow(oldFlowRun.projectId)
         const retentionDays = getEffectiveExecutionDataRetentionDays(project.executionDataRetentionDays)
         if (
@@ -132,6 +156,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             })
         }
 
+        await assertRunCreditsNotExceeded({
+            platformId: project.platformId,
+            environment: oldFlowRun.environment,
+            creditCheckSpeed: CreditCheckSpeed.NORMAL,
+            log,
+        })
+
         switch (strategy) {
             case FlowRetryStrategy.FROM_FAILED_STEP: {
                 const flowVersion = await flowVersionService(log).getOneOrThrow(oldFlowRun.flowVersionId)
@@ -141,14 +172,29 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     ? await resolveStepOutput({ step: triggerStep, flowRun: oldFlowRun, log })
                     : undefined
 
-                await flowRunRepo().update({
-                    id: oldFlowRun.id,
-                    projectId: oldFlowRun.projectId,
-                }, {
-                    status: FlowRunStatus.QUEUED,
-                    startTime: apDayjs().toISOString(),
-                    finishTime: null,
-                })
+                const { raw: requeuedRuns } = await flowRunRepo().createQueryBuilder()
+                    .update()
+                    .set({
+                        status: FlowRunStatus.QUEUED,
+                        startTime: apDayjs().toISOString(),
+                        finishTime: null,
+                    })
+                    .where({
+                        id: oldFlowRun.id,
+                        projectId: oldFlowRun.projectId,
+                        status: In(RETRYABLE_FROM_FAILED_STEP_STATUSES),
+                    })
+                    .returning('id')
+                    .execute()
+                if (requeuedRuns.length === 0) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.FLOW_RUN_NOT_RETRYABLE,
+                        params: {
+                            flowRunId: oldFlowRun.id,
+                            status: oldFlowRun.status,
+                        },
+                    })
+                }
                 const updatedFlowRun = await findFlowRunOrThrow(oldFlowRun.id)
                 const platformId = await projectService(log).getPlatformId(updatedFlowRun.projectId)
                 await flowRunSideEffects(log).onRetry({ flowRun: updatedFlowRun, platformId })
@@ -238,7 +284,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
     },
     async bulkRetry(params: BulkRetryParams): Promise<FlowRunWithRetryError[]> {
-        const filteredFlowRuns = await filterFlowRunsAndApplyFilters(params)
+        const isFromFailedStepByFilter = params.strategy === FlowRetryStrategy.FROM_FAILED_STEP && isEmpty(params.flowRunIds)
+        const statusFilter = isFromFailedStepByFilter ? restrictToFailedStatuses(params.status) : params.status
+        if (isFromFailedStepByFilter && isEmpty(statusFilter)) {
+            return []
+        }
+        const filteredFlowRuns = await filterFlowRunsAndApplyFilters({ ...params, status: statusFilter })
         const limit = pLimit(10)
         const results = await Promise.allSettled(
             filteredFlowRuns.map(flowRun =>
@@ -310,6 +361,33 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         return newFlowRun
     },
 
+    async createQuotaExceededRun({ flowVersion, payload, projectId, environment, parentRunId, failParentOnFailure, triggeredBy, shouldExecuteTriggerOnRetry }: CreateQuotaExceededRunParams): Promise<FlowRun> {
+        const now = new Date().toISOString()
+        const logsFileId = apId()
+        await persistQuotaExceededTriggerLog({ log, flowVersion, projectId, payload, logsFileId, shouldExecuteTriggerOnRetry })
+        const flowRun: FlowRun = {
+            id: apId(),
+            projectId,
+            flowId: flowVersion.flowId,
+            flowVersionId: flowVersion.id,
+            environment,
+            parentRunId,
+            failParentOnFailure: failParentOnFailure ?? true,
+            status: FlowRunStatus.QUOTA_EXCEEDED,
+            created: now,
+            updated: now,
+            startTime: now,
+            finishTime: now,
+            logsFileId,
+            tags: [],
+            steps: {},
+            triggeredBy,
+        }
+        await runsMetadataQueue(log).add(flowRun)
+        log.info({ flowRun: { id: flowRun.id }, flow: { id: flowVersion.flowId }, project: { id: projectId } }, 'Flow run admitted as QUOTA_EXCEEDED')
+        return flowRun
+    },
+
     async test({ projectId, flowVersionId, parentRunId, stepNameToTest, triggeredBy }: TestParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
         await flowService(log).getOneOrThrow({ id: flowVersion.flowId, projectId })
@@ -338,14 +416,47 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             httpRequestId: undefined,
             platformId: await projectService(log).getPlatformId(projectId),
             executeTrigger: false,
-            streamStepProgress: StreamStepProgress.WEBSOCKET,
-            sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow(projectId, flowVersion, SampleDataFileType.OUTPUT) : undefined,
+            streamStepProgress: streamStepProgressUtils.forRun({ flowRun, flowVersion }),
+            sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow({
+                projectId,
+                flowVersion,
+                type: SampleDataFileType.OUTPUT,
+                referencedBy: settingsOfStepUnderTest({ flowVersion, stepNameToTest }),
+            }) : undefined,
         }, log)
     },
     async startManualTrigger({ projectId, flowVersionId, triggeredBy }: StartManualTriggerParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
         await flowService(log).getOneOrThrow({ id: flowVersion.flowId, projectId })
+        if (!streamStepProgressUtils.hasManualTrigger({ flowVersion })) {
+            const message = `Flow version ${flowVersionId} is not started by a manual trigger, so it cannot be run manually.`
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message },
+            }, message)
+        }
         const triggerPayload = {}
+        const platformId = await projectService(log).getPlatformId(projectId)
+
+        const creditsExhausted = await shouldBlockRunOnCredits({
+            platformId,
+            environment: RunEnvironment.PRODUCTION,
+            creditCheckSpeed: CreditCheckSpeed.NORMAL,
+            log,
+        })
+        if (creditsExhausted) {
+            return this.createQuotaExceededRun({
+                flowVersion,
+                payload: triggerPayload,
+                projectId,
+                environment: RunEnvironment.PRODUCTION,
+                parentRunId: undefined,
+                failParentOnFailure: undefined,
+                triggeredBy,
+                shouldExecuteTriggerOnRetry: false,
+            })
+        }
+
         const flowRun = await queueOrCreateInstantly({
             projectId,
             flowId: flowVersion.flowId,
@@ -362,9 +473,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             executionType: ExecutionType.BEGIN,
             workerHandlerId: undefined,
             httpRequestId: undefined,
-            platformId: await projectService(log).getPlatformId(projectId),
+            platformId,
             executeTrigger: false,
-            streamStepProgress: StreamStepProgress.WEBSOCKET,
+            streamStepProgress: streamStepProgressUtils.forRun({ flowRun, flowVersion }),
             sampleData: undefined,
         }, log)
     },
@@ -407,6 +518,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 projectId: params.projectId,
                 environment: RunEnvironment.PRODUCTION,
                 archivedAt: IsNull(),
+                parentWaitpointId: IsNull(),
             })
             .groupBy('flow_run.status')
 
@@ -440,13 +552,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 })
 
 
-async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platformId: string): Promise<void> {
+export async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platformId: string): Promise<void> {
     await distributedLock(log).runExclusive({
         key: `runs_metadata_${flowRun.id}`,
         timeoutInSeconds: 30,
         fn: async () => {
-            await jobQueue(log).removeAllFlowRunJobs({ flowRunId: flowRun.id, platformId, projectId: flowRun.projectId })
-            await waitpointService(log).deleteByFlowRunId(flowRun.id)
+            await jobQueue(log).removeAllFlowRunJobs({ flowRunId: flowRun.id, platformId, projectId: flowRun.projectId, flowId: flowRun.flowId })
+            await waitpointService(log).deleteByFlowRunId({ flowRunId: flowRun.id, projectId: flowRun.projectId })
             await runsMetadataQueue(log).add({
                 id: flowRun.id,
                 projectId: flowRun.projectId,
@@ -492,17 +604,30 @@ async function getAllChildRuns(parentRunIds: string[]): Promise<FlowRun[]> {
 }
 
 
+function restrictToFailedStatuses(statusFilter: FlowRunStatus[] | undefined): FlowRunStatus[] {
+    if (isNil(statusFilter) || statusFilter.length === 0) {
+        return FAILED_STATES
+    }
+    return statusFilter.filter((status) => FAILED_STATES.includes(status))
+}
+
 async function filterFlowRunsAndApplyFilters(
     params: FilterFlowRunsAndApplyFiltersParams,
 ): Promise<FlowRun[]> {
+    const explicitFlowRunIds = params.flowRunIds ?? []
     let query = flowRunRepo().createQueryBuilder('flow_run').where({
         projectId: params.projectId,
         environment: RunEnvironment.PRODUCTION,
     })
 
-    if (!isNil(params.flowRunIds) && params.flowRunIds.length > 0) {
+    if (explicitFlowRunIds.length > 0) {
         query = query.andWhere({
-            id: In(params.flowRunIds),
+            id: In(explicitFlowRunIds),
+        })
+    }
+    else {
+        query = query.andWhere({
+            parentWaitpointId: IsNull(),
         })
     }
 
@@ -539,7 +664,7 @@ async function filterFlowRunsAndApplyFilters(
     }
 
     if (params.failedStepName) {
-        query = query.andWhere('flow_run.failedStepName = :failedStepName', {
+        query = query.andWhere('flow_run."failedStep"->>\'name\' = :failedStepName', {
             failedStepName: params.failedStepName,
         })
     }
@@ -558,7 +683,7 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
     const logsFileId = params.flowRun.logsFileId ?? apId()
 
     let jobPayload: JobPayload = { type: 'inline', value: null }
-    if (!isNil(params.payload) && isNil(params.workerHandlerId)) {
+    if (!isNil(params.payload) && isNil(params.workerHandlerId) && !(params.preferInlinePayload ?? false)) {
         jobPayload = await payloadOffloader.offloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
     }
     else if (!isNil(params.payload)) {
@@ -581,6 +706,7 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
         stepNameToTest: params.flowRun.stepNameToTest ?? undefined,
         sampleData: params.sampleData,
         logsFileId,
+        parentWaitpointId: params.flowRun.parentWaitpointId ?? undefined,
     }
     const data: ExecuteFlowJobData = params.executionType === ExecutionType.RESUME
         ? {
@@ -592,11 +718,14 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
             ...commonJobData,
             executionType: ExecutionType.BEGIN,
             executeTrigger: params.executeTrigger,
+            entryStepName: params.entryStepName,
         }
+    const aParentIsBlockedOnThisRun = params.flowRun.failParentOnFailure && !isNil(params.flowRun.parentRunId)
     await jobQueue(log).add({
         id: params.jobId ?? params.flowRun.id,
         type: JobType.ONE_TIME,
         data,
+        retryBackoffMs: aParentIsBlockedOnThisRun ? PARENT_BOUND_RETRY_BACKOFF_MS : undefined,
     })
     return params.flowRun
 }
@@ -618,8 +747,8 @@ export async function findFlowRunOrThrow(flowRunId: FlowRunId): Promise<FlowRun>
 
 function queryBuilderForFlowRun(repo: Repository<FlowRun>): SelectQueryBuilder<FlowRun> {
     return repo.createQueryBuilder('flow_run')
-        .leftJoinAndSelect('flow_run.flowVersion', 'flowVersion')
-        .addSelect(['"flowVersion"."displayName"'])
+        .leftJoin('flow_run.flowVersion', 'flowVersion')
+        .addSelect(['flowVersion.id', 'flowVersion.displayName'])
 }
 
 async function resolveStepOutput({ step, flowRun, log }: ResolveStepOutputParams): Promise<unknown> {
@@ -660,6 +789,35 @@ async function readLogsFile(log: FastifyBaseLogger, logsFileId: string, projectI
     return JSON.parse(result.data.toString('utf-8'))
 }
 
+async function persistQuotaExceededTriggerLog({ log, flowVersion, projectId, payload, logsFileId, shouldExecuteTriggerOnRetry }: PersistQuotaExceededTriggerLogParams): Promise<void> {
+    const triggerStep = GenericStepOutput.create({
+        input: {},
+        type: flowVersion.trigger.type,
+        status: shouldExecuteTriggerOnRetry ? StepOutputStatus.FAILED : StepOutputStatus.SUCCEEDED,
+        output: payload,
+    })
+    const outputFile: ExecutioOutputFile = {
+        executionState: {
+            steps: { [flowVersion.trigger.name]: triggerStep },
+            tags: [],
+        },
+    }
+    const data = await fileCompressor.compress({
+        data: await logSerializer.serialize(outputFile),
+        compression: FileCompression.ZSTD,
+    })
+    const platformId = await projectService(log).getPlatformId(projectId)
+    await fileService(log).save({
+        fileId: logsFileId,
+        projectId,
+        platformId,
+        type: FileType.FLOW_RUN_LOG,
+        data,
+        size: data.length,
+        compression: FileCompression.ZSTD,
+    })
+}
+
 async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogger): Promise<FlowRun> {
     const now = new Date().toISOString()
     const flowRun: FlowRun = {
@@ -692,6 +850,19 @@ export function isOutsideRetentionWindow(createdTime: string, retentionDays: num
     return apDayjs(createdTime).add(retentionDays, 'day').isBefore(apDayjs())
 }
 
+function settingsOfStepUnderTest({ flowVersion, stepNameToTest }: SettingsOfStepUnderTestParams): unknown {
+    const stepUnderTest = flowStructureUtil.getStep(stepNameToTest, flowVersion.trigger)
+    if (isNil(stepUnderTest)) {
+        return undefined
+    }
+    return flowStructureUtil.getAllChildSteps(stepUnderTest).map((step) => step.settings)
+}
+
+type SettingsOfStepUnderTestParams = {
+    flowVersion: FlowVersion
+    stepNameToTest: string
+}
+
 type CreateParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
@@ -717,6 +888,8 @@ type ListParams = {
     flowRunIds?: FlowRunId[]
     includeArchived?: boolean
     environment?: RunEnvironment
+    parentWaitpointId?: ApId
+    dispatchIndex?: number
 }
 
 type GetOneParams = {
@@ -739,13 +912,34 @@ type AddToQueueParamsCommon = {
     streamStepProgress: StreamStepProgress
     sampleData?: Record<string, unknown>
     jobId?: string
+    preferInlinePayload?: boolean
 }
 
 export type AddToQueueParams = AddToQueueParamsCommon & (
-    | { executionType: ExecutionType.BEGIN, executeTrigger: boolean }
+    | { executionType: ExecutionType.BEGIN, executeTrigger: boolean, entryStepName?: string }
     | { executionType: ExecutionType.RESUME, resumeReason: ResumeReason }
 )
 
+
+type CreateQuotaExceededRunParams = {
+    flowVersion: FlowVersion
+    payload: unknown
+    projectId: ProjectId
+    environment: RunEnvironment
+    parentRunId?: FlowRunId
+    failParentOnFailure: boolean | undefined
+    triggeredBy?: string
+    shouldExecuteTriggerOnRetry: boolean
+}
+
+type PersistQuotaExceededTriggerLogParams = {
+    log: FastifyBaseLogger
+    flowVersion: FlowVersion
+    projectId: ProjectId
+    payload: unknown
+    logsFileId: string
+    shouldExecuteTriggerOnRetry: boolean
+}
 
 type StartParams = {
     flowId: FlowId

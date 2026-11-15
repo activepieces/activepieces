@@ -10,7 +10,7 @@ export const anthropicProvider: AIProviderStrategy<AnthropicProviderAuthConfig, 
     },
     async listModels(authConfig: AnthropicProviderAuthConfig, _config: AnthropicProviderConfig): Promise<AIProviderModel[]> {
         const res = await httpClient.sendRequest<{ data: AnthropicModel[] }>({
-            url: 'https://api.anthropic.com/v1/models',
+            url: 'https://api.anthropic.com/v1/models?limit=1000',
             method: HttpMethod.GET,
             headers: {
                 'x-api-key': authConfig.apiKey,

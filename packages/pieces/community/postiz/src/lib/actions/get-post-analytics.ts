@@ -6,6 +6,7 @@ import { postizApiCall } from '../common';
 export const getPostAnalytics = createAction({
   auth: postizAuth,
   name: 'get_post_analytics',
+  classification: 'READ',
   displayName: 'Get Post Analytics',
   description:
     'Retrieve analytics (likes, comments, shares, impressions) for a specific published post',

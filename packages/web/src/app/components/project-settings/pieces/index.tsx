@@ -5,13 +5,12 @@ import { t } from 'i18next';
 import { Info, Package, Puzzle, Tag, Hash, GitBranch } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { RequestTrial } from '@/app/components/request-trial';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { DataTableInputPopover } from '@/components/custom/data-table/data-table-input-popover';
-import { LockedAlert } from '@/components/custom/locked-alert';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { LockedFeatureRow } from '@/features/billing';
 import { pieceSetQueries } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
 import { projectCollectionUtils } from '@/features/projects';
@@ -82,14 +81,12 @@ const PiecesSettings = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { project } = projectCollectionUtils.useCurrentProject();
   const [searchQuery, setSearchQuery] = useState('');
-  const { pieces, isLoading } = piecesHooks.usePieces({
+  const { pieces, isLoading, isError, refetch } = piecesHooks.usePieces({
     searchQuery,
     isTableQuery: true,
   });
 
-  const { data: pieceSet } = pieceSetQueries.usePieceSet(
-    project.pieceSetId ?? '',
-  );
+  const { data: pieceSet } = pieceSetQueries.useProjectPieceSet(project.id);
 
   const customFilters = useMemo(
     () => [
@@ -105,20 +102,11 @@ const PiecesSettings = () => {
 
   return (
     <div className="space-y-6">
-      {!platform.plan.managePiecesEnabled && (
-        <LockedAlert
-          title={t('Control Pieces')}
-          description={t(
-            "Show the pieces that matter most to your users and hide the ones you don't like.",
-          )}
-          button={
-            <RequestTrial
-              featureKey="ENTERPRISE_PIECES"
-              buttonVariant="basic"
-            />
-          }
-        />
-      )}
+      <LockedFeatureRow
+        unlocked={platform.plan.managePiecesEnabled}
+        featureKey="PIECES"
+        line={t('Choosing which pieces this project can use is locked.')}
+      />
       {platform.plan.managePiecesEnabled && (
         <Alert variant="primary">
           <Info className="size-4" />
@@ -148,6 +136,9 @@ const PiecesSettings = () => {
           previous: null,
         }}
         isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('pieces')}
+        onRetry={refetch}
         hidePagination={true}
       />
     </div>

@@ -48,7 +48,9 @@ function getStatusText({
     case FlowRunStatus.PAUSED:
       return t('Run Paused');
     case FlowRunStatus.QUOTA_EXCEEDED:
-      return t('Quota Exceeded');
+      return t(
+        'This run stopped because your platform ran out of credits. It can be retried once credits are available.',
+      );
     case FlowRunStatus.LOG_SIZE_EXCEEDED:
       return t(
         'Run failed due to output of steps exceeding the log size limit of {logSizeLimit} MB',
@@ -100,15 +102,15 @@ const RunInfoWidget = () => {
   return (
     <LargeWidgetWrapper
       containerClassName={cn(
-        flowRunUtils.getStatusContainerClassName(variant),
-        'bg-background border border-border dark:bg-background dark:border-border',
+        flowRunUtils.getStatusContainerClassName({ variant }),
+        'bg-gray-1 border border-gray-6',
       )}
       key={run.id + run.status}
     >
       <div className="flex items-center justify-between w-full flex-wrap">
         <div className="flex items-center text-sm shrink-0">
           <Icon className="size-5 mr-2" />
-          <span className="text-foreground dark:text-foreground font-medium">
+          <span className="text-gray-12 font-medium">
             {getStatusText({
               status: run.status,
               timeout: timeoutSeconds ?? -1,
@@ -117,7 +119,7 @@ const RunInfoWidget = () => {
             })}
           </span>
 
-          <div className="shrink-0 text-foreground dark:text-foreground">
+          <div className="shrink-0 text-gray-12">
             {isRunTerminal && (
               <>
                 &nbsp;-&nbsp;
@@ -146,7 +148,7 @@ const RunInfoWidget = () => {
           {isRunTerminal && !isTimelineEmpty(run.timeline) && (
             <HoverCard openDelay={200} closeDelay={100}>
               <HoverCardTrigger className="ml-1 inline-flex cursor-default items-center">
-                <Info className="size-4 text-muted-foreground" />
+                <Info className="size-4 text-gray-11" />
               </HoverCardTrigger>
               <HoverCardContent className="w-[28rem] p-3">
                 <TimelineBar timeline={run.timeline} />
@@ -243,7 +245,7 @@ const JumpToFailedStepButton = ({
       variant="ghost"
       size="sm"
       onClick={handleClick}
-      className="text-destructive-700 hover:text-destructive-700 dark:text-destructive-200 dark:hover:text-destructive-200"
+      className="text-danger-11 hover:text-danger-11"
     >
       <ArrowRight className="size-4" />
       {t('See error')}

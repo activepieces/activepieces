@@ -24,9 +24,9 @@ import { serpApiAuth } from './lib/auth';
 
 export const serpApi = createPiece({
   displayName: 'SerpApi',
-  description: 'Search Google, YouTube, News, and Trends with powerful filtering and analysis capabilities',
+  description: 'Get search results from Google, Google News, YouTube and Google Trends.',
   auth: serpApiAuth,
-  minimumSupportedRelease: '0.86.4',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/serp-api.png',
   authors: ['AnkitSharmaOnGithub'],
   actions: [

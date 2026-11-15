@@ -86,6 +86,7 @@ export const FIELD_TYPE_VALUES = [
     FieldType.TEXT,
     FieldType.NUMBER,
     FieldType.DATE,
+    FieldType.DATETIME,
     FieldType.STATIC_DROPDOWN,
 ] as const
 

@@ -66,6 +66,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof excelAuth>, { st
 export const newWorksheetTrigger = createTrigger({
   auth: excelAuth,
   name: 'new_worksheet',
+  classification: 'READ',
   displayName: 'New Worksheet',
   description: 'Fires when a new worksheet is created in a workbook.',
   aiMetadata: {
@@ -92,36 +93,18 @@ export const newWorksheetTrigger = createTrigger({
     if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
       throw new Error('please select SharePoint site and document library.');
     }
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue
-    });
+    await pollingHelper.onEnable(polling, context);
   },
 
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue
-    });
+    await pollingHelper.onDisable(polling, context);
   },
 
   run: async (context) => {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files
-    });
+    return await pollingHelper.poll(polling, context);
   },
 
   test: async (context) => {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files
-    });
+    return await pollingHelper.test(polling, context);
   }
 });

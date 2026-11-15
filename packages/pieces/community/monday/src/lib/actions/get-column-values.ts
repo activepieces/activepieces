@@ -6,9 +6,10 @@ import { parseMondayColumnValue } from '../common/helper';
 export const getItemsColumnValuesAction = createAction({
   auth: mondayAuth,
   name: 'monday_get_item_column_values',
+  classification: 'READ',
   displayName: "Get an Item's Column Values",
   description: 'Gets column values of an item.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Retrieves the column values for a single monday.com item identified by board and item id, optionally limited to specific column ids. Use to read one item\'s field values. Read-only and idempotent.', idempotent: true },
   props: {
     workspace_id: mondayCommon.workspace_id(true),

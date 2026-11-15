@@ -6,6 +6,7 @@ import { makeRequest } from '../common/client';
 export const rugPullCheck = createAction({
   auth: chainAwareAuth,
   name: 'rugPullCheck',
+  classification: 'READ',
   displayName: 'Rug Pull Check',
   description: 'Calculate fraud probability for a contract address',
   audience: 'both',

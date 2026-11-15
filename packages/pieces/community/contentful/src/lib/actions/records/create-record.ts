@@ -17,6 +17,7 @@ function keyBy<T>(array: T[], key: keyof T): { [key: string]: T } {
 
 export const ContentfulCreateRecordAction = createAction({
   name: 'contentful_record_create',
+  classification: 'WRITE',
   auth: ContentfulAuth,
   displayName: 'Create Record',
   description: 'Creates a new Contentful record for a given Content Model',

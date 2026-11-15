@@ -2,6 +2,7 @@
 export enum Permission {
     READ_APP_CONNECTION = 'READ_APP_CONNECTION',
     WRITE_APP_CONNECTION = 'WRITE_APP_CONNECTION',
+    REPLACE_APP_CONNECTION = 'REPLACE_APP_CONNECTION',
     READ_FLOW = 'READ_FLOW',
     WRITE_FLOW = 'WRITE_FLOW',
     UPDATE_FLOW_STATUS = 'UPDATE_FLOW_STATUS',
@@ -27,6 +28,9 @@ export enum Permission {
     WRITE_KNOWLEDGE_BASE = 'WRITE_KNOWLEDGE_BASE',
     READ_VARIABLE = 'READ_VARIABLE',
     WRITE_VARIABLE = 'WRITE_VARIABLE',
+    READ_AGENT = 'READ_AGENT',
+    WRITE_AGENT = 'WRITE_AGENT',
+    PUBLISH_SENSITIVE_FLOW_ACCESS = 'PUBLISH_SENSITIVE_FLOW_ACCESS',
 }
 
 export enum RoleType {
@@ -35,8 +39,9 @@ export enum RoleType {
 }
 
 export enum PlatformUsageMetric {
-    AI_CREDITS = 'ai-credits',
+    CREDITS = 'credits',
     ACTIVE_FLOWS = 'active-flows',
+    USERS = 'users',
 }
 
 export const SAFE_STRING_PATTERN = '^[^./]+$'
@@ -52,5 +57,15 @@ export enum AIProviderName {
     CLOUDFLARE_GATEWAY = 'cloudflare-gateway',
     CUSTOM = 'custom',
     BEDROCK = 'bedrock',
+    VERTEX = 'vertex',
     MISTRAL = 'mistral',
+    XAI = 'xai',
+    DEEPSEEK = 'deepseek',
+    ZAI = 'zai',
+    QWEN = 'qwen',
+    MINIMAX = 'minimax',
+    MOONSHOT = 'moonshot',
+    META = 'meta',
+    NVIDIA = 'nvidia',
+    COHERE = 'cohere',
 }

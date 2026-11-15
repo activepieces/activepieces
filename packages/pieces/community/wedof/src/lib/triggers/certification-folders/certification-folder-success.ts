@@ -5,6 +5,7 @@ import { wedofCommon } from '../../common/wedof';
 export const certificationFolderSuccess = createTrigger({
   auth: wedofAuth,
   name: 'certificationfolderSuccess',
+  classification: 'READ',
   displayName: 'Dossier de certification réussi',
   description:
     "Se déclenche lorsqu'un dossier de formation passe à l'état réussi",

@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { computeTokenRefreshAt, isCustomAuthTokenStale } from '../../../../src/app/app-connection/app-connection-service/app-connection.handler'
 
 const BUFFER_SECONDS = 15 * 60
@@ -34,6 +34,15 @@ describe('isCustomAuthTokenStale', () => {
 })
 
 describe('computeTokenRefreshAt', () => {
+    beforeAll(() => {
+        vi.useFakeTimers()
+        vi.setSystemTime(NOW * 1000)
+    })
+
+    afterAll(() => {
+        vi.useRealTimers()
+    })
+
     it('returns undefined (never refresh) when expiresIn is zero or negative', () => {
         expect(computeTokenRefreshAt(0)).toBeUndefined()
         expect(computeTokenRefreshAt(-1)).toBeUndefined()
@@ -43,6 +52,15 @@ describe('computeTokenRefreshAt', () => {
         const expiresIn = 3300
         const refreshAt = computeTokenRefreshAt(expiresIn)
         expect(refreshAt).toBe(NOW + expiresIn - BUFFER_SECONDS)
+    })
+
+    it('coerces a string expires_in from a third-party token response', () => {
+        expect(computeTokenRefreshAt('3300')).toBe(NOW + 3300 - BUFFER_SECONDS)
+    })
+
+    it('returns undefined (never refresh) for a non-numeric or infinite expires_in', () => {
+        expect(computeTokenRefreshAt('not-a-number')).toBeUndefined()
+        expect(computeTokenRefreshAt('1e999')).toBeUndefined()
     })
 
     it('clamps the buffer to half the lifetime for short-lived tokens', () => {

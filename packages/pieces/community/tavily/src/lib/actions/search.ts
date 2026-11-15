@@ -1,9 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { tavilyAuth } from '../auth';
+import { searchOutputSchema } from '../output-schemas';
 
 export const searchAction = createAction({
   name: 'search',
+  outputSchema: searchOutputSchema,
+  classification: 'SEARCH',
   displayName: 'Search',
   description: 'Search for data based on a query.',
   audience: 'both',

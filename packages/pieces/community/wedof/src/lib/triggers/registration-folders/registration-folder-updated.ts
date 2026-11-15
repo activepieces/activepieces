@@ -5,6 +5,7 @@ import { wedofCommon } from '../../common/wedof';
 export const registrationFolderUpdated = createTrigger({
   auth: wedofAuth,
   name: 'registrationFolderUpdated',
+  classification: 'READ',
   displayName: 'Dossier de formation mis à jour',
   description: "Se déclenche lorsqu'un dossier de formation est mis à jour",
   aiMetadata: {

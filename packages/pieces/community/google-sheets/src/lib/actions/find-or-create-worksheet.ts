@@ -1,15 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
-import { createGoogleClient, googleSheetsAuth } from '../common/common';
+import { createGoogleClient, googleSheetsAuth, googleSheetsCommon } from '../common/common';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
 import { findOrCreateWorksheetActionOutputSchema } from '../output-schemas';
 
 export const findOrCreateWorksheetAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'find-or-create-worksheet',
+	classification: 'WRITE',
 	displayName: 'Find or Create Worksheet',
 	description: 'Look up a worksheet by title in a spreadsheet; if not found, create it with optional headers.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Looks up a worksheet (tab) by exact, case-sensitive title inside a spreadsheet and returns it, or creates that tab — optionally seeding a header row — when no tab with the title exists, flagging which happened. Use instead of Create Worksheet when the tab may already exist, since Create Worksheet adds a duplicate tab regardless. Idempotent — a second call with the same title returns the existing tab rather than creating another, and the headers are written only on creation.',
@@ -67,7 +68,7 @@ export const findOrCreateWorksheetAction = createAction({
 		if (headers.length > 0) {
 			await sheetsApi.spreadsheets.values.append({
 				spreadsheetId,
-				range: `${title}!A1`,
+				range: googleSheetsCommon.sheetRange({ sheetName: title, range: 'A1' }),
 				valueInputOption: 'RAW',
 				requestBody: {
 					majorDimension: 'ROWS',

@@ -19,6 +19,7 @@ import {
 export const updateRecord = createAction({
     auth: insightlyAuth,
     name: 'update_record',
+    classification: 'WRITE',
     displayName: 'Update Record',
     description:
         "Update an existing record's fields in a specified Insightly object",

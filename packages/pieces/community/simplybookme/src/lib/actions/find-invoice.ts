@@ -5,6 +5,7 @@ import { simplybookAuth, getAccessToken, SimplybookAuth, clientDropdown } from '
 export const findInvoice = createAction({
   auth: simplybookAuth,
   name: 'find_invoice',
+  classification: 'SEARCH',
   displayName: 'Find Invoice',
   description: 'Find invoices with filters and pagination',
   audience: 'both',

@@ -7,6 +7,7 @@ import { createTableAiActionOutputSchema } from '../output-schemas';
 export const airtableCreateTableAiAction = createAction({
   auth: airtableAuth,
   name: 'create_table_ai',
+  classification: 'WRITE',
   displayName: 'Create Table (Agent)',
   description: 'Create a new table in an existing base.',
   audience: 'ai',

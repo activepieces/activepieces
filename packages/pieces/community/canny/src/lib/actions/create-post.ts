@@ -7,6 +7,7 @@ import { cannyRequest, cleanBody } from '../common/client';
 export const createPostAction = createAction({
   auth: cannyAuth,
   name: 'create_post',
+  classification: 'WRITE',
   displayName: 'Create Post',
   description: 'Creates a new post on a Canny board.',
   audience: 'both',

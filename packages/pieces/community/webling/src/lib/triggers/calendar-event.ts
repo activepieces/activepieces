@@ -45,47 +45,29 @@ export const onEventChanged = createTrigger({
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async test(context) {
-    const { store, auth, propsValue } = context;
-    return await pollingHelper.test(polling, {
-      store,
-      auth,
-      propsValue: {
+    const { propsValue } = context;
+    return await pollingHelper.test(polling, { ...context, propsValue: {
         calendarId: propsValue.calendarId,
-      },
-      files: context.files,
-    });
+      } });
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, {
-      store,
-      auth,
-      propsValue: {
+    const { propsValue } = context;
+    await pollingHelper.onEnable(polling, { ...context, propsValue: {
         calendarId: propsValue.calendarId,
-      },
-    });
+      } });
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, {
-      store,
-      auth,
-      propsValue: {
+    const { propsValue } = context;
+    await pollingHelper.onDisable(polling, { ...context, propsValue: {
         calendarId: propsValue.calendarId,
-      },
-    });
+      } });
   },
 
   async run(context) {
-    const { store, auth, propsValue } = context;
-    return await pollingHelper.poll(polling, {
-      store,
-      auth,
-      propsValue: {
+    const { propsValue } = context;
+    return await pollingHelper.poll(polling, { ...context, propsValue: {
         calendarId: propsValue.calendarId,
-      },
-      files: context.files,
-    });
+      } });
   },
 });
