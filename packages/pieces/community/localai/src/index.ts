@@ -13,7 +13,7 @@ export const openai = createPiece({
   displayName: 'LocalAI',
   description:
     'The free, Self-hosted, community-driven and local-first. Drop-in replacement for OpenAI running on consumer-grade hardware. No GPU required.',
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/localai.jpeg',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   auth: localaiAuth,
@@ -27,6 +27,12 @@ export const openai = createPiece({
       baseUrl: (auth) => (auth ? localaiCommon.baseUrl(auth) : ''),
       auth: localaiAuth,
       authMapping: async (auth) => localaiCommon.authHeaders(auth),
+      props: {
+        url: {
+          description: 'Full URL, or a path relative to your LocalAI Server URL.',
+          placeholder: '/models',
+        },
+      },
     }),
   ],
   authors: ["hkboujrida","kishanprmr","MoShizzle","abuaboud"],
