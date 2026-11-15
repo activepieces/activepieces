@@ -284,6 +284,7 @@ describe('batchUtils.headerState', () => {
       total: 10,
       succeeded: 5,
       unsuccessful: 5,
+      notDispatched: 1,
       stillRunning: 0,
       timedOut: false,
     });
@@ -295,6 +296,7 @@ describe('batchUtils.headerState', () => {
       total: 3,
       succeeded: 1,
       unsuccessful: 1,
+      notDispatched: 1,
       stillRunning: 1,
       timedOut: true,
     });
