@@ -7,19 +7,19 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const rec = (id: string, modifiedon: string, createdon = '2026-01-01T00:00:00.000') => ({ accountid: id, modifiedon, createdon });
+const rec = ({ id, modifiedon, createdon = '2026-01-01T00:00:00.000' }: { id: string; modifiedon: string; createdon?: string }) => ({ accountid: id, modifiedon, createdon });
 
 describe('selectNewRecords', () => {
   it('keeps time precision and does not re-emit records at the cursor', () => {
     const cursor = { timestamp: '2026-11-01T10:00:00.000', ids: ['a'] };
-    const records = [rec('old', '2026-11-01T09:59:59.000'), rec('a', '2026-11-01T10:00:00.000'), rec('b', '2026-11-01T10:00:00.000'), rec('c', '2026-11-01T10:05:00.000')];
+    const records = [rec({ id: 'old', modifiedon: '2026-11-01T09:59:59.000' }), rec({ id: 'a', modifiedon: '2026-11-01T10:00:00.000' }), rec({ id: 'b', modifiedon: '2026-11-01T10:00:00.000' }), rec({ id: 'c', modifiedon: '2026-11-01T10:05:00.000' })];
     const result = fireberryRecordPolling.selectNewRecords({ records, cursor, field: 'modifiedon', primaryKey: 'accountid', triggerType: 'both' });
     expect(result.items.map((r) => r.accountid)).toEqual(['b', 'c']);
     expect(result.cursor).toEqual({ timestamp: '2026-11-01T10:05:00.000', ids: ['c'] });
   });
 
   it('emits nothing on a second poll over the same data', () => {
-    const records = [rec('a', '2026-11-01T10:00:00.000'), rec('b', '2026-11-01T10:01:00.000')];
+    const records = [rec({ id: 'a', modifiedon: '2026-11-01T10:00:00.000' }), rec({ id: 'b', modifiedon: '2026-11-01T10:01:00.000' })];
     const first = fireberryRecordPolling.selectNewRecords({ records, cursor: { timestamp: '2026-11-01T09:00:00.000', ids: [] }, field: 'modifiedon', primaryKey: 'accountid', triggerType: 'both' });
     expect(first.items).toHaveLength(2);
     const second = fireberryRecordPolling.selectNewRecords({ records, cursor: first.cursor, field: 'modifiedon', primaryKey: 'accountid', triggerType: 'both' });
@@ -28,12 +28,12 @@ describe('selectNewRecords', () => {
 
   it('emits a record again when it is modified later', () => {
     const cursor = { timestamp: '2026-11-01T10:00:00.000', ids: ['a'] };
-    const result = fireberryRecordPolling.selectNewRecords({ records: [rec('a', '2026-11-01T11:00:00.000')], cursor, field: 'modifiedon', primaryKey: 'accountid', triggerType: 'both' });
+    const result = fireberryRecordPolling.selectNewRecords({ records: [rec({ id: 'a', modifiedon: '2026-11-01T11:00:00.000' })], cursor, field: 'modifiedon', primaryKey: 'accountid', triggerType: 'both' });
     expect(result.items).toHaveLength(1);
   });
 
   it('updated-only skips records whose createdon equals modifiedon but still advances the cursor', () => {
-    const records = [rec('new', '2026-11-01T10:00:00.000', '2026-11-01T10:00:00.000'), rec('upd', '2026-11-01T10:01:00.000')];
+    const records = [rec({ id: 'new', modifiedon: '2026-11-01T10:00:00.000', createdon: '2026-11-01T10:00:00.000' }), rec({ id: 'upd', modifiedon: '2026-11-01T10:01:00.000' })];
     const result = fireberryRecordPolling.selectNewRecords({ records, cursor: null, field: 'modifiedon', primaryKey: 'accountid', triggerType: 'updated' });
     expect(result.items.map((r) => r.accountid)).toEqual(['upd']);
     expect(result.cursor?.timestamp).toBe('2026-11-01T10:01:00.000');
@@ -43,7 +43,7 @@ describe('selectNewRecords', () => {
 describe('ids and timestamps', () => {
   it('throws instead of collapsing a missing primary key to an empty id', () => {
     expect(() => fireberryRecordPolling.selectNewRecords({ records: [{ modifiedon: '2026-11-01T10:00:00.000' }], cursor: null, field: 'modifiedon', primaryKey: 'accountid', triggerType: 'both' })).toThrow('primary key');
-    expect(() => fireberryRecordPolling.selectNewRecords({ records: [rec('a', '2026-11-01T10:00:00.000')], cursor: null, field: 'modifiedon', primaryKey: '', triggerType: 'both' })).toThrow('primary key');
+    expect(() => fireberryRecordPolling.selectNewRecords({ records: [rec({ id: 'a', modifiedon: '2026-11-01T10:00:00.000' })], cursor: null, field: 'modifiedon', primaryKey: '', triggerType: 'both' })).toThrow('primary key');
   });
 
   it('formats the query timestamp unquoted, seconds precision, no Z or conversion', () => {
@@ -55,8 +55,8 @@ describe('ids and timestamps', () => {
 describe('updated-only tolerance', () => {
   it('treats modifiedon within 2s of createdon as a create, not an update', () => {
     const records = [
-      rec('fresh', '2026-11-01T15:20:58.412', '2026-11-01T15:20:57.957'),
-      rec('edited', '2026-11-01T15:25:10.100', '2026-11-01T15:20:57.957'),
+      rec({ id: 'fresh', modifiedon: '2026-11-01T15:20:58.412', createdon: '2026-11-01T15:20:57.957' }),
+      rec({ id: 'edited', modifiedon: '2026-11-01T15:25:10.100', createdon: '2026-11-01T15:20:57.957' }),
     ];
     const result = fireberryRecordPolling.selectNewRecords({ records, cursor: null, field: 'modifiedon', primaryKey: 'accountid', triggerType: 'updated' });
     expect(result.items.map((r) => r.accountid)).toEqual(['edited']);
@@ -67,7 +67,7 @@ describe('updated-only tolerance', () => {
 describe('first-poll tie handling', () => {
   it('keeps every id at the tied newest timestamp so the first poll emits nothing', () => {
     const ts = '2026-11-01T15:20:57.957';
-    const records = ['a', 'b', 'c', 'd'].map((id) => rec(id, ts));
+    const records = ['a', 'b', 'c', 'd'].map((id) => rec({ id: id, modifiedon: ts }));
     const cursor = fireberryRecordPolling.cursorFromNewest({ records, field: 'modifiedon', primaryKey: 'accountid' });
     expect(cursor).toEqual({ timestamp: ts, ids: ['a', 'b', 'c', 'd'] });
     const poll = fireberryRecordPolling.selectNewRecords({ records, cursor, field: 'modifiedon', primaryKey: 'accountid', triggerType: 'both' });
@@ -77,16 +77,16 @@ describe('first-poll tie handling', () => {
 
 describe('fetchSince', () => {
   it('pages beyond 50 records and sends the full timestamp', async () => {
-    const page = (n: number, last: boolean) => ({
+    const page = ({ n, last }: { n: number; last: boolean }) => ({
       status: 200,
       headers: {},
-      body: { success: true, data: { PrimaryKey: 'accountid', IsLastPage: last, Data: Array.from({ length: last ? 3 : 50 }, (_, i) => rec(`${n}-${i}`, '2026-11-01T10:00:00.000')) } },
+      body: { success: true, data: { PrimaryKey: 'accountid', IsLastPage: last, Data: Array.from({ length: last ? 3 : 50 }, (_, i) => rec({ id: `${n}-${i}`, modifiedon: '2026-11-01T10:00:00.000' })) } },
     });
     const spy = vi
       .spyOn(httpClient, 'sendRequest')
       .mockResolvedValueOnce({ status: 200, headers: {}, body: { success: true, data: [{ name: 'Account', systemName: 'Account', objectType: '1' }] } })
-      .mockResolvedValueOnce(page(1, false))
-      .mockResolvedValueOnce(page(2, true));
+      .mockResolvedValueOnce(page({ n: 1, last: false }))
+      .mockResolvedValueOnce(page({ n: 2, last: true }));
     const result = await fireberryRecordPolling.fetchSince({ client: new FireberryClient('t'), objectSystemName: 'Account', field: 'modifiedon', since: '2026-11-01T09:30:15.123' });
     expect(result.records).toHaveLength(53);
     expect(result.primaryKey).toBe('accountid');
@@ -105,7 +105,7 @@ function fakeFireberry(dataset: Record<string, unknown>[]) {
     if (request.url.includes('/metadata/records')) {
       return { status: 200, headers: {}, body: { success: true, data: [{ name: 'Account', systemName: 'Account', objectType: '1' }] } };
     }
-    const body = request.body as { query?: string; sort_type: string; page_size: number; page_number: number };
+    const body = readQueryBody(request.body);
     if (body.page_number > 10) {
       return { status: 400, headers: {}, body: { success: false, Message: 'page_number cannot exceed 10' } };
     }
@@ -116,6 +116,17 @@ function fakeFireberry(dataset: Record<string, unknown>[]) {
     const Data = sorted.slice(start, start + body.page_size);
     return { status: 200, headers: {}, body: { success: true, data: { PrimaryKey: 'accountid', IsLastPage: start + body.page_size >= sorted.length, Data } } };
   });
+}
+
+function readQueryBody(raw: unknown): { query?: string; sort_type: string; page_size: number; page_number: number } {
+  if (typeof raw !== 'object' || raw === null) {
+    throw new Error('expected a query body');
+  }
+  const query = 'query' in raw && typeof raw.query === 'string' ? raw.query : undefined;
+  const sort_type = 'sort_type' in raw && typeof raw.sort_type === 'string' ? raw.sort_type : 'asc';
+  const page_size = 'page_size' in raw && typeof raw.page_size === 'number' ? raw.page_size : 0;
+  const page_number = 'page_number' in raw && typeof raw.page_number === 'number' ? raw.page_number : 0;
+  return { query, sort_type, page_size, page_number };
 }
 
 function pageNumbers(spy: ReturnType<typeof fakeFireberry>): number[] {
@@ -129,7 +140,7 @@ function memoryStore() {
   const data = new Map<string, unknown>();
   return {
     data,
-    get: async <T>(key: string): Promise<T | null> => (data.has(key) ? structuredClone(data.get(key)) : null) as T | null,
+    get: async <T>(key: string): Promise<T | null> => (data.has(key) ? JSON.parse(JSON.stringify(data.get(key))) : null),
     put: async <T>(key: string, value: T): Promise<T> => {
       data.set(key, structuredClone(value));
       return value;
@@ -142,38 +153,38 @@ function memoryStore() {
 
 describe('bulk records inside one second (Fireberry serves at most 10 pages)', () => {
   const ts = '2026-11-01T10:00:00.500';
-  const start = { timestamp: '2026-11-01T10:00:00.000', ids: [] as string[] };
-  const poll = (client: FireberryClient, cursor: Parameters<typeof fireberryRecordPolling.pollOnce>[0]['cursor']) =>
+  const start: { timestamp: string; ids: string[] } = { timestamp: '2026-11-01T10:00:00.000', ids: [] };
+  const poll = ({ client, cursor }: { client: FireberryClient; cursor: Parameters<typeof fireberryRecordPolling.pollOnce>[0]['cursor'] }) =>
     fireberryRecordPolling.pollOnce({ client, objectSystemName: 'Account', field: 'modifiedon', cursor, triggerType: 'both' });
 
   it('never asks for page 11 or later', async () => {
-    const spy = fakeFireberry(Array.from({ length: 600 }, (_, i) => rec(`r${i}`, ts)));
-    await poll(new FireberryClient('t'), start);
+    const spy = fakeFireberry(Array.from({ length: 600 }, (_, i) => rec({ id: `r${i}`, modifiedon: ts })));
+    await poll({ client: new FireberryClient('t'), cursor: start });
     expect(Math.max(...pageNumbers(spy))).toBe(10);
   });
 
   it('more than 500 records in the cursor second: emits the 500 it can read and moves the cursor to the next second', async () => {
-    const dataset = [...Array.from({ length: 600 }, (_, i) => rec(`r${i}`, ts)), rec('later', '2026-11-01T10:00:05.000')];
+    const dataset = [...Array.from({ length: 600 }, (_, i) => rec({ id: `r${i}`, modifiedon: ts })), rec({ id: 'later', modifiedon: '2026-11-01T10:00:05.000' })];
     fakeFireberry(dataset);
     const client = new FireberryClient('t');
-    const first = await poll(client, start);
+    const first = await poll({ client, cursor: start });
     expect(first.items).toHaveLength(500);
     expect(first.cursor).toEqual({ timestamp: '2026-11-01T10:00:01', ids: [], skippedSecond: '2026-11-01T10:00:00' });
-    const second = await poll(client, first.cursor);
+    const second = await poll({ client, cursor: first.cursor });
     expect(second.items.map((r) => r.accountid)).toEqual(['later']);
-    const third = await poll(client, second.cursor);
+    const third = await poll({ client, cursor: second.cursor });
     expect(third.items).toHaveLength(0);
   });
 
   it('500 full pages that end in a newer second return normally and the next poll continues from there', async () => {
-    const dataset = [...Array.from({ length: 499 }, (_, i) => rec(`r${i}`, ts)), ...Array.from({ length: 30 }, (_, i) => rec(`n${i}`, '2026-11-01T10:00:05.000'))];
+    const dataset = [...Array.from({ length: 499 }, (_, i) => rec({ id: `r${i}`, modifiedon: ts })), ...Array.from({ length: 30 }, (_, i) => rec({ id: `n${i}`, modifiedon: '2026-11-01T10:00:05.000' }))];
     fakeFireberry(dataset);
     const client = new FireberryClient('t');
-    const first = await poll(client, start);
+    const first = await poll({ client, cursor: start });
     expect(first.items).toHaveLength(500);
     expect(first.cursor?.skippedSecond).toBeUndefined();
     expect(first.cursor?.timestamp).toBe('2026-11-01T10:00:05.000');
-    const second = await poll(client, first.cursor);
+    const second = await poll({ client, cursor: first.cursor });
     expect(second.items).toHaveLength(29);
     const emitted = [...first.items, ...second.items].map((r) => r.accountid);
     expect(new Set(emitted).size).toBe(529);
@@ -187,7 +198,7 @@ describe('bulk records inside one second (Fireberry serves at most 10 pages)', (
 describe('latestCursor with many tied records', () => {
   it('records all 120 ids tied at the newest timestamp so the first poll emits 0', async () => {
     const ts = '2026-11-01T10:00:00.500';
-    const dataset = [rec('older', '2026-11-01T09:00:00.000'), ...Array.from({ length: 120 }, (_, i) => rec(`t${i}`, ts))];
+    const dataset = [rec({ id: 'older', modifiedon: '2026-11-01T09:00:00.000' }), ...Array.from({ length: 120 }, (_, i) => rec({ id: `t${i}`, modifiedon: ts }))];
     fakeFireberry(dataset);
     const client = new FireberryClient('t');
     const cursor = await fireberryRecordPolling.latestCursor({ client, objectSystemName: 'Account', field: 'modifiedon' });
@@ -199,7 +210,7 @@ describe('latestCursor with many tied records', () => {
 
   it('more than 500 existing records in the newest second: starts after that second, stays within 10 pages, first poll emits 0', async () => {
     const ts = '2026-11-01T10:00:00.500';
-    const spy = fakeFireberry(Array.from({ length: 600 }, (_, i) => rec(`t${i}`, ts)));
+    const spy = fakeFireberry(Array.from({ length: 600 }, (_, i) => rec({ id: `t${i}`, modifiedon: ts })));
     const client = new FireberryClient('t');
     const cursor = await fireberryRecordPolling.latestCursor({ client, objectSystemName: 'Account', field: 'modifiedon' });
     expect(cursor).toEqual({ timestamp: '2026-11-01T10:00:01', ids: [] });
@@ -215,12 +226,12 @@ describe('trigger lifecycle', () => {
   const ts = '2026-11-01T10:00:00.500';
 
   it('republish on self-hosted (onDisable without isRepublish, then onEnable with isRepublish) keeps the cursor', async () => {
-    const dataset = [rec('a', ts)];
+    const dataset = [rec({ id: 'a', modifiedon: ts })];
     fakeFireberry(dataset);
     const store = memoryStore();
     await recordCreatedOrUpdatedTrigger.onEnable({ auth, propsValue, store, isRepublish: false });
     const cursorBefore = store.data.get('fireberry_record_cursor');
-    dataset.push(rec('b', '2026-11-01T10:05:00.000'));
+    dataset.push(rec({ id: 'b', modifiedon: '2026-11-01T10:05:00.000' }));
     await recordCreatedOrUpdatedTrigger.onDisable({ auth, propsValue, store });
     await recordCreatedOrUpdatedTrigger.onEnable({ auth, propsValue, store, isRepublish: true });
     expect(store.data.get('fireberry_record_cursor')).toEqual(cursorBefore);
@@ -229,25 +240,25 @@ describe('trigger lifecycle', () => {
   });
 
   it('turning the flow off and on again resets the cursor to the newest record', async () => {
-    const dataset = [rec('a', ts)];
+    const dataset = [rec({ id: 'a', modifiedon: ts })];
     fakeFireberry(dataset);
     const store = memoryStore();
     await recordCreatedOrUpdatedTrigger.onEnable({ auth, propsValue, store, isRepublish: false });
-    dataset.push(rec('b', '2026-11-01T10:05:00.000'));
+    dataset.push(rec({ id: 'b', modifiedon: '2026-11-01T10:05:00.000' }));
     await recordCreatedOrUpdatedTrigger.onDisable({ auth, propsValue, store });
     await recordCreatedOrUpdatedTrigger.onEnable({ auth, propsValue, store, isRepublish: false });
     expect(store.data.get('fireberry_record_cursor')).toEqual({ cursor: { timestamp: '2026-11-01T10:05:00.000', ids: ['b'] } });
   });
 
   it('after a poll that skipped part of a second, the next run fails once with a clear error, then polling resumes', async () => {
-    const dataset = [...Array.from({ length: 600 }, (_, i) => rec(`r${i}`, ts))];
+    const dataset = [...Array.from({ length: 600 }, (_, i) => rec({ id: `r${i}`, modifiedon: ts }))];
     fakeFireberry(dataset);
     const store = memoryStore();
     await store.put('fireberry_record_cursor', { cursor: { timestamp: '2026-11-01T10:00:00.000', ids: [] } });
     const first = await recordCreatedOrUpdatedTrigger.run({ auth, propsValue, store });
     expect(first).toHaveLength(500);
     await expect(recordCreatedOrUpdatedTrigger.run({ auth, propsValue, store })).rejects.toThrow(/More than 500 Fireberry records share the modifiedon second 2026-11-01T10:00:00/);
-    dataset.push(rec('later', '2026-11-01T10:00:05.000'));
+    dataset.push(rec({ id: 'later', modifiedon: '2026-11-01T10:00:05.000' }));
     const third = await recordCreatedOrUpdatedTrigger.run({ auth, propsValue, store });
     expect(third.map((r: Record<string, unknown>) => r['accountid'])).toEqual(['later']);
   });
