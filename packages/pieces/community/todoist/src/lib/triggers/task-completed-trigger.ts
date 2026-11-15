@@ -148,6 +148,25 @@ function storedFloor({ floor, cursor }: { floor: unknown; cursor: number }): num
 	return typeof floor === 'number' && Number.isFinite(floor) ? floor : cursor;
 }
 
+function storedOverlap(overlap: Partial<ResumePoint> | null | undefined): ResumePoint | null {
+	if (
+		overlap === null ||
+		overlap === undefined ||
+		typeof overlap.since !== 'number' ||
+		typeof overlap.until !== 'number' ||
+		(typeof overlap.cursor !== 'string' && overlap.cursor !== null) ||
+		overlap.until - overlap.since > OVERLAP_MS + MINUTE_MS
+	) {
+		return null;
+	}
+	return {
+		since: overlap.since,
+		until: overlap.until,
+		cursor: typeof overlap.cursor === 'string' ? overlap.cursor : null,
+		restarts: typeof overlap.restarts === 'number' ? overlap.restarts : 0,
+	};
+}
+
 function storedResume(resume: Partial<ResumePoint> | null | undefined): ResumePoint | null {
 	if (
 		resume === null ||
@@ -176,6 +195,7 @@ async function readState(store: Store): Promise<CursorState | null> {
 			projectId: state.projectId,
 			chunkMs: clampChunk(state.chunkMs),
 			resume: storedResume(state.resume),
+			overlap: storedOverlap(state.overlap),
 		};
 	}
 	const legacyCursor = await store.get<number>(LEGACY_LAST_POLL_KEY);
@@ -189,6 +209,7 @@ async function readState(store: Store): Promise<CursorState | null> {
 		projectId: undefined,
 		chunkMs: MAX_CHUNK_MS,
 		resume: null,
+		overlap: null,
 	};
 }
 
@@ -257,14 +278,30 @@ async function fetchInChunks({
 		state.resume !== null && state.resume.since >= sinceMs && state.resume.since < untilMs && state.resume.until <= untilMs
 			? state.resume
 			: null;
-	const readThrough = state.cursor < untilMs ? Math.max(sinceMs, state.cursor) : sinceMs;
-	if (readThrough > sinceMs) {
-		collected.push(await fetchOverlapPage({ token, projectId, sinceMs, untilMs: readThrough, deadline }));
+	const readThrough = state.cursor < untilMs ? floorToSecond(Math.max(sinceMs, state.cursor)) : sinceMs;
+	let overlap: ResumePoint | null = null;
+	const saved = state.overlap !== null && state.overlap.since === sinceMs && state.overlap.until === readThrough ? state.overlap : null;
+	if (saved !== null && saved.cursor === null) {
 		completeThrough = readThrough;
+		overlap = saved;
+	} else if (readThrough > sinceMs) {
+		const attempt = await fetchChunkAttempt({ token, projectId, chunkStart: sinceMs, chunkEnd: readThrough, resume: saved, deadline });
+		collected.push(attempt.completions.filter(({ epochMs }) => epochMs >= sinceMs && epochMs < readThrough));
+		if (!attempt.complete && attempt.restarts < MAX_CURSOR_RESTARTS) {
+			overlap = attempt.requests === 0 ? saved : { since: sinceMs, until: readThrough, cursor: attempt.nextCursor, restarts: attempt.restarts };
+			return { completions: collected.flat(), completeThrough, chunkMs, resume, overlap };
+		}
+		if (!attempt.complete) {
+			console.warn(
+				`Todoist Task Completed: page cursors keep expiring inside ${toUtcParam(sinceMs)}–${toUtcParam(readThrough)}; the rest of that overlap is skipped.`,
+			);
+		}
+		completeThrough = readThrough;
+		overlap = { since: sinceMs, until: readThrough, cursor: null, restarts: attempt.restarts };
 	}
 	while (completeThrough < untilMs) {
 		const chunkStart = completeThrough;
-		const chunkEnd = resume !== null && resume.since === chunkStart ? resume.until : Math.min(chunkStart + chunkMs, untilMs, resume !== null && resume.since > chunkStart ? resume.since : untilMs);
+		const chunkEnd = resume !== null && resume.since === chunkStart ? resume.until : Math.max(floorToSecond(Math.min(chunkStart + chunkMs, untilMs, resume !== null && resume.since > chunkStart ? resume.since : untilMs)), chunkStart + SECOND_MS);
 		const attempt = await fetchChunkAttempt({ token, projectId, chunkStart, chunkEnd, resume: resume !== null && resume.since === chunkStart ? resume : null, deadline });
 		const inChunk = attempt.completions.filter(({ epochMs }) => epochMs >= chunkStart && epochMs < chunkEnd);
 		if (attempt.complete) {
@@ -294,34 +331,7 @@ async function fetchInChunks({
 		resume = { since: chunkStart, until: chunkEnd, cursor: attempt.nextCursor, restarts: attempt.restarts };
 		break;
 	}
-	return { completions: collected.flat(), completeThrough, chunkMs, resume };
-}
-
-async function fetchOverlapPage({
-	token,
-	projectId,
-	sinceMs,
-	untilMs,
-	deadline,
-}: {
-	token: string;
-	projectId: string | null;
-	sinceMs: number;
-	untilMs: number;
-	deadline: number;
-}): Promise<Completion[]> {
-	if (Date.now() + REQUEST_TIMEOUT_MS > deadline) {
-		return [];
-	}
-	const page = await todoistRestClient.tasks.listCompletedByCompletionDatePage({
-		token,
-		since: toUtcParam(sinceMs),
-		until: toUtcParam(untilMs),
-		project_id: projectId ?? undefined,
-		cursor: null,
-		timeoutMs: REQUEST_TIMEOUT_MS,
-	});
-	return toCompletions(page.items).filter(({ epochMs }) => epochMs >= sinceMs && epochMs < untilMs);
+	return { completions: collected.flat(), completeThrough, chunkMs, resume, overlap };
 }
 
 async function fetchChunkAttempt({
@@ -371,6 +381,7 @@ async function resetCursor({
 		projectId,
 		chunkMs: MAX_CHUNK_MS,
 		resume: null,
+		overlap: null,
 	};
 	await store.put(STATE_KEY, state);
 }
@@ -448,6 +459,7 @@ function nextState({
 		projectId,
 		chunkMs: fetched.chunkMs,
 		resume: fetched.resume,
+		overlap: fetched.overlap,
 	});
 }
 
@@ -456,7 +468,7 @@ function capStateSize(state: CursorState): CursorState {
 		return state;
 	}
 	const newestFirst = [...state.seen].sort((a, b) => keyEpochMs(b) - keyEpochMs(a));
-	const budget = MAX_STATE_BYTES - Buffer.byteLength(JSON.stringify({ ...state, seen: [] }));
+	const budget = MAX_STATE_BYTES - Buffer.byteLength(JSON.stringify({ ...state, seen: [], floor: Number.MAX_SAFE_INTEGER }));
 	const kept: string[] = [];
 	let used = 0;
 	for (const key of newestFirst) {
@@ -522,6 +534,7 @@ type ChunkedFetch = {
 	completeThrough: number;
 	chunkMs: number;
 	resume: ResumePoint | null;
+	overlap: ResumePoint | null;
 };
 
 type CursorState = {
@@ -531,4 +544,5 @@ type CursorState = {
 	projectId: string | null | undefined;
 	chunkMs: number;
 	resume: ResumePoint | null;
+	overlap: ResumePoint | null;
 };
