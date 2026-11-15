@@ -29,7 +29,9 @@ function buildOrderListQuery(filters: OrderFilters): SallaQuery {
   if (statusIds.length > 0) {
     query['status'] = statusIds;
   }
-  const paymentMethods = (filters.paymentMethods ?? []).map((value) => value.trim()).filter((value) => value.length > 0);
+  const paymentMethods = (filters.paymentMethods ?? [])
+    .map((value) => sallaUtils.dropdownText({ value, label: 'Payment method' }))
+    .filter((value): value is string => value !== undefined);
   if (paymentMethods.length > 0) {
     query['payment_method'] = paymentMethods;
   }
@@ -437,7 +439,7 @@ function buildAddress({
       latitude !== undefined && longitude !== undefined ? { lat: latitude, [longitudeKey]: longitude } : undefined,
   });
   if (Object.keys(result).length > 0) {
-    const missing = requiredKeys.filter((key) => !(key in result));
+    const missing = requiredKeys.filter((key) => !(key in result)).map((key) => ADDRESS_KEY_LABELS[key] ?? key);
     if (missing.length > 0) {
       throw new Error(
         `The shipping address is incomplete. Salla needs the full National Address; missing: ${missing.join(', ')}. Fill every address field, or leave them all empty.`,
@@ -476,6 +478,7 @@ const COD_METHOD = 'cod';
 const CANCEL_NOT_ALLOWED_MESSAGE = 'Update Order Status does not cancel orders. Use the Cancel Order action to cancel this order.';
 const CREATE_ADDRESS_REQUIRED_KEYS = ['country', 'city', 'district', 'block', 'street_number', 'address_line', 'postal_code', 'short_address', 'geo_coordinates'];
 const UPDATE_ADDRESS_REQUIRED_KEYS = [...CREATE_ADDRESS_REQUIRED_KEYS, 'building_number', 'additional_number'];
+const ADDRESS_KEY_LABELS: Record<string, string> = { geo_coordinates: 'latitude and longitude' };
 const MAX_ORDER_ITEMS = 500;
 
 export const sallaOrders = {

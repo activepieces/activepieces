@@ -138,7 +138,7 @@ async function fetchPaged<T = Record<string, unknown>>({
     }
     const firstId = itemId(pageItems[0]);
     if (firstId !== undefined && seenFirstIds.has(firstId)) {
-      return { items, truncated: false, pagesFetched: page };
+      return { items, truncated: hasMore, pagesFetched: page };
     }
     if (firstId !== undefined) {
       seenFirstIds.add(firstId);

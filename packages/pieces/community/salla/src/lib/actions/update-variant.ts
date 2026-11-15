@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sallaAuth } from '../auth';
+import { sallaUtils } from '../common/helpers';
 import { sallaOutputSchemas } from '../common/output-schemas';
 import { BranchQuantityInput, sallaProducts } from '../common/products';
 import { sallaProps } from '../common/props';
@@ -168,12 +169,12 @@ function branchQuantities({
   reason,
   quantity,
 }: {
-  branch: string | undefined | null;
-  reason: string | undefined | null;
+  branch: unknown;
+  reason: unknown;
   quantity: number | undefined | null;
 }): BranchQuantityInput[] | undefined {
-  const branchId = filled(branch);
-  const reasonId = filled(reason);
+  const branchId = sallaUtils.dropdownText({ value: branch, label: 'Branch' });
+  const reasonId = sallaUtils.dropdownText({ value: reason, label: 'Reason' });
   if (branchId === undefined) {
     if (reasonId !== undefined) {
       throw new Error('Reason is saved with a branch stock change. Pick a Branch and fill Stock Quantity, or clear Reason.');
@@ -184,9 +185,4 @@ function branchQuantities({
     throw new Error('Fill Stock Quantity to set the stock of the picked branch, or clear Branch.');
   }
   return [{ branchId, quantity, reasonId }];
-}
-
-function filled(value: string | undefined | null): string | undefined {
-  const text = typeof value === 'string' ? value.trim() : '';
-  return text.length > 0 ? text : undefined;
 }
