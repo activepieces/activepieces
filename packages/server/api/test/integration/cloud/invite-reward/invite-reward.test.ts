@@ -29,6 +29,7 @@ beforeEach(() => {
     vi.spyOn(autumnConsole, 'getCreds').mockResolvedValue(CREDS)
     vi.spyOn(autumnConsole, 'grantInviteReward').mockResolvedValue({ granted: true, credits: 1000, rewardsEarned: 1 })
     vi.spyOn(autumnConsole, 'listInviteRewards').mockResolvedValue(consoleRewards({ rewards: [] }))
+    mockProvider({})
 })
 
 describe('Invite reward', () => {
@@ -82,13 +83,37 @@ describe('Invite reward', () => {
             expect(autumnConsole.grantInviteReward).toHaveBeenCalledWith({ autumnCustomerId: CREDS.autumnCustomerId, inviteeEmail: identity.email })
         })
 
-        it('does nothing when the platform has no billing account', async () => {
+        it('enrolls a platform with no billing account, and grants nothing when it still has none', async () => {
             const { mockPlatform } = await setupPlatform()
+            const ensureEnrolled = vi.fn().mockResolvedValue(undefined)
+            mockProvider({ ensureEnrolled })
             vi.mocked(autumnConsole.getCreds).mockResolvedValue(null)
 
             await joinAsNewMember({ platformId: mockPlatform.id })
 
-            await new Promise((resolve) => setTimeout(resolve, 200))
+            await vi.waitFor(() => expect(ensureEnrolled).toHaveBeenCalledWith(mockPlatform.id))
+            expect(autumnConsole.grantInviteReward).not.toHaveBeenCalled()
+        })
+
+        it('grants once enrolling gives the platform a billing account', async () => {
+            const { mockPlatform } = await setupPlatform()
+            const identity = createMockUserIdentity({ verified: true })
+            await databaseConnection().getRepository('user_identity').save(identity)
+            vi.mocked(autumnConsole.getCreds).mockResolvedValueOnce(null).mockResolvedValueOnce(CREDS)
+
+            await inviteRewardService(mockLog).grantOnJoin({ platformId: mockPlatform.id, identityId: identity.id })
+
+            expect(autumnConsole.grantInviteReward).toHaveBeenCalledWith({ autumnCustomerId: CREDS.autumnCustomerId, inviteeEmail: identity.email })
+        })
+
+        it('fails the job for a retry when enrolling fails', async () => {
+            const { mockPlatform } = await setupPlatform()
+            const identity = createMockUserIdentity({ verified: true })
+            await databaseConnection().getRepository('user_identity').save(identity)
+            mockProvider({ ensureEnrolled: vi.fn().mockRejectedValue(new Error('console down')) })
+            vi.mocked(autumnConsole.getCreds).mockResolvedValue(null)
+
+            await expect(inviteRewardService(mockLog).grantOnJoin({ platformId: mockPlatform.id, identityId: identity.id })).rejects.toThrow('console down')
             expect(autumnConsole.grantInviteReward).not.toHaveBeenCalled()
         })
 
@@ -164,9 +189,13 @@ async function setupPlatform() {
 
 function mockRefresh() {
     const refresh = vi.fn().mockResolvedValue(undefined)
-    const realProvider = billingProvider.get(mockLog)
-    vi.spyOn(billingProvider, 'get').mockReturnValue({ ...realProvider, refreshEntitlements: refresh })
+    mockProvider({ refreshEntitlements: refresh })
     return refresh
+}
+
+function mockProvider(overrides: Partial<ReturnType<typeof billingProvider.get>>): void {
+    const realProvider = billingProvider.get(mockLog)
+    vi.spyOn(billingProvider, 'get').mockReturnValue({ ...realProvider, ensureEnrolled: vi.fn().mockResolvedValue(undefined), ...overrides })
 }
 
 async function provisionInvite({ email, platformId }: { email: string, platformId: string }): Promise<void> {

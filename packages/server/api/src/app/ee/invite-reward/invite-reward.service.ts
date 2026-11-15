@@ -8,7 +8,7 @@ import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { telemetry } from '../../helper/telemetry.utils'
 import { billingProvider } from '../../platform/billing-provider'
 import { InvitedUserJoinedParams } from '../../user-invitations/user-invitation-hooks'
-import { autumnConsole } from '../platform/platform-plan/billing-providers/autumn-utils'
+import { autumnConsole, ConsoleCustomerCall } from '../platform/platform-plan/billing-providers/autumn-utils'
 
 export const inviteRewardService = (log: FastifyBaseLogger) => ({
     async scheduleGrant({ platformId, identityId }: InvitedUserJoinedParams): Promise<void> {
@@ -31,7 +31,7 @@ export const inviteRewardService = (log: FastifyBaseLogger) => ({
         if (isNil(identity)) {
             return
         }
-        const creds = await autumnConsole.getCreds(log, platformId)
+        const creds = await loadCredsEnrollingIfMissing({ log, platformId })
         if (isNil(creds)) {
             log.info({ platform: { id: platformId } }, '[inviteReward#grantOnJoin] no billing account, no reward')
             return
@@ -63,6 +63,15 @@ export const inviteRewardService = (log: FastifyBaseLogger) => ({
     },
 })
 
+async function loadCredsEnrollingIfMissing({ log, platformId }: LoadCredsParams): Promise<ConsoleCustomerCall | null> {
+    const creds = await autumnConsole.getCreds(log, platformId)
+    if (!isNil(creds)) {
+        return creds
+    }
+    await billingProvider.get(log).ensureEnrolled(platformId)
+    return autumnConsole.getCreds(log, platformId)
+}
+
 const GRANT_ATTEMPTS = 14
 const GRANT_RETRY_BASE_DELAY_MS = 30_000
 
@@ -71,4 +80,9 @@ const NOT_ELIGIBLE: InviteRewardSummary = {
     creditsPerInvite: 0,
     maxRewards: 0,
     rewards: [],
+}
+
+type LoadCredsParams = {
+    log: FastifyBaseLogger
+    platformId: string
 }
