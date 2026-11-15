@@ -119,7 +119,7 @@ export const updateBitlinkAction = createAction({
       if (archived !== undefined && archived !== null) {
         body['archived'] = archived;
       }
-      if (tags !== undefined && tags !== null && Array.isArray(tags)) {
+      if (Array.isArray(tags) && tags.length > 0) {
         body['tags'] = tags;
       }
       
