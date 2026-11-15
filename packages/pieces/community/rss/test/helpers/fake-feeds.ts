@@ -10,7 +10,7 @@ import {
 
 async function start(): Promise<FakeFeedServer> {
   const feeds = new Map<string, FakeFeed>();
-  const server = http.createServer((req, res) => {
+  const server = createServer((req, res) => {
     const feed = feeds.get(req.url ?? '');
     if (feed === undefined) {
       res.writeHead(404);
@@ -169,7 +169,7 @@ function storeValue({ store, key }: { store: MemoryStore; key: string }): unknow
 }
 
 function startServer(handler: http.RequestListener): Promise<RawFeedServer> {
-  const server = http.createServer(handler);
+  const server = createServer(handler);
   return new Promise((resolve) => {
     server.listen(0, '127.0.0.1', () => {
       const address = server.address();
@@ -182,6 +182,13 @@ function startServer(handler: http.RequestListener): Promise<RawFeedServer> {
         },
       });
     });
+  });
+}
+
+function createServer(handler: http.RequestListener): http.Server {
+  return http.createServer((req, res) => {
+    res.setHeader('connection', 'close');
+    handler(req, res);
   });
 }
 

@@ -16,6 +16,23 @@ In **Create Testimonial**, **Form** is now a dropdown of the project's forms ins
 
 Upgrading a Senja step to 0.3.0 in the builder resets its settings, as with any minor version change: fill them in again. In Create Testimonial, pick the form from the dropdown and enter each image in the new fields.
 
+#### Fireberry 0.2.0: record actions are no longer AI agent tools, and their output changes
+
+**Create Record**, **Update Record**, **Delete Records** and **Find Records** are now shown only in the flow builder. AI agents and MCP clients get a separate set of agent actions instead: List Object Types, List Object Fields, List Picklist Values, Search Records, Get Record, Create Record, Update Record and Delete Record.
+
+After you upgrade a step:
+
+- Create Record and Update Record return `{ id, objectSystemName, record }` instead of the raw batch response.
+- Delete Records returns `{ deletedIds, deletedCount }`.
+- The **Record Created or Updated** trigger ignores its lookback setting (it is kept only so saved flows still load). It now tracks Fireberry's own timestamps, so it no longer re-sends records changed earlier the same day. Publishing the upgraded flow starts tracking at the newest record, so records created or updated between the last poll on 0.1.x and the publish are not sent. If more than 500 records change in the same second, Fireberry's API can return only the first 500 of them; the trigger sends those, skips the rest of that second, and the next poll fails once with an error that names the second.
+
+#### What you need to do
+
+- Agents that used the old Fireberry actions as tools: switch to the new agent actions.
+- If a later step read fields from the old Create or Update output, map `id` or `record` instead.
+
+Steps keep running on the version they were built with until you upgrade them.
+
 #### ManyChat 0.2.0: Set Custom Field is no longer an agent tool
 
 From ManyChat 0.2.0, **Set Custom Field** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs. Agents use the new **Set Subscriber Custom Fields** tool instead, which sets 1 to 20 fields in one call by field ID or name. Set Custom Field steps upgraded to 0.2.0 send date values as `YYYY-MM-DD` and date-time values with an explicit time zone offset, as ManyChat documents. The piece needs Activepieces 0.86.4 or later.
@@ -224,3 +241,16 @@ ActiveCampaign requests now always verify the server's TLS certificate, and an A
 - If an agent or MCP client used one of the 7 actions as a tool, switch it to the matching new tool listed above.
 - If your self-hosted instance reaches ActiveCampaign through a proxy that inspects TLS traffic, add the proxy's CA certificate to `NODE_EXTRA_CA_CERTS`, or ActiveCampaign steps fail with a certificate error.
 - Flow steps that use these actions keep working unchanged. Steps keep running on the version they were built with until you upgrade them.
+
+#### Microsoft Dynamics CRM 0.5.0: four actions are no longer AI agent tools
+
+Microsoft Dynamics CRM "Create Record", "Get Record", "Update Record" and "Delete Record" are now available in the flow builder only, not as agent/MCP tools. Agents should use the new AI tools instead: "List Entities", "Describe Entity", "Search Records", "Get Record", "Create Record", "Update Record" and "Delete Record" (AI versions), which look up the entity and its columns first.
+
+"Update Record" now fails with a "record not found" error when the record ID does not exist. Before, it silently created a new record.
+
+#### What you need to do
+
+- If an agent or MCP client used one of the 4 actions as a tool, switch it to the matching new AI tool listed above.
+- If a flow relied on "Update Record" creating a missing record, use "Create Record" for that case instead.
+- If your self-hosted instance reaches Dynamics 365 through a proxy that inspects TLS traffic, add the proxy's CA certificate to `NODE_EXTRA_CA_CERTS`, or Dynamics CRM steps fail with a certificate error.
+- Flow steps that use these actions keep working unchanged otherwise. Steps keep running on the version they were built with until you upgrade them.
