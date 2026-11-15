@@ -31,6 +31,10 @@ export const formErrors = {
     invalidHeaderValue: translationKey('invalidHeaderValue'),
     invalidDomain: translationKey('invalidDomain'),
     duplicateDomain: translationKey('duplicateDomain'),
+    batchSizeMustBeAWholeNumber: translationKey('batchSizeMustBeAWholeNumber'),
+    batchSizeMustBeAtLeastOne: translationKey('batchSizeMustBeAtLeastOne'),
+    batchTimeoutMustBeAWholeNumber: translationKey('batchTimeoutMustBeAWholeNumber'),
+    batchTimeoutMustBeAtLeastOneHour: translationKey('batchTimeoutMustBeAtLeastOneHour'),
 } as const
 
 export const SAFE_EXTERNAL_ID_PATTERN = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$/

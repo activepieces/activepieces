@@ -60,7 +60,7 @@ const globalConnectionController: FastifyPluginAsyncZod = async (app) => {
         const { displayName, pieceName, status, cursor, limit } = request.query
 
         const appConnections = await appConnectionService(request.log).list({
-            pieceName,
+            pieceNames: pieceName,
             displayName,
             status,
             platformId: request.principal.platform.id,

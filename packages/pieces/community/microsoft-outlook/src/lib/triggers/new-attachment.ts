@@ -97,7 +97,7 @@ export const newAttachmentTrigger = createTrigger({
 			filters,
 			limit: TEST_SAMPLE_SIZE,
 		});
-		return attachments.reverse();
+		return attachments;
 	},
 	async run(context) {
 		const cursor = await readPollCursor(context.store);

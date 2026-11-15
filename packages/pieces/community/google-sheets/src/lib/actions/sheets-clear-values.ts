@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
-import { areSheetIdsValid, createGoogleClient, googleSheetsAuth } from '../common/common';
+import { areSheetIdsValid, createGoogleClient, googleSheetsAuth, googleSheetsCommon } from '../common/common';
 import { getWorkSheetName } from '../triggers/helpers';
 import { sheetsClearValuesActionOutputSchema } from '../output-schemas';
 
@@ -62,7 +62,7 @@ export const sheetsClearValues = createAction({
 
 		const response = await sheets.spreadsheets.values.clear({
 			spreadsheetId: spreadsheet_id as string,
-			range: `${sheetName}!A${starting_row}:ZZZ${effectiveEndingRow}`,
+			range: googleSheetsCommon.sheetRange({ sheetName, range: `A${starting_row}:ZZZ${effectiveEndingRow}` }),
 		});
 
 		return {
