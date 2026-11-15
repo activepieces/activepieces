@@ -103,13 +103,15 @@ function plan({
     ...mapValues({ record: variablesRecord(values), convert: String }),
   };
 
+  const exactTokens = new Set(Object.keys(merged).map((key) => canonicalToken({ key, format })));
+
   const textTargets = Object.entries(merged).flatMap(([key, replaceText]) =>
-    tokensFor({ key, format, scan: templateScan }).map((token) => ({ key, token, replaceText })),
+    tokensFor({ key, format, scan: templateScan, exactTokens }).map((token) => ({ key, token, replaceText })),
   );
 
   const missing = Object.keys(merged)
     .filter((key) => {
-      const tokens = tokensFor({ key, format, scan: templateScan });
+      const tokens = tokensFor({ key, format, scan: templateScan, exactTokens });
       return !templateScan.texts.some((text) => tokens.some((token) => text.includes(token)));
     })
     .map((key) => canonicalToken({ key, format }));
@@ -243,9 +245,20 @@ function canonicalToken({ key, format }: { key: string; format: PlaceholderForma
   return format.replace('KEY', key);
 }
 
-function tokensFor({ key, format, scan: templateScan }: { key: string; format: PlaceholderFormat; scan: TemplateScan }): string[] {
+function tokensFor({
+  key,
+  format,
+  scan: templateScan,
+  exactTokens,
+}: {
+  key: string;
+  format: PlaceholderFormat;
+  scan: TemplateScan;
+  exactTokens: Set<string>;
+}): string[] {
+  const exact = canonicalToken({ key, format });
   const variants = templateScan.placeholders.find((placeholder) => placeholder.key === key.trim())?.tokens ?? [];
-  return [...new Set([canonicalToken({ key, format }), ...variants])];
+  return [...new Set([exact, ...variants.filter((token) => !exactTokens.has(token))])];
 }
 
 function resolveImages({

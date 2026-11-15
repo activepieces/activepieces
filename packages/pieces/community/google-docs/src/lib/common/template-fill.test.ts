@@ -227,6 +227,38 @@ describe('templateFill.plan', () => {
     expect(plan.missing).toEqual([]);
   });
 
+  it('gives {{name}} and {{ name }} their own values when both keys are given', () => {
+    const plan = templateFill.plan({
+      scan: templateFill.scan({ document: singleTab([paragraph('{{name}} {{ name }}')]), format: '{{KEY}}' }),
+      format: '{{KEY}}',
+      values: { name: 'Ada', ' name ': 'Grace' },
+    });
+
+    expect(
+      plan.requests.map((request) => [request.replaceAllText?.containsText?.text, request.replaceAllText?.replaceText]),
+    ).toEqual([
+      ['{{name}}', 'Ada'],
+      ['{{ name }}', 'Grace'],
+    ]);
+    expect(plan.missing).toEqual([]);
+  });
+
+  it('keeps an exact Variables key on its own token when the input fills the trimmed name', () => {
+    const plan = templateFill.plan({
+      scan: templateFill.scan({ document: singleTab([paragraph('{{name}} {{ name }}')]), format: '{{KEY}}' }),
+      format: '{{KEY}}',
+      fields: { name: 'Ada' },
+      values: { ' name ': 'Grace' },
+    });
+
+    expect(
+      plan.requests.map((request) => [request.replaceAllText?.containsText?.text, request.replaceAllText?.replaceText]),
+    ).toEqual([
+      ['{{name}}', 'Ada'],
+      ['{{ name }}', 'Grace'],
+    ]);
+  });
+
   it('blanks a placeholder whose input is empty, skips an unset one, and lets Variables win', () => {
     const plan = templateFill.plan({
       scan: templateFill.scan({
