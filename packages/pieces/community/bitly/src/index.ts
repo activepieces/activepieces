@@ -2,6 +2,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { bitlyAuth } from './lib/common/auth';
+import { bitlyBaseUrl } from './lib/common/client';
 import { newBitlinkCreatedTrigger } from './lib/triggers/new-bitlink-created';
 import { archiveBitlinkAction } from './lib/actions/archive-bitlink';
 import { createBitlinkAction } from './lib/actions/create-bitlink';
@@ -13,7 +14,7 @@ export const bitly = createPiece({
   displayName: 'Bitly',
   description: 'URL shortening and link management platform with analytics.',
   auth: bitlyAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/bitly.png',
   authors: ['aryel780'],
   categories: [PieceCategory.MARKETING],
@@ -25,7 +26,13 @@ export const bitly = createPiece({
     updateBitlinkAction,
     createCustomApiCallAction({
       auth: bitlyAuth,
-      baseUrl: () => 'https://api-ssl.bitly.com/v4',
+      baseUrl: () => bitlyBaseUrl,
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${bitlyBaseUrl}`,
+          placeholder: '/groups',
+        },
+      },
       authMapping: async (auth) => {
         const { accessToken } = auth.props;
         return {
