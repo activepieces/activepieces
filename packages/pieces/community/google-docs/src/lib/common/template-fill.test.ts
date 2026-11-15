@@ -254,19 +254,21 @@ describe('templateFill.plan', () => {
     expect(plan.requests[0].replaceAllText?.replaceText).toBe('');
   });
 
-  it('turns numbers, booleans, nulls and objects into text', () => {
+  it('prints every Variables value with String(value), as before', () => {
     const plan = templateFill.plan({
       scan: emptyScan,
       format: '{{KEY}}',
-      values: { n: 12.5, b: false, nil: null, o: { a: 1 }, list: ['x', 'y'] },
+      values: { n: 12.5, b: false, nil: null, undef: undefined, o: { a: 1 }, list: ['x', 'y'], empty: '' },
     });
 
     expect(plan.requests.map((request) => request.replaceAllText?.replaceText)).toEqual([
       '12.5',
       'false',
+      'null',
+      'undefined',
+      '[object Object]',
+      'x,y',
       '',
-      '{"a":1}',
-      '["x","y"]',
     ]);
   });
 

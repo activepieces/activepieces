@@ -98,10 +98,13 @@ function plan({
   images?: ImageReplacement[];
   imageFields?: unknown;
 }): FillPlan {
-  const merged = { ...withoutEmptyValues(toRecord(fields)), ...variablesRecord(values) };
+  const merged: Record<string, string> = {
+    ...mapValues({ record: withoutEmptyValues(toRecord(fields)), convert: toText }),
+    ...mapValues({ record: variablesRecord(values), convert: String }),
+  };
 
-  const textTargets = Object.entries(merged).flatMap(([key, value]) =>
-    tokensFor({ key, format, scan: templateScan }).map((token) => ({ key, token, replaceText: toText(value) })),
+  const textTargets = Object.entries(merged).flatMap(([key, replaceText]) =>
+    tokensFor({ key, format, scan: templateScan }).map((token) => ({ key, token, replaceText })),
   );
 
   const missing = Object.keys(merged)
@@ -316,6 +319,16 @@ function withoutEmptyValues(record: Record<string, unknown>): Record<string, unk
   return Object.fromEntries(
     Object.entries(record).filter(([, value]) => value !== null && value !== undefined && value !== ''),
   );
+}
+
+function mapValues({
+  record,
+  convert,
+}: {
+  record: Record<string, unknown>;
+  convert: (value: unknown) => string;
+}): Record<string, string> {
+  return Object.fromEntries(Object.entries(record).map(([key, value]) => [key, convert(value)]));
 }
 
 function toText(value: unknown): string {
