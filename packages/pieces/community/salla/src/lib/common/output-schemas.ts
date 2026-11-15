@@ -407,6 +407,8 @@ const productSummaryFields: OutputSchemaField[] = [
   { key: 'sold_quantity', label: 'Sold Quantity', format: 'number' },
 ];
 
+const productSummaryKeys: string[] = productSummaryFields.map((field) => field.key);
+
 const variantFields: OutputSchemaField[] = [
   { key: 'id', label: 'Variant ID', format: 'number' },
   { key: 'label', label: 'Label', description: 'Option values and SKU, for example Red / M · TSHIRT-RED-M.' },
@@ -688,13 +690,13 @@ const cartFlatFields: OutputSchemaField[] = [
 ];
 
 const cartItemFields: OutputSchemaField[] = [
-  { key: 'id', label: 'Item ID', format: 'number' },
+  { key: 'id', label: 'Item ID', description: 'Text, so all of its digits are kept.' },
   { key: 'product_id', label: 'Product ID', format: 'number' },
   { key: 'quantity', label: 'Quantity', format: 'number' },
 ];
 
 const cartFields: OutputSchemaField[] = [
-  { key: 'id', label: 'Cart ID', format: 'number' },
+  { key: 'id', label: 'Cart ID' },
   { key: 'status', label: 'Status', description: 'active or purchased.' },
   { key: 'age_in_minutes', label: 'Age (minutes)', format: 'number' },
   ...cartFlatFields,
@@ -812,3 +814,5 @@ export const sallaOutputSchemas = {
   reviewEvent,
   anyStoreEvent,
 };
+
+export { productSummaryKeys };

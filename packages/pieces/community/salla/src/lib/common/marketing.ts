@@ -53,7 +53,7 @@ function buildCreateCouponBody(input: CreateCouponInput): Record<string, unknown
     type,
     amount,
     free_shipping: sallaUtils.triState(input.freeShipping) ?? false,
-    expiry_date: expiryDate,
+    expiry_date: endOfDayWhenDateOnly(expiryDate),
     exclude_sale_products: sallaUtils.triState(input.excludeSaleProducts) ?? false,
     start_date: startDate,
     status,
@@ -152,12 +152,16 @@ function addDays({ date, days }: { date: string; days: number }): string {
   return shifted.toISOString().slice(0, 10);
 }
 
+function endOfDayWhenDateOnly(value: string): string {
+  return value.length === DATE_ONLY_LENGTH ? `${value} ${END_OF_DAY}` : value;
+}
+
 function datePart(value: string): string {
   return value.slice(0, 10);
 }
 
 function requireCouponType(value: unknown): CouponType {
-  const text = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  const text = (sallaUtils.dropdownText({ value, label: 'Coupon type' }) ?? '').toLowerCase();
   const match = COUPON_TYPE_ALIASES[text];
   if (!match) {
     throw new Error(`"${String(value ?? '')}" is not a coupon type. Use percentage or fixed.`);
@@ -166,7 +170,7 @@ function requireCouponType(value: unknown): CouponType {
 }
 
 function optionalAppliedIn(value: unknown): CouponAppliedIn | undefined {
-  const text = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  const text = (sallaUtils.dropdownText({ value, label: 'Applied In' }) ?? '').toLowerCase();
   if (text.length === 0) {
     return undefined;
   }
@@ -178,7 +182,7 @@ function optionalAppliedIn(value: unknown): CouponAppliedIn | undefined {
 }
 
 function optionalCouponStatus(value: unknown): CouponStatus | undefined {
-  const text = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  const text = (sallaUtils.dropdownText({ value, label: 'Coupon status' }) ?? '').toLowerCase();
   if (text.length === 0) {
     return undefined;
   }
@@ -259,6 +263,7 @@ async function listAbandonedCarts({ auth, filters }: { auth: SallaAuth; filters:
     query: buildAbandonedCartListQuery(filters),
     maxItems: filters.maxResults,
     perPage: CARTS_PER_PAGE,
+    keepLargeIds: true,
   });
   const carts = items.filter(sallaApi.isRecord).map(withCartExtras);
   return { carts, count: carts.length, truncated };
@@ -282,6 +287,7 @@ async function getAbandonedCart({ auth, cartId }: { auth: SallaAuth; cartId: unk
     auth,
     method: HttpMethod.GET,
     path: `/carts/abandoned/${id}`,
+    keepLargeIds: true,
   });
   return withCartExtras(response.body.data);
 }
@@ -422,6 +428,8 @@ function trimmed(value: string | undefined | null): string | undefined {
 }
 
 const COUPONS_PER_PAGE = 60;
+const DATE_ONLY_LENGTH = 10;
+const END_OF_DAY = '23:59:59';
 const CARTS_PER_PAGE = 60;
 const OPEN_RANGE_START = '2000-01-01';
 const OPEN_RANGE_END = '2099-12-31';

@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sallaAuth } from '../auth';
+import { sallaUtils } from '../common/helpers';
 import { sallaOutputSchemas } from '../common/output-schemas';
 import { StockIdentifierType, StockMode, sallaProducts } from '../common/products';
 import { sallaProps } from '../common/props';
@@ -114,22 +115,22 @@ function identifierFor({
   sku,
 }: {
   identifierType: StockIdentifierType;
-  product: string | undefined | null;
-  variant: string | undefined | null;
-  sku: string | undefined | null;
+  product: unknown;
+  variant: unknown;
+  sku: unknown;
 }): string {
   if (identifierType === 'sku') {
-    return requireText({ value: sku, message: 'Give the SKU of the product or variant, for example TSHIRT-RED-M.' });
+    return requireText({ value: sku, label: 'SKU', message: 'Give the SKU of the product or variant, for example TSHIRT-RED-M.' });
   }
   if (identifierType === 'variant_id') {
-    return requireText({ value: variant, message: 'Pick the product and then the variant whose stock changes.' });
+    return requireText({ value: variant, label: 'Variant', message: 'Pick the product and then the variant whose stock changes.' });
   }
-  return requireText({ value: product, message: 'Pick the product whose stock changes.' });
+  return requireText({ value: product, label: 'Product', message: 'Pick the product whose stock changes.' });
 }
 
-function requireText({ value, message }: { value: string | undefined | null; message: string }): string {
-  const text = typeof value === 'string' ? value.trim() : '';
-  if (text.length === 0) {
+function requireText({ value, label, message }: { value: unknown; label: string; message: string }): string {
+  const text = sallaUtils.dropdownText({ value, label });
+  if (text === undefined) {
     throw new Error(message);
   }
   return text;

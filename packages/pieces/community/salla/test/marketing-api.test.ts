@@ -68,7 +68,7 @@ describe('createCoupon', () => {
       type: 'percentage',
       amount: 10,
       free_shipping: true,
-      expiry_date: '2099-12-31',
+      expiry_date: '2099-12-31 23:59:59',
       exclude_sale_products: false,
       maximum_amount: 50,
       products_include: ['1'],
@@ -145,7 +145,7 @@ describe('listCoupons', () => {
 describe('listAbandonedCarts', () => {
   it('GETs /carts/abandoned with keyword and offset', async () => {
     const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(
-      ok({ data: [{ id: 5, total: { amount: 99, currency: 'SAR' } }], pagination: { currentPage: 1, totalPages: 3 } }),
+      ok(JSON.stringify({ data: [{ id: 5, total: { amount: 99, currency: 'SAR' } }], pagination: { currentPage: 1, totalPages: 3 } })),
     );
     const result = await sallaMarketing.listAbandonedCarts({ auth, filters: { maxResults: 1, keyword: '0501', olderThanMinutes: 60 } });
     const sent = spy.mock.calls[0][0];
@@ -166,7 +166,7 @@ describe('listAbandonedCarts', () => {
 describe('getAbandonedCart', () => {
   it('GETs /carts/abandoned/{id} and adds the flat keys', async () => {
     const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(
-      ok({ data: { id: 1097962121, checkout_url: 'https://store.example/c', items: [{ product_id: 1, quantity: 2 }] } }),
+      ok(JSON.stringify({ data: { id: 1097962121, checkout_url: 'https://store.example/c', items: [{ product_id: 1, quantity: 2 }] } })),
     );
     const result = await sallaMarketing.getAbandonedCart({ auth, cartId: '1097962121' });
     expect(spy.mock.calls[0][0]).toMatchObject({ method: HttpMethod.GET, url: `${BASE_URL}/carts/abandoned/1097962121` });

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { HttpError, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { sallaApi } from '../src/lib/common/client';
 import { StoredSallaWebhook, WEBHOOK_TOKEN_HEADER, sallaWebhooks } from '../src/lib/common/webhooks';
 
 const auth = { access_token: 'token' };
@@ -214,6 +215,34 @@ describe('remove', () => {
 });
 
 describe('register when Salla restores an older webhook on the same URL', () => {
+  function vendorError(status: number): HttpError {
+    return new HttpError({}, { status, responseBody: { status, success: false, error: { code: 'error', message: 'alert.invalid_fields' } } });
+  }
+
+  it('deletes the new subscription and rethrows when the token PUT fails, so no orphan is left', async () => {
+    const spy = vi
+      .spyOn(httpClient, 'sendRequest')
+      .mockResolvedValueOnce({ status: 200, headers: {}, body: { data: { id: 60587520, headers: { [WEBHOOK_TOKEN_HEADER]: 'old-token' } } } })
+      .mockRejectedValueOnce(vendorError(422))
+      .mockResolvedValueOnce({ status: 202, headers: {}, body: {} });
+    const failure = await sallaWebhooks.register({ auth, event: 'order.created', url: 'https://ap.example/webhook' }).catch((error: unknown) => error);
+    expect(failure).toBeInstanceOf(Error);
+    expect(sallaApi.isSallaApiError(failure) && failure.status).toBe(422);
+    expect(spy).toHaveBeenCalledTimes(3);
+    const cleanup = spy.mock.calls[2][0];
+    expect(cleanup.method).toBe(HttpMethod.DELETE);
+    expect(new URL(cleanup.url).searchParams.get('id')).toBe('60587520');
+  });
+
+  it('still rethrows the PUT error when the cleanup delete fails too', async () => {
+    vi.spyOn(httpClient, 'sendRequest')
+      .mockResolvedValueOnce({ status: 200, headers: {}, body: { data: { id: 60587520, headers: { [WEBHOOK_TOKEN_HEADER]: 'old-token' } } } })
+      .mockRejectedValueOnce(vendorError(422))
+      .mockRejectedValueOnce(vendorError(403));
+    const failure = await sallaWebhooks.register({ auth, event: 'order.created', url: 'https://ap.example/webhook' }).catch((error: unknown) => error);
+    expect(sallaApi.isSallaApiError(failure) && failure.status).toBe(422);
+  });
+
   it('re-sends our token with PUT when Salla echoes a different token header', async () => {
     const spy = vi
       .spyOn(httpClient, 'sendRequest')

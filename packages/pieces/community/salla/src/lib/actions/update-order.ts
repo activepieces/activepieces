@@ -23,7 +23,7 @@ export const updateOrderAction = createAction({
   audience: 'human',
   aiMetadata: {
     description:
-      'Updates one Salla order, by its internal order ID (2116149737), and changes only the fields you fill: customer, receiver, delivery method and address, payment, coupon or assigned employees. Use Update Order Status to change the status and Add Order Note to add a note. Sending the same values again gives the same result, so it is safe to retry.',
+      'Updates one Salla order, by its internal order ID (2116149737), and changes only the fields you fill: the customer the order belongs to, receiver, delivery method and address, payment, coupon or assigned employees. Use Update Order Status to change the status, Add Order Note to add a note, and Update Customer to change a customer\'s name, mobile or email. Sending the same values again gives the same result, so it is safe to retry.',
     idempotent: true,
   },
   outputSchema: sallaOutputSchemas.order,
@@ -39,9 +39,8 @@ export const updateOrderAction = createAction({
       key: 'customer',
       display: 'section',
       label: 'Customer',
-      description: 'Fill only what changes.',
       icon: 'user',
-      props: ['customer', 'customer_name', 'customer_mobile', 'customer_email'],
+      props: ['customer'],
     },
     {
       key: 'delivery',
@@ -71,26 +70,25 @@ export const updateOrderAction = createAction({
     customer: sallaProps.customer({
       required: false,
       displayName: 'Customer',
-      description: 'Move the order to this customer. Search by name or mobile, or map a customer ID such as 1227534533. Leave empty to keep the current customer.',
+      description:
+        'Move the order to this existing customer. Search by name or mobile, or map a customer ID such as 1227534533. Leave empty to keep the current customer. To change a customer\'s name, mobile or email, use Update Customer.',
     }),
     customer_name: Property.ShortText({
-      displayName: 'Customer Name',
-      description: 'New full name of the order customer, for example "Sara Alqahtani". Leave empty to keep it.',
-      placeholder: 'Sara Alqahtani',
-      width: 'half',
+      displayName: 'Customer Name (not supported)',
+      description: 'Leave empty. Salla cannot change a customer\'s name from an order; use Update Customer.',
+      advanced: true,
       required: false,
     }),
     customer_mobile: Property.ShortText({
-      displayName: 'Customer Mobile',
-      description: 'New mobile with country code, for example +966501234567. Leave empty to keep it.',
-      placeholder: '+966501234567',
-      width: 'half',
+      displayName: 'Customer Mobile (not supported)',
+      description: 'Leave empty. Salla cannot change a customer\'s mobile from an order; use Update Customer.',
+      advanced: true,
       required: false,
     }),
     customer_email: Property.ShortText({
-      displayName: 'Customer Email',
-      description: 'New email of the order customer, for example sara@example.com. Leave empty to keep it.',
-      placeholder: 'sara@example.com',
+      displayName: 'Customer Email (not supported)',
+      description: 'Leave empty. Salla cannot change a customer\'s email from an order; use Update Customer.',
+      advanced: true,
       required: false,
     }),
     delivery_method: Property.StaticDropdown<DeliveryMethod | 'unchanged', false>({
@@ -219,17 +217,13 @@ export const updateOrderAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
+    sallaOrders.refuseCustomerDetails({ name: propsValue.customer_name, mobile: propsValue.customer_mobile, email: propsValue.customer_email });
     const deliveryMethod = propsValue.delivery_method;
     return sallaOrders.updateOrder({
       auth,
       orderId: propsValue.order,
       input: {
-        customer: {
-          id: propsValue.customer ?? undefined,
-          name: propsValue.customer_name ?? undefined,
-          mobile: propsValue.customer_mobile ?? undefined,
-          email: propsValue.customer_email ?? undefined,
-        },
+        customerId: propsValue.customer ?? undefined,
         receiver: readReceiver({ values: propsValue, notify: sallaUtils.triState(propsValue.receiver_notify) }),
         deliveryMethod: deliveryMethod === 'shipping' || deliveryMethod === 'pickup' ? deliveryMethod : undefined,
         branchId: propsValue.branch ?? undefined,

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sallaAuth } from '../../auth';
-import { sallaOutputSchemas } from '../../common/output-schemas';
+import { productSummaryKeys, sallaOutputSchemas } from '../../common/output-schemas';
 import { PRODUCT_STATUSES, ProductStatus, sallaProducts } from '../../common/products';
 
 export const aiListProductsAction = createAction({
@@ -48,7 +48,7 @@ export const aiListProductsAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    return sallaProducts.listProducts({
+    const result = await sallaProducts.listProducts({
       auth,
       filters: {
         maxResults: clampMaxResults(propsValue.max_results),
@@ -57,8 +57,19 @@ export const aiListProductsAction = createAction({
         categoryId: propsValue.category_id ?? undefined,
       },
     });
+    return { ...result, products: result.products.map(toSummary) };
   },
 });
+
+function toSummary(product: Record<string, unknown>): Record<string, unknown> {
+  const summary: Record<string, unknown> = {};
+  for (const key of productSummaryKeys) {
+    if (key in product) {
+      summary[key] = product[key];
+    }
+  }
+  return summary;
+}
 
 function clampMaxResults(value: number | undefined | null): number {
   if (value === undefined || value === null || !Number.isFinite(value)) {

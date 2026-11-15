@@ -10,11 +10,11 @@ export const createCustomerAction = createAction({
   name: 'create_customer',
   classification: 'WRITE',
   displayName: 'Create Customer',
-  description: 'Adds a customer to the store. The email and the mobile number must not belong to another customer in the store.',
+  description: 'Adds a customer to the store. Fails if another customer already has the mobile number or email.',
   audience: 'human',
   aiMetadata: {
     description:
-      'Creates one new Salla customer from a first name, last name and mobile number with its country code, plus optional email, gender, birthday and groups. Use Update Customer to change a customer who already exists, and Find Customers first if the person may already be in the store. Salla rejects a mobile or email already used by another customer; each call creates a separate customer, so do not retry blindly.',
+      'Creates one new Salla customer from a first name, last name and mobile number with its country code, plus optional email, gender, birthday and groups. Use Update Customer to change a customer who already exists, and Find Customers first if the person may already be in the store. Fails, and sends nothing, when another customer already has the mobile or the email, because Salla would otherwise overwrite that customer or add a duplicate. After a success, a retry fails for the same reason.',
     idempotent: false,
   },
   outputSchema: sallaOutputSchemas.savedCustomer,
@@ -23,7 +23,7 @@ export const createCustomerAction = createAction({
       key: 'customer',
       display: 'section',
       label: 'Customer',
-      description: 'The email and the mobile number must be unique in the store.',
+      description: 'The step fails if another customer already has the mobile number or email.',
       icon: 'user',
       props: ['first_name', 'last_name', 'mobile', 'email'],
     },

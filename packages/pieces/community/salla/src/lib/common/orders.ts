@@ -29,7 +29,9 @@ function buildOrderListQuery(filters: OrderFilters): SallaQuery {
   if (statusIds.length > 0) {
     query['status'] = statusIds;
   }
-  const paymentMethods = (filters.paymentMethods ?? []).map((value) => value.trim()).filter((value) => value.length > 0);
+  const paymentMethods = (filters.paymentMethods ?? [])
+    .map((value) => sallaUtils.dropdownText({ value, label: 'Payment method' }))
+    .filter((value): value is string => value !== undefined);
   if (paymentMethods.length > 0) {
     query['payment_method'] = paymentMethods;
   }
@@ -223,14 +225,45 @@ async function sendInvoice({ auth, orderId }: { auth: SallaAuth; orderId: unknow
 async function createOrder({ auth, input }: { auth: SallaAuth; input: CreateOrderInput }): Promise<Record<string, unknown>> {
   const isCashOnDelivery = trimmed(input.payment.method) === COD_METHOD;
   const cashOnDeliveryCurrency = isCashOnDelivery ? await fetchStoreCurrency(auth) : undefined;
-  const response = await sallaApi.request<unknown>({
-    auth,
-    method: HttpMethod.POST,
-    path: '/orders',
-    body: buildCreateOrderBody({ ...input, payment: { ...input.payment, cashOnDeliveryCurrency } }),
-  });
-  return sallaUtils.withOrderExtras(response.body.data);
+  const body = buildCreateOrderBody({ ...input, payment: { ...input.payment, cashOnDeliveryCurrency } });
+  try {
+    const response = await sallaApi.request<unknown>({
+      auth,
+      method: HttpMethod.POST,
+      path: '/orders',
+      body,
+    });
+    return sallaUtils.withOrderExtras(response.body.data);
+  } catch (error) {
+    if (sallaApi.isSallaApiError(error) && isNoDeliveryNeededError({ status: error.status, responseBody: error.responseBody, body })) {
+      throw new Error(
+        `These products need no delivery: leave Delivery Method and Branch empty. Salla said: ${sallaApi.extractVendorMessage(error.responseBody) ?? error.message}`,
+      );
+    }
+    throw error;
+  }
 }
+
+function isNoDeliveryNeededError({
+  status,
+  responseBody,
+  body,
+}: {
+  status: number;
+  responseBody: unknown;
+  body: Record<string, unknown>;
+}): boolean {
+  if (status !== 422 || (body['delivery_method'] === undefined && body['branch_id'] === undefined)) {
+    return false;
+  }
+  const errorBody = sallaApi.isRecord(responseBody) ? responseBody['error'] : undefined;
+  const fields = sallaApi.isRecord(errorBody) ? errorBody['fields'] : undefined;
+  const products = sallaApi.isRecord(fields) ? fields['products'] : undefined;
+  const messages = Array.isArray(products) ? products : [products];
+  return messages.some((message) => typeof message === 'string' && NO_DELIVERY_NEEDED_MESSAGES.some((pattern) => pattern.test(message)));
+}
+
+const NO_DELIVERY_NEEDED_MESSAGES = [/لا تتطلب الشحن/, /do not require shipping/i];
 
 function buildCreateOrderBody(input: CreateOrderInput): Record<string, unknown> {
   if (input.products.length === 0) {
@@ -294,16 +327,17 @@ async function updateOrder({
   return sallaUtils.withOrderExtras(response.body.data);
 }
 
+function refuseCustomerDetails({ name, mobile, email }: { name: unknown; mobile: unknown; email: unknown }): void {
+  const filled = [name, mobile, email].some((value) => (typeof value === 'string' ? value.trim().length > 0 : value !== undefined && value !== null));
+  if (filled) {
+    throw new Error(
+      'Salla cannot change a customer\'s name, mobile or email from an order: it moves the order to the store\'s visitor customer instead. Nothing was sent. Clear Customer Name, Customer Mobile and Customer Email, and use Update Customer to change the customer.',
+    );
+  }
+}
+
 function buildUpdateOrderBody(input: UpdateOrderInput): Record<string, unknown> {
-  const customerId = sallaUtils.optionalNumber({ value: input.customer?.id, label: 'Customer ID' });
-  const customer = input.customer
-    ? sallaUtils.compact({
-        id: customerId,
-        name: trimmed(input.customer.name),
-        mobile: trimmed(input.customer.mobile),
-        email: trimmed(input.customer.email),
-      })
-    : {};
+  const customerId = sallaUtils.optionalNumber({ value: input.customerId, label: 'Customer ID' });
   const payment = input.payment
     ? sallaUtils.compact({
         status: trimmed(input.payment.status),
@@ -320,7 +354,7 @@ function buildUpdateOrderBody(input: UpdateOrderInput): Record<string, unknown> 
     : {};
   const employees = (input.employeeIds ?? []).map((value) => Number(sallaUtils.requireId({ value, label: 'Employee ID' })));
   return sallaUtils.compact({
-    customer: Object.keys(customer).length > 0 ? customer : undefined,
+    customer: customerId !== undefined ? { id: customerId } : undefined,
     receiver: input.receiver ? buildReceiver(input.receiver) : undefined,
     delivery_method: input.deliveryMethod,
     branch_id: sallaUtils.optionalNumber({ value: input.branchId, label: 'Branch ID' }),
@@ -405,7 +439,7 @@ function buildAddress({
       latitude !== undefined && longitude !== undefined ? { lat: latitude, [longitudeKey]: longitude } : undefined,
   });
   if (Object.keys(result).length > 0) {
-    const missing = requiredKeys.filter((key) => !(key in result));
+    const missing = requiredKeys.filter((key) => !(key in result)).map((key) => ADDRESS_KEY_LABELS[key] ?? key);
     if (missing.length > 0) {
       throw new Error(
         `The shipping address is incomplete. Salla needs the full National Address; missing: ${missing.join(', ')}. Fill every address field, or leave them all empty.`,
@@ -444,6 +478,7 @@ const COD_METHOD = 'cod';
 const CANCEL_NOT_ALLOWED_MESSAGE = 'Update Order Status does not cancel orders. Use the Cancel Order action to cancel this order.';
 const CREATE_ADDRESS_REQUIRED_KEYS = ['country', 'city', 'district', 'block', 'street_number', 'address_line', 'postal_code', 'short_address', 'geo_coordinates'];
 const UPDATE_ADDRESS_REQUIRED_KEYS = [...CREATE_ADDRESS_REQUIRED_KEYS, 'building_number', 'additional_number'];
+const ADDRESS_KEY_LABELS: Record<string, string> = { geo_coordinates: 'latitude and longitude' };
 const MAX_ORDER_ITEMS = 500;
 
 export const sallaOrders = {
@@ -459,6 +494,7 @@ export const sallaOrders = {
   createOrder,
   buildCreateOrderBody,
   updateOrder,
+  refuseCustomerDetails,
   buildUpdateOrderBody,
 };
 
@@ -544,7 +580,7 @@ type CreateOrderInput = {
 };
 
 type UpdateOrderInput = {
-  customer?: { id?: string | number; name?: string; mobile?: string; email?: string };
+  customerId?: string | number;
   receiver?: ReceiverInput;
   deliveryMethod?: 'shipping' | 'pickup';
   branchId?: string | number;

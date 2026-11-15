@@ -230,7 +230,7 @@ describe('buildErrorMessage', () => {
   });
 
   it('ends a hinted message with a full stop like the other messages', () => {
-    expect(sallaApi.buildErrorMessage({ status: 404, responseBody: '' })).toMatch(/customers see\.$/);
+    expect(sallaApi.buildErrorMessage({ status: 404, responseBody: '' })).toMatch(/another store\.$/);
   });
 
   it('cuts very long string bodies', () => {
@@ -245,8 +245,8 @@ describe('buildErrorMessage', () => {
     expect(sallaApi.buildErrorMessage({ status: 418, responseBody: [1, 2] })).toBe('Salla API error (418).');
   });
 
-  it('adds the internal-ID hint on 404', () => {
-    expect(sameSentence(sallaApi.buildErrorMessage({ status: 404, responseBody: { error: { code: 'not_found', message: 'Not Found' } } }))).toBe(
+  it('adds the internal-ID hint on an order 404', () => {
+    expect(sameSentence(sallaApi.buildErrorMessage({ status: 404, responseBody: { error: { code: 'not_found', message: 'Not Found' } }, path: '/orders/7' }))).toBe(
       'Salla API error (404): Not Found. Check the ID: the record may have been deleted, or the ID belongs to another store. For orders, use the internal order ID (for example 2116149737), not the reference number customers see',
     );
   });

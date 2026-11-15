@@ -13,7 +13,7 @@ export const aiUpdateCustomerAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Changes an existing Salla customer found by customer_id; only the fields you fill are sent and the rest stay as they are. Salla\'s docs do not say whether group_ids replaces the customer\'s groups or adds to them, so to add customers to a group without touching their other groups use Add Customers to Group. Find the customer_id with List Customers; a new email or mobile must not belong to another customer.',
+      'Changes an existing Salla customer found by customer_id; only the fields you fill are sent and the rest stay as they are. Salla\'s docs do not say whether group_ids replaces the customer\'s groups or adds to them, so to add customers to a group without touching their other groups use Add Customers to Group. Find the customer_id with List Customers; a new email or mobile must not belong to another customer. Salla may not save a new gender or birthday, and any update can clear a birthday saved earlier.',
     idempotent: true,
   },
   outputSchema: sallaOutputSchemas.savedCustomer,
@@ -68,7 +68,7 @@ export const aiUpdateCustomerAction = createAction({
     }),
     birthday: Property.ShortText({
       displayName: 'Birthday',
-      description: 'New date of birth, format YYYY-MM-DD, for example 1994-03-21. Salla accepts it but may not save it, so it can come back empty.',
+      description: 'New date of birth, format YYYY-MM-DD, for example 1994-03-21. Salla accepts it but may not save it, and any update can clear a birthday saved earlier.',
       required: false,
     }),
     group_ids: Property.Array({
