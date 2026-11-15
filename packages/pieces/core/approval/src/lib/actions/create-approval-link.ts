@@ -9,13 +9,13 @@ export const createApprovalLink = createAction({
   classification: 'READ',
   displayName: 'Create Approval Links',
   description: 'Creates an approval link without pausing the flow',
-  aiMetadata: { description: 'Mints a resumable approval/disapproval link for the current flow run and returns it immediately without pausing execution, so a later step can email or post it. Pick this when the flow must continue after handing out the link; use Wait for Approval instead when the run should block until someone responds. Takes no inputs and is a legacy piece that remains supported because, unlike the approval actions in the Approvals tab, it hands out a link without pausing the run. Not idempotent, since each call creates a new waitpoint and the previously issued link is not returned.', idempotent: false },
+  aiMetadata: { description: 'Mints a resumable approval/disapproval link for the current flow run and returns it immediately without pausing execution, so a later step can email or post it. Pick this when the flow must continue after handing out the link, and place no pause step such as Delay between it and Wait for Approval, because an answer that arrives during that pause resumes the wrong step; use Wait for Approval instead when the run should block until someone responds. Takes no inputs and is a legacy piece that remains supported because, unlike the approval actions in the Approvals tab, it hands out a link without pausing the run. Not idempotent, since each call creates a new waitpoint and the previously issued link is not returned.', idempotent: false },
   outputSchema: createApprovalLinkActionOutputSchema,
   props: {
     markdown: Property.MarkDown({
       variant: MarkdownVariant.INFO,
       value:
-        'Makes a link to send by email or chat, without pausing the flow. Approval Link and Disapproval Link open the same page, where the person picks Approve or Disapprove. To pause until they answer, add a **Wait for Approval** step after you send it.\n\nThis piece is legacy but still supported. The approval actions in the Approvals tab send the request and wait for the answer in one step.',
+        'Makes a link to send by email or chat, without pausing the flow. Approval Link and Disapproval Link open the same page, where the person picks Approve or Disapprove. To pause until they answer, add a **Wait for Approval** step after you send it. Put no pause step, such as a Delay, between this step and **Wait for Approval**: an answer that arrives during that pause goes to the wrong step.\n\nThis piece is legacy but still supported. The approval actions in the Approvals tab send the request and wait for the answer in one step.',
     }),
   },
   errorHandlingOptions: {

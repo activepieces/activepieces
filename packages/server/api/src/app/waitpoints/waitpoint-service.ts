@@ -2,7 +2,7 @@ import { ActivepiecesError, apId, ErrorCode, isNil } from '@activepieces/core-ut
 import { FlowRun, FlowRunStatus, isFailedState, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, FindOptionsWhere, In, Not } from 'typeorm'
+import { EntityManager, FindOptionsWhere, In, Not, Repository } from 'typeorm'
 import { z } from 'zod'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
@@ -130,6 +130,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 if (found.status === WaitpointStatus.CONSUMED) {
                     return 'already-delivered'
                 }
+                await logSignalForAnotherPause({ repo, signalled: found, log })
                 await onReady(found)
                 await this.consume({ waitpoint: found, entityManager })
                 return 'dispatched'
@@ -240,6 +241,27 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
     },
 })
 
+async function logSignalForAnotherPause({ repo, signalled, log }: LogSignalForAnotherPauseParams): Promise<void> {
+    if (signalled.type === PauseType.BARRIER) {
+        return
+    }
+    const currentPause = await repo.findOne({
+        where: { flowRunId: signalled.flowRunId, projectId: signalled.projectId, type: Not(PauseType.BARRIER) },
+        order: { created: 'DESC' },
+    })
+    if (isNil(currentPause) || currentPause.id === signalled.id) {
+        return
+    }
+    if (currentPause.type !== PauseType.DELAY && signalled.type !== PauseType.DELAY) {
+        return
+    }
+    log.error({
+        flowRun: { id: signalled.flowRunId },
+        waitpoint: { id: signalled.id, type: signalled.type, stepName: signalled.stepName },
+        currentPause: { id: currentPause.id, type: currentPause.type, stepName: currentPause.stepName },
+    }, '[waitpointService#handleResumeSignal] Signal resumes a pause it was not made for; a Delay is on one side')
+}
+
 async function deleteWaitpointsWithTimers({ where, flowRunId, log }: DeleteWaitpointsWithTimersParams): Promise<void> {
     const result = await waitpointRepo()
         .createQueryBuilder()
@@ -280,6 +302,12 @@ const DeletedWaitpointRows = z.array(z.object({
 }))
 
 type PausedDelivery = 'dispatched' | 'already-delivered' | 'unknown-waitpoint'
+
+type LogSignalForAnotherPauseParams = {
+    repo: Repository<Waitpoint>
+    signalled: Waitpoint
+    log: FastifyBaseLogger
+}
 
 type ClampWaitpointResumeDeadlineParams = {
     requested: string | undefined

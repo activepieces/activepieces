@@ -337,3 +337,64 @@ describe('resume guards against a cancellation in flight', () => {
         expect(stale).toBe(false)
     })
 })
+
+describe('a signal that resumes a pause it was not made for', () => {
+    it('logs an error when an approval link resumes a run paused on a Delay, and still dispatches', async () => {
+        const { flowRun, waitpointId: linkId } = await createFlowRunAndWaitpoint({ projectId: ctx.project.id })
+        await addLaterWaitpoint({ flowRunId: flowRun.id, projectId: ctx.project.id, type: PauseType.DELAY, secondsLater: 1 })
+
+        const { logged, stale } = await signalAndWatchErrorLog({ flowRunId: flowRun.id, waitpointId: linkId })
+
+        expect(logged).toBe(true)
+        expect(stale).toBe(false)
+    })
+
+    it('logs an error when a leftover Delay signal resumes the Wait for Approval pause', async () => {
+        const { flowRun } = await createFlowRunAndWaitpoint({ projectId: ctx.project.id })
+        const delayId = await addLaterWaitpoint({ flowRunId: flowRun.id, projectId: ctx.project.id, type: PauseType.DELAY, secondsLater: 1 })
+        await addLaterWaitpoint({ flowRunId: flowRun.id, projectId: ctx.project.id, type: PauseType.WEBHOOK, secondsLater: 2 })
+
+        const { logged } = await signalAndWatchErrorLog({ flowRunId: flowRun.id, waitpointId: delayId })
+
+        expect(logged).toBe(true)
+    })
+
+    it('logs nothing when an approval link resumes the Wait for Approval pause', async () => {
+        const { flowRun, waitpointId: linkId } = await createFlowRunAndWaitpoint({ projectId: ctx.project.id })
+        await addLaterWaitpoint({ flowRunId: flowRun.id, projectId: ctx.project.id, type: PauseType.WEBHOOK, secondsLater: 1 })
+
+        const { logged } = await signalAndWatchErrorLog({ flowRunId: flowRun.id, waitpointId: linkId })
+
+        expect(logged).toBe(false)
+    })
+})
+
+async function addLaterWaitpoint({ flowRunId, projectId, type, secondsLater }: { flowRunId: string, projectId: string, type: PauseType, secondsLater: number }): Promise<string> {
+    const id = apId()
+    await db.save('waitpoint', {
+        id,
+        flowRunId,
+        projectId,
+        stepName: `${type.toLowerCase()}_${secondsLater}`,
+        type,
+        status: WaitpointStatus.PENDING,
+        httpRequestId: null,
+        workerHandlerId: null,
+        created: new Date(Date.now() + secondsLater * 1000).toISOString(),
+    })
+    return id
+}
+
+async function signalAndWatchErrorLog({ flowRunId, waitpointId }: { flowRunId: string, waitpointId: string }): Promise<{ logged: boolean, stale: boolean }> {
+    const errorLog = vi.spyOn(app.log, 'error')
+    try {
+        const { stale } = await resumeService(app.log).resumeTrustedWithoutLock({ flowRunId, waitpointId, resumePayload: { queryParams: { action: 'approve' } } })
+        const logged = errorLog.mock.calls.some((call) => call[1] === MISROUTED_SIGNAL_MESSAGE)
+        return { logged, stale }
+    }
+    finally {
+        errorLog.mockRestore()
+    }
+}
+
+const MISROUTED_SIGNAL_MESSAGE = '[waitpointService#handleResumeSignal] Signal resumes a pause it was not made for; a Delay is on one side'
