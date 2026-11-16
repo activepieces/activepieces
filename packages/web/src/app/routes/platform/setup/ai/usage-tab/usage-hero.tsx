@@ -222,10 +222,11 @@ export function UsageLineChart({
               ? { fill: 'var(--gray-3)' }
               : { stroke: 'var(--gray-8)', strokeWidth: 1 }
           }
-          content={(props) => (
+          content={({ active, payload, label }) => (
             <ChartTooltipContent
-              {...props}
-              payload={props.payload?.filter(
+              active={active}
+              label={label}
+              payload={payload?.filter(
                 (entry) =>
                   entry.dataKey !== 'live' || entry.payload?.settled === null,
               )}
