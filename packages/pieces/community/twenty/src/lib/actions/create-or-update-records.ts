@@ -4,7 +4,11 @@ import { twentyApi } from '../common/api';
 import { twentyMetadataUtils } from '../common/metadata';
 import { recordParamsUtils } from '../common/record-params';
 import { twentyRecordProps } from '../common/record-props';
-import { QueryConditionNode, TwentyAuthValue, TwentyRecord } from '../common/types';
+import {
+  QueryConditionNode,
+  TwentyAuthValue,
+  TwentyRecord,
+} from '../common/types';
 
 export const createOrUpdateRecords = createAction({
   auth: twentyAuth,
@@ -22,14 +26,14 @@ export const createOrUpdateRecords = createAction({
     {
       key: 'search',
       display: 'section',
-      label: 'Object',
+      label: 'Object type',
       icon: 'tag',
       props: ['object', 'searchFields', 'filters'],
     },
     {
       key: 'fields',
       display: 'section',
-      label: 'Field',
+      label: 'Fields to create or update',
       icon: 'tag',
       props: ['updateFields', 'values'],
     },
@@ -61,7 +65,7 @@ export const createOrUpdateRecords = createAction({
     }),
     updateFields: twentyRecordProps.fields({
       required: true,
-      displayName: 'Selected Fields',
+      displayName: 'Selected fields',
       description: 'The fields to set on the record.',
       purpose: 'write',
     }),
@@ -82,7 +86,9 @@ export const createOrUpdateRecords = createAction({
     if (conditions.length === 0)
       throw new Error('Set at least one filter to match records on.');
 
-    const recordValues = recordParamsUtils.parseRecordValues({ input: values ?? {} });
+    const recordValues = recordParamsUtils.parseRecordValues({
+      input: values ?? {},
+    });
     const params = {
       auth: context.auth,
       objectNamePlural: object.namePlural,

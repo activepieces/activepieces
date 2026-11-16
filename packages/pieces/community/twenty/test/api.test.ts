@@ -205,6 +205,7 @@ describe('deleteRecords', () => {
       auth,
       objectNamePlural: 'people',
       conditions: [{ field: 'city', operator: 'eq', value: '' }],
+      permanent: false,
     });
 
     await expect(result).rejects.toThrow();
@@ -218,6 +219,7 @@ describe('deleteRecords', () => {
       auth,
       objectNamePlural: 'people',
       conditions: [{ field: 'city', operator: 'eq', value: 'Paris' }],
+      permanent: false,
     });
 
     expect(result).toEqual([{ id: '1' }]);
@@ -229,20 +231,34 @@ describe('deleteRecords', () => {
     });
   });
 
-});
+  it('never sends a permanent bulk delete without a filter', async () => {
+    const result = twentyApi.deleteRecords({
+      auth,
+      objectNamePlural: 'people',
+      conditions: [{ field: 'city', operator: 'eq', value: '' }],
+      permanent: true,
+    });
 
-describe('emptyTrash', () => {
-  it('permanently deletes only the records that are in the trash', async () => {
+    await expect(result).rejects.toThrow();
+    expect(request).not.toHaveBeenCalled();
+  });
+
+  it('leaves out soft_delete so the matching records are destroyed', async () => {
     request.mockResolvedValueOnce({ data: { deletePeople: [{ id: '1' }] } });
 
-    const result = await twentyApi.emptyTrash({ auth, objectNamePlural: 'people' });
+    const result = await twentyApi.deleteRecords({
+      auth,
+      objectNamePlural: 'people',
+      conditions: [{ field: 'city', operator: 'eq', value: 'Paris' }],
+      permanent: true,
+    });
 
     expect(result).toEqual([{ id: '1' }]);
     expect(request).toHaveBeenCalledWith({
       auth,
       method: HttpMethod.DELETE,
       path: '/rest/people',
-      query: { filter: 'deletedAt[is]:NOT_NULL' },
+      query: { filter: 'city[eq]:"Paris"' },
     });
   });
 });

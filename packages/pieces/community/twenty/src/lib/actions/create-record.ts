@@ -20,14 +20,14 @@ export const createRecord = createAction({
     {
       key: 'search',
       display: 'section',
-      label: 'Object',
+      label: 'Object type',
       icon: 'tag',
       props: ['object'],
     },
     {
       key: 'fields',
       display: 'section',
-      label: 'Field',
+      label: 'Fields to set',
       icon: 'tag',
       props: ['fields', 'values'],
     },
@@ -35,7 +35,7 @@ export const createRecord = createAction({
   props: {
     object: twentyRecordProps.object({ required: true }),
     fields: twentyRecordProps.fields({
-      displayName: 'Selected Fields',
+      displayName: 'Selected fields',
       description: 'The fields to set on the new record.',
       required: true,
       purpose: 'write',
@@ -48,12 +48,14 @@ export const createRecord = createAction({
   async run(context) {
     const { object, values } = context.propsValue;
     if (!twentyMetadataUtils.isObjectRef(object))
-      throw new Error('Select an object.');
+      throw new Error('Select an object type.');
 
     return await twentyApi.createRecord({
       auth: context.auth,
       objectNamePlural: object.namePlural,
-      recordValues: recordParamsUtils.parseRecordValues({ input: values ?? {} }),
+      recordValues: recordParamsUtils.parseRecordValues({
+        input: values ?? {},
+      }),
     });
   },
 });

@@ -20,14 +20,14 @@ export const updateRecord = createAction({
     {
       key: 'search',
       display: 'section',
-      label: 'Object',
+      label: 'Object type',
       icon: 'tag',
       props: ['object', 'recordId'],
     },
     {
       key: 'fields',
       display: 'section',
-      label: 'Field',
+      label: 'Fields to update',
       icon: 'tag',
       props: ['fields', 'values'],
     },
@@ -44,7 +44,7 @@ export const updateRecord = createAction({
     recordId: twentyRecordProps.recordId({ required: true }),
     rewrite: twentyRecordProps.rewrite({ required: false }),
     fields: twentyRecordProps.fields({
-      displayName: 'Selected Fields',
+      displayName: 'Selected fields',
       description: 'The fields to change on the record.',
       required: true,
       purpose: 'write',
@@ -57,9 +57,11 @@ export const updateRecord = createAction({
   async run(context) {
     const { object, recordId, rewrite, values } = context.propsValue;
     if (!twentyMetadataUtils.isObjectRef(object))
-      throw new Error('Select an object.');
+      throw new Error('Select an object type.');
 
-    const recordValues = recordParamsUtils.parseRecordValues({ input: values ?? {} });
+    const recordValues = recordParamsUtils.parseRecordValues({
+      input: values ?? {},
+    });
     if (Object.keys(recordValues).length === 0)
       return await twentyApi.getRecord({
         auth: context.auth,

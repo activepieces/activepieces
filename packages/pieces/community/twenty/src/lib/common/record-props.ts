@@ -79,7 +79,7 @@ const TEXT_VALUE_DESCRIPTIONS: Record<FieldPurpose, string> = {
 };
 
 const HEADING_PREFIXES: Record<FieldPurpose, string> = {
-  filter: 'Where',
+  filter: 'Filter',
   write: 'Set',
 };
 

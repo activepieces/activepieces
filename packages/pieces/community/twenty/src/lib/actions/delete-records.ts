@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { twentyAuth } from '../auth';
 import { twentyApi } from '../common/api';
 import { twentyMetadataUtils } from '../common/metadata';
@@ -10,10 +10,10 @@ export const deleteRecords = createAction({
   name: 'deleteRecords',
   displayName: 'Delete Records',
   description:
-    'Moves the records matching the filters to the trash, where they can be restored.',
+    'Deletes the records that match the filters. By default they go to the trash, where they can be restored.',
   aiMetadata: {
     description:
-      'Moves every record of the selected object in Twenty CRM that matches all given filters to the trash (soft delete), where it can still be restored. Fails when no filter is set, so it never deletes a whole object by accident. Returns the deleted records. Not idempotent: a repeat call deletes whatever matches at that moment.',
+      'Deletes every record of the selected object in Twenty CRM that matches all given filters. By default the records move to the trash (soft delete) and can still be restored; with permanent set to true they are destroyed and cannot be recovered, so only set it when the user explicitly asks for permanent deletion. Fails when no filter is set, so it never deletes a whole object by accident. Returns the deleted records. Not idempotent: a repeat call deletes whatever matches at that moment.',
     idempotent: false,
   },
   classification: 'WRITE',
@@ -42,12 +42,20 @@ export const deleteRecords = createAction({
     fields: twentyRecordProps.fields({
       required: true,
       displayName: 'Delete Where',
-      description: 'The fields used to find the records to delete.',
+      description:
+        'The fields to match records on. Only records that match every filter are deleted.',
     }),
     filters: twentyRecordProps.filters({ required: true }),
+    permanent: Property.Checkbox({
+      required: false,
+      displayName: 'Delete Permanently',
+      description:
+        'Removes the matching records for good instead of moving them to the trash. This cannot be undone, so check your filters with Find Records first.',
+      defaultValue: false,
+    }),
   },
   async run(context) {
-    const { object, filters } = context.propsValue;
+    const { object, filters, permanent } = context.propsValue;
     if (!twentyMetadataUtils.isObjectRef(object))
       throw new Error('Select an object.');
 
@@ -61,6 +69,7 @@ export const deleteRecords = createAction({
       auth: context.auth,
       objectNamePlural: object.namePlural,
       conditions,
+      permanent: permanent ?? false,
     });
   },
 });

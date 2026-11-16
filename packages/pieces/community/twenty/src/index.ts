@@ -17,7 +17,6 @@ import { updateRecord } from './lib/actions/update-record';
 import { createRecord } from './lib/actions/create-record';
 import { createOrUpdateRecords } from './lib/actions/create-or-update-records';
 import { deleteRecords } from './lib/actions/delete-records';
-import { emptyTrash } from './lib/actions/empty-trash';
 import { newRecordTrigger } from './lib/triggers/new-record';
 import { updatedRecordTrigger } from './lib/triggers/updated-record';
 import { deletedRecordTrigger } from './lib/triggers/deleted-record';
@@ -45,7 +44,6 @@ export const twenty = createPiece({
     updatePersonAction,
     updateCompanyAction,
     deleteRecords,
-    emptyTrash,
     ...twentyAiActions,
     createCustomApiCallAction({
       baseUrl: (auth) => (auth ? twentyClient.baseUrl({ auth }) : ''),

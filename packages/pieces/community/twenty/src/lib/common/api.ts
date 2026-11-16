@@ -504,10 +504,12 @@ async function deleteRecords({
   auth,
   objectNamePlural,
   conditions,
+  permanent,
 }: {
   auth: TwentyAuthValue;
   objectNamePlural: string;
   conditions: QueryConditionNode[];
+  permanent: boolean;
 }): Promise<TwentyRecord[]> {
   const filter = filterQuery({ conditions });
   if (filter['filter'] === undefined)
@@ -519,25 +521,7 @@ async function deleteRecords({
     auth,
     method: HttpMethod.DELETE,
     path: recordsPath({ objectNamePlural }),
-    query: { ...filter, soft_delete: 'true' },
-  });
-  return firstValue({ envelope: response }) ?? [];
-}
-
-async function emptyTrash({
-  auth,
-  objectNamePlural,
-}: {
-  auth: TwentyAuthValue;
-  objectNamePlural: string;
-}): Promise<TwentyRecord[]> {
-  const response = await twentyClient.request<TwentyEnvelope<TwentyRecord[]>>({
-    auth,
-    method: HttpMethod.DELETE,
-    path: recordsPath({ objectNamePlural }),
-    query: filterQuery({
-      conditions: [{ field: 'deletedAt', operator: 'is', value: 'NOT_NULL' }],
-    }),
+    query: permanent ? filter : { ...filter, soft_delete: 'true' },
   });
   return firstValue({ envelope: response }) ?? [];
 }
@@ -972,7 +956,6 @@ export const twentyApi = {
   updateRecords,
   deleteRecord,
   deleteRecords,
-  emptyTrash,
   restoreRecord,
   findDuplicateRecords,
   mergeRecords,
