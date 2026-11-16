@@ -7,14 +7,15 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AxiosError } from 'axios';
 import { t } from 'i18next';
-import { ChevronDown, Eye, EyeOff } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
-import { ControllerRenderProps, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { adminLayout } from '@/app/components/admin';
 import { DictionaryInput } from '@/components/custom/dictionary-input';
 import { ApMarkdown } from '@/components/custom/markdown';
+import { MaskedInput } from '@/components/custom/masked-input';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
@@ -310,7 +311,9 @@ function CredentialFieldInput({
               />
             </FormControl>
           ) : field.secret ? (
-            <SecretInput field={formField} placeholder={field.placeholder} />
+            <FormControl>
+              <MaskedInput {...formField} placeholder={field.placeholder} />
+            </FormControl>
           ) : (
             <FormControl>
               <Input {...formField} placeholder={field.placeholder} />
@@ -325,38 +328,6 @@ function CredentialFieldInput({
         </FormItem>
       )}
     />
-  );
-}
-
-function SecretInput({
-  field,
-  placeholder,
-}: {
-  field: ControllerRenderProps<ConnectFormValues, `credentials.${string}`>;
-  placeholder?: string;
-}) {
-  const [visible, setVisible] = useState(false);
-  return (
-    <div className="relative">
-      <FormControl>
-        <Input
-          {...field}
-          type={visible ? 'text' : 'password'}
-          placeholder={placeholder}
-          className="pr-9"
-        />
-      </FormControl>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-xs"
-        tabIndex={-1}
-        onClick={() => setVisible(!visible)}
-        className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-11 hover:text-gray-12"
-      >
-        {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-      </Button>
-    </div>
   );
 }
 

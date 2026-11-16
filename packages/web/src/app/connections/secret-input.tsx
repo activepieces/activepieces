@@ -70,6 +70,7 @@ SecretManagerToggleButton.displayName = 'SecretManagerToggleButton';
 const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
   ({ className, value, onChange, ...restProps }, ref) => {
     const { onBlur, name, disabled, ...otherProps } = restProps;
+    const masked = otherProps.type === 'password';
 
     const { platform } = platformHooks.useCurrentPlatform();
     const { data: connections } =
@@ -247,11 +248,16 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
           )}
         <Input
           {...otherProps}
+          {...(masked && {
+            type: 'text',
+            autoComplete: 'off',
+            spellCheck: false,
+          })}
           ref={ref}
           name={name}
           onBlur={onBlur}
           disabled={disabled}
-          className="flex-1"
+          className={cn('flex-1', masked && '[-webkit-text-security:disc]')}
           value={value || ''}
           onChange={handleNormalInputChange}
         />
