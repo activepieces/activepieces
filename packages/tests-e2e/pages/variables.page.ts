@@ -32,7 +32,7 @@ export class VariablesPage extends BasePage {
 
   async expectCreateRefused({ name, value, message }: { name: string; value: string; message: string }): Promise<void> {
     const response = await this.submitNewVariable({ name, value });
-    expect(response.status()).toBe(400);
+    expect(response.status()).toBe(409);
     await expect(this.dialog('New variable').getByText(message, { exact: true })).toBeVisible();
   }
 
@@ -110,12 +110,12 @@ export class VariablesPage extends BasePage {
   async insertFromDataSelector({ input, name }: { input: string; name: string }): Promise<void> {
     await this.page.getByTestId('right-sidebar').getByRole('textbox', { name: input, exact: true }).click();
     await this.page.getByRole('tab', { name: 'Variables', exact: true }).click();
+    const mention = `{{variables['${name}']}}`;
     const saved = this.page.waitForRequest(
-      (request) => request.method() === 'POST' && FLOW_PATH.test(new URL(request.url()).pathname),
+      (request) => request.method() === 'POST' && FLOW_PATH.test(new URL(request.url()).pathname) && (request.postData() ?? '').includes(mention),
     );
     await this.page.getByRole('button', { name, exact: true }).click();
     const request = await saved;
-    expect(request.postData()).toContain(`{{variables['${name}']}}`);
     expect((await request.response())?.ok(), 'Saving the step with the variable failed').toBe(true);
   }
 

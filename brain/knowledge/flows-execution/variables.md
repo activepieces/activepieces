@@ -12,7 +12,7 @@ Project-scoped, encrypted secret values (API keys, tokens) users create once and
 - Encryption: `encryptUtils.encryptObject` (AES-256-CBC) on write; decrypted on reveal and worker fetch.
 
 ### How it works
-- User routes `/v1/variables`: `POST /` creates (an existing name returns `VALIDATION` "Variable name already used"), `POST /:id` rotates the value, `GET /` lists (`name` filter is a contains match), `GET /owners`, `DELETE /:id`. API keys (SERVICE) may use all of these. Reveal is `POST /:id/reveal`, **USER-only** (an API key gets 403).
+- User routes `/v1/variables`: `POST /` creates (an existing name returns 409 `VALIDATION` "Variable name already used"), `POST /:id` rotates the value, `GET /` lists (`name` filter is a contains match), `GET /owners`, `DELETE /:id`. API keys (SERVICE) may use all of these. Reveal is `POST /:id/reveal`, **USER-only** (an API key gets 403).
 - Engine resolves mentions via `GET /v1/worker/variables/:name` using the engine principal token. `resolveSingleToken` checks `variables` prefix first, then `connections`, then step refs. Mention always resolves to a string (no sub-field access).
 - Permissions: `READ_VARIABLE` (VIEWER+), `WRITE_VARIABLE` (EDITOR/ADMIN, needed for create/rotate/delete/reveal).
 
