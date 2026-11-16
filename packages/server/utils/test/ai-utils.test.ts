@@ -1,8 +1,9 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesAiCostEvent, AIProviderName } from '@activepieces/core-utils'
 import { ACTIVEPIECES_CHAT_TIERS, ACTIVEPIECES_IMAGE_TIERS, aiProviderCredentials } from '@activepieces/shared'
-import { generateText, jsonSchema, tool } from 'ai'
+import { generateImage, generateText, jsonSchema, tool } from 'ai'
 import { describe, expect, it } from 'vitest'
 import { activepiecesAiCost } from '../src/activepieces-ai-cost'
+import { aiProviderKeyHealth, KeyHealthObservation } from '../src/ai-provider-key-health'
 import { aiUtils, WebSearchOptions } from '../src/ai-utils'
 
 function anthropicSearchArgs(options: WebSearchOptions): Record<string, unknown> {
@@ -231,6 +232,35 @@ describe('what a LiteLLM proxy is told about a call, for its spend logs', () => 
         expect(fromFlow).toMatchObject({ 'x-ap-project-id': 'project-1', 'x-ap-run-id': 'run-1' })
         expect(Object.keys({ ...fromFlow, ...fromChat }).filter((name) => name.startsWith('x-litellm-'))).toEqual([])
     })
+
+    it('sends the same headers on an image call from a flow step', async () => {
+        const model = aiUtils.createModelForImages({ credentials: LITELLM_CREDENTIALS, modelId: 'prod-image', flowStep })
+        const headers = await sentHeaders(() => generateImage({ model: model!, prompt: 'a banner', maxRetries: 0 }))
+        expect(headers).toMatchObject({
+            'x-litellm-customer-id': 'project-1',
+            'x-litellm-trace-id': 'run-1',
+            'x-litellm-tags': 'ap-surface:flow,ap-platform:platform-1',
+        })
+    })
+})
+
+describe('aiUtils.createModelForImages key health', () => {
+    it('reports a rejected key on an image call', async () => {
+        const observations: KeyHealthObservation[] = []
+        aiProviderKeyHealth.setReporter((observation) => observations.push(observation))
+        const original = globalThis.fetch
+        globalThis.fetch = () => Promise.resolve(new Response('{"error":{"message":"bad key"}}', { status: 401 }))
+        try {
+            const model = aiUtils.createModelForImages({ credentials: LITELLM_CREDENTIALS, modelId: 'prod-image', platformId: 'platform-1', providerConfigId: 'config-1' })
+            await generateImage({ model: model!, prompt: 'a banner', maxRetries: 0 }).catch(() => undefined)
+        }
+        finally {
+            globalThis.fetch = original
+            aiProviderKeyHealth.setReporter(() => undefined)
+        }
+
+        expect(observations).toEqual([expect.objectContaining({ platformId: 'platform-1', providerConfigId: 'config-1' })])
+    })
 })
 
 describe('aiUtils.createModel tool choice', () => {
@@ -306,6 +336,8 @@ async function sentHeaders(send: () => Promise<unknown>): Promise<Record<string,
     }
     return headers
 }
+
+const LITELLM_CREDENTIALS = aiProviderCredentials({ provider: AIProviderName.LITELLM, auth: { apiKey: 'sk-proxy' }, config: { baseUrl: 'https://litellm.example.com/v1', apiKeyHeader: 'Authorization', models: [] } })
 
 const BILLING: ActivepiecesAiBilling = {
     source: ActivepiecesAiConsumerSource.AI_STEP_IN_FLOW,

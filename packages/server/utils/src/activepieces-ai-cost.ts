@@ -340,6 +340,7 @@ export const activepiecesAiCost = {
     reportUsageOnly,
     reportProviderCost,
     openRouterCostOf,
+    gatewayHeaderCostOf,
 }
 
 type BillingContext = {

@@ -265,11 +265,13 @@ function flowStepMetadataHeaders(flowStep?: FlowStepMetadata): Record<string, st
     }
 }
 
-function createModelForImages({ credentials, modelId, flowStep, adminChosenImageModelId }: {
+function createModelForImages({ credentials, modelId, flowStep, adminChosenImageModelId, platformId, providerConfigId }: {
     credentials: AiProviderCredentials
     modelId: string
     flowStep?: FlowStepMetadata
     adminChosenImageModelId?: string
+    platformId?: string
+    providerConfigId?: string
 }): ImageModel | undefined {
     assertManagedModelAllowed({ provider: credentials.provider, modelId, image: true, ...spreadIfDefined('adminChosenModelId', adminChosenImageModelId) })
     if (credentials.provider === AIProviderName.CLOUDFLARE_GATEWAY) {
@@ -281,7 +283,14 @@ function createModelForImages({ credentials, modelId, flowStep, adminChosenImage
             ...spreadIfDefined('metadata', cloudflareGatewayMetadata(flowStep)),
         })
     }
-    return createImageModel({ credentials, modelId })
+    return createImageModel({
+        credentials,
+        modelId,
+        options: {
+            ...spreadIfDefined('extraHeaders', extraHeadersFor({ provider: credentials.provider, flowStep })),
+            ...spreadIfDefined('onOutcome', keyHealthReporterFor({ platformId, providerConfigId })),
+        },
+    })
 }
 
 function toStorageEmbedding(embedding: number[]): number[] {
