@@ -39,6 +39,16 @@ describe('replay.resolveCall', () => {
         expect(caseReplay.newFixtures()).toEqual([{ toolName: 'ap_list_flows', input: { limit: 5 }, output: { flows: [] } }])
     })
 
+    it('does not save a read that returned an error in record mode', async () => {
+        const caseReplay = replay.create({ recordedToolCalls: [] })
+        const live = vi.fn(async () => ({ error: 'The dev server could not run it' }))
+
+        const output = await replay.resolveCall({ caseReplay, recordMode: true, toolName: 'ap_list_flows', input: {}, live })
+
+        expect(output).toEqual({ error: 'The dev server could not run it' })
+        expect(caseReplay.newFixtures()).toEqual([])
+    })
+
     it('stops a read with no recording outside record mode without running it', async () => {
         const caseReplay = replay.create({ recordedToolCalls: [] })
         const live = vi.fn(async () => ({ flows: [] }))
@@ -122,6 +132,25 @@ describe('replay matching for writes', () => {
         await replay.resolveCall({ caseReplay, recordMode: false, toolName: 'ap_add_step', input, live: undefined })
 
         expect(caseReplay.stops().map((stop) => stop.kind)).toEqual(['unrecorded_write'])
+    })
+
+    it('answers the same read twice from one recording', async () => {
+        const caseReplay = replay.create({ recordedToolCalls: [{ toolName: 'ap_list_flows', input: { limit: 5 }, output: { flows: [] } }] })
+        const call = () => replay.resolveCall({ caseReplay, recordMode: false, toolName: 'ap_list_flows', input: { limit: 5 }, live: undefined })
+
+        expect(await call()).toEqual({ flows: [] })
+        expect(await call()).toEqual({ flows: [] })
+        expect(caseReplay.stops()).toEqual([])
+    })
+
+    it('plays repeated reads in recorded order, then keeps the latest', async () => {
+        const caseReplay = replay.create({ recordedToolCalls: [
+            { toolName: 'ap_list_flows', input: { limit: 5 }, output: 'before' },
+            { toolName: 'ap_list_flows', input: { limit: 5 }, output: 'after' },
+        ] })
+        const call = () => replay.resolveCall({ caseReplay, recordMode: false, toolName: 'ap_list_flows', input: { limit: 5 }, live: undefined })
+
+        expect([await call(), await call(), await call()]).toEqual(['before', 'after', 'after'])
     })
 
     it('does not end the turn for a read with no recording', async () => {

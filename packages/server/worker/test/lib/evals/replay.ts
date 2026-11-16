@@ -11,7 +11,9 @@ function create({ recordedToolCalls }: { recordedToolCalls: RecordedToolCall[] }
     const take = ({ toolName, input }: { toolName: string, input: unknown }): RecordedLookup => {
         const unused = (position: number): boolean => !used.has(position)
         const key = inputKey(input)
-        const index = recordedToolCalls.findIndex((call, position) => unused(position) && call.toolName === toolName && inputKey(call.input) === key)
+        const matches = (call: RecordedToolCall): boolean => call.toolName === toolName && inputKey(call.input) === key
+        const unusedIndex = recordedToolCalls.findIndex((call, position) => unused(position) && matches(call))
+        const index = unusedIndex === -1 && isRead(toolName) ? lastIndexWhere({ calls: recordedToolCalls, predicate: matches }) : unusedIndex
         if (index === -1) {
             return { found: false, sameToolRecorded: recordedToolCalls.some((call, position) => unused(position) && call.toolName === toolName) }
         }
@@ -51,7 +53,9 @@ async function resolveCall({ caseReplay, recordMode, toolName, input, live }: { 
         return caseReplay.stop({ toolName, input, kind: 'missing_fixture' })
     }
     const output = await live()
-    caseReplay.record({ toolName, input, output })
+    if (!isErrorOutput(output)) {
+        caseReplay.record({ toolName, input, output })
+    }
     return output
 }
 
@@ -100,6 +104,14 @@ function jsonSchemaProblem({ schema, input }: { schema: unknown, input: unknown 
         return isObject(property) && Array.isArray(property['enum']) && !property['enum'].includes(value)
     })
     return isNil(badEnum) ? null : `${badEnum[0]} ${JSON.stringify(badEnum[1])} is not an allowed value`
+}
+
+function lastIndexWhere({ calls, predicate }: { calls: RecordedToolCall[], predicate: (call: RecordedToolCall) => boolean }): number {
+    return calls.reduce((last, call, position) => predicate(call) ? position : last, -1)
+}
+
+function isErrorOutput(output: unknown): boolean {
+    return isObject(output) && !isNil(output['error'])
 }
 
 function isStopOutput(output: unknown): boolean {

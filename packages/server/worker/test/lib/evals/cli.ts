@@ -229,10 +229,6 @@ async function reportDataset({ name, cases, results, explained, live, browse, re
         await saveFixtures({ cases, results })
         return { status: 'ok', reason: '' }
     }
-    if (upload) {
-        const experimentId = await posthogExperiments.upload({ runs: results, suiteKey: name, runSource: isNil(process.env['CI']) ? 'local' : 'ci', applicationVersion: gitSha(), modelVersion: modelId, promptVersion: promptVersion(), toolFingerprints })
-        console.log(`\nUploaded main baseline for ${name}: experiment ${experimentId}`)
-    }
     const labels = printDiff({ baselineRead, suiteKey: name, modelVersion: modelId, cases, summaries })
     printUntested({ cases, changedTools })
     if (MUST_PASS_DATASETS.has(name) && clearlyFailing > 0) {
@@ -241,6 +237,10 @@ async function reportDataset({ name, cases, results, explained, live, browse, re
     const crashed = results.filter((result) => result.crashed).length
     if (crashed > 0) {
         return { status: 'broken', reason: `${crashed} ${name} run(s) crashed before they could be graded` }
+    }
+    if (upload) {
+        const experimentId = await posthogExperiments.upload({ runs: results, suiteKey: name, runSource: isNil(process.env['CI']) ? 'local' : 'ci', applicationVersion: gitSha(), modelVersion: modelId, promptVersion: promptVersion(), toolFingerprints })
+        console.log(`\nUploaded main baseline for ${name}: experiment ${experimentId}`)
     }
     switch (baselineRead.kind) {
         case 'error': return { status: 'broken', reason: `could not read the main baseline for ${name}: ${baselineRead.message}` }
