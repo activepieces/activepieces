@@ -125,6 +125,28 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
     },
 
     async updateAgentProgress(input: UpdateAgentProgressRequest): Promise<void> {
+        if (!isNil(input.turn)) {
+            await updateConversationForRun({
+                conversationId: input.conversationId,
+                runId: input.runId,
+                updates: {
+                    messages: () => replaceTurnSql({ column: '"messages"', baseParam: 'baseMessageCount', turnParam: 'turnMessages' }),
+                    uiMessages: () => replaceTurnSql({ column: 'coalesce("uiMessages", \'[]\'::jsonb)', baseParam: 'baseUiMessageCount', turnParam: 'turnUiMessages' }),
+                },
+                parameters: {
+                    baseMessageCount: input.turn.baseMessageCount,
+                    turnMessages: JSON.stringify(sanitizeObjectForPostgresql(input.turn.messages)),
+                    baseUiMessageCount: input.turn.baseUiMessageCount,
+                    turnUiMessages: JSON.stringify(sanitizeObjectForPostgresql(input.turn.uiMessages)),
+                },
+                onlyWhileStreaming: true,
+            })
+            log.debug({ conversation: { id: input.conversationId }, baseMessageCount: input.turn.baseMessageCount, turnMessageCount: input.turn.messages.length }, '[agentRpc#updateAgentProgress] Turn progress persisted')
+            return
+        }
+        if (isNil(input.uiMessages)) {
+            return
+        }
         const updates: Record<string, unknown> = {
             uiMessages: JSON.parse(JSON.stringify(input.uiMessages)),
         }
@@ -186,6 +208,12 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
     },
 
 })
+
+function replaceTurnSql({ column, baseParam, turnParam }: { column: string, baseParam: string, turnParam: string }): string {
+    return `CASE WHEN jsonb_array_length(${column}) >= :${baseParam}::int
+        THEN (SELECT coalesce(jsonb_agg(kept.element ORDER BY kept.position), '[]'::jsonb) FROM jsonb_array_elements(${column}) WITH ORDINALITY AS kept(element, position) WHERE kept.position <= :${baseParam}::int) || :${turnParam}::jsonb
+        ELSE ${column} END`
+}
 
 function isObject(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && !isNil(value)

@@ -335,11 +335,14 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                                     fn: () => ctx.apiClient.updateAgentProgress({
                                         conversationId,
                                         runId,
-                                        uiMessages: [
-                                            ...(config.previousUiMessages as PersistedAgentMessage[]),
-                                            { role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs: Date.now() - thinkingStartTime, tainted: taintState.readInThisReply() },
-                                        ],
-                                        messages: [...(config.allMessages as ModelMessage[]), ...responseMessages],
+                                        turn: {
+                                            baseMessageCount: config.allMessages.length,
+                                            messages: responseMessages,
+                                            baseUiMessageCount: config.previousUiMessages.length,
+                                            uiMessages: [
+                                                { role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs: Date.now() - thinkingStartTime, tainted: taintState.readInThisReply() },
+                                            ],
+                                        },
                                     }),
                                     maxAttempts: 2,
                                     log,
