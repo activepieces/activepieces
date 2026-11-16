@@ -2,6 +2,7 @@ import { litellmAuth } from '@activepieces/ai-providers'
 import { ActivepiecesError, AIProviderModel, aiProviderUtils, ErrorCode, isNil, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig, spreadIfDefined, tryCatchSync } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { AIProviderStrategy } from './ai-provider'
+import { litellmDiscovery } from './litellm-discovery'
 import { fetchOpenAiModelIds } from './openai-compatible-vendor'
 
 function assertUsableBaseUrl({ baseUrl }: { baseUrl: string }): void {
@@ -57,6 +58,7 @@ export const openAICompatibleProvider: AIProviderStrategy<OpenAICompatibleProvid
 export const litellmProvider: AIProviderStrategy<OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig> = {
     ...openAICompatibleProvider,
     name: 'LiteLLM',
+    syncModels: litellmDiscovery.syncModels,
     async listModels(_authConfig: OpenAICompatibleProviderAuthConfig, config: OpenAICompatibleProviderConfig): Promise<AIProviderModel[]> {
         return config.models.map(m => ({
             id: m.modelId,
