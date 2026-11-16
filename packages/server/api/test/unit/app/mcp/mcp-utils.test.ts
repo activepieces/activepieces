@@ -337,7 +337,7 @@ describe('mcpUtils.buildRequiredInputs / buildExampleInput — keep what the cal
     it('keeps the caller\'s values, including optional ones, in the example', () => {
         const example = mcpUtils.buildExampleInput({ props: sheetProps, providedInput })
         expect(example).toMatchObject({ spreadsheetId: 'sheet-123', sheetId: 7, first_row_headers: true })
-        expect(example.values).toContain('resolve with ap_resolve_property_options')
+        expect(example.values).toContain('resolve with ap_resolve_property_chain')
     })
 
     it('treats an empty string or null as not given, but keeps false and 0', () => {
