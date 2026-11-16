@@ -79,6 +79,19 @@ function buildCreateRequest({
         },
         auth: { apiKey: value('apiKey') },
       };
+    case AIProviderName.LITELLM:
+      return {
+        provider,
+        displayName,
+        config: {
+          baseUrl: value('baseUrl'),
+          apiKeyHeader: value('apiKeyHeader'),
+          apiStyle: value('apiStyle') === 'chat' ? 'chat' : undefined,
+          defaultHeaders: Object.keys(headers).length > 0 ? headers : undefined,
+          models,
+        },
+        auth: { apiKey: value('apiKey') },
+      };
     case AIProviderName.OPENAI:
     case AIProviderName.ANTHROPIC:
     case AIProviderName.GOOGLE:

@@ -30,6 +30,43 @@ const DEFAULT_CREDENTIAL_FIELDS: CredentialField[] = [
   },
 ];
 
+const OPENAI_COMPATIBLE_FIELDS: CredentialField[] = [
+  {
+    key: 'baseUrl',
+    label: t('Base URL'),
+    placeholder: 'https://api.example.com/v1',
+  },
+  {
+    key: 'apiKey',
+    label: t('API key'),
+    placeholder: 'sk-************************',
+    secret: true,
+  },
+  {
+    key: 'apiKeyHeader',
+    label: t('API key header'),
+    placeholder: 'Authorization',
+  },
+  {
+    key: 'apiStyle',
+    label: t('API style'),
+    optional: true,
+    description: t(
+      'Chat completions suits most gateways. Pick Responses for endpoints that only serve the newer OpenAI Responses API, such as Amazon Bedrock.',
+    ),
+    options: [
+      { value: 'chat', label: t('Chat completions') },
+      { value: 'responses', label: t('Responses') },
+    ],
+  },
+  {
+    key: 'defaultHeaders',
+    label: t('Custom headers'),
+    type: 'dictionary',
+    optional: true,
+  },
+];
+
 const PROVIDER_CREDENTIAL_FIELDS: Partial<
   Record<AIProviderName, CredentialField[]>
 > = {
@@ -136,42 +173,8 @@ const PROVIDER_CREDENTIAL_FIELDS: Partial<
       placeholder: 'us-central1',
     },
   ],
-  [AIProviderName.CUSTOM]: [
-    {
-      key: 'baseUrl',
-      label: t('Base URL'),
-      placeholder: 'https://api.example.com/v1',
-    },
-    {
-      key: 'apiKey',
-      label: t('API key'),
-      placeholder: 'sk-************************',
-      secret: true,
-    },
-    {
-      key: 'apiKeyHeader',
-      label: t('API key header'),
-      placeholder: 'Authorization',
-    },
-    {
-      key: 'apiStyle',
-      label: t('API style'),
-      optional: true,
-      description: t(
-        'Chat completions suits most gateways. Pick Responses for endpoints that only serve the newer OpenAI Responses API, such as Amazon Bedrock.',
-      ),
-      options: [
-        { value: 'chat', label: t('Chat completions') },
-        { value: 'responses', label: t('Responses') },
-      ],
-    },
-    {
-      key: 'defaultHeaders',
-      label: t('Custom headers'),
-      type: 'dictionary',
-      optional: true,
-    },
-  ],
+  [AIProviderName.CUSTOM]: OPENAI_COMPATIBLE_FIELDS,
+  [AIProviderName.LITELLM]: OPENAI_COMPATIBLE_FIELDS,
 };
 
 const MANUAL_MODEL_PROVIDERS: AIProviderName[] = [

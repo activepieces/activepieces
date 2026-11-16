@@ -676,7 +676,7 @@ async function fetchModels({ aiProvider, platformId, log }: { aiProvider: AIProv
             id: model.id,
             name: model.name,
             type: model.type,
-            ...spreadIfDefined('metadata', catalog.lookup({ provider, modelId: model.id })),
+            ...spreadIfDefined('metadata', catalog.lookup({ provider, modelId: model.id }) ?? model.metadata),
         })))
     }
     return modelsCache.get(cacheKey)!

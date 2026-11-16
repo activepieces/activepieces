@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderModel, aiProviderUtils, ErrorCode, isNil, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig, tryCatchSync } from '@activepieces/shared'
+import { ActivepiecesError, AIProviderModel, aiProviderUtils, ErrorCode, isNil, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig, spreadIfDefined, tryCatchSync } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { AIProviderStrategy } from './ai-provider'
 import { fetchOpenAiModelIds } from './openai-compatible-vendor'
@@ -26,6 +26,19 @@ export const openAICompatibleProvider: AIProviderStrategy<OpenAICompatibleProvid
             headers: { ...(config.defaultHeaders ?? {}), [config.apiKeyHeader]: authConfig.apiKey },
         })
         return modelIds.filter((modelId) => aiProviderUtils.isChatModelId({ modelId }))
+    },
+}
+
+export const litellmProvider: AIProviderStrategy<OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig> = {
+    ...openAICompatibleProvider,
+    name: 'LiteLLM',
+    async listModels(_authConfig: OpenAICompatibleProviderAuthConfig, config: OpenAICompatibleProviderConfig): Promise<AIProviderModel[]> {
+        return config.models.map(m => ({
+            id: m.modelId,
+            name: m.modelName,
+            type: m.modelType,
+            ...spreadIfDefined('metadata', m.metadata),
+        }))
     },
 }
 

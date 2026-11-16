@@ -1,0 +1,32 @@
+data: {"type":"response.created","response":{"id":"resp_litellm","created_at":1794851107,"model":"claude-haiku-5-5","object":"response","output":[],"parallel_tool_calls":true,"tool_choice":"auto","tools":[],"top_p":1,"reasoning":{"effort":null,"summary":null},"status":"in_progress","store":true},"model":"claude-haiku"}
+
+data: {"type":"response.in_progress","response":{"id":"resp_litellm","created_at":1794851107,"model":"claude-haiku-5-5","object":"response","output":[],"parallel_tool_calls":true,"tool_choice":"auto","tools":[],"top_p":1,"reasoning":{"effort":null,"summary":null},"status":"in_progress","store":true},"model":"claude-haiku"}
+
+data: {"type":"response.output_item.added","output_index":0,"item":{"id":"rs_ad787146-e323-4026-827b-26f60e0fdfa5","type":"reasoning","status":"in_progress"},"model":"claude-haiku"}
+
+data: {"type":"response.reasoning_summary_text.done","item_id":"rs_ad787146-e323-4026-827b-26f60e0fdfa5","output_index":0,"sequence_number":4,"summary_index":0,"text":"","model":"claude-haiku"}
+
+data: {"type":"response.reasoning_summary_part.done","item_id":"rs_ad787146-e323-4026-827b-26f60e0fdfa5","output_index":0,"sequence_number":5,"summary_index":0,"part":{"type":"summary_text","text":""},"model":"claude-haiku"}
+
+data: {"type":"response.output_item.done","output_index":0,"sequence_number":6,"item":{"id":"rs_ad787146-e323-4026-827b-26f60e0fdfa5","type":"reasoning","summary":[{"type":"summary_text","text":""}]},"model":"claude-haiku"}
+
+data: {"type":"response.output_item.added","output_index":1,"item":{"id":"msg_9ec07bd2-8209-43f1-869c-8667f897c461","type":"message","role":"assistant","status":"in_progress","content":[]},"model":"claude-haiku"}
+
+data: {"type":"response.content_part.added","item_id":"msg_9ec07bd2-8209-43f1-869c-8667f897c461","output_index":1,"content_index":0,"part":{"type":"output_text","text":"","annotations":[]},"model":"claude-haiku"}
+
+data: {"type":"response.output_text.delta","item_id":"msg_9ec07bd2-8209-43f1-869c-8667f897c461","output_index":1,"content_index":0,"delta":"You asked about","model":"claude-haiku"}
+
+data: {"type":"response.output_text.delta","item_id":"msg_9ec07bd2-8209-43f1-869c-8667f897c461","output_index":1,"content_index":0,"delta":" Oslo. I also need","model":"claude-haiku"}
+
+data: {"type":"response.output_text.delta","item_id":"msg_9ec07bd2-8209-43f1-869c-8667f897c461","output_index":1,"content_index":0,"delta":" to correct my earlier re","model":"claude-haiku"}
+
+data: {"type":"response.output_text.done","item_id":"msg_9ec07bd2-8209-43f1-869c-8667f897c461","output_index":1,"content_index":0,"text":"You asked about Oslo. I also need to correct my earlier reply: I can't access live weather data, so I shouldn't have stated the temperature and conditions as if I'd checked. For current weather in Oslo, a site like yr.no or the Norwegian Meteorological Institute will have accurate, up-to-date forecasts.","model":"claude-haiku"}
+
+data: {"type":"response.content_part.done","item_id":"msg_9ec07bd2-8209-43f1-869c-8667f897c461","output_index":1,"content_index":0,"part":{"type":"output_text","text":"You asked about Oslo. I also need to correct my earlier reply: I can't access live weather data, so I shouldn't have stated the temperature and conditions as if I'd checked. For current weather in Oslo, a site like yr.no or the Norwegian Meteorological Institute will have accurate, up-to-date forecasts.","annotations":[]},"model":"claude-haiku"}
+
+data: {"type":"response.output_item.done","output_index":1,"sequence_number":1,"item":{"id":"msg_9ec07bd2-8209-43f1-869c-8667f897c461","status":"completed","type":"message","role":"assistant","content":[{"type":"output_text","text":"You asked about Oslo. I also need to correct my earlier reply: I can't access live weather data, so I shouldn't have stated the temperature and conditions as if I'd checked. For current weather in Oslo, a site like yr.no or the Norwegian Meteorological Institute will have accurate, up-to-date forecasts.","annotations":[]}]},"model":"claude-haiku"}
+
+data: {"type":"response.completed","response":{"id":"resp_litellm","created_at":1794851107,"metadata":{},"model":"claude-haiku-5-5","object":"response","output":[{"type":"reasoning","id":"rs_ad787146-e323-4026-827b-26f60e0fdfa5","status":"completed","role":"assistant","content":[],"encrypted_content":"redacted"},{"type":"message","id":"msg_9ec07bd2-8209-43f1-869c-8667f897c461","status":"completed","role":"assistant","content":[{"type":"output_text","text":"You asked about Oslo. I also need to correct my earlier reply: I can't access live weather data, so I shouldn't have stated the temperature and conditions as if I'd checked. For current weather in Oslo, a site like yr.no or the Norwegian Meteorological Institute will have accurate, up-to-date forecasts.","annotations":[]}]}],"parallel_tool_calls":false,"tool_choice":"auto","tools":[],"status":"completed","text":{},"usage":{"input_tokens":42,"input_tokens_details":{"cached_tokens":0,"text_tokens":42,"cache_write_tokens":0},"output_tokens":186,"output_tokens_details":{"reasoning_tokens":79,"text_tokens":107},"total_tokens":228,"cost":0.00009719999999999999},"store":false},"model":"claude-haiku"}
+
+data: [DONE]
+
