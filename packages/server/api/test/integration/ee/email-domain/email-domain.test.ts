@@ -266,6 +266,28 @@ describe('Email domains API', () => {
             expect((await findDomains(ctx.platform.id)).map((emailDomain) => emailDomain.domain)).toEqual(['fresh-verified.example.com'])
             expect((await findPlatform(ctx.platform.id)).ssoDomain).toBe('fresh-verified.example.com')
         })
+
+        it('expires domains on several platforms in one run and refreshes each platform\'s columns', async () => {
+            const withVerified = await createTestContext(app, {
+                plan: { ssoEnabled: true, multipleEmailDomainsEnabled: true },
+                platform: withDomain({ domain: 'expired-beside-verified.example.com', status: SsoDomainVerificationStatus.PENDING_VERIFICATION, createdAt: daysAgo(8) }),
+            })
+            await saveDomain({ platformId: withVerified.platform.id, domain: 'stays-verified.example.com', status: SsoDomainVerificationStatus.VERIFIED })
+            const pendingOnly = await createTestContext(app, {
+                plan: { ssoEnabled: true },
+                platform: withDomain({ domain: 'expired-alone.example.com', status: SsoDomainVerificationStatus.PENDING_VERIFICATION, createdAt: daysAgo(8) }),
+            })
+
+            await emailDomainService(app.log).expirePending()
+            const keptPlatform = await findPlatform(withVerified.platform.id)
+            const emptiedPlatform = await findPlatform(pendingOnly.platform.id)
+
+            expect(keptPlatform.ssoDomain).toBe('stays-verified.example.com')
+            expect(keptPlatform.ssoDomainVerification?.status).toBe(SsoDomainVerificationStatus.VERIFIED)
+            expect(await findDomains(pendingOnly.platform.id)).toHaveLength(0)
+            expect(emptiedPlatform.ssoDomain).toBeNull()
+            expect(emptiedPlatform.ssoDomainVerification).toBeNull()
+        })
     })
 })
 

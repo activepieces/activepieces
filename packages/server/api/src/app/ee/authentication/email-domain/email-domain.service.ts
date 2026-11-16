@@ -2,12 +2,12 @@ import { resolveTxt } from 'dns/promises'
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil, PlatformId, spreadIfDefined, tryCatch, unique, UserId } from '@activepieces/core-utils'
 import { ApplicationEventName, AuthenticationDomainEvent, EmailDomain, EmailDomainWithUsage, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, Not } from 'typeorm'
+import { EntityManager, In, Not } from 'typeorm'
 import { z } from 'zod'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
 import { platformSideEffects } from '../../../platform/platform-side-effects'
-import { platformRepo, platformService } from '../../../platform/platform.service'
+import { platformService } from '../../../platform/platform.service'
 import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
 import { EmailDomainEntity } from './email-domain.entity'
 
@@ -103,9 +103,7 @@ export const emailDomainService = (log: FastifyBaseLogger) => ({
                 SELECT "platformId", "domain" FROM removed
             `, [SsoDomainVerificationStatus.PENDING_VERIFICATION, PENDING_DOMAIN_TTL_DAYS])
             const removed = ExpiredDomainRows.parse(rows)
-            for (const platformId of unique(removed.map((row) => row.platformId))) {
-                await refreshPlatformColumns({ entityManager, platformId })
-            }
+            await refreshPlatformColumns({ entityManager, platformIds: unique(removed.map((row) => row.platformId)) })
             return removed
         })
         for (const { platformId, domain } of expired) {
@@ -180,18 +178,30 @@ async function writeDomains({ log, platformId, userId, ip, removeSaml, removedEm
         ...spreadIfDefined('federatedAuthProviders', removeSaml ? { saml: null } : undefined),
         saveInSameTransaction: async (entityManager) => {
             await write(entityManager)
-            await refreshPlatformColumns({ entityManager, platformId })
+            await refreshPlatformColumns({ entityManager, platformIds: [platformId] })
         },
     })
 }
 
-async function refreshPlatformColumns({ entityManager, platformId }: RefreshPlatformColumnsParams): Promise<void> {
-    const domains = await emailDomainRepo(entityManager).find({ where: { platformId }, order: { created: 'ASC' } })
-    const shown = domains.find((emailDomain) => emailDomain.verificationStatus === SsoDomainVerificationStatus.VERIFIED) ?? domains[0]
-    await platformRepo(entityManager).update({ id: platformId }, {
-        ssoDomain: shown?.domain ?? null,
-        ssoDomainVerification: isNil(shown) ? null : toSsoDomainVerification(shown),
+async function refreshPlatformColumns({ entityManager, platformIds }: RefreshPlatformColumnsParams): Promise<void> {
+    if (platformIds.length === 0) {
+        return
+    }
+    const domains = await emailDomainRepo(entityManager).find({ where: { platformId: In(platformIds) }, order: { created: 'ASC' } })
+    const shownDomains = platformIds.map((platformId) => {
+        const platformDomains = domains.filter((emailDomain) => emailDomain.platformId === platformId)
+        return platformDomains.find((emailDomain) => emailDomain.verificationStatus === SsoDomainVerificationStatus.VERIFIED) ?? platformDomains[0]
     })
+    await entityManager.query(`
+        UPDATE "platform" p
+        SET "ssoDomain" = v."ssoDomain", "ssoDomainVerification" = v."ssoDomainVerification"::jsonb, "updated" = NOW()
+        FROM unnest($1::varchar[], $2::varchar[], $3::text[]) AS v("id", "ssoDomain", "ssoDomainVerification")
+        WHERE p."id" = v."id"
+    `, [
+        platformIds,
+        shownDomains.map((shown) => shown?.domain ?? null),
+        shownDomains.map((shown) => isNil(shown) ? null : JSON.stringify(toSsoDomainVerification(shown))),
+    ])
 }
 
 function toSsoDomainVerification(emailDomain: EmailDomain): SsoDomainVerification {
@@ -374,7 +384,7 @@ type WriteDomainsParams = {
 
 type RefreshPlatformColumnsParams = {
     entityManager: EntityManager
-    platformId: PlatformId
+    platformIds: PlatformId[]
 }
 
 type AssertDomainIsFreeParams = {
