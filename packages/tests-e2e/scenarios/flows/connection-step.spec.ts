@@ -5,7 +5,7 @@ import { AutomationsPage } from '../../pages/automations.page';
 import { BuilderPage } from '../../pages/builder.page';
 import { RunsPage } from '../../pages/runs.page';
 
-test.describe('Connection step', () => {
+test.describe('Connection step', { tag: '@feature:connections' }, () => {
   test('a piece step sends the API key of its connection', async ({ page, cleanup, seed }) => {
     const automationsPage = new AutomationsPage(page);
     const builderPage = new BuilderPage(page);
