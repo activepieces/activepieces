@@ -48,22 +48,31 @@ export const emailDomainService = (log: FastifyBaseLogger) => ({
             return emailDomain
         }
         const multipleDomainsAllowed = await hasMultipleDomainsFlag({ platformId, log })
-        await writeDomains({
-            log,
+        await platformService(log).runWithPlatformSettingsLock({
             platformId,
-            userId,
-            ip,
-            removeSaml: false,
-            write: async (entityManager) => {
-                const updated = await emailDomainRepo(entityManager).update({ id, platformId, verificationStatus: SsoDomainVerificationStatus.PENDING_VERIFICATION }, { verificationStatus: SsoDomainVerificationStatus.VERIFIED })
-                if (updated.affected === 0) {
-                    throwDomainChangedDuringVerification()
-                }
-                const otherVerifiedCount = await emailDomainRepo(entityManager).countBy({ platformId, id: Not(id), verificationStatus: SsoDomainVerificationStatus.VERIFIED })
-                if (otherVerifiedCount > 0 && !multipleDomainsAllowed) {
-                    throwMultipleDomainsDisabled()
-                }
-            },
+            fn: () => writeDomains({
+                log,
+                platformId,
+                userId,
+                ip,
+                removeSaml: false,
+                write: async (entityManager) => {
+                    const updated = await emailDomainRepo(entityManager)
+                        .createQueryBuilder()
+                        .update()
+                        .set({ verificationStatus: SsoDomainVerificationStatus.VERIFIED })
+                        .where({ id, platformId, verificationStatus: SsoDomainVerificationStatus.PENDING_VERIFICATION })
+                        .returning(['id'])
+                        .execute()
+                    if (!updated.raw?.length) {
+                        throwDomainChangedDuringVerification()
+                    }
+                    const otherVerifiedCount = await emailDomainRepo(entityManager).countBy({ platformId, id: Not(id), verificationStatus: SsoDomainVerificationStatus.VERIFIED })
+                    if (otherVerifiedCount > 0 && !multipleDomainsAllowed) {
+                        throwMultipleDomainsDisabled()
+                    }
+                },
+            }),
         })
         logDomainEvent({ log, platformId, userId, ip, action: ApplicationEventName.SSO_DOMAIN_VERIFIED, domain: emailDomain.domain })
         return emailDomainRepo().findOneByOrFail({ id })
