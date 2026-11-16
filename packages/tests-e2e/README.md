@@ -24,6 +24,8 @@ Staging runs the CE specs in a shared, long-lived account after each deploy, and
 
 Start from `scenarios/flows/flow-journey.spec.ts` and `pages/builder.page.ts`. Locators and actions live in a page object under `pages/`; the spec holds the steps and the expected outcomes.
 
+A builder spec edits the canvas through `BuilderPage` and does not add canvas helpers of its own: `addStep` and `addStepAt` take a `StepSlot` (after a step, inside a loop, or inside a router branch), and `moveStep`, `duplicateStep`, `copyStep`, `pasteAfter`, `deleteStep` and `addNote` cover the rest. Playwright cannot scroll the canvas to an element, so these helpers click **Fit to view** first. A drag whose drop zone is outside the viewport makes the canvas scroll and the step lands in the wrong place, so `moveStep` fails there; a spec that moves steps sets a taller viewport with `test.use({ viewport })`, as `scenarios/builder/canvas.spec.ts` does. Check the result of a canvas edit in the saved flow (`GET /api/v1/flows/:id`), not only on the screen.
+
 ### The files of a feature
 
 Many people and agents write specs at the same time, so a feature adds new files and never edits a shared one.
