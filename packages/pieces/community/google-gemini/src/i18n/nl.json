@@ -149,5 +149,16 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD"
+  "HEAD": "HOOFD",
+  "Message": "bericht",
+  "Settings": "Instellingen",
+  "Search in": "Search in",
+  "History": "History",
+  "Script": "Script",
+  "Speaker": "Speaker",
+  "Video": "Video",
+  "Output": "Uitvoer",
+  "Content": "Inhoud",
+  "Request": "Request",
+  "Data to send": "Data to send"
 }

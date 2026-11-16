@@ -84,7 +84,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         if (error) {
             log.warn({ error }, 'Credit check failed mid-turn, letting the turn continue')
         }
-        creditsExhausted = !isNil(left) && left < 0
+        creditsExhausted = !isNil(left) && left <= 0
         paidToolsAffordable = isNil(left) || left >= CHAT_CREDITS_PER_TOOL_CALL
         return creditsExhausted
     }
@@ -105,6 +105,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         tools,
         surface: skills.surface,
         guides: skills.guides,
+        preloadedSkills: skills.preloaded,
         onSkillLoaded: (skill) => {
             if (skill.entersBuildPhase) {
                 phaseState.phase = 'build'
@@ -675,7 +676,7 @@ export type RunAgentTurnParams = {
     priorToolCalls?: ChatToolCall[]
     onModelOutcome?: (outcome: { turnModel: TurnModel, signal: ProviderOutcomeSignal }) => void
     onStepModel?: (turnModel: TurnModel) => void
-    skills?: { surface: SkillSurface, guides: Record<string, string> }
+    skills?: { surface: SkillSurface, guides: Record<string, string>, preloaded?: string[] }
 }
 
 export type AgentTurnResult = {

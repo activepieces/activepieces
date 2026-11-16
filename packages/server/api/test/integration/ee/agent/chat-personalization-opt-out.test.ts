@@ -107,6 +107,31 @@ describe('clearing chat personalization', () => {
     })
 })
 
+describe('company research for the founding user', () => {
+    it('gives the founding user the company cards when company research finishes', async () => {
+        const ctx = await createTestContext(app)
+        const researchToken = apId()
+        await db.save('chat_personalization', {
+            id: apId(),
+            platformId: ctx.platform.id,
+            userId: null,
+            domain: 'acme.com',
+            companyText: null,
+            role: null,
+            status: ChatPersonalizationStatus.RESEARCHING,
+            researchToken,
+            profile: null,
+            useCases: null,
+        })
+
+        await service().saveResult({ platformId: ctx.platform.id, userId: ctx.user.id, scope: ChatPersonalizationScope.COMPANY, researchToken, status: 'READY', profile: RESEARCHED_PROFILE, useCases: RESEARCHED_USE_CASES })
+
+        const userRow = await db.findOneByOrFail<{ status: string, useCases: unknown }>('chat_personalization', { platformId: ctx.platform.id, userId: ctx.user.id })
+        expect(userRow.status).toBe(ChatPersonalizationStatus.READY)
+        expect(userRow.useCases).toEqual(RESEARCHED_USE_CASES)
+    })
+})
+
 describe('changing the role on finished personalization', () => {
     it('starts new research for the new role instead of keeping the old cards', async () => {
         const ctx = await createTestContext(app)

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 export const searchQuoteAction = createAction({
   auth: bexioAuth,
@@ -8,7 +9,8 @@ export const searchQuoteAction = createAction({
   classification: 'SEARCH',
   displayName: 'Search Quote',
   description: 'Search for quotes using various criteria',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: bexioOutputSchemas.quoteArrayOutputSchema,
   aiMetadata: { description: 'Searches Bexio quotes (offers) by one or more field criteria (document number, contact, status, totals, dates, valid-until, etc.) with operators such as contains, equals, or comparison, with ordering and paging. Use to locate quotes before referencing or following up on them; pick Search Invoice or Search Order for those document types. Read-only and idempotent.', idempotent: true },
   props: {
     search_criteria: Property.Array({

@@ -100,7 +100,7 @@ describe('platform sidebar AI Center', () => {
     ).toEqual([]);
   });
 
-  it('shows Tiers between Providers and Capabilities on cloud', () => {
+  it('shows Tiers between Providers and Capabilities, then Usage, on cloud', () => {
     plan.aiProvidersEnabled = true;
     flags.edition = 'cloud';
 
@@ -111,7 +111,7 @@ describe('platform sidebar AI Center', () => {
       Array.from(aiCenter.children).map((item) =>
         item.getAttribute('aria-label'),
       ),
-    ).toEqual(['Providers', 'Tiers', 'Capabilities']);
+    ).toEqual(['Providers', 'Tiers', 'Capabilities', 'Usage']);
   });
 
   it('hides Tiers on self-hosted enterprise', () => {

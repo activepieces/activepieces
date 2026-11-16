@@ -4,6 +4,7 @@ import {
   RemoveProjectFromInvitationResponse,
   SendUserInvitationRequest,
   UserInvitation,
+  UserInvitationPreview,
   UserInvitationWithLink,
 } from '@activepieces/shared';
 
@@ -27,6 +28,11 @@ export const userInvitationApi = {
   },
   delete(id: string): Promise<void> {
     return api.delete<void>(`/v1/user-invitations/${id}`);
+  },
+  preview(token: string): Promise<UserInvitationPreview> {
+    return api.get<UserInvitationPreview>('/v1/user-invitations/preview', {
+      token,
+    });
   },
   accept(token: string): Promise<{ registered: boolean }> {
     return api.post<{ registered: boolean }>(`/v1/user-invitations/accept`, {

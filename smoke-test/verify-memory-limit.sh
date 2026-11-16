@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Verifies that a flow that exhausts the sandbox memory reliably ends with flow run status
-# MEMORY_LIMIT_EXCEEDED. Expects a flow created by benchmark/setup.ts with
-# CODE_BODY_FILE=benchmark/oom-code.js on a stack running
-# AP_EXECUTION_MODE=SANDBOX_CODE_ONLY. The code step builds ~50MB inside the 128MB v8
-# isolate (an array of refs to one big string), and the engine's outRef.copy() then
-# materializes every element separately in the ENGINE heap (~3GB) — the engine process dies
-# on the sandbox memory limit, which is how code-only engines OOM in production.
+# Verifies that a code step that exhausts its memory limit fails the step and leaves the engine
+# alive. Expects a flow created by benchmark/setup.ts with CODE_BODY_FILE=benchmark/oom-code.js
+# on a stack running AP_EXECUTION_MODE=SANDBOX_CODE_ONLY. Code steps run in a Deno process capped
+# at 128MB of heap; the step fills it, V8 aborts that Deno process with "Fatal JavaScript out of
+# memory", and the engine reports the run as FAILED with that message on the code step.
 
 FLOW_ID="${1:?Usage: verify-memory-limit.sh <flow_id> [base_url] [num_runs]}"
 BASE_URL="${2:-localhost:8080}"
@@ -45,8 +43,12 @@ count_runs() {
   list_runs | jq '.data | length'
 }
 
-latest_run_status() {
-  list_runs | jq -r '.data[0].status // empty'
+latest_run() {
+  list_runs | jq -r '.data[0] | "\(.id // "") \(.status // "")"'
+}
+
+code_step_error() {
+  curl -s --max-time 30 "$API/flow-runs/$1" -H "$AUTH" | jq -r '.steps.step_2.errorMessage // empty'
 }
 
 PASS=0
@@ -66,11 +68,12 @@ for i in $(seq 1 "$NUM_RUNS"); do
     "http://$BASE_URL/api/v1/webhooks/$FLOW_ID")
   echo "  Webhook fired (HTTP $HTTP_CODE)"
 
+  RUN_ID=""
   STATUS=""
   for _ in $(seq 1 "$RUN_TIMEOUT_SECONDS"); do
     CURRENT_COUNT=$(count_runs)
     if [ "$CURRENT_COUNT" -ge "$EXPECTED_COUNT" ]; then
-      STATUS=$(latest_run_status)
+      read -r RUN_ID STATUS <<< "$(latest_run)"
       case "$STATUS" in
         RUNNING|QUEUED|PAUSED|"") ;;
         *) break ;;
@@ -79,11 +82,20 @@ for i in $(seq 1 "$NUM_RUNS"); do
     sleep 1
   done
 
-  if [ "$STATUS" = "MEMORY_LIMIT_EXCEEDED" ]; then
-    echo "  PASS: run ended with status MEMORY_LIMIT_EXCEEDED"
+  STEP_ERROR=""
+  if [ "$STATUS" = "FAILED" ]; then
+    STEP_ERROR=$(code_step_error "$RUN_ID")
+  fi
+
+  if [ "$STATUS" != "FAILED" ]; then
+    echo "  FAIL: run ended with status '${STATUS:-<never finished>}' (expected FAILED)"
+    FAIL=$((FAIL + 1))
+  elif [[ "${STEP_ERROR,,}" == *"out of memory"* ]]; then
+    echo "  PASS: code step failed with an out-of-memory error"
     PASS=$((PASS + 1))
   else
-    echo "  FAIL: run ended with status '${STATUS:-<never finished>}' (expected MEMORY_LIMIT_EXCEEDED)"
+    echo "  FAIL: run FAILED, but the code step error does not say out of memory:"
+    echo "${STEP_ERROR:0:2000}"
     FAIL=$((FAIL + 1))
   fi
   echo ""

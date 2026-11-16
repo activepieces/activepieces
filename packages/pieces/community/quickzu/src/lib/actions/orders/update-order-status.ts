@@ -1,11 +1,13 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { quickzuAuth } from '../../auth';
-import { makeClient, quickzuCommon } from '../../common';
+import { quickzuOutputSchemas } from '../../common/output-schemas';
+import { makeClient, quickzuCommon, requireValue } from '../../common';
 import { OrderStatus } from '../../common/constants';
 
 export const updateOrderStatusAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_update_order_status',
+  outputSchema: quickzuOutputSchemas.order,
   classification: 'DESTRUCTIVE',
   displayName: 'Update Order Status',
   description: 'Updates status of order in store.',
@@ -35,6 +37,9 @@ export const updateOrderStatusAction = createAction({
     const { orderId, status } = context.propsValue;
 
     const client = makeClient(context.auth);
-    return await client.updateOrderStatus(orderId!, status);
+    return await client.updateOrderStatus({
+      orderId: requireValue({ value: orderId, label: 'Order' }),
+      status,
+    });
   },
 });

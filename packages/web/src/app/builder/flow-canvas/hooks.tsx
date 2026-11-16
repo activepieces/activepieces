@@ -5,7 +5,6 @@ import {
   FlowVersionState,
   flowStructureUtil,
   WebsocketClientEvent,
-  RunEnvironment,
   isFlowRunStateTerminal,
 } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -64,7 +63,6 @@ const useListenToExistingRun = () => {
     },
     enabled:
       !isNil(run) &&
-      run.environment === RunEnvironment.PRODUCTION &&
       !isFlowRunStateTerminal({
         status: run.status,
         ignoreInternalError: false,
@@ -188,15 +186,14 @@ const useRefreshDraftOnReconnectAndReturn = () => {
 };
 
 export const useSwitchToDraft = () => {
-  const [flowVersion, setVersion, clearRun, setFlow] = useBuilderStateContext(
-    (state) => [
+  const [flowVersion, setVersion, clearRun, setFlow, abortTestRunSubscription] =
+    useBuilderStateContext((state) => [
       state.flowVersion,
       state.setVersion,
       state.clearRun,
       state.setFlow,
-    ],
-  );
-  const socket = useSocket();
+      state.abortTestRunSubscription,
+    ]);
   const { checkAccess } = useAuthorization();
   const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
 
@@ -210,7 +207,7 @@ export const useSwitchToDraft = () => {
         setFlow(flow);
         setVersion(flow.version);
         clearRun(userHasPermissionToEditFlow);
-        socket.removeAllListeners(WebsocketClientEvent.UPDATE_RUN_PROGRESS);
+        abortTestRunSubscription();
       },
       // surface the failure instead of silently keeping a stale draft, which
       // matters most on the lock take-over path where the refresh replaces a

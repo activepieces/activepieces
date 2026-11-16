@@ -1,0 +1,603 @@
+import { isNil } from '@activepieces/core-utils';
+import { FlowRun } from '@activepieces/shared';
+import { t } from 'i18next';
+import { CornerLeftUp, Search } from 'lucide-react';
+import { useMemo, useState } from 'react';
+
+import {
+  CardListEmpty,
+  CardListItemSkeleton,
+} from '@/components/custom/card-list';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
+import { flowRunQueries } from '@/features/flow-runs';
+import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
+
+import { useBuilderStateContext } from '../builder-hooks';
+
+import {
+  BATCH_PAGE_SIZE,
+  BatchHeaderState,
+  BatchStatusBadge,
+  BatchStepRunOutput,
+  FAILED_BATCH_STATUSES,
+  batchUtils,
+} from './batch-utils';
+import { enclosingBatchStep, useBatchStepRun } from './use-step-output-in-run';
+
+export const BatchBrowser = ({ stepName }: { stepName: string }) => {
+  const setBatchIndex = useBuilderStateContext((state) => state.setBatchIndex);
+  const { output, batchCount, selectedDispatchIndex } =
+    useBatchStepRun(stepName);
+  const [jumpQuery, setJumpQuery] = useState('');
+  const [failedOnly, setFailedOnly] = useState(false);
+
+  const header = batchUtils.headerState(output);
+  const jumpTarget = batchUtils.parseJumpTarget({
+    query: jumpQuery,
+    total: batchCount,
+  });
+
+  if (isNil(output)) {
+    return <CardListItemSkeleton numberOfCards={5} withCircle={false} />;
+  }
+  if (batchCount === 0) {
+    return (
+      <CardListEmpty
+        message={t(
+          'Items resolved to an empty array, so nothing ran. The flow continued to the next step.',
+        )}
+      />
+    );
+  }
+
+  const selectBatch = (dispatchIndex: number) =>
+    setBatchIndex({ stepName, index: dispatchIndex });
+
+  return (
+    <div className="flex flex-col gap-3">
+      <BatchProgress header={header} output={output} />
+      <BatchStatTiles header={header} />
+      <div className="flex items-center gap-2 rounded-md border px-3 py-2">
+        <Search className="size-3.5 shrink-0 text-gray-11" />
+        <Input
+          value={jumpQuery}
+          onChange={(e) => setJumpQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && jumpTarget.kind === 'index') {
+              selectBatch(jumpTarget.dispatchIndex);
+            }
+          }}
+          placeholder={t('Find a batch by number…')}
+          className="h-4 grow border-0 bg-transparent p-0 shadow-none focus-visible:ring-0"
+        />
+        <Badge
+          asChild
+          variant={failedOnly ? 'destructive' : 'outline'}
+          className="shrink-0 cursor-pointer px-2 py-0.5 font-semibold"
+        >
+          <button type="button" onClick={() => setFailedOnly(!failedOnly)}>
+            {t('Failed only')}
+          </button>
+        </Badge>
+      </div>
+      {jumpTarget.kind === 'invalid' && (
+        <span className="text-xs text-gray-11">
+          {t('Search by batch number')}
+        </span>
+      )}
+      {jumpTarget.kind === 'outOfRange' && (
+        <span className="text-xs text-danger-11">
+          {t('Only {total} batches', {
+            total: formatUtils.formatNumber(jumpTarget.total),
+          })}
+        </span>
+      )}
+      {failedOnly &&
+        jumpTarget.kind !== 'index' &&
+        header.kind === 'finished' &&
+        header.notDispatched > 0 && (
+          <span className="text-xs text-gray-11">
+            {t(
+              '{count, plural, =1 {# batch did not start, so it has no run to show. Find it by batch number.} other {# batches did not start, so they have no run to show. Find one by batch number.}}',
+              { count: header.notDispatched },
+            )}
+          </span>
+        )}
+      {jumpTarget.kind === 'index' ? (
+        <JumpTargetRow
+          output={output}
+          dispatchIndex={jumpTarget.dispatchIndex}
+          isFinished={header.kind === 'finished'}
+          selectedIndex={selectedDispatchIndex}
+          onSelect={selectBatch}
+        />
+      ) : (
+        <BatchList
+          output={output}
+          failedOnly={failedOnly}
+          selectedIndex={selectedDispatchIndex}
+          onSelect={selectBatch}
+        />
+      )}
+      <BatchDetail output={output} dispatchIndex={selectedDispatchIndex} />
+    </div>
+  );
+};
+
+export const BatchBreadcrumb = ({ stepName }: { stepName: string }) => {
+  const [trigger, selectStepByName] = useBuilderStateContext((state) => [
+    state.flowVersion.trigger,
+    state.selectStepByName,
+  ]);
+  const batchStepName = useMemo(
+    () => enclosingBatchStep({ stepName, trigger })?.name ?? null,
+    [stepName, trigger],
+  );
+  const { output, batchCount, selectedDispatchIndex } =
+    useBatchStepRun(batchStepName);
+
+  if (isNil(batchStepName) || isNil(output)) {
+    return <></>;
+  }
+  return (
+    <div className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-11">
+      <CornerLeftUp className="size-3.5 shrink-0" />
+      <span>
+        {t('Reading Batch {number} of {total}', {
+          number: formatUtils.formatNumber(selectedDispatchIndex + 1),
+          total: formatUtils.formatNumber(batchCount),
+        })}
+      </span>
+      <span className="truncate font-mono">
+        {batchUtils.itemRangeLabel({
+          output,
+          dispatchIndex: selectedDispatchIndex,
+        })}
+      </span>
+      <button
+        type="button"
+        className="ml-auto shrink-0 text-accent-11 underline"
+        onClick={() => selectStepByName(batchStepName)}
+      >
+        {t('Browse batches')}
+      </button>
+    </div>
+  );
+};
+
+const BatchProgress = ({
+  header,
+  output,
+}: {
+  header: BatchHeaderState;
+  output: BatchStepRunOutput;
+}) => (
+  <div className="flex flex-col gap-2">
+    <div
+      className={cn(
+        'h-2 rounded-full',
+        header.kind === 'finished' ? 'bg-gray-3' : 'animate-pulse bg-accent-5',
+      )}
+      style={
+        header.kind === 'finished'
+          ? { backgroundImage: progressGradient(header) }
+          : undefined
+      }
+    />
+    <span className="text-xs text-gray-11">
+      {t('Split {items} items, {size} each', {
+        items: formatUtils.formatNumber(output.totalItems),
+        size: formatUtils.formatNumber(output.batchSize),
+      })}
+    </span>
+    {header.kind === 'finished' && header.timedOut && (
+      <span className="text-xs text-warning-11">
+        {t('Stopped waiting after the timeout, with {running} still running', {
+          running: formatUtils.formatNumber(header.stillRunning),
+        })}
+      </span>
+    )}
+  </div>
+);
+
+const BatchStatTiles = ({ header }: { header: BatchHeaderState }) => {
+  if (header.kind === 'unknown') {
+    return <></>;
+  }
+  if (header.kind === 'pending') {
+    return (
+      <span className="text-sm font-semibold">
+        {t('{total} batches · still running', {
+          total: formatUtils.formatNumber(header.total),
+        })}
+      </span>
+    );
+  }
+  const tiles = [
+    {
+      label: t('Expected'),
+      value: header.total,
+      valueClassName: 'text-gray-12',
+      dotClassName: null,
+    },
+    {
+      label: t('Succeeded'),
+      value: header.succeeded,
+      valueClassName: 'text-success-11',
+      dotClassName: 'bg-success-10',
+    },
+    {
+      label: t('Failed'),
+      value: header.unsuccessful,
+      valueClassName: 'text-danger-11',
+      dotClassName: 'bg-danger-10',
+    },
+    {
+      label: t('Running'),
+      value: header.stillRunning,
+      valueClassName: 'text-accent-11',
+      dotClassName: 'bg-accent-10',
+    },
+  ];
+  return (
+    <div className="grid grid-cols-4 gap-2">
+      {tiles.map((tile) => (
+        <div
+          key={tile.label}
+          className="flex flex-col gap-1 rounded-lg border bg-gray-1 p-2"
+        >
+          <span
+            className={cn(
+              'text-lg font-semibold leading-none',
+              tile.valueClassName,
+            )}
+          >
+            {formatUtils.formatNumber(tile.value)}
+          </span>
+          <span className="flex items-center gap-1.5 text-xs text-gray-11">
+            {!isNil(tile.dotClassName) && (
+              <i
+                className={cn(
+                  'size-1.5 shrink-0 rounded-full',
+                  tile.dotClassName,
+                )}
+              />
+            )}
+            {tile.label}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const BatchList = ({
+  output,
+  failedOnly,
+  selectedIndex,
+  onSelect,
+}: {
+  output: BatchStepRunOutput;
+  failedOnly: boolean;
+  selectedIndex: number;
+  onSelect: (dispatchIndex: number) => void;
+}) => {
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetchNextPageError,
+  } = flowRunQueries.useBatchChildren({
+    barrierId: output.barrierId,
+    limit: BATCH_PAGE_SIZE,
+    statuses: failedOnly ? FAILED_BATCH_STATUSES : undefined,
+    enabled: true,
+    allBatchesTerminal: batchUtils.areAllBatchesTerminal(output),
+  });
+
+  const rows: BatchListItem[] = useMemo(() => {
+    const seen = new Set<string>();
+    const children = (data?.pages.flatMap((page) => page.data) ?? []).filter(
+      (run) => {
+        if (seen.has(run.id) || isNil(run.dispatchIndex)) {
+          return false;
+        }
+        seen.add(run.id);
+        return true;
+      },
+    );
+    const items: BatchListItem[] = children.map((run) => ({
+      type: 'batch' as const,
+      run,
+    }));
+    return hasNextPage
+      ? [...items, { type: 'loadMore' as const, id: 'loadMore' }]
+      : items;
+  }, [data, hasNextPage]);
+
+  if (isLoading) {
+    return <CardListItemSkeleton numberOfCards={5} withCircle={false} />;
+  }
+  if (isError) {
+    return <DataFetchErrorState entity={t('batches')} onRetry={refetch} />;
+  }
+  if (rows.length === 0) {
+    return (
+      <div className="py-8">
+        <CardListEmpty
+          message={failedOnly ? t('No failed batches') : t('No batches found')}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <VirtualizedScrollArea
+      className="h-[280px] w-full rounded-lg border"
+      items={rows}
+      estimateSize={() => BATCH_ROW_HEIGHT}
+      getItemKey={(index) => index}
+      renderItem={(item) => {
+        if (item.type === 'batch') {
+          return (
+            <BatchRow
+              output={output}
+              run={item.run}
+              isSelected={item.run.dispatchIndex === selectedIndex}
+              onSelect={onSelect}
+            />
+          );
+        }
+        return (
+          <div className="flex h-full items-center px-2">
+            <Button
+              className="w-full"
+              variant="secondary"
+              size="sm"
+              onClick={() => fetchNextPage()}
+              loading={isFetchingNextPage}
+            >
+              {isFetchNextPageError ? t('Retry') : t('More...')}
+            </Button>
+          </div>
+        );
+      }}
+    />
+  );
+};
+
+const JumpTargetRow = ({
+  output,
+  dispatchIndex,
+  isFinished,
+  selectedIndex,
+  onSelect,
+}: {
+  output: BatchStepRunOutput;
+  dispatchIndex: number;
+  isFinished: boolean;
+  selectedIndex: number;
+  onSelect: (dispatchIndex: number) => void;
+}) => {
+  const { data, isLoading, isError, refetch } =
+    flowRunQueries.useBatchChildByIndex({
+      barrierId: output.barrierId,
+      dispatchIndex,
+      enabled: true,
+      hasBatchSummary: batchUtils.hasBatchSummary(output),
+    });
+  const run = data?.data[0] ?? null;
+
+  if (isLoading) {
+    return <CardListItemSkeleton numberOfCards={1} withCircle={false} />;
+  }
+  if (isError && isNil(data)) {
+    return <DataFetchErrorState entity={t('this batch')} onRetry={refetch} />;
+  }
+  if (isNil(run) && !isFinished) {
+    return (
+      <div className="rounded-lg border p-4 text-xs text-gray-11">
+        {t('Batch {number} not found', {
+          number: formatUtils.formatNumber(dispatchIndex + 1),
+        })}
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-lg border">
+      <div style={{ height: BATCH_ROW_HEIGHT }}>
+        <BatchRow
+          output={output}
+          run={run}
+          fallbackDispatchIndex={dispatchIndex}
+          isSelected={dispatchIndex === selectedIndex}
+          onSelect={onSelect}
+        />
+      </div>
+    </div>
+  );
+};
+
+const BatchRow = ({
+  output,
+  run,
+  fallbackDispatchIndex,
+  isSelected,
+  onSelect,
+}: {
+  output: BatchStepRunOutput;
+  run: FlowRun | null;
+  fallbackDispatchIndex?: number;
+  isSelected: boolean;
+  onSelect: (dispatchIndex: number) => void;
+}) => {
+  const dispatchIndex = run?.dispatchIndex ?? fallbackDispatchIndex ?? 0;
+  const badge = batchUtils.batchStatusBadge(
+    isNil(run)
+      ? batchUtils.missingLogsReason({
+          output,
+          dispatchIndex,
+          child: null,
+        })
+      : run.status,
+  );
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(dispatchIndex)}
+      className={cn(
+        'flex h-full w-full items-center gap-2 border-b px-2 text-left last:border-b-0 hover:bg-gray-4',
+        isSelected && 'border-accent-6 bg-accent-3 hover:bg-accent-3',
+      )}
+    >
+      <span className="w-[60px] shrink-0 text-xs font-semibold">
+        {t('Batch {number}', {
+          number: formatUtils.formatNumber(dispatchIndex + 1),
+        })}
+      </span>
+      <span className="grow truncate font-mono text-xs text-gray-11">
+        {batchUtils.itemRangeLabel({ output, dispatchIndex })}
+      </span>
+      <span className="w-[52px] shrink-0 text-right text-xs text-gray-11">
+        {runDuration(run) ?? '—'}
+      </span>
+      <StatusBadge badge={badge} />
+    </button>
+  );
+};
+
+const BatchDetail = ({
+  output,
+  dispatchIndex,
+}: {
+  output: BatchStepRunOutput;
+  dispatchIndex: number;
+}) => {
+  const { data, isLoading, isError, refetch } =
+    flowRunQueries.useBatchChildByIndex({
+      barrierId: output.barrierId,
+      dispatchIndex,
+      enabled: true,
+      hasBatchSummary: batchUtils.hasBatchSummary(output),
+    });
+  if (isLoading) {
+    return <CardListItemSkeleton numberOfCards={1} withCircle={false} />;
+  }
+  if (isError && isNil(data)) {
+    return <DataFetchErrorState entity={t('this batch')} onRetry={refetch} />;
+  }
+  const run = data?.data[0] ?? null;
+  const missingReason = batchUtils.missingLogsReason({
+    output,
+    dispatchIndex,
+    child: null,
+  });
+  const badge = batchUtils.batchStatusBadge(
+    isNil(run) ? missingReason : run.status,
+  );
+  const missingLogsCopy = isNil(run)
+    ? batchUtils.missingLogsCopy(missingReason)
+    : null;
+  const duration = runDuration(run);
+  const failureMessage = batchUtils.failureMessage(run?.failedStep?.message);
+
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border p-3">
+      <div className="flex items-center gap-2">
+        <StatusBadge badge={badge} />
+        <span className="text-sm font-semibold">
+          {t('Batch {number}', {
+            number: formatUtils.formatNumber(dispatchIndex + 1),
+          })}
+        </span>
+        <span className="font-mono text-xs text-gray-11">
+          {batchUtils.itemRangeLabel({ output, dispatchIndex })}
+        </span>
+        {!isNil(duration) && (
+          <span className="ml-auto shrink-0 text-xs text-gray-11">
+            {t('took {duration}', { duration })}
+          </span>
+        )}
+      </div>
+      {!isNil(missingLogsCopy) && (
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs font-medium">{missingLogsCopy.title}</span>
+          <span className="text-xs leading-relaxed text-gray-11">
+            {missingLogsCopy.description}
+          </span>
+        </div>
+      )}
+      {!isNil(run?.failedStep) && (
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs font-medium text-danger-11">
+            {run.failedStep.displayName}
+          </span>
+          {!isNil(failureMessage) && (
+            <span className="whitespace-pre-wrap wrap-break-word text-xs leading-relaxed text-gray-11">
+              {failureMessage}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const StatusBadge = ({ badge }: { badge: BatchStatusBadge }) => (
+  <Badge variant={badge.variant} className="shrink-0">
+    <badge.Icon />
+    {badge.label}
+  </Badge>
+);
+
+function progressGradient({
+  total,
+  succeeded,
+  unsuccessful,
+  stillRunning,
+}: {
+  total: number;
+  succeeded: number;
+  unsuccessful: number;
+  stillRunning: number;
+}): string {
+  let cursor = 0;
+  const stops = [
+    { color: 'var(--success-9)', value: succeeded },
+    { color: 'var(--danger-9)', value: unsuccessful },
+    { color: 'var(--accent-9)', value: stillRunning },
+  ].flatMap(({ color, value }) => {
+    if (value === 0) {
+      return [];
+    }
+    const from = cursor;
+    cursor += (value / total) * 100;
+    return [`${color} ${from}% ${cursor}%`];
+  });
+  return `linear-gradient(to right, ${stops.join(', ')})`;
+}
+
+function runDuration(run: FlowRun | null): string | null {
+  if (isNil(run?.startTime) || isNil(run.finishTime)) {
+    return null;
+  }
+  return formatUtils.formatDuration(
+    new Date(run.finishTime).getTime() - new Date(run.startTime).getTime(),
+    true,
+  );
+}
+
+const BATCH_ROW_HEIGHT = 36;
+
+type BatchListItem =
+  | { type: 'batch'; run: FlowRun }
+  | { type: 'loadMore'; id: 'loadMore' };

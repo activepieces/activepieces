@@ -5,7 +5,8 @@ export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
   {
     provider: AIProviderName.ANTHROPIC,
     name: 'Anthropic',
-    markdown: t(`Follow these instructions to get your Claude API Key:
+    markdown: () =>
+      t(`Follow these instructions to get your Claude API Key:
 
 1. Go to https://console.anthropic.com/settings/keys.
 2. Once on the website, locate and click on the option to obtain your Claude API Key.
@@ -17,7 +18,8 @@ export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
     provider: AIProviderName.BEDROCK,
     name: 'AWS Bedrock',
     logoUrl: 'https://cdn.activepieces.com/pieces/amazon-bedrock.png',
-    markdown: t(`Connect your AWS account to use Amazon Bedrock AI models.
+    markdown: () =>
+      t(`Connect your AWS account to use Amazon Bedrock AI models.
 
 1. Open the [AWS IAM Console](https://console.aws.amazon.com/iam/) and go to **Users**.
 2. Select your user (or create a new one), then go to **Security credentials**.
@@ -29,7 +31,7 @@ export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
     provider: AIProviderName.VERTEX,
     name: 'Google Vertex AI',
     logoUrl: 'https://cdn.activepieces.com/pieces/google-vertexai.png',
-    markdown:
+    markdown: () =>
       t(`Connect a Google Cloud service account to call Vertex AI models inside your own GCP project.
 
 1. Open the [Google Cloud Console](https://console.cloud.google.com) and select the project you want to bill.
@@ -43,15 +45,16 @@ export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
     provider: AIProviderName.AZURE,
     name: 'Azure',
     logoUrl: 'https://cdn.activepieces.com/pieces/azure-openai.png',
-    markdown: t(
-      'Use the Azure Portal to browse to your OpenAI resource and retrieve an API key and resource name.',
-    ),
+    markdown: () =>
+      t(
+        'Use the Azure Portal to browse to your OpenAI resource and retrieve an API key and resource name.',
+      ),
   },
   {
     provider: AIProviderName.CLOUDFLARE_GATEWAY,
     name: 'Cloudflare AI Gateway',
     logoUrl: 'https://cdn.activepieces.com/pieces/cloudflare-gateway.png',
-    markdown:
+    markdown: () =>
       t(`Follow these instructions to get your Cloudflare AI Gateway API Key:
 1. Go to https://developers.cloudflare.com/ai-gateway/get-started/ to create your gateway then enter it from the dashboard.
 2. Look in the overview section for this link https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_name}/ to get your account id and gateway id.
@@ -60,10 +63,25 @@ export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
 5. After you finish all the previous steps and filled the required inputs, add models but make sure you prefix the model id with the provider name i.e (openai/gpt-4o) or (anthropic/claude-3-5-sonnet), check https://developers.cloudflare.com/ai-gateway/usage/chat-completion/ for more information.`),
   },
   {
+    provider: AIProviderName.COHERE,
+    name: 'Cohere',
+    logoUrl: 'https://cdn.activepieces.com/pieces/cohere.png',
+    markdown: () =>
+      t(`Follow these instructions to get your Cohere API Key:
+
+1. Go to https://dashboard.cohere.com/api-keys and sign in.
+2. Copy a trial key or click **New Production Key**, then paste it below.
+
+Trial keys are free but rate-limited. Use a production key for live flows.
+`),
+    dashboardUrl: 'https://dashboard.cohere.com/billing',
+  },
+  {
     provider: AIProviderName.DEEPSEEK,
     name: 'DeepSeek',
     logoUrl: 'https://cdn.activepieces.com/pieces/deepseek.png',
-    markdown: t(`Follow these instructions to get your DeepSeek API Key:
+    markdown: () =>
+      t(`Follow these instructions to get your DeepSeek API Key:
 
 1. Go to https://platform.deepseek.com/api_keys.
 2. Click **Create new API key**, copy the key, and paste it below.
@@ -72,7 +90,8 @@ export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
   {
     provider: AIProviderName.GOOGLE,
     name: 'Google Gemini',
-    markdown: t(`Follow these instructions to get your Google API Key:
+    markdown: () =>
+      t(`Follow these instructions to get your Google API Key:
 1. Go to https://console.cloud.google.com/apis/credentials.
 2. Once on the website, locate and click on the option to obtain your Google API Key.
 `),
@@ -83,7 +102,8 @@ export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
     provider: AIProviderName.META,
     name: 'Meta',
     logoUrl: 'https://cdn.activepieces.com/pieces/meta.png',
-    markdown: t(`Follow these instructions to get your Meta Model API Key:
+    markdown: () =>
+      t(`Follow these instructions to get your Meta Model API Key:
 
 1. Go to https://dev.meta.ai and sign in.
 2. Open **API keys** in the dashboard, click **Create API key**, copy the key, and paste it below.
@@ -96,7 +116,8 @@ The Meta Model API serves Meta's Muse models and opened to developers in the US 
     provider: AIProviderName.MINIMAX,
     name: 'MiniMax',
     logoUrl: 'https://cdn.activepieces.com/pieces/minimax.png',
-    markdown: t(`Follow these instructions to get your MiniMax API Key:
+    markdown: () =>
+      t(`Follow these instructions to get your MiniMax API Key:
 
 1. Go to https://platform.minimax.io and sign in.
 2. Open **API Keys** in your account settings, create a key, and paste it below.
@@ -108,7 +129,8 @@ This connects to MiniMax's international endpoint. A key from the China platform
     provider: AIProviderName.MISTRAL,
     name: 'Mistral AI',
     logoUrl: 'https://cdn.activepieces.com/pieces/mistral-ai.png',
-    markdown: t(`Follow these instructions to get your Mistral AI API Key:
+    markdown: () =>
+      t(`Follow these instructions to get your Mistral AI API Key:
 
 1. Go to https://console.mistral.ai.
 2. Navigate to **API Keys** in your account settings.
@@ -120,7 +142,7 @@ This connects to MiniMax's international endpoint. A key from the China platform
     provider: AIProviderName.MOONSHOT,
     name: 'Moonshot AI',
     logoUrl: 'https://cdn.activepieces.com/pieces/moonshot-ai.png',
-    markdown:
+    markdown: () =>
       t(`Follow these instructions to get your Moonshot AI (Kimi) API Key:
 
 1. Go to https://platform.moonshot.ai/console/api-keys.
@@ -133,7 +155,8 @@ This connects to Moonshot's international endpoint. A key from the China platfor
     provider: AIProviderName.NVIDIA,
     name: 'NVIDIA',
     logoUrl: 'https://cdn.activepieces.com/pieces/nvidia.png',
-    markdown: t(`Follow these instructions to get your NVIDIA API Key:
+    markdown: () =>
+      t(`Follow these instructions to get your NVIDIA API Key:
 
 1. Go to https://build.nvidia.com and open any model.
 2. Click **Get API Key**, sign in with your NVIDIA account, copy the key (it starts with nvapi-), and paste it below.
@@ -144,7 +167,8 @@ NVIDIA offers these hosted keys for trial and development use. For production, r
   {
     provider: AIProviderName.OPENAI,
     name: 'OpenAI',
-    markdown: t(`Follow these instructions to get your OpenAI API Key:
+    markdown: () =>
+      t(`Follow these instructions to get your OpenAI API Key:
 
 1. Go to https://platform.openai.com/account/api-keys.
 2. Once on the website, locate and click on the option to obtain your OpenAI API Key.
@@ -158,7 +182,8 @@ It is strongly recommended that you add your credit card information to your Ope
     provider: AIProviderName.OPENROUTER,
     name: 'OpenRouter',
     logoUrl: 'https://cdn.activepieces.com/pieces/openrouter.jpg',
-    markdown: t(`Follow these instructions to get your OpenRouter API Key:
+    markdown: () =>
+      t(`Follow these instructions to get your OpenRouter API Key:
 1. Go to https://openrouter.ai/settings/keys.
 2. Once on the website, locate and click on the option to obtain your OpenRouter API Key.`),
     dashboardUrl: 'https://openrouter.ai/activity',
@@ -167,7 +192,8 @@ It is strongly recommended that you add your credit card information to your Ope
     provider: AIProviderName.QWEN,
     name: 'Qwen',
     logoUrl: 'https://cdn.activepieces.com/pieces/qwen.png',
-    markdown: t(`Follow these instructions to get your Qwen API Key:
+    markdown: () =>
+      t(`Follow these instructions to get your Qwen API Key:
 
 1. Go to https://bailian.console.alibabacloud.com and sign in to Alibaba Cloud Model Studio.
 2. Open **API-KEY**, create a key, and paste it below.
@@ -179,7 +205,8 @@ This connects to Model Studio's international (Singapore) endpoint. A key from t
     provider: AIProviderName.XAI,
     name: 'xAI',
     logoUrl: 'https://cdn.activepieces.com/pieces/grok-xai.png',
-    markdown: t(`Follow these instructions to get your xAI API Key:
+    markdown: () =>
+      t(`Follow these instructions to get your xAI API Key:
 
 1. Go to https://console.x.ai and sign in.
 2. Open **API Keys**, click **Create API key**, copy the key, and paste it below.
@@ -189,7 +216,8 @@ This connects to Model Studio's international (Singapore) endpoint. A key from t
     provider: AIProviderName.ZAI,
     name: 'Z.ai',
     logoUrl: 'https://cdn.activepieces.com/pieces/z-ai.png',
-    markdown: t(`Follow these instructions to get your Z.ai (GLM) API Key:
+    markdown: () =>
+      t(`Follow these instructions to get your Z.ai (GLM) API Key:
 
 1. Go to https://z.ai/manage-apikey/apikey-list and sign in.
 2. Create an API key, copy it, and paste it below.
@@ -201,7 +229,7 @@ This connects to Z.ai's international endpoint. A key from bigmodel.cn will not 
     provider: AIProviderName.CUSTOM,
     name: 'Other (OpenAI Compatible)',
     logoUrl: 'https://cdn.activepieces.com/pieces/new-core/text-ai.svg',
-    markdown:
+    markdown: () =>
       t(`Follow these instructions to get your OpenAI Compatible API Key:
 1. Set the base url to your proxy url.
 2. In the api key input, make sure to include any required prefix, i.e 'Bearer sk-****************'.
@@ -212,7 +240,7 @@ This connects to Z.ai's international endpoint. A key from bigmodel.cn will not 
 export type AiProviderInfo = {
   provider: AIProviderName;
   name: string;
-  markdown: string;
+  markdown: () => string;
   logoUrl: string;
   dashboardUrl?: string;
 };

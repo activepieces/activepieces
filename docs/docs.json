@@ -123,10 +123,13 @@
                      "flows/passing-data",
                      "flows/using-formulas",
                      "flows/formula-reference",
+                     "flows/process-in-batches",
                      "flows/project-variables",
                      "flows/publishing-flows",
                      "flows/flow-approvals",
                      "flows/debugging-runs",
+                     "flows/managing-memory",
+                     "flows/managing-queues",
                     "flows/versioning",
                     "flows/template-library",
                     "flows/canvas-controls"
@@ -382,7 +385,8 @@
                         "pages": [
                           "admin-guide/guides/setup-ai-providers",
                           "admin-guide/guides/ai-tiers",
-                          "admin-guide/guides/ai-capabilities"
+                          "admin-guide/guides/ai-capabilities",
+                          "admin-guide/guides/ai-usage"
                         ]
                       },
                       "admin-guide/guides/global-connections",
@@ -436,8 +440,27 @@
                           "admin-guide/security/audit-logs/user-signed-up",
                           "admin-guide/security/audit-logs/user-email-verified",
                           "admin-guide/security/audit-logs/user-password-reset",
+                          "admin-guide/security/audit-logs/user-invitation-sent",
+                          "admin-guide/security/audit-logs/user-invitation-accepted",
+                          "admin-guide/security/audit-logs/user-invitation-deleted",
                           "admin-guide/security/audit-logs/signing-key-created",
-                          "admin-guide/security/audit-logs/audit-log-retention-updated"
+                          "admin-guide/security/audit-logs/audit-log-retention-updated",
+                          "admin-guide/security/audit-logs/authentication-email-enabled",
+                          "admin-guide/security/audit-logs/authentication-email-disabled",
+                          "admin-guide/security/audit-logs/authentication-google-enabled",
+                          "admin-guide/security/audit-logs/authentication-google-disabled",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-added",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-removed",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-enforcement-enabled",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-enforcement-disabled",
+                          "admin-guide/security/audit-logs/sso-domain-added",
+                          "admin-guide/security/audit-logs/sso-domain-verified",
+                          "admin-guide/security/audit-logs/sso-domain-verification-cancelled",
+                          "admin-guide/security/audit-logs/sso-domain-removed",
+                          "admin-guide/security/audit-logs/sso-domain-expired",
+                          "admin-guide/security/audit-logs/sso-saml-connected",
+                          "admin-guide/security/audit-logs/sso-saml-replaced",
+                          "admin-guide/security/audit-logs/sso-saml-disabled"
                         ]
                       }
                     ]
@@ -468,8 +491,27 @@
                           "admin-guide/security/audit-logs/user-signed-up",
                           "admin-guide/security/audit-logs/user-email-verified",
                           "admin-guide/security/audit-logs/user-password-reset",
+                          "admin-guide/security/audit-logs/user-invitation-sent",
+                          "admin-guide/security/audit-logs/user-invitation-accepted",
+                          "admin-guide/security/audit-logs/user-invitation-deleted",
                           "admin-guide/security/audit-logs/signing-key-created",
-                          "admin-guide/security/audit-logs/audit-log-retention-updated"
+                          "admin-guide/security/audit-logs/audit-log-retention-updated",
+                          "admin-guide/security/audit-logs/authentication-email-enabled",
+                          "admin-guide/security/audit-logs/authentication-email-disabled",
+                          "admin-guide/security/audit-logs/authentication-google-enabled",
+                          "admin-guide/security/audit-logs/authentication-google-disabled",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-added",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-removed",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-enforcement-enabled",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-enforcement-disabled",
+                          "admin-guide/security/audit-logs/sso-domain-added",
+                          "admin-guide/security/audit-logs/sso-domain-verified",
+                          "admin-guide/security/audit-logs/sso-domain-verification-cancelled",
+                          "admin-guide/security/audit-logs/sso-domain-removed",
+                          "admin-guide/security/audit-logs/sso-domain-expired",
+                          "admin-guide/security/audit-logs/sso-saml-connected",
+                          "admin-guide/security/audit-logs/sso-saml-replaced",
+                          "admin-guide/security/audit-logs/sso-saml-disabled"
                         ]
                       },
                       "admin-guide/guides/event-streaming"
@@ -707,6 +749,14 @@
                                  "endpoints/ai-capabilities/set-up",
                                  "endpoints/ai-capabilities/update",
                                  "endpoints/ai-capabilities/reset"
+                              ]
+                           },
+                           {
+                              "group": "Usage",
+                              "pages": [
+                                 "endpoints/ai-usage/overview",
+                                 "endpoints/ai-usage/list-items",
+                                 "endpoints/ai-usage/get-item"
                               ]
                            },
                            {

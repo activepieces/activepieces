@@ -24,6 +24,7 @@ describe('AI_PROVIDER_CAPABILITIES', () => {
             AIProviderName.MOONSHOT,
             AIProviderName.META,
             AIProviderName.NVIDIA,
+            AIProviderName.COHERE,
         ].sort())
     })
 

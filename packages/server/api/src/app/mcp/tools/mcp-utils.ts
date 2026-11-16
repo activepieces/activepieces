@@ -1,6 +1,6 @@
-import { applyFunctionToValuesSync, connectionTemplate, extractMustacheTokens, isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, applyFunctionToValuesSync, connectionTemplate, ErrorCode, extractMustacheTokens, isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { BranchOperator, EngineResponse, EngineResponseStatus, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, PropertyExecutionType, PropertySettings, singleValueConditions, WorkerJobType } from '@activepieces/shared'
+import { BranchOperator, EngineResponse, EngineResponseStatus, FlowActionType, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, PropertyExecutionType, PropertySettings, singleValueConditions, WorkerJobType } from '@activepieces/shared'
 import type { BranchedAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -28,10 +28,15 @@ const RESOLVABLE_PROP_TYPES = new Set<PropertyType>([
 
 const STEP_REFERENCE_HINT = 'Reference a prior step\'s output with {{stepName[\'output\'].field}} (output is nested under [\'output\'], e.g. {{trigger[\'output\'].body.email}}, {{send_email[\'output\'].id}}). For a continue-on-failure step\'s error, use {{stepName[\'error\'].message}}.'
 
+const BATCH_ITEMS_HINT = 'A step inside a PROCESS_IN_BATCHES body reads its batch as {{<batchStepName>[\'output\'].items}}, a list: loop over it to handle one item at a time. After the batch step, {{<batchStepName>[\'output\']}} is its summary (total, succeeded, failed, timedOut, ...).'
+
 function mcpToolError(prefix: string, err: unknown): McpToolResult {
     const entityDetail = extractEntityNotFoundDetail(err)
     if (entityDetail) {
         return { content: [{ type: 'text', text: `❌ ${prefix}: ${entityDetail} not found. Check the ID or name and try again.` }], isError: true }
+    }
+    if (err instanceof ActivepiecesError && err.error.code === ErrorCode.FLOW_OPERATION_INVALID) {
+        return { content: [{ type: 'text', text: `❌ ${prefix}: ${err.error.params.message}` }], isError: true }
     }
     const raw = err instanceof Error ? err.message : String(err)
     const message = sanitizeErrorMessage(raw)
@@ -121,7 +126,7 @@ function coerceEmptyContainerInputs({ props, input }: { props: PiecePropertyMap,
             continue
         }
         const value = coerced[propName]
-        const valueProvided = value !== undefined && value !== null && value !== ''
+        const valueProvided = isValueProvided(value)
         // An empty free-form bag means "none", so normalize a wrong-shape empty container
         // (`[]` for an OBJECT prop, `{}` for an ARRAY prop) to the prop's type rather than
         // letting validation bounce it.
@@ -155,7 +160,7 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
             : (prop.type === PropertyType.DYNAMIC ? ' — DYNAMIC: resolve sub-fields with ap_get_piece_props' : '')
         allProps.push(`${propName} (${prop.type}${prop.required ? ', required' : ''}${optionsHint})`)
         const value = input[propName]
-        const valueProvided = value !== undefined && value !== null && value !== ''
+        const valueProvided = isValueProvided(value)
         if (prop.required && !valueProvided) {
             const descriptionHint = prop.description ? ` — ${prop.description}` : ''
             if (RESOLVABLE_PROP_TYPES.has(prop.type)) {
@@ -317,27 +322,35 @@ function exampleValueForProp(prop: PropSummary): unknown {
             return RESOLUTION_SENTINEL
         case PropertyType.DYNAMIC:
             return prop.dynamicFields && prop.dynamicFields.length > 0
-                ? buildExampleInput(prop.dynamicFields)
+                ? buildExampleInput({ props: prop.dynamicFields })
                 : RESOLUTION_SENTINEL
         default:
             return prop.defaultValue ?? `<${prop.displayName}>`
     }
 }
 
-function buildExampleInput(props: PropSummary[]): Record<string, unknown> {
+function buildExampleInput({ props, providedInput = {} }: { props: PropSummary[], providedInput?: Record<string, unknown> }): Record<string, unknown> {
     const example: Record<string, unknown> = {}
     for (const prop of props) {
-        if (prop.required) {
+        const provided = providedInput[prop.name]
+        const childFields = childFieldsOf({ prop, provided })
+        if (!isNil(childFields) && isObject(provided)) {
+            example[prop.name] = { ...provided, ...buildExampleInput({ props: childFields, providedInput: provided }) }
+        }
+        else if (isValueProvided(provided)) {
+            example[prop.name] = provided
+        }
+        else if (prop.required) {
             example[prop.name] = exampleValueForProp(prop)
         }
     }
     return example
 }
 
-function buildRequiredInputs(props: PropSummary[]): { provideNow: string[], needsResolution: string[] } {
+function buildRequiredInputs({ props, providedInput = {} }: { props: PropSummary[], providedInput?: Record<string, unknown> }): { provideNow: string[], needsResolution: string[] } {
     const provideNow: string[] = []
     const needsResolution: string[] = []
-    for (const prop of props.filter((p) => p.required)) {
+    for (const prop of props.filter((p) => p.required && !isPropGiven({ prop: p, providedInput }))) {
         if (RESOLVABLE_PROP_TYPES.has(prop.type)) {
             needsResolution.push(prop.name)
         }
@@ -346,6 +359,28 @@ function buildRequiredInputs(props: PropSummary[]): { provideNow: string[], need
         }
     }
     return { provideNow, needsResolution }
+}
+
+function isValueProvided(value: unknown): boolean {
+    return value !== undefined && value !== null && value !== ''
+}
+
+function childFieldsOf({ prop, provided }: { prop: PropSummary, provided: unknown }): PropSummary[] | null {
+    const hasChildFields = prop.type === PropertyType.DYNAMIC && isObject(provided) && !isNil(prop.dynamicFields) && prop.dynamicFields.length > 0
+    return hasChildFields ? prop.dynamicFields ?? null : null
+}
+
+function isPropGiven({ prop, providedInput }: { prop: PropSummary, providedInput: Record<string, unknown> }): boolean {
+    const provided = providedInput[prop.name]
+    if (!isValueProvided(provided)) {
+        return false
+    }
+    const childFields = childFieldsOf({ prop, provided })
+    if (isNil(childFields) || !isObject(provided)) {
+        return true
+    }
+    const missingChildren = buildRequiredInputs({ props: childFields, providedInput: provided })
+    return missingChildren.provideNow.length === 0 && missingChildren.needsResolution.length === 0
 }
 
 function flattenOutputSchemaFields(fields: OutputSchemaField[], prefix = ''): string[] {
@@ -595,6 +630,27 @@ async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }
     catch (err) {
         log.warn({ error: err, piece: { name: pieceName }, actionName }, 'fillDefaultsForMissingOptionalProps: failed, skipping defaults')
     }
+}
+
+const ERROR_HANDLING_ACTION_TYPES = new Set<FlowActionType>([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.PROCESS_IN_BATCHES])
+
+function validateErrorHandlingSupport({ stepType, stepLabel, continueOnFailure, retryOnFailure, rejectFalseOnUnsupported = false }: {
+    stepType: FlowActionType
+    stepLabel: string
+    continueOnFailure?: boolean
+    retryOnFailure?: boolean
+    rejectFalseOnUnsupported?: boolean
+}): McpToolResult | null {
+    const setsFlag = rejectFalseOnUnsupported
+        ? continueOnFailure !== undefined || retryOnFailure !== undefined
+        : continueOnFailure === true || retryOnFailure === true
+    if (setsFlag && !ERROR_HANDLING_ACTION_TYPES.has(stepType)) {
+        return { content: [{ type: 'text', text: `❌ continueOnFailure/retryOnFailure can only be set on ${[...ERROR_HANDLING_ACTION_TYPES].join(', ')} steps, but ${stepLabel} is type ${stepType}.` }], isError: true }
+    }
+    if (retryOnFailure === true && stepType === FlowActionType.PROCESS_IN_BATCHES) {
+        return { content: [{ type: 'text', text: `❌ retryOnFailure is not supported on ${FlowActionType.PROCESS_IN_BATCHES} steps — a retry re-dispatches every batch. Set continueOnFailure instead: the flow then carries on, and the step output is the batch summary.` }], isError: true }
+    }
+    return null
 }
 
 function buildErrorHandlingOptions({ continueOnFailure, retryOnFailure }: {
@@ -906,13 +962,36 @@ function rankActionsByIntent({ actions, forIntent }: { actions: RankableAction[]
         if (c === 'single') return -1
         return 0
     }
+    const siblingNames = collectSiblingNames(actions)
     const scored = actions.map((a) => {
-        const haystack = `${a.displayName} ${a.description} ${a.aiDescription ?? ''}`.toLowerCase()
+        const haystack = intentHaystack({ action: a, siblingNames })
         const tokenScore = tokens.reduce((acc, t) => acc + (haystack.includes(t) ? 1 : 0), 0)
-        return { name: a.name, score: tokenScore + cardinalityBonus(a.cardinality) }
+        return { name: a.name, score: tokenScore + cardinalityBonus(a.cardinality), isAi: a.audience === AI_AUDIENCE }
     })
-    return scored.filter((s) => s.score > 0).sort((a, b) => b.score - a.score).slice(0, 5).map((s) => s.name)
+    return scored
+        .filter((s) => s.score > 0)
+        .sort((a, b) => b.score - a.score || Number(b.isAi) - Number(a.isAi))
+        .slice(0, 5)
+        .map((s) => s.name)
 }
+
+function collectSiblingNames(actions: RankableAction[]): string[] {
+    return actions.flatMap((a) => [
+        ...(IDENTIFIER_NAME.test(a.name) ? [a.name.toLowerCase()] : []),
+        ...(a.displayName.trim().includes(' ') ? [a.displayName.trim().toLowerCase()] : []),
+    ]).sort((a, b) => b.length - a.length)
+}
+
+function intentHaystack({ action, siblingNames }: { action: RankableAction, siblingNames: string[] }): string {
+    const ownNames = [action.name.toLowerCase(), action.displayName.trim().toLowerCase()]
+    const description = siblingNames
+        .filter((name) => !ownNames.includes(name))
+        .reduce((text, name) => text.split(name).join(' '), `${action.description} ${action.aiDescription ?? ''}`.toLowerCase())
+    return `${action.displayName.toLowerCase()} ${description}`
+}
+
+const AI_AUDIENCE = 'ai'
+const IDENTIFIER_NAME = /[_-]|[a-z][A-Z]/
 
 const INTENT_STOP_WORDS = new Set(['the', 'all', 'any', 'and', 'for', 'with', 'get', 'from', 'into', 'out', 'list', 'show', 'find', 'see', 'view', 'fetch', 'pull'])
 
@@ -947,6 +1026,7 @@ export const mcpUtils = {
     folderSuffix,
     resolveFolder,
     fillDefaultsForMissingOptionalProps,
+    validateErrorHandlingSupport,
     buildErrorHandlingOptions,
     resolveLatestPieceVersion,
     resolvePlatformId,
@@ -959,6 +1039,7 @@ export const mcpUtils = {
     syncContainerExecutionTypes,
     RESOLVE_TIMEOUT_MS,
     STEP_REFERENCE_HINT,
+    BATCH_ITEMS_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
     FOLDER_NAME_SCHEMA,
 }
@@ -1052,4 +1133,5 @@ export type RankableAction = {
     description: string
     cardinality: ActionCardinality
     aiDescription?: string
+    audience?: string
 }

@@ -31,6 +31,7 @@ type DataTableSelectPopoverProps = {
   }[];
   facets?: Map<any, number>;
   handleFilterChange: (filterValue: string[]) => void;
+  className?: string;
 };
 
 const DataTableSelectPopover = ({
@@ -39,12 +40,13 @@ const DataTableSelectPopover = ({
   options,
   handleFilterChange,
   facets,
+  className,
 }: DataTableSelectPopoverProps) => {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="border-dashed">
-          <ListFilterIcon className="mr-2 size-4" />
+        <Button variant="outline" className={cn('border-dashed', className)}>
+          <ListFilterIcon className="size-4" />
           {title}
           {selectedValues?.size > 0 && (
             <>

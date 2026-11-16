@@ -247,6 +247,8 @@
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Subscriber": "Neuer Abonnent",
   "Tag Applied": "Tag angewendet",
   "Completed Email Series": "Completed Email Series",

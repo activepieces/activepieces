@@ -1,5 +1,5 @@
 import { isNil, isObject, Permission, tryCatch } from '@activepieces/core-utils'
-import { BranchExecutionType, FlowActionType, FlowCreatorType, FlowOperationType, flowStructureUtil, FlowTriggerType, McpToolContext, McpToolDefinition, PieceAudienceFilter, PieceTrigger, RouterExecutionType, Step, StepLocationRelativeToParent, SuggestionType, UpdateActionRequest } from '@activepieces/shared'
+import { BranchExecutionType, DEFAULT_BATCH_SIZE, FlowActionType, FlowCreatorType, FlowOperationType, flowStructureUtil, FlowTriggerType, McpToolContext, McpToolDefinition, PieceAudienceFilter, PieceTrigger, RouterExecutionType, Step, StepLocationRelativeToParent, SuggestionType, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -16,7 +16,7 @@ const routerBranchSpec = z.object({
 })
 
 const stepSpec = z.object({
-    type: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.ROUTER]),
+    type: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.PROCESS_IN_BATCHES, FlowActionType.ROUTER]),
     displayName: z.string(),
     pieceName: z.string().optional(),
     actionName: z.string().optional(),
@@ -25,6 +25,7 @@ const stepSpec = z.object({
     sourceCode: z.string().optional(),
     packageJson: z.string().optional(),
     loopItems: z.string().optional(),
+    batchSize: z.number().int().min(1).optional(),
     continueOnFailure: z.boolean().optional(),
     retryOnFailure: z.boolean().optional(),
     branches: z.array(routerBranchSpec).optional().describe('For ROUTER steps: the condition branches, in the order they are checked. An "Otherwise" fallback branch is always added after them.'),
@@ -33,8 +34,9 @@ const stepSpec = z.object({
     stepLocationRelativeToParent: z.enum([
         StepLocationRelativeToParent.AFTER,
         StepLocationRelativeToParent.INSIDE_LOOP,
+        StepLocationRelativeToParent.INSIDE_BATCH,
         StepLocationRelativeToParent.INSIDE_BRANCH,
-    ]).optional().default(StepLocationRelativeToParent.AFTER).describe('Where to place the step relative to parentStepName: AFTER, INSIDE_LOOP (first step inside a loop), or INSIDE_BRANCH (first step inside a router branch, with branchIndex). Further steps in the same branch or loop go AFTER the previous step there.'),
+    ]).optional().default(StepLocationRelativeToParent.AFTER).describe('Where to place the step relative to parentStepName: AFTER, INSIDE_LOOP (first step inside a loop), INSIDE_BATCH (first step inside the body of a PROCESS_IN_BATCHES step), or INSIDE_BRANCH (first step inside a router branch, with branchIndex). Further steps in the same branch, loop or batch body go AFTER the previous step there.'),
     branchIndex: z.number().int().min(0).optional().describe('For INSIDE_BRANCH: the branch to place the step in, 0-based in the order of the router\'s branches; the fallback branch comes last. Omitted: the first branch that has no step yet.'),
 })
 
@@ -54,7 +56,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
     return {
         title: 'ap_build_flow',
         permission: Permission.WRITE_FLOW,
-        description: 'Create a NEW flow from scratch in one call: trigger + steps, including loops and conditions. Steps are added sequentially by default (trigger → step_1 → step_2 → ...). To nest steps inside a loop, set parentStepName to the loop step and stepLocationRelativeToParent to INSIDE_LOOP. For a condition, add a ROUTER step with its branches (each with conditions; an "Otherwise" fallback is added last), then put each branch\'s first step INSIDE_BRANCH with parentStepName = the router and branchIndex, and the rest of that branch AFTER the previous step in it. parentStepName may be an earlier step\'s displayName from the same call. Build the whole flow in this one call rather than adding steps one by one. Dropdown inputs may be given an option label (e.g. "#general"): a clear match is replaced by its value, otherwise the candidates are reported. The reply already validates the flow: it lists every step and every remaining problem as `step.field: message` — fix them all in ONE ap_apply_flow_operations call; no ap_validate_step_config / ap_validate_flow call is needed after it. For EDITING an existing flow, do NOT rebuild it — use the granular ap_add_step / ap_update_step / ap_update_trigger instead. Prefer PIECE actions and inline formula expressions (in a free-text/value input — never a dropdown/option field — wrapped `ap-formula-v1::{…}::ap-formula-v1`) over CODE steps — only emit a CODE step when no piece fits AND the logic exceeds the inline formula functions (see the build_flow guide expression ladder).',
+        description: 'Create a NEW flow from scratch in one call: trigger + steps, including loops and conditions. Steps are added sequentially by default (trigger → step_1 → step_2 → ...). To nest steps inside a loop, set parentStepName to the loop step and stepLocationRelativeToParent to INSIDE_LOOP; use INSIDE_BATCH the same way for the body of a PROCESS_IN_BATCHES step. For a condition, add a ROUTER step with its branches (each with conditions; an "Otherwise" fallback is added last), then put each branch\'s first step INSIDE_BRANCH with parentStepName = the router and branchIndex, and the rest of that branch AFTER the previous step in it. parentStepName may be an earlier step\'s displayName from the same call. Build the whole flow in this one call rather than adding steps one by one. Dropdown inputs may be given an option label (e.g. "#general"): a clear match is replaced by its value, otherwise the candidates are reported. The reply already validates the flow: it lists every step and every remaining problem as `step.field: message` — fix them all in ONE ap_apply_flow_operations call; no ap_validate_step_config / ap_validate_flow call is needed after it. For EDITING an existing flow, do NOT rebuild it — use the granular ap_add_step / ap_update_step / ap_update_trigger instead. Prefer PIECE actions and inline formula expressions (in a free-text/value input — never a dropdown/option field — wrapped `ap-formula-v1::{…}::ap-formula-v1`) over CODE steps — only emit a CODE step when no piece fits AND the logic exceeds the inline formula functions (see the build_flow guide expression ladder).',
         inputSchema: {
             flowName: z.string().describe('Name for the new flow'),
             trigger: z.object({
@@ -64,7 +66,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 auth: z.string().optional().describe('Connection externalId for trigger auth'),
             }).describe('Trigger configuration'),
             folderName: mcpUtils.FOLDER_NAME_SCHEMA,
-            steps: z.array(stepSpec).describe('Array of steps. By default added sequentially after trigger. Use parentStepName + stepLocationRelativeToParent (+ branchIndex) to nest steps inside loops and router branches. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems), ROUTER (branches). Prefer PIECE and inline formula expressions (in free-text/value inputs, not dropdowns) over CODE — reach for a CODE step only when no piece fits and the transform exceeds the inline formula functions.'),
+            steps: z.array(stepSpec).describe(`Array of steps. By default added sequentially after trigger. Use parentStepName + stepLocationRelativeToParent (+ branchIndex) to nest steps inside loops, batch bodies and router branches. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems), PROCESS_IN_BATCHES (loopItems+batchSize, splits the list into batches and runs its body once per batch), ROUTER (branches). ${mcpUtils.BATCH_ITEMS_HINT} Prefer PIECE and inline formula expressions (in free-text/value inputs, not dropdowns) over CODE — reach for a CODE step only when no piece fits and the transform exceeds the inline formula functions.`),
         },
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
@@ -83,6 +85,10 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     const stepAuthError = mcpUtils.validateAuth(step.auth)
                     if (stepAuthError) {
                         return stepAuthError
+                    }
+                    const errorHandlingError = mcpUtils.validateErrorHandlingSupport({ stepType: step.type, stepLabel: `"${step.displayName}"`, continueOnFailure: step.continueOnFailure, retryOnFailure: step.retryOnFailure })
+                    if (errorHandlingError) {
+                        return errorHandlingError
                     }
                 }
 
@@ -370,6 +376,9 @@ function placementText({ location, parentStepName, parent, branchIndex }: {
     if (location === StepLocationRelativeToParent.INSIDE_LOOP) {
         return `first inside loop ${parentStepName}`
     }
+    if (location === StepLocationRelativeToParent.INSIDE_BATCH) {
+        return `first inside batch ${parentStepName}`
+    }
     if (location === StepLocationRelativeToParent.INSIDE_BRANCH && parent?.type === FlowActionType.ROUTER && !isNil(branchIndex)) {
         return `first in ${parentStepName} branch "${parent.settings.branches[branchIndex]?.branchName ?? branchIndex}"`
     }
@@ -481,6 +490,18 @@ function buildSkeleton({ step, name, resolvedPieceVersion, resolvedPieceName, pr
                 },
             }
         }
+        case FlowActionType.PROCESS_IN_BATCHES:
+            return {
+                type: FlowActionType.PROCESS_IN_BATCHES,
+                name,
+                displayName: step.displayName,
+                valid: false,
+                settings: {
+                    items: step.loopItems ?? '',
+                    batchSize: step.batchSize ?? DEFAULT_BATCH_SIZE,
+                    errorHandlingOptions: mcpUtils.buildErrorHandlingOptions({ continueOnFailure: step.continueOnFailure, retryOnFailure: step.retryOnFailure }),
+                },
+            }
         default:
             return { type: step.type, name, displayName: step.displayName, valid: false, settings: {} }
     }

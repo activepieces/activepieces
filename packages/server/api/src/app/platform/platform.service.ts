@@ -104,6 +104,9 @@ export const platformService = (log: FastifyBaseLogger) => ({
             key: `create-platform-${identityId}`,
             timeoutInSeconds: 30,
             fn: async () => {
+                if (!isFirstPlatform) {
+                    await assertOwnsNoPlatform({ identityId })
+                }
                 const existingUsers = isFirstPlatform ? await userService(log).getByIdentityId({ identityId }) : []
                 const provisionedOwner = findProvisionedOwner(existingUsers)
                 const platformAlreadyProvisioned = !isNil(provisionedOwner)
@@ -399,6 +402,22 @@ async function resumeProvisionedPlatform({ owner, identityId, name, invalidatePr
         log,
     })
     return { response, provisioned: false }
+}
+
+async function assertOwnsNoPlatform({ identityId }: { identityId: string }): Promise<void> {
+    const ownsActivePlatform = await platformRepo()
+        .createQueryBuilder('platform')
+        .innerJoin('user', 'owner', 'owner.id = platform."ownerId"')
+        .where('owner."identityId" = :identityId', { identityId })
+        .andWhere('owner.status = :status', { status: UserStatus.ACTIVE })
+        .andWhere('owner."platformId" = platform.id')
+        .getExists()
+    if (ownsActivePlatform) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: { message: 'You can only own one platform' },
+        })
+    }
 }
 
 async function linkOwnerToPlatform({ ownerId, platformId, identityId, name, invalidatePreviousTokens, log }: LinkOwnerToPlatformParams): Promise<CreatePlatformWithProjectResult> {

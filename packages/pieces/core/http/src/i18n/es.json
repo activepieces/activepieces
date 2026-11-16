@@ -23,7 +23,7 @@
   "The full URL to call, including https:// or http://": "The full URL to call, including https:// or http://",
   "Sent with the request as key-value pairs.": "Sent with the request as key-value pairs.",
   "Appended to the URL as a query string.": "Appended to the URL as a query string.",
-  "How to encode the request body. Leave as None for GET requests.": "How to encode the request body. Leave as None for GET requests.",
+  "How to encode the request body.": "How to encode the request body.",
   "Return the response as base64, for files like PDFs.": "Return the response as base64, for files like PDFs.",
   "Route this request through an HTTP proxy.": "Route this request through an HTTP proxy.",
   "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Seconds to wait for a response. Empty: up to the flow limit (10 min).",
@@ -39,13 +39,14 @@
   "None": "Ninguna",
   "Basic Auth": "Auth Básica",
   "Bearer Token": "Tóken de portador",
-  "JSON": "JSON",
-  "Form Data": "Datos de Formulario",
-  "Raw": "Rápido",
   "Retry on all errors (4xx, 5xx)": "Reintentar en todos los errores (4xx, 5xx)",
   "Retry on internal errors (5xx)": "Reintentar en errores internos (5xx)",
   "Do not retry": "No reintentar",
   "Continue flow on all errors": "Continuar el flujo en todos los errores",
   "Continue flow on 4xx errors": "Continuar flujo en errores 4xx",
-  "Do not continue (stop the flow)": "No continuar (detener el flujo)"
+  "Do not continue (stop the flow)": "No continuar (detener el flujo)",
+  "Request": "Request",
+  "Credentials": "Credentials",
+  "Data to send": "Data to send",
+  "HTTP": "HTTP"
 }
