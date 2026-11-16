@@ -174,7 +174,9 @@ const PROVIDER_CREDENTIAL_FIELDS: Partial<
     },
   ],
   [AIProviderName.CUSTOM]: OPENAI_COMPATIBLE_FIELDS,
-  [AIProviderName.LITELLM]: OPENAI_COMPATIBLE_FIELDS,
+  [AIProviderName.LITELLM]: OPENAI_COMPATIBLE_FIELDS.filter(
+    (field) => field.key !== 'apiStyle',
+  ),
 };
 
 const MANUAL_MODEL_PROVIDERS: AIProviderName[] = [

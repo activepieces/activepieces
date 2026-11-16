@@ -86,7 +86,6 @@ function buildCreateRequest({
         config: {
           baseUrl: value('baseUrl'),
           apiKeyHeader: value('apiKeyHeader'),
-          apiStyle: value('apiStyle') === 'chat' ? 'chat' : undefined,
           defaultHeaders: Object.keys(headers).length > 0 ? headers : undefined,
           models,
         },
