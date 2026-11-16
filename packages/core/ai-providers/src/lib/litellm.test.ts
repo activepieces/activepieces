@@ -32,6 +32,24 @@ describe('LiteLLM language model', () => {
         expect(sent[0].headers.has('authorization')).toBe(false)
     })
 
+    it.each([
+        { apiStyle: undefined, apiKeyHeader: 'Authorization' },
+        { apiStyle: 'chat' as const, apiKeyHeader: 'Authorization' },
+        { apiStyle: undefined, apiKeyHeader: '' },
+        { apiStyle: 'chat' as const, apiKeyHeader: '' },
+    ])('sends one bearer key for header "$apiKeyHeader" (apiStyle $apiStyle) when the key was pasted with Bearer', async ({ apiStyle, apiKeyHeader }) => {
+        const sent = await captureRequests({ send: () => generate({ model: buildText({ apiKey: 'Bearer sk-1', apiKeyHeader, apiStyle }) }) })
+
+        expect(sent[0].headers.get('authorization')).toBe('Bearer sk-1')
+    })
+
+    it('sends a custom key header the raw key and no Authorization on chat completions', async () => {
+        const sent = await captureRequests({ send: () => generate({ model: buildText({ apiKey: 'sk-1', apiKeyHeader: 'x-litellm-api-key', apiStyle: 'chat' }) }) })
+
+        expect(sent[0].headers.get('x-litellm-api-key')).toBe('sk-1')
+        expect(sent[0].headers.has('authorization')).toBe(false)
+    })
+
     it('sends medium effort and no temperature for a reasoning model on the Responses API', async () => {
         const sent = await captureRequests({ send: () => generate({ model: buildText({ modelId: 'prod-smart' }), temperature: 0.3 }) })
 
@@ -61,6 +79,17 @@ describe('LiteLLM language model', () => {
 
         expect(sent[0].body).not.toHaveProperty('reasoning_effort')
         expect(sent[0].body.temperature).toBe(0.3)
+    })
+
+    it.each([
+        { apiStyle: undefined },
+        { apiStyle: 'chat' as const },
+    ])('leaves tool_choice on auto for a reasoning model with tools (apiStyle $apiStyle)', async ({ apiStyle }) => {
+        const tools = [{ type: 'function', name: 'get_weather', description: 'weather', inputSchema: { type: 'object', properties: {} } }]
+        const sent = await captureRequests({ send: () => generate({ model: buildText({ modelId: 'prod-smart', apiStyle }), tools, toolChoice: { type: 'auto' } }) })
+
+        expect(sent[0].body.tool_choice).toBe('auto')
+        expect(sent[0].body.tools).toHaveLength(1)
     })
 
     it('parses a non-streamed second turn when Claude returns reasoning without a summary', async () => {
