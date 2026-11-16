@@ -50,7 +50,7 @@ export const apifyAuth = PieceAuth.CustomAuth({
       displayName: 'API Key',
       required: true,
       description:
-        'Find your API key on Apify in the settings, API & Integrations section.',
+        'Create an API token for Activepieces in [Apify Console](https://console.apify.com/settings/integrations?createApiToken=true&for=Activepieces&utm_source=activepieces&utm_medium=integrations) and copy it right after creating it — it is shown only once.',
     }),
   },
   validate: async ({ auth }) => {
