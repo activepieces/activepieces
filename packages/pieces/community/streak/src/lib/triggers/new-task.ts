@@ -1,3 +1,4 @@
+import { taskWebhookOutputSchema } from '../common/output-schemas';
 import { createPipelineWebhookTrigger } from '../common/trigger-factory';
 
 export const newTaskTrigger = createPipelineWebhookTrigger({
@@ -9,6 +10,7 @@ export const newTaskTrigger = createPipelineWebhookTrigger({
       'Fires when a new task (to-do item) is created on a box in the selected pipeline, representing a freshly added action item on a CRM record.',
   },
   event: 'TASK_CREATE',
+  outputSchema: taskWebhookOutputSchema,
   sampleData: {
     key: 'agxzfm1haWxmb29nYWVyMQsSBFRhc2sYgICAwI_oogow',
     boxKey: 'agxzfm1haWxmb29nYWVyMQsSA0JveBiAgIDAj-iiCgw',

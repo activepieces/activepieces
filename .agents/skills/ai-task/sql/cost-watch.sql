@@ -13,6 +13,5 @@ from default.otel_logs
 where Timestamp > now() - interval __DAYS__ day
   and LogAttributes['job.type'] = 'EXECUTE_AGENT_RUN'
   and LogAttributes['agentRun.source'] = 'CHAT'
-  and mapContains(LogAttributes, 'outcome')
 group by day, version
 order by day, version

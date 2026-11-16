@@ -212,6 +212,8 @@
   "PUT": "弹出",
   "DELETE": "删除",
   "HEAD": "黑色",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Event": "New Event",
   "Triggers when a new event is captured in PostHog": "Triggers when a new event is captured in PostHog",
   "Event Name Filter": "Event Name Filter",

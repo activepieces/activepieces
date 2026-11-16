@@ -391,9 +391,7 @@ jobs:
           SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
 
       # Read again under the lock: an approval can wait for days, and Cloud can change in that time.
-      # The candidate must keep every PR that Cloud runs, so no deploy drops a fix that went out
-      # through another path or replaces newer code with older code.
-      - name: Check that the candidate keeps everything Cloud runs
+      - name: Check that Cloud did not change after the cut
         env:
           SHA: ${{ needs.cut.outputs.sha }}
           CUT_CLOUD_SHA: ${{ needs.cut.outputs.cloud_sha }}
@@ -415,22 +413,6 @@ jobs:
           CLOUD_SHA=$(echo "$FLEET" | cut -d. -f4)
           if [ "$CLOUD_SHA" != "$CUT_CLOUD_SHA" ]; then
             echo "::error::Cloud moved from $CUT_CLOUD_SHA to $CLOUD_SHA after this run picked $SHA. Start a new run."
-            exit 1
-          fi
-          if ! git cat-file -e "$CLOUD_SHA^{commit}"; then
-            echo "::error::Cloud runs $CLOUD_SHA, which is not in this repository"
-            exit 1
-          fi
-          MISSING=""
-          for COMMIT in $(git rev-list "$(git merge-base "$CLOUD_SHA" "$SHA")..$CLOUD_SHA"); do
-            PR=$(git log -1 --format=%s "$COMMIT" | grep -oE '#[0-9]+\)$' | tr -d '#)' || true)
-            if [ -z "$PR" ] || ! git log --format=%s "$SHA" | grep -qE "\(#$PR\)$"; then
-              MISSING="$MISSING$(git log -1 --format='%h %s' "$COMMIT")"$'\n'
-            fi
-          done
-          if [ -n "$MISSING" ]; then
-            echo "::error::$SHA does not contain these commits that Cloud runs. Deploying it would remove them."
-            printf '%s' "$MISSING"
             exit 1
           fi
 

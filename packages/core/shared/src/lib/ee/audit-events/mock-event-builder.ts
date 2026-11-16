@@ -1,6 +1,8 @@
 import { AgentRunSource, FlowOperationType, FlowStatus } from '@activepieces/core-execution'
 import { apId, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { UserIdentityProvider } from '../../core/authentication/user-identity'
+import { PlatformRole } from '../../core/user/index'
+import { InvitationType } from '../../management/invitations'
 import {
     AgentActionExecutedEvent,
     AgentActionKind,
@@ -29,6 +31,7 @@ import {
     ProjectRoleEvent,
     SigningKeyEvent,
     SignUpEvent,
+    UserInvitationEvent,
     UserSignedInEvent,
     VariableEvent,
 } from './index'
@@ -344,6 +347,25 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                 ...baseEnvelope,
                 action: event,
                 data: { domain: 'acme.com' },
+            }
+            return mock
+        }
+        case ApplicationEventName.USER_INVITATION_SENT:
+        case ApplicationEventName.USER_INVITATION_ACCEPTED:
+        case ApplicationEventName.USER_INVITATION_DELETED: {
+            const mock: UserInvitationEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: {
+                    invitation: {
+                        id: apId(),
+                        email: 'sam@acme.com',
+                        type: InvitationType.PLATFORM,
+                        platformRole: PlatformRole.MEMBER,
+                        projectId: null,
+                    },
+                    projectRole: null,
+                },
             }
             return mock
         }

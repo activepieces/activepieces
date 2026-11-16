@@ -70,6 +70,7 @@ const RenameFieldPopoverContent = ({ name }: { name: string }) => {
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex flex-col gap-2 w-full"
+        data-editing="true"
       >
         <FormField
           control={form.control}

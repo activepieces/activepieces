@@ -1,6 +1,6 @@
-import { ActivepiecesError, AiProviderKeyStatus, AIProviderName, apId, classifyProviderOutcome, ErrorCode, isNil, PlatformId, ProviderOutcomeSignal, spreadIfDefined, spreadIfNotUndefined, toProviderOutcomeSignal, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, AiProviderKeyStatus, AIProviderName, apId, classifyProviderOutcome, ErrorCode, isNil, PlatformId, ProviderOutcomeSignal, spreadIfDefined, toProviderOutcomeSignal, tryCatch, unique } from '@activepieces/core-utils'
 import { modelCatalog, modelTierCatalog } from '@activepieces/server-utils'
-import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, aiProviderCredentials, AIProviderModel, AIProviderModelType, AiProviderProjectScope, AiProviderToolConfig, aiProviderUtils, AIProviderWithoutSensitiveData, AiToolCapability, AiToolProvider, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
+import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, aiProviderCredentials, AIProviderModel, AIProviderModelType, AiProviderProjectScope, AiProviderToolConfig, aiProviderUtils, AIProviderWithoutSensitiveData, AiToolCapability, AiToolProvider, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, SelfServeTrialState, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { EntityManager, FindOptionsWhere, Not } from 'typeorm'
@@ -12,6 +12,9 @@ import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openroute
 import { flagService } from '../flags/flag.service'
 import { EncryptedObject, encryptUtils } from '../helper/encryption'
 import { sleep } from '../helper/sleep'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
+import { billingProvider } from '../platform/billing-provider'
 import { platformConfigurationService } from '../platform/platform-configuration.service'
 import { platformService } from '../platform/platform.service'
 import { aiKeyScope, ProviderScope } from './ai-key-scope'
@@ -32,6 +35,8 @@ const MANAGED_OPENROUTER_KEY_LOCK_TIMEOUT_SECONDS = 60
 const MANAGED_OPENROUTER_KEY_LIVE_WAIT_MS = 30_000
 const MANAGED_OPENROUTER_KEY_LIVE_POLL_MS = 1_000
 const MANAGED_OPENROUTER_KEY_LIVE_PASSES_IN_A_ROW = 3
+const MANAGEMENT_KEY_VISIBLE_PREFIX_LENGTH = 12
+const MANAGEMENT_KEY_VISIBLE_SUFFIX_LENGTH = 3
 
 // A passing check must not lock out the next real failure, so the claim is a floor between
 // checks rather than a window that swallows them. A confirmed failure needs no floor: the row
@@ -367,8 +372,8 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const auth = await decryptRowAuth({ aiProvider, platformId, log })
         const { error } = await tryCatch(() => aiProviders[aiProvider.provider].validateConnection(auth, aiProvider.config, log))
         const signal = isNil(error) ? { statusCode: 200 } : toProviderOutcomeSignal(error)
-        const recorded = await aiProviderHealth(log).record({ platformId, providerId, signal, throttled: false, ...spreadIfNotUndefined('expectVersion', expectVersion) })
-        return recorded ?? aiProvider.status
+        const recorded = await aiProviderHealth(log).record({ platformId, providerId, signal, throttled: false, expectVersion: expectVersion ?? aiProvider.statusVersion })
+        return recorded ?? (await getRowByIdOrThrow({ platformId, configId: providerId })).status
     },
 
     async validateProviderCredentials(provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig): Promise<void> {
@@ -434,7 +439,11 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
 async function shouldHideActivepiecesAiProvider({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<boolean> {
     const { plan } = await platformService(log).getOneWithPlanOrThrow(platformId)
-    return plan.embeddingEnabled
+    if (!plan.embeddingEnabled) {
+        return false
+    }
+    const selfServeTrial = await billingProvider.get(log).getSelfServeTrialInfo({ platformId })
+    return selfServeTrial.state !== SelfServeTrialState.ACTIVE
 }
 
 
@@ -720,6 +729,10 @@ async function isActivepiecesAiProviderHidden({ platformId, log }: { platformId:
 }
 
 async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { providerId: string, platformId: PlatformId, log: FastifyBaseLogger }): Promise<AIProviderAuthConfig> {
+    if (isNil(platformId)) {
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'platformId is required' } })
+    }
+    await platformService(log).getOneOrThrow(platformId)
     return distributedLock(log).runExclusive({
         key: getManagedAiProviderKeyLockKey(platformId),
         timeoutInSeconds: MANAGED_OPENROUTER_KEY_LOCK_TIMEOUT_SECONDS,
@@ -731,6 +744,7 @@ async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { provide
             }
             const { key, data } = await openRouterApi.createKey({
                 name: `Platform ${platformId}`,
+                external: { user: maskedManagementKey() },
                 limit: MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD,
                 limit_reset: MANAGED_OPENROUTER_KEY_LIMIT_RESET,
             })
@@ -746,9 +760,15 @@ async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { provide
             if (!hasManagedKey(stored)) {
                 throw new Error(`[aiProviderService#enrichWithKeysIfNeeded] Managed AI provider ${providerId} has no stored key`)
             }
+            log.info({ platform: { id: platformId }, aiProvider: { id: providerId } }, '[aiProviderService#enrichWithKeysIfNeeded] Minted a managed OpenRouter key')
             return stored
         },
     })
+}
+
+function maskedManagementKey(): string {
+    const managementKey = system.get(AppSystemProp.OPENROUTER_PROVISION_KEY) ?? ''
+    return `${managementKey.slice(0, MANAGEMENT_KEY_VISIBLE_PREFIX_LENGTH)}...${managementKey.slice(-MANAGEMENT_KEY_VISIBLE_SUFFIX_LENGTH)}`
 }
 
 async function waitUntilKeyIsLive({ minted, platformId, log }: { minted: ActivePiecesProviderAuthConfig, platformId: PlatformId, log: FastifyBaseLogger }): Promise<void> {

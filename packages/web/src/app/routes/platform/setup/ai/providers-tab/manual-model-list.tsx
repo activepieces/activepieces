@@ -49,8 +49,8 @@ export function ManualModelList({
   };
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-gray-6/60">
-      <div className="flex items-center gap-2 p-3">
+    <div className="flex flex-col">
+      <div className="flex items-center gap-2 p-4">
         <Input
           className="max-w-xs"
           list={suggestionListId}
@@ -90,17 +90,17 @@ export function ManualModelList({
         </Button>
       </div>
       {models.length === 0 ? (
-        <p className="border-t border-gray-6/60 p-4 text-sm text-gray-11">
+        <p className="border-t border-gray-6 p-4 text-sm text-gray-11">
           {t(
             'This provider cannot list models automatically — add the model ids you want to expose.',
           )}
         </p>
       ) : (
-        <div className="flex flex-col border-t border-gray-6/60">
+        <div className="flex flex-col border-t border-gray-6">
           {models.map((model) => (
             <div
               key={model.modelId}
-              className="flex items-center gap-3 border-b border-gray-6/60 px-4 py-2.5 last:border-b-0"
+              className="flex items-center gap-3 border-b border-gray-6 px-4 py-2.5 last:border-b-0"
             >
               <span className="min-w-0 flex-1 truncate font-mono text-sm">
                 {model.modelId}

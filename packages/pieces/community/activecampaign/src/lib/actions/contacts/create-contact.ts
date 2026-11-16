@@ -1,6 +1,7 @@
 import { activeCampaignAuth } from '../../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { activecampaignCommon, makeClient } from '../../common';
+import { createContactOutputSchema } from '../../common/output-schemas';
 import { CreateContactRequest } from '../../common/types';
 
 export const createContactAction = createAction({
@@ -9,8 +10,9 @@ export const createContactAction = createAction({
 	classification: 'WRITE',
 	displayName: 'Create Contact',
 	description: 'Creates a new contact.',
-	audience: 'both',
-	aiMetadata: { description: 'Creates a new ActiveCampaign contact from an email (required) plus optional first name, last name, phone, and custom field values. Use when adding a new person to the CRM. Not idempotent: each call creates a contact and does not look up or merge by email, so repeated calls can create duplicates.', idempotent: false },
+	audience: 'human',
+	aiMetadata: { description: 'Creates a new ActiveCampaign contact from an email (required) plus optional first name, last name, phone, and custom field values. Use when adding a new person to the CRM. Not idempotent: it never updates, and a repeat with an email that already exists fails with ActiveCampaign\'s 422 duplicate error.', idempotent: false },
+	outputSchema: createContactOutputSchema,
 	props: {
 		email: Property.ShortText({
 			displayName: 'Email',

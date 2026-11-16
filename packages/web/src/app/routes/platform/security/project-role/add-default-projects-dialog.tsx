@@ -101,7 +101,7 @@ function AddDefaultProjectsContent({
           <DialogTitle>{t('Add default projects')}</DialogTitle>
           <DialogDescription>
             {t(
-              "New Members join these as Editors. People already on the platform aren't added.",
+              "New members join these as Editors. People already on the platform aren't added.",
             )}
           </DialogDescription>
         </DialogHeader>

@@ -165,7 +165,7 @@ export const sheetsFindOrCreateRow = createAction({
 
 		const appendResponse = await sheets.spreadsheets.values.append({
 			spreadsheetId,
-			range: `${sheetName}!A:A`,
+			range: googleSheetsCommon.sheetRange({ sheetName, range: `A:A` }),
 			valueInputOption: as_string ? ValueInputOption.RAW : ValueInputOption.USER_ENTERED,
 			requestBody: {
 				majorDimension: Dimension.ROWS,

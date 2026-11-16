@@ -1,4 +1,4 @@
-import { googleSheetsAuth } from '../common/common';
+import { googleSheetsAuth, googleSheetsCommon } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
 	areSheetIdsValid,
@@ -103,7 +103,7 @@ export const sheetsUpdateMultipleRows = createAction({
 			}
 
 			values.push({
-				range: `${sheetName}!A${rowId}:ZZZ${rowId}`,
+				range: googleSheetsCommon.sheetRange({ sheetName, range: `A${rowId}:ZZZ${rowId}` }),
 				majorDimension: Dimension.ROWS,
 				values: [formattedValues],
 			});
