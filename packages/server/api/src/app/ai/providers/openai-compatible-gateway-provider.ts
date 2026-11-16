@@ -4,6 +4,30 @@ import { FastifyBaseLogger } from 'fastify'
 import { AIProviderStrategy } from './ai-provider'
 import { fetchOpenAiModelIds } from './openai-compatible-vendor'
 
+function assertUsableBaseUrl({ baseUrl }: { baseUrl: string }): void {
+    const { data: parsed } = tryCatchSync(() => new URL(baseUrl))
+    if (!isNil(parsed) && HTTP_PROTOCOLS.includes(parsed.protocol)) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: { message: `"${baseUrl}" is not a valid base URL. Enter the full address of the API over http or https, for example https://api.example.com/v1` },
+    })
+}
+
+function assertUsableHeader({ name, value, field }: { name: string, value: string, field: string }): void {
+    const { error } = tryCatchSync(() => new Headers({ [name]: value }))
+    if (isNil(error)) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: { message: `${field} cannot be sent as written. Enter the header name on its own, for example Authorization, put its value in the API key field, and keep line breaks out of both` },
+    })
+}
+
+const HTTP_PROTOCOLS = ['http:', 'https:']
+
 export const openAICompatibleProvider: AIProviderStrategy<OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig> = {
     name: 'OpenAI Compatible',
     validationSkipsModelEndpoint: true,
@@ -49,27 +73,3 @@ export const litellmProvider: AIProviderStrategy<OpenAICompatibleProviderAuthCon
         return modelIds.filter((modelId) => aiProviderUtils.isChatModelId({ modelId }))
     },
 }
-
-function assertUsableBaseUrl({ baseUrl }: { baseUrl: string }): void {
-    const { data: parsed } = tryCatchSync(() => new URL(baseUrl))
-    if (!isNil(parsed) && HTTP_PROTOCOLS.includes(parsed.protocol)) {
-        return
-    }
-    throw new ActivepiecesError({
-        code: ErrorCode.VALIDATION,
-        params: { message: `"${baseUrl}" is not a valid base URL. Enter the full address of the API over http or https, for example https://api.example.com/v1` },
-    })
-}
-
-function assertUsableHeader({ name, value, field }: { name: string, value: string, field: string }): void {
-    const { error } = tryCatchSync(() => new Headers({ [name]: value }))
-    if (isNil(error)) {
-        return
-    }
-    throw new ActivepiecesError({
-        code: ErrorCode.VALIDATION,
-        params: { message: `${field} cannot be sent as written. Enter the header name on its own, for example Authorization, put its value in the API key field, and keep line breaks out of both` },
-    })
-}
-
-const HTTP_PROTOCOLS = ['http:', 'https:']
