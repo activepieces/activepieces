@@ -6,7 +6,7 @@ import {
   AiUsageRanges,
   AiUsageTotals,
 } from '@activepieces/shared';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { usageAdapters } from '@/app/routes/platform/setup/ai/usage-tab/usage-adapters';
 
@@ -71,6 +71,28 @@ describe('usageAdapters.paceOf', () => {
       period: '6h',
     });
     expect(pace.avgPerDayUsd).toBeCloseTo(4);
+  });
+
+  it('forecasts the month from at least one day on the first day of the month', () => {
+    vi.useFakeTimers({ now: new Date('2026-11-01T12:00:00Z') });
+    const pace = usageAdapters.paceOf({
+      totals: totals(3),
+      ranges: {
+        current: {
+          start: '2026-11-01T00:00:00.000Z',
+          end: '2026-12-01T00:00:00.000Z',
+        },
+        previous: {
+          start: new Date(0).toISOString(),
+          end: new Date(0).toISOString(),
+        },
+      },
+      history: history(1),
+      period: 'this-month',
+    });
+    vi.useRealTimers();
+    expect(pace.avgPerDayUsd).toBeCloseTo(3);
+    expect(pace.forecastUsd).toBeCloseTo(90);
   });
 });
 

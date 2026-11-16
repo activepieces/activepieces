@@ -5,7 +5,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChartColumn, ChartLine, Info } from 'lucide-react';
-import { ReactNode, useId, useState } from 'react';
+import { ReactNode, useId, useMemo, useState } from 'react';
 import {
   Area,
   Bar,
@@ -59,6 +59,10 @@ export function UsageHero({
     0,
   );
   const comparable = history?.comparable ?? true;
+  const chartPoints = useMemo(
+    () => usageAdapters.chartPointsOf({ points, ranges }),
+    [points, ranges],
+  );
 
   return (
     <section className={cn(adminSurface.card, 'flex flex-col gap-5 p-5')}>
@@ -135,7 +139,7 @@ export function UsageHero({
           chartType={chartType}
         />
         <UsageLineChart
-          points={usageAdapters.chartPointsOf({ points, ranges })}
+          points={chartPoints}
           metric={metric}
           height={height}
           chartType={chartType}
@@ -283,12 +287,13 @@ export function UsageLineChart({
           />
         )}
         {chartType === 'line' && (
-          <Line
+          <Area
             dataKey="live"
             type="monotone"
             stroke={config.current.color}
             strokeWidth={2}
-            strokeDasharray="4 4"
+            strokeDasharray="2 3"
+            fill={`url(#${gradientId})`}
             dot={false}
             activeDot={{ r: 4, strokeWidth: 0, fill: config.current.color }}
           />
