@@ -1,6 +1,8 @@
 import { AgentConversation } from '@activepieces/shared';
 import i18next, { t } from 'i18next';
 
+import { chatUtils } from './chat-utils';
+
 function groupByDay({
   conversations,
   now,
@@ -115,7 +117,7 @@ function filterByTitle({
   const needle = query.trim().toLowerCase();
   if (!needle) return conversations;
   return conversations.filter((conversation) =>
-    (conversation.title ?? '').toLowerCase().includes(needle),
+    chatUtils.displayTitle(conversation.title).toLowerCase().includes(needle),
   );
 }
 
