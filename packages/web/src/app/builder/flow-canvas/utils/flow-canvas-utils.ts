@@ -755,6 +755,19 @@ function determineInitiallySelectedStep(
   }
   return firstInvalidStep?.name ?? 'trigger';
 }
+const getBranchDisplayName = (branchName: string): string => {
+  switch (branchName) {
+    case 'Otherwise':
+      return t('Otherwise');
+    case 'Branch 1':
+      return t('Branch 1');
+    case 'Route 1':
+      return t('Route 1');
+    default:
+      return branchName;
+  }
+};
+
 const doesSelectionRectangleExist = () => {
   return (
     document.querySelector(
@@ -805,4 +818,5 @@ export const flowCanvasUtils = {
   createAddOperationFromAddButtonData,
   determineInitiallySelectedStep,
   doesSelectionRectangleExist,
+  getBranchDisplayName,
 };
