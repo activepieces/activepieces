@@ -21,8 +21,6 @@ export type TwentyResponse = { data?: Record<string, unknown> };
 
 export type TwentyPersonResponse = { data?: { person?: TwentyPerson } };
 
-export type TwentyListResponse = { data?: Record<string, unknown> };
-
 export type TwentyPageInfo = {
   hasNextPage?: boolean;
   hasPreviousPage?: boolean;

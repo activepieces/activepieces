@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { recordParamsUtils } from '../src/lib/common/record-params';
 
-const { parseQueryConditions, parseRecordValues } = recordParamsUtils;
+const { parseQueryConditions, parseRecordValues, parseLimit } = recordParamsUtils;
 
 describe('parseQueryConditions', () => {
   describe('plain fields and subfields', () => {
@@ -435,5 +435,27 @@ describe('parseRecordValues', () => {
     });
 
     expect(result).toEqual({ name: 'Acme' });
+  });
+});
+
+describe('parseLimit', () => {
+  it.each<[string, unknown, number]>([
+    ['keeps a positive value', 25, 25],
+    ['keeps a value above the page size', 500, 500],
+    ['raises a value below the minimum to 1', 0, 1],
+    ['drops the fraction of a decimal', 10.7, 10],
+    ['uses the default when the limit is empty', undefined, 60],
+    ['uses the default for a value that is not a number', '25', 60],
+    ['uses the default for NaN', Number.NaN, 60],
+  ])('%s', (_, input, expected) => {
+    expect(parseLimit({ enabled: true, input })).toBe(expected);
+  });
+
+  it('applies the limit when the toggle was never set', () => {
+    expect(parseLimit({ enabled: undefined, input: 25 })).toBe(25);
+  });
+
+  it('returns no limit when the toggle is off', () => {
+    expect(parseLimit({ enabled: false, input: 25 })).toBeUndefined();
   });
 });

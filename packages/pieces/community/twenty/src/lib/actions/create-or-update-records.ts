@@ -18,7 +18,7 @@ export const createOrUpdateRecords = createAction({
     'Updates the records matching the filters, or creates a new record when none match.',
   aiMetadata: {
     description:
-      'Updates the records of the selected object in Twenty CRM that match the filters, or creates a new record with the given values when none match. With Update All off it fails when more than one record matches. Returns whether records were created or updated. Not idempotent: the created record only matches later calls if the filtered fields are among the values set, otherwise each call creates another record.',
+      'Updates the records of the selected object in Twenty CRM that match the filters, or creates a new record with the given values when none match. With Update All on it updates at most limit records per run (default 60), or every match when the limit is turned off; with it off it fails when more than one record matches. Returns whether records were created or updated. Not idempotent: the created record only matches later calls if the filtered fields are among the values set, otherwise each call creates another record.',
     idempotent: false,
   },
   classification: 'WRITE',
@@ -63,6 +63,14 @@ export const createOrUpdateRecords = createAction({
         'Update every record that matches. When unchecked, the step fails if more than one record matches.',
       defaultValue: true,
     }),
+    limitEnabled: twentyRecordProps.limitEnabled({
+      description:
+        'Stop after a set number of records. Turn off to update every matching record. Only used when updating all matching records.',
+    }),
+    limit: twentyRecordProps.limit({
+      description:
+        'The most records to update in one run. Only used when updating all matching records.',
+    }),
     updateFields: twentyRecordProps.fields({
       required: true,
       displayName: 'Selected fields',
@@ -76,7 +84,8 @@ export const createOrUpdateRecords = createAction({
     }),
   },
   async run(context) {
-    const { object, filters, values, updateAll } = context.propsValue;
+    const { object, filters, values, updateAll, limitEnabled, limit } =
+      context.propsValue;
     if (!twentyMetadataUtils.isObjectRef(object))
       throw new Error('Select an object.');
 
@@ -97,7 +106,13 @@ export const createOrUpdateRecords = createAction({
     };
 
     const updated = updateAll
-      ? await twentyApi.updateRecords(params)
+      ? await twentyApi.updateRecords({
+          ...params,
+          limit: recordParamsUtils.parseLimit({
+            enabled: limitEnabled,
+            input: limit?.['limit'],
+          }),
+        })
       : await updateSingleMatch(params);
     if (updated.length > 0) return { action: 'updated', records: updated };
 
@@ -125,10 +140,11 @@ async function updateSingleMatch({
     auth,
     objectNamePlural,
     conditions,
+    limit: 2,
   });
   if (found.length > 1)
     throw new Error(
-      `Found ${found.length} matching records. Narrow the filters or turn on "Update all matching records".`
+      'More than one record matches. Narrow the filters or turn on "Update all matching records".'
     );
 
   const [match] = found;

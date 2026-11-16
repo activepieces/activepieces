@@ -12,7 +12,7 @@ export const findRecords = createAction({
   description: 'Finds records of any object in Twenty CRM.',
   aiMetadata: {
     description:
-      'Finds records of the selected object in Twenty CRM that match every given filter. Emails, links and phones also match their additional values. Use to resolve a record to its ID before updating it, or to check whether it exists. Returns one page of results. Idempotent: a read-only query with no side effects.',
+      'Finds records of the selected object in Twenty CRM that match every given filter. Emails, links and phones also match their additional values. Use to resolve a record to its ID before updating it, or to check whether it exists. Returns at most limit records (default 60), or every match when the limit is turned off. Idempotent: a read-only query with no side effects.',
     idempotent: true,
   },
   classification: 'SEARCH',
@@ -44,9 +44,17 @@ export const findRecords = createAction({
       description: 'The fields to filter on.',
     }),
     filters: twentyRecordProps.filters({ required: false }),
+    limitEnabled: twentyRecordProps.limitEnabled({
+      description:
+        'Stop after a set number of records. Turn off to return every matching record.',
+    }),
+    limit: twentyRecordProps.limit({
+      description:
+        'The most records to return.',
+    }),
   },
   async run(context) {
-    const { object, filters } = context.propsValue;
+    const { object, filters, limitEnabled, limit } = context.propsValue;
     if (!twentyMetadataUtils.isObjectRef(object))
       throw new Error('Select an object.');
 
@@ -55,6 +63,10 @@ export const findRecords = createAction({
       objectNamePlural: object.namePlural,
       conditions: recordParamsUtils.parseQueryConditions({
         input: filters ?? {},
+      }),
+      limit: recordParamsUtils.parseLimit({
+        enabled: limitEnabled,
+        input: limit?.['limit'],
       }),
     });
   },

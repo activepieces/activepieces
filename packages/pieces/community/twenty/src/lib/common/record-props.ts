@@ -443,6 +443,39 @@ function buildDateProps({
   ];
 }
 
+function limitEnabled({ description }: { description: string }) {
+  return Property.Checkbox({
+    displayName: 'Limit records',
+    description,
+    required: false,
+    defaultValue: false,
+    advanced: true,
+  });
+}
+
+function limit({ description }: { description: string }) {
+  return Property.DynamicProperties({
+    auth: twentyAuth,
+    displayName: 'Limit',
+    required: false,
+    advanced: true,
+    refreshers: ['limitEnabled'],
+    props: async ({ limitEnabled }): Promise<Record<string, InputProperty>> => {
+      if (limitEnabled === false) return {};
+      return {
+        limit: Property.Number({
+          displayName: 'Maximum records',
+          description,
+          required: false,
+          defaultValue: recordParamsUtils.recordLimit.default,
+          min: recordParamsUtils.recordLimit.min,
+          display: 'stepper',
+        }),
+      };
+    },
+  });
+}
+
 export const twentyRecordProps = {
   recordId,
   rewrite,
@@ -450,6 +483,8 @@ export const twentyRecordProps = {
   fields,
   filters,
   values,
+  limitEnabled,
+  limit,
 };
 
 export type FieldsPropParams<R extends boolean> = PropParams<R> & {

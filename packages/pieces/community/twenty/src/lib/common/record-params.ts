@@ -15,6 +15,8 @@ const fieldKeyFormat = {
   before: 'before',
 } as const;
 
+const recordLimit = { min: 1, default: 60 } as const;
+
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 const ADDITIONAL_VALUE_SUBFIELDS: Record<string, string> = {
@@ -274,10 +276,25 @@ function isFieldValue(value: unknown): value is FieldValue {
   );
 }
 
+function parseLimit({
+  enabled,
+  input,
+}: {
+  enabled: unknown;
+  input: unknown;
+}): number | undefined {
+  if (enabled === false) return undefined;
+  if (typeof input !== 'number' || !Number.isFinite(input))
+    return recordLimit.default;
+  return Math.max(Math.trunc(input), recordLimit.min);
+}
+
 export const recordParamsUtils = {
   fieldKeyFormat,
+  recordLimit,
   parseQueryConditions,
   parseRecordValues,
+  parseLimit,
 };
 
 export type FlatInputs = {

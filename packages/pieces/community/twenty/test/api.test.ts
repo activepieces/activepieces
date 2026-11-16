@@ -107,7 +107,7 @@ describe('filter pruning', () => {
       conditions: [{ field: 'name', operator: 'eq', value: '' }],
     });
 
-    expect(request.mock.calls[0]?.[0].query).toEqual({});
+    expect(request.mock.calls[0]?.[0].query).toEqual({ limit: '200' });
   });
 
   it('collapses a group left with one child into that child', async () => {
@@ -260,6 +260,197 @@ describe('deleteRecords', () => {
       path: '/rest/people',
       query: { filter: 'city[eq]:"Paris"' },
     });
+  });
+});
+
+describe('limit', () => {
+  it('sends the limit with a find', async () => {
+    request.mockResolvedValueOnce({ data: { people: [] } });
+
+    await twentyApi.findRecords({
+      auth,
+      objectNamePlural: 'people',
+      conditions: [{ field: 'city', operator: 'eq', value: 'Paris' }],
+      limit: 25,
+    });
+
+    expect(request.mock.calls[0]?.[0].query).toEqual({
+      filter: 'city[eq]:"Paris"',
+      limit: '25',
+    });
+  });
+
+  it('deletes only the ids found within the limit that still match the filter', async () => {
+    request
+      .mockResolvedValueOnce({ data: { people: [{ id: 'a' }, { id: 'b' }] } })
+      .mockResolvedValueOnce({ data: { deletePeople: [{ id: 'a' }, { id: 'b' }] } });
+
+    const result = await twentyApi.deleteRecords({
+      auth,
+      objectNamePlural: 'people',
+      conditions: [{ field: 'city', operator: 'eq', value: 'Paris' }],
+      permanent: false,
+      limit: 2,
+    });
+
+    expect(result).toEqual([{ id: 'a' }, { id: 'b' }]);
+    expect(request.mock.calls[0]?.[0].query).toEqual({
+      filter: 'city[eq]:"Paris"',
+      limit: '2',
+    });
+    expect(request).toHaveBeenLastCalledWith({
+      auth,
+      method: HttpMethod.DELETE,
+      path: '/rest/people',
+      query: {
+        filter: 'id[in]:["a","b"],city[eq]:"Paris"',
+        soft_delete: 'true',
+      },
+    });
+  });
+
+  it('sends no delete when nothing matches', async () => {
+    request.mockResolvedValueOnce({ data: { people: [] } });
+
+    const result = await twentyApi.deleteRecords({
+      auth,
+      objectNamePlural: 'people',
+      conditions: [{ field: 'city', operator: 'eq', value: 'Paris' }],
+      permanent: true,
+      limit: 10,
+    });
+
+    expect(result).toEqual([]);
+    expect(request).toHaveBeenCalledTimes(1);
+  });
+
+  it('updates only the ids found within the limit that still match the filter', async () => {
+    request
+      .mockResolvedValueOnce({ data: { people: [{ id: 'a' }] } })
+      .mockResolvedValueOnce({ data: { updatePeople: [{ id: 'a' }] } });
+
+    const result = await twentyApi.updateRecords({
+      auth,
+      objectNamePlural: 'people',
+      conditions: [{ field: 'city', operator: 'eq', value: 'Paris' }],
+      recordValues: { jobTitle: 'CTO' },
+      limit: 1,
+    });
+
+    expect(result).toEqual([{ id: 'a' }]);
+    expect(request).toHaveBeenLastCalledWith({
+      auth,
+      method: HttpMethod.PATCH,
+      path: '/rest/people',
+      query: { filter: 'id[in]:["a"],city[eq]:"Paris"' },
+      body: { jobTitle: 'CTO' },
+    });
+  });
+
+  it('checks the filter before looking anything up', async () => {
+    const result = twentyApi.updateRecords({
+      auth,
+      objectNamePlural: 'people',
+      conditions: [{ field: 'city', operator: 'eq', value: '' }],
+      recordValues: { jobTitle: 'CTO' },
+      limit: 10,
+    });
+
+    await expect(result).rejects.toThrow();
+    expect(request).not.toHaveBeenCalled();
+  });
+});
+
+describe('pagination', () => {
+  function page({
+    ids,
+    endCursor,
+  }: {
+    ids: string[];
+    endCursor?: string;
+  }): unknown {
+    return {
+      data: { people: ids.map((id) => ({ id })) },
+      pageInfo: { hasNextPage: endCursor !== undefined, endCursor },
+    };
+  }
+
+  it('follows the cursor until the last page when there is no limit', async () => {
+    request
+      .mockResolvedValueOnce(page({ ids: ['a', 'b'], endCursor: 'c1' }))
+      .mockResolvedValueOnce(page({ ids: ['c'] }));
+
+    const result = await twentyApi.listAllRecords({
+      auth,
+      objectNamePlural: 'people',
+    });
+
+    expect(result).toEqual([{ id: 'a' }, { id: 'b' }, { id: 'c' }]);
+    expect(request.mock.calls.map((call) => call[0].query)).toEqual([
+      { limit: '200' },
+      { limit: '200', starting_after: 'c1' },
+    ]);
+  });
+
+  it('asks only for the records still needed and stops at the limit', async () => {
+    request
+      .mockResolvedValueOnce(
+        page({ ids: Array.from({ length: 200 }, (_, i) => `r${i}`), endCursor: 'c1' })
+      )
+      .mockResolvedValueOnce(page({ ids: ['x', 'y'], endCursor: 'c2' }));
+
+    const result = await twentyApi.listAllRecords({
+      auth,
+      objectNamePlural: 'people',
+      limit: 202,
+    });
+
+    expect(result).toHaveLength(202);
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(request.mock.calls[1]?.[0].query).toEqual({
+      limit: '2',
+      starting_after: 'c1',
+    });
+  });
+
+  it('stops when a page has no cursor even if it claims more pages', async () => {
+    request.mockResolvedValueOnce({
+      data: { people: [{ id: 'a' }] },
+      pageInfo: { hasNextPage: true, endCursor: null },
+    });
+
+    const result = await twentyApi.listAllRecords({
+      auth,
+      objectNamePlural: 'people',
+    });
+
+    expect(result).toEqual([{ id: 'a' }]);
+    expect(request).toHaveBeenCalledTimes(1);
+  });
+
+  it('deletes in batches of 100 ids', async () => {
+    const ids = Array.from({ length: 150 }, (_, i) => `r${i}`);
+    request
+      .mockResolvedValueOnce(page({ ids }))
+      .mockResolvedValueOnce({ data: { deletePeople: ids.slice(0, 100).map((id) => ({ id })) } })
+      .mockResolvedValueOnce({ data: { deletePeople: ids.slice(100).map((id) => ({ id })) } });
+
+    const result = await twentyApi.deleteRecords({
+      auth,
+      objectNamePlural: 'people',
+      conditions: [{ field: 'city', operator: 'eq', value: 'Paris' }],
+      permanent: false,
+      limit: 500,
+    });
+
+    expect(result).toHaveLength(150);
+    expect(request).toHaveBeenCalledTimes(3);
+    expect(request.mock.calls[1]?.[0].query?.['filter']).toBe(
+      `id[in]:${JSON.stringify(ids.slice(0, 100))},city[eq]:"Paris"`
+    );
+    expect(request.mock.calls[2]?.[0].query?.['filter']).toBe(
+      `id[in]:${JSON.stringify(ids.slice(100))},city[eq]:"Paris"`
+    );
   });
 });
 

@@ -1,7 +1,9 @@
 import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 
+import { chunk } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { twentyClient } from './client';
+import { recordParamsUtils } from './record-params';
 import { twentyTimelineUtils } from './timeline';
 
 import type {
@@ -11,7 +13,6 @@ import type {
   TwentyAuthValue,
   TwentyDuplicateConnection,
   TwentyEnvelope,
-  TwentyListResponse,
   TwentyMetadataField,
   TwentyMetadataItem,
   TwentyMetadataPage,
@@ -123,10 +124,11 @@ async function findCompanies({
   name?: string;
   domainName?: string;
 }): Promise<TwentyRecord[]> {
-  return await listRecordItems({
+  return await listAllRecords({
     auth,
-    path: '/rest/companies',
-    query: filterQuery({
+    objectNamePlural: 'companies',
+    limit: recordParamsUtils.recordLimit.default,
+    filter: filterString({
       conditions: [
         { field: 'name', operator: 'ilike', value: name },
         {
@@ -157,10 +159,11 @@ async function findPeople({
   firstName?: string;
   lastName?: string;
 }): Promise<TwentyRecord[]> {
-  return await listRecordItems({
+  return await listAllRecords({
     auth,
-    path: '/rest/people',
-    query: filterQuery({
+    objectNamePlural: 'people',
+    limit: recordParamsUtils.recordLimit.default,
+    filter: filterString({
       conditions: [
         {
           field: 'emails.primaryEmail',
@@ -186,15 +189,18 @@ async function findRecords({
   auth,
   objectNamePlural,
   conditions,
+  limit,
 }: {
   auth: TwentyAuthValue;
   objectNamePlural: string;
   conditions: QueryConditionNode[];
+  limit?: number;
 }): Promise<TwentyRecord[]> {
-  return await listRecordItems({
+  return await listAllRecords({
     auth,
-    path: recordsPath({ objectNamePlural }),
-    query: filterQuery({ conditions }),
+    objectNamePlural,
+    filter: filterString({ conditions }),
+    limit,
   });
 }
 
@@ -203,10 +209,10 @@ async function listRecentCompanies({
 }: {
   auth: TwentyAuthValue;
 }): Promise<TwentyRecord[]> {
-  return await listRecordItems({
+  return await listAllRecords({
     auth,
-    path: '/rest/companies',
-    query: RECENT_QUERY,
+    objectNamePlural: 'companies',
+    ...RECENT_RECORDS,
   });
 }
 
@@ -215,10 +221,10 @@ async function listRecentPeople({
 }: {
   auth: TwentyAuthValue;
 }): Promise<TwentyRecord[]> {
-  return await listRecordItems({
+  return await listAllRecords({
     auth,
-    path: '/rest/people',
-    query: RECENT_QUERY,
+    objectNamePlural: 'people',
+    ...RECENT_RECORDS,
   });
 }
 
@@ -324,6 +330,43 @@ async function listRecords({
   };
 }
 
+async function listAllRecords({
+  auth,
+  objectNamePlural,
+  filter,
+  orderBy,
+  depth,
+  fields,
+  limit,
+}: Omit<ListRecordsParams, 'limit' | 'startingAfter'> & {
+  auth: TwentyAuthValue;
+  limit?: number;
+}): Promise<TwentyRecord[]> {
+  const records: TwentyRecord[] = [];
+  let startingAfter: string | undefined;
+  while (limit === undefined || records.length < limit) {
+    const remaining =
+      limit === undefined ? MAX_PAGE_SIZE : limit - records.length;
+    const page = await listRecords({
+      auth,
+      objectNamePlural,
+      filter,
+      orderBy,
+      depth,
+      fields,
+      limit: Math.min(remaining, MAX_PAGE_SIZE),
+      startingAfter,
+    });
+    records.push(...page.records);
+
+    const endCursor = page.pageInfo?.endCursor;
+    if (!page.pageInfo?.hasNextPage || !endCursor || page.records.length === 0)
+      break;
+    startingAfter = endCursor;
+  }
+  return records;
+}
+
 async function listTimelines({
   auth,
   targetColumn,
@@ -373,15 +416,17 @@ async function getRecordsByIds({
   objectNamePlural: string;
   recordIds: string[];
 }): Promise<TwentyRecord[]> {
-  if (recordIds.length === 0) return [];
-
-  const { records } = await listRecords({
-    auth,
-    objectNamePlural,
-    filter: `id[in]:[${recordIds.map((id) => JSON.stringify(id)).join(',')}]`,
-    limit: recordIds.length,
-  });
-  return records;
+  const pages = await Promise.all(
+    chunk(recordIds, ID_BATCH_SIZE).map((batch) =>
+      listAllRecords({
+        auth,
+        objectNamePlural,
+        filter: idInFilter({ ids: batch }),
+        limit: batch.length,
+      })
+    )
+  );
+  return pages.flat();
 }
 
 async function getRecord({
@@ -478,26 +523,38 @@ async function updateRecords({
   objectNamePlural,
   conditions,
   recordValues,
+  limit,
 }: {
   auth: TwentyAuthValue;
   objectNamePlural: string;
   conditions: QueryConditionNode[];
   recordValues: Record<string, unknown>;
+  limit?: number;
 }): Promise<TwentyRecord[]> {
-  const query = filterQuery({ conditions });
-  if (query['filter'] === undefined)
+  const filter = filterString({ conditions });
+  if (filter === undefined)
     throw new Error(
       'Set at least one filter. To update every record on purpose, filter on Created At is NOT_NULL.'
     );
 
-  const response = await twentyClient.request<TwentyEnvelope<TwentyRecord[]>>({
+  return await mutateMatches({
     auth,
-    method: HttpMethod.PATCH,
-    path: recordsPath({ objectNamePlural }),
-    query,
-    body: recordValues,
+    objectNamePlural,
+    filter,
+    limit,
+    mutate: async ({ filter: scopedFilter }) => {
+      const response = await twentyClient.request<
+        TwentyEnvelope<TwentyRecord[]>
+      >({
+        auth,
+        method: HttpMethod.PATCH,
+        path: recordsPath({ objectNamePlural }),
+        query: { filter: scopedFilter },
+        body: recordValues,
+      });
+      return firstValue({ envelope: response }) ?? [];
+    },
   });
-  return firstValue({ envelope: response }) ?? [];
 }
 
 async function deleteRecords({
@@ -505,25 +562,39 @@ async function deleteRecords({
   objectNamePlural,
   conditions,
   permanent,
+  limit,
 }: {
   auth: TwentyAuthValue;
   objectNamePlural: string;
   conditions: QueryConditionNode[];
   permanent: boolean;
+  limit?: number;
 }): Promise<TwentyRecord[]> {
-  const filter = filterQuery({ conditions });
-  if (filter['filter'] === undefined)
+  const filter = filterString({ conditions });
+  if (filter === undefined)
     throw new Error(
       'Set at least one filter. To delete every record on purpose, filter on Created At is NOT_NULL.'
     );
 
-  const response = await twentyClient.request<TwentyEnvelope<TwentyRecord[]>>({
+  return await mutateMatches({
     auth,
-    method: HttpMethod.DELETE,
-    path: recordsPath({ objectNamePlural }),
-    query: permanent ? filter : { ...filter, soft_delete: 'true' },
+    objectNamePlural,
+    filter,
+    limit,
+    mutate: async ({ filter: scopedFilter }) => {
+      const response = await twentyClient.request<
+        TwentyEnvelope<TwentyRecord[]>
+      >({
+        auth,
+        method: HttpMethod.DELETE,
+        path: recordsPath({ objectNamePlural }),
+        query: permanent
+          ? { filter: scopedFilter }
+          : { filter: scopedFilter, soft_delete: 'true' },
+      });
+      return firstValue({ envelope: response }) ?? [];
+    },
   });
-  return firstValue({ envelope: response }) ?? [];
 }
 
 async function deleteRecord({
@@ -767,24 +838,47 @@ async function getPerson({
   });
 }
 
-async function listRecordItems({
+async function mutateMatches({
   auth,
-  path,
-  query,
+  objectNamePlural,
+  filter,
+  limit,
+  mutate,
 }: {
   auth: TwentyAuthValue;
-  path: string;
-  query: QueryParams;
+  objectNamePlural: string;
+  filter: string;
+  limit: number | undefined;
+  mutate: (params: { filter: string }) => Promise<TwentyRecord[]>;
 }): Promise<TwentyRecord[]> {
-  const response = await twentyClient.request<TwentyListResponse>({
+  if (limit === undefined) return await mutate({ filter });
+
+  const matches = await listAllRecords({
     auth,
-    method: HttpMethod.GET,
-    path,
-    query,
+    objectNamePlural,
+    filter,
+    limit,
   });
-  const items = response.data ?? response;
-  if (Array.isArray(items)) return items;
-  return Object.values(items).find(Array.isArray) ?? [];
+  const ids = matches.flatMap((record) => (record.id ? [record.id] : []));
+  const mutated: TwentyRecord[] = [];
+  for (const batch of chunk(ids, ID_BATCH_SIZE)) {
+    mutated.push(
+      ...(await mutate({ filter: `${idInFilter({ ids: batch })},${filter}` }))
+    );
+  }
+  return mutated;
+}
+
+function idInFilter({ ids }: { ids: string[] }): string {
+  return `id[in]:${JSON.stringify(ids)}`;
+}
+
+function filterString({
+  conditions,
+}: {
+  conditions: QueryConditionNode[];
+}): string | undefined {
+  return filterQuery({ conditions })['filter'];
 }
 
 async function listMetadata({
@@ -947,6 +1041,7 @@ export const twentyApi = {
   updateCompany,
   updatePerson,
   listRecords,
+  listAllRecords,
   listTimelines,
   getRecordsByIds,
   getRecord,
@@ -968,9 +1063,13 @@ export const twentyApi = {
   listFields,
 };
 
-const RECENT_QUERY: QueryParams = {
-  order_by: 'createdAt[DescNullsLast]',
-  limit: '100',
+const MAX_PAGE_SIZE = 200;
+
+const ID_BATCH_SIZE = 100;
+
+const RECENT_RECORDS = {
+  orderBy: 'createdAt[DescNullsLast]',
+  limit: 100,
 };
 
 type CreatePersonParams = {
