@@ -521,7 +521,7 @@ describe('process in batches executor', () => {
 
         expect(result.verdict.status).toEqual(FlowRunStatus.RUNNING)
         expect(result.steps['batches'].status).toEqual(StepOutputStatus.FAILED)
-        expect(result.steps['batches'].errorMessage).toContain('must be a list')
+        expect(tryParseFriendlyPieceError(result.steps['batches'].errorMessage)?.message).toEqual('The items you have selected must be a list.')
         expect(mockCreateWaitpoint).not.toHaveBeenCalled()
     })
 
