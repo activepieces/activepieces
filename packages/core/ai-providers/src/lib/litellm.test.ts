@@ -210,22 +210,26 @@ function buildText({ modelId = 'ap-fast', apiKey = 'sk-1', apiKeyHeader = 'autho
     }))
 }
 
-function buildImage({ apiKey, apiKeyHeader = 'authorization' }: { apiKey: string, apiKeyHeader?: string }): NonNullable<ReturnType<typeof createImageModel>> & { doGenerate: (options: Record<string, unknown>) => Promise<unknown> } {
+function buildImage({ apiKey, apiKeyHeader = 'authorization' }: { apiKey: string, apiKeyHeader?: string }): CallableImageModel {
     const model = createImageModel({
         credentials: aiProviderCredentials({ provider: AIProviderName.LITELLM, auth: { apiKey }, config: { apiKeyHeader, baseUrl: BASE_URL, models: [] } }),
         modelId: 'prod-image',
     })
-    if (typeof model !== 'object' || model === null) {
+    if (!hasMethods<CallableImageModel>({ model, methods: ['doGenerate'] })) {
         throw new Error('expected an image model')
     }
-    return model as NonNullable<ReturnType<typeof createImageModel>> & { doGenerate: (options: Record<string, unknown>) => Promise<unknown> }
+    return model
 }
 
 function asCallable(model: ReturnType<typeof createLanguageModel>): CallableModel {
-    if (typeof model === 'string') {
+    if (!hasMethods<CallableModel>({ model, methods: ['doGenerate', 'doStream'] })) {
         throw new Error('expected a model object')
     }
-    return model as CallableModel
+    return model
+}
+
+function hasMethods<T>({ model, methods }: { model: unknown, methods: string[] }): model is T {
+    return typeof model === 'object' && model !== null && methods.every((method) => method in model)
 }
 
 function generate({ model, ...options }: { model: CallableModel } & Record<string, unknown>): Promise<unknown> {
@@ -273,4 +277,8 @@ type SentRequest = { url: string, headers: Headers, body: Record<string, unknown
 type CallableModel = {
     doGenerate: (options: Record<string, unknown>) => Promise<{ content: { type: string, text?: string }[] }>
     doStream: (options: Record<string, unknown>) => Promise<{ stream: ReadableStream<{ type: string }> }>
+}
+
+type CallableImageModel = {
+    doGenerate: (options: Record<string, unknown>) => Promise<unknown>
 }
