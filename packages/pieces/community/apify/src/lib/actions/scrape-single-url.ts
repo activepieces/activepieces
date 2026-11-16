@@ -71,7 +71,7 @@ export const scrapeSingleUrl = createAction({
 
     let run;
     try {
-      run = await client.actor(WEBSITE_CONTENT_CRAWLER_ACTOR_ID).call(input);
+      run = await client.actor(WEBSITE_CONTENT_CRAWLER_ACTOR_ID).call(input, { log: null });
     } catch (error: any) {
       throw new Error('Failed to scrape URL: ' + error.message);
     }
