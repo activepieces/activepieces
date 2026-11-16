@@ -197,6 +197,42 @@ describe('what the managed provider is asked to send back', () => {
     })
 })
 
+describe('what a LiteLLM proxy is told about a call, for its spend logs', () => {
+    const flowStep = { projectId: 'project-1', platformId: 'platform-1', flowId: 'flow-1', runId: 'run-1' }
+    const metadata = { platformId: 'platform-1', conversationId: 'conversation-1', runId: 'agent-run-1' }
+
+    async function headersFor({ provider, ...ids }: { provider: AIProviderName.LITELLM | AIProviderName.CUSTOM, flowStep?: typeof flowStep, metadata?: typeof metadata & { surface?: 'chat' | 'agent' } }): Promise<Record<string, string>> {
+        const credentials = aiProviderCredentials({ provider, auth: { apiKey: 'sk-proxy' }, config: { baseUrl: 'https://litellm.example.com/v1', apiKeyHeader: 'Authorization', models: [] } })
+        const model = aiUtils.createModel({ credentials, modelId: 'prod-smart', billing: null, ...ids })
+        return sentHeaders(() => generateText({ model, prompt: 'hi', maxRetries: 0 }))
+    }
+
+    it('names the project as the customer and the flow run as the trace on a flow step', async () => {
+        expect(await headersFor({ provider: AIProviderName.LITELLM, flowStep })).toMatchObject({
+            'x-litellm-customer-id': 'project-1',
+            'x-litellm-trace-id': 'run-1',
+            'x-litellm-tags': 'ap-surface:flow,ap-platform:platform-1',
+        })
+    })
+
+    it('traces chat by conversation and names no customer, since a conversation is not tied to one project', async () => {
+        const headers = await headersFor({ provider: AIProviderName.LITELLM, metadata })
+        expect(headers).toMatchObject({ 'x-litellm-trace-id': 'conversation-1', 'x-litellm-tags': 'ap-surface:chat,ap-platform:platform-1' })
+        expect(headers).not.toHaveProperty('x-litellm-customer-id')
+    })
+
+    it('tags an agent run apart from chat', async () => {
+        expect(await headersFor({ provider: AIProviderName.LITELLM, metadata: { ...metadata, surface: 'agent' } })).toMatchObject({ 'x-litellm-tags': 'ap-surface:agent,ap-platform:platform-1' })
+    })
+
+    it('sends a custom provider nothing new', async () => {
+        const fromFlow = await headersFor({ provider: AIProviderName.CUSTOM, flowStep })
+        const fromChat = await headersFor({ provider: AIProviderName.CUSTOM, metadata })
+        expect(fromFlow).toMatchObject({ 'x-ap-project-id': 'project-1', 'x-ap-run-id': 'run-1' })
+        expect(Object.keys({ ...fromFlow, ...fromChat }).filter((name) => name.startsWith('x-litellm-'))).toEqual([])
+    })
+})
+
 describe('aiUtils.createModel tool choice', () => {
     it('asks the model to call a required tool instead of forcing tool_choice, which some models reject', async () => {
         const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.ANTHROPIC, auth: { apiKey: 'key' }, config: {} }), modelId: 'claude-opus-5-5', billing: null })
@@ -253,6 +289,22 @@ async function sentBody(send: () => Promise<unknown>): Promise<Record<string, un
         globalThis.fetch = original
     }
     return body
+}
+
+async function sentHeaders(send: () => Promise<unknown>): Promise<Record<string, string>> {
+    const original = globalThis.fetch
+    let headers: Record<string, string> = {}
+    globalThis.fetch = (_input, init) => {
+        headers = Object.fromEntries(new Headers(init?.headers).entries())
+        return Promise.resolve(new Response('{}'))
+    }
+    try {
+        await send().catch(() => undefined)
+    }
+    finally {
+        globalThis.fetch = original
+    }
+    return headers
 }
 
 const BILLING: ActivepiecesAiBilling = {

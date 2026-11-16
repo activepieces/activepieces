@@ -214,10 +214,36 @@ function buildModel({ credentials, modelId, metadata, flowStep, webSearchEnabled
         options: {
             openRouterSettings: openRouterModelSettings({ provider, webSearchEnabled, options: webSearchOptions }),
             mistralViaOpenRouter: isNil(flowStep),
-            ...spreadIfDefined('extraHeaders', flowStepMetadataHeaders(flowStep) ?? managedProviderMetadataHeaders({ provider, metadata })),
+            ...spreadIfDefined('extraHeaders', extraHeadersFor({ provider, flowStep, metadata })),
             ...spreadIfDefined('onOutcome', onOutcome),
         },
     })
+}
+
+function extraHeadersFor({ provider, flowStep, metadata }: { provider: AIProviderName, flowStep?: FlowStepMetadata, metadata?: ChatModelMetadata }): Record<string, string> | undefined {
+    const metadataHeaders = flowStepMetadataHeaders(flowStep) ?? managedProviderMetadataHeaders({ provider, metadata })
+    const spendHeaders = litellmSpendHeaders({ provider, flowStep, metadata })
+    return isNil(metadataHeaders) && isNil(spendHeaders) ? undefined : { ...metadataHeaders, ...spendHeaders }
+}
+
+function litellmSpendHeaders({ provider, flowStep, metadata }: { provider: AIProviderName, flowStep?: FlowStepMetadata, metadata?: ChatModelMetadata }): Record<string, string> | undefined {
+    if (provider !== AIProviderName.LITELLM) {
+        return undefined
+    }
+    if (!isNil(flowStep)) {
+        return {
+            'x-litellm-customer-id': flowStep.projectId,
+            'x-litellm-trace-id': flowStep.runId,
+            'x-litellm-tags': `ap-surface:flow,ap-platform:${flowStep.platformId}`,
+        }
+    }
+    if (isNil(metadata)) {
+        return undefined
+    }
+    return {
+        'x-litellm-trace-id': metadata.conversationId,
+        'x-litellm-tags': `ap-surface:${metadata.surface ?? 'chat'},ap-platform:${metadata.platformId}`,
+    }
 }
 
 function cloudflareGatewayMetadata(flowStep?: FlowStepMetadata): CloudflareGatewayMetadata | undefined {
@@ -347,6 +373,7 @@ export const aiUtils = {
     buildWebSearchTools,
     buildWebSearchToolsOrThrow,
     searchWeb,
+    litellmSpendHeaders,
 }
 
 type NativeWebSearchToolParams = {
@@ -384,6 +411,7 @@ type ChatModelMetadata = {
     platformId: string
     conversationId: string
     runId?: string
+    surface?: 'chat' | 'agent'
 }
 
 type WebSearchResult = {
