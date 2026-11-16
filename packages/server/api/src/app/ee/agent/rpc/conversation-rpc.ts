@@ -211,7 +211,7 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
 
 function replaceTurnSql({ column, baseParam, turnParam }: { column: string, baseParam: string, turnParam: string }): string {
     return `CASE WHEN jsonb_array_length(${column}) >= :${baseParam}::int
-        THEN (SELECT coalesce(jsonb_agg(kept.element ORDER BY kept.position), '[]'::jsonb) FROM jsonb_array_elements(${column}) WITH ORDINALITY AS kept(element, position) WHERE kept.position <= :${baseParam}::int) || :${turnParam}::jsonb
+        THEN jsonb_path_query_array(${column}, '$[0 to $last]', jsonb_build_object('last', :${baseParam}::int - 1)) || :${turnParam}::jsonb
         ELSE ${column} END`
 }
 
