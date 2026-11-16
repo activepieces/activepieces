@@ -35,7 +35,12 @@ import { usageAdapters } from './usage-adapters';
 import { DeltaChip } from './usage-bits';
 import { UsageEstimateNote } from './usage-estimate-note';
 import { usageFormat } from './usage-format';
-import { USAGE_METRICS, UsageMetric, UsagePoint } from './usage-types';
+import {
+  USAGE_METRICS,
+  UsageChartPoint,
+  UsageMetric,
+  UsagePoint,
+} from './usage-types';
 
 export function UsageHero({
   series,
@@ -130,7 +135,7 @@ export function UsageHero({
           chartType={chartType}
         />
         <UsageLineChart
-          points={points}
+          points={usageAdapters.chartPointsOf({ points, ranges })}
           metric={metric}
           height={height}
           chartType={chartType}
@@ -219,8 +224,10 @@ export function UsageLineChart({
               labelFormatter={(label) =>
                 usageFormat.pointLabel({ label: String(label) })
               }
-              formatter={(value, name) =>
-                value === null || value === undefined ? null : (
+              formatter={(value, name, item) =>
+                value === null ||
+                value === undefined ||
+                (name === 'live' && item.payload?.settled !== null) ? null : (
                   <TooltipRow
                     label={
                       String(name) === 'previous'
@@ -266,11 +273,22 @@ export function UsageLineChart({
         )}
         {chartType === 'line' && (
           <Area
-            dataKey="current"
+            dataKey="settled"
             type="monotone"
             stroke={config.current.color}
             strokeWidth={2}
             fill={`url(#${gradientId})`}
+            dot={false}
+            activeDot={{ r: 4, strokeWidth: 0, fill: config.current.color }}
+          />
+        )}
+        {chartType === 'line' && (
+          <Line
+            dataKey="live"
+            type="monotone"
+            stroke={config.current.color}
+            strokeWidth={2}
+            strokeDasharray="4 4"
             dot={false}
             activeDot={{ r: 4, strokeWidth: 0, fill: config.current.color }}
           />
@@ -431,7 +449,7 @@ type UsageHeroProps = {
 };
 
 type UsageLineChartProps = {
-  points: UsagePoint[];
+  points: UsageChartPoint[];
   metric: UsageMetric;
   height: number;
   compact?: boolean;
