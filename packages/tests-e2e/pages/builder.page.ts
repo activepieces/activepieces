@@ -146,11 +146,11 @@ export class BuilderPage extends BasePage {
       .toEqual({ status: 200, body: expected });
   }
 
-  private stepOutput() {
+  protected stepOutput() {
     return this.sidebar().getByRole('tabpanel', { name: 'Friendly View' });
   }
 
-  private sidebar() {
+  protected sidebar() {
     return this.page.getByTestId('right-sidebar');
   }
 
