@@ -3,7 +3,6 @@ import {
   FlowActionType,
   StepOutput,
   StepOutputStatus,
-  flowStructureUtil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -16,26 +15,18 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { flowRunUtils } from '@/features/flow-runs';
 import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
+import { useStepOutputInRun } from './use-step-output-in-run';
+
 const LoopIterationInput = ({ stepName }: { stepName: string }) => {
-  const [setLoopIndex, currentIndex, run, flowVersion, loopsIndexes, stepType] =
-    useBuilderStateContext((state) => [
-      state.setLoopIndex,
-      state.loopsIndexes[stepName] ?? 0,
-      state.run,
-      state.flowVersion,
-      state.loopsIndexes,
-      flowStructureUtil.getStep(stepName, state.flowVersion.trigger)?.type,
-    ]);
-  const stepOutput = useMemo(() => {
-    return run && run.steps
-      ? flowRunUtils.extractStepOutput(stepName, loopsIndexes, run.steps)
-      : null;
-  }, [run, stepName, loopsIndexes, flowVersion.trigger]);
+  const [setLoopIndex, currentIndex] = useBuilderStateContext((state) => [
+    state.setLoopIndex,
+    state.loopsIndexes[stepName] ?? 0,
+  ]);
+  const { stepOutput, steps } = useStepOutputInRun(stepName);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -63,16 +54,20 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
     return stepOutput.output.iterations.map(getIterationStatus);
   }, [stepOutput]);
   const totalIterations = iterationStatuses.length;
+  const displayedIndex = Math.min(
+    currentIndex,
+    Math.max(totalIterations - 1, 0),
+  );
 
   function onChange(value: string) {
     const parsedValue = Math.max(
       1,
       Math.min(parseInt(value) ?? 1, totalIterations),
     );
-    setLoopIndex(stepName, parsedValue - 1);
+    setLoopIndex({ stepName, index: parsedValue - 1, steps: steps ?? {} });
   }
 
-  if (isNil(run) || stepType !== FlowActionType.LOOP_ON_ITEMS) {
+  if (totalIterations === 0) {
     return <></>;
   }
 
@@ -82,7 +77,7 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
         <LoopIterationInputButton
           onChange={onChange}
           isIncreasing={true}
-          currentIndex={currentIndex}
+          currentIndex={displayedIndex}
         />
         <Tooltip>
           <TooltipTrigger>
@@ -94,7 +89,7 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
                   : 'border border-gray-6'
               }`}
               type="number"
-              value={currentIndex + 1}
+              value={displayedIndex + 1}
               min={1}
               max={totalIterations}
               onClick={(e) => {
@@ -117,14 +112,14 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
           <TooltipContent side="left">
             {t(
               'Show child steps output on round ({iteration}/{totalIterations})',
-              { iteration: currentIndex + 1, totalIterations },
+              { iteration: displayedIndex + 1, totalIterations },
             )}
           </TooltipContent>
         </Tooltip>
         <LoopIterationInputButton
           onChange={onChange}
           isIncreasing={false}
-          currentIndex={currentIndex}
+          currentIndex={displayedIndex}
         />
         {totalIterations > 1 && (
           <div className="mt-1 flex max-h-[120px] w-9 flex-wrap content-start justify-center gap-0.5 overflow-y-auto">
@@ -137,12 +132,12 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      setLoopIndex(stepName, index);
+                      setLoopIndex({ stepName, index, steps: steps ?? {} });
                     }}
                     className={cn(
                       'size-2.5 shrink-0 rounded-full border border-gray-1 transition-transform hover:scale-125',
                       getIterationDotClassName(status),
-                      index === currentIndex &&
+                      index === displayedIndex &&
                         'ring-1 ring-accent-9 ring-offset-1',
                     )}
                   />

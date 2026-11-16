@@ -394,6 +394,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Member Added": "Membro adicionado",
   "Member Edited": "Membro editado",
   "Member Deleted": "Membro Excluído",

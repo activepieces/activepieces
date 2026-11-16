@@ -6,6 +6,7 @@ import {
 	googleSheetsAuth,
 	objectToArray,
 	ValueInputOption,
+	googleSheetsCommon,
 } from '../common/common';
 import { getWorkSheetName } from '../triggers/helpers';
 import { sheets as googleSheets } from '@googleapis/sheets';
@@ -92,7 +93,7 @@ export const sheetsUpdateRow = createAction({
 
 		if (formattedValues.length > 0) {
 			const response = await sheets.spreadsheets.values.update({
-				range: `${sheetName}!A${rowId}:ZZZ${rowId}`,
+				range: googleSheetsCommon.sheetRange({ sheetName, range: `A${rowId}:ZZZ${rowId}` }),
 				spreadsheetId: spreadsheetId,
 				valueInputOption: ValueInputOption.USER_ENTERED,
 				requestBody: {

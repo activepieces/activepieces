@@ -1,7 +1,7 @@
 import { aiProviderCredentials, AIProviderName } from '@activepieces/core-utils'
 import { AIProviderConfig, AIProviderModelType, VertexProviderConfig } from '@activepieces/core-piece-types'
 import { describe, expect, it } from 'vitest'
-import { buildOpenAICompatibleHeaders, createLanguageModel } from './create-language-model'
+import { buildOpenAICompatibleHeaders, createLanguageModel, withAutoToolChoice } from './create-language-model'
 
 type ModelIdentity = { provider: string, modelId: string, settings?: { plugins?: unknown[] } }
 
@@ -103,7 +103,7 @@ async function replyingWith<T>({ replies, send }: {
         return Promise.resolve(new Response(JSON.stringify(reply), { headers: { 'content-type': 'application/json' } }))
     }
     try {
-        const result = await send(buildFor(AIProviderName.META))
+        const result = await send(withAutoToolChoice(buildFor(AIProviderName.META)))
         return { bodies, result }
     }
     finally {
@@ -205,13 +205,42 @@ describe('createLanguageModel', () => {
         expect(nvidia.url).toBe('https://integrate.api.nvidia.com/v1/chat/completions')
     })
 
-    describe('Meta, which only accepts tool_choice auto', () => {
+    describe('Cohere, on its native v2 chat API', () => {
+        const sendToCohere = (toolChoice: Parameters<ReturnType<typeof createLanguageModel>['doGenerate']>[0]['toolChoice']) => {
+            const model = buildFor(AIProviderName.COHERE)
+            return captureSentRequest(() => model.doGenerate({ ...forcedCall, tools: [...forcedCall.tools, { type: 'function', name: 'search', inputSchema: { type: 'object', properties: {} } }], toolChoice }))
+        }
+        const toolNames = (body: Record<string, unknown>) => (Array.isArray(body.tools) ? body.tools.map((tool: { function: { name: string } }) => tool.function.name) : [])
+
+        it('sends the key to the Cohere chat endpoint', async () => {
+            const request = await generateHi(buildFor(AIProviderName.COHERE))
+
+            expect(request.url).toBe('https://api.cohere.com/v2/chat')
+            expect(request.headers.get('authorization')).toBe('Bearer test-key')
+        })
+
+        it('forces a named tool as REQUIRED with only that tool offered', async () => {
+            const { body } = await sendToCohere({ type: 'tool', toolName: 'extractData' })
+
+            expect(body.tool_choice).toBe('REQUIRED')
+            expect(toolNames(body)).toEqual(['extractData'])
+        })
+
+        it('forces any tool as REQUIRED', async () => {
+            const { body } = await sendToCohere({ type: 'required' })
+
+            expect(body.tool_choice).toBe('REQUIRED')
+            expect(toolNames(body)).toEqual(['extractData', 'search'])
+        })
+    })
+
+    describe('withAutoToolChoice, on Meta which only accepts tool_choice auto', () => {
         const tools = [
             { type: 'function' as const, name: 'extractData', inputSchema: { type: 'object' as const, properties: {} } },
             { type: 'function' as const, name: 'search', inputSchema: { type: 'object' as const, properties: {} } },
         ]
         const sendToMeta = (toolChoice: Parameters<ReturnType<typeof createLanguageModel>['doGenerate']>[0]['toolChoice']) => {
-            const model = buildFor(AIProviderName.META)
+            const model = withAutoToolChoice(buildFor(AIProviderName.META))
             return captureSentRequest(() => model.doGenerate({ tools, toolChoice, prompt: [{ role: 'user', content: [{ type: 'text', text: 'hi' }] }] }))
         }
         const toolNames = (body: Record<string, unknown>) => (Array.isArray(body.tools) ? body.tools.map((tool: { name: string }) => tool.name) : [])
@@ -304,6 +333,38 @@ describe('createLanguageModel', () => {
             expect(bodies.every((body) => body.stream !== true)).toBe(true)
             expect(result).toContainEqual(expect.objectContaining({ type: 'tool-call', toolName: 'extractData' }))
         })
+    })
+
+    it.each(supportedProviders.filter((provider) => provider !== AIProviderName.VERTEX))('never sends a forced tool_choice to %s', async (provider) => {
+        const model = withAutoToolChoice(buildFor(provider))
+        const { body } = await captureSentRequest(() => model.doGenerate(forcedCall))
+
+        expect(JSON.stringify(body)).toContain('Reply only by calling the extractData tool')
+    })
+
+    it.each([
+        { type: 'required' as const },
+        { type: 'tool' as const, toolName: 'extractData' },
+    ])('hands the provider tool_choice auto when the caller forces $type', async (toolChoice) => {
+        const seen: unknown[] = []
+        const provider = buildFor(AIProviderName.ANTHROPIC)
+        if (typeof provider === 'string') {
+            throw new Error('expected a model object')
+        }
+        const model = withAutoToolChoice({
+            ...provider,
+            doGenerate: async (params) => {
+                seen.push(params.toolChoice)
+                return { content: [{ type: 'tool-call', toolCallId: 'call_1', toolName: 'extractData', input: '{}' }], finishReason: { unified: 'tool-calls', raw: undefined }, usage: { inputTokens: { total: 1, noCache: 1, cacheRead: undefined, cacheWrite: undefined }, outputTokens: { total: 1, text: 1, reasoning: undefined } }, warnings: [] }
+            },
+        })
+        if (typeof model === 'string') {
+            throw new Error('expected a model object')
+        }
+
+        await model.doGenerate({ ...forcedCall, toolChoice })
+
+        expect(seen).toEqual([{ type: 'auto' }])
     })
 
     it.each([

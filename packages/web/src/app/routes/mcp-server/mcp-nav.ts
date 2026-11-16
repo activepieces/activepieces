@@ -10,16 +10,19 @@ export function useMcpNav(): McpNav {
   const clientKey = params.get('client');
   const projectParam = toProjectId(params.get('project'));
   const segment = toSegment(params.get('segment'));
+  const isFromBrowse = params.has('browse');
 
   return {
     clientKey,
     segment,
     tab: toTab(tab),
-    view: clientKey ? 'client' : params.has('browse') ? 'browse' : 'landing',
+    view: clientKey ? 'client' : isFromBrowse ? 'browse' : 'landing',
     projectId: projectParam ?? authenticationSession.getProjectId(),
     showLanding: () => setParams({}),
     showBrowse: () => setParams({ browse: '1' }),
-    showClient: (key: string) => setParams({ client: key }),
+    showClient: (key: string) =>
+      setParams(isFromBrowse ? { client: key, browse: '1' } : { client: key }),
+    showPrevious: () => setParams(isFromBrowse ? { browse: '1' } : {}),
     showTab: (value: string) => navigate(`/mcp-server/${toTab(value)}`),
     selectSegment: (value: string) =>
       setParams(
@@ -75,6 +78,7 @@ export type McpNav = {
   showLanding: () => void;
   showBrowse: () => void;
   showClient: (key: string) => void;
+  showPrevious: () => void;
   showTab: (value: string) => void;
   selectSegment: (value: string) => void;
   selectProject: (projectId: string) => void;

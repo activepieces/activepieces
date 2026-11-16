@@ -1,3 +1,5 @@
+import { assertWriteSucceeded } from '../common/request';
+import { biginOutputSchemas } from '../common/output-schemas';
 import { biginAuth } from '../auth';
 import {
   createAction,
@@ -15,7 +17,8 @@ export const updateCompany = createAction({
   displayName: 'Update Company',
   description:
     'Updates an existing Company and prepopulates its fields for editing.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: biginOutputSchemas.legacyAckWithMessage,
   aiMetadata: { description: 'Updates an existing company (account) record in Bigin CRM, identified by selecting the company; its current fields are prepopulated and any you set are overwritten (owner, tags, billing address, and module-defined fields). Use to modify an organization that already exists. Idempotent: re-sending the same field values leaves the record in the same state.', idempotent: true },
   props: {
     companyId: Property.Dropdown({
@@ -183,7 +186,7 @@ export const updateCompany = createAction({
   },
 
   async run(context) {
-    try {
+    
       const company = JSON.parse(context.propsValue.companyId);
       const companyId = company.id;
       const updates = context.propsValue.companyDetails as Record<string, any>;
@@ -220,17 +223,15 @@ export const updateCompany = createAction({
 
       const response = await biginApiService.updateCompany(
         context.auth.access_token,
-        (context.auth as any).api_domain,
+        context.auth.data['api_domain'],
         { data: [body] }
       );
 
+      assertWriteSucceeded(response.data?.[0]);
       return {
         message: 'Company updated successfully',
         data: response.data[0],
       };
-    } catch (error: any) {
-      console.error('Error updating company:', error);
-      throw new Error(error);
-    }
+    
   },
 });

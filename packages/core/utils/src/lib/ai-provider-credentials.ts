@@ -53,6 +53,9 @@ export type BedrockProviderAuthConfig = z.infer<typeof BedrockProviderAuthConfig
 export const MistralProviderAuthConfig = BaseAIProviderAuthConfig
 export type MistralProviderAuthConfig = z.infer<typeof MistralProviderAuthConfig>
 
+export const CohereProviderAuthConfig = BaseAIProviderAuthConfig
+export type CohereProviderAuthConfig = z.infer<typeof CohereProviderAuthConfig>
+
 export const AnthropicProviderConfig = z.object({})
 export type AnthropicProviderConfig = z.infer<typeof AnthropicProviderConfig>
 
@@ -115,6 +118,9 @@ export type VertexProviderConfig = z.infer<typeof VertexProviderConfig>
 export const MistralProviderConfig = z.object({})
 export type MistralProviderConfig = z.infer<typeof MistralProviderConfig>
 
+export const CohereProviderConfig = z.object({})
+export type CohereProviderConfig = z.infer<typeof CohereProviderConfig>
+
 export const OpenAiCompatibleVendorConfig = z.object({})
 export type OpenAiCompatibleVendorConfig = z.infer<typeof OpenAiCompatibleVendorConfig>
 
@@ -169,6 +175,7 @@ export const AiProviderCredentials = z.discriminatedUnion('provider', [
     z.object({ provider: z.literal(AIProviderName.MOONSHOT), config: OpenAiCompatibleVendorConfig.partial(), auth: BaseAIProviderAuthConfig.partial() }),
     z.object({ provider: z.literal(AIProviderName.META), config: OpenAiCompatibleVendorConfig.partial(), auth: BaseAIProviderAuthConfig.partial() }),
     z.object({ provider: z.literal(AIProviderName.NVIDIA), config: OpenAiCompatibleVendorConfig.partial(), auth: BaseAIProviderAuthConfig.partial() }),
+    z.object({ provider: z.literal(AIProviderName.COHERE), config: CohereProviderConfig.partial(), auth: CohereProviderAuthConfig.partial() }),
 ])
 export type AiProviderCredentials = z.infer<typeof AiProviderCredentials>
 

@@ -13,5 +13,7 @@
   "Seconds": "segundos",
   "Minutes": "minutos",
   "Hours": "horas",
-  "Days": "dias"
+  "Days": "dias",
+  "Wait time": "Wait time",
+  "Delay": "Delay"
 }

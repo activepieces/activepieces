@@ -21,7 +21,7 @@ export const claude = createPiece({
   minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/claude.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ['dennisrongo','kishanprmr'],
+  authors: ['dennisrongo', 'kishanprmr', 'OdaiAhmed99'],
   actions: [
     askClaude,
     extractStructuredDataAction,

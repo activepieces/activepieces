@@ -1,7 +1,7 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { createTrigger, TriggerStrategy, WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 import { podioAuth } from '../auth';
-import { podioApiCall, getAccessToken, dynamicSpaceProperty, dynamicOrgProperty } from '../common';
+import { podioApi } from '../common/api';
+import { podioProps } from '../common/props';
 
 export const newActivityTrigger = createTrigger({
   auth: podioAuth,
@@ -13,16 +13,23 @@ export const newActivityTrigger = createTrigger({
     description: 'Fires when a new status update is posted to the selected Podio workspace (space) stream, via a status.create webhook on that space. Represents a newly shared status update.',
   },
   props: {
-    orgId: dynamicOrgProperty,
-    spaceId: dynamicSpaceProperty,
+    orgId: podioProps.orgId({ required: true }),
+    spaceId: podioProps.spaceId({ required: true }),
   },
   sampleData: {
     type: "status.create",
     status_id: 1122334455
   },
   type: TriggerStrategy.WEBHOOK,
+  handshakeConfiguration: {
+    strategy: WebhookHandshakeStrategy.BODY_PARAM_PRESENT,
+    paramName: 'code',
+  },
+  async onHandshake(context) {
+    await podioApi.validateHookIfVerification({ auth: context.auth, body: context.payload.body, hookId: await context.store.get<number>('podio_new_activity_hook_id') });
+    return { status: 200 };
+  },
   async onEnable(context) {
-    const accessToken = getAccessToken(context.auth);
     const { spaceId } = context.propsValue;
 
     if (!spaceId) {
@@ -30,14 +37,12 @@ export const newActivityTrigger = createTrigger({
     }
 
     try {
-      const response = await podioApiCall<{ hook_id: number }>({
-        method: HttpMethod.POST,
-        accessToken,
-        resourceUri: `/hook/space/${spaceId}/`,
-        body: {
-          url: context.webhookUrl,
-          type: 'status.create',
-        },
+      const response = await podioApi.createHook({
+        auth: context.auth,
+        refType: 'space',
+        refId: spaceId,
+        url: context.webhookUrl,
+        type: 'status.create',
       });
 
       if (!response.hook_id) {
@@ -45,13 +50,13 @@ export const newActivityTrigger = createTrigger({
       }
 
       await context.store.put('podio_new_activity_hook_id', response.hook_id);
+      await podioApi.requestHookVerification({ auth: context.auth, hookId: response.hook_id });
       await context.store.put('podio_new_activity_space_id', spaceId);
-    } catch (error: any) {
-      throw new Error(`Failed to enable New Status trigger: ${error.message || 'Unknown error occurred'}`);
+    } catch (error) {
+      throw new Error(`Failed to enable New Status trigger: ${(error instanceof Error && error.message) || 'Unknown error occurred'}`);
     }
   },
   async onDisable(context) {
-    const accessToken = getAccessToken(context.auth);
     const hookId = await context.store.get<number>('podio_new_activity_hook_id');
 
     if (!hookId) {
@@ -59,16 +64,9 @@ export const newActivityTrigger = createTrigger({
     }
 
     try {
-      await podioApiCall({
-        method: HttpMethod.DELETE,
-        accessToken,
-        resourceUri: `/hook/${hookId}`,
-      });
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        return;
-      }
-      throw new Error(`Failed to disable New Status trigger: ${error.message || 'Unknown error occurred'}`);
+      await podioApi.deleteHook({ auth: context.auth, hookId });
+    } catch (error) {
+      throw new Error(`Failed to disable New Status trigger: ${(error instanceof Error && error.message) || 'Unknown error occurred'}`);
     } finally {
       await context.store.delete('podio_new_activity_hook_id');
       await context.store.delete('podio_new_activity_space_id');
@@ -81,14 +79,14 @@ export const newActivityTrigger = createTrigger({
       return [];
     }
 
-    if (!(payload as any).type || (payload as any).type !== 'status.create') {
+    if (!('type' in payload) || payload.type !== 'status.create') {
       return [];
     }
 
-    if (!(payload as any).status_id) {
+    if (!('status_id' in payload && payload.status_id)) {
       return [];
     }
 
     return [payload];
   },
-}); 
+});

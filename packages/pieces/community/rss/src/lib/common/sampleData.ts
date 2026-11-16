@@ -33,7 +33,6 @@ export const sampleData = {
       '@': {},
       '#': 'https://dev.to/arc/aws-cloud-quest-container-services-1hi7',
     },
-    permalink: 'https://dev.to/arc/aws-cloud-quest-container-services-1hi7',
     'rss:guid': {
       '@': {},
       '#': 'https://dev.to/arc/aws-cloud-quest-container-services-1hi7',

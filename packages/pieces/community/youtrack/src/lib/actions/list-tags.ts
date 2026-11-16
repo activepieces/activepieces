@@ -1,8 +1,6 @@
-// Action: List Tags
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../auth';
-import { youtrackApiCall } from '../common';
+import { youtrackClient } from '../common/client';
 import { listTagsActionOutputSchema } from '../output-schemas';
 
 export const listTagsAction = createAction({
@@ -13,34 +11,38 @@ export const listTagsAction = createAction({
   displayName: 'List Tags',
   description: 'Lists all tags visible to the current user.',
   audience: 'both',
-  aiMetadata: { description: 'List tags visible to the current user, optionally filtered by a name substring; leave the filter empty to return all tags. Use to discover tag IDs before adding or removing tags on an issue. Read-only and idempotent.', idempotent: true },
+  aiMetadata: {
+    description:
+      'List tags visible to the current user, optionally filtered by a name substring; leave the filter empty to return all tags (up to Limit, default 100). Use to discover tag IDs before Add Tag to Issue or Remove Tag from Issue. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({ displayName: 'Filter by Name', description: 'Filter tags by name. Leave empty for all.', required: false }),
     limit: Property.Number({ displayName: 'Limit', description: 'Max tags. Default 100.', required: false, defaultValue: 100 }),
   },
   async run(context) {
-    const { baseUrl, apiToken } = context.auth.props;
-    const limit = context.propsValue.limit ?? 100;
-    const queryParams: Record<string, string> = {
-      fields: 'id,name,owner(id,name),visibleFor(id,name),updateableBy(id,name),untagOnResolve',
-      '$top': String(limit),
-    };
-    if (context.propsValue.query) queryParams['query'] = context.propsValue.query;
-    const response = await youtrackApiCall<Array<Record<string, unknown>>>({
-      baseUrl,
-      token: apiToken,
-      method: HttpMethod.GET,
+    const items = await youtrackClient.listUpTo({
+      auth: context.auth,
       path: '/tags',
-      queryParams,
+      query: {
+        fields: 'id,name,owner(id,name),visibleFor(id,name),updateableBy(id,name),untagOnResolve',
+        query: youtrackClient.optionalText(context.propsValue.query),
+      },
+      limit: context.propsValue.limit,
+      fallback: 100,
+      operation: 'list tags',
     });
-    const data = response.body;
-    return (data || []).map((tag) => ({
-      id: tag['id'], name: tag['name'],
-      owner_name: (tag['owner'] as Record<string, unknown>)?.['name'] ?? null,
-      owner_id: (tag['owner'] as Record<string, unknown>)?.['id'] ?? null,
-      visible_for_name: (tag['visibleFor'] as Record<string, unknown>)?.['name'] ?? 'Only me',
-      updateable_by_name: (tag['updateableBy'] as Record<string, unknown>)?.['name'] ?? 'Only me',
-      untag_on_resolve: tag['untagOnResolve'] ?? false,
-    }));
+    return items.map((tag) => {
+      const owner = youtrackClient.recordOf(tag['owner']);
+      return {
+        id: tag['id'],
+        name: tag['name'],
+        owner_name: owner['name'] ?? null,
+        owner_id: owner['id'] ?? null,
+        visible_for_name: youtrackClient.recordOf(tag['visibleFor'])['name'] ?? 'Only me',
+        updateable_by_name: youtrackClient.recordOf(tag['updateableBy'])['name'] ?? 'Only me',
+        untag_on_resolve: tag['untagOnResolve'] ?? false,
+      };
+    });
   },
 });

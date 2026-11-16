@@ -143,7 +143,7 @@ async function resolveIdentity({ token, scope, log }: { token: string, scope: Mc
 async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity, log: FastifyBaseLogger }): Promise<{ mcp: PopulatedMcpServer | null, userId?: string, platformId?: string }> {
     try {
         if (identity.type === McpServerType.PLATFORM) {
-            if (telemetryDedupe.onceToday(`mcp-server-connected:platform:${identity.platformId}:${identity.userId}`)) {
+            if (!isInAppChatIdentity(identity) && telemetryDedupe.onceToday(`mcp-server-connected:platform:${identity.platformId}:${identity.userId}`)) {
                 rejectedPromiseHandler(telemetry(log).trackPlatform({
                     platformId: identity.platformId,
                     event: {

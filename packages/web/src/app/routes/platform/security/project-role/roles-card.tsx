@@ -1,5 +1,5 @@
 import { ProjectRole, SeekPage } from '@activepieces/core-utils';
-import { isNil } from '@activepieces/shared';
+import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useState } from 'react';
 
@@ -11,6 +11,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
@@ -27,13 +28,16 @@ export function RolesCard({
   refetch,
 }: RolesCardProps) {
   const { platform } = platformHooks.useCurrentPlatform();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const [activeTab, setActiveTab] = useState<RolesTab>('project');
 
   const projectRolesCount =
     isLoading || isError ? null : projectRoles?.data.length ?? 0;
   const platformRolesCount = PLATFORM_ROLE_COUNT;
 
-  const newRoleButton = !platform.plan.customRolesEnabled ? (
+  const lockedOnCommunity =
+    edition === ApEdition.COMMUNITY && !platform.plan.customRolesEnabled;
+  const newRoleButton = lockedOnCommunity ? (
     <Tooltip>
       <TooltipTrigger>
         <AnimatedIconButton icon={PlusIcon} iconSize={16} disabled>

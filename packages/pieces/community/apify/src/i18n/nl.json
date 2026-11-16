@@ -220,6 +220,17 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
+  "Where to Read": "Waar te lezen",
+  "How Many Items": "Hoeveel items",
+  "What to Run": "Wat uit te voeren",
+  "What to Send": "Wat te verzenden",
+  "Results": "Resultaten",
+  "Input Changes": "Invoerwijzigingen",
+  "Which Record": "Welk record",
+  "Page to Scrape": "Pagina om te scrapen",
+  "How to Load It": "Hoe het te laden",
+  "Request": "Verzoek",
+  "Data to send": "Te verzenden gegevens",
   "Watch Actor Runs": "Bekijk Acteur Runs",
   "Watch Task Runs": "Bekijk taak uitvoeringen",
   "Fires when a run of the Actor ends with a chosen status.": "Fires when a run of the Actor ends with a chosen status.",
@@ -227,5 +238,7 @@
   "Markdown": "Markdown",
   "Statuses": "Statuses",
   "Turning this flow on creates a webhook in your Apify account. Turning it off removes it.": "Turning this flow on creates a webhook in your Apify account. Turning it off removes it.",
-  "Run outcomes that start the flow.": "Run outcomes that start the flow."
+  "Run outcomes that start the flow.": "Run outcomes that start the flow.",
+  "What to Watch": "Waarop te letten",
+  "When to Fire": "Wanneer te activeren"
 }

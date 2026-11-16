@@ -188,5 +188,14 @@
   "PATCH": "COMPRAR",
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
-  "HEAD": "CABEÇA"
+  "HEAD": "CABEÇA",
+  "Page": "Página",
+  "Output": "Saída",
+  "Pages": "Pages",
+  "What to extract": "What to extract",
+  "Site": "site",
+  "Limits": "Limits",
+  "Webhook": "Webhook",
+  "Request": "Request",
+  "Data to send": "Data to send"
 }
