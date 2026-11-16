@@ -10191,6 +10191,17 @@
         "vitest": "5.0.5",
       },
     },
+    "packages/pieces/community/whatsapp-retention-stack": {
+      "name": "@activepieces/piece-whatsapp-retention-stack",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/whatsscale": {
       "name": "@activepieces/piece-whatsscale",
       "version": "1.1.1",
@@ -13077,6 +13088,8 @@
     "@activepieces/piece-whatsable": ["@activepieces/piece-whatsable@workspace:packages/pieces/community/whatsable"],
 
     "@activepieces/piece-whatsapp": ["@activepieces/piece-whatsapp@workspace:packages/pieces/community/whatsapp"],
+
+    "@activepieces/piece-whatsapp-retention-stack": ["@activepieces/piece-whatsapp-retention-stack@workspace:packages/pieces/community/whatsapp-retention-stack"],
 
     "@activepieces/piece-whatsscale": ["@activepieces/piece-whatsscale@workspace:packages/pieces/community/whatsscale"],
 

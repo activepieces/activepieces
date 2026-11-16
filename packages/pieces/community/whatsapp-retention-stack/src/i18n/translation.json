@@ -1,0 +1,22 @@
+{
+  "Send WhatsApp messages from a number linked by QR code. No WhatsApp Business account needed.": "Send WhatsApp messages from a number linked by QR code. No WhatsApp Business account needed.",
+  "Sign in at https://whatsapp-messaging.retentionstack.agency/start, link your number, and copy a session token (ch_live_...) or account key (ak_live_...) from the console.": "Sign in at https://whatsapp-messaging.retentionstack.agency/start, link your number, and copy a session token (ch_live_...) or account key (ak_live_...) from the console.",
+  "Send Text Message": "Send Text Message",
+  "Send Image": "Send Image",
+  "Send File": "Send File",
+  "Sends a text message to a contact or group.": "Sends a text message to a contact or group.",
+  "Sends an image from a public URL, with an optional caption.": "Sends an image from a public URL, with an optional caption.",
+  "Sends a document (PDF, spreadsheet, etc.) from a public URL.": "Sends a document (PDF, spreadsheet, etc.) from a public URL.",
+  "Session": "Session",
+  "To": "To",
+  "Message": "Message",
+  "Image URL": "Image URL",
+  "Caption": "Caption",
+  "File URL": "File URL",
+  "File Name": "File Name",
+  "Leave as \"default\" with a session token (ch_live_...). With an account key (ak_live_...), enter the session name.": "Leave as \"default\" with a session token (ch_live_...). With an account key (ak_live_...), enter the session name.",
+  "Phone number with country code, digits only (e.g. 14155550123), or a group ID ending in @g.us.": "Phone number with country code, digits only (e.g. 14155550123), or a group ID ending in @g.us.",
+  "Public URL of the image.": "Public URL of the image.",
+  "Public URL of the file.": "Public URL of the file.",
+  "Name shown to the recipient, e.g. invoice.pdf.": "Name shown to the recipient, e.g. invoice.pdf."
+}
