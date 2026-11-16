@@ -51,14 +51,13 @@ function newConnectionRequest({ displayName, projectId }: { displayName: string;
     displayName,
     pieceName: ACTIVEPIECES_PIECE,
     projectId,
-    type: 'CUSTOM_AUTH',
-    value: { type: 'CUSTOM_AUTH', props: { baseApiUrl: BASE_API_URL, apiKey: `e2e-${randomUUID()}` } },
+    type: 'NO_AUTH',
+    value: { type: 'NO_AUTH' },
   };
 }
 
 const CONNECTIONS_PATH = '/api/v1/app-connections';
 const ACTIVEPIECES_PIECE = '@activepieces/piece-activepieces';
-const BASE_API_URL = 'http://localhost/api/v1';
 
 type ConnectionsList = {
   newPrefix: () => string;
