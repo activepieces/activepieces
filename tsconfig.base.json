@@ -724,6 +724,9 @@
       "@activepieces/piece-invoiceninja": [
         "packages/pieces/community/invoiceninja/src/index.ts"
       ],
+      "@activepieces/piece-invoicexml": [
+        "packages/pieces/community/invoicexml/src/index.ts"
+      ],
       "@activepieces/piece-jina-ai": [
         "packages/pieces/community/jina-ai/src/index.ts"
       ],
