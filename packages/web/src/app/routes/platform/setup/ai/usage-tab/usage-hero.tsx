@@ -222,16 +222,19 @@ export function UsageLineChart({
               ? { fill: 'var(--gray-3)' }
               : { stroke: 'var(--gray-8)', strokeWidth: 1 }
           }
-          content={
+          content={(props) => (
             <ChartTooltipContent
+              {...props}
+              payload={props.payload?.filter(
+                (entry) =>
+                  entry.dataKey !== 'live' || entry.payload?.settled === null,
+              )}
               indicator="line"
               labelFormatter={(label) =>
                 usageFormat.pointLabel({ label: String(label) })
               }
-              formatter={(value, name, item) =>
-                value === null ||
-                value === undefined ||
-                (name === 'live' && item.payload?.settled !== null) ? null : (
+              formatter={(value, name) =>
+                value === null || value === undefined ? null : (
                   <TooltipRow
                     label={
                       String(name) === 'previous'
@@ -246,7 +249,7 @@ export function UsageLineChart({
                 )
               }
             />
-          }
+          )}
         />
         {chartType === 'bar' && (
           <Bar
