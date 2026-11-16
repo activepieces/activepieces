@@ -1,3 +1,4 @@
+import { tryParseFriendlyPieceError } from '@activepieces/core-utils'
 import { BarrierSignalStatus, FlowActionType, FlowRunStatus, GenericStepOutput, LoopStepOutput, PauseType, StepOutputStatus } from '@activepieces/shared'
 import { vi } from 'vitest'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
@@ -668,6 +669,7 @@ describe('process in batches executor', () => {
 
         expect(result.verdict.status).toEqual(FlowRunStatus.FAILED)
         expect(JSON.stringify(result.verdict)).toContain('1 of 1 batches did not succeed')
+        expect(tryParseFriendlyPieceError(result.steps['batches'].errorMessage)?.message).toEqual('1 of 1 batches did not succeed.')
     })
 
     it('fails the step when a batch never dispatched and continue on failure is off', async () => {

@@ -46,7 +46,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
                 action,
                 executionState: newExecutionContext,
                 stepOutput,
-                error: JSON.stringify({ message: 'The items you have selected must be a list.' }),
+                error: 'The items you have selected must be a list.',
                 durationMs: performance.now() - stepStartTime,
             })
         }
