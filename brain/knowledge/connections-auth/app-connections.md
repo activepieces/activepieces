@@ -7,7 +7,7 @@ icon: 🔗
 Encrypted credential records (OAuth2 tokens, API keys, basic/custom auth, OIDC props) that flow steps use to call external services. Support automatic OAuth2 refresh with distributed locking, a project-or-platform scope model, and a project-scoped "replace" that rewires flow references from one connection to another.
 
 ### Entity
-`AppConnection`: id, displayName, externalId (stable ref in flow settings, survives rename), type, status (ACTIVE/EXPIRED/ERROR), value (encrypted AES-256), platformId, pieceName/Version, projectIds[], scope (PROJECT/PLATFORM), preSelectForNewProjects.
+`AppConnection`: id, displayName, externalId (stable ref in flow settings, survives rename), type, status (ACTIVE/MISSING/ERROR), value (encrypted AES-256), platformId, pieceName/Version, projectIds[], scope (PROJECT/PLATFORM), preSelectForNewProjects.
 
 ### Connection types (8)
 `OAUTH2`, `CLOUD_OAUTH2` (exchanged via `secrets.activepieces.com`), `PLATFORM_OAUTH2` (platform-managed OAuth app), `SECRET_TEXT`, `BASIC_AUTH`, `CUSTOM_AUTH` (opt-in refresh callback), `NO_AUTH`, `OIDC`.
@@ -18,7 +18,7 @@ Encrypted credential records (OAuth2 tokens, API keys, basic/custom auth, OIDC p
 - **OIDC**: AP acts as an OIDC identity provider so pieces get short-lived cloud creds (e.g. AWS `AssumeRoleWithWebIdentity`). Engine calls `POST /api/v1/worker/oidc-token` with `{audience, expiresInSeconds?}` → RS256 JWT `sub: platform:{id}:project:{id}`, TTL default/cap 1h. Public discovery: `/.well-known/openid-configuration` + `/jwks.json`; `kid` is an RFC 7638 SHA-256 thumbprint. Signing key auto-generated + persisted (encrypted) to the shared `flag` table with first-writer-wins (`INSERT ... ON CONFLICT DO NOTHING`), no env var needed.
 
 ### Endpoints
-`POST /v1/app-connections` (upsert, validates via worker EXECUTE_VALIDATION), `POST /:id` (update meta), `GET` (filters), `GET /owners`, `POST /replace`, `DELETE /:id`, `POST /oauth2/authorization-url` (optional scope subset).
+`POST /v1/app-connections` (upsert, validates via worker EXECUTE_VALIDATION), `POST /:id` (update meta), `GET` (filters; `displayName` is a case-insensitive substring match), `GET /:id`, `POST /:id/revalidate` (the Recheck button), `GET /owners`, `POST /replace`, `DELETE /:id`, `POST /oauth2/authorization-url` (optional scope subset).
 
 ### Gotchas
 - Deleting a PLATFORM-scope connection via the project route is rejected `403` — delete those via platform admin `DELETE /v1/global-connections/:id`.
