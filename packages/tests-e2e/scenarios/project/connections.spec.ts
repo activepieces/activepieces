@@ -94,12 +94,14 @@ test.describe('Connections', { tag: ['@feature:connections', '@surface'] }, () =
     await expect(connectionsPage.row(single.displayName)).toBeVisible();
   });
 
-  test('a connections filter with no match shows the empty state', async ({ page }) => {
+  test('a connections filter with no match shows the empty state', async ({ page, connectionsList }) => {
+    const [unmatched] = await connectionsList.seedConnections({ prefix: connectionsList.newPrefix(), count: 1 });
     const connectionsPage = new ConnectionsPage(page);
 
     await connectionsPage.visitWithName(e2eApi.uniqueName('no match'));
 
     await expect(connectionsPage.emptyState()).toContainText('No connections found');
+    await expect(connectionsPage.row(unmatched.displayName)).toBeHidden();
   });
 
   test('a failed connections request shows the error state', async ({ page, connectionsList, listResponse }) => {
