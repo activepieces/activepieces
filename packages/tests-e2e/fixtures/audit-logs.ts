@@ -30,6 +30,19 @@ export const test = base.extend<{ auditLog: AuditLog }>({
         }, { message: `The audit log did not record ${names.length} folder.created event(s) in project ${projectId}` }).toBe(names.length);
         return events;
       },
+      renameFolder: async ({ folderId, displayName }) => {
+        await e2eApi.callApi({ request, session, method: 'POST', path: `/api/v1/folders/${folderId}`, data: { displayName } });
+      },
+      expectSinkRun: async ({ flowId, text }) => {
+        await expect.poll(
+          () => hasRunWithText({ request, session, flowId, text }),
+          { message: `No run of flow ${flowId} received an event with "${text}"`, timeout: SINK_RUN_TIMEOUT_MS },
+        ).toBe(true);
+      },
+      readDestinationIds: async () => {
+        const page = await e2eApi.callApi<{ data: { id: string }[] }>({ request, session, method: 'GET', path: '/api/v1/event-destinations', params: { limit: '100' } });
+        return page.data.map((destination) => destination.id);
+      },
       readProjectName: async ({ projectId }) => {
         const project = await e2eApi.callApi<{ displayName: string }>({ request, session, method: 'GET', path: `/api/v1/projects/${projectId}` });
         return project.displayName;
@@ -60,12 +73,34 @@ async function listFolderEvents({ request, session, projectId, names }: {
   return page.data.filter((event) => names.includes(event.data.folder.displayName));
 }
 
-type FolderCreatedEvent = { userEmail: string; projectDisplayName: string; data: { folder: { displayName: string } } };
+async function hasRunWithText({ request, session, flowId, text }: {
+  request: APIRequestContext;
+  session: E2eSession;
+  flowId: string;
+  text: string;
+}): Promise<boolean> {
+  const runs = await e2eApi.callApi<{ data: { id: string }[] }>({
+    request,
+    session,
+    method: 'GET',
+    path: '/api/v1/flow-runs',
+    params: { projectId: session.projectId, flowId, limit: '10' },
+  });
+  const details = await Promise.all(runs.data.map((run) => e2eApi.callApi<{ steps?: unknown }>({ request, session, method: 'GET', path: `/api/v1/flow-runs/${run.id}` })));
+  return details.some((run) => JSON.stringify(run.steps ?? {}).includes(text));
+}
+
+const SINK_RUN_TIMEOUT_MS = 60_000;
+
+type FolderCreatedEvent ={ userEmail: string; projectDisplayName: string; data: { folder: { displayName: string } } };
 
 type AuditLog = {
   folderNames: (params: { count: number }) => { word: string; names: string[] };
   createFolders: (params: { names: string[]; session: E2eSession }) => Promise<string[]>;
   expectFolderEvents: (params: { projectId: string; names: string[] }) => Promise<FolderCreatedEvent[]>;
+  renameFolder: (params: { folderId: string; displayName: string }) => Promise<void>;
+  expectSinkRun: (params: { flowId: string; text: string }) => Promise<void>;
+  readDestinationIds: () => Promise<string[]>;
   readProjectName: (params: { projectId: string }) => Promise<string>;
   readStatus: (params: { session: E2eSession; path: string; params?: Record<string, string> }) => Promise<number>;
 };
