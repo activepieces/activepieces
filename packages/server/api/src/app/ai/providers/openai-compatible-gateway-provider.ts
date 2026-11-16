@@ -1,3 +1,4 @@
+import { litellmAuth } from '@activepieces/ai-providers'
 import { ActivepiecesError, AIProviderModel, aiProviderUtils, ErrorCode, isNil, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig, spreadIfDefined, tryCatchSync } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { AIProviderStrategy } from './ai-provider'
@@ -39,6 +40,13 @@ export const litellmProvider: AIProviderStrategy<OpenAICompatibleProviderAuthCon
             type: m.modelType,
             ...spreadIfDefined('metadata', m.metadata),
         }))
+    },
+    async suggestModels(authConfig: OpenAICompatibleProviderAuthConfig, config: OpenAICompatibleProviderConfig): Promise<string[]> {
+        const modelIds = await fetchOpenAiModelIds({
+            url: `${config.baseUrl.replace(/\/$/, '')}/models`,
+            headers: litellmAuth.buildHeaders({ apiKeyHeader: config.apiKeyHeader, apiKey: authConfig.apiKey, defaultHeaders: config.defaultHeaders }),
+        })
+        return modelIds.filter((modelId) => aiProviderUtils.isChatModelId({ modelId }))
     },
 }
 
