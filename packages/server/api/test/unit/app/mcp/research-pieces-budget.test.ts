@@ -112,7 +112,7 @@ describe('what a pieceNames lookup is allowed to return', () => {
 describe('marking AI actions in ap_research_pieces', () => {
     it('keeps the AI mark even when the result is trimmed to names only', () => {
         const aiAction = { name: 'drive_search_files', displayName: 'Search Files', description: '', requiresAuth: true, cardinality: 'many' as const, audience: 'ai' as const }
-        const crowded = pieces({ count: 4, actionCount: 130, detailLength: 0, aiLength: 0 })
+        const crowded = pieces({ count: 2, actionCount: 150, detailLength: 0, aiLength: 0 })
         const result = fitEnrichedResponse({ pieces: [{ ...SLIM_PIECE, actions: [aiAction] }, ...crowded], overflowHint: '', totalCount: 5 })
 
         expect(result.structuredContent.trimmed).toBe(true)
