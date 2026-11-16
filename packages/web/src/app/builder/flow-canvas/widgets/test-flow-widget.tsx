@@ -27,6 +27,7 @@ const TestFlowWidget = () => {
     hideTestWidget,
     setRun,
     publishedVersionId,
+    startTestRunSubscription,
   ] = useBuilderStateContext((state) => [
     state.setChatDrawerOpenSource,
     state.flowVersion,
@@ -34,6 +35,7 @@ const TestFlowWidget = () => {
     state.hideTestWidget,
     state.setRun,
     state.flow.publishedVersionId,
+    state.startTestRunSubscription,
   ]);
   const builderStore = useBuilderStore();
 
@@ -115,7 +117,7 @@ const TestFlowWidget = () => {
   return (
     <AboveTriggerButton
       onClick={() => {
-        runFlow();
+        runFlow(startTestRunSubscription());
       }}
       text={isManualTrigger ? t('Run Flow') : t('Test Flow')}
       disable={!triggerHasSampleData && !isManualTrigger}

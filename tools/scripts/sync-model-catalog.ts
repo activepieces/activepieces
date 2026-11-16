@@ -27,6 +27,7 @@ const MODELS_DEV_PROVIDER: Partial<Record<AIProviderName, string>> = {
     [AIProviderName.MOONSHOT]: 'moonshotai',
     [AIProviderName.META]: 'meta',
     [AIProviderName.NVIDIA]: 'nvidia',
+    [AIProviderName.COHERE]: 'cohere',
 }
 
 const ALIASED_AT_LOOKUP: AIProviderName[] = [AIProviderName.ACTIVEPIECES]

@@ -8,6 +8,7 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { FieldEntity } from '../field/field.entity'
 import { fieldService } from '../field/field.service'
+import { tableSideEffects } from '../table/table-side-effects'
 import { tableService } from '../table/table.service'
 import { CellEntity } from './cell.entity'
 import { RecordEntity, RecordSchema } from './record.entity'
@@ -22,6 +23,7 @@ export const recordService = {
         request,
         projectId,
         fields,
+        editorSessionId,
     }: CreateParams): Promise<PopulatedRecord[]> {
         await this.validateCount({ projectId, tableId: request.tableId }, request.records.length)
         const existingFields = fields ?? await fieldService.getAll({
@@ -62,6 +64,7 @@ export const recordService = {
                 created: 'ASC',
             },
         })
+        await tableSideEffects.onTableChanged({ projectId, tableId: request.tableId, editorSessionId })
         return formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId, fields: existingFields })
     },
 
@@ -154,11 +157,13 @@ export const recordService = {
         id,
         projectId,
         request,
-    }: UpdateParams): Promise<PopulatedRecord> {
+        editorSessionId,
+    }: UpdateParams): Promise<UpdateRecordResult> {
         const { tableId } = request
-        return transaction(async (entityManager: EntityManager) => {
+        const result = await transaction(async (entityManager: EntityManager) => {
             const record = await entityManager.getRepository(RecordEntity).findOne({
                 where: { projectId, tableId, id },
+                lock: { mode: 'pessimistic_write' },
             })
 
             if (isNil(record)) {
@@ -171,64 +176,56 @@ export const recordService = {
                 })
             }
 
-            if (request.cells && request.cells.length > 0) {
-                const existingFields = await entityManager
-                    .getRepository(FieldEntity)
-                    .find({
-                        where: { projectId, tableId },
-                    })
+            const fields = await entityManager.getRepository(FieldEntity).find({
+                where: { projectId, tableId },
+                order: { position: 'ASC', created: 'ASC' },
+            })
+            const storedCells = await entityManager.getRepository(CellEntity).find({
+                where: { projectId, recordId: id },
+            })
+            const fieldIds = new Set(fields.map((field) => field.id))
+            const storedValues = new Map(storedCells.map((cell) => [cell.fieldId, cell.value]))
+            const requestedValues = new Map((request.cells ?? []).map((cellData) => [cellData.fieldId, cellData.value ?? '']))
+            const cellsToUpsert = [...requestedValues]
+                .filter(([fieldId, value]) => fieldIds.has(fieldId) && (storedValues.get(fieldId) ?? '') !== value)
+                .map(([fieldId, value]) => ({
+                    recordId: id,
+                    fieldId,
+                    projectId,
+                    value,
+                    id: apId(),
+                }))
 
-                // Filter out cells with non-existing fields
-                const validCells = request.cells.filter((cellData) =>
-                    existingFields.some((field) => field.id === cellData.fieldId),
-                )
-
-                // Prepare cells for upsert
-                const cellsToUpsert = validCells.map((cellData) => {
-                    return {
-                        recordId: id,
-                        fieldId: cellData.fieldId,
-                        projectId,
-                        value: cellData.value ?? '',
-                        id: apId(),
-                    }
-                })
-
-                // Perform bulk upsert only for valid cells
-                if (cellsToUpsert.length > 0) {
-                    await entityManager
-                        .getRepository(CellEntity)
-                        .upsert(cellsToUpsert, ['projectId', 'fieldId', 'recordId'])
-                }
+            const changed = cellsToUpsert.length > 0
+            if (changed) {
+                await entityManager
+                    .getRepository(RecordEntity)
+                    .update({ id, projectId, tableId }, { updated: () => 'now()' })
+                await entityManager
+                    .getRepository(CellEntity)
+                    .upsert(cellsToUpsert, ['projectId', 'fieldId', 'recordId'])
             }
 
-            // Fetch and return the updated record with full details
-            const updatedRecord = await entityManager
-                .getRepository(RecordEntity)
-                .findOne({
-                    where: { id, projectId, tableId },
-                    relations: ['cells'],
-                })
-
-            if (isNil(updatedRecord)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.ENTITY_NOT_FOUND,
-                    params: {
-                        entityType: 'Record',
-                        entityId: id,
-                    },
-                })
-            }
-
-            const result = await formatRecordsAndFetchField({ records: [updatedRecord], tableId: updatedRecord.tableId, projectId: updatedRecord.projectId })
-            return result[0]
+            const updatedRecordEntity = changed
+                ? await entityManager.getRepository(RecordEntity).findOneByOrFail({ id, projectId, tableId })
+                : record
+            const cells = changed
+                ? await entityManager.getRepository(CellEntity).find({ where: { projectId, recordId: id } })
+                : storedCells
+            const [updatedRecord] = formatRecords([{ ...updatedRecordEntity, cells }], fields)
+            return { record: updatedRecord, changed }
         })
+        if (result.changed) {
+            await tableSideEffects.onTableChanged({ projectId, tableId, editorSessionId })
+        }
+        return result
     },
 
     async delete({
         ids,
         projectId,
         tableId,
+        editorSessionId,
     }: DeleteParams): Promise<DeleteRecordsResult> {
         const uniqueIds = [...new Set(ids)]
         if (uniqueIds.length === 0) {
@@ -254,6 +251,7 @@ export const recordService = {
                 params: { entityType: 'Record', entityId: uniqueIds[0] },
             })
         }
+        await tableSideEffects.onTableChanged({ projectId, tableId, editorSessionId })
         return {
             deletedCount: deletedIds.length,
             records,
@@ -265,6 +263,7 @@ export const recordService = {
         projectId,
     }: DeleteAllParams): Promise<PopulatedRecord[]> {
         const { records } = await deleteRecordsAndReturnWebhookPayloads({ projectId, tableId })
+        await tableSideEffects.onTableChanged({ projectId, tableId })
         return records
     },
 
@@ -499,6 +498,7 @@ type CreateParams = {
     projectId: string
     logger: FastifyBaseLogger
     fields?: Field[]
+    editorSessionId?: string | null
 }
 
 type ListParams = {
@@ -519,12 +519,19 @@ type UpdateParams = {
     id: string
     projectId: string
     request: UpdateRecordRequest
+    editorSessionId?: string | null
+}
+
+type UpdateRecordResult = {
+    record: PopulatedRecord
+    changed: boolean
 }
 
 type DeleteParams = {
     ids: string[]
     projectId: string
     tableId: string
+    editorSessionId?: string | null
 }
 
 type DeleteRecordsResult = {

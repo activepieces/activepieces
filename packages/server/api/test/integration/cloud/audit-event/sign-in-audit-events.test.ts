@@ -1,4 +1,4 @@
-import { ApplicationEvent, ApplicationEventName, OtpType, PlatformRole, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ApplicationEvent, ApplicationEventName, InvitationStatus, InvitationType, OtpType, PlatformRole, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -9,7 +9,7 @@ import { distributedStore } from '../../../../src/app/database/redis-connections
 import { auditLogRepo } from '../../../../src/app/ee/audit-logs/audit-event-service'
 import { generateMockExternalToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
-import { createMockProject, createMockSigningKey, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
+import { createMockProject, createMockSigningKey, createMockUserInvitation, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 process.env.AP_TURNSTILE_SITE_KEY = 'test-site-key'
@@ -121,6 +121,32 @@ describe('Sign-in audit events', () => {
 
         expect(response?.statusCode).toBe(StatusCodes.OK)
         const events = await settledEvents({ platformId: response?.json().platformId, expectedCount: 1 })
+        expect(events).toEqual([signUpEvent({ email, method: UserIdentityProvider.EMAIL, source: 'credentials' })])
+    })
+
+    it('records an invited sign-up on the inviting platform when it finishes at the name step', async () => {
+        const email = faker.internet.email().toLowerCase()
+        const { mockPlatform } = await mockAndSaveBasicSetup({ platform: { emailAuthEnabled: true, enforceAllowedAuthDomains: false } })
+        await db.save('user_invitation', createMockUserInvitation({
+            email,
+            platformId: mockPlatform.id,
+            type: InvitationType.PLATFORM,
+            platformRole: PlatformRole.MEMBER,
+            status: InvitationStatus.ACCEPTED,
+        }))
+        const onboarding = await signInWithCode(email)
+        expect(onboarding?.json().platformId).toBeNull()
+
+        const response = await app?.inject({
+            method: 'POST',
+            url: '/api/v1/authentication/complete-sign-up',
+            headers: { authorization: `Bearer ${onboarding?.json().token}` },
+            body: { fullName: 'Dana Levi' },
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(response?.json().platformId).toBe(mockPlatform.id)
+        const events = await settledEvents({ platformId: mockPlatform.id, expectedCount: 1 })
         expect(events).toEqual([signUpEvent({ email, method: UserIdentityProvider.EMAIL, source: 'credentials' })])
     })
 

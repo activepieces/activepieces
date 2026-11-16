@@ -1,10 +1,12 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { quickzuAuth } from '../../auth';
-import { makeClient, quickzuCommon } from '../../common';
+import { quickzuOutputSchemas } from '../../common/output-schemas';
+import { makeClient, quickzuCommon, requireValue } from '../../common';
 
 export const updateCategoryAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_update_category',
+  outputSchema: quickzuOutputSchemas.statusMessage,
   classification: 'WRITE',
   displayName: 'Update Category',
   description: 'Updates an existing category in store.',
@@ -31,6 +33,9 @@ export const updateCategoryAction = createAction({
 
     const client = makeClient(context.auth);
 
-    return await client.updateCategory(categoryId!, { name, status });
+    return await client.updateCategory({
+      categoryId: requireValue({ value: categoryId, label: 'Category' }),
+      categoryInput: { name, status },
+    });
   },
 });

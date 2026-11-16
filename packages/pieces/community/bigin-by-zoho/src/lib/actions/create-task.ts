@@ -1,3 +1,5 @@
+import { assertWriteSucceeded } from '../common/request';
+import { biginOutputSchemas } from '../common/output-schemas';
 import { biginAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { tagsDropdown, usersDropdown } from '../common/props';
@@ -11,7 +13,8 @@ export const createTask = createAction({
   classification: 'WRITE',
   displayName: 'Create Task',
   description: 'Creates a new Task',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: biginOutputSchemas.legacyAckRaw,
   aiMetadata: { description: 'Creates a new task in Bigin CRM with a subject plus optional due date, owner, priority, status, description, and tags. Supports optional recurrence (daily/weekly/monthly/yearly RRULE) and reminders, and can be linked to a related Contact, Pipeline, or Company record. Use to schedule follow-up work. Not idempotent: each call creates a new task.', idempotent: false },
   props: {
     subject: Property.ShortText({
@@ -407,21 +410,15 @@ export const createTask = createAction({
 
     const payload = { data: [taskData] };
 
-    try {
+    
       const response = await biginApiService.createTask(
         access_token,
         api_domain,
         payload
       );
 
+      assertWriteSucceeded(response.data?.[0]);
       return response.data[0];
-    } catch (error) {
-      console.error('Error creating task:', error);
-      throw new Error(
-        error instanceof Error
-          ? `Failed to create task: ${error.message}`
-          : 'Failed to create task due to an unknown error'
-      );
-    }
+    
   },
 });

@@ -42,12 +42,43 @@ describe('global search Tiers page', () => {
   });
 });
 
-function tiersPage(): StaticPage {
-  const page = STATIC_PAGES.find(
-    (candidate) => candidate.href === '/platform/ai/tiers',
+describe('global search AI Usage page', () => {
+  it.each([ApEdition.CLOUD, ApEdition.ENTERPRISE])(
+    'shows to platform admins on %s',
+    (edition) => {
+      expect(
+        staticPageUtils.isVisible({
+          page: usagePage(),
+          isPlatformAdmin: true,
+          edition,
+        }),
+      ).toBe(true);
+    },
   );
+
+  it('stays hidden on community', () => {
+    expect(
+      staticPageUtils.isVisible({
+        page: usagePage(),
+        isPlatformAdmin: true,
+        edition: ApEdition.COMMUNITY,
+      }),
+    ).toBe(false);
+  });
+});
+
+function tiersPage(): StaticPage {
+  return pageAt({ href: '/platform/ai/tiers' });
+}
+
+function usagePage(): StaticPage {
+  return pageAt({ href: '/platform/ai/usage' });
+}
+
+function pageAt({ href }: { href: string }): StaticPage {
+  const page = STATIC_PAGES.find((candidate) => candidate.href === href);
   if (page === undefined) {
-    throw new Error('The Tiers page is missing from global search');
+    throw new Error(`${href} is missing from global search`);
   }
   return page;
 }

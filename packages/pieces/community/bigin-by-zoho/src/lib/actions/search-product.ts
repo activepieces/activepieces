@@ -1,3 +1,5 @@
+import { escapeCriteriaValue } from '../common/helpers';
+import { biginOutputSchemas } from '../common/output-schemas';
 import { biginAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { biginApiService } from '../common/request';
@@ -8,7 +10,8 @@ export const searchProductRecord = createAction({
   classification: 'SEARCH',
   displayName: 'Search Product Record',
   description: 'Searches products by name/code via criteria or word',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: biginOutputSchemas.legacyProductSearch,
   aiMetadata: { description: 'Searches product records in Bigin CRM and returns matches. Choose between Criteria mode (matches Product Name or Product Code with equals or starts-with) and Word mode (a free-text word search across the module). Use to find a product by name or code before associating it with a deal. Idempotent: read-only, repeating the search returns the same matches.', idempotent: true },
   props: {
     mode: Property.StaticDropdown({
@@ -36,13 +39,13 @@ export const searchProductRecord = createAction({
 
     const criteriaValue = ['Product_Name', 'Product_Code']
       .flatMap((key) => [
-        `${key}:equals:${searchTerm}`,
-        `${key}:starts_with:${searchTerm}`,
+        `${key}:equals:${escapeCriteriaValue(searchTerm)}`,
+        `${key}:starts_with:${escapeCriteriaValue(searchTerm)}`,
       ])
       .map((condition) => `(${condition})`)
       .join('OR');
 
-    try {
+    
       const response = await biginApiService.searchRecords(
         access_token,
         api_domain,
@@ -52,10 +55,8 @@ export const searchProductRecord = createAction({
 
       return {
         message: 'Product record search completed successfully',
-        data: response.data,
+        data: response.data ?? [],
       };
-    } catch (error: any) {
-      throw new Error(`Error searching product record: ${error.message}`);
-    }
+    
   },
 });

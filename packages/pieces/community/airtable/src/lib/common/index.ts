@@ -10,7 +10,7 @@ import {
   DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';
-import Airtable from 'airtable';
+import Airtable, { FieldSet, SelectOptions } from 'airtable';
 import {
   AirtableBase,
   AirtableComment,
@@ -20,9 +20,11 @@ import {
   AirtableEnterpriseFields,
   AirtableField,
   AirtableFieldMapping,
+  AirtableRawRecord,
   AirtableRecord,
   AirtableTable,
   AirtableView,
+  ResolvedField,
 } from './models';
 import { isNil } from '@activepieces/pieces-framework';
 import { airtableAuth } from '../auth';
@@ -32,6 +34,8 @@ const RATE_LIMIT_STATUS = 429;
 const RATE_LIMIT_PAUSE_MS = 30000;
 const RATE_LIMIT_RETRIES = 2;
 const DROPDOWN_RATE_LIMIT_RETRIES = 0;
+const FIELD_ID_PATTERN = /^fld[A-Za-z0-9]{14}$/;
+const TRIGGER_REQUEST_TIMEOUT_MS = 30000;
 
 function isRateLimited(error: unknown): boolean {
   return (
@@ -187,6 +191,7 @@ async function fetchTableList({
       type: AuthenticationType.BEARER_TOKEN,
       token,
     },
+    timeout: TRIGGER_REQUEST_TIMEOUT_MS,
   });
 
   if (response.status === 200) {
@@ -223,6 +228,80 @@ async function fetchViews({
     return table.views;
   }
   return [];
+}
+
+
+function pollStartCursor(): number {
+  return Math.floor(Date.now() / 1000) * 1000 - 1;
+}
+
+async function selectRecords({
+  token,
+  baseId,
+  tableId,
+  params,
+}: {
+  token: string;
+  baseId: string;
+  tableId: string;
+  params: SelectOptions<FieldSet>;
+}): Promise<AirtableRawRecord[]> {
+  const airtable = new Airtable({
+    apiKey: token,
+    requestTimeout: TRIGGER_REQUEST_TIMEOUT_MS,
+  });
+  const records = await airtable.base(baseId).table(tableId).select(params).all();
+  return records.map((record) => ({
+    id: record.id,
+    createdTime: record._rawJson.createdTime,
+    fields: record.fields,
+  }));
+}
+
+async function resolveField({
+  token,
+  baseId,
+  tableId,
+  idOrName,
+  label,
+  rememberedFieldId,
+}: {
+  token: string;
+  baseId: string;
+  tableId: string;
+  idOrName: string;
+  label: string;
+  rememberedFieldId?: string;
+}): Promise<ResolvedField> {
+  let table: AirtableTable | undefined;
+  try {
+    table = await fetchTable({ token, baseId, tableId });
+  } catch (error) {
+    if (FIELD_ID_PATTERN.test(idOrName)) {
+      throw new Error(
+        `Could not read the table's fields to find ${label} "${idOrName}". Check that the token has the schema.bases:read scope.`
+      );
+    }
+    return { name: idOrName };
+  }
+  if (isNil(table)) {
+    if (FIELD_ID_PATTERN.test(idOrName)) {
+      throw new Error(
+        `Could not find the selected table to look up ${label} "${idOrName}". Open the step and pick the table again.`
+      );
+    }
+    return { name: idOrName };
+  }
+  const field = isNil(rememberedFieldId)
+    ? table.fields.find((candidate) => candidate.id === idOrName) ??
+      table.fields.find((candidate) => candidate.name === idOrName)
+    : table.fields.find((candidate) => candidate.id === rememberedFieldId);
+  if (isNil(field)) {
+    throw new Error(
+      `${label} "${idOrName}" no longer exists in table "${table.name}". It was deleted or renamed: open the step and pick ${label} again.`
+    );
+  }
+  return { id: field.id, name: field.name };
 }
 
 async function createRecord({
@@ -264,7 +343,19 @@ async function findRecord({
   const escapedSearchValue = (searchValue ?? '')
     .replace(/\\/g, '\\\\')
     .replace(/"/g, '\\"');
-  if (/[{}]/.test(searchField ?? '')) {
+  const savedSearchField = searchField ?? '';
+  const searchFieldName = FIELD_ID_PATTERN.test(savedSearchField)
+    ? (
+        await resolveField({
+          token,
+          baseId,
+          tableId,
+          idOrName: savedSearchField,
+          label: 'Search Field',
+        })
+      ).name
+    : savedSearchField;
+  if (/[{}]/.test(searchFieldName)) {
     throw new Error(
       'Search Field must not contain "{" or "}" because Airtable cannot escape braces inside a field reference.'
     );
@@ -281,7 +372,7 @@ async function findRecord({
         token,
       },
       queryParams: {
-        filterByFormula: `FIND("${escapedSearchValue}",{${searchField}})`,
+        filterByFormula: `FIND("${escapedSearchValue}",{${searchFieldName}})`,
         pageSize: '100',
         ...(limitToView ? { view: limitToView } : {}),
         ...(offset ? { offset } : {}),
@@ -854,7 +945,7 @@ export const airtableCommon = {
           disabled: false,
           options: airtable.fields.map((field: AirtableField) => ({
             label: field.name,
-            value: field.name,
+            value: field.id,
           })),
         };
       } catch (e) {
@@ -925,27 +1016,9 @@ export const airtableCommon = {
     return newFields;
   },
 
-  getTableSnapshot: async (params: Params) => {
-    Airtable.configure({
-      apiKey: params.personalToken,
-    });
-    const airtable = new Airtable();
-    const currentTableSnapshot = (
-      await airtable
-        .base(params.baseId)
-        .table(params.tableId)
-        .select(params.limitToView ? { view: params.limitToView } : {})
-        .all()
-    )
-      .map((r: any) => r._rawJson)
-      .sort(
-        (x: any, y: any) =>
-          new Date(x.createdTime).getTime() - new Date(y.createdTime).getTime()
-      );
-    return currentTableSnapshot;
-  },
-
-
+  selectRecords,
+  resolveField,
+  pollStartCursor,
   createRecord,
   findRecord,
   updateRecord,
