@@ -114,8 +114,9 @@ The destination receives the audit event itself as the JSON body, with `Content-
 - `action` — the event name (for example `flow.run.finished`).
 - `data` — event-specific payload, including details like the flow id, run id, status, or affected user.
 - `id`, `created`, `updated` — event identifiers and timestamps.
-- `platformId`, `projectId` — context fields present on every event.
-- `userId`, `userEmail`, `ip` — who did it and from where. These are filled in for events that come from a user request. The four `flow.run.*` events are emitted by a worker rather than a request, so they carry none of them.
+- `platformId` — present on every event.
+- `projectId`, `projectDisplayName` — the project the event belongs to. Platform-level events, such as sign-in settings and SSO changes, have none.
+- `userId`, `userEmail`, `ip` — who did it and from where. These are filled in for events that come from a user request. The four `flow.run.*` events, and a `flow.deactivated` event sent when the system turns a flow off, are emitted by a worker rather than a request, so they carry none of them.
 
 A handler flow on this instance gets the JSON of its destination's format: the raw event for Raw JSON, and the OTLP/JSON request for the OpenTelemetry JSON encoding. A flow webhook accepts only JSON, so a destination that points at one cannot use the Protobuf encoding: the setup page switches it to JSON (and back to Protobuf if you then enter a URL that is not a flow webhook, unless you picked JSON yourself), and the API rejects Protobuf for a flow webhook URL with a `400`.
 
@@ -163,7 +164,7 @@ You can subscribe a destination to any audit event — flow lifecycle, run statu
 - **`415` or a decode error from an OpenTelemetry backend**: the backend does not accept the selected encoding. Switch the encoding to **Protobuf**.
 - **Test fails**: check that your URL is valid and uses HTTPS. The test reports the status code returned by the endpoint, which usually names the problem.
 - **Missing events**: make sure the event type is selected in your destination configuration.
-- **A field is missing**: the field is not on that event. The four `flow.run.*` events carry no `userId`, `userEmail`, or `ip`, because a worker emits them rather than a user request.
+- **A field is missing**: the field is not on that event. The four `flow.run.*` events, and a `flow.deactivated` event sent when the system turns a flow off, carry no `userId`, `userEmail`, or `ip`, because a worker emits them rather than a user request.
 
 ## See also
 

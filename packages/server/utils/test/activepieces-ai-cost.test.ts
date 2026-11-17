@@ -418,7 +418,7 @@ describe('what a model call reports back for billing', () => {
         })
     })
 
-    it('keeps the cost a LiteLLM gateway puts in its response header, only for custom providers', async () => {
+    it('keeps the cost a LiteLLM gateway puts in its response header, only for custom and litellm providers', async () => {
         const response = { id: 'resp-litellm', headers: { 'x-litellm-response-cost': '0.0031' } }
         const custom = activepiecesAiCost.billedLanguageModel({
             model: modelReturning({ content: [], finishReason: 'stop', usage: { inputTokens: { total: 7 }, outputTokens: { total: 1 } }, response }),
@@ -435,10 +435,19 @@ describe('what a model call reports back for billing', () => {
             charge: chargeFor({ provider: AIProviderName.OPENAI }),
         })
 
+        const litellm = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [], finishReason: 'stop', usage: {}, response }),
+            provider: AIProviderName.LITELLM,
+            modelId: 'prod-smart',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.LITELLM }),
+        })
+
         await generateWith(custom)
         await generateWith(openAi)
+        await generateWith(litellm)
 
-        expect(reported.map((event) => event.call.observedCostUsd)).toEqual([0.0031, undefined])
+        expect(reported.map((event) => event.call.observedCostUsd)).toEqual([0.0031, undefined, 0.0031])
     })
 
     it('still bills a managed call on cost when the turn carries the own-key credit, since we pay per call either way', async () => {

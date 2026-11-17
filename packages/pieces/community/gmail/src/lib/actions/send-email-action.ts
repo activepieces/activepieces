@@ -211,18 +211,28 @@ export const gmailSendEmailAction = createAction({
       .replace(/\//g, '_');
 
     if (context.propsValue.draft) {
-      return await gmail.users.drafts.create({
+      const draftResponse = await gmail.users.drafts.create({
         userId: 'me',
         requestBody: { message: { threadId, raw: encodedPayload } },
       });
+      return {
+        data: draftResponse.data,
+        status: draftResponse.status,
+        statusText: draftResponse.statusText,
+      };
     } else {
-      return await gmail.users.messages.send({
+      const sendResponse = await gmail.users.messages.send({
         userId: 'me',
         requestBody: {
           threadId,
           raw: encodedPayload,
         },
       });
+      return {
+        data: sendResponse.data,
+        status: sendResponse.status,
+        statusText: sendResponse.statusText,
+      };
     }
   },
 });

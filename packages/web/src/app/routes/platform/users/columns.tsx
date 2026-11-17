@@ -22,6 +22,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { MemberStatus } from '@/lib/statuses';
 import { cn } from '@/lib/utils';
 
 import { UserRowData } from './index';
@@ -182,12 +183,15 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
     ),
     cell: ({ row }) => {
       if (row.original.type === 'invitation') {
-        return <StatusDot tone="warning">{t('Pending')}</StatusDot>;
+        return (
+          <StatusDot status={MemberStatus.INVITED}>{t('Pending')}</StatusDot>
+        );
       }
-      return row.original.data.status === UserStatus.ACTIVE ? (
-        <StatusDot tone="success">{t('Activated')}</StatusDot>
-      ) : (
-        <StatusDot tone="neutral">{t('Deactivated')}</StatusDot>
+      const status = row.original.data.status;
+      return (
+        <StatusDot status={status}>
+          {status === UserStatus.ACTIVE ? t('Activated') : t('Deactivated')}
+        </StatusDot>
       );
     },
   },
