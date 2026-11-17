@@ -4,7 +4,7 @@ import { expect, test } from '../../fixtures';
 import webhookEcho from '../../fixtures/templates/webhook-echo.json';
 import { BuilderPage } from '../../pages/builder.page';
 
-test.describe('Canvas', { tag: ['@feature:canvas', '@surface'] }, () => {
+test.describe('Canvas', { tag: ['@feature:canvas', '@surface', '@no-staging'] }, () => {
   test.use({ viewport: { width: 1280, height: 1100 } });
 
   test('add, move, duplicate and delete a step, and the canvas keeps them after reload', async ({ page, request, session, seed }) => {
@@ -69,7 +69,8 @@ test.describe('Canvas', { tag: ['@feature:canvas', '@surface'] }, () => {
   });
 
   test('copy steps from one flow and paste them into another', async ({ page, request, session, seed }) => {
-    const source = await seed.flow({ template: webhookEcho, publish: false });
+    const marker = e2eApi.uniqueName('copied step');
+    const source = await seed.flow({ template: withMarkedStep({ marker }), publish: false });
     const target = await seed.flow({ template: webhookEcho, publish: false });
     const builderPage = new BuilderPage(page);
     await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
@@ -83,8 +84,9 @@ test.describe('Canvas', { tag: ['@feature:canvas', '@surface'] }, () => {
 
     const sourceStep = findStep({ flow: await readFlow({ request, session, flowId: source.flowId }), stepName: 'step_1' });
     const pastedStep = findStep({ flow: await readFlow({ request, session, flowId: target.flowId }), stepName: 'step_2' });
-    expect(pastedStep.displayName).toBe(`${sourceStep.displayName} Copy`);
+    expect(pastedStep.displayName).toBe(`${marker} Copy`);
     expect(pastedStep.settings).toMatchObject({ pieceName: sourceStep.settings.pieceName, actionName: sourceStep.settings.actionName, input: sourceStep.settings.input });
+    expect(pastedStep.settings.input).toMatchObject({ fields: { body: markedBody({ marker }) } });
   });
 
   test('a step with an empty required input shows as invalid and blocks publish', async ({ page, request, session, seed }) => {
@@ -119,6 +121,18 @@ function outlineOf(step: FlowStep | null | undefined): string {
   const loop = step.type === 'LOOP_ON_ITEMS' ? `{${outlineOf(step.firstLoopAction)}}` : '';
   const router = step.type === 'ROUTER' ? `[${(step.children ?? []).map(outlineOf).join('|')}]` : '';
   return [`${step.name}${loop}${router}`, outlineOf(step.nextAction)].filter(Boolean).join(' ');
+}
+
+function withMarkedStep({ marker }: { marker: string }) {
+  const template = structuredClone(webhookEcho);
+  const step = template.flows[0].trigger.nextAction;
+  step.displayName = marker;
+  step.settings.input.fields.body = markedBody({ marker });
+  return template;
+}
+
+function markedBody({ marker }: { marker: string }): string {
+  return JSON.stringify({ copiedFrom: marker });
 }
 
 function findStep({ flow, stepName }: { flow: FlowWithDraft; stepName: string }): FlowStep {
