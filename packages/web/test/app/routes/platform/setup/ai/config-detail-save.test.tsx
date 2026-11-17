@@ -119,6 +119,9 @@ vi.mock('@/features/platform-admin/hooks/platform-model-tier-hooks', () => ({
 
 vi.mock('@/features/platform-admin/hooks/ai-provider-hooks', () => ({
   aiProviderQueries: { useAiProviderConfigs: () => ({ data: [] }) },
+  aiProviderMutations: {
+    useRefreshAiProviderModels: () => ({ mutate: vi.fn(), isPending: false }),
+  },
 }));
 
 vi.mock('@/lib/format-utils', () => ({

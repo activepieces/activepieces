@@ -215,4 +215,27 @@ describe('ManualModelList', () => {
     );
     expect(remove?.disabled).toBe(true);
   });
+
+  it('marks a model synced from the proxy, and keeps it from being removed or retyped', () => {
+    render([
+      {
+        modelId: 'prod-smart',
+        modelName: 'prod-smart',
+        modelType: AIProviderModelType.TEXT,
+        discovered: true,
+        metadata: { realModelId: 'gpt-5.4-mini' },
+      },
+    ]);
+
+    expect(container.textContent).toContain('Synced');
+    expect(container.textContent).toContain('gpt-5.4-mini');
+    const remove = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Remove"]',
+    );
+    expect(remove?.disabled).toBe(true);
+    const typeButton = Array.from(container.querySelectorAll('button')).find(
+      (candidate) => candidate.textContent === 'Text',
+    );
+    expect(typeButton).toBeUndefined();
+  });
 });

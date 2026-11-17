@@ -261,6 +261,7 @@ export function ProvidersTab() {
         {!locked && (
           <Button
             onClick={() => openConnect()}
+            data-testid="ai-provider-add-key"
             {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
           >
             <Plus className="size-4" />
@@ -778,5 +779,6 @@ const PROVIDERS_BY_IMPORTANCE: AIProviderName[] = [
   AIProviderName.MINIMAX,
   AIProviderName.ZAI,
   AIProviderName.CLOUDFLARE_GATEWAY,
+  AIProviderName.LITELLM,
   AIProviderName.CUSTOM,
 ];

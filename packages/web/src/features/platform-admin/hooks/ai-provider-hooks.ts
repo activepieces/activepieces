@@ -63,6 +63,22 @@ export const aiProviderMutations = {
       onError,
     });
   },
+  useRefreshAiProviderModels: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: () => void;
+    onError: (
+      error: AxiosError<{ message?: string; params?: { message: string } }>,
+    ) => void;
+  }) => {
+    return useMutation({
+      mutationFn: (providerId: string) =>
+        aiProviderApi.refreshModels(providerId),
+      onSuccess,
+      onError,
+    });
+  },
   useDeleteAiProvider: ({
     onSuccess,
     onError,

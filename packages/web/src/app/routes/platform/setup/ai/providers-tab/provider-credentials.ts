@@ -176,12 +176,28 @@ const PROVIDER_CREDENTIAL_FIELDS: Partial<
   [AIProviderName.CUSTOM]: OPENAI_COMPATIBLE_FIELDS,
   [AIProviderName.LITELLM]: OPENAI_COMPATIBLE_FIELDS.filter(
     (field) => field.key !== 'apiStyle',
+  ).flatMap((field) =>
+    field.key === 'apiKeyHeader'
+      ? [
+          field,
+          {
+            key: 'typedModels',
+            label: t('Models'),
+            placeholder: 'prod-smart, openai/gpt-4o',
+            optional: true,
+            description: t(
+              'Comma-separated model ids to add by hand, for wildcard routes or a proxy that cannot be reached from here. Models your proxy lists are added on save.',
+            ),
+          },
+        ]
+      : [field],
   ),
 };
 
 const MANUAL_MODEL_PROVIDERS: AIProviderName[] = [
   AIProviderName.VERTEX,
   AIProviderName.CUSTOM,
+  AIProviderName.LITELLM,
   AIProviderName.CLOUDFLARE_GATEWAY,
 ];
 

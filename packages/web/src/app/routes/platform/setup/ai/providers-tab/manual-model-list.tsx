@@ -18,11 +18,13 @@ export function ManualModelList({
   models,
   suggestedModelIds = [],
   tiersByModel = new Map(),
+  syncsModels = false,
   onChange,
 }: {
   models: ProviderModelConfig[];
   suggestedModelIds?: string[];
   tiersByModel?: Map<string, string[]>;
+  syncsModels?: boolean;
   onChange: (models: ProviderModelConfig[]) => void;
 }) {
   const suggestionListId = useId();
@@ -91,12 +93,19 @@ export function ManualModelList({
       </div>
       {models.length === 0 ? (
         <p className="border-t border-gray-6 p-4 text-sm text-gray-11">
-          {t(
-            'This provider cannot list models automatically — add the model ids you want to expose.',
-          )}
+          {syncsModels
+            ? t(
+                'No models yet. Refresh to load them from your proxy, or add model ids by hand.',
+              )
+            : t(
+                'This provider cannot list models automatically — add the model ids you want to expose.',
+              )}
         </p>
       ) : (
-        <div className="flex flex-col border-t border-gray-6">
+        <div
+          className="flex flex-col border-t border-gray-6"
+          data-testid="ai-provider-model-list"
+        >
           {models.map((model) => (
             <div
               key={model.modelId}
@@ -104,7 +113,18 @@ export function ManualModelList({
             >
               <span className="min-w-0 flex-1 truncate font-mono text-sm">
                 {model.modelId}
+                {model.metadata?.realModelId !== undefined &&
+                  model.metadata.realModelId !== model.modelId && (
+                    <span className="ml-2 text-gray-10">
+                      {model.metadata.realModelId}
+                    </span>
+                  )}
               </span>
+              {model.discovered === true && (
+                <Badge variant="outline" className="shrink-0">
+                  {t('Synced')}
+                </Badge>
+              )}
               {tiersByModel.has(model.modelId) && (
                 <Badge variant="info" className="shrink-0">
                   {t('Used by {tiers}', {
@@ -112,28 +132,41 @@ export function ManualModelList({
                   })}
                 </Badge>
               )}
-              <button
-                type="button"
-                title={t('Model Type')}
-                onClick={() =>
-                  onChange(
-                    models.map((current) =>
-                      current.modelId === model.modelId
-                        ? { ...current, modelType: toggleModelType(current) }
-                        : current,
-                    ),
-                  )
-                }
-                className="rounded-md border border-gray-6 px-2 py-0.5 text-xs text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12"
-              >
-                {modelTypeLabel(model.modelType)}
-              </button>
+              {model.discovered === true ? (
+                <span className="px-2 py-0.5 text-xs text-gray-11">
+                  {modelTypeLabel(model.modelType)}
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  title={t('Model Type')}
+                  onClick={() =>
+                    onChange(
+                      models.map((current) =>
+                        current.modelId === model.modelId
+                          ? { ...current, modelType: toggleModelType(current) }
+                          : current,
+                      ),
+                    )
+                  }
+                  className="rounded-md border border-gray-6 px-2 py-0.5 text-xs text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12"
+                >
+                  {modelTypeLabel(model.modelType)}
+                </button>
+              )}
               <Button
                 type="button"
                 variant="ghost"
                 size="icon-xs"
                 aria-label={t('Remove')}
-                disabled={tiersByModel.has(model.modelId)}
+                disabled={
+                  tiersByModel.has(model.modelId) || model.discovered === true
+                }
+                title={
+                  model.discovered === true
+                    ? t('Synced from your proxy. Remove it there.')
+                    : undefined
+                }
                 onClick={() =>
                   onChange(
                     models.filter(
