@@ -38,8 +38,10 @@ test.describe('Automations › flows', { tag: ['@feature:flows-list', '@surface'
     });
 
     await test.step('Import the exported file', async () => {
-      const importedId = await automationsPage.importFlow(exported.file);
-      cleanup.track({ resource: 'flows', id: importedId });
+      const importedId = await automationsPage.importFlow({
+        file: exported.file,
+        onCreated: (id) => cleanup.track({ resource: 'flows', id }),
+      });
       const imported = await readFlow({ request, session, flowId: importedId });
       expect(imported.version).toMatchObject({
         displayName: newName,
