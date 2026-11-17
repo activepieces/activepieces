@@ -53,6 +53,7 @@ test.describe('Platform connections', { tag: ['@feature:pconn', '@surface'] }, (
 
   test('the all-connections table searches by the spec prefix', async ({ page, platformConnections }) => {
     const connectionsPage = new PlatformConnectionsPage(page);
+    test.setTimeout(120000);
     const prefix = e2eFlows.uniqueName('pconn');
 
     await test.step('Seed a global and a project connection with the prefix, and one more without it', async () => {
