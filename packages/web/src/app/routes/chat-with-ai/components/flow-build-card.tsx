@@ -71,7 +71,6 @@ export function FlowBuildCard({
           indicatorClassName={cn(
             'transition-all duration-500',
             isDone && 'bg-success-9',
-            isFailed && 'bg-warning-9',
           )}
         />
       </div>
@@ -146,8 +145,8 @@ function BuildStepRow({ step }: { step: BuildPlanStep }) {
           'truncate',
           step.status === 'done' && 'text-gray-12',
           step.status === 'pending' && 'text-gray-11',
-          step.status === 'in_progress' && 'font-medium text-gray-12',
-          step.status === 'failed' && 'text-warning-11',
+          (step.status === 'in_progress' || step.status === 'failed') &&
+            'font-medium text-gray-12',
         )}
       >
         {step.label}
