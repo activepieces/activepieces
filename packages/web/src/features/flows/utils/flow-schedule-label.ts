@@ -136,41 +136,44 @@ function describeFixedTime({
   preset: FixedPreset;
   zone: ScheduleContext;
 }): { detail: string; scheduleTooltip: string } {
+  if (preset.kind === 'hourly') {
+    return preset.weekdaysOnly
+      ? {
+          detail: t('hourly, Mon–Fri'),
+          scheduleTooltip: t(
+            'Runs every hour on the hour ({zone}), Monday to Friday.',
+            { zone: zoneName({ zone }) },
+          ),
+        }
+      : {
+          detail: t('hourly'),
+          scheduleTooltip: t('Runs every hour on the hour ({zone}).', {
+            zone: zoneName({ zone }),
+          }),
+        };
+  }
+  const nextRunAt = nextRun({
+    preset,
+    timeZone: zone.scheduleTimeZone,
+    now: zone.now,
+  });
+  const atRun = { ...zone, at: nextRunAt };
+  const time = scheduleTime({
+    zone: atRun,
+    hour: preset.hour,
+    minute: preset.minute,
+  });
+  const differs = differsFromViewer({ zone: atRun });
+  const zoneParams = { showZone: !differs, zone: zoneName({ zone }) };
   switch (preset.kind) {
-    case 'hourly':
-      return preset.weekdaysOnly
-        ? {
-            detail: t('hourly, Mon–Fri'),
-            scheduleTooltip: t(
-              'Runs every hour on the hour ({zone}), Monday to Friday.',
-              { zone: zoneName({ zone }) },
-            ),
-          }
-        : {
-            detail: t('hourly'),
-            scheduleTooltip: t('Runs every hour on the hour ({zone}).', {
-              zone: zoneName({ zone }),
-            }),
-          };
     case 'daily': {
-      const nextRun = nextDailyRun({
-        hour: preset.hour,
-        minute: preset.minute,
-        timeZone: zone.scheduleTimeZone,
-        now: zone.now,
-      });
-      const atRun = { ...zone, at: nextRun };
-      const time = scheduleTime({ zone: atRun });
-      const differs = differsFromViewer({ zone: atRun });
       if (preset.weekdaysOnly) {
         return {
           detail: t('Mon–Fri at {time}', { time }),
-          scheduleTooltip: differs
-            ? t('Runs Monday to Friday at {time}.', { time })
-            : t('Runs Monday to Friday at {time} ({zone}).', {
-                time,
-                zone: zoneName({ zone }),
-              }),
+          scheduleTooltip: t(
+            'Runs Monday to Friday at {time}{showZone, select, true { ({zone})} other {}}.',
+            { time, ...zoneParams },
+          ),
         };
       }
       return {
@@ -180,7 +183,7 @@ function describeFixedTime({
               time,
               yourTime: formatInstant({
                 locale: zone.locale,
-                at: nextRun,
+                at: nextRunAt,
                 timeZone: zone.viewerTimeZone,
               }),
             })
@@ -191,12 +194,6 @@ function describeFixedTime({
       };
     }
     case 'weekly': {
-      const atNow = { ...zone, at: zone.now };
-      const time = scheduleTime({
-        zone: atNow,
-        hour: preset.hour,
-        minute: preset.minute,
-      });
       const weekday = formatWeekday({
         locale: zone.locale,
         weekday: preset.weekday,
@@ -211,48 +208,26 @@ function describeFixedTime({
           }),
           time,
         }),
-        scheduleTooltip: differsFromViewer({ zone: atNow })
-          ? t('Runs every {weekday} at {time}.', { weekday, time })
-          : t('Runs every {weekday} at {time} ({zone}).', {
-              weekday,
-              time,
-              zone: zoneName({ zone }),
-            }),
+        scheduleTooltip: t(
+          'Runs every {weekday} at {time}{showZone, select, true { ({zone})} other {}}.',
+          { weekday, time, ...zoneParams },
+        ),
       };
     }
     case 'monthly': {
-      const atNow = { ...zone, at: zone.now };
-      const time = scheduleTime({
-        zone: atNow,
-        hour: preset.hour,
-        minute: preset.minute,
-      });
       const day = formatDayOfMonth({ locale: zone.locale, day: preset.day });
-      const differs = differsFromViewer({ zone: atNow });
-      const zoneLabel = zoneName({ zone });
-      if (preset.day > 28) {
-        return {
-          detail: t('{day} at {time}', { day, time }),
-          scheduleTooltip: differs
-            ? t('Runs on the {day} at {time}. Skips months with fewer days.', {
-                day,
-                time,
-              })
-            : t(
-                'Runs on the {day} at {time} ({zone}). Skips months with fewer days.',
-                { day, time, zone: zoneLabel },
-              ),
-        };
-      }
       return {
         detail: t('{day} at {time}', { day, time }),
-        scheduleTooltip: differs
-          ? t('Runs on the {day} of every month at {time}.', { day, time })
-          : t('Runs on the {day} of every month at {time} ({zone}).', {
-              day,
-              time,
-              zone: zoneLabel,
-            }),
+        scheduleTooltip:
+          preset.day > 28
+            ? t(
+                'Runs on the {day} at {time}{showZone, select, true { ({zone})} other {}}. Skips months with fewer days.',
+                { day, time, ...zoneParams },
+              )
+            : t(
+                'Runs on the {day} of every month at {time}{showZone, select, true { ({zone})} other {}}.',
+                { day, time, ...zoneParams },
+              ),
       };
     }
   }
@@ -325,33 +300,67 @@ function toNumber({
   return value >= min && value <= max ? value : undefined;
 }
 
-function nextDailyRun({
-  hour,
-  minute,
+function nextRun({
+  preset,
   timeZone,
   now,
 }: {
-  hour: number;
-  minute: number;
+  preset: TimedPreset;
   timeZone: string;
   now: Date;
 }): Date {
-  const parts = new Intl.DateTimeFormat('en-US', {
+  const formatter = new Intl.DateTimeFormat('en-US', {
     timeZone,
     year: 'numeric',
     month: 'numeric',
     day: 'numeric',
-  }).formatToParts(now);
-  const part = (type: Intl.DateTimeFormatPartTypes) =>
-    Number(parts.find((p) => p.type === type)?.value);
-  const offsetNow = offsetMinutes({ timeZone, at: now });
-  const todayRun =
-    Date.UTC(part('year'), part('month') - 1, part('day'), hour, minute) -
-    offsetNow * 60_000;
-  const candidate =
-    todayRun <= now.getTime() ? todayRun + 24 * 60 * 60_000 : todayRun;
-  const offsetAtRun = offsetMinutes({ timeZone, at: new Date(candidate) });
-  return new Date(candidate - (offsetAtRun - offsetNow) * 60_000);
+  });
+  const today = Date.UTC(
+    Number(partValue({ formatter, at: now, type: 'year' })),
+    Number(partValue({ formatter, at: now, type: 'month' })) - 1,
+    Number(partValue({ formatter, at: now, type: 'day' })),
+  );
+  for (let daysAhead = 0; daysAhead <= MAX_DAYS_BETWEEN_RUNS; daysAhead++) {
+    const day = new Date(today + daysAhead * 24 * 60 * 60_000);
+    if (runsOn({ preset, day })) {
+      const wallClock =
+        day.getTime() + (preset.hour * 60 + preset.minute) * 60_000;
+      const estimate =
+        wallClock -
+        offsetMinutes({
+          timeZone,
+          at: new Date(wallClock - 24 * 60 * 60_000),
+        }) *
+          60_000;
+      const offsetAtEstimate = offsetMinutes({
+        timeZone,
+        at: new Date(estimate),
+      });
+      const candidate = wallClock - offsetAtEstimate * 60_000;
+      const run =
+        offsetMinutes({ timeZone, at: new Date(candidate) }) ===
+        offsetAtEstimate
+          ? candidate
+          : estimate;
+      if (run > now.getTime()) {
+        return new Date(run);
+      }
+    }
+  }
+  return now;
+}
+
+function runsOn({ preset, day }: { preset: TimedPreset; day: Date }): boolean {
+  switch (preset.kind) {
+    case 'daily':
+      return (
+        !preset.weekdaysOnly || (day.getUTCDay() >= 1 && day.getUTCDay() <= 5)
+      );
+    case 'weekly':
+      return day.getUTCDay() === preset.weekday;
+    case 'monthly':
+      return day.getUTCDate() === preset.day;
+  }
 }
 
 function scheduleTime({
@@ -359,17 +368,11 @@ function scheduleTime({
   hour,
   minute,
 }: {
-  zone: ScheduleContext & { at: Date };
-  hour?: number;
-  minute?: number;
+  zone: ScheduleContextAtRun;
+  hour: number;
+  minute: number;
 }): string {
-  const time = isNil(hour)
-    ? formatInstant({
-        locale: zone.locale,
-        at: zone.at,
-        timeZone: zone.scheduleTimeZone,
-      })
-    : formatClock({ locale: zone.locale, hour, minute: minute ?? 0 });
+  const time = formatClock({ locale: zone.locale, hour, minute });
   return differsFromViewer({ zone })
     ? `${time} ${zoneAbbreviation({ zone })}`
     : time;
@@ -384,15 +387,17 @@ function formatInstant({
   at: Date;
   timeZone: string;
 }): string {
-  const parts = new Intl.DateTimeFormat('en-US', {
+  const formatter = new Intl.DateTimeFormat('en-US', {
     timeZone,
     hour: 'numeric',
     minute: 'numeric',
     hourCycle: 'h23',
-  }).formatToParts(at);
-  const value = (type: Intl.DateTimeFormatPartTypes) =>
-    Number(parts.find((p) => p.type === type)?.value);
-  return formatClock({ locale, hour: value('hour'), minute: value('minute') });
+  });
+  return formatClock({
+    locale,
+    hour: Number(partValue({ formatter, at, type: 'hour' })),
+    minute: Number(partValue({ formatter, at, type: 'minute' })),
+  });
 }
 
 function formatClock({
@@ -440,30 +445,23 @@ function formatDayOfMonth({
   return `${day}${ENGLISH_ORDINAL_SUFFIXES[rule] ?? 'th'}`;
 }
 
-function differsFromViewer({
-  zone,
-}: {
-  zone: ScheduleContext & { at: Date };
-}): boolean {
+function differsFromViewer({ zone }: { zone: ScheduleContextAtRun }): boolean {
   return (
     offsetMinutes({ timeZone: zone.scheduleTimeZone, at: zone.at }) !==
     offsetMinutes({ timeZone: zone.viewerTimeZone, at: zone.at })
   );
 }
 
-function zoneAbbreviation({
-  zone,
-}: {
-  zone: ScheduleContext & { at: Date };
-}): string {
+function zoneAbbreviation({ zone }: { zone: ScheduleContextAtRun }): string {
   return (
-    new Intl.DateTimeFormat(zone.locale, {
-      timeZone: zone.scheduleTimeZone,
-      timeZoneName: 'short',
-    })
-      .formatToParts(zone.at)
-      .find((part) => part.type === 'timeZoneName')?.value ??
-    zone.scheduleTimeZone
+    partValue({
+      formatter: new Intl.DateTimeFormat(zone.locale, {
+        timeZone: zone.scheduleTimeZone,
+        timeZoneName: 'short',
+      }),
+      at: zone.at,
+      type: 'timeZoneName',
+    }) ?? zone.scheduleTimeZone
   );
 }
 
@@ -485,14 +483,15 @@ function offsetMinutes({
   timeZone: string;
   at: Date;
 }): number {
-  const { data: name } = tryCatchSync(
-    () =>
-      new Intl.DateTimeFormat('en-US', {
+  const { data: name } = tryCatchSync(() =>
+    partValue({
+      formatter: new Intl.DateTimeFormat('en-US', {
         timeZone,
         timeZoneName: 'longOffset',
-      })
-        .formatToParts(at)
-        .find((part) => part.type === 'timeZoneName')?.value,
+      }),
+      at,
+      type: 'timeZoneName',
+    }),
   );
   const match = /GMT([+-])(\d{2}):?(\d{2})?/.exec(name ?? '');
   if (isNil(match)) {
@@ -500,6 +499,18 @@ function offsetMinutes({
   }
   const sign = match[1] === '-' ? -1 : 1;
   return sign * (Number(match[2]) * 60 + Number(match[3] ?? 0));
+}
+
+function partValue({
+  formatter,
+  at,
+  type,
+}: {
+  formatter: Intl.DateTimeFormat;
+  at: Date;
+  type: Intl.DateTimeFormatPartTypes;
+}): string | undefined {
+  return formatter.formatToParts(at).find((part) => part.type === type)?.value;
 }
 
 function isKnownTimeZone({ timeZone }: { timeZone: string }): boolean {
@@ -516,6 +527,7 @@ export const flowScheduleLabelUtils = {
 const SCHEDULE_PIECE_NAME = '@activepieces/piece-schedule';
 const MANUAL_TRIGGER_PIECE_NAME = '@activepieces/piece-manual-trigger';
 const CUSTOM_PRESET: Preset = { kind: 'custom' };
+const MAX_DAYS_BETWEEN_RUNS = 62;
 const ENGLISH_ORDINAL_SUFFIXES: Partial<Record<Intl.LDMLPluralRule, string>> = {
   one: 'st',
   two: 'nd',
@@ -545,6 +557,8 @@ type ScheduleContext = ViewerContext & {
   scheduleTimeZone: string;
 };
 
+type ScheduleContextAtRun = ScheduleContext & { at: Date };
+
 type Timing = {
   detail: string;
   scheduleTooltip: string;
@@ -556,6 +570,8 @@ type FixedPreset =
   | { kind: 'daily'; hour: number; minute: number; weekdaysOnly: boolean }
   | { kind: 'weekly'; hour: number; minute: number; weekday: number }
   | { kind: 'monthly'; hour: number; minute: number; day: number };
+
+type TimedPreset = Exclude<FixedPreset, { kind: 'hourly' }>;
 
 type Preset =
   | FixedPreset

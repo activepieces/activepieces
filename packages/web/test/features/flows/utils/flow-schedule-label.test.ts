@@ -118,6 +118,55 @@ describe('flowScheduleLabelUtils.describe', () => {
     expect(label?.tooltip).toBe(tooltip);
   });
 
+  it.each([
+    [
+      'a weekly run after a clock change',
+      '0 9 * * 1',
+      '2026-03-07T15:00:00Z',
+      'Mon at 9 AM EDT',
+    ],
+    [
+      'a monthly run after a clock change',
+      '0 9 15 * *',
+      '2026-03-07T15:00:00Z',
+      '15th at 9 AM EDT',
+    ],
+    [
+      'a weekday run after a weekend clock change',
+      '0 9 * * 1-5',
+      '2026-03-06T15:00:00Z',
+      'Mon–Fri at 9 AM EDT',
+    ],
+  ])(
+    'uses the next run’s zone and the cron hour for %s',
+    (_case, expression, now, detail) => {
+      const label = flowScheduleLabelUtils.describe({
+        flow: flowWith({
+          schedule: cron(expression, 'America/New_York'),
+          pieceName: SCHEDULE,
+        }),
+        locale: 'en-US',
+        viewerTimeZone: 'Europe/Berlin',
+        now: new Date(now),
+      });
+      expect(label?.detail).toBe(detail);
+    },
+  );
+
+  it('keeps the cron hour and gives the real run time when the clock skips that hour', () => {
+    const label = flowScheduleLabelUtils.describe({
+      flow: flowWith({
+        schedule: cron('0 2 * * *', 'America/New_York'),
+        pieceName: SCHEDULE,
+      }),
+      locale: 'en-US',
+      viewerTimeZone: 'Europe/Berlin',
+      now: new Date('2026-03-07T12:00:00Z'),
+    });
+    expect(label?.detail).toBe('daily at 2 AM EDT');
+    expect(label?.tooltip).toBe('Runs every day at 2 AM EDT (8 AM your time).');
+  });
+
   it('gives no viewer time for weekdays, which can shift across zones', () => {
     const label = flowScheduleLabelUtils.describe({
       flow: flowWith({ schedule: cron('0 22 * * 1-5'), pieceName: SCHEDULE }),

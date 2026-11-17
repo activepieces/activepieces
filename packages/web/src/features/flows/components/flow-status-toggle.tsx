@@ -54,7 +54,7 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
       : null;
 
   return (
-    <div className="flex items-center justify-start">
+    <div className="flex min-w-0 items-center justify-start">
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="flex items-center justify-center">
