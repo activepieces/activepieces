@@ -41,7 +41,7 @@ export const deleteRecords = createAction({
     }),
     fields: twentyRecordProps.fields({
       required: true,
-      displayName: 'Filder by',
+      displayName: 'Filter By',
       description:
         'The fields to match records on. Only records that match every filter are deleted.',
     }),
