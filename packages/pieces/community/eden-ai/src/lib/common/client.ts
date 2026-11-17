@@ -17,9 +17,22 @@ function logEdenAiError(error: any, context: Record<string, any>) {
   }
 }
 
+function errorValueToString(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    'message' in value &&
+    typeof value.message === 'string'
+  ) {
+    return value.message;
+  }
+  return JSON.stringify(value);
+}
+
 function parseEdenAiError(error: any): string {
-  if (error?.response?.body?.error) return error.response.body.error;
-  if (error?.response?.body?.message) return error.response.body.message;
+  if (error?.response?.body?.error) return errorValueToString(error.response.body.error);
+  if (error?.response?.body?.message) return errorValueToString(error.response.body.message);
   if (error?.message) return error.message;
   return String(error);
 }
