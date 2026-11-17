@@ -3989,5 +3989,12 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "Routes to": "Routes to",
+  "Comma-separated model ids to add by hand, for wildcard routes or a proxy that cannot be reached from here. Models your proxy lists are added on save.": "Comma-separated model ids to add by hand, for wildcard routes or a proxy that cannot be reached from here. Models your proxy lists are added on save.",
+  "Models refreshed": "Models refreshed",
+  "Could not refresh the models": "Could not refresh the models",
+  "Save your changes first": "Save your changes first",
+  "Refresh models": "Refresh models",
+  "Connect your LiteLLM proxy:\n1. Set the base url to your proxy url, e.g. https://litellm.example.com.\n2. Paste a LiteLLM virtual key or the master key as it is, without a 'Bearer ' prefix.\n3. Keep the api key header as 'Authorization', or set it to the header your proxy reads (e.g. 'x-litellm-api-key').\n4. Models load from your proxy when you save. Add a model by hand if your proxy routes it through a wildcard like 'openai/*'.": "Connect your LiteLLM proxy:\n1. Set the base url to your proxy url, e.g. https://litellm.example.com.\n2. Paste a LiteLLM virtual key or the master key as it is, without a 'Bearer ' prefix.\n3. Keep the api key header as 'Authorization', or set it to the header your proxy reads (e.g. 'x-litellm-api-key').\n4. Models load from your proxy when you save. Add a model by hand if your proxy routes it through a wildcard like 'openai/*'."
 }

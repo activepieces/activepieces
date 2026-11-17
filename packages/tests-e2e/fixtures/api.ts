@@ -21,6 +21,10 @@ async function deleteConnection({ request, session, connectionId }: { request: A
   await deleteById({ request, session, resource: 'app-connections', id: connectionId });
 }
 
+async function deleteAiProvider({ request, session, providerId }: { request: APIRequestContext; session: E2eSession; providerId: string }) {
+  await deleteById({ request, session, resource: 'ai-providers', id: providerId });
+}
+
 async function invitePlatformMember({ request, session, email }: { request: APIRequestContext; session: E2eSession; email: string }): Promise<{ id: string }> {
   const response = await request.post('/api/v1/user-invitations', {
     headers: { Authorization: `Bearer ${session.token}` },
@@ -181,6 +185,7 @@ export const e2eApi = {
   readSession,
   deleteFlow,
   deleteConnection,
+  deleteAiProvider,
   invitePlatformMember,
   acceptInvitation,
   readInvitationStatus,
@@ -195,7 +200,7 @@ export const e2eApi = {
 
 export type E2eSession = { token: string; projectId: string };
 
-type Resource = 'flows' | 'app-connections' | 'users' | 'user-invitations';
+type Resource = 'flows' | 'app-connections' | 'users' | 'user-invitations' | 'ai-providers';
 type FlowSummary = { id: string; created: string; version: { displayName: string } };
 type ConnectionSummary = { id: string; created: string; displayName: string };
 type FlowState = {
