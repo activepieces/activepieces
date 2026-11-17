@@ -1,3 +1,18 @@
+function ofGroup({
+  online,
+  inUse,
+}: {
+  online: number;
+  inUse: boolean;
+}): WorkerHealth {
+  if (online > 0) {
+    return WorkerHealth.ONLINE;
+  }
+  return inUse ? WorkerHealth.OFFLINE : WorkerHealth.EMPTY;
+}
+
+export const workerHealthUtils = { ofGroup };
+
 export enum CreditsSeverity {
   DEFAULT = 'DEFAULT',
   WARNING = 'WARNING',
