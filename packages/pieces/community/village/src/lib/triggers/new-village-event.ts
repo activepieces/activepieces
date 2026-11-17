@@ -62,13 +62,20 @@ export const newVillageEvent = createTrigger({
     if (events.length > 0) {
       body['event_filter'] = events;
     }
-    const response = await villageApi.call<{ data: { id: string } }>({
+    const response = await villageApi.call<{ data?: { id?: string | number | null } }>({
       token: context.auth.secret_text,
       method: HttpMethod.POST,
       path: '/v2/webhooks',
       body,
     });
-    const webhookId = response.data.id;
+    const createdId = response.data?.id;
+    if (createdId === undefined || createdId === null || String(createdId).length === 0) {
+      await removeWebhooksForUrl({ token: context.auth.secret_text, url: context.webhookUrl });
+      throw new Error(
+        'Village did not return a webhook ID when registering the trigger; any webhook it created for this flow was removed. Try turning the flow on again.',
+      );
+    }
+    const webhookId = String(createdId);
     try {
       await context.store.put<StoredWebhook>(STORE_KEY, { webhookId, secret });
     } catch (error) {
@@ -126,6 +133,23 @@ export const newVillageEvent = createTrigger({
     return [body];
   },
 });
+
+async function removeWebhooksForUrl({ token, url }: { token: string; url: string }): Promise<void> {
+  const found = await villageApi
+    .call<{ data?: { id?: string; url?: string }[] }>({
+      token,
+      method: HttpMethod.GET,
+      path: '/v2/webhooks',
+      queryParams: { search: url, limit: '100' },
+    })
+    .catch(() => ({ data: [] }));
+  const matches = (found.data ?? []).filter((hook) => hook.url === url && typeof hook.id === 'string');
+  for (const hook of matches) {
+    await villageApi
+      .call({ token, method: HttpMethod.DELETE, path: `/v2/webhooks/${villageApi.encodePathId(String(hook.id))}` })
+      .catch(() => undefined);
+  }
+}
 
 function readHeader({ headers, name }: { headers: Record<string, string> | undefined; name: string }): string | null {
   if (!headers) {

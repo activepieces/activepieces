@@ -11,6 +11,26 @@ import { resolveListByName } from '../src/lib/actions/ai/resolve-list-by-name';
 import { addLeadToSequence } from '../src/lib/actions/ai/add-lead-to-sequence';
 import { createSequence } from '../src/lib/actions/sequences/create-sequence';
 import { getSequence } from '../src/lib/actions/sequences/get-sequence';
+import { addSequenceLeads } from '../src/lib/actions/sequences/add-sequence-leads';
+import { archiveSequence } from '../src/lib/actions/sequences/archive-sequence';
+import { deleteSequenceLead } from '../src/lib/actions/sequences/delete-sequence-lead';
+import { listSequences } from '../src/lib/actions/sequences/list-sequences';
+import { listSequenceLeads } from '../src/lib/actions/sequences/list-sequence-leads';
+import { listSequenceEmails } from '../src/lib/actions/sequences/list-sequence-emails';
+import { listEmailActivities } from '../src/lib/actions/sequences/list-email-activities';
+import { refreshList } from '../src/lib/actions/lists/refresh-list';
+import { getPersonPosts } from '../src/lib/actions/people/get-person-posts';
+import { reverseLookupEmail } from '../src/lib/actions/people/reverse-lookup-email';
+import { checkCompanyPathsBulk } from '../src/lib/actions/companies/check-company-paths-bulk';
+import { addPersonToList } from '../src/lib/actions/ai/add-person-to-list';
+import { addRelationship } from '../src/lib/actions/ai/add-relationship';
+import { findCompanies } from '../src/lib/actions/ai/find-companies';
+import { listNetworkCompanies } from '../src/lib/actions/ai/list-network-companies';
+import { resolveGroupByName } from '../src/lib/actions/ai/resolve-group-by-name';
+import { resolveTeamByName } from '../src/lib/actions/ai/resolve-team-by-name';
+import { importRelationships } from '../src/lib/actions/user/import-relationships';
+import { createWebhook } from '../src/lib/actions/webhooks/create-webhook';
+import { updateWebhook } from '../src/lib/actions/webhooks/update-webhook';
 import { newVillageEvent } from '../src/lib/triggers/new-village-event';
 
 afterEach(() => {
@@ -234,6 +254,165 @@ describe('trigger signature formats', () => {
 
   it('never accepts the timestamp itself as a signature', async () => {
     expect(await signedDelivery({ id: 'evt', header: () => 't=1700000000' })).toEqual([]);
+  });
+});
+
+describe('client list helpers and token', () => {
+  it('stringList reads arrays, JSON-string arrays and rejects other strings', () => {
+    expect(villageApi.stringList([' a ', 2, null, ''])).toEqual(['a', '2']);
+    expect(villageApi.stringList('["x", "y"]')).toEqual(['x', 'y']);
+    expect(villageApi.stringList('plain text')).toEqual([]);
+    expect(villageApi.stringList(undefined)).toEqual([]);
+    expect(() => villageApi.stringList('[not json')).toThrow('not valid JSON');
+  });
+
+  it('objectRows reads arrays, JSON-string arrays and a single JSON object', () => {
+    expect(villageApi.objectRows([{ a: 1 }, 'x'])).toEqual([{ a: 1 }, {}]);
+    expect(villageApi.objectRows('[{"identifier":"a@b.co"}]')).toEqual([{ identifier: 'a@b.co' }]);
+    expect(villageApi.objectRows('{"identifier":"a@b.co"}')).toEqual([{ identifier: 'a@b.co' }]);
+  });
+
+  it('trims the token in the Authorization header', async () => {
+    const spy = mockOk({ data: {} });
+    await villageApi.call({ token: '  tok \n', method: HttpMethod.GET, path: '/v2/app' });
+    expect(spy.mock.calls[0][0].headers).toMatchObject({ Authorization: 'Bearer tok' });
+  });
+});
+
+describe('request shapes', () => {
+  const lastRequest = (spy: ReturnType<typeof mockOk>) => spy.mock.calls[spy.mock.calls.length - 1][0];
+
+  it.each([
+    ['add_sequence_leads', addSequenceLeads, { sequence_id: 's==!vNnNM', lead_identifiers: '["1", 2]' }, HttpMethod.POST, '/v2/sequences/s%3D%3D!vNnNM/leads', { lead_identifiers: ['1', '2'] }],
+    ['archive_sequence', archiveSequence, { id: 's!vNnNM' }, HttpMethod.DELETE, '/v2/sequences/s!vNnNM', undefined],
+    ['delete_sequence_lead', deleteSequenceLead, { lead_id: 'l%3D!vNnNM' }, HttpMethod.DELETE, '/v2/sequences/leads/l%3D!vNnNM', undefined],
+    ['refresh_list', refreshList, { id: '12', add: 5.7 }, HttpMethod.POST, '/v2/lists/12/refresh', { add: 5 }],
+    ['get_person_posts', getPersonPosts, { linkedin_url: 'https://linkedin.com/in/x', limit: 80 }, HttpMethod.POST, '/v2/people/posts', { linkedin_url: 'https://linkedin.com/in/x', limit: 50 }],
+    ['reverse_lookup_email', reverseLookupEmail, { email: ' a@b.co ', mode: 'cached_only' }, HttpMethod.POST, '/v2/people/enrich/by-email', { email: 'a@b.co', mode: 'cached_only' }],
+    ['add_person_to_list', addPersonToList, { list_id: '9', identifier: 'https://linkedin.com/in/x' }, HttpMethod.POST, '/v2/lists/9/items', { items: [{ identifier: 'https://linkedin.com/in/x' }] }],
+    ['add_relationship', addRelationship, { identifier: 'a@b.co', score: 7, relationship_type: 'worked_together' }, HttpMethod.POST, '/v2/user/relationships', { people: [{ identifier: 'a@b.co', score: 7, user_relationship_type: 'worked_together' }] }],
+    ['find_companies', findCompanies, { prompt: 'fintech', scope: 'global', limit: 3 }, HttpMethod.POST, '/v2/companies/search', { prompt: 'fintech', scope: 'global', limit: 3 }],
+    ['list_network_companies', listNetworkCompanies, { limit: 500 }, HttpMethod.POST, '/v2/companies', { connection_degrees: [1], limit: 50 }],
+    ['create_webhook', createWebhook, { url: 'https://h.example/x', event_filter: ['job_change'] }, HttpMethod.POST, '/v2/webhooks', { url: 'https://h.example/x', event_filter: ['job_change'] }],
+    ['update_webhook', updateWebhook, { id: 'w!vNnNM', receive_all_events: true, is_active: 'no' }, HttpMethod.PATCH, '/v2/webhooks/w!vNnNM', { event_filter: null, is_active: false }],
+  ])('%s sends the documented request', async (_name, step, props, method, path, body) => {
+    const spy = mockOk({ data: [] });
+    await runStep({ step, props });
+    const request = lastRequest(spy);
+    expect(request.method).toBe(method);
+    expect(request.url).toBe(`https://api.village.ai${path}`);
+    expect(request.body).toEqual(body);
+  });
+
+  it.each([
+    ['list_sequences', listSequences, { search: 'q', status: 'active', limit: 500 }, '/v2/sequences', { search: 'q', status: 'active', limit: '100' }],
+    ['list_sequence_leads', listSequenceLeads, { sequence_id: 's!vNnNM', status: 'active' }, '/v2/sequences/s!vNnNM/leads', { status: 'active', limit: '25' }],
+    ['list_sequence_emails', listSequenceEmails, { sequence_id: 's!vNnNM', status: 'sent' }, '/v2/sequences/s!vNnNM/emails', { status: 'sent' }],
+    ['list_email_activities', listEmailActivities, { decision: 'pending' }, '/v2/sequences/activities', { decision: 'pending' }],
+  ])('%s sends GET with the expected query', async (_name, step, props, path, query) => {
+    const spy = mockOk({ data: [] });
+    await runStep({ step, props });
+    const request = lastRequest(spy);
+    expect(request.method).toBe(HttpMethod.GET);
+    expect(request.url).toBe(`https://api.village.ai${path}`);
+    expect(request.queryParams).toEqual(query);
+  });
+
+  it('webhook create rejects a short secret before calling Village', async () => {
+    const spy = mockOk({ data: {} });
+    await expect(runStep({ step: createWebhook, props: { url: 'https://h.example/x', secret: 'short' } })).rejects.toThrow('32');
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('update webhook needs at least one field', async () => {
+    await expect(runStep({ step: updateWebhook, props: { id: 'w' } })).rejects.toThrow('at least one field');
+  });
+
+  it('add_relationship rejects a NaN score', async () => {
+    const spy = mockOk({ data: {} });
+    await expect(runStep({ step: addRelationship, props: { identifier: 'a@b.co', score: Number.NaN } })).rejects.toThrow('Score must be a number');
+    expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+describe('check company paths bulk', () => {
+  it('routes identifiers by shape', async () => {
+    const spy = mockOk({ data: [] });
+    await runStep({
+      step: checkCompanyPathsBulk,
+      props: { companies: ['stripe.com', 'https://www.linkedin.com/company/stripe', 'https://stripe.com/about'] },
+    });
+    expect(spy.mock.calls[0][0].body).toEqual({
+      companies: [{ domain: 'stripe.com' }, { linkedin_url: 'https://www.linkedin.com/company/stripe' }, { url: 'https://stripe.com/about' }],
+    });
+  });
+
+  it('caps at 100 companies and needs at least one', async () => {
+    const spy = mockOk({ data: [] });
+    const many = Array.from({ length: 101 }, (_value, index) => `c${index}.com`);
+    await expect(runStep({ step: checkCompanyPathsBulk, props: { companies: many } })).rejects.toThrow('at most 100');
+    await expect(runStep({ step: checkCompanyPathsBulk, props: { companies: '[]' } })).rejects.toThrow('at least one');
+    expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+describe('resolve group and team by name', () => {
+  it('resolves a group from GET /v2/groups', async () => {
+    const spy = mockOk({ data: { groups: [{ id: 'g1', name: 'Alumni' }, { id: 'g2', name: 'Alumni 2020' }] } });
+    const output = await runStep({ step: resolveGroupByName, props: { name: 'alumni' } });
+    expect(spy.mock.calls[0][0].url).toBe('https://api.village.ai/v2/groups');
+    expect(output).toMatchObject({ found: true, id: 'g1', name: 'Alumni' });
+  });
+
+  it('reports partial team matches when there is no exact one', async () => {
+    const spy = mockOk({ data: { teams: [{ id: 't1', name: 'Sales Team' }] } });
+    const output = await runStep({ step: resolveTeamByName, props: { name: 'sales' } });
+    expect(spy.mock.calls[0][0].url).toBe('https://api.village.ai/v2/teams');
+    expect(output).toEqual({ found: false, id: null, name: null, other_matches: [{ id: 't1', name: 'Sales Team' }] });
+  });
+});
+
+describe('import relationships', () => {
+  it('parses rows (including a JSON string) and sends scores', async () => {
+    const spy = mockOk({ data: {} });
+    await runStep({
+      step: importRelationships,
+      props: { people: '[{"identifier":" a@b.co ","score":"7","user_relationship_type":"met_in_person"},{"identifier":"https://linkedin.com/in/x"}]', min_score: 3 },
+    });
+    expect(spy.mock.calls[0][0].body).toEqual({
+      people: [{ identifier: 'a@b.co', score: 7, user_relationship_type: 'met_in_person' }, { identifier: 'https://linkedin.com/in/x' }],
+      min_score: 3,
+    });
+  });
+
+  it('rejects missing identifiers, out-of-range scores and more than 1000 rows', async () => {
+    const spy = mockOk({ data: {} });
+    await expect(runStep({ step: importRelationships, props: { people: [{ score: 2 }] } })).rejects.toThrow('identifier is required');
+    await expect(runStep({ step: importRelationships, props: { people: [{ identifier: 'a@b.co', score: 11 }] } })).rejects.toThrow('between 0 and 10');
+    await expect(runStep({ step: importRelationships, props: { people: [{ identifier: 'a@b.co' }], min_score: -1 } })).rejects.toThrow('Default Score');
+    const many = Array.from({ length: 1001 }, (_value, index) => ({ identifier: `p${index}@b.co` }));
+    await expect(runStep({ step: importRelationships, props: { people: many } })).rejects.toThrow('Maximum 1000');
+    expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+describe('trigger enable without webhook id', () => {
+  it('removes any webhook registered for this URL and throws', async () => {
+    const spy = vi
+      .spyOn(httpClient, 'sendRequest')
+      .mockResolvedValueOnce({ status: 200, headers: {}, body: { data: {} } })
+      .mockResolvedValueOnce({ status: 200, headers: {}, body: { data: [{ id: 'w1', url: 'https://hook.example/x' }, { id: 'w2', url: 'https://other' }] } })
+      .mockResolvedValueOnce({ status: 200, headers: {}, body: { data: {} } });
+    const store = createStore();
+    await expect(
+      Reflect.apply(newVillageEvent.onEnable, undefined, [
+        { auth: { secret_text: 't' }, webhookUrl: 'https://hook.example/x', propsValue: {}, store },
+      ]),
+    ).rejects.toThrow('did not return a webhook ID');
+    expect(spy).toHaveBeenCalledTimes(3);
+    expect(spy.mock.calls[2][0].method).toBe(HttpMethod.DELETE);
+    expect(spy.mock.calls[2][0].url).toBe('https://api.village.ai/v2/webhooks/w1');
+    expect(await store.get('village_new_event_webhook')).toBeNull();
   });
 });
 

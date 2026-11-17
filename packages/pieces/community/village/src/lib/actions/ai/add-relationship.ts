@@ -34,6 +34,9 @@ export const addRelationship = createAction({
     const identifier = villageApi.requireText({ value: context.propsValue.identifier, field: 'Email or LinkedIn URL' });
     const person: Record<string, unknown> = { identifier };
     if (score !== undefined && score !== null) {
+      if (!Number.isFinite(Number(score))) {
+        throw new Error('Score must be a number between 0 and 10.');
+      }
       if (score < 0 || score > 10) {
         throw new Error('Score must be between 0 and 10.');
       }

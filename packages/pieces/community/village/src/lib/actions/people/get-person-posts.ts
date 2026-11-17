@@ -14,8 +14,8 @@ export const getPersonPosts = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      "Read a page of one person's recent LinkedIn posts (content, date, likes/comments/shares) from their LinkedIn profile URL. Costs 1 credit per call/page, so request only the pages you need; follow pagination.cursor for more. Read-only, but each repeat call is charged again.",
-    idempotent: true,
+      "Read a page of one person's recent LinkedIn posts (content, date, likes/comments/shares) from their LinkedIn profile URL. Costs 1 credit per call/page, so request only the pages you need; follow pagination.cursor for more. Read-only, but each repeat call is charged again, so it is not idempotent.",
+    idempotent: false,
   },
   outputSchema: villageSchemas.getPersonPosts,
   props: {

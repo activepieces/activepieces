@@ -27,7 +27,7 @@ export const addSequenceLeads = createAction({
   },
   async run(context) {
     const { sequence_id, lead_identifiers } = context.propsValue;
-    const ids = (lead_identifiers ?? []).map((value) => String(value).trim()).filter((value) => value.length > 0);
+    const ids = villageApi.stringList(lead_identifiers);
     if (ids.length === 0) {
       throw new Error('Add at least one person ID.');
     }

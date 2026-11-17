@@ -26,9 +26,7 @@ export const checkCompanyPathsBulk = createAction({
     }),
   },
   async run(context) {
-    const values = (context.propsValue.companies ?? [])
-      .map((value) => String(value).trim())
-      .filter((value) => value.length > 0);
+    const values = villageApi.stringList(context.propsValue.companies);
     if (values.length === 0) {
       throw new Error('Add at least one company.');
     }

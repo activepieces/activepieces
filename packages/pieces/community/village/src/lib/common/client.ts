@@ -11,7 +11,7 @@ async function call<T = unknown>({
   const request: HttpRequest = {
     method,
     url: `${VILLAGE_API_BASE_URL}${path}`,
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    headers: { Authorization: `Bearer ${token.trim()}`, Accept: 'application/json' },
   };
   if (body !== undefined) {
     request.body = body;
@@ -158,6 +158,29 @@ function companyName(company: unknown): string | null {
   return null;
 }
 
+async function collectPages<T>({
+  fetchPage,
+  tooManyMessage,
+}: {
+  fetchPage: (cursor: string | undefined) => Promise<VillagePage<T>>;
+  tooManyMessage: string;
+}): Promise<T[]> {
+  let cursor: string | undefined = undefined;
+  let items: T[] = [];
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const response = await fetchPage(cursor);
+    items = [...items, ...(response.data ?? [])];
+    const next = response.pagination?.cursor;
+    if (!response.pagination?.has_next_page || next === undefined || next === null || String(next) === '') {
+      return items;
+    }
+    cursor = String(next);
+  }
+  throw new Error(tooManyMessage);
+}
+
+const MAX_PAGES = 20;
+
 function matchByName({ items, name }: { items: NamedItem[]; name: string }): NameMatch {
   const wanted = name.trim().toLowerCase();
   const exact = items.filter((item) => item.name.trim().toLowerCase() === wanted);
@@ -175,18 +198,37 @@ function matchByName({ items, name }: { items: NamedItem[]; name: string }): Nam
 
 const MAX_OTHER_MATCHES = 10;
 
-function stringList(value: unknown): string[] {
-  if (!Array.isArray(value)) {
+function toArray(value: unknown): unknown[] {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  if (typeof value !== 'string' || value.trim().length === 0) {
     return [];
   }
-  return value.filter((item) => item !== undefined && item !== null).map((item) => String(item));
+  const trimmed = value.trim();
+  if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+    try {
+      const parsed: unknown = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+      return typeof parsed === 'object' && parsed !== null ? [parsed] : [];
+    } catch {
+      throw new Error('Could not read the list input: it looks like JSON but is not valid JSON.');
+    }
+  }
+  return [];
+}
+
+function stringList(value: unknown): string[] {
+  return toArray(value)
+    .filter((item) => item !== undefined && item !== null)
+    .map((item) => String(item).trim())
+    .filter((item) => item.length > 0);
 }
 
 function objectRows(value: unknown): Record<string, unknown>[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  return value.map((item) =>
+  return toArray(value).map((item) =>
     typeof item === 'object' && item !== null ? Object.fromEntries(Object.entries(item)) : {},
   );
 }
@@ -241,6 +283,11 @@ export type VillageCallParams = {
   queryParams?: Record<string, string | undefined>;
 };
 
+export type VillagePage<T> = {
+  data?: T[];
+  pagination?: { cursor?: string | number | null; has_next_page?: boolean };
+};
+
 export type NamedItem = { id: string; name: string };
 
 export type NameMatch = { found: boolean; id: string | null; name: string | null; other_matches: NamedItem[] };
@@ -252,6 +299,7 @@ export const villageApi = {
   clampLimit,
   companyName,
   matchByName,
+  collectPages,
   stringList,
   objectRows,
   rowText,

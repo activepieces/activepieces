@@ -34,7 +34,7 @@ export const upsertTeam = createAction({
     const { name, logo } = context.propsValue;
 
     const body: Record<string, unknown> = { name };
-    if (logo !== undefined) body['logo'] = logo;
+    if (typeof logo === 'string' && logo.trim().length > 0) body['logo'] = logo.trim();
 
     const response = await villageApi.call({
       token: context.auth.secret_text,
