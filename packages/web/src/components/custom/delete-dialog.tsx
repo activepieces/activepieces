@@ -40,6 +40,7 @@ interface ConfirmationDeleteDialogProps {
   contentClassName?: string;
   keepOpenOnOutsideClick?: boolean;
   confirmVariant?: 'destructive' | 'default';
+  cancelButtonText?: string;
 }
 
 export const ConfirmationDeleteDialog = ({
@@ -61,6 +62,7 @@ export const ConfirmationDeleteDialog = ({
   contentClassName,
   keepOpenOnOutsideClick = false,
   confirmVariant = 'destructive',
+  cancelButtonText,
 }: ConfirmationDeleteDialogProps) => {
   const [isControlled] = useState(
     open !== undefined && onOpenChange !== undefined,
@@ -130,7 +132,7 @@ export const ConfirmationDeleteDialog = ({
             disabled={isPending}
             onClick={() => handleClose()}
           >
-            {t('Cancel')}
+            {cancelButtonText || t('Cancel')}
           </Button>
           <Button
             variant={confirmVariant}
