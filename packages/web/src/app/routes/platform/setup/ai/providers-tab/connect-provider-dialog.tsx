@@ -7,15 +7,16 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AxiosError } from 'axios';
 import { t } from 'i18next';
-import { ChevronDown, Eye, EyeOff } from 'lucide-react';
+import { ChevronDown, CircleAlert, Eye, EyeOff, Info } from 'lucide-react';
 import { useState } from 'react';
-import { ControllerRenderProps, useForm } from 'react-hook-form';
+import { ControllerRenderProps, FieldErrors, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { adminLayout } from '@/app/components/admin';
 import { DictionaryInput } from '@/components/custom/dictionary-input';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { SearchableSelect } from '@/components/custom/searchable-select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Collapsible,
@@ -33,7 +34,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -49,6 +49,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import { aiProviderMutations } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -73,7 +78,7 @@ export function ConnectProviderDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={adminLayout.dialog.md}>
+      <DialogContent className={adminLayout.dialog.lg}>
         <ConnectProviderForm
           key={open ? editing?.id ?? defaultProvider ?? 'new' : 'closed'}
           editing={editing}
@@ -105,10 +110,15 @@ function ConnectProviderForm({
     mode: 'onChange',
     defaultValues: defaultValuesOf({ editing, defaultProvider }),
   });
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const provider = form.watch('provider');
   const info = providerInfoOf({ provider });
   const fields = providerCredentials.fieldsOf({ provider });
+  const mainFields = fields.filter((field) => !field.advanced);
+  const advancedFields = fields.filter((field) => field.advanced);
+  const providerLocked = editing !== undefined || defaultProvider !== undefined;
+  const serverError = form.formState.errors.root?.serverError?.message;
 
   const { mutate: connect, isPending: connecting } =
     aiProviderMutations.useUpsertAiProvider({
@@ -118,13 +128,25 @@ function ConnectProviderForm({
         error: AxiosError<{ message?: string; params?: { message: string } }>,
       ) => {
         const data = error.response?.data;
-        form.setError('root.serverError', {
-          type: 'manual',
-          message:
-            data?.params?.message ??
-            data?.message ??
-            t('The provider rejected these credentials.'),
+        const message =
+          data?.params?.message ??
+          data?.message ??
+          t('The provider rejected these credentials.');
+        form.setError('root.serverError', { type: 'manual', message });
+        const fieldKey = providerCredentials.fieldOfServerError({
+          provider,
+          message,
         });
+        if (fieldKey === undefined) {
+          return;
+        }
+        form.setError(`credentials.${fieldKey}`, {
+          type: 'manual',
+          message: t('Check this field'),
+        });
+        if (advancedFields.some((field) => field.key === fieldKey)) {
+          setAdvancedOpen(true);
+        }
       },
     });
 
@@ -140,15 +162,24 @@ function ConnectProviderForm({
     connect(request);
   };
 
+  const handleInvalid = (errors: FieldErrors<ConnectFormValues>) => {
+    const failedKeys = Object.keys(errors.credentials ?? {});
+    if (advancedFields.some((field) => failedKeys.includes(field.key))) {
+      setAdvancedOpen(true);
+    }
+  };
+
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(handleSubmit)}
+        onSubmit={form.handleSubmit(handleSubmit, handleInvalid)}
+        onChange={() => form.clearErrors('root.serverError')}
         className="flex flex-col gap-4"
       >
         <DialogHeader>
-          <DialogTitle>
-            {editing ? t('Replace credentials') : t('Connect a provider')}
+          <DialogTitle className="flex items-center gap-2">
+            {providerLocked && info && <ProviderLogo info={info} size="sm" />}
+            {titleOf({ editing, providerLocked, name: info?.name })}
           </DialogTitle>
           <DialogDescription>
             {editing
@@ -159,77 +190,126 @@ function ConnectProviderForm({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea viewPortClassName="max-h-[60vh] p-px">
-          <div className="flex flex-col gap-4">
-            <FormField
-              control={form.control}
-              name="provider"
-              render={({ field }) => (
-                <FormItem className="flex flex-col gap-1.5">
-                  <FormLabel showRequiredIndicator>{t('Provider')}</FormLabel>
-                  <FormControl>
-                    <SearchableSelect
-                      value={field.value}
-                      options={SUPPORTED_AI_PROVIDERS.map((candidate) => ({
-                        value: candidate.provider,
-                        label: candidate.name,
-                      }))}
-                      placeholder={t('Search providers')}
-                      disabled={editing !== undefined}
-                      valuesRendering={(value) => (
-                        <ProviderOption provider={value} />
+        <ScrollArea viewPortClassName="max-h-[65vh] p-px">
+          <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
+            <div className="flex flex-col gap-4">
+              {!providerLocked && (
+                <FormField
+                  control={form.control}
+                  name="provider"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col gap-1.5">
+                      <FormLabel showRequiredIndicator>
+                        {t('Provider')}
+                      </FormLabel>
+                      <FormControl>
+                        <SearchableSelect
+                          value={field.value}
+                          options={SUPPORTED_AI_PROVIDERS.map((candidate) => ({
+                            value: candidate.provider,
+                            label: candidate.name,
+                          }))}
+                          placeholder={t('Search providers')}
+                          valuesRendering={(value) => (
+                            <ProviderOption provider={value} />
+                          )}
+                          onChange={(next) => {
+                            if (next === null || next === field.value) {
+                              return;
+                            }
+                            field.onChange(next);
+                            form.setValue(
+                              'credentials',
+                              emptyCredentialsOf(next),
+                            );
+                            form.setValue('headers', {});
+                            form.setValue('name', defaultNameOf(next));
+                            form.clearErrors();
+                            setAdvancedOpen(false);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col gap-1.5">
+                    <FieldLabel
+                      label={t('Name')}
+                      help={t(
+                        'How this key shows up in the list, for example the team or budget it belongs to.',
                       )}
-                      onChange={(next) => {
-                        if (next === null || next === field.value) {
-                          return;
-                        }
-                        field.onChange(next);
-                        form.setValue('credentials', emptyCredentialsOf(next));
-                        form.setValue('headers', {});
-                        form.setValue('name', defaultNameOf(next));
-                      }}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {info && <SetupInstructions info={info} />}
-
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem className="flex flex-col gap-1.5">
-                  <FormLabel showRequiredIndicator>{t('Name')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder={t('e.g. Marketing')}
-                      data-testid="ai-provider-name"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {fields.map((credentialField) => (
-              <CredentialFieldInput
-                key={credentialField.key}
-                form={form}
-                field={credentialField}
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder={t('e.g. Marketing')}
+                        data-testid="ai-provider-name"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            ))}
 
-            {form.formState.errors.root?.serverError && (
-              <FormMessage>
-                {form.formState.errors.root.serverError.message}
-              </FormMessage>
-            )}
+              {mainFields.map((credentialField) => (
+                <CredentialFieldInput
+                  key={credentialField.key}
+                  form={form}
+                  field={credentialField}
+                />
+              ))}
+
+              {advancedFields.length > 0 && (
+                <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+                  <CollapsibleTrigger asChild>
+                    <button
+                      type="button"
+                      data-testid="ai-provider-advanced-toggle"
+                      className="flex w-full items-center gap-1.5 border-t border-gray-6 pt-4 text-sm font-medium text-gray-11 transition-colors hover:text-gray-12"
+                    >
+                      <ChevronDown
+                        className={cn(
+                          'size-4 transition-transform',
+                          advancedOpen && 'rotate-180',
+                        )}
+                      />
+                      {t('Advanced ({count})', {
+                        count: advancedFields.length,
+                      })}
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="flex flex-col gap-4 pt-4">
+                    {advancedFields.map((credentialField) => (
+                      <CredentialFieldInput
+                        key={credentialField.key}
+                        form={form}
+                        field={credentialField}
+                      />
+                    ))}
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
+            </div>
+
+            {info && <SetupHelp info={info} />}
           </div>
         </ScrollArea>
+
+        {serverError && (
+          <Alert variant="destructive" data-testid="ai-provider-connect-error">
+            <CircleAlert />
+            <AlertDescription className="break-words">
+              {serverError}
+            </AlertDescription>
+          </Alert>
+        )}
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onCancel}>
@@ -268,7 +348,7 @@ function CredentialFieldInput({
         name="headers"
         render={({ field: formField }) => (
           <FormItem className="flex flex-col gap-1.5">
-            <FormLabel>{field.label}</FormLabel>
+            <FieldLabel label={field.label} help={field.help} optional />
             <DictionaryInput
               values={formField.value}
               onChange={formField.onChange}
@@ -287,9 +367,11 @@ function CredentialFieldInput({
       name={`credentials.${field.key}`}
       render={({ field: formField }) => (
         <FormItem className="flex flex-col gap-1.5">
-          <FormLabel showRequiredIndicator={!field.optional}>
-            {field.label}
-          </FormLabel>
+          <FieldLabel
+            label={field.label}
+            help={field.help}
+            optional={field.optional}
+          />
           {field.options ? (
             <Select value={formField.value} onValueChange={formField.onChange}>
               <FormControl>
@@ -329,15 +411,38 @@ function CredentialFieldInput({
               />
             </FormControl>
           )}
-          {field.description && (
-            <FormDescription className="text-xs">
-              {field.description}
-            </FormDescription>
-          )}
           <FormMessage />
         </FormItem>
       )}
     />
+  );
+}
+
+function FieldLabel({
+  label,
+  help,
+  optional,
+}: {
+  label: string;
+  help: string;
+  optional?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <FormLabel showRequiredIndicator={!optional}>{label}</FormLabel>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label={t('About {label}', { label })}
+            className="text-gray-11 transition-colors hover:text-gray-12"
+          >
+            <Info className="size-3.5" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs">{help}</TooltipContent>
+      </Tooltip>
+    </div>
   );
 }
 
@@ -367,6 +472,7 @@ function SecretInput({
         variant="ghost"
         size="icon-xs"
         tabIndex={-1}
+        aria-label={visible ? t('Hide value') : t('Show value')}
         onClick={() => setVisible(!visible)}
         className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-11 hover:text-gray-12"
       >
@@ -391,26 +497,36 @@ function ProviderOption({ provider }: { provider: unknown }) {
   );
 }
 
-function SetupInstructions({ info }: { info: AiProviderInfo }) {
-  const [open, setOpen] = useState(false);
+function SetupHelp({ info }: { info: AiProviderInfo }) {
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger asChild>
-        <button
-          type="button"
-          className="flex w-full items-center gap-1.5 text-sm text-gray-11 transition-colors hover:text-gray-12"
-        >
-          <ChevronDown
-            className={cn('size-4 transition-transform', open && 'rotate-180')}
-          />
-          {t('How to get {name} credentials', { name: info.name })}
-        </button>
-      </CollapsibleTrigger>
-      <CollapsibleContent className="pt-2">
-        <ApMarkdown markdown={info.markdown()} variant={MarkdownVariant.INFO} />
-      </CollapsibleContent>
-    </Collapsible>
+    <aside className="flex flex-col gap-2 self-start rounded-lg border border-gray-6 bg-gray-2 p-4">
+      <h3 className="text-sm font-medium text-gray-12">
+        {t('How to connect {name}', { name: info.name })}
+      </h3>
+      <ApMarkdown
+        markdown={info.markdown()}
+        variant={MarkdownVariant.BORDERLESS}
+      />
+    </aside>
   );
+}
+
+function titleOf({
+  editing,
+  providerLocked,
+  name,
+}: {
+  editing?: AIProviderWithoutSensitiveData;
+  providerLocked: boolean;
+  name?: string;
+}): string {
+  if (editing) {
+    return t('Replace credentials');
+  }
+  if (providerLocked && name) {
+    return t('Connect {name}', { name });
+  }
+  return t('Connect a provider');
 }
 
 function defaultValuesOf({
@@ -460,7 +576,7 @@ function emptyCredentialsOf(provider: AIProviderName): Record<string, string> {
     providerCredentials
       .fieldsOf({ provider })
       .filter((field) => field.type !== 'dictionary')
-      .map((field) => [field.key, '']),
+      .map((field) => [field.key, field.defaultValue ?? '']),
   );
 }
 
