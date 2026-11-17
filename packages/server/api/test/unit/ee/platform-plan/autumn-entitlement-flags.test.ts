@@ -210,6 +210,7 @@ describe('mapAutumnFeaturesToPlatformPlan', () => {
             ssoEnabled: false,
             secretManagersEnabled: false,
             scimEnabled: false,
+            multipleEmailDomainsEnabled: false,
         })
     })
 

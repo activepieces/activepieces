@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { ApplicationEventName, AuthenticationDomainEvent, AuthenticationSettingEvent, Platform, PlatformWithoutFederatedAuth, SAMLAuthnProviderConfig, SsoDomainVerificationStatus } from '@activepieces/shared'
+import { ApplicationEventName, AuthenticationDomainEvent, AuthenticationSettingEvent, Platform, PlatformWithoutFederatedAuth, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import deepEqual from 'deep-equal'
 
 function buildAuthenticationEvents({ before, after }: AuthenticationEventsParams): AuthenticationAuditEventParams[] {
@@ -23,7 +23,6 @@ function buildAuthenticationEvents({ before, after }: AuthenticationEventsParams
             enabledAction: ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED,
             disabledAction: ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED,
         }),
-        ...ssoDomainEvents({ before, after }),
         ...samlEvents({ before, after }),
     ]
 }
@@ -44,24 +43,6 @@ function allowedDomainEvents({ before, after }: AuthenticationEventsParams): Aut
         ...added.map((domain): AuthenticationAuditEventParams => ({ action: ApplicationEventName.ALLOWED_DOMAIN_ADDED, data: { domain } })),
         ...removed.map((domain): AuthenticationAuditEventParams => ({ action: ApplicationEventName.ALLOWED_DOMAIN_REMOVED, data: { domain } })),
     ]
-}
-
-function ssoDomainEvents({ before, after }: AuthenticationEventsParams): AuthenticationAuditEventParams[] {
-    const previousDomain = before.ssoDomain ?? null
-    const nextDomain = after.ssoDomain ?? null
-    const wasVerified = before.ssoDomainVerification?.status === SsoDomainVerificationStatus.VERIFIED
-    const isVerified = after.ssoDomainVerification?.status === SsoDomainVerificationStatus.VERIFIED
-    if (previousDomain === nextDomain) {
-        const justVerified = !isNil(nextDomain) && !wasVerified && isVerified
-        return justVerified ? [{ action: ApplicationEventName.SSO_DOMAIN_VERIFIED, data: { domain: nextDomain } }] : []
-    }
-    const removed: AuthenticationAuditEventParams[] = isNil(previousDomain)
-        ? []
-        : [{ action: wasVerified ? ApplicationEventName.SSO_DOMAIN_REMOVED : ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED, data: { domain: previousDomain } }]
-    const added: AuthenticationAuditEventParams[] = isNil(nextDomain)
-        ? []
-        : [{ action: ApplicationEventName.SSO_DOMAIN_ADDED, data: { domain: nextDomain } }]
-    return [...removed, ...added]
 }
 
 function samlEvents({ before, after }: AuthenticationEventsParams): AuthenticationAuditEventParams[] {

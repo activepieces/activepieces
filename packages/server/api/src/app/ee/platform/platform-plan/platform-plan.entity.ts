@@ -115,6 +115,10 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         scimEnabled: {
             type: Boolean,
         },
+        multipleEmailDomainsEnabled: {
+            type: Boolean,
+            default: false,
+        },
         licenseKey: {
             type: String,
             nullable: true,
