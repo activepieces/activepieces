@@ -235,11 +235,11 @@ export class BuilderPage extends BasePage {
     await this.page.getByRole('menuitem').filter({ has: this.page.getByText(item, { exact: true }) }).click();
   }
 
-  private stepOutput() {
+  protected stepOutput() {
     return this.sidebar().getByRole('tabpanel', { name: 'Friendly View' });
   }
 
-  private sidebar() {
+  protected sidebar() {
     return this.page.getByTestId('right-sidebar');
   }
 
