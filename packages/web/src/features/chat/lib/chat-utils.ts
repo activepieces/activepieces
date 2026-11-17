@@ -13,6 +13,7 @@ import {
   PersistedAgentPartType,
   PersistedToolCallStatus,
 } from '@activepieces/shared';
+import { t } from 'i18next';
 
 import { formatUtils } from '@/lib/format-utils';
 
@@ -571,6 +572,11 @@ function sanitizeTitle(title: string): string {
   return title.replace(/[*_`~#]/g, '').trim();
 }
 
+function displayTitle(title: string | null | undefined): string {
+  const clean = isNil(title) ? '' : sanitizeTitle(title);
+  return clean.length > 0 ? clean : t('New chat');
+}
+
 function reopensSameConversation({
   current,
   next,
@@ -659,6 +665,7 @@ export const chatUtils = {
   pickOf,
   reopensSameConversation,
   sanitizeTitle,
+  displayTitle,
   formatToolLabel: ({ part }: { part: AnyToolPart }) =>
     formatToolName({ part }),
   formatToolActionName: formatToolActiveTitle,

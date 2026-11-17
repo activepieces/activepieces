@@ -41,14 +41,22 @@ const shellHandles = {
     allowAnonymous: true,
     standalone: 'sharedTemplate',
   },
+  chat: { shell: 'project', chat: 'full' },
   builder: { shell: 'builder' },
   platform: { shell: 'platform' },
 } satisfies Record<string, RouteHandle>;
 
-export { useShellMatch, useShellHandle, shellHandles };
+const CHAT_ALLOWED: Record<RouteHandle['shell'], boolean> = {
+  project: true,
+  builder: true,
+  platform: false,
+};
+
+export { useShellMatch, useShellHandle, shellHandles, CHAT_ALLOWED };
 
 export type RouteHandle = {
   shell: (typeof SHELLS)[number];
+  chat?: 'full';
   projectHeader?: true;
   allowAnonymous?: true;
   standalone?: 'sharedTemplate';
