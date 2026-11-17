@@ -16,6 +16,7 @@ vi.mock('i18next', () => ({
 vi.mock('@/app/components/chat-panel/chat-window', () => ({
   useChatWidth: () => layout.width,
   useActiveConversationId: () => null,
+  useChatSheet: () => ({ show: vi.fn(), hide: vi.fn() }),
 }));
 
 vi.mock('@/components/providers/embed-provider', () => ({

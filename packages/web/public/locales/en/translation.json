@@ -630,7 +630,9 @@
   "Chat deleted": "Chat deleted",
   "Resize chat": "Resize chat",
   "Chat couldn't load. Your chats are safe.": "Chat couldn't load. Your chats are safe.",
+  "Open chat": "Open chat",
   "Chat is waiting for your answer": "Chat is waiting for your answer",
+  "Close chat": "Close chat",
   "Open page": "Open page",
   "Read the docs": "Read the docs",
   "Upgrade plan": "Upgrade plan",
@@ -4029,5 +4031,6 @@
   "The AI deleted this page.": "The AI deleted this page.",
   "Opened {name} beside the chat.": "Opened {name} beside the chat.",
   "The AI finished editing this flow.": "The AI finished editing this flow.",
-  "The AI finished editing this table.": "The AI finished editing this table."
+  "The AI finished editing this table.": "The AI finished editing this table.",
+  "Opened {name} behind the chat.": "Opened {name} behind the chat."
 }

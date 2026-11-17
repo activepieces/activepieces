@@ -162,28 +162,30 @@ function ChatBoxContent({
     setStoreConversationId(conversationId ?? null);
   }, [conversationId, setStoreConversationId]);
 
+  const rootRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!isStreaming) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      const target = e.target as HTMLElement | null;
+      const target = e.target;
       if (
-        target &&
-        (target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
-          target.tagName === 'SELECT' ||
-          target.closest('[role="dialog"]') ||
-          target.closest('[data-radix-popper-content-wrapper]'))
+        e.key !== 'Escape' ||
+        !(target instanceof HTMLElement) ||
+        !(
+          rootRef.current?.contains(target) ||
+          (!compact && target === document.body)
+        ) ||
+        chatDom.isCardField(target) ||
+        !chatDom.escapeFree(e)
       ) {
         return;
       }
-      e.preventDefault();
+      chatDom.claimEscape(e);
       cancelStream();
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [isStreaming, cancelStream]);
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [isStreaming, cancelStream, compact]);
 
   const chatProjectId = conversationProjectId ?? sessionProjectId;
   const showsPicker = agentId === undefined && !isNil(chatProjectId);
@@ -393,7 +395,10 @@ function ChatBoxContent({
   }
 
   return (
-    <div className="@container/chat flex flex-col h-full flex-1 min-w-0 [&_*]:[scrollbar-width:thin]">
+    <div
+      ref={rootRef}
+      className="@container/chat flex flex-col h-full flex-1 min-w-0 [&_*]:[scrollbar-width:thin]"
+    >
       <AnimatePresence mode="wait">
         {isEmpty ? (
           <div
