@@ -59,42 +59,42 @@ const StepDataPanelStatusBadge = ({
   status,
   viewMode,
 }: StepDataPanelStatusBadgeProps) => {
-  if (status === 'failed') {
-    return (
-      <div className="flex items-center gap-1.5 text-sm">
-        <StepStatusIcon status={StepOutputStatus.FAILED} size="4.5" />
-        <span className="font-medium">
-          {viewMode === 'run' ? t('Failed') : t('Test Failed')}
-        </span>
-      </div>
-    );
+  switch (status) {
+    case 'failed':
+      return (
+        <div className="flex items-center gap-1.5 text-sm">
+          <StepStatusIcon status={StepOutputStatus.FAILED} size="4.5" />
+          <span className="font-medium">
+            {viewMode === 'run' ? t('Failed') : t('Test Failed')}
+          </span>
+        </div>
+      );
+    case 'paused':
+      return (
+        <div className="flex items-center gap-1.5 text-sm">
+          <StepStatusIcon status={StepOutputStatus.PAUSED} size="4.5" />
+          <span className="font-medium">{t('Paused')}</span>
+        </div>
+      );
+    case 'testing':
+      return (
+        <div className="flex items-center gap-1.5 text-sm">
+          <Loader2 className="size-4 animate-spin" />
+          <span className="font-medium">
+            {viewMode === 'run' ? t('Running') : t('Testing...')}
+          </span>
+        </div>
+      );
+    case 'success':
+      return (
+        <div className="flex items-center gap-1.5 text-sm">
+          <StepStatusIcon status={StepOutputStatus.SUCCEEDED} size="4.5" />
+          <span className="font-medium">
+            {viewMode === 'run' ? t('Success') : t('Tested Successfully')}
+          </span>
+        </div>
+      );
   }
-  if (status === 'paused') {
-    return (
-      <div className="flex items-center gap-1.5 text-sm">
-        <StepStatusIcon status={StepOutputStatus.PAUSED} size="4.5" />
-        <span className="font-medium">{t('Paused')}</span>
-      </div>
-    );
-  }
-  if (status === 'testing') {
-    return (
-      <div className="flex items-center gap-1.5 text-sm">
-        <Loader2 className="size-4 animate-spin" />
-        <span className="font-medium">
-          {viewMode === 'run' ? t('Running') : t('Testing...')}
-        </span>
-      </div>
-    );
-  }
-  return (
-    <div className="flex items-center gap-1.5 text-sm">
-      <StepStatusIcon status={StepOutputStatus.SUCCEEDED} size="4.5" />
-      <span className="font-medium">
-        {viewMode === 'run' ? t('Success') : t('Tested Successfully')}
-      </span>
-    </div>
-  );
 };
 
 const HEADER_STATUS: Record<
