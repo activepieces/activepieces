@@ -19,7 +19,7 @@ A **Project** is the workspace within a platform where flows, connections, table
 ### Endpoints
 Every edition registers the same `/v1/projects` routes from `platformProjectModule`.
 - `POST /v1/projects` — creates a TEAM project; refused once the plan's `billedTeamProjectsLimit` is reached.
-- `GET /v1/projects` — platform admins and operators see every platform project, members see the projects they belong to. Filters: `displayName`, `type`, `externalId`, `externalUserId`.
+- `GET /v1/projects` — platform admins and operators see every platform project, members see the projects they belong to. Filters: `displayName`, `types`, `externalId`, `externalUserId`.
 - `GET /v1/projects/:id` — one project with its plan and usage.
 - `POST /v1/projects/:id` — update. A member with `WRITE_PROJECT` on the project can rename it; only a platform admin sets `isDefault`, `externalId` and `executionDataRetentionDays`.
 - `DELETE /v1/projects/:id` — platform admins and API keys only; a soft delete through `markForDeletion`.
