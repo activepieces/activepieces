@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 
+import { composerCarry } from '@/features/chat/lib/composer-carry';
 import { chatPanelUtils } from '@/features/workspace/lib/chat-panel-open';
 
 describe('chat panel conversation', () => {
@@ -34,5 +35,16 @@ describe('chat panel conversation', () => {
 
     expect(store.getState().conversationId).toBe('chat-new');
     expect(store.getState().newChatToken).toBe(token);
+  });
+
+  it('carries a waiting message into the chat that is shown next', () => {
+    const store = chatPanelUtils.createStore();
+    store.getState().showConversation('chat-a');
+    composerCarry.reportQueued({ message: { text: 'later', files: [] } });
+
+    store.getState().showConversation('chat-b');
+
+    expect(composerCarry.peekCarried()).toEqual({ text: 'later', files: [] });
+    composerCarry.clearCarried();
   });
 });
