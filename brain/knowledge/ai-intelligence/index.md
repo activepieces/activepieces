@@ -28,6 +28,7 @@ The door an agent turn came through. `AgentRunSource` is CHAT (the assistant cha
 ### ⚡ Direct AI step
 A flow step that makes one model call and returns: Ask AI, Summarize Text, Classify Text, Extract Structured Data, Generate Image. The counterpart to an **Agent**, which loops — and the distinction decides how each reaches a model, see [decision 000035](../decisions/000035-direct-ai-steps-reuse-the-agents-suspend-and-resume-path.md).
 - *Avoid:* "simple AI action" and "AI action" — both name the piece rather than the behaviour, and would wrongly include the Agent step, which also lives in the AI piece.
+- *Gotcha:* Ask AI keeps Conversation Key history in the flow-scoped store, so the same key in two flows is two separate conversations. A history test has to run both turns in one flow.
 
 ### 🔗 MCP Server
 The per-project endpoint that exposes Activepieces tools to an external AI assistant. Distinct from a **piece** that *calls* an MCP server.
@@ -39,7 +40,7 @@ The per-project endpoint that exposes Activepieces tools to an external AI assis
 - **Model Picker** — the builder's tier / credits / key picker and its options endpoint
 - **MCP Server** — the per-project endpoint, tool exposure, visibility rules
 - **AI & MCP** — how the AI and MCP surfaces fit together
-- **AI Usage Page** — the `/platform/ai/usage` spend dashboard, hidden until launch, Cloud and EE only
+- **AI Usage Page** — the `/platform/ai/usage` spend dashboard under AI Center → Usage, Cloud and EE only
 - **Shipping Behind a Flag** — merging unfinished AI work, turned on for a test group only
 - **AI Quality Loop**: real chats → blind labels → private tests → a paired PR score → proof in production
 
