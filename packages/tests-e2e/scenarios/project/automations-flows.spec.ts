@@ -9,7 +9,7 @@ import { AutomationsPage } from '../../pages/automations.page';
 
 const test = mergeTests(listResponseTest, flowsListTest);
 
-test.describe('Automations › flows', { tag: ['@feature:flows-list', '@surface'] }, () => {
+test.describe('Automations › flows', { tag: ['@feature:flows-list', '@surface', '@no-staging'] }, () => {
   test('rename, duplicate, export and import a flow', async ({ page, request, session, seed, cleanup }) => {
     const { flowId, flowName } = await seed.flow({ template: webhookEcho, publish: false });
     const newName = `${flowName} renamed`;
@@ -38,8 +38,10 @@ test.describe('Automations › flows', { tag: ['@feature:flows-list', '@surface'
     });
 
     await test.step('Import the exported file', async () => {
-      const importedId = await automationsPage.importFlow(exported.file);
-      cleanup.track({ resource: 'flows', id: importedId });
+      const importedId = await automationsPage.importFlow({
+        file: exported.file,
+        onCreated: (id) => cleanup.track({ resource: 'flows', id }),
+      });
       const imported = await readFlow({ request, session, flowId: importedId });
       expect(imported.version).toMatchObject({
         displayName: newName,
