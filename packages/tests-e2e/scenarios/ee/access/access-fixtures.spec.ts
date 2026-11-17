@@ -29,4 +29,19 @@ test.describe('Access fixtures', { tag: '@feature:access-fixtures' }, () => {
     const outsiderList = await request.get('/api/v1/flows', { headers: outsiderHeaders, params: { projectId: session.projectId } });
     expect(outsiderList.status()).toBe(403);
   });
+
+  test('the flows list of another project does not show the flows of this project', async ({ request, seed, secondProject }) => {
+    const { flowId } = await seed.flow({ template: webhookEcho, publish: false });
+    const control = await seed.flow({ template: webhookEcho, publish: false, session: secondProject.session });
+
+    const list = await request.get('/api/v1/flows', {
+      headers: { Authorization: `Bearer ${secondProject.session.token}` },
+      params: { projectId: secondProject.id },
+    });
+    expect(list.status()).toBe(200);
+    const { data }: { data: { id: string }[] } = await list.json();
+    const listedIds = data.map((flow) => flow.id);
+    expect(listedIds, 'The list of the second project does not show the flow seeded there').toContain(control.flowId);
+    expect(listedIds).not.toContain(flowId);
+  });
 });
