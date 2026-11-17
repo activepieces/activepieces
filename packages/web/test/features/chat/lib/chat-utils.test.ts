@@ -241,6 +241,12 @@ describe('chatUtils — tool pill active/done labels', () => {
     ).toBe('Some Helper');
   });
 
+  it('labels an unresolved lazy call with a neutral title', () => {
+    expect(
+      chatUtils.formatToolActionName({ part: toolPart('ap_lazy_tool', {}) }),
+    ).toBe('Working on it');
+  });
+
   it('uses the model-authored activeTitle (-ing) and doneTitle (-ed) when provided', () => {
     const part = toolPart('ap_generate_image', {
       activeTitle: 'Designing your Instagram post',
