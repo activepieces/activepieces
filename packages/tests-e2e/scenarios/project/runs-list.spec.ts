@@ -6,7 +6,7 @@ import { RunsPage } from '../../pages/runs.page';
 
 const test = mergeTests(listResponseTest, runsListTest);
 
-test.describe('Runs list', { tag: ['@feature:runs-list', '@surface'] }, () => {
+test.describe('Runs list', { tag: ['@feature:runs-list', '@surface', '@no-staging'] }, () => {
   test.describe.configure({ timeout: 120_000 });
 
   test('retry the selected failed runs in bulk', async ({ page, runsList }) => {
