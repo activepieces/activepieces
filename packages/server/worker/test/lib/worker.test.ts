@@ -39,6 +39,21 @@ vi.mock('../../src/lib/config/worker-settings', async () => {
     }
 })
 
+const testDrain = vi.hoisted(() => {
+    const state: { drainMs?: number } = {}
+    return state
+})
+
+vi.mock('../../src/lib/config/shutdown-budget', async (importOriginal) => {
+    const { shutdownBudget } = await importOriginal<typeof import('../../src/lib/config/shutdown-budget')>()
+    return {
+        shutdownBudget: {
+            ...shutdownBudget,
+            drainMs: (input: { flowTimeoutMs: number }) => testDrain.drainMs ?? shutdownBudget.drainMs(input),
+        },
+    }
+})
+
 vi.mock('../../src/lib/config/logger', () => {
     const noopLogger = {
         info: () => undefined,
@@ -521,6 +536,139 @@ describe('worker integration', () => {
         }, 15_000)
     })
 
+    describe('graceful stop', () => {
+        let stoppingWorker: typeof worker
+
+        beforeEach(async () => {
+            vi.resetModules()
+            stoppingWorker = (await import('../../src/lib/worker')).worker
+        })
+
+        afterEach(async () => {
+            await stoppingWorker.stop()
+            testDrain.drainMs = undefined
+        })
+
+        type StopHarness = {
+            events: string[]
+            serverSockets: Socket[]
+            pollCount: () => number
+            finishJob: () => void
+        }
+
+        function startWorkerWithOneRunningJob(beginShutdown: () => Promise<void>): Promise<StopHarness> {
+            const events: string[] = []
+            const serverSockets: Socket[] = []
+            let polls = 0
+            let finishJob: () => void = () => undefined
+            return new Promise((resolve) => {
+                mockGetHandler.mockReturnValue({
+                    jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+                    execute: vi.fn(() => new Promise((done) => {
+                        events.push('job started')
+                        finishJob = () => done({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK })
+                        resolve({ events, serverSockets, pollCount: () => polls, finishJob: () => finishJob() })
+                    })),
+                })
+                ioServer.on('connection', (serverSocket) => {
+                    serverSockets.push(serverSocket)
+                    serverSocket.on(WebsocketServerEvent.FETCH_WORKER_SETTINGS, (...args: unknown[]) => {
+                        const callback = args[args.length - 1]
+                        if (typeof callback === 'function') {
+                            callback(WORKER_SETTINGS)
+                        }
+                    })
+                    createRpcServer<WorkerToApiContract>(serverSocket, {
+                        poll: vi.fn(() => {
+                            polls++
+                            return polls === 1 ? Promise.resolve(buildConsumeJobRequest()) : new Promise(() => {})
+                        }),
+                        completeJob: vi.fn(async () => {
+                            events.push('job completed')
+                        }),
+                        beginShutdown: vi.fn(async () => {
+                            events.push('beginShutdown received')
+                            await beginShutdown()
+                            events.push('beginShutdown confirmed')
+                        }),
+                    } as unknown as WorkerToApiContract)
+                })
+                stoppingWorker.start({
+                    apiUrl: `http://127.0.0.1:${port}/api/`,
+                    socketUrl: { url: `http://127.0.0.1:${port}`, path: '/api/socket.io' },
+                    workerToken: 'test-token',
+                })
+            })
+        }
+
+        it('tells the app it is stopping, then waits for the running job to finish and report', async () => {
+            const harness = await startWorkerWithOneRunningJob(async () => undefined)
+
+            let stopped = false
+            const stopping = stoppingWorker.stop().then(() => {
+                stopped = true
+            })
+            await waitFor(() => harness.events.includes('beginShutdown confirmed'))
+            await sleepMs(500)
+            expect(stopped).toBe(false)
+
+            harness.finishJob()
+            await stopping
+
+            expect(harness.events).toEqual(['job started', 'beginShutdown received', 'beginShutdown confirmed', 'job completed'])
+            expect(createdRuntimes[0].shutdown).toHaveBeenCalledTimes(1)
+        }, 15_000)
+
+        it('counts the drain from the app confirming, not from stop(): a 1 s confirm + 1.5 s drain covers a job ending 2 s in', async () => {
+            testDrain.drainMs = 1_500
+            const harness = await startWorkerWithOneRunningJob(() => sleepMs(1_000))
+
+            const stopping = stoppingWorker.stop()
+            setTimeout(() => harness.finishJob(), 2_000)
+            await stopping
+
+            expect(harness.events).toContain('job completed')
+        }, 15_000)
+
+        it('stops waiting for the running job when the drain runs out', async () => {
+            testDrain.drainMs = 500
+            const harness = await startWorkerWithOneRunningJob(async () => undefined)
+
+            const startedAt = Date.now()
+            await stoppingWorker.stop()
+
+            expect(Date.now() - startedAt).toBeLessThan(3_000)
+            expect(harness.events).not.toContain('job completed')
+            harness.finishJob()
+        }, 15_000)
+
+        it('drains even when the app never confirms, after waiting at most 5 s for it', async () => {
+            testDrain.drainMs = 500
+            await startWorkerWithOneRunningJob(() => new Promise(() => {}))
+
+            const startedAt = Date.now()
+            await stoppingWorker.stop()
+
+            const elapsedMs = Date.now() - startedAt
+            expect(elapsedMs).toBeGreaterThanOrEqual(5_000)
+            expect(elapsedMs).toBeLessThan(7_500)
+        }, 15_000)
+
+        it('does not poll again when the socket reconnects during the drain', async () => {
+            const harness = await startWorkerWithOneRunningJob(async () => undefined)
+
+            const stopping = stoppingWorker.stop()
+            await waitFor(() => harness.events.includes('beginShutdown confirmed'))
+            harness.serverSockets[0].disconnect(true)
+            await waitFor(() => harness.serverSockets.length === 2)
+            await sleepMs(500)
+
+            expect(harness.pollCount()).toBe(1)
+            harness.finishJob()
+            await stopping
+        }, 15_000)
+    })
+
     describe('runtime lifecycle on reconnect', () => {
         function acceptConnections(serverSockets: Socket[]): void {
             ioServer.on('connection', (serverSocket) => {
@@ -711,6 +859,10 @@ describe('findStalledLoopIndex', () => {
         expect(findStalledLoopIndex({ loops: [], now: NOW, timeoutMs: TIMEOUT_MS })).toBe(-1)
     })
 })
+
+function sleepMs(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
 async function waitFor(predicate: () => boolean): Promise<void> {
     for (let i = 0; i < WAIT_ATTEMPTS; i++) {

@@ -7,8 +7,9 @@ import { ApEdition, ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, 
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
 import { createApiToWorkerHandlers } from './api-notify-service'
-import { getApiUrl, shutdownTimeoutMs, system, WorkerSystemProp } from './config/configs'
+import { getApiUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
+import { shutdownBudget } from './config/shutdown-budget'
 import { workerSettings } from './config/worker-settings'
 import { getHandler } from './execute/job-registry'
 import { JobContext, JobResult, JobResultKind } from './execute/types'
@@ -19,6 +20,7 @@ import { VERSION_MISMATCH_POLL_PAUSE_MS, versionChecker } from './utils/version-
 let socket: Socket | null = null
 let rpcClient: WorkerToApiContract | null = null
 let polling = false
+let stopping = false
 let connectionGeneration = 0
 
 const workerId = `worker-${nanoid()}`
@@ -59,6 +61,7 @@ let cacheSweepFirstRunTimeout: NodeJS.Timeout | null = null
 
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
+        stopping = false
         versionChecker.assertReleaseReadable()
         modelCatalog.load().catch(() => undefined)
         await modelTierCatalog.warmUp()
@@ -136,6 +139,7 @@ export const worker = {
     },
 
     async stop(): Promise<void> {
+        stopping = true
         polling = false
         pollLoopLiveness = []
         stopPollWatchdog()
@@ -148,6 +152,7 @@ export const worker = {
             }
         }
         await drainInFlightJobs()
+        rpcClient = null
         if (runtime) {
             await runtime.shutdown(logger)
             runtime = null
@@ -161,10 +166,18 @@ export const worker = {
     stopPolling(): void {
         polling = false
     },
+
+    forceExitAfterMs(): number {
+        return shutdownBudget.forceExitMs({ flowTimeoutMs: flowTimeoutMs() })
+    },
 }
 
 async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void> {
     if (polling) return
+    if (stopping) {
+        logger.info('Reconnected while stopping, not polling for jobs')
+        return
+    }
     polling = true
 
     const generation = connectionGeneration
@@ -308,7 +321,11 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
 }
 
 async function drainInFlightJobs(): Promise<void> {
-    const deadline = Date.now() + shutdownTimeoutMs()
+    const drainMs = shutdownBudget.drainMs({ flowTimeoutMs: flowTimeoutMs() })
+    if (inFlightJobs > 0) {
+        logger.info({ inFlightJobs, drainMs }, 'Waiting for in-flight jobs before stopping')
+    }
+    const deadline = Date.now() + drainMs
     while (inFlightJobs > 0 && Date.now() < deadline) {
         await sleep(100)
     }
@@ -339,6 +356,9 @@ function flowTimeoutMs(): number {
 }
 
 function rpcTimeoutMsFor(method: string): number {
+    if (method === 'beginShutdown') {
+        return shutdownBudget.BEGIN_SHUTDOWN_TIMEOUT_MS
+    }
     if (!LONG_RUNNING_RPC_METHODS.includes(method)) {
         return RPC_TIMEOUT_MS
     }

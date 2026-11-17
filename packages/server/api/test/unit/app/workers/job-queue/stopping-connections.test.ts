@@ -1,5 +1,35 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { WAITER_TIMEOUT_MS } from '../../../../../src/app/workers/job-queue/queue-timing'
 import { holdForConnection, stoppingConnections } from '../../../../../src/app/workers/job-queue/stopping-connections'
+
+describe('stoppingConnections', () => {
+    beforeEach(() => {
+        vi.useFakeTimers()
+        stoppingConnections.reset()
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
+    it('keeps a connection marked for longer than a poll can wait in the dispatcher', () => {
+        stoppingConnections.mark('socket-1')
+        vi.advanceTimersByTime(WAITER_TIMEOUT_MS + 1_000)
+        expect(stoppingConnections.isStopping('socket-1')).toBe(true)
+    })
+
+    it('forgets the connection once no poll it sent can still return', () => {
+        stoppingConnections.mark('socket-1')
+        vi.advanceTimersByTime(WAITER_TIMEOUT_MS + 10_001)
+        expect(stoppingConnections.isStopping('socket-1')).toBe(false)
+    })
+
+    it('marks only the connection that is stopping', () => {
+        stoppingConnections.mark('socket-1')
+        expect(stoppingConnections.isStopping('socket-2')).toBe(false)
+        expect(stoppingConnections.isStopping(undefined)).toBe(false)
+    })
+})
 
 describe('holdForConnection', () => {
     beforeEach(() => {
