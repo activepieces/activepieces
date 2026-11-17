@@ -65,6 +65,12 @@ export class AuditLogsPage extends BasePage {
   emptyState(): Locator {
     return this.page.getByTestId('data-table-empty-state');
   }
+
+  async visitFiltered(filters: Record<string, string>): Promise<void> {
+    const listed = this.page.waitForResponse(isAuditEventsList);
+    await this.page.goto(`${this.url}?${new URLSearchParams(filters)}`);
+    expect((await listed).status(), 'The audit events request failed').toBe(200);
+  }
 }
 
 function folderCreatedDetails(name: string): string {

@@ -7,6 +7,8 @@ import { AuditLogsPage } from '../../../pages/audit-logs.page';
 const test = mergeTests(accessTest, auditLogTest, listResponseTest);
 
 test.describe('Audit logs', { tag: ['@feature:audit', '@surface'] }, () => {
+  test.describe.configure({ timeout: 120_000 });
+
   test('an action of the spec shows in the audit log', async ({ page, secondProject, auditLog }) => {
     const { names: [folderName] } = auditLog.folderNames({ count: 1 });
     await auditLog.createFolders({ names: [folderName], session: secondProject.session });
@@ -23,7 +25,7 @@ test.describe('Audit logs', { tag: ['@feature:audit', '@surface'] }, () => {
     await expect(row).toContainText(event.projectDisplayName);
   });
 
-  test('the audit events table filters by action and project and pages', async ({ page, secondProject, auditLog }) => {
+  test('the audit events table filters by action and project and pages', async ({ page, secondProject, viewer, auditLog }) => {
     const { word, names } = auditLog.folderNames({ count: 11 });
     await auditLog.createFolders({ names, session: secondProject.session });
     const [event] = await auditLog.expectFolderEvents({ projectId: secondProject.id, names });
@@ -46,6 +48,14 @@ test.describe('Audit logs', { tag: ['@feature:audit', '@surface'] }, () => {
     expect(await auditLogsPage.shownFolders({ word, names })).toEqual(firstPage);
     expect(secondPage).toHaveLength(1);
     expect(new Set([...firstPage, ...secondPage]).size).toBe(names.length);
+
+    const ownFolders = { action: 'folder.created', projectId: secondProject.id };
+    await auditLogsPage.visitFiltered({ ...ownFolders, createdAfter: daysAgo(1) });
+    await expect(auditLogsPage.rowsMatching(word)).toHaveCount(10);
+    await auditLogsPage.visitFiltered({ ...ownFolders, userId: viewer.userId });
+    await expect(auditLogsPage.emptyState(), 'Performed By still shows the events of another user').toBeVisible();
+    await auditLogsPage.visitFiltered({ ...ownFolders, createdAfter: daysAgo(8), createdBefore: daysAgo(1) });
+    await expect(auditLogsPage.emptyState(), 'Created still shows the events of today').toBeVisible();
   });
 
   test('an audit events filter with no match shows the empty state', async ({ page, secondProject, auditLog }) => {
@@ -79,3 +89,7 @@ test.describe('Audit logs', { tag: ['@feature:audit', '@surface'] }, () => {
     expect(await auditLog.readStatus({ session, ...auditEvents })).toBe(200);
   });
 });
+
+function daysAgo(days: number): string {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+}
