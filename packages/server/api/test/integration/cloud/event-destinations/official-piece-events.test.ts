@@ -37,6 +37,7 @@ let entitledA: TestContext
 let entitledB: TestContext
 let unentitled: TestContext
 let registry: CloudPiece[] = []
+let unreachablePieceNames: string[] = []
 let addSpy: Mock<JobQueueAdd>
 let pendingSends: Promise<unknown>[] = []
 const originalJobQueue = jobQueueModule.jobQueue
@@ -82,6 +83,9 @@ function stubCloudFetch(): void {
             return jsonResponse(registry.map((piece) => ({ name: piece.name, version: piece.version })))
         }
         const name = decodeURIComponent(url.pathname.slice('/api/v1/pieces/'.length))
+        if (unreachablePieceNames.includes(name)) {
+            throw new TypeError('fetch failed')
+        }
         const version = url.searchParams.get('version')
         const match = registry.find((piece) => piece.name === name && piece.version === version)
         return match ? jsonResponse(match) : jsonResponse({ message: 'not found' }, 404)
@@ -185,6 +189,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
     registry = []
+    unreachablePieceNames = []
     pendingSends = []
     const connection = databaseConnection()
     await connection.getRepository('piece_metadata').createQueryBuilder().delete().execute()
@@ -301,6 +306,18 @@ describe('Official piece events', () => {
         await sync([])
 
         expect(deliveriesTo(destinationId)).toEqual([])
+    })
+
+    it('a sync where one piece fetch throws still sends events for the pieces it saved', async () => {
+        const destinationId = await subscribe({ platformId: entitledA.platform.id })
+        unreachablePieceNames = ['@test/unreachable']
+
+        await sync([
+            { name: '@test/unreachable', version: '1.0.0' },
+            { name: '@test/reachable', version: '1.0.0' },
+        ])
+
+        expect(deliveriesTo(destinationId).map((delivery) => delivery.event.data.piece.name)).toEqual(['@test/reachable'])
     })
 
     it('a sync that read the pieces before another replica inserted one sends nothing for it and keeps one row', async () => {

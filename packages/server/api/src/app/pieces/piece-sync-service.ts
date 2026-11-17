@@ -104,13 +104,12 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
                 queryParams.append('version', piece.version)
             }
             const url = `${CLOUD_API_URL}/${piece.name}?${queryParams.toString()}`
-            const response = await fetch(url)
-            if (!response.ok) {
-                log.warn({ piece: { name: piece.name, version: piece.version }, status: response.status }, '[pieceSyncService#installNewPieces] Error reading piece metadata')
+            const { data: pieceMetadata, error: fetchError } = await tryCatch(() => fetchPieceMetadata(url))
+            if (fetchError) {
+                log.warn({ piece: { name: piece.name, version: piece.version }, error: fetchError }, '[pieceSyncService#installNewPieces] Error reading piece metadata')
                 fetchFailed++
                 return
             }
-            const pieceMetadata = await response.json()
             const { data: created, error } = await tryCatch(() => pieceMetadataService(log).create({
                 pieceMetadata,
                 packageType: pieceMetadata.packageType,
@@ -146,6 +145,14 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
         await pieceCache(log).invalidate()
     }
     return { added, addedPieces, fetchFailed }
+}
+
+async function fetchPieceMetadata(url: string) {
+    const response = await fetch(url)
+    if (!response.ok) {
+        throw new Error(`Failed to fetch piece metadata: ${response.status}`)
+    }
+    return response.json()
 }
 
 
