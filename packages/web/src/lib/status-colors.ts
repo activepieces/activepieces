@@ -21,6 +21,7 @@ import {
   StepNodeBadgeStatus,
   TestEventStatus,
   WorkerHealth,
+  BatchChildStatus,
 } from './statuses';
 
 function colorsOf(status: Status): StatusColors {
@@ -62,6 +63,7 @@ function colorsOf(status: Status): StatusColors {
     case TestEventStatus.FAILED:
     case HealthCheckStatus.FAILED:
     case SecretManagerStatus.DISCONNECTED:
+    case BatchChildStatus.FAILED_TO_START:
       return DANGER;
     case StepNodeBadgeStatus.INVALID:
     case CreditsSeverity.WARNING:
@@ -86,10 +88,15 @@ function colorsOf(status: Status): StatusColors {
     case HealthCheckStatus.LOADING:
     case HealthCheckStatus.NOT_APPLICABLE:
     case SecretManagerStatus.NOT_CONFIGURED:
+    case BatchChildStatus.PENDING:
+    case BatchChildStatus.NEVER_STARTED:
+    case BatchChildStatus.DID_NOT_RUN:
+    case BatchChildStatus.LOGS_UNAVAILABLE:
       return NEUTRAL;
     case FlowRunStatus.RUNNING:
     case StepOutputStatus.RUNNING:
     case AgentConversationStatus.STREAMING:
+    case BatchChildStatus.STILL_RUNNING:
       return RUNNING;
     case StepNodeBadgeStatus.NEEDS_TEST:
     case StepNodeBadgeStatus.UNTESTED:
@@ -176,7 +183,8 @@ export type Status =
   | SignInMethodStatus
   | DomainVerificationStatus
   | SecretManagerStatus
-  | SaveBarStatus;
+  | SaveBarStatus
+  | BatchChildStatus;
 
 export type StatusColors = {
   text: string;

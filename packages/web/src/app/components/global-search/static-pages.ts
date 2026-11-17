@@ -32,6 +32,7 @@ export type StaticPage = {
   icon: ComponentType<{ className?: string; size?: number }>;
   requiresPlatformAdmin?: boolean;
   requiresEdition?: ApEdition;
+  hiddenOnEdition?: ApEdition;
 };
 
 export const STATIC_PAGES: StaticPage[] = [
@@ -95,6 +96,14 @@ export const STATIC_PAGES: StaticPage[] = [
     href: '/platform/ai/capabilities',
     icon: BotIcon,
     requiresPlatformAdmin: true,
+  },
+  {
+    id: 'page-platform-ai-usage',
+    label: 'Platform Admin — AI Usage',
+    href: '/platform/ai/usage',
+    icon: BotIcon,
+    requiresPlatformAdmin: true,
+    hiddenOnEdition: ApEdition.COMMUNITY,
   },
   {
     id: 'page-platform-mcp',
@@ -263,7 +272,8 @@ function isVisible({
 }): boolean {
   return (
     (!page.requiresPlatformAdmin || isPlatformAdmin) &&
-    (isNil(page.requiresEdition) || page.requiresEdition === edition)
+    (isNil(page.requiresEdition) || page.requiresEdition === edition) &&
+    page.hiddenOnEdition !== edition
   );
 }
 

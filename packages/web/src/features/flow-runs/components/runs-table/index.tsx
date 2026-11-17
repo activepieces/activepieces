@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/core-utils';
+import { isNil, Permission } from '@activepieces/core-utils';
 import {
   FlowRetryStrategy,
   FlowRun,
@@ -31,6 +31,7 @@ import {
   DataTableFilters,
 } from '@/components/custom/data-table';
 import { getDefaultRange } from '@/components/custom/date-time-picker-range';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { MessageTooltip } from '@/components/custom/message-tooltip';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,7 @@ import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
 import {
   DEFAULT_DATE_PRESET,
   flowRunMutations,
+  flowRunQueries,
 } from '@/features/flow-runs/hooks/flow-run-hooks';
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { flowHooks } from '@/features/flows/hooks/flow-hooks';
@@ -55,7 +57,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { useNewWindow } from '@/lib/navigation-utils';
 
-import { runsTableColumns } from './columns';
+import { runsTableColumns, SelectedRow } from './columns';
 import { FailedRetryRunsDialog } from './failed-retry-runs-dialog';
 import { FailedStepDialog } from './failed-step-dialog';
 import {
@@ -64,10 +66,6 @@ import {
 } from './retried-runs-snackbar';
 import { RunsStatusChart } from './runs-status-chart';
 
-type SelectedRow = {
-  id: string;
-  status: FlowRunStatus;
-};
 export const RunsTable = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedRows, setSelectedRows] = useState<Array<SelectedRow>>([]);
@@ -81,6 +79,10 @@ export const RunsTable = () => {
   >([]);
   const [failedRetryDialogOpen, setFailedRetryDialogOpen] = useState(false);
   const [errorDialogRun, setErrorDialogRun] = useState<FlowRun | null>(null);
+  const [pendingBatchAction, setPendingBatchAction] = useState<{
+    action: 'cancel' | 'retry';
+    resetSelection: () => void;
+  } | null>(null);
 
   const [hasSeededDefaultRange, setHasSeededDefaultRange] = useState(() =>
     searchParams.has('createdAfter'),
@@ -268,6 +270,75 @@ export const RunsTable = () => {
     },
   });
 
+  const selectionMayProcessInBatches = flowRunQueries.useMayProcessInBatches({
+    runs: selectedRows,
+    includesUnlistedRuns: selectedAll,
+    enabled: selectedRows.length > 0,
+  });
+
+  const retryFromFailedStep = useCallback(
+    (resetSelection: () => void) => {
+      retryRuns.mutate({
+        projectId,
+        flowRunIds: selectedAll ? undefined : selectedRows.map((row) => row.id),
+        strategy: FlowRetryStrategy.FROM_FAILED_STEP,
+        excludeFlowRunIds: selectedAll ? Array.from(excludedRows) : undefined,
+        status: searchParams.getAll('status') as FlowRunStatus[],
+        flowId: searchParams.getAll('flowId'),
+        createdAfter: searchParams.get('createdAfter') || undefined,
+        createdBefore: searchParams.get('createdBefore') || undefined,
+        failedStepName: searchParams.get('failedStepName') || undefined,
+        failedStepMessage: searchParams.get('failedStepMessage') || undefined,
+      });
+      resetSelection();
+      setSelectedRows([]);
+      setSelectedAll(false);
+      setExcludedRows(new Set());
+    },
+    [
+      retryRuns,
+      projectId,
+      selectedAll,
+      selectedRows,
+      excludedRows,
+      searchParams,
+    ],
+  );
+
+  const cancelSelectedRuns = useCallback(
+    (resetSelection: () => void) => {
+      const status = searchParams.getAll('status') as FlowRunStatus[];
+      cancelRuns.mutate({
+        projectId,
+        flowRunIds: selectedAll ? undefined : selectedRows.map((row) => row.id),
+        excludeFlowRunIds: selectedAll ? Array.from(excludedRows) : undefined,
+        status:
+          status.length > 0
+            ? status.filter(
+                (
+                  s,
+                ): s is
+                  | typeof FlowRunStatus.PAUSED
+                  | typeof FlowRunStatus.QUEUED =>
+                  s === FlowRunStatus.PAUSED || s === FlowRunStatus.QUEUED,
+              )
+            : undefined,
+        flowId: searchParams.getAll('flowId'),
+        createdAfter: searchParams.get('createdAfter') || undefined,
+        createdBefore: searchParams.get('createdBefore') || undefined,
+      });
+      resetSelection();
+    },
+    [
+      cancelRuns,
+      projectId,
+      selectedAll,
+      selectedRows,
+      excludedRows,
+      searchParams,
+    ],
+  );
+
   const archiveRuns = flowRunMutations.useBulkArchiveRuns({
     onSuccess: () => {
       refetch();
@@ -357,34 +428,14 @@ export const RunsTable = () => {
                     size="sm"
                     loading={cancelRuns.isPending}
                     onClick={() => {
-                      const runIds = selectedRows.map((row) => row.id);
-                      const status = searchParams.getAll(
-                        'status',
-                      ) as FlowRunStatus[];
-                      cancelRuns.mutate({
-                        projectId,
-                        flowRunIds: selectedAll ? undefined : runIds,
-                        excludeFlowRunIds: selectedAll
-                          ? Array.from(excludedRows)
-                          : undefined,
-                        status:
-                          status.length > 0
-                            ? (status.filter(
-                                (s) =>
-                                  s === FlowRunStatus.PAUSED ||
-                                  s === FlowRunStatus.QUEUED,
-                              ) as (
-                                | typeof FlowRunStatus.PAUSED
-                                | typeof FlowRunStatus.QUEUED
-                              )[])
-                            : undefined,
-                        flowId: searchParams.getAll('flowId'),
-                        createdAfter:
-                          searchParams.get('createdAfter') || undefined,
-                        createdBefore:
-                          searchParams.get('createdBefore') || undefined,
-                      });
-                      resetSelection();
+                      if (selectionMayProcessInBatches) {
+                        setPendingBatchAction({
+                          action: 'cancel',
+                          resetSelection,
+                        });
+                        return;
+                      }
+                      cancelSelectedRuns(resetSelection);
                     }}
                   >
                     <X className="h-3 w-4 mr-1" />
@@ -491,32 +542,14 @@ export const RunsTable = () => {
                         <DropdownMenuItem
                           disabled={!userHasPermissionToRetryRun || !allFailed}
                           onClick={() => {
-                            const runIds = selectedRows.map((row) => row.id);
-                            retryRuns.mutate({
-                              projectId,
-                              flowRunIds: selectedAll ? undefined : runIds,
-                              strategy: FlowRetryStrategy.FROM_FAILED_STEP,
-                              excludeFlowRunIds: selectedAll
-                                ? Array.from(excludedRows)
-                                : undefined,
-                              status: searchParams.getAll(
-                                'status',
-                              ) as FlowRunStatus[],
-                              flowId: searchParams.getAll('flowId'),
-                              createdAfter:
-                                searchParams.get('createdAfter') || undefined,
-                              createdBefore:
-                                searchParams.get('createdBefore') || undefined,
-                              failedStepName:
-                                searchParams.get('failedStepName') || undefined,
-                              failedStepMessage:
-                                searchParams.get('failedStepMessage') ||
-                                undefined,
-                            });
-                            resetSelection();
-                            setSelectedRows([]);
-                            setSelectedAll(false);
-                            setExcludedRows(new Set());
+                            if (selectionMayProcessInBatches) {
+                              setPendingBatchAction({
+                                action: 'retry',
+                                resetSelection,
+                              });
+                              return;
+                            }
+                            retryFromFailedStep(resetSelection);
                           }}
                           className="cursor-pointer"
                         >
@@ -543,6 +576,9 @@ export const RunsTable = () => {
       selectedAll,
       excludedRows,
       cancelRuns,
+      selectionMayProcessInBatches,
+      retryFromFailedStep,
+      cancelSelectedRuns,
     ],
   );
 
@@ -580,6 +616,7 @@ export const RunsTable = () => {
           </Button>,
         ]
       : [];
+  const isBatchCancel = pendingBatchAction?.action === 'cancel';
 
   return (
     <div className="relative">
@@ -610,6 +647,51 @@ export const RunsTable = () => {
         open={failedRetryDialogOpen}
         onOpenChange={setFailedRetryDialogOpen}
         failedRuns={failedRetryRuns}
+      />
+      <ConfirmationDeleteDialog
+        open={!isNil(pendingBatchAction)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingBatchAction(null);
+          }
+        }}
+        title={isBatchCancel ? t('Cancel runs') : t('Retry from failed step')}
+        message={
+          isBatchCancel
+            ? t('Are you sure you want to cancel the selected runs?')
+            : t('Are you sure you want to retry from the failed step?')
+        }
+        warning={
+          isBatchCancel ? (
+            t(
+              'Some of these runs may process items in batches. Cancelling stops batches that are queued or paused, and a paused batch loses its approval or delay. Batches that are already running finish.',
+            )
+          ) : (
+            <>
+              {t(
+                'If a batch step failed, retrying can run its batches again, including the ones that already succeeded. Anything they sent to other apps can be sent twice.',
+              )}
+              {!selectedAll &&
+                ` ${t('batchRetryRunCount', {
+                  count: selectedRows.length,
+                })}`}
+            </>
+          )
+        }
+        buttonText={isBatchCancel ? t('Cancel runs') : t('Retry')}
+        cancelButtonText={isBatchCancel ? t('Keep running') : undefined}
+        confirmVariant={isBatchCancel ? 'destructive' : 'default'}
+        entityName={t('Runs')}
+        mutationFn={async () => {
+          if (isNil(pendingBatchAction)) {
+            return;
+          }
+          if (pendingBatchAction.action === 'cancel') {
+            cancelSelectedRuns(pendingBatchAction.resetSelection);
+            return;
+          }
+          retryFromFailedStep(pendingBatchAction.resetSelection);
+        }}
       />
       <FailedStepDialog
         run={errorDialogRun}

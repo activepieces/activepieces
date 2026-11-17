@@ -15,6 +15,7 @@ import {
 import { describe, expect, it } from 'vitest';
 
 import {
+  BatchChildStatus,
   CreditsSeverity,
   DomainVerificationStatus,
   HandlerFlowStatus,
@@ -47,6 +48,7 @@ const STATUS_ENUMS: Record<string, readonly string[]> = {
   StepNodeBadgeStatus: Object.values(StepNodeBadgeStatus),
   TestEventStatus: Object.values(TestEventStatus),
   WorkerHealth: Object.values(WorkerHealth),
+  BatchChildStatus: Object.values(BatchChildStatus),
 };
 
 const SHARED_WORDS = [

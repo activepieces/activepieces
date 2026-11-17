@@ -1,5 +1,5 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { apDayjs, apDayjsDuration, createLogger, wideEvent } from '@activepieces/server-utils'
+import { apDayjs, apDayjsDuration, wideEvent } from '@activepieces/server-utils'
 import { DelayedError, Job, JobsOptions, JobState, Queue, Worker } from 'bullmq'
 import { Dayjs } from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -61,20 +61,12 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
                     throw new DelayedError()
                 }
                 log.debug({ jobName: job.name }, '[systemJob#worker] Executing job')
-                const jobLogger = createLogger({
-                    event: 'system-job.execute',
-                    job: { id: job.id, type: job.name },
-                })
-                return wideEvent.run({
-                    logger: jobLogger,
-                    fn: () => processSystemJob(job)
-                        .then(() => wideEvent.set({ outcome: 'success' }))
-                        .catch((error: unknown) => {
-                            wideEvent.error(error)
-                            wideEvent.set({ outcome: 'failed' })
-                            throw error
-                        })
-                        .finally(() => jobLogger.emit()),
+                return wideEvent.runJob({
+                    fields: {
+                        event: 'system-job.execute',
+                        job: { id: job.id, type: job.name },
+                    },
+                    fn: () => processSystemJob(job),
                 })
             },
             {

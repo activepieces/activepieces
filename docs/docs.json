@@ -123,6 +123,7 @@
                      "flows/passing-data",
                      "flows/using-formulas",
                      "flows/formula-reference",
+                     "flows/process-in-batches",
                      "flows/project-variables",
                      "flows/publishing-flows",
                      "flows/flow-approvals",
@@ -384,7 +385,8 @@
                         "pages": [
                           "admin-guide/guides/setup-ai-providers",
                           "admin-guide/guides/ai-tiers",
-                          "admin-guide/guides/ai-capabilities"
+                          "admin-guide/guides/ai-capabilities",
+                          "admin-guide/guides/ai-usage"
                         ]
                       },
                       "admin-guide/guides/global-connections",
@@ -747,6 +749,14 @@
                                  "endpoints/ai-capabilities/set-up",
                                  "endpoints/ai-capabilities/update",
                                  "endpoints/ai-capabilities/reset"
+                              ]
+                           },
+                           {
+                              "group": "Usage",
+                              "pages": [
+                                 "endpoints/ai-usage/overview",
+                                 "endpoints/ai-usage/list-items",
+                                 "endpoints/ai-usage/get-item"
                               ]
                            },
                            {

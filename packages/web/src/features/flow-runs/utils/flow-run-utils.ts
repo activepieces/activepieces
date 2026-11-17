@@ -4,6 +4,8 @@ import {
   FlowActionType,
   FlowRun,
   FlowRunStatus,
+  flowStructureUtil,
+  FlowVersion,
   isFailedState,
   StepOutput,
   StepOutputStatus,
@@ -193,6 +195,22 @@ export const flowRunUtils = {
       case FlowRunStatus.TIMEOUT:
         return CircleAlert;
     }
+  },
+  mayProcessInBatches({
+    versions,
+    includesUnlistedRuns,
+  }: {
+    versions: (FlowVersion | undefined)[];
+    includesUnlistedRuns: boolean;
+  }): boolean {
+    if (includesUnlistedRuns) {
+      return true;
+    }
+    return versions.some(
+      (version) =>
+        isNil(version) ||
+        flowStructureUtil.getBatchSteps(version.trigger).length > 0,
+    );
   },
   getStatusLabelOverride(status: FlowRunStatus): string | null {
     if (status === FlowRunStatus.QUOTA_EXCEEDED) {
