@@ -1,14 +1,14 @@
 import { randomInt, randomUUID } from 'node:crypto';
-import { AutomationsPage, BuilderPage } from '../pages';
+import type { Page } from '@playwright/test';
+import { AutomationsPage } from '../pages/automations.page';
+import { BuilderPage } from '../pages/builder.page';
 import { E2E_PREFIX } from './api';
+import type { Cleanup } from './index';
 
-async function publishWebhookEchoFlow({ automationsPage, builderPage, flowCleanup }: {
-  automationsPage: AutomationsPage;
-  builderPage: BuilderPage;
-  flowCleanup: { track: (flowId: string) => void };
-}): Promise<{ flowId: string; flowName: string; webhookUrl: string }> {
-  const flowId = await automationsPage.createFlow();
-  flowCleanup.track(flowId);
+async function publishWebhookEchoFlow({ page, cleanup }: { page: Page; cleanup: Cleanup }): Promise<{ flowId: string; flowName: string; webhookUrl: string }> {
+  const builderPage = new BuilderPage(page);
+  const flowId = await new AutomationsPage(page).createFlow();
+  cleanup.track({ resource: 'flows', id: flowId });
   const flowName = uniqueName('echo');
   await builderPage.nameNewFlow(flowName);
   await builderPage.selectTrigger({ piece: 'Webhook', trigger: 'Catch Webhook' });
