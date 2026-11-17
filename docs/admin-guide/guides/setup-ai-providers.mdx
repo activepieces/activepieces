@@ -52,6 +52,7 @@ Keys are grouped by provider. Each row shows the key's name, its status, how man
 
   * OpenRouter
   * Cloudflare AI Gateway
+  * LiteLLM
 
   **Anything else**
 
@@ -110,7 +111,7 @@ Choose which of the key's models the platform may use:
 
 Search, sort (newest, cheapest, biggest context, name) and filter by tool calling, reasoning, vision or image generation. Each row shows the model's context size and price per million tokens, when known. A model a tier uses shows **Used by** and the tier name, and stays selected until you change the tier.
 
-For **Google Vertex AI**, **Cloudflare AI Gateway** and **Other (OpenAI Compatible)**, you type the model ids yourself, because these providers don't list them.
+For **Google Vertex AI**, **Cloudflare AI Gateway** and **Other (OpenAI Compatible)**, you type the model ids yourself, because these providers don't list them. **LiteLLM** lists its models from your proxy; see [LiteLLM](#litellm).
 
 ![Models tab of a key](/resources/screenshots/ai-center-key-models.png)
 
@@ -160,7 +161,36 @@ Spend on your own key is billed by your provider. To add limits and an audit tra
 - Log and monitor every AI request.
 - Track usage across projects.
 
-**OpenRouter** and **Cloudflare AI Gateway** are set up like any other provider. Any other gateway that speaks the OpenAI API works through **Other (OpenAI Compatible)**, so LiteLLM, Portkey, Helicone and self-hosted routers are all fine. **Azure** and **AWS Bedrock** give you the same through your cloud account's quotas and logs.
+**OpenRouter**, **Cloudflare AI Gateway** and **LiteLLM** are set up like any other provider. Any other gateway that speaks the OpenAI API works through **Other (OpenAI Compatible)**, so Portkey, Helicone and self-hosted routers are all fine. **Azure** and **AWS Bedrock** give you the same through your cloud account's quotas and logs.
+
+## LiteLLM
+
+Connect a [LiteLLM proxy](https://docs.litellm.ai/docs/simple_proxy) to use its models, budgets and logs. Tested with LiteLLM v1.108.0.
+
+1. Click **Add key** and pick **LiteLLM**.
+2. **Base URL**: your proxy's URL, with or without `/v1`.
+3. **API key**: a LiteLLM virtual key or the master key. Paste the key alone, without `Bearer `.
+4. **API key header**: `Authorization`, or `x-litellm-api-key` if your proxy uses that header.
+5. Click **Connect**.
+
+**Models.** On save, the key reads its models from your proxy (`/v1/model/info`, or `/v1/models` on older proxies). Chat and image models are added; embedding, audio and other models are skipped. Synced models show **Synced** and come back on every save, so remove them in LiteLLM, not here. Click **Refresh models** on the key page to sync again after you change your proxy.
+
+Type model ids by hand in **Models** (comma-separated) when:
+
+- a model sits behind a wildcard route such as `openai/*`, which is not listed, or
+- the proxy can't be reached from your Activepieces server. The key then saves with only the models you typed.
+
+**Private networks.** Self-hosted Activepieces blocks requests to private and loopback addresses. If your proxy runs on a private network, add its IP or CIDR to [`AP_SSRF_ALLOW_LIST`](/install/reference/environment-variables), for example `10.0.0.5` or `10.10.0.0/24`, and restart the server. Model requests are not blocked, only the model sync.
+
+**Spend tracking.** Each request sends ids only, never names or emails:
+
+- `x-litellm-customer-id`: the project id, on flow steps. LiteLLM creates an end user per project, so a default end-user budget applies to each project.
+- `x-litellm-trace-id`: the flow run id, or the chat conversation id.
+- `x-litellm-tags`: `ap-surface:<chat|flow|agent>` and `ap-platform:<id>`. If you turned on tag-based routing, make sure these tags match a deployment or you have a default one.
+
+AI Usage records the cost LiteLLM reports for each request, except streamed chat replies.
+
+**Moving from Other (OpenAI Compatible).** Add a LiteLLM key with the same base URL and key, move your tiers and project access to it, then delete the old key. Flows that pin an old version of the AI piece don't know LiteLLM; update the AI piece in those flows.
 
 
 ## Related

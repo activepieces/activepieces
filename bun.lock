@@ -91,7 +91,7 @@
     },
     "packages/core/ai-providers": {
       "name": "@activepieces/ai-providers",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -114,7 +114,7 @@
     },
     "packages/core/execution": {
       "name": "@activepieces/core-execution",
-      "version": "0.30.1",
+      "version": "0.34.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -146,7 +146,7 @@
     },
     "packages/core/piece-types": {
       "name": "@activepieces/core-piece-types",
-      "version": "0.14.0",
+      "version": "0.15.0",
       "dependencies": {
         "@activepieces/core-utils": "workspace:*",
         "tslib": "2.6.2",
@@ -159,7 +159,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.220.0",
+      "version": "0.223.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -182,7 +182,7 @@
     },
     "packages/core/utils": {
       "name": "@activepieces/core-utils",
-      "version": "0.13.2",
+      "version": "0.14.0",
       "dependencies": {
         "deepmerge-ts": "8.0.2",
         "ipaddr.js": "2.3.0",
@@ -345,7 +345,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.15.4",
+      "version": "0.16.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -444,17 +444,17 @@
     },
     "packages/pieces/community/airtable": {
       "name": "@activepieces/piece-airtable",
-      "version": "0.9.4",
+      "version": "0.9.5",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "airtable": "0.11.6",
-        "dayjs": "1.11.9",
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/airtop": {
@@ -759,7 +759,7 @@
     },
     "packages/pieces/community/apitable": {
       "name": "@activepieces/piece-apitable",
-      "version": "0.5.3",
+      "version": "0.5.4",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -770,6 +770,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/apitemplate-io": {
@@ -2567,6 +2568,20 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/datalab": {
+      "name": "@activepieces/piece-datalab",
+      "version": "0.0.2",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "5.0.5",
+      },
+    },
     "packages/pieces/community/datocms": {
       "name": "@activepieces/piece-datocms",
       "version": "0.2.1",
@@ -3288,7 +3303,7 @@
     },
     "packages/pieces/community/fireberry": {
       "name": "@activepieces/piece-fireberry",
-      "version": "0.1.8",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3297,6 +3312,7 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/firecrawl": {
@@ -3316,15 +3332,17 @@
     },
     "packages/pieces/community/fireflies-ai": {
       "name": "@activepieces/piece-fireflies-ai",
-      "version": "0.1.9",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "undici": "7.30.1",
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/flipando": {
@@ -3852,7 +3870,7 @@
     },
     "packages/pieces/community/gmail": {
       "name": "@activepieces/piece-gmail",
-      "version": "0.18.6",
+      "version": "0.19.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3916,7 +3934,7 @@
     },
     "packages/pieces/community/google-calendar": {
       "name": "@activepieces/piece-google-calendar",
-      "version": "0.13.4",
+      "version": "0.14.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3963,7 +3981,7 @@
     },
     "packages/pieces/community/google-docs": {
       "name": "@activepieces/piece-google-docs",
-      "version": "0.7.0",
+      "version": "0.7.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3993,7 +4011,7 @@
     },
     "packages/pieces/community/google-drive": {
       "name": "@activepieces/piece-google-drive",
-      "version": "0.14.0",
+      "version": "0.14.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4094,7 +4112,7 @@
     },
     "packages/pieces/community/google-sheets": {
       "name": "@activepieces/piece-google-sheets",
-      "version": "0.20.0",
+      "version": "0.20.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4133,7 +4151,7 @@
     },
     "packages/pieces/community/google-tasks": {
       "name": "@activepieces/piece-google-tasks",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4540,7 +4558,7 @@
     },
     "packages/pieces/community/hubspot": {
       "name": "@activepieces/piece-hubspot",
-      "version": "0.13.2",
+      "version": "0.14.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4871,7 +4889,7 @@
     },
     "packages/pieces/community/jira-data-center": {
       "name": "@activepieces/piece-jira-data-center",
-      "version": "0.1.2",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4883,6 +4901,21 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
+      },
+    },
+    "packages/pieces/community/jira-service-management": {
+      "name": "@activepieces/piece-jira-service-management",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/jogg-ai": {
@@ -5717,15 +5750,17 @@
     },
     "packages/pieces/community/manychat": {
       "name": "@activepieces/piece-manychat",
-      "version": "0.1.7",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "undici": "7.30.1",
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/mastodon": {
@@ -6001,15 +6036,17 @@
     },
     "packages/pieces/community/microsoft-dynamics-crm": {
       "name": "@activepieces/piece-microsoft-dynamics-crm",
-      "version": "0.4.3",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "undici": "7.30.1",
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/microsoft-excel-365": {
@@ -7374,7 +7411,7 @@
     },
     "packages/pieces/community/postgres": {
       "name": "@activepieces/piece-postgres",
-      "version": "0.6.1",
+      "version": "0.7.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7385,9 +7422,11 @@
         "pg-format": "1.0.4",
       },
       "devDependencies": {
+        "@electric-sql/pglite": "0.3.14",
         "@types/pg": "8.16.0",
         "@types/pg-format": "1.0.5",
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/posthog": {
@@ -8088,18 +8127,18 @@
     },
     "packages/pieces/community/rss": {
       "name": "@activepieces/piece-rss",
-      "version": "0.7.2",
+      "version": "0.8.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
-        "dayjs": "1.11.9",
         "feedparser": "2.2.10",
       },
       "devDependencies": {
         "@types/feedparser": "2.2.8",
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/runware": {
@@ -8196,6 +8235,20 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+      },
+    },
+    "packages/pieces/community/salla": {
+      "name": "@activepieces/piece-salla",
+      "version": "0.2.2",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/sap-ariba": {
@@ -8672,7 +8725,7 @@
     },
     "packages/pieces/community/slack": {
       "name": "@activepieces/piece-slack",
-      "version": "0.23.2",
+      "version": "0.23.3",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9443,13 +9496,12 @@
     },
     "packages/pieces/community/todoist": {
       "name": "@activepieces/piece-todoist",
-      "version": "0.6.3",
+      "version": "0.6.4",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
-        "dayjs": "1.11.9",
       },
       "devDependencies": {
         "tslib": "2.6.2",
@@ -10220,7 +10272,7 @@
     },
     "packages/pieces/community/wordpress": {
       "name": "@activepieces/piece-wordpress",
-      "version": "0.9.1",
+      "version": "0.9.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10374,7 +10426,7 @@
     },
     "packages/pieces/community/youtube": {
       "name": "@activepieces/piece-youtube",
-      "version": "0.9.4",
+      "version": "0.9.5",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -11058,7 +11110,7 @@
     },
     "packages/pieces/framework": {
       "name": "@activepieces/pieces-framework",
-      "version": "0.42.0",
+      "version": "0.43.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -11077,6 +11129,7 @@
       "version": "0.0.1",
       "dependencies": {
         "@1password/sdk": "0.4.0",
+        "@activepieces/ai-providers": "workspace:*",
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
         "@activepieces/core-piece-types": "workspace:*",
@@ -11892,6 +11945,8 @@
 
     "@activepieces/piece-datafuel": ["@activepieces/piece-datafuel@workspace:packages/pieces/community/datafuel"],
 
+    "@activepieces/piece-datalab": ["@activepieces/piece-datalab@workspace:packages/pieces/community/datalab"],
+
     "@activepieces/piece-date-helper": ["@activepieces/piece-date-helper@workspace:packages/pieces/core/date-helper"],
 
     "@activepieces/piece-datocms": ["@activepieces/piece-datocms@workspace:packages/pieces/community/datocms"],
@@ -12233,6 +12288,8 @@
     "@activepieces/piece-jira-cloud": ["@activepieces/piece-jira-cloud@workspace:packages/pieces/community/jira-cloud"],
 
     "@activepieces/piece-jira-data-center": ["@activepieces/piece-jira-data-center@workspace:packages/pieces/community/jira-data-center"],
+
+    "@activepieces/piece-jira-service-management": ["@activepieces/piece-jira-service-management@workspace:packages/pieces/community/jira-service-management"],
 
     "@activepieces/piece-jogg-ai": ["@activepieces/piece-jogg-ai@workspace:packages/pieces/community/jogg-ai"],
 
@@ -12719,6 +12776,8 @@
     "@activepieces/piece-salesforce": ["@activepieces/piece-salesforce@workspace:packages/pieces/community/salesforce"],
 
     "@activepieces/piece-salesloft": ["@activepieces/piece-salesloft@workspace:packages/pieces/community/salesloft"],
+
+    "@activepieces/piece-salla": ["@activepieces/piece-salla@workspace:packages/pieces/community/salla"],
 
     "@activepieces/piece-sap-ariba": ["@activepieces/piece-sap-ariba@workspace:packages/pieces/community/sap-ariba"],
 
