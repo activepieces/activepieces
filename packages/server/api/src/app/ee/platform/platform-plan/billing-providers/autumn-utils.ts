@@ -47,14 +47,17 @@ const BASELINE_PLAN_IDS: readonly string[] = [PlanName.FREE, PlanName.FREE_LEGAC
 const SELF_SERVE_TRIAL_ENDED_REPORT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
 
 export const autumnUtils = {
-    client({ secretKey, customerId, failOpen = true }: AutumnClientParams) {
-        const client = new Autumn({ secretKey, failOpen })
+    client({ secretKey, customerId }: AutumnClientParams) {
+        const client = new Autumn({ secretKey, failOpen: true })
         return {
-            check({ idempotencyKey, ...params }: CheckInput) {
-                return client.check({ customerId, ...params }, idempotencyOptions(idempotencyKey))
+            check(params: WithoutCustomerId<CheckParams>) {
+                return client.check({ customerId, ...params })
             },
             track({ idempotencyKey, ...params }: TrackInput) {
-                return client.track({ customerId, ...params }, idempotencyOptions(idempotencyKey))
+                return client.track(
+                    { customerId, ...params },
+                    idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined,
+                )
             },
             async getCustomer(params?: { expand?: GetCustomerParams['expand'] }) {
                 const customer = await client.customers.get(
@@ -409,11 +412,11 @@ export const autumnConsole = {
     async compFreeLegacy({ autumnCustomerId }: { autumnCustomerId: string }): Promise<void> {
         await consoleRequest({ path: '/api/v1/billing/free-legacy', token: consoleSecretOrThrow(), body: { autumnCustomerId } })
     },
-    async grantInviteReward({ autumnCustomerId }: { autumnCustomerId: string }): Promise<ConsoleInviteRewardGrant> {
+    async grantInviteReward({ autumnCustomerId, inviteeEmail }: GrantInviteRewardParams): Promise<ConsoleInviteRewardGrant> {
         return consoleRequest<ConsoleInviteRewardGrant>({
             path: '/api/v1/invite-rewards',
             token: consoleSecretOrThrow(),
-            body: { autumnCustomerId },
+            body: { autumnCustomerId, inviteeEmail },
         })
     },
     async listInviteRewards({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<InviteRewardSummary> {
@@ -447,10 +450,6 @@ async function consoleRequest<T>({ path, method = 'post', token, body, query, ex
     }
     assertNotNullOrUndefined(response, 'response')
     return response.data.data
-}
-
-function idempotencyOptions(idempotencyKey: string | undefined): { headers: Record<string, string> } | undefined {
-    return isNil(idempotencyKey) ? undefined : { headers: { 'Idempotency-Key': idempotencyKey } }
 }
 
 function consoleSecretOrThrow(): string {
@@ -722,11 +721,6 @@ type ListAllSubscriptionsParams = {
 type AutumnClientParams = {
     secretKey: string
     customerId: string
-    failOpen?: boolean
-}
-
-type CheckInput = WithoutCustomerId<CheckParams> & {
-    idempotencyKey?: string
 }
 
 type TrackInput = WithoutCustomerId<TrackParams> & {
@@ -829,6 +823,11 @@ export type SelfServeTrialStartOutcome =
 export type ConsoleCustomerCall = {
     autumnCustomerId: string
     autumnApiKey: string
+}
+
+type GrantInviteRewardParams = {
+    autumnCustomerId: string
+    inviteeEmail: string
 }
 
 type ConsoleInviteRewardGrant = { granted: true, credits: number, rewardsEarned: number } | { granted: false, reason: string }
