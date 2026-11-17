@@ -1,6 +1,5 @@
 import React from 'react';
 
-import { Badge } from '@/components/ui/badge';
 import { Status, statusColors } from '@/lib/status-colors';
 import { cn } from '@/lib/utils';
 
@@ -8,13 +7,18 @@ const StatusBadge = React.memo(
   ({ status, icon: Icon, text }: StatusBadgeProps) => {
     const colors = statusColors.of(status);
     return (
-      <Badge
-        variant={null}
-        className={cn(colors.background, colors.text, colors.border)}
+      <span
+        data-slot="status-badge"
+        className={cn(
+          'inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-md border px-1.5 text-xs font-medium whitespace-nowrap [&>svg]:pointer-events-none [&>svg]:size-3',
+          colors.background,
+          colors.text,
+          colors.border,
+        )}
       >
-        <Icon className="size-4" />
+        {Icon && <Icon />}
         <span>{text}</span>
-      </Badge>
+      </span>
     );
   },
 );
@@ -24,6 +28,6 @@ export { StatusBadge };
 
 type StatusBadgeProps = {
   status: Status;
-  icon: React.ElementType;
+  icon?: React.ElementType;
   text: string;
 };
