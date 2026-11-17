@@ -1,12 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  httpClient,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-
-export const VAPI_BASE_URL = 'https://api.vapi.ai';
-
+import { HttpMethod } from '@activepieces/pieces-common';
+import { VAPI_BASE_URL, VapiApiError, vapiApi } from './common/vapi-api';
 
 export const vapiAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -20,22 +14,28 @@ export const vapiAuth = PieceAuth.SecretText({
   required: true,
   validate: async ({ auth }) => {
     try {
-      await httpClient.sendRequest({
+      await vapiApi.request({
+        apiKey: auth,
         method: HttpMethod.GET,
-        url: `${VAPI_BASE_URL}/call?limit=1`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth,
-        },
+        path: '/assistant',
+        operation: 'connection check',
+        query: { limit: 1 },
       });
       return { valid: true };
     } catch (error: unknown) {
+      if (error instanceof VapiApiError && (error.status === 401 || error.status === 403)) {
+        return {
+          valid: false,
+          error: `Invalid Vapi API key (status: ${error.status}). Use the Private API key, not the Public key.`,
+        };
+      }
+      const status = error instanceof VapiApiError && error.status > 0 ? error.status : 'unknown';
       return {
         valid: false,
-        error: `Could not connect to Vapi API (status: ${
-          status ?? 'unknown'
-        }).`,
+        error: `Could not connect to Vapi API (status: ${status}).`,
       };
     }
   },
 });
+
+export { VAPI_BASE_URL };
