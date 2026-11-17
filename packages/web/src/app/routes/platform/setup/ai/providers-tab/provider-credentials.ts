@@ -88,9 +88,13 @@ function openAiCompatibleFields({
       placeholder: 'Authorization',
       defaultValue: 'Authorization',
       advanced: true,
-      help: t(
-        'The header that carries the key. Authorization sends it as a Bearer token; any other name sends the key as it is.',
-      ),
+      help: withApiStyle
+        ? t(
+            'The header that carries the key. The key is sent exactly as typed, so add the Bearer prefix to the key if the API needs it.',
+          )
+        : t(
+            'The header that carries the key. Authorization sends it as a Bearer token; any other name sends the key as it is.',
+          ),
     },
     {
       key: 'typedModels',

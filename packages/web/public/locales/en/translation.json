@@ -2302,6 +2302,7 @@
   "The address of the OpenAI-compatible API, usually ending in /v1.": "The address of the OpenAI-compatible API, usually ending in /v1.",
   "The key the API expects. Stored encrypted.": "The key the API expects. Stored encrypted.",
   "API key header": "API key header",
+  "The header that carries the key. The key is sent exactly as typed, so add the Bearer prefix to the key if the API needs it.": "The header that carries the key. The key is sent exactly as typed, so add the Bearer prefix to the key if the API needs it.",
   "The header that carries the key. Authorization sends it as a Bearer token; any other name sends the key as it is.": "The header that carries the key. Authorization sends it as a Bearer token; any other name sends the key as it is.",
   "Comma-separated model ids to add by hand, for wildcard routes or a proxy that cannot be reached from here. Models your proxy lists are added on save.": "Comma-separated model ids to add by hand, for wildcard routes or a proxy that cannot be reached from here. Models your proxy lists are added on save.",
   "API style": "API style",
