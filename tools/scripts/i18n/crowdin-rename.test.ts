@@ -51,10 +51,6 @@ const fakeCrowdin = ({ strings = [{ id: 1, identifier: 'Upload a file', text: 'U
         if (approvals) {
             return approvals[1] === 'ja' ? state.approvals.ja : state.approvals.de
         }
-        const issuesOfString = /^\/comments\?stringId=(\d+)&type=issue&issueStatus=unresolved$/.exec(path)
-        if (issuesOfString) {
-            return state.issues.filter(({ stringId }) => String(stringId) === issuesOfString[1])
-        }
         const approvalsOfTranslation = /^\/approvals\?translationId=(\d+)$/.exec(path)
         if (approvalsOfTranslation) {
             return [...state.approvals.ja, ...state.approvals.de].filter(({ translationId }) => String(translationId) === approvalsOfTranslation[1])
@@ -88,9 +84,10 @@ const fakeCrowdin = ({ strings = [{ id: 1, identifier: 'Upload a file', text: 'U
                     throw new CrowdinError({ method: 'POST', path, status: 403, detail: 'Forbidden' })
                 }
                 const issue = clone<Omit<FakeIssue, 'id'>>(body)
-                state.issues.push({ ...issue, id: 100 + state.issues.length })
+                const id = 100 + state.issues.length
+                state.issues.push({ ...issue, id })
                 writes.push(`POST ${path} ${issue.targetLanguageId} ${issue.type} ${issue.issueType}`)
-                return clone<T>({})
+                return clone<T>({ data: { id } })
             }
             if (failApprovals) {
                 throw new CrowdinError({ method: 'POST', path, status: 400, detail: 'Invalid' })
@@ -328,7 +325,7 @@ describe('crowdinRename.undo', () => {
 
         const counts = await crowdinRename.undo({ client: retry.client, lines, journal })
 
-        expect(retry.writes).toEqual(['POST /approvals {"translationId":10}'])
+        expect(retry.writes).toEqual(['POST /approvals {"translationId":10}', 'DELETE /comments/100'])
         expect(counts).toEqual({ undone: 0, failed: 0 })
     })
 
@@ -357,6 +354,17 @@ describe('crowdinRename.undo', () => {
 
         expect(state.strings[0].text).toBe('Upload a file')
         expect(counts).toEqual({ undone: 2, failed: 0 })
+    })
+
+    it('leaves a review issue that an earlier, merged rename opened on the same string', async () => {
+        const earlier = { id: 50, stringId: 1, targetLanguageId: 'ja', type: 'issue', issueType: 'translation_mistake', text: 'The English text of this string changed (automatic note from the Activepieces translations job).\n\nOld English: Upload the file\nNew English: Upload a file' }
+        const { client, state } = fakeCrowdin({ issues: [earlier] })
+        const { lines, journal } = collect()
+        await crowdinRename.run({ client, pieces: [dropbox()], autoApprovers: ['robot'], dryRun: false, journal })
+
+        await crowdinRename.undo({ client, lines, journal })
+
+        expect(state.issues).toEqual([earlier])
     })
 
     it('has nothing to undo when nothing was renamed', async () => {

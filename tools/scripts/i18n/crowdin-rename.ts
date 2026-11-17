@@ -16,10 +16,13 @@ async function run({ client, pieces, autoApprovers, dryRun, journal }: RunParams
 
 async function undo({ client, lines, journal }: UndoParams): Promise<UndoCounts> {
     const attempted = lines.filter((line) => line.kind === 'pending' || (line.kind === 'rename' && line.status === 'renamed'))
-    const latestByRename = new Map(attempted.map((line) => [`${line.stringId}\u0000${line.before?.text}\u0000${line.after?.text}`, line]))
+    const latestByRename = new Map(attempted.map((line) => [renameKey({ line }), line]))
     let counts: UndoCounts = { undone: 0, failed: 0 }
     for (const line of [...latestByRename.values()].reverse()) {
-        const outcome = await undoOne({ client, line, journal })
+        const issueIds = lines
+            .filter((issue) => issue.kind === 'review-issue' && issue.status === 'opened' && renameKey({ line: issue }) === renameKey({ line }))
+            .flatMap(({ issueId }) => issueId === undefined ? [] : [issueId])
+        const outcome = await undoOne({ client, line, issueIds, journal })
         counts = { undone: counts.undone + outcome.undone, failed: counts.failed + outcome.failed }
     }
     return counts
@@ -134,16 +137,16 @@ async function applyRename({ client, piece, fileId, action, dryRun, journal }: A
         counts = addCounts({ left: counts, right: deleted.ok ? { ...EMPTY_COUNTS, writes: 1 } : { ...EMPTY_COUNTS, failed: 1 } })
     }
     for (const language of action.needsReview ? action.keptLanguages : []) {
-        const problem = await openReviewIssue({ client, action, language })
-        journal({ kind: 'review-issue', piece, fileId, stringId: action.stringId, language, before: checked.before, after, status: problem === null ? 'opened' : 'error', message: problem ?? undefined })
-        counts = addCounts({ left: counts, right: problem === null ? { ...EMPTY_COUNTS, writes: 1 } : { ...EMPTY_COUNTS, failed: 1 } })
+        const opened = await openReviewIssue({ client, action, language })
+        journal({ kind: 'review-issue', piece, fileId, stringId: action.stringId, language, before: checked.before, after, status: opened.ok ? 'opened' : 'error', issueId: opened.ok ? opened.issueId : undefined, message: opened.ok ? undefined : opened.message })
+        counts = addCounts({ left: counts, right: opened.ok ? { ...EMPTY_COUNTS, writes: 1 } : { ...EMPTY_COUNTS, failed: 1 } })
     }
     return counts
 }
 
-async function openReviewIssue({ client, action, language }: { client: CrowdinClient, action: RenameAction, language: string }): Promise<string | null> {
+async function openReviewIssue({ client, action, language }: { client: CrowdinClient, action: RenameAction, language: string }): Promise<OpenedIssue> {
     try {
-        await client.post({
+        const created = await client.post<{ data: { id: number } }>({
             path: '/comments',
             body: {
                 stringId: action.stringId,
@@ -153,10 +156,10 @@ async function openReviewIssue({ client, action, language }: { client: CrowdinCl
                 text: reviewIssueText({ oldText: action.oldText, newText: action.newText }),
             },
         })
-        return null
+        return { ok: true, issueId: created.data.id }
     }
     catch (error) {
-        return messageOf({ error })
+        return { ok: false, message: messageOf({ error }) }
     }
 }
 
@@ -171,22 +174,13 @@ function reviewIssueText({ oldText, newText }: { oldText: string, newText: strin
     ].join('\n')
 }
 
-async function deleteReviewIssues({ client, line }: { client: CrowdinClient, line: JournalLine }): Promise<string | null> {
-    if (line.needsReview !== true || line.stringId === undefined) {
-        return null
+async function deleteReviewIssues({ client, issueIds }: { client: CrowdinClient, issueIds: number[] }): Promise<string | null> {
+    const problems: string[] = []
+    for (const issueId of issueIds) {
+        const deleted = await deleteIfPresent({ client, path: `/comments/${issueId}` })
+        problems.push(...(deleted.ok ? [] : [deleted.message]))
     }
-    try {
-        const issues = await client.list<{ id: number, text: string }>({ path: `/comments?stringId=${line.stringId}&type=issue&issueStatus=unresolved` })
-        const problems: string[] = []
-        for (const { id } of issues.filter(({ text }) => text.startsWith(REVIEW_ISSUE_PREFIX))) {
-            const deleted = await deleteIfPresent({ client, path: `/comments/${id}` })
-            problems.push(...(deleted.ok ? [] : [deleted.message]))
-        }
-        return problems.length === 0 ? null : `review issues not removed: ${problems.join('; ')}`
-    }
-    catch (error) {
-        return `review issues not removed: ${messageOf({ error })}`
-    }
+    return problems.length === 0 ? null : `review issues not removed: ${problems.join('; ')}`
 }
 
 async function readBeforeRename({ client, action }: { client: CrowdinClient, action: RenameAction }): Promise<BeforeRename> {
@@ -261,7 +255,7 @@ async function deleteIfPresent({ client, path }: { client: CrowdinClient, path: 
     }
 }
 
-async function undoOne({ client, line, journal }: { client: CrowdinClient, line: JournalLine, journal: Journal }): Promise<UndoCounts> {
+async function undoOne({ client, line, issueIds, journal }: { client: CrowdinClient, line: JournalLine, issueIds: number[], journal: Journal }): Promise<UndoCounts> {
     const { stringId, before, after } = line
     if (stringId === undefined || before === undefined || after === undefined) {
         return { undone: 0, failed: 1 }
@@ -273,7 +267,7 @@ async function undoOne({ client, line, journal }: { client: CrowdinClient, line:
         return { undone: 0, failed: 1 }
     }
     if (current.text === before.text && current.identifier === before.identifier) {
-        const leftovers = await restoreAfterUndo({ client, line })
+        const leftovers = await restoreAfterUndo({ client, line, issueIds })
         journal({ ...undoLine, status: 'already-undone', message: leftovers ?? undefined })
         return { undone: 0, failed: leftovers === null ? 0 : 1 }
     }
@@ -294,14 +288,14 @@ async function undoOne({ client, line, journal }: { client: CrowdinClient, line:
         journal({ ...undoLine, status: 'error', message: messageOf({ error }) })
         return { undone: 0, failed: 1 }
     }
-    const leftovers = await restoreAfterUndo({ client, line })
+    const leftovers = await restoreAfterUndo({ client, line, issueIds })
     journal({ ...undoLine, status: 'undone', message: leftovers ?? undefined })
     return { undone: 1, failed: leftovers === null ? 0 : 1 }
 }
 
-async function restoreAfterUndo({ client, line }: { client: CrowdinClient, line: JournalLine }): Promise<string | null> {
+async function restoreAfterUndo({ client, line, issueIds }: { client: CrowdinClient, line: JournalLine, issueIds: number[] }): Promise<string | null> {
     const lostApprovals = await restoreApprovals({ client, translationIds: line.reapproveOnUndo ?? [] })
-    const issueProblem = await deleteReviewIssues({ client, line })
+    const issueProblem = await deleteReviewIssues({ client, issueIds })
     const problems = [
         ...(lostApprovals.length === 0 ? [] : [`approvals not restored for translations ${lostApprovals.join(', ')}`]),
         ...(issueProblem === null ? [] : [issueProblem]),
@@ -336,6 +330,10 @@ async function readPerLanguage({ client, languages, pathFor }: ReadPerLanguagePa
 
 function skipLine({ piece, change, reason }: { piece: string, change: ChangedString, reason: string }): JournalLine {
     return { kind: 'skip', piece, status: reason, before: { identifier: change.oldEnglish, text: change.oldEnglish }, after: { identifier: change.newEnglish, text: change.newEnglish } }
+}
+
+function renameKey({ line }: { line: JournalLine }): string {
+    return `${line.stringId}\u0000${line.before?.text}\u0000${line.after?.text}`
 }
 
 function addCounts({ left, right }: { left: RunCounts, right: RunCounts }): RunCounts {
@@ -470,6 +468,7 @@ export type JournalLine = {
     changeClass?: RenameAction['changeClass']
     keptLanguages?: string[]
     language?: string
+    issueId?: number
     reapproveOnUndo?: number[]
     needsReview?: boolean
     message?: string
@@ -489,6 +488,8 @@ type StringText = {
     identifier: string
     text: string
 }
+
+type OpenedIssue = { ok: true, issueId: number } | { ok: false, message: string }
 
 type BeforeRename = { ok: true, before: StringText } | { ok: false, status: 'error' | 'precondition-failed', before: StringText, message: string }
 
