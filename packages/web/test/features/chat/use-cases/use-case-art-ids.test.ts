@@ -1,7 +1,7 @@
 import { CHAT_SUGGESTION_CARD_IMAGE_IDS } from '@activepieces/shared';
 import { describe, expect, it } from 'vitest';
 
-import { useCaseArtIds } from './use-case-art-ids';
+import { useCaseArtIds } from '@/features/chat/use-cases/use-case-art-ids';
 
 describe('useCaseArtIds.withUniqueArt', () => {
   it('gives each card a different art when the model repeats one', () => {
