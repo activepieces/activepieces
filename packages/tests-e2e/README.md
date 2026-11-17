@@ -93,7 +93,9 @@ Project roles, a second project and the mail catcher exist only in EE. A test th
 For the role gate and project isolation, an EE spec imports `test` from `fixtures/access.ts`. `secondProject` is a new team project, and its `session` is the admin token scoped to that project. `viewer` is a new user with the Viewer role in `secondProject` only, not in the default project, invited and accepted through the mail catcher, with its own session. Seed what the viewer needs into its project with `seed.flow({ template, publish, session: secondProject.session })`. Everything is deleted after the test.
 
 - Role gate: first check that the viewer can read the record, so a 403 on the write means the role and not a missing membership. Then assert the server's answer to the write.
-- Isolation: seed the record into the default project, and assert that the viewer, who is not a member there, gets a 403 when it reads or lists it. Do not use the admin for this check: the admin is a member of every project.
+- Isolation: seed the record into the default project, then make two checks. Each one finds a different bug.
+  - The viewer, who is not a member of the default project, gets a 403 when it reads or lists the record. This proves the security config of the endpoint. The admin cannot make this check, because it is a member of every project.
+  - The admin lists the records of `secondProject`. A control record seeded there shows, and the record of the default project does not. This proves that the query filters by project, which the 403 never reaches.
 
 `scenarios/ee/access/access-fixtures.spec.ts` shows both checks.
 
