@@ -17,7 +17,7 @@ const tokenKey = 'token';
 const projectIdKey = 'projectId';
 export const authenticationSession = {
   setProjectId(projectId: string) {
-    ApStorage.getInstance().setItem(projectIdKey, projectId);
+    saveProjectId(projectId);
   },
   saveResponse(response: AuthenticationResponse, isEmbedding: boolean) {
     if (isEmbedding) {
@@ -51,9 +51,14 @@ export const authenticationSession = {
     if (isNil(token)) {
       return null;
     }
-    const projectId = ApStorage.getInstance().getItem(projectIdKey);
-    if (!isNil(projectId)) {
-      return projectId;
+    const tabProjectId = window.sessionStorage.getItem(tabProjectIdKey());
+    if (!isNil(tabProjectId)) {
+      return tabProjectId;
+    }
+    const lastUsedProjectId = ApStorage.getInstance().getItem(projectIdKey);
+    if (!isNil(lastUsedProjectId)) {
+      window.sessionStorage.setItem(tabProjectIdKey(), lastUsedProjectId);
+      return lastUsedProjectId;
     }
     const decodedJwt = getDecodedJwt(token);
     if ('projectId' in decodedJwt && typeof decodedJwt.projectId === 'string') {
@@ -111,7 +116,7 @@ export const authenticationSession = {
     if (authenticationSession.getProjectId() === projectId) {
       return;
     }
-    ApStorage.getInstance().setItem(projectIdKey, projectId);
+    saveProjectId(projectId);
     window.dispatchEvent(new Event('storage'));
   },
   isLoggedIn(): boolean {
@@ -122,7 +127,7 @@ export const authenticationSession = {
     return !this.isJwtExpired(token);
   },
   clearSession() {
-    ApStorage.getInstance().removeItem(projectIdKey);
+    removeProjectId();
     ApStorage.getInstance().removeItem(tokenKey);
   },
   logOut() {
@@ -141,8 +146,22 @@ function getDecodedJwt(token: string): Principal {
 
 function saveProjectIdOrClear(projectId: string | null | undefined): void {
   if (isNil(projectId)) {
-    ApStorage.getInstance().removeItem(projectIdKey);
+    removeProjectId();
     return;
   }
+  saveProjectId(projectId);
+}
+
+function saveProjectId(projectId: string): void {
+  window.sessionStorage.setItem(tabProjectIdKey(), projectId);
   ApStorage.getInstance().setItem(projectIdKey, projectId);
+}
+
+function removeProjectId(): void {
+  window.sessionStorage.removeItem(tabProjectIdKey());
+  ApStorage.getInstance().removeItem(projectIdKey);
+}
+
+function tabProjectIdKey(): string {
+  return `${projectIdKey}:${authenticationSession.getPlatformId()}:${authenticationSession.getCurrentUserId()}`;
 }

@@ -12,6 +12,7 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
 import { defaultSettingsMiddleware, ImageModel, LanguageModel, LanguageModelMiddleware, simulateStreamingMiddleware, wrapLanguageModel } from 'ai'
+import { litellm } from './litellm'
 
 const VERTEX_MAAS_SUFFIX = '-maas'
 const VERTEX_ANTHROPIC_PREFIX = 'claude'
@@ -72,6 +73,8 @@ export function createLanguageModel({ credentials, modelId, options = {} }: Crea
                 ...observed,
             }).chatModel(modelId)
         }
+        case AIProviderName.LITELLM:
+            return litellm.createLanguageModel({ credentials, modelId, onOutcome: options.onOutcome, extraHeaders: options.extraHeaders })
         case AIProviderName.MISTRAL: {
             const { apiKey } = credentials.auth
             if (options.mistralViaOpenRouter) {
@@ -149,6 +152,8 @@ export function createImageModel({ credentials, modelId, options = {} }: CreateI
                 ...observed,
             }).imageModel(modelId)
         }
+        case AIProviderName.LITELLM:
+            return litellm.createImageModel({ credentials, modelId, onOutcome: options.onOutcome, extraHeaders: options.extraHeaders })
         default:
             return undefined
     }

@@ -69,7 +69,7 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
         const { displayName, pieceName, status, cursor, limit, scope } = request.query
 
         const appConnections = await appConnectionService(request.log).list({
-            pieceName,
+            pieceNames: pieceName,
             displayName,
             status,
             scope,
