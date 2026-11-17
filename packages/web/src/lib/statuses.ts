@@ -29,6 +29,10 @@ export enum StepNodeBadgeStatus {
   SKIPPED = 'SKIPPED',
 }
 
+export enum MemberStatus {
+  INVITED = 'INVITED',
+}
+
 export enum SaveBarStatus {
   LOCKED = 'LOCKED',
   UNSAVED = 'UNSAVED',
