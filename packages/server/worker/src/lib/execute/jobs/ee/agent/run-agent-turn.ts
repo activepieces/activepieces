@@ -518,7 +518,7 @@ export function classifyAgentRunError({ error, provider }: { error: unknown, pro
         const rejectedWithReason = USER_FACING_ERROR_CODES.has(apError?.code ?? '')
         return missingUserConfig || rejectedWithReason ? 'user' : 'internal'
     }
-    const rejectedByCustomGateway = apiError.statusCode === 400 && provider === AIProviderName.CUSTOM
+    const rejectedByCustomGateway = apiError.statusCode === 400 && (provider === AIProviderName.CUSTOM || provider === AIProviderName.LITELLM)
     if (rejectedByCustomGateway) {
         return 'user'
     }

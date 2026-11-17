@@ -6,7 +6,7 @@ import cron from 'node-cron'
 import { EntityManager, FindOptionsWhere, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
-import { getAiProviderConfirmKey, getManagedAiProviderKeyLockKey } from '../database/redis/keys'
+import { getAiProviderConfirmKey, getAiProviderUpdateLockKey, getManagedAiProviderKeyLockKey } from '../database/redis/keys'
 import { distributedLock, distributedStore } from '../database/redis-connections'
 import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
 import { flagService } from '../flags/flag.service'
@@ -21,6 +21,7 @@ import { AiToolConfigEntity } from './ai-tool-config-entity'
 import { aiUsageHooks } from './ai-usage-hooks'
 import { platformModelTierService } from './platform-model-tier-service'
 import { aiProviders } from './providers'
+import { ModelSyncMode } from './providers/ai-provider'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
 
@@ -29,6 +30,7 @@ const modelsCache = new Map<string, AIProviderModel[]>()
 const MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD = 500
 const MANAGED_OPENROUTER_KEY_LIMIT_RESET = 'monthly'
 const MANAGED_OPENROUTER_KEY_LOCK_TIMEOUT_SECONDS = 60
+const KEY_UPDATE_LOCK_TIMEOUT_SECONDS = 60
 const MANAGED_OPENROUTER_KEY_LIVE_WAIT_MS = 30_000
 const MANAGED_OPENROUTER_KEY_LIVE_POLL_MS = 1_000
 const MANAGED_OPENROUTER_KEY_LIVE_PASSES_IN_A_ROW = 3
@@ -134,6 +136,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
         await assertDisplayNameIsFree({ platformId, provider: request.provider, displayName: request.displayName })
         await this.validateProviderCredentials(request.provider, request.auth, request.config)
+        const config = await this.syncProviderModels({ provider: request.provider, auth: request.auth, config: request.config, mode: 'save' }) ?? request.config
         const auth = await encryptUtils.encryptObject(request.auth)
         const { saved, isFirstKey } = await transaction(async (manager) => {
             await platformModelTierService.lockPlatform({ manager, platformId })
@@ -146,7 +149,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 id: apId(),
                 enabledForChat: firstKey,
                 auth,
-                config: request.config,
+                config,
                 provider: request.provider,
                 displayName: request.displayName,
                 platformId,
@@ -163,6 +166,28 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return toConfigResponse({ row: saved, enabledForChat: isFirstKey })
     },
     async update(platformId: PlatformId, providerId: string, request: UpdateAIProviderRequest): Promise<void> {
+        await withKeyUpdateLock({ providerId, log, fn: () => this.updateKey({ platformId, providerId, request, syncMode: 'save' }) })
+    },
+
+    async refreshModels({ platformId, providerId }: { platformId: PlatformId, providerId: string }): Promise<AIProviderModel[]> {
+        await withKeyUpdateLock({
+            providerId,
+            log,
+            fn: async () => {
+                const aiProvider = await getRowByIdOrThrow({ platformId, configId: providerId })
+                if (isNil(aiProviders[aiProvider.provider].syncModels)) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.VALIDATION,
+                        params: { message: `${aiProviders[aiProvider.provider].name} keys have no model list to refresh` },
+                    })
+                }
+                await this.updateKey({ platformId, providerId, request: { displayName: aiProvider.displayName, config: aiProvider.config }, syncMode: 'refresh' })
+            },
+        })
+        return this.listModelsForConfig({ platformId, configId: providerId })
+    },
+
+    async updateKey({ platformId, providerId, request, syncMode }: { platformId: PlatformId, providerId: string, request: UpdateAIProviderRequest, syncMode: ModelSyncMode }): Promise<void> {
         const aiProvider = await aiProviderRepo().findOneBy({
             platformId,
             id: providerId,
@@ -189,18 +214,18 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
         const config = request.config ?? aiProvider.config
         const revalidated = !isNil(request.auth) || !isNil(request.config)
-        if (!isNil(request.auth)) {
-            await this.validateProviderCredentials(aiProvider.provider, request.auth, config)
-        }
-        else if (!isNil(request.config)) {
-            const auth = await decryptRowAuth({ aiProvider, platformId, log })
+        const auth = revalidated ? request.auth ?? await decryptRowAuth({ aiProvider, platformId, log }) : undefined
+        if (!isNil(auth)) {
             await this.validateProviderCredentials(aiProvider.provider, auth, config)
         }
+        const nextConfig = isNil(auth)
+            ? request.config
+            : await this.syncProviderModels({ provider: aiProvider.provider, auth, config, mode: syncMode }) ?? request.config
 
         const encryptedAuth = !isNil(request.auth) ? await encryptUtils.encryptObject(request.auth) : undefined
         const updates = {
             ...spreadIfDefined('auth', encryptedAuth),
-            ...spreadIfDefined('config', request.config),
+            ...spreadIfDefined('config', nextConfig),
             ...spreadIfDefined('enabledForChat', request.enabledForChat),
             ...spreadIfDefined('modelScope', request.modelScope),
             ...spreadIfDefined('modelIds', request.modelIds),
@@ -210,10 +235,10 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             displayName: request.displayName,
         }
 
-        const changesModelScope = !isNil(request.modelScope) || !isNil(request.modelIds) || !isNil(aiKeyScope.manualModelIdsOf({ config: request.config }))
+        const changesModelScope = !isNil(request.modelScope) || !isNil(request.modelIds) || !isNil(aiKeyScope.manualModelIdsOf({ config: nextConfig }))
         await transaction(async (manager) => {
             await platformModelTierService.lockPlatform({ manager, platformId })
-            await assertCapabilitiesKeepKey({ manager, platformId, providerId, request })
+            await assertCapabilitiesKeepKey({ manager, platformId, providerId, request: { ...request, config: nextConfig } })
             if (changesModelScope) {
                 await platformModelTierService.assertKeyScopeKeepsTiers({
                     manager,
@@ -221,7 +246,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                     configId: providerId,
                     modelScope: request.modelScope,
                     modelIds: request.modelIds,
-                    config: request.config,
+                    config: nextConfig,
                 })
             }
             if (request.enabledForChat === true) {
@@ -372,28 +397,19 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
 
     async validateProviderCredentials(provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig): Promise<void> {
-        const providerStrategy = aiProviders[provider]
-        try {
-            await providerStrategy.validateConnection(auth, config, log)
-        }
-        catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-            const configProblem = ownConfigProblem(error)
-            const includeHttpErrorInMessage = provider === AIProviderName.CLOUDFLARE_GATEWAY
+        const { error } = await tryCatch(() => aiProviders[provider].validateConnection(auth, config, log))
+        if (!isNil(error)) {
             log.error({ error }, '[aiProviderService#validateProviderCredentials] Failed to validate provider credentials')
-            throw new ActivepiecesError({
-                code: ErrorCode.INVALID_AI_PROVIDER_CREDENTIALS,
-                params: {
-                    provider,
-                    message: !isNil(configProblem)
-                        ? configProblem
-                        : includeHttpErrorInMessage
-                            ? `Failed to validate credentials for ${providerStrategy.name}, ${errorMessage}`
-                            : `Failed to validate credentials for ${providerStrategy.name}`,
-                    httpErrorResponse: errorMessage,
-                },
-            })
+            throw credentialsError({ provider, error })
         }
+    },
+    async syncProviderModels({ provider, auth, config, mode }: { provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig, mode: ModelSyncMode }): Promise<AIProviderConfig | undefined> {
+        const { data, error } = await tryCatch(async () => aiProviders[provider].syncModels?.({ authConfig: auth, config, mode }))
+        if (!isNil(error)) {
+            log.warn({ error, provider }, '[aiProviderService#syncProviderModels] Could not sync the provider models')
+            throw credentialsError({ provider, error })
+        }
+        return data ?? undefined
     },
     async assertModelAllowed({ platformId, provider, scope, configId, modelId }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope, configId?: string, modelId: string }): Promise<void> {
         const aiProvider = await resolveRowForScope({ platformId, provider, scope, configId })
@@ -667,7 +683,7 @@ async function fetchModels({ aiProvider, platformId, log }: { aiProvider: AIProv
             id: model.id,
             name: model.name,
             type: model.type,
-            ...spreadIfDefined('metadata', catalog.lookup({ provider, modelId: model.id })),
+            ...spreadIfDefined('metadata', catalog.lookup({ provider, modelId: model.id }) ?? model.metadata),
         })))
     }
     return modelsCache.get(cacheKey)!
@@ -717,6 +733,10 @@ async function isActivepiecesAiProviderHidden({ platformId, log }: { platformId:
         return true
     }
     return shouldHideActivepiecesAiProvider({ platformId, log })
+}
+
+function withKeyUpdateLock<T>({ providerId, log, fn }: { providerId: string, log: FastifyBaseLogger, fn: () => Promise<T> }): Promise<T> {
+    return distributedLock(log).runExclusive({ key: getAiProviderUpdateLockKey(providerId), timeoutInSeconds: KEY_UPDATE_LOCK_TIMEOUT_SECONDS, fn })
 }
 
 async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { providerId: string, platformId: PlatformId, log: FastifyBaseLogger }): Promise<AIProviderAuthConfig> {
@@ -815,6 +835,25 @@ async function revokeManagedKey({ hash, platformId, log }: { hash: string, platf
     }
 }
 
+
+function credentialsError({ provider, error }: { provider: AIProviderName, error: unknown }): ActivepiecesError {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const configProblem = ownConfigProblem(error)
+    const providerName = aiProviders[provider].name
+    const includeHttpErrorInMessage = provider === AIProviderName.CLOUDFLARE_GATEWAY
+    return new ActivepiecesError({
+        code: ErrorCode.INVALID_AI_PROVIDER_CREDENTIALS,
+        params: {
+            provider,
+            message: !isNil(configProblem)
+                ? configProblem
+                : includeHttpErrorInMessage
+                    ? `Failed to validate credentials for ${providerName}, ${errorMessage}`
+                    : `Failed to validate credentials for ${providerName}`,
+            httpErrorResponse: errorMessage,
+        },
+    })
+}
 
 function ownConfigProblem(error: unknown): string | undefined {
     if (!(error instanceof ActivepiecesError) || error.error.code !== ErrorCode.VALIDATION) {
