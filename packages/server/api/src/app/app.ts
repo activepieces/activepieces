@@ -244,7 +244,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(flagModule)
     await app.register(storeEntryModule)
     await app.register(folderModule)
-    await pieceSyncService(app.log).setup()
     toolSearchReindexJob(app.log).register()
     // Boot backfill: build the tool-search index if the flag is on but it is empty or only partially
     // embedded (a populated deployment fires no sync delta, and a build that failed midway leaves rows
@@ -467,6 +466,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(otpModule)
             break
     }
+
+    await pieceSyncService(app.log).setup()
 
     const isCanaryApp = system.getBoolean(AppSystemProp.IS_CANARY_APP) ?? false
     if (isCanaryApp) {
