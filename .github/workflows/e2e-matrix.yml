@@ -91,30 +91,35 @@ jobs:
       matrix:
         include:
           # EE refuses to boot without a sandbox, so the unsandboxed runs are CE.
+          # A @surface test runs in one cell per edition: the code-sandbox cell for EE, the shared cell for CE.
           - name: ee, shared, db, code sandbox
             edition: ee
             containerType: WORKER_AND_APP
             workerReplicas: 0
             fileStorage: DB
             executionMode: SANDBOX_CODE_ONLY
+            grepInvert: Piece isolation|@quarantine
           - name: ee, split, s3 signed urls, process sandbox
             edition: ee
             containerType: APP
             workerReplicas: 1
             fileStorage: S3
             executionMode: SANDBOX_PROCESS
+            grepInvert: Piece isolation|@quarantine|@surface
           - name: ce, shared, s3 signed urls, unsandboxed
             edition: ce
             containerType: WORKER_AND_APP
             workerReplicas: 0
             fileStorage: S3
             executionMode: UNSANDBOXED
+            grepInvert: Piece isolation|@quarantine
           - name: ce, split, db, unsandboxed
             edition: ce
             containerType: APP
             workerReplicas: 1
             fileStorage: DB
             executionMode: UNSANDBOXED
+            grepInvert: Piece isolation|@quarantine|@surface
     env:
       # The EE configs add the mail catcher. The CE configs keep no SMTP, so the invite dialog still shows the link.
       COMPOSE_FILE: benchmark/docker-compose.yml${{ matrix.fileStorage == 'S3' && ':benchmark/docker-compose.minio.yml' || '' }}${{ matrix.edition == 'ee' && ':benchmark/docker-compose.mail.yml' || '' }}
@@ -218,7 +223,7 @@ jobs:
             -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE/packages/tests-e2e" \
             -e CI -e AP_EDITION -e E2E_INSTANCE_URL -e E2E_PIECES_MANIFEST -e E2E_MAIL_URL -e E2E_LICENSE_KEY -e PLAYWRIGHT_JSON_OUTPUT_FILE \
             "$PLAYWRIGHT_IMAGE" \
-            npx playwright test --config=playwright.config.ts --reporter=github,json --grep-invert "Piece isolation|@quarantine"
+            npx playwright test --config=playwright.config.ts --reporter=github,json --grep-invert "${{ matrix.grepInvert }}"
 
       - name: Summarize results
         if: always()
