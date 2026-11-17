@@ -6,7 +6,7 @@ import { AutomationsPage } from '../../pages/automations.page';
 import { BuilderPage } from '../../pages/builder.page';
 import { VersionsPage } from '../../pages/versions.page';
 
-test.describe('Publish and versions', { tag: '@feature:publish' }, () => {
+test.describe('Publish and versions', { tag: ['@feature:publish', '@no-staging'] }, () => {
   test.describe.configure({ timeout: 120000 });
 
   test('republish runs the new version on the same webhook', async ({ page, request, session, seed }) => {
