@@ -1,15 +1,9 @@
-import { expect, Locator, Page } from '@playwright/test';
+import { expect, Locator } from '@playwright/test';
+import { e2eApi } from '../fixtures/api';
 import { BasePage } from './base';
 
 export class BuilderPage extends BasePage {
   url = `/flows`;
-
-  private readonly describeRun: (runId: string) => Promise<string>;
-
-  constructor({ page, describeRun }: { page: Page; describeRun: (runId: string) => Promise<string> }) {
-    super(page);
-    this.describeRun = describeRun;
-  }
 
   async nameNewFlow(name: string) {
     const breadcrumb = this.page.getByRole('navigation', { name: 'breadcrumb' });
@@ -70,6 +64,10 @@ export class BuilderPage extends BasePage {
     await this.replaceText({ field: this.sidebar().getByRole('textbox', { name, exact: true }), text: value });
   }
 
+  async expectStepPanelText(text: string) {
+    await expect(this.sidebar().getByText(text)).toBeVisible({ timeout: 60000 });
+  }
+
   async setJsonBody(json: string) {
     await this.replaceEditorText({ testId: 'json-editor', text: json });
   }
@@ -103,7 +101,7 @@ export class BuilderPage extends BasePage {
     const succeeded = this.sidebar().getByText('Tested Successfully');
     await succeeded.or(this.sidebar().getByText('Test Failed')).first().waitFor({ timeout: 60000 }).catch(() => undefined);
     if (!(await succeeded.isVisible())) {
-      throw new Error(`The step test did not succeed: ${await this.describeRun(run.id)}`);
+      throw new Error(`The step test did not succeed: ${await e2eApi.describeRun({ request: this.page.request, session: e2eApi.readSession(), runId: run.id })}`);
     }
   }
 

@@ -28,7 +28,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { flowRunUtils } from '@/features/flow-runs';
+import { FlowRunStatusIcon } from '@/features/flow-runs';
 import {
   flowRunMutations,
   flowRunQueries,
@@ -47,7 +47,6 @@ type FlowRunCardProps = {
 export const FLOW_CARD_HEIGHT = 70;
 const FlowRunCard = React.memo(
   ({ run, viewedRunId, refetchRuns }: FlowRunCardProps) => {
-    const { Icon, variant } = flowRunUtils.getStatusIcon(run.status);
     const userHasPermissionToRetryRun = useAuthorization().checkAccess(
       Permission.WRITE_RUN,
     );
@@ -93,26 +92,12 @@ const FlowRunCard = React.memo(
             {run.status === FlowRunStatus.CANCELED ? (
               <Tooltip>
                 <TooltipTrigger>
-                  <Icon
-                    className={cn('w-5 h-5', {
-                      'text-success-11': variant === 'success',
-                      'text-danger-11': variant === 'error',
-                      'text-warning-11': variant === 'warning',
-                      'text-accent-11': variant === 'primary',
-                    })}
-                  />
+                  <FlowRunStatusIcon status={run.status} className="w-5 h-5" />
                 </TooltipTrigger>
                 <TooltipContent>{t('Canceled')}</TooltipContent>
               </Tooltip>
             ) : (
-              <Icon
-                className={cn('w-5 h-5', {
-                  'text-success-11': variant === 'success',
-                  'text-danger-11': variant === 'error',
-                  'text-warning-11': variant === 'warning',
-                  'text-accent-11': variant === 'primary',
-                })}
-              />
+              <FlowRunStatusIcon status={run.status} className="w-5 h-5" />
             )}
           </span>
         </div>

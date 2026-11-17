@@ -14,6 +14,7 @@ import {
   FAILED_BATCH_STATUSES,
   batchUtils,
 } from '@/app/builder/run-details/batch-utils';
+import { BatchChildStatus } from '@/lib/statuses';
 
 vi.mock('i18next', async (importOriginal) => ({
   ...(await importOriginal<typeof import('i18next')>()),
@@ -442,40 +443,31 @@ describe('batchUtils.parseJumpTarget', () => {
 });
 
 describe('batchUtils.batchStatusBadge', () => {
-  it('gives each childless state its own colour', () => {
-    expect(batchUtils.batchStatusBadge('failedToDispatch').variant).toBe(
-      'destructive',
+  it('gives each childless state its own status', () => {
+    expect(batchUtils.batchStatusBadge('failedToDispatch').status).toBe(
+      BatchChildStatus.FAILED_TO_START,
     );
-    expect(batchUtils.batchStatusBadge('stillRunning').variant).toBe('info');
-    for (const state of [
-      'pending',
-      'neverStarted',
-      'didNotRun',
-      'logsUnavailable',
-    ] as const) {
-      expect(batchUtils.batchStatusBadge(state).variant).toBe('secondary');
-    }
+    expect(batchUtils.batchStatusBadge('stillRunning').status).toBe(
+      BatchChildStatus.STILL_RUNNING,
+    );
+    expect(batchUtils.batchStatusBadge('pending').status).toBe(
+      BatchChildStatus.PENDING,
+    );
+    expect(batchUtils.batchStatusBadge('neverStarted').status).toBe(
+      BatchChildStatus.NEVER_STARTED,
+    );
+    expect(batchUtils.batchStatusBadge('didNotRun').status).toBe(
+      BatchChildStatus.DID_NOT_RUN,
+    );
+    expect(batchUtils.batchStatusBadge('logsUnavailable').status).toBe(
+      BatchChildStatus.LOGS_UNAVAILABLE,
+    );
   });
 
-  it('keeps the run status colours for batches that have a run', () => {
-    expect(batchUtils.batchStatusBadge(FlowRunStatus.SUCCEEDED).variant).toBe(
-      'success',
-    );
-    expect(batchUtils.batchStatusBadge(FlowRunStatus.FAILED).variant).toBe(
-      'destructive',
-    );
-    expect(batchUtils.batchStatusBadge(FlowRunStatus.RUNNING).variant).toBe(
-      'info',
-    );
-    expect(batchUtils.batchStatusBadge(FlowRunStatus.CANCELED).variant).toBe(
-      'secondary',
-    );
-    expect(batchUtils.batchStatusBadge(FlowRunStatus.QUEUED).variant).toBe(
-      'secondary',
-    );
-    expect(batchUtils.batchStatusBadge(FlowRunStatus.PAUSED).variant).toBe(
-      'warning',
-    );
+  it('keeps the run status for batches that have a run', () => {
+    for (const status of Object.values(FlowRunStatus)) {
+      expect(batchUtils.batchStatusBadge(status).status).toBe(status);
+    }
   });
 });
 

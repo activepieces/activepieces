@@ -4,7 +4,7 @@ icon: 🌐
 
 # Global Connections
 
-App connections scoped to a platform (`AppConnectionScope.PLATFORM`) rather than a single project, shared across projects so each doesn't re-authenticate the same service account. A platform admin creates them; accessible to any project in the connection's `projectIds[]` (or all new projects if `preSelectForNewProjects`). Gated by `platform.plan.globalConnectionsEnabled` (EE/Cloud only).
+App connections scoped to a platform (`AppConnectionScope.PLATFORM`) rather than a single project, shared across projects so each doesn't re-authenticate the same service account. A platform admin creates them; accessible to any project in the connection's `projectIds[]`. Gated by `platform.plan.globalConnectionsEnabled` (EE/Cloud only).
 
 ### Entities & services
 - Stored in the same `app_connection` table as project connections; the `scope` column distinguishes them.
@@ -17,7 +17,9 @@ App connections scoped to a platform (`AppConnectionScope.PLATFORM`) rather than
 
 ### Gotchas
 - Module gated via `platformMustHaveFeatureEnabled((p) => p.plan.globalConnectionsEnabled)`.
-- When shown to project users in the builder picker, the shared `list` call runs with the project's ID and scope filtering handles visibility.
+- When shown to project users in the builder picker, the shared `list` call runs with the project's ID; `projectIds` membership, not the `scope` filter, decides visibility. A project member cannot delete one (`AUTHORIZATION`) or rename it (update runs with `scope: PROJECT`, so not found).
+- `preSelectForNewProjects` is a web hint only: the Create Project dialog pre-ticks those connections. The server links a new project only to the connections named in `globalConnectionExternalIds` (`platformProjectService.create`), so an API-created project gets none by default.
+- `POST /` matches an existing row by `externalId` only when its `projectIds` contains every requested project. A new project in the list makes a second row with the same `externalId` (no unique index); change projects with `POST /:id`.
 
 ### Key files
 Entry point: `globalConnectionModule`, registered twice in `packages/server/api/src/app/app.ts` (cloud and enterprise editions).
@@ -27,6 +29,9 @@ Entry point: `globalConnectionModule`, registered twice in `packages/server/api/
 - `packages/core/shared/src/lib/automation/app-connection/dto/` — `UpsertGlobalConnectionRequestBody`, `UpdateGlobalConnectionValueRequestBody`, `ListGlobalConnectionsRequestQuery`
 - `packages/core/shared/src/lib/automation/app-connection/app-connection.ts` — `AppConnectionScope`, `AppConnectionWithoutSensitiveData`
 - `packages/web/src/features/connections/` — api client, hooks and the edit dialog for global connections
+- `packages/web/src/app/connections/` — create/reconnect dialog, shared with project connections (`isGlobalConnection`)
+- `packages/web/src/app/routes/platform/setup/connections/` — the Global Connections page (`/platform/connections/global`)
+- `packages/server/api/src/app/ee/projects/` — `platformProjectService` links global connections on project create and update
 - `packages/server/api/test/integration/cloud/global-connection/` — endpoint integration tests
 
-Paths verified 2026-07-17. An earlier version pointed at `packages/server/api/src/app/ee/app-connection/app-connection-service/app-connection-service.ts`; the service moved out of `ee/` to `packages/server/api/src/app/app-connection/app-connection-service/`.
+Paths verified 2026-11-16. An earlier version pointed at `packages/server/api/src/app/ee/app-connection/app-connection-service/app-connection-service.ts`; the service moved out of `ee/` to `packages/server/api/src/app/app-connection/app-connection-service/`.
