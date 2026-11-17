@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
@@ -293,31 +293,36 @@ export const textToSpeechAction = createAction({
   classification: 'READ',
   auth: edenAiAuth,
   displayName: 'Generate Audio From Text',
-  description: 'Convert text to spoken audio using Eden AI. Supports multiple providers, languages, and voice customization.',
+  description: 'Turn text into spoken audio.',
   audience: 'both',
   aiMetadata: {
     description:
       'Synthesize spoken audio from text via Eden AI text-to-speech, routed to a chosen provider, with optional language/locale, voice gender, and rate/pitch/volume tuning. Use it to turn text into an audio clip. Requires a provider and the text; language defaults to en-US and voice to female. Generative but stateless — repeating the call creates no extra side effect.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'content', display: 'section', label: 'Content', icon: 'text', props: ['text'] },
+    { key: 'voice', display: 'section', label: 'Voice', icon: 'user', props: ['language', 'option', 'audio_format', 'tuning_note', 'rate', 'pitch', 'volume'] },
+    { key: 'ai_model', display: 'section', label: 'AI Provider', icon: 'code', props: ['provider'] },
+  ],
   props: {
     provider: Property.Dropdown({
       auth: edenAiAuth,
       displayName: 'Provider',
-      description: 'The AI provider to use for text-to-speech synthesis.',
+      description: 'The AI service that runs this step.',
       required: true,
       refreshers: [],
       options: createStaticDropdown(TEXT_TO_SPEECH_PROVIDERS),
     }),
     text: Property.LongText({
       displayName: 'Text',
-      description: 'The text to convert to speech.',
+      description: 'The text to read aloud.',
       required: true,
     }),
     language: Property.Dropdown({
         auth: edenAiAuth,
       displayName: 'Language',
-      description: 'The language and locale for the speech synthesis (defaults to en-US if not specified).',
+      description: 'Language and accent of the voice. en-US if left empty.',
       required: false,
       refreshers: [],
       options: createStaticDropdown(TEXT_TO_SPEECH_LANGUAGES),
@@ -325,54 +330,60 @@ export const textToSpeechAction = createAction({
     option: Property.Dropdown({
       auth: edenAiAuth,
       displayName: 'Voice Gender',
-      description: 'Choose the voice gender for speech synthesis (defaults to Female if not specified).',
+      description: 'Female if left empty.',
       required: false,
       refreshers: [],
       options: createStaticDropdown(VOICE_OPTIONS),
     }),
+    tuning_note: Property.MarkDown({
+      value: 'Speaking rate, pitch and volume take whole numbers from -100 to 100. 0 keeps the normal setting.',
+      variant: MarkdownVariant.INFO,
+    }),
     rate: Property.Number({
       displayName: 'Speaking Rate',
-      description: 'Adjust speaking rate (-100 to 100, where 0 is normal speed).',
+      width: 'half',
       required: false,
       defaultValue: 0,
     }),
     pitch: Property.Number({
       displayName: 'Voice Pitch',
-      description: 'Adjust voice pitch (-100 to 100, where 0 is normal pitch).',
+      width: 'half',
       required: false,
       defaultValue: 0,
     }),
     volume: Property.Number({
       displayName: 'Audio Volume',
-      description: 'Adjust audio volume (-100 to 100, where 0 is normal volume).',
       required: false,
       defaultValue: 0,
     }),
     audio_format: Property.Dropdown({
       auth: edenAiAuth,
       displayName: 'Audio Format',
-      description: 'The audio format for the generated speech (default: MP3).',
+      description: "The provider's default if left empty.",
       required: false,
       refreshers: [],
       options: createStaticDropdown(AUDIO_FORMATS),
     }),
     sampling_rate: Property.Number({
       displayName: 'Sampling Rate',
-      description: 'Audio sampling rate in Hz (0-200000, 0 for provider default).',
+      description: 'In Hz. 0 uses the provider default.',
+      advanced: true,
       required: false,
       defaultValue: 0,
     }),
     fallback_providers: Property.MultiSelectDropdown({
       auth: edenAiAuth,
       displayName: 'Fallback Providers',
-      description: 'Alternative providers to try if the main provider fails (up to 5).',
+      description: 'Tried in order if the main provider fails. Up to 5.',
+      advanced: true,
       required: false,
       refreshers: [],
       options: createStaticDropdown(TEXT_TO_SPEECH_PROVIDERS),
     }),
     show_original_response: Property.Checkbox({
       displayName: 'Include Original Response',
-      description: 'Include the raw provider response in the output for debugging.',
+      description: "Adds the provider's unprocessed response to the output.",
+      advanced: true,
       required: false,
       defaultValue: false,
     }),
