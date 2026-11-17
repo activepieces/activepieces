@@ -108,6 +108,36 @@ describe('LiteLLM AI provider', () => {
         expect((await listModels({ id: created?.json().id })).map((model) => model.id).sort()).toEqual(['ap-fast', 'typed-by-hand'])
     })
 
+    it('keeps an edit made while a refresh is still waiting on the proxy', async () => {
+        const rows = [{ model_name: 'ap-fast', model_info: { mode: 'chat' } }]
+        mockProxy({ rows })
+        const created = await createKey({ models: [] })
+        const id = created?.json().id
+
+        let releaseRefresh: () => void = () => undefined
+        const request = vi.spyOn(safeHttp.axios, 'request')
+            .mockImplementationOnce(() => new Promise((resolve) => {
+                releaseRefresh = (): void => resolve({ data: { data: rows } })
+            }))
+            .mockResolvedValue({ data: { data: rows } })
+
+        const refreshing = ctx.post(`/v1/ai-providers/${id}/refresh-models`, {})
+        await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(1))
+        const editing = ctx.post(`/v1/ai-providers/${id}`, {
+            displayName: 'LiteLLM',
+            config: { baseUrl: BASE_URL, apiKeyHeader: 'x-litellm-api-key', models: [] },
+        })
+        await new Promise((resolve) => setTimeout(resolve, 300))
+        releaseRefresh()
+        const [refreshed, edited] = await Promise.all([refreshing, editing])
+
+        expect(refreshed?.statusCode).toBe(StatusCodes.OK)
+        expect(edited?.statusCode).toBe(StatusCodes.OK)
+        const configs = await ctx.get('/v1/ai-providers/configs')
+        const saved = configs?.json<{ id: string, config: { apiKeyHeader?: string } }[]>().find((config) => config.id === id)
+        expect(saved?.config.apiKeyHeader).toBe('x-litellm-api-key')
+    })
+
     it('keeps discovered metadata when only the API key header changes', async () => {
         mockProxy({ rows: [{ model_name: 'ap-fast', model_info: { mode: 'chat', max_input_tokens: 272000 } }] })
         const created = await createKey({ models: [] })
