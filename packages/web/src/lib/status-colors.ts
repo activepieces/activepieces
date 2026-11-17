@@ -3,7 +3,6 @@ import {
   AppConnectionStatus,
   FlowApprovalRequestState,
   FlowRunStatus,
-  InvitationStatus,
   McpActivityStatus,
   PieceSelectionMode,
   StepOutputStatus,
@@ -15,6 +14,7 @@ import {
   DomainVerificationStatus,
   HandlerFlowStatus,
   HealthCheckStatus,
+  MemberStatus,
   SaveBarStatus,
   SecretManagerStatus,
   SignInMethodStatus,
@@ -35,7 +35,6 @@ function colorsOf(status: Status): StatusColors {
     case StepNodeBadgeStatus.TESTED:
     case McpActivityStatus.enum.SUCCEEDED:
     case UserStatus.ACTIVE:
-    case InvitationStatus.ACCEPTED:
     case PieceSelectionMode.INCLUDE_ALL:
     case WorkerHealth.ONLINE:
     case HandlerFlowStatus.PUBLISHED:
@@ -71,7 +70,7 @@ function colorsOf(status: Status): StatusColors {
     case SignInMethodStatus.NOT_SET_UP:
     case DomainVerificationStatus.VERIFYING:
     case SaveBarStatus.UNSAVED:
-    case InvitationStatus.PENDING:
+    case MemberStatus.INVITED:
       return WARNING;
     case SaveBarStatus.LOCKED:
     case StepNodeBadgeStatus.TESTING:
@@ -174,7 +173,7 @@ export type Status =
   | CreditsSeverity
   | McpActivityStatus
   | UserStatus
-  | InvitationStatus
+  | MemberStatus
   | PieceSelectionMode
   | WorkerHealth
   | HandlerFlowStatus

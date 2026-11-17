@@ -1,8 +1,4 @@
-import {
-  InvitationStatus,
-  PlatformRole,
-  UserStatus,
-} from '@activepieces/shared';
+import { PlatformRole, UserStatus } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -26,6 +22,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { MemberStatus } from '@/lib/statuses';
 import { cn } from '@/lib/utils';
 
 import { UserRowData } from './index';
@@ -187,9 +184,7 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
     cell: ({ row }) => {
       if (row.original.type === 'invitation') {
         return (
-          <StatusDot status={InvitationStatus.PENDING}>
-            {t('Pending')}
-          </StatusDot>
+          <StatusDot status={MemberStatus.INVITED}>{t('Pending')}</StatusDot>
         );
       }
       const status = row.original.data.status;
