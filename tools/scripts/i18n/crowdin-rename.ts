@@ -1,4 +1,5 @@
 import { execFileSync } from 'child_process'
+import { randomUUID } from 'crypto'
 import { appendFileSync, existsSync, readFileSync } from 'fs'
 import { CrowdinClient, crowdinClient } from './crowdin-client'
 import { ChangedString, CrowdinApproval, CrowdinString, CrowdinTranslation, RenameAction, renamePlan } from './rename-plan'
@@ -19,10 +20,7 @@ async function undo({ client, lines, journal }: UndoParams): Promise<UndoCounts>
     const latestByRename = new Map(attempted.map((line) => [renameKey({ line }), line]))
     let counts: UndoCounts = { undone: 0, failed: 0 }
     for (const line of [...latestByRename.values()].reverse()) {
-        const issueIds = lines
-            .filter((issue) => issue.kind === 'review-issue' && issue.status === 'opened' && renameKey({ line: issue }) === renameKey({ line }))
-            .flatMap(({ issueId }) => issueId === undefined ? [] : [issueId])
-        const outcome = await undoOne({ client, line, issueIds, journal })
+        const outcome = await undoOne({ client, line, issues: reviewIssuesOf({ lines, line }), journal })
         counts = { undone: counts.undone + outcome.undone, failed: counts.failed + outcome.failed }
     }
     return counts
@@ -137,14 +135,17 @@ async function applyRename({ client, piece, fileId, action, dryRun, journal }: A
         counts = addCounts({ left: counts, right: deleted.ok ? { ...EMPTY_COUNTS, writes: 1 } : { ...EMPTY_COUNTS, failed: 1 } })
     }
     for (const language of action.needsReview ? action.keptLanguages : []) {
-        const opened = await openReviewIssue({ client, action, language })
-        journal({ kind: 'review-issue', piece, fileId, stringId: action.stringId, language, before: checked.before, after, status: opened.ok ? 'opened' : 'error', issueId: opened.ok ? opened.issueId : undefined, message: opened.ok ? undefined : opened.message })
+        const marker = randomUUID()
+        const issueLine: Omit<JournalLine, 'status'> = { kind: 'review-issue', piece, fileId, stringId: action.stringId, language, before: checked.before, after, issueMarker: marker }
+        journal({ ...issueLine, status: 'opening' })
+        const opened = await openReviewIssue({ client, action, language, marker })
+        journal({ ...issueLine, status: opened.ok ? 'opened' : 'error', issueId: opened.ok ? opened.issueId : undefined, message: opened.ok ? undefined : opened.message })
         counts = addCounts({ left: counts, right: opened.ok ? { ...EMPTY_COUNTS, writes: 1 } : { ...EMPTY_COUNTS, failed: 1 } })
     }
     return counts
 }
 
-async function openReviewIssue({ client, action, language }: { client: CrowdinClient, action: RenameAction, language: string }): Promise<OpenedIssue> {
+async function openReviewIssue({ client, action, language, marker }: { client: CrowdinClient, action: RenameAction, language: string, marker: string }): Promise<OpenedIssue> {
     try {
         const created = await client.post<{ data: { id: number } }>({
             path: '/comments',
@@ -153,7 +154,7 @@ async function openReviewIssue({ client, action, language }: { client: CrowdinCl
                 targetLanguageId: language,
                 type: 'issue',
                 issueType: 'translation_mistake',
-                text: reviewIssueText({ oldText: action.oldText, newText: action.newText }),
+                text: reviewIssueText({ oldText: action.oldText, newText: action.newText, marker }),
             },
         })
         return { ok: true, issueId: created.data.id }
@@ -163,7 +164,7 @@ async function openReviewIssue({ client, action, language }: { client: CrowdinCl
     }
 }
 
-function reviewIssueText({ oldText, newText }: { oldText: string, newText: string }): string {
+function reviewIssueText({ oldText, newText, marker }: { oldText: string, newText: string, marker: string }): string {
     return [
         REVIEW_ISSUE_PREFIX,
         '',
@@ -171,16 +172,45 @@ function reviewIssueText({ oldText, newText }: { oldText: string, newText: strin
         `New English: ${newText}`,
         '',
         'This translation was written for the old English and is no longer approved. Please check it against the new English, correct it if needed, approve it, then resolve this issue.',
+        '',
+        `Reference: ${marker}`,
     ].join('\n')
 }
 
-async function deleteReviewIssues({ client, issueIds }: { client: CrowdinClient, issueIds: number[] }): Promise<string | null> {
+async function deleteReviewIssues({ client, stringId, issues }: { client: CrowdinClient, stringId: number, issues: ReviewIssues }): Promise<string | null> {
+    const found = await findIssuesByMarker({ client, stringId, markers: issues.unrecordedMarkers })
+    if (!found.ok) {
+        return `review issues not removed: ${found.message}`
+    }
     const problems: string[] = []
-    for (const issueId of issueIds) {
+    for (const issueId of [...issues.issueIds, ...found.issueIds]) {
         const deleted = await deleteIfPresent({ client, path: `/comments/${issueId}` })
         problems.push(...(deleted.ok ? [] : [deleted.message]))
     }
     return problems.length === 0 ? null : `review issues not removed: ${problems.join('; ')}`
+}
+
+async function findIssuesByMarker({ client, stringId, markers }: { client: CrowdinClient, stringId: number, markers: string[] }): Promise<FoundIssues> {
+    if (markers.length === 0) {
+        return { ok: true, issueIds: [] }
+    }
+    try {
+        const unresolved = await client.list<{ id: number, text: string }>({ path: `/comments?stringId=${stringId}&type=issue&issueStatus=unresolved` })
+        return { ok: true, issueIds: unresolved.filter(({ text }) => markers.some((marker) => text.includes(marker))).map(({ id }) => id) }
+    }
+    catch (error) {
+        return { ok: false, message: messageOf({ error }) }
+    }
+}
+
+function reviewIssuesOf({ lines, line }: { lines: JournalLine[], line: JournalLine }): ReviewIssues {
+    const ofRename = lines.filter((issue) => issue.kind === 'review-issue' && renameKey({ line: issue }) === renameKey({ line }))
+    const recorded = ofRename.filter((issue) => issue.status === 'opened' && issue.issueId !== undefined)
+    const recordedMarkers = new Set(recorded.map(({ issueMarker }) => issueMarker))
+    return {
+        issueIds: recorded.flatMap(({ issueId }) => issueId === undefined ? [] : [issueId]),
+        unrecordedMarkers: [...new Set(ofRename.flatMap(({ issueMarker }) => issueMarker === undefined || recordedMarkers.has(issueMarker) ? [] : [issueMarker]))],
+    }
 }
 
 async function readBeforeRename({ client, action }: { client: CrowdinClient, action: RenameAction }): Promise<BeforeRename> {
@@ -255,7 +285,7 @@ async function deleteIfPresent({ client, path }: { client: CrowdinClient, path: 
     }
 }
 
-async function undoOne({ client, line, issueIds, journal }: { client: CrowdinClient, line: JournalLine, issueIds: number[], journal: Journal }): Promise<UndoCounts> {
+async function undoOne({ client, line, issues, journal }: { client: CrowdinClient, line: JournalLine, issues: ReviewIssues, journal: Journal }): Promise<UndoCounts> {
     const { stringId, before, after } = line
     if (stringId === undefined || before === undefined || after === undefined) {
         return { undone: 0, failed: 1 }
@@ -267,7 +297,7 @@ async function undoOne({ client, line, issueIds, journal }: { client: CrowdinCli
         return { undone: 0, failed: 1 }
     }
     if (current.text === before.text && current.identifier === before.identifier) {
-        const leftovers = await restoreAfterUndo({ client, line, issueIds })
+        const leftovers = await restoreAfterUndo({ client, line, issues })
         journal({ ...undoLine, status: 'already-undone', message: leftovers ?? undefined })
         return { undone: 0, failed: leftovers === null ? 0 : 1 }
     }
@@ -288,14 +318,14 @@ async function undoOne({ client, line, issueIds, journal }: { client: CrowdinCli
         journal({ ...undoLine, status: 'error', message: messageOf({ error }) })
         return { undone: 0, failed: 1 }
     }
-    const leftovers = await restoreAfterUndo({ client, line, issueIds })
+    const leftovers = await restoreAfterUndo({ client, line, issues })
     journal({ ...undoLine, status: 'undone', message: leftovers ?? undefined })
     return { undone: 1, failed: leftovers === null ? 0 : 1 }
 }
 
-async function restoreAfterUndo({ client, line, issueIds }: { client: CrowdinClient, line: JournalLine, issueIds: number[] }): Promise<string | null> {
+async function restoreAfterUndo({ client, line, issues }: { client: CrowdinClient, line: JournalLine, issues: ReviewIssues }): Promise<string | null> {
     const lostApprovals = await restoreApprovals({ client, translationIds: line.reapproveOnUndo ?? [] })
-    const issueProblem = await deleteReviewIssues({ client, issueIds })
+    const issueProblem = line.stringId === undefined ? null : await deleteReviewIssues({ client, stringId: line.stringId, issues })
     const problems = [
         ...(lostApprovals.length === 0 ? [] : [`approvals not restored for translations ${lostApprovals.join(', ')}`]),
         ...(issueProblem === null ? [] : [issueProblem]),
@@ -469,6 +499,7 @@ export type JournalLine = {
     keptLanguages?: string[]
     language?: string
     issueId?: number
+    issueMarker?: string
     reapproveOnUndo?: number[]
     needsReview?: boolean
     message?: string
@@ -490,6 +521,13 @@ type StringText = {
 }
 
 type OpenedIssue = { ok: true, issueId: number } | { ok: false, message: string }
+
+type FoundIssues = { ok: true, issueIds: number[] } | { ok: false, message: string }
+
+type ReviewIssues = {
+    issueIds: number[]
+    unrecordedMarkers: string[]
+}
 
 type BeforeRename = { ok: true, before: StringText } | { ok: false, status: 'error' | 'precondition-failed', before: StringText, message: string }
 

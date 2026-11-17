@@ -10,7 +10,7 @@ const FILE_PATH = '/main/packages/pieces/community/dropbox/src/i18n/translation.
 
 const clone = <T>(value: unknown): T => JSON.parse(JSON.stringify(value))
 
-const fakeCrowdin = ({ strings = [{ id: 1, identifier: 'Upload a file', text: 'Upload a file' }], failPatchFor = [], patchLandsButErrorsFor = [], failApprovals = false, failIssues = false, approvals = DEFAULT_APPROVALS, issues = [] }: FakeParams = {}) => {
+const fakeCrowdin = ({ strings = [{ id: 1, identifier: 'Upload a file', text: 'Upload a file' }], failPatchFor = [], patchLandsButErrorsFor = [], failApprovals = false, failIssues = false, issueResponseLost = false, approvals = DEFAULT_APPROVALS, issues = [] }: FakeParams = {}) => {
     const state = {
         strings: clone<FakeString[]>(strings),
         translations: {
@@ -51,6 +51,10 @@ const fakeCrowdin = ({ strings = [{ id: 1, identifier: 'Upload a file', text: 'U
         if (approvals) {
             return approvals[1] === 'ja' ? state.approvals.ja : state.approvals.de
         }
+        const issuesOfString = /^\/comments\?stringId=(\d+)&type=issue&issueStatus=unresolved$/.exec(path)
+        if (issuesOfString) {
+            return state.issues.filter(({ stringId }) => String(stringId) === issuesOfString[1])
+        }
         const approvalsOfTranslation = /^\/approvals\?translationId=(\d+)$/.exec(path)
         if (approvalsOfTranslation) {
             return [...state.approvals.ja, ...state.approvals.de].filter(({ translationId }) => String(translationId) === approvalsOfTranslation[1])
@@ -87,6 +91,9 @@ const fakeCrowdin = ({ strings = [{ id: 1, identifier: 'Upload a file', text: 'U
                 const id = 100 + state.issues.length
                 state.issues.push({ ...issue, id })
                 writes.push(`POST ${path} ${issue.targetLanguageId} ${issue.type} ${issue.issueType}`)
+                if (issueResponseLost) {
+                    throw new CrowdinError({ method: 'POST', path, status: 502, detail: 'Bad Gateway' })
+                }
                 return clone<T>({ data: { id } })
             }
             if (failApprovals) {
@@ -177,7 +184,7 @@ describe('crowdinRename.run', () => {
 
         expect(state.strings[0].text).toBe('Send a file')
         expect(counts).toMatchObject({ renamed: 1, failed: 1 })
-        expect(lines.find(({ kind }) => kind === 'review-issue')).toMatchObject({ status: 'error', language: 'ja' })
+        expect(lines.find(({ kind, status }) => kind === 'review-issue' && status !== 'opening')).toMatchObject({ status: 'error', language: 'ja' })
         expect(crowdinRename.summarize({ lines, counts, dryRun: false })).toContain('review-issue error')
     })
 
@@ -367,6 +374,31 @@ describe('crowdinRename.undo', () => {
         expect(state.issues).toEqual([earlier])
     })
 
+    it('deletes the review issue it opened when Crowdin lost the response', async () => {
+        const { client, state } = fakeCrowdin({ issueResponseLost: true })
+        const { lines, journal } = collect()
+        await crowdinRename.run({ client, pieces: [dropbox()], autoApprovers: ['robot'], dryRun: false, journal })
+        expect(state.issues).toHaveLength(1)
+
+        const counts = await crowdinRename.undo({ client, lines, journal })
+
+        expect(state.issues).toEqual([])
+        expect(counts).toEqual({ undone: 1, failed: 0 })
+    })
+
+    it('deletes the review issue it opened when the job stopped before recording its id', async () => {
+        const earlier = { id: 50, stringId: 1, targetLanguageId: 'ja', type: 'issue', issueType: 'translation_mistake', text: 'The English text of this string changed (automatic note from the Activepieces translations job).\n\nOld English: Upload the file\nNew English: Upload a file' }
+        const { client, state } = fakeCrowdin({ issues: [earlier] })
+        const { lines, journal } = collect()
+        await crowdinRename.run({ client, pieces: [dropbox()], autoApprovers: ['robot'], dryRun: false, journal })
+        const cut = lines.filter((line) => !(line.kind === 'review-issue' && line.status === 'opened'))
+
+        const counts = await crowdinRename.undo({ client, lines: cut, journal })
+
+        expect(state.issues).toEqual([earlier])
+        expect(counts).toEqual({ undone: 1, failed: 0 })
+    })
+
     it('has nothing to undo when nothing was renamed', async () => {
         const { client, writes } = fakeCrowdin()
         const { journal } = collect()
@@ -458,6 +490,7 @@ type FakeParams = {
     failIssues?: boolean
     approvals?: FakeApprovals
     issues?: FakeIssue[]
+    issueResponseLost?: boolean
 }
 
 type FakeIssue = {
