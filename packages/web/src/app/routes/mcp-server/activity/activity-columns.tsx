@@ -1,10 +1,15 @@
-import { PopulatedMcpActivity, ProjectType } from '@activepieces/shared';
+import {
+  McpActivityStatus,
+  PopulatedMcpActivity,
+  ProjectType,
+} from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Clock, FolderOpen, Plug, User, Wrench } from 'lucide-react';
+import { Check, Clock, FolderOpen, Plug, User, Wrench, X } from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { StatusBadge } from '@/components/custom/status-badge';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
@@ -13,7 +18,18 @@ import { ClientIcon } from '../client-icon';
 import { mcpClientDisplay } from '../mcp-client-display';
 
 import { activityUtils } from './activity-utils';
-import { McpActivityStatusBadge } from './mcp-activity-status-badge';
+
+export function McpActivityStatusBadge({
+  status,
+}: {
+  status: McpActivityStatus;
+}) {
+  return status === McpActivityStatus.enum.SUCCEEDED ? (
+    <StatusBadge status={status} icon={Check} text={t('Succeeded')} />
+  ) : (
+    <StatusBadge status={status} icon={X} text={t('Failed')} />
+  );
+}
 
 export function buildActivityColumns({
   currentUserId,

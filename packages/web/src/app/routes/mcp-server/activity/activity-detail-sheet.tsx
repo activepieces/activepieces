@@ -34,8 +34,8 @@ import { ClientIcon } from '../client-icon';
 import { mcpActivityQueries } from '../mcp-activity-hooks';
 import { mcpClientDisplay } from '../mcp-client-display';
 
+import { McpActivityStatusBadge } from './activity-columns';
 import { activityUtils, ParsedOutput } from './activity-utils';
-import { McpActivityStatusBadge } from './mcp-activity-status-badge';
 
 export function ActivityDetailSheet({
   row,
