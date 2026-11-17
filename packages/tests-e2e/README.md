@@ -22,7 +22,7 @@ This section is the one set of E2E guidelines, for people and agents. Other page
 
 Staging runs the CE specs in a shared, long-lived account after each deploy, and CI runs specs in parallel in one project, so a spec must pass whatever the project already holds: nothing, many flows, or another run's flows. It must never change data it did not create.
 
-Start from `scenarios/flows/flow-journey.spec.ts` and `pages/builder.page.ts`. Locators and actions live in a page object under `pages/`; the spec holds the steps and the expected outcomes.
+Start from `scenarios/project/automations-flows.spec.ts` when the spec seeds its data, and from `scenarios/flows/flow-journey.spec.ts` when the spec tests the builder. Locators and actions live in a page object under `pages/`; the spec holds the steps and the expected outcomes.
 
 ### The files of a feature
 
@@ -44,8 +44,17 @@ Many people and agents write specs at the same time, so a feature adds new files
   });
   ```
 
-  `createVariable` stands for the feature's own seed call, in the same file. Make the call with `e2eApi.callApi({ request, session, method, path, data })`, which sends the session token and fails on any status that is not 2xx; do not write a fetch helper of your own. A spec that needs the fixtures of two features joins them with `mergeTests(variablesTest, connectionsTest)` from `@playwright/test`.
+  `createVariable` stands for the feature's own seed call, in the same file. Make the call with `e2eApi.callApi({ request, session, method, path, data })`, which sends the session token and fails on any status that is not 2xx; do not write a fetch helper of your own. Every fixture file exports its own `test`, so a spec that needs the fixtures of two features imports both under new names and joins them:
+
+  ```ts
+  import { mergeTests } from '@playwright/test';
+  import { test as connectionsTest } from '../../fixtures/connections';
+  import { test as variablesTest } from '../../fixtures/variables';
+
+  const test = mergeTests(variablesTest, connectionsTest);
+  ```
 - A feature PR never edits `fixtures/index.ts`, `fixtures/api.ts` or another feature's page object. There is one exception: when a second feature needs a helper that the first feature wrote, a separate PR moves the helper into `fixtures/api.ts` first, and the second feature PR builds on it.
+- The page objects of the shared pages (`base.ts`, `builder.page.ts`, `automations.page.ts`, `runs.page.ts`) belong to no feature, and a feature PR does not edit them either. A feature puts the methods it needs in its own page object, which can create a shared one: `new BuilderPage(page)`. When a second feature needs the same method, a separate PR moves it into the shared page object first.
 
 Tag every test of the feature with `@feature:<slug>`, so a query can list which features have a passing spec: `test.describe('Variables', { tag: '@feature:variables' }, () => { … })`.
 
@@ -54,15 +63,18 @@ Project roles, a second project and the mail catcher exist only in EE. A test th
 For the role gate and project isolation, an EE spec imports `test` from `fixtures/access.ts`. `secondProject` is a new team project, and its `session` is the admin token scoped to that project. `viewer` is a new user with the Viewer role in `secondProject` only, not in the default project, invited and accepted through the mail catcher, with its own session. Seed what the viewer needs into its project with `seed.flow({ template, publish, session: secondProject.session })`. Everything is deleted after the test.
 
 - Role gate: first check that the viewer can read the record, so a 403 on the write means the role and not a missing membership. Then assert the server's answer to the write.
-- Isolation: seed the record into the default project, and assert that the viewer, who is not a member there, gets a 403 when it reads or lists it. Do not use the admin for this check: the admin is a member of every project.
+- Isolation: seed the record into the default project, then make two checks. Each one finds a different bug.
+  - The viewer, who is not a member of the default project, gets a 403 when it reads or lists the record. This proves the security config of the endpoint. The admin cannot make this check, because it is a member of every project.
+  - The admin lists the records of `secondProject`. A control record seeded there shows, and the record of the default project does not. This proves that the query filters by project, which the 403 never reaches.
 
 `scenarios/ee/access/access-fixtures.spec.ts` shows both checks.
 
 ### Data
 
 - Create what the spec needs, and name each flow and connection with `e2eFlows.uniqueName()` (prefix `E2E `).
-- Create a flow that the spec does not test through the builder with the `seed` fixture: `await seed.flow({ template, publish: true })`. The template is the JSON that "Export" in the flow menu downloads, saved under `fixtures/templates/`. The seed call names the flow, uses the piece versions installed on the instance, tracks it for cleanup, and returns `{ flowId, flowName, webhookUrl }`. Pass `session` to seed the flow into a different project, such as `secondProject.session`. Build a flow in the builder only when the builder is what the spec tests.
-- Create a secret-text connection with `await seed.secretTextConnection({ pieceName, secret })`. It is tracked for cleanup too.
+- Create a flow that the spec does not test through the builder with the `seed` fixture: `await seed.flow({ template, publish: true })`. The template is the JSON that "Export" in the flow menu downloads, saved under `fixtures/templates/` and imported in the spec: `import webhookEcho from '../../fixtures/templates/webhook-echo.json'`. The seed call names the flow, uses the piece versions installed on the instance, tracks it for cleanup, and returns `{ flowId, flowName, webhookUrl }`. Pass `session` to seed the flow into a different project, such as `secondProject.session`. Build a flow in the builder only when the builder is what the spec tests.
+- Create a secret-text connection with `await seed.secretTextConnection({ pieceName, secret })`, and pass `session` for a different project. It is tracked for cleanup too.
+- An export keeps the connection id of the account that exported it, and the test instance has no connection with that id. Give each step that needs a connection the id of one the spec seeded, by step name: `seed.flow({ template, publish: true, connections: { step_1: connection.externalId } })`. A step name that is not in the template fails the call.
 - Pass the id of each record you create to `cleanup.track({ resource, id })`, where `resource` is the API path, such as `flows`, `app-connections` or `users`. The fixture deletes the records after the test, last one first, also when the test fails. A record that is already gone counts as deleted. A typo in `resource` fails the test, because the API answers `Route not found`. When one delete fails, the fixture still deletes the other records and then fails with every error.
 - Delete only by the ids your test created. Never delete by a query, a name, or a prefix.
 - Find your data by its id or unique name, never by its position in a list.
@@ -96,7 +108,8 @@ For the role gate and project isolation, an EE spec imports `test` from `fixture
 
 - Run the spec. Show it fail without your change (or against the bug), then pass with it. Put both results in the PR.
 - When a spec fails, find the cause first: the app, the spec, or the environment. Never loosen a locator, remove an assertion, or change an expected value to match what the screen shows now.
-- A spec is done when `npx playwright test <spec> --repeat-each=3` passes locally, and the PR shows one red run against the broken feature.
+- A spec is done when `npx playwright test <spec> --repeat-each=3` passes locally. Without a local stack, the E2E matrix of the PR counts instead: the spec passes on the first attempt in every config. CI retries a failed spec, so read the attempts in `results.json` of the `e2e-matrix-*` artifacts, not the green check.
+- The PR also links one red run. On a scratch branch, break what the spec checks, in the app or in a fake answer of the spec, and push it. Link the failed run, then delete the branch.
 - Never skip a spec with `test.skip` or `test.fixme` to get a green run. A flaky spec follows [Flaky specs](#flaky-specs).
 - `npx turbo run lint --filter=tests-e2e` checks specs, page objects and fixtures with `eslint-plugin-playwright`.
 
@@ -116,6 +129,15 @@ A spec is flaky when it fails and then passes on a retry, or fails with no produ
 2. Add the `@quarantine` tag and the ticket to the spec: `test('…', { tag: '@quarantine', annotation: { type: 'issue', description: '<ticket URL>' } }, …)`.
 3. CI skips `@quarantine` specs, so the release gate does not wait for the fix. Local runs still run them.
 4. The fix removes the tag in the same PR.
+
+## New specs and staging
+
+After each deploy, staging runs every spec outside `scenarios/ee` and `scenarios/cloud`, and the Cloud release takes only a `main` commit that passed there. Staging serves `main`, so a new test cannot pass there before its PR merges, and one red test stops the release.
+
+1. Tag each new test outside `scenarios/ee` with `@no-staging`, on its `describe` or on the test. The staging job skips the tag; the E2E matrix still runs the test.
+2. After the PR reaches staging, run the spec there once: `E2E_INSTANCE_URL=https://stg.activepieces.com E2E_EMAIL=<staging user> E2E_PASSWORD=<password> npx playwright test <spec>`.
+3. When it passes, remove the tag in a one-line PR.
+4. A test that cannot pass on Cloud keeps the tag and says why in an annotation: `{ tag: '@no-staging', annotation: { type: 'no-staging', description: '<reason>' } }`.
 
 ## Running the tests
 
