@@ -22,7 +22,7 @@ export const gotifyAuth = PieceAuth.CustomAuth({
     }),
     client_token: PieceAuth.SecretText({
       displayName: 'Client Token',
-      description: 'Token of a Gotify client. Needed by every action except sending.',
+      description: 'Needed by every action except sending and server health.',
       required: false,
     }),
   },
