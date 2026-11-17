@@ -3,7 +3,7 @@ export { userInvitationApi } from './api/user-invitation';
 export { AcceptInvitation } from './components/accept-invitation';
 export { InviteUserDialog } from './components/invite-user/invite-user-dialog';
 export {
-  BonusCreditsLine,
+  InviteRewardBillingLink,
   InviteRewardButton,
   InviteRewardCard,
   InviteRewardNotifier,

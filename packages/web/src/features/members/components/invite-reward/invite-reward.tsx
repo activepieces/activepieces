@@ -3,7 +3,7 @@ import { InviteRewardSurface, TelemetryEventName } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { ArrowRight, Gift, X } from 'lucide-react';
+import { ArrowRight, Gift, UserPlus, X } from 'lucide-react';
 import { ReactNode, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -89,41 +89,32 @@ export function InviteRewardButton({ offer }: { offer: InviteOffer }) {
   );
 }
 
-export function BonusCreditsLine() {
+export function InviteRewardBillingLink() {
   const { rewards, openInvite, dialog } = useInviteOffer(
     InviteRewardSurface.BILLING_CREDITS,
   );
-
-  if (rewards.bonusCredits <= 0) {
-    return null;
-  }
+  const credits = billingUtils.formatCredits(
+    rewards.rewardsLeft * rewards.creditsPerInvite,
+  );
 
   return (
     <>
-      <div className="flex items-center gap-2 border-t px-5 py-4 text-sm text-gray-11">
-        <Gift className="size-4 shrink-0" />
-        <span>
-          {t('Bonus credits from invites')}{' '}
-          <span className="font-semibold text-gray-12">
-            {billingUtils.formatCredits(rewards.bonusCredits)}
-          </span>
-        </span>
-        {rewards.visible && (
+      {rewards.visible && (
+        <div className="border-t px-5 py-4">
           <Button
             variant="link"
             size="sm"
-            className="ms-auto h-auto"
+            className="h-auto w-full justify-start"
             onClick={openInvite}
           >
-            {t('Earn {credits} more', {
-              credits: billingUtils.formatCredits(
-                rewards.rewardsLeft * rewards.creditsPerInvite,
-              ),
-            })}
-            <ArrowRight />
+            <UserPlus />
+            {rewards.rewardsEarned > 0
+              ? t('Invite teammates, earn {credits} more', { credits })
+              : t('Invite teammates, earn {credits} credits', { credits })}
+            <ArrowRight className="ms-auto" />
           </Button>
-        )}
-      </div>
+        </div>
+      )}
       {dialog}
     </>
   );

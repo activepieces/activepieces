@@ -68,7 +68,6 @@ describe('useInviteRewards', () => {
     await waitFor(() => expect(result.current.visible).toBe(true));
     expect(result.current.rewardsEarned).toBe(1);
     expect(result.current.rewardsLeft).toBe(3);
-    expect(result.current.bonusCredits).toBe(1000);
   });
 
   it('counts rewards left under the cap, however few seats are free', async () => {
@@ -108,18 +107,18 @@ describe('useInviteRewards', () => {
 
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
-    await waitFor(() => expect(result.current.bonusCredits).toBe(4000));
+    await waitFor(() => expect(result.current.rewardsEarned).toBe(4));
     expect(result.current.visible).toBe(false);
   });
 
-  it('keeps the earned bonus after the platform upgrades, but stops offering', async () => {
+  it('keeps the earned rewards after the platform upgrades, but stops offering', async () => {
     getSummary.mockResolvedValue(
       summary({ eligible: false, rewards: [granted('a')] }),
     );
 
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
-    await waitFor(() => expect(result.current.bonusCredits).toBe(1000));
+    await waitFor(() => expect(result.current.rewardsEarned).toBe(1));
     expect(result.current.visible).toBe(false);
   });
 

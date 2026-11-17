@@ -49,10 +49,6 @@ export function useInviteRewards(): InviteRewardsState {
     maxRewards: summary.maxRewards,
     rewardsLeft: rewardsUnderCap,
     rewards: summary.rewards,
-    bonusCredits: summary.rewards.reduce(
-      (total, reward) => total + reward.credits,
-      0,
-    ),
   };
 }
 
@@ -67,5 +63,4 @@ export type InviteRewardsState = {
   maxRewards: number;
   rewardsLeft: number;
   rewards: InviteReward[];
-  bonusCredits: number;
 };

@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const capture = vi.fn();
-const offer = { visible: true, bonusCredits: 0 };
+const offer = { visible: true, rewardsEarned: 2 };
 
 vi.mock('i18next', async (importOriginal) => ({
   ...(await importOriginal<typeof import('i18next')>()),
@@ -19,11 +19,10 @@ vi.mock('@/features/members/hooks/use-invite-rewards', () => ({
     visible: offer.visible,
     platformId: 'platform_1',
     creditsPerInvite: 1000,
-    rewardsEarned: 2,
+    rewardsEarned: offer.rewardsEarned,
     maxRewards: 4,
-    rewardsLeft: 2,
+    rewardsLeft: 4 - offer.rewardsEarned,
     rewards: [],
-    bonusCredits: offer.bonusCredits,
   }),
 }));
 vi.mock('@/features/members/components/invite-user/invite-user-dialog', () => ({
@@ -32,7 +31,7 @@ vi.mock('@/features/members/components/invite-user/invite-user-dialog', () => ({
 }));
 
 import {
-  BonusCreditsLine,
+  InviteRewardBillingLink,
   InviteRewardButton,
   InviteRewardCard,
   useInviteOffer,
@@ -53,7 +52,7 @@ describe('invite reward offer tracking', () => {
     capture.mockReset();
     localStorage.clear();
     offer.visible = true;
-    offer.bonusCredits = 0;
+    offer.rewardsEarned = 2;
   });
 
   it('records a sidebar card click and opens the invite dialog', () => {
@@ -119,12 +118,13 @@ describe('invite reward offer tracking', () => {
     screen.getByText('invite dialog');
   });
 
-  it('opens the invite dialog from the earn-more link on the billing bonus line', () => {
-    offer.bonusCredits = 2000;
-    render(<BonusCreditsLine />);
+  it('opens the invite dialog from the billing card link', () => {
+    render(<InviteRewardBillingLink />);
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'Earn {credits} more' }),
+      screen.getByRole('button', {
+        name: 'Invite teammates, earn {credits} more',
+      }),
     );
 
     expect(capture).toHaveBeenCalledWith({
@@ -135,6 +135,20 @@ describe('invite reward offer tracking', () => {
       },
     });
     screen.getByText('invite dialog');
+  });
+
+  it('offers the full amount on the billing card before any reward is earned', () => {
+    offer.rewardsEarned = 0;
+
+    render(<InviteRewardBillingLink />);
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Invite teammates, earn {credits} credits',
+      }),
+    );
+
+    expect(capture).toHaveBeenCalledTimes(1);
   });
 
   it('records a low-credits alert click', () => {
