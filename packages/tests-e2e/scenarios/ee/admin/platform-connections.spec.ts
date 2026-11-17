@@ -38,7 +38,7 @@ test.describe('Platform connections', { tag: ['@feature:pconn', '@surface'] }, (
       await builderPage.selectTrigger({ piece: 'Webhook', trigger: 'Catch Webhook' });
       await builderPage.addStep({ after: 'trigger', piece: 'Activepieces Platform', action: 'Custom API Call' });
       await connectionsPage.pickConnectionInStep(connectionName);
-      await builderPage.expectStepPanelText(`relative to ${echo.webhookUrl.replace(/[^/]+$/, '')}`);
+      await builderPage.expectStepPanelText(`relative to ${new URL(echo.webhookUrl).origin}`);
       await builderPage.setTextInput({ name: 'URL', value: '/' });
       await builderPage.testStep();
     });
