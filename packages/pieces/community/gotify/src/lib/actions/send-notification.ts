@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { gotifyAuth } from '../auth';
 import { gotifyClient } from '../common/client';
 import { gotifyOutputSchemas } from '../common/output-schemas';
@@ -18,19 +18,24 @@ export const sendNotification = createAction({
   },
   outputSchema: gotifyOutputSchemas.message,
   props: {
+    info: Property.MarkDown({
+      value: "Sent with your connection's App Token, so it appears under that token's Gotify app.",
+      variant: MarkdownVariant.INFO,
+    }),
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'The title of the notification',
+      placeholder: 'Backup finished',
       required: true,
     }),
     message: Property.LongText({
       displayName: 'Message',
-      description: 'The message to send',
+      description: 'Plain text, or Markdown when Render as Markdown is on.',
+      placeholder: 'The nightly backup completed in 4 minutes.',
       required: true,
     }),
     priority: Property.Number({
       displayName: 'Priority',
-      description: '0 (lowest) to 10. Empty uses the application default.',
+      description: "0 (lowest) to 10 (highest). Empty uses the app's default.",
       required: false,
     }),
     markdown: Property.Checkbox({
@@ -41,15 +46,28 @@ export const sendNotification = createAction({
     }),
     click_url: Property.ShortText({
       displayName: 'Click URL',
-      description: 'URL opened when the notification is tapped (http or https).',
+      description: 'Full http(s) link opened when the notification is tapped.',
+      placeholder: 'https://example.com/report',
       required: false,
+      advanced: true,
     }),
     big_image_url: Property.ShortText({
       displayName: 'Big Image URL',
-      description: 'Image shown in the expanded notification on Android (http or https).',
+      description: 'Full http(s) image URL shown in the expanded Android notification.',
+      placeholder: 'https://example.com/image.png',
       required: false,
+      advanced: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['info', 'title', 'message', 'markdown', 'priority'],
+    },
+  ],
   async run({ auth, propsValue }) {
     const message = typeof propsValue.message === 'string' ? propsValue.message : '';
     if (message.trim() === '') {
