@@ -320,7 +320,12 @@ async function claimNewOfficialPiece({ inserted }: ClaimNewOfficialPieceParams):
         select: { version: true },
         where: { name: piece.name, platformId: IsNull(), version: Not(piece.version) },
     })
-    return { piece, previousVersion: newestVersion(otherVersions) }
+    return { piece, previousVersion: previousVersionOf({ versions: otherVersions, version: piece.version }) }
+}
+
+function previousVersionOf({ versions, version }: PreviousVersionOfParams): string | null {
+    const olderVersions = versions.filter((existing) => isNewerVersion(version, existing.version))
+    return newestVersion(olderVersions.length > 0 ? olderVersions : versions)
 }
 
 function newestVersion(versions: Pick<PieceMetadataSchema, 'version'>[]): string | null {
@@ -335,7 +340,7 @@ async function insertPieceVersion({ pieceMetadata, platformId, packageType, piec
     if (existingVersions.some((existing) => existing.version === pieceMetadata.version)) {
         throw pieceAlreadyExistsError({ name: pieceMetadata.name, version: pieceMetadata.version })
     }
-    const previousVersion = newestVersion(existingVersions)
+    const previousVersion = previousVersionOf({ versions: existingVersions, version: pieceMetadata.version })
     const oldestCreated = existingVersions.reduce<string | null>((oldest, existing) => isNil(oldest) || existing.created < oldest ? existing.created : oldest, null)
     const pieceRow = {
         id: apId(),
@@ -641,6 +646,11 @@ type FindFlowsUsingPieceParams = {
 
 type ClaimNewOfficialPieceParams = {
     inserted: CreatedPieceVersion
+}
+
+type PreviousVersionOfParams = {
+    versions: Pick<PieceMetadataSchema, 'version'>[]
+    version: string
 }
 
 type InsertPieceVersionParams = Omit<CreateParams, 'publishCacheRefresh' | 'projectId'>

@@ -460,6 +460,9 @@ function pieceChangeType({ previousVersion, version }: PieceChangeTypeParams): P
     if (isNil(semver.valid(previousVersion)) || isNil(semver.valid(version))) {
         return 'patch'
     }
+    if (semver.lt(version, previousVersion)) {
+        return null
+    }
     switch (semver.diff(previousVersion, version)) {
         case 'major':
         case 'premajor':

@@ -156,19 +156,30 @@ describe('triggerOnAllPlatforms for official piece events', () => {
         expect(addSpy).not.toHaveBeenCalled()
     })
 
-    it('every added version sends its own event, an older one included', async () => {
+    it('every added version sends its own event, a hotfix on an older line included', async () => {
         const ctx = await createTestContext(app, ENTITLED_PLAN)
         await subscribe({ platformId: ctx.platform.id })
 
         await eventDestinationService(app.log).triggerOnAllPlatforms({
-            addedPieces: [added('@test/a', '0.3.0'), added('@test/a', '0.2.0', '0.3.0'), added('@test/a', '0.3.1', '0.3.0')],
+            addedPieces: [added('@test/a', '0.3.0'), added('@test/a', '0.2.1', '0.2.0'), added('@test/a', '0.3.1', '0.3.0')],
         })
 
         expect(queuedJobs().map((job) => [job.data.payload.action, job.data.payload.data.piece.version, job.data.payload.data.piece.previousVersion])).toEqual([
             [ApplicationEventName.OFFICIAL_PIECE_ADDED, '0.3.0', null],
-            [ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED, '0.2.0', '0.3.0'],
+            [ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED, '0.2.1', '0.2.0'],
             [ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED, '0.3.1', '0.3.0'],
         ])
+    })
+
+    it('a version lower than its previous version sends no event', async () => {
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
+        await subscribe({ platformId: ctx.platform.id })
+
+        await eventDestinationService(app.log).triggerOnAllPlatforms({
+            addedPieces: [added('@test/a', '0.2.0', '0.3.0')],
+        })
+
+        expect(addSpy).not.toHaveBeenCalled()
     })
 
     it('dispatches a platform\'s deliveries at most 25 at a time', async () => {

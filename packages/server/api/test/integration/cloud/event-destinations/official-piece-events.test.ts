@@ -2,6 +2,7 @@ import { apId } from '@activepieces/core-utils'
 import { ApEdition, ApplicationEventName, EventDestinationScope, PackageType, PieceType, WorkerJobType } from '@activepieces/shared'
 import fastify, { FastifyInstance } from 'fastify'
 import { validatorCompiler } from 'fastify-type-provider-zod'
+import semver from 'semver'
 import { Repository } from 'typeorm'
 import { Mock } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -271,7 +272,7 @@ describe('Official piece events', () => {
         expect(deliveriesTo(withoutPatch)).toEqual([])
     })
 
-    it('a sync that adds several versions of a new piece sends one added event and a version event for each other version', async () => {
+    it('a sync that adds several versions of a new piece sends one added event and compares every other event with a lower version', async () => {
         const destinationId = await subscribe({ platformId: entitledA.platform.id })
 
         await sync([
@@ -281,21 +282,31 @@ describe('Official piece events', () => {
         ])
 
         const sent = deliveriesTo(destinationId)
-        expect(sent.map((delivery) => delivery.event.data.piece.version).sort()).toEqual(['0.1.0', '0.2.0', '0.3.0'])
         expect(sent.filter((delivery) => delivery.event.action === ApplicationEventName.OFFICIAL_PIECE_ADDED)).toHaveLength(1)
-        expect(sent.filter((delivery) => delivery.event.data.piece.previousVersion === null)).toHaveLength(1)
+        const versionEvents = sent.filter((delivery) => delivery.event.action !== ApplicationEventName.OFFICIAL_PIECE_ADDED)
+        expect(versionEvents.every(({ event }) => semver.lt(event.data.piece.previousVersion ?? '', event.data.piece.version))).toBe(true)
     })
 
-    it('a sync that adds a version older than the newest one sends a version event against the newest', async () => {
+    it('a sync that adds a hotfix on an older line compares it with the newest version below it', async () => {
+        await seed([{ name: '@test/gmail', version: '0.1.6' }, { name: '@test/gmail', version: '0.2.1' }])
+        const destinationId = await subscribe({ platformId: entitledA.platform.id })
+
+        await sync([{ name: '@test/gmail', version: '0.1.7' }])
+
+        const sent = deliveriesTo(destinationId)
+        expect(sent).toHaveLength(1)
+        expect(sent[0].event.action).toBe(ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED)
+        expect(sent[0].event.data.piece).toMatchObject({ version: '0.1.7', previousVersion: '0.1.6', changeType: 'patch' })
+    })
+
+    it('a sync that adds a version lower than every saved version saves it and sends no event', async () => {
         await seed([{ name: '@test/gmail', version: '0.9.0' }])
         const destinationId = await subscribe({ platformId: entitledA.platform.id })
 
         await sync([{ name: '@test/gmail', version: '0.8.4' }])
 
-        const sent = deliveriesTo(destinationId)
-        expect(sent).toHaveLength(1)
-        expect(sent[0].event.action).toBe(ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED)
-        expect(sent[0].event.data.piece).toMatchObject({ version: '0.8.4', previousVersion: '0.9.0', changeType: 'minor' })
+        expect(deliveriesTo(destinationId)).toEqual([])
+        expect(await databaseConnection().getRepository('piece_metadata').countBy({ name: '@test/gmail', version: '0.8.4' })).toBe(1)
     })
 
     it('a sync that adds a major version saves it and sends no event', async () => {

@@ -164,7 +164,7 @@ Official piece events fire when official piece versions are added to your instan
 
 Patch versions are frequent, so subscribe to `official_piece.patch_version.added` only if you need them.
 
-The envelope carries `platformId` but no project or user: there is no `projectId`, `userId`, `userEmail`, or `ip`. `changeType` is `new` for `official_piece.added`, `minor` for `official_piece.minor_version.added`, and `patch` for `official_piece.patch_version.added`. `previousVersion` is the newest version your instance had before this one. The sync adds the newest versions first, so `version` can be lower than `previousVersion`, and `changeType` then describes the difference between the two. `minimumSupportedRelease` and `maximumSupportedRelease` are the Activepieces releases the version supports.
+The envelope carries `platformId` but no project or user: there is no `projectId`, `userId`, `userEmail`, or `ip`. `changeType` is `new` for `official_piece.added`, `minor` for `official_piece.minor_version.added`, and `patch` for `official_piece.patch_version.added`. `previousVersion` is the newest version your instance has that is lower than `version`. A hotfix for an older line is compared with that line: `0.1.7` added after `0.2.1` is a `patch` of `0.1.6`. A version lower than every version your instance already has sends no event. `minimumSupportedRelease` and `maximumSupportedRelease` are the Activepieces releases the version supports.
 
 ```json
 {
