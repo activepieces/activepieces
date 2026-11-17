@@ -12,7 +12,8 @@ export class AiProvidersPage extends BasePage {
     await dialog.getByTestId('ai-provider-name').fill(name);
     await dialog.getByTestId('ai-provider-field-baseUrl').fill(baseUrl);
     await dialog.getByTestId('ai-provider-field-apiKey').fill(apiKey);
-    await dialog.getByTestId('ai-provider-field-apiKeyHeader').fill('Authorization');
+    await dialog.getByTestId('ai-provider-advanced-toggle').click();
+    await expect(dialog.getByTestId('ai-provider-field-apiKeyHeader')).toHaveValue('Authorization');
     await dialog.getByTestId('ai-provider-field-typedModels').fill(models);
     const created = this.page.waitForResponse((response) => response.request().method() === 'POST' && new URL(response.url()).pathname === '/api/v1/ai-providers');
     await dialog.getByTestId('ai-provider-connect-submit').click();
