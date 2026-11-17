@@ -46,6 +46,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { WorkerHealth } from '@/lib/statuses';
 import { cn } from '@/lib/utils';
 
 import { MoveItem, groupUtils, useMover } from './hooks';
@@ -262,7 +263,7 @@ export function SelectedLabel({
     <span className="flex min-w-0 items-center gap-2">
       {down && (
         <>
-          <StatusDot tone="danger" />
+          <StatusDot status={WorkerHealth.OFFLINE} />
           <span className="sr-only">{t('No workers online')}</span>
         </>
       )}
@@ -665,7 +666,7 @@ function Option({
       <span className="flex-1 truncate">{title}</span>
       {health !== null && (
         <StatusDot
-          tone={down ? 'danger' : 'success'}
+          status={down ? WorkerHealth.OFFLINE : WorkerHealth.ONLINE}
           className={cn(
             'w-36 shrink-0 text-xs',
             down ? 'text-danger-11' : 'text-gray-10',

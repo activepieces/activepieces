@@ -19,7 +19,7 @@ export const postgres = createPiece({
   minimumSupportedRelease: '0.88.2',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   logoUrl: 'https://cdn.activepieces.com/pieces/postgres.png',
-  authors: ["AbdullahBitar", "Willianwg", "dentych", "kishanprmr", "AbdulTheActivePiecer", "khaledmashaly", "abuaboud", "bjacobs42"],
+  authors: ["AbdullahBitar", "Willianwg", "dentych", "kishanprmr", "AbdulTheActivePiecer", "khaledmashaly", "abuaboud", "OdaiAhmed99", "bjacobs42"],
   auth: postgresAuth,
   actions: [findRows, insertRow, insertRows, updateRow, deleteRow, getTables, runQuery, ...postgresAiActions],
   triggers: [newRow, updatedRows],

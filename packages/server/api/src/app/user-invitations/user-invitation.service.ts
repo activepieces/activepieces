@@ -1,7 +1,8 @@
-import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, isNil, ProjectRole, RoleType, SeekPage, spreadIfDefined, unique } from '@activepieces/core-utils'
-import { ApEdition, INVITATION_EXPIRY_SECONDS, InvitationStatus, InvitationType, PlatformRole, RemoveProjectFromInvitationResponse, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, isNil, ProjectRole, RoleType, SeekPage, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ApEdition, DEFAULT_BRAND_LOGOS, INVITATION_EXPIRY_SECONDS, InvitationStatus, InvitationType, PlatformRole, RemoveProjectFromInvitationResponse, TelemetryEventName, UserInvitation, UserInvitationPreview, UserInvitationWithLink } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { JsonWebTokenError } from 'jsonwebtoken'
 import { EntityManager, In, IsNull, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
@@ -16,9 +17,10 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { telemetry } from '../helper/telemetry.utils'
-import { platformService } from '../platform/platform.service'
+import { platformRepo, platformService } from '../platform/platform.service'
 import { ProjectEntity } from '../project/project-entity'
 import { userService } from '../user/user-service'
+import { resumePageHooks } from '../waitpoints/resume-page-hooks'
 import { UserInvitationEntity } from './user-invitation.entity'
 
 export const userInvitationRepo = repoFactory(UserInvitationEntity)
@@ -27,11 +29,23 @@ const projectRepo = repoFactory(ProjectEntity)
 
 export const userInvitationsService = (log: FastifyBaseLogger) => ({
     async getOneByInvitationTokenOrThrow(invitationToken: string): Promise<UserInvitation> {
-        const decodedToken = await jwtUtils.decodeAndVerify<UserInvitationToken>({
+        const key = await jwtUtils.getJwtSecret()
+        const { data: decodedToken, error } = await tryCatch(() => jwtUtils.decodeAndVerify<UserInvitationToken>({
             jwt: invitationToken,
-            key: await jwtUtils.getJwtSecret(),
+            key,
             audience: JwtAudience.USER_INVITATION,
-        })
+        }))
+        if (error instanceof JsonWebTokenError) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'UserInvitation',
+                },
+            })
+        }
+        if (isNil(decodedToken)) {
+            throw error
+        }
         const invitation = await repo().findOneBy({
             id: decodedToken.id,
         })
@@ -45,6 +59,19 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             })
         }
         return invitation
+    },
+    async getPreviewByInvitationToken(invitationToken: string): Promise<UserInvitationPreview> {
+        const invitation = await this.getOneByInvitationTokenOrThrow(invitationToken)
+        const platform = await platformService(log).getOneOrThrow(invitation.platformId)
+        const theme = await resumePageHooks.get(log).getTheme({ platformId: invitation.platformId })
+        const memberCount = await userService(log).countActiveByPlatformId({ platformId: invitation.platformId })
+        return {
+            email: invitation.email,
+            platformName: platform.name,
+            platformLogoUrl: theme.logos.logoIconUrl === DEFAULT_BRAND_LOGOS.logoIconUrl ? null : theme.logos.logoIconUrl,
+            memberCount,
+            status: invitation.status,
+        }
     },
     async provisionUserInvitation({ email }: ProvisionUserInvitationParams): Promise<void> {
         const invitations = await repo().createQueryBuilder('user_invitation')
@@ -73,11 +100,13 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                     if (!isNil(invitation.projectId) && !isNil(invitation.projectRoleId)) {
                         await addToInvitedProject({ invitation, userId: user.id, log, context, failsWithoutProjectRoles: false })
                     }
-                    await userService(log).update({
-                        id: user.id,
-                        platformId: invitation.platformId,
-                        platformRole: invitation.platformRole,
-                    })
+                    if (context.ownerIdByPlatformId.get(invitation.platformId) !== user.id) {
+                        await userService(log).update({
+                            id: user.id,
+                            platformId: invitation.platformId,
+                            platformRole: invitation.platformRole,
+                        })
+                    }
                     break
                 }
                 case InvitationType.PROJECT: {
@@ -480,18 +509,21 @@ async function loadProvisioningContext({ invitations, log }: LoadProvisioningCon
     const projectRoleIds = unique(withProject.map((invitation) => invitation.projectRoleId).filter((id): id is string => !isNil(id)))
     const projectIds = unique(withProject.map((invitation) => invitation.projectId).filter((id): id is string => !isNil(id)))
     const platformIds = unique(withProject.map((invitation) => invitation.platformId))
-    const [projectRoles, liveProjects, platforms] = await Promise.all([
+    const invitedPlatformIds = unique(invitations.map((invitation) => invitation.platformId))
+    const [projectRoles, liveProjects, platforms, invitedPlatforms] = await Promise.all([
         projectRoleIds.length === 0 ? [] : projectRoleRepo().findBy([
             { id: In(projectRoleIds), platformId: In(platformIds) },
             { id: In(projectRoleIds), type: RoleType.DEFAULT },
         ]),
         projectIds.length === 0 ? [] : projectRepo().findBy({ id: In(projectIds), platformId: In(platformIds) }),
         Promise.all(platformIds.map((platformId) => platformService(log).getOneWithPlanOrThrow(platformId))),
+        platformRepo().findBy({ id: In(invitedPlatformIds) }),
     ])
     return {
         projectRoleById: new Map(projectRoles.map((projectRole) => [projectRole.id, projectRole])),
         liveProjectPlatformIdById: new Map(liveProjects.map((project) => [project.id, project.platformId])),
         projectRolesEnabledByPlatformId: new Map(platforms.map((platform) => [platform.id, platform.plan.projectRolesEnabled])),
+        ownerIdByPlatformId: new Map(invitedPlatforms.map((platform) => [platform.id, platform.ownerId])),
     }
 }
 
@@ -604,6 +636,7 @@ type ProvisioningContext = {
     projectRoleById: Map<string, ProjectRole>
     liveProjectPlatformIdById: Map<string, string>
     projectRolesEnabledByPlatformId: Map<string, boolean>
+    ownerIdByPlatformId: Map<string, string>
 }
 
 type AddToInvitedProjectParams = {

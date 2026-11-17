@@ -5,7 +5,6 @@ export type SandboxMount = {
     hostPath: string
     sandboxPath: string
     optional?: boolean
-    rw?: boolean
 }
 
 export type SandboxResourceLimits = {

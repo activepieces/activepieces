@@ -197,6 +197,28 @@ describe('agentRpcHandlers.updateAgentProgress — incremental LLM message persi
         expect(updates.uiMessages).toBeDefined()
     })
 
+    it('sends only the turn to the database when the worker reports a turn, not the stored history', async () => {
+        mockSetParameters.mockClear()
+        const turnMessages = [{ role: 'assistant', content: 'step 1' }]
+        const turnUiMessages = [{ role: 'assistant', parts: [] }]
+
+        await agentRpcHandlers(noopLogger as never).updateAgentProgress({
+            conversationId: 'conv-1',
+            runId: 'run-1',
+            turn: { baseMessageCount: 6348, messages: turnMessages, baseUiMessageCount: 3200, uiMessages: turnUiMessages },
+        })
+
+        const updates = mockSet.mock.calls[0][0]
+        expect(typeof updates.messages).toBe('function')
+        expect(typeof updates.uiMessages).toBe('function')
+        const parameters = mockSetParameters.mock.calls[0][0]
+        expect(parameters.baseMessageCount).toBe(6348)
+        expect(parameters.baseUiMessageCount).toBe(3200)
+        expect(JSON.parse(parameters.turnMessages)).toEqual(turnMessages)
+        expect(JSON.parse(parameters.turnUiMessages)).toEqual(turnUiMessages)
+        expect(mockAndWhere).toHaveBeenCalledWith({ streamingStatus: 'STREAMING' })
+    })
+
     it('fences the write on the owning run id so a superseded run is rejected by the DB', async () => {
         await callUpdateChatProgress({ conversationId: 'conv-1', runId: 'run-1', uiMessages: [{ role: 'assistant', parts: [] }], messages: [{ role: 'assistant', content: 'x' }] })
 

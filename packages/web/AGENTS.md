@@ -43,6 +43,16 @@ You are working in the Activepieces web application (`packages/web`).
 - **Overflowing text must use `TextWithTooltip`** (from `@/components/custom/text-with-tooltip`). Wrap any text that may overflow its container (emails, IDs, long names) in `<TextWithTooltip tooltipMessage={text}><p className="...">{text}</p></TextWithTooltip>`. It auto-detects truncation and only shows the tooltip when the text actually overflows. Ensure parent flex containers have `min-w-0` so `truncate` works correctly.
 - **Copy-to-clipboard UI must use `CopyToClipboardInput`** (from `@/components/custom/clipboard/copy-to-clipboard`). Never hand-roll a readonly `<Input>` glued to a copy `<Button>` with `navigator.clipboard.writeText`. `CopyToClipboardInput` handles the copied-state toggle, tooltip, styling, and optional download button. Pass `useInput={true}` for single-line values (links, keys) or `useInput={false}` for multi-line content (textarea). Use `fileName` only when the value should also be downloadable.
 
+## Statuses
+
+- **Colours of a state come from `statusColors.of(status)`** (`src/lib/status-colors.ts`). `StatusBadge`, `StatusDot` and other status components take the status, never a colour or a tone.
+- **Use `StatusBadge` when the badge tells the state of something. Use `Badge` when it is only a label.**
+  - A state can be stored on the entity. The API sends it: a run is Succeeded or Failed, a connection is Active or Error, an invitation is Pending.
+  - A state can also be derived. The API sends only facts, and the web app builds the state from them in one place in `src/lib/statuses.ts`. For example: credits are Warning or Error from the percentage used; a worker group is Online, Offline or Empty from the number of workers online and whether the group is in use; the save bar is Unsaved or Locked from unsaved changes and the plan; a batch is Never started or Failed to start from its batch signals.
+  - A label tells no state: "Default", "Built in", "Yearly", "3 selected". A label keeps its own look.
+  - Do not give a `Badge` a success, warning or danger look to show a state. Show the state with `StatusBadge`, so it looks the same on every screen.
+- **When booleans or checks derived from data (for example, "is this config property null") together make a state the user sees, and every combination can happen, add an enum to `src/lib/statuses.ts` and build it in one function.** The same state then looks the same on every screen. If some combinations can never happen, the API should probably send one enum instead (see `packages/server/AGENTS.md`). Apply this only where it makes the code simpler.
+
 ## Accessible markup
 
 - **Every interactive element has a role and an accessible name.** Use a real `<button>` / `<a>` (the Shadcn `Button`), never a clickable `div`. Link each `FormLabel` to its input through `FormControl`. Give an icon-only button an `aria-label` with a translation key.

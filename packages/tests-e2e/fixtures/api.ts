@@ -21,7 +21,11 @@ async function deleteConnection({ request, session, connectionId }: { request: A
   await deleteById({ request, session, resource: 'app-connections', id: connectionId });
 }
 
-async function invitePlatformMember({ request, session, email }: { request: APIRequestContext; session: E2eSession; email: string }) {
+async function deleteAiProvider({ request, session, providerId }: { request: APIRequestContext; session: E2eSession; providerId: string }) {
+  await deleteById({ request, session, resource: 'ai-providers', id: providerId });
+}
+
+async function invitePlatformMember({ request, session, email }: { request: APIRequestContext; session: E2eSession; email: string }): Promise<{ id: string }> {
   const response = await request.post('/api/v1/user-invitations', {
     headers: { Authorization: `Bearer ${session.token}` },
     data: { type: 'PLATFORM', email, platformRole: 'MEMBER' },
@@ -29,6 +33,8 @@ async function invitePlatformMember({ request, session, email }: { request: APIR
   if (!response.ok()) {
     throw new Error(`Inviting ${email} failed with ${response.status()}: ${await response.text()}`);
   }
+  const invitation: { id: string } = await response.json();
+  return { id: invitation.id };
 }
 
 async function acceptInvitation({ request, link }: { request: APIRequestContext; link: URL }) {
@@ -38,6 +44,19 @@ async function acceptInvitation({ request, link }: { request: APIRequestContext;
   if (!response.ok()) {
     throw new Error(`Accepting the invitation failed with ${response.status()}: ${await response.text()}`);
   }
+}
+
+async function readInvitationStatus({ request, link }: { request: APIRequestContext; link: URL }): Promise<string> {
+  const response = await request.get('/api/v1/user-invitations/preview', { params: { token: link.searchParams.get('token') ?? '' } });
+  if (!response.ok()) {
+    throw new Error(`Reading the invitation failed with ${response.status()}: ${await response.text()}`);
+  }
+  const preview: { status: string } = await response.json();
+  return preview.status;
+}
+
+async function deleteInvitation({ request, session, invitationId }: { request: APIRequestContext; session: E2eSession; invitationId: string }) {
+  await deleteById({ request, session, resource: 'user-invitations', id: invitationId });
 }
 
 async function signUp({ request, email, password }: { request: APIRequestContext; email: string; password: string }): Promise<{ userId: string }> {
@@ -166,8 +185,11 @@ export const e2eApi = {
   readSession,
   deleteFlow,
   deleteConnection,
+  deleteAiProvider,
   invitePlatformMember,
   acceptInvitation,
+  readInvitationStatus,
+  deleteInvitation,
   signUp,
   signIn,
   deleteUser,
@@ -178,7 +200,7 @@ export const e2eApi = {
 
 export type E2eSession = { token: string; projectId: string };
 
-type Resource = 'flows' | 'app-connections' | 'users';
+type Resource = 'flows' | 'app-connections' | 'users' | 'user-invitations' | 'ai-providers';
 type FlowSummary = { id: string; created: string; version: { displayName: string } };
 type ConnectionSummary = { id: string; created: string; displayName: string };
 type FlowState = {
