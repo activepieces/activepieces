@@ -92,7 +92,7 @@ export const buildEventLabels = (): EventLabelsMap => {
       'Official piece minor version added',
     ),
     [ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED]: t(
-      'Official piece patch added',
+      'Official piece patch version added',
     ),
   };
 };
