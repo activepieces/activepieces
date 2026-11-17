@@ -83,11 +83,12 @@ async function deleteStaleData({ request, session }: { request: APIRequestContex
   return { flows: staleFlows.length, connections: staleConnections.length };
 }
 
-async function seedFlow({ request, session, template, publish, onCreated }: {
+async function seedFlow({ request, session, template, publish, connections, onCreated }: {
   request: APIRequestContext;
   session: E2eSession;
   template: FlowTemplate;
   publish: boolean;
+  connections: Record<string, string>;
   onCreated: (flowId: string) => void;
 }): Promise<SeededFlow> {
   const [source] = template.flows;
@@ -100,7 +101,10 @@ async function seedFlow({ request, session, template, publish, onCreated }: {
     data: { displayName: flowName, projectId: session.projectId },
   });
   onCreated(flow.id);
-  const trigger = await withInstalledPieceVersions({ request, session, trigger: source.trigger });
+  const trigger = withConnections({
+    trigger: await withInstalledPieceVersions({ request, session, trigger: source.trigger }),
+    connections: new Map(Object.entries(connections)),
+  });
   await callApi({
     request,
     session,
@@ -220,6 +224,33 @@ async function readPieceVersion({ request, session, pieceName }: { request: APIR
 
 function isPieceSettings(value: unknown): value is { pieceName: string; pieceVersion: string } {
   return typeof value === 'object' && value !== null && 'pieceName' in value && typeof value.pieceName === 'string' && 'pieceVersion' in value;
+}
+
+function withConnections({ trigger, connections }: { trigger: unknown; connections: Map<string, string> }): unknown {
+  const boundSteps = new Set<string>();
+  const bound: unknown = JSON.parse(JSON.stringify(trigger), (_key, value: unknown) => {
+    if (!isStepWithInput(value)) {
+      return value;
+    }
+    const externalId = connections.get(value.name);
+    if (externalId === undefined) {
+      return value;
+    }
+    boundSteps.add(value.name);
+    return { ...value, settings: { ...value.settings, input: { ...value.settings.input, auth: `{{connections['${externalId}']}}` } } };
+  });
+  const missingSteps = [...connections.keys()].filter((stepName) => !boundSteps.has(stepName));
+  if (missingSteps.length > 0) {
+    throw new Error(`seed.flow got a connection for ${missingSteps.join(', ')}, but the template has no step with that name and an input`);
+  }
+  return bound;
+}
+
+function isStepWithInput(value: unknown): value is { name: string; settings: { input: Record<string, unknown> } } {
+  return typeof value === 'object' && value !== null
+    && 'name' in value && typeof value.name === 'string'
+    && 'settings' in value && typeof value.settings === 'object' && value.settings !== null
+    && 'input' in value.settings && typeof value.settings.input === 'object' && value.settings.input !== null;
 }
 
 async function callApi<T>({ request, session, method, path, data, params }: {
