@@ -1,8 +1,9 @@
 import { resolveTxt } from 'dns/promises'
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil, PlatformId, spreadIfDefined, tryCatch, UserId } from '@activepieces/core-utils'
-import { ApEdition, AuthenticationResponse, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, UserIdentityProvider } from '@activepieces/shared'
+import { ApEdition, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
+import { AuthenticationResult } from '../../../authentication/authentication-utils'
 import { authenticationService } from '../../../authentication/authentication.service'
 import { domainHelper } from '../../../helper/domain-helper'
 import { system } from '../../../helper/system/system'
@@ -42,11 +43,11 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                 redirectUrl,
             }
         },
-        async acs(platformId: string, samlProvider: SAMLAuthnProviderConfig, idpLoginResponse: IdpLoginResponse): Promise<AuthenticationResponse> {
+        async acs(platformId: string, samlProvider: SAMLAuthnProviderConfig, idpLoginResponse: IdpLoginResponse): Promise<AuthenticationResult> {
             const acsUrl = await this.getAcsUrl(platformId)
             const client = await createSamlClient({ platformId, samlProvider, acsUrl })
             const attributes = await client.parseAndValidateLoginResponse(idpLoginResponse)
-            const { response } = await authenticationService(log).federatedAuthn({
+            return authenticationService(log).federatedAuthn({
                 email: attributes.email,
                 firstName: attributes.firstName,
                 lastName: attributes.lastName,
@@ -55,29 +56,26 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                 provider: UserIdentityProvider.SAML,
                 predefinedPlatformId: platformId,
             })
-            return response
         },
         async discoverByDomain(domain: string): Promise<DiscoverResult> {
+            const platformId = await this.findPlatformIdByDomain({ domain })
+            if (isNil(platformId)) {
+                return { platformId: null }
+            }
+            const samlConfigured = await platformService(log).hasSamlConfigured(platformId)
+            return { platformId: samlConfigured ? platformId : null }
+        },
+        async findPlatformIdByDomain({ domain }: FindPlatformIdByDomainParams): Promise<PlatformId | null> {
             const ssoDomain = domain.trim().toLowerCase()
             if (ssoDomain.length === 0) {
-                return { platformId: null }
+                return null
             }
             const platform = await platformRepo().findOneBy({ ssoDomain })
-            if (isNil(platform)) {
-                return { platformId: null }
-            }
-            if (platform.ssoDomainVerification?.status !== SsoDomainVerificationStatus.VERIFIED) {
-                return { platformId: null }
+            if (isNil(platform) || platform.ssoDomainVerification?.status !== SsoDomainVerificationStatus.VERIFIED) {
+                return null
             }
             const plan = await platformPlanService(log).getOrCreateForPlatform(platform.id)
-            if (!plan.ssoEnabled) {
-                return { platformId: null }
-            }
-            const samlConfigured = await platformService(log).hasSamlConfigured(platform.id)
-            if (!samlConfigured) {
-                return { platformId: null }
-            }
-            return { platformId: platform.id }
+            return plan.ssoEnabled ? platform.id : null
         },
         async updateSsoDomain({ platformId, ssoDomain, userId, ip }: UpdateSsoDomainParams): Promise<SsoDomainState> {
             const normalized = ssoDomain?.trim().toLowerCase() ?? null
@@ -219,6 +217,10 @@ type SamlConfigResult = {
 
 type DiscoverResult = {
     platformId: string | null
+}
+
+type FindPlatformIdByDomainParams = {
+    domain: string
 }
 
 type UpdateSsoDomainParams = {

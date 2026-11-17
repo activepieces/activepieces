@@ -247,6 +247,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Subscriber": "Novo Assinante",
   "Tag Applied": "Tag Aplicada",
   "Completed Email Series": "Completed Email Series",

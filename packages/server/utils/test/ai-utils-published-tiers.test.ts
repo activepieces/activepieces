@@ -37,6 +37,6 @@ describe('aiUtils.createModel on the managed key with a published tier file', ()
 
         await modelTierCatalog.warmUp()
 
-        expect(() => aiUtils.createModel({ credentials: managed, modelId: PUBLISHED_ONLY_MODEL })).not.toThrow()
+        expect(() => aiUtils.createModel({ credentials: managed, modelId: PUBLISHED_ONLY_MODEL, billing: null })).not.toThrow()
     })
 })

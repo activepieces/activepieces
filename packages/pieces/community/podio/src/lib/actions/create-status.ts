@@ -1,19 +1,22 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
+import { podioClient } from '../common/client';
+import { podioProps } from '../common/props';
 import { podioAuth } from '../auth';
-import { podioApiCall, getAccessToken, dynamicSpaceProperty, dynamicOrgProperty } from '../common';
+import { createStatusOutputSchema } from '../output-schemas';
 
 export const createStatusAction = createAction({
   auth: podioAuth,
   name: 'create_status',
+  outputSchema: createStatusOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Status Update',
   description: 'Add a status to an item or workspace stream.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Posts a status update to a Podio workspace (space) stream, optionally with file/embed attachments or an attached poll. Use to share an announcement or post to a space feed; requires the space id and a status message. Not idempotent — each call posts a new status update.', idempotent: false },
   props: {
-    orgId: dynamicOrgProperty,
-    spaceId: dynamicSpaceProperty,
+    orgId: podioProps.orgId({ required: true }),
+    spaceId: podioProps.spaceId({ required: true }),
 
     value: Property.LongText({
       displayName: 'Status Message',
@@ -51,7 +54,6 @@ export const createStatusAction = createAction({
     }),
   },
   async run(context) {
-    const accessToken = getAccessToken(context.auth);
     const { 
       spaceId, 
       value, 
@@ -78,7 +80,7 @@ export const createStatusAction = createAction({
       throw new Error('Embed ID must be a number.');
     }
 
-    if (question && typeof question === 'object') {
+    if (question && typeof question === 'object' && Object.keys(question).length > 0) {
       if (!question['text'] || typeof question['text'] !== 'string') {
         throw new Error('Poll question must have a "text" property with the question text.');
       }
@@ -87,7 +89,7 @@ export const createStatusAction = createAction({
       }
     }
 
-    const body: any = {
+    const body: CreateStatusBody = {
       value: value.trim(),
     };
 
@@ -107,21 +109,27 @@ export const createStatusAction = createAction({
       body.question = question;
     }
 
-    const queryParams: any = {};
+    const queryParams: QueryParams = {};
     if (typeof alertInvite === 'boolean') {
-      queryParams.alert_invite = alertInvite.toString();
+      queryParams['alert_invite'] = alertInvite.toString();
     }
 
-    const response = await podioApiCall<{
+    return await podioClient.request<{
       status_id: number;
     }>({
       method: HttpMethod.POST,
-      accessToken,
-      resourceUri: `/status/space/${spaceId}/`,
+      auth: context.auth,
+      path: `/status/space/${spaceId}/`,
       body,
-      queryParams,
+      query: queryParams,
     });
-
-    return response;
   },
-}); 
+});
+
+type CreateStatusBody = {
+  value: string;
+  file_ids?: unknown[];
+  embed_id?: number;
+  embed_url?: string;
+  question?: Record<string, unknown>;
+};

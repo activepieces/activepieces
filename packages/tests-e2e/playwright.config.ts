@@ -15,19 +15,25 @@ const E2E_INSTANCE_URL = process.env.E2E_INSTANCE_URL || undefined;
 
 const editionConfigs = {
   ce: {
-    testIgnore: ['**/ee/**'],
+    testIgnore: ['**/ee/**', '**/cloud/**'],
   },
   ee: {
-    testIgnore: [],
+    testIgnore: ['**/cloud/**'],
+  },
+  cloud: {
+    testIgnore: ['**/ce/**', '**/ee/**'],
   },
 };
 
 const editionConfig = editionConfigs[AP_EDITION as keyof typeof editionConfigs];
 
+const QUARANTINE = /@quarantine/;
+
 const config: PlaywrightTestConfig = {
   testDir: './scenarios',
   testMatch: '**/*.spec.ts',
   testIgnore: editionConfig.testIgnore,
+  grepInvert: process.env.CI ? QUARANTINE : undefined,
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */

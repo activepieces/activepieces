@@ -43,6 +43,7 @@ vi.mock('@activepieces/server-utils', async () => {
                 data: init?.body,
                 responseType: 'arraybuffer',
                 validateStatus: () => true,
+                maxRedirects: 0,
                 timeout: 15_000,
                 maxContentLength: 64 * 1024,
                 maxBodyLength: 64 * 1024,

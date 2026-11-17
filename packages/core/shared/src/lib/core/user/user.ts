@@ -55,6 +55,7 @@ export const UserWithMetaInformation = z.object({
     updated: DateOrString,
     lastActiveDate: Nullable(DateOrString),
     imageUrl: Nullable(z.string()),
+    hasProjects: z.boolean().optional(),
 })
 
 export type UserWithMetaInformation = z.infer<typeof UserWithMetaInformation>

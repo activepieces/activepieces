@@ -1,4 +1,4 @@
-import { aiDevtools, evlogSetup } from '@activepieces/server-utils'
+import { aiDevtools, aiObservability, evlogSetup } from '@activepieces/server-utils'
 import { ApEnvironment } from '@activepieces/shared'
 import { getApiUrl, getSocketUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
@@ -20,7 +20,7 @@ process.on('unhandledRejection', (reason) => {
 function flushLogsThenExit(): void {
     worker.stopPolling()
     setTimeout(() => process.exit(1), LOG_FLUSH_TIMEOUT_MS)
-    evlogSetup.flush().catch(() => undefined).finally(() => process.exit(1))
+    Promise.all([evlogSetup.flush(), aiObservability.flush()]).catch(() => undefined).finally(() => process.exit(1))
 }
 
 async function main(): Promise<void> {
@@ -35,6 +35,7 @@ async function main(): Promise<void> {
             process.exit(1)
         }, 30_000)
         await worker.stop()
+        await aiObservability.flush()
         clearTimeout(timeout)
         process.exit(0)
     }

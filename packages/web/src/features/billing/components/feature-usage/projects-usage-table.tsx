@@ -17,6 +17,7 @@ import { DateTimePickerWithRange } from '@/components/custom/date-time-picker-ra
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { billingQueries } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
+import { authenticationSession } from '@/lib/authentication-session';
 
 export function ProjectsUsageTable({
   platformId,
@@ -96,7 +97,7 @@ function ProjectNameLink({
   const navigate = useNavigate();
   const goToProjectHome = () => {
     projectCollectionUtils.setCurrentProject(projectId);
-    navigate('/');
+    navigate(authenticationSession.appendProjectRoutePrefix('/automations'));
   };
   return (
     <TextWithTooltip tooltipMessage={projectName}>

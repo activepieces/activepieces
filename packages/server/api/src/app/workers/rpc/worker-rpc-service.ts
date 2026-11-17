@@ -1,11 +1,12 @@
 import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
+import { AgentRunSource, ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { aiRpcHandlers } from '../../ai/ai-rpc-handlers'
 import { websocketService } from '../../core/websockets.service'
 import { distributedStore, redisConnections } from '../../database/redis-connections'
+import { agentHelpers } from '../../ee/agent/agent-helpers'
 import { agentRpcHandlers } from '../../ee/agent/agent-rpc-handlers'
 import { chatPersonalizationService } from '../../ee/agent/personalization/chat-personalization-service'
 import { eventDestinationRpcHandlers } from '../../event-destinations/event-destinations-rpc-handlers'
@@ -22,7 +23,7 @@ import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
-import { shouldBlockRunOnCredits } from '../../platform/billing-provider'
+import { CreditCheckSpeed, shouldBlockRunOnCredits } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
@@ -114,7 +115,8 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             const creditsExhausted = await shouldBlockRunOnCredits({
                 platformId,
                 environment,
-                log,
+                creditCheckSpeed: CreditCheckSpeed.BACKGROUND,
+                log: log.child({ rpc: 'submitPayloads', flowVersion: { id: flowVersionId } }),
             })
 
             const flowRuns = await Promise.all(
@@ -343,7 +345,14 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         },
 
         async getAgentConfig(input) {
-            return agentRpcHandlers(agentRpcLog(log, input)).getAgentConfig(input)
+            const config = await agentRpcHandlers(agentRpcLog(log, input)).getAgentConfig(input)
+            const { conversationId, runId, source } = input
+            const flowStepReplyUndeliverable = socket?.connected === false && source === AgentRunSource.FLOW_STEP && !isNil(runId)
+            if (flowStepReplyUndeliverable) {
+                log.warn({ conversation: { id: conversationId }, run: { id: runId } }, '[workerRpc#getAgentConfig] Worker disconnected before the config reply, handing the lock to the redelivered copy')
+                await agentHelpers.handLockToRedelivery({ conversationId, runId })
+            }
+            return config
         },
 
         async saveAgentMessages(input) {

@@ -6,6 +6,7 @@ import {
 	jiraPaginatedApiCall,
 	sendJiraRequest,
 } from '.';
+import { MISSING_ACCOUNT_PLACEHOLDER, waitingPlaceholder } from './placeholders';
 import { DropdownOption, Property } from '@activepieces/pieces-framework';
 import { JiraDataCenterAuth, jiraDataCenterAuth } from '../../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -16,14 +17,16 @@ import dayjs from 'dayjs';
 export function getProjectIdDropdown(data?: DropdownParams) {
 	return Property.Dropdown({
 		auth: jiraDataCenterAuth,
-		displayName: data?.displayName ?? 'Project ID or Key',
+		displayName: data?.displayName ?? 'Project',
 		description: data?.description,
 		required: data?.required ?? true,
 		refreshers: data?.refreshers ?? [],
 		options: async ({ auth }) => {
 			if (!auth) {
 				return {
+					disabled: true,
 					options: [],
+					placeholder: MISSING_ACCOUNT_PLACEHOLDER,
 				};
 			}
 
@@ -43,7 +46,7 @@ export function getProjectIdDropdown(data?: DropdownParams) {
 export function getIssueIdDropdown(data?: DropdownParams) {
 	return Property.Dropdown({
 		auth: jiraDataCenterAuth,
-		displayName: data?.displayName ?? 'Issue ID or Key',
+		displayName: data?.displayName ?? 'Issue',
 		description: data?.description,
 		required: data?.required ?? true,
 		refreshers: data?.refreshers ?? [],
@@ -52,43 +55,56 @@ export function getIssueIdDropdown(data?: DropdownParams) {
 				return {
 					disabled: true,
 					options: [],
+					placeholder: waitingPlaceholder({ auth, waitingFor: 'Select a project first' }),
 				};
 			}
-			let startAt = 0;
-			let hasMore = true;
-			const options: DropdownOption<string>[] = [];
-			do {
-				const response = await sendJiraRequest({
-					method: HttpMethod.POST,
-					url: 'search',
-					auth: auth as JiraDataCenterAuth,
-					body: {
-						fields: ['summary'],
-						jql: `project=${projectId}`,
-						startAt,
-						maxResults: 100,
-					},
-				});
-				const issueList = response.body as SearchIssuesResponse;
-				options.push(
-					...issueList.issues.map((issue) => {
-						return {
-							label: `[${issue.key}] ${issue.fields.summary}`,
-							value: issue.id,
-						};
-					}),
-				);
 
-				startAt += 100;
-				hasMore = startAt < issueList.total;
-			} while (hasMore);
-
-			return {
-				disabled: false,
-				options,
-			};
+			return await fetchIssueOptions({
+				auth,
+				jql: `project = "${String(projectId).replace(/"/g, '\\"')}" ORDER BY updated DESC`,
+			});
 		},
 	});
+}
+
+async function fetchIssueOptions({
+	auth,
+	jql,
+}: {
+	auth: JiraDataCenterAuth;
+	jql: string;
+}): Promise<{ disabled: false; options: DropdownOption<string>[]; placeholder?: string }> {
+	const options: DropdownOption<string>[] = [];
+	let total = 0;
+	do {
+		const issueList = await jiraApiCall<SearchIssuesResponse>({
+			auth,
+			method: HttpMethod.POST,
+			resourceUri: '/search',
+			body: {
+				fields: ['summary'],
+				jql,
+				startAt: options.length,
+				maxResults: ISSUE_OPTIONS_PAGE_SIZE,
+			},
+		});
+		if (issueList.issues.length === 0) {
+			break;
+		}
+		options.push(
+			...issueList.issues.map((issue) => ({
+				label: `[${issue.key}] ${issue.fields.summary}`,
+				value: issue.id,
+			})),
+		);
+		total = issueList.total;
+	} while (options.length < total && options.length < ISSUE_OPTIONS_LIMIT);
+
+	return {
+		disabled: false,
+		options,
+		...(total > options.length ? { placeholder: `Showing the ${options.length.toLocaleString('en-US')} most recently updated issues` } : {}),
+	};
 }
 
 export function getIssueTypeIdDropdown(data?: DropdownParams) {
@@ -131,7 +147,9 @@ export function getUsersDropdown(data?: DropdownParams) {
 		options: async ({ auth, projectId }) => {
 			if (!auth) {
 				return {
+					disabled: true,
 					options: [],
+					placeholder: MISSING_ACCOUNT_PLACEHOLDER,
 				};
 			}
 
@@ -176,7 +194,7 @@ export const issueTypeIdProp = (displayName: string, required = true) =>
 				return {
 					disabled: true,
 					options: [],
-					placeholder: 'Please connect your account first',
+					placeholder: waitingPlaceholder({ auth, waitingFor: 'Select a project first' }),
 				};
 			}
 
@@ -215,7 +233,7 @@ export const issueLinkTypeIdProp = (displayName: string, required = true) =>
 				return {
 					disabled: true,
 					options: [],
-					placeholder: 'Please connect your account first',
+					placeholder: MISSING_ACCOUNT_PLACEHOLDER,
 				};
 			}
 
@@ -253,31 +271,10 @@ export const issueIdOrKeyProp = (displayName: string, required = true) =>
 				return {
 					disabled: true,
 					options: [],
-					placeholder: 'Please connect your account first',
+					placeholder: MISSING_ACCOUNT_PLACEHOLDER,
 				};
 			}
-			const authValue = auth as JiraDataCenterAuth;
-			const response = await jiraPaginatedApiCall<{ id: string; key: string }, 'issues'>({
-				auth: authValue,
-				resourceUri: '/search',
-				propertyName: 'issues',
-				query: { fields: 'summary' },
-				method: HttpMethod.GET,
-			});
-
-			const options: DropdownOption<string>[] = [];
-
-			for (const issue of response) {
-				options.push({
-					value: issue.id,
-					label: issue.key,
-				});
-			}
-
-			return {
-				disabled: false,
-				options,
-			};
+			return await fetchIssueOptions({ auth, jql: 'ORDER BY updated DESC' });
 		},
 	});
 
@@ -292,7 +289,7 @@ export const issueStatusIdProp = (displayName: string, required = true) =>
 				return {
 					disabled: true,
 					options: [],
-					placeholder: 'Please connect your account first and select an issue.',
+					placeholder: waitingPlaceholder({ auth, waitingFor: 'Select an issue first' }),
 				};
 			}
 
@@ -492,7 +489,7 @@ export async function createPropertyDefinition(
 		case 'date':
 			return Property.DateTime({
 				displayName: field.name,
-				description: 'Provide date in YYYY-MM-DD format.',
+				description: 'Only the date is sent; the time is ignored.',
 				required: isRequired,
 			});
 
@@ -512,14 +509,16 @@ export async function createPropertyDefinition(
 			return Property.ShortText({
 				displayName: field.name,
 				required: isRequired,
-				description: 'Provide project key.',
+				description: 'The project key, not its name.',
+				placeholder: 'PROJ',
 			});
 
 		case 'issuelink':
 			return Property.ShortText({
 				displayName: field.name,
 				required: isRequired,
-				description: 'Provide issue key.',
+				description: 'The issue key, not its ID.',
+				placeholder: 'PROJ-123',
 			});
 		default:
 			return null;
@@ -631,6 +630,11 @@ export function transformCustomFields(
 
 	return result;
 }
+
+export const jiraPropsInternals = { fetchIssueOptions };
+
+const ISSUE_OPTIONS_PAGE_SIZE = 100;
+const ISSUE_OPTIONS_LIMIT = 1000;
 
 export interface DropdownParams {
 	required?: boolean;

@@ -17,6 +17,7 @@ import {
   PieceTrigger,
   FlowTrigger,
   BranchExecutionType,
+  DEFAULT_BATCH_SIZE,
   RouterExecutionType,
   flowStructureUtil,
   StepSettings,
@@ -29,6 +30,7 @@ import {
   FlowVersion,
   FlowOperationType,
   AUTHENTICATION_PROPERTY_NAME,
+  StepLocationRelativeToParent,
 } from '@activepieces/shared';
 import { useRef } from 'react';
 
@@ -106,7 +108,8 @@ const isStepInitiallyValid = (
         requireAuth: pieceSelectorItem.actionOrTrigger.requireAuth,
       });
     }
-    case FlowActionType.LOOP_ON_ITEMS: {
+    case FlowActionType.LOOP_ON_ITEMS:
+    case FlowActionType.PROCESS_IN_BATCHES: {
       if (
         overrideDefaultSettings &&
         'input' in overrideDefaultSettings &&
@@ -211,6 +214,18 @@ const getDefaultStepValues = ({
           type: FlowActionType.LOOP_ON_ITEMS,
           settings: overrideDefaultSettings ?? {
             items: '',
+          },
+        },
+        common,
+      );
+    case FlowActionType.PROCESS_IN_BATCHES:
+      return deepMergeAndCast<FlowAction>(
+        {
+          type: FlowActionType.PROCESS_IN_BATCHES,
+          settings: overrideDefaultSettings ?? {
+            items: '',
+            batchSize: DEFAULT_BATCH_SIZE,
+            errorHandlingOptions,
           },
         },
         common,
@@ -411,6 +426,56 @@ const getStepNameFromOperationType = (
       return 'trigger';
   }
 };
+const isStepInsideBatch = ({
+  flowVersion,
+  stepName,
+}: {
+  flowVersion: FlowVersion;
+  stepName: string;
+}): boolean =>
+  flowStructureUtil
+    .getAllSteps(flowVersion.trigger)
+    .some(
+      (step) =>
+        step.type === FlowActionType.PROCESS_IN_BATCHES &&
+        flowStructureUtil.isChildOf(step, stepName),
+    );
+
+const getHiddenStepTypes = ({
+  operation,
+  flowVersion,
+}: {
+  operation: PieceSelectorOperation;
+  flowVersion: FlowVersion;
+}): FlowActionType[] => {
+  switch (operation.type) {
+    case FlowOperationType.UPDATE_TRIGGER:
+      return [];
+    case FlowOperationType.UPDATE_ACTION: {
+      const stepType = flowStructureUtil.getStep(
+        operation.stepName,
+        flowVersion.trigger,
+      )?.type;
+      if (stepType === FlowActionType.PROCESS_IN_BATCHES) {
+        return [FlowActionType.LOOP_ON_ITEMS];
+      }
+      return stepType === FlowActionType.LOOP_ON_ITEMS ||
+        isStepInsideBatch({ flowVersion, stepName: operation.stepName })
+        ? [FlowActionType.PROCESS_IN_BATCHES]
+        : [];
+    }
+    case FlowOperationType.ADD_ACTION: {
+      const { parentStep, stepLocationRelativeToParent } =
+        operation.actionLocation;
+      return stepLocationRelativeToParent ===
+        StepLocationRelativeToParent.INSIDE_BATCH ||
+        isStepInsideBatch({ flowVersion, stepName: parentStep })
+        ? [FlowActionType.PROCESS_IN_BATCHES]
+        : [];
+    }
+  }
+};
+
 export const pieceSelectorUtils = {
   getDefaultStepValues,
   useAdjustPieceListHeightToAvailableSpace,
@@ -419,6 +484,8 @@ export const pieceSelectorUtils = {
   isChatTrigger,
   removeHiddenActions,
   getStepNameFromOperationType,
+  isStepInsideBatch,
+  getHiddenStepTypes,
   isManualTrigger: isManualPieceTrigger,
   PIECE_SELECTOR_CLIPPING_THRESHOLD: 20 as const,
 };

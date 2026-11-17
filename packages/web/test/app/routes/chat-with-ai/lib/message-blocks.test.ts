@@ -317,6 +317,24 @@ describe('buildMessageBlocks — one accordion per segment', () => {
     expect(blocks.map((b) => b.kind)).toEqual(['thinking', 'card-skeleton']);
   });
 
+  it('drops the skeleton once an action finishes without a receipt, as a declared read does', () => {
+    const blocks = buildMessageBlocks({
+      parts: [
+        status('Splitting the text'),
+        tool({
+          name: 'ap_execute_action',
+          id: 'exec',
+          input: { actionName: 'split', input: {} },
+          output: { success: true },
+        }),
+      ],
+      isStreaming: true,
+      toolCallMeta: {},
+      claimedBuildIds: new Set(),
+    }).blocks;
+    expect(blocks.map((b) => b.kind)).toEqual(['thinking']);
+  });
+
   it('keeps pre-build discovery above the build card', () => {
     const blocks = buildMessageBlocks({
       parts: [

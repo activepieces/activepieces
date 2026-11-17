@@ -1,28 +1,28 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from '../common';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const getTask = createAction({
   auth: ninjapipeAuth,
   name: 'get_task',
   classification: 'READ',
   displayName: 'Get Task',
-  description: 'Retrieves a single task within a project.',
+  description: 'Gets one task of a project.',
   audience: 'both',
-  aiMetadata: { description: 'Fetch a single task by its ID within a specific project to read its current details; requires both the project ID and the task ID. Use when you already have both IDs. Read-only and idempotent.', idempotent: true },
+  aiMetadata: { description: 'Fetch a single task by project ID and task ID. Read-only.', idempotent: true },
+  outputSchema: ninjapipeSchemas.task,
   props: {
-    projectId: ninjapipeCommon.projectDropdownRequired,
-    taskId: ninjapipeCommon.taskDropdown,
+    projectId: ninjapipeProps.projectRequired(),
+    taskId: ninjapipeProps.task(),
   },
   async run(context) {
-    const auth = getAuth(context);
-    const { projectId, taskId } = context.propsValue;
-    const response = await ninjapipeApiCall<Record<string, unknown>>({
-      auth,
-      method: HttpMethod.GET,
-      path: `/projects/${encodeURIComponent(String(projectId))}/tasks/${encodeURIComponent(String(taskId))}`,
+    const p = context.propsValue;
+    return ninjapipeClient.getRecord({
+      auth: ninjapipeClient.readAuth(context.auth),
+      path: `/projects/${ninjapipeClient.pathId({ value: p.projectId, field: 'Project' })}/tasks/${ninjapipeClient.pathId({ value: p.taskId, field: 'Task' })}`,
+      operation: 'get task',
     });
-    return flattenCustomFields(response.body);
   },
 });

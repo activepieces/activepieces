@@ -84,8 +84,10 @@ const ResetPasswordForm = () => {
                     <Label htmlFor="email">{t('Email')}</Label>
                     <Input
                       {...field}
+                      id="email"
                       type="text"
                       placeholder={'email@example.com'}
+                      data-testid="reset-password-email"
                     />
                     <FormMessage />
                   </FormItem>
@@ -94,6 +96,7 @@ const ResetPasswordForm = () => {
               <Button
                 className="w-full mt-4"
                 loading={isPending}
+                data-testid="reset-password-send"
                 onClick={(e) => form.handleSubmit(onSubmit)(e)}
               >
                 {t('Send Password Reset Link')}

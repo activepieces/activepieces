@@ -1,11 +1,13 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-
-import { webflowAuth } from '../..';
+import { webflowAuth } from '../auth';
+import { webflowClient } from '../common/client';
 import { webflowProps } from '../common/props';
-import { WebflowApiClient } from '../common/client';
+import { orderOutputSchema } from '../output-schemas';
 
-export const webflowFulfillOrder = createAction({
+export const fulfillOrderAction = createAction({
 	auth: webflowAuth,
+	outputSchema: orderOutputSchema,
 	name: 'fulfill_order',
 	classification: 'WRITE',
 	description: 'Fulfill order',
@@ -13,8 +15,8 @@ export const webflowFulfillOrder = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Marks an existing Webflow Ecommerce order as fulfilled, identified by site ID and order ID, optionally sending the customer a fulfillment email. Use after shipping or completing an order. Setting fulfilled state is idempotent, but enabling the email may resend a notification, so prefer leaving it off when retrying.', idempotent: false },
 	props: {
-		site_id: webflowProps.site_id,
-		order_id: webflowProps.order_id,
+		site_id: webflowProps.siteId({ required: true }),
+		order_id: webflowProps.orderId({ required: true }),
 		send_order_fulfilled_email: Property.Checkbox({
 			displayName: 'Send Order Fulfilled Email',
 			description: 'Send an email to the customer that their order has been fulfilled',
@@ -27,8 +29,11 @@ export const webflowFulfillOrder = createAction({
 		const siteId = context.propsValue.site_id;
 		const sendOrderFulfilledEmail = context.propsValue.send_order_fulfilled_email;
 
-		const client = new WebflowApiClient(context.auth.access_token);
-
-		return await client.fulfillOrder(siteId, orderId, { sendOrderFulfilledEmail });
+		return await webflowClient.request<unknown>({
+			auth: context.auth,
+			method: HttpMethod.POST,
+			path: `/v2/sites/${encodeURIComponent(siteId)}/orders/${encodeURIComponent(orderId)}/fulfill`,
+			body: { sendOrderFulfilledEmail },
+		});
 	},
 });

@@ -2,8 +2,8 @@ import { createTrigger, TriggerStrategy, Property, AppConnectionValueForAuthProp
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof bexioAuth>,
@@ -83,6 +83,7 @@ export const newQuoteTrigger = createTrigger({
   aiMetadata: {
     description: 'Fires when a quote (offer) is created or its updated timestamp changes in Bexio, optionally filtered to a chosen quote status. Emits each matching quote with its document number, contact, totals (gross, net, taxes), validity dates, and status. Use to react to new or modified quotes.',
   },
+  outputSchema: bexioOutputSchemas.quoteSummaryOutputSchema,
   type: TriggerStrategy.POLLING,
   props: {
     status_id: Property.Dropdown({

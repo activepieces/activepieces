@@ -31,11 +31,9 @@ function useFlowLock() {
   const canEditFlow = checkAccess(Permission.WRITE_FLOW);
 
   // refresh the flow in place after a successful take-over; a full-page
-  // reload would break the embed SDK handshake inside an iframe. When viewing
-  // a run, mirror EditFlowOrViewDraftButton: navigate to the flow
-  // (client-side, embed-safe) instead of editing a draft under the run view.
-  // Branch on the builder run state, not the URL: embed mounts a memory
-  // router, so window.location never reflects the in-app route.
+  // reload would break the embed SDK handshake inside an iframe. When a run
+  // is shown, navigate to the flow (client-side, embed-safe) instead of
+  // editing a draft under the run view.
   const onTakeOver = useCallback(() => {
     if (!isNil(run)) {
       navigate(`/flows/${flowId}`);

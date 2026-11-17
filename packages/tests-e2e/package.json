@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "test-e2e": "npx playwright test --config=playwright.config.ts",
-    "lint": "eslint 'scenarios/**/*.ts'"
+    "lint": "eslint 'scenarios/**/*.ts' 'pages/**/*.ts' 'fixtures/**/*.ts' global-setup.ts"
   },
   "dependencies": {},
   "devDependencies": {
     "@faker-js/faker": "10.5.0",
     "@playwright/test": "1.64.1",
     "checkly": "6.9.10",
-    "dotenv": "17.2.3"
+    "dotenv": "17.2.3",
+    "eslint-plugin-playwright": "2.12.1"
   }
 }

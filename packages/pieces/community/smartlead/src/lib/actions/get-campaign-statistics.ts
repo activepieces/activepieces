@@ -1,7 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { smartleadRequest } from '../common/client';
+import { createAction } from '@activepieces/pieces-framework';
 import { smartleadAuth } from '../auth';
+import { smartleadOperations } from '../common/operations';
+import { smartleadOutputSchemas } from '../common/output-schemas';
+import { smartleadProps } from '../common/props';
 
 export const getCampaignStatisticsAction = createAction({
   auth: smartleadAuth,
@@ -10,27 +11,17 @@ export const getCampaignStatisticsAction = createAction({
   displayName: 'Get Campaign Statistics',
   description:
     'Retrieve comprehensive analytics for a campaign including open rates, click rates, reply rates, and engagement statistics.',
-  audience: 'both',
-  aiMetadata: {
-    description:
-      'Fetches aggregate performance analytics for a single SmartLead campaign by campaign ID, covering open, click, and reply rates and related engagement metrics. Use to report on or evaluate how a campaign is performing. Read-only and idempotent.',
-    idempotent: true,
-  },
+  audience: 'human',
+  outputSchema: smartleadOutputSchemas.campaignStatistics,
   props: {
-    campaign_id: Property.Number({
-      displayName: 'Campaign ID',
-      description: 'The ID of the campaign to get statistics for',
-      required: true,
+    campaign_id: smartleadProps.campaignDropdown({
+      description: 'The campaign to get statistics for',
     }),
   },
   async run(context) {
-    const { campaign_id } = context.propsValue;
-    const apiKey = context.auth.secret_text;
-
-    return await smartleadRequest({
-      endpoint: `campaigns/${campaign_id}/analytics`,
-      method: HttpMethod.GET,
-      apiKey,
+    return smartleadOperations.getCampaignStatistics({
+      apiKey: context.auth.secret_text,
+      campaignId: context.propsValue.campaign_id,
     });
   },
 });

@@ -356,6 +356,8 @@
   "PUT": "PUT",
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Contact Replied": "Contacto contestado",
   "Lead Added Email": "Correo principal añadido",
   "Lead Converted To User": "Prospectos convertidos a usuario",

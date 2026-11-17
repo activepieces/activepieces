@@ -1,4 +1,4 @@
-import { PlatformConfiguration, PrincipalType, UpdatePlatformConfigurationRequestBody } from '@activepieces/shared'
+import { PlatformConfiguration, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdatePlatformConfigurationRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
@@ -36,9 +36,12 @@ const GetPlatformConfigurationEndpoint = {
 
 const UpdatePlatformConfigurationEndpoint = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
+        tags: ['platform-configuration'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Update platform settings, including the default chat model and whether specific AI models are visible to builders.',
         body: UpdatePlatformConfigurationRequestBody,
         response: {
             [StatusCodes.OK]: PlatformConfiguration,

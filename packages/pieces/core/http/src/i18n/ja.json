@@ -23,7 +23,7 @@
   "The full URL to call, including https:// or http://": "The full URL to call, including https:// or http://",
   "Sent with the request as key-value pairs.": "Sent with the request as key-value pairs.",
   "Appended to the URL as a query string.": "Appended to the URL as a query string.",
-  "How to encode the request body. Leave as None for GET requests.": "How to encode the request body. Leave as None for GET requests.",
+  "How to encode the request body.": "How to encode the request body.",
   "Return the response as base64, for files like PDFs.": "Return the response as base64, for files like PDFs.",
   "Route this request through an HTTP proxy.": "Route this request through an HTTP proxy.",
   "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Seconds to wait for a response. Empty: up to the flow limit (10 min).",
@@ -39,13 +39,14 @@
   "None": "なし",
   "Basic Auth": "ベーシック認証",
   "Bearer Token": "ベアラートトークン",
-  "JSON": "JSON",
-  "Form Data": "フォームデータ",
-  "Raw": "Raw",
   "Retry on all errors (4xx, 5xx)": "すべてのエラー（4xxx、5xx）を再試行してください",
   "Retry on internal errors (5xx)": "内部エラーを再試行（5xx）",
   "Do not retry": "再試行しない",
   "Continue flow on all errors": "すべてのエラーでフローを続ける",
   "Continue flow on 4xx errors": "4xxエラー時にフローを続ける",
-  "Do not continue (stop the flow)": "続行しない (フローを停止する)"
+  "Do not continue (stop the flow)": "続行しない (フローを停止する)",
+  "Request": "Request",
+  "Credentials": "Credentials",
+  "Data to send": "Data to send",
+  "HTTP": "HTTP"
 }

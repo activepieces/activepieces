@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createGoogleClient } from '../common/common';
+import { createGoogleClient, googleSheetsCommon } from '../common/common';
 import { googleSheetsAuth } from '../common/common';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
 import { sheets as googleSheets } from '@googleapis/sheets';
@@ -55,7 +55,7 @@ export const createWorksheetAction = createAction({
     });
     const addHeadersResponse = await sheetsApi.spreadsheets.values.append({
         spreadsheetId,
-        range:`${context.propsValue.title}!A1`,
+        range:googleSheetsCommon.sheetRange({ sheetName: context.propsValue.title, range: 'A1' }),
         valueInputOption:'RAW',
         requestBody:{
             majorDimension:'ROWS',

@@ -151,3 +151,18 @@ export const resolveValueFromProps = (props: Record<string, unknown> | undefined
     })
     return resolvedScope
 }
+
+export function pickDefaultConnectionExternalId({ healthy, updatedByExternalId }: {
+    healthy: { externalId: string }[]
+    updatedByExternalId: Record<string, string | undefined>
+}): string | null {
+    const [newest] = [...healthy].sort((a, b) => {
+        const aUpdated = updatedByExternalId[a.externalId]
+        const bUpdated = updatedByExternalId[b.externalId]
+        if (aUpdated && bUpdated) return bUpdated.localeCompare(aUpdated)
+        if (aUpdated) return -1
+        if (bUpdated) return 1
+        return 0
+    })
+    return newest?.externalId ?? null
+}

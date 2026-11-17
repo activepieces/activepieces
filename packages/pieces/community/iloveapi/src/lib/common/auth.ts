@@ -1,5 +1,5 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { iLoveApi } from './client';
+import { ILoveApiError, iLoveApi } from './client';
 
 export const iloveapiAuth = PieceAuth.SecretText({
   displayName: 'Project Public Key',
@@ -18,10 +18,15 @@ Only the public key is required. Tokens are issued automatically per request.
     try {
       await iLoveApi.authenticate({ publicKey: auth });
       return { valid: true };
-    } catch {
+    } catch (error) {
+      const status = error instanceof ILoveApiError ? error.status : undefined;
+      if (status === 401 || status === 403) {
+        return { valid: false, error: 'Invalid iLoveAPI project public key.' };
+      }
+      const reason = error instanceof Error ? error.message : String(error);
       return {
         valid: false,
-        error: 'Invalid iLoveAPI project public key.',
+        error: `Could not verify the key with iLoveAPI right now: ${reason}`,
       };
     }
   },

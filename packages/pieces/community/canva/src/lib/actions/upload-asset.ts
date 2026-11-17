@@ -1,142 +1,102 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
 import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { canvaAuth } from '../../index';
-import { 
-  canvaCommon, 
-  AssetUploadResponse,
-  AssetUploadMetadata,
-  SUPPORTED_IMAGE_FORMATS,
-  SUPPORTED_VIDEO_FORMATS,
+  AssetUploadJob,
+  canvaAuth,
+  canvaCommon,
+  canvaProps,
+  MAX_ASSET_NAME_LENGTH,
   MAX_IMAGE_SIZE_MB,
   MAX_VIDEO_SIZE_MB,
-  MAX_ASSET_NAME_LENGTH
+  SUPPORTED_IMAGE_FORMATS,
+  SUPPORTED_VIDEO_FORMATS,
 } from '../common';
+import { canvaClient } from '../common/client';
+import { canvaOutputSchemas } from '../common/output-schemas';
 
 export const uploadAsset = createAction({
   auth: canvaAuth,
   name: 'upload_asset',
   classification: 'WRITE',
   displayName: 'Upload Asset',
-  description: 'Upload an image or video asset to your Canva library. This creates an asynchronous job that you can monitor for completion.',
-  audience: 'both',
+  description: 'Upload an image or video to your Canva library and wait until Canva has processed it.',
+  audience: 'human',
   aiMetadata: {
-    description:
-      "Uploads an image (max 50MB) or video (max 500MB) file into the user's Canva media library via an asynchronous job, with a required asset name of at most 50 characters. Pick this to add media for later use in designs; use Import Design instead when the file should become an editable design itself. Not idempotent: each call starts a new upload and creates a duplicate asset.",
+    description: 'Uploads a file to the Canva library. Human step; agents use canva_upload_asset_from_url. Not idempotent: each run creates another asset.',
     idempotent: false,
   },
+  outputSchema: canvaOutputSchemas.uploadAsset,
   props: {
     file: Property.File({
       displayName: 'Asset File',
-      description: `📁 Supported formats:
-      🖼️ Images (max 50MB): ${SUPPORTED_IMAGE_FORMATS.map(f => f.toUpperCase()).join(', ')}
-      🎬 Videos (max 500MB): ${SUPPORTED_VIDEO_FORMATS.map(f => f.toUpperCase()).join(', ')}`,
+      description: `Images (max ${MAX_IMAGE_SIZE_MB}MB): ${SUPPORTED_IMAGE_FORMATS.join(', ').toUpperCase()}. Videos (max ${MAX_VIDEO_SIZE_MB}MB): ${SUPPORTED_VIDEO_FORMATS.join(', ').toUpperCase()}.`,
       required: true,
     }),
     assetName: Property.ShortText({
       displayName: 'Asset Name',
-      description: '🏷️ Name for the asset (max 50 characters, supports emojis and special characters)',
+      description: `Name for the asset (max ${MAX_ASSET_NAME_LENGTH} characters).`,
       required: true,
     }),
+    ...canvaProps.waitProps(),
   },
   async run(context) {
-    const { file, assetName } = context.propsValue;
-    
-    if (!assetName || assetName.trim().length === 0) {
-      throw new Error('Asset name is required');
+    const { file, assetName, waitForCompletion, maxWaitSeconds } = context.propsValue;
+    const name = assetName.trim();
+    if (!name) {
+      throw new Error('Asset name is required.');
     }
-    
-    if (assetName.length > MAX_ASSET_NAME_LENGTH) {
-      throw new Error(`Asset name must be ${MAX_ASSET_NAME_LENGTH} characters or less`);
+    if (name.length > MAX_ASSET_NAME_LENGTH) {
+      throw new Error(`Asset name must be ${MAX_ASSET_NAME_LENGTH} characters or fewer.`);
     }
-    
-    if (!file) {
-      throw new Error('File is required');
+    const extension = file.filename?.split('.').pop()?.toLowerCase();
+    if (!extension) {
+      throw new Error('Could not tell the file type from the file name.');
     }
-    
-    const fileExtension = file.filename?.split('.').pop()?.toLowerCase();
-    if (!fileExtension) {
-      throw new Error('Unable to determine file type from filename');
-    }
-    
-    const isImage = SUPPORTED_IMAGE_FORMATS.includes(fileExtension);
-    const isVideo = SUPPORTED_VIDEO_FORMATS.includes(fileExtension);
-    
+    const isImage = SUPPORTED_IMAGE_FORMATS.includes(extension);
+    const isVideo = SUPPORTED_VIDEO_FORMATS.includes(extension);
     if (!isImage && !isVideo) {
-      throw new Error(`Unsupported file format: ${fileExtension}. Supported formats - Images: ${SUPPORTED_IMAGE_FORMATS.join(', ')}. Videos: ${SUPPORTED_VIDEO_FORMATS.join(', ')}`);
+      throw new Error(`Unsupported file format: ${extension}. Images: ${SUPPORTED_IMAGE_FORMATS.join(', ')}. Videos: ${SUPPORTED_VIDEO_FORMATS.join(', ')}.`);
     }
-    
-    const fileBuffer = Buffer.from(file.base64, 'base64');
-    const fileSizeMB = fileBuffer.length / (1024 * 1024);
-    
-    if (isImage && fileSizeMB > MAX_IMAGE_SIZE_MB) {
-      throw new Error(`Image file size (${fileSizeMB.toFixed(2)}MB) exceeds maximum limit of ${MAX_IMAGE_SIZE_MB}MB`);
+    const buffer = Buffer.from(file.base64, 'base64');
+    const sizeMb = buffer.length / (1024 * 1024);
+    const limitMb = isImage ? MAX_IMAGE_SIZE_MB : MAX_VIDEO_SIZE_MB;
+    if (sizeMb > limitMb) {
+      throw new Error(`File size (${sizeMb.toFixed(2)}MB) is over the ${limitMb}MB limit for ${isImage ? 'images' : 'videos'}.`);
     }
-    
-    if (isVideo && fileSizeMB > MAX_VIDEO_SIZE_MB) {
-      throw new Error(`Video file size (${fileSizeMB.toFixed(2)}MB) exceeds maximum limit of ${MAX_VIDEO_SIZE_MB}MB`);
-    }
-    
-    const nameBase64 = Buffer.from(assetName.trim()).toString('base64');
-    
-    const uploadMetadata: AssetUploadMetadata = {
-      name_base64: nameBase64,
+    const token = context.auth.access_token;
+    const started = await canvaClient.request<{ job: AssetUploadJob }>({
+      token,
+      method: HttpMethod.POST,
+      path: '/asset-uploads',
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'Asset-Upload-Metadata': JSON.stringify({ name_base64: canvaCommon.base64Utf8(name) }),
+      },
+      body: buffer,
+      timeoutMs: 300_000,
+    });
+    const job = waitForCompletion === false
+      ? started.job
+      : await canvaCommon.settleJob<AssetUploadJob>({
+          token,
+          kind: 'asset_upload',
+          initial: started.job,
+          timeoutSeconds: canvaCommon.clampWaitSeconds(maxWaitSeconds ?? undefined),
+          failOnTimeout: true,
+        });
+    return {
+      success: job.status !== 'failed',
+      job,
+      asset: job.asset ?? null,
+      file_info: {
+        name,
+        size_mb: Math.round(sizeMb * 100) / 100,
+        type: isImage ? 'image' : 'video',
+        format: extension.toUpperCase(),
+      },
+      message: job.status === 'success'
+        ? `Asset "${job.asset?.name ?? name}" uploaded. Asset ID: ${job.asset?.id ?? 'unknown'}`
+        : `Upload job ${job.id} is ${job.status}. Check it later with Get Job Status.`,
     };
-
-    try {
-      const response = await httpClient.sendRequest<AssetUploadResponse>({
-        method: HttpMethod.POST,
-        url: `${canvaCommon.baseUrl}/asset-uploads`,
-        headers: {
-          'Content-Type': 'application/octet-stream',
-          'Asset-Upload-Metadata': JSON.stringify(uploadMetadata),
-        },
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth.access_token,
-        },
-        body: fileBuffer,
-      });
-
-      return {
-        success: true,
-        job: response.body.job,
-        file_info: {
-          name: assetName.trim(),
-          size_mb: Math.round(fileSizeMB * 100) / 100,
-          type: isImage ? 'image' : 'video',
-          format: fileExtension.toUpperCase(),
-        },
-        message: `Asset upload job created successfully. Job ID: ${response.body.job.id}. Status: ${response.body.job.status}`,
-        next_steps: response.body.job.status === 'in_progress' 
-          ? 'Use the "Get Asset Upload Job" action to check the status and get the final asset details.'
-          : undefined,
-      };
-    } catch (error: any) {
-      if (error.response?.status === 429) {
-        throw new Error('Rate limit exceeded. Please wait before making another request (30 requests per minute limit).');
-      }
-      
-      if (error.response?.status === 401) {
-        throw new Error('Authentication failed. Please check your Canva connection.');
-      }
-      
-      if (error.response?.status === 403) {
-        throw new Error('Access forbidden. Make sure your integration has the required scope: asset:write');
-      }
-      
-      if (error.response?.status === 413) {
-        throw new Error('File too large. Check file size limits: Images max 50MB, Videos max 500MB.');
-      }
-      
-      if (error.response?.data?.message) {
-        throw new Error(`Canva API error: ${error.response.data.message}`);
-      }
-      
-      throw new Error(`Failed to upload asset: ${error.message || 'Unknown error'}`);
-    }
   },
-}); 
+});

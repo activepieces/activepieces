@@ -1,5 +1,5 @@
 import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
-import { postgresAuth } from '../..';
+import { postgresAuth } from '../auth';
 import { pgClient, postgresCommon, postgresUtils } from '../common';
 import { updateRowOutputSchema } from '../output-schemas';
 
@@ -9,7 +9,7 @@ export const updateRow = createAction({
   classification: 'WRITE',
   displayName: 'Update Row',
   description: 'Updates one or more rows in a table',
-  audience: 'both',
+  audience: 'human',
   outputSchema: updateRowOutputSchema,
   aiMetadata: {
     description: 'Updates every row in a PostgreSQL table whose search column equals a given value, setting the supplied column-to-value pairs, and returns how many rows changed. Use to modify existing records matched by a single column. Enable Return Updated Rows to also get the rows themselves back, but leave it off when the update can match many rows. Idempotent: re-running with the same input writes the same values and has no additional effect.',

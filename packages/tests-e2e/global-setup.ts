@@ -41,9 +41,9 @@ async function globalSetup(config: FullConfig) {
       await installPieceArchives({ page, token: session.token, manifestPath: process.env.E2E_PIECES_MANIFEST });
     }
 
-    const deleted = await e2eApi.deleteStaleFlows({ request: page.request, session });
-    if (deleted > 0) {
-      console.log(`✓ Deleted ${deleted} flows that crashed runs left behind`);
+    const deleted = await e2eApi.deleteStaleData({ request: page.request, session });
+    if (deleted.flows + deleted.connections > 0) {
+      console.log(`✓ Deleted ${deleted.flows} flows and ${deleted.connections} connections that crashed runs left behind`);
     }
 
     console.log('✓ Global setup completed successfully');

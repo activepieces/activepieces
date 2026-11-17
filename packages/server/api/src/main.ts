@@ -1,4 +1,4 @@
-import { aiDevtools, evlogSetup } from '@activepieces/server-utils'
+import { aiDevtools, aiObservability, evlogSetup } from '@activepieces/server-utils'
 import { ApEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
@@ -37,7 +37,7 @@ const stop = async ({ app, signal }: { app: FastifyInstance, signal: NodeJS.Sign
     try {
         app.log.info({ signal }, '[main#stop] Received shutdown signal, stopping server gracefully')
         await app.close()
-        await evlogSetup.flush()
+        await Promise.all([evlogSetup.flush(), aiObservability.flush()])
         process.exit(0)
     }
     catch (err) {

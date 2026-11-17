@@ -1,8 +1,15 @@
-import { expect } from '@playwright/test';
+import { expect, Locator, Page } from '@playwright/test';
 import { BasePage } from './base';
 
 export class BuilderPage extends BasePage {
   url = `/flows`;
+
+  private readonly describeRun: (runId: string) => Promise<string>;
+
+  constructor({ page, describeRun }: { page: Page; describeRun: (runId: string) => Promise<string> }) {
+    super(page);
+    this.describeRun = describeRun;
+  }
 
   async nameNewFlow(name: string) {
     const breadcrumb = this.page.getByRole('navigation', { name: 'breadcrumb' });
@@ -17,6 +24,10 @@ export class BuilderPage extends BasePage {
     await this.page.getByTestId('rf__node-trigger').click();
     await this.page.getByTestId('pieces-search-input').fill(piece);
     await this.page.getByTestId(`action-or-trigger-${trigger}`).click();
+  }
+
+  async openStep(stepName: string) {
+    await this.page.getByTestId(`rf__node-${stepName}`).click();
   }
 
   async addStep({ after, piece, action }: { after: string; piece: string; action: string }) {
@@ -45,9 +56,8 @@ export class BuilderPage extends BasePage {
 
   async setCodeInput({ key, value }: { key: string; value: string }) {
     await this.sidebar().getByRole('button', { name: 'Add Item' }).click();
-    const fields = this.sidebar().getByRole('textbox');
-    await fields.nth(0).fill(key);
-    await fields.nth(1).click();
+    await this.sidebar().getByRole('textbox', { name: 'Key', exact: true }).last().fill(key);
+    await this.sidebar().getByRole('textbox', { name: 'Value', exact: true }).last().click();
     await this.page.keyboard.insertText(value);
     await this.waitForSaveOfLastEdit();
   }
@@ -56,21 +66,53 @@ export class BuilderPage extends BasePage {
     await this.replaceEditorText({ testId: 'code-editor', text: code });
   }
 
+  async setTextInput({ name, value }: { name: string; value: string }) {
+    await this.replaceText({ field: this.sidebar().getByRole('textbox', { name, exact: true }), text: value });
+  }
+
   async setJsonBody(json: string) {
     await this.replaceEditorText({ testId: 'json-editor', text: json });
   }
 
+  async createConnection({ name, fields }: { name: string; fields: Record<string, string> }): Promise<string> {
+    await this.sidebar().getByRole('combobox', { name: 'Connection' }).click();
+    await this.page.getByRole('button', { name: 'Create Connection' }).click();
+    const dialog = this.page.getByRole('dialog', { name: /^Connect to / });
+    await dialog.getByLabel('Connection Name').fill(name);
+    for (const [label, value] of Object.entries(fields)) {
+      await dialog.getByLabel(label).fill(value);
+    }
+    const created = this.page.waitForResponse(
+      (response) => response.request().method() === 'POST' && new URL(response.url()).pathname === '/api/v1/app-connections',
+    );
+    await dialog.getByRole('button', { name: 'Save' }).click();
+    const response = await created;
+    expect(response.ok(), `Creating the connection failed with ${response.status()}`).toBe(true);
+    const connection: { id: string } = await response.json();
+    return connection.id;
+  }
+
   async testStep() {
+    const started = this.page.waitForResponse(
+      (response) => response.request().method() === 'POST' && new URL(response.url()).pathname === STEP_TEST,
+    );
     await this.sidebar().getByTestId('test-step-button').click();
+    const response = await started;
+    expect(response.ok(), `Starting the step test failed with ${response.status()}: ${await response.text()}`).toBe(true);
+    const run: { id: string } = await response.json();
     const succeeded = this.sidebar().getByText('Tested Successfully');
-    await succeeded.or(this.sidebar().getByText('Test Failed')).first().waitFor({ timeout: 60000 });
-    await expect(succeeded, 'The step test failed').toBeVisible();
+    await succeeded.or(this.sidebar().getByText('Test Failed')).first().waitFor({ timeout: 60000 }).catch(() => undefined);
+    if (!(await succeeded.isVisible())) {
+      throw new Error(`The step test did not succeed: ${await this.describeRun(run.id)}`);
+    }
+  }
+
+  async expandStepOutput(key: string) {
+    await this.stepOutput().getByRole('button', { name: new RegExp(`^${key}\\b`) }).click();
   }
 
   async expectStepOutput({ key, value }: { key: string; value: string }) {
-    await expect(this.sidebar().getByRole('tabpanel', { name: 'Friendly View' })).toContainText(
-      new RegExp(`${key}\\s*${value}`),
-    );
+    await expect(this.stepOutput()).toContainText(new RegExp(`${key}:?\\s*${value}`));
   }
 
   async testFlow() {
@@ -83,7 +125,14 @@ export class BuilderPage extends BasePage {
 
   async publish() {
     const publishButton = this.page.getByRole('button', { name: 'Publish' });
+    const published = this.page.waitForResponse(
+      (response) => response.request().method() === 'POST'
+        && FLOW_SAVE.test(new URL(response.url()).pathname)
+        && response.request().postDataJSON()?.type === 'LOCK_AND_PUBLISH',
+    );
     await publishButton.click();
+    const response = await published;
+    expect(response.ok(), `Publishing failed with ${response.status()}: ${await response.text()}`).toBe(true);
     await expect(publishButton).toBeHidden({ timeout: 60000 });
   }
 
@@ -99,12 +148,20 @@ export class BuilderPage extends BasePage {
       .toEqual({ status: 200, body: expected });
   }
 
+  private stepOutput() {
+    return this.sidebar().getByRole('tabpanel', { name: 'Friendly View' });
+  }
+
   private sidebar() {
     return this.page.getByTestId('right-sidebar');
   }
 
   private async replaceEditorText({ testId, text }: { testId: string; text: string }) {
-    await this.sidebar().getByTestId(testId).getByRole('textbox').click();
+    await this.replaceText({ field: this.sidebar().getByTestId(testId).getByRole('textbox'), text });
+  }
+
+  private async replaceText({ field, text }: { field: Locator; text: string }) {
+    await field.click();
     await this.page.keyboard.press('ControlOrMeta+a');
     await this.page.keyboard.insertText(text);
     await this.waitForSaveOfLastEdit();
@@ -119,3 +176,4 @@ export class BuilderPage extends BasePage {
 }
 
 const FLOW_SAVE = /\/api\/v1\/flows\/[^/]+$/;
+const STEP_TEST = '/api/v1/sample-data/test-step';

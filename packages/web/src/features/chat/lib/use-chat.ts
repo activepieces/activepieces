@@ -16,7 +16,6 @@ import {
   subagentProgressId,
   SubagentProgressEvent,
 } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -91,7 +90,6 @@ function restoreReceiptsIntoStore({
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const AGENT_POLL_INTERVAL_MS = 5_000;
 const TOOL_GATES_WITHOUT_A_PIECE = new Set([
   'ap_send_email',
   'ap_test_flow',
@@ -190,16 +188,6 @@ function buildRunningTaskPart({
     state: 'input-available' as const,
     input: { title },
   };
-}
-
-function appendGatePart({
-  messages,
-  gate,
-}: {
-  messages: ChatUIMessage[];
-  gate: PendingGate;
-}): ChatUIMessage[] {
-  return appendTrailingPart({ messages, part: buildGatePart(gate) });
 }
 
 function appendRunningTaskParts({
@@ -337,7 +325,7 @@ type SendStatus =
   | { type: 'idle' }
   | { type: 'submitting' }
   | { type: 'cancelled' }
-  | { type: 'error'; message: string };
+  | { type: 'error'; message: string | null };
 
 export function useAgentChat({
   agentId,
@@ -367,7 +355,6 @@ export function useAgentChat({
     string | null
   >(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  const [isPollingForAgentReply, setIsPollingForAgentReply] = useState(false);
   const [sendStatus, setSendStatus] = useState<SendStatus>({ type: 'idle' });
   const sendStatusRef = useRef<SendStatus>({ type: 'idle' });
   const onCreditsExhaustedRef = useRef(onCreditsExhausted);
@@ -387,6 +374,7 @@ export function useAgentChat({
     { name: string; mimeType: AgentAllowedMimeType; data: string }[] | undefined
   >(undefined);
   const lastSentFileNamesRef = useRef<string[]>([]);
+  const lastSentRef = useRef<{ content: string; files?: File[] } | null>(null);
   const conversationIdRef = useRef<string | null>(null);
   const modelPickRef = useRef<ChatModelPick | null>(null);
   const savedPickRef = useRef<ChatModelPick | null>(null);
@@ -642,9 +630,7 @@ export function useAgentChat({
           );
         updateSendStatus({
           type: 'error',
-          message: failureIsInTranscript
-            ? t('The last reply did not finish. Please try again.')
-            : opts.errorMessage,
+          message: failureIsInTranscript ? null : opts.errorMessage,
         });
       } else if (!hasReply && !opts?.suppressNoReply) {
         updateSendStatus({
@@ -680,9 +666,7 @@ export function useAgentChat({
   }, [isStreamActive]);
 
   const isStreaming =
-    isStreamActive ||
-    sendStatusRef.current.type === 'submitting' ||
-    isPollingForAgentReply;
+    isStreamActive || sendStatusRef.current.type === 'submitting';
 
   const isAwaitingResponse =
     streamPhase === 'awaiting-stream' ||
@@ -708,11 +692,8 @@ export function useAgentChat({
   ]);
 
   const error =
-    sendStatus.type === 'error'
-      ? sendStatus.message
-      : streamError
-      ? streamError
-      : null;
+    sendStatus.type === 'error' ? sendStatus.message : streamError ?? null;
+  const failed = sendStatus.type === 'error' || !isNil(streamError);
 
   const wasCancelled = sendStatus.type === 'cancelled';
 
@@ -752,7 +733,6 @@ export function useAgentChat({
     commitInFlightTurn();
     stopStream();
     setOptimisticUserMessage(null);
-    setIsPollingForAgentReply(false);
     updateSendStatus({ type: 'cancelled' });
     const convId = conversationIdRef.current;
     if (convId) {
@@ -810,6 +790,7 @@ export function useAgentChat({
 
       const fileNames = files?.map((f) => f.name) ?? [];
       lastSentFileNamesRef.current = fileNames;
+      lastSentRef.current = { content, files };
 
       const optimisticUser: ChatUIMessage = {
         id: `optimistic-${Date.now()}`,
@@ -866,7 +847,10 @@ export function useAgentChat({
           setOptimisticUserMessage(null);
           updateSendStatus({
             type: 'error',
-            message: convError.message ?? 'Failed to start conversation',
+            message: api.extractServerErrorMessage(
+              convError,
+              'Failed to start conversation',
+            ),
           });
           return;
         }
@@ -928,7 +912,10 @@ export function useAgentChat({
         } else {
           updateSendStatus({
             type: 'error',
-            message: sendError.message ?? 'Failed to send message',
+            message: api.extractServerErrorMessage(
+              sendError,
+              'Failed to send message',
+            ),
           });
         }
       }
@@ -944,6 +931,16 @@ export function useAgentChat({
     ],
   );
 
+  const retryLastMessage = useCallback(
+    (fallbackContent: string) => {
+      const lastSent = lastSentRef.current;
+      return isNil(lastSent)
+        ? sendMessage(fallbackContent)
+        : sendMessage(lastSent.content, lastSent.files);
+    },
+    [sendMessage],
+  );
+
   const setConversationId = useCallback(
     async (id: string) => {
       if (
@@ -954,7 +951,6 @@ export function useAgentChat({
       )
         return;
       stopStream();
-      setIsPollingForAgentReply(false);
       updateSendStatus({ type: 'idle' });
       conversationIdRef.current = id;
       setConversationIdState(id);
@@ -963,6 +959,7 @@ export function useAgentChat({
 
       pendingFilesRef.current = undefined;
       lastSentFileNamesRef.current = [];
+      lastSentRef.current = null;
       setOptimisticUserMessage(null);
 
       setIsLoadingHistory(true);
@@ -1029,9 +1026,12 @@ export function useAgentChat({
       } else {
         setPersistedMessages(mapped);
         if (convResult.data.status === AgentConversationStatus.ERROR) {
+          const failureIsInTranscript = mapped.at(-1)?.role === 'assistant';
           updateSendStatus({
             type: 'error',
-            message: t('The last reply did not finish. Please try again.'),
+            message: failureIsInTranscript
+              ? null
+              : t('The last reply did not finish. Please try again.'),
           });
         }
       }
@@ -1039,59 +1039,6 @@ export function useAgentChat({
     },
     [stopStream, startStream, updateSendStatus, store, t],
   );
-
-  useQuery({
-    queryKey: ['chat-agent-poll', conversationId],
-    queryFn: async () => {
-      if (!conversationId || conversationIdRef.current !== conversationId)
-        return null;
-      const [messagesResult, convResult] = await Promise.all([
-        chatApi.getMessages(conversationId),
-        chatApi.getConversation(conversationId),
-      ]);
-      if (conversationIdRef.current !== conversationId) return null;
-      const mapped = chatUtils.mapHistoryToUIMessages(messagesResult.data);
-      const current = persistedMessagesRef.current;
-      // Never let a poll shrink the visible history — only apply growth or
-      // in-place part updates, never a truncation.
-      const hasChanged =
-        mapped.length >= current.length &&
-        (mapped.length !== current.length ||
-          mapped.some((m, i) => m.parts.length !== current[i]?.parts.length));
-      if (hasChanged) {
-        setPersistedMessages(mapped);
-        const restored = chatUtils.extractQuickRepliesFromHistory(mapped);
-        applyQuickRepliesToStore({ setState: store.setState, data: restored });
-      }
-      if (convResult.status !== AgentConversationStatus.STREAMING) {
-        setIsPollingForAgentReply(false);
-      } else {
-        const hasBlockingCard = chatStoreSelectors.hasBlockingCard({
-          state: store.getState(),
-          lastAssistantMessage: mapped[mapped.length - 1],
-        });
-        if (!hasBlockingCard) {
-          const { data: gate } = await tryCatch(() =>
-            chatApi.getPendingGate(conversationId),
-          );
-          if (gate && conversationIdRef.current === conversationId) {
-            store.setState((prev) => ({
-              toolCallMeta: {
-                ...prev.toolCallMeta,
-                ...buildToolCallMetaFromGate(gate),
-              },
-            }));
-            setPersistedMessages((prev) =>
-              appendGatePart({ messages: prev, gate }),
-            );
-          }
-        }
-      }
-      return mapped;
-    },
-    enabled: isPollingForAgentReply && !isStreamActive,
-    refetchInterval: AGENT_POLL_INTERVAL_MS,
-  });
 
   const setModelPick = useCallback(async (newPick: ChatModelPick) => {
     modelPickRef.current = newPick;
@@ -1129,7 +1076,9 @@ export function useAgentChat({
     wasCancelled,
     isLoadingHistory,
     error,
+    failed,
     sendMessage,
+    retryLastMessage,
     cancelStream,
     setConversationId,
     setModelPick,

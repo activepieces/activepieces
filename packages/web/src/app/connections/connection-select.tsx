@@ -53,6 +53,7 @@ import {
   useIsPlatformAdmin,
 } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { statusColors } from '@/lib/status-colors';
 import { cn } from '@/lib/utils';
 
 export function ConnectionSelect({
@@ -78,10 +79,11 @@ export function ConnectionSelect({
   const {
     data: connections,
     isLoading: isLoadingConnections,
+    isError: isConnectionsError,
     refetch,
   } = appConnectionsQueries.useAppConnections({
     request: {
-      pieceName: piece.name,
+      pieceName: [piece.name],
       projectId: authenticationSession.getProjectId()!,
       limit: 1000,
     },
@@ -114,17 +116,22 @@ export function ConnectionSelect({
     setConnectionDialogOpen(true);
   };
 
-  if (isLoadingConnections || !pieceWithCorrectVersion) {
+  if (isLoadingConnections || isConnectionsError || !pieceWithCorrectVersion) {
     return (
       <SearchableSelect
         options={[]}
         disabled={true}
         loading={isLoadingConnections}
-        placeholder={t('Select a connection')}
+        placeholder={
+          isConnectionsError
+            ? t("Couldn't load your connections.")
+            : t('Select a connection')
+        }
         value={value}
         onChange={() => {}}
         showDeselect={false}
-        showRefresh={false}
+        showRefresh={isConnectionsError}
+        onRefresh={() => refetch()}
       />
     );
   }
@@ -137,13 +144,13 @@ export function ConnectionSelect({
         piece={pieceWithCorrectVersion}
         key={`CreateOrEditConnectionDialog-open-${connectionDialogOpen}`}
         open={connectionDialogOpen}
-        setOpen={(open, connection) => {
+        setOpen={async (open, connection) => {
           setConnectionDialogOpen(open);
           const createdValue = connectionTemplate.wrapExternalId(
             connection?.externalId,
           );
           if (!isNil(createdValue)) {
-            refetch();
+            await refetch();
             onChange(createdValue);
           }
         }}
@@ -152,7 +159,7 @@ export function ConnectionSelect({
         key={value ?? ''}
         open={selectConnectionOpen}
         onOpenChange={setSelectConnectionOpen}
-        defaultValue={value}
+        value={value ?? ''}
         onValueChange={onChange}
         disabled={disabled}
       >
@@ -194,7 +201,10 @@ export function ConnectionSelect({
             </div>
           )}
 
-          <SelectTrigger className="flex gap-2 items-center">
+          <SelectTrigger
+            className="flex gap-2 items-center"
+            aria-label={t('Connection')}
+          >
             <SelectValue
               className="truncate grow shrink"
               placeholder={t('Select a connection')}
@@ -343,23 +353,24 @@ function getConnectionStatusDisplay(status: AppConnectionStatus): {
   iconClassName: string;
   label: string;
 } {
+  const iconClassName = statusColors.of(status).text;
   switch (status) {
     case AppConnectionStatus.ACTIVE:
       return {
         Icon: Check,
-        iconClassName: 'text-success-11',
+        iconClassName,
         label: t('Connected'),
       };
     case AppConnectionStatus.ERROR:
       return {
         Icon: X,
-        iconClassName: 'text-danger-11',
+        iconClassName,
         label: t('Error'),
       };
     case AppConnectionStatus.MISSING:
       return {
         Icon: Unplug,
-        iconClassName: 'text-gray-11',
+        iconClassName,
         label: t('Missing'),
       };
   }

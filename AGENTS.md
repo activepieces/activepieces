@@ -92,6 +92,7 @@ When running in `--mode=cloud`, do not use OAuth2 connections — the OAuth prov
 
 ## Pull Requests
 
+- When the ticket belongs to a co-owned Linear project (a label from the `Co-Owner` group), pass `--reviewer <login>` with the login from that label, `<Name> (@github-login)`, and add the `### Project` section from `brain/knowledge/engineering/project-co-ownership.md` under "Linear ticket". If the label has no login, ask the engineer.
 - When creating a PR with `gh pr create`, always apply exactly one of these labels based on the nature of the change:
   - **`🌟 feature`** — new functionality
   - **`🐛 bug`** — bug fix

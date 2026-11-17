@@ -55,8 +55,11 @@ export const UserActions = ({
           {!isInvitation && (
             <UpdateUserDialog
               userId={row.data.id}
+              email={row.data.email}
+              firstName={row.data.firstName}
               role={row.data.platformRole}
               externalId={row.data.externalId ?? undefined}
+              hasProjects={row.data.hasProjects ?? true}
               onUpdate={onUpdate}
             >
               <DropdownMenuItem

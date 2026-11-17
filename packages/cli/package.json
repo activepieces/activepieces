@@ -32,6 +32,7 @@
     "@types/autocannon": "7.12.7",
     "@types/inquirer": "8.2.13",
     "@types/jsonwebtoken": "9.0.10",
-    "@types/node": "24.11.0"
+    "@types/node": "24.11.0",
+    "vitest": "5.0.5"
   }
 }

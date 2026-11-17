@@ -2,6 +2,8 @@ import { ActivepiecesError, apId, ErrorCode, isNil, tryCatch } from '@activepiec
 import { EmbedSubdomain, EmbedSubdomainStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
+import { domainHelper } from '../../helper/domain-helper'
+import { networkUtils } from '../../helper/network-utils'
 import { cloudflareService } from './cloudflare.service'
 import { EmbedSubdomainEntity } from './embed-subdomain.entity'
 
@@ -102,6 +104,14 @@ export const embedSubdomainService = (log: FastifyBaseLogger) => ({
             return null
         }
         return `https://${record.hostname}`
+    },
+
+    async getPublicApiBaseUrl({ platformId }: { platformId: string }): Promise<string> {
+        const subdomainUrl = await embedSubdomainService(log).getActiveSubdomainUrl({ platformId })
+        if (isNil(subdomainUrl)) {
+            return domainHelper.getPublicApiUrl({ path: '' })
+        }
+        return networkUtils.combineUrl(subdomainUrl, 'api')
     },
 
     async getByHostname({ hostname }: { hostname: string }): Promise<EmbedSubdomain | null> {

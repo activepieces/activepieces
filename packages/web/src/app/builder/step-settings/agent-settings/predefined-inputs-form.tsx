@@ -53,7 +53,7 @@ export const PredefinedInputsForm = () => {
   const { isLoading: isLoadingConnections } =
     appConnectionsQueries.useAppConnections({
       request: {
-        pieceName: selectedPiece?.name ?? '',
+        pieceName: [selectedPiece?.name ?? ''],
         projectId: authenticationSession.getProjectId()!,
         limit: 1000,
       },

@@ -322,7 +322,9 @@ function decodeJwtPayload(token: string | null): AuthRequestSummary {
     }>(token);
     return {
       clientName: payload.clientName ?? t('Unknown app'),
-      isPlatformScoped: payload.resource?.endsWith('/mcp/platform') ?? false,
+      isPlatformScoped:
+        payload.resource?.replace(/\/+$/, '').endsWith('/mcp/platform') ??
+        false,
       expiresAt: payload.exp ?? null,
     };
   } catch {

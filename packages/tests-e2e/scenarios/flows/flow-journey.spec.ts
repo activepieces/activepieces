@@ -5,7 +5,7 @@ import { e2eFlows } from '../../fixtures/flows';
 test.describe('Flow journey', () => {
   test('build, test, publish and run a webhook flow with a code step', async ({ automationsPage, builderPage, runsPage, flowCleanup }) => {
     test.setTimeout(240000);
-    const flowName = e2eFlows.uniqueFlowName('journey');
+    const flowName = e2eFlows.uniqueName('journey');
     const sampleValue = randomInt(1, 1000000);
     const liveValue = randomInt(1, 1000000);
 

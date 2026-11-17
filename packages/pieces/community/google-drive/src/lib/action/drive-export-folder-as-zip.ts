@@ -9,7 +9,7 @@ import { ZipWriter, ZipWriterAddDataOptions } from '@zip.js/zip.js';
 import { extension } from 'mime-types';
 import { googleDriveAuth, GoogleDriveAuthValue, getAccessToken } from '../auth';
 import { common } from '../common';
-import { listDriveFiles } from '../common/list-drive-files';
+import { listDriveFiles, resolveFolderScope } from '../common/list-drive-files';
 
 // A zip is a sequential format. Only the entry holding the writer lock streams straight into the
 // archive -- that one is paced by backpressure and costs almost nothing. Every *other* in-flight
@@ -91,20 +91,18 @@ interface DriveListItem {
 async function listFolderChildren({
   auth,
   folderId,
-  includeTeamDrives,
+  scope,
 }: {
   auth: GoogleDriveAuthValue;
   folderId: string;
-  includeTeamDrives: boolean;
+  scope: Record<string, string>;
 }): Promise<DriveListItem[]> {
   return listDriveFiles<DriveListItem>({
     auth,
     params: {
-      q: `'${folderId}' in parents and trashed=false`,
-      fields: 'nextPageToken,files(id,name,mimeType,size)',
-      supportsAllDrives: 'true',
-      includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
-      corpora: includeTeamDrives ? 'allDrives' : 'user',
+      q: `'${common.escapeDriveQueryLiteral(folderId)}' in parents and trashed=false`,
+      fields: 'nextPageToken,incompleteSearch,files(id,name,mimeType,size)',
+      ...scope,
       pageSize: '1000',
     },
   });
@@ -258,7 +256,7 @@ async function walk({
   folderId,
   relativePrefix,
   nativeFormats,
-  includeTeamDrives,
+  scope,
   out,
   errors,
 }: {
@@ -266,14 +264,14 @@ async function walk({
   folderId: string;
   relativePrefix: string;
   nativeFormats: NativeFormatChoice;
-  includeTeamDrives: boolean;
+  scope: Record<string, string>;
   out: ZipFolderEntry[];
   errors: ExportError[];
 }): Promise<void> {
   const children = await listFolderChildren({
     auth,
     folderId,
-    includeTeamDrives,
+    scope,
   });
 
   if (children.length === 0) {
@@ -317,7 +315,7 @@ async function walk({
         folderId: resolved.item.id,
         relativePrefix: itemPath,
         nativeFormats,
-        includeTeamDrives,
+        scope,
         out,
         errors,
       });
@@ -350,12 +348,17 @@ async function collectZipEntries({
 }): Promise<ZipFolderEntry[]> {
   const out: ZipFolderEntry[] = [];
   const errors: ExportError[] = [];
+  const scope = await resolveFolderScope({
+    auth,
+    folderId: rootFolderId,
+    includeTeamDrives,
+  });
   await walk({
     auth,
     folderId: rootFolderId,
     relativePrefix: '',
     nativeFormats,
-    includeTeamDrives,
+    scope,
     out,
     errors,
   });

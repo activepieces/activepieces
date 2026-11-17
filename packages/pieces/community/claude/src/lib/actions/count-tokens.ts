@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import Anthropic from '@anthropic-ai/sdk';
 import { claudeAuth } from '../auth';
-import { modelDropdown } from '../common/common';
+import { modelDropdown, resolveModelId } from '../common/common';
 import { countTokensActionOutputSchema } from '../output-schemas';
 
 export const countTokensAction = createAction({
@@ -31,7 +31,7 @@ export const countTokensAction = createAction({
   async run(context) {
     const anthropic = new Anthropic({ apiKey: context.auth.secret_text });
     return anthropic.messages.countTokens({
-      model: context.propsValue.model,
+      model: resolveModelId(context.propsValue.model),
       system: context.propsValue.systemPrompt,
       messages: [{ role: 'user', content: context.propsValue.prompt }],
     });

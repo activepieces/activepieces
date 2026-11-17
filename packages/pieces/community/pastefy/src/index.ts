@@ -1,60 +1,22 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import actions from './lib/actions';
+import { pastefyAuth } from './lib/common/auth';
+import { pastefyCustomApiCallAction } from './lib/actions/custom-api-call';
 import triggers from './lib/triggers';
-
-const markdown = `
-Create an account and obtain the API Key from Pastefy.
-`;
-
-export const pastefyAuth = PieceAuth.CustomAuth({
-  description: markdown,
-  required: true,
-  props: {
-    instance_url: Property.ShortText({
-      displayName: 'Pastefy Instance URL',
-      required: false,
-      defaultValue: 'https://pastefy.app',
-    }),
-    token: PieceAuth.SecretText({
-      displayName: 'API-Token',
-      required: false,
-    }),
-  },
-});
 
 export const pastefy = createPiece({
   displayName: 'Pastefy',
   description: 'Sharing code snippets platform',
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/pastefy.png',
-  categories: [],
-  authors: ["JanHolger","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  categories: [PieceCategory.DEVELOPER_TOOLS],
+  authors: ['JanHolger', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud', 'OdaiAhmed99'],
   auth: pastefyAuth,
   actions: [
     ...actions,
-    createCustomApiCallAction({
-      baseUrl: (auth) => {
-        if (!auth) {
-          return '';
-        }
-        const typedAuth = auth.props as { instance_url: string };
-        return typedAuth.instance_url + '/api/v2';
-      },
-      auth: pastefyAuth,
-      authMapping: async (auth) => {
-        const typedAuth = auth as { token?: string };
-        return {
-          Authorization: typedAuth.token
-            ? `Bearer ${typedAuth.token}`
-            : undefined,
-        };
-      },
-    }),
+    pastefyCustomApiCallAction,
   ],
-  triggers: triggers,
+  triggers,
 });
+
+export { pastefyAuth };
