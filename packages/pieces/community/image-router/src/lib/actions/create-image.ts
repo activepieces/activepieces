@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { kebabCase } from '@activepieces/pieces-framework';
 
 import { imageRouterAuth } from '../auth';
@@ -17,16 +17,26 @@ export const createImageAction = createAction({
   displayName: 'Create Image',
   description: 'Generate an image from a text prompt using any available model',
   aiMetadata: { description: 'Generates brand-new images from a text prompt alone, routing the request through ImageRouter to whichever hosted image model is named in the required Model input, then downloading each result and saving it as a flow file. Pick this when there is no source picture to work from; use Image to Image instead to edit, mask, or transform images you already have. Quality and size are advisory and are ignored by models that do not support them. Not idempotent: each call runs a fresh generation and returns different images.', idempotent: false },
+  propertyGroups: [
+    { key: 'request', display: 'section', label: 'What to Create', icon: 'text', props: ['prompt', 'model'] },
+    { key: 'output', display: 'section', label: 'Output', icon: 'sliders', props: ['outputNote', 'quality', 'size', 'responseFormat'] },
+  ],
   props: {
     prompt: Property.ShortText({
       displayName: 'Prompt',
-      description: 'Text prompt describing the image you want to generate',
+      description: 'What the image should show.',
+      placeholder: 'A red fox in a snowy forest at golden hour',
       required: true,
     }),
     model: imageRouterProps.model({ required: true }),
+    outputNote: Property.MarkDown({
+      value: 'Quality and size apply only to models that support them.',
+      variant: MarkdownVariant.INFO,
+    }),
     quality: Property.StaticDropdown({
       displayName: 'Quality',
-      description: 'Image quality (not all models support this)',
+      description: 'Auto uses the model\'s default.',
+      width: 'half',
       required: false,
       defaultValue: 'auto',
       options: {
@@ -40,20 +50,22 @@ export const createImageAction = createAction({
     }),
     size: Property.ShortText({
       displayName: 'Size',
-      description: 'Image size (e.g., 1024x1024). Use "auto" for default size.',
+      description: 'Width x height, e.g. 1024x1024, or auto.',
+      width: 'half',
       required: false,
       defaultValue: 'auto',
     }),
     responseFormat: Property.StaticDropdown({
       displayName: 'Response Format',
-      description: 'How to receive the generated image',
+      description: 'The step saves the image as a file either way.',
+      display: 'cards',
       required: false,
       defaultValue: 'url',
       options: {
         options: [
-          { label: 'URL (saved in logs)', value: 'url' },
-          { label: 'Base64 JSON (saved in logs)', value: 'b64_json' },
-          { label: 'Base64 Ephemeral (not saved)', value: 'b64_ephemeral' },
+          { label: 'URL', value: 'url', description: 'Logged link', icon: 'file' },
+          { label: 'Base64', value: 'b64_json', description: 'Logged data', icon: 'code' },
+          { label: 'Unlogged Base64', value: 'b64_ephemeral', description: 'Image data, not logged', icon: 'code' },
         ],
       },
     }),
