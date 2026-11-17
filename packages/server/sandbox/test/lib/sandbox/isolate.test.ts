@@ -148,8 +148,18 @@ describe('isolateProcess', () => {
                 '--dir=/usr/src/node_modules/',
                 '--dir=proc=proc:fs',
                 '--dir=/dev=/dev:dev',
-                `--dir=/box=/var/local/lib/isolate/${boxId}/box:rw`,
+                `--dir=/box=/var/local/lib/isolate/${boxId}/box:rw:noexec`,
             ])
+        })
+
+        it('never mounts a directory that is both writable and executable', async () => {
+            await callCreate({ mounts: [{ hostPath: '/host/cache/codes/fv', sandboxPath: '/root/codes/fv', optional: true }] })
+            const args: string[] = spawnMock.mock.calls[0][1]
+            const writableDirs = args.filter((arg) => arg.startsWith('--dir=') && arg.split(':').includes('rw'))
+            expect(writableDirs).toHaveLength(1)
+            for (const dir of writableDirs) {
+                expect(dir.split(':')).toContain('noexec')
+            }
         })
 
         it('raises the open-file limit off isolate\'s default of 64', async () => {
