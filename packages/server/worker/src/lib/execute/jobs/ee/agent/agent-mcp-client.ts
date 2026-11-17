@@ -61,7 +61,7 @@ async function connectMcpClient({ mcpCredentials, conversationId, log }: {
     }
 
     const { data: allMcpTools, error: listError } = await tryCatch(() => retryOnceOnServerError({ fn: () => client.tools(), log }))
-    if (!isNil(listError)) {
+    if (!allMcpTools) {
         await client.close().catch(() => undefined)
         throw listError
     }
@@ -78,16 +78,14 @@ async function retryOnceOnServerError<T>({ fn, log }: {
     fn: () => Promise<T>
     log: FastifyBaseLogger
 }): Promise<T> {
-    const { data, error } = await tryCatch(fn)
-    if (isNil(error)) {
-        return data
-    }
-    const isServerError = (extractErrorStatus(error) ?? 0) >= 500
-    if (!isServerError) {
-        throw error
-    }
-    log.warn({ error }, 'Platform MCP request hit a server error, retrying once')
-    return fn()
+    return fn().catch((error: unknown) => {
+        const isServerError = (extractErrorStatus(error) ?? 0) >= 500
+        if (!isServerError) {
+            throw error
+        }
+        log.warn({ error }, 'Platform MCP request hit a server error, retrying once')
+        return fn()
+    })
 }
 
 function mcpAuthSecrets(auth: McpAuthConfig): string[] {
