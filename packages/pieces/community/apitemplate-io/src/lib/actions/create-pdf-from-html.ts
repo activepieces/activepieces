@@ -13,31 +13,53 @@ export const createPdfFromHtml = createAction({
   description: 'Creates a PDF from HTML.',
   audience: 'both',
   aiMetadata: { description: 'Renders a new PDF directly from raw HTML (with optional CSS, templating data, and page settings such as size, orientation, margins, and headers/footers). Use when you have ad-hoc HTML markup rather than a saved template or a live URL. Requires the HTML body. Not idempotent: each call generates and stores a new PDF.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'content',
+      display: 'section',
+      label: 'Content',
+      icon: 'code',
+      props: ['html', 'css', 'data'],
+    },
+    {
+      key: 'page',
+      display: 'section',
+      label: 'Page Setup',
+      icon: 'file',
+      props: [
+        'pageSize',
+        'orientation',
+        'marginTop',
+        'marginBottom',
+        'marginLeft',
+        'marginRight',
+        'printBackground',
+        'displayHeaderFooter',
+      ],
+    },
+  ],
   props: {
     html: Property.LongText({
-      displayName: 'HTML Content',
-      description: 'The HTML content to convert to PDF. Can include CSS styles and external resources.',
+      displayName: 'HTML',
+      description: 'The page to turn into a PDF.',
+      placeholder: '<h1>Invoice</h1>',
       required: true,
     }),
     css: Property.LongText({
-      displayName: 'CSS Styles',
-      description: 'Optional CSS styles to apply to the HTML content. Can include inline styles or external stylesheets.',
+      displayName: 'CSS',
+      description: 'Styles applied to the HTML.',
+      placeholder: 'h1 { color: #333; }',
       required: false,
     }),
     data: Property.Json({
-      displayName: 'Data for Templating',
-      description: 'Optional JSON data to use for templating the HTML content. Can include variables and dynamic content.',
-      required: false,
-    }),
-    expiration: Property.Number({
-      displayName: 'Expiration (minutes)',
-      description: 'Expiration of the generated PDF in minutes. Use 0 to store permanently, or 1-10080 minutes (7 days) to specify expiration.',
+      displayName: 'Template Data',
+      description: 'Values for the placeholders in the HTML, as JSON.',
       required: false,
     }),
     pageSize: Property.StaticDropdown({
       displayName: 'Page Size',
-      description: 'PDF page size format',
       required: false,
+      width: 'half',
       defaultValue: 'A4',
       options: {
         options: [
@@ -51,9 +73,9 @@ export const createPdfFromHtml = createAction({
       },
     }),
     orientation: Property.StaticDropdown({
-      displayName: 'Page Orientation',
-      description: 'PDF page orientation',
+      displayName: 'Orientation',
       required: false,
+      width: 'half',
       defaultValue: 'portrait',
       options: {
         options: [
@@ -63,66 +85,82 @@ export const createPdfFromHtml = createAction({
       },
     }),
     marginTop: Property.Number({
-      displayName: 'Margin Top (mm)',
-      description: 'Top margin in millimeters',
+      displayName: 'Top Margin',
+      description: 'In millimeters.',
       required: false,
+      width: 'half',
     }),
     marginBottom: Property.Number({
-      displayName: 'Margin Bottom (mm)',
-      description: 'Bottom margin in millimeters',
+      displayName: 'Bottom Margin',
+      description: 'In millimeters.',
       required: false,
+      width: 'half',
     }),
     marginLeft: Property.Number({
-      displayName: 'Margin Left (mm)',
-      description: 'Left margin in millimeters',
+      displayName: 'Left Margin',
+      description: 'In millimeters.',
       required: false,
+      width: 'half',
     }),
     marginRight: Property.Number({
-      displayName: 'Margin Right (mm)',
-      description: 'Right margin in millimeters',
+      displayName: 'Right Margin',
+      description: 'In millimeters.',
       required: false,
+      width: 'half',
     }),
     printBackground: Property.Checkbox({
-      displayName: 'Print Background',
-      description: 'Whether to print background graphics and colors',
+      displayName: 'Print Backgrounds',
+      description: 'Include background colors and images.',
       required: false,
       defaultValue: true,
     }),
-    headerFontSize: Property.ShortText({
-      displayName: 'Header Font Size',
-      description: 'Font size for header (e.g., "9px")',
-      required: false,
-    }),
     displayHeaderFooter: Property.Checkbox({
-      displayName: 'Display Header/Footer',
-      description: 'Whether to display header and footer',
+      displayName: 'Header and Footer',
+      description: 'Add a header and footer to every page.',
       required: false,
       defaultValue: false,
+      reveals: ['customHeader', 'customFooter', 'headerFontSize'],
     }),
     customHeader: Property.LongText({
-      displayName: 'Custom Header HTML',
-      description: 'Custom HTML content for header',
+      displayName: 'Header HTML',
+      description: 'Shown at the top of every page.',
       required: false,
     }),
     customFooter: Property.LongText({
-      displayName: 'Custom Footer HTML',
-      description: 'Custom HTML content for footer',
+      displayName: 'Footer HTML',
+      description: 'Shown at the bottom of every page.',
+      required: false,
+    }),
+    headerFontSize: Property.ShortText({
+      displayName: 'Header Font Size',
+      description: 'A CSS size.',
+      placeholder: '9px',
       required: false,
     }),
     scale: Property.Number({
       displayName: 'Scale',
-      description: 'Scale factor for the PDF (0.1 to 2.0)',
+      description: 'Zoom from 0.1 to 2; 1 is actual size.',
       required: false,
+      advanced: true,
     }),
     waitForTimeout: Property.Number({
-      displayName: 'Wait Timeout (ms)',
-      description: 'Time to wait before generating PDF (in milliseconds)',
+      displayName: 'Wait Before Rendering',
+      description: 'Milliseconds to wait for the page to finish loading.',
       required: false,
+      advanced: true,
+    }),
+    expiration: Property.Number({
+      displayName: 'Delete After',
+      description: 'Minutes until the file is deleted, up to 10080. Empty or 0 keeps it.',
+      required: false,
+      advanced: true,
     }),
     meta: Property.ShortText({
-      displayName: 'External Reference ID',
-      description: 'Specify an external reference ID for your own reference',
+      displayName: 'Your Reference',
+      description: 'Your own ID for this file, to find it in List Objects.',
+      placeholder: 'invoice-1042',
       required: false,
+      advanced: true,
     }),
   },
   async run({ auth, propsValue }) {
@@ -162,75 +200,75 @@ export const createPdfFromHtml = createAction({
     const endpoint = `/create-pdf-from-html${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 
     // Build settings object
-    const settings: any = {};
+    const settings: Record<string, unknown> = {};
 
     if (pageSize && pageSize !== 'A4') {
-      settings.paper_size = pageSize;
+      settings['paper_size'] = pageSize;
     }
 
     if (orientation) {
-      settings.orientation = orientation === 'landscape' ? '1' : '0';
+      settings['orientation'] = orientation === 'landscape' ? '1' : '0';
     }
 
     if (marginTop !== undefined) {
-      settings.margin_top = marginTop.toString();
+      settings['margin_top'] = marginTop.toString();
     }
 
     if (marginBottom !== undefined) {
-      settings.margin_bottom = marginBottom.toString();
+      settings['margin_bottom'] = marginBottom.toString();
     }
 
     if (marginLeft !== undefined) {
-      settings.margin_left = marginLeft.toString();
+      settings['margin_left'] = marginLeft.toString();
     }
 
     if (marginRight !== undefined) {
-      settings.margin_right = marginRight.toString();
+      settings['margin_right'] = marginRight.toString();
     }
 
     if (printBackground !== undefined) {
-      settings.print_background = printBackground ? '1' : '0';
+      settings['print_background'] = printBackground ? '1' : '0';
     }
 
     if (headerFontSize) {
-      settings.header_font_size = headerFontSize;
+      settings['header_font_size'] = headerFontSize;
     }
 
     if (displayHeaderFooter !== undefined) {
-      settings.displayHeaderFooter = displayHeaderFooter;
+      settings['displayHeaderFooter'] = displayHeaderFooter;
     }
 
     if (customHeader) {
-      settings.custom_header = customHeader;
+      settings['custom_header'] = customHeader;
     }
 
     if (customFooter) {
-      settings.custom_footer = customFooter;
+      settings['custom_footer'] = customFooter;
     }
 
     if (scale !== undefined) {
-      settings.scale = scale.toString();
+      settings['scale'] = scale.toString();
     }
 
     if (waitForTimeout !== undefined) {
-      settings.wait_for_timeout = waitForTimeout.toString();
+      settings['wait_for_timeout'] = waitForTimeout.toString();
     }
 
     // Build request body
-    const requestBody: any = {
+    const requestBody: Record<string, unknown> = {
       body: html,
     };
 
     if (css) {
-      requestBody.css = css;
+      requestBody['css'] = css;
     }
 
     if (data) {
-      requestBody.data = data;
+      requestBody['data'] = data;
     }
 
     if (Object.keys(settings).length > 0) {
-      requestBody.settings = settings;
+      requestBody['settings'] = settings;
     }
 
     try {
