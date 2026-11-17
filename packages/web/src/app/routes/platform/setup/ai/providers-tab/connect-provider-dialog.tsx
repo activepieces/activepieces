@@ -204,7 +204,11 @@ function ConnectProviderForm({
                 <FormItem className="flex flex-col gap-1.5">
                   <FormLabel showRequiredIndicator>{t('Name')}</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder={t('e.g. Marketing')} />
+                    <Input
+                      {...field}
+                      placeholder={t('e.g. Marketing')}
+                      data-testid="ai-provider-name"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -235,6 +239,7 @@ function ConnectProviderForm({
             type="submit"
             loading={connecting}
             disabled={connecting}
+            data-testid="ai-provider-connect-submit"
             {...adminControl(
               editing
                 ? AdminControl.AI_PROVIDER_KEY_CREDENTIALS_SUBMIT
@@ -310,10 +315,18 @@ function CredentialFieldInput({
               />
             </FormControl>
           ) : field.secret ? (
-            <SecretInput field={formField} placeholder={field.placeholder} />
+            <SecretInput
+              field={formField}
+              placeholder={field.placeholder}
+              testId={`ai-provider-field-${field.key}`}
+            />
           ) : (
             <FormControl>
-              <Input {...formField} placeholder={field.placeholder} />
+              <Input
+                {...formField}
+                placeholder={field.placeholder}
+                data-testid={`ai-provider-field-${field.key}`}
+              />
             </FormControl>
           )}
           {field.description && (
@@ -331,9 +344,11 @@ function CredentialFieldInput({
 function SecretInput({
   field,
   placeholder,
+  testId,
 }: {
   field: ControllerRenderProps<ConnectFormValues, `credentials.${string}`>;
   placeholder?: string;
+  testId: string;
 }) {
   const [visible, setVisible] = useState(false);
   return (
@@ -343,6 +358,7 @@ function SecretInput({
           {...field}
           type={visible ? 'text' : 'password'}
           placeholder={placeholder}
+          data-testid={testId}
           className="pr-9"
         />
       </FormControl>

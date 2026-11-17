@@ -141,23 +141,25 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ...spreadIfDefined('user', isNil(userId) ? undefined : { id: userId }),
                 ...spreadIfDefined('project', isNil(billing.projectId) ? undefined : { id: billing.projectId }),
             })
+            const metadata: ModelMetadata = { platformId, conversationId, runId, surface: source === AgentRunSource.AGENT || source === AgentRunSource.FLOW_STEP ? 'agent' : 'chat' }
             const model = aiUtils.createModel({
                 credentials, modelId: config.modelId,
-                metadata: { platformId, conversationId, runId },
+                metadata,
                 billing,
                 turnAlreadyCharged: true,
                 ...spreadIfDefined('providerConfigId', config.providerConfigId),
             })
             const fastModel = aiUtils.createModel({
                 credentials, modelId: config.fastModelId,
+                metadata,
                 billing,
                 turnAlreadyCharged: true,
                 ...spreadIfDefined('providerConfigId', config.providerConfigId),
             })
-            const turnModels = turnModelsFor({ config, model, billing, metadata: { platformId, conversationId, runId } })
+            const turnModels = turnModelsFor({ config, model, billing, metadata })
             const fastTurnModel: TurnModel | undefined = isNil(config.platformTier)
                 ? { model: fastModel, provider, modelId: config.fastModelId, thinkingBudget: config.tier.thinkingBudget }
-                : isNil(config.fastCandidate) ? undefined : candidateTurnModel({ candidate: config.fastCandidate, billing })
+                : isNil(config.fastCandidate) ? undefined : candidateTurnModel({ candidate: config.fastCandidate, billing, metadata })
             let answering: TurnModel = turnModels[0]
             const runKey = (): RunKey => ({ provider: answering.provider, providerConfigId: answering.key?.providerConfigId ?? config.providerConfigId, modelId: answering.modelId })
 

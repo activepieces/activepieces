@@ -7,7 +7,7 @@ vi.mock('@activepieces/server-utils', () => ({
     safeHttp: { axios: { request: mockRequest } },
 }))
 
-import { openAICompatibleProvider } from '../../../../../src/app/ai/providers/openai-compatible-gateway-provider'
+import { litellmProvider, openAICompatibleProvider } from '../../../../../src/app/ai/providers/openai-compatible-gateway-provider'
 
 const config = (overrides: Partial<OpenAICompatibleProviderConfig> = {}): OpenAICompatibleProviderConfig => ({
     apiKeyHeader: 'Authorization',
@@ -75,5 +75,29 @@ describe('openAICompatibleProvider.suggestModels', () => {
             { id: 'typed-by-hand', name: 'typed-by-hand', type: AIProviderModelType.TEXT },
         ])
         expect(mockRequest).not.toHaveBeenCalled()
+    })
+})
+
+describe('litellmProvider.suggestModels', () => {
+    beforeEach(() => {
+        mockRequest.mockReset()
+    })
+
+    it.each([
+        { apiKey: 'sk-test', apiKeyHeader: 'Authorization', expected: { authorization: 'Bearer sk-test' } },
+        { apiKey: 'Bearer sk-test', apiKeyHeader: 'Authorization', expected: { authorization: 'Bearer sk-test' } },
+        { apiKey: 'sk-test', apiKeyHeader: '', expected: { authorization: 'Bearer sk-test' } },
+        { apiKey: 'sk-test', apiKeyHeader: 'x-litellm-api-key', expected: { 'x-litellm-api-key': 'sk-test' } },
+    ])('sends the key the way generation does for header "$apiKeyHeader" and key "$apiKey"', async ({ apiKey, apiKeyHeader, expected }) => {
+        respondWith(['prod-smart'])
+        const { suggestModels } = litellmProvider
+        if (isNil(suggestModels)) {
+            throw new Error('the LiteLLM provider should suggest models')
+        }
+
+        await expect(suggestModels({ apiKey }, config({ apiKeyHeader }))).resolves.toEqual(['prod-smart'])
+
+        const headers: Record<string, string> = mockRequest.mock.calls[0][0].headers
+        expect(Object.fromEntries(Object.entries(headers).map(([name, value]) => [name.toLowerCase(), value]))).toEqual(expected)
     })
 })
