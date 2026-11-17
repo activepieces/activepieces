@@ -22,6 +22,12 @@ export const imageRouter = createPiece({
     createCustomApiCallAction({
       auth: imageRouterAuth,
       baseUrl: () => imageRouterClient.baseUrl(),
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${imageRouterClient.baseUrl()}`,
+          placeholder: '/v1/openai/images/generations',
+        },
+      },
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.secret_text}`,
       }),
