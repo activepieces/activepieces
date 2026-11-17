@@ -34,8 +34,14 @@ export const createPdfFromHtml = createAction({
         'marginLeft',
         'marginRight',
         'printBackground',
-        'displayHeaderFooter',
       ],
+    },
+    {
+      key: 'headerFooter',
+      display: 'section',
+      label: 'Header and Footer',
+      icon: 'text',
+      props: ['displayHeaderFooter', 'customHeader', 'customFooter', 'headerFontSize'],
     },
   ],
   props: {
@@ -115,11 +121,10 @@ export const createPdfFromHtml = createAction({
       defaultValue: true,
     }),
     displayHeaderFooter: Property.Checkbox({
-      displayName: 'Header and Footer',
-      description: 'Add a header and footer to every page.',
+      displayName: 'Show Header and Footer',
+      description: 'Print the header and footer below on every page.',
       required: false,
       defaultValue: false,
-      reveals: ['customHeader', 'customFooter', 'headerFontSize'],
     }),
     customHeader: Property.LongText({
       displayName: 'Header HTML',
