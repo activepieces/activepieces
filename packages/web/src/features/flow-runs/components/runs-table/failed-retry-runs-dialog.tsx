@@ -11,13 +11,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
+import { FlowRunStatusIcon } from '@/features/flow-runs/components/flow-run-status-icon';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { statusColors } from '@/lib/status-colors';
-import { cn } from '@/lib/utils';
 
 type FailedRetryRunsDialogProps = {
   open: boolean;
@@ -43,7 +41,6 @@ export const FailedRetryRunsDialog = ({
         <ScrollArea className="max-h-[400px]">
           <ul className="flex flex-col gap-3 pr-3">
             {failedRuns.map((run) => {
-              const Icon = flowRunUtils.getStatusIcon(run.status);
               return (
                 <li
                   key={run.id}
@@ -51,11 +48,9 @@ export const FailedRetryRunsDialog = ({
                 >
                   <div className="flex flex-col gap-1 min-w-0">
                     <div className="flex items-center gap-1.5 text-sm font-medium">
-                      <Icon
-                        className={cn(
-                          'size-4 shrink-0',
-                          statusColors.of(run.status).text,
-                        )}
+                      <FlowRunStatusIcon
+                        status={run.status}
+                        className="size-4 shrink-0"
                       />
                       <span className="truncate">
                         {t('Previous status')}:{' '}

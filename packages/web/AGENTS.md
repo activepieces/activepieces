@@ -46,6 +46,11 @@ You are working in the Activepieces web application (`packages/web`).
 ## Statuses
 
 - **Colours of a state come from `statusColors.of(status)`** (`src/lib/status-colors.ts`). `StatusBadge`, `StatusDot` and other status components take the status, never a colour or a tone.
+- **Use `StatusBadge` when the badge tells the state of something. Use `Badge` when it is only a label.**
+  - A state can be stored on the entity. The API sends it: a run is Succeeded or Failed, a connection is Active or Error, an invitation is Pending.
+  - A state can also be derived. The API sends only facts, and the web app builds the state from them in one place in `src/lib/statuses.ts`. For example: credits are Warning or Error from the percentage used; a worker group is Online, Offline or Empty from the number of workers online and whether the group is in use; the save bar is Unsaved or Locked from unsaved changes and the plan; a batch is Never started or Failed to start from its batch signals.
+  - A label tells no state: "Default", "Built in", "Yearly", "3 selected". A label keeps its own look.
+  - Do not give a `Badge` a success, warning or danger look to show a state. Show the state with `StatusBadge`, so it looks the same on every screen.
 - **When booleans or checks derived from data (for example, "is this config property null") together make a state the user sees, and every combination can happen, add an enum to `src/lib/statuses.ts` and build it in one function.** The same state then looks the same on every screen. If some combinations can never happen, the API should probably send one enum instead (see `packages/server/AGENTS.md`). Apply this only where it makes the code simpler.
 
 ## Accessible markup

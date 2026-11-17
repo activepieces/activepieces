@@ -23,14 +23,12 @@ import {
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
-import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
+import { FlowRunStatusIcon } from '@/features/flow-runs/components/flow-run-status-icon';
 import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 import { stepsHooks } from '@/features/pieces';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
-import { statusColors } from '@/lib/status-colors';
-import { cn } from '@/lib/utils';
 
 type FailedStepDialogProps = {
   run: FlowRun | null;
@@ -72,7 +70,6 @@ export const FailedStepDialog = ({
     const internalError = populatedRun?.internalError;
     const flowName = run.flowVersion?.displayName ?? '';
     const failureTimestamp = run.finishTime ?? run.startTime ?? run.created;
-    const RunStatusIcon = flowRunUtils.getStatusIcon(run.status);
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
@@ -81,11 +78,9 @@ export const FailedStepDialog = ({
         >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
-              <RunStatusIcon
-                className={cn(
-                  'size-4 shrink-0',
-                  statusColors.of(run.status).text,
-                )}
+              <FlowRunStatusIcon
+                status={run.status}
+                className="size-4 shrink-0"
               />
               <span className="truncate">
                 {flowName || t('Internal error')}
@@ -153,18 +148,15 @@ export const FailedStepDialog = ({
   const flowName =
     run.flowVersion?.displayName ?? flowVersion?.displayName ?? '';
   const failureTimestamp = run.finishTime ?? run.startTime ?? run.created;
-  const RunStatusIcon = flowRunUtils.getStatusIcon(run.status);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg" onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
-            <RunStatusIcon
-              className={cn(
-                'size-4 shrink-0',
-                statusColors.of(run.status).text,
-              )}
+            <FlowRunStatusIcon
+              status={run.status}
+              className="size-4 shrink-0"
             />
             <span className="truncate">{flowName || t('Run Failed')}</span>
           </DialogTitle>
