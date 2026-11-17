@@ -3,6 +3,8 @@ import { test } from '../../../fixtures';
 import { e2eFlows } from '../../../fixtures/flows';
 
 test.describe('LiteLLM AI provider', () => {
+  test.skip(process.env.AP_EDITION === 'ee', 'AI Center is locked on the unlicensed EE plan');
+
   test('admin connects a LiteLLM key and its models appear', async ({ aiProvidersPage, aiProviderCleanup }) => {
     const modelId = `e2e-${faker.string.alphanumeric({ length: 8, casing: 'lower' })}`;
 
