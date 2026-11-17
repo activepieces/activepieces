@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 const MAX_COMPANIES = 100;
 
@@ -14,9 +16,10 @@ export const sortCompanies = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Read-only ranking of a caller-supplied set of companies (up to 100 LinkedIn URLs or domains) by how strongly your network reaches people there, ordered strongest-first. Use when you already have specific companies to prioritize; to discover companies use Search Companies. Pure query, safe to retry.',
+      'Read-only ranking of a caller-supplied set of companies (up to 100 LinkedIn URLs or domains) by how strongly your network reaches people there, ordered strongest-first. Use when you already have specific companies to prioritize; to discover companies use Find Companies. Free. Pure query, safe to retry.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.sortCompanies,
   props: {
     companies: Property.Array({
       displayName: 'Companies',
@@ -35,14 +38,14 @@ export const sortCompanies = createAction({
       throw new Error(`Maximum ${MAX_COMPANIES} companies per request`);
     }
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/companies/sort`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/companies/sort`,
       body: {
         companies: companies.map((value) => String(value)),
       },
     });
-    return response.body;
+    return response;
   },
 });

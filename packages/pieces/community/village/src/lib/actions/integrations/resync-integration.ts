@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const resyncIntegration = createAction({
   auth: villageAuth,
@@ -15,6 +17,7 @@ export const resyncIntegration = createAction({
       'Trigger a full resync of a Google or LinkedIn integration by numeric ID, clearing sync cursors and re-importing all contacts and calendar data. Idempotent: graph writes use MERGE, so repeating it re-imports without creating duplicates. Use when synced network data looks stale or incomplete.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.integrationResult,
   props: {
     id: Property.Number({
       displayName: 'Integration ID',
@@ -25,11 +28,11 @@ export const resyncIntegration = createAction({
   async run(context) {
     const { id } = context.propsValue;
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/integrations/${id}/resync`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/integrations/${id}/resync`,
     });
-    return response.body;
+    return response;
   },
 });

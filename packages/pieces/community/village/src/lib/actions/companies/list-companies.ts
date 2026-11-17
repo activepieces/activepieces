@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const listCompanies = createAction({
   auth: villageAuth,
@@ -8,13 +10,14 @@ export const listCompanies = createAction({
   classification: 'SEARCH',
   displayName: 'List Companies',
   description:
-    'Get your top-connected companies ranked by network strength. Returns a paginated list with connection score, label, LinkedIn URL, domain, and enrichment data.',
-  audience: 'both',
+    'Get your top-connected companies ranked by network strength. Returns a paginated list with connection score, label, LinkedIn URL, domain, and enrichment data. Free with Connection Degrees = 1 only; without a Connection Degrees filter a call costs 1 Village credit, and other degrees cost 2 credits per 10 results.',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Read-only browse of the companies your network reaches best, ranked by connection strength, with optional connection-degree filtering. Use to enumerate companies you already have a path into; for criteria-based discovery use Search Companies. Cursor-paginated and safe to retry.',
+      'Read-only browse of the companies your network reaches best, ranked by connection strength, with optional connection-degree filtering. Use to enumerate companies you already have a path into; for criteria-based discovery use Search Companies. Free with connection_degrees [1]; a call without a connection_degrees filter costs 1 credit, other degrees cost credits too. Cursor-paginated and safe to retry.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.listCompanies,
   props: {
     cursor: Property.ShortText({
       displayName: 'Cursor',
@@ -43,12 +46,12 @@ export const listCompanies = createAction({
       body['connection_degrees'] = connection_degrees.map((value) => Number(value));
     }
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/companies`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/companies`,
       body,
     });
-    return response.body;
+    return response;
   },
 });

@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 const MAX_ITEM_IDS = 100;
 
@@ -17,6 +19,7 @@ export const removeListItems = createAction({
       'Remove up to 100 items from a list by their list-item IDs, which you must first obtain from Get a list (these are not entity/person IDs). Effectively idempotent: removing an item already gone is a no-op rather than an error.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.removeListItems,
   props: {
     id: Property.ShortText({
       displayName: 'List ID',
@@ -32,7 +35,7 @@ export const removeListItems = createAction({
   async run(context) {
     const { id, item_ids } = context.propsValue;
 
-    const ids = (item_ids ?? []) as string[];
+    const ids = villageApi.stringList(item_ids);
     if (ids.length === 0) {
       throw new Error('At least one item ID is required');
     }
@@ -40,14 +43,14 @@ export const removeListItems = createAction({
       throw new Error(`Maximum ${MAX_ITEM_IDS} item IDs per request`);
     }
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.DELETE,
-      url: `${VILLAGE_API_BASE_URL}/v2/lists/${encodeURIComponent(id)}/items`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/lists/${encodeURIComponent(id)}/items`,
       body: {
         item_ids: ids,
       },
     });
-    return response.body;
+    return response;
   },
 });

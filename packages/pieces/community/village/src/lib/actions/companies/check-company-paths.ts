@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const checkCompanyPaths = createAction({
   auth: villageAuth,
@@ -12,9 +14,10 @@ export const checkCompanyPaths = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Read-only lightweight check of whether any introduction paths to a company exist, identified by domain, LinkedIn URL, or generic url (supply exactly one). Use as a cheap yes/no-with-score screen before calling Get Company Paths, which returns the actual reachable employees. Pure query, safe to retry.',
+      'Read-only lightweight check of whether any introduction paths to a company exist, identified by domain, LinkedIn URL, or generic url (supply exactly one). Use as a cheap yes/no-with-score screen before calling Get Company Paths, which returns the actual reachable employees. Free. Pure query, safe to retry.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.checkCompanyPaths,
   props: {
     domain: Property.ShortText({
       displayName: 'Domain',
@@ -49,14 +52,14 @@ export const checkCompanyPaths = createAction({
       ? { domain }
       : linkedin_url
         ? { linkedin_url }
-        : { url: url as string };
+        : { url: url ?? '' };
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/companies/paths/check`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/companies/paths/check`,
       body: identifier,
     });
-    return response.body;
+    return response;
   },
 });

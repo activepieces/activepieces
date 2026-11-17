@@ -1,6 +1,8 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const getAppInfo = createAction({
   auth: villageAuth,
@@ -15,13 +17,14 @@ export const getAppInfo = createAction({
       'Fetch metadata about the partner application tied to the current API token (title, domain, public key, active flag). Read-only and idempotent. Use to verify which app a token belongs to and confirm its configuration, not for user or team data.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.getAppInfo,
   props: {},
   async run(context) {
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
-      url: `${VILLAGE_API_BASE_URL}/v2/app`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/app`,
     });
-    return response.body;
+    return response;
   },
 });

@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const createList = createAction({
   auth: villageAuth,
@@ -15,6 +17,7 @@ export const createList = createAction({
       'Create a new people or company list, making the caller its owner. Not idempotent: each call creates a separate list even with the same title, and the entity type is fixed at creation. Subscription plan limits may cap how many lists can exist.',
     idempotent: false,
   },
+  outputSchema: villageSchemas.singleList,
   props: {
     title: Property.ShortText({
       displayName: 'Title',
@@ -53,12 +56,12 @@ export const createList = createAction({
     if (description !== undefined) body['description'] = description;
     if (is_public !== undefined) body['is_public'] = is_public;
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/lists`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/lists`,
       body,
     });
-    return response.body;
+    return response;
   },
 });

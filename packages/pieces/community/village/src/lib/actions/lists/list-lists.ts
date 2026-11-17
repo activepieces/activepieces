@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const listLists = createAction({
   auth: villageAuth,
@@ -15,6 +17,7 @@ export const listLists = createAction({
       'List the caller\'s saved lists, with optional cursor pagination, type filter (people or company), and title search. Read-only and idempotent. Use to discover list IDs and titles; use Get a list to read the items inside a specific list.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.listLists,
   props: {
     cursor: Property.ShortText({
       displayName: 'Cursor',
@@ -53,12 +56,12 @@ export const listLists = createAction({
     if (type) queryParams['type'] = type;
     if (search) queryParams['search'] = search;
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
-      url: `${VILLAGE_API_BASE_URL}/v2/lists`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/lists`,
       queryParams,
     });
-    return response.body;
+    return response;
   },
 });

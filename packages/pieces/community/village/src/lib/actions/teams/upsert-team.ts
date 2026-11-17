@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const upsertTeam = createAction({
   auth: villageAuth,
@@ -15,6 +17,7 @@ export const upsertTeam = createAction({
       'Create a team, or update an existing one when a team with the same name already exists since the team ID is derived from the name. Idempotent by stable name: repeating the same name and fields converges to one team rather than creating duplicates (updating requires admin permission on that team).',
     idempotent: true,
   },
+  outputSchema: villageSchemas.upsertTeamOrGroup,
   props: {
     name: Property.ShortText({
       displayName: 'Name',
@@ -33,12 +36,12 @@ export const upsertTeam = createAction({
     const body: Record<string, unknown> = { name };
     if (logo !== undefined) body['logo'] = logo;
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/teams`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/teams`,
       body,
     });
-    return response.body;
+    return response;
   },
 });

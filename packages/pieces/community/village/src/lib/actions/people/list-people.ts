@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const listPeople = createAction({
   auth: villageAuth,
@@ -8,13 +10,14 @@ export const listPeople = createAction({
   classification: 'SEARCH',
   displayName: 'List People',
   description:
-    'Get your network contacts ranked by connection strength. Returns a paginated list with enrichment data, supporting cursor-based pagination and optional connection-degree filtering.',
-  audience: 'both',
+    'Get your network contacts ranked by connection strength. Returns a paginated list with enrichment data, supporting cursor-based pagination and optional connection-degree filtering. Free with Connection Degrees = 1 only; without a Connection Degrees filter a call costs 1 Village credit, and other degrees cost 2 credits per 10 results.',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Read-only browse of your own network contacts ranked by connection strength, with optional filtering by connection degree or current company domain. Use to enumerate who you already know; for criteria-based discovery beyond your contacts use Search People. Cursor-paginated and safe to retry.',
+      'Read-only browse of your own network contacts ranked by connection strength, with optional filtering by connection degree or current company domain. Use to enumerate who you already know; for criteria-based discovery beyond your contacts use Search People. Free with connection_degrees [1]; a call without a connection_degrees filter costs 1 credit, other degrees cost credits too. Cursor-paginated and safe to retry.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.listPeople,
   props: {
     cursor: Property.ShortText({
       displayName: 'Cursor',
@@ -50,12 +53,12 @@ export const listPeople = createAction({
     }
     if (company_domain !== undefined) body['company_domain'] = company_domain;
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/people`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/people`,
       body,
     });
-    return response.body;
+    return response;
   },
 });
