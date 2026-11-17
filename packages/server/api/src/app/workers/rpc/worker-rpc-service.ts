@@ -233,7 +233,7 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
                 return
             }
             log.info({ connection: { id: socket.id } }, '[workerRpc#beginShutdown] Worker is stopping; no further jobs will be dispatched')
-            jobBroker(log).markConnectionStopping(socket.id)
+            jobBroker(log).markWorkerShuttingDown(socket.id)
         },
 
         async getPieceArchive(input) {
