@@ -416,11 +416,11 @@ export const textToSpeechAction = createAction({
     
     body['language'] = defaultLanguage;
     body['option'] = defaultOption;
-    if (rate !== undefined && rate !== 0) body['rate'] = rate;
-    if (pitch !== undefined && pitch !== 0) body['pitch'] = pitch;
-    if (volume !== undefined && volume !== 0) body['volume'] = volume;
+    if (typeof rate === 'number' && rate !== 0) body['rate'] = rate;
+    if (typeof pitch === 'number' && pitch !== 0) body['pitch'] = pitch;
+    if (typeof volume === 'number' && volume !== 0) body['volume'] = volume;
     if (audio_format) body['audio_format'] = audio_format;
-    if (sampling_rate !== undefined && sampling_rate !== 0) body['sampling_rate'] = sampling_rate;
+    if (typeof sampling_rate === 'number' && sampling_rate !== 0) body['sampling_rate'] = sampling_rate;
     if (show_original_response) body['show_original_response'] = true;
     
     if (fallback_providers && fallback_providers.length > 0) {

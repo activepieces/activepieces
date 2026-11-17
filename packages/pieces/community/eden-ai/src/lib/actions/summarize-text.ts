@@ -151,7 +151,7 @@ export const summarizeTextAction = createAction({
       text,
     };
 
-    if (output_sentences !== undefined) body['output_sentences'] = output_sentences;
+    if (typeof output_sentences === 'number') body['output_sentences'] = output_sentences;
     if (language && language !== 'auto-detect') body['language'] = language;
     if (show_original_response) body['show_original_response'] = true;
     

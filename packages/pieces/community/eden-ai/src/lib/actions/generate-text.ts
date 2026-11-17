@@ -192,8 +192,8 @@ export const generateTextAction = createAction({
     
     body['model'] = model || defaultModels[provider] || 'gpt-4o';
 
-    if (temperature !== undefined) body['temperature'] = temperature;
-    if (max_completion_tokens !== undefined) body['max_completion_tokens'] = max_completion_tokens;
+    if (typeof temperature === 'number') body['temperature'] = temperature;
+    if (typeof max_completion_tokens === 'number') body['max_completion_tokens'] = max_completion_tokens;
     if (reasoning_effort) body['reasoning_effort'] = reasoning_effort;
     if (fallback_providers && fallback_providers.length > 0) {
       body['fallback_providers'] = fallback_providers;
