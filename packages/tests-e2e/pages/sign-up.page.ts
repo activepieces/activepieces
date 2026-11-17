@@ -13,14 +13,23 @@ export class SignUpPage extends BasePage {
   }
 
   async signUp(person: Person): Promise<{ userId: string }> {
+    const attempt = await this.attemptSignUp({ person });
+    if (!attempt.userId) {
+      throw new Error(`Sign-up failed with ${attempt.status}: ${attempt.error}`);
+    }
+    return { userId: attempt.userId };
+  }
+
+  async attemptSignUp({ person, onCreated }: { person: Person; onCreated?: (userId: string) => void }): Promise<SignUpAttempt> {
     const response = this.page.waitForResponse((candidate) => candidate.url().endsWith(SIGN_UP_PATH));
     await this.submit(person);
-    const signedUp = await response;
-    if (!signedUp.ok()) {
-      throw new Error(`Sign-up failed with ${signedUp.status()}: ${await signedUp.text()}`);
+    const answered = await response;
+    if (!answered.ok()) {
+      return { status: answered.status(), error: await answered.text() };
     }
-    const user: { id: string } = await signedUp.json();
-    return { userId: user.id };
+    const user: { id: string } = await answered.json();
+    onCreated?.(user.id);
+    return { status: answered.status(), userId: user.id };
   }
 
   async submit(person: Person) {
@@ -44,3 +53,5 @@ export class SignUpPage extends BasePage {
 const SIGN_UP_PATH = '/api/v1/authentication/sign-up';
 
 type Person = { firstName: string; lastName: string; password: string };
+
+type SignUpAttempt = { status: number; userId?: string; error?: string };

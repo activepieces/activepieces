@@ -28,4 +28,6 @@ async function invitePlatformMember({ request, session, email }: { request: APIR
   return invitation;
 }
 
+export { expect } from '@playwright/test';
+
 type Invitation = { email: string; link: URL };

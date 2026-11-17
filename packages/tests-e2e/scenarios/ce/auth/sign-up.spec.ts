@@ -1,11 +1,14 @@
 import { faker } from '@faker-js/faker';
-import { test } from '../../../fixtures/sign-up';
+import { expect, test } from '../../../fixtures/sign-up';
 import { InvitationPage } from '../../../pages/invitation.page';
 import { SignUpPage } from '../../../pages/sign-up.page';
 
 test.use({ storageState: { cookies: [], origins: [] } });
 
-test.describe('Sign up', { tag: ['@feature:sign-up', '@surface'] }, () => {
+test.describe('Sign up', {
+  tag: ['@feature:sign-up', '@surface', '@no-staging'],
+  annotation: { type: 'no-staging', description: 'Cloud allows a sign-up without an invitation, and staging has no mail catcher' },
+}, () => {
   test('invited person signs up and lands in a project', async ({ page, invitation, cleanup }) => {
     const invitationPage = new InvitationPage(page);
     const signUpPage = new SignUpPage(page);
@@ -21,13 +24,14 @@ test.describe('Sign up', { tag: ['@feature:sign-up', '@surface'] }, () => {
     await signUpPage.expectSignedInAs(invitation.email);
   });
 
-  test('uninvited email sees sign up is restricted', async ({ page }) => {
+  test('uninvited email sees sign up is restricted', async ({ page, cleanup }) => {
     const signUpPage = new SignUpPage(page);
     const email = faker.internet.email({ provider: 'example.com' }).toLowerCase();
 
     await signUpPage.openAs(email);
     await signUpPage.expectEmail(email);
-    await signUpPage.submit(PERSON);
+    const attempt = await signUpPage.attemptSignUp({ person: PERSON, onCreated: (id) => cleanup.track({ resource: 'users', id }) });
+    expect(attempt.userId, 'A sign-up without an invitation created a user').toBeUndefined();
     await signUpPage.expectRestricted();
   });
 });
