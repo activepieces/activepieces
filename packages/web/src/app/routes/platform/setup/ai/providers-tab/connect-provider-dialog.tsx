@@ -7,7 +7,14 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AxiosError } from 'axios';
 import { t } from 'i18next';
-import { ChevronDown, CircleAlert, Eye, EyeOff, Info } from 'lucide-react';
+import {
+  BookOpen,
+  ChevronDown,
+  CircleAlert,
+  Eye,
+  EyeOff,
+  Info,
+} from 'lucide-react';
 import { useState } from 'react';
 import { ControllerRenderProps, FieldErrors, useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -78,7 +85,7 @@ export function ConnectProviderDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={adminLayout.dialog.lg}>
+      <DialogContent className={adminLayout.dialog.md}>
         <ConnectProviderForm
           key={open ? editing?.id ?? defaultProvider ?? 'new' : 'closed'}
           editing={editing}
@@ -191,7 +198,8 @@ function ConnectProviderForm({
         </DialogHeader>
 
         <ScrollArea viewPortClassName="max-h-[65vh] p-px">
-          <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
+          <div className="flex flex-col gap-4">
+            {info && <SetupHelp key={info.provider} info={info} />}
             <div className="flex flex-col gap-4">
               {!providerLocked && (
                 <FormField
@@ -276,7 +284,7 @@ function ConnectProviderForm({
                     >
                       <ChevronDown
                         className={cn(
-                          'size-4 transition-transform',
+                          'size-4 transition-transform duration-200',
                           advancedOpen && 'rotate-180',
                         )}
                       />
@@ -285,20 +293,20 @@ function ConnectProviderForm({
                       })}
                     </button>
                   </CollapsibleTrigger>
-                  <CollapsibleContent className="flex flex-col gap-4 pt-4">
-                    {advancedFields.map((credentialField) => (
-                      <CredentialFieldInput
-                        key={credentialField.key}
-                        form={form}
-                        field={credentialField}
-                      />
-                    ))}
+                  <CollapsibleContent className={COLLAPSE_ANIMATION}>
+                    <div className="flex flex-col gap-4 pt-4">
+                      {advancedFields.map((credentialField) => (
+                        <CredentialFieldInput
+                          key={credentialField.key}
+                          form={form}
+                          field={credentialField}
+                        />
+                      ))}
+                    </div>
                   </CollapsibleContent>
                 </Collapsible>
               )}
             </div>
-
-            {info && <SetupHelp info={info} />}
           </div>
         </ScrollArea>
 
@@ -498,16 +506,40 @@ function ProviderOption({ provider }: { provider: unknown }) {
 }
 
 function SetupHelp({ info }: { info: AiProviderInfo }) {
+  const [open, setOpen] = useState(false);
   return (
-    <aside className="flex flex-col gap-2 self-start rounded-lg border border-gray-6 bg-gray-2 p-4">
-      <h3 className="text-sm font-medium text-gray-12">
-        {t('How to connect {name}', { name: info.name })}
-      </h3>
-      <ApMarkdown
-        markdown={info.markdown()}
-        variant={MarkdownVariant.BORDERLESS}
-      />
-    </aside>
+    <Collapsible
+      open={open}
+      onOpenChange={setOpen}
+      className="rounded-lg border border-gray-6 bg-gray-2"
+    >
+      <CollapsibleTrigger asChild>
+        <button
+          type="button"
+          data-testid="ai-provider-setup-help-toggle"
+          className="flex w-full items-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-12"
+        >
+          <BookOpen className="size-4 shrink-0 text-gray-11" />
+          <span className="grow text-left">
+            {t('How to connect {name}', { name: info.name })}
+          </span>
+          <ChevronDown
+            className={cn(
+              'size-4 shrink-0 text-gray-11 transition-transform duration-200',
+              open && 'rotate-180',
+            )}
+          />
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className={COLLAPSE_ANIMATION}>
+        <div className="border-t border-gray-6 px-3 py-3 text-sm text-gray-11">
+          <ApMarkdown
+            markdown={info.markdown()}
+            variant={MarkdownVariant.BORDERLESS}
+          />
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -613,6 +645,9 @@ function connectFormSchema() {
         });
     });
 }
+
+const COLLAPSE_ANIMATION =
+  'overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up';
 
 type ConnectFormValues = z.infer<ReturnType<typeof connectFormSchema>>;
 
