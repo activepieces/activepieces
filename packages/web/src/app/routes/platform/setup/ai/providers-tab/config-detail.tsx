@@ -113,12 +113,7 @@ export function ConfigDetail({
   const { mutate: refreshModels, isPending: isRefreshing } =
     aiProviderMutations.useRefreshAiProviderModels({
       onSuccess: async () => {
-        const { data: freshConfigs } = await refetchConfigs();
-        const fresh = freshConfigs?.find((other) => other.id === config.id);
-        if (fresh && 'models' in fresh.config) {
-          const models = fresh.config.models;
-          setDraft((current) => ({ ...current, models }));
-        }
+        await refetchConfigs();
         toast.success(t('Models refreshed'));
       },
       onError: (error) => {
@@ -298,34 +293,12 @@ export function ConfigDetail({
             <SettingsPanel flush>
               <PanelHeader
                 title={t('Models')}
-                description={
-                  syncsModels
-                    ? t(
-                        'Models your proxy lists sync on every save. Add any others by hand.',
-                      )
-                    : t('Model ids exposed through this key.')
-                }
-                action={
-                  syncsModels && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      loading={isRefreshing}
-                      disabled={dirty}
-                      title={dirty ? t('Save your changes first') : undefined}
-                      onClick={() => refreshModels(config.id)}
-                    >
-                      <RefreshCw className="size-4" />
-                      {t('Refresh models')}
-                    </Button>
-                  )
-                }
+                description={t('Model ids exposed through this key.')}
               />
               <ManualModelList
                 models={draft.models}
                 suggestedModelIds={suggestedModelIds}
                 tiersByModel={tiersByModel}
-                syncsModels={syncsModels}
                 onChange={(models) => setDraft({ ...draft, models })}
               />
             </SettingsPanel>
@@ -339,7 +312,22 @@ export function ConfigDetail({
                 modelScope: draft.modelScope,
                 modelIds: draft.modelIds,
               }}
-              isLoading={isLoadingModels}
+              isLoading={isLoadingModels || isRefreshing}
+              action={
+                syncsModels && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    loading={isRefreshing}
+                    disabled={dirty}
+                    title={dirty ? t('Save your changes first') : undefined}
+                    onClick={() => refreshModels(config.id)}
+                  >
+                    <RefreshCw className="size-4" />
+                    {t('Refresh models')}
+                  </Button>
+                )
+              }
               onChange={(selection) => setDraft({ ...draft, ...selection })}
             />
           )}

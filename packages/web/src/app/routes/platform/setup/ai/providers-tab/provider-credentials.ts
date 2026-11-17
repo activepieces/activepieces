@@ -197,7 +197,6 @@ const PROVIDER_CREDENTIAL_FIELDS: Partial<
 const MANUAL_MODEL_PROVIDERS: AIProviderName[] = [
   AIProviderName.VERTEX,
   AIProviderName.CUSTOM,
-  AIProviderName.LITELLM,
   AIProviderName.CLOUDFLARE_GATEWAY,
 ];
 
