@@ -47,7 +47,7 @@ export function useInviteRewards(): InviteRewardsState {
     creditsPerInvite: summary.creditsPerInvite,
     rewardsEarned,
     maxRewards: summary.maxRewards,
-    rewardsLeft: Math.min(rewardsUnderCap, seatsLeft),
+    rewardsLeft: rewardsUnderCap,
     rewards: summary.rewards,
     bonusCredits: summary.rewards.reduce(
       (total, reward) => total + reward.credits,

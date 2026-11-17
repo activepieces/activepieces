@@ -71,7 +71,7 @@ describe('useInviteRewards', () => {
     expect(result.current.bonusCredits).toBe(1000);
   });
 
-  it('caps rewards left by the free seats left', async () => {
+  it('counts rewards left under the cap, however few seats are free', async () => {
     state.activeUsers = 3;
     state.invitedSeats = 1;
     getSummary.mockResolvedValue(summary({ rewards: [] }));
@@ -79,7 +79,7 @@ describe('useInviteRewards', () => {
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
     await waitFor(() => expect(result.current.visible).toBe(true));
-    expect(result.current.rewardsLeft).toBe(1);
+    expect(result.current.rewardsLeft).toBe(4);
   });
 
   it('hides the offer once every seat is taken', async () => {

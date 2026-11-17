@@ -117,8 +117,7 @@ export function BonusCreditsLine() {
           >
             {t('Earn {credits} more', {
               credits: billingUtils.formatCredits(
-                (rewards.maxRewards - rewards.rewardsEarned) *
-                  rewards.creditsPerInvite,
+                rewards.rewardsLeft * rewards.creditsPerInvite,
               ),
             })}
             <ArrowRight />
