@@ -1,3 +1,4 @@
+import { AgentPageContext } from '@activepieces/shared';
 import { t } from 'i18next';
 import { CircleSlash } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
@@ -129,8 +130,12 @@ export function ChatBottomBar({
   // Typing a free-text reply abandons the active card. onSend resets interaction
   // state (clearing dismissals); dismissing afterwards re-marks the gate as
   // dismissed/rejected so the card doesn't flash back before the worker unblocks.
-  const handleSend = (text: string, files?: File[]) => {
-    void onSend(text, files);
+  const handleSend = (
+    text: string,
+    files?: File[],
+    options?: { pageContext?: AgentPageContext | null },
+  ) => {
+    void onSend(text, files, options);
     if (dismissActiveCard) {
       dismissActiveCard();
       setSkipped(true);
@@ -278,7 +283,11 @@ function BlockingDisplayCard({
 
 type ChatBottomBarProps = {
   isStreaming: boolean;
-  onSend: (text: string, files?: File[]) => void;
+  onSend: (
+    text: string,
+    files?: File[],
+    options?: { pageContext?: AgentPageContext | null },
+  ) => void;
   onStop: () => void;
   onInputChange?: (hasInput: boolean) => void;
   modelPicker?: ReactNode;

@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/core-utils';
+import { ApResourceKind, Permission } from '@activepieces/core-utils';
 import {
   ApFlagId,
   FlowOperationType,
@@ -33,6 +33,8 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
+import { aiHighlightKey } from '@/features/chat/lib/follow/ai-highlight-key';
+import { useAiHighlight } from '@/features/chat/lib/follow/use-ai-highlight';
 import { flowHooks } from '@/features/flows';
 import { FlowCreatedByBadge } from '@/features/flows/components/flow-created-by-badge';
 import { foldersHooks } from '@/features/folders';
@@ -81,6 +83,15 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
     state.readonly,
   ]);
 
+  useAiHighlight({
+    resource: { kind: ApResourceKind.FLOW, id: flow.id },
+    key: aiHighlightKey.flowName(flow.id),
+  });
+  useAiHighlight({
+    resource: { kind: ApResourceKind.FLOW, id: flow.id },
+    key: aiHighlightKey.flowStatus(flow.id),
+  });
+
   const { embedState } = useEmbedding();
   const { project } = projectCollectionUtils.useCurrentProject();
 
@@ -126,8 +137,9 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
             <BreadcrumbItem className="min-w-16">
               <BreadcrumbPage className="min-w-0">
                 <div
+                  data-ai-field={aiHighlightKey.flowName(flow.id)}
                   className={cn(
-                    'flex min-w-0 items-center gap-1 rounded-md px-1 text-sm',
+                    'relative flex min-w-0 items-center gap-1 rounded-md px-1 text-sm',
                     {
                       'max-w-[500px]': !isEditingFlowName || readonly,
                     },
@@ -214,7 +226,12 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
         </Button>
       )}
 
-      <BuilderFlowStatusSection></BuilderFlowStatusSection>
+      <div
+        data-ai-field={aiHighlightKey.flowStatus(flow.id)}
+        className="relative rounded-md"
+      >
+        <BuilderFlowStatusSection></BuilderFlowStatusSection>
+      </div>
       <FlowCreatedByBadge createdBy={flow.createdBy} />
     </div>
   );

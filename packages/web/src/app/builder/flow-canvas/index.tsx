@@ -70,6 +70,7 @@ export const FlowCanvas = React.memo(
     const containerRef = useRef<HTMLDivElement>(null);
     useShowChevronNextToSelection();
     flowCanvasHooks.useFocusOnStep();
+    flowCanvasHooks.usePanToFlashedStep();
     useHandleKeyPressOnCanvas();
     flowCanvasHooks.useResizeCanvas(containerRef, setHasCanvasBeenInitialised);
     const reactFlowStore = useStoreApi();
