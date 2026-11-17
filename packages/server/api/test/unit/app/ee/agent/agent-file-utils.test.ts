@@ -21,6 +21,6 @@ describe('dropImagesForTextOnlyModels', () => {
     it('keeps the image for vision models and for models the catalog does not know', async () => {
         const original = await imageTurn()
 
-        expect(dropImagesForTextOnlyModels({ messages: original, models: [{ supportsVision: true }, undefined] })).toEqual(original)
+        expect(dropImagesForTextOnlyModels({ messages: original, models: [{ supportsVision: true }, {}, undefined] })).toEqual(original)
     })
 })

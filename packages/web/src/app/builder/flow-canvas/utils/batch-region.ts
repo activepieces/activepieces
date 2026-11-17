@@ -1,9 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
-import {
-  FlowActionType,
-  FlowVersion,
-  flowStructureUtil,
-} from '@activepieces/shared';
+import { FlowVersion, flowStructureUtil } from '@activepieces/shared';
 
 import { canvasElementIds } from './canvas-element-ids';
 import { flowCanvasLayoutConsts } from './layout-consts';
@@ -25,8 +21,7 @@ const buildBatchRegionNodes = ({
   orientation: CanvasOrientation;
 }): ApBatchRegionNode[] =>
   flowStructureUtil
-    .getAllSteps(version.trigger)
-    .filter((step) => step.type === FlowActionType.PROCESS_IN_BATCHES)
+    .getBatchSteps(version.trigger)
     .map((batchStep) =>
       buildBatchRegion({
         graph,
