@@ -77,6 +77,14 @@ jobs:
           chmod +x smoke-test/verify-delay.sh
           smoke-test/verify-delay.sh
 
+      # A worker stopped mid-run (SIGTERM) must finish its flow before it exits, not hand it
+      # back to start over from the first step.
+      - name: Run graceful stop smoke test (worker)
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
+        run: |
+          chmod +x smoke-test/verify-graceful-stop.sh
+          SERVICE=worker smoke-test/verify-graceful-stop.sh
+
       # NOTE: The SANDBOX_PROCESS filesystem-isolation gate runs LOCAL only.
       # The sandbox hides host paths (e.g. /usr/src/app) with mount namespaces, which need
       # privileged container capabilities that GitHub Actions runners don't grant — so the probe
@@ -169,6 +177,27 @@ jobs:
           chmod +x smoke-test/verify.sh smoke-test/verify-s3.sh
           smoke-test/verify.sh "${{ steps.setup-s3-signed.outputs.flow_id }}"
           smoke-test/verify-s3.sh "${{ steps.setup-s3-signed.outputs.flow_id }}"
+
+      # Same check for a single WORKER_AND_APP container: docker-entrypoint.sh must stop the
+      # worker first and keep the app up until the worker has finished its run.
+      - name: Restart stack as one WORKER_AND_APP container
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
+        run: |
+          docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml down -v
+          AP_CONTAINER_TYPE=WORKER_AND_APP \
+          APP_REPLICAS=1 \
+          WORKER_REPLICAS=0 \
+            docker compose -f benchmark/docker-compose.yml up -d
+          sleep 5
+          docker compose -f benchmark/docker-compose.yml ps
+
+      - name: Setup WORKER_AND_APP stack
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
+        run: bun run benchmark/setup.ts > /dev/null
+
+      - name: Run graceful stop smoke test (WORKER_AND_APP)
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
+        run: SERVICE=app smoke-test/verify-graceful-stop.sh
 
       # NOTE: The perf-regression gate runs LOCAL / GKE only, not in this CI preflight.
       # GitHub Actions shared runners deliver ~32 req/s here (worker CPU only ~65% — the runner is
