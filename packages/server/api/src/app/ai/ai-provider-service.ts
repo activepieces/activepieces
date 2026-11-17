@@ -6,7 +6,7 @@ import cron from 'node-cron'
 import { EntityManager, FindOptionsWhere, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
-import { getAiProviderConfirmKey, getManagedAiProviderKeyLockKey } from '../database/redis/keys'
+import { getAiProviderConfirmKey, getAiProviderUpdateLockKey, getManagedAiProviderKeyLockKey } from '../database/redis/keys'
 import { distributedLock, distributedStore } from '../database/redis-connections'
 import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
 import { flagService } from '../flags/flag.service'
@@ -33,6 +33,7 @@ const modelsCache = new Map<string, AIProviderModel[]>()
 const MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD = 500
 const MANAGED_OPENROUTER_KEY_LIMIT_RESET = 'monthly'
 const MANAGED_OPENROUTER_KEY_LOCK_TIMEOUT_SECONDS = 60
+const KEY_UPDATE_LOCK_TIMEOUT_SECONDS = 60
 const MANAGED_OPENROUTER_KEY_LIVE_WAIT_MS = 30_000
 const MANAGED_OPENROUTER_KEY_LIVE_POLL_MS = 1_000
 const MANAGED_OPENROUTER_KEY_LIVE_PASSES_IN_A_ROW = 3
@@ -170,18 +171,24 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return toConfigResponse({ row: saved, enabledForChat: isFirstKey })
     },
     async update(platformId: PlatformId, providerId: string, request: UpdateAIProviderRequest): Promise<void> {
-        await this.updateKey({ platformId, providerId, request, syncMode: 'save' })
+        await withKeyUpdateLock({ providerId, log, fn: () => this.updateKey({ platformId, providerId, request, syncMode: 'save' }) })
     },
 
     async refreshModels({ platformId, providerId }: { platformId: PlatformId, providerId: string }): Promise<AIProviderModel[]> {
-        const aiProvider = await getRowByIdOrThrow({ platformId, configId: providerId })
-        if (isNil(aiProviders[aiProvider.provider].syncModels)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: { message: `${aiProviders[aiProvider.provider].name} keys have no model list to refresh` },
-            })
-        }
-        await this.updateKey({ platformId, providerId, request: { displayName: aiProvider.displayName, config: aiProvider.config }, syncMode: 'refresh' })
+        await withKeyUpdateLock({
+            providerId,
+            log,
+            fn: async () => {
+                const aiProvider = await getRowByIdOrThrow({ platformId, configId: providerId })
+                if (isNil(aiProviders[aiProvider.provider].syncModels)) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.VALIDATION,
+                        params: { message: `${aiProviders[aiProvider.provider].name} keys have no model list to refresh` },
+                    })
+                }
+                await this.updateKey({ platformId, providerId, request: { displayName: aiProvider.displayName, config: aiProvider.config }, syncMode: 'refresh' })
+            },
+        })
         return this.listModelsForConfig({ platformId, configId: providerId })
     },
 
@@ -735,6 +742,10 @@ async function isActivepiecesAiProviderHidden({ platformId, log }: { platformId:
         return true
     }
     return shouldHideActivepiecesAiProvider({ platformId, log })
+}
+
+function withKeyUpdateLock<T>({ providerId, log, fn }: { providerId: string, log: FastifyBaseLogger, fn: () => Promise<T> }): Promise<T> {
+    return distributedLock(log).runExclusive({ key: getAiProviderUpdateLockKey(providerId), timeoutInSeconds: KEY_UPDATE_LOCK_TIMEOUT_SECONDS, fn })
 }
 
 async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { providerId: string, platformId: PlatformId, log: FastifyBaseLogger }): Promise<AIProviderAuthConfig> {
