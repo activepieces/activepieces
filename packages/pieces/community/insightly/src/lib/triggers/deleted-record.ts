@@ -1,156 +1,163 @@
-import {
-    createTrigger,
-    isNil,
-    Property,
-    TriggerStrategy
-} from '@activepieces/pieces-framework';
-import {
-    HttpMethod
-} from '@activepieces/pieces-common';
-import { insightlyAuth, makeInsightlyRequest } from '../common/common';
+import { createTrigger, isNil, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { insightlyClient, InsightlyError, insightlyUtils } from '../common/client';
+import { insightlyAuth, insightlyCommon, OBJECT_OPTIONS, podProperty } from '../common/common';
+import { outputSchemas } from '../common/output-schemas';
+
+function normalizeStored(value: unknown): KnownRecords {
+  if (!insightlyUtils.isRecord(value)) {
+    return {};
+  }
+  const result: KnownRecords = {};
+  for (const [id, entry] of Object.entries(value)) {
+    const parsed = parseEntry({ id, entry });
+    if (parsed) {
+      result[id] = parsed;
+    }
+  }
+  return result;
+}
+
+function parseEntry({ id, entry }: { id: string; entry: unknown }): KnownEntry | null {
+  if (Array.isArray(entry)) {
+    const minutes = insightlyUtils.readNumber(entry[0]);
+    return minutes === null ? null : [minutes, compactName({ name: insightlyUtils.readString(entry[1]), id })];
+  }
+  if (insightlyUtils.isRecord(entry)) {
+    const lastSeenMs = insightlyUtils.readNumber(entry['lastSeenMs']);
+    return lastSeenMs === null ? null : [Math.floor(lastSeenMs / MINUTE_MS), compactName({ name: insightlyUtils.readString(entry['name']), id })];
+  }
+  const minutes = insightlyUtils.readNumber(entry);
+  return minutes === null ? null : [minutes, `Record ${id}`];
+}
+
+function compactName({ name, id }: { name: string | null; id: string }): string {
+  const clean = (name ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim();
+  return clean === '' ? `Record ${id}` : Array.from(clean).slice(0, MAX_NAME_LENGTH).join('');
+}
+
+function tooMany({ objectType, detail }: { objectType: string; detail: string }): InsightlyError {
+  return new InsightlyError({
+    message: `Too many records to watch: ${objectType} ${detail}. The Deleted Record trigger supports up to ${MAX_WATCHED_RECORDS} records per object type.`,
+    status: 413,
+  });
+}
+
+function detectDeletions({ stored, records, nowMs, objectType }: DetectParams): DetectResult {
+  const current = new Map<string, string>();
+  for (const record of records) {
+    const id = insightlyCommon.recordIdOf({ record, objectName: objectType });
+    if (id) {
+      current.set(id, compactName({ name: insightlyCommon.recordNameOf(record), id }));
+    }
+  }
+  if (current.size > MAX_WATCHED_RECORDS) {
+    throw tooMany({ objectType, detail: `has ${current.size} records` });
+  }
+  const nowMinutes = Math.floor(nowMs / MINUTE_MS);
+  const nextStored: KnownRecords = {};
+  const deleted: DeletedRecord[] = [];
+  for (const [id, [lastSeenMinutes, name]] of Object.entries(stored)) {
+    if (current.has(id)) {
+      continue;
+    }
+    const lastSeenMs = lastSeenMinutes * MINUTE_MS;
+    if (nowMs - lastSeenMs > DELETION_THRESHOLD_MS) {
+      deleted.push({
+        recordId: Number(id),
+        recordName: name,
+        deletedAt: new Date(nowMs).toISOString(),
+        objectType,
+        lastSeenAt: new Date(lastSeenMs).toISOString(),
+      });
+    } else {
+      nextStored[id] = [lastSeenMinutes, name];
+    }
+  }
+  for (const [id, name] of current) {
+    nextStored[id] = [nowMinutes, name];
+  }
+  const bytes = Buffer.byteLength(JSON.stringify(nextStored), 'utf8');
+  if (bytes > MAX_STORE_BYTES) {
+    throw tooMany({ objectType, detail: `needs ${bytes} bytes of trigger state (limit ${MAX_STORE_BYTES})` });
+  }
+  return { deleted, nextStored };
+}
+
+function storeKey(objectType: string): string {
+  return `known_records_${objectType}`;
+}
+
+type KnownEntry = [number, string];
+
+type KnownRecords = Record<string, KnownEntry>;
+
+type DeletedRecord = { recordId: number; recordName: string; deletedAt: string; objectType: string; lastSeenAt: string };
+
+type DetectParams = { stored: KnownRecords; records: Record<string, unknown>[]; nowMs: number; objectType: string };
+
+type DetectResult = { deleted: DeletedRecord[]; nextStored: KnownRecords };
+
+const MINUTE_MS = 60 * 1000;
+const MAX_WATCHED_RECORDS = 5000;
+const MAX_NAME_LENGTH = 60;
+const MAX_STORE_BYTES = 450 * 1024;
+const DELETION_THRESHOLD_MS = 15 * 60 * 1000;
+const SAMPLE_DELETED = {
+  recordId: 123456,
+  recordName: 'Test Deleted Record',
+  deletedAt: '2026-01-15T10:45:00.000Z',
+  objectType: 'Contacts',
+  lastSeenAt: '2026-01-15T10:30:00.000Z',
+};
 
 export const deletedRecord = createTrigger({
-    auth: insightlyAuth,
-    name: 'deleted_record',
-    classification: 'READ',
-    displayName: 'Deleted Record',
-    description: 'Fires when a record is deleted from Insightly',
-    aiMetadata: {
-        description: 'Fires when a record disappears from the selected Insightly object type (Contact, Lead, Opportunity, Organization, Project, Task, Event, Product, or Quote), inferring deletion by polling and comparing against previously seen records. A deletion is only reported after the record has been absent for at least 15 minutes, so events are delayed and approximate rather than real-time. Requires the Insightly pod (e.g. "na1") matching your account region.',
-    },
-    type: TriggerStrategy.POLLING,
-    props: {
-        pod: Property.ShortText({
-            displayName: 'Pod',
-            description: 'Your Insightly pod (e.g., "na1", "eu1").',
-            required: true,
-            defaultValue: 'na1'
-        }),
-        objectType: Property.StaticDropdown({
-            displayName: 'Object Type',
-            description: 'The type of Insightly object to monitor for deletions',
-            required: true,
-            options: {
-                options: [
-                    { label: 'Contact', value: 'Contacts' },
-                    { label: 'Lead', value: 'Leads' },
-                    { label: 'Opportunity', value: 'Opportunities' },
-                    { label: 'Organization', value: 'Organisations' },
-                    { label: 'Project', value: 'Projects' },
-                    { label: 'Task', value: 'Tasks' },
-                    { label: 'Event', value: 'Events' },
-                    { label: 'Product', value: 'Products' },
-                    { label: 'Quote', value: 'Quotations' }
-                ]
-            }
-        })
-    },
-    async onEnable(context) {
-        if (context.isRepublish && !isNil(await context.store.get(`known_records_${context.propsValue.objectType}`))) {
-            return;
-        }
-        await context.store.put(`known_records_${context.propsValue.objectType}`, {});
-    },
-    async onDisable(context) {
-        if (context.isRepublish) {
-            return;
-        }
-        await context.store.delete(`known_records_${context.propsValue.objectType}`);
-    },
-    async run(context) {
-        const { pod, objectType } = context.propsValue;
-        
-        const response = await makeInsightlyRequest(
-            context.auth,
-            `/${objectType}?brief=true&top=500`,
-            pod as string,
-            HttpMethod.GET
-        );
-        
-        const records = Array.isArray(response.body) ? response.body : [];
-        const currentTimeMs = Date.now();
-        const currentTime = new Date(currentTimeMs).toISOString();
-
-        const getRecordId = (record: any) => {
-            const idKey = Object.keys(record).find(key => key.endsWith('_ID'));
-            return idKey ? String(record[idKey]) : String(record['ID'] || '');
-        };
-        
-        const getRecordName = (record: any) => {
-            if (record.FIRST_NAME || record.LAST_NAME) {
-                return `${record.FIRST_NAME || ''} ${record.LAST_NAME || ''}`.trim();
-            }
-            const nameKey = Object.keys(record).find(key => 
-                key.endsWith('_NAME') || key === 'TITLE'
-            );
-            return nameKey ? String(record[nameKey]) : undefined;
-        };
-
-        const currentRecordIds = new Set(records.map(getRecordId));
-
-        const storeKey = `known_records_${objectType}`;
-        const storedRecords = (await context.store.get<Record<string, { name: string; lastSeenMs: number }>>(storeKey)) || {};
-        const storedRecordIds = new Set(Object.keys(storedRecords));
-        
-        const deletedRecords: any[] = [];
-        const DELETION_THRESHOLD_MS = 15 * 60 * 1000;
-
-        for (const storedId of storedRecordIds) {
-            if (!currentRecordIds.has(storedId)) {
-                const timeSinceLastSeen = currentTimeMs - storedRecords[storedId].lastSeenMs;
-                
-                if (timeSinceLastSeen > DELETION_THRESHOLD_MS) {
-                    deletedRecords.push({
-                        recordId: storedId,
-                        recordName: storedRecords[storedId].name || `Record ${storedId}`,
-                        deletedAt: currentTime,
-                        objectType,
-                        lastSeenAt: new Date(storedRecords[storedId].lastSeenMs).toISOString()
-                    });
-                    delete storedRecords[storedId];
-                }
-            } else {
-                const recordId = storedId;
-                const record = records.find(r => getRecordId(r) === recordId);
-                if (record) {
-                    storedRecords[recordId] = {
-                        name: getRecordName(record) || storedRecords[recordId].name,
-                        lastSeenMs: currentTimeMs
-                    };
-                }
-            }
-        }
-
-        for (const record of records) {
-            const recordId = getRecordId(record);
-            if (!storedRecords[recordId]) {
-                storedRecords[recordId] = {
-                    name: getRecordName(record) || `Record ${recordId}`,
-                    lastSeenMs: currentTimeMs
-                };
-            }
-        }
-
-        const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-        Object.keys(storedRecords).forEach((id) => {
-            if (currentTimeMs - storedRecords[id].lastSeenMs > THIRTY_DAYS_MS) {
-                delete storedRecords[id];
-            }
-        });
-
-        await context.store.put(storeKey, storedRecords);
-
-        return deletedRecords;
-    },
-    test: async (context) => {
-        return [
-            {
-                recordId: 123456,
-                recordName: 'Test Deleted Record',
-                deletedAt: new Date().toISOString(),
-                objectType: context.propsValue.objectType,
-            }
-        ];
-    },
-    sampleData: {}
+  auth: insightlyAuth,
+  name: 'deleted_record',
+  classification: 'READ',
+  displayName: 'Deleted Record',
+  description: 'Fires when a record is deleted from Insightly',
+  aiMetadata: {
+    description:
+      'Fires when a record disappears from the selected Insightly object type (Contact, Lead, Opportunity, Organization, Project, Task, Event, Product, or Quote), inferring deletion by polling every record and comparing against previously seen records. A deletion is only reported after the record has been absent for at least 15 minutes, so events are delayed and approximate rather than real-time.',
+  },
+  type: TriggerStrategy.POLLING,
+  outputSchema: outputSchemas['deletedTrigger'],
+  props: {
+    pod: podProperty(),
+    objectType: Property.StaticDropdown({
+      displayName: 'Object Type',
+      description: 'The type of Insightly object to monitor for deletions',
+      required: true,
+      options: { options: OBJECT_OPTIONS },
+    }),
+  },
+  async onEnable(context) {
+    const key = storeKey(context.propsValue.objectType);
+    if (context.isRepublish && !isNil(await context.store.get(key))) {
+      return;
+    }
+    await context.store.put(key, {});
+  },
+  async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
+    await context.store.delete(storeKey(context.propsValue.objectType));
+  },
+  async run(context) {
+    const objectType = insightlyCommon.ensureObject(context.propsValue.objectType);
+    const connection = await insightlyCommon.connect({ auth: context.auth, pod: context.propsValue.pod });
+    const { records } = await insightlyClient.paginate({ apiKey: connection.apiKey, pod: connection.pod, path: `/${objectType}`, query: { brief: 'true' } });
+    const key = storeKey(objectType);
+    const stored = normalizeStored(await context.store.get<unknown>(key));
+    const { deleted, nextStored } = detectDeletions({ stored, records, nowMs: Date.now(), objectType });
+    await context.store.put(key, nextStored);
+    return deleted;
+  },
+  async test(context) {
+    return [{ ...SAMPLE_DELETED, objectType: context.propsValue.objectType }];
+  },
+  sampleData: SAMPLE_DELETED,
 });
+
+export const deletedRecordInternals = { detectDeletions, normalizeStored, MAX_WATCHED_RECORDS, MAX_STORE_BYTES };

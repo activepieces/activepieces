@@ -1,214 +1,55 @@
-import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-framework';
-import {
-    HttpMethod,
-} from '@activepieces/pieces-common';
-import { insightlyAuth, makeInsightlyRequest } from '../common/common';
-import {
-    contactFields,
-    leadFields,
-    opportunityFields,
-    organisationFields,
-    projectFields,
-    taskFields,
-    eventFields,
-    productFields,
-    quotationFields,
-} from '../common/props';
-
+import { HttpMethod } from '@activepieces/pieces-common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { insightlyUtils } from '../common/client';
+import { insightlyAuth, insightlyCommon, OBJECT_OPTIONS, podProperty } from '../common/common';
+import { insightlyDropdowns } from '../common/dropdowns';
+import { outputSchemas } from '../common/output-schemas';
+import { fieldsByObject } from '../common/props';
 
 export const updateRecord = createAction({
-    auth: insightlyAuth,
-    name: 'update_record',
-    classification: 'WRITE',
-    displayName: 'Update Record',
-    description:
-        "Update an existing record's fields in a specified Insightly object",
-    audience: 'both',
-    aiMetadata: { description: 'Updates field values on an existing record in a chosen Insightly CRM object (Contact, Lead, Opportunity, etc.), identified by its record ID. Use to modify an entity that already exists. Sending the same field values repeatedly leaves the record in the same state, but the call always overwrites the targeted fields. Requires the matching Insightly pod (e.g. "na1") and the record ID.', idempotent: false },
-    props: {
-        pod: Property.ShortText({
-            displayName: 'Pod',
-            description: 'Your Insightly pod (e.g., "na1", "eu1"). Find this in your API URL: https://api.{pod}.insightly.com',
-            required: true,
-            defaultValue: 'na1'
-        }),
-        objectName: Property.StaticDropdown({
-            displayName: 'Object Type',
-            description: 'Select the type of object that contains the record you want to update',
-            required: true,
-            options: {
-                options: [
-                    { label: 'Contact', value: 'Contacts' },
-                    { label: 'Lead', value: 'Leads' },
-                    { label: 'Opportunity', value: 'Opportunities' },
-                    { label: 'Organization', value: 'Organisations' },
-                    { label: 'Project', value: 'Projects' },
-                    { label: 'Task', value: 'Tasks' },
-                    { label: 'Event', value: 'Events' },
-                    { label: 'Product', value: 'Products' },
-                    { label: 'Quote', value: 'Quotations' }
-                ]
-            }
-        }),
-        recordId: Property.Dropdown({
-            auth: insightlyAuth,
-            displayName: 'Record ID',
-            description: 'Select the record to update',
-            required: true,
-            refreshers: ['objectName', 'pod'],
-            options: async ({ auth, objectName, pod }) => {
-                if (!objectName || !pod || !auth) {
-                    return {
-                        disabled: true,
-                        placeholder: 'Please select an object type and pod first',
-                        options: []
-                    };
-                }
-
-                const response = await makeInsightlyRequest(
-                    auth,
-                    `/${objectName}?top=100&brief=true`,
-                    pod as string
-                );
-
-                const records = Array.isArray(response.body) ? response.body : [];
-                
-                return {
-                    options: records.map((record: any) => {
-                        const idKey = Object.keys(record).find(key => key.endsWith('_ID'));
-                        const recordId = idKey ? record[idKey] : 'Unknown ID';
-
-                        const nameKey = Object.keys(record).find(key => key.endsWith('_NAME') || key === 'TITLE' || key === 'FIRST_NAME');
-                        let recordName = nameKey ? record[nameKey] : `Record ${recordId}`;
-
-                        if (objectName === 'Contacts' || objectName === 'Leads') {
-                            recordName = `${record.FIRST_NAME || ''} ${record.LAST_NAME || ''}`.trim();
-                        }
-                        
-                        return {
-                            label: `${recordName} (ID: ${recordId})`,
-                            value: recordId
-                        };
-                    })
-                };
-            }
-        }),
-        fields: Property.DynamicProperties({
-            auth: insightlyAuth,
-            displayName: 'Fields',
-            description: 'The new field values to update.',
-            required: true,
-            refreshers: ['objectName', 'recordId', 'pod'],
-            props: async ({ auth, objectName, recordId, pod }) => {
-                if (!objectName || !recordId || !pod || !auth) {
-                    return {};
-                }
-                const objName = objectName as unknown as string;
-                const podName = pod as unknown as string;
-
-                const record = await makeInsightlyRequest(
-                    auth,
-                    `/${objName}/${recordId as unknown as string}`,
-                    podName
-                );
-
-                let fieldDefinitions: any = {};
-                switch (objName) {
-                    case 'Contacts':
-                        fieldDefinitions = contactFields;
-                        break;
-                    case 'Leads':
-                        fieldDefinitions = leadFields;
-                        break;
-                    case 'Opportunities':
-                        fieldDefinitions = opportunityFields;
-                        break;
-                    case 'Organisations':
-                        fieldDefinitions = organisationFields;
-                        break;
-                    case 'Projects':
-                        fieldDefinitions = projectFields;
-                        break;
-                    case 'Tasks':
-                        fieldDefinitions = taskFields;
-                        break;
-                    case 'Events':
-                        fieldDefinitions = eventFields;
-                        break;
-                    case 'Products':
-                        fieldDefinitions = productFields;
-                        break;
-                    case 'Quotations':
-                        fieldDefinitions = quotationFields;
-                        break;
-                }
-                
-                // Clone the field definitions and set default values from the record
-                const fields: DynamicPropsValue = {};
-                for (const key in fieldDefinitions) {
-                    const fieldDef = fieldDefinitions[key];
-                    fields[key] = {
-                        ...fieldDef,
-                        defaultValue: record.body[key]
-                    };
-                }
-                return fields;
-            }
-        })
-    },
-    async run(context) {
-        const { pod, objectName, recordId, fields } = context.propsValue;
-
-        // Use the provided field values as the record data
-        const recordData = { ...fields };
-
-        // The API requires the ID in the body for PUT requests.
-        // We create the ID key dynamically, e.g., 'CONTACT_ID', 'OPPORTUNITY_ID'
-        const idKey = `${(objectName as string).slice(0, -1).toUpperCase()}_ID`;
-        recordData[idKey] = recordId;
-
-
-        try {
-            const response = await makeInsightlyRequest(
-                context.auth,
-                `/${objectName as string}/${recordId as string}`,
-                pod as string,
-                HttpMethod.PUT,
-                recordData
-            );
-
-            return {
-                success: true,
-                ...response.body
-            };
-        } catch (error: any) {
-            // Handle specific error cases
-            if (error.response?.status === 400) {
-                const errorMessage =
-                    error.response.body?.message ||
-                    error.response.body?.error ||
-                    'Invalid data provided or record not found';
-                const errorDetails = error.response.body
-                    ? JSON.stringify(error.response.body, null, 2)
-                    : 'No details available';
-                throw new Error(
-                    `Data validation error for ${objectName} ID ${recordId}: ${errorMessage}. ` +
-                    `Sent data: ${JSON.stringify(recordData, null, 2)}. ` +
-                    `API response: ${errorDetails}`
-                );
-            } else if (error.response?.status === 401) {
-                throw new Error(
-                    'Authentication failed. Please check your API key and pod.'
-                );
-            } else if (error.response?.status === 402) {
-                throw new Error('Record limit reached for your Insightly plan.');
-            } else if (error.response?.status === 404) {
-                throw new Error(
-                    `Record with ID ${recordId} not found in ${objectName}`
-                );
-            } else {
-                throw new Error(`Failed to update record: ${error.message}`);
-            }
+  auth: insightlyAuth,
+  name: 'update_record',
+  classification: 'WRITE',
+  displayName: 'Update Record',
+  description: "Update an existing record's fields in a specified Insightly object. Only the fields you fill in are changed.",
+  audience: 'human',
+  outputSchema: outputSchemas['updatedRecord'],
+  props: {
+    pod: podProperty(),
+    objectName: Property.StaticDropdown({
+      displayName: 'Object Type',
+      description: 'Select the type of object that contains the record you want to update',
+      required: true,
+      options: { options: OBJECT_OPTIONS },
+    }),
+    recordId: insightlyDropdowns.recordDropdown({ displayName: 'Record ID', description: 'Select the record to update' }),
+    fields: Property.DynamicProperties({
+      auth: insightlyAuth,
+      displayName: 'Fields',
+      description: 'The new field values. Empty fields are left unchanged.',
+      required: true,
+      refreshers: ['objectName'],
+      props: async ({ objectName }) => {
+        const fields = typeof objectName === 'string' ? fieldsByObject[objectName] : undefined;
+        if (!fields) {
+          return {};
         }
+        return Object.fromEntries(Object.entries(fields).map(([key, field]) => [key, { ...field, required: false }]));
+      },
+    }),
+  },
+  async run(context) {
+    const objectName = insightlyCommon.ensureObject(context.propsValue.objectName);
+    const recordId = insightlyUtils.toId({ value: context.propsValue.recordId, label: 'Record ID' });
+    const changes = insightlyUtils.compact({ ...context.propsValue.fields });
+    if (Object.keys(changes).length === 0) {
+      throw new Error('Fill in at least one field to update.');
     }
+    const idKey = insightlyCommon.idKeyFor(objectName);
+    const connection = await insightlyCommon.connect({ auth: context.auth, pod: context.propsValue.pod });
+    const record = insightlyUtils.sanitizeRecord(
+      await insightlyCommon.call({ connection, method: HttpMethod.PUT, path: `/${objectName}`, body: { ...changes, [idKey]: recordId } }),
+    );
+    return { success: true, id: recordId, objectType: objectName, ...record };
+  },
 });
