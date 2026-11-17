@@ -9,6 +9,7 @@ export {
   InviteRewardNotifier,
   useInviteOffer,
 } from './components/invite-reward/invite-reward';
+export { InviteRewardHint } from './components/invite-reward/invite-reward-hint';
 export { PlatformRoleSelect } from './components/platform-role-select';
 export { ProjectRoleSelect } from './components/project-role-select';
 export { RoleSelector } from './components/role-selector';

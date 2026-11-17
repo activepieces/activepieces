@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const capture = vi.fn();
-const offer = { visible: true };
+const offer = { visible: true, bonusCredits: 0 };
 
 vi.mock('i18next', async (importOriginal) => ({
   ...(await importOriginal<typeof import('i18next')>()),
@@ -23,7 +23,7 @@ vi.mock('@/features/members/hooks/use-invite-rewards', () => ({
     maxRewards: 4,
     rewardsLeft: 2,
     rewards: [],
-    bonusCredits: 0,
+    bonusCredits: offer.bonusCredits,
   }),
 }));
 vi.mock('@/features/members/components/invite-user/invite-user-dialog', () => ({
@@ -32,6 +32,7 @@ vi.mock('@/features/members/components/invite-user/invite-user-dialog', () => ({
 }));
 
 import {
+  BonusCreditsLine,
   InviteRewardButton,
   InviteRewardCard,
   useInviteOffer,
@@ -52,6 +53,7 @@ describe('invite reward offer tracking', () => {
     capture.mockReset();
     localStorage.clear();
     offer.visible = true;
+    offer.bonusCredits = 0;
   });
 
   it('records a sidebar card click and opens the invite dialog', () => {
@@ -114,6 +116,24 @@ describe('invite reward offer tracking', () => {
     rerender(<CreditsAlertOffer alertShown={false} />);
 
     expect(screen.queryAllByRole('button')).toEqual([]);
+    screen.getByText('invite dialog');
+  });
+
+  it('opens the invite dialog from the earn-more link on the billing bonus line', () => {
+    offer.bonusCredits = 2000;
+    render(<BonusCreditsLine />);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Earn {credits} more' }),
+    );
+
+    expect(capture).toHaveBeenCalledWith({
+      name: TelemetryEventName.INVITE_REWARD_OFFER_CLICKED,
+      payload: {
+        surface: InviteRewardSurface.BILLING_CREDITS,
+        rewardsEarned: 2,
+      },
+    });
     screen.getByText('invite dialog');
   });
 

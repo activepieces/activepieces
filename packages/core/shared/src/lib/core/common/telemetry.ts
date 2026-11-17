@@ -273,6 +273,7 @@ export enum TelemetryEventName {
 export enum InviteRewardSurface {
     SIDEBAR_CARD = 'sidebar_card',
     CREDITS_ALERT = 'credits_alert',
+    BILLING_CREDITS = 'billing_credits',
 }
 
 export enum ConnectionSwitchChoice {

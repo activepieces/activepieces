@@ -3,7 +3,7 @@ import { InviteRewardSurface, TelemetryEventName } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Gift, X } from 'lucide-react';
+import { ArrowRight, Gift, X } from 'lucide-react';
 import { ReactNode, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -90,22 +90,43 @@ export function InviteRewardButton({ offer }: { offer: InviteOffer }) {
 }
 
 export function BonusCreditsLine() {
-  const rewards = useInviteRewards();
+  const { rewards, openInvite, dialog } = useInviteOffer(
+    InviteRewardSurface.BILLING_CREDITS,
+  );
 
   if (rewards.bonusCredits <= 0) {
     return null;
   }
 
   return (
-    <div className="flex items-center gap-2 border-t px-5 py-4 text-sm text-gray-11">
-      <Gift className="size-4 shrink-0" />
-      <span>
-        {t('Bonus credits from invites')}{' '}
-        <span className="font-semibold text-gray-12">
-          {billingUtils.formatCredits(rewards.bonusCredits)}
+    <>
+      <div className="flex items-center gap-2 border-t px-5 py-4 text-sm text-gray-11">
+        <Gift className="size-4 shrink-0" />
+        <span>
+          {t('Bonus credits from invites')}{' '}
+          <span className="font-semibold text-gray-12">
+            {billingUtils.formatCredits(rewards.bonusCredits)}
+          </span>
         </span>
-      </span>
-    </div>
+        {rewards.visible && (
+          <Button
+            variant="link"
+            size="sm"
+            className="ms-auto h-auto"
+            onClick={openInvite}
+          >
+            {t('Earn {credits} more', {
+              credits: billingUtils.formatCredits(
+                (rewards.maxRewards - rewards.rewardsEarned) *
+                  rewards.creditsPerInvite,
+              ),
+            })}
+            <ArrowRight />
+          </Button>
+        )}
+      </div>
+      {dialog}
+    </>
   );
 }
 
