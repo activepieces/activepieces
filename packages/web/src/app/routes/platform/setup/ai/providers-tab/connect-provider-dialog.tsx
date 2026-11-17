@@ -360,7 +360,10 @@ function CredentialFieldInput({
             <FieldLabel label={field.label} help={field.help} optional />
             <DictionaryInput
               values={formField.value}
-              onChange={formField.onChange}
+              onChange={(change) => {
+                form.clearErrors('root.serverError');
+                formField.onChange(change);
+              }}
               keyPlaceholder={t('Header name')}
               valuePlaceholder={t('Header value')}
             />
