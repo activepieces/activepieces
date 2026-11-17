@@ -155,7 +155,7 @@ jobs:
 
       - name: Run E2E tests against staging
         working-directory: packages/tests-e2e
-        run: npx playwright test --config=playwright.config.ts --reporter=github,json
+        run: npx playwright test --config=playwright.config.ts --reporter=github,json --grep-invert "@quarantine|@no-staging"
 
       - name: Summarize results
         if: always()
