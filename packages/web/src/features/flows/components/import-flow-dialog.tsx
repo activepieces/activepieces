@@ -277,6 +277,7 @@ const ImportFlowDialog = (
               type="file"
               accept={props.insideBuilder ? '.json' : '.json,.zip'}
               ref={fileInputRef}
+              disabled={isReadingFile}
               onChange={handleFileChange}
             />
           </div>

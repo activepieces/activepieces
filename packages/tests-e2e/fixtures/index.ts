@@ -19,16 +19,17 @@ export const test = base.extend<CustomFixtures>({
 
   seed: async ({ request, session, cleanup }, use) => {
     await use({
-      flow: ({ template, publish, session: projectSession }) => e2eApi.seedFlow({
+      flow: ({ template, publish, session: projectSession, connections }) => e2eApi.seedFlow({
         request,
         session: projectSession ?? session,
         template,
         publish,
+        connections: connections ?? {},
         onCreated: (flowId) => cleanup.track({ resource: 'flows', id: flowId }),
       }),
-      secretTextConnection: ({ pieceName, secret }) => e2eApi.seedSecretTextConnection({
+      secretTextConnection: ({ pieceName, secret, session: projectSession }) => e2eApi.seedSecretTextConnection({
         request,
-        session,
+        session: projectSession ?? session,
         pieceName,
         secret,
         onCreated: (connectionId) => cleanup.track({ resource: 'app-connections', id: connectionId }),
@@ -59,8 +60,8 @@ async function deleteTracked({ request, session, records }: { request: APIReques
 
 export type Cleanup = { track: (record: TrackedRecord) => void };
 export type Seed = {
-  flow: (params: { template: FlowTemplate; publish: boolean; session?: E2eSession }) => Promise<SeededFlow>;
-  secretTextConnection: (params: { pieceName: string; secret: string }) => Promise<SeededConnection>;
+  flow: (params: { template: FlowTemplate; publish: boolean; session?: E2eSession; connections?: Record<string, string> }) => Promise<SeededFlow>;
+  secretTextConnection: (params: { pieceName: string; secret: string; session?: E2eSession }) => Promise<SeededConnection>;
 };
 
 type TrackedRecord = { resource: E2eResource; id: string };
