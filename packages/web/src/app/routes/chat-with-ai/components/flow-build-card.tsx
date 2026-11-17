@@ -4,8 +4,8 @@ import {
   AlertCircle,
   Check,
   Circle,
-  ExternalLink,
   Loader2,
+  PanelLeft,
   Rocket,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
@@ -16,8 +16,9 @@ import { Progress } from '@/components/ui/progress';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
 import { MOTION } from '@/features/workspace/lib/chat-layout';
+import { chatPanelUtils } from '@/features/workspace/lib/chat-panel-open';
 import { authenticationSession } from '@/lib/authentication-session';
-import { useNewWindow } from '@/lib/navigation-utils';
+import { domUtils } from '@/lib/dom-utils';
 import { cn } from '@/lib/utils';
 
 const CARD_BASE =
@@ -124,16 +125,28 @@ function OpenInBuilderButton({
   projectId: string;
   flowId: string;
 }) {
-  const openNewWindow = useNewWindow();
+  const route = `/projects/${projectId}/flows/${flowId}`;
   return (
     <Button
+      asChild
       size="sm"
       variant="ghost"
-      className="gap-1.5 text-xs font-medium text-gray-11 shadow-none transition-colors hover:bg-gray-4 hover:text-gray-12"
-      onClick={() => openNewWindow(`/projects/${projectId}/flows/${flowId}`)}
+      className="gap-1.5 text-xs font-medium text-gray-11 shadow-none transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-4 hover:text-gray-12"
     >
-      <ExternalLink className="h-3.5 w-3.5" />
-      {t('Open in builder')}
+      <a
+        href={route}
+        onClick={(event) => {
+          if (!domUtils.isPlainLeftClick(event)) return;
+          if (
+            chatPanelUtils.openBeside({ route, push: true, name: t('Flow') })
+          ) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <PanelLeft className="h-3.5 w-3.5" />
+        {t('Open in builder')}
+      </a>
     </Button>
   );
 }
