@@ -1,3 +1,4 @@
+import { mailchimpOutputSchemas } from '../common/output-schemas';
 import { createAction } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { mailchimpCommon } from '../common';
@@ -13,6 +14,7 @@ export const sendCampaign = createAction({
   description: 'Send a draft campaign to the subscribers in its audience, segment, or tag',
   audience: 'both',
   aiMetadata: { description: 'Sends an existing draft campaign to its configured recipients immediately (RSS campaigns follow their schedule instead). Use once the campaign is fully set up; there is no undo, so confirm the campaign content and audience beforehand. Not idempotent: calling again on an already-sent campaign fails.', idempotent: false },
+  outputSchema: mailchimpOutputSchemas['sendCampaign'],
   props: {
     campaign_id: mailchimpCommon.mailChimpDraftCampaignIdDropdown,
   },

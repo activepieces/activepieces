@@ -8,6 +8,21 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Mailchimp 0.6.0: six actions are no longer AI agent tools, and Find Subscriber and Unsubscribe Email now fail on errors
+
+**Add or Update Subscriber**, **Update Member in an Audience (List)**, **Unsubscribe Email**, **Find Subscriber**, **Create Campaign** and **Get Campaign Report** are now shown only in the flow builder. AI agents and MCP clients get **Upsert Member**, **Update Member Profile**, **Set Member Status**, **Get Member**, **Create Campaign Draft** and **Get Campaign Stats** instead. Existing flow steps keep working with the same inputs.
+
+After you upgrade:
+
+- **Find Subscriber** fails the step on Mailchimp 400, 403 and missing-audience errors instead of returning `success: false`. In its output, dates are ISO strings and missing values are `null` instead of `'N/A'`.
+- **Unsubscribe Email** fails the step when Mailchimp rejects the address, instead of reporting success, and its output no longer includes `_links`.
+- **Get Campaign Report** no longer includes the report's `share_password` in its output.
+
+#### What you need to do
+
+- Agents that used the six actions as tools: switch to the new agent actions listed above.
+- Find Subscriber steps that check `success: false` or `'N/A'`: handle a failed step or `null` instead.
+
 #### Fireflies.ai 0.2.0: three find actions are no longer AI agent tools, and Upload Audio returns a smaller output
 
 **Find Meeting by ID**, **Find Recent Meeting** and **Find Meeting by Call Details** are now shown only in the flow builder. AI agents and MCP clients get **Get Meeting**, **Get Meeting Summary** and **Find Meetings** instead.

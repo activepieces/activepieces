@@ -118,6 +118,9 @@ export type MailChimpCampaignWebhookData = {
   campaign_subject: string;
   campaign_send_time: string;
   campaign_status: string;
+  subject?: string;
+  status?: string;
+  reason?: string;
 };
 
 export type MailChimpCampaignWebhookRequest = MailChimpWebhookRequest<

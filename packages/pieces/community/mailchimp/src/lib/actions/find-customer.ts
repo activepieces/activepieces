@@ -1,5 +1,7 @@
+import { mailchimpOutputSchemas } from '../common/output-schemas';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { getAccessTokenOrThrow, HttpMethod } from '@activepieces/pieces-common';
+import { mailchimpApi } from '../common/client';
 import { mailchimpCommon } from '../common';
 import { mailchimpAuth } from '../..';
 import mailchimp from '@mailchimp/mailchimp_marketing';
@@ -13,6 +15,7 @@ export const findCustomer = createAction({
   description: 'Find a customer by email address in a store',
   audience: 'both',
   aiMetadata: { description: 'Looks up e-commerce customers in a specified connected store by email address, with optional pagination and field filtering. Use to retrieve a store customer record before referencing or syncing it. Requires a store and email; read-only and idempotent.', idempotent: true },
+  outputSchema: mailchimpOutputSchemas['findCustomer'],
   props: {
     store_id: mailchimpCommon.mailChimpStoreIdDropdown,
     email_address: Property.ShortText({
@@ -83,7 +86,7 @@ export const findCustomer = createAction({
         _links: result._links,
       };
     } catch (error: any) {
-      throw new Error(`Failed to find customer: ${error.message || JSON.stringify(error)}`);
+      throw mailchimpApi.toMailchimpError({ error, operation: 'find customer', method: HttpMethod.GET });
     }
   },
 });

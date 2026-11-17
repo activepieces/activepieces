@@ -1,5 +1,7 @@
+import { mailchimpOutputSchemas } from '../common/output-schemas';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { getAccessTokenOrThrow, HttpMethod } from '@activepieces/pieces-common';
+import { mailchimpApi, MailchimpApiError } from '../common/client';
 import { mailchimpCommon } from '../common';
 import { mailchimpAuth } from '../..';
 import mailchimp from '@mailchimp/mailchimp_marketing';
@@ -12,8 +14,9 @@ export const addMemberToList = createAction({
   classification: 'WRITE',
   displayName: 'Add or Update Subscriber',
   description: 'Add a new subscriber to an audience or update existing subscriber',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Upserts a member into a Mailchimp audience (list) keyed on the email address: creates the subscriber if absent (using the "status if new" value) or updates the existing record otherwise. Use to ensure a contact exists with given status, name, language, or VIP flag without checking first. Requires the target list and email; repeating with the same input is safe and converges to the same member state.', idempotent: true },
+  outputSchema: mailchimpOutputSchemas['addMemberToList'],
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     email_address: Property.ShortText({
@@ -87,6 +90,16 @@ export const addMemberToList = createAction({
       required: false,
       defaultValue: false,
     }),
+    merge_fields: Property.Object({
+      displayName: 'Merge Fields',
+      description: 'Extra contact fields keyed by merge tag, e.g. PHONE or COMPANY. First Name and Last Name above win over FNAME and LNAME here.',
+      required: false,
+    }),
+    tags: Property.Array({
+      displayName: 'Tags',
+      description: 'Tag names to add to the subscriber after saving. Existing tags are kept.',
+      required: false,
+    }),
   },
   async run(context) {
     const accessToken = getAccessTokenOrThrow(context.auth);
@@ -101,41 +114,23 @@ export const addMemberToList = createAction({
     try {
       const subscriberHash = crypto.createHash('md5').update(context.propsValue.email_address.toLowerCase()).digest('hex');
       
-      const memberData: any = {
+      const mergeFields: Record<string, unknown> = {
+        ...(context.propsValue.merge_fields ?? {}),
+        ...(context.propsValue.first_name ? { FNAME: context.propsValue.first_name } : {}),
+        ...(context.propsValue.last_name ? { LNAME: context.propsValue.last_name } : {}),
+      };
+      const memberData: Record<string, unknown> = {
         email_address: context.propsValue.email_address,
         status_if_new: context.propsValue.status_if_new,
+        ...(context.propsValue.email_type ? { email_type: context.propsValue.email_type } : {}),
+        ...(context.propsValue.status ? { status: context.propsValue.status } : {}),
+        ...(Object.keys(mergeFields).length > 0 ? { merge_fields: mergeFields } : {}),
+        ...(context.propsValue.language ? { language: context.propsValue.language } : {}),
+        ...(context.propsValue.vip !== undefined ? { vip: context.propsValue.vip } : {}),
       };
-
-      if (context.propsValue.email_type) {
-        memberData.email_type = context.propsValue.email_type;
-      }
-      
-      if (context.propsValue.status) {
-        memberData.status = context.propsValue.status;
-      }
-      
-      if (context.propsValue.first_name || context.propsValue.last_name) {
-        memberData.merge_fields = {};
-        if (context.propsValue.first_name) {
-          memberData.merge_fields.FNAME = context.propsValue.first_name;
-        }
-        if (context.propsValue.last_name) {
-          memberData.merge_fields.LNAME = context.propsValue.last_name;
-        }
-      }
-      
-      if (context.propsValue.language) {
-        memberData.language = context.propsValue.language;
-      }
-      
-      if (context.propsValue.vip !== undefined) {
-        memberData.vip = context.propsValue.vip;
-      }
-
-      const queryParams: any = {};
-      if (context.propsValue.skip_merge_validation) {
-        queryParams.skip_merge_validation = true;
-      }
+      const queryParams: Record<string, boolean> = context.propsValue.skip_merge_validation
+        ? { skip_merge_validation: true }
+        : {};
 
       const member = await client.lists.setListMember(
         context.propsValue.list_id!,
@@ -144,8 +139,14 @@ export const addMemberToList = createAction({
         queryParams
       );
 
+      const tags = mailchimpApi.toStringList(context.propsValue.tags);
+      const tagState = tags.length > 0
+        ? await applyTags({ accessToken, listId: context.propsValue.list_id, subscriberHash, tags })
+        : { tags: member.tags, tags_count: member.tags_count };
+
       return {
         success: true,
+        tags_applied: tags,
         id: member.id,
         email_address: member.email_address,
         unique_email_id: member.unique_email_id,
@@ -169,13 +170,45 @@ export const addMemberToList = createAction({
         location: member.location,
         marketing_permissions: member.marketing_permissions,
         source: member.source,
-        tags_count: member.tags_count,
-        tags: member.tags,
+        tags_count: tagState.tags_count,
+        tags: tagState.tags,
         list_id: member.list_id,
         _links: member._links,
       };
     } catch (error: any) {
+      if (error instanceof MailchimpApiError) {
+        throw error;
+      }
       throw new Error(`Failed to add or update subscriber: ${error.message || JSON.stringify(error)}`);
     }
   },
 });
+
+async function applyTags({
+  accessToken,
+  listId,
+  subscriberHash,
+  tags,
+}: {
+  accessToken: string;
+  listId: string;
+  subscriberHash: string;
+  tags: string[];
+}): Promise<TagState> {
+  const client = mailchimpApi.createClient({ accessToken });
+  const memberPath = `/lists/${encodeURIComponent(listId)}/members/${subscriberHash}`;
+  await client.request<unknown>({
+    method: HttpMethod.POST,
+    path: `${memberPath}/tags`,
+    body: { tags: tags.map((name) => ({ name, status: 'active' })) },
+    operation: 'add tags to subscriber (the subscriber itself was saved)',
+  });
+  return client.request<TagState>({
+    method: HttpMethod.GET,
+    path: memberPath,
+    queryParams: { fields: 'tags,tags_count' },
+    operation: 'read subscriber tags (the subscriber and tags were saved)',
+  });
+}
+
+type TagState = { tags: { id: number; name: string }[]; tags_count: number };

@@ -1,5 +1,7 @@
+import { mailchimpOutputSchemas } from '../common/output-schemas';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { getAccessTokenOrThrow, HttpMethod } from '@activepieces/pieces-common';
+import { mailchimpApi, MailchimpApiError } from '../common/client';
 import { mailchimpCommon } from '../common';
 import { mailchimpAuth } from '../..';
 import mailchimp from '@mailchimp/mailchimp_marketing';
@@ -14,6 +16,7 @@ export const archiveSubscriber = createAction({
   description: 'Archive an existing audience member',
   audience: 'both',
   aiMetadata: { description: 'Archives a member from an audience (list); the identifier accepts an MD5 hash of the lowercase email, the raw email (auto-hashed), or a contact_id. Use to remove a contact from active sending while preserving their record. Idempotent: archiving an already-archived or absent member converges to the same state.', idempotent: true },
+  outputSchema: mailchimpOutputSchemas['archiveSubscriber'],
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     subscriber_hash: Property.ShortText({
@@ -59,7 +62,14 @@ export const archiveSubscriber = createAction({
         };
       }
       
-      throw new Error(`Failed to archive subscriber: ${error.message || JSON.stringify(error)}`);
+      if (error.status === 405) {
+        throw new MailchimpApiError({
+          message: 'Mailchimp could not archive this subscriber because it is already archived (HTTP 405).',
+          status: 405,
+          responseBody: error.response?.body ?? null,
+        });
+      }
+      throw mailchimpApi.toMailchimpError({ error, operation: 'archive subscriber', method: HttpMethod.DELETE });
     }
   },
 });

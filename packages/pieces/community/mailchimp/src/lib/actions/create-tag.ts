@@ -1,3 +1,4 @@
+import { mailchimpOutputSchemas } from '../common/output-schemas';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { mailchimpCommon } from '../common';
@@ -13,6 +14,7 @@ export const createTag = createAction({
   description: 'Create a new tag in a Mailchimp audience',
   audience: 'both',
   aiMetadata: { description: 'Creates a new tag on an audience (list) so it can later be applied to subscribers. Use to set up a tag ahead of tagging contacts. Not idempotent: calling again with the same name creates a duplicate tag.', idempotent: false },
+  outputSchema: mailchimpOutputSchemas['createTag'],
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     name: Property.ShortText({

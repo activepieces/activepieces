@@ -1,5 +1,7 @@
+import { mailchimpOutputSchemas } from '../common/output-schemas';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { getAccessTokenOrThrow, HttpMethod } from '@activepieces/pieces-common';
+import { mailchimpApi } from '../common/client';
 import { mailchimpCommon } from '../common';
 import { mailchimpAuth } from '../..';
 import mailchimp from '@mailchimp/mailchimp_marketing';
@@ -13,6 +15,7 @@ export const createAudience = createAction({
   description: 'Create a new audience (list) in your Mailchimp account',
   audience: 'both',
   aiMetadata: { description: 'Creates a new audience (list) in the Mailchimp account, including the required physical contact address, permission reminder, and default campaign sender settings. Use to provision a brand-new list to hold subscribers. Not idempotent: each call creates a separate audience even with identical input.', idempotent: false },
+  outputSchema: mailchimpOutputSchemas['createAudience'],
   props: {
     name: Property.ShortText({
       displayName: 'List Name',
@@ -90,7 +93,7 @@ export const createAudience = createAction({
       displayName: 'Email Type Option',
       description: 'Whether the list supports multiple email formats (HTML/plain text)',
       required: false,
-      defaultValue: true,
+      defaultValue: false,
     }),
     use_archive_bar: Property.Checkbox({
       displayName: 'Use Archive Bar',
@@ -151,7 +154,7 @@ export const createAudience = createAction({
           subject: context.propsValue.subject,
           language: context.propsValue.language,
         },
-        email_type_option: context.propsValue.email_type_option,
+        email_type_option: context.propsValue.email_type_option ?? false,
         use_archive_bar: context.propsValue.use_archive_bar,
         notify_on_subscribe: context.propsValue.notify_on_subscribe || '',
         notify_on_unsubscribe: context.propsValue.notify_on_unsubscribe || '',
@@ -187,7 +190,7 @@ export const createAudience = createAction({
         _links: list._links,
       };
     } catch (error: any) {
-      throw new Error(`Failed to create list: ${error.message || JSON.stringify(error)}`);
+      throw mailchimpApi.toMailchimpError({ error, operation: 'create audience', method: HttpMethod.POST });
     }
   },
 });
