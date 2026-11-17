@@ -36,7 +36,11 @@ export function useInviteRewards(): InviteRewardsState {
 
   const rewardsEarned = summary.rewards.length;
   const rewardsUnderCap = Math.max(0, summary.maxRewards - rewardsEarned);
-  const usersLimit = platform.plan.usersLimit;
+  const seatLimits = [
+    platform.plan.usersLimit,
+    platform.plan.scheduledUsersLimit,
+  ].filter((limit): limit is number => !isNil(limit));
+  const usersLimit = seatLimits.length === 0 ? null : Math.min(...seatLimits);
   const seatsLeft = isNil(usersLimit)
     ? Number.POSITIVE_INFINITY
     : Math.max(0, usersLimit - (platform.usage?.users ?? 0));

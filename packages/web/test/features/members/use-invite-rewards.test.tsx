@@ -9,6 +9,7 @@ const state = vi.hoisted(() => ({
   edition: 'CLOUD',
   isPlatformAdmin: true,
   usersLimit: 5 as number | null,
+  scheduledUsersLimit: null as number | null,
   activeUsers: 1,
   invitedSeats: 0,
 }));
@@ -26,7 +27,10 @@ vi.mock('@/hooks/platform-hooks', () => ({
     useCurrentPlatform: () => ({
       platform: {
         id: 'platform_1',
-        plan: { usersLimit: state.usersLimit },
+        plan: {
+          usersLimit: state.usersLimit,
+          scheduledUsersLimit: state.scheduledUsersLimit,
+        },
         usage: {
           users: state.activeUsers + state.invitedSeats,
           invitedSeats: state.invitedSeats,
@@ -49,6 +53,7 @@ describe('useInviteRewards', () => {
     state.edition = ApEdition.CLOUD;
     state.isPlatformAdmin = true;
     state.usersLimit = 5;
+    state.scheduledUsersLimit = null;
     state.activeUsers = 1;
     state.invitedSeats = 0;
     queryClient = new QueryClient({
@@ -82,6 +87,18 @@ describe('useInviteRewards', () => {
   });
 
   it('hides the offer once every seat is taken', async () => {
+    state.activeUsers = 5;
+    getSummary.mockResolvedValue(summary({ rewards: [] }));
+
+    const { result } = renderHook(() => useInviteRewards(), { wrapper });
+
+    await waitFor(() => expect(result.current.maxRewards).toBe(4));
+    expect(result.current.visible).toBe(false);
+  });
+
+  it('hides the offer when a scheduled downgrade leaves no free seat', async () => {
+    state.usersLimit = 10;
+    state.scheduledUsersLimit = 5;
     state.activeUsers = 5;
     getSummary.mockResolvedValue(summary({ rewards: [] }));
 
