@@ -51,16 +51,10 @@ export const autumnUtils = {
         const client = new Autumn({ secretKey, failOpen })
         return {
             check({ idempotencyKey, ...params }: CheckInput) {
-                return client.check(
-                    { customerId, ...params },
-                    idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined,
-                )
+                return client.check({ customerId, ...params }, idempotencyOptions(idempotencyKey))
             },
             track({ idempotencyKey, ...params }: TrackInput) {
-                return client.track(
-                    { customerId, ...params },
-                    idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined,
-                )
+                return client.track({ customerId, ...params }, idempotencyOptions(idempotencyKey))
             },
             async getCustomer(params?: { expand?: GetCustomerParams['expand'] }) {
                 const customer = await client.customers.get(
@@ -447,12 +441,16 @@ async function consoleRequest<T>({ path, method = 'post', token, body, query, ex
         : safeHttp.axios.post<ConsoleEnvelope<T>>(url, body ?? {}, config))
     if (!isNil(error)) {
         if (!isAxiosError(error) || isNil(error.response) || !expectedErrorStatuses.includes(error.response.status)) {
-            system.globalLogger().error({ err: error, url }, 'Autumn console request failed')
+            system.globalLogger().error({ error, url }, 'Autumn console request failed')
         }
         throw error
     }
     assertNotNullOrUndefined(response, 'response')
     return response.data.data
+}
+
+function idempotencyOptions(idempotencyKey: string | undefined): { headers: Record<string, string> } | undefined {
+    return isNil(idempotencyKey) ? undefined : { headers: { 'Idempotency-Key': idempotencyKey } }
 }
 
 function consoleSecretOrThrow(): string {

@@ -24,19 +24,10 @@ export function InviteRewardCard() {
   const { rewards, openInvite, dialog } = useInviteOffer(
     InviteRewardSurface.SIDEBAR_CARD,
   );
-  const [dismissedAt, setDismissedAt] = useState(() =>
-    cardDismissal.read({ platformId: rewards.platformId }),
-  );
-  const showCard = rewards.visible && !cardDismissal.isActive({ dismissedAt });
-
-  const dismissCard = () => {
-    const timestamp = dayjs().toISOString();
-    setDismissedAt(timestamp);
-    cardDismissal.write({
-      platformId: rewards.platformId,
-      dismissedAt: timestamp,
-    });
-  };
+  const dismissal = cardDismissal.useDismissal({
+    platformId: rewards.platformId,
+  });
+  const showCard = rewards.visible && !dismissal.isDismissed;
 
   return (
     <>
@@ -54,7 +45,7 @@ export function InviteRewardCard() {
               size="icon-xs"
               aria-label={t('Dismiss')}
               className="ms-auto shrink-0 text-gray-11"
-              onClick={dismissCard}
+              onClick={dismissal.dismiss}
             >
               <X className="size-3.5" />
             </Button>
@@ -175,7 +166,7 @@ export function useInviteOffer(surface: InviteRewardSurface): InviteOffer {
 }
 
 function seenStorageKey(platformId: string): string {
-  return `${SEEN_STORAGE_PREFIX}${platformId}`;
+  return `${SEEN_STORAGE_PREFIX}:${platformId}`;
 }
 
 function readSeenRewardIds(platformId: string): string[] {
@@ -200,7 +191,7 @@ function writeSeenRewardIds({
   );
 }
 
-const SEEN_STORAGE_PREFIX = 'ap_invite_reward_seen_';
+const SEEN_STORAGE_PREFIX = 'ap-invite-reward-seen';
 const CARD_DISMISSAL_DAYS = 7;
 const TOAST_RECENT_DAYS = 7;
 const cardDismissal = timedDismissal.create({

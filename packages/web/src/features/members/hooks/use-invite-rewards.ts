@@ -2,8 +2,8 @@ import { isNil } from '@activepieces/core-utils';
 import {
   ApEdition,
   ApFlagId,
+  EMPTY_INVITE_REWARD_SUMMARY,
   InviteReward,
-  InviteRewardSummary,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 
@@ -32,7 +32,7 @@ export function useInviteRewards(): InviteRewardsState {
         ? INVITE_REWARDS_STALE_MS
         : false,
   });
-  const summary = data ?? EMPTY_SUMMARY;
+  const summary = data ?? EMPTY_INVITE_REWARD_SUMMARY;
 
   const rewardsEarned = summary.rewards.length;
   const rewardsUnderCap = Math.max(0, summary.maxRewards - rewardsEarned);
@@ -58,13 +58,6 @@ export function useInviteRewards(): InviteRewardsState {
 
 const INVITE_REWARDS_QUERY_KEY = 'invite-rewards';
 const INVITE_REWARDS_STALE_MS = 60_000;
-
-const EMPTY_SUMMARY: InviteRewardSummary = {
-  eligible: false,
-  creditsPerInvite: 0,
-  maxRewards: 0,
-  rewards: [],
-};
 
 export type InviteRewardsState = {
   visible: boolean;

@@ -1,5 +1,6 @@
 import { isNil, tryCatchSync } from '@activepieces/core-utils';
 import dayjs from 'dayjs';
+import { useState } from 'react';
 
 function create({
   storageKeyPrefix,
@@ -8,24 +9,39 @@ function create({
   const storageKey = ({ platformId }: DismissalRef): string =>
     `${storageKeyPrefix}:${platformId}`;
 
+  const read = ({ platformId }: DismissalRef): string | undefined => {
+    const { data } = tryCatchSync(() =>
+      window.localStorage.getItem(storageKey({ platformId })),
+    );
+    return isNil(data) || !dayjs(data).isValid() ? undefined : data;
+  };
+  const write = ({ platformId, dismissedAt }: WriteDismissalParams): void => {
+    tryCatchSync(() =>
+      window.localStorage.setItem(storageKey({ platformId }), dismissedAt),
+    );
+  };
+  const isActive = ({ dismissedAt }: IsActiveParams): boolean => {
+    if (isNil(dismissedAt)) {
+      return false;
+    }
+    const hoursSince = dayjs().diff(dismissedAt, 'hour');
+    return hoursSince >= 0 && hoursSince < durationHours;
+  };
+
   return {
-    read: ({ platformId }) => {
-      const { data } = tryCatchSync(() =>
-        window.localStorage.getItem(storageKey({ platformId })),
+    read,
+    write,
+    isActive,
+    useDismissal: ({ platformId }) => {
+      const [dismissedAt, setDismissedAt] = useState(() =>
+        read({ platformId }),
       );
-      return isNil(data) || !dayjs(data).isValid() ? undefined : data;
-    },
-    write: ({ platformId, dismissedAt }) => {
-      tryCatchSync(() =>
-        window.localStorage.setItem(storageKey({ platformId }), dismissedAt),
-      );
-    },
-    isActive: ({ dismissedAt }) => {
-      if (isNil(dismissedAt)) {
-        return false;
-      }
-      const hoursSince = dayjs().diff(dismissedAt, 'hour');
-      return hoursSince >= 0 && hoursSince < durationHours;
+      const dismiss = () => {
+        const timestamp = dayjs().toISOString();
+        setDismissedAt(timestamp);
+        write({ platformId, dismissedAt: timestamp });
+      };
+      return { isDismissed: isActive({ dismissedAt }), dismiss };
     },
   };
 }
@@ -51,8 +67,14 @@ type CreateTimedDismissalParams = {
   durationHours: number;
 };
 
+type Dismissal = {
+  isDismissed: boolean;
+  dismiss: () => void;
+};
+
 type TimedDismissal = {
   read: (params: DismissalRef) => string | undefined;
   write: (params: WriteDismissalParams) => void;
   isActive: (params: IsActiveParams) => boolean;
+  useDismissal: (params: DismissalRef) => Dismissal;
 };

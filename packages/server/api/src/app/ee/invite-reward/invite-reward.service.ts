@@ -1,6 +1,6 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { InviteRewardSummary, TelemetryEventName } from '@activepieces/shared'
+import { EMPTY_INVITE_REWARD_SUMMARY, InviteRewardSummary, TelemetryEventName } from '@activepieces/shared'
 import { AutumnError } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -38,7 +38,7 @@ export const inviteRewardService = (log: FastifyBaseLogger) => ({
             log.info({ platform: { id: platformId } }, '[inviteReward#grantOnJoin] no billing account, no reward')
             return
         }
-        const slotUsed = await useRewardSlot({ creds, inviteeEmail: identity.email })
+        const slotUsed = await consumeRewardSlot({ creds, inviteeEmail: identity.email })
         if (!slotUsed) {
             log.info({ platform: { id: platformId } }, '[inviteReward#grantOnJoin] the plan has no reward slot left')
             return
@@ -50,7 +50,7 @@ export const inviteRewardService = (log: FastifyBaseLogger) => ({
         }
         const { error } = await tryCatch(() => billingProvider.get(log).refreshEntitlements(platformId))
         if (!isNil(error)) {
-            log.warn({ err: error, platform: { id: platformId } }, '[inviteReward] balance refresh failed after a grant')
+            log.warn({ error, platform: { id: platformId } }, '[inviteReward] balance refresh failed after a grant')
         }
         await telemetry(log).trackPlatform({
             platformId,
@@ -64,7 +64,7 @@ export const inviteRewardService = (log: FastifyBaseLogger) => ({
     async getSummary({ platformId }: { platformId: string }): Promise<InviteRewardSummary> {
         const creds = await autumnConsole.getCreds(log, platformId)
         if (isNil(creds)) {
-            return NOT_ELIGIBLE
+            return EMPTY_INVITE_REWARD_SUMMARY
         }
         return autumnConsole.listInviteRewards(creds)
     },
@@ -79,7 +79,7 @@ async function loadCredsEnrollingIfMissing({ log, platformId }: LoadCredsParams)
     return autumnConsole.getCreds(log, platformId)
 }
 
-async function useRewardSlot({ creds, inviteeEmail }: UseRewardSlotParams): Promise<boolean> {
+async function consumeRewardSlot({ creds, inviteeEmail }: ConsumeRewardSlotParams): Promise<boolean> {
     const client = autumnUtils.client({ secretKey: creds.autumnApiKey, customerId: creds.autumnCustomerId, failOpen: false })
     const { data, error } = await tryCatch(() => client.check({
         featureId: REWARDED_INVITES_FEATURE_ID,
@@ -101,14 +101,7 @@ const REWARDED_INVITES_FEATURE_ID = 'rewarded_invites_count'
 const GRANT_ATTEMPTS = 12
 const GRANT_RETRY_BASE_DELAY_MS = 30_000
 
-const NOT_ELIGIBLE: InviteRewardSummary = {
-    eligible: false,
-    creditsPerInvite: 0,
-    maxRewards: 0,
-    rewards: [],
-}
-
-type UseRewardSlotParams = {
+type ConsumeRewardSlotParams = {
     creds: ConsoleCustomerCall
     inviteeEmail: string
 }

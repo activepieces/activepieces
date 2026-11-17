@@ -206,3 +206,10 @@ export const InviteRewardSummary = z.object({
 })
 
 export type InviteRewardSummary = z.infer<typeof InviteRewardSummary>
+
+export const EMPTY_INVITE_REWARD_SUMMARY: InviteRewardSummary = {
+    eligible: false,
+    creditsPerInvite: 0,
+    maxRewards: 0,
+    rewards: [],
+}
