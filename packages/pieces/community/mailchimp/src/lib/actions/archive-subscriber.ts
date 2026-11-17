@@ -1,7 +1,7 @@
 import { mailchimpOutputSchemas } from '../common/output-schemas';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow, HttpMethod } from '@activepieces/pieces-common';
-import { mailchimpApi, MailchimpApiError } from '../common/client';
+import { mailchimpApi } from '../common/client';
 import { mailchimpCommon } from '../common';
 import { mailchimpAuth } from '../..';
 import mailchimp from '@mailchimp/mailchimp_marketing';
@@ -47,6 +47,7 @@ export const archiveSubscriber = createAction({
 
       return {
         success: true,
+        already_archived: false,
         message: 'Subscriber archived successfully',
         list_id: context.propsValue.list_id,
         subscriber_hash: subscriberHash,
@@ -63,11 +64,15 @@ export const archiveSubscriber = createAction({
       }
       
       if (error.status === 405) {
-        throw new MailchimpApiError({
-          message: 'Mailchimp could not archive this subscriber because it is already archived (HTTP 405).',
-          status: 405,
-          responseBody: error.response?.body ?? null,
-        });
+        const identifier = context.propsValue.subscriber_hash;
+        return {
+          success: true,
+          already_archived: true,
+          message: 'Subscriber was already archived',
+          list_id: context.propsValue.list_id,
+          subscriber_hash: identifier.includes('@') ? mailchimpCommon.getMD5EmailHash(identifier) : identifier,
+          archived_at: null,
+        };
       }
       throw mailchimpApi.toMailchimpError({ error, operation: 'archive subscriber', method: HttpMethod.DELETE });
     }

@@ -93,7 +93,7 @@ export const createAudience = createAction({
       displayName: 'Email Type Option',
       description: 'Whether the list supports multiple email formats (HTML/plain text)',
       required: false,
-      defaultValue: false,
+      defaultValue: true,
     }),
     use_archive_bar: Property.Checkbox({
       displayName: 'Use Archive Bar',
@@ -154,7 +154,7 @@ export const createAudience = createAction({
           subject: context.propsValue.subject,
           language: context.propsValue.language,
         },
-        email_type_option: context.propsValue.email_type_option ?? false,
+        email_type_option: context.propsValue.email_type_option ?? true,
         use_archive_bar: context.propsValue.use_archive_bar,
         notify_on_subscribe: context.propsValue.notify_on_subscribe || '',
         notify_on_unsubscribe: context.propsValue.notify_on_unsubscribe || '',

@@ -30,7 +30,7 @@ export const removeSubscriberFromTag = createAction({
   async run(context) {
     const { list_id, email, tag_name } = context.propsValue;
     const client = mailchimpApi.createClient({ accessToken: context.auth.access_token });
-    await client.request<unknown>({
+    const result = await client.request<unknown>({
       method: HttpMethod.POST,
       path: `${mailchimpApi.memberPath({ listId: list_id, email })}/tags`,
       body: { tags: [{ name: tag_name, status: 'inactive' }] },
@@ -39,6 +39,8 @@ export const removeSubscriberFromTag = createAction({
     return {
       success: true,
       message: `Successfully removed subscriber ${email} from tag ${tag_name}`,
+      data: result ?? null,
+      _links: [],
     };
   },
 });

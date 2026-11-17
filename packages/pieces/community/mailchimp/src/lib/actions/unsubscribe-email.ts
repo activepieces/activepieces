@@ -12,7 +12,7 @@ export const unsubscribeEmail = createAction({
   displayName: 'Unsubscribe Email',
   description: 'Unsubscribe an email address from an audience',
   audience: 'human',
-  aiMetadata: { description: 'Sets an email address to unsubscribed status within an audience (list) via a batch upsert; with "update existing" on, it changes an existing member, otherwise it can add the address as unsubscribed. Use to opt a contact out of a specific audience. Idempotent: repeating converges to the same unsubscribed state.', idempotent: true },
+  aiMetadata: { description: 'Sets an email address to unsubscribed in one audience (list) through a batch upsert. An existing member is updated to unsubscribed; an address not yet in the audience is added as unsubscribed. Fails if Mailchimp rejects the address. Use to opt a contact out of a specific audience. Idempotent: repeating converges to the same unsubscribed state.', idempotent: true },
   outputSchema: mailchimpOutputSchemas['unsubscribeEmail'],
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
@@ -35,7 +35,7 @@ export const unsubscribeEmail = createAction({
     }),
     update_existing: Property.Checkbox({
       displayName: 'Update Existing',
-      description: 'Kept for older flows. Existing members are always updated, because Mailchimp rejects the request for existing members otherwise.',
+      description: 'No longer used; kept for older flows. Existing members are always updated.',
       required: false,
       defaultValue: true,
     }),

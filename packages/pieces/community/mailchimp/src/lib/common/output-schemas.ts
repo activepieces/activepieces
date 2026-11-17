@@ -199,6 +199,7 @@ export const mailchimpOutputSchemas = {
       { key: 'message', label: 'Message' },
       { key: 'list_id', label: 'Audience ID' },
       { key: 'subscriber_hash', label: 'Subscriber Hash' },
+      { key: 'already_archived', label: 'Already Archived', format: 'boolean' },
       { key: 'archived_at', label: 'Archived At', format: 'datetime' },
       { key: 'error', label: 'Error' },
     ],

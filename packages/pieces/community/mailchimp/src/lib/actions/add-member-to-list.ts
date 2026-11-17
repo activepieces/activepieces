@@ -115,7 +115,7 @@ export const addMemberToList = createAction({
       const subscriberHash = crypto.createHash('md5').update(context.propsValue.email_address.toLowerCase()).digest('hex');
       
       const mergeFields: Record<string, unknown> = {
-        ...(context.propsValue.merge_fields ?? {}),
+        ...(mailchimpApi.parseJsonObject({ value: context.propsValue.merge_fields, label: 'Merge Fields' }) ?? {}),
         ...(context.propsValue.first_name ? { FNAME: context.propsValue.first_name } : {}),
         ...(context.propsValue.last_name ? { LNAME: context.propsValue.last_name } : {}),
       };
