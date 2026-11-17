@@ -22,7 +22,7 @@ This section is the one set of E2E guidelines, for people and agents. Other page
 
 Staging runs the CE specs in a shared, long-lived account after each deploy, and CI runs specs in parallel in one project, so a spec must pass whatever the project already holds: nothing, many flows, or another run's flows. It must never change data it did not create.
 
-Start from `scenarios/flows/flow-journey.spec.ts` and `pages/builder.page.ts`. Locators and actions live in a page object under `pages/`; the spec holds the steps and the expected outcomes.
+Start from `scenarios/project/automations-flows.spec.ts` when the spec seeds its data, and from `scenarios/flows/flow-journey.spec.ts` when the spec tests the builder. Locators and actions live in a page object under `pages/`; the spec holds the steps and the expected outcomes.
 
 ### The files of a feature
 
