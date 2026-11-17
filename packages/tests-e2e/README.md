@@ -115,6 +115,15 @@ A spec is flaky when it fails and then passes on a retry, or fails with no produ
 3. CI skips `@quarantine` specs, so the release gate does not wait for the fix. Local runs still run them.
 4. The fix removes the tag in the same PR.
 
+## New specs and staging
+
+After each deploy, staging runs every spec outside `scenarios/ee` and `scenarios/cloud`, and the Cloud release takes only a `main` commit that passed there. Staging serves `main`, so a new test cannot pass there before its PR merges, and one red test stops the release.
+
+1. Tag each new test outside `scenarios/ee` with `@no-staging`, on its `describe` or on the test. The staging job skips the tag; the E2E matrix still runs the test.
+2. After the PR reaches staging, run the spec there once: `E2E_INSTANCE_URL=https://stg.activepieces.com E2E_EMAIL=<staging user> E2E_PASSWORD=<password> npx playwright test <spec>`.
+3. When it passes, remove the tag in a one-line PR.
+4. A test that cannot pass on Cloud keeps the tag and says why in an annotation: `{ tag: '@no-staging', annotation: { type: 'no-staging', description: '<reason>' } }`.
+
 ## Running the tests
 
 ```bash
