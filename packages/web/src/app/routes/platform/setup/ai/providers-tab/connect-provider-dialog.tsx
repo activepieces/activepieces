@@ -197,7 +197,7 @@ function ConnectProviderForm({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea viewPortClassName="max-h-[65vh] p-px">
+        <ScrollArea viewPortClassName="max-h-[65vh] p-px pr-4">
           <div className="flex flex-col gap-4">
             {info && <SetupHelp key={info.provider} info={info} />}
             <div className="flex flex-col gap-4">
@@ -280,7 +280,7 @@ function ConnectProviderForm({
                     <button
                       type="button"
                       data-testid="ai-provider-advanced-toggle"
-                      className="flex w-full items-center gap-1.5 border-t border-gray-6 pt-4 text-sm font-medium text-gray-11 transition-colors hover:text-gray-12"
+                      className="flex w-full items-center gap-1.5 pt-2 text-sm font-medium text-gray-11 transition-colors hover:text-gray-12"
                     >
                       <ChevronDown
                         className={cn(
@@ -291,6 +291,7 @@ function ConnectProviderForm({
                       {t('Advanced ({count})', {
                         count: advancedFields.length,
                       })}
+                      <span className="ml-2 h-px grow bg-gray-6" />
                     </button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className={COLLAPSE_ANIMATION}>
