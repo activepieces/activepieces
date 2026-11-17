@@ -8,6 +8,7 @@ import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { WorkerHealth } from '@/lib/statuses';
 import { cn } from '@/lib/utils';
 
 import { groupUtils } from './hooks';
@@ -250,7 +251,13 @@ function CardStatus({
     <p className="flex min-w-0 items-center gap-2 text-sm">
       <span className={ROW_GLYPH}>
         <StatusDot
-          tone={down ? 'danger' : online > 0 ? 'success' : 'neutral'}
+          status={
+            down
+              ? WorkerHealth.OFFLINE
+              : online > 0
+              ? WorkerHealth.ONLINE
+              : WorkerHealth.EMPTY
+          }
         />
       </span>
       <span

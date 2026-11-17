@@ -43,6 +43,11 @@ You are working in the Activepieces web application (`packages/web`).
 - **Overflowing text must use `TextWithTooltip`** (from `@/components/custom/text-with-tooltip`). Wrap any text that may overflow its container (emails, IDs, long names) in `<TextWithTooltip tooltipMessage={text}><p className="...">{text}</p></TextWithTooltip>`. It auto-detects truncation and only shows the tooltip when the text actually overflows. Ensure parent flex containers have `min-w-0` so `truncate` works correctly.
 - **Copy-to-clipboard UI must use `CopyToClipboardInput`** (from `@/components/custom/clipboard/copy-to-clipboard`). Never hand-roll a readonly `<Input>` glued to a copy `<Button>` with `navigator.clipboard.writeText`. `CopyToClipboardInput` handles the copied-state toggle, tooltip, styling, and optional download button. Pass `useInput={true}` for single-line values (links, keys) or `useInput={false}` for multi-line content (textarea). Use `fileName` only when the value should also be downloadable.
 
+## Statuses
+
+- **Colours of a state come from `statusColors.of(status)`** (`src/lib/status-colors.ts`). `StatusBadge`, `StatusDot` and other status components take the status, never a colour or a tone.
+- **When booleans or checks derived from data (for example, "is this config property null") together make a state the user sees, and every combination can happen, add an enum to `src/lib/statuses.ts` and build it in one function.** The same state then looks the same on every screen. If some combinations can never happen, the API should probably send one enum instead (see `packages/server/AGENTS.md`). Apply this only where it makes the code simpler.
+
 ## Accessible markup
 
 - **Every interactive element has a role and an accessible name.** Use a real `<button>` / `<a>` (the Shadcn `Button`), never a clickable `div`. Link each `FormLabel` to its input through `FormControl`. Give an icon-only button an `aria-label` with a translation key.

@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 import { StatusDot, adminSurface } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { WorkerHealth } from '@/lib/statuses';
 import { cn } from '@/lib/utils';
 
 import { AddItemsDialog } from './add-items-dialog';
@@ -247,7 +248,13 @@ function GroupStatus({
   return (
     <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm max-sm:gap-x-3">
       <StatusDot
-        tone={down ? 'danger' : online > 0 ? 'success' : 'neutral'}
+        status={
+          down
+            ? WorkerHealth.OFFLINE
+            : online > 0
+            ? WorkerHealth.ONLINE
+            : WorkerHealth.EMPTY
+        }
         className="mr-0.5 shrink-0"
       />
       {items.map((item, i) => (

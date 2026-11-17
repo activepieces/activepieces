@@ -17,27 +17,32 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
-const SERIES: Array<{ status: FlowRunStatus; label: string; color: string }> = [
+const SERIES: Array<{
+  status: FlowRunStatus;
+  label: string;
+  className: string;
+}> = [
   {
     status: FlowRunStatus.SUCCEEDED,
     label: 'Succeeded',
-    color: 'var(--success-9)',
+    className: 'text-success-9',
   },
   {
     status: FlowRunStatus.FAILED,
     label: 'Failed',
-    color: 'var(--warning-9)',
+    className: 'text-warning-9',
   },
   {
     status: FlowRunStatus.INTERNAL_ERROR,
     label: 'Internal error',
-    color: 'var(--danger-9)',
+    className: 'text-danger-9',
   },
   {
     status: FlowRunStatus.CANCELED,
     label: 'Cancelled',
-    color: 'var(--gray-9)',
+    className: 'text-gray-9',
   },
 ];
 
@@ -76,7 +81,10 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
   }, [data]);
 
   const chartConfig = selectedSeries.reduce((config, item) => {
-    config[item.status] = { label: t(item.label), color: item.color };
+    config[item.status] = {
+      label: t(item.label),
+      className: item.className,
+    };
     return config;
   }, {} as ChartConfig) satisfies ChartConfig;
 
@@ -95,8 +103,7 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
               onCheckedChange={() => toggleStatus(item.status)}
             />
             <span
-              className="size-2.5 rounded-full"
-              style={{ backgroundColor: item.color }}
+              className={cn('size-2.5 rounded-full bg-current', item.className)}
             />
             {t(item.label)}
           </label>
@@ -131,15 +138,20 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
                 <linearGradient
                   key={item.status}
                   id={`status-gradient-${item.status}`}
+                  className={item.className}
                   x1="0"
                   y1="0"
                   x2="0"
                   y2="1"
                 >
-                  <stop offset="0%" stopColor={item.color} stopOpacity={0.3} />
+                  <stop
+                    offset="0%"
+                    stopColor="currentColor"
+                    stopOpacity={0.3}
+                  />
                   <stop
                     offset="100%"
-                    stopColor={item.color}
+                    stopColor="currentColor"
                     stopOpacity={0.05}
                   />
                 </linearGradient>
@@ -192,11 +204,12 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
                 key={item.status}
                 dataKey={item.status}
                 type="monotone"
-                stroke={item.color}
+                className={item.className}
+                stroke="currentColor"
                 strokeWidth={2}
                 fill={`url(#status-gradient-${item.status})`}
                 dot={false}
-                activeDot={{ r: 4 }}
+                activeDot={{ r: 4, className: item.className }}
               />
             ))}
           </AreaChart>
