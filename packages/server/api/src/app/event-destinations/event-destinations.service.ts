@@ -41,7 +41,7 @@ const FLOW_RUN_EVENT_ACTIONS: ReadonlySet<ApplicationEventName> = new Set([
     ApplicationEventName.FLOW_RUN_RETRIED,
 ])
 
-const PIECE_EVENTS = [ApplicationEventName.OFFICIAL_PIECE_ADDED, ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED, ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED]
+const PIECE_EVENTS = [ApplicationEventName.OFFICIAL_PIECE_ADDED, ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED, ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED]
 const PIECE_EVENT_DISPATCH_CHUNK_SIZE = 25
 const PIECE_EVENT_DESTINATION_PAGE_SIZE = 100
 
@@ -241,7 +241,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
         return paginationHelper.createPage<EventDestinationSchema>(data, cursor)
     },
     triggerOnAllPlatforms: async ({ addedPieces }: TriggerOnAllPlatformsParams): Promise<void> => {
-        const changes = addedPieces.map(toPieceChange)
+        const changes = addedPieces.flatMap(toPieceChanges)
         if (changes.length === 0) {
             return
         }
@@ -438,28 +438,32 @@ async function triggerPieceEventsForDestinations({ log, destinations, changes, w
     }
 }
 
-function toPieceChange(piece: AddedPiece): OfficialPieceEventData['piece'] {
-    return {
+function toPieceChanges(piece: AddedPiece): OfficialPieceEventData['piece'][] {
+    const changeType = isNil(piece.previousVersion) ? 'new' : pieceChangeType({ previousVersion: piece.previousVersion, version: piece.version })
+    if (isNil(changeType)) {
+        return []
+    }
+    return [{
         name: piece.name,
         displayName: piece.displayName,
         version: piece.version,
         previousVersion: piece.previousVersion,
-        changeType: isNil(piece.previousVersion) ? 'new' : pieceChangeType({ previousVersion: piece.previousVersion, version: piece.version }),
+        changeType,
         pieceType: 'OFFICIAL' as const,
         minimumSupportedRelease: piece.minimumSupportedRelease ?? null,
         maximumSupportedRelease: piece.maximumSupportedRelease ?? null,
         deprecated: piece.deprecated ?? false,
-    }
+    }]
 }
 
-function pieceChangeType({ previousVersion, version }: PieceChangeTypeParams): PieceChangeType {
+function pieceChangeType({ previousVersion, version }: PieceChangeTypeParams): PieceChangeType | null {
     if (isNil(semver.valid(previousVersion)) || isNil(semver.valid(version))) {
         return 'patch'
     }
     switch (semver.diff(previousVersion, version)) {
         case 'major':
         case 'premajor':
-            return 'major'
+            return null
         case 'minor':
         case 'preminor':
             return 'minor'
@@ -487,9 +491,8 @@ function toPieceEvent({ platformId, change }: ToPieceEventParams): OfficialPiece
     switch (change.changeType) {
         case 'new':
             return { ...envelope, action: ApplicationEventName.OFFICIAL_PIECE_ADDED, data }
-        case 'major':
         case 'minor':
-            return { ...envelope, action: ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED, data }
+            return { ...envelope, action: ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED, data }
         case 'patch':
             return { ...envelope, action: ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED, data }
     }

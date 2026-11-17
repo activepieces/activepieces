@@ -27,7 +27,7 @@ const originalSyncMode = vi.hoisted(() => {
 const CLOUD_PIECES_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const PIECE_EVENTS = [
     ApplicationEventName.OFFICIAL_PIECE_ADDED,
-    ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED,
+    ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED,
     ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED,
 ]
 
@@ -246,8 +246,7 @@ describe('Official piece events', () => {
     })
 
     it.each([
-        { version: '2.0.0', action: ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED, changeType: 'major' },
-        { version: '1.1.0', action: ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED, changeType: 'minor' },
+        { version: '1.1.0', action: ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED, changeType: 'minor' },
         { version: '1.0.1', action: ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED, changeType: 'patch' },
     ])('a sync that adds $version after 1.0.0 sends $action', async ({ version, action, changeType }) => {
         await seed([{ name: '@test/gmail', version: '1.0.0' }])
@@ -264,7 +263,7 @@ describe('Official piece events', () => {
     it('a destination gets only the piece events it subscribed to', async () => {
         await seed([{ name: '@test/gmail', version: '1.0.0' }])
         const patchOnly = await subscribe({ platformId: entitledA.platform.id, events: [ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED] })
-        const withoutPatch = await subscribe({ platformId: entitledA.platform.id, events: [ApplicationEventName.OFFICIAL_PIECE_ADDED, ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED] })
+        const withoutPatch = await subscribe({ platformId: entitledA.platform.id, events: [ApplicationEventName.OFFICIAL_PIECE_ADDED, ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED] })
 
         await sync([{ name: '@test/gmail', version: '1.0.1' }])
 
@@ -295,8 +294,18 @@ describe('Official piece events', () => {
 
         const sent = deliveriesTo(destinationId)
         expect(sent).toHaveLength(1)
-        expect(sent[0].event.action).toBe(ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED)
+        expect(sent[0].event.action).toBe(ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED)
         expect(sent[0].event.data.piece).toMatchObject({ version: '0.8.4', previousVersion: '0.9.0', changeType: 'minor' })
+    })
+
+    it('a sync that adds a major version saves it and sends no event', async () => {
+        await seed([{ name: '@test/gmail', version: '1.0.0' }])
+        const destinationId = await subscribe({ platformId: entitledA.platform.id })
+
+        await sync([{ name: '@test/gmail', version: '2.0.0' }])
+
+        expect(deliveriesTo(destinationId)).toEqual([])
+        expect(await databaseConnection().getRepository('piece_metadata').countBy({ name: '@test/gmail', version: '2.0.0' })).toBe(1)
     })
 
     it('a sync that adds nothing sends nothing', async () => {
@@ -397,7 +406,7 @@ describe('Official piece events', () => {
 
         const sent = deliveriesTo(destinationId)
         expect(sent).toHaveLength(1)
-        expect(sent[0].event.action).toBe(ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED)
+        expect(sent[0].event.action).toBe(ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED)
         expect(sent[0].event.data.piece).toMatchObject({ version: '1.1.0', previousVersion: '1.0.0', changeType: 'minor' })
     })
 })

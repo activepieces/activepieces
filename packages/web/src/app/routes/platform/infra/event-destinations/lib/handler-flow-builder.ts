@@ -27,7 +27,7 @@ const HTTP_PIECE_VERSION = '0.13.0';
 const HTTP_SEND_REQUEST_ACTION_NAME = 'send_request';
 const OFFICIAL_PIECE_EVENTS: ReadonlySet<ApplicationEventName> = new Set([
   ApplicationEventName.OFFICIAL_PIECE_ADDED,
-  ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED,
+  ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED,
   ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED,
 ]);
 

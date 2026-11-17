@@ -28,7 +28,7 @@ import {
     FolderEvent,
     OfficialPieceAddedEvent,
     OfficialPieceEventData,
-    OfficialPieceMinorOrMajorVersionAddedEvent,
+    OfficialPieceMinorVersionAddedEvent,
     OfficialPiecePatchVersionAddedEvent,
     ProjectReleaseEvent,
     ProjectReplacedEvent,
@@ -479,10 +479,10 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
             }
             return mock
         }
-        case ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED: {
-            const mock: OfficialPieceMinorOrMajorVersionAddedEvent = {
+        case ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED: {
+            const mock: OfficialPieceMinorVersionAddedEvent = {
                 ...pieceEnvelope,
-                action: ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED,
+                action: ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED,
                 data: { piece },
             }
             return mock

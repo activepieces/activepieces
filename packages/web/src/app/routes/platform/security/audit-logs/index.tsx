@@ -86,7 +86,7 @@ export default function AuditLogsPage() {
           (action) =>
             action !== ApplicationEventName.OFFICIAL_PIECE_ADDED &&
             action !==
-              ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED &&
+              ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED &&
             action !== ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED,
         )
         .map((action) => {
@@ -775,7 +775,7 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       return rows;
     }
     case ApplicationEventName.OFFICIAL_PIECE_ADDED:
-    case ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED:
+    case ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED:
     case ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED: {
       const { piece } = event.data;
       return [

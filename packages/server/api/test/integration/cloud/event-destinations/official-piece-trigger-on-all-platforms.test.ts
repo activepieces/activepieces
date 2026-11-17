@@ -12,7 +12,7 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/
 
 const ENTITLED_PLAN = { plan: { eventStreamingEnabled: true } }
 
-const PIECE_EVENTS = [ApplicationEventName.OFFICIAL_PIECE_ADDED, ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED, ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED]
+const PIECE_EVENTS = [ApplicationEventName.OFFICIAL_PIECE_ADDED, ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED, ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED]
 
 const added = (name: string, version: string, previousVersion: string | null = null): AddedPiece => ({
     name,
@@ -86,7 +86,7 @@ describe('triggerOnAllPlatforms for official piece events', () => {
             expect(job.data.payload).not.toHaveProperty('projectId')
             expect(job.data.payload).not.toHaveProperty('userId')
             expect(job.data.payload).not.toHaveProperty('ip')
-            expect(job.data.payload.action).toBe(ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED)
+            expect(job.data.payload.action).toBe(ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED)
             expect(job.data.payload.data.piece).toEqual({
                 name: '@activepieces/piece-gmail',
                 displayName: '@activepieces/piece-gmail',
@@ -126,11 +126,9 @@ describe('triggerOnAllPlatforms for official piece events', () => {
 
     it.each<ChangeCase>([
         { previous: null, version: '1.0.0', changeType: 'new', action: ApplicationEventName.OFFICIAL_PIECE_ADDED },
-        { previous: '1.0.0', version: '2.0.0', changeType: 'major', action: ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED },
-        { previous: '1.0.0', version: '1.1.0', changeType: 'minor', action: ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED },
+        { previous: '1.0.0', version: '1.1.0', changeType: 'minor', action: ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED },
         { previous: '1.0.0', version: '1.0.1', changeType: 'patch', action: ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED },
-        { previous: '1.0.0', version: '2.0.0-beta.1', changeType: 'major', action: ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED },
-        { previous: '1.0.0', version: '1.1.0-beta.1', changeType: 'minor', action: ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED },
+        { previous: '1.0.0', version: '1.1.0-beta.1', changeType: 'minor', action: ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED },
     ])('$previous → $version is $changeType, sent as $action only to destinations subscribed to it', async ({ previous, version, changeType, action }) => {
         const ctx = await createTestContext(app, ENTITLED_PLAN)
         const subscribedId = await subscribe({ platformId: ctx.platform.id, events: [action] })
@@ -147,6 +145,17 @@ describe('triggerOnAllPlatforms for official piece events', () => {
         expect(job.data.payload.data.piece).toMatchObject({ version, previousVersion: previous, changeType })
     })
 
+    it.each(['2.0.0', '2.0.0-beta.1'])('1.0.0 → %s is a major version and sends no event', async (version) => {
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
+        await subscribe({ platformId: ctx.platform.id })
+
+        await eventDestinationService(app.log).triggerOnAllPlatforms({
+            addedPieces: [added('@test/a', version, '1.0.0')],
+        })
+
+        expect(addSpy).not.toHaveBeenCalled()
+    })
+
     it('every added version sends its own event, an older one included', async () => {
         const ctx = await createTestContext(app, ENTITLED_PLAN)
         await subscribe({ platformId: ctx.platform.id })
@@ -157,7 +166,7 @@ describe('triggerOnAllPlatforms for official piece events', () => {
 
         expect(queuedJobs().map((job) => [job.data.payload.action, job.data.payload.data.piece.version, job.data.payload.data.piece.previousVersion])).toEqual([
             [ApplicationEventName.OFFICIAL_PIECE_ADDED, '0.3.0', null],
-            [ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED, '0.2.0', '0.3.0'],
+            [ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED, '0.2.0', '0.3.0'],
             [ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED, '0.3.1', '0.3.0'],
         ])
     })

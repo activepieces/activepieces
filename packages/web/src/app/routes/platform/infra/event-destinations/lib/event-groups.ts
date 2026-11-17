@@ -128,7 +128,7 @@ function buildEventGroups(): EventGroup[] {
       title: t('Official pieces'),
       events: [
         ApplicationEventName.OFFICIAL_PIECE_ADDED,
-        ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED,
+        ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED,
         ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED,
       ],
     },

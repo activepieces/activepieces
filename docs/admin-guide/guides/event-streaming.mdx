@@ -153,23 +153,23 @@ You can subscribe a destination to any audit event — flow lifecycle, run statu
 You can also subscribe to three official piece events. They are not audit events and do not appear in the audit log:
 
 - `official_piece.added` — an official piece that you did not have yet was added.
-- `official_piece.minor_or_major_version.added` — a new major or minor version of an official piece was added.
+- `official_piece.minor_version.added` — a new minor version of an official piece was added.
 - `official_piece.patch_version.added` — a new patch version of an official piece was added.
 
 See [Official piece events](#official-piece-events) below for what fires them and what they carry.
 
 ### Official piece events
 
-Official piece events fire when official piece versions are added to your instance: on self-hosted, when the piece sync inserts them (at startup, every hour, and on `POST /v1/pieces/sync`); on Cloud, when a piece is published. Custom and private pieces do not send them. Every added version sends one event. `official_piece.added` is sent once per piece, for the first version of it that your instance gets, and every other version sends a version event.
+Official piece events fire when official piece versions are added to your instance: on self-hosted, when the piece sync inserts them (at startup, every hour, and on `POST /v1/pieces/sync`); on Cloud, when a piece is published. Custom and private pieces do not send them. Every added version sends one event. `official_piece.added` is sent once per piece, for the first version of it that your instance gets, and every other version sends a version event. A new major version sends no event.
 
 Patch versions are frequent, so subscribe to `official_piece.patch_version.added` only if you need them.
 
-The envelope carries `platformId` but no project or user: there is no `projectId`, `userId`, `userEmail`, or `ip`. `changeType` is `new` for `official_piece.added`, `major` or `minor` for `official_piece.minor_or_major_version.added`, and `patch` for `official_piece.patch_version.added`. `previousVersion` is the newest version your instance had before this one. The sync adds the newest versions first, so `version` can be lower than `previousVersion`, and `changeType` then describes the difference between the two. `minimumSupportedRelease` and `maximumSupportedRelease` are the Activepieces releases the version supports.
+The envelope carries `platformId` but no project or user: there is no `projectId`, `userId`, `userEmail`, or `ip`. `changeType` is `new` for `official_piece.added`, `minor` for `official_piece.minor_version.added`, and `patch` for `official_piece.patch_version.added`. `previousVersion` is the newest version your instance had before this one. The sync adds the newest versions first, so `version` can be lower than `previousVersion`, and `changeType` then describes the difference between the two. `minimumSupportedRelease` and `maximumSupportedRelease` are the Activepieces releases the version supports.
 
 ```json
 {
   "id": "…", "created": "…", "updated": "…", "platformId": "…",
-  "action": "official_piece.minor_or_major_version.added",
+  "action": "official_piece.minor_version.added",
   "data": {
     "piece": { "name": "@activepieces/piece-gmail", "displayName": "Gmail", "version": "0.9.0", "previousVersion": "0.8.3",
                "changeType": "minor", "pieceType": "OFFICIAL", "minimumSupportedRelease": "0.88.2", "maximumSupportedRelease": null, "deprecated": false }

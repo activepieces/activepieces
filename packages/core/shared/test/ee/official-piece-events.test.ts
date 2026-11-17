@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { ApplicationEventName, buildMockEvent, OfficialPieceAddedEvent, OfficialPiecePatchVersionAddedEvent, OfficialPieceMinorOrMajorVersionAddedEvent, summarizeApplicationEvent } from '../../src/index'
+import { ApplicationEventName, buildMockEvent, OfficialPieceAddedEvent, OfficialPieceMinorVersionAddedEvent, OfficialPiecePatchVersionAddedEvent, summarizeApplicationEvent } from '../../src/index'
 
 describe('official piece mock events', () => {
-    it('builds a official_piece.minor_or_major_version.added mock with a minor change and a previous version', () => {
-        const event = OfficialPieceMinorOrMajorVersionAddedEvent.parse(buildMockEvent({ event: ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED, platformId: 'platform-id' }))
+    it('builds a official_piece.minor_version.added mock with a minor change and a previous version', () => {
+        const event = OfficialPieceMinorVersionAddedEvent.parse(buildMockEvent({ event: ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED, platformId: 'platform-id' }))
         expect(event.platformId).toBe('platform-id')
         expect(event.data.piece.name).toBe('@activepieces/piece-gmail')
         expect(event.data.piece.changeType).toBe('minor')
@@ -33,7 +33,7 @@ describe('official piece mock events', () => {
 
     it.each([
         { event: ApplicationEventName.OFFICIAL_PIECE_ADDED, expected: 'Piece Gmail added' },
-        { event: ApplicationEventName.OFFICIAL_PIECE_MINOR_OR_MAJOR_VERSION_ADDED, expected: 'Piece Gmail updated 0.8.3 → 0.9.0' },
+        { event: ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED, expected: 'Piece Gmail updated 0.8.3 → 0.9.0' },
         { event: ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED, expected: 'Piece Gmail updated 0.9.0 → 0.9.1' },
     ])('summarizes $event as "$expected"', ({ event, expected }) => {
         expect(summarizeApplicationEvent(buildMockEvent({ event, platformId: 'platform-id' }))).toBe(expected)
