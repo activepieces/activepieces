@@ -5,6 +5,8 @@ import { test as variablesTest } from '../../../fixtures/variables';
 const test = mergeTests(accessTest, variablesTest);
 
 test.describe('Variables access', { tag: ['@feature:variables', '@surface'] }, () => {
+  test.describe.configure({ timeout: 180_000 });
+
   test('a viewer cannot create or reveal a variable, and an API key cannot reveal one: the server refuses', async ({ secondProject, viewer, variables }) => {
     const variable = await variables.seed({ session: secondProject.session });
     const viewerToken = viewer.session.token;

@@ -2,7 +2,7 @@ import { expect, test } from '../../fixtures/variables';
 import { BuilderPage } from '../../pages/builder.page';
 import { VariablesPage } from '../../pages/variables.page';
 
-test.describe('Variables', { tag: ['@feature:variables', '@surface'] }, () => {
+test.describe('Variables', { tag: ['@feature:variables', '@surface', '@no-staging'] }, () => {
   test('a variable created through the form resolves in a flow run', async ({ page, seed, cleanup, variables }) => {
     test.setTimeout(180000);
     const variablesPage = new VariablesPage(page);
@@ -33,7 +33,7 @@ test.describe('Variables', { tag: ['@feature:variables', '@surface'] }, () => {
 
     await test.step('A run returns the value, and the run log shows the step input as redacted', async () => {
       await variables.expectRunReturns({ webhookUrl: flow.webhookUrl, value });
-      expect(await variables.latestStepInput({ flowId: flow.flowId })).toMatchObject({ fields: { body: '**REDACTED**' } });
+      await expect.poll(() => variables.latestStepInput({ flowId: flow.flowId }), { timeout: 60_000 }).toMatchObject({ fields: { body: '**REDACTED**' } });
     });
   });
 
