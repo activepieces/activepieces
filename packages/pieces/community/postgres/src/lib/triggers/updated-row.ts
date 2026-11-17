@@ -18,7 +18,7 @@ import { postgresAuth } from '../auth';
 const props = {
   description: Property.MarkDown({
     value:
-      'Each check returns every row whose timestamp is newer than the last check. The table needs a column that is set to the current time whenever a row changes, such as `updated_at`.',
+      'Each row whose timestamp is newer than the last check starts its own flow run. The table needs a column that is set to the current time whenever a row changes, such as `updated_at`.',
     variant: MarkdownVariant.INFO,
   }),
   table: postgresCommon.table,
@@ -91,16 +91,10 @@ const polling: Polling<
       const result = await client.query<Record<string, unknown>>(query, [
         lastFetchEpochMS,
       ]);
-      if (result.rows.length === 0) return [];
-
-      const newest = Number(result.rows[0][EPOCH_ALIAS]);
-      const rows = result.rows.map(withoutEpoch);
-      return [
-        {
-          epochMilliSeconds: newest,
-          data: { rows, rowCount: rows.length },
-        },
-      ];
+      return result.rows.map((row) => ({
+        epochMilliSeconds: Number(row[EPOCH_ALIAS]),
+        data: withoutEpoch(row),
+      }));
     } finally {
       await client.end();
     }
@@ -115,15 +109,15 @@ function withoutEpoch(row: Record<string, unknown>): Record<string, unknown> {
 
 const EPOCH_ALIAS = '__ap_updated_epoch_ms';
 
-export const updatedRows = createTrigger({
-  name: 'updatedRows',
+export const updatedRow = createTrigger({
+  name: 'updated-row',
   classification: 'READ',
   auth: postgresAuth,
-  displayName: 'Updated Rows',
-  description: 'Triggers when rows in a table are updated',
+  displayName: 'Updated Row',
+  description: 'Triggers when a row in a table is updated',
   aiMetadata: {
     description:
-      'Fires when one or more rows in a selected PostgreSQL table change, detected by polling a timestamp column (such as updated_at) for values newer than the previous check. Each event carries every row changed since the last check as a single list, plus the number of rows.',
+      'Fires when one or more rows in a selected PostgreSQL table change, detected by polling a timestamp column (such as updated_at) for values newer than the previous check. Emits one event per changed row, carrying that row with all its columns.',
   },
   props,
   propertyGroups: [
@@ -143,15 +137,10 @@ export const updatedRows = createTrigger({
     },
   ],
   sampleData: {
-    rows: [
-      {
-        id: 42,
-        name: 'Jane Doe',
-        email: 'jane@example.com',
-        updated_at: '2026-01-15T10:30:00.000Z',
-      },
-    ],
-    rowCount: 1,
+    id: 42,
+    name: 'Jane Doe',
+    email: 'jane@example.com',
+    updated_at: '2026-01-15T10:30:00.000Z',
   },
   type: TriggerStrategy.POLLING,
   async test(context) {
