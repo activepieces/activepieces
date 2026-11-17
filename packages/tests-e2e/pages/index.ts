@@ -1,4 +1,5 @@
 export { BasePage } from './base';
+export { AiProvidersPage } from './ai-providers.page';
 export { AuthenticationPage } from './authentication.page';
 export { AutomationsPage } from './automations.page';
 export { BuilderPage } from './builder.page';

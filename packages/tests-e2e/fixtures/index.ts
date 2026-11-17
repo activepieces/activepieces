@@ -1,5 +1,6 @@
 import { test as base } from '@playwright/test';
 import {
+  AiProvidersPage,
   AuthenticationPage,
   AutomationsPage,
   BuilderPage,
@@ -9,6 +10,10 @@ import {
 import { e2eApi, E2eSession } from './api';
 
 export const test = base.extend<CustomFixtures>({
+  aiProvidersPage: async ({ page }, use) => {
+    await use(new AiProvidersPage(page));
+  },
+
   authenticationPage: async ({ page }, use) => {
     await use(new AuthenticationPage(page));
   },
@@ -48,11 +53,20 @@ export const test = base.extend<CustomFixtures>({
       await e2eApi.deleteConnection({ request, session, connectionId });
     }
   },
+
+  aiProviderCleanup: async ({ request, session }, use) => {
+    const providerIds: string[] = [];
+    await use({ track: (providerId) => providerIds.push(providerId) });
+    for (const providerId of providerIds) {
+      await e2eApi.deleteAiProvider({ request, session, providerId });
+    }
+  },
 });
 
 export { expect } from '@playwright/test';
 
 type CustomFixtures = {
+  aiProvidersPage: AiProvidersPage;
   authenticationPage: AuthenticationPage;
   automationsPage: AutomationsPage;
   builderPage: BuilderPage;
@@ -61,4 +75,5 @@ type CustomFixtures = {
   session: E2eSession;
   flowCleanup: { track: (flowId: string) => void };
   connectionCleanup: { track: (connectionId: string) => void };
+  aiProviderCleanup: { track: (providerId: string) => void };
 };

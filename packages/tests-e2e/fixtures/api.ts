@@ -21,6 +21,10 @@ async function deleteConnection({ request, session, connectionId }: { request: A
   await deleteById({ request, session, resource: 'app-connections', id: connectionId });
 }
 
+async function deleteAiProvider({ request, session, providerId }: { request: APIRequestContext; session: E2eSession; providerId: string }) {
+  await deleteById({ request, session, resource: 'ai-providers', id: providerId });
+}
+
 async function deleteStaleData({ request, session }: { request: APIRequestContext; session: E2eSession }) {
   const staleFlows = await listStale({ request, session, resource: 'flows', nameOf: (flow: FlowSummary) => flow.version.displayName, cursor: undefined });
   for (const flow of staleFlows) {
@@ -124,11 +128,11 @@ const STALE_AFTER_MS = 60 * 60 * 1000;
 
 export const STORAGE_STATE = path.join(__dirname, '..', '.auth', 'user.json');
 export const E2E_PREFIX = 'E2E ';
-export const e2eApi = { readSession, deleteFlow, deleteConnection, deleteStaleData, describeFlow, describeRun };
+export const e2eApi = { readSession, deleteFlow, deleteConnection, deleteAiProvider, deleteStaleData, describeFlow, describeRun };
 
 export type E2eSession = { token: string; projectId: string };
 
-type Resource = 'flows' | 'app-connections';
+type Resource = 'flows' | 'app-connections' | 'ai-providers';
 type FlowSummary = { id: string; created: string; version: { displayName: string } };
 type ConnectionSummary = { id: string; created: string; displayName: string };
 type FlowState = {
