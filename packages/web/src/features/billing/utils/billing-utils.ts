@@ -11,6 +11,7 @@ import dayjs from 'dayjs';
 import { t } from 'i18next';
 
 import { formatUtils } from '@/lib/format-utils';
+import { CreditsSeverity } from '@/lib/statuses';
 
 const DAILY_RESET_INTERVAL = 'day';
 
@@ -46,12 +47,12 @@ function percentUsed({ used, total }: PercentUsedParams): number {
 
 function creditsSeverity(percent: number): CreditsSeverity {
   if (percent >= CREDITS_DANGER_PERCENT) {
-    return 'error';
+    return CreditsSeverity.ERROR;
   }
   if (percent >= CREDITS_WARNING_PERCENT) {
-    return 'warning';
+    return CreditsSeverity.WARNING;
   }
-  return 'default';
+  return CreditsSeverity.DEFAULT;
 }
 
 function formatCredits(credits: number): string {
@@ -73,10 +74,14 @@ function shouldShowCreditsAlert({
   if (isEmbedded || !isProjectRoute || edition === ApEdition.COMMUNITY) {
     return false;
   }
-  if (isUnlimited || !isBillingEnforced || severity === 'default') {
+  if (
+    isUnlimited ||
+    !isBillingEnforced ||
+    severity === CreditsSeverity.DEFAULT
+  ) {
     return false;
   }
-  return severity === 'error' || !isDismissalActive;
+  return severity === CreditsSeverity.ERROR || !isDismissalActive;
 }
 
 function resolveCreditsAction({
@@ -231,8 +236,6 @@ export type IsYearlyPlanInfo = Pick<
   PlatformBillingInformation,
   'planInterval' | 'creditsResetInterval'
 >;
-
-export type CreditsSeverity = 'default' | 'warning' | 'error';
 
 export type ShouldShowCreditsAlertParams = {
   edition: ApEdition | null | undefined;

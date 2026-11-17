@@ -107,6 +107,9 @@ export const slack = createPiece({
   auth: slackAuth,
   events: {
     parseAndReply: ({ payload, server }) => {
+      if (!isFreshSlackRequest({ headers: payload.headers })) {
+        return { reply: { headers: {}, body: {} } };
+      }
       if (payload.headers['content-type'] === 'application/x-www-form-urlencoded') {
         if (payload.body && typeof payload.body == 'object' && 'payload' in payload.body) {
           const interactionPayloadBody = JSON.parse(
@@ -311,6 +314,13 @@ export const slack = createPiece({
     newModalInteractionTrigger,
   ],
 });
+
+function isFreshSlackRequest({ headers }: { headers: Record<string, string> }): boolean {
+  const ageSeconds = Math.abs(Date.now() / 1000 - Number(headers['x-slack-request-timestamp']));
+  return !Number.isNaN(ageSeconds) && ageSeconds <= SLACK_MAX_REQUEST_AGE_SECONDS;
+}
+
+const SLACK_MAX_REQUEST_AGE_SECONDS = 5 * 60;
 
 type EventPayloadBody = {
   // Event payload

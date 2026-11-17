@@ -47,6 +47,20 @@ export const ProviderModelConfig = z.object({
     modelId: z.string(),
     modelName: z.string(),
     modelType: z.enum(AIProviderModelType),
+    discovered: z.optional(z.boolean()),
+    metadata: z.optional(z.object({
+        contextTokens: z.optional(z.number()),
+        maxOutputTokens: z.optional(z.number()),
+        releaseDate: z.optional(z.string()),
+        inputCostPerMillionTokens: z.optional(z.number()),
+        outputCostPerMillionTokens: z.optional(z.number()),
+        cacheReadCostPerMillionTokens: z.optional(z.number()),
+        cacheWriteCostPerMillionTokens: z.optional(z.number()),
+        supportsToolCalling: z.optional(z.boolean()),
+        supportsReasoning: z.optional(z.boolean()),
+        supportsVision: z.optional(z.boolean()),
+        realModelId: z.optional(z.string()),
+    })),
 })
 export type ProviderModelConfig = z.infer<typeof ProviderModelConfig>
 
@@ -515,6 +529,7 @@ export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabili
     [AIProviderName.META]: buildProviderCapabilities(AIProviderName.META),
     [AIProviderName.NVIDIA]: buildProviderCapabilities(AIProviderName.NVIDIA),
     [AIProviderName.COHERE]: buildProviderCapabilities(AIProviderName.COHERE),
+    [AIProviderName.LITELLM]: buildProviderCapabilities(AIProviderName.LITELLM),
 }
 
 export const aiProviderUtils = {

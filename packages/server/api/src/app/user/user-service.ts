@@ -80,7 +80,7 @@ export const userService = (log: FastifyBaseLogger) => ({
     async updateLastActiveDate({ id }: UpdateLastActiveDateParams): Promise<void> {
         await userRepo().update({ id }, { lastActiveDate: dayjs().toISOString() })
     },
-    async update({ id, status, platformId, platformRole, externalId }: UpdateParams): Promise<UserWithMetaInformation> {
+    async update({ id, status, platformId, platformRole, externalId, actorId }: UpdateParams): Promise<UserWithMetaInformation> {
         const user = await this.getOrThrow({ id })
         assertNotNullOrUndefined(user.platformId, 'platformId')
 
@@ -95,6 +95,9 @@ export const userService = (log: FastifyBaseLogger) => ({
         }
 
         const platform = await platformService(log).getOneOrThrow(user.platformId)
+        if (!isNil(actorId)) {
+            assertActorCanUpdate({ actorId, ownerId: platform.ownerId, user, platformRole, status })
+        }
         if (platform.ownerId === user.id && status === UserStatus.INACTIVE) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -350,6 +353,26 @@ async function assertNotPlatformOwner({ id, platformId, log }: DeleteParams & { 
     }
 }
 
+function assertActorCanUpdate({ actorId, ownerId, user, platformRole, status }: AssertActorCanUpdateParams): void {
+    if (user.id === ownerId && actorId !== ownerId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'Only the platform owner can update the platform owner',
+            },
+        })
+    }
+    const changesOwnRole = !isNil(platformRole) && platformRole !== user.platformRole
+    if (user.id === actorId && (changesOwnRole || status === UserStatus.INACTIVE)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'Users cannot change their own platform role or deactivate themselves',
+            },
+        })
+    }
+}
+
 async function deleteIdentityIfOrphaned({ identityId, entityManager }: { identityId: string, entityManager: EntityManager }): Promise<void> {
     const identityStillReferenced = await userRepo(entityManager).existsBy({ identityId })
     if (!identityStillReferenced) {
@@ -409,6 +432,15 @@ type UpdateParams = {
     platformId: PlatformId
     platformRole?: PlatformRole
     externalId?: string
+    actorId?: string
+}
+
+type AssertActorCanUpdateParams = {
+    actorId: string
+    ownerId: string
+    user: User
+    platformRole?: PlatformRole
+    status?: UserStatus
 }
 
 type CreateParams = {
