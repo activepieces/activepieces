@@ -97,10 +97,11 @@ export class AutomationsPage extends BasePage {
     return { file: { name: download.suggestedFilename(), mimeType: 'application/json', buffer }, template };
   }
 
-  async importFlow(file: FlowFile): Promise<string> {
+  async importFlow({ file, onCreated }: { file: FlowFile; onCreated: (flowId: string) => void }): Promise<string> {
     const created = this.page.waitForResponse(isFlowCreate);
     await this.submitImport(file);
     const flowId = await createdFlowId(created);
+    onCreated(flowId);
     await this.page.waitForURL(new RegExp(`/flows/${flowId}`));
     return flowId;
   }
