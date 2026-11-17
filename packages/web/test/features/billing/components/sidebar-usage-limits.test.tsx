@@ -1,3 +1,4 @@
+import { CreditsSeverity } from '@/lib/statuses';
 /**
  * @vitest-environment jsdom
  */
@@ -33,7 +34,6 @@ const state = vi.hoisted<TestState>(() => ({
   credits: null,
   selfServeTrial: undefined,
   isPlatformAdmin: false,
-  shouldOfferTrial: false,
 }));
 
 vi.mock('@/features/projects', () => ({
@@ -78,10 +78,6 @@ vi.mock('@/features/billing/hooks/billing-hooks', () => ({
   billingQueries: { usePlatformSubscription: () => ({ data: undefined }) },
 }));
 
-vi.mock('@/features/billing/hooks/self-serve-trial-hooks', () => ({
-  selfServeTrialHooks: { useShouldOfferTrial: () => state.shouldOfferTrial },
-}));
-
 vi.mock('@/features/billing/components/credits-action-button', () => ({
   CreditsActionButton: () => null,
 }));
@@ -98,7 +94,7 @@ function renderSidebar() {
   return render(
     <MemoryRouter>
       <SidebarUsageLimits />
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
@@ -115,7 +111,7 @@ function unlimitedCredits({
     creditsRemaining: null,
     isUnlimited: true,
     percentUsed: 0,
-    severity: 'default',
+    severity: CreditsSeverity.DEFAULT,
   };
 }
 
@@ -137,9 +133,7 @@ beforeEach(() => {
   state.credits = unlimitedCredits({ isPlatformAdmin: false });
   state.selfServeTrial = undefined;
   state.isPlatformAdmin = false;
-  state.shouldOfferTrial = false;
   billingDialogHooks.useTrialSeatDialogStore.setState({ isOpen: false });
-  billingDialogHooks.useSelfServeTrialDialogStore.setState({ payload: null });
 });
 
 afterEach(() => {
@@ -156,8 +150,8 @@ describe('sidebar usage card during the seat grace', () => {
     expect(screen.getByText('· 3 days left')).toBeTruthy();
     expect(
       screen.getByText(
-        "Your Enterprise trial has ended. Users added during it beyond the plan's 5 seats lose access on Oct 26 unless an admin upgrades.",
-      ),
+        "Your Enterprise trial has ended. Users added during it beyond the plan's 5 seats lose access on Oct 26 unless an admin upgrades."
+      )
     ).toBeTruthy();
     expect(screen.queryByRole('button')).toBeNull();
   });
@@ -171,21 +165,21 @@ describe('sidebar usage card during the seat grace', () => {
 
     expect(
       screen.getByText(
-        "Users and invitations added during the trial beyond the plan's 5 seats will be removed on Oct 26. Manage seats, or upgrade to keep them.",
-      ),
+        "Users and invitations added during the trial beyond the plan's 5 seats will be removed on Oct 26. Manage seats, or upgrade to keep them."
+      )
     ).toBeTruthy();
     const line = screen.getByRole('button', {
       name: /Enterprise trial ended/,
     });
     expect(line.getAttribute('data-ap-control')).toBe('trial.seats.open');
     expect(billingDialogHooks.useTrialSeatDialogStore.getState().isOpen).toBe(
-      false,
+      false
     );
 
     fireEvent.click(line);
 
     expect(billingDialogHooks.useTrialSeatDialogStore.getState().isOpen).toBe(
-      true,
+      true
     );
   });
 
@@ -232,58 +226,6 @@ describe('sidebar usage card during the seat grace', () => {
   });
 });
 
-describe('sidebar usage card before the trial', () => {
-  it('gives an admin who can start the trial a button that opens it', () => {
-    state.shouldOfferTrial = true;
-
-    const view = renderSidebar();
-
-    const line = screen.getByRole('button', { name: 'Start your free trial' });
-    expect(view.container.innerHTML).toMatch(/^<button/);
-    expect(line.getAttribute('data-ap-control')).toBe('trial.start.open');
-    expect(
-      screen.getByText('Try the Enterprise plan free for 7 days'),
-    ).toBeTruthy();
-
-    fireEvent.click(line);
-
-    expect(
-      billingDialogHooks.useSelfServeTrialDialogStore.getState().payload,
-    ).toEqual({});
-  });
-
-  it('sits above the credits when the plan has credits', () => {
-    state.credits = {
-      ...unlimitedCredits({ isPlatformAdmin: true }),
-      creditsRemaining: 1000,
-      isUnlimited: false,
-    };
-    state.shouldOfferTrial = true;
-
-    renderSidebar();
-
-    const rows = screen.getAllByText(/^(Start your free trial|credits)$/);
-    expect(rows.map((row) => row.textContent)).toEqual([
-      'Start your free trial',
-      'credits',
-    ]);
-  });
-
-  it('gives way to the running trial line', () => {
-    state.shouldOfferTrial = true;
-    state.selfServeTrial = {
-      ...graceEndingIn(3),
-      state: SelfServeTrialState.ACTIVE,
-      endsAt: dayjs(NOW).add(5, 'day').toISOString(),
-    };
-
-    renderSidebar();
-
-    expect(screen.getByText('Enterprise trial')).toBeTruthy();
-    expect(screen.queryByText('Start your free trial')).toBeNull();
-  });
-});
-
 type CreditsState = {
   platformId: string;
   usage: { creditsNextResetAt: string | null };
@@ -292,12 +234,11 @@ type CreditsState = {
   creditsRemaining: number | null;
   isUnlimited: boolean;
   percentUsed: number;
-  severity: 'default' | 'warning' | 'error';
+  severity: CreditsSeverity;
 };
 
 type TestState = {
   credits: CreditsState | null;
   selfServeTrial: SelfServeTrialInfo | undefined;
   isPlatformAdmin: boolean;
-  shouldOfferTrial: boolean;
 };

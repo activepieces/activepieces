@@ -242,5 +242,29 @@ describe('Enterprise Local Authn API', () => {
             const userIdentity = await db.findOneBy('user_identity', { id: mockUserIdentity.id })
             expect(userIdentity?.password).toBe(mockUserIdentity.password)
         })
+
+        it('Fails if the new password is shorter than 8 characters', async () => {
+            const { mockUserIdentity } = await mockBasicUser({})
+            const { otp: mockOtp, code: mockCode } = await createMockOtpWithCode({
+                identityId: mockUserIdentity.id,
+                type: OtpType.PASSWORD_RESET,
+                state: OtpState.PENDING,
+            })
+            await db.save('otp', mockOtp)
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authn/local/reset-password',
+                body: {
+                    identityId: mockUserIdentity.id,
+                    otp: mockCode,
+                    newPassword: 'short',
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            const userIdentity = await db.findOneBy('user_identity', { id: mockUserIdentity.id })
+            expect(userIdentity?.password).toBe(mockUserIdentity.password)
+        })
     })
 })
