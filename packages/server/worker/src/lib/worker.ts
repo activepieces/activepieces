@@ -2,7 +2,7 @@ import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, cacheUtils, CODE_CACHE_FIRST_SWEEP_DELAY_MS, CODE_CACHE_SWEEP_INTERVAL_MS, codeCacheEviction, createResolver, createSandboxRuntime, markDevPiecesRebuilt, Runtime } from '@activepieces/sandbox'
-import { aiCostReporter, aiObservability, createLogger, modelCatalog, modelTierCatalog, systemUsage, wideEvent } from '@activepieces/server-utils'
+import { aiCostReporter, aiObservability, modelCatalog, modelTierCatalog, systemUsage, wideEvent } from '@activepieces/server-utils'
 import { ApEdition, ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, LONG_RUNNING_RPC_METHODS, SandboxInformation, WebsocketClientEvent, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
@@ -349,7 +349,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
     // Chat jobs reuse `runId` as the per-message chat run id (NOT a flow run);
     // map it to the `run`/`conversation` groups so chat logs correlate correctly.
     const isAgentJob = jobData.jobType === WorkerJobType.EXECUTE_AGENT_RUN
-    const jobLogger = createLogger({
+    const fields = {
         event: 'job.execute',
         job: { id: job.jobId, type: jobData.jobType },
         ...spreadIfDefined('requestId', 'requestId' in jobData ? jobData.requestId : 'httpRequestId' in jobData ? jobData.httpRequestId : undefined),
@@ -361,9 +361,9 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
         ...spreadIfDefined('conversation', 'conversationId' in jobData ? { id: jobData.conversationId } : undefined),
         ...spreadIfDefined('flowVersion', 'flowVersionId' in jobData ? { id: jobData.flowVersionId } : undefined),
         ...spreadIfDefined('waitpoint', 'parentWaitpointId' in jobData && jobData.parentWaitpointId != null ? { id: jobData.parentWaitpointId } : undefined),
-    })
-    return wideEvent.run({
-        logger: jobLogger,
+    }
+    return wideEvent.runJob({
+        fields,
         fn: async () => {
             const log = logger.child({ job: { id: job.jobId, type: jobData.jobType } })
             const apiUrl = getApiUrl()
@@ -390,23 +390,11 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
                 publicApiUrl,
                 log,
             }
-            try {
-                const handler = await getHandler(jobData.jobType)
-                log.debug({ handlerType: handler.jobType }, 'Executing job with handler')
-                const { data: result, error } = await tryCatch(() => handler.execute(ctx, jobData))
-                if (error) {
-                    log.error({ error }, 'Job execution failed')
-                    wideEvent.error(error)
-                    wideEvent.set({ outcome: 'failed' })
-                    throw error
-                }
-                log.debug('Job completed')
-                wideEvent.set({ outcome: 'success' })
-                return result
-            }
-            finally {
-                jobLogger.emit()
-            }
+            const handler = await getHandler(jobData.jobType)
+            log.debug({ handlerType: handler.jobType }, 'Executing job with handler')
+            const result = await handler.execute(ctx, jobData)
+            log.debug('Job completed')
+            return result
         },
     })
 }

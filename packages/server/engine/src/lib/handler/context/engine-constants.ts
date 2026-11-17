@@ -79,7 +79,7 @@ export class EngineConstants {
         return EngineConstants.TEST_MODE
     }
 
-    public get isTestFlow(): boolean {
+    public get isStreamingToBuilder(): boolean {
         return this.streamStepProgress === StreamStepProgress.WEBSOCKET
     }
 

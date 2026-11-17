@@ -10,4 +10,7 @@ export type AIProviderStrategy<T extends AIProviderAuthConfig, C extends AIProvi
     listModels(authConfig: T, config: C): Promise<AIProviderModel[]>
     suggestModels?(authConfig: T, config: C): Promise<string[]>
     validateConnection(authConfig: T, config: C, log: FastifyBaseLogger): Promise<void>
+    syncModels?(params: { authConfig: T, config: C, mode: ModelSyncMode }): Promise<C>
 }
+
+export type ModelSyncMode = 'save' | 'refresh'
