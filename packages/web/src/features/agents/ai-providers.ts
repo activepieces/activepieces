@@ -226,6 +226,17 @@ This connects to Z.ai's international endpoint. A key from bigmodel.cn will not 
 `),
   },
   {
+    provider: AIProviderName.LITELLM,
+    name: 'LiteLLM',
+    logoUrl: 'https://cdn.activepieces.com/pieces/litellm.png',
+    markdown: () =>
+      t(`Connect your LiteLLM proxy:
+1. Set the base url to your proxy url, e.g. https://litellm.example.com.
+2. Paste a LiteLLM virtual key or the master key as it is, without a 'Bearer ' prefix.
+3. Keep the api key header as 'Authorization', or set it to the header your proxy reads (e.g. 'x-litellm-api-key').
+4. Models load from your proxy when you save. Add a model by hand if your proxy routes it through a wildcard like 'openai/*'.`),
+  },
+  {
     provider: AIProviderName.CUSTOM,
     name: 'Other (OpenAI Compatible)',
     logoUrl: 'https://cdn.activepieces.com/pieces/new-core/text-ai.svg',
