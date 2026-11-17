@@ -205,7 +205,7 @@ async function reportFlowStatus({ ctx, data, status, internalError, failedStep }
         ...spreadIfDefined('httpRequestId', data.httpRequestId),
     })
 
-    if (status === FlowRunStatus.INTERNAL_ERROR && isDedicatedWorker()) {
+    if (status === FlowRunStatus.INTERNAL_ERROR && !willRetry && isDedicatedWorker()) {
         onCallService(ctx.log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
             code: ErrorCode.ENGINE_OPERATION_FAILURE,
             message: `Flow run ${data.runId} ended with INTERNAL_ERROR`,

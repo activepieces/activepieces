@@ -5,9 +5,30 @@ import type { ExecuteFlowJobData, FlowVersion } from '@activepieces/shared'
 
 vi.mock('../../../../src/lib/config/worker-settings', () => ({
     workerSettings: {
-        getSettings: vi.fn().mockReturnValue({ FLOW_TIMEOUT_SECONDS: 600 }),
+        getSettings: vi.fn().mockReturnValue({ FLOW_TIMEOUT_SECONDS: 600, PAGE_ONCALL_WEBHOOK: 'http://oncall.test' }),
     },
 }))
+
+const { pageMock, workerGroupId } = vi.hoisted(() => ({
+    pageMock: vi.fn().mockResolvedValue(undefined),
+    workerGroupId: { value: undefined as string | undefined },
+}))
+
+vi.mock('@activepieces/server-utils', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@activepieces/server-utils')>()),
+    onCallService: () => ({ page: pageMock }),
+}))
+
+vi.mock('../../../../src/lib/config/configs', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../../../src/lib/config/configs')>()
+    return {
+        ...actual,
+        system: {
+            ...actual.system,
+            get: (prop: string) => prop === actual.WorkerSystemProp.WORKER_GROUP_ID ? workerGroupId.value : actual.system.get(prop as never),
+        },
+    }
+})
 
 import { executeFlowJob } from '../../../../src/lib/execute/jobs/execute-flow'
 import { JobResultKind } from '../../../../src/lib/execute/types'
@@ -336,6 +357,31 @@ describe('executeFlowJob', () => {
             expect(reported.status).toBe(FlowRunStatus.TIMEOUT)
             expect(reported).not.toHaveProperty('workerHandlerId')
             expect(reported).not.toHaveProperty('httpRequestId')
+        })
+    })
+
+    describe('on-call page on a dedicated worker', () => {
+        beforeEach(() => {
+            workerGroupId.value = 'group-1'
+        })
+
+        it('does not page when the INTERNAL_ERROR attempt will be retried', async () => {
+            const ctx = { ...makeMockContext(), lastAttempt: false }
+            ctx.runtime.execute = vi.fn().mockResolvedValue({ status: EngineResponseStatus.INTERNAL_ERROR, error: 'boom', timings: {} })
+
+            await executeFlowJob.execute(ctx, makeResumeJobData())
+
+            expect(ctx.apiClient.uploadRunLog).toHaveBeenCalledWith(expect.objectContaining({ status: FlowRunStatus.INTERNAL_ERROR, willRetry: true }))
+            expect(pageMock).not.toHaveBeenCalled()
+        })
+
+        it('pages when the last attempt ends with INTERNAL_ERROR', async () => {
+            const ctx = { ...makeMockContext(), lastAttempt: true }
+            ctx.runtime.execute = vi.fn().mockResolvedValue({ status: EngineResponseStatus.INTERNAL_ERROR, error: 'boom', timings: {} })
+
+            await executeFlowJob.execute(ctx, makeResumeJobData())
+
+            expect(pageMock).toHaveBeenCalledWith(expect.objectContaining({ params: expect.objectContaining({ runId: 'run-1', willRetry: false }) }))
         })
     })
 })
