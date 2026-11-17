@@ -8,6 +8,7 @@ import { createPortal } from 'react-dom';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { ToolCallMeta } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { cn } from '@/lib/utils';
 
 import { TaskRow } from '../lib/message-blocks';
@@ -52,9 +53,9 @@ export function SubagentGroup({
   return (
     <motion.div
       className="my-2 overflow-hidden rounded-xl border bg-panel"
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       <div className="px-4 pt-3 pb-1 text-xs text-gray-11">
         {working
@@ -106,7 +107,7 @@ function SubagentRow({
       <button
         type="button"
         className={cn(
-          'flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-gray-3',
+          'flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3',
           selected && 'bg-gray-3',
         )}
         onClick={onOpen}

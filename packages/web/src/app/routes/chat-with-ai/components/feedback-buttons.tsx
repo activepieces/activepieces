@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 import { MessageAction } from '@/components/prompt-kit/message';
 import { chatApi } from '@/features/chat/lib/chat-api';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { cn } from '@/lib/utils';
 
 import { FeedbackDialog } from './feedback-dialog';
@@ -13,7 +14,7 @@ import { FeedbackDialog } from './feedback-dialog';
 type Rating = 'up' | 'down';
 
 const BUTTON_CLASS =
-  'flex h-6 w-6 items-center justify-center rounded-md text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-8';
+  'flex h-6 w-6 items-center justify-center rounded-md text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 hover:text-gray-12 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-8';
 const ACTIVE_CLASS = 'text-gray-12/80 hover:text-gray-12/80';
 
 export function FeedbackButtons({
@@ -59,13 +60,13 @@ export function FeedbackButtons({
           aria-label={label}
           aria-pressed={active}
           onClick={() => submit(value)}
-          whileTap={{ scale: 0.8 }}
+          whileTap={{ scale: 0.95 }}
           className={cn(BUTTON_CLASS, active && ACTIVE_CLASS)}
         >
           <motion.span
             initial={false}
-            animate={active ? { scale: [1, 1.35, 1] } : { scale: 1 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
+            animate={active ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+            transition={{ duration: MOTION.move, ease: MOTION.easeOut }}
           >
             <Icon className={cn('h-3.5 w-3.5', active && 'fill-current')} />
           </motion.span>
