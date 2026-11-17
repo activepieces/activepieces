@@ -44,8 +44,17 @@ Many people and agents write specs at the same time, so a feature adds new files
   });
   ```
 
-  `createVariable` stands for the feature's own seed call, in the same file. Make the call with `e2eApi.callApi({ request, session, method, path, data })`, which sends the session token and fails on any status that is not 2xx; do not write a fetch helper of your own. A spec that needs the fixtures of two features joins them with `mergeTests(variablesTest, connectionsTest)` from `@playwright/test`.
+  `createVariable` stands for the feature's own seed call, in the same file. Make the call with `e2eApi.callApi({ request, session, method, path, data })`, which sends the session token and fails on any status that is not 2xx; do not write a fetch helper of your own. Every fixture file exports its own `test`, so a spec that needs the fixtures of two features imports both under new names and joins them:
+
+  ```ts
+  import { mergeTests } from '@playwright/test';
+  import { test as connectionsTest } from '../../fixtures/connections';
+  import { test as variablesTest } from '../../fixtures/variables';
+
+  const test = mergeTests(variablesTest, connectionsTest);
+  ```
 - A feature PR never edits `fixtures/index.ts`, `fixtures/api.ts` or another feature's page object. There is one exception: when a second feature needs a helper that the first feature wrote, a separate PR moves the helper into `fixtures/api.ts` first, and the second feature PR builds on it.
+- The page objects of the shared pages (`base.ts`, `builder.page.ts`, `automations.page.ts`, `runs.page.ts`) belong to no feature, and a feature PR does not edit them either. A feature puts the methods it needs in its own page object, which can create a shared one: `new BuilderPage(page)`. When a second feature needs the same method, a separate PR moves it into the shared page object first.
 
 Tag every test of the feature with `@feature:<slug>`, so a query can list which features have a passing spec: `test.describe('Variables', { tag: '@feature:variables' }, () => { … })`.
 
@@ -83,7 +92,8 @@ Project roles, a second project and the mail catcher exist only in EE. A test th
 
 - Run the spec. Show it fail without your change (or against the bug), then pass with it. Put both results in the PR.
 - When a spec fails, find the cause first: the app, the spec, or the environment. Never loosen a locator, remove an assertion, or change an expected value to match what the screen shows now.
-- A spec is done when `npx playwright test <spec> --repeat-each=3` passes locally, and the PR shows one red run against the broken feature.
+- A spec is done when `npx playwright test <spec> --repeat-each=3` passes locally. Without a local stack, the E2E matrix of the PR counts instead: the spec passes on the first attempt in every config. CI retries a failed spec, so read the attempts in `results.json` of the `e2e-matrix-*` artifacts, not the green check.
+- The PR also links one red run. On a scratch branch, break what the spec checks, in the app or in a fake answer of the spec, and push it. Link the failed run, then delete the branch.
 - Never skip a spec with `test.skip` or `test.fixme` to get a green run. A flaky spec follows [Flaky specs](#flaky-specs).
 - `npx turbo run lint --filter=tests-e2e` checks specs, page objects and fixtures with `eslint-plugin-playwright`.
 
