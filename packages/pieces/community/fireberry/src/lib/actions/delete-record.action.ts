@@ -1,8 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { fireberryAuth } from '../auth';
-import { objectTypeDropdown } from '../common/props';
-import { FireberryClient } from '../common/client';
+import { objectTypeDropdown, fireberryProps } from '../common/props';
+import { FireberryClient, fireberryUtils } from '../common/client';
+import { fireberryOutputSchemas } from '../common/output-schemas';
 
 const recordsToDeleteDropdown = Property.MultiSelectDropdown({
   auth: fireberryAuth,
@@ -10,66 +10,10 @@ const recordsToDeleteDropdown = Property.MultiSelectDropdown({
   required: true,
   refreshers: ['objectType'],
   options: async ({ auth, objectType }) => {
-    if (!auth || !objectType) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Select object type first',
-      };
+    if (!auth) {
+      return { disabled: true, options: [], placeholder: 'Connect your Fireberry account' };
     }
-
-    try {
-      const objectTypeStr = typeof objectType === 'string' ? objectType : (objectType as { value: string })?.value;
-      const client = new FireberryClient(auth);
-      
-      const response = await client.request<{ 
-        success: boolean; 
-        data: { 
-          Records: Array<Record<string, any>>;
-          PrimaryField: string;
-          PrimaryKey: string;
-          Total_Records: number;
-        } 
-      }>({
-        method: HttpMethod.GET,
-        resourceUri: `/api/record/${objectTypeStr}?$top=100`,
-      });
-      
-      if (!response.data?.Records || !Array.isArray(response.data.Records)) {
-        return {
-          disabled: false,
-          options: [],
-          placeholder: response.data?.Total_Records === 0 ? 'No records found' : 'Error loading records',
-        };
-      }
-      
-      const primaryField = response.data.PrimaryField;
-      const primaryKey = response.data.PrimaryKey;
-      
-      const options = response.data.Records.map((record: any) => {
-        const displayName = record[primaryField] || 
-                           record.name || record.title || record.subject || 
-                           record.firstname || record.lastname || record.email ||
-                           record.accountname || record.contactname ||
-                           `Record ${record[primaryKey]?.substring(0, 8) || 'Unknown'}`;
-        
-        return {
-          label: displayName,
-          value: record[primaryKey],
-        };
-      });
-      
-      return {
-        disabled: false,
-        options: options.slice(0, 100),
-      };
-    } catch (error) {
-      return {
-        disabled: false,
-        options: [],
-        placeholder: 'Error loading records',
-      };
-    }
+    return fireberryProps.recordOptions({ token: auth.secret_text, objectType, top: 100 });
   },
 });
 
@@ -78,9 +22,9 @@ export const deleteRecordAction = createAction({
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Records',
   description: 'Delete records from Fireberry.',
-  audience: 'both',
-  aiMetadata: { description: 'Permanently deletes one or more Fireberry records (max 20 per call) of a given object type, selected by their record IDs; requires the confirmation flag to be set. Use when removing known records. Not idempotent and irreversible: a repeat call on already-deleted IDs has no further effect but the deletion itself cannot be undone.', idempotent: false },
+  audience: 'human',
   auth: fireberryAuth,
+  outputSchema: fireberryOutputSchemas['deleteRecords'],
   props: {
     objectType: objectTypeDropdown,
     recordIds: recordsToDeleteDropdown,
@@ -91,29 +35,28 @@ export const deleteRecordAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = new FireberryClient(auth);
+    const client = new FireberryClient(auth.secret_text);
     const { objectType, recordIds, confirmDeletion } = propsValue;
-    
     if (!confirmDeletion) {
       throw new Error('You must confirm deletion by checking the confirmation box');
     }
-    
-    if (!recordIds || !Array.isArray(recordIds) || recordIds.length === 0) {
+    if (!Array.isArray(recordIds) || recordIds.length === 0) {
       throw new Error('At least one record must be selected for deletion');
     }
-    
     if (recordIds.length > 20) {
       throw new Error('Maximum 20 records can be deleted at once');
     }
-    
-    const result = await client.batchDelete(objectType as string, recordIds);
-    
-    return {
-      success: true,
-      deletedCount: recordIds.length,
-      recordIds: recordIds,
-      message: `Successfully deleted ${recordIds.length} record(s)`,
-      apiResponse: result,
-    };
+    const ids = recordIds.map((id) => String(id));
+    const deletedIds: string[] = [];
+    for (const recordId of ids) {
+      try {
+        await client.deleteRecord({ objectSystemName: objectType, recordId });
+      } catch (error) {
+        const done = deletedIds.length > 0 ? ` Already deleted: ${deletedIds.join(', ')}.` : '';
+        throw new Error(`Failed to delete record ${recordId}: ${fireberryUtils.errorMessage(error)}.${done}`);
+      }
+      deletedIds.push(recordId);
+    }
+    return { deletedIds, deletedCount: deletedIds.length };
   },
-}); 
+});

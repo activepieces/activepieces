@@ -195,7 +195,8 @@ function buildPolling({
           mimeTypes: propsValue.file_types,
           excludeShortcuts: true,
           includeTeamDrive: propsValue.include_team_drives,
-          maxPages: isTestMode ? 1 : undefined,
+          maxPages: isTestMode ? common.testSampleMaxPages : undefined,
+          accept: isTestMode ? isSampleCandidate : undefined,
           deadline: listingDeadline,
         },
         'modifiedTime desc'
@@ -249,6 +250,13 @@ function changedAtEpoch(file: DriveFile): number {
 function isDeliverable({ file, now }: { file: DriveFile; now: number }): boolean {
   const changedAt = changedAtEpoch(file);
   return changedAt > 0 && changedAt <= now;
+}
+
+function isSampleCandidate(file: unknown): boolean {
+  return (
+    driveFileContent.isDriveFile(file) &&
+    isDeliverable({ file, now: Date.now() })
+  );
 }
 
 function resolveChangeType({

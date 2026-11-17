@@ -15,6 +15,7 @@ const SHARED_DRIVES_PAGE_SIZE = 100;
 const SHARED_DRIVE_LIST_CONCURRENCY = 5;
 const LIST_CALL_TIMEOUT_MS = 10_000;
 const LISTING_BUDGET_MS = 25_000;
+const TEST_SAMPLE_MAX_PAGES = 10;
 const LISTING_TIMED_OUT =
   'Google Drive took too long to list files. Nothing was skipped; the next check will try again.';
 const ACTION_LISTING_BUDGET_MS = 120_000;
@@ -125,6 +126,7 @@ async function listPages({
   wording,
   stopAt,
   startToken,
+  accept,
 }: {
   drive: drive_v3.Drive;
   params: drive_v3.Params$Resource$Files$List;
@@ -133,12 +135,17 @@ async function listPages({
   wording: ListingWording;
   stopAt: ListingStop | undefined;
   startToken?: string;
+  accept?: FileAccept;
 }): Promise<PageListing> {
   const files: drive_v3.Schema$File[] = [];
   let pageToken: string | undefined = startToken;
   let pagesFetched = 0;
   let closingKey: number | undefined = undefined;
   do {
+    const sampling = accept !== undefined && pagesFetched > 0;
+    if (sampling && Date.now() >= deadline) {
+      break;
+    }
     const canStop = stopAt !== undefined && pagesFetched > 0;
     if (canStop) {
       const lastKey = lastReadKey({
@@ -165,12 +172,15 @@ async function listPages({
     }).then(
       (response) => response.data,
       (error: unknown) => {
-        if (canStop && Date.now() >= deadline) {
+        if ((canStop || sampling) && Date.now() >= deadline) {
           return undefined;
         }
         throw error;
       }
     );
+    if (page === undefined && sampling) {
+      break;
+    }
     if (page === undefined) {
       return { files, incomplete: false, truncated: true, nextPageToken: pageToken };
     }
@@ -180,6 +190,7 @@ async function listPages({
     files.push(...(page.files ?? []));
     pageToken = page.nextPageToken ?? undefined;
     pagesFetched += 1;
+    if (accept && files.some(accept)) break;
     if (maxPages && pagesFetched >= maxPages) break;
   } while (pageToken);
   return { files, incomplete: false, truncated: false };
@@ -244,6 +255,7 @@ async function listCompleteCorpus({
   deadline,
   wording,
   stopAt,
+  accept,
 }: {
   drive: drive_v3.Drive;
   params: drive_v3.Params$Resource$Files$List;
@@ -251,6 +263,7 @@ async function listCompleteCorpus({
   deadline: number;
   wording: ListingWording;
   stopAt: ListingStop | undefined;
+  accept: FileAccept | undefined;
 }): Promise<PageListing> {
   const result = await listPages({
     drive,
@@ -259,6 +272,7 @@ async function listCompleteCorpus({
     deadline,
     wording,
     stopAt,
+    accept,
   });
   if (result.incomplete) {
     throw incompleteSearchError({ params, wording });
@@ -299,6 +313,7 @@ async function listSharedDrivesFiles({
   wording,
   stopAt,
   driveIds,
+  accept,
 }: {
   drive: drive_v3.Drive;
   params: drive_v3.Params$Resource$Files$List;
@@ -307,6 +322,7 @@ async function listSharedDrivesFiles({
   wording: ListingWording;
   stopAt: ListingStop | undefined;
   driveIds: string[];
+  accept: FileAccept | undefined;
 }): Promise<PageListing[]> {
   const listings: PageListing[] = [];
   for (
@@ -330,6 +346,7 @@ async function listSharedDrivesFiles({
           deadline,
           wording,
           stopAt,
+          accept,
         })
       )
     );
@@ -426,12 +443,14 @@ async function listPassEntry({
   maxPages,
   deadline,
   stopAt,
+  accept,
 }: {
   drive: drive_v3.Drive;
   entry: PassEntry;
   maxPages: number | undefined;
   deadline: number;
   stopAt: ListingStop | undefined;
+  accept: FileAccept | undefined;
 }): Promise<PassOutcome> {
   if (Date.now() >= deadline) {
     return { entry, listing: undefined };
@@ -445,6 +464,7 @@ async function listPassEntry({
       wording: 'poll',
       stopAt,
       startToken: entry.pageToken,
+      accept,
     })
   );
   if (error !== null) {
@@ -501,6 +521,7 @@ async function runDrivePass({
   deadline,
   stopAt,
   orderBy,
+  accept,
 }: {
   drive: drive_v3.Drive;
   entries: PassEntry[];
@@ -510,11 +531,13 @@ async function runDrivePass({
   deadline: number;
   stopAt: ListingStop | undefined;
   orderBy: string;
+  accept: FileAccept | undefined;
 }): Promise<DriveListing> {
   const outcomes = await drivePool.mapInPool({
     items: entries,
     concurrency: SHARED_DRIVE_LIST_CONCURRENCY,
-    map: (entry) => listPassEntry({ drive, entry, maxPages, deadline, stopAt }),
+    map: (entry) =>
+      listPassEntry({ drive, entry, maxPages, deadline, stopAt, accept }),
   });
   const listings = outcomes.flatMap((outcome) =>
     outcome.listing === undefined ? [] : [outcome.listing]
@@ -562,6 +585,7 @@ async function listFilesAcrossCorpora({
   wording = 'poll',
   stopAt,
   resume,
+  accept,
 }: {
   drive: drive_v3.Drive;
   params: drive_v3.Params$Resource$Files$List;
@@ -570,6 +594,7 @@ async function listFilesAcrossCorpora({
   wording?: ListingWording;
   stopAt?: ListingStop;
   resume?: ListingPosition;
+  accept?: FileAccept;
 }): Promise<DriveListing> {
   const listingDeadline = deadline ?? Date.now() + LISTING_BUDGET_MS;
   if (resume && 'pending' in resume) {
@@ -582,6 +607,7 @@ async function listFilesAcrossCorpora({
       deadline: listingDeadline,
       stopAt,
       orderBy: params.orderBy ?? 'createdTime desc',
+      accept,
     });
   }
   if (resume) {
@@ -605,6 +631,7 @@ async function listFilesAcrossCorpora({
     deadline: listingDeadline,
     wording,
     stopAt,
+    accept,
   });
   if (!primary.incomplete) {
     return withPosition({
@@ -643,6 +670,7 @@ async function listFilesAcrossCorpora({
       deadline: listingDeadline,
       stopAt,
       orderBy: params.orderBy ?? 'createdTime desc',
+      accept,
     });
   }
 
@@ -653,6 +681,7 @@ async function listFilesAcrossCorpora({
     deadline: listingDeadline,
     wording,
     stopAt,
+    accept,
   });
   const driveIds = await listSharedDriveIds({
     drive,
@@ -667,6 +696,7 @@ async function listFilesAcrossCorpora({
     wording,
     stopAt,
     driveIds,
+    accept,
   });
   return mergeListings({
     listings: [userListing, ...sharedListings],
@@ -701,6 +731,10 @@ function parentFolderDropdown({
   });
 }
 
+function hasId(file: drive_v3.Schema$File): boolean {
+  return Boolean(file.id);
+}
+
 export const common = {
   properties: {
     parentFolder: parentFolderDropdown({
@@ -717,6 +751,8 @@ export const common = {
   },
 
   listingBudgetMs: LISTING_BUDGET_MS,
+  testSampleMaxPages: TEST_SAMPLE_MAX_PAGES,
+  hasId,
   actionListingBudgetMs: ACTION_LISTING_BUDGET_MS,
   watchFolderHint: WATCH_FOLDER_HINT,
   parentFolderDropdown,
@@ -741,6 +777,7 @@ export const common = {
       deadline?: number;
       stopAt?: ListingStop;
       resume?: ListingPosition;
+      accept?: FileAccept;
     },
     order?: string
   ): Promise<DriveListing> {
@@ -797,6 +834,7 @@ export const common = {
       deadline: search?.deadline,
       stopAt: search?.stopAt,
       resume: search?.resume,
+      accept: search?.accept,
     });
   },
 
@@ -811,6 +849,7 @@ export const common = {
       deadline?: number;
       stopAt?: ListingStop;
       resume?: ListingPosition;
+      accept?: FileAccept;
     },
     order?: string
   ): Promise<DriveListing> {
@@ -843,6 +882,7 @@ export const common = {
       deadline: search?.deadline,
       stopAt: search?.stopAt,
       resume: search?.resume,
+      accept: search?.accept,
     });
   },
 };
@@ -857,6 +897,8 @@ type PageListing = {
 };
 
 export type ListingStop = { maxFiles: number };
+
+export type FileAccept = (file: drive_v3.Schema$File) => boolean;
 
 export type ResumableParams = {
   q?: string;
