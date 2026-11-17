@@ -177,6 +177,7 @@ export function ProjectSettingsDialog({
           <Button
             disabled={!form.formState.isDirty}
             size="sm"
+            data-testid="project-settings-save"
             onClick={form.handleSubmit(handleSave)}
           >
             {t('Save Changes')}

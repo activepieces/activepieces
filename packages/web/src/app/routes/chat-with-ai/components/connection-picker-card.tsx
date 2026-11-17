@@ -122,7 +122,7 @@ function useLiveConnections({
         if (!effectiveProjectId) return [];
         const result = await appConnectionsApi.list({
           projectId: effectiveProjectId,
-          pieceName,
+          pieceName: [pieceName],
           limit: 100,
         });
         return result.data;

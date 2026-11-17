@@ -118,6 +118,23 @@ run id. The loop *rail* presentation reuses fine; the data path underneath it do
 
 ## Gotchas
 
+- **Any per-batch reason derived from `signals` must branch on `signalsTruncated` first.** Above 100 batches
+  the released summary drops `signals` entirely, so a `(output.signals ?? []).some(...)` probe silently
+  answers "no" for every batch. A childless `NOT_DISPATCHED` batch then reads as *never started* instead of
+  *failed to dispatch* — while the header, which is drawn from the counts and survives truncation, still folds
+  it into "failed". Header contradicting the rows is how this shows up. There is no read endpoint for signals,
+  so above the bound `batchUtils.missingLogsReason` reads the counts instead: with `notDispatched === 0` a
+  childless batch never started, otherwise it is `didNotRun`. Both mean nothing in the batch ran.
+
+- **Only the released summary tells a batch's fate; the paused output has no `signals` and no counts.** A
+  childless batch while the barrier waits is *not started yet*, never *never started*. The released shape is
+  the one with the counts, so their presence is the release check.
+
+- **`stillRunning` counts every `PENDING` signal at release, including unclaimed ones that will never run.**
+  `closeBarrier` builds the summary, marks the barrier `COMPLETED` and deletes the signals, so the dispatcher
+  claims nothing after it. A `PENDING` signal with `runId: null` never started and is safe to retry; only one
+  with a `runId` has a live child. Above 100 batches the two are indistinguishable in the summary.
+
 - **`startTime` is reported from the trigger path only, so any run entered at a step never had one.**
   Surfaced as "every barrier child has `startTime = NULL`" (verified against a live 10-batch run: `created` and
   `finishTime` set on all children, `startTime` on none, while ordinary runs in the same project all have it) —
@@ -218,10 +235,10 @@ run id. The loop *rail* presentation reuses fine; the data path underneath it do
   per-step batch, so two panels can never disagree about which batch is open.
 - **Changing the selected batch blanks every body step node until the child run loads.** Same hook, one step
   further: `useStepOutputInRun` returns `undefined` whenever `BatchLogs.kind === 'loading'`, and
-  `useBatchChildRun` refetches on every `setBatchIndex`. Both canvas readers (`step-node-status-in-run.tsx`,
+  `useFlowRun` refetches on every `setBatchIndex`. Both canvas readers (`step-node-status-in-run.tsx`,
   `step-node-run-duration-and-piece-name.tsx`) therefore de-paint together for the round-trip — a whole-canvas
   flash, not a local spinner. `setBatchIndex` has no callers yet, so nobody has seen it; the first one to wire
-  a picker will. `placeholderData: keepPreviousData` on `useBatchChildRun` holds the old batch's steps until
+  a picker will. `placeholderData: keepPreviousData` on `useFlowRun` holds the old batch's steps until
   the new ones land (precedent: `use-global-search-results.ts:84`). Do not confuse this with a batch that
   legitimately has no logs — `neverStarted`, `failedToDispatch`, `stillRunning`, `logsExpired` each have their
   own copy in `missingLogsCopy` (`batch-utils.ts`), and a blank canvas is the *correct* render for those.
@@ -247,7 +264,7 @@ run id. The loop *rail* presentation reuses fine; the data path underneath it do
   write back: the store keeping the stale 12 is what restores your place when you switch back, and a converging
   write-back is only knowable after the child loads, i.e. the `useEffect`-on-value-change `packages/web/CLAUDE.md`
   forbids. Note the symmetry — the mirror case, a batch *inside a loop* sharing one index across iterations,
-  is already read-clamped at `use-batch-logs.ts:36`.
+  is already read-clamped in `useBatchStepRun` (`use-step-output-in-run.ts`).
 - **The deadline is set at create, not at seal.** A barrier that got its deadline at seal was invisible to
   the sweep until sealed — safe only while the parent went PAUSED *after* the seal returned. The moment a
   dispatcher pauses the parent before its children exist (which is now the shipped shape), that accident ends:
@@ -276,8 +293,8 @@ run id. The loop *rail* presentation reuses fine; the data path underneath it do
   dodges it only by accident: it deletes the waitpoint, which makes the background dispatcher fail fast too.
 - **There is no `barrierService.listChildren`, and planning docs that price one in are wrong.** Enumerating a
   barrier's children is `GET /v1/flow-runs?parentWaitpointId=…` — `flow-run-controller.ts:31` →
-  `flow-run-service.ts:74`, riding the partial index above; web already wraps it as `useBatchChildrenPage` /
-  `useBatchChild` (`flow-run-hooks.ts`, 7s poll). `barrier-service.ts` exposes no children accessor at
+  `flow-run-service.ts:74`, riding the partial index above; web already wraps it as `useBatchChildren` /
+  `useBatchChildByIndex` (`flow-run-hooks.ts`, 7s poll). `barrier-service.ts` exposes no children accessor at
   all and does not need one, because the durable mapping lives on `flow_run`, not on the barrier. The trap is
   that `grep -r listChildren packages/` looks like it exists: the hits are a stale
   `packages/server/api/dist/**/fan-in-barrier.d.ts` from the pre-rename design and a same-named test helper
