@@ -12,7 +12,7 @@ import { BuilderPage } from '../../../pages/builder.page';
  * flows from executing.
  */
 test.describe('Piece isolation — CE', () => {
-  test('worker stays healthy after piece sync and can execute a webhook flow', async ({ page, request, session, cleanup }) => {
+  test('worker stays healthy after piece sync and can execute a webhook flow', async ({ page, request, session, seed }) => {
     test.setTimeout(120000);
 
     // Trigger a piece sync — this exercises the warmup path
@@ -20,7 +20,7 @@ test.describe('Piece isolation — CE', () => {
       headers: { Authorization: `Bearer ${session.token}` },
     });
 
-    const { webhookUrl } = await e2eFlows.publishWebhookEchoFlow({ page, cleanup });
+    const { webhookUrl } = await e2eFlows.publishWebhookEchoFlow({ seed });
     const value = randomInt(1, 1000000);
     await new BuilderPage(page).expectSyncWebhookResponse({
       url: `${webhookUrl}/sync?value=${value}`,

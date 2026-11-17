@@ -1,6 +1,6 @@
 import { test as base } from '@playwright/test';
 import type { APIRequestContext } from '@playwright/test';
-import { e2eApi, E2eResource, E2eSession } from './api';
+import { e2eApi, E2eResource, E2eSession, FlowTemplate, SeededConnection, SeededFlow } from './api';
 import { e2eMail, Mailbox } from './mail';
 
 export const test = base.extend<CustomFixtures>({
@@ -15,6 +15,26 @@ export const test = base.extend<CustomFixtures>({
     if (failures.length > 0) {
       throw new Error(`Cleanup could not delete ${failures.length} tracked record(s):\n${failures.join('\n')}`);
     }
+  },
+
+  seed: async ({ request, session, cleanup }, use) => {
+    await use({
+      flow: ({ template, publish, session: projectSession, connections }) => e2eApi.seedFlow({
+        request,
+        session: projectSession ?? session,
+        template,
+        publish,
+        connections: connections ?? {},
+        onCreated: (flowId) => cleanup.track({ resource: 'flows', id: flowId }),
+      }),
+      secretTextConnection: ({ pieceName, secret, session: projectSession }) => e2eApi.seedSecretTextConnection({
+        request,
+        session: projectSession ?? session,
+        pieceName,
+        secret,
+        onCreated: (connectionId) => cleanup.track({ resource: 'app-connections', id: connectionId }),
+      }),
+    });
   },
 
   mailbox: async ({ request }, use) => {
@@ -39,11 +59,16 @@ async function deleteTracked({ request, session, records }: { request: APIReques
 }
 
 export type Cleanup = { track: (record: TrackedRecord) => void };
+export type Seed = {
+  flow: (params: { template: FlowTemplate; publish: boolean; session?: E2eSession; connections?: Record<string, string> }) => Promise<SeededFlow>;
+  secretTextConnection: (params: { pieceName: string; secret: string; session?: E2eSession }) => Promise<SeededConnection>;
+};
 
 type TrackedRecord = { resource: E2eResource; id: string };
 
 type CustomFixtures = {
   session: E2eSession;
   cleanup: Cleanup;
+  seed: Seed;
   mailbox: Mailbox;
 };
