@@ -10,7 +10,6 @@ import {
 } from '@/lib/route-utils';
 
 import { NoProjectsState } from '../components/no-projects-state';
-import { ProjectDashboardLayout } from '../components/project-layout';
 
 export const DefaultRoute = () => {
   const token = authenticationSession.getToken();
@@ -40,11 +39,7 @@ const AuthenticatedDefaultRoute = () => {
     TRIAL_KEY_QUERY_PARAM,
   );
   if (isNil(currentProjectId)) {
-    return (
-      <ProjectDashboardLayout>
-        <NoProjectsState />
-      </ProjectDashboardLayout>
-    );
+    return <NoProjectsState />;
   }
   return (
     <Navigate

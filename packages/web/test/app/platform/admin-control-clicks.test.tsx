@@ -32,8 +32,10 @@ vi.mock('@/hooks/authorization-hooks', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useIsPlatformAdmin: () => true,
 }));
-vi.mock('@/app/components/platform-layout', () => ({
-  PlatformLayout: ({ children }: React.PropsWithChildren) => <>{children}</>,
+vi.mock('@/app/guards/platform-admin-guard', () => ({
+  PlatformAdminGuard: ({ children }: React.PropsWithChildren) => (
+    <>{children}</>
+  ),
 }));
 vi.mock('@/app/components/page-title', () => ({
   PageTitle: ({ children }: React.PropsWithChildren) => <>{children}</>,
