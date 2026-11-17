@@ -75,14 +75,22 @@ export const PresenceUpdatedEvent = z.object({
     users: z.array(PresenceUser),
 })
 
+export enum ResourceChangeOp {
+    CREATE = 'create',
+    UPDATE = 'update',
+    DELETE = 'delete',
+}
+
 export const FlowDraftUpdatedEvent = z.object({
     flowId: z.string(),
     editorSessionId: z.string().nullable(),
+    op: z.enum(ResourceChangeOp),
 })
 
 export const TableUpdatedEvent = z.object({
     tableId: z.string(),
     editorSessionId: z.string().nullable(),
+    op: z.enum(ResourceChangeOp),
 })
 
 export const EDITOR_SESSION_ID_HEADER = 'x-ap-editor-session-id'

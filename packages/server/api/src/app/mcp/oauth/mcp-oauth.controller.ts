@@ -8,6 +8,7 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { AgentConversationEntity } from '../../ee/agent/agent-conversation-entity'
 import { agentHelpers } from '../../ee/agent/agent-helpers'
 import { CONVERSATION_ID_HEADER } from '../../ee/agent/mcp/agent-mcp'
+import { editorSession } from '../../flows/flow/editor-session'
 import { domainHelper } from '../../helper/domain-helper'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { telemetry, telemetryDedupe } from '../../helper/telemetry.utils'
@@ -72,13 +73,16 @@ function registerMcpEndpoint(app: Parameters<FastifyPluginAsyncZod>[0], scope: M
         }
 
         const conversationId = req.headers[CONVERSATION_ID_HEADER] as string | undefined
-        const conversationProjectId = !isNil(conversationId)
-            ? await resolveConversationProjectId({ conversationId, identity, log: req.log })
-            : null
+        const conversation = isNil(conversationId) ? null : await findConversation({ conversationId, identity, log: req.log })
+        const conversationProjectId = isNil(conversation)
+            ? null
+            : await resolveConversationProjectId({ conversation, identity, log: req.log })
         const serverMcp = conversationProjectId
             ? await mcpServerService(req.log).getPopulatedByProjectId(conversationProjectId) ?? mcp
             : mcp
-        const { server } = await mcpServerService(req.log).buildServer({ mcp: serverMcp, userId, platformId, clientKey: identity.clientKey, clientId: identity.clientId, isInAppChat: isInAppChatIdentity(identity) })
+        const isInAppChat = isInAppChatIdentity(identity)
+        const isOwnChatConversation = isInAppChat && !isNil(conversation) && conversation.platformId === identity.platformId
+        const { server } = await mcpServerService(req.log).buildServer({ mcp: serverMcp, userId, platformId, clientKey: identity.clientKey, clientId: identity.clientId, isInAppChat })
 
         const transport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined,
@@ -90,7 +94,8 @@ function registerMcpEndpoint(app: Parameters<FastifyPluginAsyncZod>[0], scope: M
         })
 
         await server.connect(transport)
-        await transport.handleRequest(req.raw, reply.raw, req.body)
+        const handle = () => transport.handleRequest(req.raw, reply.raw, req.body)
+        await (isOwnChatConversation ? editorSession.run({ id: conversation.id, fn: handle }) : handle())
     })
 }
 
@@ -182,6 +187,12 @@ async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity
     }
 }
 
+type ConversationScope = {
+    id: string
+    projectId?: string | null
+    platformId: string
+}
+
 type ResolvedIdentity =
     | { type: McpServerType.PROJECT, projectId: string, platformId: string, userId: string, clientKey: McpOAuthClientKey | null, clientId: string }
     | { type: McpServerType.PLATFORM, platformId: string, userId: string, clientKey: McpOAuthClientKey | null, clientId: string }
@@ -197,20 +208,29 @@ function isInAppChatIdentity(identity: ResolvedIdentity): boolean {
     return identity.type === McpServerType.PLATFORM && identity.clientId === INTERNAL_CHAT_CLIENT_ID
 }
 
-async function resolveConversationProjectId({ conversationId, identity, log }: {
+async function findConversation({ conversationId, identity, log }: {
     conversationId: string
     identity: ResolvedIdentity
     log: FastifyBaseLogger
-}): Promise<string | null> {
+}): Promise<ConversationScope | null> {
     const { data: conversation, error } = await tryCatch(async () =>
-        chatConversationRepo().findOne({ where: { id: conversationId, userId: identity.userId }, select: ['projectId', 'platformId'] }),
+        chatConversationRepo().findOne({ where: { id: conversationId, userId: identity.userId }, select: ['id', 'projectId', 'platformId'] }),
     )
     if (error) {
         log.warn({ error, conversation: { id: conversationId } }, 'DB error resolving conversation project')
         return null
     }
-    if (isNil(conversation) || isNil(conversation.projectId)) {
-        log.debug({ conversation: { id: conversationId } }, 'Conversation not found for project resolution')
+    return conversation
+}
+
+async function resolveConversationProjectId({ conversation, identity, log }: {
+    conversation: ConversationScope
+    identity: ResolvedIdentity
+    log: FastifyBaseLogger
+}): Promise<string | null> {
+    const conversationId = conversation.id
+    if (isNil(conversation.projectId)) {
+        log.debug({ conversation: { id: conversationId } }, 'Conversation has no project to resolve')
         return null
     }
     const conversationProjectId = conversation.projectId
