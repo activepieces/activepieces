@@ -250,6 +250,7 @@ export type ReadAgentFileRequest = {
     projectId?: string
     conversationId: string
     fileId: string
+    markReadForRunId?: string
 }
 
 export type SaveAgentFileResponse = {

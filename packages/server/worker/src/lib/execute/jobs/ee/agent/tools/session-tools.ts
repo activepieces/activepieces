@@ -1,4 +1,5 @@
-import { spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { isNil, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { toolResultView } from '@activepieces/server-utils'
 import { AgentOutputField, AgentOutputFieldType, apId, BuildPlanEvent, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
@@ -127,6 +128,33 @@ export function createAgentSurfaceTools({ executeTool, taintState, eventEmitter,
     }
 }
 
+export function createResultTools({ readFile, taintState }: {
+    readFile: (fileId: string) => Promise<Buffer>
+    taintState: TaintState
+}): ToolSet {
+    return {
+        ap_read_result: tool({
+            description: 'Read part of a large tool result that was saved as a file (its preview names the fileId). Pick a JSON path and fields, page with offset/limit, or search. Use this instead of calling the tool again or writing code to look at the result.',
+            inputSchema: z.object({
+                fileId: z.string().describe('The fileId from the large-result preview'),
+                path: z.string().optional().describe('Where to read in a JSON result, e.g. "records", "messages[3].payload.headers". Omit for the root.'),
+                fields: z.array(z.string()).optional().describe('Keys to keep from each item or the object, e.g. ["id", "name", "properties.email"]'),
+                offset: z.number().int().min(0).optional().describe('First item (JSON list) or line (text) to return, 0-based'),
+                limit: z.number().int().min(1).max(500).optional().describe('How many items or lines (default 20 items / 200 lines)'),
+                search: z.string().optional().describe('Only items or lines containing this text'),
+            }),
+            execute: async ({ fileId, path, fields, offset, limit, search }) => {
+                taintState.tainted = true
+                const { data: stored, error } = await tryCatch(() => loadResultFile({ readFile, fileId }))
+                if (error || isNil(stored)) {
+                    return { error: `Could not read file ${fileId}. Use a fileId from a large-result preview in this conversation.` }
+                }
+                return toolResultView.read({ stored, fileId, ...spreadIfDefined('path', path), ...spreadIfDefined('fields', fields), ...spreadIfDefined('offset', offset), ...spreadIfDefined('limit', limit), ...spreadIfDefined('search', search) })
+            },
+        }),
+    }
+}
+
 export function createThinkingTools(): ToolSet {
     return {
         ap_update_thinking_status: tool({
@@ -194,6 +222,12 @@ export function createStructuredOutputTool({ fields, capture }: {
             },
         }),
     }
+}
+
+async function loadResultFile({ readFile, fileId }: { readFile: (fileId: string) => Promise<Buffer>, fileId: string }): Promise<unknown> {
+    const text = (await readFile(fileId)).toString('utf8')
+    const { data: parsed } = tryCatchSync((): unknown => JSON.parse(text))
+    return parsed ?? text
 }
 
 function schemaForOutputField(field: AgentOutputField): z.ZodType {

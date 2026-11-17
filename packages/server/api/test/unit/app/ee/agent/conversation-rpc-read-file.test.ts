@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockGetFile, mockGetData, mockFindConversation, mockGetUserProjects } = vi.hoisted(() => ({
+const { mockGetFile, mockGetData, mockFindConversation, mockGetUserProjects, mockMarkTurnAsHavingRead } = vi.hoisted(() => ({
     mockGetFile: vi.fn(),
     mockGetData: vi.fn(),
     mockFindConversation: vi.fn(),
     mockGetUserProjects: vi.fn(),
+    mockMarkTurnAsHavingRead: vi.fn(),
 }))
 
 vi.mock('../../../../../src/app/file/file.service', () => ({
@@ -18,6 +19,11 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
     },
 }))
 
+vi.mock('../../../../../src/app/ee/agent/rpc/rpc-shared', async (importOriginal) => ({
+    ...await importOriginal<Record<string, unknown>>(),
+    markTurnAsHavingRead: mockMarkTurnAsHavingRead,
+}))
+
 const { conversationRpc } = await import('../../../../../src/app/ee/agent/rpc/conversation-rpc')
 
 const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() } as never
@@ -28,6 +34,19 @@ describe('readAgentFile', () => {
         mockGetData.mockReset().mockResolvedValue({ data: Buffer.from('png'), fileName: 'cat.png', metadata: { mimetype: 'image/png', conversationId: 'conv-1' } })
         mockFindConversation.mockReset().mockResolvedValue({ id: 'conv-1', userId: 'user-1' })
         mockGetUserProjects.mockReset().mockResolvedValue([{ id: 'project-1' }])
+        mockMarkTurnAsHavingRead.mockReset().mockResolvedValue(undefined)
+    })
+
+    it('marks the turn as having read data when the worker reads a saved result for a run', async () => {
+        await conversationRpc(log).readAgentFile({ platformId: 'platform-1', conversationId: 'conv-1', fileId: 'file-1', markReadForRunId: 'run-1' })
+
+        expect(mockMarkTurnAsHavingRead).toHaveBeenCalledWith({ conversationId: 'conv-1', runId: 'run-1' })
+    })
+
+    it('does not mark the turn when no run is given', async () => {
+        await read()
+
+        expect(mockMarkTurnAsHavingRead).not.toHaveBeenCalled()
     })
 
     it('returns a file saved in this conversation, in a project the user can access', async () => {

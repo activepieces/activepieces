@@ -190,6 +190,19 @@ describe('agentMcpClient.withToolTimeouts circuit breaker', () => {
     })
 })
 
+describe('agentMcpClient.withToolTimeouts large results', () => {
+    it('returns a result whose visible text fits unchanged, however big its structuredContent', async () => {
+        const result = { content: [{ type: 'text', text: 'Found 3 records' }], structuredContent: { rows: 'x'.repeat(300_000) } }
+        const wrapped = agentMcpClient.withToolTimeouts({
+            mcpToolSet: { [ATTIO_TOOL]: { execute: async () => result } },
+            brokenConnectors: new Set<string>(),
+            taintState: { tainted: false },
+        }) as Record<string, { execute: (args: unknown) => Promise<unknown> }>
+
+        expect(await wrapped[ATTIO_TOOL].execute({})).toBe(result)
+    })
+})
+
 function createTestLogger(): { log: FastifyBaseLogger, warnCalls: unknown[][] } {
     const warnCalls: unknown[][] = []
     const log: FastifyBaseLogger = {
