@@ -10,7 +10,7 @@ export const test = base.extend<AccessFixtures>({
       method: 'POST',
       path: '/api/v1/projects',
       data: { displayName: `${E2E_PREFIX}project ${randomUUID().slice(0, 8)}` },
-    }).catch(explainFreePlan);
+    }).catch(explainPlanRefusal);
     cleanup.track({ resource: 'projects', id: project.id });
     await use({ id: project.id, session: { token: session.token, projectId: project.id } });
   },
@@ -23,7 +23,7 @@ export const test = base.extend<AccessFixtures>({
       method: 'POST',
       path: '/api/v1/user-invitations',
       data: { type: 'PROJECT', email, projectId: secondProject.id, projectRole: 'Viewer' },
-    }).catch(explainFreePlan);
+    }).catch(explainPlanRefusal);
     cleanup.track({ resource: 'user-invitations', id: invitation.id });
     await e2eApi.acceptInvitation({ request, link: await mailbox.linkTo({ to: email, path: '/invitation' }) });
     const { userId } = await e2eApi.signUp({ request, email, password: VIEWER_PASSWORD });
@@ -39,11 +39,14 @@ export const test = base.extend<AccessFixtures>({
 
 export { expect } from '@playwright/test';
 
-function explainFreePlan(error: unknown): never {
-  if (error instanceof Error && error.message.includes(' failed with 402:')) {
-    throw new Error(`${error.message}\nThe platform is on the free plan. Set E2E_LICENSE_KEY, so global setup activates an EE license with team projects and project roles.`);
+function explainPlanRefusal(error: unknown): never {
+  if (!(error instanceof Error) || !error.message.includes(' failed with 402:')) {
+    throw error;
   }
-  throw error;
+  const hint = process.env.E2E_LICENSE_KEY
+    ? 'The plan of E2E_LICENSE_KEY refused the request. Check that the plan has project roles, and that its limit of team projects covers the tests that run at the same time.'
+    : 'The platform is on the free plan. Set E2E_LICENSE_KEY, so global setup activates an EE license with team projects and project roles.';
+  throw new Error(`${error.message}\n${hint}`);
 }
 
 const VIEWER_PASSWORD = 'E2e-Viewer-Pass-1!';
