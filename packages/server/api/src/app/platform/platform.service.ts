@@ -237,6 +237,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 ...signInSettingsToSave,
                 auditLogRetentionDays: params.auditLogRetentionDays === undefined ? lockedPlatform.auditLogRetentionDays ?? null : params.auditLogRetentionDays,
             })
+            await params.saveInSameTransaction?.(entityManager)
             return { saved: savedPlatform, locked: lockedPlatform }
         })
         const previousRetentionDays = locked.auditLogRetentionDays ?? null
@@ -668,6 +669,7 @@ type UpdateParams = UpdatePlatformRequestBody & {
     ssoDomainVerification?: SsoDomainVerification | null
     userId?: UserId
     ip?: string
+    saveInSameTransaction?: (entityManager: EntityManager) => Promise<void>
 }
 
 type CreatePlatformWithProjectResult = {
