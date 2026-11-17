@@ -97,16 +97,15 @@ describe('denoCodeSandbox permission boundary', () => {
             }
         })
 
-        it('with the ENV permission exposes only PATH, never the engine env', async () => {
+        it('with the ENV permission exposes only PATH and TMPDIR, never the engine env', async () => {
             const envSandbox = denoModule.denoCodeSandbox({ permissions: [denoModule.DenoPermission.ENV], codeStepMemoryLimitMb: 128 })
             const codeFilePath = path.join(stepDir, 'index.ts')
             await writeFile(codeFilePath, `export const code = async () => ({ keys: Object.keys(Deno.env.toObject()).sort(), missing: process.env.AP_EXECUTION_MODE ?? null })`)
             const result = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
-            expect(result).toEqual({ keys: ['DENO_DIR', 'PATH'], missing: null })
+            expect(result).toEqual({ keys: ['DENO_DIR', 'PATH', 'TMPDIR'], missing: null })
         })
 
         it('forwards exactly the vars listed in AP_SANDBOX_PROPAGATED_ENV_VARS when ENV is granted, and none without it', async () => {
-            const originalEnv = { ...process.env }
             try {
                 process.env.AP_SANDBOX_PROPAGATED_ENV_VARS = 'MY_PROPAGATED_SECRET,MY_MISSING_VAR'
                 process.env.MY_PROPAGATED_SECRET = 'propagated-value'
@@ -116,14 +115,16 @@ describe('denoCodeSandbox permission boundary', () => {
 
                 const envSandbox = denoModule.denoCodeSandbox({ permissions: [denoModule.DenoPermission.ENV], codeStepMemoryLimitMb: 128 })
                 const result = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
-                expect(result).toEqual({ secret: 'propagated-value', unlisted: null, keys: ['DENO_DIR', 'MY_PROPAGATED_SECRET', 'PATH'] })
+                expect(result).toEqual({ secret: 'propagated-value', unlisted: null, keys: ['DENO_DIR', 'MY_PROPAGATED_SECRET', 'PATH', 'TMPDIR'] })
 
                 await writeFile(codeFilePath, `export const code = async () => { try { Deno.env.toObject(); return 'readable' } catch { return 'blocked' } }`)
                 const lockedResult = await denoCodeSandbox.runCodeModule({ codeFilePath, inputs: {} })
                 expect(lockedResult).toBe('blocked')
             }
             finally {
-                process.env = originalEnv
+                delete process.env.AP_SANDBOX_PROPAGATED_ENV_VARS
+                delete process.env.MY_PROPAGATED_SECRET
+                delete process.env.MY_UNLISTED_SECRET
             }
         })
 
@@ -488,6 +489,32 @@ describe('denoCodeSandbox permission profiles', () => {
             // readEtc 'prompt' (not 'granted') = read outside tmp is absent from the flags;
             // --no-prompt turns any such read into a hard NotCapable failure at use time.
             expect(out).toEqual({ net: 'granted', env: 'granted', run: 'granted', sys: 'granted', readEtc: 'prompt', readTmp: 'granted', writeTmp: 'granted' })
+        })
+
+        it('lets a step write a file under its own os.tmpdir() when TMPDIR is not the default', async () => {
+            const customTmp = await mkdtemp(path.join(tmpdir(), 'ap-deno-tmpdir-'))
+            const previousTmpDir = process.env.TMPDIR
+            process.env.TMPDIR = customTmp
+            try {
+                const out = await runWith(profile(), `import os from 'node:os'
+import fs from 'node:fs'
+import path from 'node:path'
+export const code = async () => {
+    const file = path.join(os.tmpdir(), 'probe.txt')
+    fs.writeFileSync(file, 'ok')
+    return { tmp: os.tmpdir(), content: fs.readFileSync(file, 'utf8') }
+}`)
+                expect(out).toEqual({ tmp: customTmp, content: 'ok' })
+            }
+            finally {
+                if (previousTmpDir === undefined) {
+                    delete process.env.TMPDIR
+                }
+                else {
+                    process.env.TMPDIR = previousTmpDir
+                }
+                await rm(customTmp, { recursive: true, force: true })
+            }
         })
     })
 

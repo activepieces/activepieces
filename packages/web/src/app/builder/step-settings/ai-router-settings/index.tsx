@@ -2,6 +2,7 @@ import { isNil } from '@activepieces/core-utils';
 import {
   AiRouterAction,
   AiRouterMatchMode,
+  aiRouterModels,
   BranchExecutionType,
   FlowActionType,
   FlowOperationRequest,
@@ -62,6 +63,10 @@ export const AiRouterSettings = memo(({ readonly }: { readonly: boolean }) => {
     { value: '0.7', label: t('70% — likely') },
     { value: '0.9', label: t('90% — very likely') },
   ];
+  const modelOptions = aiRouterModels.all.map((model) => ({
+    value: model.id,
+    label: model.label,
+  }));
 
   const form =
     useFormContext<Omit<AiRouterAction, 'children' | 'nextAction'>>();
@@ -354,6 +359,29 @@ export const AiRouterSettings = memo(({ readonly }: { readonly: boolean }) => {
             />
             <span className="text-xs text-gray-11">
               {t('Below this, the flow takes the Otherwise route.')}
+            </span>
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="settings.model"
+        render={({ field }) => (
+          <FormItem className="flex flex-col gap-1">
+            <Label>{t('Model')}</Label>
+            <SearchableSelect
+              disabled={readonly}
+              value={aiRouterModels.resolve(field.value)}
+              options={modelOptions}
+              placeholder={t('Model')}
+              onChange={(value) => {
+                field.onChange(value ?? undefined);
+                form.trigger();
+              }}
+            />
+            <span className="text-xs text-gray-11">
+              {t('The decision model that picks the route.')}
             </span>
           </FormItem>
         )}
