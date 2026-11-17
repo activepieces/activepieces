@@ -52,6 +52,7 @@ const POLL_WATCHDOG_INTERVAL_MS = 30_000
 const RPC_TIMEOUT_MS = 60_000
 const LONG_RUNNING_RPC_MARGIN_MS = 120_000
 const FALLBACK_FLOW_TIMEOUT_SECONDS = 600
+const BEGIN_SHUTDOWN_RPC: keyof WorkerToApiContract = 'beginShutdown'
 
 let pollLoopLiveness: PollLoopLiveness[] = []
 let pollWatchdogInterval: NodeJS.Timeout | null = null
@@ -356,7 +357,7 @@ function flowTimeoutMs(): number {
 }
 
 function rpcTimeoutMsFor(method: string): number {
-    if (method === 'beginShutdown') {
+    if (method === BEGIN_SHUTDOWN_RPC) {
         return shutdownBudget.BEGIN_SHUTDOWN_TIMEOUT_MS
     }
     if (!LONG_RUNNING_RPC_METHODS.includes(method)) {

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { WAITER_TIMEOUT_MS } from '../../../../../src/app/workers/job-queue/queue-timing'
-import { holdForConnection, stoppingConnections } from '../../../../../src/app/workers/job-queue/stopping-connections'
+import { stoppingConnections } from '../../../../../src/app/workers/job-queue/stopping-connections'
 
 describe('stoppingConnections', () => {
     beforeEach(() => {
@@ -42,7 +42,7 @@ describe('holdForConnection', () => {
         const release = vi.fn(async () => undefined)
         const record = vi.fn()
 
-        const delivered = await holdForConnection({
+        const delivered = await stoppingConnections.holdForConnection({
             connectionId: 'socket-1',
             job,
             release,
@@ -58,7 +58,7 @@ describe('holdForConnection', () => {
         stoppingConnections.mark('socket-1')
         const release = vi.fn(async () => undefined)
 
-        const delivered = await holdForConnection({
+        const delivered = await stoppingConnections.holdForConnection({
             connectionId: 'socket-1',
             job: null,
             release,
@@ -74,7 +74,7 @@ describe('holdForConnection', () => {
         const release = vi.fn(async () => undefined)
         const record = vi.fn()
 
-        const delivered = await holdForConnection({
+        const delivered = await stoppingConnections.holdForConnection({
             connectionId: 'socket-1',
             job,
             release,
@@ -82,7 +82,22 @@ describe('holdForConnection', () => {
         })
 
         expect(delivered).toBe(job)
-        expect(record).toHaveBeenCalledWith(job)
+        expect(record).toHaveBeenCalledWith({ job, connectionId: 'socket-1' })
         expect(release).not.toHaveBeenCalled()
+    })
+
+    it('delivers a job without recording it when the poll has no connection', async () => {
+        const job = { jobId: 'job-1' }
+        const record = vi.fn()
+
+        const delivered = await stoppingConnections.holdForConnection({
+            connectionId: undefined,
+            job,
+            release: vi.fn(async () => undefined),
+            record,
+        })
+
+        expect(delivered).toBe(job)
+        expect(record).not.toHaveBeenCalled()
     })
 })

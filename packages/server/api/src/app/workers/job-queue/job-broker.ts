@@ -17,7 +17,7 @@ import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
 import { callerWaitingForResponse } from './job-queue'
 import { jobReclaimCount } from './job-reclaim-count'
 import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
-import { holdForConnection, stoppingConnections } from './stopping-connections'
+import { stoppingConnections } from './stopping-connections'
 
 const DRAIN_DELAY_SECONDS = 15
 const LOCK_DURATION_MS = 120_000
@@ -278,7 +278,7 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         const worker = await ensureBullMQWorker(queueName, log)
         const dispatcher = ensureDispatcher(queueName, worker, log)
         const job = await dispatcher.poll(socket)
-        return holdForConnection({
+        return stoppingConnections.holdForConnection({
             connectionId: socket?.id,
             job,
             release: (held) => returnJobToQueue({
@@ -288,8 +288,8 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
                 log,
                 isDisconnectReclaim: false,
             }),
-            record: (held) => jobAssignmentTracker.record({
-                connectionId: socket!.id,
+            record: ({ job: held, connectionId }) => jobAssignmentTracker.record({
+                connectionId,
                 jobId: held.jobId,
                 token: held.token,
                 queueName: held.queueName,

@@ -96,8 +96,9 @@ activepiecesConfig is visible here: a flow timeout set only in a secret needs
 terminationGracePeriodSeconds set by hand.
 */}}
 {{- define "activepieces.terminationGracePeriodSeconds" -}}
-{{- if .Values.terminationGracePeriodSeconds }}
-{{- .Values.terminationGracePeriodSeconds | int }}
+{{- $explicit := .Values.terminationGracePeriodSeconds }}
+{{- if and (not (kindIs "invalid" $explicit)) (ne (toString $explicit) "") }}
+{{- $explicit | int }}
 {{- else }}
 {{- $config := .Values.activepiecesConfig | default dict }}
 {{- add (get $config "AP_FLOW_TIMEOUT_SECONDS" | default 600 | int) 75 }}

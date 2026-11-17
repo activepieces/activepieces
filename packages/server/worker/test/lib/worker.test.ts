@@ -572,26 +572,20 @@ describe('worker integration', () => {
                 })
                 ioServer.on('connection', (serverSocket) => {
                     serverSockets.push(serverSocket)
-                    serverSocket.on(WebsocketServerEvent.FETCH_WORKER_SETTINGS, (...args: unknown[]) => {
-                        const callback = args[args.length - 1]
-                        if (typeof callback === 'function') {
-                            callback(WORKER_SETTINGS)
-                        }
-                    })
-                    createRpcServer<WorkerToApiContract>(serverSocket, {
-                        poll: vi.fn(() => {
-                            polls++
-                            return polls === 1 ? Promise.resolve(buildConsumeJobRequest()) : new Promise(() => {})
-                        }),
-                        completeJob: vi.fn(async () => {
-                            events.push('job completed')
-                        }),
-                        beginShutdown: vi.fn(async () => {
-                            events.push('beginShutdown received')
-                            await beginShutdown()
-                            events.push('beginShutdown confirmed')
-                        }),
-                    } as unknown as WorkerToApiContract)
+                })
+                registerRpcServer({
+                    poll: vi.fn(() => {
+                        polls++
+                        return polls === 1 ? Promise.resolve(buildConsumeJobRequest()) : new Promise(() => {})
+                    }),
+                    completeJob: vi.fn(async () => {
+                        events.push('job completed')
+                    }),
+                    beginShutdown: vi.fn(async () => {
+                        events.push('beginShutdown received')
+                        await beginShutdown()
+                        events.push('beginShutdown confirmed')
+                    }),
                 })
                 stoppingWorker.start({
                     apiUrl: `http://127.0.0.1:${port}/api/`,
