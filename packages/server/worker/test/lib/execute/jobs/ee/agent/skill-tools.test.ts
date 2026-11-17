@@ -350,3 +350,43 @@ describe('ap_get_tool_schema', () => {
         expect(result).toMatchObject({ inputSchema: { properties: { title: { type: 'string', description: 'Task title' } }, required: ['title'] } })
     })
 })
+
+describe('loading flow building', () => {
+    function surfaceWithGuides(onSkillLoaded = vi.fn()) {
+        return buildSkillSurface({
+            tools: stubTools(CHAT_TOOL_NAMES),
+            surface: 'CHAT',
+            guides: { build_flow: 'BUILD GUIDE', discovery: 'DISCOVERY GUIDE' },
+            onSkillLoaded,
+            canAffordPaidTool: () => true,
+        })
+    }
+
+    async function load({ surface, skills }: { surface: ReturnType<typeof chatSurface>, skills: string[] }): Promise<string> {
+        return String(await surface.tools['ap_load_skill']?.execute?.({ skills }, CALL_OPTIONS))
+    }
+
+    it('loads discovery with it in the same call', async () => {
+        const onSkillLoaded = vi.fn()
+        const playbook = await load({ surface: surfaceWithGuides(onSkillLoaded), skills: ['flow_building'] })
+        expect(playbook.indexOf('DISCOVERY GUIDE')).toBeLessThan(playbook.indexOf('BUILD GUIDE'))
+        expect(playbook.indexOf('DISCOVERY GUIDE')).toBeGreaterThanOrEqual(0)
+        expect(onSkillLoaded.mock.calls.map(([skill]) => skill.name)).toEqual(['discovery', 'flow_building'])
+    })
+
+    it('does not load discovery again once it is loaded', async () => {
+        const surface = surfaceWithGuides()
+        await load({ surface, skills: ['discovery'] })
+        const playbook = await load({ surface, skills: ['flow_building'] })
+        expect(playbook).toContain('BUILD GUIDE')
+        expect(playbook).not.toContain('DISCOVERY GUIDE')
+        expect(playbook).not.toContain('already loaded')
+    })
+
+    it('never shows a flow building tool the registry does not have', async () => {
+        const playbook = await load({ surface: surfaceWithGuides(), skills: ['flow_building'] })
+        expect(playbook).not.toContain('ap_search_actions')
+        expect(playbook).not.toContain('ap_apply_flow_operations')
+    })
+})
+

@@ -17,7 +17,7 @@ export const apAddBranchTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
     return {
         title: 'ap_add_branch',
         permission: Permission.WRITE_FLOW,
-        description: 'Add a conditional branch to a router step. Inserted before the fallback branch.',
+        description: 'Add a conditional branch to a router step of an existing flow. Inserted before the fallback branch. A new flow defines its routers and branches inside ap_build_flow instead.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             routerStepName: z.string().describe('The name of the ROUTER step to add a branch to. Use ap_flow_structure to get valid values.'),

@@ -510,6 +510,21 @@ describe('buildProviderOptions', () => {
         expect(options.openrouter?.cache_control).toEqual({ type: 'ephemeral' })
     })
 
+    for (const provider of [AIProviderName.ACTIVEPIECES, AIProviderName.OPENROUTER]) {
+        it(`maps the tier's thinking budget to an effort level GLM accepts on ${provider}, since it ignores a token budget`, () => {
+            const effortAt = (thinkingBudget: number, disableThinking = false) => agentAiUtils.buildProviderOptions({ provider, tier: { id: 't', thinkingBudget }, modelId: 'z-ai/glm-5.3', disableThinking }).openrouter?.reasoning
+            expect(effortAt(5_000)).toEqual({ effort: 'low' })
+            expect(effortAt(10_000)).toEqual({ effort: 'high' })
+            expect(effortAt(20_000)).toEqual({ effort: 'high' })
+            expect(effortAt(20_000, true)).toEqual({ effort: 'low' })
+        })
+
+        it(`switches DeepSeek reasoning off with effort none on ${provider}`, () => {
+            const reasoning = agentAiUtils.buildProviderOptions({ provider, tier: TIER, modelId: 'deepseek/deepseek-v4.1-flash', disableThinking: true }).openrouter?.reasoning
+            expect(reasoning).toEqual({ effort: 'none' })
+        })
+    }
+
     it('sends nothing for a provider that does not take a reasoning directive', () => {
         expect(agentAiUtils.buildProviderOptions({ provider: AIProviderName.GOOGLE, tier: TIER, modelId: 'gemini-2.5-flash', disableThinking: true })).toEqual({})
     })

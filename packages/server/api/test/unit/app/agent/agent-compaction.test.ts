@@ -178,6 +178,27 @@ describe('agentCompaction.buildCompactedPayload', () => {
         }))
     })
 
+    it('counts an attached screenshot as an image, not as its base64 text, so the message still fits', () => {
+        const withScreenshot: ModelMessage[] = [{
+            role: 'user',
+            content: [
+                { type: 'text', text: 'This is the flow.' },
+                { type: 'file', mediaType: 'image/png', data: 'A'.repeat(2_000_000) },
+            ],
+        }]
+
+        const result = agentCompaction.buildCompactedPayload({
+            messages: withScreenshot,
+            summary: null,
+            summarizedUpToIndex: null,
+            provider: AIProviderName.ACTIVEPIECES,
+            reservedTokens: 0,
+        })
+
+        expect(result).toEqual(withScreenshot)
+        expect(agentCompaction.estimateTokenCount({ messages: withScreenshot, systemPromptLength: 0 })).toBeLessThan(5_000)
+    })
+
     it('skips orphaned tool messages when trimming the recent window', () => {
         const messages: ModelMessage[] = [
             { role: 'user', content: 'msg 0' },
