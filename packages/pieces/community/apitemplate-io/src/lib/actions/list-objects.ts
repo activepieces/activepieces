@@ -34,13 +34,7 @@ export const listObjects = createAction({
       display: 'builder',
       label: 'Paging',
       icon: 'sliders',
-      props: ['offset'],
-    },
-    {
-      key: 'footer',
-      display: 'footer',
-      icon: 'sliders',
-      props: ['limit'],
+      props: ['offset', 'limit'],
     },
   ],
   props: {
@@ -91,10 +85,7 @@ export const listObjects = createAction({
       description: 'Up to 300.',
       required: false,
       defaultValue: 300,
-      display: 'stepper',
-      min: 1,
-      max: 300,
-      step: 1,
+      icon: 'sliders',
     }),
   },
   async run({ auth, propsValue }) {
