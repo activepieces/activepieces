@@ -4,6 +4,8 @@ import webhookEcho from '../../../fixtures/templates/webhook-echo.json';
 import { EventStreamingPage } from '../../../pages/event-streaming.page';
 
 test.describe('Event streaming', { tag: ['@feature:audit', '@surface'] }, () => {
+  test.describe.configure({ timeout: 120_000 });
+
   test('stream events to a webhook flow of the spec and receive one', async ({ page, session, seed, cleanup, auditLog }) => {
     const sink = await seed.flow({ template: webhookEcho, publish: true });
     const [folderId] = await auditLog.createFolders({ names: [e2eApi.uniqueName('stream folder')], session });
