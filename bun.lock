@@ -775,7 +775,7 @@
     },
     "packages/pieces/community/apitemplate-io": {
       "name": "@activepieces/piece-apitemplate-io",
-      "version": "0.3.3",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
