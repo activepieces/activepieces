@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { ssoMutations } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { SignInMethodStatus } from '@/lib/statuses';
 import { cn } from '@/lib/utils';
 
 import GoogleIcon from '../../../../../assets/img/custom/auth/google-icon.svg';
@@ -75,7 +76,10 @@ export const SignInMethodsSection = ({
               {t('Single sign-on')}
               <Badge variant="outline">{t('SAML 2.0')}</Badge>
               {samlConnected && (
-                <StatusDot tone="success" className="text-xs text-gray-11">
+                <StatusDot
+                  status={SignInMethodStatus.CONNECTED}
+                  className="text-xs text-gray-11"
+                >
                   {t('Connected')}
                 </StatusDot>
               )}
@@ -110,7 +114,10 @@ export const SignInMethodsSection = ({
               {t('Continue with Google')}
               <Badge variant="outline">{t('OAuth 2.0')}</Badge>
               {googleNotSetUp && (
-                <StatusDot tone="warning" className="text-xs text-gray-11">
+                <StatusDot
+                  status={SignInMethodStatus.NOT_SET_UP}
+                  className="text-xs text-gray-11"
+                >
                   {t('Not set up')}
                 </StatusDot>
               )}

@@ -39,6 +39,7 @@ import { workerGroupsLock, workersQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useTimeAgo } from '@/hooks/use-time-ago';
+import { WorkerHealth } from '@/lib/statuses';
 import { cn } from '@/lib/utils';
 
 import { SandboxesPopover } from './sandboxes-popover';
@@ -256,7 +257,9 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
                   )}
             </TooltipContent>
           </Tooltip>
-          <StatusDot tone={isOnline ? 'success' : 'danger'}>
+          <StatusDot
+            status={isOnline ? WorkerHealth.ONLINE : WorkerHealth.OFFLINE}
+          >
             {isOnline ? t('Online') : t('Offline')}
           </StatusDot>
           <WorkerConfigsPopover workerProps={workerProps} />
