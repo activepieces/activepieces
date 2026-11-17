@@ -30,7 +30,7 @@ test.describe('Connection step', { tag: '@feature:connections' }, () => {
         fields: { 'Base URL': echo.webhookUrl, 'API Key': apiKey },
       });
       cleanup.track({ resource: 'app-connections', id: connectionId });
-      await builderPage.expectStepPanelText(`relative to ${echo.webhookUrl.replace(/[^/]+$/, '')}`);
+      await builderPage.expectStepPanelText(`relative to ${new URL(echo.webhookUrl).origin}`);
       await builderPage.setTextInput({ name: 'URL', value: '/' });
       await builderPage.testStep();
     });
