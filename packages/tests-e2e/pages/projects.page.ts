@@ -96,6 +96,10 @@ export class ProjectsPage extends BasePage {
   emptyState(): Locator {
     return this.page.getByTestId('data-table-empty-state');
   }
+
+  async visitFiltered({ displayName, type }: { displayName: string; type: 'TEAM' | 'PERSONAL' }): Promise<void> {
+    await this.page.goto(`${this.url}?${new URLSearchParams({ displayName, type })}`);
+  }
 }
 
 function isProjectCreate(response: Response): boolean {

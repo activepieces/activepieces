@@ -74,6 +74,12 @@ test.describe('Projects', { tag: ['@feature:projects', '@surface'] }, () => {
     await expect(projectsPage.rows(word)).toHaveCount(10);
     expect(await projectsPage.shownNames({ word, names })).toEqual(firstPage);
     expect([...firstPage, ...secondPage].sort()).toEqual(names);
+
+    await projectsPage.visitFiltered({ displayName: word, type: 'PERSONAL' });
+    await expect(projectsPage.emptyState(), 'The Personal filter still shows the team projects').toBeVisible();
+    await expect(projectsPage.rows(word)).toHaveCount(0);
+    await projectsPage.visitFiltered({ displayName: word, type: 'TEAM' });
+    await expect(projectsPage.rows(word)).toHaveCount(10);
   });
 
   test('a projects filter with no match shows the empty state', async ({ page }) => {
