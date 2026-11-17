@@ -382,8 +382,7 @@ describe('agentMcpClient.connect — transient server errors from the platform M
 
     it('retries a 502 once and keeps the platform tools', async () => {
         const client = fakeMcpClient()
-        const tools = vi.fn().mockRejectedValueOnce(badGateway).mockResolvedValueOnce({ ap_list_flows: { inputSchema: jsonSchema({ type: 'object', properties: {} }) } })
-        client.tools = tools
+        const tools = vi.spyOn(client, 'tools').mockRejectedValueOnce(badGateway).mockResolvedValueOnce({ ap_list_flows: { inputSchema: jsonSchema({ type: 'object', properties: {} }) } })
         mockCreateMCPClient.mockResolvedValueOnce(client)
         const { log } = createTestLogger()
 
@@ -396,8 +395,7 @@ describe('agentMcpClient.connect — transient server errors from the platform M
 
     it('fails the turn and closes the client when the retry answers a 502 too', async () => {
         const client = fakeMcpClient()
-        const tools = vi.fn().mockRejectedValue(badGateway)
-        client.tools = tools
+        const tools = vi.spyOn(client, 'tools').mockRejectedValue(badGateway)
         const close = vi.spyOn(client, 'close')
         mockCreateMCPClient.mockResolvedValueOnce(client)
         const { log } = createTestLogger()
@@ -431,8 +429,7 @@ describe('agentMcpClient.connect — transient server errors from the platform M
     it('does not retry a client error', async () => {
         const unauthorized = Object.assign(new Error('MCP HTTP Transport Error: POSTing to endpoint (HTTP 401)'), { statusCode: 401 })
         const client = fakeMcpClient()
-        const tools = vi.fn().mockRejectedValue(unauthorized)
-        client.tools = tools
+        const tools = vi.spyOn(client, 'tools').mockRejectedValue(unauthorized)
         const close = vi.spyOn(client, 'close')
         mockCreateMCPClient.mockResolvedValueOnce(client)
         const { log } = createTestLogger()
