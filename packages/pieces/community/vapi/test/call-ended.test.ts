@@ -77,6 +77,22 @@ describe('selectNewCalls', () => {
 });
 
 describe('call_ended trigger', () => {
+  it('onEnable keeps saved state on republish and resets after disable', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(T0);
+    const store = makeStore();
+    const context = { auth: { secret_text: 'k' }, propsValue: {}, store, files: {}, server: {}, setSchedule: () => undefined };
+    await invoke({ fn: callEnded.onEnable, context });
+    const saved = { enabledAt: T0, lastPollAt: T0 + 5000, emitted: [{ id: 'c1', endedAt: T0 + 1000 }] };
+    await store.put('vapi_call_ended_state', saved);
+    vi.setSystemTime(T0 + 60_000);
+    await invoke({ fn: callEnded.onEnable, context: { ...context, isRepublish: true } });
+    expect(store.data.get('vapi_call_ended_state')).toEqual(saved);
+    await invoke({ fn: callEnded.onDisable, context });
+    await invoke({ fn: callEnded.onEnable, context });
+    expect(store.data.get('vapi_call_ended_state')).toEqual({ enabledAt: T0 + 60_000, lastPollAt: T0 + 60_000, emitted: [] });
+  });
+
   it('outputSchema covers every sampleData key', () => {
     const trigger = vapi.triggers()['call_ended'];
     const keys = trigger.outputSchema?.fields.map((field) => field.key) ?? [];

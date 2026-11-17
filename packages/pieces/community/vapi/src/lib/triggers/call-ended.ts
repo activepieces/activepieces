@@ -169,6 +169,10 @@ export const callEnded = createTrigger({
     updatedAt: '2026-11-17T10:01:10.000Z',
   },
   async onEnable(context) {
+    const existing = readState(await context.store.get(STATE_KEY));
+    if (existing !== null) {
+      return;
+    }
     const now = Date.now();
     const state: CallEndedState = { enabledAt: now, lastPollAt: now, emitted: [] };
     await context.store.put(STATE_KEY, state);

@@ -15,7 +15,7 @@ export const findSquad = createAction({
   outputSchema: vapiOutputSchemas.findSquad,
   aiMetadata: {
     description:
-      'Finds squads (groups of assistants that hand calls to each other) in the Vapi organization and returns each one\'s ID, name and member assistant IDs, newest first. Optional Name Contains matches part of the name, case-insensitive. Matching is done by this tool over the 1000 most recent squads. Use the ID with Get Squad or as the squad ID in Update Phone Number. Read-only.',
+      'Finds squads (groups of assistants that hand calls to each other) in the Vapi organization and returns each one\'s ID, name and member assistant IDs, newest first. Optional Name Contains matches part of the name, case-insensitive. Matching is done by this tool over the 1000 most recent squads. If Truncated is true, more records exist than were scanned and a match may be missing: use a more specific value or the ID from the Vapi dashboard. Use the ID with Get Squad or as the squad ID in Update Phone Number. Read-only.',
     idempotent: true,
   },
   props: {
@@ -24,7 +24,7 @@ export const findSquad = createAction({
   },
   async run(context) {
     const needle = context.propsValue.nameContains?.trim() ?? '';
-    const squads = await vapiResources.find({
+    const { items: squads, truncated } = await vapiResources.find({
       apiKey: context.auth.secret_text,
       path: '/squad',
       operation: 'list squads',
@@ -32,6 +32,6 @@ export const findSquad = createAction({
       matches: (item) => needle === '' || vapiUtils.containsIgnoreCase({ haystack: item.name, needle }),
       limit: vapiUtils.clampLimit({ value: context.propsValue.limit, defaultValue: 20, max: 100 }),
     });
-    return { squads };
+    return { squads, truncated };
   },
 });

@@ -24,7 +24,7 @@ export const findAssistant = createAction({
   },
   async run(context) {
     const needle = context.propsValue.nameContains?.trim() ?? '';
-    const assistants = await vapiResources.find({
+    const { items: assistants, truncated } = await vapiResources.find({
       apiKey: context.auth.secret_text,
       path: '/assistant',
       operation: 'list assistants',
@@ -32,6 +32,6 @@ export const findAssistant = createAction({
       matches: (item) => needle === '' || vapiUtils.containsIgnoreCase({ haystack: item.name, needle }),
       limit: vapiUtils.clampLimit({ value: context.propsValue.limit, defaultValue: 20, max: 100 }),
     });
-    return { assistants };
+    return { assistants, truncated };
   },
 });

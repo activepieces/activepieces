@@ -54,8 +54,8 @@ export const placeCall = createAction({
     }
     const call = await callStarter.start({
       apiKey: context.auth.secret_text,
-      assistantId,
-      phoneNumberId,
+      assistantId: assistantId.trim(),
+      phoneNumberId: phoneNumberId.trim(),
       customer,
       assistantOverrides: Object.keys(overrides).length > 0 ? overrides : undefined,
     });

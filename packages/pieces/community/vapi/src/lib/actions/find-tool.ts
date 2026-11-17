@@ -15,7 +15,7 @@ export const findTool = createAction({
   outputSchema: vapiOutputSchemas.findTool,
   aiMetadata: {
     description:
-      'Finds tools in the Vapi organization and returns each one\'s ID, type, name and description, newest first. Optional Name Contains matches part of the function name, case-insensitive; optional Type must equal the tool type exactly (e.g. function, transferCall, endCall, apiRequest, query). Matching is done by this tool over the 1000 most recent tools. Use the ID with Get Tool. Read-only.',
+      'Finds tools in the Vapi organization and returns each one\'s ID, type, name and description, newest first. Optional Name Contains matches part of the function name, case-insensitive; optional Type must equal the tool type exactly (e.g. function, transferCall, endCall, apiRequest, query). Matching is done by this tool over the 1000 most recent tools. If Truncated is true, more records exist than were scanned and a match may be missing: use a more specific value or the ID from the Vapi dashboard. Use the ID with Get Tool. Read-only.',
     idempotent: true,
   },
   props: {
@@ -26,7 +26,7 @@ export const findTool = createAction({
   async run(context) {
     const needle = context.propsValue.nameContains?.trim() ?? '';
     const type = context.propsValue.type?.trim() ?? '';
-    const tools = await vapiResources.find({
+    const { items: tools, truncated } = await vapiResources.find({
       apiKey: context.auth.secret_text,
       path: '/tool',
       operation: 'list tools',
@@ -36,6 +36,6 @@ export const findTool = createAction({
         (type === '' || (item.type !== null && item.type.toLowerCase() === type.toLowerCase())),
       limit: vapiUtils.clampLimit({ value: context.propsValue.limit, defaultValue: 20, max: 100 }),
     });
-    return { tools };
+    return { tools, truncated };
   },
 });

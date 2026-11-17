@@ -21,7 +21,7 @@ export const findCalls = createAction({
   outputSchema: vapiOutputSchemas.findCalls,
   aiMetadata: {
     description:
-      'Finds recent Vapi calls, newest first, and returns for each: call ID, status, ended reason, customer number, creation time and cost. Optional filters: assistant ID, phone number ID, created after (ISO 8601), and customer number. The customer number filter is applied by this tool to the 1000 most recent calls matching the other filters, because Vapi cannot filter by it. Pass a call ID to Get Call Result for the transcript and summary. Read-only.',
+      'Finds recent Vapi calls, newest first, and returns for each: call ID, status, ended reason, customer number, creation time and cost. Optional filters: assistant ID, phone number ID, created after (ISO 8601), and customer number. The customer number filter is applied by this tool to the 1000 most recent calls matching the other filters, because Vapi cannot filter by it; if Truncated is true, older matching calls may exist, so narrow with Created After or the other filters. Pass a call ID to Get Call Result for the transcript and summary. Read-only.',
     idempotent: true,
   },
   props: {
@@ -50,6 +50,7 @@ export const findCalls = createAction({
     const matching = calls.map((call) => vapiFlatten.callSummary(call)).filter(
       (call) => numberDigits === '' || (call.customerNumber !== null && digitsOf(call.customerNumber) === numberDigits)
     );
-    return { calls: matching.slice(0, max) };
+    const truncated = numberDigits !== '' && calls.length >= FINDER_SCAN_LIMIT && matching.length < max;
+    return { calls: matching.slice(0, max), truncated };
   },
 });

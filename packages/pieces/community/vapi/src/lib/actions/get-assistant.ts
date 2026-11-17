@@ -9,7 +9,7 @@ export const getAssistant = createAction({
   name: 'get_assistant',
   classification: 'READ',
   displayName: 'Get Assistant',
-  description: 'Get the details of a assistant by its ID.',
+  description: 'Get the details of an assistant by its ID.',
   audience: 'both',
   outputSchema: vapiOutputSchemas.assistant,
   aiMetadata: {

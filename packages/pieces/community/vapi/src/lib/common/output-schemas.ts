@@ -182,7 +182,17 @@ export const vapiOutputSchemas = {
   listCalls: { fields: [{ key: 'calls', label: 'Calls', labelKey: 'id', listItems: callFields }] },
   placedCall: { fields: placedCallFields },
   callResult: { fields: callResultFields },
-  findCalls: { fields: [{ key: 'calls', label: 'Calls', labelKey: 'id', listItems: callSummaryFields }] },
+  findCalls: {
+    fields: [
+      { key: 'calls', label: 'Calls', labelKey: 'id', listItems: callSummaryFields },
+      {
+        key: 'truncated',
+        label: 'Truncated',
+        format: 'boolean',
+        description: 'True when only the most recent 1000 calls were searched and more exist, so a match may be missing.',
+      },
+    ],
+  },
   assistant: { fields: assistantFields },
   listAssistants: {
     fields: [{ key: 'assistants', label: 'Assistants', labelKey: 'name', listItems: assistantFields }],
@@ -200,6 +210,7 @@ export const vapiOutputSchemas = {
           { key: 'createdAt', label: 'Created At', format: 'datetime' },
         ],
       },
+      { key: 'truncated', label: 'Truncated', format: 'boolean', description: 'True when only the most recent 1000 records were searched and more exist, so a match may be missing.' },
     ],
   },
   phoneNumber: { fields: phoneNumberFields },
@@ -221,6 +232,7 @@ export const vapiOutputSchemas = {
           { key: 'squadId', label: 'Squad ID' },
         ],
       },
+      { key: 'truncated', label: 'Truncated', format: 'boolean', description: 'True when only the most recent 1000 records were searched and more exist, so a match may be missing.' },
     ],
   },
   tool: { fields: toolFields },
@@ -238,6 +250,7 @@ export const vapiOutputSchemas = {
           { key: 'description', label: 'Description' },
         ],
       },
+      { key: 'truncated', label: 'Truncated', format: 'boolean', description: 'True when only the most recent 1000 records were searched and more exist, so a match may be missing.' },
     ],
   },
   squad: { fields: squadFields },
@@ -254,6 +267,7 @@ export const vapiOutputSchemas = {
           { key: 'memberAssistantIds', label: 'Member Assistant IDs' },
         ],
       },
+      { key: 'truncated', label: 'Truncated', format: 'boolean', description: 'True when only the most recent 1000 records were searched and more exist, so a match may be missing.' },
     ],
   },
   file: { fields: fileFields },
@@ -272,6 +286,7 @@ export const vapiOutputSchemas = {
           { key: 'createdAt', label: 'Created At', format: 'datetime' },
         ],
       },
+      { key: 'truncated', label: 'Truncated', format: 'boolean', description: 'True when only the most recent 1000 records were searched and more exist, so a match may be missing.' },
     ],
   },
 } satisfies Record<string, OutputSchema>;

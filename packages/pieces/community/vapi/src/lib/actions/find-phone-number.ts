@@ -15,7 +15,7 @@ export const findPhoneNumber = createAction({
   outputSchema: vapiOutputSchemas.findPhoneNumber,
   aiMetadata: {
     description:
-      'Finds the phone numbers in the Vapi organization and returns each one\'s ID, number, name, provider and the assistant or squad that answers it. Optional Number or Name Contains matches part of the number (digits only are compared) or of the name, case-insensitive; leave it empty to list all. Matching is done by this tool over up to 1000 numbers. Use the returned ID as the phone number ID in Place Call or Update Phone Number. Read-only.',
+      'Finds the phone numbers in the Vapi organization and returns each one\'s ID, number, name, provider and the assistant or squad that answers it. Optional Number or Name Contains matches part of the number (digits only are compared) or of the name, case-insensitive; leave it empty to list all. Matching is done by this tool over up to 1000 numbers. If Truncated is true, more records exist than were scanned and a match may be missing: use a more specific value or the ID from the Vapi dashboard. Use the returned ID as the phone number ID in Place Call or Update Phone Number. Read-only.',
     idempotent: true,
   },
   props: {
@@ -25,7 +25,7 @@ export const findPhoneNumber = createAction({
   async run(context) {
     const needle = context.propsValue.numberOrNameContains?.trim() ?? '';
     const needleDigits = needle.replace(/\D/g, '');
-    const phoneNumbers = await vapiResources.find({
+    const { items: phoneNumbers, truncated } = await vapiResources.find({
       apiKey: context.auth.secret_text,
       path: '/phone-number',
       operation: 'list phone numbers',
@@ -37,6 +37,6 @@ export const findPhoneNumber = createAction({
         (needleDigits !== '' && item.number !== null && item.number.replace(/\D/g, '').includes(needleDigits)),
       limit: vapiUtils.clampLimit({ value: context.propsValue.limit, defaultValue: 20, max: 100 }),
     });
-    return { phoneNumbers };
+    return { phoneNumbers, truncated };
   },
 });

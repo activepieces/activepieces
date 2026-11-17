@@ -34,7 +34,7 @@ describe('finders', () => {
     });
     const result = await run({ action: findAssistant, propsValue: { nameContains: 'sales', limit: 1 } });
     expect(spy.mock.calls[0][0].queryParams).toEqual({ limit: '1000' });
-    expect(result).toEqual({ assistants: [{ id: 'a1', name: 'Sales Bot', createdAt: 't1' }] });
+    expect(result).toEqual({ assistants: [{ id: 'a1', name: 'Sales Bot', createdAt: 't1' }], truncated: false });
   });
 
   it('find_phone_number matches on digits of the number', async () => {
@@ -42,6 +42,7 @@ describe('finders', () => {
     const result = await run({ action: findPhoneNumber, propsValue: { numberOrNameContains: '(415) 555' } });
     expect(result).toEqual({
       phoneNumbers: [{ id: 'p1', number: '+14155551234', name: 'Main', provider: null, assistantId: null, squadId: null }],
+      truncated: false,
     });
   });
 
@@ -54,7 +55,7 @@ describe('finders', () => {
       ],
     });
     const result = await run({ action: findTool, propsValue: { type: 'function', nameContains: 'GET' } });
-    expect(result).toEqual({ tools: [{ id: 't1', type: 'function', name: 'get_order', description: 'd' }] });
+    expect(result).toEqual({ tools: [{ id: 't1', type: 'function', name: 'get_order', description: 'd' }], truncated: false });
   });
 
   it('find_calls filters customer number client-side over 1000 calls', async () => {
@@ -68,7 +69,26 @@ describe('finders', () => {
     expect(spy.mock.calls[0][0].queryParams).toEqual({ limit: '1000' });
     expect(result).toEqual({
       calls: [{ id: 'c1', status: 'ended', endedReason: null, customerNumber: '+14155551234', createdAt: 't', cost: 1 }],
+      truncated: false,
     });
+  });
+
+  it('flags truncated when 1000 records were scanned without enough matches', async () => {
+    mockOk({ body: Array.from({ length: 1000 }, (_, i) => ({ id: `a${i}`, name: `bot ${i}` })) });
+    const result = await run({ action: findAssistant, propsValue: { nameContains: 'missing' } });
+    expect(result).toEqual({ assistants: [], truncated: true });
+  });
+
+  it('does not flag truncated when the limit was filled', async () => {
+    mockOk({ body: Array.from({ length: 1000 }, (_, i) => ({ id: `a${i}`, name: `bot ${i}` })) });
+    const result = await run({ action: findAssistant, propsValue: { nameContains: 'bot', limit: 2 } });
+    expect(result).toMatchObject({ truncated: false });
+  });
+
+  it('find_calls flags truncated when the customer-number scan hit 1000', async () => {
+    mockOk({ body: Array.from({ length: 1000 }, (_, i) => ({ id: `c${i}`, customer: { number: '+12125550000' } })) });
+    const result = await run({ action: findCalls, propsValue: { customerNumber: '+14155551234' } });
+    expect(result).toEqual({ calls: [], truncated: true });
   });
 
   it('find_calls without a customer number asks Vapi for the limit only', async () => {

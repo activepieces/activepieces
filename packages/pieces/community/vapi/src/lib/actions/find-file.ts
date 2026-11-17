@@ -15,7 +15,7 @@ export const findFile = createAction({
   outputSchema: vapiOutputSchemas.findFile,
   aiMetadata: {
     description:
-      'Finds knowledge-base files uploaded to Vapi and returns each one\'s ID, name, processing status, size in bytes and creation time, newest first. Optional Name Contains matches part of the file name, case-insensitive. Matching is done by this tool over the 1000 most recent files. Use the ID with Get File. Read-only.',
+      'Finds knowledge-base files uploaded to Vapi and returns each one\'s ID, name, processing status, size in bytes and creation time, newest first. Optional Name Contains matches part of the file name, case-insensitive. Matching is done by this tool over the 1000 most recent files. If Truncated is true, more records exist than were scanned and a match may be missing: use a more specific value or the ID from the Vapi dashboard. Use the ID with Get File. Read-only.',
     idempotent: true,
   },
   props: {
@@ -24,7 +24,7 @@ export const findFile = createAction({
   },
   async run(context) {
     const needle = context.propsValue.nameContains?.trim() ?? '';
-    const files = await vapiResources.find({
+    const { items: files, truncated } = await vapiResources.find({
       apiKey: context.auth.secret_text,
       path: '/file',
       operation: 'list files',
@@ -32,6 +32,6 @@ export const findFile = createAction({
       matches: (item) => needle === '' || vapiUtils.containsIgnoreCase({ haystack: item.name, needle }),
       limit: vapiUtils.clampLimit({ value: context.propsValue.limit, defaultValue: 20, max: 100 }),
     });
-    return { files };
+    return { files, truncated };
   },
 });

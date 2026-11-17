@@ -10,7 +10,7 @@ export const deleteAssistant = createAction({
   name: 'delete_assistant',
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Assistant',
-  description: 'Permanently delete a assistant.',
+  description: 'Permanently delete an assistant.',
   audience: 'human',
   outputSchema: vapiOutputSchemas.assistant,
   props: {

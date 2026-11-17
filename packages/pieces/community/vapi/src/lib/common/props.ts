@@ -30,8 +30,9 @@ async function findResources<T>({
   flatten: (item: Record<string, unknown>) => T;
   matches: (item: T) => boolean;
   limit: number;
-}): Promise<T[]> {
+}): Promise<{ items: T[]; truncated: boolean }> {
   const items = await listResources({ apiKey, path, operation, limit: FINDER_SCAN_LIMIT });
+  const truncated = items.length >= FINDER_SCAN_LIMIT;
   const result: T[] = [];
   for (const item of items) {
     const flat = flatten(item);
@@ -42,7 +43,7 @@ async function findResources<T>({
       }
     }
   }
-  return result;
+  return { items: result, truncated: truncated && result.length < limit };
 }
 
 function readPath({ item, path }: { item: Record<string, unknown>; path: string }): unknown {
@@ -99,7 +100,12 @@ function resourceDropdown({
           options: items
             .filter((item) => typeof item['id'] === 'string')
             .map((item) => ({ label: labelFor({ item, keys: labelKeys }), value: String(item['id']) })),
-          placeholder: items.length === 0 ? `No ${noun} found in this Vapi organization.` : undefined,
+          placeholder:
+            items.length === 0
+              ? `No ${noun} found in this Vapi organization.`
+              : items.length >= FINDER_SCAN_LIMIT
+                ? `Showing the first ${FINDER_SCAN_LIMIT}; enter the ID manually if yours isn't listed.`
+                : undefined,
         };
       } catch (error) {
         return {
@@ -179,3 +185,4 @@ export const vapiResources = {
   list: listResources,
   find: findResources,
 };
+
