@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { FieldType, FilterOperator, TableWebhookEventType } from '@activepieces/shared'
+import { EDITOR_SESSION_ID_HEADER, FieldType, FilterOperator, TableWebhookEventType, WebsocketClientEvent } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -7,6 +7,7 @@ import qs from 'qs'
 import { webhookService } from '../../../../src/app/webhooks/webhook.service'
 import { db } from '../../../helpers/db'
 import { describeWithAuth } from '../../../helpers/describe-with-auth'
+import { draftPushes } from '../../../helpers/draft-push'
 import {
     createMockCell,
     createMockField,
@@ -554,6 +555,55 @@ describe('Record API', () => {
                 url: `/api/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.EQ, value: '2026-08-12T14:30:00Z' }] })}`,
             })
             expect(sameInstantDifferentText?.json().data.length).toBe(0)
+        })
+    })
+
+    describeWithAuth('Live table updates', () => app!, (setup) => {
+        afterEach(() => {
+            vi.restoreAllMocks()
+        })
+
+        it('tells the project the table changed, with the editor that changed it', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const editorSessionId = apId()
+            const pushes = draftPushes.capture({ event: WebsocketClientEvent.TABLE_UPDATED })
+
+            const response = await ctx.inject({
+                method: 'POST',
+                url: '/api/v1/records',
+                headers: { [EDITOR_SESSION_ID_HEADER]: editorSessionId },
+                body: { tableId: table.id, records: [[{ fieldId: field.id, value: 'hello' }]] },
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.CREATED)
+            expect(pushes).toEqual([{ room: ctx.project.id, payload: { tableId: table.id, editorSessionId } }])
+        })
+
+        it('tells the project when columns are reordered', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const pushes = draftPushes.capture({ event: WebsocketClientEvent.TABLE_UPDATED })
+
+            const response = await ctx.post('/v1/fields/reorder', { tableId: table.id, fieldIds: [field.id] })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(pushes).toEqual([{ room: ctx.project.id, payload: { tableId: table.id, editorSessionId: null } }])
+        })
+
+        it('stays quiet when an update changes nothing', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const [record] = await saveRecordsWithValues({ ctx, table, field, values: ['same'] })
+            const pushes = draftPushes.capture({ event: WebsocketClientEvent.TABLE_UPDATED })
+
+            const response = await ctx.post(`/v1/records/${record.id}`, {
+                tableId: table.id,
+                cells: [{ fieldId: field.id, value: 'same' }],
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(pushes).toEqual([])
         })
     })
 
