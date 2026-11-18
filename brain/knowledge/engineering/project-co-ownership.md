@@ -4,7 +4,7 @@ icon: 🤝
 
 # Project Co-Ownership
 
-How an Engineering project gets a second engineer who approves the scope before the build and reviews every PR. The approach goes public before the build, so a concern comes while it is still cheap. Tracked in the Linear project P-ENG-361. After a pilot of two projects, the team kept the process on 2026-11-18.
+How an Engineering project gets a second engineer who approves the scope before the build and reviews every PR. The approach goes public before the build, so a concern comes while it is still cheap. Tracked in the Linear project P-ENG-361.
 
 **Co-owned project** — a Linear project with a label from the `Co-Owner` project label group. The group is single-select, so a project has one Co-Owner. A project without such a label keeps the old process.
 **Co-Owner label** — one label per engineer in the `Co-Owner` group, named `<Name> (@github-login)`. It names the Co-Owner, shows in the projects list, and gives agents the reviewer login. Add a label when an engineer first becomes a Co-Owner.
@@ -82,10 +82,6 @@ Start reading at: <file>
 - The CE, EE and Cloud paths behave as the note says.
 - The breaking-change and security boxes are true.
 - No plan flag, setting, edition branch, special case or second code path that the cost check did not declare.
-
-## Pilot
-
-Two projects, P-ENG-326 and P-ENG-365, from 2026-11-03 to 2026-11-18. The process worked, and the team kept it with the agent rule in `.claude/rules/linear-tickets.md`.
 
 ## Edge cases
 
