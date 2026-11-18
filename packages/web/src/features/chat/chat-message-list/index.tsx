@@ -67,6 +67,7 @@ const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
                 <ChatBubble
                   id={isLastMessage ? 'last-message' : undefined}
                   key={index}
+                  data-testid={`chat-message-${message.role}`}
                   variant={message.role === 'user' ? 'sent' : 'received'}
                   className={cn(
                     'flex items-start',
