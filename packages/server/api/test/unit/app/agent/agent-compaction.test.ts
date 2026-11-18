@@ -25,21 +25,54 @@ function makeMessages(count: number, charsPer = 100): ModelMessage[] {
 describe('agentCompaction.estimateTokenCount', () => {
     it('estimates tokens from message character length', () => {
         const messages = makeMessages(2, 100)
-        const result = agentCompaction.estimateTokenCount({ messages, systemPromptLength: 0 })
+        const result = agentCompaction.estimateTokenCount({ messages, summary: null, summarizedUpToIndex: null, systemPromptLength: 0 })
         expect(result).toBeGreaterThan(0)
         expect(result).toBe(Math.ceil(JSON.stringify(messages).length / 4))
     })
 
     it('includes system prompt length in estimate', () => {
         const messages = makeMessages(1)
-        const withoutSystem = agentCompaction.estimateTokenCount({ messages, systemPromptLength: 0 })
-        const withSystem = agentCompaction.estimateTokenCount({ messages, systemPromptLength: 400 })
+        const withoutSystem = agentCompaction.estimateTokenCount({ messages, summary: null, summarizedUpToIndex: null, systemPromptLength: 0 })
+        const withSystem = agentCompaction.estimateTokenCount({ messages, summary: null, summarizedUpToIndex: null, systemPromptLength: 400 })
         expect(withSystem - withoutSystem).toBe(100)
     })
 
     it('returns 1 for empty messages with no system prompt', () => {
-        const result = agentCompaction.estimateTokenCount({ messages: [], systemPromptLength: 0 })
+        const result = agentCompaction.estimateTokenCount({ messages: [], summary: null, summarizedUpToIndex: null, systemPromptLength: 0 })
         expect(result).toBe(Math.ceil('[]'.length / 4))
+    })
+
+    it('counts only the summary and the messages after summarizedUpToIndex', () => {
+        const messages = makeMessages(10, 1_000)
+        const tailOnly = agentCompaction.estimateTokenCount({ messages: messages.slice(6), summary: null, summarizedUpToIndex: null, systemPromptLength: 0 })
+        const withSummary = agentCompaction.estimateTokenCount({ messages, summary: 'short summary', summarizedUpToIndex: 6, systemPromptLength: 0 })
+        const full = agentCompaction.estimateTokenCount({ messages, summary: null, summarizedUpToIndex: null, systemPromptLength: 0 })
+        expect(withSummary).toBeGreaterThan(tailOnly)
+        expect(withSummary - tailOnly).toBeLessThan(50)
+        expect(withSummary).toBeLessThan(full)
+    })
+
+    it('does not trigger compaction again on the turn after a pass', async () => {
+        const history = makeMessages(40, 10_000)
+        const provider = AIProviderName.ANTHROPIC
+        const before = agentCompaction.estimateTokenCount({ messages: history, summary: null, summarizedUpToIndex: null, systemPromptLength: 0 })
+        expect(agentCompaction.shouldCompact({ estimatedTokens: before, provider, messageCount: history.length, reservedTokens: RESERVED_TOKENS })).toBe(true)
+
+        const compacted = await agentCompaction.compactMessages({
+            messages: history,
+            existingSummary: null,
+            summarizedUpToIndex: null,
+            provider,
+            reservedTokens: RESERVED_TOKENS,
+            model: summaryModel,
+            summarizer: SUMMARIZER,
+            log: silentLog,
+        })
+        const nextTurn = [...history, { role: 'user' as const, content: 'next question' }]
+        const after = agentCompaction.estimateTokenCount({ messages: nextTurn, summary: compacted.summary, summarizedUpToIndex: compacted.summarizedUpToIndex, systemPromptLength: 0 })
+
+        expect(compacted.summarizedUpToIndex).toBeGreaterThan(0)
+        expect(agentCompaction.shouldCompact({ estimatedTokens: after, provider, messageCount: nextTurn.length, reservedTokens: RESERVED_TOKENS })).toBe(false)
     })
 })
 

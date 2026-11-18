@@ -21,11 +21,15 @@ const COMPACTION_SYSTEM_PROMPT = readFileSync(
     'utf8',
 )
 
-function estimateTokenCount({ messages, systemPromptLength }: {
+function estimateTokenCount({ messages, summary, summarizedUpToIndex, systemPromptLength }: {
     messages: ModelMessage[]
+    summary: string | null
+    summarizedUpToIndex: number | null
     systemPromptLength: number
 }): number {
-    return tokensIn(JSON.stringify(messages)) + Math.ceil(systemPromptLength / CHARS_PER_TOKEN_ESTIMATE)
+    const unsummarized = summary ? messages.slice(summarizedUpToIndex ?? 0) : messages
+    const summaryTokens = summary ? tokensIn(JSON.stringify(summaryBlockFor({ summary }))) : 0
+    return summaryTokens + tokensIn(JSON.stringify(unsummarized)) + Math.ceil(systemPromptLength / CHARS_PER_TOKEN_ESTIMATE)
 }
 
 function contextBudget({ provider, reservedTokens }: { provider: AIProviderName, reservedTokens: number }): number {
@@ -170,7 +174,7 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
     reservedTokens: number
 }): ModelMessage[] {
     const recentMessages = summary ? messages.slice(summarizedUpToIndex ?? 0) : messages
-    const summaryBlock = summary ? `[Previous conversation summary]\n${summary}\n[End of summary — conversation continues below]` : ''
+    const summaryBlock = summary ? summaryBlockFor({ summary }) : ''
 
     const budget = contextBudget({ provider, reservedTokens })
     const threshold = budget * COMPACTION_THRESHOLD
@@ -216,6 +220,10 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
         : [{ role: 'user', content: summaryText }, ...trimmedRecent]
 
     return finalPayload
+}
+
+function summaryBlockFor({ summary }: { summary: string }): string {
+    return `[Previous conversation summary]\n${summary}\n[End of summary — conversation continues below]`
 }
 
 function fairShareCap({ lengths, budget }: { lengths: number[], budget: number }): number {

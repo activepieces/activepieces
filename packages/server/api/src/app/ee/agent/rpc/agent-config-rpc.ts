@@ -274,8 +274,8 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             : Math.max(...await Promise.all(everyModelOfTheTurn.map((candidate) => agentAiUtils.affordableOutputTokens({ provider: candidate.config.provider, modelIds: [candidate.modelId], thinkingBudget: candidate.thinkingBudget }))))
         const reservedTokens = reservedOutputTokens + TOOL_SCHEMA_TOKEN_ESTIMATE
         const payloadReservedTokens = reservedTokens + agentAiUtils.estimateTokenCount({ messages: [], systemPromptLength: systemPromptText.length })
-        const estimatedTokens = agentCompaction.estimateTokenCount({ messages: llmHistory, systemPromptLength: systemPromptText.length })
         let compactionState = { summary: conversation.summary ?? null, summarizedUpToIndex: conversation.summarizedUpToIndex ?? null }
+        const estimatedTokens = agentCompaction.estimateTokenCount({ messages: llmHistory, ...compactionState, systemPromptLength: systemPromptText.length })
 
         const willCompact = agentCompaction.shouldCompact({ estimatedTokens, provider: contextProvider, messageCount: llmHistory.length, reservedTokens })
         log.debug({ estimatedTokens, willCompact, messageCount: llmHistory.length, systemPromptLength: systemPromptText.length }, '[agentRpc#getAgentConfig] Compaction decision')
