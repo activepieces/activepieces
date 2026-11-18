@@ -39,8 +39,6 @@ export class StepSettingsPage extends BuilderPage {
   }
 
   private dataSelectorNode(propertyPath: string) {
-    return this.page
-      .getByRole('tree', { name: 'Data Selector' })
-      .locator(`[data-testid="data-selector-node"][data-property-path="${propertyPath}"]`);
+    return this.page.locator(`[data-testid="data-selector-node"][data-property-path="${propertyPath}"]`);
   }
 }

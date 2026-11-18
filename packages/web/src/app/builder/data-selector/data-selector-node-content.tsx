@@ -94,8 +94,6 @@ const DataSelectorNodeContent = ({
       onKeyDown={handleKeyPress}
       ref={ripple}
       onClick={handleClick}
-      role="treeitem"
-      aria-level={depth + 1}
       aria-expanded={isExpandable ? expanded : undefined}
       className={cn(
         'w-full max-w-full relative select-none focus:outline-hidden cursor-pointer group transition-colors',
