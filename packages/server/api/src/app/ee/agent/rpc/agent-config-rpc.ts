@@ -288,7 +288,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                 conversationId: conversation.id,
                 context: await agentHelpers.usageContextOf({ source: conversation.source, projectId: runProjectId, agentId: conversation.agentId, flowRunId: conversation.flowRunId, userId: conversation.userId }),
             }
-            compactionState = await onFirstModelThatAnswers({
+            const compacted = await tryCatch(() => onFirstModelThatAnswers({
                 models: compactionModels,
                 billing: compactionBilling,
                 log,
@@ -303,12 +303,18 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                     log,
                     billing: compactionBilling,
                 }),
-            })
-            await agentHelpers.conversationRepo().update(conversationId, {
-                summary: compactionState.summary,
-                summarizedUpToIndex: compactionState.summarizedUpToIndex,
-            })
-            log.info({ summarizedUpToIndex: compactionState.summarizedUpToIndex, summaryLength: compactionState.summary?.length ?? 0 }, '[agentRpc#getAgentConfig] Compaction ran')
+            }))
+            if (compacted.error) {
+                log.warn({ error: compacted.error }, '[agentRpc#getAgentConfig] Compaction failed on every model, keeping the previous summary')
+            }
+            else {
+                compactionState = compacted.data
+                await agentHelpers.conversationRepo().update(conversationId, {
+                    summary: compactionState.summary,
+                    summarizedUpToIndex: compactionState.summarizedUpToIndex,
+                })
+                log.info({ summarizedUpToIndex: compactionState.summarizedUpToIndex, summaryLength: compactionState.summary?.length ?? 0 }, '[agentRpc#getAgentConfig] Compaction ran')
+            }
         }
 
         const messagesForLlm = agentCompaction.buildCompactedPayload({

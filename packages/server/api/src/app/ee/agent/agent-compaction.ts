@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, ErrorCode, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, ErrorCode } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { aiProviderUtils } from '@activepieces/shared'
 import { generateText, LanguageModel, ModelMessage } from 'ai'
@@ -14,7 +14,6 @@ const MAX_TOOL_RESULT_CHARS_FOR_SUMMARY = 2_000
 const SUMMARY_OUTPUT_RESERVE_TOKENS = 4_000
 const COMPACTION_TIMEOUT_MS = 35_000
 const MAX_SUMMARY_INPUT_TOKENS_PER_PASS = 32_000
-const SUMMARY_TIER = { id: 'agent-compaction', thinkingBudget: 0 }
 
 const COMPACTION_SYSTEM_PROMPT = readFileSync(
     path.resolve('packages/server/api/src/assets/prompts/chat-compaction-prompt.md'),
@@ -128,21 +127,17 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
         hadExistingSummary: !!existingSummary,
     }, 'Compacting chat messages')
 
-    const { data, error } = await tryCatch(() => generateText({
+    const { text } = await generateText({
         model,
         instructions: COMPACTION_SYSTEM_PROMPT,
         ...agentAiUtils.buildTelemetry({ functionId: 'agent-compaction', billing }),
         prompt: contentToSummarize,
-        providerOptions: agentAiUtils.buildProviderOptions({ provider: summarizer.provider, tier: SUMMARY_TIER, modelId: summarizer.modelId, disableThinking: true }),
+        providerOptions: agentAiUtils.buildProviderOptions({ provider: summarizer.provider, thinkingBudget: 0, modelId: summarizer.modelId, disableThinking: true }),
         maxOutputTokens: SUMMARY_OUTPUT_RESERVE_TOKENS,
         abortSignal: AbortSignal.timeout(COMPACTION_TIMEOUT_MS),
-    }))
-    if (error) {
-        log.warn({ error }, 'Compaction failed or timed out, keeping previous summary')
-        return { summary: existingSummary ?? '', summarizedUpToIndex: startIndex }
-    }
+    })
 
-    return { summary: data.text, summarizedUpToIndex: newCutoffIndex }
+    return { summary: text, summarizedUpToIndex: newCutoffIndex }
 }
 
 function cutoffForOnePass({ messages, startIndex, windowCutoffIndex }: {

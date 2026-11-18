@@ -312,11 +312,10 @@ describe('agentCompaction with reserved tokens', () => {
         expect(result.summarizedUpToIndex).toBeGreaterThan(0)
     })
 
-    it('moves past a timed-out pass on the next turn instead of re-sending the whole backlog', async () => {
-        const messages = makeMessages(120, 4_000)
+    it('rejects a timed-out pass so the caller can try the next model', async () => {
         vi.mocked(generateText).mockRejectedValueOnce(new DOMException('The operation was aborted due to timeout', 'TimeoutError'))
-        const timedOut = await agentCompaction.compactMessages({
-            messages,
+        await expect(agentCompaction.compactMessages({
+            messages: makeMessages(120, 4_000),
             existingSummary: null,
             summarizedUpToIndex: null,
             provider: AIProviderName.ACTIVEPIECES,
@@ -324,12 +323,15 @@ describe('agentCompaction with reserved tokens', () => {
             model: summaryModel,
             summarizer: SUMMARIZER,
             log: silentLog,
-        })
-        expect(timedOut.summarizedUpToIndex).toBe(0)
+        })).rejects.toMatchObject({ name: 'TimeoutError' })
+    })
+
+    it('moves past a timed-out pass on the next turn instead of re-sending the whole backlog', async () => {
+        const messages = makeMessages(120, 4_000)
         const next = await agentCompaction.compactMessages({
             messages,
-            existingSummary: timedOut.summary,
-            summarizedUpToIndex: timedOut.summarizedUpToIndex,
+            existingSummary: null,
+            summarizedUpToIndex: null,
             provider: AIProviderName.ACTIVEPIECES,
             reservedTokens: RESERVED_TOKENS,
             model: summaryModel,
@@ -434,21 +436,6 @@ describe('agentCompaction with reserved tokens', () => {
         const request = vi.mocked(generateText).mock.calls.at(-1)?.[0]
         expect(request?.maxOutputTokens).toBe(4_000)
         expect(request?.abortSignal).toBeInstanceOf(AbortSignal)
-    })
-
-    it('keeps the previous summary when the summarizer times out, so the turn still runs', async () => {
-        vi.mocked(generateText).mockRejectedValueOnce(new DOMException('The operation was aborted due to timeout', 'TimeoutError'))
-        const result = await agentCompaction.compactMessages({
-            messages: makeMessages(40, 20_000),
-            existingSummary: 'earlier summary',
-            summarizedUpToIndex: 4,
-            provider: AIProviderName.ANTHROPIC,
-            reservedTokens: RESERVED_TOKENS,
-            model: summaryModel,
-            summarizer: SUMMARIZER,
-            log: silentLog,
-        })
-        expect(result).toEqual({ summary: 'earlier summary', summarizedUpToIndex: 4 })
     })
 })
 
