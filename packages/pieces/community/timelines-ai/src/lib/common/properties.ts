@@ -55,18 +55,15 @@ export const chatDropdown = ({
 export const whatsappAccountDropdown = ({
   required = true,
   description = 'The connected WhatsApp number to use.',
-  icon,
 }: {
   required?: boolean;
   description?: string;
-  icon?: 'text' | 'code' | 'markdown' | 'reply' | 'reply-all' | 'users' | 'user' | 'send' | 'type' | 'file' | 'paperclip' | 'location' | 'tag' | 'inbox' | 'calendar' | 'trash' | 'filter' | 'sliders' | 'blank';
 }) =>
   Property.Dropdown({
     auth: timelinesAiAuth,
     displayName: 'WhatsApp Account',
     description,
     required,
-    ...(icon ? { icon } : {}),
     refreshers: ['auth'],
     options: async ({ auth: apiKey }) => {
       if (!apiKey) {
