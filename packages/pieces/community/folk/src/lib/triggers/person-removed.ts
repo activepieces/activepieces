@@ -1,7 +1,8 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { folkAuth } from '../common/auth';
-import { folkClient } from '../common/client';
 import { folkProps } from '../common/props';
+import { folkWebhook } from '../common/webhook';
+import { folkOutputSchemas } from '../output-schemas';
 
 export const personRemoved = createTrigger({
   auth: folkAuth,
@@ -10,7 +11,7 @@ export const personRemoved = createTrigger({
   displayName: 'Person Removed',
   description: 'Fires when a person is removed from your Folk workspace.',
   aiMetadata: {
-    description: 'Fires when a person (contact) is deleted from the connected Folk workspace, optionally scoped to a single group. The event payload carries the deleted person ID along with a snapshot of their name and emails.',
+    description: 'Fires when a person (contact) is deleted from the connected Folk workspace, optionally scoped to a single group. The event payload carries the deleted person ID along with a snapshot of their name and emails. Deliveries are signature-checked and retried deliveries are de-duplicated.',
   },
   props: {
     groupId: folkProps.group_id(false, 'Group ID'),
@@ -30,51 +31,8 @@ export const personRemoved = createTrigger({
       },
     },
   },
+  outputSchema: folkOutputSchemas.webhookEvent,
   type: TriggerStrategy.WEBHOOK,
 
-  async onEnable(context) {
-    const eventConfig: any = {
-      eventType: 'person.deleted',
-    };
-
-    if (context.propsValue?.groupId) {
-      eventConfig.filter = {
-        groupId: context.propsValue.groupId,
-      };
-    }
-
-    const subscribedEvents = [eventConfig];
-
-    const webhook = await folkClient.createWebhook({
-      apiKey: context.auth,
-      name: `Activepieces Person Removed - ${Date.now()}`,
-      targetUrl: context.webhookUrl,
-      subscribedEvents,
-    });
-
-    await context.store?.put('_webhookId', webhook.data.id);
-    // await context.store?.put('_signingSecret', webhook.data.signingSecret);
-  },
-
-  async onDisable(context) {
-    const webhookId = (await context.store?.get('_webhookId')) as string;
-    if (webhookId) {
-      try {
-        await folkClient.deleteWebhook({
-          apiKey: context.auth,
-          webhookId,
-        });
-      } catch (error) {
-        console.warn('Failed to delete webhook:', error);
-      }
-    }
-  },
-
-  async run(context) {
-    const payloadBody = context.payload.body as any;
-    if (payloadBody.type !== 'person.deleted') {
-      return [];
-    }
-    return [payloadBody];
-  },
+  ...folkWebhook.handlers({ eventType: 'person.deleted', label: 'Person Removed' }),
 });

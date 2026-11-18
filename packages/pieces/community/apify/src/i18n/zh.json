@@ -220,6 +220,17 @@
   "PUT": "弹出",
   "DELETE": "删除",
   "HEAD": "黑色",
+  "Where to Read": "讀取位置",
+  "How Many Items": "項目數量",
+  "What to Run": "要執行的內容",
+  "What to Send": "要傳送的內容",
+  "Results": "結果",
+  "Input Changes": "輸入變更",
+  "Which Record": "哪一筆記錄",
+  "Page to Scrape": "要抓取的頁面",
+  "How to Load It": "如何載入它",
+  "Request": "請求",
+  "Data to send": "要傳送的資料",
   "Watch Actor Runs": "Watch Actor Runs",
   "Watch Task Runs": "Watch Task Runs",
   "Fires when a run of the Actor ends with a chosen status.": "Fires when a run of the Actor ends with a chosen status.",
@@ -227,5 +238,7 @@
   "Markdown": "Markdown",
   "Statuses": "Statuses",
   "Turning this flow on creates a webhook in your Apify account. Turning it off removes it.": "Turning this flow on creates a webhook in your Apify account. Turning it off removes it.",
-  "Run outcomes that start the flow.": "Run outcomes that start the flow."
+  "Run outcomes that start the flow.": "Run outcomes that start the flow.",
+  "What to Watch": "要監看什麼",
+  "When to Fire": "何時觸發"
 }

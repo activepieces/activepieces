@@ -9,6 +9,7 @@ import { StatusCodes } from 'http-status-codes'
 import { pieceMetadataService } from '../../../../src/app/pieces/metadata/piece-metadata-service'
 import { db } from '../../../helpers/db'
 import {
+    createMockConnection,
     createMockPieceMetadata,
     createMockProjectRole,
 } from '../../../helpers/mocks'
@@ -67,6 +68,24 @@ describe('AppConnection API', () => {
             expect(updateResponse?.statusCode).toBe(StatusCodes.OK)
             const updatedResponseBody = updateResponse?.json()
             expect(updatedResponseBody.metadata).toEqual({ foo: 'baz' })
+        })
+
+        it('Keeps the stored account identifier when metadata is updated', async () => {
+            const ctx = await createTestContext(app!)
+            const connection = createMockConnection({
+                platformId: ctx.platform.id,
+                projectIds: [ctx.project.id],
+                metadata: { foo: 'bar', accountIdentifier: 'user@example.com' },
+            }, ctx.user.id)
+            await db.save('app_connection', connection)
+
+            const response = await ctx.post(`/v1/app-connections/${connection.id}`, {
+                displayName: 'Updated Connection Name',
+                metadata: { foo: 'baz', accountIdentifier: 'spoofed@example.com' },
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(response.json().metadata).toEqual({ foo: 'baz', accountIdentifier: 'user@example.com' })
         })
 
         describeRolePermissions({

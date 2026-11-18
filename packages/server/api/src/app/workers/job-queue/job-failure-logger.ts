@@ -1,7 +1,10 @@
 import path from 'path'
+import { tryCatchSync } from '@activepieces/core-utils'
 import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
 
 const STACK_FRAME_RE = /at\s+(?:.+?\s+\()?([^\s()]+):(\d+):\d+\)?/
+const JsonErrorCode = z.object({ code: z.union([z.string().min(1), z.number()]) })
 
 export const jobFailureLogger = {
     signatureOf(error: unknown): string {
@@ -11,10 +14,8 @@ export const jobFailureLogger = {
     },
     signatureFromMessage(message: string, sourceLabel: string): string {
         const firstLine = message.split('\n', 1)[0].trim()
-        const colonIdx = firstLine.indexOf(':')
-        const head = colonIdx > 0 ? firstLine.slice(0, colonIdx) : firstLine
-        const clean = head.replace(/\s+/g, ' ').slice(0, 80)
-        return `${sourceLabel}@${clean || 'unknown'}`
+        const head = readJsonHead(firstLine) ?? readHead(firstLine)
+        return `${sourceLabel}@${head || 'unknown'}`
     },
     logJobFailed({ queueName, jobId, jobType, error, log, signatureOverride }: LogJobFailedParams): void {
         const errorSignature = signatureOverride ?? jobFailureLogger.signatureOf(error)
@@ -33,6 +34,19 @@ function readErrorName(error: unknown): string {
         return declared ?? error.constructor?.name ?? 'Error'
     }
     return typeof error
+}
+
+function readHead(line: string): string {
+    const colonIdx = line.indexOf(':')
+    const head = colonIdx > 0 ? line.slice(0, colonIdx) : line
+    return head.replace(/\s+/g, ' ').slice(0, 80)
+}
+
+function readJsonHead(line: string): string | null {
+    if (!line.startsWith('{')) return null
+    const { data } = tryCatchSync((): unknown => JSON.parse(line))
+    const parsed = JsonErrorCode.safeParse(data)
+    return parsed.success ? String(parsed.data.code).slice(0, 80) : null
 }
 
 function readTopStackFrame(error: unknown): string | null {

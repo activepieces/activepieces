@@ -25,7 +25,7 @@ const CopyTextTooltip = ({
             withoutTooltip={true}
             variant="ghost"
             className="hover:bg-gray-1/20 hover:text-gray-1"
-            textToCopy={text || ''}
+            value={text || ''}
             {...adminControl(controlId)}
           ></CopyButton>
         </div>

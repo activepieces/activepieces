@@ -8,12 +8,12 @@ icon: "chart-pie"
 
 **AI usage** answers one question: where is your AI money going? It covers every AI call on the platform, from flow steps, agents, chat and knowledge bases, on your own keys and on Activepieces credits.
 
-Open it at `/platform/ai/usage`.
+Open it from **AI Center → Usage** in the sidebar, or search for it.
 
 ![AI usage overview](/resources/screenshots/ai-center-usage.png)
 
 <Note>
-  AI usage is available on Cloud and self-hosted Enterprise. It is not in the menu yet, so open it by URL. Community Edition doesn't have it. On self-hosted Enterprise, the page needs a billing connection; without one it says AI usage isn't available.
+  AI usage is available on Cloud and self-hosted Enterprise. Community Edition doesn't have it. On self-hosted Enterprise, the page needs a billing connection; without one it says AI usage isn't available.
 </Note>
 
 New usage shows up a few minutes after the AI call.
@@ -22,8 +22,8 @@ New usage shows up a few minutes after the AI call.
 
 Two controls sit next to the page title, on every usage page:
 
-- **Scope**: **Production** (the default) counts live flows, agents and chat. **Testing** counts test runs from the flow builder and the agent builder. **All** counts both.
-- **Period**: the last hour, 6 hours, 12 hours, 24 hours, 7 days, 30 days or 90 days, this month or last month.
+- **Scope**: **Published** (the default) counts live flows, agents and chat. **Testing** counts test runs from the flow builder and the agent builder. **All** counts both.
+- **Period**: the last hour, 6 hours, 12 hours, 24 hours, 7 days (the default), 30 days or 90 days, this month or last month.
 
 The whole page follows both. They stay in the URL, so you can share a view.
 
@@ -35,7 +35,7 @@ From top to bottom:
    - For a period of a day or less, the pace is a **Daily run rate**: the spend of the period, scaled to a full day.
    - For longer periods it is the **Average per day**.
    - For **This month** it is a **Month-end forecast**, with the daily pace it is based on.
-2. **Chart**: total spend for the period, the change from the previous period, and a line chart. The solid line is this period, the dashed line the previous one. Switch between **Spend**, **Calls** and **Tokens**.
+2. **Chart**: total spend for the period, the change from the previous period (hover it to see what it compares with), and a line chart. The solid line is this period, the dashed line the previous one. Switch between **Spend**, **Calls** and **Tokens**.
 3. **Spend by source**: what kind of work spends: **Flow AI steps**, **Run Agent steps**, **Agents**, **Chat** and **Knowledge base**.
 4. **Top lists**: the top five **Projects**, **Flows**, **Agents**, **Users**, **Providers & keys** and **Models**. The bar under each row is its share of all AI spend in the period.
 

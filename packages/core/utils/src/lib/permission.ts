@@ -67,4 +67,6 @@ export enum AIProviderName {
     MOONSHOT = 'moonshot',
     META = 'meta',
     NVIDIA = 'nvidia',
+    COHERE = 'cohere',
+    LITELLM = 'litellm',
 }

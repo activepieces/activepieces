@@ -11,7 +11,7 @@ function createQueueDispatcher(params: {
     queueName: string
     worker: BullMQWorker
     dequeue: (worker: BullMQWorker, queueName: string, log: FastifyBaseLogger) => Promise<ConsumeJobRequest | null>
-    onOrphanedJob: (jobId: string, token: string, queueName: string, log: FastifyBaseLogger) => Promise<void>
+    onOrphanedJob: (params: { jobId: string, token: string, queueName: string, log: FastifyBaseLogger }) => Promise<void>
     log: FastifyBaseLogger
 }): QueueDispatcher {
     const { queueName, worker, dequeue, onOrphanedJob, log } = params
@@ -57,7 +57,7 @@ function createQueueDispatcher(params: {
             const waiter = takeConnectedWaiter()
             if (isNil(waiter)) {
                 log.warn({ queueName, job: { id: job.jobId } }, '[QueueDispatcher] job dequeued but no waiter available, returning to queue')
-                const { error: orphanError } = await tryCatch(() => onOrphanedJob(job.jobId, job.token, job.queueName, log))
+                const { error: orphanError } = await tryCatch(() => onOrphanedJob({ jobId: job.jobId, token: job.token, queueName: job.queueName, log }))
                 if (orphanError) {
                     log.error({ queueName, job: { id: job.jobId }, error: String(orphanError) }, '[QueueDispatcher] failed to return orphaned job to queue')
                 }

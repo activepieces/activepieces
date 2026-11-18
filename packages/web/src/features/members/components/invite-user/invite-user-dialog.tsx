@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
+import { clipboardUtils } from '@/components/custom/clipboard/use-copy-to-clipboard';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -332,9 +333,12 @@ const InviteUserDialogInternal = ({
       return;
     }
 
-    const newEmailsCount = emailsToInvite.filter(
-      (email) => !existingEmails.has(email.trim().toLowerCase()),
-    ).length;
+    const newEmailsCount = emailsToInvite.filter((email) => {
+      const normalized = email.trim().toLowerCase();
+      return (
+        !platformUserEmails.has(normalized) && !existingEmails.has(normalized)
+      );
+    }).length;
     if (newEmailsCount > 0 && !ensureSeatsAvailable(newEmailsCount)) {
       return;
     }
@@ -342,15 +346,10 @@ const InviteUserDialogInternal = ({
     mutate({ ...data, emails: emailsToInvite });
   };
 
-  const copyAllLinks = () => {
-    const text = resultsWithLinks
-      .map((r) => `${r.email}: ${r.link}`)
-      .join('\n');
-    navigator.clipboard.writeText(text);
-    toast.success(t('All invitation links copied successfully'), {
-      duration: 3000,
+  const copyAllLinks = () =>
+    clipboardUtils.copy({
+      value: resultsWithLinks.map((r) => `${r.email}: ${r.link}`).join('\n'),
     });
-  };
 
   const downloadCsv = () => {
     const rows = [

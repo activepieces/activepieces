@@ -1,5 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { folkAuth } from '../common/auth';
+import { folkOutputSchemas } from '../output-schemas';
 import { folkClient } from '../common/client';
 import { folkProps } from '../common/props';
 
@@ -9,7 +10,8 @@ export const getCompany = createAction({
   classification: 'READ',
   displayName: 'Get Company',
   description: 'Retrieve detailed information about a company from your Folk workspace.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: folkOutputSchemas.legacyCompanyGet,
   aiMetadata: {
     description: 'Fetches the full record of a single Folk company by its company ID. Use when you already have the company ID and need its current details; if you only have a name or email, find the ID first with Find Company. Read-only and idempotent.',
     idempotent: true,
@@ -18,16 +20,10 @@ export const getCompany = createAction({
     companyId: folkProps.company_id(true),
   },
   async run(context) {
-    const { companyId } = context.propsValue;
-
-    const response = await folkClient.getCompany({
-      apiKey: context.auth,
-      companyId: companyId as string,
+    const company = await folkClient.getData<Record<string, unknown>>({
+      auth: context.auth,
+      path: `/v1/companies/${folkClient.idSegment({ value: String(context.propsValue.companyId ?? ''), label: 'Company' })}`,
     });
-
-    return {
-      company: response.data,
-    };
+    return { company };
   },
 });
-

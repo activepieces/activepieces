@@ -114,6 +114,7 @@
     "test": {
       "dependsOn": ["build"],
       "inputs": ["src/**", "test/**", "tsconfig*.json", "vitest.config.*"],
+      "passThroughEnv": ["VITEST_MAX_WORKERS"],
       "outputs": ["coverage/**"]
     },
     "test-unit": {

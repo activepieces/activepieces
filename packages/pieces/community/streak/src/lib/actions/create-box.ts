@@ -1,8 +1,9 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { streakAuth } from '../common/auth';
+import { boxOutputSchema } from '../common/output-schemas';
 import { streakApiCall } from '../common/client';
-import { flattenStreakBox } from '../common/flatten';
+import { flattenStreakBox, toEmailList } from '../common/flatten';
 import { pipelineDropdown, stageDropdown } from '../common/props';
 import { StreakBox } from '../common/types';
 
@@ -18,6 +19,7 @@ export const createBoxAction = createAction({
       'Create a new box (Streak\'s CRM record, e.g. a deal, lead, or candidate) inside a pipeline. Use when an agent needs to add a new record to a Streak pipeline; requires the target pipeline and a name, with optional starting stage, notes, and assignee emails. Not idempotent: each call creates another box even with identical inputs.',
     idempotent: false,
   },
+  outputSchema: boxOutputSchema,
   props: {
     pipelineKey: pipelineDropdown,
     name: Property.ShortText({
@@ -47,7 +49,7 @@ export const createBoxAction = createAction({
     if (stageKey) body['stageKey'] = stageKey;
     if (notes) body['notes'] = notes;
     if (assignedToEmails && assignedToEmails.length > 0) {
-      body['assignedToSharingEntries'] = (assignedToEmails as string[]).map(
+      body['assignedToSharingEntries'] = toEmailList(assignedToEmails).map(
         (email) => ({ email }),
       );
     }

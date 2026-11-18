@@ -13,7 +13,7 @@ export const githubUpdateIssueAiAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Edits an existing issue (PATCH /repos/{owner}/{repo}/issues/{issue_number}), setting only the fields you provide — title, body, state (open/closed) with state_reason, milestone (set Clear Milestone to remove it), labels, or assignees. Use to modify, close, or reopen an issue (no separate close action). Labels and assignees here REPLACE the existing set; use Add Labels to Issue / Add Assignees to Issue to append. Idempotent: applying the same field values again leaves the issue in the same state.',
+      'Edits an existing issue (PATCH /repos/{owner}/{repo}/issues/{issue_number}), setting only the fields you provide — title, body, state (open/closed) with state_reason, milestone (set Clear Milestone to remove it), labels, or assignees. Use to modify, close, or reopen an issue (no separate close action). Labels and assignees here REPLACE the existing set; use Add Labels to Issue / Add Assignees to Issue to append. Leaving Labels or Assignees out, or passing an empty list, keeps the current ones; set Clear Labels / Clear Assignees to remove them all. Idempotent: applying the same field values again leaves the issue in the same state.',
     idempotent: true,
   },
   props: {
@@ -82,13 +82,25 @@ export const githubUpdateIssueAiAction = createAction({
     labels: Property.Array({
       displayName: 'Labels',
       description:
-        'Replaces the full label set. Resolve names via List Repository Labels.',
+        'Replaces the full label set; leave empty to keep it. Resolve names via List Repository Labels.',
+      required: false,
+    }),
+    clear_labels: Property.Checkbox({
+      displayName: 'Clear Labels',
+      description:
+        'Set to true to remove every label from the issue. Overrides Labels.',
       required: false,
     }),
     assignees: Property.Array({
       displayName: 'Assignees',
       description:
-        'Replaces the full assignee set (logins). Resolve via List Assignees.',
+        'Replaces the full assignee set (logins); leave empty to keep it. Resolve via List Assignees.',
+      required: false,
+    }),
+    clear_assignees: Property.Checkbox({
+      displayName: 'Clear Assignees',
+      description:
+        'Set to true to remove every assignee from the issue. Overrides Assignees.',
       required: false,
     }),
   },
@@ -107,10 +119,16 @@ export const githubUpdateIssueAiAction = createAction({
     } else if (propsValue.milestone !== undefined) {
       body['milestone'] = propsValue.milestone;
     }
-    if (propsValue.labels !== undefined)
-      body['labels'] = propsValue.labels as string[];
-    if (propsValue.assignees !== undefined)
-      body['assignees'] = propsValue.assignees as string[];
+    if (propsValue.clear_labels) {
+      body['labels'] = [];
+    } else if (isNonEmptyList(propsValue.labels)) {
+      body['labels'] = propsValue.labels;
+    }
+    if (propsValue.clear_assignees) {
+      body['assignees'] = [];
+    } else if (isNonEmptyList(propsValue.assignees)) {
+      body['assignees'] = propsValue.assignees;
+    }
 
     try {
       const response = await githubApiCall({
@@ -132,3 +150,7 @@ export const githubUpdateIssueAiAction = createAction({
     }
   },
 });
+
+function isNonEmptyList(value: unknown): value is unknown[] {
+  return Array.isArray(value) && value.length > 0;
+}

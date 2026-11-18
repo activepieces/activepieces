@@ -1,7 +1,8 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
 import { bexioCommonProps } from '../common/props';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 export const createProductAction = createAction({
   auth: bexioAuth,
@@ -9,7 +10,8 @@ export const createProductAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Product',
   description: 'Create a new product or service',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: bexioOutputSchemas.itemOutputSchema,
   aiMetadata: { description: 'Create a new Bexio article (a physical product or a service) with internal code and name, plus optional pricing, taxes, unit, currency, supplier, stock, and dimension details. Not idempotent: each call adds a separate article even if the code repeats, so check for an existing product first to avoid duplicates. Stock-item fields require the stock_edit scope.', idempotent: false },
   props: {
     user_id: Property.Dropdown({

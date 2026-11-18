@@ -1,6 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { folkAuth } from '../common/auth';
+import { folkOutputSchemas } from '../output-schemas';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { folkClient } from '../common/client';
+import { folkLegacy } from '../common/legacy';
 import { folkProps } from '../common/props';
 
 export const createCompany = createAction({
@@ -9,7 +12,8 @@ export const createCompany = createAction({
   classification: 'WRITE',
   displayName: 'Create Company',
   description: 'Create a new company in your Folk workspace. You can add emails, links, phone numbers, and assign it to a group.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: folkOutputSchemas.legacyCompanyWrite,
   aiMetadata: {
     description: 'Creates a new company record in the Folk CRM, optionally attaching addresses, emails, phone numbers, URLs, an industry, and a group assignment. Use when a company does not yet exist in Folk; only the company name is required. Not idempotent: each call creates a separate company even with identical input, so guard against duplicates (e.g. search with Find Company first).',
     idempotent: false,
@@ -77,44 +81,13 @@ export const createCompany = createAction({
     groupId: folkProps.group_id(false, 'Group ID'),
   },
   async run(context) {
-    const { name, description, industry, addresses, emails, phones, urls, groupId } = context.propsValue;
-
-    const companyData: any = {
-      name,
-    };
-
-    if (description) companyData.description = description;
-    if (industry) companyData.industry = industry;
-
-    if (addresses && Array.isArray(addresses) && addresses.length > 0) {
-      companyData.addresses = addresses.map((addr: any) => addr.value || addr);
-    }
-
-    if (emails && Array.isArray(emails) && emails.length > 0) {
-      companyData.emails = emails.map((e: any) => e.value || e);
-    }
-
-    if (phones && Array.isArray(phones) && phones.length > 0) {
-      companyData.phones = phones.map((p: any) => p.value || p);
-    }
-
-    if (urls && Array.isArray(urls) && urls.length > 0) {
-      companyData.urls = urls.map((u: any) => u.value || u);
-    }
-
-    if (groupId) {
-      companyData.groups = [{ id: groupId }];
-    }
-
-    const response = await folkClient.createCompany({
-      apiKey: context.auth,
-      data: companyData,
+    const body = folkLegacy.companyBody({ props: context.propsValue });
+    const company = await folkClient.sendData<Record<string, unknown>>({
+      auth: context.auth,
+      method: HttpMethod.POST,
+      path: '/v1/companies',
+      body,
     });
-
-    return {
-      company: response.data,
-      success: true,
-    };
+    return { company, success: true };
   },
 });
-

@@ -28,6 +28,7 @@ export const platformListController: FastifyPluginAsyncZod = async (app) => {
             return {
                 platformId: platform.id,
                 platformName: platform.name,
+                isOwner: platform.ownerId === platformUser.id,
                 projects,
             }
         }))

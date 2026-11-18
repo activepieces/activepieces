@@ -1,7 +1,7 @@
-import { ActivePiecesProviderAuthConfig, ActivePiecesProviderConfig, AIProviderConfig, AiProviderCredentials, AiProviderKeyStatus, AIProviderModelType, AIProviderName, AnthropicProviderAuthConfig, AnthropicProviderConfig, AzureProviderAuthConfig, AzureProviderConfig, BaseAIProviderAuthConfig, BaseModelSchema, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderAuthConfig, CloudflareGatewayProviderConfig, GoogleProviderAuthConfig, GoogleProviderConfig, MistralProviderAuthConfig, MistralProviderConfig, Nullable, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig, OpenAiCompatibleVendorConfig, OpenAIProviderAuthConfig, OpenAIProviderConfig, OpenRouterProviderAuthConfig, OpenRouterProviderConfig, VertexProviderAuthConfig, VertexProviderConfig } from '@activepieces/core-utils'
+import { ActivePiecesProviderAuthConfig, ActivePiecesProviderConfig, AIProviderConfig, AiProviderCredentials, AiProviderKeyStatus, AIProviderModelType, AIProviderName, AnthropicProviderAuthConfig, AnthropicProviderConfig, AzureProviderAuthConfig, AzureProviderConfig, BaseAIProviderAuthConfig, BaseModelSchema, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderAuthConfig, CloudflareGatewayProviderConfig, CohereProviderAuthConfig, CohereProviderConfig, GoogleProviderAuthConfig, GoogleProviderConfig, MistralProviderAuthConfig, MistralProviderConfig, Nullable, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig, OpenAiCompatibleVendorConfig, OpenAIProviderAuthConfig, OpenAIProviderConfig, OpenRouterProviderAuthConfig, OpenRouterProviderConfig, VertexProviderAuthConfig, VertexProviderConfig } from '@activepieces/core-utils'
 import { z } from 'zod'
 
-export { ActivePiecesProviderAuthConfig, ActivePiecesProviderConfig, AIProviderAuthConfig, AIProviderConfig, AiProviderCredentials, aiProviderCredentials, AIProviderModelType, AnthropicProviderAuthConfig, AnthropicProviderConfig, AzureProviderAuthConfig, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderAuthConfig, CloudflareGatewayProviderConfig, GoogleProviderAuthConfig, GoogleProviderConfig, MistralProviderAuthConfig, MistralProviderConfig, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig, OpenAiCompatibleVendorConfig, OpenAIProviderAuthConfig, OpenAIProviderConfig, OpenRouterProviderAuthConfig, OpenRouterProviderConfig, ProviderModelConfig, VertexProviderAuthConfig, VertexProviderConfig } from '@activepieces/core-utils'
+export { ActivePiecesProviderAuthConfig, ActivePiecesProviderConfig, AIProviderAuthConfig, AIProviderConfig, AiProviderCredentials, aiProviderCredentials, AIProviderModelType, AnthropicProviderAuthConfig, AnthropicProviderConfig, AzureProviderAuthConfig, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderAuthConfig, CloudflareGatewayProviderConfig, CohereProviderAuthConfig, CohereProviderConfig, GoogleProviderAuthConfig, GoogleProviderConfig, MistralProviderAuthConfig, MistralProviderConfig, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig, OpenAiCompatibleVendorConfig, OpenAIProviderAuthConfig, OpenAIProviderConfig, OpenRouterProviderAuthConfig, OpenRouterProviderConfig, ProviderModelConfig, VertexProviderAuthConfig, VertexProviderConfig } from '@activepieces/core-utils'
 
 const ProviderConfigUnion = z.discriminatedUnion('provider', [
     z.object({
@@ -118,6 +118,18 @@ const ProviderConfigUnion = z.discriminatedUnion('provider', [
         config: OpenAiCompatibleVendorConfig,
         auth: strictAuth(BaseAIProviderAuthConfig),
     }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.COHERE),
+        config: CohereProviderConfig,
+        auth: strictAuth(CohereProviderAuthConfig),
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.LITELLM),
+        config: OpenAICompatibleProviderConfig,
+        auth: strictAuth(OpenAICompatibleProviderAuthConfig),
+    }),
 ])
 
 const StrictAIProviderAuthConfig = z.union([
@@ -189,6 +201,7 @@ export const AIProviderModelMetadata = z.object({
     supportsToolCalling: z.boolean().optional(),
     supportsReasoning: z.boolean().optional(),
     supportsVision: z.boolean().optional(),
+    realModelId: z.string().optional(),
 })
 export type AIProviderModelMetadata = z.infer<typeof AIProviderModelMetadata>
 

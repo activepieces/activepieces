@@ -12,6 +12,7 @@ import { agentWorkerTools, GateDecision, TaintState } from './agent-worker-tools
 import { creditLedger } from './credit-ledger'
 import { declinedActions } from './declined-actions'
 import { classifyAgentRunError, delayWithJitter, drainOf, firstStepUsesFastModel, isTransientFailureText, NO_STEP_CONTENT, runAgentTurn, StreamDrain, trackStepContent, TurnModel } from './run-agent-turn'
+import { displayToolUtils } from './tools/display-tools'
 import { taskContext } from './tools/task-context'
 import { createTaskSubagentTools, taskTokensOf } from './tools/task-subagent-tools'
 
@@ -140,23 +141,25 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ...spreadIfDefined('user', isNil(userId) ? undefined : { id: userId }),
                 ...spreadIfDefined('project', isNil(billing.projectId) ? undefined : { id: billing.projectId }),
             })
+            const metadata: ModelMetadata = { platformId, conversationId, runId, surface: source === AgentRunSource.AGENT || source === AgentRunSource.FLOW_STEP ? 'agent' : 'chat' }
             const model = aiUtils.createModel({
                 credentials, modelId: config.modelId,
-                metadata: { platformId, conversationId, runId },
+                metadata,
                 billing,
                 turnAlreadyCharged: true,
                 ...spreadIfDefined('providerConfigId', config.providerConfigId),
             })
             const fastModel = aiUtils.createModel({
                 credentials, modelId: config.fastModelId,
+                metadata,
                 billing,
                 turnAlreadyCharged: true,
                 ...spreadIfDefined('providerConfigId', config.providerConfigId),
             })
-            const turnModels = turnModelsFor({ config, model, billing, metadata: { platformId, conversationId, runId } })
+            const turnModels = turnModelsFor({ config, model, billing, metadata })
             const fastTurnModel: TurnModel | undefined = isNil(config.platformTier)
                 ? { model: fastModel, provider, modelId: config.fastModelId, thinkingBudget: config.tier.thinkingBudget }
-                : isNil(config.fastCandidate) ? undefined : candidateTurnModel({ candidate: config.fastCandidate, billing })
+                : isNil(config.fastCandidate) ? undefined : candidateTurnModel({ candidate: config.fastCandidate, billing, metadata })
             let answering: TurnModel = turnModels[0]
             const runKey = (): RunKey => ({ provider: answering.provider, providerConfigId: answering.key?.providerConfigId ?? config.providerConfigId, modelId: answering.modelId })
 
@@ -334,11 +337,14 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                                     fn: () => ctx.apiClient.updateAgentProgress({
                                         conversationId,
                                         runId,
-                                        uiMessages: [
-                                            ...(config.previousUiMessages as PersistedAgentMessage[]),
-                                            { role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs: Date.now() - thinkingStartTime, tainted: taintState.readInThisReply() },
-                                        ],
-                                        messages: [...(config.allMessages as ModelMessage[]), ...responseMessages],
+                                        turn: {
+                                            baseMessageCount: config.allMessages.length,
+                                            messages: responseMessages,
+                                            baseUiMessageCount: config.previousUiMessages.length,
+                                            uiMessages: [
+                                                { role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs: Date.now() - thinkingStartTime, tainted: taintState.readInThisReply() },
+                                            ],
+                                        },
                                     }),
                                     maxAttempts: 2,
                                     log,
@@ -792,6 +798,19 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
             const label = selected['label']
             selectedConnectionByPiece.set(pieceName, externalId)
             return { externalId, label: typeof label === 'string' ? label : externalId }
+        },
+        pieceNeedsNoConnection: async (pieceName) => {
+            const discovered = await executeCrossProjectTool('ap_discover_action_auth', { pieceName })
+            return isObject(discovered) && discovered['noAuthRequired'] === true
+        },
+        autoPickedConnectionFor: !discoveryOnly ? undefined : async (pieceName) => {
+            await tryCatch(() => executeCrossProjectTool('ap_discover_action_auth', { pieceName }))
+            const { data: available } = await tryCatch(() => ctx.apiClient.executeAgentTool({
+                toolName: '__get_available_connections',
+                toolInput: { pieceName },
+                platformId, userId, source, conversationId,
+            }))
+            return displayToolUtils.preselectedConnection({ stored: available?.result })
         },
         onConnectionSelected: async ({ pieceName, connectionExternalId, label, projectId: connProjectId }) => {
             selectedConnectionByPiece.set(pieceName, connectionExternalId)

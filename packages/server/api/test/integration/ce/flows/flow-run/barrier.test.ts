@@ -201,12 +201,13 @@ async function failDispatch({ barrierId, attemptsMade }: { barrierId: string, at
     })
 }
 
-async function createFanOutBarrier({ flowRunId, items, batchSize, stepName, batchStepName }: {
+async function createFanOutBarrier({ flowRunId, items, batchSize, stepName, batchStepName, timeoutSeconds }: {
     flowRunId: string
     items: unknown[]
     batchSize: number
     stepName?: string
     batchStepName?: string
+    timeoutSeconds?: number
 }) {
     return barrierService(app.log).create({
         flowRunId,
@@ -214,6 +215,7 @@ async function createFanOutBarrier({ flowRunId, items, batchSize, stepName, batc
         platformId: ctx.platform.id,
         stepName: stepName ?? FAN_OUT_BATCH_STEP,
         version: 'V1',
+        timeoutSeconds,
         fanOut: {
             entryStepName: FAN_OUT_ENTRY_STEP,
             batchStepName: batchStepName ?? FAN_OUT_BATCH_STEP,
@@ -1099,6 +1101,26 @@ describe('barrier deadline', () => {
         expect(armed).toContain(barrier.id)
     })
 
+    it('brings the deadline forward when the step asks for a shorter timeout', async () => {
+        const { flowRun } = await createParentRun()
+        const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2], batchSize: 1, timeoutSeconds: 3600 })
+
+        const deadline = dayjs(barrier.resumeDateTime)
+        expect(deadline.isAfter(dayjs().add(50, 'minute'))).toBe(true)
+        expect(deadline.isBefore(dayjs().add(70, 'minute'))).toBe(true)
+    })
+
+    it('clamps a timeout longer than the paused-flow limit down to the run-age limit', async () => {
+        const { flowRun } = await createParentRun()
+        const runCreated = dayjs().subtract(10, 'day').toISOString()
+        await db.update('flow_run', flowRun.id, { created: runCreated })
+        const beyondCap = (PAUSE_TIMEOUT_DAYS + 10) * 24 * 60 * 60
+
+        const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2], batchSize: 1, timeoutSeconds: beyondCap })
+
+        expect(dayjs(barrier.resumeDateTime).toISOString()).toBe(dayjs(runCreated).add(PAUSE_TIMEOUT_DAYS, 'day').toISOString())
+    })
+
     it('counts the signals nobody answered as still running and marks the release as timed out', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
         const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com', 'b@example.com'] })
@@ -1740,6 +1762,55 @@ describe('fan-out dispatch', () => {
 
             expect(retried.barrier.id).toBe(barrier.id)
             expect(await listChildren(barrier.id)).toHaveLength(3)
+        })
+    })
+
+    it('keeps the first source when a retried fan-out create resolves different items, so each batch keeps its slice', async () => {
+        const { flowRun } = await createFanOutParentRun()
+        await withBarrierQueuePaused(async () => {
+            const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4], batchSize: 2 })
+
+            const retried = await createFanOutBarrier({ flowRunId: flowRun.id, items: [9, 8, 7, 6], batchSize: 2 })
+
+            expect(retried.barrier.id).toBe(barrier.id)
+            const source = await distributedStore.get<{ batches: unknown[][] }>(barrierSourceKey(barrier.id))
+            expect(source?.batches).toEqual([[1, 2], [3, 4]])
+        })
+    })
+
+    it('reports the kept source item count when a retried fan-out create resolves fewer items into the same number of batches', async () => {
+        const { flowRun } = await createFanOutParentRun()
+        await withBarrierQueuePaused(async () => {
+            const first = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4], batchSize: 2 })
+            expect(first).toMatchObject({ signalCount: 2, batchSize: 2, totalItems: 4 })
+
+            const retried = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3], batchSize: 2 })
+
+            expect(retried).toMatchObject({ signalCount: 2, batchSize: 2, totalItems: 4 })
+        })
+    })
+
+    it('reports the kept source batch size when a retried fan-out create asks for a different one', async () => {
+        const { flowRun } = await createFanOutParentRun()
+        await withBarrierQueuePaused(async () => {
+            await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4], batchSize: 2 })
+
+            const retried = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4], batchSize: 3 })
+
+            expect(retried).toMatchObject({ signalCount: 2, batchSize: 2, totalItems: 4 })
+        })
+    })
+
+    it('refuses a retried fan-out create whose items split into a different number of batches', async () => {
+        const { flowRun } = await createFanOutParentRun()
+        await withBarrierQueuePaused(async () => {
+            const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3], batchSize: 1 })
+            await distributedStore.delete(barrierSourceKey(barrier.id))
+
+            await expect(createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2], batchSize: 1 })).rejects.toMatchObject({ error: { code: ErrorCode.VALIDATION } })
+
+            expect(await distributedStore.exists(barrierSourceKey(barrier.id))).toBe(false)
+            expect(await listSignals(barrier.id)).toHaveLength(3)
         })
     })
 

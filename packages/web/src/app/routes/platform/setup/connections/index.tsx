@@ -23,7 +23,6 @@ import {
   AdminPage,
   AdminPageHeader,
   StatusDot,
-  StatusTone,
   adminPageResources,
 } from '@/app/components/admin';
 import { DeleteConnectionsDialog } from '@/app/connections/delete-connections-dialog';
@@ -132,7 +131,7 @@ const GlobalConnectionsTable = () => {
         />
       ),
       cell: ({ row }) => (
-        <StatusDot tone={CONNECTION_STATUS_TONE[row.original.status]}>
+        <StatusDot status={row.original.status}>
           {formatUtils.convertEnumToReadable(row.original.status)}
         </StatusDot>
       ),
@@ -226,6 +225,7 @@ const GlobalConnectionsTable = () => {
     gcTime: 0,
   });
   const isSample = !platform.plan.globalConnectionsEnabled;
+  const samplePage = useMemo(() => sampleData.globalConnectionsPage(), []);
 
   const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
@@ -319,7 +319,7 @@ const GlobalConnectionsTable = () => {
         )}
         emptyStateIcon={<Globe />}
         columns={columns}
-        page={isSample ? sampleData.globalConnectionsPage() : globalConnections}
+        page={isSample ? samplePage : globalConnections}
         isLoading={isSample ? false : isLoadingGlobalConnections}
         isError={isGlobalConnectionsError}
         errorStateEntity={t('connections')}
@@ -331,12 +331,6 @@ const GlobalConnectionsTable = () => {
       />
     </AdminPage>
   );
-};
-
-const CONNECTION_STATUS_TONE: Record<AppConnectionStatus, StatusTone> = {
-  [AppConnectionStatus.ACTIVE]: 'success',
-  [AppConnectionStatus.ERROR]: 'danger',
-  [AppConnectionStatus.MISSING]: 'neutral',
 };
 
 export { GlobalConnectionsTable };

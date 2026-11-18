@@ -2,6 +2,7 @@ import {
   AppConnectionScope,
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
+  pickDefaultConnectionExternalId,
 } from '@activepieces/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -23,7 +24,6 @@ import {
   ConnectionPickerData,
   isConnectionHealthy,
   normalizePieceName,
-  pickDefaultConnectionExternalId,
   resolveConnectionCardState,
 } from '../lib/message-parsers';
 import { useConversationId } from '../lib/use-conversation-id';
@@ -122,7 +122,7 @@ function useLiveConnections({
         if (!effectiveProjectId) return [];
         const result = await appConnectionsApi.list({
           projectId: effectiveProjectId,
-          pieceName,
+          pieceName: [pieceName],
           limit: 100,
         });
         return result.data;

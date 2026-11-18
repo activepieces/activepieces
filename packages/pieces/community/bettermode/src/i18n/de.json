@@ -260,6 +260,8 @@
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
   "HEAD": "HEAD",
+  "Request": "Anfrage",
+  "Data to send": "Daten zum Senden",
   "New Post": "Neuer Beitrag",
   "New Member": "Neues Mitglied",
   "New Reply": "New Reply",

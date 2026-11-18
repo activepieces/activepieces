@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   INVITED_USER_STATUS,
   PlatformUserListItem,
@@ -25,13 +26,23 @@ import { dataTableFilterUtils } from '@/components/custom/data-table/data-table-
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { useSeatLimitGuard } from '@/features/billing';
+import {
+  billingKeys,
+  billingQueries,
+  billingUtils,
+  seatUtils,
+  ActionWhenLocked,
+  LockedFeatureUsage,
+  useLockedFeature,
+  useSeatLimitGuard,
+} from '@/features/billing';
 import { InviteUserDialog } from '@/features/members';
 import {
   platformUserHooks,
   platformUserKeys,
   platformUserMutations,
 } from '@/features/platform-admin/hooks/platform-user-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { UserActions } from './actions/user-actions';
@@ -41,7 +52,7 @@ export type UserRowData = PlatformUserListItem;
 
 export default function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
-  const { isOutOfSeats, handleSeatLimitError, seatLimitDialog } =
+  const { isOutOfSeats, canBuySeats, handleSeatLimitError, seatLimitDialog } =
     useSeatLimitGuard();
 
   const [searchParams] = useSearchParams();
@@ -80,16 +91,49 @@ export default function UsersPage() {
     ]).catch(() => undefined);
   };
 
+  const { data: usersData } = platformUserHooks.useUsers();
+  const { data: invitationsData } = platformUserHooks.usePlatformInvitations();
+
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { data: subscription } = billingQueries.usePlatformSubscription(
+    platform.id,
+    true,
+  );
+  const activeUsers =
+    subscription?.usage.users ??
+    seatUtils.reservedSeats({
+      users: usersData?.data ?? [],
+      invitations: invitationsData ?? [],
+    });
+  const usersLimit = isNil(subscription)
+    ? platform.plan.usersLimit
+    : billingUtils.resolveSeatCap(subscription).effectiveLimit;
+  const usersLockedFeature = useLockedFeature({
+    unlocked: isNil(usersLimit) || activeUsers < usersLimit,
+    featureKey: 'USERS',
+  });
+
+  const refreshUsersAndSeats = () => {
+    refetch();
+    queryClient
+      .invalidateQueries({
+        queryKey: billingKeys.platformSubscription(platform.id),
+      })
+      .catch(() => undefined);
+  };
+
   const { mutate: deleteUser } = platformUserMutations.useDeleteUser({
-    onSuccess: refetch,
+    onSuccess: refreshUsersAndSeats,
   });
 
   const { mutate: deleteInvitation } =
-    platformUserMutations.useDeleteInvitation({ onSuccess: refetch });
+    platformUserMutations.useDeleteInvitation({
+      onSuccess: refreshUsersAndSeats,
+    });
 
   const { mutate: updateUserStatus, isPending: isUpdatingStatus } =
     platformUserMutations.useUpdateUserStatus({
-      onSuccess: refetch,
+      onSuccess: refreshUsersAndSeats,
       onError: (error) => {
         if (!handleSeatLimitError(error)) {
           internalErrorToast();
@@ -126,17 +170,36 @@ export default function UsersPage() {
         )}
         resources={adminPageResources.users}
       >
-        <Button
-          {...adminControl(AdminControl.USERS_INVITE_OPEN)}
-          onClick={() => setInviteOpen(true)}
+        <LockedFeatureUsage
+          featureKey="USERS"
+          unlocked={!usersLockedFeature.locked}
+          used={activeUsers}
+          limit={usersLimit}
+          label={t('users')}
         >
-          {isOutOfSeats ? (
-            <Gem className="text-on-accent/90" />
-          ) : (
-            <UserRoundPlusIcon size={16} />
-          )}
-          {t('Invite')}
-        </Button>
+          <Button
+            {...adminControl(AdminControl.USERS_INVITE_OPEN)}
+            onClick={() => {
+              if (
+                usersLockedFeature.locked &&
+                usersLockedFeature.actionWhenLocked ===
+                  ActionWhenLocked.START_TRIAL &&
+                !canBuySeats
+              ) {
+                usersLockedFeature.showLockedDialog();
+                return;
+              }
+              setInviteOpen(true);
+            }}
+          >
+            {isOutOfSeats || usersLockedFeature.locked ? (
+              <Gem className="text-on-accent/90" />
+            ) : (
+              <UserRoundPlusIcon size={16} />
+            )}
+            {t('Invite')}
+          </Button>
+        </LockedFeatureUsage>
       </AdminPageHeader>
       <AdminDataTable
         emptyStateTextTitle={
@@ -186,7 +249,7 @@ export default function UsersPage() {
       <InviteUserDialog
         open={inviteOpen}
         setOpen={setInviteOpen}
-        onInviteSuccess={refetch}
+        onInviteSuccess={refreshUsersAndSeats}
       />
       {seatLimitDialog}
     </AdminPage>

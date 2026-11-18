@@ -63,7 +63,7 @@
   "Give an existing worksheet a new title.": "Give an existing worksheet a new title.",
   "Apply colour and text styling to one or more rows.": "Apply colour and text styling to one or more rows.",
   "Retrieve one row by its row number.": "Retrieve one row by its row number.",
-  "Read the next batch of rows from a worksheet, continuing where the last run left off.": "Read the next batch of rows from a worksheet, continuing where the last run left off.",
+  "Read the next batch of rows from a worksheet, continuing where the last run left off. A batch of only blank rows returns an empty list mid-sheet, so do not stop at the first empty result.": "Read the next batch of rows from a worksheet, continuing where the last run left off. A batch of only blank rows returns an empty list mid-sheet, so do not stop at the first empty result.",
   "Read every row from a worksheet.": "Read every row from a worksheet.",
   "Read cells from a range using A1 notation (e.g. A1:D10). Returns rows and the resolved range.": "Read cells from a range using A1 notation (e.g. A1:D10). Returns rows and the resolved range.",
   "Find spreadsheet(s) by name.": "Find spreadsheet(s) by name.",
@@ -390,7 +390,8 @@
   "Triggers when a new spreadsheet is created.": "Triggers when a new spreadsheet is created.",
   "Triggers when a worksheet is created in a spreadsheet.": "Triggers when a worksheet is created in a spreadsheet.",
   "Trigger Column": "Trigger Column",
-  "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.": "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.",
+  "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nRows that only move (insert, delete, sort) and format-only changes do not fire. With a Trigger Column, a new row fires once that column is filled.": "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nRows that only move (insert, delete, sort) and format-only changes do not fire. With a Trigger Column, a new row fires once that column is filled.",
   "Fire only when this column changes. Any Column fires on any cell.": "Fire only when this column changes. Any Column fires on any cell.",
+  "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nOnly rows added below the last row fire. Rows inserted higher up, sorting and edits do not.": "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nOnly rows added below the last row fire. Rows inserted higher up, sorting and edits do not.",
   "The spreadsheet to watch for new worksheets.": "The spreadsheet to watch for new worksheets."
 }

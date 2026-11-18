@@ -3,6 +3,7 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
 import dayjs from 'dayjs';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof bexioAuth>,
@@ -92,6 +93,7 @@ export const newUpdatedPersonTrigger = createTrigger({
   aiMetadata: {
     description: 'Fires when a person contact is created or its updated timestamp changes in Bexio. Emits each matching person with their name, address, contact details (email, phone), birthday, group memberships, and lead status. Use to react to new or modified individual contacts.',
   },
+  outputSchema: bexioOutputSchemas.contactSummaryOutputSchema,
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

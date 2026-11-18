@@ -1,10 +1,12 @@
 import { isNil, Permission, SeekPage } from '@activepieces/core-utils';
 import {
+  INVITATION_EXPIRY_SECONDS,
   InvitationType,
   PlatformUserListItem,
   PlatformUserListStatus,
   UpdateUserRequestBody,
   User,
+  UserInvitation,
   UserStatus,
   UserWithMetaInformation,
 } from '@activepieces/shared';
@@ -19,12 +21,14 @@ import { userHooks } from '@/hooks/user-hooks';
 
 export const platformUserKeys = {
   users: ['users'] as const,
+  allUsers: ['users', 'all'] as const,
   invitations: ['platform-invitations'] as const,
+  invitesReservingSeats: ['platform-invitations', 'reserving-seats'] as const,
 };
 
 export const platformUserHooks = {
   useUsers: () => {
-    const canListUsers = useCanListPlatformUsers();
+    const canListUsers = useCanListUsers();
     return useQuery<SeekPage<UserWithMetaInformation>, Error>({
       queryKey: platformUserKeys.users,
       queryFn: async () => {
@@ -45,7 +49,7 @@ export const platformUserHooks = {
     cursor: string | undefined;
     limit: number;
   }) => {
-    const canListUsers = useCanListPlatformUsers();
+    const canListUsers = useCanListUsers();
     return useQuery<SeekPage<PlatformUserListItem>, Error>({
       queryKey: [
         ...platformUserKeys.users,
@@ -64,6 +68,18 @@ export const platformUserHooks = {
       enabled: canListUsers,
     });
   },
+  useAllUsers: () => {
+    const canListUsers = useCanListUsers();
+    return useQuery({
+      queryKey: platformUserKeys.allUsers,
+      queryFn: () =>
+        fetchAllPages({
+          fetchPage: (cursor) =>
+            platformUserApi.list({ cursor, limit: PAGE_SIZE }),
+        }),
+      enabled: canListUsers,
+    });
+  },
   usePlatformInvitations: ({ enabled = true }: { enabled?: boolean } = {}) => {
     return useQuery({
       queryFn: () => {
@@ -76,6 +92,29 @@ export const platformUserHooks = {
       queryKey: platformUserKeys.invitations,
       staleTime: 0,
       enabled,
+    });
+  },
+  useInvitesReservingSeats: () => {
+    return useQuery({
+      queryFn: async () => {
+        const [platformInvitations, projectInvitations] = await Promise.all([
+          userInvitationApi.listAll({
+            type: InvitationType.PLATFORM,
+            projectId: null,
+            limit: PAGE_SIZE,
+          }),
+          userInvitationApi.listAll({
+            type: InvitationType.PROJECT,
+            projectId: null,
+            limit: PAGE_SIZE,
+          }),
+        ]);
+        return [...platformInvitations, ...projectInvitations].filter(
+          isUnexpired,
+        );
+      },
+      queryKey: platformUserKeys.invitesReservingSeats,
+      staleTime: 0,
     });
   },
 };
@@ -144,12 +183,37 @@ export const platformUserMutations = {
   },
 };
 
-function useCanListPlatformUsers(): boolean {
+function useCanListUsers(): boolean {
   const { data: currentUser } = userHooks.useCurrentUser();
   const { checkAccess, isFetchingProjectRole } = useAuthorization();
+  const hasInvitePermission = checkAccess(Permission.WRITE_INVITATION);
+  return !isNil(currentUser) && hasInvitePermission && !isFetchingProjectRole;
+}
+
+function isUnexpired(invitation: UserInvitation): boolean {
   return (
-    !isNil(currentUser) &&
-    checkAccess(Permission.WRITE_INVITATION) &&
-    !isFetchingProjectRole
+    Date.parse(invitation.updated) >
+    Date.now() - INVITATION_EXPIRY_SECONDS * 1000
   );
 }
+
+async function fetchAllPages<T>({
+  fetchPage,
+  cursor,
+}: FetchAllPagesParams<T>): Promise<T[]> {
+  const page = await fetchPage(cursor);
+  if (isNil(page.next)) {
+    return page.data;
+  }
+  return [
+    ...page.data,
+    ...(await fetchAllPages({ fetchPage, cursor: page.next })),
+  ];
+}
+
+const PAGE_SIZE = 2000;
+
+type FetchAllPagesParams<T> = {
+  fetchPage: (cursor: string | undefined) => Promise<SeekPage<T>>;
+  cursor?: string;
+};
