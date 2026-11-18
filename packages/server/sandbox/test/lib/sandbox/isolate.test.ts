@@ -2,10 +2,11 @@ import { EventEmitter } from 'node:events'
 import path from 'path'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const { spawnMock, mkdirMock, execPromiseMock } = vi.hoisted(() => ({
+const { spawnMock, mkdirMock, execPromiseMock, ensureRuntimeRootMock } = vi.hoisted(() => ({
     spawnMock: vi.fn(),
     mkdirMock: vi.fn(),
     execPromiseMock: vi.fn(),
+    ensureRuntimeRootMock: vi.fn(),
 }))
 
 vi.mock('child_process', () => ({
@@ -19,6 +20,11 @@ vi.mock('fs/promises', () => ({
 vi.mock('../../../src/lib/utils/exec', () => ({
     execPromise: execPromiseMock,
 }))
+
+vi.mock('../../../src/lib/sandbox/runtime-root', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../../src/lib/sandbox/runtime-root')>()
+    return { ...actual, sandboxRuntimeRoot: { ...actual.sandboxRuntimeRoot, ensure: ensureRuntimeRootMock } }
+})
 
 import { isolateProcess, getIsolateExecutableName } from '../../../src/lib/sandbox/isolate'
 import { SandboxLogger, SandboxMount } from '../../../src/lib/sandbox/types'
@@ -47,6 +53,7 @@ const BASE_ENV: Record<string, string> = {
     AP_SANDBOX_WS_TOKEN: 'test-token-aaaaaaaaaaaaaaaaaaaaaaaa',
 }
 
+const RUNTIME_ROOT = '/var/lib/activepieces/sandbox-root'
 const etcDir = path.resolve(process.cwd(), 'packages/server/api/src/assets/etc')
 
 async function callCreate({
@@ -80,6 +87,8 @@ describe('isolateProcess', () => {
         spawnMock.mockImplementation(() => createMockChild())
         mkdirMock.mockResolvedValue(undefined)
         execPromiseMock.mockResolvedValue({ stdout: '', stderr: '' })
+        ensureRuntimeRootMock.mockReset()
+        ensureRuntimeRootMock.mockResolvedValue(RUNTIME_ROOT)
     })
 
     describe('pre-spawn', () => {
@@ -136,20 +145,44 @@ describe('isolateProcess', () => {
             await callCreate({ boxId })
 
             const args: string[] = spawnMock.mock.calls[0][1]
-            expect(args.slice(0, 12)).toEqual([
+            expect(args.slice(0, 9)).toEqual([
                 '--no-default-dirs',
-                '--dir=/bin/',
-                '--dir=/lib/',
-                '--dir=/lib64/:maybe',
-                '--dir=/usr/bin/',
-                '--dir=/usr/lib/',
-                '--dir=/usr/local/',
+                `--dir=/usr=${RUNTIME_ROOT}/usr`,
+                `--dir=/lib=${RUNTIME_ROOT}/lib:maybe`,
+                `--dir=/lib64=${RUNTIME_ROOT}/lib64:maybe`,
+                `--dir=/bin=${RUNTIME_ROOT}/bin:maybe`,
                 `--dir=/etc/=${etcDir}`,
-                '--dir=/usr/src/node_modules/',
                 '--dir=proc=proc:fs',
                 '--dir=/dev=/dev:dev',
                 `--dir=/box=/var/local/lib/isolate/${boxId}/box:rw:noexec`,
             ])
+        })
+
+        it('never mounts the worker container\'s own system directories', async () => {
+            await callCreate()
+            const args: string[] = spawnMock.mock.calls[0][1]
+            const containerSystemDirs = ['/bin', '/lib', '/lib64', '/usr', '/usr/bin', '/usr/lib', '/usr/local', '/usr/src/node_modules']
+            const mountedHostPaths = args
+                .filter((arg) => arg.startsWith('--dir='))
+                .map((arg) => {
+                    const [inside, outside] = arg.slice('--dir='.length).split(':')[0].split('=')
+                    return (outside ?? inside).replace(/\/$/, '')
+                })
+            for (const dir of containerSystemDirs) {
+                expect(mountedHostPaths).not.toContain(dir)
+            }
+        })
+
+        it('builds the runtime root before spawning isolate', async () => {
+            await callCreate()
+            expect(ensureRuntimeRootMock).toHaveBeenCalledTimes(1)
+            expect(ensureRuntimeRootMock.mock.invocationCallOrder[0]).toBeLessThan(spawnMock.mock.invocationCallOrder[0])
+        })
+
+        it('does not spawn isolate when the runtime root cannot be built', async () => {
+            ensureRuntimeRootMock.mockRejectedValue(new Error('ldd failed'))
+            await expect(callCreate()).rejects.toThrow('ldd failed')
+            expect(spawnMock).not.toHaveBeenCalled()
         })
 
         it('never mounts a directory that is both writable and executable', async () => {

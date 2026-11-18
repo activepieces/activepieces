@@ -1,12 +1,13 @@
 import { rm } from 'node:fs/promises'
 import { join } from 'node:path'
-import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { type ApLogger, apVersionUtil, wideEvent } from '@activepieces/server-utils'
-import { PrewarmScopeFileContent, WorkerToApiContract } from '@activepieces/shared'
+import { ExecutionMode, PrewarmScopeFileContent, WorkerToApiContract } from '@activepieces/shared'
 import { cacheUtils } from './cache/cache-paths'
 import { localExecutionCache } from './cache/local-execution-cache'
 import { engineRpcHandlers } from './engine-rpc-handlers'
 import { createResolver } from './resolver'
+import { sandboxRuntimeRoot } from './sandbox/runtime-root'
 import { createSandboxManager, SandboxManager } from './sandbox-manager'
 import {
     ExecuteParams,
@@ -27,7 +28,8 @@ import { bundleHttp } from './utils/bundle-http'
 // (threadSafeMkdir / cache-state), so there is no per-key provision dedup here. execute owns the slot
 // lifecycle: acquire -> provision -> run -> release on success / invalidate on throw, re-raising the
 // sandbox ActivepiecesError codes (timeout / memory / log-size) that handlers already catch. See ADR 0004.
-export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }: CreateSandboxRuntimeParams): Runtime {
+export function createSandboxRuntime({ concurrency = 1, basePath, getSettings, log }: CreateSandboxRuntimeParams): Runtime {
+    startRuntimeRootBuild({ getSettings, log })
     const managers: SandboxManager[] = Array.from({ length: concurrency }, (_, index) =>
         createSandboxManager({ boxId: index + 1, basePath, getSettings }),
     )
@@ -201,12 +203,24 @@ async function resolveFlowsForPrewarm({ resolver, flows, platformId, internalApi
 }
 
 
+function startRuntimeRootBuild({ getSettings, log }: { getSettings: () => SandboxSettings, log: ApLogger }): void {
+    const { data: settings } = tryCatchSync(getSettings)
+    if (isNil(settings) || !PROCESS_SANDBOXED_MODES.includes(settings.EXECUTION_MODE)) {
+        return
+    }
+    sandboxRuntimeRoot.ensure({ log }).catch((error: unknown) => {
+        log.error({ error }, '[sandboxRuntimeRoot] Failed to build the sandbox runtime root at startup, the first sandboxed job will retry')
+    })
+}
+
 function remainingTimeoutInSeconds({ timeoutInSeconds, expiresAt }: { timeoutInSeconds: number, expiresAt?: number }): number {
     if (isNil(expiresAt)) {
         return timeoutInSeconds
     }
     return Math.min(timeoutInSeconds, Math.floor((expiresAt - Date.now()) / 1000))
 }
+
+const PROCESS_SANDBOXED_MODES: string[] = [ExecutionMode.SANDBOX_PROCESS, ExecutionMode.SANDBOX_CODE_AND_PROCESS]
 
 type FetchScopeFileParams = {
     apiClient: WorkerToApiContract
@@ -231,5 +245,5 @@ type CreateSandboxRuntimeParams = {
     concurrency?: number
     basePath: string
     getSettings: () => SandboxSettings
-
+    log: ApLogger
 }

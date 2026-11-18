@@ -6,6 +6,11 @@ const acquiredBoxIds: number[] = []
 const runTimeouts: number[] = []
 const managerCalls = { release: 0, invalidate: 0 }
 let bootAdvanceMs = 0
+const ensureRuntimeRootMock = vi.fn()
+
+vi.mock('../../src/lib/sandbox/runtime-root', () => ({
+    sandboxRuntimeRoot: { ensure: (...args: unknown[]) => ensureRuntimeRootMock(...args) },
+}))
 
 vi.mock('@activepieces/server-utils', async (importActual) => {
     const actual = await importActual<typeof import('@activepieces/server-utils')>()
@@ -83,7 +88,33 @@ describe('createSandboxRuntime', () => {
         managerCalls.invalidate = 0
         bootAdvanceMs = 0
         vi.clearAllMocks()
+        ensureRuntimeRootMock.mockResolvedValue('/var/lib/activepieces/sandbox-root')
         vi.useFakeTimers()
+    })
+
+    describe('runtime root build at startup', () => {
+        it.each(['SANDBOX_PROCESS', 'SANDBOX_CODE_AND_PROCESS'])('starts building the runtime root in %s', (mode) => {
+            createSandboxRuntime({ basePath: '/tmp', getSettings: () => ({ EXECUTION_MODE: mode } as never), log })
+            expect(ensureRuntimeRootMock).toHaveBeenCalledTimes(1)
+        })
+
+        it.each(['UNSANDBOXED', 'SANDBOX_CODE_ONLY'])('does not build a runtime root in %s', (mode) => {
+            createSandboxRuntime({ basePath: '/tmp', getSettings: () => ({ EXECUTION_MODE: mode } as never), log })
+            expect(ensureRuntimeRootMock).not.toHaveBeenCalled()
+        })
+
+        it('does not build when settings are not loaded yet', () => {
+            createSandboxRuntime({ basePath: '/tmp', getSettings: () => { throw new Error('settings not loaded') }, log })
+            expect(ensureRuntimeRootMock).not.toHaveBeenCalled()
+        })
+
+        it('logs and keeps going when the startup build fails', async () => {
+            ensureRuntimeRootMock.mockRejectedValue(new Error('ldd failed'))
+            expect(() => createSandboxRuntime({ basePath: '/tmp', getSettings: () => ({ EXECUTION_MODE: 'SANDBOX_PROCESS' } as never), log })).not.toThrow()
+            await vi.runAllTimersAsync()
+            const { error } = log as unknown as { error: ReturnType<typeof vi.fn> }
+            expect(error).toHaveBeenCalled()
+        })
     })
 
     afterEach(() => {
