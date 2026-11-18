@@ -1,4 +1,3 @@
-import { isNil } from '@activepieces/core-utils';
 import { ApEdition } from '@activepieces/shared';
 import { type ComponentType } from 'react';
 
@@ -31,7 +30,7 @@ export type StaticPage = {
   href: string;
   icon: ComponentType<{ className?: string; size?: number }>;
   requiresPlatformAdmin?: boolean;
-  requiresEdition?: ApEdition;
+  hiddenOnEdition?: ApEdition;
 };
 
 export const STATIC_PAGES: StaticPage[] = [
@@ -87,7 +86,7 @@ export const STATIC_PAGES: StaticPage[] = [
     href: '/platform/ai/tiers',
     icon: BotIcon,
     requiresPlatformAdmin: true,
-    requiresEdition: ApEdition.CLOUD,
+    hiddenOnEdition: ApEdition.COMMUNITY,
   },
   {
     id: 'page-platform-ai-capabilities',
@@ -95,6 +94,14 @@ export const STATIC_PAGES: StaticPage[] = [
     href: '/platform/ai/capabilities',
     icon: BotIcon,
     requiresPlatformAdmin: true,
+  },
+  {
+    id: 'page-platform-ai-usage',
+    label: 'Platform Admin — AI Usage',
+    href: '/platform/ai/usage',
+    icon: BotIcon,
+    requiresPlatformAdmin: true,
+    hiddenOnEdition: ApEdition.COMMUNITY,
   },
   {
     id: 'page-platform-mcp',
@@ -263,7 +270,7 @@ function isVisible({
 }): boolean {
   return (
     (!page.requiresPlatformAdmin || isPlatformAdmin) &&
-    (isNil(page.requiresEdition) || page.requiresEdition === edition)
+    page.hiddenOnEdition !== edition
   );
 }
 

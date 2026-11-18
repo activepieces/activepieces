@@ -444,8 +444,7 @@ export const flowOperations = {
 }
 
 function hasNestedBatch(flowVersion: FlowVersion): boolean {
-    return flowStructureUtil.getAllSteps(flowVersion.trigger)
-        .filter((step) => step.type === FlowActionType.PROCESS_IN_BATCHES)
+    return flowStructureUtil.getBatchSteps(flowVersion.trigger)
         .some((batch) => flowStructureUtil.getAllChildSteps(batch)
             .some((child) => child.name !== batch.name && child.type === FlowActionType.PROCESS_IN_BATCHES))
 }

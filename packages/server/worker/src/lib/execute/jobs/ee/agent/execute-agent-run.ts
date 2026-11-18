@@ -142,23 +142,25 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ...spreadIfDefined('project', isNil(billing.projectId) ? undefined : { id: billing.projectId }),
                 agentRun: { source, tierId: config.platformTier?.id ?? config.tier.id, tierModel: config.modelId },
             })
+            const metadata: ModelMetadata = { platformId, conversationId, runId, surface: source === AgentRunSource.AGENT || source === AgentRunSource.FLOW_STEP ? 'agent' : 'chat' }
             const model = aiUtils.createModel({
                 credentials, modelId: config.modelId,
-                metadata: { platformId, conversationId, runId },
+                metadata,
                 billing,
                 turnAlreadyCharged: true,
                 ...spreadIfDefined('providerConfigId', config.providerConfigId),
             })
             const fastModel = aiUtils.createModel({
                 credentials, modelId: config.fastModelId,
+                metadata,
                 billing,
                 turnAlreadyCharged: true,
                 ...spreadIfDefined('providerConfigId', config.providerConfigId),
             })
-            const turnModels = turnModelsFor({ config, model, billing, metadata: { platformId, conversationId, runId } })
+            const turnModels = turnModelsFor({ config, model, billing, metadata })
             const fastTurnModel: TurnModel | undefined = isNil(config.platformTier)
                 ? { model: fastModel, provider, modelId: config.fastModelId, thinkingBudget: config.tier.thinkingBudget }
-                : isNil(config.fastCandidate) ? undefined : candidateTurnModel({ candidate: config.fastCandidate, billing })
+                : isNil(config.fastCandidate) ? undefined : candidateTurnModel({ candidate: config.fastCandidate, billing, metadata })
             let answering: TurnModel = turnModels[0]
             const runKey = (): RunKey => ({ provider: answering.provider, providerConfigId: answering.key?.providerConfigId ?? config.providerConfigId, modelId: answering.modelId })
 
@@ -337,11 +339,14 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                                     fn: () => ctx.apiClient.updateAgentProgress({
                                         conversationId,
                                         runId,
-                                        uiMessages: [
-                                            ...(config.previousUiMessages as PersistedAgentMessage[]),
-                                            { role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs: Date.now() - thinkingStartTime, tainted: taintState.readInThisReply() },
-                                        ],
-                                        messages: [...(config.allMessages as ModelMessage[]), ...responseMessages],
+                                        turn: {
+                                            baseMessageCount: config.allMessages.length,
+                                            messages: responseMessages,
+                                            baseUiMessageCount: config.previousUiMessages.length,
+                                            uiMessages: [
+                                                { role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs: Date.now() - thinkingStartTime, tainted: taintState.readInThisReply() },
+                                            ],
+                                        },
                                     }),
                                     maxAttempts: 2,
                                     log,
