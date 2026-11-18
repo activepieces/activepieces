@@ -69,8 +69,8 @@ jobs:
       # from archives of this commit's source instead of from the Cloud registry.
       - name: Pack the pieces the suite uses
         run: |
-          PIECES="packages/pieces/core/webhook packages/pieces/core/schedule packages/pieces/core/file-helper packages/pieces/community/activepieces"
-          npx turbo run build --filter=@activepieces/piece-webhook --filter=@activepieces/piece-schedule --filter=@activepieces/piece-file-helper --filter=@activepieces/piece-activepieces
+          PIECES="packages/pieces/core/webhook packages/pieces/core/schedule packages/pieces/core/file-helper packages/pieces/community/activepieces packages/pieces/community/mcp"
+          npx turbo run build --filter=@activepieces/piece-webhook --filter=@activepieces/piece-schedule --filter=@activepieces/piece-file-helper --filter=@activepieces/piece-activepieces --filter=@activepieces/piece-mcp
           CHANGED_PIECES="$(printf '%s\n' $PIECES)" npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/pieces/prepare-pieces-for-publish.ts
           mkdir e2e-pieces
           npm pack --json --pack-destination "$GITHUB_WORKSPACE/e2e-pieces" $(printf '%s/dist ' $PIECES) > "$GITHUB_WORKSPACE/e2e-pieces/pieces.json"
