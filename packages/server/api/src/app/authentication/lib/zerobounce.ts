@@ -15,7 +15,7 @@ const DISPOSABLE_DOMAIN_CACHE_SIZE = 500
 
 const REFUSED_STATUSES = new Set(['spamtrap', 'abuse'])
 const REFUSED_SUB_STATUSES = new Map<string, Set<string>>([
-    ['do_not_mail', new Set(['disposable', 'toxic', 'possible_trap', 'global_suppression'])],
+    ['do_not_mail', new Set(['disposable', 'toxic', 'possible_trap', 'global_suppression', 'blocked'])],
     ['invalid', new Set(['no_dns_entries', 'does_not_accept_mail', 'unroutable_ip_address'])],
 ])
 

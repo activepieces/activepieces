@@ -35,6 +35,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Call Completion Report": "Call Completion Report",
   "Triggers when  Bolna call report  it is completed": "Triggers when  Bolna call report  it is completed",
   "Markdown": "Markdown",

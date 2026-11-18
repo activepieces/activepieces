@@ -18,7 +18,7 @@ async function generateIfFirstTurn({ model, userMessage, previousUiMessages, log
         const { text } = await generateText({
             model,
             abortSignal,
-            telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-title' }),
+            ...agentAiUtils.buildTelemetry({ functionId: 'agent-title' }),
             system: 'You name conversations. Never answer, refuse or comment on the message. Output only a concise 3-6 word title for it, nothing else.',
             prompt: `<message>\n${userMessage}\n</message>`,
         })

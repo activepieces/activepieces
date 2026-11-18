@@ -17,6 +17,7 @@ export const pieceListUtils = (_log: FastifyBaseLogger) => ({
             categories: params.categories,
             searchQuery: params.searchQuery,
             pieces: sortedPieces,
+            untranslatedNames: params.untranslatedNames,
             suggestionType: params.suggestionType,
         })
     },
@@ -49,6 +50,7 @@ export type SortAndSearchPiecesParams = {
     sortBy?: PieceSortBy
     orderBy?: PieceOrderBy
     pieces: PieceMetadataSchema[]
+    untranslatedNames: Map<string, string>
     suggestionType?: SuggestionType
 }
 

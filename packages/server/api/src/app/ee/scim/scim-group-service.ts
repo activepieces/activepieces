@@ -218,6 +218,7 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
                         userId,
                         projectId,
                         platformId,
+                        log,
                     })
                 }
             }
@@ -304,8 +305,9 @@ async function removeMemberFromProject(params: {
     userId: string
     projectId: string
     platformId: string
+    log: FastifyBaseLogger
 }): Promise<void> {
-    const { userId, projectId, platformId } = params
+    const { userId, projectId, platformId, log } = params
 
     const member = await projectMemberRepo().findOneBy({
         userId,
@@ -314,7 +316,7 @@ async function removeMemberFromProject(params: {
     })
 
     if (!isNil(member)) {
-        await projectMemberRepo().delete({ id: member.id })
+        await projectMemberService(log).delete(projectId, member.id)
     }
 }
 

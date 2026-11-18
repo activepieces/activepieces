@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { youtubeAuth } from '../common/auth';
 import { listPlaylistItemsOutputSchema } from '../output-schemas';
@@ -15,6 +19,10 @@ export const youtubeListPlaylistItemsAction = createAction({
   audience: 'human',
   aiMetadata: { description: 'Lists the entries of a YouTube playlist in one of two modes: pass a playlist ID to page through that whole playlist (optionally narrowed to entries containing one video ID), or pass a comma-separated list of playlist item IDs to fetch only those entries. Exactly one of the two is required, supplying both or filtering by video without a playlist ID fails validation, and Max Results is capped at 50 with further pages fetched via the page token. Run Search with type Playlist first when the playlist ID is unknown; read-only and idempotent.', idempotent: true },
   props: {
+    sourceInfo: Property.MarkDown({
+      value: 'Fill in Playlist ID or Item IDs, not both.',
+      variant: MarkdownVariant.INFO,
+    }),
     playlistId: Property.ShortText({
       displayName: 'Playlist ID',
       description:
@@ -55,6 +63,22 @@ export const youtubeListPlaylistItemsAction = createAction({
       advanced: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'playlist',
+      display: 'section',
+      label: 'Playlist',
+      icon: 'file',
+      props: ['sourceInfo', 'playlistId', 'itemIds'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['maxResults'],
+    },
+  ],
   async run(context) {
     const { playlistId, itemIds, maxResults, pageToken, videoId } =
       context.propsValue;

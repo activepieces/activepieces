@@ -11,3 +11,5 @@ export type EmailStatusType =
       type: 'new-user';
       user: undefined;
     };
+
+export type ExistingEmailStatus = 'on-platform' | 'already-invited';

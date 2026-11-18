@@ -35,6 +35,9 @@ export const newProject = createTrigger({
     await context.store.put('projectIds', JSON.stringify(ids));
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete('projectIds');
   },
   async run(context) {

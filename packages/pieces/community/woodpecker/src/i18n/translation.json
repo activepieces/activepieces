@@ -84,6 +84,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Prospect Replied": "Prospect Replied",
   "Prospect Blacklisted": "Prospect Blacklisted",
   "Prospect Opt-out": "Prospect Opt-out",

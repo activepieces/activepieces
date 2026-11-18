@@ -32,21 +32,30 @@ export const uploadFile = createAction({
 	name: 'upload_file',
 	classification: 'WRITE',
 	displayName: 'Upload File',
-	description: 'Upload a file to Mistral AI (e.g., for fine-tuning or context storage).',
+	description: 'Upload a file to Mistral for OCR, batch jobs or fine-tuning.',
+	propertyGroups: [
+		{ key: 'upload', display: 'section', label: 'Upload', icon: 'paperclip', props: ['file'] },
+		{ key: 'use', display: 'section', label: 'Use for', icon: 'tag', props: ['purpose'] },
+	],
 	aiMetadata: { description: 'Stores a file in the connected Mistral account and returns its file id, tagged with a purpose of fine-tune, batch, or ocr that decides what the id may later be used for. Run it before Run OCR whenever the document is a step attachment rather than a public URL: upload with purpose=ocr and feed the returned id into that action. Rejects files above 512MB or with an extension outside jsonl, txt, csv, pdf, docx, png, jpg, jpeg, mp3, mp4; not idempotent: each call stores another copy and returns a new id.', idempotent: false },
 	outputSchema: uploadFileOutputSchema,
 	props: {
 		file: Property.File({
 			displayName: 'File',
-			description: 'The file to upload (max 512MB).For fine tuning purspose provide .jsonl file.',
+			description: 'The file to send to Mistral, up to 512 MB.',
 			required: true,
 		}),
 		purpose: Property.StaticDropdown({
 			displayName: 'Purpose',
-			description: 'Purpose of the file.',
+			description: 'What Mistral may use the file for. Fine-tuning needs a .jsonl file.',
 			required: true,
+			display: 'cards',
 			options: {
-				options: SUPPORTED_PURPOSES.map((p) => ({ label: p, value: p })),
+				options: [
+					{ label: 'OCR', value: 'ocr', icon: 'file' },
+					{ label: 'Batch', value: 'batch', icon: 'file' },
+					{ label: 'Fine-Tuning', value: 'fine-tune', icon: 'file' },
+				],
 			},
 		}),
 	},
@@ -80,7 +89,7 @@ export const uploadFile = createAction({
 			});
 			return response.body;
 		} catch (e: any) {
-			throw new Error(parseMistralError(e));
+			throw new Error(parseMistralError({ error: e, baseUrl }));
 		}
 	},
 });

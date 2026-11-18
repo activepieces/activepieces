@@ -1,5 +1,5 @@
 import { AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils'
-import { AgentPhase, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
+import { AgentPhase, PersistedAgentPartType } from '@activepieces/shared'
 import { tool } from 'ai'
 import { convertArrayToReadableStream, MockLanguageModelV3 } from 'ai/test'
 import { describe, expect, it, vi } from 'vitest'
@@ -25,19 +25,15 @@ describe('a turn that runs out of credits', () => {
         expect(creditsLeft.mock.calls).toEqual([[2], [3]])
     })
 
-    it('lets the agent answer on an exact balance, but without the paid tools', async () => {
+    it('stops on an exact balance, since the balance never goes below zero', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
         const model = alwaysSearchingModel()
 
-        const turn = await runTurn({ search: async () => SEARCH_RESULT, creditsLeft: async () => 0, stepCeiling: 2, model })
+        const turn = await runTurn({ search, creditsLeft: async () => 0, model })
 
-        const [firstStep, ...laterSteps] = model.doStreamCalls.map((call) => call.tools?.map((t) => t.name))
-        expect(firstStep).toEqual(['ap_web_search', 'ap_fetch_url'])
-        expect(laterSteps.length).toBeGreaterThan(0)
-        expect(laterSteps.every((names) => names?.join() === 'ap_fetch_url')).toBe(true)
-        expect(turn.creditsExhausted).toBe(false)
-        const searchStatuses = turn.uiParts.flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL ? [part.status] : [])
-        expect(searchStatuses[0]).toBe(PersistedToolCallStatus.COMPLETED)
-        expect(searchStatuses.slice(1).every((status) => status === PersistedToolCallStatus.ERROR)).toBe(true)
+        expect(model.doStreamCalls).toHaveLength(1)
+        expect(search).toHaveBeenCalledTimes(1)
+        expect(turn.creditsExhausted).toBe(true)
     })
 
     it('keeps going when the credit check itself fails', async () => {
@@ -87,6 +83,18 @@ describe('a turn with many steps', () => {
     })
 })
 
+describe('a turn that hits its token budget', () => {
+    it('stops at the step that crossed the budget, instead of running every step', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
+        const model = alwaysSearchingModel({ usage: OVER_BUDGET_USAGE })
+
+        const turn = await runTurn({ search, creditsLeft: async () => 1_000, model })
+
+        expect(search).toHaveBeenCalledTimes(1)
+        expect(turn.budgetExceeded).toBe(true)
+    })
+})
+
 async function runTurn({ search, creditsLeft, stepCeiling = 20, model = alwaysSearchingModel(), drainsStream = false, completion, phase = 'discovery' }: {
     search: () => Promise<unknown>
     creditsLeft: (pendingCredits: number) => Promise<number | null>
@@ -123,7 +131,7 @@ async function failingCreditCheck(): Promise<number | null> {
     throw new Error('rpc down')
 }
 
-function alwaysSearchingModel(): MockLanguageModelV3 {
+function alwaysSearchingModel({ usage = USAGE }: { usage?: typeof USAGE } = {}): MockLanguageModelV3 {
     let calls = 0
     return new MockLanguageModelV3({
         doStream: async () => {
@@ -132,7 +140,7 @@ function alwaysSearchingModel(): MockLanguageModelV3 {
                 stream: convertArrayToReadableStream([
                     { type: 'stream-start' as const, warnings: [] },
                     { type: 'tool-call' as const, toolCallId: `call-${calls}`, toolName: 'ap_web_search', input: '{"query":"more"}' },
-                    { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                    { type: 'finish' as const, finishReason: 'tool-calls' as const, usage },
                 ]),
             }
         },
@@ -150,7 +158,7 @@ function searchUntilToldToAnswer({ searches }: { searches: number }): MockLangua
                     stream: convertArrayToReadableStream([
                         { type: 'stream-start' as const, warnings: [] },
                         { type: 'tool-call' as const, toolCallId: `call-${calls}`, toolName: toolChoice.toolName, input: '{"output":{"summary":"partial"}}' },
-                        { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                        { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: USAGE },
                     ]),
                 }
             }
@@ -161,12 +169,12 @@ function searchUntilToldToAnswer({ searches }: { searches: number }): MockLangua
                         { type: 'text-start' as const, id: 'answer' },
                         { type: 'text-delta' as const, id: 'answer', delta: 'Here is what I found so far.' },
                         { type: 'text-end' as const, id: 'answer' },
-                        { type: 'finish' as const, finishReason: 'stop' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                        { type: 'finish' as const, finishReason: 'stop' as const, usage: USAGE },
                     ]
                     : [
                         { type: 'stream-start' as const, warnings: [] },
                         { type: 'tool-call' as const, toolCallId: `call-${calls}`, toolName: 'ap_web_search', input: '{"query":"more"}' },
-                        { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                        { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: USAGE },
                     ]),
             }
         },
@@ -178,3 +186,7 @@ const SEARCH_RESULT = { content: [{ type: 'text', text: 'ok' }] }
 const TIER = { id: 'fast', thinkingBudget: 5_000, modelId: 'anthropic/claude-haiku-4.5' }
 
 const SILENT_LOG = { debug: () => undefined, info: () => undefined, warn: () => undefined, error: () => undefined }
+
+const USAGE = { inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 }, outputTokens: { total: 1, text: 1, reasoning: 0 } }
+
+const OVER_BUDGET_USAGE = { ...USAGE, inputTokens: { total: Number.MAX_SAFE_INTEGER, noCache: Number.MAX_SAFE_INTEGER, cacheRead: 0, cacheWrite: 0 } }

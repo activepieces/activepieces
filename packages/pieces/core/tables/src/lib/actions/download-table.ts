@@ -19,6 +19,22 @@ export const downloadTable = createAction({
   description: 'Export a table as a CSV file.',
   aiMetadata: { description: 'Exports all records of an Activepieces Table as a CSV file, optionally prefixed with a header row of column names. Pick this when a whole table is needed as a file; use Find Records instead to read rows as structured data. Requires the table ID and always exports the full table - it accepts no filters, column selection, or row limit; read-only and idempotent.', idempotent: true },
   auth: PieceAuth.None(),
+  propertyGroups: [
+    {
+      key: 'source',
+      display: 'section',
+      label: 'Export from',
+      icon: 'file',
+      props: ['table_id'],
+    },
+    {
+      key: 'csv',
+      display: 'section',
+      label: 'CSV file',
+      icon: 'paperclip',
+      props: ['include_headers'],
+    },
+  ],
   props: {
     table_id: tablesCommon.table_id,
     include_headers: Property.Checkbox({

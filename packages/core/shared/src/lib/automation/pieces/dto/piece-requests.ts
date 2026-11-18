@@ -87,8 +87,8 @@ export const PieceOptionRequest = z.object({
     pieceVersion: VersionType,
     actionOrTriggerName: z.string(),
     propertyName: z.string(),
-    flowId: z.string(),
-    flowVersionId: z.string(),
+    flowId: z.string().optional(),
+    flowVersionId: z.string().optional(),
     input: z.any(),
     searchValue: z.string().optional(),
 })

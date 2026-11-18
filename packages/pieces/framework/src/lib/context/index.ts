@@ -95,6 +95,7 @@ type WebhookTriggerHookContext<
   webhookUrl: string;
   payload: TriggerPayload;
   server: ServerContext;
+  isRepublish?: boolean;
 };
 export type TriggerHookContext<
   PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
@@ -202,6 +203,7 @@ export type CreateWaitpointParams = {
 export type CreateWaitpointResult = {
   id: string;
   resumeUrl: string;
+  publicResumeUrl?: string;
   buildResumeUrl: (params: { queryParams: Record<string, string>, sync?: boolean }) => string;
 };
 

@@ -13,6 +13,7 @@ import { ApLoopStartLineCanvasEdge as ApLoopStartCanvasEdge } from '../edges/loo
 import { ApRouterEndCanvasEdge } from '../edges/router-end-edge';
 import { ApRouterStartCanvasEdge } from '../edges/router-start-edge';
 import { ApStraightLineCanvasEdge } from '../edges/straight-line-edge';
+import { ApBatchRegionCanvasNode } from '../nodes/batch-region-node';
 import { ApBigAddButtonCanvasNode } from '../nodes/big-add-button-node';
 import ApGraphEndWidgetNode from '../nodes/flow-end-widget-node';
 import ApLoopReturnCanvasNode from '../nodes/loop-return-node';
@@ -49,7 +50,10 @@ const DRAGGED_STEP_TAG = 'dragged-step';
 const DRAGGED_NOTE_TAG = 'dragged-note';
 const HORIZONTAL_SPACE_BETWEEN_NODES = FLOW_CANVAS_HSPACE;
 const AP_NODE_SIZE: Record<
-  Exclude<ApNodeType, ApNodeType.GRAPH_START_WIDGET | ApNodeType.NOTE>,
+  Exclude<
+    ApNodeType,
+    ApNodeType.GRAPH_START_WIDGET | ApNodeType.NOTE | ApNodeType.BATCH_REGION
+  >,
   { height: number; width: number }
 > = {
   [ApNodeType.BIG_ADD_BUTTON]: {
@@ -108,6 +112,7 @@ export const flowCanvasConsts = {
     [ApNodeType.BIG_ADD_BUTTON]: ApBigAddButtonCanvasNode,
     [ApNodeType.GRAPH_END_WIDGET]: ApGraphEndWidgetNode,
     [ApNodeType.NOTE]: ApNoteCanvasNode,
+    [ApNodeType.BATCH_REGION]: ApBatchRegionCanvasNode,
   },
   DRAGGED_STEP_TAG,
   DRAGGED_NOTE_TAG,

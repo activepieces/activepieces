@@ -1,14 +1,9 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sendItAuth } from '../auth';
-import {
-  platformProperty,
-  textProperty,
-  mediaUrlProperty,
-  mediaUrlsProperty,
-  mediaTypeProperty,
-  sendItRequest,
-} from '../common';
+import { sendItAuth } from '../common/auth';
+import { apiKeyOf } from '../common/client';
+import { sendItOutputSchemas } from '../common/output-schemas';
+import { mediaTypeProperty, mediaUrlProperty, mediaUrlsProperty, platformProperty, textProperty } from '../common/props';
+import { sendItRequests } from '../common/requests';
 
 export const validateContent = createAction({
   auth: sendItAuth,
@@ -19,7 +14,7 @@ export const validateContent = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Validates that a post (text plus optional media) meets the requirements of the selected social platforms, such as character limits and media rules, without publishing anything. Use this as a pre-flight check before Publish Post or Schedule Post. Idempotent: it is a read-only check with no side effects.',
+      'Checks a post (text plus optional media) against the selected platforms without publishing anything. Returns valid (boolean), errors and warnings per platform (e.g. "Instagram requires media"), and platformLimits per platform (text limit, media required, max images). Use before Publish Post or Schedule Post. Read-only and idempotent.',
     idempotent: true,
   },
   props: {
@@ -29,23 +24,9 @@ export const validateContent = createAction({
     mediaUrls: mediaUrlsProperty,
     mediaType: mediaTypeProperty,
   },
+  outputSchema: sendItOutputSchemas.validationResult,
   async run(context) {
-    const { platforms, text, mediaUrl, mediaUrls, mediaType } =
-      context.propsValue;
-
-    return await sendItRequest(
-      context.auth.secret_text,
-      HttpMethod.POST,
-      '/validate',
-      {
-        platforms,
-        content: {
-          text,
-          mediaUrl,
-          mediaUrls,
-          mediaType,
-        },
-      }
-    );
+    const { platforms, text, mediaUrl, mediaUrls, mediaType } = context.propsValue;
+    return sendItRequests.validate({ apiKey: apiKeyOf(context.auth), input: { platforms, text, mediaUrl, mediaUrls, mediaType } });
   },
 });

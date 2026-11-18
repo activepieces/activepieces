@@ -49,6 +49,22 @@ describe('resolveModelIdForProvider', () => {
         expect(agentModelResolution.resolveModelIdForProvider({ provider: AIProviderName.VERTEX, selectedModel: 'gemini-2.5-flash', surface: 'flow', config })).toBe('gemini-2.5-flash')
     })
 
+    it('picks the listed model whose real model is the tier native model, not the first listed one', () => {
+        const config = {
+            baseUrl: 'https://litellm.example.com',
+            apiKeyHeader: 'Authorization',
+            models: [
+                { modelId: 'prod-smart', modelName: 'prod-smart', modelType: AIProviderModelType.TEXT, metadata: { realModelId: 'gpt-5.4' } },
+                { modelId: 'ap-fast', modelName: 'ap-fast', modelType: AIProviderModelType.TEXT, metadata: { realModelId: 'claude-haiku-4-5-20251001' } },
+            ],
+        }
+
+        expect(agentModelResolution.resolveModelIdForProvider({ provider: AIProviderName.LITELLM, selectedModel: 'fast', surface: 'chat', config })).toBe('ap-fast')
+        expect(agentModelResolution.resolveModelIdForProvider({ provider: AIProviderName.LITELLM, selectedModel: 'prod-smart', surface: 'chat', config })).toBe('prod-smart')
+        expect(agentModelResolution.resolveModelIdForProvider({ provider: AIProviderName.LITELLM, selectedModel: 'smart', surface: 'chat', config })).toBe('prod-smart')
+        expect(agentModelResolution.resolveModelIdForProvider({ provider: AIProviderName.LITELLM, selectedModel: 'fast', surface: 'chat', config, modelScope: 'selected', modelIds: ['prod-smart'] })).toBe('prod-smart')
+    })
+
     it('honours the key model allow-list over the curated default', () => {
         const scoped = { modelScope: 'selected' as const, modelIds: ['gemini-2.5-flash'] }
 
@@ -151,9 +167,35 @@ describe('resolveModelIdForProvider', () => {
     })
 })
 
+describe('resolvePinnedModelId', () => {
+    const pinned = ({ provider, modelName, modelScope, modelIds }: { provider: AIProviderName, modelName: string, modelScope?: 'all' | 'selected', modelIds?: string[] }) =>
+        agentModelResolution.resolvePinnedModelId({ provider, modelName, modelScope, modelIds, log })
+
+    it('refuses a managed tier the catalog no longer publishes, instead of running the default', () => {
+        expect(pinned({ provider: AIProviderName.ACTIVEPIECES, modelName: 'a-retired-tier' })).toBeNull()
+        expect(pinned({ provider: AIProviderName.OPENROUTER, modelName: 'a-retired-tier' })).toBeNull()
+    })
+
+    it('refuses a managed tier whose model the key no longer allows', () => {
+        const modelId = pinned({ provider: AIProviderName.OPENROUTER, modelName: 'smart' })
+        expect(modelId).not.toBeNull()
+        expect(pinned({ provider: AIProviderName.OPENROUTER, modelName: 'smart', modelScope: 'selected', modelIds: ['some/other-model'] })).toBeNull()
+        expect(pinned({ provider: AIProviderName.OPENROUTER, modelName: 'smart', modelScope: 'selected', modelIds: [modelId ?? ''] })).toBe(modelId)
+    })
+})
+
 describe('resolveModelIdForAnalytics', () => {
-    const forAnalytics = ({ provider, selectedModel, surface = 'chat' }: { provider: AIProviderName | null, selectedModel: string | null, surface?: ModelTierSurface }) =>
-        agentModelResolution.resolveModelIdForAnalytics({ provider, selectedModel, surface })
+    const forAnalytics = ({ provider, selectedModel, surface = 'chat', pinned = false }: { provider: AIProviderName | null, selectedModel: string | null, surface?: ModelTierSurface, pinned?: boolean }) =>
+        agentModelResolution.resolveModelIdForAnalytics({ provider, selectedModel, surface, pinned })
+
+    it('reports a pinned model as stored, even on a key with no curated list', () => {
+        expect(forAnalytics({ provider: AIProviderName.CUSTOM, selectedModel: 'my-model', pinned: true })).toBe('my-model')
+        expect(forAnalytics({ provider: AIProviderName.OPENAI, selectedModel: 'smart', pinned: true })).toBe('gpt-5.5')
+    })
+
+    it('reports nothing instead of throwing when the provider has no model to name', () => {
+        expect(forAnalytics({ provider: AIProviderName.CUSTOM, selectedModel: 'my-model' })).toBeNull()
+    })
 
     it('reports the model the turn ran on when the provider is known', () => {
         expect(forAnalytics({ provider: AIProviderName.OPENAI, selectedModel: 'gpt-4.1' })).toBe('gpt-4.1')

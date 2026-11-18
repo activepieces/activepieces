@@ -288,7 +288,7 @@ describe('mcpUtils.buildRequiredInputs / buildExampleInput — prepare-to-execut
     ]
 
     it('splits required inputs into provideNow vs needsResolution (dropdowns/dynamic)', () => {
-        const { provideNow, needsResolution } = mcpUtils.buildRequiredInputs(props)
+        const { provideNow, needsResolution } = mcpUtils.buildRequiredInputs({ props })
         expect(provideNow).toContain('url')
         expect(provideNow).toContain('headers')
         expect(provideNow).toContain('method')
@@ -296,7 +296,7 @@ describe('mcpUtils.buildRequiredInputs / buildExampleInput — prepare-to-execut
     })
 
     it('builds an example with empty containers, a first dropdown option, and a resolution sentinel for unresolved dropdowns', () => {
-        const example = mcpUtils.buildExampleInput(props)
+        const example = mcpUtils.buildExampleInput({ props })
         expect(example.headers).toEqual({})
         expect(example.queryParams).toEqual({})
         expect(example.method).toBe('GET')
@@ -305,10 +305,71 @@ describe('mcpUtils.buildRequiredInputs / buildExampleInput — prepare-to-execut
     })
 
     it('uses a resolved dropdown option value when options are present', () => {
-        const example = mcpUtils.buildExampleInput([
+        const example = mcpUtils.buildExampleInput({ props: [
             { name: 'objectTypeId', type: PropertyType.DROPDOWN, displayName: 'Object Type', required: true, options: [{ label: 'Deals', value: 'deal-uuid' }] },
-        ])
+        ] })
         expect(example.objectTypeId).toBe('deal-uuid')
+    })
+})
+
+describe('mcpUtils.buildRequiredInputs / buildExampleInput — keep what the caller already passed', () => {
+    const sheetProps = [
+        { name: 'spreadsheetId', type: PropertyType.DROPDOWN, displayName: 'Spreadsheet', required: true },
+        { name: 'sheetId', type: PropertyType.DROPDOWN, displayName: 'Sheet', required: true },
+        { name: 'first_row_headers', type: PropertyType.CHECKBOX, displayName: 'First row headers', required: false },
+        { name: 'values', type: PropertyType.DYNAMIC, displayName: 'Values', required: true },
+    ]
+    const providedInput = { spreadsheetId: 'sheet-123', sheetId: 7, first_row_headers: true }
+
+    it('lists only the required keys the caller has not given under Resolve first', () => {
+        const { provideNow, needsResolution } = mcpUtils.buildRequiredInputs({ props: sheetProps, providedInput })
+        expect(needsResolution).toEqual(['values'])
+        expect(provideNow).toEqual([])
+    })
+
+    it('keeps the caller\'s values, including optional ones, in the example', () => {
+        const example = mcpUtils.buildExampleInput({ props: sheetProps, providedInput })
+        expect(example).toMatchObject({ spreadsheetId: 'sheet-123', sheetId: 7, first_row_headers: true })
+        expect(example.values).toContain('resolve with ap_resolve_property_options')
+    })
+
+    it('treats an empty string or null as not given, but keeps false and 0', () => {
+        const props = [
+            { name: 'url', type: PropertyType.SHORT_TEXT, displayName: 'URL', required: true },
+            { name: 'body', type: PropertyType.SHORT_TEXT, displayName: 'Body', required: true },
+            { name: 'enabled', type: PropertyType.CHECKBOX, displayName: 'Enabled', required: true },
+            { name: 'limit', type: PropertyType.NUMBER, displayName: 'Limit', required: true },
+        ]
+        const providedInput = { url: '', body: null, enabled: false, limit: 0 }
+
+        expect(mcpUtils.buildRequiredInputs({ props, providedInput }).provideNow).toEqual(['url', 'body'])
+        expect(mcpUtils.buildExampleInput({ props, providedInput })).toMatchObject({ url: '<URL>', enabled: false, limit: 0 })
+    })
+
+    it('fills the missing required children of a dynamic object the caller passed', () => {
+        const props = [
+            { name: 'markdown', type: PropertyType.CHECKBOX, displayName: 'Markdown', required: false },
+            {
+                name: 'dynamic',
+                type: PropertyType.DYNAMIC,
+                displayName: 'Options',
+                required: true,
+                dynamicFields: [
+                    { name: 'depth', type: PropertyType.NUMBER, displayName: 'Depth', required: true, defaultValue: 1 },
+                    { name: 'filter', type: PropertyType.SHORT_TEXT, displayName: 'Filter', required: false },
+                ],
+            },
+        ]
+        const providedInput = { markdown: false, dynamic: { filter: 'todo' } }
+
+        expect(mcpUtils.buildExampleInput({ props, providedInput })).toEqual({ markdown: false, dynamic: { filter: 'todo', depth: 1 } })
+        expect(mcpUtils.buildRequiredInputs({ props, providedInput }).needsResolution).toEqual(['dynamic'])
+        expect(mcpUtils.buildRequiredInputs({ props, providedInput: { dynamic: { depth: 2 } } }).needsResolution).toEqual([])
+    })
+
+    it('builds the same output as before when the caller passes nothing', () => {
+        expect(mcpUtils.buildRequiredInputs({ props: sheetProps })).toEqual({ provideNow: [], needsResolution: ['spreadsheetId', 'sheetId', 'values'] })
+        expect(Object.keys(mcpUtils.buildExampleInput({ props: sheetProps }))).toEqual(['spreadsheetId', 'sheetId', 'values'])
     })
 })
 
@@ -401,6 +462,72 @@ describe('mcpUtils.rankActionsByIntent — cardinality bias', () => {
     })
 })
 
+describe('mcpUtils.rankActionsByIntent — AI actions and their human twins', () => {
+    function action({ name, displayName, description, aiDescription, audience }: { name: string, displayName: string, description: string, aiDescription?: string, audience?: string }) {
+        return { name, displayName, description, cardinality: mcpUtils.classifyActionCardinality(name), aiDescription, audience }
+    }
+
+    it('ranks an AI action above its human twin when both match the intent equally', () => {
+        const actions = [
+            action({ name: 'searchMessages', displayName: 'Search Messages', description: 'Search messages in the workspace' }),
+            action({ name: 'slack_search_messages', displayName: 'Search Messages', description: 'Search messages in the workspace', audience: 'ai' }),
+        ]
+        const ranked = mcpUtils.rankActionsByIntent({ actions, forIntent: 'search messages for a keyword' })
+        expect(ranked).toEqual(['slack_search_messages', 'searchMessages'])
+    })
+
+    it('keeps a matching AI action in the top 5 when its human twin and other ties come first in the piece', () => {
+        const actions = [
+            action({ name: 'searchFiles', displayName: 'Search', description: 'Search files' }),
+            ...['one', 'two', 'three', 'four'].map((n) => action({ name: `file_${n}`, displayName: `File ${n}`, description: 'Search files' })),
+            action({ name: 'drive_search_files', displayName: 'Search', description: 'Search files', audience: 'ai' }),
+        ]
+        const ranked = mcpUtils.rankActionsByIntent({ actions, forIntent: 'search files' })
+        expect(ranked).toHaveLength(5)
+        expect(ranked[0]).toBe('drive_search_files')
+        expect(ranked[1]).toBe('searchFiles')
+    })
+
+    it('does not count an intent word that only appears inside another action\'s name', () => {
+        const actions = [
+            action({ name: 'drive_get_file', displayName: 'Get File', description: 'Get a file by ID', aiDescription: 'Resolve the ID via `drive_search_files` first.', audience: 'ai' }),
+            action({ name: 'drive_create_folder', displayName: 'Create Folder', description: 'Create a folder for files', aiDescription: 'Resolve the parent ID via `drive_search_files`.', audience: 'ai' }),
+            action({ name: 'drive_search_files', displayName: 'Search Files and Folders', description: 'Search a folder for files by name', audience: 'ai' }),
+        ]
+        const ranked = mcpUtils.rankActionsByIntent({ actions, forIntent: 'search files by name prefix' })
+        expect(ranked).toEqual(['drive_search_files', 'drive_create_folder'])
+    })
+
+    it('does not count an intent word that only appears in another action\'s display name', () => {
+        const actions = [
+            action({ name: 'searchMessages', displayName: 'Search Messages', description: 'Search messages in the workspace' }),
+            action({ name: 'slack_update_message', displayName: 'Update Message', description: 'Edit a message', aiDescription: 'Take the ts from Search Messages or Get Channel History.', audience: 'ai' }),
+            action({ name: 'slack_search_messages', displayName: 'Search Messages', description: 'Search the workspace for messages', audience: 'ai' }),
+        ]
+        const ranked = mcpUtils.rankActionsByIntent({ actions, forIntent: 'search messages for a keyword' })
+        expect(ranked).toEqual(['slack_search_messages', 'searchMessages'])
+    })
+
+    it('still counts the words in an action\'s own display name when it contains another action\'s display name', () => {
+        const actions = [
+            action({ name: 'send_message', displayName: 'Send Message', description: 'Send a message' }),
+            action({ name: 'send_message_to_user', displayName: 'Send Message To User', description: 'Direct message a user' }),
+        ]
+        const ranked = mcpUtils.rankActionsByIntent({ actions, forIntent: 'send message to a user' })
+        expect(ranked).toEqual(['send_message_to_user', 'send_message'])
+    })
+
+    it('keeps the piece order for equal scores when the piece has no AI actions', () => {
+        const actions = [
+            action({ name: 'create_row', displayName: 'Create Row', description: 'Add a row to a sheet' }),
+            action({ name: 'update_row', displayName: 'Update Row', description: 'Change a row in a sheet' }),
+            action({ name: 'delete_row', displayName: 'Delete Row', description: 'Remove a row from a sheet' }),
+        ]
+        const ranked = mcpUtils.rankActionsByIntent({ actions, forIntent: 'row in a sheet' })
+        expect(ranked).toEqual(['create_row', 'update_row', 'delete_row'])
+    })
+})
+
 describe('mcpUtils.resolveTransitively — collapse the discovery chain', () => {
     it('resolves a dependent chain (base → table → fields) in one pass and seeds parent values', async () => {
         const props = [
@@ -460,7 +587,7 @@ describe('mcpUtils.buildExampleInput — runnable, sentinel-free once resolved',
                 { name: 'name', type: PropertyType.SHORT_TEXT, displayName: 'Name', required: true },
             ] },
         ]
-        const example = mcpUtils.buildExampleInput(props)
+        const example = mcpUtils.buildExampleInput({ props })
         const serialized = JSON.stringify(example)
         expect(serialized).not.toContain('resolve with')
         expect(example.channel).toBe('C123')

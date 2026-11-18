@@ -20,11 +20,31 @@ export const updateCompanyAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Update properties on an existing HubSpot company identified by Company ID; only the supplied fields are changed. Applying the same field values repeatedly leaves the record in the same state, so it is idempotent. Use Create Company to add a new record, or a find action to obtain the ID first.', idempotent: true },
 	outputSchema: crmObjectOutputSchema,
+	propertyGroups: [
+		{
+			key: 'target',
+			display: 'section',
+			label: 'Company to Update',
+			icon: 'tag',
+			props: ['companyId'],
+		},
+		{
+			key: 'changes',
+			display: 'section',
+			label: 'Changes',
+			icon: 'text',
+			props: ['changesInfo', 'objectProperties'],
+		},
+	],
 	props: {
 		companyId: Property.ShortText({
 			displayName: 'Company ID',
 			description: 'Map it from an earlier step like Find Company.',
 			required: true,
+		}),
+		changesInfo: Property.MarkDown({
+			value: 'Fields left empty keep their current value.',
+			variant: MarkdownVariant.INFO,
 		}),
 		objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.COMPANY, []),
 		markdown: Property.MarkDown({

@@ -19,12 +19,32 @@ export const updateCustomObjectAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Updates properties on an existing custom-object record identified by its custom object type and record ID, then returns the refreshed record. Use to modify a known custom-object record; for standard CRM objects use the dedicated update actions instead. Idempotent: applying the same property values converges to the same record state.', idempotent: true },
 	outputSchema: crmObjectOutputSchema,
+	propertyGroups: [
+		{
+			key: 'target',
+			display: 'section',
+			label: 'Custom Object to Update',
+			icon: 'tag',
+			props: ['customObjectType', 'customObjectId'],
+		},
+		{
+			key: 'changes',
+			display: 'section',
+			label: 'Changes',
+			icon: 'text',
+			props: ['changesInfo', 'objectProperties'],
+		},
+	],
 	props: {
 		customObjectType: customObjectDropdown,
 		customObjectId: Property.ShortText({
 			displayName: 'Custom Object ID',
 			description: 'Map it from an earlier step like Find Custom Object.',
 			required: true,
+		}),
+		changesInfo: Property.MarkDown({
+			value: 'Fields left empty keep their current value.',
+			variant: MarkdownVariant.INFO,
 		}),
 		objectProperties: customObjectDynamicProperties,
 		markdown: Property.MarkDown({

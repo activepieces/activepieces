@@ -1,7 +1,8 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { ApFlagId, DefaultProjectRole, maxBarrierSignalsBounds } from '@activepieces/shared'
+import { AIProviderModelType, ApFlagId, DefaultProjectRole, maxBarrierSignalsBounds } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { system } from '../../../../src/app/helper/system/system'
 import { AppSystemProp } from '../../../../src/app/helper/system/system-props'
 import { mockAndSaveAIProvider } from '../../../helpers/mocks'
@@ -195,6 +196,56 @@ describe('platform configuration', () => {
         expect(after.aiSpecificModelsVisible).toBe(true)
     })
 
+    it('saves the default chat model and makes its key the Default AI key', async () => {
+        const ctx = await createTestContext(app!)
+        const first = await customKey({ platformId: ctx.platform.id, name: 'First', enabledForChat: true })
+        const second = await customKey({ platformId: ctx.platform.id, name: 'Second' })
+        const defaultChatModel = { type: 'model', provider: AIProviderName.CUSTOM, providerConfigId: second.id, modelId: 'team-model' }
+
+        const response = await ctx.post('/v1/platform-configurations', { defaultChatModel })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(response!.json().defaultChatModel).toEqual(defaultChatModel)
+        const keys = await databaseConnection().getRepository('ai_provider').findBy({ platformId: ctx.platform.id })
+        expect(keys.filter((key) => key.enabledForChat).map((key) => key.id)).toEqual([second.id])
+        expect(first.id).not.toBe(second.id)
+    })
+
+    it('refuses a default chat model the key does not offer, and changes nothing', async () => {
+        const ctx = await createTestContext(app!)
+        const key = await customKey({ platformId: ctx.platform.id, name: 'Team' })
+
+        const response = await ctx.post('/v1/platform-configurations', {
+            maxBarrierSignals: 7,
+            defaultChatModel: { type: 'model', provider: AIProviderName.CUSTOM, providerConfigId: key.id, modelId: 'not-offered' },
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        const configuration = (await ctx.get('/v1/platform-configurations'))!.json()
+        expect(configuration.defaultChatModel ?? null).toBeNull()
+        expect(configuration.maxBarrierSignals).not.toBe(7)
+    })
+
+    it('clears the default chat model', async () => {
+        const ctx = await createTestContext(app!)
+        const key = await customKey({ platformId: ctx.platform.id, name: 'Team' })
+        await ctx.post('/v1/platform-configurations', { defaultChatModel: { type: 'model', provider: AIProviderName.CUSTOM, providerConfigId: key.id, modelId: 'team-model' } })
+
+        await ctx.post('/v1/platform-configurations', { defaultChatModel: null })
+
+        expect((await ctx.get('/v1/platform-configurations'))!.json().defaultChatModel ?? null).toBeNull()
+    })
+
+    it('clears the default chat model when its key is deleted', async () => {
+        const ctx = await createTestContext(app!)
+        const key = await customKey({ platformId: ctx.platform.id, name: 'Team' })
+        await ctx.post('/v1/platform-configurations', { defaultChatModel: { type: 'model', provider: AIProviderName.CUSTOM, providerConfigId: key.id, modelId: 'team-model' } })
+
+        await ctx.delete(`/v1/ai-providers/${key.id}`)
+
+        expect((await ctx.get('/v1/platform-configurations'))!.json().defaultChatModel ?? null).toBeNull()
+    })
+
     it('lets any platform member read the configuration, but only an admin write it', async () => {
         const ctx = await createTestContext(app!)
         const memberCtx = await createMemberContext(app!, ctx, {
@@ -211,3 +262,17 @@ describe('platform configuration', () => {
         expect(write?.statusCode).toBe(StatusCodes.FORBIDDEN)
     })
 })
+
+async function customKey({ platformId, name, enabledForChat }: { platformId: string, name: string, enabledForChat?: boolean }): Promise<{ id: string }> {
+    return mockAndSaveAIProvider({
+        platformId,
+        provider: AIProviderName.CUSTOM,
+        displayName: name,
+        enabledForChat: enabledForChat ?? false,
+        config: {
+            baseUrl: 'https://api.example.com/v1',
+            apiKeyHeader: 'Authorization',
+            models: [{ modelId: 'team-model', modelName: 'team-model', modelType: AIProviderModelType.TEXT }],
+        },
+    })
+}

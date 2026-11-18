@@ -1,111 +1,43 @@
-import { createAction, Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { netlifyAuth } from "../common/auth";
+import { createAction } from '@activepieces/pieces-framework';
+import { netlifyAuth } from '../common/auth';
+import { netlifyOperations } from '../common/operations';
+import { netlifySchemas } from '../common/output-schemas';
+import { netlifyProps } from '../common/props';
 
 export const listFiles = createAction({
-  name: "list_files",
+  auth: netlifyAuth,
+  name: 'list_files',
   classification: 'SEARCH',
-  displayName: "List Files",
-  description: "Returns a list of all the files in the current deploy.",
-  audience: 'both',
-  aiMetadata: { description: 'Lists all files in the current (published) deploy of a Netlify site, identified by its site ID. Use it to inspect which files are served for the live site. Read-only and idempotent.', idempotent: true },
-  props: {
-    siteId: Property.Dropdown({
-      auth: netlifyAuth,      displayName: "Site",
-      description: "Select the site to list files for",
-      required: true,
-      refreshers: ['auth'],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: "Connect your account first",
-            options: [],
-          };
-        }
-
-        const authentication = auth as OAuth2PropertyValue;
-        if (!authentication.access_token) {
-          return {
-            disabled: true,
-            placeholder: "Access token is required",
-            options: [],
-          };
-        }
-
-        try {
-          const response = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: "https://api.netlify.com/api/v1/sites?per_page=50",
-            headers: {
-              "Authorization": `Bearer ${authentication.access_token}`,
-              "Content-Type": "application/json",
-            },
-          });
-
-          if (response.status === 200) {
-            const sites = response.body as any[];
-            return {
-              disabled: false,
-              options: sites.map((site) => ({
-                label: `${site.name} (${site.url})`,
-                value: site.id,
-              })),
-            };
-          } else {
-            return {
-              disabled: true,
-              placeholder: `Failed to fetch sites: ${response.status}`,
-              options: [],
-            };
-          }
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: "Failed to fetch sites",
-            options: [],
-          };
-        }
-      },
-    }),
+  displayName: 'List Files',
+  description: 'List the files of the published deploy of a site.',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Lists every file served by the currently published deploy of one Netlify site, with path, MIME type, size and SHA-1. Use it to check whether a page or asset is live. Read-only.',
+    idempotent: true,
   },
-  async run(context) {
-    const { siteId } = context.propsValue;
+  outputSchema: netlifySchemas.fileList,
+  props: { siteId: netlifyProps.siteDropdown({ description: 'The site whose files to list.' }) },
+  async run({ auth, propsValue }) {
+    return netlifyOperations.listFiles({ auth, siteId: propsValue.siteId });
+  },
+});
 
-    if (!context.auth) {
-      throw new Error("Authentication is required");
-    }
-
-    const auth = context.auth as OAuth2PropertyValue;
-    if (!auth.access_token) {
-      throw new Error("Access token is required");
-    }
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `https://api.netlify.com/api/v1/sites/${siteId}/files`,
-      headers: {
-        "Authorization": `Bearer ${auth.access_token}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (response.status === 200) {
-      return response.body;
-    }
-
-    if (response.status === 404) {
-      throw new Error(`Site not found: ${siteId}. Please check the site ID or domain.`);
-    }
-
-    if (response.status === 401) {
-      throw new Error("Unauthorized. Please check your access token.");
-    }
-
-    if (response.status === 403) {
-      throw new Error("Forbidden. You don't have permission to access this site.");
-    }
-
-    throw new Error(`Failed to list files: ${response.status}`);
+export const listFilesById = createAction({
+  auth: netlifyAuth,
+  name: 'list_files_by_id',
+  classification: 'SEARCH',
+  displayName: 'List Files by Site ID',
+  description: 'List the files of the published deploy of a site given its ID or domain.',
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Lists every file served by the currently published deploy of one Netlify site, with path, MIME type, size and SHA-1. Use it to check whether a page or asset is live. Read-only. Get the site ID from List Sites.',
+    idempotent: true,
+  },
+  outputSchema: netlifySchemas.fileList,
+  props: { siteId: netlifyProps.siteId() },
+  async run({ auth, propsValue }) {
+    return netlifyOperations.listFiles({ auth, siteId: propsValue.siteId });
   },
 });

@@ -10,7 +10,7 @@ export const db = {
         return databaseConnection().getRepository(entity).update(id, data)
     },
 
-    delete(entity: string, id: string): Promise<unknown> {
+    delete(entity: string, id: string | string[]): Promise<unknown> {
         return databaseConnection().getRepository(entity).delete(id)
     },
 

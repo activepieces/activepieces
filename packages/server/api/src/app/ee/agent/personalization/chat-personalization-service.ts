@@ -22,7 +22,7 @@ import { userService } from '../../../user/user-service'
 import { agentHelpers } from '../agent-helpers'
 import { normalizeRoleTitle, normalizeWebsite } from './personalization-normalize'
 import { apolloApiKey, claimForResearch, enqueueResearchJob, guardsAllowResearch, PERSONALIZATION_PROVIDER_SCOPE, PREFILL_TTL_SECONDS, prefillKey, readPrefill, recoverIfStale, RESEARCH_STALENESS_TIMEOUT_MS, startPrefillLookup, validateResult } from './personalization-research'
-import { callerMayEditCompany, findRow, IN_FLIGHT_STATUSES, personalizationRepo, upsertFoundingUserRow, UpsertParams, writeCompanyRow, writeUserRow } from './personalization-rows'
+import { callerMayEditCompany, findRow, hasOptedOut, IN_FLIGHT_STATUSES, personalizationRepo, upsertFoundingUserRow, UpsertParams, writeCompanyRow, writeUserRow } from './personalization-rows'
 import { emitProgress, PersonalizationIdentity, toScopeEnum, toView } from './personalization-view'
 
 
@@ -65,6 +65,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
                 companyText: null,
                 role: null,
                 status: ChatPersonalizationStatus.SKIPPED,
+                researchToken: null,
                 profile: null,
                 useCases: null,
             }
@@ -155,17 +156,16 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
     async upsertUserScope({ platformId, userId, companyRow, role }: { platformId: string, userId: string, companyRow: ChatPersonalization, role: string | null }): Promise<ChatPersonalizationView> {
         const researchToken = apId()
         const userRow = await findRow({ platformId, userId })
+        if (!isNil(userRow) && keepsCurrentRow({ userRow, role })) {
+            return this.getEffectiveView({ platformId, userId })
+        }
+        const refreshesReadyCards = userRow?.status === ChatPersonalizationStatus.READY
+        const researchBlockedForReadyCards = refreshesReadyCards && !await guardsAllowResearch({ platformId, log })
+        if (researchBlockedForReadyCards) {
+            return this.getEffectiveView({ platformId, userId })
+        }
         if (!isNil(userRow)) {
-            const fresh = Date.now() - new Date(userRow.updated).getTime() < RESEARCH_STALENESS_TIMEOUT_MS
-            const terminal = [ChatPersonalizationStatus.READY, ChatPersonalizationStatus.SKIPPED].includes(userRow.status)
-            const roleChanged = !isNil(role) && role !== userRow.role
-            if (terminal || (fresh && !roleChanged)) {
-                if (roleChanged) {
-                    await personalizationRepo().update({ platformId, userId }, { role })
-                }
-                return this.getEffectiveView({ platformId, userId })
-            }
-            await personalizationRepo().update({ platformId, userId }, { status: ChatPersonalizationStatus.PENDING, researchToken, ...spreadIfDefined('role', role) })
+            await personalizationRepo().update({ platformId, userId }, { status: ChatPersonalizationStatus.PENDING, researchToken, domain: companyRow.domain, companyText: companyRow.companyText, ...spreadIfDefined('role', role) })
         }
         else {
             const { error } = await tryCatch(() => personalizationRepo().insert({
@@ -184,7 +184,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
                 return this.getEffectiveView({ platformId, userId })
             }
         }
-        const allowed = await guardsAllowResearch({ platformId, log })
+        const allowed = refreshesReadyCards || await guardsAllowResearch({ platformId, log })
         if (!allowed) {
             await personalizationRepo().update({ platformId, userId }, { status: ChatPersonalizationStatus.SKIPPED })
             return this.getEffectiveView({ platformId, userId })
@@ -213,7 +213,8 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             recoverIfStale({ row: foundCompanyRow, platformId, userId, scope: ChatPersonalizationScope.COMPANY, log }),
         ])
         const personalStatus = userRow?.status ?? ChatPersonalizationStatus.UNSET
-        if (userRow?.status === ChatPersonalizationStatus.READY) {
+        const userRowWins = !isNil(userRow) && (userRow.status === ChatPersonalizationStatus.READY || hasOptedOut(userRow))
+        if (userRowWins) {
             return toView({ row: userRow, scope: ChatPersonalizationScope.USER, inputsRow: companyRow ?? userRow, role: userRow.role ?? null, personalStatus, prefill: null })
         }
         if (!isNil(companyRow)) {
@@ -244,19 +245,19 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
         }
         const userRow = await findRow({ platformId, userId })
         const [provider, user, platform, companyRow, enabledTools] = await Promise.all([
-            agentHelpers.resolveChatProvider({ platformId, scope: PERSONALIZATION_PROVIDER_SCOPE, log }),
+            agentHelpers.resolvePlatformWorkModelOrThrow({ platformId, log }),
             userService(log).getMetaInformation({ id: userId }),
             platformService(log).getOneOrThrow(platformId),
             findRow({ platformId, userId: null }),
             tryCatch(() => aiToolConfigService(log).getEnabledTools({ platformId })),
         ])
         const webSearch = enabledTools.data?.webSearch ?? null
-        const modelId = await agentHelpers.resolveModelId({ platformId, providerConfig: provider, selectedModel: null, surface: 'chat', scope: PERSONALIZATION_PROVIDER_SCOPE, log })
+        const modelId = provider.modelId ?? await agentHelpers.resolveModelId({ platformId, providerConfig: provider.config, selectedModel: null, surface: 'chat', scope: PERSONALIZATION_PROVIDER_SCOPE, log })
         return {
             claimed: true,
-            credentials: provider,
+            credentials: provider.config,
             modelId,
-            fastModelId: await agentHelpers.resolveFastModelId({ platformId, providerConfig: provider, surface: 'chat', scope: PERSONALIZATION_PROVIDER_SCOPE, log }),
+            fastModelId: provider.modelId ?? await agentHelpers.resolveFastModelId({ platformId, providerConfig: provider.config, surface: 'chat', scope: PERSONALIZATION_PROVIDER_SCOPE, log }),
             user: { firstName: user.firstName, lastName: user.lastName, email: user.email },
             platformName: platform.name,
             website: companyRow?.domain ?? null,
@@ -382,3 +383,10 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
     },
 
 })
+
+function keepsCurrentRow({ userRow, role }: { userRow: ChatPersonalization, role: string | null }): boolean {
+    const fresh = Date.now() - new Date(userRow.updated).getTime() < RESEARCH_STALENESS_TIMEOUT_MS
+    const terminal = [ChatPersonalizationStatus.READY, ChatPersonalizationStatus.SKIPPED].includes(userRow.status)
+    const roleChanged = !isNil(role) && role !== userRow.role
+    return !hasOptedOut(userRow) && !roleChanged && (terminal || fresh)
+}

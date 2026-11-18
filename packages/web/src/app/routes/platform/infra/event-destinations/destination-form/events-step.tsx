@@ -94,7 +94,7 @@ export const EventsStep = ({
         const groupCheckboxId = `${checkboxIdPrefix}-group`;
 
         return (
-          <FormItem className="flex flex-col gap-4">
+          <FormItem className="@container flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <SearchInput
                 placeholder={t('Search events')}
@@ -119,10 +119,10 @@ export const EventsStep = ({
             <div
               className={cn(
                 adminSurface.card,
-                'grid min-h-85 grid-cols-[240px_minmax(0,1fr)] overflow-hidden',
+                'grid min-h-85 grid-cols-1 grid-rows-[auto_1fr] overflow-hidden @xl:grid-cols-[240px_minmax(0,1fr)] @xl:grid-rows-none',
               )}
             >
-              <nav className="flex flex-col gap-0.5 border-r bg-gray-3 p-1.5">
+              <nav className="flex gap-0.5 overflow-x-auto border-b bg-gray-3 p-1.5 @xl:flex-col @xl:border-r @xl:border-b-0">
                 {visibleGroups.map((group) => {
                   const isActive = group.key === activeGroup?.key;
                   const selectedCount = group.events.filter((event) =>
@@ -135,7 +135,7 @@ export const EventsStep = ({
                       onClick={() => setActiveGroupKey(group.key)}
                       aria-current={isActive ? 'true' : undefined}
                       className={cn(
-                        'flex h-8 items-center gap-2 rounded-md px-2.5 text-left text-sm transition-colors',
+                        'flex h-8 shrink-0 items-center gap-2 rounded-md px-2.5 text-left text-sm transition-colors',
                         isActive
                           ? 'bg-panel font-semibold text-gray-12'
                           : 'hover:bg-gray-4',
@@ -214,7 +214,7 @@ export const EventsStep = ({
                           >
                             {eventLabels[event]}
                           </Label>
-                          <span className="font-mono text-xs text-gray-11">
+                          <span className="hidden font-mono text-xs text-gray-11 @md:inline">
                             {event}
                           </span>
                         </div>

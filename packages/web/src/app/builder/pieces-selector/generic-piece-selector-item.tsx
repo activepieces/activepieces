@@ -52,7 +52,12 @@ const GenericActionOrTriggerItem = ({
       };
   const pieceSelectorItemInfo = getPieceSelectorItemInfo(item);
   return (
-    <CardListItem className="p-2 w-full" onClick={onClick} style={style}>
+    <CardListItem
+      className="p-2 w-full"
+      onClick={onClick}
+      style={style}
+      data-testid={`action-or-trigger-${pieceSelectorItemInfo.displayName}`}
+    >
       <div className="flex gap-3 items-center w-full min-w-0">
         <div
           className={cn({

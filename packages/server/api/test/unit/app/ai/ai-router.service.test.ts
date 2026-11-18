@@ -21,6 +21,10 @@ vi.mock('../../../../src/app/platform/billing-provider', () => ({
     assertCreditsAndAppSumoNotExceeded: assertCredits,
 }))
 
+vi.mock('../../../../src/app/ai/usage/ai-call-context', () => ({
+    aiCallContext: { forFlowRun: async () => ({ origin: 'FLOW_STEP', environment: 'PRODUCTION' }) },
+}))
+
 const { aiRouterService } = await import('../../../../src/app/ai/ai-router.service')
 
 const log = { info: vi.fn(), warn: vi.fn() }
@@ -131,6 +135,20 @@ describe('aiRouterService runs the decision as a worker AI job', () => {
 
         await expect(service().start({ ...REQUEST, waitpointId: 'wp-1' })).rejects.toMatchObject({ error: { code: ErrorCode.QUOTA_EXCEEDED } })
         expect(enqueue).not.toHaveBeenCalled()
+    })
+
+    it('sends the model the step picked to the worker', async () => {
+        await service().choose({ ...REQUEST, model: 'cloudflare/clef' })
+        await service().start({ ...REQUEST, model: 'google/gemini-decision-1', waitpointId: 'wp-1' })
+
+        expect(enqueue.mock.calls[0][0]).toMatchObject({ modelId: 'cloudflare/clef' })
+        expect(enqueue.mock.calls[1][0]).toMatchObject({ modelId: 'google/gemini-decision-1' })
+    })
+
+    it('runs the default model when the step picked one that is not on the allowlist', async () => {
+        await service().choose({ ...REQUEST, model: 'openai/gpt-5' })
+
+        expect(enqueue.mock.calls[0][0]).toMatchObject({ modelId: 'typesafe/jev-1.13' })
     })
 
     it('fails when the worker answered in a shape the engine cannot read', async () => {

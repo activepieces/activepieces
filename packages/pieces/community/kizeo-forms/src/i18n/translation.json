@@ -65,6 +65,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Event On Data": "Event On Data",
   "Event On Data Deleted": "Event On Data Deleted",
   "Event On Data Finished": "Event On Data Finished",

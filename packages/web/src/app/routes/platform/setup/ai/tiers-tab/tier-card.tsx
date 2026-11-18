@@ -11,7 +11,6 @@ import {
   Brain,
   Info,
   Loader2,
-  MessageSquare,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -169,11 +168,6 @@ export function TierCard({
             )}
             {thinkingChip !== undefined && (
               <TierTag icon={Brain}>{thinkingChip}</TierTag>
-            )}
-            {tools === 'recommended' && (
-              <TierTag icon={MessageSquare}>
-                {t('Recommended for chat')}
-              </TierTag>
             )}
             {showSpinner && (
               <Loader2

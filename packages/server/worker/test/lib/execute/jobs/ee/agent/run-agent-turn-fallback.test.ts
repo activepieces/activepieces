@@ -18,6 +18,28 @@ describe('a platform tier chat turn', () => {
         expect(textOf(turn)).toBe('from backup')
     })
 
+    it.each([
+        ['statusCode, the shape the ai sdk uses', { statusCode: 503, responseBody: '{"error":"overloaded"}' }],
+        ['status, the shape a client library uses', { status: 503, body: '{"error":"overloaded"}' }],
+        ['no status, only a nested message', { error: { message: 'service unavailable, try another upstream' } }],
+    ])('answers on the next model when the main model fails with a plain object carrying %s', async (_name, raw) => {
+        const turn = await runTurn({ models: [tierModel({ modelId: 'main', model: failingModelWithoutAnError(raw) }), tierModel({ modelId: 'backup', model: answeringModel('from backup') })] })
+
+        expect(turn.streamError).toBeNull()
+        expect(turn.answeredBy.modelId).toBe('backup')
+        expect(textOf(turn)).toBe('from backup')
+    })
+
+    it('says what the provider returned instead of [object Object] when the whole tier is down', async () => {
+        const raw = { error: { message: 'service unavailable, try another upstream' } }
+
+        const turn = await runTurn({ models: [tierModel({ modelId: 'main', model: failingModelWithoutAnError(raw) }), tierModel({ modelId: 'backup', model: failingModelWithoutAnError(raw) })] })
+
+        expect(turn.allModelsFailed).toBe(true)
+        expect(turn.streamError?.message).toContain('service unavailable')
+        expect(turn.streamError?.message).not.toContain('[object Object]')
+    })
+
     it('continues on the next model after the fast step already answered and ran a tool, without running it again', async () => {
         const search = vi.fn(async () => ({ content: [{ type: 'text', text: 'found' }] }))
         const backup = answeringModel('done')
@@ -33,6 +55,17 @@ describe('a platform tier chat turn', () => {
         expect(search).toHaveBeenCalledTimes(1)
         expect(textOf(turn)).toBe('Looking.done')
         expect(JSON.stringify(backup.doStreamCalls[0].prompt)).toContain('found')
+    })
+
+    it('counts the tokens of a step that finished before a later step failed', async () => {
+        const turn = await runTurn({
+            models: [tierModel({ modelId: 'main', model: failingModel({ statusCode: 503 }) }), tierModel({ modelId: 'backup', model: answeringModel('done') })],
+            fastModel: tierModel({ modelId: 'fast', model: searchingModel() }),
+            search: vi.fn(async () => ({ content: [{ type: 'text', text: 'found' }] })),
+        })
+
+        expect(turn.totalInputTokens).toBe(2)
+        expect(turn.totalOutputTokens).toBe(2)
     })
 
     it('does not fall back once the failing step already sent text to the user', async () => {
@@ -211,6 +244,14 @@ function failingModel({ statusCode }: { statusCode: number }): MockLanguageModel
     })
 }
 
+function failingModelWithoutAnError(raw: unknown): MockLanguageModelV3 {
+    return new MockLanguageModelV3({
+        doStream: async () => {
+            throw raw
+        },
+    })
+}
+
 function answeringModel(text: string, sentOptions?: SharedV3ProviderOptions[]): MockLanguageModelV3 {
     return new MockLanguageModelV3({
         doStream: async ({ providerOptions }) => {
@@ -261,5 +302,5 @@ function textOf(turn: Awaited<ReturnType<typeof runAgentTurn>>): string {
 }
 
 const TIER = { id: 'fast', thinkingBudget: 0, modelId: 'main' }
-const USAGE = { inputTokens: 1, outputTokens: 1, totalTokens: 2 }
+const USAGE = { inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 }, outputTokens: { total: 1, text: 1, reasoning: 0 } }
 const SILENT_LOG = { debug: () => undefined, info: () => undefined, warn: () => undefined, error: () => undefined }

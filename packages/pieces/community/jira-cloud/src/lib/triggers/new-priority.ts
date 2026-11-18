@@ -34,6 +34,9 @@ export const newPriority = createTrigger({
     await context.store.put('priorityIds', JSON.stringify(ids));
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete('priorityIds');
   },
   async run(context) {

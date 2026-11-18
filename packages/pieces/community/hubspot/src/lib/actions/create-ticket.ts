@@ -16,6 +16,29 @@ export const createTicketAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Create a new HubSpot support ticket with a name, pipeline, and pipeline stage plus optional properties. Each call creates a separate ticket even for identical input, so it is not idempotent.', idempotent: false },
 	outputSchema: crmObjectOutputSchema,
+	propertyGroups: [
+		{
+			key: 'ticket',
+			display: 'section',
+			label: 'Ticket',
+			icon: 'tag',
+			props: ['ticketName'],
+		},
+		{
+			key: 'pipeline',
+			display: 'section',
+			label: 'Pipeline',
+			icon: 'sliders',
+			props: ['pipelineId', 'pipelineStageId'],
+		},
+		{
+			key: 'details',
+			display: 'section',
+			label: 'Details',
+			icon: 'text',
+			props: ['objectProperties'],
+		},
+	],
 	props: {
 		ticketName: Property.ShortText({
 			displayName: 'Ticket Name',

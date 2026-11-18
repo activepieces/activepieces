@@ -1,167 +1,52 @@
-import { createTrigger, TriggerStrategy, Property, AppConnectionValueForAuthProperty } from "@activepieces/pieces-framework";
-import { foreplayCoApiCall } from "../common";
-import { HttpMethod, Polling, DedupeStrategy, pollingHelper } from "@activepieces/pieces-common";
-import { newSwipefileAd as newSwipefileAdProperties } from "../properties";
-import { newSwipefileAdSchema } from "../schemas";
-import { foreplayCoAuth } from "../..";
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { foreplayCoAuth } from '../auth';
+import { ForeplayAuthInput } from '../common/client';
+import { foreplayMappers } from '../common/mappers';
+import { foreplayOutputSchemas } from '../common/output-schemas';
+import { foreplayPolling } from '../common/polling';
+import { foreplayProps } from '../common/props';
+import { legacyEventMetadata, sampleAd } from './sample-ad';
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof foreplayCoAuth>, Record<string, any>> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    console.log(`[New Swipefile Ad Polling] Fetching swipefile ads, lastFetch: ${new Date(lastFetchEpochMS || 0).toISOString()}`);
+function fetcher({ auth, propsValue }: { auth: ForeplayAuthInput; propsValue: Record<string, unknown> }) {
+  const filters = foreplayProps.adFilterQuery(foreplayProps.humanAdFilterInput(propsValue));
+  const pageSize = foreplayPolling.pageSizeOf(propsValue['page_size']);
+  return async ({ limit, cursor }: { limit: number | undefined; cursor: string | undefined }) => {
+    const size = limit ?? pageSize;
+    const offset = cursor === undefined ? 0 : Number(cursor);
+    const { ads } = await foreplayPolling.fetchAdPage({ auth, path: '/api/swipefile/ads', query: { ...filters, order: 'saved_newest', limit: size, offset }, pageSize: size });
+    return { ads: ads.map((ad) => ({ ...foreplayMappers.recordOf(ad), metadata: legacyEventMetadata })), next: ads.length >= size ? String(offset + ads.length) : null };
+  };
+}
 
-    const queryParams: Record<string, string> = {
-      limit: String(250), // Max limit to get more ads
-      order: 'newest'
-    };
-
-    // Add optional filters if provided
-    if (propsValue['start_date']) {
-      queryParams['start_date'] = propsValue['start_date'];
-    }
-    if (propsValue['end_date']) {
-      queryParams['end_date'] = propsValue['end_date'];
-    }
-    if (propsValue['live'] !== undefined) {
-      queryParams['live'] = String(propsValue['live'] === 'true');
-    }
-    if (propsValue['display_format'] && propsValue['display_format'].length > 0) {
-      (queryParams as any).display_format = propsValue['display_format'];
-    }
-    if (propsValue['publisher_platform'] && propsValue['publisher_platform'].length > 0) {
-      (queryParams as any).publisher_platform = propsValue['publisher_platform'];
-    }
-    if (propsValue['niches'] && propsValue['niches'].length > 0) {
-      (queryParams as any).niches = propsValue['niches'];
-    }
-    if (propsValue['market_target'] && propsValue['market_target'].length > 0) {
-      (queryParams as any).market_target = propsValue['market_target'];
-    }
-    if (propsValue['languages'] && propsValue['languages'].length > 0) {
-      (queryParams as any).languages = propsValue['languages'];
-    }
-
-    const response = await foreplayCoApiCall({
-      apiKey: auth,
-      method: HttpMethod.GET,
-      resourceUri: '/api/swipefile/ads',
-      queryParams,
-    });
-
-    const responseBody = response.body;
-
-    if (!responseBody.metadata || !responseBody.metadata.success) {
-      console.log(`[New Swipefile Ad Polling] API call failed:`, responseBody);
-      return [];
-    }
-
-    const ads = responseBody.data || [];
-    console.log(`[New Swipefile Ad Polling] Found ${ads.length} swipefile ads`);
-
-    return ads.map((ad: any) => ({
-      epochMilliSeconds: new Date(ad.created_at).getTime(),
-      data: ad,
-    }));
-  }
-};
-
-export const newSwipefileAd = createTrigger({
-  name: 'newSwipefileAd',
-  classification: 'READ',
-  displayName: 'New Swipefile Ad',
-  description: 'Triggers when a new ad is added to your swipefile collection.',
-  aiMetadata: {
-    description: 'Fires when a new ad is saved to the authenticated account\'s swipefile collection, optionally narrowed by filters such as date range, platform, format, niche, market, language, and live-only status. Each event represents one ad newly added to the swipefile.',
-  },
-  type: TriggerStrategy.POLLING,
-  sampleData: {
-    id: "ad_123456789",
-    brand_id: "brand_987654321",
-    brand_name: "Nike",
-    title: "Just Do It - New Collection",
-    description: "Discover our latest athletic wear collection",
-    live: true,
-    display_format: "video",
-    publisher_platform: ["facebook"],
-    niches: ["sports", "fashion"],
-    market_target: "b2c",
-    languages: ["en"],
-    created_at: "2024-01-15T10:30:00Z",
-    updated_at: "2024-01-15T10:30:00Z",
-    media_urls: [
-      "https://example.com/video1.mp4",
-      "https://example.com/image1.jpg"
-    ],
-    ad_library_id: "123456789",
-    ad_library_url: "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=US&view_all_page_id=123456789"
-  },
-
-  props: newSwipefileAdProperties(),
+const newSwipefileAd = createTrigger({
   auth: foreplayCoAuth,
-  async test(context) {
-    // Validate props using Zod schema
-    const validation = newSwipefileAdSchema.safeParse(context.propsValue);
-    if (!validation.success) {
-      throw new Error(`Validation failed: ${validation.error.message}`);
-    }
-
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+  name: 'newSwipefileAd',
+  displayName: 'New Swipefile Ad',
+  description: 'Triggers when a new ad is saved to your swipe file.',
+  aiMetadata: {
+    description: 'Fires when an ad is newly saved to the Foreplay user\'s swipe file (checked newest saved first), optionally narrowed by ad date range, platform, format, niche, market, language and live status. Each event is one ad. Costs 1 Foreplay credit per ad checked on every poll (at most 5 pages per poll). Known limit: Foreplay pages the swipe file only by offset, with no stable cursor or saved-after filter, so if ads are saved or removed while a burst larger than 5 pages is still being worked through, one ad may be missed or repeated.',
   },
-
-  async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+  classification: 'READ',
+  type: TriggerStrategy.POLLING,
+  sampleData: { ...sampleAd, metadata: legacyEventMetadata },
+  outputSchema: foreplayOutputSchemas.swipefileAd,
+  props: {
+    page_size: foreplayPolling.pageSizeProp(),
+    polling_interval: foreplayPolling.legacyPollingIntervalProp(),
+    ...foreplayProps.humanAdFilterProps(),
   },
-
-  async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      store: context.store,
-      propsValue: context.propsValue,
-      auth: context.auth,
-    });
+  async onEnable({ auth, propsValue, store, isRepublish }) {
+    await foreplayPolling.seed({ store, fetchAds: fetcher({ auth, propsValue }), isRepublish });
   },
-
-  async run(context) {
-    // Validate props using Zod schema
-    const validation = newSwipefileAdSchema.safeParse(context.propsValue);
-    if (!validation.success) {
-      throw new Error(`Validation failed: ${validation.error.message}`);
-    }
-
-    const result = await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
-
-    // Transform the result to match our expected format
-    return result.map((item: any) => ({
-      id: item.data.id,
-      brand_id: item.data.brand_id,
-      brand_name: item.data.brand_name,
-      title: item.data.title,
-      description: item.data.description,
-      live: item.data.live,
-      display_format: item.data.display_format,
-      publisher_platform: item.data.publisher_platform,
-      niches: item.data.niches,
-      market_target: item.data.market_target,
-      languages: item.data.languages,
-      created_at: item.data.created_at,
-      updated_at: item.data.updated_at,
-      media_urls: item.data.media_urls,
-      ad_library_id: item.data.ad_library_id,
-      ad_library_url: item.data.ad_library_url,
-      metadata: { success: true, message: 'New ad detected' }
-    }));
-  }
+  async onDisable() {
+    return;
+  },
+  async test({ auth, propsValue }) {
+    return foreplayPolling.testAds({ fetchAds: fetcher({ auth, propsValue }) });
+  },
+  async run({ auth, propsValue, store }) {
+    return foreplayPolling.pollNewAds({ store, fetchAds: fetcher({ auth, propsValue }), shifting: true });
+  },
 });
+
+export { newSwipefileAd };

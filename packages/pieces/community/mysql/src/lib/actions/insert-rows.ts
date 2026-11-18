@@ -10,7 +10,7 @@ export const insertRows = createAction({
   classification: 'WRITE',
   displayName: 'Insert Multiple Rows',
   description: 'Inserts many rows into a table in a single transaction',
-  audience: 'both',
+  audience: 'human',
   outputSchema: insertRowsOutputSchema,
   aiMetadata: {
     description: 'Inserts an array of rows into a MySQL table, each row a map of column names to values, using multi-row INSERT statements inside one transaction: if any row fails, none are inserted (InnoDB tables only). Columns a row omits get the column default. Returns the inserted row count and the auto-increment id of the first inserted row. Use instead of repeated single inserts for bulk loads. Not idempotent: each call appends new rows, so repeating it adds duplicates or errors on a unique-key collision.',
@@ -58,8 +58,18 @@ export const insertRows = createAction({
       description: 'Insert empty fields as empty strings instead of the column default.',
       required: false,
       defaultValue: false,
+      advanced: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'rows',
+      display: 'section',
+      label: 'Data to insert',
+      icon: 'inbox',
+      props: ['table', 'batch'],
+    },
+  ],
   async run(context) {
     const { table, batch, keep_empty_strings } = context.propsValue;
     const records = insertRowsUtils.toRecords({ rows: batch?.['rows'], keepEmptyStrings: keep_empty_strings === true });

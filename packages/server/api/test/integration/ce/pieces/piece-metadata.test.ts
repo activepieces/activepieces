@@ -255,6 +255,40 @@ describe('Piece Metadata CE API', () => {
             expect(body.displayName).toBe('CE Get Test')
         })
 
+        it('translates the piece into the requested locale and never leaks i18n', async () => {
+            const mockPiece = createMockPieceMetadata({
+                name: 'locale-get-piece',
+                pieceType: PieceType.OFFICIAL,
+                description: 'Send a message',
+                packageType: PackageType.REGISTRY,
+                i18n: {
+                    [LocalesEnum.GERMAN]: { 'Send a message': 'Eine Nachricht senden' },
+                    [LocalesEnum.FRENCH]: { 'Send a message': 'Envoyer un message' },
+                },
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.UNKNOWN,
+                id: apId(),
+            })
+
+            const responses = await Promise.all([LocalesEnum.GERMAN, LocalesEnum.ENGLISH].map((locale) => app?.inject({
+                method: 'GET',
+                url: `/api/v1/pieces/locale-get-piece?locale=${locale}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })))
+
+            const [german, english] = responses.map((response) => response?.json())
+            expect(german.description).toBe('Eine Nachricht senden')
+            expect(english.description).toBe('Send a message')
+            expect(german.i18n).toBeUndefined()
+            expect(english.i18n).toBeUndefined()
+        })
+
         it('should return 404 for non-existent piece', async () => {
             await pieceCache(mockLog).setup()
 

@@ -246,6 +246,7 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
             />
           )}
         <Input
+          {...otherProps}
           ref={ref}
           name={name}
           onBlur={onBlur}
@@ -253,7 +254,6 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
           className="flex-1"
           value={value || ''}
           onChange={handleNormalInputChange}
-          type={otherProps.type}
         />
       </div>
     );

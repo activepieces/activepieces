@@ -22,6 +22,12 @@ export const facebookLeads = createPiece({
 			auth: facebookLeadsAuth,
 			baseUrl: () => facebookLeadsClient.baseUrl(),
 			authMapping: async (auth) => ({ Authorization: `Bearer ${auth.access_token}` }),
+			props: {
+				url: {
+					description: `Full URL, or a path relative to ${facebookLeadsClient.baseUrl()}`,
+					placeholder: '/me/accounts',
+				},
+			},
 		}),
 	],
 	triggers: [newLeadTrigger],

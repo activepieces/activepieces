@@ -3,6 +3,7 @@ import { AppConnection, AppConnectionScope, Flow, FlowStatus, FlowTrigger, FlowT
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { In } from 'typeorm'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { db } from '../../../helpers/db'
 import {
@@ -27,59 +28,6 @@ const PIECE_NAME = '@activepieces/piece-slack'
 const MISSING_PIECE_NAME = '@activepieces/piece-does-not-exist'
 
 describe('POST /v1/app-connections/replace', () => {
-    it('keeps the source connection when deleteSourceConnection is not set', async () => {
-        const ctx = await createTestContext(app!)
-
-        const source = createMockConnection({
-            platformId: ctx.platform.id,
-            projectIds: [ctx.project.id],
-            pieceName: PIECE_NAME,
-        }, ctx.user.id)
-        const target = createMockConnection({
-            platformId: ctx.platform.id,
-            projectIds: [ctx.project.id],
-            pieceName: PIECE_NAME,
-        }, ctx.user.id)
-        await db.save('app_connection', [source, target])
-
-        const response = await ctx.post('/v1/app-connections/replace', {
-            sourceAppConnectionId: source.id,
-            targetAppConnectionId: target.id,
-            projectId: ctx.project.id,
-        })
-
-        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-        const stillThere = await db.findOneBy<AppConnection>('app_connection', { id: source.id })
-        expect(stillThere?.id).toBe(source.id)
-    })
-
-    it('deletes the source connection when deleteSourceConnection is true', async () => {
-        const ctx = await createTestContext(app!)
-
-        const source = createMockConnection({
-            platformId: ctx.platform.id,
-            projectIds: [ctx.project.id],
-            pieceName: PIECE_NAME,
-        }, ctx.user.id)
-        const target = createMockConnection({
-            platformId: ctx.platform.id,
-            projectIds: [ctx.project.id],
-            pieceName: PIECE_NAME,
-        }, ctx.user.id)
-        await db.save('app_connection', [source, target])
-
-        const response = await ctx.post('/v1/app-connections/replace', {
-            sourceAppConnectionId: source.id,
-            targetAppConnectionId: target.id,
-            projectId: ctx.project.id,
-            deleteSourceConnection: true,
-        })
-
-        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-        const deleted = await db.findOneBy<AppConnection>('app_connection', { id: source.id })
-        expect(deleted).toBeNull()
-    })
-
     it('rejects replacing a connection with itself', async () => {
         const ctx = await createTestContext(app!)
 
@@ -94,7 +42,7 @@ describe('POST /v1/app-connections/replace', () => {
             sourceAppConnectionId: source.id,
             targetAppConnectionId: source.id,
             projectId: ctx.project.id,
-            deleteSourceConnection: true,
+            flowIds: ['unused-flow-id'],
         })
 
         expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
@@ -102,37 +50,7 @@ describe('POST /v1/app-connections/replace', () => {
         expect(stillThere?.id).toBe(source.id)
     })
 
-    it('rejects deleting a platform source from the project replace', async () => {
-        const ctx = await createTestContext(app!)
-
-        const source: AppConnection = {
-            ...createMockConnection({
-                platformId: ctx.platform.id,
-                projectIds: [ctx.project.id],
-                pieceName: PIECE_NAME,
-            }, ctx.user.id),
-            scope: AppConnectionScope.PLATFORM,
-        }
-        const target = createMockConnection({
-            platformId: ctx.platform.id,
-            projectIds: [ctx.project.id],
-            pieceName: PIECE_NAME,
-        }, ctx.user.id)
-        await db.save('app_connection', [source, target])
-
-        const response = await ctx.post('/v1/app-connections/replace', {
-            sourceAppConnectionId: source.id,
-            targetAppConnectionId: target.id,
-            projectId: ctx.project.id,
-            deleteSourceConnection: true,
-        })
-
-        expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-        const stillThere = await db.findOneBy<AppConnection>('app_connection', { id: source.id })
-        expect(stillThere?.id).toBe(source.id)
-    })
-
-    it('replaces flows off a platform source without deleting it', async () => {
+    it('replaces flows off a platform source', async () => {
         const ctx = await createTestContext(app!)
 
         const source: AppConnection = {
@@ -166,6 +84,7 @@ describe('POST /v1/app-connections/replace', () => {
             sourceAppConnectionId: source.id,
             targetAppConnectionId: target.id,
             projectId: ctx.project.id,
+            flowIds: [flow.id],
         })
 
         expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
@@ -173,108 +92,10 @@ describe('POST /v1/app-connections/replace', () => {
         expect(stillThere?.id).toBe(source.id)
     })
 
-    it('repoints draft flows before deleting the source', async () => {
+    it('republishes a flow whose published version uses the source but whose draft does not, and keeps the draft edits', async () => {
         const ctx = await createTestContext(app!)
+        const { source, target } = await saveSourceAndTarget(ctx)
 
-        const source = createMockConnection({
-            platformId: ctx.platform.id,
-            projectIds: [ctx.project.id],
-            pieceName: PIECE_NAME,
-        }, ctx.user.id)
-        const target = createMockConnection({
-            platformId: ctx.platform.id,
-            projectIds: [ctx.project.id],
-            pieceName: PIECE_NAME,
-        }, ctx.user.id)
-        await db.save('app_connection', [source, target])
-
-        const flow = createMockFlow({
-            projectId: ctx.project.id,
-            status: FlowStatus.DISABLED,
-        })
-        await db.save('flow', flow)
-        const draftVersion = createMockFlowVersion({
-            flowId: flow.id,
-            state: FlowVersionState.DRAFT,
-            connectionIds: [source.externalId],
-        })
-        await db.save('flow_version', draftVersion)
-
-        const response = await ctx.post('/v1/app-connections/replace', {
-            sourceAppConnectionId: source.id,
-            targetAppConnectionId: target.id,
-            projectId: ctx.project.id,
-            deleteSourceConnection: true,
-        })
-
-        // The delete only goes through after the final integrity gate confirms no
-        // flow still references the source, so a 204 + deleted source proves the
-        // draft was actually repointed first.
-        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-        const deleted = await db.findOneBy<AppConnection>('app_connection', { id: source.id })
-        expect(deleted).toBeNull()
-    })
-
-    it('blocks deleting the source when published flows are not updated', async () => {
-        const ctx = await createTestContext(app!)
-
-        const source = createMockConnection({
-            platformId: ctx.platform.id,
-            projectIds: [ctx.project.id],
-            pieceName: PIECE_NAME,
-        }, ctx.user.id)
-        const target = createMockConnection({
-            platformId: ctx.platform.id,
-            projectIds: [ctx.project.id],
-            pieceName: PIECE_NAME,
-        }, ctx.user.id)
-        await db.save('app_connection', [source, target])
-
-        const flow = createMockFlow({
-            projectId: ctx.project.id,
-            status: FlowStatus.DISABLED,
-        })
-        await db.save('flow', flow)
-        const publishedVersion = createMockFlowVersion({
-            flowId: flow.id,
-            state: FlowVersionState.LOCKED,
-            connectionIds: [source.externalId],
-        })
-        await db.save('flow_version', publishedVersion)
-        flow.publishedVersionId = publishedVersion.id
-        await db.save('flow', flow)
-
-        const response = await ctx.post('/v1/app-connections/replace', {
-            sourceAppConnectionId: source.id,
-            targetAppConnectionId: target.id,
-            projectId: ctx.project.id,
-            deleteSourceConnection: true,
-        })
-
-        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
-        const stillThere = await db.findOneBy<AppConnection>('app_connection', { id: source.id })
-        expect(stillThere?.id).toBe(source.id)
-    })
-
-    it('blocks a draft-and-published replace when a published version it cannot see still references the source', async () => {
-        const ctx = await createTestContext(app!)
-
-        const source = createMockConnection({
-            platformId: ctx.platform.id,
-            projectIds: [ctx.project.id],
-            pieceName: PIECE_NAME,
-        }, ctx.user.id)
-        const target = createMockConnection({
-            platformId: ctx.platform.id,
-            projectIds: [ctx.project.id],
-            pieceName: PIECE_NAME,
-        }, ctx.user.id)
-        await db.save('app_connection', [source, target])
-
-        // Published version still uses the source but the newer draft dropped it:
-        // the replace cannot update that published version without overwriting
-        // the draft, so a draft-and-published replace must refuse instead of
-        // reporting success while the published flow stays on the old connection.
         const flow = createMockFlow({
             projectId: ctx.project.id,
             status: FlowStatus.DISABLED,
@@ -285,14 +106,16 @@ describe('POST /v1/app-connections/replace', () => {
             state: FlowVersionState.LOCKED,
             created: '2020-01-01T00:00:00.000Z',
             connectionIds: [source.externalId],
+            trigger: pieceTrigger({ externalId: source.externalId, marker: 'published' }),
         })
-        const newerDraftVersion = createMockFlowVersion({
+        const draftWithoutSource = createMockFlowVersion({
             flowId: flow.id,
             state: FlowVersionState.DRAFT,
             created: '2020-06-01T00:00:00.000Z',
-            connectionIds: [],
+            connectionIds: [target.externalId],
+            trigger: pieceTrigger({ externalId: target.externalId, marker: 'draft-edit' }),
         })
-        await db.save('flow_version', [publishedVersion, newerDraftVersion])
+        await db.save('flow_version', [publishedVersion, draftWithoutSource])
         flow.publishedVersionId = publishedVersion.id
         await db.save('flow', flow)
 
@@ -300,12 +123,17 @@ describe('POST /v1/app-connections/replace', () => {
             sourceAppConnectionId: source.id,
             targetAppConnectionId: target.id,
             projectId: ctx.project.id,
+            flowIds: [flow.id],
             applyToPublishedVersions: true,
         })
 
-        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
-        const stillThere = await db.findOneBy<AppConnection>('app_connection', { id: source.id })
-        expect(stillThere?.id).toBe(source.id)
+        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        const updatedFlow = await db.findOneByOrFail<Flow>('flow', { id: flow.id })
+        const versions = await versionsNewestFirst(flow.id)
+        const republished = versions.find((v) => v.id === updatedFlow.publishedVersionId)
+        expect(republished?.trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'published' })
+        expect(versions[0].state).toBe(FlowVersionState.DRAFT)
+        expect(versions[0].trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'draft-edit' })
     })
 
     it('allows a draft-only replace even when a published version still references the source', async () => {
@@ -348,61 +176,10 @@ describe('POST /v1/app-connections/replace', () => {
             sourceAppConnectionId: source.id,
             targetAppConnectionId: target.id,
             projectId: ctx.project.id,
+            flowIds: [flow.id],
         })
 
         expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-        const stillThere = await db.findOneBy<AppConnection>('app_connection', { id: source.id })
-        expect(stillThere?.id).toBe(source.id)
-    })
-
-    it('blocks deleting the source when a published version the replace cannot see still references it', async () => {
-        const ctx = await createTestContext(app!)
-
-        const source = createMockConnection({
-            platformId: ctx.platform.id,
-            projectIds: [ctx.project.id],
-            pieceName: PIECE_NAME,
-        }, ctx.user.id)
-        const target = createMockConnection({
-            platformId: ctx.platform.id,
-            projectIds: [ctx.project.id],
-            pieceName: PIECE_NAME,
-        }, ctx.user.id)
-        await db.save('app_connection', [source, target])
-
-        // The published version still uses the source, but the newer draft dropped
-        // it, so the flow is invisible to the replace's connection filter and its
-        // published version would be orphaned by the delete.
-        const flow = createMockFlow({
-            projectId: ctx.project.id,
-            status: FlowStatus.DISABLED,
-        })
-        await db.save('flow', flow)
-        const publishedVersion = createMockFlowVersion({
-            flowId: flow.id,
-            state: FlowVersionState.LOCKED,
-            created: '2020-01-01T00:00:00.000Z',
-            connectionIds: [source.externalId],
-        })
-        const newerDraftVersion = createMockFlowVersion({
-            flowId: flow.id,
-            state: FlowVersionState.DRAFT,
-            created: '2020-06-01T00:00:00.000Z',
-            connectionIds: [],
-        })
-        await db.save('flow_version', [publishedVersion, newerDraftVersion])
-        flow.publishedVersionId = publishedVersion.id
-        await db.save('flow', flow)
-
-        const response = await ctx.post('/v1/app-connections/replace', {
-            sourceAppConnectionId: source.id,
-            targetAppConnectionId: target.id,
-            projectId: ctx.project.id,
-            deleteSourceConnection: true,
-            applyToPublishedVersions: true,
-        })
-
-        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
         const stillThere = await db.findOneBy<AppConnection>('app_connection', { id: source.id })
         expect(stillThere?.id).toBe(source.id)
     })
@@ -438,6 +215,7 @@ describe('POST /v1/app-connections/replace', () => {
             sourceAppConnectionId: source.id,
             targetAppConnectionId: target.id,
             projectId: ctx.project.id,
+            flowIds: [flow.id],
             applyToPublishedVersions: true,
         })
 
@@ -483,6 +261,7 @@ describe('POST /v1/app-connections/replace', () => {
             sourceAppConnectionId: source.id,
             targetAppConnectionId: target.id,
             projectId: ctx.project.id,
+            flowIds: [flow.id],
             applyToPublishedVersions: true,
         })
 
@@ -515,6 +294,7 @@ describe('POST /v1/app-connections/replace', () => {
             sourceAppConnectionId: source.id,
             targetAppConnectionId: target.id,
             projectId: ctx.project.id,
+            flowIds: [flow.id],
             applyToPublishedVersions: true,
         })
 
@@ -558,6 +338,7 @@ describe('POST /v1/app-connections/replace', () => {
             sourceAppConnectionId: source.id,
             targetAppConnectionId: target.id,
             projectId: ctx.project.id,
+            flowIds: [flow.id],
             applyToPublishedVersions: true,
         })
 
@@ -571,6 +352,67 @@ describe('POST /v1/app-connections/replace', () => {
         expect(versions[0].state).toBe(FlowVersionState.DRAFT)
         expect(versions[0].trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'draft-edit' })
     })
+
+    it('replaces the connection in 200 flows in one request, republishing the published ones', async () => {
+        const ctx = await createTestContext(app!)
+        const { source, target } = await saveSourceAndTarget(ctx)
+
+        const flows = Array.from({ length: 200 }, () => createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED }))
+        await db.save('flow', flows)
+        const publishedFlows = flows.filter((_, index) => index % 2 === 0)
+        const liveVersions = publishedFlows.map((flow) => createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+            created: '2020-01-01T00:00:00.000Z',
+            connectionIds: [source.externalId],
+            trigger: pieceTrigger({ externalId: source.externalId, marker: 'published' }),
+        }))
+        const draftVersions = flows.map((flow) => createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.DRAFT,
+            created: '2020-06-01T00:00:00.000Z',
+            connectionIds: [source.externalId],
+            trigger: pieceTrigger({ externalId: source.externalId, marker: 'draft-edit' }),
+        }))
+        await db.save('flow_version', [...liveVersions, ...draftVersions])
+        publishedFlows.forEach((flow, index) => {
+            flow.publishedVersionId = liveVersions[index].id
+        })
+        await db.save('flow', publishedFlows)
+
+        const response = await ctx.post('/v1/app-connections/replace', {
+            sourceAppConnectionId: source.id,
+            targetAppConnectionId: target.id,
+            projectId: ctx.project.id,
+            flowIds: flows.map((flow) => flow.id),
+            applyToPublishedVersions: true,
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        const updatedFlows = await databaseConnection().getRepository<Flow>('flow').find({ where: { id: In(flows.map((flow) => flow.id)) } })
+        const versions = await databaseConnection().getRepository<FlowVersion>('flow_version').find({
+            where: { flowId: In(flows.map((flow) => flow.id)) },
+            order: { created: 'DESC' },
+        })
+        const newestVersionByFlowId = new Map<string, FlowVersion>()
+        versions.forEach((version) => {
+            if (!newestVersionByFlowId.has(version.flowId)) {
+                newestVersionByFlowId.set(version.flowId, version)
+            }
+        })
+        const versionById = new Map(versions.map((version) => [version.id, version]))
+        flows.forEach((flow) => {
+            const newestVersion = newestVersionByFlowId.get(flow.id)
+            expect(newestVersion?.state).toBe(FlowVersionState.DRAFT)
+            expect(newestVersion?.trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'draft-edit' })
+        })
+        const publishedFlowIds = new Set(publishedFlows.map((flow) => flow.id))
+        updatedFlows.filter((flow) => publishedFlowIds.has(flow.id)).forEach((flow) => {
+            const liveVersion = versionById.get(flow.publishedVersionId ?? '')
+            expect(liveVersion?.trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'published' })
+        })
+        expect(updatedFlows.filter((flow) => !publishedFlowIds.has(flow.id)).every((flow) => isNil(flow.publishedVersionId))).toBe(true)
+    }, 600_000)
 
     it('decides the republish per flow when one replace covers several flows', async () => {
         const ctx = await createTestContext(app!)
@@ -622,6 +464,7 @@ describe('POST /v1/app-connections/replace', () => {
             sourceAppConnectionId: source.id,
             targetAppConnectionId: target.id,
             projectId: ctx.project.id,
+            flowIds: [draftOnlyFlow.id, publishedFlow.id],
             applyToPublishedVersions: true,
         })
 
@@ -638,7 +481,7 @@ describe('POST /v1/app-connections/replace', () => {
         expect(publishedFlowVersions[0].trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'draft-edit' })
     })
 
-    it('rewires a newer locked version that uses the source connection even when the live version does not', async () => {
+    it('republishes the live version, and keeps a newer locked version that is not live in the draft', async () => {
         const ctx = await createTestContext(app!)
         const { source, target } = await saveSourceAndTarget(ctx)
 
@@ -651,8 +494,8 @@ describe('POST /v1/app-connections/replace', () => {
             flowId: flow.id,
             state: FlowVersionState.LOCKED,
             created: '2020-01-01T00:00:00.000Z',
-            connectionIds: [target.externalId],
-            trigger: pieceTrigger({ externalId: target.externalId, marker: 'published' }),
+            connectionIds: [source.externalId],
+            trigger: pieceTrigger({ externalId: source.externalId, marker: 'published' }),
         })
         const submittedVersion = createMockFlowVersion({
             flowId: flow.id,
@@ -669,13 +512,84 @@ describe('POST /v1/app-connections/replace', () => {
             sourceAppConnectionId: source.id,
             targetAppConnectionId: target.id,
             projectId: ctx.project.id,
+            flowIds: [flow.id],
             applyToPublishedVersions: true,
         })
 
         expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
         const versions = await versionsNewestFirst(flow.id)
-        const newestLocked = versions.find((v) => v.state === FlowVersionState.LOCKED)
-        expect(newestLocked?.trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'submitted' })
+        const updatedFlow = await db.findOneBy<Flow>('flow', { id: flow.id })
+        const newLiveVersion = versions.find((v) => v.id === updatedFlow?.publishedVersionId)
+        expect(newLiveVersion?.id).not.toBe(liveVersion.id)
+        expect(newLiveVersion?.trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'published' })
+        expect(versions[0].state).toBe(FlowVersionState.DRAFT)
+        expect(versions[0].trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'submitted' })
+    })
+
+    it('repoints only the listed flows, and keeps their sample data', async () => {
+        const ctx = await createTestContext(app!)
+        const { source, target } = await saveSourceAndTarget(ctx)
+
+        const listedFlow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED })
+        const otherFlow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED })
+        await db.save('flow', [listedFlow, otherFlow])
+        await db.save('flow_version', [
+            createMockFlowVersion({
+                flowId: listedFlow.id,
+                state: FlowVersionState.DRAFT,
+                connectionIds: [source.externalId],
+                trigger: pieceTrigger({ externalId: source.externalId, marker: 'listed', sampleDataFileId: 'listed-sample' }),
+            }),
+            createMockFlowVersion({
+                flowId: otherFlow.id,
+                state: FlowVersionState.DRAFT,
+                connectionIds: [source.externalId],
+                trigger: pieceTrigger({ externalId: source.externalId, marker: 'other' }),
+            }),
+        ])
+
+        const response = await ctx.post('/v1/app-connections/replace', {
+            flowIds: [listedFlow.id],
+            sourceAppConnectionId: source.id,
+            targetAppConnectionId: target.id,
+            projectId: ctx.project.id,
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        const [listedVersion] = await versionsNewestFirst(listedFlow.id)
+        expect(listedVersion.trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'listed' })
+        expect(listedVersion.trigger.settings.sampleData?.sampleDataFileId).toBe('listed-sample')
+        const [otherVersion] = await versionsNewestFirst(otherFlow.id)
+        expect(otherVersion.trigger.settings.input).toEqual({ auth: connectionRef(source.externalId), marker: 'other' })
+        const stillThere = await db.findOneBy<AppConnection>('app_connection', { id: source.id })
+        expect(stillThere?.id).toBe(source.id)
+    })
+
+    it('rejects a flow from another project', async () => {
+        const ctx = await createTestContext(app!)
+        const otherCtx = await createTestContext(app!)
+        const { source, target } = await saveSourceAndTarget(ctx)
+
+        const foreignFlow = createMockFlow({ projectId: otherCtx.project.id, status: FlowStatus.DISABLED })
+        await db.save('flow', foreignFlow)
+        await db.save('flow_version', createMockFlowVersion({
+            flowId: foreignFlow.id,
+            state: FlowVersionState.DRAFT,
+            connectionIds: [source.externalId],
+            trigger: pieceTrigger({ externalId: source.externalId, marker: 'foreign' }),
+        }))
+
+        const response = await ctx.post('/v1/app-connections/replace', {
+            flowIds: [foreignFlow.id],
+            sourceAppConnectionId: source.id,
+            targetAppConnectionId: target.id,
+            projectId: ctx.project.id,
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(response?.json().params.message).toContain(foreignFlow.id)
+        const [foreignVersion] = await versionsNewestFirst(foreignFlow.id)
+        expect(foreignVersion.trigger.settings.input).toEqual({ auth: connectionRef(source.externalId), marker: 'foreign' })
     })
 })
 

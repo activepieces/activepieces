@@ -1,7 +1,8 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
 import { bexioCommonProps } from '../common/props';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 export const createSalesInvoiceAction = createAction({
   auth: bexioAuth,
@@ -9,7 +10,8 @@ export const createSalesInvoiceAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Sales Invoice',
   description: 'Create a new product-based sales invoice',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: bexioOutputSchemas.invoiceOutputSchema,
   aiMetadata: { description: 'Creates a new sales invoice in Bexio from one or more line-item positions (custom, article, text, subtotal, discount, or page-break). Use when billing a customer for products or services; requires a user, language, bank account, currency, payment type, tax handling, and at least one position. Not idempotent: each call creates a separate invoice, so guard against duplicates.', idempotent: false },
   props: {
     document_nr: Property.ShortText({

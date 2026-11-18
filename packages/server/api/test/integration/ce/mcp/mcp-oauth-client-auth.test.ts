@@ -2,10 +2,12 @@ import { FastifyInstance } from 'fastify'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { mcpOAuthClientService } from '../../../../src/app/mcp/oauth/client/mcp-oauth-client.service'
-import { MCP_OAUTH_REDIRECT_URI, mcpOAuthTestHelpers, RegisteredClient } from '../../../helpers/mcp-oauth'
+import { MCP_OAUTH_REDIRECT_URI, McpGrantee, mcpOAuthTestHelpers, RegisteredClient } from '../../../helpers/mcp-oauth'
+import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
+let grantee: McpGrantee
 
 async function registerClient(tokenEndpointAuthMethod?: string): Promise<RegisteredClient> {
     return mcpOAuthTestHelpers.registerClient({ app, tokenEndpointAuthMethod })
@@ -17,7 +19,7 @@ async function exchange({ client, headers, body }: {
     body?: Record<string, string>
 }): Promise<ReturnType<FastifyInstance['inject']>> {
     const { verifier, challenge } = mcpOAuthTestHelpers.generatePkce()
-    const code = await mcpOAuthTestHelpers.issueCode({ clientId: client.client_id, codeChallenge: challenge })
+    const code = await mcpOAuthTestHelpers.issueCode({ clientId: client.client_id, codeChallenge: challenge, ...grantee })
     return app.inject({
         method: 'POST',
         url: '/token',
@@ -35,6 +37,8 @@ async function exchange({ client, headers, body }: {
 describe('MCP OAuth client authentication', () => {
     beforeAll(async () => {
         app = await setupTestEnvironment({ fresh: true })
+        const ctx = await createTestContext(app)
+        grantee = { userId: ctx.user.id, projectId: ctx.project.id, platformId: ctx.platform.id }
     })
 
     describe('dynamic client registration', () => {
@@ -463,7 +467,7 @@ describe('MCP OAuth client authentication', () => {
             const owner = await registerClient('none')
             const attacker = await registerClient('none')
             const { verifier, challenge } = mcpOAuthTestHelpers.generatePkce()
-            const code = await mcpOAuthTestHelpers.issueCode({ clientId: owner.client_id, codeChallenge: challenge })
+            const code = await mcpOAuthTestHelpers.issueCode({ clientId: owner.client_id, codeChallenge: challenge, ...grantee })
             const issued = await app.inject({
                 method: 'POST',
                 url: '/token',

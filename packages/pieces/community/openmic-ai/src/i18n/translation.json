@@ -81,6 +81,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Post-call Summary": "New Post-call Summary",
   "Trigger when a new call completes with comprehensive call data and analysis": "Trigger when a new call completes with comprehensive call data and analysis",
   "Markdown": "Markdown",

@@ -1,21 +1,22 @@
 import { confluenceAuth } from '../auth';
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { folderIdProp, spaceIdProp, templateIdProp, templateVariablesProp } from "../common/props";
-import { confluenceApiCall, escapeStorageValue } from "../common";
-import { HttpMethod } from "@activepieces/pieces-common";
+import { confluenceApi } from '../common/api';
+import { confluenceProps } from '../common/props';
+import { createPageOutputSchema } from '../output-schemas';
 
 export const createPageFromTemplateAction = createAction({
     auth:confluenceAuth,
     name:'create-page-from-template',
+    outputSchema: createPageOutputSchema,
     classification: 'WRITE',
     displayName:'Create Page from Template',
     description:'Creates a new page from a template with the given title and variables.',
     audience: 'both',
     aiMetadata: { description: 'Creates a new Confluence page by fetching a template, substituting its declared variables with the provided values, and posting the rendered content as a page (published or draft) in the given space. Use when a page should follow a predefined template rather than free-form body. Requires the template ID and matching variable names. Not idempotent: each call creates another page.', idempotent: false },
     props:{
-        spaceId:spaceIdProp,
-        templateId:templateIdProp,
-        folderId:folderIdProp,
+        spaceId:confluenceProps.spaceId({ required: true }),
+        templateId:confluenceProps.templateId({ required: true }),
+        folderId:confluenceProps.folderId({ required: false }),
         title:Property.ShortText({
             displayName:'Title',
             required:true,
@@ -38,20 +39,13 @@ export const createPageFromTemplateAction = createAction({
                 ]
             }
         }),
-        templateVariables:templateVariablesProp,
+        templateVariables:confluenceProps.templateVariables({ required: false }),
     },
     async run(context){
         const {spaceId,templateId,title,status,folderId} = context.propsValue;
         const variables = context.propsValue.templateVariables ??{};
 
-        const template = await confluenceApiCall<{ body: { storage: { value: string } } }>({
-                    domain: context.auth.props.confluenceDomain,
-                    username: context.auth.props.username,
-                    password: context.auth.props.password,
-                    method: HttpMethod.GET,
-                    version: 'v1',
-                    resourceUri: `/template/${templateId}`,
-                });
+        const template = await confluenceApi.getTemplate({ auth: context.auth, templateId });
         
         const body = template.body.storage.value;
 
@@ -62,25 +56,23 @@ export const createPageFromTemplateAction = createAction({
             content = content.replace(varRegex, safeValue);
           });
 
-        const response = await confluenceApiCall({
-            domain: context.auth.props.confluenceDomain,
-            username: context.auth.props.username,
-            password: context.auth.props.password,
-            method: HttpMethod.POST,
-            version: 'v2',
-            resourceUri: '/pages',
-            body: {
-                spaceId:spaceId,
-                title,
-                parentId:folderId,
-                status,
-                body:{
-                    representation:'storage',
-                    value:content,
-                }
-            }
-        })
-
-        return response;
+        return await confluenceApi.createPage({
+            auth: context.auth,
+            spaceId,
+            title,
+            parentId: folderId,
+            status,
+            representation: 'storage',
+            value: content,
+        });
     }
 })
+
+function escapeStorageValue(value: string): string {
+	return value
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&apos;');
+}

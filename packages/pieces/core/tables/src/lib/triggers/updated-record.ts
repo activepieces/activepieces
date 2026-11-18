@@ -36,27 +36,22 @@ export const updatedRecordTrigger = createTrigger({
             },
         });
 
-        context.store.put('webhookId', webhookId);
+        await context.store.put('webhookId', webhookId);
     },
     async onDisable(context) {
         const tableExternalId = context.propsValue.table_id;
         if ((tableExternalId ?? '').toString().length === 0) {
             return;
         }
-        const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
-
         const webhookId = await context.store.get<string>('webhookId');
         if (!webhookId) {
             return;
         }
 
-        await tablesCommon.deleteWebhook({
-            tableId,
-            webhookId: webhookId,
-            server: {
-                apiUrl: context.server.apiUrl,
-                token: context.server.token,
-            },
+        await tablesCommon.deleteWebhookFromTablesWithExternalId({
+            externalId: tableExternalId,
+            webhookId,
+            context,
         });
     },
     async run(context) {

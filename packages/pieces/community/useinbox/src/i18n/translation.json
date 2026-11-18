@@ -86,6 +86,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Contact": "New Contact",
   "New Campaign": "New Campaign",
   "Email Bounced": "Email Bounced",

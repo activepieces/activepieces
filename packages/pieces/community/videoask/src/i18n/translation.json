@@ -52,6 +52,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Form contact message": "Form contact message",
   "Form transcribed": "Form transcribed",
   "new form response": "new form response",

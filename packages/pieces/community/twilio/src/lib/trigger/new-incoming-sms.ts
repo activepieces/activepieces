@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, isNil, TriggerStrategy } from '@activepieces/pieces-framework';
 import {
   HttpMethod,
   HttpResponse,
@@ -53,6 +53,9 @@ export const twilioNewIncomingSms = createTrigger({
   // Twilio API only allows one webhook per phone number, so we need to poll
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get('_new_incoming_sms_trigger'))) {
+      return;
+    }
     const { phone_number } = context.propsValue;
     const account_sid = context.auth.username;
     const auth_token = context.auth.password;
@@ -70,6 +73,9 @@ export const twilioNewIncomingSms = createTrigger({
     });
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.put('_new_incoming_sms_trigger', null);
   },
   async run(context) {

@@ -16,6 +16,22 @@ export const findPage = createAction({
       'Searches the workspace for pages whose title matches a query, supporting exact or partial matching. Use when an agent needs to locate a page id by name before reading or modifying it; requires a title query and only searches pages shared with the integration. Idempotent read-only search.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search',
+      icon: 'filter',
+      props: ['title', 'exact_match'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['limit'],
+    },
+  ],
   props: {
     title: Property.ShortText({
       displayName: 'Title',

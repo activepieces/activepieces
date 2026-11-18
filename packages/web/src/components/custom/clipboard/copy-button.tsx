@@ -1,8 +1,6 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, Copy } from 'lucide-react';
-import React, { forwardRef, useState } from 'react';
-import { toast } from 'sonner';
+import React, { forwardRef } from 'react';
 
 import { Button, ButtonProps } from '@/components/ui/button';
 import {
@@ -11,82 +9,49 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 
-interface CopyButtonProps extends ButtonProps {
-  textToCopy: string;
-  tooltipSide?: React.ComponentProps<typeof TooltipContent>['side'];
-  withoutTooltip?: boolean;
-  children?: React.ReactNode;
-}
+import { CopyParams, useCopyToClipboard } from './use-copy-to-clipboard';
 
 export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(
   (
     {
-      textToCopy,
-      className,
+      value,
       tooltipSide,
       withoutTooltip = false,
       variant = 'outline',
       children,
+      onClick,
       ...props
     },
     ref,
   ) => {
-    const [isCopied, setIsCopied] = useState(false);
+    const { isCopied, copy } = useCopyToClipboard();
 
-    const { mutate: copyToClipboard } = useMutation({
-      mutationFn: async () => {
-        await navigator.clipboard.writeText(textToCopy);
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 3000);
-      },
-      onError: () => {
-        toast.error(t('Failed to copy to clipboard'), {
-          duration: 3000,
-        });
-      },
-    });
-
-    const content = (
-      <>
-        {isCopied ? (
-          <Check className="h-4 w-4" />
-        ) : (
-          <Copy className="h-4 w-4" />
-        )}
+    const button = (
+      <Button
+        ref={ref}
+        variant={variant}
+        size={children ? 'default' : 'icon'}
+        type="button"
+        aria-label={children ? undefined : t('Copy')}
+        {...props}
+        onClick={(event) => {
+          onClick?.(event);
+          if (!event.defaultPrevented) {
+            copy({ value });
+          }
+        }}
+      >
+        {isCopied ? <Check /> : <Copy />}
         {children}
-      </>
+      </Button>
     );
 
     if (withoutTooltip || children) {
-      return (
-        <Button
-          ref={ref}
-          variant={variant}
-          size={children ? 'default' : 'icon'}
-          type="button"
-          className={className}
-          onClick={() => copyToClipboard()}
-          {...props}
-        >
-          {content}
-        </Button>
-      );
+      return button;
     }
     return (
       <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            ref={ref}
-            variant={variant}
-            size={'icon'}
-            type="button"
-            className={className}
-            onClick={() => copyToClipboard()}
-            {...props}
-          >
-            {content}
-          </Button>
-        </TooltipTrigger>
+        <TooltipTrigger asChild>{button}</TooltipTrigger>
         <TooltipContent side={tooltipSide}>{t('Copy')}</TooltipContent>
       </Tooltip>
     );
@@ -94,3 +59,10 @@ export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(
 );
 
 CopyButton.displayName = 'CopyButton';
+
+type CopyButtonProps = Omit<ButtonProps, 'value'> &
+  CopyParams & {
+    tooltipSide?: React.ComponentProps<typeof TooltipContent>['side'];
+    withoutTooltip?: boolean;
+    children?: React.ReactNode;
+  };

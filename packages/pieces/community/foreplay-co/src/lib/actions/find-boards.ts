@@ -1,57 +1,36 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { foreplayCoApiCall } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { findBoards as findBoardsProperties } from '../properties';
-import { findBoardsSchema } from '../schemas';
-import { foreplayCoAuth } from '../..';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { foreplayCoAuth } from '../auth';
+import { foreplayClient } from '../common/client';
+import { foreplayMappers } from '../common/mappers';
+import { foreplayOutputSchemas } from '../common/output-schemas';
+import { foreplayProps } from '../common/props';
 
-export const findBoards = createAction({
+const findBoards = createAction({
+  auth: foreplayCoAuth,
   name: 'findBoards',
   classification: 'SEARCH',
   displayName: 'Find Boards',
-  description: 'Get all boards for the authenticated user with pagination.',
-  audience: 'both',
-  aiMetadata: { description: 'List the saved ad boards belonging to the authenticated Foreplay account, with offset/limit pagination. Use to discover available board IDs and names, for example before watching a board for new ads. Read-only, so repeating the call is safe.', idempotent: true },
-  props: findBoardsProperties(),
-  auth: foreplayCoAuth,
+  description: 'Get the boards of your Foreplay account. Leave Limit empty to get all boards.',
+  audience: 'human',
+  aiMetadata: {
+    description: 'List the boards of the Foreplay account; with no limit it returns every board. Returns raw board objects (id, name, description). Costs 1 credit per call.',
+    idempotent: true,
+  },
+  outputSchema: foreplayOutputSchemas.rawBoards,
+  props: {
+    offset: Property.Number({ displayName: 'Offset', description: 'Boards to skip (only used when Limit is set).', required: false }),
+    limit: Property.Number({ displayName: 'Limit', description: 'Boards per request. Leave empty for all boards.', required: false }),
+  },
   async run({ auth, propsValue }) {
-    // Validate props using Zod schema
-    const validation = findBoardsSchema.safeParse(propsValue);
-    if (!validation.success) {
-      throw new Error(`Validation failed: ${validation.error.message}`);
-    }
-
-    const values = propsValue;
-    const queryParams: Record<string, string> = {};
-
-    // Add optional parameters if provided
-    if (values['offset'] !== undefined) {
-      queryParams['offset'] = String(values['offset']);
-    }
-    if (values['limit'] !== undefined) {
-      queryParams['limit'] = String(values['limit']);
-    }
-
-    const response = await foreplayCoApiCall({
-      apiKey: auth,
-      method: HttpMethod.GET,
-      resourceUri: '/api/boards',
-      queryParams,
+    const limit = foreplayProps.parseInteger({ value: propsValue.limit, label: 'Limit', min: 1, max: 10_000 });
+    const offset = foreplayProps.parseInteger({ value: propsValue.offset, label: 'Offset', min: 0, max: Number.MAX_SAFE_INTEGER });
+    const response = await foreplayClient.request({
+      auth,
+      path: '/api/boards',
+      query: limit === undefined ? {} : { limit, offset },
     });
-
-    const responseBody = response.body;
-
-    // Check if the response is successful
-    if (responseBody.metadata && responseBody.metadata.success === true) {
-      // Return just the boards data for clean automation workflows
-      return responseBody.data;
-    } else {
-      // Handle error responses by throwing an error
-      const errorMessage =
-        responseBody.error ||
-        responseBody.metadata?.message ||
-        'Failed to retrieve boards';
-      throw new Error(`Foreplay.co API Error: ${errorMessage}`);
-    }
+    return foreplayMappers.listOf(response.body);
   },
 });
+
+export { findBoards };

@@ -1,4 +1,4 @@
-import { isNil, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AiUsageEnvironment, AiUsageOrigin, isNil, tryCatch } from '@activepieces/core-utils'
 import { aiUtils } from '@activepieces/server-utils'
 import { EngineResponseStatus, ExecutePersonalizationResearchJobData, WorkerJobType } from '@activepieces/shared'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
@@ -59,6 +59,8 @@ export const executePersonalizationResearchJob: JobHandler<ExecutePersonalizatio
     },
 }
 
+const PERSONALIZATION_USAGE_CONVERSATION = 'personalization'
+
 type ProgressFn = (input: { phase: string, message: string }) => Promise<void>
 
 type ResearchOutput = {
@@ -75,9 +77,14 @@ async function runResearch({ data, config, progress, log }: {
     log: JobContext['log']
 }): Promise<ResearchOutput | null> {
     const { credentials } = config
-    const fastModel = aiUtils.createModel({
-        credentials, modelId: config.fastModelId,
-    })
+    const billing: ActivepiecesAiBilling = {
+        source: ActivepiecesAiConsumerSource.CHAT,
+        platformId: data.platformId,
+        projectId: data.projectId,
+        conversationId: PERSONALIZATION_USAGE_CONVERSATION,
+        context: { origin: AiUsageOrigin.CHAT, environment: AiUsageEnvironment.PRODUCTION },
+    }
+    const fastModel = aiUtils.createModel({ credentials, modelId: config.fastModelId, billing, usageOnly: true })
 
     if (data.scope === 'user') {
         if (isNil(config.companyProfile)) {
@@ -137,7 +144,7 @@ async function runResearch({ data, config, progress, log }: {
     const gathered = searchBlocks ?? []
     const digest = gathered.length > 0
         ? `${groundwork}\n\n${gathered.map((block) => block.block).join('\n\n')}`
-        : await fallbackResearch({ credentials, fastModelId: config.fastModelId, companyRef, role, groundwork, log })
+        : await fallbackResearch({ credentials, fastModelId: config.fastModelId, companyRef, role, groundwork, billing, log })
 
     await progress({ phase: 'understanding', message: `Studying how ${homepage?.siteName ?? companyLabel} runs behind the scenes…` })
     const profilePromise = generateProfile({ model: fastModel, domain, companyText, digest, role, user: config.user, log })

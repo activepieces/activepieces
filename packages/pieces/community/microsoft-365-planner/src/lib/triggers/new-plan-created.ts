@@ -6,11 +6,12 @@ import {
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,
-  PiecePropValueSchema,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { microsoft365PlannerAuth, microsoft365PlannerCommon } from '../common';
+import { microsoft365PlannerAuth } from '../auth';
+import { microsoft365PlannerApi } from '../common/api';
+import { microsoft365PlannerPlanOutputSchema } from '../output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof microsoft365PlannerAuth>,
@@ -18,7 +19,7 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
-    const items = await microsoft365PlannerCommon.listPlans({
+    const items = await microsoft365PlannerApi.listPlans({
       auth,
     });
     return items.map((item) => ({
@@ -28,9 +29,10 @@ const polling: Polling<
   },
 };
 
-export const newPlanCreated = createTrigger({
+export const newPlanCreatedTrigger = createTrigger({
   auth: microsoft365PlannerAuth,
   name: 'newPlanCreated',
+  outputSchema: microsoft365PlannerPlanOutputSchema,
   classification: 'READ',
   displayName: 'New Plan Created',
   description: 'Triggers when a new Plan is created in Microsoft 365 Planner.',
@@ -44,13 +46,11 @@ export const newPlanCreated = createTrigger({
     return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {

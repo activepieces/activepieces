@@ -57,6 +57,19 @@
       "rules": {
         "react-hooks/rules-of-hooks": "error",
         "react-hooks/exhaustive-deps": "warn",
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["lodash", "lodash/*"],
+            "paths": [
+              {
+                "name": "react-use",
+                "importNames": ["useLocation"],
+                "message": "Use useLocation from react-router-dom. The embed mounts a memory router, so window.location is not the app route."
+              }
+            ]
+          }
+        ],
         "import/no-restricted-paths": [
           "error",
           {

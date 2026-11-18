@@ -69,6 +69,12 @@ export const tally = createPiece({
 			authMapping: async (auth) => ({
 				Authorization: `Bearer ${auth.secret_text}`,
 			}),
+			props: {
+				url: {
+					description: `Full URL, or a path relative to ${TALLY_API_BASE}`,
+					placeholder: '/forms',
+				},
+			},
 		}),
 	],
 	triggers: [newSubmissionTrigger],

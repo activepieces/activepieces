@@ -1,10 +1,13 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { ChargekeepApiError, chargekeepClient } from './common/client';
 
 const markdownDescription = `
-  Follow these instructions to get your Chargekeep API Key:
+To get your ChargeKeep API key:
 
-  1. Visit the following website: https://crm.chargekeep.com/ or the beta website: https://beta.chargekeep.com
-  2. Once on the website, locate and click on the admin to obtain your chargekeep API Key.
+1. Sign in to https://crm.chargekeep.com (or https://beta.chargekeep.com) with an admin account.
+2. Open the admin settings and find the API keys page.
+3. Create a key and paste it below. Pick the Base URL of the site you signed in to.
 `;
 
 export const chargekeepAuth = PieceAuth.CustomAuth({
@@ -34,5 +37,16 @@ export const chargekeepAuth = PieceAuth.CustomAuth({
       description: 'Enter the API Key',
       required: true,
     }),
+  },
+  validate: async ({ auth }) => {
+    try {
+      await chargekeepClient.request({ auth, method: HttpMethod.GET, path: '/api/services/CRM/Contact/GetContactGroups' });
+      return { valid: true };
+    } catch (error) {
+      if (error instanceof ChargekeepApiError && (error.status === 401 || error.status === 403)) {
+        return { valid: false, error: 'Invalid API key for the selected Base URL.' };
+      }
+      return { valid: false, error: error instanceof Error ? error.message : 'Could not reach ChargeKeep.' };
+    }
   },
 });

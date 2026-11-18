@@ -4,6 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { FindOptionsWhere, In } from 'typeorm'
 import { websocketService } from '../../../core/websockets.service'
 import { fileService } from '../../../file/file.service'
+import { flowSideEffects } from '../../../flows/flow/flow-service-side-effects'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { flowVersionRepo } from '../../../flows/flow-version/flow-version.service'
 import { projectService } from '../../../project/project-service'
@@ -67,6 +68,9 @@ async function migrateFlow({ log, flow, useDeno }: { log: FastifyBaseLogger, flo
         const migrated = await setUseDenoOnVersion({ versionId, useDeno })
         versionsMigrated += migrated
         publishedVersionMigrated = publishedVersionMigrated || (migrated > 0 && versionId === flow.publishedVersionId)
+        if (migrated > 0 && versionId === latestVersion.id) {
+            await flowSideEffects(log).onDraftWritten({ flowId: flow.id, projectId: flow.projectId, editorSessionId: null })
+        }
     }
 
     if (publishedVersionMigrated && !isNil(flow.publishedVersionId)) {
@@ -107,7 +111,7 @@ function setUseDenoOnCodeSteps({ flowVersion, useDeno }: { flowVersion: FlowVers
 
 function hasCodeStepToChange({ flowVersion, useDeno }: { flowVersion: FlowVersion, useDeno: boolean }): boolean {
     return flowStructureUtil.getAllSteps(flowVersion.trigger)
-        .some((step) => step.type === FlowActionType.CODE && (step.settings.useDeno === true) !== useDeno)
+        .some((step) => step.type === FlowActionType.CODE && step.settings.useDeno !== useDeno)
 }
 
 type MigrateToDenoParams = {

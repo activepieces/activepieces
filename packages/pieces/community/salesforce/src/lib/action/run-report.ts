@@ -10,8 +10,7 @@ export const runReport = createAction({
 	name: 'run_report',
 	classification: 'READ',
 	displayName: 'Run Report',
-	description:
-		'Execute a Salesforce analytics report and return the results as easy-to-use rows.',
+	description: 'Runs a report and returns its rows.',
 	audience: 'human',
 	aiMetadata: { description: 'Run an existing Salesforce analytics report by its report Id and get back flattened rows (detail and grouping columns) instead of raw factMap structures. Optionally pass dynamic filters to override the report\'s saved filters for this run. Use to read aggregated/reported data rather than to query raw records. Read-only and idempotent — it executes the report without changing it.', idempotent: true },
 	outputSchema: runReportSyncOutputSchema,
@@ -20,15 +19,8 @@ export const runReport = createAction({
 		filters: Property.Json({
 			displayName: 'Filters',
 			description:
-				"Apply dynamic filters to the report run. Leave empty to use the report's saved filters.",
+				'JSON list of column, operator and value. Empty: the saved filters.',
 			required: false,
-			defaultValue: [
-				{
-					column: 'ACCOUNT.NAME',
-					operator: 'equals',
-					value: 'Acme',
-				},
-			],
 		}),
 	},
 	async run(context) {

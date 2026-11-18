@@ -16,6 +16,22 @@ export const addComment = createAction({
       'Posts a new comment thread on a Notion page. Use when an agent must leave feedback or a note on a page for collaborators; requires the page id and comment text, and the integration must have comment-insert capability. Not idempotent: each call posts a separate comment.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'page',
+      display: 'section',
+      label: 'Page',
+      icon: 'file',
+      props: ['page_id'],
+    },
+    {
+      key: 'comment',
+      display: 'section',
+      label: 'Comment',
+      icon: 'text',
+      props: ['comment_text'],
+    },
+  ],
   props: {
     page_id: notionCommon.page,
     comment_text: Property.LongText({

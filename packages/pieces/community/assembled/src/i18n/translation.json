@@ -73,6 +73,8 @@
   "Approved": "Approved",
   "Rejected": "Rejected",
   "Cancelled": "Cancelled",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New OOO Request": "New OOO Request",
   "OOO Status Changed": "OOO Status Changed",
   "Schedule Updated": "Schedule Updated",

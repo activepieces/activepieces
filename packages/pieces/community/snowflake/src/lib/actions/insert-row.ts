@@ -1,24 +1,21 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { snowflakeAuth } from '../auth';
-import {
-  configureConnection,
-  connect,
-  destroy,
-  execute,
-  snowflakeCommonProps,
-  SnowflakeAuthValue,
-} from '../common';
+import { snowflakeCommonProps, toAuthValue, withSnowflake } from '../common';
+import { buildInsert } from '../common/operations';
+import { legacyInsertOutputSchema } from '../common/output-schemas';
 
 export const insertRowAction = createAction({
   name: 'insert-row',
+  classification: 'WRITE',
   displayName: 'Insert Row',
   description: 'Insert a row into a table.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Inserts a single new row into a specified Snowflake table (database, schema, table, and a map of column values). Use when adding one record; for many rows at once use Insert Multiple Rows. Not idempotent: each call issues an INSERT, so repeating it appends a duplicate row unless the table enforces uniqueness.',
+      'Inserts one row into a table picked from dropdowns, with one input per column. Human-only; agents use Insert Row (JSON). Each call appends a new row, so retries duplicate it.',
     idempotent: false,
   },
+  outputSchema: legacyInsertOutputSchema,
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,
@@ -27,25 +24,15 @@ export const insertRowAction = createAction({
     table_column_values: snowflakeCommonProps.table_column_values,
   },
   async run(context) {
-    const tableName = context.propsValue.table;
-    const tableColumnValues = context.propsValue.table_column_values;
-
-    const columns = Object.keys(tableColumnValues).join(',');
-    const valuePlaceholders = Object.keys(tableColumnValues)
-      .map(() => '?')
-      .join(', ');
-    const statement = `INSERT INTO ${tableName}(${columns}) VALUES(${valuePlaceholders})`;
-
-    const connection = configureConnection(context.auth as SnowflakeAuthValue);
-    await connect(connection);
-
-    const response = await execute(
-      connection,
-      statement,
-      Object.values(tableColumnValues)
-    );
-    await destroy(connection);
-
-    return response;
+    const { table, table_column_values } = context.propsValue;
+    const { sql, binds } = buildInsert({
+      table,
+      rows: [Object.fromEntries(Object.entries(table_column_values))],
+    });
+    const result = await withSnowflake({
+      auth: toAuthValue(context.auth),
+      fn: (session) => session.query({ sql, binds }),
+    });
+    return result.rows;
   },
 });

@@ -92,6 +92,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Form Submission": "New Form Submission",
   "New Partial Form Submission": "New Partial Form Submission",
   "Triggers when a completed form submission is received.": "Triggers when a completed form submission is received.",

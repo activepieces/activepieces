@@ -8,7 +8,22 @@
     },
     {
       "files": ["*.ts", "*.tsx"],
-      "rules": {}
+      "extends": ["plugin:playwright/recommended"],
+      "rules": {
+        "playwright/no-wait-for-timeout": "error",
+        "playwright/no-wait-for-selector": "error",
+        "playwright/no-force-option": "error",
+        "playwright/no-element-handle": "error",
+        "playwright/no-page-pause": "error",
+        "playwright/no-eval": "error",
+        "playwright/no-conditional-in-test": "error",
+        "playwright/no-conditional-expect": "error",
+        "playwright/no-raw-locators": "error",
+        "playwright/no-nth-methods": "warn",
+        "playwright/no-skipped-test": ["error", { "allowConditional": true }],
+        "playwright/require-annotation-reason": "error",
+        "playwright/expect-expect": ["error", { "assertFunctionPatterns": ["^expect[A-Z]"] }]
+      }
     },
     {
       "files": ["*.js", "*.jsx"],

@@ -1,10 +1,11 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { pollingHelper } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeCommon } from '../common';
-import { buildProjectTasksPolling } from './common';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
+import { ninjapipePolling } from './common';
 
-const polling = buildProjectTasksPolling('updated_at');
+const polling = ninjapipePolling.buildProjectTasksPolling({ field: 'updated_at' });
 
 export const newOrUpdatedTask = createTrigger({
   auth: ninjapipeAuth,
@@ -13,26 +14,29 @@ export const newOrUpdatedTask = createTrigger({
   displayName: 'New or Updated Task',
   description: 'Triggers when a task in the selected project is created or updated.',
   aiMetadata: {
-    description: 'Fires whenever a task in the selected NinjaPipe project is created or has any field changed, detected by polling on the task last-updated timestamp. The event payload is the current state of the affected task, including its id, project_id, title, description, status, priority, assignee_id, due_date, parent_id, tags, and timestamps. A given task can fire this multiple times as it progresses (e.g. status moving to In Progress); the payload does not distinguish a first creation from a later update.',
+    description:
+      'Fires whenever a task in the selected NinjaPipe project is created or changed (for example its status moves to Done), found by polling by updated_at. The payload is the current task. One task can fire many times.',
   },
   type: TriggerStrategy.POLLING,
+  outputSchema: ninjapipeSchemas.task,
   sampleData: {
-    id: 'a97381c8-75d3-4773-92d7-80ad97cf06f9',
-    project_id: 'dbe92bb3-3239-4710-8216-dccc9ffceaa5',
+    id: 'f6bc8683-31a9-46f2-9f3d-58a0a66f5e27',
+    project_id: 'd9e0d794-e966-473e-bc7f-89d90e40d1aa',
     title: 'Ship release notes',
     description: null,
-    status: 'In Progress',
-    priority: 'Medium',
+    status: 'To Do',
+    priority: 'High',
     assignee_id: null,
-    due_date: null,
+    due_date: '2026-12-01',
     parent_id: null,
-    order_index: 0,
+    level: 0,
+    has_children: false,
     tags: [],
-    created_at: '2026-04-28T13:00:00Z',
-    updated_at: '2026-04-28T13:30:00Z',
+    created_at: '2026-10-25T15:34:47.050306+00:00',
+    updated_at: '2026-10-25T15:34:47.050306+00:00',
   },
   props: {
-    projectId: ninjapipeCommon.projectDropdownRequired,
+    projectId: ninjapipeProps.projectRequired(),
   },
   async test(context) {
     return pollingHelper.test(polling, context);

@@ -17,6 +17,22 @@ export const createOrUpdateContactAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Upserts a contact keyed on email: searches for a contact with the given email and updates it if found, otherwise creates a new one with the provided properties. Use this safe-to-retry path when you want to set a contact by email without risking duplicates; use Create Contact when you specifically need a new record. Idempotent on the email key.', idempotent: true },
 	outputSchema: crmObjectOutputSchema,
+	propertyGroups: [
+		{
+			key: 'contact',
+			display: 'section',
+			label: 'Contact',
+			icon: 'user',
+			props: ['email'],
+		},
+		{
+			key: 'details',
+			display: 'section',
+			label: 'Details',
+			icon: 'text',
+			props: ['objectProperties'],
+		},
+	],
 	props: {
 		email: Property.ShortText({
 			displayName: 'Contact Email',

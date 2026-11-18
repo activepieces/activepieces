@@ -6,13 +6,70 @@ import {
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { folderIdProp } from '../common/props';
+import { driveQuery } from '../common/drive-query';
 import { newDocumentTriggerOutputSchema } from '../output-schemas';
 import dayjs from 'dayjs';
 import { drive as googleDrive, drive_v3 } from '@googleapis/drive';
 
+const LIST_CALL_TIMEOUT_MS = 10_000;
+const LISTING_BUDGET_MS = 25_000;
+const TEST_SAMPLE_MAX_PAGES = 10;
+
 type Props = {
 	folderId?: string;
 };
+
+async function listNewDocuments({
+	drive,
+	query,
+	isTestMode,
+}: {
+	drive: drive_v3.Drive;
+	query: string;
+	isTestMode: boolean;
+}): Promise<drive_v3.Schema$File[]> {
+	const deadline = Date.now() + LISTING_BUDGET_MS;
+	const items: drive_v3.Schema$File[] = [];
+	let nextPageToken: string | undefined;
+	let pages = 0;
+
+	do {
+		const remaining = deadline - Date.now();
+		if (remaining <= 0) {
+			if (isTestMode) {
+				break;
+			}
+			throw new Error(
+				'Google Docs New Document: listing new documents ran out of time; the next poll will retry from the same point.',
+			);
+		}
+		const response = await drive.files.list(
+			{
+				q: query,
+				fields: '*',
+				orderBy: 'createdTime desc',
+				supportsAllDrives: true,
+				includeItemsFromAllDrives: true,
+				corpora: 'allDrives',
+				pageToken: nextPageToken,
+			},
+			{ timeout: Math.min(LIST_CALL_TIMEOUT_MS, remaining) },
+		);
+		pages += 1;
+
+		const fileList: drive_v3.Schema$FileList = response.data;
+		if (fileList.files) {
+			items.push(...fileList.files);
+		}
+		nextPageToken = fileList.nextPageToken ?? undefined;
+
+		if (isTestMode && (items.length > 0 || pages >= TEST_SAMPLE_MAX_PAGES)) {
+			break;
+		}
+	} while (nextPageToken);
+
+	return items;
+}
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof googleDocsAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
@@ -24,42 +81,25 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof googleDocsAuth>,
 			q.push(`createdTime > '${dayjs(lastFetchEpochMS).toISOString()}'`);
 		}
 		if (folderId) {
-			q.push(`'${folderId}' in parents`);
+			q.push(`'${driveQuery.escapeLiteral(folderId)}' in parents`);
 		}
 
 		const authClient = await createGoogleClient(auth);
 
 		const drive = googleDrive({ version: 'v3', auth: authClient });
 
-		let nextPageToken;
-		const items = [];
+		const files = await listNewDocuments({
+			drive,
+			query: q.join(' and '),
+			isTestMode: lastFetchEpochMS === 0,
+		});
 
-		do {
-			const response: any = await drive.files.list({
-				q: q.join(' and '),
-				fields: '*',
-				orderBy: 'createdTime desc',
-				supportsAllDrives: true,
-				includeItemsFromAllDrives: true,
-				corpora: 'allDrives',
-				pageToken: nextPageToken,
-			});
-
-			const fileList: drive_v3.Schema$FileList = response.data;
-
-			if (fileList.files) {
-				items.push(...fileList.files);
-			}
-
-			if (lastFetchEpochMS === 0) break;
-
-			nextPageToken = response.data.nextPageToken;
-		} while (nextPageToken);
-
-		return items.map((item) => ({
-			epochMilliSeconds: dayjs(item.createdTime).valueOf(),
-			data: item,
-		}));
+		return files
+			.map((item) => ({
+				epochMilliSeconds: dayjs(item.createdTime).valueOf(),
+				data: item,
+			}))
+			.sort((a, b) => b.epochMilliSeconds - a.epochMilliSeconds);
 	},
 };
 
@@ -79,18 +119,10 @@ export const newDocumentTrigger = createTrigger({
 	},
 	outputSchema: newDocumentTriggerOutputSchema,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

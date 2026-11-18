@@ -54,7 +54,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             // code-cache sink guard already block this upstream; this is the runtime backstop.
             throw new ExecutionError('InvalidStepName', `Invalid code step name: "${action.name}"`, ExecutionErrorType.USER)
         }
-        const useDeno = action.settings.useDeno === true
+        const useDeno = action.settings.useDeno !== false
         const stepDir = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}`)
         const artifactPath = useDeno
             ? resolveDenoArtifactPath(stepDir)

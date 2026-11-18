@@ -7,7 +7,7 @@ export const getLocationsAction = createAction({
   name: 'get_locations',
   classification: 'SEARCH',
   displayName: 'Get Locations',
-  description: `Get locations.`,
+  description: 'Get every location in the store.',
   audience: 'both',
   aiMetadata: { description: 'List all store locations (warehouses, retail outlets) configured in Shopify, with no input required. Use to discover location IDs needed by inventory actions such as Adjust Inventory Level. Read-only and idempotent.', idempotent: true },
   props: {},

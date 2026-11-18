@@ -1,69 +1,54 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { HttpMethod } from "@activepieces/pieces-common";
-import { magicalApiAuth } from "../common/auth";
-import { makeRequest } from "../common/client";
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { magicalApiAuth } from '../common/auth';
+import { runJob, normalizeRequestId } from '../common/poll';
+import { profileDataOutputSchema } from '../common/output-schemas';
 
 export const getProfileData = createAction({
-    auth: magicalApiAuth,
-    name: 'get_profile_data',
-    classification: 'READ',
-    displayName: 'Get Profile Data',
-    description: 'Given a LinkedIn profile username, retrieve comprehensive profile data.',
-    audience: 'both',
-    aiMetadata: { description: 'Retrieves comprehensive public LinkedIn profile data (experience, education, headline, etc.) for a given profile username — the slug from the profile URL, e.g. "williamhgates", not a full URL or display name. Use to enrich a person record from their LinkedIn handle. Either supply the profile username to start a lookup, or pass the Request ID from a prior timed-out run to retrieve that result; the call polls until data is ready. Idempotent: it is a read-only lookup that returns the same profile for the same username.', idempotent: true },
-    props: {
-        profile_name: Property.ShortText({
-            displayName: 'LinkedIn Profile Username',
-            description: "Provide the username from the LinkedIn profile URL (e.g., 'williamhgates').",
-            required: false,
-        }),
-        request_id: Property.ShortText({
-            displayName: 'Request ID (for retries)',
-            description: "If a previous run timed out, paste the Request ID here to get the result.",
-            required: false,
-        }),
-    },
-    async run(context) {
-        const { profile_name, request_id } = context.propsValue;
-        const apiKey = context.auth;
-        const PROFILE_DATA_ENDPOINT = '/profile-data';
-        let requestIdToPoll = request_id;
-        let response;
-
-        if (!requestIdToPoll) {
-        
-            if (!profile_name) {
-                throw new Error("To start a new request, you must provide a LinkedIn Profile Username.");
-            }
-            response = await makeRequest(apiKey, HttpMethod.POST, PROFILE_DATA_ENDPOINT, { profile_name });
-        } else {
-
-            response = await makeRequest(apiKey, HttpMethod.POST, PROFILE_DATA_ENDPOINT, { request_id });
-        }
-
-        if (response.data?.profile) {
-            return response.data;
-        }
-
-        requestIdToPoll = response.data?.request_id;
-        if (!requestIdToPoll) {
-            throw new Error('Failed to start or retrieve the request. The API did not return a request_id or the final data.');
-        }
-
-
-        const maxAttempts = 20;
-        const pollInterval = 3000;
-        for (let attempt = 0; attempt < maxAttempts; attempt++) {
-            await sleep(pollInterval);
-            const pollResponse = await makeRequest(apiKey, HttpMethod.POST, PROFILE_DATA_ENDPOINT, { request_id: requestIdToPoll });
-
-            if (pollResponse.data?.profile) {
-                return pollResponse.data; 
-            }
-        }
-
-        throw new Error('Timeout: The request is still processing. You can try again later with this Request ID: ' + requestIdToPoll);
-    },
+  auth: magicalApiAuth,
+  name: 'get_profile_data',
+  classification: 'READ',
+  displayName: 'Get Profile Data',
+  description: 'Given a LinkedIn profile username, retrieve comprehensive profile data.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves public LinkedIn profile data (name, bio, location, experience, education, certifications, languages, skills-related sections) for a profile username: the slug after /in/ in the profile URL, e.g. "williamhgates". A full linkedin.com/in/ URL is also accepted and reduced to its slug; a display name is not. Use to enrich a person record. Each new lookup costs about 150 MagicalAPI credits. Either supply the username, or pass the Request ID from a prior timed-out run to fetch that result; the call polls up to 60 seconds. Idempotent: a read-only lookup (but every new lookup spends credits).',
+    idempotent: true,
+  },
+  props: {
+    profile_name: Property.ShortText({
+      displayName: 'LinkedIn Profile Username',
+      description: "Provide the username from the LinkedIn profile URL (e.g., 'williamhgates').",
+      required: false,
+    }),
+    request_id: Property.ShortText({
+      displayName: 'Request ID (for retries)',
+      description: 'If a previous run timed out, paste the Request ID here to get the result.',
+      required: false,
+    }),
+  },
+  outputSchema: profileDataOutputSchema,
+  async run(context) {
+    const { profile_name, request_id: rawRequestId } = context.propsValue;
+    const request_id = normalizeRequestId(rawRequestId);
+    const slug = profile_name ? toProfileSlug(profile_name) : '';
+    if (!request_id && !slug) {
+      throw new Error('To start a new request, you must provide a LinkedIn Profile Username.');
+    }
+    return runJob({
+      apiKey: context.auth.secret_text,
+      service: 'profile_data',
+      input: { profile_name: slug },
+      requestId: request_id,
+    });
+  },
 });
+
+export function toProfileSlug(value: string): string {
+  const trimmed = value.trim();
+  const match = /linkedin\.com\/in\/([^/?#]+)/i.exec(trimmed);
+  if (match) {
+    return decodeURIComponent(match[1]);
+  }
+  return trimmed.replace(/^@/, '').replace(/\/+$/, '');
+}

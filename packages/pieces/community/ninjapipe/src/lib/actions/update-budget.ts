@@ -1,57 +1,52 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon, toDateOnly } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeFields } from '../common/fields';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const updateBudget = createAction({
   auth: ninjapipeAuth,
   name: 'update_budget',
   classification: 'WRITE',
   displayName: 'Update Budget',
-  description: 'Updates a budget by ID.',
+  description: 'Updates a budget. Fields left blank keep their value; use Clear Fields to empty them.',
   audience: 'both',
-  aiMetadata: { description: 'Update an existing budget identified by its ID. Only supplied fields change (name, allocated amount, category, period, currency, status, start/end dates); allocated must be greater than 0 if set. Repeating the same update is idempotent.', idempotent: true },
+  aiMetadata: {
+    description: 'Update a NinjaPipe budget by ID. Only filled fields change and Clear Fields empties fields. Re-running with the same input gives the same result.',
+    idempotent: true,
+  },
+  outputSchema: ninjapipeSchemas.budget,
   props: {
-    budgetId: ninjapipeCommon.budgetDropdownRequired,
+    budgetId: ninjapipeProps.budgetRequired(),
     name: Property.ShortText({ displayName: 'Name', required: false }),
-    allocated: Property.Number({
-      displayName: 'Allocated Amount',
-      description: 'Total allocated budget amount. Must be greater than 0 if set.',
-      required: false,
-    }),
+    allocated: Property.Number({ displayName: 'Allocated Amount', required: false }),
     description: Property.LongText({ displayName: 'Description', required: false }),
-    category: ninjapipeCommon.budgetCategoryDropdown,
-    period: ninjapipeCommon.budgetPeriodDropdown,
+    category: ninjapipeProps.staticDropdown({ displayName: 'Category', description: 'Category.', values: ['Marketing', 'Sales', 'Product', 'Operations'] }),
+    period: ninjapipeProps.staticDropdown({ displayName: 'Period', description: 'Budget cycle. NinjaPipe derives the end date from the start date and period.', values: ['Monthly', 'Quarterly', 'Yearly'] }),
     currency: Property.ShortText({ displayName: 'Currency', required: false }),
-    status: ninjapipeCommon.budgetStatusDropdown,
-    startDate: Property.DateTime({ displayName: 'Start Date', required: false }),
-    endDate: Property.DateTime({ displayName: 'End Date', required: false }),
+    status: ninjapipeProps.staticDropdown({ displayName: 'Status', description: 'Status.', values: ['Active', 'Inactive', 'Completed'] }),
+    startDate: Property.DateTime({ displayName: 'Start Date', description: 'Date (YYYY-MM-DD).', required: false }),
+    endDate: Property.DateTime({ displayName: 'End Date', description: 'Date (YYYY-MM-DD).', required: false }),
+    clearFields: ninjapipeProps.clearFields({ fields: { description: 'Description', currency: 'Currency', start_date: 'Start Date', end_date: 'End Date' } }),
   },
   async run(context) {
-    const auth = getAuth(context);
+    const auth = ninjapipeClient.readAuth(context.auth);
     const p = context.propsValue;
-    const body: Record<string, unknown> = {};
-    if (p.name) body['name'] = p.name;
-    if (p.allocated !== undefined && p.allocated !== null) body['allocated'] = p.allocated;
-    if (p.description !== undefined) body['description'] = p.description;
-    if (p.category) body['category'] = p.category;
-    if (p.period) body['period'] = p.period;
-    if (p.currency) body['currency'] = p.currency;
-    if (p.status) body['status'] = p.status;
-    {
-      const v = toDateOnly(p.startDate);
-      if (v) body['start_date'] = v;
-    }
-    {
-      const v = toDateOnly(p.endDate);
-      if (v) body['end_date'] = v;
-    }
-    const response = await ninjapipeApiCall<Record<string, unknown>>({
-      auth,
-      method: HttpMethod.PUT,
-      path: `/budgets/${encodeURIComponent(String(p.budgetId))}`,
-      body,
+    const path = `/budgets/${ninjapipeClient.pathId({ value: p.budgetId, field: 'Budget' })}`;
+    const changes = ninjapipeFields.compact({
+      name: p.name,
+      allocated: ninjapipeFields.toNumber({ value: p.allocated, field: 'Allocated Amount' }),
+      description: p.description,
+      category: p.category,
+      period: p.period,
+      currency: p.currency,
+      status: p.status,
+      start_date: ninjapipeFields.toDateOnly({ value: p.startDate, field: 'Start Date' }),
+      end_date: ninjapipeFields.toDateOnly({ value: p.endDate, field: 'End Date' }),
     });
-    return flattenCustomFields(response.body);
+    const body = ninjapipeFields.requireChanges({ body: ninjapipeFields.withClears({ body: changes, clear: p.clearFields }), what: 'budget' });
+    return ninjapipeClient.sendRecord({ auth, method: HttpMethod.PUT, path, body, operation: 'update budget' });
   },
 });

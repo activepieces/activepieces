@@ -11,6 +11,22 @@ export const hubSpotListsAddContactAction = createAction({
 	description: 'Adds a contact to a static list by email.',
 	audience: 'both',
 	aiMetadata: { description: 'Adds a contact, identified by email, to a chosen HubSpot static contact list. Use to enroll a known contact into a list for segmentation or workflow targeting; the list must be static (not dynamic/active). Idempotent: a contact already on the list stays a single member.', idempotent: true },
+	propertyGroups: [
+		{
+			key: 'list',
+			display: 'section',
+			label: 'List',
+			icon: 'users',
+			props: ['listId'],
+		},
+		{
+			key: 'contact',
+			display: 'section',
+			label: 'Contact',
+			icon: 'user',
+			props: ['email'],
+		},
+	],
 	props: {
 		listId: staticListsDropdown,
 		email: Property.ShortText({

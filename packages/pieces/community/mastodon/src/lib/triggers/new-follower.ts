@@ -1,6 +1,9 @@
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,
+  MarkdownVariant,
+  Property,
+  StaticPropsValue,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
@@ -9,7 +12,17 @@ import { mastodonPolling } from '../common/polling';
 import { mastodonSampleData } from '../common/sample-data';
 import { followNotificationOutputSchema } from '../output-schemas';
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof mastodonAuth>, Record<string, never>> = {
+const props = {
+  follower_info: Property.MarkDown({
+    value: 'If your account approves followers by hand, new followers appear once you accept them.',
+    variant: MarkdownVariant.INFO,
+  }),
+};
+
+const polling: Polling<
+  AppConnectionValueForAuthProperty<typeof mastodonAuth>,
+  StaticPropsValue<typeof props>
+> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, lastItemId }) =>
     mastodonPolling.fetchNewItems({
@@ -27,13 +40,12 @@ export const newFollower = createTrigger({
   name: 'new_follower',
   classification: 'READ',
   displayName: 'New Follower',
-  description:
-    'Triggers when someone starts following your account. If your account requires follow approval, people appear here only after you accept their request.',
+  description: 'Triggers when someone starts following your account.',
   aiMetadata: {
     description:
       'Fires once per new follow notification of the connected account; the payload is the notification, and its account field is the new follower (use its id with Follow Account to follow back). Pending follow requests on a locked account do not fire until accepted.',
   },
-  props: {},
+  props,
   sampleData: mastodonSampleData.followNotification,
   outputSchema: followNotificationOutputSchema,
   type: TriggerStrategy.POLLING,

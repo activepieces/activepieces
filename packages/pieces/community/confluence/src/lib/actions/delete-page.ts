@@ -1,20 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { confluenceAuth } from '../auth';
-import { confluenceApiCall } from '../common';
-import { pageIdProp, spaceIdProp } from '../common/props';
+import { confluenceApi } from '../common/api';
+import { confluenceProps } from '../common/props';
+import { deletePageOutputSchema } from '../output-schemas';
 
 export const deletePageAction = createAction({
 	auth: confluenceAuth,
 	name: 'delete-page',
+	outputSchema: deletePageOutputSchema,
 	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Page',
 	description: 'Trashes or permanently deletes a page.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Deletes a Confluence page by ID; by default it is moved to the trash, or when "purge permanently" is enabled it is removed from the trash for good. Use to remove a page. Not idempotent in practice: it mutates page state and re-running after deletion errors rather than returning the same result, and a purge is irreversible.', idempotent: false },
 	props: {
-		spaceId: spaceIdProp,
-		pageId: pageIdProp,
+		spaceId: confluenceProps.spaceId({ required: true }),
+		pageId: confluenceProps.pageId({ required: true }),
 		purge: Property.Checkbox({
 			displayName: 'Purge Permanently',
 			description:
@@ -26,15 +27,7 @@ export const deletePageAction = createAction({
 	async run(context) {
 		const { pageId, purge } = context.propsValue;
 
-		await confluenceApiCall({
-			domain: context.auth.props.confluenceDomain,
-			username: context.auth.props.username,
-			password: context.auth.props.password,
-			method: HttpMethod.DELETE,
-			version: 'v2',
-			resourceUri: `/pages/${pageId}`,
-			query: purge ? { purge: 'true' } : undefined,
-		});
+		await confluenceApi.deletePage({ auth: context.auth, pageId, purge });
 
 		return { success: true, pageId };
 	},

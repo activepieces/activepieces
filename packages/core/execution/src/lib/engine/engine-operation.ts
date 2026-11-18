@@ -119,6 +119,7 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     stepNameToTest: string | null
     sampleData?: Record<string, unknown>
     logsFileId?: string
+    entryStepName?: string
 }
 
 export enum StreamStepProgress {
@@ -259,7 +260,7 @@ export function normalizeToolOutputToExecuteResponse(
             errorMessage: o['errorMessage'],
         }
     }
-    const isError = o['isError'] === true
+    const isError = o['isError'] === true || o['failed'] === true
     let output: unknown = o['structuredContent']
     if (output === undefined && Array.isArray(o['content'])) {
         const parts = (o['content'] as { text?: string }[])
@@ -282,6 +283,7 @@ export function normalizeToolOutputToExecuteResponse(
         errorMessage: isError
             ? ((o['content'] as { text?: string }[])?.[0]?.text as string) ??
               (o['message'] as string) ??
+              (typeof o['error'] === 'string' ? o['error'] : undefined) ??
               'Tool failed'
             : undefined,
     }

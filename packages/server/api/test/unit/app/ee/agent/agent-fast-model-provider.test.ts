@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName } from '@activepieces/core-utils'
 import { aiProviderCredentials, AIProviderModelType, GetProviderConfigResponse } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -27,6 +27,7 @@ const { agentHelpers } = await import('../../../../../src/app/ee/agent/agent-hel
 const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn() } as never
 const platformId = 'platform-1'
 const scope = { type: 'project', projectId: 'project-1' } as const
+const billing: ActivepiecesAiBilling = { source: ActivepiecesAiConsumerSource.CHAT, platformId, projectId: null, conversationId: 'conversation-1' }
 
 describe('resolveFastModel', () => {
     beforeEach(() => {
@@ -43,7 +44,7 @@ describe('resolveFastModel', () => {
     })
 
     it('fills a flow step\'s inputs on the run\'s own provider, so a platform without chat can still run one', async () => {
-        const model = await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, surface: 'flow', scope, log })
+        const model = await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, surface: 'flow', scope, billing, log })
 
         expect(mockGetChatProvider).not.toHaveBeenCalled()
         expect(mockGetConfigOrThrow).toHaveBeenCalledWith({ platformId, provider: AIProviderName.OPENROUTER, scope })
@@ -51,13 +52,13 @@ describe('resolveFastModel', () => {
     })
 
     it('asks for the pinned key when the run names one', async () => {
-        await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, providerConfigId: 'config-2', surface: 'flow', scope, log })
+        await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, providerConfigId: 'config-2', surface: 'flow', scope, billing, log })
 
         expect(mockGetConfigOrThrow).toHaveBeenCalledWith({ platformId, provider: AIProviderName.OPENROUTER, scope, configId: 'config-2' })
     })
 
     it('still refuses when no provider is named and the platform has no chat provider', async () => {
-        await expect(agentHelpers.resolveFastModel({ platformId, surface: 'flow', scope, log })).rejects.toMatchObject({
+        await expect(agentHelpers.resolveFastModel({ platformId, surface: 'flow', scope, billing, log })).rejects.toMatchObject({
             error: { code: 'ENTITY_NOT_FOUND', params: { entityType: 'ChatAiProvider' } },
         })
     })
@@ -65,7 +66,7 @@ describe('resolveFastModel', () => {
     it('uses the chat provider when no provider is named and one is configured', async () => {
         mockGetChatProvider.mockResolvedValue({ provider: AIProviderName.ANTHROPIC, auth: { apiKey: 'k' }, config: {} })
 
-        const model = await agentHelpers.resolveFastModel({ platformId, surface: 'flow', scope, log })
+        const model = await agentHelpers.resolveFastModel({ platformId, surface: 'flow', scope, billing, log })
 
         expect(model).toMatchObject({ credentials: { provider: AIProviderName.ANTHROPIC }, modelId: 'claude-haiku-4-5' })
     })
@@ -88,7 +89,7 @@ describe('resolveFastModel', () => {
                 { id: 'eu.anthropic.claude-haiku-4-5-20251001-v1:0', name: 'Haiku', type: AIProviderModelType.TEXT },
             ])
 
-            const model = await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.BEDROCK, surface: 'flow', scope, log })
+            const model = await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.BEDROCK, surface: 'flow', scope, billing, log })
 
             expect(model).toMatchObject({ credentials: { provider: AIProviderName.BEDROCK }, modelId: 'eu.anthropic.claude-haiku-4-5-20251001-v1:0' })
         })
@@ -96,27 +97,27 @@ describe('resolveFastModel', () => {
         it('needs nothing from the worker, so an in-flight run on an older one still resolves', async () => {
             mockListModels.mockResolvedValue([{ id: 'amazon.titan-text-express-v1', name: 'Titan', type: AIProviderModelType.TEXT }])
 
-            await expect(agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.BEDROCK, surface: 'flow', scope, log })).resolves.toMatchObject({ modelId: 'amazon.titan-text-express-v1' })
+            await expect(agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.BEDROCK, surface: 'flow', scope, billing, log })).resolves.toMatchObject({ modelId: 'amazon.titan-text-express-v1' })
         })
 
         it('still refuses a key that serves no text model at all', async () => {
             mockListModels.mockResolvedValue([])
 
-            await expect(agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.BEDROCK, surface: 'flow', scope, log })).rejects.toMatchObject({
+            await expect(agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.BEDROCK, surface: 'flow', scope, billing, log })).rejects.toMatchObject({
                 error: { code: 'ENTITY_NOT_FOUND' },
             })
         })
     })
 
     it('never asks the provider when our own catalogue already names a fast model', async () => {
-        const model = await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, surface: 'flow', scope, log })
+        const model = await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, surface: 'flow', scope, billing, log })
 
         expect(model).toMatchObject({ modelId: 'anthropic/claude-haiku-4.5' })
         expect(mockListModels).not.toHaveBeenCalled()
     })
     it('follows the fast pointer of the surface, not a fixed tier id', async () => {
-        await expect(agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, surface: 'chat', scope, log })).resolves.toMatchObject({ modelId: 'openai/gpt-5.5' })
-        await expect(agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, surface: 'flow', scope, log })).resolves.toMatchObject({ modelId: 'anthropic/claude-haiku-4.5' })
+        await expect(agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, surface: 'chat', scope, billing, log })).resolves.toMatchObject({ modelId: 'openai/gpt-5.5' })
+        await expect(agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, surface: 'flow', scope, billing, log })).resolves.toMatchObject({ modelId: 'anthropic/claude-haiku-4.5' })
     })
 })
 

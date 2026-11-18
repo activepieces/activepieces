@@ -30,6 +30,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Recording": "New Recording",
   "Triggers when a new recording is created.": "Triggers when a new recording is created."
 }

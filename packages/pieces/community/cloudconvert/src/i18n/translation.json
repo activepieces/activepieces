@@ -197,6 +197,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Job Event": "New Job Event",
   "Job Finished": "Job Finished",
   "Job Failed": "Job Failed",

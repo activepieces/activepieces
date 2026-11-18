@@ -1,7 +1,13 @@
-import { GetFlowQueryParamsRequest, PopulatedFlow } from '@activepieces/shared';
+import {
+  GetFlowQueryParamsRequest,
+  isNil,
+  PopulatedFlow,
+  tryCatch,
+} from '@activepieces/shared';
 
 export type RunDiscardDeps = {
   flow: { id: string; publishedVersionId?: string | null };
+  savePendingEdits: () => Promise<void>;
   overWriteDraftWithVersion: (params: {
     flowId: string;
     versionId: string;
@@ -17,6 +23,10 @@ export type RunDiscardDeps = {
 export async function runDiscard(deps: RunDiscardDeps): Promise<void> {
   const { flow } = deps;
   if (!flow.publishedVersionId) {
+    return;
+  }
+  const { error: saveError } = await tryCatch(deps.savePendingEdits);
+  if (!isNil(saveError)) {
     return;
   }
   await deps.overWriteDraftWithVersion({

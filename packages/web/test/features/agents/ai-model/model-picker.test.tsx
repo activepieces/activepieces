@@ -14,7 +14,10 @@ vi.mock('i18next', () => ({
   t: (key: string) => key,
 }));
 
-import { modelPickerView } from '@/features/agents/ai-model/model-picker';
+import {
+  modelPickerUtils,
+  modelPickerView,
+} from '@/features/agents/ai-model/model-picker';
 
 const optionModel = (modelId: string) => ({
   provider: AIProviderName.OPENAI,
@@ -217,5 +220,30 @@ describe('modelPickerView', () => {
         shown: shownAs({ modelId: supported }),
       }).current,
     ).toMatchObject({ kind: 'unavailable' });
+  });
+});
+
+describe('modelPickerUtils.isUnavailable', () => {
+  it('blocks a pick that is gone, but not one the admin hid or a live one', () => {
+    const gone = {
+      type: 'model',
+      provider: AIProviderName.CUSTOM,
+      providerConfigId: 'deleted-key',
+      modelId: 'old',
+    } as const;
+
+    expect(modelPickerUtils.isUnavailable({ options, value: gone })).toBe(true);
+    expect(
+      modelPickerUtils.isUnavailable({
+        options: { ...options, keys: [], specificModelsHidden: true },
+        value: gone,
+      }),
+    ).toBe(false);
+    expect(
+      modelPickerUtils.isUnavailable({
+        options,
+        value: { type: 'tier', tierId: 'tier-expert' },
+      }),
+    ).toBe(false);
   });
 });
