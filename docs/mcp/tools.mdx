@@ -156,7 +156,7 @@ Validate a step configuration before applying it. Returns field-level errors wit
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
-| `stepType` | string | Yes | `PIECE_ACTION`, `PIECE_TRIGGER`, `CODE`, `LOOP_ON_ITEMS`, or `ROUTER` |
+| `stepType` | string | Yes | `PIECE_ACTION`, `PIECE_TRIGGER`, `CODE`, `LOOP_ON_ITEMS`, `PROCESS_IN_BATCHES`, or `ROUTER` |
 | `pieceName` | string | No | For PIECE types: piece name (short names like `slack` accepted) |
 | `actionName` | string | No | For PIECE_ACTION: action name |
 | `triggerName` | string | No | For PIECE_TRIGGER: trigger name |
@@ -356,10 +356,11 @@ Returns the flow ID, a direct `flowUrl` link to the flow in the editor, step cou
 - **PIECE**: `pieceName`, `actionName`, `input`, `auth`, `continueOnFailure`, `retryOnFailure`
 - **CODE**: `sourceCode`, `packageJson`, `input`, `continueOnFailure`, `retryOnFailure`
 - **LOOP_ON_ITEMS**: `loopItems`
+- **PROCESS_IN_BATCHES**: `loopItems`, `batchSize` (default 10), `continueOnFailure`. It splits the list into batches and runs its body once per batch.
 
 ROUTER steps are not supported here. Add the router afterwards with `ap_add_step`, then configure its branches with `ap_add_branch`.
 
-Every step also accepts `parentStepName` and `stepLocationRelativeToParent` (`AFTER`, `INSIDE_LOOP`, or `INSIDE_BRANCH`; default `AFTER`). To nest a step inside a loop, set `parentStepName` to the loop step and `stepLocationRelativeToParent` to `INSIDE_LOOP`.
+Every step also accepts `parentStepName` and `stepLocationRelativeToParent` (`AFTER`, `INSIDE_LOOP`, `INSIDE_BATCH`, or `INSIDE_BRANCH`; default `AFTER`). To nest a step inside a loop, set `parentStepName` to the loop step and `stepLocationRelativeToParent` to `INSIDE_LOOP`. To nest a step inside the body of a batch, set `parentStepName` to the `PROCESS_IN_BATCHES` step and `stepLocationRelativeToParent` to `INSIDE_BATCH`.
 
 ### ap_update_trigger
 
@@ -383,7 +384,7 @@ Add a new step to a flow. Optionally configure it in the same call by providing 
 | `flowId` | string | Yes | The flow ID |
 | `parentStepName` | string | Yes | Step to insert after/into |
 | `stepLocationRelativeToParent` | string | Yes | `AFTER`, `INSIDE_LOOP`, `INSIDE_BATCH`, `INSIDE_BRANCH`, `INSIDE_ON_SUCCESS_BRANCH`, or `INSIDE_ON_FAILURE_BRANCH`. The last two need `continueOnFailure` on the parent step. |
-| `stepType` | string | Yes | `CODE`, `PIECE`, `LOOP_ON_ITEMS`, or `ROUTER` |
+| `stepType` | string | Yes | `CODE`, `PIECE`, `LOOP_ON_ITEMS`, `PROCESS_IN_BATCHES`, or `ROUTER` |
 | `displayName` | string | Yes | Step display name |
 | `pieceName` | string | No | For PIECE steps |
 | `actionName` | string | No | For PIECE steps |
@@ -392,8 +393,9 @@ Add a new step to a flow. Optionally configure it in the same call by providing 
 | `auth` | string | No | Connection externalId |
 | `sourceCode` | string | No | For CODE steps: JavaScript/TypeScript source |
 | `packageJson` | string | No | For CODE steps: npm dependencies |
-| `loopItems` | string | No | For LOOP steps: items expression |
-| `continueOnFailure` | boolean | No | For CODE/PIECE steps: continue flow if this step fails (default: false) |
+| `loopItems` | string | No | For LOOP_ON_ITEMS and PROCESS_IN_BATCHES steps: items expression |
+| `batchSize` | number | No | For PROCESS_IN_BATCHES steps: items in each batch (default: 10) |
+| `continueOnFailure` | boolean | No | For CODE/PIECE/PROCESS_IN_BATCHES steps: continue flow if this step fails (default: false) |
 | `retryOnFailure` | boolean | No | For CODE/PIECE steps: retry this step on failure (default: false) |
 
 ### ap_update_step

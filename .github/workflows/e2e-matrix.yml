@@ -26,6 +26,7 @@ on:
       - benchmark/docker-compose.minio.yml
       - benchmark/docker-compose.mail.yml
       - packages/tests-e2e/**
+      - packages/pieces/community/mcp/**
 
 permissions:
   contents: read

@@ -9,11 +9,15 @@ import mcpToolEcho from './templates/mcp-tool-echo.json';
 export const test = base.extend<McpServerFixtures>({
   mcpServer: async ({ request, session, seed, baseURL }, use) => {
     const instanceUrl = requireBaseUrl(baseURL);
-    const connections: McpConnection[] = [];
-    const finishAuthorization = async ({ pending, redirect }: { pending: PendingAuthorization; redirect: URL }) => {
-      const connection = await exchangeCode({ request, instanceUrl, pending, redirect });
-      connections.push(connection);
-      return connection;
+    const grantIds: string[] = [];
+    const clients: Client[] = [];
+    const finishAuthorization = async ({ pending, redirect }: { pending: PendingAuthorization; redirect: URL }): Promise<McpConnection> => {
+      const accessToken = await exchangeCode({ request, pending, redirect });
+      const grantId = readGrantId(accessToken);
+      grantIds.push(grantId);
+      const client = await connectClient({ instanceUrl, pending, accessToken });
+      clients.push(client);
+      return { client, clientName: pending.clientName, grantId };
     };
     await use({
       startAuthorization: ({ scope }) => startAuthorization({ request, instanceUrl, scope }),
@@ -30,8 +34,8 @@ export const test = base.extend<McpServerFixtures>({
         return { ...flow, toolDescription };
       },
     });
-    await Promise.all(connections.map(({ client }) => client.close()));
-    await revokeGrants({ request, session, grantIds: connections.map(({ grantId }) => grantId) });
+    await Promise.allSettled(clients.map((client) => client.close()));
+    await revokeGrants({ request, session, grantIds });
   },
 
   projectMcpTools: async ({ request, session }, use) => {
@@ -104,7 +108,7 @@ async function approve({ request, instanceUrl, session, pending }: { request: AP
   return new URL(redirectUrl);
 }
 
-async function exchangeCode({ request, instanceUrl, pending, redirect }: { request: APIRequestContext; instanceUrl: string; pending: PendingAuthorization; redirect: URL }): Promise<McpConnection> {
+async function exchangeCode({ request, pending, redirect }: { request: APIRequestContext; pending: PendingAuthorization; redirect: URL }): Promise<string> {
   const code = redirect.searchParams.get('code');
   if (!code || redirect.searchParams.get('state') !== pending.state) {
     throw new Error(`The consent redirect carries no code or the wrong state: ${redirect.search}`);
@@ -122,11 +126,15 @@ async function exchangeCode({ request, instanceUrl, pending, redirect }: { reque
     throw new Error(`Exchanging the code failed with ${token.status()}: ${await token.text()}`);
   }
   const { access_token: accessToken }: { access_token: string } = await token.json();
+  return accessToken;
+}
+
+async function connectClient({ instanceUrl, pending, accessToken }: { instanceUrl: string; pending: PendingAuthorization; accessToken: string }): Promise<Client> {
   const client = new Client({ name: pending.clientName, version: '1.0.0' });
   await client.connect(new StreamableHTTPClientTransport(serverUrl({ instanceUrl, scope: pending.scope }), {
     requestInit: { headers: { Authorization: `Bearer ${accessToken}` } },
   }));
-  return { client, clientName: pending.clientName, grantId: readGrantId(accessToken) };
+  return client;
 }
 
 function readGrantId(accessToken: string): string {
