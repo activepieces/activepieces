@@ -2,7 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { placidAuth } from '../auth';
 import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
 import { PLACID_BASE_URL } from '../common';
-import FormData from 'form-data';
+import { placidHelpers } from '../common/client';
+import { placidSchemas } from '../common/output-schemas';
 
 export const convertFileToUrl = createAction({
 	auth: placidAuth,
@@ -11,7 +12,12 @@ export const convertFileToUrl = createAction({
 	displayName: 'Convert File to URL',
 	description: 'Convert uploaded file(s) into media URL(s) consumable by Placid templates.',
 	audience: 'both',
-	aiMetadata: { description: 'Upload a file to Placid and get back a hosted media URL that can be passed into template layers (e.g. as an image source). Use this before a create action when you need to reference local file content by URL. Requires a file input; may need a paid Placid plan. Not idempotent — each call uploads the file as a new media object.', idempotent: false },
+	aiMetadata: {
+		description:
+			'Upload a file to Placid temporary media storage and get back a hosted URL (url, also media[0].file_id) that can be passed into a picture layer, e.g. {"photo": {"image": "<url>"}}. Use this before a create action when the image is a file rather than a public URL. Storage is temporary, so render soon after uploading. Not idempotent: each call uploads the file again.',
+		idempotent: false,
+	},
+	outputSchema: placidSchemas.media,
 	props: {
 		file: Property.File({
 			displayName: 'File',
@@ -26,46 +32,54 @@ export const convertFileToUrl = createAction({
 	},
 	async run(context) {
 		const { file, filename } = context.propsValue;
-
+		const name = filename || file.filename;
 		const formData = new FormData();
-
-		// Convert base64 to buffer for form-data
-		const buffer = Buffer.from(file.base64, 'base64');
-		formData.append('file', buffer, {
-			filename: filename || file.filename,
-			contentType: file.extension ? `application/${file.extension}` : 'application/octet-stream',
-		});
+		const bytes = Buffer.from(file.base64, 'base64');
+		formData.append('file', new Blob([bytes], { type: mimeTypeFor({ name, extension: file.extension }) }), name);
 
 		try {
-			const response = await httpClient.sendRequest({
+			const response = await httpClient.sendRequest<{ media?: { file_key: string; file_id: string }[] }>({
 				method: HttpMethod.POST,
 				url: `${PLACID_BASE_URL}/media`,
 				body: formData,
+				headers: { Accept: 'application/json' },
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
 					token: context.auth.secret_text,
 				},
-				headers: {
-					...formData.getHeaders(),
-				},
 			});
-
-			return response.body;
-		} catch (error: any) {
-			if (error.response?.status === 404) {
-				throw new Error(
-					'File upload not supported. This feature may not be available for demo accounts or may require a paid Placid plan. Please check your account permissions.',
-				);
-			}
-			if (error.response?.status === 413) {
-				throw new Error('File too large. Please check Placid file size limits.');
-			}
-			if (error.response?.status === 403) {
-				throw new Error(
-					'File upload access forbidden. This feature may require additional permissions in your Placid account.',
-				);
-			}
-			throw error;
+			const media = response.body.media ?? [];
+			return { media, url: media[0]?.file_id ?? null };
+		} catch (error) {
+			throw placidHelpers.toPlacidError({ error, operation: 'file upload', mayHaveApplied: true });
 		}
 	},
 });
+
+const MIME_TYPES: Record<string, string> = {
+	png: 'image/png',
+	jpg: 'image/jpeg',
+	jpeg: 'image/jpeg',
+	gif: 'image/gif',
+	webp: 'image/webp',
+	svg: 'image/svg+xml',
+	bmp: 'image/bmp',
+	tif: 'image/tiff',
+	tiff: 'image/tiff',
+	avif: 'image/avif',
+	mp4: 'video/mp4',
+	mov: 'video/quicktime',
+	webm: 'video/webm',
+	mp3: 'audio/mpeg',
+	wav: 'audio/wav',
+	pdf: 'application/pdf',
+	ttf: 'font/ttf',
+	otf: 'font/otf',
+	woff: 'font/woff',
+	woff2: 'font/woff2',
+};
+
+function mimeTypeFor({ name, extension }: { name: string; extension: string | undefined }): string {
+	const ext = (extension || name.split('.').pop() || '').toLowerCase().replace(/^\./, '');
+	return MIME_TYPES[ext] ?? 'application/octet-stream';
+}
