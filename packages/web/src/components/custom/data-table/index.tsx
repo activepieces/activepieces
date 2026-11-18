@@ -56,7 +56,6 @@ export type RowDataWithActions<TData extends DataWithId> = TData & {
 
 export const CURSOR_QUERY_PARAM = 'cursor';
 export const LIMIT_QUERY_PARAM = 'limit';
-export const PAGE_SIZE_OPTIONS = [10, 30, 50];
 
 type DataTableAction<TData extends DataWithId> = (
   row: RowDataWithActions<TData>,
@@ -796,5 +795,7 @@ export function DataTable<
 
 const STICKY_HEADER_CLASS_NAME =
   'sticky top-0 z-10 border-t-0 bg-[color-mix(in_srgb,var(--gray-3)_70%,var(--gray-1))] shadow-[inset_0_1px_0_var(--gray-6),inset_0_-1px_0_var(--gray-6)] [&>tr]:border-b-0';
+
+export const PAGE_SIZE_OPTIONS = [10, 30, 50];
 
 export type { DataTableProps };

@@ -48,8 +48,6 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { UserActions } from './actions/user-actions';
 import { createUsersTableColumns } from './columns';
 
-export type UserRowData = PlatformUserListItem;
-
 export default function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const { isOutOfSeats, canBuySeats, handleSeatLimitError, seatLimitDialog } =
@@ -268,3 +266,5 @@ const DEFAULT_STATUS_FILTER: PlatformUserListStatus[] = [
   UserStatus.ACTIVE,
   INVITED_USER_STATUS,
 ];
+
+export type UserRowData = PlatformUserListItem;

@@ -338,7 +338,11 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
     },
     async withProjectRoles(invitations: UserInvitation[]): Promise<UserInvitation[]> {
         const roleIds = invitations.map((invitation) => invitation.projectRoleId).filter((id): id is string => !isNil(id))
-        const roles = roleIds.length > 0 ? await projectRoleRepo().findBy({ id: In(roleIds) }) : []
+        const platformIds = unique(invitations.map((invitation) => invitation.platformId))
+        const roles = roleIds.length > 0 ? await projectRoleRepo().findBy([
+            { id: In(roleIds), platformId: In(platformIds) },
+            { id: In(roleIds), type: RoleType.DEFAULT },
+        ]) : []
         return invitations.map((invitation) => {
             if (isNil(invitation.projectRoleId)) {
                 return { ...invitation, projectRole: null }
