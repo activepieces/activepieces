@@ -32,7 +32,10 @@ export const lookupNumber = createAction({
         options: [
           { label: 'Format — syntax only', value: 'format' },
           { label: 'Analysis — metadata (type, country)', value: 'analysis' },
-          { label: 'Validation — live network / HLR (billable)', value: 'validation' },
+          {
+            label: 'Validation — live network / HLR (billable)',
+            value: 'validation',
+          },
         ],
       },
     }),

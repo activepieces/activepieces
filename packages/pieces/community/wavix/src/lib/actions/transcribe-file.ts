@@ -12,15 +12,11 @@ import { wavixApiCall, WAVIX_BASE_URL } from '../common/client';
 const transcribeProps = {
   file: Property.File({
     displayName: 'Audio File',
-    description: 'Audio file to transcribe — stereo WAV, MP3 or MP4, up to 25 MB.',
+    description:
+      'Audio file to transcribe — stereo WAV, MP3 or MP4, up to 25 MB.',
     required: true,
   }),
 };
-
-type TranscribeFileContext = ActionContext<
-  typeof wavixAuth,
-  typeof transcribeProps
->;
 
 export const transcribeFile = createAction({
   auth: wavixAuth,
@@ -40,7 +36,6 @@ export const transcribeFile = createAction({
     if (context.executionType === ExecutionType.BEGIN) {
       const { file } = context.propsValue;
 
-      // WEBHOOK waitpoint with an expiry: a missing callback fails the step instead of hanging.
       const timeoutMs = 15 * 60 * 1000;
       const waitpoint = await context.run.createWaitpoint({
         type: 'WEBHOOK',
@@ -49,9 +44,12 @@ export const transcribeFile = createAction({
       const resumeUrl = waitpoint.buildResumeUrl({ queryParams: {} });
 
       const formData = new FormData();
-      formData.append('file', Buffer.from(file.base64, 'base64'), file.filename);
+      formData.append(
+        'file',
+        Buffer.from(file.base64, 'base64'),
+        file.filename
+      );
       formData.append('callback_url', resumeUrl);
-      // Request the conversation summary and score.
       formData.append('insights', 'true');
 
       const submit = await httpClient.sendRequest({
@@ -93,3 +91,8 @@ export const transcribeFile = createAction({
     });
   },
 });
+
+type TranscribeFileContext = ActionContext<
+  typeof wavixAuth,
+  typeof transcribeProps
+>;

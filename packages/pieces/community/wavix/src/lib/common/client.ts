@@ -4,8 +4,6 @@ import {
   QueryParams,
 } from '@activepieces/pieces-common';
 
-export const WAVIX_BASE_URL = 'https://api.wavix.com';
-
 export async function wavixApiCall<T>({
   apiKey,
   method,
@@ -31,3 +29,5 @@ export async function wavixApiCall<T>({
   });
   return response.body;
 }
+
+export const WAVIX_BASE_URL = 'https://api.wavix.com';

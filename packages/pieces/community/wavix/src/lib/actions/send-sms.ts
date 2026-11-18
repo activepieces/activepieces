@@ -24,12 +24,14 @@ export const sendSms = createAction({
     }),
     to: Property.ShortText({
       displayName: 'To',
-      description: 'Recipient phone number in E.164 format (e.g. +15555550100).',
+      description:
+        'Recipient phone number in E.164 format (e.g. +15555550100).',
       required: true,
     }),
     text: Property.LongText({
       displayName: 'Message',
-      description: 'Message text. Segmentation and encoding are handled by Wavix.',
+      description:
+        'Message text. Segmentation and encoding are handled by Wavix.',
       required: true,
     }),
     media: Property.Array({

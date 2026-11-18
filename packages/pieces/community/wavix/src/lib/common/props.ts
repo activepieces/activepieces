@@ -3,10 +3,6 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { wavixAuth } from './auth';
 import { wavixApiCall } from './client';
 
-/**
- * Dropdown of the phone numbers on the connected account.
- * Value is the numeric number id.
- */
 export const numberDropdown = Property.Dropdown({
   displayName: 'Phone Number',
   description: 'The number on your account to watch.',
@@ -24,7 +20,6 @@ export const numberDropdown = Property.Dropdown({
     try {
       const perPage = 100;
       const numbers: { id: number; number: string }[] = [];
-      // Page through all numbers so large accounts aren't truncated.
       for (let page = 1; page <= 100; page++) {
         const response = await wavixApiCall<{
           items: { id: number; number: string }[];
