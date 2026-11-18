@@ -19,7 +19,7 @@ import { filterActionsByAudience, filterPieceBasedOnType, isNewerVersion, isSupp
 
 export const pieceRepos = repoFactory(PieceMetadataEntity)
 
-const NEW_OFFICIAL_PIECE_CLAIM_TTL_SECONDS = 60 * 60
+const NEW_OFFICIAL_PIECE_TTL_SECONDS = 60 * 60
 
 export const pieceMetadataService = (log: FastifyBaseLogger) => {
     return {
@@ -156,13 +156,16 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             archiveId,
             publishCacheRefresh = true,
         }: CreateParams): Promise<CreatedPieceVersion> {
-            const inserted = await insertPieceVersion({ pieceMetadata, platformId, packageType, pieceType, archiveId })
-            const created = isNil(inserted.previousVersion) && isNil(platformId) ? await claimNewOfficialPiece({ inserted }) : inserted
-            log.info({ piece: { name: pieceMetadata.name, version: pieceMetadata.version, previousVersion: created.previousVersion, type: pieceType }, platform: { id: platformId } }, '[pieceMetadataService#create] Piece version installed')
+            const { piece, previousVersion: previousVersionSeenBeforeInsert } = await insertPieceVersion({ pieceMetadata, platformId, packageType, pieceType, archiveId })
+            const looksLikeNewOfficialPiece = isNil(previousVersionSeenBeforeInsert) && isNil(platformId)
+            const previousVersion = looksLikeNewOfficialPiece && !(await isFirstToAnnounceNewPiece({ piece }))
+                ? await findPreviousOfficialVersion({ piece })
+                : previousVersionSeenBeforeInsert
+            log.info({ piece: { name: pieceMetadata.name, version: pieceMetadata.version, previousVersion, type: pieceType }, platform: { id: platformId } }, '[pieceMetadataService#create] Piece version installed')
             if (publishCacheRefresh) {
                 await pieceCache(log).invalidate()
             }
-            return created
+            return { piece, previousVersion }
         },
 
         async bulkDelete(pieces: { name: string, version: string }[]): Promise<void> {
@@ -310,17 +313,16 @@ export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | Piec
     })
 }
 
-async function claimNewOfficialPiece({ inserted }: ClaimNewOfficialPieceParams): Promise<CreatedPieceVersion> {
-    const { piece } = inserted
-    const claimed = await distributedStore.putIfAbsent(`official-piece-added:${piece.name}`, true, NEW_OFFICIAL_PIECE_CLAIM_TTL_SECONDS)
-    if (claimed) {
-        return inserted
-    }
+async function isFirstToAnnounceNewPiece({ piece }: PieceParams): Promise<boolean> {
+    return distributedStore.putIfAbsent(`official-piece-added:${piece.name}`, true, NEW_OFFICIAL_PIECE_TTL_SECONDS)
+}
+
+async function findPreviousOfficialVersion({ piece }: PieceParams): Promise<string | null> {
     const otherVersions = await pieceRepos().find({
         select: { version: true },
         where: { name: piece.name, platformId: IsNull(), version: Not(piece.version) },
     })
-    return { piece, previousVersion: previousVersionOf({ versions: otherVersions, version: piece.version }) }
+    return previousVersionOf({ versions: otherVersions, version: piece.version })
 }
 
 function previousVersionOf({ versions, version }: PreviousVersionOfParams): string | null {
@@ -644,8 +646,8 @@ type FindFlowsUsingPieceParams = {
     log: FastifyBaseLogger
 }
 
-type ClaimNewOfficialPieceParams = {
-    inserted: CreatedPieceVersion
+type PieceParams = {
+    piece: PieceMetadataSchema
 }
 
 type PreviousVersionOfParams = {
