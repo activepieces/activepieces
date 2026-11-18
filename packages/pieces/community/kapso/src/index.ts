@@ -23,7 +23,7 @@ export const kapso = createPiece({
   displayName: 'Kapso',
   description: 'Send and receive WhatsApp messages, media, templates, and more using the Kapso WhatsApp API.',
   auth: kapsoAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/kapso.png',
   categories: [PieceCategory.COMMUNICATION],
   authors: ['onyedikachi-david'],
@@ -45,6 +45,12 @@ export const kapso = createPiece({
     createCustomApiCallAction({
       auth: kapsoAuth,
       baseUrl: () => KAPSO_BASE_URL,
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${KAPSO_BASE_URL}`,
+          placeholder: '/v23.0/123456789012345/messages',
+        },
+      },
       authMapping: async (auth) => {
         return {
           'X-API-Key': auth.secret_text,

@@ -5025,7 +5025,7 @@
     },
     "packages/pieces/community/kapso": {
       "name": "@activepieces/piece-kapso",
-      "version": "0.2.2",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
