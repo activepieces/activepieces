@@ -3,19 +3,12 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { ReachinboxAuth } from '../..';
 import { reachinboxCommon } from '../common';
 
-// Define the shape of the account object
-interface EmailAccount {
-  id: number;
-  email: string;
-  warmupEnabled: boolean;
-}
-
 export const pauseWarmup = createAction({
   auth: ReachinboxAuth,
   name: 'pauseWarmup',
   classification: 'WRITE',
   displayName: 'Pause Warmup',
-  description: 'Pause warmup for selected email accounts.',
+  description: 'Turns off warmup for a connected email account.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -25,42 +18,43 @@ export const pauseWarmup = createAction({
   props: {
     accountId: Property.Dropdown({
   auth: ReachinboxAuth,
-      displayName: 'Select Email Accounts to Pause Warmup',
-      description: 'Choose email accounts that are currently warming up.',
+      displayName: 'Email Account',
+      description: 'Only accounts that are warming up are listed.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        try {
-          // Fetch email accounts
-          const response = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: `${reachinboxCommon.baseUrl}account/all`,
-            headers: {
-              Authorization: `Bearer ${auth}`,
-            },
-          });
-
-          const accounts: EmailAccount[] =
-            response.body?.data?.emailsConnected || [];
-
-          // Filter accounts with warmupEnabled = true
-          const warmupAccounts = accounts.filter(
-            (account: EmailAccount) => account.warmupEnabled
-          );
-
-          // Map the warmup accounts to dropdown options
-          const options = warmupAccounts.map((account: EmailAccount) => ({
-            label: `${account.email} (ID: ${account.id})`,
-            value: account.id.toString(),
-          }));
-
+        if (!auth) {
           return {
-            options,
-            disabled: options.length === 0,
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
           };
+        }
+        try {
+          const accounts = await reachinboxCommon.fetchEmailAccounts(
+            auth.secret_text
+          );
+          const options = accounts
+            .filter((account) => account.warmupEnabled)
+            .map((account) => ({
+              label: `${account.email} (ID: ${account.id})`,
+              value: account.id.toString(),
+            }));
+
+          if (options.length === 0) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'No accounts are warming up.',
+            };
+          }
+          return { options, disabled: false };
         } catch (error) {
-          console.error('Error fetching email accounts:', error);
-          return { options: [], disabled: true };
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Failed to load accounts. Check your connection.',
+          };
         }
       },
     }),

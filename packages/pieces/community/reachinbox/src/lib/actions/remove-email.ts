@@ -3,18 +3,12 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { ReachinboxAuth } from '../..';
 import { reachinboxCommon } from '../common';
 
-// Define the shape of the account object
-interface EmailAccount {
-  id: number;
-  email: string;
-}
-
 export const removeEmail = createAction({
   auth: ReachinboxAuth,
   name: 'removeEmail',
   classification: 'DESTRUCTIVE',
-  displayName: 'Remove Email',
-  description: 'Remove an email account from the system.',
+  displayName: 'Remove Email Account',
+  description: 'Disconnects an email account from ReachInbox.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -24,37 +18,42 @@ export const removeEmail = createAction({
   props: {
     accountId: Property.Dropdown({
   auth: ReachinboxAuth,
-      displayName: 'Select Email Account to Remove',
-      description: 'Choose an email account to remove.',
+      displayName: 'Email Account',
+      description: 'The connected account to remove.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        try {
-          // Fetch email accounts
-          const response = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: `${reachinboxCommon.baseUrl}account/all`,
-            headers: {
-              Authorization: `Bearer ${auth}`,
-            },
-          });
-
-          const accounts: EmailAccount[] =
-            response.body?.data?.emailsConnected || [];
-
-          // Map the fetched accounts to dropdown options
-          const options = accounts.map((account: EmailAccount) => ({
-            label: `${account.email} (ID: ${account.id})`,
-            value: account.id.toString(),
-          }));
-
+        if (!auth) {
           return {
-            options,
-            disabled: options.length === 0,
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
           };
+        }
+        try {
+          const accounts = await reachinboxCommon.fetchEmailAccounts(
+            auth.secret_text
+          );
+          const options = accounts
+            .map((account) => ({
+              label: `${account.email} (ID: ${account.id})`,
+              value: account.id.toString(),
+            }));
+
+          if (options.length === 0) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'No connected email accounts found.',
+            };
+          }
+          return { options, disabled: false };
         } catch (error) {
-          console.error('Error fetching email accounts:', error);
-          return { options: [], disabled: true };
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Failed to load accounts. Check your connection.',
+          };
         }
       },
     }),
