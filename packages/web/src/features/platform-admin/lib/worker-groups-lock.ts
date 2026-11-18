@@ -1,4 +1,3 @@
-import { isNil } from '@activepieces/core-utils';
 import { ApEdition, PlatformWithoutSensitiveData } from '@activepieces/shared';
 
 export const workerGroupsLock = {
@@ -7,20 +6,18 @@ export const workerGroupsLock = {
     plan,
   }: {
     edition: ApEdition | null | undefined;
-    plan: Pick<
-      PlatformWithoutSensitiveData['plan'],
-      'workerGroupsEnabled' | 'licenseKey'
-    >;
+    plan: Pick<PlatformWithoutSensitiveData['plan'], 'workerGroupsEnabled'>;
   }): WorkerGroupsLockReason | null {
-    if (edition === ApEdition.CLOUD) return 'cloud';
+    if (edition === ApEdition.CLOUD) return WorkerGroupsLockReason.CLOUD;
     if (plan.workerGroupsEnabled) return null;
-    if (edition === ApEdition.COMMUNITY) return 'community';
-    return isNil(plan.licenseKey) ? 'no-license' : 'not-in-license';
+    if (edition === ApEdition.COMMUNITY)
+      return WorkerGroupsLockReason.COMMUNITY;
+    return WorkerGroupsLockReason.NOT_IN_PLAN;
   },
 };
 
-export type WorkerGroupsLockReason =
-  | 'cloud'
-  | 'community'
-  | 'no-license'
-  | 'not-in-license';
+export enum WorkerGroupsLockReason {
+  CLOUD = 'CLOUD',
+  COMMUNITY = 'COMMUNITY',
+  NOT_IN_PLAN = 'NOT_IN_PLAN',
+}

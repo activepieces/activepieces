@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { createLogger, wideEvent } from '@activepieces/server-utils'
+import { wideEvent } from '@activepieces/server-utils'
 import { Job, Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../database/redis-connections'
@@ -25,19 +25,13 @@ export const barrierQueue = (log: FastifyBaseLogger) => ({
         barrierWorker = new Worker<BarrierJobData>(
             QueueName.BARRIER_EVALUATION,
             async (job) => {
-                const jobLogger = createLogger({
-                    event: 'barrier.job',
-                    job: { id: job.id, type: job.name },
-                    waitpoint: { id: job.data.barrierId },
-                })
-                return wideEvent.run({
-                    logger: jobLogger,
-                    fn: () => processBarrierJob({ job, log })
-                        .catch((error: unknown) => {
-                            wideEvent.error(error)
-                            throw error
-                        })
-                        .finally(() => jobLogger.emit()),
+                return wideEvent.runJob({
+                    fields: {
+                        event: 'barrier.job',
+                        job: { id: job.id, type: job.name },
+                        waitpoint: { id: job.data.barrierId },
+                    },
+                    fn: () => processBarrierJob({ job, log }),
                 })
             },
             {

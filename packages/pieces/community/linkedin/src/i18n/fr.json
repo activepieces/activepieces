@@ -81,5 +81,10 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "Post": "Contenu",
+  "Link Preview": "Aperçu du lien",
+  "Post As": "Publier en tant que",
+  "Request": "Requête",
+  "Data to send": "Données à envoyer"
 }

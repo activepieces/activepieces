@@ -1,3 +1,5 @@
+import { assertWriteSucceeded } from '../common/request';
+import { biginOutputSchemas } from '../common/output-schemas';
 import { biginAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { tagsDropdown, usersDropdown } from '../common/props';
@@ -11,7 +13,8 @@ export const createEvent = createAction({
   classification: 'WRITE',
   displayName: 'Create Event',
   description: 'Creates a new event in Bigin',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: biginOutputSchemas.legacyAckRaw,
   aiMetadata: { description: 'Creates a calendar event in Bigin CRM with a title, start and end date/time (end must be after start), plus optional all-day flag, venue, participants, description, and tags. Supports optional recurrence (daily/weekly/monthly/yearly RRULE) and reminders, and can be linked to a related Contact, Pipeline, or Company record. Use to schedule a meeting or appointment. Not idempotent: each call creates a new event.', idempotent: false },
   props: {
     eventTitle: Property.ShortText({
@@ -381,20 +384,14 @@ export const createEvent = createAction({
 
     const payload = { data: [eventData] };
 
-    try {
+    
       const response = await biginApiService.createEvent(
         access_token,
         api_domain,
         payload
       );
+      assertWriteSucceeded(response.data?.[0]);
       return response.data[0];
-    } catch (error) {
-      console.error('Error creating event:', error);
-      throw new Error(
-        error instanceof Error
-          ? `Failed to create event: ${error.message}`
-          : 'Failed to create event due to an unknown error'
-      );
-    }
+    
   },
 });

@@ -1,13 +1,14 @@
-import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { knackApiCall } from '../common/client';
 import { knackAuth } from '../common/auth';
 import {
   fieldIdDropdown,
-  KnackGetObjectResponse,
+  knackGetObject,
   knackTransformFields,
   objectDropdown,
 } from '../common/props';
+import { findRecordOutputSchema } from '../common/schemas';
 
 export const findRecordAction = createAction({
   auth: knackAuth,
@@ -15,11 +16,8 @@ export const findRecordAction = createAction({
   classification: 'SEARCH',
   displayName: 'Find Record',
   description: 'Finds a single record using field value.',
-  audience: 'both',
-  aiMetadata: {
-    description: 'Looks up a single record in a chosen Knack object (table) by matching one field against a value (exact "is" match), returning the first match or a not-found result. Use to find a record by a known field value rather than its record ID. Read-only and idempotent.',
-    idempotent: true,
-  },
+  audience: 'human',
+  outputSchema: findRecordOutputSchema,
   props: {
     object: objectDropdown,
     fieldId: fieldIdDropdown,
@@ -31,66 +29,31 @@ export const findRecordAction = createAction({
   },
   async run({ propsValue, auth }) {
     const { object: objectKey, fieldId, fieldValue } = propsValue;
+    const response = await knackApiCall<{ records?: Record<string, unknown>[] }>({
+      method: HttpMethod.GET,
+      auth,
+      resourceUri: `/objects/${encodeURIComponent(objectKey)}/records`,
+      query: {
+        filters: JSON.stringify({
+          match: 'and',
+          rules: [{ field: fieldId, operator: 'is', value: fieldValue }],
+        }),
+        rows_per_page: 1,
+      },
+    });
 
-    try {
-      const response = await knackApiCall<{ records: Record<string, any>[] }>({
-        method: HttpMethod.GET,
-        auth: auth,
-        resourceUri: `/objects/${objectKey}/records`,
-        query: {
-          filters: JSON.stringify([
-            {
-              field: fieldId,
-              operator: 'is',
-              value: fieldValue,
-            },
-          ]),
-          rows_per_page: '1',
-        },
-      });
-
-      if (response.records && response.records.length > 0) {
-        const objectDetails = await knackApiCall<KnackGetObjectResponse>({
-          method: HttpMethod.GET,
-          auth,
-          resourceUri: `/objects/${objectKey}`,
-        });
-
-        const transformedRecord = knackTransformFields(
-          objectDetails,
-          response.records[0]
-        );
-        return {
-          found: true,
-          record: transformedRecord,
-        };
-      }
-
+    const first = response.records?.[0];
+    if (first) {
+      const objectDetails = await knackGetObject({ auth, objectKey });
       return {
-        found: false,
-        record: null,
-        message: 'No record found matching the provided filters.',
+        found: true,
+        record: knackTransformFields(objectDetails, first),
       };
-    } catch (error: any) {
-      if (error.message.includes('400')) {
-        throw new Error(
-          'Bad Request: The filter rules are invalid. Please check the JSON format and field/operator values.'
-        );
-      }
-
-      if (error.message.includes('401') || error.message.includes('403')) {
-        throw new Error(
-          'Authentication Failed: Please check your API Key, Application ID, and user permissions.'
-        );
-      }
-
-      if (error.message.includes('429')) {
-        throw new Error(
-          'Rate Limit Exceeded: Too many requests. Please wait a moment before trying again.'
-        );
-      }
-
-      throw new Error(`Failed to find Knack record: ${error.message}`);
     }
+    return {
+      found: false,
+      record: null,
+      message: 'No record found matching the provided filters.',
+    };
   },
 });

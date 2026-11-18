@@ -9,6 +9,9 @@ import { wideEvent } from './wide-event'
 
 
 const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
+const UNKNOWN_MODEL_OUTPUT_CEILING: Partial<Record<AIProviderName, number>> = {
+    [AIProviderName.COHERE]: 4_000,
+}
 const KEEP_RECENT_TOOL_RESULTS = 6
 const COLLAPSE_OUTPUT_OVER_CHARS = 600
 // Tool results that are the agent's working memory of an action's input schema — never collapsed,
@@ -410,7 +413,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 async function affordableOutputTokens({ provider, modelIds, thinkingBudget }: { provider: AIProviderName, modelIds: (string | undefined)[], thinkingBudget: number }): Promise<number> {
     const catalog = await modelCatalog.load()
-    const ceilings = modelIds.map((modelId) => isNil(modelId) ? undefined : catalog.lookup({ provider, modelId })?.maxOutputTokens)
+    const ceilings = modelIds.map((modelId) => isNil(modelId) ? undefined : catalog.lookup({ provider, modelId })?.maxOutputTokens ?? UNKNOWN_MODEL_OUTPUT_CEILING[provider])
     return clampOutputTokens({ thinkingBudget, ceilings })
 }
 

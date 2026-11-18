@@ -8,6 +8,7 @@ import {
   Layers,
   LucideIcon,
   Mail,
+  MessageSquare,
   Shield,
   User,
   Workflow,
@@ -126,6 +127,14 @@ const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
     group: 'billing',
     label: t('Trial started'),
   },
+  [TelemetryEventName.TRIAL_ENDED]: {
+    group: 'billing',
+    label: t('Trial ended'),
+  },
+  [TelemetryEventName.TRIAL_SEATS_DEACTIVATED]: {
+    group: 'billing',
+    label: t('Users deactivated after the trial'),
+  },
   [TelemetryEventName.SALES_HANDOFF_CLICKED]: {
     group: 'billing',
     label: t('Contacted sales'),
@@ -170,6 +179,18 @@ const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
     group: 'flows',
     label: t('Replaced a connection'),
   },
+  [TelemetryEventName.MEMORY_IMPORT_NUDGE_SHOWN]: {
+    group: 'chat',
+    label: t('Saw the memory import suggestion'),
+  },
+  [TelemetryEventName.MEMORY_IMPORT_NUDGE_CLICKED]: {
+    group: 'chat',
+    label: t('Opened memory import from chat'),
+  },
+  [TelemetryEventName.MEMORY_IMPORT_NUDGE_IMPORTED]: {
+    group: 'chat',
+    label: t('Imported memory from chat'),
+  },
 });
 
 const buildGroups = (): TrackedEventGroup[] => {
@@ -179,6 +200,7 @@ const buildGroups = (): TrackedEventGroup[] => {
     { id: 'emailCodes', title: t('Emailed sign-in codes'), icon: Mail },
     { id: 'flows', title: t('Flows and the builder'), icon: Workflow },
     { id: 'mcp', title: t('MCP'), icon: Layers },
+    { id: 'chat', title: t('Chat'), icon: MessageSquare },
     { id: 'billing', title: t('Billing'), icon: CreditCard },
     {
       id: 'platformAdmin',
@@ -207,6 +229,7 @@ export type TrackedEventGroupId =
   | 'emailCodes'
   | 'flows'
   | 'mcp'
+  | 'chat'
   | 'billing'
   | 'platformAdmin';
 

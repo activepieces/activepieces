@@ -1,6 +1,7 @@
 import { AiProviderCredentials, AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils'
 import { OPENAI_COMPATIBLE_VENDOR_BASE_URLS } from '@activepieces/core-piece-types'
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
+import { createCohere } from '@ai-sdk/cohere'
 import { createVertex } from '@ai-sdk/google-vertex'
 import { createVertexAnthropic } from '@ai-sdk/google-vertex/anthropic'
 import { createVertexMaas } from '@ai-sdk/google-vertex/maas'
@@ -11,6 +12,7 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
 import { defaultSettingsMiddleware, ImageModel, LanguageModel, LanguageModelMiddleware, simulateStreamingMiddleware, wrapLanguageModel } from 'ai'
+import { litellm } from './litellm'
 
 const VERTEX_MAAS_SUFFIX = '-maas'
 const VERTEX_ANTHROPIC_PREFIX = 'claude'
@@ -71,6 +73,8 @@ export function createLanguageModel({ credentials, modelId, options = {} }: Crea
                 ...observed,
             }).chatModel(modelId)
         }
+        case AIProviderName.LITELLM:
+            return litellm.createLanguageModel({ credentials, modelId, onOutcome: options.onOutcome, extraHeaders: options.extraHeaders })
         case AIProviderName.MISTRAL: {
             const { apiKey } = credentials.auth
             if (options.mistralViaOpenRouter) {
@@ -96,10 +100,11 @@ export function createLanguageModel({ credentials, modelId, options = {} }: Crea
         case AIProviderName.META: {
             const { apiKey } = credentials.auth
             const responses = createOpenAI({ baseURL: OPENAI_COMPATIBLE_VENDOR_BASE_URLS[AIProviderName.META], apiKey, ...observed }).responses(modelId)
-            return withoutServerStorage({
-                model: wrapLanguageModel({ model: responses, middleware: autoToolChoiceOnly }),
-                providerOptionsName: 'openai',
-            })
+            return withoutServerStorage({ model: responses, providerOptionsName: 'openai' })
+        }
+        case AIProviderName.COHERE: {
+            const { apiKey } = credentials.auth
+            return createCohere({ apiKey, ...observed })(modelId)
         }
         case AIProviderName.OPENROUTER:
         case AIProviderName.ACTIVEPIECES: {
@@ -147,6 +152,8 @@ export function createImageModel({ credentials, modelId, options = {} }: CreateI
                 ...observed,
             }).imageModel(modelId)
         }
+        case AIProviderName.LITELLM:
+            return litellm.createImageModel({ credentials, modelId, onOutcome: options.onOutcome, extraHeaders: options.extraHeaders })
         default:
             return undefined
     }
@@ -196,6 +203,10 @@ export function withoutServerStorage({ model, providerOptionsName }: {
         model,
         middleware: defaultSettingsMiddleware({ settings: { providerOptions: { [providerOptionsName]: { store: false } } } }),
     })
+}
+
+export function withAutoToolChoice(model: LanguageModel): LanguageModel {
+    return typeof model === 'string' ? model : wrapLanguageModel({ model, middleware: autoToolChoiceOnly })
 }
 
 const autoToolChoiceOnly: LanguageModelMiddleware = {
@@ -281,7 +292,7 @@ function withToolInstruction({ params, toolName, retry }: {
     const reminder = retry ? 'Your previous reply did not call a tool. ' : ''
     return {
         ...params,
-        prompt: [...params.prompt, { role: 'system', content: `${reminder}Reply only by calling ${target}. Do not reply with text.` }],
+        prompt: [...params.prompt, { role: 'user', content: [{ type: 'text', text: `${reminder}Reply only by calling ${target}. Do not reply with text.` }] }],
     }
 }
 

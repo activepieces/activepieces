@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { microsoftSharepointSearchListItemOutputSchema } from '../output-schemas';
 
 export const findListItemAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_search_list_item',
+  outputSchema: microsoftSharepointSearchListItemOutputSchema,
   classification: 'SEARCH',
   displayName: 'Find List Item',
   description: 'Finds a item in a list based on name.',

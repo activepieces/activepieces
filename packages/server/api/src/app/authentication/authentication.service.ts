@@ -1,4 +1,4 @@
-import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, SignInMethod } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
 import { ApEdition, ApEnvironment, ApFlagId, AuthenticationResponse, OtpType, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -9,13 +9,15 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
-import { AuthenticationResult, authenticationUtils, SignInMethods } from './authentication-utils'
+import { AuthenticationResult, authenticationUtils } from './authentication-utils'
 import { zerobounce } from './lib/zerobounce'
 import { otpService } from './otp/otp-service'
 import { userIdentityService } from './user-identity/user-identity-service'
 import { verifiedDomainHooks } from './verified-domain-hooks'
 
 const PLATFORM_CONTROLLED_PROVIDERS = new Set([UserIdentityProvider.JWT, UserIdentityProvider.SAML])
+
+const SIGN_IN_METHODS: SignInMethod[] = [UserIdentityProvider.EMAIL, UserIdentityProvider.GOOGLE, UserIdentityProvider.SAML]
 
 export const authenticationService = (log: FastifyBaseLogger) => ({
     async signUp(params: SignUpParams): Promise<AuthenticationResult> {
@@ -25,6 +27,11 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 throw refusedSignUpError(params)
             }
         }
+        await authenticationService(log).assertSignInMethodIsAllowed({
+            email: params.email,
+            provider: params.provider,
+            emailIsProven: params.provider === UserIdentityProvider.GOOGLE,
+        })
         const platformId = params.platformId
 
         if (!isNil(platformId)) {
@@ -93,6 +100,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     },
     async signInWithPassword(params: SignInWithPasswordParams): Promise<AuthenticationResult> {
         const identity = await userIdentityService(log).verifyIdentityPassword(params)
+        await authenticationService(log).assertSignInMethodIsAllowed({ email: identity.email, provider: UserIdentityProvider.EMAIL, emailIsProven: true })
         const platformId = isNil(params.predefinedPlatformId) ? await authenticationService(log).selectCloudSignInPlatformId({ identityId: identity.id }) : params.predefinedPlatformId
 
         if (isNil(platformId)) { // always cloud
@@ -137,13 +145,24 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         }
         const memberships = await platformService(log).listPlatformMembershipsForIdentity({ identityId })
         const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
+        const governingPlatform = await authenticationService(log).findGoverningPlatform({ email: identity.email })
+        const governing = memberships.find((membership) => membership.platform.id === governingPlatform?.id)
         const lastUsed = memberships.find((membership) => membership.platform.id === identity.lastLoggedInPlatformId)
         const withProjects = memberships.find((membership) => membership.hasProjects)
-        return (lastUsed ?? withProjects ?? memberships[0])?.platform.id ?? null
+        return (governing ?? lastUsed ?? withProjects ?? memberships[0])?.platform.id ?? null
     },
     async federatedAuthn(params: FederatedAuthnParams): Promise<AuthenticationResult> {
         const platformId = isNil(params.predefinedPlatformId) ? await selectCloudSignInPlatformIdByEmail({ email: params.email, log }) : params.predefinedPlatformId
+        if (params.provider === UserIdentityProvider.SAML && !isNil(platformId)) {
+            await authenticationUtils(log).assertEmailMatchesSsoDomain({
+                email: params.email,
+                platformId,
+            })
+        }
         const userIdentity = await userIdentityService(log).getIdentityByEmail(params.email)
+        if (!isNil(userIdentity)) {
+            await authenticationService(log).assertSignInMethodIsAllowed({ email: params.email, provider: params.provider, emailIsProven: params.provider === UserIdentityProvider.GOOGLE })
+        }
 
         if (isNil(platformId)) { // always cloud
             if (!isNil(userIdentity)) {
@@ -159,13 +178,6 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 platformId: null,
                 password: await cryptoUtils.generateRandomPassword(),
                 imageUrl: params.imageUrl,
-            })
-        }
-
-        if (params.provider == UserIdentityProvider.SAML) {
-            await authenticationUtils(log).assertEmailMatchesSsoDomain({
-                email: params.email,
-                platformId,
             })
         }
 
@@ -208,15 +220,54 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             projectId: null,
         })
     },
-    async discoverSignInMethods({ domain }: DiscoverSignInMethodsParams): Promise<SignInDiscovery> {
+    async findGoverningPlatform({ email }: FindGoverningPlatformParams): Promise<Omit<PlatformWithoutSensitiveData, 'usage'> | null> {
+        const domain = email.split('@')[1] ?? ''
         const domainOwnerPlatformId = await verifiedDomainHooks.get(log).findPlatformIdByDomain({ domain })
         if (isNil(domainOwnerPlatformId)) {
-            return { domainOwned: false }
+            return null
         }
-        const domainOwnerPlatform = await platformService(log).getOneWithPlanOrThrow(domainOwnerPlatformId)
-        return { domainOwned: true, methods: authenticationUtils(log).getSignInMethods({ platform: domainOwnerPlatform }) }
+        const governed = await isMemberOrAcceptedInvitee({ email, platformId: domainOwnerPlatformId, log })
+        if (!governed) {
+            return null
+        }
+        return platformService(log).getOneWithPlanOrThrow(domainOwnerPlatformId)
+    },
+    async assertSignInMethodIsAllowed({ email, provider, emailIsProven }: AssertSignInMethodIsAllowedParams): Promise<void> {
+        if (provider === UserIdentityProvider.JWT) {
+            return
+        }
+        const governingPlatform = await authenticationService(log).findGoverningPlatform({ email })
+        if (isNil(governingPlatform)) {
+            return
+        }
+        const methods = authenticationUtils(log).getSignInMethods({ platform: governingPlatform })
+        const enabled: Record<SignInMethod, boolean> = {
+            EMAIL: methods.email,
+            GOOGLE: methods.google,
+            SAML: methods.sso,
+        }
+        const allowedMethods = SIGN_IN_METHODS.filter((method) => enabled[method])
+        if (allowedMethods.includes(provider)) {
+            return
+        }
+        log.info({ platform: { id: governingPlatform.id }, provider }, 'Refused a sign-in method the governing platform does not allow')
+        throw new ActivepiecesError({
+            code: ErrorCode.SIGN_IN_METHOD_NOT_ALLOWED,
+            params: emailIsProven ? { platformName: governingPlatform.name, allowedMethods } : {},
+        })
     },
 })
+
+async function isMemberOrAcceptedInvitee({ email, platformId, log }: IsMemberOrAcceptedInviteeParams): Promise<boolean> {
+    const identity = await userIdentityService(log).getIdentityByEmail(email)
+    if (!isNil(identity)) {
+        const member = await userService(log).getOneByIdentityAndPlatform({ identityId: identity.id, platformId })
+        if (!isNil(member)) {
+            return true
+        }
+    }
+    return userInvitationsService(log).hasAnyAcceptedInvitations({ email, platformId })
+}
 
 async function assertUserCanSwitchToPlatform(platform: PlatformWithoutSensitiveData | undefined): Promise<void> {
     if (isNil(platform)) {
@@ -341,10 +392,17 @@ type SwitchPlatformParams = {
     platformId: string
 }
 
-type DiscoverSignInMethodsParams = {
-    domain: string
+type FindGoverningPlatformParams = {
+    email: string
 }
 
-export type SignInDiscovery =
-    | { domainOwned: true, methods: SignInMethods }
-    | { domainOwned: false }
+type AssertSignInMethodIsAllowedParams = {
+    email: string
+    provider: UserIdentityProvider
+    emailIsProven: boolean
+}
+
+type IsMemberOrAcceptedInviteeParams = FindGoverningPlatformParams & {
+    platformId: string
+    log: FastifyBaseLogger
+}

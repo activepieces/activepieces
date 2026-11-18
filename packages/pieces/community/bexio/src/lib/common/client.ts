@@ -7,7 +7,7 @@ import {
 import { bexioCommon } from './index';
 
 export class BexioClient {
-  constructor(private auth: {access_token: string}) {}
+  constructor(private auth: { access_token: string }) {}
 
   async makeRequest<T>(
     method: HttpMethod,
@@ -15,8 +15,6 @@ export class BexioClient {
     data?: unknown,
     queryParams?: Record<string, string>
   ): Promise<T> {
-    // If endpoint already includes version (starts with /2.0/ or /3.0/), use it directly
-    // Otherwise, prepend the default API version
     const url = endpoint.startsWith('/2.0/') || endpoint.startsWith('/3.0/')
       ? `${bexioCommon.baseUrl}${endpoint}`
       : `${bexioCommon.baseUrl}/${bexioCommon.api_version}${endpoint}`;
@@ -34,7 +32,7 @@ export class BexioClient {
       },
     };
 
-    if (data) {
+    if (data !== undefined) {
       request.body = data;
     }
 
@@ -58,8 +56,11 @@ export class BexioClient {
     return this.makeRequest<T>(HttpMethod.PATCH, endpoint, data);
   }
 
+  async put<T>(endpoint: string, data: unknown): Promise<T> {
+    return this.makeRequest<T>(HttpMethod.PUT, endpoint, data);
+  }
+
   async delete<T>(endpoint: string): Promise<T> {
     return this.makeRequest<T>(HttpMethod.DELETE, endpoint);
   }
 }
-

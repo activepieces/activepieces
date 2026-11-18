@@ -10,7 +10,7 @@ import dayjs from 'dayjs';
 
 import { getEventsActionOutputSchema } from '../output-schemas';
 export const getEventsProps = {
-  calendar_id: googleCalendarCommon.calendarDropdown('writer'),
+  calendar_id: googleCalendarCommon.calendarDropdown(),
   event_types: Property.StaticMultiSelectDropdown({
     displayName: 'Event Types',
     description: 'Only events of these types are returned.',

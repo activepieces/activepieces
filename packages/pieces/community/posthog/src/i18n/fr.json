@@ -212,6 +212,8 @@
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
   "HEAD": "TÊTE",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Event": "Nouvel événement",
   "Triggers when a new event is captured in PostHog": "Déclenche lorsqu'un nouvel événement est capturé dans PostHog",
   "Event Name Filter": "Filtre du nom de l'événement",
