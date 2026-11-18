@@ -4,6 +4,12 @@ import { webscrapingAiApi } from './common/api';
 
 export const webscrapingAiAuth = PieceAuth.SecretText({
 	displayName: 'API Key',
+	description: [
+		'To get your API key:',
+		'1. Sign in at https://webscraping.ai',
+		'2. Open your Dashboard',
+		'3. Copy the API key and paste it here',
+	].join('\n'),
 	required: true,
 	validate: async ({ auth }) => {
 		const { error } = await tryCatch(() =>
