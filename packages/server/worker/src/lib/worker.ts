@@ -146,8 +146,9 @@ export const worker = {
         stopPollWatchdog()
         stopSandboxInfoSampling()
         stopCacheSweeper()
-        if (rpcClient) {
-            const { error } = await tryCatch(() => rpcClient!.beginShutdown())
+        const client = rpcClient
+        if (!isNil(client)) {
+            const { error } = await tryCatch(() => client.beginShutdown())
             if (error) {
                 logger.warn({ error }, 'Failed to tell the app this worker is stopping')
             }
