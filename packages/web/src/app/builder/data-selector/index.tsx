@@ -473,7 +473,11 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
                 </TabsList>
               </Tabs>
             </div>
-            <ScrollArea className="transition-all flex-1 w-full ">
+            <ScrollArea
+              className="transition-all flex-1 w-full "
+              role="tree"
+              aria-label={t('Data Selector')}
+            >
               <VirtualizedList
                 items={rows}
                 estimateSize={32}

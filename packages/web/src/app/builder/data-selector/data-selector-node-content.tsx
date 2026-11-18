@@ -94,12 +94,18 @@ const DataSelectorNodeContent = ({
       onKeyDown={handleKeyPress}
       ref={ripple}
       onClick={handleClick}
+      role="treeitem"
+      aria-level={depth + 1}
       aria-expanded={isExpandable ? expanded : undefined}
       className={cn(
         'w-full max-w-full relative select-none focus:outline-hidden cursor-pointer group transition-colors',
         'hover:bg-gray-4/60 focus:bg-gray-4',
       )}
       data-depth={depth}
+      data-testid="data-selector-node"
+      data-property-path={
+        node.data.type === 'value' ? node.data.propertyPath : undefined
+      }
     >
       <div
         className={cn(
