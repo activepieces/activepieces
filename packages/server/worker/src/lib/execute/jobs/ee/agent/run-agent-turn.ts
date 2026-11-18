@@ -14,7 +14,6 @@ const STREAM_RETRY_BASE_DELAY_MS = 1_000
 const SDK_RETRIES = 3
 const SDK_RETRIES_BEFORE_FALLBACK = 1
 const MIN_THINKING_BUDGET = 1_024
-const TURN_FINGERPRINTS = new WeakMap<ToolSet, Promise<string | undefined>>()
 const CONTENT_CHUNK_TYPES = new Set(['text-delta', 'reasoning-delta', 'tool-input-start', 'tool-input-available', 'source-url', 'source-document', 'file'])
 const USER_FAULT_STATUS_CODES = new Set([401, 403, 404])
 const MODEL_UNAVAILABLE_PATTERNS = [/\bis deprecated\b/i, /no longer (available|supported)/i, /\bmodel_not_found\b/i, /\bunknown model\b/i, /\bdecommissioned\b/i]
@@ -69,7 +68,7 @@ export function drainOf({ state }: { state: StepContentState }): StreamDrain {
     return { lastStepSentContent: state.sentWhenFailed ?? state.sentInStep }
 }
 
-export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, priorToolCalls, onModelOutcome, onStepModel, skills, promptFingerprint }: RunAgentTurnParams): Promise<AgentTurnResult> {
+export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, priorToolCalls, onModelOutcome, onStepModel, skills }: RunAgentTurnParams): Promise<AgentTurnResult> {
     const drainStream = sinks?.drainStream ?? ((result: ReturnType<typeof streamText>) => result.consumeStream())
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
@@ -118,7 +117,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
     const runsATier = models.some((candidate) => !isNil(candidate.key))
     const peers = [...models, ...(isNil(fastModel) ? [] : [fastModel])]
     const [fingerprint, ranked] = await Promise.all([
-        fingerprintOf({ cacheKey: tools, tools: guardedTools, promptFingerprint }),
+        aiObservability.turnFingerprintOf({ tools: skillSurface?.tools ?? tools }),
         Promise.all(models.map((turnModel) => withOutputBudget({ turnModel, peers }))),
     ])
     let fast = isNil(fastModel) ? undefined : await withOutputBudget({ turnModel: fastModel, peers })
@@ -564,20 +563,6 @@ function runawayTokenCeiling(provider: AIProviderName): number {
     return aiProviderUtils.getMaxContextTokens({ provider }) * RUNAWAY_TURN_CONTEXT_MULTIPLE
 }
 
-function fingerprintOf({ cacheKey, tools, promptFingerprint }: { cacheKey: ToolSet, tools: ToolSet, promptFingerprint: string | undefined }): Promise<string | undefined> {
-    if (isNil(aiObservability.integration())) {
-        return Promise.resolve(undefined)
-    }
-    const cached = TURN_FINGERPRINTS.get(cacheKey)
-    if (!isNil(cached)) {
-        return cached
-    }
-    const computed = tryCatch(() => aiObservability.turnFingerprintOf({ promptFingerprint, tools })).then(({ data }) => data ?? undefined)
-    TURN_FINGERPRINTS.set(cacheKey, computed)
-    return computed
-}
-
-
 /**
  * Within a single streamText call the SDK appends every tool result and re-sends
  * the full history each step, with no built-in size cap — a turn with many or
@@ -689,7 +674,6 @@ export type RunAgentTurnParams = {
     onModelOutcome?: (outcome: { turnModel: TurnModel, signal: ProviderOutcomeSignal }) => void
     onStepModel?: (turnModel: TurnModel) => void
     skills?: { surface: SkillSurface, guides: Record<string, string>, preloaded?: string[] }
-    promptFingerprint?: string
 }
 
 export type AgentTurnResult = {

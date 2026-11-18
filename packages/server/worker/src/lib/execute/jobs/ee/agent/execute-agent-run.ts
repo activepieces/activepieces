@@ -140,7 +140,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             wideEvent.set({
                 ...spreadIfDefined('user', isNil(userId) ? undefined : { id: userId }),
                 ...spreadIfDefined('project', isNil(billing.projectId) ? undefined : { id: billing.projectId }),
-                agentRun: { source, tierId: config.platformTier?.id ?? config.tier.id, tierModel: config.modelId },
+                agentRun: { source, tierId: config.platformTier?.id ?? config.tier.id, tierModel: config.modelId, ...spreadIfDefined('promptFingerprint', config.promptFingerprint) },
             })
             const metadata: ModelMetadata = { platformId, conversationId, runId, surface: source === AgentRunSource.AGENT || source === AgentRunSource.FLOW_STEP ? 'agent' : 'chat' }
             const model = aiUtils.createModel({
@@ -281,7 +281,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                     const baseTools = agentWorkerTools.wrapToolsWithUserWaitBarrier({ tools: { ...allTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }) } })
                     const taskTools = createTaskSubagentTools({
                         tools: baseTools, guides: config.guides, models: turnModels, researchModels: isNil(fastTurnModel) ? turnModels : [fastTurnModel], tier: config.tier,
-                        taskPrompt: config.taskSystemPrompt, creditsLeftFor, eventEmitter, abortSignal: abortController.signal, log, ...spreadIfDefined('promptFingerprint', config.promptFingerprint),
+                        taskPrompt: config.taskSystemPrompt, creditsLeftFor, eventEmitter, abortSignal: abortController.signal, log,
                         beginTask: (input) => ctx.apiClient.beginAgentTask({ platformId, conversationId, ...input }),
                         finishTask: (input) => ctx.apiClient.finishAgentTask({ platformId, conversationId, ...input }),
                     })
@@ -316,7 +316,6 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         tier: config.tier,
                         phaseState,
                         ...spreadIfDefined('skills', skillsFor({ source, guides: config.guides })),
-                        ...spreadIfDefined('promptFingerprint', config.promptFingerprint),
                         abortSignal: abortController.signal,
                         log,
                         sinks: {

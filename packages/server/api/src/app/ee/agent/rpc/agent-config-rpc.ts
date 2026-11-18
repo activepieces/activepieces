@@ -354,7 +354,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('agentId', conversation.agentId ?? undefined),
             ...spreadIfDefined('projectId', runProjectId ?? undefined),
             systemPrompt: systemPromptText,
-            promptFingerprint: isNil(promptOverride) ? BASE_PROMPT_FINGERPRINT : aiObservability.promptFingerprintOf({ templates: { ...agentPrompt.sources, ...promptOverride, guides } }),
+            promptFingerprint: aiObservability.promptFingerprintOf({ templates: { ...agentPrompt.sources, ...promptOverride, guides } }),
             messages: messagesForLlm,
             allMessages,
             previousUiMessages: uiMessagesWithUser,
@@ -419,6 +419,5 @@ function tierFieldsOf({ tierRun }: { tierRun: AgentTierRun | null }): Pick<Agent
 }
 
 const TOOL_SCHEMA_TOKEN_ESTIMATE = 12_000
-const BASE_PROMPT_FINGERPRINT = aiObservability.promptFingerprintOf({ templates: agentPrompt.sources })
 
 type CompactionCandidate = { config: GetProviderConfigResponse, modelId: string }
