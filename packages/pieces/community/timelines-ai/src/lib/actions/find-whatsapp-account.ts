@@ -6,20 +6,29 @@ export const findWhatsappAccount = createAction({
   name: 'findWhatsappAccount',
   classification: 'SEARCH',
   displayName: 'Find WhatsApp Account',
-  description: 'Search for a WhatsApp account (by phone or ID).',
+  description: 'Finds a connected WhatsApp account by ID or phone.',
   audience: 'both',
   aiMetadata: { description: 'Lists the WhatsApp accounts connected to TimelinesAI, optionally narrowed by account ID and/or phone number; with neither supplied it returns all accounts. Use to resolve a whatsapp_account_id before sending a message from a specific number. Read-only and idempotent.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['id', 'phone'],
+    },
+  ],
   props: {
     id: Property.ShortText({
       displayName: 'WhatsApp Account ID',
-      description:
-        'The unique identifier of the WhatsApp account to search for.',
+      description: 'Empty: any account.',
+      placeholder: '14155550123@s.whatsapp.net',
       required: false,
     }),
     phone: Property.ShortText({
       displayName: 'Phone Number',
-      description:
-        'The phone number associated with the WhatsApp account to search for.',
+      description: 'International format with country code.',
+      placeholder: '+14155550123',
       required: false,
     }),
   },

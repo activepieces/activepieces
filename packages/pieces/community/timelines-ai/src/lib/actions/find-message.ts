@@ -6,13 +6,14 @@ export const findMessage = createAction({
   name: 'findMessage',
   classification: 'READ',
   displayName: 'Find Message',
-  description: 'Lookup a message by its WhatsApp message ID.',
+  description: 'Gets a message by its UID.',
   audience: 'both',
   aiMetadata: { description: 'Retrieves a single TimelinesAI WhatsApp message by its message UID. Use to fetch the full content and metadata of a known message. Requires the exact message_uid. Read-only and idempotent.', idempotent: true },
   props: {
     message_uid: Property.ShortText({
       displayName: 'Message UID',
-      description: 'The unique identifier of the message to find.',
+      description: 'Found as message_uid in trigger and send-step output.',
+      placeholder: 'c7ec509d-0171-1ead-a84b-c6943a644768',
       required: true,
     }),
   },
