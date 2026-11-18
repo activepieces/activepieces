@@ -1,14 +1,15 @@
 name: Continuous Delivery — Cloud
 
-# The Cloud gate. Picks the newest main commit that staging deployed, runs the E2E matrix and the upgrade
-# test on the image staging built from it, waits for one approval, then deploys that image to the canary and to the fleet.
+# The Cloud gate. A manual run picks the tip of main and stops if staging has not deployed it; a scheduled run
+# picks the newest main commit that staging deployed. It runs the E2E matrix and the upgrade test on the image
+# staging built from that commit, waits for one approval, then deploys that image to the canary and to the fleet.
 # With hotfix_prs, it instead cherry-picks only those merged PRs onto the commit Cloud runs, builds that,
 # and sends it through the same checks, approval and deploy.
 on:
   workflow_dispatch:
     inputs:
       sha:
-        description: 'Commit on main to deploy. Empty takes the newest one that staging deployed.'
+        description: 'Commit on main to deploy. Empty takes the tip of main, which staging must have deployed.'
         type: string
         default: ''
       hotfix_prs:
@@ -98,6 +99,9 @@ jobs:
                 --jq '.check_runs[] | select(.conclusion == "success") | .id')" ] || return 1
             done
           }
+          if [ -z "$INPUT_SHA" ] && [ "$GITHUB_EVENT_NAME" != schedule ]; then
+            INPUT_SHA=origin/main
+          fi
           if [ -n "$INPUT_SHA" ]; then
             SHA=$(git rev-parse --verify "$INPUT_SHA^{commit}")
             if ! git merge-base --is-ancestor "$SHA" origin/main; then
@@ -105,7 +109,7 @@ jobs:
               exit 1
             fi
             if ! staging_deployed "$SHA"; then
-              echo "::error::Staging did not deploy $SHA"
+              echo "::error::Staging did not deploy $SHA. Run the gate again when its staging deploy is green, or set sha to an older commit."
               exit 1
             fi
           else
