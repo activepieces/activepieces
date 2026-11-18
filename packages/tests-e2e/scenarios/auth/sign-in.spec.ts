@@ -13,7 +13,7 @@ test.describe('Sign in', { tag: ['@feature:sign-in', '@surface'] }, () => {
     await expect(page.getByRole('button', { name: email })).toBeVisible();
   });
 
-  test('a wrong password shows an error and opens no session', { tag: '@no-staging' }, async ({ page }) => {
+  test('a wrong password shows an error and opens no session', async ({ page }) => {
     const authenticationPage = new AuthenticationPage(page);
     const email = process.env.E2E_EMAIL ?? DEFAULT_EMAIL;
 

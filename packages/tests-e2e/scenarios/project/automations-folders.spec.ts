@@ -3,7 +3,7 @@ import { e2eApi, E2eSession } from '../../fixtures/api';
 import { expect, test } from '../../fixtures/flows-list';
 import { FoldersPage } from '../../pages/folders.page';
 
-test.describe('Automations › folders', { tag: ['@feature:folders', '@surface', '@no-staging'] }, () => {
+test.describe('Automations › folders', { tag: ['@feature:folders', '@surface'] }, () => {
   test('create a folder, move a flow into it, rename it and delete it', async ({ page, request, session, cleanup, flowsList }) => {
     const prefix = flowsList.newPrefix();
     const [{ flowId, flowName }] = await flowsList.seedFlows({ prefix, count: 1, publish: false });

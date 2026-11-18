@@ -4,7 +4,7 @@ import { expect, test } from '../../fixtures';
 import webhookEcho from '../../fixtures/templates/webhook-echo.json';
 import { BuilderPage } from '../../pages/builder.page';
 
-test.describe('Canvas', { tag: ['@feature:canvas', '@surface', '@no-staging'] }, () => {
+test.describe('Canvas', { tag: ['@feature:canvas', '@surface'] }, () => {
   test.use({ viewport: { width: 1280, height: 1100 } });
 
   test('add, move, duplicate and delete a step, and the canvas keeps them after reload', async ({ page, request, session, seed }) => {
