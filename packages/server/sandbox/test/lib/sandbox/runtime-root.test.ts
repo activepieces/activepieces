@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { chmodSync, mkdirSync, mkdtempSync, readdirSync, rmSync, statSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs'
+import { chmodSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -58,6 +58,7 @@ describe('sandboxRuntimeRoot', () => {
             executables: [src('bin/node'), src('bin/deno')],
             optionalExecutables: [src('bin/missing-tool')],
             directories: [src('node_modules')],
+            dataFiles: [],
         }
     }
 
@@ -146,6 +147,49 @@ describe('sandboxRuntimeRoot', () => {
         await expect(buildRoot()).rejects.toThrow()
     })
 
+    it('copies a data file such as a custom CA certificate without resolving libraries for it', async () => {
+        mkdirSync(src('share/ca-certificates'), { recursive: true })
+        writeSourceFile({ relative: 'share/ca-certificates/my-ca.pem', mode: 0o644 })
+        await sandboxRuntimeRoot.build({
+            log: createMockLogger(),
+            rootPath,
+            sources: { ...sources(), dataFiles: [src('share/ca-certificates/my-ca.pem'), src('share/ca-certificates/absent.pem')] },
+            listSharedLibraries: fakeLdd(),
+        })
+        const copied = path.join(rootPath, src('share/ca-certificates/my-ca.pem'))
+        expect(readFileSync(copied, 'utf8')).toBe('content of share/ca-certificates/my-ca.pem')
+        expect(statSync(copied).mode & 0o7777).toBe(0o644)
+        expect(listFiles(rootPath).some((file) => file.endsWith('absent.pem'))).toBe(false)
+    })
+
+    it('removes the staging folder when a copy fails', async () => {
+        const ldd = async ({ file }: { file: string }): Promise<LddResult | null> => file === src('lib') ? { libraries: [], missing: [] } : fakeLdd()({ file })
+        await expect(sandboxRuntimeRoot.build({
+            log: createMockLogger(),
+            rootPath,
+            sources: { ...sources(), executables: [src('bin/node'), src('lib')] },
+            listSharedLibraries: ldd,
+        })).rejects.toThrow()
+        expect(readdirSync(workDir).filter((entry) => entry.includes('.staging-'))).toEqual([])
+        expect(readdirSync(workDir)).not.toContain('root')
+    })
+
+    describe('defaultSources', () => {
+        it('includes the custom CA certificate when its path is inside a directory the box mounts', () => {
+            const result = sandboxRuntimeRoot.defaultSources({ env: { NODE_EXTRA_CA_CERTS: '/usr/local/share/ca-certificates/my-ca.pem', AP_DENO_PATH: '/usr/local/bin/deno' }, execPath: '/usr/local/bin/node' })
+            expect(result.dataFiles).toEqual(['/usr/local/share/ca-certificates/my-ca.pem'])
+            expect(result.executables).toEqual(['/usr/local/bin/node', '/usr/local/bin/deno'])
+        })
+
+        it.each(['/etc/ssl/my-ca.pem', '/tmp/my-ca.pem', '/usr/../etc/shadow', '/usrlocal/ca.pem'])('leaves out a certificate path the box cannot see: %s', (certPath) => {
+            expect(sandboxRuntimeRoot.defaultSources({ env: { NODE_EXTRA_CA_CERTS: certPath }, execPath: '/usr/local/bin/node' }).dataFiles).toEqual([])
+        })
+
+        it('has no data files when no custom CA certificate is configured', () => {
+            expect(sandboxRuntimeRoot.defaultSources({ env: {}, execPath: '/usr/local/bin/node' }).dataFiles).toEqual([])
+        })
+    })
+
     describe('parseLddOutput', () => {
         it('reads resolved libraries and the loader, and reports missing ones', () => {
             const output = [
@@ -167,7 +211,7 @@ describe('sandboxRuntimeRoot', () => {
             await sandboxRuntimeRoot.build({
                 log: createMockLogger(),
                 rootPath,
-                sources: { executables: [process.execPath], optionalExecutables: [], directories: [] },
+                sources: { executables: [process.execPath], optionalExecutables: [], directories: [], dataFiles: [] },
             })
             const loader = ['/lib64/ld-linux-x86-64.so.2', '/lib/ld-linux-aarch64.so.1'].find((candidate) => listFiles(rootPath).includes(candidate.slice(1)))
             expect(loader).toBeDefined()

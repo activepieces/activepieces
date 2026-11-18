@@ -8,7 +8,7 @@ let ensuredRoot: Promise<string> | null = null
 
 function ensure({ log }: { log: SandboxLogger }): Promise<string> {
     if (isNil(ensuredRoot)) {
-        ensuredRoot = build({ log, rootPath: SANDBOX_RUNTIME_ROOT_PATH, sources: defaultSources() }).catch((error: unknown) => {
+        ensuredRoot = build({ log, rootPath: SANDBOX_RUNTIME_ROOT_PATH, sources: defaultSources({ env: process.env, execPath: process.execPath }) }).catch((error: unknown) => {
             ensuredRoot = null
             throw error
         })
@@ -28,14 +28,20 @@ async function build({ log, rootPath, sources, listSharedLibraries = lddSharedLi
 
     const stagingPath = `${rootPath}.staging-${process.pid}-${Date.now()}`
     await rm(stagingPath, { recursive: true, force: true })
-    for (const file of plan.files) {
-        await copyIntoRoot({ rootPath: stagingPath, boxPath: file.boxPath, sourcePath: file.sourcePath })
+    const { error } = await tryCatch(async () => {
+        for (const file of plan.files) {
+            await copyIntoRoot({ rootPath: stagingPath, boxPath: file.boxPath, sourcePath: file.sourcePath })
+        }
+        for (const directory of plan.directories) {
+            await cp(directory.sourcePath, path.join(stagingPath, directory.boxPath), { recursive: true, dereference: true })
+        }
+        await writeFile(path.join(stagingPath, MANIFEST_FILE), fingerprint)
+        await swapIntoPlace({ stagingPath, rootPath, fingerprint })
+    })
+    if (error) {
+        await rm(stagingPath, { recursive: true, force: true })
+        throw error
     }
-    for (const directory of plan.directories) {
-        await cp(directory.sourcePath, path.join(stagingPath, directory.boxPath), { recursive: true, dereference: true })
-    }
-    await writeFile(path.join(stagingPath, MANIFEST_FILE), fingerprint)
-    await swapIntoPlace({ stagingPath, rootPath, fingerprint })
 
     log.info({
         rootPath,
@@ -47,12 +53,7 @@ async function build({ log, rootPath, sources, listSharedLibraries = lddSharedLi
 }
 
 function mountArgs({ rootPath }: { rootPath: string }): string[] {
-    return [
-        `--dir=/usr=${path.join(rootPath, 'usr')}`,
-        `--dir=/lib=${path.join(rootPath, 'lib')}:maybe`,
-        `--dir=/lib64=${path.join(rootPath, 'lib64')}:maybe`,
-        `--dir=/bin=${path.join(rootPath, 'bin')}:maybe`,
-    ]
+    return BOX_MOUNT_ROOTS.map((root) => `--dir=${root}=${path.join(rootPath, root)}${root === '/usr' ? '' : ':maybe'}`)
 }
 
 function parseLddOutput({ output }: { output: string }): LddResult {
@@ -73,6 +74,7 @@ async function planRuntimeRoot({ sources, listSharedLibraries }: PlanParams): Pr
     const presentOptional = await filterExisting({ paths: sources.optionalExecutables })
     const executables = [...sources.executables, ...presentOptional]
     const directories = await filterExisting({ paths: sources.directories })
+    const dataFiles = await filterExisting({ paths: sources.dataFiles })
     const nativeAddons = (await Promise.all(directories.map((directory) => findNativeAddons({ directory })))).flat()
 
     const requiredLibraries = await Promise.all(executables.map(async (executable) => {
@@ -84,7 +86,7 @@ async function planRuntimeRoot({ sources, listSharedLibraries }: PlanParams): Pr
     }))
     const addonLibraries = await Promise.all(nativeAddons.map(async (addon) => (await listSharedLibraries({ file: addon }))?.libraries ?? []))
 
-    const boxPaths = unique({ values: [...executables, ...requiredLibraries.flat(), ...addonLibraries.flat()] })
+    const boxPaths = unique({ values: [...executables, ...requiredLibraries.flat(), ...addonLibraries.flat(), ...dataFiles] })
         .filter((boxPath) => !directories.some((directory) => boxPath.startsWith(`${directory}/`)))
         .sort()
 
@@ -144,13 +146,20 @@ async function swapIntoPlace({ stagingPath, rootPath, fingerprint }: { stagingPa
     }
 }
 
-function defaultSources(): RuntimeRootSources {
-    const denoPath = process.env['AP_DENO_PATH']
+function defaultSources({ env, execPath }: { env: NodeJS.ProcessEnv, execPath: string }): RuntimeRootSources {
+    const denoPath = env['AP_DENO_PATH']
+    const extraCaCerts = env['NODE_EXTRA_CA_CERTS']
     return {
-        executables: [process.execPath, ...(isNil(denoPath) ? [] : [denoPath])],
+        executables: [execPath, ...(isNil(denoPath) ? [] : [denoPath])],
         optionalExecutables: ['/bin/sh', '/usr/bin/pdftoppm'],
         directories: ['/usr/src/node_modules'],
+        dataFiles: isNil(extraCaCerts) || !isMountedInBox({ filePath: extraCaCerts }) ? [] : [path.posix.normalize(extraCaCerts)],
     }
+}
+
+function isMountedInBox({ filePath }: { filePath: string }): boolean {
+    const normalized = path.posix.normalize(filePath)
+    return BOX_MOUNT_ROOTS.some((root) => normalized.startsWith(`${root}/`))
 }
 
 function unique({ values }: { values: string[] }): string[] {
@@ -162,15 +171,18 @@ export const sandboxRuntimeRoot = {
     build,
     mountArgs,
     parseLddOutput,
+    defaultSources,
 }
 
 export const SANDBOX_RUNTIME_ROOT_PATH = '/var/lib/activepieces/sandbox-root'
 const MANIFEST_FILE = '.manifest.json'
+const BOX_MOUNT_ROOTS = ['/usr', '/lib', '/lib64', '/bin']
 
 export type RuntimeRootSources = {
     executables: string[]
     optionalExecutables: string[]
     directories: string[]
+    dataFiles: string[]
 }
 
 export type LddResult = {
