@@ -8072,6 +8072,19 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/reviewflowz": {
+      "name": "@activepieces/piece-reviewflowz",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/ringcentral": {
       "name": "@activepieces/piece-ringcentral",
       "version": "0.1.4",
@@ -12753,6 +12766,8 @@
     "@activepieces/piece-retune": ["@activepieces/piece-retune@workspace:packages/pieces/community/retune"],
 
     "@activepieces/piece-returning-ai": ["@activepieces/piece-returning-ai@workspace:packages/pieces/community/returning-ai"],
+
+    "@activepieces/piece-reviewflowz": ["@activepieces/piece-reviewflowz@workspace:packages/pieces/community/reviewflowz"],
 
     "@activepieces/piece-ringcentral": ["@activepieces/piece-ringcentral@workspace:packages/pieces/community/ringcentral"],
 

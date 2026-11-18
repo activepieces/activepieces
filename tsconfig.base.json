@@ -1187,6 +1187,9 @@
       "@activepieces/piece-returning-ai": [
         "packages/pieces/community/returning-ai/src/index.ts"
       ],
+      "@activepieces/piece-reviewflowz": [
+        "packages/pieces/community/reviewflowz/src/index.ts"
+      ],
       "@activepieces/piece-recurly": [
         "packages/pieces/community/recurly/src/index.ts"
       ],
