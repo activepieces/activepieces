@@ -102,6 +102,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Event": "New Event",
   "New Poll Response": "New Poll Response",
   "Workflow Action Triggered": "Workflow Action Triggered",

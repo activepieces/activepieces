@@ -1,76 +1,21 @@
-
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { ZOHO_WEBHOOK_TOKEN } from '../common/constants';
 import { biginAuth } from '../auth';
-import { biginApiService } from '../common/request';
-
-const CACHE_KEY = 'bigin_created_contact_trigger';
+import { biginOutputSchemas } from '../common/output-schemas';
+import { biginWebhook } from '../common/webhook';
 
 export const newContactCreated = createTrigger({
   auth: biginAuth,
   name: 'newContactCreated',
-  classification: 'READ',
   displayName: 'New Contact Created',
-  description: 'Triggers when a new contact is created',
+  description: 'Triggers when a new contact is created. Full records are fetched for the first 10 IDs.',
   aiMetadata: {
-    description: 'Fires when a new contact (person) record is created in Bigin CRM, via a Contacts.create webhook. Represents a newly added person.',
+    description:
+      'Fires when a new contact (person) record is created in Bigin CRM, via a Contacts.create webhook. Represents a newly added person. The output includes every notified record id (ids) and the full records of the first 10 ids only (records); a bulk change can notify more ids than that, so use ids for the complete list. If a record read fails, records holds the ones fetched so far and records_error says why.',
   },
+  classification: 'READ',
   props: {},
-  sampleData: {
-    server_time: 1754252081534,
-    query_params: {},
-    module: 'Contacts',
-    resource_uri: 'https://www.zohoapis.com/bigin/v1/Contacts',
-    ids: ['6913232000000583260'],
-    affected_fields: [],
-    operation: 'insert',
-    channel_id: '1722705400',
-  },
+  outputSchema: biginOutputSchemas.triggerPayload,
+  sampleData: biginWebhook.sampleData({ module: 'Contacts', event: 'create' }),
   type: TriggerStrategy.WEBHOOK,
-  async onEnable(context) {
-    try {
-      const channel_id = Date.now().toString();
-      const { api_domain } = context.auth.data;
-
-      const webhookData = {
-        watch: [
-          {
-            channel_id,
-            events: ['Contacts.create'],
-            notify_url: context.webhookUrl,
-            token: ZOHO_WEBHOOK_TOKEN,
-          },
-        ],
-      };
-
-      await biginApiService.createWebhook(context.auth.access_token, webhookData, api_domain)
-
-      await context.store.put(CACHE_KEY, channel_id);
-    } catch (error) {
-      console.error('Failed to enable Zoho webhook');
-    }
-  },
-  async onDisable(context) {
-    const channel_id = await context.store.get(CACHE_KEY) as string;
-    if (!channel_id) return;
-
-    const { api_domain } = context.auth.data;
-
-    await biginApiService.deleteWebhook(
-      context.auth.access_token,
-      api_domain,
-      channel_id
-    );
-
-    await context.store.delete(CACHE_KEY);
-  },
-  async run(context) {
-    const { token } = context.payload.body as any;
-
-    if (token !== ZOHO_WEBHOOK_TOKEN) {
-      throw new Error('Invalid webhook token');
-    }
-
-    return [context.payload.body];
-  },
+  ...biginWebhook.hooks({ module: 'Contacts', event: 'create', storeKey: 'bigin_created_contact_trigger' }),
 });

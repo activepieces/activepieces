@@ -123,6 +123,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Submission": "New Submission",
   "Triggers when Opnform receives a new submission.": "Triggers when Opnform receives a new submission.",
   "Workspace": "Workspace",

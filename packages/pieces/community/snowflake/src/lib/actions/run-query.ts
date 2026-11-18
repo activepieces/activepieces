@@ -1,28 +1,28 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import snowflake from 'snowflake-sdk';
 import { snowflakeAuth } from '../auth';
 import {
-  configureConnection,
-  connect,
-  execute,
-  destroy,
-  SnowflakeAuthValue,
+  DEFAULT_APPLICATION_NAME,
+  toAuthValue,
+  withSnowflake,
 } from '../common';
+import { rawRowsOutputSchema } from '../common/output-schemas';
+import { toBind } from '../common/sql';
 
-const DEFAULT_APPLICATION_NAME = 'ActivePieces';
 const DEFAULT_QUERY_TIMEOUT = 30000;
 
 export const runQuery = createAction({
   name: 'runQuery',
+  classification: 'WRITE',
   displayName: 'Run Query',
   description:
     'Execute a SQL query against your Snowflake database and return the results as rows.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Runs an arbitrary SQL statement against Snowflake (SELECT, DML, or DDL). Use this for any query the dedicated row/table actions do not cover, or when you need full SQL control. Pass dynamic values via the parameters array bound to `:1`/`?` placeholders rather than concatenating into the SQL. Idempotency depends on the statement: a SELECT is safe to repeat, but an INSERT/UPDATE/DELETE mutates state on each call.',
+      'Runs one arbitrary SQL statement (SELECT, DML or DDL) and returns all result rows. Human-only escape hatch; agents should use Run Select Query for reads and the dedicated row actions for writes. Re-running repeats any change the statement makes.',
     idempotent: false,
   },
+  outputSchema: rawRowsOutputSchema,
   auth: snowflakeAuth,
   props: {
     sqlText: Property.LongText({
@@ -40,7 +40,7 @@ export const runQuery = createAction({
     timeout: Property.Number({
       displayName: 'Query Timeout (ms)',
       description:
-        'Maximum time in milliseconds to wait for the query to complete before cancelling it. Defaults to 30 000 ms (30 seconds).',
+        'Maximum time in milliseconds the query may run before Snowflake cancels it (applied as STATEMENT_TIMEOUT_IN_SECONDS, capped at 540 seconds). Defaults to 30 000 ms (30 seconds).',
       required: false,
       defaultValue: DEFAULT_QUERY_TIMEOUT,
     }),
@@ -53,19 +53,14 @@ export const runQuery = createAction({
     }),
   },
   async run(context) {
-    const connection = configureConnection(
-      context.auth as SnowflakeAuthValue,
-      context.propsValue.application,
-      context.propsValue.timeout
-    );
-
-    const { sqlText, binds } = context.propsValue;
-
-    await connect(connection);
-    try {
-      return await execute(connection, sqlText, binds as snowflake.Binds);
-    } finally {
-      await destroy(connection);
-    }
+    const { sqlText, binds, timeout, application } = context.propsValue;
+    const result = await withSnowflake({
+      auth: toAuthValue(context.auth),
+      application: application || DEFAULT_APPLICATION_NAME,
+      statementTimeoutSeconds: (timeout ?? DEFAULT_QUERY_TIMEOUT) / 1000,
+      fn: (session) =>
+        session.query({ sql: sqlText, binds: (binds ?? []).map(toBind) }),
+    });
+    return result.rows;
   },
 });

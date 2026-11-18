@@ -1,12 +1,13 @@
-import { AIProviderName, isObject } from '@activepieces/core-utils';
+import { AIProviderName, isNil, isObject } from '@activepieces/core-utils';
 import {
-  aiProviderUtils,
   ActionReceiptEvent,
   BuildPlanEvent,
   BuildPlanStep,
   AgentHistoryMessage,
   FileProducedEvent,
   ImageGeneratedEvent,
+  ModelChoice,
+  ModelOptions,
   PersistedAgentMessage,
   PersistedAgentPart,
   PersistedAgentPartType,
@@ -580,20 +581,82 @@ function reopensSameConversation({
   return current === next;
 }
 
-function newChatModelName({
-  provider,
+function choiceOf({
+  pick,
+  options,
 }: {
-  provider: AIProviderName | undefined;
-}): string | null {
-  if (provider === undefined) {
+  pick: ChatModelPick | null;
+  options: ModelOptions;
+}): ModelChoice | null {
+  if (isNil(pick)) {
     return null;
   }
-  return aiProviderUtils.getCuratedChatModels({ provider })?.[0]?.id ?? null;
+  if (!isNil(pick.modelTierId)) {
+    return { type: 'tier', tierId: pick.modelTierId };
+  }
+  if (isNil(pick.modelName)) {
+    return null;
+  }
+  if (isNil(pick.providerConfigId)) {
+    return legacyChoiceOf({ modelName: pick.modelName, options });
+  }
+  const provider =
+    pick.providerConfigId === options.credits?.providerConfigId
+      ? AIProviderName.ACTIVEPIECES
+      : options.keys.find(
+          (key) => key.providerConfigId === pick.providerConfigId,
+        )?.provider ?? AIProviderName.CUSTOM;
+  return {
+    type: 'model',
+    provider,
+    providerConfigId: pick.providerConfigId,
+    modelId: pick.modelName,
+  };
+}
+
+function legacyChoiceOf({
+  modelName,
+  options,
+}: {
+  modelName: string;
+  options: ModelOptions;
+}): ModelChoice | null {
+  const credits = options.credits;
+  if (!isNil(credits) && credits.tiers.some((tier) => tier.id === modelName)) {
+    return {
+      type: 'model',
+      provider: AIProviderName.ACTIVEPIECES,
+      providerConfigId: credits.providerConfigId,
+      modelId: modelName,
+    };
+  }
+  const key = options.keys.find((candidate) =>
+    candidate.models.some((model) => model.id === modelName),
+  );
+  return isNil(key)
+    ? null
+    : {
+        type: 'model',
+        provider: key.provider,
+        providerConfigId: key.providerConfigId,
+        modelId: modelName,
+      };
+}
+
+function pickOf({ choice }: { choice: ModelChoice }): ChatModelPick {
+  return choice.type === 'tier'
+    ? { modelTierId: choice.tierId, providerConfigId: null, modelName: null }
+    : {
+        modelTierId: null,
+        providerConfigId: choice.providerConfigId,
+        modelName: choice.modelId,
+      };
 }
 
 export const chatUtils = {
   newChatEvent: 'ap:new-chat',
-  newChatModelName,
+  choiceOf,
+  pickOf,
   reopensSameConversation,
   sanitizeTitle,
   formatToolLabel: ({ part }: { part: AnyToolPart }) =>
@@ -606,4 +669,10 @@ export const chatUtils = {
   extractImagesFromHistory,
   extractFilesFromHistory,
   extractBuildsFromHistory,
+};
+
+export type ChatModelPick = {
+  modelTierId: string | null;
+  providerConfigId: string | null;
+  modelName: string | null;
 };

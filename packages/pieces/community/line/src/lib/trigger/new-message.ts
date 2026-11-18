@@ -7,11 +7,19 @@ import {
 import { newMessageTriggerOutputSchema } from '../output-schemas';
 
 const markdown = `
-- Create Line bot account from Developer Console
-- Go to the "Messaging API" section.
-- In the webhook settings, paste this URL: 
-  \`{{webhookUrl}}\`
-- Publish Activepieces flow first then click "Verify" button
+**Connect this trigger to your LINE bot**
+
+1. **Publish this flow first.** LINE checks the URL when you click **Verify**.
+2. Open the [LINE Developers Console](https://developers.line.biz/console/), pick your Messaging API channel and go to the **Messaging API** tab.
+3. Under **Webhook settings**, click **Edit** and paste this URL:
+
+   \`\`\`text
+   {{webhookUrl}}
+   \`\`\`
+
+4. Click **Verify**, then turn on **Use webhook**.
+
+A channel has one webhook URL, so only the flow whose URL you paste receives messages.
 `;
 
 export const newMessage = createTrigger({
@@ -19,7 +27,7 @@ export const newMessage = createTrigger({
   classification: 'READ',
   displayName: 'New Message',
   auth: PieceAuth.None(),
-  description: 'Triggers when a new message is received',
+  description: 'Starts the flow when your LINE bot receives a message.',
   aiMetadata: {
     description: 'Fires when the LINE bot receives an inbound message event from a user via the Messaging API webhook. Each emitted item represents one active message event, carrying the sender details and message content needed to react or reply.',
   },
@@ -30,6 +38,7 @@ export const newMessage = createTrigger({
     }),
   },
   type: TriggerStrategy.WEBHOOK,
+  requireAuth: false,
   sampleData: {},
   async onEnable(context) {
     // Empty

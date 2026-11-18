@@ -24,6 +24,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Project Created": "Project Created",
   "Asset Created": "Asset Created",
   "Comment Created": "Comment Created",

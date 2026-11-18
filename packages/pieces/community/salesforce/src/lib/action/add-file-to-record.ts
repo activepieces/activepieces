@@ -13,18 +13,22 @@ export const addFileToRecord = createAction({
     audience: 'human',
     aiMetadata: { description: 'Upload a file and attach it to an existing Salesforce record by creating a ContentVersion linked to the target record Id. Use when you need to attach a document, image, or other binary to a record. Not idempotent: each call creates a new file version, so re-running attaches a duplicate file.', idempotent: false },
     outputSchema: sobjectCreateResponseOutputSchema,
+    propertyGroups: [
+        { key: 'record', display: 'section', label: 'Record', icon: 'file', props: ['object', 'record_id'] },
+        { key: 'file', display: 'section', label: 'File', icon: 'paperclip', props: ['file', 'file_name'] },
+    ],
     props: {
         object: salesforcesCommon.object,
         record_id: salesforcesCommon.record,
         file: Property.File({
             displayName: 'File',
-            description: 'The file to upload.',
             required: true,
         }),
         file_name: Property.ShortText({
             displayName: 'File Name',
-            description: 'The name of the file, including its extension (e.g., "report.pdf").',
+            description: 'Include the extension.',
             required: true,
+            placeholder: 'report.pdf',
         })
     },
     async run(context) {

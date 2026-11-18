@@ -23,6 +23,7 @@ import { listReviews } from './lib/actions/list-reviews';
 import { replyToReview } from './lib/actions/reply-to-review';
 import { updateLocation } from './lib/actions/update-location';
 import { newReview } from './lib/triggers/new-review';
+import { gmbApi } from './lib/common/client';
 
 export const googleAuth = PieceAuth.OAuth2({
   authUrl: 'https://accounts.google.com/o/oauth2/auth',
@@ -59,13 +60,17 @@ export const googleBusiness = createPiece({
     replyToReview,
     deleteReviewReply,
     createCustomApiCallAction({
-      baseUrl: () => {
-        return 'https://mybusiness.googleapis.com/v4';
-      },
+      baseUrl: () => gmbApi.hosts.v4,
       auth: googleAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${gmbApi.hosts.v4}`,
+          placeholder: '/accounts/123/locations/456/reviews',
+        },
+      },
     }),
   ],
   triggers: [newReview],

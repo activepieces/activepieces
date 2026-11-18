@@ -25,9 +25,9 @@ import {
   Workflow,
 } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
+import { clipboardUtils } from '@/components/custom/clipboard/use-copy-to-clipboard';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { LoadingSpinner } from '@/components/custom/spinner';
@@ -167,7 +167,7 @@ export const AutomationsTableRow = ({
                   className={cn(
                     'h-4 w-4',
                     isPinned
-                      ? 'text-yellow-500 fill-yellow-500'
+                      ? 'text-swatch-6-mark fill-swatch-6-mark'
                       : 'text-gray-11 hover:text-gray-11',
                   )}
                 />
@@ -197,7 +197,7 @@ export const AutomationsTableRow = ({
             <RowItemIcon item={item} />
           </span>
           <TextWithTooltip tooltipMessage={item.name}>
-            <span>{item.name}</span>
+            <span data-testid="automations-row-name">{item.name}</span>
           </TextWithTooltip>
         </div>
       </div>
@@ -287,6 +287,7 @@ export const AutomationsTableRow = ({
             <Button
               variant="ghost"
               size="icon-sm"
+              aria-label={t('Actions')}
               disabled={isAgentItem(item) && !userHasPermissionToWriteAgent}
             >
               <MoreHorizontal className="h-4 w-4" />
@@ -298,8 +299,9 @@ export const AutomationsTableRow = ({
                 onClick={() => {
                   const url = new URL(window.location.href);
                   url.searchParams.set('folder', item.id);
-                  navigator.clipboard.writeText(url.toString());
-                  toast.success(t('URL copied to clipboard'));
+                  return clipboardUtils.copy({
+                    value: url.toString(),
+                  });
                 }}
               >
                 <Link className="h-4 w-4 mr-2" />

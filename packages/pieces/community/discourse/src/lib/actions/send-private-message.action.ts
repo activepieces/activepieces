@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { discourseAuth } from '../auth';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { discourseOps } from '../common/operations';
+import { discourseSchemas } from '../common/schemas';
 
 export const sendPrivateMessage = createAction({
   auth: discourseAuth,
@@ -9,41 +9,42 @@ export const sendPrivateMessage = createAction({
   classification: 'WRITE',
   description: 'Send a private message in Discourse',
   audience: 'both',
-  aiMetadata: { description: 'Send a private message to one or more Discourse users (by username) with a title and body. Use when an agent needs to message members directly rather than post publicly. Each call delivers a new message, so it is not idempotent.', idempotent: false },
+  aiMetadata: {
+    description:
+      'Start a new private message conversation with one or more Discourse users (by username) and/or groups (by group name), with a title and Markdown body. Use to message members directly instead of posting publicly; to reply inside an existing message use Reply to Topic with its topic ID. Recipients get a notification and possibly an email. Each call starts a new conversation, so retries duplicate.',
+    idempotent: false,
+  },
   displayName: 'Send Private Message',
   props: {
     title: Property.ShortText({
       description: 'Title for the PM',
-      displayName: 'Post Title',
+      displayName: 'Message Title',
       required: true,
     }),
     raw: Property.LongText({
-      description: 'Content of the post',
-      displayName: 'Post Content',
+      description: 'Content of the message (Markdown)',
+      displayName: 'Message Content',
       required: true,
     }),
     target_recipients: Property.Array({
-      description: 'List of users to send the PM to (can be one or more)',
+      description: 'Usernames to send the PM to (one or more)',
       displayName: 'Users',
       required: true,
     }),
+    target_groups: Property.Array({
+      description: 'Optional group names to also send the PM to',
+      displayName: 'Groups',
+      required: false,
+    }),
   },
-  async run(context) {
-    const { title, raw, target_recipients } = context.propsValue;
-
-    return await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${context.auth.props.website_url.trim()}/posts.json`,
-      headers: {
-        'Api-Key': context.auth.props.api_key,
-        'Api-Username': context.auth.props.api_username,
-      },
-      body: {
-        raw: raw,
-        title: title,
-        target_recipients: target_recipients.join(','),
-        archetype: 'private_message',
-      },
+  outputSchema: discourseSchemas.createdPost,
+  async run({ auth, propsValue }) {
+    return discourseOps.sendPrivateMessage({
+      auth: auth.props,
+      title: propsValue.title,
+      raw: propsValue.raw,
+      recipients: propsValue.target_recipients,
+      groups: propsValue.target_groups,
     });
   },
 });

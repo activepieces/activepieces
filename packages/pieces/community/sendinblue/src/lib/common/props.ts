@@ -105,6 +105,20 @@ export const brevoProps = {
 				}
 			},
 		}),
+	optionalBoolean: ({ displayName, description }: OptionalBooleanPropParams) =>
+		Property.StaticDropdown<string, false>({
+			displayName,
+			description,
+			required: false,
+			options: {
+				disabled: false,
+				options: [
+					{ label: 'Yes', value: 'yes' },
+					{ label: 'No', value: 'no' },
+					{ label: 'Leave unchanged', value: 'unchanged' },
+				],
+			},
+		}),
 	senderEmail: Property.Dropdown({
 		displayName: 'Sender',
 		description: 'The verified sender the email is sent from.',
@@ -205,6 +219,11 @@ export type BrevoSendersResponse = {
 };
 
 export type ListIdsPropParams = {
+	displayName: string;
+	description: string;
+};
+
+export type OptionalBooleanPropParams = {
 	displayName: string;
 	description: string;
 };

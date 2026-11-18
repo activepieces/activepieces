@@ -1,5 +1,9 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { youtubeAuth } from '../common/auth';
 import { getChannelOutputSchema } from '../output-schemas';
 
@@ -17,6 +21,10 @@ export const youtubeGetChannelAction = createAction({
     idempotent: true,
   },
   props: {
+    lookupInfo: Property.MarkDown({
+      value: 'Fill in Channel ID or Handle.',
+      variant: MarkdownVariant.INFO,
+    }),
     channelId: Property.ShortText({
       displayName: 'Channel ID',
       description: 'Starts with UC. Leave empty to look the channel up by Handle.',
@@ -30,6 +38,15 @@ export const youtubeGetChannelAction = createAction({
       required: false,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'channel',
+      display: 'section',
+      label: 'Channel',
+      icon: 'user',
+      props: ['lookupInfo', 'channelId', 'handle'],
+    },
+  ],
   async run(context) {
     const accessToken = context.auth.access_token;
     const { channelId, handle } = context.propsValue;

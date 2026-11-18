@@ -76,7 +76,7 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
             updates.messages = input.messages
             updates.uiMessages = sanitizeObjectForPostgresql(input.uiMessages)
             if (input.title) updates.title = input.title
-            if (input.modelName && isNil(stored?.modelTierId)) updates.modelName = input.modelName
+            if (input.modelName && isNil(stored?.modelTierId) && isNil(stored?.providerConfigId)) updates.modelName = input.modelName
         }
         const failureAppend = isNil(input.failure) ? null : failureAppendFor({ stored: stored?.uiMessages ?? [], failure: input.failure })
         if (!isNil(failureAppend)) {
@@ -125,6 +125,28 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
     },
 
     async updateAgentProgress(input: UpdateAgentProgressRequest): Promise<void> {
+        if (!isNil(input.turn)) {
+            await updateConversationForRun({
+                conversationId: input.conversationId,
+                runId: input.runId,
+                updates: {
+                    messages: () => replaceTurnSql({ column: '"messages"', baseParam: 'baseMessageCount', turnParam: 'turnMessages' }),
+                    uiMessages: () => replaceTurnSql({ column: 'coalesce("uiMessages", \'[]\'::jsonb)', baseParam: 'baseUiMessageCount', turnParam: 'turnUiMessages' }),
+                },
+                parameters: {
+                    baseMessageCount: input.turn.baseMessageCount,
+                    turnMessages: JSON.stringify(sanitizeObjectForPostgresql(input.turn.messages)),
+                    baseUiMessageCount: input.turn.baseUiMessageCount,
+                    turnUiMessages: JSON.stringify(sanitizeObjectForPostgresql(input.turn.uiMessages)),
+                },
+                onlyWhileStreaming: true,
+            })
+            log.debug({ conversation: { id: input.conversationId }, baseMessageCount: input.turn.baseMessageCount, turnMessageCount: input.turn.messages.length }, '[agentRpc#updateAgentProgress] Turn progress persisted')
+            return
+        }
+        if (isNil(input.uiMessages)) {
+            return
+        }
         const updates: Record<string, unknown> = {
             uiMessages: JSON.parse(JSON.stringify(input.uiMessages)),
         }
@@ -186,6 +208,12 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
     },
 
 })
+
+function replaceTurnSql({ column, baseParam, turnParam }: { column: string, baseParam: string, turnParam: string }): string {
+    return `CASE WHEN jsonb_array_length(${column}) >= :${baseParam}::int
+        THEN jsonb_path_query_array(${column}, '$[0 to $last]', jsonb_build_object('last', :${baseParam}::int - 1)) || :${turnParam}::jsonb
+        ELSE ${column} END`
+}
 
 function isObject(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && !isNil(value)

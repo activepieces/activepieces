@@ -1,11 +1,6 @@
-import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
-import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { canvaCommon } from './lib/common';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { canvaAuth, canvaCommon } from './lib/common';
 import { createDesign } from './lib/actions/create-design';
 import { getDesign } from './lib/actions/get-design';
 import { uploadAsset } from './lib/actions/upload-asset';
@@ -15,83 +10,35 @@ import { moveFolderItem } from './lib/actions/move-folder-item';
 import { findDesign } from './lib/actions/find-design';
 import { getFolder } from './lib/actions/get-folder';
 import { getAsset } from './lib/actions/get-asset';
-
-const canvaAuthDescription = `
-To connect Canva, follow these steps:
-1. Go to https://www.canva.com/developers/integrations and sign in.
-2. Click **Create an integration** and fill in the app name and description.
-3. Under **Configure** → **Authentication**, set the redirect URL to the one shown above.
-4. Under **Configure** → **Scopes**, enable: \`design:content:read\`, \`design:content:write\`, \`design:meta:read\`, \`asset:read\`, \`asset:write\`, \`folder:read\`, \`folder:write\`, \`profile:read\`.
-5. Copy the **Client ID** and **Client secret** and paste them above.
-`;
-
-export const canvaAuth = PieceAuth.OAuth2({
-  description: canvaAuthDescription,
-  authUrl: 'https://www.canva.com/api/oauth/authorize',
-  tokenUrl: 'https://api.canva.com/rest/v1/oauth/token',
-  required: true,
-  pkce: true,
-  pkceMethod: 'S256',
-  scope: [
-    'design:content:read',
-    'design:content:write',
-    'design:meta:read',
-    'asset:read',
-    'asset:write',
-    'folder:read',
-    'folder:write',
-    'profile:read',
-  ],
-  getConnectionIdentifier: async ({ auth }) => {
-    try {
-      const response = await httpClient.sendRequest<{ profile?: { display_name?: string } }>({
-        method: HttpMethod.GET,
-        url: `${canvaCommon.baseUrl}/users/me/profile`,
-        headers: { Authorization: `Bearer ${auth.access_token}` },
-        timeout: 5000,
-      });
-      return response.body.profile?.display_name || undefined;
-    } catch {
-      return undefined;
-    }
-  },
-  validate: async ({ auth }) => {
-    try {
-      const authValue = auth as OAuth2PropertyValue;
-      if (!authValue.access_token) {
-        return { valid: false, error: 'No access token found' };
-      }
-
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `${canvaCommon.baseUrl}/users/me`,
-        headers: {
-          Authorization: `Bearer ${authValue.access_token}`,
-        },
-      });
-
-      if (response.status === 200) {
-        return { valid: true };
-      }
-      
-      return { valid: false, error: 'Invalid or expired access token' };
-    } catch (error: any) {
-      if (error.response?.status === 401) {
-        return { valid: false, error: 'Access token is invalid or expired' };
-      }
-      return { valid: false, error: 'Failed to validate authentication credentials' };
-    }
-  },
-});
+import { listFolderItems } from './lib/actions/list-folder-items';
+import { createFolder } from './lib/actions/create-folder';
+import { getJobStatus } from './lib/actions/get-job-status';
+import { canvaListDesignsAi } from './lib/actions/ai/list-designs';
+import { canvaGetDesignAi } from './lib/actions/ai/get-design';
+import { canvaCreateDesignAi } from './lib/actions/ai/create-design';
+import { canvaExportDesignAi } from './lib/actions/ai/export-design';
+import { canvaGetExportJobAi } from './lib/actions/ai/get-export-job';
+import { canvaUploadAssetFromUrlAi } from './lib/actions/ai/upload-asset-from-url';
+import { canvaGetAssetUploadJobAi } from './lib/actions/ai/get-asset-upload-job';
+import { canvaImportDesignFromUrlAi } from './lib/actions/ai/import-design-from-url';
+import { canvaGetImportJobAi } from './lib/actions/ai/get-import-job';
+import { canvaListFolderItemsAi } from './lib/actions/ai/list-folder-items';
+import { canvaCreateFolderAi } from './lib/actions/ai/create-folder';
+import { canvaMoveFolderItemAi } from './lib/actions/ai/move-folder-item';
+import { canvaGetAssetAi } from './lib/actions/ai/get-asset';
+import { canvaUpdateAssetAi } from './lib/actions/ai/update-asset';
+import { canvaGetDesignPagesAi } from './lib/actions/ai/get-design-pages';
+import { canvaGetExportFormatsAi } from './lib/actions/ai/get-export-formats';
+import { canvaDeleteAssetAi } from './lib/actions/ai/delete-asset';
 
 export const canva = createPiece({
   displayName: 'Canva',
-  description: 'Create stunning designs with Canva\'s powerful design automation tools',
+  description: "Create, export and organize Canva designs and assets",
   auth: canvaAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/canva.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
-  authors: ['onyedikachi-david'],
+  authors: ['onyedikachi-david', 'OdaiAhmed99'],
   actions: [
     createDesign,
     getDesign,
@@ -102,17 +49,35 @@ export const canva = createPiece({
     findDesign,
     getFolder,
     getAsset,
+    listFolderItems,
+    createFolder,
+    getJobStatus,
+    canvaListDesignsAi,
+    canvaGetDesignAi,
+    canvaCreateDesignAi,
+    canvaExportDesignAi,
+    canvaGetExportJobAi,
+    canvaUploadAssetFromUrlAi,
+    canvaGetAssetUploadJobAi,
+    canvaImportDesignFromUrlAi,
+    canvaGetImportJobAi,
+    canvaListFolderItemsAi,
+    canvaCreateFolderAi,
+    canvaMoveFolderItemAi,
+    canvaGetAssetAi,
+    canvaUpdateAssetAi,
+    canvaGetDesignPagesAi,
+    canvaGetExportFormatsAi,
+    canvaDeleteAssetAi,
     createCustomApiCallAction({
-      baseUrl: () => 'https://api.canva.com/rest/v1',
+      baseUrl: () => canvaCommon.baseUrl,
       auth: canvaAuth,
-      authMapping: async (auth) => {
-        const authValue = auth as OAuth2PropertyValue;
-        return {
-          Authorization: `Bearer ${authValue.access_token}`,
-        };
-      },
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${auth.access_token}`,
+      }),
     }),
   ],
   triggers: [],
 });
-    
+
+export { canvaAuth };

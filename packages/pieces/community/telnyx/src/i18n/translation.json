@@ -46,6 +46,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Message Received": "Message Received",
   "Triggers when Telnyx delivers a message.received webhook event.": "Triggers when Telnyx delivers a message.received webhook event.",
   "Markdown": "Markdown",

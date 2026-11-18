@@ -1,6 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { folkAuth } from '../common/auth';
+import { folkOutputSchemas } from '../output-schemas';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { folkClient } from '../common/client';
+import { folkLegacy } from '../common/legacy';
 import { folkProps } from '../common/props';
 
 export const updatePerson = createAction({
@@ -10,7 +13,8 @@ export const updatePerson = createAction({
   displayName: 'Update Person',
   description:
     'Update an existing person in your Folk workspace with new information.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: folkOutputSchemas.legacyPersonWrite,
   aiMetadata: {
     description: 'Updates fields on an existing Folk person identified by their person ID; only the fields you supply are changed, and supplied company names that do not yet exist are created. Use when you already know the target person ID (look it up first with List People or Get Person). Not idempotent in general: re-running mutates the record each call and supplied arrays replace prior values, so resubmitting the same input is not guaranteed to be a no-op.',
     idempotent: false,
@@ -109,72 +113,17 @@ export const updatePerson = createAction({
     groupId: folkProps.group_id(false, 'Group ID'),
   },
   async run(context) {
-    const {
-      personId,
-      firstName,
-      lastName,
-      fullName,
-      description,
-      birthday,
-      jobTitle,
-      companyIds,
-      companyNames,
-      addresses,
-      emails,
-      phones,
-      urls,
-      groupId,
-    } = context.propsValue;
-
-    const personData: any = {};
-
-    if (firstName) personData.firstName = firstName;
-    if (lastName) personData.lastName = lastName;
-    if (fullName) personData.fullName = fullName;
-    if (description) personData.description = description;
-    if (birthday) personData.birthday = birthday;
-    if (jobTitle) personData.jobTitle = jobTitle;
-
-    const companies: any[] = [];
-    if (companyIds) {
-      for (const companyId of companyIds) {
-        companies.push({ id: companyId });
-      }
+    const { personId, ...props } = context.propsValue;
+    const body = folkLegacy.personBody({ props });
+    if (Object.keys(body).length === 0) {
+      throw new Error('Nothing to update. Fill in at least one field to change.');
     }
-    if (companyNames && Array.isArray(companyNames)) {
-      companies.push(...companyNames.map((c: any) => ({ name: c.value || c })));
-    }
-    if (companies.length > 0) personData.companies = companies;
-
-    if (addresses && Array.isArray(addresses) && addresses.length > 0) {
-      personData.addresses = addresses.map((addr: any) => addr.value || addr);
-    }
-
-    if (emails && Array.isArray(emails) && emails.length > 0) {
-      personData.emails = emails.map((e: any) => e.value || e);
-    }
-
-    if (phones && Array.isArray(phones) && phones.length > 0) {
-      personData.phones = phones.map((p: any) => p.value || p);
-    }
-
-    if (urls && Array.isArray(urls) && urls.length > 0) {
-      personData.urls = urls.map((u: any) => u.value || u);
-    }
-
-    if (groupId) {
-      personData.groups = [{ id: groupId }];
-    }
-
-    const response = await folkClient.updatePerson({
-      apiKey: context.auth,
-      contactId: personId as string,
-      data: personData,
+    const data = await folkClient.sendData<Record<string, unknown>>({
+      auth: context.auth,
+      method: HttpMethod.PATCH,
+      path: `/v1/people/${folkClient.idSegment({ value: String(personId ?? ''), label: 'Person' })}`,
+      body,
     });
-
-    return {
-      data: response.data,
-      success: true,
-    };
+    return { data, success: true };
   },
 });

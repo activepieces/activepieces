@@ -110,6 +110,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Calendar Subscriber": "New Calendar Subscriber",
   "New RSVP Attendee": "New RSVP Attendee",
   "Triggers when a new subscriber is added to your AddEvent calendar. Leave the calendar blank to watch all of them.": "Triggers when a new subscriber is added to your AddEvent calendar. Leave the calendar blank to watch all of them.",

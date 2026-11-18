@@ -1,0 +1,23 @@
+{
+  "Read Word documents (.docx) and fill Word templates in your flow, no Microsoft account needed.": "Read Word documents (.docx) and fill Word templates in your flow, no Microsoft account needed.",
+  "Extract Text": "Extract Text",
+  "Fill Template": "Fill Template",
+  "Get the text, headers and footers of a Word document (.docx).": "Get the text, headers and footers of a Word document (.docx).",
+  "Fill the {{placeholders}} in a Word template (.docx) and get a new document.": "Fill the {{placeholders}} in a Word template (.docx) and get a new document.",
+  "Word Document": "Word Document",
+  "Password": "Password",
+  "Markdown": "Markdown",
+  "Word Template": "Word Template",
+  "Fields": "Fields",
+  "Data (JSON)": "Data (JSON)",
+  "File Name": "File Name",
+  "Pick a .docx file from an earlier step, such as an email attachment, or paste a URL to download.": "Pick a .docx file from an earlier step, such as an email attachment, or paste a URL to download.",
+  "Only needed when the document is password-protected.": "Only needed when the document is password-protected.",
+  "Type placeholders in your Word template with double braces:\n- `{{name}}` is replaced by the \"name\" value. `{{customer.city}}` reads a nested value.\n- `{{#items}}` ... `{{/items}}` repeats a table row or paragraph for each entry of the \"items\" list. Inside it, use the entry's fields, like `{{description}}`.\n- `{{#paid}}` ... `{{/paid}}` shows the text only when \"paid\" is true; `{{^paid}}` ... `{{/paid}}` only when it is false or empty.": "Type placeholders in your Word template with double braces:\n- `{{name}}` is replaced by the \"name\" value. `{{customer.city}}` reads a nested value.\n- `{{#items}}` ... `{{/items}}` repeats a table row or paragraph for each entry of the \"items\" list. Inside it, use the entry's fields, like `{{description}}`.\n- `{{#paid}}` ... `{{/paid}}` shows the text only when \"paid\" is true; `{{^paid}}` ... `{{/paid}}` only when it is false or empty.",
+  "A .docx file with {{placeholders}}, from an earlier step or a URL.": "A .docx file with {{placeholders}}, from an earlier step or a URL.",
+  "One field per placeholder in the template. They appear once the template is set, or mapped from a step you have tested.": "One field per placeholder in the template. They appear once the template is set, or mapped from a step you have tested.",
+  "Optional. A JSON object with values for the placeholders. It overrides the fields above, and is needed for a list inside a list.": "Optional. A JSON object with values for the placeholders. It overrides the fields above, and is needed for a list inside a list.",
+  "Name of the new document. Leave empty to use the template's name.": "Name of the new document. Leave empty to use the template's name.",
+  "Document": "Document",
+  "Word Documents": "Word Documents"
+}

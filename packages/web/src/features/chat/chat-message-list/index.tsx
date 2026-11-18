@@ -1,4 +1,4 @@
-import { ApErrorParams, isNil } from '@activepieces/core-utils';
+import { ApErrorParams } from '@activepieces/core-utils';
 import { ChatUIResponse, FileResponseInterface } from '@activepieces/shared';
 import { BotIcon } from 'lucide-react';
 import React from 'react';
@@ -32,7 +32,7 @@ interface ChatMessageListProps extends React.HTMLAttributes<HTMLDivElement> {
   sendingError?: ApErrorParams | null;
   isSending?: boolean;
   flowId?: string;
-  sendMessage?: (arg0: { isRetrying: boolean; message: ChatMessage }) => void;
+  sendMessage?: (arg0: { isRetrying: boolean; message?: ChatMessage }) => void;
   setSelectedImage?: (image: string | null) => void;
 }
 
@@ -100,14 +100,7 @@ const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
                 chatUI={chatUI}
                 flowId={flowId}
                 sendingError={sendingError}
-                sendMessage={(arg0) => {
-                  if (!isNil(arg0.message)) {
-                    sendMessage({
-                      isRetrying: false,
-                      message: arg0.message!,
-                    });
-                  }
-                }}
+                sendMessage={sendMessage}
               />
             )}
             {isSending && (

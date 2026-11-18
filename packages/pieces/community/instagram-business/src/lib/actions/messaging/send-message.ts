@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 
 import { sendMessageOutputSchema } from '../../output-schemas';
 import { instagramCommon, FacebookPageDropdown } from '../../common';
@@ -14,17 +14,30 @@ export const sendMessage = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Sends a text direct message to one Instagram user, addressed by their Instagram-scoped user id as supplied by a New Message trigger or List Conversations. Instagram only allows a reply within 24 hours of that user last messaging the account, so an older thread is rejected. Not idempotent, since each call sends another message.',
+      'Sends a text direct message to one Instagram user, addressed by their Instagram-scoped user id as supplied by List Conversations or List Messages. Instagram only allows a reply within 24 hours of that user last messaging the account, so an older thread is rejected. Not idempotent, since each call sends another message.',
     idempotent: false,
   },
+  propertyGroups: [
+    { key: 'account', display: 'section', label: 'Account', icon: 'user', props: ['page'] },
+    { key: 'recipient', display: 'section', label: 'Send to', icon: 'send', props: ['window_info', 'recipient_id'] },
+    { key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['text'] },
+  ],
   props: {
     page: instagramCommon.page,
+    window_info: Property.MarkDown({
+      value: 'Instagram only delivers to people who messaged you in the last 24 hours.',
+      variant: MarkdownVariant.INFO,
+    }),
     recipient_id: Property.ShortText({
       displayName: 'Recipient ID',
-      description: 'The Instagram-scoped user id of the person to message.',
+      description: 'Their Instagram-scoped id, from List Conversations or List Messages.',
       required: true,
     }),
-    text: Property.LongText({ displayName: 'Message', required: true }),
+    text: Property.LongText({
+      displayName: 'Text',
+      placeholder: 'Thanks for reaching out! How can we help?',
+      required: true,
+    }),
   },
   async run({ propsValue }) {
     const page: FacebookPageDropdown = propsValue.page;

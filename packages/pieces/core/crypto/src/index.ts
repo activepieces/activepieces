@@ -10,9 +10,9 @@ import { openpgpEncrypt } from './lib/actions/openpgp-encrypt';
 
 export const Crypto = createPiece({
   displayName: 'Crypto',
-  description: 'Generate random passwords and hash existing text',
+  description: 'Hash, sign and encode text, encrypt files and generate passwords',
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/new-core/crypto.svg',
   categories: [PieceCategory.CORE],
   authors: ['AbdullahBitar', 'kishanprmr', 'abuaboud', 'matthieu-lombard', 'antonyvigouret', 'danielpoonwj', 'prasanna2000-max'],

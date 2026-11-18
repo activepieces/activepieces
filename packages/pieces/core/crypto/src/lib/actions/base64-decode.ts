@@ -12,7 +12,8 @@ export const base64Decode = createAction({
   props: {
     text: Property.ShortText({
       displayName: 'Text',
-      description: 'The text to be decoded.',
+      description: 'The base64 text to turn back into plain text.',
+      placeholder: 'SGVsbG8gd29ybGQ=',
       required: true,
     }),
   },

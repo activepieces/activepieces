@@ -1,11 +1,13 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
-
-import { webflowAuth } from '../..';
+import { webflowAuth } from '../auth';
+import { webflowClient } from '../common/client';
 import { webflowProps } from '../common/props';
-import { WebflowApiClient } from '../common/client';
+import { orderOutputSchema } from '../output-schemas';
 
-export const webflowFindOrder = createAction({
+export const findOrderAction = createAction({
 	auth: webflowAuth,
+	outputSchema: orderOutputSchema,
 	name: 'find_order',
 	classification: 'READ',
 	description: 'Find order',
@@ -13,16 +15,18 @@ export const webflowFindOrder = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Retrieves a single Webflow Ecommerce order by its site ID and order ID. Use to look up order details before fulfilling, refunding, or unfulfilling it. Read-only and idempotent.', idempotent: true },
 	props: {
-		site_id: webflowProps.site_id,
-		order_id: webflowProps.order_id,
+		site_id: webflowProps.siteId({ required: true }),
+		order_id: webflowProps.orderId({ required: true }),
 	},
 
 	async run(context) {
 		const orderId = context.propsValue.order_id;
 		const siteId = context.propsValue.site_id;
 
-		const client = new WebflowApiClient(context.auth.access_token);
-
-		return await client.getOrder(siteId, orderId);
+		return await webflowClient.request<unknown>({
+			auth: context.auth,
+			method: HttpMethod.GET,
+			path: `/v2/sites/${encodeURIComponent(siteId)}/orders/${encodeURIComponent(orderId)}`,
+		});
 	},
 });

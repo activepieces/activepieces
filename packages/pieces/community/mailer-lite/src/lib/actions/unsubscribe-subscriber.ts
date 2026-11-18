@@ -1,5 +1,5 @@
 import MailerLite from '@mailerlite/mailerlite-nodejs';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { mailerLiteAuth } from '../auth';
 import { unsubscribeSubscriberOutputSchema } from '../output-schemas';
 
@@ -16,11 +16,24 @@ export const unsubscribeSubscriberAction = createAction({
 		idempotent: true,
 	},
 	outputSchema: unsubscribeSubscriberOutputSchema,
+	propertyGroups: [
+		{
+			key: 'subscriber',
+			display: 'section',
+			label: 'Subscriber',
+			icon: 'user',
+			props: ['email', 'unknown_info'],
+		},
+	],
 	props: {
 		email: Property.ShortText({
 			displayName: 'Email',
-			description: 'Email address of the subscriber to unsubscribe',
+			placeholder: 'jane@example.com',
 			required: true,
+		}),
+		unknown_info: Property.MarkDown({
+			value: 'An email that is not on your list yet is added as unsubscribed.',
+			variant: MarkdownVariant.INFO,
 		}),
 	},
 	async run(context) {

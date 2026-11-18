@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { typeformAuth } from '../auth';
 import { typeformCommon, TypeformPage, TypeformRecord } from '../common';
@@ -17,8 +17,23 @@ export const listResponsesAction = createAction({
     idempotent: true,
   },
   outputSchema: responsesOutputSchema,
+  propertyGroups: [
+    { key: 'form', display: 'section', label: 'Search in', icon: 'file', props: ['form_id', 'lag_info'] },
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['query', 'since', 'until', 'responseType', 'includedResponseIds'],
+    },
+    { key: 'results', display: 'section', label: 'Results', icon: 'sliders', props: ['sort', 'pageSize'] },
+  ],
   props: {
     form_id: typeformCommon.form,
+    lag_info: Property.MarkDown({
+      value: 'Responses from the last 30 minutes may be missing. Use the New Submission trigger for real-time data.',
+      variant: MarkdownVariant.INFO,
+    }),
     query: Property.ShortText({
       displayName: 'Search',
       description: 'Only responses containing this text in any answer or hidden field.',
@@ -27,13 +42,16 @@ export const listResponsesAction = createAction({
     since: Property.DateTime({
       displayName: 'Submitted After',
       required: false,
+      width: 'half',
     }),
     until: Property.DateTime({
       displayName: 'Submitted Before',
       required: false,
+      width: 'half',
     }),
     responseType: Property.StaticDropdown({
       displayName: 'Response Type',
+      description: 'Leave empty for completed responses only.',
       required: false,
       options: {
         options: [
@@ -45,33 +63,38 @@ export const listResponsesAction = createAction({
     }),
     includedResponseIds: Property.Array({
       displayName: 'Response IDs',
-      description: 'Only these responses.',
+      description: 'Only return the responses with these IDs.',
       required: false,
     }),
     sort: Property.StaticDropdown({
       displayName: 'Sort',
+      description: 'Leave empty for newest first.',
       required: false,
+      width: 'half',
       options: {
         options: [
-          { label: 'Submitted, newest first', value: 'submitted_at,desc' },
-          { label: 'Submitted, oldest first', value: 'submitted_at,asc' },
+          { label: 'Newest first', value: 'submitted_at,desc' },
+          { label: 'Oldest first', value: 'submitted_at,asc' },
         ],
       },
     }),
     pageSize: Property.Number({
-      displayName: 'Page Size',
-      description: 'How many responses to return, from 1 to 1000. Default 25.',
+      displayName: 'Max Responses',
+      description: '1 to 1000. Leave empty for 25.',
       required: false,
+      width: 'half',
     }),
     before: Property.ShortText({
-      displayName: 'Before',
-      description: 'Token of a response. Returns responses older than it, for the next page.',
+      displayName: 'Before Response',
+      description: 'Response token. Returns responses submitted before it, for paging.',
       required: false,
+      advanced: true,
     }),
     after: Property.ShortText({
-      displayName: 'After',
-      description: 'Token of a response. Returns responses newer than it.',
+      displayName: 'After Response',
+      description: 'Response token. Returns responses submitted after it.',
       required: false,
+      advanced: true,
     }),
   },
   async run({ auth, propsValue }) {

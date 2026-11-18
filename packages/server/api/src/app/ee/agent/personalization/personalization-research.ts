@@ -15,7 +15,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
 import { z } from 'zod'
-import { aiProviderService, ProviderScope } from '../../../ai/ai-provider-service'
+import { ProviderScope } from '../../../ai/ai-provider-service'
 import { redisConnections } from '../../../database/redis-connections'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
@@ -185,7 +185,7 @@ export async function claimForResearch({ platformId, userId, scope, researchToke
 
 
 export async function guardsAllowResearch({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<boolean> {
-    const chatProvider = await tryCatch(() => aiProviderService(log).getChatProvider({ platformId, scope: PERSONALIZATION_PROVIDER_SCOPE }))
+    const chatProvider = await tryCatch(() => agentHelpers.resolvePlatformWorkModel({ platformId, log }))
     if (chatProvider.error) {
         log.warn({ platform: { id: platformId }, error: chatProvider.error }, '[chatPersonalization] Chat AI provider failed to load, skipping research')
         return false

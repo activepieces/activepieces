@@ -65,17 +65,26 @@ export function cloneResolvedValue(value: unknown): unknown {
 }
 
 export function sanitizeObjectForPostgresql<T>(input: T): T {
-    return applyFunctionToValuesSync<T>(input, (str) => {
-        if (isString(str)) {
-            // Postgres text/jsonb cannot store NUL bytes or unpaired UTF-16 surrogates (e.g. a half-emoji
-            // left behind by code-unit truncation) — both raise "invalid input syntax for type json".
-            // eslint-disable-next-line no-control-regex
-            const nullByteRegex = /\u0000/g
-            const loneSurrogateRegex = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g
-            return str.replace(nullByteRegex, '').replace(loneSurrogateRegex, '')
-        }
-        return str
-    })
+    return applyFunctionToValuesSync<T>(sanitizeKeysForPostgresql(input), removeCharactersPostgresRejects)
+}
+
+function sanitizeKeysForPostgresql(value: unknown): unknown {
+    if (Array.isArray(value)) {
+        return value.map(sanitizeKeysForPostgresql)
+    }
+    if (isObject(value)) {
+        return Object.fromEntries(Object.entries(value).map(([key, nested]) => [removeCharactersPostgresRejects(key), sanitizeKeysForPostgresql(nested)]))
+    }
+    return value
+}
+
+function removeCharactersPostgresRejects(str: string): string {
+    // Postgres text/jsonb cannot store NUL bytes or unpaired UTF-16 surrogates (e.g. a half-emoji
+    // left behind by code-unit truncation) — both raise "invalid input syntax for type json".
+    // eslint-disable-next-line no-control-regex
+    const nullByteRegex = /\u0000/g
+    const loneSurrogateRegex = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g
+    return str.replace(nullByteRegex, '').replace(loneSurrogateRegex, '')
 }
 export function applyFunctionToValuesSync<T>(obj: unknown, apply: (str: string) => unknown): T {
     if (isNil(obj)) {

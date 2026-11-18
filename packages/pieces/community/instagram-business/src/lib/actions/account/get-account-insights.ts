@@ -17,15 +17,21 @@ export const getAccountInsights = createAction({
       'Reads account-level Instagram metrics such as reach, profile views and accounts engaged, over a chosen period. Metrics cover professional accounts only and lag real time by a few hours, so a very recent post may not be reflected yet. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'account', display: 'section', label: 'Account', icon: 'user', props: ['page'] },
+    { key: 'insights', display: 'section', label: 'Insights', icon: 'filter', props: ['period', 'metrics'] },
+  ],
   props: {
     page: instagramCommon.page,
     metrics: Property.Array({
       displayName: 'Metrics',
-      description: 'Metric names, for example reach or profile_views. Defaults to reach.',
+      description: 'For example reach or profile_views. Empty reads reach.',
       required: false,
+      defaultValue: [],
     }),
     period: Property.StaticDropdown({
       displayName: 'Period',
+      description: 'The time window each metric covers.',
       required: false,
       defaultValue: 'day',
       options: {

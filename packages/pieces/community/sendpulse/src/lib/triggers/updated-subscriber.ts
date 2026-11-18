@@ -1,5 +1,6 @@
 import {
   createTrigger,
+  isNil,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { sendpulseAuth } from '../common/auth';
@@ -39,11 +40,17 @@ export const updatedSubscriberTrigger = createTrigger({
   },
 
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get('last_check'))) {
+      return;
+    }
     await context.store.put('mailing_list_id', String(context.propsValue.mailingListId));
     await context.store.put('last_check', Date.now().toString());
   },
 
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete('mailing_list_id');
     await context.store.delete('last_check');
     await context.store.delete('subscribers_cache');

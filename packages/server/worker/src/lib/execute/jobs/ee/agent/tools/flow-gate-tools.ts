@@ -1,4 +1,4 @@
-import { isObject, tryCatch } from '@activepieces/core-utils'
+import { isNil, isObject, tryCatch } from '@activepieces/core-utils'
 import { ToolExecutionOptions } from 'ai'
 import { AgentEventEmitter, GateDecision, gateNoResponseMessage, toolHasExecute } from './tool-primitives'
 
@@ -22,14 +22,16 @@ export function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, s
             if (flowId && gateId) {
                 const { data: check, error } = await tryCatch(() => checkFlowWrites(flowId))
                 if (error) {
-                    log?.warn({ error, flow: { id: flowId } }, 'ap_test_flow write-check failed, running test without confirmation gate')
+                    log?.warn({ error, flow: { id: flowId } }, 'ap_test_flow write-check failed, asking for approval before the live test')
                 }
-                else if (isObject(check) && check['hasWrites'] === true) {
-                    const writeSteps = Array.isArray(check['writeSteps']) ? check['writeSteps'].filter((s): s is string => typeof s === 'string') : []
-                    const flowName = typeof check['flowName'] === 'string' ? check['flowName'] : 'this flow'
+                const writeCheck = isObject(check) ? check : {}
+                const mustConfirm = !isNil(error) || writeCheck['hasWrites'] === true
+                if (mustConfirm) {
+                    const writeSteps = Array.isArray(writeCheck['writeSteps']) ? writeCheck['writeSteps'].filter((s): s is string => typeof s === 'string') : []
+                    const flowName = typeof writeCheck['flowName'] === 'string' ? `"${writeCheck['flowName']}"` : 'this flow'
                     const gateLabel = writeSteps.length > 0
-                        ? `Run a live test of "${flowName}" — performs: ${writeSteps.join(', ')}`
-                        : `Run a live test of "${flowName}"`
+                        ? `Run a live test of ${flowName} — performs: ${writeSteps.join(', ')}`
+                        : `Run a live test of ${flowName}`
                     // Render the confirmation card in the live session (and persist it for refresh).
                     // Without the emit the gate would block silently until the approval timeout.
                     eventEmitter.emitActionPreview({

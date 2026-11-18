@@ -20,6 +20,22 @@ export const stripeCreatePrice = createAction({
       'Creates a price for an existing Stripe product, in either one-time or recurring mode depending on the selected billing interval. Use after creating a product to define what to charge before building a subscription or payment link. Requires the product ID; not idempotent, as each call creates a new price.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'price',
+      display: 'section',
+      label: 'Price',
+      icon: 'tag',
+      props: ['product', 'unit_amount', 'currency'],
+    },
+    {
+      key: 'billing',
+      display: 'section',
+      label: 'Billing',
+      icon: 'calendar',
+      props: ['recurring_interval'],
+    },
+  ],
   props: {
     product: stripeCommon.product, 
     unit_amount: Property.Number({

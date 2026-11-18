@@ -1,25 +1,33 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { pandadocClient, pandadocAuth } from '../common';
+import { pandadocAuth } from '../common/auth';
+import { pandadocApi } from '../common/api';
+import { pandadocFiles } from '../common/files';
+import { pandadocInputs } from '../common/inputs';
+import { pandadocSchemas } from '../common/schemas';
 import { documentDropdown } from '../common/dynamic-dropdowns';
 
 export const createAttachment = createAction({
+  auth: pandadocAuth,
   name: 'createAttachment',
   classification: 'WRITE',
   displayName: 'Create Attachment',
-  description: 'Adds an attachment to a document.',
-  audience: 'both',
+  description: 'Adds an attachment to a document, from a file URL or an uploaded file.',
+  audience: 'human',
   aiMetadata: {
-    description: 'Attach a file (fetched from a public file URL) to an existing PandaDoc document, with an optional display name. Requires the target document ID and a reachable source URL. Not idempotent — each call appends another attachment.',
+    description: 'Attach a file to an existing PandaDoc document, from a public URL or a file. Not idempotent: each call adds another attachment.',
     idempotent: false,
   },
-  auth: pandadocAuth,
   props: {
     document_id: documentDropdown,
     source: Property.ShortText({
       displayName: 'File URL',
-      description: 'URL link to the file to be attached to the document',
-      required: true,
+      description: 'Public URL of the file to attach. Leave empty when you use the File field instead.',
+      required: false,
+    }),
+    file: Property.File({
+      displayName: 'File',
+      description: 'A file from a previous step to attach. Used instead of the File URL when both are set.',
+      required: false,
     }),
     name: Property.ShortText({
       displayName: 'Attachment Name',
@@ -27,20 +35,14 @@ export const createAttachment = createAction({
       required: false,
     }),
   },
+  outputSchema: pandadocSchemas['rawAttachment'],
   async run({ auth, propsValue }) {
-    const body: any = {
-      source: propsValue.source,
-    };
-
-    if (propsValue.name) {
-      body.name = propsValue.name;
-    }
-
-    return await pandadocClient.makeRequest(
-      auth.secret_text,
-      HttpMethod.POST,
-      `/documents/${propsValue.document_id}/attachments`,
-      body
-    );
+    return pandadocApi.createAttachmentRaw({
+      apiKey: auth.secret_text,
+      documentId: pandadocInputs.requiredString({ value: propsValue.document_id, label: 'Document' }),
+      url: pandadocInputs.optionalString(propsValue.source),
+      file: pandadocFiles.readUploadFile({ value: propsValue.file, label: 'File' }),
+      name: pandadocInputs.optionalString(propsValue.name),
+    });
   },
 });

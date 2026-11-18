@@ -7,11 +7,13 @@ import {
   getBedrockModelOptions,
   formatBedrockError,
 } from '../common';
+import { generateEmbeddingsOutputSchema } from '../output-schemas';
 
 export const generateEmbeddings = createAction({
   audience: 'both',
   auth: awsBedrockCombinedAuth,
   name: 'generate_embeddings',
+  outputSchema: generateEmbeddingsOutputSchema,
   classification: 'READ',
   displayName: 'Generate Embeddings',
   description:

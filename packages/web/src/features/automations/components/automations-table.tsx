@@ -143,7 +143,9 @@ export const AutomationsTable = ({
 
   return (
     <div className="overflow-x-auto">
-      <div className="min-w-[1000px]">
+      <div
+        className={embedState.isEmbedded ? 'min-w-[950px]' : 'min-w-[1200px]'}
+      >
         <div className="flex items-center h-8 text-xs border-b font-medium text-gray-12 bg-gray-3/50">
           <div className="w-10 shrink-0 pl-4 pr-1">
             <Checkbox
@@ -195,7 +197,7 @@ export const AutomationsTable = ({
         </div>
 
         {isLoading ? (
-          <div>
+          <div data-testid="automations-loading">
             {Array.from({ length: 10 }).map((_, i) => (
               <AutomationsSkeletonRow
                 key={i}
@@ -220,6 +222,7 @@ export const AutomationsTable = ({
                   >
                     <div
                       className={cn(rowClassName)}
+                      data-testid="automations-row"
                       onClick={(e) =>
                         onRowClick(group.item, e.ctrlKey || e.metaKey)
                       }
@@ -266,6 +269,7 @@ export const AutomationsTable = ({
                         <div
                           key={`${child.type}-${child.id}`}
                           className={cn(rowClassName, 'border-t')}
+                          data-testid="automations-row"
                           onClick={(e) =>
                             onRowClick(child, e.ctrlKey || e.metaKey)
                           }
@@ -310,6 +314,7 @@ export const AutomationsTable = ({
                 <div
                   key={`${group.item.type}-${group.item.id}`}
                   className={cn(rowClassName, 'border-b')}
+                  data-testid="automations-row"
                   onClick={(e) =>
                     onRowClick(group.item, e.ctrlKey || e.metaKey)
                   }

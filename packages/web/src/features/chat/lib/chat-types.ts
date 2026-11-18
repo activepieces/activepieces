@@ -299,6 +299,7 @@ export type CardSkeletonPhase = 'pending' | 'failed';
 
 export type ThinkingStep =
   | { kind: 'thinking-status'; text: string }
+  | { kind: 'reasoning'; text: string }
   | { kind: 'tool'; part: AnyToolPart; description: string | null };
 
 export type ToolStatus = 'running' | 'completed' | 'failed' | 'stopped';

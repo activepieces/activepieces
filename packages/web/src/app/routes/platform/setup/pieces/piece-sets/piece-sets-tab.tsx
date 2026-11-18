@@ -21,7 +21,6 @@ import {
   StatusDot,
   adminPageResources,
 } from '@/app/components/admin';
-import { PiecesLockedBanner } from '@/app/routes/platform/setup/pieces/pieces-locked-banner';
 import {
   CURSOR_QUERY_PARAM,
   RowDataWithActions,
@@ -36,6 +35,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { CreatePieceSetDialog } from './create-piece-set-dialog';
@@ -43,6 +43,7 @@ import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
 import { EditPieceSetDialog } from './edit-piece-set-dialog';
 
 export const PieceSetsTab = () => {
+  const { platform } = platformHooks.useCurrentPlatform();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [duplicatingSet, setDuplicatingSet] = useState<PieceSet | null>(null);
@@ -51,13 +52,14 @@ export const PieceSetsTab = () => {
   const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
   const limitParam = searchParams.get('limit');
   const limit = limitParam ? parseInt(limitParam, 10) : undefined;
+  const name = searchParams.get('name') ?? undefined;
 
   const {
     data: pieceSetsPage,
     isLoading,
     isError,
     refetch,
-  } = pieceSetQueries.usePieceSets({ cursor, limit });
+  } = pieceSetQueries.usePieceSets({ cursor, limit, name });
   const { mutate: deleteSet } = pieceSetMutations.useDeletePieceSet();
 
   const pieceSets = useMemo(() => pieceSetsPage?.data ?? [], [pieceSetsPage]);
@@ -108,7 +110,7 @@ export const PieceSetsTab = () => {
           const includesNewPieces =
             row.original.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL;
           return (
-            <StatusDot tone={includesNewPieces ? 'success' : 'neutral'}>
+            <StatusDot status={row.original.config.pieces.mode}>
               {includesNewPieces ? t('Yes') : t('No')}
             </StatusDot>
           );
@@ -184,12 +186,19 @@ export const PieceSetsTab = () => {
       >
         <CreatePieceSetDialog onCreated={() => refetch()} />
       </AdminPageHeader>
-      <PiecesLockedBanner message={t('Piece sets need a higher plan.')} />
       <AdminDataTable
-        emptyStateTextTitle={t('No piece sets found')}
-        emptyStateTextDescription={t(
-          'Create a piece set to control which pieces are available to specific projects',
-        )}
+        emptyStateTextTitle={
+          platform.plan.managePiecesEnabled
+            ? t('No piece sets found')
+            : t('No piece sets yet')
+        }
+        emptyStateTextDescription={
+          platform.plan.managePiecesEnabled
+            ? t(
+                'Create a piece set to control which pieces are available to specific projects',
+              )
+            : ''
+        }
         emptyStateIcon={<Layers />}
         columns={columns}
         filters={[
@@ -209,7 +218,6 @@ export const PieceSetsTab = () => {
         isError={isError}
         errorStateEntity={t('piece sets')}
         onRetry={refetch}
-        clientFiltering={true}
         onRowClick={(pieceSet) =>
           navigate(`/platform/pieces/piece-sets/${pieceSet.id}`)
         }

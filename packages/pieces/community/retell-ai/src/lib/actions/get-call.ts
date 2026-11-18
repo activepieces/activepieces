@@ -1,8 +1,10 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { retellAiApiCall } from '../common/client';
+import { createAction } from '@activepieces/pieces-framework';
 import { retellAiAuth } from '../common/auth';
+import { apiKeyOf, retellApiCall } from '../common/client';
+import { retellInput } from '../common/input';
 import { callIdDropdown } from '../common/props';
+import { retellSchemas } from '../common/schemas';
 
 export const getCall = createAction({
   auth: retellAiAuth,
@@ -10,22 +12,21 @@ export const getCall = createAction({
   classification: 'READ',
   displayName: 'Get Call',
   description: 'Retrieve detailed data of a specific call (e.g., transcript), given a Call ID.',
-  audience: 'both',
-  aiMetadata: { description: 'Look up the full details of a single Retell call by its Call ID, including status, transcript, recording, and metadata. Use to inspect the outcome or content of a known call. Read-only and idempotent.', idempotent: true },
+  audience: 'human',
+  aiMetadata: {
+    description: 'Returns one Retell call with status, transcript, recording and analysis. Read-only.',
+    idempotent: true,
+  },
   props: {
     callId: callIdDropdown,
   },
+  outputSchema: retellSchemas.rawCall,
   async run({ propsValue, auth }) {
-    const { callId } = propsValue;
-
-    if (!callId) {
-      throw new Error('Call ID is required');
-    }
-
-    return await retellAiApiCall({
+    return retellApiCall({
+      apiKey: apiKeyOf(auth),
       method: HttpMethod.GET,
-      url: `/v2/get-call/${callId}`,
-      auth: auth,
+      path: `/v2/get-call/${retellInput.seg({ value: propsValue.callId, label: 'Call ID' })}`,
+      retryRateLimit: true,
     });
   },
 });

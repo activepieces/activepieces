@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { posthogAuth } from '../..';
+import { posthogAuth } from '../auth';
+import { captureEvent } from '../common/capture';
+import { posthogClient } from '../common/client';
+import { posthogOutputSchemas } from '../common/output-schemas';
 
 export const posthogCreateEvent = createAction({
   auth: posthogAuth,
@@ -9,7 +11,11 @@ export const posthogCreateEvent = createAction({
   displayName: 'Capture Event',
   description: 'Capture a custom event in PostHog',
   audience: 'both',
-  aiMetadata: { description: 'Sends a custom analytics event to PostHog attributed to a user via their distinct ID (e.g. user ID or email), with optional event properties. Use to record a product action or behavior in PostHog. Not idempotent: each call appends a new event, so repeating it records duplicate events.', idempotent: false },
+  aiMetadata: {
+    description: 'Sends a custom analytics event to PostHog for a user identified by distinct_id (the same ID your app uses, e.g. user ID or email), with optional event properties (keys starting with $set update the person). Returns the event uuid and timestamp. Ingestion is asynchronous: the event shows up in queries after a few seconds. Each call records a new event unless you pass the same uuid and timestamp again, which PostHog deduplicates.',
+    idempotent: false,
+  },
+  outputSchema: posthogOutputSchemas.captured,
   props: {
     event: Property.ShortText({
       displayName: 'Event Name',
@@ -18,8 +24,7 @@ export const posthogCreateEvent = createAction({
     }),
     distinct_id: Property.ShortText({
       displayName: 'Distinct ID',
-      description:
-        'Unique identifier for the user performing the action (e.g. user ID or email address)',
+      description: 'Unique identifier for the user performing the action (e.g. user ID or email address)',
       required: true,
     }),
     properties: Property.Object({
@@ -27,32 +32,25 @@ export const posthogCreateEvent = createAction({
       description: 'Additional event properties as key/value pairs',
       required: false,
     }),
+    timestamp: Property.DateTime({
+      displayName: 'Timestamp',
+      description: 'When the event happened (ISO 8601). Defaults to now.',
+      required: false,
+    }),
+    uuid: Property.ShortText({
+      displayName: 'Event UUID',
+      description: 'Reuse with the same timestamp to avoid duplicate events.',
+      required: false,
+    }),
   },
-  async run(context) {
-    const { personal_api_key, project_id, api_host, ingestion_host } = context.auth.props;
-    const apiBase = api_host || 'https://us.posthog.com';
-    const ingestionBase = ingestion_host || 'https://us.i.posthog.com';
-
-    const projectResult = await httpClient.sendRequest<{ api_token: string }>({
-      method: HttpMethod.GET,
-      url: `${apiBase}/api/projects/${project_id}/`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: personal_api_key,
-      },
+  async run({ auth, propsValue }) {
+    return captureEvent({
+      auth: auth.props,
+      event: posthogClient.requiredText({ value: propsValue.event, label: 'Event Name' }),
+      distinctId: posthogClient.requiredText({ value: propsValue.distinct_id, label: 'Distinct ID' }),
+      properties: posthogClient.plainObject({ value: propsValue.properties, label: 'Properties' }),
+      timestamp: posthogClient.isoTimestamp({ value: propsValue.timestamp, label: 'Timestamp' }),
+      uuid: posthogClient.uuid({ value: propsValue.uuid, label: 'Event UUID' }),
     });
-
-    const result = await httpClient.sendRequest<{ status: number }>({
-      method: HttpMethod.POST,
-      url: `${ingestionBase}/i/v0/e/`,
-      body: {
-        api_key: projectResult.body.api_token,
-        distinct_id: context.propsValue.distinct_id,
-        event: context.propsValue.event,
-        properties: context.propsValue.properties ?? {},
-      },
-    });
-
-    return result.body;
   },
 });

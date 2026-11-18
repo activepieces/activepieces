@@ -1,4 +1,4 @@
-FROM node:24.14.0-bullseye-slim AS base
+FROM node:24.22.1-bookworm-slim AS base
 
 # C.UTF-8 ships with Debian, so no locale generation is needed.
 # REDISMS_VERSION pins the Redis that redis-memory-server (AP_REDIS_TYPE=MEMORY)
@@ -10,17 +10,11 @@ ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
     REDISMS_VERSION=7.4.2
 
-# bullseye LTS ended 2026-08-31: deb.debian.org's index and pool now drift (404s on fetch), and
-# archive.debian.org has not picked bullseye up yet. Pin apt to a dated snapshot.debian.org
-# mirror (frozen, so Release files expire — hence Check-Valid-Until off) until the base image
-# moves to bookworm.
-RUN printf 'deb http://snapshot.debian.org/archive/debian/20260825T000000Z bullseye main\ndeb http://snapshot.debian.org/archive/debian-security/20260825T000000Z bullseye-security main\n' > /etc/apt/sources.list && \
-    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99snapshot
-
 # Install all system dependencies in a single layer. No apt cache mounts: docker-clean in the
 # node base image wipes /var/cache/apt anyway, and a persisted /var/lib/apt/lists goes stale
-# against rotated bullseye-security packages, failing the build with hash/size fetch errors.
+# against rotated bookworm-security packages, failing the build with hash/size fetch errors.
 # libcap2 is isolate's runtime lib (the isolate binaries ship prebuilt in api assets).
+# tini runs as PID 1 and reaps orphaned sandbox children; node as PID 1 never waits on them and they pile up as zombies.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         openssh-client \
@@ -31,6 +25,7 @@ RUN apt-get update && \
         poppler-utils \
         poppler-data \
         procps \
+        tini \
         unzip \
         curl \
         ca-certificates \
@@ -41,9 +36,9 @@ RUN apt-get update && \
 # Download, extract, and clean up bun in a single layer so the zip never ships
 RUN export ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
-      curl -fSL --retry 5 --retry-delay 2 https://github.com/oven-sh/bun/releases/download/bun-v1.4.0/bun-linux-x64-baseline.zip -o bun.zip; \
+      curl -fSL --retry 5 --retry-delay 2 https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-linux-x64-baseline.zip -o bun.zip; \
     elif [ "$ARCH" = "aarch64" ]; then \
-      curl -fSL --retry 5 --retry-delay 2 https://github.com/oven-sh/bun/releases/download/bun-v1.4.0/bun-linux-aarch64.zip -o bun.zip; \
+      curl -fSL --retry 5 --retry-delay 2 https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-linux-aarch64.zip -o bun.zip; \
     fi && \
     unzip bun.zip && \
     mv bun-*/bun /usr/local/bin/bun && \
@@ -95,11 +90,10 @@ COPY . .
 # Build frontend, engine, server API, and worker
 RUN NODE_OPTIONS=--max-old-space-size=4096 npx turbo run build --filter=web --filter=@activepieces/engine --filter=api --filter=worker
 
-# Source maps are off unless AP_BUILD_SOURCEMAP=true: generating them costs ~1GB of
-# peak heap in the web build (3.5GB vs 2.5GB measured) for ~21MB of output that this
-# layer then deletes, which is what OOM-killed the image build. A build that opts in
-# must upload them BEFORE this line; the delete stays so source is never served from
-# the shipped image.
+# Source maps are off unless AP_BUILD_SOURCEMAP=true: there is no upload step yet, so
+# they'd be ~21MB of output that this layer deletes anyway. Turning them on adds about
+# 0.6GB of peak memory and a second or two. A build that opts in must upload them BEFORE
+# this line; the delete stays so source is never served from the shipped image.
 # TODO(cloud-ci): set AP_BUILD_SOURCEMAP=true and upload with sentry-cli when SENTRY_AUTH_TOKEN is set.
 RUN find dist/packages/web -name '*.map' -delete
 
@@ -165,5 +159,5 @@ LABEL service=activepieces
 HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=5 \
     CMD [ "$AP_CONTAINER_TYPE" = "WORKER" ] && exit 0 || curl -fsS "http://localhost:${AP_PORT:-80}/api/v1/health" || exit 1
 
-ENTRYPOINT ["./docker-entrypoint.sh"]
+ENTRYPOINT ["tini", "--", "./docker-entrypoint.sh"]
 EXPOSE 80

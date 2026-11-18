@@ -1,4 +1,7 @@
-import { KnowledgeBaseFile } from '@activepieces/shared';
+import {
+  KnowledgeBaseEmbeddingSource,
+  KnowledgeBaseFile,
+} from '@activepieces/shared';
 
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -9,6 +12,13 @@ export const knowledgeBaseApi = {
     return api.get<KnowledgeBaseFile[]>('/v1/knowledge-base/files', {
       projectId,
     });
+  },
+  embeddingSource(): Promise<KnowledgeBaseEmbeddingSource> {
+    const projectId = authenticationSession.getProjectId()!;
+    return api.get<KnowledgeBaseEmbeddingSource>(
+      '/v1/knowledge-base/files/embedding-source',
+      { projectId },
+    );
   },
   upload(formData: FormData): Promise<KnowledgeBaseFile> {
     const projectId = authenticationSession.getProjectId()!;

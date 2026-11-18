@@ -367,7 +367,7 @@ describe('modelMeta project scope', () => {
     ]);
   });
 
-  it('flags a main model that cannot call tools and recommends a curated one', () => {
+  it('flags a main model that cannot call tools and recommends nothing', () => {
     const openAi = key('k', { provider: AIProviderName.OPENAI });
     expect(
       modelMeta.toolsVerdict({
@@ -382,7 +382,7 @@ describe('modelMeta project scope', () => {
         entry: { configId: 'k', modelId: 'gpt-4.1' },
         model: model('gpt-4.1', {}),
       }),
-    ).toBe('recommended');
+    ).toBeNull();
     expect(
       modelMeta.toolsVerdict({
         config: openAi,

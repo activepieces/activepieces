@@ -1,22 +1,24 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
 import { freshsalesAuth } from '../auth';
+import { freshsalesClient } from '../common/client';
+import { freshsalesProps } from '../common/props';
+import { freshsalesRecords } from '../common/records';
+import { createContactOutputSchema } from '../output-schemas';
 
 export const freshSalesCreateContact = createAction({
   auth: freshsalesAuth,
   name: 'freshsales_create_contact',
-  classification: 'WRITE',
   displayName: 'Create Contact',
   description: 'Add new contact in Freshsales CRM',
   audience: 'both',
+  classification: 'WRITE',
   aiMetadata: {
-    description: 'Creates a new contact record in Freshsales CRM with the given details (email is required; name, phone, address, social handles, owner/territory/account IDs, and marketing attribution fields are optional). Use when an agent needs to add a person to the CRM. Not idempotent: each call creates a new contact and may produce duplicates if repeated.',
+    description:
+      'Creates a new contact in Freshsales and returns it with its ID. Email is required; owner, territory, status, lifecycle stage and lead source take IDs from the dropdowns or the List Field Options tool; Sales account id links the contact to an account as primary. Custom Fields is a JSON object keyed by cf_ API names. Not idempotent: each call creates a new contact; use Upsert Contact to avoid duplicates.',
     idempotent: false,
   },
+  outputSchema: createContactOutputSchema,
   props: {
     first_name: Property.ShortText({
       displayName: 'First name',
@@ -30,12 +32,13 @@ export const freshSalesCreateContact = createAction({
     }),
     job_title: Property.ShortText({
       displayName: 'Job title',
-      description: 'Designation of the contact in the account they belong to',
+      description: 'Job title of the contact',
       required: false,
     }),
     email: Property.ShortText({
       displayName: 'Email',
       description: 'Primary email address of the contact',
+      placeholder: 'jane@acme.com',
       required: true,
     }),
     work_number: Property.ShortText({
@@ -50,63 +53,65 @@ export const freshSalesCreateContact = createAction({
     }),
     address: Property.ShortText({
       displayName: 'Address',
-      description: 'Address of the contact',
+      description: 'Street address of the contact',
       required: false,
     }),
     city: Property.ShortText({
       displayName: 'City',
-      description: 'City that the contact belongs to',
+      description: 'City of the contact',
       required: false,
     }),
     state: Property.ShortText({
       displayName: 'State',
-      description: 'State that the contact belongs to',
+      description: 'State of the contact',
       required: false,
     }),
     zipcode: Property.ShortText({
       displayName: 'Zip code',
-      description: 'Zipcode of the region that the contact belongs to',
+      description: 'Zip code of the contact',
       required: false,
     }),
     country: Property.ShortText({
       displayName: 'Country',
-      description: 'Country that the contact belongs to',
+      description: 'Country of the contact',
       required: false,
     }),
-    territory_id: Property.ShortText({
-      displayName: 'Territory id',
-      description: 'ID of the territory that the contact belongs to',
-      required: false,
-    }),
-    owner_id: Property.ShortText({
-      displayName: 'Owner id',
-      description: 'ID of the user to whom the contact has been assigned',
-      required: false,
-    }),
-    subscription_status: Property.ShortText({
+    territory_id: freshsalesProps.territory(),
+    owner_id: freshsalesProps.owner({ required: false }),
+    subscription_status: Property.StaticDropdown({
       displayName: 'Subscription status',
-      description: 'Status of subscription that the contact is in.',
+      description: 'Email subscription status of the contact',
+      required: false,
+      options: {
+        disabled: false,
+        options: freshsalesRecords.SUBSCRIPTION_STATUS_OPTIONS,
+      },
+    }),
+    contact_status_id: freshsalesProps.contactStatus(),
+    lifecycle_stage_id: freshsalesProps.lifecycleStage(),
+    lead_source_id: freshsalesProps.leadSource(),
+    sales_account_id: Property.ShortText({
+      displayName: 'Sales account id',
+      description: 'ID of the primary account of the contact',
+      placeholder: '16000123456',
       required: false,
     }),
     medium: Property.ShortText({
       displayName: 'Medium',
-      description: 'The medium that led your contact to your website/web app',
+      description: 'Medium that led the contact to you',
+      placeholder: 'email',
       required: false,
     }),
-    campaign_id: Property.ShortText({
-      displayName: 'Campaign id',
-      description: 'The campaign that led your contact to your web app.',
-      required: false,
-    }),
+    campaign_id: freshsalesProps.campaign(),
     keyword: Property.ShortText({
       displayName: 'Keyword',
-      description:
-        'The keywords that the contact used to reach your website/web app',
+      description: 'Keywords the contact used to find you',
       required: false,
     }),
     time_zone: Property.ShortText({
       displayName: 'Timezone',
-      description: 'Timezone that the contact belongs to',
+      description: 'Time zone of the contact',
+      placeholder: 'Eastern Time (US & Canada)',
       required: false,
     }),
     facebook: Property.ShortText({
@@ -121,40 +126,50 @@ export const freshSalesCreateContact = createAction({
     }),
     linkedin: Property.ShortText({
       displayName: 'Linkedin',
-      description: 'LinkedIn account of the contact',
+      description: 'LinkedIn profile of the contact',
       required: false,
     }),
-    contact_status_id: Property.ShortText({
-      displayName: 'Contact status id',
-      description: 'ID of the contact status that the contact belongs to',
-      required: false,
-    }),
-    sales_account_id: Property.ShortText({
-      displayName: 'Sales account id',
-      description: 'ID of the primary account that the contact belongs to',
-      required: false,
-    }),
+    custom_fields: freshsalesProps.customFields(),
   },
   async run(context) {
-    const contact = context.propsValue;
-
-    const request: HttpRequest = {
+    const contact = freshsalesRecords.buildContactBody({
+      first_name: context.propsValue.first_name,
+      last_name: context.propsValue.last_name,
+      job_title: context.propsValue.job_title,
+      email: context.propsValue.email,
+      work_number: context.propsValue.work_number,
+      mobile_number: context.propsValue.mobile_number,
+      address: context.propsValue.address,
+      city: context.propsValue.city,
+      state: context.propsValue.state,
+      zipcode: context.propsValue.zipcode,
+      country: context.propsValue.country,
+      territory_id: context.propsValue.territory_id,
+      owner_id: context.propsValue.owner_id,
+      subscription_status: context.propsValue.subscription_status,
+      contact_status_id: context.propsValue.contact_status_id,
+      lifecycle_stage_id: context.propsValue.lifecycle_stage_id,
+      lead_source_id: context.propsValue.lead_source_id,
+      sales_account_id: context.propsValue.sales_account_id,
+      custom_fields: context.propsValue.custom_fields,
+      medium: context.propsValue.medium,
+      campaign_id: context.propsValue.campaign_id,
+      keyword: context.propsValue.keyword,
+      time_zone: context.propsValue.time_zone,
+      facebook: context.propsValue.facebook,
+      twitter: context.propsValue.twitter,
+      linkedin: context.propsValue.linkedin,
+    });
+    const response = await freshsalesClient.request<unknown>({
+      auth: context.auth,
       method: HttpMethod.POST,
-      url: `https://${context.auth.username}.myfreshworks.com/crm/sales/api/contacts`,
-      body: {
-        contact,
-      },
-      headers: {
-        Authorization: `Token token=${context.auth.password}`,
-      },
-    };
-
-    const result = await httpClient.sendRequest(request);
-
-    if (result.status == 200) {
-      return result.body;
-    } else {
-      return result;
-    }
+      path: '/api/contacts',
+      query: { include: freshsalesRecords.RECORD_INCLUDES.contacts },
+      body: { contact },
+    });
+    const created = freshsalesRecords.shapeContact(
+      freshsalesClient.unwrap({ body: response, key: 'contact' })
+    );
+    return { ...created, contact: created };
   },
 });

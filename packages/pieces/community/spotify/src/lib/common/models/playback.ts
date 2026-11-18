@@ -1,3 +1,4 @@
+import { Episode } from './catalog';
 import { Track } from './track';
 
 export enum RepeatState {
@@ -27,15 +28,16 @@ export interface PlaybackActions {
 }
 
 export interface PlaybackState {
-  device: Device;
+  device: Device | null;
   timestamp: number;
   progress_ms?: number;
   is_playing: boolean;
   shuffle_state: boolean;
   repeat_state: RepeatState;
-  item?: Track;
-  current_playing_type: PlayingType;
-  actions: PlaybackActions;
+  item?: Track | Episode | null;
+  currently_playing_type?: PlayingType;
+  actions?: PlaybackActions;
+  context?: { type: string; uri: string } | null;
 }
 
 export interface PlaybackVolumeRequest {
@@ -52,6 +54,7 @@ export interface PlaybackPlayRequest {
   context_uri?: string;
   uris?: string[];
   position_ms?: number;
+  offset?: { position: number } | { uri: string };
 }
 
 export interface PlaybackSeekRequest {
@@ -59,20 +62,15 @@ export interface PlaybackSeekRequest {
   position_ms: number;
 }
 
-export enum DeviceType {
-  COMPUTER = 'computer',
-  SMARTPHONE = 'smartphone',
-  SPEAKER = 'speaker',
-}
-
 export interface Device {
-  id: string;
+  id: string | null;
   is_active: boolean;
   is_private_session: boolean;
   is_restricted: boolean;
   name: string;
-  type: DeviceType;
-  volume_percent: number;
+  type: string;
+  volume_percent: number | null;
+  supports_volume?: boolean;
 }
 
 export interface DeviceListResponse {

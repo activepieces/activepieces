@@ -1,9 +1,9 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof bexioAuth>,
@@ -82,6 +82,7 @@ export const newOrderTrigger = createTrigger({
   aiMetadata: {
     description: 'Fires when a sales order is created or its updated timestamp changes in Bexio, optionally filtered to a chosen order status. Emits each matching order with its document number, contact, totals (gross, net, taxes), valid-from date, and status. Use to react to new or modified orders.',
   },
+  outputSchema: bexioOutputSchemas.orderSummaryOutputSchema,
   type: TriggerStrategy.POLLING,
   props: {
     status_id: Property.Dropdown({
@@ -152,34 +153,16 @@ export const newOrderTrigger = createTrigger({
     updated_at: '2019-04-08 13:17:32',
   },
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.test(polling, context);
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.poll(polling, context);
   },
 });
 

@@ -1,52 +1,83 @@
 ---
-title: "AI Capabilities"
+title: "Capabilities"
+description: "Give chat, agents and knowledge bases web search, web scraping, image generation and embeddings"
 icon: "bicep"
 ---
 
-AI Capabilities let platform admins connect external services that give the Activepieces AI assistant additional abilities beyond what the AI model can do on its own.
+## Overview
 
-Currently, you can configure capabilities for **Web Search, Web Scraping, and Image Generation**.
+Capabilities give the AI extra skills that the model can't do on its own, such as searching the web. You choose the service behind each one, once, for the whole platform. Builders don't need their own keys.
 
-### **Why use AI Capabilities?**
+Go to **Platform admin** → **AI Center** → **Capabilities**.
 
-AI Capabilities let your organization control which external services the AI assistant can use for specialized tasks.
+![Capabilities page](/resources/screenshots/ai-center-capabilities.png)
 
-For example, you can allow the assistant to search for current information on the web, extract content from webpages, or generate images when users need these capabilities.
+<Note>
+  Capabilities are available on Cloud and self-hosted Enterprise. Community Edition doesn't have this page.
+</Note>
 
-Configuring these services at the platform level also means the required API credentials can be managed centrally rather than asking individual users to configure them.
+## The four capabilities
 
-### **Available AI Capabilities**
+The page has two groups.
 
-#### **Web Search**
+**Chat and agents**
 
-Web Search lets the AI assistant search the live web for current information. 
+| Capability | What it does | Works with |
+| --- | --- | --- |
+| **Web Search** | Searches the live web for current information. | A Tavily API key, or an AI provider key whose provider has built-in web search. |
+| **Web Scraping** | Reads any web page as clean text, including JavaScript pages. | A Firecrawl or Apify API key. |
+| **Image Generation** | Creates images, from photos to graphics with text. | A fal.ai API key, or an AI provider key plus the image model to use. |
 
-This is useful for tasks where the assistant needs information that may not be available in the model itself.
+**Knowledge bases**
 
-#### **Web Scraping**
+| Capability | What it does | Works with |
+| --- | --- | --- |
+| **Embeddings** | Indexes knowledge-base files so agents can search them. | An AI provider key plus the embedding model to use, for example OpenAI, Google, Azure or OpenRouter. |
 
-Web Scraping lets the AI assistant extract clean content from webpages as Markdown, including pages that are rendered with JavaScript.
+An AI provider key used for a capability must serve **all projects**. Add or edit keys on the [Providers](/admin-guide/guides/setup-ai-providers) page.
 
-This can be useful when the assistant needs to read and work with the full content of a webpage rather than just search results.
+## What the card shows
 
-#### **Image Generation**
+The bottom of each card tells you where the capability stands:
 
-Image Generation lets the AI assistant create images such as realistic photos, marketing graphics with text, brand logos, and abstract art. The model is selected automatically for each request.
+- **Using** and a name: the capability is on. The name is the service or key it runs on, followed by the model when there is one.
+- **Works with** and a list: nothing serves the capability yet. The list shows which keys can.
 
-### **How To Set Up AI Capability**
+When you haven't set a capability up, it may still work through your chat key. Web search and image generation use the key behind your [Default chat model](/admin-guide/guides/setup-ai-providers#default-chat-model) when that provider supports them. Embeddings use the chat key when it supports embeddings, and otherwise your AI credits. In that case the card already shows **Using** with that key's name.
 
-The setup is similar across the available capabilities:
+## Set up a capability
 
-1. Go to **Platform Admin → Catalogue → AI Center → Capabilities**.
-2. Find the capability you want to configure.
-3. Click **Set up**.
-4. Enter the API key for the external service.
-5. Click **Save**.
+<Steps>
+  <Step title="Open the card">
+    Click **Set up** on the capability. If it is already in use, the button says **Change**.
+  </Step>
+  <Step title="Pick the source">
+    When there is more than one option, pick it under **Source**: one of your AI provider keys or an outside service.
+  </Step>
+  <Step title="Enter the details">
+    For an outside service, paste its API key. The dialog links to where you get one. For an AI provider key, pick the **Image model** or **Embedding model** when the capability needs one.
+  </Step>
+  <Step title="Save">
+    Click **Save**.
+  </Step>
+</Steps>
 
-<video src="https://cdn.activepieces.com/videos/docs/Set-up-ai-capabilities.mp4" controls />
+If no key can serve **Embeddings**, the card shows **Connect a provider** instead. Add a key that serves all projects and supports embeddings first.
 
-### **AI Providers vs AI Capabilities**
+<Warning>
+  Changing the Embeddings key or model doesn't re-index files. Files already in knowledge bases keep their old vectors. Re-upload them to search with the new key or model.
+</Warning>
 
-**AI Providers** connect the AI models Activepieces uses, while **AI Capabilities** connect external services that give the AI assistant additional abilities such as web search, web scraping, and image generation.
+## Reset a capability
 
-<br />
+Hover the card and click the trash icon to **Reset** it. This removes the saved API key or key choice. The capability then goes back to your chat key, if that key supports it. Otherwise it turns off.
+
+## Providers vs capabilities
+
+**Providers** connect the AI models that chat, agents and AI steps run on. **Capabilities** add skills on top of those models: web search, web scraping, image generation and embeddings.
+
+## Related
+
+- [Providers and keys](/admin-guide/guides/setup-ai-providers)
+- [Knowledge bases](/agents/knowledge)
+- API reference: [list capabilities](/endpoints/ai-capabilities/list), [set up](/endpoints/ai-capabilities/set-up), [update](/endpoints/ai-capabilities/update), [reset](/endpoints/ai-capabilities/reset).

@@ -16,6 +16,7 @@ export const pieceSetController: FastifyPluginAsyncZod = async (app) => {
             platformId: req.principal.platform.id,
             cursor: req.query.cursor,
             limit: req.query.limit,
+            name: req.query.name,
         })
     })
 
@@ -83,6 +84,7 @@ const ListPieceSets = {
         querystring: z.object({
             cursor: z.string().optional(),
             limit: z.coerce.number().int().min(1).max(100).optional().default(10),
+            name: z.string().optional(),
         }),
     },
 }

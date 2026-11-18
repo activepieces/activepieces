@@ -85,7 +85,7 @@ export const hubspot = createPiece({
 	description: 'Powerful CRM that offers tools for sales, customer service, and marketing automation.',
 	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/hubspot.png',
-	authors: ['Salem-Alaa', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
+	authors: ['Salem-Alaa', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud', 'OdaiAhmed99'],
 	categories: [PieceCategory.SALES_AND_CRM],
 	auth: hubspotAuth,
 	actions: [
@@ -148,6 +148,12 @@ export const hubspot = createPiece({
 			authMapping: async (auth) => ({
 				Authorization: `Bearer ${getHubspotAccessToken(auth)}`,
 			}),
+			props: {
+				url: {
+					description: 'Full URL, or a path relative to https://api.hubapi.com',
+					placeholder: '/crm/v3/objects/contacts',
+				},
+			},
 		}),
 	],
 	triggers: [

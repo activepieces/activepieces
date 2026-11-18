@@ -9,14 +9,20 @@ export const createTask = createAction({
     name: 'create_task',
     classification: 'WRITE',
     displayName: 'Create Task',
-    description: 'Creates a new task.',
+    description: 'Creates a task.',
     audience: 'human',
     aiMetadata: { description: 'Create a new activity Task with a required Subject and optional owner, status, priority, and links to a Contact/Lead (WhoId) or other object (WhatId). Not idempotent — each call creates a separate task.', idempotent: false },
     outputSchema: sobjectCreateResponseOutputSchema,
+    propertyGroups: [
+        { key: 'task', display: 'section', label: 'Task', icon: 'text', props: ['Subject', 'Description'] },
+        { key: 'assignment', display: 'section', label: 'Assignment', icon: 'user', props: ['OwnerId', 'Status', 'Priority'] },
+        { key: 'related', display: 'section', label: 'Related To', icon: 'paperclip', props: ['WhoId', 'WhatId'] },
+    ],
     props: {
         Subject: Property.ShortText({
             displayName: 'Subject',
             required: true,
+            placeholder: 'Call back about the renewal',
         }),
         OwnerId: salesforcesCommon.owner,
         Status: salesforcesCommon.taskStatus,
@@ -26,14 +32,16 @@ export const createTask = createAction({
             required: false,
         }),
         WhoId: Property.ShortText({
-            displayName: 'Related To (Contact/Lead ID)',
-            description: 'The ID of a Contact or Lead to relate the task to.',
+            displayName: 'Contact or Lead ID',
+            description: 'ID of the contact or lead, from its record URL or an earlier step.',
             required: false,
+            placeholder: '0035g00000AbCdEAAZ',
         }),
         WhatId: Property.ShortText({
-            displayName: 'Related To (Other Object ID)',
-            description: 'The ID of an Account, Opportunity, or other object to relate the task to.',
+            displayName: 'Related Record ID',
+            description: 'Account, case or other record ID, from its URL or an earlier step.',
             required: false,
+            placeholder: '0015g00000XyZ12AAB',
         }),
     },
     async run(context) {

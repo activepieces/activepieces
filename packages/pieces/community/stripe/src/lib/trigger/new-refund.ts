@@ -28,6 +28,15 @@ export const stripeNewRefund = createTrigger({
     description:
       'Fires when a refund is created in Stripe (the refund.created event), for a full or partial refund, emitting the refund record. Optional filters narrow firing to a specific charge ID or payment intent ID. Use to react to money returned to a customer, such as updating accounting or notifying them.',
   },
+  propertyGroups: [
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['charge', 'payment_intent'],
+    },
+  ],
   props: {
     charge: Property.ShortText({
       displayName: 'Charge ID',

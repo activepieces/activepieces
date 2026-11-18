@@ -1,5 +1,6 @@
 import {
     createTrigger,
+    isNil,
     Property,
     TriggerStrategy
 } from '@activepieces/pieces-framework';
@@ -45,9 +46,15 @@ export const deletedRecord = createTrigger({
         })
     },
     async onEnable(context) {
+        if (context.isRepublish && !isNil(await context.store.get(`known_records_${context.propsValue.objectType}`))) {
+            return;
+        }
         await context.store.put(`known_records_${context.propsValue.objectType}`, {});
     },
     async onDisable(context) {
+        if (context.isRepublish) {
+            return;
+        }
         await context.store.delete(`known_records_${context.propsValue.objectType}`);
     },
     async run(context) {

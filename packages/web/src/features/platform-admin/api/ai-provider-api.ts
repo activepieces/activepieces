@@ -30,6 +30,11 @@ export const aiProviderApi = {
       `/v1/ai-providers/configs/${configId}/suggested-models`,
     );
   },
+  listPlatformModelOptions({ surface }: { surface: ModelOptionsSurface }) {
+    return api.get<ModelOptions>('/v1/ai-providers/model-options/platform', {
+      surface,
+    });
+  },
   listModelOptions({
     projectId,
     surface,
@@ -45,9 +50,6 @@ export const aiProviderApi = {
       ...(tierId === undefined ? {} : { tierId }),
     });
   },
-  listModelTiers() {
-    return api.get<ModelTiersResponse>('/v1/ai-providers/tiers');
-  },
   upsert(request: CreateAIProviderRequest) {
     return api.post<AIProviderWithoutSensitiveData>(
       '/v1/ai-providers',
@@ -60,6 +62,12 @@ export const aiProviderApi = {
       {},
     );
   },
+  refreshModels(providerId: string) {
+    return api.post<AIProviderModel[]>(
+      `/v1/ai-providers/${providerId}/refresh-models`,
+      {},
+    );
+  },
   update(providerId: string, request: UpdateAIProviderRequest): Promise<void> {
     return api.post(`/v1/ai-providers/${providerId}`, request);
   },
@@ -67,18 +75,3 @@ export const aiProviderApi = {
     return api.delete(`/v1/ai-providers/${providerId}`);
   },
 };
-
-export type ModelTierSurface = 'chat' | 'flow';
-
-export type ModelTier = {
-  id: string;
-  label: string;
-  modelId: string;
-};
-
-export type ModelTierList = {
-  tiers: ModelTier[];
-  defaultTierId: string;
-};
-
-export type ModelTiersResponse = Record<ModelTierSurface, ModelTierList>;

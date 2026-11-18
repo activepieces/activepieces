@@ -1,0 +1,31 @@
+export const SAMPLE_ACTIVITY = {
+  _id: 'act_PbKqTGpQqSlPcoOZ5',
+  type: 'emailsReplied',
+  teamId: 'tea_8QvkOiBfPdb2ZRhHi',
+  createdAt: '2026-10-13T08:07:38.375Z',
+  campaignId: 'cam_bSn8EORHQxbWPjHvu',
+  campaignName: 'Product Launch Campaign',
+  sequenceId: 'seq_9brn1aEKdYbDerkqq',
+  sequenceStep: 1,
+  stepId: 'stp_qsTl0LO6zkQQJQqsP',
+  leadId: 'lea_fiDpiGV585wy3Oii2',
+  contactId: 'ctc_xW8Ou6C03Csv8vatp',
+  leadEmail: 'jane@example.com',
+  leadFirstName: 'Jane',
+  leadLastName: 'Doe',
+  leadCompanyName: 'Acme Inc',
+  email: 'jane@example.com',
+  firstName: 'Jane',
+  lastName: 'Doe',
+  sendUserId: 'usr_ahfFktBBHUIxbVG5P',
+  sendUserEmail: 'sales@example.com',
+  sendUserName: 'Sam Seller',
+  subject: 'Quick question',
+};
+
+export const SAMPLE_UNSUBSCRIBE = {
+  ...SAMPLE_ACTIVITY,
+  _id: 'act_Uns1bscr1b3dXyz12',
+  type: 'entityUnsubscribed',
+  subject: undefined,
+};

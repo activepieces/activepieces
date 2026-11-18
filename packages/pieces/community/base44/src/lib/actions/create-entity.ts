@@ -1,6 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { base44Auth } from '../..';
-import { createClient, Base44Error, type Base44Client } from '@base44/sdk';
+import { base44Auth, base44Common } from '../common/client';
 
 export const createEntity = createAction({
   auth: base44Auth,
@@ -9,7 +8,8 @@ export const createEntity = createAction({
   displayName: 'Create Entity',
   description: 'Creates an entity (record) in your Base44 app',
   audience: 'both',
-  aiMetadata: { description: 'Creates a new record of a given entity type in a Base44 app, with the field values supplied as a JSON object. Use when you need to add a new item (e.g. a Product, User, or Order) to a Base44 database. Requires the exact entity-type name and matching field data; each call inserts a fresh record, so it is not idempotent. Service access uses the configured token when present, otherwise the user session.', idempotent: false },
+  outputSchema: base44Common.recordOutputSchema,
+  aiMetadata: { description: 'Creates a new record of a given entity type in a Base44 app, with the field values supplied as a JSON object. Use when you need to add a new item (e.g. a Product, User, or Order) to a Base44 database. Requires the exact entity-type name (case-sensitive, as defined in the Base44 app) and matching field data. Returns the stored record including its generated id. Each call inserts a fresh record, so it is not idempotent. Returned records include the built-in fields plus every app-defined field of the entity (e.g. name, status) as top-level keys.', idempotent: false },
   props: {
     entityType: Property.ShortText({
       displayName: 'Entity Type',
@@ -24,38 +24,14 @@ export const createEntity = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const appId = auth.props.appId;
-    const token = auth.props.token;
     const { entityType, entityData } = propsValue;
-
-    if (!appId) {
-      throw new Error('App ID is required.');
-    }
-
-    const base44: Base44Client = createClient({
-      appId,
-      token,
-      serviceToken: token,
-    });
-
+    const data = base44Common.requireJsonObject({ value: entityData, label: 'Entity Data' });
+    const handler = await base44Common.getEntityHandler({ auth: auth.props, entityType });
     try {
-      const entitiesModule = token
-        ? base44.asServiceRole.entities as Record<string, { create: (data: Record<string, unknown>) => Promise<unknown> }>
-        : base44.entities as Record<string, { create: (data: Record<string, unknown>) => Promise<unknown> }>;
-
-      const result = await entitiesModule[entityType].create(entityData as Record<string, unknown>);
-      return result;
+      const result = await handler.create(data);
+      return base44Common.toRecord(result);
     } catch (error: unknown) {
-      if (error instanceof Base44Error) {
-        if (error.status === 404) {
-          throw new Error(`Entity type "${entityType}" not found. Please check the name.`);
-        }
-        if (error.status === 401 || error.status === 403) {
-          throw new Error('Authentication failed. Please check your credentials.');
-        }
-        throw new Error(`Failed to create entity: ${error.message}`);
-      }
-      throw new Error(`Failed to create entity: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw base44Common.toBase44Error({ error, entityType, operation: 'create the record' });
     }
   },
 });

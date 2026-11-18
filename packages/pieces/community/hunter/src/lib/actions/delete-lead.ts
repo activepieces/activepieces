@@ -1,29 +1,27 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { hunterApiCall } from '../common';
 import { hunterAuth } from '../auth';
+import { apiKeyOf } from '../common/client';
+import { hunterOutputSchemas } from '../common/output-schemas';
 import { leadDeleteDropdownProp } from '../common/props';
+import { hunterRequests } from '../common/requests';
 
 export const deleteLeadAction = createAction({
-    auth: hunterAuth,
-    name: 'delete-lead',
-    classification: 'DESTRUCTIVE',
-    displayName: 'Delete Lead',
-    description: 'Delete a specific lead record by ID.',
-    audience: 'both',
-    aiMetadata: { description: 'Permanently deletes a single lead from the Hunter account by its lead ID. Use to remove a prospect that is no longer relevant. Requires the lead ID; idempotent in effect since re-deleting an already-removed lead leaves the account in the same state.', idempotent: true },
-    props: {
-        lead_id: leadDeleteDropdownProp,
-    },
-    async run(context) {
-        const { lead_id } = context.propsValue;
-
-        await hunterApiCall({
-            apiKey: context.auth,
-            endpoint: `/leads/${lead_id}`,
-            method: HttpMethod.DELETE,
-        });
-
-        return { success: true };
-    },
+  auth: hunterAuth,
+  name: 'delete-lead',
+  classification: 'DESTRUCTIVE',
+  displayName: 'Delete Lead',
+  description: 'Delete a specific lead record.',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Permanently deletes one lead picked from a dropdown. Fails with a clear message when the lead no longer exists (a second run on the same lead fails).',
+    idempotent: false,
+  },
+  props: {
+    lead_id: leadDeleteDropdownProp,
+  },
+  outputSchema: hunterOutputSchemas.leadDeleted,
+  async run(context) {
+    return hunterRequests.deleteLead({ apiKey: apiKeyOf(context.auth), leadId: context.propsValue.lead_id, missingOk: false });
+  },
 });

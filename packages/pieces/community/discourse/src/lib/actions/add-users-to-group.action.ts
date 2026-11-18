@@ -1,74 +1,36 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { discourseAuth } from '../auth';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { discourseOps } from '../common/operations';
+import { discourseProps } from '../common/props';
+import { discourseSchemas } from '../common/schemas';
 
 export const addUsersToGroup = createAction({
   auth: discourseAuth,
   name: 'add_users_to_group',
   classification: 'WRITE',
   description: 'Add users to a group',
-  audience: 'both',
-  aiMetadata: { description: 'Add one or more users (by username) as members of a Discourse group, identified by its numeric group ID. Use when an agent needs to grant group membership. Re-adding users who are already members has no additional effect, so the call is effectively idempotent.', idempotent: true },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Add users by username to a Discourse group picked from a dropdown. Agents should use Add Group Members, which takes the group ID as text. Users who are already members or do not exist are reported as skipped, so retries are safe.',
+    idempotent: true,
+  },
   displayName: 'Add Users to Group',
   props: {
-    group_id: Property.Dropdown({
-      auth: discourseAuth,
-      description: 'Id of the group',
-      displayName: 'Group Id',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please connect your discourse account',
-          };
-        }
-        const response = await httpClient.sendRequest({
-          method: HttpMethod.GET,
-          url: `${auth.props.website_url.trim()}/groups.json`,
-          headers: {
-            'Api-Key': auth.props.api_key,
-            'Api-Username': auth.props.api_username,
-          },
-        });
-        const options = response.body['groups'].map(
-          (res: { display_name: any; id: any }) => {
-            return {
-              label: res.display_name,
-              value: res.id,
-            };
-          }
-        );
-        return {
-          options: options,
-          disabled: false,
-        };
-      },
-    }),
+    group_id: discourseProps.groupDropdown(),
     users: Property.Array({
-      description: 'List of users to add to the group',
+      description: 'Usernames to add to the group',
       displayName: 'Users',
       required: true,
     }),
   },
-  async run(context) {
-    const { group_id, users } = context.propsValue;
-    //convert array to comma separated string
-    users.join(',');
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.PUT,
-      url: `${context.auth.props.website_url.trim()}/groups/${group_id}/members.json`,
-      headers: {
-        'Api-Key': context.auth.props.api_key,
-        'Api-Username': context.auth.props.api_username,
-      },
-      body: {
-        usernames: users.join(','),
-      },
+  outputSchema: discourseSchemas.groupMembership,
+  async run({ auth, propsValue }) {
+    return discourseOps.changeGroupMembers({
+      auth: auth.props,
+      groupId: propsValue.group_id,
+      usernames: propsValue.users,
+      remove: false,
     });
-    return response.body;
   },
 });

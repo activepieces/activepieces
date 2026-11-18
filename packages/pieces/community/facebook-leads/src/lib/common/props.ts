@@ -14,10 +14,13 @@ function page<R extends boolean>({ required, displayName = 'Page', description }
 		refreshers: [],
 		options: async ({ auth }) => {
 			if (!auth) {
-				return disabledOptions({ placeholder: 'Connect your account first.' });
+				return disabledOptions({ placeholder: 'Connect your Facebook account first.' });
 			}
 			try {
 				const pages = await facebookLeadsApi.listPages({ accessToken: auth.access_token });
+				if (pages.length === 0) {
+					return { disabled: false, options: [], placeholder: 'No Pages found for this account.' };
+				}
 				return {
 					disabled: false,
 					options: pages.map((page) => ({
@@ -26,7 +29,7 @@ function page<R extends boolean>({ required, displayName = 'Page', description }
 					})),
 				};
 			} catch (e) {
-				return disabledOptions({ placeholder: 'Error occured while fetching pages.' });
+				return disabledOptions({ placeholder: "Couldn't load your Pages. Try reconnecting." });
 			}
 		},
 	});
@@ -41,22 +44,28 @@ function form<R extends boolean>({ required, displayName = 'Form', description }
 		refreshers: ['page'],
 		options: async ({ page }) => {
 			if (!isPageDropdownValue(page)) {
-				return disabledOptions({ placeholder: 'Select page first.' });
+				return disabledOptions({ placeholder: 'Select a Page first.' });
 			}
 			try {
 				const forms = await facebookLeadsApi.listLeadForms({
 					pageId: page.id,
 					accessToken: page.accessToken,
+					detailed: true,
 				});
 				return {
 					disabled: false,
 					options: [
-						{ label: 'All Forms (Default)', value: 'all' },
-						...forms.map((form) => ({ label: form.name, value: form.id })),
+						{ label: 'All Forms', value: 'all' },
+						...forms.map((form) => ({
+							label: formLabel({ name: form.name, status: form.status }),
+							value: form.id,
+						})),
 					],
 				};
 			} catch (e) {
-				return disabledOptions({ placeholder: 'Error occured while fetching forms.' });
+				return disabledOptions({
+					placeholder: "Couldn't load forms. Check your access to this Page's lead ads.",
+				});
 			}
 		},
 	});
@@ -71,6 +80,21 @@ function isPageDropdownValue(value: unknown): value is FacebookLeadsPageDropdown
 		'accessToken' in value &&
 		typeof value.accessToken === 'string'
 	);
+}
+
+function formLabel({ name, status }: { name: string; status: string | undefined }): string {
+	if (!status || status === 'ACTIVE') {
+		return name;
+	}
+	return `${name} (${titleCase({ text: status })})`;
+}
+
+function titleCase({ text }: { text: string }): string {
+	return text
+		.toLowerCase()
+		.split('_')
+		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+		.join(' ');
 }
 
 function disabledOptions({ placeholder }: { placeholder: string }): DropdownState<never> {

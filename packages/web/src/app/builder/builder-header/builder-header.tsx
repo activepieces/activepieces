@@ -12,6 +12,7 @@ import { ChevronDown, CircleHelp, HistoryIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   createSearchParams,
+  useLocation,
   useNavigate,
   useSearchParams,
 } from 'react-router-dom';
@@ -46,11 +47,13 @@ import { cn } from '@/lib/utils';
 import FlowActionMenu from '../../components/flow-actions-menu';
 import { flowCanvasConsts } from '../flow-canvas/utils/consts';
 
+import { FlowConnectionsPopover } from './flow-connections-popover';
 import { BuilderFlowStatusSection } from './flow-status';
 
-export const BuilderHeader = () => {
+export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
   const [queryParams] = useSearchParams();
   const navigate = useNavigate();
+  const isRunsPage = useLocation().pathname.includes('/runs');
   const queryClient = useQueryClient();
   const openNewWindow = useNewWindow();
   const { data: showSupport } = flagsHooks.useFlag<boolean>(
@@ -66,12 +69,16 @@ export const BuilderHeader = () => {
     moveToFolderClientSide,
     applyOperation,
     setRightSidebar,
+    savePendingEdits,
+    readonly,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
     state.moveToFolderClientSide,
     state.applyOperation,
     state.setRightSidebar,
+    state.savePendingEdits,
+    state.readonly,
   ]);
 
   const { embedState } = useEmbedding();
@@ -117,16 +124,16 @@ export const BuilderHeader = () => {
           )}
           {!embedState.hideFlowNameInBuilder && (
             <BreadcrumbItem>
-              <BreadcrumbPage>
+              <BreadcrumbPage role={undefined} aria-disabled={undefined}>
                 <div
                   className={cn('flex items-center gap-1 text-sm', {
-                    'max-w-[500px]': !isEditingFlowName,
+                    'max-w-[500px]': !isEditingFlowName || readonly,
                   })}
                 >
                   <EditableText
                     className="hover:cursor-text"
                     value={flowVersion.displayName}
-                    readonly={!isLatestVersion}
+                    readonly={readonly}
                     onValueChange={(value) => {
                       applyOperation(
                         {
@@ -140,7 +147,7 @@ export const BuilderHeader = () => {
                         },
                       );
                     }}
-                    isEditing={isEditingFlowName}
+                    isEditing={isEditingFlowName && !readonly}
                     setIsEditing={setIsEditingFlowName}
                     tooltipContent=""
                   />
@@ -149,9 +156,10 @@ export const BuilderHeader = () => {
                       setRightSidebar(RightSideBarType.VERSIONS);
                     }}
                     insideBuilder={true}
+                    savePendingEdits={savePendingEdits}
                     flow={flow}
                     flowVersion={flowVersion}
-                    readonly={!isLatestVersion}
+                    readonly={readonly}
                     onDelete={goToFlowsPage}
                     onRename={() => {
                       setIsEditingFlowName(true);
@@ -159,7 +167,12 @@ export const BuilderHeader = () => {
                     onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
                     onDuplicate={() => {}}
                   >
-                    <Button variant="ghost" size="icon-xs">
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      data-testid="builder-flow-menu"
+                      aria-label={t('Actions')}
+                    >
                       <ChevronDown className="h-4 w-4 text-gray-11" />
                     </Button>
                   </FlowActionMenu>
@@ -174,6 +187,11 @@ export const BuilderHeader = () => {
 
   const rightContent = (
     <div className="flex items-center justify-center gap-4">
+      {isLatestVersion &&
+        !isRunsPage &&
+        !embedState.hideConnectionsInBuilder && (
+          <FlowConnectionsPopover isFlowLocked={isFlowLocked} />
+        )}
       {showSupport && (
         <Button variant="ghost" onClick={() => openNewWindow(supportUrl)}>
           <CircleHelp className="w-4 h-4"></CircleHelp>

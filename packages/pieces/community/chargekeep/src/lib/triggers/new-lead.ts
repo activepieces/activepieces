@@ -1,6 +1,9 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { chargekeepAuth } from '../auth';
-import { chargekeepCommon } from '../common/common';
+import { chargekeepOutputSchemas } from '../common/output-schemas';
+import { createChargekeepWebhookHooks, deliveryKeys } from './helpers';
+
+const hooks = createChargekeepWebhookHooks({ eventName: 'LeadCreated', storeKey: '_new_lead_trigger', deliveryKey: deliveryKeys.byId });
 
 export const newLead = createTrigger({
   auth: chargekeepAuth,
@@ -13,9 +16,11 @@ export const newLead = createTrigger({
   },
   props: {},
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: chargekeepOutputSchemas.leadTrigger,
   sampleData: {
+    eventType: 'LeadCreated',
     id: 100500,
-    group: 'P',
+    group: 'Client',
     personalInfo: {
       fullName: {
         namePrefix: 'Mr',
@@ -202,37 +207,12 @@ export const newLead = createTrigger({
   },
 
   async onEnable(context) {
-    const webhookId = await chargekeepCommon.subscribeWebhook(
-      'LeadCreated',
-      context.auth.props.base_url,
-      context.auth.props.api_key,
-      context.webhookUrl
-    );
-
-    await context.store?.put<WebhookInformation>('_new_lead_trigger', {
-      webhookId: webhookId,
-    });
+    await hooks.onEnable({ auth: context.auth, webhookUrl: context.webhookUrl, store: context.store });
   },
-
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_new_lead_trigger'
-    );
-
-    if (response !== null && response !== undefined) {
-      await chargekeepCommon.unsubscribeWebhook(
-        context.auth.props.base_url,
-        context.auth.props.api_key,
-        response.webhookId
-      );
-    }
+    await hooks.onDisable({ auth: context.auth, store: context.store });
   },
-
   async run(context) {
-    return [context.payload.body];
+    return hooks.run(context);
   },
 });
-
-interface WebhookInformation {
-  webhookId: number;
-}

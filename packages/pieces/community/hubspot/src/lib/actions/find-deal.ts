@@ -16,6 +16,15 @@ export const findDealAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Search HubSpot deals by one or two property/value pairs (matched with equality) and return the matching deals. Read-only and repeatable. Use this to look up an existing deal before updating or associating it; pick a create action instead when no matching deal should exist.', idempotent: true },
 	outputSchema: dealSearchOutputSchema,
+	propertyGroups: [
+		{
+			key: 'search',
+			display: 'section',
+			label: 'Search',
+			icon: 'filter',
+			props: ['firstSearchPropertyName', 'firstSearchPropertyValue'],
+		},
+	],
 	props: {
 		firstSearchPropertyName: standardObjectPropertiesDropdown(
 			{

@@ -1,8 +1,9 @@
 import { createHash } from 'crypto'
 import { isNil } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { AuthenticationResponse, PiecesFilterType, PlatformRole, PrincipalType, Project, ProjectType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { PiecesFilterType, PlatformRole, PrincipalType, Project, ProjectType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { AuthenticationResult } from '../../authentication/authentication-utils'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { platformService } from '../../platform/platform.service'
@@ -16,7 +17,7 @@ import { externalTokenExtractor } from './lib/external-token-extractor'
 export const managedAuthnService = (log: FastifyBaseLogger) => ({
     async externalToken({
         externalAccessToken,
-    }: AuthenticateParams): Promise<AuthenticationResponse> {
+    }: AuthenticateParams): Promise<AuthenticationResult> {
         const externalPrincipal = await externalTokenExtractor(log).extract(
             externalAccessToken,
         )
@@ -52,7 +53,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             log,
         })
 
-        const user = await getOrCreateUser(externalPrincipal, log)
+        const { user, created } = await getOrCreateUser(externalPrincipal, log)
 
         await projectMemberService(log).upsert({
             projectId: project.id,
@@ -73,19 +74,22 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             tokenVersion: identity.tokenVersion,
         }, 7 * 24 * 60 * 60)
         return {
-            id: user.id,
-            platformRole: user.platformRole,
-            status: user.status,
-            externalId: user.externalId,
-            platformId: user.platformId,
-            firstName: identity.firstName,
-            lastName: identity.lastName,
-            email: identity.email,
-            trackEvents: identity.trackEvents,
-            newsLetter: identity.newsLetter,
-            verified: identity.verified,
-            token,
-            projectId: project.id,
+            response: {
+                id: user.id,
+                platformRole: user.platformRole,
+                status: user.status,
+                externalId: user.externalId,
+                platformId: user.platformId,
+                firstName: identity.firstName,
+                lastName: identity.lastName,
+                email: identity.email,
+                trackEvents: identity.trackEvents,
+                newsLetter: identity.newsLetter,
+                verified: identity.verified,
+                token,
+                projectId: project.id,
+            },
+            signedUp: created,
         }
     },
 })
@@ -125,14 +129,14 @@ const applyProjectPieceAccess = async ({ platformId, projectId, pieceSetKey, pie
 const getOrCreateUser = async (
     params: GetOrCreateUserParams,
     log: FastifyBaseLogger,
-): Promise<User> => {
+): Promise<GetOrCreateUserResult> => {
     const existingUser = await userService(log).getByPlatformAndExternalId({
         platformId: params.platformId,
         externalId: params.externalUserId,
     })
 
     if (!isNil(existingUser)) {
-        return existingUser
+        return { user: existingUser, created: false }
     }
     const identity = await getOrCreateUserIdentity(params, log)
     const user = await userService(log).create({
@@ -141,7 +145,7 @@ const getOrCreateUser = async (
         identityId: identity.id,
         platformRole: PlatformRole.MEMBER,
     })
-    return user
+    return { user, created: true }
 }
 
 const getOrCreateUserIdentity = async (
@@ -202,6 +206,11 @@ function cleanEmailOtherwiseCompareFails(email: string): string {
 
 type AuthenticateParams = {
     externalAccessToken: string
+}
+
+type GetOrCreateUserResult = {
+    user: User
+    created: boolean
 }
 
 type GetOrCreateUserParams = {

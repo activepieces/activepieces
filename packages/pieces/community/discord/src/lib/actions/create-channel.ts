@@ -17,6 +17,22 @@ export const discordCreateChannel = createAction({
   aiMetadata: { description: 'Creates a new channel in a guild with the given name and optional topic, identified by guild ID. Use to provision a channel before posting to it. Requires the bot to have Manage Channels permission; not idempotent, since each call creates a separate channel even with the same name.', idempotent: false },
   displayName: 'Create Channel',
   outputSchema: discordCreateChannelActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'server',
+      display: 'section',
+      label: 'Server',
+      icon: 'users',
+      props: ['guild_id'],
+    },
+    {
+      key: 'channel',
+      display: 'section',
+      label: 'Channel',
+      icon: 'markdown',
+      props: ['name'],
+    },
+  ],
   props: {
     guild_id: discordCommon.guilds,
     name: Property.ShortText({

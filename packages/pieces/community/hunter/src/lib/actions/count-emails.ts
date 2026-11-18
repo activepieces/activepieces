@@ -1,76 +1,44 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpError, HttpMethod, QueryParams } from '@activepieces/pieces-common';
-import { hunterApiCall } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
 import { hunterAuth } from '../auth';
-import { domainProp, companyProp, emailTypeProp } from '../common/props';
+import { apiKeyOf, optionalText } from '../common/client';
+import { hunterOutputSchemas } from '../common/output-schemas';
+import { companyProp, domainProp, emailTypeProp } from '../common/props';
+import { hunterRequests } from '../common/requests';
 
 export const countEmailsAction = createAction({
-    auth: hunterAuth,
-    name: 'count-emails',
-    classification: 'READ',
-    displayName: 'Count Emails',
-    description: 'Returns the number of email addresses found for a domain or company.',
-    audience: 'both',
-    aiMetadata: { description: 'Returns how many email addresses Hunter knows for a given domain or company, broken down by department and seniority, and optionally filtered to personal or generic addresses. Use to gauge coverage before running an email search or to estimate prospecting volume. Provide either a domain or a company name; this is a read-only lookup that consumes no credits and is idempotent.', idempotent: true },
-    props: {
-        domain: domainProp,
-        company: companyProp,
-        type: emailTypeProp,
-    },
-    async run(context) {
-        const { domain, company, type } =
-            context.propsValue as {
-                domain?: string;
-                company?: string;
-                type?: 'personal' | 'generic';
-            };
-        if (!domain && !company) {
-            throw new Error(
-                'You must provide at least a domain or a company name to count emails.'
-            );
-        }
-
-        const qparams: QueryParams = {};
-        if (domain) qparams['domain'] = domain;
-        if (!domain && company) qparams['company'] = company;
-        if (type) qparams['type'] = type;
-
-        let respBody;
-        try {
-            respBody = await hunterApiCall({
-                apiKey: context.auth,
-                endpoint: '/email-count',
-                method: HttpMethod.GET,
-                qparams,
-            });
-        } catch (err) {
-            const httpErr = err as HttpError;
-            const status = httpErr.response?.status;
-            const details =
-                (httpErr.response?.body as any)?.errors?.[0]?.details || 'Unknown error';
-            if (status === 400 && details.includes('wrong_params')) {
-                throw new Error('Missing domain or company parameter.');
-            }
-            if (status === 400 && details.includes('invalid_type')) {
-                throw new Error(
-                    'Invalid type. Must be "personal" or "generic", exactly as shown.'
-                );
-            }
-            if (status === 429) {
-                throw new Error(
-                    'Rate limit exceeded (15 req/s). Please wait a moment and try again.'
-                );
-            }
-            throw new Error(`Hunter Email Count API error: ${details}`);
-        }
-
-        const data = (respBody as any).data;
-        return {
-            total: data.total as number,
-            personal_emails: data.personal_emails as number,
-            generic_emails: data.generic_emails as number,
-            department: data.department as Record<string, number>,
-            seniority: data.seniority as Record<string, number>,
-        };
-    },
+  auth: hunterAuth,
+  name: 'count-emails',
+  classification: 'READ',
+  displayName: 'Count Emails',
+  description: 'Returns the number of email addresses found for a domain or company.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Returns how many email addresses Hunter knows for a domain or company (total, personal, generic, and counts by department and seniority), optionally only personal or generic ones. Use to gauge coverage before Domain Search. Give a domain or a company name (domain wins when both are set). Free: uses no credits. Read-only and idempotent.',
+    idempotent: true,
+  },
+  props: {
+    domain: domainProp,
+    company: companyProp,
+    type: emailTypeProp,
+  },
+  outputSchema: hunterOutputSchemas.emailCount,
+  async run(context) {
+    const domain = optionalText(context.propsValue.domain);
+    const company = optionalText(context.propsValue.company);
+    if (domain === undefined && company === undefined) {
+      throw new Error('Provide a domain or a company name.');
+    }
+    const data = await hunterRequests.countEmails({
+      apiKey: apiKeyOf(context.auth),
+      query: { domain, company: domain === undefined ? company : undefined, type: optionalText(context.propsValue.type) },
+    });
+    return {
+      total: data['total'],
+      personal_emails: data['personal_emails'],
+      generic_emails: data['generic_emails'],
+      department: data['department'],
+      seniority: data['seniority'],
+    };
+  },
 });

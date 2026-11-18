@@ -330,6 +330,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Account Event": "New Account Event",
   "New Person Event": "New Person Event",
   "New Deal Event": "New Deal Event",

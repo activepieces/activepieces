@@ -1,9 +1,9 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, tryCatch, tryCatchSync, unique, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, tryCatch, tryCatchSync, unique, UserId } from '@activepieces/core-utils'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { ApEdition, ApEnvironment, AppConnection, AppConnectionId, AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, ConnectionState, EngineResponse, EngineResponseStatus, ExecuteResolveConnectionIdentifierResponse, ExecuteValidateAuthResponse, MAX_PLATFORM_APP_CONNECTION_OWNERS, OAuth2GrantType, PlatformAppConnectionOwner, PlatformAppConnectionOwnersResponse, PlatformAppConnectionProjectInfo, PlatformAppConnectionsListItem, PlatformRole, UpsertAppConnectionRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
-import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
+import { ArrayContains, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectMemberService } from '../../ee/projects/project-members/project-member.service'
 import { containsSecretManagerReference, secretManagersService } from '../../ee/secret-managers/secret-managers.service'
@@ -131,17 +131,21 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             ...(projectIds ? { projectIds: ArrayContains(projectIds) } : {}),
         }
 
-        const storedMetadata = isNil(request.metadata)
-            ? undefined
-            : (await appConnectionsRepo().findOneByOrFail(filter)).metadata
-        const storedAccountIdentifier = storedMetadata?.['accountIdentifier']
+        const existingConnection = await appConnectionsRepo().findOneBy(filter)
+        if (isNil(existingConnection)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'AppConnection', entityId: id },
+            })
+        }
+        const storedAccountIdentifier = existingConnection.metadata?.['accountIdentifier']
 
         await appConnectionsRepo().update(filter, {
             displayName: request.displayName,
             ...spreadIfDefined('projectIds', request.projectIds),
             ...(isNil(request.metadata) ? {} : spreadIfDefined('metadata', mergeConnectionMetadata({
                 requestMetadata: request.metadata,
-                existingMetadata: storedMetadata,
+                existingMetadata: existingConnection.metadata,
                 accountIdentifier: typeof storedAccountIdentifier === 'string' ? storedAccountIdentifier : undefined,
             }))),
             ...spreadIfDefined('preSelectForNewProjects', request.preSelectForNewProjects),
@@ -264,7 +268,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     },
 
     async replace(params: ReplaceParams): Promise<void> {
-        const { sourceAppConnectionId, targetAppConnectionId, projectId, platformId, userId, deleteSourceConnection, applyToPublishedVersions } = params
+        const { sourceAppConnectionId, targetAppConnectionId, projectId, platformId, userId, applyToPublishedVersions, flowIds } = params
         if (sourceAppConnectionId === targetAppConnectionId) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -294,109 +298,31 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        // Mirrors the project-route DELETE guard: platform connections are managed
-        // from the platform admin page and must not be deletable through a
-        // project-scoped replace, no matter which projects still use them.
-        if (deleteSourceConnection && sourceAppConnection.scope === AppConnectionScope.PLATFORM) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {
-                    message: 'Platform connections must be deleted from the platform admin connections page',
-                },
-            })
-        }
-
-        // Reject up-front (before mutating any flow) when published versions this
-        // replace won't touch still use the source connection. When
-        // applyToPublishedVersions is set, that is only the published versions
-        // invisible to the replace (their flow's latest version no longer
-        // references the connection); updating those in place would overwrite
-        // the newer draft, so the user has to publish or repoint them first.
-        // Without it, a delete would orphan every published reference.
-        const publishedFlowsUsingConnection = deleteSourceConnection || applyToPublishedVersions
-            ? await appConnectionHandler(log).countPublishedFlowsReferencingConnection({ projectId, externalId: sourceAppConnection.externalId, applyToPublishedVersions })
-            : 0
-        if (publishedFlowsUsingConnection > 0) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: deleteSourceConnection
-                        ? 'Cannot delete the old connection because it is still used by published flows that were not updated'
-                        : 'Some published flows still use the old connection but have unpublished draft changes — publish those flows first',
-                },
-            })
-        }
-
-        // Repoint page by page: each repointed flow drops out of the connection
-        // filter, so re-fetching the first page walks the whole set without the
-        // cursor skew of paginating rows that are being mutated. The seen-set
-        // stops the loop if a flow fails to leave the filter (e.g. an auth
-        // string the rewrite does not understand) instead of spinning forever.
-        const repointedFlowIds = new Set<string>()
-        for (;;) {
-            const flowsPage = await flowService(log).list({
-                projectIds: [projectId],
-                cursorRequest: null,
-                limit: 1000,
-                folderId: undefined,
-                name: undefined,
-                status: undefined,
-                connectionExternalIds: [sourceAppConnection.externalId],
-            })
-            const flowsToRepoint = flowsPage.data.filter((flow) => !repointedFlowIds.has(flow.id))
-            if (flowsToRepoint.length === 0) {
-                if (flowsPage.data.length > 0) {
-                    log.warn({ oldConnectionId: sourceAppConnectionId, stuckFlowIds: flowsPage.data.map((flow) => flow.id) }, 'Replace could not rewrite some flow references; they keep the old connection')
-                }
-                break
-            }
-            await appConnectionHandler(log).updateFlowsWithAppConnection(flowsToRepoint, {
-                appConnection: sourceAppConnection,
-                newAppConnection: targetAppConnection,
-                userId,
-                applyToPublishedVersions,
-            })
-            flowsToRepoint.forEach((flow) => repointedFlowIds.add(flow.id))
-        }
-
-        log.info({ oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, affectedFlows: repointedFlowIds.size, deleteSourceConnection, applyToPublishedVersions }, 'App connection replaced')
-
-        if (!deleteSourceConnection) {
-            return
-        }
-
-        // Final integrity gate before the irreversible delete: a flow whose
-        // reference could not be rewritten or that was edited or published
-        // concurrently may still use the connection, and deleting it would
-        // orphan that flow. The list covers latest-version references; the
-        // count covers published versions the list cannot see.
-        const remainingFlows = await flowService(log).list({
+        const flows = await flowService(log).list({
             projectIds: [projectId],
             cursorRequest: null,
-            limit: 1,
             folderId: undefined,
             name: undefined,
             status: undefined,
-            connectionExternalIds: [sourceAppConnection.externalId],
+            flowIds,
         })
-        const remainingPublishedFlows = remainingFlows.data.length > 0
-            ? 0
-            : await appConnectionHandler(log).countPublishedFlowsReferencingConnection({ projectId, externalId: sourceAppConnection.externalId, applyToPublishedVersions: false })
-        if (remainingFlows.data.length > 0 || remainingPublishedFlows > 0) {
+        if (flows.data.length !== unique(flowIds).length) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
-                    message: 'Cannot delete the old connection because some flows still use it',
+                    message: `Flows not found in this project: ${unique(flowIds).filter((flowId) => !flows.data.some((flow) => flow.id === flowId)).join(', ')}`,
                 },
             })
         }
-
-        await this.delete({
-            id: sourceAppConnection.id,
+        await appConnectionHandler(log).replaceConnectionInFlows({
+            flows: flows.data,
+            appConnection: sourceAppConnection,
+            newAppConnection: targetAppConnection,
+            userId,
             platformId,
-            scope: sourceAppConnection.scope,
-            projectId,
+            applyToPublishedVersions,
         })
+        log.info({ oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, affectedFlows: flows.data.length, applyToPublishedVersions }, 'App connection replaced')
     },
 
     async delete(params: DeleteParams): Promise<void> {
@@ -413,7 +339,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         projectId,
         projectIds,
         ownerIds,
-        pieceName,
+        pieceNames,
         cursorRequest,
         displayName,
         status,
@@ -438,8 +364,8 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('scope', scope),
             platformId,
         }
-        if (!isNil(pieceName)) {
-            querySelector.pieceName = Equal(pieceName)
+        if (!isNil(pieceNames)) {
+            querySelector.pieceName = In(pieceNames)
         }
         if (!isNil(displayName)) {
             querySelector.displayName = ILike(`%${displayName}%`)
@@ -544,7 +470,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     async listForPlatform(params: ListForPlatformParams): Promise<SeekPage<PlatformAppConnectionsListItem>> {
         const service = appConnectionService(log)
         const page = await service.list({
-            pieceName: params.pieceName,
+            pieceNames: params.pieceNames,
             displayName: params.displayName,
             status: params.status,
             scope: params.scope,
@@ -712,6 +638,7 @@ const validateConnectionValue = async (
                     authorizationMethod: value.authorization_method,
                     codeVerifier: value.code_challenge,
                     redirectUrl: value.redirect_url,
+                    resource: value.resource,
                 },
             })
         }
@@ -734,6 +661,7 @@ const validateConnectionValue = async (
                     clientId: value.client_id,
                     authorizationMethod: value.authorization_method,
                     codeVerifier: value.code_challenge,
+                    resource: value.resource,
                 },
             })
         }
@@ -760,6 +688,7 @@ const validateConnectionValue = async (
                     authorizationMethod: value.authorization_method,
                     codeVerifier: value.code_challenge,
                     scope: value.scope,
+                    resource: value.resource,
                 },
             })
             await engineValidateAuth({
@@ -1005,7 +934,7 @@ type ListParams = {
     projectIds?: ProjectId[]
     ownerIds?: string[]
     platformId: string
-    pieceName: string | undefined
+    pieceNames: string[] | undefined
     cursorRequest: Cursor | null
     scope: AppConnectionScope | undefined
     displayName: string | undefined
@@ -1016,7 +945,7 @@ type ListParams = {
 
 type ListForPlatformParams = {
     platformId: string
-    pieceName: string | undefined
+    pieceNames: string[] | undefined
     displayName: string | undefined
     status: AppConnectionStatus[] | undefined
     scope: AppConnectionScope | undefined
@@ -1056,7 +985,7 @@ type ReplaceParams = {
     projectId: ProjectId
     platformId: string
     userId: UserId
-    deleteSourceConnection: boolean
     applyToPublishedVersions: boolean
+    flowIds: FlowId[]
 }
 

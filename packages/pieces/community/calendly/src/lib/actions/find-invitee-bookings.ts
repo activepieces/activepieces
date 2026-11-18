@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { calendlyAuth } from '../auth';
 import { calendlyCommon, CalendlyCollection, CalendlyRecord } from '../common';
@@ -8,7 +8,7 @@ export const findInviteeBookingsAction = createAction({
   auth: calendlyAuth,
   name: 'find_invitee_bookings',
   classification: 'SEARCH',
-  displayName: 'Find Invitee by Email',
+  displayName: 'Find Events by Invitee Email',
   description: "Finds the meetings an invitee booked with you, by the invitee's email.",
   audience: 'both',
   aiMetadata: {
@@ -17,13 +17,28 @@ export const findInviteeBookingsAction = createAction({
     idempotent: true,
   },
   outputSchema: findInviteeBookingsOutputSchema,
+  propertyGroups: [
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search',
+      icon: 'filter',
+      props: ['searchInfo', 'email', 'status'],
+    },
+  ],
   props: {
+    searchInfo: Property.MarkDown({
+      value: 'Returns up to 100 of your matching events, latest first.',
+      variant: MarkdownVariant.INFO,
+    }),
     email: Property.ShortText({
       displayName: 'Invitee Email',
+      placeholder: 'jane@example.com',
       required: true,
     }),
     status: Property.StaticDropdown({
       displayName: 'Status',
+      description: 'Empty: both active and canceled.',
       required: false,
       options: {
         options: [

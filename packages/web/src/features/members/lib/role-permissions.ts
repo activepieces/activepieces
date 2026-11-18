@@ -87,6 +87,12 @@ function groups(): PermissionGroup[] {
           edit: Permission.WRITE_APP_CONNECTION,
         },
         {
+          key: 'replace-app-connections',
+          label: t('Replace connections'),
+          edit: Permission.REPLACE_APP_CONNECTION,
+          requires: Permission.READ_APP_CONNECTION,
+        },
+        {
           key: 'project-releases',
           label: t('Project releases'),
           view: Permission.READ_PROJECT_RELEASE,
@@ -171,28 +177,38 @@ function toggleBox({
   column,
   checked,
 }: ToggleBoxParams): string[] {
-  const next = new Set(permissions);
+  const updatedPermissions = new Set(permissions);
   if (column === 'edit' && row.edit) {
     if (checked) {
-      next.add(row.edit);
+      updatedPermissions.add(row.edit);
       if (row.view) {
-        next.add(row.view);
+        updatedPermissions.add(row.view);
+      }
+      if (row.requires) {
+        updatedPermissions.add(row.requires);
       }
     } else {
-      next.delete(row.edit);
+      updatedPermissions.delete(row.edit);
     }
   }
   if (column === 'view' && row.view && !row.viewAlwaysOn) {
     if (checked) {
-      next.add(row.view);
+      updatedPermissions.add(row.view);
     } else {
-      next.delete(row.view);
+      updatedPermissions.delete(row.view);
       if (row.edit) {
-        next.delete(row.edit);
+        updatedPermissions.delete(row.edit);
       }
+      allRows()
+        .filter((dependentRow) => dependentRow.requires === row.view)
+        .forEach((dependentRow) => {
+          if (dependentRow.edit) {
+            updatedPermissions.delete(dependentRow.edit);
+          }
+        });
     }
   }
-  return Array.from(next);
+  return Array.from(updatedPermissions);
 }
 
 function changedRowKeys({
@@ -235,6 +251,7 @@ export type PermissionRow = {
   view?: Permission;
   edit?: Permission;
   viewAlwaysOn?: boolean;
+  requires?: Permission;
 };
 
 export type PermissionGroup = {

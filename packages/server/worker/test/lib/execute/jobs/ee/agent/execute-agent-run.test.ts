@@ -1,34 +1,46 @@
 import { describe, expect, it } from 'vitest'
 import { UNATTENDED_WEB_TOOLS } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-tool-policy'
 import { stepResultFrom } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-step-result'
-import { decideLoopAction, shouldRetryStream } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
+import { decideLoopAction, shouldRetryStream, stepEndsWithReply } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
 describe('decideLoopAction', () => {
     it('finishes when a normal step produced visible output', () => {
-        expect(decideLoopAction({ finishReason: 'stop', producedVisibleOutput: true, continuations: 0, emptyContinuations: 0 })).toBe('finish')
-        expect(decideLoopAction({ finishReason: 'tool-calls', producedVisibleOutput: true, continuations: 0, emptyContinuations: 0 })).toBe('finish')
+        expect(decideLoopAction({ finishReason: 'stop', endedWithReply: true, continuations: 0, emptyContinuations: 0 })).toBe('finish')
+        expect(decideLoopAction({ finishReason: 'tool-calls', endedWithReply: true, continuations: 0, emptyContinuations: 0 })).toBe('finish')
     })
 
     it('nudges (continue_empty) when a step produced no visible output, within the cap', () => {
-        expect(decideLoopAction({ finishReason: 'stop', producedVisibleOutput: false, continuations: 0, emptyContinuations: 0 })).toBe('continue_empty')
-        expect(decideLoopAction({ finishReason: 'stop', producedVisibleOutput: false, continuations: 0, emptyContinuations: 1 })).toBe('continue_empty')
+        expect(decideLoopAction({ finishReason: 'stop', endedWithReply: false, continuations: 0, emptyContinuations: 0 })).toBe('continue_empty')
+        expect(decideLoopAction({ finishReason: 'stop', endedWithReply: false, continuations: 0, emptyContinuations: 1 })).toBe('continue_empty')
     })
 
     it('stops nudging empty steps once the empty cap is reached', () => {
-        expect(decideLoopAction({ finishReason: 'stop', producedVisibleOutput: false, continuations: 0, emptyContinuations: 2 })).toBe('finish')
+        expect(decideLoopAction({ finishReason: 'stop', endedWithReply: false, continuations: 0, emptyContinuations: 2 })).toBe('finish')
     })
 
     it('auto-continues on truncation until the truncation cap', () => {
-        expect(decideLoopAction({ finishReason: 'length', producedVisibleOutput: false, continuations: 0, emptyContinuations: 0 })).toBe('continue_truncation')
-        expect(decideLoopAction({ finishReason: 'length', producedVisibleOutput: true, continuations: 2, emptyContinuations: 0 })).toBe('continue_truncation')
+        expect(decideLoopAction({ finishReason: 'length', endedWithReply: false, continuations: 0, emptyContinuations: 0 })).toBe('continue_truncation')
+        expect(decideLoopAction({ finishReason: 'length', endedWithReply: true, continuations: 2, emptyContinuations: 0 })).toBe('continue_truncation')
     })
 
     it('finishes once the truncation cap is reached', () => {
-        expect(decideLoopAction({ finishReason: 'length', producedVisibleOutput: false, continuations: 3, emptyContinuations: 0 })).toBe('finish')
+        expect(decideLoopAction({ finishReason: 'length', endedWithReply: false, continuations: 3, emptyContinuations: 0 })).toBe('finish')
     })
 
     it('treats truncation as higher priority than emptiness', () => {
-        expect(decideLoopAction({ finishReason: 'length', producedVisibleOutput: false, continuations: 0, emptyContinuations: 2 })).toBe('continue_truncation')
+        expect(decideLoopAction({ finishReason: 'length', endedWithReply: false, continuations: 0, emptyContinuations: 2 })).toBe('continue_truncation')
+    })
+})
+
+describe('stepEndsWithReply', () => {
+    it('is false for a thinking-only final step after earlier tool calls', () => {
+        expect(stepEndsWithReply({ text: '', toolCallCount: 0 })).toBe(false)
+        expect(stepEndsWithReply({ text: '  \n', toolCallCount: 0 })).toBe(false)
+    })
+
+    it('is true when the final step has text or calls a tool', () => {
+        expect(stepEndsWithReply({ text: 'Renamed the step.', toolCallCount: 0 })).toBe(true)
+        expect(stepEndsWithReply({ text: '', toolCallCount: 1 })).toBe(true)
     })
 })
 

@@ -41,6 +41,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Scheduled Post": "New Scheduled Post",
   "New Published Post": "New Published Post",
   "Triggers when a new post is scheduled in Hootsuite.": "Triggers when a new post is scheduled in Hootsuite.",

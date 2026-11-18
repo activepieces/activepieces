@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { sendBroadcastOutputSchema } from '../output-schemas';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
@@ -14,12 +14,25 @@ export const sendBroadcast = createAction({
   description: 'Send or schedule a broadcast email to its audience',
   audience: 'both',
   aiMetadata: { description: 'Sends an existing draft broadcast to its entire audience immediately, or schedules it for a future time, identified by broadcast ID. Use this after Create Broadcast to deliver the campaign. Not idempotent — repeating the call can dispatch the broadcast again; optionally pass an ISO 8601 time to schedule rather than send now.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'send',
+      display: 'section',
+      label: 'Send',
+      icon: 'send',
+      props: ['info', 'broadcast_id', 'scheduled_at'],
+    },
+  ],
   props: {
+    info: Property.MarkDown({
+      value: "Sends to every subscribed contact in the broadcast's audience.",
+      variant: MarkdownVariant.INFO,
+    }),
     broadcast_id: resendProps.broadcastId,
     scheduled_at: Property.ShortText({
-      displayName: 'Schedule For',
-      description:
-        'ISO 8601 date-time to schedule the send, e.g. 2024-12-01T10:00:00Z. Leave blank to send immediately.',
+      displayName: 'Send Time',
+      description: 'Empty sends now. ISO 8601, or plain words like in 1 hour.',
+      placeholder: '2026-12-01T10:00:00Z',
       required: false,
     }),
   },

@@ -10,6 +10,7 @@ import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client, PageCollection, ResponseType } from '@microsoft/microsoft-graph-client';
 import { DriveItem } from '@microsoft/microsoft-graph-types';
+import { microsoftSharepointCopyItemOutputSchema } from '../output-schemas';
 
 const polling_delay_ms = 2000; 
 const polling_timeout_secs = 120; 
@@ -21,6 +22,7 @@ async function delay(ms: number) {
 export const copyItemWithinSiteAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_copy_item_within_site',
+  outputSchema: microsoftSharepointCopyItemOutputSchema,
   classification: 'WRITE',
   displayName: 'Copy File or Folder (Within Site)',
   description: 'Copy a file or folder to another folder within the same site.',

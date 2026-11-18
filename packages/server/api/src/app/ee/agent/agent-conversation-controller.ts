@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, connectionTemplate, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
+import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, MemoryImportNudgeClaimResponse, MemoryImportNudgeResponse, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -9,6 +9,7 @@ import { mcpUtils } from '../../mcp/tools/mcp-utils'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { agentApprovalGate } from './agent-approval-gate'
+import { agentChatModel } from './agent-chat-model'
 import { agentConversationService } from './agent-conversation-service'
 import { agentHelpers } from './agent-helpers'
 import { agentMemoryAi } from './agent-memory-ai'
@@ -131,14 +132,19 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             projects: await agentHelpers.getUserProjects({ platformId, userId, log }),
         })
         const runScope = agentHelpers.runScopeOrThrow({ projectId: runProjectId })
-        await agentHelpers.assertRunProviderConfigured({
-            platformId,
-            log,
-            scope: runScope,
-            modelTierId: runTierId,
-            ...spreadIfDefined('provider', agentConfig?.provider ?? undefined),
-            ...spreadIfDefined('providerConfigId', agentConfig?.providerConfigId ?? undefined),
-        })
+        if (runsOnAgentModel) {
+            await agentHelpers.assertRunProviderConfigured({
+                platformId,
+                log,
+                scope: runScope,
+                modelTierId: runTierId,
+                ...spreadIfDefined('provider', agentConfig.provider ?? undefined),
+                ...spreadIfDefined('providerConfigId', agentConfig.providerConfigId ?? undefined),
+            })
+        }
+        else {
+            await agentChatModel(log).assertRunnable({ platformId, conversation, scope: runScope })
+        }
         await assertCreditsAndAppSumoNotExceeded({ platformId, log })
 
         const carriesConfiguredTools = !isNil(agentConfig) && !isBuilder
@@ -290,16 +296,31 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         })
     })
 
+    app.get('/memory/import-nudge', GetMemoryImportNudgeRoute, async (request): Promise<MemoryImportNudgeResponse> => {
+        const eligible = await agentHelpers.memoryImportNudgeEligible({
+            platformId: request.principal.platform.id,
+            userId: request.principal.id,
+        })
+        return { eligible }
+    })
+
+    app.post('/memory/import-nudge/claim', ClaimMemoryImportNudgeRoute, async (request): Promise<MemoryImportNudgeClaimResponse> => {
+        const claimed = await agentHelpers.claimMemoryImportNudge({
+            platformId: request.principal.platform.id,
+            userId: request.principal.id,
+        })
+        return { claimed }
+    })
+
     app.post('/memory/import', ImportMemoryRoute, async (request) => {
         const platformId = request.principal.platform.id
         const userId = request.principal.id
-        const draft = await agentMemoryAi.extract({ platformId, text: request.body.text, log: request.log })
+        const draft = await agentMemoryAi.extract({ platformId, userId, text: request.body.text, log: request.log })
         const current = await agentHelpers.getUserMemory({ platformId, userId })
         return agentHelpers.saveUserMemory({
             platformId,
             userId,
-            memories: [...current.memories, ...draft.memories],
-            baseMemories: current.memories,
+            memories: { next: [...current.memories, ...draft.memories], base: current.memories },
         })
     })
 
@@ -530,6 +551,32 @@ const UpdateMemoryRoute = {
         tags: ['agent'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         body: UpdateAgentMemoryRequest,
+    },
+}
+
+const GetMemoryImportNudgeRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['agent'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        response: {
+            [StatusCodes.OK]: MemoryImportNudgeResponse,
+        },
+    },
+}
+
+const ClaimMemoryImportNudgeRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['agent'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        response: {
+            [StatusCodes.OK]: MemoryImportNudgeClaimResponse,
+        },
     },
 }
 

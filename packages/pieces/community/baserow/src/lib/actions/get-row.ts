@@ -16,13 +16,22 @@ export const getRowAction = createAction({
     idempotent: true,
   },
   auth: baserowAuth,
+  propertyGroups: [
+    {
+      key: 'row',
+      display: 'section',
+      label: 'Row to Get',
+      icon: 'file',
+      props: ['table_id', 'row_id'],
+    },
+  ],
   props: {
     table_id: baserowCommon.tableId(),
     row_id: baserowCommon.rowId(),
   },
   async run(context) {
-    const { table_id, row_id } = context.propsValue as {table_id: number, row_id: number};
+    const { table_id, row_id } = context.propsValue;
     const client = await makeClient(context.auth);
-    return await client.getRow(table_id, row_id);
+    return await client.getRow(table_id!, row_id!);
   },
 });

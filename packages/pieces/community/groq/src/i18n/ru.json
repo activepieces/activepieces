@@ -86,5 +86,7 @@
   "Appended to the URL as ?key=value.": "Добавляется к URL в виде ?key=value.",
   "On a failed request, output the error instead of failing the step.": "При неудачном запросе возвращает ошибку вместо сбоя шага.",
   "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Сколько секунд ждать ответа. Пусто: до лимита потока (10 мин).",
-  "Follow 3xx redirects instead of returning them as the response.": "Следовать перенаправлениям 3xx вместо того, чтобы возвращать их как ответ."
+  "Follow 3xx redirects instead of returning them as the response.": "Следовать перенаправлениям 3xx вместо того, чтобы возвращать их как ответ.",
+  "Markdown": "Markdown",
+  "Saved for the whole project, so other flows that use this ID join the same conversation.": "Сохраняется для всего проекта, поэтому другие потоки с этим ID продолжают ту же беседу."
 }

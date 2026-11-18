@@ -114,6 +114,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Candidate Application": "New Candidate Application",
   "Candidate Hired": "Candidate Hired",
   "New Job Post": "New Job Post",

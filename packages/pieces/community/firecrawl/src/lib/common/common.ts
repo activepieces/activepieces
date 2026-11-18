@@ -146,12 +146,52 @@ export async function polling(
     if (jobStatus === 'completed') {
       return statusResponse.body;
     } else if (jobStatus === 'failed') {
-        throw new Error(`${actionType.charAt(0).toUpperCase()}. job failed: ${JSON.stringify(statusResponse.body)}`);
+        throw new Error(`${JOB_NAMES[actionType]} job failed: ${JSON.stringify(statusResponse.body)}`);
     }
   }
 
   // exit loop time out
-  throw new Error(`${actionType.charAt(0).toUpperCase()}. job timed out after ${timeoutSeconds} second(s)`);
+  throw new Error(`${JOB_NAMES[actionType]} job timed out after ${timeoutSeconds} seconds`);
 }
 
+export async function followCrawlPages({
+  firstPage,
+  auth,
+}: {
+  firstPage: CrawlStatusPage;
+  auth: string;
+}): Promise<CrawlStatusPage> {
+  let data = firstPage.data ?? [];
+  let next = firstPage.next;
+  const visited = new Set<string>();
+  while (isFirecrawlApiUrl(next) && !visited.has(next)) {
+    visited.add(next);
+    const response = await httpClient.sendRequest<CrawlStatusPage>({
+      method: HttpMethod.GET,
+      url: next,
+      headers: {
+        'Authorization': `Bearer ${auth}`,
+      },
+    });
+    data = [...data, ...(response.body.data ?? [])];
+    next = response.body.next;
+  }
+  return { ...firstPage, data, next: null };
+}
+
+function isFirecrawlApiUrl(url: string | null | undefined): url is string {
+  return typeof url === 'string' && url.startsWith(`${FIRECRAWL_API_BASE_URL}/`);
+}
+
+const JOB_NAMES: Record<'extract' | 'crawl', string> = {
+  extract: 'Extract',
+  crawl: 'Crawl',
+};
+
 export const FIRECRAWL_ORIGIN = 'activepieces';
+
+export type CrawlStatusPage = {
+  data?: Record<string, unknown>[];
+  next?: string | null;
+  [key: string]: unknown;
+};

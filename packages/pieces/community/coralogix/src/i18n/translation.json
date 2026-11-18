@@ -106,6 +106,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Alert Event": "New Alert Event",
   "New Incident": "New Incident",
   "Triggers when Coralogix sends an alert-event webhook payload to this flow.": "Triggers when Coralogix sends an alert-event webhook payload to this flow.",

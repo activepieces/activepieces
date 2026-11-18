@@ -1,23 +1,30 @@
-import { ActivepiecesError, AiProviderKeyStatus, AIProviderName, apId, classifyProviderOutcome, ErrorCode, isNil, PlatformId, ProviderOutcomeSignal, spreadIfDefined, spreadIfNotUndefined, toProviderOutcomeSignal, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, AiProviderKeyStatus, AIProviderName, apId, classifyProviderOutcome, ErrorCode, isNil, PlatformId, ProviderOutcomeSignal, spreadIfDefined, toProviderOutcomeSignal, tryCatch, unique } from '@activepieces/core-utils'
 import { modelCatalog, modelTierCatalog } from '@activepieces/server-utils'
-import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, aiProviderCredentials, AIProviderModel, AIProviderModelType, AiProviderProjectScope, AiProviderToolConfig, aiProviderUtils, AIProviderWithoutSensitiveData, AiToolCapability, AiToolProvider, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
+import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, aiProviderCredentials, AIProviderModel, AIProviderModelType, AiProviderProjectScope, AiProviderToolConfig, aiProviderUtils, AIProviderWithoutSensitiveData, AiToolCapability, AiToolProvider, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, SelfServeTrialState, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
-import { EntityManager, FindOptionsWhere } from 'typeorm'
+import { EntityManager, FindOptionsWhere, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
-import { getAiProviderConfirmKey, getManagedAiProviderKeyLockKey } from '../database/redis/keys'
+import { getAiProviderConfirmKey, getAiProviderUpdateLockKey, getManagedAiProviderKeyLockKey } from '../database/redis/keys'
 import { distributedLock, distributedStore } from '../database/redis-connections'
 import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
 import { flagService } from '../flags/flag.service'
 import { EncryptedObject, encryptUtils } from '../helper/encryption'
+import { sleep } from '../helper/sleep'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
+import { billingProvider } from '../platform/billing-provider'
+import { platformConfigurationService } from '../platform/platform-configuration.service'
 import { platformService } from '../platform/platform.service'
 import { aiKeyScope, ProviderScope } from './ai-key-scope'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { aiProviderHealth } from './ai-provider-health'
 import { AiToolConfigEntity } from './ai-tool-config-entity'
+import { aiUsageHooks } from './ai-usage-hooks'
 import { platformModelTierService } from './platform-model-tier-service'
 import { aiProviders } from './providers'
+import { ModelSyncMode } from './providers/ai-provider'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
 
@@ -25,7 +32,13 @@ const modelsCache = new Map<string, AIProviderModel[]>()
 
 const MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD = 500
 const MANAGED_OPENROUTER_KEY_LIMIT_RESET = 'monthly'
-const MANAGED_OPENROUTER_KEY_LOCK_TIMEOUT_SECONDS = 30
+const MANAGED_OPENROUTER_KEY_LOCK_TIMEOUT_SECONDS = 60
+const KEY_UPDATE_LOCK_TIMEOUT_SECONDS = 60
+const MANAGED_OPENROUTER_KEY_LIVE_WAIT_MS = 30_000
+const MANAGED_OPENROUTER_KEY_LIVE_POLL_MS = 1_000
+const MANAGED_OPENROUTER_KEY_LIVE_PASSES_IN_A_ROW = 3
+const MANAGEMENT_KEY_VISIBLE_PREFIX_LENGTH = 12
+const MANAGEMENT_KEY_VISIBLE_SUFFIX_LENGTH = 3
 
 // A passing check must not lock out the next real failure, so the claim is a floor between
 // checks rather than a window that swallows them. A confirmed failure needs no floor: the row
@@ -45,6 +58,18 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const rows = await listVisibleRows({ platformId, log })
         const chatRowId = pickChatRow(rows)?.id
         return rows.map((row) => toConfigResponse({ row, enabledForChat: row.id === chatRowId }))
+    },
+
+    async getConfig({ platformId, configId }: { platformId: PlatformId, configId: string }): Promise<AIProviderWithoutSensitiveData> {
+        const rows = await aiProviderRepo().findBy({ platformId })
+        const row = rows.find((candidate) => candidate.id === configId)
+        if (isNil(row)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: configId, entityType: AI_PROVIDER_ENTITY_TYPES.provider },
+            })
+        }
+        return toConfigResponse({ row, enabledForChat: row.id === pickChatRow(rows)?.id })
     },
 
     async listForProject({ platformId, projectId }: { platformId: PlatformId, projectId: string }): Promise<ProjectAIProvider[]> {
@@ -74,18 +99,17 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     async listKeysForProject({ platformId, projectId }: { platformId: PlatformId, projectId: string }): Promise<ProjectKeyModels[]> {
         const rows = await listVisibleRows({ platformId, log })
         const scope: ProviderScope = { type: 'project', projectId }
-        const ranked = rankRows({ rows: rows.filter((row) => aiKeyScope.rowAllowsScope({ row, scope })), scope })
-        const chatRowId = pickChatRow(ranked)?.id
-        return Promise.all(ranked.map(async (row) => {
-            const { data } = row.provider === AIProviderName.ACTIVEPIECES
-                ? { data: null }
-                : await tryCatch(() => fetchModels({ aiProvider: row, platformId, log }))
-            return {
-                row,
-                isChatKey: row.id === chatRowId,
-                models: isNil(data) ? null : data.filter((model) => aiKeyScope.scopeAllows({ modelScope: row.modelScope, modelIds: row.modelIds, modelId: model.id })),
-            }
-        }))
+        return withModels({ ranked: rankRows({ rows: rows.filter((row) => aiKeyScope.rowAllowsScope({ row, scope })), scope }), platformId, log })
+    },
+
+    async listKeysForPlatform({ platformId }: { platformId: PlatformId }): Promise<ProjectKeyModels[]> {
+        const rows = await listVisibleRows({ platformId, log })
+        return withModels({ ranked: rankRows({ rows, scope: { type: 'platform' } }), platformId, log })
+    },
+
+    async markDefaultKey({ manager, platformId, configId }: { manager: EntityManager, platformId: PlatformId, configId: string }): Promise<void> {
+        await manager.update(AIProviderEntity, { platformId }, { enabledForChat: false })
+        await manager.update(AIProviderEntity, { platformId, id: configId }, { enabledForChat: true })
     },
 
     async listModelsForConfig({ platformId, configId }: { platformId: PlatformId, configId: string }): Promise<AIProviderModel[]> {
@@ -117,24 +141,58 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
         await assertDisplayNameIsFree({ platformId, provider: request.provider, displayName: request.displayName })
         await this.validateProviderCredentials(request.provider, request.auth, request.config)
-        const saved = await aiProviderRepo().save({
-            id: apId(),
-            auth: await encryptUtils.encryptObject(request.auth),
-            config: request.config,
-            provider: request.provider,
-            displayName: request.displayName,
-            platformId,
-            modelScope: 'all',
-            modelIds: [],
-            projectScope: 'all',
-            projectIds: [],
-            status: 'active',
-            statusReason: null,
-            statusUpdated: new Date().toISOString(),
+        const config = await this.syncProviderModels({ provider: request.provider, auth: request.auth, config: request.config, mode: 'save' }) ?? request.config
+        const auth = await encryptUtils.encryptObject(request.auth)
+        const { saved, isFirstKey } = await transaction(async (manager) => {
+            await platformModelTierService.lockPlatform({ manager, platformId })
+            const hasDefaultChatModel = !isNil((await platformConfigurationService(log).getOrCreateForPlatform({ platformId })).defaultChatModel)
+            const firstKey = !hasDefaultChatModel && !await aiProviderRepo(manager).existsBy({ platformId, provider: Not(AIProviderName.ACTIVEPIECES) })
+            if (firstKey) {
+                await aiProviderRepo(manager).update({ platformId }, { enabledForChat: false })
+            }
+            const row = await aiProviderRepo(manager).save({
+                id: apId(),
+                enabledForChat: firstKey,
+                auth,
+                config,
+                provider: request.provider,
+                displayName: request.displayName,
+                platformId,
+                modelScope: 'all',
+                modelIds: [],
+                projectScope: 'all',
+                projectIds: [],
+                status: 'active',
+                statusReason: null,
+                statusUpdated: new Date().toISOString(),
+            })
+            return { saved: row, isFirstKey: firstKey }
         })
-        return toConfigResponse({ row: saved, enabledForChat: false })
+        return toConfigResponse({ row: saved, enabledForChat: isFirstKey })
     },
     async update(platformId: PlatformId, providerId: string, request: UpdateAIProviderRequest): Promise<void> {
+        await withKeyUpdateLock({ providerId, log, fn: () => this.updateKey({ platformId, providerId, request, syncMode: 'save' }) })
+    },
+
+    async refreshModels({ platformId, providerId }: { platformId: PlatformId, providerId: string }): Promise<AIProviderModel[]> {
+        await withKeyUpdateLock({
+            providerId,
+            log,
+            fn: async () => {
+                const aiProvider = await getRowByIdOrThrow({ platformId, configId: providerId })
+                if (isNil(aiProviders[aiProvider.provider].syncModels)) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.VALIDATION,
+                        params: { message: `${aiProviders[aiProvider.provider].name} keys have no model list to refresh` },
+                    })
+                }
+                await this.updateKey({ platformId, providerId, request: { displayName: aiProvider.displayName, config: aiProvider.config }, syncMode: 'refresh' })
+            },
+        })
+        return this.listModelsForConfig({ platformId, configId: providerId })
+    },
+
+    async updateKey({ platformId, providerId, request, syncMode }: { platformId: PlatformId, providerId: string, request: UpdateAIProviderRequest, syncMode: ModelSyncMode }): Promise<void> {
         const aiProvider = await aiProviderRepo().findOneBy({
             platformId,
             id: providerId,
@@ -161,18 +219,18 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
         const config = request.config ?? aiProvider.config
         const revalidated = !isNil(request.auth) || !isNil(request.config)
-        if (!isNil(request.auth)) {
-            await this.validateProviderCredentials(aiProvider.provider, request.auth, config)
-        }
-        else if (!isNil(request.config)) {
-            const auth = await decryptRowAuth({ aiProvider, platformId, log })
+        const auth = revalidated ? request.auth ?? await decryptRowAuth({ aiProvider, platformId, log }) : undefined
+        if (!isNil(auth)) {
             await this.validateProviderCredentials(aiProvider.provider, auth, config)
         }
+        const nextConfig = isNil(auth)
+            ? request.config
+            : await this.syncProviderModels({ provider: aiProvider.provider, auth, config, mode: syncMode }) ?? request.config
 
         const encryptedAuth = !isNil(request.auth) ? await encryptUtils.encryptObject(request.auth) : undefined
         const updates = {
             ...spreadIfDefined('auth', encryptedAuth),
-            ...spreadIfDefined('config', request.config),
+            ...spreadIfDefined('config', nextConfig),
             ...spreadIfDefined('enabledForChat', request.enabledForChat),
             ...spreadIfDefined('modelScope', request.modelScope),
             ...spreadIfDefined('modelIds', request.modelIds),
@@ -182,10 +240,10 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             displayName: request.displayName,
         }
 
-        const changesModelScope = !isNil(request.modelScope) || !isNil(request.modelIds) || !isNil(aiKeyScope.manualModelIdsOf({ config: request.config }))
+        const changesModelScope = !isNil(request.modelScope) || !isNil(request.modelIds) || !isNil(aiKeyScope.manualModelIdsOf({ config: nextConfig }))
         await transaction(async (manager) => {
             await platformModelTierService.lockPlatform({ manager, platformId })
-            await assertCapabilitiesKeepKey({ manager, platformId, providerId, request })
+            await assertCapabilitiesKeepKey({ manager, platformId, providerId, request: { ...request, config: nextConfig } })
             if (changesModelScope) {
                 await platformModelTierService.assertKeyScopeKeepsTiers({
                     manager,
@@ -193,13 +251,17 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                     configId: providerId,
                     modelScope: request.modelScope,
                     modelIds: request.modelIds,
-                    config: request.config,
+                    config: nextConfig,
                 })
             }
             if (request.enabledForChat === true) {
                 await manager.update(AIProviderEntity, { platformId }, { enabledForChat: false })
             }
             await manager.update(AIProviderEntity, providerId, updates)
+            if (changesModelScope || !isNil(request.projectScope) || !isNil(request.projectIds)) {
+                const key = await manager.findOneByOrFail(AIProviderEntity, { platformId, id: providerId })
+                await aiUsageHooks.get(log).unpinConversationsFromKey({ manager, platformId, configId: providerId, key })
+            }
         })
     },
 
@@ -228,6 +290,27 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return { ...aiProviderCredentials({ provider: chatProvider.provider, auth, config: chatProvider.config }), configId: chatProvider.id, platformId, modelScope: chatProvider.modelScope, modelIds: chatProvider.modelIds }
     },
 
+    async findCreditsConfig({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<GetProviderConfigResponse | null> {
+        const row = (await listVisibleRows({ platformId, log })).find((candidate) => candidate.provider === AIProviderName.ACTIVEPIECES)
+        return isNil(row) ? null : this.findKeyConfig({ platformId, configId: row.id, scope })
+    },
+
+    async findKeyConfig({ platformId, configId, scope }: { platformId: PlatformId, configId: string, scope: ProviderScope }): Promise<GetProviderConfigResponse | null> {
+        const row = await aiProviderRepo().findOneBy({ platformId, id: configId })
+        if (isNil(row) || !aiKeyScope.rowAllowsScope({ row, scope })) {
+            return null
+        }
+        if (row.provider === AIProviderName.ACTIVEPIECES && await isActivepiecesAiProviderHidden({ platformId, log })) {
+            return null
+        }
+        return this.configForTierKey({ platformId, key: row })
+    },
+
+    async findProviderName({ platformId, configId }: { platformId: PlatformId, configId: string }): Promise<AIProviderName | null> {
+        const row = await aiProviderRepo().findOne({ where: { platformId, id: configId }, select: { provider: true } })
+        return row?.provider ?? null
+    },
+
     async keyServesScope({ platformId, provider, configId, resolvedFor, target }: { platformId: PlatformId, provider?: AIProviderName, configId?: string, resolvedFor: ProviderScope, target: ProviderScope }): Promise<boolean> {
         const candidates = await findRunKeyCandidates({ platformId, provider, configId, scope: resolvedFor, log })
         return candidates.every((row) => target.type === 'platform'
@@ -243,7 +326,13 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     async delete(platformId: PlatformId, providerId: string): Promise<void> {
         const deleted = await transaction(async (manager) => {
             await platformModelTierService.removeKeyFromTiers({ manager, platformId, configId: providerId })
-            return deleteRowForUpdate({ manager, where: { platformId, id: providerId } })
+            await manager.query(
+                'UPDATE "platform_configuration" SET "defaultChatModel" = NULL WHERE "platformId" = $1 AND "defaultChatModel"->>\'providerConfigId\' = $2',
+                [platformId, providerId],
+            )
+            const row = await deleteRowForUpdate({ manager, where: { platformId, id: providerId } })
+            await aiUsageHooks.get(log).unpinConversationsFromKey({ manager, platformId, configId: providerId, key: null })
+            return row
         })
         await revokeKeyIfManaged({ row: deleted, log })
     },
@@ -251,6 +340,9 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const deleted = await transaction(async (manager) => {
             await lockPlatformForUpdate({ manager, platformId })
             const row = await deleteRowForUpdate({ manager, where: { platformId, provider: AIProviderName.ACTIVEPIECES } })
+            if (!isNil(row)) {
+                await aiUsageHooks.get(log).unpinConversationsFromKey({ manager, platformId, configId: row.id, key: null })
+            }
             await inSameTransaction?.(manager)
             return row
         })
@@ -305,33 +397,24 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const auth = await decryptRowAuth({ aiProvider, platformId, log })
         const { error } = await tryCatch(() => aiProviders[aiProvider.provider].validateConnection(auth, aiProvider.config, log))
         const signal = isNil(error) ? { statusCode: 200 } : toProviderOutcomeSignal(error)
-        const recorded = await aiProviderHealth(log).record({ platformId, providerId, signal, throttled: false, ...spreadIfNotUndefined('expectVersion', expectVersion) })
-        return recorded ?? aiProvider.status
+        const recorded = await aiProviderHealth(log).record({ platformId, providerId, signal, throttled: false, expectVersion: expectVersion ?? aiProvider.statusVersion })
+        return recorded ?? (await getRowByIdOrThrow({ platformId, configId: providerId })).status
     },
 
     async validateProviderCredentials(provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig): Promise<void> {
-        const providerStrategy = aiProviders[provider]
-        try {
-            await providerStrategy.validateConnection(auth, config, log)
-        }
-        catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-            const configProblem = ownConfigProblem(error)
-            const includeHttpErrorInMessage = provider === AIProviderName.CLOUDFLARE_GATEWAY
+        const { error } = await tryCatch(() => aiProviders[provider].validateConnection(auth, config, log))
+        if (!isNil(error)) {
             log.error({ error }, '[aiProviderService#validateProviderCredentials] Failed to validate provider credentials')
-            throw new ActivepiecesError({
-                code: ErrorCode.INVALID_AI_PROVIDER_CREDENTIALS,
-                params: {
-                    provider,
-                    message: !isNil(configProblem)
-                        ? configProblem
-                        : includeHttpErrorInMessage
-                            ? `Failed to validate credentials for ${providerStrategy.name}, ${errorMessage}`
-                            : `Failed to validate credentials for ${providerStrategy.name}`,
-                    httpErrorResponse: errorMessage,
-                },
-            })
+            throw credentialsError({ provider, error })
         }
+    },
+    async syncProviderModels({ provider, auth, config, mode }: { provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig, mode: ModelSyncMode }): Promise<AIProviderConfig | undefined> {
+        const { data, error } = await tryCatch(async () => aiProviders[provider].syncModels?.({ authConfig: auth, config, mode }))
+        if (!isNil(error)) {
+            log.warn({ error, provider }, '[aiProviderService#syncProviderModels] Could not sync the provider models')
+            throw credentialsError({ provider, error })
+        }
+        return data ?? undefined
     },
     async assertModelAllowed({ platformId, provider, scope, configId, modelId }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope, configId?: string, modelId: string }): Promise<void> {
         const aiProvider = await resolveRowForScope({ platformId, provider, scope, configId })
@@ -372,7 +455,11 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
 async function shouldHideActivepiecesAiProvider({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<boolean> {
     const { plan } = await platformService(log).getOneWithPlanOrThrow(platformId)
-    return plan.embeddingEnabled
+    if (!plan.embeddingEnabled) {
+        return false
+    }
+    const selfServeTrial = await billingProvider.get(log).getSelfServeTrialInfo({ platformId })
+    return selfServeTrial.state !== SelfServeTrialState.ACTIVE
 }
 
 
@@ -380,6 +467,7 @@ const CAPABILITY_LABELS: Record<AiToolCapability, string> = {
     [AiToolCapability.WEB_SEARCH]: 'web search',
     [AiToolCapability.WEB_SCRAPING]: 'web scraping',
     [AiToolCapability.IMAGE_GENERATION]: 'image generation',
+    [AiToolCapability.EMBEDDINGS]: 'embeddings',
 }
 
 const PLATFORM_SCOPE_PREFERENCE: Record<AiProviderProjectScope, number> = {
@@ -392,6 +480,20 @@ const PROJECT_SCOPE_SPECIFICITY: Record<AiProviderProjectScope, number> = {
     selected: 0,
     except: 1,
     all: 2,
+}
+
+async function withModels({ ranked, platformId, log }: { ranked: AIProviderSchema[], platformId: PlatformId, log: FastifyBaseLogger }): Promise<ProjectKeyModels[]> {
+    const chatRowId = pickChatRow(ranked)?.id
+    return Promise.all(ranked.map(async (row) => {
+        const { data } = row.provider === AIProviderName.ACTIVEPIECES
+            ? { data: null }
+            : await tryCatch(() => fetchModels({ aiProvider: row, platformId, log }))
+        return {
+            row,
+            isChatKey: row.id === chatRowId,
+            models: isNil(data) ? null : data.filter((model) => aiKeyScope.scopeAllows({ modelScope: row.modelScope, modelIds: row.modelIds, modelId: model.id })),
+        }
+    }))
 }
 
 function rankRows({ rows, scope }: { rows: AIProviderSchema[], scope: ProviderScope }): AIProviderSchema[] {
@@ -493,7 +595,7 @@ async function assertCapabilitiesKeepKey({ manager, platformId, providerId, requ
             return []
         }
         const losesProjects = next.projectScope !== 'all'
-        const losesModel = !isNil(choice.data.modelId) && !aiKeyScope.keyOffersModel({ key: next, modelId: choice.data.modelId })
+        const losesModel = toolConfig.capability !== AiToolCapability.EMBEDDINGS && !isNil(choice.data.modelId) && !aiKeyScope.keyOffersModel({ key: next, modelId: choice.data.modelId })
         return losesProjects || losesModel ? [CAPABILITY_LABELS[toolConfig.capability]] : []
     })
     if (broken.length > 0) {
@@ -590,7 +692,7 @@ async function fetchModels({ aiProvider, platformId, log }: { aiProvider: AIProv
             id: model.id,
             name: model.name,
             type: model.type,
-            ...spreadIfDefined('metadata', catalog.lookup({ provider, modelId: model.id })),
+            ...spreadIfDefined('metadata', catalog.lookup({ provider, modelId: model.id }) ?? model.metadata),
         })))
     }
     return modelsCache.get(cacheKey)!
@@ -613,6 +715,9 @@ function hasManagedKey(auth: AIProviderAuthConfig | null): auth is AIProviderAut
 }
 
 async function findAvailableChatProviderRow({ platformId, scope, log }: { platformId: PlatformId, scope: ProviderScope, log: FastifyBaseLogger }): Promise<AIProviderSchema | null> {
+    if (flagService(log).aiCreditsEnabled()) {
+        await ensureManagedProviderRow({ platformId })
+    }
     const candidates = await aiProviderRepo().findBy([
         { platformId, enabledForChat: true },
         { platformId, provider: AIProviderName.ACTIVEPIECES },
@@ -639,7 +744,15 @@ async function isActivepiecesAiProviderHidden({ platformId, log }: { platformId:
     return shouldHideActivepiecesAiProvider({ platformId, log })
 }
 
+function withKeyUpdateLock<T>({ providerId, log, fn }: { providerId: string, log: FastifyBaseLogger, fn: () => Promise<T> }): Promise<T> {
+    return distributedLock(log).runExclusive({ key: getAiProviderUpdateLockKey(providerId), timeoutInSeconds: KEY_UPDATE_LOCK_TIMEOUT_SECONDS, fn })
+}
+
 async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { providerId: string, platformId: PlatformId, log: FastifyBaseLogger }): Promise<AIProviderAuthConfig> {
+    if (isNil(platformId)) {
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'platformId is required' } })
+    }
+    await platformService(log).getOneOrThrow(platformId)
     return distributedLock(log).runExclusive({
         key: getManagedAiProviderKeyLockKey(platformId),
         timeoutInSeconds: MANAGED_OPENROUTER_KEY_LOCK_TIMEOUT_SECONDS,
@@ -651,10 +764,12 @@ async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { provide
             }
             const { key, data } = await openRouterApi.createKey({
                 name: `Platform ${platformId}`,
+                external: { user: maskedManagementKey() },
                 limit: MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD,
                 limit_reset: MANAGED_OPENROUTER_KEY_LIMIT_RESET,
             })
             const minted: ActivePiecesProviderAuthConfig = { apiKey: key, apiKeyHash: data.hash }
+            await waitUntilKeyIsLive({ minted, platformId, log })
             const { data: stored, error } = await tryCatch(() => storeKeyIfAuthUnchanged({ providerId, platformId, observedAuth: current.auth, auth: minted }))
             if (isNil(stored) || managedKeyHash(stored) !== minted.apiKeyHash) {
                 await revokeManagedKey({ hash: minted.apiKeyHash, platformId, log })
@@ -665,9 +780,28 @@ async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { provide
             if (!hasManagedKey(stored)) {
                 throw new Error(`[aiProviderService#enrichWithKeysIfNeeded] Managed AI provider ${providerId} has no stored key`)
             }
+            log.info({ platform: { id: platformId }, aiProvider: { id: providerId } }, '[aiProviderService#enrichWithKeysIfNeeded] Minted a managed OpenRouter key')
             return stored
         },
     })
+}
+
+function maskedManagementKey(): string {
+    const managementKey = system.get(AppSystemProp.OPENROUTER_PROVISION_KEY) ?? ''
+    return `${managementKey.slice(0, MANAGEMENT_KEY_VISIBLE_PREFIX_LENGTH)}...${managementKey.slice(-MANAGEMENT_KEY_VISIBLE_SUFFIX_LENGTH)}`
+}
+
+async function waitUntilKeyIsLive({ minted, platformId, log }: { minted: ActivePiecesProviderAuthConfig, platformId: PlatformId, log: FastifyBaseLogger }): Promise<void> {
+    const deadline = Date.now() + MANAGED_OPENROUTER_KEY_LIVE_WAIT_MS
+    let passesInARow = 0
+    while (Date.now() < deadline) {
+        passesInARow = await openRouterApi.isKeyLive({ key: minted.apiKey }) ? passesInARow + 1 : 0
+        if (passesInARow === MANAGED_OPENROUTER_KEY_LIVE_PASSES_IN_A_ROW) {
+            return
+        }
+        await sleep(MANAGED_OPENROUTER_KEY_LIVE_POLL_MS)
+    }
+    log.warn({ platform: { id: platformId }, openRouterKey: { hash: minted.apiKeyHash } }, '[aiProviderService#waitUntilKeyIsLive] New managed OpenRouter key is still not live, using it anyway')
 }
 
 async function storeKeyIfAuthUnchanged({ providerId, platformId, observedAuth, auth }: { providerId: string, platformId: PlatformId, observedAuth: EncryptedObject, auth: ActivePiecesProviderAuthConfig }): Promise<AIProviderAuthConfig> {
@@ -721,6 +855,25 @@ async function revokeManagedKey({ hash, platformId, log }: { hash: string, platf
     }
 }
 
+
+function credentialsError({ provider, error }: { provider: AIProviderName, error: unknown }): ActivepiecesError {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const configProblem = ownConfigProblem(error)
+    const providerName = aiProviders[provider].name
+    const includeHttpErrorInMessage = provider === AIProviderName.CLOUDFLARE_GATEWAY
+    return new ActivepiecesError({
+        code: ErrorCode.INVALID_AI_PROVIDER_CREDENTIALS,
+        params: {
+            provider,
+            message: !isNil(configProblem)
+                ? configProblem
+                : includeHttpErrorInMessage
+                    ? `Failed to validate credentials for ${providerName}, ${errorMessage}`
+                    : `Failed to validate credentials for ${providerName}`,
+            httpErrorResponse: errorMessage,
+        },
+    })
+}
 
 function ownConfigProblem(error: unknown): string | undefined {
     if (!(error instanceof ActivepiecesError) || error.error.code !== ErrorCode.VALIDATION) {

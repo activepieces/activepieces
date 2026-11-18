@@ -1,74 +1,31 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { discourseAuth } from '../auth';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { discourseOps } from '../common/operations';
+import { discourseProps } from '../common/props';
+import { discourseSchemas } from '../common/schemas';
 
 export const createPost = createAction({
   auth: discourseAuth,
   name: 'create_post',
   classification: 'WRITE',
   description: 'Create a new post in discourse',
-  audience: 'both',
-  aiMetadata: { description: 'Add a reply post to an existing Discourse topic, identified by its numeric topic ID. Use when an agent needs to append a message to a thread that already exists (to start a new thread instead, use Create Topic). Each call creates a new post, so it is not idempotent.', idempotent: false },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Add a reply post to an existing Discourse topic picked from a dropdown of recently active topics. Agents should use Reply to Topic, which takes the topic ID as text. Each call creates a new post, so retries duplicate.',
+    idempotent: false,
+  },
   displayName: 'Create Post',
   props: {
     raw: Property.LongText({
-      description: 'Content of the post',
+      description: 'Content of the post (Markdown)',
       displayName: 'Post Content',
       required: true,
     }),
-    topic_id: Property.Dropdown({
-      auth: discourseAuth,
-      description: 'ID of the topic to post in',
-      displayName: 'Topic ID',
-      required: true,
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please connect your discourse account',
-          };
-        }
-        const response = await httpClient.sendRequest({
-          method: HttpMethod.GET,
-          url: `${auth.props.website_url.trim()}/latest.json`,
-          headers: {
-            'Api-Key': auth.props.api_key,
-            'Api-Username': auth.props.api_username,
-          },
-        });
-        const options = response.body['topic_list']['topics'].map(
-          (res: { title: any; id: any }) => {
-            return {
-              label: res.title,
-              value: res.id,
-            };
-          }
-        );
-
-        return {
-          options: options,
-          disabled: false,
-        };
-      },
-      refreshers: [],
-    }),
+    topic_id: discourseProps.topicDropdown(),
   },
-  async run(context) {
-    const { raw, topic_id } = context.propsValue;
-
-    return await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${context.auth.props.website_url.trim()}/posts.json`,
-      headers: {
-        'Api-Key': context.auth.props.api_key,
-        'Api-Username': context.auth.props.api_username,
-      },
-      body: {
-        raw: raw,
-        topic_id: topic_id,
-      },
-    });
+  outputSchema: discourseSchemas.createdPost,
+  async run({ auth, propsValue }) {
+    return discourseOps.createPost({ auth: auth.props, topicId: propsValue.topic_id, raw: propsValue.raw });
   },
 });

@@ -3,6 +3,7 @@ import {
   PieceAuth,
   Property,
   createAction,
+  sanitizeHttpHeaders,
 } from '@activepieces/pieces-framework';
 import { StopResponse } from '@activepieces/pieces-framework';
 
@@ -114,7 +115,7 @@ export const returnResponse = createAction({
   async run(context) {
     const { fields, responseType, respond } = context.propsValue;
     const bodyInput = fields ['body'];
-    const headers = fields['headers']?? {};
+    const headers = sanitizeHttpHeaders(fields['headers']);
     const status = fields['status'];
     
  

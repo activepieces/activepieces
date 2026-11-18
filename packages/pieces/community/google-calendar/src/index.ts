@@ -57,7 +57,8 @@ export const googleCalendar = createPiece({
     'ikus060',
     'Cloudieunnie',
     'sanket-a11y',
-    'geekyme'
+    'geekyme',
+    'OdaiAhmed99',
   ],
   auth: googleCalendarAuth,
   actions: [
@@ -96,6 +97,12 @@ export const googleCalendar = createPiece({
         return {
           Authorization: `Bearer ${await getAccessToken(auth as GoogleCalendarAuthValue)}`,
         };
+      },
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${googleCalendarCommon.baseUrl}`,
+          placeholder: '/calendars/primary/events',
+        },
       },
     }),
   ],

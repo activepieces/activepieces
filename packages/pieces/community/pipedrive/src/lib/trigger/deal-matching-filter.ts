@@ -59,6 +59,9 @@ export const dealMatchingFilterTrigger = createTrigger({
 		}),
 	},
 	async onEnable(context) {
+		if (context.isRepublish && !isNil(await context.store.get('deals'))) {
+			return;
+		}
 		const ids: number[] = [];
 
 		const response = await pipedrivePaginatedV2ApiCall<{ id: number }>({
@@ -81,6 +84,9 @@ export const dealMatchingFilterTrigger = createTrigger({
 		await context.store.put('deals', JSON.stringify(ids));
 	},
 	async onDisable(context) {
+		if (context.isRepublish) {
+			return;
+		}
 		await context.store.delete('deals');
 	},
 	async test(context) {

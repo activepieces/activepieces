@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
 import { resendClient } from '../common/client';
@@ -15,6 +15,10 @@ export const deleteAudience = createAction({
   audience: 'both',
   aiMetadata: { description: 'Permanently deletes an entire audience and all of its contacts from Resend, identified by audience ID. Use this to remove a whole mailing list; this is destructive and cannot be undone. Effectively idempotent — once deleted, repeating the call has no further effect.', idempotent: true },
   props: {
+    info: Property.MarkDown({
+      value: 'Also deletes every contact in the audience. This cannot be undone.',
+      variant: MarkdownVariant.INFO,
+    }),
     audience_id: resendProps.audienceId,
   },
   async run({ auth, propsValue }) {
