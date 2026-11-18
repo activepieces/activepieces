@@ -4,6 +4,7 @@ import { makeClient } from '../common';
 import {
   phoneNumberIdDropdown,
   businessAccountIdProp,
+  recipientPhoneProp,
   templateDropdown,
 } from '../common/props';
 
@@ -18,19 +19,60 @@ export const sendTemplate = createAction({
     description: 'Sends a pre-approved WhatsApp template message, substituting values into named header, body, and button parameters. Use this to initiate conversations outside the 24-hour customer service window, where free-form text (Send Text Message) is not allowed; the template must already be approved for the business account. Supports text/image/video/document/location headers and quick-reply, URL, OTP, and flow buttons. Each call delivers a new message, so it is not idempotent.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'sender',
+      display: 'section',
+      label: 'Send From',
+      icon: 'send',
+      props: ['businessAccountId', 'phoneNumberId'],
+    },
+    {
+      key: 'recipient',
+      display: 'section',
+      label: 'Send To',
+      icon: 'user',
+      props: ['to'],
+    },
+    {
+      key: 'template',
+      display: 'section',
+      label: 'Template',
+      icon: 'file',
+      props: ['template'],
+    },
+    {
+      key: 'header',
+      display: 'section',
+      label: 'Header',
+      icon: 'type',
+      props: [
+        'headerType',
+        'headerTextParameters',
+        'headerMediaUrl',
+        'headerMediaFilename',
+        'headerLocationLatitude',
+        'headerLocationLongitude',
+        'headerLocationName',
+        'headerLocationAddress',
+      ],
+    },
+    {
+      key: 'values',
+      display: 'section',
+      label: 'Values',
+      icon: 'tag',
+      props: ['bodyParameters', 'buttonParameters'],
+    },
+  ],
   props: {
     businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,
-    to: Property.ShortText({
-      displayName: 'Recipient Phone Number',
-      description:
-        'The recipient\'s phone number in international format (e.g. 15551234567).',
-      required: true,
-    }),
+    to: recipientPhoneProp,
     template: templateDropdown,
     headerType: Property.StaticDropdown({
       displayName: 'Header Type',
-      description: 'The type of header your template uses. Leave as None if no header.',
+      description: 'The header your template has. Fill only the fields for that type.',
       required: false,
       defaultValue: 'none',
       options: {
@@ -45,81 +87,83 @@ export const sendTemplate = createAction({
       },
     }),
     headerTextParameters: Property.Array({
-      displayName: 'Header Text Parameters',
-      description:
-        'Text header parameters (only if header type is Text).',
+      displayName: 'Text Parameters',
+      description: "For Text headers: the value for the header's parameter.",
       required: false,
       properties: {
         parameterName: Property.ShortText({
           displayName: 'Parameter Name',
-          description: 'The name of the header parameter (e.g. sale_name).',
+          description: 'The parameter name in the template.',
+          placeholder: 'sale_name',
           required: true,
         }),
         text: Property.ShortText({
           displayName: 'Value',
-          description: 'The value to substitute for this parameter.',
+          description: 'The text to put in its place.',
           required: true,
         }),
       },
     }),
     headerMediaUrl: Property.ShortText({
-      displayName: 'Header Media URL',
-      description:
-        'Public URL of the media file for image, video, or document headers.',
+      displayName: 'Media URL',
+      description: 'For Image, Video and Document headers: a public link.',
+      placeholder: 'https://example.com/banner.jpg',
       required: false,
     }),
     headerMediaFilename: Property.ShortText({
-      displayName: 'Header Document Filename',
-      description: 'Filename for document headers (e.g. invoice.pdf).',
+      displayName: 'File Name',
+      description: 'For Document headers: the name the recipient sees.',
+      placeholder: 'invoice.pdf',
       required: false,
     }),
     headerLocationLatitude: Property.Number({
-      displayName: 'Header Location Latitude',
-      description: 'Latitude for location headers.',
+      displayName: 'Latitude',
+      description: 'For Location headers.',
+      width: 'half',
       required: false,
     }),
     headerLocationLongitude: Property.Number({
-      displayName: 'Header Location Longitude',
-      description: 'Longitude for location headers.',
+      displayName: 'Longitude',
+      description: 'For Location headers.',
+      width: 'half',
       required: false,
     }),
     headerLocationName: Property.ShortText({
-      displayName: 'Header Location Name',
-      description: 'Name of the location (e.g. Delivery Location).',
+      displayName: 'Location Name',
+      description: 'For Location headers.',
+      placeholder: 'Delivery Location',
       required: false,
     }),
     headerLocationAddress: Property.ShortText({
-      displayName: 'Header Location Address',
-      description: 'Address of the location.',
+      displayName: 'Address',
+      description: 'For Location headers.',
       required: false,
     }),
     bodyParameters: Property.Array({
       displayName: 'Body Parameters',
-      description:
-        'Template body parameters. Each entry needs a parameter name and value.',
+      description: 'A value for each named parameter in the template body.',
       required: false,
       properties: {
         parameterName: Property.ShortText({
           displayName: 'Parameter Name',
-          description: 'The name of the template parameter (e.g. customer_name).',
+          description: 'The parameter name in the template.',
+          placeholder: 'customer_name',
           required: true,
         }),
         text: Property.ShortText({
           displayName: 'Value',
-          description: 'The value to substitute for this parameter.',
+          description: 'The text to put in its place.',
           required: true,
         }),
       },
     }),
     buttonParameters: Property.Array({
       displayName: 'Button Parameters',
-      description:
-        'Template button parameters. Each entry maps to a button by index.',
+      description: 'Values for the template buttons that need one.',
       required: false,
       properties: {
         subType: Property.StaticDropdown({
           displayName: 'Button Type',
-          description: 'The type of button.',
           required: true,
           options: {
             options: [
@@ -132,23 +176,23 @@ export const sendTemplate = createAction({
         }),
         index: Property.ShortText({
           displayName: 'Button Index',
-          description: 'Zero-based index of the button (e.g. 0, 1, 2).',
+          description: 'Position of the button, starting at 0.',
+          placeholder: '0',
           required: true,
         }),
         value: Property.ShortText({
           displayName: 'Value',
-          description:
-            'For quick_reply: the payload string. For url: the dynamic URL suffix. For otp: the OTP code. Leave empty for flow buttons.',
+          description: 'Payload, URL suffix or code. Leave empty for Flow buttons.',
           required: false,
         }),
         flowToken: Property.ShortText({
           displayName: 'Flow Token',
-          description: 'Token for flow buttons (e.g. a session identifier).',
+          description: 'For Flow buttons.',
           required: false,
         }),
         flowActionData: Property.Json({
           displayName: 'Flow Action Data',
-          description: 'JSON object with data to pass to the flow (e.g. {"customer_id": "123"}).',
+          description: 'For Flow buttons: data passed to the flow, as JSON.',
           required: false,
         }),
       },
