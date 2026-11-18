@@ -1,6 +1,6 @@
 import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { connectucAuth } from '../../index';
-import { connectucApiCall } from './api-helpers';
+import { connectucApiCall, formatApiError } from './api-helpers';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 /**
@@ -48,12 +48,7 @@ export const domainProp = () =>
                     options,
                 };
             } catch (error) {
-                console.error('Error fetching domains:', error);
-                return {
-                    disabled: true,
-                    placeholder: 'Error loading domains',
-                    options: [],
-                };
+                return failedOptions({ entity: 'domains', error });
             }
         },
     });
@@ -114,12 +109,7 @@ export const subscriberUuidProp = () =>
 
                 return { disabled: false, options };
             } catch (error) {
-                console.error('Error fetching subscribers:', error);
-                return {
-                    disabled: true,
-                    placeholder: 'Error loading subscribers',
-                    options: [],
-                };
+                return failedOptions({ entity: 'subscribers', error });
             }
         },
     });
@@ -173,12 +163,7 @@ export const deviceProp = () =>
 
                 return { disabled: false, options };
             } catch (error) {
-                console.error('Error fetching registrations:', error);
-                return {
-                    disabled: true,
-                    placeholder: 'Error loading devices',
-                    options: [],
-                };
+                return failedOptions({ entity: 'devices', error });
             }
         },
     });
@@ -224,12 +209,7 @@ export const smsNumberProp = () =>
 
                 return { disabled: false, options };
             } catch (error) {
-                console.error('Error fetching SMS numbers:', error);
-                return {
-                    disabled: true,
-                    placeholder: 'Error loading SMS numbers',
-                    options: [],
-                };
+                return failedOptions({ entity: 'SMS numbers', error });
             }
         },
     });
@@ -295,12 +275,7 @@ export const smsRecipientsProp = () =>
 
                 return { disabled: false, options };
             } catch (error) {
-                console.error('Error fetching SMS numbers:', error);
-                return {
-                    disabled: true,
-                    placeholder: 'Error loading SMS numbers',
-                    options: [],
-                };
+                return failedOptions({ entity: 'SMS numbers', error });
             }
         },
     });
@@ -367,12 +342,7 @@ export const usersProp = () =>
                     options,
                 };
             } catch (error) {
-                console.error('Error fetching subscribers:', error);
-                return {
-                    disabled: true,
-                    placeholder: 'Error loading subscribers',
-                    options: [],
-                };
+                return failedOptions({ entity: 'subscribers', error });
             }
         },
     });
@@ -432,12 +402,16 @@ export const userProp = () =>
 
                 return { disabled: false, options };
             } catch (error) {
-                console.error('Error fetching subscribers:', error);
-                return {
-                    disabled: true,
-                    placeholder: 'Error loading subscribers',
-                    options: [],
-                };
+                return failedOptions({ entity: 'subscribers', error });
             }
         },
     });
+
+function failedOptions({ entity, error }: { entity: string; error: unknown }) {
+    console.error(`Error fetching ${entity}:`, error);
+    return {
+        disabled: true,
+        placeholder: `Error loading ${entity} (${formatApiError(error)})`,
+        options: [],
+    };
+}

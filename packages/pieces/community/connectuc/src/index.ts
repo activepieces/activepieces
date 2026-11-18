@@ -1,5 +1,6 @@
 import { createPiece, PieceAuth, OAuth2PropertyValue } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
+import { httpClient, HttpMethod, AuthenticationType, HttpError } from "@activepieces/pieces-common";
+import { connectucApiCall, formatApiError } from "./lib/common/api-helpers";
 import { newRecording } from "./lib/triggers/new-recording";
 import { newCallTranscription } from "./lib/triggers/new-call-transcription";
 import { newCallSummary } from "./lib/triggers/new-call-summary";
@@ -32,7 +33,7 @@ export const connectucAuth = PieceAuth.OAuth2({
       });
 
       if (response.status === 200) {
-        return { valid: true };
+        return validateApiAccess((auth as OAuth2PropertyValue).access_token);
       }
 
       return {
@@ -55,6 +56,21 @@ export const connectucAuth = PieceAuth.OAuth2({
     }
   },
 });
+
+async function validateApiAccess(accessToken: string): Promise<{ valid: true } | { valid: false; error: string }> {
+  try {
+    await connectucApiCall({ accessToken, endpoint: '/activepieces/domains', method: HttpMethod.GET });
+    return { valid: true };
+  } catch (error: unknown) {
+    if (error instanceof HttpError && error.response.status === 401) {
+      return {
+        valid: false,
+        error: `ConnectUC signed you in, but its API rejected this account (${formatApiError(error)}). Check with ConnectUC that this account has API access.`,
+      };
+    }
+    return { valid: true };
+  }
+}
 
 export const connectuc = createPiece({
   displayName: "ConnectUC",
