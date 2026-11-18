@@ -3,10 +3,9 @@ import { OpenTelemetry } from '@ai-sdk/otel'
 import { Attributes } from '@opentelemetry/api'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { BasicTracerProvider, BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
-import { asSchema, Telemetry, ToolSet } from 'ai'
+import { Telemetry } from 'ai'
 import { aiTraceScrubber } from './ai-trace-scrubber'
 import { apVersionUtil } from './ap-version'
-import { cryptoUtils } from './crypto'
 import { wideEvent } from './wide-event'
 
 let tracing: { processor: BatchSpanProcessor, integration: Telemetry } | undefined
@@ -38,7 +37,7 @@ function reset(): void {
     tracing = undefined
 }
 
-function runtimeContextOf({ billing, fingerprint }: { billing?: ActivepiecesAiBilling, fingerprint?: string }): AiTraceContext {
+function runtimeContextOf({ billing }: { billing?: ActivepiecesAiBilling }): AiTraceContext {
     const ids = isNil(billing) ? idsFromWideEvent() : idsFromBilling({ billing })
     const groups = {
         ...(isNil(ids.platformId) ? {} : { platform: ids.platformId }),
@@ -51,41 +50,7 @@ function runtimeContextOf({ billing, fingerprint }: { billing?: ActivepiecesAiBi
         ...(isNil(ids.runSource) ? {} : { runSource: ids.runSource }),
         ...(isNil(ids.tierId) ? {} : { tierId: ids.tierId }),
         ...(isNil(ids.tierModel) ? {} : { tierModel: ids.tierModel }),
-        ...(isNil(fingerprint) ? {} : { fingerprint }),
     }
-}
-
-function promptFingerprintOf({ templates }: { templates: Record<string, unknown> }): string {
-    return shortHash({ value: templates })
-}
-
-async function turnFingerprintOf({ tools }: { tools: ToolSet }): Promise<string | undefined> {
-    if (isNil(tracing)) {
-        return undefined
-    }
-    const promptFingerprint = idsFromWideEvent().promptFingerprint
-    const { data } = await tryCatch(async () => {
-        const toolHashes = await Promise.all(Object.entries(tools)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(async ([name, tool]) => ({ name, hash: await toolHashOf({ tool }) })))
-        return shortHash({ value: { prompt: promptFingerprint ?? null, tools: toolHashes } })
-    })
-    return data ?? undefined
-}
-
-function toolHashOf({ tool }: { tool: ToolSet[string] }): Promise<string> {
-    const cached = TOOL_HASHES.get(tool)
-    if (!isNil(cached)) {
-        return cached
-    }
-    const computed = Promise.resolve(asSchema(tool.inputSchema).jsonSchema)
-        .then((inputSchema) => shortHash({ value: { description: tool.description ?? '', inputSchema } }))
-    TOOL_HASHES.set(tool, computed)
-    return computed
-}
-
-function shortHash({ value }: { value: unknown }): string {
-    return cryptoUtils.hashSHA256(JSON.stringify(value)).slice(0, FINGERPRINT_LENGTH)
 }
 
 function idsFromBilling({ billing }: { billing: ActivepiecesAiBilling }): TraceIds {
@@ -108,7 +73,6 @@ function idsFromWideEvent(): TraceIds {
         runSource: fieldOf({ group: context['agentRun'], key: 'source' }),
         tierId: fieldOf({ group: context['agentRun'], key: 'tierId' }),
         tierModel: fieldOf({ group: context['agentRun'], key: 'tierModel' }),
-        promptFingerprint: fieldOf({ group: context['agentRun'], key: 'promptFingerprint' }),
     }
 }
 
@@ -130,8 +94,6 @@ function enrichSpan({ runtimeContext }: { runtimeContext: Record<string, unknown
 }
 
 const POSTHOG_AI_LIB = 'activepieces-ai'
-const FINGERPRINT_LENGTH = 12
-const TOOL_HASHES = new WeakMap<ToolSet[string], Promise<string>>()
 const SPAN_ATTRIBUTE_BY_CONTEXT_KEY: Record<keyof AiTraceContext, string> = {
     distinctId: 'posthog.distinct_id',
     sessionId: '$ai_session_id',
@@ -139,7 +101,6 @@ const SPAN_ATTRIBUTE_BY_CONTEXT_KEY: Record<keyof AiTraceContext, string> = {
     runSource: 'ai_run_source',
     tierId: 'ai_tier_id',
     tierModel: 'ai_tier_model',
-    fingerprint: 'ai_fingerprint',
 }
 
 export const aiObservability = {
@@ -148,13 +109,11 @@ export const aiObservability = {
     flush,
     reset,
     runtimeContextOf,
-    promptFingerprintOf,
-    turnFingerprintOf,
 }
 
 export const POSTHOG_PROJECT_TOKEN = 'phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh'
 export const POSTHOG_HOST = 'https://us.i.posthog.com'
-export const AI_TRACE_RUNTIME_CONTEXT = { distinctId: true, sessionId: true, groups: true, runSource: true, tierId: true, tierModel: true, fingerprint: true }
+export const AI_TRACE_RUNTIME_CONTEXT = { distinctId: true, sessionId: true, groups: true, runSource: true, tierId: true, tierModel: true }
 
 export type AiTraceContext = {
     distinctId?: string
@@ -163,7 +122,6 @@ export type AiTraceContext = {
     runSource?: string
     tierId?: string
     tierModel?: string
-    fingerprint?: string
 }
 
 type TraceIds = {
@@ -174,5 +132,4 @@ type TraceIds = {
     runSource?: string
     tierId?: string
     tierModel?: string
-    promptFingerprint?: string
 }

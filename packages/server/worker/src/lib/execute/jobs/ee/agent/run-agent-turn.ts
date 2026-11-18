@@ -1,5 +1,5 @@
 import { AiProviderKeyStatus, AIProviderName, ErrorCode, formatPieceError, isFallbackWorthy, isNil, isObject, isProviderBillingError, isTransientProviderError, ProviderOutcomeSignal, spreadIfDefined, toError, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
-import { agentAiUtils, aiObservability, aiProviderSignal, ContentPartLike } from '@activepieces/server-utils'
+import { agentAiUtils, aiProviderSignal, ContentPartLike } from '@activepieces/server-utils'
 import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, agentToolSkills, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, LAZY_TOOL_NAME, PersistedAgentPart, SkillSurface, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
 import { buildSkillSurface } from './tools/skill-tools'
@@ -116,10 +116,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
     const guardedTools = wrapToolsWithFailureGuard({ tools: skillSurface?.tools ?? tools, log })
     const runsATier = models.some((candidate) => !isNil(candidate.key))
     const peers = [...models, ...(isNil(fastModel) ? [] : [fastModel])]
-    const [fingerprint, ranked] = await Promise.all([
-        aiObservability.turnFingerprintOf({ tools: skillSurface?.tools ?? tools }),
-        Promise.all(models.map((turnModel) => withOutputBudget({ turnModel, peers }))),
-    ])
+    const ranked = await Promise.all(models.map((turnModel) => withOutputBudget({ turnModel, peers })))
     let fast = isNil(fastModel) ? undefined : await withOutputBudget({ turnModel: fastModel, peers })
     let modelIndex = 0
     let lastStepUsedFast = false
@@ -152,7 +149,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         messages: agentAiUtils.stripThinkingBlocks(attemptMessages, current().provider),
         tools: guardedTools,
         stopWhen: loopStopCondition,
-        ...agentAiUtils.buildTelemetry({ functionId: 'agent-turn', fingerprint }),
+        ...agentAiUtils.buildTelemetry({ functionId: 'agent-turn' }),
         // providerOptions/model are supplied per-step by prepareStep (authoritative). A
         // call-level providerOptions would deep-merge into every step and leak the enabled
         // thinking budget back into the disabled first step.
@@ -220,7 +217,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 const { text } = await generateText({
                     model: current().model,
                     abortSignal,
-                    ...agentAiUtils.buildTelemetry({ functionId: 'agent-tool-repair', fingerprint }),
+                    ...agentAiUtils.buildTelemetry({ functionId: 'agent-tool-repair' }),
                     prompt: `Fix this invalid input for the tool "${toolCall.toolName}". The error was: ${error.message}\n\nOriginal input:\n${toolCall.input}\n\nThe input must match this JSON schema:\n${JSON.stringify(schema)}\n\nReturn ONLY the corrected JSON input, nothing else.`,
                 })
                 return jsonInputFrom(text)

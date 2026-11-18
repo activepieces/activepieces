@@ -1,5 +1,5 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesError, AIProviderName, ErrorCode, isFallbackWorthy, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { agentAiUtils, aiObservability, aiProviderSignal, aiUtils, modelCatalog } from '@activepieces/server-utils'
+import { agentAiUtils, aiProviderSignal, aiUtils, modelCatalog } from '@activepieces/server-utils'
 import { AgentConfigResponse, AgentConversation, AgentRunSource, aiProviderUtils, GetAgentConfigRequest, GetEnabledAiToolsResponse, GetProviderConfigResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
 import { LanguageModel, ModelMessage, UserContent } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -354,7 +354,6 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('agentId', conversation.agentId ?? undefined),
             ...spreadIfDefined('projectId', runProjectId ?? undefined),
             systemPrompt: systemPromptText,
-            promptFingerprint: aiObservability.promptFingerprintOf({ templates: { ...agentPrompt.sources, ...promptOverride, guides } }),
             messages: messagesForLlm,
             allMessages,
             previousUiMessages: uiMessagesWithUser,

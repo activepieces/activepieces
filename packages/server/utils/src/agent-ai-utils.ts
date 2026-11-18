@@ -146,7 +146,7 @@ function effectiveToolNamesByCallId(messages: ModelMessage[]): Map<string, strin
     }))
 }
 
-function buildTelemetry({ functionId, billing, fingerprint }: { functionId: string, billing?: ActivepiecesAiBilling, fingerprint?: string }): AgentTelemetry {
+function buildTelemetry({ functionId, billing }: { functionId: string, billing?: ActivepiecesAiBilling }): AgentTelemetry {
     const logger = wideEvent.current()
     const posthog = aiObservability.integration()
     if (isNil(logger) && isNil(posthog)) {
@@ -162,7 +162,7 @@ function buildTelemetry({ functionId, billing, fingerprint }: { functionId: stri
     }
     return {
         telemetry: { functionId, integrations, includeRuntimeContext: AI_TRACE_RUNTIME_CONTEXT },
-        runtimeContext: aiObservability.runtimeContextOf({ billing, fingerprint }),
+        runtimeContext: aiObservability.runtimeContextOf({ billing }),
     }
 }
 

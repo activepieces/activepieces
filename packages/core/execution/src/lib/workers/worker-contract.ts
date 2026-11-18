@@ -174,7 +174,6 @@ export type AgentConfigResponse = {
     agentId?: string
     projectId?: string
     systemPrompt: string
-    promptFingerprint?: string
     messages: unknown[]
     allMessages: unknown[]
     previousUiMessages: unknown[]
