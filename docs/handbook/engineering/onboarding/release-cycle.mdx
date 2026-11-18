@@ -10,7 +10,7 @@ This page explains how code moves from merge to production and why each step exi
 ```
 Merge to main ──→ Deploy to staging
                           │
-                          Started by hand: the Cloud gate picks the newest deployed commit
+                          Started by hand: the Cloud gate picks the tip of main, which staging must have deployed
                           │
                           E2E matrix + upgrade test on the staging image
                           │

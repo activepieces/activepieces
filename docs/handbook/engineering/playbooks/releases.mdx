@@ -56,9 +56,9 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 
 | Trigger | What happens |
 |---|---|
-| **Manual dispatch** | Picks the newest `main` commit whose `deploy-staging-app` and `deploy-staging-workers` checks passed, or the `main` commit named in `sha`, which staging must also have deployed. `skip_migration_check` lets a breaking migration through. |
+| **Manual dispatch** | Picks the tip of `main`, or the `main` commit named in `sha`. The run stops unless that commit's `deploy-staging-app` and `deploy-staging-workers` checks passed. `skip_migration_check` lets a breaking migration through. |
 
-The gate has no schedule yet. A daily run (Sunday to Thursday, 8 AM UTC) comes back when the E2E suite covers more of the product; the `cut` job already stops a scheduled run when every Cloud host runs the candidate.
+The gate has no schedule yet. A daily run (Sunday to Thursday, 8 AM UTC) comes back when the E2E suite covers more of the product; a scheduled run picks the newest `main` commit whose staging deploy checks passed, not the tip, and the `cut` job already stops it when every Cloud host runs the candidate.
 
 Then, for the candidate:
 
