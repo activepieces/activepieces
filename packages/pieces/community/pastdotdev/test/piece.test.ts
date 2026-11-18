@@ -1,3 +1,4 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { pastdotdev } from '../src';
 import { deleteDataPointAction } from '../src/lib/actions/delete-data-point';
@@ -280,6 +281,66 @@ describe('Delete data point', () => {
   });
 });
 
+describe('Custom API call', () => {
+  const customCall = ({ url, apiHost }: { url: string; apiHost?: string }) =>
+    pastdotdev.actions()['custom_api_call'].run(
+      actionContext({
+        apiHost,
+        propsValue: {
+          url: { url },
+          method: HttpMethod.GET,
+          headers: {},
+          queryParams: {},
+          body_type: 'none',
+          body: {},
+          response_is_binary: false,
+          failsafe: false,
+          timeout: undefined,
+          followRedirects: false,
+        },
+      })
+    );
+
+  test('sends a relative path to the connection host with the key', async () => {
+    const fake = installFakePastDev({ responses: [{ status: 200, body: { audiences: [] } }] });
+    await customCall({ url: '/audiences', apiHost: FAKE_HOST });
+    expect(fake.calls).toHaveLength(1);
+    expect(fake.calls[0].url).toBe(`${FAKE_HOST}/api/v1/audiences`);
+    expect(fake.calls[0].authorization).toBe(`Bearer ${FAKE_KEY}`);
+  });
+
+  test('accepts a full URL on the connection host', async () => {
+    const fake = installFakePastDev({ responses: [{ status: 200, body: { audiences: [] } }] });
+    await customCall({ url: `${FAKE_HOST}/api/v1/audiences`, apiHost: FAKE_HOST });
+    expect(fake.calls[0].url).toBe(`${FAKE_HOST}/api/v1/audiences`);
+    expect(fake.calls[0].authorization).toBe(`Bearer ${FAKE_KEY}`);
+  });
+
+  test('accepts a full URL on https://api.past.dev when no host is set', async () => {
+    const fake = installFakePastDev({ responses: [{ status: 200, body: { audiences: [] } }] });
+    await customCall({ url: 'https://api.past.dev/api/v1/audiences' });
+    expect(fake.calls[0].url).toBe('https://api.past.dev/api/v1/audiences');
+  });
+
+  test.each([
+    'https://attacker.example.test/collect',
+    'http://past.example.test/api/v1/audiences',
+    'https://past.example.test:8443/api/v1/audiences',
+    'https://past.example.test@attacker.example.test/collect',
+    'https://past.example.test.attacker.example.test/collect',
+    ' https://attacker.example.test/collect',
+    'HTTPS://attacker.example.test/collect',
+    '//attacker.example.test/collect',
+    'ftp://attacker.example.test/collect',
+  ])('refuses %s before any request, so the key stays on the connection host', async (url) => {
+    const fake = installFakePastDev({ responses: [] });
+    await expect(customCall({ url, apiHost: FAKE_HOST })).rejects.toThrow(
+      `The URL must be on the API host of the connection (${FAKE_HOST}).`
+    );
+    expect(fake.calls).toHaveLength(0);
+  });
+});
+
 describe('dropdowns', () => {
   const propertyContext = {
     server: { apiUrl: '', publicUrl: '', token: '' },
@@ -315,6 +376,88 @@ describe('dropdowns', () => {
       `${FAKE_HOST}/api/v1/identities?limit=1000&after=c1`,
     ]);
     expect(state.options[0]).toMatchObject({ label: 'Use "new-user"', value: 'new-user' });
+  });
+
+  const fullPage = ({ identity, endCursor }: { identity: string; endCursor: string }) => ({
+    status: 200,
+    body: { identities: [{ identity, traits: {} }], hasMore: true, endCursor },
+  });
+  const listedPages = [
+    fullPage({ identity: 'user-1', endCursor: 'c1' }),
+    fullPage({ identity: 'user-2', endCursor: 'c2' }),
+    fullPage({ identity: 'user-3', endCursor: 'c3' }),
+  ];
+  const noTraitMatch = { status: 200, body: { identities: [], hasMore: false, endCursor: null } };
+
+  test('identity search reaches an identity after the listed pages by its email', async () => {
+    const fake = installFakePastDev({
+      responses: [
+        ...listedPages,
+        { status: 404, body: { code: 'not-found', status: 404 } },
+        noTraitMatch,
+        {
+          status: 200,
+          body: {
+            identities: [{ identity: 'user-9000', traits: { email: 'ana@acme.test' } }],
+            hasMore: false,
+            endCursor: null,
+          },
+        },
+      ],
+    });
+    const dropdown = pastDevProps.identityDropdown({ required: true, description: 'd' });
+    const state = await dropdown.options(
+      { auth: connection },
+      { ...propertyContext, searchValue: 'ana@acme.test' }
+    );
+    expect(fake.calls.map((call) => call.url)).toEqual([
+      `${FAKE_HOST}/api/v1/identities?limit=1000`,
+      `${FAKE_HOST}/api/v1/identities?limit=1000&after=c1`,
+      `${FAKE_HOST}/api/v1/identities?limit=1000&after=c2`,
+      `${FAKE_HOST}/api/v1/identities/ana%40acme.test`,
+      `${FAKE_HOST}/api/v1/identities?limit=20&traitKey=name&traitValue=ana%40acme.test`,
+      `${FAKE_HOST}/api/v1/identities?limit=20&traitKey=email&traitValue=ana%40acme.test`,
+    ]);
+    expect(state.disabled).toBe(false);
+    expect(state.options).toEqual([
+      {
+        label: 'Use "ana@acme.test"',
+        value: 'ana@acme.test',
+        description: 'past dev creates this identity on its first ingest.',
+      },
+      { label: 'user-9000', value: 'user-9000', description: 'ana@acme.test' },
+    ]);
+    expect(state.placeholder).toContain('3,000 newest identities');
+  });
+
+  test('identity search does not offer an older identity as a new one', async () => {
+    installFakePastDev({
+      responses: [
+        ...listedPages,
+        { status: 200, body: { identity: 'user-9000', traits: { name: 'Ana' } } },
+        noTraitMatch,
+        noTraitMatch,
+      ],
+    });
+    const dropdown = pastDevProps.identityDropdown({ required: true, description: 'd' });
+    const state = await dropdown.options(
+      { auth: connection },
+      { ...propertyContext, searchValue: 'user-9000' }
+    );
+    expect(state.options).toEqual([
+      { label: 'user-9000', value: 'user-9000', description: 'Ana' },
+    ]);
+  });
+
+  test('identity shows the limit when the directory is larger than the list', async () => {
+    const fake = installFakePastDev({ responses: listedPages });
+    const dropdown = pastDevProps.identityDropdown({ required: true, description: 'd' });
+    const state = await dropdown.options({ auth: connection }, propertyContext);
+    expect(fake.calls).toHaveLength(3);
+    expect(state.options.map((option) => option.value)).toEqual(['user-1', 'user-2', 'user-3']);
+    expect(state.placeholder).toBe(
+      'The list shows the 3,000 newest identities. To find an older one, type its exact identity, name or email.'
+    );
   });
 
   test('identity lists names and emails without a search', async () => {

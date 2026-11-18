@@ -51,18 +51,32 @@ async function main() {
   );
   report(`Ingest (status ${ingest.status}, sourceId ${ingest.sourceId})`, ingest.sourceId === sourceId);
 
-  const recall = await actions['recall'].run(
-    actionContext({
-      auth,
-      propsValue: { query: 'What is the test favourite colour?', identity, limit: 5 },
-    })
-  );
-  report(`Recall (${recall.resultCount} results, request ${recall.requestId ?? 'none'})`, Array.isArray(recall.results));
+  try {
+    const recall = await actions['recall'].run(
+      actionContext({
+        auth,
+        propsValue: { query: 'What is the test favourite colour?', identity, limit: 5 },
+      })
+    );
+    report(`Recall (${recall.resultCount} results, request ${recall.requestId ?? 'none'})`, Array.isArray(recall.results));
+  } finally {
+    await deleteTestDataPoint({ actions, auth, sourceId });
+  }
+}
 
-  const deletion = await actions['delete_data_point'].run(
-    actionContext({ auth, propsValue: { sourceId } })
-  );
-  report(`Delete data point (operation ${deletion.operationId})`, deletion.ids.includes(sourceId));
+async function deleteTestDataPoint({ actions, auth, sourceId }) {
+  try {
+    const deletion = await actions['delete_data_point'].run(
+      actionContext({ auth, propsValue: { sourceId } })
+    );
+    report(`Delete data point (operation ${deletion.operationId})`, deletion.ids.includes(sourceId));
+  } catch (error) {
+    report(
+      `Delete data point (${sourceId} is still in the project)`,
+      false,
+      error instanceof Error ? error.message : String(error)
+    );
+  }
 }
 
 function actionContext({ auth, propsValue }) {

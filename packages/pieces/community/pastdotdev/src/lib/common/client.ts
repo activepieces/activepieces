@@ -6,7 +6,30 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 
-async function sendRequest<T extends HttpMessageBody>({
+async function sendRequest<T extends HttpMessageBody>(
+  request: PastDevRequest
+): Promise<PastDevResponse<T>> {
+  try {
+    return await send<T>(request);
+  } catch (error) {
+    throw new Error(describeError({ error }));
+  }
+}
+
+async function findRecord<T extends HttpMessageBody>(
+  request: PastDevRequest
+): Promise<PastDevResponse<T> | undefined> {
+  try {
+    return await send<T>(request);
+  } catch (error) {
+    if (error instanceof HttpError && ABSENT_STATUSES.includes(error.response.status)) {
+      return undefined;
+    }
+    throw new Error(describeError({ error }));
+  }
+}
+
+async function send<T extends HttpMessageBody>({
   connection,
   method,
   path,
@@ -14,31 +37,65 @@ async function sendRequest<T extends HttpMessageBody>({
   queryParams,
   redactBodyInErrors,
 }: PastDevRequest): Promise<PastDevResponse<T>> {
-  try {
-    const response = await httpClient.sendRequest<T>({
-      method,
-      url: `${resolveBaseUrl({ apiHost: connection.apiHost })}${path}`,
-      headers: {
-        Authorization: `Bearer ${connection.apiKey}`,
-        Accept: 'application/json',
-      },
-      body,
-      queryParams,
-      redactBodyInErrors,
-    });
-    return {
-      body: response.body,
-      requestId: readRequestId({ headers: response.headers }),
-    };
-  } catch (error) {
-    throw new Error(describeError({ error }));
-  }
+  const response = await httpClient.sendRequest<T>({
+    method,
+    url: `${resolveBaseUrl({ apiHost: connection.apiHost })}${path}`,
+    headers: {
+      Authorization: `Bearer ${connection.apiKey}`,
+      Accept: 'application/json',
+    },
+    body,
+    queryParams,
+    redactBodyInErrors,
+  });
+  return {
+    body: response.body,
+    requestId: readRequestId({ headers: response.headers }),
+  };
 }
 
 function resolveBaseUrl({ apiHost }: { apiHost: string | undefined }): string {
   const trimmed = (apiHost ?? '').trim().replace(/\/+$/, '');
   const host = trimmed.length === 0 ? DEFAULT_API_HOST : trimmed;
   return host.replace(/\/api\/v1$/, '');
+}
+
+function assertOnConnectionHost({
+  urlProp,
+  apiHost,
+}: {
+  urlProp: unknown;
+  apiHost: string | undefined;
+}): void {
+  const url = readUrl({ urlProp });
+  if (url === undefined) {
+    throw new Error('Enter a URL, or a path on the API host of the connection.');
+  }
+  const baseUrl = resolveBaseUrl({ apiHost });
+  const namesAHost = /^[a-z][a-z0-9+.-]*:/i.test(url) || /^[/\\]{2}/.test(url);
+  if (namesAHost && !isSameOrigin({ url, baseUrl })) {
+    throw new Error(
+      `The URL must be on the API host of the connection (${baseUrl}). The API key is not sent to another host.`
+    );
+  }
+}
+
+function readUrl({ urlProp }: { urlProp: unknown }): string | undefined {
+  if (typeof urlProp !== 'object' || urlProp === null) {
+    return undefined;
+  }
+  if (!('url' in urlProp) || typeof urlProp.url !== 'string') {
+    return undefined;
+  }
+  return urlProp.url.trim();
+}
+
+function isSameOrigin({ url, baseUrl }: { url: string; baseUrl: string }): boolean {
+  try {
+    return new URL(url, baseUrl).origin === new URL(baseUrl).origin;
+  } catch {
+    return false;
+  }
 }
 
 function describeError({ error }: { error: unknown }): string {
@@ -113,10 +170,13 @@ function withoutEmpty(values: Record<string, unknown>): Record<string, unknown> 
 }
 
 const DEFAULT_API_HOST = 'https://api.past.dev';
+const ABSENT_STATUSES = [400, 404];
 
 export const pastDevClient = {
   sendRequest,
+  findRecord,
   resolveBaseUrl,
+  assertOnConnectionHost,
   describeError,
   withoutEmpty,
   DEFAULT_API_HOST,

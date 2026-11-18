@@ -26,19 +26,24 @@ function identityDropdown<R extends boolean>({
         };
       }
       try {
-        const identities = await listIdentities({
-          connection: {
-            apiKey: auth.props.apiKey,
-            apiHost: auth.props.apiHost,
-          },
-        });
+        const connection = {
+          apiKey: auth.props.apiKey,
+          apiHost: auth.props.apiHost,
+        };
+        const search = (searchValue ?? '').trim();
+        const directory = await listIdentities({ connection });
+        const found =
+          directory.truncated && search.length > 0
+            ? await findIdentities({ connection, search })
+            : [];
+        const identities = mergeIdentities({ found, listed: directory.identities });
         return {
           disabled: false,
-          options: identityOptions({ identities, searchValue }),
-          placeholder:
-            identities.length === 0
-              ? 'No identity yet. Type an identity, or map one from an earlier step.'
-              : 'Select an identity, or type a new one.',
+          options: identityOptions({ identities, search }),
+          placeholder: identityPlaceholder({
+            count: identities.length,
+            truncated: directory.truncated,
+          }),
         };
       } catch (error) {
         return {
@@ -96,7 +101,7 @@ async function listIdentities({
   connection,
 }: {
   connection: PastDevConnection;
-}): Promise<Identity[]> {
+}): Promise<IdentityDirectory> {
   return collectIdentityPages({
     connection,
     after: undefined,
@@ -112,7 +117,7 @@ async function collectIdentityPages({
   connection: PastDevConnection;
   after: string | undefined;
   remainingPages: number;
-}): Promise<Identity[]> {
+}): Promise<IdentityDirectory> {
   const response = await pastDevClient.sendRequest<IdentityList>({
     connection,
     method: HttpMethod.GET,
@@ -123,25 +128,94 @@ async function collectIdentityPages({
     },
   });
   const { identities, hasMore, endCursor } = response.body;
-  if (!hasMore || !endCursor || remainingPages <= 1) {
-    return identities;
+  if (!hasMore) {
+    return { identities, truncated: false };
+  }
+  if (!endCursor || remainingPages <= 1) {
+    return { identities, truncated: true };
   }
   const rest = await collectIdentityPages({
     connection,
     after: endCursor,
     remainingPages: remainingPages - 1,
   });
-  return [...identities, ...rest];
+  return {
+    identities: [...identities, ...rest.identities],
+    truncated: rest.truncated,
+  };
+}
+
+async function findIdentities({
+  connection,
+  search,
+}: {
+  connection: PastDevConnection;
+  search: string;
+}): Promise<Identity[]> {
+  const [byIdentity, byTrait] = await Promise.all([
+    pastDevClient.findRecord<Identity>({
+      connection,
+      method: HttpMethod.GET,
+      path: `/api/v1/identities/${encodeURIComponent(search)}`,
+    }),
+    Promise.all(
+      SEARCHED_TRAITS.map((traitKey) =>
+        pastDevClient.sendRequest<IdentityList>({
+          connection,
+          method: HttpMethod.GET,
+          path: '/api/v1/identities',
+          queryParams: {
+            limit: String(TRAIT_MATCH_LIMIT),
+            traitKey,
+            traitValue: search,
+          },
+        })
+      )
+    ),
+  ]);
+  return [
+    ...(byIdentity ? [byIdentity.body] : []),
+    ...byTrait.flatMap((response) => response.body.identities),
+  ];
+}
+
+function mergeIdentities({
+  found,
+  listed,
+}: {
+  found: Identity[];
+  listed: Identity[];
+}): Identity[] {
+  const foundByIdentity = new Map(found.map((identity) => [identity.identity, identity]));
+  return [
+    ...foundByIdentity.values(),
+    ...listed.filter((identity) => !foundByIdentity.has(identity.identity)),
+  ];
+}
+
+function identityPlaceholder({
+  count,
+  truncated,
+}: {
+  count: number;
+  truncated: boolean;
+}): string {
+  if (truncated) {
+    return `The list shows the ${LISTED_IDENTITIES_LIMIT} newest identities. To find an older one, type its exact identity, name or email.`;
+  }
+  if (count === 0) {
+    return 'No identity yet. Type an identity, or map one from an earlier step.';
+  }
+  return 'Select an identity, or type a new one.';
 }
 
 function identityOptions({
   identities,
-  searchValue,
+  search,
 }: {
   identities: Identity[];
-  searchValue: string | undefined;
+  search: string;
 }) {
-  const search = (searchValue ?? '').trim();
   const matches = identities
     .filter((identity) => matchesSearch({ identity, search }))
     .map((identity) => ({
@@ -190,6 +264,9 @@ function describeIdentity({ identity }: { identity: Identity }): string | undefi
 
 const IDENTITY_PAGE_SIZE = 1000;
 const MAX_IDENTITY_PAGES = 3;
+const LISTED_IDENTITIES_LIMIT = (IDENTITY_PAGE_SIZE * MAX_IDENTITY_PAGES).toLocaleString('en-US');
+const TRAIT_MATCH_LIMIT = 20;
+const SEARCHED_TRAITS = ['name', 'email'];
 
 export const pastDevProps = {
   identityDropdown,
@@ -199,6 +276,11 @@ export const pastDevProps = {
 type Identity = {
   identity: string;
   traits: Record<string, string>;
+};
+
+type IdentityDirectory = {
+  identities: Identity[];
+  truncated: boolean;
 };
 
 type IdentityList = {

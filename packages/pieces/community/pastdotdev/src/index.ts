@@ -23,9 +23,13 @@ export const pastdotdev = createPiece({
       auth: pastDevAuth,
       baseUrl: (auth) =>
         `${pastDevClient.resolveBaseUrl({ apiHost: auth?.props.apiHost })}/api/v1`,
-      authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth.props.apiKey}`,
-      }),
+      authMapping: async (auth, propsValue) => {
+        pastDevClient.assertOnConnectionHost({
+          urlProp: propsValue['url'],
+          apiHost: auth.props.apiHost,
+        });
+        return { Authorization: `Bearer ${auth.props.apiKey}` };
+      },
     }),
   ],
   triggers: [],
