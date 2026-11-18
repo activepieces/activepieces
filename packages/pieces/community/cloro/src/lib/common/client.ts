@@ -29,7 +29,7 @@ async function send<T>({
     if (e instanceof HttpError) {
       const detail = errorDetail(e.response.body);
       if (detail) {
-        throw new Error(`cloro returned HTTP ${e.response.status}: ${detail}`);
+        throw new CloroApiError({ status: e.response.status, detail });
       }
     }
     throw e;
@@ -59,12 +59,37 @@ async function monitor({
 }
 
 function isDirectLink(url: unknown): url is string {
-  return (
-    typeof url === 'string' &&
-    /^https?:\/\//.test(url) &&
-    !url.includes('google.com/goto') &&
-    !url.includes('google.com/search')
-  );
+  if (!isAbsoluteHttpUrl(url)) {
+    return false;
+  }
+  const parsed = parseUrl(url);
+  if (parsed === undefined) {
+    return false;
+  }
+  return !(GOOGLE_HOST.test(parsed.hostname) && GOOGLE_REDIRECT_PATH.test(parsed.pathname));
+}
+
+function assertCloroUrl(url: unknown): void {
+  if (!isAbsoluteHttpUrl(url)) {
+    return;
+  }
+  if (parseUrl(url)?.origin !== CLORO_API_URL) {
+    throw new Error(
+      `Custom API Call only sends your cloro API key to ${CLORO_API_URL}. Use a path such as /v1/credits, or a full URL on that host.`
+    );
+  }
+}
+
+function isAbsoluteHttpUrl(url: unknown): url is string {
+  return typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'));
+}
+
+function parseUrl(url: string): URL | undefined {
+  try {
+    return new URL(url);
+  } catch {
+    return undefined;
+  }
 }
 
 function encodedPromptLength(prompt: string): number {
@@ -107,7 +132,19 @@ function errorDetail(body: unknown): string | undefined {
   return parts.length > 0 ? parts.join(' ') : undefined;
 }
 
+class CloroApiError extends Error {
+  readonly status: number;
+
+  constructor({ status, detail }: { status: number; detail: string }) {
+    super(`cloro returned HTTP ${status}: ${detail}`);
+    this.name = 'CloroApiError';
+    this.status = status;
+  }
+}
+
 const REQUEST_TIMEOUT_MS = 180000;
+const GOOGLE_HOST = /^(www\.)?google\.[a-z]{2,3}(\.[a-z]{2})?$/;
+const GOOGLE_REDIRECT_PATH = /^\/(goto|search)(\/|$)/;
 
 export const CLORO_API_URL = 'https://api.cloro.dev';
 export const BING_PROMPT_LIMIT = 3500;
@@ -115,11 +152,13 @@ export const cloroApi = {
   send,
   monitor,
   isDirectLink,
+  assertCloroUrl,
   isRecord,
   text,
   encodedPromptLength,
   sources,
   countryName,
 };
+export { CloroApiError };
 
 export type CloroSource = { title: string; url: string };

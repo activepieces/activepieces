@@ -1,6 +1,6 @@
 import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { cloroApi } from './common/client';
+import { CloroApiError, cloroApi } from './common/client';
 
 export const cloroAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -20,7 +20,7 @@ The free plan includes 500 credits each month.`,
       });
       return { valid: true };
     } catch (e) {
-      const status = e instanceof HttpError ? e.response.status : undefined;
+      const status = errorStatus(e);
       if (status === 401 || status === 403) {
         return { valid: false, error: 'Invalid API key.' };
       }
@@ -31,3 +31,13 @@ The free plan includes 500 credits each month.`,
     }
   },
 });
+
+function errorStatus(error: unknown): number | undefined {
+  if (error instanceof HttpError) {
+    return error.response.status;
+  }
+  if (error instanceof CloroApiError) {
+    return error.status;
+  }
+  return undefined;
+}

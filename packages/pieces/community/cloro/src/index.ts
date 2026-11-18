@@ -4,7 +4,7 @@ import { getAiAnswerAction } from './lib/actions/get-ai-answer';
 import { searchGoogleAction } from './lib/actions/search-google';
 import { searchGoogleNewsAction } from './lib/actions/search-google-news';
 import { cloroAuth } from './lib/auth';
-import { CLORO_API_URL } from './lib/common/client';
+import { CLORO_API_URL, cloroApi } from './lib/common/client';
 
 export const cloro = createPiece({
   displayName: 'cloro',
@@ -22,9 +22,10 @@ export const cloro = createPiece({
     createCustomApiCallAction({
       baseUrl: () => CLORO_API_URL,
       auth: cloroAuth,
-      authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth.secret_text}`,
-      }),
+      authMapping: async (auth, propsValue) => {
+        cloroApi.assertCloroUrl(propsValue['url']?.['url']);
+        return { Authorization: `Bearer ${auth.secret_text}` };
+      },
     }),
   ],
   triggers: [],

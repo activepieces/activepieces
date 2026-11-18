@@ -2,8 +2,10 @@ import { HttpError, httpClient, HttpRequest } from '@activepieces/pieces-common'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getAiAnswerAction } from '../src/lib/actions/get-ai-answer';
 import { searchGoogleAction } from '../src/lib/actions/search-google';
+import { cloro } from '../src';
 import { searchGoogleNewsAction } from '../src/lib/actions/search-google-news';
 import { cloroAuth } from '../src/lib/auth';
+import { cloroApi } from '../src/lib/common/client';
 
 const API_KEY = 'sk_test_cloro';
 const sendRequest = vi.fn();
@@ -76,9 +78,60 @@ describe('auth', () => {
     expect(await validate('bad')).toEqual({ valid: false, error: 'Invalid API key.' });
   });
 
+  it('reports a rejected key with a cloro error body as invalid', async () => {
+    sendRequest.mockRejectedValue(
+      new HttpError({}, { status: 401, responseBody: { success: false, error: { code: 'UNAUTHORIZED', message: 'Invalid API key' } } })
+    );
+    expect(await validate('bad')).toEqual({ valid: false, error: 'Invalid API key.' });
+  });
+
   it('reports other failures as unreachable', async () => {
     sendRequest.mockRejectedValue(new HttpError({}, { status: 503, responseBody: {} }));
     expect((await validate(API_KEY)).valid).toBe(false);
+  });
+});
+
+describe('Custom API Call', () => {
+  const customCall = cloro.getAction('custom_api_call');
+  const call = (url: string) =>
+    customCall!.run({ auth: { secret_text: API_KEY }, propsValue: { method: 'GET', url: { url } } } as never);
+
+  it('sends a relative path to api.cloro.dev with the Bearer key', async () => {
+    sendRequest.mockResolvedValue(ok({ remaining: 100 }));
+    await call('/v1/credits');
+    expect(request().url).toBe('https://api.cloro.dev/v1/credits');
+    expect(request().headers).toMatchObject({ Authorization: `Bearer ${API_KEY}` });
+  });
+
+  it('accepts a full URL on api.cloro.dev', async () => {
+    sendRequest.mockResolvedValue(ok({ remaining: 100 }));
+    await call('https://api.cloro.dev/v1/credits');
+    expect(request().url).toBe('https://api.cloro.dev/v1/credits');
+  });
+
+  it.each([
+    'https://example.com/v1/credits',
+    'http://api.cloro.dev/v1/credits',
+    'https://api.cloro.dev.example.com/v1/credits',
+    'https://api.cloro.dev@example.com/v1/credits',
+  ])('refuses to send the key to %s', async (url) => {
+    await expect(call(url)).rejects.toThrow(/only sends your cloro API key/);
+    expect(sendRequest).not.toHaveBeenCalled();
+  });
+});
+
+describe('direct links', () => {
+  it.each([
+    ['https://example.com/a', true],
+    ['https://developers.google.com/search/docs', true],
+    ['https://www.google.com/searchconsole', true],
+    ['https://www.google.com/search?q=x', false],
+    ['https://www.google.co.uk/search?q=x', false],
+    ['https://www.google.com/goto?x=1', false],
+    ['/relative', false],
+    ['', false],
+  ])('%s is direct: %s', (url, expected) => {
+    expect(cloroApi.isDirectLink(url)).toBe(expected);
   });
 });
 
