@@ -119,7 +119,6 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
               minRows={1}
               maxRows={6}
               name="message"
-              data-testid="chat-input"
               className={cn(
                 'px-4 py-3 text-sm placeholder:text-gray-11 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50 w-full resize-none border-0 shadow-none focus-visible:ring-0',
                 className,
@@ -159,8 +158,6 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
                 type="submit"
                 size="icon"
                 variant="default"
-                aria-label={t('Send message')}
-                data-testid="chat-send-button"
               >
                 <ArrowUpIcon className="w-4 h-4" />
               </Button>
