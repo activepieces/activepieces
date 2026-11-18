@@ -102,7 +102,7 @@ Two projects, ending 2026-12-04. For each concern, record where it first appears
 - **Two areas changed** — the Co-Owner comes from the area with the most change. A PR in the other area also needs that area's code owner.
 - **Large PR (migration, generated code)** — allowed; the PR body says why and names the file to read first.
 - **Work fits in one PR, a single bug, or a hotfix** — not a project. No Co-Owner and no gate: agents treat the ticket as approved in any status. Round-robin review.
-- **Rushed feature** — the gate stays but can be same-day on a short note; the window and the demo can be skipped when the PM or a founder asks and the Owner and Co-Owner agree. Decisions records each skip, and each skip gets a follow-up ticket.
+- **Rushed feature** — the project gets no Co-Owner label, so it skips the gate and the Co-Owner review. Every other gate stays. The skip needs no record.
 
 ## Gotchas
 
