@@ -1,36 +1,24 @@
 import {
   createTrigger,
+  MarkdownVariant,
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-
-const campaignCompletedMessage = `
-  Follow the below steps:
-  
-  1. Login to the ReachInbox dashboard.
-  2. Go to the "Profile" section and navigate to the "Settings" tab.
-  3. Click on the "Integrations" and go to the "Webhooks". Click on the "Add Webhook" button.
-  4. Copy the following webhook URL and paste it into the "Webhook URL" field.
-      \`\`\`text
-      {{webhookUrl}}
-      \`\`\`
-
-  5. Select the event type as "Campaign Completed".
-  6. Click on the "Test Trigger" button to simulate a test and capture the webhook response here.
-  `;
+import { reachinboxCommon } from '../common';
 
 export const campaignCompleted = createTrigger({
   name: 'campaignCompleted',
   classification: 'READ',
   displayName: 'Campaign Completed',
-  description: 'Triggers when a campaign is completed.',
+  description: 'Triggers when a campaign completes its sequence.',
   aiMetadata: {
     description:
       'Fires when a ReachInbox campaign finishes its full sending sequence (SEQUENCE_COMPLETED). Represents the end of outreach for a campaign, carrying campaign and lead details. Requires the webhook to be configured in ReachInbox.',
   },
   props: {
     markdown: Property.MarkDown({
-      value: campaignCompletedMessage,
+      value: reachinboxCommon.webhookInstructions('Campaign Completed'),
+      variant: MarkdownVariant.INFO,
     }),
   },
   sampleData: {

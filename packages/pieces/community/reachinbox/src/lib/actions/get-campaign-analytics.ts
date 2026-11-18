@@ -58,20 +58,27 @@ export const getCampaignAnalytics = createAction({
   name: 'getCampaignAnalytics',
   classification: 'READ',
   displayName: 'Get Campaign Analytics',
-  description:
-    'Fetch analytics data for a selected campaign based on a date range.',
+  description: 'Gets opens, clicks and replies for one campaign over a date range.',
   audience: 'both',
   aiMetadata: {
     description:
       'Retrieves performance analytics (sent, opens, clicks, replies, per-step breakdowns, and activity) for one ReachInbox campaign over a date range. Use to report on or evaluate a specific campaign. Requires a campaign id and start/end dates in YYYY-MM-DD format; read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'report',
+      display: 'section',
+      label: 'Report',
+      icon: 'calendar',
+      props: ['campaignId', 'startDate', 'endDate'],
+    },
+  ],
   props: {
     campaignId: Property.Dropdown({
   auth: ReachinboxAuth,
-      displayName: 'Select Campaign',
-      description:
-        'Choose a campaign from the list or enter the campaign ID manually.',
+      displayName: 'Campaign',
+      description: 'Your campaigns, newest first.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
@@ -82,26 +89,45 @@ export const getCampaignAnalytics = createAction({
             placeholder: 'Please connect your account first',
           };
         }
-        const campaigns = await fetchCampaigns(auth.secret_text);
+        try {
+          const campaigns = await fetchCampaigns(auth.secret_text);
 
-        return {
-          options: campaigns.map((campaign) => ({
-            label: campaign.name,
-            value: campaign.id.toString(),
-          })),
-          disabled: campaigns.length === 0,
-        };
+          if (campaigns.length === 0) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'No campaigns found. Create one in ReachInbox first.',
+            };
+          }
+          return {
+            options: campaigns.map((campaign) => ({
+              label: reachinboxCommon.campaignLabel(campaign),
+              value: campaign.id.toString(),
+            })),
+            disabled: false,
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Failed to load campaigns. Check your connection.',
+          };
+        }
       },
     }),
     startDate: Property.ShortText({
       displayName: 'Start Date',
-      description: 'Enter the start date (YYYY-MM-DD). E.g. 2023-10-11',
-      required: true, // Made mandatory again
+      description: 'Format YYYY-MM-DD.',
+      placeholder: '2024-01-01',
+      required: true,
+      width: 'half',
     }),
     endDate: Property.ShortText({
       displayName: 'End Date',
-      description: 'Enter the end date (YYYY-MM-DD). E.g. 2023-10-20',
-      required: true, // Made mandatory again
+      description: 'Format YYYY-MM-DD.',
+      placeholder: '2024-01-31',
+      required: true,
+      width: 'half',
     }),
   },
   async run(context) {

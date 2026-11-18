@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { ReachinboxAuth } from '../..'; // Ensure proper authentication setup
 import { reachinboxCommon } from '../common';
@@ -7,29 +11,40 @@ export const addBlocklist = createAction({
   auth: ReachinboxAuth,
   name: 'addBlocklist',
   classification: 'WRITE',
-  displayName: 'Add Blocklist',
-  description: 'Add email addresses, domains, and keywords to the blocklist.',
+  displayName: 'Add to Blocklist',
+  description: 'Blocks email addresses, domains or keywords from your outreach.',
   audience: 'both',
   aiMetadata: {
     description:
       'Adds email addresses, domains, and/or keywords to the ReachInbox blocklist so matching leads are excluded from outreach. Use to suppress contacts globally. At least one of emails, domains, or keywords must be provided; the call appends entries on each run.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'entries',
+      display: 'section',
+      label: 'Blocklist Entries',
+      icon: 'filter',
+      props: ['info', 'emails', 'domains', 'keywords'],
+    },
+  ],
   props: {
+    info: Property.MarkDown({
+      value: 'Fill in at least one list.',
+      variant: MarkdownVariant.INFO,
+    }),
     emails: Property.Array({
       displayName: 'Email Addresses',
-      description:
-        'Enter the email addresses to block (e.g., ["abc@gmail.com"])',
+      description: 'Addresses that should never be contacted.',
       required: false,
     }),
     domains: Property.Array({
       displayName: 'Domains',
-      description: 'Enter the domains to block (e.g., ["example.com"])',
+      description: 'Every address at these domains is blocked.',
       required: false,
     }),
     keywords: Property.Array({
       displayName: 'Keywords',
-      description: 'Enter keywords to block (e.g., ["spam", "blacklist"])',
       required: false,
     }),
   },
