@@ -1,5 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { closeChat } from './lib/actions/close-chat';
 import { findChat } from './lib/actions/find-chat';
 import { findMessage } from './lib/actions/find-message';
@@ -18,32 +18,34 @@ import { newReceivedMessage } from './lib/triggers/new-received-message';
 import { newSentMessage } from './lib/triggers/new-sent-message';
 import { newUploadedFile } from './lib/triggers/new-uploaded-file';
 import { newWhatsappAccount } from './lib/triggers/new-whatsapp-account';
-import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const timelinesAi = createPiece({
   displayName: 'TimelinesAI',
   auth: timelinesAiAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/timelines-ai.png',
   authors: ['LuizDMM', 'sanket-a11y'],
   categories: [PieceCategory.MARKETING, PieceCategory.COMMUNICATION],
   actions: [
-    // Write Actions
     sendMessageToExistingChat,
     sendUploadedFileToExistingChat,
     sendFileToExistingChat,
     sendMessageToNewChat,
     closeChat,
-    // Search Actions
     findChat,
     findMessage,
     findUploadedFile,
     findMessageStatus,
     findWhatsappAccount,
-    // Custom API Call
     createCustomApiCallAction({
       baseUrl: () => timelinesAiCommon.baseUrl,
       auth: timelinesAiAuth,
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${timelinesAiCommon.baseUrl}`,
+          placeholder: '/chats',
+        },
+      },
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.secret_text}`,
       }),
