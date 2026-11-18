@@ -89,8 +89,8 @@ Create the name of the service account to use
 
 {{/*
 How long Kubernetes waits after SIGTERM before it kills the pod. A stopping worker waits up to
-5 s for the app to stop sending it jobs, then up to one flow timeout + 60 s for its running jobs,
-then 10 s for teardown, so the default is AP_FLOW_TIMEOUT_SECONDS + 75 (675 with the default
+5 s for the app to stop sending it jobs, then up to one flow timeout + 90 s for its running jobs,
+then 10 s for teardown, so the default is AP_FLOW_TIMEOUT_SECONDS + 105 (705 with the default
 600 s). Keep in step with packages/server/worker/src/lib/config/shutdown-budget.ts. Only
 activepiecesConfig is visible here: a flow timeout set only in a secret needs
 terminationGracePeriodSeconds set by hand.
@@ -101,6 +101,6 @@ terminationGracePeriodSeconds set by hand.
 {{- $explicit | int }}
 {{- else }}
 {{- $config := .Values.activepiecesConfig | default dict }}
-{{- add (get $config "AP_FLOW_TIMEOUT_SECONDS" | default 600 | int) 75 }}
+{{- add (get $config "AP_FLOW_TIMEOUT_SECONDS" | default 600 | int) 105 }}
 {{- end }}
 {{- end }}
