@@ -5,7 +5,7 @@ import { VariablesPage } from '../../pages/variables.page';
 
 const test = mergeTests(variablesTest, listResponseTest);
 
-test.describe('Variables table', { tag: ['@feature:variables', '@surface', '@no-staging'] }, () => {
+test.describe('Variables table', { tag: ['@feature:variables', '@surface'] }, () => {
   test('the variables table searches, filters by owner and pages, and keeps that state after a reload', async ({ page, variables }) => {
     const variablesPage = new VariablesPage(page);
     const { word, names } = await variables.seedMany({ count: 11 });
