@@ -127,6 +127,15 @@ export const chatWithCopilot = createAction({
       },
       body: JSON.stringify(body),
     });
-    return response.body.messages[1];
+    const reply = response.body.messages[1];
+    if (typeof reply?.text !== 'string') {
+      return reply;
+    }
+    return { ...reply, text: collapseRepeatedText(reply.text) };
   },
 });
+
+function collapseRepeatedText(text: string): string {
+  const half = text.slice(0, text.length / 2);
+  return half + half === text ? half : text;
+}
