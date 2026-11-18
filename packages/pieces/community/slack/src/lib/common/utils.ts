@@ -1,5 +1,6 @@
-import { ApFile } from '@activepieces/pieces-framework';
-import { Block, ConversationsRepliesResponse, KnownBlock, WebClient, WebClientOptions } from '@slack/web-api';
+import { ApFile, isNil, tryCatch } from '@activepieces/pieces-framework';
+import { Block, ConversationsRepliesResponse, ErrorCode, KnownBlock, WebAPIPlatformError, WebClient, WebClientOptions } from '@slack/web-api';
+import { getBotToken, getUserToken, SlackAuthValue } from './auth-helpers';
 
 const SLACK_SECTION_TEXT_MAX_LENGTH = 3000;
 
@@ -215,4 +216,37 @@ export async function fetchAllThreadReplies({ client, channel, ts, cursor: start
     has_more: Boolean(cursor),
     response_metadata: { ...firstPage.response_metadata, next_cursor: cursor ?? '' },
   };
+}
+
+const SLACK_NO_ACCESS_ERRORS = ['channel_not_found', 'not_in_channel', 'missing_scope', 'access_denied', 'no_permission'];
+
+export async function connectionCanSeeConversation({ auth, channel }: { auth: SlackAuthValue; channel: string }): Promise<boolean> {
+  const botCanSee = await slackAllowsAccess(() => new WebClient(getBotToken(auth)).conversations.info({ channel }));
+  if (botCanSee) {
+    return true;
+  }
+  const userToken = getUserToken(auth);
+  if (isNil(userToken)) {
+    return false;
+  }
+  return slackAllowsAccess(() => new WebClient(userToken).conversations.history({ channel, limit: 1 }));
+}
+
+async function slackAllowsAccess(slackCall: () => Promise<unknown>): Promise<boolean> {
+  const { error } = await tryCatch(slackCall);
+  if (isNil(error)) {
+    return true;
+  }
+  if (isSlackNoAccessError(error)) {
+    return false;
+  }
+  throw error;
+}
+
+function isSlackNoAccessError(error: Error): boolean {
+  return isSlackPlatformError(error) && SLACK_NO_ACCESS_ERRORS.includes(error.data.error);
+}
+
+function isSlackPlatformError(error: Error): error is WebAPIPlatformError {
+  return 'code' in error && error.code === ErrorCode.PlatformError;
 }

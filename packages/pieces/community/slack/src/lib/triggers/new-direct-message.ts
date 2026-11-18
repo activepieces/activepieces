@@ -2,6 +2,7 @@ import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-f
 import { slackAuth } from '../auth';
 import { getTeamId, getUserId, SlackAuthValue } from '../common/auth-helpers';
 import { appWebhookSetupInfo } from '../common/props';
+import { connectionCanSeeConversation } from '../common/utils';
 import { newDirectMessageTriggerOutputSchema } from '../output-schemas';
 
 
@@ -67,6 +68,13 @@ export const newDirectMessageTrigger = createTrigger({
 			(context.propsValue.ignoreBots && payloadBody.event.bot_id) ||
 			(context.propsValue.ignoreSelfMessages && payloadBody.event.user === userId)
 		) {
+			return [];
+		}
+		const connectionCanSeeDirectMessage = await connectionCanSeeConversation({
+			auth: context.auth,
+			channel: payloadBody.event.channel,
+		});
+		if (!connectionCanSeeDirectMessage) {
 			return [];
 		}
 

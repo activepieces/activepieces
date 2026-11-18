@@ -2,6 +2,7 @@ import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-f
 import { slackAuth } from '../auth';
 import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
 import { appWebhookSetupInfo } from '../common/props';
+import { connectionCanSeeConversation } from '../common/utils';
 import { newMessageTriggerOutputSchema } from '../output-schemas';
 
 export const newMessageTrigger = createTrigger({
@@ -48,6 +49,16 @@ export const newMessageTrigger = createTrigger({
 		// check for bot messages
 		if (context.propsValue.ignoreBots && payloadBody.event.bot_id) {
 			return [];
+		}
+		const isPrivateChannel = payloadBody.event.channel_type === 'group';
+		if (isPrivateChannel) {
+			const connectionCanSeePrivateChannel = await connectionCanSeeConversation({
+				auth: context.auth,
+				channel: payloadBody.event.channel,
+			});
+			if (!connectionCanSeePrivateChannel) {
+				return [];
+			}
 		}
 		return [payloadBody.event];
 	},
