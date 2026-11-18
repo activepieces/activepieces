@@ -3,12 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { autumnBillingProvider } from '../../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-billing'
 
 const mockGetCustomer = vi.fn()
+const mockListEvents = vi.fn()
 
 vi.mock('../../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils', async (importOriginal) => {
     const actual = await importOriginal<typeof import('../../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils')>()
     return {
         ...actual,
-        autumnUtils: { ...actual.autumnUtils, resolveClientForPlatform: async () => ({ getCustomer: mockGetCustomer }) },
+        autumnUtils: { ...actual.autumnUtils, resolveClientForPlatform: async () => ({ getCustomer: mockGetCustomer, listEvents: mockListEvents }) },
     }
 })
 
@@ -32,25 +33,51 @@ const log = { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() } sat
 
 beforeEach(() => {
     mockGetCustomer.mockReset()
+    mockListEvents.mockReset()
 })
 
 describe('billing overview invite rewards', () => {
-    it('reads the plan\'s reward slots, counting used slots as earned', async () => {
+    it('counts the slots used so far, read from their usage events', async () => {
         mockGetCustomer.mockResolvedValue(customer({ rewarded_invites_count: { granted: 4, usage: 1 } }))
+        mockListEvents.mockResolvedValue(events(1))
 
         expect((await overview()).inviteRewards).toEqual({ maxRewards: 4, rewardsEarned: 1, creditsPerInvite: 1000 })
+        expect(mockListEvents).toHaveBeenCalledWith({ featureId: 'rewarded_invites_count', customRange: { start: 0, end: expect.any(Number) }, limit: 4 })
     })
 
-    it('never counts more earned rewards than the plan grants', async () => {
+    it('keeps the rewards earned when the plan count restarts after a cancel back to Free', async () => {
+        mockGetCustomer.mockResolvedValue(customer({ rewarded_invites_count: { granted: 4, usage: 0 } }))
+        mockListEvents.mockResolvedValue(events(4))
+
+        expect((await overview()).inviteRewards).toEqual({ maxRewards: 4, rewardsEarned: 4, creditsPerInvite: 1000 })
+    })
+
+    it('trusts the plan count when the events have not caught up yet', async () => {
+        mockGetCustomer.mockResolvedValue(customer({ rewarded_invites_count: { granted: 4, usage: 2 } }))
+        mockListEvents.mockResolvedValue(events(1))
+
+        expect((await overview()).inviteRewards?.rewardsEarned).toBe(2)
+    })
+
+    it('skips the events when every slot is used, and never counts past the plan', async () => {
         mockGetCustomer.mockResolvedValue(customer({ rewarded_invites_count: { granted: 4, usage: 6 } }))
 
         expect((await overview()).inviteRewards).toEqual({ maxRewards: 4, rewardsEarned: 4, creditsPerInvite: 1000 })
+        expect(mockListEvents).not.toHaveBeenCalled()
+    })
+
+    it('hides the offer when the events cannot be read', async () => {
+        mockGetCustomer.mockResolvedValue(customer({ rewarded_invites_count: { granted: 4, usage: 1 } }))
+        mockListEvents.mockRejectedValue(new Error('autumn down'))
+
+        expect((await overview()).inviteRewards).toBeNull()
     })
 
     it('has no invite rewards when the plan carries no reward slots', async () => {
         mockGetCustomer.mockResolvedValue(customer({}))
 
         expect((await overview()).inviteRewards).toBeNull()
+        expect(mockListEvents).not.toHaveBeenCalled()
     })
 })
 
@@ -60,4 +87,8 @@ function overview() {
 
 function customer(balances: Record<string, { granted: number, usage: number }>) {
     return { balances, subscriptions: [], purchases: [], flags: {} }
+}
+
+function events(count: number) {
+    return { list: Array.from({ length: count }, (_, index) => ({ id: `evt_${index}` })) }
 }

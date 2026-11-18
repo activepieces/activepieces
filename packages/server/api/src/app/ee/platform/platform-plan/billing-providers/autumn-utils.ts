@@ -412,11 +412,11 @@ export const autumnConsole = {
     async compFreeLegacy({ autumnCustomerId }: { autumnCustomerId: string }): Promise<void> {
         await consoleRequest({ path: '/api/v1/billing/free-legacy', token: consoleSecretOrThrow(), body: { autumnCustomerId } })
     },
-    async grantInviteReward({ autumnCustomerId, inviteeEmail }: GrantInviteRewardParams): Promise<ConsoleInviteRewardGrant> {
+    async grantInviteReward({ autumnCustomerId, inviteeEmail, credits }: GrantInviteRewardParams): Promise<ConsoleInviteRewardGrant> {
         return consoleRequest<ConsoleInviteRewardGrant>({
             path: '/api/v1/invite-rewards',
             token: consoleSecretOrThrow(),
-            body: { autumnCustomerId, inviteeEmail },
+            body: { autumnCustomerId, inviteeEmail, credits },
         })
     },
     async getCreds(log: FastifyBaseLogger, platformId: string): Promise<ConsoleCustomerCall | null> {
@@ -820,6 +820,7 @@ export type ConsoleCustomerCall = {
 type GrantInviteRewardParams = {
     autumnCustomerId: string
     inviteeEmail: string
+    credits: number
 }
 
 type ConsoleInviteRewardGrant = { granted: true, credits: number, rewardsEarned: number } | { granted: false, reason: string }

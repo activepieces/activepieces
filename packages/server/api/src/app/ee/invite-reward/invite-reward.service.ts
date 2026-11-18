@@ -3,6 +3,8 @@ import { apDayjs } from '@activepieces/server-utils'
 import { TelemetryEventName } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityRepository } from '../../authentication/user-identity/user-identity-service'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { telemetry } from '../../helper/telemetry.utils'
@@ -36,7 +38,11 @@ export const inviteRewardService = (log: FastifyBaseLogger) => ({
             log.info({ platform: { id: platformId } }, '[inviteReward#grantOnJoin] no billing account, no reward')
             return
         }
-        const result = await autumnConsole.grantInviteReward({ autumnCustomerId: creds.autumnCustomerId, inviteeEmail: identity.email })
+        const result = await autumnConsole.grantInviteReward({
+            autumnCustomerId: creds.autumnCustomerId,
+            inviteeEmail: identity.email,
+            credits: system.getNumberOrThrow(AppSystemProp.INVITE_REWARD_CREDITS),
+        })
         if (!result.granted) {
             log.info({ platform: { id: platformId }, reason: result.reason }, '[inviteReward#grantOnJoin] no reward')
             return

@@ -37,7 +37,7 @@ describe('Invite reward', () => {
 
             const email = await joinAsNewMember({ platformId: mockPlatform.id })
 
-            await vi.waitFor(() => expect(autumnConsole.grantInviteReward).toHaveBeenCalledExactlyOnceWith({ autumnCustomerId: CREDS.autumnCustomerId, inviteeEmail: email }))
+            await vi.waitFor(() => expect(autumnConsole.grantInviteReward).toHaveBeenCalledExactlyOnceWith({ autumnCustomerId: CREDS.autumnCustomerId, inviteeEmail: email, credits: 1000 }))
         })
 
         it('refreshes the balance after the console grants', async () => {
@@ -77,7 +77,7 @@ describe('Invite reward', () => {
 
             await inviteRewardService(mockLog).grantOnJoin({ platformId: mockPlatform.id, identityId: identity.id })
 
-            expect(autumnConsole.grantInviteReward).toHaveBeenCalledWith({ autumnCustomerId: CREDS.autumnCustomerId, inviteeEmail: identity.email })
+            expect(autumnConsole.grantInviteReward).toHaveBeenCalledWith({ autumnCustomerId: CREDS.autumnCustomerId, inviteeEmail: identity.email, credits: 1000 })
         })
 
         it('enrolls a platform with no billing account, and grants nothing when it still has none', async () => {
@@ -100,7 +100,7 @@ describe('Invite reward', () => {
 
             await inviteRewardService(mockLog).grantOnJoin({ platformId: mockPlatform.id, identityId: identity.id })
 
-            expect(autumnConsole.grantInviteReward).toHaveBeenCalledWith({ autumnCustomerId: CREDS.autumnCustomerId, inviteeEmail: identity.email })
+            expect(autumnConsole.grantInviteReward).toHaveBeenCalledWith({ autumnCustomerId: CREDS.autumnCustomerId, inviteeEmail: identity.email, credits: 1000 })
         })
 
         it('fails the job for a retry when enrolling fails', async () => {
@@ -133,7 +133,7 @@ describe('Invite reward', () => {
 
             const identity = await databaseConnection().getRepository('user_identity').findOneByOrFail({ email })
             const jobId = `invite-reward-grant-${mockPlatform.id}-${identity.id}`
-            await vi.waitFor(() => expect(autumnConsole.grantInviteReward).toHaveBeenCalledWith({ autumnCustomerId: CREDS.autumnCustomerId, inviteeEmail: email }))
+            await vi.waitFor(() => expect(autumnConsole.grantInviteReward).toHaveBeenCalledWith({ autumnCustomerId: CREDS.autumnCustomerId, inviteeEmail: email, credits: 1000 }))
             await vi.waitFor(async () => expect(await systemJobsSchedule(mockLog).getJobState(jobId)).toBe('delayed'))
         })
     })
