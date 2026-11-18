@@ -6,8 +6,7 @@ import { SignUpPage } from '../../../pages/sign-up.page';
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Sign up', {
-  tag: ['@feature:sign-up', '@surface', '@no-staging'],
-  annotation: { type: 'no-staging', description: 'Cloud allows a sign-up without an invitation, and staging has no mail catcher' },
+  tag: ['@feature:sign-up', '@surface'],
 }, () => {
   test('invited person signs up and lands in a project', async ({ page, invitation, cleanup }) => {
     const invitationPage = new InvitationPage(page);

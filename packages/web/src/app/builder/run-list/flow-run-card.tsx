@@ -38,6 +38,8 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
+import { useBuilderStateContext } from '../builder-hooks';
+
 type FlowRunCardProps = {
   run: FlowRun;
   viewedRunId?: string;
@@ -52,6 +54,7 @@ const FlowRunCard = React.memo(
     );
     const projectId = authenticationSession.getProjectId();
     const navigate = useNavigate();
+    const setRun = useBuilderStateContext((state) => state.setRun);
 
     const [isRetryDropdownOpen, setIsRetryDropdownOpen] =
       useState<boolean>(false);
@@ -64,9 +67,13 @@ const FlowRunCard = React.memo(
     });
     const { mutate: retryRun, isPending: isRetryingRun } =
       flowRunMutations.useRetryRun({
-        onSuccess: ({ run }) => {
+        onSuccess: ({ run: retriedRun, populatedFlow }) => {
           refetchRuns();
-          navigate(`/runs/${run.id}`);
+          if (retriedRun.id === viewedRunId) {
+            setRun({ ...retriedRun, steps: {} }, populatedFlow.version);
+            return;
+          }
+          navigate(`/runs/${retriedRun.id}`);
         },
       });
     const retryFromFailedStep = () =>
@@ -153,6 +160,8 @@ const FlowRunCard = React.memo(
                       <Button
                         variant="ghost"
                         size={'icon'}
+                        data-testid="flow-run-card-retry"
+                        aria-label={t('Retry run')}
                         className={cn(
                           'group-hover:opacity-100 opacity-0 rounded-full bg-gray-4 drop-shadow-md',
                           {
