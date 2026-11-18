@@ -1,7 +1,7 @@
 import { expect, test } from '../../fixtures/run-details';
 import { RunDetailsPage } from '../../pages/run-details.page';
 
-test.describe('Run details and retry', { tag: ['@feature:run-details', '@no-staging'] }, () => {
+test.describe('Run details and retry', { tag: ['@feature:run-details'] }, () => {
   test.describe.configure({ timeout: 120_000 });
   test.use({ viewport: { width: 1280, height: 1000 } });
 
