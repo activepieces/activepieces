@@ -1,18 +1,18 @@
-import { Property } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { kapsoAuth } from './index';
 import { makeClient } from './index';
 
 export const businessAccountIdProp = Property.ShortText({
   displayName: 'Business Account ID',
-  description:
-    'Your WhatsApp Business Account (WABA) ID. Find it in your [Kapso dashboard](https://app.kapso.ai).',
+  description: 'Your WhatsApp Business Account ID, shown in the Kapso dashboard.',
+  placeholder: '102290129340398',
   required: true,
 });
 
 export const phoneNumberIdDropdown = Property.Dropdown({
   auth: kapsoAuth,
   displayName: 'Phone Number',
-  description: 'Select the WhatsApp phone number to send from.',
+  description: 'The WhatsApp number that sends the message.',
   required: true,
   refreshers: ['businessAccountId'],
   options: async ({ auth, businessAccountId }) => {
@@ -42,6 +42,14 @@ export const phoneNumberIdDropdown = Property.Dropdown({
         }>;
       }>('GET', `${businessAccountId}/phone_numbers`, { responseType: 'json' });
 
+      if (response.data.length === 0) {
+        return {
+          disabled: false,
+          options: [],
+          placeholder: 'No phone numbers found for this business account.',
+        };
+      }
+
       return {
         options: response.data.map((pn) => ({
           label: `${pn.verified_name} (${pn.display_phone_number})`,
@@ -51,7 +59,7 @@ export const phoneNumberIdDropdown = Property.Dropdown({
     } catch {
       return {
         disabled: true,
-        placeholder: 'Could not load phone numbers',
+        placeholder: 'Could not load phone numbers. Check the Business Account ID.',
         options: [],
       };
     }
@@ -61,7 +69,7 @@ export const phoneNumberIdDropdown = Property.Dropdown({
 export const templateDropdown = Property.Dropdown({
   auth: kapsoAuth,
   displayName: 'Template',
-  description: 'Select a message template to send.',
+  description: 'An approved template from this business account.',
   required: true,
   refreshers: ['businessAccountId'],
   options: async ({ auth, businessAccountId }) => {
@@ -89,6 +97,14 @@ export const templateDropdown = Property.Dropdown({
         limit: 100,
       });
 
+      if (response.data.length === 0) {
+        return {
+          disabled: false,
+          options: [],
+          placeholder: 'No approved templates found for this business account.',
+        };
+      }
+
       return {
         options: response.data.map((t) => ({
           label: `${t.name} (${t.language ?? 'unknown'})`,
@@ -98,9 +114,22 @@ export const templateDropdown = Property.Dropdown({
     } catch {
       return {
         disabled: true,
-        placeholder: 'Could not load templates',
+        placeholder: 'Could not load templates. Check the Business Account ID.',
         options: [],
       };
     }
   },
+});
+
+export const recipientPhoneProp = Property.ShortText({
+  displayName: 'Recipient Phone Number',
+  description: "The person's WhatsApp number, with country code.",
+  placeholder: '15551234567',
+  required: true,
+});
+
+export const freeFormWindowInfo = Property.MarkDown({
+  value:
+    'WhatsApp delivers this message only if the person messaged you in the last 24 hours. To start a new conversation, use **Send Template Message**.',
+  variant: MarkdownVariant.WARNING,
 });
