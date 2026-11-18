@@ -75,8 +75,8 @@ export const autumnUtils = {
             aggregateEvents(params: WithoutCustomerId<EventsAggregateParams>) {
                 return client.events.aggregate({ customerId, ...params })
             },
-            listEvents(params: WithoutCustomerId<EventsListParams>) {
-                return client.events.list({ customerId, ...params }, { timeoutMs: AUTUMN_LIST_EVENTS_TIMEOUT_MS })
+            listEvents({ timeoutMs = AUTUMN_LIST_EVENTS_TIMEOUT_MS, ...params }: ListEventsInput) {
+                return client.events.list({ customerId, ...params }, { timeoutMs })
             },
         }
     },
@@ -713,6 +713,10 @@ type ListAllSubscriptionsParams = {
 type AutumnClientParams = {
     secretKey: string
     customerId: string
+}
+
+type ListEventsInput = WithoutCustomerId<EventsListParams> & {
+    timeoutMs?: number
 }
 
 type TrackInput = WithoutCustomerId<TrackParams> & {

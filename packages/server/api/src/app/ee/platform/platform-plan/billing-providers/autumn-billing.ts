@@ -1,6 +1,6 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs, wideEvent } from '@activepieces/server-utils'
-import { AiCreditsAutoTopUpState, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, FeatureId, InviteRewardsInfo, isConsumableFeatureId, isEligibleForSelfServeTrial, notStartedSelfServeTrial, PlanName, RewardFeatureId, SeatsBillableFeature, SelfServeTrialDates, SelfServeTrialInfo, SelfServeTrialState, UnconsumableFeatureId } from '@activepieces/shared'
+import { AiCreditsAutoTopUpState, ApEdition, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, FeatureId, InviteRewardsInfo, isConsumableFeatureId, isEligibleForSelfServeTrial, notStartedSelfServeTrial, PlanName, RewardFeatureId, SeatsBillableFeature, SelfServeTrialDates, SelfServeTrialInfo, SelfServeTrialState, UnconsumableFeatureId } from '@activepieces/shared'
 import { AutumnError, type GetCustomerResponse } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
 import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey, getEntitlementsRefreshKey, getSelfServeTrialEndedRefreshKey, getSelfServeTrialStartLockKey } from '../../../../database/redis/keys'
@@ -29,6 +29,7 @@ const BILLING_OVERVIEW_TTL_SECONDS = 5 * 60
 const USAGE_EVENTS_PAGE_SIZE = 5000
 const SELF_SERVE_TRIAL_ENDED_REFRESH_CLAIM_SECONDS = 30 * 24 * 60 * 60
 const TRIAL_DURATION_UNITS: Partial<Record<string, 'day' | 'month' | 'year'>> = { day: 'day', month: 'month', year: 'year' }
+const INVITE_REWARD_EVENTS_TIMEOUT_MS = 3000
 
 export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider => ({
     listPlans: async (platformId: string) => {
@@ -366,7 +367,7 @@ function toCreditsResetInterval(items: AutumnPlanItems): string | null {
 
 async function loadInviteRewards({ log, platformId, client, customer }: LoadInviteRewardsParams): Promise<InviteRewardsInfo | null> {
     const slots = customer.balances[RewardFeatureId.REWARDED_INVITES]
-    if (isNil(slots)) {
+    if (system.getEdition() !== ApEdition.CLOUD || isNil(slots)) {
         return null
     }
     const rewards = { maxRewards: slots.granted, creditsPerInvite: system.getNumberOrThrow(AppSystemProp.INVITE_REWARD_CREDITS) }
@@ -377,6 +378,7 @@ async function loadInviteRewards({ log, platformId, client, customer }: LoadInvi
         featureId: RewardFeatureId.REWARDED_INVITES,
         customRange: { start: 0, end: Date.now() },
         limit: slots.granted,
+        timeoutMs: INVITE_REWARD_EVENTS_TIMEOUT_MS,
     }))
     if (!isNil(error) || isNil(events)) {
         log.warn({ error, platform: { id: platformId } }, 'Failed to count invite reward events; hiding the invite offer')

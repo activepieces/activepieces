@@ -1,9 +1,16 @@
+import { ApEdition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { autumnBillingProvider } from '../../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-billing'
 
 const mockGetCustomer = vi.fn()
 const mockListEvents = vi.fn()
+const edition = vi.hoisted(() => ({ current: 'CLOUD' }))
+
+vi.mock('../../../../../src/app/helper/system/system', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../../../../src/app/helper/system/system')>()
+    return { ...actual, system: { ...actual.system, getEdition: () => edition.current } }
+})
 
 vi.mock('../../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils', async (importOriginal) => {
     const actual = await importOriginal<typeof import('../../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils')>()
@@ -34,6 +41,7 @@ const log = { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() } sat
 beforeEach(() => {
     mockGetCustomer.mockReset()
     mockListEvents.mockReset()
+    edition.current = ApEdition.CLOUD
 })
 
 describe('billing overview invite rewards', () => {
@@ -42,7 +50,7 @@ describe('billing overview invite rewards', () => {
         mockListEvents.mockResolvedValue(events(1))
 
         expect((await overview()).inviteRewards).toEqual({ maxRewards: 4, rewardsEarned: 1, creditsPerInvite: 1000 })
-        expect(mockListEvents).toHaveBeenCalledWith({ featureId: 'rewarded_invites_count', customRange: { start: 0, end: expect.any(Number) }, limit: 4 })
+        expect(mockListEvents).toHaveBeenCalledWith({ featureId: 'rewarded_invites_count', customRange: { start: 0, end: expect.any(Number) }, limit: 4, timeoutMs: 3000 })
     })
 
     it('keeps the rewards earned when the plan count restarts after a cancel back to Free', async () => {
@@ -71,6 +79,14 @@ describe('billing overview invite rewards', () => {
         mockListEvents.mockRejectedValue(new Error('autumn down'))
 
         expect((await overview()).inviteRewards).toBeNull()
+    })
+
+    it('has no invite rewards outside Cloud, even on a plan with reward slots', async () => {
+        edition.current = ApEdition.ENTERPRISE
+        mockGetCustomer.mockResolvedValue(customer({ rewarded_invites_count: { granted: 4, usage: 1 } }))
+
+        expect((await overview()).inviteRewards).toBeNull()
+        expect(mockListEvents).not.toHaveBeenCalled()
     })
 
     it('has no invite rewards when the plan carries no reward slots', async () => {
