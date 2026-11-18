@@ -18,7 +18,6 @@ const DEFAULT_WEB_SEARCH_RESULTS = 5
 const MIN_OPENROUTER_WEB_SEARCH_RESULTS = 1
 const MAX_OPENROUTER_WEB_SEARCH_RESULTS = 10
 const REPORT_WHAT_THE_CALL_COST = { usage: { include: true } } as const
-const SEARCH_WITHOUT_THINKING = { id: 'web-search', thinkingBudget: 0 }
 const EMBEDDING_REPORTS_WHAT_IT_COST = { extraBody: { usage: { include: true } } } as const
 
 const NATIVE_WEB_SEARCH_TOOLS: Record<string, (params: NativeWebSearchToolParams) => ToolSet> = {
@@ -86,7 +85,7 @@ async function searchWeb({ credentials, modelId, providerConfigId, billing, turn
     const { text, sources } = await generateText({
         model: createModel({ credentials, modelId, billing, turnAlreadyCharged, usageOnly, webSearchEnabled: true, ...spreadIfDefined('providerConfigId', providerConfigId) }),
         tools: buildWebSearchTools({ provider: credentials.provider, model: modelId }),
-        providerOptions: agentProviderOptions.buildProviderOptions({ provider: credentials.provider, tier: SEARCH_WITHOUT_THINKING, modelId, disableThinking: true }),
+        providerOptions: agentProviderOptions.buildProviderOptions({ provider: credentials.provider, thinkingBudget: 0, modelId, disableThinking: true }),
         system,
         prompt,
         abortSignal,
