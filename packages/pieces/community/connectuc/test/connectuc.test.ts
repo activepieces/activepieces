@@ -88,6 +88,16 @@ describe('ConnectUC connection validation', () => {
         expect(await validate()).toEqual({ valid: true });
     });
 
+    it('still accepts the token when the API response never finishes', async () => {
+        vi.useFakeTimers();
+        respond({ sub: 'user-1' });
+        sendRequest.mockReturnValueOnce(new Promise(() => undefined));
+        const result = validate();
+        await vi.advanceTimersByTimeAsync(10000);
+        expect(await result).toEqual({ valid: true });
+        vi.useRealTimers();
+    });
+
     it('rejects a token the sign-in server refuses', async () => {
         fail(new HttpError(undefined, { status: 401, responseBody: { error: 'invalid_token' } }));
         expect(await validate()).toEqual({ valid: false, error: 'Invalid or expired access token. Please reconnect your ConnectUC account.' });

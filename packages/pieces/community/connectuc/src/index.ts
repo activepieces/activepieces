@@ -58,18 +58,21 @@ export const connectucAuth = PieceAuth.OAuth2({
 });
 
 async function validateApiAccess(accessToken: string): Promise<{ valid: true } | { valid: false; error: string }> {
-  try {
-    await connectucApiCall({ accessToken, endpoint: '/activepieces/domains', method: HttpMethod.GET, timeout: API_ACCESS_CHECK_TIMEOUT_MS });
-    return { valid: true };
-  } catch (error: unknown) {
-    if (error instanceof HttpError && error.response.status === 401) {
-      return {
-        valid: false,
-        error: `ConnectUC signed you in, but its API rejected this account (${formatApiError(error)}). Check with ConnectUC that this account has API access.`,
-      };
-    }
-    return { valid: true };
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<undefined>((resolve) => {
+    timer = setTimeout(() => resolve(undefined), API_ACCESS_CHECK_TIMEOUT_MS);
+  });
+  const probe = connectucApiCall({ accessToken, endpoint: '/activepieces/domains', method: HttpMethod.GET, timeout: API_ACCESS_CHECK_TIMEOUT_MS })
+    .then(() => undefined, (error: unknown) => error);
+  const error = await Promise.race([probe, deadline]);
+  clearTimeout(timer);
+  if (error instanceof HttpError && error.response.status === 401) {
+    return {
+      valid: false,
+      error: `ConnectUC signed you in, but its API rejected this account (${formatApiError(error)}). Check with ConnectUC that this account has API access.`,
+    };
   }
+  return { valid: true };
 }
 
 export const connectuc = createPiece({
