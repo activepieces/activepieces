@@ -8,10 +8,11 @@ interface ApiCallParams {
     method: HttpMethod;
     body?: unknown;
     queryParams?: Record<string, string>;
+    timeout?: number;
 }
 
 export async function connectucApiCall<T = unknown>(params: ApiCallParams): Promise<T> {
-    const { accessToken, endpoint, method, body, queryParams } = params;
+    const { accessToken, endpoint, method, body, queryParams, timeout } = params;
 
     const response = await httpClient.sendRequest<T>({
         method,
@@ -22,6 +23,7 @@ export async function connectucApiCall<T = unknown>(params: ApiCallParams): Prom
         },
         body,
         queryParams,
+        timeout,
     });
 
     return response.body;

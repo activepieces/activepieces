@@ -65,7 +65,7 @@ describe('ConnectUC connection validation', () => {
         respond({ sub: 'user-1' });
         respond({});
         expect(await validate()).toEqual({ valid: true });
-        expect(sendRequest.mock.calls[1][0].url).toBe('https://api.connectuc.io/activepieces/domains');
+        expect(sendRequest.mock.calls[1][0]).toMatchObject({ url: 'https://api.connectuc.io/activepieces/domains', timeout: 10000 });
     });
 
     it('rejects a token the API refuses with 401 even though sign-in accepted it', async () => {
@@ -79,6 +79,12 @@ describe('ConnectUC connection validation', () => {
     it('still accepts the token when the API check fails for another reason', async () => {
         respond({ sub: 'user-1' });
         fail(new HttpError(undefined, { status: 503, responseBody: { message: 'Service Unavailable' } }));
+        expect(await validate()).toEqual({ valid: true });
+    });
+
+    it('still accepts the token when the API check times out', async () => {
+        respond({ sub: 'user-1' });
+        fail(new DOMException('This operation was aborted', 'AbortError'));
         expect(await validate()).toEqual({ valid: true });
     });
 

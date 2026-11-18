@@ -59,7 +59,7 @@ export const connectucAuth = PieceAuth.OAuth2({
 
 async function validateApiAccess(accessToken: string): Promise<{ valid: true } | { valid: false; error: string }> {
   try {
-    await connectucApiCall({ accessToken, endpoint: '/activepieces/domains', method: HttpMethod.GET });
+    await connectucApiCall({ accessToken, endpoint: '/activepieces/domains', method: HttpMethod.GET, timeout: API_ACCESS_CHECK_TIMEOUT_MS });
     return { valid: true };
   } catch (error: unknown) {
     if (error instanceof HttpError && error.response.status === 401) {
@@ -81,3 +81,5 @@ export const connectuc = createPiece({
   actions: [createContactAction, doNotDisturbAction, findCdrAction, initiateCallAction, sendSmsAction, updateCdrAction],
   triggers: [newRecording, newCallTranscription, newCallSummary, newCdr, newIncomingCall, newOutgoingCall, newVoicemail, newSms],
 });
+
+const API_ACCESS_CHECK_TIMEOUT_MS = 10000;
