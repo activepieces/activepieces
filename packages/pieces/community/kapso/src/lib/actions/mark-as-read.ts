@@ -19,7 +19,8 @@ export const markAsRead = createAction({
     phoneNumberId: phoneNumberIdDropdown,
     messageId: Property.ShortText({
       displayName: 'Message ID',
-      description: 'The ID of the message to mark as read.',
+      description: 'The ID of the received message. It starts with wamid.',
+      placeholder: 'wamid.HBgLMTU1NTEyMzQ1NjcVAgASGBQ',
       required: true,
     }),
   },

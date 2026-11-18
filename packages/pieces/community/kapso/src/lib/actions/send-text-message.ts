@@ -1,7 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { kapsoAuth } from '../common';
 import { makeClient } from '../common';
-import { businessAccountIdProp, phoneNumberIdDropdown } from '../common/props';
+import {
+  businessAccountIdProp,
+  freeFormWindowInfo,
+  phoneNumberIdDropdown,
+  recipientPhoneProp,
+} from '../common/props';
 
 export const sendTextMessage = createAction({
   auth: kapsoAuth,
@@ -14,25 +19,45 @@ export const sendTextMessage = createAction({
     description: 'Sends a plain text WhatsApp message to a recipient phone number from a connected WhatsApp Business number. Use for free-form text replies; choose Send Template Message instead when initiating a conversation outside the 24-hour customer service window. Requires the recipient number in international format. Each call delivers a new message, so it is not idempotent.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'sender',
+      display: 'section',
+      label: 'Send From',
+      icon: 'send',
+      props: ['businessAccountId', 'phoneNumberId'],
+    },
+    {
+      key: 'recipient',
+      display: 'section',
+      label: 'Send To',
+      icon: 'user',
+      props: ['windowInfo', 'to'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['body'],
+    },
+  ],
   props: {
     businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,
-    to: Property.ShortText({
-      displayName: 'Recipient Phone Number',
-      description:
-        'The recipient\'s phone number in international format (e.g. 15551234567).',
-      required: true,
-    }),
+    windowInfo: freeFormWindowInfo,
+    to: recipientPhoneProp,
     body: Property.LongText({
       displayName: 'Message',
-      description: 'The text message to send.',
+      description: 'Up to 4,096 characters. WhatsApp formatting such as *bold* works.',
       required: true,
     }),
     previewUrl: Property.Checkbox({
-      displayName: 'Preview URL',
-      description: 'Whether to show a link preview if the message contains a URL.',
+      displayName: 'Link Preview',
+      description: 'Show a preview of the first link in the message.',
       required: false,
       defaultValue: false,
+      advanced: true,
     }),
   },
   async run(context) {
