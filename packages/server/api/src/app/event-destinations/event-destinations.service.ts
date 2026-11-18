@@ -422,8 +422,8 @@ async function triggerPieceEventsForDestinations({ log, destinations, changes, w
         }
         const deliveries = planPieceEventDeliveries({ platformId, destinations: platformDestinations, changes, webhookUrlPrefix })
         for (const batch of chunk(deliveries, PIECE_EVENT_DISPATCH_CHUNK_SIZE)) {
-            await Promise.all(batch.map(({ destination, internalFlowId, body }) =>
-                dispatchEventToDestination({
+            await Promise.all(batch.map(async ({ destination, internalFlowId, body }) => {
+                const { error } = await tryCatch(() => dispatchEventToDestination({
                     log,
                     platformId,
                     destinationId: destination.id,
@@ -432,8 +432,15 @@ async function triggerPieceEventsForDestinations({ log, destinations, changes, w
                     format: destination.format,
                     storedHeaders: destination.headers,
                     body,
-                }),
-            ))
+                }))
+                if (error !== null) {
+                    log.error({
+                        platform: { id: platformId },
+                        destination: { id: destination.id },
+                        error: error.message,
+                    }, '[eventDestinationService#triggerPieceEventsForDestinations] Piece event delivery failed, continuing with the other deliveries')
+                }
+            }))
         }
     }
 }

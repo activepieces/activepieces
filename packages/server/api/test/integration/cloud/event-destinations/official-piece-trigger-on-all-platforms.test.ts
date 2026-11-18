@@ -101,6 +101,18 @@ describe('triggerOnAllPlatforms for official piece events', () => {
         }
     })
 
+    it('a failed delivery on one platform does not stop the other platform\'s event', async () => {
+        const first = await createTestContext(app, ENTITLED_PLAN)
+        const second = await createTestContext(app, ENTITLED_PLAN)
+        const firstDestinationId = await subscribe({ platformId: first.platform.id })
+        const secondDestinationId = await subscribe({ platformId: second.platform.id })
+        addSpy.mockRejectedValueOnce(new Error('queue unavailable'))
+
+        await eventDestinationService(app.log).triggerOnAllPlatforms({ addedPieces: [added('@test/a', '1.0.0')] })
+
+        expect(queuedJobs().map((job) => job.data.webhookId).sort()).toEqual([firstDestinationId, secondDestinationId].sort())
+    })
+
     it('unsubscribed, disabled and unentitled destinations get nothing', async () => {
         const unsubscribed = await createTestContext(app, ENTITLED_PLAN)
         const disabled = await createTestContext(app, ENTITLED_PLAN)
@@ -275,7 +287,7 @@ type QueuedJob = {
         payload: {
             platformId: string
             action: ApplicationEventName
-            data: { piece: Record<string, unknown> & { name: string, version: string, changeType: string }}
+            data: { piece: Record<string, unknown> & { name: string, version: string, changeType: string } }
         }
     }
 }
