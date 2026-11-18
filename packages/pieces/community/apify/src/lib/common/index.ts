@@ -348,7 +348,10 @@ export const handleRun = async (
   }
 ): Promise<{ run: any; datasetItems: any; }> => {
   const run = waitForFinish
-    ? await resourceClient.call(body, { ...runOptions, log: null })
+    ? await resourceClient.call(
+        body,
+        resourceClient instanceof ActorClient ? { ...runOptions, log: null } : runOptions,
+      )
     : await resourceClient.start(body, runOptions);
 
   if (waitForFinish && run.defaultDatasetId) {

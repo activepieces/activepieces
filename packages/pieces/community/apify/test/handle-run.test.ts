@@ -8,6 +8,7 @@ vi.mock('../src/index', () => ({ apifyAuth: {} }));
 
 const RUN_ID = 'run_fixture';
 const ACTOR_ID = 'actor_fixture';
+const TASK_ID = 'task_fixture';
 const DATASET_ID = 'dataset_fixture';
 
 let server: http.Server;
@@ -52,12 +53,33 @@ test('a dropped actor log stream does not surface as an unhandled rejection', as
   expect(unhandled).toEqual([]);
 });
 
+test('a task run waits for finish without a log option', async () => {
+  const client = new ApifyClient({ token: 'token', baseUrl, maxRetries: 0 });
+
+  const result = await handleRun({
+    resourceClient: client.task(TASK_ID),
+    body: {},
+    runOptions: {},
+    waitForFinish: true,
+    client,
+  });
+  await new Promise((resolve) => setTimeout(resolve, 100));
+
+  expect(result.run.status).toBe('SUCCEEDED');
+  expect(result.datasetItems).toEqual([{ id: 1 }]);
+  expect(unhandled).toEqual([]);
+});
+
 function fakeApifyApi(req: http.IncomingMessage, res: http.ServerResponse) {
   const url = new URL(req.url ?? '/', 'http://localhost');
   if (url.pathname.startsWith(`/v2/logs/${RUN_ID}`) || url.pathname.startsWith(`/v2/actor-runs/${RUN_ID}/log`)) {
     res.writeHead(200, { 'content-type': 'text/plain' });
     res.write('2026-11-16T14:16:21.469Z ACTOR: Pulling container image\n');
     setTimeout(() => res.socket?.destroy(), 20);
+    return;
+  }
+  if (url.pathname === `/v2/actor-tasks/${TASK_ID}/runs` && req.method === 'POST') {
+    sendJson(res, { data: run('RUNNING') });
     return;
   }
   if (url.pathname === `/v2/acts/${ACTOR_ID}/runs` && req.method === 'POST') {
