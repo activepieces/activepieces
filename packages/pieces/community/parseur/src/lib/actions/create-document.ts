@@ -1,12 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { parseurAuth, parseurCommon } from '../common';
+import { parseurAuth } from '../auth';
+import { parseurApi } from '../common/api';
+import { emailDocumentUploadOutputSchema } from '../output-schemas';
 
-export const createDocument = createAction({
+export const createDocumentAction = createAction({
   auth: parseurAuth,
   name: 'createDocument',
+  outputSchema: emailDocumentUploadOutputSchema,
+  classification: 'WRITE',
   displayName: 'Create Document',
   description: 'Creates a new document.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Submits a new email-style document to Parseur for parsing by sending its subject, sender/recipient addresses, and HTML or plain-text body. Use to push raw email content into a Parseur mailbox so it can be parsed against templates. Each call creates a separate document, so it is not idempotent.',
@@ -60,16 +64,18 @@ export const createDocument = createAction({
       required: false,
     }),
   },
-  async run({ auth: apiKey, propsValue }) {
+  async run({ auth, propsValue }) {
     const { message_headers, ...rest } = propsValue;
-    return await parseurCommon.createDocument({
-      apiKey:apiKey.secret_text,
-      ...rest,
-      message_headers: message_headers
-        ? Object.fromEntries(
-            Object.entries(message_headers).map(([k, v]) => [k, String(v)])
-          )
-        : undefined,
+    return await parseurApi.createEmailDocument({
+      auth,
+      document: {
+        ...rest,
+        message_headers: message_headers
+          ? Object.fromEntries(
+              Object.entries(message_headers).map(([k, v]) => [k, String(v)])
+            )
+          : undefined,
+      },
     });
   },
 });

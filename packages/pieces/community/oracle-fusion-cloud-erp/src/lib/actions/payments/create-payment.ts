@@ -5,6 +5,7 @@ import { makeClient } from '../../common/client';
 export const createPayment = createAction({
     auth: oracleFusionCloudErpAuth,
     name: 'create_payment',
+    classification: 'WRITE',
     displayName: 'Create Payment',
     description: 'Creates a new manual payment in Oracle Fusion Cloud ERP.',
     audience: 'both',

@@ -2,16 +2,18 @@ import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { smartsuiteAuth } from '../auth';
 import { smartsuiteCommon, formatRecordFields, transformRecordFields } from '../common/props';
-import { smartSuiteApiCall, TableStucture } from '../common';
+import { smartSuiteApi, SmartSuiteRecord } from '../common';
+import { smartSuiteClient } from '../common/client';
+import { outputSchemas } from '../output-schemas';
 
 export const updateRecord = createAction({
 	name: 'update_record',
 	classification: 'WRITE',
 	displayName: 'Update a Record',
 	description: 'Updates an existing record in the specified table',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
-		description: 'Patches an existing SmartSuite record identified by its record ID, overwriting only the supplied field values against the live table schema. Use when an agent needs to change fields on a known record; requires the solution, table, record ID, and the fields to set. Idempotent — re-applying the same field values leaves the record in the same state.',
+		description: 'Patches an existing SmartSuite record using form fields built from the table schema; only filled-in fields are sent and the output is keyed by field label. Agents should use Update Record Fields (by ID) instead. Idempotent: re-applying the same values leaves the record unchanged.',
 		idempotent: true,
 	},
 	auth: smartsuiteAuth,
@@ -21,49 +23,19 @@ export const updateRecord = createAction({
 		recordId: smartsuiteCommon.recordId,
 		fields: smartsuiteCommon.tableFields,
 	},
+	outputSchema: outputSchemas['labelledRecord'],
 	async run({ auth, propsValue }) {
 		const { tableId, recordId, fields } = propsValue;
-
-		const tableResponse = await smartSuiteApiCall<{
-			structure: TableStucture[];
-		}>({
-			apiKey: auth.props.apiKey,
-			accountId: auth.props.accountId,
-			method: HttpMethod.GET,
-			resourceUri: `/applications/${tableId}`,
+		const credentials = smartSuiteClient.credentialsOf(auth);
+		const recordPath = `/applications/${smartSuiteClient.pathSegment({ value: tableId, label: 'Table' })}/records/${smartSuiteClient.pathSegment({ value: recordId, label: 'Record ID' })}/`;
+		const table = await smartSuiteApi.getTable({ credentials, tableId });
+		const response = await smartSuiteClient.request<SmartSuiteRecord>({
+			credentials,
+			method: HttpMethod.PATCH,
+			path: recordPath,
+			body: formatRecordFields({ tableSchema: table.structure, tableValues: fields ?? {} }),
+			operation: 'update record',
 		});
-		const tableSchema = tableResponse.structure;
-
-		const formattedFields = formatRecordFields(tableSchema, fields);
-
-		try {
-			const response = await smartSuiteApiCall<Record<string, any>>({
-				apiKey: auth.props.apiKey,
-				accountId: auth.props.accountId,
-				method: HttpMethod.PATCH,
-				resourceUri: `/applications/${tableId}/records/${recordId}/`,
-				body: formattedFields,
-			});
-
-			const transformedFields = transformRecordFields(tableSchema, response);
-
-			return transformedFields;
-		} catch (error: any) {
-			if (error.response?.status === 422) {
-				throw new Error(
-					`Invalid request: ${error.response?.body?.message || 'Invalid data format'}`,
-				);
-			}
-
-			if (error.response?.status === 403) {
-				throw new Error('You do not have permission to update this record');
-			}
-
-			if (error.response?.status === 404) {
-				throw new Error(`Record with ID ${recordId} not found in table ${tableId}`);
-			}
-
-			throw new Error(`Failed to update record: ${error.message || 'Unknown error'}`);
-		}
+		return transformRecordFields({ tableSchema: table.structure, tableValues: response });
 	},
 });

@@ -16,14 +16,28 @@ A **Project** is the workspace within a platform where flows, connections, table
 - `update` — TEAM allows `displayName` + `icon`; PERSONAL allows neither.
 - `getOne`/`getOneOrThrow`, `getAllForUser` (admins see all platform projects, members see assigned), `getUserProjectOrThrow` (CE list), `getProjectIdsByPlatform`, `countByPlatformIdAndType` (limit enforcement).
 
-### Endpoints (CE level)
-- `GET /v1/projects` — CE returns personal project only.
-- `GET /v1/projects/:id` — single project.
-- `POST /v1/projects/:id` — update display name + metadata.
+### Endpoints
+Every edition registers the same `/v1/projects` routes from `platformProjectModule`.
+- `POST /v1/projects` — creates a TEAM project; refused once the plan's `billedTeamProjectsLimit` is reached.
+- `GET /v1/projects` — platform admins and operators see every platform project, members see the projects they belong to. Filters: `displayName`, `types`, `externalId`, `externalUserId`.
+- `GET /v1/projects/:id` — one project with its plan and usage.
+- `POST /v1/projects/:id` — update. A member with `WRITE_PROJECT` on the project can rename it; only a platform admin sets `isDefault`, `externalId` and `executionDataRetentionDays`.
+- `DELETE /v1/projects/:id` — platform admins and API keys only; a soft delete through `markForDeletion`.
 
 ### Gotchas
+- **The current project lives only in the browser.** A switch in the rail saves `projectId` in local storage (`authenticationSession.switchToProject`); the server keeps no current project, so each browser profile has its own.
+- **Platform Admin → Projects has no error state.** The table reads the whole `projectCollection` (one `GET /v1/projects` with `limit: 30000`) and pages and filters on the client, so it passes `isError={false}` to the table. The same collection fills the rail.
+- **A project name cannot hold `.` or `/`.** The server checks `SAFE_STRING_PATTERN` (`^[^./]+$`) on create and update, but the create dialog only checks for an empty name, so a name with a dot fails with the generic error toast.
 - `projectHooks.postCreate` is where EE creates the associated `ProjectPlan`, sets piece filters, and auto-subscribes an alert receiver (owner email for personal, `context.alertReceiverEmail` for team).
 - Soft-deleted projects stay in DB; a background job hard-deletes them.
+- **Raw SQL on `project` must add `"deleted" IS NULL` itself.** TypeORM adds it only to repository queries, so a raw `databaseConnection().query` or a join through `project` returns soft-deleted projects, names included. Usage name lookups (`ai-usage-names.ts`) hit this.
+- **A default project is a flag on the project**, `project.isDefault` (see decision 000051). The database only allows it on team projects (`chk_project_is_default_team`). Admins set it per project with `POST /v1/projects/:id` and `isDefault`; only platform admins and API keys can, and a plan without project roles gets `FEATURE_DISABLED` (checked in the controller; the service only takes `enforceDefaultGuard`). There is no cap on how many defaults a platform has; the platform response reads them in cursor pages of 100, so no single query is unbounded. The platform response lists the live team projects with the flag as `defaultProjectIds`, oldest first. The order matters, because the invite dialog preselects the first default.
+- The web project collection never sends `isDefault` when it saves other project settings, so a stale cache can't undo another admin's change. Defaults are only changed through `projectCollectionUtils.useSetDefaultProjects`.
+- A soft-deleted project keeps its flag until the hard delete; reads skip deleted rows. A default project can't be deleted from the app while it is a default: remove it on Roles & Access first (see decision 000049). API-key deletes, SCIM group deletes, and plans without project roles still delete it. The app check is part of the soft delete (`AND "isDefault" = false`), not a read before it, so a project another admin makes a default mid-delete is still refused.
+- Default projects only apply when a user is created; existing members are never backfilled or removed (see decision 000050). Only team projects of the same platform, and only on plans with `projectRolesEnabled`. On the server read them with `platformService.listDefaultProjectIds`; in the web, through `platformHooks.useNewMemberSettings()`, which applies the plan gate (`newMemberSettingsUtils.activeDefaultProjectIds`).
+- The personal projects switch lives on Roles & access, not the Projects page, and never depends on default projects. What guarantees a new Member a project is either their personal project or the invite: with personal projects off, the platform invite dialog requires a project for Members (see [User Invitations](./user-invitations.md)).
+- **Saved settings are not the effective ones.** Without `projectRolesEnabled`, a saved `autoCreatePersonalProjects: false` is kept but ignored: new members still get a personal project, and the saved "off" applies again after an upgrade. Read it through `newMemberSettingsUtils.personalProjectsActive`, never the raw field.
+- **The switch only creates personal projects at sign-up.** `getOrCreateWithProject` makes one when the user row is created, never later, so people who joined while it was off have none. Turning it on can also call `POST /v1/personal-projects/create-missing`, which turns the switch on and queues the `create-missing-personal-projects` system job in one request (putting the switch back if queuing fails). The job works in batches of 50 under a short per-platform `distributedLock`, stops as soon as the switch is off again, and gives active, non-embedded (`provider != JWT`) members without a live personal project one each. It saves its cursor on its own BullMQ job after every batch (`job.updateData`, found through a job id built from `platformId` + `runId`, the same pattern as `deleteFlowHandler` and `hardDeleteProjectHandler`), and is queued with 10 attempts, 5 minutes apart, so a crashed attempt resumes after the last member it reached instead of re-scanning. If a project's post-create hooks fail, that project is deleted and the member is recorded; at the end the job saves only those members and fails the attempt, so the retry handles just them. Nothing re-creates a personal project an admin deletes later, and turning the switch off never deletes any.
 
 ### Key files
 Entry point: `projectService`, a log-taking factory in `project-service.ts` that every project read and write routes through.
@@ -32,6 +46,8 @@ Entry point: `projectService`, a log-taking factory in `project-service.ts` that
 - `packages/server/api/src/app/ee/projects/` — the whole `/v1/projects` HTTP surface plus members, roles, releases, plans
 - `packages/core/shared/src/lib/management/project/` — `Project`, `ProjectPlan`, `ProjectIcon` and request schemas
 - `packages/web/src/features/projects/components/` — project switcher, platform switcher, create and edit dialogs
-- `packages/web/src/features/projects/stores/` — current-project store
+- `packages/web/src/features/projects/stores/` — current-project store and `projectCollection`
+- `packages/web/src/app/routes/platform/projects/` — the Platform Admin → Projects table
+- `packages/web/src/app/components/project-settings/` — the project settings dialog (rename, members, alerts)
 
-Paths verified 2026-07-17. An earlier version pointed at `project/project-controller.ts`; that file is gone and the `/v1/projects` routes now register from `ee/projects/platform-project-module.ts`.
+Paths verified 2026-11-16. An earlier version pointed at `project/project-controller.ts`; that file is gone and the `/v1/projects` routes now register from `ee/projects/platform-project-module.ts`.

@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getOrgBalanceAction = createAction({
   name: 'get_org_balance',
+  classification: 'READ',
   displayName: 'Get Organization Balance',
   description: 'Retrieve the current balance for your organization',
   audience: 'both',

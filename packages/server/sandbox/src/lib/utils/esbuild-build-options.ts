@@ -34,6 +34,9 @@ export function stepFolderResolvePlugin(rootDir: string): Plugin {
                 if (args.kind === 'entry-point' || isBareSpecifier(args.path)) {
                     return null
                 }
+                if (args.path.startsWith('node:')) {
+                    return { external: true }
+                }
                 if (/^[a-z][a-z0-9+.-]*:/i.test(args.path)) {
                     return { errors: [{ text: IMPORT_OUT_OF_SCOPE_MESSAGE }] }
                 }

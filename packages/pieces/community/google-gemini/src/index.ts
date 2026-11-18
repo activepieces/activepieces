@@ -16,8 +16,8 @@ import { googleGeminiAuth } from './lib/auth';
 export const googleGemini = createPiece({
   displayName: 'Google Gemini',
   auth: googleGeminiAuth,
-  description: 'Use the new Gemini models from Google',
-  minimumSupportedRelease: '0.87.0',
+  description: 'Generate text, images, video and speech with Google Gemini.',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-gemini.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["pfernandez98","kishanprmr","MoShizzle","AbdulTheActivePiecer","abuaboud"],

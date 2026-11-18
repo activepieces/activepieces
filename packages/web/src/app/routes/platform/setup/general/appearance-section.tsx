@@ -1,304 +1,570 @@
 import { isNil } from '@activepieces/core-utils';
-import { formErrors, HEX_COLOR_PATTERN } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  brandColors,
+  formErrors,
+  HEX_COLOR_PATTERN,
+  ThemeHexColor,
+  PlatformThemeColors,
+  StatusColors,
+  StatusScale,
+  SalesLinkLocationInWebApp,
+} from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useRef } from 'react';
-import { FieldPath, useForm } from 'react-hook-form';
+import { ReactNode, useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
-import { FeatureBanner } from '@/app/components/feature-banner';
+import {
+  AdminPage,
+  SaveBar,
+  SaveBarLock,
+  SettingsPanel,
+  SettingsRow,
+} from '@/app/components/admin';
 import { ColorPicker } from '@/components/custom/color-picker';
 import { Button } from '@/components/ui/button';
 import {
   Form,
-  FormDescription,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+import {
+  SelfServeTrialSalesLink,
+  LockedGem,
+  PlanBadge,
+  useLockedFeature,
+} from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
+import { brandSeed } from '@/lib/brand-seed';
 
-export const AppearanceSection = () => {
+import { BrandImageField } from './brand-image-field';
+import { ColorPreview, ColorTone } from './color-preview';
+
+export const AppearanceSection = ({
+  header,
+  children,
+}: AppearanceSectionProps) => {
+  const queryClient = useQueryClient();
   const { platform } = platformHooks.useCurrentPlatform();
   const branding = flagsHooks.useWebsiteBranding();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { data: maxFileSizeMb } = flagsHooks.useFlag<number>(
+    ApFlagId.MAX_FILE_SIZE_MB,
+  );
   const brandingLocked = !platform.plan.customAppearanceEnabled;
+  const lockedFeature = useLockedFeature({
+    unlocked: !brandingLocked,
+    featureKey: 'BRANDING',
+  });
+  const initialColor =
+    !brandingLocked && HEX_COLOR_PATTERN.test(platform.primaryColor)
+      ? platform.primaryColor
+      : branding.colors.primary.default;
 
+  const storedStatusColors = brandingLocked
+    ? branding.statusColors
+    : platform.themeColors?.status;
+
+  const brandingLockedRef = useRef(brandingLocked);
+  brandingLockedRef.current = brandingLocked;
   const form = useForm<PlatformAppearanceSchema>({
     defaultValues: {
       name: platform.name,
-      color: platform.primaryColor,
-      customThemeColors: !isNil(platform.themeColors),
-      themeColors: {
-        avatar: branding.colors.avatar,
-        'blue-link': branding.colors['blue-link'],
-        danger: branding.colors.danger,
-        selection: branding.colors.selection,
-        primary: {
-          dark: branding.colors.primary.dark,
-          light: branding.colors.primary.light,
-          medium: branding.colors.primary.medium,
-        },
-        warn: {
-          default: branding.colors.warn.default,
-          light: branding.colors.warn.light,
-          dark: branding.colors.warn.dark,
-        },
-        success: {
-          default: branding.colors.success.default,
-          light: branding.colors.success.light,
-        },
+      color: initialColor,
+      statusColors: {
+        danger: storedStatusColors?.danger,
+        warning: storedStatusColors?.warning,
+        success: storedStatusColors?.success,
       },
     },
-    resolver: zodResolver(PlatformAppearanceSchema),
+    resolver: (values, context, options) =>
+      zodResolver(
+        brandingLockedRef.current
+          ? LOCKED_PREVIEW_SCHEMA
+          : PlatformAppearanceSchema,
+      )(values, context, options),
     mode: 'onChange',
   });
 
-  const logoRef = useRef<HTMLInputElement>(null);
-  const iconRef = useRef<HTMLInputElement>(null);
-  const faviconRef = useRef<HTMLInputElement>(null);
+  const previewColor = form.watch('color');
+  const [previewDanger, previewWarning, previewSuccess] = form.watch([
+    'statusColors.danger',
+    'statusColors.warning',
+    'statusColors.success',
+  ]);
+  const savedColor = branding.colors.primary.default;
 
-  const { mutate: updatePlatform, isPending } = useMutation({
-    mutationFn: async () => {
-      const logo = logoRef.current?.files?.[0];
-      const icon = iconRef.current?.files?.[0];
-      const favicon = faviconRef.current?.files?.[0];
-      const { name, color, customThemeColors, themeColors } = form.getValues();
+  useEffect(() => {
+    brandSeed.setPreview({
+      primaryColor: HEX_COLOR_PATTERN.test(previewColor)
+        ? previewColor
+        : savedColor,
+      statusColors: {
+        danger: previewDanger,
+        warning: previewWarning,
+        success: previewSuccess,
+      },
+    });
+    return () => brandSeed.clearPreview();
+  }, [previewColor, previewDanger, previewWarning, previewSuccess, savedColor]);
+
+  const statusLabels: Record<StatusScale, string> = {
+    danger: t('Danger'),
+    warning: t('Warning'),
+    success: t('Success'),
+  };
+
+  const [images, setImages] = useState<BrandImages>(EMPTY_IMAGES);
+  const { isDirty, errors, dirtyFields } = form.formState;
+  const hasFieldErrors = Object.keys(errors).some((field) => field !== 'root');
+  const imagesChanged = Object.values(images).some((file) => !isNil(file));
+  const hasChanges = isDirty || imagesChanged;
+  const nameDirty = dirtyFields.name === true;
+  const brandingDirty =
+    imagesChanged ||
+    dirtyFields.color === true ||
+    Object.values(dirtyFields.statusColors ?? {}).some(Boolean);
+  const previewingLockedBranding = brandingLocked && brandingDirty;
+  const [imageFieldsKey, setImageFieldsKey] = useState(0);
+  const clearImages = () => {
+    setImages(EMPTY_IMAGES);
+    setImageFieldsKey((key) => key + 1);
+  };
+
+  const {
+    mutate: updatePlatform,
+    mutateAsync: updatePlatformAsync,
+    isPending,
+  } = useMutation({
+    mutationFn: async ({ includeBranding }: { includeBranding: boolean }) => {
+      form.clearErrors('root.serverError');
+      const { name, color, statusColors } = form.getValues();
 
       const formdata = new FormData();
       formdata.append('name', name);
-      if (!brandingLocked) {
-        formdata.append('primaryColor', color);
+      if (includeBranding) {
+        if (color !== initialColor) {
+          formdata.append('primaryColor', color);
+        }
         formdata.append(
           'themeColors',
-          customThemeColors ? JSON.stringify(themeColors) : 'null',
+          JSON.stringify(
+            withStatusColors({
+              themeColors: platform.themeColors,
+              statusColors,
+            }),
+          ),
         );
-        if (logo) formdata.append('fullLogo', logo);
-        if (icon) formdata.append('logoIcon', icon);
-        if (favicon) formdata.append('favIcon', favicon);
+        BRAND_IMAGES.forEach(({ kind, field }) => {
+          const file = images[kind];
+          if (file) formdata.append(field, file);
+        });
       }
 
       await platformApi.updateWithFormData(formdata, platform.id);
-      window.location.reload();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['platform', platform.id] }),
+        queryClient.invalidateQueries({ queryKey: flagsHooks.queryKey }),
+      ]);
     },
-    onSuccess: () => {
+    onSuccess: (_data, { includeBranding }) => {
       toast.success(t('Your changes have been saved.'), { duration: 3000 });
+      if (!includeBranding) {
+        form.resetField('name', { defaultValue: form.getValues('name') });
+        return;
+      }
+      clearImages();
       form.reset(form.getValues());
+    },
+    onError: () => {
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: t('Failed to save changes. Please try again.'),
+      });
     },
   });
 
+  const brandingIsComplete = (): boolean => {
+    const check = PlatformAppearanceSchema.safeParse(form.getValues());
+    if (check.success) {
+      return true;
+    }
+    for (const issue of check.error.issues) {
+      const [field, status] = issue.path;
+      if (field === 'color') {
+        form.setError('color', { type: 'manual', message: issue.message });
+      }
+      if (
+        field === 'statusColors' &&
+        (status === 'danger' || status === 'warning' || status === 'success')
+      ) {
+        form.setError(`statusColors.${status}`, {
+          type: 'manual',
+          message: issue.message,
+        });
+      }
+    }
+    return false;
+  };
+
+  const lockedSave: SaveBarLock | undefined = previewingLockedBranding
+    ? {
+        message: t('Try it now. Saving needs the Enterprise plan.'),
+        canSaveRest: nameDirty,
+        action:
+          edition === ApEdition.COMMUNITY ? (
+            <SelfServeTrialSalesLink
+              locationInWebApp={SalesLinkLocationInWebApp.LOCKED_FEATURE}
+              variant="default"
+              featureKey="BRANDING"
+            />
+          ) : (
+            <Button
+              {...adminControl(AdminControl.GENERAL_BRANDING_UPGRADE_OPEN)}
+              type="button"
+              onClick={() => {
+                if (!brandingIsComplete()) {
+                  return;
+                }
+                lockedFeature.runOrShowLockedDialog(() =>
+                  form.handleSubmit(
+                    () => updatePlatformAsync({ includeBranding: true }),
+                    rejectInvalidBranding,
+                  )(),
+                );
+              }}
+            >
+              <LockedGem />
+              {t('Save branding')}
+            </Button>
+          ),
+      }
+    : undefined;
+
   return (
-    <div className="grid gap-4">
-      <Form {...form}>
-        <form
-          className="grid space-y-4 mt-4"
-          onSubmit={form.handleSubmit(() => updatePlatform())}
+    <Form {...form}>
+      <form
+        className="flex flex-1 flex-col"
+        onSubmit={(event) => {
+          if (!brandingLocked) {
+            form.handleSubmit(() => updatePlatform({ includeBranding: true }))(
+              event,
+            );
+            return;
+          }
+          event.preventDefault();
+          if (previewingLockedBranding && !nameDirty) return;
+          form
+            .trigger('name')
+            .then((nameIsValid) => {
+              if (nameIsValid) updatePlatform({ includeBranding: false });
+            })
+            .catch(() => undefined);
+        }}
+      >
+        <AdminPage
+          width="content"
+          footer={
+            <SaveBar
+              width="content"
+              dirty={previewingLockedBranding ? nameDirty : hasChanges}
+              canDiscard={hasChanges}
+              saving={isPending}
+              disabled={brandingLocked ? !!errors.name : hasFieldErrors}
+              status={
+                form.formState.errors.root?.serverError ? (
+                  <FormMessage>
+                    {form.formState.errors.root.serverError.message}
+                  </FormMessage>
+                ) : undefined
+              }
+              locked={lockedSave}
+              saveLabel={previewingLockedBranding ? t('Save name') : undefined}
+              onDiscard={() => {
+                form.reset();
+                clearImages();
+              }}
+              saveControl={AdminControl.GENERAL_APPEARANCE_SUBMIT}
+            />
+          }
         >
-          <div className="max-w-[600px] grid space-y-4">
-            <FormField
-              name="name"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <FormLabel htmlFor="name">{t('Platform Name')}</FormLabel>
-                  <Input
-                    {...field}
-                    required
-                    id="name"
-                    placeholder={t('Platform Name')}
-                    className="rounded-sm"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {brandingLocked && (
-              <FeatureBanner
-                message={t(
-                  'Your logo, colors and favicon are part of custom branding.',
-                )}
-              />
-            )}
-
-            <div className="grid space-y-2">
-              <Label htmlFor="logoFile">{t('Logo')}</Label>
-              <Input
-                type="file"
-                ref={logoRef}
-                defaultFileName={platform.fullLogoUrl}
-                accept="image/*"
-                id="logoFile"
-                disabled={brandingLocked}
-                className="rounded-sm"
-              />
-            </div>
-            <div className="grid space-y-2">
-              <Label htmlFor="iconFile">{t('Icon')}</Label>
-              <Input
-                type="file"
-                ref={iconRef}
-                defaultFileName={platform.logoIconUrl}
-                accept="image/*"
-                id="iconFile"
-                disabled={brandingLocked}
-                className="rounded-sm"
-              />
-            </div>
-            <div className="grid space-y-2">
-              <Label htmlFor="faviconFile">{t('Favicon')}</Label>
-              <Input
-                type="file"
-                ref={faviconRef}
-                defaultFileName={platform.favIconUrl}
-                accept="image/*"
-                id="faviconFile"
-                disabled={brandingLocked}
-                className="rounded-sm"
-              />
-            </div>
-
-            <FormField
-              name="color"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <FormLabel htmlFor="color">{t('Primary Color')}</FormLabel>
-                  <div className="flex flex-row gap-2 items-center">
-                    <ColorPicker
-                      disabled={brandingLocked}
-                      value={field.value}
-                      onChange={(color: string) => field.onChange(color)}
-                      className="flex flex-row gap-2 items-center"
-                    ></ColorPicker>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-
+          {header}
+          <SettingsPanel title={t('Platform')} flush>
             <FormField
               control={form.control}
-              name="customThemeColors"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <FormLabel htmlFor="customThemeColors">
-                    {t('Customize theme colors')}
-                  </FormLabel>
-                  <div className="flex flex-row gap-2 items-center">
-                    <Switch
-                      id="customThemeColors"
-                      disabled={brandingLocked}
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </div>
-                  <FormDescription>
-                    {t(
-                      'When disabled, theme colors are derived from your primary color.',
-                    )}
-                  </FormDescription>
+              name="name"
+              render={({ field, fieldState }) => (
+                <FormItem className="space-y-0">
+                  <SettingsRow
+                    title={
+                      <FormLabel htmlFor="name">{t('Platform Name')}</FormLabel>
+                    }
+                    description={
+                      fieldState.error ? (
+                        <FormMessage />
+                      ) : (
+                        t('Shown in the sidebar, emails and the sign-in page.')
+                      )
+                    }
+                  >
+                    <FormControl>
+                      <Input
+                        {...field}
+                        required
+                        id="name"
+                        placeholder={t('Platform Name')}
+                        className="w-full sm:w-64"
+                      />
+                    </FormControl>
+                  </SettingsRow>
                 </FormItem>
               )}
             />
+          </SettingsPanel>
 
-            {form.watch('customThemeColors') && !brandingLocked && (
-              <div className="grid grid-cols-3 gap-4">
-                {THEME_COLOR_FIELDS.map(({ name, label }) => (
+          <SettingsPanel
+            title={t('Branding')}
+            meta={brandingLocked && <PlanBadge featureKey="BRANDING" />}
+            action={
+              brandingLocked ? (
+                <Button
+                  {...adminControl(AdminControl.TRIAL_START_OPEN)}
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={lockedFeature.showLockedDialog}
+                >
+                  <LockedGem />
+                  {t('Unlock branding')}
+                </Button>
+              ) : undefined
+            }
+            description={
+              brandingLocked
+                ? t(
+                    'Try your logo and colors here. The preview is only for you until you save it with the Enterprise plan.',
+                  )
+                : t(
+                    'Your logo and colors replace ours everywhere, including sign-in and emails.',
+                  )
+            }
+          >
+            {BRAND_IMAGES.map((image) => (
+              <BrandImageField
+                key={`${image.kind}-${imageFieldsKey}`}
+                id={`brand-${image.kind}`}
+                label={image.title()}
+                hint={image.hint()}
+                wide={image.kind === 'logo'}
+                currentUrl={platform[image.urlKey]}
+                file={images[image.kind]}
+                maxSizeMb={maxFileSizeMb ?? DEFAULT_MAX_FILE_SIZE_MB}
+                onFileChange={(file) =>
+                  setImages((previous) => ({ ...previous, [image.kind]: file }))
+                }
+              />
+            ))}
+            <div className="flex flex-col gap-4 border-t border-gray-6 pt-4">
+              <div className="flex flex-col gap-1">
+                <span className="text-sm font-medium text-gray-12">
+                  {t('Colors')}
+                </span>
+                <span className="text-sm text-gray-11">
+                  {t('Your brand and status colors.')}
+                </span>
+              </div>
+              <div className="@container">
+                <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
                   <FormField
-                    key={name}
                     control={form.control}
-                    name={name}
+                    name="color"
                     render={({ field }) => (
-                      <FormItem className="grid space-y-2">
-                        <FormLabel>{t(label)}</FormLabel>
-                        <div className="flex flex-row gap-2 items-center">
-                          <ColorPicker
-                            value={field.value as string}
-                            onChange={(color: string) => field.onChange(color)}
-                            className="flex flex-row gap-2 items-center"
-                          ></ColorPicker>
-                          <FormMessage />
-                        </div>
-                      </FormItem>
+                      <ColorRow
+                        tone="primary"
+                        label={t('Primary')}
+                        color={field.value}
+                        defaultColor={brandColors.defaultPrimaryColor()}
+                        isDefault={
+                          field.value.toLowerCase() ===
+                          brandColors.defaultPrimaryColor()
+                        }
+                        onChange={field.onChange}
+                        onReset={() =>
+                          field.onChange(brandColors.defaultPrimaryColor())
+                        }
+                      />
                     )}
                   />
-                ))}
+                  {brandColors.statusScales.map((scale) => (
+                    <FormField
+                      key={scale}
+                      control={form.control}
+                      name={`statusColors.${scale}`}
+                      render={({ field }) => (
+                        <ColorRow
+                          tone={scale}
+                          label={statusLabels[scale]}
+                          color={field.value}
+                          defaultColor={brandColors.defaultStatusColor({
+                            scale,
+                          })}
+                          isDefault={isNil(field.value)}
+                          onChange={field.onChange}
+                          onReset={() => field.onChange(undefined)}
+                        />
+                      )}
+                    />
+                  ))}
+                </div>
               </div>
-            )}
-          </div>
-
-          {form?.formState?.errors?.root?.serverError && (
-            <FormMessage>
-              {form.formState.errors.root.serverError.message}
-            </FormMessage>
-          )}
-          <div className="flex gap-2 justify-end mt-4">
-            <Button
-              type="submit"
-              loading={isPending}
-              disabled={!form.formState.isValid}
-            >
-              {t('Save')}
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </div>
+            </div>
+          </SettingsPanel>
+          {children}
+        </AdminPage>
+      </form>
+    </Form>
   );
 };
 
-const hexColor = z.string().regex(HEX_COLOR_PATTERN, 'invalidHexColor');
+const ColorRow = ({
+  tone,
+  label,
+  color,
+  defaultColor,
+  isDefault,
+  onChange,
+  onReset,
+}: ColorRowProps) => {
+  const shownColor = color ?? defaultColor;
+  return (
+    <FormItem className="flex flex-col gap-4 space-y-0 rounded-lg border border-gray-6 p-4">
+      <div className="flex items-center gap-3">
+        <ColorPicker
+          side="top"
+          aria-label={label}
+          value={shownColor}
+          onChange={onChange}
+          className="shrink-0"
+        />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <FormLabel className="font-normal">{label}</FormLabel>
+          <span className="text-xs text-gray-11">
+            <span className="font-mono uppercase">{shownColor}</span>
+            {isDefault && ` · ${t('Default')}`}
+          </span>
+        </div>
+        <Button
+          {...adminControl(AdminControl.GENERAL_COLOUR_RESET_RUN)}
+          type="button"
+          variant="ghost"
+          size="sm"
+          aria-label={t('Reset {name}', { name: label })}
+          disabled={isDefault}
+          onClick={onReset}
+        >
+          {t('Reset')}
+        </Button>
+      </div>
+      <FormMessage />
+      <ColorPreview tone={tone} />
+    </FormItem>
+  );
+};
 
-const ThemeColorsSchema = z.object({
-  avatar: hexColor,
-  'blue-link': hexColor,
-  danger: hexColor,
-  selection: hexColor,
-  primary: z.object({
-    dark: hexColor,
-    light: hexColor,
-    medium: hexColor,
-  }),
-  warn: z.object({
-    default: hexColor,
-    light: hexColor,
-    dark: hexColor,
-  }),
-  success: z.object({
-    default: hexColor,
-    light: hexColor,
-  }),
-});
+function withStatusColors({
+  themeColors,
+  statusColors,
+}: {
+  themeColors: PlatformThemeColors | null | undefined;
+  statusColors: StatusColors;
+}): PlatformThemeColors {
+  const hasStatusColor = Object.values(statusColors).some(
+    (color) => !isNil(color),
+  );
+  return {
+    ...themeColors,
+    status: hasStatusColor ? statusColors : undefined,
+  };
+}
+
+function rejectInvalidBranding(): never {
+  throw new Error('Branding has fields to fix before it can be saved');
+}
 
 const PlatformAppearanceSchema = z.object({
   name: z.string().min(1, formErrors.required),
-  color: z.string(),
-  customThemeColors: z.boolean(),
-  themeColors: ThemeColorsSchema,
+  color: ThemeHexColor,
+  statusColors: PlatformThemeColors.shape.status.unwrap(),
 });
 
-const THEME_COLOR_FIELDS: {
-  name: FieldPath<PlatformAppearanceSchema>;
-  label: string;
-}[] = [
-  { name: 'themeColors.primary.dark', label: 'Primary Dark' },
-  { name: 'themeColors.primary.light', label: 'Primary Light' },
-  { name: 'themeColors.primary.medium', label: 'Primary Medium' },
-  { name: 'themeColors.danger', label: 'Danger' },
-  { name: 'themeColors.warn.default', label: 'Warning' },
-  { name: 'themeColors.warn.light', label: 'Warning Light' },
-  { name: 'themeColors.warn.dark', label: 'Warning Dark' },
-  { name: 'themeColors.success.default', label: 'Success' },
-  { name: 'themeColors.success.light', label: 'Success Light' },
-  { name: 'themeColors.blue-link', label: 'Link' },
-  { name: 'themeColors.avatar', label: 'Avatar' },
-  { name: 'themeColors.selection', label: 'Selection' },
+type PlatformAppearanceSchema = z.infer<typeof PlatformAppearanceSchema>;
+
+const LOCKED_PREVIEW_SCHEMA = PlatformAppearanceSchema.extend({
+  color: z.string(),
+});
+
+const DEFAULT_MAX_FILE_SIZE_MB = 25;
+const EMPTY_IMAGES: BrandImages = { logo: null, icon: null, favicon: null };
+
+const BRAND_IMAGES: BrandImageSpec[] = [
+  {
+    kind: 'logo',
+    field: 'fullLogo',
+    urlKey: 'fullLogoUrl',
+    title: () => t('Logo'),
+    hint: () => t('The full logo in the sidebar, emails and the sign-in page.'),
+  },
+  {
+    kind: 'icon',
+    field: 'logoIcon',
+    urlKey: 'logoIconUrl',
+    title: () => t('Icon'),
+    hint: () => t('The square mark used where the full logo does not fit.'),
+  },
+  {
+    kind: 'favicon',
+    field: 'favIcon',
+    urlKey: 'favIconUrl',
+    title: () => t('Favicon'),
+    hint: () => t('The small icon in the browser tab.'),
+  },
 ];
 
-type PlatformAppearanceSchema = z.infer<typeof PlatformAppearanceSchema>;
+type BrandImageKind = 'logo' | 'icon' | 'favicon';
+
+type BrandImages = Record<BrandImageKind, File | null>;
+
+type BrandImageSpec = {
+  kind: BrandImageKind;
+  field: 'fullLogo' | 'logoIcon' | 'favIcon';
+  urlKey: 'fullLogoUrl' | 'logoIconUrl' | 'favIconUrl';
+  title: () => string;
+  hint: () => string;
+};
+
+type AppearanceSectionProps = {
+  header?: ReactNode;
+  children?: ReactNode;
+};
+
+type ColorRowProps = {
+  tone: ColorTone;
+  label: string;
+  color: string | undefined;
+  defaultColor: string;
+  isDefault: boolean;
+  onChange: (color: string | undefined) => void;
+  onReset: () => void;
+};

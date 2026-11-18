@@ -1,25 +1,31 @@
 import { isNil } from '@activepieces/core-utils';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  SelfServeTrialInfo,
+  SelfServeTrialState,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { SquareArrowOutUpRight } from 'lucide-react';
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
+import { StatusBadge } from '@/components/custom/status-badge';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { cn } from '@/lib/utils';
+import { CreditsSeverity } from '@/lib/statuses';
 
 import { billingQueries } from '../hooks/billing-hooks';
 import { useCreditsUsage } from '../hooks/use-credits-usage';
-import { billingUtils, BILLING_DATE_FORMAT } from '../utils/billing-utils';
+import { billingUtils } from '../utils/billing-utils';
 
 import { CreditsActionButton } from './credits-action-button';
+import { SeatGraceLine, SelfServeTrialLine } from './self-serve-trial-sidebar';
 
 export const SidebarUsageLimits = React.memo(() => {
   const { project } = projectCollectionUtils.useCurrentProject();
@@ -34,8 +40,10 @@ export const SidebarUsageLimits = React.memo(() => {
     severity,
   } = useCreditsUsage();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { platform } = platformHooks.useCurrentPlatform();
+  const noticeLine = resolveNoticeLine(platform.selfServeTrial);
 
-  const inWarning = !isUnlimited && severity !== 'default';
+  const inWarning = !isUnlimited && severity !== CreditsSeverity.DEFAULT;
   const canManage = isPlatformAdmin && inWarning;
   const needsSubscription = canManage && isPaid;
 
@@ -54,7 +62,7 @@ export const SidebarUsageLimits = React.memo(() => {
 
   if (isNil(project) || isNil(usage)) {
     return (
-      <div className="flex flex-col w-full gap-2 p-2.5 bg-background rounded-md border">
+      <div className="flex flex-col w-full gap-2 p-2.5 bg-gray-1 rounded-md border">
         <div className="flex items-center justify-between">
           <Skeleton className="w-24 h-4" />
           <Skeleton className="w-14 h-4" />
@@ -65,7 +73,11 @@ export const SidebarUsageLimits = React.memo(() => {
   }
 
   if (isNil(creditsRemaining)) {
-    return null;
+    return isNil(noticeLine) ? null : (
+      <div className="flex w-full flex-col rounded-md border bg-gray-1 p-2.5">
+        {noticeLine}
+      </div>
+    );
   }
 
   const creditsText = billingUtils.formatCredits(creditsRemaining);
@@ -73,30 +85,28 @@ export const SidebarUsageLimits = React.memo(() => {
     creditsNextResetAt: usage.creditsNextResetAt,
     creditsResetInterval: info?.creditsResetInterval,
     nextBillingDate: info?.nextBillingDate,
-    dateFormat: BILLING_DATE_FORMAT,
   });
   return (
-    <div className="flex flex-col w-full gap-2 p-2.5 bg-background rounded-md border">
-      <div className="flex items-center justify-between gap-2">
+    <div className="flex flex-col w-full gap-2 p-2.5 bg-gray-1 rounded-md border">
+      {!isNil(noticeLine) && (
+        <div className="flex border-b border-gray-5 pb-2">{noticeLine}</div>
+      )}
+      <div className="flex h-5 items-center justify-between gap-2">
         <div className="flex items-baseline gap-1 min-w-0">
           <span className="text-sm font-semibold truncate">{creditsText}</span>
-          <span className="text-xs text-muted-foreground">{t('credits')}</span>
+          <span className="text-xs text-gray-11">{t('credits')}</span>
         </div>
-        <Badge
-          className={cn(
-            'shrink-0',
-            flowRunUtils.getStatusContainerClassName(severity),
-          )}
-        >
-          {t('{percent}% used', { percent: percentUsed })}
-        </Badge>
+        <StatusBadge
+          status={severity}
+          text={t('{percent}% used', { percent: percentUsed })}
+        />
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex h-5 items-center gap-2">
         {!isNil(resetLine) && (
           <TextWithTooltip
             tooltipMessage={resetLine.label + ' ' + resetLine.value}
           >
-            <span className="min-w-0 truncate text-xs text-muted-foreground">
+            <span className="min-w-0 truncate text-xs text-gray-11">
               {resetLine.label} {resetLine.value}
             </span>
           </TextWithTooltip>
@@ -105,7 +115,7 @@ export const SidebarUsageLimits = React.memo(() => {
         {isPlatformAdmin && (
           <Link to="/platform/billing" className="shrink-0">
             <Button variant="link" size="xs">
-              {t('Billing')} <SquareArrowOutUpRight className="h-4 w-4" />
+              {t('Billing')} <SquareArrowOutUpRight />
             </Button>
           </Link>
         )}
@@ -116,3 +126,11 @@ export const SidebarUsageLimits = React.memo(() => {
 });
 
 SidebarUsageLimits.displayName = 'SidebarUsageLimits';
+
+function resolveNoticeLine(trial: SelfServeTrialInfo | undefined): ReactNode {
+  const graceEndsAt = trial?.seatGraceEndsAt;
+  if (trial?.state === SelfServeTrialState.ACTIVE) {
+    return <SelfServeTrialLine endsAt={trial.endsAt} />;
+  }
+  return isNil(graceEndsAt) ? null : <SeatGraceLine endsAt={graceEndsAt} />;
+}

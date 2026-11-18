@@ -1,5 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { newActivity } from './lib/trigger/new-activity';
 import { newDeal } from './lib/trigger/new-deal';
@@ -44,13 +44,45 @@ import { findDealAction } from './lib/actions/find-deal';
 import { findActivityAction } from './lib/actions/find-activity';
 import { updateProductAction } from './lib/actions/update-product';
 import { findLeadAction } from './lib/actions/find-leads';
+import { getDealAction } from './lib/actions/get-deal';
+import { listDealsAction } from './lib/actions/list-deals';
+import { searchDealsAction } from './lib/actions/search-deals';
+import { deleteDealAction } from './lib/actions/delete-deal';
+import { listDealProductsAction } from './lib/actions/list-deal-products';
+import { removeProductFromDealAction } from './lib/actions/remove-product-from-deal';
+import { getPersonAction } from './lib/actions/get-person';
+import { listPersonsAction } from './lib/actions/list-persons';
+import { searchPersonsAction } from './lib/actions/search-persons';
+import { deletePersonAction } from './lib/actions/delete-person';
+import { getOrganizationAction } from './lib/actions/get-organization';
+import { listOrganizationsAction } from './lib/actions/list-organizations';
+import { searchOrganizationsAction } from './lib/actions/search-organizations';
+import { deleteOrganizationAction } from './lib/actions/delete-organization';
+import { getActivityAction } from './lib/actions/get-activity';
+import { listActivitiesAction } from './lib/actions/list-activities';
+import { deleteActivityAction } from './lib/actions/delete-activity';
+import { getLeadAction } from './lib/actions/get-lead';
+import { deleteLeadAction } from './lib/actions/delete-lead';
+import { convertLeadToDealAction } from './lib/actions/convert-lead-to-deal';
+import { getLeadConversionStatusAction } from './lib/actions/get-lead-conversion-status';
+import { updateNoteAction } from './lib/actions/update-note';
+import { deleteNoteAction } from './lib/actions/delete-note';
+import { deleteProductAction } from './lib/actions/delete-product';
+import { listPipelinesAction } from './lib/actions/list-pipelines';
+import { listStagesAction } from './lib/actions/list-stages';
+import { listActivityTypesAction } from './lib/actions/list-activity-types';
+import { listUsersAction } from './lib/actions/list-users';
+import { getCurrentUserAction } from './lib/actions/get-current-user';
+import { mergeDealsAction } from './lib/actions/merge-deals';
+import { mergePersonsAction } from './lib/actions/merge-persons';
+import { mergeOrganizationsAction } from './lib/actions/merge-organizations';
 import { pipedriveAuth } from './lib/auth';
 
 export const pipedrive = createPiece({
 	displayName: 'Pipedrive',
 	description: 'Sales CRM and pipeline management software',
 
-	minimumSupportedRelease: '0.30.0',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/pipedrive.png',
 	categories: [PieceCategory.SALES_AND_CRM],
 	auth: pipedriveAuth,
@@ -84,8 +116,45 @@ export const pipedrive = createPiece({
 		findActivityAction,
 		findUserAction,
 		findLeadAction,
+		getDealAction,
+		listDealsAction,
+		searchDealsAction,
+		deleteDealAction,
+		listDealProductsAction,
+		removeProductFromDealAction,
+		getPersonAction,
+		listPersonsAction,
+		searchPersonsAction,
+		deletePersonAction,
+		getOrganizationAction,
+		listOrganizationsAction,
+		searchOrganizationsAction,
+		deleteOrganizationAction,
+		getActivityAction,
+		listActivitiesAction,
+		deleteActivityAction,
+		getLeadAction,
+		deleteLeadAction,
+		convertLeadToDealAction,
+		getLeadConversionStatusAction,
+		updateNoteAction,
+		deleteNoteAction,
+		deleteProductAction,
+		listPipelinesAction,
+		listStagesAction,
+		listActivityTypesAction,
+		listUsersAction,
+		getCurrentUserAction,
+		mergeDealsAction,
+		mergePersonsAction,
+		mergeOrganizationsAction,
 		createCustomApiCallAction({
-			baseUrl: () => 'https://api.pipedrive.com/api/v2',
+			baseUrl: (auth) => {
+				const apiDomain = auth?.data?.['api_domain'];
+				return typeof apiDomain === 'string' && apiDomain.length > 0
+					? `${apiDomain}/api/v2`
+					: 'https://api.pipedrive.com/api/v2';
+			},
 			auth: pipedriveAuth,
 			authMapping: async (auth) => ({
 				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,

@@ -2,10 +2,11 @@ import { Property, DropdownOption } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { mistralAuth } from './auth';
 import { mistralRequest } from './request';
+import { mistralApi } from './client';
 
 export const modelDropdown = Property.Dropdown({
 	displayName: 'Model',
-	description: 'Select a Mistral model. List is fetched live from your account.',
+	description: 'The Mistral model that writes the reply.',
 	required: true,
 	refreshers: [],
 	auth: mistralAuth,
@@ -50,9 +51,6 @@ export const modelDropdown = Property.Dropdown({
 	},
 });
 
-export function parseMistralError(e: any): string {
-	if (e.response?.data?.error) return e.response.data.error;
-	if (e.response?.data?.message) return e.response.data.message;
-	if (e.message) return e.message;
-	return 'Unknown error';
+export function parseMistralError({ error, baseUrl }: { error: unknown; baseUrl: string }): string {
+	return mistralApi.describeError({ error, isGateway: mistralApi.isGatewayBaseUrl(baseUrl) });
 }

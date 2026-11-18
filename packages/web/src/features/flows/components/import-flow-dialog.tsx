@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils';
+import { isNil, tryCatch } from '@activepieces/core-utils';
 import {
   PopulatedFlow,
   TelemetryEventName,
@@ -56,6 +56,7 @@ export type ImportFlowDialogProps =
   | {
       insideBuilder: true;
       flowId: string;
+      savePendingEdits: () => Promise<void>;
     };
 
 const readTemplateJson = async (
@@ -68,6 +69,7 @@ const readTemplateJson = async (
       const template = templateUtils.parseTemplate(reader.result as string);
       resolve(template);
     };
+    reader.onerror = () => resolve(null);
     reader.readAsText(templateFile);
   });
 };
@@ -83,6 +85,7 @@ const ImportFlowDialog = (
   const [errorMessage, setErrorMessage] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [failedFiles, setFailedFiles] = useState<string[]>([]);
+  const [isReadingFile, setIsReadingFile] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
     props.insideBuilder ? undefined : props.folderId,
   );
@@ -175,11 +178,24 @@ const ImportFlowDialog = (
       );
     } else {
       setErrorMessage('');
+      if (props.insideBuilder) {
+        const { error: saveError } = await tryCatch(props.savePendingEdits);
+        if (!isNil(saveError)) {
+          return;
+        }
+      }
       importFlows(templates);
     }
   };
 
   const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setIsReadingFile(true);
+    await readSelectedFile(event).finally(() => setIsReadingFile(false));
+  };
+
+  const readSelectedFile = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const files = event.target.files;
@@ -251,20 +267,23 @@ const ImportFlowDialog = (
             </Alert>
           )}
           <div className="w-full flex flex-col gap-2 justify-between items-start">
-            <span className="w-16 text-sm font-medium text-gray-700">
+            <span className="w-16 text-sm font-medium text-gray-11">
               {t('Flow')}
             </span>
             <Input
               id="file-input"
+              data-testid="import-flow-file-input"
+              aria-label={t('Flow')}
               type="file"
               accept={props.insideBuilder ? '.json' : '.json,.zip'}
               ref={fileInputRef}
+              disabled={isReadingFile}
               onChange={handleFileChange}
             />
           </div>
           {!props.insideBuilder && !embedState.hideFolders && (
             <div className="w-full flex flex-col gap-2 justify-between items-start">
-              <span className="w-16 text-sm font-medium text-gray-700">
+              <span className="w-16 text-sm font-medium text-gray-11">
                 {t('Folder')}
               </span>
               {isLoading ? (
@@ -301,7 +320,11 @@ const ImportFlowDialog = (
           )}
         </div>
         {errorMessage && (
-          <FormError formMessageId="import-flow-error-message" className="mt-4">
+          <FormError
+            formMessageId="import-flow-error-message"
+            data-testid="import-flow-error"
+            className="mt-4"
+          >
             {errorMessage}
           </FormError>
         )}
@@ -313,7 +336,11 @@ const ImportFlowDialog = (
           >
             {t('Cancel')}
           </Button>
-          <Button onClick={handleSubmit} loading={isPending}>
+          <Button
+            onClick={handleSubmit}
+            loading={isPending}
+            disabled={isReadingFile}
+          >
             {t('Import')}
           </Button>
         </DialogFooter>

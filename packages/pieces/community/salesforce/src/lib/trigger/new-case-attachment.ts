@@ -19,6 +19,7 @@ import { newCaseAttachmentTriggerOutputSchema } from '../output-schemas';
 export const newCaseAttachment = createTrigger({
     auth: salesforceAuth,
     name: 'new_case_attachment',
+    classification: 'READ',
     displayName: 'New Case Attachment',
     description: 'Fires when a new Attachment or File is added to any Case record.',
     aiMetadata: {

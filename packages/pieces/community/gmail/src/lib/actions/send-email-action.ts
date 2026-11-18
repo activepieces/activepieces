@@ -1,7 +1,7 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
 import MailComposer from 'nodemailer/lib/mail-composer';
-import Mail, { Attachment } from 'nodemailer/lib/mailer';
+import Mail from 'nodemailer/lib/mailer';
 import { gmailAuth, createGoogleClient, getUserEmail } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import { sendEmailActionOutputSchema } from '../output-schemas';
@@ -184,7 +184,7 @@ export const gmailSendEmailAction = createAction({
     }
 
     if (attachments && attachments.length > 0) {
-      const attachmentOption: Attachment[] = attachments.map(
+      const attachmentOption: Mail.Attachment[] = attachments.map(
         ({ file, name }) => {
           const lookupResult = mime.lookup(
             file.extension ? file.extension : ''
@@ -211,18 +211,28 @@ export const gmailSendEmailAction = createAction({
       .replace(/\//g, '_');
 
     if (context.propsValue.draft) {
-      return await gmail.users.drafts.create({
+      const draftResponse = await gmail.users.drafts.create({
         userId: 'me',
         requestBody: { message: { threadId, raw: encodedPayload } },
       });
+      return {
+        data: draftResponse.data,
+        status: draftResponse.status,
+        statusText: draftResponse.statusText,
+      };
     } else {
-      return await gmail.users.messages.send({
+      const sendResponse = await gmail.users.messages.send({
         userId: 'me',
         requestBody: {
           threadId,
           raw: encodedPayload,
         },
       });
+      return {
+        data: sendResponse.data,
+        status: sendResponse.status,
+        statusText: sendResponse.statusText,
+      };
     }
   },
 });

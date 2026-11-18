@@ -25,6 +25,10 @@ export const zipFiles = createAction({
   description: 'Bundle one or more files into a zip archive.',
   aiMetadata: { description: 'Compresses one or many input files into a single zip archive, optionally placing each entry at a custom path inside the archive (e.g. foo/test.txt) and optionally password-protecting it with ZipCrypto or AES-256. Use it to bundle several files into one attachment or download; use Unzip File for the reverse direction. Requires the list of files and an output file name; entries default to their own file names, reusing the same in-zip path keeps only the later file, and there are no external side effects, so it is idempotent.', idempotent: true },
   outputSchema: zipFilesActionOutputSchema,
+  propertyGroups: [
+    { key: 'archive', display: 'section', label: 'Archive', icon: 'paperclip', props: ['files', 'outputFileName'] },
+    { key: 'password', display: 'section', label: 'Password', icon: 'sliders', props: ['usePassword', 'passwordOptions'] },
+  ],
   props: {
     files: Property.Array({
       displayName: 'Files',

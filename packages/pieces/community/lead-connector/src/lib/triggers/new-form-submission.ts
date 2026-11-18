@@ -1,4 +1,4 @@
-import { AppConnectionValueForAuthProperty, OAuth2PropertyValue, Property, createTrigger } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, Property, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -34,9 +34,9 @@ export const newFormSubmission = createTrigger({
   },
   props: {
     form: Property.Dropdown({
-  auth: leadConnectorAuth,
+      auth: leadConnectorAuth,
       displayName: 'Form',
-      description: 'The form you want to use.',
+      description: 'Runs for each new submission of this form.',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
@@ -44,9 +44,10 @@ export const newFormSubmission = createTrigger({
           return {
             disabled: true,
             options: [],
+            placeholder: 'Connect your account first',
           };
 
-        const forms = await getForms(auth as OAuth2PropertyValue);
+        const forms = await getForms(auth);
 
         return {
           options: forms.map((form) => {
@@ -63,33 +64,15 @@ export const newFormSubmission = createTrigger({
   sampleData: {},
 
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.poll(polling, context);
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.test(polling, context);
   },
 });

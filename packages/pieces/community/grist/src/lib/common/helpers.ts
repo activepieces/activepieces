@@ -63,6 +63,27 @@ export class GristAPIClient {
     return response.body;
   }
 
+  async download(resourceUri: string, query?: Query) {
+    const baseUrl = this.#domaiUrl.replace(/\/$/, '');
+    const queryParams: QueryParams = {};
+    for (const [key, value] of Object.entries(query ?? {})) {
+      if (value !== undefined) {
+        queryParams[key] = String(value);
+      }
+    }
+    const response = await httpClient.sendRequest<Buffer>({
+      method: HttpMethod.GET,
+      url: baseUrl + '/api' + resourceUri,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: this.#apiKey,
+      },
+      queryParams,
+      responseType: 'arraybuffer',
+    });
+    return response.body;
+  }
+
   async listOrgs() {
     return await this.makeRequest<GristOrgResponse[]>(
       HttpMethod.GET,
@@ -217,3 +238,52 @@ export function transformTableColumnValues({
 
   return fields;
 }
+
+function asObject({
+  value,
+  name,
+}: {
+  value: unknown;
+  name: string;
+}): Record<string, unknown> {
+  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    return Object.fromEntries(Object.entries(value));
+  }
+  throw new Error(`${name} must be a JSON object.`);
+}
+
+function asObjectArray({
+  value,
+  name,
+}: {
+  value: unknown;
+  name: string;
+}): Record<string, unknown>[] {
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new Error(`${name} must be a non-empty JSON array of objects.`);
+  }
+  return value.map((item) =>
+    asObject({ value: item, name: `Each item of ${name}` })
+  );
+}
+
+function asNumberArray({
+  value,
+  name,
+}: {
+  value: unknown;
+  name: string;
+}): number[] {
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new Error(`${name} must be a non-empty list of numbers.`);
+  }
+  return value.map((item) => {
+    const parsed = Number(item);
+    if (!Number.isFinite(parsed)) {
+      throw new Error(`${name} contains a non-numeric value: ${String(item)}`);
+    }
+    return parsed;
+  });
+}
+
+export const gristInput = { asObject, asObjectArray, asNumberArray };

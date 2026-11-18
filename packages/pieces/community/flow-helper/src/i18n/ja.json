@@ -1,9 +1,15 @@
 {
+  "Stop or fail a running flow, or get a link to the current run.": "Stop or fail a running flow, or get a link to the current run.",
   "Get Run Info": "実行情報を取得",
-  "Fail Flow": "失敗の流れ",
+  "Fail Flow": "フローを失敗にする",
   "Stop Flow": "フローを停止",
-  "Fails the flow execution with a custom message.": "カスタムメッセージでフローの実行に失敗します。",
-  "Stops the flow immediately this step is reached.": "このステップに到達した直後にフローを停止します。",
-  "Error Message": "エラー メッセージ",
-  "The error message to show when the flow fails.": "フローが失敗したときに表示されるエラーメッセージ。"
+  "Gets this run's ID and a link to open it.": "Gets this run's ID and a link to open it.",
+  "Fails this step with your error message.": "Fails this step with your error message.",
+  "Ends the run at this step and marks it as succeeded.": "Ends the run at this step and marks it as succeeded.",
+  "Markdown": "Markdown",
+  "Error Message": "エラーメッセージ",
+  "Outputs this run's ID and a link that opens the run.": "Outputs this run's ID and a link that opens the run.",
+  "The run fails here and later steps do not run. If Add Error Handler is on, only this step fails. The Failure branch runs and the flow continues.": "実行はここで失敗し、以降のステップは実行されません。「Add Error Handler」がオンの場合は、このステップだけが失敗します。「失敗」ブランチが実行され、フローは続行されます。",
+  "Shown as the step's error. Can include data from earlier steps.": "Shown as the step's error. Can include data from earlier steps.",
+  "The run ends here and is marked as succeeded. Steps after this one do not run.": "The run ends here and is marked as succeeded. Steps after this one do not run."
 }

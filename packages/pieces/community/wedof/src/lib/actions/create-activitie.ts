@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 export const createActivitie = createAction({
   auth: wedofAuth,
   name: 'createActivitie',
+  classification: 'WRITE',
   displayName: "Créer une activité",
   description: "Permet de créer une activité d'un dossier (Dossier de formation / Dossier de certification)",
   audience: 'both',

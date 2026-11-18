@@ -5,6 +5,7 @@ import { dappierCommon } from '../common';
 
 export const realTimeWebSearch = createAction({
   name: 'real_time_web_search',
+  classification: 'READ',
   auth: dappierAuth,
   displayName: 'Real Time Data',
   description:

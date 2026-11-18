@@ -14,6 +14,7 @@ type IdentifierRow = {
 export const enrichPersonBulk = createAction({
   auth: villageAuth,
   name: 'enrich_person_bulk',
+  classification: 'READ',
   displayName: 'Enrich Person (Bulk)',
   description:
     'Get detailed profile information for up to 10 people in a single request. Partial results are returned if some lookups fail — check each result for success or error status.',

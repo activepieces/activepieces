@@ -216,7 +216,7 @@ export const removeTagFromContactActionOutputSchema: OutputSchema = {
   ],
 };
 
-export const newContactTriggerOutputSchema: OutputSchema = { fields: contactFields };
+export const newContactTriggerOutputSchema: OutputSchema = { fields: contactFieldsWithTags };
 
 export const newTagAddedToContactTriggerOutputSchema: OutputSchema = {
   fields: [
@@ -237,3 +237,266 @@ export const newTagAddedToContactTriggerOutputSchema: OutputSchema = {
     },
   ],
 };
+
+const tagFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Tag ID', description: 'Use this to tag or untag contacts in a later step.' },
+  { key: 'name', label: 'Name' },
+  { key: 'created_at', label: 'Created At', format: 'datetime' },
+];
+
+export const findContactsActionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'contacts',
+      label: 'Contacts',
+      labelKey: 'email',
+      listItems: contactFieldsWithTags,
+    },
+    { key: 'count', label: 'Returned', format: 'number' },
+    {
+      key: 'has_more',
+      label: 'More Available',
+      format: 'boolean',
+      description: 'True when more contacts match than were returned.',
+    },
+    {
+      key: 'next_cursor',
+      label: 'Next Cursor',
+      description: 'Pass this as "Continue After" to fetch the next contacts. Empty when there are no more.',
+    },
+  ],
+};
+
+export const getContactActionOutputSchema: OutputSchema = { fields: contactFieldsWithTags };
+
+export const deleteResultOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'deleted', label: 'Deleted', format: 'boolean' },
+    {
+      key: 'not_found',
+      label: 'Already Gone',
+      format: 'boolean',
+      description: 'True when the record did not exist (already deleted), so nothing changed.',
+    },
+    { key: 'id', label: 'ID' },
+  ],
+};
+
+export const createTagActionOutputSchema: OutputSchema = {
+  fields: [
+    ...tagFields,
+    {
+      key: 'created',
+      label: 'Was Created',
+      format: 'boolean',
+      description: 'False when a tag with this name already existed and was returned instead.',
+    },
+  ],
+};
+
+const enrollmentFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Enrollment ID' },
+  {
+    key: 'access_type',
+    label: 'Access Type',
+    description: 'full_access, partial_access, dripping_content or partial_dripping_access.',
+  },
+  { key: 'active', label: 'Active', format: 'boolean' },
+  { key: 'course_id', label: 'Course ID' },
+  { key: 'course_name', label: 'Course Name' },
+  { key: 'contact_id', label: 'Contact ID' },
+  { key: 'contact_email', label: 'Contact Email', format: 'email' },
+];
+
+export const enrollmentOutputSchema: OutputSchema = { fields: enrollmentFields };
+
+export const removalResultOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'removed', label: 'Removed', format: 'boolean' },
+    { key: 'removed_count', label: 'Removed Count', format: 'number' },
+    {
+      key: 'removed_ids',
+      label: 'Removed IDs',
+      description: 'The enrollment or membership ids that were deleted.',
+    },
+    {
+      key: 'not_found',
+      label: 'Nothing to Remove',
+      format: 'boolean',
+      description: 'True when the contact had no matching enrollment or membership, so nothing changed.',
+    },
+  ],
+};
+
+export const addToCommunityOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'queued',
+      label: 'Queued',
+      format: 'boolean',
+      description: 'Systeme.io accepted the request and adds the member in the background.',
+    },
+    { key: 'community_id', label: 'Community ID' },
+    { key: 'contact_id', label: 'Contact ID' },
+  ],
+};
+
+export const cancelSubscriptionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'cancelled',
+      label: 'Cancelled',
+      format: 'boolean',
+      description: 'True when Systeme.io accepted the cancellation. With "At the end of the billing period" the subscription stays active until the period ends.',
+    },
+    {
+      key: 'already_cancelled',
+      label: 'Was Already Cancelled',
+      format: 'boolean',
+      description: 'True when the subscription was already cancelled, or already set to end with the period, so nothing changed.',
+    },
+    { key: 'subscription_id', label: 'Subscription ID' },
+    { key: 'contact_id', label: 'Contact ID' },
+    { key: 'cancel_type', label: 'When', description: 'Now or WhenBillingPeriodEnds.' },
+  ],
+};
+
+const pricePlanFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Price Plan ID' },
+  { key: 'name', label: 'Name' },
+  { key: 'innerName', label: 'Internal Name' },
+  { key: 'type', label: 'Type', description: 'For example one_shot or subscription.' },
+  {
+    key: 'amount',
+    label: 'Amount',
+    format: 'number',
+    description: 'Unverified: most likely in the smallest currency unit (cents).',
+  },
+  { key: 'currency', label: 'Currency' },
+  {
+    key: 'recurringOptions',
+    label: 'Recurring Options',
+    description: 'Empty for one-off prices.',
+    children: [
+      { key: 'interval', label: 'Interval' },
+      { key: 'intervalCount', label: 'Interval Count', format: 'number' },
+      { key: 'trialPeriod', label: 'Trial Period', format: 'number' },
+      { key: 'trialInterval', label: 'Trial Interval' },
+      { key: 'limitOfPayments', label: 'Limit of Payments', format: 'number' },
+    ],
+  },
+];
+
+export const saleTriggerOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'customer',
+      label: 'Customer',
+      children: [
+        { key: 'contactId', label: 'Contact ID', description: 'Use this with the contact actions.' },
+        { key: 'email', label: 'Email', format: 'email' },
+        { key: 'id', label: 'Customer ID' },
+        {
+          key: 'fields',
+          label: 'Form Fields',
+          dynamicKey: true,
+          description: 'Values the buyer entered, keyed by field slug (e.g. first_name, surname, country).',
+        },
+        { key: 'paymentProcessor', label: 'Payment Processor' },
+        { key: 'sourceUrl', label: 'Source URL', format: 'url' },
+        { key: 'clientIp', label: 'IP Address' },
+      ],
+    },
+    {
+      key: 'order',
+      label: 'Order',
+      children: [
+        { key: 'id', label: 'Order ID' },
+        { key: 'createdAt', label: 'Created At', format: 'datetime' },
+        { key: 'totalPrice', label: 'Total Price', format: 'number' },
+        { key: 'vat', label: 'VAT', format: 'number' },
+        { key: 'shippingFee', label: 'Shipping Fee', format: 'number' },
+        { key: 'discountAmount', label: 'Discount Amount', format: 'number' },
+        { key: 'discountType', label: 'Discount Type' },
+      ],
+    },
+    {
+      key: 'orderItem',
+      label: 'Order Item',
+      children: [
+        { key: 'id', label: 'Order Item ID' },
+        { key: 'createdAt', label: 'Created At', format: 'datetime' },
+        {
+          key: 'resources',
+          label: 'Resources',
+          description: 'What the purchase grants: a course, course bundle, physical product or tag.',
+          listItems: [
+            { key: 'course', label: 'Course', children: [{ key: 'id', label: 'Course ID' }, { key: 'name', label: 'Name' }] },
+            {
+              key: 'courseBundle',
+              label: 'Course Bundle',
+              children: [{ key: 'id', label: 'Bundle ID' }, { key: 'name', label: 'Name' }],
+            },
+            { key: 'enrollmentAccessType', label: 'Enrollment Access Type' },
+            {
+              key: 'physicalProduct',
+              label: 'Physical Product',
+              children: [{ key: 'id', label: 'Product ID' }, { key: 'name', label: 'Name' }],
+            },
+            { key: 'tag', label: 'Tag', children: [{ key: 'id', label: 'Tag ID' }, { key: 'name', label: 'Name' }] },
+          ],
+        },
+      ],
+    },
+    { key: 'pricePlan', label: 'Price Plan', children: pricePlanFields },
+    {
+      key: 'funnelStep',
+      label: 'Funnel Step',
+      children: [
+        { key: 'id', label: 'Funnel Step ID' },
+        { key: 'name', label: 'Name' },
+        { key: 'type', label: 'Type' },
+        { key: 'funnel', label: 'Funnel', children: [{ key: 'id', label: 'Funnel ID' }, { key: 'name', label: 'Name' }] },
+      ],
+    },
+    {
+      key: 'coupon',
+      label: 'Coupon',
+      description: 'Empty when no coupon was used.',
+      children: [
+        { key: 'code', label: 'Code' },
+        { key: 'innerName', label: 'Internal Name' },
+        { key: 'discountAmount', label: 'Discount Amount', format: 'number' },
+        { key: 'discountType', label: 'Discount Type' },
+        { key: 'expirationDate', label: 'Expires At', format: 'datetime' },
+        { key: 'limitOfUse', label: 'Limit of Use', format: 'number' },
+      ],
+    },
+  ],
+};
+
+export const newOptInTriggerOutputSchema: OutputSchema = { fields: contactFieldsWithTags };
+
+export const contactTagRemovedTriggerOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'tag',
+      label: 'Tag',
+      description: 'The tag that was just removed.',
+      children: [
+        { key: 'id', label: 'Tag ID' },
+        { key: 'name', label: 'Name' },
+      ],
+    },
+    {
+      key: 'contact',
+      label: 'Contact',
+      description: 'The contact it was removed from, with its remaining tags.',
+      children: contactFieldsWithTags,
+    },
+  ],
+};
+
+export const tagOutputFields = tagFields;
+export const enrollmentOutputFields = enrollmentFields;
+export const contactOutputFields = contactFieldsWithTags;

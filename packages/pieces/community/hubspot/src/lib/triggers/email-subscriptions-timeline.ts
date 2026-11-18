@@ -8,6 +8,7 @@ import {
 	QueryParams,
 } from '@activepieces/pieces-common';
 import { getHubspotAccessToken, hubspotAuth } from '../auth';
+import { hubspotPolling } from '../common/polling';
 import {
 	AppConnectionValueForAuthProperty,
 	createTrigger,
@@ -46,12 +47,19 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Re
 			for (const item of response.body.timeline) {
 				items.push(item);
 			}
+			if (!lastFetchEpochMS) {
+				break;
+			}
 		} while (hasMore);
 
-		return items.map((item) => ({
-			epochMilliSeconds: item.timestamp as number,
-			data: item,
-		}));
+		return items
+			.map((item) => ({
+				epochMilliSeconds: Number(item.timestamp),
+				data: item,
+			}))
+			.sort((a, b) =>
+				lastFetchEpochMS ? a.epochMilliSeconds - b.epochMilliSeconds : b.epochMilliSeconds - a.epochMilliSeconds,
+			);
 	},
 };
 
@@ -59,8 +67,8 @@ export const newEmailSubscriptionsTimelineTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-email-subscriptions-timeline',
 	classification: 'READ',
-	displayName: 'New Email Subscriptions Timeline',
-	description: 'Triggers when a new email timeline subscription added for the portal.',
+	displayName: 'New Email Subscription Change',
+	description: "Triggers when a contact's email subscription status changes.",
 	aiMetadata: {
 		description:
 			'Fires when a new email-subscription timeline event is recorded for the HubSpot portal. Each event represents one subscription change (such as a bounce, unsubscribe, or opt-in) for a recipient, including the change type, source, and the underlying event that caused it. Polls the portal-wide email subscription timeline by timestamp.',
@@ -75,7 +83,7 @@ export const newEmailSubscriptionsTimelineTrigger = createTrigger({
 		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
-		return await pollingHelper.test(polling, context);
+		return hubspotPolling.sampleOldestToNewest({ items: await pollingHelper.test(polling, context) });
 	},
 	async run(context) {
 		return await pollingHelper.poll(polling, context);

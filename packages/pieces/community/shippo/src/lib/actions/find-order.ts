@@ -4,6 +4,7 @@ import { ShippoClient } from "../../lib/client";
 
 export const findOrder = createAction({
   name: 'find_order',
+  classification: 'READ',
   displayName: 'Find Order',
   description: 'Search for an order by its ID',
   audience: 'both',

@@ -13,8 +13,10 @@ export const searchContactsAction = createAction({
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',
-      description: 'The value you want to search for.',
+      description:
+        'Matched against name, email, phone and more. Up to 100 results.',
       required: true,
+      placeholder: 'jane@example.com',
     }),
   },
 

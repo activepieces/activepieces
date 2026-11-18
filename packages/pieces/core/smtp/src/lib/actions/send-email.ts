@@ -1,7 +1,7 @@
 import { ApFile, Property, createAction } from '@activepieces/pieces-framework';
 import { smtpAuth } from '../..';
 import { smtpCommon } from '../common';
-import { Attachment, Headers } from 'nodemailer/lib/mailer';
+import Mail from 'nodemailer/lib/mailer';
 import mime from 'mime-types';
 import { sendEmailActionOutputSchema } from '../output-schemas';
 
@@ -13,49 +13,62 @@ export const sendEmail = createAction({
   displayName: 'Send Email',
   description: 'Send an email using a custom SMTP server.',
   aiMetadata: { description: 'Sends an email through an arbitrary SMTP relay, delivering the body as either plain text or HTML depending on the chosen body type. Use this when the only mail credentials available are raw SMTP host/port/login details; prefer a provider-specific piece (Gmail, Microsoft Outlook, SendGrid) when the mailbox lives on one of those services. Requires a reachable SMTP connection, a from address, at least one recipient, a subject and a body; not idempotent, since each call sends another copy.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'recipients',
+      display: 'tabs',
+      label: 'Recipients',
+      props: ['to', 'cc', 'bcc', 'replyTo'],
+    },
+  ],
   props: {
     from: Property.ShortText({
       displayName: 'From Email',
+      description: 'Must be an address your server lets you send from.',
+      placeholder: 'sender@example.com',
       required: true,
-    }),
-    senderName: Property.ShortText({
-      displayName: "Sender Name",
-      required: false,
     }),
     to: Property.Array({
       displayName: 'To',
       required: true,
     }),
     cc: Property.Array({
-      displayName: 'CC',
+      displayName: 'Cc',
+      required: false,
+    }),
+    bcc: Property.Array({
+      displayName: 'Bcc',
       required: false,
     }),
     replyTo: Property.ShortText({
       displayName: 'Reply To',
-      required: false,
-    }),
-    bcc: Property.Array({
-      displayName: 'BCC',
+      description: 'Replies go to this address instead of the sender.',
+      placeholder: 'support@example.com',
       required: false,
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
+      placeholder: 'Invoice for March',
       required: true,
     }),
     body_type: Property.StaticDropdown({
       displayName: 'Body Type',
+      description: 'How the text in Body is interpreted.',
       required: true,
       defaultValue: 'plain_text',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
           {
-            label: 'plain text',
+            label: 'Plain Text',
             value: 'plain_text',
+            icon: 'text',
           },
           {
-            label: 'html',
+            label: 'HTML',
             value: 'html',
+            icon: 'code',
           },
         ],
       },
@@ -64,34 +77,43 @@ export const sendEmail = createAction({
       displayName: 'Body',
       required: true,
     }),
-    customHeaders: Property.Object({
-      displayName: 'Custom Headers',
-      required: false,
-    }),
     attachments: Property.Array({
       displayName: 'Attachments',
       required: false,
       properties: {
         file: Property.File({
           displayName: 'File',
-          description: 'File to attach to the email you want to send',
           required: true,
         }),
         name: Property.ShortText({
           displayName: 'Attachment Name',
-          description: 'In case you want to change the name of the attachment',
+          description: 'Overrides the uploaded file name.',
+          placeholder: 'report.pdf',
           required: false,
         }),
       }
+    }),
+    senderName: Property.ShortText({
+      displayName: 'Sender Name',
+      description: 'Name shown in the inbox instead of your address.',
+      placeholder: 'Jane at Acme',
+      required: false,
+      advanced: true,
+    }),
+    customHeaders: Property.Object({
+      displayName: 'Custom Headers',
+      description: 'Extra headers added to the email, as name and value pairs.',
+      required: false,
+      advanced: true,
     }),
   },
   outputSchema: sendEmailActionOutputSchema,
   run: async ({ auth, propsValue }) => {
     const transporter = smtpCommon.createSMTPTransport(auth.props);
 
-    const attachments = propsValue['attachments'] as {file: ApFile; name: string | undefined; }[];
+    const attachments = (propsValue.attachments ?? []) as {file: ApFile; name: string | undefined; }[];
 
-    const attachment_data: Attachment[] = attachments.map(({file, name}) => {
+    const attachment_data: Mail.Attachment[] = attachments.map(({file, name}) => {
       const lookupResult = mime.lookup(
         file.extension ? file.extension : ''
       );
@@ -107,13 +129,13 @@ export const sendEmail = createAction({
       from: getFrom(propsValue.senderName, propsValue.from),
       to: propsValue.to.join(','),
       cc: propsValue.cc?.join(','),
-      inReplyTo: propsValue.replyTo,
+      replyTo: propsValue.replyTo,
       bcc: propsValue.bcc?.join(','),
       subject: propsValue.subject,
       text: propsValue.body_type === 'plain_text' ? propsValue.body : undefined,
       html: propsValue.body_type === 'html' ? propsValue.body : undefined,
       attachments: attachment_data ? attachment_data : undefined,
-      headers: propsValue.customHeaders as Headers,
+      headers: propsValue.customHeaders as Mail.Headers,
     };
 
     return await sendWithRetry(transporter, mailOptions);

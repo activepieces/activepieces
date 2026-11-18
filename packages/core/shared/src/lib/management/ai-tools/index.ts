@@ -6,6 +6,7 @@ export enum AiToolCapability {
     WEB_SEARCH = 'WEB_SEARCH',
     WEB_SCRAPING = 'WEB_SCRAPING',
     IMAGE_GENERATION = 'IMAGE_GENERATION',
+    EMBEDDINGS = 'EMBEDDINGS',
 }
 
 export enum AiToolProvider {
@@ -13,6 +14,7 @@ export enum AiToolProvider {
     FIRECRAWL = 'firecrawl',
     APIFY = 'apify',
     FAL = 'fal',
+    AI_PROVIDER = 'ai_provider',
 }
 
 export const AiToolAuthConfig = z.object({
@@ -22,6 +24,12 @@ export type AiToolAuthConfig = z.infer<typeof AiToolAuthConfig>
 
 export const AiToolProviderConfig = z.record(z.string(), z.unknown())
 export type AiToolProviderConfig = z.infer<typeof AiToolProviderConfig>
+
+export const AiProviderToolConfig = z.object({
+    aiProviderId: z.string().min(1, formErrors.required),
+    modelId: z.string().min(1, formErrors.required).optional(),
+})
+export type AiProviderToolConfig = z.infer<typeof AiProviderToolConfig>
 
 export const AiToolConfig = z.object({
     ...BaseModelSchema,
@@ -46,7 +54,7 @@ export type AiToolConfigWithoutSensitiveData = z.infer<typeof AiToolConfigWithou
 export const CreateAiToolConfigRequest = z.object({
     capability: z.enum(AiToolCapability),
     provider: z.enum(AiToolProvider),
-    auth: AiToolAuthConfig,
+    auth: AiToolAuthConfig.optional(),
     config: AiToolProviderConfig.optional(),
     enabled: z.boolean().optional(),
 })
@@ -73,3 +81,9 @@ export const GetEnabledAiToolsResponse = z.object({
     imageGeneration: ResolvedAiTool.optional(),
 })
 export type GetEnabledAiToolsResponse = z.infer<typeof GetEnabledAiToolsResponse>
+
+export type AiProviderToolChoices = {
+    webSearch?: AiProviderToolConfig
+    imageGeneration?: AiProviderToolConfig
+    embeddings?: AiProviderToolConfig
+}

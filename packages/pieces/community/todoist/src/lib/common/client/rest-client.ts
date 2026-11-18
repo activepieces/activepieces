@@ -130,31 +130,6 @@ export const todoistRestClient = {
       return response.body;
     },
 
-    async listCompleted({ token, since, until, project_id }: CompletedListParams): Promise<TodoistCompletedTask[]> {
-      const tasks: TodoistCompletedTask[] = [];
-      let cursor: string | null = null;
-
-      do {
-        const queryParams = pickBy(
-          { since, until, project_id, limit: '200', cursor: cursor ?? undefined },
-          isNotUndefined,
-        );
-
-        const request: HttpRequest = {
-          method: HttpMethod.GET,
-          url: `${API}/tasks/completed`,
-          authentication: { type: AuthenticationType.BEARER_TOKEN, token },
-          queryParams,
-        };
-
-        const response = await httpClient.sendRequest<{ items: TodoistCompletedTask[]; next_cursor: string | null }>(request);
-        tasks.push(...response.body.items);
-        cursor = response.body.next_cursor;
-      } while (cursor);
-
-      return tasks;
-    },
-
     async get({ token, task_id }: { token: string; task_id: string }): Promise<TodoistTask> {
       const request: HttpRequest = {
         method: HttpMethod.GET,
@@ -253,6 +228,29 @@ export const todoistRestClient = {
     async listCompletedByDueDate(params: CompletedByDateParams): Promise<TodoistCompletedTask[]> {
       return fetchCompletedByDate(`${API}/tasks/completed/by_due_date`, params);
     },
+
+    async listCompletedByCompletionDatePage({
+      token,
+      since,
+      until,
+      project_id,
+      cursor,
+      timeoutMs,
+    }: CompletedByDatePageParams): Promise<CompletedByDatePage> {
+      const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `${API}/tasks/completed/by_completion_date`,
+        authentication: { type: AuthenticationType.BEARER_TOKEN, token },
+        queryParams: pickBy(
+          { since, until, project_id, limit: '200', cursor: cursor ?? undefined },
+          isNotUndefined,
+        ),
+        timeout: timeoutMs,
+      };
+
+      const response = await httpClient.sendRequest<CompletedByDatePage>(request);
+      return { items: response.body.items, next_cursor: response.body.next_cursor };
+    },
   },
 };
 
@@ -317,13 +315,6 @@ type TasksListParams = {
   filter?: string | undefined;
 };
 
-type CompletedListParams = {
-  token: string;
-  since: string;
-  until: string;
-  project_id?: string | undefined;
-};
-
 type TasksFilterParams = {
   token: string;
   query: string;
@@ -358,12 +349,26 @@ type CompletedByDateParams = {
   limit?: number | undefined;
 };
 
+type CompletedByDatePageParams = {
+  token: string;
+  since: string;
+  until: string;
+  project_id?: string | undefined;
+  cursor: string | null;
+  timeoutMs: number;
+};
+
+type CompletedByDatePage = {
+  items: TodoistCompletedTask[];
+  next_cursor: string | null;
+};
+
 const dueDateParams = (dueDate?: string) => {
   if (dueDate) {
     const parsedDate = Date.parse(dueDate);
     if (isNaN(parsedDate)) {
       return { due_string: dueDate };
-    } else if (/\d{4}-\d{2}-\d{2}/.test(dueDate)) {
+    } else if (/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
       return { due_date: dueDate };
     } else {
       return { due_datetime: new Date(parsedDate).toISOString() };

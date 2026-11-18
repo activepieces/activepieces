@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
@@ -9,49 +9,72 @@ export const telegramSendLocationAction = createAction({
   name: 'send_location',
   classification: 'WRITE',
   displayName: 'Send Location',
-  description: 'Send a geographic location (latitude/longitude) to a Telegram chat',
+  description: 'Send a map pin, or a live location that updates, to a chat.',
   audience: 'human',
   aiMetadata: { description: 'Sends a point location given as latitude and longitude to a Telegram chat, optionally as a live location that updates for a set period. Use to share a place or track a moving position; both coordinates are required. Not idempotent: each call posts a new location message.', idempotent: false },
+  propertyGroups: [
+    { key: 'send_to', display: 'section', label: 'Send to', icon: 'send', props: ['instructions', 'chat_id'] },
+    {
+      key: 'location',
+      display: 'section',
+      label: 'Location',
+      icon: 'location',
+      props: ['latitude', 'longitude', 'horizontal_accuracy'],
+    },
+    {
+      key: 'live',
+      display: 'section',
+      label: 'Live Location',
+      icon: 'sliders',
+      props: ['live_info', 'live_period', 'heading', 'proximity_alert_radius'],
+    },
+  ],
   props: {
-    instructions: telegramCommons.chatIdInstructions(),
-    chat_id: telegramCommons.chatIdProp(),
-    message_thread_id: telegramCommons.messageThreadIdProp(),
+    instructions: telegramCommons.form.chatIdInstructions(),
+    chat_id: telegramCommons.form.chatIdProp(),
     latitude: Property.Number({
       displayName: 'Latitude',
-      description: 'Latitude of the location.',
+      description: 'Between -90 and 90.',
       required: true,
+      width: 'half',
     }),
     longitude: Property.Number({
       displayName: 'Longitude',
-      description: 'Longitude of the location.',
+      description: 'Between -180 and 180.',
       required: true,
+      width: 'half',
     }),
     horizontal_accuracy: Property.Number({
       displayName: 'Horizontal Accuracy',
-      description: 'Radius of uncertainty for the location, in meters (0–1500).',
+      description: 'Uncertainty radius in meters, 0 to 1500.',
       required: false,
+    }),
+    live_info: Property.MarkDown({
+      value: 'Fill Live Period to share a live location. Heading and Proximity Alert Radius only work with it.',
+      variant: MarkdownVariant.INFO,
     }),
     live_period: Property.Number({
       displayName: 'Live Period',
-      description:
-        'Number of seconds the location will be updated (60–86400). Use for live locations.',
+      description: 'Seconds, 60 to 86400.',
       required: false,
+      width: 'half',
     }),
     heading: Property.Number({
       displayName: 'Heading',
-      description: 'For live locations, direction the user is moving in degrees (1–360).',
+      description: 'Degrees, 1 to 360.',
       required: false,
+      width: 'half',
     }),
     proximity_alert_radius: Property.Number({
       displayName: 'Proximity Alert Radius',
-      description:
-        'For live locations, the max distance (1–100000 m) for proximity alerts about approaching another chat member.',
+      description: 'Alert distance in meters, 1 to 100000.',
       required: false,
     }),
-    disable_notification: telegramCommons.disableNotificationProp(),
-    protect_content: telegramCommons.protectContentProp(),
-    reply_to_message_id: telegramCommons.replyToMessageIdProp(),
-    reply_markup: telegramCommons.replyMarkupProp(),
+    message_thread_id: telegramCommons.form.messageThreadIdProp(),
+    disable_notification: telegramCommons.form.disableNotificationProp(),
+    protect_content: telegramCommons.form.protectContentProp(),
+    reply_to_message_id: telegramCommons.form.replyToMessageIdProp(),
+    reply_markup: telegramCommons.form.replyMarkupProp(),
   },
   outputSchema: sendLocationActionOutputSchema,
   async run(ctx) {

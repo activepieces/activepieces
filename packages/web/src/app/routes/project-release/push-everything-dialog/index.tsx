@@ -95,7 +95,7 @@ const PushEverythingDialog = (props: PushEverythingDialogProps) => {
                     <FormLabel>{t('Commit Message')}</FormLabel>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                        <Info className="w-4 h-4 text-gray-11 cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         {t(
@@ -107,7 +107,7 @@ const PushEverythingDialog = (props: PushEverythingDialogProps) => {
                   <FormControl>
                     <Textarea {...field} />
                   </FormControl>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-gray-11">
                     {t(
                       'Enter a commit message to describe the changes you want to push.',
                     )}

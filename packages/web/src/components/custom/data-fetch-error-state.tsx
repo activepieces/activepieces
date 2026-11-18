@@ -26,22 +26,24 @@ export function DataFetchErrorState({
 
   return (
     <div
+      data-testid="data-fetch-error-state"
       className={cn(
         'flex w-full flex-col items-center justify-center gap-2 px-4 py-10 text-center',
         className,
       )}
     >
-      <div className="flex size-10 items-center justify-center rounded-xl bg-warning/15 text-warning-700 dark:text-warning-300">
+      <div className="flex size-10 items-center justify-center rounded-xl bg-warning-3 text-warning-11">
         <TriangleAlert className="size-5" />
       </div>
       <p className="text-lg font-semibold">
         {t('Trouble loading {entity}', { entity })}
       </p>
-      <p className="max-w-sm text-sm text-muted-foreground">
+      <p className="max-w-sm text-sm text-gray-11">
         {t('Nothing has been lost — your data is safe. Try again in a moment.')}
       </p>
       {onRetry && (
         <Button
+          data-testid="data-fetch-error-retry"
           variant="outline"
           size="sm"
           className="mt-2"

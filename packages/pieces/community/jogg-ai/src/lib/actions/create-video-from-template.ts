@@ -9,6 +9,7 @@ import { joggAiAuth } from '../..';
 
 export const createVideoFromTemplate = createAction({
   name: 'createVideoFromTemplate',
+  classification: 'WRITE',
   displayName: 'Create Video from Template',
   description: 'Creates a new video from templates',
   audience: 'both',

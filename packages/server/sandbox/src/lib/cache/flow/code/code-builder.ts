@@ -1,13 +1,14 @@
 import { existsSync } from 'node:fs'
 import fs, { rm } from 'node:fs/promises'
 import path from 'node:path'
-import { tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { isNil, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { type ApLogger, cryptoUtils, fileSystemUtils, wideEvent } from '@activepieces/server-utils'
 import { ExecutionMode } from '@activepieces/shared'
 import { CodeArtifact, SandboxSettings } from '../../../types'
 import { bunRunner } from '../../../utils/bun-runner'
 import { cacheState } from '../../cache-state'
 import { codeCache } from './code-cache'
+import { denoStepTranspiler } from './deno-step-transpiler'
 import { packageDependencies } from './package-dependencies'
 
 const TS_CONFIG_CONTENT = `
@@ -34,6 +35,8 @@ const TS_CONFIG_CONTENT = `
 }
 `
 
+const DENO_TRANSPILER_VERSION = 'sucrase-v1'
+
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '__AP_ERROR_MESSAGE__'
 
 const INVALID_DENO_ARTIFACT_TEMPLATE = `
@@ -58,10 +61,13 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
         const codePath = codes.stepDir({ flowVersionId, stepName: name })
         log.debug({ sourceCode, name, codePath, useDeno }, 'Processing code step')
 
-        const currentHash = await cryptoUtils.hashObject({ sourceCode, useDeno })
+        const currentHash = await cryptoUtils.hashObject(useDeno
+            ? { sourceCode, useDeno, transpiler: DENO_TRANSPILER_VERSION }
+            : { sourceCode, useDeno })
         const entryPath = useDeno
             ? codes.stepEntryPath({ flowVersionId, stepName: name })
             : codes.compiledStepPath({ flowVersionId, stepName: name })
+        const transpiledPath = codes.transpiledStepPath({ flowVersionId, stepName: name })
         const packageJson = getPackageJson(sourceCode.packageJson, getSettings)
         const hasDependencies = Object.keys(JSON.parse(packageJson).dependencies ?? {}).length > 0
         const cache = cacheState(codePath)
@@ -69,17 +75,17 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
         const { cacheHit } = await cache.getOrSetCache({
             key: codePath,
             cacheMiss: (value: string) => {
+                const entryExists = useDeno
+                    ? existsSync(transpiledPath) || existsSync(entryPath)
+                    : existsSync(entryPath)
                 return value !== currentHash
-                    || !existsSync(entryPath)
+                    || !entryExists
                     || (useDeno && hasDependencies && !existsSync(path.join(codePath, 'node_modules')))
             },
             installFn: async () => {
-                const codeNeedCleanUp = await fileSystemUtils.fileExists(codePath)
-                if (codeNeedCleanUp) {
-                    await rm(codePath, { recursive: true })
-                }
-
                 await fileSystemUtils.threadSafeMkdir(codePath)
+                await cache.clear()
+                await removeStaleBuildOutputs({ codes, flowVersionId, stepName: name })
 
                 const installError = await wideEvent.timed({
                     name: 'codeDeps',
@@ -110,7 +116,21 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
                 }
 
                 if (useDeno) {
-                    await fs.writeFile(entryPath, sourceCode.code, 'utf8')
+                    await wideEvent.timed({
+                        name: 'codeCompile',
+                        fn: async () => {
+                            await fs.writeFile(entryPath, sourceCode.code, 'utf8')
+                            const { data: transpiled, error } = await tryCatch(() => denoStepTranspiler.toCommonJs({ source: sourceCode.code }))
+                            if (error !== null || transpiled.fallbackToEsm === true) {
+                                const fallbackError = error ?? transpiled?.error
+                                if (!isNil(fallbackError)) {
+                                    log.info({ codePath, error: fallbackError }, 'Deno step transpile failed, falling back to raw source')
+                                }
+                                return
+                            }
+                            await fs.writeFile(transpiledPath, transpiled.code, 'utf8')
+                        },
+                    })
                     return currentHash
                 }
 
@@ -178,11 +198,20 @@ function getPackageJson(packageJson: string, getSettings: () => SandboxSettings)
     })
 }
 
+async function removeStaleBuildOutputs({ codes, flowVersionId, stepName }: RemoveStaleBuildOutputsParams): Promise<void> {
+    const ref = { flowVersionId, stepName }
+    await Promise.all([
+        rm(codes.stepEntryPath(ref), { force: true }),
+        rm(codes.compiledStepPath(ref), { force: true }),
+        rm(codes.transpiledStepPath(ref), { force: true }),
+    ])
+}
+
 async function installDependencies({ path, packageJson }: InstallDependenciesParams, log: ApLogger): Promise<void> {
     await fs.writeFile(`${path}/package.json`, packageJson, 'utf8')
     const deps = Object.entries(JSON.parse(packageJson).dependencies ?? {})
     if (deps.length > 0) {
-        await bunRunner(log).install({ path, filtersPath: [] })
+        await bunRunner(log).install({ path, filtersPath: [], force: true })
     }
 }
 
@@ -212,6 +241,12 @@ async function writeInvalidArtifact({ entryPath, useDeno, errorMessage }: WriteI
 type ProcessCodeStepParams = {
     artifact: CodeArtifact
     codesFolderPath: string
+}
+
+type RemoveStaleBuildOutputsParams = {
+    codes: ReturnType<typeof codeCache>
+    flowVersionId: string
+    stepName: string
 }
 
 type InstallDependenciesParams = {

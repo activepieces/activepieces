@@ -92,6 +92,7 @@ When running in `--mode=cloud`, do not use OAuth2 connections — the OAuth prov
 
 ## Pull Requests
 
+- When the ticket belongs to a co-owned Linear project (a label from the `Co-Owner` group), pass `--reviewer <login>` with the login from that label, `<Name> (@github-login)`, and add the `### Project` section from `brain/knowledge/engineering/project-co-ownership.md` under "Linear ticket". If the label has no login, ask the engineer.
 - When creating a PR with `gh pr create`, always apply exactly one of these labels based on the nature of the change:
   - **`🌟 feature`** — new functionality
   - **`🐛 bug`** — bug fix
@@ -101,7 +102,7 @@ When running in `--mode=cloud`, do not use OAuth2 connections — the OAuth prov
   - **`🧩 area/core-pieces`** — for core pieces (under `packages/pieces/core/`)
 - **Always fill the "Breaking change?" section of the PR template** — tick exactly one box (the `breaking-change-check` CI job fails if it is left unedited). A change is breaking if a self-hoster or API consumer must take action: removed/renamed API fields or endpoints, dropped columns, new required fields, removed/required env vars, or default/limit/behaviour changes. If it is breaking:
   - also apply the **`⛓️‍💥 breaking-change`** label (in addition to the primary label above), and
-  - add an entry to `docs/install/reference/breaking-changes.mdx` describing what changed and the action required. CI enforces that the label and the docs entry travel together.
+  - add the entry at the top of `docs/install/reference/breaking-changes-unreleased.mdx` (a hidden page) describing what changed and the action required; the release moves it onto the Breaking Changes page under the release that ships it. Never write a version heading by hand. CI enforces that the label and the entry travel together.
 - **Non-rollbackable migrations are a separate axis** from customer-facing breaking changes: a migration that runs destructive DDL (`DROP TABLE`/`DROP COLUMN`, `ADD ... NOT NULL` without `DEFAULT`, etc.) must set `breaking = true` on the migration class — this is the rollback-safety flag (used by `rollback-migrations.ts` and the release rollback note), enforced by `check-migration-rollback.ts`. It does **not** by itself require the `⛓️‍💥 breaking-change` label; decide that from the upgrade-impact question above.
 
 ## Database Migrations

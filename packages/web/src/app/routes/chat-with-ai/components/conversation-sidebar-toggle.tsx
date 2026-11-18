@@ -42,7 +42,7 @@ export function ConversationSidebarToggle({
     return (
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0">
+          <Button variant="ghost" size="icon">
             <HistoryIcon size={18} />
           </Button>
         </SheetTrigger>
@@ -56,7 +56,7 @@ export function ConversationSidebarToggle({
               {t('Chats')}
             </SheetTitle>
             <SheetClose asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+              <Button variant="ghost" size="icon-sm">
                 <X size={16} />
               </Button>
             </SheetClose>
@@ -87,12 +87,7 @@ export function ConversationSidebarToggle({
       <TooltipProvider delayDuration={400}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 shrink-0"
-              onClick={onTogglePin}
-            >
+            <Button variant="ghost" size="icon-xs" onClick={onTogglePin}>
               <PanelLeftCloseIcon size={16} />
             </Button>
           </TooltipTrigger>
@@ -105,12 +100,7 @@ export function ConversationSidebarToggle({
   return (
     <HoverCard openDelay={120} closeDelay={120}>
       <HoverCardTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 shrink-0"
-          onClick={onTogglePin}
-        >
+        <Button variant="ghost" size="icon-xs" onClick={onTogglePin}>
           <HistoryIcon size={16} />
         </Button>
       </HoverCardTrigger>

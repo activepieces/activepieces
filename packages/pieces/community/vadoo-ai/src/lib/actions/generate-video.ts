@@ -11,6 +11,7 @@ import { isEmpty } from '@activepieces/pieces-framework';
 export const generateVideo = createAction({
   auth: vadooAiAuth,
   name: 'generate_video',
+  classification: 'WRITE',
   displayName: 'Generate Video',
   description: 'Create an AI-generated video from parameters',
   audience: 'both',

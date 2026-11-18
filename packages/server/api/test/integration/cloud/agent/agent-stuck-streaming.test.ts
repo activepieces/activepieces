@@ -1,10 +1,13 @@
-import { apId, AgentConversationStatus } from '@activepieces/shared'
+import { AgentConversationStatus, AgentRunSource, apId, FlowRunStatus, FlowVersionState } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { agentHelpers } from '../../../../src/app/ee/agent/agent-helpers'
+import { payloadOffloader } from '../../../../src/app/workers/payload-offloader'
+import { WaitpointStatus } from '../../../../src/app/waitpoints/waitpoint-types'
 import { db } from '../../../helpers/db'
-import { createTestContext } from '../../../helpers/test-context'
+import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../helpers/mocks'
+import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
@@ -189,4 +192,98 @@ describe('CHAT_STALE_SWEEP proactive recovery', () => {
         const row = await db.findOneByOrFail<{ status: string }>('agent_conversation', { id: evalId })
         expect(row.status).toBe(AgentConversationStatus.STREAMING)
     })
+
+    it('releases the paused flow of a flow-step run whose worker died, so the flow does not wait out the step timeout', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        const abandoned = await pausedFlowStepRun({ ctx, lastHeartbeat: new Date(Date.now() - 5 * 60 * 1_000) })
+        const running = await pausedFlowStepRun({ ctx, lastHeartbeat: new Date(Date.now() - 30 * 1_000) })
+
+        await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
+        await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
+
+        expect(await db.findOneBy('waitpoint', { id: abandoned.waitpointId })).toBeNull()
+        expect(await db.findOneBy('waitpoint', { id: running.waitpointId })).not.toBeNull()
+    })
+
+    it('resumes the flow with a failure that says the agent stopped, so the step fails with a reason', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        await pausedFlowStepRun({ ctx, lastHeartbeat: new Date(Date.now() - 5 * 60 * 1_000) })
+        const offload = vi.spyOn(payloadOffloader, 'offloadPayload')
+
+        await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
+
+        const resumedWith = offload.mock.calls.map(([, payload]) => payload)
+        offload.mockRestore()
+        expect(resumedWith).toContainEqual(expect.objectContaining({ body: expect.objectContaining({ failure: expect.stringContaining('The agent stopped responding before it finished') }) }))
+    })
+
+    it('never resumes a flow outside the conversation\'s own project, even if the row points at one', async () => {
+        const victim = await createTestContext(app, { plan: { chatEnabled: true } })
+        const attacker = await createTestContext(app, { plan: { chatEnabled: true } })
+        const foreign = await pausedFlowStepRun({ ctx: victim, lastHeartbeat: new Date(Date.now() - 5 * 60 * 1_000), conversationProjectId: attacker.project.id })
+
+        await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
+
+        expect(await db.findOneBy('waitpoint', { id: foreign.waitpointId })).not.toBeNull()
+    })
+
+    it('frees a flow-step row written by an older worker without a waitpoint, and leaves the step to its own timeout', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1_000)
+        const legacy = await pausedFlowStepRun({ ctx, lastHeartbeat: fiveMinutesAgo })
+        await db.update('agent_conversation', legacy.conversationId, { waitpointId: null, updated: fiveMinutesAgo.toISOString() })
+
+        await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
+
+        const row = await db.findOneByOrFail<{ status: string }>('agent_conversation', { id: legacy.conversationId })
+        expect(row.status).toBe(AgentConversationStatus.IDLE)
+        expect(await db.findOneBy('waitpoint', { id: legacy.waitpointId })).not.toBeNull()
+    })
+
+    it('keeps a flow step whose release failed eligible for the next sweep, so one failed attempt does not strand the flow', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        const unreleasable = await pausedFlowStepRun({ ctx, lastHeartbeat: new Date(Date.now() - 5 * 60 * 1_000), conversationProjectId: null })
+
+        await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
+
+        const row = await db.findOneByOrFail<{ status: string }>('agent_conversation', { id: unreleasable.conversationId })
+        expect(row.status).toBe(AgentConversationStatus.STREAMING)
+        expect(await db.findOneBy('waitpoint', { id: unreleasable.waitpointId })).not.toBeNull()
+    })
+
+    it('stops retrying a release that keeps failing once the step has timed out, since the waitpoint timeout already ended the wait', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        const pastTimeout = await pausedFlowStepRun({ ctx, lastHeartbeat: new Date(Date.now() - 4 * 60 * 60 * 1_000), conversationProjectId: null })
+
+        await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
+
+        const row = await db.findOneByOrFail<{ status: string }>('agent_conversation', { id: pastTimeout.conversationId })
+        expect(row.status).toBe(AgentConversationStatus.IDLE)
+    })
 })
+
+async function pausedFlowStepRun({ ctx, lastHeartbeat, conversationProjectId = ctx.project.id }: { ctx: TestContext, lastHeartbeat: Date, conversationProjectId?: string | null }): Promise<{ conversationId: string, waitpointId: string }> {
+    const flow = createMockFlow({ projectId: ctx.project.id })
+    await db.save('flow', flow)
+    const flowVersion = createMockFlowVersion({ flowId: flow.id, state: FlowVersionState.LOCKED })
+    await db.save('flow_version', flowVersion)
+    const flowRun = createMockFlowRun({ projectId: ctx.project.id, flowId: flow.id, flowVersionId: flowVersion.id, status: FlowRunStatus.PAUSED })
+    await db.save('flow_run', flowRun)
+    const waitpointId = apId()
+    await db.save('waitpoint', { id: waitpointId, flowRunId: flowRun.id, projectId: ctx.project.id, stepName: 'agent', type: 'WEBHOOK', status: WaitpointStatus.PENDING, httpRequestId: null, workerHandlerId: null })
+    const conversationId = apId()
+    await db.save('agent_conversation', {
+        id: conversationId,
+        platformId: ctx.platform.id,
+        projectId: conversationProjectId,
+        userId: ctx.user.id,
+        source: AgentRunSource.FLOW_STEP,
+        flowRunId: flowRun.id,
+        waitpointId,
+        activeRunId: apId(),
+        status: AgentConversationStatus.STREAMING,
+        messages: [],
+    })
+    await db.update('agent_conversation', conversationId, { created: lastHeartbeat.toISOString(), updated: lastHeartbeat.toISOString() })
+    return { conversationId, waitpointId }
+}

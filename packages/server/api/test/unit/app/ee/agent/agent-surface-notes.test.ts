@@ -1,4 +1,4 @@
-import { AgentRunSource } from '@activepieces/shared'
+import { AgentRunSource, SubagentTaskStatus } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
 import { agentSurfaceNotes } from '../../../../../src/app/ee/agent/prompt/agent-surface-notes'
 
@@ -24,7 +24,7 @@ const IDENTITY = {
     },
 }
 
-const EVERYTHING_AVAILABLE = { searchAvailable: true, fetchAvailable: true, scrapeAvailable: true, imageAvailable: true, emailAvailable: true, agentsAvailable: true }
+const EVERYTHING_AVAILABLE = { searchAvailable: true, fetchAvailable: true, scrapeAvailable: true, imageAvailable: true, imageEditAvailable: true, emailAvailable: true, agentsAvailable: true, tasksAvailable: true }
 
 function notesFor(source: AgentRunSource): string {
     return agentSurfaceNotes.buildRunNotes({
@@ -55,10 +55,35 @@ describe('what each surface is told it can do', () => {
         expect(notes).not.toContain('ap_generate_image')
     })
 
+    it('only offers image editing when the image service can edit', () => {
+        const withFal = agentSurfaceNotes.buildRunNotes({
+            source: AgentRunSource.CHAT,
+            currentDate: 'Tuesday, August 18, 2026',
+            ...EVERYTHING_AVAILABLE,
+            imageEditAvailable: false,
+            userEmail: 'owner@acme.com',
+            userIdentity: null,
+            connections: null,
+            memory: { instructions: null, memories: [] },
+        })
+
+        expect(notesFor(AgentRunSource.CHAT)).toContain('editFileId')
+        expect(withFal).toContain('ap_generate_image')
+        expect(withFal).not.toContain('editFileId')
+    })
+
     it('only tells a chat run about saved agents, and only where the surface exists', () => {
         expect(notesFor(AgentRunSource.CHAT)).toContain('Saved agents')
         expect(notesFor(AgentRunSource.FLOW_STEP)).not.toContain('Saved agents')
         expect(notesFor(AgentRunSource.AGENT)).not.toContain('Saved agents')
+    })
+
+    it('only points the chat at deep research when it can search the web', () => {
+        const withSearch = agentSurfaceNotes.buildRunNotes({ source: AgentRunSource.CHAT, currentDate: 'Tuesday, August 18, 2026', ...EVERYTHING_AVAILABLE, userEmail: 'owner@acme.com', memory: { instructions: '', memories: [] } })
+        const withoutSearch = agentSurfaceNotes.buildRunNotes({ source: AgentRunSource.CHAT, currentDate: 'Tuesday, August 18, 2026', ...EVERYTHING_AVAILABLE, searchAvailable: false, userEmail: 'owner@acme.com', memory: { instructions: '', memories: [] } })
+
+        expect(withSearch).toContain('ap_deep_research')
+        expect(withoutSearch).not.toContain('ap_deep_research')
     })
 
     it('tells a chat run about everything it has', () => {
@@ -109,7 +134,7 @@ describe('what each surface is told it can do', () => {
         const notes = agentSurfaceNotes.buildRunNotes({
             source: AgentRunSource.CHAT,
             currentDate: 'Tuesday, August 18, 2026',
-            searchAvailable: false, fetchAvailable: false, scrapeAvailable: false, imageAvailable: false, emailAvailable: false, agentsAvailable: false,
+            searchAvailable: false, fetchAvailable: false, scrapeAvailable: false, imageAvailable: false, imageEditAvailable: false, emailAvailable: false, agentsAvailable: false, tasksAvailable: false,
             userEmail: 'owner@acme.com',
             userIdentity: null,
             connections: null,
@@ -120,6 +145,22 @@ describe('what each surface is told it can do', () => {
         expect(notes).not.toContain('Saved agents')
         expect(notes).not.toContain('ap_web_search')
         expect(notes).not.toContain('ap_send_email')
+        expect(notes).not.toContain('ap_run_task')
+    })
+
+    it('tells chat about task agents only when they exist, and lists the conversation tasks to resume', () => {
+        expect(notesFor(AgentRunSource.CHAT)).toContain('ap_run_task')
+        const withTasks = agentSurfaceNotes.buildRunNotes({
+            source: AgentRunSource.CHAT,
+            currentDate: 'Tuesday, August 18, 2026',
+            ...EVERYTHING_AVAILABLE,
+            tasks: [{ id: 'task1', title: 'Build Save order', status: SubagentTaskStatus.DONE, artifacts: [{ type: 'flow', id: 'f1', name: 'Save order' }] }],
+            userEmail: 'owner@acme.com',
+            userIdentity: IDENTITY,
+            connections: null,
+            memory: { instructions: null, memories: [] },
+        })
+        expect(withTasks).toContain('- taskId task1, "Build Save order", done; made flow "Save order" (f1)')
     })
 })
 
@@ -178,18 +219,46 @@ describe('who the agent is told it is talking to', () => {
         expect(identityNoteFor({ source: AgentRunSource.AGENT, userIdentity: IDENTITY })).not.toContain('Who you\'re talking to')
     })
 
-    it('puts the person above the first-message note that points back at them', () => {
-        const notes = agentSurfaceNotes.buildRunNotes({
-            source: AgentRunSource.CHAT,
-            messageSource: 'onboarding',
+})
+
+describe('the onboarding note', () => {
+    it('goes with the first onboarding chat message, not into the system prompt', () => {
+        expect(agentSurfaceNotes.onboardingNote({ source: AgentRunSource.CHAT, messageSource: 'onboarding' })).toContain('FIRST message ever')
+        expect(agentSurfaceNotes.onboardingNote({ source: AgentRunSource.CHAT })).toBeNull()
+        expect(agentSurfaceNotes.onboardingNote({ source: AgentRunSource.AGENT, messageSource: 'onboarding' })).toBeNull()
+    })
+})
+
+describe('the skills note', () => {
+    function notesFor(source: AgentRunSource): string {
+        return agentSurfaceNotes.buildRunNotes({
+            source,
             currentDate: 'Tuesday, August 18, 2026',
             ...EVERYTHING_AVAILABLE,
-            userEmail: IDENTITY.email,
-            userIdentity: IDENTITY,
+            userEmail: 'owner@acme.com',
+            userIdentity: null,
             connections: null,
             memory: { instructions: null, memories: [] },
         })
+    }
 
-        expect(notes.indexOf('Who you\'re talking to')).toBeLessThan(notes.indexOf('FIRST message ever'))
+    it('gives a chat run the skill index and how to run deferred tools', () => {
+        const notes = notesFor(AgentRunSource.CHAT)
+        expect(notes).toContain('ap_lazy_tool')
+        expect(notes).toContain('- flow_building — load before')
+    })
+
+    it('tells a saved agent how to run deferred tools without the chat skill index', () => {
+        const notes = notesFor(AgentRunSource.AGENT)
+        expect(notes).toContain('ap_lazy_tool')
+        expect(notes).not.toContain('- flow_building')
+        for (const tool of CHAT_ONLY_TOOLS) {
+            expect(notes).not.toContain(tool)
+        }
+    })
+
+    it('adds nothing on surfaces without skills', () => {
+        expect(notesFor(AgentRunSource.FLOW_STEP)).not.toContain('ap_lazy_tool')
+        expect(notesFor(AgentRunSource.AGENT_BUILDER)).not.toContain('ap_lazy_tool')
     })
 })

@@ -1,11 +1,14 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { quickzuAuth } from '../../auth';
-import { makeClient, quickzuCommon } from '../../common';
+import { quickzuOutputSchemas } from '../../common/output-schemas';
+import { makeClient, quickzuCommon, requireValue } from '../../common';
 import { ProductUnit } from '../../common/constants';
 
 export const addProductAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_add_product',
+  outputSchema: quickzuOutputSchemas.product,
+  classification: 'WRITE',
   displayName: 'Add Product',
   description: 'Adds new product to store.',
   audience: 'both',
@@ -93,7 +96,7 @@ export const addProductAction = createAction({
     return await client.createProduct({
       name,
       desc,
-      category: categoryId!,
+      category: requireValue({ value: categoryId, label: 'Category' }),
       mrp,
       price,
       unit,

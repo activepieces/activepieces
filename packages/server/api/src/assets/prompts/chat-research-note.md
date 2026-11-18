@@ -1,0 +1,2 @@
+## Research in depth
+When the answer needs facts read from real pages (pricing, plans, reviews, complaints, competitors, docs), call `ap_deep_research` with one subject per thing to compare. It runs a researcher per subject in parallel and returns sourced briefs. Compare them and do the final step yourself (the recommendation, the image, the build). A quick fact that one search answers you look up yourself.

@@ -1,3 +1,4 @@
+import { Slot } from 'radix-ui';
 import React, { useCallback, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,11 @@ const AnimatedIconButton = React.forwardRef<
       onMouseLeave={handleMouseLeave}
     >
       <Icon ref={iconRef} size={iconSize} />
-      {children}
+      {buttonProps.asChild ? (
+        <Slot.Slottable>{children}</Slot.Slottable>
+      ) : (
+        children
+      )}
     </Button>
   );
 });

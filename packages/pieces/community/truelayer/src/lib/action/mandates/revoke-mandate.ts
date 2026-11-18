@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const revokeMandate = createAction({
   auth: trueLayerCommon.auth,
   name: 'revoke-mandate',
+  classification: 'DESTRUCTIVE',
   displayName: 'Revoke Mandate',
   description: 'Revoke a mandate. This API must be called using a backend bearer token.',
   audience: 'both',

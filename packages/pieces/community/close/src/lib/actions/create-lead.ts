@@ -1,3 +1,4 @@
+import { closeOutputSchemas } from '../common/output-schemas';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { closeAuth } from '../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -7,13 +8,15 @@ import { customFields, statusId } from '../common/props';
 export const createLead = createAction({
 	auth: closeAuth,
 	name: 'create_lead',
+	classification: 'WRITE',
 	displayName: 'Create Lead',
 	description: 'Creates a new lead.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Creates a new lead (company/account) in Close CRM, optionally with an inline list of contacts, custom fields, and an initial status. Use to add a prospect or account to the CRM. Each call creates a separate lead, so it is not idempotent; repeated calls produce duplicates. Lead name is required.',
 		idempotent: false,
 	},
+	outputSchema: closeOutputSchemas.raw.lead,
 	props: {
 		name: Property.ShortText({
 			displayName: 'Lead Name',
@@ -143,7 +146,7 @@ export const createLead = createAction({
 			};
 		});
 
-		const payload: Record<string, any> = {
+		const payload: Record<string, unknown> = {
 			name,
 			url,
 			description,

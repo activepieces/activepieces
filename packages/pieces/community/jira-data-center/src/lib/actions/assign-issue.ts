@@ -7,6 +7,7 @@ import { getIssueIdDropdown, getProjectIdDropdown, getUsersDropdown } from '../c
 export const assignIssueAction = createAction({
 	auth: jiraDataCenterAuth,
 	name: 'assign_issue',
+	classification: 'WRITE',
 	displayName: 'Assign Issue',
 	description: 'Assigns an issue to a user.',
 	audience: 'both',
@@ -20,10 +21,27 @@ export const assignIssueAction = createAction({
 		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),
 		assignee: getUsersDropdown({
 			displayName: 'Assignee',
+			description: 'The person who will own the issue.',
 			refreshers: ['projectId'],
 			required: true,
 		}),
 	},
+	propertyGroups: [
+		{
+			key: 'issue',
+			display: 'section',
+			label: 'Issue',
+			icon: 'inbox',
+			props: ['projectId', 'issueId'],
+		},
+		{
+			key: 'assignment',
+			display: 'section',
+			label: 'Assignment',
+			icon: 'user',
+			props: ['assignee'],
+		},
+	],
 	async run(context) {
 		const { issueId, assignee } = context.propsValue;
 		const response = await sendJiraRequest({

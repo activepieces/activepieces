@@ -1,4 +1,11 @@
-import { ApFile, Property } from '@activepieces/pieces-framework';
+import {
+  ApFile,
+  MarkdownVariant,
+  Property,
+  chunk,
+  tryCatch,
+  unique,
+} from '@activepieces/pieces-framework';
 import {
   HttpMethod,
   httpClient,
@@ -27,27 +34,49 @@ export const linkedinCommon = {
   },
   text: Property.LongText({
     displayName: 'Text',
+    description:
+      'Up to 3,000 characters of plain text; an @ does not tag anyone.',
     required: true,
   }),
   imageUrl: Property.File({
     displayName: 'Image',
     required: false,
   }),
+  postImage: Property.File({
+    displayName: 'Image',
+    description: "With a Link URL, the image becomes the link's thumbnail.",
+    placeholder: 'https://example.com/photo.jpg',
+    required: false,
+  }),
   link: Property.ShortText({
-    displayName: 'Content - URL',
+    displayName: 'Link URL',
+    placeholder: 'https://example.com/article',
     required: false,
   }),
   linkTitle: Property.ShortText({
-    displayName: 'Content - Title',
+    displayName: 'Link Title',
+    placeholder: 'Article headline',
     required: false,
+    width: 'half',
   }),
   linkDescription: Property.ShortText({
-    displayName: 'Content - Description',
+    displayName: 'Link Description',
+    placeholder: 'One-line summary',
     required: false,
+    width: 'half',
+  }),
+  linkPreviewInfo: Property.MarkDown({
+    value: 'Title and description show only when a Link URL is set.',
+    variant: MarkdownVariant.INFO,
+  }),
+  companyVisibilityInfo: Property.MarkDown({
+    value: 'Posts to a Company Page are always public.',
+    variant: MarkdownVariant.INFO,
   }),
   visibility: Property.Dropdown({
     auth: linkedinAuth,
     displayName: 'Visibility',
+    description: 'Who can see the post.',
     refreshers: [],
     required: true,
     options: async () => {
@@ -69,73 +98,94 @@ export const linkedinCommon = {
   company: Property.Dropdown({
     auth: linkedinAuth,
     displayName: 'Company Page',
+    description: 'Only pages where your account can post are listed.',
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
         return {
           disabled: true,
-          placeholder: 'Connect your account',
           options: [],
         };
       }
-      const authProp = auth as { access_token: string };
-
-      const companies: any = await linkedinCommon.getCompanies(
-        authProp.access_token
+      const { data: companies, error } = await tryCatch(
+        (): Promise<LinkedinCompany[]> =>
+          linkedinCommon.getCompanies(auth.access_token)
       );
-      const options = [];
-      for (const company in companies) {
-        options.push({
-          label: companies[company].localizedName,
-          value: companies[company].id,
-        });
+      if (error !== null) {
+        return {
+          disabled: true,
+          options: [],
+        };
       }
-
       return {
-        options: options,
+        disabled: false,
+        options: companies.map((company) => ({
+          label: company.localizedName,
+          value: company.id,
+        })),
       };
     },
   }),
 
-  getCompanies: async (accessToken: string) => {
-    const companies = (
-      await httpClient.sendRequest({
-        url: `${linkedinCommon.baseUrl}/v2/organizationalEntityAcls`,
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: accessToken,
-        },
-        queryParams: {
-          q: 'roleAssignee',
-        },
-      })
-    ).body;
-
-    const companyIds = companies.elements.map(
-      (company: { organizationalTarget: string }) => {
-        return company.organizationalTarget.substr(
-          company.organizationalTarget.lastIndexOf(':') + 1
-        );
+  getCompanies: async (accessToken: string): Promise<LinkedinCompany[]> => {
+    const pageSize = 100;
+    const maxPages = 10;
+    const organizationTargets: string[] = [];
+    for (let page = 0; page < maxPages; page++) {
+      const response =
+        await httpClient.sendRequest<OrganizationalEntityAclsResponse>({
+          url: `${linkedinCommon.baseUrl}/v2/organizationalEntityAcls`,
+          method: HttpMethod.GET,
+          authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: accessToken,
+          },
+          queryParams: {
+            q: 'roleAssignee',
+            state: 'APPROVED',
+            start: String(page * pageSize),
+            count: String(pageSize),
+          },
+        });
+      const elements = response.body.elements ?? [];
+      organizationTargets.push(
+        ...elements
+          .filter((element) =>
+            ORGANIZATION_POSTING_ROLES.includes(element.role)
+          )
+          .map((element) => element.organizationalTarget)
+      );
+      if (elements.length < pageSize) {
+        break;
       }
+    }
+
+    const organizationIds = unique(
+      organizationTargets.map((target) => organizationIdOf(target))
+    );
+    if (organizationIds.length === 0) {
+      return [];
+    }
+
+    const lookups = await Promise.all(
+      chunk(organizationIds, 50).map((ids) =>
+        linkedinRawGet<OrganizationsLookupResponse>({
+          accessToken,
+          url: `${linkedinCommon.baseUrl}/rest/organizations?ids=List(${ids.join(
+            ','
+          )})`,
+          resource: 'your Company Pages',
+        })
+      )
     );
 
-    const response = await fetch(`${linkedinCommon.baseUrl}/rest/organizations?ids=List(${companyIds.join(',')})`, {
-      method: 'GET',
-      headers: {
-        ...linkedinCommon.linkedinHeaders,
-        'Authorization': `Bearer ${accessToken}`
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const companySearch = await response.json();
-
-    return companySearch.results;
+    return lookups.flatMap((lookup) =>
+      Object.values(lookup.results ?? {}).map((organization) => ({
+        id: organization.id,
+        localizedName: organization.localizedName,
+      }))
+    );
   },
 
   generatePostRequestBody: (data: {
@@ -224,6 +274,12 @@ export const linkedinCommon = {
     return uploadData;
   },
 };
+
+const ORGANIZATION_POSTING_ROLES = [
+  'ADMINISTRATOR',
+  'CONTENT_ADMINISTRATOR',
+  'DIRECT_SPONSORED_CONTENT_POSTER',
+];
 
 const readErrorStatus = (error: unknown): number | null => {
   if (typeof error !== 'object' || error === null) {
@@ -516,6 +572,19 @@ export interface Image {
 export interface PostCreationResult {
   success: boolean;
   post_urn: string | null;
+}
+
+export interface LinkedinCompany {
+  id: number;
+  localizedName: string;
+}
+
+interface OrganizationalEntityAclsResponse {
+  elements?: { organizationalTarget: string; role: string }[];
+}
+
+interface OrganizationsLookupResponse {
+  results?: Record<string, LinkedinCompany>;
 }
 
 export const MAX_ERROR_BODY_CHARS = 200;

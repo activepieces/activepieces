@@ -17,6 +17,22 @@ export const slackSendDirectMessageAction = createAction({
   audience: 'human',
   aiMetadata: { description: 'Send a direct message to a single user by user ID, with optional Block Kit blocks, custom username/icon, and link unfurling. Each call posts a new DM, so it is not idempotent. Use this to message one person privately; use Send Message To A Channel to post in a channel.', idempotent: false },
   outputSchema: chatPostMessageOutputSchema,
+  propertyGroups: [
+    {
+      key: 'user_picker',
+      display: 'section',
+      label: 'User',
+      icon: 'user',
+      props: ['userId'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['text', 'blocks'],
+    },
+  ],
   props: {
     userId: userId(true),
     text: Property.LongText({

@@ -65,7 +65,7 @@ export const startDocumentAnalysis = createAction({
     } = context.propsValue;
 
     try {
-      const client = createTextractClient(context.auth.props);
+      const client = await createTextractClient({ auth: context.auth.props, server: context.server });
 
       const response = await client.send(
         new StartDocumentAnalysisCommand({

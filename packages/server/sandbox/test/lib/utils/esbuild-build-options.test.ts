@@ -90,6 +90,22 @@ describe('stepFolderResolvePlugin', () => {
         expect(result.bundle).not.toContain(SECRET)
     })
 
+    it('allows a node:-prefixed builtin import', async () => {
+        const result = await compile({
+            code: `import { createHash } from 'node:crypto'; export const code = async () => createHash('md5').update('x').digest('hex')`,
+        })
+        expect(result.built).toBe(true)
+        expect(result.bundle).toContain('node:crypto')
+    })
+
+    it('still blocks non-node scheme imports', async () => {
+        const result = await compile({
+            code: `import s from 'file://${secretDir}/secret.js'; export const code = async () => ({ s })`,
+        })
+        expect(result.built).toBe(false)
+        expect(result.error).toContain(IMPORT_OUT_OF_SCOPE_MESSAGE)
+    })
+
     it('allows a legitimate relative import inside the step folder', async () => {
         const result = await compile({
             code: `import s from './helper'; export const code = async () => ({ s })`,

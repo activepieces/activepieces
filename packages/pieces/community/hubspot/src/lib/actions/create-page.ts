@@ -9,41 +9,64 @@ export const createPageAction = createAction({
 	name: 'create-page',
 	classification: 'WRITE',
 	displayName: 'Create Page',
-	description: 'Creates a new landing/site page.',
+	description: 'Creates a landing page or site page.',
 	audience: 'both',
 	aiMetadata: { description: 'Create a new HubSpot CMS landing page or site page (choose via Page Type) from a template, then optionally publish it when State is set to publish rather than leaving it as a draft. Each call creates a distinct page, so it is not idempotent.', idempotent: false },
 	outputSchema: pageOutputSchema,
+	propertyGroups: [
+		{
+			key: 'page',
+			display: 'section',
+			label: 'Page',
+			icon: 'file',
+			props: ['pageType', 'pageTitle', 'internalPageName', 'templatePath', 'slug', 'language'],
+		},
+		{
+			key: 'publishing',
+			display: 'section',
+			label: 'Publishing',
+			icon: 'send',
+			props: ['state'],
+		},
+	],
 	props: {
 		pageType: pageType,
 		pageTitle: Property.ShortText({
 			displayName: 'Page Title',
 			required: true,
+			width: 'half',
 		}),
 		internalPageName: Property.ShortText({
 			displayName: 'Internal Page Name',
 			required: true,
+			width: 'half',
 		}),
 		templatePath: Property.ShortText({
 			displayName: 'Template Path',
-			description:
-				'The path should not include a slash (/) at the start.For example,"@hubspot/elevate/templates/blank.hubl.html".',
+			description: 'The theme template to use, without a leading slash.',
+			placeholder: '@hubspot/elevate/templates/blank.hubl.html',
 			required: true,
 		}),
 		slug: Property.ShortText({
 			displayName: 'Slug',
+			placeholder: 'spring-sale',
 			required: true,
+			width: 'half',
 		}),
 		language: Property.ShortText({
 			displayName: 'Language',
+			description: 'A language code such as en-us or de-de.',
 			required: false,
 			defaultValue: 'en-us',
+			width: 'half',
 		}),
 		metaDescription: Property.LongText({
 			displayName: 'Meta Description',
 			required: false,
+			advanced: true,
 		}),
 		state: Property.StaticDropdown({
-			displayName: 'State',
+			displayName: 'Status',
 			required: false,
 			defaultValue: 'DRAFT',
 			options: {
@@ -52,10 +75,14 @@ export const createPageAction = createAction({
 					{
 						label: 'Draft',
 						value: 'DRAFT',
+						description: 'Kept unpublished',
+						icon: 'file',
 					},
 					{
 						label: 'Publish',
 						value: 'PUBLISHED_OR_SCHEDULED',
+						description: 'Live once created',
+						icon: 'send',
 					},
 				],
 			},
@@ -63,10 +90,12 @@ export const createPageAction = createAction({
 		headHtml: Property.LongText({
 			displayName: 'Additional Head HTML',
 			required: false,
+			advanced: true,
 		}),
 		footerHtml: Property.LongText({
 			displayName: 'Additional Footer HTML',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {

@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 export const declareRegistrationFolderTerminated = createAction({
   auth: wedofAuth,
   name: 'declareRegistrationFolderTerminated',
+  classification: 'WRITE',
   displayName: "Passer un dossier de formation à l'état : sortie de formation",
   description:
     "Change l'état d'un dossier de formation vers : sortie de formation",

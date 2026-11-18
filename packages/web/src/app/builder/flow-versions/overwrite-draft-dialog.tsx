@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/core-utils';
+import { isNil, Permission, tryCatch } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { useState } from 'react';
 
@@ -27,18 +27,25 @@ const OverwriteDraftDialog = ({
   versionNumber,
 }: OverwriteDraftDialogProps) => {
   const { checkAccess } = useAuthorization();
-  const [setVersion, setRightSidebar, flow] = useBuilderStateContext(
-    (state) => [state.setVersion, state.setRightSidebar, state.flow],
-  );
+  const [setVersion, setRightSidebar, flow, savePendingEdits] =
+    useBuilderStateContext((state) => [
+      state.setVersion,
+      state.setRightSidebar,
+      state.flow,
+      state.savePendingEdits,
+    ]);
+  const [open, setOpen] = useState(false);
+  const [isSavingPendingEdits, setIsSavingPendingEdits] = useState(false);
   const { mutate: overWriteDraftWithVersion, isPending: isOverwritingDraft } =
     flowHooks.useOverWriteDraftWithVersion({
       onSuccess: (updatedFlow) => {
         setVersion(updatedFlow.version);
         setRightSidebar(RightSideBarType.NONE);
+        setOpen(false);
+        onConfirm?.();
       },
     });
   const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
-  const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
@@ -65,20 +72,23 @@ const OverwriteDraftDialog = ({
           <DialogClose asChild>
             <Button variant={'outline'}>{t('Cancel')}</Button>
           </DialogClose>
-          <DialogClose asChild>
-            <Button
-              loading={isOverwritingDraft}
-              onClick={() => {
-                overWriteDraftWithVersion({
-                  flowId: flow.id,
-                  versionId: versionId,
-                });
-                onConfirm?.();
-              }}
-            >
-              {t('Overwrite')}
-            </Button>
-          </DialogClose>
+          <Button
+            loading={isSavingPendingEdits || isOverwritingDraft}
+            onClick={async () => {
+              setIsSavingPendingEdits(true);
+              const { error: saveError } = await tryCatch(savePendingEdits);
+              setIsSavingPendingEdits(false);
+              if (!isNil(saveError)) {
+                return;
+              }
+              overWriteDraftWithVersion({
+                flowId: flow.id,
+                versionId: versionId,
+              });
+            }}
+          >
+            {t('Overwrite')}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -2,24 +2,22 @@ import { isNil } from '@activepieces/core-utils';
 import {
   Agent,
   AgentConversationStatus,
+  AgentRunListItem,
   AgentListSort,
   CreateAgentRequest,
   MoveAgentRequest,
   Permission,
+  SeekPage,
   UpdateAgentRequest,
 } from '@activepieces/shared';
 import {
+  InfiniteData,
   useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 
-import {
-  CURSOR_QUERY_PARAM,
-  LIMIT_QUERY_PARAM,
-} from '@/components/custom/data-table';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -40,6 +38,7 @@ export const useAgentsNavVisible = (): boolean => {
 };
 
 const AGENTS_PAGE_SIZE = 100;
+const AGENT_RUNS_PAGE_SIZE = 20;
 const AGENT_RUNS_ACTIVE_POLL_MS = 5 * 1000;
 const AGENT_RUNS_IDLE_POLL_MS = 15 * 1000;
 
@@ -121,18 +120,41 @@ export const agentsQueries = {
     agentId: string;
     projectId: string;
   }) => {
-    const [searchParams] = useSearchParams();
-    const cursor = searchParams.get(CURSOR_QUERY_PARAM);
-    const limit = searchParams.get(LIMIT_QUERY_PARAM);
-    return useQuery({
-      queryKey: [AGENTS_KEY, 'runs', agentId, cursor, limit],
-      queryFn: () =>
+    const queryClient = useQueryClient();
+    const listKey = [AGENTS_KEY, 'runs', agentId];
+    const list = useInfiniteQuery({
+      queryKey: listKey,
+      queryFn: ({ pageParam }) =>
         agentsApi.listRuns({
           agentId,
           projectId,
-          cursor: cursor ?? undefined,
-          limit: limit === null ? undefined : parseInt(limit),
+          cursor: pageParam,
+          limit: AGENT_RUNS_PAGE_SIZE,
         }),
+      initialPageParam: undefined as string | undefined,
+      getNextPageParam: (lastPage) => lastPage.next ?? undefined,
+    });
+    const latest = useQuery({
+      queryKey: [AGENTS_KEY, 'runs-latest', agentId],
+      queryFn: async () => {
+        const latest = await agentsApi.listRuns({
+          agentId,
+          projectId,
+          limit: AGENT_RUNS_PAGE_SIZE,
+        });
+        const shown =
+          queryClient.getQueryData<InfiniteData<SeekPage<AgentRunListItem>>>(
+            listKey,
+          )?.pages[0];
+        if (!isNil(shown) && runsSignature(shown) !== runsSignature(latest)) {
+          await queryClient.invalidateQueries({
+            queryKey: listKey,
+            exact: true,
+          });
+        }
+        return latest;
+      },
+      enabled: list.isSuccess,
       refetchInterval: (query) => {
         const stillRunning = query.state.data?.data.some(
           (run) => run.status === AgentConversationStatus.STREAMING,
@@ -142,6 +164,12 @@ export const agentsQueries = {
           : AGENT_RUNS_IDLE_POLL_MS;
       },
     });
+    return {
+      ...list,
+      isError: list.isError || latest.isError,
+      refetch: () =>
+        Promise.all([list.refetch(), latest.refetch()]).catch(() => undefined),
+    };
   },
 };
 
@@ -191,3 +219,9 @@ export const agentsMutations = {
     });
   },
 };
+
+function runsSignature(page: SeekPage<AgentRunListItem>): string {
+  return page.data
+    .map((run) => `${run.id}:${run.status}:${run.title ?? ''}`)
+    .join(',');
+}

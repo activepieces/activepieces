@@ -6,6 +6,7 @@ import { verifyEmailActionOutputSchema } from '../output-schemas';
 export const verifyEmail = createAction({
   auth: reoonEmailVerifyAuth,
   name: 'verifyEmail',
+  classification: 'READ',
   displayName: 'Verify Email',
   description: 'Verify a single email',
   audience: 'human',

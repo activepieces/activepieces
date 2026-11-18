@@ -7,7 +7,7 @@ import { LineChart as LineChartIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SettingsPanel } from '@/app/components/admin';
 import {
   ChartConfig,
   ChartContainer,
@@ -17,16 +17,33 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
-const SERIES: Array<{ status: FlowRunStatus; label: string; color: string }> = [
-  { status: FlowRunStatus.SUCCEEDED, label: 'Succeeded', color: '#22c55e' },
-  { status: FlowRunStatus.FAILED, label: 'Failed', color: '#f59e0b' },
+const SERIES: Array<{
+  status: FlowRunStatus;
+  label: string;
+  className: string;
+}> = [
+  {
+    status: FlowRunStatus.SUCCEEDED,
+    label: 'Succeeded',
+    className: 'text-success-9',
+  },
+  {
+    status: FlowRunStatus.FAILED,
+    label: 'Failed',
+    className: 'text-warning-9',
+  },
   {
     status: FlowRunStatus.INTERNAL_ERROR,
     label: 'Internal error',
-    color: '#ef4444',
+    className: 'text-danger-9',
   },
-  { status: FlowRunStatus.CANCELED, label: 'Cancelled', color: '#9ca3af' },
+  {
+    status: FlowRunStatus.CANCELED,
+    label: 'Cancelled',
+    className: 'text-gray-9',
+  },
 ];
 
 type StatusLineChartProps = {
@@ -64,146 +81,141 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
   }, [data]);
 
   const chartConfig = selectedSeries.reduce((config, item) => {
-    config[item.status] = { label: t(item.label), color: item.color };
+    config[item.status] = {
+      label: t(item.label),
+      className: item.className,
+    };
     return config;
   }, {} as ChartConfig) satisfies ChartConfig;
 
   const hasSelection = selectedSeries.length > 0;
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium">
-          {t('Jobs Per Month')}
-        </CardTitle>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">
-          {SERIES.map((item) => (
-            <label
-              key={item.status}
-              className="flex items-center gap-1.5 text-sm cursor-pointer select-none"
-            >
-              <Checkbox
-                checked={selectedStatuses.includes(item.status)}
-                onCheckedChange={() => toggleStatus(item.status)}
-              />
-              <span
-                className="size-2.5 rounded-full"
-                style={{ backgroundColor: item.color }}
-              />
-              {t(item.label)}
-            </label>
-          ))}
-        </div>
-      </CardHeader>
-      <CardContent className="pt-4">
-        {isLoading ? (
-          <Skeleton className="h-[300px] w-full" />
-        ) : !hasSelection ? (
-          <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
-            <LineChartIcon className="size-10 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              {t('Select at least one status to display')}
-            </p>
-          </div>
-        ) : chartData.length === 0 ? (
-          <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
-            <LineChartIcon className="size-10 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              {t('No runs in this period')}
-            </p>
-          </div>
-        ) : (
-          <ChartContainer
-            config={chartConfig}
-            className="aspect-auto h-[300px] w-full"
+    <SettingsPanel title={t('Jobs Per Month')}>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {SERIES.map((item) => (
+          <label
+            key={item.status}
+            className="flex cursor-pointer select-none items-center gap-2 text-sm"
           >
-            <AreaChart
-              accessibilityLayer
-              data={chartData}
-              margin={{ left: 0, right: 12, top: 12, bottom: 0 }}
-            >
-              <defs>
-                {selectedSeries.map((item) => (
-                  <linearGradient
-                    key={item.status}
-                    id={`status-gradient-${item.status}`}
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop
-                      offset="0%"
-                      stopColor={item.color}
-                      stopOpacity={0.3}
-                    />
-                    <stop
-                      offset="100%"
-                      stopColor={item.color}
-                      stopOpacity={0.05}
-                    />
-                  </linearGradient>
-                ))}
-              </defs>
-              <CartesianGrid
-                vertical={false}
-                strokeDasharray="3 3"
-                stroke="hsl(var(--border))"
-              />
-              <XAxis
-                dataKey="date"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                minTickGap={32}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                tickFormatter={(value) =>
-                  new Date(value).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                  })
-                }
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                width={40}
-                tickFormatter={(value) =>
-                  formatUtils.formatNumberCompact(value as number)
-                }
-              />
-              <ChartTooltip
-                content={
-                  <ChartTooltipContent
-                    labelFormatter={(value) =>
-                      new Date(value).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })
-                    }
-                  />
-                }
-              />
+            <Checkbox
+              checked={selectedStatuses.includes(item.status)}
+              onCheckedChange={() => toggleStatus(item.status)}
+            />
+            <span
+              className={cn('size-2.5 rounded-full bg-current', item.className)}
+            />
+            {t(item.label)}
+          </label>
+        ))}
+      </div>
+      {isLoading ? (
+        <Skeleton className="h-[300px] w-full" />
+      ) : !hasSelection ? (
+        <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
+          <LineChartIcon className="size-10 text-gray-11" />
+          <p className="text-sm text-gray-11">
+            {t('Select at least one status to display')}
+          </p>
+        </div>
+      ) : chartData.length === 0 ? (
+        <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
+          <LineChartIcon className="size-10 text-gray-11" />
+          <p className="text-sm text-gray-11">{t('No runs in this period')}</p>
+        </div>
+      ) : (
+        <ChartContainer
+          config={chartConfig}
+          className="aspect-auto h-[300px] w-full"
+        >
+          <AreaChart
+            accessibilityLayer
+            data={chartData}
+            margin={{ left: 0, right: 12, top: 12, bottom: 0 }}
+          >
+            <defs>
               {selectedSeries.map((item) => (
-                <Area
+                <linearGradient
                   key={item.status}
-                  dataKey={item.status}
-                  type="monotone"
-                  stroke={item.color}
-                  strokeWidth={2}
-                  fill={`url(#status-gradient-${item.status})`}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
+                  id={`status-gradient-${item.status}`}
+                  className={item.className}
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="0%"
+                    stopColor="currentColor"
+                    stopOpacity={0.3}
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor="currentColor"
+                    stopOpacity={0.05}
+                  />
+                </linearGradient>
               ))}
-            </AreaChart>
-          </ChartContainer>
-        )}
-      </CardContent>
-    </Card>
+            </defs>
+            <CartesianGrid
+              vertical={false}
+              strokeDasharray="3 3"
+              stroke="var(--gray-6)"
+            />
+            <XAxis
+              dataKey="date"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              minTickGap={32}
+              tick={{ fill: 'var(--gray-11)', fontSize: 12 }}
+              tickFormatter={(value) =>
+                new Date(value).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })
+              }
+            />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              tick={{ fill: 'var(--gray-11)', fontSize: 12 }}
+              width={40}
+              tickFormatter={(value) =>
+                formatUtils.formatNumberCompact(value as number)
+              }
+            />
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  labelFormatter={(value) =>
+                    new Date(value).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
+                  }
+                />
+              }
+            />
+            {selectedSeries.map((item) => (
+              <Area
+                key={item.status}
+                dataKey={item.status}
+                type="monotone"
+                className={item.className}
+                stroke="currentColor"
+                strokeWidth={2}
+                fill={`url(#status-gradient-${item.status})`}
+                dot={false}
+                activeDot={{ r: 4, className: item.className }}
+              />
+            ))}
+          </AreaChart>
+        </ChartContainer>
+      )}
+    </SettingsPanel>
   );
 }
 

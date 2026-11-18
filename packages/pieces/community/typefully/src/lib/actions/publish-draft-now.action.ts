@@ -8,6 +8,7 @@ import { TypefullyDraft } from '../common/types';
 export const publishDraftNowAction = createAction({
 	auth: typefullyAuth,
 	name: 'typefully_publish_draft_now',
+	classification: 'WRITE',
 	displayName: 'Publish Draft Now',
 	description:
 		'Immediately publishes an existing draft to all configured platforms.',

@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const newInvoice = createTrigger({
 	name: 'new_invoice',
+	classification: 'READ',
 	displayName: 'New Invoice',
 	description: 'Fires when a new invoice is created.',
 	aiMetadata: {

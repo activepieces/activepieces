@@ -9,6 +9,7 @@ import { joggAiAuth } from '../..';
 
 export const createAiAvatarPhoto = createAction({
   name: 'createAiAvatarPhoto',
+  classification: 'WRITE',
   displayName: 'Create AI Avatar Photo',
   description: 'Creates an AI avatar photo using JoggAI API',
   audience: 'both',

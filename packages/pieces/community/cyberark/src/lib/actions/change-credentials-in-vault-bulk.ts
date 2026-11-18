@@ -11,6 +11,7 @@ interface BulkItem {
 export const changeCredentialsInVaultBulk = createAction({
   auth: cyberarkAuth,
   name: 'change_credentials_in_vault_bulk',
+  classification: 'WRITE',
   displayName: 'Change Credentials in the Vault in Bulk',
   description:
     'Sets credentials for multiple accounts and changes them in the Vault. This does not affect credentials on the target device.',

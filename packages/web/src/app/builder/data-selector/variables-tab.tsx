@@ -61,7 +61,7 @@ const VariablesTab = () => {
 
       <ScrollArea className="transition-all flex-1 w-full">
         {isLoading && (
-          <div className="text-center text-sm text-muted-foreground py-8">
+          <div className="text-center text-sm text-gray-11 py-8">
             {t('Loading…')}
           </div>
         )}
@@ -71,22 +71,22 @@ const VariablesTab = () => {
             {debouncedSearch ? (
               <>
                 <SearchXIcon className="w-[35px] h-[35px]" />
-                <div className="text-center font-semibold text-md">
+                <div className="text-center font-semibold">
                   {t('No matching variables')}
                 </div>
-                <div className="text-center text-sm text-muted-foreground">
+                <div className="text-center text-sm text-gray-11">
                   {t('Try adjusting your search')}
                 </div>
               </>
             ) : (
               <>
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent-3 text-accent-11">
                   <Variable className="w-5 h-5" />
                 </div>
-                <div className="text-center font-semibold text-md">
+                <div className="text-center font-semibold">
                   {t('No variables yet')}
                 </div>
-                <div className="text-center text-sm text-muted-foreground max-w-[280px]">
+                <div className="text-center text-sm text-gray-11 max-w-[280px]">
                   {t(
                     'Create a variable to reference a value from any step input.',
                   )}
@@ -110,37 +110,29 @@ const VariablesTab = () => {
         {!isLoading && variables.length > 0 && (
           <div className="flex flex-col">
             {variables.map((variable) => (
-              <div
+              <button
+                type="button"
                 key={variable.id}
-                tabIndex={0}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    if (insertMention) {
-                      insertMention(`variables['${variable.name}']`);
-                    }
-                  }
-                }}
                 onClick={() => {
                   if (insertMention) {
                     insertMention(`variables['${variable.name}']`);
                   }
                 }}
                 className={cn(
-                  'group w-full max-w-full select-none focus:outline-hidden',
-                  'hover:bg-accent dark:hover:bg-accent/20 focus:bg-accent focus:bg-opacity-75',
+                  'group w-full max-w-full select-none focus:outline-hidden text-left',
+                  'hover:bg-gray-4 focus:bg-gray-4',
                   'cursor-pointer flex items-center gap-3 px-5 py-3',
                 )}
               >
-                <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 text-primary">
+                <span className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-accent-3 text-accent-11">
                   <Variable className="w-4 h-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-mono text-sm truncate">
+                </span>
+                <span className="flex-1 min-w-0">
+                  <span className="block font-mono text-sm truncate">
                     {variable.name}
-                  </div>
-                </div>
-              </div>
+                  </span>
+                </span>
+              </button>
             ))}
           </div>
         )}

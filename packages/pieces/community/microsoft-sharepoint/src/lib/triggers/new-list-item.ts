@@ -11,6 +11,7 @@ import { microsoftSharePointCommon } from '../common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import dayjs from 'dayjs';
 import { ListItem } from '@microsoft/microsoft-graph-types';
+import { newListItemOutputSchema } from '../output-schemas';
 
 type Props = {
 	siteId: string;
@@ -33,11 +34,13 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftSharePo
 		const items = [];
 
 		const filter =
-			lastFetchEpochMS === 0 ? `$filter=createdDateTime gt ${dayjs().toISOString()}` : '$top=10';
-
+			lastFetchEpochMS === 0
+				? '$top=10'
+				: `$filter=fields/Created gt '${dayjs(lastFetchEpochMS).toISOString()}'`;
 
 		let response: PageCollection = await client
 			.api(`/sites/${siteId}/lists/${listId}/items?${filter}`)
+			.header('Prefer', 'HonorNonIndexedQueriesWarningMayFailRandomly')
 			.expand('fields')
 			.get();
 
@@ -52,7 +55,10 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftSharePo
 				}
 
 				if (response['@odata.nextLink']) {
-					response = await client.api(response['@odata.nextLink']).get();
+					response = await client
+						.api(response['@odata.nextLink'])
+						.header('Prefer', 'HonorNonIndexedQueriesWarningMayFailRandomly')
+						.get();
 				} else {
 					break;
 				}
@@ -75,6 +81,8 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftSharePo
 export const newListItemTrigger = createTrigger({
 	auth: microsoftSharePointAuth,
 	name: 'new_list_item',
+	outputSchema: newListItemOutputSchema,
+	classification: 'READ',
 	displayName: 'New List Item',
 	description: 'Triggers when a new item is created in a SharePoint list.',
 	aiMetadata: {
@@ -88,18 +96,10 @@ export const newListItemTrigger = createTrigger({
 
 	sampleData: undefined,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

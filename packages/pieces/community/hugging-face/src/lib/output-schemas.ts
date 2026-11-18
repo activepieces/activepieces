@@ -180,6 +180,137 @@ const collectionFields: OutputSchemaField[] = [
   },
 ];
 
+const viewerPartialField: OutputSchemaField = {
+  key: 'partial',
+  label: 'Partial',
+  format: 'boolean',
+  description: 'True when the viewer only processed part of a very large dataset.',
+};
+
+const viewerPendingField: OutputSchemaField = {
+  key: 'pending',
+  label: 'Pending',
+  description: 'Subsets or splits the viewer is still processing.',
+};
+
+const viewerFailedField: OutputSchemaField = {
+  key: 'failed',
+  label: 'Failed',
+  description: 'Subsets or splits the viewer could not process.',
+};
+
+const datasetSplitRefFields: OutputSchemaField[] = [
+  { key: 'dataset', label: 'Dataset ID' },
+  { key: 'config', label: 'Subset (Config)' },
+  { key: 'split', label: 'Split' },
+];
+
+const datasetFeaturesField: OutputSchemaField = {
+  key: 'features',
+  label: 'Columns',
+  labelKey: 'name',
+  listItems: [
+    { key: 'feature_idx', label: 'Column Index', format: 'number' },
+    { key: 'name', label: 'Column Name' },
+    {
+      key: 'type',
+      label: 'Column Type',
+      description: "The datasets feature type, for example {dtype: 'string', _type: 'Value'} or a ClassLabel with names.",
+    },
+  ],
+};
+
+const datasetRowsField: OutputSchemaField = {
+  key: 'rows',
+  label: 'Rows',
+  labelKey: 'row_idx',
+  listItems: [
+    { key: 'row_idx', label: 'Row Index', format: 'number' },
+    {
+      key: 'row',
+      label: 'Row',
+      dynamicKey: true,
+      description: 'The row values, keyed by column name. Columns differ per dataset; see Columns.',
+    },
+    {
+      key: 'truncated_cells',
+      label: 'Truncated Cells',
+      description: 'Names of columns whose values were cut short because they were too large.',
+    },
+  ],
+};
+
+const datasetSizeCoreFields: OutputSchemaField[] = [
+  { key: 'dataset', label: 'Dataset ID' },
+  { key: 'num_rows', label: 'Rows', format: 'number' },
+  { key: 'num_bytes_parquet_files', label: 'Parquet Size', format: 'filesize' },
+  { key: 'num_bytes_memory', label: 'In-Memory Size', format: 'filesize' },
+  {
+    key: 'estimated_num_rows',
+    label: 'Estimated Rows',
+    format: 'number',
+    description: 'Only set when the viewer processed part of the data; null otherwise.',
+  },
+];
+
+const repoRefFields: OutputSchemaField[] = [
+  { key: 'repo_id', label: 'Repo ID' },
+  { key: 'repo_type', label: 'Repo Type' },
+];
+
+const discussionRefFields: OutputSchemaField[] = [
+  ...repoRefFields,
+  { key: 'discussion_number', label: 'Discussion Number', format: 'number' },
+];
+
+const spaceKeyRefFields: OutputSchemaField[] = [
+  { key: 'space_id', label: 'Space ID' },
+  { key: 'key', label: 'Key' },
+];
+
+const collectionWriteFields: OutputSchemaField[] = [
+  { key: 'slug', label: 'Collection Slug' },
+  { key: 'item_count', label: 'Item Count', format: 'number' },
+  { key: 'url', label: 'Collection URL', format: 'url' },
+];
+
+const webhookFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Webhook ID' },
+  { key: 'url', label: 'Target URL', format: 'url' },
+  { key: 'enabled', label: 'Enabled', format: 'boolean' },
+  {
+    key: 'disabled_reason',
+    label: 'Disabled Reason',
+    description: "Why the webhook is off, for example 'disabled' when turned off by hand. Null while enabled.",
+  },
+  {
+    key: 'watched',
+    label: 'Watched Items',
+    labelKey: 'name',
+    listItems: [
+      { key: 'type', label: 'Type', description: "'user', 'org', 'model', 'dataset' or 'space'." },
+      { key: 'name', label: 'Name' },
+    ],
+  },
+  { key: 'domains', label: 'Event Domains', description: "'repo', 'discussion' or both." },
+  { key: 'has_secret', label: 'Has Secret', format: 'boolean' },
+  { key: 'runs_job', label: 'Runs a Job', format: 'boolean' },
+  { key: 'last_trigger_at', label: 'Last Triggered At', format: 'datetime' },
+];
+
+const socialHandleFields: OutputSchemaField[] = [
+  { key: 'twitter', label: 'X (Twitter) Handle' },
+  { key: 'github', label: 'GitHub Handle' },
+  { key: 'linkedin', label: 'LinkedIn Handle' },
+];
+
+const watchTargetFields: OutputSchemaField[] = [
+  { key: 'type', label: 'Type', description: "'user', 'org', 'model', 'dataset' or 'space'." },
+  { key: 'name', label: 'Name', description: 'The username, organization name or canonical repository ID.' },
+  { key: 'id', label: 'Hub ID', description: 'The 24-character Hub ObjectId the name resolved to.' },
+  { key: 'watch_type', label: 'Watch Type', description: "'user', 'org' or 'repo', as sent to the Hub." },
+];
+
 export const languageTranslationOutputSchema: OutputSchema = {
   fields: [
     { key: 'translatedText', label: 'Translated Text' },
@@ -1157,5 +1288,579 @@ export const generateEmbeddingsOutputSchema: OutputSchema = {
       format: 'number',
       description: 'Number of vectors returned. Only present when several texts were sent.',
     },
+  ],
+};
+
+export const checkDatasetViewerSupportOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'preview', label: 'Preview Supported', format: 'boolean' },
+    { key: 'viewer', label: 'Viewer Supported', format: 'boolean' },
+    { key: 'search', label: 'Search Supported', format: 'boolean' },
+    { key: 'filter', label: 'Filter Supported', format: 'boolean' },
+    { key: 'statistics', label: 'Statistics Supported', format: 'boolean' },
+  ],
+};
+
+export const listDatasetSplitsOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'splits', label: 'Splits', labelKey: 'split', listItems: datasetSplitRefFields },
+    countField,
+    viewerPendingField,
+    viewerFailedField,
+  ],
+};
+
+export const previewDatasetRowsOutputSchema: OutputSchema = {
+  fields: [
+    ...datasetSplitRefFields,
+    datasetFeaturesField,
+    datasetRowsField,
+    countField,
+    {
+      key: 'rows_available',
+      label: 'Rows Available in Preview',
+      format: 'number',
+      description: 'How many preview rows the viewer returned before Max Rows was applied (at most 100).',
+    },
+    {
+      key: 'truncated',
+      label: 'Truncated',
+      format: 'boolean',
+      description: 'True when the returned rows are fewer than the whole split, either because the viewer preview is partial or because Max Rows trimmed it.',
+    },
+  ],
+};
+
+export const getDatasetRowsOutputSchema: OutputSchema = {
+  fields: [
+    datasetFeaturesField,
+    datasetRowsField,
+    countField,
+    { key: 'offset', label: 'Offset', format: 'number' },
+    {
+      key: 'next_offset',
+      label: 'Next Offset',
+      format: 'number',
+      description: 'Pass this to Offset to fetch the next page. Null on the last page.',
+    },
+    { key: 'num_rows_total', label: 'Total Rows', format: 'number' },
+    { key: 'num_rows_per_page', label: 'Rows per Page', format: 'number' },
+    viewerPartialField,
+  ],
+};
+
+export const getDatasetViewerInfoOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'dataset_info',
+      label: 'Dataset Info',
+      description:
+        'With a subset: that subset\'s description, citation, homepage, license, features (column schema keyed by column name), splits (keyed by split name, with num_examples and num_bytes), download_size and dataset_size. Without a subset: the same object keyed by subset name.',
+    },
+    viewerPartialField,
+  ],
+};
+
+export const getDatasetSizeOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'size',
+      label: 'Size',
+      children: [
+        {
+          key: 'dataset',
+          label: 'Whole Dataset',
+          description: 'Totals across every subset.',
+          children: [
+            ...datasetSizeCoreFields,
+            { key: 'num_bytes_original_files', label: 'Original Files Size', format: 'filesize' },
+          ],
+        },
+        {
+          key: 'configs',
+          label: 'Subsets',
+          labelKey: 'config',
+          listItems: [
+            ...datasetSizeCoreFields,
+            { key: 'config', label: 'Subset (Config)' },
+            { key: 'num_columns', label: 'Columns', format: 'number' },
+            { key: 'num_bytes_original_files', label: 'Original Files Size', format: 'filesize' },
+          ],
+        },
+        {
+          key: 'splits',
+          label: 'Splits',
+          labelKey: 'split',
+          listItems: [
+            ...datasetSizeCoreFields,
+            { key: 'config', label: 'Subset (Config)' },
+            { key: 'split', label: 'Split' },
+            { key: 'num_columns', label: 'Columns', format: 'number' },
+          ],
+        },
+      ],
+    },
+    viewerPendingField,
+    viewerFailedField,
+    viewerPartialField,
+  ],
+};
+
+export const getDatasetStatisticsOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'num_examples', label: 'Rows in Split', format: 'number' },
+    {
+      key: 'statistics',
+      label: 'Column Statistics',
+      labelKey: 'column_name',
+      listItems: [
+        { key: 'column_name', label: 'Column Name' },
+        {
+          key: 'column_type',
+          label: 'Column Type',
+          description: "The viewer's column type, for example 'class_label' or 'string_text'.",
+        },
+        {
+          key: 'column_statistics',
+          label: 'Statistics',
+          description:
+            'Keys depend on the column type. All include nan_count and nan_proportion; for example string_text adds min, max, mean, median, std and histogram (of text lengths), and class_label adds n_unique and frequencies.',
+        },
+      ],
+    },
+    viewerPartialField,
+  ],
+};
+
+export const listDatasetParquetFilesOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'parquet_files',
+      label: 'Parquet Files',
+      labelKey: 'split',
+      listItems: [
+        ...datasetSplitRefFields,
+        { key: 'filename', label: 'File Name' },
+        { key: 'url', label: 'Download URL', format: 'url' },
+        { key: 'size', label: 'Size', format: 'filesize' },
+      ],
+    },
+    countField,
+    viewerPendingField,
+    viewerFailedField,
+    viewerPartialField,
+  ],
+};
+
+export const getDatasetLeaderboardOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'entries',
+      label: 'Leaderboard Entries',
+      labelKey: 'model_id',
+      listItems: [
+        { key: 'rank', label: 'Rank', format: 'number' },
+        { key: 'model_id', label: 'Model ID' },
+        { key: 'value', label: 'Score', format: 'number' },
+        { key: 'lower_is_better', label: 'Lower Is Better', format: 'boolean' },
+        { key: 'num_parameters', label: 'Parameters', format: 'number' },
+        { key: 'verified', label: 'Verified', format: 'boolean' },
+        { key: 'author_name', label: 'Author' },
+        { key: 'author_fullname', label: 'Author Full Name' },
+        { key: 'author_type', label: 'Author Type' },
+        { key: 'source_name', label: 'Source' },
+        { key: 'source_url', label: 'Source URL', format: 'url' },
+        { key: 'source_is_external', label: 'Source Is External', format: 'boolean' },
+        { key: 'pull_request', label: 'Pull Request Number', format: 'number' },
+        { key: 'filename', label: 'Eval Results File' },
+      ],
+    },
+    countField,
+  ],
+};
+
+export const createRepoOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'created',
+      label: 'Created',
+      format: 'boolean',
+      description: 'False when the repository already existed and was returned unchanged.',
+    },
+    ...repoRefFields,
+    { key: 'url', label: 'Repo URL', format: 'url' },
+    { key: 'private', label: 'Private', format: 'boolean' },
+  ],
+};
+
+export const updateRepoSettingsOutputSchema: OutputSchema = {
+  fields: [
+    ...repoRefFields,
+    { key: 'updated_settings', label: 'Updated Settings', description: 'Names of the settings that were changed.' },
+    {
+      key: 'settings',
+      label: 'Settings',
+      dynamicKey: true,
+      description:
+        'The new values of the changed settings, keyed by name: private, discussionsDisabled, gated, gatedNotificationsMode or gatedNotificationsEmail.',
+    },
+  ],
+};
+
+export const createRepoBranchOutputSchema: OutputSchema = {
+  fields: [
+    ...repoRefFields,
+    { key: 'branch', label: 'Branch' },
+    {
+      key: 'starting_point',
+      label: 'Starting Point',
+      description: 'The revision the branch was created from. Null means the head of the default branch.',
+    },
+    { key: 'empty_branch', label: 'Empty Branch', format: 'boolean' },
+    { key: 'created', label: 'Created', format: 'boolean' },
+  ],
+};
+
+export const deleteRepoBranchOutputSchema: OutputSchema = {
+  fields: [...repoRefFields, { key: 'branch', label: 'Branch' }, { key: 'deleted', label: 'Deleted', format: 'boolean' }],
+};
+
+export const createRepoTagOutputSchema: OutputSchema = {
+  fields: [
+    ...repoRefFields,
+    { key: 'tag', label: 'Tag' },
+    { key: 'revision', label: 'Tagged Revision' },
+    { key: 'created', label: 'Created', format: 'boolean' },
+  ],
+};
+
+export const deleteRepoTagOutputSchema: OutputSchema = {
+  fields: [...repoRefFields, { key: 'tag', label: 'Tag' }, { key: 'deleted', label: 'Deleted', format: 'boolean' }],
+};
+
+export const commitFilesOutputSchema: OutputSchema = {
+  fields: [
+    ...repoRefFields,
+    { key: 'branch', label: 'Branch' },
+    { key: 'commit_oid', label: 'Commit SHA' },
+    { key: 'commit_url', label: 'Commit URL', format: 'url' },
+    {
+      key: 'pull_request_url',
+      label: 'Pull Request URL',
+      format: 'url',
+      description: 'Set only when the commit was opened as a pull request; null otherwise.',
+    },
+    {
+      key: 'pull_request_number',
+      label: 'Pull Request Number',
+      format: 'number',
+      description: 'Set only when the commit was opened as a pull request; null otherwise.',
+    },
+    {
+      key: 'pull_request_revision',
+      label: 'Pull Request Revision',
+      description:
+        'The pull request ref, for example refs/pr/1, when opened as a pull request. Pass it as the branch to add more commits to that pull request.',
+    },
+    { key: 'files_written', label: 'Files Written' },
+    { key: 'paths_deleted', label: 'Paths Deleted' },
+    { key: 'total_bytes', label: 'Total Size Written', format: 'filesize' },
+  ],
+};
+
+export const createDiscussionOutputSchema: OutputSchema = {
+  fields: [
+    ...discussionRefFields,
+    { key: 'title', label: 'Title' },
+    { key: 'is_pull_request', label: 'Is Pull Request', format: 'boolean' },
+    {
+      key: 'pull_request_revision',
+      label: 'Pull Request Revision',
+      description: 'The pull request ref, for example refs/pr/2, when opened as a pull request; null otherwise.',
+    },
+    {
+      key: 'url',
+      label: 'Discussion Path',
+      description: 'The discussion path on huggingface.co, for example /user/repo/discussions/2.',
+    },
+  ],
+};
+
+export const commentOnDiscussionOutputSchema: OutputSchema = {
+  fields: [
+    ...discussionRefFields,
+    { key: 'comment_id', label: 'Comment ID' },
+    { key: 'created_at', label: 'Created At', format: 'datetime' },
+    { key: 'url', label: 'Comment URL', format: 'url' },
+  ],
+};
+
+export const renameDiscussionOutputSchema: OutputSchema = {
+  fields: [
+    ...discussionRefFields,
+    { key: 'title', label: 'New Title' },
+    { key: 'previous_title', label: 'Previous Title' },
+    { key: 'event_id', label: 'Event ID' },
+  ],
+};
+
+export const pinDiscussionOutputSchema: OutputSchema = {
+  fields: [...discussionRefFields, { key: 'pinned', label: 'Pinned', format: 'boolean' }],
+};
+
+export const changeDiscussionStatusOutputSchema: OutputSchema = {
+  fields: [
+    ...discussionRefFields,
+    { key: 'status', label: 'Status' },
+    { key: 'event_id', label: 'Event ID' },
+    { key: 'created_at', label: 'Changed At', format: 'datetime' },
+  ],
+};
+
+export const deleteDiscussionOutputSchema: OutputSchema = {
+  fields: [...discussionRefFields, { key: 'deleted', label: 'Deleted', format: 'boolean' }],
+};
+
+export const createCollectionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'created',
+      label: 'Created',
+      format: 'boolean',
+      description: 'False when a collection with this title already existed and was returned unchanged.',
+    },
+    { key: 'title', label: 'Title' },
+    { key: 'description', label: 'Description' },
+    { key: 'private', label: 'Private', format: 'boolean' },
+    ...collectionWriteFields,
+  ],
+};
+
+export const addCollectionItemOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'item_type', label: 'Item Type' },
+    { key: 'item_id', label: 'Item ID' },
+    { key: 'item_object_id', label: 'Item Object ID', description: 'The ID of the item entry inside the collection.' },
+    ...collectionWriteFields,
+  ],
+};
+
+export const listGatedAccessRequestsOutputSchema: OutputSchema = {
+  fields: [
+    ...repoRefFields,
+    { key: 'status', label: 'Status Filter' },
+    {
+      key: 'requests',
+      label: 'Access Requests',
+      labelKey: 'username',
+      listItems: [
+        { key: 'username', label: 'Username' },
+        { key: 'user_id', label: 'User ID' },
+        { key: 'fullname', label: 'Full Name' },
+        { key: 'email', label: 'Email', format: 'email' },
+        { key: 'status', label: 'Status' },
+        { key: 'requested_at', label: 'Requested At', format: 'datetime' },
+        { key: 'reviewed_at', label: 'Reviewed At', format: 'datetime' },
+        { key: 'granted_by', label: 'Granted By' },
+        {
+          key: 'fields',
+          label: 'Gate Form Answers',
+          dynamicKey: true,
+          description: 'The answers the requester gave on the gate form, keyed by field name.',
+        },
+      ],
+    },
+    countField,
+    { key: 'oldest_requested_at', label: 'Oldest Requested At', format: 'datetime' },
+    { key: 'newest_requested_at', label: 'Newest Requested At', format: 'datetime' },
+  ],
+};
+
+export const upsertSpaceSecretOutputSchema: OutputSchema = {
+  fields: [...spaceKeyRefFields, { key: 'updated', label: 'Updated', format: 'boolean' }],
+};
+
+export const deleteSpaceSecretOutputSchema: OutputSchema = {
+  fields: [...spaceKeyRefFields, { key: 'deleted', label: 'Deleted', format: 'boolean' }],
+};
+
+export const upsertSpaceVariableOutputSchema: OutputSchema = {
+  fields: [...spaceKeyRefFields, { key: 'updated', label: 'Updated', format: 'boolean' }],
+};
+
+export const deleteSpaceVariableOutputSchema: OutputSchema = {
+  fields: [...spaceKeyRefFields, { key: 'deleted', label: 'Deleted', format: 'boolean' }],
+};
+
+export const commentOnPaperOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'paper_id', label: 'Paper ID' },
+    { key: 'comment_id', label: 'Comment ID', description: 'Pass this to Reply to Paper Comment. Null if the Hub did not return it.' },
+    { key: 'created_at', label: 'Created At', format: 'datetime' },
+    { key: 'url', label: 'Comment URL', format: 'url' },
+  ],
+};
+
+export const replyToPaperCommentOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'paper_id', label: 'Paper ID' },
+    { key: 'parent_comment_id', label: 'Parent Comment ID' },
+    { key: 'comment_id', label: 'Reply ID', description: 'The ID of the new reply. Null if the Hub did not return it.' },
+    { key: 'created_at', label: 'Created At', format: 'datetime' },
+    { key: 'url', label: 'Reply URL', format: 'url' },
+  ],
+};
+
+export const handleGatedAccessRequestOutputSchema: OutputSchema = {
+  fields: [
+    ...repoRefFields,
+    { key: 'username', label: 'Username' },
+    { key: 'status', label: 'New Status', description: "One of 'accepted', 'rejected', 'pending' or 'reset'." },
+    { key: 'reason', label: 'Reason', description: 'The rejection or reset reason sent to the requester. Null when none was given.' },
+  ],
+};
+
+export const webhookOutputSchema: OutputSchema = {
+  fields: webhookFields,
+};
+
+export const listWebhooksOutputSchema: OutputSchema = {
+  fields: [{ key: 'webhooks', label: 'Webhooks', labelKey: 'url', listItems: webhookFields }, countField],
+};
+
+export const updateWebhookOutputSchema: OutputSchema = {
+  fields: [
+    ...webhookFields,
+    {
+      key: 'secret_status',
+      label: 'Secret Status',
+      description: "'kept', 'set', 'replaced', 'cleared' or 'none'.",
+    },
+    {
+      key: 'warning',
+      label: 'Warning',
+      description: 'Set only when the Hub removed the existing signing secret; null otherwise.',
+    },
+  ],
+};
+
+export const deleteWebhookOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'webhook_id', label: 'Webhook ID' },
+    { key: 'deleted', label: 'Deleted', format: 'boolean' },
+  ],
+};
+
+export const listNotificationsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'notifications',
+      label: 'Notifications',
+      labelKey: 'title',
+      listItems: [
+        { key: 'type', label: 'Type' },
+        { key: 'title', label: 'Title' },
+        { key: 'read', label: 'Read', format: 'boolean' },
+        { key: 'updated_at', label: 'Updated At', format: 'datetime' },
+        {
+          key: 'discussion_id',
+          label: 'Discussion ID',
+          description: 'The 24-character ID that Delete Notifications needs, not the discussion number.',
+        },
+        ...repoRefFields,
+        { key: 'discussion_num', label: 'Discussion Number', format: 'number' },
+        { key: 'discussion_status', label: 'Discussion Status' },
+        { key: 'is_pull_request', label: 'Is Pull Request', format: 'boolean' },
+        { key: 'paper_id', label: 'Paper ID' },
+        { key: 'post_id', label: 'Post ID' },
+        { key: 'post_slug', label: 'Post Slug' },
+        { key: 'post_author', label: 'Post Author' },
+        { key: 'participants', label: 'Participants', description: 'Comma-separated usernames in the thread.' },
+      ],
+    },
+    countField,
+    { key: 'total_matching', label: 'Total Matching', format: 'number' },
+    { key: 'total_unread', label: 'Total Unread', format: 'number' },
+    { key: 'total_all', label: 'Total Notifications', format: 'number' },
+    nextPageField,
+  ],
+};
+
+export const getUserSocialsOutputSchema: OutputSchema = {
+  fields: [{ key: 'username', label: 'Username' }, ...socialHandleFields, { key: 'bluesky', label: 'Bluesky Handle' }],
+};
+
+export const getOrganizationSocialsOutputSchema: OutputSchema = {
+  fields: [{ key: 'organization', label: 'Organization' }, ...socialHandleFields],
+};
+
+export const searchHfDocsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'results',
+      label: 'Passages',
+      labelKey: 'title',
+      listItems: [
+        { key: 'title', label: 'Page Title' },
+        { key: 'url', label: 'URL', format: 'url' },
+        { key: 'product', label: 'Product' },
+        { key: 'section', label: 'Section', description: "The heading path, joined with ' > '." },
+        { key: 'text', label: 'Text (Markdown)' },
+      ],
+    },
+    countField,
+  ],
+};
+
+export const listInferenceEndpointsOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'namespace', label: 'Namespace' },
+    {
+      key: 'endpoints',
+      label: 'Endpoints',
+      labelKey: 'name',
+      listItems: [
+        { key: 'name', label: 'Name' },
+        { key: 'type', label: 'Access Type', description: "For example 'public', 'protected' or 'private'." },
+        { key: 'state', label: 'State', description: "For example 'running', 'paused' or 'scaledToZero'." },
+        { key: 'url', label: 'Endpoint URL', format: 'url' },
+        { key: 'status_message', label: 'Status Message' },
+        { key: 'created_at', label: 'Created At', format: 'datetime' },
+        { key: 'updated_at', label: 'Updated At', format: 'datetime' },
+        { key: 'repository', label: 'Model Repository' },
+        { key: 'revision', label: 'Model Revision' },
+        { key: 'task', label: 'Task' },
+        { key: 'framework', label: 'Framework' },
+        { key: 'accelerator', label: 'Accelerator' },
+        { key: 'instance_type', label: 'Instance Type' },
+        { key: 'instance_size', label: 'Instance Size' },
+        { key: 'min_replica', label: 'Min Replicas', format: 'number' },
+        { key: 'max_replica', label: 'Max Replicas', format: 'number' },
+        { key: 'vendor', label: 'Cloud Vendor' },
+        { key: 'region', label: 'Region' },
+      ],
+    },
+    countField,
+  ],
+};
+
+export const updateWatchListOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'watched', label: 'Now Watching', labelKey: 'name', listItems: watchTargetFields },
+    { key: 'unwatched', label: 'No Longer Watching', labelKey: 'name', listItems: watchTargetFields },
+    { key: 'watched_count', label: 'Watched Count', format: 'number' },
+    { key: 'unwatched_count', label: 'Unwatched Count', format: 'number' },
+  ],
+};
+
+export const deleteNotificationsOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'deleted', label: 'Deleted', format: 'boolean' },
+    {
+      key: 'deleted_discussion_ids',
+      label: 'Deleted Discussion IDs',
+      description: 'The lowercased, de-duplicated discussion IDs whose notifications were removed.',
+    },
+    countField,
   ],
 };

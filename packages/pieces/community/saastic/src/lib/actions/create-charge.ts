@@ -16,6 +16,7 @@ import { saasticAuth } from '../..';
 export const createCharge = createAction({
   auth: saasticAuth,
   name: 'create_charge',
+  classification: 'WRITE',
   displayName: 'Create a Customer Charge',
   description: 'Creates a customer charge.',
   audience: 'both',

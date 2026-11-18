@@ -6,7 +6,9 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 import {
+  AttachmentUploadReq,
   BaseResponse,
+  CurrentUserResponse,
   DataOperationResponse,
   DataOperationV3Response,
   GetTableResponse,
@@ -14,7 +16,12 @@ import {
   ListAPIResponse,
   ListAPIV3Response,
   ListRecordsParams,
+  NotificationResponse,
+  SharedViewGroupedDataItem,
   TableResponse,
+  ViewColumnResponse,
+  ViewResponse,
+  ViewSortResponse,
   WorkspaceResponse,
 } from './types';
 
@@ -262,5 +269,95 @@ export class NocoDBClient {
     } else {
       return makeRequest<ListAPIResponse<Record<string, unknown>>>();
     }
+  }
+
+  async getCurrentUser(baseId?: string): Promise<CurrentUserResponse> {
+    return await this.makeRequest<CurrentUserResponse>(
+      HttpMethod.GET,
+      '/v1/auth/user/me',
+      baseId ? { base_id: baseId } : undefined
+    );
+  }
+
+  async listNotifications(
+    isRead?: boolean,
+    limit?: number,
+    offset?: number
+  ): Promise<ListAPIResponse<NotificationResponse>> {
+    return await this.makeRequest<ListAPIResponse<NotificationResponse>>(
+      HttpMethod.GET,
+      '/v1/notifications',
+      { is_read: isRead === undefined ? undefined : String(isRead), limit, offset }
+    );
+  }
+
+  async listViewSorts(viewId: string): Promise<ListAPIResponse<ViewSortResponse>> {
+    return await this.makeRequest<ListAPIResponse<ViewSortResponse>>(
+      HttpMethod.GET,
+      `/v1/db/meta/views/${viewId}/sorts`
+    );
+  }
+
+  async listViewColumns(viewId: string): Promise<ListAPIResponse<ViewColumnResponse>> {
+    return await this.makeRequest<ListAPIResponse<ViewColumnResponse>>(
+      HttpMethod.GET,
+      `/v1/db/meta/views/${viewId}/columns`
+    );
+  }
+
+  async updateViewColumn(
+    viewId: string,
+    columnId: string,
+    input: { show?: boolean; order?: number }
+  ) {
+    return await this.makeRequest(
+      HttpMethod.PATCH,
+      `/v1/db/meta/views/${viewId}/columns/${columnId}`,
+      undefined,
+      input
+    );
+  }
+
+  async createGridView(tableId: string, title: string): Promise<ViewResponse> {
+    return await this.makeRequest<ViewResponse>(
+      HttpMethod.POST,
+      `/v1/db/meta/tables/${tableId}/grids`,
+      undefined,
+      { title }
+    );
+  }
+
+  async deleteView(viewId: string) {
+    return await this.makeRequest(HttpMethod.DELETE, `/v1/db/meta/views/${viewId}`);
+  }
+
+  async getSharedViewGroupedData(
+    sharedViewUuid: string,
+    columnId: string,
+    password?: string
+  ): Promise<SharedViewGroupedDataItem[]> {
+    const baseUrl = this.hostUrl.replace(/\/$/, '');
+    const request: HttpRequest = {
+      method: HttpMethod.GET,
+      url: `${baseUrl}/api/v1/db/public/shared-view/${sharedViewUuid}/group/${columnId}`,
+      headers: password ? { 'xc-password': password } : undefined,
+    };
+    const response = await httpClient.sendRequest<SharedViewGroupedDataItem[]>(request);
+    return response.body;
+  }
+
+  async uploadAttachmentByUrl(path: string, attachment: AttachmentUploadReq) {
+    const baseUrl = this.hostUrl.replace(/\/$/, '');
+    const request: HttpRequest = {
+      method: HttpMethod.POST,
+      url: `${baseUrl}/api/v1/db/storage/upload-by-url`,
+      headers: {
+        'xc-token': this.apiToken,
+      },
+      queryParams: { path },
+      body: [attachment],
+    };
+    const response = await httpClient.sendRequest(request);
+    return response.body;
   }
 }

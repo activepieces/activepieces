@@ -20,6 +20,11 @@ const TOOL_CATEGORIES: ToolCategory[] = [
         description: 'List all flows in the current project',
       },
       {
+        name: 'ap_list_folders',
+        description:
+          'List the folders in the current project with their flow and table counts',
+      },
+      {
         name: 'ap_flow_structure',
         description:
           'Get the structure of a flow: step tree, configuration status, and valid insert locations',
@@ -37,7 +42,7 @@ const TOOL_CATEGORIES: ToolCategory[] = [
       {
         name: 'ap_validate_flow',
         description:
-          'Validate a flow for structural issues without publishing — checks step validity, template references, and empty branches',
+          'Validate one flow, or a whole solution folder including the connections between its flows and tables, without publishing',
       },
       {
         name: 'ap_research_pieces',
@@ -115,6 +120,10 @@ const TOOL_CATEGORIES: ToolCategory[] = [
         description: 'Create a new flow',
       },
       {
+        name: 'ap_create_folder',
+        description: 'Create a folder to group a solution of flows and tables',
+      },
+      {
         name: 'ap_duplicate_flow',
         description:
           'Duplicate an existing flow with all steps and configuration',
@@ -122,6 +131,10 @@ const TOOL_CATEGORIES: ToolCategory[] = [
       {
         name: 'ap_rename_flow',
         description: 'Rename an existing flow',
+      },
+      {
+        name: 'ap_move_flow_to_folder',
+        description: 'Move a flow into a folder, creating the folder if needed',
       },
       {
         name: 'ap_change_flow_status',

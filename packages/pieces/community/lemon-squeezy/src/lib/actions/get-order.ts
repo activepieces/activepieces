@@ -1,41 +1,33 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { lemonSqueezyAuth } from '../common/auth';
-import { LEMON_SQUEEZY_API_BASE, getLemonSqueezyHeaders, fetchOrderOptions } from '../common/api';
-
+import { lsRequest, seg } from '../common/client';
+import { orderOptions } from '../common/props';
+import { rawSchemas } from '../common/output-schemas';
 export const getOrder = createAction({
   name: 'get_order',
   classification: 'READ',
   displayName: 'Get Order',
   description: 'Retrieve the details of a specific order by its ID.',
-  audience: 'both',
-  aiMetadata: { description: 'Fetch the full details of one Lemon Squeezy order by its order ID. Use when you already have an order ID and need its complete record; to discover orders by store, email, or status first, use List Orders. Read-only and idempotent.', idempotent: true },
+  audience: 'human',
   auth: lemonSqueezyAuth,
+  outputSchema: rawSchemas.order,
   props: {
     orderId: Property.Dropdown({
       displayName: 'Order',
-      description: 'Select the order to retrieve.',
+      description: 'The order to retrieve (the list shows up to 1,000 orders).',
       required: true,
       auth: lemonSqueezyAuth,
       refreshers: ['auth'],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
-        }
-        const options = await fetchOrderOptions(auth.secret_text);
-        return { options };
-      },
+      options: async ({ auth }) => orderOptions({ auth }),
     }),
   },
   async run(context) {
     const { auth, propsValue } = context;
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${LEMON_SQUEEZY_API_BASE}/orders/${propsValue.orderId}`,
-      headers: getLemonSqueezyHeaders(auth.secret_text),
+    const response = await lsRequest({
+      apiKey: auth.secret_text,
+      method: 'GET',
+      path: `/orders/${seg({ value: propsValue.orderId, label: 'Order' })}`,
     });
-
     return response.body;
   },
 });

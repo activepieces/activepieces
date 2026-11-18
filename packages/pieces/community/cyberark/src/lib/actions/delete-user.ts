@@ -7,6 +7,7 @@ import { getAuthToken, CyberArkAuth } from '../common/auth-helper';
 export const deleteUser = createAction({
   auth: cyberarkAuth,
   name: 'delete_user',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete User',
   description: 'Deletes a specific user in the Vault (requires Add/Update Users authorization)',
   audience: 'both',

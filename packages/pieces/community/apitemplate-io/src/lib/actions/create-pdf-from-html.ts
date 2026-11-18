@@ -2,10 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { ApitemplateAuth } from '../common/auth';
 import { ApitemplateAuthConfig, ApitemplateRegion, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { createPdfFromHtmlOutputSchema } from '../output-schemas';
 
 export const createPdfFromHtml = createAction({
   auth: ApitemplateAuth,
   name: 'createPdfFromHtml',
+  outputSchema: createPdfFromHtmlOutputSchema,
   classification: 'WRITE',
   displayName: 'Create PDF From HTML',
   description: 'Creates a PDF from HTML.',

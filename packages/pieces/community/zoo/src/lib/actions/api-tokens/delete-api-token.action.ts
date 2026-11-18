@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const deleteApiTokenAction = createAction({
   name: 'delete_api_token',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete API Token',
   description: 'Delete an API token from your user account',
   audience: 'both',

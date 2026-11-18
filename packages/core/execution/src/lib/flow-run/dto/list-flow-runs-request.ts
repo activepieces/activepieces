@@ -16,6 +16,8 @@ export const ListFlowRunsRequestQuery = z.object({
     failedStepMessage: z.string().optional(),
     flowRunIds: OptionalArrayFromQuery(ApId),
     includeArchived: OptionalBooleanFromQuery,
+    parentWaitpointId: z.optional(ApId),
+    dispatchIndex: z.coerce.number().int().nonnegative().max(2147483647).optional(),
 })
 
 export type ListFlowRunsRequestQuery = z.infer<typeof ListFlowRunsRequestQuery>

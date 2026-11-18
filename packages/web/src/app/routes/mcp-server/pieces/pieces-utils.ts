@@ -64,16 +64,26 @@ function toReachablePieces({
   pieces: PieceMetadataModelSummary[];
   isSearching: boolean;
 }): ReachablePiece[] {
-  const piecesWithActions = pieces.filter(
-    (piece) => (piece.suggestedActions ?? []).length > 0,
-  );
+  const piecesWithActions = pieces.filter(hasSuggestedActions);
   const orderedPieces = isSearching
     ? piecesWithActions
     : orderPopularFirst(piecesWithActions);
   return orderedPieces.map((piece) => toReachablePiece({ piece, isSearching }));
 }
 
-export const piecesUtils = { toReachablePieces };
+function countReachablePieces({
+  pieces,
+}: {
+  pieces: PieceMetadataModelSummary[];
+}): number {
+  return pieces.filter(hasSuggestedActions).length;
+}
+
+function hasSuggestedActions(piece: PieceMetadataModelSummary): boolean {
+  return (piece.suggestedActions ?? []).length > 0;
+}
+
+export const piecesUtils = { toReachablePieces, countReachablePieces };
 
 export type ActionGroup = {
   classification: ActionClassification;

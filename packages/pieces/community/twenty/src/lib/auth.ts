@@ -1,5 +1,5 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { AppConnectionType, PieceAuth, Property, tryCatch } from '@activepieces/pieces-framework';
+import { twentyApi } from './common/api';
 
 export const twentyAuth = PieceAuth.CustomAuth({
   description:
@@ -21,25 +21,16 @@ export const twentyAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
-    try {
-      const sanitizedUrl = auth.base_url.replace(/\/$/, '');
-      await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `${sanitizedUrl}/rest/people`,
-        headers: {
-          Authorization: `Bearer ${auth.api_key}`,
-        },
-        queryParams: {
-          'page[size]': '1',
-        },
-      });
-      return { valid: true };
-    } catch (e) {
+    const { error } = await tryCatch(() =>
+      twentyApi.checkConnection({ auth: { type: AppConnectionType.CUSTOM_AUTH, props: auth } }),
+    );
+    if (error) {
       return {
         valid: false,
         error:
           'Could not connect to Twenty. Please verify your Instance URL and API Key.',
       };
     }
+    return { valid: true };
   },
 });

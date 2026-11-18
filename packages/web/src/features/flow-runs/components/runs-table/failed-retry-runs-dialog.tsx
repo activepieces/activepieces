@@ -11,12 +11,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
+import { FlowRunStatusIcon } from '@/features/flow-runs/components/flow-run-status-icon';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { cn } from '@/lib/utils';
 
 type FailedRetryRunsDialogProps = {
   open: boolean;
@@ -42,7 +41,6 @@ export const FailedRetryRunsDialog = ({
         <ScrollArea className="max-h-[400px]">
           <ul className="flex flex-col gap-3 pr-3">
             {failedRuns.map((run) => {
-              const { Icon, variant } = flowRunUtils.getStatusIcon(run.status);
               return (
                 <li
                   key={run.id}
@@ -50,28 +48,17 @@ export const FailedRetryRunsDialog = ({
                 >
                   <div className="flex flex-col gap-1 min-w-0">
                     <div className="flex items-center gap-1.5 text-sm font-medium">
-                      <Icon
-                        className={cn('size-4 shrink-0', {
-                          'text-destructive': variant === 'error',
-                          'text-success': variant === 'success',
-                          'text-muted-foreground': variant === 'default',
-                        })}
+                      <FlowRunStatusIcon
+                        status={run.status}
+                        className="size-4 shrink-0"
                       />
                       <span className="truncate">
                         {t('Previous status')}:{' '}
                         {formatUtils.convertEnumToHumanReadable(run.status)}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {run.error?.errorCode ===
-                      ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION
-                        ? t(
-                            'Retry is only available for {failedJobRetentionDays} after a run fails.',
-                            {
-                              failedJobRetentionDays: retentionDays,
-                            },
-                          )
-                        : run.error.errorMessage ?? t('Internal server error')}
+                    <p className="text-xs text-gray-11">
+                      {retryErrorMessage({ run, retentionDays })}
                     </p>
                   </div>
                   <Button
@@ -97,4 +84,28 @@ export const FailedRetryRunsDialog = ({
       </DialogContent>
     </Dialog>
   );
+};
+
+function retryErrorMessage({
+  run,
+  retentionDays,
+}: RetryErrorMessageParams): string {
+  switch (run.error.errorCode) {
+    case ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION:
+      return t(
+        'Retry is only available for {failedJobRetentionDays} after a run fails.',
+        {
+          failedJobRetentionDays: retentionDays,
+        },
+      );
+    case ErrorCode.FLOW_RUN_NOT_RETRYABLE:
+      return t('Only failed runs can be retried from failed step');
+    default:
+      return run.error.errorMessage ?? t('Internal server error');
+  }
+}
+
+type RetryErrorMessageParams = {
+  run: Required<FlowRunWithRetryError>;
+  retentionDays: number | null | undefined;
 };

@@ -10,6 +10,7 @@ import { microsoftSharePointCommon } from '../common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import dayjs from 'dayjs';
 import { List } from '@microsoft/microsoft-graph-types';
+import { newListOutputSchema } from '../output-schemas';
 
 type Props = {
 	siteId: string;
@@ -78,6 +79,8 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftSharePo
 export const newOrUpdatedListTrigger = createTrigger({
 	auth: microsoftSharePointAuth,
 	name: 'new_or_updated_list',
+	outputSchema: newListOutputSchema,
+	classification: 'READ',
 	displayName: 'New or Updated List',
 	description: 'Triggers when a list is created or updated in a site.',
 	aiMetadata: {
@@ -97,18 +100,10 @@ export const newOrUpdatedListTrigger = createTrigger({
 		webUrl: 'https://contoso.sharepoint.com/sites/MySite/Lists/Projects%20Tracker',
 	},
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

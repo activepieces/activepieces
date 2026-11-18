@@ -44,6 +44,7 @@ import {
 } from '@/components/ui/select';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -172,7 +173,12 @@ const InstallPieceDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
       <DialogTrigger asChild>
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+        <AnimatedIconButton
+          {...adminControl(AdminControl.PIECES_INSTALL_OPEN)}
+          icon={PlusIcon}
+          iconSize={16}
+          size="sm"
+        >
           {t('Install Piece')}
         </AnimatedIconButton>
       </DialogTrigger>
@@ -255,7 +261,6 @@ const InstallPieceDialog = ({
                         id="pieceName"
                         type="text"
                         placeholder="@activepieces/piece-name"
-                        className="rounded-sm"
                       />
                       <FormMessage />
                     </FormItem>
@@ -275,7 +280,6 @@ const InstallPieceDialog = ({
                         id="pieceVersion"
                         type="text"
                         placeholder="0.0.1"
-                        className="rounded-sm"
                       />
                       <FormMessage />
                     </FormItem>
@@ -307,7 +311,6 @@ const InstallPieceDialog = ({
                         }
                       }}
                       placeholder={t('Package archive')}
-                      className="rounded-sm"
                     />
                     <FormMessage />
                   </FormItem>
@@ -320,7 +323,11 @@ const InstallPieceDialog = ({
                 {form.formState.errors.root.serverError.message}
               </FormMessage>
             )}
-            <Button loading={isPending} type="submit">
+            <Button
+              {...adminControl(AdminControl.PIECES_INSTALL_SUBMIT)}
+              loading={isPending}
+              type="submit"
+            >
               {t('Install')}
             </Button>
           </form>

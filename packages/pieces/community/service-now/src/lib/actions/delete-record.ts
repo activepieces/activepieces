@@ -10,6 +10,7 @@ import {
 export const deleteRecordAction = createAction({
   auth: servicenowAuth,
   name: 'delete_record',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Record',
   description: 'Delete a record from a specified table',
   audience: 'both',

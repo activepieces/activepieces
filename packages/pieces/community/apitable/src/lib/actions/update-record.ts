@@ -1,6 +1,6 @@
 import {
 	DynamicPropsValue,
-	PiecePropValueSchema,
+	MarkdownVariant,
 	Property,
 	createAction,
 } from '@activepieces/pieces-framework';
@@ -13,22 +13,47 @@ export const updateRecordAction = createAction({
 	name: 'apitable_update_record',
 	classification: 'WRITE',
 	displayName: 'Update Record',
-	description: 'Updates an existing record in datasheet.',
+	description: 'Updates an existing record in a datasheet.',
 	audience: 'both',
 	aiMetadata: {
 		description:
 			'Updates the field values of an existing record in an AITable datasheet, identified by its record ID. Use when an agent needs to modify a row it can already locate. Idempotent: re-applying the same field values to the same record ID yields the same result with no extra side effect.',
 		idempotent: true,
 	},
+	propertyGroups: [
+		{
+			key: 'record',
+			display: 'section',
+			label: 'Record to Update',
+			icon: 'file',
+			props: ['space_id', 'datasheet_id', 'recordId'],
+		},
+		{
+			key: 'changes',
+			display: 'section',
+			label: 'Changes',
+			icon: 'text',
+			props: ['info', 'fields'],
+		},
+	],
 	props: {
 		space_id: APITableCommon.space_id,
 		datasheet_id: APITableCommon.datasheet_id,
 		recordId: Property.ShortText({
 			displayName: 'Record ID',
-			description: 'The ID of the record to update.',
+			description: 'Map it from a trigger or a Find Records step.',
+			placeholder: 'rec2T5ppW1Mal',
 			required: true,
 		}),
-		fields: APITableCommon.fields,
+		info: Property.MarkDown({
+			value:
+				'Blank fields keep their current value; unticked checkboxes are cleared. Some column types, such as attachments and formulas, are not listed.',
+			variant: MarkdownVariant.INFO,
+		}),
+		fields: APITableCommon.fields({
+			description:
+				'Blank fields keep their value; unticked checkboxes are cleared.',
+		}),
 	},
 	outputSchema: updateRecordActionOutputSchema,
 	async run(context) {

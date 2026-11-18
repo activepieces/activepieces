@@ -8,6 +8,7 @@ import { createApiClient } from '../common';
 export const updateEnvelope = createAction({
   auth: docusignAuth,
   name: 'updateEnvelope',
+  classification: 'DESTRUCTIVE',
   displayName: 'Update Signing Request',
   description:
     'Send a draft, cancel, resend reminders, or edit the subject line on a signing request.',

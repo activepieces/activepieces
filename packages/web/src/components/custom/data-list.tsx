@@ -22,7 +22,7 @@ export const DataList: React.FC<DataListProps> = ({
 
   if (entries.length === 0) {
     return (
-      <div className={`text-sm text-muted-foreground italic ${className}`}>
+      <div className={`text-sm text-gray-11 italic ${className}`}>
         No data available
       </div>
     );
@@ -38,10 +38,8 @@ export const DataList: React.FC<DataListProps> = ({
           key={key}
           className="grid grid-cols-[auto_1fr] gap-x-3 items-start"
         >
-          <dt className="font-medium text-muted-foreground capitalize">
-            {key}
-          </dt>
-          <dd className="text-primary">{formatValue(value)}</dd>
+          <dt className="font-medium text-gray-11 capitalize">{key}</dt>
+          <dd className="text-accent-11">{formatValue(value)}</dd>
         </div>
       ))}
     </dl>

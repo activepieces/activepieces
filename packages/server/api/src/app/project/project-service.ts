@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApId, apId, assertNotNullOrUndefined, ErrorCode, isNil, Metadata, ProjectId, spreadIfDefined, spreadIfNotUndefined, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, ApId, apId, assertNotNullOrUndefined, ErrorCode, isNil, Metadata, ProjectId, spreadIfDefined, spreadIfNotUndefined, unique, UserId } from '@activepieces/core-utils'
 import { ColorName, Project, ProjectIcon, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
@@ -7,7 +7,6 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { userService } from '../user/user-service'
 import { projectHooks, ProjectPostCreateContext } from './project-hooks'
 import { projectRepo } from './project-repo'
-import { projectWorkerGroupService } from './project-worker-group.service'
 
 export { projectRepo }
 
@@ -22,6 +21,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
             releasesEnabled: false,
             notifyFlowOwnerOnFailure: false,
             sensitive: params.sensitive ?? false,
+            isDefault: false,
         }
         const savedProject = await projectRepo(entityManager).save(newProject)
         if (callPostCreateHooks) {
@@ -79,19 +79,16 @@ export const projectService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('sensitive', request.sensitive),
             ...(request.poolId !== undefined ? { poolId: request.poolId } : {}),
             ...(request.maxConcurrentJobs !== undefined ? { maxConcurrentJobs: request.maxConcurrentJobs } : {}),
-            ...(request.workerGroupId !== undefined ? { workerGroupId: request.workerGroupId } : {}),
             ...spreadIfNotUndefined('executionDataRetentionDays', request.executionDataRetentionDays),
         }
 
         const teamUpdate = request.type === ProjectType.TEAM ? {
             ...spreadIfDefined('displayName', request.displayName),
             ...spreadIfDefined('icon', request.icon),
+            ...spreadIfDefined('isDefault', request.isDefault),
         } : {}
 
         await projectRepo(entityManager).update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
-        if (request.workerGroupId !== undefined) {
-            await projectWorkerGroupService(log).invalidate({ projectId })
-        }
         return this.getOneOrThrow(projectId)
     },
 
@@ -179,6 +176,49 @@ export const projectService = (log: FastifyBaseLogger) => ({
         await applyProjectsAccessFilters(queryBuilder, params)
 
         return queryBuilder.getExists()
+    },
+    async listUserIdsWithProjects({ platformId, userIds }: ListUserIdsWithProjectsParams): Promise<string[]> {
+        if (userIds.length === 0) {
+            return []
+        }
+        const [owners, members] = await Promise.all([
+            projectRepo()
+                .createQueryBuilder('project')
+                .select('project."ownerId"', 'userId')
+                .where('project."platformId" = :platformId', { platformId })
+                .andWhere('project.type = :personalType', { personalType: ProjectType.PERSONAL })
+                .andWhere('project."ownerId" IN (:...userIds)', { userIds })
+                .getRawMany<{ userId: string }>(),
+            projectRepo()
+                .createQueryBuilder('project')
+                .innerJoin('project_member', 'project_member', 'project_member."projectId" = project.id')
+                .select('project_member."userId"', 'userId')
+                .where('project."platformId" = :platformId', { platformId })
+                .andWhere('project_member."userId" IN (:...userIds)', { userIds })
+                .getRawMany<{ userId: string }>(),
+        ])
+        return unique([...owners, ...members].map((row) => row.userId))
+    },
+    async listPlatformIdsWhereUsersHaveProjects({ users }: ListPlatformIdsWhereUsersHaveProjectsParams): Promise<string[]> {
+        const privilegedPlatformIds = users.filter((user) => user.isPrivileged).map((user) => user.platformId)
+        const memberUserIds = users.filter((user) => !user.isPrivileged).map((user) => user.userId)
+        if (privilegedPlatformIds.length === 0 && memberUserIds.length === 0) {
+            return []
+        }
+        const rows = await projectRepo()
+            .createQueryBuilder('project')
+            .select('DISTINCT project."platformId"', 'platformId')
+            .where(new Brackets((qb) => {
+                if (privilegedPlatformIds.length > 0) {
+                    qb.orWhere('project."platformId" IN (:...privilegedPlatformIds)', { privilegedPlatformIds })
+                }
+                if (memberUserIds.length > 0) {
+                    qb.orWhere('(project."ownerId" IN (:...memberUserIds) AND project.type = :personalType)', { memberUserIds, personalType: ProjectType.PERSONAL })
+                    qb.orWhere('project.id IN (SELECT "projectId" FROM project_member WHERE "userId" IN (:...memberUserIds))', { memberUserIds })
+                }
+            }))
+            .getRawMany<{ platformId: string }>()
+        return rows.map((row) => row.platformId)
     },
     async addProjectToPlatform({ projectId, platformId }: AddProjectToPlatformParams): Promise<void> {
         const query = {
@@ -293,10 +333,10 @@ type UpdateTeamProjectParams = {
     metadata?: Metadata
     poolId?: string | null
     maxConcurrentJobs?: number | null
-    workerGroupId?: string | null
     executionDataRetentionDays?: number | null
     icon?: ProjectIcon
     sensitive?: boolean
+    isDefault?: boolean
 }
 
 type UpdatePersonalProjectParams = {
@@ -307,7 +347,6 @@ type UpdatePersonalProjectParams = {
     metadata?: Metadata
     poolId?: string | null
     maxConcurrentJobs?: number | null
-    workerGroupId?: string | null
     executionDataRetentionDays?: number | null
     sensitive?: boolean
 }
@@ -331,6 +370,19 @@ type CreateParams = {
 type GetByPlatformIdAndExternalIdParams = {
     platformId: string
     externalId: string
+}
+
+type ListPlatformIdsWhereUsersHaveProjectsParams = {
+    users: {
+        userId: string
+        platformId: string
+        isPrivileged: boolean
+    }[]
+}
+
+type ListUserIdsWithProjectsParams = {
+    platformId: string
+    userIds: UserId[]
 }
 
 type AddProjectToPlatformParams = {

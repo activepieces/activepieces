@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const leaveTeam = createAction({
   auth: villageAuth,
   name: 'leave_team',
+  classification: 'DESTRUCTIVE',
   displayName: 'Leave Team',
   description:
     'Leave a team you are a member of. If you are the last member of a non-paid team, the team is deleted. Admins of paid teams cannot leave — use Cancel Plan instead.',

@@ -28,6 +28,7 @@ describe('piece action run result', () => {
         expect(result.content[0].text).toContain('❌')
         expect(result.content[0].text).toContain('failed (run run-1)')
         expect(result.structuredContent?.errorSummary).toContain('invalid_auth')
+        expect(result.structuredContent?.runId).toBe('run-1')
     })
 
     it('flags a failed run with no error message', () => {

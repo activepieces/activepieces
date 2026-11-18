@@ -1,44 +1,85 @@
+import { ApId } from '@activepieces/core-utils';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { authenticationSession } from '@/lib/authentication-session';
-
-function toTab(value: string | undefined): McpTab {
-  return value === 'connections' || value === 'pieces' || value === 'activity'
-    ? value
-    : 'connect';
-}
 
 export function useMcpNav(): McpNav {
   const { tab } = useParams();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const clientKey = params.get('client');
+  const projectParam = toProjectId(params.get('project'));
+  const segment = toSegment(params.get('segment'));
+  const isFromBrowse = params.has('browse');
 
   return {
     clientKey,
+    segment,
     tab: toTab(tab),
-    view: clientKey ? 'client' : params.has('browse') ? 'browse' : 'landing',
-    projectId: params.get('project') ?? authenticationSession.getProjectId(),
+    view: clientKey ? 'client' : isFromBrowse ? 'browse' : 'landing',
+    projectId: projectParam ?? authenticationSession.getProjectId(),
     showLanding: () => setParams({}),
     showBrowse: () => setParams({ browse: '1' }),
-    showClient: (key: string) => setParams({ client: key }),
+    showClient: (key: string) =>
+      setParams(isFromBrowse ? { client: key, browse: '1' } : { client: key }),
+    showPrevious: () => setParams(isFromBrowse ? { browse: '1' } : {}),
     showTab: (value: string) => navigate(`/mcp-server/${toTab(value)}`),
-    selectProject: (projectId: string) => setParams({ project: projectId }),
+    selectSegment: (value: string) =>
+      setParams(
+        buildToolsParams({
+          projectId: projectParam,
+          segment: toSegment(value),
+        }),
+      ),
+    selectProject: (projectId: string) =>
+      setParams(buildToolsParams({ projectId, segment })),
   };
 }
 
-export type McpTab = 'connect' | 'pieces' | 'connections' | 'activity';
+export function buildToolsParams({
+  projectId,
+  segment,
+}: {
+  projectId: string | null;
+  segment: McpToolSegment;
+}): Record<string, string> {
+  return {
+    ...(projectId === null ? {} : { project: projectId }),
+    ...(segment === DEFAULT_SEGMENT ? {} : { segment }),
+  };
+}
+
+function toTab(value: string | undefined): McpTab {
+  return value === 'connections' || value === 'tools' ? value : 'connect';
+}
+
+function toSegment(value: string | null): McpToolSegment {
+  return value === 'pieces' ? value : DEFAULT_SEGMENT;
+}
+
+function toProjectId(value: string | null): string | null {
+  return ApId.safeParse(value).success ? value : null;
+}
+
+const DEFAULT_SEGMENT: McpToolSegment = 'built-in';
+
+export type McpTab = 'connect' | 'tools' | 'connections';
+
+export type McpToolSegment = 'built-in' | 'pieces';
 
 export type McpView = 'landing' | 'browse' | 'client';
 
 export type McpNav = {
   tab: McpTab;
+  segment: McpToolSegment;
   view: McpView;
   clientKey: string | null;
   projectId: string | null;
   showLanding: () => void;
   showBrowse: () => void;
   showClient: (key: string) => void;
+  showPrevious: () => void;
   showTab: (value: string) => void;
+  selectSegment: (value: string) => void;
   selectProject: (projectId: string) => void;
 };

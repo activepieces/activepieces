@@ -1,6 +1,7 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { typeformAuth } from './lib/auth';
+import { typeformCommon } from './lib/common';
 import { typeformNewSubmission } from './lib/trigger/new-submission';
 import { createFormAction } from './lib/actions/create-form';
 import { createThemeAction } from './lib/actions/create-theme';
@@ -36,7 +37,7 @@ export const typeform = createPiece({
   displayName: 'Typeform',
   description: 'Create beautiful online forms and surveys',
 
-  minimumSupportedRelease: '0.87.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/typeform.png',
   categories: [PieceCategory.FORMS_AND_SURVEYS],
   actions: [
@@ -73,6 +74,12 @@ export const typeform = createPiece({
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.access_token}`,
       }),
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${typeformCommon.baseUrl}`,
+          placeholder: '/forms',
+        },
+      },
     }),
   ],
   auth: typeformAuth,

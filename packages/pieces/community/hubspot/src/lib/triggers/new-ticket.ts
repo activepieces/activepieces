@@ -3,13 +3,11 @@ import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
-import dayjs from 'dayjs';
 import { getHubspotAccessToken, hubspotAuth } from '../auth';
-import { isNil } from '@activepieces/pieces-framework';
+import { hubspotPolling } from '../common/polling';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
-import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
+import { OBJECT_TYPE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
-import { FilterOperatorEnum } from '../common/types';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
@@ -17,67 +15,31 @@ type Props = {
 };
 
 import { crmObjectOutputSchema } from '../output-schemas';
-const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
+const polling = {
 	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, propsValue, lastFetchEpochMS }) {
+	async items({ auth, propsValue, lastFetchEpochMS, store }) {
 		const client = new Client({ accessToken: getHubspotAccessToken(auth), numberOfApiCallRetries: 3 });
 
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
 		const defaultTicketProperties = getDefaultPropertiesForObject(OBJECT_TYPE.TICKET);
 		const propertiesToRetrieve = [...defaultTicketProperties, ...additionalProperties];
 
-		const items = [];
-		let after: string | undefined;
-
-		do {
-			const isTest = lastFetchEpochMS === 0;
-			const response = await client.crm.tickets.searchApi.doSearch({
-				limit: isTest ? 10 : MAX_SEARCH_PAGE_SIZE,
-				properties: propertiesToRetrieve,
-				after,
-				sorts: ['-createdate'],
-				filterGroups: isTest
-					? []
-					: [
-							{
-								filters: [
-									{
-										propertyName: 'createdate',
-										operator: FilterOperatorEnum.Gt,
-										value: lastFetchEpochMS.toString(),
-									},
-								],
-							},
-					  ],
-			});
-			after = response.paging?.next?.after;
-			items.push(...response.results);
-
-			// Stop fetching if it's a test
-			if (isTest) break;
-
-			// Stop fetching if it exceeds max search results or will encounter 400 status
-			if (
-				!isNil(after) &&
-				parseInt(after) + MAX_SEARCH_PAGE_SIZE > MAX_SEARCH_TOTAL_RESULTS
-			) {
-				break;
-			}
-		} while (after);
-
-		return items.map((item) => ({
-			epochMilliSeconds: dayjs(item.properties['createdate']).valueOf(),
-			data: item,
-		}));
+		return hubspotPolling.pollSearchTrigger({
+			store,
+			search: (request) => client.crm.tickets.searchApi.doSearch(request),
+			timestampProperty: 'createdate',
+			lastFetchEpochMS,
+			properties: propertiesToRetrieve,
+		});
 	},
-};
+} satisfies Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props>;
 
 export const newTicketTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-ticket',
 	classification: 'READ',
 	displayName: 'New Ticket',
-	description: 'Trigger when new ticket is available.',
+	description: 'Triggers when a new ticket is created.',
 	aiMetadata: {
 		description:
 			'Fires when a new support ticket is created in HubSpot. Polls the CRM tickets API for tickets sorted by creation date and emits each newly created ticket, including default ticket properties (subject, content, source type, pipeline, pipeline stage, priority, owner, etc.) plus any additional properties configured. Represents a freshly opened customer service case or request.',
@@ -85,15 +47,13 @@ export const newTicketTrigger = createTrigger({
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                                        
-              subject, content, source_type, createdate, hs_pipeline, hs_pipeline_stage, hs_resolution, hs_ticket_category, hs_ticket_id, hs_ticket_priority, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id
+			value: `Returned by default: subject, content, source_type, createdate, hs_pipeline, hs_pipeline_stage, hs_resolution, hs_ticket_category, hs_ticket_id, hs_ticket_priority, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id.
 
-              **Specify here a list of additional properties to retrieve**`,
+Pick more below.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.TICKET,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
 		}),
 	},
@@ -106,10 +66,10 @@ export const newTicketTrigger = createTrigger({
 		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
-		return await pollingHelper.test(polling, context);
+		return hubspotPolling.sampleOldestToNewest({ items: await pollingHelper.test(polling, context) });
 	},
 	async run(context) {
-		return await pollingHelper.poll(polling, context);
+		return await hubspotPolling.poll({ polling, context });
 	},
 
 	sampleData: {

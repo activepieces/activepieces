@@ -5,7 +5,7 @@ export const McpSvg = ({ className }: { className?: string }) => (
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 64 64"
     fill="none"
-    className={cn('w-6 h-6 transition-all duration-150 ease-in-out', className)}
+    className={cn('w-6 h-6 transition-all duration-150', className)}
   >
     <path
       stroke="currentColor"

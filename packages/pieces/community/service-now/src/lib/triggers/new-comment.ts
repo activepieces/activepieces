@@ -53,6 +53,7 @@ const polling: Polling<
 export const newCommentTrigger = createTrigger({
   auth: servicenowAuth,
   name: 'new_comment',
+  classification: 'READ',
   displayName: 'New Comment or Work Note',
   description:
     'Triggers when a new comment or work note is added to a record in the selected table',
@@ -94,33 +95,15 @@ export const newCommentTrigger = createTrigger({
     sys_created_on: '2026-04-30 12:00:00',
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   async run(context) {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.poll(polling, context);
   },
   async test(context) {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.test(polling, context);
   },
 });

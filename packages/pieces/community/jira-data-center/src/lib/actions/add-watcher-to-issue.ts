@@ -8,6 +8,7 @@ import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 export const addWatcherToIssueAction = createAction({
 	auth: jiraDataCenterAuth,
 	name: 'add-watcher-to-issue',
+	classification: 'WRITE',
 	displayName: 'Add Watcher to Issue',
 	description: 'Adds a new watcher to an issue.',
 	audience: 'both',
@@ -17,13 +18,23 @@ export const addWatcherToIssueAction = createAction({
 		idempotent: true,
 	},
 	props: {
-		issueId: issueIdOrKeyProp('Issue ID or Key', true),
+		issueId: issueIdOrKeyProp('Issue', true),
 		userId: getUsersDropdown({
 			displayName: 'User',
+			description: 'Gets notified about changes to the issue.',
 			refreshers: [],
 			required: true,
 		}),
 	},
+	propertyGroups: [
+		{
+			key: 'watcher',
+			display: 'section',
+			label: 'Watcher',
+			icon: 'users',
+			props: ['issueId', 'userId'],
+		},
+	],
 	async run(context) {
 		const { issueId, userId } = context.propsValue;
 		if (isNil(issueId)) {

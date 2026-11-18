@@ -6,6 +6,7 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 export const addEmail = createAction({
   auth: ReachinboxAuth,
   name: 'addEmail',
+  classification: 'WRITE',
   displayName: 'Add Email',
   description: 'Add an email to a specific account.',
   audience: 'both',

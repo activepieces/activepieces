@@ -1,6 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import { DragMoveEvent, useDndMonitor, useDroppable } from '@dnd-kit/core';
 import { Handle, Position } from '@xyflow/react';
+import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import React, { useId, useState } from 'react';
 
@@ -39,13 +40,18 @@ const ApBigAddButtonCanvasNode = React.memo(
     const isShowingDropIndicator = !isNil(activeDraggingStep);
     useDndMonitor({
       onDragMove(event: DragMoveEvent) {
-        setIsStepInsideDropzone(event.over?.id === draggableId);
+        const isOver = event.over?.id === draggableId;
+        if (isOver !== isIsStepInsideDropzone) {
+          setIsStepInsideDropzone(isOver);
+        }
       },
       onDragEnd() {
         setIsStepInsideDropzone(false);
       },
     });
     const stepNodeSize = flowCanvasConsts.STEP_NODE_SIZE[canvasOrientation];
+    const slotAttributes =
+      flowCanvasUtils.slotAttributesFromAddButtonData(data);
     return (
       <>
         {
@@ -58,7 +64,7 @@ const ApBigAddButtonCanvasNode = React.memo(
           >
             {!readonly && (
               //we use transparent colors when opening the piece selector, so to not show the pattern of the background inside the button, we wrap the big add button in a div with the background color
-              <div className="bg-builder-background">
+              <div className="bg-gray-2">
                 <div
                   style={{
                     height: `${flowCanvasConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height}px`,
@@ -72,8 +78,8 @@ const ApBigAddButtonCanvasNode = React.memo(
                       width: `${flowCanvasConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
                     }}
                     id={id}
-                    className={cn('rounded-lg bg-background relative', {
-                      'bg-primary/80':
+                    className={cn('rounded-xl bg-gray-1 relative', {
+                      'bg-accent-9/80':
                         isShowingDropIndicator || isPieceSelectorOpened,
                       'shadow-add-button':
                         isIsStepInsideDropzone || isPieceSelectorOpened,
@@ -92,11 +98,21 @@ const ApBigAddButtonCanvasNode = React.memo(
                       >
                         <span>
                           <Button
-                            variant="transparent"
-                            className="w-full h-full flex items-center hover:bg-accent-foreground rounded-lg border-border border-solid border"
+                            variant="ghost"
+                            aria-label={t('Add step')}
+                            data-testid="add-action-button"
+                            {...slotAttributes}
+                            className={cn(
+                              'w-full h-full flex items-center rounded-xl border-gray-6 border-solid border',
+                              {
+                                'enabled:hover:bg-gray-4':
+                                  !isPieceSelectorOpened,
+                                'hover:bg-transparent': isPieceSelectorOpened,
+                              },
+                            )}
                           >
                             <Plus
-                              className={cn('w-6 h-6 text-foreground ', {
+                              className={cn('w-6 h-6 text-gray-12 ', {
                                 'opacity-0':
                                   isShowingDropIndicator ||
                                   isPieceSelectorOpened,
@@ -120,6 +136,8 @@ const ApBigAddButtonCanvasNode = React.memo(
                       }}
                       className=" absolute "
                       ref={setNodeRef}
+                      data-testid="step-drop-zone"
+                      {...slotAttributes}
                     >
                       {' '}
                     </div>

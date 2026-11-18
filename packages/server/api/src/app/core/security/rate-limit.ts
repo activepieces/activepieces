@@ -37,3 +37,10 @@ export const emailCodeRateLimit: RateLimitOptions = {
     ),
     timeWindow: system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW),
 }
+
+export const eventDestinationTestRateLimit: RateLimitOptions = {
+    max: 20,
+    timeWindow: '1 minute',
+    hook: 'preHandler',
+    keyGenerator: (req) => `event-destination-test:${req.principal.id}`,
+}

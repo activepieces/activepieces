@@ -15,14 +15,36 @@ export const listDatabasePages = createAction({
   name: 'list_database_pages',
   classification: 'SEARCH',
   displayName: 'List Pages',
-  description:
-    'List pages in a database, optionally filtered by field values.',
+  description: 'List pages in a database, optionally filtered by field values.',
   audience: 'human',
   aiMetadata: {
     description:
       'Queries pages in a specific Notion database, optionally filtering by property values (combined with AND), and returns paginated results. Use when an agent needs to browse or enumerate database records rather than find a single item; requires database_id. Idempotent read-only lookup.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'database',
+      display: 'section',
+      label: 'Database',
+      icon: 'inbox',
+      props: ['database_id'],
+    },
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['filter_hint', 'filterDatabaseFields'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['limit'],
+    },
+  ],
   props: {
     database_id: notionCommon.database_id,
     limit: Property.Number({

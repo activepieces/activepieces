@@ -9,6 +9,7 @@ import {
 export const sendSMSAction = createAction({
   auth: birdAuth,
   name: 'send-sms',
+  classification: 'WRITE',
   displayName: 'Send SMS',
   description: 'Sends an SMS message via Bird Channels API.',
   audience: 'both',

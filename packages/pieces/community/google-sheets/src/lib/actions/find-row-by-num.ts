@@ -17,6 +17,22 @@ export const findRowByNumAction = createAction({
 			'Reads a single row from a worksheet by its row number, optionally keyed by header names instead of column letters. Use when an agent already knows the exact row to fetch. Read-only and idempotent.',
 		idempotent: true,
 	},
+	propertyGroups: [
+		{
+			key: 'spreadsheet',
+			display: 'section',
+			label: 'Spreadsheet',
+			icon: 'file',
+			props: ['spreadsheetId', 'sheetId'],
+		},
+		{
+			key: 'target_row',
+			display: 'section',
+			label: 'Row',
+			icon: 'markdown',
+			props: ['rowNumber', 'headerRow'],
+		},
+	],
 	props: {
 		...commonProps,
 		rowNumber: Property.Number({

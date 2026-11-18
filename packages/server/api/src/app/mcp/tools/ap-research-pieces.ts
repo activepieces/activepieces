@@ -1,4 +1,4 @@
-import { isNil, LocalesEnum } from '@activepieces/core-utils'
+import { isNil, LocalesEnum, spreadIfDefined } from '@activepieces/core-utils'
 import { largeResultUtils, MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
 import { McpToolDefinition, PieceAudienceFilter, PieceCategory, ProjectScopedMcpServer, SuggestionType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -31,7 +31,7 @@ export const apResearchPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBa
             locale: researchPiecesSchema.shape.locale,
             includeActions: z.boolean().optional().describe('When true, include action names and descriptions for each piece (only applies to searchQuery mode)'),
             includeTriggers: z.boolean().optional().describe('When true, include trigger names and descriptions for each piece (only applies to searchQuery mode)'),
-            forIntent: z.string().optional().describe('What you are trying to do (e.g. "list all my open deals"). When set, each piece also returns recommendedActions — the actions whose AI guidance best matches your intent — so you can pick the right action in one shot. Advisory only; the full action list is always returned.'),
+            forIntent: z.string().optional().describe('What you are trying to do (e.g. "list all my open deals"). When set, each piece also returns recommendedActions — the actions whose AI guidance best matches your intent — so you can pick the right action in one shot. Every action and trigger is still listed, but only the ones matching your intent carry their full description.'),
         },
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
@@ -64,7 +64,7 @@ export const apResearchPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBa
     }
 }
 
-function summarizeComponent(c: { name: string, displayName: string, description: string, requireAuth: boolean, aiMetadata?: { description?: string, idempotent?: boolean } }): ComponentSummary {
+function summarizeComponent(c: { name: string, displayName: string, description: string, requireAuth: boolean, audience?: string, aiMetadata?: { description?: string, idempotent?: boolean } }): ComponentSummary {
     return {
         name: c.name,
         displayName: c.displayName,
@@ -74,7 +74,12 @@ function summarizeComponent(c: { name: string, displayName: string, description:
         // signal it lacks today (it grabs find_record when it meant to enumerate, then thrashes).
         cardinality: mcpUtils.classifyActionCardinality(c.name),
         ...(c.aiMetadata?.description && { aiDescription: c.aiMetadata.description }),
+        ...(c.audience === AI_AUDIENCE && { audience: AI_AUDIENCE }),
     }
+}
+
+function detailOnlyFor({ components, recommended, trim }: { components: ComponentSummary[], recommended: string[] | undefined, trim: ComponentTrim }): Partial<ComponentSummary>[] {
+    return components.map((component) => isNil(recommended) || recommended.includes(component.name) ? trim(component) : nameOnly(component))
 }
 
 async function bulkLookup({ pieceNames, forIntent, projectId, platformId, log }: {
@@ -83,49 +88,73 @@ async function bulkLookup({ pieceNames, forIntent, projectId, platformId, log }:
     projectId: string | undefined
     platformId: string
     log: FastifyBaseLogger
-}): Promise<{ content: [{ type: 'text', text: string }], structuredContent: Record<string, unknown> }> {
+}): Promise<PieceSearchResult> {
     const capped = pieceNames.slice(0, BULK_LOOKUP_CAP)
     const svc = pieceMetadataService(log)
-    const results = await Promise.all(capped.map(async (rawName) => {
+    const results = await Promise.all(capped.map(async (rawName): Promise<BulkLookupEntry> => {
         const normalized = mcpUtils.normalizePieceName(rawName)
         if (isNil(normalized)) {
-            return { name: rawName, found: false as const }
+            return { name: rawName, found: false }
         }
         const piece = await svc.get({ name: normalized, projectId, platformId })
         if (isNil(piece)) {
-            return { name: normalized, found: false as const }
+            return { name: normalized, found: false }
         }
         const actions = Object.values(piece.actions).map(summarizeComponent)
-        const recommendedActions = forIntent ? mcpUtils.rankActionsByIntent({ actions, forIntent }) : []
+        const triggers = Object.values(piece.triggers).map(summarizeComponent)
         return {
             name: piece.name,
-            found: true as const,
+            found: true,
             displayName: piece.displayName,
             description: piece.description,
             actions,
-            triggers: Object.values(piece.triggers).map(summarizeComponent),
-            ...(recommendedActions.length > 0 && { recommendedActions }),
+            triggers,
+            recommendedActions: isNil(forIntent) ? undefined : mcpUtils.rankActionsByIntent({ actions, forIntent }),
+            recommendedTriggers: isNil(forIntent) ? undefined : mcpUtils.rankActionsByIntent({ actions: triggers, forIntent }),
         }
     }))
 
-    const found = results.filter((r) => r.found)
-    const missing = results.filter((r) => !r.found)
-    const hints: string[] = []
-    if (missing.length > 0) {
-        hints.push(`⚠️ Not found: ${missing.map((m) => m.name).join(', ')}`)
-    }
-    if (pieceNames.length > BULK_LOOKUP_CAP) {
-        hints.push(`⚠️ Only the first ${BULK_LOOKUP_CAP} pieces were looked up (${pieceNames.length} requested)`)
-    }
-    const hintText = hints.length > 0 ? `\n\n${hints.join('\n')}` : ''
+    const found = results.filter((r): r is FoundPiece => r.found)
+    const missing = results.filter((r) => !r.found).map((r) => r.name)
+    const hints = [
+        ...(missing.length > 0 ? [`⚠️ Not found: ${missing.join(', ')}`] : []),
+        ...(pieceNames.length > BULK_LOOKUP_CAP ? [`⚠️ Only the first ${BULK_LOOKUP_CAP} pieces were looked up (${pieceNames.length} requested)`] : []),
+    ]
+    return fitBulkLookup({ found, missing, hints, forIntent })
+}
 
+export function fitBulkLookup({ found, missing, hints, forIntent }: { found: FoundPiece[], missing: string[], hints: string[], forIntent: string | undefined }): PieceSearchResult {
+    const trimHint = isNil(forIntent)
+        ? '⚠️ Trimmed to fit: pass forIntent with what you are trying to do to get full details on the actions that match it.'
+        : '⚠️ Trimmed to fit: look up fewer pieces at once for full details.'
+    for (const [rung, trim] of DETAIL_LADDER.entries()) {
+        const result = bulkResult({ pieces: found.map((piece) => shapeFoundPiece({ piece, trim })), missing, hints: rung === 0 ? hints : [...hints, trimHint] })
+        if (fitsBudget(result)) {
+            return result
+        }
+    }
+    return bulkResult({
+        pieces: found.map(({ name, displayName, actions, triggers }) => ({ name, displayName, actionCount: actions.length, triggerCount: triggers.length })),
+        missing,
+        hints: [...hints, '⚠️ Too many actions to list for these pieces together: look up one piece at a time, with forIntent.'],
+    })
+}
+
+function shapeFoundPiece({ piece, trim }: { piece: FoundPiece, trim: ComponentTrim }): Record<string, unknown> {
+    const { actions, triggers, recommendedActions, recommendedTriggers, ...rest } = piece
     return {
-        content: [{ type: 'text', text: `✅ Researched ${found.length} piece(s)${hintText}:\n${JSON.stringify(found)}` }],
-        structuredContent: {
-            pieces: found,
-            missing: missing.map((m) => m.name),
-            count: found.length,
-        },
+        ...rest,
+        actions: detailOnlyFor({ components: actions, recommended: recommendedActions, trim }),
+        triggers: detailOnlyFor({ components: triggers, recommended: recommendedTriggers, trim }),
+        ...(!isNil(recommendedActions) && recommendedActions.length > 0 && { recommendedActions }),
+    }
+}
+
+function bulkResult({ pieces, missing, hints }: { pieces: Record<string, unknown>[], missing: string[], hints: string[] }): PieceSearchResult {
+    const hintText = hints.length > 0 ? `\n\n${hints.join('\n')}` : ''
+    return {
+        content: [{ type: 'text', text: `✅ Researched ${pieces.length} piece(s)${hintText}:\n${JSON.stringify(pieces)}` }],
+        structuredContent: { pieces, missing, count: pieces.length },
     }
 }
 
@@ -204,10 +233,10 @@ async function searchPieces({ params, projectId, platformId, log }: {
     return fitEnrichedResponse({ pieces: enrichedPieces, overflowHint, totalCount })
 }
 
-const DETAIL_LADDER: Array<(component: ComponentSummary) => Partial<ComponentSummary>> = [
+const DETAIL_LADDER: ComponentTrim[] = [
     (component) => component,
     ({ aiDescription: _aiDescription, ...rest }) => rest,
-    ({ name, displayName }) => ({ name, displayName }),
+    nameOnly,
 ]
 
 export function fitEnrichedResponse({ pieces, overflowHint, totalCount }: {
@@ -271,7 +300,29 @@ type ComponentSummary = {
     requiresAuth: boolean
     cardinality: ActionCardinality
     aiDescription?: string
+    audience?: typeof AI_AUDIENCE
 }
+
+type ComponentTrim = (component: ComponentSummary) => Partial<ComponentSummary>
+
+function nameOnly({ name, displayName, audience }: ComponentSummary): Partial<ComponentSummary> {
+    return { name, displayName, ...spreadIfDefined('audience', audience) }
+}
+
+const AI_AUDIENCE = 'ai'
+
+export type FoundPiece = {
+    name: string
+    found: true
+    displayName: string
+    description: string
+    actions: ComponentSummary[]
+    triggers: ComponentSummary[]
+    recommendedActions: string[] | undefined
+    recommendedTriggers: string[] | undefined
+}
+
+type BulkLookupEntry = FoundPiece | { name: string, found: false }
 
 type PieceSearchResult = { content: [{ type: 'text', text: string }], structuredContent: Record<string, unknown> }
 

@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const upsertTeam = createAction({
   auth: villageAuth,
   name: 'upsert_team',
+  classification: 'WRITE',
   displayName: 'Create or Update Team',
   description:
     'Create or update a team. The team ID is derived from the team name; repeated calls with the same name update the same team (requires admin permissions on update).',

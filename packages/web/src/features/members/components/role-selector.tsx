@@ -1,4 +1,3 @@
-import { PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Loader2 } from 'lucide-react';
 
@@ -11,44 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-type RoleConfig<T = string> = {
-  value: T;
-  label: string;
-  description: string;
-};
-
-const PLATFORM_ROLES: RoleConfig<PlatformRole>[] = [
-  {
-    value: PlatformRole.ADMIN,
-    label: t('Admin'),
-    description: t('Full access to all projects and platform settings'),
-  },
-  {
-    value: PlatformRole.OPERATOR,
-    label: t('Operator'),
-    description: t(
-      'Access and edit flows in all projects, no platform settings',
-    ),
-  },
-  {
-    value: PlatformRole.MEMBER,
-    label: t('Member'),
-    description: t(
-      "Access to personal project and any team projects they're invited to",
-    ),
-  },
-];
-
-const PROJECT_ROLE_DESCRIPTIONS: Record<string, string> = {
-  Admin: t('Manage project settings, members, connections, and git sync'),
-  Editor: t('Build, publish, and manage flows'),
-  Viewer: t('View flows and monitor run history'),
-};
-
-export const getProjectRoleDescription = (roleName: string): string => {
-  return PROJECT_ROLE_DESCRIPTIONS[roleName] || '';
-};
+import { roleCopy } from '@/features/members/lib/role-copy';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { cn } from '@/lib/utils';
 
 interface RoleSelectorProps {
   type: 'platform' | 'project';
@@ -56,7 +20,7 @@ interface RoleSelectorProps {
   onValueChange: (value: string) => void;
   disabled?: boolean;
   placeholder?: string;
-  roles?: Array<{ name: string }>;
+  roles?: Array<{ name: string; permissions: string[] }>;
   isLoading?: boolean;
   isAssigningRole?: boolean;
 }
@@ -71,6 +35,7 @@ export const RoleSelector = ({
   isLoading = false,
   isAssigningRole = false,
 }: RoleSelectorProps) => {
+  const newMemberSettings = platformHooks.useNewMemberSettings();
   const isPlatform = type === 'platform';
   const projectRolesLoading = !isPlatform && isLoading;
   const projectRoleAssigning = !isPlatform && isAssigningRole;
@@ -80,15 +45,24 @@ export const RoleSelector = ({
   const label = isPlatform ? t('Platform Roles') : t('Project Roles');
 
   const options = isPlatform
-    ? PLATFORM_ROLES.map((role) => ({
-        value: role.value,
-        label: role.label,
-        description: role.description,
-      }))
+    ? roleCopy
+        .platformRoles({
+          personalProjectsEnabled: newMemberSettings.personalProjectsActive,
+          hasDefaultProjects:
+            newMemberSettings.activeDefaultProjectIds.length > 0,
+        })
+        .map((role) => ({
+          value: role.role,
+          label: role.label,
+          description: role.description,
+        }))
     : roles.map((role) => ({
         value: role.name,
         label: role.name,
-        description: getProjectRoleDescription(role.name),
+        description: roleCopy.projectRoleSummary({
+          name: role.name,
+          permissions: role.permissions,
+        }),
       }));
 
   const selectedRole = options.find((r) => r.value === value);
@@ -101,7 +75,7 @@ export const RoleSelector = ({
     >
       <SelectTrigger className="w-full">
         {showProjectSpinner ? (
-          <span className="flex items-center gap-2 font-normal text-muted-foreground">
+          <span className="flex items-center gap-2 font-normal text-gray-11">
             <Loader2 className="size-4 animate-spin" />
             {projectRoleAssigning ? t('Saving...') : t('Loading...')}
           </span>
@@ -111,7 +85,9 @@ export const RoleSelector = ({
           <SelectValue placeholder={placeholder || t('Select Role')} />
         )}
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent
+        className={cn({ 'w-(--radix-select-trigger-width)': isPlatform })}
+      >
         <SelectGroup>
           <SelectLabel>{label}</SelectLabel>
           {options.map((option) => (
@@ -122,7 +98,7 @@ export const RoleSelector = ({
             >
               <div className="flex flex-col gap-1">
                 <span className="font-medium">{t(option.label)}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs whitespace-normal text-gray-11">
                   {t(option.description)}
                 </span>
               </div>

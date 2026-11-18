@@ -110,6 +110,7 @@ describe('ssrf-guard', () => {
         ]
 
         afterEach(() => {
+            ssrfGuard.uninstall()
             vi.restoreAllMocks()
         })
 

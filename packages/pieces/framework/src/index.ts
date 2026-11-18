@@ -17,6 +17,7 @@ export {
   camelCase,
   startCase,
   tryCatch,
+  sanitizeHttpHeaders,
   AIProviderName,
   AiStepAction,
 } from '@activepieces/core-utils';
@@ -110,6 +111,7 @@ export {
   ACTIVEPIECES_CHAT_TIERS,
   ACTIVEPIECES_IMAGE_TIERS,
   DEFAULT_CHAT_TIER_ID,
+  aiProviderUtils,
 } from '@activepieces/core-piece-types';
 export type {
   McpAuthConfig,

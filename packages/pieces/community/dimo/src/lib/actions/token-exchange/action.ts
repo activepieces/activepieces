@@ -6,6 +6,7 @@ import { DimoClient } from '../../common/helpers';
 const tokenExchangeApiAction = createAction({
 	auth: dimoAuth,
 	name: 'token-exchange-get-vehicle-jwt',
+	classification: 'READ',
 	displayName: 'Token Exchange : Get Vehicle JWT',
 	description: 'Creates a token exchange to obtain a Vehicle JWT.',
 	audience: 'both',

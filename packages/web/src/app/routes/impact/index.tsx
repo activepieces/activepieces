@@ -102,6 +102,7 @@ export default function ImpactPage() {
       featureKey="ANALYTICS"
       locked={!platform.plan.analyticsEnabled}
       lockTitle={t('Unlock Impact Analytics')}
+      pageTitle={<h1 className="text-sm font-medium">{t('Impact')}</h1>}
       lockDescription={t(
         'View impact analytics and metrics for the active flows across your platform',
       )}
@@ -113,7 +114,7 @@ export default function ImpactPage() {
               <span className="text-sm font-medium">{t('Impact')}</span>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  <Info className="h-4 w-4 text-gray-11 cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent>
                   {t('View impact analytics and metrics for the active flows.')}
@@ -123,7 +124,7 @@ export default function ImpactPage() {
           }
           rightContent={
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md text-sm text-gray-11">
                 <span>
                   {t('Updated')}{' '}
                   {dayjs(data?.updated).format('MMM DD, hh:mm A')} —{' '}
@@ -133,8 +134,7 @@ export default function ImpactPage() {
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
+                      size="icon-xs"
                       onClick={() =>
                         refreshAnalytics(undefined, {
                           onSuccess: () =>
@@ -158,7 +158,7 @@ export default function ImpactPage() {
                 value={selectedTimePeriod}
                 onValueChange={handleTimePeriodChange}
               >
-                <SelectTrigger className="w-auto gap-2 h-8">
+                <SelectTrigger size="sm" className="w-auto">
                   <Calendar className="h-4 w-4" />
                   <SelectValue />
                 </SelectTrigger>

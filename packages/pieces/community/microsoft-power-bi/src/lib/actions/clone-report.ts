@@ -7,6 +7,7 @@ import { microsoftPowerBiAuth } from '../auth';
 export const cloneReportAction = createAction({
   auth: microsoftPowerBiAuth,
   name: 'clone_report',
+  classification: 'WRITE',
   displayName: 'Clone Report',
   description: 'Creates a copy of a Power BI report, optionally into a different workspace or bound to a different dataset.',
   audience: 'both',

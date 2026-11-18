@@ -186,7 +186,7 @@ export class FlowExecutorContext {
         return undefined
     }
 
-    private stepMapsAlongPath(): Array<Readonly<Record<string, StepOutput>>> {
+    public stepMapsAlongPath(): Array<Readonly<Record<string, StepOutput>>> {
         const stepMaps: Array<Readonly<Record<string, StepOutput>>> = [this.steps]
         let targetMap: Readonly<Record<string, StepOutput>> = this.steps
         for (const [loopStepName, iteration] of this.currentPath.path) {

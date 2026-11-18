@@ -6,6 +6,7 @@ import { clockodoAuth } from '../../auth';
 export default createAction({
   auth: clockodoAuth,
   name: 'create_entry',
+  classification: 'WRITE',
   displayName: 'Create Entry',
   description: 'Creates an entry in clockodo',
   audience: 'both',

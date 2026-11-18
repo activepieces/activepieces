@@ -115,6 +115,7 @@ export function useAutomationsSelection(treeItems: TreeItem[]) {
 export function getSelectedIdsByType(selected: SelectedItemsMap) {
   const flowIds: string[] = [];
   const tableIds: string[] = [];
+  const agentIds: string[] = [];
   const folderIds: string[] = [];
 
   for (const [key, type] of selected) {
@@ -126,20 +127,24 @@ export function getSelectedIdsByType(selected: SelectedItemsMap) {
       case 'table':
         tableIds.push(id);
         break;
+      case 'agent':
+        agentIds.push(id);
+        break;
       case 'folder':
         folderIds.push(id);
         break;
     }
   }
 
-  return { flowIds, tableIds, folderIds };
+  return { flowIds, tableIds, agentIds, folderIds };
 }
 
-export function hasMovableOrExportableItems(selected: SelectedItemsMap) {
-  for (const type of selected.values()) {
-    if (type === 'flow' || type === 'table') {
-      return true;
-    }
-  }
-  return false;
+export function hasMovableItems(selected: SelectedItemsMap) {
+  return [...selected.values()].some((type) => type !== 'folder');
+}
+
+export function hasExportableItems(selected: SelectedItemsMap) {
+  return [...selected.values()].some(
+    (type) => type === 'flow' || type === 'table',
+  );
 }

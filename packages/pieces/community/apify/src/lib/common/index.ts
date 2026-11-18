@@ -63,7 +63,7 @@ export const TERMINAL_STATUSES: WebhookEventType[] = [
   'ACTOR.RUN.ABORTED',
 ];
 
-export const STATUS_OPTIONS = [
+export const STATUS_OPTIONS: { label: string; value: WebhookEventType }[] = [
   {
     label: 'Aborted',
     value: 'ACTOR.RUN.ABORTED',
@@ -116,30 +116,38 @@ const mapTaskToDropdownOption = (item: Item): DropdownOption => {
   };
 };
 
-export const listActors = async (apiKey: string, actorSource: string): Promise<DropdownOption[]> => {
+export const listActors = async ({
+  apiKey,
+  actorSource,
+  search,
+}: {
+  apiKey: string;
+  actorSource: string | undefined;
+  search: string | undefined;
+}): Promise<DropdownOption[]> => {
   const client = createApifyClient(apiKey);
+  const query = search?.trim() ?? '';
 
-  try {
-    if (actorSource === 'recent') {
-      const recentActors = await client.actors().list({
-        offset: 0,
-        sortBy: ActorListSortBy.LAST_RUN_STARTED_AT,
-        desc: true,
-        limit: 1000,
-      });
-      return recentActors.items.map(mapActorToDropdownOption);
-    }
-
-    const storeActors = await client.store().list({
-      limit: 1000,
+  if (actorSource === 'recent') {
+    const recentActors = await client.actors().list({
       offset: 0,
+      sortBy: ActorListSortBy.LAST_RUN_STARTED_AT,
+      desc: true,
+      limit: 1000,
     });
-    return storeActors.items.map(mapActorToDropdownOption);
-  } catch (error: any) {
-    return [
-      { label: `Failed to load actors: ${error.message || error}`, value: '' },
-    ];
+    const options = recentActors.items.map(mapActorToDropdownOption);
+    const lowerQuery = query.toLowerCase();
+    return lowerQuery
+      ? options.filter((option) => option.label.toLowerCase().includes(lowerQuery))
+      : options;
   }
+
+  const storeActors = await client.store().list({
+    limit: 1000,
+    offset: 0,
+    ...(query ? { search: query } : {}),
+  });
+  return storeActors.items.map(mapActorToDropdownOption);
 };
 
 export const fetchActorInputSchema = async (apiKey: string, actorId: string): Promise<Build | undefined> => {
@@ -170,70 +178,54 @@ export const getDefaultValuesFromBuild = (build: ActorBuild): Dictionary => {
 
 export const listTasks = async (apiKey: string): Promise<DropdownOption[]> => {
   const client = createApifyClient(apiKey);
-
-  try {
-    const tasks = await client.tasks().list({
-      limit: 1000,
-      offset: 0,
-    });
-    return tasks.items.map(mapTaskToDropdownOption);
-  } catch (error: any) {
-    return [
-      { label: `Failed to load tasks: ${error.message || error}`, value: '' },
-    ];
-  }
+  const tasks = await client.tasks().list({
+    limit: 1000,
+    offset: 0,
+  });
+  return tasks.items.map(mapTaskToDropdownOption);
 };
 
 export const listDatasets = async (apiKey: string): Promise<DropdownOption[]> => {
   const client = createApifyClient(apiKey);
+  const dataset = await client.datasets().list({
+    desc: true,
+  });
 
-  try {
-    const dataset = await client.datasets().list({
-      desc: true,
-    });
-
-    return dataset.items.map(item => ({
+  return dataset.items.map(item => {
+    const name = item.title || item.name;
+    const count = `${item.itemCount} ${pluralize(item.itemCount)}`;
+    return {
       value: item.id,
-      label: `${item.title || item.name} (${item.itemCount} ${pluralize(item.itemCount)} - ${item.id})`
-    }));
-  } catch (error: any) {
-    return [{ label: `Failed to load datasets: ${error.message || error}`, value: '' }];
-  }
+      label: name ? `${name} (${count} - ${item.id})` : `${item.id} (${count})`,
+    };
+  });
 };
 
 export const listStores = async (apiKey: string): Promise<DropdownOption[]> => {
   const client = createApifyClient(apiKey);
+  const stores = await client.keyValueStores().list({
+    desc: true
+  });
 
-  try {
-    const stores = await client.keyValueStores().list({
-      desc: true
-    });
-
-    return stores.items.map(item => ({
-      value: item.id,
-      label: item.title! || item.name!
-    }));
-  } catch (error: any) {
-    return [{ label: `Failed to load Key-Value store list: ${error.message || error}`, value: '' }];
-  }
+  return stores.items.map(item => ({
+    value: item.id,
+    label: item.title || item.name || item.id
+  }));
 };
 
 export const listRecords = async (apiKey: string, storeId: string): Promise<DropdownOption[]> => {
   const client = createApifyClient(apiKey);
+  const records = await client.keyValueStore(storeId).listKeys();
 
-  try {
-    const records = await client.keyValueStore(storeId).listKeys();
-
-    return records.items.map(item => ({
-      value: item.key,
-      label: item.key
-    }));
-  } catch (error: any) {
-    return [{ label: `Failed to fetch keys for store "${storeId}". Reason: ${error.message}`, value: '' }];
-  }
+  return records.items.map(item => ({
+    value: item.key,
+    label: item.key
+  }));
 };
 
 export const pluralize = (n: number): string => n === 1 ? "item" : "items";
+
+export const getErrorMessage = (error: unknown): string => error instanceof Error ? error.message : String(error);
 
 // File extension mapping for key-value store records
 export const getFileExtension = (contentType: string): string => {
@@ -262,54 +254,62 @@ export const isBinaryContentType = (contentType: string): boolean => {
 };
 
 
-// Create dropdown options for a list of items
 export const createDropdownOptions = async (
   auth: unknown,
   fetchItems: (apiKey: string) => Promise<DropdownOption[]>
-): Promise<{ disabled: boolean; options: DropdownOption[]; }> => {
-  if (!auth) {
+): Promise<{ disabled: boolean; options: DropdownOption[]; placeholder?: string; }> => {
+  if (!isApifyAuth(auth)) {
     return {
       disabled: true,
       options: [],
+      placeholder: 'Connect your Apify account first.',
     };
   }
 
   try {
-    const apifyAuth = auth as ApifyAuth;
-    const items = await fetchItems(apifyAuth.props.apikey);
+    const items = await fetchItems(auth.props.apikey);
     return { disabled: false, options: items };
-  } catch (error) {
+  } catch {
     return {
       disabled: true,
       options: [],
+      placeholder: 'Could not load the list. Check your connection.',
     };
   }
 };
 
 export const createBuildProperty = () => Property.ShortText({
   displayName: 'Build',
-  description: 'Build to run. It can be either a build tag or build number. By default, the run uses the build specified in the default run configuration (typically `latest`).',
-  required: false
+  description: 'Build tag or number to run. Empty: the default build.',
+  placeholder: 'latest',
+  required: false,
+  advanced: true,
 });
 
 export const createMemoryProperty = (runType: RunType) => Property.StaticDropdown({
-  displayName: 'Memory (MB)',
-  description: `Memory limit for the run, in megabytes. The amount of memory can be set to one of the available options. By default, the run uses a memory limit specified in the ${runType === RunType.ACTOR ? 'default run configuration for the Actor' : 'task settings'}.`,
+  displayName: 'Memory',
+  description: runType === RunType.ACTOR
+    ? "Empty: the Actor's default memory."
+    : 'Empty: the memory set in the task.',
   required: false,
+  advanced: true,
   options: {
     options: MEMORY_OPTIONS
   }
 });
 
 export const createTimeoutProperty = (runType: RunType) => Property.Number({
-  displayName: 'Timeout (seconds)',
+  displayName: 'Timeout',
   required: false,
-  description: `Optional timeout for the run, in seconds. By default, the run uses a timeout specified in the ${runType === RunType.ACTOR ? 'default run configuration for the Actor' : 'task settings'}.`
+  advanced: true,
+  description: runType === RunType.ACTOR
+    ? "Seconds before the run is stopped. Empty: the Actor's default."
+    : "Seconds before the run is stopped. Empty: the task's setting."
 });
 
-export const createWaitForFinishProperty = (runType: RunType) => Property.Checkbox({
-  displayName: 'Wait for finish',
-  description: `If enabled, the step waits for the ${runType} run to finish and returns the run’s dataset items as the step output.`,
+export const createWaitForFinishProperty = () => Property.Checkbox({
+  displayName: 'Wait for Finish',
+  description: "On: waits and returns the run's dataset items. Off: only starts it.",
   required: false,
   defaultValue: true,
 });
@@ -368,10 +368,12 @@ export const handleRun = async (
 export const createActorSourceProperty = () => Property.StaticDropdown({
   required: true,
   displayName: 'Actor Source',
+  description: 'Your recently run Actors, or any public Actor in the Apify Store.',
   defaultValue: 'recent',
+  display: 'cards',
   options: {
     options: [{
-      label: 'Recently Used Actors',
+      label: 'Recently Used',
       value: 'recent',
     }, {
       label: 'Apify Store',
@@ -383,19 +385,20 @@ export const createActorSourceProperty = () => Property.StaticDropdown({
 export const createActorIdProperty = () => Property.Dropdown({
   displayName: 'Actor',
   auth: apifyAuth,
-  description: 'Select an Actor from the list.',
+  description: 'Type to search by name.',
   required: true,
   refreshers: ['auth', 'actorSource'],
-  options: async (props) => {
-    const actorSource = props['actorSource'] as string;
-    return createDropdownOptions(props['auth'], (apiKey) => listActors(apiKey, actorSource));
+  refreshOnSearch: true,
+  options: async (props, { searchValue }) => {
+    const actorSource = typeof props['actorSource'] === 'string' ? props['actorSource'] : undefined;
+    return createDropdownOptions(props['auth'], (apiKey) => listActors({ apiKey, actorSource, search: searchValue }));
   }
 });
 
 export const createTaskIdProperty = () => Property.Dropdown({
-  displayName: 'Actor Task',
+  displayName: 'Task',
   auth: apifyAuth,
-  description: 'Select a task from the list.',
+  description: 'A saved task from your Apify account.',
   required: true,
   refreshers: ['auth'],
   options: async (props) => {
@@ -405,7 +408,9 @@ export const createTaskIdProperty = () => Property.Dropdown({
 
 const createInputBodyProperty = (runType: RunType, defaultValue?: object) => Property.Json({
   displayName: `${runType === RunType.ACTOR ? '' : 'Override '}Input JSON`,
-  description: `JSON input for the ${runType} run, which you can find on the ${runType} input page in Apify Console. If empty, the run uses the input specified in the default run configuration.`,
+  description: runType === RunType.ACTOR
+    ? 'The JSON the Actor gets, prefilled from its defaults when available.'
+    : "Fields here replace the same fields in the task's saved input.",
   required: true,
   defaultValue
 });
@@ -501,12 +506,16 @@ export const generateIdempotencyKey = (
 
 export const createStatusesProperty = () => Property.StaticMultiSelectDropdown({
   displayName: 'Statuses',
-  description: 'Run statuses to watch.',
+  description: 'Run outcomes that start the flow.',
   required: true,
   defaultValue: TERMINAL_STATUSES,
   options: {
     options: STATUS_OPTIONS,
   },
+});
+
+export const createWebhookInfoProperty = () => Property.MarkDown({
+  value: 'Turning this flow on creates a webhook in your Apify account. Turning it off removes it.',
 });
 
 export const createWebhookSampleData = (runType: RunType) => ({
@@ -530,3 +539,11 @@ export const createWebhookSampleData = (runType: RunType) => ({
     defaultRequestQueueId: "FL35cSF7jrxr3BY39",
   },
 });
+
+function isApifyAuth(auth: unknown): auth is ApifyAuth {
+  if (typeof auth !== 'object' || auth === null || !('props' in auth)) {
+    return false;
+  }
+  const { props } = auth;
+  return typeof props === 'object' && props !== null && 'apikey' in props && typeof props.apikey === 'string';
+}

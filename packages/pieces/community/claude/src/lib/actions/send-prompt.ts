@@ -1,88 +1,105 @@
-import {
-  createAction,
-  DynamicPropsValue,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import Anthropic from '@anthropic-ai/sdk';
 import mime from 'mime-types';
 import { claudeAuth } from '../auth';
-import { TextBlock } from '@anthropic-ai/sdk/resources';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 import { spreadIfDefined } from '@activepieces/pieces-framework';
-import { billingIssueMessage, modelDropdown, unauthorizedMessage } from '../common/common';
+import {
+  billingIssueMessage,
+  ClaudeMessageParams,
+  lowEffortConfig,
+  modelDropdown,
+  resolveModelId,
+  supportsTemperature,
+  THINKING_MODEL,
+  unauthorizedMessage,
+} from '../common/common';
 import { askClaudeActionOutputSchema } from '../output-schemas';
-const DEFAULT_TOKENS_FOR_THINKING_MODE = 1024;
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function extractReplyText(message: Anthropic.Messages.Message): string {
+  const text = message.content
+    .flatMap((block) => (block.type === 'text' ? [block.text] : []))
+    .join('\n')
+    .trim();
+  if (text.length === 0) {
+    throw new Error(
+      `Claude returned no text (stop_reason: ${message.stop_reason ?? 'unknown'}). Try raising Max Tokens or rephrasing the prompt.`
+    );
+  }
+  return text;
+}
+
 export const askClaude = createAction({
   audience: 'both',
   auth: claudeAuth,
   name: 'ask_claude',
   classification: 'READ',
   displayName: 'Ask Claude',
-  description: 'Ask Claude anything you want!',
-  aiMetadata: { description: 'Sends a free-form question or instruction to a chosen Anthropic Claude model and returns the reply as plain text, optionally with an image attached for vision and earlier user/assistant turns supplied as Roles for multi-turn context; enabling Extended Thinking Mode routes the call to Claude 3.7 Sonnet with a separate reasoning token budget. Prefer the sibling Extract Structured Data action when the answer must be constrained to defined fields rather than prose. Requires a model and a question, with temperature between 0 and 1; not idempotent, since each call is a fresh generation that can return different text.', idempotent: false },
+  description: 'Send a question or instruction to Claude and get a text reply.',
+  aiMetadata: { description: 'Sends a free-form question or instruction to a chosen Anthropic Claude model and returns the reply as plain text, optionally with an image attached for vision and earlier user/assistant turns supplied as Roles for multi-turn context; enabling Extended Thinking Mode routes the call to Claude Sonnet 5.5 with adaptive thinking. Prefer the sibling Extract Structured Data action when the answer must be constrained to defined fields rather than prose. Requires a model and a question, with temperature between 0 and 1; not idempotent, since each call is a fresh generation that can return different text.', idempotent: false },
+  propertyGroups: [
+    { key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['model', 'maxTokens'] },
+    { key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['prompt', 'systemPrompt', 'image'] },
+  ],
   props: {
     model: modelDropdown,
+    prompt: Property.LongText({
+      displayName: 'Question',
+      description: 'What you want Claude to answer or do.',
+      required: true,
+    }),
     systemPrompt: Property.LongText({
       displayName: 'System Prompt',
+      description:
+        'Standing instructions, such as a role or tone, for Claude to follow.',
       required: false,
       defaultValue: "You're a helpful assistant.",
     }),
-    temperature: Property.Number({
-      displayName: 'Temperature',
+    image: Property.File({
+      displayName: 'Image',
       required: false,
-      description:
-        'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
+      description: 'An image for Claude to look at along with your question.',
     }),
     maxTokens: Property.Number({
       displayName: 'Maximum Tokens',
       required: false,
       description:
-        "The maximum number of tokens to generate. Requests can use up to 2,048 or 4,096 tokens shared between prompt and completion, don't set the value to maximum and leave some tokens for the input. The exact limit varies by model. (One token is roughly 4 characters for normal English text)",
+        'Longest reply in tokens, about 4 characters each. Empty: 1,000.',
     }),
-    prompt: Property.LongText({
-      displayName: 'Question',
-      required: true,
-    }),
-    image: Property.File({
-      displayName: 'Image (URL)',
+    temperature: Property.Number({
+      displayName: 'Temperature',
       required: false,
-      description: 'URL of image to be used as input for the model.',
+      advanced: true,
+      description: 'From 0 to 1, lower is more focused. Newer models ignore it.',
     }),
     roles: Property.Json({
       displayName: 'Roles',
       required: false,
+      advanced: true,
       defaultValue: [],
-      description: `Array of roles to specify more accurate response.Please check [guide to Input Messages](https://docs.anthropic.com/en/api/messages-examples#vision).`,
+      description:
+        'Extra messages sent after the question, as user or assistant turns.',
     }),
     thinkingMode: Property.Checkbox({
       displayName: 'Extended Thinking Mode',
       required: false,
+      advanced: true,
       defaultValue: false,
       description:
-        'Uses claude 3.7 sonnet enhanced reasoning capabilities for complex tasks.',
+        'Lets Claude reason first. Uses Claude Sonnet 5.5, regardless of Model.',
     }),
     thinkingModeParams: Property.DynamicProperties({
       auth: claudeAuth,
       displayName: '',
       refreshers: ['thinkingMode'],
       required: false,
-      props: async ({ auth, thinkingMode }) => {
-        if (!auth || !thinkingMode) return {};
-
-        const props: DynamicPropsValue = {};
-
-        props['budgetTokens'] = Property.Number({
-          displayName: 'Budget Tokens',
-          required: true,
-          defaultValue: DEFAULT_TOKENS_FOR_THINKING_MODE,
-          description:
-            'This parameter determines the maximum number of tokens Claude is allowed to use for its internal reasoning process.Your budget tokens must always be less than the max tokens specified.',
-        });
-
-        return props;
-      },
+      advanced: true,
+      props: async () => ({}),
     }),
   },
   outputSchema: askClaudeActionOutputSchema,
@@ -96,12 +113,8 @@ export const askClaude = createAction({
     });
     let billingIssue = false;
     let unauthorized = false;
-    let model = 'claude-3-haiku-20240307';
-
-    if (propsValue.model) {
-      model = propsValue.model;
-    }
-    const temperature = isNil(propsValue.temperature)
+    const model = resolveModelId(propsValue.model);
+    const temperature = isNil(propsValue.temperature) || !supportsTemperature(model)
       ? undefined
       : Number(propsValue.temperature);
     let maxTokens = 1000;
@@ -162,35 +175,27 @@ export const askClaude = createAction({
     while (retries < maxRetries) {
       try {
         if (propsValue.thinkingMode) {
-          const budgetTokens = propsValue.thinkingModeParams
-            ? propsValue.thinkingModeParams['budgetTokens']
-            : 1024;
-
           const req = await anthropic.messages.create({
-            model: 'claude-3-7-sonnet-20250219',
+            model: THINKING_MODEL,
             max_tokens: maxTokens,
             system: systemPrompt,
-            thinking: {
-              type: 'enabled',
-              budget_tokens: budgetTokens ?? DEFAULT_TOKENS_FOR_THINKING_MODE,
-            },
+            thinking: { type: 'adaptive' },
             messages: roles,
-          });
+          } as unknown as Anthropic.Messages.MessageCreateParamsNonStreaming);
 
-          response = req.content
-            .filter((block) => block.type === 'text')[0]
-            .text.trim();
+          response = extractReplyText(req);
         } else {
-          const params: Anthropic.Messages.MessageCreateParamsNonStreaming = {
+          const params: ClaudeMessageParams = {
             model: model,
             max_tokens: maxTokens,
             system: systemPrompt,
             messages: roles,
             ...spreadIfDefined('temperature', temperature),
+            ...lowEffortConfig(model),
           };
           const req = await anthropic.messages.create(params);
 
-          response = (req.content[0] as TextBlock).text?.trim();
+          response = extractReplyText(req);
         }
 
         break; // Break out of the loop if the request is successful
@@ -234,7 +239,3 @@ export const askClaude = createAction({
     return response;
   },
 });
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}

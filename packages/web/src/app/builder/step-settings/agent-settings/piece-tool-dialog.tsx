@@ -6,6 +6,7 @@ import { useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useDebounce } from 'use-debounce';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -194,7 +195,20 @@ export function AgentPieceDialog({
                 </TooltipTrigger>
                 <TooltipContent>{t('Back')}</TooltipContent>
               </Tooltip>
-              {selectedAction.displayName}
+              <LogoPlate
+                className="size-9 rounded-md p-1.5"
+                border
+                src={selectedPiece?.logoUrl}
+                alt=""
+              />
+              <div className="min-w-0 flex flex-col">
+                <span>{selectedAction.displayName}</span>
+                {selectedAction.description && (
+                  <span className="text-xs font-normal text-gray-11 line-clamp-1">
+                    {selectedAction.description}
+                  </span>
+                )}
+              </div>
             </div>
           )
         );
@@ -204,7 +218,7 @@ export function AgentPieceDialog({
 
   return (
     <Dialog open={showAddPieceDialog} onOpenChange={handleDialogClose}>
-      <DialogContent className="w-[90vw] max-w-[750px] h-[80vh] max-h-[800px] flex flex-col overflow-hidden p-0">
+      <DialogContent className="w-[90vw] max-w-[750px] h-[80vh] max-h-[800px] flex flex-col gap-0 overflow-hidden p-0">
         <DialogHeader className="min-h-16 flex px-4 items-start justify-center mb-0 border-b">
           <DialogTitle>{renderDialogHeaderContent()}</DialogTitle>
         </DialogHeader>

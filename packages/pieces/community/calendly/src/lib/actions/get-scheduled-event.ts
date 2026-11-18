@@ -8,8 +8,8 @@ export const getScheduledEventAction = createAction({
   auth: calendlyAuth,
   name: 'get_scheduled_event',
   classification: 'READ',
-  displayName: 'Find Event',
-  description: 'Gets a booked meeting by its URI or UUID.',
+  displayName: 'Get Event',
+  description: 'Gets a booked event by its URI or ID.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -18,7 +18,7 @@ export const getScheduledEventAction = createAction({
   },
   outputSchema: scheduledEventOutputSchema,
   props: {
-    scheduledEvent: calendlyCommon.scheduledEvent,
+    scheduledEvent: calendlyCommon.bookedEvent,
   },
   async run({ auth, propsValue }) {
     const response = await calendlyCommon.calendlyRequest<{ resource: CalendlyRecord }>({

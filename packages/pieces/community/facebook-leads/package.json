@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-facebook-leads",
-  "version": "0.3.7",
+  "version": "0.5.2",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -12,9 +12,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/core-piece-types": "workspace:*",
-    "@activepieces/core-utils": "workspace:*"
-  },
-  "devDependencies": {
+    "@activepieces/core-utils": "workspace:*",
     "tslib": "2.6.2"
   }
 }

@@ -1,3 +1,4 @@
+import { ApEdition } from '@activepieces/shared';
 import { type ComponentType } from 'react';
 
 import { BotIcon } from '@/components/icons/bot';
@@ -29,6 +30,7 @@ export type StaticPage = {
   href: string;
   icon: ComponentType<{ className?: string; size?: number }>;
   requiresPlatformAdmin?: boolean;
+  hiddenOnEdition?: ApEdition;
 };
 
 export const STATIC_PAGES: StaticPage[] = [
@@ -79,6 +81,14 @@ export const STATIC_PAGES: StaticPage[] = [
     requiresPlatformAdmin: true,
   },
   {
+    id: 'page-platform-ai-tiers',
+    label: 'Platform Admin — AI Tiers',
+    href: '/platform/ai/tiers',
+    icon: BotIcon,
+    requiresPlatformAdmin: true,
+    hiddenOnEdition: ApEdition.COMMUNITY,
+  },
+  {
     id: 'page-platform-ai-capabilities',
     label: 'Platform Admin — AI Capabilities',
     href: '/platform/ai/capabilities',
@@ -86,16 +96,17 @@ export const STATIC_PAGES: StaticPage[] = [
     requiresPlatformAdmin: true,
   },
   {
-    id: 'page-platform-mcp',
-    label: 'Platform Admin — MCP Server',
-    href: '/platform/mcp',
-    icon: ConnectIcon,
+    id: 'page-platform-ai-usage',
+    label: 'Platform Admin — AI Usage',
+    href: '/platform/ai/usage',
+    icon: BotIcon,
     requiresPlatformAdmin: true,
+    hiddenOnEdition: ApEdition.COMMUNITY,
   },
   {
-    id: 'page-platform-mcp-tools',
+    id: 'page-platform-mcp',
     label: 'Platform Admin — MCP Tools',
-    href: '/platform/mcp/tools',
+    href: '/platform/mcp',
     icon: ConnectIcon,
     requiresPlatformAdmin: true,
   },
@@ -164,14 +175,14 @@ export const STATIC_PAGES: StaticPage[] = [
   },
   {
     id: 'page-platform-sso',
-    label: 'Platform Admin — Single Sign On',
+    label: 'Platform Admin — Authentication',
     href: '/platform/sso',
     icon: LogInIcon,
     requiresPlatformAdmin: true,
   },
   {
     id: 'page-platform-project-roles',
-    label: 'Platform Admin — Project Roles',
+    label: 'Platform Admin — Roles & Access',
     href: '/platform/users/roles',
     icon: Settings2Icon,
     requiresPlatformAdmin: true,
@@ -247,3 +258,20 @@ export const STATIC_PAGES: StaticPage[] = [
     requiresPlatformAdmin: true,
   },
 ];
+
+function isVisible({
+  page,
+  isPlatformAdmin,
+  edition,
+}: {
+  page: StaticPage;
+  isPlatformAdmin: boolean;
+  edition: ApEdition | null;
+}): boolean {
+  return (
+    (!page.requiresPlatformAdmin || isPlatformAdmin) &&
+    page.hiddenOnEdition !== edition
+  );
+}
+
+export const staticPageUtils = { isVisible };

@@ -12,6 +12,7 @@ import { JOURNAL_ELEMENT } from '../common/journal';
 export const addCommentAction = createAction({
   auth: servicenowAuth,
   name: 'add_comment',
+  classification: 'WRITE',
   displayName: 'Add Comment or Work Note',
   description:
     'Append a customer-visible comment or an internal work note to a record (incident, request, problem, change, etc.)',

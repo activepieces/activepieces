@@ -140,7 +140,7 @@ const EmbeddedConnectionDialogContent = ({
         {isLoadingPiece ||
           (loadingPiecesOAuth2AppsMap && (
             <div className="flex justify-center items-center">
-              <LoadingSpinner className="stroke-background size-[50px]"></LoadingSpinner>
+              <LoadingSpinner className="stroke-gray-1 size-[50px]"></LoadingSpinner>
             </div>
           ))}
 

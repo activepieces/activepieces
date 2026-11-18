@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const getCompanyPaths = createAction({
   auth: villageAuth,
   name: 'get_company_paths',
+  classification: 'SEARCH',
   displayName: 'Get Company Paths',
   description:
     'Find introduction paths to people at a specific company. Returns up to 50 employees you can reach through your network, ranked by connection strength.',

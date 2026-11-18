@@ -10,7 +10,12 @@ import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
-import { CreditsUsageAlert, ManagePlanDialog } from '@/features/billing';
+import {
+  CreditsUsageAlert,
+  SelfServeTrialDialog,
+  SelfServeTrialEndingAlert,
+  ManagePlanDialog,
+} from '@/features/billing';
 import { projectHooks } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
@@ -20,7 +25,7 @@ import {
   GlobalSearchProvider,
   useGlobalSearch,
 } from '../global-search/global-search-context';
-import { PrimaryRail } from '../primary-rail';
+import { AppSidebar } from '../sidebar/app-sidebar';
 
 import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header';
 
@@ -111,6 +116,7 @@ export function ProjectDashboardLayout({
         {children}
       </ProjectDashboardLayoutInner>
       {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
+      <SelfServeTrialDialog />
     </GlobalSearchProvider>
   );
 
@@ -139,28 +145,37 @@ function ProjectDashboardLayoutInner({
   const { open: searchOpen } = useGlobalSearch();
 
   return (
-    <div className="flex h-full w-full overflow-hidden">
-      {!isEmbedded && <PrimaryRail />}
+    <div
+      className={cn(
+        'flex h-full w-full overflow-hidden',
+        !isEmbedded && 'max-md:h-svh max-md:flex-col',
+      )}
+    >
+      {!isEmbedded && <AppSidebar mode="app" />}
       <SidebarProvider
         defaultOpen={false}
         hoverMode={!searchOpen}
-        className="flex-1 min-w-0 w-auto will-change-transform"
+        keyboardShortcut={isEmbedded}
+        className={cn(
+          'flex-1 min-w-0 w-auto will-change-transform',
+          !isEmbedded && 'max-md:h-auto max-md:min-h-0',
+        )}
       >
-        <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
+        <SidebarInset className="flex flex-col h-full overflow-hidden bg-gray-2">
           <div
             className={cn(
               'flex-1 flex flex-col overflow-hidden',
-              !isEmbedded && 'pr-2 pt-3 pb-3',
+              !isEmbedded && 'pr-2 pt-3 pb-3 max-md:pl-2 max-md:pt-2',
             )}
           >
             <div
               id="dashboard-content-container"
               className={cn(
-                'relative flex flex-col h-full bg-background overflow-clip',
-                !isEmbedded &&
-                  'rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border',
+                'relative flex flex-col h-full bg-gray-1 overflow-clip',
+                !isEmbedded && 'rounded-xl shadow-panel border',
               )}
             >
+              <SelfServeTrialEndingAlert />
               {!hideHeader && (
                 <ProjectDashboardLayoutHeader key={currentProjectId} />
               )}

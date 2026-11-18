@@ -5,6 +5,7 @@ import { wedofCommon } from '../../common/wedof';
 export const certificationPartnerRefused = createTrigger({
   auth: wedofAuth,
   name: 'certificationPartnerRefused',
+  classification: 'READ',
   displayName: 'Demande de partenariat refusée',
   description: "Se déclenche Lorsqu'une demande de partenariat est refusée",
   aiMetadata: {

@@ -4,11 +4,12 @@ import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { domainHelper } from '../../../helper/domain-helper'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
+import { networkUtils } from '../../../helper/network-utils'
 import { mcpOAuthClientService } from '../client/mcp-oauth-client.service'
 import { DEFAULT_MCP_OAUTH_SCOPES } from '../mcp-oauth-scopes'
 import { mcpOAuthValidation } from '../mcp-oauth-validation'
 
-const AUTH_REQUEST_TTL_10_MINUTES_SECONDS = 10 * 60
+const AUTH_REQUEST_TTL_SECONDS = 30 * 60
 
 export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) => {
 
@@ -47,11 +48,17 @@ export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) =>
                 type: 'mcp_auth_request',
             },
             key,
-            expiresInSeconds: AUTH_REQUEST_TTL_10_MINUTES_SECONDS,
+            expiresInSeconds: AUTH_REQUEST_TTL_SECONDS,
             audience: JwtAudience.MCP_OAUTH_AUTH_REQUEST,
         })
 
-        const authorizePageUrl = new URL(domainHelper.getPublicUrlFromRequest({ req, path: '/mcp-authorize' }))
+        if (domainHelper.hasMcpUrl() && domainHelper.isUnconfiguredHostRequest({ req })) {
+            req.log.warn({ requestHost: networkUtils.getRequestHost(req) }, '[mcpOAuthAuthorizeController] Request host matches neither AP_MCP_URL nor AP_FRONTEND_URL; the proxy must forward the public hostname in X-Forwarded-Host or keep the Host header')
+        }
+        const consentPageUrl = domainHelper.isMcpHostRequest({ req })
+            ? domainHelper.getBrowserLandingUrl({ path: '/mcp-authorize' })
+            : networkUtils.combineUrl(networkUtils.getRequestBaseUrl(req), '/mcp-authorize')
+        const authorizePageUrl = new URL(consentPageUrl)
         authorizePageUrl.searchParams.set('authRequestId', authRequestToken)
 
         return reply.redirect(authorizePageUrl.toString())

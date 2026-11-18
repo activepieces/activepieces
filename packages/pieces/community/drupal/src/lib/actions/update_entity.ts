@@ -13,6 +13,7 @@ import {
 export const drupalUpdateEntityAction = createAction({
   auth: drupalAuth,
   name: 'drupal-update-entity',
+  classification: 'WRITE',
   displayName: 'Update Entity',
   description: 'Update an existing entity in Drupal with smart field discovery and validation',
   audience: 'both',

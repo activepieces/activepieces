@@ -48,14 +48,14 @@ import { createBatchJob } from "./lib/actions/create-batch-job";
 import { getBatchJob } from "./lib/actions/get-batch-job";
 import { cancelBatchJob } from "./lib/actions/cancel-batch-job";
 import { mistralAuth } from "./lib/common/auth";
-import { mistralRequest } from "./lib/common/request";
+import { mistralRequest, MISTRAL_API_BASE_URL } from "./lib/common/request";
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
 
 export const mistralAi = createPiece({
   displayName: "Mistral AI",
   description: "Mistral AI provides state-of-the-art open-weight and hosted language models for text generation, embeddings, and reasoning tasks.",
   auth: mistralAuth,
-  minimumSupportedRelease: "0.87.0",
+  minimumSupportedRelease: "0.88.2",
   logoUrl: "https://cdn.activepieces.com/pieces/mistral-ai.png",
   authors: ["sparkybug"],
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
@@ -109,8 +109,14 @@ export const mistralAi = createPiece({
     cancelBatchJob,
     createCustomApiCallAction({
       auth: mistralAuth,
-      baseUrl: (auth) => (auth ? mistralRequest.getConfig(auth).baseUrl : 'https://api.mistral.ai/v1'),
+      baseUrl: (auth) => (auth ? mistralRequest.getConfig(auth).baseUrl : MISTRAL_API_BASE_URL),
       authMapping: async (auth) => mistralRequest.getConfig(auth).headers,
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${MISTRAL_API_BASE_URL} or your Cloudflare gateway.`,
+          placeholder: '/models',
+        },
+      },
     }),
   ],
   triggers: [],

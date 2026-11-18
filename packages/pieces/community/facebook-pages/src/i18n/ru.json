@@ -17,5 +17,14 @@
   "Title": "Заголовок",
   "Description": "Description",
   "A URL we can access for the photo": "URL-адрес, к которому мы можем получить доступ к фото",
-  "A URL we can access for the video (Limit: 1GB or 20 minutes)": "URL-адрес, к которому мы можем получить доступ для видео (лимит: 1ГБ или 20 минут)"
+  "A URL we can access for the video (Limit: 1GB or 20 minutes)": "URL-адрес, к которому мы можем получить доступ для видео (лимит: 1ГБ или 20 минут)",
+  "Photo URL": "URL фото",
+  "Video URL": "URL видео",
+  "Pages you gave access to when connecting your account.": "Страницы, к которым вы дали доступ при подключении аккаунта.",
+  "Facebook adds a preview card for this link below the post.": "Facebook добавит под публикацией карточку предпросмотра этой ссылки.",
+  "Public URL of the image, so Facebook can download it.": "Публичный URL изображения, чтобы Facebook мог его скачать.",
+  "Post text shown with the photo.": "Текст публикации, который показывается вместе с фото.",
+  "Public URL of the video file, up to 1 GB or 20 minutes.": "Публичный URL видеофайла, до 1 ГБ или 20 минут.",
+  "Name of the video, shown on the Page's Videos tab.": "Название видео, которое показывается на вкладке «Видео» Страницы.",
+  "Post text shown with the video.": "Текст публикации, который показывается вместе с видео."
 }

@@ -10,6 +10,7 @@ type EmbeddingState = {
   hideFolders: boolean;
   hideTables: boolean;
   hideFlowNameInBuilder: boolean;
+  hideConnectionsInBuilder: boolean;
   hideExportAndImportFlow: boolean;
   sdkVersion?: string;
   predefinedConnectionName?: string;
@@ -23,6 +24,7 @@ type EmbeddingState = {
   hidePageHeader: boolean;
   hideActiveUsers: boolean;
   hideGlobalSearch: boolean;
+  hideReplaceConnection: boolean;
   formulasDocsUrl?: string;
   gtmContainerId?: string;
   clarityProjectId?: string;
@@ -36,6 +38,7 @@ const defaultState: EmbeddingState = {
   hideFolders: false,
   hideTables: false,
   hideFlowNameInBuilder: false,
+  hideConnectionsInBuilder: false,
   hideExportAndImportFlow: false,
   useDarkBackground: window.opener !== null,
   hideHomeButtonInBuilder: false,
@@ -45,6 +48,7 @@ const defaultState: EmbeddingState = {
   hidePageHeader: false,
   hideActiveUsers: false,
   hideGlobalSearch: false,
+  hideReplaceConnection: false,
 };
 
 const EmbeddingContext = createContext<{
@@ -70,7 +74,7 @@ const EmbeddingProvider = ({ children }: EmbeddingProviderProps) => {
     >
       <div
         className={cn({
-          'bg-black/80 h-screen w-screen':
+          'bg-scrim h-screen w-screen':
             state.useDarkBackground && state.isEmbedded,
         })}
       >

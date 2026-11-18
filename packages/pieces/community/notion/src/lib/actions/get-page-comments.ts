@@ -9,8 +9,7 @@ export const getPageComments = createAction({
   name: 'get_page_comments',
   classification: 'READ',
   displayName: 'Get Page Comments',
-  description:
-    'Get all comments on a page, grouped by thread.',
+  description: 'Get all comments on a page, grouped by thread.',
   audience: 'human',
   aiMetadata: {
     description:

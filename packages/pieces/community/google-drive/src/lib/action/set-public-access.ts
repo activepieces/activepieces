@@ -22,11 +22,12 @@ export const setPublicAccess = createAction({
     role: Property.StaticDropdown({
       displayName: 'Role',
       description: 'What anyone with the link can do.',
+      display: 'cards',
       options: {
         options: [
-          { label: 'Viewer', value: 'reader' },
-          { label: 'Commenter', value: 'commenter' },
-          { label: 'Editor', value: 'writer' },
+          { label: 'Viewer', value: 'reader', description: 'Read only', icon: 'file' },
+          { label: 'Commenter', value: 'commenter', description: 'Read and comment', icon: 'reply' },
+          { label: 'Editor', value: 'writer', description: 'Read and edit', icon: 'type' },
         ],
       },
       defaultValue: 'reader',
@@ -61,12 +62,12 @@ export const setPublicAccess = createAction({
       return { ...res.data, webViewLink: file.data.webViewLink, downloadUrl: null };
     }
 
-    const content = await downloadFileFromDrive(
-      context.auth,
-      context.files,
+    const content = await downloadFileFromDrive({
+      auth: context.auth,
+      files: context.files,
       fileId,
-      file.data.name!
-    );
+      fileName: file.data.name ?? undefined,
+    });
     return { ...res.data, downloadUrl: content };
   },
 });

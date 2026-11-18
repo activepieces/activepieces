@@ -1,8 +1,12 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { shortIoApiCall } from '../common/client';
 import { shortIoAuth } from '../common/auth';
+import { shortIoClient } from '../common/client';
+import { shortIoLinkBody } from '../common/link-body';
+import { shortIoLinks } from '../common/links';
+import { shortIoSchemas } from '../common/output-schemas';
 import { domainIdDropdown, linkIdDropdown } from '../common/props';
+import { shortIoValues } from '../common/values';
 
 export const expireShortLinkAction = createAction({
   auth: shortIoAuth,
@@ -10,8 +14,13 @@ export const expireShortLinkAction = createAction({
   classification: 'DESTRUCTIVE',
   displayName: 'Expire Short Link',
   description: 'Set an expiration date or click limit to deactivate a short link.',
-  audience: 'both',
-  aiMetadata: { description: 'Sets an expiration on an existing short link (identified by its link ID) so it deactivates at a given date/time or after a number of clicks, optionally redirecting expired visitors to a fallback URL. Use to schedule a link to stop working. Requires either an expiration date or a click limit; idempotent — re-applying the same expiry settings to the same link leaves it in the same state.', idempotent: true },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Sets an expiration on an existing short link so it deactivates at a given date/time or after a number of clicks, optionally sending expired visitors to a fallback URL. Requires an expiration date or a click limit. Idempotent: re-applying the same settings leaves the link unchanged.',
+    idempotent: true,
+  },
+  outputSchema: shortIoSchemas.legacyLink,
   props: {
     domain: domainIdDropdown,
     linkId: linkIdDropdown,
@@ -32,82 +41,32 @@ export const expireShortLinkAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const { 
-      linkId, 
-      domain: domainString,
-      expiresAt,
-      clicksLimit,
-      expiredURL,
-    } = propsValue;
-
-    if (!expiresAt && !clicksLimit) {
+    const { clicksLimit } = shortIoLinkBody.validateLinkOptions({
+      clicksLimit: propsValue.clicksLimit,
+      splitPercent: undefined,
+      redirectType: undefined,
+    });
+    const expiresAt = propsValue.expiresAt ? shortIoValues.toIsoDateTime({ value: propsValue.expiresAt, label: 'Expiration date' }) : undefined;
+    if (expiresAt === undefined && clicksLimit === undefined) {
       throw new Error('You must provide either an expiration date or a clicks limit to expire the link.');
     }
-
-    if (clicksLimit && clicksLimit < 1) {
-      throw new Error('Clicks limit must be at least 1');
-    }
-
-    const query: Record<string, string> = {};
-    if (domainString) {
-      const domainObject = JSON.parse(domainString as string);
-      query['domain_id'] = String(domainObject.id);
-    }
-
-    const body: Record<string, unknown> = {};
-    
-    if (expiresAt) {
-      body['expiresAt'] = expiresAt;
-    }
-    
-    if (clicksLimit) {
-      body['clicksLimit'] = clicksLimit;
-    }
-    
-    if (expiredURL && expiredURL.trim() !== '') {
-      body['expiredURL'] = expiredURL;
-    }
-
+    const domain = shortIoLinks.parseDomainProp(propsValue.domain);
+    const linkId = shortIoClient.seg({ value: propsValue.linkId, label: 'Short Link' });
     try {
-      const response = await shortIoApiCall({
+      const response = await shortIoClient.request({
         method: HttpMethod.POST,
         auth,
-        resourceUri: `/links/${linkId}`,
-        query,
-        body,
+        path: `/links/${linkId}`,
+        query: { domain_id: domain.id },
+        body: shortIoValues.compact({ expiresAt, clicksLimit, expiredURL: propsValue.expiredURL?.trim() }),
       });
-
       return {
         success: true,
         message: 'Short link expiration settings updated successfully',
-        data: response,
+        data: shortIoLinks.scrubLink(response),
       };
-    } catch (error: any) {
-      if (error.message.includes('400')) {
-        throw new Error(
-          'Invalid request parameters. Please check your expiration settings and try again.'
-        );
-      }
-      
-      if (error.message.includes('401') || error.message.includes('403')) {
-        throw new Error(
-          'Authentication failed. Please check your API key and permissions.'
-        );
-      }
-      
-      if (error.message.includes('404')) {
-        throw new Error(
-          'Short link not found. Please check the link ID and try again.'
-        );
-      }
-      
-      if (error.message.includes('429')) {
-        throw new Error(
-          'Rate limit exceeded. Please wait a moment before trying again.'
-        );
-      }
-
-      throw new Error(`Failed to set link expiration: ${error.message}`);
+    } catch (error) {
+      return shortIoClient.rethrowWithHint({ error, hints: { 404: 'Short link not found. Check the link and domain.' } });
     }
   },
-}); 
+});

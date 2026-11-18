@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const uploadVideo = createAction({
   name: 'upload_video',
+  classification: 'WRITE',
   displayName: 'Upload Video',
   description: 'Upload a video to your Vimeo account',
   audience: 'both',

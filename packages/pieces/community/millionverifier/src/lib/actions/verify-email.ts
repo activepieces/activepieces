@@ -1,12 +1,18 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { millionVerifierAuth } from '../common/auth';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { millionVerifierAuth } from '../auth';
+import { millionVerifierClient } from '../common/client';
+import type { MillionVerifierVerifyResult } from '../common/types';
+import { verifyEmailActionOutputSchema } from '../output-schemas';
+
 export const verifyEmail = createAction({
   auth: millionVerifierAuth,
   name: 'verifyEmail',
+  classification: 'READ',
   displayName: 'Verify Email',
   description: 'Verify email address using Million Verifier API',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: verifyEmailActionOutputSchema,
   aiMetadata: { description: 'Validates a single email address against the MillionVerifier real-time API, returning its deliverability status (e.g. deliverable, undeliverable, risky). Use to check whether an email is valid and safe to send to before adding it to a list or sending mail. Requires one email address; the call is read-only and idempotent.', idempotent: true },
   props: {
     email: Property.ShortText({
@@ -23,19 +29,11 @@ export const verifyEmail = createAction({
   },
   async run(context) {
     const { email, timeout = 10 } = context.propsValue;
-    const apiKey = context.auth.secret_text;
-
-    const params = new URLSearchParams({
-      api: apiKey,
-      email: email,
-      timeout: timeout.toString(),
-    });
-    const url = `https://millionverifier.com/api/v3/?${params.toString()}`;
-    const response = await httpClient.sendRequest({
+    return await millionVerifierClient.request<MillionVerifierVerifyResult>({
+      auth: context.auth,
       method: HttpMethod.GET,
-      url: url,
+      path: '/',
+      query: { email, timeout: timeout.toString() },
     });
-
-    return response.body;
   },
 });

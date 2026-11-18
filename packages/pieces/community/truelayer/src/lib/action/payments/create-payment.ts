@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const createPayment = createAction({
   auth: trueLayerCommon.auth,
   name: 'create-payment',
+  classification: 'WRITE',
   displayName: 'Create Payment',
   description: 'Create a new payment. This API must be called using a backend bearer token.',
   audience: 'both',

@@ -9,13 +9,21 @@ import {
 import { JiraDataCenterAuth } from '../../auth';
 import { isNil } from '@activepieces/pieces-framework';
 
+export function jiraBaseUrl(auth: JiraDataCenterAuth): string {
+	return `${auth.props.instanceUrl.trim().replace(/\/+$/, '')}/rest/api/2`;
+}
+
+export function jiraToken(auth: JiraDataCenterAuth): string {
+	return auth.props.personalAccessToken.trim();
+}
+
 export async function sendJiraRequest(request: HttpRequest & { auth: JiraDataCenterAuth }) {
 	return httpClient.sendRequest({
 		...request,
-		url: `${request.auth.props.instanceUrl}/rest/api/2/${request.url}`,
+		url: `${jiraBaseUrl(request.auth)}/${request.url}`,
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
-			token: request.auth.props.personalAccessToken,
+			token: jiraToken(request.auth),
 		},
 	});
 }
@@ -161,7 +169,7 @@ export async function jiraApiCall<T extends HttpMessageBody>({
 	query,
 	body,
 }: JiraApiCallParams): Promise<T> {
-	const baseUrl = `${auth.props.instanceUrl}/rest/api/2`;
+	const baseUrl = jiraBaseUrl(auth);
 	const qs: QueryParams = {};
 	if (query) {
 		for (const [key, value] of Object.entries(query)) {
@@ -178,7 +186,7 @@ export async function jiraApiCall<T extends HttpMessageBody>({
 		body,
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
-			token: auth.props.personalAccessToken,
+			token: jiraToken(auth),
 		},
 	};
 

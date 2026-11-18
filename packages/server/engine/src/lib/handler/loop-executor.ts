@@ -1,6 +1,7 @@
+import { setImmediate } from 'timers/promises'
 import { isNil } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { FlowRunStatus, LoopOnItemsAction, LoopStepOutput } from '@activepieces/shared'
+import { ExecutionError, ExecutionErrorType, FlowRunStatus, LoopOnItemsAction, LoopStepOutput } from '@activepieces/shared'
 import { utils } from '../utils'
 import { BaseExecutor, failStep } from './base-executor'
 import { flowExecutor } from './flow-executor'
@@ -45,7 +46,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
                 action,
                 executionState: newExecutionContext,
                 stepOutput,
-                error: JSON.stringify({ message: 'The items you have selected must be a list.' }),
+                error: new ExecutionError('LoopItemsNotAList', 'The items you have selected must be a list.', ExecutionErrorType.USER),
                 durationMs: performance.now() - stepStartTime,
             })
         }
@@ -54,6 +55,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
 
 
         for (let i = 0; i < resolvedInput.items.length; ++i) {
+            await setImmediate()
             const newCurrentPath = newExecutionContext.currentPath.loopIteration({ loopName: action.name, iteration: i })
 
             const testSingleStepMode = !isNil(constants.stepNameToTest)

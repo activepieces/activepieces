@@ -6,6 +6,7 @@ import { famulorCommon } from '../common';
 export const getCall = createAction({
   auth: famulorAuth,
   name: 'getCall',
+  classification: 'READ',
   displayName: 'Get Call',
   description: 'Retrieve details for a call by ID, including transcript and recording.',
   audience: 'both',

@@ -1,96 +1,62 @@
-export interface AuthorizationParams {
-  accessToken: string;
-}
+import type { AppConnectionType } from '@activepieces/pieces-framework';
 
-export interface BaseCampaignKeyParams {
-  campaignkey: string;
-}
+export type ZohoCampaignsAuthValue = {
+  type:
+    | AppConnectionType.OAUTH2
+    | AppConnectionType.CLOUD_OAUTH2
+    | AppConnectionType.PLATFORM_OAUTH2;
+  access_token: string;
+  props?: { location?: string };
+};
 
-export interface CreateCampaignParams extends AuthorizationParams {
-  campaignname: string;
-  from_email: string;
-  subject: string;
-  content_url?: string;
-  list_details: object;
-  topicId?: string;
-}
+export type ZohoCampaignsSort = 'asc' | 'desc';
 
-export interface CreateTagParams extends AuthorizationParams {
-  tagName: string;
-}
+export type ZohoCampaignsSignupForm = 'public' | 'private';
 
-export interface CloneCampaignParams extends AuthorizationParams {
-  campaigninfo: object;
-}
+export type ZohoCampaignsContactStatus =
+  | 'active'
+  | 'recent'
+  | 'most recent'
+  | 'unsub'
+  | 'bounce';
 
-export interface SendCampaignParams
-  extends AuthorizationParams,
-    BaseCampaignKeyParams {}
+export type ZohoCampaignsCampaignStatus =
+  | 'all'
+  | 'all campaigns'
+  | 'drafts'
+  | 'scheduled'
+  | 'inprogress'
+  | 'sent'
+  | 'stopped'
+  | 'canceled'
+  | 'tobereviewed'
+  | 'reviewed'
+  | 'paused'
+  | 'intesting';
 
-export interface AddUpdateContactParams extends AuthorizationParams {
-  listkey: string;
-  contactinfo: object;
-  source?: string;
-  topic_id?: string;
-}
+export type ZohoCampaignsRecipientAction =
+  | 'sentcontacts'
+  | 'openedcontacts'
+  | 'optoutcontacts'
+  | 'spamcontacts'
+  | 'unopenedcontacts'
+  | 'clickedcontacts'
+  | 'senthardbounce'
+  | 'sentsoftbounce'
+  | 'unsentcontacts';
 
-export interface AddTagToContactParams extends AuthorizationParams {
-  tagName: string;
-  lead_email: string;
-}
+export type ZohoCampaignsResponse = {
+  status?: string;
+  code?: string | number;
+  message?: string;
+  response?: {
+    status?: string;
+    code?: string | number;
+    message?: string;
+  };
+};
 
-export interface RemoveTagParams extends AuthorizationParams {
-  tagName: string;
-  lead_email: string;
-}
-
-export interface UnsubscribeContactParams extends AuthorizationParams {
-  listkey: string;
-  contactinfo: object;
-  topic_id?: string;
-}
-
-export interface AddContactToMailingListParams extends AuthorizationParams {
-  listkey: string;
-  emailids: string;
-}
-
-export interface ListContactsParams extends AuthorizationParams {
-  listkey: string;
-  sort?: 'asc' | 'desc';
-  fromindex?: number;
-  range?: number;
-  status?: 'active' | 'recent' | 'most recent' | 'unsub' | 'bounce';
-}
-
-export interface ListCampaignParams extends AuthorizationParams {
-  sort?: 'asc' | 'desc';
-  fromindex?: number;
-  range?: number;
-  status?:
-    | 'all'
-    | 'all campaigns'
-    | 'drafts'
-    | 'scheduled'
-    | 'inprogress'
-    | 'sent'
-    | 'stopped'
-    | 'canceled'
-    | 'tobereviewed'
-    | 'reviewed'
-    | 'paused'
-    | 'intesting';
-}
-
-export interface ListMailingListsParams extends AuthorizationParams {
-  sort?: 'asc' | 'desc';
-  fromindex?: number;
-  range?: number;
-}
-
-
-// API Response types
-export type Campaign = {
+export type ZohoCampaignsCampaign = {
   campaign_key: string;
   campaign_name: string;
   created_date_string: string;
@@ -99,7 +65,7 @@ export type Campaign = {
   campaign_preview: string;
 };
 
-export type Contact = {
+export type ZohoCampaignsContact = {
   firstname: string;
   added_time: string;
   phone: string;
@@ -109,7 +75,7 @@ export type Contact = {
   zuid: string;
 };
 
-export type MailingList = {
+export type ZohoCampaignsMailingList = {
   date: string;
   deletable: string;
   segments: object;
@@ -142,13 +108,13 @@ export type MailingList = {
   zx: string;
 };
 
-export type Topic = {
+export type ZohoCampaignsTopic = {
   topicId: string;
   topicName: string;
   primaryList: number;
 };
 
-export type Tag = {
+export type ZohoCampaignsTag = {
   [key: string]: {
     tagowner: string;
     tag_created_time: string;
@@ -161,24 +127,22 @@ export type Tag = {
   };
 };
 
-export interface ListCampaignResponse {
-  fromindex: string;
-  total_record_count: string;
-  code: string;
-  recent_campaigns: Campaign[];
-  range: string;
-  campaign_count: string;
-  uri: string;
-  version: string;
-  requestdetails: string;
-  status: string;
-}
+export type ZohoCampaignsListCampaignsResponse = ZohoCampaignsResponse & {
+  fromindex?: string;
+  total_record_count?: string;
+  recent_campaigns?: ZohoCampaignsCampaign[];
+  range?: string;
+  campaign_count?: string;
+  uri?: string;
+  version?: string;
+  requestdetails?: string;
+};
 
-export interface ListContactsResponse {
+export type ZohoCampaignsListContactsResponse = ZohoCampaignsResponse & {
   code: string;
   uri: string;
   version: string;
-  list_of_details: Contact[];
+  list_of_details?: ZohoCampaignsContact[];
   requestdetails: {
     fromindex: number;
     range: number;
@@ -186,13 +150,13 @@ export interface ListContactsResponse {
     status: string;
   };
   status: string;
-}
+};
 
-export interface ListMailingListsResponse {
+export type ZohoCampaignsListMailingListsResponse = ZohoCampaignsResponse & {
   code: string;
   uri: string;
   version: string;
-  list_of_details: MailingList[];
+  list_of_details?: ZohoCampaignsMailingList[];
   requestdetails: {
     fromindex: number;
     range: number;
@@ -200,25 +164,27 @@ export interface ListMailingListsResponse {
     sort: string;
   };
   status: string;
-}
+};
 
-export interface ListTopicsResponse {
-  topicDetails: Topic[];
+export type ZohoCampaignsListTopicsResponse = ZohoCampaignsResponse & {
+  topicDetails: ZohoCampaignsTopic[];
   message: string;
   code: string;
   uri: string;
-}
+};
 
-export interface CreateCampaignResponse {
-  message: string;
-  campaignKey: string;
-  code: string;
-  uri: string;
-}
+export type ZohoCampaignsCreateCampaignResponse = ZohoCampaignsResponse & {
+  campaignKey?: string;
+  uri?: string;
+};
 
-export interface ListTagsResponse {
+export type ZohoCampaignsListTagsResponse = ZohoCampaignsResponse & {
   uri: string;
   version: string;
   requestdetails: string;
-  tags?: Tag[];
-}
+  tags?: ZohoCampaignsTag[];
+};
+
+export type ZohoCampaignsListSentCampaignsResponse = ZohoCampaignsResponse & {
+  recent_sent_campaigns?: string;
+};

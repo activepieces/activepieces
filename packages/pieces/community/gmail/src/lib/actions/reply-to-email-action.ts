@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
 import MailComposer from 'nodemailer/lib/mail-composer';
-import Mail, { Attachment } from 'nodemailer/lib/mailer';
+import Mail from 'nodemailer/lib/mailer';
 import { gmailAuth, createGoogleClient, getUserEmail } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import { GmailProps } from '../common/props';
@@ -19,6 +19,22 @@ export const gmailReplyToEmailAction = createAction({
       'Sends a reply to an existing email, preserving the thread and subject and addressing the original sender (reply) or all participants (reply all). Use this to respond within a known conversation; requires the Gmail message ID of the email being answered. Not idempotent: each call sends a new reply message into the thread.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'reply_target',
+      display: 'section',
+      label: 'Reply to',
+      icon: 'reply',
+      props: ['message_id', 'reply_type'],
+    },
+    {
+      key: 'reply_content',
+      display: 'section',
+      label: 'Your Reply',
+      icon: 'text',
+      props: ['body_type', 'body', 'attachment'],
+    },
+  ],
   props: {
     message_id: GmailProps.message,
     reply_type: Property.StaticDropdown({
@@ -203,7 +219,7 @@ export const gmailReplyToEmailAction = createAction({
       const lookupResult = mime.lookup(
         context.propsValue.attachment.extension || ''
       );
-      const attachmentOption: Attachment[] = [
+      const attachmentOption: Mail.Attachment[] = [
         {
           filename:
             context.propsValue.attachment_name ??

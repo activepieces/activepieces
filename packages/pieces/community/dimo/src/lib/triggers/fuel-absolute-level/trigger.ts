@@ -12,6 +12,7 @@ const TRIGGER_KEY = 'dimo-fuel-absolute-level-trigger';
 export const fuelAbsoluteTrigger = createTrigger({
 	auth: dimoAuth,
 	name: 'fuel-absolute-level-trigger',
+	classification: 'READ',
 	displayName: 'Fuel System Absolute Level Trigger',
 	description: 'Triggers when vehicle fuel system absolute level meets the specified condition.',
 	aiMetadata: {

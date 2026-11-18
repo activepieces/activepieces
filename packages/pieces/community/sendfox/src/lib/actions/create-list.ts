@@ -1,31 +1,32 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { sendfoxAuth } from '../auth';
-import { callsendfoxApi } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { sendfoxAuth } from '../auth';
+import { sendfoxClient } from '../common/client';
+import { createListOutputSchema } from '../output-schemas';
 
-export const createList = createAction({
+export const createListAction = createAction({
   name: 'create-list',
   classification: 'WRITE',
   auth: sendfoxAuth,
   displayName: 'Create List',
-  description: 'Create a new list',
+  description: 'Create a contact list in SendFox',
   audience: 'both',
   aiMetadata: { description: 'Creates a new contact list in SendFox with the given name. Use to set up a list before adding subscribers to it. Not idempotent: each call creates a new list even if one with the same name already exists.', idempotent: false },
+  outputSchema: createListOutputSchema,
   props: {
     task_name: Property.ShortText({
       displayName: 'List Name',
       required: true,
+      placeholder: 'Newsletter subscribers',
     }),
   },
   async run(context) {
-    const authentication = context.auth;
-    const accessToken = authentication.secret_text; 
-    const task_name = context.propsValue.task_name;
-    const response = (
-      await callsendfoxApi(HttpMethod.POST, 'lists', accessToken, {
-        name: task_name,
-      })
-    ).body;
+    const response = await sendfoxClient.request<unknown>({
+      auth: context.auth,
+      method: HttpMethod.POST,
+      path: '/lists',
+      body: { name: context.propsValue.task_name },
+    });
     return [response];
   },
 });

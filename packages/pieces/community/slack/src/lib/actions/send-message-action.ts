@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { profilePicture, slackChannel, username, blocks, threadTs, singleSelectChannelInfo, mentionOriginFlow, iconEmoji, replyBroadcast, unfurlLinks } from '../common/props';
+import { profilePicture, slackChannel, onlyBotChannels, username, blocks, threadTs, singleSelectChannelInfo, mentionOriginFlow, iconEmoji, replyBroadcast, unfurlLinks } from '../common/props';
 import { buildFlowOriginContextBlock, processMessageTimestamp, slackSendMessage, textToSectionBlocks } from '../common/utils';
 import { slackAuth } from '../auth';
 import { Block,KnownBlock } from '@slack/web-api';
@@ -16,8 +16,25 @@ export const slackSendMessageAction = createAction({
   audience: 'human',
   aiMetadata: { description: 'Post a message to a channel, with optional Block Kit blocks, file attachment, custom username/icon, and link unfurling; can post as the bot or as the authenticated user. Provide a thread timestamp to reply within a thread (and optionally broadcast that reply to the channel). Each call posts a new message, so it is not idempotent; requires either message text or blocks. Use Send Message To A User for a private DM.', idempotent: false },
   outputSchema: chatPostMessageOutputSchema,
+  propertyGroups: [
+    {
+      key: 'channel_picker',
+      display: 'section',
+      label: 'Channel',
+      icon: 'markdown',
+      props: ['info', 'onlyBotChannels', 'channel'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['text', 'sendAsBot', 'threadTs', 'file', 'blocks'],
+    },
+  ],
   props: {
     info: singleSelectChannelInfo,
+    onlyBotChannels,
     channel: slackChannel(true),
     text: Property.LongText({
       displayName: 'Message',

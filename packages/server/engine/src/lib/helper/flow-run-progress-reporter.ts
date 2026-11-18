@@ -37,7 +37,7 @@ export const flowRunProgressReporter = {
                 savedStartTime = params.startTime
             }
             latestUpdateParams = params
-            if (!stepNameToUpdate || !engineConstants.isTestFlow) { // live runs are updated by backup job
+            if (!stepNameToUpdate || !engineConstants.isStreamingToBuilder) { // live runs are updated by backup job
                 return
             }
             const step = flowExecutorContext.getStepOutput(stepNameToUpdate)
@@ -107,6 +107,7 @@ export const flowRunProgressReporter = {
                 executionState: {
                     steps: flowExecutorContext.steps,
                     tags: Array.from(flowExecutorContext.tags),
+                    entryStepName: engineConstants.entryStepName,
                 },
             })
             const executionState = await zstdCompress(serialized)

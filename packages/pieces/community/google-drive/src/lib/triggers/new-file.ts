@@ -13,28 +13,9 @@ import {
 import dayjs from 'dayjs';
 import { googleDriveAuth } from '../auth';
 import { common } from '../common';
-import { downloadFileFromDrive } from '../common/get-file-content';
+import { drivePoll } from '../common/drive-poll';
+import { driveFileContent } from '../common/file-content';
 import { newFileTriggerOutputSchema } from '../output-schemas';
-
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof googleDriveAuth>,
-  { parentFolder?: any; include_team_drives?: boolean }
-> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const currentValues =
-      (await common.getFiles(auth, {
-        parent: propsValue.parentFolder,
-        createdTime: lastFetchEpochMS,
-        includeTeamDrive: propsValue.include_team_drives,
-      })) ?? [];
-    const items = currentValues.map((item: any) => ({
-      epochMilliSeconds: dayjs(item.createdTime).valueOf(),
-      data: item,
-    }));
-    return items;
-  },
-};
 
 export const newFile = createTrigger({
   auth: googleDriveAuth,
@@ -42,21 +23,20 @@ export const newFile = createTrigger({
   classification: 'READ',
   displayName: 'New File',
   description:
-    'Triggers when a new file is added to Drive or the chosen folder.',
+    "Triggers when a file is created in Drive or the chosen folder. Uploads and copies count. A file moved in from another folder fires only if it is newer than the last file this trigger sent.",
   aiMetadata: {
-    description: 'Fires when a new file appears in Google Drive, optionally scoped to a specific parent folder. Each event represents one newly created file and its metadata, with optional inclusion of the file content.',
+    description: 'Fires when a file is created in Google Drive, optionally scoped to a specific parent folder, based on the file\'s creation time (polling). Uploads and copies fire; a file moved into the folder from elsewhere fires only if it was created after the last file the trigger sent. Each event represents one newly created file and its metadata, and can include the file content, falling back to a contentError field when a download fails.',
   },
   props: {
     parentFolder: common.parentFolderDropdown({
       displayName: 'Folder',
-      description:
-        'Leave empty to watch all of My Drive. Type to search by folder name.',
+      description: common.watchFolderHint,
     }),
     include_team_drives: common.properties.include_team_drives,
     include_file_content: Property.Checkbox({
       displayName: 'Include File Content',
       description:
-        'Also download each file. Slower, and very large files may fail.',
+        'Also download each file. A failed download adds an error instead.',
       required: false,
       defaultValue: false
     }),
@@ -64,38 +44,69 @@ export const newFile = createTrigger({
   outputSchema: newFileTriggerOutputSchema,
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
+    await pollingHelper.onEnable(
+      buildPolling({ listingDeadline: Date.now() + common.listingBudgetMs }),
+      context
+    );
+    await drivePoll.onEnable({
       store: context.store,
-      propsValue: context.propsValue,
+      isRepublish: context.isRepublish,
     });
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(
+      buildPolling({ listingDeadline: Date.now() + common.listingBudgetMs }),
+      context
+    );
   },
   run: async (context) => {
-    const newFiles = await pollingHelper.poll(polling, {
-      auth: context.auth,
+    const startedAt = Date.now();
+    const deadline = startedAt + driveFileContent.budgetMs;
+    const includeFileContent = context.propsValue.include_file_content;
+    const items = await drivePoll.poll({
       store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
+      maxItems: drivePoll.maxItemsPerPoll({ includeFileContent }),
+      list: async ({ from, maxFiles, positions }) => [
+        await common.getFiles(
+          context.auth,
+          {
+            parent: context.propsValue.parentFolder,
+            createdTime: from,
+            createdTimeOp: '>=',
+            includeTeamDrive: context.propsValue.include_team_drives,
+            deadline: startedAt + common.listingBudgetMs,
+            stopAt: { maxFiles },
+            resume: positions[0],
+          },
+          'createdTime'
+        ),
+      ],
+      describe: ({ file }) => drivePoll.byCreatedTime(file),
     });
 
-    return await handleFileContent(newFiles, context)
+    return await driveFileContent.withFileContent({
+      auth: context.auth,
+      files: context.files,
+      items,
+      includeFileContent,
+      deadline,
+    });
   },
   test: async (context) => {
-    const newFiles = await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    const startedAt = Date.now();
+    const deadline = startedAt + driveFileContent.budgetMs;
+    const items = await pollingHelper.test(
+      buildPolling({ listingDeadline: startedAt + common.listingBudgetMs }),
+      context
+    );
 
-    return await handleFileContent(newFiles, context)
+    return await driveFileContent.withFileContent({
+      auth: context.auth,
+      files: context.files,
+      items,
+      includeFileContent: context.propsValue.include_file_content,
+      deadline,
+    });
   },
 
   sampleData: {
@@ -110,20 +121,32 @@ export const newFile = createTrigger({
   },
 });
 
-async function handleFileContent(newFiles: unknown[], context: any) {
-  const newFilesObj = JSON.parse(JSON.stringify(newFiles))
-
-  if (context.propsValue.include_file_content) {
-    const fileContentPromises: Promise<string>[] = []
-    for (const file of newFilesObj) {
-      fileContentPromises.push(downloadFileFromDrive(context.auth, context.files, file["id"], file["name"]));
-    }
-
-    const filesContent = await Promise.all(fileContentPromises)
-
-    for (let i = 0; i < newFilesObj.length; i++) {
-      newFilesObj[i].content = filesContent[i]
-    }
-  }
-  return newFilesObj
+function buildPolling({
+  listingDeadline,
+}: {
+  listingDeadline: number;
+}): Polling<AppConnectionValueForAuthProperty<typeof googleDriveAuth>, NewFileProps> {
+  return {
+    strategy: DedupeStrategy.TIMEBASED,
+    items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+      const listing = await common.getFiles(auth, {
+        parent: propsValue.parentFolder,
+        createdTime: lastFetchEpochMS,
+        includeTeamDrive: propsValue.include_team_drives,
+        maxPages: lastFetchEpochMS === 0 ? common.testSampleMaxPages : undefined,
+        accept: lastFetchEpochMS === 0 ? common.hasId : undefined,
+        deadline: listingDeadline,
+      });
+      return listing.files.map((item) => ({
+        epochMilliSeconds: dayjs(item.createdTime).valueOf(),
+        data: item,
+      }));
+    },
+  };
 }
+
+type NewFileProps = {
+  parentFolder?: string;
+  include_team_drives?: boolean;
+  include_file_content?: boolean;
+};

@@ -3,11 +3,11 @@ import { apVersionUtil } from '@activepieces/server-utils'
 import { ExecutionMode, NetworkMode, WorkerGroupScope, WorkerMachineHealthcheckRequest, WorkerMachineStatus, WorkerMachineType, WorkerMachineWithStatus, WorkerSettingsResponse } from '@activepieces/shared'
 
 import { FastifyBaseLogger } from 'fastify'
-import { workerGroupService } from '../../ee/platform/platform-plan/worker-group.service'
 import { domainHelper } from '../../helper/domain-helper'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { WorkerGroupAssignment } from '../job'
+import { platformWorkerGroupService } from '../worker-groups/platform-worker-group.service'
+import { WorkerGroupAssignment } from '../worker-groups/worker-group-queues'
 import { workerMachineCache } from './machine-cache'
 import { parseWorkerConcurrency, workerCapacity } from './worker-capacity'
 import { workerLiveness } from './worker-liveness'
@@ -95,13 +95,13 @@ export const machineService = (log: FastifyBaseLogger) => {
 
             await workerMachineCache().delete(offlineWorkers.map(worker => worker.id))
 
-            const platformWorkerGroupId = await workerGroupService(log).getWorkerGroupId({ platformId })
+            const platformWorkerGroupId = await platformWorkerGroupService(log).getWorkerGroupId({ platformId })
             return onlineWorkers
                 .filter(worker => {
                     if (worker.workerGroupScope === WorkerGroupScope.PLATFORM) {
                         return !isNil(platformWorkerGroupId) && worker.workerGroupId === platformWorkerGroupId
                     }
-                    if (worker.workerGroupScope === WorkerGroupScope.PROJECT) {
+                    if (worker.workerGroupScope === WorkerGroupScope.PROJECT || worker.workerGroupScope === WorkerGroupScope.FLOW) {
                         return true
                     }
                     return isNil(platformWorkerGroupId)
@@ -114,30 +114,71 @@ export const machineService = (log: FastifyBaseLogger) => {
                     workerGroupScope: worker.workerGroupScope,
                 }))
         },
-        async listProjectWorkerGroups(): Promise<WorkerPoolCapacity> {
+        async listWorkerGroups(): Promise<WorkerPoolCapacity> {
             const { online: onlineWorkers } = workerLiveness.partitionByLiveness(await workerMachineCache().find())
-            const slotsByLabel = new Map<string, number>()
+            const groupsByLabel = new Map<string, WorkerGroupInfo>()
             let sharedSlots = 0
             for (const worker of onlineWorkers) {
                 const slots = parseWorkerConcurrency(worker.information.workerProps.WORKER_CONCURRENCY)
-                if (worker.workerGroupScope === WorkerGroupScope.PROJECT && !isNil(worker.workerGroupId) && worker.workerGroupId.length > 0) {
-                    slotsByLabel.set(worker.workerGroupId, (slotsByLabel.get(worker.workerGroupId) ?? 0) + slots)
-                }
-                else if (isNil(worker.workerGroupScope)) {
+                const scope = resolveDedicatedScope(worker)
+                if (isNil(scope)) {
                     sharedSlots += slots
+                    continue
                 }
+                if (![WorkerGroupScope.PROJECT, WorkerGroupScope.FLOW].includes(scope)) {
+                    continue
+                }
+                const groupKey = `${scope}:${worker.workerGroupId!}`
+                const existing = groupsByLabel.get(groupKey)
+                groupsByLabel.set(groupKey, {
+                    label: worker.workerGroupId!,
+                    slots: (existing?.slots ?? 0) + slots,
+                    scope,
+                })
             }
             return {
-                groups: [...slotsByLabel.entries()].map(([label, slots]) => ({ label, slots })),
+                groups: [...groupsByLabel.values()],
                 sharedSlots,
             }
         },
+        async listOnlineWorkersByGroup(): Promise<OnlineWorkerSummary[]> {
+            const { online: onlineWorkers } = workerLiveness.partitionByLiveness(await workerMachineCache().find())
+            return onlineWorkers.map((worker) => ({
+                id: worker.id,
+                slots: parseWorkerConcurrency(worker.information.workerProps.WORKER_CONCURRENCY),
+                workerGroupId: isNil(worker.workerGroupId) || worker.workerGroupId.length === 0 ? null : worker.workerGroupId,
+                scope: resolveDedicatedScope(worker),
+            }))
+        },
+        async getWorkerGroupScopes({ workerGroupId }: { workerGroupId: string }): Promise<WorkerGroupScope[]> {
+            const { online: onlineWorkers } = workerLiveness.partitionByLiveness(await workerMachineCache().find())
+            const scopes = onlineWorkers
+                .filter(worker => worker.workerGroupId === workerGroupId)
+                .map(resolveDedicatedScope)
+                .filter((scope): scope is WorkerGroupScope => !isNil(scope))
+            return [...new Set(scopes)]
+        },
     }
+}
+
+function resolveDedicatedScope(worker: { workerGroupId?: string, workerGroupScope?: WorkerGroupScope }): WorkerGroupScope | null {
+    if (isNil(worker.workerGroupId) || worker.workerGroupId.length === 0) {
+        return null
+    }
+    return worker.workerGroupScope ?? WorkerGroupScope.PROJECT
+}
+
+type OnlineWorkerSummary = {
+    id: string
+    slots: number
+    workerGroupId: string | null
+    scope: WorkerGroupScope | null
 }
 
 type WorkerGroupInfo = {
     label: string
     slots: number
+    scope: WorkerGroupScope
 }
 
 type WorkerPoolCapacity = {

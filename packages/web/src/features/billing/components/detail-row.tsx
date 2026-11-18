@@ -1,7 +1,7 @@
 export const DetailRow = ({ label, value }: DetailRowProps) => (
   <div className="flex items-center justify-between gap-2">
-    <span className="text-muted-foreground">{label}</span>
-    <span className="font-medium text-foreground">{value}</span>
+    <span className="text-gray-11">{label}</span>
+    <span className="font-medium text-gray-12">{value}</span>
   </div>
 );
 

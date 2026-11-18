@@ -3,10 +3,12 @@ import { ApitemplateAuth } from '../common/auth';
 import { ApitemplateAuthConfig, ApitemplateRegion, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { templateIdDropdown } from '../common/props';
+import { createImageOutputSchema } from '../output-schemas';
 
 export const createImage = createAction({
   auth: ApitemplateAuth,
   name: 'createImage',
+  outputSchema: createImageOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Image',
   description: 'Creates an image from a template with provided data.',

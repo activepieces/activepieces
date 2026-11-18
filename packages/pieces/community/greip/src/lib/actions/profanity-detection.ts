@@ -6,6 +6,7 @@ import { greipApiCall } from '../common/client';
 export const profanityDetection = createAction({
   auth: greipAuth,
   name: 'profanity_detection',
+  classification: 'READ',
   displayName: 'Detect Profanity',
   description: 'Detect offensive or inappropriate language in text using machine learning',
   audience: 'both',

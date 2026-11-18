@@ -1,4 +1,11 @@
-import { ExportTableResponse, FieldType } from '@activepieces/shared';
+import {
+  ExportTableResponse,
+  FieldType,
+  isNil,
+  SharedTemplate,
+  TableTemplate,
+} from '@activepieces/shared';
+import { t } from 'i18next';
 import JSZip from 'jszip';
 import {
   Type,
@@ -7,7 +14,9 @@ import {
   Hash,
   ChevronDownCircle,
 } from 'lucide-react';
+import { parse } from 'papaparse';
 import { createContext, ReactNode } from 'react';
+import { z } from 'zod';
 
 import { downloadFile } from '@/lib/dom-utils';
 
@@ -98,7 +107,133 @@ function exportRecords({
     extension: 'csv',
   });
 }
+function getTemplateError({
+  template,
+  existingTableId,
+}: {
+  template: SharedTemplate;
+  existingTableId?: string;
+}): string | null {
+  const reason = findTemplateIssue({ template, existingTableId });
+  return isNil(reason)
+    ? null
+    : t('This file is not a valid table template: {reason}', { reason });
+}
+
+function findTemplateIssue({
+  template,
+  existingTableId,
+}: {
+  template: SharedTemplate;
+  existingTableId?: string;
+}): string | null {
+  const tables = template.tables ?? [];
+  if (tables.length === 0) {
+    return t('it has no tables');
+  }
+  if (!isNil(existingTableId) && tables.length > 1) {
+    return t(
+      'it has more than one table, but you can only import one into an existing table',
+    );
+  }
+  const parsed = TableTemplate.array().safeParse(tables);
+  if (!parsed.success) {
+    const { issues } = parsed.error;
+    const tableNameOrFieldsIssue = issues.find(
+      ({ path }) =>
+        path.length === 2 && (path[1] === 'name' || path[1] === 'fields'),
+    );
+    return describeTemplateIssue({
+      path: (tableNameOrFieldsIssue ?? issues[0]).path,
+      tables,
+    });
+  }
+  return (
+    tables
+      .flatMap((table) => table.fields)
+      .map(findFieldIssue)
+      .find((issue) => !isNil(issue)) ?? null
+  );
+}
+
+function describeTemplateIssue({
+  path,
+  tables,
+}: {
+  path: PropertyKey[];
+  tables: TableTemplate[];
+}): string {
+  const [tableIndex, section, fieldIndex, key] = path;
+  const tableKey = TableTemplate.keyof().safeParse(section);
+  if (!tableKey.success || typeof tableIndex !== 'number') {
+    return t('one of its tables is not in the expected format');
+  }
+  switch (tableKey.data) {
+    case 'externalId':
+      return t('the table has no externalId');
+    case 'data':
+      return t('its rows are not in the expected format');
+    case 'fields':
+      return describeFieldIssue({
+        fields: tables[tableIndex].fields,
+        fieldIndex,
+        key,
+      });
+    case 'name':
+      return t('the table has no name');
+    case 'status':
+      return t('the table status is not in the expected format');
+    case 'trigger':
+      return t('the table trigger is not in the expected format');
+  }
+}
+
+function describeFieldIssue({
+  fields,
+  fieldIndex,
+  key,
+}: {
+  fields: TableTemplate['fields'];
+  fieldIndex: PropertyKey | undefined;
+  key: PropertyKey | undefined;
+}): string {
+  if (typeof fieldIndex !== 'number') {
+    return t('it has no list of columns');
+  }
+  const name = fields[fieldIndex]?.name;
+  const fieldKey = TableTemplate.shape.fields.element.keyof().safeParse(key);
+  if (!fieldKey.success) {
+    return t('column "{name}" is not in the expected format', { name });
+  }
+  switch (fieldKey.data) {
+    case 'name':
+      return t('column {position} has no name', { position: fieldIndex + 1 });
+    case 'type':
+      return t('column "{name}" has no type', { name });
+    case 'externalId':
+      return t('column "{name}" has no externalId', { name });
+    case 'data':
+      return t('column "{name}" is not in the expected format', { name });
+  }
+}
+
+function findFieldIssue(field: TableTemplate['fields'][number]): string | null {
+  if (!z.enum(FieldType).safeParse(field.type).success) {
+    return t('column "{name}" has an unsupported type "{type}"', {
+      name: field.name,
+      type: field.type,
+    });
+  }
+  if (field.type === FieldType.STATIC_DROPDOWN && isNil(field.data)) {
+    return t('column "{name}" is a dropdown with no options', {
+      name: field.name,
+    });
+  }
+  return null;
+}
+
 export const tablesUtils = {
+  getTemplateError,
   exportTables,
   getColumnIcon,
   exportRecords,
@@ -158,5 +293,17 @@ export const fileUtils = {
     }
 
     return { valid: true };
+  },
+
+  parseCsv: (file: File): Promise<string[][]> => {
+    return new Promise((resolve, reject) => {
+      parse<string[]>(file, {
+        header: false,
+        skipEmptyLines: 'greedy',
+        worker: true,
+        complete: (results) => resolve(results.data),
+        error: (error) => reject(error),
+      });
+    });
   },
 };

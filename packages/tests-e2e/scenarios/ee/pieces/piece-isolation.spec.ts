@@ -1,6 +1,9 @@
 import { gzipSync } from 'node:zlib';
 
+import { randomInt } from 'node:crypto';
 import { test } from '../../../fixtures';
+import { e2eFlows } from '../../../fixtures/flows';
+import { BuilderPage } from '../../../pages/builder.page';
 
 /**
  * EE: Bad piece isolation test.
@@ -12,11 +15,10 @@ import { test } from '../../../fixtures';
  * Requires a platform admin token (EE only).
  */
 test.describe('Piece isolation — EE', () => {
-  test('broken custom piece does not prevent webhook flow from running', async ({ page, automationsPage, builderPage, request }) => {
+  test('broken custom piece does not prevent webhook flow from running', async ({ page, request, session, seed }) => {
     test.setTimeout(180000);
 
-    const token = await page.evaluate(() => localStorage.getItem('token'));
-    const authHeaders = { Authorization: `Bearer ${token}` };
+    const authHeaders = { Authorization: `Bearer ${session.token}` };
 
     // Upload a bad custom piece that has workspace:* in its dependencies.
     // The archive is a minimal tarball with a package.json that contains a
@@ -48,40 +50,11 @@ test.describe('Piece isolation — EE', () => {
 
     // Even if the upload succeeds and bun fails to install the broken piece,
     // a regular Webhook flow must still execute successfully
-    await automationsPage.waitFor();
-    await automationsPage.newFlowFromScratch();
-
-    await builderPage.selectInitialTrigger({
-      piece: 'Webhook',
-      trigger: 'Catch Webhook'
-    });
-
-    const webhookInput = page.locator('input.grow.bg-background');
-    const webhookUrl = await webhookInput.inputValue();
-
-    await builderPage.testTrigger();
-
-    const runVersion = Math.floor(Math.random() * 100000);
-    await page.context().request.get(`${webhookUrl}?runVersion=${runVersion}`);
-    await page.waitForTimeout(3000);
-
-    await builderPage.addAction({
-      piece: 'Webhook',
-      action: 'Return Response'
-    });
-
-    await page.locator('div.cm-activeLine.cm-line').fill('');
-    await page.locator('div.cm-activeLine.cm-line').fill(
-      '{"runVersion": "{{trigger[\'output\'][\'queryParams\'][\'runVersion\']}}"}'
-    );
-
-    await page.waitForTimeout(1000);
-    await builderPage.publishFlow();
-
-    await builderPage.expectSyncWebhookResponse({
-      url: `${webhookUrl}/sync?runVersion=${runVersion}`,
-      key: 'runVersion',
-      expected: runVersion.toString(),
+    const { webhookUrl } = await e2eFlows.publishWebhookEchoFlow({ seed });
+    const value = randomInt(1, 1000000);
+    await new BuilderPage(page).expectSyncWebhookResponse({
+      url: `${webhookUrl}/sync?value=${value}`,
+      expected: { value: String(value) },
     });
   });
 });

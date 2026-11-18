@@ -1,103 +1,102 @@
-import { DropdownOption, Property } from '@activepieces/pieces-framework';
-import { makeRequest } from './client';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { DropdownState, Property } from '@activepieces/pieces-framework';
 import { pdfmonkeyAuth } from './auth';
+import { pdfmonkeyOperations } from './operations';
+
+async function dropdown({
+  auth,
+  load,
+}: {
+  auth: unknown;
+  load: () => Promise<{ options: { label: string; value: string }[]; truncated: boolean }>;
+}): Promise<DropdownState<string>> {
+  if (!auth) {
+    return { disabled: true, options: [], placeholder: 'Connect your PDFMonkey account first.' };
+  }
+  try {
+    const { options, truncated } = await load();
+    return {
+      disabled: false,
+      options,
+      placeholder: options.length === 0 ? 'Nothing found in this account.' : truncated ? `Showing the first ${options.length}; map an ID instead.` : 'Select one',
+    };
+  } catch (error) {
+    return { disabled: true, options: [], placeholder: `Could not load the list: ${error instanceof Error ? error.message : 'unknown error'}` };
+  }
+}
+
+function text(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
 
 export const templateIdDropdown = Property.Dropdown({
-	displayName: 'Template ID',
-	auth: pdfmonkeyAuth,
-	required: true,
-	refreshers: [],
-	options: async ({ auth }) => {
-		if (!auth) {
-			return {
-				disabled: true,
-				options: [],
-				placeholder: 'Please connect your account first.',
-			};
-		}
-
-		try {
-			let page = 1;
-			let hasMore = true;
-
-			const options: DropdownOption<string>[] = [];
-
-			do {
-				const response = await makeRequest<{
-					document_template_cards: Array<{ id: string; identifier: string }>;
-					meta: { total_pages: number; current_page: number };
-				}>(auth, HttpMethod.GET, '/document_template_cards',{ page: page.toString() });
-
-				const items = response.document_template_cards ?? [];
-
-				for (const template of items) {
-					options.push({ label: template.identifier, value: template.id });
-				}
-
-				page++;
-				hasMore = response.meta.current_page < response.meta.total_pages;
-			} while (hasMore);
-
-			return {
-				disabled: false,
-				options,
-			};
-		} catch (error) {
-			return {
-				disabled: true,
-				options: [],
-				placeholder: 'Error loading document templates.',
-			};
-		}
-	},
+  displayName: 'Template ID',
+  auth: pdfmonkeyAuth,
+  required: true,
+  refreshers: [],
+  options: async ({ auth }) =>
+    dropdown({
+      auth,
+      load: async () => {
+        const { templates, truncated } = await pdfmonkeyOperations.listTemplates({ auth });
+        return {
+          truncated,
+          options: templates
+            .filter((template) => typeof template['id'] === 'string')
+            .map((template) => ({ label: text(template['identifier']) || text(template['id']), value: text(template['id']) })),
+        };
+      },
+    }),
 });
 
 export const documentIdDropdown = Property.Dropdown({
-	displayName: 'Document ID',
-	required: true,
-	refreshers: [],
-	auth: pdfmonkeyAuth,
-	options: async ({ auth }) => {
-		if (!auth) {
-			return {
-				disabled: true,
-				options: [],
-				placeholder: 'Please connect your account first.',
-			};
-		}
+  displayName: 'Document ID',
+  required: true,
+  refreshers: [],
+  auth: pdfmonkeyAuth,
+  options: async ({ auth }) =>
+    dropdown({
+      auth,
+      load: async () => {
+        const { items, truncated } = await pdfmonkeyOperations.listAllDocumentCards({ auth, query: {} });
+        return {
+          truncated,
+          options: items
+            .filter((document) => typeof document['id'] === 'string')
+            .map((document) => ({
+              label: `${text(document['filename']) || text(document['document_template_identifier']) || 'Untitled'} (${text(document['status'])}, ${text(document['id']).slice(0, 8)})`,
+              value: text(document['id']),
+            })),
+        };
+      },
+    }),
+});
 
-		try {
-			let page = 1;
-			let hasMore = true;
+export const documentIdText = Property.ShortText({
+  displayName: 'Document ID',
+  description: 'The document ID (a UUID), e.g. from Generate Document or List Documents.',
+  required: true,
+});
 
-			const options: DropdownOption<string>[] = [];
+export const templateIdText = Property.ShortText({
+  displayName: 'Template ID',
+  description: 'The template ID (a UUID). Use List Templates to find it.',
+  required: true,
+});
 
-			do {
-				const response = await makeRequest<{
-					document_cards: Array<{ id: string; filename: string }>;
-					meta: { total_pages: number; current_page: number };
-				}>(auth, HttpMethod.GET, '/document_cards', { page: page.toString() });
+export const payloadProp = Property.Json({
+  displayName: 'Payload',
+  description: 'The data merged into the template, as a JSON object, e.g. {"clientName": "Jane Doe", "total": 120}.',
+  required: true,
+});
 
-				const items = response.document_cards ?? [];
+export const metaProp = Property.Json({
+  displayName: 'Meta',
+  description: 'Optional metadata to keep with the document, as a JSON object. It is returned with the document and in triggers.',
+  required: false,
+});
 
-				for (const doc of items) {
-					options.push({ label: doc.filename, value: doc.id });
-				}
-				page++;
-				hasMore = response.meta.current_page < response.meta.total_pages;
-			} while (hasMore);
-
-			return {
-				disabled: false,
-				options,
-			};
-		} catch (error) {
-			return {
-				disabled: true,
-				options: [],
-				placeholder: 'Error loading documents.',
-			};
-		}
-	},
+export const fileNameProp = Property.ShortText({
+  displayName: 'Custom File Name',
+  description: 'Name of the generated file, e.g. "Invoice 2026-001.pdf". Stored as the _filename meta key.',
+  required: false,
 });

@@ -67,7 +67,7 @@ const EnvironmentSettings = () => {
                       <Button
                         size={'sm'}
                         onClick={() => gitSync && mutate(gitSync.id)}
-                        className="w-32 text-destructive"
+                        className="w-32 text-danger-11"
                         variant={'basic'}
                       >
                         {t('Disconnect')}

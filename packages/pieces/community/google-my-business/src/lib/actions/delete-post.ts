@@ -8,7 +8,7 @@ export const deletePost = createAction({
   name: 'delete-post',
   classification: 'WRITE',
   displayName: 'Delete Post',
-  description: 'Deletes a post from a specified location.',
+  description: 'Delete a post from its location.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -18,9 +18,9 @@ export const deletePost = createAction({
   auth: googleAuth,
   props: {
     postName: Property.ShortText({
-      displayName: 'Post Name',
-      description:
-        'Full resource name of the post, as `accounts/{account}/locations/{location}/localPosts/{post}`.',
+      displayName: 'Post ID',
+      description: 'Paste the whole name field from Create Post or List Posts.',
+      placeholder: 'accounts/123/locations/456/localPosts/789',
       required: true,
     }),
   },

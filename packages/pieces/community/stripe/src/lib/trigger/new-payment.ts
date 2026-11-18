@@ -11,7 +11,7 @@ export const stripeNewPayment = createTrigger({
   name: 'new_payment',
   classification: 'READ',
   displayName: 'New Payment',
-  description: 'Triggers when a new payment is made',
+  description: 'Fires when a payment succeeds. Returns the payment.',
   aiMetadata: {
     description:
       'Fires when a payment succeeds in Stripe (the payment_intent.succeeded event), emitting the completed payment. Use to react to a successful payment, such as fulfilling an order or recording revenue.',

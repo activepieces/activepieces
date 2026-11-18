@@ -9,6 +9,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const uploadFileToProject = createAction({
 	name: 'upload_file_to_project',
+	classification: 'WRITE',
 	displayName: 'Upload File to Project',
 	description: 'Upload a file to a Teamwork project.',
 	audience: 'both',

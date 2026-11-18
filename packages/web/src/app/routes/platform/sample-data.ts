@@ -9,6 +9,7 @@ import {
   ApplicationEventName,
   buildMockEvent,
   EventDestination,
+  EventDestinationFormat,
   EventDestinationScope,
   ProjectRole,
   SecretManagerConnectionScope,
@@ -20,6 +21,8 @@ import {
   Template,
   TemplateStatus,
   TemplateType,
+  WorkerGroupScope,
+  WorkerGroupsOverview,
 } from '@activepieces/shared';
 
 const SAMPLE_PLATFORM_ID = 'sample-platform';
@@ -104,18 +107,40 @@ function projectRoles(): ProjectRole[] {
   }));
 }
 
+function defaultProjects(): SampleDefaultProject[] {
+  return [
+    { displayName: 'Company Wide', memberCount: 41 },
+    { displayName: 'Revenue Ops', memberCount: 12 },
+  ].map((entry, index) => ({
+    id: `sample-default-project-${index}`,
+    ...entry,
+  }));
+}
+
 function eventDestinations(): EventDestination[] {
   return [
-    'https://splunk.acme.com/services/collector',
-    'https://http-intake.logs.datadoghq.com/api/v2/logs',
-    'https://siem.acme.com/hooks/activepieces',
-  ].map((url, index) => ({
+    {
+      url: 'https://otlp.datadoghq.com/v1/logs',
+      format: EventDestinationFormat.OTLP_PROTOBUF,
+    },
+    {
+      url: 'https://us.i.posthog.com/i/v1/logs',
+      format: EventDestinationFormat.OTLP_JSON,
+    },
+    {
+      url: 'https://siem.acme.com/hooks/activepieces',
+      format: EventDestinationFormat.RAW,
+    },
+  ].map(({ url, format }, index) => ({
     id: `sample-destination-${index}`,
     ...agedTimestamps((index + 1) * 5 * 24 * 60),
     platformId: SAMPLE_PLATFORM_ID,
     scope: EventDestinationScope.PLATFORM,
     url,
     events: SAMPLE_EVENT_NAMES.slice(0, 4),
+    enabled: true,
+    headers: null,
+    format,
   }));
 }
 
@@ -204,6 +229,70 @@ function signingKeys(): SigningKey[] {
   }));
 }
 
+function workerGroupsOverview(): WorkerGroupsOverview {
+  return {
+    defaultGroup: {
+      online: 6,
+      slots: 24,
+      projectCount: 14,
+      flowCount: 0,
+      sample: [],
+    },
+    groups: [
+      {
+        label: 'Finance (EU)',
+        scope: WorkerGroupScope.PROJECT,
+        online: 2,
+        slots: 8,
+        waiting: 1,
+        projectCount: 3,
+        flowCount: 0,
+        sample: ['Billing', 'Payroll', 'Invoicing'],
+      },
+      {
+        label: 'Customer support',
+        scope: WorkerGroupScope.PROJECT,
+        online: 3,
+        slots: 12,
+        waiting: 0,
+        projectCount: 2,
+        flowCount: 0,
+        sample: ['Helpdesk', 'Live chat'],
+      },
+      {
+        label: 'High-volume webhooks',
+        scope: WorkerGroupScope.FLOW,
+        online: 2,
+        slots: 8,
+        waiting: 4,
+        projectCount: 0,
+        flowCount: 3,
+        sample: ['Stripe events', 'Shopify orders', 'Order sync'],
+      },
+      {
+        label: 'Nightly reports',
+        scope: WorkerGroupScope.FLOW,
+        online: 1,
+        slots: 4,
+        waiting: 2,
+        projectCount: 0,
+        flowCount: 2,
+        sample: ['Weekly churn digest', 'Revenue rollup'],
+      },
+      {
+        label: 'GPU flows',
+        scope: WorkerGroupScope.FLOW,
+        online: 1,
+        slots: 2,
+        waiting: 0,
+        projectCount: 0,
+        flowCount: 2,
+        sample: ['Invoice OCR', 'Image tagging'],
+      },
+    ],
+  };
+}
+
 export const sampleData = {
   signingKeys,
   templatesPage: () => toPage(templates()),
@@ -211,6 +300,14 @@ export const sampleData = {
   auditEventsPage: () => toPage(auditEvents()),
   globalConnectionsPage: () => toPage(globalConnections()),
   projectRolesPage: () => toPage(projectRoles()),
+  defaultProjects,
   eventDestinations,
   secretManagers,
+  workerGroupsOverview,
+};
+
+export type SampleDefaultProject = {
+  id: string;
+  displayName: string;
+  memberCount: number;
 };

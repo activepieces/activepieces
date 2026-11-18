@@ -7,6 +7,7 @@ import { common } from '../common';
 export const newMessageInTopic = createTrigger({
   auth: googlePubsubAuth,
   name: 'new_message_in_topic',
+  classification: 'READ',
   displayName: 'New Message',
   description: 'Trigger when a new message is sended.',
   aiMetadata: {

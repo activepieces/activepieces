@@ -3,12 +3,12 @@ import {
   apId,
   PieceSelectorTabConfig,
   PieceSelectorTabSection,
+  TelemetryEventName,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   CheckIcon,
   ChevronDownIcon,
-  Crown,
   EyeIcon,
   EyeOffIcon,
   GripVerticalIcon,
@@ -21,7 +21,9 @@ import {
 import { ReactNode, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { adminLayout } from '@/app/components/admin';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -52,7 +54,18 @@ import {
   SortableDragHandle,
   SortableItem,
 } from '@/components/ui/sortable';
-import { PLATFORM_FEATURES, useFeatureGate } from '@/features/billing';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  LockedFeature,
+  LockedGem,
+  ActionWhenLocked,
+  useLockedFeature,
+  usePlanThatHasFeature,
+} from '@/features/billing';
 import {
   PieceIcon,
   pieceSelectorCustomization,
@@ -61,10 +74,11 @@ import {
 } from '@/features/pieces';
 import { platformPiecesMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 const borderlessInputClass =
-  'border-transparent bg-transparent shadow-none hover:border-input focus-visible:bg-background';
+  'border-transparent bg-transparent dark:bg-transparent shadow-none hover:border-gray-6 focus-visible:bg-gray-1';
 
 export const CustomizeSelectorDialog = ({
   isEnabled,
@@ -72,37 +86,46 @@ export const CustomizeSelectorDialog = ({
   isEnabled: boolean;
 }) => {
   const [open, setOpen] = useState(false);
-  const gate = useFeatureGate({
-    locked: !isEnabled,
-    feature: PLATFORM_FEATURES.pieces,
+  const lockedFeature = useLockedFeature({
+    unlocked: isEnabled,
+    featureKey: 'PIECES',
   });
-
-  if (gate.locked) {
-    return (
-      <>
-        <Button variant="outline" size="sm" onClick={gate.open}>
-          <Crown className="size-3.5 shrink-0 text-primary" />
-          {t('Customize Selector')}
-        </Button>
-        {gate.dialog}
-      </>
-    );
-  }
+  const { capture } = useTelemetry();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Settings2Icon className="size-4 mr-2" />
+        <Button
+          {...adminControl(AdminControl.PIECES_SELECTOR_OPEN)}
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            if (lockedFeature.locked) {
+              capture({
+                name: TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
+                payload: {
+                  feature: 'PIECES',
+                  control: AdminControl.PIECES_SELECTOR_OPEN,
+                },
+              });
+            }
+          }}
+        >
+          {lockedFeature.locked ? (
+            <LockedGem className="text-accent-11" />
+          ) : (
+            <Settings2Icon />
+          )}
           {t('Customize Selector')}
         </Button>
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-lg flex flex-col gap-0 p-0"
+        className={cn(adminLayout.sheet.md, 'flex flex-col gap-0 p-0')}
       >
         <SelectorTabsEditor
           key={open ? 'open' : 'closed'}
+          lockedFeature={lockedFeature}
           onClose={() => setOpen(false)}
         />
       </SheetContent>
@@ -110,8 +133,18 @@ export const CustomizeSelectorDialog = ({
   );
 };
 
-const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
+const SelectorTabsEditor = ({
+  lockedFeature,
+  onClose,
+}: {
+  lockedFeature: LockedFeature;
+  onClose: () => void;
+}) => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
+  const plan = usePlanThatHasFeature('PIECES');
+  const saveLockedOnCommunity =
+    lockedFeature.actionWhenLocked === ActionWhenLocked.SWITCH_EDITION;
+  const communityLockedReason = t('Contact sales to unlock the piece selector');
   const [tabs, setTabs] = useState<PieceSelectorTabConfig[]>(
     platform.pieceSelectorConfig?.tabs.length
       ? platform.pieceSelectorConfig.tabs
@@ -175,7 +208,9 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
       toast.error(t('Sections must have a name'));
       return;
     }
-    saveMutation.mutate({ tabs: normalizedTabs }, { onSuccess: onClose });
+    lockedFeature.runOrShowLockedDialog(() =>
+      saveMutation.mutateAsync({ tabs: normalizedTabs }).then(onClose),
+    );
   };
 
   return (
@@ -211,7 +246,7 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
           <Button
             variant="outline"
             size="sm"
-            className="self-start text-muted-foreground mt-1"
+            className="self-start text-gray-11 mt-1"
             onClick={addCustomTab}
           >
             <PlusIcon className="size-4 mr-2" />
@@ -221,28 +256,76 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
       </ScrollArea>
 
       <SheetFooter className="flex-row justify-between px-6 py-4 border-t">
-        <ConfirmationDeleteDialog
-          title={t('Reset to default?')}
-          message={t('The piece selector will return to its default layout.')}
-          warning={t(
-            'All your custom tabs and sections will be permanently removed.',
-          )}
-          buttonText={t('Reset')}
-          entityName={t('customization')}
-          mutationFn={async () => {
-            await saveMutation.mutateAsync(null);
-            onClose();
-          }}
-        >
-          <Button variant="ghost">{t('Reset to default')}</Button>
-        </ConfirmationDeleteDialog>
-        <Button onClick={handleSave} loading={saveMutation.isPending}>
-          {t('Save')}
-        </Button>
+        {lockedFeature.locked ? (
+          <LockedReason
+            reason={saveLockedOnCommunity ? communityLockedReason : plan.label}
+          >
+            <Button variant="ghost" disabled>
+              {saveLockedOnCommunity && <LockedGem />}
+              {t('Reset to default')}
+            </Button>
+          </LockedReason>
+        ) : (
+          <ConfirmationDeleteDialog
+            title={t('Reset to default?')}
+            message={t('The piece selector will return to its default layout.')}
+            warning={t(
+              'All your custom tabs and sections will be permanently removed.',
+            )}
+            buttonText={t('Reset')}
+            entityName={t('customization')}
+            controlId={AdminControl.PIECES_SELECTOR_RESET_CONFIRM}
+            mutationFn={async () => {
+              await saveMutation.mutateAsync(null);
+              onClose();
+            }}
+          >
+            <Button
+              {...adminControl(AdminControl.PIECES_SELECTOR_RESET_OPEN)}
+              variant="ghost"
+            >
+              {t('Reset to default')}
+            </Button>
+          </ConfirmationDeleteDialog>
+        )}
+        {saveLockedOnCommunity ? (
+          <LockedReason reason={communityLockedReason}>
+            <Button disabled>
+              <LockedGem />
+              {t('Save')}
+            </Button>
+          </LockedReason>
+        ) : (
+          <Button
+            {...adminControl(AdminControl.PIECES_SELECTOR_SUBMIT)}
+            onClick={handleSave}
+            loading={saveMutation.isPending}
+          >
+            {lockedFeature.locked && <LockedGem />}
+            {t('Save')}
+          </Button>
+        )}
       </SheetFooter>
     </>
   );
 };
+
+function LockedReason({
+  reason,
+  children,
+}: {
+  reason: string;
+  children: ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span tabIndex={0}>{children}</span>
+      </TooltipTrigger>
+      <TooltipContent side="top">{reason}</TooltipContent>
+    </Tooltip>
+  );
+}
 
 const TabCard = ({
   tab,
@@ -290,16 +373,16 @@ const TabCard = ({
   return (
     <div
       className={cn(
-        'rounded-lg border bg-card transition-colors',
+        'rounded-xl border bg-panel transition-colors',
         tab.hidden && 'opacity-60',
-        expanded && 'border-primary/40',
+        expanded && 'border-accent-7',
       )}
     >
       <div className="flex items-center gap-1.5 p-2">
         <SortableDragHandle
           variant="ghost"
-          size="icon"
-          className="shrink-0 size-7 text-muted-foreground/50"
+          size="icon-xs"
+          className="text-gray-9"
         >
           <GripVerticalIcon className="size-4" />
         </SortableDragHandle>
@@ -319,8 +402,8 @@ const TabCard = ({
 
         <Button
           variant="ghost"
-          size="icon"
-          className="shrink-0 size-7 text-muted-foreground"
+          size="icon-xs"
+          className="text-gray-11"
           onClick={() => onChange({ hidden: !tab.hidden })}
           title={tab.hidden ? t('Show tab') : t('Hide tab')}
         >
@@ -334,8 +417,8 @@ const TabCard = ({
         {isCustom && (
           <Button
             variant="ghost"
-            size="icon"
-            className="shrink-0 size-7 text-muted-foreground"
+            size="icon-xs"
+            className="text-gray-11"
             onClick={() => setExpanded((prev) => !prev)}
             title={t('Pieces & sections')}
           >
@@ -363,7 +446,7 @@ const TabCard = ({
             {sections.map((section) => (
               <div
                 key={section.id}
-                className="flex items-center gap-1.5 rounded-md border bg-background pl-2 pr-1 py-1"
+                className="flex items-center gap-1.5 rounded-md border bg-gray-1 pl-2 pr-1 py-1"
               >
                 <Input
                   value={section.title}
@@ -382,8 +465,8 @@ const TabCard = ({
                 />
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="shrink-0 size-7 text-muted-foreground hover:text-destructive"
+                  size="icon-xs"
+                  className="text-gray-11 hover:text-danger-11"
                   onClick={() => removeSection(section.id)}
                   title={t('Delete section')}
                 >
@@ -394,7 +477,7 @@ const TabCard = ({
             <Button
               variant="ghost"
               size="sm"
-              className="self-start text-muted-foreground"
+              className="self-start text-gray-11"
               onClick={addSection}
             >
               <PlusIcon className="size-4 mr-2" />
@@ -406,7 +489,7 @@ const TabCard = ({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+              className="text-danger-11 hover:text-danger-11 hover:bg-danger-3"
               onClick={onRemove}
             >
               <TrashIcon className="size-4 mr-2" />
@@ -436,7 +519,7 @@ const PiecesPickerRow = ({
     <div className="flex items-center justify-between gap-2 p-3">
       <div className="flex flex-col">
         <span className="text-sm font-medium">{label}</span>
-        <span className="text-xs text-muted-foreground">{hint}</span>
+        <span className="text-xs text-gray-11">{hint}</span>
       </div>
       <PiecePickerButton
         pieces={pieces}
@@ -461,8 +544,8 @@ const TabIconPicker = ({
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          size="icon"
-          className="shrink-0 size-8 text-foreground hover:bg-muted"
+          size="icon-sm"
+          className="text-gray-12 hover:bg-gray-3"
         >
           {iconNode}
         </Button>
@@ -474,8 +557,9 @@ const TabIconPicker = ({
               key={key}
               variant="ghost"
               size="icon"
-              className={cn('size-9', {
-                'bg-accent text-primary': value === key,
+              className={cn({
+                'bg-gray-5 hover:bg-gray-5 text-accent-11 hover:text-accent-11':
+                  value === key,
               })}
               onClick={() => onChange(key)}
             >
@@ -533,11 +617,11 @@ const PiecePickerButton = ({
               <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
                 {selectedPieces.map((piece) => (
                   <SortableItem key={piece.name} value={piece.name} asChild>
-                    <div className="flex items-center gap-2 rounded-sm px-1 py-0.5">
+                    <div className="flex items-center gap-2 rounded-md px-1 py-0.5">
                       <SortableDragHandle
                         variant="ghost"
-                        size="icon"
-                        className="shrink-0 size-6 text-muted-foreground/60"
+                        size="icon-xs"
+                        className="text-gray-9"
                       >
                         <GripVerticalIcon className="size-3.5" />
                       </SortableDragHandle>
@@ -552,8 +636,7 @@ const PiecePickerButton = ({
                       </span>
                       <Button
                         variant="ghost"
-                        size="icon"
-                        className="shrink-0 size-6"
+                        size="icon-xs"
                         onClick={() => togglePiece(piece.name)}
                       >
                         <XIcon className="size-3.5" />
@@ -587,7 +670,7 @@ const PiecePickerButton = ({
                     />
                     <span className="grow truncate">{piece.displayName}</span>
                     {isSelected && (
-                      <CheckIcon className="size-4 text-primary" />
+                      <CheckIcon className="size-4 text-accent-11" />
                     )}
                   </CommandItem>
                 );

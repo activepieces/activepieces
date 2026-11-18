@@ -2,8 +2,7 @@ import { Permission } from '@activepieces/core-utils';
 import { FlowVersionState } from '@activepieces/shared';
 import { t } from 'i18next';
 import { EyeIcon, PencilIcon } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useLocation } from 'react-use';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { useAuthorization } from '@/hooks/authorization-hooks';

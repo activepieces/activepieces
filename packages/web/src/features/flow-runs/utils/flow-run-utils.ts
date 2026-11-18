@@ -4,6 +4,8 @@ import {
   FlowActionType,
   FlowRun,
   FlowRunStatus,
+  flowStructureUtil,
+  FlowVersion,
   isFailedState,
   StepOutput,
   StepOutputStatus,
@@ -19,6 +21,7 @@ import {
   Timer,
 } from 'lucide-react';
 
+import { Status, statusColors } from '@/lib/status-colors';
 import { cn } from '@/lib/utils';
 
 export const flowRunUtils = {
@@ -138,105 +141,76 @@ export const flowRunUtils = {
   },
 
   getStatusIconForStep(stepOutput: StepOutputStatus): {
-    variant: 'default' | 'success' | 'error';
     Icon: LucideIcon;
     text: string;
-    extraClassName?: string;
   } {
     switch (stepOutput) {
       case StepOutputStatus.RUNNING:
-        return {
-          variant: 'default',
-          Icon: Timer,
-          text: t('Running'),
-          extraClassName: 'text-foreground',
-        };
+        return { Icon: Timer, text: t('Running') };
       case StepOutputStatus.PAUSED:
-        return {
-          variant: 'default',
-          Icon: PauseIcon,
-          text: t('Paused'),
-        };
+        return { Icon: PauseIcon, text: t('Paused') };
       case StepOutputStatus.STOPPED:
       case StepOutputStatus.SUCCEEDED:
-        return {
-          variant: 'success',
-          Icon: CircleCheck,
-          text: t('Succeeded'),
-          extraClassName: 'text-success-700 dark:text-success-200',
-        };
+        return { Icon: CircleCheck, text: t('Succeeded') };
       case StepOutputStatus.FAILED:
-        return {
-          variant: 'error',
-          Icon: CircleAlert,
-          text: t('Failed'),
-          extraClassName: 'text-destructive-700 dark:text-destructive-200',
-        };
+        return { Icon: CircleAlert, text: t('Failed') };
     }
   },
 
-  getStatusContainerClassName(
-    variant: 'default' | 'success' | 'error' | 'warning',
+  getStatusContainerClassName({
+    status,
     withPaddingAndAnimation = false,
-  ) {
-    return cn('text-xs border rounded-md leading-tight', {
-      'text-success-800 bg-success-50 border-success-200 dark:text-success-200 dark:bg-success-900 dark:border-success-800':
-        variant === 'success',
-      'text-destructive-700 bg-destructive-50 border-destructive-200 dark:text-destructive-200 dark:bg-destructive-900 dark:border-destructive-800':
-        variant === 'error',
-      'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-600 dark:bg-amber-950 border-amber-500 dark:border-amber-900':
-        variant === 'warning',
-      'bg-background  border-border text-foreground': variant === 'default',
-      'flex gap-1 animate-in fade-in slide-in-from-bottom-2 duration-500 items-center  justify-center px-2 py-0.5':
-        withPaddingAndAnimation,
-    });
+  }: {
+    status: Status;
+    withPaddingAndAnimation?: boolean;
+  }) {
+    const colors = statusColors.of(status);
+    return cn(
+      'text-xs border rounded-md leading-tight',
+      colors.text,
+      colors.background,
+      colors.border,
+      withPaddingAndAnimation &&
+        'flex gap-1 animate-in fade-in slide-in-from-bottom-2 duration-500 items-center  justify-center px-2 py-0.5',
+    );
   },
 
-  getStatusIcon(status: FlowRunStatus): {
-    variant: 'default' | 'success' | 'error';
-    Icon: LucideIcon;
-  } {
+  getStatusIcon(status: FlowRunStatus): LucideIcon {
     switch (status) {
       case FlowRunStatus.QUEUED:
-        return {
-          variant: 'default',
-          Icon: Timer,
-        };
+        return Timer;
       case FlowRunStatus.RUNNING:
-        return {
-          variant: 'default',
-          Icon: Play,
-        };
-      case FlowRunStatus.FAILED:
-        return {
-          variant: 'error',
-          Icon: CircleAlert,
-        };
+        return Play;
       case FlowRunStatus.PAUSED:
-        return {
-          variant: 'default',
-          Icon: PauseIcon,
-        };
+        return PauseIcon;
       case FlowRunStatus.CANCELED:
-        return {
-          variant: 'default',
-          Icon: CircleX,
-        };
+        return CircleX;
       case FlowRunStatus.SUCCEEDED:
-        return {
-          variant: 'success',
-          Icon: CircleCheck,
-        };
+        return CircleCheck;
+      case FlowRunStatus.FAILED:
       case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
       case FlowRunStatus.LOG_SIZE_EXCEEDED:
       case FlowRunStatus.QUOTA_EXCEEDED:
       case FlowRunStatus.INTERNAL_ERROR:
       case FlowRunStatus.TIMEOUT:
-        return {
-          variant: 'error',
-          Icon: CircleAlert,
-        };
+        return CircleAlert;
     }
+  },
+  mayProcessInBatches({
+    versions,
+    includesUnlistedRuns,
+  }: {
+    versions: (FlowVersion | undefined)[];
+    includesUnlistedRuns: boolean;
+  }): boolean {
+    if (includesUnlistedRuns) {
+      return true;
+    }
+    return versions.some(
+      (version) =>
+        isNil(version) ||
+        flowStructureUtil.getBatchSteps(version.trigger).length > 0,
+    );
   },
   getStatusLabelOverride(status: FlowRunStatus): string | null {
     if (status === FlowRunStatus.QUOTA_EXCEEDED) {

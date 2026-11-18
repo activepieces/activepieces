@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createLead = createAction({
   auth: loftyAuth,
   name: 'createLead',
+  classification: 'WRITE',
   displayName: 'Create Lead',
   description: 'Create a lead in Lofty',
   audience: 'both',

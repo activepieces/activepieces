@@ -107,6 +107,7 @@ interface QuickBooksInvoiceLine {
 export const findInvoiceAction = createAction({
 	auth: quickbooksAuth,
 	name: 'find_invoice',
+	classification: 'READ',
 	displayName: 'Find Invoice',
 	description: 'Search for an invoice by its number in QuickBooks.',
 	audience: 'both',

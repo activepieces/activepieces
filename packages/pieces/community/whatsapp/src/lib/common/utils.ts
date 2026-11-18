@@ -18,77 +18,7 @@ export const mediaTypeSupportsCaption = (type: string) =>
 	['image', 'video', 'document'].includes(type);
 
 export const commonProps = {
-	phone_number_id: Property.Dropdown({
-		auth: whatsappAuth,
-		displayName: 'From Phone Number',
-		description: 'The business number the message is sent from.',
-		refreshers: [],
-		required: true,
-		options: async ({ auth }) => {
-			if (!auth) {
-				return {
-					placeholder: 'Please connect your account first',
-					disabled: true,
-					options: [],
-				};
-			}
-
-			const authValue = auth.props;
-
-			const options: DropdownOption<string>[] = [];
-
-			let hasMore = false;
-			let cursor: string | undefined;
-
-			do {
-				const qs: QueryParams = {
-					fields: 'verified_name,id,display_phone_number',
-					limit: '100',
-				};
-				if (cursor) qs['after'] = cursor;
-
-				const response = await httpClient.sendRequest<PhoneNumbersPage>({
-					method: HttpMethod.GET,
-					url: `https://graph.facebook.com/v20.0/${authValue.businessAccountId}/phone_numbers`,
-					authentication: {
-						type: AuthenticationType.BEARER_TOKEN,
-						token: authValue.access_token,
-					},
-					queryParams: qs,
-				});
-
-				for (const phoneNumber of response.body.data ?? []) {
-					options.push({
-						label: `${phoneNumber.verified_name} (${phoneNumber.display_phone_number})`,
-						value: phoneNumber.id,
-					});
-				}
-
-				const nextPage = response.body.paging?.next;
-				const nextCursor = response.body.paging?.cursors?.after;
-
-				if (nextPage && nextCursor) {
-					hasMore = true;
-					cursor = nextCursor;
-				} else {
-					hasMore = false;
-				}
-			} while (hasMore);
-
-			if (options.length === 0) {
-				return {
-					placeholder: 'No phone numbers found in this account',
-					disabled: false,
-					options: [],
-				};
-			}
-
-			return {
-				disabled: false,
-				options,
-			};
-		},
-	}),
+	phone_number_id: phoneNumberDropdown({ required: true }),
 	message_template_id: Property.Dropdown({
 		displayName: 'Template',
 		description: 'Only templates approved by WhatsApp are delivered.',
@@ -108,19 +38,18 @@ export const commonProps = {
 
 			const options: DropdownOption<string>[] = [];
 
-			let hasMore = false;
 			let cursor: string | undefined;
 
 			do {
 				const qs: QueryParams = {
 					fields: 'id,name,language',
-					limit: '100',
+					limit: String(DROPDOWN_PAGE_SIZE),
 				};
 				if (cursor) qs['after'] = cursor;
 
-				const response = await httpClient.sendRequest<TemplatesPage>({
+				const response = await httpClient.sendRequest<GraphPage<MessageTemplateRow>>({
 					method: HttpMethod.GET,
-					url: `https://graph.facebook.com/v20.0/${authValue.businessAccountId}/message_templates`,
+					url: `${WHATSAPP_API_BASE}/${authValue.businessAccountId}/message_templates`,
 					authentication: {
 						type: AuthenticationType.BEARER_TOKEN,
 						token: authValue.access_token,
@@ -135,16 +64,8 @@ export const commonProps = {
 					});
 				}
 
-				const nextPage = response.body.paging?.next;
-				const nextCursor = response.body.paging?.cursors?.after;
-
-				if (nextPage && nextCursor) {
-					hasMore = true;
-					cursor = nextCursor;
-				} else {
-					hasMore = false;
-				}
-			} while (hasMore);
+				cursor = nextCursor(response.body);
+			} while (cursor);
 
 			if (options.length === 0) {
 				return {
@@ -175,7 +96,7 @@ export const commonProps = {
 			const templateId = String(message_template_id);
 
 			const response = await httpClient.sendRequest<TemplateDetails>({
-				url: `https://graph.facebook.com/v20.0/${templateId}`,
+				url: `${WHATSAPP_API_BASE}/${templateId}`,
 				method: HttpMethod.GET,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
@@ -243,34 +164,87 @@ export const commonProps = {
 	}),
 };
 
-function escapeTemplatePlaceholders(text: string) {
-	return text.replace(/{{(\d+)}}/g, '`{`{$1`}`}');
+
+function nextCursor<T>(page: GraphPage<T>): string | undefined {
+	return page.paging?.next ? page.paging.cursors?.after : undefined;
 }
 
-type Paging = {
-	next?: string;
-	cursors?: {
-		after?: string;
-	};
+export function phoneNumberDropdown<R extends boolean>({ required }: { required: R }) {
+	return Property.Dropdown({
+		auth: whatsappAuth,
+		displayName: 'From Phone Number',
+		description: 'The business number the message is sent from.',
+		refreshers: [],
+		required,
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					placeholder: 'Please connect your account first',
+					disabled: true,
+					options: [],
+				};
+			}
+
+			const authValue = auth.props;
+
+			const options: DropdownOption<string>[] = [];
+
+			let cursor: string | undefined;
+
+			do {
+				const qs: QueryParams = {
+					fields: 'verified_name,id,display_phone_number',
+					limit: String(DROPDOWN_PAGE_SIZE),
+				};
+				if (cursor) qs['after'] = cursor;
+
+				const response = await httpClient.sendRequest<GraphPage<PhoneNumberRow>>({
+					method: HttpMethod.GET,
+					url: `${WHATSAPP_API_BASE}/${authValue.businessAccountId}/phone_numbers`,
+					authentication: {
+						type: AuthenticationType.BEARER_TOKEN,
+						token: authValue.access_token,
+					},
+					queryParams: qs,
+				});
+
+				for (const phoneNumber of response.body.data ?? []) {
+					options.push({
+						label: `${phoneNumber.verified_name} (${phoneNumber.display_phone_number})`,
+						value: phoneNumber.id,
+					});
+				}
+
+				cursor = nextCursor(response.body);
+			} while (cursor);
+
+			if (options.length === 0) {
+				return {
+					placeholder: 'No phone numbers found in this account',
+					disabled: false,
+					options: [],
+				};
+			}
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});
+}
+
+export const WHATSAPP_API_BASE = 'https://graph.facebook.com/v23.0';
+
+const DROPDOWN_PAGE_SIZE = 100;
+
+type GraphPage<T> = {
+	data?: T[];
+	paging?: { next?: string; cursors?: { after?: string } };
 };
 
-type PhoneNumbersPage = {
-	data?: {
-		id: string;
-		verified_name: string;
-		display_phone_number: string;
-	}[];
-	paging?: Paging;
-};
-
-type TemplatesPage = {
-	data?: {
-		id: string;
-		name: string;
-		language: string;
-	}[];
-	paging?: Paging;
-};
+type PhoneNumberRow = { id: string; verified_name: string; display_phone_number: string };
+type MessageTemplateRow = { id: string; name: string; language: string };
 
 type TemplateDetails = {
 	components?: {
@@ -284,3 +258,7 @@ type TemplateDetails = {
 		}[];
 	}[];
 };
+
+function escapeTemplatePlaceholders(text: string) {
+	return text.replace(/{{(\d+)}}/g, '`{`{$1`}`}');
+}

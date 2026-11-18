@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { BranchCondition, BranchExecutionType, FlowActionType, flowCanvasUtils, flowStructureUtil, FlowTriggerType, McpToolDefinition, Note, ProjectScopedMcpServer, StepLocationRelativeToParent } from '@activepieces/shared'
+import { BranchCondition, BranchExecutionType, FlowActionType, flowCanvasUtils, flowStructureUtil, FlowTrigger, FlowTriggerType, McpToolDefinition, Note, ProjectScopedMcpServer, StepLocationRelativeToParent } from '@activepieces/shared'
 import type { Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -11,7 +11,7 @@ type StepInfo = {
     type: string
     displayName: string
     parentName: string | null
-    relationship: 'trigger' | 'next' | 'first_loop_action' | 'branch' | 'on_success_branch' | 'on_failure_branch'
+    relationship: 'trigger' | 'next' | 'first_loop_action' | 'first_batch_action' | 'branch' | 'on_success_branch' | 'on_failure_branch'
     branchIndex?: number
     branchName?: string
     valid: boolean
@@ -19,8 +19,8 @@ type StepInfo = {
     configStatus: string
 }
 
-function getConfigStatus(step: Step): string {
-    if ((step as { skip?: boolean }).skip) return 'skipped'
+function getConfigStatus({ step, skippedStepNames }: { step: Step, skippedStepNames: Set<string> }): string {
+    if (skippedStepNames.has(step.name)) return 'skipped'
     if (step.valid) return 'configured'
     const s = step.settings as { triggerName?: string, actionName?: string }
     switch (step.type) {
@@ -34,6 +34,8 @@ function getConfigStatus(step: Step): string {
             return 'invalid (check sourceCode/input)'
         case FlowActionType.LOOP_ON_ITEMS:
             return 'invalid (loopItems expression missing or invalid)'
+        case FlowActionType.PROCESS_IN_BATCHES:
+            return 'invalid (loopItems expression missing or batchSize below 1)'
         case FlowActionType.ROUTER:
             return 'invalid (check branch conditions)'
         case FlowActionType.AI_ROUTER:
@@ -80,6 +82,12 @@ function formatStepSettings(step: Step): string[] {
             lines.push(`  loopItems: ${items}`)
         }
     }
+    else if (step.type === FlowActionType.PROCESS_IN_BATCHES) {
+        if (step.settings.items) {
+            lines.push(`  loopItems: ${step.settings.items}`)
+        }
+        lines.push(`  batchSize: ${step.settings.batchSize}`)
+    }
     return lines
 }
 
@@ -91,6 +99,8 @@ function formatRelationshipLabel(step: StepInfo): string {
             return 'after parent'
         case 'first_loop_action':
             return 'inside_loop'
+        case 'first_batch_action':
+            return 'inside_batch'
         case 'on_success_branch':
             return 'on_success_branch'
         case 'on_failure_branch':
@@ -114,8 +124,9 @@ function formatBranchConditions(conditions: BranchCondition[][]): string {
     return groups.join(' OR ')
 }
 
-function buildFlowStructure(trigger: Step): { structure: StepInfo[], stepByName: Map<string, Step> } {
+function buildFlowStructure(trigger: FlowTrigger): { structure: StepInfo[], stepByName: Map<string, Step> } {
     const allSteps = flowStructureUtil.getAllSteps(trigger)
+    const skippedStepNames = flowStructureUtil.getSkippedStepNames({ trigger })
     const stepByName = new Map(allSteps.map(s => [s.name, s]))
     const structure = allSteps.map((step): StepInfo => {
         if (flowStructureUtil.isTrigger(step.type)) {
@@ -126,8 +137,8 @@ function buildFlowStructure(trigger: Step): { structure: StepInfo[], stepByName:
                 parentName: null,
                 relationship: 'trigger',
                 valid: step.valid,
-                skip: (step as { skip?: boolean }).skip,
-                configStatus: getConfigStatus(step),
+                skip: skippedStepNames.has(step.name),
+                configStatus: getConfigStatus({ step, skippedStepNames }),
             }
         }
         let parentName: string | null = null
@@ -140,9 +151,9 @@ function buildFlowStructure(trigger: Step): { structure: StepInfo[], stepByName:
                 relationship = 'next'
                 break
             }
-            if (parent.type === FlowActionType.LOOP_ON_ITEMS && (parent as { firstLoopAction?: { name: string } }).firstLoopAction?.name === step.name) {
+            if (flowCanvasUtils.isLoopOrBatchStep(parent) && parent.firstLoopAction?.name === step.name) {
                 parentName = parent.name
-                relationship = 'first_loop_action'
+                relationship = parent.type === FlowActionType.PROCESS_IN_BATCHES ? 'first_batch_action' : 'first_loop_action'
                 break
             }
             if (flowStructureUtil.isBranchedAction(parent)) {
@@ -177,8 +188,8 @@ function buildFlowStructure(trigger: Step): { structure: StepInfo[], stepByName:
             relationship,
             ...(relationship === 'branch' && { branchIndex, branchName }),
             valid: step.valid,
-            skip: (step as { skip?: boolean }).skip,
-            configStatus: getConfigStatus(step),
+            skip: skippedStepNames.has(step.name),
+            configStatus: getConfigStatus({ step, skippedStepNames }),
         }
     })
     return { structure, stepByName }
@@ -271,6 +282,9 @@ function formatFlowStructure(
         if (step.type === FlowActionType.LOOP_ON_ITEMS) {
             lines.push(`  Inside loop of "${step.name}": parentStepName="${step.name}", stepLocationRelativeToParent="${StepLocationRelativeToParent.INSIDE_LOOP}"`)
         }
+        if (step.type === FlowActionType.PROCESS_IN_BATCHES) {
+            lines.push(`  Inside batch body of "${step.name}": parentStepName="${step.name}", stepLocationRelativeToParent="${StepLocationRelativeToParent.INSIDE_BATCH}"`)
+        }
         const branchedStep = stepByName.get(step.name)
         if (!isNil(branchedStep) && flowStructureUtil.isBranchedAction(branchedStep)) {
             branchedStep.settings.branches.forEach((b, i) => {
@@ -289,7 +303,9 @@ function formatFlowStructure(
     }
 
     lines.push('')
-    lines.push('Step types: trigger = EMPTY | PIECE_TRIGGER; action = CODE | PIECE | LOOP_ON_ITEMS | ROUTER')
+    lines.push('Step types: trigger = EMPTY | PIECE_TRIGGER; action = CODE | PIECE | LOOP_ON_ITEMS | PROCESS_IN_BATCHES | ROUTER')
+    lines.push('PROCESS_IN_BATCHES ("Process in Batches") splits its items into batches and runs its nestable body once per batch.')
+    lines.push(mcpUtils.BATCH_ITEMS_HINT)
     lines.push('')
     lines.push('## Referencing step outputs')
     lines.push(mcpUtils.STEP_REFERENCE_HINT)

@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, isNil, TriggerStrategy } from '@activepieces/pieces-framework';
 import { assembledCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { assembledAuth } from '../common/auth';
@@ -32,6 +32,9 @@ export const timeOffStatusChanged = createTrigger({
     }
   },
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get('lastStatusCheck'))) {
+      return;
+    }
     await context.store.put('lastStatusCheck', Math.floor(Date.now() / 1000));
   },
   async onDisable() {

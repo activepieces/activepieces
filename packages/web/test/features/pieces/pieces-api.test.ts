@@ -31,6 +31,64 @@ describe('piecesApi.options', () => {
     ).rejects.toBe(failure);
   });
 
+  it('rejects for DYNAMIC when the engine answers with the dropdown placeholder', async () => {
+    post.mockResolvedValue({
+      type: PropertyType.DYNAMIC,
+      options: {
+        disabled: true,
+        options: [],
+        placeholder: 'Throws an error, reconnect or refresh the page',
+      },
+    });
+
+    await expect(
+      piecesApi.options(request, PropertyType.DYNAMIC),
+    ).rejects.toThrow();
+  });
+
+  it('rejects for DYNAMIC when the engine answers with an empty body', async () => {
+    post.mockResolvedValue('');
+
+    await expect(
+      piecesApi.options(request, PropertyType.DYNAMIC),
+    ).rejects.toThrow();
+  });
+
+  it('resolves for DYNAMIC when the engine answers with a property map', async () => {
+    const response = {
+      type: PropertyType.DYNAMIC,
+      options: {
+        url: { type: PropertyType.SHORT_TEXT, displayName: 'URL' },
+      },
+    };
+    post.mockResolvedValue(response);
+
+    await expect(
+      piecesApi.options(request, PropertyType.DYNAMIC),
+    ).resolves.toBe(response);
+  });
+
+  it('resolves for DYNAMIC when the engine answers with an empty property map', async () => {
+    const response = { type: PropertyType.DYNAMIC, options: {} };
+    post.mockResolvedValue(response);
+
+    await expect(
+      piecesApi.options(request, PropertyType.DYNAMIC),
+    ).resolves.toBe(response);
+  });
+
+  it('resolves the engine placeholder unchanged for DROPDOWN', async () => {
+    const response = {
+      type: PropertyType.DROPDOWN,
+      options: { disabled: true, options: [], placeholder: 'reconnect' },
+    };
+    post.mockResolvedValue(response);
+
+    await expect(
+      piecesApi.options(request, PropertyType.DROPDOWN),
+    ).resolves.toBe(response);
+  });
+
   it('resolves a disabled dropdown state for DROPDOWN', async () => {
     post.mockRejectedValue(new Error('boom'));
 

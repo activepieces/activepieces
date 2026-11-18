@@ -3,10 +3,10 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { appWebhookSetupInfo, getChannels, multiSelectChannelInfo, userId } from '../common/props';
+import { appWebhookSetupInfo, onlyBotChannels, slackChannels, multiSelectChannelInfo, userId } from '../common/props';
 import { slackAuth } from '../auth';
 import { parseCommand } from '../common/utils';
-import { getBotToken, getTeamId, SlackAuthValue } from '../common/auth-helpers';
+import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
 import { newCommandTriggerOutputSchema } from '../output-schemas';
 
 export const newCommand = createTrigger({
@@ -20,6 +20,36 @@ export const newCommand = createTrigger({
     description:
       'Fires when a channel or group message addressed to the bot contains one of the configured commands (e.g., "@bot help" or "@bot ocr"). Can be optionally filtered to specific channels, and bot messages can be ignored. The event payload includes the original message plus a parsed_command object with the recognized command and its arguments.',
   },
+  propertyGroups: [
+    {
+      key: 'user_picker',
+      display: 'section',
+      label: 'User',
+      icon: 'user',
+      props: ['webhookInfo', 'user'],
+    },
+    {
+      key: 'command',
+      display: 'section',
+      label: 'Command',
+      icon: 'code',
+      props: ['commands'],
+    },
+    {
+      key: 'channel_picker',
+      display: 'section',
+      label: 'Channel',
+      icon: 'markdown',
+      props: ['info', 'onlyBotChannels', 'channels'],
+    },
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['ignoreBots'],
+    },
+  ],
   props: {
     webhookInfo: appWebhookSetupInfo,
     info: multiSelectChannelInfo,
@@ -30,29 +60,8 @@ export const newCommand = createTrigger({
       required: true,
       defaultValue: ['help'],
     }),
-    channels: Property.MultiSelectDropdown({
-      auth: slackAuth,
-      displayName: 'Channels',
-      description: 'Empty means every channel the bot is in.',
-      required: false,
-      refreshers: [],
-      async options({ auth }) {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'connect slack account',
-            options: [],
-          };
-        }
-        const accessToken = getBotToken(auth as SlackAuthValue);
-        const channels = await getChannels(accessToken);
-        return {
-          disabled: false,
-          placeholder: 'Select channel',
-          options: channels,
-        };
-      },
-    }),
+    onlyBotChannels,
+    channels: slackChannels,
     ignoreBots: Property.Checkbox({
       displayName: 'Ignore Bot Messages',
       description: 'Skip messages posted by bots and apps.',

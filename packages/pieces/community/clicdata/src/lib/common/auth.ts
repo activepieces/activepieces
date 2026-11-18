@@ -3,7 +3,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { clicdataApiCall } from './client';
 import { AppConnectionType } from '@activepieces/pieces-framework';
 
@@ -41,6 +41,8 @@ export const clicdataAuth = [
         };
       }
     },
+    getConnectionIdentifier: async ({ auth }) =>
+      fetchAccountLabel({ Authorization: `Bearer ${auth.access_token}` }),
   }),
   PieceAuth.SecretText({
     displayName: 'API Key',
@@ -64,6 +66,8 @@ export const clicdataAuth = [
         };
       }
     },
+    getConnectionIdentifier: async ({ auth }) =>
+      fetchAccountLabel({ 'CLICDATA-API-KEY': auth }),
   }),
   PieceAuth.CustomAuth({
     displayName: 'Basic Auth',
@@ -105,9 +109,31 @@ export const clicdataAuth = [
         };
       }
     },
+    getConnectionIdentifier: async ({ auth }) =>
+      auth.userEmail?.trim() || undefined,
   }),
 ];
 
 export type ClicdataAuthValue = AppConnectionValueForAuthProperty<
   typeof clicdataAuth
 >;
+
+async function fetchAccountLabel(
+  headers: Record<string, string>
+): Promise<string | undefined> {
+  try {
+    const response = await httpClient.sendRequest<{
+      result?: { name?: string; domain?: string };
+    }>({
+      method: HttpMethod.GET,
+      url: 'https://api.clicdata.com/account',
+      queryParams: { api_version: '2022.01' },
+      headers,
+      timeout: 5000,
+    });
+    const account = response.body.result;
+    return account?.name || account?.domain || undefined;
+  } catch {
+    return undefined;
+  }
+}

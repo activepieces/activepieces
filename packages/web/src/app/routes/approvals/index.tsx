@@ -16,25 +16,24 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { FormattedDate } from '@/components/custom/formatted-date';
-import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { StatusBadge } from '@/components/custom/status-badge';
 import { Button } from '@/components/ui/button';
 import { flowApprovalsHooks } from '@/features/flow-approvals';
 import { authenticationSession } from '@/lib/authentication-session';
 
-const stateVariant = (
+const stateIcon = (
   state: FlowApprovalRequestState,
 ): {
-  variant: 'default' | 'success' | 'error';
   Icon: typeof ShieldAlert;
   text: string;
 } => {
   switch (state) {
     case FlowApprovalRequestState.PENDING:
-      return { variant: 'default', Icon: ShieldAlert, text: t('Pending') };
+      return { Icon: ShieldAlert, text: t('Pending') };
     case FlowApprovalRequestState.APPROVED:
-      return { variant: 'success', Icon: CircleCheck, text: t('Approved') };
+      return { Icon: CircleCheck, text: t('Approved') };
     case FlowApprovalRequestState.REJECTED:
-      return { variant: 'error', Icon: CircleX, text: t('Rejected') };
+      return { Icon: CircleX, text: t('Rejected') };
   }
 };
 
@@ -78,7 +77,7 @@ export function ApprovalsPage() {
       cell: ({ row }) => (
         <span className="font-medium">
           {row.original.flowVersion?.displayName ?? (
-            <span className="text-muted-foreground">{row.original.flowId}</span>
+            <span className="text-gray-11">{row.original.flowId}</span>
           )}
         </span>
       ),
@@ -87,15 +86,17 @@ export function ApprovalsPage() {
       accessorKey: 'state',
       header: () => <span>{t('State')}</span>,
       cell: ({ row }) => {
-        const { variant, Icon, text } = stateVariant(row.original.state);
-        return <StatusIconWithText icon={Icon} text={text} variant={variant} />;
+        const { Icon, text } = stateIcon(row.original.state);
+        return (
+          <StatusBadge status={row.original.state} icon={Icon} text={text} />
+        );
       },
     },
     {
       accessorKey: 'submittedAt',
       header: () => <span>{t('Submitted')}</span>,
       cell: ({ row }) => (
-        <span className="text-muted-foreground">
+        <span className="text-gray-11">
           <FormattedDate
             date={new Date(row.original.submittedAt)}
             includeTime
@@ -127,7 +128,7 @@ export function ApprovalsPage() {
         <h1 className="text-2xl font-semibold tracking-tight">
           {t('Pending approvals')}
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-gray-11">
           {t('Flows awaiting approval to publish.')}
         </p>
       </div>
@@ -143,9 +144,7 @@ export function ApprovalsPage() {
         emptyStateTextDescription={t(
           'When users request approval for sensitive flows, they will appear here.',
         )}
-        emptyStateIcon={
-          <ShieldAlert className="size-12 text-muted-foreground" />
-        }
+        emptyStateIcon={<ShieldAlert className="size-12 text-gray-11" />}
       />
     </div>
   );

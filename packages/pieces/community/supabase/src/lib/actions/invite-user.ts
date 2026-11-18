@@ -17,16 +17,18 @@ export const inviteUser = createAction({
     props: {
         email: Property.ShortText({
             displayName: 'Email',
+            placeholder: 'jane@example.com',
             required: true,
         }),
         userMetadata: Property.Json({
             displayName: 'User Metadata',
-            description: 'Custom data to attach to the user, as a JSON object.',
+            description: 'Custom data saved on the user, as JSON.',
             required: false,
         }),
         redirectTo: Property.ShortText({
             displayName: 'Redirect URL',
-            description: 'Where to redirect the user after they accept the invite.',
+            description: 'Page the user lands on after accepting.',
+            placeholder: 'https://example.com/welcome',
             required: false,
         }),
     },

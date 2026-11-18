@@ -1,6 +1,8 @@
-import { ApFlagId } from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { ApFlagId, EmbedSubdomainStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -78,5 +80,144 @@ describe('Flags API', () => {
             expect(theme.colors['blue-link']).toBe('#1890ff')
         })
 
+        it('should return the status colors saved under status, whatever their hex', async () => {
+            const ctx = await createTestContext(app!, {
+                platform: {
+                    themeColors: {
+                        status: {
+                            danger: '#f94949',
+                            success: '#00a367',
+                        },
+                    },
+                },
+                plan: {
+                    customAppearanceEnabled: true,
+                },
+            })
+
+            const response = await ctx.get('/v1/flags')
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(response.json()[ApFlagId.THEME].statusColors).toStrictEqual({
+                danger: '#f94949',
+                success: '#00a367',
+            })
+        })
+
+        it('should not read status colors from the fields the old form saved', async () => {
+            const ctx = await createTestContext(app!, {
+                platform: {
+                    themeColors: {
+                        avatar: '#515151',
+                        danger: '#e82c51',
+                        warn: {
+                            default: '#f78a3b',
+                        },
+                    },
+                },
+                plan: {
+                    customAppearanceEnabled: true,
+                },
+            })
+
+            const response = await ctx.get('/v1/flags')
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(response.json()[ApFlagId.THEME].statusColors).toStrictEqual({})
+        })
+
+        it('should return no status colors when the platform has not set any', async () => {
+            const ctx = await createTestContext(app!, {
+                plan: {
+                    customAppearanceEnabled: true,
+                },
+            })
+
+            const response = await ctx.get('/v1/flags')
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(response.json()[ApFlagId.THEME].statusColors).toStrictEqual({})
+        })
+
+        it('should return no status colors when custom appearance is not in the plan', async () => {
+            const ctx = await createTestContext(app!, {
+                platform: {
+                    themeColors: {
+                        status: {
+                            danger: '#e82c51',
+                        },
+                    },
+                },
+                plan: {
+                    customAppearanceEnabled: false,
+                },
+            })
+
+            const response = await ctx.get('/v1/flags')
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(response.json()[ApFlagId.THEME].statusColors).toStrictEqual({})
+        })
+
+        describe('EMBED_SUBDOMAIN_URL', () => {
+            it('should not return the embed subdomain url when the platform has no embed subdomain', async () => {
+                const ctx = await createTestContext(app!)
+
+                const response = await ctx.get('/v1/flags')
+
+                expect(response.statusCode).toBe(StatusCodes.OK)
+                expect(response.json()).not.toHaveProperty(ApFlagId.EMBED_SUBDOMAIN_URL)
+            })
+
+            it('should not return the embed subdomain url while the embed subdomain is pending verification', async () => {
+                const ctx = await createTestContext(app!)
+                await saveEmbedSubdomain({ platformId: ctx.platform.id, status: EmbedSubdomainStatus.PENDING_VERIFICATION })
+
+                const response = await ctx.get('/v1/flags')
+
+                expect(response.statusCode).toBe(StatusCodes.OK)
+                expect(response.json()).not.toHaveProperty(ApFlagId.EMBED_SUBDOMAIN_URL)
+            })
+
+            it('should return the active embed subdomain url and keep the public url on the instance', async () => {
+                const ctx = await createTestContext(app!)
+                const publicUrlBefore = (await ctx.get('/v1/flags')).json()[ApFlagId.PUBLIC_URL]
+                const hostname = await saveEmbedSubdomain({ platformId: ctx.platform.id, status: EmbedSubdomainStatus.ACTIVE })
+
+                const response = await ctx.get('/v1/flags')
+
+                expect(response.statusCode).toBe(StatusCodes.OK)
+                const body = response.json()
+                expect(body[ApFlagId.EMBED_SUBDOMAIN_URL]).toBe(`https://${hostname}/`)
+                expect(body[ApFlagId.WEBHOOK_URL_PREFIX]).toBe(`https://${hostname}/api/v1/webhooks`)
+                expect(body[ApFlagId.PUBLIC_URL]).toBe(publicUrlBefore)
+            })
+
+            it('should not return another platform\'s embed subdomain url', async () => {
+                const platformWithSubdomain = await createTestContext(app!)
+                await saveEmbedSubdomain({ platformId: platformWithSubdomain.platform.id, status: EmbedSubdomainStatus.ACTIVE })
+                const otherPlatform = await createTestContext(app!)
+
+                const response = await otherPlatform.get('/v1/flags')
+
+                expect(response.statusCode).toBe(StatusCodes.OK)
+                expect(response.json()).not.toHaveProperty(ApFlagId.EMBED_SUBDOMAIN_URL)
+            })
+        })
     })
 })
+
+async function saveEmbedSubdomain({ platformId, status }: { platformId: string, status: EmbedSubdomainStatus }): Promise<string> {
+    const hostname = `test-${apId().slice(0, 8).toLowerCase()}.example.com`
+    await databaseConnection().getRepository('embed_subdomain').save({
+        id: apId(),
+        created: new Date().toISOString(),
+        updated: new Date().toISOString(),
+        platformId,
+        hostname,
+        status,
+        cloudflareId: `cf-${apId()}`,
+        verificationRecords: [],
+    })
+    return hostname
+}

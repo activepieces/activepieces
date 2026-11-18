@@ -64,7 +64,7 @@ describe('POST /v1/agents/runs', () => {
     })
 
     it('keeps flow-step runs out of the owner\'s chat list', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
         const engineToken = await accessTokenManager(app.log).generateEngineToken({
             jobId: 'job-3',
             projectId: ctx.project.id,

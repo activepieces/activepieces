@@ -10,6 +10,7 @@ import { fetchEntityTypesForReading } from '../common/drupal-entities';
 export const drupalGetEntityAction = createAction({
   auth: drupalAuth,
   name: 'drupal-get-entity',
+  classification: 'READ',
   displayName: 'Get Entity',
   description: 'Retrieve a single entity by UUID',
   audience: 'both',

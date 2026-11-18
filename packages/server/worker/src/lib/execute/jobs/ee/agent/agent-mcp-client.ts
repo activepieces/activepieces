@@ -2,19 +2,33 @@ import { isNil, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils, mcpTransport } from '@activepieces/server-utils'
 import { AgentMcpTool, agentToolPhases, McpAuthConfig, McpAuthType, mcpToolNameUtils } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
-import { ToolExecutionOptions, ToolSet } from 'ai'
+import { asSchema, jsonSchema, Tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
 import { agentWorkerTools } from './agent-worker-tools'
-import { TaintState } from './tools/tool-primitives'
+import { cardTitleFields, plainJsonSchema, TaintState } from './tools/tool-primitives'
 
 const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
 const MCP_OFFLOAD_BYTES = 64 * 1024
+const CARD_TITLE_SCHEMA = asSchema(z.object(cardTitleFields))
 
 const MCP_CONNECTOR_NAME_PATTERN = /^mcp__([^_]+)__/
 // High-precision: matched against tool RESULT text (which can contain user/CRM data), so it
 // only fires on explicit auth signals. Low-precision alternations that match ordinary prose —
 // bare "reconnect", generic "invalid token", bare "oauth" — are deliberately excluded.
 const MCP_AUTH_ERROR_PATTERN = /\b(401|403)\b|unauthorized|forbidden|token (has )?(expired|revoked)|re-?authenticat|authentication (failed|error|required)|not (authenticated|authorized)|oauth\s*error/i
+
+function withCardTitleFields(tool: Tool): Tool {
+    const original = asSchema(tool.inputSchema)
+    return {
+        ...tool,
+        inputSchema: jsonSchema(async () => {
+            const base = plainJsonSchema(await original.jsonSchema)
+            const titles = plainJsonSchema(await CARD_TITLE_SCHEMA.jsonSchema)
+            return { ...base, properties: { ...titles.properties, ...base.properties } }
+        }),
+    }
+}
 
 async function connectMcpClient({ mcpCredentials, conversationId, log }: {
     mcpCredentials: { mcpServerUrl: string, mcpToken: string } | null
@@ -27,15 +41,18 @@ async function connectMcpClient({ mcpCredentials, conversationId, log }: {
 
     const { mcpServerUrl, mcpToken } = mcpCredentials
 
-    const { data: client, error } = await tryCatch(async () => createMCPClient({
-        transport: {
-            type: 'http',
-            url: mcpServerUrl,
-            headers: {
-                'Authorization': `Bearer ${mcpToken}`,
-                [CONVERSATION_ID_HEADER]: conversationId,
+    const { data: client, error } = await tryCatch(() => retryOnceOnServerError({
+        fn: () => createMCPClient({
+            transport: {
+                type: 'http',
+                url: mcpServerUrl,
+                headers: {
+                    'Authorization': `Bearer ${mcpToken}`,
+                    [CONVERSATION_ID_HEADER]: conversationId,
+                },
             },
-        },
+        }),
+        log,
     }))
 
     if (!client) {
@@ -43,14 +60,32 @@ async function connectMcpClient({ mcpCredentials, conversationId, log }: {
         return { mcpClient: null, mcpToolSet: {} }
     }
 
-    const allMcpTools = await client.tools()
+    const { data: allMcpTools, error: listError } = await tryCatch(() => retryOnceOnServerError({ fn: () => client.tools(), log }))
+    if (!allMcpTools) {
+        await client.close().catch(() => undefined)
+        throw listError
+    }
     const mcpToolSet: Record<string, unknown> = {}
     for (const [name, tool] of Object.entries(allMcpTools)) {
         if (!agentToolPhases.isAgentHiddenTool(name)) {
-            mcpToolSet[name] = tool
+            mcpToolSet[name] = withCardTitleFields(tool)
         }
     }
     return { mcpClient: client, mcpToolSet }
+}
+
+async function retryOnceOnServerError<T>({ fn, log }: {
+    fn: () => Promise<T>
+    log: FastifyBaseLogger
+}): Promise<T> {
+    return fn().catch((error: unknown) => {
+        const isServerError = (extractErrorStatus(error) ?? 0) >= 500
+        if (!isServerError) {
+            throw error
+        }
+        log.warn({ error }, 'Platform MCP request hit a server error, retrying once')
+        return fn()
+    })
 }
 
 function mcpAuthSecrets(auth: McpAuthConfig): string[] {

@@ -6,6 +6,7 @@ import { customPropertiesProp, mergeCustomProperties } from '../common/custom-pr
 
 export const createDealAction = createAction({
   name: 'create_deal',
+  classification: 'WRITE',
   auth: outsetaAuth,
   displayName: 'Create Deal',
   description: 'Create a new deal in the CRM.',

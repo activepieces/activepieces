@@ -662,8 +662,8 @@ export const triggers = [
     displayName: 'Folder Deleted',
     description: 'Triggered when a folder is deleted.',
     sampleData: {
-      "event": "listDeleted",
-      "list_id": "162641543",
+      "event": "folderDeleted",
+      "folder_id": "162641543",
       "webhook_id": "7fa3ec74-69a8-4530-a251-8a13730bd204"
     }
   },

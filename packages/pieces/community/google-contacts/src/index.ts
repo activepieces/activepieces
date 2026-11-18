@@ -28,7 +28,7 @@ import { googleContactNewOrUpdatedContact } from './lib/trigger/new-contact';
 import { googleContactsAuth } from './lib/auth';
 
 export const googleContacts = createPiece({
-  minimumSupportedRelease: '0.87.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-contacts.png',
   categories: [PieceCategory.SALES_AND_CRM],
   actions: [
@@ -60,6 +60,12 @@ export const googleContacts = createPiece({
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth).access_token}`,
       }),
+      props: {
+        url: {
+          description: `Full URL, or a path after ${googleContactsCommon.baseUrl}`,
+          placeholder: '/me/connections?personFields=names',
+        },
+      },
     }),
   ],
   displayName: 'Google Contacts',

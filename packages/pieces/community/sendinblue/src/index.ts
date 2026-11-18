@@ -53,8 +53,8 @@ import { emailOpened } from './lib/triggers/email-opened';
 export const sendinblue = createPiece({
   displayName: 'Brevo',
   description:
-    'Formerly Sendinblue, is a SaaS solution for relationship marketing',
-  minimumSupportedRelease: '0.87.0',
+    'Email, SMS and contact marketing platform, formerly Sendinblue.',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/brevo.png',
   authors: ["kanarelo","BLaidzX","Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   categories: [PieceCategory.MARKETING],

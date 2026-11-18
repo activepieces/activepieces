@@ -13,10 +13,10 @@ export function CellEditorTrigger({
       <button
         className={cn(
           'w-full h-full flex items-center justify-between gap-2',
-          'bg-background text-sm px-2',
+          'bg-gray-1 text-sm px-2',
           'focus:outline-hidden',
           {
-            'border-2 border-primary': isEditing,
+            'border-2 border-accent-9': isEditing,
             'border-transparent bg-transparent!': !isEditing,
           },
         )}

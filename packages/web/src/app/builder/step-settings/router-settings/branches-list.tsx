@@ -174,7 +174,7 @@ export const BranchListItem = ({
   return (
     <div
       className={
-        'flex items-center gap-2 hover:transition-colors   has-[div.button-group:hover]:bg-background  text-sm hover:bg-gray-100 dark:hover:bg-accent px-2 cursor-pointer'
+        'flex items-center gap-2 hover:transition-colors   has-[div.button-group:hover]:bg-gray-1  text-sm hover:bg-gray-4 px-2 cursor-pointer'
       }
       onClick={() => {
         onClick();
@@ -224,7 +224,7 @@ export const BranchListItem = ({
                   deleteBranch();
                 }}
               >
-                <Trash className="w-4 h-4 stroke-destructive"></Trash>
+                <Trash className="w-4 h-4 stroke-danger-11"></Trash>
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">{t('Delete')}</TooltipContent>
@@ -268,9 +268,8 @@ export const BranchListItem = ({
             <TooltipTrigger asChild>
               <SortableDragHandle
                 variant="ghost"
-                size="icon"
+                size="icon-xs"
                 disabled={readonly}
-                className={'shrink-0 size-7'}
               >
                 <GripVertical className="size-4" aria-hidden="true" />
               </SortableDragHandle>

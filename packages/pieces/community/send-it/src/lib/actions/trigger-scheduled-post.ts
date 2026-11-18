@@ -1,7 +1,9 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sendItAuth } from '../auth';
-import { scheduleIdProperty, sendItRequest } from '../common';
+import { sendItAuth } from '../common/auth';
+import { apiKeyOf } from '../common/client';
+import { sendItOutputSchemas } from '../common/output-schemas';
+import { scheduleIdProperty } from '../common/props';
+import { sendItRequests } from '../common/requests';
 
 export const triggerScheduledPost = createAction({
   auth: sendItAuth,
@@ -9,22 +11,17 @@ export const triggerScheduledPost = createAction({
   classification: 'WRITE',
   displayName: 'Trigger Scheduled Post Now',
   description: 'Immediately publish a scheduled post',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Publishes a pending scheduled post right away instead of waiting for its scheduled time, identified by its schedule ID. Use this to push out a queued post early. Not idempotent: it performs an actual publish, so repeating the call can re-publish the content.',
+      'Publishes a pending scheduled post chosen from a dropdown right away instead of waiting for its scheduled time. Not idempotent: it performs a real publish.',
     idempotent: false,
   },
   props: {
     scheduleId: scheduleIdProperty,
   },
+  outputSchema: sendItOutputSchemas.triggerNowResult,
   async run(context) {
-    const { scheduleId } = context.propsValue;
-
-    return await sendItRequest(
-      context.auth.secret_text,
-      HttpMethod.POST,
-      `/scheduled/${scheduleId}/trigger`
-    );
+    return sendItRequests.triggerNow({ apiKey: apiKeyOf(context.auth), scheduleId: context.propsValue.scheduleId });
   },
 });

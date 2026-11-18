@@ -7,6 +7,7 @@ import { QuickbooksReport } from '../lib/types';
 export const readAgingReportAction = createAction({
 	auth: quickbooksAuth,
 	name: 'read_aging_report',
+	classification: 'READ',
 	displayName: 'Read AR/AP Aging',
 	description: 'Reads an accounts receivable or accounts payable aging report from QuickBooks.',
 	audience: 'both',

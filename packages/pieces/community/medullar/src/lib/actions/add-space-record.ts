@@ -6,6 +6,7 @@ import { getUser, medullarCommon, medullarPropsCommon } from '../common';
 export const addSpaceRecord = createAction({
   auth: medullarAuth,
   name: 'addSpaceRecord',
+  classification: 'WRITE',
   displayName: 'Add Space Record',
   description: 'Adds a Record into a Space',
   audience: 'both',

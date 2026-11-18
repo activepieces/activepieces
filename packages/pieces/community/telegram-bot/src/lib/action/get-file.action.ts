@@ -20,19 +20,21 @@ export const telegramGetFileAction = createAction({
   auth: telegramBotAuth,
   name: 'get_file',
   classification: 'READ',
-  description: 'Get file information and optionally download a file from Telegram',
+  description: 'Get file details and, optionally, its content.',
   audience: 'human',
-  aiMetadata: { description: 'Resolves a Telegram file_id to its file metadata and download URL, and optionally downloads the file content as base64 when download is enabled. Use to retrieve files attached to messages the bot received. Idempotent: read/download with no side effects, though Telegram download URLs are time-limited.', idempotent: true },
+  aiMetadata: { description: 'Resolves a Telegram file_id to its file metadata, and optionally downloads the file content as base64 when download is enabled. Use to retrieve files attached to messages the bot received. Idempotent: read/download with no side effects.', idempotent: true },
   displayName: 'Get File',
   props: {
     file_id: Property.ShortText({
       displayName: 'File ID',
-      description: 'File identifier to get information about',
+      description: 'The file_id of a photo, document or audio in a message.',
+      placeholder: 'message.document.file_id from the trigger',
       required: true,
     }),
     download: Property.Checkbox({
       displayName: 'Download File',
-      description: 'If enabled, the file is downloaded and returned as base64.',
+      description:
+        'Also return the content as base64. Telegram caps this at 20 MB.',
       required: false,
       defaultValue: false,
     }),
@@ -52,29 +54,36 @@ export const telegramGetFileAction = createAction({
     }
 
     const fileInfo = fileInfoResponse.body.result;
-    const fileUrl = fileInfo.file_path
-      ? `https://api.telegram.org/file/bot${ctx.auth.secret_text}/${fileInfo.file_path}`
-      : undefined;
 
-    if (ctx.propsValue.download && fileUrl) {
-      const fileResponse = await httpClient.sendRequest<Buffer>({
-        method: HttpMethod.GET,
-        url: fileUrl,
-        responseType: 'arraybuffer',
+    if (ctx.propsValue.download && fileInfo.file_path) {
+      const content = await downloadTelegramFile({
+        botToken: ctx.auth.secret_text,
+        filePath: fileInfo.file_path,
       });
-
-      const base64Content = Buffer.from(fileResponse.body).toString('base64');
 
       return {
         file_info: fileInfo,
-        file_url: fileUrl,
-        file_content_base64: base64Content,
+        file_content_base64: content.toString('base64'),
       };
     }
 
     return {
       file_info: fileInfo,
-      file_url: fileUrl,
     };
   },
 });
+
+async function downloadTelegramFile({
+  botToken,
+  filePath,
+}: {
+  botToken: string;
+  filePath: string;
+}): Promise<Buffer> {
+  const response = await httpClient.sendRequest<ArrayBuffer>({
+    method: HttpMethod.GET,
+    url: `https://api.telegram.org/file/bot${botToken}/${filePath}`,
+    responseType: 'arraybuffer',
+  });
+  return Buffer.from(response.body);
+}

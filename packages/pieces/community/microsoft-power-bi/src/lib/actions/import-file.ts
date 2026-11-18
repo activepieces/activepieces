@@ -8,6 +8,7 @@ import { microsoftPowerBiAuth } from '../auth';
 export const importFileAction = createAction({
   auth: microsoftPowerBiAuth,
   name: 'import_pbix',
+  classification: 'WRITE',
   displayName: 'Import File (.pbix)',
   description: 'Uploads a Power BI Desktop (.pbix), Excel (.xlsx), or RDL file into a workspace, creating a new dataset and report.',
   audience: 'both',

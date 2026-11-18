@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-xml",
-  "version": "0.1.20",
+  "version": "0.2.1",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@types/json2xml": "0.1.4",
-    "vitest": "3.2.6",
+    "vitest": "5.0.5",
     "tslib": "2.6.2"
   }
 }

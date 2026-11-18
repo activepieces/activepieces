@@ -5,6 +5,7 @@ import { insightoAuth } from '../..';
 
 export const newConversation = createTrigger({
   name: 'new_conversation',
+  classification: 'READ',
   displayName: 'New Conversation',
   description: 'Fires when an existing conversation is updated with a new message',
   aiMetadata: {

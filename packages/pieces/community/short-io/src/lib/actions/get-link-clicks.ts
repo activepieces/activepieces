@@ -1,8 +1,11 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { shortIoApiCall } from '../common/client';
 import { shortIoAuth } from '../common/auth';
+import { shortIoClient } from '../common/client';
+import { shortIoLinks } from '../common/links';
+import { shortIoSchemas } from '../common/output-schemas';
 import { domainIdDropdown } from '../common/props';
+import { shortIoValues } from '../common/values';
 
 export const getLinkClicksAction = createAction({
   auth: shortIoAuth,
@@ -10,8 +13,13 @@ export const getLinkClicksAction = createAction({
   classification: 'READ',
   displayName: 'Get Link Clicks',
   description: 'Retrieve click statistics for specific short links by their IDs.',
-  audience: 'both',
-  aiMetadata: { description: 'Retrieves click statistics for one or more specific short links (by their link IDs) on a domain, optionally scoped to a start/end date range. Use to measure performance of particular links rather than a whole domain. Requires the domain and at least one link ID, and if filtering by date both start and end must be supplied; read-only and idempotent.', idempotent: true },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Retrieves click counts for one or more short links (by link ID) on a domain, optionally for a start/end date range (both dates needed). Returns a map of link ID to clicks. Read-only and idempotent.',
+    idempotent: true,
+  },
+  outputSchema: shortIoSchemas.legacyLinkClicks,
   props: {
     domain: {
       ...domainIdDropdown,
@@ -25,92 +33,46 @@ export const getLinkClicksAction = createAction({
     }),
     startDate: Property.DateTime({
       displayName: 'Start Date',
-      description: 'Start date for click statistics (optional).',
+      description: 'Start date for click statistics (optional). The calendar day you pick is sent as is.',
       required: false,
     }),
     endDate: Property.DateTime({
       displayName: 'End Date',
-      description: 'End date for click statistics (optional).',
+      description: 'End date for click statistics (optional). The calendar day you pick is sent as is.',
       required: false,
     }),
   },
   async run({ propsValue, auth }) {
-    const { domain: domainString, ids, startDate, endDate } = propsValue;
-
-    if (!domainString) {
-      throw new Error('Domain is required. Please select a domain.');
-    }
-
-    if (!ids || ids.length === 0) {
+    const domain = shortIoLinks.parseDomainProp(propsValue.domain);
+    const ids = shortIoValues.stringList(propsValue.ids);
+    if (ids.length === 0) {
       throw new Error('At least one Link ID is required.');
     }
-
-    if ((startDate && !endDate) || (!startDate && endDate)) {
+    const { startDate, endDate } = propsValue;
+    if (Boolean(startDate) !== Boolean(endDate)) {
       throw new Error('Both Start Date and End Date must be provided if using a date range filter.');
     }
-
-    if (startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      
-      if (start >= end) {
-        throw new Error('Start date must be before end date.');
-      }
+    const start = startDate ? shortIoValues.toApiDate({ value: startDate, label: 'Start date' }) : undefined;
+    const end = endDate ? shortIoValues.toApiDate({ value: endDate, label: 'End date' }) : undefined;
+    if (start && end && start > end) {
+      throw new Error('Start date must not be after end date.');
     }
-
-    const domainObject = JSON.parse(domainString as string);
-
-    const query: Record<string, string> = {
-      ids: (ids as string[]).join(','),
-    };
-
-    if (startDate && endDate) {
-      query['startDate'] = new Date(startDate).toISOString().split('T')[0]; // YYYY-MM-DD format
-      query['endDate'] = new Date(endDate).toISOString().split('T')[0];
-    }
-
     try {
-      const response = await shortIoApiCall({
+      const response = await shortIoClient.request({
         method: HttpMethod.GET,
         auth,
-        url: `https://statistics.short.io/statistics/domain/${domainObject.id}/link_clicks`,
-        query,
+        base: 'stats',
+        path: `/domain/${shortIoClient.domainIdSeg(domain.id)}/link_clicks`,
+        query: { ids: ids.join(','), startDate: start, endDate: end },
       });
-
-      const linkCount = ids.length;
-      const dateRange = startDate && endDate ? ` for ${query['startDate']} to ${query['endDate']}` : '';
-
+      const range = start && end ? ` for ${start} to ${end}` : '';
       return {
         success: true,
-        message: `Retrieved click statistics for ${linkCount} link${linkCount > 1 ? 's' : ''}${dateRange}`,
-        data: response,
+        message: `Retrieved click statistics for ${ids.length} link${ids.length > 1 ? 's' : ''}${range}`,
+        data: shortIoLinks.isRecord(response) ? response : {},
       };
-    } catch (error: any) {
-      if (error.message.includes('400')) {
-        throw new Error(
-          'Invalid request parameters. Please check your link IDs and date range.'
-        );
-      }
-      
-      if (error.message.includes('401') || error.message.includes('403')) {
-        throw new Error(
-          'Authentication failed or insufficient permissions. Please check your API key and domain access.'
-        );
-      }
-      
-      if (error.message.includes('404')) {
-        throw new Error(
-          'Domain or links not found. Please verify the domain and link IDs exist.'
-        );
-      }
-      
-      if (error.message.includes('429')) {
-        throw new Error(
-          'Rate limit exceeded. Please wait a moment before trying again.'
-        );
-      }
-
-      throw new Error(`Failed to retrieve link click statistics: ${error.message}`);
+    } catch (error) {
+      return shortIoClient.rethrowWithHint({ error, hints: { 404: 'Domain or links not found.' } });
     }
   },
 });

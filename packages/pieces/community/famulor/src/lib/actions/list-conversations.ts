@@ -7,6 +7,7 @@ import type { ConversationChannelType } from '../common/types';
 export const listConversations = createAction({
   auth: famulorAuth,
   name: 'listConversations',
+  classification: 'SEARCH',
   displayName: 'List Conversations',
   description: 'List conversations with optional filters.',
   audience: 'both',

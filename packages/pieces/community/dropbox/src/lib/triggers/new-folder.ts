@@ -1,5 +1,6 @@
 import {
   createTrigger,
+  isNil,
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
@@ -10,6 +11,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { dropboxAuth } from '../auth';
+import { dropboxCommon } from '../common';
 import { newFolderTriggerOutputSchema } from '../output-schemas';
 
 type DropboxListFolderEntry = {
@@ -111,17 +113,27 @@ export const dropboxNewFolder = createTrigger({
   type: TriggerStrategy.POLLING,
 
   outputSchema: newFolderTriggerOutputSchema,
+  propertyGroups: [
+    {
+      key: 'watch',
+      display: 'section',
+      label: 'Folder to Watch',
+      icon: 'file',
+      props: ['path', 'recursive'],
+    },
+  ],
   props: {
     path: Property.ShortText({
-      displayName: 'Watched Folder Path',
-      description: 'Folder path to watch. Use empty string "" for root.',
+      displayName: 'Path',
+      description: 'Folder to watch, starting with /. Use / for the root.',
+      placeholder: '/Clients',
       required: true,
       defaultValue: '',
     }),
 
     recursive: Property.Checkbox({
-      displayName: 'Recursive',
-      description: 'Watch subfolders recursively. May return many results.',
+      displayName: 'Include Subfolders',
+      description: 'Also fire for folders created inside subfolders.',
       required: false,
       defaultValue: false,
     }),
@@ -138,13 +150,19 @@ export const dropboxNewFolder = createTrigger({
   onEnable: async (context) => {
     const cursor = await getLatestCursor(
       context.auth.access_token,
-      context.propsValue.path || '',
+      dropboxCommon.toApiPath(context.propsValue.path || ''),
       context.propsValue.recursive ?? false,
     );
+    if (context.isRepublish && !isNil(await context.store.get('cursor'))) {
+      return;
+    }
     await context.store.put('cursor', cursor);
   },
 
   onDisable: async (context) => {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete('cursor');
   },
 
@@ -163,7 +181,7 @@ export const dropboxNewFolder = createTrigger({
   test: async (context) => {
     return listRecentFolders(
       context.auth.access_token,
-      context.propsValue.path || '',
+      dropboxCommon.toApiPath(context.propsValue.path || ''),
       context.propsValue.recursive ?? false,
     );
   },

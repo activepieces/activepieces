@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
-import { singleSelectChannelInfo, slackChannel, threadCursor } from '../common/props';
+import { singleSelectChannelInfo, slackChannel, onlyBotChannels, threadCursor } from '../common/props';
 import { fetchAllThreadReplies, processMessageTimestamp } from '../common/utils';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 import { threadRepliesActionOutputSchema } from '../output-schemas';
@@ -15,8 +15,25 @@ export const retrieveThreadMessages = createAction({
   aiMetadata: { description: 'Retrieve the replies in a thread given the channel and the parent message timestamp; read-only and repeatable. Returns up to 10,000 replies per call; when has_more is true, pass response_metadata.next_cursor as the cursor to continue. The timestamp must be that of the parent message, not a reply. Use this to read a conversation thread; use Get channel history for top-level channel messages.', idempotent: true },
   auth: slackAuth,
   outputSchema: threadRepliesActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'channel_picker',
+      display: 'section',
+      label: 'Channel',
+      icon: 'markdown',
+      props: ['info', 'onlyBotChannels', 'channel'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['threadTs'],
+    },
+  ],
   props: {
     info: singleSelectChannelInfo,
+    onlyBotChannels,
     channel: slackChannel(true),
     threadTs: Property.ShortText({
       displayName: 'Thread Timestamp',

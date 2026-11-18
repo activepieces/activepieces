@@ -1,4 +1,7 @@
+import { randomInt } from 'node:crypto';
 import { test } from '../../../fixtures';
+import { e2eFlows } from '../../../fixtures/flows';
+import { BuilderPage } from '../../../pages/builder.page';
 
 /**
  * Warmup resilience smoke test.
@@ -9,49 +12,19 @@ import { test } from '../../../fixtures';
  * flows from executing.
  */
 test.describe('Piece isolation — CE', () => {
-  test('worker stays healthy after piece sync and can execute a webhook flow', async ({ page, automationsPage, builderPage, request }) => {
+  test('worker stays healthy after piece sync and can execute a webhook flow', async ({ page, request, session, seed }) => {
     test.setTimeout(120000);
 
     // Trigger a piece sync — this exercises the warmup path
-    const token = await page.evaluate(() => localStorage.getItem('token'));
     await request.post('/api/v1/pieces/sync', {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${session.token}` },
     });
 
-    await automationsPage.waitFor();
-    await automationsPage.newFlowFromScratch();
-
-    await builderPage.selectInitialTrigger({
-      piece: 'Webhook',
-      trigger: 'Catch Webhook'
-    });
-
-    const webhookInput = page.locator('input.grow.bg-background');
-    const webhookUrl = await webhookInput.inputValue();
-
-    await builderPage.testTrigger();
-
-    const runVersion = Math.floor(Math.random() * 100000);
-    await page.context().request.get(`${webhookUrl}?runVersion=${runVersion}`);
-    await page.waitForTimeout(3000);
-
-    await builderPage.addAction({
-      piece: 'Webhook',
-      action: 'Return Response'
-    });
-
-    await page.locator('div.cm-activeLine.cm-line').fill('');
-    await page.locator('div.cm-activeLine.cm-line').fill(
-      '{"runVersion": "{{trigger[\'output\'][\'queryParams\'][\'runVersion\']}}"}'
-    );
-
-    await page.waitForTimeout(1000);
-    await builderPage.publishFlow();
-
-    await builderPage.expectSyncWebhookResponse({
-      url: `${webhookUrl}/sync?runVersion=${runVersion}`,
-      key: 'runVersion',
-      expected: runVersion.toString(),
+    const { webhookUrl } = await e2eFlows.publishWebhookEchoFlow({ seed });
+    const value = randomInt(1, 1000000);
+    await new BuilderPage(page).expectSyncWebhookResponse({
+      url: `${webhookUrl}/sync?value=${value}`,
+      expected: { value: String(value) },
     });
   });
 });

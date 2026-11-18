@@ -19,6 +19,7 @@ export const githubCommon = {
     typeof githubAuth
   >({
     displayName: 'Repository',
+    description: 'Repositories your connection can access.',
     refreshers: [],
     auth: githubAuth,
     required: true,
@@ -27,10 +28,17 @@ export const githubCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'please authenticate first',
+          placeholder: 'Please connect your account first',
         };
       }
       const repositories = await getUserRepo(auth);
+      if (repositories.length === 0) {
+        return {
+          disabled: false,
+          options: [],
+          placeholder: 'No repositories found',
+        };
+      }
       return {
         disabled: false,
         options: repositories.map((repo) => {
@@ -49,7 +57,7 @@ export const githubCommon = {
     Property.Dropdown({
       auth: githubAuth,
       displayName: 'Milestone',
-      description: 'The milestone to associate this issue with.',
+      description: 'Open milestones only.',
       required,
       refreshers: ['repository'],
       options: async ({ auth, repository }) => {
@@ -117,7 +125,7 @@ export const githubCommon = {
     Property.Dropdown({
       auth: githubAuth,
       displayName: 'Issue',
-      description: 'The issue to select.',
+      description: 'Open issues only.',
       required,
       refreshers: ['repository'],
       options: async ({ auth, repository }) => {
@@ -167,7 +175,7 @@ export const githubCommon = {
           return {
             disabled: true,
             options: [],
-            placeholder: 'please authenticate first and select repo',
+            placeholder: 'Please select a repository first',
           };
         }
         const { owner, repo } = repository as RepositoryProp;
@@ -188,7 +196,7 @@ export const githubCommon = {
     Property.MultiSelectDropdown({
       auth: githubAuth,
       displayName: 'Assignees',
-      description: 'Assignees for the Issue',
+      description: 'People who can be assigned in this repository.',
       refreshers: ['repository'],
 
       required,
@@ -197,7 +205,7 @@ export const githubCommon = {
           return {
             disabled: true,
             options: [],
-            placeholder: 'please authenticate first and select repo',
+            placeholder: 'Please select a repository first',
           };
         }
         const { owner, repo } = repository as RepositoryProp;
@@ -217,7 +225,7 @@ export const githubCommon = {
     Property.MultiSelectDropdown({
       auth: githubAuth,
       displayName: 'Labels',
-      description: 'Labels for the Issue',
+      description: "The repository's existing labels.",
       refreshers: ['repository'],
       required,
       options: async ({ auth, repository }) => {
@@ -225,7 +233,7 @@ export const githubCommon = {
           return {
             disabled: true,
             options: [],
-            placeholder: 'please authenticate first and select repo',
+            placeholder: 'Please select a repository first',
           };
         }
         const { owner, repo } = repository as RepositoryProp;

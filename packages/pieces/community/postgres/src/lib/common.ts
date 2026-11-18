@@ -1,40 +1,9 @@
-import { AppConnectionValueForAuthProperty, Property } from "@activepieces/pieces-framework";
-import { postgresAuth } from "..";
+import { MarkdownVariant, Property } from "@activepieces/pieces-framework";
+import { postgresAuth } from "./auth";
 import { Client } from "pg";
+import { pgClient } from "./client";
 import format from "pg-format";
 
-export const pgClient = async (auth: AppConnectionValueForAuthProperty<typeof postgresAuth>, query_timeout = 30000, application_name: string | undefined = undefined , connectionTimeoutMillis = 30000) => {
-    const {
-        host,
-        user,
-        database,
-        password,
-        port,
-        enable_ssl,
-        reject_unauthorized: rejectUnauthorized,
-        certificate,
-    } = auth.props;
-
-    const sslConf = {
-        rejectUnauthorized: rejectUnauthorized,
-        ca: certificate && certificate.length > 0 ? certificate : undefined,
-    };
-    const client = new Client({
-        host,
-        port: Number(port),
-        user,
-        password,
-        database,
-        ssl: enable_ssl ? sslConf : undefined,
-        query_timeout: Number(query_timeout),
-        statement_timeout: Number(query_timeout),
-        application_name,
-        connectionTimeoutMillis: Number(connectionTimeoutMillis),
-    });
-    await client.connect();
-
-    return client;
-}
 
 const listTables = async (client: Client): Promise<PostgresTable[]> => {
     const result = await client.query<PostgresTable>(
@@ -51,6 +20,14 @@ const listColumns = async ({ client, table }: { client: Client, table: PostgresT
     return result.rows.map((row) => row.column_name);
 }
 
+const listColumnDetails = async ({ client, table }: { client: Client, table: PostgresTable }): Promise<PostgresColumn[]> => {
+    const result = await client.query<PostgresColumn>(
+        `SELECT column_name, data_type, is_nullable, column_default, is_identity, is_generated FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 ORDER BY ordinal_position`,
+        [table.table_schema, table.table_name]
+    );
+    return result.rows;
+}
+
 const isPostgresTable = (value: unknown): value is PostgresTable => {
     if (typeof value !== 'object' || value === null) {
         return false;
@@ -63,9 +40,11 @@ const qualifiedName = (table: PostgresTable): string => format('%I.%I', table.ta
 
 const quoteIdentifier = (name: string): string => name === '*' ? name : format.ident(name);
 
+export { pgClient };
+
 export const warningMarkdown = Property.MarkDown({
-    value: `
-    **DO NOT** insert dynamic input directly into the condition. Use **$1**, **$2**, etc. in the condition and pass the values in Arguments for parameterized queries to prevent **SQL injection.**`,
+    value: 'Never type dynamic values into the condition. Write $1, $2 and put the values in Arguments to prevent SQL injection.',
+    variant: MarkdownVariant.WARNING,
 });
 
 export const postgresCommon = {
@@ -142,7 +121,7 @@ export const postgresCommon = {
     columns: Property.MultiSelectDropdown<string, false, typeof postgresAuth>({
         auth: postgresAuth,
         displayName: 'Columns',
-        description: 'The columns to return. Leave empty to return every column.',
+        description: 'Leave empty to return every column.',
         required: false,
         refreshers: ['table'],
         options: async ({ auth, table }) => {
@@ -180,6 +159,7 @@ export const postgresCommon = {
 export const postgresUtils = {
     listTables,
     listColumns,
+    listColumnDetails,
     isPostgresTable,
     qualifiedName,
     quoteIdentifier,
@@ -188,4 +168,13 @@ export const postgresUtils = {
 export type PostgresTable = {
     table_schema: string;
     table_name: string;
+};
+
+export type PostgresColumn = {
+    column_name: string;
+    data_type: string;
+    is_nullable: string;
+    column_default: string | null;
+    is_identity: string;
+    is_generated: string;
 };

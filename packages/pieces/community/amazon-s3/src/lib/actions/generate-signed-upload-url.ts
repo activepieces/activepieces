@@ -3,10 +3,12 @@ import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { amazonS3CombinedAuth, AccessKeyAuthProps, OidcAuthProps, S3AuthProps } from '../auth';
 import { createS3, createS3WithAssumeRole, isOidcAuth, MAX_STS_DURATION_SECONDS, MIN_STS_DURATION_SECONDS } from '../common';
+import { generateSignedUploadUrlOutputSchema } from '../output-schemas';
 
 export const generateSignedUploadUrl = createAction({
   auth: amazonS3CombinedAuth,
   name: 'generate-signed-upload-url',
+  outputSchema: generateSignedUploadUrlOutputSchema,
   classification: 'READ',
   displayName: 'Generate Signed Upload URL',
   description:

@@ -186,6 +186,14 @@ List all tables in the project with their fields (name, type, id) and row counts
 |-------|------|----------|-------------|
 | — | — | — | No inputs required |
 
+### ap_list_folders
+
+List the folders in the project with how many flows and tables each holds.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| — | — | — | No inputs required |
+
 ### ap_find_records
 
 Query records from a table with optional filtering.
@@ -268,6 +276,18 @@ Rename an existing flow.
 |-------|------|----------|-------------|
 | `flowId` | string | Yes | The flow ID |
 | `displayName` | string | Yes | New name |
+
+### ap_move_flow_to_folder
+
+Move a flow into a folder, or take it out of its folder. A folder name is matched case-insensitively, and a new folder is created when no folder has that name.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+| `folderName` | string | No | The folder to move the flow into |
+| `uncategorized` | boolean | No | `true` to take the flow out of its folder |
+
+Pass exactly one of `folderName` or `uncategorized`.
 
 ### ap_change_flow_status
 

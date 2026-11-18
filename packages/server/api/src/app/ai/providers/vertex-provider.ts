@@ -5,6 +5,7 @@ import { AIProviderStrategy } from './ai-provider'
 
 export const vertexProvider: AIProviderStrategy<VertexProviderAuthConfig, VertexProviderConfig> = {
     name: 'Google Vertex AI',
+    validationSkipsModelEndpoint: true,
 
     async validateConnection(
         authConfig: VertexProviderAuthConfig,

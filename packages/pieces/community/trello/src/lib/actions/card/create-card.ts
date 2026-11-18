@@ -18,21 +18,25 @@ export const createCard = createAction({
   audience: 'human',
   outputSchema: createCardActionOutputSchema,
   aiMetadata: { description: 'Creates a new Trello card in a specific list, optionally with a description, position, and labels. Use to add a task or item to a board. Requires the target list_id (and the board_id it belongs to); each call creates a distinct card, so it is not idempotent.', idempotent: false },
+  propertyGroups: [
+    { key: 'destination', display: 'section', label: 'Where to Add', icon: 'inbox', props: ['board_id', 'list_id'] },
+    { key: 'details', display: 'section', label: 'Card Details', icon: 'text', props: ['name', 'description', 'position', 'labels'] },
+  ],
   props: {
     board_id: trelloCommon.board_id,
     list_id: trelloCommon.list_id,
     name: Property.ShortText({
-      description: 'The name of the card to create',
-      displayName: 'Task Name',
+      displayName: 'Card Name',
+      placeholder: 'Write the launch post',
       required: true,
     }),
     description: Property.LongText({
-      description: 'The description of the card to create',
-      displayName: 'Task Description',
+      description: 'Markdown formatting is supported.',
+      displayName: 'Card Description',
       required: false,
     }),
     position: Property.StaticDropdown({
-      description: 'Place the card on top or bottom of the list',
+      description: 'Empty adds the card at the bottom of the list.',
       displayName: 'Position',
       required: false,
       options: {

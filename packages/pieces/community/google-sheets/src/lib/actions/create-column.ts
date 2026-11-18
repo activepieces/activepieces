@@ -1,4 +1,4 @@
-import { googleSheetsAuth } from '../common/common';
+import { googleSheetsAuth, googleSheetsCommon } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
 	areSheetIdsValid,
@@ -24,6 +24,22 @@ export const createColumnAction = createAction({
 			'Inserts a new column into a worksheet and writes a header name into its first row, either at a given column index or after the last existing column. Use when an agent needs to add a field to a sheet. Not idempotent — each call inserts another column.',
 		idempotent: false,
 	},
+	propertyGroups: [
+		{
+			key: 'spreadsheet',
+			display: 'section',
+			label: 'Spreadsheet',
+			icon: 'file',
+			props: ['spreadsheetId', 'sheetId'],
+		},
+		{
+			key: 'new_column',
+			display: 'section',
+			label: 'New Column',
+			icon: 'tag',
+			props: ['columnName', 'columnIndex'],
+		},
+	],
 	props: {
 		...commonProps,
 		columnName: Property.ShortText({
@@ -106,7 +122,7 @@ export const createColumnAction = createAction({
 		);
 
 		const response = await sheets.spreadsheets.values.update({
-			range: `${sheetName}!${columnLabel}1`,
+			range: googleSheetsCommon.sheetRange({ sheetName, range: `${columnLabel}1` }),
 			spreadsheetId,
 			valueInputOption: ValueInputOption.USER_ENTERED,
 			requestBody: {

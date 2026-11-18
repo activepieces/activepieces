@@ -1,51 +1,73 @@
-import { AiStepAction, ApFile, createAction, PieceAuth, Property, spreadIfDefined } from '@activepieces/pieces-framework';
+import { AgentPieceProps, AiStepAction, ApFile, createAction, PieceAuth, Property, spreadIfDefined } from '@activepieces/pieces-framework';
 import Ajv from 'ajv';
 import mime from 'mime-types';
 import { runOnWorker, uploadAiFiles } from '../../common/ai-step';
-import { aiProps, aiProviderSelection } from '../../common/props';
+import { aiModel } from '../../common/props';
 
 export const extractStructuredData = createAction({
   audience: 'both',
 	name: 'extractStructuredData',
 	classification: 'READ',
 	displayName: 'Extract Structured Data',
-	description: 'Accurately Pull names, amounts, and other structured data from emails, invoices, and scanned documents.',
+	description: 'Pull names, amounts and other fields from text, images or PDFs.',
 	aiMetadata: { description: 'Pulls typed fields out of unstructured input (text, images or PDFs) against a schema supplied either in simple mode, a list of field definitions, or advanced mode, a raw JSON Schema. Pick it when you need specific named values from documents such as invoices, receipts or emails; use classifyText for a single label, summarizeText for prose condensation, or askAi for open-ended analysis. At least one of Text or Files is required or the step throws; read-only and idempotent.', idempotent: true },
+	propertyGroups: [
+		{
+			key: 'ai_model',
+			display: 'section',
+			label: 'AI Model',
+			icon: 'sliders',
+			props: [AgentPieceProps.AI_PROVIDER_MODEL],
+		},
+		{
+			key: 'source',
+			display: 'section',
+			label: 'Extract from',
+			icon: 'file',
+			props: ['text', 'files'],
+		},
+		{
+			key: 'output',
+			display: 'section',
+			label: 'Data to extract',
+			icon: 'tag',
+			props: ['prompt', 'mode', 'schema'],
+		},
+	],
 	props: {
-		provider: aiProps({ modelType: 'text' }).provider,
-		model: aiProps({ modelType: 'text' }).model,
+		[AgentPieceProps.AI_PROVIDER_MODEL]: aiModel.prop(),
 		text: Property.LongText({
 			displayName: 'Text',
-			description: 'Text to extract structured data from.',
+			description: 'Text to extract from. Fill this, Files, or both.',
 			required: false,
 		}),
 		files: Property.Array({
 			displayName: 'Files',
+			description: 'Images or PDFs to extract from.',
 			required: false,
 			properties: {
 				file: Property.File({
 					displayName: 'Image/PDF',
-					description: 'Image or PDF to extract structured data from.',
 					required: false,
 				}),
 			},
 		}),
 		prompt: Property.LongText({
-			displayName: 'Guide Prompt',
-			description: 'Prompt to guide the AI.',
+			displayName: 'Prompt',
+			description: 'Extra guidance for the AI, like a date format to use.',
 			defaultValue: 'Extract the following data from the provided data.',
 			required: false,
 		}),
 		mode: Property.StaticDropdown<'simple' | 'advanced'>({
 			displayName: 'Data Schema Type',
-			description: 'For complex schema, you can use advanced mode.',
 			required: true,
 			defaultValue: 'simple',
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
-					{ label: 'Simple', value: 'simple' },
-					{ label: 'Advanced', value: 'advanced' },
+					{ label: 'Simple', value: 'simple', description: 'List fields', icon: 'sliders' },
+					{ label: 'Advanced', value: 'advanced', description: 'JSON Schema', icon: 'code' },
 				],
 			},
 		}),
@@ -60,8 +82,7 @@ export const extractStructuredData = createAction({
 					return {
 						fields: Property.Json({
 							displayName: 'JSON Schema',
-							description:
-								'Learn more about JSON Schema here: https://json-schema.org/learn/getting-started-step-by-step',
+							description: 'JSON Schema for the output. See json-schema.org to learn more.',
 							required: true,
 							defaultValue: {
 								type: 'object',
@@ -80,24 +101,24 @@ export const extractStructuredData = createAction({
 				}
 				return {
 					fields: Property.Array({
-						displayName: 'Data Definition',
+						displayName: 'Fields',
 						required: true,
 						properties: {
 							name: Property.ShortText({
 								displayName: 'Name',
-								description:
-									'Provide the name of the value you want to extract from the unstructured text. The name should be unique and short. ',
+								description: 'Short, unique name for this value in the output.',
+								placeholder: 'e.g. invoice_total',
 								required: true,
 							}),
 							description: Property.LongText({
 								displayName: 'Description',
-								description:
-									'Brief description of the data, this hints for the AI on what to look for',
+								description: 'Tells the AI what to look for.',
+								placeholder: 'e.g. Total due, including tax',
 								required: false,
 							}),
 							type: Property.StaticDropdown({
 								displayName: 'Data Type',
-								description: 'Type of parameter.',
+								description: 'Data type of the extracted value.',
 								required: true,
 								defaultValue: 'string',
 								options: {
@@ -110,7 +131,8 @@ export const extractStructuredData = createAction({
 								},
 							}),
 							isRequired: Property.Checkbox({
-								displayName: 'Fail if Not present?',
+								displayName: 'Required',
+								description: 'Asks the AI to always fill this field. The step does not check it.',
 								required: true,
 								defaultValue: false,
 							}),
@@ -121,12 +143,14 @@ export const extractStructuredData = createAction({
 		}),
 		maxOutputTokens: Property.Number({
 			displayName: 'Max Tokens',
+			description: 'Longest reply allowed, in tokens. Raise it if a long reply fails or stops short.',
 			required: false,
 			defaultValue: 2000,
+			advanced: true,
 		}),
 	},
 	async run(context) {
-		const { provider, configId } = aiProviderSelection.resolveOrThrow(context.propsValue.provider);
+		const model = aiModel.resolveOrThrow(context.propsValue.aiProviderModel);
 		const attachments = ((context.propsValue.files as { file?: ApFile }[] | undefined) ?? []).map((row) => row?.file);
 
 		if (!context.propsValue.text && attachments.length === 0) {
@@ -141,9 +165,7 @@ export const extractStructuredData = createAction({
 			context,
 			buildRequest: async () => ({
 				action: AiStepAction.EXTRACT_STRUCTURED_DATA,
-				provider,
-				...spreadIfDefined('providerConfigId', configId),
-				modelId: context.propsValue.model,
+				...model,
 				...spreadIfDefined('text', context.propsValue.text),
 				...spreadIfDefined('prompt', context.propsValue.prompt),
 				files: await uploadAiFiles({ context, files: attachments, mimeTypeOf: documentMimeType }),

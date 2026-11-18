@@ -10,6 +10,7 @@ import { lobstermailAuth } from '../..';
 export const newThreadTrigger = createTrigger({
   auth: lobstermailAuth,
   name: 'new_thread',
+  classification: 'READ',
   displayName: 'New Email Thread',
   description:
     'Triggers when a brand-new conversation (thread) is started in an inbox.',

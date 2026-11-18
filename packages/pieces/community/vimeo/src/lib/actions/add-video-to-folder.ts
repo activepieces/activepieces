@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const addVideoToFolder = createAction({
   name: 'add_video_to_folder',
+  classification: 'WRITE',
   displayName: 'Add Video to Folder',
   description: 'Adds an existing video to a user\'s folder',
   audience: 'both',

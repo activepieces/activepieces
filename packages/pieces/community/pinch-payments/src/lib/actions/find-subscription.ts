@@ -6,6 +6,7 @@ import { pinchPaymentsClient } from '../common/client';
 export const findSubscriptionAction = createAction({
   auth: pinchPaymentsAuth,
   name: 'find_subscription',
+  classification: 'READ',
   displayName: 'Find Subscription',
   description: 'Find a subscription using the Subscription ID',
   audience: 'both',

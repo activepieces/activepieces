@@ -12,6 +12,7 @@ const polling = createQuickbooksCdcPolling<QuickbooksInvoice>({
 export const newOrUpdatedInvoice = createTrigger({
 	auth: quickbooksAuth,
 	name: 'new_or_updated_invoice',
+	classification: 'READ',
 	displayName: 'New or Updated Invoice',
 	description: 'Triggers when an invoice is created or updated in QuickBooks.',
 	aiMetadata: {

@@ -53,7 +53,11 @@ const FlowVersionDetailsCard = React.memo(
     const showAvatar = !useEmbedding().embedState.isEmbedded;
 
     return (
-      <CardListItem interactive={false} className="px-4">
+      <CardListItem
+        interactive={false}
+        className="px-4"
+        data-testid="flow-version-card"
+      >
         {showAvatar && flowVersion.updatedByUser && (
           <UserAvatar
             size={45}
@@ -72,7 +76,7 @@ const FlowVersionDetailsCard = React.memo(
             includeTime={true}
             className="text-sm font-medium leading-none select-none cursor-default"
           ></FormattedDate>
-          <p className="flex gap-1 text-xs text-muted-foreground">
+          <p className="flex gap-1 text-xs text-gray-11">
             {t('Version')} #{flowVersionNumber}
           </p>
         </div>
@@ -100,7 +104,13 @@ const FlowVersionDetailsCard = React.memo(
             open={dropdownMenuOpen}
           >
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" disabled={isPending} size={'icon'}>
+              <Button
+                variant="ghost"
+                disabled={isPending}
+                size={'icon'}
+                data-testid="flow-version-menu"
+                aria-label={t('Actions')}
+              >
                 <EllipsisVertical />
               </Button>
             </DropdownMenuTrigger>

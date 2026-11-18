@@ -8,17 +8,34 @@ export const createShareUpdate = createAction({
   name: 'create_share_update',
   classification: 'WRITE',
   displayName: 'Create Share Update',
-  description: 'Create a share update on LinkedIn',
+  description: 'Post on your personal LinkedIn profile',
   audience: 'human',
   aiMetadata: {
     description:
       "Publishes a new post to the authenticated user's personal LinkedIn profile, with optional image, link preview, and visibility setting. Use this to share content as an individual member (not a company page — use Create Company Update for that). Not idempotent: each call creates a separate post, so calling it again with the same text produces a duplicate.",
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'post',
+      display: 'section',
+      label: 'Post',
+      icon: 'text',
+      props: ['text', 'visibility', 'imageUrl'],
+    },
+    {
+      key: 'link_preview',
+      display: 'section',
+      label: 'Link Preview',
+      icon: 'paperclip',
+      props: ['link_preview_info', 'link', 'linkTitle', 'linkDescription'],
+    },
+  ],
   props: {
     text: linkedinCommon.text,
     visibility: linkedinCommon.visibility,
-    imageUrl: linkedinCommon.imageUrl,
+    imageUrl: linkedinCommon.postImage,
+    link_preview_info: linkedinCommon.linkPreviewInfo,
     link: linkedinCommon.link,
     linkTitle: linkedinCommon.linkTitle,
     linkDescription: linkedinCommon.linkDescription,

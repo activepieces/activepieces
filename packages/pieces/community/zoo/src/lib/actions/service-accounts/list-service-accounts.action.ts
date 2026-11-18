@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const listServiceAccountsAction = createAction({
   name: 'list_service_accounts',
+  classification: 'SEARCH',
   displayName: 'List Service Accounts',
   description: 'List all service accounts for your organization',
   audience: 'both',

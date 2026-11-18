@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 export const declareCertificationFolderRegistred = createAction({
   auth: wedofAuth,
   name: 'declareCertificationFolderRegistred',
+  classification: 'WRITE',
   displayName: "Passer un dossier de certification à l'état : Enregistré",
   description: "Change l'état d'un dossier de certification vers : Enregistré",
   audience: 'both',

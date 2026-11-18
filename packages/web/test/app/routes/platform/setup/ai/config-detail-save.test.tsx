@@ -24,10 +24,24 @@ import {
 import * as React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 
 const selectMock = vi.hoisted(() => ({
   onValueChange: undefined as undefined | ((value: string) => void),
+}));
+
+const keyModelList = vi.hoisted(() => ({
+  onChange: undefined as
+    | undefined
+    | ((selection: {
+        modelScope: 'all' | 'selected';
+        modelIds: string[];
+      }) => void),
+}));
+
+const leaveGuard = vi.hoisted(() => ({
+  hasChanges: undefined as undefined | boolean,
 }));
 
 vi.mock('i18next', () => ({
@@ -76,7 +90,10 @@ vi.mock('@/components/custom/delete-dialog', () => ({
 
 vi.mock('@/components/custom/leave-without-saving', () => ({
   LeaveWithoutSavingDialog: () => null,
-  useWarnBeforeLosingChanges: () => ({ state: 'unblocked' }),
+  useWarnBeforeLosingChanges: ({ hasChanges }: { hasChanges: boolean }) => {
+    leaveGuard.hasChanges = hasChanges;
+    return { state: 'unblocked' };
+  },
 }));
 
 vi.mock('@/app/routes/platform/setup/components/section-header', () => ({
@@ -87,10 +104,12 @@ vi.mock('@/app/routes/platform/setup/ai/providers-tab/key-status', () => ({
   KeyStatusBadge: () => null,
 }));
 
-vi.mock(
-  '@/app/routes/platform/setup/ai/providers-tab/model-selection-panel',
-  () => ({ ModelSelectionPanel: () => null }),
-);
+vi.mock('@/app/routes/platform/setup/ai/providers-tab/key-model-list', () => ({
+  KeyModelList: ({ action, onChange }: any) => {
+    keyModelList.onChange = onChange;
+    return <div>{action}</div>;
+  },
+}));
 
 vi.mock(
   '@/app/routes/platform/setup/ai/providers-tab/project-selection-panel',
@@ -104,6 +123,17 @@ vi.mock('@/app/routes/platform/setup/ai/providers-tab/provider-logo', () => ({
 vi.mock('@/features/platform-admin', () => ({
   aiProviderApi: { listModelsForConfig: vi.fn() },
   aiProviderKeys: { configModels: () => ['ai-provider', 'models'] },
+}));
+
+vi.mock('@/features/platform-admin/hooks/platform-model-tier-hooks', () => ({
+  platformModelTierQueries: { useAdminList: () => ({ data: [] }) },
+}));
+
+vi.mock('@/features/platform-admin/hooks/ai-provider-hooks', () => ({
+  aiProviderQueries: { useAiProviderConfigs: () => ({ data: [] }) },
+  aiProviderMutations: {
+    useRefreshAiProviderModels: () => ({ mutate: vi.fn(), isPending: false }),
+  },
 }));
 
 vi.mock('@/lib/format-utils', () => ({
@@ -130,15 +160,16 @@ const TEXT_MODEL = {
 
 const IMAGE_MODEL_ID = 'openai/gpt-image-2.5-flare';
 
+const gatewayKeyFields = {
+  accountId: '1c441b119970086c90b78ad3be4a478f',
+  gatewayId: 'my-gateway',
+};
+
 const gatewayConfig: AIProviderWithoutSensitiveData = {
   id: 'ai-provider-1',
   name: 'Cloudflare AI Gateway key',
   provider: AIProviderName.CLOUDFLARE_GATEWAY,
-  config: {
-    accountId: '1c441b119970086c90b78ad3be4a478f',
-    gatewayId: 'my-gateway',
-    models: [TEXT_MODEL],
-  },
+  config: { ...gatewayKeyFields, models: [TEXT_MODEL] },
   enabledForChat: false,
   modelScope: 'all',
   modelIds: [TEXT_MODEL.modelId],
@@ -149,32 +180,51 @@ const gatewayConfig: AIProviderWithoutSensitiveData = {
   statusUpdated: null,
 };
 
+const OTHER_TEXT_MODEL = {
+  modelId: 'anthropic/claude-sonnet-4',
+  modelName: 'Claude Sonnet 4',
+  modelType: AIProviderModelType.TEXT,
+};
+
+const narrowedConfig: AIProviderWithoutSensitiveData = {
+  ...gatewayConfig,
+  config: {
+    accountId: '1c441b119970086c90b78ad3be4a478f',
+    gatewayId: 'my-gateway',
+    models: [TEXT_MODEL, OTHER_TEXT_MODEL],
+  },
+  modelScope: 'selected',
+  modelIds: [TEXT_MODEL.modelId],
+};
+
 describe('ConfigDetail save (manual models)', () => {
   let container: HTMLDivElement;
   let root: Root;
-  let onSave: ReturnType<typeof vi.fn>;
+  let onSave: Mock<React.ComponentProps<typeof ConfigDetail>['onSave']>;
 
-  const render = () => {
-    onSave = vi.fn().mockResolvedValue(undefined);
+  const render = (config: AIProviderWithoutSensitiveData = gatewayConfig) => {
+    onSave = vi.fn().mockResolvedValue({ error: null });
     act(() => {
       root.render(
-        <ConfigDetail
-          config={gatewayConfig}
-          info={{
-            provider: AIProviderName.CLOUDFLARE_GATEWAY,
-            name: 'Cloudflare AI Gateway',
-            markdown: '',
-            logoUrl: '',
-          }}
-          projects={[]}
-          isSaving={false}
-          onSave={onSave}
-          onDelete={async () => undefined}
-          onReplaceCredentials={() => undefined}
-          isRechecking={false}
-          onRecheck={() => undefined}
-          onBack={() => undefined}
-        />,
+        <MemoryRouter>
+          <ConfigDetail
+            config={config}
+            info={{
+              provider: AIProviderName.CLOUDFLARE_GATEWAY,
+              name: 'Cloudflare AI Gateway',
+              markdown: () => '',
+              logoUrl: '',
+            }}
+            projects={[]}
+            isSaving={false}
+            onSave={onSave}
+            onDelete={async () => undefined}
+            onReplaceCredentials={() => undefined}
+            isRechecking={false}
+            onRecheck={() => undefined}
+            onBack={() => undefined}
+          />
+        </MemoryRouter>,
       );
     });
   };
@@ -189,33 +239,62 @@ describe('ConfigDetail save (manual models)', () => {
     });
   };
 
-  const flipTypeBadge = (modelId: string) => {
-    const chip = Array.from(container.querySelectorAll('span')).find(
-      (candidate) => candidate.textContent?.startsWith(modelId),
+  const clickModelButton = ({
+    modelId,
+    selector,
+  }: {
+    modelId: string;
+    selector: string;
+  }) => {
+    const button = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(selector),
+    ).find((candidate) =>
+      candidate.parentElement?.textContent?.startsWith(modelId),
     );
-    const badge = chip?.querySelector<HTMLButtonElement>(
-      'button[title="Model Type"]',
-    );
-    expect(badge).toBeDefined();
+    expect(button).toBeDefined();
     act(() => {
-      badge?.click();
+      button?.click();
     });
   };
 
-  const typeModelId = (modelId: string) => {
-    const input = Array.from(container.querySelectorAll('input')).find(
-      (candidate) => candidate.placeholder === 'e.g. openai/gpt-4o',
-    );
+  const flipTypeBadge = (modelId: string) =>
+    clickModelButton({ modelId, selector: 'button[title="Model Type"]' });
+
+  const removeModel = (modelId: string) =>
+    clickModelButton({ modelId, selector: 'button:not([title])' });
+
+  const setInputValue = ({
+    matches,
+    value,
+  }: {
+    matches: (input: HTMLInputElement) => boolean;
+    value: string;
+  }) => {
+    const input = Array.from(container.querySelectorAll('input')).find(matches);
     expect(input).toBeDefined();
     act(() => {
       const setter = Object.getOwnPropertyDescriptor(
         window.HTMLInputElement.prototype,
         'value',
       )?.set;
-      setter?.call(input, modelId);
+      setter?.call(input, value);
       input?.dispatchEvent(new Event('input', { bubbles: true }));
     });
   };
+
+  const typeModelId = (modelId: string) =>
+    setInputValue({
+      matches: (input) => input.placeholder === 'e.g. openai/gpt-4o',
+      value: modelId,
+    });
+
+  const renameTo = ({ from, to }: { from: string; to: string }) =>
+    setInputValue({ matches: (input) => input.value === from, value: to });
+
+  const hasSaveBar = () =>
+    Array.from(container.querySelectorAll('button')).some(
+      (candidate) => candidate.textContent?.trim() === 'Save',
+    );
 
   const savedRequest = (): UpdateAIProviderRequest => {
     expect(onSave).toHaveBeenCalledTimes(1);
@@ -227,6 +306,35 @@ describe('ConfigDetail save (manual models)', () => {
     document.body.appendChild(container);
     root = createRoot(container);
     selectMock.onValueChange = undefined;
+    leaveGuard.hasChanges = undefined;
+    keyModelList.onChange = undefined;
+  });
+
+  it('is no longer dirty once the saved models come back from the server', async () => {
+    const emptyKey: AIProviderWithoutSensitiveData = {
+      ...gatewayConfig,
+      config: { ...gatewayKeyFields, models: [] },
+      modelIds: [],
+    };
+    render(emptyKey);
+    typeModelId(IMAGE_MODEL_ID);
+    clickButton('Add');
+    await act(async () => {
+      clickButton('Save');
+    });
+
+    const request = savedRequest();
+    render({
+      ...emptyKey,
+      config: request.config ?? emptyKey.config,
+      modelIds: request.modelIds ?? emptyKey.modelIds,
+    });
+
+    const saveBar = Array.from(container.querySelectorAll('span')).find(
+      (span) => span.textContent === 'You have unsaved changes',
+    );
+    expect(saveBar).toBeUndefined();
+    expect(leaveGuard.hasChanges).toBe(false);
   });
 
   it('sends an added image model as an image model, keeping the existing one intact', () => {
@@ -273,5 +381,187 @@ describe('ConfigDetail save (manual models)', () => {
       ],
     });
     expect(request.modelIds).toEqual([TEXT_MODEL.modelId, IMAGE_MODEL_ID]);
+  });
+
+  it('keeps a narrowed allow-list when an unrelated field is saved', () => {
+    render(narrowedConfig);
+    renameTo({ from: narrowedConfig.name, to: 'Renamed gateway key' });
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.displayName).toBe('Renamed gateway key');
+    expect(request.modelScope).toBe('selected');
+    expect(request.modelIds).toEqual([TEXT_MODEL.modelId]);
+  });
+
+  it('drops a removed model from a narrowed allow-list', () => {
+    render(narrowedConfig);
+    removeModel(TEXT_MODEL.modelId);
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.modelScope).toBe('selected');
+    expect(request.modelIds).toEqual([]);
+  });
+
+  it('allows a model added to a narrowed allow-list', () => {
+    render(narrowedConfig);
+    typeModelId(IMAGE_MODEL_ID);
+    clickButton('Add');
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.modelScope).toBe('selected');
+    expect(request.modelIds).toEqual([TEXT_MODEL.modelId, IMAGE_MODEL_ID]);
+  });
+
+  it('keeps a removed and re-added model allowed', () => {
+    render(narrowedConfig);
+    removeModel(TEXT_MODEL.modelId);
+    typeModelId(TEXT_MODEL.modelId);
+    clickButton('Add');
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.modelScope).toBe('selected');
+    expect(request.modelIds).toEqual([TEXT_MODEL.modelId]);
+  });
+
+  it('keeps a removed and re-added disallowed model disallowed', () => {
+    render(narrowedConfig);
+    removeModel(OTHER_TEXT_MODEL.modelId);
+    typeModelId(OTHER_TEXT_MODEL.modelId);
+    clickButton('Add');
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.modelScope).toBe('selected');
+    expect(request.modelIds).toEqual([TEXT_MODEL.modelId]);
+  });
+
+  it('clears unsaved changes once the saved key comes back', () => {
+    render(narrowedConfig);
+    typeModelId(IMAGE_MODEL_ID);
+    clickButton('Add');
+    clickButton('Save');
+
+    const request = savedRequest();
+    render({
+      ...narrowedConfig,
+      config: {
+        accountId: '1c441b119970086c90b78ad3be4a478f',
+        gatewayId: 'my-gateway',
+        models: [
+          TEXT_MODEL,
+          OTHER_TEXT_MODEL,
+          {
+            modelId: IMAGE_MODEL_ID,
+            modelName: IMAGE_MODEL_ID,
+            modelType: AIProviderModelType.TEXT,
+          },
+        ],
+      },
+      modelIds: request.modelIds ?? [],
+    });
+
+    expect(hasSaveBar()).toBe(false);
+  });
+
+  it('mirrors the remaining catalog when a model is removed from an all-models key', () => {
+    render({ ...narrowedConfig, modelScope: 'all' });
+    removeModel(TEXT_MODEL.modelId);
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.modelScope).toBe('all');
+    expect(request.modelIds).toEqual([OTHER_TEXT_MODEL.modelId]);
+  });
+
+  it('keeps a disallowed model disallowed when its type changes', () => {
+    render(narrowedConfig);
+    flipTypeBadge(OTHER_TEXT_MODEL.modelId);
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.modelScope).toBe('selected');
+    expect(request.modelIds).toEqual([TEXT_MODEL.modelId]);
+  });
+
+  const legacyVertexConfig: AIProviderWithoutSensitiveData = {
+    ...narrowedConfig,
+    provider: AIProviderName.VERTEX,
+    config: {
+      project: 'domain.com:legacy-project',
+      region: 'us-central1',
+      models: [TEXT_MODEL, OTHER_TEXT_MODEL],
+    },
+  };
+
+  it('sends the saved allow-list unchanged when the saved config does not parse', () => {
+    render(legacyVertexConfig);
+    renameTo({ from: narrowedConfig.name, to: 'Renamed vertex key' });
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.config).toBeUndefined();
+    expect(request.modelScope).toBe('selected');
+    expect(request.modelIds).toEqual([TEXT_MODEL.modelId]);
+  });
+
+  it('drops a removed model when the saved config does not parse', () => {
+    render(legacyVertexConfig);
+    removeModel(TEXT_MODEL.modelId);
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.config).toBeUndefined();
+    expect(request.modelScope).toBe('selected');
+    expect(request.modelIds).toEqual([]);
+  });
+
+  it('does not allow a model missing from the stored catalog when the saved config does not parse', () => {
+    render({ ...legacyVertexConfig, modelScope: 'all' });
+    typeModelId(IMAGE_MODEL_ID);
+    clickButton('Add');
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.config).toBeUndefined();
+    expect(request.modelScope).toBe('all');
+    expect(request.modelIds).toEqual([
+      TEXT_MODEL.modelId,
+      OTHER_TEXT_MODEL.modelId,
+    ]);
+  });
+
+  it('saves a LiteLLM key as a checkbox selection, without resending its synced models', async () => {
+    render({
+      ...gatewayConfig,
+      provider: AIProviderName.LITELLM,
+      config: {
+        baseUrl: 'https://litellm.example.com',
+        apiKeyHeader: 'Authorization',
+        models: [{ ...TEXT_MODEL, discovered: true }],
+      },
+    });
+    const refresh = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'Refresh models',
+    );
+    expect(refresh).toBeDefined();
+
+    act(() => {
+      keyModelList.onChange?.({
+        modelScope: 'selected',
+        modelIds: [TEXT_MODEL.modelId],
+      });
+    });
+    await act(async () => {
+      clickButton('Save');
+    });
+
+    const request = savedRequest();
+    expect(request.modelScope).toBe('selected');
+    expect(request.modelIds).toEqual([TEXT_MODEL.modelId]);
+    expect(request.config).toBeUndefined();
   });
 });

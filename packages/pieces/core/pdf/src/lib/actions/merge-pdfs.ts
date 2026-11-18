@@ -30,6 +30,9 @@ export const mergePdfs = createAction({
       advanced: true,
     }),
   },
+  propertyGroups: [
+    { key: 'source', display: 'section', label: 'Files', icon: 'file', props: ['pdfFiles'] },
+  ],
   async run(context) {
     try {
       const { pdfFiles, outputFileName } = context.propsValue;

@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const newAddOnEventTrigger = createTrigger({
   name: 'new_add_on_event',
+  classification: 'READ',
   auth: outsetaAuth,
   displayName: 'New Add-On Event',
   description: 'Triggers when an add-on is created or updated in the Outseta catalog.',

@@ -12,14 +12,18 @@ export const generateImage = createAction({
   name: 'generate_image',
   classification: 'READ',
   displayName: 'Generate Image',
-  description: 'Generate an image using text-to-image models',
+  description: 'Create an image from a text description.',
   aiMetadata: { description: 'Creates a brand new image from a text prompt using an image model available to the account (gpt-image or dall-e), saving each returned image as a file and reporting its URL. Resolution and quality both default to auto. Pick edit_image instead when an existing image is the starting point, and vision_prompt when the task is reading an image rather than producing one. Requires the prompt and a model id; not idempotent: each call renders a fresh image.', idempotent: false },
+  propertyGroups: [
+    { key: 'request', display: 'section', label: 'Image', icon: 'text', props: ['model', 'prompt'] },
+    { key: 'output', display: 'section', label: 'Output', icon: 'sliders', props: ['resolution', 'quality'] },
+  ],
   props: {
     model: Property.Dropdown({
       auth: openaiAuth,
       displayName: 'Model',
       required: true,
-      description: 'The model which will generate the image.',
+      description: 'The OpenAI model that draws the image.',
       defaultValue: 'gpt-image-2',
       refreshers: [],
       options: async ({ auth }) => {
@@ -54,26 +58,29 @@ export const generateImage = createAction({
     }),
     prompt: Property.LongText({
       displayName: 'Prompt',
+      description: 'Describe the image you want.',
+      placeholder: 'e.g. A watercolor fox in a snowy forest',
       required: true,
     }),
     resolution: Property.StaticDropdown({
-      displayName: 'Resolution',
-      description: 'The resolution to generate the image in.',
+      displayName: 'Size',
+      description: 'Image shape. Auto lets the model choose.',
       required: false,
       defaultValue: 'auto',
+      display: 'cards',
       options: {
         options: [
-          { label: 'Auto', value: 'auto' },
-          { label: '1024x1024', value: '1024x1024' },
-          { label: '1536x1024 (landscape)', value: '1536x1024' },
-          { label: '1024x1536 (portrait)', value: '1024x1536' },
+          { label: 'Auto', value: 'auto', icon: 'blank' },
+          { label: 'Square', value: '1024x1024', description: '1024 × 1024', icon: 'blank' },
+          { label: 'Landscape', value: '1536x1024', description: '1536 × 1024', icon: 'blank' },
+          { label: 'Portrait', value: '1024x1536', description: '1024 × 1536', icon: 'blank' },
         ],
       },
     }),
     quality: Property.StaticDropdown({
       displayName: 'Quality',
       required: false,
-      description: 'Image quality level.',
+      description: 'Higher quality takes longer and costs more.',
       defaultValue: 'auto',
       options: {
         options: [

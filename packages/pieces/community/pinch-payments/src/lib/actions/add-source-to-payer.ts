@@ -6,6 +6,7 @@ import { listPayers, pinchPaymentsClient } from '../common/client';
 export const addSourceToPayerAction = createAction({
   auth: pinchPaymentsAuth,
   name: 'add_source_to_payer',
+  classification: 'WRITE',
   displayName: 'Add Source to Payer',
   description: 'Add a payment source (bank account or credit card) to an existing payer',
   audience: 'both',

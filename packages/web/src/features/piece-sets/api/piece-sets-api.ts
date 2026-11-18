@@ -17,6 +17,9 @@ export const pieceSetsApi = {
   get(id: string) {
     return api.get<PieceSet>(`/v1/piece-sets/${id}`);
   },
+  getForProject(projectId: string) {
+    return api.get<PieceSet>(`/v1/piece-sets/projects/${projectId}`);
+  },
   create(request: CreatePieceSetRequestBody) {
     return api.post<PieceSet>('/v1/piece-sets', request);
   },

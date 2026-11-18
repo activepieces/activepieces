@@ -3,10 +3,12 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { commonProps } from '../common/props';
 import { GristAPIClient } from '../common/helpers';
 import { GristWebhookPayload } from '../common/types';
+import { gristNewRecordOutputSchema } from '../output-schemas';
 
 export const gristNewRecordTrigger = createTrigger({
   auth: gristAuth,
   name: 'grist-new-record',
+  outputSchema: gristNewRecordOutputSchema,
   classification: 'READ',
   displayName: 'New Record',
   description: 'Triggers when a new record is added to the table.',

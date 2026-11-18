@@ -14,7 +14,7 @@ export const newMilestoneTrigger = createTrigger({
   name: 'new_milestone',
   classification: 'READ',
   displayName: 'New Milestone',
-  description: 'Triggers when a new milestone is created.',
+  description: 'Triggers when a milestone is created.',
   aiMetadata: {
     description:
       'Fires when a new milestone is created in the chosen repository (milestone event with action created; other milestone changes are ignored). Represents a newly opened milestone.',

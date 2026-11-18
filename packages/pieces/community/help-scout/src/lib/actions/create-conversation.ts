@@ -1,29 +1,35 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { helpScoutApiRequest } from '../common/api';
-import { helpScoutAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { helpScoutApi } from '../common/api';
+import { helpScoutAuth } from '../common/auth';
 import { mailboxIdDropdown, userIdDropdown } from '../common/props';
+import { helpScoutOutputSchemas } from '../common/output-schemas';
 
 export const createConversation = createAction({
   auth: helpScoutAuth,
   name: 'create_conversation',
+  classification: 'WRITE',
   displayName: 'Create Conversation',
   description: 'Start a new conversation.',
-  audience: 'both',
-  aiMetadata: {
-    description:
-      'Creates a new conversation in a Help Scout mailbox with an initial thread, addressed to a customer email. Use to open a support thread (chat, phone, reply, or customer-initiated, set via thread type) rather than replying to an existing one. Requires a mailbox, subject, customer email, status, and body; not idempotent — each call creates a separate conversation.',
-    idempotent: false,
-  },
+  audience: 'human',
+  outputSchema: helpScoutOutputSchemas['createdId'],
   props: {
     mailboxId: mailboxIdDropdown(true),
-    subject: Property.ShortText({
-      displayName: 'Subject',
-      required: true,
-    }),
-    customerEmail: Property.ShortText({
-      displayName: 'Customer Email',
-      required: true,
+    subject: Property.ShortText({ displayName: 'Subject', required: true }),
+    customerEmail: Property.ShortText({ displayName: 'Customer Email', required: true }),
+    conversationType: Property.StaticDropdown({
+      displayName: 'Conversation Type',
+      description: 'Defaults to Chat, which is what earlier versions of this step always created.',
+      required: false,
+      defaultValue: 'chat',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Email', value: 'email' },
+          { label: 'Chat', value: 'chat' },
+          { label: 'Phone', value: 'phone' },
+        ],
+      },
     }),
     fromUser: userIdDropdown('From User'),
     threadType: Property.StaticDropdown({
@@ -51,102 +57,35 @@ export const createConversation = createAction({
         ],
       },
     }),
-    body: Property.LongText({
-      displayName: 'Body',
-      required: true,
-    }),
+    body: Property.LongText({ displayName: 'Body', required: true }),
     assignTo: userIdDropdown('Assigned User'),
-    tags: Property.Array({
-      displayName: 'Tags',
-      required: false,
-    }),
-    cc: Property.Array({
-      displayName: 'CC',
-      required: false,
-    }),
-    bcc: Property.Array({
-      displayName: 'BCC',
-      required: false,
-    }),
-    imported: Property.Checkbox({
-      displayName: 'Imported',
-      required: false,
-    }),
+    tags: Property.Array({ displayName: 'Tags', required: false }),
+    cc: Property.Array({ displayName: 'CC', required: false }),
+    bcc: Property.Array({ displayName: 'BCC', required: false }),
+    imported: Property.Checkbox({ displayName: 'Imported', required: false }),
   },
   async run({ auth, propsValue }) {
-    if (propsValue.tags) {
-      const uniqueTags = new Set(propsValue.tags);
-      if (uniqueTags.size !== propsValue.tags.length) {
-        throw new Error('Tags must be unique.');
-      }
-    }
-    if (propsValue.cc) {
-      const uniqueCC = new Set(propsValue.cc);
-      if (uniqueCC.size !== propsValue.cc.length) {
-        throw new Error('CC emails must be unique.');
-      }
-    }
-    if (propsValue.bcc) {
-      const uniqueBCC = new Set(propsValue.bcc);
-      if (uniqueBCC.size !== propsValue.bcc.length) {
-        throw new Error('BCC emails must be unique.');
-      }
-    }
-    const customer = { email: propsValue.customerEmail };
-    const payload: Record<string, any> = {
-      type: 'chat',
-      mailboxId: propsValue.mailboxId,
+    const body = helpScoutApi.buildConversationBody({
+      type: propsValue.conversationType ?? 'chat',
+      mailboxId: Number(propsValue.mailboxId),
       subject: propsValue.subject,
-      customer,
+      customerEmail: propsValue.customerEmail,
       status: propsValue.status,
-      threads: [
-        {
-          type: propsValue.threadType,
-          text: propsValue.body,
-          customer,
-          imported: propsValue.imported,
-          ...(propsValue.cc &&
-            propsValue.threadType === 'customer' &&
-            propsValue.cc.length > 0 && { cc: propsValue.cc }),
-          ...(propsValue.bcc &&
-            propsValue.threadType === 'customer' &&
-            propsValue.bcc.length > 0 && { bcc: propsValue.bcc }),
-        },
-      ],
-      tags: propsValue.tags,
-    };
-    if(propsValue.fromUser) {
-      payload['user'] = Number(propsValue.fromUser);
-    }
-    if(propsValue.assignTo) {
-      payload['assignTo'] = Number(propsValue.assignTo);
-    }
-
-    Object.keys(payload).forEach((key) => {
-      if (payload[key] === undefined || payload[key] === null) {
-        delete payload[key];
-      }
+      threadType: propsValue.threadType,
+      text: propsValue.body,
+      tags: helpScoutApi.uniqueOrThrow({ values: helpScoutApi.toStringList(propsValue.tags), label: 'Tags' }),
+      cc: helpScoutApi.uniqueOrThrow({ values: helpScoutApi.toStringList(propsValue.cc), label: 'CC emails' }),
+      bcc: helpScoutApi.uniqueOrThrow({ values: helpScoutApi.toStringList(propsValue.bcc), label: 'BCC emails' }),
+      userId: helpScoutApi.optionalNumber(propsValue.fromUser),
+      assignTo: helpScoutApi.optionalNumber(propsValue.assignTo),
+      imported: propsValue.imported ? true : undefined,
     });
-
-    Object.keys(payload['threads'][0]).forEach((key) => {
-      if (
-        payload['threads'][0][key] === undefined ||
-        payload['threads'][0][key] === null
-      ) {
-        delete payload['threads'][0][key];
-      }
-    });
-    const response =  await helpScoutApiRequest({
+    const response = await helpScoutApi.request({
       method: HttpMethod.POST,
-      url: '/conversations',
+      path: '/conversations',
       auth,
-      body: payload,
+      body,
     });
-
-    const convoId = response.headers?.['resource-id'];
-
-    return {
-      id:convoId
-    }
+    return { id: helpScoutApi.getResourceId(response.headers) };
   },
 });

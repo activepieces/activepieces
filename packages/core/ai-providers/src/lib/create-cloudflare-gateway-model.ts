@@ -6,10 +6,11 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { ImageModel, LanguageModel } from 'ai'
 import { createAiGateway } from 'ai-gateway-provider'
+import { withoutServerStorage } from './create-language-model'
 
 export function createCloudflareGatewayModel(params: CreateCloudflareGatewayModelParams & { isImage: true }): ImageModel
 export function createCloudflareGatewayModel(params: CreateCloudflareGatewayModelParams & { isImage?: false }): LanguageModel
-export function createCloudflareGatewayModel({ credentials, modelId, isImage = false, openaiResponsesModel = false, routing = 'compat', metadata, onOutcome }: CreateCloudflareGatewayModelParams): ImageModel | LanguageModel {
+export function createCloudflareGatewayModel({ credentials, modelId, isImage = false, routing = 'compat', metadata, onOutcome }: CreateCloudflareGatewayModelParams): ImageModel | LanguageModel {
     const { apiKey } = credentials.auth
     const { vertexProject, vertexRegion } = credentials.config
     const accountId = credentials.config.accountId ?? ''
@@ -18,6 +19,11 @@ export function createCloudflareGatewayModel({ credentials, modelId, isImage = f
     const headers = {
         'cf-aig-authorization': `Bearer ${apiKey}`,
         ...(isNil(metadata) ? {} : { 'cf-aig-metadata': JSON.stringify(metadata) }),
+    }
+
+    if (providerPrefix === 'openai' && !isImage) {
+        const openaiProvider = openAiGatewayProvider({ accountId, gatewayId, headers, onOutcome })
+        return withoutServerStorage({ model: openaiProvider.responses(actualModelId), providerOptionsName: 'openai' })
     }
 
     if (routing === 'compat') {
@@ -40,18 +46,8 @@ export function createCloudflareGatewayModel({ credentials, modelId, isImage = f
                 headers,
             })(actualModelId)
         }
-        case 'openai': {
-            const openaiProvider = createOpenAI({
-                apiKey: NO_KEY_PLACEHOLDER,
-                baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/openai`,
-                headers,
-                fetch: stripAuthorizationHeader,
-            })
-            if (isImage) {
-                return openaiProvider.imageModel(actualModelId)
-            }
-            return openaiResponsesModel ? openaiProvider.responses(actualModelId) : openaiProvider.chat(actualModelId)
-        }
+        case 'openai':
+            return openAiGatewayProvider({ accountId, gatewayId, headers }).imageModel(actualModelId)
         default:
             return compatGatewayModel({ accountId, gatewayId, headers, isImage, modelId })
     }
@@ -74,10 +70,26 @@ function compatGatewayModel({ accountId, gatewayId, headers, isImage, modelId, o
     return isImage ? provider.imageModel(modelId) : provider.chatModel(modelId)
 }
 
-const stripAuthorizationHeader: typeof globalThis.fetch = (input, init) => {
-    const headers = new Headers(init?.headers)
-    headers.delete('Authorization')
-    return fetch(input, { ...init, headers })
+function openAiGatewayProvider({ accountId, gatewayId, headers, onOutcome }: {
+    accountId: string
+    gatewayId: string
+    headers: Record<string, string>
+    onOutcome?: ProviderOutcomeReporter
+}): ReturnType<typeof createOpenAI> {
+    return createOpenAI({
+        apiKey: NO_KEY_PLACEHOLDER,
+        baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/openai`,
+        headers,
+        fetch: withoutAuthorizationHeader(observedProviderFetch(onOutcome)),
+    })
+}
+
+function withoutAuthorizationHeader(delegate: typeof globalThis.fetch | undefined): typeof globalThis.fetch {
+    return (input, init) => {
+        const headers = new Headers(init?.headers)
+        headers.delete('Authorization')
+        return (delegate ?? globalThis.fetch)(input, { ...init, headers })
+    }
 }
 
 const NO_KEY_PLACEHOLDER = 'no-key'
@@ -95,7 +107,6 @@ export type CreateCloudflareGatewayModelParams = {
     credentials: Extract<AiProviderCredentials, { provider: AIProviderName.CLOUDFLARE_GATEWAY }>
     modelId: string
     isImage?: boolean
-    openaiResponsesModel?: boolean
     routing?: CloudflareGatewayRouting
     metadata?: CloudflareGatewayMetadata
     onOutcome?: ProviderOutcomeReporter

@@ -16,6 +16,7 @@ function filterEmptyVariables(
 export const generateAiReply = createAction({
   auth: famulorAuth,
   name: 'generateAiReply',
+  classification: 'WRITE',
   displayName: 'Generate AI Reply',
   description: 'Generate an AI reply from an assistant for a given customer.',
   audience: 'both',

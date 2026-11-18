@@ -8,7 +8,7 @@ import {
 import { gmail as googleGmail } from '@googleapis/gmail';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import mime from 'mime-types';
-import Mail, { Attachment } from 'nodemailer/lib/mailer';
+import Mail from 'nodemailer/lib/mailer';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { ExecutionType } from '@activepieces/pieces-framework';
 import { requestApprovalInMailActionOutputSchema } from '../output-schemas';
@@ -146,7 +146,9 @@ export const requestApprovalInEmail = createAction({
           type: 'WEBHOOK',
         });
 
-        const confirmationLink = `${waitpoint.resumeUrl}/confirm`;
+        const confirmationLink = `${
+          waitpoint.publicResumeUrl ?? waitpoint.resumeUrl
+        }/confirm`;
 
         const bodyHtml =
           context.propsValue.body_type === 'plain_text'
@@ -191,7 +193,7 @@ export const requestApprovalInEmail = createAction({
         };
 
         if (attachments && attachments.length > 0) {
-          const attachmentOption: Attachment[] = attachments.map(
+          const attachmentOption: Mail.Attachment[] = attachments.map(
             ({ file, name }) => {
               const lookupResult = mime.lookup(
                 file.extension ? file.extension : ''

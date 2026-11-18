@@ -4,6 +4,7 @@ import { krispcallAuth } from '../auth';
 
 export const addContact = createAction({
   name: 'addContact',
+  classification: 'WRITE',
   displayName: 'Add Contact',
   auth: krispcallAuth,
   description: 'Add contact in Krispcall',

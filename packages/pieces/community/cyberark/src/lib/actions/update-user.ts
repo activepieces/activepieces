@@ -7,6 +7,7 @@ import { getAuthToken, CyberArkAuth } from '../common/auth-helper';
 export const updateUser = createAction({
   auth: cyberarkAuth,
   name: 'update_user',
+  classification: 'WRITE',
   displayName: 'Update User',
   description:
     'Updates an existing Vault user (except Master and Batch built-in users)',

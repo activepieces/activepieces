@@ -30,7 +30,7 @@ export const TemplateCardSkeleton = ({
         </div>
       </CardContent>
 
-      <div className="h-16 flex items-center px-4 rounded-b-lg">
+      <div className="h-16 flex items-center px-4 rounded-b-xl">
         <Skeleton className="h-8 w-8 rounded-full" />
         <Skeleton className="h-8 w-8 rounded-full ml-2" />
         <Skeleton className="h-8 w-8 rounded-full ml-2" />

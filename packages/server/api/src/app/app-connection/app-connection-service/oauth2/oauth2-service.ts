@@ -30,6 +30,7 @@ export type OAuth2RequestBody = {
     authorizationMethod?: OAuth2AuthorizationMethod
     codeVerifier?: string
     scope?: string
+    resource?: string
 }
 
 export type ClaimOAuth2Request = {

@@ -21,6 +21,7 @@ const FindRecordInputSchema = z.object({
 export const findRecordAction = createAction({
   auth: servicenowAuth,
   name: 'find_record',
+  classification: 'SEARCH',
   displayName: 'Find Records',
   description: 'Search for records in a table using a query',
   audience: 'both',

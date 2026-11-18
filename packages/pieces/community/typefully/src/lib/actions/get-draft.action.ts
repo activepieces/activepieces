@@ -8,6 +8,7 @@ import { TypefullyDraft } from '../common/types';
 export const getDraftAction = createAction({
 	auth: typefullyAuth,
 	name: 'typefully_get_draft',
+	classification: 'READ',
 	displayName: 'Get Draft',
 	description: 'Retrieve a specific draft by its ID.',
 	audience: 'both',

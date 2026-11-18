@@ -5,6 +5,7 @@ import { quickbooksQuery, QuickbooksEntityResponse } from '../lib/common';
 export const findCustomerAction = createAction({
 	auth: quickbooksAuth,
 	name: 'find_customer',
+	classification: 'READ',
 	displayName: 'Find Customer',
 	description: 'Search for a customer by display name in QuickBooks.',
 	audience: 'both',

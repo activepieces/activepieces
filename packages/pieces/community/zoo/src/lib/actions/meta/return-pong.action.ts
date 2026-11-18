@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const returnPongAction = createAction({
   name: 'return_pong',
+  classification: 'READ',
   displayName: 'Return Pong',
   description: 'Health check endpoint that returns "pong"',
   audience: 'both',

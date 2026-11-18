@@ -9,6 +9,7 @@ import {
 	objectToArray,
 	stringifyArray,
 	ValueInputOption,
+	googleSheetsCommon,
 } from '../common/common';
 import { commonProps, isFirstRowHeaderProp, rowValuesProp } from '../common/props';
 import { getWorkSheetName } from '../triggers/helpers';
@@ -26,6 +27,22 @@ export const insertRowAtTopAction = createAction({
 			'Inserts a blank row near the top of a worksheet and writes the supplied values into it, shifting every existing row below it down by one; the insertion point defaults to just under row 1 but can be moved with Insert After Row. Use when newest-first ordering matters — prefer Add Row to append at the bottom, which is cheaper and does not renumber existing rows. Not idempotent: each call inserts another row and shifts the rest down again.',
 		idempotent: false,
 	},
+	propertyGroups: [
+		{
+			key: 'spreadsheet',
+			display: 'section',
+			label: 'Spreadsheet',
+			icon: 'file',
+			props: ['spreadsheetId', 'sheetId'],
+		},
+		{
+			key: 'new_row',
+			display: 'section',
+			label: 'New Row',
+			icon: 'text',
+			props: ['insertAfterRow', 'first_row_headers', 'values'],
+		},
+	],
 	props: {
 		...commonProps,
 		first_row_headers: isFirstRowHeaderProp(),
@@ -95,7 +112,7 @@ export const insertRowAtTopAction = createAction({
 
 		const updateResponse = await sheets.spreadsheets.values.update({
 			spreadsheetId,
-			range: `${sheetName}!A${targetRow}:ZZZ${targetRow}`,
+			range: googleSheetsCommon.sheetRange({ sheetName, range: `A${targetRow}:ZZZ${targetRow}` }),
 			valueInputOption: as_string ? ValueInputOption.RAW : ValueInputOption.USER_ENTERED,
 			requestBody: {
 				majorDimension: Dimension.ROWS,

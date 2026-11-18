@@ -7,6 +7,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createLabel = createAction({
   auth: meistertaskAuth,
   name: 'create_label',
+  classification: 'WRITE',
   displayName: 'Create Label',
   description: 'Creates a new label',
   audience: 'both',

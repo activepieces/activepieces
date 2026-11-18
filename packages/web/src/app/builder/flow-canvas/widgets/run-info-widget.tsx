@@ -6,7 +6,7 @@ import {
 } from '@activepieces/shared';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { ArrowRight, CircleHelp, Info, Magnet } from 'lucide-react';
+import { ArrowRight, Info, Magnet } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +21,7 @@ import {
 } from '@/features/flow-runs/components/timeline-bar';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/format-utils';
+import { statusColors } from '@/lib/status-colors';
 import { cn } from '@/lib/utils';
 
 import { EditFlowOrViewDraftButton } from '../../builder-header/flow-status/view-draft-or-edit-flow-button';
@@ -80,9 +81,6 @@ function getStatusText({
 
 const RunInfoWidget = () => {
   const run = useBuilderStateContext((state) => state.run);
-  const { variant, Icon } = run
-    ? flowRunUtils.getStatusIcon(run.status)
-    : { variant: 'default' as const, Icon: CircleHelp };
   const { data: timeoutSeconds } = flagsHooks.useFlag<number>(
     ApFlagId.FLOW_RUN_TIME_SECONDS,
   );
@@ -95,6 +93,7 @@ const RunInfoWidget = () => {
   if (!run) {
     return null;
   }
+  const Icon = flowRunUtils.getStatusIcon(run.status);
   const isRunTerminal = isFlowRunStateTerminal({
     status: run.status,
     ignoreInternalError: false,
@@ -102,15 +101,15 @@ const RunInfoWidget = () => {
   return (
     <LargeWidgetWrapper
       containerClassName={cn(
-        flowRunUtils.getStatusContainerClassName(variant),
-        'bg-background border border-border dark:bg-background dark:border-border',
+        'text-xs leading-tight rounded-md bg-gray-1 border border-gray-6',
+        statusColors.of(run.status).text,
       )}
       key={run.id + run.status}
     >
       <div className="flex items-center justify-between w-full flex-wrap">
         <div className="flex items-center text-sm shrink-0">
           <Icon className="size-5 mr-2" />
-          <span className="text-foreground dark:text-foreground font-medium">
+          <span className="text-gray-12 font-medium">
             {getStatusText({
               status: run.status,
               timeout: timeoutSeconds ?? -1,
@@ -119,7 +118,7 @@ const RunInfoWidget = () => {
             })}
           </span>
 
-          <div className="shrink-0 text-foreground dark:text-foreground">
+          <div className="shrink-0 text-gray-12">
             {isRunTerminal && (
               <>
                 &nbsp;-&nbsp;
@@ -148,7 +147,7 @@ const RunInfoWidget = () => {
           {isRunTerminal && !isTimelineEmpty(run.timeline) && (
             <HoverCard openDelay={200} closeDelay={100}>
               <HoverCardTrigger className="ml-1 inline-flex cursor-default items-center">
-                <Info className="size-4 text-muted-foreground" />
+                <Info className="size-4 text-gray-11" />
               </HoverCardTrigger>
               <HoverCardContent className="w-[28rem] p-3">
                 <TimelineBar timeline={run.timeline} />
@@ -245,7 +244,7 @@ const JumpToFailedStepButton = ({
       variant="ghost"
       size="sm"
       onClick={handleClick}
-      className="text-destructive-700 hover:text-destructive-700 dark:text-destructive-200 dark:hover:text-destructive-200"
+      className="text-danger-11 hover:text-danger-11"
     >
       <ArrowRight className="size-4" />
       {t('See error')}

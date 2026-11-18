@@ -18,13 +18,7 @@ import {
 import { HttpMethod } from '@activepieces/pieces-common';
 import { GithubAuthValue } from '../common/auth-helpers';
 
-const WORKFLOW_DISPATCH_NOTE = `**Requirements**
-
-- The selected workflow file must declare an \`on: workflow_dispatch\` trigger on the chosen branch/tag, or triggering it will fail.
-- Your GitHub connection needs these permissions on the target repo:
-  - **Actions** — Read and write
-  - **Contents** — Read-only
-- If you're connected via OAuth2 with the \`repo\` scope, this is already covered.`;
+const WORKFLOW_DISPATCH_NOTE = `The workflow must have an \`on: workflow_dispatch\` trigger on the chosen branch or tag. The connection needs **Actions** read and write and **Contents** read access; OAuth's \`repo\` scope covers both.`;
 
 export const githubTriggerWorkflowDispatchAction = createAction({
   auth: githubAuth,
@@ -32,7 +26,7 @@ export const githubTriggerWorkflowDispatchAction = createAction({
   classification: 'WRITE',
   displayName: 'Trigger Workflow Dispatch',
   description:
-    'Manually triggers a GitHub Actions workflow run via the workflow_dispatch event.',
+    'Starts a GitHub Actions workflow run, optionally waiting for it.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -45,20 +39,17 @@ export const githubTriggerWorkflowDispatchAction = createAction({
     }),
     repository: githubCommon.repositoryDropdown,
     workflow: githubCommon.workflowDropdown({
-      description:
-        'The workflow to trigger. It must have a workflow_dispatch trigger configured in its YAML file.',
+      description: 'Only workflows with a workflow_dispatch trigger can run.',
       required: true,
     }),
     ref: githubCommon.refDropdown({
-      description:
-        'The branch or tag to run the workflow on. If a branch and a tag share the same name, GitHub resolves the tag.',
+      description: 'If a branch and a tag share a name, GitHub uses the tag.',
       required: true,
     }),
     inputs: Property.DynamicProperties({
       auth: githubAuth,
       displayName: 'Workflow Inputs',
-      description:
-        'Detected from the workflow_dispatch trigger declared in the workflow file, as it exists on the selected branch/tag.',
+      description: 'Read from the workflow file on the chosen branch or tag.',
       required: false,
       refreshers: ['repository', 'workflow', 'ref'],
       props: async ({
@@ -101,14 +92,14 @@ export const githubTriggerWorkflowDispatchAction = createAction({
     waitForCompletion: Property.Checkbox({
       displayName: 'Wait for Completion',
       description:
-        'Pause this flow and poll the triggered run until it finishes (or times out), instead of returning immediately after dispatching it.',
-      required: true,
+        'Pause the flow until the run finishes or the timeout passes.',
+      required: false,
       defaultValue: false,
     }),
     waitSettings: Property.DynamicProperties({
       auth: githubAuth,
       displayName: 'Wait Settings',
-      description: 'Only used when "Wait for Completion" is enabled.',
+      description: 'Used only when Wait for Completion is on.',
       required: false,
       refreshers: ['waitForCompletion'],
       props: async ({ waitForCompletion }): Promise<DynamicPropsValue> => {
@@ -117,15 +108,15 @@ export const githubTriggerWorkflowDispatchAction = createAction({
         }
         return {
           pollIntervalInSeconds: Property.ShortText({
-            displayName: 'Poll Interval (seconds)',
-            description: "How often to check the run's status while waiting.",
+            displayName: 'Poll Interval',
+            description: 'Seconds between status checks.',
             required: false,
             defaultValue: '60',
           }),
           timeoutInMinutes: Property.ShortText({
-            displayName: 'Wait Timeout (minutes)',
+            displayName: 'Wait Timeout',
             description:
-              'Give up waiting after this many minutes and throw an error (the workflow run itself keeps going on GitHub either way).',
+              'Minutes before the step fails. The run keeps going on GitHub.',
             required: false,
             defaultValue: '30',
           }),
@@ -133,6 +124,28 @@ export const githubTriggerWorkflowDispatchAction = createAction({
       },
     }),
   },
+  propertyGroups: [
+    {
+      key: 'workflow',
+      display: 'section',
+      label: 'Workflow',
+      icon: 'send',
+      props: [
+        'workflowDispatchNote',
+        'repository',
+        'workflow',
+        'ref',
+        'inputs',
+      ],
+    },
+    {
+      key: 'run',
+      display: 'section',
+      label: 'Run',
+      icon: 'sliders',
+      props: ['waitForCompletion', 'waitSettings'],
+    },
+  ],
   async run(context) {
     const { auth, propsValue } = context;
     const { owner, repo } = propsValue.repository!;
@@ -295,8 +308,8 @@ async function buildInputProperty(
   owner: string,
   repo: string
 ) {
-  const displayName = `[Workflow Input]: ${key}`;
-  const description = buildInputDescription(def);
+  const displayName = key;
+  const description = def.description;
   const required = def.required ?? false;
   const defaultValue =
     def.default !== undefined ? String(def.default) : undefined;
@@ -360,11 +373,6 @@ async function buildInputProperty(
         defaultValue,
       });
   }
-}
-
-function buildInputDescription(def: WorkflowDispatchInputDef): string {
-  const typePrefix = `[${def.type ?? 'string'}]`;
-  return def.description ? `${typePrefix} ${def.description}` : typePrefix;
 }
 
 type WorkflowDispatchInputDef = {

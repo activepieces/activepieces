@@ -24,6 +24,7 @@ function toHighlightArray(result: unknown): Highlight[] {
 export const listSessionHighlights = createAction({
   auth: hedyAuth,
   name: 'list-session-highlights',
+  classification: 'SEARCH',
   displayName: 'List Session Highlights',
   description: 'Retrieve highlights for a specific session.',
   audience: 'both',

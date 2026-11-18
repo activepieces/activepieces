@@ -2,8 +2,7 @@ import { isNil } from '@activepieces/core-utils'
 import { McpToolDefinition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { projectService } from '../../project/project-service'
-import { userService } from '../../user/user-service'
+import { mcpAccess } from '../mcp-access'
 import { mcpProjectSelection, ProjectSelectionScope } from '../mcp-project-selection'
 
 export const apSetProjectContextTool = ({ platformId, userId, selectionScope, log }: {
@@ -12,7 +11,7 @@ export const apSetProjectContextTool = ({ platformId, userId, selectionScope, lo
     selectionScope: ProjectSelectionScope
     log: FastifyBaseLogger
 }): McpToolDefinition => ({
-    title: 'ap_set_project_context',
+    title: SET_PROJECT_CONTEXT_TOOL_NAME,
     description: 'Set or clear the active project context. All tools require a project context to operate. Call with a projectId to select a project, or without to clear the selection. Always returns the list of available projects.',
     inputSchema: {
         projectId: z.string().optional().describe('The project ID to select. Omit to clear the current selection and list available projects.'),
@@ -26,12 +25,11 @@ export const apSetProjectContextTool = ({ platformId, userId, selectionScope, lo
     execute: async (args: Record<string, unknown>) => {
         const projectId = args.projectId as string | undefined
 
-        const user = await userService(log).getOneOrFail({ id: userId })
-        const projects = await projectService(log).getAllForUser({
-            platformId,
-            userId,
-            isPrivileged: userService(log).isUserPrivileged(user),
-        })
+        const projects = await mcpAccess.listAccessibleProjects({ platformId, userId, log })
+
+        if (projects.length === 0) {
+            return mcpAccess.noMcpReachResult(SET_PROJECT_CONTEXT_TOOL_NAME)
+        }
 
         if (!isNil(projectId) && projectId !== '') {
             const targetProject = projects.find(p => p.id === projectId)
@@ -67,3 +65,5 @@ export const apSetProjectContextTool = ({ platformId, userId, selectionScope, lo
         }
     },
 })
+
+export const SET_PROJECT_CONTEXT_TOOL_NAME = 'ap_set_project_context'

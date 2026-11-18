@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const enrichCompany = createAction({
   auth: villageAuth,
   name: 'enrich_company',
+  classification: 'READ',
   displayName: 'Enrich Company',
   description:
     'Get detailed information about a company by domain, LinkedIn URL, or any URL. Returns name, website, LinkedIn URL, logo, employee count, industry, founded year, and description.',

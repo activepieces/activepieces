@@ -9,7 +9,7 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { applicationEvents } from '../../helper/application-events'
 import { securityHelper } from '../../helper/security-helper'
 import { AgentEntity } from './agent-entity'
-import { agentAudit, agentRedaction, agentService } from './agent-service'
+import { AGENT_USAGE_LIST_LIMIT, agentAudit, agentRedaction, agentService } from './agent-service'
 
 export const agentController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', CreateAgentRoute, async (request, reply) => {
@@ -36,6 +36,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
             sort: request.query.sort,
             cursor: request.query.cursor,
             limit: request.query.limit,
+            connectionExternalIds: request.query.connectionExternalIds,
         })
     })
 
@@ -50,7 +51,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
         if (request.query.includeUsage !== true) {
             return redacted
         }
-        const publishedFlowsUsingAgent = await agentService(request.log).publishedFlowsUsing({ agent, projectId: request.projectId, userId })
+        const publishedFlowsUsingAgent = await agentService(request.log).publishedFlowsUsing({ agent, projectId: request.projectId, userId, nameLimit: AGENT_USAGE_LIST_LIMIT })
         return { ...redacted, publishedFlowsUsingAgent }
     })
 

@@ -5,6 +5,7 @@ import { wedofCommon } from '../../common/wedof';
 export const certificationPartnerAborted = createTrigger({
   auth: wedofAuth,
   name: 'certificationPartnerAborted',
+  classification: 'READ',
   displayName: 'Demande de partenariat abandonnée',
   description: "Se déclenche Lorsqu'une demande de partenariat estabandonnée",
   aiMetadata: {

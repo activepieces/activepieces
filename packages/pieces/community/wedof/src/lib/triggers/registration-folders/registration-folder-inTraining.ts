@@ -5,6 +5,7 @@ import { wedofCommon } from '../../common/wedof';
 export const registrationFolderInTraining = createTrigger({
   auth: wedofAuth,
   name: 'registrationFolderInTraining',
+  classification: 'READ',
   displayName: 'Dossier de formation entre en formation',
   description:
     "Se déclenche lorsqu'un dossier de formation passe à l'état en formation",

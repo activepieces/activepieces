@@ -8,24 +8,41 @@ export const createClickupTaskComment = createAction({
   auth: clickupAuth,
   name: 'create_task_comments',
   classification: 'WRITE',
-  description: 'Creates a comment on a task in ClickUp',
+  description: 'Add a comment to a ClickUp task.',
   audience: 'human',
   aiMetadata: { description: 'Post a new comment on a ClickUp task and notify the workspace. Each call adds a distinct comment, so repeated calls create duplicates (not idempotent). If no assignee is given, the comment is attributed to the authenticated user.', idempotent: false },
   displayName: 'Create Task Comment',
+  propertyGroups: [
+    {
+      key: 'target',
+      display: 'section',
+      label: 'Task',
+      icon: 'inbox',
+      props: ['workspace_id', 'space_id', 'list_id', 'task_id'],
+    },
+    {
+      key: 'comment',
+      display: 'section',
+      label: 'Comment',
+      icon: 'text',
+      props: ['comment', 'assignee_id'],
+    },
+  ],
   props: {
     workspace_id: clickupCommon.workspace_id(),
     space_id: clickupCommon.space_id(),
     list_id: clickupCommon.list_id(),
     task_id: clickupCommon.task_id(),
     comment: Property.LongText({
-      description: 'Comment to make on the task',
-      displayName: 'Comment',
+      displayName: 'Text',
+      description: 'What the comment says.',
+      placeholder: 'e.g. Ready for review',
       required: true,
     }),
     assignee_id: clickupCommon.single_assignee_id(
       false,
-      'Assignee Id',
-      'ID of assignee for Task Comment'
+      'Assignee',
+      'Who should act on the comment. Empty: you.'
     ),
   },
   outputSchema: createTaskCommentOutputSchema,
@@ -43,7 +60,7 @@ export const createClickupTaskComment = createAction({
       );
 
       if (user_request.body['user'] === undefined) {
-        throw 'Please connect to your ClickUp account';
+        throw new Error('Please connect to your ClickUp account');
       }
 
       assignee_id = user_request.body['user']['id'];

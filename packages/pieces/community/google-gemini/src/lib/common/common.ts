@@ -32,6 +32,7 @@ const isVeoModel = (model: GeminiModel): boolean =>
 
 const isImageModel = (model: GeminiModel): boolean =>
   model.name.toLowerCase().includes('image') &&
+  !model.name.toLowerCase().includes('imagen') &&
   !isTtsModel(model) &&
   !isVeoModel(model);
 

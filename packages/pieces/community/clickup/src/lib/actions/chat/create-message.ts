@@ -9,26 +9,36 @@ export const createClickupMessage = createAction({
   auth: clickupAuth,
   name: 'create_message',
   classification: 'WRITE',
-  description: 'Creates a message in a ClickUp channel',
+  description: 'Post a message in a ClickUp chat channel.',
   audience: 'both',
   aiMetadata: { description: 'Post a new top-level message into a ClickUp Chat channel, given the workspace and channel IDs. Each call sends a separate message, so repeated calls create duplicates (not idempotent). Use Create Message Reply to respond within an existing message thread instead.', idempotent: false },
   displayName: 'Create Message',
   props: {
     workspace_id: clickupCommon.workspace_id(),
-    channel_id: clickupCommon.channel_id(),
+    channel_id: clickupCommon.channel_id(true),
     content: Property.LongText({
-      description: 'Content of the message',
-      displayName: 'Message Content',
+      description: 'ClickUp formats Markdown in the message.',
+      displayName: 'Message',
       required: true,
+      placeholder: 'e.g. The release is live',
     }),
     type: Property.StaticDropdown({
-      description: 'Type of the message',
+      description: 'How the message appears in the channel.',
       displayName: 'Message Type',
       required: true,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Message', value: 'message' },
-          { label: 'Post', value: 'post' },
+          {
+            label: 'Message',
+            value: 'message',
+            icon: 'text',
+          },
+          {
+            label: 'Post',
+            value: 'post',
+            icon: 'send',
+          },
         ],
       },
       defaultValue: 'message',

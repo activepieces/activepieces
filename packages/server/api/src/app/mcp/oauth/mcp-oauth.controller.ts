@@ -11,8 +11,9 @@ import { CONVERSATION_ID_HEADER } from '../../ee/agent/mcp/agent-mcp'
 import { domainHelper } from '../../helper/domain-helper'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { telemetry, telemetryDedupe } from '../../helper/telemetry.utils'
+import { projectRepo } from '../../project/project-repo'
 import { mcpServerService } from '../mcp-service'
-import { mcpOAuthTokenService } from './token/mcp-oauth-token.service'
+import { INTERNAL_CHAT_CLIENT_ID, mcpOAuthTokenService } from './token/mcp-oauth-token.service'
 
 export const mcpOAuthHttpController: FastifyPluginAsyncZod = async (app) => {
     registerMcpEndpoint(app, McpServerType.PROJECT)
@@ -77,7 +78,7 @@ function registerMcpEndpoint(app: Parameters<FastifyPluginAsyncZod>[0], scope: M
         const serverMcp = conversationProjectId
             ? await mcpServerService(req.log).getPopulatedByProjectId(conversationProjectId) ?? mcp
             : mcp
-        const { server } = await mcpServerService(req.log).buildServer({ mcp: serverMcp, userId, platformId, clientKey: identity.clientKey, clientId: identity.clientId })
+        const { server } = await mcpServerService(req.log).buildServer({ mcp: serverMcp, userId, platformId, clientKey: identity.clientKey, clientId: identity.clientId, isInAppChat: isInAppChatIdentity(identity) })
 
         const transport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined,
@@ -142,7 +143,7 @@ async function resolveIdentity({ token, scope, log }: { token: string, scope: Mc
 async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity, log: FastifyBaseLogger }): Promise<{ mcp: PopulatedMcpServer | null, userId?: string, platformId?: string }> {
     try {
         if (identity.type === McpServerType.PLATFORM) {
-            if (telemetryDedupe.onceToday(`mcp-server-connected:platform:${identity.platformId}:${identity.userId}`)) {
+            if (!isInAppChatIdentity(identity) && telemetryDedupe.onceToday(`mcp-server-connected:platform:${identity.platformId}:${identity.userId}`)) {
                 rejectedPromiseHandler(telemetry(log).trackPlatform({
                     platformId: identity.platformId,
                     event: {
@@ -156,6 +157,9 @@ async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity
             }
             const mcp = await mcpServerService(log).getPopulatedByPlatformId(identity.platformId)
             return { mcp, userId: identity.userId, platformId: identity.platformId }
+        }
+        if (!(await projectRepo().existsBy({ id: identity.projectId, platformId: identity.platformId }))) {
+            return { mcp: null }
         }
         if (telemetryDedupe.onceToday(`mcp-server-connected:project:${identity.projectId}:${identity.userId}`)) {
             rejectedPromiseHandler(telemetry(log).trackProject({
@@ -188,6 +192,10 @@ type IdentityResult =
     | { status: 'unavailable' }
 
 const chatConversationRepo = repoFactory(AgentConversationEntity)
+
+function isInAppChatIdentity(identity: ResolvedIdentity): boolean {
+    return identity.type === McpServerType.PLATFORM && identity.clientId === INTERNAL_CHAT_CLIENT_ID
+}
 
 async function resolveConversationProjectId({ conversationId, identity, log }: {
     conversationId: string
@@ -223,7 +231,10 @@ async function resolveConversationProjectId({ conversationId, identity, log }: {
     return conversationProjectId
 }
 
+export const MCP_REQUEST_BODY_LIMIT_BYTES = 4 * 1024 * 1024
+
 const McpEndpointConfig = {
     config: { security: securityAccess.public() },
     schema: { hide: true },
+    bodyLimit: MCP_REQUEST_BODY_LIMIT_BYTES,
 }

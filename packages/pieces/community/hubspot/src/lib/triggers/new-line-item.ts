@@ -1,17 +1,15 @@
 import { getHubspotAccessToken, hubspotAuth } from '../auth';
+import { hubspotPolling } from '../common/polling';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import {
 	createTrigger,
 	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
+import { OBJECT_TYPE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
-import { FilterOperatorEnum } from '../common/types';
-import dayjs from 'dayjs';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
@@ -19,9 +17,9 @@ type Props = {
 };
 
 import { crmObjectOutputSchema } from '../output-schemas';
-const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
+const polling = {
 	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, propsValue, lastFetchEpochMS }) {
+	async items({ auth, propsValue, lastFetchEpochMS, store }) {
 		const client = new Client({ accessToken: getHubspotAccessToken(auth), numberOfApiCallRetries: 3 });
 
 		// Extract properties once to avoid recomputation
@@ -29,58 +27,22 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 		const defaultLineItemProperties = getDefaultPropertiesForObject(OBJECT_TYPE.LINE_ITEM);
 		const propertiesToRetrieve = [...defaultLineItemProperties, ...additionalProperties];
 
-		const items = [];
-		let after: string | undefined;
-
-		do {
-			const isTest = lastFetchEpochMS === 0;
-			const response = await client.crm.lineItems.searchApi.doSearch({
-				limit: isTest ? 10 : MAX_SEARCH_PAGE_SIZE,
-				after,
-				properties: propertiesToRetrieve,
-				sorts: ['-createdate'],
-				filterGroups: isTest
-					? []
-					: [
-							{
-								filters: [
-									{
-										propertyName: 'createdate',
-										operator: FilterOperatorEnum.Gt,
-										value: lastFetchEpochMS.toString(),
-									},
-								],
-							},
-					  ],
-			});
-			after = response.paging?.next?.after;
-			items.push(...response.results);
-
-			// Stop fetching if it's a test
-			if (isTest) break;
-
-			// Stop fetching if it exceeds max search results or will encounter 400 status
-			if (
-				!isNil(after) &&
-				parseInt(after) + MAX_SEARCH_PAGE_SIZE > MAX_SEARCH_TOTAL_RESULTS
-			) {
-				break;
-			}
-		} while (after);
-
-		return items.map((item) => ({
-			epochMilliSeconds: dayjs(item.properties['createdate']).valueOf(),
-			data: item,
-		}));
+		return hubspotPolling.pollSearchTrigger({
+			store,
+			search: (request) => client.crm.lineItems.searchApi.doSearch(request),
+			timestampProperty: 'createdate',
+			lastFetchEpochMS,
+			properties: propertiesToRetrieve,
+		});
 	},
-};
+} satisfies Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props>;
 
 export const newLineItemTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-line-item',
 	classification: 'READ',
 	displayName: 'New Line Item',
-	description: 'Triggers when new line item is available.',
+	description: 'Triggers when a new line item is created.',
 	aiMetadata: {
 		description:
 			'Fires when a new line item is created in HubSpot. Each event represents one line item with properties such as name, price, quantity, amount, discount, tax, SKU, and linked product. Polls for line items by creation date; does not fire on updates to existing line items.',
@@ -88,15 +50,13 @@ export const newLineItemTrigger = createTrigger({
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                                    
-                    name, description, price, quantity, amount, discount, tax, createdate, hs_object_id, hs_product_id, hs_images, hs_lastmodifieddate, hs_line_item_currency_code, hs_sku, hs_url, hs_cost_of_goods_sold, hs_discount_percentage, hs_term_in_months           
-                        
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: name, description, price, quantity, amount, discount, tax, createdate, hs_object_id, hs_product_id, hs_images, hs_lastmodifieddate, hs_line_item_currency_code, hs_sku, hs_url, hs_cost_of_goods_sold, hs_discount_percentage, hs_term_in_months.
+
+Pick more below.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.LINE_ITEM,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
 		}),
 	},
@@ -109,10 +69,10 @@ export const newLineItemTrigger = createTrigger({
 		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
-		return await pollingHelper.test(polling, context);
+		return hubspotPolling.sampleOldestToNewest({ items: await pollingHelper.test(polling, context) });
 	},
 	async run(context) {
-		return await pollingHelper.poll(polling, context);
+		return await hubspotPolling.poll({ polling, context });
 	},
 	sampleData: {
 		createdAt: '2024-12-25T11:08:54.763Z',
@@ -131,10 +91,7 @@ export const newLineItemTrigger = createTrigger({
 			hs_object_id: '26882583648',
 			hs_product_id: '17602013482',
 			hs_sku: 'fb-100',
-			hs_tax_amount: null,
-			hs_tcv: '5.00',
 			hs_term_in_months: null,
-			hs_total_discount: '10.00',
 			hs_url: null,
 			name: 'Chair',
 			price: '15.0',

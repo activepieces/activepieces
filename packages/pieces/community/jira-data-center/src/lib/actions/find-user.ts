@@ -6,8 +6,9 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const findUserAction = createAction({
 	auth: jiraDataCenterAuth,
 	name: 'find-user',
+	classification: 'SEARCH',
 	displayName: 'Find User',
-	description: 'Finds an existing user.',
+	description: 'Finds users by username, name or email address.',
 	audience: 'both',
 	aiMetadata: {
 		description:
@@ -17,6 +18,8 @@ export const findUserAction = createAction({
 	props: {
 		keyword: Property.ShortText({
 			displayName: 'Keyword',
+			description: 'Matches part of a username, name or email address.',
+			placeholder: 'jane@example.com',
 			required: true,
 		}),
 	},

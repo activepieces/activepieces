@@ -5,14 +5,17 @@ import {
 } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-import { ghostAuth } from '../..';
+import { ghostAuth } from '../auth';
 import { common } from '../common';
+import { ghostOriginalCreatePostOutputSchema } from '../output-schemas';
 
 export const createPost = createAction({
   name: 'create_post',
+  outputSchema: ghostOriginalCreatePostOutputSchema,
+  classification: 'WRITE',
   displayName: 'Create Post',
   description: 'Create a new post',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new post in a Ghost publication from a title and HTML content, with the status controlling whether it is saved as a draft, published immediately, or scheduled (scheduled requires a future Published At). Supports optional slug, excerpt, author, tags, and a featured flag. Not idempotent: each call creates a separate post.', idempotent: false },
   auth: ghostAuth,
   props: {

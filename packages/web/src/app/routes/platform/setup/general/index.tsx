@@ -1,9 +1,8 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 
-import { CenteredPage } from '@/app/components/centered-page';
+import { AdminPageHeader, adminPageResources } from '@/app/components/admin';
 import { AppearanceSection } from '@/app/routes/platform/setup/general/appearance-section';
-import { Separator } from '@/components/ui/separator';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
@@ -19,17 +18,16 @@ export const GeneralPage = () => {
     edition === ApEdition.CLOUD && platform.ownerId === user?.id;
 
   return (
-    <CenteredPage
-      title={t('General')}
-      description={t('Your platform name, branding and general settings.')}
+    <AppearanceSection
+      header={
+        <AdminPageHeader
+          title={t('General')}
+          description={t('Your platform name, branding and general settings.')}
+          resources={adminPageResources.general}
+        />
+      }
     >
-      <AppearanceSection />
-      {canDeletePlatform && (
-        <>
-          <Separator className="my-8" />
-          <DangerZoneSection platformName={platform.name} />
-        </>
-      )}
-    </CenteredPage>
+      {canDeletePlatform && <DangerZoneSection platformName={platform.name} />}
+    </AppearanceSection>
   );
 };

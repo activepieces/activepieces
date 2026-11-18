@@ -106,9 +106,8 @@ export const CreateFolderDialog = ({
                     required
                     id="folder"
                     placeholder={t('Folder Name')}
-                    className="rounded-sm"
                   />
-                  <FormMessage />
+                  <FormMessage data-testid="create-folder-name-error" />
                 </FormItem>
               )}
             />

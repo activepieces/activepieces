@@ -1,0 +1,173 @@
+import {
+  SharedTemplate,
+  TemplateStatus,
+  TemplateType,
+} from '@activepieces/shared';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { tablesApi, fieldsApi, recordsApi } = vi.hoisted(() => ({
+  tablesApi: {
+    clear: vi.fn(),
+    update: vi.fn(),
+    getById: vi.fn(),
+    create: vi.fn(),
+  },
+  fieldsApi: { list: vi.fn(), delete: vi.fn(), create: vi.fn() },
+  recordsApi: { create: vi.fn() },
+}));
+
+vi.mock('@/features/tables/api/tables-api', () => ({ tablesApi }));
+vi.mock('@/features/tables/api/fields-api', () => ({ fieldsApi }));
+vi.mock('@/features/tables/api/records-api', () => ({ recordsApi }));
+vi.mock('@/lib/authentication-session', () => ({
+  authenticationSession: { getProjectId: () => 'project-1' },
+}));
+
+import { tableHooks } from '@/features/tables/hooks/table-hooks';
+
+const wrapAsDialogDoes = (fileContent: unknown): SharedTemplate => {
+  const parsedContent = JSON.parse(JSON.stringify(fileContent));
+  return {
+    name: 'anything',
+    type: TemplateType.SHARED,
+    summary: '',
+    description: '',
+    tags: [],
+    blogUrl: null,
+    metadata: null,
+    author: '',
+    categories: [],
+    pieces: [],
+    tables: [parsedContent],
+    status: TemplateStatus.PUBLISHED,
+  };
+};
+
+const exportedTableTemplate = {
+  name: 'Customers',
+  externalId: 'customers',
+  fields: [{ name: 'Email', type: 'TEXT', externalId: 'email' }],
+  data: {
+    type: 'CSV',
+    rows: [[{ fieldId: 'email', value: 'a@b.com' }]],
+  },
+};
+
+const templateWithFieldMissingExternalId = {
+  name: 'Customers',
+  externalId: 'customers',
+  fields: [{ name: 'Email', type: 'TEXT' }],
+};
+
+const handWrittenTemplate = {
+  name: 'Customers',
+  fields: [{ name: 'Email', type: 'TEXT', externalId: 'email' }],
+  data: {
+    rows: [[{ fieldId: 'email', value: 42 }]],
+  },
+};
+
+const gitSyncTableState = {
+  id: 'table-2',
+  name: 'Leads',
+  externalId: 'leads',
+  fields: [{ name: 'Name', type: 'TEXT', externalId: 'name' }],
+  status: null,
+  trigger: null,
+};
+
+describe('tableHooks.importTableIntoExisting', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    tablesApi.clear.mockResolvedValue(undefined);
+    tablesApi.update.mockResolvedValue(undefined);
+    tablesApi.getById.mockResolvedValue({ id: 'existing-1' });
+    fieldsApi.delete.mockResolvedValue(undefined);
+    fieldsApi.create.mockResolvedValue(undefined);
+    recordsApi.create.mockResolvedValue([]);
+    fieldsApi.list
+      .mockResolvedValueOnce([{ id: 'old-field-1', externalId: 'email' }])
+      .mockResolvedValue([{ id: 'new-field-1', externalId: 'email' }]);
+  });
+
+  it('imports a template whose columns have no externalId', async () => {
+    await tableHooks.importTableIntoExisting({
+      template: wrapAsDialogDoes(templateWithFieldMissingExternalId),
+      existingTableId: 'existing-1',
+    });
+
+    expect(fieldsApi.create).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Email', tableId: 'existing-1' }),
+    );
+  });
+
+  it('imports an exported table template', async () => {
+    await tableHooks.importTableIntoExisting({
+      template: wrapAsDialogDoes(exportedTableTemplate),
+      existingTableId: 'existing-1',
+    });
+
+    expect(tablesApi.clear).toHaveBeenCalledWith('existing-1');
+    expect(fieldsApi.delete).toHaveBeenCalledWith('old-field-1');
+    expect(tablesApi.update).toHaveBeenCalledWith('existing-1', {
+      name: 'Customers',
+    });
+    expect(fieldsApi.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Email',
+        tableId: 'existing-1',
+        position: 0,
+      }),
+    );
+    expect(recordsApi.create).toHaveBeenCalledWith({
+      tableId: 'existing-1',
+      records: [[{ fieldId: 'new-field-1', value: 'a@b.com' }]],
+    });
+  });
+
+  it('imports a hand-written template that omits externalId and uses non-string cell values', async () => {
+    await tableHooks.importTableIntoExisting({
+      template: wrapAsDialogDoes(handWrittenTemplate),
+      existingTableId: 'existing-1',
+    });
+
+    expect(tablesApi.clear).toHaveBeenCalledWith('existing-1');
+    expect(recordsApi.create).toHaveBeenCalledWith({
+      tableId: 'existing-1',
+      records: [[{ fieldId: 'new-field-1', value: 42 }]],
+    });
+  });
+
+  it('imports a git-sync table state that carries no data rows', async () => {
+    await tableHooks.importTableIntoExisting({
+      template: wrapAsDialogDoes(gitSyncTableState),
+      existingTableId: 'existing-1',
+    });
+
+    expect(tablesApi.clear).toHaveBeenCalledWith('existing-1');
+    expect(recordsApi.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('tableHooks.importTablesFromTemplates', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    tablesApi.create.mockResolvedValue({ id: 'new-1' });
+    recordsApi.create.mockResolvedValue([]);
+    fieldsApi.list.mockResolvedValue([{ id: 'field-1', externalId: 'email' }]);
+  });
+
+  it('creates the table for an exported table template', async () => {
+    const tables = await tableHooks.importTablesFromTemplates({
+      templates: [wrapAsDialogDoes(exportedTableTemplate)],
+      projectId: 'project-1',
+    });
+
+    expect(tables).toEqual([
+      { table: { id: 'new-1' }, importedRecordsCount: 0 },
+    ]);
+    expect(tablesApi.create).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Customers', externalId: 'customers' }),
+    );
+  });
+});
