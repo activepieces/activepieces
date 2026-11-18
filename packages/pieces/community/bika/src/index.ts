@@ -40,6 +40,12 @@ export const bika = createPiece({
     deleteRecordByIdAction,
     createCustomApiCallAction({
       baseUrl: () => BIKA_API_BASE,
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${BIKA_API_BASE}`,
+          placeholder: '/v1/spaces',
+        },
+      },
       auth: BikaAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.props.token.trim()}`,
