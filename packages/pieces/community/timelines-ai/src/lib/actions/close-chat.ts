@@ -7,11 +7,14 @@ export const closeChat = createAction({
   name: 'closeChat',
   classification: 'WRITE',
   displayName: 'Close Chat',
-  description: 'Programmatically mark a chat as closed by its chat_id.',
+  description: 'Marks a chat as closed.',
   audience: 'both',
   aiMetadata: { description: 'Marks a TimelinesAI WhatsApp chat as closed, identified by its numeric chat_id. Use to resolve or archive a conversation once handling is done. Idempotent: closing an already-closed chat sets the same end state with no additional effect.', idempotent: true },
   props: {
-    chat_id: chatDropdown({ required: true }),
+    chat_id: chatDropdown({
+      description: 'The chat to close.',
+      required: true,
+    }),
   },
   async run({ auth: apiKey, propsValue: { chat_id } }) {
     const response = await timelinesAiCommon.updateChat({
