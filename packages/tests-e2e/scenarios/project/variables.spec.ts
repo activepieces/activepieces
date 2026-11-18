@@ -2,7 +2,7 @@ import { expect, test } from '../../fixtures/variables';
 import { BuilderPage } from '../../pages/builder.page';
 import { VariablesPage } from '../../pages/variables.page';
 
-test.describe('Variables', { tag: ['@feature:variables', '@surface', '@no-staging'] }, () => {
+test.describe('Variables', { tag: ['@feature:variables', '@surface'] }, () => {
   test('a variable created through the form resolves in a flow run', async ({ page, seed, cleanup, variables }) => {
     test.setTimeout(180000);
     const variablesPage = new VariablesPage(page);

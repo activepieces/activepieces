@@ -7,7 +7,7 @@ import { ConnectionsPage } from '../../pages/connections.page';
 
 const test = mergeTests(listResponseTest, connectionsListTest);
 
-test.describe('Connections', { tag: ['@feature:connections', '@surface', '@no-staging'] }, () => {
+test.describe('Connections', { tag: ['@feature:connections', '@surface'] }, () => {
   test.describe.configure({ timeout: 120_000 });
 
   test('create a connection, rename it and delete it', async ({ page, cleanup, connectionsList }) => {

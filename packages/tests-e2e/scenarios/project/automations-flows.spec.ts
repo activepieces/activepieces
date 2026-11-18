@@ -9,7 +9,7 @@ import { AutomationsPage } from '../../pages/automations.page';
 
 const test = mergeTests(listResponseTest, flowsListTest);
 
-test.describe('Automations › flows', { tag: ['@feature:flows-list', '@surface', '@no-staging'] }, () => {
+test.describe('Automations › flows', { tag: ['@feature:flows-list', '@surface'] }, () => {
   test('rename, duplicate, export and import a flow', async ({ page, request, session, seed, cleanup }) => {
     const { flowId, flowName } = await seed.flow({ template: webhookEcho, publish: false });
     const newName = `${flowName} renamed`;
