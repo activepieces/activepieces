@@ -1,7 +1,9 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { TelemetryEventName } from '@activepieces/shared'
+import { RewardFeatureId, TelemetryEventName } from '@activepieces/shared'
+import { AutumnError } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { userIdentityRepository } from '../../authentication/user-identity/user-identity-service'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
@@ -10,7 +12,7 @@ import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { telemetry } from '../../helper/telemetry.utils'
 import { billingProvider } from '../../platform/billing-provider'
 import { InvitedUserJoinedParams } from '../../user-invitations/user-invitation-hooks'
-import { autumnConsole, ConsoleCustomerCall } from '../platform/platform-plan/billing-providers/autumn-utils'
+import { autumnConsole, autumnUtils, ConsoleCustomerCall } from '../platform/platform-plan/billing-providers/autumn-utils'
 
 export const inviteRewardService = (log: FastifyBaseLogger) => ({
     async scheduleGrant({ platformId, identityId }: InvitedUserJoinedParams): Promise<void> {
@@ -38,9 +40,13 @@ export const inviteRewardService = (log: FastifyBaseLogger) => ({
             log.info({ platform: { id: platformId } }, '[inviteReward#grantOnJoin] no billing account, no reward')
             return
         }
+        const slotUsed = await useRewardSlot({ creds, inviteeEmail: identity.email })
+        if (!slotUsed) {
+            log.info({ platform: { id: platformId } }, '[inviteReward#grantOnJoin] no reward slot left')
+            return
+        }
         const result = await autumnConsole.grantInviteReward({
             autumnCustomerId: creds.autumnCustomerId,
-            inviteeEmail: identity.email,
             credits: system.getNumberOrThrow(AppSystemProp.INVITE_REWARD_CREDITS),
         })
         if (!result.granted) {
@@ -70,8 +76,31 @@ async function loadCredsEnrollingIfMissing({ log, platformId }: LoadCredsParams)
     return autumnConsole.getCreds(log, platformId)
 }
 
+async function useRewardSlot({ creds, inviteeEmail }: UseRewardSlotParams): Promise<boolean> {
+    const client = autumnUtils.client({ secretKey: creds.autumnApiKey, customerId: creds.autumnCustomerId, failOpen: false })
+    const { data, error } = await tryCatch(() => client.check({
+        featureId: RewardFeatureId.REWARDED_INVITES,
+        requiredBalance: 1,
+        sendEvent: true,
+        properties: { invitee_email: inviteeEmail },
+        idempotencyKey: `invite:${creds.autumnCustomerId}:${inviteeEmail}`,
+    }))
+    if (!isNil(data)) {
+        return data.allowed
+    }
+    if (error instanceof AutumnError && error.statusCode === StatusCodes.CONFLICT) {
+        return true
+    }
+    throw error
+}
+
 const GRANT_ATTEMPTS = 12
 const GRANT_RETRY_BASE_DELAY_MS = 30_000
+
+type UseRewardSlotParams = {
+    creds: ConsoleCustomerCall
+    inviteeEmail: string
+}
 
 type LoadCredsParams = {
     log: FastifyBaseLogger

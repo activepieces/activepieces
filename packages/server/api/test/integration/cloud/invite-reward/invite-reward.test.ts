@@ -3,7 +3,7 @@ import { InvitationStatus, InvitationType, PlatformRole, PrincipalType } from '@
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { inviteRewardService } from '../../../../src/app/ee/invite-reward/invite-reward.service'
-import { autumnConsole } from '../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils'
+import { autumnConsole, autumnUtils } from '../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils'
 import { systemJobsSchedule } from '../../../../src/app/helper/system-jobs/system-job'
 import { billingProvider } from '../../../../src/app/platform/billing-provider'
 import { userInvitationsService } from '../../../../src/app/user-invitations/user-invitation.service'
@@ -13,6 +13,8 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/
 
 let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
+const realAutumnClient = autumnUtils.client
+const slotCheck = vi.fn()
 
 beforeAll(async () => {
     app = await setupTestEnvironment()
@@ -27,17 +29,55 @@ beforeEach(() => {
     vi.restoreAllMocks()
     vi.spyOn(autumnConsole, 'getCreds').mockResolvedValue(CREDS)
     vi.spyOn(autumnConsole, 'grantInviteReward').mockResolvedValue({ granted: true, credits: 1000, rewardsEarned: 1 })
+    slotCheck.mockReset().mockResolvedValue({ allowed: true })
+    vi.spyOn(autumnUtils, 'client').mockImplementation((params) => ({ ...realAutumnClient(params), check: slotCheck }))
     mockProvider({})
 })
 
 describe('Invite reward', () => {
     describe('when an invited person joins', () => {
-        it('asks the console to reward the new member, naming the invitee', async () => {
+        it('asks the console to reward the new member', async () => {
             const { mockPlatform } = await setupPlatform()
 
             const email = await joinAsNewMember({ platformId: mockPlatform.id })
 
-            await vi.waitFor(() => expect(autumnConsole.grantInviteReward).toHaveBeenCalledExactlyOnceWith({ autumnCustomerId: CREDS.autumnCustomerId, inviteeEmail: email, credits: 1000 }))
+            await vi.waitFor(() => expect(autumnConsole.grantInviteReward).toHaveBeenCalledExactlyOnceWith({ autumnCustomerId: CREDS.autumnCustomerId, credits: 1000 }))
+        })
+
+        it('uses one reward slot in Autumn for the new member, keyed by invitee', async () => {
+            const { mockPlatform } = await setupPlatform()
+
+            const email = await joinAsNewMember({ platformId: mockPlatform.id })
+
+            await vi.waitFor(() => expect(autumnConsole.grantInviteReward).toHaveBeenCalledTimes(1))
+            expect(autumnUtils.client).toHaveBeenCalledWith({ secretKey: CREDS.autumnApiKey, customerId: CREDS.autumnCustomerId, failOpen: false })
+            expect(slotCheck).toHaveBeenCalledWith({
+                featureId: 'rewarded_invites_count',
+                requiredBalance: 1,
+                sendEvent: true,
+                properties: { invitee_email: email },
+                idempotencyKey: `invite:${CREDS.autumnCustomerId}:${email}`,
+            })
+        })
+
+        it('asks the console for nothing when the plan has no reward slot left', async () => {
+            const { mockPlatform } = await setupPlatform()
+            slotCheck.mockResolvedValue({ allowed: false })
+
+            await joinAsNewMember({ platformId: mockPlatform.id })
+
+            await vi.waitFor(() => expect(slotCheck).toHaveBeenCalledTimes(1))
+            expect(autumnConsole.grantInviteReward).not.toHaveBeenCalled()
+        })
+
+        it('fails the job for a retry when Autumn cannot be reached, paying nothing', async () => {
+            const { mockPlatform } = await setupPlatform()
+            const identity = createMockUserIdentity({ verified: true })
+            await databaseConnection().getRepository('user_identity').save(identity)
+            slotCheck.mockRejectedValue(new Error('autumn down'))
+
+            await expect(inviteRewardService(mockLog).grantOnJoin({ platformId: mockPlatform.id, identityId: identity.id })).rejects.toThrow('autumn down')
+            expect(autumnConsole.grantInviteReward).not.toHaveBeenCalled()
         })
 
         it('refreshes the balance after the console grants', async () => {
@@ -77,7 +117,7 @@ describe('Invite reward', () => {
 
             await inviteRewardService(mockLog).grantOnJoin({ platformId: mockPlatform.id, identityId: identity.id })
 
-            expect(autumnConsole.grantInviteReward).toHaveBeenCalledWith({ autumnCustomerId: CREDS.autumnCustomerId, inviteeEmail: identity.email, credits: 1000 })
+            expect(autumnConsole.grantInviteReward).toHaveBeenCalledWith({ autumnCustomerId: CREDS.autumnCustomerId, credits: 1000 })
         })
 
         it('enrolls a platform with no billing account, and grants nothing when it still has none', async () => {
@@ -100,7 +140,7 @@ describe('Invite reward', () => {
 
             await inviteRewardService(mockLog).grantOnJoin({ platformId: mockPlatform.id, identityId: identity.id })
 
-            expect(autumnConsole.grantInviteReward).toHaveBeenCalledWith({ autumnCustomerId: CREDS.autumnCustomerId, inviteeEmail: identity.email, credits: 1000 })
+            expect(autumnConsole.grantInviteReward).toHaveBeenCalledWith({ autumnCustomerId: CREDS.autumnCustomerId, credits: 1000 })
         })
 
         it('fails the job for a retry when enrolling fails', async () => {
@@ -133,7 +173,7 @@ describe('Invite reward', () => {
 
             const identity = await databaseConnection().getRepository('user_identity').findOneByOrFail({ email })
             const jobId = `invite-reward-grant-${mockPlatform.id}-${identity.id}`
-            await vi.waitFor(() => expect(autumnConsole.grantInviteReward).toHaveBeenCalledWith({ autumnCustomerId: CREDS.autumnCustomerId, inviteeEmail: email, credits: 1000 }))
+            await vi.waitFor(() => expect(autumnConsole.grantInviteReward).toHaveBeenCalledWith({ autumnCustomerId: CREDS.autumnCustomerId, credits: 1000 }))
             await vi.waitFor(async () => expect(await systemJobsSchedule(mockLog).getJobState(jobId)).toBe('delayed'))
         })
     })

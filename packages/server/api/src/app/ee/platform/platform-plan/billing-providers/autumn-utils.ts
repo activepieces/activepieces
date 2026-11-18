@@ -47,11 +47,14 @@ const BASELINE_PLAN_IDS: readonly string[] = [PlanName.FREE, PlanName.FREE_LEGAC
 const SELF_SERVE_TRIAL_ENDED_REPORT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
 
 export const autumnUtils = {
-    client({ secretKey, customerId }: AutumnClientParams) {
-        const client = new Autumn({ secretKey, failOpen: true })
+    client({ secretKey, customerId, failOpen = true }: AutumnClientParams) {
+        const client = new Autumn({ secretKey, failOpen })
         return {
-            check(params: WithoutCustomerId<CheckParams>) {
-                return client.check({ customerId, ...params })
+            check({ idempotencyKey, ...params }: CheckInput) {
+                return client.check(
+                    { customerId, ...params },
+                    idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined,
+                )
             },
             track({ idempotencyKey, ...params }: TrackInput) {
                 return client.track(
@@ -412,11 +415,11 @@ export const autumnConsole = {
     async compFreeLegacy({ autumnCustomerId }: { autumnCustomerId: string }): Promise<void> {
         await consoleRequest({ path: '/api/v1/billing/free-legacy', token: consoleSecretOrThrow(), body: { autumnCustomerId } })
     },
-    async grantInviteReward({ autumnCustomerId, inviteeEmail, credits }: GrantInviteRewardParams): Promise<ConsoleInviteRewardGrant> {
+    async grantInviteReward({ autumnCustomerId, credits }: GrantInviteRewardParams): Promise<ConsoleInviteRewardGrant> {
         return consoleRequest<ConsoleInviteRewardGrant>({
             path: '/api/v1/invite-rewards',
             token: consoleSecretOrThrow(),
-            body: { autumnCustomerId, inviteeEmail, credits },
+            body: { autumnCustomerId, credits },
         })
     },
     async getCreds(log: FastifyBaseLogger, platformId: string): Promise<ConsoleCustomerCall | null> {
@@ -713,6 +716,11 @@ type ListAllSubscriptionsParams = {
 type AutumnClientParams = {
     secretKey: string
     customerId: string
+    failOpen?: boolean
+}
+
+type CheckInput = WithoutCustomerId<CheckParams> & {
+    idempotencyKey?: string
 }
 
 type ListEventsInput = WithoutCustomerId<EventsListParams> & {
@@ -823,7 +831,6 @@ export type ConsoleCustomerCall = {
 
 type GrantInviteRewardParams = {
     autumnCustomerId: string
-    inviteeEmail: string
     credits: number
 }
 
